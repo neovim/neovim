@@ -62,7 +62,7 @@ describe(':terminal window', function()
       screen:expect([[
         {7:1 }tty ready                                       |
         {7:2 }rows: 6, cols: 48                               |
-        {7:3 }{1: }                                               |
+        {7:3 }^                                                |
         {7:4 }                                                |
         {7:5 }                                                |
         {7:6 }                                                |
@@ -73,7 +73,7 @@ describe(':terminal window', function()
         {7:1 }tty ready                                       |
         {7:2 }rows: 6, cols: 48                               |
         {7:3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV|
-        {7:4 }WXYZ{1: }                                           |
+        {7:4 }WXYZ^                                            |
         {7:5 }                                                |
         {7:6 }                                                |
         {3:-- TERMINAL --}                                    |
@@ -87,7 +87,7 @@ describe(':terminal window', function()
         {7:       2 }rows: 6, cols: 48                        |
         {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
         {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
-        {7:       5 }{1: }                                        |
+        {7:       5 }^                                         |
         {7:       6 }                                         |
         {3:-- TERMINAL --}                                    |
       ]])
@@ -98,7 +98,7 @@ describe(':terminal window', function()
         {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
         {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
         {7:       5 } abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN|
-        {7:       6 }OPQRSTUVWXYZ{1: }                            |
+        {7:       6 }OPQRSTUVWXYZ^                             |
         {3:-- TERMINAL --}                                    |
       ]])
     end)
@@ -110,7 +110,7 @@ describe(':terminal window', function()
       screen:expect([[
         {7:++1  }tty ready                                    |
         {7:++2  }rows: 6, cols: 45                            |
-        {7:++3  }{1: }                                            |
+        {7:++3  }^                                             |
         {7:++4  }                                             |
         {7:++5  }                                             |
         {7:++6  }                                             |
@@ -123,7 +123,7 @@ describe(':terminal window', function()
         {7:++6  }                                             |
         {7:++7  }                                             |
         {7:++8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS|
-        {7:++9  }TUVWXYZ{1: }                                     |
+        {7:++9  }TUVWXYZ^                                      |
         {3:-- TERMINAL --}                                    |
       ]])
       feed_data('\nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
@@ -133,7 +133,7 @@ describe(':terminal window', function()
         {7:++ 9  }STUVWXYZ                                    |
         {7:++10  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
         {7:++11  }STUVWXYZrows: 6, cols: 44                   |
-        {7:++12  }{1: }                                           |
+        {7:++12  }^                                            |
         {3:-- TERMINAL --}                                    |
       ]])
     end)
@@ -144,7 +144,7 @@ describe(':terminal window', function()
       feed([[<C-\><C-N>]])
       screen:expect([[
         tty ready                                         |
-        {2:^ }                                                 |
+        ^                                                  |
                                                           |*5
       ]])
       feed(':set colorcolumn=20<CR>i')
@@ -153,7 +153,7 @@ describe(':terminal window', function()
     it('wont show the color column', function()
       screen:expect([[
         tty ready                                         |
-        {1: }                                                 |
+        ^                                                  |
                                                           |*4
         {3:-- TERMINAL --}                                    |
       ]])
@@ -170,7 +170,7 @@ describe(':terminal window', function()
         line2                                             |
         line3                                             |
         line4                                             |
-        {1: }                                                 |
+        ^                                                  |
         {3:-- TERMINAL --}                                    |
       ]])
     end)
@@ -184,7 +184,7 @@ describe(':terminal window', function()
         line2                                             |
         line3                                             |
         line4                                             |
-        {2: }                                                 |
+                                                          |
                                                           |
       ]])
     end)
@@ -206,7 +206,7 @@ describe(':terminal with multigrid', function()
       [3:--------------------------------------------------]|
     ## grid 2
       tty ready                                         |
-      {1: }                                                 |
+      ^                                                  |
                                                         |*4
     ## grid 3
       {3:-- TERMINAL --}                                    |
@@ -223,7 +223,7 @@ describe(':terminal with multigrid', function()
       ## grid 2
         tty ready           |
         rows: 10, cols: 20  |
-        {1: }                   |
+        ^                    |
                             |*7
       ## grid 3
         {3:-- TERMINAL --}                                    |
@@ -241,7 +241,7 @@ describe(':terminal with multigrid', function()
       ## grid 2
         rows: 10, cols: 20                                                    |
         rows: 3, cols: 70                                                     |
-        {1: }                                                                     |
+        ^                                                                      |
       ## grid 3
         {3:-- TERMINAL --}                                    |
       ]])
@@ -260,7 +260,7 @@ describe(':terminal with multigrid', function()
         rows: 10, cols: 20                                |
         rows: 3, cols: 70                                 |
         rows: 6, cols: 50                                 |
-        {1: }                                                 |
+        ^                                                  |
                                                           |
       ## grid 3
         {3:-- TERMINAL --}                                    |

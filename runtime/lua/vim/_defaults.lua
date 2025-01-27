@@ -49,10 +49,10 @@ do
 
     vim.keymap.set('x', '*', function()
       return _visual_search('/')
-    end, { desc = ':help v_star-default', expr = true, silent = true })
+    end, { desc = ':help v_star-default', expr = true, replace_keycodes = false })
     vim.keymap.set('x', '#', function()
       return _visual_search('?')
-    end, { desc = ':help v_#-default', expr = true, silent = true })
+    end, { desc = ':help v_#-default', expr = true, replace_keycodes = false })
   end
 
   --- Map Y to y$. This mimics the behavior of D and C. See |Y-default|
@@ -157,7 +157,7 @@ do
   --- client is attached. If no client is attached, or if a server does not support a capability, an
   --- error message is displayed rather than exhibiting different behavior.
   ---
-  --- See |grr|, |grn|, |gra|, |gri|, |i_CTRL-S|.
+  --- See |grr|, |grn|, |gra|, |gri|, |gO|, |i_CTRL-S|.
   do
     vim.keymap.set('n', 'grn', function()
       vim.lsp.buf.rename()
@@ -175,7 +175,11 @@ do
       vim.lsp.buf.implementation()
     end, { desc = 'vim.lsp.buf.implementation()' })
 
-    vim.keymap.set('i', '<C-S>', function()
+    vim.keymap.set('n', 'gO', function()
+      vim.lsp.buf.document_symbol()
+    end, { desc = 'vim.lsp.buf.document_symbol()' })
+
+    vim.keymap.set({ 'i', 's' }, '<C-S>', function()
       vim.lsp.buf.signature_help()
     end, { desc = 'vim.lsp.buf.signature_help()' })
   end
@@ -215,173 +219,163 @@ do
 
   --- vim-unimpaired style mappings. See: https://github.com/tpope/vim-unimpaired
   do
+    --- Execute a command and print errors without a stacktrace.
+    --- @param opts table Arguments to |nvim_cmd()|
+    local function cmd(opts)
+      local ok, err = pcall(vim.api.nvim_cmd, opts, {})
+      if not ok then
+        vim.api.nvim_echo({ { err:sub(#'Vim:' + 1) } }, true, { err = true })
+      end
+    end
+
     -- Quickfix mappings
     vim.keymap.set('n', '[q', function()
-      vim.cmd.cprevious({ count = vim.v.count1 })
-    end, {
-      desc = ':cprevious',
-    })
+      cmd({ cmd = 'cprevious', count = vim.v.count1 })
+    end, { desc = ':cprevious' })
 
     vim.keymap.set('n', ']q', function()
-      vim.cmd.cnext({ count = vim.v.count1 })
-    end, {
-      desc = ':cnext',
-    })
+      cmd({ cmd = 'cnext', count = vim.v.count1 })
+    end, { desc = ':cnext' })
 
     vim.keymap.set('n', '[Q', function()
-      vim.cmd.crewind({ count = vim.v.count ~= 0 and vim.v.count or nil })
-    end, {
-      desc = ':crewind',
-    })
+      cmd({ cmd = 'crewind', count = vim.v.count ~= 0 and vim.v.count or nil })
+    end, { desc = ':crewind' })
 
     vim.keymap.set('n', ']Q', function()
-      vim.cmd.clast({ count = vim.v.count ~= 0 and vim.v.count or nil })
-    end, {
-      desc = ':clast',
-    })
+      cmd({ cmd = 'clast', count = vim.v.count ~= 0 and vim.v.count or nil })
+    end, { desc = ':clast' })
 
     vim.keymap.set('n', '[<C-Q>', function()
-      vim.cmd.cpfile({ count = vim.v.count1 })
-    end, {
-      desc = ':cpfile',
-    })
+      cmd({ cmd = 'cpfile', count = vim.v.count1 })
+    end, { desc = ':cpfile' })
 
     vim.keymap.set('n', ']<C-Q>', function()
-      vim.cmd.cnfile({ count = vim.v.count1 })
-    end, {
-      desc = ':cnfile',
-    })
+      cmd({ cmd = 'cnfile', count = vim.v.count1 })
+    end, { desc = ':cnfile' })
 
     -- Location list mappings
     vim.keymap.set('n', '[l', function()
-      vim.cmd.lprevious({ count = vim.v.count1 })
-    end, {
-      desc = ':lprevious',
-    })
+      cmd({ cmd = 'lprevious', count = vim.v.count1 })
+    end, { desc = ':lprevious' })
 
     vim.keymap.set('n', ']l', function()
-      vim.cmd.lnext({ count = vim.v.count1 })
-    end, {
-      desc = ':lnext',
-    })
+      cmd({ cmd = 'lnext', count = vim.v.count1 })
+    end, { desc = ':lnext' })
 
     vim.keymap.set('n', '[L', function()
-      vim.cmd.lrewind({ count = vim.v.count ~= 0 and vim.v.count or nil })
-    end, {
-      desc = ':lrewind',
-    })
+      cmd({ cmd = 'lrewind', count = vim.v.count ~= 0 and vim.v.count or nil })
+    end, { desc = ':lrewind' })
 
     vim.keymap.set('n', ']L', function()
-      vim.cmd.llast({ count = vim.v.count ~= 0 and vim.v.count or nil })
-    end, {
-      desc = ':llast',
-    })
+      cmd({ cmd = 'llast', count = vim.v.count ~= 0 and vim.v.count or nil })
+    end, { desc = ':llast' })
 
     vim.keymap.set('n', '[<C-L>', function()
-      vim.cmd.lpfile({ count = vim.v.count1 })
-    end, {
-      desc = ':lpfile',
-    })
+      cmd({ cmd = 'lpfile', count = vim.v.count1 })
+    end, { desc = ':lpfile' })
 
     vim.keymap.set('n', ']<C-L>', function()
-      vim.cmd.lnfile({ count = vim.v.count1 })
-    end, {
-      desc = ':lnfile',
-    })
+      cmd({ cmd = 'lnfile', count = vim.v.count1 })
+    end, { desc = ':lnfile' })
 
     -- Argument list
     vim.keymap.set('n', '[a', function()
-      vim.cmd.previous({ count = vim.v.count1 })
-    end, {
-      desc = ':previous',
-    })
+      cmd({ cmd = 'previous', count = vim.v.count1 })
+    end, { desc = ':previous' })
 
     vim.keymap.set('n', ']a', function()
       -- count doesn't work with :next, must use range. See #30641.
-      vim.cmd.next({ range = { vim.v.count1 } })
-    end, {
-      desc = ':next',
-    })
+      cmd({ cmd = 'next', range = { vim.v.count1 } })
+    end, { desc = ':next' })
 
     vim.keymap.set('n', '[A', function()
       if vim.v.count ~= 0 then
-        vim.cmd.argument({ count = vim.v.count })
+        cmd({ cmd = 'argument', count = vim.v.count })
       else
-        vim.cmd.rewind()
+        cmd({ cmd = 'rewind' })
       end
-    end, {
-      desc = ':rewind',
-    })
+    end, { desc = ':rewind' })
 
     vim.keymap.set('n', ']A', function()
       if vim.v.count ~= 0 then
-        vim.cmd.argument({ count = vim.v.count })
+        cmd({ cmd = 'argument', count = vim.v.count })
       else
-        vim.cmd.last()
+        cmd({ cmd = 'last' })
       end
-    end, {
-      desc = ':last',
-    })
+    end, { desc = ':last' })
 
     -- Tags
     vim.keymap.set('n', '[t', function()
       -- count doesn't work with :tprevious, must use range. See #30641.
-      vim.cmd.tprevious({ range = { vim.v.count1 } })
+      cmd({ cmd = 'tprevious', range = { vim.v.count1 } })
     end, { desc = ':tprevious' })
 
     vim.keymap.set('n', ']t', function()
       -- count doesn't work with :tnext, must use range. See #30641.
-      vim.cmd.tnext({ range = { vim.v.count1 } })
+      cmd({ cmd = 'tnext', range = { vim.v.count1 } })
     end, { desc = ':tnext' })
 
     vim.keymap.set('n', '[T', function()
       -- count doesn't work with :trewind, must use range. See #30641.
-      vim.cmd.trewind({ range = vim.v.count ~= 0 and { vim.v.count } or nil })
+      cmd({ cmd = 'trewind', range = vim.v.count ~= 0 and { vim.v.count } or nil })
     end, { desc = ':trewind' })
 
     vim.keymap.set('n', ']T', function()
       -- :tlast does not accept a count, so use :trewind if count given
       if vim.v.count ~= 0 then
-        vim.cmd.trewind({ range = { vim.v.count } })
+        cmd({ cmd = 'trewind', range = { vim.v.count } })
       else
-        vim.cmd.tlast()
+        cmd({ cmd = 'tlast' })
       end
     end, { desc = ':tlast' })
 
     vim.keymap.set('n', '[<C-T>', function()
       -- count doesn't work with :ptprevious, must use range. See #30641.
-      vim.cmd.ptprevious({ range = { vim.v.count1 } })
+      cmd({ cmd = 'ptprevious', range = { vim.v.count1 } })
     end, { desc = ' :ptprevious' })
 
     vim.keymap.set('n', ']<C-T>', function()
       -- count doesn't work with :ptnext, must use range. See #30641.
-      vim.cmd.ptnext({ range = { vim.v.count1 } })
+      cmd({ cmd = 'ptnext', range = { vim.v.count1 } })
     end, { desc = ':ptnext' })
 
     -- Buffers
     vim.keymap.set('n', '[b', function()
-      vim.cmd.bprevious({ count = vim.v.count1 })
+      cmd({ cmd = 'bprevious', count = vim.v.count1 })
     end, { desc = ':bprevious' })
 
     vim.keymap.set('n', ']b', function()
-      vim.cmd.bnext({ count = vim.v.count1 })
+      cmd({ cmd = 'bnext', count = vim.v.count1 })
     end, { desc = ':bnext' })
 
     vim.keymap.set('n', '[B', function()
       if vim.v.count ~= 0 then
-        vim.cmd.buffer({ count = vim.v.count })
+        cmd({ cmd = 'buffer', count = vim.v.count })
       else
-        vim.cmd.brewind()
+        cmd({ cmd = 'brewind' })
       end
     end, { desc = ':brewind' })
 
     vim.keymap.set('n', ']B', function()
       if vim.v.count ~= 0 then
-        vim.cmd.buffer({ count = vim.v.count })
+        cmd({ cmd = 'buffer', count = vim.v.count })
       else
-        vim.cmd.blast()
+        cmd({ cmd = 'blast' })
       end
     end, { desc = ':blast' })
+
+    -- Add empty lines
+    vim.keymap.set('n', '[<Space>', function()
+      -- TODO: update once it is possible to assign a Lua function to options #25672
+      vim.go.operatorfunc = "v:lua.require'vim._buf'.space_above"
+      return 'g@l'
+    end, { expr = true, desc = 'Add empty line above cursor' })
+
+    vim.keymap.set('n', ']<Space>', function()
+      -- TODO: update once it is possible to assign a Lua function to options #25672
+      vim.go.operatorfunc = "v:lua.require'vim._buf'.space_below"
+      return 'g@l'
+    end, { expr = true, desc = 'Add empty line below cursor' })
   end
 end
 
@@ -418,7 +412,7 @@ do
     end
   end
 
-  local nvim_popupmenu_augroup = vim.api.nvim_create_augroup('nvim_popupmenu', {})
+  local nvim_popupmenu_augroup = vim.api.nvim_create_augroup('nvim.popupmenu', {})
   vim.api.nvim_create_autocmd('MenuPopup', {
     pattern = '*',
     group = nvim_popupmenu_augroup,
@@ -435,13 +429,13 @@ end
 
 --- Default autocommands. See |default-autocmds|
 do
-  local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim_terminal', {})
+  local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim.terminal', {})
   vim.api.nvim_create_autocmd('BufReadCmd', {
     pattern = 'term://*',
     group = nvim_terminal_augroup,
     desc = 'Treat term:// buffers as terminal buffers',
     nested = true,
-    command = "if !exists('b:term_title')|call termopen(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
+    command = "if !exists('b:term_title')|call jobstart(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'term': v:true, 'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
   })
 
   vim.api.nvim_create_autocmd({ 'TermClose' }, {
@@ -498,6 +492,10 @@ do
       vim.bo.textwidth = 0
       vim.wo[0][0].wrap = false
       vim.wo[0][0].list = false
+      vim.wo[0][0].number = false
+      vim.wo[0][0].relativenumber = false
+      vim.wo[0][0].signcolumn = 'no'
+      vim.wo[0][0].foldcolumn = '0'
 
       -- This is gross. Proper list options support when?
       local winhl = vim.o.winhighlight
@@ -511,14 +509,14 @@ do
   vim.api.nvim_create_autocmd('CmdwinEnter', {
     pattern = '[:>]',
     desc = 'Limit syntax sync to maxlines=1 in the command window',
-    group = vim.api.nvim_create_augroup('nvim_cmdwin', {}),
+    group = vim.api.nvim_create_augroup('nvim.cmdwin', {}),
     command = 'syntax sync minlines=1 maxlines=1',
   })
 
   vim.api.nvim_create_autocmd('SwapExists', {
     pattern = '*',
     desc = 'Skip the swapfile prompt when the swapfile is owned by a running Nvim process',
-    group = vim.api.nvim_create_augroup('nvim_swapfile', {}),
+    group = vim.api.nvim_create_augroup('nvim.swapfile', {}),
     callback = function()
       local info = vim.fn.swapinfo(vim.v.swapname)
       local user = vim.uv.os_get_passwd().username
@@ -545,15 +543,16 @@ do
   end
 
   if tty then
-    local group = vim.api.nvim_create_augroup('nvim_tty', {})
+    local group = vim.api.nvim_create_augroup('nvim.tty', {})
 
     --- Set an option after startup (so that OptionSet is fired), but only if not
     --- already set by the user.
     ---
     --- @param option string Option name
     --- @param value any Option value
-    local function setoption(option, value)
-      if vim.api.nvim_get_option_info2(option, {}).was_set then
+    --- @param force boolean? Always set the value, even if already set
+    local function setoption(option, value, force)
+      if not force and vim.api.nvim_get_option_info2(option, {}).was_set then
         -- Don't do anything if option is already set
         return
       end
@@ -569,7 +568,7 @@ do
           once = true,
           nested = true,
           callback = function()
-            setoption(option, value)
+            setoption(option, value, force)
           end,
         })
       end
@@ -651,11 +650,15 @@ do
         return nil, nil, nil
       end
 
-      local timer = assert(vim.uv.new_timer())
-
+      -- This autocommand updates the value of 'background' anytime we receive
+      -- an OSC 11 response from the terminal emulator. If the user has set
+      -- 'background' explictly then we will delete this autocommand,
+      -- effectively disabling automatic background setting.
+      local force = false
       local id = vim.api.nvim_create_autocmd('TermResponse', {
         group = group,
         nested = true,
+        desc = "Update the value of 'background' automatically based on the terminal emulator's background color",
         callback = function(args)
           local resp = args.data ---@type string
           local r, g, b = parseosc11(resp)
@@ -667,27 +670,33 @@ do
             if rr and gg and bb then
               local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
               local bg = luminance < 0.5 and 'dark' or 'light'
-              setoption('background', bg)
-            end
+              setoption('background', bg, force)
 
-            return true
+              -- On the first query response, don't force setting the option in
+              -- case the user has already set it manually. If they have, then
+              -- this autocommand will be deleted. If they haven't, then we do
+              -- want to force setting the option to override the value set by
+              -- this autocommand.
+              if not force then
+                force = true
+              end
+            end
+          end
+        end,
+      })
+
+      vim.api.nvim_create_autocmd('VimEnter', {
+        group = group,
+        nested = true,
+        once = true,
+        callback = function()
+          if vim.api.nvim_get_option_info2('background', {}).was_set then
+            vim.api.nvim_del_autocmd(id)
           end
         end,
       })
 
       io.stdout:write('\027]11;?\007')
-
-      timer:start(1000, 0, function()
-        -- Delete the autocommand if no response was received
-        vim.schedule(function()
-          -- Suppress error if autocommand has already been deleted
-          pcall(vim.api.nvim_del_autocmd, id)
-        end)
-
-        if not timer:is_closing() then
-          timer:close()
-        end
-      end)
     end
 
     --- If the TUI (term_has_truecolor) was able to determine that the host

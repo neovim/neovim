@@ -8,6 +8,7 @@ function s:logger.on_exit(id, data, event)
 endfunction
 
 let s:logger.env = #{VIMRUNTIME: $VIMRUNTIME}
+let s:logger.term = v:true
 
 " Replace non-printable chars by special sequence, or "<%x>".
 let s:escaped_char = {"\n": '\n', "\r": '\r', "\t": '\t'}
@@ -25,7 +26,7 @@ function Main()
   set lines=25
   set columns=80
   enew
-  let job = termopen(args, s:logger)
+  let job = jobstart(args, s:logger)
   let results = jobwait([job], 5 * 60 * 1000)
   " TODO(ZyX-I): Get colors
   let screen = getline(1, '$')

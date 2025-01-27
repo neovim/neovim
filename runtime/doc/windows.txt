@@ -69,7 +69,8 @@ If a window is focusable, it is part of the "navigation stack", that is,
 editor commands such as :windo, |CTRL-W|, etc., will consider the window as
 one that can be made the "current window". A non-focusable window will be
 skipped by such commands (though it can be explicitly focused by
-|nvim_set_current_win()|).
+|nvim_set_current_win()|). Non-focusable windows are not listed by |:tabs|, and
+are not counted by the default 'tabline'.
 
 Windows (especially floating windows) can have many other |api-win_config|
 properties such as "hide" and "fixed" which also affect behavior.
@@ -940,8 +941,8 @@ set in the preview window to be able to recognize it.  The 'winfixheight'
 option is set to have it keep the same height when opening/closing other
 windows.
 
-						*:pta* *:ptag*
-:pta[g][!] [tagname]
+						*:pt* *:ptag*
+:pt[ag][!] [tagname]
 		Does ":tag[!] [tagname]" and shows the found tag in a
 		"Preview" window without changing the current buffer or cursor
 		position.  If a "Preview" window already exists, it is re-used
@@ -977,6 +978,14 @@ CTRL-W g }						*CTRL-W_g}*
 		it.  Make the new Preview window (if required) N high.  If N is
 		not given, 'previewheight' is used.
 
+							*:pb* *:pbuffer*
+:[N]pb[uffer][!] [+cmd] [N]
+		Edit buffer [N] from the buffer list in the preview window.
+		If [N] is not given, the current buffer remains being edited.
+		See |:buffer-!| for [!].  This will also edit a buffer that is
+		not in the buffer list, without setting the 'buflisted' flag.
+		Also see |+cmd|.
+
 							*:ped* *:pedit*
 :ped[it][!] [++opt] [+cmd] {file}
 		Edit {file} in the preview window.  The preview window is
@@ -984,6 +993,8 @@ CTRL-W g }						*CTRL-W_g}*
 		position isn't changed.  Useful example: >
 			:pedit +/fputc /usr/include/stdio.h
 <
+		Also see |++opt| and |+cmd|.
+
 							*:ps* *:psearch*
 :[range]ps[earch][!] [count] [/]pattern[/]
 		Works like |:ijump| but shows the found match in the preview

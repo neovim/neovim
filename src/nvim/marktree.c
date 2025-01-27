@@ -2330,7 +2330,6 @@ void marktree_check(MarkTree *b)
 #endif
 }
 
-#ifndef NDEBUG
 size_t marktree_check_node(MarkTree *b, MTNode *x, MTPos *last, bool *last_right,
                            const uint32_t *meta_node_ref)
 {
@@ -2484,8 +2483,6 @@ bool mt_recurse_nodes_compare(MTNode *x, PMap(ptr_t) *checked)
 
   return true;
 }
-
-#endif
 
 // TODO(bfredl): kv_print
 #define GA_PUT(x) ga_concat(ga, (char *)(x))

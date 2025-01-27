@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <lauxlib.h>
 #include <stddef.h>
@@ -22,7 +23,6 @@
 #include "nvim/event/proc.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/socket.h"
-#include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
@@ -32,6 +32,7 @@
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"

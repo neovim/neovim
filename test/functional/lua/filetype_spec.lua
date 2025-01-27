@@ -161,6 +161,18 @@ describe('vim.filetype', function()
       end
     end
   end)
+
+  it('.get_option() cleans up buffer on error', function()
+    api.nvim_create_autocmd('FileType', { pattern = 'foo', command = 'lua error()' })
+
+    local buf = api.nvim_get_current_buf()
+
+    exec_lua(function()
+      pcall(vim.filetype.get_option, 'foo', 'lisp')
+    end)
+
+    eq(buf, api.nvim_get_current_buf())
+  end)
 end)
 
 describe('filetype.lua', function()
@@ -187,7 +199,19 @@ describe('filetype.lua', function()
     finally(function()
       uv.fs_unlink('Xfiletype/.config/git')
     end)
-    clear({ args = { '--clean', 'Xfiletype/.config/git/config' } })
+    local args = { '--clean', 'Xfiletype/.config/git/config' }
+    clear({ args = args })
     eq('gitconfig', api.nvim_get_option_value('filetype', {}))
+    table.insert(args, 2, '--cmd')
+    table.insert(args, 3, "autocmd BufRead * call expand('<afile>')")
+    clear({ args = args })
+    eq('gitconfig', api.nvim_get_option_value('filetype', {}))
+  end)
+
+  it('works with :doautocmd BufRead #31306', function()
+    clear({ args = { '--clean' } })
+    eq('', api.nvim_get_option_value('filetype', {}))
+    command('doautocmd BufRead README.md')
+    eq('markdown', api.nvim_get_option_value('filetype', {}))
   end)
 end)

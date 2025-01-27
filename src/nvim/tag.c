@@ -34,7 +34,6 @@
 #include "nvim/hashtab.h"
 #include "nvim/hashtab_defs.h"
 #include "nvim/help.h"
-#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/input.h"
 #include "nvim/insexpand.h"
@@ -451,7 +450,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         curwin->w_cursor.col = saved_fmark.mark.col;
         curwin->w_set_curswant = true;
         check_cursor(curwin);
-        if ((fdo_flags & FDO_TAG) && old_KeyTyped) {
+        if ((fdo_flags & kOptFdoFlagTag) && old_KeyTyped) {
           foldOpenCursor();
         }
 
@@ -669,7 +668,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
 
       if (ask_for_selection) {
         // Ask to select a tag from the list.
-        int i = prompt_for_number(NULL);
+        int i = prompt_for_input(NULL, 0, false, NULL);
         if (i <= 0 || i > num_matches || got_int) {
           // no valid choice: don't change anything
           if (use_tagstack) {
@@ -736,7 +735,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         }
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
-          msg(IObuff, ic ? HL_ATTR(HLF_W) : 0);
+          msg(IObuff, ic ? HLF_W : 0);
           msg_scroll = true;  // Don't overwrite this message.
         } else {
           give_warning(IObuff, ic);
@@ -815,10 +814,10 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
     msg_didout = false;     // overwrite previous message
   }
   msg_start();
-  msg_puts_attr(_("  # pri kind tag"), HL_ATTR(HLF_T));
+  msg_puts_hl(_("  # pri kind tag"), HLF_T, false);
   msg_clr_eos();
   taglen_advance(taglen);
-  msg_puts_attr(_("file\n"), HL_ATTR(HLF_T));
+  msg_puts_hl(_("file\n"), HLF_T, false);
 
   for (int i = 0; i < num_matches && !got_int; i++) {
     parse_match(matches[i], &tagp);
@@ -836,10 +835,10 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
                  mt_names[matches[i][0] & MT_MASK]);
     msg_puts(IObuff);
     if (tagp.tagkind != NULL) {
-      msg_outtrans_len(tagp.tagkind, (int)(tagp.tagkind_end - tagp.tagkind), 0);
+      msg_outtrans_len(tagp.tagkind, (int)(tagp.tagkind_end - tagp.tagkind), 0, false);
     }
     msg_advance(13);
-    msg_outtrans_len(tagp.tagname, (int)(tagp.tagname_end - tagp.tagname), HL_ATTR(HLF_T));
+    msg_outtrans_len(tagp.tagname, (int)(tagp.tagname_end - tagp.tagname), HLF_T, false);
     msg_putchar(' ');
     taglen_advance(taglen);
 
@@ -847,7 +846,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
     // it and put "..." in the middle
     const char *p = tag_full_fname(&tagp);
     if (p != NULL) {
-      msg_outtrans(p, HL_ATTR(HLF_D));
+      msg_outtrans(p, HLF_D, false);
       XFREE_CLEAR(p);
     }
     if (msg_col > 0) {
@@ -880,7 +879,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
           continue;
         }
         // print all other extra fields
-        int attr = HL_ATTR(HLF_CM);
+        int hl_id = HLF_CM;
         while (*p && *p != '\r' && *p != '\n') {
           if (msg_col + ptr2cells(p) >= Columns) {
             msg_putchar('\n');
@@ -889,13 +888,13 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
             }
             msg_advance(15);
           }
-          p = msg_outtrans_one(p, attr);
+          p = msg_outtrans_one(p, hl_id, false);
           if (*p == TAB) {
-            msg_puts_attr(" ", attr);
+            msg_puts_hl(" ", hl_id, false);
             break;
           }
           if (*p == ':') {
-            attr = 0;
+            hl_id = 0;
           }
         }
       }
@@ -947,7 +946,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
         msg_putchar(' ');
         p++;
       } else {
-        p = msg_outtrans_one(p, 0);
+        p = msg_outtrans_one(p, 0, false);
       }
 
       // don't display the "$/;\"" and "$?;\""
@@ -1125,8 +1124,8 @@ void do_tags(exarg_T *eap)
                    tagstack[i].cur_match + 1,
                    tagstack[i].tagname,
                    tagstack[i].fmark.mark.lnum);
-      msg_outtrans(IObuff, 0);
-      msg_outtrans(name, tagstack[i].fmark.fnum == curbuf->b_fnum ? HL_ATTR(HLF_D) : 0);
+      msg_outtrans(IObuff, 0, false);
+      msg_outtrans(name, tagstack[i].fmark.fnum == curbuf->b_fnum ? HLF_D : 0, false);
       xfree(name);
     }
   }
@@ -2294,17 +2293,17 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   // Change the value of 'ignorecase' according to 'tagcase' for the
   // duration of this function.
   switch (curbuf->b_tc_flags ? curbuf->b_tc_flags : tc_flags) {
-  case TC_FOLLOWIC: break;
-  case TC_IGNORE:
+  case kOptTcFlagFollowic: break;
+  case kOptTcFlagIgnore:
     p_ic = true;
     break;
-  case TC_MATCH:
+  case kOptTcFlagMatch:
     p_ic = false;
     break;
-  case TC_FOLLOWSCS:
+  case kOptTcFlagFollowscs:
     p_ic = ignorecase(pat);
     break;
-  case TC_SMART:
+  case kOptTcFlagSmart:
     p_ic = ignorecase_opt(pat, true, true);
     break;
   default:
@@ -2846,7 +2845,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
 
   // If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
   // open a new tab page.
-  if (postponed_split && (swb_flags & (SWB_USEOPEN | SWB_USETAB))) {
+  if (postponed_split && (swb_flags & (kOptSwbFlagUseopen | kOptSwbFlagUsetab))) {
     buf_T *const existing_buf = buflist_findname_exp(fname);
 
     if (existing_buf != NULL) {
@@ -3015,7 +3014,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
       if (curbuf->b_help) {
         set_topline(curwin, curwin->w_cursor.lnum);
       }
-      if ((fdo_flags & FDO_TAG) && old_KeyTyped) {
+      if ((fdo_flags & kOptFdoFlagTag) && old_KeyTyped) {
         foldOpenCursor();
       }
     }

@@ -1,55 +1,51 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
 local clear = n.clear
 local exec_lua = n.exec_lua
 
-describe("Nvim API calls with 'winfixbuf'", function()
+describe("'winfixbuf'", function()
   before_each(function()
     clear()
   end)
 
-  it("Calling vim.api.nvim_win_set_buf with 'winfixbuf'", function()
-    local results = exec_lua([[
-      local function _setup_two_buffers()
-        local buffer = vim.api.nvim_create_buf(true, true)
-
-        vim.api.nvim_create_buf(true, true)  -- Make another buffer
-
-        local current_window = 0
-        vim.api.nvim_set_option_value("winfixbuf", true, {win=current_window})
-
-        return buffer
-      end
-
-      local other_buffer = _setup_two_buffers()
-      local current_window = 0
-      local results, _ = pcall(vim.api.nvim_win_set_buf, current_window, other_buffer)
-
-      return results
+  ---@return integer
+  local function setup_winfixbuf()
+    return exec_lua([[
+      local buffer = vim.api.nvim_create_buf(true, true)
+      vim.api.nvim_create_buf(true, true)  -- Make another buffer
+      vim.wo.winfixbuf = true
+      return buffer
     ]])
+  end
 
-    assert(results == false)
+  it('nvim_win_set_buf on non-current buffer', function()
+    local other_buf = setup_winfixbuf()
+    t.eq(
+      "Vim:E1513: Cannot switch buffer. 'winfixbuf' is enabled",
+      t.pcall_err(n.api.nvim_win_set_buf, 0, other_buf)
+    )
   end)
 
-  it("Calling vim.api.nvim_set_current_buf with 'winfixbuf'", function()
-    local results = exec_lua([[
-      local function _setup_two_buffers()
-        local buffer = vim.api.nvim_create_buf(true, true)
+  it('nvim_set_current_buf on non-current buffer', function()
+    local other_buf = setup_winfixbuf()
+    t.eq(
+      "Vim:E1513: Cannot switch buffer. 'winfixbuf' is enabled",
+      t.pcall_err(n.api.nvim_set_current_buf, other_buf)
+    )
+  end)
 
-        vim.api.nvim_create_buf(true, true)  -- Make another buffer
+  it('nvim_win_set_buf on current buffer', function()
+    setup_winfixbuf()
+    local curbuf = n.api.nvim_get_current_buf()
+    n.api.nvim_win_set_buf(0, curbuf)
+    t.eq(curbuf, n.api.nvim_get_current_buf())
+  end)
 
-        local current_window = 0
-        vim.api.nvim_set_option_value("winfixbuf", true, {win=current_window})
-
-        return buffer
-      end
-
-      local other_buffer = _setup_two_buffers()
-      local results, _ = pcall(vim.api.nvim_set_current_buf, other_buffer)
-
-      return results
-    ]])
-
-    assert(results == false)
+  it('nvim_set_current_buf on current buffer', function()
+    setup_winfixbuf()
+    local curbuf = n.api.nvim_get_current_buf()
+    n.api.nvim_set_current_buf(curbuf)
+    t.eq(curbuf, n.api.nvim_get_current_buf())
   end)
 end)

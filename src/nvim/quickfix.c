@@ -38,7 +38,6 @@
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/help.h"
-#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
@@ -2697,7 +2696,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
       // Didn't find it, go to the window before the quickfix
       // window, unless 'switchbuf' contains 'uselast': in this case we
       // try to jump to the previously used window first.
-      if ((swb_flags & SWB_USELAST) && win_valid(prevwin)
+      if ((swb_flags & kOptSwbFlagUselast) && win_valid(prevwin)
           && !prevwin->w_p_wfb) {
         win = prevwin;
       } else if (altwin != NULL) {
@@ -2754,7 +2753,7 @@ static int qf_jump_to_usable_window(int qf_fnum, bool newwin, bool *opened_windo
 
   // If no usable window is found and 'switchbuf' contains "usetab"
   // then search in other tabs.
-  if (!usable_win && (swb_flags & SWB_USETAB)) {
+  if (!usable_win && (swb_flags & kOptSwbFlagUsetab)) {
     usable_win = qf_goto_tabwin_with_file(qf_fnum);
   }
 
@@ -2937,7 +2936,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
     msg_scroll = false;
   }
   msg_ext_set_kind("quickfix");
-  msg_attr_keep(gap->ga_data, 0, true, false);
+  msg_keep(gap->ga_data, 0, true, false);
   msg_scroll = (int)i;
 
   qfga_clear();
@@ -3032,7 +3031,7 @@ static int qf_jump_to_buffer(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, int 
 
   qf_jump_goto_line(qf_ptr->qf_lnum, qf_ptr->qf_col, qf_ptr->qf_viscol, qf_ptr->qf_pattern);
 
-  if ((fdo_flags & FDO_QUICKFIX) && openfold) {
+  if ((fdo_flags & kOptFdoFlagQuickfix) && openfold) {
     foldOpenCursor();
   }
   if (print_message) {
@@ -3144,10 +3143,10 @@ theend:
   decr_quickfix_busy();
 }
 
-// Highlight attributes used for displaying entries from the quickfix list.
-static int qfFileAttr;
-static int qfSepAttr;
-static int qfLineAttr;
+// Highlight ids used for displaying entries from the quickfix list.
+static int qfFile_hl_id;
+static int qfSep_hl_id;
+static int qfLine_hl_id;
 
 /// Display information about a single entry from the quickfix/location list.
 /// Used by ":clist/:llist" commands.
@@ -3195,10 +3194,10 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
 
   msg_putchar('\n');
-  msg_outtrans(IObuff, cursel ? HL_ATTR(HLF_QFL) : qfFileAttr);
+  msg_outtrans(IObuff, cursel ? HLF_QFL : qfFile_hl_id, false);
 
   if (qfp->qf_lnum != 0) {
-    msg_puts_attr(":", qfSepAttr);
+    msg_puts_hl(":", qfSep_hl_id, false);
   }
   garray_T *gap = qfga_get();
   if (qfp->qf_lnum != 0) {
@@ -3206,14 +3205,14 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
   ga_concat(gap, qf_types(qfp->qf_type, qfp->qf_nr));
   ga_append(gap, NUL);
-  msg_puts_attr(gap->ga_data, qfLineAttr);
-  msg_puts_attr(":", qfSepAttr);
+  msg_puts_hl(gap->ga_data, qfLine_hl_id, false);
+  msg_puts_hl(":", qfSep_hl_id, false);
   if (qfp->qf_pattern != NULL) {
     gap = qfga_get();
     qf_fmt_text(gap, qfp->qf_pattern);
     ga_append(gap, NUL);
     msg_puts(gap->ga_data);
-    msg_puts_attr(":", qfSepAttr);
+    msg_puts_hl(":", qfSep_hl_id, false);
   }
   msg_puts(" ");
 
@@ -3275,17 +3274,17 @@ void qf_list(exarg_T *eap)
 
   // Get the attributes for the different quickfix highlight items.  Note
   // that this depends on syntax items defined in the qf.vim syntax file
-  qfFileAttr = syn_name2attr("qfFileName");
-  if (qfFileAttr == 0) {
-    qfFileAttr = HL_ATTR(HLF_D);
+  qfFile_hl_id = syn_name2id("qfFileName");
+  if (qfFile_hl_id == 0) {
+    qfFile_hl_id = HLF_D;
   }
-  qfSepAttr = syn_name2attr("qfSeparator");
-  if (qfSepAttr == 0) {
-    qfSepAttr = HL_ATTR(HLF_D);
+  qfSep_hl_id = syn_name2id("qfSeparator");
+  if (qfSep_hl_id == 0) {
+    qfSep_hl_id = HLF_D;
   }
-  qfLineAttr = syn_name2attr("qfLineNr");
-  if (qfLineAttr == 0) {
-    qfLineAttr = HL_ATTR(HLF_N);
+  qfLine_hl_id = syn_name2id("qfLineNr");
+  if (qfLine_hl_id == 0) {
+    qfLine_hl_id = HLF_N;
   }
 
   if (qfl->qf_nonevalid) {
@@ -4396,7 +4395,7 @@ static char *make_get_fullcmd(const char *makecmd, const char *fname)
   }
   msg_start();
   msg_puts(":!");
-  msg_outtrans(cmd, 0);  // show what we are doing
+  msg_outtrans(cmd, 0, false);  // show what we are doing
 
   return cmd;
 }
@@ -5243,9 +5242,9 @@ static void vgr_display_fname(char *fname)
   msg_start();
   char *p = msg_strtrunc(fname, true);
   if (p == NULL) {
-    msg_outtrans(fname, 0);
+    msg_outtrans(fname, 0, false);
   } else {
-    msg_outtrans(p, 0);
+    msg_outtrans(p, 0, false);
     xfree(p);
   }
   msg_clr_eos();
@@ -7348,7 +7347,6 @@ void ex_helpgrep(exarg_T *eap)
   bool updated = false;
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *const save_cpo = p_cpo;
-  const bool save_cpo_allocated = (get_option(kOptCpoptions)->flags & P_ALLOCED);
   p_cpo = empty_string_option;
 
   bool new_qi = false;
@@ -7388,9 +7386,7 @@ void ex_helpgrep(exarg_T *eap)
     if (*p_cpo == NUL) {
       set_option_value_give_err(kOptCpoptions, CSTR_AS_OPTVAL(save_cpo), 0);
     }
-    if (save_cpo_allocated) {
-      free_string_option(save_cpo);
-    }
+    free_string_option(save_cpo);
   }
 
   if (updated) {

@@ -43,7 +43,7 @@
   "#"
 ] @punctuation.special
 
-"_" @constant
+"_" @character.special
 
 ((parameters
   (identifier) @number)

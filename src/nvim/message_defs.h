@@ -6,7 +6,7 @@
 
 typedef struct {
   String text;
-  int attr;
+  int hl_id;
 } HlMessageChunk;
 
 typedef kvec_t(HlMessageChunk) HlMessage;
@@ -16,7 +16,7 @@ typedef struct msg_hist {
   struct msg_hist *next;  ///< Next message.
   char *msg;              ///< Message text.
   const char *kind;       ///< Message kind (for msg_ext)
-  int attr;               ///< Message highlighting.
+  int hl_id;               ///< Message highlighting.
   bool multiline;         ///< Multiline message.
-  HlMessage multiattr;    ///< multiattr message.
+  HlMessage multihl;      ///< Multihl message.
 } MessageHistoryEntry;

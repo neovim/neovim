@@ -187,7 +187,8 @@ func Test_global_local_undolevels()
 
   " Resetting the local 'undolevels' value to use the global value
   setlocal undolevels=5
-  setlocal undolevels<
+  "setlocal undolevels<
+  set undolevels<
   call assert_equal(-123456, &l:undolevels)
 
   " Drop created windows

@@ -2,21 +2,22 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <uv.h>
 
 #include "auto/config.h"
+#include "klib/kvec.h"
+#include "mpack/mpack_core.h"
 #include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/cmdhist.h"
-#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/encode.h"
@@ -26,8 +27,6 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fileio.h"
-#include "nvim/garray.h"
-#include "nvim/garray_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
@@ -38,8 +37,10 @@
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/packer.h"
+#include "nvim/msgpack_rpc/packer_defs.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/normal_defs.h"
 #include "nvim/ops.h"
@@ -246,7 +247,7 @@ typedef struct {
     struct reg {  // yankreg_T
       char name;
       MotionType type;
-      char **contents;
+      String *contents;
       bool is_unnamed;
       size_t contents_size;
       size_t width;
@@ -658,7 +659,7 @@ static const void *shada_hist_iter(const void *const iter, const uint8_t history
           .histtype = history_type,
           .string = hist_he.hisstr,
           .sep = (char)(history_type == HIST_SEARCH
-                        ? hist_he.hisstr[strlen(hist_he.hisstr) + 1]
+                        ? hist_he.hisstr[hist_he.hisstrlen + 1]
                         : 0),
         }
       },
@@ -784,6 +785,7 @@ static inline void hms_to_he_array(const HistoryMergerState *const hms_p,
     hist->timestamp = cur_entry->data.timestamp;
     hist->hisnum = (int)(hist - hist_array) + 1;
     hist->hisstr = cur_entry->data.data.history_item.string;
+    hist->hisstrlen = strlen(cur_entry->data.data.history_item.string);
     hist->additional_data = cur_entry->data.additional_data;
     hist++;
   })
@@ -1490,7 +1492,7 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
     PACK_KEY(REG_KEY_CONTENTS);
     mpack_array(&sbuf.ptr, (uint32_t)entry.data.reg.contents_size);
     for (size_t i = 0; i < entry.data.reg.contents_size; i++) {
-      mpack_bin(cstr_as_string(entry.data.reg.contents[i]), &sbuf);
+      mpack_bin(entry.data.reg.contents[i], &sbuf);
     }
     PACK_KEY(KEY_NAME_CHAR);
     mpack_uint(&sbuf.ptr, (uint8_t)entry.data.reg.name);
@@ -2929,7 +2931,7 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
     break;
   case kSDItemRegister:
     for (size_t i = 0; i < entry->data.reg.contents_size; i++) {
-      xfree(entry->data.reg.contents[i]);
+      api_free_string(entry->data.reg.contents[i]);
     }
     xfree(entry->data.reg.contents);
     break;
@@ -3311,9 +3313,9 @@ shada_read_next_item_start:
       goto shada_read_next_item_error;
     }
     entry->data.reg.contents_size = it.rc.size;
-    entry->data.reg.contents = xmalloc(it.rc.size * sizeof(char *));
+    entry->data.reg.contents = xmalloc(it.rc.size * sizeof(String));
     for (size_t j = 0; j < it.rc.size; j++) {
-      entry->data.reg.contents[j] = xmemdupz(it.rc.items[j].data, it.rc.items[j].size);
+      entry->data.reg.contents[j] = copy_string(it.rc.items[j], NULL);
     }
     kv_destroy(it.rc);
 

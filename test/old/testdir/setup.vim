@@ -1,6 +1,5 @@
 if exists('s:did_load')
   " Align Nvim defaults to Vim.
-  set backspace=
   set commentstring=/*\ %s\ */
   set complete=.,w,b,u,t,i
   set define=^\\s*#\\s*define
@@ -66,7 +65,7 @@ mapclear
 mapclear!
 aunmenu *
 tlunmenu *
-autocmd! nvim_popupmenu
+autocmd! nvim.popupmenu
 
 " Undo the 'grepprg' and 'grepformat' setting in _defaults.lua.
 set grepprg& grepformat&

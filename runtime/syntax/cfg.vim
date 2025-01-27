@@ -2,6 +2,7 @@
 " Language:	Good old CFG files
 " Maintainer:	Igor N. Prischepoff (igor@tyumbit.ru, pri_igor@mail.ru)
 " Last change:	2012 Aug 11
+" 2024 Nov 14 by Vim project:  // only denotes a comment when starting a line (#16051)
 
 " quit when a syntax file was already loaded
 if exists ("b:current_syntax")
@@ -27,17 +28,17 @@ syn match CfgSection	    "{.*}"
 syn match  CfgString	"\".*\"" contained
 syn match  CfgString    "'.*'"   contained
 
-" Comments (Everything before '#' or '//' or ';')
+" Comments (Everything before '#' or ';' or leading '//')
 syn match  CfgComment	"#.*"
 syn match  CfgComment	";.*"
-syn match  CfgComment	"\/\/.*"
+syn match  CfgComment	"^\s*\/\/.*"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 hi def link CfgOnOff     Label
-hi def link CfgComment	Comment
-hi def link CfgSection	Type
-hi def link CfgString	String
+hi def link CfgComment	 Comment
+hi def link CfgSection	 Type
+hi def link CfgString	 String
 hi def link CfgParams    Keyword
 hi def link CfgValues    Constant
 hi def link CfgDirectory Directory

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -7,25 +8,22 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/tabpage.h"
 #include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval/window.h"
-#include "nvim/extmark_defs.h"
 #include "nvim/globals.h"
-#include "nvim/grid_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
@@ -33,7 +31,6 @@
 #include "nvim/syntax.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
-#include "nvim/ui_compositor.h"
 #include "nvim/ui_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -104,10 +101,12 @@
 /// @param config Map defining the window configuration. Keys:
 ///   - relative: Sets the window layout to "floating", placed at (row,col)
 ///                 coordinates relative to:
-///      - "editor" The global editor grid
-///      - "win"    Window given by the `win` field, or current window.
-///      - "cursor" Cursor position in current window.
-///      - "mouse"  Mouse position
+///      - "cursor"     Cursor position in current window.
+///      - "editor"     The global editor grid.
+///      - "laststatus" 'laststatus' if present, or last row.
+///      - "mouse"      Mouse position.
+///      - "tabline"    Tabline if present, or first row.
+///      - "win"        Window given by the `win` field, or current window.
 ///   - win: |window-ID| window to split, or relative window when creating a
 ///      float (relative="win").
 ///   - anchor: Decides which corner of the float to place at (row,col):
@@ -129,7 +128,12 @@
 ///            fractional.
 ///   - focusable: Enable focus by user actions (wincmds, mouse events).
 ///       Defaults to true. Non-focusable windows can be entered by
-///       |nvim_set_current_win()|.
+///       |nvim_set_current_win()|, or, when the `mouse` field is set to true,
+///       by mouse events. See |focusable|.
+///   - mouse: Specify how this window interacts with mouse events.
+///       Defaults to `focusable` value.
+///       - If false, mouse events pass through this window.
+///       - If true, mouse events interact with this window normally.
 ///   - external: GUI should display the window as an external
 ///       top-level window. Currently accepts no other positioning
 ///       configuration together with this.
@@ -697,7 +701,9 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   FUNC_API_SINCE(6)
 {
   /// Keep in sync with FloatRelative in buffer_defs.h
-  static const char *const float_relative_str[] = { "editor", "win", "cursor", "mouse" };
+  static const char *const float_relative_str[] = {
+    "editor", "win", "cursor", "mouse", "tabline", "laststatus"
+  };
 
   /// Keep in sync with WinSplit in buffer_defs.h
   static const char *const win_split_str[] = { "left", "right", "above", "below" };
@@ -714,6 +720,7 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   PUT_KEY_X(rv, focusable, config->focusable);
   PUT_KEY_X(rv, external, config->external);
   PUT_KEY_X(rv, hide, config->hide);
+  PUT_KEY_X(rv, mouse, config->mouse);
 
   if (wp->w_floating) {
     PUT_KEY_X(rv, width, config->width);
@@ -802,6 +809,10 @@ static bool parse_float_relative(String relative, FloatRelative *out)
     *out = kFloatRelativeCursor;
   } else if (striequal(str, "mouse")) {
     *out = kFloatRelativeMouse;
+  } else if (striequal(str, "tabline")) {
+    *out = kFloatRelativeTabline;
+  } else if (striequal(str, "laststatus")) {
+    *out = kFloatRelativeLaststatus;
   } else {
     return false;
   }
@@ -1202,6 +1213,11 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
 
   if (HAS_KEY_X(config, focusable)) {
     fconfig->focusable = config->focusable;
+    fconfig->mouse = config->focusable;
+  }
+
+  if (HAS_KEY_X(config, mouse)) {
+    fconfig->mouse = config->mouse;
   }
 
   if (HAS_KEY_X(config, zindex)) {

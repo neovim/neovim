@@ -10,7 +10,6 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/globals.h"
@@ -137,7 +136,7 @@ void win_set_minimal_style(win_T *wp)
                    ? xstrdup("EndOfBuffer:")
                    : concat_str(old, ",EndOfBuffer:"));
   free_string_option(old);
-  parse_winhl_opt(wp);
+  parse_winhl_opt(NULL, wp);
 
   // signcolumn: use 'auto'
   if (wp->w_p_scl[0] != 'a' || strlen(wp->w_p_scl) >= 8) {
@@ -308,6 +307,15 @@ void win_check_anchored_floats(win_T *win)
   }
 }
 
+void win_float_anchor_laststatus(void)
+{
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+    if (win->w_config.relative == kFloatRelativeLaststatus) {
+      win->w_pos_changed = true;
+    }
+  }
+}
+
 void win_reconfig_floats(void)
 {
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
@@ -389,6 +397,7 @@ win_T *win_float_create(bool enter, bool new_buf)
   config.row = curwin->w_wrow;
   config.relative = kFloatRelativeEditor;
   config.focusable = false;
+  config.mouse = false;
   config.anchor = 0;  // NW
   config.noautocmd = true;
   config.hide = true;
@@ -411,8 +420,8 @@ win_T *win_float_create(bool enter, bool new_buf)
       return handle_error_and_cleanup(wp, &err);
     }
     buf->b_p_bl = false;  // unlist
-    set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0, kOptReqBuf,
-                          buf);
+    set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0,
+                          kOptScopeBuf, buf);
     win_set_buf(wp, buf, &err);
     if (ERROR_SET(&err)) {
       return handle_error_and_cleanup(wp, &err);

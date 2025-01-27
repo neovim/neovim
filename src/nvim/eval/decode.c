@@ -6,6 +6,8 @@
 #include <string.h>
 
 #include "klib/kvec.h"
+#include "mpack/conv.h"
+#include "mpack/mpack_core.h"
 #include "mpack/object.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
@@ -21,7 +23,6 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
 /// Helper structure for container_struct

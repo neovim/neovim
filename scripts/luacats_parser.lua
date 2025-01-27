@@ -1,9 +1,6 @@
 local luacats_grammar = require('scripts.luacats_grammar')
 
---- @class nvim.luacats.parser.param
---- @field name string
---- @field type string
---- @field desc string
+--- @class nvim.luacats.parser.param : nvim.luacats.Param
 
 --- @class nvim.luacats.parser.return
 --- @field name string
@@ -41,21 +38,14 @@ local luacats_grammar = require('scripts.luacats_grammar')
 --- @field notes? nvim.luacats.parser.note[]
 --- @field see? nvim.luacats.parser.note[]
 
---- @class nvim.luacats.parser.field
---- @field name string
---- @field type string
---- @field desc string
---- @field access? 'private'|'package'|'protected'
+--- @class nvim.luacats.parser.field : nvim.luacats.Field
+--- @field classvar? string
 --- @field nodoc? true
 
---- @class nvim.luacats.parser.class
---- @field kind 'class'
---- @field parent? string
---- @field name string
---- @field desc string
+--- @class nvim.luacats.parser.class : nvim.luacats.Class
+--- @field desc? string
 --- @field nodoc? true
 --- @field inlinedoc? true
---- @field access? 'private'|'package'|'protected'
 --- @field fields nvim.luacats.parser.field[]
 --- @field notes? string[]
 
@@ -332,7 +322,10 @@ local function process_lua_line(line, state, classes, classvars, has_indent)
         end
 
         -- Add method as the field to the class
-        table.insert(classes[class].fields, fun2field(cur_obj))
+        local cls = classes[class]
+        local field = fun2field(cur_obj)
+        field.classvar = cur_obj.classvar
+        table.insert(cls.fields, field)
         return
       end
 

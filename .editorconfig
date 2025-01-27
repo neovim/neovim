@@ -13,6 +13,6 @@ max_line_length = 100
 [*.py]
 indent_size = 4
 
-[{Makefile,**/Makefile,runtime/doc/*.txt}]
+[{Makefile,**/Makefile,*.mk,runtime/doc/*.txt}]
 indent_style = tab
 indent_size = 8

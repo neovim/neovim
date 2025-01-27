@@ -109,7 +109,9 @@ function vim.gsplit(s, sep, opts)
   if type(opts) == 'boolean' then
     plain = opts -- For backwards compatibility.
   else
-    vim.validate({ s = { s, 's' }, sep = { sep, 's' }, opts = { opts, 't', true } })
+    vim.validate('s', s, 'string')
+    vim.validate('sep', sep, 'string')
+    vim.validate('opts', opts, 'table', true)
     opts = opts or {}
     plain, trimempty = opts.plain, opts.trimempty
   end
@@ -249,7 +251,8 @@ end
 ---@param t table<any, T> Table
 ---@return table : Table of transformed values
 function vim.tbl_map(func, t)
-  vim.validate({ func = { func, 'c' }, t = { t, 't' } })
+  vim.validate('func', func, 'callable')
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   local rettab = {} --- @type table<any,any>
@@ -266,7 +269,8 @@ end
 ---@param t table<any, T> (table) Table
 ---@return T[] : Table of filtered values
 function vim.tbl_filter(func, t)
-  vim.validate({ func = { func, 'c' }, t = { t, 't' } })
+  vim.validate('func', func, 'callable')
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   local rettab = {} --- @type table<any,any>
@@ -303,12 +307,13 @@ end
 ---@param opts? vim.tbl_contains.Opts Keyword arguments |kwargs|:
 ---@return boolean `true` if `t` contains `value`
 function vim.tbl_contains(t, value, opts)
-  vim.validate({ t = { t, 't' }, opts = { opts, 't', true } })
+  vim.validate('t', t, 'table')
+  vim.validate('opts', opts, 'table', true)
   --- @cast t table<any,any>
 
   local pred --- @type fun(v: any): boolean?
   if opts and opts.predicate then
-    vim.validate({ value = { value, 'c' } })
+    vim.validate('value', value, 'callable')
     pred = value
   else
     pred = function(v)
@@ -550,12 +555,10 @@ end
 ---@param finish integer? Final index on src. Defaults to `#src`
 ---@return T dst
 function vim.list_extend(dst, src, start, finish)
-  vim.validate({
-    dst = { dst, 't' },
-    src = { src, 't' },
-    start = { start, 'n', true },
-    finish = { finish, 'n', true },
-  })
+  vim.validate('dst', dst, 'table')
+  vim.validate('src', src, 'table')
+  vim.validate('start', start, 'number', true)
+  vim.validate('finish', finish, 'number', true)
   for i = start or 1, finish or #src do
     table.insert(dst, src[i])
   end
@@ -734,6 +737,51 @@ function vim.list_slice(list, start, finish)
   return new_list
 end
 
+--- Efficiently insert items into the middle of a list.
+---
+--- Calling table.insert() in a loop will re-index the tail of the table on
+--- every iteration, instead this function will re-index  the table exactly
+--- once.
+---
+--- Based on https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating/53038524#53038524
+---
+---@param t any[]
+---@param first integer
+---@param last integer
+---@param v any
+function vim._list_insert(t, first, last, v)
+  local n = #t
+
+  -- Shift table forward
+  for i = n - first, 0, -1 do
+    t[last + 1 + i] = t[first + i]
+  end
+
+  -- Fill in new values
+  for i = first, last do
+    t[i] = v
+  end
+end
+
+--- Efficiently remove items from middle of a list.
+---
+--- Calling table.remove() in a loop will re-index the tail of the table on
+--- every iteration, instead this function will re-index  the table exactly
+--- once.
+---
+--- Based on https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating/53038524#53038524
+---
+---@param t any[]
+---@param first integer
+---@param last integer
+function vim._list_remove(t, first, last)
+  local n = #t
+  for i = 0, n - first do
+    t[first + i] = t[last + 1 + i]
+    t[last + 1 + i] = nil
+  end
+end
+
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
 ---
 ---@see |lua-patterns|
@@ -778,231 +826,227 @@ function vim.endswith(s, suffix)
 end
 
 do
-  --- @alias vim.validate.Type
-  --- | 't' | 'table'
-  --- | 's' | 'string'
-  --- | 'n' | 'number'
-  --- | 'f' | 'function'
-  --- | 'c' | 'callable'
-  --- | 'nil'
-  --- | 'thread'
-  --- | 'userdata
+  --- @alias vim.validate.Validator
+  --- | type
+  --- | 'callable'
+  --- | (type|'callable')[]
+  --- | fun(v:any):boolean, string?
 
-  local type_names = {
-    ['table'] = 'table',
-    t = 'table',
-    ['string'] = 'string',
-    s = 'string',
-    ['number'] = 'number',
-    n = 'number',
-    ['boolean'] = 'boolean',
+  local type_aliases = {
     b = 'boolean',
-    ['function'] = 'function',
-    f = 'function',
-    ['callable'] = 'callable',
     c = 'callable',
-    ['nil'] = 'nil',
-    ['thread'] = 'thread',
-    ['userdata'] = 'userdata',
+    f = 'function',
+    n = 'number',
+    s = 'string',
+    t = 'table',
   }
 
   --- @nodoc
-  --- @class vim.validate.Spec [any, string|string[], boolean]
+  --- @class vim.validate.Spec
   --- @field [1] any Argument value
-  --- @field [2] string|string[]|fun(v:any):boolean, string? Type name, or callable
-  --- @field [3]? boolean
+  --- @field [2] vim.validate.Validator Argument validator
+  --- @field [3]? boolean|string Optional flag or error message
 
-  local function _is_type(val, t)
+  local function is_type(val, t)
     return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
 
   --- @param param_name string
-  --- @param spec vim.validate.Spec
+  --- @param val any
+  --- @param validator vim.validate.Validator
+  --- @param message? string
+  --- @param allow_alias? boolean Allow short type names: 'n', 's', 't', 'b', 'f', 'c'
   --- @return string?
-  local function is_param_valid(param_name, spec)
-    if type(spec) ~= 'table' then
-      return string.format('opt[%s]: expected table, got %s', param_name, type(spec))
-    end
+  local function is_valid(param_name, val, validator, message, allow_alias)
+    if type(validator) == 'string' then
+      local expected = allow_alias and type_aliases[validator] or validator
 
-    local val = spec[1] -- Argument value
-    local types = spec[2] -- Type name, or callable
-    local optional = (true == spec[3])
+      if not expected then
+        return string.format('invalid type name: %s', validator)
+      end
 
-    if type(types) == 'string' then
-      types = { types }
-    end
-
-    if vim.is_callable(types) then
+      if not is_type(val, expected) then
+        return string.format('%s: expected %s, got %s', param_name, expected, type(val))
+      end
+    elseif vim.is_callable(validator) then
       -- Check user-provided validation function
-      local valid, optional_message = types(val)
+      local valid, opt_msg = validator(val)
       if not valid then
-        local error_message =
-          string.format('%s: expected %s, got %s', param_name, (spec[3] or '?'), tostring(val))
-        if optional_message ~= nil then
-          error_message = string.format('%s. Info: %s', error_message, optional_message)
+        local err_msg =
+          string.format('%s: expected %s, got %s', param_name, message or '?', tostring(val))
+
+        if opt_msg then
+          err_msg = string.format('%s. Info: %s', err_msg, opt_msg)
         end
 
-        return error_message
+        return err_msg
       end
-    elseif type(types) == 'table' then
-      local success = false
-      for i, t in ipairs(types) do
-        local t_name = type_names[t]
-        if not t_name then
+    elseif type(validator) == 'table' then
+      for _, t in ipairs(validator) do
+        local expected = allow_alias and type_aliases[t] or t
+        if not expected then
           return string.format('invalid type name: %s', t)
         end
-        types[i] = t_name
 
-        if (optional and val == nil) or _is_type(val, t_name) then
-          success = true
-          break
+        if is_type(val, expected) then
+          return -- success
         end
       end
-      if not success then
-        return string.format(
-          '%s: expected %s, got %s',
-          param_name,
-          table.concat(types, '|'),
-          type(val)
-        )
+
+      -- Normalize validator types for error message
+      if allow_alias then
+        for i, t in ipairs(validator) do
+          validator[i] = type_aliases[t] or t
+        end
       end
+
+      return string.format(
+        '%s: expected %s, got %s',
+        param_name,
+        table.concat(validator, '|'),
+        type(val)
+      )
     else
-      return string.format('invalid type name: %s', tostring(types))
+      return string.format('invalid validator: %s', tostring(validator))
     end
   end
 
-  --- @param opt table<vim.validate.Type,vim.validate.Spec>
-  --- @return boolean, string?
-  local function is_valid(opt)
-    if type(opt) ~= 'table' then
-      return false, string.format('opt: expected table, got %s', type(opt))
-    end
-
+  --- @param opt table<type|'callable',vim.validate.Spec>
+  --- @return string?
+  local function validate_spec(opt)
     local report --- @type table<string,string>?
 
     for param_name, spec in pairs(opt) do
-      local msg = is_param_valid(param_name, spec)
-      if msg then
+      local err_msg --- @type string?
+      if type(spec) ~= 'table' then
+        err_msg = string.format('opt[%s]: expected table, got %s', param_name, type(spec))
+      else
+        local value, validator = spec[1], spec[2]
+        local msg = type(spec[3]) == 'string' and spec[3] or nil --[[@as string?]]
+        local optional = spec[3] == true
+        if not (optional and value == nil) then
+          err_msg = is_valid(param_name, value, validator, msg, true)
+        end
+      end
+
+      if err_msg then
         report = report or {}
-        report[param_name] = msg
+        report[param_name] = err_msg
       end
     end
 
     if report then
       for _, msg in vim.spairs(report) do -- luacheck: ignore
-        return false, msg
+        return msg
       end
     end
-
-    return true
   end
 
   --- Validate function arguments.
   ---
   --- This function has two valid forms:
   ---
-  --- 1. vim.validate(name: str, value: any, type: string, optional?: bool)
-  --- 2. vim.validate(spec: table)
+  --- 1. `vim.validate(name, value, validator[, optional][, message])`
   ---
-  --- Form 1 validates that argument {name} with value {value} has the type
-  --- {type}. {type} must be a value returned by |lua-type()|. If {optional} is
-  --- true, then {value} may be null. This form is significantly faster and
-  --- should be preferred for simple cases.
+  ---     Validates that argument {name} with value {value} satisfies
+  ---     {validator}. If {optional} is given and is `true`, then {value} may be
+  ---     `nil`. If {message} is given, then it is used as the expected type in the
+  ---     error message.
   ---
-  --- Example:
+  ---     Example:
   ---
-  --- ```lua
-  --- function vim.startswith(s, prefix)
-  ---   vim.validate('s', s, 'string')
-  ---   vim.validate('prefix', prefix, 'string')
-  ---   ...
-  --- end
-  --- ```
+  ---     ```lua
+  ---       function vim.startswith(s, prefix)
+  ---         vim.validate('s', s, 'string')
+  ---         vim.validate('prefix', prefix, 'string')
+  ---         -- ...
+  ---       end
+  ---     ```
   ---
-  --- Form 2 validates a parameter specification (types and values). Specs are
-  --- evaluated in alphanumeric order, until the first failure.
+  --- 2. `vim.validate(spec)` (deprecated)
+  ---     where `spec` is of type
+  ---    `table<string,[value:any, validator: vim.validate.Validator, optional_or_msg? : boolean|string]>)`
   ---
-  --- Usage example:
+  ---     Validates a argument specification.
+  ---     Specs are evaluated in alphanumeric order, until the first failure.
   ---
-  --- ```lua
-  --- function user.new(name, age, hobbies)
-  ---   vim.validate{
-  ---     name={name, 'string'},
-  ---     age={age, 'number'},
-  ---     hobbies={hobbies, 'table'},
-  ---   }
-  ---   ...
-  --- end
-  --- ```
+  ---     Example:
+  ---
+  ---     ```lua
+  ---       function user.new(name, age, hobbies)
+  ---         vim.validate{
+  ---           name={name, 'string'},
+  ---           age={age, 'number'},
+  ---           hobbies={hobbies, 'table'},
+  ---         }
+  ---         -- ...
+  ---       end
+  ---     ```
   ---
   --- Examples with explicit argument values (can be run directly):
   ---
   --- ```lua
-  --- vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
+  --- vim.validate('arg1', {'foo'}, 'table')
+  ---    --> NOP (success)
+  --- vim.validate('arg2', 'foo', 'string')
   ---    --> NOP (success)
   ---
-  --- vim.validate{arg1={1, 'table'}}
+  --- vim.validate('arg1', 1, 'table')
   ---    --> error('arg1: expected table, got number')
   ---
-  --- vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+  --- vim.validate('arg1', 3, function(a) return (a % 2) == 0 end, 'even number')
   ---    --> error('arg1: expected even number, got 3')
   --- ```
   ---
   --- If multiple types are valid they can be given as a list.
   ---
   --- ```lua
-  --- vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
+  --- vim.validate('arg1', {'foo'}, {'table', 'string'})
+  --- vim.validate('arg2', 'foo', {'table', 'string'})
   --- -- NOP (success)
   ---
-  --- vim.validate{arg1={1, {'string', 'table'}}}
+  --- vim.validate('arg1', 1, {'string', 'table'})
   --- -- error('arg1: expected string|table, got number')
   --- ```
   ---
-  ---@param opt table<vim.validate.Type,vim.validate.Spec> (table) Names of parameters to validate. Each key is a parameter
-  ---          name; each value is a tuple in one of these forms:
-  ---          1. (arg_value, type_name, optional)
-  ---             - arg_value: argument value
-  ---             - type_name: string|table type name, one of: ("table", "t", "string",
-  ---               "s", "number", "n", "boolean", "b", "function", "f", "nil",
-  ---               "thread", "userdata") or list of them.
-  ---             - optional: (optional) boolean, if true, `nil` is valid
-  ---          2. (arg_value, fn, msg)
-  ---             - arg_value: argument value
-  ---             - fn: any function accepting one argument, returns true if and
-  ---               only if the argument is valid. Can optionally return an additional
-  ---               informative error message as the second returned value.
-  ---             - msg: (optional) error string if validation fails
-  --- @overload fun(name: string, val: any, expected: string, optional?: boolean)
-  function vim.validate(opt, ...)
-    local ok = false
-    local err_msg ---@type string?
-    local narg = select('#', ...)
-    if narg == 0 then
-      ok, err_msg = is_valid(opt)
-    elseif narg >= 2 then
-      -- Overloaded signature for fast/simple cases
-      local name = opt --[[@as string]]
-      local v, expected, optional = ... ---@type string, string, boolean?
-      local actual = type(v)
-
-      ok = (actual == expected) or (v == nil and optional == true)
+  --- @note `validator` set to a value returned by |lua-type()| provides the
+  --- best performance.
+  ---
+  --- @param name string Argument name
+  --- @param value any Argument value
+  --- @param validator vim.validate.Validator
+  ---   - (`string|string[]`): Any value that can be returned from |lua-type()| in addition to
+  ---     `'callable'`: `'boolean'`, `'callable'`, `'function'`, `'nil'`, `'number'`, `'string'`, `'table'`,
+  ---     `'thread'`, `'userdata'`.
+  ---   - (`fun(val:any): boolean, string?`) A function that returns a boolean and an optional
+  ---     string message.
+  --- @param optional? boolean Argument is optional (may be omitted)
+  --- @param message? string message when validation fails
+  --- @overload fun(name: string, val: any, validator: vim.validate.Validator, message: string)
+  --- @overload fun(spec: table<string,[any, vim.validate.Validator, boolean|string]>)
+  function vim.validate(name, value, validator, optional, message)
+    local err_msg --- @type string?
+    if validator then -- Form 1
+      -- Check validator as a string first to optimize the common case.
+      local ok = (type(value) == validator) or (value == nil and optional == true)
       if not ok then
-        err_msg = ('%s: expected %s, got %s%s'):format(
-          name,
-          expected,
-          actual,
-          v and (' (%s)'):format(v) or ''
-        )
+        local msg = type(optional) == 'string' and optional or message --[[@as string?]]
+        -- Check more complicated validators
+        err_msg = is_valid(name, value, validator, msg, false)
       end
+    elseif type(name) == 'table' then -- Form 2
+      vim.deprecate('vim.validate', 'vim.validate(name, value, validator, optional_or_msg)', '1.0')
+      err_msg = validate_spec(name)
     else
       error('invalid arguments')
     end
 
-    if not ok then
+    if err_msg then
       error(err_msg, 2)
     end
   end
 end
+
 --- Returns true if object `f` can be called as a function.
 ---
 ---@param f any Any object
@@ -1143,7 +1187,7 @@ end
 --- @param mod T
 --- @return T
 function vim._defer_require(root, mod)
-  return setmetatable({}, {
+  return setmetatable({ _submodules = mod }, {
     ---@param t table<string, any>
     ---@param k string
     __index = function(t, k)
@@ -1153,6 +1197,34 @@ function vim._defer_require(root, mod)
       local name = string.format('%s.%s', root, k)
       t[k] = require(name)
       return t[k]
+    end,
+  })
+end
+
+--- @private
+--- Creates a module alias/shim that lazy-loads a target module.
+---
+--- Unlike `vim.defaulttable()` this also:
+--- - implements __call
+--- - calls vim.deprecate()
+---
+--- @param old_name string Name of the deprecated module, which will be shimmed.
+--- @param new_name string Name of the new module, which will be loaded by require().
+function vim._defer_deprecated_module(old_name, new_name)
+  return setmetatable({}, {
+    ---@param _ table<string, any>
+    ---@param k string
+    __index = function(_, k)
+      vim.deprecate(old_name, new_name, '2.0.0', nil, false)
+      --- @diagnostic disable-next-line:no-unknown
+      local target = require(new_name)
+      return target[k]
+    end,
+    __call = function(self)
+      vim.deprecate(old_name, new_name, '2.0.0', nil, false)
+      --- @diagnostic disable-next-line:no-unknown
+      local target = require(new_name)
+      return target(self)
     end,
   })
 end
@@ -1193,11 +1265,14 @@ local state_restore_order = { 'bo', 'wo', 'go', 'env' }
 --- @param context vim.context.mods
 --- @return vim.context.state
 local get_context_state = function(context)
+  --- @type vim.context.state
   local res = { bo = {}, env = {}, go = {}, wo = {} }
 
   -- Use specific order from possibly most to least intrusive
   for _, scope in ipairs(scope_order) do
-    for name, _ in pairs(context[scope] or {}) do
+    for name, _ in
+      pairs(context[scope] or {} --[[@as table<string,any>]])
+    do
       local sc = scope == 'o' and scope_map[vim.api.nvim_get_option_info2(name, {}).scope] or scope
 
       -- Do not override already set state and fall back to `vim.NIL` for
@@ -1291,7 +1366,10 @@ function vim._with(context, f)
     -- Apply some parts of the context in specific order
     -- NOTE: triggers `OptionSet` event
     for _, scope in ipairs(scope_order) do
-      for name, context_value in pairs(context[scope] or {}) do
+      for name, context_value in
+        pairs(context[scope] or {} --[[@as table<string,any>]])
+      do
+        --- @diagnostic disable-next-line:no-unknown
         vim[scope][name] = context_value
       end
     end
@@ -1302,7 +1380,10 @@ function vim._with(context, f)
     -- Restore relevant cached values in specific order, global scope last
     -- NOTE: triggers `OptionSet` event
     for _, scope in ipairs(state_restore_order) do
-      for name, cached_value in pairs(state[scope]) do
+      for name, cached_value in
+        pairs(state[scope] --[[@as table<string,any>]])
+      do
+        --- @diagnostic disable-next-line:no-unknown
         vim[scope][name] = cached_value
       end
     end
@@ -1316,6 +1397,26 @@ function vim._with(context, f)
   end
 
   return vim._with_c(context, callback)
+end
+
+--- @param bufnr? integer
+--- @return integer
+function vim._resolve_bufnr(bufnr)
+  if bufnr == nil or bufnr == 0 then
+    return vim.api.nvim_get_current_buf()
+  end
+  vim.validate('bufnr', bufnr, 'number')
+  return bufnr
+end
+
+--- @generic T
+--- @param x elem_or_list<T>?
+--- @return T[]
+function vim._ensure_list(x)
+  if type(x) == 'table' then
+    return x
+  end
+  return { x }
 end
 
 return vim

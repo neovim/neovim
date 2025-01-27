@@ -12,7 +12,6 @@
 #include "nvim/mbyte_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
-typedef utf8proc_int32_t GraphemeState;
 #define GRAPHEME_STATE_INIT 0
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

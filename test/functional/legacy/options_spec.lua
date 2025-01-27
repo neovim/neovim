@@ -32,8 +32,7 @@ describe('set', function()
   end)
 
   it('winminheight works', function()
-    local screen = Screen.new(20, 11)
-    screen:attach()
+    local _ = Screen.new(20, 11)
     source([[
       set wmh=0 stal=2
       below sp | wincmd _
@@ -45,8 +44,7 @@ describe('set', function()
   end)
 
   it('winminheight works with tabline', function()
-    local screen = Screen.new(20, 11)
-    screen:attach()
+    local _ = Screen.new(20, 11)
     source([[
       set wmh=0 stal=2
       split
@@ -60,7 +58,6 @@ describe('set', function()
 
   it('scroll works', function()
     local screen = Screen.new(42, 16)
-    screen:attach()
     source([[
       set scroll=2
       set laststatus=2

@@ -66,7 +66,6 @@ local function common_setup(screen, inccommand, text)
     command('syntax on')
     command('set nohlsearch')
     command('hi Substitute guifg=red guibg=yellow')
-    screen:attach()
 
     screen:add_extra_attr_ids {
       [100] = { underline = true },
@@ -556,10 +555,9 @@ describe(":substitute, 'inccommand' preserves undo", function()
   end)
 
   it('with undolevels=1', function()
-    local screen = Screen.new(20, 10)
-
     for _, case in pairs(cases) do
       clear()
+      local screen = Screen.new(20, 10)
       common_setup(screen, case, default_text)
       screen:expect([[
         Inc substitution on |
@@ -617,10 +615,9 @@ describe(":substitute, 'inccommand' preserves undo", function()
   end)
 
   it('with undolevels=2', function()
-    local screen = Screen.new(20, 10)
-
     for _, case in pairs(cases) do
       clear()
+      local screen = Screen.new(20, 10)
       common_setup(screen, case, default_text)
       command('set undolevels=2')
 
@@ -697,10 +694,9 @@ describe(":substitute, 'inccommand' preserves undo", function()
   end)
 
   it('with undolevels=-1', function()
-    local screen = Screen.new(20, 10)
-
     for _, case in pairs(cases) do
       clear()
+      local screen = Screen.new(20, 10)
       common_setup(screen, case, default_text)
 
       command('set undolevels=-1')
@@ -728,6 +724,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
       -- repeat with an interrupted substitution
       clear()
+      screen = Screen.new(20, 10)
       common_setup(screen, case, default_text)
 
       command('set undolevels=-1')
@@ -2510,7 +2507,7 @@ describe(':substitute', function()
   end)
 
   it("doesn't prompt to swap cmd range", function()
-    screen = Screen.new(50, 8) -- wide to avoid hit-enter prompt
+    screen:try_resize(50, 8) -- wide to avoid hit-enter prompt
     common_setup(screen, 'split', default_text)
     feed(':2,1s/tw/MO/g')
 

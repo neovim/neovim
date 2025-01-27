@@ -897,7 +897,7 @@ def CheckIncludes(filename, lines, error):
             if (not name.endswith('.h.generated.h') and
                     not name.endswith('/defs.h') and
                     not name.endswith('_defs.h') and
-                    not name.endswith('h.inline.generated.h') and
+                    not name.endswith('.h.inline.generated.h') and
                     not name.endswith('_defs.generated.h') and
                     not name.endswith('_enum.generated.h')):
                 error(filename, i, 'build/include_defs', 5,
@@ -2206,18 +2206,18 @@ def ProcessFileData(filename, file_extension, lines, error,
 
         error = RecordedError
 
-    if file_extension == 'h':
-        CheckForHeaderGuard(filename, lines, error)
-        CheckIncludes(filename, lines, error)
-        if filename.endswith('/defs.h') or filename.endswith('_defs.h'):
-            CheckNonSymbols(filename, lines, error)
-
     RemoveMultiLineComments(filename, lines, error)
     clean_lines = CleansedLines(lines, init_lines)
     for line in range(clean_lines.NumLines()):
         ProcessLine(filename, clean_lines, line,
                     nesting_state, error,
                     extra_check_functions)
+
+    if file_extension == 'h':
+        CheckForHeaderGuard(filename, lines, error)
+        CheckIncludes(filename, lines, error)
+        if filename.endswith('/defs.h') or filename.endswith('_defs.h'):
+            CheckNonSymbols(filename, lines, error)
 
     # We check here rather than inside ProcessLine so that we see raw
     # lines rather than "cleaned" lines.

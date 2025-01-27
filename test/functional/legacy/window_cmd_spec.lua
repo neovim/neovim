@@ -11,7 +11,6 @@ local feed = n.feed
 it('scrolling with laststatus=0 and :botright split', function()
   clear('--cmd', 'set ruler')
   local screen = Screen.new(40, 10)
-  screen:attach()
   exec([[
     set laststatus=0
     call setline(1, range(1, 100))
@@ -38,7 +37,6 @@ describe('splitkeep', function()
   before_each(function()
     clear('--cmd', 'set splitkeep=screen')
     screen = Screen.new()
-    screen:attach()
   end)
 
   -- oldtest: Test_splitkeep_cursor()
@@ -122,7 +120,7 @@ describe('splitkeep', function()
             row = 0,
             col = 0,
           }))
-          vim.cmd("call termopen([&sh, &shcf, 'true'], { 'on_exit': 'C2' })")
+          vim.cmd("call jobstart([&sh, &shcf, 'true'], { 'term': v:true, 'on_exit': 'C2' })")
       end
     })]])
     feed('j')
@@ -301,7 +299,7 @@ describe('splitkeep', function()
       c                                                    |
       {1:~                                                    }|
       {3:[No Name]                                            }|
-                                                           |
+      :call win_move_statusline(win, 1)                    |
     ]])
   end)
 

@@ -42,12 +42,10 @@ local keymap = {}
 ---@see |mapcheck()|
 ---@see |mapset()|
 function keymap.set(mode, lhs, rhs, opts)
-  vim.validate({
-    mode = { mode, { 's', 't' } },
-    lhs = { lhs, 's' },
-    rhs = { rhs, { 's', 'f' } },
-    opts = { opts, 't', true },
-  })
+  vim.validate('mode', mode, { 'string', 'table' })
+  vim.validate('lhs', lhs, 'string')
+  vim.validate('rhs', rhs, { 'string', 'function' })
+  vim.validate('opts', opts, 'table', true)
 
   opts = vim.deepcopy(opts or {}, true)
 
@@ -107,11 +105,9 @@ end
 ---@param opts? vim.keymap.del.Opts
 ---@see |vim.keymap.set()|
 function keymap.del(modes, lhs, opts)
-  vim.validate({
-    mode = { modes, { 's', 't' } },
-    lhs = { lhs, 's' },
-    opts = { opts, 't', true },
-  })
+  vim.validate('mode', modes, { 'string', 'table' })
+  vim.validate('lhs', lhs, 'string')
+  vim.validate('opts', opts, 'table', true)
 
   opts = opts or {}
   modes = type(modes) == 'string' and { modes } or modes

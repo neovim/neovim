@@ -11,7 +11,6 @@ describe(':drop', function()
   before_each(function()
     clear()
     screen = Screen.new(35, 10)
-    screen:attach()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue },
       [1] = { bold = true, reverse = true },

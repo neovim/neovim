@@ -4,7 +4,7 @@
 " Previous Maintainer:  Will Langstroth <will@langstroth.com>
 " URL:                  https://github.com/benknoble/vim-racket
 " Description:          Contains all of the keywords in #lang racket
-" Last Change:          2023 Sep 22
+" Last Change:          2024 Apr 14
 
 " Initializing:
 if exists("b:current_syntax")
@@ -30,7 +30,7 @@ endif
 " http://docs.racket-lang.org/reference/index.html
 "
 syntax keyword racketSyntax module module* module+ require provide quote
-syntax keyword racketSyntax #%datum #%expression #%top #%variable-reference #%app
+syntax keyword racketSyntax #%module-begin #%datum #%expression #%top #%variable-reference #%app
 syntax keyword racketSyntax lambda case-lambda let let* letrec
 syntax keyword racketSyntax let-values let*-values let-syntax letrec-syntax
 syntax keyword racketSyntax let-syntaxes letrec-syntaxes letrec-syntaxes+values

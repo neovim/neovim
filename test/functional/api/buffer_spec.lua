@@ -125,7 +125,6 @@ describe('api/buf', function()
 
     it('cursor position is maintained consistently with viewport', function()
       local screen = Screen.new(20, 12)
-      screen:attach()
 
       local lines = { 'line1', 'line2', 'line3', 'line4', 'line5', 'line6' }
       local buf = api.nvim_get_current_buf()
@@ -211,7 +210,6 @@ describe('api/buf', function()
       local screen
       before_each(function()
         screen = Screen.new(20, 12)
-        screen:attach()
         api.nvim_buf_set_lines(
           0,
           0,
@@ -735,7 +733,6 @@ describe('api/buf', function()
 
     it("set_lines of invisible buffer doesn't move cursor in current window", function()
       local screen = Screen.new(20, 5)
-      screen:attach()
 
       insert([[
         Who would win?
@@ -1689,7 +1686,6 @@ describe('api/buf', function()
 
     it('correctly marks changed region for redraw #13890', function()
       local screen = Screen.new(20, 5)
-      screen:attach()
 
       insert([[
       AAA
@@ -1742,7 +1738,6 @@ describe('api/buf', function()
       local screen
       before_each(function()
         screen = Screen.new(20, 12)
-        screen:attach()
         api.nvim_buf_set_lines(
           0,
           0,

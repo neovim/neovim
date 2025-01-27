@@ -16,8 +16,7 @@ describe('multibyte rendering', function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(60, 6)
-    screen:attach({ rgb = true })
+    screen = Screen.new(60, 6, { rgb = true })
   end)
 
   it('works with composed char at start of line', function()
@@ -384,7 +383,6 @@ describe('multibyte rendering: statusline', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 4)
-    screen:attach()
     command('set laststatus=2')
   end)
 

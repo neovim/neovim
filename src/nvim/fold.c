@@ -1658,7 +1658,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
     if (*cms != NUL) {
       // Also delete 'commentstring' if it matches.
       char *cms2 = strstr(cms, "%s");
-      if (p - line >= cms2 - cms
+      if (cms2 != NULL && p - line >= cms2 - cms
           && strncmp(p - (cms2 - cms), cms, (size_t)(cms2 - cms)) == 0
           && strncmp(p + len, cms2 + 2, strlen(cms2 + 2)) == 0) {
         p -= cms2 - cms;
@@ -1731,7 +1731,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
 
       curwin = wp;
       curbuf = wp->w_buffer;
-      current_sctx = wp->w_p_script_ctx[WV_FDT].script_ctx;
+      current_sctx = wp->w_p_script_ctx[kWinOptFoldtext].script_ctx;
 
       emsg_off++;  // handle exceptions, but don't display errors
 

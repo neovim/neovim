@@ -134,16 +134,24 @@ describe('vim.lsp.completion: item conversion', function()
     eq(expected, result)
   end)
 
-  it('filters on label if filterText is missing', function()
+  it('does not filter if there is a textEdit', function()
+    local range0 = {
+      start = { line = 0, character = 0 },
+      ['end'] = { line = 0, character = 0 },
+    }
     local completion_list = {
-      { label = 'foo' },
-      { label = 'bar' },
+      { label = 'foo', textEdit = { newText = 'foo', range = range0 } },
+      { label = 'bar', textEdit = { newText = 'bar', range = range0 } },
     }
     local result = complete('fo|', completion_list)
     local expected = {
       {
         abbr = 'foo',
         word = 'foo',
+      },
+      {
+        abbr = 'bar',
+        word = 'bar',
       },
     }
     result = vim.tbl_map(function(x)
@@ -152,7 +160,296 @@ describe('vim.lsp.completion: item conversion', function()
         word = x.word,
       }
     end, result.items)
+    local sorter = function(a, b)
+      return a.word > b.word
+    end
+    table.sort(expected, sorter)
+    table.sort(result, sorter)
     eq(expected, result)
+  end)
+
+  ---@param prefix string
+  ---@param items lsp.CompletionItem[]
+  ---@param expected table[]
+  local assert_completion_matches = function(prefix, items, expected)
+    local result = complete(prefix .. '|', items)
+    result = vim.tbl_map(function(x)
+      return {
+        abbr = x.abbr,
+        word = x.word,
+      }
+    end, result.items)
+    local sorter = function(a, b)
+      return a.word > b.word
+    end
+    table.sort(expected, sorter)
+    table.sort(result, sorter)
+    eq(expected, result)
+  end
+
+  describe('when completeopt has fuzzy matching enabled', function()
+    before_each(function()
+      exec_lua(function()
+        vim.opt.completeopt:append('fuzzy')
+      end)
+    end)
+    after_each(function()
+      exec_lua(function()
+        vim.opt.completeopt:remove('fuzzy')
+      end)
+    end)
+
+    it('fuzzy matches on filterText', function()
+      assert_completion_matches('fo', {
+        { label = '?.foo', filterText = 'foo' },
+        { label = 'faz other', filterText = 'faz other' },
+        { label = 'bar', filterText = 'bar' },
+      }, {
+        {
+          abbr = 'faz other',
+          word = 'faz other',
+        },
+        {
+          abbr = '?.foo',
+          word = '?.foo',
+        },
+      })
+    end)
+
+    it('uses filterText as word if label/newText would not match', function()
+      local items = {
+        {
+          filterText = '<module',
+          insertTextFormat = 2,
+          kind = 10,
+          label = 'module',
+          sortText = 'module',
+          textEdit = {
+            newText = '<module>$1</module>$0',
+            range = {
+              start = {
+                character = 0,
+                line = 0,
+              },
+              ['end'] = {
+                character = 0,
+                line = 0,
+              },
+            },
+          },
+        },
+      }
+      assert_completion_matches('<mo', items, {
+        {
+          abbr = 'module',
+          word = '<module',
+        },
+      })
+      assert_completion_matches('', items, {
+        {
+          abbr = 'module',
+          word = 'module',
+        },
+      })
+    end)
+
+    it('fuzzy matches on label when filterText is missing', function()
+      assert_completion_matches('fo', {
+        { label = 'foo' },
+        { label = 'faz other' },
+        { label = 'bar' },
+      }, {
+        {
+          abbr = 'faz other',
+          word = 'faz other',
+        },
+        {
+          abbr = 'foo',
+          word = 'foo',
+        },
+      })
+    end)
+  end)
+
+  describe('when smartcase is enabled', function()
+    before_each(function()
+      exec_lua(function()
+        vim.opt.smartcase = true
+      end)
+    end)
+    after_each(function()
+      exec_lua(function()
+        vim.opt.smartcase = false
+      end)
+    end)
+
+    it('matches filterText case sensitively', function()
+      assert_completion_matches('Fo', {
+        { label = 'foo', filterText = 'foo' },
+        { label = '?.Foo', filterText = 'Foo' },
+        { label = 'Faz other', filterText = 'Faz other' },
+        { label = 'faz other', filterText = 'faz other' },
+        { label = 'bar', filterText = 'bar' },
+      }, {
+        {
+          abbr = '?.Foo',
+          word = '?.Foo',
+        },
+      })
+    end)
+
+    it('matches label case sensitively when filterText is missing', function()
+      assert_completion_matches('Fo', {
+        { label = 'foo' },
+        { label = 'Foo' },
+        { label = 'Faz other' },
+        { label = 'faz other' },
+        { label = 'bar' },
+      }, {
+        {
+          abbr = 'Foo',
+          word = 'Foo',
+        },
+      })
+    end)
+
+    describe('when ignorecase is enabled', function()
+      before_each(function()
+        exec_lua(function()
+          vim.opt.ignorecase = true
+        end)
+      end)
+      after_each(function()
+        exec_lua(function()
+          vim.opt.ignorecase = false
+        end)
+      end)
+
+      it('matches filterText case insensitively if prefix is lowercase', function()
+        assert_completion_matches('fo', {
+          { label = '?.foo', filterText = 'foo' },
+          { label = '?.Foo', filterText = 'Foo' },
+          { label = 'Faz other', filterText = 'Faz other' },
+          { label = 'faz other', filterText = 'faz other' },
+          { label = 'bar', filterText = 'bar' },
+        }, {
+          {
+            abbr = '?.Foo',
+            word = '?.Foo',
+          },
+          {
+            abbr = '?.foo',
+            word = '?.foo',
+          },
+        })
+      end)
+
+      it(
+        'matches label case insensitively if prefix is lowercase and filterText is missing',
+        function()
+          assert_completion_matches('fo', {
+            { label = 'foo' },
+            { label = 'Foo' },
+            { label = 'Faz other' },
+            { label = 'faz other' },
+            { label = 'bar' },
+          }, {
+            {
+              abbr = 'Foo',
+              word = 'Foo',
+            },
+            {
+              abbr = 'foo',
+              word = 'foo',
+            },
+          })
+        end
+      )
+
+      it('matches filterText case sensitively if prefix has uppercase letters', function()
+        assert_completion_matches('Fo', {
+          { label = 'foo', filterText = 'foo' },
+          { label = '?.Foo', filterText = 'Foo' },
+          { label = 'Faz other', filterText = 'Faz other' },
+          { label = 'faz other', filterText = 'faz other' },
+          { label = 'bar', filterText = 'bar' },
+        }, {
+          {
+            abbr = '?.Foo',
+            word = '?.Foo',
+          },
+        })
+      end)
+
+      it(
+        'matches label case sensitively if prefix has uppercase letters and filterText is missing',
+        function()
+          assert_completion_matches('Fo', {
+            { label = 'foo' },
+            { label = 'Foo' },
+            { label = 'Faz other' },
+            { label = 'faz other' },
+            { label = 'bar' },
+          }, {
+            {
+              abbr = 'Foo',
+              word = 'Foo',
+            },
+          })
+        end
+      )
+    end)
+  end)
+
+  describe('when ignorecase is enabled', function()
+    before_each(function()
+      exec_lua(function()
+        vim.opt.ignorecase = true
+      end)
+    end)
+    after_each(function()
+      exec_lua(function()
+        vim.opt.ignorecase = false
+      end)
+    end)
+
+    it('matches filterText case insensitively', function()
+      assert_completion_matches('Fo', {
+        { label = '?.foo', filterText = 'foo' },
+        { label = '?.Foo', filterText = 'Foo' },
+        { label = 'Faz other', filterText = 'Faz other' },
+        { label = 'faz other', filterText = 'faz other' },
+        { label = 'bar', filterText = 'bar' },
+      }, {
+        {
+          abbr = '?.Foo',
+          word = '?.Foo',
+        },
+        {
+          abbr = '?.foo',
+          word = '?.foo',
+        },
+      })
+    end)
+
+    it('matches label case insensitively when filterText is missing', function()
+      assert_completion_matches('Fo', {
+        { label = 'foo' },
+        { label = 'Foo' },
+        { label = 'Faz other' },
+        { label = 'faz other' },
+        { label = 'bar' },
+      }, {
+        {
+          abbr = 'Foo',
+          word = 'Foo',
+        },
+        {
+          abbr = 'foo',
+          word = 'foo',
+        },
+      })
+    end)
   end)
 
   it('works on non word prefix', function()
@@ -471,9 +768,10 @@ describe('vim.lsp.completion: item conversion', function()
   )
 end)
 
+--- @param name string
 --- @param completion_result lsp.CompletionList
 --- @return integer
-local function create_server(completion_result)
+local function create_server(name, completion_result)
   return exec_lua(function()
     local server = _G._create_server({
       capabilities = {
@@ -491,7 +789,7 @@ local function create_server(completion_result)
     local bufnr = vim.api.nvim_get_current_buf()
     vim.api.nvim_win_set_buf(0, bufnr)
     return vim.lsp.start({
-      name = 'dummy',
+      name = name,
       cmd = server.cmd,
       on_attach = function(client, bufnr0)
         vim.lsp.completion.enable(true, client.id, bufnr0, {
@@ -540,7 +838,7 @@ describe('vim.lsp.completion: protocol', function()
   end
 
   it('fetches completions and shows them using complete on trigger', function()
-    create_server({
+    create_server('dummy', {
       isIncomplete = false,
       items = {
         {
@@ -632,7 +930,7 @@ describe('vim.lsp.completion: protocol', function()
   end)
 
   it('merges results from multiple clients', function()
-    create_server({
+    create_server('dummy1', {
       isIncomplete = false,
       items = {
         {
@@ -640,7 +938,7 @@ describe('vim.lsp.completion: protocol', function()
         },
       },
     })
-    create_server({
+    create_server('dummy2', {
       isIncomplete = false,
       items = {
         {
@@ -673,7 +971,7 @@ describe('vim.lsp.completion: protocol', function()
         },
       },
     }
-    local client_id = create_server(completion_list)
+    local client_id = create_server('dummy', completion_list)
 
     exec_lua(function()
       _G.called = false
@@ -710,7 +1008,7 @@ describe('vim.lsp.completion: protocol', function()
   end)
 
   it('enable(…,{convert=fn}) custom word/abbr format', function()
-    create_server({
+    create_server('dummy', {
       isIncomplete = false,
       items = {
         {
@@ -752,7 +1050,7 @@ describe('vim.lsp.completion: integration', function()
     exec_lua(function()
       vim.o.completeopt = 'menuone,noselect'
     end)
-    create_server(completion_list)
+    create_server('dummy', completion_list)
     feed('i world<esc>0ih<c-x><c-o>')
     retry(nil, nil, function()
       eq(

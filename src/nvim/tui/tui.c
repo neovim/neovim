@@ -1,9 +1,9 @@
 // Terminal UI functions. Invoked (by ui_client.c) on the UI process.
 
 #include <assert.h>
+#include <inttypes.h>
 #include <signal.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,8 +22,6 @@
 #include "nvim/event/stream.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
-#include "nvim/grid_defs.h"
-#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
@@ -107,7 +105,7 @@ struct TUIData {
   bool busy, is_invisible, want_invisible;
   bool cork, overflow;
   bool set_cursor_color_as_str;
-  bool cursor_color_changed;
+  bool cursor_has_color;
   bool is_starting;
   bool did_set_grapheme_cluster_mode;
   FILE *screenshot;
@@ -241,15 +239,18 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
       tui->unibi_ext.sync = (int)unibi_add_ext_str(tui->ut, "Sync",
                                                    "\x1b[?2026%?%p1%{1}%-%tl%eh%;");
       break;
-    case kTermModeResizeEvents:
-      signal_watcher_stop(&tui->winch_handle);
-      tui_set_term_mode(tui, mode, true);
-      break;
     case kTermModeGraphemeClusters:
       if (!is_set) {
         tui_set_term_mode(tui, mode, true);
         tui->did_set_grapheme_cluster_mode = true;
       }
+      break;
+    case kTermModeThemeUpdates:
+      tui_set_term_mode(tui, mode, true);
+      break;
+    case kTermModeResizeEvents:
+      signal_watcher_stop(&tui->winch_handle);
+      tui_set_term_mode(tui, mode, true);
       break;
     }
   }
@@ -295,7 +296,10 @@ void tui_set_key_encoding(TUIData *tui)
 {
   switch (tui->input.key_encoding) {
   case kKeyEncodingKitty:
-    out(tui, S_LEN("\x1b[>1u"));
+    // Progressive enhancement flags:
+    //   0b01   (1) Disambiguate escape codes
+    //   0b10   (2) Report event types
+    out(tui, S_LEN("\x1b[>3u"));
     break;
   case kKeyEncodingXterm:
     out(tui, S_LEN("\x1b[>4;2m"));
@@ -310,7 +314,7 @@ static void tui_reset_key_encoding(TUIData *tui)
 {
   switch (tui->input.key_encoding) {
   case kKeyEncodingKitty:
-    out(tui, S_LEN("\x1b[<1u"));
+    out(tui, S_LEN("\x1b[<u"));
     break;
   case kKeyEncodingXterm:
     out(tui, S_LEN("\x1b[>4;0m"));
@@ -318,6 +322,18 @@ static void tui_reset_key_encoding(TUIData *tui)
   case kKeyEncodingLegacy:
     break;
   }
+}
+
+/// Write the OSC 11 sequence to the terminal emulator to query the current
+/// background color.
+///
+/// The response will be handled by the TermResponse autocommand created in
+/// _defaults.lua.
+void tui_query_bg_color(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  out(tui, S_LEN("\x1b]11;?\x07"));
+  flush_buf(tui);
 }
 
 /// Enable the alternate screen and emit other control sequences to start the TUI.
@@ -336,7 +352,7 @@ static void terminfo_start(TUIData *tui)
   tui->cork = false;
   tui->overflow = false;
   tui->set_cursor_color_as_str = false;
-  tui->cursor_color_changed = false;
+  tui->cursor_has_color = false;
   tui->showing_mode = SHAPE_IDX_N;
   tui->unibi_ext.enable_mouse = -1;
   tui->unibi_ext.disable_mouse = -1;
@@ -438,14 +454,13 @@ static void terminfo_start(TUIData *tui)
   // Enable bracketed paste
   unibi_out_ext(tui, tui->unibi_ext.enable_bracketed_paste);
 
-  // Query support for mode 2026 (Synchronized Output). Some terminals also
-  // support an older DCS sequence for synchronized output, but we will only use
-  // mode 2026.
+  // Query support for private DEC modes that Nvim can take advantage of.
   // Some terminals (such as Terminal.app) do not support DECRQM, so skip the query.
   if (!nsterm) {
     tui_request_term_mode(tui, kTermModeSynchronizedOutput);
-    tui_request_term_mode(tui, kTermModeResizeEvents);
     tui_request_term_mode(tui, kTermModeGraphemeClusters);
+    tui_request_term_mode(tui, kTermModeThemeUpdates);
+    tui_request_term_mode(tui, kTermModeResizeEvents);
   }
 
   // Don't use DECRQSS in screen or tmux, as they behave strangely when receiving it.
@@ -493,6 +508,10 @@ static void terminfo_start(TUIData *tui)
 /// Disable the alternate screen and prepare for the TUI to close.
 static void terminfo_stop(TUIData *tui)
 {
+  // Disable theme update notifications. We do this first to avoid getting any
+  // more notifications after we reset the cursor and any color palette changes.
+  tui_set_term_mode(tui, kTermModeThemeUpdates, false);
+
   // Destroy output stuff
   tui_mode_change(tui, NULL_STRING, SHAPE_IDX_N);
   tui_mouse_off(tui);
@@ -509,6 +528,7 @@ static void terminfo_stop(TUIData *tui)
   if (tui->did_set_grapheme_cluster_mode) {
     tui_set_term_mode(tui, kTermModeGraphemeClusters, false);
   }
+
   // May restore old title before exiting alternate screen.
   tui_set_title(tui, NULL_STRING);
   if (ui_client_exit_status == 0) {
@@ -521,7 +541,7 @@ static void terminfo_stop(TUIData *tui)
     // Exit alternate screen.
     unibi_out(tui, unibi_exit_ca_mode);
   }
-  if (tui->cursor_color_changed) {
+  if (tui->cursor_has_color) {
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
   // Disable bracketed paste
@@ -1302,11 +1322,12 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
         UNIBI_SET_NUM_VAR(tui->params[0], aep.rgb_bg_color);
       }
       unibi_out_ext(tui, tui->unibi_ext.set_cursor_color);
-      tui->cursor_color_changed = true;
+      tui->cursor_has_color = true;
     }
-  } else if (c.id == 0) {
+  } else if (c.id == 0 && (tui->want_invisible || tui->cursor_has_color)) {
     // No cursor color for this mode; reset to default.
     tui->want_invisible = false;
+    tui->cursor_has_color = false;
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
 
@@ -1319,7 +1340,7 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
   case SHAPE_VER:
     shape = 5; break;
   }
-  UNIBI_SET_NUM_VAR(tui->params[0], shape + (int)(c.blinkon == 0));
+  UNIBI_SET_NUM_VAR(tui->params[0], shape + (int)(c.blinkon == 0 || c.blinkoff == 0));
   unibi_out_ext(tui, tui->unibi_ext.set_cursor_style);
 }
 

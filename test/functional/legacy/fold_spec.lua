@@ -14,7 +14,6 @@ describe('folding', function()
     n.clear()
 
     screen = Screen.new(45, 8)
-    screen:attach()
   end)
 
   it('creation, opening, moving (to the end) and closing', function()

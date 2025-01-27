@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 
 local clear = n.clear
 local connect = n.connect
+local get_session = n.get_session
 local eq = t.eq
 local fn = n.fn
 local is_os = t.is_os
@@ -74,12 +75,12 @@ describe('has()', function()
 
   it('"gui_running"', function()
     eq(0, fn.has('gui_running'))
-    local tui = Screen.new(50, 15)
+    local tui_session = get_session()
     local gui_session = connect(fn.serverstart())
-    local gui = Screen.new(50, 15)
     eq(0, fn.has('gui_running'))
-    tui:attach({ ext_linegrid = true, rgb = true, stdin_tty = true, stdout_tty = true })
-    gui:attach({ ext_multigrid = true, rgb = true }, gui_session)
+    local tui = Screen.new(50, 5, { rgb = true, stdin_tty = true, stdout_tty = true }, tui_session)
+    eq(0, fn.has('gui_running'))
+    local gui = Screen.new(50, 15, { ext_multigrid = true, rgb = true }, gui_session)
     eq(1, fn.has('gui_running'))
     tui:detach()
     eq(1, fn.has('gui_running'))

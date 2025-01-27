@@ -302,7 +302,7 @@ it would be easier to simply type two d's to delete a line.
 
  3. Now move to the fourth line.
 
- 4. Type `2dd`{normal} to delete two lines.
+ 4. Type `2dd`{normal} to delete two lines, then press `u`{normal} twice to undo all three lines.
 
 1)  Roses are red,
 2)  Mud is fun,
@@ -689,7 +689,7 @@ NOTE: Pressing [v](v) starts [Visual selection](visual-mode). You can move the c
  1. Place the cursor just above this line.
 
 NOTE: After executing Step 2 you will see text from Lesson 5.3. Then move
-      DOWN to see this lesson again.
+      DOWN to see this lesson again. Press `u`{normal} to undo after you are done.
 
  2. Now retrieve your TEST file using the command
 
@@ -736,12 +736,12 @@ NOTE: You can also read the output of an external command. For example,
  2. Type the lowercase letter `o`{normal} to [open](o) up a line BELOW the
     cursor and place you in Insert mode.
 
- 3. Now type some text and press `<Esc>`{normal} to exit Insert mode.
+ 3. Now type some text and press `<Esc>`{normal} to exit Insert mode. Remove your opened lines after you're done.
 
 After typing `o`{normal} the cursor is placed on the open line in Insert mode.
 
  4. To open up a line ABOVE the cursor, simply type a [capital O](O), rather
-    than a lowercase `o`{normal}. Try this on the line below.
+    than a lowercase `o`{normal}. Try this on the line below. Remove your opened lines after you're done.
 
 Open up a line above this by typing O while the cursor is on this line.
 

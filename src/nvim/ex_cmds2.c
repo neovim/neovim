@@ -30,10 +30,10 @@
 #include "nvim/fileio.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
-#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
+#include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
@@ -450,7 +450,7 @@ int buf_write_all(buf_T *buf, bool forceit)
                           1, buf->b_ml.ml_line_count, NULL,
                           false, forceit, true, false));
   if (curbuf != old_curbuf) {
-    msg_source(HL_ATTR(HLF_W));
+    msg_source(HLF_W);
     msg(_("Warning: Entered other buffer unexpectedly (check autocommands)"), 0);
   }
   return retval;

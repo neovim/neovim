@@ -23,7 +23,7 @@ before_each(function()
     -- local line_ending = format_line_ending[vim.api.nvim_get_option_value('fileformat', {})]
 
     --- @diagnostic disable-next-line:duplicate-set-field
-    function _G.test_register(bufnr, id, offset_encoding, line_ending)
+    function _G.test_register(bufnr, id, position_encoding, line_ending)
       local prev_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
 
       local function callback(_, bufnr0, _changedtick, firstline, lastline, new_lastline)
@@ -38,7 +38,7 @@ before_each(function()
           firstline,
           lastline,
           new_lastline,
-          offset_encoding,
+          position_encoding,
           line_ending
         )
 
@@ -63,15 +63,15 @@ local function test_edit(
   prev_buffer,
   edit_operations,
   expected_text_changes,
-  offset_encoding,
+  position_encoding,
   line_ending
 )
-  offset_encoding = offset_encoding or 'utf-16'
+  position_encoding = position_encoding or 'utf-16'
   line_ending = line_ending or '\n'
 
   api.nvim_buf_set_lines(0, 0, -1, true, prev_buffer)
   exec_lua(function()
-    return _G.test_register(0, 'test1', offset_encoding, line_ending)
+    return _G.test_register(0, 'test1', position_encoding, line_ending)
   end)
 
   for _, edit in ipairs(edit_operations) do

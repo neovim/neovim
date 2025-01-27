@@ -220,6 +220,10 @@ func Test_statusline()
   wincmd j
   call assert_match('^\[Preview\],PRV\s*$', s:get_statusline())
   pclose
+  pbuffer
+  wincmd j
+  call assert_match('^\[Preview\],PRV\s*$', s:get_statusline())
+  pclose
 
   " %y: Type of file in the buffer, e.g., "[vim]". See 'filetype'.
   " %Y: Type of file in the buffer, e.g., ",VIM". See 'filetype'.

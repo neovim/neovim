@@ -3,7 +3,7 @@
 " Original Author: Josef Litos (JosefLitos/i3config.vim)
 " Maintainer: James Eapen <james.eapen@vai.org>
 " Version: 1.2.4
-" Last Change: 2024-05-24
+" Last Change: 2024 Oct 17
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -29,7 +29,7 @@ syn keyword i3ConfigConditionProp app_id pid shell contained
 
 syn keyword i3ConfigWorkspaceDir prev_on_output next_on_output contained
 
-syn match i3ConfigBindArgument /--\(locked\|to-code\|no-repeat\|input-device=[^ '"]*\|no-warn\) / contained contains=i3ConfigShOper,@i3ConfigStrVar nextgroup=i3ConfigBindArgument,i3ConfigBindCombo
+syn match i3ConfigBindArgument /--\(locked\|to-code\|no-repeat\|input-device=[^ '"]*\|no-warn\|inhibited\) / contained contains=i3ConfigShOper,@i3ConfigStrVar nextgroup=i3ConfigBindArgument,i3ConfigBindCombo
 syn region i3ConfigBindArgument start=/--input-device=['"]/ end=/\s/ contained contains=@i3ConfigIdent,i3ConfigShOper,i3ConfigString nextgroup=i3ConfigBindArgument,i3ConfigBindCombo
 
 syn region i3ConfigBindCombo matchgroup=i3ConfigParen start=/{$/ end=/^\s*}$/ contained contains=i3ConfigBindArgument,i3ConfigBindCombo,i3ConfigComment fold keepend extend

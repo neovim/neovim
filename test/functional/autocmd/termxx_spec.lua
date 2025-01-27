@@ -213,9 +213,11 @@ describe('autocmd TextChangedT', function()
   end)
 
   it('cannot delete terminal buffer', function()
-    command([[autocmd TextChangedT * call nvim_input('<CR>') | bwipe!]])
+    command('autocmd TextChangedT * bwipe!')
     tt.feed_data('a')
     screen:expect({ any = 'E937: ' })
+    feed('<CR>')
+    command('autocmd! TextChangedT')
     matches(
       '^E937: Attempt to delete a buffer that is in use: term://',
       api.nvim_get_vvar('errmsg')

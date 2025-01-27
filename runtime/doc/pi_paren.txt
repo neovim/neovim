@@ -10,6 +10,7 @@ The functionality mentioned here is a |standard-plugin|.
 This plugin is only available if 'compatible' is not set.
 
 You can avoid loading this plugin by setting the "loaded_matchparen" variable: >
+
 	:let loaded_matchparen = 1
 
 The plugin installs CursorMoved, CursorMovedI and WinEnter autocommands to
@@ -29,6 +30,16 @@ the ":highlight" command.  Example: >
 
 	:hi MatchParen ctermbg=blue guibg=lightblue
 
+By default the plugin will highlight both the paren under the cursor and the
+matching one using the |hl-MatchParen| highlighting group.  This may result in
+the cursor briefly disappearing from the screen as the MatchParen colors take
+over the cursor highlight.  To prevent this from happening and have the plugin
+only highlight the matching paren and not the one under the cursor
+(effectively leaving the cursor style unchanged), you can set the
+"matchparen_disable_cursor_hl" variable: >
+
+	:let matchparen_disable_cursor_hl = 1
+
 The characters to be matched come from the 'matchpairs' option.  You can
 change the value to highlight different matches.  Note that not everything is
 possible.  For example, you can't highlight single or double quotes, because
@@ -46,10 +57,10 @@ are:
   closed folds.
 - 'synmaxcol' times 2 bytes before or after the cursor to avoid a delay
   in a long line with syntax highlighting.
-- A timeout of 300 msec (60 msec in Insert mode). This can be changed with the
-  g:matchparen_timeout and g:matchparen_insert_timeout variables and their
-  buffer-local equivalents b:matchparen_timeout and
-  b:matchparen_insert_timeout.
+- A timeout of 300 msec (60 msec in Insert mode).  This can be changed with
+  the "g:matchparen_timeout" and "g:matchparen_insert_timeout" variables and
+  their buffer-local equivalents "b:matchparen_timeout" and
+  "b:matchparen_insert_timeout".
 
 If you would like the |%| command to work better, the |matchit| plugin can be
 used.  This plugin also helps to skip matches in comments.  This is unrelated

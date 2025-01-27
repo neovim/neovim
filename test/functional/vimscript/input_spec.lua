@@ -17,7 +17,6 @@ local screen
 before_each(function()
   clear()
   screen = Screen.new(25, 5)
-  screen:attach()
   source([[
     hi Test ctermfg=Red guifg=Red term=bold
     function CustomCompl(...)

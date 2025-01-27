@@ -7,11 +7,12 @@
 #include "nvim/api/vim.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
-#include "nvim/memory.h"
+#include "nvim/memory_defs.h"
+#include "nvim/types_defs.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/tabpage.c.generated.h"
+# include "api/tabpage.c.generated.h"  // IWYU pragma: keep
 #endif
 
 /// Gets the windows in a tabpage
@@ -146,11 +147,9 @@ void nvim_tabpage_set_win(Tabpage tabpage, Window win, Error *err)
   }
 
   if (tp == curtab) {
-    try_start();
-    win_goto(wp);
-    if (!try_end(err) && curwin != wp) {
-      api_set_error(err, kErrorTypeException, "Failed to switch to window %d", win);
-    }
+    TRY_WRAP(err, {
+      win_goto(wp);
+    });
   } else if (tp->tp_curwin != wp) {
     tp->tp_prevwin = tp->tp_curwin;
     tp->tp_curwin = wp;

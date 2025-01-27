@@ -11,7 +11,6 @@ describe(':move', function()
   -- oldtest: Test_move_undo()
   it('redraws correctly when undone', function()
     local screen = Screen.new(60, 10)
-    screen:attach()
 
     fn.setline(1, { 'First', 'Second', 'Third', 'Fourth' })
     feed('gg:move +1<CR>')

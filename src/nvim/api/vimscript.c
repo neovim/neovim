@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "klib/kvec.h"
@@ -21,6 +22,7 @@
 #include "nvim/garray_defs.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/vim_defs.h"
 #include "nvim/viml/parser/expressions.h"
@@ -78,24 +80,24 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
     capture_ga = &capture_local;
   }
 
-  try_start();
-  if (opts->output) {
-    msg_silent++;
-    msg_col = 0;  // prevent leading spaces
-  }
+  TRY_WRAP(err, {
+    if (opts->output) {
+      msg_silent++;
+      msg_col = 0;  // prevent leading spaces
+    }
 
-  const sctx_T save_current_sctx = api_set_sctx(channel_id);
+    const sctx_T save_current_sctx = api_set_sctx(channel_id);
 
-  do_source_str(src.data, "nvim_exec2()");
-  if (opts->output) {
-    capture_ga = save_capture_ga;
-    msg_silent = save_msg_silent;
-    // Put msg_col back where it was, since nothing should have been written.
-    msg_col = save_msg_col;
-  }
+    do_source_str(src.data, "nvim_exec2()");
+    if (opts->output) {
+      capture_ga = save_capture_ga;
+      msg_silent = save_msg_silent;
+      // Put msg_col back where it was, since nothing should have been written.
+      msg_col = save_msg_col;
+    }
 
-  current_sctx = save_current_sctx;
-  try_end(err);
+    current_sctx = save_current_sctx;
+  });
 
   if (ERROR_SET(err)) {
     goto theend;
@@ -125,19 +127,17 @@ theend:
 ///
 /// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
-/// Prefer using |nvim_cmd()| or |nvim_exec2()| over this. To evaluate multiple lines of Vim script
-/// or an Ex command directly, use |nvim_exec2()|. To construct an Ex command using a structured
-/// format and then execute it, use |nvim_cmd()|. To modify an Ex command before evaluating it, use
-/// |nvim_parse_cmd()| in conjunction with |nvim_cmd()|.
+/// Prefer |nvim_cmd()| or |nvim_exec2()| instead. To modify an Ex command in a structured way
+/// before executing it, modify the result of |nvim_parse_cmd()| then pass it to |nvim_cmd()|.
 ///
 /// @param command  Ex command string
 /// @param[out] err Error details (Vim error), if any
 void nvim_command(String command, Error *err)
   FUNC_API_SINCE(1)
 {
-  try_start();
-  do_cmdline_cmd(command.data);
-  try_end(err);
+  TRY_WRAP(err, {
+    do_cmdline_cmd(command.data);
+  });
 }
 
 /// Evaluates a Vimscript |expression|. Dicts and Lists are recursively expanded.
@@ -231,10 +231,9 @@ static Object _call_function(String fn, Array args, dict_T *self, Arena *arena, 
   funcexe.fe_selfdict = self;
 
   TRY_WRAP(err, {
-    // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
-    // (see above) to capture abort-causing non-exception errors.
-    call_func(fn.data, (int)fn.size, &rettv, (int)args.size,
-              vim_args, &funcexe);
+    // call_func() retval is deceptive, ignore it.  Instead TRY_WRAP sets `msg_list` to capture
+    // abort-causing non-exception errors.
+    (void)call_func(fn.data, (int)fn.size, &rettv, (int)args.size, vim_args, &funcexe);
   });
 
   if (!ERROR_SET(err)) {
@@ -282,20 +281,23 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
   typval_T rettv;
   bool mustfree = false;
   switch (dict.type) {
-  case kObjectTypeString:
-    try_start();
-    if (eval0(dict.data.string.data, &rettv, NULL, &EVALARG_EVALUATE) == FAIL) {
-      api_set_error(err, kErrorTypeException,
-                    "Failed to evaluate dict expression");
-    }
-    clear_evalarg(&EVALARG_EVALUATE, NULL);
-    if (try_end(err)) {
+  case kObjectTypeString: {
+    int eval_ret;
+    TRY_WRAP(err, {
+        eval_ret = eval0(dict.data.string.data, &rettv, NULL, &EVALARG_EVALUATE);
+        clear_evalarg(&EVALARG_EVALUATE, NULL);
+      });
+    if (ERROR_SET(err)) {
       return rv;
+    }
+    if (eval_ret != OK) {
+      abort();  // Should not happen.
     }
     // Evaluation of the string arg created a new dict or increased the
     // refcount of a dict. Not necessary for a RPC dict.
     mustfree = true;
     break;
+  }
   case kObjectTypeDict:
     object_to_vim(dict, &rettv, err);
     break;

@@ -102,7 +102,7 @@ void win_pos(Integer grid, Window win, Integer startrow, Integer startcol, Integ
              Integer height)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_float_pos(Integer grid, Window win, String anchor, Integer anchor_grid, Float anchor_row,
-                   Float anchor_col, Boolean focusable, Integer zindex)
+                   Float anchor_col, Boolean mouse_enabled, Integer zindex)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_external_pos(Integer grid, Window win)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
@@ -136,13 +136,13 @@ void tabline_update(Tabpage current, Array tabs, Buffer current_buffer, Array bu
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 void cmdline_show(Array content, Integer pos, String firstc, String prompt, Integer indent,
-                  Integer level)
+                  Integer level, Integer hl_id)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void cmdline_pos(Integer pos, Integer level)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void cmdline_special_char(String c, Boolean shift, Integer level)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
-void cmdline_hide(Integer level)
+void cmdline_hide(Integer level, Boolean abort)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void cmdline_block_show(Array lines)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
@@ -158,8 +158,8 @@ void wildmenu_select(Integer selected)
 void wildmenu_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
-void msg_show(String kind, Array content, Boolean replace_last)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void msg_show(String kind, Array content, Boolean replace_last, Boolean history)
+  FUNC_API_SINCE(6) FUNC_API_FAST FUNC_API_REMOTE_ONLY;
 void msg_clear(void)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_showcmd(Array content)

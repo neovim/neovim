@@ -17,7 +17,26 @@ describe('thread', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 10)
-    screen:attach()
+  end)
+
+  it('handle non-string error', function()
+    exec_lua [[
+      local thread = vim.uv.new_thread(function()
+        error()
+      end)
+      vim.uv.thread_join(thread)
+    ]]
+
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|*5
+      {3:                                                  }|
+      {9:Error in luv thread:}                              |
+      {9:[NULL]}                                            |
+      {6:Press ENTER or type command to continue}^           |
+    ]])
+    feed('<cr>')
+    assert_alive()
   end)
 
   it('entry func is executed in protected mode', function()
@@ -257,7 +276,6 @@ describe('threadpool', function()
 
   it('with invalid return value', function()
     local screen = Screen.new(50, 10)
-    screen:attach()
 
     exec_lua [[
       local work = vim.uv.new_work(function() return {} end, function() end)

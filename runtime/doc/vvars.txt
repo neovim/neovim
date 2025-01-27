@@ -6,7 +6,8 @@
 
 Predefined variables                                             *vvars*
 
-Some variables can be set by the user, but the type cannot be changed.
+Most variables are read-only, when a variable can be set by the user, it will
+be mentioned at the variable description below. The type cannot be changed.
 
                                        Type |gO| to see the table of contents.
 
@@ -152,13 +153,14 @@ v:event
 		                   an aborting condition (e.g. |c_Esc| or
 		                   |c_CTRL-C| for |CmdlineLeave|).
 		  chan             |channel-id|
+		  info             Dict of arbitrary event data.
 		  cmdlevel         Level of cmdline.
 		  cmdtype          Type of cmdline, |cmdline-char|.
 		  cwd              Current working directory.
 		  inclusive        Motion is |inclusive|, else exclusive.
 		  scope            Event-specific scope name.
 		  operator         Current |operator|.  Also set for Ex
-		  commands         (unlike |v:operator|). For
+		                   commands (unlike |v:operator|). For
 		                   example if |TextYankPost| is triggered
 		                   by the |:yank| Ex command then
 		                   `v:event.operator` is "y".
@@ -188,11 +190,14 @@ v:event
 		                   changing window  (or tab) on |DirChanged|.
 		  status           Job status or exit code, -1 means "unknown". |TermClose|
 		  reason           Reason for completion being done. |CompleteDone|
+		  complete_word    The word that was selected, empty if abandoned complete.
+		  complete_type    See |complete_info_mode|
 
 				*v:exception* *exception-variable*
 v:exception
 		The value of the exception most recently caught and not
-		finished.  See also |v:throwpoint| and |throw-variables|.
+		finished.  See also |v:stacktrace|, |v:throwpoint|, and
+		|throw-variables|.
 		Example: >vim
 		  try
 		    throw "oops"
@@ -583,6 +588,13 @@ v:shell_error
 		  endif
 <
 
+				*v:stacktrace* *stacktrace-variable*
+v:stacktrace
+		The stack trace of the exception most recently caught and
+		not finished.  Refer to |getstacktrace()| for the structure of
+		stack trace.  See also |v:exception|, |v:throwpoint|, and
+		|throw-variables|.
+
 				*v:statusmsg* *statusmsg-variable*
 v:statusmsg
 		Last given status message.
@@ -676,7 +688,7 @@ v:this_session
 v:throwpoint
 		The point where the exception most recently caught and not
 		finished was thrown.  Not set when commands are typed.  See
-		also |v:exception| and |throw-variables|.
+		also |v:exception|, |v:stacktrace|, and |throw-variables|.
 		Example: >vim
 		  try
 		    throw "oops"

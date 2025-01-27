@@ -10,7 +10,6 @@ describe('Scrollbind', function()
 
   before_each(function()
     screen = Screen.new(40, 12)
-    screen:attach()
   end)
 
   it('works with one buffer with virtual lines', function()

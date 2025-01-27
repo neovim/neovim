@@ -9,6 +9,7 @@
 /// structure used to store one block of the stuff/redo/recording buffers
 typedef struct buffblock {
   struct buffblock *b_next;  ///< pointer to next buffblock
+  size_t b_strlen;      ///< length of b_str, excluding the NUL
   char b_str[1];        ///< contents (actually longer)
 } buffblock_T;
 
@@ -18,6 +19,7 @@ typedef struct {
   buffblock_T *bh_curr;  ///< buffblock for appending
   size_t bh_index;       ///< index for reading
   size_t bh_space;       ///< space in bh_curr for appending
+  bool bh_create_newblock;  ///< create a new block?
 } buffheader_T;
 
 typedef struct {

@@ -14,7 +14,6 @@ local api = n.api
 local command = n.command
 local clear = n.clear
 local exc_exec = n.exc_exec
-local exec_lua = n.exec_lua
 local eval = n.eval
 local eq = t.eq
 local ok = t.ok
@@ -34,7 +33,6 @@ describe('startup defaults', function()
   describe(':filetype', function()
     local function expect_filetype(expected)
       local screen = Screen.new(50, 4)
-      screen:attach()
       command('filetype')
       screen:expect([[
         ^                                                  |
@@ -127,7 +125,6 @@ describe('startup defaults', function()
     it('vert/fold flags', function()
       clear()
       local screen = Screen.new(50, 5)
-      screen:attach()
       command('set laststatus=0')
       insert([[
         1
@@ -931,17 +928,12 @@ describe('stdpath()', function()
     assert_alive() -- Check for crash. #8393
 
     -- Check that Nvim rejects invalid APPNAMEs
-    -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
     local function test_appname(testAppname, expected_exitcode)
-      local lua_code = string.format(
-        [[
-        local child = vim.fn.jobstart({ vim.v.progpath, '--clean', '--headless', '--listen', 'x', '+qall!' }, { env = { NVIM_APPNAME = %q } })
-        return vim.fn.jobwait({ child }, %d)[1]
-      ]],
-        testAppname,
-        3000
-      )
-      eq(expected_exitcode, exec_lua(lua_code))
+      local p = n.spawn_wait({
+        args = { '--listen', 'x', '+qall!' },
+        env = { NVIM_APPNAME = testAppname },
+      })
+      eq(expected_exitcode, p.status)
     end
     -- Invalid appnames:
     test_appname('a/../b', 1)

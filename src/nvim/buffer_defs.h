@@ -70,7 +70,7 @@ typedef struct {
 // Mask to check for flags that prevent normal writing
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
 
-typedef struct wininfo_S wininfo_T;
+typedef struct wininfo_S WinInfo;
 typedef struct frame_S frame_T;
 typedef uint64_t disptick_T;  // display tick type
 
@@ -85,7 +85,7 @@ typedef struct {
 
 // Structure that contains all options that are local to a window.
 // Used twice in a window: for the current buffer and for all buffers.
-// Also used in wininfo_T.
+// Also used in WinInfo.
 typedef struct {
   int wo_arab;
 #define w_p_arab w_onebuf_opt.wo_arab  // 'arabic'
@@ -206,7 +206,7 @@ typedef struct {
   OptInt wo_winbl;
 #define w_p_winbl w_onebuf_opt.wo_winbl  // 'winblend'
 
-  LastSet wo_script_ctx[WV_COUNT];        // SCTXs for window-local options
+  LastSet wo_script_ctx[kWinOptCount];  // SCTXs for window-local options
 #define w_p_script_ctx w_onebuf_opt.wo_script_ctx
 } winopt_T;
 
@@ -219,8 +219,6 @@ typedef struct {
 // The window-info is kept in a list at b_wininfo.  It is kept in
 // most-recently-used order.
 struct wininfo_S {
-  wininfo_T *wi_next;         // next entry or NULL for last entry
-  wininfo_T *wi_prev;         // previous entry or NULL for first entry
   win_T *wi_win;          // pointer to window that did set wi_mark
   fmark_T wi_mark;                // last cursor mark in the file
   bool wi_optset;               // true when wi_opt has useful values
@@ -316,8 +314,6 @@ typedef struct {
   char *b_p_spf;              // 'spellfile'
   char *b_p_spl;              // 'spelllang'
   char *b_p_spo;              // 'spelloptions'
-#define SPO_CAMEL  0x1
-#define SPO_NPBUFFER 0x2
   unsigned b_p_spo_flags;      // 'spelloptions' flags
   int b_cjk;                  // all CJK letters as OK
   uint8_t b_syn_chartab[32];  // syntax iskeyword option
@@ -413,7 +409,7 @@ struct file_buffer {
                                 // change
   linenr_T b_mod_xlines;        // number of extra buffer lines inserted;
                                 // negative when lines were deleted
-  wininfo_T *b_wininfo;         // list of last used info for each window
+  kvec_t(WinInfo *) b_wininfo;  // list of last used info for each window
   disptick_T b_mod_tick_syn;    // last display tick syntax was updated
   disptick_T b_mod_tick_decor;  // last display tick decoration providers
                                 // where invoked
@@ -512,7 +508,7 @@ struct file_buffer {
   // or contents of the file being edited.
   bool b_p_initialized;                 // set when options initialized
 
-  LastSet b_p_script_ctx[BV_COUNT];     // SCTXs for buffer-local options
+  LastSet b_p_script_ctx[kBufOptCount];  // SCTXs for buffer-local options
 
   int b_p_ai;                   ///< 'autoindent'
   int b_p_ai_nopaste;           ///< b_p_ai saved for paste mode
@@ -543,8 +539,10 @@ struct file_buffer {
   Callback b_cfu_cb;            ///< 'completefunc' callback
   char *b_p_ofu;                ///< 'omnifunc'
   Callback b_ofu_cb;            ///< 'omnifunc' callback
-  char *b_p_tfu;                ///< 'tagfunc'
+  char *b_p_tfu;                ///< 'tagfunc' option value
   Callback b_tfu_cb;            ///< 'tagfunc' callback
+  char *b_p_ffu;                ///< 'findfunc' option value
+  Callback b_ffu_cb;            ///< 'findfunc' callback
   int b_p_eof;                  ///< 'endoffile'
   int b_p_eol;                  ///< 'endofline'
   int b_p_fixeol;               ///< 'fixendofline'
@@ -902,6 +900,8 @@ typedef enum {
   kFloatRelativeWindow = 1,
   kFloatRelativeCursor = 2,
   kFloatRelativeMouse = 3,
+  kFloatRelativeTabline = 4,
+  kFloatRelativeLaststatus = 5,
 } FloatRelative;
 
 /// Keep in sync with win_split_str[] in nvim_win_get_config() (api/win_config.c)
@@ -938,6 +938,7 @@ typedef struct {
   FloatRelative relative;
   bool external;
   bool focusable;
+  bool mouse;
   WinSplit split;
   int zindex;
   WinStyle style;
@@ -964,6 +965,7 @@ typedef struct {
                                       .row = 0, .col = 0, .anchor = 0, \
                                       .relative = 0, .external = false, \
                                       .focusable = true, \
+                                      .mouse = true, \
                                       .split = 0, \
                                       .zindex = kZIndexFloatDefault, \
                                       .style = kWinStyleUnused, \
@@ -1031,7 +1033,7 @@ struct window_S {
   synblock_T *w_s;                 ///< for :ownsyntax
 
   int w_ns_hl;
-  int w_ns_hl_winhl;
+  int w_ns_hl_winhl;  ///< when set to -1, 'winhighlight' shouldn't be used
   int w_ns_hl_active;
   int *w_ns_hl_attr;
 
@@ -1247,7 +1249,7 @@ struct window_S {
   // transform a pointer to a "onebuf" option into a "allbuf" option
 #define GLOBAL_WO(p)    ((char *)(p) + sizeof(winopt_T))
 
-  // A few options have local flags for P_INSECURE.
+  // A few options have local flags for kOptFlagInsecure.
   uint32_t w_p_stl_flags;           // flags for 'statusline'
   uint32_t w_p_wbr_flags;           // flags for 'winbar'
   uint32_t w_p_fde_flags;           // flags for 'foldexpr'

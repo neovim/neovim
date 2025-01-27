@@ -14,7 +14,6 @@ describe("'shortmess'", function()
   before_each(function()
     clear()
     screen = Screen.new(42, 5)
-    screen:attach()
   end)
 
   describe('"F" flag', function()

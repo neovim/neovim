@@ -82,9 +82,11 @@ The most efficient is to call a function without arguments: >
 The function must use v:lnum.  See |expr-option-function|.
 
 These are the conditions with which the expression is evaluated:
+
 - The current buffer and window are set for the line.
 - The variable "v:lnum" is set to the line number.
-- The result is used for the fold level in this way:
+
+The result of foldexpr then determines the fold level as follows:
   value			meaning ~
   0			the line is not in a fold
   1, 2, ..		the line is in a fold with this level
@@ -99,6 +101,9 @@ These are the conditions with which the expression is evaluated:
   "<1", "<2", ..	a fold with this level ends at this line
   ">1", ">2", ..	a fold with this level starts at this line
 
+The result values "=", "s" and "a" are more expensive, please see
+|fold-expr-slow|.
+
 It is not required to mark the start (end) of a fold with ">1" ("<1"), a fold
 will also start (end) when the fold level is higher (lower) than the fold
 level of the previous line.
@@ -112,14 +117,8 @@ recognized, there is no error message and the fold level will be zero.
 For debugging the 'debug' option can be set to "msg", the error messages will
 be visible then.
 
-Note: Since the expression has to be evaluated for every line, this fold
-method can be very slow!
-
-Try to avoid the "=", "a" and "s" return values, since Vim often has to search
-backwards for a line for which the fold level is defined.  This can be slow.
-
 If the 'foldexpr' expression starts with s: or |<SID>|, then it is replaced
-with the script ID (|local-function|). Examples: >
+with the script ID (|local-function|).  Examples: >
 		set foldexpr=s:MyFoldExpr()
 		set foldexpr=<SID>SomeFoldExpr()
 <
@@ -143,6 +142,37 @@ end in that line.
 It may happen that folds are not updated properly.  You can use |zx| or |zX|
 to force updating folds.
 
+MINIMIZING COMPUTATIONAL COST				*fold-expr-slow*
+
+Due to its computational cost, this fold method can make Vim unresponsive,
+especially when the fold level of all lines have to be initially computed.
+Afterwards, after each change, Vim restricts the computation of foldlevels
+to those lines whose fold level was affected by it (and reuses the known
+foldlevels of all the others).
+
+The fold expression should therefore strive to minimize the number of
+dependent lines needed for the computation of a given line: For example, try
+to avoid the "=", "a" and "s" return values, because these will require the
+evaluation of the fold levels on previous lines until an independent fold
+level is found.
+
+If this proves difficult, the next best thing could be to cache all fold
+levels in a buffer-local variable (b:foldlevels) that is only updated on
+|b:changedtick|:
+>vim
+  func MyFoldFunc()
+    if b:lasttick == b:changedtick
+      return b:foldlevels[v:lnum - 1]
+    endif
+    let b:lasttick = b:changedtick
+    let b:foldlevels = []
+    " compute foldlevels ...
+    return b:foldlevels[v:lnum - 1]
+  enddef
+  set foldexpr=s:MyFoldFunc()
+<
+In above example further speedup was gained by using a function without
+arguments (that must still use v:lnum). See |expr-option-function|.
 
 SYNTAX						*fold-syntax*
 
@@ -379,8 +409,8 @@ zX		Undo manually opened and closed folds: re-apply 'foldlevel'.
 		Also forces recomputing folds, like |zx|.
 
 							*zm*
-zm		Fold more: Subtract |v:count1| from 'foldlevel'.  If 'foldlevel' was
-		already zero nothing happens.
+zm		Fold more: Subtract |v:count1| from 'foldlevel'.  If
+		'foldlevel' was already zero nothing happens.
 		'foldenable' will be set.
 
 							*zM*
@@ -444,7 +474,7 @@ zk		Move upwards to the end of the previous fold.  A closed fold
 
 EXECUTING COMMANDS ON FOLDS ~
 
-:[range]foldd[oopen] {cmd}			*:foldd* *:folddo* *:folddoopen*
+:[range]foldd[oopen] {cmd}		*:foldd* *:folddo* *:folddoopen*
 		Execute {cmd} on all lines that are not in a closed fold.
 		When [range] is given, only these lines are used.
 		Each time {cmd} is executed the cursor is positioned on the
@@ -532,7 +562,7 @@ When there is room after the text, it is filled with the character specified
 by 'fillchars'.
 
 If the 'foldtext' expression starts with s: or |<SID>|, then it is replaced
-with the script ID (|local-function|). Examples: >
+with the script ID (|local-function|).  Examples: >
 		set foldtext=s:MyFoldText()
 		set foldtext=<SID>SomeFoldText()
 <

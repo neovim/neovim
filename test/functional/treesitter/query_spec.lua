@@ -86,7 +86,7 @@ void ui_refresh(void)
         local before = vim.api.nvim__stats().ts_query_parse_count
         collectgarbage('stop')
         for _ = 1, _n, 1 do
-          vim.treesitter.query.parse('c', long_query, _n)
+          vim.treesitter.query.parse('c', long_query)
         end
         collectgarbage('restart')
         collectgarbage('collect')
@@ -96,8 +96,39 @@ void ui_refresh(void)
     end
 
     eq(1, q(1))
-    -- cache is cleared by garbage collection even if valid "cquery" reference is kept around
-    eq(1, q(100))
+    -- cache is retained even after garbage collection
+    eq(0, q(100))
+  end)
+
+  it('cache is cleared upon runtimepath changes, or setting query manually', function()
+    ---@return number
+    exec_lua(function()
+      _G.query_parse_count = _G.query_parse_count or 0
+      local parse = vim.treesitter.query.parse
+      vim.treesitter.query.parse = function(...)
+        _G.query_parse_count = _G.query_parse_count + 1
+        return parse(...)
+      end
+    end)
+
+    local function q(_n)
+      return exec_lua(function()
+        for _ = 1, _n, 1 do
+          vim.treesitter.query.get('c', 'highlights')
+        end
+        return _G.query_parse_count
+      end)
+    end
+
+    eq(1, q(10))
+    exec_lua(function()
+      vim.opt.rtp:prepend('/another/dir')
+    end)
+    eq(2, q(100))
+    exec_lua(function()
+      vim.treesitter.query.set('c', 'highlights', [[; test]])
+    end)
+    eq(3, q(100))
   end)
 
   it('supports query and iter by capture (iter_captures)', function()
@@ -722,7 +753,25 @@ void ui_refresh(void)
       eq(exp, pcall_err(exec_lua, "vim.treesitter.query.parse('c', ...)", cquery))
     end
 
-    -- Invalid node type
+    -- Invalid node types
+    test(
+      '.../query.lua:0: Query error at 1:2. Invalid node type ">\\">>":\n'
+        .. '">\\">>" @operator\n'
+        .. ' ^',
+      '">\\">>" @operator'
+    )
+    test(
+      '.../query.lua:0: Query error at 1:2. Invalid node type "\\\\":\n'
+        .. '"\\\\" @operator\n'
+        .. ' ^',
+      '"\\\\" @operator'
+    )
+    test(
+      '.../query.lua:0: Query error at 1:2. Invalid node type ">>>":\n'
+        .. '">>>" @operator\n'
+        .. ' ^',
+      '">>>" @operator'
+    )
     test(
       '.../query.lua:0: Query error at 1:2. Invalid node type "dentifier":\n'
         .. '(dentifier) @variable\n'
@@ -817,9 +866,9 @@ void ui_refresh(void)
 
       local result = exec_lua(function()
         local query0 = vim.treesitter.query.parse('c', query)
-        local match_preds = query0.match_preds
+        local match_preds = query0._match_predicates
         local called = 0
-        function query0:match_preds(...)
+        function query0:_match_predicates(...)
           called = called + 1
           return match_preds(self, ...)
         end

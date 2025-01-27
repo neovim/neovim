@@ -8,9 +8,9 @@ vim.api.nvim_create_user_command('Man', function(params)
   if params.bang then
     man.init_pager()
   else
-    local ok, err = pcall(man.open_page, params.count, params.smods, params.fargs)
-    if not ok then
-      vim.notify(man.errormsg or err, vim.log.levels.ERROR)
+    local err = man.open_page(params.count, params.smods, params.fargs)
+    if err then
+      vim.notify('man.lua: ' .. err, vim.log.levels.ERROR)
     end
   end
 end, {
@@ -24,13 +24,16 @@ end, {
   end,
 })
 
-local augroup = vim.api.nvim_create_augroup('man', {})
+local augroup = vim.api.nvim_create_augroup('nvim.man', {})
 
 vim.api.nvim_create_autocmd('BufReadCmd', {
   group = augroup,
   pattern = 'man://*',
   nested = true,
   callback = function(params)
-    require('man').read_page(vim.fn.matchstr(params.match, 'man://\\zs.*'))
+    local err = require('man').read_page(assert(params.match:match('man://(.*)')))
+    if err then
+      vim.notify('man.lua: ' .. err, vim.log.levels.ERROR)
+    end
   end,
 })

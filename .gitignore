@@ -44,6 +44,7 @@ compile_commands.json
 /test/old/testdir/messages
 /test/old/testdir/starttime
 /test/old/testdir/viminfo
+/test/old/testdir/opt_test.vim
 /test/old/testdir/test.ok
 /test/old/testdir/*.failed
 /test/old/testdir/X*

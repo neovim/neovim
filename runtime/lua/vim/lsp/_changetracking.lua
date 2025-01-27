@@ -18,14 +18,14 @@ local M = {}
 ---
 ---   None: One group for all clients
 ---   Full: One group for all clients
----   Incremental: One group per `offset_encoding`
+---   Incremental: One group per `position_encoding`
 ---
 --- Sending changes can be debounced per buffer. To simplify the implementation the
 --- smallest debounce interval is used and we don't group clients by different intervals.
 ---
 --- @class vim.lsp.CTGroup
 --- @field sync_kind integer TextDocumentSyncKind, considers config.flags.allow_incremental_sync
---- @field offset_encoding "utf-8"|"utf-16"|"utf-32"
+--- @field position_encoding "utf-8"|"utf-16"|"utf-32"
 ---
 --- @class vim.lsp.CTBufferState
 --- @field name string name of the buffer
@@ -40,13 +40,13 @@ local M = {}
 --- @class vim.lsp.CTGroupState
 --- @field buffers table<integer,vim.lsp.CTBufferState>
 --- @field debounce integer debounce duration in ms
---- @field clients table<integer, table> clients using this state. {client_id, client}
+--- @field clients table<integer, vim.lsp.Client> clients using this state. {client_id, client}
 
 ---@param group vim.lsp.CTGroup
 ---@return string
 local function group_key(group)
   if group.sync_kind == protocol.TextDocumentSyncKind.Incremental then
-    return tostring(group.sync_kind) .. '\0' .. group.offset_encoding
+    return tostring(group.sync_kind) .. '\0' .. group.position_encoding
   end
   return tostring(group.sync_kind)
 end
@@ -72,7 +72,7 @@ local function get_group(client)
   end
   return {
     sync_kind = sync_kind,
-    offset_encoding = client.offset_encoding,
+    position_encoding = client.offset_encoding,
   }
 end
 
@@ -273,8 +273,8 @@ local function send_changes(bufnr, sync_kind, state, buf_state)
   end
   local uri = vim.uri_from_bufnr(bufnr)
   for _, client in pairs(state.clients) do
-    if not client.is_stopped() and vim.lsp.buf_is_attached(bufnr, client.id) then
-      client.notify(protocol.Methods.textDocument_didChange, {
+    if not client:is_stopped() and vim.lsp.buf_is_attached(bufnr, client.id) then
+      client:notify(protocol.Methods.textDocument_didChange, {
         textDocument = {
           uri = uri,
           version = util.buf_versions[bufnr],
@@ -310,7 +310,7 @@ local function send_changes_for_group(bufnr, firstline, lastline, new_lastline, 
     -- The contents would further change and startline/endline may no longer fit
     local changes = incremental_changes(
       buf_state,
-      group.offset_encoding,
+      group.position_encoding,
       bufnr,
       firstline,
       lastline,

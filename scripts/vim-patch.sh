@@ -213,8 +213,8 @@ preprocess_patch() {
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
-  # Remove gui, option, setup, screen dumps, testdir/Make_*.mak files
-  local na_src_testdir='gen_opt_test\.vim\|gui_.*\|Make_amiga\.mak\|Make_dos\.mak\|Make_ming\.mak\|Make_vms\.mms\|dumps/.*\.dump\|setup_gui\.vim'
+  # Remove gui, setup, screen dumps, testdir/Make_*.mak files
+  local na_src_testdir='gui_.*\|Make_amiga\.mak\|Make_dos\.mak\|Make_ming\.mak\|Make_vms\.mms\|dumps/.*\.dump\|setup_gui\.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove testdir/test_*.vim files

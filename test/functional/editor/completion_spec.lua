@@ -10,6 +10,7 @@ local fn = n.fn
 local command = n.command
 local api = n.api
 local poke_eventloop = n.poke_eventloop
+local exec_lua = n.exec_lua
 
 describe('completion', function()
   local screen
@@ -17,7 +18,6 @@ describe('completion', function()
   before_each(function()
     clear()
     screen = Screen.new(60, 8)
-    screen:attach()
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Gray0, background = Screen.colors.Yellow },
       [101] = { background = Screen.colors.Gray0 },
@@ -1024,18 +1024,18 @@ describe('completion', function()
 
   it("'ignorecase' 'infercase' CTRL-X CTRL-N #6451", function()
     feed_command('set ignorecase infercase')
-    feed_command('edit runtime/doc/backers.txt')
+    feed_command('edit runtime/doc/credits.txt')
     feed('oX<C-X><C-N>')
     screen:expect {
       grid = [[
-      *backers.txt*          Nvim                                 |
-      Xnull^                                                       |
-      {12:Xnull          }{101: }                                            |
-      {4:Xoxomoon       }{101: }                                            |
-      {4:Xu             }{101: }     NVIM REFERENCE MANUAL                  |
-      {4:Xpayn          }{12: }                                            |
-      {4:Xinity         }{12: }                                            |
-      {5:-- Keyword Local completion (^N^P) }{6:match 1 of 7}             |
+      *credits.txt*          Nvim                                 |
+      Xvi^                                                         |
+      {12:Xvi            }{101: }                                            |
+      {4:Xvim           }{101: }                                            |
+      {4:X11            }{12: }     NVIM REFERENCE MANUAL                  |
+      {4:Xnull          }{12: }                                            |
+      {4:Xoxomoon       }{12: }                                            |
+      {5:-- Keyword Local completion (^N^P) }{6:match 1 of 10}            |
     ]],
     }
   end)
@@ -1266,7 +1266,7 @@ describe('completion', function()
     command([[
       call setline(1, ['aaaa'])
       let ns_id = nvim_create_namespace('extmark')
-      let mark_id = nvim_buf_set_extmark(0, ns_id, 0, 0, { 'end_col':2, 'hl_group':'Error'})
+      let mark_id = nvim_buf_set_extmark(0, ns_id, 0, 0, { 'end_col':2, 'hl_group':'Error' })
       let mark = nvim_buf_get_extmark_by_id(0, ns_id, mark_id, { 'details':1 })
       inoremap <C-x> <C-r>=Complete()<CR>
       function Complete() abort
@@ -1303,5 +1303,53 @@ describe('completion', function()
       aaaaa                                                       |
       {5:-- INSERT --}                                                |
     ]])
+    -- Also when completion leader is changed #31384
+    feed('<Esc>hi<C-N><C-P>a')
+    screen:expect({
+      grid = [[
+        {9:aa}a^aa                                                       |
+        {4:aaaa           }                                             |
+        {4:aaaaa          }                                             |
+        {5:-- Keyword completion (^N^P) }{19:Back at original}               |
+      ]],
+    })
+    -- But still grows with end_right_gravity #31437
+    command(
+      "call nvim_buf_set_extmark(0, ns_id, 1, 0, { 'end_col':2, 'hl_group':'Error', 'end_right_gravity': 1 })"
+    )
+    feed('<Esc>ji<C-N>a')
+    screen:expect({
+      grid = [[
+        {9:aa}aaa                                                       |
+        {9:aaa}^aa                                                       |
+        aaaaa                                                       |
+        {5:-- INSERT --}                                                |
+      ]],
+    })
+  end)
+
+  describe('nvim__complete_set', function()
+    it("fails when 'completeopt' does not include popup", function()
+      exec_lua([[
+        function _G.omni_test(findstart, base)
+          if findstart == 1 then
+            return vim.fn.col('.') - 1
+          end
+          return { { word = 'one' } }
+        end
+        vim.api.nvim_create_autocmd('CompleteChanged', {
+          callback = function()
+            local ok, err = pcall(vim.api.nvim__complete_set, 0, { info = '1info' })
+            if not ok then
+              vim.g.err_msg = err
+            end
+          end,
+        })
+        vim.opt.completeopt = 'menu,menuone'
+        vim.opt.omnifunc = 'v:lua.omni_test'
+      ]])
+      feed('S<C-X><C-O>')
+      eq('completeopt option does not include popup', api.nvim_get_var('err_msg'))
+    end)
   end)
 end)

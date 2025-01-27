@@ -255,7 +255,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     emsg(_("E83: Cannot allocate buffer, using other one..."));
     enter_buffer(curbuf);
     if (old_tw != curbuf->b_p_tw) {
-      check_colorcolumn(curwin);
+      check_colorcolumn(NULL, curwin);
     }
     return FAIL;
   }
@@ -875,6 +875,7 @@ static void free_buffer(buf_T *buf)
   aubuflocal_remove(buf);
   xfree(buf->additional_data);
   xfree(buf->b_prompt_text);
+  kv_destroy(buf->b_wininfo);
   callback_free(&buf->b_prompt_callback);
   callback_free(&buf->b_prompt_interrupt);
   clear_fmark(&buf->b_last_cursor, 0);
@@ -901,13 +902,10 @@ static void free_buffer(buf_T *buf)
 /// Free the b_wininfo list for buffer "buf".
 static void clear_wininfo(buf_T *buf)
 {
-  wininfo_T *wip;
-
-  while (buf->b_wininfo != NULL) {
-    wip = buf->b_wininfo;
-    buf->b_wininfo = wip->wi_next;
-    free_wininfo(wip, buf);
+  for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+    free_wininfo(kv_A(buf->b_wininfo, i), buf);
   }
+  kv_size(buf->b_wininfo) = 0;
 }
 
 /// Free stuff in the buffer for ":bdel" and when wiping out the buffer.
@@ -1029,7 +1027,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
       enter_buffer(buf);
 
       if (old_tw != curbuf->b_p_tw) {
-        check_colorcolumn(curwin);
+        check_colorcolumn(NULL, curwin);
       }
     }
     // If "old_curbuf" is NULL we are in big trouble here...
@@ -1393,7 +1391,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
 
     // If the buffer to be deleted is not the current one, delete it here.
     if (buf != curbuf) {
-      if (jop_flags & JOP_CLEAN) {
+      if (jop_flags & kOptJopFlagClean) {
         // Remove the buffer to be deleted from the jump list.
         mark_jumplist_forget_file(curwin, buf_fnum);
       }
@@ -1419,7 +1417,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     if (au_new_curbuf.br_buf != NULL && bufref_valid(&au_new_curbuf)) {
       buf = au_new_curbuf.br_buf;
     } else if (curwin->w_jumplistlen > 0) {
-      if (jop_flags & JOP_CLEAN) {
+      if (jop_flags & kOptJopFlagClean) {
         // Remove the buffer from the jump list.
         mark_jumplist_forget_file(curwin, buf_fnum);
       }
@@ -1429,7 +1427,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       if (curwin->w_jumplistlen > 0) {
         int jumpidx = curwin->w_jumplistidx;
 
-        if (jop_flags & JOP_CLEAN) {
+        if (jop_flags & kOptJopFlagClean) {
           // If the index is the same as the length, the current position was not yet added to the
           // jump list. So we can safely go back to the last entry and search from there.
           if (jumpidx == curwin->w_jumplistlen) {
@@ -1443,7 +1441,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
         }
 
         forward = jumpidx;
-        while ((jop_flags & JOP_CLEAN) || jumpidx != curwin->w_jumplistidx) {
+        while ((jop_flags & kOptJopFlagClean) || jumpidx != curwin->w_jumplistidx) {
           buf = buflist_findnr(curwin->w_jumplist[jumpidx].fmark.fnum);
 
           if (buf != NULL) {
@@ -1460,7 +1458,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
             }
           }
           if (buf != NULL) {         // found a valid buffer: stop searching
-            if (jop_flags & JOP_CLEAN) {
+            if (jop_flags & kOptJopFlagClean) {
               curwin->w_jumplistidx = jumpidx;
               update_jumplist = false;
             }
@@ -1669,7 +1667,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
     // enter some buffer.  Using the last one is hopefully OK.
     enter_buffer(valid ? buf : lastbuf);
     if (old_tw != curbuf->b_p_tw) {
-      check_colorcolumn(curwin);
+      check_colorcolumn(NULL, curwin);
     }
   }
 
@@ -1926,7 +1924,8 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   }
 
   clear_wininfo(buf);
-  buf->b_wininfo = xcalloc(1, sizeof(wininfo_T));
+  WinInfo *curwin_info = xcalloc(1, sizeof(WinInfo));
+  kv_push(buf->b_wininfo, curwin_info);
 
   if (buf == curbuf) {
     free_buffer_stuff(buf, kBffInitChangedtick);  // delete local vars et al.
@@ -1964,9 +1963,9 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     buf_copy_options(buf, BCO_ALWAYS);
   }
 
-  buf->b_wininfo->wi_mark = (fmark_T)INIT_FMARK;
-  buf->b_wininfo->wi_mark.mark.lnum = lnum;
-  buf->b_wininfo->wi_win = curwin;
+  curwin_info->wi_mark = (fmark_T)INIT_FMARK;
+  curwin_info->wi_mark.mark.lnum = lnum;
+  curwin_info->wi_win = curwin;
 
   hash_init(&buf->b_s.b_keywtab);
   hash_init(&buf->b_s.b_keywtab_ic);
@@ -2097,6 +2096,8 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_tc);
   clear_string_option(&buf->b_p_tfu);
   callback_free(&buf->b_tfu_cb);
+  clear_string_option(&buf->b_p_ffu);
+  callback_free(&buf->b_ffu_cb);
   clear_string_option(&buf->b_p_dict);
   clear_string_option(&buf->b_p_tsr);
   clear_string_option(&buf->b_p_qe);
@@ -2157,11 +2158,11 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 
     // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
     // current buffer isn't empty: open new tab or window
-    if (wp == NULL && (swb_flags & (SWB_VSPLIT | SWB_SPLIT | SWB_NEWTAB))
+    if (wp == NULL && (swb_flags & (kOptSwbFlagVsplit | kOptSwbFlagSplit | kOptSwbFlagNewtab))
         && !buf_is_empty(curbuf)) {
-      if (swb_flags & SWB_NEWTAB) {
+      if (swb_flags & kOptSwbFlagNewtab) {
         tabpage_new();
-      } else if (win_split(0, (swb_flags & SWB_VSPLIT) ? WSP_VERT : 0)
+      } else if (win_split(0, (swb_flags & kOptSwbFlagVsplit) ? WSP_VERT : 0)
                  == FAIL) {
         return FAIL;
       }
@@ -2181,7 +2182,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
       curwin->w_cursor.coladd = 0;
       curwin->w_set_curswant = true;
     }
-    if (jop_flags & JOP_VIEW && restore_view) {
+    if (jop_flags & kOptJopFlagView && restore_view) {
       mark_view_restore(fm);
     }
     return OK;
@@ -2629,30 +2630,26 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
                      bool copy_options)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  wininfo_T *wip;
+  WinInfo *wip;
 
-  for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+  size_t i;
+  for (i = 0; i < kv_size(buf->b_wininfo); i++) {
+    wip = kv_A(buf->b_wininfo, i);
     if (wip->wi_win == win) {
       break;
     }
   }
-  if (wip == NULL) {
+
+  if (i == kv_size(buf->b_wininfo)) {
     // allocate a new entry
-    wip = xcalloc(1, sizeof(wininfo_T));
+    wip = xcalloc(1, sizeof(WinInfo));
     wip->wi_win = win;
     if (lnum == 0) {            // set lnum even when it's 0
       lnum = 1;
     }
   } else {
     // remove the entry from the list
-    if (wip->wi_prev) {
-      wip->wi_prev->wi_next = wip->wi_next;
-    } else {
-      buf->b_wininfo = wip->wi_next;
-    }
-    if (wip->wi_next) {
-      wip->wi_next->wi_prev = wip->wi_prev;
-    }
+    kv_shift(buf->b_wininfo, i, 1);
     if (copy_options && wip->wi_optset) {
       clear_winopt(&wip->wi_opt);
       deleteFoldRecurse(buf, &wip->wi_folds);
@@ -2677,17 +2674,15 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
   }
 
   // insert the entry in front of the list
-  wip->wi_next = buf->b_wininfo;
-  buf->b_wininfo = wip;
-  wip->wi_prev = NULL;
-  if (wip->wi_next) {
-    wip->wi_next->wi_prev = wip;
-  }
+  kv_pushp(buf->b_wininfo);
+  memmove(&kv_A(buf->b_wininfo, 1), &kv_A(buf->b_wininfo, 0),
+          (kv_size(buf->b_wininfo) - 1) * sizeof(kv_A(buf->b_wininfo, 0)));
+  kv_A(buf->b_wininfo, 0) = wip;
 }
 
 /// Check that "wip" has 'diff' set and the diff is only for another tab page.
 /// That's because a diff is local to a tab page.
-static bool wininfo_other_tab_diff(wininfo_T *wip)
+static bool wininfo_other_tab_diff(WinInfo *wip)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (!wip->wi_opt.wo_diff) {
@@ -2711,21 +2706,16 @@ static bool wininfo_other_tab_diff(wininfo_T *wip)
 /// @param skip_diff_buffer  when true, avoid windows with 'diff' set that is in another tab page.
 ///
 /// @return  NULL when there isn't any info.
-static wininfo_T *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buffer)
+static WinInfo *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buffer)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  wininfo_T *wip;
-
-  for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+  for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+    WinInfo *wip = kv_A(buf->b_wininfo, i);
     if (wip->wi_win == curwin
         && (!skip_diff_buffer || !wininfo_other_tab_diff(wip))
         && (!need_options || wip->wi_optset)) {
-      break;
+      return wip;
     }
-  }
-
-  if (wip != NULL) {
-    return wip;
   }
 
   // If no wininfo for curwin, use the first in the list (that doesn't have
@@ -2734,19 +2724,20 @@ static wininfo_T *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buf
   // unless the window is editing "buf", so we can copy from the window
   // itself.
   if (skip_diff_buffer) {
-    for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+    for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+      WinInfo *wip = kv_A(buf->b_wininfo, i);
       if (!wininfo_other_tab_diff(wip)
           && (!need_options
               || wip->wi_optset
               || (wip->wi_win != NULL
                   && wip->wi_win->w_buffer == buf))) {
-        break;
+        return wip;
       }
     }
-  } else {
-    wip = buf->b_wininfo;
+  } else if (kv_size(buf->b_wininfo)) {
+    return kv_A(buf->b_wininfo, 0);
   }
-  return wip;
+  return NULL;
 }
 
 /// Reset the local window options to the values last used in this window.
@@ -2758,7 +2749,7 @@ void get_winopts(buf_T *buf)
   clear_winopt(&curwin->w_onebuf_opt);
   clearFolding(curwin);
 
-  wininfo_T *const wip = find_wininfo(buf, true, true);
+  WinInfo *const wip = find_wininfo(buf, true, true);
   if (wip != NULL && wip->wi_win != curwin && wip->wi_win != NULL
       && wip->wi_win->w_buffer == buf) {
     win_T *wp = wip->wi_win;
@@ -2798,7 +2789,7 @@ fmark_T *buflist_findfmark(buf_T *buf)
 {
   static fmark_T no_position = { { 1, 0, 0 }, 0, 0, { 0 }, NULL };
 
-  wininfo_T *const wip = find_wininfo(buf, false, false);
+  WinInfo *const wip = find_wininfo(buf, false, false);
   return (wip == NULL) ? &no_position : &(wip->wi_mark);
 }
 
@@ -2817,6 +2808,7 @@ void buflist_list(exarg_T *eap)
   garray_T buflist;
   buf_T **buflist_data = NULL;
 
+  msg_ext_set_kind("list_cmd");
   if (vim_strchr(eap->arg, 't')) {
     ga_init(&buflist, sizeof(buf_T *), 50);
     for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
@@ -2900,7 +2892,7 @@ void buflist_list(exarg_T *eap)
                    buf == curbuf ? (int64_t)curwin->w_cursor.lnum : (int64_t)buflist_findlnum(buf));
     }
 
-    msg_outtrans(IObuff, 0);
+    msg_outtrans(IObuff, 0, false);
     line_breakcheck();
   }
 
@@ -3265,8 +3257,8 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
                      n);
     validate_virtcol(curwin);
     size_t len = strlen(buffer);
-    col_print(buffer + len, IOSIZE - len,
-              (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
+    (void)col_print(buffer + len, IOSIZE - len,
+                    (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
   }
 
   append_arg_number(curwin, buffer, IOSIZE);
@@ -3294,13 +3286,13 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
   xfree(buffer);
 }
 
-void col_print(char *buf, size_t buflen, int col, int vcol)
+int col_print(char *buf, size_t buflen, int col, int vcol)
 {
   if (col == vcol) {
-    vim_snprintf(buf, buflen, "%d", col);
-  } else {
-    vim_snprintf(buf, buflen, "%d-%d", col, vcol);
+    return vim_snprintf(buf, buflen, "%d", col);
   }
+
+  return vim_snprintf(buf, buflen, "%d-%d", col, vcol);
 }
 
 static char *lasttitle = NULL;
@@ -3339,96 +3331,11 @@ void maketitle(void)
         title_str = p_titlestring;
       }
     } else {
-      // Format: "fname + (path) (1 of 2) - VIM".
-
-#define SPACE_FOR_FNAME (sizeof(buf) - 100)
-#define SPACE_FOR_DIR   (sizeof(buf) - 20)
-#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - Nvim".
-      char *buf_p = buf;
-      if (curbuf->b_fname == NULL) {
-        const size_t size = xstrlcpy(buf_p, _("[No Name]"),
-                                     SPACE_FOR_FNAME + 1);
-        buf_p += MIN(size, SPACE_FOR_FNAME);
-      } else {
-        buf_p += transstr_buf(path_tail(curbuf->b_fname), -1, buf_p, SPACE_FOR_FNAME + 1, true);
-      }
-
-      switch (bufIsChanged(curbuf)
-              | (curbuf->b_p_ro << 1)
-              | (!MODIFIABLE(curbuf) << 2)) {
-      case 0:
-        break;
-      case 1:
-        buf_p = strappend(buf_p, " +"); break;
-      case 2:
-        buf_p = strappend(buf_p, " ="); break;
-      case 3:
-        buf_p = strappend(buf_p, " =+"); break;
-      case 4:
-      case 6:
-        buf_p = strappend(buf_p, " -"); break;
-      case 5:
-      case 7:
-        buf_p = strappend(buf_p, " -+"); break;
-      default:
-        abort();
-      }
-
-      if (curbuf->b_fname != NULL) {
-        // Get path of file, replace home dir with ~.
-        *buf_p++ = ' ';
-        *buf_p++ = '(';
-        home_replace(curbuf, curbuf->b_ffname, buf_p,
-                     (SPACE_FOR_DIR - (size_t)(buf_p - buf)), true);
-#ifdef BACKSLASH_IN_FILENAME
-        // Avoid "c:/name" to be reduced to "c".
-        if (isalpha((uint8_t)(*buf_p)) && *(buf_p + 1) == ':') {
-          buf_p += 2;
-        }
-#endif
-        // Remove the file name.
-        char *p = path_tail_with_sep(buf_p);
-        if (p == buf_p) {
-          // Must be a help buffer.
-          xstrlcpy(buf_p, _("help"), SPACE_FOR_DIR - (size_t)(buf_p - buf));
-        } else {
-          *p = NUL;
-        }
-
-        // Translate unprintable chars and concatenate.  Keep some
-        // room for the server name.  When there is no room (very long
-        // file name) use (...).
-        if ((size_t)(buf_p - buf) < SPACE_FOR_DIR) {
-          char *const tbuf = transstr(buf_p, true);
-          const size_t free_space = SPACE_FOR_DIR - (size_t)(buf_p - buf) + 1;
-          const size_t dir_len = xstrlcpy(buf_p, tbuf, free_space);
-          buf_p += MIN(dir_len, free_space - 1);
-          xfree(tbuf);
-        } else {
-          const size_t free_space = SPACE_FOR_ARGNR - (size_t)(buf_p - buf) + 1;
-          const size_t dots_len = xstrlcpy(buf_p, "...", free_space);
-          buf_p += MIN(dots_len, free_space - 1);
-        }
-        *buf_p++ = ')';
-        *buf_p = NUL;
-      } else {
-        *buf_p = NUL;
-      }
-
-      append_arg_number(curwin, buf_p, (int)(SPACE_FOR_ARGNR - (size_t)(buf_p - buf)));
-
-      xstrlcat(buf_p, " - Nvim", (sizeof(buf) - (size_t)(buf_p - buf)));
-
-      if (maxlen > 0) {
-        // Make it shorter by removing a bit in the middle.
-        if (vim_strsize(buf) > maxlen) {
-          trunc_string(buf, buf, maxlen, sizeof(buf));
-        }
-      }
+      // Format: "fname + (path) (1 of 2) - Nvim".
+      char *default_titlestring = "%t%( %M%)%( (%{expand(\"%:~:h\")})%)%a - Nvim";
+      build_stl_str_hl(curwin, buf, sizeof(buf), default_titlestring,
+                       kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL, NULL);
       title_str = buf;
-#undef SPACE_FOR_FNAME
-#undef SPACE_FOR_DIR
-#undef SPACE_FOR_ARGNR
     }
   }
   bool mustset = value_change(title_str, &lasttitle);
@@ -3509,15 +3416,16 @@ void free_titles(void)
 
 /// Get relative cursor position in window into "buf[buflen]", in the localized
 /// percentage form like %99, 99%; using "Top", "Bot" or "All" when appropriate.
-void get_rel_pos(win_T *wp, char *buf, int buflen)
+int get_rel_pos(win_T *wp, char *buf, int buflen)
 {
   // Need at least 3 chars for writing.
   if (buflen < 3) {
-    return;
+    return 0;
   }
 
   linenr_T above;          // number of lines above window
   linenr_T below;          // number of lines below window
+  int len;
 
   above = wp->w_topline - 1;
   above += win_get_fill(wp, wp->w_topline) - wp->w_topfill;
@@ -3528,25 +3436,24 @@ void get_rel_pos(win_T *wp, char *buf, int buflen)
   }
   below = wp->w_buffer->b_ml.ml_line_count - wp->w_botline + 1;
   if (below <= 0) {
-    xstrlcpy(buf, (above == 0 ? _("All") : _("Bot")), (size_t)buflen);
+    len = vim_snprintf(buf, (size_t)buflen, "%s", (above == 0) ? _("All") : _("Bot"));
   } else if (above <= 0) {
-    xstrlcpy(buf, _("Top"), (size_t)buflen);
+    len = vim_snprintf(buf, (size_t)buflen, "%s", _("Top"));
   } else {
     int perc = (above > 1000000
                 ? (above / ((above + below) / 100))
                 : (above * 100 / (above + below)));
-
-    char *p = buf;
-    size_t l = (size_t)buflen;
-    if (perc < 10) {
-      // prepend one space
-      buf[0] = ' ';
-      p++;
-      l--;
-    }
     // localized percentage value
-    vim_snprintf(p, l, _("%d%%"), perc);
+    len = vim_snprintf(buf, (size_t)buflen, _("%s%d%%"), (perc < 10) ? " " : "", perc);
   }
+  if (len < 0) {
+    buf[0] = NUL;
+    len = 0;
+  } else if (len > buflen - 1) {
+    len = buflen - 1;
+  }
+
+  return len;
 }
 
 /// Append (2 of 8) to "buf[buflen]", if editing more than one file.
@@ -3720,7 +3627,7 @@ void ex_buffer_all(exarg_T *eap)
 
       // Open the buffer in this window.
       swap_exists_action = SEA_DIALOG;
-      set_curbuf(buf, DOBUF_GOTO, !(jop_flags & JOP_CLEAN));
+      set_curbuf(buf, DOBUF_GOTO, !(jop_flags & kOptJopFlagClean));
       if (!bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
         swap_exists_action = SEA_NONE;

@@ -252,12 +252,21 @@
 
 ; Preproc def / undef
 (preproc_def
-  name: (_) @constant)
+  name: (_) @constant.macro)
 
 (preproc_call
   directive: (preproc_directive) @_u
-  argument: (_) @constant
+  argument: (_) @constant.macro
   (#eq? @_u "#undef"))
+
+(preproc_ifdef
+  name: (identifier) @constant.macro)
+
+(preproc_elifdef
+  name: (identifier) @constant.macro)
+
+(preproc_defined
+  (identifier) @constant.macro)
 
 (call_expression
   function: (identifier) @function.call)

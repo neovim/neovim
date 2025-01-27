@@ -4,6 +4,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/macros_defs.h"
+#include "nvim/pos_defs.h"
 
 /// flags for update_screen()
 /// The higher the value, the higher the priority

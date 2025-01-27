@@ -1189,6 +1189,7 @@ items:
 			|hl-PmenuKind| highlight group, allowing for the
 			customization of ctermfg and guifg properties for the
 			completion kind
+	match		See "matches" in |complete_info()|.
 
 All of these except "icase", "equal", "dup" and "empty" must be a string.  If
 an item does not meet these requirements then an error message is given and
@@ -1907,6 +1908,16 @@ These commands are used to start inserting text.  You can end insert mode with
 <Esc>.  See |mode-ins-repl| for the other special characters in Insert mode.
 The effect of [count] takes place after Insert mode is exited.
 
+The following commands insert text, but stay in normal mode:
+
+							*]<Space>*
+]<Space>		Insert an empty line below the cursor without leaving
+			Normal mode, repeat [count] times.
+
+							*[<Space>*
+[<Space>		Insert an empty line above the cursor without leaving
+			Normal mode, repeat [count] times.
+
 When 'autoindent' is on, the indent for a new line is obtained from the
 previous line.  When 'smartindent' or 'cindent' is on, the indent for a line
 is automatically adjusted for C programs.
@@ -2016,7 +2027,7 @@ the cursor is, or below the specified line.  To insert text above the first
 line use the command ":0r {name}".
 
 After the ":read" command, the cursor is left on the first non-blank in the
-first new line.  Unless in Ex mode, then the cursor is left on the last new
+first new line.  If in Ex mode, then the cursor is left on the last new
 line (sorry, this is Vi compatible).
 
 If a file name is given with ":r", it becomes the alternate file.  This can be

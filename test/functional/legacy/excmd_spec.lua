@@ -19,7 +19,6 @@ describe(':confirm command dialog', function()
   local function start_new()
     clear()
     screen = Screen.new(75, 20)
-    screen:attach()
   end
 
   -- Test for the :confirm command dialog

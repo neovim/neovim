@@ -17,10 +17,12 @@
 
 #ifdef HAVE_WASMTIME
 # include <wasm.h>
+
+# include "nvim/os/fs.h"
 #endif
 
-#include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
 #include "nvim/lua/treesitter.h"
@@ -28,7 +30,6 @@
 #include "nvim/map_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
-#include "nvim/os/fs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -127,9 +128,9 @@ static const TSLanguage *load_language_from_object(lua_State *L, const char *pat
 {
   uv_lib_t lib;
   if (uv_dlopen(path, &lib)) {
+    xstrlcpy(IObuff, uv_dlerror(&lib), sizeof(IObuff));
     uv_dlclose(&lib);
-    luaL_error(L, "Failed to load parser for language '%s': uv_dlopen: %s",
-               lang_name, uv_dlerror(&lib));
+    luaL_error(L, "Failed to load parser for language '%s': uv_dlopen: %s", lang_name, IObuff);
   }
 
   char symbol_buf[128];
@@ -137,8 +138,9 @@ static const TSLanguage *load_language_from_object(lua_State *L, const char *pat
 
   TSLanguage *(*lang_parser)(void);
   if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
+    xstrlcpy(IObuff, uv_dlerror(&lib), sizeof(IObuff));
     uv_dlclose(&lib);
-    luaL_error(L, "Failed to load parser: uv_dlsym: %s", uv_dlerror(&lib));
+    luaL_error(L, "Failed to load parser: uv_dlsym: %s", IObuff);
   }
 
   TSLanguage *lang = lang_parser();
@@ -488,7 +490,11 @@ static int parser_parse(lua_State *L)
   // Sometimes parsing fails (timeout, or wrong parser ABI)
   // In those case, just return an error.
   if (!new_tree) {
-    return luaL_error(L, "An error occurred when parsing.");
+    if (ts_parser_timeout_micros(p) == 0) {
+      // No timeout set, must have had an error
+      return luaL_error(L, "An error occurred when parsing.");
+    }
+    return 0;
   }
 
   // The new tree will be pushed to the stack, without copy, ownership is now to the lua GC.
@@ -1151,7 +1157,7 @@ static int __has_ancestor(lua_State *L)
   int const pred_len = (int)lua_objlen(L, 2);
 
   TSNode node = ts_tree_root_node(descendant.tree);
-  while (node.id != descendant.id) {
+  while (node.id != descendant.id && !ts_node_is_null(node)) {
     char const *node_type = ts_node_type(node);
     size_t node_type_len = strlen(node_type);
 
@@ -1528,10 +1534,25 @@ static void query_err_string(const char *src, int error_offset, TSQueryError err
       || error_type == TSQueryErrorField
       || error_type == TSQueryErrorCapture) {
     const char *suffix = src + error_offset;
+    bool is_anonymous = error_type == TSQueryErrorNodeType && suffix[-1] == '"';
     int suffix_len = 0;
     char c = suffix[suffix_len];
-    while (isalnum(c) || c == '_' || c == '-' || c == '.') {
-      c = suffix[++suffix_len];
+    if (is_anonymous) {
+      int backslashes = 0;
+      // Stop when we hit an unescaped double quote
+      while (c != '"' || backslashes % 2 != 0) {
+        if (c == '\\') {
+          backslashes += 1;
+        } else {
+          backslashes = 0;
+        }
+        c = suffix[++suffix_len];
+      }
+    } else {
+      // Stop when we hit the end of the identifier
+      while (isalnum(c) || c == '_' || c == '-' || c == '.') {
+        c = suffix[++suffix_len];
+      }
     }
     snprintf(err, errlen, "\"%.*s\":\n", suffix_len, suffix);
     offset = strlen(err);

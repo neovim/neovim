@@ -15,7 +15,6 @@ describe('search stat', function()
       [4] = { reverse = true }, -- IncSearch, TabLineFill
       [5] = { foreground = Screen.colors.Red }, -- WarningMsg
     })
-    screen:attach()
   end)
 
   -- oldtest: Test_search_stat_screendump()

@@ -1,8 +1,10 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <signal.h>
+#include <string.h>
 #include <uv.h>
 
+#include "klib/kvec.h"
 #include "nvim/event/libuv_proc.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -13,6 +15,7 @@
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
+#include "nvim/memory_defs.h"
 #include "nvim/os/proc.h"
 #include "nvim/os/pty_proc.h"
 #include "nvim/os/shell.h"

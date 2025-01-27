@@ -15,6 +15,7 @@
 
 #include "auto/config.h"
 #include "klib/kvec.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -52,7 +53,6 @@
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/help.h"
-#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
@@ -73,7 +73,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
-#include "nvim/optionstr.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
@@ -189,7 +188,7 @@ void do_ascii(exarg_T *eap)
                    transchar(c), buf1, buf2, cval, cval, cval);
     }
 
-    msg_multiline(IObuff, 0, true, &need_clear);
+    msg_multiline(cstr_as_string(IObuff), 0, true, false, &need_clear);
 
     off += (size_t)utf_ptr2len(data);  // needed for overlong ascii?
   }
@@ -224,7 +223,7 @@ void do_ascii(exarg_T *eap)
                    c, c, c);
     }
 
-    msg_multiline(IObuff, 0, true, &need_clear);
+    msg_multiline(cstr_as_string(IObuff), 0, true, false, &need_clear);
 
     off += (size_t)utf_ptr2len(data + off);  // needed for overlong ascii?
   }
@@ -1028,7 +1027,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     msg_start();
     msg_putchar(':');
     msg_putchar('!');
-    msg_outtrans(newcmd, 0);
+    msg_outtrans(newcmd, 0, false);
     msg_clr_eos();
     ui_cursor_goto(msg_row, msg_col);
 
@@ -1469,7 +1468,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, bool list)
   if (curwin->w_p_nu || use_number) {
     vim_snprintf(numbuf, sizeof(numbuf), "%*" PRIdLINENR " ",
                  number_width(curwin), lnum);
-    msg_puts_attr(numbuf, HL_ATTR(HLF_N));  // Highlight line nrs.
+    msg_puts_hl(numbuf, HLF_N + 1, false);  // Highlight line nrs.
   }
   msg_prt_line(ml_get(lnum), list);
 }
@@ -2261,7 +2260,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     if (buf == NULL) {
       goto theend;
     }
-    // autocommands try to edit a file that is goind to be removed, abort
+    // autocommands try to edit a file that is going to be removed, abort
     if (buf_locked(buf)) {
       // window was split, but not editing the new buffer, reset b_nwindows again
       if (oldwin == NULL
@@ -3708,12 +3707,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           // Loop until 'y', 'n', 'q', CTRL-E or CTRL-Y typed.
           while (subflags.do_ask) {
             if (exmode_active) {
-              char *prompt;
-              char *resp;
-              colnr_T sc, ec;
-
               print_line_no_prefix(lnum, subflags.do_number, subflags.do_list);
 
+              colnr_T sc, ec;
               getvcol(curwin, &curwin->w_cursor, &sc, NULL, NULL);
               curwin->w_cursor.col = MAX(regmatch.endpos[0].col - 1, 0);
 
@@ -3725,10 +3721,11 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
                 ec += numw;
               }
 
-              prompt = xmallocz((size_t)ec + 1);
+              char *prompt = xmallocz((size_t)ec + 1);
               memset(prompt, ' ', (size_t)sc);
               memset(prompt + sc, '^', (size_t)(ec - sc) + 1);
-              resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL, CALLBACK_NONE);
+              char *resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL,
+                                             CALLBACK_NONE, false, NULL);
               msg_putchar('\n');
               xfree(prompt);
               if (resp != NULL) {
@@ -3795,35 +3792,17 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               redraw_later(curwin, UPD_SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
-              if (msg_row == Rows - 1) {
-                msg_didout = false;                     // avoid a scroll-up
-              }
-              msg_starthere();
-              i = msg_scroll;
-              msg_scroll = 0;                           // truncate msg when
-                                                        // needed
-              msg_no_more = true;
-              msg_ext_set_kind("confirm_sub");
-              // Same highlight as wait_return().
-              smsg(HL_ATTR(HLF_R), _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
-              msg_no_more = false;
-              msg_scroll = i;
-              if (!ui_has(kUIMessages)) {
-                ui_cursor_goto(msg_row, msg_col);
-              }
-              RedrawingDisabled = temp;
 
-              no_mapping++;                     // don't map this key
-              allow_keys++;                     // allow special keys
-              typed = plain_vgetc();
-              no_mapping--;
-              allow_keys--;
+              char *p = _("replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)");
+              snprintf(IObuff, IOSIZE, p, sub);
+              p = xstrdup(IObuff);
+              typed = prompt_for_input(p, HLF_R, true, NULL);
+              xfree(p);
 
-              // clear the question
-              msg_didout = false;               // don't scroll up
-              msg_col = 0;
+              msg_didout = false;                 // don't scroll up
               gotocmdline(true);
               p_lz = save_p_lz;
+              RedrawingDisabled = temp;
 
               // restore the line
               if (orig_line != NULL) {
@@ -4434,11 +4413,11 @@ void ex_global(exarg_T *eap)
     delim = *cmd;               // get the delimiter
     cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
-    patlen = strlen(pat);
     cmd = skip_regexp_ex(cmd, delim, magic_isset(), &eap->arg, NULL, NULL);
     if (cmd[0] == delim) {                  // end delimiter found
       *cmd++ = NUL;                         // replace it with a NUL
     }
+    patlen = strlen(pat);
   }
 
   char *used_pat;
@@ -4796,7 +4775,7 @@ void ex_oldfiles(exarg_T *eap)
     if (!message_filtered(fname)) {
       msg_outnum(nr);
       msg_puts(": ");
-      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)), 0);
+      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)), 0, false);
       msg_clr_eos();
       msg_putchar('\n');
       os_breakcheck();
@@ -4809,7 +4788,7 @@ void ex_oldfiles(exarg_T *eap)
   // File selection prompt on ":browse oldfiles"
   if (cmdmod.cmod_flags & CMOD_BROWSE) {
     quit_more = false;
-    nr = prompt_for_number(false);
+    nr = prompt_for_input(NULL, 0, false, NULL);
     msg_starthere();
     if (nr > 0 && nr <= tv_list_len(l)) {
       const char *const p = tv_list_find_str(l, nr - 1);

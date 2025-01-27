@@ -27,7 +27,7 @@ depends on the 'shortmess' option.
 				Clear messages, keeping only the {count} most
 				recent ones.
 
-The number of remembered messages is fixed at 200.
+The number of remembered messages is determined by the 'messagesopt' option.
 
 								*g<*
 The "g<" command can be used to see the last page of previous command output.
@@ -789,6 +789,7 @@ If you accidentally hit <Enter> or <Space> and you want to see the displayed
 text then use |g<|.  This only works when 'more' is set.
 
 To reduce the number of hit-enter prompts:
+- Set 'messagesopt'.
 - Set 'cmdheight' to 2 or higher.
 - Add flags to 'shortmess'.
 - Reset 'showcmd' and/or 'ruler'.

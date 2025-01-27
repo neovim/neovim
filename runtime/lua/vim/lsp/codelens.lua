@@ -21,7 +21,7 @@ local lens_cache_by_buf = setmetatable({}, {
 ---client_id -> namespace
 local namespaces = setmetatable({}, {
   __index = function(t, key)
-    local value = api.nvim_create_namespace('vim_lsp_codelens:' .. key)
+    local value = api.nvim_create_namespace('nvim.lsp.codelens:' .. key)
     rawset(t, key, value)
     return value
   end,
@@ -30,7 +30,7 @@ local namespaces = setmetatable({}, {
 ---@private
 M.__namespaces = namespaces
 
-local augroup = api.nvim_create_augroup('vim_lsp_codelens', {})
+local augroup = api.nvim_create_augroup('nvim.lsp.codelens', {})
 
 api.nvim_create_autocmd('LspDetach', {
   group = augroup,
@@ -48,7 +48,7 @@ local function execute_lens(lens, bufnr, client_id)
 
   local client = vim.lsp.get_client_by_id(client_id)
   assert(client, 'Client is required to execute lens, client_id=' .. client_id)
-  client:_exec_cmd(lens.command, { bufnr = bufnr }, function(...)
+  client:exec_cmd(lens.command, { bufnr = bufnr }, function(...)
     vim.lsp.handlers[ms.workspace_executeCommand](...)
     M.refresh()
   end)
@@ -104,16 +104,12 @@ function M.run()
   end
 end
 
-local function resolve_bufnr(bufnr)
-  return bufnr == 0 and api.nvim_get_current_buf() or bufnr
-end
-
 --- Clear the lenses
 ---
 ---@param client_id integer|nil filter by client_id. All clients if nil
 ---@param bufnr integer|nil filter by buffer. All buffers if nil, 0 for current buffer
 function M.clear(client_id, bufnr)
-  bufnr = bufnr and resolve_bufnr(bufnr)
+  bufnr = bufnr and vim._resolve_bufnr(bufnr)
   local buffers = bufnr and { bufnr }
     or vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
   for _, iter_bufnr in pairs(buffers) do
@@ -231,7 +227,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
       countdown()
     else
       assert(client)
-      client.request(ms.codeLens_resolve, lens, function(_, result)
+      client:request(ms.codeLens_resolve, lens, function(_, result)
         if api.nvim_buf_is_loaded(bufnr) and result and result.command then
           lens.command = result.command
           -- Eager display to have some sort of incremental feedback
@@ -261,7 +257,7 @@ end
 ---@param err lsp.ResponseError?
 ---@param result lsp.CodeLens[]
 ---@param ctx lsp.HandlerContext
-function M.on_codelens(err, result, ctx, _)
+function M.on_codelens(err, result, ctx)
   if err then
     active_refreshes[assert(ctx.bufnr)] = nil
     log.error('codelens', err)
@@ -296,7 +292,7 @@ end
 --- @param opts? vim.lsp.codelens.refresh.Opts Optional fields
 function M.refresh(opts)
   opts = opts or {}
-  local bufnr = opts.bufnr and resolve_bufnr(opts.bufnr)
+  local bufnr = opts.bufnr and vim._resolve_bufnr(opts.bufnr)
   local buffers = bufnr and { bufnr }
     or vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
 

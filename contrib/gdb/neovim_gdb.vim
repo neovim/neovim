@@ -167,13 +167,15 @@ function! s:Spawn(server_cmd, client_cmd, server_addr, reconnect)
   if type(a:server_cmd) == type('')
     " spawn gdbserver in a vertical split
     let server = s:GdbServer.new(gdb)
-    vsp | enew | let gdb._server_id = termopen(a:server_cmd, server)
+    server.term = v:true
+    vsp | enew | let gdb._server_id = jobstart(a:server_cmd, server)
     let gdb._jump_window = 2
     let gdb._server_buf = bufnr('%')
   endif
   " go to the bottom window and spawn gdb client
   wincmd j
-  enew | let gdb._client_id = termopen(a:client_cmd, gdb)
+  gdb.term = v:true
+  enew | let gdb._client_id = jobstart(a:client_cmd, gdb)
   let gdb._client_buf = bufnr('%')
   tnoremap <silent> <f8> <c-\><c-n>:GdbContinue<cr>i
   tnoremap <silent> <f10> <c-\><c-n>:GdbNext<cr>i

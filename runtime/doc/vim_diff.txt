@@ -24,7 +24,7 @@ User configuration and data files are found in standard |base-directories|
   session information.  |shada|
 
 ==============================================================================
-Defaults                                                    *nvim-defaults*
+Defaults                                            *defaults* *nvim-defaults*
 
 - Filetype detection is enabled by default. This can be disabled by adding
   ":filetype off" to |init.vim|.
@@ -39,7 +39,6 @@ Defaults                                                    *nvim-defaults*
 - 'autoindent' is enabled
 - 'autoread' is enabled (works in all UIs, including terminal)
 - 'background' defaults to "dark" (unless set automatically by the terminal/UI)
-- 'backspace' defaults to "indent,eol,start"
 - 'backupdir' defaults to .,~/.local/state/nvim/backup// (|xdg|), auto-created
 - 'belloff' defaults to "all"
 - 'comments' includes "fb:•"
@@ -89,7 +88,6 @@ Defaults                                                    *nvim-defaults*
 - 'undodir' defaults to ~/.local/state/nvim/undo// (|xdg|), auto-created
 - 'viewoptions' includes "unix,slash", excludes "options"
 - 'viminfo' includes "!"
-- 'wildmenu' is enabled
 - 'wildoptions' defaults to "pum,tagfile"
 
 - |editorconfig| plugin is enabled, .editorconfig settings are applied.
@@ -124,7 +122,7 @@ fully disable the mouse or popup-menu, do any of the following:
 <
 To remove the default popup-menu without disabling mouse: >vim
   aunmenu PopUp
-  autocmd! nvim_popupmenu
+  autocmd! nvim.popupmenu
 
 To remove only the "How-to disable mouse" menu item (and its separator): >vim
   aunmenu PopUp.How-to\ disable\ mouse
@@ -151,6 +149,7 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
   - |grr|
   - |gra|
   - |gri|
+  - |gO|
 - <C-S> |i_CTRL-S|
 - ]d |]d-default|
 - [d |[d-default|
@@ -162,6 +161,7 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T|
 - |[a|, |]a|, |[A|, |]A|
 - |[b|, |]b|, |[B|, |]B|
+- |[<Space>|, |]<Space>|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
 
@@ -170,7 +170,7 @@ DEFAULT AUTOCOMMANDS
 Default autocommands exist in the following groups. Use ":autocmd! {group}" to
 remove them and ":autocmd {group}" to see how they're defined.
 
-nvim_terminal:
+nvim.terminal:
 - BufReadCmd: Treats "term://" buffers as |terminal| buffers. |terminal-start|
 - TermClose: A |terminal| buffer started with no arguments (which thus uses
   'shell') and which exits with no error is closed automatically.
@@ -186,13 +186,17 @@ nvim_terminal:
     - 'textwidth' set to 0
     - 'nowrap'
     - 'nolist'
+    - 'nonumber'
+    - 'norelativenumber'
+    - 'signcolumn' set to "no"
+    - 'foldcolumn' set to "0"
     - 'winhighlight' uses |hl-StatusLineTerm| and |hl-StatusLineTermNC| in
       place of |hl-StatusLine| and |hl-StatusLineNC|
 
-nvim_cmdwin:
+nvim.cmdwin:
 - CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
 
-nvim_swapfile:
+nvim.swapfile:
 - SwapExists: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
   swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
   swapfile…" message.
@@ -249,7 +253,7 @@ backwards-compatibility cost. Some examples:
 
 Some features are built in that otherwise required external plugins:
 
-- Highlighting the yanked region, see |vim.highlight|.
+- Highlighting the yanked region, see |vim.hl|.
 
 ARCHITECTURE
 
@@ -287,7 +291,8 @@ Commands:
   User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
 
-Events:
+Events (autocommands):
+- Fixed inconsistent behavior in execution of nested autocommands #23368
 - |RecordingEnter|
 - |RecordingLeave|
 - |SearchWrapped|
@@ -295,6 +300,8 @@ Events:
 - |TabNewEntered|
 - |TermClose|
 - |TermOpen|
+- |TermResponse| is fired for any OSC sequence received from the terminal,
+  instead of the Primary Device Attributes response. |v:termresponse|
 - |UIEnter|
 - |UILeave|
 
@@ -321,7 +328,6 @@ Highlight groups:
 - |hl-MsgSeparator| highlights separator for scrolled messages
 - |hl-Substitute|
 - |hl-TermCursor|
-- |hl-TermCursorNC|
 - |hl-WinSeparator| highlights window separators
 - |hl-Whitespace| highlights 'listchars' whitespace
 - |hl-WinBar| highlights 'winbar'
@@ -339,15 +345,17 @@ Normal commands:
 
 Options:
 
-Local values for global-local number/boolean options are unset when the option
-is set without a scope (e.g. by using |:set|), similarly to how global-local
-string options work.
-
+- `:set {option}<` removes local value for all |global-local| options.
+- `:setlocal {option}<` copies global value to local value for all options.
+- 'ambiwidth'   cannot be set to empty.
 - 'autoread'    works in the terminal (if it supports "focus" events)
+- 'background'  cannot be set to empty.
 - 'cpoptions'   flags: |cpo-_|
 - 'diffopt'     "linematch" feature
+- 'eadirection' cannot be set to empty.
 - 'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The
                 user is prompted whether to trust the file.
+- 'fileformat'  cannot be set to empty.
 - 'fillchars'   flags: "msgsep", "horiz", "horizup", "horizdown",
                 "vertleft", "vertright", "verthoriz"
 - 'foldcolumn'  supports up to 9 dynamic/fixed columns
@@ -359,20 +367,27 @@ string options work.
     - "clean" removes unloaded buffers from the jumplist.
 - the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
 - 'laststatus'  global statusline support
+- 'mousemodel'  cannot be set to empty.
 - 'mousescroll' amount to scroll by when scrolling with a mouse
 - 'pumblend'    pseudo-transparent popupmenu
 - 'scrollback'
 - 'shortmess'
     - "F" flag does not affect output from autocommands.
     - "q" flag fully hides macro recording message.
-- 'signcolumn'  supports up to 9 dynamic/fixed columns
+- 'showcmdloc'  cannot be set to empty.
+- 'signcolumn'  can show multiple signs (dynamic or fixed columns)
 - 'statuscolumn' full control of columns using 'statusline' format
+- 'splitkeep'   cannot be set to empty.
 - 'tabline'     middle-click on tabpage label closes tabpage,
                 and %@Func@foo%X can call any function on mouse-click
 - 'termpastefilter'
 - 'ttimeout', 'ttimeoutlen' behavior was simplified
 - 'winblend'    pseudo-transparency in floating windows |api-floatwin|
 - 'winhighlight' window-local highlights
+
+Performance:
+- Signs are implemented using Nvim's internal "marktree" (btree) structure.
+- Folds are not updated during insert-mode.
 
 Providers:
 - If a Python interpreter is available on your `$PATH`, |:python| and
@@ -391,6 +406,7 @@ Shell:
 - |system()| does not support writing/reading "backgrounded" commands. |E5677|
 
 Signs:
+- 'signcolumn' can show multiple signs.
 - Signs are removed if the associated line is deleted.
 - Signs placed twice with the same identifier in the same group are moved.
 
@@ -400,6 +416,8 @@ Startup:
 - |-es| and |-Es| have improved behavior:
     - Quits automatically, don't need "-c qa!".
     - Skips swap-file dialog.
+    - Optimized for non-interactive scripts: disables swapfile, shada.
+- |-l| Executes Lua scripts non-interactively.
 - |-s| reads Normal commands from stdin if the script name is "-".
 - Reading text (instead of commands) from stdin |--|:
     - works by default: "-" file is optional
@@ -412,9 +430,12 @@ TUI:
 <
                         *'term'* *E529* *E530* *E531*
 - 'term' reflects the terminal type derived from |$TERM| and other environment
-  checks.  For debugging only; not reliable during startup. >vim
-          :echo &term
--  "builtin_x" means one of the |builtin-terms| was chosen, because the expected
+  checks.  Use `:echo &term` to get its value. For debugging only; not
+  reliable during startup.
+  - Note: If you want to detect when Nvim is running in a terminal, use
+    `has('gui_running')` |has()| or see |nvim_list_uis()| for an example of
+    how to inspect the UI channel.
+- "builtin_x" means one of the |builtin-terms| was chosen, because the expected
   terminfo file was not found on the system.
 - Nvim will use 256-colour capability on Linux virtual terminals.  Vim uses
   only 8 colours plus bright foreground on Linux VTs.
@@ -583,9 +604,6 @@ Mappings:
 Motion:
 - The |jumplist| avoids useless/phantom jumps.
 
-Performance:
-- Folds are not updated during insert-mode.
-
 Syntax highlighting:
 - syncolor.vim has been removed. Nvim now sets up default highlighting groups
   automatically for both light and dark backgrounds, regardless of whether or
@@ -610,11 +628,10 @@ Working directory (Vim implemented some of these after Nvim):
 - `getcwd(-1)` is equivalent to `getcwd(-1, 0)` instead of returning the global
   working directory. Use `getcwd(-1, -1)` to get the global working directory.
 
-Autocommands:
-- Fixed inconsistent behavior in execution of nested autocommands:
-  https://github.com/neovim/neovim/issues/23368
-- |TermResponse| is fired for any OSC sequence received from the terminal,
-  instead of the Primary Device Attributes response. |v:termresponse|
+Options:
+- 'titlestring' uses printf-style '%' items (see: 'statusline') to implement
+  the default behaviour. The implementation is equivalent to setting
+  'titlestring' to `%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim`.
 
 ==============================================================================
 Missing features                                         *nvim-missing*
@@ -623,7 +640,12 @@ These legacy Vim features are not yet implemented:
 
 - *:gui*
 - *:gvim*
+- *'browsedir'* *'bsdir'*
 - *'completepopup'*
+- *'guioptions'* *'go'*
+- *'guitablabel'* *'gtl'*
+- *'guitabtooltip'* *'gtt'*
+- *'mouseshape'* *'mouses'*
 - *'previewpopup'*
 
 ==============================================================================
@@ -658,7 +680,6 @@ Commands:
 - :promptrepl
 - :scriptversion (always version 1)
 - :shell
-- :sleep! (does not hide the cursor; same as :sleep)
 - :smile
 - :tearoff
 - :cstag
@@ -678,7 +699,7 @@ Cscope:
   https://github.com/dhananjaylatkar/cscope_maps.nvim
 
 Eval:
-- Vim9script
+- *Vim9script* (the Vim 9+ flavor of Vimscript) is not supported.
 - *cscope_connection()*
 - *err_teapot()*
 - *js_encode()*
@@ -730,6 +751,8 @@ Options:
   CMD-v (macOS), middle-click, …).
 - *'imactivatefunc'* *'imaf'*
 - *'imactivatekey'* *'imak'*
+- *'imcmdline'* *'imc'* *'noimcmdline'* *'noimc'*
+- *'imdisable'* *'imd'* *'noimdisable'* *'noimd'*
 - *'imstatusfunc'* *'imsf'*
 - *'insertmode'* *'im'* Use the following script to emulate 'insertmode': >vim
     autocmd BufWinEnter * startinsert
@@ -767,6 +790,7 @@ Options:
     6 composing chars only.
 - *'maxmem'* Nvim delegates memory-management to the OS.
 - *'maxmemtot'* Nvim delegates memory-management to the OS.
+- *'opendevice'* *'odev'* *'noopendevice'* *'noodev'*
 - printoptions
 - *'printdevice'*
 - *'printencoding'*

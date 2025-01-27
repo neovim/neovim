@@ -68,7 +68,6 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
-#include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
@@ -178,14 +177,11 @@ bool default_grid_alloc(void)
   resizing = true;
 
   // Allocation of the screen buffers is done only when the size changes and
-  // when Rows and Columns have been set and we have started doing full
-  // screen stuff.
+  // when Rows and Columns have been set.
   if ((default_grid.chars != NULL
        && Rows == default_grid.rows
        && Columns == default_grid.cols)
-      || Rows == 0
-      || Columns == 0
-      || (!full_screen && default_grid.chars == NULL)) {
+      || Rows == 0 || Columns == 0) {
     resizing = false;
     return false;
   }
@@ -290,9 +286,23 @@ void screen_resize(int width, int height)
   Rows = height;
   Columns = width;
   check_screensize();
-  int max_p_ch = Rows - min_rows() + 1;
-  if (!ui_has(kUIMessages) && p_ch > 0 && p_ch > max_p_ch) {
-    p_ch = max_p_ch ? max_p_ch : 1;
+  if (!ui_has(kUIMessages)) {
+    // clamp 'cmdheight'
+    int max_p_ch = Rows - min_rows(curtab) + 1;
+    if (p_ch > 0 && p_ch > max_p_ch) {
+      p_ch = MAX(max_p_ch, 1);
+      curtab->tp_ch_used = p_ch;
+    }
+    // clamp 'cmdheight' for other tab pages
+    FOR_ALL_TABS(tp) {
+      if (tp == curtab) {
+        continue;  // already set above
+      }
+      int max_tp_ch = Rows - min_rows(tp) + 1;
+      if (tp->tp_ch_used > 0 && tp->tp_ch_used > max_tp_ch) {
+        tp->tp_ch_used = MAX(max_tp_ch, 1);
+      }
+    }
   }
   height = Rows;
   width = Columns;
@@ -396,7 +406,7 @@ void check_screensize(void)
 {
   // Limit Rows and Columns to avoid an overflow in Rows * Columns.
   // need room for one window and command line
-  Rows = MIN(MAX(Rows, min_rows()), 1000);
+  Rows = MIN(MAX(Rows, min_rows_for_all_tabpages()), 1000);
   Columns = MIN(MAX(Columns, MIN_COLUMNS), 10000);
 }
 
@@ -665,6 +675,10 @@ int update_screen(void)
 
   updating_screen = false;
 
+  if (need_maketitle) {
+    maketitle();
+  }
+
   // Clear or redraw the command line.  Done last, because scrolling may
   // mess up the command line.
   if (clear_cmdline || redraw_cmdline || redraw_mode) {
@@ -842,6 +856,19 @@ void setcursor_mayforce(win_T *wp, bool force)
   }
 }
 
+/// Mark the title and icon for redraw if either of them uses statusline format.
+///
+/// @return  whether either title or icon uses statusline format.
+bool redraw_custom_title_later(void)
+{
+  if ((p_icon && (stl_syntax & STL_IN_ICON))
+      || (p_title && (stl_syntax & STL_IN_TITLE))) {
+    need_maketitle = true;
+    return true;
+  }
+  return false;
+}
+
 /// Show current cursor info in ruler and various other places
 ///
 /// @param always  if false, only show ruler if position has changed.
@@ -875,10 +902,7 @@ void show_cursor_info_later(bool force)
       curwin->w_redr_status = true;
     }
 
-    if ((p_icon && (stl_syntax & STL_IN_ICON))
-        || (p_title && (stl_syntax & STL_IN_TITLE))) {
-      need_maketitle = true;
-    }
+    redraw_custom_title_later();
   }
 
   curwin->w_stl_cursor = curwin->w_cursor;
@@ -952,7 +976,7 @@ int showmode(void)
 
     // Position on the last line in the window, column 0
     msg_pos_mode();
-    int attr = HL_ATTR(HLF_CM);                     // Highlight mode
+    int hl_id = HLF_CM;  // Highlight mode
 
     // When the screen is too narrow to show the entire mode message,
     // avoid scrolling and truncate instead.
@@ -961,7 +985,7 @@ int showmode(void)
     lines_left = 0;
 
     if (do_mode) {
-      msg_puts_attr("--", attr);
+      msg_puts_hl("--", hl_id, false);
       // CTRL-X in Insert mode
       if (edit_submode != NULL && !shortmess(SHM_COMPLETIONMENU)) {
         // These messages can get long, avoid a wrap in a narrow window.
@@ -981,52 +1005,49 @@ int showmode(void)
           }
           if (length - vim_strsize(edit_submode) > 0) {
             if (edit_submode_pre != NULL) {
-              msg_puts_attr(edit_submode_pre, attr);
+              msg_puts_hl(edit_submode_pre, hl_id, false);
             }
-            msg_puts_attr(edit_submode, attr);
+            msg_puts_hl(edit_submode, hl_id, false);
           }
           if (edit_submode_extra != NULL) {
-            msg_puts_attr(" ", attr);  // Add a space in between.
-            int sub_attr = edit_submode_highl < HLF_COUNT
-                           ? win_hl_attr(curwin, (int)edit_submode_highl)
-                           : attr;
-            msg_puts_attr(edit_submode_extra, sub_attr);
+            msg_puts_hl(" ", hl_id, false);  // Add a space in between.
+            int sub_id = edit_submode_highl < HLF_COUNT ? (int)edit_submode_highl : hl_id;
+            msg_puts_hl(edit_submode_extra, sub_id, false);
           }
         }
       } else {
         if (State & MODE_TERMINAL) {
-          msg_puts_attr(_(" TERMINAL"), attr);
+          msg_puts_hl(_(" TERMINAL"), hl_id, false);
         } else if (State & VREPLACE_FLAG) {
-          msg_puts_attr(_(" VREPLACE"), attr);
+          msg_puts_hl(_(" VREPLACE"), hl_id, false);
         } else if (State & REPLACE_FLAG) {
-          msg_puts_attr(_(" REPLACE"), attr);
+          msg_puts_hl(_(" REPLACE"), hl_id, false);
         } else if (State & MODE_INSERT) {
           if (p_ri) {
-            msg_puts_attr(_(" REVERSE"), attr);
+            msg_puts_hl(_(" REVERSE"), hl_id, false);
           }
-          msg_puts_attr(_(" INSERT"), attr);
+          msg_puts_hl(_(" INSERT"), hl_id, false);
         } else if (restart_edit == 'I' || restart_edit == 'i'
                    || restart_edit == 'a' || restart_edit == 'A') {
           if (curbuf->terminal) {
-            msg_puts_attr(_(" (terminal)"), attr);
+            msg_puts_hl(_(" (terminal)"), hl_id, false);
           } else {
-            msg_puts_attr(_(" (insert)"), attr);
+            msg_puts_hl(_(" (insert)"), hl_id, false);
           }
         } else if (restart_edit == 'R') {
-          msg_puts_attr(_(" (replace)"), attr);
+          msg_puts_hl(_(" (replace)"), hl_id, false);
         } else if (restart_edit == 'V') {
-          msg_puts_attr(_(" (vreplace)"), attr);
+          msg_puts_hl(_(" (vreplace)"), hl_id, false);
         }
         if (State & MODE_LANGMAP) {
           if (curwin->w_p_arab) {
-            msg_puts_attr(_(" Arabic"), attr);
-          } else if (get_keymap_str(curwin, " (%s)",
-                                    NameBuff, MAXPATHL)) {
-            msg_puts_attr(NameBuff, attr);
+            msg_puts_hl(_(" Arabic"), hl_id, false);
+          } else if (get_keymap_str(curwin, " (%s)", NameBuff, MAXPATHL) > 0) {
+            msg_puts_hl(NameBuff, hl_id, false);
           }
         }
         if ((State & MODE_INSERT) && p_paste) {
-          msg_puts_attr(_(" (paste)"), attr);
+          msg_puts_hl(_(" (paste)"), hl_id, false);
         }
 
         if (VIsual_active) {
@@ -1050,9 +1071,9 @@ int showmode(void)
           default:
             p = N_(" SELECT BLOCK"); break;
           }
-          msg_puts_attr(_(p), attr);
+          msg_puts_hl(_(p), hl_id, false);
         }
-        msg_puts_attr(" --", attr);
+        msg_puts_hl(" --", hl_id, false);
       }
 
       need_clear = true;
@@ -1060,7 +1081,7 @@ int showmode(void)
     if (reg_recording != 0
         && edit_submode == NULL             // otherwise it gets too long
         ) {
-      recording_mode(attr);
+      recording_mode(hl_id);
       need_clear = true;
     }
 
@@ -1095,9 +1116,13 @@ int showmode(void)
   win_T *ruler_win = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
   if (redrawing() && ruler_win->w_status_height == 0 && global_stl_height() == 0
       && !(p_ch == 0 && !ui_has(kUIMessages))) {
-    grid_line_start(&msg_grid_adj, Rows - 1);
+    if (!ui_has(kUIMessages)) {
+      grid_line_start(&msg_grid_adj, Rows - 1);
+    }
     win_redr_ruler(ruler_win);
-    grid_line_flush();
+    if (!ui_has(kUIMessages)) {
+      grid_line_flush();
+    }
   }
 
   redraw_cmdline = false;
@@ -1136,7 +1161,7 @@ void clearmode(void)
   msg_ext_ui_flush();
   msg_pos_mode();
   if (reg_recording != 0) {
-    recording_mode(HL_ATTR(HLF_CM));
+    recording_mode(HLF_CM);
   }
   msg_clr_eos();
   msg_ext_flush_showmode();
@@ -1145,16 +1170,16 @@ void clearmode(void)
   msg_row = save_msg_row;
 }
 
-static void recording_mode(int attr)
+static void recording_mode(int hl_id)
 {
   if (shortmess(SHM_RECORDING)) {
     return;
   }
 
-  msg_puts_attr(_("recording"), attr);
+  msg_puts_hl(_("recording"), hl_id, false);
   char s[4];
   snprintf(s, ARRAY_SIZE(s), " @%c", reg_recording);
-  msg_puts_attr(s, attr);
+  msg_puts_hl(s, hl_id, false);
 }
 
 #define COL_RULER 17        // columns needed by standard ruler
@@ -1501,10 +1526,12 @@ static void win_update(win_T *wp)
 
   decor_providers_invoke_win(wp);
 
-  if (win_redraw_signcols(wp)) {
-    wp->w_lines_valid = 0;
-    wp->w_redr_type = UPD_NOT_VALID;
-    changed_line_abv_curs_win(wp);
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+    if (win->w_buffer == wp->w_buffer && win_redraw_signcols(win)) {
+      win->w_lines_valid = 0;
+      changed_line_abv_curs_win(win);
+      redraw_later(win, UPD_NOT_VALID);
+    }
   }
 
   init_search_hl(wp, &screen_search_hl);
@@ -1885,7 +1912,7 @@ static void win_update(win_T *wp)
         unsigned save_ve_flags = curwin->w_ve_flags;
 
         if (curwin->w_p_lbr) {
-          curwin->w_ve_flags = VE_ALL;
+          curwin->w_ve_flags = kOptVeFlagAll;
         }
 
         getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc);
@@ -1894,7 +1921,7 @@ static void win_update(win_T *wp)
         // Highlight to the end of the line, unless 'virtualedit' has
         // "block".
         if (curwin->w_curswant == MAXCOL) {
-          if (get_ve_flags(curwin) & VE_BLOCK) {
+          if (get_ve_flags(curwin) & kOptVeFlagBlock) {
             pos_T pos;
             int cursor_above = curwin->w_cursor.lnum < VIsual.lnum;
 
@@ -1906,7 +1933,7 @@ static void win_update(win_T *wp)
                  pos.lnum += cursor_above ? 1 : -1) {
               colnr_T t;
 
-              pos.col = (colnr_T)strlen(ml_get_buf(wp->w_buffer, pos.lnum));
+              pos.col = ml_get_buf_len(wp->w_buffer, pos.lnum);
               getvvcol(wp, &pos, NULL, NULL, &t);
               toc = MAX(toc, t);
             }
@@ -2002,14 +2029,7 @@ static void win_update(win_T *wp)
   }
 
   foldinfo_T cursorline_fi = { 0 };
-  wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
-  if (wp->w_p_cul) {
-    // Make sure that the cursorline on a closed fold is redrawn
-    cursorline_fi = fold_info(wp, wp->w_cursor.lnum);
-    if (cursorline_fi.fi_level != 0 && cursorline_fi.fi_lines > 0) {
-      wp->w_cursorline = cursorline_fi.fi_lnum;
-    }
-  }
+  win_update_cursorline(wp, &cursorline_fi);
 
   win_check_ns_hl(wp);
 
@@ -2071,7 +2091,7 @@ static void win_update(win_T *wp)
                         // match in fixed position might need redraw
                         // if lines were inserted or deleted
                         || (wp->w_match_head != NULL
-                            && buf->b_mod_xlines != 0)))))
+                            && buf->b_mod_set && buf->b_mod_xlines != 0)))))
         || lnum == wp->w_cursorline
         || lnum == wp->w_last_cursorline) {
       if (lnum == mod_top) {
@@ -2230,7 +2250,7 @@ static void win_update(win_T *wp)
           && wp->w_lines[idx].wl_valid
           && wp->w_lines[idx].wl_lnum == lnum
           && lnum > wp->w_topline
-          && !(dy_flags & (DY_LASTLINE | DY_TRUNCATE))
+          && !(dy_flags & (kOptDyFlagLastline | kOptDyFlagTruncate))
           && srow + wp->w_lines[idx].wl_size > wp->w_grid.rows
           && win_get_fill(wp, lnum) == 0) {
         // This line is not going to fit.  Don't draw anything here,
@@ -2290,7 +2310,8 @@ static void win_update(win_T *wp)
       // - 'number' is set and below inserted/deleted lines, or
       // - 'relativenumber' is set and cursor moved vertically,
       // the text doesn't need to be redrawn, but the number column does.
-      if ((wp->w_p_nu && mod_top != 0 && lnum >= mod_bot && buf->b_mod_xlines != 0)
+      if ((wp->w_p_nu && mod_top != 0 && lnum >= mod_bot
+           && buf->b_mod_set && buf->b_mod_xlines != 0)
           || (wp->w_p_rnu && wp->w_last_cursor_lnum_rnu != wp->w_cursor.lnum)) {
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum
                           ? cursorline_fi : fold_info(wp, lnum);
@@ -2357,7 +2378,7 @@ redr_statuscol:
       // Window ends in filler lines.
       wp->w_botline = lnum;
       wp->w_filler_rows = wp->w_grid.rows - srow;
-    } else if (dy_flags & DY_TRUNCATE) {      // 'display' has "truncate"
+    } else if (dy_flags & kOptDyFlagTruncate) {      // 'display' has "truncate"
       // Last line isn't finished: Display "@@@" in the last screen line.
       grid_line_start(&wp->w_grid, wp->w_grid.rows - 1);
       grid_line_fill(0, MIN(wp->w_grid.cols, 3), wp->w_p_fcs_chars.lastline, at_attr);
@@ -2365,7 +2386,7 @@ redr_statuscol:
       grid_line_flush();
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
-    } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
+    } else if (dy_flags & kOptDyFlagLastline) {      // 'display' has "lastline"
       // Last line isn't finished: Display "@@@" at the end.
       // If this would split a doublewidth char in two, we need to display "@@@@" instead
       grid_line_start(&wp->w_grid, wp->w_grid.rows - 1);
@@ -2549,9 +2570,9 @@ int compute_foldcolumn(win_T *wp, int col)
 {
   int fdc = win_fdccol_count(wp);
   int wmw = wp == curwin && p_wmw == 0 ? 1 : (int)p_wmw;
-  int wwidth = wp->w_grid.cols;
+  int n = wp->w_grid.cols - (col + wmw);
 
-  return MIN(fdc, wwidth - (col + wmw));
+  return MIN(fdc, n);
 }
 
 /// Return the width of the 'number' and 'relativenumber' column.
@@ -2755,6 +2776,10 @@ void redraw_statuslines(void)
   if (redraw_tabline) {
     draw_tabline();
   }
+
+  if (need_maketitle) {
+    maketitle();
+  }
 }
 
 /// Redraw all status lines at the bottom of frame "frp".
@@ -2829,4 +2854,19 @@ bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
   return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+}
+
+/// Update w_cursorline, taking care to set it to the to the start of a closed fold.
+///
+/// @param[out] foldinfo foldinfo for the cursor line
+void win_update_cursorline(win_T *wp, foldinfo_T *foldinfo)
+{
+  wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
+  if (wp->w_p_cul) {
+    // Make sure that the cursorline on a closed fold is redrawn
+    *foldinfo = fold_info(wp, wp->w_cursor.lnum);
+    if (foldinfo->fi_level != 0 && foldinfo->fi_lines > 0) {
+      wp->w_cursorline = foldinfo->fi_lnum;
+    }
+  }
 }

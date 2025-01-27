@@ -13,7 +13,6 @@ describe('107', function()
 
   it('is working', function()
     local screen = Screen.new()
-    screen:attach()
 
     insert('start:')
     poke_eventloop()

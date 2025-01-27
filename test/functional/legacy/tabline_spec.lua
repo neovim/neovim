@@ -12,7 +12,6 @@ describe('tabline', function()
 
   before_each(function()
     screen = Screen.new(50, 7)
-    screen:attach()
   end)
 
   -- oldtest: Test_tabline_showcmd()

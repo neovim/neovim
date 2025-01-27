@@ -1,10 +1,11 @@
 " Vim syntax file
 " Language:	po (gettext)
 " Maintainer:	Dwayne Bailey <dwayne@translate.org.za>
-" Last Change:	2015 Jun 07
+" Last Change:	2024 Nov 28
 " Contributors: Dwayne Bailey (Most advanced syntax highlighting)
 "               Leonardo Fontenelle (Spell checking)
 "               Nam SungHyun <namsh@kldp.org> (Original maintainer)
+"               Eisuke Kawashima (add format-flags: #16132)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -32,9 +33,9 @@ syn region     poMsgCTxt	matchgroup=poStatementMsgCTxt start=+^msgctxt "+rs=e-1 
 syn region     poMsgID	matchgroup=poStatementMsgid start=+^msgid "+rs=e-1 matchgroup=poStringID end=+^msgstr\(\|\[[\]0\[]\]\) "+me=s-1 contains=poStringID,poStatementMsgidplural,poStatementMsgid
 syn region     poMsgSTR	matchgroup=poStatementMsgstr start=+^msgstr\(\|\[[\]0\[]\]\) "+rs=e-1 matchgroup=poStringSTR end=+\n\n+me=s-1 contains=poStringSTR,poStatementMsgstr
 syn region poStringCTxt	start=+"+ skip=+\\\\\|\\"+ end=+"+
-syn region poStringID	start=+"+ skip=+\\\\\|\\"+ end=+"+ contained 
+syn region poStringID	start=+"+ skip=+\\\\\|\\"+ end=+"+ contained
                             \ contains=poSpecial,poFormat,poCommentKDE,poPluralKDE,poKDEdesktopFile,poHtml,poAcceleratorId,poHtmlNot,poVariable
-syn region poStringSTR	start=+"+ skip=+\\\\\|\\"+ end=+"+ contained 
+syn region poStringSTR	start=+"+ skip=+\\\\\|\\"+ end=+"+ contained
                             \ contains=@Spell,poSpecial,poFormat,poHeaderItem,poCommentKDEError,poHeaderUndefined,poPluralKDEError,poMsguniqError,poKDEdesktopFile,poHtml,poAcceleratorStr,poHtmlNot,poVariable
 
 " Header and Copyright
@@ -45,13 +46,43 @@ syn match     poCopyrightUnset "SOME DESCRIPTIVE TITLE\|FIRST AUTHOR <EMAIL@ADDR
 " Translation comment block including: translator comment, automatic comments, flags and locations
 syn match     poComment "^#.*$"
 syn keyword   poFlagFuzzy fuzzy contained
+
+syn match     poFlagFormat /\<\%(no-\)\?awk-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?boost-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?c++-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?c-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?csharp-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?elisp-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?gcc-internal-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?gfc-internal-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?java-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?java-printf-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?javascript-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?kde-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?librep-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?lisp-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?lua-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?objc-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?object-pascal-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?perl-brace-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?perl-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?php-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?python-brace-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?python-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?qt-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?qt-plural-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?ruby-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?scheme-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?sh-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?smalltalk-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?tcl-format\>/ contained
+syn match     poFlagFormat /\<\%(no-\)\?ycp-format\>/ contained
+
 syn match     poCommentTranslator "^# .*$" contains=poCopyrightUnset
-syn match     poCommentAutomatic "^#\..*$" 
+syn match     poCommentAutomatic "^#\..*$"
 syn match     poCommentSources	"^#:.*$"
-syn match     poCommentFlags "^#,.*$" contains=poFlagFuzzy
-syn match     poDiffOld '\(^#| "[^{]*+}\|{+[^}]*+}\|{+[^}]*\|"$\)' contained
-syn match     poDiffNew '\(^#| "[^{]*-}\|{-[^}]*-}\|{-[^}]*\|"$\)' contained
-syn match     poCommentDiff "^#|.*$" contains=poDiffOld,poDiffNew
+syn match     poCommentFlags "^#,.*$" contains=poFlagFuzzy,poFlagFormat
+syn match     poCommentPrevious "^#|.*$"
 
 " Translations (also includes header fields as they appear in a translation msgstr)
 syn region poCommentKDE	  start=+"_: +ms=s+1 end="\\n" end="\"\n^msgstr"me=s-1 contained
@@ -66,13 +97,13 @@ syn match  poFormat	"%%" contained
 syn region poMsguniqError matchgroup=poMsguniqErrorMarkers  start="#-#-#-#-#"  end='#\("\n"\|\)-\("\n"\|\)#\("\n"\|\)-\("\n"\|\)#\("\n"\|\)-\("\n"\|\)#\("\n"\|\)-\("\n"\|\)#\("\n"\|\)\\n' contained
 
 " Obsolete messages
-syn match poObsolete "^#\~.*$" 
+syn match poObsolete "^#\~.*$"
 
 " KDE Name= handling
 syn match poKDEdesktopFile "\"\(Name\|Comment\|GenericName\|Description\|Keywords\|About\)="ms=s+1,me=e-1
 
 " Accelerator keys - this messes up if the preceding or following char is a multibyte unicode char
-syn match poAcceleratorId  contained "[^&_~][&_~]\(\a\|\d\)[^:]"ms=s+1,me=e-1 
+syn match poAcceleratorId  contained "[^&_~][&_~]\(\a\|\d\)[^:]"ms=s+1,me=e-1
 syn match poAcceleratorStr  contained "[^&_~][&_~]\(\a\|\d\)[^:]"ms=s+1,me=e-1 contains=@Spell
 
 " Variables simple
@@ -86,11 +117,10 @@ hi def link poComment	     Comment
 hi def link poCommentAutomatic  Comment
 hi def link poCommentTranslator Comment
 hi def link poCommentFlags      Special
-hi def link poCommentDiff       Comment
+hi def link poCommentPrevious   Comment
 hi def link poCopyrightUnset    Todo
 hi def link poFlagFuzzy         Todo
-hi def link poDiffOld           Todo
-hi def link poDiffNew          Special
+hi def link poFlagFormat        Todo
 hi def link poObsolete         Comment
 
 hi def link poStatementMsgid   Statement

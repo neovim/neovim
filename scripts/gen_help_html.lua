@@ -48,7 +48,7 @@ local spell_dict = {
 --- specify the list of keywords to ignore (i.e. allow), or true to disable spell check completely.
 --- @type table<string, true|string[]>
 local spell_ignore_files = {
-  ['backers.txt'] = true,
+  ['credits.txt'] = { 'Neovim' },
   ['news.txt'] = { 'tree-sitter' }, -- in news, may refer to the upstream "tree-sitter" library
   ['news-0.10.txt'] = { 'tree-sitter' },
 }
@@ -70,6 +70,8 @@ local new_layout = {
   ['dev_vimpatch.txt'] = true,
   ['editorconfig.txt'] = true,
   ['faq.txt'] = true,
+  ['gui.txt'] = true,
+  ['intro.txt'] = true,
   ['lua.txt'] = true,
   ['luaref.txt'] = true,
   ['news.txt'] = true,
@@ -84,6 +86,7 @@ local new_layout = {
 
 -- Map of new:old pages, to redirect renamed pages.
 local redirects = {
+  ['credits'] = 'backers',
   ['tui'] = 'term',
   ['terminal'] = 'nvim_terminal_emulator',
 }
@@ -116,7 +119,7 @@ local exclude_invalid_urls = {
 -- Deprecated, brain-damaged files that I don't care about.
 local ignore_errors = {
   ['pi_netrw.txt'] = true,
-  ['backers.txt'] = true,
+  ['credits.txt'] = true,
 }
 
 local function tofile(fname, text)
@@ -1289,25 +1292,15 @@ end
 ---
 --- @return nvim.gen_help_html.gen_result result
 function M.gen(help_dir, to_dir, include, commit, parser_path)
-  vim.validate {
-    help_dir = {
-      help_dir,
-      function(d)
-        return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
-      end,
-      'valid directory',
-    },
-    to_dir = { to_dir, 's' },
-    include = { include, 't', true },
-    commit = { commit, 's', true },
-    parser_path = {
-      parser_path,
-      function(f)
-        return f == nil or vim.fn.filereadable(vim.fs.normalize(f)) == 1
-      end,
-      'valid vimdoc.{so,dll} filepath',
-    },
-  }
+  vim.validate('help_dir', help_dir, function(d)
+    return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
+  end, 'valid directory')
+  vim.validate('to_dir', to_dir, 'string')
+  vim.validate('include', include, 'table', true)
+  vim.validate('commit', commit, 'string', true)
+  vim.validate('parser_path', parser_path, function(f)
+    return vim.fn.filereadable(vim.fs.normalize(f)) == 1
+  end, true, 'valid vimdoc.{so,dll} filepath')
 
   local err_count = 0
   local redirects_count = 0
@@ -1410,23 +1403,13 @@ end
 ---
 --- @return nvim.gen_help_html.validate_result result
 function M.validate(help_dir, include, parser_path)
-  vim.validate {
-    help_dir = {
-      help_dir,
-      function(d)
-        return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
-      end,
-      'valid directory',
-    },
-    include = { include, 't', true },
-    parser_path = {
-      parser_path,
-      function(f)
-        return f == nil or vim.fn.filereadable(vim.fs.normalize(f)) == 1
-      end,
-      'valid vimdoc.{so,dll} filepath',
-    },
-  }
+  vim.validate('help_dir', help_dir, function(d)
+    return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
+  end, 'valid directory')
+  vim.validate('include', include, 'table', true)
+  vim.validate('parser_path', parser_path, function(f)
+    return vim.fn.filereadable(vim.fs.normalize(f)) == 1
+  end, true, 'valid vimdoc.{so,dll} filepath')
   local err_count = 0 ---@type integer
   local files_to_errors = {} ---@type table<string, string[]>
   ensure_runtimepath()

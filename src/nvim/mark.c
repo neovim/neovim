@@ -23,7 +23,6 @@
 #include "nvim/fold.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
-#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -234,7 +233,7 @@ void setpcmark(void)
     curwin->w_pcmark.lnum = 1;
   }
 
-  if (jop_flags & JOP_STACK) {
+  if (jop_flags & kOptJopFlagStack) {
     // jumpoptions=stack: if we're somewhere in the middle of the jumplist
     // discard everything after the current index.
     if (curwin->w_jumplistidx < curwin->w_jumplistlen - 1) {
@@ -957,9 +956,9 @@ static void show_one_mark(int c, char *arg, pos_T *p, char *name_arg, int curren
       msg_putchar('\n');
       if (!got_int) {
         snprintf(IObuff, IOSIZE, " %c %6" PRIdLINENR " %4d ", c, p->lnum, p->col);
-        msg_outtrans(IObuff, 0);
+        msg_outtrans(IObuff, 0, false);
         if (name != NULL) {
-          msg_outtrans(name, current ? HL_ATTR(HLF_D) : 0);
+          msg_outtrans(name, current ? HLF_D : 0, false);
         }
       }
     }
@@ -1082,9 +1081,8 @@ void ex_jumps(exarg_T *eap)
                i == curwin->w_jumplistidx ? '>' : ' ',
                i > curwin->w_jumplistidx ? i - curwin->w_jumplistidx : curwin->w_jumplistidx - i,
                curwin->w_jumplist[i].fmark.mark.lnum, curwin->w_jumplist[i].fmark.mark.col);
-      msg_outtrans(IObuff, 0);
-      msg_outtrans(name,
-                   curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum ? HL_ATTR(HLF_D) : 0);
+      msg_outtrans(IObuff, 0, false);
+      msg_outtrans(name, curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum ? HLF_D : 0, false);
       xfree(name);
       os_breakcheck();
     }
@@ -1119,9 +1117,9 @@ void ex_changes(exarg_T *eap)
                curwin->w_changelistidx ? i - curwin->w_changelistidx : curwin->w_changelistidx - i,
                curbuf->b_changelist[i].mark.lnum,
                curbuf->b_changelist[i].mark.col);
-      msg_outtrans(IObuff, 0);
+      msg_outtrans(IObuff, 0, false);
       char *name = mark_line(&curbuf->b_changelist[i].mark, 17);
-      msg_outtrans(name, HL_ATTR(HLF_D));
+      msg_outtrans(name, HLF_D, false);
       xfree(name);
       os_breakcheck();
     }
@@ -1474,7 +1472,7 @@ void cleanup_jumplist(win_T *wp, bool loadfiles)
       mustfree = false;
     } else if (i > from + 1) {      // non-adjacent duplicate
       // jumpoptions=stack: remove duplicates only when adjacent.
-      mustfree = !(jop_flags & JOP_STACK);
+      mustfree = !(jop_flags & kOptJopFlagStack);
     } else {                        // adjacent duplicate
       mustfree = true;
     }

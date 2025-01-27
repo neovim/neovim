@@ -65,7 +65,6 @@ describe('the first line is redrawn correctly after inserting text in an empty b
       [1] = { bold = true, foreground = Screen.colors.Blue },
       [2] = { bold = true, reverse = true },
     })
-    screen:attach()
   end)
 
   it('using :append', function()

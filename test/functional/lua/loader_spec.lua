@@ -10,7 +10,17 @@ local eq = t.eq
 describe('vim.loader', function()
   before_each(clear)
 
-  it('can work in compatibility with --luamod-dev #27413', function()
+  it('can be disabled', function()
+    exec_lua(function()
+      local orig_loader = _G.loadfile
+      vim.loader.enable()
+      assert(orig_loader ~= _G.loadfile)
+      vim.loader.enable(false)
+      assert(orig_loader == _G.loadfile)
+    end)
+  end)
+
+  it('works with --luamod-dev #27413', function()
     clear({ args = { '--luamod-dev' } })
     exec_lua(function()
       vim.loader.enable()
@@ -31,7 +41,7 @@ describe('vim.loader', function()
     end)
   end)
 
-  it('handles changing files (#23027)', function()
+  it('handles changing files #23027', function()
     exec_lua(function()
       vim.loader.enable()
     end)
@@ -63,7 +73,7 @@ describe('vim.loader', function()
     )
   end)
 
-  it('handles % signs in modpath (#24491)', function()
+  it('handles % signs in modpath #24491', function()
     exec_lua [[
       vim.loader.enable()
     ]]
@@ -82,7 +92,7 @@ describe('vim.loader', function()
     eq(2, exec_lua('return loadfile(...)()', tmp2))
   end)
 
-  it('correct indent on error message (#29809)', function()
+  it('indents error message #29809', function()
     local errmsg = exec_lua [[
       vim.loader.enable()
       local _, errmsg = pcall(require, 'non_existent_module')

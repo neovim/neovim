@@ -309,6 +309,15 @@ describe('API: set highlight', function()
     eq({ underdotted = true }, api.nvim_get_hl_by_name('Test_hl', true))
   end)
 
+  it('can set all underline cterm attributes #31385', function()
+    local ns = get_ns()
+    local attrs = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
+    for _, attr in ipairs(attrs) do
+      api.nvim_set_hl(ns, 'Test_' .. attr, { cterm = { [attr] = true } })
+      eq({ [attr] = true }, api.nvim_get_hl_by_name('Test_' .. attr, false))
+    end
+  end)
+
   it('can set a highlight in the global namespace', function()
     api.nvim_set_hl(0, 'Test_hl', highlight2_config)
     eq(
@@ -708,6 +717,20 @@ describe('API: set/get highlight namespace', function()
     eq(-1, api.nvim_get_hl_ns({ winid = 0 }))
     local ns = api.nvim_create_namespace('')
     api.nvim_win_set_hl_ns(0, ns)
+    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
+  end)
+
+  it('setting namespace takes priority over &winhighlight', function()
+    command('set winhighlight=Visual:Search')
+    n.insert('foobar')
+    local ns = api.nvim_create_namespace('')
+    api.nvim_win_set_hl_ns(0, ns)
+    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
+    command('enew') -- switching buffer keeps namespace #30904
+    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
+    command('set winhighlight=')
+    eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
+    command('set winhighlight=Visual:Search')
     eq(ns, api.nvim_get_hl_ns({ winid = 0 }))
   end)
 end)

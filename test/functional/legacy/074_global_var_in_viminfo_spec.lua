@@ -150,5 +150,7 @@ describe('storing global variables in ShaDa files', function()
 
   teardown(function()
     os.remove(tempname)
+    command('set shadafile=NONE')
+    os.remove('Xviminfo')
   end)
 end)

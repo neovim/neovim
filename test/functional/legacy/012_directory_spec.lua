@@ -15,7 +15,6 @@ local clear = n.clear
 local insert = n.insert
 local command = n.command
 local write_file = t.write_file
-local expect_exit = n.expect_exit
 local mkdir = t.mkdir
 
 local function ls_dir_sorted(dirname)
@@ -44,7 +43,9 @@ describe("'directory' option", function()
     clear()
   end)
   teardown(function()
-    expect_exit(command, 'qall!')
+    command('%bwipe!')
+    api.nvim_set_option_value('swapfile', false, {})
+    api.nvim_set_option_value('directory', '.', {})
     n.rmdir('Xtest.je')
     n.rmdir('Xtest2')
     os.remove('Xtest1')
@@ -57,7 +58,6 @@ describe("'directory' option", function()
       line 3 Abcdefghij
       end of testfile]])
 
-    api.nvim_set_option_value('swapfile', true, {})
     api.nvim_set_option_value('swapfile', true, {})
     api.nvim_set_option_value('directory', '.', {})
 

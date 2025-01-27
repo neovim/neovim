@@ -21,8 +21,7 @@ describe(':terminal', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(50, 4)
-    screen:attach({ rgb = false })
+    screen = Screen.new(50, 4, { rgb = false })
     screen._default_attr_ids = nil
   end)
 
@@ -169,16 +168,15 @@ local function test_terminal_with_fake_shell(backslash)
 
   before_each(function()
     clear()
-    screen = Screen.new(50, 4)
-    screen:attach({ rgb = false })
+    screen = Screen.new(50, 4, { rgb = false })
     screen._default_attr_ids = nil
     api.nvim_set_option_value('shell', shell_path, {})
     api.nvim_set_option_value('shellcmdflag', 'EXE', {})
     api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
   end)
 
-  it('with no argument, acts like termopen()', function()
-    command('autocmd! nvim_terminal TermClose')
+  it('with no argument, acts like jobstart(…,{term=true})', function()
+    command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     screen:expect([[
       ^ready $                                           |
@@ -198,7 +196,7 @@ local function test_terminal_with_fake_shell(backslash)
     ]])
   end)
 
-  it("with no argument, but 'shell' has arguments, acts like termopen()", function()
+  it("with no argument, but 'shell' has arguments, acts like jobstart(…,{term=true})", function()
     api.nvim_set_option_value('shell', shell_path .. ' INTERACT', {})
     feed_command('terminal')
     screen:expect([[
@@ -248,7 +246,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('ignores writes if the backing stream closes', function()
-    command('autocmd! nvim_terminal TermClose')
+    command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     feed('iiXXXXXXX')
     poke_eventloop()
@@ -260,14 +258,14 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('works with findfile()', function()
-    command('autocmd! nvim_terminal TermClose')
+    command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     eq('scripts/shadacat.py', eval('findfile("scripts/shadacat.py", ".")'))
   end)
 
   it('works with :find', function()
-    command('autocmd! nvim_terminal TermClose')
+    command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     screen:expect([[
       ^ready $                                           |

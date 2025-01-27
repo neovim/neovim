@@ -15,7 +15,6 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_8] = "SpecialKey",
   [HLF_EOB] = "EndOfBuffer",
   [HLF_TERM] = "TermCursor",
-  [HLF_TERMNC] = "TermCursorNC",
   [HLF_AT] = "NonText",
   [HLF_D] = "Directory",
   [HLF_E] = "ErrorMsg",
@@ -84,7 +83,7 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_TSNC] = "StatusLineTermNC",
 });
 
-EXTERN int highlight_attr[HLF_COUNT + 1];     // Highl. attr for each context.
+EXTERN int highlight_attr[HLF_COUNT];     // Highl. attr for each context.
 EXTERN int highlight_attr_last[HLF_COUNT];  // copy for detecting changed groups
 EXTERN int highlight_user[9];                   // User[1-9] attributes
 EXTERN int highlight_stlnc[9];                  // On top of user

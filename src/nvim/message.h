@@ -28,8 +28,6 @@ enum {
   VIM_DISCARDALL = 6,
 };
 
-enum { MSG_HIST = 0x1000, };  ///< special attribute addition: Put message in history
-
 /// First message
 extern MessageHistoryEntry *first_msg_hist;
 /// Last message

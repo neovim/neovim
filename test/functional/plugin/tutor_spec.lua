@@ -24,7 +24,6 @@ describe(':Tutor', function()
       [5] = { bold = true, foreground = Screen.colors.Magenta1 },
       [6] = { italic = true },
     })
-    screen:attach()
   end)
 
   it('applies {unix:…,win:…} transform', function()

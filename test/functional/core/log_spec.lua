@@ -15,6 +15,7 @@ describe('log', function()
 
   after_each(function()
     expect_exit(command, 'qa!')
+    vim.uv.sleep(10) -- Wait for Nvim to fully exit
     os.remove(testlog)
   end)
 
@@ -45,7 +46,7 @@ describe('log', function()
         env = env,
       })
       screen:expect([[
-        {1: }                                                 |
+        ^                                                  |
         ~                                                 |*4
                                                           |
         {3:-- TERMINAL --}                                    |

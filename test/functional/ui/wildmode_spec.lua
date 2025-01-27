@@ -19,7 +19,6 @@ describe("'wildmenu'", function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.Yellow1, foreground = Screen.colors.Black },
     }
-    screen:attach()
   end)
 
   -- oldtest: Test_wildmenu_screendump()
@@ -492,7 +491,6 @@ describe('command line completion', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.Yellow1, foreground = Screen.colors.Black },
     }
-    screen:attach()
   end)
   after_each(function()
     os.remove('Xtest-functional-viml-compl-dir')
@@ -592,8 +590,7 @@ describe('ui/ext_wildmenu', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(25, 5)
-    screen:attach({ rgb = true, ext_wildmenu = true })
+    screen = Screen.new(25, 5, { rgb = true, ext_wildmenu = true })
   end)
 
   it('works with :sign <tab>', function()

@@ -88,9 +88,9 @@ if has('timers')
     " CursorHoldI event.
     let g:triggered = 0
     au CursorHoldI * let g:triggered += 1
-    set updatetime=500
-    call job_start(has('win32') ? 'cmd /c echo:' : 'echo',
-          \ {'exit_cb': {-> timer_start(1000, 'ExitInsertMode')}})
+    set updatetime=100
+    call job_start(has('win32') ? 'cmd /D /c echo:' : 'echo',
+          \ {'exit_cb': {-> timer_start(200, 'ExitInsertMode')}})
     call feedkeys('a', 'x!')
     call assert_equal(1, g:triggered)
     unlet g:triggered
@@ -1198,8 +1198,8 @@ func Test_OptionSet()
   call assert_equal(g:opt[0], g:opt[1])
 
   " 14: Setting option backspace through :let"
-  let g:options = [['backspace', '', '', '', 'eol,indent,start', 'global', 'set']]
-  let &bs = "eol,indent,start"
+  let g:options = [['backspace', 'indent,eol,start', 'indent,eol,start', 'indent,eol,start', '', 'global', 'set']]
+  let &bs = ''
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
@@ -2003,7 +2003,10 @@ func Test_Cmdline()
   au! CmdlineLeave
 
   let save_shellslash = &shellslash
-  set noshellslash
+  " Nvim doesn't allow setting value of a hidden option to non-default value
+  if exists('+shellslash')
+    set noshellslash
+  endif
   au! CmdlineEnter / let g:entered = expand('<afile>')
   au! CmdlineLeave / let g:left = expand('<afile>')
   let g:entered = 0
@@ -4176,6 +4179,30 @@ func Test_autocmd_BufWinLeave_with_vsp()
   bw
   call CleanUpTestAuGroup()
   exe "bw! " .. dummy
+endfunc
+
+func Test_OptionSet_cmdheight()
+  set mouse=a laststatus=2
+  au OptionSet cmdheight :let &l:ch = v:option_new
+
+  resize -1
+  call assert_equal(2, &l:ch)
+  resize +1
+  call assert_equal(1, &l:ch)
+
+  call Ntest_setmouse(&lines - 1, 1)
+  call feedkeys("\<LeftMouse>", 'xt')
+  call Ntest_setmouse(&lines - 2, 1)
+  call feedkeys("\<LeftDrag>", 'xt')
+  call assert_equal(2, &l:ch)
+
+  tabnew | resize +1
+  call assert_equal(1, &l:ch)
+  tabfirst
+  call assert_equal(2, &l:ch)
+
+  tabonly
+  set cmdheight& mouse& laststatus&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

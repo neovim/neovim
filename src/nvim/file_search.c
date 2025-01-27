@@ -41,6 +41,7 @@
 // functions.
 
 #include <assert.h>
+#include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -52,6 +53,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/errors.h"
@@ -67,6 +69,7 @@
 #include "nvim/message.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/fs_defs.h"
@@ -76,7 +79,6 @@
 #include "nvim/path.h"
 #include "nvim/strings.h"
 #include "nvim/vim_defs.h"
-#include "nvim/window.h"
 
 static char *ff_expand_buffer = NULL;  // used for expanding filenames
 
@@ -1489,15 +1491,15 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
   if (file_name == NULL && (options & FNAME_MESS)) {
     if (first == true) {
       if (find_what == FINDFILE_DIR) {
-        semsg(_("E344: Can't find directory \"%s\" in cdpath"), *file_to_find);
+        semsg(_(e_cant_find_directory_str_in_cdpath), *file_to_find);
       } else {
-        semsg(_("E345: Can't find file \"%s\" in path"), *file_to_find);
+        semsg(_(e_cant_find_file_str_in_path), *file_to_find);
       }
     } else {
       if (find_what == FINDFILE_DIR) {
-        semsg(_("E346: No more directory \"%s\" found in cdpath"), *file_to_find);
+        semsg(_(e_no_more_directory_str_found_in_cdpath), *file_to_find);
       } else {
-        semsg(_("E347: No more file \"%s\" found in path"), *file_to_find);
+        semsg(_(e_no_more_file_str_found_in_path), *file_to_find);
       }
     }
   }
@@ -1648,7 +1650,7 @@ static char *eval_includeexpr(const char *const ptr, const size_t len)
 {
   const sctx_T save_sctx = current_sctx;
   set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
-  current_sctx = curbuf->b_p_script_ctx[BV_INEX].script_ctx;
+  current_sctx = curbuf->b_p_script_ctx[kBufOptIncludeexpr].script_ctx;
 
   char *res = eval_to_string_safe(curbuf->b_p_inex,
                                   was_set_insecurely(curwin, kOptIncludeexpr, OPT_LOCAL),

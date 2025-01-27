@@ -26,6 +26,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/ops.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
@@ -226,8 +227,8 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
     addr = "?";
     break;
   }
-  PUT_KEY(result, cmd, addr, CSTR_AS_OBJ(addr));
-  PUT_KEY(result, cmd, nextcmd, CSTR_AS_OBJ(ea.nextcmd));
+  PUT_KEY(result, cmd, addr, cstr_as_string(addr));
+  PUT_KEY(result, cmd, nextcmd, cstr_as_string(ea.nextcmd));
 
   // TODO(bfredl): nested keydict would be nice..
   Dict mods = arena_dict(arena, 20);
@@ -930,6 +931,9 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
     gap = &ucmds;
   } else {
     buf_T *buf = find_buffer_by_handle(buffer, err);
+    if (ERROR_SET(err)) {
+      return;
+    }
     gap = &buf->b_ucmds;
   }
 

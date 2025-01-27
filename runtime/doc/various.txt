@@ -267,6 +267,7 @@ gx			Opens the current filepath or URL (decided by
 <
 							*:!cmd* *:!*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
+			For the filter command, see |:range!|.
 
 			The command runs in a non-interactive shell connected
 			to a pipe (not a terminal). Use |:terminal| to run an
@@ -281,6 +282,16 @@ gx			Opens the current filepath or URL (decided by
 			requires using the call operator (&). >
 				:!Write-Output "1`n2" | & "C:\Windows\System32\sort.exe" /r
 <
+			Vim builds command line using options 'shell', 'shcf',
+			'sxq' and 'shq' in the following order:
+			`&sh &shcf &sxq &shq {cmd} &shq &sxq`
+			So setting both 'sxq' and 'shq' is possible but rarely
+			useful.  Additional escaping inside `{cmd}` may also
+			be due to 'sxe' option.
+
+			Also, all |cmdline-special| characters in {cmd} are
+			replaced by Vim before passing them to shell.
+
 							*E34*
 			Any "!" in {cmd} is replaced with the previous
 			external command (see also 'cpoptions'), unless
@@ -523,7 +534,8 @@ gO			Show a filetype-specific, navigable "outline" of the
 			current buffer. For example, in a |help| buffer this
 			shows the table of contents.
 
-			Currently works in |help| and |:Man| buffers.
+			Works in |help| and |:Man| buffers, or any buffer with
+			an active |LSP| client (|lsp-defaults|).
 
 [N]gs							*gs* *:sl* *:sleep*
 :[N]sl[eep] [N][m]	Do nothing for [N] seconds, or [N] milliseconds if [m]
@@ -540,8 +552,12 @@ gO			Show a filetype-specific, navigable "outline" of the
 			Queued messages are processed during the sleep.
 
 							*:sl!* *:sleep!*
-:[N]sl[eep]! [N][m]	Same as above. Unlike Vim, it does not hide the
-			cursor. |vim-differences|
+:[N]sl[eep]! [N][m]	Same as above, but hide the cursor.
+
+							*g==*
+g==			Executes the current code block.
+
+			Works in |help| buffers.
 
 ==============================================================================
 2. Using Vim like less or more					*less*

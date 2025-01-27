@@ -119,7 +119,7 @@ function TSTreeView:new(bufnr, lang)
   end
 
   local t = {
-    ns = api.nvim_create_namespace('treesitter/dev-inspect'),
+    ns = api.nvim_create_namespace('nvim.treesitter.dev_inspect'),
     nodes = nodes,
     named = named,
     ---@type vim.treesitter.dev.TSTreeViewOpts
@@ -135,7 +135,7 @@ function TSTreeView:new(bufnr, lang)
   return t
 end
 
-local decor_ns = api.nvim_create_namespace('ts.dev')
+local decor_ns = api.nvim_create_namespace('nvim.treesitter.dev')
 
 ---@param range Range4
 ---@return string
@@ -330,9 +330,7 @@ end
 ---
 --- @param opts vim.treesitter.dev.inspect_tree.Opts?
 function M.inspect_tree(opts)
-  vim.validate({
-    opts = { opts, 't', true },
-  })
+  vim.validate('opts', opts, 'table', true)
 
   opts = opts or {}
 
@@ -444,7 +442,7 @@ function M.inspect_tree(opts)
     end,
   })
 
-  local group = api.nvim_create_augroup('treesitter/dev', {})
+  local group = api.nvim_create_augroup('nvim.treesitter.dev', {})
 
   api.nvim_create_autocmd('CursorMoved', {
     group = group,
@@ -529,20 +527,27 @@ function M.inspect_tree(opts)
     end,
   })
 
-  api.nvim_create_autocmd('BufHidden', {
+  api.nvim_create_autocmd({ 'BufHidden', 'BufUnload', 'QuitPre' }, {
     group = group,
     buffer = buf,
-    once = true,
     callback = function()
+      -- don't close inpector window if source buffer
+      -- has more than one open window
+      if #vim.fn.win_findbuf(buf) > 1 then
+        return
+      end
+
       -- close all tree windows
       for _, window in pairs(vim.fn.win_findbuf(b)) do
         close_win(window)
       end
+
+      return true
     end,
   })
 end
 
-local edit_ns = api.nvim_create_namespace('treesitter/dev-edit')
+local edit_ns = api.nvim_create_namespace('nvim.treesitter.dev_edit')
 
 ---@param query_win integer
 ---@param base_win integer
@@ -628,7 +633,7 @@ function M.edit_query(lang)
   -- can infer the language later.
   api.nvim_buf_set_name(query_buf, string.format('%s/query_editor.scm', lang))
 
-  local group = api.nvim_create_augroup('treesitter/dev-edit', {})
+  local group = api.nvim_create_augroup('nvim.treesitter.dev_edit', {})
   api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave' }, {
     group = group,
     buffer = query_buf,
@@ -667,10 +672,10 @@ function M.edit_query(lang)
       api.nvim_buf_clear_namespace(query_buf, edit_ns, 0, -1)
     end,
   })
-  api.nvim_create_autocmd('BufHidden', {
+  api.nvim_create_autocmd({ 'BufHidden', 'BufUnload' }, {
     group = group,
     buffer = buf,
-    desc = 'Close the editor window when the source buffer is hidden',
+    desc = 'Close the editor window when the source buffer is hidden or unloaded',
     once = true,
     callback = function()
       close_win(query_win)

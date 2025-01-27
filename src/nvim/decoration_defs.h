@@ -19,10 +19,11 @@ typedef kvec_t(VirtTextChunk) VirtText;
 /// Keep in sync with virt_text_pos_str[] in decoration.h
 typedef enum {
   kVPosEndOfLine,
-  kVPosOverlay,
-  kVPosWinCol,
-  kVPosRightAlign,
+  kVPosEndOfLineRightAlign,
   kVPosInline,
+  kVPosOverlay,
+  kVPosRightAlign,
+  kVPosWinCol,
 } VirtTextPos;
 
 typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
@@ -55,7 +56,7 @@ typedef struct {
   schar_T conceal_char;
 } DecorHighlightInline;
 
-#define DECOR_HIGHLIGHT_INLINE_INIT { 0, DECOR_PRIORITY_BASE, 0,  0 }
+#define DECOR_HIGHLIGHT_INLINE_INIT { 0, DECOR_PRIORITY_BASE, 0, 0 }
 
 typedef struct {
   uint16_t flags;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
+#include <stddef.h>  // IWYU pragma: keep
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
@@ -111,6 +111,12 @@ typedef kvec_withinit_t(Object, 16) ArrayBuilder;
 #define STATIC_CSTR_AS_OBJ(s) STRING_OBJ(STATIC_CSTR_AS_STRING(s))
 #define STATIC_CSTR_TO_OBJ(s) STRING_OBJ(STATIC_CSTR_TO_STRING(s))
 
+#define API_CLEAR_STRING(s) \
+  do { \
+    XFREE_CLEAR(s.data); \
+    s.size = 0; \
+  } while (0)
+
 // Helpers used by the generated msgpack-rpc api wrappers
 #define api_init_boolean
 #define api_init_integer
@@ -141,27 +147,19 @@ typedef struct {
   except_T *current_exception;
   msglist_T *private_msg_list;
   const msglist_T *const *msg_list;
-  int trylevel;
   int got_int;
   bool did_throw;
   int need_rethrow;
   int did_emsg;
 } TryState;
 
-// `msg_list` controls the collection of abort-causing non-exception errors,
-// which would otherwise be ignored.  This pattern is from do_cmdline().
-//
 // TODO(bfredl): prepare error-handling at "top level" (nv_event).
 #define TRY_WRAP(err, code) \
   do { \
-    msglist_T **saved_msg_list = msg_list; \
-    msglist_T *private_msg_list; \
-    msg_list = &private_msg_list; \
-    private_msg_list = NULL; \
-    try_start(); \
+    TryState tstate; \
+    try_enter(&tstate); \
     code; \
-    try_end(err); \
-    msg_list = saved_msg_list;  /* Restore the exception context. */ \
+    try_leave(&tstate, err); \
   } while (0)
 
 // Execute code with cursor position saved and restored and textlock active.

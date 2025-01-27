@@ -348,7 +348,6 @@ describe('named marks view', function()
 
   it('is restored in normal mode but not op-pending mode', function()
     local screen = Screen.new(5, 8)
-    screen:attach()
     command('edit ' .. file1)
     feed('<C-e>jWma')
     feed("G'a")
@@ -390,7 +389,6 @@ describe('named marks view', function()
 
   it('is restored across files', function()
     local screen = Screen.new(5, 5)
-    screen:attach()
     command('args ' .. file1 .. ' ' .. file2)
     feed('<C-e>mA')
     local mark_view = [[
@@ -415,7 +413,6 @@ describe('named marks view', function()
 
   it("fallback to standard behavior when view can't be recovered", function()
     local screen = Screen.new(10, 10)
-    screen:attach()
     command('edit ' .. file1)
     feed('7GzbmaG') -- Seven lines from the top
     command('new') -- Screen size for window is now half the height can't be restored
@@ -434,7 +431,6 @@ describe('named marks view', function()
 
   it('fallback to standard behavior when mark is loaded from shada', function()
     local screen = Screen.new(10, 6)
-    screen:attach()
     command('edit ' .. file1)
     feed('G')
     feed('mA')

@@ -705,6 +705,7 @@ Short explanation of each option:		*option-list*
 'fileignorecase'  'fic'     ignore case when using file names
 'filetype'	  'ft'	    type of file, used for autocommands
 'fillchars'	  'fcs'     characters to use for displaying special items
+'findfunc'	  'ffu'     function to be called for the |:find| command
 'fixendofline'	  'fixeol'  make sure last line in file has <EOL>
 'foldclose'	  'fcl'     close a fold when the cursor leaves it
 'foldcolumn'	  'fdc'     width of the column used to indicate folds

@@ -273,54 +273,72 @@ describe('autocmd api', function()
       eq({}, api.nvim_get_autocmds({ event = 'User', pattern = 'Test' }))
     end)
 
-    it('receives an args table', function()
+    local function test_autocmd_args(event)
+      local function get_amatch(pat)
+        return event == 'User' and pat or vim.fs.normalize(n.fn.fnamemodify(pat, ':p'))
+      end
+
       local group_id = api.nvim_create_augroup('TestGroup', {})
       -- Having an existing autocmd calling expand("<afile>") shouldn't change args #18964
-      api.nvim_create_autocmd('User', {
+      api.nvim_create_autocmd(event, {
         group = 'TestGroup',
         pattern = 'Te*',
         command = 'call expand("<afile>")',
       })
 
-      local autocmd_id = exec_lua [[
-        return vim.api.nvim_create_autocmd("User", {
+      local autocmd_id = exec_lua(([[
+        return vim.api.nvim_create_autocmd(%q, {
           group = "TestGroup",
           pattern = "Te*",
           callback = function(args)
             vim.g.autocmd_args = args
           end,
         })
-      ]]
+      ]]):format(event))
 
-      api.nvim_exec_autocmds('User', { pattern = 'Test pattern' })
+      local exec_pat = 'Test pattern'
+      local amatch = get_amatch(exec_pat)
+      api.nvim_exec_autocmds(event, { pattern = exec_pat })
       eq({
         id = autocmd_id,
         group = group_id,
-        event = 'User',
-        match = 'Test pattern',
-        file = 'Test pattern',
+        event = event,
+        match = amatch,
+        file = exec_pat,
         buf = 1,
       }, api.nvim_get_var('autocmd_args'))
 
       -- Test without a group
-      autocmd_id = exec_lua [[
-        return vim.api.nvim_create_autocmd("User", {
+      autocmd_id = exec_lua(([[
+        return vim.api.nvim_create_autocmd(%q, {
           pattern = "*",
           callback = function(args)
             vim.g.autocmd_args = args
           end,
         })
-      ]]
+      ]]):format(event))
 
-      api.nvim_exec_autocmds('User', { pattern = 'some_pat' })
+      exec_pat = 'some_pat'
+      amatch = get_amatch(exec_pat)
+      api.nvim_exec_autocmds(event, { pattern = exec_pat })
       eq({
         id = autocmd_id,
         group = nil,
-        event = 'User',
-        match = 'some_pat',
-        file = 'some_pat',
+        event = event,
+        match = amatch,
+        file = exec_pat,
         buf = 1,
       }, api.nvim_get_var('autocmd_args'))
+    end
+
+    describe('receives correct args table', function()
+      it('for event that takes non-file pattern', function()
+        test_autocmd_args('User')
+      end)
+
+      it('for event that takes file pattern', function()
+        test_autocmd_args('BufEnter')
+      end)
     end)
 
     it('can receive arbitrary data', function()
@@ -879,6 +897,89 @@ describe('autocmd api', function()
         eq(normalized_aus, raw_aus)
         eq(normalized_aus, zero_aus)
         eq([[:echo "Buffer"]], normalized_aus[1].command)
+      end)
+    end)
+
+    describe('id', function()
+      it('gets events by ID', function()
+        local id = api.nvim_create_autocmd('BufEnter', {
+          command = 'echo "hello"',
+        })
+        eq({
+          {
+            buflocal = false,
+            command = 'echo "hello"',
+            event = 'BufEnter',
+            id = id,
+            once = false,
+            pattern = '*',
+          },
+        }, api.nvim_get_autocmds({ id = id }))
+      end)
+
+      it('gets events by ID by other filters', function()
+        local group_name = 'NVIM_GET_AUTOCMDS_ID'
+        local group = api.nvim_create_augroup(group_name, { clear = true })
+        local id = api.nvim_create_autocmd('BufEnter', {
+          command = 'set number',
+          group = group,
+        })
+        api.nvim_create_autocmd('WinEnter', {
+          group = group,
+          command = 'set cot&',
+        })
+        eq({
+          {
+            buflocal = false,
+            command = 'set number',
+            event = 'BufEnter',
+            group = group,
+            group_name = group_name,
+            id = id,
+            once = false,
+            pattern = '*',
+          },
+        }, api.nvim_get_autocmds({ id = id, group = group }))
+      end)
+
+      it('gets events by ID and a specific event', function()
+        local id = api.nvim_create_autocmd('InsertEnter', { command = 'set number' })
+        api.nvim_create_autocmd('InsertEnter', { command = 'set wrap' })
+        eq({
+          {
+            buflocal = false,
+            command = 'set number',
+            event = 'InsertEnter',
+            id = id,
+            once = false,
+            pattern = '*',
+          },
+        }, api.nvim_get_autocmds({ id = id, event = 'InsertEnter' }))
+      end)
+
+      it('gets events by ID and a specific pattern', function()
+        local id = api.nvim_create_autocmd('InsertEnter', {
+          pattern = '*.c',
+          command = 'set number',
+        })
+        api.nvim_create_autocmd('InsertEnter', {
+          pattern = '*.c',
+          command = 'set wrap',
+        })
+        eq({
+          {
+            buflocal = false,
+            command = 'set number',
+            event = 'InsertEnter',
+            id = id,
+            once = false,
+            pattern = '*.c',
+          },
+        }, api.nvim_get_autocmds({ id = id, pattern = '*.c' }))
+      end)
+
+      it('empty result when id does not found', function()
+        eq({}, api.nvim_get_autocmds({ id = 255 }))
       end)
     end)
   end)

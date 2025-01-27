@@ -449,7 +449,7 @@ end
 --- Get the latest Nvim Python client (pynvim) version from PyPI.
 local function latest_pypi_version()
   local pypi_version = 'unable to get pypi response'
-  local pypi_response = download('https://pypi.python.org/pypi/pynvim/json')
+  local pypi_response = download('https://pypi.org/pypi/pynvim/json')
   if pypi_response ~= '' then
     local pcall_ok, output = pcall(vim.fn.json_decode, pypi_response)
     if not pcall_ok then

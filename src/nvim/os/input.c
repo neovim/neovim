@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -13,7 +14,6 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/rstream.h"
-#include "nvim/event/stream.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -29,6 +29,7 @@
 #include "nvim/profile.h"
 #include "nvim/state.h"
 #include "nvim/state_defs.h"
+#include "nvim/types_defs.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE ((READ_BUFFER_SIZE * 4) + MAX_KEY_CODE_LEN)
@@ -289,9 +290,10 @@ size_t input_enqueue(String keys)
     unsigned new_size
       = trans_special(&ptr, (size_t)(end - ptr), (char *)buf, FSK_KEYCODE, true, NULL);
 
-    if (new_size) {
-      new_size = handle_mouse_event(&ptr, buf, new_size);
-      input_enqueue_raw((char *)buf, new_size);
+    if (new_size > 0) {
+      if ((new_size = handle_mouse_event(&ptr, buf, new_size)) > 0) {
+        input_enqueue_raw((char *)buf, new_size);
+      }
       continue;
     }
 
@@ -326,7 +328,7 @@ size_t input_enqueue(String keys)
   return rv;
 }
 
-static uint8_t check_multiclick(int code, int grid, int row, int col)
+static uint8_t check_multiclick(int code, int grid, int row, int col, bool *skip_event)
 {
   static int orig_num_clicks = 0;
   static int orig_mouse_code = 0;
@@ -335,24 +337,29 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   static int orig_mouse_row = 0;
   static uint64_t orig_mouse_time = 0;  // time of previous mouse click
 
-  if ((code >= KE_MOUSEDOWN && code <= KE_MOUSERIGHT) || code == KE_MOUSEMOVE) {
+  if (code >= KE_MOUSEDOWN && code <= KE_MOUSERIGHT) {
     return 0;
   }
 
-  // For click events the number of clicks is updated.
-  if (code == KE_LEFTMOUSE || code == KE_RIGHTMOUSE || code == KE_MIDDLEMOUSE
-      || code == KE_X1MOUSE || code == KE_X2MOUSE) {
+  bool no_move = orig_mouse_grid == grid && orig_mouse_col == col && orig_mouse_row == row;
+
+  if (code == KE_MOUSEMOVE) {
+    if (no_move) {
+      *skip_event = true;
+      return 0;
+    }
+  } else if (code == KE_LEFTMOUSE || code == KE_RIGHTMOUSE || code == KE_MIDDLEMOUSE
+             || code == KE_X1MOUSE || code == KE_X2MOUSE) {
+    // For click events the number of clicks is updated.
     uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
-    // compute the time elapsed since the previous mouse click and
-    // convert p_mouse from ms to ns
+    // Compute the time elapsed since the previous mouse click.
     uint64_t timediff = mouse_time - orig_mouse_time;
+    // Convert 'mousetime' from ms to ns.
     uint64_t mouset = (uint64_t)p_mouset * 1000000;
     if (code == orig_mouse_code
+        && no_move
         && timediff < mouset
-        && orig_num_clicks != 4
-        && orig_mouse_grid == grid
-        && orig_mouse_col == col
-        && orig_mouse_row == row) {
+        && orig_num_clicks != 4) {
       orig_num_clicks++;
     } else {
       orig_num_clicks = 1;
@@ -367,12 +374,14 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   orig_mouse_row = row;
 
   uint8_t modifiers = 0;
-  if (orig_num_clicks == 2) {
-    modifiers |= MOD_MASK_2CLICK;
-  } else if (orig_num_clicks == 3) {
-    modifiers |= MOD_MASK_3CLICK;
-  } else if (orig_num_clicks == 4) {
-    modifiers |= MOD_MASK_4CLICK;
+  if (code != KE_MOUSEMOVE) {
+    if (orig_num_clicks == 2) {
+      modifiers |= MOD_MASK_2CLICK;
+    } else if (orig_num_clicks == 3) {
+      modifiers |= MOD_MASK_3CLICK;
+    } else if (orig_num_clicks == 4) {
+      modifiers |= MOD_MASK_4CLICK;
+    }
   }
   return modifiers;
 }
@@ -394,12 +403,13 @@ static unsigned handle_mouse_event(const char **ptr, uint8_t *buf, unsigned bufs
 
   if (type != KS_EXTRA
       || !((mouse_code >= KE_LEFTMOUSE && mouse_code <= KE_RIGHTRELEASE)
+           || (mouse_code >= KE_X1MOUSE && mouse_code <= KE_X2RELEASE)
            || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT)
            || mouse_code == KE_MOUSEMOVE)) {
     return bufsize;
   }
 
-  // a <[COL],[ROW]> sequence can follow and will set the mouse_row/mouse_col
+  // A <[COL],[ROW]> sequence can follow and will set the mouse_row/mouse_col
   // global variables. This is ugly but its how the rest of the code expects to
   // find mouse coordinates, and it would be too expensive to refactor this
   // now.
@@ -421,8 +431,12 @@ static unsigned handle_mouse_event(const char **ptr, uint8_t *buf, unsigned bufs
     *ptr += advance;
   }
 
+  bool skip_event = false;
   uint8_t modifiers = check_multiclick(mouse_code, mouse_grid,
-                                       mouse_row, mouse_col);
+                                       mouse_row, mouse_col, &skip_event);
+  if (skip_event) {
+    return 0;
+  }
 
   if (modifiers) {
     if (buf[1] != KS_MODIFIER) {
@@ -443,7 +457,11 @@ static unsigned handle_mouse_event(const char **ptr, uint8_t *buf, unsigned bufs
 
 void input_enqueue_mouse(int code, uint8_t modifier, int grid, int row, int col)
 {
-  modifier |= check_multiclick(code, grid, row, col);
+  bool skip_event = false;
+  modifier |= check_multiclick(code, grid, row, col, &skip_event);
+  if (skip_event) {
+    return;
+  }
   uint8_t buf[7];
   uint8_t *p = buf;
   if (modifier) {

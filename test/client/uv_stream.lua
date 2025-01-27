@@ -1,3 +1,8 @@
+---
+--- Basic stream types.
+--- See `rpc_stream.lua` for the msgpack layer.
+---
+
 local uv = vim.uv
 
 --- @class test.Stream
@@ -6,6 +11,8 @@ local uv = vim.uv
 --- @field read_stop fun(self)
 --- @field close fun(self, signal?: string)
 
+--- Stream over given pipes.
+---
 --- @class vim.StdioStream : test.Stream
 --- @field private _in uv.uv_pipe_t
 --- @field private _out uv.uv_pipe_t
@@ -45,6 +52,8 @@ function StdioStream:close()
   self._out:close()
 end
 
+--- Stream over a named pipe or TCP socket.
+---
 --- @class test.SocketStream : test.Stream
 --- @field package _stream_error? string
 --- @field package _socket uv.uv_pipe_t
@@ -109,26 +118,54 @@ function SocketStream:close()
   uv.close(self._socket)
 end
 
---- @class test.ChildProcessStream : test.Stream
+--- Stream over child process stdio.
+---
+--- @class test.ProcStream : test.Stream
 --- @field private _proc uv.uv_process_t
 --- @field private _pid integer
 --- @field private _child_stdin uv.uv_pipe_t
 --- @field private _child_stdout uv.uv_pipe_t
+--- @field private _child_stderr uv.uv_pipe_t
+--- Collects stdout (if `collect_text=true`). Treats data as text (CRLF converted to LF).
+--- @field stdout string
+--- Collects stderr as raw data.
+--- @field stderr string
+--- Gets stderr+stdout as text (CRLF converted to LF).
+--- @field output fun(): string
+--- @field stdout_eof boolean
+--- @field stderr_eof boolean
+--- Collects text into the `stdout` field.
+--- @field collect_text boolean
+--- Exit code
 --- @field status integer
 --- @field signal integer
-local ChildProcessStream = {}
-ChildProcessStream.__index = ChildProcessStream
+local ProcStream = {}
+ProcStream.__index = ProcStream
 
+--- Starts child process specified by `argv`.
+---
 --- @param argv string[]
 --- @param env string[]?
 --- @param io_extra uv.uv_pipe_t?
---- @return test.ChildProcessStream
-function ChildProcessStream.spawn(argv, env, io_extra)
+--- @return test.ProcStream
+function ProcStream.spawn(argv, env, io_extra)
   local self = setmetatable({
-    _child_stdin = uv.new_pipe(false),
-    _child_stdout = uv.new_pipe(false),
+    collect_text = false,
+    output = function(self)
+      if not self.collect_text then
+        error('set collect_text=true')
+      end
+      return (self.stderr .. self.stdout):gsub('\r\n', '\n')
+    end,
+    stdout = '',
+    stderr = '',
+    stdout_eof = false,
+    stderr_eof = false,
+    _child_stdin = assert(uv.new_pipe(false)),
+    _child_stdout = assert(uv.new_pipe(false)),
+    _child_stderr = assert(uv.new_pipe(false)),
     _exiting = false,
-  }, ChildProcessStream)
+  }, ProcStream)
   local prog = argv[1]
   local args = {} --- @type string[]
   for i = 2, #argv do
@@ -136,13 +173,14 @@ function ChildProcessStream.spawn(argv, env, io_extra)
   end
   --- @diagnostic disable-next-line:missing-fields
   self._proc, self._pid = uv.spawn(prog, {
-    stdio = { self._child_stdin, self._child_stdout, 1, io_extra },
+    stdio = { self._child_stdin, self._child_stdout, self._child_stderr, io_extra },
     args = args,
     --- @diagnostic disable-next-line:assign-type-mismatch
     env = env,
   }, function(status, signal)
-    self.status = status
     self.signal = signal
+    -- "Abort" exit may not set status; force to nonzero in that case.
+    self.status = (0 ~= (status or 0) or 0 == (signal or 0)) and status or (128 + (signal or 0))
   end)
 
   if not self._proc then
@@ -153,24 +191,54 @@ function ChildProcessStream.spawn(argv, env, io_extra)
   return self
 end
 
-function ChildProcessStream:write(data)
+function ProcStream:write(data)
   self._child_stdin:write(data)
 end
 
-function ChildProcessStream:read_start(cb)
-  self._child_stdout:read_start(function(err, chunk)
-    if err then
-      error(err)
+function ProcStream:on_read(stream, cb, err, chunk)
+  if err then
+    error(err) -- stream read failed?
+  elseif chunk then
+    -- Always collect stderr, in case it gives useful info on failure.
+    if stream == 'stderr' then
+      self.stderr = self.stderr .. chunk --[[@as string]]
+    elseif stream == 'stdout' and self.collect_text then
+      -- Set `stdout` and convert CRLF => LF.
+      self.stdout = (self.stdout .. chunk):gsub('\r\n', '\n')
     end
+  else
+    -- stderr_eof/stdout_eof
+    self[stream .. '_eof'] = true ---@type boolean
+  end
+
+  -- Handler provided by the caller.
+  if cb then
     cb(chunk)
+  end
+end
+
+--- Collects output until the process exits.
+function ProcStream:wait()
+  while not (self.stdout_eof and self.stderr_eof and (self.status or self.signal)) do
+    uv.run('once')
+  end
+end
+
+function ProcStream:read_start(on_stdout, on_stderr)
+  self._child_stdout:read_start(function(err, chunk)
+    self:on_read('stdout', on_stdout, err, chunk)
+  end)
+  self._child_stderr:read_start(function(err, chunk)
+    self:on_read('stderr', on_stderr, err, chunk)
   end)
 end
 
-function ChildProcessStream:read_stop()
+function ProcStream:read_stop()
   self._child_stdout:read_stop()
+  self._child_stderr:read_stop()
 end
 
-function ChildProcessStream:close(signal)
+function ProcStream:close(signal)
   if self._closed then
     return
   end
@@ -178,6 +246,7 @@ function ChildProcessStream:close(signal)
   self:read_stop()
   self._child_stdin:close()
   self._child_stdout:close()
+  self._child_stderr:close()
   if type(signal) == 'string' then
     self._proc:kill('sig' .. signal)
   end
@@ -189,6 +258,6 @@ end
 
 return {
   StdioStream = StdioStream,
-  ChildProcessStream = ChildProcessStream,
+  ProcStream = ProcStream,
   SocketStream = SocketStream,
 }

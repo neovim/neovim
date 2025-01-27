@@ -23,7 +23,6 @@
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -47,10 +46,12 @@
 #include "nvim/lua/treesitter.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/message_defs.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fileio.h"
@@ -187,7 +188,7 @@ static void nlua_luv_error_event(void **argv)
   msg_ext_set_kind("lua_error");
   switch (type) {
   case kCallback:
-    semsg_multiline("Error executing luv callback:\n%s", error);
+    semsg_multiline("Error executing callback:\n%s", error);
     break;
   case kThread:
     semsg_multiline("Error in luv thread:\n%s", error);
@@ -201,13 +202,13 @@ static void nlua_luv_error_event(void **argv)
   xfree(error);
 }
 
-static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags)
+/// Execute callback in "fast" context. Used for luv and some vim.ui_event
+/// callbacks where using the API directly is not safe.
+static int nlua_fast_cfpcall(lua_State *lstate, int nargs, int nresult, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   int retval;
 
-  // luv callbacks might be executed at any os_breakcheck/line_breakcheck
-  // call, so using the API directly here is not safe.
   in_fast_callback++;
 
   int top = lua_gettop(lstate);
@@ -275,10 +276,9 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
 #endif
     }
     const char *error = lua_tostring(lstate, -1);
-
     loop_schedule_deferred(&main_loop,
                            event_create(nlua_luv_error_event,
-                                        xstrdup(error),
+                                        error != NULL ? xstrdup(error) : NULL,
                                         (void *)(intptr_t)(is_callback
                                                            ? kThreadCallback
                                                            : kThread)));
@@ -366,11 +366,13 @@ static int nlua_init_argv(lua_State *const L, char **argv, int argc, int lua_arg
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
+  uint32_t ns_id = (uint32_t)(ptrdiff_t)argv[1];
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, cb);
   nlua_unref_global(lstate, cb);
   if (nlua_pcall(lstate, 0, 0)) {
     nlua_error(lstate, _("Error executing vim.schedule lua callback: %.*s"));
+    ui_remove_cb(ns_id, true);
   }
 }
 
@@ -392,8 +394,9 @@ static int nlua_schedule(lua_State *const lstate)
   }
 
   LuaRef cb = nlua_ref_global(lstate, 1);
-
-  multiqueue_put(main_loop.events, nlua_schedule_event, (void *)(ptrdiff_t)cb);
+  // Pass along UI event handler to disable on error.
+  multiqueue_put(main_loop.events, nlua_schedule_event, (void *)(ptrdiff_t)cb,
+                 (void *)(ptrdiff_t)ui_event_ns_id);
   return 0;
 }
 
@@ -425,7 +428,7 @@ static int nlua_wait(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
   if (in_fast_callback) {
-    return luaL_error(lstate, e_luv_api_disabled, "vim.wait");
+    return luaL_error(lstate, e_fast_api_disabled, "vim.wait");
   }
 
   intptr_t timeout = luaL_checkinteger(lstate, 1);
@@ -598,7 +601,7 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread, bool is_stan
     luv_set_cthread(lstate, nlua_luv_thread_cfcpcall);
   } else {
     luv_set_loop(lstate, &main_loop.uv);
-    luv_set_callback(lstate, nlua_luv_cfpcall);
+    luv_set_callback(lstate, nlua_fast_cfpcall);
   }
   luaopen_luv(lstate);
   lua_pushvalue(lstate, -1);
@@ -724,7 +727,7 @@ static int nlua_ui_detach(lua_State *lstate)
     return luaL_error(lstate, "invalid ns_id");
   }
 
-  ui_remove_cb(ns_id);
+  ui_remove_cb(ns_id, false);
   return 0;
 }
 
@@ -951,41 +954,10 @@ static void nlua_common_free_all_mem(lua_State *lstate)
 
 static void nlua_print_event(void **argv)
 {
-  char *str = argv[0];
-  const size_t len = (size_t)(intptr_t)argv[1] - 1;  // exclude final NUL
-
-  for (size_t i = 0; i < len;) {
-    if (got_int) {
-      break;
-    }
-    const size_t start = i;
-    while (i < len) {
-      switch (str[i]) {
-      case NUL:
-        str[i] = NL;
-        i++;
-        continue;
-      case NL:
-        // TODO(bfredl): use proper multiline msg? Probably should implement
-        // print() in lua in terms of nvim_message(), when it is available.
-        str[i] = NUL;
-        i++;
-        break;
-      default:
-        i++;
-        continue;
-      }
-      break;
-    }
-    msg(str + start, 0);
-    if (msg_silent == 0) {
-      msg_didout = true;  // Make blank lines work properly
-    }
-  }
-  if (len && str[len - 1] == NUL) {  // Last was newline
-    msg("", 0);
-  }
-  xfree(str);
+  HlMessage msg = KV_INITIAL_VALUE;
+  HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
+  kv_push(msg, chunk);
+  msg_multihl(msg, "lua_print", true, false);
 }
 
 /// Print as a Vim message
@@ -1174,7 +1146,7 @@ int nlua_call(lua_State *lstate)
   size_t name_len;
   const char *name = luaL_checklstring(lstate, 1, &name_len);
   if (!nlua_is_deferred_safe() && !viml_func_is_fast(name)) {
-    return luaL_error(lstate, e_luv_api_disabled, "Vimscript function");
+    return luaL_error(lstate, e_fast_api_disabled, "Vimscript function");
   }
 
   int nargs = lua_gettop(lstate) - 1;
@@ -1231,7 +1203,7 @@ free_vim_args:
 static int nlua_rpcrequest(lua_State *lstate)
 {
   if (!nlua_is_deferred_safe()) {
-    return luaL_error(lstate, e_luv_api_disabled, "rpcrequest");
+    return luaL_error(lstate, e_fast_api_disabled, "rpcrequest");
   }
   return nlua_rpc(lstate, true);
 }
@@ -1594,6 +1566,12 @@ bool nlua_ref_is_function(LuaRef ref)
 Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, Arena *arena,
                      Error *err)
 {
+  return nlua_call_ref_ctx(false, ref, name, args, mode, arena, err);
+}
+
+Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, LuaRetMode mode,
+                         Arena *arena, Error *err)
+{
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, ref);
   int nargs = (int)args.size;
@@ -1605,7 +1583,13 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, 
     nlua_push_Object(lstate, &args.items[i], 0);
   }
 
-  if (nlua_pcall(lstate, nargs, 1)) {
+  if (fast) {
+    if (nlua_fast_cfpcall(lstate, nargs, 1, -1) < 0) {
+      // error is already scheduled, set anyways to convey failure.
+      api_set_error(err, kErrorTypeException, "fast context failure");
+      return NIL;
+    }
+  } else if (nlua_pcall(lstate, nargs, 1)) {
     // if err is passed, the caller will deal with the error.
     if (err) {
       size_t len;
@@ -2063,12 +2047,13 @@ char *nlua_register_table_as_callable(const typval_T *const arg)
   return name;
 }
 
-void nlua_execute_on_key(int c, char *typed_buf)
+/// @return true to discard the key
+bool nlua_execute_on_key(int c, char *typed_buf)
 {
   static bool recursive = false;
 
   if (recursive) {
-    return;
+    return false;
   }
   recursive = true;
 
@@ -2097,9 +2082,15 @@ void nlua_execute_on_key(int c, char *typed_buf)
 
   int save_got_int = got_int;
   got_int = false;  // avoid interrupts when the key typed is Ctrl-C
-  if (nlua_pcall(lstate, 2, 0)) {
-    nlua_error(lstate,
-               _("Error executing  vim.on_key Lua callback: %.*s"));
+  bool discard = false;
+  // Do not use nlua_pcall here to avoid duplicate stack trace information
+  if (lua_pcall(lstate, 2, 1, 0)) {
+    nlua_error(lstate, _("Error executing vim.on_key() callbacks: %.*s"));
+  } else {
+    if (lua_isboolean(lstate, -1)) {
+      discard = lua_toboolean(lstate, -1);
+    }
+    lua_pop(lstate, 1);
   }
   got_int |= save_got_int;
 
@@ -2112,6 +2103,7 @@ void nlua_execute_on_key(int c, char *typed_buf)
 #endif
 
   recursive = false;
+  return discard;
 }
 
 // Sets the editor "script context" during Lua execution. Used by :verbose.

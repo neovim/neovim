@@ -25,8 +25,6 @@ local command = n.command
 local write_file = t.write_file
 local api = n.api
 local sleep = vim.uv.sleep
-local matches = t.matches
-local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
 local poke_eventloop = n.poke_eventloop
 local feed = n.feed
@@ -189,12 +187,6 @@ describe('uncaught exception', function()
 
   it('multiline exception remains multiline #25350', function()
     local screen = Screen.new(80, 11)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, reverse = true }, -- MsgSeparator
-      [2] = { foreground = Screen.colors.White, background = Screen.colors.Red }, -- ErrorMsg
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-    })
-    screen:attach()
     exec_lua([[
       function _G.Oops()
         error("oops")
@@ -203,17 +195,17 @@ describe('uncaught exception', function()
     feed(':try\rlua _G.Oops()\rendtry\r')
     screen:expect {
       grid = [[
-      {1:                                                                                }|
+      {3:                                                                                }|
       :try                                                                            |
       :  lua _G.Oops()                                                                |
       :  endtry                                                                       |
-      {2:Error detected while processing :}                                               |
-      {2:E5108: Error executing lua [string "<nvim>"]:2: oops}                            |
-      {2:stack traceback:}                                                                |
-      {2:        [C]: in function 'error'}                                                |
-      {2:        [string "<nvim>"]:2: in function 'Oops'}                                 |
-      {2:        [string ":lua"]:1: in main chunk}                                        |
-      {3:Press ENTER or type command to continue}^                                         |
+      {9:Error detected while processing :}                                               |
+      {9:E5108: Error executing lua [string "<nvim>"]:2: oops}                            |
+      {9:stack traceback:}                                                                |
+      {9:        [C]: in function 'error'}                                                |
+      {9:        [string "<nvim>"]:2: in function 'Oops'}                                 |
+      {9:        [string ":lua"]:1: in main chunk}                                        |
+      {6:Press ENTER or type command to continue}^                                         |
     ]],
     }
   end)
@@ -232,74 +224,6 @@ describe('listing functions using :function', function()
    endfunction]]):format(num),
       exec_capture(('function <lambda>%s'):format(num))
     )
-  end)
-
-  it('does not crash if another function is deleted while listing', function()
-    local screen = Screen.new(80, 24)
-    screen:attach()
-    matches(
-      'Vim%(function%):E454: Function list was modified$',
-      pcall_err(
-        exec_lua,
-        [=[
-      vim.cmd([[
-        func Func1()
-        endfunc
-        func Func2()
-        endfunc
-        func Func3()
-        endfunc
-      ]])
-
-      local ns = vim.api.nvim_create_namespace('test')
-
-      vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
-        if event == 'msg_show' and content[1][2] == 'function Func1()'  then
-          vim.cmd('delfunc Func3')
-        end
-      end)
-
-      vim.cmd('function')
-
-      vim.ui_detach(ns)
-    ]=]
-      )
-    )
-    assert_alive()
-  end)
-
-  it('does not crash if the same function is deleted while listing', function()
-    local screen = Screen.new(80, 24)
-    screen:attach()
-    matches(
-      'Vim%(function%):E454: Function list was modified$',
-      pcall_err(
-        exec_lua,
-        [=[
-      vim.cmd([[
-        func Func1()
-        endfunc
-        func Func2()
-        endfunc
-        func Func3()
-        endfunc
-      ]])
-
-      local ns = vim.api.nvim_create_namespace('test')
-
-      vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
-        if event == 'msg_show' and content[1][2] == 'function Func1()'  then
-          vim.cmd('delfunc Func2')
-        end
-      end)
-
-      vim.cmd('function')
-
-      vim.ui_detach(ns)
-    ]=]
-      )
-    )
-    assert_alive()
   end)
 end)
 

@@ -26,7 +26,7 @@ end
 ---
 ---@param trust table<string, string> Trust table to write
 local function write_trust(trust)
-  vim.validate({ trust = { trust, 't' } })
+  vim.validate('trust', trust, 'table')
   local f = assert(io.open(vim.fn.stdpath('state') .. '/trust', 'w'))
 
   local t = {} ---@type string[]
@@ -49,7 +49,7 @@ end
 ---@return (string|nil) The contents of the given file if it exists and is
 ---        trusted, or nil otherwise.
 function M.read(path)
-  vim.validate({ path = { path, 's' } })
+  vim.validate('path', path, 'string')
   local fullpath = vim.uv.fs_realpath(vim.fs.normalize(path))
   if not fullpath then
     return nil
@@ -132,17 +132,11 @@ end
 ---@return boolean success true if operation was successful
 ---@return string msg full path if operation was successful, else error message
 function M.trust(opts)
-  vim.validate({
-    path = { opts.path, 's', true },
-    bufnr = { opts.bufnr, 'n', true },
-    action = {
-      opts.action,
-      function(m)
-        return m == 'allow' or m == 'deny' or m == 'remove'
-      end,
-      [["allow" or "deny" or "remove"]],
-    },
-  })
+  vim.validate('path', opts.path, 'string', true)
+  vim.validate('bufnr', opts.bufnr, 'number', true)
+  vim.validate('action', opts.action, function(m)
+    return m == 'allow' or m == 'deny' or m == 'remove'
+  end, [["allow" or "deny" or "remove"]])
 
   ---@cast opts vim.trust.opts
   local path = opts.path

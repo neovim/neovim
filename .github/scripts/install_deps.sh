@@ -16,9 +16,9 @@ if [[ $os == Linux ]]; then
 
   if [[ $CC == clang ]]; then
     DEFAULT_CLANG_VERSION=$(echo |  clang -dM -E - | grep __clang_major | awk '{print $3}')
-    CLANG_VERSION=20
+    CLANG_VERSION=19
     if ((DEFAULT_CLANG_VERSION >= CLANG_VERSION)); then
-      echo "Default clang version is $DEFAULT_CLANG_VERSION, which equal or larger than wanted version $CLANG_VERSION. Aborting!"
+      echo "Default clang version is $DEFAULT_CLANG_VERSION, which is equal or larger than wanted version $CLANG_VERSION. Aborting!"
       exit 1
     fi
 
@@ -30,7 +30,7 @@ if [[ $os == Linux ]]; then
   fi
 
   if [[ -n $TEST ]]; then
-    sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb inotify-tools
+    sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb inotify-tools xdg-utils
 
     # Use default CC to avoid compilation problems when installing Python modules
     CC=cc python3 -m pip -q install --user --upgrade --break-system-packages pynvim

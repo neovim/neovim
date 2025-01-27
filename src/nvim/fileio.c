@@ -38,7 +38,6 @@
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
-#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/iconv_defs.h"
 #include "nvim/log.h"
@@ -55,7 +54,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
-#include "nvim/optionstr.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
@@ -99,7 +97,7 @@
 
 static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buffer name");
 
-void filemess(buf_T *buf, char *name, char *s, int attr)
+void filemess(buf_T *buf, char *name, char *s)
 {
   int prev_msg_col = msg_col;
 
@@ -129,7 +127,7 @@ void filemess(buf_T *buf, char *name, char *s, int attr)
   msg_scroll = msg_scroll_save;
   msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
-  msg_outtrans(msg_may_trunc(false, IObuff), attr);
+  msg_outtrans(msg_may_trunc(false, IObuff), 0, false);
   msg_clr_eos();
   ui_flush();
   msg_scrolled_ign = false;
@@ -335,7 +333,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 
     // If the name is too long we might crash further on, quit here.
     if (namelen >= MAXPATHL) {
-      filemess(curbuf, fname, _("Illegal file name"), 0);
+      filemess(curbuf, fname, _("Illegal file name"));
       msg_end();
       msg_scroll = msg_save;
       goto theend;
@@ -346,7 +344,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     // swap file may destroy it!  Reported on MS-DOS and Win 95.
     if (after_pathsep(fname, fname + namelen)) {
       if (!silent) {
-        filemess(curbuf, fname, _(msg_is_a_directory), 0);
+        filemess(curbuf, fname, _(msg_is_a_directory));
       }
       msg_end();
       msg_scroll = msg_save;
@@ -374,11 +372,11 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         ) {
       if (S_ISDIR(perm)) {
         if (!silent) {
-          filemess(curbuf, fname, _(msg_is_a_directory), 0);
+          filemess(curbuf, fname, _(msg_is_a_directory));
         }
         retval = NOTDONE;
       } else {
-        filemess(curbuf, fname, _("is not a file"), 0);
+        filemess(curbuf, fname, _("is not a file"));
       }
       msg_end();
       msg_scroll = msg_save;
@@ -467,9 +465,9 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       }
       if (!silent) {
         if (dir_of_file_exists(fname)) {
-          filemess(curbuf, sfname, _("[New]"), 0);
+          filemess(curbuf, sfname, _("[New]"));
         } else {
-          filemess(curbuf, sfname, _("[New DIRECTORY]"), 0);
+          filemess(curbuf, sfname, _("[New DIRECTORY]"));
         }
       }
       // Even though this is a new file, it might have been
@@ -497,10 +495,10 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
                               // open() does not set
                               // EOVERFLOW
                               (fd == -EOVERFLOW) ? _("[File too big]")
-                                                 : _("[Permission Denied]")), 0);
+                                                 : _("[Permission Denied]")));
 #else
     filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]")
-                                               : _("[Permission Denied]")), 0);
+                                               : _("[Permission Denied]")));
 #endif
     curbuf->b_p_ro = true;                  // must use "w!" now
 
@@ -658,7 +656,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 
   if (!recoverymode && !filtering && !(flags & READ_DUMMY) && !silent) {
     if (!read_stdin && !read_buffer) {
-      filemess(curbuf, sfname, "", 0);
+      filemess(curbuf, sfname, "");
     }
   }
 
@@ -1685,7 +1683,7 @@ failed:
 
     if (got_int) {
       if (!(flags & READ_DUMMY)) {
-        filemess(curbuf, sfname, _(e_interr), 0);
+        filemess(curbuf, sfname, _(e_interr));
         if (newfile) {
           curbuf->b_p_ro = true;                // must use "w!" now
         }
@@ -3035,9 +3033,9 @@ int buf_check_timestamp(buf_T *buf)
     } else {
       if (!autocmd_busy) {
         msg_start();
-        msg_puts_attr(tbuf, HL_ATTR(HLF_E) + MSG_HIST);
+        msg_puts_hl(tbuf, HLF_E, true);
         if (*mesg2 != NUL) {
-          msg_puts_attr(mesg2, HL_ATTR(HLF_W) + MSG_HIST);
+          msg_puts_hl(mesg2, HLF_W, true);
         }
         msg_clr_eos();
         msg_end();
@@ -3278,7 +3276,11 @@ static void vim_mktempdir(void)
     expand_env((char *)temp_dirs[i], tmp, TEMP_FILE_PATH_MAXLEN - 64);
     if (!os_isdir(tmp)) {
       if (strequal("$TMPDIR", temp_dirs[i])) {
-        WLOG("$TMPDIR tempdir not a directory (or does not exist): %s", tmp);
+        if (!os_getenv("TMPDIR")) {
+          DLOG("$TMPDIR is unset");
+        } else {
+          WLOG("$TMPDIR tempdir not a directory (or does not exist): \"%s\"", tmp);
+        }
       }
       continue;
     }

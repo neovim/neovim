@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <uv.h>
 
 #include "klib/kvec.h"
 #include "mpack/conv.h"

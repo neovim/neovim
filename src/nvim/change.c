@@ -25,7 +25,6 @@
 #include "nvim/fold.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
-#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
@@ -89,9 +88,9 @@ void change_warning(buf_T *buf, int col)
     if (msg_row == Rows - 1) {
       msg_col = col;
     }
-    msg_source(HL_ATTR(HLF_W));
+    msg_source(HLF_W);
     msg_ext_set_kind("wmsg");
-    msg_puts_attr(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
+    msg_puts_hl(_(w_readonly), HLF_W, true);
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     msg_end();
@@ -914,7 +913,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
     // fixpos is true, we don't want to end up positioned at the NUL,
     // unless "restart_edit" is set or 'virtualedit' contains "onemore".
     if (col > 0 && fixpos && restart_edit == 0
-        && (get_ve_flags(curwin) & VE_ONEMORE) == 0) {
+        && (get_ve_flags(curwin) & kOptVeFlagOnemore) == 0) {
       curwin->w_cursor.col--;
       curwin->w_cursor.coladd = 0;
       curwin->w_cursor.col -= utf_head_off(oldp, oldp + curwin->w_cursor.col);

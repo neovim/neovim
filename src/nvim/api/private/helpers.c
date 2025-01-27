@@ -31,19 +31,18 @@
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
-#include "nvim/ui.h"
-#include "nvim/ui_defs.h"
-#include "nvim/version.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/api_metadata.generated.h"
-# include "api/private/helpers.c.generated.h"
+# include "api/private/helpers.c.generated.h"  // IWYU pragma: keep
 #endif
 
 /// Start block that may cause Vimscript exceptions while evaluating another code
 ///
-/// Used when caller is supposed to be operating when other Vimscript code is being
-/// processed and that “other Vimscript code” must not be affected.
+/// Used just in case caller is supposed to be operating when other Vimscript code
+/// is being processed and that “other Vimscript code” must not be affected.
+///
+/// @warning Avoid calling directly; use TRY_WRAP instead.
 ///
 /// @param[out]  tstate  Location where try state should be saved.
 void try_enter(TryState *const tstate)
@@ -55,74 +54,33 @@ void try_enter(TryState *const tstate)
     .current_exception = current_exception,
     .msg_list = (const msglist_T *const *)msg_list,
     .private_msg_list = NULL,
-    .trylevel = trylevel,
     .got_int = got_int,
     .did_throw = did_throw,
     .need_rethrow = need_rethrow,
     .did_emsg = did_emsg,
   };
+  // `msg_list` controls the collection of abort-causing non-exception errors,
+  // which would otherwise be ignored.  This pattern is from do_cmdline().
   msg_list = &tstate->private_msg_list;
   current_exception = NULL;
-  trylevel = 1;
   got_int = false;
   did_throw = false;
   need_rethrow = false;
   did_emsg = false;
-}
-
-/// End try block, set the error message if any and restore previous state
-///
-/// @warning Return is consistent with most functions (false on error), not with
-///          try_end (true on error).
-///
-/// @param[in]  tstate  Previous state to restore.
-/// @param[out]  err  Location where error should be saved.
-///
-/// @return false if error occurred, true otherwise.
-bool try_leave(const TryState *const tstate, Error *const err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  const bool ret = !try_end(err);
-  assert(trylevel == 0);
-  assert(!need_rethrow);
-  assert(!got_int);
-  assert(!did_throw);
-  assert(!did_emsg);
-  assert(msg_list == &tstate->private_msg_list);
-  assert(*msg_list == NULL);
-  assert(current_exception == NULL);
-  msg_list = (msglist_T **)tstate->msg_list;
-  current_exception = tstate->current_exception;
-  trylevel = tstate->trylevel;
-  got_int = tstate->got_int;
-  did_throw = tstate->did_throw;
-  need_rethrow = tstate->need_rethrow;
-  did_emsg = tstate->did_emsg;
-  return ret;
-}
-
-/// Start block that may cause vimscript exceptions
-///
-/// Each try_start() call should be mirrored by try_end() call.
-///
-/// To be used as a replacement of `:try … catch … endtry` in C code, in cases
-/// when error flag could not already be set. If there may be pending error
-/// state at the time try_start() is executed which needs to be preserved,
-/// try_enter()/try_leave() pair should be used instead.
-void try_start(void)
-{
   trylevel++;
 }
 
-/// End try block, set the error message if any and return true if an error
-/// occurred.
+/// Ends a `try_enter` block; sets error message if any.
 ///
-/// @param err Pointer to the stack-allocated error object
-/// @return true if an error occurred
-bool try_end(Error *err)
+/// @warning Avoid calling directly; use TRY_WRAP instead.
+///
+/// @param[out] err Pointer to the stack-allocated error object
+void try_leave(const TryState *const tstate, Error *const err)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
+  assert(trylevel > 0);
   trylevel--;
 
   // Set by emsg(), affects aborting().  See also enter_cleanup().
@@ -165,7 +123,20 @@ bool try_end(Error *err)
     discard_current_exception();
   }
 
-  return ERROR_SET(err);
+  assert(msg_list == &tstate->private_msg_list);
+  assert(*msg_list == NULL);
+  assert(current_exception == NULL);
+  assert(!got_int);
+  assert(!did_throw);
+  assert(!need_rethrow);
+  assert(!did_emsg);
+  // Restore the exception context.
+  msg_list = (msglist_T **)tstate->msg_list;
+  current_exception = tstate->current_exception;
+  got_int = tstate->got_int;
+  did_throw = tstate->did_throw;
+  need_rethrow = tstate->need_rethrow;
+  did_emsg = tstate->did_emsg;
 }
 
 /// Recursively expands a vimscript value in a dict
@@ -771,7 +742,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
     int id = (int)obj.data.integer;
     return (1 <= id && id <= highlight_num_groups()) ? id : 0;
   } else {
-    api_set_error(err, kErrorTypeValidation, "Invalid highlight: %s", what);
+    api_set_error(err, kErrorTypeValidation, "Invalid hl_group: %s", what);
     return 0;
   }
 }
@@ -805,35 +776,26 @@ char *api_typename(ObjectType t)
   UNREACHABLE;
 }
 
-HlMessage parse_hl_msg(Array chunks, Error *err)
+HlMessage parse_hl_msg(Array chunks, bool is_err, Error *err)
 {
   HlMessage hl_msg = KV_INITIAL_VALUE;
   for (size_t i = 0; i < chunks.size; i++) {
-    if (chunks.items[i].type != kObjectTypeArray) {
-      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+    VALIDATE_T("chunk", kObjectTypeArray, chunks.items[i].type, {
       goto free_exit;
-    }
+    });
     Array chunk = chunks.items[i].data.array;
-    if (chunk.size == 0 || chunk.size > 2
-        || chunk.items[0].type != kObjectTypeString
-        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Chunk is not an array with one or two strings");
+    VALIDATE((chunk.size > 0 && chunk.size <= 2 && chunk.items[0].type == kObjectTypeString),
+             "%s", "Invalid chunk: expected Array with 1 or 2 Strings", {
       goto free_exit;
-    }
+    });
 
     String str = copy_string(chunk.items[0].data.string, NULL);
 
-    int attr = 0;
+    int hl_id = is_err ? HLF_E : 0;
     if (chunk.size == 2) {
-      String hl = chunk.items[1].data.string;
-      if (hl.size > 0) {
-        // TODO(bfredl): use object_to_hl_id and allow integer
-        int hl_id = syn_check_group(hl.data, hl.size);
-        attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
-      }
+      hl_id = object_to_hl_id(chunk.items[1], "text highlight", err);
     }
-    kv_push(hl_msg, ((HlMessageChunk){ .text = str, .attr = attr }));
+    kv_push(hl_msg, ((HlMessageChunk){ .text = str, .hl_id = hl_id }));
   }
 
   return hl_msg;

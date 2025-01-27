@@ -18,7 +18,6 @@ describe("'cursorbind'", function()
       [3] = { reverse = true }, -- StatusLineNC
       [4] = { background = Screen.colors.Grey90 }, -- CursorLine, CursorColumn
     })
-    screen:attach()
     exec([[
       call setline(1, 'aa bb cc dd ee ff gg hh ii jj kk ll mm' ..
       \ ' nn oo pp qq rr ss tt uu vv ww xx yy zz')

@@ -349,7 +349,7 @@ processing a quickfix or location list command, it will be aborted.
 			Example: >
     :g/mypattern/caddexpr expand("%") .. ":" .. line(".") ..  ":" .. getline(".")
 <
-						*:lad* *:addd* *:laddexpr*
+						*:lad* *:ladd* *:laddexpr*
 :lad[dexpr] {expr}	Same as ":caddexpr", except the location list for the
 			current window is used instead of the quickfix list.
 
@@ -538,9 +538,9 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 <			Otherwise it works the same as `:ldo`.
 
 FILTERING A QUICKFIX OR LOCATION LIST:
-				    *cfilter-plugin* *:Cfilter* *:Lfilter*
+		    *cfilter-plugin* *:Cfilter* *:Lfilter* *package-cfilter*
 If you have too many entries in a quickfix list, you can use the cfilter
-plugin to reduce the number of entries.  Load the plugin with: >
+plugin to reduce the number of entries.  Load the plugin with: >vim
 
     packadd cfilter
 
@@ -1317,9 +1317,117 @@ g:compiler_gcc_ignore_unmatched_lines
 JAVAC							*compiler-javac*
 
 Commonly used compiler options can be added to 'makeprg' by setting the
-g:javac_makeprg_params variable.  For example: >
+b/g:javac_makeprg_params variable.  For example: >
+
 	let g:javac_makeprg_params = "-Xlint:all -encoding utf-8"
-<
+
+MAVEN							*compiler-maven*
+
+Commonly used compiler options can be added to 'makeprg' by setting the
+b/g:maven_makeprg_params variable.  For example: >
+
+	let g:maven_makeprg_params = "-DskipTests -U -X"
+
+SPOTBUGS						*compiler-spotbugs*
+
+SpotBugs is a static analysis tool that can be used to find bugs in Java.
+It scans the Java bytecode of all classes in the currently open buffer.
+(Therefore, `:compiler! spotbugs` is not supported.)
+
+Commonly used compiler options can be added to 'makeprg' by setting the
+"b:" or "g:spotbugs_makeprg_params" variable.  For example: >
+
+	let b:spotbugs_makeprg_params = "-longBugCodes -effort:max -low"
+
+The global default is "-workHard -experimental".
+
+By default, the class files are searched in the directory where the source
+files are placed.  However, typical Java projects use distinct directories
+for source files and class files.  To make both known to SpotBugs, assign
+their paths (distinct and relative to their common root directory) to the
+following properties (using the example of a common Maven project): >
+
+	let g:spotbugs_properties = {
+		\ 'sourceDirPath':	'src/main/java',
+		\ 'classDirPath':	'target/classes',
+		\ 'testSourceDirPath':	'src/test/java',
+		\ 'testClassDirPath':	'target/test-classes',
+	\ }
+
+Note that values for the path keys describe only for SpotBugs where to look
+for files; refer to the documentation for particular compiler plugins for more
+information.
+
+The default pre- and post-compiler actions are provided for Ant, Maven, and
+Javac compiler plugins and can be selected by assigning the name of a compiler
+plugin to the "compiler" key: >
+
+	let g:spotbugs_properties = {
+		\ 'compiler':		'maven',
+	\ }
+
+This single setting is essentially equivalent to all the settings below, with
+the exception made for the "PreCompilerAction" and "PreCompilerTestAction"
+values: their listed |Funcref|s will obtain no-op implementations whereas the
+implicit Funcrefs of the "compiler" key will obtain the requested defaults if
+available. >
+
+	let g:spotbugs_properties = {
+		\ 'PreCompilerAction':
+			\ function('spotbugs#DefaultPreCompilerAction'),
+		\ 'PreCompilerTestAction':
+			\ function('spotbugs#DefaultPreCompilerTestAction'),
+		\ 'PostCompilerAction':
+			\ function('spotbugs#DefaultPostCompilerAction'),
+		\ 'sourceDirPath':	'src/main/java',
+		\ 'classDirPath':	'target/classes',
+		\ 'testSourceDirPath':	'src/test/java',
+		\ 'testClassDirPath':	'target/test-classes',
+	\ }
+
+With default actions, the compiler of choice will attempt to rebuild the class
+files for the buffer (and possibly for the whole project) as soon as a Java
+syntax file is loaded; then, `spotbugs` will attempt to analyze the quality of
+the compilation unit of the buffer.
+
+When default actions are not suited to a desired workflow, consider writing
+arbitrary functions yourself and matching their |Funcref|s to the supported
+keys: "PreCompilerAction", "PreCompilerTestAction", and "PostCompilerAction".
+
+The next example re-implements the default pre-compiler actions for a Maven
+project and requests other default Maven settings with the "compiler" entry: >
+
+	function! MavenPreCompilerAction() abort
+		call spotbugs#DeleteClassFiles()
+		compiler maven
+		make compile
+	endfunction
+
+	function! MavenPreCompilerTestAction() abort
+		call spotbugs#DeleteClassFiles()
+		compiler maven
+		make test-compile
+	endfunction
+
+	let g:spotbugs_properties = {
+		\ 'compiler':		'maven',
+		\ 'PreCompilerAction':
+			\ function('MavenPreCompilerAction'),
+		\ 'PreCompilerTestAction':
+			\ function('MavenPreCompilerTestAction'),
+	\ }
+
+Note that all entered custom settings will take precedence over the matching
+default settings in "g:spotbugs_properties".
+
+The "g:spotbugs_properties" variable is consulted by the Java filetype plugin
+(|ft-java-plugin|) to arrange for the described automation, and, therefore, it
+must be defined before |FileType| events can take place for the buffers loaded
+with Java source files.  It could, for example, be set in a project-local
+|vimrc| loaded by [0].
+
+[0] https://github.com/MarcWeber/vim-addon-local-vimrc/
+
 GNU MAKE						*compiler-make*
 
 Since the default make program is "make", the compiler plugin for make,
@@ -1366,6 +1474,32 @@ being checked.  To disable this set g:perl_compiler_force_warnings to a zero
 value.  For example: >
 	let g:perl_compiler_force_warnings = 0
 
+MYPY TYPE CHECKER					*compiler-mypy*
+
+Commonly used compiler options can be added to 'makeprg' by setting the
+b/g:mypy_makeprg_params variable.  For example: >
+
+	let b:mypy_makeprg_params = "--warn-unused-ignores"
+
+The global default is "--strict --ignore-missing-imports".
+
+RUFF LINTER						*compiler-ruff*
+
+Commonly used compiler options can be added to 'makeprg' by setting the
+b/g:ruff_makeprg_params variable.  For example: >
+
+	let b:ruff_makeprg_params = "--max-line-length "..&textwidth
+
+The global default is "--preview".
+
+PYLINT LINTER						*compiler-pylint*
+
+Commonly used compiler options can be added to 'makeprg' by setting the
+b/g:pylint_makeprg_params variable.  For example: >
+
+	let b:pylint_makeprg_params = "--max-line-length "..&textwidth
+
+The global default is "--jobs=0" to use (almost) all cores.
 
 PYUNIT COMPILER						*compiler-pyunit*
 
@@ -1383,6 +1517,13 @@ Useful values for the 'makeprg' options therefore are:
  setlocal makeprg=./alltests.py " Run a testsuite
  setlocal makeprg=python\ %:S   " Run a single testcase
 
+PYTEST COMPILER						*compiler-pytest*
+Commonly used compiler options can be added to 'makeprg' by setting the
+b/g:pytest_makeprg_params variable.  For example: >
+
+  let b:pytest_makeprg_params = "--verbose --no-summary --disable-warnings"
+
+The global default is "--tb=short --quiet"; Python warnings are suppressed.
 
 TEX COMPILER						*compiler-tex*
 

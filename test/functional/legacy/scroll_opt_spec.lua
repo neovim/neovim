@@ -13,7 +13,6 @@ describe('smoothscroll', function()
 
   before_each(function()
     screen = Screen.new(40, 12)
-    screen:attach()
   end)
 
   -- oldtest: Test_CtrlE_CtrlY_stop_at_end()

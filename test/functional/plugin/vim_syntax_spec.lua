@@ -21,7 +21,6 @@ describe('Vimscript syntax highlighting', function()
       [1] = { foreground = Screen.colors.Brown, bold = true },
       [2] = { foreground = tonumber('0x6a0dad') },
     })
-    screen:attach()
   end)
 
   it('prefixed boolean options are highlighted properly', function()

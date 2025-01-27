@@ -2545,6 +2545,18 @@ func Test_pedit()
   call assert_equal(l:other, bufnr())
 endfunc
 
+" Allow :pbuffer because, unlike :buffer, it uses a separate window
+func Test_pbuffer()
+  call s:reset_all_buffers()
+
+  let l:other = s:make_buffer_pairs()
+
+  exe 'pbuffer ' . l:other
+
+  execute "normal \<C-w>w"
+  call assert_equal(l:other, bufnr())
+endfunc
+
 " Fail :pop but :pop! is allowed
 func Test_pop()
   call s:reset_all_buffers()
@@ -2613,7 +2625,7 @@ EOF
 
   try
     pyxdo test_winfixbuf_Test_pythonx_pyxdo_set_buffer()
-  catch /pynvim\.api\.common\.NvimError: E1513:/
+  catch /pynvim\.api\.common\.NvimError: Vim:E1513:/
     let l:caught = 1
   endtry
 
@@ -2644,7 +2656,7 @@ func Test_pythonx_pyxfile()
 
   try
     pyxfile file.py
-  catch /pynvim\.api\.common\.NvimError: E1513:/
+  catch /pynvim\.api\.common\.NvimError: Vim:E1513:/
     let l:caught = 1
   endtry
 
@@ -2676,7 +2688,7 @@ import vim
 buffer = vim.vars["_previous_buffer"]
 vim.current.buffer = vim.buffers[buffer]
 EOF
-  catch /pynvim\.api\.common\.NvimError: E1513:/
+  catch /pynvim\.api\.common\.NvimError: Vim:E1513:/
     let l:caught = 1
   endtry
 

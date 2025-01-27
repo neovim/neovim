@@ -351,11 +351,10 @@ describe('autocmd DirChanged and DirChangedPre', function()
     eq(2, eval('g:cdprecount'))
     eq(2, eval('g:cdcount'))
 
-    local status, err = pcall(function()
-      request('nvim_set_current_dir', '/doesnotexist')
-    end)
-    eq(false, status)
-    eq('Failed to change directory', string.match(err, ': (.*)'))
+    eq(
+      'Vim:E344: Can\'t find directory "/doesnotexist" in cdpath',
+      t.pcall_err(request, 'nvim_set_current_dir', '/doesnotexist')
+    )
     eq({ directory = '/doesnotexist', scope = 'global', changed_window = false }, eval('g:evpre'))
     eq(3, eval('g:cdprecount'))
     eq(2, eval('g:cdcount'))

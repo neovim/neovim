@@ -55,14 +55,13 @@ static bool decor_provider_invoke(int provider_idx, const char *name, LuaRef ref
   // We get the provider here via an index in case the above call to nlua_call_ref causes
   // decor_providers to be reallocated.
   DecorProvider *provider = &kv_A(decor_providers, provider_idx);
-
   if (!ERROR_SET(&err)
       && api_object_to_bool(ret, "provider %s retval", default_true, &err)) {
     provider->error_count = 0;
     return true;
   }
 
-  if (ERROR_SET(&err)) {
+  if (ERROR_SET(&err) && provider->error_count < DP_MAX_ERROR) {
     decor_provider_error(provider, name, err.msg);
     provider->error_count++;
 
@@ -121,7 +120,8 @@ void decor_providers_invoke_win(win_T *wp)
 {
   // this might change in the future
   // then we would need decor_state.running_decor_provider just like "on_line" below
-  assert(kv_size(decor_state.active) == 0);
+  assert(decor_state.current_end == 0
+         && decor_state.future_begin == (int)kv_size(decor_state.ranges_i));
 
   if (kv_size(decor_providers) > 0) {
     validate_botline(wp);
@@ -155,7 +155,7 @@ void decor_providers_invoke_win(win_T *wp)
 /// @param      row       Row to invoke line callback for
 /// @param[out] has_decor Set when at least one provider invokes a line callback
 /// @param[out] err       Provider error
-void decor_providers_invoke_line(win_T *wp, int row, bool *has_decor)
+void decor_providers_invoke_line(win_T *wp, int row)
 {
   decor_state.running_decor_provider = true;
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
@@ -165,9 +165,7 @@ void decor_providers_invoke_line(win_T *wp, int row, bool *has_decor)
       ADD_C(args, WINDOW_OBJ(wp->handle));
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
-      if (decor_provider_invoke((int)i, "line", p->redraw_line, args, true)) {
-        *has_decor = true;
-      } else {
+      if (!decor_provider_invoke((int)i, "line", p->redraw_line, args, true)) {
         // return 'false' or error: skip rest of this window
         kv_A(decor_providers, i).state = kDecorProviderWinDisabled;
       }

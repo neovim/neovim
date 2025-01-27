@@ -66,6 +66,18 @@ describe(':checkhealth', function()
     eq({}, getcompletion('', 'checkhealth'))
     assert_alive()
   end)
+
+  it('vim.g.health', function()
+    clear()
+    command("let g:health = {'style':'float'}")
+    command('checkhealth lsp')
+    eq(
+      'editor',
+      exec_lua([[
+      return vim.api.nvim_win_get_config(0).relative
+    ]])
+    )
+  end)
 end)
 
 describe('vim.health', function()
@@ -155,7 +167,6 @@ describe('vim.health', function()
 
     it('highlights OK, ERROR', function()
       local screen = Screen.new(50, 12)
-      screen:attach()
       screen:set_default_attr_ids({
         h1 = { reverse = true },
         h2 = { foreground = tonumber('0x6a0dad') },
@@ -222,7 +233,7 @@ describe(':checkhealth window', function()
   end)
 
   it('opens directly if no buffer created', function()
-    local screen = Screen.new(50, 12)
+    local screen = Screen.new(50, 12, { ext_multigrid = true })
     screen:set_default_attr_ids {
       h1 = { reverse = true },
       h2 = { foreground = tonumber('0x6a0dad') },
@@ -230,7 +241,6 @@ describe(':checkhealth window', function()
       [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
       [32] = { foreground = Screen.colors.PaleGreen2 },
     }
-    screen:attach({ ext_multigrid = true })
     command('checkhealth success1')
     screen:expect {
       grid = [[
@@ -256,7 +266,7 @@ describe(':checkhealth window', function()
   end)
 
   local function test_health_vsplit(left, emptybuf, mods)
-    local screen = Screen.new(50, 20)
+    local screen = Screen.new(50, 20, { ext_multigrid = true })
     screen:set_default_attr_ids {
       h1 = { reverse = true },
       h2 = { foreground = tonumber('0x6a0dad') },
@@ -264,7 +274,6 @@ describe(':checkhealth window', function()
       [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
       [32] = { foreground = Screen.colors.PaleGreen2 },
     }
-    screen:attach({ ext_multigrid = true })
     if not emptybuf then
       insert('hello')
     end
@@ -322,8 +331,7 @@ describe(':checkhealth window', function()
   end
 
   local function test_health_split(top, emptybuf, mods)
-    local screen = Screen.new(50, 25)
-    screen:attach({ ext_multigrid = true })
+    local screen = Screen.new(50, 25, { ext_multigrid = true })
     screen._default_attr_ids = nil
     if not emptybuf then
       insert('hello')

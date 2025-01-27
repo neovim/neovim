@@ -16,8 +16,7 @@ describe('ext_multigrid', function()
 
   before_each(function()
     clear{args_rm={'--headless'}, args={'--cmd', 'set laststatus=2'}}
-    screen = Screen.new(53,14)
-    screen:attach({ext_multigrid=true})
+    screen = Screen.new(53,14, {ext_multigrid=true})
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {foreground = Screen.colors.Magenta},
@@ -1095,7 +1094,7 @@ describe('ext_multigrid', function()
   end)
 
   it('supports mouse', function()
-    command('autocmd! nvim_popupmenu') -- Delete the default MenuPopup event handler.
+    command('autocmd! nvim.popupmenu') -- Delete the default MenuPopup event handler.
     insert('some text\nto be clicked')
     screen:expect{grid=[[
     ## grid 1

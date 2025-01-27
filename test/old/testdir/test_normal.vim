@@ -692,9 +692,9 @@ func Test_opfunc_callback()
   delfunc s:OpFunc3
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set opfunc=(a)\ =>\ OpFunc1(24,\ a)
+  set opfunc=(a)\ =>\ OpFunc1(24,\ a)
   let g:OpFunc1Args = []
-  " call assert_fails('normal! g@l', 'E117:')
+  call assert_fails('normal! g@l', 'E117:')
   call assert_equal([], g:OpFunc1Args)
 
   " set 'operatorfunc' to a partial with dict. This used to cause a crash.
@@ -1338,11 +1338,27 @@ func Test_scroll_in_ex_mode()
       call writefile(['done'], 'Xdone')
       qa!
   END
-  call writefile(lines, 'Xscript')
+  call writefile(lines, 'Xscript', 'D')
   call assert_equal(1, RunVim([], [], '--clean -X -Z -e -s -S Xscript'))
   call assert_equal(['done'], readfile('Xdone'))
 
-  call delete('Xscript')
+  call delete('Xdone')
+endfunc
+
+func Test_scroll_and_paste_in_ex_mode()
+  throw 'Skipped: does not work when Nvim is run from :!'
+  " This used to crash because of moving cursor to line 0.
+  let lines =<< trim END
+      v/foo/vi|YY9PYQ
+      v/bar/vi|YY9PYQ
+      v/bar/exe line('.') == 1 ? "vi|Y\<C-B>9PYQ" : "vi|YQ"
+      call writefile(['done'], 'Xdone')
+      qa!
+  END
+  call writefile(lines, 'Xscript', 'D')
+  call assert_equal(1, RunVim([], [], '-u NONE -i NONE -n -X -Z -e -s -S Xscript'))
+  call assert_equal(['done'], readfile('Xdone'))
+
   call delete('Xdone')
 endfunc
 
@@ -3958,8 +3974,7 @@ func Test_mouse_shape_after_failed_change()
   END
   call writefile(lines, 'Xmouseshape.vim', 'D')
   call RunVim([], [], "-g -S Xmouseshape.vim")
-  sleep 300m
-  call assert_equal(['busy', 'arrow'], readfile('Xmouseshapes'))
+  call WaitForAssert({-> assert_equal(['busy', 'arrow'], readfile('Xmouseshapes'))}, 300)
 
   call delete('Xmouseshapes')
 endfunc
@@ -3990,8 +4005,7 @@ func Test_mouse_shape_after_cancelling_gr()
   END
   call writefile(lines, 'Xmouseshape.vim', 'D')
   call RunVim([], [], "-g -S Xmouseshape.vim")
-  sleep 300m
-  call assert_equal(['beam', 'arrow'], readfile('Xmouseshapes'))
+  call WaitForAssert({-> assert_equal(['beam', 'arrow'], readfile('Xmouseshapes'))}, 300)
 
   call delete('Xmouseshapes')
 endfunc
@@ -4305,4 +4319,5 @@ func Test_normal_go()
 
   bwipe!
 endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

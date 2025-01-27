@@ -105,7 +105,6 @@ describe('tabpage', function()
     screen:add_extra_attr_ids {
       [100] = { bold = true, foreground = Screen.colors.Fuchsia },
     }
-    screen:attach()
 
     command('tabnew')
     command('tabprev')

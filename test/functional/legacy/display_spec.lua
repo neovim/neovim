@@ -12,7 +12,6 @@ describe('display', function()
   -- oldtest: Test_display_scroll_at_topline()
   it('scroll when modified at topline vim-patch:8.2.1488', function()
     local screen = Screen.new(20, 4)
-    screen:attach()
 
     command([[call setline(1, repeat('a', 21))]])
     feed('O')
@@ -27,7 +26,6 @@ describe('display', function()
   -- oldtest: Test_display_scroll_update_visual()
   it('scrolling when modified at topline in Visual mode vim-patch:8.2.4626', function()
     local screen = Screen.new(60, 8)
-    screen:attach()
 
     exec([[
       set scrolloff=0
@@ -52,7 +50,6 @@ describe('display', function()
       [2] = { bold = true, reverse = true }, -- StatusLine
       [3] = { reverse = true }, -- StatusLineNC
     })
-    screen:attach()
     exec([[
       call setline(1, ['aaa', 'b'->repeat(200)])
       set display=truncate
@@ -131,7 +128,6 @@ describe('display', function()
   -- oldtest: Test_display_long_lastline()
   it('"lastline" shows correct text when end of wrapped line is deleted', function()
     local screen = Screen.new(35, 14)
-    screen:attach()
     exec([[
       set display=lastline smoothscroll scrolloff=0
       call setline(1, [
@@ -183,7 +179,6 @@ describe('display', function()
   -- oldtest: Test_display_cursor_long_line()
   it("correctly shows line that doesn't fit in the window", function()
     local screen = Screen.new(75, 8)
-    screen:attach()
     exec([[
       call setline(1, ['a', 'b ' .. 'bbbbb'->repeat(150), 'c'])
       norm $j

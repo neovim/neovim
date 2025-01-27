@@ -562,7 +562,7 @@ with the following possible keys:
 	"ui":       Builtin UI highlight. |highlight-groups|
 	"syntax":   Highlight applied to a buffer by a syntax declaration or
 		    other runtime/plugin functionality such as
-		    |nvim_buf_add_highlight()|
+		    |nvim_buf_set_extmark()|
 	"terminal": highlight from a process running in a |terminal-emulator|.
 		    Contains no further semantic information.
     `ui_name`:	Highlight name from |highlight-groups|. Only for "ui" kind.
@@ -610,11 +610,12 @@ tabs.
 	size). If the window was previously hidden, it should now be shown
 	again.
 
-["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, focusable, zindex] ~
+["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, mouse_enabled, zindex] ~
 	Display or reconfigure floating window `win`. The window should be
 	displayed above another grid `anchor_grid` at the specified position
-	`anchor_row` and `anchor_col`. For the meaning of `anchor` and more
-	details of positioning, see |nvim_open_win()|.
+	`anchor_row` and `anchor_col`. For the meaning of `anchor` and more details
+	of positioning, see |nvim_open_win()|. `mouse_enabled` is true if the
+	window can receive mouse events.
 
 ["win_external_pos", grid, win] ~
 	Display or reconfigure external window `win`. The window should be
@@ -714,7 +715,7 @@ Activated by the `ext_cmdline` |ui-option|.
 This UI extension delegates presentation of the |cmdline| (except 'wildmenu').
 For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 
-["cmdline_show", content, pos, firstc, prompt, indent, level] ~
+["cmdline_show", content, pos, firstc, prompt, indent, level, hl_id] ~
         content: List of [attrs, string]
 	         [[{}, "t"], [attrs, "est"], ...]
 
@@ -727,8 +728,8 @@ For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 	`firstc` and `prompt` are text, that if non-empty should be
 	displayed in front of the command line. `firstc` always indicates
 	built-in command lines such as `:` (ex command) and `/` `?` (search),
-	while `prompt` is an |input()| prompt. `indent` tells how many spaces
-	the content should be indented.
+	while `prompt` is an |input()| prompt, highlighted with `hl_id`.
+	`indent` tells how many spaces the content should be indented.
 
 	The Nvim command line can be invoked recursively, for instance by
 	typing `<c-r>=` at the command line prompt. The `level` field is used
@@ -748,8 +749,9 @@ For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 
 	Should be hidden at next cmdline_show.
 
-["cmdline_hide"] ~
-	Hide the cmdline.
+["cmdline_hide", abort] ~
+	Hide the cmdline. `abort` is true if the cmdline is hidden after an
+	aborting condition (|c_Esc| or |c_CTRL-C|).
 
 ["cmdline_block_show", lines] ~
 	Show a block of context to the current command line. For example if
@@ -782,32 +784,43 @@ will be set to zero, but can be changed and used for the replacing cmdline or
 message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
-["msg_show", kind, content, replace_last] ~
+["msg_show", kind, content, replace_last, history] ~
 	Display a message to the user.
 
 	kind
 	    Name indicating the message kind:
-		"" (empty)	Unknown (consider a feature-request: |bugs|)
+		"" (empty)	Unknown (consider a |feature-request|)
+		"bufwrite"	|:write| message
 		"confirm"	|confirm()| or |:confirm| dialog
-		"confirm_sub"	|:substitute| confirm dialog |:s_c|
 		"emsg"		Error (|errors|, internal error, |:throw|, …)
 		"echo"		|:echo| message
 		"echomsg"	|:echomsg| message
 		"echoerr"	|:echoerr| message
+		"completion"    |ins-completion-menu| message
+		"list_cmd"	List output for various commands (|:ls|, |:set|, …)
 		"lua_error"	Error in |:lua| code
+		"lua_print"	|print()| from |:lua| code
 		"rpc_error"	Error response from |rpcrequest()|
 		"return_prompt"	|press-enter| prompt after a multiple messages
 		"quickfix"	Quickfix navigation message
+		"search_cmd"	Entered search command
 		"search_count"	Search count message ("S" flag of 'shortmess')
+		"shell_err"	|:!cmd| shell stderr output
+		"shell_out"	|:!cmd| shell stdout output
+		"shell_ret"	|:!cmd| shell return code
+		"undo"		|:undo| and |:redo| message
+		"verbose"	'verbose' message
+		"wildlist"	'wildmode' "list" message
 		"wmsg"		Warning ("search hit BOTTOM", |W10|, …)
 	    New kinds may be added in the future; clients should treat unknown
 	    kinds as the empty kind.
 
 	content
-	    Array of `[attr_id, text_chunk]` tuples, building up the message
-	    text of chunks of different highlights. No extra spacing should be
-	    added between chunks, the `text_chunk` by itself contains any
-	    necessary whitespace. Messages can contain line breaks "\n".
+	    Array of `[attr_id, text_chunk, hl_id]` tuples, building up the
+	    message text of chunks of different highlights. No extra spacing
+	    should be added between chunks, the `text_chunk` by itself
+	    contains any necessary whitespace. Messages can contain line
+	    breaks "\n".
 
 	replace_last
 	    Decides how multiple messages should be displayed:
@@ -815,6 +828,9 @@ must handle.
 		   that are still visible.
 	    true:  Replace the message in the most-recent `msg_show` call,
 		   but any other visible message should still remain.
+
+	history
+	    True if the message was added to the |:messages| history.
 
 ["msg_clear"] ~
 	Clear all messages currently displayed by "msg_show". (Messages sent

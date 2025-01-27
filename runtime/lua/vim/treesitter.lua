@@ -32,9 +32,7 @@ M.minimum_language_version = vim._ts_get_minimum_language_version()
 ---
 ---@return vim.treesitter.LanguageTree object to use for parsing
 function M._create_parser(bufnr, lang, opts)
-  if bufnr == 0 then
-    bufnr = vim.api.nvim_get_current_buf()
-  end
+  bufnr = vim._resolve_bufnr(bufnr)
 
   vim.fn.bufload(bufnr)
 
@@ -63,8 +61,6 @@ function M._create_parser(bufnr, lang, opts)
     { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true }
   )
 
-  self:parse()
-
   return self
 end
 
@@ -90,9 +86,7 @@ function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
   local should_error = opts.error == nil or opts.error
 
-  if bufnr == nil or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim._resolve_bufnr(bufnr)
 
   if not valid_lang(lang) then
     lang = M.language.get_lang(vim.bo[bufnr].filetype)
@@ -133,10 +127,8 @@ end
 ---
 ---@return vim.treesitter.LanguageTree object to use for parsing
 function M.get_string_parser(str, lang, opts)
-  vim.validate({
-    str = { str, 'string' },
-    lang = { lang, 'string' },
-  })
+  vim.validate('str', str, 'string')
+  vim.validate('lang', lang, 'string')
 
   return LanguageTree.new(str, lang, opts)
 end
@@ -167,7 +159,7 @@ function M.get_node_range(node_or_range)
   if type(node_or_range) == 'table' then
     return unpack(node_or_range)
   else
-    return node_or_range:range()
+    return node_or_range:range(false)
   end
 end
 
@@ -243,28 +235,25 @@ end
 ---
 ---@return boolean True if the {node} contains the {range}
 function M.node_contains(node, range)
-  vim.validate({
-    -- allow a table so nodes can be mocked
-    node = { node, { 'userdata', 'table' } },
-    range = { range, M._range.validate, 'integer list with 4 or 6 elements' },
-  })
+  -- allow a table so nodes can be mocked
+  vim.validate('node', node, { 'userdata', 'table' })
+  vim.validate('range', range, M._range.validate, 'integer list with 4 or 6 elements')
   return M._range.contains({ node:range() }, range)
 end
 
 --- Returns a list of highlight captures at the given position
 ---
---- Each capture is represented by a table containing the capture name as a string as
---- well as a table of metadata (`priority`, `conceal`, ...; empty if none are defined).
+--- Each capture is represented by a table containing the capture name as a string, the capture's
+--- language, a table of metadata (`priority`, `conceal`, ...; empty if none are defined), and the
+--- id of the capture.
 ---
 ---@param bufnr integer Buffer number (0 for current buffer)
 ---@param row integer Position row
 ---@param col integer Position column
 ---
----@return {capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata}[]
+---@return {capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata, id: integer}[]
 function M.get_captures_at_pos(bufnr, row, col)
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim._resolve_bufnr(bufnr)
   local buf_highlighter = M.highlighter.active[bufnr]
 
   if not buf_highlighter then
@@ -295,12 +284,15 @@ function M.get_captures_at_pos(bufnr, row, col)
 
     local iter = q:query():iter_captures(root, buf_highlighter.bufnr, row, row + 1)
 
-    for capture, node, metadata in iter do
+    for id, node, metadata in iter do
       if M.is_in_node_range(node, row, col) then
         ---@diagnostic disable-next-line: invisible
-        local c = q._query.captures[capture] -- name of the capture in the query
-        if c ~= nil then
-          table.insert(matches, { capture = c, metadata = metadata, lang = tree:lang() })
+        local capture = q._query.captures[id] -- name of the capture in the query
+        if capture ~= nil then
+          table.insert(
+            matches,
+            { capture = capture, metadata = metadata, lang = tree:lang(), id = id }
+          )
         end
       end
     end
@@ -365,11 +357,7 @@ end
 function M.get_node(opts)
   opts = opts or {}
 
-  local bufnr = opts.bufnr
-
-  if not bufnr or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  local bufnr = vim._resolve_bufnr(opts.bufnr)
 
   local row, col --- @type integer, integer
   if opts.pos then
@@ -407,6 +395,8 @@ end
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
 --- In this case, add `vim.bo.syntax = 'on'` after the call to `start`.
 ---
+--- Note: By default, the highlighter parses code asynchronously, using a segment time of 3ms.
+---
 --- Example:
 ---
 --- ```lua
@@ -418,10 +408,10 @@ end
 --- })
 --- ```
 ---
----@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
----@param lang (string|nil) Language of the parser (default: from buffer filetype)
+---@param bufnr integer? Buffer to be highlighted (default: current buffer)
+---@param lang string? Language of the parser (default: from buffer filetype)
 function M.start(bufnr, lang)
-  bufnr = bufnr or api.nvim_get_current_buf()
+  bufnr = vim._resolve_bufnr(bufnr)
   local parser = assert(M.get_parser(bufnr, lang, { error = false }))
   M.highlighter.new(parser)
 end
@@ -430,7 +420,7 @@ end
 ---
 ---@param bufnr (integer|nil) Buffer to stop highlighting (default: current buffer)
 function M.stop(bufnr)
-  bufnr = (bufnr and bufnr ~= 0) and bufnr or api.nvim_get_current_buf()
+  bufnr = vim._resolve_bufnr(bufnr)
 
   if M.highlighter.active[bufnr] then
     M.highlighter.active[bufnr]:destroy()

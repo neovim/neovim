@@ -229,10 +229,8 @@ end
 --- global value of a |global-local| option, see |:setglobal|.
 --- </pre>
 
---- Get or set |options|. Like `:set`. Invalid key is an error.
----
---- Note: this works on both buffer-scoped and window-scoped options using the
---- current buffer and window.
+--- Get or set |options|. Works like `:set`, so buffer/window-scoped options target the current
+--- buffer/window. Invalid key is an error.
 ---
 --- Example:
 ---
@@ -770,7 +768,7 @@ end
 ---
 ---
 --- A special interface |vim.opt| exists for conveniently interacting with list-
---- and map-style option from Lua: It allows accessing them as Lua tables and
+--- and map-style options from Lua: It allows accessing them as Lua tables and
 --- offers object-oriented method for adding and removing entries.
 ---
 ---     Examples: ~

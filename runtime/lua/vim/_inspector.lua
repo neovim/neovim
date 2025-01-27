@@ -53,7 +53,7 @@ function vim.inspect_pos(bufnr, row, col, filter)
     local cursor = vim.api.nvim_win_get_cursor(win)
     row, col = cursor[1] - 1, cursor[2]
   end
-  bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
+  bufnr = vim._resolve_bufnr(bufnr)
 
   local results = {
     treesitter = {}, --- @type table[]
@@ -128,13 +128,13 @@ function vim.inspect_pos(bufnr, row, col, filter)
 
   if filter.semantic_tokens then
     results.semantic_tokens = vim.tbl_filter(function(extmark)
-      return extmark.ns:find('vim_lsp_semantic_tokens') == 1
+      return extmark.ns:find('nvim.lsp.semantic_tokens') == 1
     end, extmarks)
   end
 
   if filter.extmarks then
     results.extmarks = vim.tbl_filter(function(extmark)
-      return extmark.ns:find('vim_lsp_semantic_tokens') ~= 1
+      return extmark.ns:find('nvim.lsp.semantic_tokens') ~= 1
         and (filter.extmarks == 'all' or extmark.opts.hl_group)
     end, extmarks)
   end
@@ -145,6 +145,13 @@ end
 ---Show all the items at a given buffer position.
 ---
 ---Can also be shown with `:Inspect`. [:Inspect]()
+---
+---Example: To bind this function to the vim-scriptease
+---inspired `zS` in Normal mode:
+---
+---```lua
+---vim.keymap.set('n', 'zS', vim.show_pos)
+---```
 ---
 ---@since 11
 ---@param bufnr? integer defaults to the current buffer
@@ -171,7 +178,7 @@ function vim.show_pos(bufnr, row, col, filter)
     if data.hl_group ~= data.hl_group_link then
       append('links to ', 'MoreMsg')
       append(data.hl_group_link, data.hl_group_link)
-      append(' ')
+      append('   ')
     end
     if comment then
       append(comment, 'Comment')
@@ -184,7 +191,14 @@ function vim.show_pos(bufnr, row, col, filter)
     append('Treesitter', 'Title')
     nl()
     for _, capture in ipairs(items.treesitter) do
-      item(capture, capture.lang)
+      item(
+        capture,
+        string.format(
+          'priority: %d   language: %s',
+          capture.metadata.priority or vim.hl.priorities.treesitter,
+          capture.lang
+        )
+      )
     end
     nl()
   end

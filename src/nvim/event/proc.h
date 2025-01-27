@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "nvim/event/defs.h"  // IWYU pragma: keep
+#include "nvim/os/os_defs.h"
 #include "nvim/types_defs.h"
 
 static inline Proc proc_init(Loop *loop, ProcType type, void *data)
@@ -21,8 +22,8 @@ static inline Proc proc_init(Loop *loop, ProcType type, void *data)
     .argv = NULL,
     .exepath = NULL,
     .in = { .closed = false },
-    .out = { .s.closed = false },
-    .err = { .s.closed = false },
+    .out = { .s.closed = false, .s.fd = STDOUT_FILENO },
+    .err = { .s.closed = false, .s.fd = STDERR_FILENO },
     .cb = NULL,
     .closed = false,
     .internal_close_cb = NULL,

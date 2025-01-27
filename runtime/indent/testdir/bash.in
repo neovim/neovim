@@ -1,0 +1,22 @@
+#!/bin/bash
+# vim: set ft=bash sw=2 noet:
+
+# START_INDENT
+a = 10
+b = 20
+
+function add() {
+c = $((a + b))
+}
+
+function print {
+# do nothing
+}
+
+if [[ $c -ge 15 ]];
+then
+print("ok")
+else
+print("not ok")
+fi
+# END_INDENT

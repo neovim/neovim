@@ -29,6 +29,10 @@ function M.feed_termcode(data)
   M.feed_data('\027' .. data)
 end
 
+function M.feed_csi(data)
+  M.feed_termcode('[' .. data)
+end
+
 function M.make_lua_executor(session)
   return function(code, ...)
     local status, rv = session:request('nvim_exec_lua', code, { ... })
@@ -78,6 +82,9 @@ end
 function M.set_undercurl()
   M.feed_termcode('[4:3m')
 end
+function M.set_reverse()
+  M.feed_termcode('[7m')
+end
 function M.set_strikethrough()
   M.feed_termcode('[9m')
 end
@@ -108,11 +115,10 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
   cols = cols and cols or 50
 
   api.nvim_command('highlight TermCursor cterm=reverse')
-  api.nvim_command('highlight TermCursorNC ctermbg=11')
   api.nvim_command('highlight StatusLineTerm ctermbg=2 ctermfg=0')
   api.nvim_command('highlight StatusLineTermNC ctermbg=2 ctermfg=8')
 
-  local screen = Screen.new(cols, 7 + extra_rows)
+  local screen = Screen.new(cols, 7 + extra_rows, screen_opts or { rgb = false })
   screen:set_default_attr_ids({
     [1] = { reverse = true }, -- focused cursor
     [2] = { background = 11 }, -- unfocused cursor
@@ -134,10 +140,8 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
     [18] = { background = 2, foreground = 8 }, -- StatusLineTermNC
   })
 
-  screen:attach(screen_opts or { rgb = false })
-
   api.nvim_command('enew')
-  api.nvim_call_function('termopen', { cmd, env and { env = env } or nil })
+  api.nvim_call_function('jobstart', { cmd, { term = true, env = (env and env or nil) } })
   api.nvim_input('<CR>')
   local vim_errmsg = api.nvim_eval('v:errmsg')
   if vim_errmsg and '' ~= vim_errmsg then
@@ -156,7 +160,7 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
     local empty_line = (' '):rep(cols)
     local expected = {
       'tty ready' .. (' '):rep(cols - 9),
-      '{1: }' .. (' '):rep(cols - 1),
+      '^' .. (' '):rep(cols),
       empty_line,
       empty_line,
       empty_line,

@@ -28,7 +28,6 @@ describe('semantic token highlighting', function()
   local screen --- @type test.functional.ui.screen
   before_each(function()
     screen = Screen.new(40, 16)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = { bold = true, foreground = Screen.colors.Blue1 },
       [2] = { foreground = Screen.colors.DarkCyan },
@@ -457,7 +456,7 @@ describe('semantic token highlighting', function()
         vim.notify = function(...)
           table.insert(_G.notifications, 1, { ... })
         end
-        return vim.lsp.start_client({ name = 'dummy', cmd = _G.server.cmd })
+        return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd }, { attach = false })
       end)
       eq(false, exec_lua('return vim.lsp.buf_is_attached(0, ...)', client_id))
 

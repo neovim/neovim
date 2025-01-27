@@ -1029,7 +1029,6 @@ describe('vim._with', function()
         [1] = { bold = true, reverse = true },
         [2] = { bold = true, foreground = Screen.colors.Blue },
       }
-      screen:attach()
       exec_lua [[ vim._with({ silent = true }, function() vim.cmd.echo('"ccc"') end) ]]
       screen:expect [[
         ^                    |
@@ -1178,7 +1177,6 @@ describe('vim._with', function()
         [1] = { reverse = true },
         [2] = { bold = true, reverse = true },
       }
-      screen:attach()
       exec_lua [[
         vim.opt.ruler = true
         local lines = {}
@@ -1622,5 +1620,22 @@ describe('vim._with', function()
 
     matches('Invalid buffer', get_error('{ buf = -1 }, function() end'))
     matches('Invalid window', get_error('{ win = -1 }, function() end'))
+  end)
+
+  it('no double-free when called from :filter browse oldfiles #31501', function()
+    exec_lua([=[
+      vim.api.nvim_create_autocmd('BufEnter', {
+        callback = function()
+          vim._with({ lockmarks = true }, function() end)
+        end,
+      })
+      vim.cmd([[
+        let v:oldfiles = ['Xoldfile']
+        call nvim_input('1<CR>')
+        noswapfile filter /Xoldfile/ browse oldfiles
+      ]])
+    ]=])
+    n.assert_alive()
+    eq('Xoldfile', fn.bufname('%'))
   end)
 end)

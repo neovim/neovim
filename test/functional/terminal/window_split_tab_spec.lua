@@ -30,10 +30,6 @@ describe(':terminal', function()
     command('highlight VertSplit NONE')
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('next to a closing window', function()
     command('split')
     command('terminal')
@@ -53,7 +49,7 @@ describe(':terminal', function()
       ==========                                        |
       tty ready                                         |
       rows: 5, cols: 50                                 |
-      {2: }                                                 |
+                                                        |
                                                         |*2
       ==========                                        |
       :2split                                           |
@@ -65,7 +61,7 @@ describe(':terminal', function()
       ==========                                        |
       ^tty ready                                         |
       rows: 5, cols: 50                                 |
-      {2: }                                                 |
+                                                        |
                                                         |*2
       ==========                                        |
       :wincmd p                                         |
@@ -81,7 +77,7 @@ describe(':terminal', function()
     command('bprevious')
     screen:expect([[
       tty ready                                         |
-      ^foo{2: }                                              |
+      ^foo                                               |
                                                         |*8
     ]])
   end)
@@ -106,7 +102,7 @@ describe(':terminal', function()
     screen:expect([[
       tty ready                                      |
       rows: 7, cols: 47                              |
-      {2: }                                              |
+                                                     |
                                                      |*3
       ^                                               |
                                                      |
@@ -116,7 +112,7 @@ describe(':terminal', function()
       tty ready                                |
       rows: 7, cols: 47                        |
       rows: 4, cols: 41                        |
-      {2:^ }                                        |
+      ^                                         |
                                                |
     ]])
   end)

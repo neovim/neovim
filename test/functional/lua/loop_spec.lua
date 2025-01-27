@@ -65,7 +65,6 @@ describe('vim.uv', function()
 
   it('is API safe', function()
     local screen = Screen.new(50, 10)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue1 },
       [2] = { bold = true, reverse = true },
@@ -88,9 +87,9 @@ describe('vim.uv', function()
     screen:expect([[
                                                         |
       {2:                                                  }|
-      {3:Error executing luv callback:}                     |
+      {3:Error executing callback:}                         |
       {3:[string "<nvim>"]:5: E5560: nvim_set_var must not }|
-      {3:be called in a lua loop callback}                  |
+      {3:be called in a fast event context}                 |
       {3:stack traceback:}                                  |
       {3:        [C]: in function 'nvim_set_var'}           |
       {3:        [string "<nvim>"]:5: in function <[string }|

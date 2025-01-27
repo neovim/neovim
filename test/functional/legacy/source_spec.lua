@@ -18,7 +18,6 @@ describe(':source!', function()
     ]]
     )
     local screen = Screen.new(75, 6)
-    screen:attach()
     feed(':source! Xscript.vim\n')
     screen:expect([[
       ^                                                                           |

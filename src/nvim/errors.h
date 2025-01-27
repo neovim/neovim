@@ -129,6 +129,7 @@ EXTERN const char e_missingparen[] INIT(= N_("E107: Missing parentheses: %s"));
 EXTERN const char e_empty_buffer[] INIT(= N_("E749: Empty buffer"));
 EXTERN const char e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
+EXTERN const char e_unknown_function_str[] INIT(= N_("E117: Unknown function: %s"));
 EXTERN const char e_str_not_inside_function[] INIT(= N_("E193: %s not inside a function"));
 
 EXTERN const char e_invalpat[] INIT(= N_("E682: Invalid search pattern or delimiter"));
@@ -151,10 +152,15 @@ EXTERN const char e_auabort[] INIT(= N_("E855: Autocommands caused command to ab
 
 EXTERN const char e_api_error[] INIT(= N_("E5555: API call: %s"));
 
-EXTERN const char e_luv_api_disabled[] INIT(= N_("E5560: %s must not be called in a lua loop callback"));
+EXTERN const char e_fast_api_disabled[] INIT(= N_("E5560: %s must not be called in a fast event context"));
 
 EXTERN const char e_floatonly[] INIT(= N_("E5601: Cannot close window, only floating window would remain"));
 EXTERN const char e_floatexchange[] INIT(= N_("E5602: Cannot exchange or rotate float"));
+
+EXTERN const char e_cant_find_directory_str_in_cdpath[] INIT(= N_("E344: Can't find directory \"%s\" in cdpath"));
+EXTERN const char e_cant_find_file_str_in_path[] INIT(= N_("E345: Can't find file \"%s\" in path"));
+EXTERN const char e_no_more_directory_str_found_in_cdpath[] INIT(= N_("E346: No more directory \"%s\" found in cdpath"));
+EXTERN const char e_no_more_file_str_found_in_path[] INIT(= N_("E347: No more file \"%s\" found in path"));
 
 EXTERN const char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
 
@@ -181,6 +187,7 @@ INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch")
 
 EXTERN const char e_winfixbuf_cannot_go_to_buffer[]
 INIT(= N_("E1513: Cannot switch buffer. 'winfixbuf' is enabled"));
+EXTERN const char e_invalid_return_type_from_findfunc[] INIT( = N_("E1514: 'findfunc' did not return a List type"));
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 

@@ -25,34 +25,31 @@ local function test_embed(ext_linegrid)
     clear { args_rm = { '--headless' }, args = { ... } }
 
     -- attach immediately after startup, for early UI
-    screen = Screen.new(60, 8)
-    screen:attach { ext_linegrid = ext_linegrid }
-    screen:set_default_attr_ids({
-      [1] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [2] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-      [3] = { bold = true, foreground = Screen.colors.Blue1 },
-      [4] = { bold = true, foreground = Screen.colors.Green },
-      [5] = { bold = true, reverse = true },
-      [6] = { foreground = Screen.colors.NvimLightGrey3, background = Screen.colors.NvimDarkGrey3 },
-      [7] = { foreground = Screen.colors.NvimDarkRed },
-      [8] = { foreground = Screen.colors.NvimDarkCyan },
-    })
+    screen = Screen.new(60, 8, { ext_linegrid = ext_linegrid })
+    screen:add_extra_attr_ids {
+      [100] = { foreground = Screen.colors.NvimDarkCyan },
+      [101] = { foreground = Screen.colors.NvimDarkRed },
+      [102] = {
+        background = Screen.colors.NvimDarkGrey3,
+        foreground = Screen.colors.NvimLightGrey3,
+      },
+    }
   end
 
   it('can display errors', function()
     startup('--cmd', 'echoerr invalid+')
     screen:expect([[
                                                                   |*4
-      {6:                                                            }|
-      {7:Error detected while processing pre-vimrc command line:}     |
-      {7:E121: Undefined variable: invalid}                           |
-      {8:Press ENTER or type command to continue}^                     |
+      {102:                                                            }|
+      {9:Error detected while processing pre-vimrc command line:}     |
+      {9:E121: Undefined variable: invalid}                           |
+      {6:Press ENTER or type command to continue}^                     |
     ]])
 
     feed('<cr>')
     screen:expect([[
       ^                                                            |
-      {3:~                                                           }|*6
+      {1:~                                                           }|*6
                                                                   |
     ]])
   end)
@@ -64,11 +61,11 @@ local function test_embed(ext_linegrid)
     startup('--cmd', 'echoerr "foo"', '--cmd', 'color default', '--cmd', 'echoerr "bar"')
     screen:expect([[
                                                                   |*3
-      {6:                                                            }|
-      {7:Error detected while processing pre-vimrc command line:}     |
-      {7:foo}                                                         |
-      {7:bar}                                                         |
-      {8:Press ENTER or type command to continue}^                     |
+      {102:                                                            }|
+      {9:Error detected while processing pre-vimrc command line:}     |
+      {9:foo}                                                         |
+      {101:bar}                                                         |
+      {100:Press ENTER or type command to continue}^                     |
     ]])
   end)
 
@@ -77,11 +74,11 @@ local function test_embed(ext_linegrid)
     screen:expect {
       grid = [[
                                                                   |*3
-      {6:                                                            }|
-      {7:Error detected while processing pre-vimrc command line:}     |
-      {7:foo}                                                         |
-      {7:bar}                                                         |
-      {8:Press ENTER or type command to continue}^                     |
+      {102:                                                            }|
+      {9:Error detected while processing pre-vimrc command line:}     |
+      {9:foo}                                                         |
+      {9:bar}                                                         |
+      {6:Press ENTER or type command to continue}^                     |
     ]],
       condition = function()
         eq(Screen.colors.Green, screen.default_colors.rgb_bg)
@@ -112,13 +109,10 @@ describe('--embed UI', function()
     clear { args_rm = { '--headless' }, io_extra = pipe.read, env = { NVIM_LOG_FILE = testlog } }
 
     -- attach immediately after startup, for early UI
-    local screen = Screen.new(40, 8)
+    -- rpc_async: Avoid hanging. #24888
+    local screen = Screen.new(40, 8, { stdin_fd = 3 }, false)
     screen.rpc_async = true -- Avoid hanging. #24888
-    screen:attach { stdin_fd = 3 }
-    screen:set_default_attr_ids {
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { bold = true },
-    }
+    screen:attach()
 
     writer:write 'hello nvim\nfrom external input\n'
     writer:shutdown(function()
@@ -139,7 +133,7 @@ describe('--embed UI', function()
       ^                                        |
       from external input                     |
       {1:~                                       }|*4
-      {2:-- INSERT --}                            |
+      {5:-- INSERT --}                            |
     ]]
 
     if not is_os('win') then
@@ -170,13 +164,9 @@ describe('--embed UI', function()
     clear { args_rm = { '--headless' }, args = { '-q', '-' }, io_extra = pipe.read }
 
     -- attach immediately after startup, for early UI
-    local screen = Screen.new(60, 8)
+    local screen = Screen.new(60, 8, { stdin_fd = 3 }, false)
     screen.rpc_async = true -- Avoid hanging. #24888
-    screen:attach { stdin_fd = 3 }
-    screen:set_default_attr_ids {
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { bold = true },
-    }
+    screen:attach()
 
     writer:write [[Xbadfile.c:4:12: error: expected ';' before '}' token]]
     writer:shutdown(function()
@@ -202,7 +192,7 @@ describe('--embed UI', function()
         return 666^                                                |
       }                                                           |
       {1:~                                                           }|*2
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]]
 
     eq('-', api.nvim_get_option_value('errorfile', {}))
@@ -222,7 +212,6 @@ describe('--embed UI', function()
       -- attach immediately after startup, for early UI
       screen = Screen.new(40, 8)
       screen._handle_default_colors_set = handle_default_colors_set
-      screen:attach()
     end
 
     startup()
@@ -249,7 +238,6 @@ describe('--embed UI', function()
     clear { args_rm = { '--headless' } }
 
     local screen = Screen.new(40, 8)
-    screen:attach()
 
     screen:expect {
       condition = function()
@@ -336,8 +324,7 @@ describe('--embed --listen UI', function()
     ok(var_ok)
     eq({}, var)
 
-    local child_screen = Screen.new(40, 6)
-    child_screen:attach(nil, child_session)
+    local child_screen = Screen.new(40, 6, nil, child_session)
     child_screen:expect {
       grid = [[
       ^                                        |

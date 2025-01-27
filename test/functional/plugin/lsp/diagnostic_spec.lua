@@ -89,7 +89,7 @@ describe('vim.lsp.diagnostic', function()
         return extmarks
       end
 
-      client_id = assert(vim.lsp.start_client {
+      client_id = assert(vim.lsp.start({
         cmd_env = {
           NVIM_LUA_NOTRACK = '1',
         },
@@ -101,7 +101,7 @@ describe('vim.lsp.diagnostic', function()
           '--headless',
         },
         offset_encoding = 'utf-16',
-      })
+      }, { attach = false }))
     end)
 
     fake_uri = 'file:///fake/uri'
@@ -120,85 +120,6 @@ describe('vim.lsp.diagnostic', function()
   end)
 
   describe('vim.lsp.diagnostic.on_publish_diagnostics', function()
-    it('allows configuring the virtual text via vim.lsp.with', function()
-      local expected_spacing = 10
-      local extmarks = exec_lua(function()
-        _G.PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-          virtual_text = {
-            spacing = expected_spacing,
-          },
-        })
-
-        _G.PublishDiagnostics(nil, {
-          uri = fake_uri,
-          diagnostics = {
-            _G.make_error('Delayed Diagnostic', 4, 4, 4, 4),
-          },
-        }, { client_id = client_id })
-
-        return _G.get_extmarks(diagnostic_bufnr, client_id)
-      end)
-
-      local spacing = extmarks[1][4].virt_text[1][1]
-
-      eq(expected_spacing, #spacing)
-    end)
-
-    it('allows configuring the virtual text via vim.lsp.with using a function', function()
-      local expected_spacing = 10
-      local extmarks = exec_lua(function()
-        _G.PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-          virtual_text = function()
-            return {
-              spacing = expected_spacing,
-            }
-          end,
-        })
-
-        _G.PublishDiagnostics(nil, {
-          uri = fake_uri,
-          diagnostics = {
-            _G.make_error('Delayed Diagnostic', 4, 4, 4, 4),
-          },
-        }, { client_id = client_id })
-
-        return _G.get_extmarks(diagnostic_bufnr, client_id)
-      end)
-
-      local spacing = extmarks[1][4].virt_text[1][1]
-
-      eq(expected_spacing, #spacing)
-    end)
-
-    it('allows filtering via severity limit', function()
-      local get_extmark_count_with_severity = function(severity_limit)
-        return exec_lua(function()
-          _G.PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-            underline = false,
-            virtual_text = {
-              severity = { min = severity_limit },
-            },
-          })
-
-          _G.PublishDiagnostics(nil, {
-            uri = fake_uri,
-            diagnostics = {
-              _G.make_warning('Delayed Diagnostic', 4, 4, 4, 4),
-            },
-          }, { client_id = client_id })
-
-          return #_G.get_extmarks(diagnostic_bufnr, client_id)
-        end, client_id, fake_uri, severity_limit)
-      end
-
-      -- No messages with Error or higher
-      eq(0, get_extmark_count_with_severity('ERROR'))
-
-      -- But now we don't filter it
-      eq(1, get_extmark_count_with_severity('WARN'))
-      eq(1, get_extmark_count_with_severity('HINT'))
-    end)
-
     it('correctly handles UTF-16 offsets', function()
       local line = 'All 💼 and no 🎉 makes Jack a dull 👦'
       local result = exec_lua(function()
@@ -219,13 +140,13 @@ describe('vim.lsp.diagnostic', function()
       eq(1, #result)
       eq(
         exec_lua(function()
-          return vim.str_byteindex(line, 7, true)
+          return vim.str_byteindex(line, 'utf-16', 7)
         end),
         result[1].col
       )
       eq(
         exec_lua(function()
-          return vim.str_byteindex(line, 8, true)
+          return vim.str_byteindex(line, 'utf-16', 8)
         end),
         result[1].end_col
       )
@@ -288,9 +209,15 @@ describe('vim.lsp.diagnostic', function()
     before_each(function()
       exec_lua(create_server_definition)
       exec_lua(function()
+        _G.requests = 0
         _G.server = _G._create_server({
           capabilities = {
             diagnosticProvider = {},
+          },
+          handlers = {
+            [vim.lsp.protocol.Methods.textDocument_diagnostic] = function()
+              _G.requests = _G.requests + 1
+            end,
           },
         })
 
@@ -380,34 +307,6 @@ describe('vim.lsp.diagnostic', function()
       eq(1, diagnostics[1].severity)
     end)
 
-    it('allows configuring the virtual text via vim.lsp.with', function()
-      local expected_spacing = 10
-      local extmarks = exec_lua(function()
-        _G.Diagnostic = vim.lsp.with(vim.lsp.diagnostic.on_diagnostic, {
-          virtual_text = {
-            spacing = expected_spacing,
-          },
-        })
-
-        _G.Diagnostic(nil, {
-          kind = 'full',
-          items = {
-            _G.make_error('Pull Diagnostic', 4, 4, 4, 4),
-          },
-        }, {
-          params = {
-            textDocument = { uri = fake_uri },
-          },
-          uri = fake_uri,
-          client_id = client_id,
-        }, {})
-
-        return _G.get_extmarks(diagnostic_bufnr, client_id)
-      end)
-      eq(2, #extmarks)
-      eq(expected_spacing, #extmarks[1][4].virt_text[1][1])
-    end)
-
     it('clears diagnostics when client detaches', function()
       exec_lua(function()
         vim.lsp.diagnostic.on_diagnostic(nil, {
@@ -477,6 +376,57 @@ describe('vim.lsp.diagnostic', function()
         1,
         exec_lua(function()
           return #vim.diagnostic.get(diagnostic_bufnr)
+        end)
+      )
+    end)
+
+    it('handles server cancellation', function()
+      eq(
+        1,
+        exec_lua(function()
+          vim.lsp.diagnostic.on_diagnostic({
+            code = vim.lsp.protocol.ErrorCodes.ServerCancelled,
+            -- Empty data defaults to retriggering request
+            data = {},
+            message = '',
+          }, {}, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            client_id = client_id,
+          })
+
+          return _G.requests
+        end)
+      )
+
+      eq(
+        2,
+        exec_lua(function()
+          vim.lsp.diagnostic.on_diagnostic({
+            code = vim.lsp.protocol.ErrorCodes.ServerCancelled,
+            data = { retriggerRequest = true },
+            message = '',
+          }, {}, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            client_id = client_id,
+          })
+
+          return _G.requests
+        end)
+      )
+
+      eq(
+        2,
+        exec_lua(function()
+          vim.lsp.diagnostic.on_diagnostic({
+            code = vim.lsp.protocol.ErrorCodes.ServerCancelled,
+            data = { retriggerRequest = false },
+            message = '',
+          }, {}, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            client_id = client_id,
+          })
+
+          return _G.requests
         end)
       )
     end)

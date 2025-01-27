@@ -3,8 +3,9 @@
 " URL: https://github.com/PProvost/vim-ps1
 " Contributors: Enno Nagel
 " Last Change: 2024 Mar 29
-"		2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
-"		2024 Apr 05 by The Vim Project (avoid leaving behind g:makeprg)
+"		2024 Apr 03 by the Vim Project (removed :CompilerSet definition)
+"		2024 Apr 05 by the Vim Project (avoid leaving behind g:makeprg)
+"		2024 Nov 19 by the Vim Project (properly escape makeprg setting)
 
 if exists("current_compiler")
   finish
@@ -49,7 +50,7 @@ let s:makeprg = g:ps1_makeprg_cmd .. ' %:p:S'
 "         + CategoryInfo          : ObjectNotFound: (Write-Ouput:String) [], CommandNotFoundException
 "         + FullyQualifiedErrorId : CommandNotFoundException
 
-execute 'CompilerSet makeprg=' .. escape(s:makeprg, ' ')
+execute 'CompilerSet makeprg=' .. escape(s:makeprg, ' \|"')
 
 " Showing error in context with underlining.
 CompilerSet errorformat=%+G+%m

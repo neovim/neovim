@@ -21,7 +21,6 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_two_windows()
   it('works', function()
     local screen = Screen.new(75, 12)
-    screen:attach()
     exec([[
       let lines = ["one one one one one", "two |hidden| here", "three |hidden| three"]
       call setline(1, lines)
@@ -382,12 +381,9 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_with_cursorcolumn()
   it('CursorColumn and ColorColumn on wrapped line', function()
     local screen = Screen.new(40, 10)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.Grey90 }, -- CursorColumn
-      [2] = { background = Screen.colors.LightRed }, -- ColorColumn
-    })
-    screen:attach()
+    screen:add_extra_attr_ids {
+      [100] = { background = Screen.colors.LightRed },
+    }
     -- Check that cursorcolumn and colorcolumn don't get broken in presence of
     -- wrapped lines containing concealed text
     -- luacheck: push ignore 613 (trailing whitespace in a string)
@@ -408,12 +404,12 @@ describe('Conceal', function()
     -- luacheck: pop
 
     screen:expect([[
-      one one one  one one one {1:o}ne            |
-      {0: >>> }one {2:o}ne one one                    |
+      one one one  one one one {21:o}ne            |
+      {1: >>> }one {100:o}ne one one                    |
       two two two two |hidden| ^here two two   |
-      three  three three three {1:t}hree          |
-      {0: >>> }thre{2:e} three three three            |
-      {0:~                                       }|*4
+      three  three three three {21:t}hree          |
+      {1: >>> }thre{100:e} three three three            |
+      {1:~                                       }|*4
       /here                                   |
     ]])
 
@@ -421,11 +417,11 @@ describe('Conceal', function()
     feed('$')
     screen:expect([[
       one one one  one one one one            |
-      {0: >>> }one {2:o}ne one one                    |
+      {1: >>> }one {100:o}ne one one                    |
       two two two two |hidden| here two tw^o   |
       three  three three three three          |
-      {0: >>> }thre{2:e} three three three            |
-      {0:~                                       }|*4
+      {1: >>> }thre{100:e} three three three            |
+      {1:~                                       }|*4
       /here                                   |
     ]])
   end)
@@ -433,12 +429,9 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_wrapped_cursorline_wincolor()
   it('CursorLine highlight on wrapped lines', function()
     local screen = Screen.new(40, 4)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.Green }, -- CursorLine (low-priority)
-      [2] = { foreground = Screen.colors.Red }, -- CursorLine (high-priority)
-    })
-    screen:attach()
+    screen:add_extra_attr_ids {
+      [100] = { background = Screen.colors.WebGreen },
+    }
     exec([[
       call setline(1, 'one one one |hidden| one one one one one one one one')
       syntax match test /|hidden|/ conceal
@@ -447,16 +440,16 @@ describe('Conceal', function()
       hi! CursorLine guibg=Green
     ]])
     screen:expect([[
-      {1:one one one  one one one one on^e        }|
-      {1: one one one                            }|
-      {0:~                                       }|
+      {100:one one one  one one one one on^e        }|
+      {100: one one one                            }|
+      {1:~                                       }|
                                               |
     ]])
     command('hi! CursorLine guibg=NONE guifg=Red')
     screen:expect([[
-      {2:one one one  one one one one on^e        }|
-      {2: one one one                            }|
-      {0:~                                       }|
+      {19:one one one  one one one one on^e        }|
+      {19: one one one                            }|
+      {1:~                                       }|
                                               |
     ]])
   end)
@@ -464,12 +457,9 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_wrapped_cursorline_wincolor_rightleft()
   it('CursorLine highlight on wrapped lines with rightleft', function()
     local screen = Screen.new(40, 4)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.Green }, -- CursorLine (low-priority)
-      [2] = { foreground = Screen.colors.Red }, -- CursorLine (high-priority)
-    })
-    screen:attach()
+    screen:add_extra_attr_ids {
+      [100] = { background = Screen.colors.WebGreen },
+    }
     exec([[
       call setline(1, 'one one one |hidden| one one one one one one one one')
       syntax match test /|hidden|/ conceal
@@ -478,16 +468,16 @@ describe('Conceal', function()
       hi! CursorLine guibg=Green
     ]])
     screen:expect([[
-      {1:        ^eno eno eno eno eno  eno eno eno}|
-      {1:                            eno eno eno }|
-      {0:                                       ~}|
+      {100:        ^eno eno eno eno eno  eno eno eno}|
+      {100:                            eno eno eno }|
+      {1:                                       ~}|
                                               |
     ]])
     command('hi! CursorLine guibg=NONE guifg=Red')
     screen:expect([[
-      {2:        ^eno eno eno eno eno  eno eno eno}|
-      {2:                            eno eno eno }|
-      {0:                                       ~}|
+      {19:        ^eno eno eno eno eno  eno eno eno}|
+      {19:                            eno eno eno }|
+      {1:                                       ~}|
                                               |
     ]])
   end)
@@ -495,7 +485,6 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_resize_term()
   it('resize editor', function()
     local screen = Screen.new(75, 6)
-    screen:attach()
     exec([[
       call setline(1, '`one` `two` `three` `four` `five`, the backticks should be concealed')
       setl cocu=n cole=3
@@ -519,7 +508,6 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_linebreak()
   it('with linebreak', function()
     local screen = Screen.new(75, 8)
-    screen:attach()
     exec([[
       let &wrap = v:true
       let &conceallevel = 2
@@ -625,10 +613,6 @@ describe('Conceal', function()
 
   local function test_conceal_virtualedit_after_eol(wrap)
     local screen = Screen.new(60, 3)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    })
-    screen:attach()
     api.nvim_set_option_value('wrap', wrap, {})
     exec([[
       call setline(1, 'abcdefgh|hidden|ijklmnpop')
@@ -638,31 +622,31 @@ describe('Conceal', function()
     ]])
     screen:expect([[
       abcdefghijklmnpo^p                                           |
-      {0:~                                                           }|
+      {1:~                                                           }|
                                                                   |
     ]])
     feed('l')
     screen:expect([[
       abcdefghijklmnpop^                                           |
-      {0:~                                                           }|
+      {1:~                                                           }|
                                                                   |
     ]])
     feed('l')
     screen:expect([[
       abcdefghijklmnpop ^                                          |
-      {0:~                                                           }|
+      {1:~                                                           }|
                                                                   |
     ]])
     feed('l')
     screen:expect([[
       abcdefghijklmnpop  ^                                         |
-      {0:~                                                           }|
+      {1:~                                                           }|
                                                                   |
     ]])
     feed('rr')
     screen:expect([[
       abcdefghijklmnpop  ^r                                        |
-      {0:~                                                           }|
+      {1:~                                                           }|
                                                                   |
     ]])
   end
@@ -679,10 +663,6 @@ describe('Conceal', function()
 
   local function test_conceal_virtualedit_after_eol_rightleft(wrap)
     local screen = Screen.new(60, 3)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    })
-    screen:attach()
     api.nvim_set_option_value('wrap', wrap, {})
     exec([[
       call setline(1, 'abcdefgh|hidden|ijklmnpop')
@@ -692,31 +672,31 @@ describe('Conceal', function()
     ]])
     screen:expect([[
                                                  ^popnmlkjihgfedcba|
-      {0:                                                           ~}|
+      {1:                                                           ~}|
                                                                   |
     ]])
     feed('h')
     screen:expect([[
                                                 ^ popnmlkjihgfedcba|
-      {0:                                                           ~}|
+      {1:                                                           ~}|
                                                                   |
     ]])
     feed('h')
     screen:expect([[
                                                ^  popnmlkjihgfedcba|
-      {0:                                                           ~}|
+      {1:                                                           ~}|
                                                                   |
     ]])
     feed('h')
     screen:expect([[
                                               ^   popnmlkjihgfedcba|
-      {0:                                                           ~}|
+      {1:                                                           ~}|
                                                                   |
     ]])
     feed('rr')
     screen:expect([[
                                               ^r  popnmlkjihgfedcba|
-      {0:                                                           ~}|
+      {1:                                                           ~}|
                                                                   |
     ]])
   end
@@ -733,12 +713,9 @@ describe('Conceal', function()
 
   local function test_conceal_double_width(wrap)
     local screen = Screen.new(60, 4)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { background = Screen.colors.DarkGrey, foreground = Screen.colors.LightGrey },
-      [2] = { background = Screen.colors.LightRed },
-    })
-    screen:attach()
+    screen:add_extra_attr_ids {
+      [100] = { background = Screen.colors.LightRed },
+    }
     api.nvim_set_option_value('wrap', wrap, {})
     exec([[
       call setline(1, ['aaaaa口=口bbbbb口=口ccccc', 'foobar'])
@@ -747,30 +724,30 @@ describe('Conceal', function()
       normal! $
     ]])
     screen:expect([[
-      aaaaa{1:β}bbbbb{1:β}cccc^c            {2: }                              |
-      foobar                       {2: }                              |
-      {0:~                                                           }|
+      aaaaa{14:β}bbbbb{14:β}cccc^c            {100: }                              |
+      foobar                       {100: }                              |
+      {1:~                                                           }|
                                                                   |
     ]])
     feed('gM')
     screen:expect([[
-      aaaaa{1:β}bb^bbb{1:β}ccccc            {2: }                              |
-      foobar                       {2: }                              |
-      {0:~                                                           }|
+      aaaaa{14:β}bb^bbb{14:β}ccccc            {100: }                              |
+      foobar                       {100: }                              |
+      {1:~                                                           }|
                                                                   |
     ]])
     command('set conceallevel=3')
     screen:expect([[
-      aaaaabb^bbbccccc              {2: }                              |
-      foobar                       {2: }                              |
-      {0:~                                                           }|
+      aaaaabb^bbbccccc              {100: }                              |
+      foobar                       {100: }                              |
+      {1:~                                                           }|
                                                                   |
     ]])
     feed('$')
     screen:expect([[
-      aaaaabbbbbcccc^c              {2: }                              |
-      foobar                       {2: }                              |
-      {0:~                                                           }|
+      aaaaabbbbbcccc^c              {100: }                              |
+      foobar                       {100: }                              |
+      {1:~                                                           }|
                                                                   |
     ]])
   end
@@ -788,12 +765,9 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_double_width_wrap()
   it('line wraps correctly when double-width chars are concealed', function()
     local screen = Screen.new(20, 4)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { background = Screen.colors.DarkGrey, foreground = Screen.colors.LightGrey },
-      [2] = { background = Screen.colors.LightRed },
-    })
-    screen:attach()
+    screen:add_extra_attr_ids {
+      [100] = { background = Screen.colors.LightRed },
+    }
     exec([[
       call setline(1, 'aaaaaaaaaa口=口bbbbbbbbbb口=口cccccccccc')
       syntax match test /口=口/ conceal cchar=β
@@ -801,30 +775,30 @@ describe('Conceal', function()
       normal! $
     ]])
     screen:expect([[
-      aaaaaaaaaa{1:β}bbbbb    |
-      bbbbb{1:β}ccccccccc^c    |
-      {0:~                   }|
+      aaaaaaaaaa{14:β}bbbbb    |
+      bbbbb{14:β}ccccccccc^c    |
+      {1:~                   }|
                           |
     ]])
     feed('gM')
     screen:expect([[
-      aaaaaaaaaa{1:β}bbbbb    |
-      ^bbbbb{1:β}cccccccccc    |
-      {0:~                   }|
+      aaaaaaaaaa{14:β}bbbbb    |
+      ^bbbbb{14:β}cccccccccc    |
+      {1:~                   }|
                           |
     ]])
     command('set conceallevel=3')
     screen:expect([[
       aaaaaaaaaabbbbb     |
       ^bbbbbcccccccccc     |
-      {0:~                   }|
+      {1:~                   }|
                           |
     ]])
     feed('$')
     screen:expect([[
       aaaaaaaaaabbbbb     |
       bbbbbccccccccc^c     |
-      {0:~                   }|
+      {1:~                   }|
                           |
     ]])
   end)

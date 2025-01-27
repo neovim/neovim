@@ -1,7 +1,7 @@
 " Vim compiler file
 " Compiler:     Groff
 " Maintainer:   Konfekt
-" Last Change:	2024 Sep 8
+" Last Change:	2024 Nov 19
 "
 " Expects output file extension, say `:make html` or `:make pdf`.
 " Supported devices as of Sept 2024 are: (x)html, pdf, ps, dvi, lj4, lbp ...
@@ -30,7 +30,7 @@ execute 'CompilerSet makeprg=groff'..escape(
     \ ' '..s:groff_compiler_lang()..
     \ ' -K'..get(b:, 'groff_compiler_encoding', get(g:, 'groff_compiler_encoding', 'utf8'))..
     \ ' '..get(b:, 'groff_compiler_args', get(g:, 'groff_compiler_args', ''))..
-    \ ' -mom -T$* -- %:S > %:r:S.$*', ' ')
+    \ ' -mom -T$* -- %:S > %:r:S.$*', ' \|"')
 " From Gavin Freeborn's https://github.com/Gavinok/vim-troff under Vim License
 " https://github.com/Gavinok/vim-troff/blob/91017b1423caa80aba541c997909a4f810edd275/compiler/troff.vim#L39
 CompilerSet errorformat=%o:<standard\ input>\ (%f):%l:%m,

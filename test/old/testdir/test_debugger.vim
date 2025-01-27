@@ -6,10 +6,11 @@ source check.vim
 
 func CheckCWD()
   " Check that the longer lines don't wrap due to the length of the script name
-  " in cwd
+  " in cwd. Need to subtract by 1 since Vim will still wrap the message if it
+  " just fits.
   let script_len = len( getcwd() .. '/Xtest1.vim' )
   let longest_line = len( 'Breakpoint in "" line 1' )
-  if script_len > ( 75 - longest_line )
+  if script_len > ( 75 - longest_line - 1 )
     throw 'Skipped: Your CWD has too many characters'
   endif
 endfunc

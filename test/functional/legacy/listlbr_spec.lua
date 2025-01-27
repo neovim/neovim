@@ -205,7 +205,6 @@ describe('listlbr', function()
   -- oldtest: Test_linebreak_reset_restore()
   it('cursor position is drawn correctly after operator', function()
     local screen = Screen.new(60, 6)
-    screen:attach()
 
     -- f_wincol() calls validate_cursor()
     source([[

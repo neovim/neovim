@@ -37,7 +37,6 @@ describe('mappings with <Cmd>', function()
       [9] = { background = Screen.colors.LightMagenta },
       [10] = { foreground = Screen.colors.Red },
     })
-    screen:attach()
 
     cmdmap('<F3>', 'let m = mode(1)')
     cmdmap('<F4>', 'normal! ww')

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
@@ -32,7 +33,6 @@
 #include "nvim/getchar_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
-#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
@@ -42,6 +42,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -239,9 +240,9 @@ static void showmap(mapblock_T *mp, bool local)
   } while (len < 12);
 
   if (mp->m_noremap == REMAP_NONE) {
-    msg_puts_attr("*", HL_ATTR(HLF_8));
+    msg_puts_hl("*", HLF_8, false);
   } else if (mp->m_noremap == REMAP_SCRIPT) {
-    msg_puts_attr("&", HL_ATTR(HLF_8));
+    msg_puts_hl("&", HLF_8, false);
   } else {
     msg_putchar(' ');
   }
@@ -256,10 +257,10 @@ static void showmap(mapblock_T *mp, bool local)
   // the rhs, and not M-x etc, true gets both -- webb
   if (mp->m_luaref != LUA_NOREF) {
     char *str = nlua_funcref_str(mp->m_luaref, NULL);
-    msg_puts_attr(str, HL_ATTR(HLF_8));
+    msg_puts_hl(str, HLF_8, false);
     xfree(str);
   } else if (mp->m_str[0] == NUL) {
-    msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
+    msg_puts_hl("<Nop>", HLF_8, false);
   } else {
     msg_outtrans_special(mp->m_str, false, 0);
   }
@@ -568,6 +569,12 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   mapblock_T **abbr_table = args->buffer ? &buf->b_first_abbr : &first_abbr;
   mapblock_T *mp_result[2] = { NULL, NULL };
 
+  bool unmap_lhs_only = false;
+  if (maptype == MAPTYPE_UNMAP_LHS) {
+    unmap_lhs_only = true;
+    maptype = MAPTYPE_UNMAP;
+  }
+
   // For ":noremap" don't remap, otherwise do remap.
   int noremap = args->script ? REMAP_SCRIPT
                              : maptype == MAPTYPE_NOREMAP ? REMAP_NONE : REMAP_YES;
@@ -575,6 +582,9 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   const bool has_lhs = (args->lhs[0] != NUL);
   const bool has_rhs = args->rhs_lua != LUA_NOREF || (args->rhs[0] != NUL) || args->rhs_is_noop;
   const bool do_print = !has_lhs || (maptype != MAPTYPE_UNMAP && !has_rhs);
+  if (do_print) {
+    msg_ext_set_kind("list_cmd");
+  }
 
   // check for :unmap without argument
   if (maptype == MAPTYPE_UNMAP && !has_lhs) {
@@ -720,8 +730,8 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     // entry with a matching 'to' part. This was done to allow ":ab foo bar"
     // to be unmapped by typing ":unab foo", where "foo" will be replaced by
     // "bar" because of the abbreviation.
-    for (int round = 0; (round == 0 || maptype == MAPTYPE_UNMAP) && round <= 1
-         && !did_it && !got_int; round++) {
+    const int num_rounds = maptype == MAPTYPE_UNMAP && !unmap_lhs_only ? 2 : 1;
+    for (int round = 0; round < num_rounds && !did_it && !got_int; round++) {
       int hash_start, hash_end;
       if ((round == 0 && has_lhs) || is_abbrev) {
         // just use one hash
@@ -935,9 +945,11 @@ theend:
 /// for :cabbr mode is MODE_CMDLINE
 /// ```
 ///
-/// @param maptype  MAPTYPE_MAP for |:map|
-///                 MAPTYPE_UNMAP for |:unmap|
-///                 MAPTYPE_NOREMAP for |:noremap|.
+/// @param maptype  MAPTYPE_MAP for |:map| or |:abbr|
+///                 MAPTYPE_UNMAP for |:unmap| or |:unabbr|
+///                 MAPTYPE_NOREMAP for |:noremap| or |:noreabbr|
+///                 MAPTYPE_UNMAP_LHS is like MAPTYPE_UNMAP, but doesn't try to match
+///                 with {rhs} if there is no match with {lhs}.
 /// @param arg      C-string containing the arguments of the map/abbrev
 ///                 command, i.e. everything except the initial `:[X][nore]map`.
 ///                 - Cannot be a read-only string; it will be modified.
@@ -1889,7 +1901,7 @@ int makemap(FILE *fd, buf_T *buf)
 // "what": 0 for :map lhs, 1 for :map rhs, 2 for :set
 //
 // return FAIL for failure, OK otherwise
-int put_escstr(FILE *fd, char *strstart, int what)
+int put_escstr(FILE *fd, const char *strstart, int what)
 {
   uint8_t *str = (uint8_t *)strstart;
 
@@ -2348,7 +2360,7 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   MapArguments unmap_args = MAP_ARGUMENTS_INIT;
   set_maparg_lhs_rhs(lhs, strlen(lhs), "", 0, LUA_NOREF, p_cpo, &unmap_args);
   unmap_args.buffer = buffer;
-  buf_do_map(MAPTYPE_UNMAP, &unmap_args, mode, is_abbr, curbuf);
+  buf_do_map(MAPTYPE_UNMAP_LHS, &unmap_args, mode, is_abbr, curbuf);
   xfree(unmap_args.rhs);
   xfree(unmap_args.orig_rhs);
 
@@ -2649,7 +2661,7 @@ void ex_map(exarg_T *eap)
   // If we are in a secure mode we print the mappings for security reasons.
   if (secure) {
     secure = 2;
-    msg_outtrans(eap->cmd, 0);
+    msg_outtrans(eap->cmd, 0, false);
     msg_putchar('\n');
   }
   do_exmap(eap, false);

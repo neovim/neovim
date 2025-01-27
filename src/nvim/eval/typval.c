@@ -9,6 +9,7 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
@@ -32,6 +33,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/os/input.h"
 #include "nvim/pos_defs.h"
@@ -2628,6 +2630,30 @@ int tv_dict_add_allocated_str(dict_T *const d, const char *const key, const size
     tv_dict_item_free(item);
     return FAIL;
   }
+  return OK;
+}
+
+/// Add a function entry to dictionary.
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param[in]  fp  Function to add.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_func(dict_T *const d, const char *const key, const size_t key_len,
+                     ufunc_T *const fp)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+{
+  dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
+
+  item->di_tv.v_type = VAR_FUNC;
+  item->di_tv.vval.v_string = xstrdup(fp->uf_name);
+  if (tv_dict_add(d, item) == FAIL) {
+    tv_dict_item_free(item);
+    return FAIL;
+  }
+  func_ref(item->di_tv.vval.v_string);
   return OK;
 }
 

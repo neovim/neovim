@@ -2,6 +2,7 @@
 " Language:     ChordPro 6 (https://www.chordpro.org)
 " Maintainer:   Niels Bo Andersen <niels@niboan.dk>
 " Last Change:  2022-04-15
+" 2024 Dec 31:  add "keys" as syntax keyword (via: https://groups.google.com/g/vim_dev/c/vP4epus0euM/m/mNoDY6hsCQAJ)
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -104,7 +105,7 @@ syn match chordproStandardMetadata /instrument\.description/ contained
 syn match chordproStandardMetadata /user\.name/ contained
 syn match chordproStandardMetadata /user\.fullname/ contained
 
-syn keyword chordproDefineKeyword contained frets fingers
+syn keyword chordproDefineKeyword contained frets fingers keys
 syn match chordproDefineKeyword /base-fret/ contained
 
 syn match chordproArgumentsNumber /\d\+/ contained

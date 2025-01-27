@@ -28,8 +28,7 @@ describe('folded lines', function()
   local function with_ext_multigrid(multigrid)
     local screen
     before_each(function()
-      screen = Screen.new(45, 8)
-      screen:attach({ rgb = true, ext_multigrid = multigrid })
+      screen = Screen.new(45, 8, { rgb = true, ext_multigrid = multigrid })
       screen:set_default_attr_ids({
         [1] = { bold = true, foreground = Screen.colors.Blue1 },
         [2] = { reverse = true },

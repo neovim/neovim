@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local screen = require('test.functional.ui.screen')
+local Screen = require('test.functional.ui.screen')
 
 local testprg = n.testprg
 local command = n.command
@@ -13,12 +13,6 @@ local matches = t.matches
 local pesc = vim.pesc
 
 describe(':edit term://*', function()
-  local get_screen = function(columns, lines)
-    local scr = screen.new(columns, lines)
-    scr:attach({ rgb = false })
-    return scr
-  end
-
   before_each(function()
     clear()
     api.nvim_set_option_value('shell', testprg('shell-test'), {})
@@ -37,7 +31,7 @@ describe(':edit term://*', function()
 
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
     local columns, lines = 20, 4
-    local scr = get_screen(columns, lines)
+    local scr = Screen.new(columns, lines, { rgb = false })
     local rep = 97
     api.nvim_set_option_value('shellcmdflag', 'REP ' .. rep, {})
     command('set shellxquote=') -- win: avoid extra quotes

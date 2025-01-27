@@ -132,7 +132,6 @@ describe('system()', function()
 
     before_each(function()
       screen = Screen.new()
-      screen:attach()
     end)
 
     if is_os('win') then
@@ -430,11 +429,6 @@ describe('systemlist()', function()
 
     before_each(function()
       screen = Screen.new()
-      screen:attach()
-    end)
-
-    after_each(function()
-      screen:detach()
     end)
 
     it('`echo` and waits for its return', function()
@@ -567,7 +561,6 @@ describe('shell :!', function()
 
   it(':{range}! with powershell filter/redirect #16271 #19250', function()
     local screen = Screen.new(500, 8)
-    screen:attach()
     local found = n.set_shell_powershell(true)
     insert([[
       3
@@ -598,7 +591,6 @@ describe('shell :!', function()
 
   it(':{range}! without redirecting to buffer', function()
     local screen = Screen.new(500, 10)
-    screen:attach()
     insert([[
       3
       1

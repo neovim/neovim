@@ -196,7 +196,6 @@ describe('mapping', function()
   -- oldtest: Test_showcmd_part_map()
   it("'showcmd' with a partial mapping", function()
     local screen = Screen.new(60, 6)
-    screen:attach()
     exec([[
       set notimeout showcmd
       nnoremap ,a <Ignore>

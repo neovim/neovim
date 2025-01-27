@@ -48,7 +48,7 @@ function M.to_lpeg(pattern)
   end
 
   -- luacheck: push ignore s
-  local function cut(s, idx, match)
+  local function cut(_s, idx, match)
     return idx, match
   end
   -- luacheck: pop

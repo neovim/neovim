@@ -14,7 +14,6 @@ describe('debugger', function()
 
   before_each(function()
     screen = Screen.new(999, 10)
-    screen:attach()
   end)
 
   -- oldtest: Test_Debugger_breakadd_expr()

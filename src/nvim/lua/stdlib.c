@@ -18,11 +18,13 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/eval/window.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
@@ -181,7 +183,9 @@ int nlua_str_utfindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   } else {
     idx = luaL_checkinteger(lstate, 2);
     if (idx < 0 || idx > (intptr_t)s1_len) {
-      return luaL_error(lstate, "index out of range");
+      lua_pushnil(lstate);
+      lua_pushnil(lstate);
+      return 2;
     }
   }
 
@@ -272,7 +276,8 @@ int nlua_str_byteindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
   intptr_t idx = luaL_checkinteger(lstate, 2);
   if (idx < 0) {
-    return luaL_error(lstate, "index out of range");
+    lua_pushnil(lstate);
+    return 1;
   }
   bool use_utf16 = false;
   if (lua_gettop(lstate) >= 3) {
@@ -281,7 +286,8 @@ int nlua_str_byteindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   ssize_t byteidx = mb_utf_index_to_bytes(s1, s1_len, (size_t)idx, use_utf16);
   if (byteidx == -1) {
-    return luaL_error(lstate, "index out of range");
+    lua_pushnil(lstate);
+    return 1;
   }
 
   lua_pushinteger(lstate, (lua_Integer)byteidx);
@@ -615,41 +621,36 @@ static int nlua_with(lua_State *L)
   int rets = 0;
 
   cmdmod_T save_cmdmod = cmdmod;
+  CLEAR_FIELD(cmdmod);
   cmdmod.cmod_flags = flags;
   apply_cmdmod(&cmdmod);
 
-  if (buf || win) {
-    try_start();
-  }
-
-  aco_save_T aco;
-  win_execute_T win_execute_args;
   Error err = ERROR_INIT;
+  TRY_WRAP(&err, {
+    aco_save_T aco;
+    win_execute_T win_execute_args;
 
-  if (win) {
-    tabpage_T *tabpage = win_find_tabpage(win);
-    if (!win_execute_before(&win_execute_args, win, tabpage)) {
-      goto end;
+    if (win) {
+      tabpage_T *tabpage = win_find_tabpage(win);
+      if (!win_execute_before(&win_execute_args, win, tabpage)) {
+        goto end;
+      }
+    } else if (buf) {
+      aucmd_prepbuf(&aco, buf);
     }
-  } else if (buf) {
-    aucmd_prepbuf(&aco, buf);
-  }
 
-  int s = lua_gettop(L);
-  lua_pushvalue(L, 2);
-  status = lua_pcall(L, 0, LUA_MULTRET, 0);
-  rets = lua_gettop(L) - s;
+    int s = lua_gettop(L);
+    lua_pushvalue(L, 2);
+    status = lua_pcall(L, 0, LUA_MULTRET, 0);
+    rets = lua_gettop(L) - s;
 
-  if (win) {
-    win_execute_after(&win_execute_args);
-  } else if (buf) {
-    aucmd_restbuf(&aco);
-  }
-
-end:
-  if (buf || win) {
-    try_end(&err);
-  }
+    if (win) {
+      win_execute_after(&win_execute_args);
+    } else if (buf) {
+      aucmd_restbuf(&aco);
+    }
+    end:;
+  });
 
   undo_cmdmod(&cmdmod);
   cmdmod = save_cmdmod;
@@ -695,10 +696,10 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     lua_setfield(lstate, -2, "stricmp");
     // str_utfindex
     lua_pushcfunction(lstate, &nlua_str_utfindex);
-    lua_setfield(lstate, -2, "str_utfindex");
+    lua_setfield(lstate, -2, "_str_utfindex");
     // str_byteindex
     lua_pushcfunction(lstate, &nlua_str_byteindex);
-    lua_setfield(lstate, -2, "str_byteindex");
+    lua_setfield(lstate, -2, "_str_byteindex");
     // str_utf_pos
     lua_pushcfunction(lstate, &nlua_str_utf_pos);
     lua_setfield(lstate, -2, "str_utf_pos");

@@ -258,7 +258,6 @@ describe('autocmd', function()
     -- Check redrawing and API accesses to this window.
 
     local screen = Screen.new(50, 10)
-    screen:attach()
 
     source([[
       function! Doit()
@@ -333,7 +332,6 @@ describe('autocmd', function()
 
   it('`aucmd_win` cannot be changed into a normal window #13699', function()
     local screen = Screen.new(50, 10)
-    screen:attach()
 
     -- Create specific layout and ensure it's left unchanged.
     -- Use vim._with on a hidden buffer so aucmd_win is used.
@@ -498,7 +496,6 @@ describe('autocmd', function()
 
   it(':doautocmd does not warn "No matching autocommands" #10689', function()
     local screen = Screen.new(32, 3)
-    screen:attach()
 
     feed(':doautocmd User Foo<cr>')
     screen:expect {

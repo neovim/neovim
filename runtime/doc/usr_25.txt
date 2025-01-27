@@ -190,15 +190,15 @@ This results in the following:
 	story. ~
 
 
-JUSTIFYING TEXT
+JUSTIFYING TEXT			*justify* *:Justify* *Justify()* *package-justify*
 
 Vim has no built-in way of justifying text.  However, there is a neat macro
 package that does the job.  To use this package, execute the following
-command: >
+command: >vim
 
 	:packadd justify
 
-Or put this line in your |vimrc|: >
+Or put this line in your |vimrc|: >vim
 
 	packadd! justify
 

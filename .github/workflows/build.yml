@@ -89,7 +89,9 @@ jobs:
           for d in *; do (cd "$d"; rm -rf ./autom4te.cache; make clean || true; make distclean || true); done
 
       - name: Re-build bundled dependencies with no network access
-        run: unshare --map-root-user --net make deps DEPS_CMAKE_FLAGS=-DUSE_EXISTING_SRC_DIR=ON
+        run: |
+          sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0
+          unshare --map-root-user --net make deps DEPS_CMAKE_FLAGS=-DUSE_EXISTING_SRC_DIR=ON
 
       - name: Build
         run: make CMAKE_FLAGS="-D CI_BUILD=ON"

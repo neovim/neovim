@@ -4,22 +4,19 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/buffer_updates.h"
-#include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
@@ -27,6 +24,7 @@
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -35,6 +33,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -46,7 +45,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
-#include "nvim/optionstr.h"
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
@@ -234,12 +232,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     }
 
     // Figure out the size and position of the pum.
-    if (size < PUM_DEF_HEIGHT) {
-      pum_height = size;
-    } else {
-      pum_height = PUM_DEF_HEIGHT;
-    }
-
+    pum_height = MIN(size, PUM_DEF_HEIGHT);
     if (p_ph > 0 && pum_height > p_ph) {
       pum_height = (int)p_ph;
     }
@@ -256,11 +249,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         context_lines = 0;
       } else {
         // Leave two lines of context if possible
-        if (curwin->w_wrow - curwin->w_cline_row >= 2) {
-          context_lines = 2;
-        } else {
-          context_lines = curwin->w_wrow - curwin->w_cline_row;
-        }
+        context_lines = MIN(2, curwin->w_wrow - curwin->w_cline_row);
       }
 
       if (pum_win_row - min_row >= size + context_lines) {
@@ -285,20 +274,13 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       } else {
         // Leave two lines of context if possible
         validate_cheight(curwin);
-        if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
-          context_lines = 3;
-        } else {
-          context_lines = curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow;
-        }
+        int cline_visible_offset = curwin->w_cline_row +
+                                   curwin->w_cline_height - curwin->w_wrow;
+        context_lines = MIN(3, cline_visible_offset);
       }
 
       pum_row = pum_win_row + context_lines;
-      if (size > below_row - pum_row) {
-        pum_height = below_row - pum_row;
-      } else {
-        pum_height = size;
-      }
-
+      pum_height = MIN(below_row - pum_row, size);
       if (p_ph > 0 && pum_height > p_ph) {
         pum_height = (int)p_ph;
       }
@@ -353,15 +335,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         pum_width = max_col - pum_col - pum_scrollbar;
       }
 
-      if (pum_width > max_width + pum_kind_width + pum_extra_width + 1
-          && pum_width > p_pw) {
-        // the width is more than needed for the items, make it
-        // narrower
-        pum_width = max_width + pum_kind_width + pum_extra_width + 1;
-
-        if (pum_width < p_pw) {
-          pum_width = (int)p_pw;
-        }
+      int content_width = max_width + pum_kind_width + pum_extra_width + 1;
+      if (pum_width > content_width && pum_width > p_pw) {
+        // Reduce width to fit item
+        pum_width = MAX(content_width, (int)p_pw);
       } else if (((cursor_col - min_col > p_pw
                    || cursor_col - min_col > max_width) && !pum_rl)
                  || (pum_rl && (cursor_col < max_col - p_pw
@@ -373,13 +350,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
             pum_col = max_col - 1;
           }
         } else if (!pum_rl) {
-          if (win_start_col > max_col - max_width - pum_scrollbar
-              && max_width <= p_pw) {
+          int right_edge_col = max_col - max_width - pum_scrollbar;
+          if (win_start_col > right_edge_col && max_width <= p_pw) {
             // use full width to end of the screen
-            pum_col = max_col - max_width - pum_scrollbar;
-            if (pum_col < min_col) {
-              pum_col = min_col;
-            }
+            pum_col = MAX(min_col, right_edge_col);
           }
         }
 
@@ -400,12 +374,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
               pum_width = max_col - pum_col - 1;
             }
           }
-        } else if (pum_width > max_width + pum_kind_width + pum_extra_width + 1
-                   && pum_width > p_pw) {
-          pum_width = max_width + pum_kind_width + pum_extra_width + 1;
-          if (pum_width < p_pw) {
-            pum_width = (int)p_pw;
-          }
+        } else if (pum_width > content_width && pum_width > p_pw) {
+          pum_width = MAX(content_width, (int)p_pw);
         }
       }
     } else if (max_col - min_col < def_width) {
@@ -442,7 +412,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 /// Returns attributes for every cell, or NULL if all attributes are the same.
 static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
 {
-  if ((hlf != HLF_PSI && hlf != HLF_PNI)
+  if (*text == NUL || (hlf != HLF_PSI && hlf != HLF_PNI)
       || (win_hl_attr(curwin, HLF_PMSI) == win_hl_attr(curwin, HLF_PSI)
           && win_hl_attr(curwin, HLF_PMNI) == win_hl_attr(curwin, HLF_PNI))) {
     return NULL;
@@ -456,7 +426,7 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
 
   int *attrs = xmalloc(sizeof(int) * (size_t)vim_strsize(text));
   bool in_fuzzy = State == MODE_CMDLINE ? cmdline_compl_is_fuzzy()
-                                        : (get_cot_flags() & COT_FUZZY) != 0;
+                                        : (get_cot_flags() & kOptCotFlagFuzzy) != 0;
   size_t leader_len = strlen(leader);
 
   garray_T *ga = NULL;
@@ -471,6 +441,7 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
   const char *ptr = text;
   int cell_idx = 0;
   uint32_t char_pos = 0;
+  bool is_select = hlf == HLF_PSI;
 
   while (*ptr != NUL) {
     int new_attr = win_hl_attr(curwin, (int)hlf);
@@ -479,14 +450,14 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
       // Handle fuzzy matching
       for (int i = 0; i < ga->ga_len; i++) {
         if (char_pos == ((uint32_t *)ga->ga_data)[i]) {
-          new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
+          new_attr = win_hl_attr(curwin, is_select ? HLF_PMSI : HLF_PMNI);
           new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PMNI), new_attr);
           new_attr = hl_combine_attr(win_hl_attr(curwin, (int)hlf), new_attr);
           break;
         }
       }
     } else if (matched_start && ptr < text + leader_len) {
-      new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
+      new_attr = win_hl_attr(curwin, is_select ? HLF_PMSI : HLF_PMNI);
       new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PMNI), new_attr);
       new_attr = hl_combine_attr(win_hl_attr(curwin, (int)hlf), new_attr);
     }
@@ -552,6 +523,15 @@ static inline char *pum_get_item(int index, int type)
   return NULL;
 }
 
+static inline int pum_user_attr_combine(int idx, int type, int attr)
+{
+  int user_attr[] = {
+    pum_array[idx].pum_user_abbr_hlattr,
+    pum_array[idx].pum_user_kind_hlattr,
+  };
+  return user_attr[type] > 0 ? hl_combine_attr(attr, user_attr[type]) : attr;
+}
+
 /// Redraw the popup menu, using "pum_first" and "pum_selected".
 void pum_redraw(void)
 {
@@ -615,19 +595,16 @@ void pum_redraw(void)
                           pum_row - row_off, pum_left_col, false, pum_grid.zindex);
   }
 
+  int scroll_range = pum_size - pum_height;
   // Never display more than we have
-  if (pum_first > pum_size - pum_height) {
-    pum_first = pum_size - pum_height;
-  }
+  pum_first = MIN(pum_first, scroll_range);
 
   if (pum_scrollbar) {
     thumb_height = pum_height * pum_height / pum_size;
     if (thumb_height == 0) {
       thumb_height = 1;
     }
-    thumb_pos = (pum_first * (pum_height - thumb_height)
-                 + (pum_size - pum_height) / 2)
-                / (pum_size - pum_height);
+    thumb_pos = (pum_first * (pum_height - thumb_height) + scroll_range / 2) / scroll_range;
   }
 
   for (int i = 0; i < pum_height; i++) {
@@ -657,20 +634,17 @@ void pum_redraw(void)
     pum_align_order(order);
     int basic_width = items_width_array[order[0]];  // first item width
     bool last_isabbr = order[2] == CPT_ABBR;
+    int orig_attr = -1;
+
     for (int j = 0; j < 3; j++) {
       int item_type = order[j];
       hlf = hlfs[item_type];
       attr = win_hl_attr(curwin, (int)hlf);
-      int orig_attr = attr;
-      int user_abbr_hlattr = pum_array[idx].pum_user_abbr_hlattr;
-      int user_kind_hlattr = pum_array[idx].pum_user_kind_hlattr;
-      if (item_type == CPT_ABBR && user_abbr_hlattr > 0) {
-        attr = hl_combine_attr(attr, user_abbr_hlattr);
-      }
-      if (item_type == CPT_KIND && user_kind_hlattr > 0) {
-        attr = hl_combine_attr(attr, user_kind_hlattr);
-      }
       attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), attr);
+      orig_attr = attr;
+      if (item_type < 2) {  // try combine attr with user custom
+        attr = pum_user_attr_combine(idx, item_type, attr);
+      }
       int width = 0;
       char *s = NULL;
       p = pum_get_item(idx, item_type);
@@ -680,89 +654,87 @@ void pum_redraw(void)
             s = p;
           }
           int w = ptr2cells(p);
-
-          if ((*p == NUL) || (*p == TAB) || (totwidth + w > pum_width)) {
-            // Display the text that fits or comes before a Tab.
-            // First convert it to printable characters.
-            char *st;
-            char saved = *p;
-
-            if (saved != NUL) {
-              *p = NUL;
-            }
-            st = transstr(s, true);
-            if (saved != NUL) {
-              *p = saved;
-            }
-
-            int *attrs = NULL;
-            if (item_type == CPT_ABBR) {
-              attrs = pum_compute_text_attrs(st, hlf, user_abbr_hlattr);
-            }
-
-            if (pum_rl) {
-              char *rt = reverse_text(st);
-              char *rt_start = rt;
-              int cells = vim_strsize(rt);
-
-              if (cells > pum_width) {
-                do {
-                  cells -= utf_ptr2cells(rt);
-                  MB_PTR_ADV(rt);
-                } while (cells > pum_width);
-
-                if (cells < pum_width) {
-                  // Most left character requires 2-cells but only 1 cell
-                  // is available on screen.  Put a '<' on the left of the
-                  // pum item
-                  *(--rt) = '<';
-                  cells++;
-                }
-              }
-
-              if (attrs == NULL) {
-                grid_line_puts(grid_col - cells + 1, rt, -1, attr);
-              } else {
-                pum_grid_puts_with_attrs(grid_col - cells + 1, cells, rt, -1, attrs);
-              }
-
-              xfree(rt_start);
-              xfree(st);
-              grid_col -= width;
-            } else {
-              if (attrs == NULL) {
-                grid_line_puts(grid_col, st, -1, attr);
-              } else {
-                pum_grid_puts_with_attrs(grid_col, vim_strsize(st), st, -1, attrs);
-              }
-
-              xfree(st);
-              grid_col += width;
-            }
-
-            if (attrs != NULL) {
-              XFREE_CLEAR(attrs);
-            }
-
-            if (*p != TAB) {
-              break;
-            }
-
-            // Display two spaces for a Tab.
-            if (pum_rl) {
-              grid_line_puts(grid_col - 1, "  ", 2, attr);
-              grid_col -= 2;
-            } else {
-              grid_line_puts(grid_col, "  ", 2, attr);
-              grid_col += 2;
-            }
-            totwidth += 2;
-            // start text at next char
-            s = NULL;
-            width = 0;
-          } else {
+          if (*p != NUL && *p != TAB && totwidth + w <= pum_width) {
             width += w;
+            continue;
           }
+
+          // Display the text that fits or comes before a Tab.
+          // First convert it to printable characters.
+          char saved = *p;
+
+          if (saved != NUL) {
+            *p = NUL;
+          }
+          char *st = transstr(s, true);
+          if (saved != NUL) {
+            *p = saved;
+          }
+
+          int *attrs = NULL;
+          if (item_type == CPT_ABBR) {
+            attrs = pum_compute_text_attrs(st, hlf,
+                                           pum_array[idx].pum_user_abbr_hlattr);
+          }
+
+          if (pum_rl) {
+            char *rt = reverse_text(st);
+            char *rt_start = rt;
+            int cells = vim_strsize(rt);
+
+            if (cells > pum_width) {
+              do {
+                cells -= utf_ptr2cells(rt);
+                MB_PTR_ADV(rt);
+              } while (cells > pum_width);
+
+              if (cells < pum_width) {
+                // Most left character requires 2-cells but only 1 cell is available on
+                // screen.  Put a '<' on the left of the pum item.
+                *(--rt) = '<';
+                cells++;
+              }
+            }
+
+            if (attrs == NULL) {
+              grid_line_puts(grid_col - cells + 1, rt, -1, attr);
+            } else {
+              pum_grid_puts_with_attrs(grid_col - cells + 1, cells, rt, -1, attrs);
+            }
+
+            xfree(rt_start);
+            xfree(st);
+            grid_col -= width;
+          } else {
+            if (attrs == NULL) {
+              grid_line_puts(grid_col, st, -1, attr);
+            } else {
+              pum_grid_puts_with_attrs(grid_col, vim_strsize(st), st, -1, attrs);
+            }
+
+            xfree(st);
+            grid_col += width;
+          }
+
+          if (attrs != NULL) {
+            XFREE_CLEAR(attrs);
+          }
+
+          if (*p != TAB) {
+            break;
+          }
+
+          // Display two spaces for a Tab.
+          if (pum_rl) {
+            grid_line_puts(grid_col - 1, "  ", 2, attr);
+            grid_col -= 2;
+          } else {
+            grid_line_puts(grid_col, "  ", 2, attr);
+            grid_col += 2;
+          }
+          totwidth += 2;
+          s = NULL;  // start text at next char
+          width = 0;
         }
       }
 
@@ -796,9 +768,9 @@ void pum_redraw(void)
     }
 
     if (pum_rl) {
-      grid_line_fill(col_off - pum_width + 1, grid_col + 1, schar_from_ascii(' '), attr);
+      grid_line_fill(col_off - pum_width + 1, grid_col + 1, schar_from_ascii(' '), orig_attr);
     } else {
-      grid_line_fill(grid_col, col_off + pum_width, schar_from_ascii(' '), attr);
+      grid_line_fill(grid_col, col_off + pum_width, schar_from_ascii(' '), orig_attr);
     }
 
     if (pum_scrollbar > 0) {
@@ -815,36 +787,41 @@ void pum_redraw(void)
   }
 }
 
-/// set info text to preview buffer.
+/// Set the informational text in the preview buffer when the completion
+/// item does not include a dedicated preview or popup window.
+///
+/// @param[in]  buf        Buffer where the text will be set.
+/// @param[in]  info       Informational text to display in the preview buffer.
+/// @param[in]  lnum       Where to start the text. Incremented for each added line.
+/// @param[out] max_width  Maximum width of the displayed text.
 static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *max_width)
 {
-  bcount_t inserted_bytes = 0;
-  for (char *p = info; *p != NUL;) {
-    int text_width = 0;
-    char *e = vim_strchr(p, '\n');
-    if (e == NULL) {
-      ml_append_buf(buf, (*lnum)++, p, 0, false);
-      text_width = (int)mb_string2cells(p);
-      if (text_width > *max_width) {
-        *max_width = text_width;
-      }
-      break;
-    }
-    *e = NUL;
-    ml_append_buf(buf, (*lnum)++, p, (int)(e - p + 1), false);
-    inserted_bytes += (bcount_t)strlen(p) + 1;
-    text_width = (int)mb_string2cells(p);
-    if (text_width > *max_width) {
-      *max_width = text_width;
-    }
-    *e = '\n';
-    p = e + 1;
+  Error err = ERROR_INIT;
+  Arena arena = ARENA_EMPTY;
+  Array replacement = ARRAY_DICT_INIT;
+  char *token = NULL;
+  char *line = os_strtok(info, "\n", &token);
+  buf->b_p_ma = true;
+  while (line != NULL) {
+    ADD(replacement, STRING_OBJ(cstr_to_string(line)));
+    (*lnum)++;
+    (*max_width) = MAX(*max_width, (int)mb_string2cells(line));
+    line = os_strtok(NULL, "\n", &token);
   }
-  // delete the empty last line
-  ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
-  if (get_cot_flags() & COT_POPUP) {
-    extmark_splice(buf, 1, 0, 1, 0, 0, buf->b_ml.ml_line_count, 0, inserted_bytes, kExtmarkNoUndo);
+
+  int original_textlock = textlock;
+  if (textlock > 0) {
+    textlock = 0;
   }
+  nvim_buf_set_lines(0, buf->handle, 0, -1, false, replacement, &arena, &err);
+  textlock = original_textlock;
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
+  }
+  arena_mem_free(arena_finish(&arena));
+  api_free_array(replacement);
+  buf->b_p_ma = false;
 }
 
 /// adjust floating info preview window position
@@ -878,7 +855,7 @@ static void pum_adjust_info_position(win_T *wp, int height, int width)
 /// Used for nvim__complete_set
 ///
 /// @param selected the selected compl item.
-/// @parma info     Info string.
+/// @param info     Info string.
 /// @return a win_T pointer.
 win_T *pum_set_info(int selected, char *info)
 {
@@ -894,14 +871,6 @@ win_T *pum_set_info(int selected, char *info)
     if (!wp) {
       return NULL;
     }
-  } else {
-    // clean exist buffer
-    linenr_T count = wp->w_buffer->b_ml.ml_line_count;
-    while (!buf_is_empty(wp->w_buffer)) {
-      ml_delete_buf(wp->w_buffer, 1, false);
-    }
-    bcount_t deleted_bytes = get_region_bytecount(wp->w_buffer, 1, count, 0, 0);
-    extmark_splice(wp->w_buffer, 1, 0, count, 0, deleted_bytes, 1, 0, 0, kExtmarkNoUndo);
   }
   linenr_T lnum = 0;
   int max_info_width = 0;
@@ -937,13 +906,17 @@ static bool pum_set_selected(int n, int repeat)
   int prev_selected = pum_selected;
 
   pum_selected = n;
+  int scroll_offset = pum_selected - pum_height;
   unsigned cur_cot_flags = get_cot_flags();
-  bool use_float = (cur_cot_flags & COT_POPUP) != 0;
-  // when new leader add and info window is shown and no selected we still
-  // need use the first index item to update the info float window position.
-  bool force_select = use_float && pum_selected < 0 && win_float_find_preview();
-  if (force_select) {
-    pum_selected = 0;
+  bool use_float = (cur_cot_flags & kOptCotFlagPopup) != 0;
+
+  // Close the floating preview window if 'selected' is -1, indicating a return to the original
+  // state. It is also closed when the selected item has no corresponding info item.
+  if (use_float && (pum_selected < 0 || pum_array[pum_selected].pum_info == NULL)) {
+    win_T *wp = win_float_find_preview();
+    if (wp) {
+      win_close(wp, true, true);
+    }
   }
 
   if ((pum_selected >= 0) && (pum_selected < pum_size)) {
@@ -960,41 +933,28 @@ static bool pum_set_selected(int n, int repeat)
       } else {
         pum_first = pum_selected;
       }
-    } else if (pum_first < pum_selected - pum_height + 5) {
+    } else if (pum_first < scroll_offset + 5) {
       // scroll up; when we did a jump it's probably a PageDown then
       // scroll a whole page
-      if (pum_first < pum_selected - pum_height + 1 + 2) {
-        pum_first += pum_height - 2;
-        if (pum_first < pum_selected - pum_height + 1) {
-          pum_first = pum_selected - pum_height + 1;
-        }
+      if (pum_first < scroll_offset + 3) {
+        pum_first = MAX(pum_first + pum_height - 2, scroll_offset + 1);
       } else {
-        pum_first = pum_selected - pum_height + 1;
+        pum_first = scroll_offset + 1;
       }
     }
 
     // Give a few lines of context when possible.
-    if (context > 3) {
-      context = 3;
-    }
+    context = MIN(context, 3);
 
     if (pum_height > 2) {
       if (pum_first > pum_selected - context) {
-        // scroll down
-        pum_first = pum_selected - context;
-
-        if (pum_first < 0) {
-          pum_first = 0;
-        }
+        pum_first = MAX(pum_selected - context, 0);  // scroll down
       } else if (pum_first < pum_selected + context - pum_height + 1) {
-        // scroll up
-        pum_first = pum_selected + context - pum_height + 1;
+        pum_first = pum_selected + context - pum_height + 1;  // up
       }
     }
     // adjust for the number of lines displayed
-    if (pum_first > pum_size - pum_height) {
-      pum_first = pum_size - pum_height;
-    }
+    pum_first = MIN(pum_first, pum_size - pum_height);
 
     // Show extra info in the preview window if there is something and
     // 'completeopt' contains "preview".
@@ -1004,7 +964,7 @@ static bool pum_set_selected(int n, int repeat)
     if ((pum_array[pum_selected].pum_info != NULL)
         && (Rows > 10)
         && (repeat <= 1)
-        && (cur_cot_flags & COT_ANY_PREVIEW)) {
+        && (cur_cot_flags & (kOptCotFlagPreview | kOptCotFlagPopup))) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
 
@@ -1048,7 +1008,8 @@ static bool pum_set_selected(int n, int repeat)
             && (curbuf->b_nwindows == 1)
             && (curbuf->b_fname == NULL)
             && bt_nofile(curbuf)
-            && (curbuf->b_p_bh[0] == 'w')) {
+            && (curbuf->b_p_bh[0] == 'w')
+            && !use_float) {
           // Already a "wipeout" buffer, make it empty.
           while (!buf_is_empty(curbuf)) {
             ml_delete(1, false);
@@ -1077,9 +1038,7 @@ static bool pum_set_selected(int n, int repeat)
           // Increase the height of the preview window to show the
           // text, but no more than 'previewheight' lines.
           if (repeat == 0 && !use_float) {
-            if (lnum > p_pvh) {
-              lnum = (linenr_T)p_pvh;
-            }
+            lnum = MIN(lnum, (linenr_T)p_pvh);
 
             if (curwin->w_height < lnum) {
               win_setheight((int)lnum);
@@ -1160,11 +1119,6 @@ static bool pum_set_selected(int n, int repeat)
         unblock_autocmds();
       }
     }
-  }
-
-  // restore before selected value
-  if (force_select) {
-    pum_selected = n;
   }
 
   return resized;
@@ -1347,9 +1301,7 @@ static void pum_position_at_mouse(int min_width)
     pum_width = max_col - pum_col;
   }
 
-  if (pum_width > pum_base_width + 1) {
-    pum_width = pum_base_width + 1;
-  }
+  pum_width = MIN(pum_width, pum_base_width + 1);
 }
 
 /// Select the pum entry at the mouse position.
@@ -1358,14 +1310,15 @@ static void pum_select_mouse_pos(void)
   if (mouse_grid == pum_grid.handle) {
     pum_selected = mouse_row;
     return;
-  } else if (mouse_grid != pum_anchor_grid) {
+  } else if (mouse_grid != pum_anchor_grid || mouse_col < pum_grid.comp_col
+             || mouse_col >= pum_grid.comp_col + pum_grid.comp_width) {
     pum_selected = -1;
     return;
   }
 
-  int idx = mouse_row - pum_row;
+  int idx = mouse_row - pum_grid.comp_row;
 
-  if (idx < 0 || idx >= pum_height) {
+  if (idx < 0 || idx >= pum_grid.comp_height) {
     pum_selected = -1;
   } else if (*pum_array[idx].pum_text != NUL) {
     pum_selected = idx;

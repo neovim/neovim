@@ -201,8 +201,7 @@ describe(':mksession', function()
     local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     local session_path = cwd_dir .. '/' .. session_file
 
-    screen = Screen.new(50, 6)
-    screen:attach({ rgb = false })
+    screen = Screen.new(50, 6, { rgb = false })
     local expected_screen = [[
       ^/                                                 |
                                                         |
@@ -222,8 +221,7 @@ describe(':mksession', function()
 
     -- Create a new test instance of Nvim.
     clear()
-    screen = Screen.new(50, 6)
-    screen:attach({ rgb = false })
+    screen = Screen.new(50, 6, { rgb = false })
     command('silent source ' .. session_path)
 
     -- Verify that the terminal's working directory is "/".

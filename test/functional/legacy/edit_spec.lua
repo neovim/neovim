@@ -31,7 +31,6 @@ describe('edit', function()
   -- oldtest: Test_edit_insert_reg()
   it('inserting a register using CTRL-R', function()
     local screen = Screen.new(10, 6)
-    screen:attach()
     feed('a<C-R>')
     screen:expect([[
       {18:^"}           |
@@ -55,7 +54,6 @@ describe('edit', function()
   -- oldtest: Test_edit_ctrl_r_failed()
   it('positioning cursor after CTRL-R expression failed', function()
     local screen = Screen.new(60, 6)
-    screen:attach()
 
     feed('i<C-R>')
     screen:expect([[

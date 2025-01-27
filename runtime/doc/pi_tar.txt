@@ -1,4 +1,4 @@
-*pi_tar.txt*	For Vim version 8.2.  Last change: 2020 Jan 07
+*pi_tar.txt*	Nvim
 
 		       +====================+
 		       | Tar File Interface |

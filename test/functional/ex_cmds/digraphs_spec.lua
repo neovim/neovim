@@ -19,7 +19,6 @@ describe(':digraphs', function()
       [6] = { foreground = Screen.colors.Blue1 },
       [7] = { bold = true, reverse = true },
     })
-    screen:attach()
   end)
 
   it('displays digraphs', function()

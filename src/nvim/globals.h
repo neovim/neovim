@@ -156,7 +156,7 @@ EXTERN bool msg_scrolled_ign INIT( = false);
 EXTERN bool msg_did_scroll INIT( = false);
 
 EXTERN char *keep_msg INIT( = NULL);         // msg to be shown after redraw
-EXTERN int keep_msg_attr INIT( = 0);         // highlight attr for keep_msg
+EXTERN int keep_msg_hl_id INIT( = 0);        // highlight id for keep_msg
 EXTERN bool need_fileinfo INIT( = false);    // do fileinfo() after redraw
 EXTERN int msg_scroll INIT( = false);        // msg_start() will scroll
 EXTERN bool msg_didout INIT( = false);       // msg_outstr() was used in line
@@ -404,9 +404,6 @@ EXTERN buf_T *curbuf INIT( = NULL);    // currently active buffer
   for (buf_T *buf = firstbuf; buf != NULL; buf = buf->b_next)
 #define FOR_ALL_BUFFERS_BACKWARDS(buf) \
   for (buf_T *buf = lastbuf; buf != NULL; buf = buf->b_prev)
-
-#define FOR_ALL_BUF_WININFO(buf, wip) \
-  for ((wip) = (buf)->b_wininfo; (wip) != NULL; (wip) = (wip)->wi_next)
 
 // List of files being edited (global argument list).  curwin->w_alist points
 // to this when the window is using the global argument list.
@@ -712,12 +709,6 @@ EXTERN int replace_offset INIT( = 0);        // offset for replace_push()
 EXTERN char *escape_chars INIT( = " \t\\\"|");  // need backslash in cmd line
 
 EXTERN bool keep_help_flag INIT( = false);  // doing :ta from help file
-
-// When a string option is NULL (which only happens in out-of-memory situations), it is set to
-// empty_string_option, to avoid having to check for NULL everywhere.
-//
-// TODO(famiu): Remove this when refcounted strings are used for string options.
-EXTERN char *empty_string_option INIT( = "");
 
 EXTERN bool redir_off INIT( = false);        // no redirection for a moment
 EXTERN FILE *redir_fd INIT( = NULL);         // message redirection file

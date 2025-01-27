@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +20,7 @@
 #endif
 
 #include "auto/config.h"  // IWYU pragma: keep
+#include "klib/kvec.h"
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -79,9 +81,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
-#include "nvim/optionstr.h"
-#include "nvim/os/fileio.h"
-#include "nvim/os/fileio_defs.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
@@ -111,6 +110,9 @@
 
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
+# ifndef _UCRT
+#  error UCRT is the only supported C runtime on windows
+# endif
 #endif
 
 #if defined(MSWIN) && !defined(MAKE_LIB)
@@ -241,22 +243,10 @@ void early_init(mparm_T *paramp)
 #ifdef MAKE_LIB
 int nvim_main(int argc, char **argv);  // silence -Wmissing-prototypes
 int nvim_main(int argc, char **argv)
-#elif defined(MSWIN)
-int wmain(int argc, wchar_t **argv_w)  // multibyte args on Windows. #7060
 #else
 int main(int argc, char **argv)
 #endif
 {
-#if defined(MSWIN) && !defined(MAKE_LIB)
-  char **argv = xmalloc((size_t)argc * sizeof(char *));
-  for (int i = 0; i < argc; i++) {
-    char *buf = NULL;
-    utf16_to_utf8(argv_w[i], -1, &buf);
-    assert(buf);
-    argv[i] = buf;
-  }
-#endif
-
   argv0 = argv[0];
 
   if (!appname_is_valid()) {
@@ -370,7 +360,7 @@ int main(int argc, char **argv)
 
   setbuf(stdout, NULL);  // NOLINT(bugprone-unsafe-functions)
 
-  full_screen = !silent_mode || exmode_active;
+  full_screen = !silent_mode;
 
   // Set the default values for the options that use Rows and Columns.
   win_init_size();
@@ -637,13 +627,14 @@ int main(int argc, char **argv)
   }
 
   // WORKAROUND(mhi): #3023
-  if (cb_flags & CB_UNNAMEDMASK) {
+  if (cb_flags & (kOptCbFlagUnnamed | kOptCbFlagUnnamedplus)) {
     eval_has_provider("clipboard", false);
   }
 
   if (params.luaf != NULL) {
     // Like "--cmd", "+", "-c" and "-S", don't truncate messages.
     msg_scroll = true;
+    DLOG("executing Lua -l script");
     bool lua_ok = nlua_exec_file(params.luaf);
     TIME_MSG("executing Lua -l script");
     if (msg_didout) {
@@ -678,11 +669,13 @@ void os_exit(int r)
   } else {
     ui_flush();
     ui_call_stop();
-    ml_close_all(true);           // remove all memfiles
   }
 
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.
+  }
+  if (!ui_client_channel_id) {
+    ml_close_all(true);  // remove all memfiles
   }
   if (used_stdin) {
     stream_set_blocking(STDIN_FILENO, true);  // normalize stream (#2598)
@@ -775,7 +768,11 @@ void getout(int exitval)
     }
   }
 
-  if (p_shada && *p_shada != NUL) {
+  if (
+#ifdef EXITFREE
+      !entered_free_all_mem &&
+#endif
+      p_shada && *p_shada != NUL) {
     // Write out the registers, history, marks etc, to the ShaDa file
     shada_write_file(NULL, false);
   }
@@ -1231,6 +1228,9 @@ static void command_line_scan(mparm_T *parmp)
         if (exmode_active) {    // "-es" silent (batch) Ex-mode
           silent_mode = true;
           parmp->no_swap_file = true;
+          if (p_shadafile == NULL || *p_shadafile == NUL) {
+            set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OPTVAL("NONE"), 0);
+          }
         } else {                // "-s {scriptin}" read from script file
           want_argument = true;
         }
@@ -2088,8 +2088,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
 {
   // If -u given, use only the initializations from that file and nothing else.
   if (parmp->use_vimrc != NULL) {
-    if (strequal(parmp->use_vimrc, "NONE")
-        || strequal(parmp->use_vimrc, "NORC")) {
+    if (strequal(parmp->use_vimrc, "NONE") || strequal(parmp->use_vimrc, "NORC")) {
       // Do nothing.
     } else {
       if (do_source(parmp->use_vimrc, false, DOSO_NONE, NULL) != OK) {

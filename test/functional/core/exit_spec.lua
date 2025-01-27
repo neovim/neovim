@@ -8,8 +8,6 @@ local feed = n.feed
 local eval = n.eval
 local eq = t.eq
 local run = n.run
-local fn = n.fn
-local nvim_prog = n.nvim_prog
 local pcall_err = t.pcall_err
 local exec_capture = n.exec_capture
 local poke_eventloop = n.poke_eventloop
@@ -69,8 +67,8 @@ describe(':cquit', function()
       poke_eventloop()
       assert_alive()
     else
-      fn.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline })
-      eq(exit_code, eval('v:shell_error'))
+      local p = n.spawn_wait('--cmd', cmdline)
+      eq(exit_code, p.status)
     end
   end
 

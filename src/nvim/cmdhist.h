@@ -1,7 +1,9 @@
 #pragma once
 
+#include <stddef.h>  // IWYU pragma: keep
+
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
-#include "nvim/eval/typval_defs.h"
+#include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/os/time_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
@@ -23,6 +25,7 @@ enum { HIST_COUNT = HIST_DEBUG + 1, };  ///< Number of history tables
 typedef struct {
   int hisnum;           ///< Entry identifier number.
   char *hisstr;         ///< Actual entry, separator char after the NUL.
+  size_t hisstrlen;     ///< Length of hisstr (excluding the NUL).
   Timestamp timestamp;  ///< Time when entry was added.
   AdditionalData *additional_data;  ///< Additional entries from ShaDa file.
 } histentry_T;

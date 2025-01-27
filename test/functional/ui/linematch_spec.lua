@@ -38,7 +38,6 @@ describe('Diff mode screen with 3 diffs open', function()
     feed(':windo diffthis<cr>')
 
     screen = Screen.new(100, 16)
-    screen:attach()
     feed('<c-w>=')
     feed(':windo set nu!<cr>')
   end)
@@ -217,7 +216,6 @@ describe('Diff mode screen with 2 diffs open', function()
     feed(':windo diffthis<cr>')
 
     screen = Screen.new(100, 20)
-    screen:attach()
     feed('<c-w>=')
     feed(':windo set nu!<cr>')
   end)
@@ -1093,7 +1091,6 @@ describe('regressions', function()
     clear()
     feed(':set diffopt+=linematch:30<cr>')
     screen = Screen.new(100, 20)
-    screen:attach()
     -- line must be greater than MATCH_CHAR_MAX_LEN
     n.api.nvim_buf_set_lines(0, 0, -1, false, { string.rep('a', 1000) .. 'hello' })
     n.exec 'vnew'
@@ -1105,7 +1102,6 @@ describe('regressions', function()
     clear()
     feed(':set diffopt+=linematch:10<cr>')
     screen = Screen.new(100, 20)
-    screen:attach()
     local lines = {}
     for i = 0, 29 do
       lines[#lines + 1] = tostring(i)

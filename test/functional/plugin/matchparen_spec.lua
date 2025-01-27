@@ -14,7 +14,6 @@ describe('matchparen', function()
   before_each(function()
     clear { args = { '-u', 'NORC' } }
     screen = Screen.new(20, 5)
-    screen:attach()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = 255 },
       [1] = { bold = true },

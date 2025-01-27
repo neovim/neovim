@@ -111,7 +111,6 @@ describe(':lua', function()
 
   it('can show multiline error messages', function()
     local screen = Screen.new(40, 10)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue1 },
       [2] = { bold = true, reverse = true },
@@ -204,7 +203,6 @@ describe(':lua', function()
 
   it('with range', function()
     local screen = Screen.new(40, 10)
-    screen:attach()
     api.nvim_buf_set_lines(0, 0, 0, 0, { 'nonsense', 'function x() print "hello" end', 'x()' })
 
     -- ":{range}lua" fails on invalid Lua code.

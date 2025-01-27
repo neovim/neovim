@@ -3053,7 +3053,6 @@ describe('syntax/shada.vim', function()
       [7] = { bold = true, reverse = true },
       [8] = { bold = true, foreground = Screen.colors.Blue },
     }
-    screen:attach()
 
     api.nvim_buf_set_lines(0, 0, 1, true, {
       'Header with timestamp ' .. epoch .. ':',

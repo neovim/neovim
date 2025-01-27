@@ -20,7 +20,8 @@ local M = {}
 --- end)
 --- ```
 ---
----@param items any[] Arbitrary items
+---@generic T
+---@param items T[] Arbitrary items
 ---@param opts table Additional options
 ---     - prompt (string|nil)
 ---               Text of the prompt. Defaults to `Select one of:`
@@ -32,19 +33,19 @@ local M = {}
 ---               Plugins reimplementing `vim.ui.select` may wish to
 ---               use this to infer the structure or semantics of
 ---               `items`, or the context in which select() was called.
----@param on_choice fun(item: any|nil, idx: integer|nil)
+---@param on_choice fun(item: T|nil, idx: integer|nil)
 ---               Called once the user made a choice.
 ---               `idx` is the 1-based index of `item` within `items`.
 ---               `nil` if the user aborted the dialog.
 function M.select(items, opts, on_choice)
-  vim.validate({
-    items = { items, 'table', false },
-    on_choice = { on_choice, 'function', false },
-  })
+  vim.validate('items', items, 'table')
+  vim.validate('on_choice', on_choice, 'function')
   opts = opts or {}
   local choices = { opts.prompt or 'Select one of:' }
   local format_item = opts.format_item or tostring
-  for i, item in ipairs(items) do
+  for i, item in
+    ipairs(items --[[@as any[] ]])
+  do
     table.insert(choices, string.format('%d: %s', i, format_item(item)))
   end
   local choice = vim.fn.inputlist(choices)
@@ -86,10 +87,8 @@ end
 ---               an empty string if nothing was entered), or
 ---               `nil` if the user aborted the dialog.
 function M.input(opts, on_confirm)
-  vim.validate({
-    opts = { opts, 'table', true },
-    on_confirm = { on_confirm, 'function', false },
-  })
+  vim.validate('opts', opts, 'table', true)
+  vim.validate('on_confirm', on_confirm, 'function')
 
   opts = (opts and not vim.tbl_isempty(opts)) and opts or vim.empty_dict()
 
@@ -135,9 +134,7 @@ end
 ---
 ---@see |vim.system()|
 function M.open(path, opt)
-  vim.validate({
-    path = { path, 'string' },
-  })
+  vim.validate('path', path, 'string')
   local is_uri = path:match('%w+:')
   if not is_uri then
     path = vim.fs.normalize(path)
@@ -165,8 +162,10 @@ function M.open(path, opt)
     cmd = { 'wslview', path }
   elseif vim.fn.executable('explorer.exe') == 1 then
     cmd = { 'explorer.exe', path }
+  elseif vim.fn.executable('lemonade') == 1 then
+    cmd = { 'lemonade', 'open', path }
   else
-    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open)'
+    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
   end
 
   return vim.system(cmd, job_opt), nil
@@ -207,7 +206,9 @@ function M._get_urls()
             if vim.treesitter.node_contains(node, range) then
               local url = metadata[id] and metadata[id].url
               if url and match[url] then
-                for _, n in ipairs(match[url]) do
+                for _, n in
+                  ipairs(match[url] --[[@as TSNode[] ]])
+                do
                   urls[#urls + 1] =
                     vim.treesitter.get_node_text(n, bufnr, { metadata = metadata[url] })
                 end

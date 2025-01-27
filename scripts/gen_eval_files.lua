@@ -26,11 +26,11 @@ local LUA_API_RETURN_OVERRIDES = {
   nvim_buf_get_command = 'table<string,vim.api.keyset.command_info>',
   nvim_buf_get_extmark_by_id = 'vim.api.keyset.get_extmark_item_by_id',
   nvim_buf_get_extmarks = 'vim.api.keyset.get_extmark_item[]',
-  nvim_buf_get_keymap = 'vim.api.keyset.keymap[]',
+  nvim_buf_get_keymap = 'vim.api.keyset.get_keymap[]',
   nvim_get_autocmds = 'vim.api.keyset.get_autocmds.ret[]',
   nvim_get_color_map = 'table<string,integer>',
   nvim_get_command = 'table<string,vim.api.keyset.command_info>',
-  nvim_get_keymap = 'vim.api.keyset.keymap[]',
+  nvim_get_keymap = 'vim.api.keyset.get_keymap[]',
   nvim_get_mark = 'vim.api.keyset.get_mark',
 
   -- Can also return table<string,vim.api.keyset.get_hl_info>, however we need to
@@ -45,6 +45,18 @@ local LUA_API_RETURN_OVERRIDES = {
   nvim_get_option_info2 = 'vim.api.keyset.get_option_info',
   nvim_parse_cmd = 'vim.api.keyset.parse_cmd',
   nvim_win_get_config = 'vim.api.keyset.win_config',
+}
+
+local LUA_API_KEYSET_OVERRIDES = {
+  create_autocmd = {
+    callback = 'string|(fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?)',
+  },
+}
+
+local LUA_API_PARAM_OVERRIDES = {
+  nvim_create_user_command = {
+    command = 'string|fun(args: vim.api.keyset.create_user_command.command_args)',
+  },
 }
 
 local LUA_META_HEADER = {
@@ -118,9 +130,18 @@ local API_TYPES = {
   LuaRef = 'function',
   Dict = 'table<string,any>',
   Float = 'number',
-  HLGroupID = 'number|string',
+  HLGroupID = 'integer|string',
   void = '',
 }
+
+--- @param s string
+--- @return string
+local function luaescape(s)
+  if LUA_KEYWORDS[s] then
+    return s .. '_'
+  end
+  return s
+end
 
 --- @param x string
 --- @param sep? string
@@ -133,6 +154,10 @@ end
 --- @param t string
 --- @return string
 local function api_type(t)
+  if vim.startswith(t, '*') then
+    return api_type(t:sub(2)) .. '?'
+  end
+
   local as0 = t:match('^ArrayOf%((.*)%)')
   if as0 then
     local as = split(as0, ', ')
@@ -147,6 +172,33 @@ local function api_type(t)
   local d0 = t:match('^DictOf%((.*)%)')
   if d0 then
     return 'table<string,' .. api_type(d0) .. '>'
+  end
+
+  local u = t:match('^Union%((.*)%)')
+  if u then
+    local us = vim.split(u, ',%s*')
+    return table.concat(vim.tbl_map(api_type, us), '|')
+  end
+
+  local l = t:match('^LuaRefOf%((.*)%)')
+  if l then
+    --- @type string
+    l = l:gsub('%s+', ' ')
+    --- @type string?, string?
+    local as, r = l:match('%((.*)%),%s*(.*)')
+    if not as then
+      --- @type string
+      as = assert(l:match('%((.*)%)'))
+    end
+
+    local as1 = {} --- @type string[]
+    for a in vim.gsplit(as, ',%s') do
+      local a1 = vim.split(a, '%s+', { trimempty = true })
+      local nm = a1[2]:gsub('%*(.*)$', '%1?')
+      as1[#as1 + 1] = nm .. ': ' .. api_type(a1[1])
+    end
+
+    return ('fun(%s)%s'):format(table.concat(as1, ', '), r and ': ' .. api_type(r) or '')
   end
 
   return API_TYPES[t] or t
@@ -165,7 +217,7 @@ local function render_fun_sig(f, params)
         --- @param v [string,string]
         --- @return string
         function(v)
-          return v[1]
+          return luaescape(v[1])
         end,
         params
       ),
@@ -181,7 +233,6 @@ local function render_fun_sig(f, params)
 end
 
 --- Uniquify names
---- Fix any names that are lua keywords
 --- @param params [string,string,string][]
 --- @return [string,string,string][]
 local function process_params(params)
@@ -189,9 +240,6 @@ local function process_params(params)
   local sfx = 1
 
   for _, p in ipairs(params) do
-    if LUA_KEYWORDS[p[1]] then
-      p[1] = p[1] .. '_'
-    end
     if seen[p[1]] then
       p[1] = p[1] .. sfx
       sfx = sfx + 1
@@ -251,11 +299,13 @@ local function get_api_meta()
       sees[#sees + 1] = see.desc
     end
 
+    local pty_overrides = LUA_API_PARAM_OVERRIDES[fun.name] or {}
+
     local params = {} --- @type [string,string][]
     for _, p in ipairs(fun.params) do
       params[#params + 1] = {
         p.name,
-        api_type(p.type),
+        api_type(pty_overrides[p.name] or p.type),
         not deprecated and p.desc or nil,
       }
     end
@@ -344,10 +394,10 @@ local function render_api_meta(_f, fun, write)
   local param_names = {} --- @type string[]
   local params = process_params(fun.params)
   for _, p in ipairs(params) do
-    param_names[#param_names + 1] = p[1]
-    local pdesc = p[3]
+    local pname, ptype, pdesc = luaescape(p[1]), p[2], p[3]
+    param_names[#param_names + 1] = pname
     if pdesc then
-      local s = '--- @param ' .. p[1] .. ' ' .. p[2] .. ' '
+      local s = '--- @param ' .. pname .. ' ' .. ptype .. ' '
       local pdesc_a = split(vim.trim(norm_text(pdesc)))
       write(s .. pdesc_a[1])
       for i = 2, #pdesc_a do
@@ -357,7 +407,7 @@ local function render_api_meta(_f, fun, write)
         write('--- ' .. pdesc_a[i])
       end
     else
-      write('--- @param ' .. p[1] .. ' ' .. p[2])
+      write('--- @param ' .. pname .. ' ' .. ptype)
     end
   end
 
@@ -382,9 +432,11 @@ local function get_api_keysets_meta()
   local keysets = metadata.keysets
 
   for _, k in ipairs(keysets) do
+    local pty_overrides = LUA_API_KEYSET_OVERRIDES[k.name] or {}
     local params = {}
     for _, key in ipairs(k.keys) do
-      table.insert(params, { key .. '?', api_type(k.types[key] or 'any') })
+      local pty = pty_overrides[key] or k.types[key] or 'any'
+      table.insert(params, { key .. '?', api_type(pty) })
     end
     ret[k.name] = {
       signature = 'NA',
@@ -444,10 +496,14 @@ local function render_eval_meta(f, fun, write)
     end
   end
 
+  for _, text in ipairs(vim.fn.reverse(fun.generics or {})) do
+    write(fmt('--- @generic %s', text))
+  end
+
   local req_args = type(fun.args) == 'table' and fun.args[1] or fun.args or 0
 
   for i, param in ipairs(params) do
-    local pname, ptype = param[1], param[2]
+    local pname, ptype = luaescape(param[1]), param[2]
     local optional = (pname ~= '...' and i > req_args) and '?' or ''
     write(fmt('--- @param %s%s %s', pname, optional, ptype))
   end
@@ -610,15 +666,24 @@ local function render_option_meta(_f, opt, write)
     write('--- ' .. l)
   end
 
-  write('--- @type ' .. OPTION_TYPES[opt.type])
+  if opt.type == 'string' and not opt.list and opt.values then
+    local values = {} --- @type string[]
+    for _, e in ipairs(opt.values) do
+      values[#values + 1] = fmt("'%s'", e)
+    end
+    write('--- @type ' .. table.concat(values, '|'))
+  else
+    write('--- @type ' .. OPTION_TYPES[opt.type])
+  end
+
   write('vim.o.' .. opt.full_name .. ' = ' .. render_option_default(opt.defaults))
   if opt.abbreviation then
     write('vim.o.' .. opt.abbreviation .. ' = vim.o.' .. opt.full_name)
   end
 
   for _, s in pairs {
-    { 'wo', 'window' },
-    { 'bo', 'buffer' },
+    { 'wo', 'win' },
+    { 'bo', 'buf' },
     { 'go', 'global' },
   } do
     local id, scope = s[1], s[2]
@@ -661,8 +726,8 @@ end
 local function scope_to_doc(s)
   local m = {
     global = 'global',
-    buffer = 'local to buffer',
-    window = 'local to window',
+    buf = 'local to buffer',
+    win = 'local to window',
     tab = 'local to tab page',
   }
 
@@ -670,7 +735,7 @@ local function scope_to_doc(s)
     return m[s[1]]
   end
   assert(s[1] == 'global')
-  return 'global or ' .. m[s[2]] .. ' |global-local|'
+  return 'global or ' .. m[s[2]] .. (s[2] ~= 'tab' and ' |global-local|' or '')
 end
 
 -- @param o vim.option_meta
@@ -717,7 +782,9 @@ local function get_option_meta()
   local optinfo = vim.api.nvim_get_all_options_info()
   local ret = {} --- @type table<string,vim.option_meta>
   for _, o in ipairs(opts) do
-    if o.desc then
+    local is_window_option = #o.scope == 1 and o.scope[1] == 'win'
+    local is_option_hidden = o.immutable and not o.varname and not is_window_option
+    if not is_option_hidden and o.desc then
       if o.full_name == 'cmdheight' then
         table.insert(o.scope, 'tab')
       end

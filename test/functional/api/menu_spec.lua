@@ -11,7 +11,6 @@ describe('update_menu notification', function()
   before_each(function()
     clear()
     screen = Screen.new()
-    screen:attach()
   end)
 
   local function expect_sent(expected)

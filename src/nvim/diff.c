@@ -44,6 +44,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
+#include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
@@ -801,7 +802,7 @@ static int diff_write(buf_T *buf, diffin_T *din)
 
   // Always use 'fileformat' set to "unix".
   char *save_ff = buf->b_p_ff;
-  buf->b_p_ff = xstrdup(FF_UNIX);
+  buf->b_p_ff = xstrdup("unix");
   const bool save_cmod_flags = cmdmod.cmod_flags;
   // Writing the buffer is an implementation detail of performing the diff,
   // so it shouldn't update the '[ and '] marks.
@@ -1390,8 +1391,8 @@ void diff_win_options(win_T *wp, bool addbuf)
     }
     wp->w_p_fdm_save = xstrdup(wp->w_p_fdm);
   }
-  set_option_direct_for(kOptFoldmethod, STATIC_CSTR_AS_OPTVAL("diff"), OPT_LOCAL, 0, kOptReqWin,
-                        wp);
+  set_option_direct_for(kOptFoldmethod, STATIC_CSTR_AS_OPTVAL("diff"), OPT_LOCAL, 0,
+                        kOptScopeWin, wp);
 
   if (!wp->w_p_diff) {
     wp->w_p_fen_save = wp->w_p_fen;
@@ -1621,6 +1622,11 @@ static void process_hunk(diff_T **dpp, diff_T **dprevp, int idx_orig, int idx_ne
     } else {
       // second overlap of new block with existing block
       dp->df_count[idx_new] += (linenr_T)hunk->count_new;
+      if ((dp->df_lnum[idx_new] + dp->df_count[idx_new] - 1)
+          > curtab->tp_diffbuf[idx_new]->b_ml.ml_line_count) {
+        dp->df_count[idx_new] = curtab->tp_diffbuf[idx_new]->b_ml.ml_line_count
+                                - dp->df_lnum[idx_new] + 1;
+      }
     }
 
     // Adjust the size of the block to include all the lines to the
@@ -1631,6 +1637,11 @@ static void process_hunk(diff_T **dpp, diff_T **dprevp, int idx_orig, int idx_ne
     if (off < 0) {
       // new change ends in existing block, adjust the end
       dp->df_count[idx_new] += -off;
+      if ((dp->df_lnum[idx_new] + dp->df_count[idx_new] - 1)
+          > curtab->tp_diffbuf[idx_new]->b_ml.ml_line_count) {
+        dp->df_count[idx_new] = curtab->tp_diffbuf[idx_new]->b_ml.ml_line_count
+                                - dp->df_lnum[idx_new] + 1;
+      }
       off = 0;
     }
 
@@ -2417,7 +2428,7 @@ int diffopt_changed(void)
 
   char *p = p_dip;
   while (*p != NUL) {
-    // Note: Keep this in sync with p_dip_values
+    // Note: Keep this in sync with opt_dip_values.
     if (strncmp(p, "filler", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_FILLER;
@@ -2464,7 +2475,7 @@ int diffopt_changed(void)
       p += 8;
       diff_flags_new |= DIFF_INTERNAL;
     } else if (strncmp(p, "algorithm:", 10) == 0) {
-      // Note: Keep this in sync with p_dip_algorithm_values.
+      // Note: Keep this in sync with opt_dip_algorithm_values.
       p += 10;
       if (strncmp(p, "myers", 5) == 0) {
         p += 5;
@@ -2745,7 +2756,7 @@ bool diff_infold(win_T *wp, linenr_T lnum)
 void nv_diffgetput(bool put, size_t count)
 {
   if (bt_prompt(curbuf)) {
-    vim_beep(BO_OPER);
+    vim_beep(kOptBoFlagOperator);
     return;
   }
 

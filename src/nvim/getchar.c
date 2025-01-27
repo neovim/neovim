@@ -2,7 +2,6 @@
 // file, manipulations with redo buffer and stuff buffer.
 
 #include <assert.h>
-#include <lauxlib.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
@@ -29,6 +29,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
+#include "nvim/ex_getln_defs.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
@@ -38,6 +39,7 @@
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
+#include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/mapping.h"
 #include "nvim/mapping_defs.h"
@@ -45,6 +47,7 @@
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
@@ -53,6 +56,7 @@
 #include "nvim/ops.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fileio.h"
+#include "nvim/os/fileio_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
@@ -95,15 +99,15 @@ static FileDescriptor scriptin[NSCRIPT] = { 0 };
 
 #define MINIMAL_SIZE 20                 // minimal size for b_str
 
-static buffheader_T redobuff = { { NULL, { NUL } }, NULL, 0, 0 };
-static buffheader_T old_redobuff = { { NULL, { NUL } }, NULL, 0, 0 };
-static buffheader_T recordbuff = { { NULL, { NUL } }, NULL, 0, 0 };
+static buffheader_T redobuff = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
+static buffheader_T old_redobuff = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
+static buffheader_T recordbuff = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
 
 /// First read ahead buffer. Used for translated commands.
-static buffheader_T readbuf1 = { { NULL, { NUL } }, NULL, 0, 0 };
+static buffheader_T readbuf1 = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
 
 /// Second read ahead buffer. Used for redo.
-static buffheader_T readbuf2 = { { NULL, { NUL } }, NULL, 0, 0 };
+static buffheader_T readbuf2 = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
 
 /// Buffer used to store typed characters for vim.on_key().
 static kvec_withinit_t(char, MAXMAPLEN + 1) on_key_buf = KVI_INITIAL_VALUE(on_key_buf);
@@ -183,15 +187,17 @@ static void free_buff(buffheader_T *buf)
 /// K_SPECIAL in the returned string is escaped.
 ///
 /// @param dozero  count == zero is not an error
-static char *get_buffcont(buffheader_T *buffer, int dozero)
+/// @param len     the length of the returned buffer
+static char *get_buffcont(buffheader_T *buffer, int dozero, size_t *len)
 {
   size_t count = 0;
   char *p = NULL;
+  size_t i = 0;
 
   // compute the total length of the string
   for (const buffblock_T *bp = buffer->bh_first.b_next;
        bp != NULL; bp = bp->b_next) {
-    count += strlen(bp->b_str);
+    count += bp->b_strlen;
   }
 
   if (count > 0 || dozero) {
@@ -204,7 +210,13 @@ static char *get_buffcont(buffheader_T *buffer, int dozero)
       }
     }
     *p2 = NUL;
+    i = (size_t)(p2 - p);
   }
+
+  if (len != NULL) {
+    *len = i;
+  }
+
   return p;
 }
 
@@ -213,12 +225,12 @@ static char *get_buffcont(buffheader_T *buffer, int dozero)
 /// K_SPECIAL in the returned string is escaped.
 char *get_recorded(void)
 {
-  char *p = get_buffcont(&recordbuff, true);
+  size_t len;
+  char *p = get_buffcont(&recordbuff, true, &len);
   free_buff(&recordbuff);
 
   // Remove the characters that were added the last time, these must be the
   // (possibly mapped) characters that stopped the recording.
-  size_t len = strlen(p);
   if (len >= last_recorded_len) {
     len -= last_recorded_len;
     p[len] = NUL;
@@ -237,7 +249,7 @@ char *get_recorded(void)
 /// K_SPECIAL in the returned string is escaped.
 char *get_inserted(void)
 {
-  return get_buffcont(&redobuff, false);
+  return get_buffcont(&redobuff, false, NULL);
 }
 
 /// Add string after the current block of the given buffer
@@ -257,27 +269,31 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
   }
 
   if (buf->bh_first.b_next == NULL) {  // first add to list
-    buf->bh_space = 0;
     buf->bh_curr = &(buf->bh_first);
+    buf->bh_create_newblock = true;
   } else if (buf->bh_curr == NULL) {  // buffer has already been read
     iemsg(_("E222: Add to read buffer"));
     return;
   } else if (buf->bh_index != 0) {
     memmove(buf->bh_first.b_next->b_str,
             buf->bh_first.b_next->b_str + buf->bh_index,
-            strlen(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
+            (buf->bh_first.b_next->b_strlen - buf->bh_index) + 1);
+    buf->bh_first.b_next->b_strlen -= buf->bh_index;
+    buf->bh_space += buf->bh_index;
   }
   buf->bh_index = 0;
 
-  if (buf->bh_space >= (size_t)slen) {
-    size_t len = strlen(buf->bh_curr->b_str);
-    xmemcpyz(buf->bh_curr->b_str + len, s, (size_t)slen);
+  if (!buf->bh_create_newblock && buf->bh_space >= (size_t)slen) {
+    xmemcpyz(buf->bh_curr->b_str + buf->bh_curr->b_strlen, s, (size_t)slen);
+    buf->bh_curr->b_strlen += (size_t)slen;
     buf->bh_space -= (size_t)slen;
   } else {
     size_t len = MAX(MINIMAL_SIZE, (size_t)slen);
     buffblock_T *p = xmalloc(offsetof(buffblock_T, b_str) + len + 1);
-    buf->bh_space = len - (size_t)slen;
     xmemcpyz(p->b_str, s, (size_t)slen);
+    p->b_strlen = (size_t)slen;
+    buf->bh_space = len - (size_t)slen;
+    buf->bh_create_newblock = false;
 
     p->b_next = buf->bh_curr->b_next;
     buf->bh_curr->b_next = p;
@@ -292,12 +308,12 @@ static void delete_buff_tail(buffheader_T *buf, int slen)
   if (buf->bh_curr == NULL) {
     return;  // nothing to delete
   }
-  int len = (int)strlen(buf->bh_curr->b_str);
-  if (len < slen) {
+  if (buf->bh_curr->b_strlen < (size_t)slen) {
     return;
   }
 
-  buf->bh_curr->b_str[len - slen] = NUL;
+  buf->bh_curr->b_str[buf->bh_curr->b_strlen - (size_t)slen] = NUL;
+  buf->bh_curr->b_strlen -= (size_t)slen;
   buf->bh_space += (size_t)slen;
 }
 
@@ -305,8 +321,8 @@ static void delete_buff_tail(buffheader_T *buf, int slen)
 static void add_num_buff(buffheader_T *buf, int n)
 {
   char number[32];
-  snprintf(number, sizeof(number), "%d", n);
-  add_buff(buf, number, -1);
+  int numberlen = snprintf(number, sizeof(number), "%d", n);
+  add_buff(buf, number, numberlen);
 }
 
 /// Add byte or special key 'c' to buffer "buf".
@@ -314,17 +330,20 @@ static void add_num_buff(buffheader_T *buf, int n)
 static void add_byte_buff(buffheader_T *buf, int c)
 {
   char temp[4];
+  ptrdiff_t templen;
   if (IS_SPECIAL(c) || c == K_SPECIAL || c == NUL) {
     // Translate special key code into three byte sequence.
     temp[0] = (char)K_SPECIAL;
     temp[1] = (char)K_SECOND(c);
     temp[2] = (char)K_THIRD(c);
     temp[3] = NUL;
+    templen = 3;
   } else {
     temp[0] = (char)c;
     temp[1] = NUL;
+    templen = 1;
   }
-  add_buff(buf, temp, -1);
+  add_buff(buf, temp, templen);
 }
 
 /// Add character 'c' to buffer "buf".
@@ -385,11 +404,11 @@ static void start_stuff(void)
 {
   if (readbuf1.bh_first.b_next != NULL) {
     readbuf1.bh_curr = &(readbuf1.bh_first);
-    readbuf1.bh_space = 0;
+    readbuf1.bh_create_newblock = true;  // force a new block to be created (see add_buff())
   }
   if (readbuf2.bh_first.b_next != NULL) {
     readbuf2.bh_curr = &(readbuf2.bh_first);
-    readbuf2.bh_space = 0;
+    readbuf2.bh_create_newblock = true;  // force a new block to be created (see add_buff())
   }
 }
 
@@ -456,7 +475,7 @@ void beep_flush(void)
 {
   if (emsg_silent == 0) {
     flush_buffers(FLUSH_MINIMAL);
-    vim_beep(BO_ERROR);
+    vim_beep(kOptBoFlagError);
   }
 }
 
@@ -498,12 +517,13 @@ void saveRedobuff(save_redo_T *save_redo)
   old_redobuff.bh_first.b_next = NULL;
 
   // Make a copy, so that ":normal ." in a function works.
-  char *const s = get_buffcont(&save_redo->sr_redobuff, false);
+  size_t slen;
+  char *const s = get_buffcont(&save_redo->sr_redobuff, false, &slen);
   if (s == NULL) {
     return;
   }
 
-  add_buff(&redobuff, s, -1);
+  add_buff(&redobuff, s, (ptrdiff_t)slen);
   xfree(s);
 }
 
@@ -1497,7 +1517,7 @@ int merge_modifiers(int c_arg, int *modifiers)
   int c = c_arg;
 
   if (*modifiers & MOD_MASK_CTRL) {
-    if ((c >= '`' && c <= 0x7f) || (c >= '@' && c <= '_')) {
+    if (c >= '@' && c <= 0x7f) {
       c &= 0x1f;
       if (c == NUL) {
         c = K_ZERO;
@@ -1772,7 +1792,9 @@ int vgetc(void)
 
   // Execute Lua on_key callbacks.
   kvi_push(on_key_buf, NUL);
-  nlua_execute_on_key(c, on_key_buf.items);
+  if (nlua_execute_on_key(c, on_key_buf.items)) {
+    c = K_IGNORE;
+  }
   kvi_destroy(on_key_buf);
   kvi_init(on_key_buf);
 
@@ -1919,9 +1941,9 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
       i += utf_char2bytes((int)n, temp + i);
     }
     assert(i < 10);
-    temp[i++] = NUL;
+    temp[i] = NUL;
     rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = xstrdup(temp);
+    rettv->vval.v_string = xmemdupz(temp, (size_t)i);
 
     if (is_mouse_key((int)n)) {
       int row = mouse_row;
@@ -1974,9 +1996,9 @@ void f_getcharstr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     i += utf_char2bytes((int)n, temp);
   }
   assert(i < 7);
-  temp[i++] = NUL;
+  temp[i] = NUL;
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xstrdup(temp);
+  rettv->vval.v_string = xmemdupz(temp, (size_t)i);
 }
 
 /// "getcharmod()" function
@@ -2034,6 +2056,12 @@ static bool at_ins_compl_key(void)
 /// @return  the length of the replaced bytes, 0 if nothing changed, -1 for error.
 static int check_simplify_modifier(int max_offset)
 {
+  // We want full modifiers in Terminal mode so that the key can be correctly
+  // encoded
+  if (State & MODE_TERMINAL) {
+    return 0;
+  }
+
   for (int offset = 0; offset < max_offset; offset++) {
     if (offset + 3 >= typebuf.tb_len) {
       break;
@@ -2371,7 +2399,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
           buf[1] = (char)KS_EXTRA;
           buf[2] = KE_IGNORE;
           buf[3] = NUL;
-          map_str = xstrdup(buf);
+          map_str = xmemdupz(buf, 3);
           if (State & MODE_CMDLINE) {
             // redraw the command below the error
             msg_didout = true;

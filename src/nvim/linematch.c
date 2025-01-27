@@ -3,9 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
-#include "nvim/ascii_defs.h"
 #include "nvim/linematch.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"

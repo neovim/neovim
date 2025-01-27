@@ -150,6 +150,7 @@ LANGUAGE SUPPORT
 |arabic.txt|		Arabic language support and editing
 |hebrew.txt|		Hebrew language support and editing
 |russian.txt|		Russian language support and editing
+|vietnamese.txt|	Vietnamese language support and editing
 
 ------------------------------------------------------------------------------
 INTEROP

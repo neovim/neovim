@@ -1,3 +1,5 @@
+// Island of misfit toys.
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -7,6 +9,7 @@
 #include "nvim/api/extmark.h"
 #include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/api/vimscript.h"
@@ -18,14 +21,14 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
+#include "nvim/marktree.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
-#include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/channel_defs.h"
-#include "nvim/msgpack_rpc/unpacker.h"
+#include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/pos_defs.h"
+#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -82,6 +85,17 @@ Integer nvim_buf_get_number(Buffer buffer, Error *err)
   return buf->b_fnum;
 }
 
+static uint32_t src2ns(Integer *src_id)
+{
+  if (*src_id == 0) {
+    *src_id = nvim_create_namespace((String)STRING_INIT);
+  }
+  if (*src_id < 0) {
+    return (((uint32_t)1) << 31) - 1;
+  }
+  return (uint32_t)(*src_id);
+}
+
 /// Clears highlights and virtual text from namespace and range of lines
 ///
 /// @deprecated use |nvim_buf_clear_namespace()|.
@@ -100,6 +114,80 @@ void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, 
   nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
 }
 
+/// Adds a highlight to buffer.
+///
+/// @deprecated use |nvim_buf_set_extmark()| or |vim.hl.range()|
+///
+/// Namespaces are used for batch deletion/updating of a set of highlights. To
+/// create a namespace, use |nvim_create_namespace()| which returns a namespace
+/// id. Pass it in to this function as `ns_id` to add highlights to the
+/// namespace. All highlights in the same namespace can then be cleared with
+/// single call to |nvim_buf_clear_namespace()|. If the highlight never will be
+/// deleted by an API call, pass `ns_id = -1`.
+///
+/// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
+/// highlight, the allocated id is then returned. If `hl_group` is the empty
+/// string no highlight is added, but a new `ns_id` is still returned. This is
+/// supported for backwards compatibility, new code should use
+/// |nvim_create_namespace()| to create a new empty namespace.
+///
+/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param ns_id      namespace to use or -1 for ungrouped highlight
+/// @param hl_group   Name of the highlight group to use
+/// @param line       Line to highlight (zero-indexed)
+/// @param col_start  Start of (byte-indexed) column range to highlight
+/// @param col_end    End of (byte-indexed) column range to highlight,
+///                   or -1 to highlight to end of line
+/// @param[out] err   Error details, if any
+/// @return The ns_id that was used
+Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, Integer line,
+                               Integer col_start, Integer col_end, Error *err)
+  FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(13)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  VALIDATE_RANGE((line >= 0 && line < MAXLNUM), "line number", {
+    return 0;
+  });
+  VALIDATE_RANGE((col_start >= 0 && col_start <= MAXCOL), "column", {
+    return 0;
+  });
+
+  if (col_end < 0 || col_end > MAXCOL) {
+    col_end = MAXCOL;
+  }
+
+  uint32_t ns = src2ns(&ns_id);
+
+  if (!(line < buf->b_ml.ml_line_count)) {
+    // safety check, we can't add marks outside the range
+    return ns_id;
+  }
+
+  int hl_id = 0;
+  if (hl_group.size > 0) {
+    hl_id = syn_check_group(hl_group.data, hl_group.size);
+  } else {
+    return ns_id;
+  }
+
+  int end_line = (int)line;
+  if (col_end == MAXCOL) {
+    col_end = 0;
+    end_line++;
+  }
+
+  DecorInline decor = DECOR_INLINE_INIT;
+  decor.data.hl.hl_id = hl_id;
+
+  extmark_set(buf, ns, NULL, (int)line, (colnr_T)col_start, end_line, (colnr_T)col_end,
+              decor, MT_FLAG_DECOR_HL, true, false, false, false, NULL);
+  return ns_id;
+}
 /// Set the virtual text (annotation) for a buffer line.
 ///
 /// @deprecated use nvim_buf_set_extmark to use full virtual text functionality.
@@ -533,7 +621,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
 {
-  set_option_to(channel_id, NULL, kOptReqGlobal, name, value, err);
+  set_option_to(channel_id, NULL, kOptScopeGlobal, name, value, err);
 }
 
 /// Gets the global value of an option.
@@ -546,7 +634,7 @@ Object nvim_get_option(String name, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
 {
-  return get_option_from(NULL, kOptReqGlobal, name, err);
+  return get_option_from(NULL, kOptScopeGlobal, name, err);
 }
 
 /// Gets a buffer option value
@@ -566,7 +654,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return get_option_from(buf, kOptReqBuf, name, err);
+  return get_option_from(buf, kOptScopeBuf, name, err);
 }
 
 /// Sets a buffer option value. Passing `nil` as value deletes the option (only
@@ -588,7 +676,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
     return;
   }
 
-  set_option_to(channel_id, buf, kOptReqBuf, name, value, err);
+  set_option_to(channel_id, buf, kOptScopeBuf, name, value, err);
 }
 
 /// Gets a window option value
@@ -608,7 +696,7 @@ Object nvim_win_get_option(Window window, String name, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return get_option_from(win, kOptReqWin, name, err);
+  return get_option_from(win, kOptScopeWin, name, err);
 }
 
 /// Sets a window option value. Passing `nil` as value deletes the option (only
@@ -630,26 +718,36 @@ void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object
     return;
   }
 
-  set_option_to(channel_id, win, kOptReqWin, name, value, err);
+  set_option_to(channel_id, win, kOptScopeWin, name, value, err);
 }
 
 /// Gets the value of a global or local (buffer, window) option.
 ///
 /// @param[in]   from       Pointer to buffer or window for local option value.
-/// @param       req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param       scope      Option scope. See OptScope in option.h.
 /// @param       name       The option name.
 /// @param[out]  err        Details of an error that may have occurred.
 ///
 /// @return  the option value.
-static Object get_option_from(void *from, OptReqScope req_scope, String name, Error *err)
+static Object get_option_from(void *from, OptScope scope, String name, Error *err)
 {
   VALIDATE_S(name.size > 0, "option name", "<empty>", {
     return (Object)OBJECT_INIT;
   });
 
-  OptVal value = get_option_value_strict(find_option(name.data), req_scope, from, err);
-  if (ERROR_SET(err)) {
+  OptIndex opt_idx = find_option(name.data);
+  VALIDATE_S(opt_idx != kOptInvalid, "option name", name.data, {
     return (Object)OBJECT_INIT;
+  });
+
+  OptVal value = NIL_OPTVAL;
+
+  if (option_has_scope(opt_idx, scope)) {
+    value = get_option_value_for(opt_idx, scope == kOptScopeGlobal ? OPT_GLOBAL : OPT_LOCAL,
+                                 scope, from, err);
+    if (ERROR_SET(err)) {
+      return (Object)OBJECT_INIT;
+    }
   }
 
   VALIDATE_S(value.type != kOptValTypeNil, "option name", name.data, {
@@ -662,12 +760,12 @@ static Object get_option_from(void *from, OptReqScope req_scope, String name, Er
 /// Sets the value of a global or local (buffer, window) option.
 ///
 /// @param[in]   to         Pointer to buffer or window for local option value.
-/// @param       req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param       scope      Option scope. See OptScope in option.h.
 /// @param       name       The option name.
 /// @param       value      New option value.
 /// @param[out]  err        Details of an error that may have occurred.
-static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, String name,
-                          Object value, Error *err)
+static void set_option_to(uint64_t channel_id, void *to, OptScope scope, String name, Object value,
+                          Error *err)
 {
   VALIDATE_S(name.size > 0, "option name", "<empty>", {
     return;
@@ -689,15 +787,15 @@ static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, 
     return;
   });
 
-  int attrs = get_option_attrs(opt_idx);
   // For global-win-local options -> setlocal
   // For        win-local options -> setglobal and setlocal (opt_flags == 0)
-  const int opt_flags = (req_scope == kOptReqWin && !(attrs & SOPT_GLOBAL))
-                        ? 0
-                        : (req_scope == kOptReqGlobal) ? OPT_GLOBAL : OPT_LOCAL;
+  const int opt_flags
+    = (scope == kOptScopeWin && !option_has_scope(opt_idx, kOptScopeGlobal))
+      ? 0
+      : ((scope == kOptScopeGlobal) ? OPT_GLOBAL : OPT_LOCAL);
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, opt_idx, optval, opt_flags, req_scope, to, err);
+    set_option_value_for(name.data, opt_idx, optval, opt_flags, scope, to, err);
   });
 }
 
@@ -792,7 +890,8 @@ theend:
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
 void nvim_subscribe(uint64_t channel_id, String event)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+// XXX: c_grammar.lua is order-sensitive.
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13) FUNC_API_REMOTE_ONLY
 {
   // Does nothing. `rpcnotify(0,…)` broadcasts to all channels, there are no "subscriptions".
 }
@@ -802,7 +901,105 @@ void nvim_subscribe(uint64_t channel_id, String event)
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
 void nvim_unsubscribe(uint64_t channel_id, String event)
-  FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
+// XXX: c_grammar.lua is order-sensitive.
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13) FUNC_API_REMOTE_ONLY
 {
   // Does nothing. `rpcnotify(0,…)` broadcasts to all channels, there are no "subscriptions".
+}
+
+enum { LINE_BUFFER_MIN_SIZE = 4096, };
+
+/// Writes a message to vim output or error buffer. The string is split
+/// and flushed after each newline. Incomplete lines are kept for writing
+/// later.
+///
+/// @param message  Message to write
+/// @param to_err   true: message is an error (uses `emsg` instead of `msg`)
+/// @param writeln  Append a trailing newline
+static void write_msg(String message, bool to_err, bool writeln)
+{
+  static StringBuilder out_line_buf = KV_INITIAL_VALUE;
+  static StringBuilder err_line_buf = KV_INITIAL_VALUE;
+  StringBuilder *line_buf = to_err ? &err_line_buf : &out_line_buf;
+
+#define PUSH_CHAR(c) \
+  if (kv_max(*line_buf) == 0) { \
+    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
+  } \
+  if (c == NL) { \
+    kv_push(*line_buf, NUL); \
+    if (to_err) { \
+      emsg(line_buf->items); \
+    } else { \
+      msg(line_buf->items, 0); \
+    } \
+    if (msg_silent == 0) { \
+      msg_didout = true; \
+    } \
+    kv_drop(*line_buf, kv_size(*line_buf)); \
+    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
+  } else if (c == NUL) { \
+    kv_push(*line_buf, NL); \
+  } else { \
+    kv_push(*line_buf, c); \
+  }
+
+  no_wait_return++;
+  for (uint32_t i = 0; i < message.size; i++) {
+    if (got_int) {
+      break;
+    }
+    PUSH_CHAR(message.data[i]);
+  }
+  if (writeln) {
+    PUSH_CHAR(NL);
+  }
+  no_wait_return--;
+  msg_end();
+}
+
+/// @deprecated
+///
+/// @param str Message
+void nvim_out_write(String str)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13)
+{
+  write_msg(str, false, false);
+}
+
+/// @deprecated
+///
+/// @param str Message
+void nvim_err_write(String str)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13)
+{
+  write_msg(str, true, false);
+}
+
+/// @deprecated
+///
+/// @param str Message
+void nvim_err_writeln(String str)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13)
+{
+  write_msg(str, true, true);
+}
+
+/// @deprecated
+///
+/// Use `nvim_echo` or `nvim_exec_lua("vim.notify(...)", ...)` instead.
+///
+/// @param msg        Message to display to the user
+/// @param log_level  The log level
+/// @param opts       Reserved for future use.
+/// @param[out] err   Error details, if any
+Object nvim_notify(String msg, Integer log_level, Dict opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(7) FUNC_API_DEPRECATED_SINCE(13)
+{
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, STRING_OBJ(msg));
+  ADD_C(args, INTEGER_OBJ(log_level));
+  ADD_C(args, DICT_OBJ(opts));
+
+  return NLUA_EXEC_STATIC("return vim.notify(...)", args, kRetObject, arena, err);
 }

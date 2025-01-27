@@ -189,7 +189,7 @@ Other hints:
 
 - The python `neovim` module was renamed to `pynvim` (long ago).
 - If you're using pyenv or virtualenv for the `pynvim` module
-    https://pypi.python.org/pypi/pynvim/, you must set `g:python3_host_prog` to
+    https://pypi.org/project/pynvim/, you must set `g:python3_host_prog` to
     the virtualenv's interpreter path.
 - Read |provider-python|.
 - Be sure you have the latest version of the `pynvim` Python module: >bash

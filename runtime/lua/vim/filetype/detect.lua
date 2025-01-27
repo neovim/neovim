@@ -34,6 +34,12 @@ local matchregex = vim.filetype._matchregex
 -- can be detected from the first five lines of the file.
 --- @type vim.filetype.mapfn
 function M.asm(path, bufnr)
+  -- tiasm uses `* commment`
+  local lines = table.concat(getlines(bufnr, 1, 10), '\n')
+  if findany(lines, { '^%*', '\n%*', 'Texas Instruments Incorporated' }) then
+    return 'tiasm'
+  end
+
   local syntax = vim.b[bufnr].asmsyntax
   if not syntax or syntax == '' then
     syntax = M.asm_syntax(path, bufnr)
@@ -181,6 +187,16 @@ function M.changelog(_, bufnr)
 end
 
 --- @type vim.filetype.mapfn
+function M.cl(_, bufnr)
+  local lines = table.concat(getlines(bufnr, 1, 4))
+  if lines:match('/%*') then
+    return 'opencl'
+  else
+    return 'lisp'
+  end
+end
+
+--- @type vim.filetype.mapfn
 function M.class(_, bufnr)
   -- Check if not a Java class (starts with '\xca\xfe\xba\xbe')
   if not getline(bufnr, 1):find('^\202\254\186\190') then
@@ -209,6 +225,24 @@ function M.cls(_, bufnr)
   return 'st'
 end
 
+--- *.cmd is close to a Batch file, but on OS/2 Rexx files and TI linker command files also use *.cmd.
+--- lnk: `/* comment */`, `// comment`, and `--linker-option=value`
+--- rexx: `/* comment */`, `-- comment`
+--- @type vim.filetype.mapfn
+function M.cmd(_, bufnr)
+  local lines = table.concat(getlines(bufnr, 1, 20))
+  if matchregex(lines, [[MEMORY\|SECTIONS\|\%(^\|\n\)--\S\|\%(^\|\n\)//]]) then
+    return 'lnk'
+  else
+    local line1 = getline(bufnr, 1)
+    if line1:find('^/%*') then
+      return 'rexx'
+    else
+      return 'dosbatch'
+    end
+  end
+end
+
 --- @type vim.filetype.mapfn
 function M.conf(path, bufnr)
   if fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
@@ -227,7 +261,8 @@ end
 --- Debian Control
 --- @type vim.filetype.mapfn
 function M.control(_, bufnr)
-  if getline(bufnr, 1):find('^Source:') then
+  local line1 = getline(bufnr, 1)
+  if line1 and findany(line1, { '^Source:', '^Package:' }) then
     return 'debcontrol'
   end
 end
@@ -722,7 +757,7 @@ function M.html(_, bufnr)
     if
       matchregex(
         line,
-        [[@\(if\|for\|defer\|switch\)\|\*\(ngIf\|ngFor\|ngSwitch\|ngTemplateOutlet\)\|ng-template\|ng-content\|{{.*}}]]
+        [[@\(if\|for\|defer\|switch\)\|\*\(ngIf\|ngFor\|ngSwitch\|ngTemplateOutlet\)\|ng-template\|ng-content]]
       )
     then
       return 'htmlangular'
@@ -865,6 +900,16 @@ function M.log(path, _)
     return 'usserverlog'
   elseif findany(path, { 'usw2kagt%.log', 'usw2kagt%..*%.log', '.*%.usw2kagt%.log' }) then
     return 'usw2kagtlog'
+  end
+end
+
+--- @type vim.filetype.mapfn
+function M.ll(_, bufnr)
+  local first_line = getline(bufnr, 1)
+  if matchregex(first_line, [[;\|\<source_filename\>\|\<target\>]]) then
+    return 'llvm'
+  else
+    return 'lifelines'
   end
 end
 
@@ -1385,6 +1430,15 @@ function M.sig(_, bufnr)
   end
 end
 
+--- @type vim.filetype.mapfn
+function M.sa(_, bufnr)
+  local lines = table.concat(getlines(bufnr, 1, 4), '\n')
+  if findany(lines, { '^;', '\n;' }) then
+    return 'tiasm'
+  end
+  return 'sather'
+end
+
 -- This function checks the first 25 lines of file extension "sc" to resolve
 -- detection between scala and SuperCollider
 --- @type vim.filetype.mapfn
@@ -1709,7 +1763,7 @@ function M.v(_, bufnr)
     return vim.g.filetype_v
   end
   local in_comment = 0
-  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+  for _, line in ipairs(getlines(bufnr, 1, 500)) do
     if line:find('^%s*/%*') then
       in_comment = 1
     end
@@ -1723,7 +1777,7 @@ function M.v(_, bufnr)
         or line:find('%(%*') and not line:find('/[/*].*%(%*')
       then
         return 'coq'
-      elseif findany(line, { ';%s*$', ';%s*/[/*]' }) then
+      elseif findany(line, { ';%s*$', ';%s*/[/*]', '^%s*module%s+%w+%s*%(' }) then
         return 'verilog'
       end
     end
@@ -1823,6 +1877,7 @@ local patterns_hashbang = {
   ruby = 'ruby',
   ['node\\(js\\)\\=\\>\\|js\\>'] = { 'javascript', { vim_regex = true } },
   ['rhino\\>'] = { 'javascript', { vim_regex = true } },
+  just = 'just',
   -- BC calculator
   ['^bc\\>'] = { 'bc', { vim_regex = true } },
   ['sed\\>'] = { 'sed', { vim_regex = true } },
@@ -1908,7 +1963,7 @@ local function match_from_hashbang(contents, path, dispatch_extension)
   end
 
   for k, v in pairs(patterns_hashbang) do
-    local ft = type(v) == 'table' and v[1] or v
+    local ft = type(v) == 'table' and v[1] or v --[[@as string]]
     local opts = type(v) == 'table' and v[2] or {}
     if opts.vim_regex and matchregex(name, k) or name:find(k) then
       return ft
@@ -2080,6 +2135,7 @@ local function match_from_text(contents, path)
         return ft
       end
     else
+      --- @cast k string
       local opts = type(v) == 'table' and v[2] or {}
       if opts.start_lnum and opts.end_lnum then
         assert(

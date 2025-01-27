@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/extmark_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
@@ -105,7 +105,7 @@ enum GRegFlags {
 
 /// Definition of one register
 typedef struct {
-  char **y_array;           ///< Pointer to an array of line pointers.
+  String *y_array;          ///< Pointer to an array of Strings.
   size_t y_size;            ///< Number of lines in y_array.
   MotionType y_type;        ///< Register type
   colnr_T y_width;          ///< Register width (only valid for y_type == kBlockWise).

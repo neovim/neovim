@@ -53,7 +53,6 @@ describe('Diff mode screen', function()
     feed('<c-w>w:diffthis<cr><c-w>w')
 
     screen = Screen.new(40, 16)
-    screen:attach()
   end)
 
   it('Add a line in beginning of file 2', function()
@@ -1172,7 +1171,6 @@ end)
 it('win_update redraws lines properly', function()
   local screen
   screen = Screen.new(50, 10)
-  screen:attach()
   screen:set_default_attr_ids({
     [1] = { bold = true, foreground = Screen.colors.Blue1 },
     [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
@@ -1250,7 +1248,6 @@ end)
 -- oldtest: Test_diff_rnu()
 it('diff updates line numbers below filler lines', function()
   local screen = Screen.new(40, 14)
-  screen:attach()
   exec([[
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
     vnew
@@ -1310,7 +1307,6 @@ end)
 -- oldtest: Test_diff_with_scroll_and_change()
 it('Align the filler lines when changing text in diff mode', function()
   local screen = Screen.new(40, 20)
-  screen:attach()
   exec([[
     call setline(1, range(1, 15))
     vnew
@@ -1376,7 +1372,6 @@ end)
 
 it("diff mode doesn't restore invalid 'foldcolumn' value #21647", function()
   local screen = Screen.new(60, 6)
-  screen:attach()
   eq('0', api.nvim_get_option_value('foldcolumn', {}))
   command('diffsplit | bd')
   screen:expect([[
@@ -1389,7 +1384,6 @@ end)
 
 it("'relativenumber' doesn't draw beyond end of window in diff mode #29403", function()
   local screen = Screen.new(60, 12)
-  screen:attach()
   command('set relativenumber')
   feed('10aa<CR><Esc>gg')
   command('vnew')
@@ -1433,7 +1427,6 @@ it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', fun
   screen:add_extra_attr_ids {
     [100] = { foreground = Screen.colors.Blue, bold = true, background = Screen.colors.Red },
   }
-  screen:attach()
   exec([[
     call setline(1, ['a', 'b', "c\n", 'd', 'e', 'f', 'g'])
     vnew
@@ -1510,7 +1503,6 @@ end)
 -- oldtest: Test_diff_breakindent_after_filler()
 it("diff mode draws 'breakindent' correctly after filler lines", function()
   local screen = Screen.new(45, 8)
-  screen:attach()
   exec([[
     set laststatus=0 diffopt+=followwrap breakindent breakindentopt=min:0
     call setline(1, ['a', '  ' .. repeat('c', 50)])
@@ -1562,7 +1554,6 @@ it('diff mode overlapped diff blocks will be merged', function()
   ]])
 
   local screen = Screen.new(35, 20)
-  screen:attach()
   command('set winwidth=10 diffopt=filler,internal')
 
   command('args Xdifile1 Xdifile2 | vert all | windo diffthis')
@@ -2052,5 +2043,130 @@ it('diff mode overlapped diff blocks will be merged', function()
     {1:~          }│{1:~          }│{1:~          }|*14
     {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
                                        |
+  ]])
+
+  WriteDiffFiles3('a\nb\nc', 'd\ne', 'b\nf')
+  screen:expect([[
+    {7:  }{27:a}{4:        }│{7:  }{27:d}{4:        }│{7:  }{27:^b}{4:        }|
+    {7:  }{27:b}{4:        }│{7:  }{27:e}{4:        }│{7:  }{27:f}{4:        }|
+    {7:  }{22:c        }│{7:  }{23:---------}│{7:  }{23:---------}|
+    {1:~          }│{1:~          }│{1:~          }|*15
+    {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
+                                       |
+  ]])
+
+  WriteDiffFiles3('a\nb\nc', 'd\ne', 'b')
+  screen:expect([[
+    {7:  }{27:a}{4:        }│{7:  }{27:d}{4:        }│{7:  }{27:^b}{4:        }|
+    {7:  }{27:b}{4:        }│{7:  }{27:e}{4:        }│{7:  }{23:---------}|
+    {7:  }{22:c        }│{7:  }{23:---------}│{7:  }{23:---------}|
+    {1:~          }│{1:~          }│{1:~          }|*15
+    {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
+                                       |
+  ]])
+end)
+
+-- oldtest: Test_diff_topline_noscroll()
+it('diff mode does not scroll with line("w0")', function()
+  local screen = Screen.new(45, 20)
+  exec([[
+    set scrolloff=5
+    call setline(1, range(1,60))
+    vnew
+    call setline(1, range(1,10) + range(50,60))
+    windo diffthis
+    norm! G
+    exe "norm! 30\<C-y>"
+  ]])
+  screen:expect([[
+    {7:  }9                   │{7:  }9                   |
+    {7:  }10                  │{7:  }10                  |
+    {7:  }{23:--------------------}│{7:  }{22:11                  }|
+    {7:  }{23:--------------------}│{7:  }{22:12                  }|
+    {7:  }{23:--------------------}│{7:  }{22:13                  }|
+    {7:  }{23:--------------------}│{7:  }{22:14                  }|
+    {7:  }{23:--------------------}│{7:  }{22:15                  }|
+    {7:  }{23:--------------------}│{7:  }{22:16                  }|
+    {7:  }{23:--------------------}│{7:  }{22:17                  }|
+    {7:  }{23:--------------------}│{7:  }{22:18                  }|
+    {7:  }{23:--------------------}│{7:  }{22:19                  }|
+    {7:  }{23:--------------------}│{7:  }{22:20                  }|
+    {7:  }{23:--------------------}│{7:  }{22:^21                  }|
+    {7:  }{23:--------------------}│{7:  }{22:22                  }|
+    {7:  }{23:--------------------}│{7:  }{22:23                  }|
+    {7:  }{23:--------------------}│{7:  }{22:24                  }|
+    {7:  }{23:--------------------}│{7:  }{22:25                  }|
+    {7:  }{23:--------------------}│{7:  }{22:26                  }|
+    {2:[No Name] [+]          }{3:[No Name] [+]         }|
+                                                 |
+  ]])
+  command([[echo line('w0', 1001)]])
+  screen:expect([[
+    {7:  }9                   │{7:  }9                   |
+    {7:  }10                  │{7:  }10                  |
+    {7:  }{23:--------------------}│{7:  }{22:11                  }|
+    {7:  }{23:--------------------}│{7:  }{22:12                  }|
+    {7:  }{23:--------------------}│{7:  }{22:13                  }|
+    {7:  }{23:--------------------}│{7:  }{22:14                  }|
+    {7:  }{23:--------------------}│{7:  }{22:15                  }|
+    {7:  }{23:--------------------}│{7:  }{22:16                  }|
+    {7:  }{23:--------------------}│{7:  }{22:17                  }|
+    {7:  }{23:--------------------}│{7:  }{22:18                  }|
+    {7:  }{23:--------------------}│{7:  }{22:19                  }|
+    {7:  }{23:--------------------}│{7:  }{22:20                  }|
+    {7:  }{23:--------------------}│{7:  }{22:^21                  }|
+    {7:  }{23:--------------------}│{7:  }{22:22                  }|
+    {7:  }{23:--------------------}│{7:  }{22:23                  }|
+    {7:  }{23:--------------------}│{7:  }{22:24                  }|
+    {7:  }{23:--------------------}│{7:  }{22:25                  }|
+    {7:  }{23:--------------------}│{7:  }{22:26                  }|
+    {2:[No Name] [+]          }{3:[No Name] [+]         }|
+    9                                            |
+  ]])
+  feed('<C-W>p')
+  screen:expect([[
+    {7:  }{23:--------------------}│{7:  }{22:39                  }|
+    {7:  }{23:--------------------}│{7:  }{22:40                  }|
+    {7:  }{23:--------------------}│{7:  }{22:41                  }|
+    {7:  }{23:--------------------}│{7:  }{22:42                  }|
+    {7:  }{23:--------------------}│{7:  }{22:43                  }|
+    {7:  }{23:--------------------}│{7:  }{22:44                  }|
+    {7:  }{23:--------------------}│{7:  }{22:45                  }|
+    {7:  }{23:--------------------}│{7:  }{22:46                  }|
+    {7:  }{23:--------------------}│{7:  }{22:47                  }|
+    {7:  }{23:--------------------}│{7:  }{22:48                  }|
+    {7:  }{23:--------------------}│{7:  }{22:49                  }|
+    {7:  }^50                  │{7:  }50                  |
+    {7:  }51                  │{7:  }51                  |
+    {7:  }52                  │{7:  }52                  |
+    {7:  }53                  │{7:  }53                  |
+    {7:  }54                  │{7:  }54                  |
+    {7:  }55                  │{7:  }55                  |
+    {7:+ }{13:+--  5 lines: 56····}│{7:+ }{13:+--  5 lines: 56····}|
+    {3:[No Name] [+]          }{2:[No Name] [+]         }|
+    9                                            |
+  ]])
+  feed('<C-W>p')
+  screen:expect([[
+    {7:  }{23:--------------------}│{7:  }{22:39                  }|
+    {7:  }{23:--------------------}│{7:  }{22:40                  }|
+    {7:  }{23:--------------------}│{7:  }{22:41                  }|
+    {7:  }{23:--------------------}│{7:  }{22:42                  }|
+    {7:  }{23:--------------------}│{7:  }{22:43                  }|
+    {7:  }{23:--------------------}│{7:  }{22:^44                  }|
+    {7:  }{23:--------------------}│{7:  }{22:45                  }|
+    {7:  }{23:--------------------}│{7:  }{22:46                  }|
+    {7:  }{23:--------------------}│{7:  }{22:47                  }|
+    {7:  }{23:--------------------}│{7:  }{22:48                  }|
+    {7:  }{23:--------------------}│{7:  }{22:49                  }|
+    {7:  }50                  │{7:  }50                  |
+    {7:  }51                  │{7:  }51                  |
+    {7:  }52                  │{7:  }52                  |
+    {7:  }53                  │{7:  }53                  |
+    {7:  }54                  │{7:  }54                  |
+    {7:  }55                  │{7:  }55                  |
+    {7:+ }{13:+--  5 lines: 56····}│{7:+ }{13:+--  5 lines: 56····}|
+    {2:[No Name] [+]          }{3:[No Name] [+]         }|
+    9                                            |
   ]])
 end)

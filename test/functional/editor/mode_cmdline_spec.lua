@@ -38,6 +38,26 @@ describe('cmdline', function()
       feed([[:<C-R>="foo\nbar\rbaz"<CR>]])
       eq('foo\nbar\rbaz', fn.getcmdline())
     end)
+
+    it('pasting handles composing chars properly', function()
+      local screen = Screen.new(60, 4)
+      -- 'arabicshape' cheats and always redraws everything which trivially works,
+      -- this test is for partial redraws in 'noarabicshape' mode.
+      command('set noarabicshape')
+      fn.setreg('a', '💻')
+      feed(':test 🧑‍')
+      screen:expect([[
+                                                                    |
+        {1:~                                                           }|*2
+        :test 🧑‍^                                                    |
+      ]])
+      feed('<c-r><c-r>a')
+      screen:expect([[
+                                                                    |
+        {1:~                                                           }|*2
+        :test 🧑‍💻^                                                    |
+      ]])
+    end)
   end)
 
   it('Ctrl-Shift-V supports entering unsimplified key notations', function()
@@ -48,7 +68,6 @@ describe('cmdline', function()
 
   it('redraws statusline when toggling overstrike', function()
     local screen = Screen.new(60, 4)
-    screen:attach()
     command('set laststatus=2 statusline=%!mode(1)')
     feed(':')
     screen:expect {

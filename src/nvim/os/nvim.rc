@@ -1,0 +1,2 @@
+#include "winuser.h"
+2 RT_MANIFEST nvim.manifest
