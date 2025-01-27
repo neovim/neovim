@@ -50,11 +50,11 @@ TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/a
 TREESITTER_QUERY_SHA256 d3a423ab66dc62b2969625e280116678a8a22582b5ff087795222108db2f6a6e
 TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.3.2.tar.gz
 TREESITTER_MARKDOWN_SHA256 5dac48a6d971eb545aab665d59a18180d21963afc781bbf40f9077c06cb82ae5
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.24.7.tar.gz
-TREESITTER_SHA256 7cbc13c974d6abe978cafc9da12d1e79e07e365c42af75e43ec1b5cdc03ed447
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/9515be4fc16d3dfe6fba5ae4a7a058f32bcf535d.tar.gz
+TREESITTER_SHA256 cbdea399736b55d61cfb581bc8d80620d487f4ec8f8d60b7fe00406e39a98d6d
 
-WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v25.0.3.tar.gz
-WASMTIME_SHA256 17850ca356fce6ea8bcd3847692b3233588ddf32ff31fcccac67ad06bcac0a3a
+WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v29.0.1.tar.gz
+WASMTIME_SHA256 b94b6c6fd6aebaf05d4c69c1b12b5dc217b0d42c1a95f435b33af63dddfa5304
 
 UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.80.1.tar.gz
 UNCRUSTIFY_SHA256 0e2616ec2f78e12816388c513f7060072ff7942b42f1175eb28b24cb75aaec48

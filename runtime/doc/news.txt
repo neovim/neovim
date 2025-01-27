@@ -36,6 +36,12 @@ OPTIONS
 • 'jumpoptions' flag "unload" has been renamed to "clean".
 • The `msghistory` option has been removed in favor of 'messagesopt'.
 
+TREESITTER
+
+• *TSNode:child_containing_descendant()* has been removed in the tree-sitter
+  library and is no longer available; use |TSNode:child_with_descendant()|
+  instead.
+
 ==============================================================================
 BREAKING CHANGES                                                *news-breaking*
 
@@ -366,9 +372,8 @@ TREESITTER
 • |treesitter-directive-trim!| can trim all whitespace (not just empty lines)
   from both sides of a node.
 • |vim.treesitter.get_captures_at_pos()| now returns the `id` of each capture
-• New |TSNode:child_with_descendant()|, which is nearly identical to
-  |TSNode:child_containing_descendant()| except that it can return the
-  descendant itself.
+• New |TSNode:child_with_descendant()|, which efficiently gets the node's
+  child that contains a given node as descendant.
 • |LanguageTree:parse()| optionally supports asynchronous invocation, which is
   activated by passing the `on_parse` callback parameter.
 
