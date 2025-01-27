@@ -62,7 +62,7 @@ Integer nvim_create_namespace(String name)
 {
   handle_T id = map_get(String, int)(&namespace_ids, name);
   if (id > 0) {
-    return id;
+    return (Integer)id;
   }
   id = next_namespace_id++;
   if (name.size > 0) {
