@@ -1,3 +1,7 @@
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+  set(CMAKE_SYSTEM_PROCESSOR arm64)
+endif()
+
 set(CPACK_PACKAGE_NAME "Neovim")
 set(CPACK_PACKAGE_VENDOR "neovim.io")
 set(CPACK_PACKAGE_FILE_NAME "nvim")
