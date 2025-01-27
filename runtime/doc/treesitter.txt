@@ -832,7 +832,7 @@ TSNode:range({include_bytes})                                 *TSNode:range()*
     • end byte (if {include_bytes} is `true`)
 
     Parameters: ~
-      • {include_bytes}  (`boolean?`)
+      • {include_bytes}  (`false?`)
 
     Return (multiple): ~
         (`integer`)

@@ -103,18 +103,9 @@ function TSNode:end_() end
 --- - end row
 --- - end column
 --- - end byte (if {include_bytes} is `true`)
---- @param include_bytes boolean?
---- @return integer, integer, integer, integer
-function TSNode:range(include_bytes) end
-
---- @nodoc
 --- @param include_bytes false?
 --- @return integer, integer, integer, integer
-function TSNode:range(include_bytes) end
-
---- @nodoc
---- @param include_bytes true
---- @return integer, integer, integer, integer, integer, integer
+--- @overload fun(self: TSNode, include_bytes: true): integer, integer, integer, integer, integer, integer
 function TSNode:range(include_bytes) end
 
 --- Get the node's type as a string.

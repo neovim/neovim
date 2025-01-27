@@ -53,7 +53,7 @@ for _, match, metadata in query:iter_matches(tree:root(), 0, 0, -1) do
   for id, nodes in pairs(match) do
     local name = query.captures[id]
     local node = nodes[1]
-    local start, _, end_ = node:parent():range() --[[@as integer]]
+    local start, _, end_ = node:parent():range()
 
     if name == 'code' then
       vim.api.nvim_buf_set_extmark(0, run_message_ns, start, 0, {
