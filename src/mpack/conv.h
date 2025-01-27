@@ -14,10 +14,6 @@ typedef mpack_sint32_t mpack_sintmax_t;
 typedef mpack_uint32_t mpack_uintmax_t;
 #endif
 
-#ifndef bool
-# define bool unsigned
-#endif
-
 MPACK_API mpack_token_t mpack_pack_nil(void) FUNUSED FPURE;
 MPACK_API mpack_token_t mpack_pack_boolean(unsigned v) FUNUSED FPURE;
 MPACK_API mpack_token_t mpack_pack_uint(mpack_uintmax_t v) FUNUSED FPURE;
