@@ -48,17 +48,11 @@ glibc 2.31 or newer is required. Or you may try the (unsupported) [builds for ol
      ./squashfs-root/usr/bin/nvim
      ```
 
-> [!NOTE]
-> This appimage is also published as `nvim.appimage` for backward compatibility, but scripts should be updated to use the new name.
-
 #### Tarball
 
 1. Download **nvim-linux-x86_64.tar.gz**
 2. Extract: `tar xzvf nvim-linux-x86_64.tar.gz`
 3. Run `./nvim-linux-x86_64/bin/nvim`
-
-> [!NOTE]
-> This tarball is also published as `nvim-linux64.tar.gz` for backward compatibility, but scripts should be updated to use the new name.
 
 ### Linux (arm64)
 
