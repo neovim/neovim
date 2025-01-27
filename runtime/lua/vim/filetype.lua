@@ -2873,7 +2873,7 @@ function M.match(args)
     name = normalize_path(name)
 
     -- First check for the simple case where the full path exists as a key
-    local path = fn.fnamemodify(name, ':p')
+    local path = normalize_path(fn.fnamemodify(name, ':p'))
     ft, on_detect = dispatch(filename[path], path, bufnr)
     if ft then
       return ft, on_detect
