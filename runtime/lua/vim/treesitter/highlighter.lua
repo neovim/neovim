@@ -160,7 +160,10 @@ function TSHighlighter:destroy()
     vim.bo[self.bufnr].spelloptions = self.orig_spelloptions
     vim.b[self.bufnr].ts_highlight = nil
     if vim.g.syntax_on == 1 then
-      api.nvim_exec_autocmds('FileType', { group = 'syntaxset', buffer = self.bufnr })
+      api.nvim_exec_autocmds(
+        'FileType',
+        { group = 'syntaxset', buffer = self.bufnr, modeline = false }
+      )
     end
   end
 end
