@@ -380,7 +380,7 @@ function M.foldexpr(lnum)
 
   if not foldinfos[bufnr] then
     foldinfos[bufnr] = FoldInfo.new(bufnr)
-    api.nvim_create_autocmd('BufUnload', {
+    api.nvim_create_autocmd({ 'BufUnload', 'VimEnter' }, {
       buffer = bufnr,
       once = true,
       callback = function()
