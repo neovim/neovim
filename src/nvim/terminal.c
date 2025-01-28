@@ -778,6 +778,51 @@ static int terminal_check(VimState *state)
   return 1;
 }
 
+// Handle the InsertCharPre autocommand.
+// "c" is the character that was typed.
+// Return a pointer to allocated memory with the replacement string.
+// Return NULL to continue inserting "c".
+static char *do_insert_char_pre(const handle_T buf_handle, const int c)
+{
+  char char_buf[MB_MAXBYTES + 1];
+  const int save_State = State;
+
+  if (c == Ctrl_RSB) {
+    return NULL;
+  }
+
+  // Return quickly when there is nothing to do.
+  if (!has_event(EVENT_INSERTCHARPRE)) {
+    return NULL;
+  }
+
+  char_buf[utf_char2bytes(c, char_buf)] = NUL;
+
+  // Lock the text to avoid weird things from happening.
+  textlock++;
+  set_vim_var_string(VV_CHAR, char_buf, -1);
+
+  char *res = NULL;
+
+  buf_T *buf = handle_get_buffer(buf_handle);
+  if (buf != NULL && apply_autocmds(EVENT_INSERTCHARPRE, NULL, NULL, false, buf)) {
+    // Get the value of v:char.  It may be empty or more than one
+    // character.  Only use it when changed, otherwise continue with the
+    // original character to avoid breaking autoindent.
+    if (strcmp(char_buf, get_vim_var_str(VV_CHAR)) != 0) {
+      res = xstrdup(get_vim_var_str(VV_CHAR));
+    }
+  }
+
+  set_vim_var_string(VV_CHAR, NULL, -1);
+  textlock--;
+
+  // Restore the State, it may have been changed.
+  State = save_State;
+
+  return res;
+}
+
 /// Processes one char of terminal-mode input.
 static int terminal_execute(VimState *state, int key)
 {
@@ -868,7 +913,31 @@ static int terminal_execute(VimState *state, int key)
     }
 
     s->got_bsl = false;
-    terminal_send_key(s->term, key);
+
+    // Keep track of whether InsertCharPre replaced the key.
+    bool send_original_key = true;
+    if (!p_paste) {
+      char *str = do_insert_char_pre(s->term->buf_handle, key);
+
+      if (str != NULL) {
+        send_original_key = false;
+        if (*str != NUL) {
+          // Insert the new value of v:char literally.
+          for (char *p = str; *p != NUL; MB_PTR_ADV(p)) {
+            const int c = utf_ptr2char(p);
+            terminal_send_key(s->term, c);
+          }
+          AppendToRedobuffLit(str, -1);
+        }
+        xfree(str);
+      }
+    }
+
+    // If the new value is already inserted or an empty string
+    // then don't insert any character.
+    if (send_original_key) {
+      terminal_send_key(s->term, key);
+    }
   }
 
   if (curbuf->terminal == NULL) {

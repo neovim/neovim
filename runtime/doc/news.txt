@@ -363,6 +363,7 @@ TERMINAL
 • The |terminal| has experimental support for the Kitty keyboard protocol
   (sometimes called "CSI u" key encoding). Only the "Disambiguate escape
   codes" mode is currently supported.
+• |InsertCharPre| events are now correctly handled in |Terminal-mode|.
 
 TREESITTER
 
