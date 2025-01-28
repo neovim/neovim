@@ -242,7 +242,7 @@ cmake --build build
 ### How to build without "bundled" dependencies
 
 1. Manually install the dependencies:
-    - libuv libluv libutf8proc luajit lua-lpeg tree-sitter tree-sitter-c tree-sitter-lua tree-sitter-markdown tree-sitter-query tree-sitter-vim tree-sitter-vimdoc unibilium
+    - libuv libluv libutf8proc luajit lua-lpeg tree-sitter tree-sitter-c tree-sitter-lua tree-sitter-markdown tree-sitter-query tree-sitter-vim tree-sitter-vimdoc unibilium.
 2. Run CMake:
    ```sh
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
