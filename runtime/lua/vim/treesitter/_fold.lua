@@ -269,10 +269,15 @@ local function schedule_if_loaded(bufnr, fn)
 end
 
 ---@param bufnr integer
----@param foldinfo TS.FoldInfo
 ---@param tree_changes Range4[]
-local function on_changedtree(bufnr, foldinfo, tree_changes)
+local function on_changedtree(bufnr, tree_changes)
   schedule_if_loaded(bufnr, function()
+    -- Buffer reload clears `foldinfos[bufnr]`, which may still be nil when callback is invoked.
+    local foldinfo = foldinfos[bufnr]
+    if not foldinfo then
+      return
+    end
+
     local srow_upd, erow_upd ---@type integer?, integer?
     local max_erow = api.nvim_buf_line_count(bufnr)
     -- TODO(ribru17): Replace this with a proper .all() awaiter once #19624 is resolved
@@ -303,13 +308,18 @@ local function on_changedtree(bufnr, foldinfo, tree_changes)
 end
 
 ---@param bufnr integer
----@param foldinfo TS.FoldInfo
 ---@param start_row integer
 ---@param old_row integer
 ---@param old_col integer
 ---@param new_row integer
 ---@param new_col integer
-local function on_bytes(bufnr, foldinfo, start_row, start_col, old_row, old_col, new_row, new_col)
+local function on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, new_col)
+  -- Buffer reload clears `foldinfos[bufnr]`, which may still be nil when callback is invoked.
+  local foldinfo = foldinfos[bufnr]
+  if not foldinfo then
+    return
+  end
+
   -- extend the end to fully include the range
   local end_row_old = start_row + old_row + 1
   local end_row_new = start_row + new_row + 1
@@ -348,7 +358,7 @@ local function on_bytes(bufnr, foldinfo, start_row, start_col, old_row, old_col,
     -- is invoked. For example, `J` with non-zero count triggers multiple on_bytes before executing
     -- the scheduled callback. So we accumulate the edited ranges in `on_bytes_range`.
     schedule_if_loaded(bufnr, function()
-      if not foldinfo.on_bytes_range then
+      if not (foldinfo.on_bytes_range and foldinfos[bufnr]) then
         return
       end
       local srow, erow = foldinfo.on_bytes_range[1], foldinfo.on_bytes_range[2]
@@ -387,13 +397,11 @@ function M.foldexpr(lnum)
 
     parser:register_cbs({
       on_changedtree = function(tree_changes)
-        if foldinfos[bufnr] then
-          on_changedtree(bufnr, foldinfos[bufnr], tree_changes)
-        end
+        on_changedtree(bufnr, tree_changes)
       end,
 
       on_bytes = function(_, _, start_row, start_col, _, old_row, old_col, _, new_row, new_col, _)
-        on_bytes(bufnr, foldinfos[bufnr], start_row, start_col, old_row, old_col, new_row, new_col)
+        on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, new_col)
       end,
 
       on_detach = function()
