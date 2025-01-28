@@ -679,6 +679,15 @@ static void init_ccline(int firstc, int indent)
   }
 }
 
+static void ui_ext_cmdline_hide(bool abort)
+{
+  if (ui_has(kUICmdline)) {
+    cmdline_was_last_drawn = false;
+    ccline.redraw_state = kCmdRedrawNone;
+    ui_call_cmdline_hide(ccline.level, abort);
+  }
+}
+
 /// Internal entry point for cmdline mode.
 ///
 /// @param count  only used for incremental search
@@ -954,8 +963,7 @@ theend:
   char *p = ccline.cmdbuff;
 
   if (ui_has(kUICmdline)) {
-    ccline.redraw_state = kCmdRedrawNone;
-    ui_call_cmdline_hide(ccline.level, s->gotesc);
+    ui_ext_cmdline_hide(s->gotesc);
     msg_ext_clear_later();
   }
   if (!cmd_silent) {
@@ -2209,14 +2217,19 @@ end:
   return ccline.one_key ? 0 : command_line_changed(s);
 }
 
-static int command_line_not_changed(CommandLineState *s)
+/// Trigger CursorMovedC autocommands.
+static void may_trigger_cursormovedc(CommandLineState *s)
 {
-  // Trigger CursorMovedC autocommands.
   if (ccline.cmdpos != s->prev_cmdpos) {
     trigger_cmd_autocmd(get_cmdline_type(), EVENT_CURSORMOVEDC);
     s->prev_cmdpos = ccline.cmdpos;
+    ccline.redraw_state = MAX(ccline.redraw_state, kCmdRedrawPos);
   }
+}
 
+static int command_line_not_changed(CommandLineState *s)
+{
+  may_trigger_cursormovedc(s);
   // Incremental searches for "/" and "?":
   // Enter command_line_not_changed() when a character has been read but the
   // command line did not change. Then we only search and redraw if something
@@ -2696,11 +2709,7 @@ static int command_line_changed(CommandLineState *s)
   // Trigger CmdlineChanged autocommands.
   do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
 
-  // Trigger CursorMovedC autocommands.
-  if (ccline.cmdpos != s->prev_cmdpos) {
-    trigger_cmd_autocmd(get_cmdline_type(), EVENT_CURSORMOVEDC);
-    s->prev_cmdpos = ccline.cmdpos;
-  }
+  may_trigger_cursormovedc(s);
 
   const bool prev_cmdpreview = cmdpreview;
   if (s->firstc == ':'
@@ -2741,7 +2750,6 @@ static int command_line_changed(CommandLineState *s)
 static void abandon_cmdline(void)
 {
   dealloc_cmdbuff();
-  ccline.redraw_state = kCmdRedrawNone;
   if (msg_scrolled == 0) {
     compute_cmdrow();
   }
@@ -3385,7 +3393,7 @@ color_cmdline_error:
 // when cmdline_star is true.
 static void draw_cmdline(int start, int len)
 {
-  if (!color_cmdline(&ccline)) {
+  if (ccline.cmdbuff == NULL || !color_cmdline(&ccline)) {
     return;
   }
 
@@ -3491,8 +3499,7 @@ void ui_ext_cmdline_block_leave(void)
   ui_call_cmdline_block_hide();
 }
 
-/// Extra redrawing needed for redraw! and on ui_attach
-/// assumes "redrawcmdline()" will already be invoked
+/// Extra redrawing needed for redraw! and on ui_attach.
 void cmdline_screen_cleared(void)
 {
   if (!ui_has(kUICmdline)) {
@@ -3515,6 +3522,7 @@ void cmdline_screen_cleared(void)
     }
     line = line->prev_ccline;
   }
+  redrawcmd();
 }
 
 /// called by ui_flush, do what redraws necessary to keep cmdline updated.
@@ -3527,12 +3535,14 @@ void cmdline_ui_flush(void)
   CmdlineInfo *line = &ccline;
   while (level > 0 && line) {
     if (line->level == level) {
-      if (line->redraw_state == kCmdRedrawAll) {
+      CmdRedraw redraw_state = line->redraw_state;
+      line->redraw_state = kCmdRedrawNone;
+      if (redraw_state == kCmdRedrawAll) {
+        cmdline_was_last_drawn = true;
         ui_ext_cmdline_show(line);
-      } else if (line->redraw_state == kCmdRedrawPos) {
+      } else if (redraw_state == kCmdRedrawPos && cmdline_was_last_drawn) {
         ui_call_cmdline_pos(line->cmdpos, line->level);
       }
-      line->redraw_state = kCmdRedrawNone;
       level--;
     }
     line = line->prev_ccline;
@@ -3900,12 +3910,7 @@ void compute_cmdrow(void)
 
 void cursorcmd(void)
 {
-  if (cmd_silent) {
-    return;
-  }
-
-  if (ui_has(kUICmdline)) {
-    ccline.redraw_state = MAX(ccline.redraw_state, kCmdRedrawPos);
+  if (cmd_silent || ui_has(kUICmdline)) {
     return;
   }
 
@@ -4507,10 +4512,7 @@ static int open_cmdwin(void)
   curwin->w_cursor.col = ccline.cmdpos;
   changed_line_abv_curs();
   invalidate_botline(curwin);
-  if (ui_has(kUICmdline)) {
-    ccline.redraw_state = kCmdRedrawNone;
-    ui_call_cmdline_hide(ccline.level, false);
-  }
+  ui_ext_cmdline_hide(false);
   redraw_later(curwin, UPD_SOME_VALID);
 
   // No Ex mode here!

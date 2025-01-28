@@ -692,8 +692,11 @@ int update_screen(void)
 
   decor_providers_invoke_end();
 
-  // either cmdline is cleared, not drawn or mode is last drawn
-  cmdline_was_last_drawn = false;
+  // Either cmdline is cleared, not drawn or mode is last drawn.
+  // This does not (necessarily) overwrite an external cmdline.
+  if (!ui_has(kUICmdline)) {
+    cmdline_was_last_drawn = false;
+  }
   return OK;
 }
 
