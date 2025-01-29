@@ -77,16 +77,3 @@ glibc 2.31 or newer is required. Or you may try the (unsupported) [builds for ol
 - Install by [package manager](https://github.com/neovim/neovim/blob/master/INSTALL.md#install-from-package)
 
 ## SHA256 Checksums
-
-```
-${SHA_APPIMAGE_ARM64}
-${SHA_APPIMAGE_ARM64_ZSYNC}
-${SHA_LINUX_ARM64_TAR}
-${SHA_APPIMAGE_X86_64}
-${SHA_APPIMAGE_X86_64_ZSYNC}
-${SHA_LINUX_X86_64_TAR}
-${SHA_MACOS_ARM64}
-${SHA_MACOS_X86_64}
-${SHA_WIN_64_MSI}
-${SHA_WIN_64_ZIP}
-```
