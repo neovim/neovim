@@ -85,6 +85,8 @@ local TSCallbackNames = {
 ---Table of callback queues, keyed by each region for which the callbacks should be run
 ---@field private _cb_queues table<string, fun(err?: string, trees?: table<integer, TSTree>)[]>
 ---@field private _regions table<integer, Range6[]>?
+---The total number of regions. Since _regions can have holes, we cannot simply read this value from #_regions.
+---@field private _num_regions integer
 ---List of regions this tree should manage and parse. If nil then regions are
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
 ---@field private _lang string Language name
@@ -92,7 +94,8 @@ local TSCallbackNames = {
 ---@field private _source (integer|string) Buffer or string to parse
 ---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
----@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
+---@field private _valid_regions table<integer,true> Set of valid region IDs.
+---@field private _is_entirely_valid boolean Whether the entire tree (excluding children) is valid.
 ---@field private _logger? fun(logtype: string, msg: string)
 ---@field private _logfile? file*
 local LanguageTree = {}
@@ -134,7 +137,9 @@ function LanguageTree.new(source, lang, opts)
     _injection_query = injections[lang] and query.parse(lang, injections[lang])
       or query.get(lang, 'injections'),
     _injections_processed = false,
-    _valid = false,
+    _valid_regions = {},
+    _num_regions = 1,
+    _is_entirely_valid = false,
     _parser = vim._create_ts_parser(lang),
     _ranges_being_parsed = {},
     _cb_queues = {},
@@ -240,7 +245,8 @@ end
 --- tree in treesitter. Doesn't clear filesystem cache. Called often, so needs to be fast.
 ---@param reload boolean|nil
 function LanguageTree:invalidate(reload)
-  self._valid = false
+  self._valid_regions = {}
+  self._is_entirely_valid = false
   self._parser:reset()
 
   -- buffer was reloaded, reparse all trees
@@ -273,53 +279,6 @@ function LanguageTree:lang()
   return self._lang
 end
 
---- Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()| reflects the latest
---- state of the source. If invalid, user should call |LanguageTree:parse()|.
----@param exclude_children boolean|nil whether to ignore the validity of children (default `false`)
----@return boolean
-function LanguageTree:is_valid(exclude_children)
-  local valid = self._valid
-
-  if type(valid) == 'table' then
-    for i, _ in pairs(self:included_regions()) do
-      if not valid[i] then
-        return false
-      end
-    end
-  end
-
-  if not exclude_children then
-    if not self._injections_processed then
-      return false
-    end
-
-    for _, child in pairs(self._children) do
-      if not child:is_valid(exclude_children) then
-        return false
-      end
-    end
-  end
-
-  if type(valid) == 'boolean' then
-    return valid
-  end
-
-  self._valid = true
-  return true
-end
-
---- Returns a map of language to child tree.
---- @return table<string,vim.treesitter.LanguageTree>
-function LanguageTree:children()
-  return self._children
-end
-
---- Returns the source content of the language tree (bufnr or string).
---- @return integer|string
-function LanguageTree:source()
-  return self._source
-end
-
 --- @param region Range6[]
 --- @param range? boolean|Range
 --- @return boolean
@@ -345,6 +304,53 @@ local function intercepts_region(region, range)
   return false
 end
 
+--- Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()| reflects the latest
+--- state of the source. If invalid, user should call |LanguageTree:parse()|.
+---@param exclude_children boolean? whether to ignore the validity of children (default `false`)
+---@param range Range? range to check for validity
+---@return boolean
+function LanguageTree:is_valid(exclude_children, range)
+  local valid_regions = self._valid_regions
+
+  if not self._is_entirely_valid then
+    if not range then
+      return false
+    end
+    -- TODO: Efficiently search for possibly intersecting regions using a binary search
+    for i, region in pairs(self:included_regions()) do
+      if not valid_regions[i] and intercepts_region(region, range) then
+        return false
+      end
+    end
+  end
+
+  if not exclude_children then
+    if not self._injections_processed then
+      return false
+    end
+
+    for _, child in pairs(self._children) do
+      if not child:is_valid(exclude_children, range) then
+        return false
+      end
+    end
+  end
+
+  return true
+end
+
+--- Returns a map of language to child tree.
+--- @return table<string,vim.treesitter.LanguageTree>
+function LanguageTree:children()
+  return self._children
+end
+
+--- Returns the source content of the language tree (bufnr or string).
+--- @return integer|string
+function LanguageTree:source()
+  return self._source
+end
+
 --- @private
 --- @param range boolean|Range?
 --- @param thread_state ParserThreadState
@@ -357,15 +363,11 @@ function LanguageTree:_parse_regions(range, thread_state)
   local no_regions_parsed = 0
   local total_parse_time = 0
 
-  if type(self._valid) ~= 'table' then
-    self._valid = {}
-  end
-
   -- If there are no ranges, set to an empty list
   -- so the included ranges in the parser are cleared.
   for i, ranges in pairs(self:included_regions()) do
     if
-      not self._valid[i]
+      not self._valid_regions[i]
       and (
         intercepts_region(ranges, range)
         or (self._trees[i] and intercepts_region(self._trees[i]:included_ranges(false), range))
@@ -392,7 +394,13 @@ function LanguageTree:_parse_regions(range, thread_state)
 
       total_parse_time = total_parse_time + parse_time
       no_regions_parsed = no_regions_parsed + 1
-      self._valid[i] = true
+      self._valid_regions[i] = true
+
+      -- _valid_regions can have holes, but that is okay because this equality is only true when it
+      -- has no holes (meaning all regions are valid)
+      if #self._valid_regions == self._num_regions then
+        self._is_entirely_valid = true
+      end
     end
   end
 
@@ -559,7 +567,7 @@ end
 --- @return table<integer, TSTree> trees
 --- @return boolean finished
 function LanguageTree:_parse(range, thread_state)
-  if self:is_valid() then
+  if self:is_valid(nil, type(range) == 'table' and range or nil) then
     self:_log('valid')
     return self._trees, true
   end
@@ -572,7 +580,7 @@ function LanguageTree:_parse(range, thread_state)
   local total_parse_time = 0
 
   -- At least 1 region is invalid
-  if not self:is_valid(true) then
+  if not self:is_valid(true, type(range) == 'table' and range or nil) then
     ---@type fun(self: vim.treesitter.LanguageTree, range: boolean|Range?, thread_state: ParserThreadState): Range6[], integer, number, boolean
     local parse_regions = coroutine.wrap(self._parse_regions)
     while true do
@@ -715,38 +723,34 @@ end
 ---region is valid or not.
 ---@param fn fun(index: integer, region: Range6[]): boolean
 function LanguageTree:_iter_regions(fn)
-  if not self._valid then
+  if vim.deep_equal(self._valid_regions, {}) then
     return
   end
 
-  local was_valid = type(self._valid) ~= 'table'
-
-  if was_valid then
-    self:_log('was valid', self._valid)
-    self._valid = {}
+  if self._is_entirely_valid then
+    self:_log('was valid')
   end
 
   local all_valid = true
 
   for i, region in pairs(self:included_regions()) do
-    if was_valid or self._valid[i] then
-      self._valid[i] = fn(i, region)
-      if not self._valid[i] then
+    if self._valid_regions[i] then
+      -- Setting this to nil rather than false allows us to determine if all regions were parsed
+      -- just by checking the length of _valid_regions.
+      self._valid_regions[i] = fn(i, region) and true or nil
+      if not self._valid_regions[i] then
         self:_log(function()
           return 'invalidating region', i, region_tostr(region)
         end)
       end
     end
 
-    if not self._valid[i] then
+    if not self._valid_regions[i] then
       all_valid = false
     end
   end
 
-  -- Compress the valid value to 'true' if there are no invalid regions
-  if all_valid then
-    self._valid = all_valid
-  end
+  self._is_entirely_valid = all_valid
 end
 
 --- Sets the included regions that should be parsed by this |LanguageTree|.
@@ -796,6 +800,7 @@ function LanguageTree:set_included_regions(new_regions)
   end
 
   self._regions = new_regions
+  self._num_regions = #new_regions
 end
 
 ---Gets the set of included regions managed by this LanguageTree. This can be different from the
