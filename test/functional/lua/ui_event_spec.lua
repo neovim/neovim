@@ -202,7 +202,7 @@ describe('vim.ui_attach', function()
     feed([[:call confirm("Save changes?", "&Yes\n&No\n&Cancel")<CR>]])
     screen:expect({
       grid = [[
-        ^5                                       |
+        ^4                                       |
         {1:~                                       }|*4
       ]],
       cmdline = {
@@ -224,7 +224,7 @@ describe('vim.ui_attach', function()
     feed('n')
     screen:expect({
       grid = [[
-        ^5                                       |
+        ^4                                       |
         {1:~                                       }|*4
       ]],
       cmdline = { { abort = false } },
