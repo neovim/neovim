@@ -1,12 +1,19 @@
 local t = require('test.unit.testutil')
 local itp = t.gen_itp(it)
 
+local child_call_once = t.child_call_once
 local cimport = t.cimport
 local eq = t.eq
 local ffi = t.ffi
 local to_cstr = t.to_cstr
 
 local strings = cimport('stdlib.h', './src/nvim/strings.h', './src/nvim/memory.h')
+
+local UVARNUM_TYPE
+
+child_call_once(function()
+  UVARNUM_TYPE = ffi.typeof('uvarnumber_T')
+end)
 
 describe('vim_strsave_escaped()', function()
   local vim_strsave_escaped = function(s, chars)
@@ -153,6 +160,9 @@ describe('vim_snprintf()', function()
     end
   end
 
+  local function uv(n)
+    return ffi.cast(UVARNUM_TYPE, n)
+  end
   local function i(n)
     return ffi.cast('int', n)
   end
@@ -187,7 +197,7 @@ describe('vim_snprintf()', function()
       a('  1234567', buf, bsize, '%9ld', l(1234567))
       a('1234567  ', buf, bsize, '%-9ld', l(1234567))
       a('deadbeef', buf, bsize, '%x', u(0xdeadbeef))
-      a('001100', buf, bsize, '%06b', u(12))
+      a('001100', buf, bsize, '%06b', uv(12))
       a('one two', buf, bsize, '%s %s', 'one', 'two')
       a('1.234000', buf, bsize, '%f', 1.234)
       a('1.234000e+00', buf, bsize, '%e', 1.234)
@@ -229,10 +239,10 @@ describe('vim_snprintf()', function()
       a('three one two', buf, bsize, '%3$s %1$s %2$s', 'one', 'two', 'three')
       a('1234567', buf, bsize, '%1$d', i(1234567))
       a('deadbeef', buf, bsize, '%1$x', u(0xdeadbeef))
-      a('001100', buf, bsize, '%2$0*1$b', i(6), u(12))
-      a('001100', buf, bsize, '%1$0.*2$b', u(12), i(6))
+      a('001100', buf, bsize, '%2$0*1$b', i(6), uv(12))
+      a('001100', buf, bsize, '%1$0.*2$b', uv(12), i(6))
       a('one two', buf, bsize, '%1$s %2$s', 'one', 'two')
-      a('001100', buf, bsize, '%06b', u(12))
+      a('001100', buf, bsize, '%06b', uv(12))
       a('two one', buf, bsize, '%2$s %1$s', 'one', 'two')
       a('1.234000', buf, bsize, '%1$f', 1.234)
       a('1.234000e+00', buf, bsize, '%1$e', 1.234)
