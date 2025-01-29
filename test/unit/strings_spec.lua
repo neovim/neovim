@@ -140,7 +140,13 @@ end)
 
 describe('vim_snprintf()', function()
   local function a(expected, buf, bsize, fmt, ...)
-    eq(#expected, strings.vim_snprintf(buf, bsize, fmt, ...))
+    local args = { ... }
+    local ctx = string.format('snprintf(buf, %d, "%s"', bsize, fmt)
+    for _, x in ipairs(args) do
+      ctx = ctx .. ', ' .. tostring(x)
+    end
+    ctx = ctx .. string.format(') = %s', expected)
+    eq(#expected, strings.vim_snprintf(buf, bsize, fmt, ...), ctx)
     if bsize > 0 then
       local actual = ffi.string(buf, math.min(#expected + 1, bsize))
       eq(expected:sub(1, bsize - 1) .. '\0', actual)
