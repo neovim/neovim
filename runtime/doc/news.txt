@@ -376,6 +376,8 @@ TREESITTER
   child that contains a given node as descendant.
 • |LanguageTree:parse()| optionally supports asynchronous invocation, which is
   activated by passing the `on_parse` callback parameter.
+• |vim.treesitter.query.set()| can now inherit and/or extend runtime file
+  queries in addition to overriding.
 
 TUI
 

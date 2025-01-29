@@ -1349,7 +1349,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       `info.captures`).
     • `info.patterns`: information about predicates.
 
-    Example (to try it, use `g==` or select the code then run `:'<,'>lua`): >lua
+    Example: >lua
         local query = vim.treesitter.query.parse('vimdoc', [[
           ; query
           ((h1) @str
@@ -1466,8 +1466,18 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
 set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
     Sets the runtime query named {query_name} for {lang}
 
-    This allows users to override any runtime files and/or configuration set
-    by plugins.
+    This allows users to override or extend any runtime files and/or
+    configuration set by plugins.
+
+    For example, you could enable spellchecking of `C` identifiers with the
+    following code: >lua
+        vim.treesitter.query.set(
+          'c',
+          'highlights',
+          [[;inherits c
+          (identifier) @spell]])
+        ]])
+<
 
     Parameters: ~
       • {lang}        (`string`) Language to use for the query

@@ -5,6 +5,9 @@ local api = vim.api
 local language = require('vim.treesitter.language')
 local memoize = vim.func._memoize
 
+local MODELINE_FORMAT = '^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$'
+local EXTENDS_FORMAT = '^;+%s*extends%s*$'
+
 local M = {}
 
 local function is_directive(name)
@@ -167,9 +170,6 @@ function M.get_files(lang, query_name, is_included)
   -- ;+ inherits: ({language},)*{language}
   --
   -- {language} ::= {lang} | ({lang})
-  local MODELINE_FORMAT = '^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$'
-  local EXTENDS_FORMAT = '^;+%s*extends%s*$'
-
   for _, filename in ipairs(lang_files) do
     local file, err = io.open(filename, 'r')
     if not file then
@@ -242,8 +242,8 @@ local function read_query_files(filenames)
   return table.concat(contents, '')
 end
 
--- The explicitly set queries from |vim.treesitter.query.set()|
----@type table<string,table<string,vim.treesitter.Query>>
+-- The explicitly set query strings from |vim.treesitter.query.set()|
+---@type table<string,table<string,string>>
 local explicit_queries = setmetatable({}, {
   __index = function(t, k)
     local lang_queries = {}
@@ -255,8 +255,19 @@ local explicit_queries = setmetatable({}, {
 
 --- Sets the runtime query named {query_name} for {lang}
 ---
---- This allows users to override any runtime files and/or configuration
+--- This allows users to override or extend any runtime files and/or configuration
 --- set by plugins.
+---
+--- For example, you could enable spellchecking of `C` identifiers with the
+--- following code:
+--- ```lua
+--- vim.treesitter.query.set(
+---   'c',
+---   'highlights',
+---   [[;inherits c
+---   (identifier) @spell]])
+--- ]])
+--- ```
 ---
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g., "highlights")
@@ -264,7 +275,7 @@ local explicit_queries = setmetatable({}, {
 function M.set(lang, query_name, text)
   --- @diagnostic disable-next-line: undefined-field LuaLS bad at generics
   M.get:clear(lang, query_name)
-  explicit_queries[lang][query_name] = M.parse(lang, text)
+  explicit_queries[lang][query_name] = text
 end
 
 --- Returns the runtime query {query_name} for {lang}.
@@ -274,12 +285,43 @@ end
 ---
 ---@return vim.treesitter.Query? : Parsed query. `nil` if no query files are found.
 M.get = memoize('concat-2', function(lang, query_name)
-  if explicit_queries[lang][query_name] then
-    return explicit_queries[lang][query_name]
-  end
+  local query_string ---@type string
 
-  local query_files = M.get_files(lang, query_name)
-  local query_string = read_query_files(query_files)
+  if explicit_queries[lang][query_name] then
+    local query_files = {}
+    local base_langs = {} ---@type string[]
+
+    for line in explicit_queries[lang][query_name]:gmatch('([^\n]*)\n?') do
+      if not vim.startswith(line, ';') then
+        break
+      end
+
+      local lang_list = line:match(MODELINE_FORMAT)
+      if lang_list then
+        for _, incl_lang in ipairs(vim.split(lang_list, ',')) do
+          local is_optional = incl_lang:match('%(.*%)')
+
+          if is_optional then
+            add_included_lang(base_langs, lang, incl_lang:sub(2, #incl_lang - 1))
+          else
+            add_included_lang(base_langs, lang, incl_lang)
+          end
+        end
+      elseif line:match(EXTENDS_FORMAT) then
+        table.insert(base_langs, lang)
+      end
+    end
+
+    for _, base_lang in ipairs(base_langs) do
+      local base_files = M.get_files(base_lang, query_name, true)
+      vim.list_extend(query_files, base_files)
+    end
+
+    query_string = read_query_files(query_files) .. explicit_queries[lang][query_name]
+  else
+    local query_files = M.get_files(lang, query_name)
+    query_string = read_query_files(query_files)
+  end
 
   if #query_string == 0 then
     return nil
@@ -303,7 +345,7 @@ api.nvim_create_autocmd('OptionSet', {
 ---   - `captures`: a list of unique capture names defined in the query (alias: `info.captures`).
 ---   - `info.patterns`: information about predicates.
 ---
---- Example (to try it, use `g==` or select the code then run `:'<,'>lua`):
+--- Example:
 --- ```lua
 --- local query = vim.treesitter.query.parse('vimdoc', [[
 ---   ; query
