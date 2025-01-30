@@ -7356,7 +7356,7 @@ const char *check_colorcolumn(char *cc, win_T *wp)
     return NULL;      // buffer was closed
   }
 
-  char *s = empty_string_option;
+  char *s = STATIC_CSTR_AS_REF_STRING("");
   if (cc != NULL) {
     s = cc;
   } else if (wp != NULL) {

@@ -784,7 +784,7 @@ bool briopt_check(char *briopt, win_T *wp)
   int bri_list = 0;
   int bri_vcol = 0;
 
-  char *p = empty_string_option;
+  char *p = STATIC_CSTR_AS_REF_STRING("");
   if (briopt != NULL) {
     p = briopt;
   } else if (wp != NULL) {
