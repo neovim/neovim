@@ -504,6 +504,15 @@ end]]
     eq({ 0, 0, 0, 13 }, ret)
   end)
 
+  it('can run async parses with string parsers', function()
+    local ret = exec_lua(function()
+      local parser = vim.treesitter.get_string_parser('int foo = 42;', 'c')
+      return { parser:parse(nil, function() end)[1]:root():range() }
+    end)
+
+    eq({ 0, 0, 0, 13 }, ret)
+  end)
+
   it('allows to run queries with string parsers', function()
     local txt = [[
       int foo = 42;

@@ -476,21 +476,26 @@ function LanguageTree:_async_parse(range, on_parse)
   end
 
   local source = self._source
-  local buf = vim.b[source]
-  local ct = buf.changedtick
+  local is_buffer_parser = type(source) == 'number'
+  local buf = is_buffer_parser and vim.b[source] or nil
+  local ct = is_buffer_parser and buf.changedtick or nil
   local total_parse_time = 0
   local redrawtime = vim.o.redrawtime
   local timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ms or nil
 
   local function step()
-    if type(source) == 'number' and not vim.api.nvim_buf_is_valid(source) then
-      return nil
-    end
+    if is_buffer_parser then
+      if
+        not vim.api.nvim_buf_is_valid(source --[[@as number]])
+      then
+        return nil
+      end
 
-    -- If buffer was changed in the middle of parsing, reset parse state
-    if buf.changedtick ~= ct then
-      ct = buf.changedtick
-      total_parse_time = 0
+      -- If buffer was changed in the middle of parsing, reset parse state
+      if buf.changedtick ~= ct then
+        ct = buf.changedtick
+        total_parse_time = 0
+      end
     end
 
     local parse_time, trees, finished = tcall(self._parse, self, range, timeout)
