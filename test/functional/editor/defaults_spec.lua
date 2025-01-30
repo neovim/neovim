@@ -167,7 +167,7 @@ describe('default', function()
     end)
 
     describe('unimpaired-style mappings', function()
-      it('show the command ouptut when successful', function()
+      it('show the command output when successful', function()
         n.clear({ args_rm = { '--cmd' } })
         local screen = Screen.new(40, 8)
         n.fn.setqflist({
