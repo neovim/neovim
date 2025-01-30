@@ -1494,6 +1494,7 @@ local options = {
         'noselect',
         'fuzzy',
         'nosort',
+        'preinsert',
       },
       flags = true,
       deny_duplicates = true,
@@ -1542,6 +1543,12 @@ local options = {
            nosort   Disable sorting of completion candidates based on fuzzy
         	    scores when "fuzzy" is enabled. Candidates will appear
         	    in their original order.
+
+           preinsert
+        	    Preinsert the portion of the first candidate word that is
+        	    not part of the current completion leader and using the
+        	    |hl-ComplMatchIns| highlight group. Does not work when
+        	    "fuzzy" is also included.
       ]=],
       full_name = 'completeopt',
       list = 'onecomma',

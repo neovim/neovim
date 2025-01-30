@@ -2964,4 +2964,121 @@ func Test_complete_info_completed()
   set cot&
 endfunc
 
+function Test_completeopt_preinsert()
+  func Omni_test(findstart, base)
+    if a:findstart
+      return col(".")
+    endif
+    return [#{word: "fobar"}, #{word: "foobar"}, #{word: "你的"}, #{word: "你好世界"}]
+  endfunc
+  set omnifunc=Omni_test
+  set completeopt=menu,menuone,preinsert
+
+  new
+  call feedkeys("S\<C-X>\<C-O>f", 'tx')
+  call assert_equal("fobar", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  call feedkeys("S\<C-X>\<C-O>foo", 'tx')
+  call assert_equal("foobar", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  call feedkeys("S\<C-X>\<C-O>foo\<BS>\<BS>\<BS>", 'tx')
+  call assert_equal("", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  " delete a character and input new leader
+  call feedkeys("S\<C-X>\<C-O>foo\<BS>b", 'tx')
+  call assert_equal("fobar", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  " delete preinsert when prepare completion
+  call feedkeys("S\<C-X>\<C-O>f\<Space>", 'tx')
+  call assert_equal("f ", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  call feedkeys("S\<C-X>\<C-O>你", 'tx')
+  call assert_equal("你的", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  call feedkeys("S\<C-X>\<C-O>你好", 'tx')
+  call assert_equal("你好世界", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>f", 'tx')
+  call assert_equal("hello  fobar wo", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>f\<BS>", 'tx')
+  call assert_equal("hello   wo", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>foo", 'tx')
+  call assert_equal("hello  foobar wo", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>foo\<BS>b", 'tx')
+  call assert_equal("hello  fobar wo", getline('.'))
+  call feedkeys("\<C-E>\<ESC>", 'tx')
+
+  " confrim
+  call feedkeys("S\<C-X>\<C-O>f\<C-Y>", 'tx')
+  call assert_equal("fobar", getline('.'))
+  call assert_equal(5, col('.'))
+
+  " cancel
+  call feedkeys("S\<C-X>\<C-O>fo\<C-E>", 'tx')
+  call assert_equal("fo", getline('.'))
+  call assert_equal(2, col('.'))
+
+  call feedkeys("S hello hero\<CR>h\<C-X>\<C-N>", 'tx')
+  call assert_equal("hello", getline('.'))
+  call assert_equal(1, col('.'))
+
+  call feedkeys("Sh\<C-X>\<C-N>\<C-Y>", 'tx')
+  call assert_equal("hello", getline('.'))
+  call assert_equal(5, col('.'))
+
+  " delete preinsert part
+  call feedkeys("S\<C-X>\<C-O>fo ", 'tx')
+  call assert_equal("fo ", getline('.'))
+  call assert_equal(3, col('.'))
+
+  " whole line
+  call feedkeys("Shello hero\<CR>\<C-X>\<C-L>", 'tx')
+  call assert_equal("hello hero", getline('.'))
+  call assert_equal(1, col('.'))
+
+  call feedkeys("Shello hero\<CR>he\<C-X>\<C-L>", 'tx')
+  call assert_equal("hello hero", getline('.'))
+  call assert_equal(2, col('.'))
+
+  " can not work with fuzzy
+  set cot+=fuzzy
+  call feedkeys("S\<C-X>\<C-O>", 'tx')
+  call assert_equal("fobar", getline('.'))
+  call assert_equal(5, col('.'))
+
+  " test for fuzzy and noinsert
+  set cot+=noinsert
+  call feedkeys("S\<C-X>\<C-O>fb", 'tx')
+  call assert_equal("fb", getline('.'))
+  call assert_equal(2, col('.'))
+
+  call feedkeys("S\<C-X>\<C-O>你", 'tx')
+  call assert_equal("你", getline('.'))
+  call assert_equal(1, col('.'))
+
+  call feedkeys("S\<C-X>\<C-O>fb\<C-Y>", 'tx')
+  call assert_equal("fobar", getline('.'))
+  call assert_equal(5, col('.'))
+
+  bw!
+  bw!
+  set cot&
+  set omnifunc&
+  delfunc Omni_test
+  autocmd! CompleteChanged
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

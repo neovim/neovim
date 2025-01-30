@@ -1102,6 +1102,12 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    scores when "fuzzy" is enabled. Candidates will appear
 --- 	    in their original order.
 ---
+---    preinsert
+--- 	    Preinsert the portion of the first candidate word that is
+--- 	    not part of the current completion leader and using the
+--- 	    `hl-ComplMatchIns` highlight group. Does not work when
+--- 	    "fuzzy" is also included.
+---
 --- @type string
 vim.o.completeopt = "menu,preview"
 vim.o.cot = vim.o.completeopt

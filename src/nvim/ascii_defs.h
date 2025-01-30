@@ -103,6 +103,15 @@ static inline bool ascii_iswhite_or_nul(int c)
   return ascii_iswhite(c) || c == NUL;
 }
 
+/// Checks if `c` is a space or tab or newline character or NUL.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_iswhite_nl_or_nul(int c)
+  FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE
+{
+  return ascii_iswhite(c) || c == '\n' || c == NUL;
+}
+
 /// Check whether character is a decimal digit.
 ///
 /// Library isdigit() function is officially locale-dependent and, for
