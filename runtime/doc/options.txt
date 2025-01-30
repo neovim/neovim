@@ -1575,6 +1575,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    scores when "fuzzy" is enabled. Candidates will appear
 		    in their original order.
 
+	   preinsert
+		    Preinsert the portion of the first candidate word that is
+		    not part of the current completion leader and using the
+		    |hl-ComplMatchIns| highlight group. Does not work when
+		    "fuzzy" is also included.
+
 						*'completeslash'* *'csl'*
 'completeslash' 'csl'	string	(default "")
 			local to buffer

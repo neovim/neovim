@@ -1781,12 +1781,33 @@ int ins_compl_len(void)
   return compl_length;
 }
 
+/// Return true when preinsert is set otherwise FALSE.
+static bool ins_compl_has_preinsert(void)
+{
+  return (get_cot_flags() & (kOptCotFlagFuzzy|kOptCotFlagPreinsert)) == kOptCotFlagPreinsert;
+}
+
+/// Returns true if the pre-insert effect is valid and the cursor is within
+/// the `compl_ins_end_col` range.
+bool ins_compl_preinsert_effect(void)
+{
+  if (!ins_compl_has_preinsert()) {
+    return false;
+  }
+
+  return curwin->w_cursor.col < compl_ins_end_col;
+}
+
 /// Delete one character before the cursor and show the subset of the matches
 /// that match the word that is now before the cursor.
 /// Returns the character to be used, NUL if the work is done and another char
 /// to be got from the user.
 int ins_compl_bs(void)
 {
+  if (ins_compl_preinsert_effect()) {
+    ins_compl_delete(false);
+  }
+
   char *line = get_cursor_line_ptr();
   char *p = line + curwin->w_cursor.col;
   MB_PTR_BACK(line, p);
@@ -1872,8 +1893,13 @@ static void ins_compl_new_leader(void)
   ins_compl_show_pum();
 
   // Don't let Enter select the original text when there is no popup menu.
+  if (compl_match_array == NULL) {
+    compl_enter_selects = false;
+  } else if (ins_compl_has_preinsert() && compl_leader.size > 0) {
+    ins_compl_insert(false, true);
+  }
   // Don't let Enter select when use user function and refresh_always is set
-  if (compl_match_array == NULL || ins_compl_refresh_always()) {
+  if (ins_compl_refresh_always()) {
     compl_enter_selects = false;
   }
 }
@@ -1895,6 +1921,10 @@ static int get_compl_len(void)
 void ins_compl_addleader(int c)
 {
   int cc;
+
+  if (ins_compl_preinsert_effect()) {
+    ins_compl_delete(false);
+  }
 
   if (stop_arrow() == FAIL) {
     return;
@@ -3696,6 +3726,12 @@ void ins_compl_delete(bool new_leader)
   // In insert mode: Delete the typed part.
   // In replace mode: Put the old characters back, if any.
   int col = compl_col + (compl_status_adding() ? compl_length : orig_col);
+  bool has_preinsert = ins_compl_preinsert_effect();
+  if (has_preinsert) {
+    col = compl_col + (int)ins_compl_leader_len() - compl_length;
+    curwin->w_cursor.col = compl_ins_end_col;
+  }
+
   if ((int)curwin->w_cursor.col > col) {
     if (stop_arrow() == FAIL) {
       return;
@@ -3713,15 +3749,24 @@ void ins_compl_delete(bool new_leader)
 
 /// Insert the new text being completed.
 /// "in_compl_func" is true when called from complete_check().
-void ins_compl_insert(bool in_compl_func)
+/// "move_cursor" is used when 'completeopt' includes "preinsert" and when true
+/// cursor needs to move back from the inserted text to the compl_leader.
+void ins_compl_insert(bool in_compl_func, bool move_cursor)
 {
   int compl_len = get_compl_len();
+  bool preinsert = ins_compl_has_preinsert();
+  char *str = compl_shown_match->cp_str.data;
+  size_t leader_len = ins_compl_leader_len();
+
   // Make sure we don't go over the end of the string, this can happen with
   // illegal bytes.
   if (compl_len < (int)compl_shown_match->cp_str.size) {
-    ins_compl_insert_bytes(compl_shown_match->cp_str.data + compl_len, -1);
+    ins_compl_insert_bytes(str + compl_len, -1);
+    if (preinsert && move_cursor) {
+      curwin->w_cursor.col -= (colnr_T)(strlen(str) - leader_len);
+    }
   }
-  compl_used_match = !match_at_original_text(compl_shown_match);
+  compl_used_match = !(match_at_original_text(compl_shown_match) || preinsert);
 
   dict_T *dict = ins_compl_dict_alloc(compl_shown_match);
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
@@ -3923,6 +3968,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   unsigned cur_cot_flags = get_cot_flags();
   bool compl_no_insert = (cur_cot_flags & kOptCotFlagNoinsert) != 0;
   bool compl_fuzzy_match = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
+  bool compl_preinsert = ins_compl_has_preinsert();
 
   // When user complete function return -1 for findstart which is next
   // time of 'always', compl_shown_match become NULL.
@@ -3967,13 +4013,13 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   }
 
   // Insert the text of the new completion, or the compl_leader.
-  if (compl_no_insert && !started) {
+  if (compl_no_insert && !started && !compl_preinsert) {
     ins_compl_insert_bytes(compl_orig_text.data + get_compl_len(), -1);
     compl_used_match = false;
     restore_orig_extmarks();
   } else if (insert_match) {
     if (!compl_get_longest || compl_used_match) {
-      ins_compl_insert(in_compl_func);
+      ins_compl_insert(in_compl_func, true);
     } else {
       assert(compl_leader.data != NULL);
       ins_compl_insert_bytes(compl_leader.data + get_compl_len(), -1);

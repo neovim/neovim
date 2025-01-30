@@ -188,6 +188,7 @@ information.
   vim_strcat strncat                                     xstrlcat
   VIM_ISWHITE                                          ascii_iswhite
   IS_WHITE_OR_NUL                                  ascii_iswhite_or_nul
+  IS_WHITE_NL_OR_NUL                              ascii_iswhite_nl_or_nul
   vim_isalpha                                           mb_isalpha
   vim_isNormalIDc                                      ascii_isident
   vim_islower vim_isupper                          mb_islower mb_isupper
