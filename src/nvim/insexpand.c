@@ -3755,15 +3755,16 @@ void ins_compl_insert(bool in_compl_func, bool move_cursor)
 {
   int compl_len = get_compl_len();
   bool preinsert = ins_compl_has_preinsert();
-  char *str = compl_shown_match->cp_str.data;
+  char *cp_str = compl_shown_match->cp_str.data;
+  size_t cp_str_len = compl_shown_match->cp_str.size;
   size_t leader_len = ins_compl_leader_len();
 
   // Make sure we don't go over the end of the string, this can happen with
   // illegal bytes.
-  if (compl_len < (int)compl_shown_match->cp_str.size) {
-    ins_compl_insert_bytes(str + compl_len, -1);
+  if (compl_len < (int)cp_str_len) {
+    ins_compl_insert_bytes(cp_str + compl_len, -1);
     if (preinsert && move_cursor) {
-      curwin->w_cursor.col -= (colnr_T)(strlen(str) - leader_len);
+      curwin->w_cursor.col -= (colnr_T)(cp_str_len - leader_len);
     }
   }
   compl_used_match = !(match_at_original_text(compl_shown_match) || preinsert);
