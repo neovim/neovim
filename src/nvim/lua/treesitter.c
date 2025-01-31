@@ -500,7 +500,8 @@ static int parser_parse(lua_State *L)
   // The new tree will be pushed to the stack, without copy, ownership is now to the lua GC.
   // Old tree is owned by lua GC since before
   uint32_t n_ranges = 0;
-  TSRange *changed = old_tree ? ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges) : NULL;
+  TSRange *changed = old_tree ? ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges)
+                              : ts_tree_included_ranges(new_tree, &n_ranges);
 
   push_tree(L, new_tree);  // [tree]
 
