@@ -3469,7 +3469,8 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
     int len;
     char *ptr = ins_compl_get_next_word_or_line(st->ins_buf, st->cur_match_pos,
                                                 &len, &cont_s_ipos);
-    if (ptr == NULL) {
+    if (ptr == NULL
+        || (ins_compl_has_preinsert() && strcmp(ptr, compl_pattern.data) == 0)) {
       continue;
     }
     if (ins_compl_add_infercase(ptr, len, p_ic,
@@ -3728,7 +3729,7 @@ void ins_compl_delete(bool new_leader)
   int col = compl_col + (compl_status_adding() ? compl_length : orig_col);
   bool has_preinsert = ins_compl_preinsert_effect();
   if (has_preinsert) {
-    col = compl_col + (int)ins_compl_leader_len() - compl_length;
+    col += (int)ins_compl_leader_len();
     curwin->w_cursor.col = compl_ins_end_col;
   }
 
