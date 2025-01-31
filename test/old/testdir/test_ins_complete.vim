@@ -3051,6 +3051,10 @@ function Test_completeopt_preinsert()
   call assert_equal("hello hero", getline('.'))
   call assert_equal(2, col('.'))
 
+  call feedkeys("Shello hero\<CR>h\<C-X>\<C-N>er", 'tx')
+  call assert_equal("hero", getline('.'))
+  call assert_equal(3, col('.'))
+
   " can not work with fuzzy
   set cot+=fuzzy
   call feedkeys("S\<C-X>\<C-O>", 'tx')
