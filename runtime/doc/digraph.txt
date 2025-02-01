@@ -119,8 +119,8 @@ see them.
 
 On most systems Vim uses the same digraphs.  They work for the Unicode and
 ISO-8859-1 character sets.  These default digraphs are taken from the RFC1345
-mnemonics.  To make it easy to remember the mnemonic, the second character has
-a standard meaning:
+mnemonics (with some additions).  To make it easy to remember the mnemonic,
+the second character has a standard meaning:
 
 	char name		char	meaning ~
 	Exclamation mark	!	Grave
@@ -1064,6 +1064,7 @@ the 1', 2' and 3' digraphs.
   ≅	?=	2245	8773	APPROXIMATELY EQUAL TO
   ≈	?2	2248	8776	ALMOST EQUAL TO
   ≌	=?	224C	8780	ALL EQUAL TO
+  ≐	.=	2250	8784	APPROACHES THE LIMIT
   ≓	HI	2253	8787	IMAGE OF OR APPROXIMATELY EQUAL TO
   ≠	!=	2260	8800	NOT EQUAL TO
   ≡	=3	2261	8801	IDENTICAL TO

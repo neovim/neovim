@@ -40,6 +40,9 @@ func Test_digraphs()
   " Quadruple prime
   call Put_Dig("'4")
   call assert_equal("⁗", getline('.'))
+  " APPROACHES THE LIMIT
+  call Put_Dig(".=")
+  call assert_equal("≐", getline('.'))
   " Not a digraph
   call Put_Dig("a\<bs>")
   call Put_Dig("\<bs>a")
