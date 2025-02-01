@@ -107,7 +107,6 @@ typedef int (*ex_preview_func_T)(exarg_T *eap, int cmdpreview_ns, handle_T cmdpr
 // However, that would probably have some performance cost (probably
 // very marginal, but still some cost either way).
 typedef enum {
-  CALLABLE_NONE,
   CALLABLE_EX,
   CALLABLE_CB,
 } AucmdExecutableType;
@@ -121,7 +120,7 @@ struct aucmd_executable_t {
   } callable;
 };
 
-#define AUCMD_EXECUTABLE_INIT { .type = CALLABLE_NONE }
+#define AUCMD_EXECUTABLE_INIT { .type = CALLABLE_EX }
 
 typedef char *(*LineGetter)(int, void *, int, bool);
 

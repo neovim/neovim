@@ -2135,9 +2135,6 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
     retval = xcalloc(1, 1);
     break;
   }
-  case CALLABLE_NONE:
-  default:
-    abort();
   }
 
   // Remove one-shot ("once") autocmd in anticipation of its execution.
@@ -2469,11 +2466,9 @@ char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
     return xstrdup(acc.callable.cmd);
   case CALLABLE_CB:
     return callback_to_string(&acc.callable.cb, NULL);
-  case CALLABLE_NONE:
-    return "This is not possible";
+  default:
+    abort();
   }
-
-  abort();
 }
 
 void aucmd_exec_free(AucmdExecutable *acc)
@@ -2485,11 +2480,7 @@ void aucmd_exec_free(AucmdExecutable *acc)
   case CALLABLE_CB:
     callback_free(&acc->callable.cb);
     break;
-  case CALLABLE_NONE:
-    return;
   }
-
-  acc->type = CALLABLE_NONE;
 }
 
 AucmdExecutable aucmd_exec_copy(AucmdExecutable src)
@@ -2504,8 +2495,6 @@ AucmdExecutable aucmd_exec_copy(AucmdExecutable src)
   case CALLABLE_CB:
     dest.type = CALLABLE_CB;
     callback_copy(&dest.callable.cb, &src.callable.cb);
-    return dest;
-  case CALLABLE_NONE:
     return dest;
   }
 
