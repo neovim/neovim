@@ -3672,12 +3672,11 @@ bool do_return(exarg_T *eap, bool reanimate, bool is_cmd, void *rettv)
 char *get_return_cmd(void *rettv)
 {
   char *s = NULL;
+  char *tofree = NULL;
   size_t slen = 0;
 
   if (rettv != NULL) {
-    char *tofree = NULL;
     tofree = s = encode_tv2echo((typval_T *)rettv, NULL);
-    xfree(tofree);
   }
   if (s == NULL) {
     s = "";
@@ -3688,10 +3687,11 @@ char *get_return_cmd(void *rettv)
   xstrlcpy(IObuff, ":return ", IOSIZE);
   xstrlcpy(IObuff + 8, s, IOSIZE - 8);
   size_t IObufflen = 8 + slen;
-  if (slen + 8 >= IOSIZE) {
+  if (IObufflen >= IOSIZE) {
     STRCPY(IObuff + IOSIZE - 4, "...");
-    IObufflen += 3;
+    IObufflen = IOSIZE - 1;
   }
+  xfree(tofree);
   return xstrnsave(IObuff, IObufflen);
 }
 

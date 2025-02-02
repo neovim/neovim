@@ -910,4 +910,36 @@ func Test_func_curly_brace_invalid_name()
   delfunc Fail
 endfunc
 
+func Test_func_return_in_try_verbose()
+  func TryReturnList()
+    try
+      return [1, 2, 3]
+    endtry
+  endfunc
+  func TryReturnNumber()
+    try
+      return 123
+    endtry
+  endfunc
+  func TryReturnOverlongString()
+    try
+      return repeat('a', 9999)
+    endtry
+  endfunc
+
+  " This should not cause heap-use-after-free
+  call assert_match('\n:return \[1, 2, 3\] made pending\n',
+                  \ execute('14verbose call TryReturnList()'))
+  " This should not cause stack-use-after-scope
+  call assert_match('\n:return 123 made pending\n',
+                  \ execute('14verbose call TryReturnNumber()'))
+  " An overlong string is truncated
+  call assert_match('\n:return a\{100,}\.\.\.',
+                  \ execute('14verbose call TryReturnOverlongString()'))
+
+  delfunc TryReturnList
+  delfunc TryReturnNumber
+  delfunc TryReturnOverlongString
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
