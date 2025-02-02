@@ -104,6 +104,48 @@ hashtab_T *func_tbl_get(void)
   return &func_hashtab;
 }
 
+/// Get one function argument.
+/// Return a pointer to after the type.
+/// When something is wrong return "arg".
+static char *one_function_arg(char *arg, garray_T *newargs, bool skip)
+{
+  char *p = arg;
+
+  while (ASCII_ISALNUM(*p) || *p == '_') {
+    p++;
+  }
+  if (arg == p || isdigit((uint8_t)(*arg))
+      || (p - arg == 9 && strncmp(arg, "firstline", 9) == 0)
+      || (p - arg == 8 && strncmp(arg, "lastline", 8) == 0)) {
+    if (!skip) {
+      semsg(_("E125: Illegal argument: %s"), arg);
+    }
+    return arg;
+  }
+
+  if (newargs != NULL) {
+    ga_grow(newargs, 1);
+    uint8_t c = (uint8_t)(*p);
+    *p = NUL;
+    char *arg_copy = xstrdup(arg);
+
+    // Check for duplicate argument name.
+    for (int i = 0; i < newargs->ga_len; i++) {
+      if (strcmp(((char **)(newargs->ga_data))[i], arg_copy) == 0) {
+        semsg(_("E853: Duplicate argument name: %s"), arg_copy);
+        xfree(arg_copy);
+        return arg;
+      }
+    }
+    ((char **)(newargs->ga_data))[newargs->ga_len] = arg_copy;
+    newargs->ga_len++;
+
+    *p = (char)c;
+  }
+
+  return p;
+}
+
 /// Get function arguments.
 static int get_function_args(char **argp, char endchar, garray_T *newargs, int *varargs,
                              garray_T *default_args, bool skip)
@@ -134,36 +176,11 @@ static int get_function_args(char **argp, char endchar, garray_T *newargs, int *
       mustend = true;
     } else {
       arg = p;
-      while (ASCII_ISALNUM(*p) || *p == '_') {
-        p++;
-      }
-      if (arg == p || isdigit((uint8_t)(*arg))
-          || (p - arg == 9 && strncmp(arg, "firstline", 9) == 0)
-          || (p - arg == 8 && strncmp(arg, "lastline", 8) == 0)) {
-        if (!skip) {
-          semsg(_("E125: Illegal argument: %s"), arg);
-        }
+      p = one_function_arg(p, newargs, skip);
+      if (p == arg) {
         break;
       }
-      if (newargs != NULL) {
-        ga_grow(newargs, 1);
-        uint8_t c = (uint8_t)(*p);
-        *p = NUL;
-        arg = xstrdup(arg);
 
-        // Check for duplicate argument name.
-        for (int i = 0; i < newargs->ga_len; i++) {
-          if (strcmp(((char **)(newargs->ga_data))[i], arg) == 0) {
-            semsg(_("E853: Duplicate argument name: %s"), arg);
-            xfree(arg);
-            goto err_ret;
-          }
-        }
-        ((char **)(newargs->ga_data))[newargs->ga_len] = arg;
-        newargs->ga_len++;
-
-        *p = (char)c;
-      }
       if (*skipwhite(p) == '=' && default_args != NULL) {
         typval_T rettv;
 
@@ -2186,8 +2203,6 @@ char *save_function_name(char **name, bool skip, int flags, funcdict_T *fudi)
   return saved;
 }
 
-#define MAX_FUNC_NESTING 50
-
 /// List functions.
 ///
 /// @param regmatch  When NULL, all of them.
@@ -2218,12 +2233,280 @@ static void list_functions(regmatch_T *regmatch)
   }
 }
 
+#define MAX_FUNC_NESTING 50
+
+/// Read the body of a function, put every line in "newlines".
+/// This stops at "endfunction".
+/// "newlines" must already have been initialized.
+static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in,
+                             char **line_to_free, bool show_block)
+{
+  bool saved_wait_return = need_wait_return;
+  char *line_arg = line_arg_in;
+  int indent = 2;
+  int nesting = 0;
+  char *skip_until = NULL;
+  int ret = FAIL;
+  bool is_heredoc = false;
+  char *heredoc_trimmed = NULL;
+  bool do_concat = true;
+
+  while (true) {
+    if (KeyTyped) {
+      msg_scroll = true;
+      saved_wait_return = false;
+    }
+    need_wait_return = false;
+
+    char *theline;
+    char *p;
+    char *arg;
+
+    if (line_arg != NULL) {
+      // Use eap->arg, split up in parts by line breaks.
+      theline = line_arg;
+      p = vim_strchr(theline, '\n');
+      if (p == NULL) {
+        line_arg += strlen(line_arg);
+      } else {
+        *p = NUL;
+        line_arg = p + 1;
+      }
+    } else {
+      xfree(*line_to_free);
+      if (eap->ea_getline == NULL) {
+        theline = getcmdline(':', 0, indent, do_concat);
+      } else {
+        theline = eap->ea_getline(':', eap->cookie, indent, do_concat);
+      }
+      *line_to_free = theline;
+    }
+    if (KeyTyped) {
+      lines_left = Rows - 1;
+    }
+    if (theline == NULL) {
+      if (skip_until != NULL) {
+        semsg(_(e_missing_heredoc_end_marker_str), skip_until);
+      } else {
+        emsg(_("E126: Missing :endfunction"));
+      }
+      goto theend;
+    }
+    if (show_block) {
+      assert(indent >= 0);
+      ui_ext_cmdline_block_append((size_t)indent, theline);
+    }
+
+    // Detect line continuation: SOURCING_LNUM increased more than one.
+    linenr_T sourcing_lnum_off = get_sourced_lnum(eap->ea_getline, eap->cookie);
+    if (SOURCING_LNUM < sourcing_lnum_off) {
+      sourcing_lnum_off -= SOURCING_LNUM;
+    } else {
+      sourcing_lnum_off = 0;
+    }
+
+    if (skip_until != NULL) {
+      // Don't check for ":endfunc" between
+      // * ":append" and "."
+      // * ":python <<EOF" and "EOF"
+      // * ":let {var-name} =<< [trim] {marker}" and "{marker}"
+      if (heredoc_trimmed == NULL
+          || (is_heredoc && skipwhite(theline) == theline)
+          || strncmp(theline, heredoc_trimmed,
+                     strlen(heredoc_trimmed)) == 0) {
+        if (heredoc_trimmed == NULL) {
+          p = theline;
+        } else if (is_heredoc) {
+          p = skipwhite(theline) == theline
+              ? theline : theline + strlen(heredoc_trimmed);
+        } else {
+          p = theline + strlen(heredoc_trimmed);
+        }
+        if (strcmp(p, skip_until) == 0) {
+          XFREE_CLEAR(skip_until);
+          XFREE_CLEAR(heredoc_trimmed);
+          do_concat = true;
+          is_heredoc = false;
+        }
+      }
+    } else {
+      // skip ':' and blanks
+      for (p = theline; ascii_iswhite(*p) || *p == ':'; p++) {}
+
+      // Check for "endfunction".
+      if (checkforcmd(&p, "endfunction", 4) && nesting-- == 0) {
+        if (*p == '!') {
+          p++;
+        }
+        char *nextcmd = NULL;
+        if (*p == '|') {
+          nextcmd = p + 1;
+        } else if (line_arg != NULL && *skipwhite(line_arg) != NUL) {
+          nextcmd = line_arg;
+        } else if (*p != NUL && *p != '"' && p_verbose > 0) {
+          swmsg(true, _("W22: Text found after :endfunction: %s"), p);
+        }
+        if (nextcmd != NULL) {
+          // Another command follows. If the line came from "eap" we
+          // can simply point into it, otherwise we need to change
+          // "eap->cmdlinep".
+          eap->nextcmd = nextcmd;
+          if (*line_to_free != NULL) {
+            xfree(*eap->cmdlinep);
+            *eap->cmdlinep = *line_to_free;
+            *line_to_free = NULL;
+          }
+        }
+        break;
+      }
+
+      // Increase indent inside "if", "while", "for" and "try", decrease
+      // at "end".
+      if (indent > 2 && strncmp(p, "end", 3) == 0) {
+        indent -= 2;
+      } else if (strncmp(p, "if", 2) == 0
+                 || strncmp(p, "wh", 2) == 0
+                 || strncmp(p, "for", 3) == 0
+                 || strncmp(p, "try", 3) == 0) {
+        indent += 2;
+      }
+
+      // Check for defining a function inside this function.
+      if (checkforcmd(&p, "function", 2)) {
+        if (*p == '!') {
+          p = skipwhite(p + 1);
+        }
+        p += eval_fname_script(p);
+        xfree(trans_function_name(&p, true, 0, NULL, NULL));
+        if (*skipwhite(p) == '(') {
+          if (nesting == MAX_FUNC_NESTING - 1) {
+            emsg(_(e_function_nesting_too_deep));
+          } else {
+            nesting++;
+            indent += 2;
+          }
+        }
+      }
+
+      // Check for ":append", ":change", ":insert".
+      p = skip_range(p, NULL);
+      if ((p[0] == 'a' && (!ASCII_ISALPHA(p[1]) || p[1] == 'p'))
+          || (p[0] == 'c'
+              && (!ASCII_ISALPHA(p[1])
+                  || (p[1] == 'h' && (!ASCII_ISALPHA(p[2])
+                                      || (p[2] == 'a'
+                                          && (strncmp(&p[3], "nge", 3) != 0
+                                              || !ASCII_ISALPHA(p[6])))))))
+          || (p[0] == 'i'
+              && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
+                                           && (!ASCII_ISALPHA(p[2])
+                                               || (p[2] == 's')))))) {
+        skip_until = xstrdup(".");
+      }
+
+      // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
+      arg = skipwhite(skiptowhite(p));
+      if (arg[0] == '<' && arg[1] == '<'
+          && ((p[0] == 'p' && p[1] == 'y'
+               && (!ASCII_ISALNUM(p[2]) || p[2] == 't'
+                   || ((p[2] == '3' || p[2] == 'x')
+                       && !ASCII_ISALPHA(p[3]))))
+              || (p[0] == 'p' && p[1] == 'e'
+                  && (!ASCII_ISALPHA(p[2]) || p[2] == 'r'))
+              || (p[0] == 't' && p[1] == 'c'
+                  && (!ASCII_ISALPHA(p[2]) || p[2] == 'l'))
+              || (p[0] == 'l' && p[1] == 'u' && p[2] == 'a'
+                  && !ASCII_ISALPHA(p[3]))
+              || (p[0] == 'r' && p[1] == 'u' && p[2] == 'b'
+                  && (!ASCII_ISALPHA(p[3]) || p[3] == 'y'))
+              || (p[0] == 'm' && p[1] == 'z'
+                  && (!ASCII_ISALPHA(p[2]) || p[2] == 's')))) {
+        // ":python <<" continues until a dot, like ":append"
+        p = skipwhite(arg + 2);
+        if (strncmp(p, "trim", 4) == 0) {
+          // Ignore leading white space.
+          p = skipwhite(p + 4);
+          heredoc_trimmed = xmemdupz(theline, (size_t)(skipwhite(theline) - theline));
+        }
+        if (*p == NUL) {
+          skip_until = xstrdup(".");
+        } else {
+          skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
+        }
+        do_concat = false;
+        is_heredoc = true;
+      }
+
+      // Check for ":let v =<< [trim] EOF"
+      //       and ":let [a, b] =<< [trim] EOF"
+      arg = p;
+      if (checkforcmd(&arg, "let", 2)) {
+        int var_count = 0;
+        int semicolon = 0;
+        arg = (char *)skip_var_list(arg, &var_count, &semicolon, true);
+        if (arg != NULL) {
+          arg = skipwhite(arg);
+        }
+        if (arg != NULL && strncmp(arg, "=<<", 3) == 0) {
+          p = skipwhite(arg + 3);
+          while (true) {
+            if (strncmp(p, "trim", 4) == 0) {
+              // Ignore leading white space.
+              p = skipwhite(p + 4);
+              heredoc_trimmed = xmemdupz(theline, (size_t)(skipwhite(theline) - theline));
+              continue;
+            }
+            if (strncmp(p, "eval", 4) == 0) {
+              // Ignore leading white space.
+              p = skipwhite(p + 4);
+              continue;
+            }
+            break;
+          }
+          skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
+          do_concat = false;
+          is_heredoc = true;
+        }
+      }
+    }
+
+    // Add the line to the function.
+    ga_grow(newlines, 1 + (int)sourcing_lnum_off);
+
+    // Copy the line to newly allocated memory.  get_one_sourceline()
+    // allocates 250 bytes per line, this saves 80% on average.  The cost
+    // is an extra alloc/free.
+    p = xstrdup(theline);
+    ((char **)(newlines->ga_data))[newlines->ga_len++] = p;
+
+    // Add NULL lines for continuation lines, so that the line count is
+    // equal to the index in the growarray.
+    while (sourcing_lnum_off-- > 0) {
+      ((char **)(newlines->ga_data))[newlines->ga_len++] = NULL;
+    }
+
+    // Check for end of eap->arg.
+    if (line_arg != NULL && *line_arg == NUL) {
+      line_arg = NULL;
+    }
+  }
+
+  // Return OK when no error was detected.
+  if (!did_emsg) {
+    ret = OK;
+  }
+
+theend:
+  xfree(skip_until);
+  xfree(heredoc_trimmed);
+  need_wait_return |= saved_wait_return;
+  return ret;
+}
+
 /// ":function"
 void ex_function(exarg_T *eap)
 {
-  char *theline;
   char *line_to_free = NULL;
-  bool saved_wait_return = need_wait_return;
   char *arg;
   char *line_arg = NULL;
   garray_T newargs;
@@ -2236,11 +2519,7 @@ void ex_function(exarg_T *eap)
   funcdict_T fudi;
   static int func_nr = 0;           // number for nameless function
   hashtab_T *ht;
-  bool is_heredoc = false;
-  char *skip_until = NULL;
-  char *heredoc_trimmed = NULL;
   bool show_block = false;
-  bool do_concat = true;
 
   // ":function" without argument: list functions.
   if (ends_excmd(*eap->arg)) {
@@ -2487,247 +2766,9 @@ void ex_function(exarg_T *eap)
   // Save the starting line number.
   linenr_T sourcing_lnum_top = SOURCING_LNUM;
 
-  int indent = 2;
-  int nesting = 0;
-  while (true) {
-    if (KeyTyped) {
-      msg_scroll = true;
-      saved_wait_return = false;
-    }
-    need_wait_return = false;
-
-    if (line_arg != NULL) {
-      // Use eap->arg, split up in parts by line breaks.
-      theline = line_arg;
-      p = vim_strchr(theline, '\n');
-      if (p == NULL) {
-        line_arg += strlen(line_arg);
-      } else {
-        *p = NUL;
-        line_arg = p + 1;
-      }
-    } else {
-      xfree(line_to_free);
-      if (eap->ea_getline == NULL) {
-        theline = getcmdline(':', 0, indent, do_concat);
-      } else {
-        theline = eap->ea_getline(':', eap->cookie, indent, do_concat);
-      }
-      line_to_free = theline;
-    }
-    if (KeyTyped) {
-      lines_left = Rows - 1;
-    }
-    if (theline == NULL) {
-      if (skip_until != NULL) {
-        semsg(_(e_missing_heredoc_end_marker_str), skip_until);
-      } else {
-        emsg(_("E126: Missing :endfunction"));
-      }
-      goto erret;
-    }
-    if (show_block) {
-      assert(indent >= 0);
-      ui_ext_cmdline_block_append((size_t)indent, theline);
-    }
-
-    // Detect line continuation: SOURCING_LNUM increased more than one.
-    linenr_T sourcing_lnum_off = get_sourced_lnum(eap->ea_getline, eap->cookie);
-    if (SOURCING_LNUM < sourcing_lnum_off) {
-      sourcing_lnum_off -= SOURCING_LNUM;
-    } else {
-      sourcing_lnum_off = 0;
-    }
-
-    if (skip_until != NULL) {
-      // Don't check for ":endfunc" between
-      // * ":append" and "."
-      // * ":python <<EOF" and "EOF"
-      // * ":let {var-name} =<< [trim] {marker}" and "{marker}"
-      if (heredoc_trimmed == NULL
-          || (is_heredoc && skipwhite(theline) == theline)
-          || strncmp(theline, heredoc_trimmed,
-                     strlen(heredoc_trimmed)) == 0) {
-        if (heredoc_trimmed == NULL) {
-          p = theline;
-        } else if (is_heredoc) {
-          p = skipwhite(theline) == theline
-              ? theline : theline + strlen(heredoc_trimmed);
-        } else {
-          p = theline + strlen(heredoc_trimmed);
-        }
-        if (strcmp(p, skip_until) == 0) {
-          XFREE_CLEAR(skip_until);
-          XFREE_CLEAR(heredoc_trimmed);
-          do_concat = true;
-          is_heredoc = false;
-        }
-      }
-    } else {
-      // skip ':' and blanks
-      for (p = theline; ascii_iswhite(*p) || *p == ':'; p++) {}
-
-      // Check for "endfunction".
-      if (checkforcmd(&p, "endfunction", 4) && nesting-- == 0) {
-        if (*p == '!') {
-          p++;
-        }
-        char *nextcmd = NULL;
-        if (*p == '|') {
-          nextcmd = p + 1;
-        } else if (line_arg != NULL && *skipwhite(line_arg) != NUL) {
-          nextcmd = line_arg;
-        } else if (*p != NUL && *p != '"' && p_verbose > 0) {
-          swmsg(true, _("W22: Text found after :endfunction: %s"), p);
-        }
-        if (nextcmd != NULL) {
-          // Another command follows. If the line came from "eap" we
-          // can simply point into it, otherwise we need to change
-          // "eap->cmdlinep".
-          eap->nextcmd = nextcmd;
-          if (line_to_free != NULL) {
-            xfree(*eap->cmdlinep);
-            *eap->cmdlinep = line_to_free;
-            line_to_free = NULL;
-          }
-        }
-        break;
-      }
-
-      // Increase indent inside "if", "while", "for" and "try", decrease
-      // at "end".
-      if (indent > 2 && strncmp(p, "end", 3) == 0) {
-        indent -= 2;
-      } else if (strncmp(p, "if", 2) == 0
-                 || strncmp(p, "wh", 2) == 0
-                 || strncmp(p, "for", 3) == 0
-                 || strncmp(p, "try", 3) == 0) {
-        indent += 2;
-      }
-
-      // Check for defining a function inside this function.
-      if (checkforcmd(&p, "function", 2)) {
-        if (*p == '!') {
-          p = skipwhite(p + 1);
-        }
-        p += eval_fname_script(p);
-        xfree(trans_function_name(&p, true, 0, NULL, NULL));
-        if (*skipwhite(p) == '(') {
-          if (nesting == MAX_FUNC_NESTING - 1) {
-            emsg(_(e_function_nesting_too_deep));
-          } else {
-            nesting++;
-            indent += 2;
-          }
-        }
-      }
-
-      // Check for ":append", ":change", ":insert".
-      p = skip_range(p, NULL);
-      if ((p[0] == 'a' && (!ASCII_ISALPHA(p[1]) || p[1] == 'p'))
-          || (p[0] == 'c'
-              && (!ASCII_ISALPHA(p[1])
-                  || (p[1] == 'h' && (!ASCII_ISALPHA(p[2])
-                                      || (p[2] == 'a'
-                                          && (strncmp(&p[3], "nge", 3) != 0
-                                              || !ASCII_ISALPHA(p[6])))))))
-          || (p[0] == 'i'
-              && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
-                                           && (!ASCII_ISALPHA(p[2])
-                                               || (p[2] == 's')))))) {
-        skip_until = xstrdup(".");
-      }
-
-      // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
-      arg = skipwhite(skiptowhite(p));
-      if (arg[0] == '<' && arg[1] == '<'
-          && ((p[0] == 'p' && p[1] == 'y'
-               && (!ASCII_ISALNUM(p[2]) || p[2] == 't'
-                   || ((p[2] == '3' || p[2] == 'x')
-                       && !ASCII_ISALPHA(p[3]))))
-              || (p[0] == 'p' && p[1] == 'e'
-                  && (!ASCII_ISALPHA(p[2]) || p[2] == 'r'))
-              || (p[0] == 't' && p[1] == 'c'
-                  && (!ASCII_ISALPHA(p[2]) || p[2] == 'l'))
-              || (p[0] == 'l' && p[1] == 'u' && p[2] == 'a'
-                  && !ASCII_ISALPHA(p[3]))
-              || (p[0] == 'r' && p[1] == 'u' && p[2] == 'b'
-                  && (!ASCII_ISALPHA(p[3]) || p[3] == 'y'))
-              || (p[0] == 'm' && p[1] == 'z'
-                  && (!ASCII_ISALPHA(p[2]) || p[2] == 's')))) {
-        // ":python <<" continues until a dot, like ":append"
-        p = skipwhite(arg + 2);
-        if (strncmp(p, "trim", 4) == 0) {
-          // Ignore leading white space.
-          p = skipwhite(p + 4);
-          heredoc_trimmed = xmemdupz(theline, (size_t)(skipwhite(theline) - theline));
-        }
-        if (*p == NUL) {
-          skip_until = xstrdup(".");
-        } else {
-          skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
-        }
-        do_concat = false;
-        is_heredoc = true;
-      }
-
-      // Check for ":let v =<< [trim] EOF"
-      //       and ":let [a, b] =<< [trim] EOF"
-      arg = p;
-      if (checkforcmd(&arg, "let", 2)) {
-        int var_count = 0;
-        int semicolon = 0;
-        arg = (char *)skip_var_list(arg, &var_count, &semicolon, true);
-        if (arg != NULL) {
-          arg = skipwhite(arg);
-        }
-        if (arg != NULL && strncmp(arg, "=<<", 3) == 0) {
-          p = skipwhite(arg + 3);
-          while (true) {
-            if (strncmp(p, "trim", 4) == 0) {
-              // Ignore leading white space.
-              p = skipwhite(p + 4);
-              heredoc_trimmed = xmemdupz(theline, (size_t)(skipwhite(theline) - theline));
-              continue;
-            }
-            if (strncmp(p, "eval", 4) == 0) {
-              // Ignore leading white space.
-              p = skipwhite(p + 4);
-              continue;
-            }
-            break;
-          }
-          skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
-          do_concat = false;
-          is_heredoc = true;
-        }
-      }
-    }
-
-    // Add the line to the function.
-    ga_grow(&newlines, 1 + (int)sourcing_lnum_off);
-
-    // Copy the line to newly allocated memory.  get_one_sourceline()
-    // allocates 250 bytes per line, this saves 80% on average.  The cost
-    // is an extra alloc/free.
-    p = xstrdup(theline);
-    ((char **)(newlines.ga_data))[newlines.ga_len++] = p;
-
-    // Add NULL lines for continuation lines, so that the line count is
-    // equal to the index in the growarray.
-    while (sourcing_lnum_off-- > 0) {
-      ((char **)(newlines.ga_data))[newlines.ga_len++] = NULL;
-    }
-
-    // Check for end of eap->arg.
-    if (line_arg != NULL && *line_arg == NUL) {
-      line_arg = NULL;
-    }
-  }
-
-  // Don't define the function when skipping commands or when an error was
-  // detected.
-  if (eap->skip || did_emsg) {
+  // Do not define the function when getting the body fails and when skipping.
+  if (get_function_body(eap, &newlines, line_arg, &line_to_free, show_block) == FAIL
+      || eap->skip) {
     goto erret;
   }
 
@@ -2879,13 +2920,10 @@ erret:
 errret_2:
   ga_clear_strings(&newlines);
 ret_free:
-  xfree(skip_until);
-  xfree(heredoc_trimmed);
   xfree(line_to_free);
   xfree(fudi.fd_newkey);
   xfree(name);
   did_emsg |= saved_did_emsg;
-  need_wait_return |= saved_wait_return;
   if (show_block) {
     ui_ext_cmdline_block_leave();
   }
