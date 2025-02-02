@@ -410,6 +410,11 @@ UI
 • |:checkhealth| can display in a floating window, controlled by the
   |g:health| variable.
 
+VIMSCRIPT
+
+• |getchar()| and |getcharstr()| have optional {opts} |Dict| argument to control:
+  cursor behavior, return type, and whether to simplify the returned key.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

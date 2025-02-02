@@ -1872,9 +1872,11 @@ static int no_reduce_keys = 0;  ///< Do not apply modifiers to the key.
 static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number)
   FUNC_ATTR_NONNULL_ALL
 {
-  varnumber_T n;
+  varnumber_T n = 0;
+  const int called_emsg_start = called_emsg;
   bool error = false;
   bool simplify = true;
+  char cursor_flag = NUL;
 
   if (argvars[0].v_type != VAR_UNKNOWN
       && tv_check_for_opt_dict_arg(argvars, 1) == FAIL) {
@@ -1888,10 +1890,28 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
       allow_number = tv_dict_get_bool(d, "number", true);
     } else if (tv_dict_has_key(d, "number")) {
       semsg(_(e_invarg2), "number");
-      error = true;
     }
 
     simplify = tv_dict_get_bool(d, "simplify", true);
+
+    const char *cursor_str = tv_dict_get_string(d, "cursor", false);
+    if (cursor_str != NULL) {
+      if (strcmp(cursor_str, "hide") != 0
+          && strcmp(cursor_str, "keep") != 0
+          && strcmp(cursor_str, "msg") != 0) {
+        semsg(_(e_invargNval), "cursor", cursor_str);
+      } else {
+        cursor_flag = cursor_str[0];
+      }
+    }
+  }
+
+  if (called_emsg != called_emsg_start) {
+    return;
+  }
+
+  if (cursor_flag == 'h') {
+    ui_busy_start();
   }
 
   no_mapping++;
@@ -1899,9 +1919,8 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
   if (!simplify) {
     no_reduce_keys++;
   }
-  while (!error) {
-    if (msg_col > 0) {
-      // Position the cursor. Needed after a message that ends in a space.
+  while (true) {
+    if (cursor_flag == 'm' || (cursor_flag == NUL && msg_col > 0)) {
       ui_cursor_goto(msg_row, msg_col);
     }
 
@@ -1943,6 +1962,10 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
   allow_keys--;
   if (!simplify) {
     no_reduce_keys--;
+  }
+
+  if (cursor_flag == 'h') {
+    ui_busy_stop();
   }
 
   set_vim_var_nr(VV_MOUSE_WIN, 0);
