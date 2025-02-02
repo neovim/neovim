@@ -2160,6 +2160,25 @@ describe('vim.diagnostic', function()
       eq(1, #result)
       eq(' An error there!', result[1][4].virt_text[3][1])
     end)
+
+    it('can only show virtual_text for the current line', function()
+      local result = exec_lua(function()
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        vim.diagnostic.config({ virtual_text = { current_line = true } })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error here!', 0, 0, 0, 0, 'foo_server'),
+          _G.make_error('Another error there!', 1, 0, 1, 0, 'foo_server'),
+        })
+
+        local extmarks = _G.get_virt_text_extmarks(_G.diagnostic_ns)
+        return extmarks
+      end)
+
+      eq(1, #result)
+      eq(' Error here!', result[1][4].virt_text[3][1])
+    end)
   end)
 
   describe('handlers.virtual_lines', function()
