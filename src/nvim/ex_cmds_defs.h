@@ -94,35 +94,6 @@ typedef struct exarg exarg_T;
 typedef void (*ex_func_T)(exarg_T *eap);
 typedef int (*ex_preview_func_T)(exarg_T *eap, int cmdpreview_ns, handle_T cmdpreview_bufnr);
 
-// NOTE: These possible could be removed and changed so that
-// Callback could take a "command" style string, and simply
-// execute that (instead of it being a function).
-//
-// But it's still a bit weird to do that.
-//
-// Another option would be that we just make a callback reference to
-// "execute($INPUT)" or something like that, so whatever the user
-// sends in via autocmds is just executed via this.
-//
-// However, that would probably have some performance cost (probably
-// very marginal, but still some cost either way).
-typedef enum {
-  CALLABLE_NONE,
-  CALLABLE_EX,
-  CALLABLE_CB,
-} AucmdExecutableType;
-
-typedef struct aucmd_executable_t AucmdExecutable;
-struct aucmd_executable_t {
-  AucmdExecutableType type;
-  union {
-    char *cmd;
-    Callback cb;
-  } callable;
-};
-
-#define AUCMD_EXECUTABLE_INIT { .type = CALLABLE_NONE }
-
 typedef char *(*LineGetter)(int, void *, int, bool);
 
 /// Structure for command definition.
