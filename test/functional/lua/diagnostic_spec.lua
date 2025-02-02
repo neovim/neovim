@@ -2134,6 +2134,32 @@ describe('vim.diagnostic', function()
         end)
       )
     end)
+
+    it('can filter diagnostics by returning nil when formatting', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config {
+          virtual_text = {
+            format = function(diagnostic)
+              if diagnostic.code == 'foo_err' then
+                return nil
+              end
+              return diagnostic.message
+            end,
+          },
+        }
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('An error here!', 0, 0, 0, 0, 'foo_server', 'foo_err'),
+          _G.make_error('An error there!', 1, 1, 1, 1, 'bar_server', 'bar_err'),
+        })
+
+        local extmarks = _G.get_virt_text_extmarks(_G.diagnostic_ns)
+        return extmarks
+      end)
+
+      eq(1, #result)
+      eq(' An error there!', result[1][4].virt_text[3][1])
+    end)
   end)
 
   describe('handlers.virtual_lines', function()

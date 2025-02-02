@@ -150,10 +150,11 @@ end
 --- Overrides the setting from |vim.diagnostic.config()|.
 --- @field source? boolean|'if_many'
 ---
---- A function that takes a diagnostic as input and returns a string.
---- The return value is the text used to display the diagnostic.
+--- A function that takes a diagnostic as input and returns a string or nil.
+--- If the return value is nil, the diagnostic is not displayed by the handler.
+--- Else the output text is used to display the diagnostic.
 --- Overrides the setting from |vim.diagnostic.config()|.
---- @field format? fun(diagnostic:vim.Diagnostic): string
+--- @field format? fun(diagnostic:vim.Diagnostic): string?
 ---
 --- Prefix each diagnostic in the floating window:
 --- - If a `function`, {i} is the index of the diagnostic being evaluated and
@@ -207,7 +208,7 @@ end
 --- This can be used to render an LSP diagnostic error code.
 --- @field suffix? string|(fun(diagnostic:vim.Diagnostic): string)
 ---
---- The return value is the text used to display the diagnostic. Example:
+--- If not nil, the return value is the text used to display the diagnostic. Example:
 --- ```lua
 --- function(diagnostic)
 ---   if diagnostic.severity == vim.diagnostic.severity.ERROR then
@@ -216,7 +217,8 @@ end
 ---   return diagnostic.message
 --- end
 --- ```
---- @field format? fun(diagnostic:vim.Diagnostic): string
+--- If the return value is nil, the diagnostic is not displayed by the handler.
+--- @field format? fun(diagnostic:vim.Diagnostic): string?
 ---
 --- See |nvim_buf_set_extmark()|.
 --- @field hl_mode? 'replace'|'combine'|'blend'
@@ -239,9 +241,10 @@ end
 --- (default: `false`)
 --- @field current_line? boolean
 ---
---- A function that takes a diagnostic as input and returns a string.
---- The return value is the text used to display the diagnostic.
---- @field format? fun(diagnostic:vim.Diagnostic): string
+--- A function that takes a diagnostic as input and returns a string or nil.
+--- If the return value is nil, the diagnostic is not displayed by the handler.
+--- Else the output text is used to display the diagnostic.
+--- @field format? fun(diagnostic:vim.Diagnostic): string?
 
 --- @class vim.diagnostic.Opts.Signs
 ---
@@ -503,15 +506,21 @@ local function prefix_source(diagnostics)
   end, diagnostics)
 end
 
+--- @param format fun(vim.Diagnostic): string?
 --- @param diagnostics vim.Diagnostic[]
 --- @return vim.Diagnostic[]
 local function reformat_diagnostics(format, diagnostics)
   vim.validate('format', format, 'function')
   vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
 
-  local formatted = vim.deepcopy(diagnostics, true)
-  for _, diagnostic in ipairs(formatted) do
-    diagnostic.message = format(diagnostic)
+  local formatted = {}
+  for _, diagnostic in ipairs(diagnostics) do
+    local message = format(diagnostic)
+    if message ~= nil then
+      local formatted_diagnostic = vim.deepcopy(diagnostic, true)
+      formatted_diagnostic.message = message
+      table.insert(formatted, formatted_diagnostic)
+    end
   end
   return formatted
 end
