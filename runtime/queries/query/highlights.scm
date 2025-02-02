@@ -11,6 +11,9 @@
 (named_node
   name: (identifier) @variable)
 
+(missing_node
+  name: (identifier) @variable)
+
 (field_definition
   name: (identifier) @variable.member)
 
@@ -43,7 +46,12 @@
   "#"
 ] @punctuation.special
 
+(predicate
+  "." @punctuation.special)
+
 "_" @character.special
+
+"MISSING" @keyword
 
 ((parameters
   (identifier) @number)
