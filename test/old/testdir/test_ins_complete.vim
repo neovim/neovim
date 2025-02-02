@@ -3042,6 +3042,14 @@ function Test_completeopt_preinsert()
   call assert_equal("fo ", getline('.'))
   call assert_equal(3, col('.'))
 
+  call feedkeys("She\<C-X>\<C-N>\<C-U>", 'tx')
+  call assert_equal("", getline('.'))
+  call assert_equal(1, col('.'))
+
+  call feedkeys("She\<C-X>\<C-N>\<C-W>", 'tx')
+  call assert_equal("", getline('.'))
+  call assert_equal(1, col('.'))
+
   " whole line
   call feedkeys("Shello hero\<CR>\<C-X>\<C-L>", 'tx')
   call assert_equal("hello hero", getline('.'))
