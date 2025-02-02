@@ -1805,20 +1805,26 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
   end
 end
 
---- @param diagnostics vim.Diagnostic[]
+--- @param diagnostics table<integer, vim.Diagnostic[]>
 --- @param namespace integer
 --- @param bufnr integer
 local function render_virtual_lines_at_current_line(diagnostics, namespace, bufnr)
-  local line_diagnostics = {}
   local lnum = api.nvim_win_get_cursor(0)[1] - 1
+  local cursor_diagnostics = {}
 
-  for _, diag in ipairs(diagnostics) do
-    if (lnum == diag.lnum) or (diag.end_lnum and lnum >= diag.lnum and lnum <= diag.end_lnum) then
-      table.insert(line_diagnostics, diag)
+  if diagnostics[lnum] ~= nil then
+    cursor_diagnostics = diagnostics[lnum]
+  else
+    for _, line_diags in pairs(diagnostics) do
+      for _, diag in ipairs(line_diags) do
+        if diag.end_lnum and lnum >= diag.lnum and lnum <= diag.end_lnum then
+          table.insert(cursor_diagnostics, diag)
+        end
+      end
     end
   end
 
-  render_virtual_lines(namespace, bufnr, line_diagnostics)
+  render_virtual_lines(namespace, bufnr, cursor_diagnostics)
 end
 
 M.handlers.virtual_lines = {
@@ -1854,15 +1860,18 @@ M.handlers.virtual_lines = {
     end
 
     if opts.virtual_lines.current_line == true then
+      -- Create a mapping from line -> diagnostics so that we can quickly get the
+      -- diagnostics we need when the cursor line doesn't change.
+      local line_diagnostics = diagnostic_lines(diagnostics)
       api.nvim_create_autocmd('CursorMoved', {
         buffer = bufnr,
         group = ns.user_data.virt_lines_augroup,
         callback = function()
-          render_virtual_lines_at_current_line(diagnostics, ns.user_data.virt_lines_ns, bufnr)
+          render_virtual_lines_at_current_line(line_diagnostics, ns.user_data.virt_lines_ns, bufnr)
         end,
       })
       -- Also show diagnostics for the current line before the first CursorMoved event.
-      render_virtual_lines_at_current_line(diagnostics, ns.user_data.virt_lines_ns, bufnr)
+      render_virtual_lines_at_current_line(line_diagnostics, ns.user_data.virt_lines_ns, bufnr)
     else
       render_virtual_lines(ns.user_data.virt_lines_ns, bufnr, diagnostics)
     end
