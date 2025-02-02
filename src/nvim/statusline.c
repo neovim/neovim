@@ -927,6 +927,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   static stl_hlrec_t *stl_hltab = NULL;
   static StlClickRecord *stl_tabtab = NULL;
   static int *stl_separator_locations = NULL;
+  static int curitem = 0;
 
 #define TMPLEN 70
   char buf_tmp[TMPLEN];
@@ -1013,7 +1014,11 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   int groupdepth = 0;
   int evaldepth = 0;
 
-  int curitem = 0;
+  // nvim_eval_statusline() can be called from inside a {-expression item so
+  // this may be a recursive call. Keep track of the start index into "stl_items".
+  // During post-processing only treat items filled in a certain recursion level.
+  int evalstart = curitem;
+
   bool prevchar_isflag = true;
   bool prevchar_isitem = false;
 
@@ -1949,7 +1954,9 @@ stcsign:
   }
 
   *out_p = NUL;
-  int itemcnt = curitem;
+  // Subtract offset from `itemcnt` and restore `curitem` to previous recursion level.
+  int itemcnt = curitem - evalstart;
+  curitem = evalstart;
 
   // Free the format buffer if we allocated it internally
   if (usefmt != fmt) {
@@ -1975,7 +1982,7 @@ stcsign:
       trunc_p = stl_items[0].start;
       item_idx = 0;
 
-      for (int i = 0; i < itemcnt; i++) {
+      for (int i = evalstart; i < itemcnt + evalstart; i++) {
         if (stl_items[i].type == Trunc) {
           // Truncate at %< stl_items.
           trunc_p = stl_items[i].start;
@@ -2005,9 +2012,9 @@ stcsign:
 
       // Ignore any items in the statusline that occur after
       // the truncation point
-      for (int i = 0; i < itemcnt; i++) {
+      for (int i = evalstart; i < itemcnt + evalstart; i++) {
         if (stl_items[i].start > trunc_p) {
-          for (int j = i; j < itemcnt; j++) {
+          for (int j = i; j < itemcnt + evalstart; j++) {
             if (stl_items[j].type == ClickFunc) {
               XFREE_CLEAR(stl_items[j].cmd);
             }
@@ -2046,7 +2053,7 @@ stcsign:
       //       the truncation marker `<` is not counted.
       int item_offset = trunc_len - 1;
 
-      for (int i = item_idx; i < itemcnt; i++) {
+      for (int i = item_idx; i < itemcnt + evalstart; i++) {
         // Items starting at or after the end of the truncated section need
         // to be moved backwards.
         if (stl_items[i].start >= trunc_end_p) {
@@ -2079,7 +2086,7 @@ stcsign:
     // Find how many separators there are, which we will use when
     // figuring out how many groups there are.
     int num_separators = 0;
-    for (int i = 0; i < itemcnt; i++) {
+    for (int i = evalstart; i < itemcnt + evalstart; i++) {
       if (stl_items[i].type == Separate) {
         // Create an array of the start location for each separator mark.
         stl_separator_locations[num_separators] = i;
@@ -2104,7 +2111,7 @@ stcsign:
         }
 
         for (int item_idx = stl_separator_locations[l] + 1;
-             item_idx < itemcnt;
+             item_idx < itemcnt + evalstart;
              item_idx++) {
           stl_items[item_idx].start += dislocation;
         }
@@ -2118,7 +2125,7 @@ stcsign:
   if (hltab != NULL) {
     *hltab = stl_hltab;
     stl_hlrec_t *sp = stl_hltab;
-    for (int l = 0; l < itemcnt; l++) {
+    for (int l = evalstart; l < itemcnt + evalstart; l++) {
       if (stl_items[l].type == Highlight
           || stl_items[l].type == HighlightFold || stl_items[l].type == HighlightSign) {
         sp->start = stl_items[l].start;
@@ -2139,7 +2146,7 @@ stcsign:
   if (tabtab != NULL) {
     *tabtab = stl_tabtab;
     StlClickRecord *cur_tab_rec = stl_tabtab;
-    for (int l = 0; l < itemcnt; l++) {
+    for (int l = evalstart; l < itemcnt + evalstart; l++) {
       if (stl_items[l].type == TabPage) {
         cur_tab_rec->start = stl_items[l].start;
         if (stl_items[l].minwid == 0) {
