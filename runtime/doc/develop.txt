@@ -376,6 +376,10 @@ Where possible, these patterns apply to _both_ Lua and the API:
   - See |vim.lsp.inlay_hint.enable()| and |vim.lsp.inlay_hint.is_enabled()|
     for a reference implementation of these "best practices".
   - NOTE: open questions: https://github.com/neovim/neovim/issues/28603
+- Transformation functions should also have a filter functionality when
+  appropriate. That is, when the function returns a nil value it "filters" its
+  input, otherwise the transformed value is used.
+  - Example: |vim.diagnostic.config.format()|
 
 API DESIGN GUIDELINES                                   *dev-api*
 
