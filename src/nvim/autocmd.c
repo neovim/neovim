@@ -2025,7 +2025,8 @@ static void aucmd_next(AutoPatCmd *apc)
   apc->auidx = SIZE_MAX;
 }
 
-static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
+/// Executes an autocmd callback function (as opposed to an Ex command).
+static bool au_callback(const AutoCmd *ac, const AutoPatCmd *apc)
 {
   Callback callback = ac->exec.callable.cb;
   if (callback.type == kCallbackLua) {
@@ -2106,16 +2107,24 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
   apc->script_ctx = current_sctx;
 
   char *retval;
-  if (ac->exec.type == CALLABLE_CB) {
-    // Can potentially reallocate kvec_t data and invalidate the ac pointer
-    if (call_autocmd_callback(ac, apc)) {
-      // If an autocommand callback returns true, delete the autocommand
-      oneshot = true;
+  switch (ac->exec.type) {
+  case CALLABLE_EX:
+    retval = xstrdup(ac->exec.callable.cmd);
+    break;
+  case CALLABLE_CB: {
+    AutoCmd ac_copy = *ac;
+    // Mark oneshot handler as "removed" now, to prevent recursion by e.g. `:doautocmd`. #25526
+    ac->pat = oneshot ? NULL : ac->pat;
+    // May reallocate `acs` kvec_t data and invalidate the `ac` pointer.
+    bool rv = au_callback(&ac_copy, apc);
+    if (oneshot) {
+      // Restore `pat`. Use `acs` because `ac` may have been invalidated by the callback.
+      kv_A(*acs, apc->auidx).pat = ac_copy.pat;
     }
+    // If an autocommand callback returns true, delete the autocommand
+    oneshot = oneshot || rv;
 
-    // TODO(tjdevries):
-    //
-    // Major Hack Alert:
+    // HACK(tjdevries):
     //  We just return "not-null" and continue going.
     //  This would be a good candidate for a refactor. You would need to refactor:
     //      1. do_cmdline to accept something besides a string
@@ -2124,8 +2133,11 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
     //      and instead we loop over all the matches and just execute one-by-one.
     //          However, my expectation would be that could be expensive.
     retval = xcalloc(1, 1);
-  } else {
-    retval = xstrdup(ac->exec.callable.cmd);
+    break;
+  }
+  case CALLABLE_NONE:
+  default:
+    abort();
   }
 
   // Remove one-shot ("once") autocmd in anticipation of its execution.

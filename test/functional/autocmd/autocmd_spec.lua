@@ -160,7 +160,7 @@ describe('autocmd', function()
 
   it('++once', function() -- :help autocmd-once
     --
-    -- ":autocmd ... ++once" executes its handler once, then removes the handler.
+    -- ":autocmd … ++once" executes its handler once, then removes the handler.
     --
     local expected = {
       'Many1',
@@ -206,7 +206,7 @@ describe('autocmd', function()
     )
 
     --
-    -- ":autocmd ... ++once" handlers can be deleted.
+    -- ":autocmd … ++once" handlers can be deleted.
     --
     expected = {}
     command('let g:foo = []')
@@ -216,7 +216,7 @@ describe('autocmd', function()
     eq(expected, eval('g:foo'))
 
     --
-    -- ":autocmd ... <buffer> ++once ++nested"
+    -- ":autocmd … <buffer> ++once ++nested"
     --
     expected = {
       'OptionSet-Once',
@@ -250,6 +250,24 @@ describe('autocmd', function()
        --- Autocommands ---]]),
       fn.execute('autocmd Tabnew')
     )
+
+    --
+    -- :autocmd does not recursively call ++once Lua handlers.
+    --
+    exec_lua [[vim.g.count = 0]]
+    eq(0, eval('g:count'))
+    exec_lua [[
+      vim.api.nvim_create_autocmd('User', {
+        once = true,
+        pattern = nil,
+        callback = function()
+          vim.g.count = vim.g.count + 1
+          vim.api.nvim_exec_autocmds('User', { pattern = nil })
+        end,
+      })
+      vim.api.nvim_exec_autocmds('User', { pattern = nil })
+    ]]
+    eq(1, eval('g:count'))
   end)
 
   it('internal `aucmd_win` window', function()
