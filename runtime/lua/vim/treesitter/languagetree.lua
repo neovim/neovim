@@ -378,10 +378,7 @@ function LanguageTree:_parse_regions(range, timeout)
         return changes, no_regions_parsed, total_parse_time, false
       end
 
-      -- Pass ranges if this is an initial parse
-      local cb_changes = self._trees[i] and tree_changes or tree:included_ranges(true)
-
-      self:_do_callback('changedtree', cb_changes, tree)
+      self:_do_callback('changedtree', tree_changes, tree)
       self._trees[i] = tree
       vim.list_extend(changes, tree_changes)
 
