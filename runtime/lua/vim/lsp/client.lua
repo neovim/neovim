@@ -620,10 +620,12 @@ function Client:_process_request(id, req_type, bufnr, method)
     )
     return
   elseif not pending and not cur_request then
-    log.error(
-      self._log_prefix,
-      ('Cannot find request with id %d whilst attempting to %s'):format(id, req_type)
-    )
+    if req_type ~= 'cancel' then
+      log.error(
+        self._log_prefix,
+        ('Cannot find request with id %d whilst attempting to %s'):format(id, req_type)
+      )
+    end
     return
   end
 
