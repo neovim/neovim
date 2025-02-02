@@ -82,7 +82,6 @@ local TSCallbackNames = {
 ---@field private _ranges_being_parsed table<string, boolean>
 ---Table of callback queues, keyed by each region for which the callbacks should be run
 ---@field private _cb_queues table<string, fun(err?: string, trees?: table<integer, TSTree>)[]>
----@field private _has_regions boolean
 ---@field private _regions table<integer, Range6[]>?
 ---List of regions this tree should manage and parse. If nil then regions are
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
@@ -132,7 +131,6 @@ function LanguageTree.new(source, lang, opts)
     _opts = opts,
     _injection_query = injections[lang] and query.parse(lang, injections[lang])
       or query.get(lang, 'injections'),
-    _has_regions = false,
     _injections_processed = false,
     _valid = false,
     _parser = vim._create_ts_parser(lang),
@@ -743,8 +741,6 @@ end
 ---@private
 ---@param new_regions (Range4|Range6|TSNode)[][] List of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(new_regions)
-  self._has_regions = true
-
   -- Transform the tables from 4 element long to 6 element long (with byte offset)
   for _, region in ipairs(new_regions) do
     for i, range in ipairs(region) do
@@ -788,18 +784,8 @@ function LanguageTree:included_regions()
     return self._regions
   end
 
-  if not self._has_regions then
-    -- treesitter.c will default empty ranges to { -1, -1, -1, -1, -1, -1} (the full range)
-    return { {} }
-  end
-
-  local regions = {} ---@type Range6[][]
-  for i, _ in pairs(self._trees) do
-    regions[i] = self._trees[i]:included_ranges(true)
-  end
-
-  self._regions = regions
-  return regions
+  -- treesitter.c will default empty ranges to { -1, -1, -1, -1, -1, -1} (the full range)
+  return { {} }
 end
 
 ---@param node TSNode
@@ -1050,7 +1036,14 @@ function LanguageTree:_edit(
   end
 
   self._parser:reset()
-  self._regions = nil
+
+  if self._regions then
+    local regions = {} ---@type table<integer, Range6[]>
+    for i, tree in pairs(self._trees) do
+      regions[i] = tree:included_ranges(true)
+    end
+    self._regions = regions
+  end
 
   local changed_range = {
     start_row,
