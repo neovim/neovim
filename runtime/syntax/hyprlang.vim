@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     hyprlang
 " Maintainer:   Luca Saccarola <github.e41mv@aleeas.com>
-" Last Change:  2024 nov 15
+" Last Change:  2025 Jan 29
 
 if exists("b:current_syntax")
   finish
@@ -21,7 +21,8 @@ syn region hyprCategory matchgroup=hyprCategoryD start='^\s*\k\+\s*{' end='^\s*}
 " Variables Types
 syn match   hyprNumber  '\%[-+]\<\d\+\>\%[%]' contained
 syn match   hyprFloat   '\%[-+]\<\d\+\.\d\+\>\%[%]' contained
-syn match   hyprString  '["\'].*["\']' contained
+syn match   hyprString  "'[^']*'" contained
+syn match   hyprString  '"[^"]*"' contained
 syn match   hyprColor   'rgb(\(\w\|\d\)\{6})' contained
 syn match   hyprColor   'rgba(\(\w\|\d\)\{8})' contained
 syn match   hyprColor   '0x\(\w\|\d\)\{8}' contained
