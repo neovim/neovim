@@ -264,25 +264,47 @@ static void register_closure(ufunc_T *fp)
   [current_funccal->fc_ufuncs.ga_len++] = fp;
 }
 
+static char lambda_name[8 + NUMBUFLEN];
+static size_t lambda_namelen = 0;
+
 /// @return  a name for a lambda.  Returned in static memory.
 char *get_lambda_name(void)
 {
-  static char name[30];
   static int lambda_no = 0;
 
-  snprintf(name, sizeof(name), "<lambda>%d", ++lambda_no);
-  return name;
+  int n = snprintf(lambda_name, sizeof(lambda_name), "<lambda>%d", ++lambda_no);
+  if (n < 1) {
+    lambda_namelen = 0;
+  } else if (n >= (int)sizeof(lambda_name)) {
+    lambda_namelen = sizeof(lambda_name) - 1;
+  } else {
+    lambda_namelen = (size_t)n;
+  }
+
+  return lambda_name;
 }
 
-static void set_ufunc_name(ufunc_T *fp, char *name)
+/// Get the length of the last lambda name.
+size_t get_lambda_name_len(void)
 {
+  return lambda_namelen;
+}
+
+/// Allocate a "ufunc_T" for a function called "name".
+static ufunc_T *alloc_ufunc(const char *name, size_t namelen)
+{
+  size_t len = offsetof(ufunc_T, uf_name) + namelen + 1;
+  ufunc_T *fp = xcalloc(1, len);
   STRCPY(fp->uf_name, name);
+  fp->uf_namelen = namelen;
 
   if ((uint8_t)name[0] == K_SPECIAL) {
-    fp->uf_name_exp = xmalloc(strlen(name) + 3);
-    STRCPY(fp->uf_name_exp, "<SNR>");
-    strcat(fp->uf_name_exp, fp->uf_name + 3);
+    len = namelen + 3;
+    fp->uf_name_exp = xmalloc(len);
+    snprintf(fp->uf_name_exp, len, "<SNR>%s", fp->uf_name + 3);
   }
+
+  return fp;
 }
 
 /// Parse a lambda expression and get a Funcref from "*arg".
@@ -350,8 +372,9 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
     garray_T newlines;
 
     char *name = get_lambda_name();
+    size_t namelen = get_lambda_name_len();
 
-    fp = xcalloc(1, offsetof(ufunc_T, uf_name) + strlen(name) + 1);
+    fp = alloc_ufunc(name, namelen);
     pt = xcalloc(1, sizeof(partial_T));
 
     ga_init(&newlines, (int)sizeof(char *), 1);
@@ -369,7 +392,6 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
     }
 
     fp->uf_refcount = 1;
-    set_ufunc_name(fp, name);
     hash_add(&func_hashtab, UF2HIKEY(fp));
     fp->uf_args = newargs;
     ga_init(&fp->uf_def_args, (int)sizeof(char *), 1);
@@ -409,7 +431,10 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
 
 errret:
   ga_clear_strings(&newargs);
-  xfree(fp);
+  if (fp != NULL) {
+    xfree(fp->uf_name_exp);
+    xfree(fp);
+  }
   xfree(pt);
   if (evalarg != NULL && evalarg->eval_tofree == NULL) {
     evalarg->eval_tofree = tofree;
@@ -627,33 +652,36 @@ static char *fname_trans_sid(const char *const name, char *const fname_buf, char
                              int *const error)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const int llen = eval_fname_script(name);
-  if (llen == 0) {
+  const char *script_name = name + eval_fname_script(name);
+  if (script_name == name) {
     return (char *)name;  // no prefix
   }
 
   fname_buf[0] = (char)K_SPECIAL;
   fname_buf[1] = (char)KS_EXTRA;
   fname_buf[2] = KE_SNR;
-  int i = 3;
-  if (eval_fname_sid(name)) {  // "<SID>" or "s:"
+  size_t fname_buflen = 3;
+  if (!eval_fname_sid(name)) {  // "<SID>" or "s:"
+    fname_buf[fname_buflen] = NUL;
+  } else {
     if (current_sctx.sc_sid <= 0) {
       *error = FCERR_SCRIPT;
     } else {
-      snprintf(fname_buf + i, (size_t)(FLEN_FIXED + 1 - i), "%" PRId64 "_",
-               (int64_t)current_sctx.sc_sid);
-      i = (int)strlen(fname_buf);
+      fname_buflen += (size_t)snprintf(fname_buf + fname_buflen,
+                                       FLEN_FIXED + 1 - fname_buflen,
+                                       "%" PRIdSCID "_",
+                                       current_sctx.sc_sid);
     }
   }
+  size_t fnamelen = fname_buflen + strlen(script_name);
   char *fname;
-  if ((size_t)i + strlen(name + llen) < FLEN_FIXED) {
-    STRCPY(fname_buf + i, name + llen);
+  if (fnamelen < FLEN_FIXED) {
+    STRCPY(fname_buf + fname_buflen, script_name);
     fname = fname_buf;
   } else {
-    fname = xmalloc((size_t)i + strlen(name + llen) + 1);
+    fname = xmalloc(fnamelen + 1);
     *tofree = fname;
-    memmove(fname, fname_buf, (size_t)i);
-    STRCPY(fname + i, name + llen);
+    snprintf(fname, fnamelen + 1, "%s%s", fname_buf, script_name);
   }
   return fname;
 }
@@ -711,20 +739,20 @@ ufunc_T *find_func(const char *name)
 /// Copy the function name of "fp" to buffer "buf".
 /// "buf" must be able to hold the function name plus three bytes.
 /// Takes care of script-local function names.
-static void cat_func_name(char *buf, size_t buflen, ufunc_T *fp)
+static int cat_func_name(char *buf, size_t bufsize, ufunc_T *fp)
 {
   int len = -1;
-  size_t uflen = strlen(fp->uf_name);
+  size_t uflen = fp->uf_namelen;
   assert(uflen > 0);
 
   if ((uint8_t)fp->uf_name[0] == K_SPECIAL && uflen > 3) {
-    len = snprintf(buf, buflen, "<SNR>%s", fp->uf_name + 3);
+    len = snprintf(buf, bufsize, "<SNR>%s", fp->uf_name + 3);
   } else {
-    len = snprintf(buf, buflen, "%s", fp->uf_name);
+    len = snprintf(buf, bufsize, "%s", fp->uf_name);
   }
 
-  (void)len;  // Avoid unused warning on release builds
   assert(len > 0);
+  return (len >= (int)bufsize) ? (int)bufsize - 1 : len;
 }
 
 /// Add a number variable "name" to dict "dp" with value "nr".
@@ -984,6 +1012,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   bool islambda = false;
   char numbuf[NUMBUFLEN];
   char *name;
+  size_t namelen;
   typval_T *tv_to_free[MAX_FUNC_ARGS];
   int tv_to_free_len = 0;
   proftime_T wait_start;
@@ -1105,23 +1134,25 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
           break;
         }
       }
+
+      namelen = strlen(name);
     } else {
       if ((fp->uf_flags & FC_NOARGS) != 0) {
         // Bail out if no a: arguments used (in lambda).
         break;
       }
       // "..." argument a:1, a:2, etc.
-      snprintf(numbuf, sizeof(numbuf), "%d", ai + 1);
+      namelen = (size_t)snprintf(numbuf, sizeof(numbuf), "%d", ai + 1);
       name = numbuf;
     }
-    if (fixvar_idx < FIXVAR_CNT && strlen(name) <= VAR_SHORT_LEN) {
+    if (fixvar_idx < FIXVAR_CNT && namelen <= VAR_SHORT_LEN) {
       v = (dictitem_T *)&fc->fc_fixvar[fixvar_idx++];
       v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
+      STRCPY(v->di_key, name);
     } else {
-      v = xmalloc(sizeof(dictitem_T) + strlen(name));
-      v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX | DI_FLAGS_ALLOC;
+      v = tv_dict_item_alloc_len(name, namelen);
+      v->di_flags |= DI_FLAGS_RO | DI_FLAGS_FIX;
     }
-    STRCPY(v->di_key, name);
 
     // Note: the values are copied directly to avoid alloc/free.
     // "argvars" must have VAR_FIXED for v_lock.
@@ -2096,7 +2127,7 @@ char *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, part
     len = (int)(end - lv.ll_name);
   }
 
-  size_t sid_buf_len = 0;
+  size_t sid_buflen = 0;
   char sid_buf[20];
 
   // Copy the function name to allocated memory.
@@ -2106,15 +2137,16 @@ char *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, part
     lead = 0;  // do nothing
   } else if (lead > 0) {
     lead = 3;
-    if ((lv.ll_exp_name != NULL && eval_fname_sid(lv.ll_exp_name)) || eval_fname_sid(*pp)) {
+    if ((lv.ll_exp_name != NULL && eval_fname_sid(lv.ll_exp_name))
+        || eval_fname_sid(*pp)) {
       // It's "s:" or "<SID>".
       if (current_sctx.sc_sid <= 0) {
         emsg(_(e_usingsid));
         goto theend;
       }
-      sid_buf_len =
-        (size_t)snprintf(sid_buf, sizeof(sid_buf), "%" PRIdSCID "_", current_sctx.sc_sid);
-      lead += (int)sid_buf_len;
+      sid_buflen = (size_t)snprintf(sid_buf, sizeof(sid_buf), "%" PRIdSCID "_",
+                                    current_sctx.sc_sid);
+      lead += (int)sid_buflen;
     }
   } else if (!(flags & TFN_INT) && builtin_function(lv.ll_name, (int)lv.ll_name_len)) {
     semsg(_("E128: Function name must start with a capital or \"s:\": %s"),
@@ -2136,8 +2168,8 @@ char *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, part
     name[0] = (char)K_SPECIAL;
     name[1] = (char)KS_EXTRA;
     name[2] = KE_SNR;
-    if (sid_buf_len > 0) {  // If it's "<SID>"
-      memcpy(name + 3, sid_buf, sid_buf_len);
+    if (sid_buflen > 0) {  // If it's "<SID>"
+      memcpy(name + 3, sid_buf, sid_buflen);
     }
   }
   memmove(name + lead, lv.ll_name, (size_t)len);
@@ -2173,12 +2205,12 @@ char *get_scriptlocal_funcname(char *funcname)
 
   char sid_buf[25];
   // Expand s: and <SID> prefix into <SNR>nr_<name>
-  snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
-           (int64_t)current_sctx.sc_sid);
+  size_t sid_buflen = (size_t)snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRIdSCID "_",
+                                       current_sctx.sc_sid);
   const int off = *funcname == 's' ? 2 : 5;
-  char *newname = xmalloc(strlen(sid_buf) + strlen(funcname + off) + 1);
-  STRCPY(newname, sid_buf);
-  strcat(newname, funcname + off);
+  size_t newnamesize = sid_buflen + strlen(funcname + off) + 1;
+  char *newname = xmalloc(newnamesize);
+  snprintf(newname, newnamesize, "%s%s", sid_buf, funcname + off);
 
   return newname;
 }
@@ -2250,6 +2282,7 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
   int ret = FAIL;
   bool is_heredoc = false;
   char *heredoc_trimmed = NULL;
+  size_t heredoc_trimmedlen = 0;
   bool do_concat = true;
 
   while (true) {
@@ -2313,19 +2346,18 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
       // * ":let {var-name} =<< [trim] {marker}" and "{marker}"
       if (heredoc_trimmed == NULL
           || (is_heredoc && skipwhite(theline) == theline)
-          || strncmp(theline, heredoc_trimmed,
-                     strlen(heredoc_trimmed)) == 0) {
+          || strncmp(theline, heredoc_trimmed, heredoc_trimmedlen) == 0) {
         if (heredoc_trimmed == NULL) {
           p = theline;
         } else if (is_heredoc) {
-          p = skipwhite(theline) == theline
-              ? theline : theline + strlen(heredoc_trimmed);
+          p = skipwhite(theline) == theline ? theline : theline + heredoc_trimmedlen;
         } else {
-          p = theline + strlen(heredoc_trimmed);
+          p = theline + heredoc_trimmedlen;
         }
         if (strcmp(p, skip_until) == 0) {
           XFREE_CLEAR(skip_until);
           XFREE_CLEAR(heredoc_trimmed);
+          heredoc_trimmedlen = 0;
           do_concat = true;
           is_heredoc = false;
         }
@@ -2402,7 +2434,7 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
               && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
                                            && (!ASCII_ISALPHA(p[2])
                                                || (p[2] == 's')))))) {
-        skip_until = xstrdup(".");
+        skip_until = xmemdupz(".", 1);
       }
 
       // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
@@ -2427,10 +2459,11 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
         if (strncmp(p, "trim", 4) == 0) {
           // Ignore leading white space.
           p = skipwhite(p + 4);
-          heredoc_trimmed = xmemdupz(theline, (size_t)(skipwhite(theline) - theline));
+          heredoc_trimmedlen = (size_t)(skipwhite(theline) - theline);
+          heredoc_trimmed = xmemdupz(theline, heredoc_trimmedlen);
         }
         if (*p == NUL) {
-          skip_until = xstrdup(".");
+          skip_until = xmemdupz(".", 1);
         } else {
           skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
         }
@@ -2454,7 +2487,8 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
             if (strncmp(p, "trim", 4) == 0) {
               // Ignore leading white space.
               p = skipwhite(p + 4);
-              heredoc_trimmed = xmemdupz(theline, (size_t)(skipwhite(theline) - theline));
+              heredoc_trimmedlen = (size_t)(skipwhite(theline) - theline);
+              heredoc_trimmed = xmemdupz(theline, heredoc_trimmedlen);
               continue;
             }
             if (strncmp(p, "eval", 4) == 0) {
@@ -2775,6 +2809,7 @@ void ex_function(exarg_T *eap)
   }
 
   // If there are no errors, add the function
+  size_t namelen = 0;
   if (fudi.fd_dict == NULL) {
     dictitem_T *v = find_var(name, strlen(name), &ht, false);
     if (v != NULL && v->di_tv.v_type == VAR_FUNC) {
@@ -2815,7 +2850,7 @@ void ex_function(exarg_T *eap)
       }
     }
   } else {
-    char numbuf[20];
+    char numbuf[NUMBUFLEN];
 
     fp = NULL;
     if (fudi.fd_newkey == NULL && !eap->forceit) {
@@ -2835,8 +2870,8 @@ void ex_function(exarg_T *eap)
     // Give the function a sequential number.  Can only be used with a
     // Funcref!
     xfree(name);
-    snprintf(numbuf, sizeof(numbuf), "%d", ++func_nr);
-    name = xstrdup(numbuf);
+    namelen = (size_t)snprintf(numbuf, sizeof(numbuf), "%d", ++func_nr);
+    name = xmemdupz(numbuf, namelen);
   }
 
   if (fp == NULL) {
@@ -2860,7 +2895,10 @@ void ex_function(exarg_T *eap)
       }
     }
 
-    fp = xcalloc(1, offsetof(ufunc_T, uf_name) + strlen(name) + 1);
+    if (namelen == 0) {
+      namelen = strlen(name);
+    }
+    fp = alloc_ufunc(name, namelen);
 
     if (fudi.fd_dict != NULL) {
       if (fudi.fd_di == NULL) {
@@ -2877,14 +2915,13 @@ void ex_function(exarg_T *eap)
         tv_clear(&fudi.fd_di->di_tv);
       }
       fudi.fd_di->di_tv.v_type = VAR_FUNC;
-      fudi.fd_di->di_tv.vval.v_string = xstrdup(name);
+      fudi.fd_di->di_tv.vval.v_string = xmemdupz(name, namelen);
 
       // behave like "dict" was used
       flags |= FC_DICT;
     }
 
     // insert the new function in the function list
-    set_ufunc_name(fp, name);
     if (overwrite) {
       hashitem_T *hi = hash_find(&func_hashtab, name);
       hi->hi_key = UF2HIKEY(fp);
@@ -2927,6 +2964,9 @@ errret_2:
   ga_clear_strings(&newargs);
   ga_clear_strings(&default_args);
   ga_clear_strings(&newlines);
+  if (fp != NULL) {
+    XFREE_CLEAR(fp->uf_name_exp);
+  }
   if (free_fp) {
     xfree(fp);
     fp = NULL;
@@ -3022,15 +3062,16 @@ char *get_user_func_name(expand_T *xp, int idx)
       return "";       // don't show dict and lambda functions
     }
 
-    if (strlen(fp->uf_name) + 4 >= IOSIZE) {
+    if (fp->uf_namelen + 4 >= IOSIZE) {
       return fp->uf_name;  // Prevent overflow.
     }
 
-    cat_func_name(IObuff, IOSIZE, fp);
+    int len = cat_func_name(IObuff, IOSIZE, fp);
     if (xp->xp_context != EXPAND_USER_FUNC) {
-      xstrlcat(IObuff, "(", IOSIZE);
+      xstrlcpy(IObuff + len, "(", IOSIZE - (size_t)len);
       if (!fp->uf_varargs && GA_EMPTY(&fp->uf_args)) {
-        xstrlcat(IObuff, ")", IOSIZE);
+        len++;
+        xstrlcpy(IObuff + len, ")", IOSIZE - (size_t)len);
       }
     }
     return IObuff;
@@ -3631,22 +3672,27 @@ bool do_return(exarg_T *eap, bool reanimate, bool is_cmd, void *rettv)
 char *get_return_cmd(void *rettv)
 {
   char *s = NULL;
-  char *tofree = NULL;
+  size_t slen = 0;
 
   if (rettv != NULL) {
+    char *tofree = NULL;
     tofree = s = encode_tv2echo((typval_T *)rettv, NULL);
+    xfree(tofree);
   }
   if (s == NULL) {
     s = "";
+  } else {
+    slen = strlen(s);
   }
 
   xstrlcpy(IObuff, ":return ", IOSIZE);
   xstrlcpy(IObuff + 8, s, IOSIZE - 8);
-  if (strlen(s) + 8 >= IOSIZE) {
+  size_t IObufflen = 8 + slen;
+  if (slen + 8 >= IOSIZE) {
     STRCPY(IObuff + IOSIZE - 4, "...");
+    IObufflen += 3;
   }
-  xfree(tofree);
-  return xstrdup(IObuff);
+  return xstrnsave(IObuff, IObufflen);
 }
 
 /// Get next function line.
@@ -4089,7 +4135,8 @@ bool set_ref_in_func(char *name, ufunc_T *fp_in, int copyID)
 char *register_luafunc(LuaRef ref)
 {
   char *name = get_lambda_name();
-  ufunc_T *fp = xcalloc(1, offsetof(ufunc_T, uf_name) + strlen(name) + 1);
+  size_t namelen = get_lambda_name_len();
+  ufunc_T *fp = alloc_ufunc(name, namelen);
 
   fp->uf_refcount = 1;
   fp->uf_varargs = true;
@@ -4098,7 +4145,6 @@ char *register_luafunc(LuaRef ref)
   fp->uf_script_ctx = current_sctx;
   fp->uf_luaref = ref;
 
-  STRCPY(fp->uf_name, name);
   hash_add(&func_hashtab, UF2HIKEY(fp));
 
   // coverity[leaked_storage]

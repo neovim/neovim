@@ -357,9 +357,10 @@ struct ufunc {
   funccall_T *uf_scoped;       ///< l: local variables for closure
   char *uf_name_exp;    ///< if "uf_name[]" starts with SNR the name with
                         ///< "<SNR>" as a string, otherwise NULL
-  char uf_name[];    ///< Name of function (actual size equals name);
-                     ///< can start with <SNR>123_
-                     ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
+  size_t uf_namelen;    ///< Length of uf_name (excluding the NUL)
+  char uf_name[];       ///< Name of function (actual size equals name);
+                        ///< can start with <SNR>123_
+                        ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
 };
 
 struct partial_S {
