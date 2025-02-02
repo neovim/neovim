@@ -2748,12 +2748,14 @@ function vim.fn.getcellwidths() end
 function vim.fn.getchangelist(buf) end
 
 --- Get a single character from the user or input stream.
---- If {expr} is omitted, wait until a character is available.
+--- If {expr} is omitted or is -1, wait until a character is
+---   available.
 --- If {expr} is 0, only get a character when one is available.
 ---   Return zero otherwise.
 --- If {expr} is 1, only check if a character is available, it is
 ---   not consumed.  Return zero if no character available.
---- If you prefer always getting a string use |getcharstr()|.
+--- If you prefer always getting a string use |getcharstr()|, or
+--- specify |FALSE| as "number" in {opts}.
 ---
 --- Without {expr} and when {expr} is 0 a whole character or
 --- special key is returned.  If it is a single character, the
@@ -2763,7 +2765,8 @@ function vim.fn.getchangelist(buf) end
 --- starting with 0x80 (decimal: 128).  This is the same value as
 --- the String "\<Key>", e.g., "\<Left>".  The returned value is
 --- also a String when a modifier (shift, control, alt) was used
---- that is not included in the character.
+--- that is not included in the character.  |keytrans()| can also
+--- be used to convert a returned String into a readable form.
 ---
 --- When {expr} is 0 and Esc is typed, there will be a short delay
 --- while Vim waits to see if this is the start of an escape
@@ -2774,6 +2777,24 @@ function vim.fn.getchangelist(buf) end
 --- Use nr2char() to convert it to a String.
 ---
 --- Use getcharmod() to obtain any additional modifiers.
+---
+--- The optional argument {opts} is a Dict and supports the
+--- following items:
+---
+---   number    If |TRUE|, return a Number when getting
+---       a single character.
+---       If |FALSE|, the return value is always
+---       converted to a String, and an empty
+---       String (instead of 0) is returned when
+---       no character is available.
+---       (default: |TRUE|)
+---
+---   simplify  If |TRUE|, include modifiers in the
+---       character if possible.  E.g., return
+---       the same value for CTRL-I and <Tab>.
+---       If |FALSE|, don't include modifiers in
+---       the character.
+---       (default: |TRUE|)
 ---
 --- When the user clicks a mouse button, the mouse event will be
 --- returned.  The position can then be found in |v:mouse_col|,
@@ -2811,9 +2832,10 @@ function vim.fn.getchangelist(buf) end
 ---   endfunction
 --- <
 ---
---- @param expr? 0|1
---- @return integer
-function vim.fn.getchar(expr) end
+--- @param expr? -1|0|1
+--- @param opts? table
+--- @return integer|string
+function vim.fn.getchar(expr, opts) end
 
 --- The result is a Number which is the state of the modifiers for
 --- the last obtained character with getchar() or in another way.
@@ -2872,20 +2894,13 @@ function vim.fn.getcharpos(expr) end
 --- @return table
 function vim.fn.getcharsearch() end
 
---- Get a single character from the user or input stream as a
---- string.
---- If {expr} is omitted, wait until a character is available.
---- If {expr} is 0 or false, only get a character when one is
----   available.  Return an empty string otherwise.
---- If {expr} is 1 or true, only check if a character is
----   available, it is not consumed.  Return an empty string
----   if no character is available.
---- Otherwise this works like |getchar()|, except that a number
---- result is converted to a string.
+--- The same as |getchar()|, except that this always returns a
+--- String, and "number" isn't allowed in {opts}.
 ---
---- @param expr? 0|1
+--- @param expr? -1|0|1
+--- @param opts? table
 --- @return string
-function vim.fn.getcharstr(expr) end
+function vim.fn.getcharstr(expr, opts) end
 
 --- Return completion pattern of the current command-line.
 --- Only works when the command line is being edited, thus
