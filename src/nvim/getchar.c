@@ -1866,22 +1866,47 @@ bool char_avail(void)
   return retval != NUL;
 }
 
+static int no_reduce_keys = 0;  ///< Do not apply modifiers to the key.
+
 /// "getchar()" and "getcharstr()" functions
-static void getchar_common(typval_T *argvars, typval_T *rettv)
+static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number)
   FUNC_ATTR_NONNULL_ALL
 {
   varnumber_T n;
   bool error = false;
+  bool simplify = true;
+
+  if (argvars[0].v_type != VAR_UNKNOWN
+      && tv_check_for_opt_dict_arg(argvars, 1) == FAIL) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_UNKNOWN && argvars[1].v_type == VAR_DICT) {
+    dict_T *d = argvars[1].vval.v_dict;
+
+    if (allow_number) {
+      allow_number = tv_dict_get_bool(d, "number", true);
+    } else if (tv_dict_has_key(d, "number")) {
+      semsg(_(e_invarg2), "number");
+      error = true;
+    }
+
+    simplify = tv_dict_get_bool(d, "simplify", true);
+  }
 
   no_mapping++;
   allow_keys++;
-  while (true) {
+  if (!simplify) {
+    no_reduce_keys++;
+  }
+  while (!error) {
     if (msg_col > 0) {
       // Position the cursor. Needed after a message that ends in a space.
       ui_cursor_goto(msg_row, msg_col);
     }
 
-    if (argvars[0].v_type == VAR_UNKNOWN) {
+    if (argvars[0].v_type == VAR_UNKNOWN
+        || (argvars[0].v_type == VAR_NUMBER && argvars[0].vval.v_number == -1)) {
       // getchar(): blocking wait.
       // TODO(bfredl): deduplicate shared logic with state_enter ?
       if (!char_avail()) {
@@ -1916,14 +1941,16 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
   }
   no_mapping--;
   allow_keys--;
+  if (!simplify) {
+    no_reduce_keys--;
+  }
 
   set_vim_var_nr(VV_MOUSE_WIN, 0);
   set_vim_var_nr(VV_MOUSE_WINID, 0);
   set_vim_var_nr(VV_MOUSE_LNUM, 0);
   set_vim_var_nr(VV_MOUSE_COL, 0);
 
-  rettv->vval.v_number = n;
-  if (n != 0 && (IS_SPECIAL(n) || mod_mask != 0)) {
+  if (n != 0 && (!allow_number || IS_SPECIAL(n) || mod_mask != 0)) {
     char temp[10];                // modifier: 3, mbyte-char: 6, NUL: 1
     int i = 0;
 
@@ -1970,35 +1997,23 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
         set_vim_var_nr(VV_MOUSE_COL, col + 1);
       }
     }
+  } else if (!allow_number) {
+    rettv->v_type = VAR_STRING;
+  } else {
+    rettv->vval.v_number = n;
   }
 }
 
 /// "getchar()" function
 void f_getchar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  getchar_common(argvars, rettv);
+  getchar_common(argvars, rettv, true);
 }
 
 /// "getcharstr()" function
 void f_getcharstr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  getchar_common(argvars, rettv);
-
-  if (rettv->v_type != VAR_NUMBER) {
-    return;
-  }
-
-  char temp[7];   // mbyte-char: 6, NUL: 1
-  const varnumber_T n = rettv->vval.v_number;
-  int i = 0;
-
-  if (n != 0) {
-    i += utf_char2bytes((int)n, temp);
-  }
-  assert(i < 7);
-  temp[i] = NUL;
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xmemdupz(temp, (size_t)i);
+  getchar_common(argvars, rettv, false);
 }
 
 /// "getcharmod()" function
@@ -2058,7 +2073,7 @@ static int check_simplify_modifier(int max_offset)
 {
   // We want full modifiers in Terminal mode so that the key can be correctly
   // encoded
-  if (State & MODE_TERMINAL) {
+  if ((State & MODE_TERMINAL) || no_reduce_keys > 0) {
     return 0;
   }
 

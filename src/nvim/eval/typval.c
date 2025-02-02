@@ -2234,6 +2234,18 @@ dictitem_T *tv_dict_find(const dict_T *const d, const char *const key, const ptr
   return TV_DICT_HI2DI(hi);
 }
 
+/// Check if a key is present in a dictionary.
+///
+/// @param[in]  d  Dictionary to check.
+/// @param[in]  key  Dictionary key.
+///
+/// @return whether the key is present in the dictionary.
+bool tv_dict_has_key(const dict_T *const d, const char *const key)
+  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return tv_dict_find(d, key, -1) != NULL;
+}
+
 /// Get a typval item from a dictionary and copy it into "rettv".
 ///
 /// @param[in]  d  Dictionary to check.
