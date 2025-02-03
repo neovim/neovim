@@ -532,11 +532,13 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                           the buffer. Otherwise, any truthy value means to
                           always show the diagnostic source. Overrides the
                           setting from |vim.diagnostic.config()|.
-      • {format}?         (`fun(diagnostic:vim.Diagnostic): string`) A
+      • {format}?         (`fun(diagnostic:vim.Diagnostic): string?`) A
                           function that takes a diagnostic as input and
-                          returns a string. The return value is the text used
-                          to display the diagnostic. Overrides the setting
-                          from |vim.diagnostic.config()|.
+                          returns a string or nil. If the return value is nil,
+                          the diagnostic is not displayed by the handler. Else
+                          the output text is used to display the diagnostic.
+                          Overrides the setting from
+                          |vim.diagnostic.config()|.
       • {prefix}?         (`string|table|(fun(diagnostic:vim.Diagnostic,i:integer,total:integer): string, string)`)
                           Prefix each diagnostic in the floating window:
                           • If a `function`, {i} is the index of the
@@ -607,10 +609,11 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
     Fields: ~
       • {current_line}?  (`boolean`, default: `false`) Only show diagnostics
                          for the current line.
-      • {format}?        (`fun(diagnostic:vim.Diagnostic): string`) A function
-                         that takes a diagnostic as input and returns a
-                         string. The return value is the text used to display
-                         the diagnostic.
+      • {format}?        (`fun(diagnostic:vim.Diagnostic): string?`) A
+                         function that takes a diagnostic as input and returns
+                         a string or nil. If the return value is nil, the
+                         diagnostic is not displayed by the handler. Else the
+                         output text is used to display the diagnostic.
 
 *vim.diagnostic.Opts.VirtualText*
 
@@ -635,9 +638,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {suffix}?             (`string|(fun(diagnostic:vim.Diagnostic): string)`)
                               Append diagnostic message with suffix. This can
                               be used to render an LSP diagnostic error code.
-      • {format}?             (`fun(diagnostic:vim.Diagnostic): string`) The
-                              return value is the text used to display the
-                              diagnostic. Example: >lua
+      • {format}?             (`fun(diagnostic:vim.Diagnostic): string?`) If
+                              not nil, the return value is the text used to
+                              display the diagnostic. Example: >lua
                                   function(diagnostic)
                                     if diagnostic.severity == vim.diagnostic.severity.ERROR then
                                       return string.format("E: %s", diagnostic.message)
@@ -645,6 +648,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                                     return diagnostic.message
                                   end
 <
+
+                              If the return value is nil, the diagnostic is
+                              not displayed by the handler.
       • {hl_mode}?            (`'replace'|'combine'|'blend'`) See
                               |nvim_buf_set_extmark()|.
       • {virt_text}?          (`[string,any][]`) See |nvim_buf_set_extmark()|.
