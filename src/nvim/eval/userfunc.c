@@ -891,7 +891,6 @@ static void func_clear_items(ufunc_T *fp)
   ga_clear_strings(&(fp->uf_args));
   ga_clear_strings(&(fp->uf_def_args));
   ga_clear_strings(&(fp->uf_lines));
-  XFREE_CLEAR(fp->uf_name_exp);
 
   if (fp->uf_flags & FC_LUAREF) {
     api_free_luaref(fp->uf_luaref);
@@ -930,6 +929,8 @@ static void func_free(ufunc_T *fp)
   if ((fp->uf_flags & (FC_DELETED | FC_REMOVED)) == 0) {
     func_remove(fp);
   }
+
+  XFREE_CLEAR(fp->uf_name_exp);
   xfree(fp);
 }
 
