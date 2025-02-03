@@ -3507,6 +3507,14 @@ M.funcs = {
       The optional argument {opts} is a Dict and supports the
       following items:
 
+      	cursor		A String specifying cursor behavior
+      			when waiting for a character.
+      			"hide": hide the cursor.
+      			"keep": keep current cursor unchanged.
+      			"msg": move cursor to message area.
+      			(default: automagically decide
+      			between "keep" and "msg")
+
       	number		If |TRUE|, return a Number when getting
       			a single character.
       			If |FALSE|, the return value is always
