@@ -2379,8 +2379,8 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
       // would use a tmux control sequence and an extra if(screen) test.
       tui->unibi_ext.set_cursor_color =
         (int)unibi_add_ext_str(ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
-    } else if (((xterm || hterm || rxvt || tmux || alacritty)
-               && (vte_version == 0 || vte_version >= 3900)) || st) {
+    } else if ((xterm || hterm || rxvt || tmux || alacritty || st)
+               && (vte_version == 0 || vte_version >= 3900)) {
       // Supported in urxvt, newer VTE.
       // Supported in st, but currently lacks entry in ncurses definitions  #32217
       tui->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(ut, "ext.set_cursor_color",
