@@ -2825,11 +2825,11 @@ void ex_function(exarg_T *eap)
           && (fp->uf_script_ctx.sc_sid != current_sctx.sc_sid
               || fp->uf_script_ctx.sc_seq == current_sctx.sc_seq)) {
         emsg_funcname(e_funcexts, name);
-        goto erret;
+        goto errret_keep;
       }
       if (fp->uf_calls > 0) {
         emsg_funcname(N_("E127: Cannot redefine function %s: It is in use"), name);
-        goto erret;
+        goto errret_keep;
       }
       if (fp->uf_refcount > 1) {
         // This function is referenced somewhere, don't redefine it but
@@ -2961,9 +2961,6 @@ erret:
     ga_init(&fp->uf_def_args, (int)sizeof(char *), 1);
   }
 errret_2:
-  ga_clear_strings(&newargs);
-  ga_clear_strings(&default_args);
-  ga_clear_strings(&newlines);
   if (fp != NULL) {
     XFREE_CLEAR(fp->uf_name_exp);
   }
@@ -2971,6 +2968,10 @@ errret_2:
     xfree(fp);
     fp = NULL;
   }
+errret_keep:
+  ga_clear_strings(&newargs);
+  ga_clear_strings(&default_args);
+  ga_clear_strings(&newlines);
 ret_free:
   xfree(line_to_free);
   xfree(fudi.fd_newkey);
