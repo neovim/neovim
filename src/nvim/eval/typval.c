@@ -2660,7 +2660,7 @@ int tv_dict_add_func(dict_T *const d, const char *const key, const size_t key_le
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
   item->di_tv.v_type = VAR_FUNC;
-  item->di_tv.vval.v_string = xstrdup(fp->uf_name);
+  item->di_tv.vval.v_string = xmemdupz(fp->uf_name, fp->uf_namelen);
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;

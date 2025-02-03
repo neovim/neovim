@@ -421,12 +421,48 @@ func Test_func_def_error()
   call assert_fails('exe l', 'E717:')
 
   " Define an autoload function with an incorrect file name
-  call writefile(['func foo#Bar()', 'return 1', 'endfunc'], 'Xscript')
+  call writefile(['func foo#Bar()', 'return 1', 'endfunc'], 'Xscript', 'D')
   call assert_fails('source Xscript', 'E746:')
-  call delete('Xscript')
 
   " Try to list functions using an invalid search pattern
   call assert_fails('function /\%(/', 'E53:')
+
+  " Use a script-local function to cover uf_name_exp.
+  func s:TestRedefine(arg1 = 1, arg2 = 10)
+    let caught_E122 = 0
+    try
+      func s:TestRedefine(arg1 = 1, arg2 = 10)
+      endfunc
+    catch /E122:/
+      let caught_E122 = 1
+    endtry
+    call assert_equal(1, caught_E122)
+
+    let caught_E127 = 0
+    try
+      func! s:TestRedefine(arg1 = 1, arg2 = 10)
+      endfunc
+    catch /E127:/
+      let caught_E127 = 1
+    endtry
+    call assert_equal(1, caught_E127)
+
+    " The failures above shouldn't cause heap-use-after-free here.
+    return [a:arg1 + a:arg2, expand('<stack>')]
+  endfunc
+
+  let stacks = []
+  " Call the function twice.
+  " Failing to redefine a function shouldn't clear its argument list.
+  for i in range(2)
+    let [val, stack] = s:TestRedefine(1000)
+    call assert_equal(1010, val)
+    call assert_match(expand('<SID>') .. 'TestRedefine\[20\]$', stack)
+    call add(stacks, stack)
+  endfor
+  call assert_equal(stacks[0], stacks[1])
+
+  delfunc s:TestRedefine
 endfunc
 
 " Test for deleting a function
@@ -908,6 +944,38 @@ func Test_func_curly_brace_invalid_name()
 
   set formatexpr&
   delfunc Fail
+endfunc
+
+func Test_func_return_in_try_verbose()
+  func TryReturnList()
+    try
+      return [1, 2, 3]
+    endtry
+  endfunc
+  func TryReturnNumber()
+    try
+      return 123
+    endtry
+  endfunc
+  func TryReturnOverlongString()
+    try
+      return repeat('a', 9999)
+    endtry
+  endfunc
+
+  " This should not cause heap-use-after-free
+  call assert_match('\n:return \[1, 2, 3\] made pending\n',
+                  \ execute('14verbose call TryReturnList()'))
+  " This should not cause stack-use-after-scope
+  call assert_match('\n:return 123 made pending\n',
+                  \ execute('14verbose call TryReturnNumber()'))
+  " An overlong string is truncated
+  call assert_match('\n:return a\{100,}\.\.\.',
+                  \ execute('14verbose call TryReturnOverlongString()'))
+
+  delfunc TryReturnList
+  delfunc TryReturnNumber
+  delfunc TryReturnOverlongString
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
