@@ -1147,4 +1147,32 @@ describe('regressions', function()
       },
     }
   end)
+
+  -- oldtest: Test_linematch_3diffs_sanity_check()
+  it('sanity check with 3 diff buffers', function()
+    clear()
+    screen = Screen.new(75, 20)
+    n.api.nvim_buf_set_lines(0, 0, -1, false, { 'abcd', 'def', 'hij' })
+    n.exec('rightbelow vnew')
+    n.api.nvim_buf_set_lines(0, 0, -1, false, { 'defq', 'hijk', 'nopq' })
+    n.exec('rightbelow vnew')
+    n.api.nvim_buf_set_lines(0, 0, -1, false, { 'hijklm', 'nopqr', 'stuv' })
+    n.exec([[
+      set diffopt+=linematch:60
+      windo diffthis | wincmd t
+      call feedkeys("Aq\<esc>")
+      call feedkeys("GAklm\<esc>")
+      call feedkeys("o")
+    ]])
+    screen:expect([[
+      {7:  }{22:abcdq                 }│{7:  }{23:----------------------}│{7:  }{23:-----------------------}|
+      {7:  }{4:def                   }│{7:  }{4:def}{27:q}{4:                  }│{7:  }{23:-----------------------}|
+      {7:  }{4:hijk}{27:lm}{4:                }│{7:  }{4:hijk                  }│{7:  }{4:hijk}{27:lm}{4:                 }|
+      {7:  }{23:----------------------}│{7:  }{4:nopq                  }│{7:  }{4:nopq}{27:r}{4:                  }|
+      {7:  }{4:^                      }│{7:  }{23:----------------------}│{7:  }{27:stuv}{4:                   }|
+      {1:~                       }│{1:~                       }│{1:~                        }|*13
+      {3:[No Name] [+]            }{2:[No Name] [+]            [No Name] [+]            }|
+      {5:-- INSERT --}                                                               |
+    ]])
+  end)
 end)

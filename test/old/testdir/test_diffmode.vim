@@ -1247,7 +1247,7 @@ func CloseoffSetup()
   call setline(1, ['one', 'tow', 'three'])
   diffthis
   call assert_equal(1, &diff)
-  only!
+  bw!
 endfunc
 
 func Test_diff_closeoff()
@@ -2278,7 +2278,8 @@ func Test_diffget_diffput_linematch()
   call term_sendkeys(buf, "17gg")
   call term_sendkeys(buf, ":diffput\<CR>")
   call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_19', {})
-
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_linematch_diff()
@@ -2298,7 +2299,8 @@ func Test_linematch_diff()
       \ 'abc d!',
       \ 'd!'])
   call VerifyScreenDump(buf, 'Test_linematch_diff1', {})
-
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_linematch_diff_iwhite()
@@ -2324,7 +2326,8 @@ func Test_linematch_diff_iwhite()
   call VerifyScreenDump(buf, 'Test_linematch_diff_iwhite1', {})
   call term_sendkeys(buf, ":set diffopt+=iwhiteall\<CR>")
   call VerifyScreenDump(buf, 'Test_linematch_diff_iwhite2', {})
-
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_linematch_diff_grouping()
@@ -2361,7 +2364,8 @@ func Test_linematch_diff_grouping()
       \ '?C',
       \ '?C'])
   call VerifyScreenDump(buf, 'Test_linematch_diff_grouping2', {})
-
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_linematch_diff_scroll()
@@ -2392,10 +2396,9 @@ func Test_linematch_diff_scroll()
   call VerifyScreenDump(buf, 'Test_linematch_diff_grouping_scroll1', {})
   call term_sendkeys(buf, "3\<c-e>")
   call VerifyScreenDump(buf, 'Test_linematch_diff_grouping_scroll2', {})
-
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
-
-
 
 func Test_linematch_line_limit_exceeded()
   CheckScreendump
@@ -2443,7 +2446,8 @@ func Test_linematch_line_limit_exceeded()
   " alignment algorithm will run on the largest diff block here
   call term_sendkeys(buf, ":set diffopt+=linematch:30\<CR>")
   call VerifyScreenDump(buf, 'Test_linematch_line_limit_exceeded2', {})
-
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_linematch_3diffs()
@@ -2480,6 +2484,31 @@ func Test_linematch_3diffs()
         \ "      BBB",
         \ "      BBB"])
   call VerifyScreenDump(buf, 'Test_linematch_3diffs1', {})
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
 
+" this used to access invalid memory
+func Test_linematch_3diffs_sanity_check()
+  CheckScreendump
+  call delete('.Xfile_linematch1.swp')
+  call delete('.Xfile_linematch2.swp')
+  call delete('.Xfile_linematch3.swp')
+  let lines =<< trim END
+    set diffopt+=linematch:60
+    call feedkeys("Aq\<esc>")
+    call feedkeys("GAklm\<esc>")
+    call feedkeys("o")
+  END
+  call writefile(lines, 'Xlinematch_3diffs.vim', 'D')
+  call writefile(['abcd', 'def', 'hij'], 'Xfile_linematch1', 'D')
+  call writefile(['defq', 'hijk', 'nopq'], 'Xfile_linematch2', 'D')
+  call writefile(['hijklm', 'nopqr', 'stuv'], 'Xfile_linematch3', 'D')
+  call WriteDiffFiles3(0, [], [], [])
+  let buf = RunVimInTerminal('-d -S Xlinematch_3diffs.vim Xfile_linematch1 Xfile_linematch2 Xfile_linematch3', {})
+  call VerifyScreenDump(buf, 'Test_linematch_3diffs2', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 " vim: shiftwidth=2 sts=2 expandtab
