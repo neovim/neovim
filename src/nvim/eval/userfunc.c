@@ -2515,7 +2515,8 @@ void ex_function(exarg_T *eap)
   garray_T newlines;
   int varargs = false;
   int flags = 0;
-  ufunc_T *fp;
+  ufunc_T *fp = NULL;
+  bool free_fp = false;
   bool overwrite = false;
   funcdict_T fudi;
   static int func_nr = 0;           // number for nameless function
@@ -2888,8 +2889,7 @@ void ex_function(exarg_T *eap)
       hashitem_T *hi = hash_find(&func_hashtab, name);
       hi->hi_key = UF2HIKEY(fp);
     } else if (hash_add(&func_hashtab, UF2HIKEY(fp)) == FAIL) {
-      xfree(fp);
-      fp = NULL;
+      free_fp = true;
       goto erret;
     }
     fp->uf_refcount = 1;
@@ -2920,8 +2920,16 @@ void ex_function(exarg_T *eap)
 erret:
   ga_clear_strings(&newargs);
   ga_clear_strings(&default_args);
+  if (fp != NULL) {
+    ga_init(&fp->uf_args, (int)sizeof(char *), 1);
+    ga_init(&fp->uf_def_args, (int)sizeof(char *), 1);
+  }
 errret_2:
   ga_clear_strings(&newlines);
+  if (free_fp) {
+    xfree(fp);
+    fp = NULL;
+  }
 ret_free:
   xfree(line_to_free);
   xfree(fudi.fd_newkey);
