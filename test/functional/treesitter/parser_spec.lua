@@ -633,7 +633,7 @@ int x = INT_MAX;
         }, get_ranges())
 
         n.feed('7ggI//<esc>')
-        exec_lua([[parser:parse({6, 7})]])
+        exec_lua([[parser:parse({5, 6})]])
         eq('table', exec_lua('return type(parser:children().c)'))
         eq(2, exec_lua('return #parser:children().c:trees()'))
         eq({

@@ -1581,7 +1581,8 @@ LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
     Parameters: ~
       • {reload}  (`boolean?`)
 
-LanguageTree:is_valid({exclude_children})            *LanguageTree:is_valid()*
+                                                     *LanguageTree:is_valid()*
+LanguageTree:is_valid({exclude_children}, {range})
     Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()|
     reflects the latest state of the source. If invalid, user should call
     |LanguageTree:parse()|.
@@ -1589,6 +1590,7 @@ LanguageTree:is_valid({exclude_children})            *LanguageTree:is_valid()*
     Parameters: ~
       • {exclude_children}  (`boolean?`) whether to ignore the validity of
                             children (default `false`)
+      • {range}             (`Range?`) range to check for validity
 
     Return: ~
         (`boolean`)
