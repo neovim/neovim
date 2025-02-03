@@ -2908,8 +2908,7 @@ void ex_function(exarg_T *eap)
         fudi.fd_di = tv_dict_item_alloc(fudi.fd_newkey);
         if (tv_dict_add(fudi.fd_dict, fudi.fd_di) == FAIL) {
           xfree(fudi.fd_di);
-          xfree(fp);
-          fp = NULL;
+          XFREE_CLEAR(fp);
           goto erret;
         }
       } else {
@@ -2967,8 +2966,7 @@ errret_2:
     XFREE_CLEAR(fp->uf_name_exp);
   }
   if (free_fp) {
-    xfree(fp);
-    fp = NULL;
+    XFREE_CLEAR(fp);
   }
 errret_keep:
   ga_clear_strings(&newargs);
