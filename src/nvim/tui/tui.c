@@ -2382,7 +2382,7 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
     } else if ((xterm || hterm || rxvt || tmux || alacritty || st)
                && (vte_version == 0 || vte_version >= 3900)) {
       // Supported in urxvt, newer VTE.
-      // Supported in st, but currently lacks entry in ncurses definitions  #32217
+      // Supported in st, but currently missing in ncurses definitions. #32217
       tui->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(ut, "ext.set_cursor_color",
                                                                "\033]12;%p1%s\007");
     }
