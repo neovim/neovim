@@ -6,6 +6,7 @@ on:
 
 jobs:
   update-vim-patches:
+    if: github.repository_owner == 'neovim'
     runs-on: ubuntu-latest
     permissions:
       contents: write
