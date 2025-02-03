@@ -284,7 +284,10 @@ s+='B'
   python3 << trim eof
     s+='E'
   eof
-  call assert_equal('ABCDE', pyxeval('s'))
+  python3 << trimm
+s+='F'
+trimm
+  call assert_equal('ABCDEF', pyxeval('s'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

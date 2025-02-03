@@ -2456,7 +2456,8 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
                   && (!ASCII_ISALPHA(p[2]) || p[2] == 's')))) {
         // ":python <<" continues until a dot, like ":append"
         p = skipwhite(arg + 2);
-        if (strncmp(p, "trim", 4) == 0) {
+        if (strncmp(p, "trim", 4) == 0
+            && (p[4] == NUL || ascii_iswhite(p[4]))) {
           // Ignore leading white space.
           p = skipwhite(p + 4);
           heredoc_trimmedlen = (size_t)(skipwhite(theline) - theline);
@@ -2484,20 +2485,26 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
           }
           if (arg != NULL && strncmp(arg, "=<<", 3) == 0) {
             p = skipwhite(arg + 3);
+            bool has_trim = false;
             while (true) {
-              if (strncmp(p, "trim", 4) == 0) {
+              if (strncmp(p, "trim", 4) == 0
+                  && (p[4] == NUL || ascii_iswhite(p[4]))) {
                 // Ignore leading white space.
                 p = skipwhite(p + 4);
-                heredoc_trimmedlen = (size_t)(skipwhite(theline) - theline);
-                heredoc_trimmed = xmemdupz(theline, heredoc_trimmedlen);
+                has_trim = true;
                 continue;
               }
-              if (strncmp(p, "eval", 4) == 0) {
+              if (strncmp(p, "eval", 4) == 0
+                  && (p[4] == NUL || ascii_iswhite(p[4]))) {
                 // Ignore leading white space.
                 p = skipwhite(p + 4);
                 continue;
               }
               break;
+            }
+            if (has_trim) {
+              heredoc_trimmedlen = (size_t)(skipwhite(theline) - theline);
+              heredoc_trimmed = xmemdupz(theline, heredoc_trimmedlen);
             }
             skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
             do_concat = false;
