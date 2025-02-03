@@ -2294,6 +2294,7 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
   bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
+  bool st = terminfo_is_term_family(term, "st");
   bool iterm = terminfo_is_term_family(term, "iterm")
                || terminfo_is_term_family(term, "iterm2")
                || terminfo_is_term_family(term, "iTerm.app")
@@ -2378,9 +2379,10 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
       // would use a tmux control sequence and an extra if(screen) test.
       tui->unibi_ext.set_cursor_color =
         (int)unibi_add_ext_str(ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
-    } else if ((xterm || hterm || rxvt || tmux || alacritty)
+    } else if ((xterm || hterm || rxvt || tmux || alacritty || st)
                && (vte_version == 0 || vte_version >= 3900)) {
       // Supported in urxvt, newer VTE.
+      // Supported in st, but currently missing in ncurses definitions. #32217
       tui->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(ut, "ext.set_cursor_color",
                                                                "\033]12;%p1%s\007");
     }
