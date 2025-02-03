@@ -2471,36 +2471,38 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
         is_heredoc = true;
       }
 
-      // Check for ":let v =<< [trim] EOF"
-      //       and ":let [a, b] =<< [trim] EOF"
-      arg = p;
-      if (checkforcmd(&arg, "let", 2)) {
-        int var_count = 0;
-        int semicolon = 0;
-        arg = (char *)skip_var_list(arg, &var_count, &semicolon, true);
-        if (arg != NULL) {
-          arg = skipwhite(arg);
-        }
-        if (arg != NULL && strncmp(arg, "=<<", 3) == 0) {
-          p = skipwhite(arg + 3);
-          while (true) {
-            if (strncmp(p, "trim", 4) == 0) {
-              // Ignore leading white space.
-              p = skipwhite(p + 4);
-              heredoc_trimmedlen = (size_t)(skipwhite(theline) - theline);
-              heredoc_trimmed = xmemdupz(theline, heredoc_trimmedlen);
-              continue;
-            }
-            if (strncmp(p, "eval", 4) == 0) {
-              // Ignore leading white space.
-              p = skipwhite(p + 4);
-              continue;
-            }
-            break;
+      if (!is_heredoc) {
+        // Check for ":let v =<< [trim] EOF"
+        //       and ":let [a, b] =<< [trim] EOF"
+        arg = p;
+        if (checkforcmd(&arg, "let", 2)) {
+          int var_count = 0;
+          int semicolon = 0;
+          arg = (char *)skip_var_list(arg, &var_count, &semicolon, true);
+          if (arg != NULL) {
+            arg = skipwhite(arg);
           }
-          skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
-          do_concat = false;
-          is_heredoc = true;
+          if (arg != NULL && strncmp(arg, "=<<", 3) == 0) {
+            p = skipwhite(arg + 3);
+            while (true) {
+              if (strncmp(p, "trim", 4) == 0) {
+                // Ignore leading white space.
+                p = skipwhite(p + 4);
+                heredoc_trimmedlen = (size_t)(skipwhite(theline) - theline);
+                heredoc_trimmed = xmemdupz(theline, heredoc_trimmedlen);
+                continue;
+              }
+              if (strncmp(p, "eval", 4) == 0) {
+                // Ignore leading white space.
+                p = skipwhite(p + 4);
+                continue;
+              }
+              break;
+            }
+            skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
+            do_concat = false;
+            is_heredoc = true;
+          }
         }
       }
     }
