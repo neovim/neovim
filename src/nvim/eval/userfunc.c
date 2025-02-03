@@ -2918,13 +2918,14 @@ void ex_function(exarg_T *eap)
   goto ret_free;
 
 erret:
-  ga_clear_strings(&newargs);
-  ga_clear_strings(&default_args);
   if (fp != NULL) {
+    // these were set to "newargs" and "default_args", which are cleared below
     ga_init(&fp->uf_args, (int)sizeof(char *), 1);
     ga_init(&fp->uf_def_args, (int)sizeof(char *), 1);
   }
 errret_2:
+  ga_clear_strings(&newargs);
+  ga_clear_strings(&default_args);
   ga_clear_strings(&newlines);
   if (free_fp) {
     xfree(fp);
