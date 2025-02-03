@@ -2037,11 +2037,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Option settings for diff mode.  It can consist of the following items.
 	All are optional.  Items must be separated by a comma.
 
-		filler		Show filler lines, to keep the text
-				synchronized with a window that has inserted
-				lines at the same position.  Mostly useful
-				when windows are side-by-side and 'scrollbind'
-				is set.
+		algorithm:{text} Use the specified diff algorithm with the
+				internal diff engine. Currently supported
+				algorithms are:
+				myers      the default algorithm
+				minimal    spend extra time to generate the
+					   smallest possible diff
+				patience   patience diff algorithm
+				histogram  histogram diff algorithm
+
+		closeoff	When a window is closed where 'diff' is set
+				and there is only one window remaining in the
+				same tab page with 'diff' set, execute
+				`:diffoff` in that window.  This undoes a
+				`:diffsplit` command.
 
 		context:{n}	Use a context of {n} lines between a change
 				and a fold that contains unchanged lines.
@@ -2051,6 +2060,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 				for a deleted line. Set it to a very large
 				value (999999) to disable folding completely.
 				See |fold-diff|.
+
+		filler		Show filler lines, to keep the text
+				synchronized with a window that has inserted
+				lines at the same position.  Mostly useful
+				when windows are side-by-side and 'scrollbind'
+				is set.
+
+		foldcolumn:{n}	Set the 'foldcolumn' option to {n} when
+				starting diff mode.  Without this 2 is used.
+
+		followwrap	Follow the 'wrap' option and leave as it is.
+
+		horizontal	Start diff mode with horizontal splits (unless
+				explicitly specified otherwise).
+
+		hiddenoff	Do not use diff mode for a buffer when it
+				becomes hidden.
 
 		iblank		Ignore changes where lines are all blank.  Adds
 				the "-B" flag to the "diff" command if
@@ -2064,6 +2090,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 		icase		Ignore changes in case of text.  "a" and "A"
 				are considered the same.  Adds the "-i" flag
 				to the "diff" command if 'diffexpr' is empty.
+
+		indent-heuristic
+				Use the indent heuristic for the internal
+				diff library.
+
+		internal	Use the internal diff library.  This is
+				ignored when 'diffexpr' is set.  *E960*
+				When running out of memory when writing a
+				buffer this item will be ignored for diffs
+				involving that buffer.  Set the 'verbose'
+				option to see when this happens.
 
 		iwhite		Ignore changes in amount of white space.  Adds
 				the "-b" flag to the "diff" command if
@@ -2084,55 +2121,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 				of the "diff" command for what this does
 				exactly.
 
-		horizontal	Start diff mode with horizontal splits (unless
-				explicitly specified otherwise).
+		linematch:{n}   Align and mark changes between the most
+				similar lines between the buffers. When the
+				total number of lines in the diff hunk exceeds
+				{n}, the lines will not be aligned because for
+				very large diff hunks there will be a
+				noticeable lag. A reasonable setting is
+				"linematch:60", as this will enable alignment
+				for a 2 buffer diff hunk of 30 lines each,
+				or a 3 buffer diff hunk of 20 lines each.
 
 		vertical	Start diff mode with vertical splits (unless
 				explicitly specified otherwise).
-
-		closeoff	When a window is closed where 'diff' is set
-				and there is only one window remaining in the
-				same tab page with 'diff' set, execute
-				`:diffoff` in that window.  This undoes a
-				`:diffsplit` command.
-
-		hiddenoff	Do not use diff mode for a buffer when it
-				becomes hidden.
-
-		foldcolumn:{n}	Set the 'foldcolumn' option to {n} when
-				starting diff mode.  Without this 2 is used.
-
-		followwrap	Follow the 'wrap' option and leave as it is.
-
-		internal	Use the internal diff library.  This is
-				ignored when 'diffexpr' is set.  *E960*
-				When running out of memory when writing a
-				buffer this item will be ignored for diffs
-				involving that buffer.  Set the 'verbose'
-				option to see when this happens.
-
-		indent-heuristic
-				Use the indent heuristic for the internal
-				diff library.
-
-		linematch:{n}   Enable a second stage diff on each generated
-				hunk in order to align lines. When the total
-				number of lines in a hunk exceeds {n}, the
-				second stage diff will not be performed as
-				very large hunks can cause noticeable lag. A
-				recommended setting is "linematch:60", as this
-				will enable alignment for a 2 buffer diff with
-				hunks of up to 30 lines each, or a 3 buffer
-				diff with hunks of up to 20 lines each.
-
-		algorithm:{text} Use the specified diff algorithm with the
-				internal diff engine. Currently supported
-				algorithms are:
-				myers      the default algorithm
-				minimal    spend extra time to generate the
-					   smallest possible diff
-				patience   patience diff algorithm
-				histogram  histogram diff algorithm
 
 	Examples: >vim
 		set diffopt=internal,filler,context:4

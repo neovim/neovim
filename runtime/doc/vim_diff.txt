@@ -351,7 +351,6 @@ Options:
 - 'autoread'    works in the terminal (if it supports "focus" events)
 - 'background'  cannot be set to empty.
 - 'cpoptions'   flags: |cpo-_|
-- 'diffopt'     "linematch" feature
 - 'eadirection' cannot be set to empty.
 - 'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The
                 user is prompted whether to trust the file.
@@ -466,6 +465,7 @@ Upstreamed features                                      *nvim-upstreamed*
 
 These Nvim features were later integrated into Vim.
 
+- 'diffopt' "linematch" feature
 - 'fillchars' flags: "eob"
 - 'jumpoptions' "stack" behavior
 - 'wildoptions' flags: "pum" enables popupmenu for wildmode completion
