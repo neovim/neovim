@@ -110,13 +110,11 @@ void do_debug(char *cmd)
   }
   if (debug_oldval != NULL) {
     smsg(0, _("Oldval = \"%s\""), debug_oldval);
-    xfree(debug_oldval);
-    debug_oldval = NULL;
+    XFREE_CLEAR(debug_oldval);
   }
   if (debug_newval != NULL) {
     smsg(0, _("Newval = \"%s\""), debug_newval);
-    xfree(debug_newval);
-    debug_newval = NULL;
+    XFREE_CLEAR(debug_newval);
   }
   char *sname = estack_sfile(ESTACK_NONE);
   if (sname != NULL) {

@@ -5226,7 +5226,7 @@ void buf_copy_options(buf_T *buf, int flags)
       // or to a help buffer.
       if (dont_do_help) {
         buf->b_p_isk = save_p_isk;
-        if (p_vts && p_vts != empty_string_option && !buf->b_p_vts_array) {
+        if (p_vts && *p_vts != NUL && !buf->b_p_vts_array) {
           tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
           buf->b_p_vts_array = NULL;
@@ -5239,7 +5239,7 @@ void buf_copy_options(buf_T *buf, int flags)
         COPY_OPT_SCTX(buf, kBufOptTabstop);
         buf->b_p_vts = xstrdup(p_vts);
         COPY_OPT_SCTX(buf, kBufOptVartabstop);
-        if (p_vts && p_vts != empty_string_option && !buf->b_p_vts_array) {
+        if (p_vts && *p_vts != NUL && !buf->b_p_vts_array) {
           tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
           buf->b_p_vts_array = NULL;
