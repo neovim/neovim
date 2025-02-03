@@ -28,10 +28,10 @@ jobs:
       - run: sudo apt-get install libfuse2
 
       - run: |
-          gh release download -R neovim/neovim -p nvim.appimage
-          chmod a+x nvim.appimage
+          gh release download -R neovim/neovim -p nvim-linux-x86_64.appimage
+          chmod a+x nvim-linux-x86_64.appimage
           mkdir -p $HOME/.local/bin
-          mv nvim.appimage $HOME/.local/bin/nvim
+          mv nvim-linux-x86_64.appimage $HOME/.local/bin/nvim
           printf '%s\n' "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Set up git config
