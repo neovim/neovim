@@ -436,6 +436,24 @@ func Test_let_heredoc_fails()
     call assert_report('Caught exception: ' .. v:exception)
   endtry
 
+  try
+    let v =<< trim trimm
+    trimm
+    call assert_report('No exception thrown')
+  catch /E221:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
+  try
+    let v =<< trim trim evall
+    evall
+    call assert_report('No exception thrown')
+  catch /E221:/
+  catch
+    call assert_report('Caught exception: ' .. v:exception)
+  endtry
+
   let text =<< trim END
   func WrongSyntax()
     let v =<< that there
