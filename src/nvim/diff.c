@@ -1866,8 +1866,10 @@ static void count_filler_lines_and_topline(int *curlinenum_to, int *linesfiller,
       }
     } else {
       (*linesfiller) = 0;
-      ch_virtual_lines = get_max_diff_length(curdif);
-      isfiller = (curdif->df_count[toidx] ? false : true);
+      if (curdif) {
+        ch_virtual_lines = get_max_diff_length(curdif);
+        isfiller = (curdif->df_count[toidx] ? false : true);
+      }
       if (isfiller) {
         while (curdif && curdif->df_next && curdif->df_lnum[toidx] ==
                curdif->df_next->df_lnum[toidx]
