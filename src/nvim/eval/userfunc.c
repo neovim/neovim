@@ -2867,6 +2867,7 @@ void ex_function(exarg_T *eap)
         if (tv_dict_add(fudi.fd_dict, fudi.fd_di) == FAIL) {
           xfree(fudi.fd_di);
           xfree(fp);
+          fp = NULL;
           goto erret;
         }
       } else {
@@ -2887,6 +2888,7 @@ void ex_function(exarg_T *eap)
       hi->hi_key = UF2HIKEY(fp);
     } else if (hash_add(&func_hashtab, UF2HIKEY(fp)) == FAIL) {
       xfree(fp);
+      fp = NULL;
       goto erret;
     }
     fp->uf_refcount = 1;
