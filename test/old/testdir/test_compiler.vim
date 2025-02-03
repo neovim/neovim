@@ -411,8 +411,10 @@ func Test_compiler_spotbugs_properties()
 
   " TEST INTEGRATION WITH A SUPPORTED COMPILER PLUGIN.
   if filereadable($VIMRUNTIME .. '/compiler/maven.vim')
+    let save_PATH = $PATH
     if !executable('mvn')
       if has('win32')
+        let $PATH = 'Xspotbugs;' .. $PATH
         " This is what ":help executable()" suggests.
         call writefile([], 'Xspotbugs/mvn.cmd')
       else
@@ -700,6 +702,7 @@ func Test_compiler_spotbugs_properties()
 
     bwipeout
     setlocal makeprg=
+    let $PATH = save_PATH
   endif
 
   filetype plugin off
