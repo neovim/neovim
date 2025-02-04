@@ -5,6 +5,7 @@ local clear = n.clear
 local exec = n.exec
 local feed = n.feed
 local async_command = n.async_meths.nvim_command
+local poke_eventloop = n.poke_eventloop
 
 describe('getchar()', function()
   before_each(clear)
@@ -56,8 +57,10 @@ describe('getchar()', function()
       "echo 1234 | sleep 1m | call getchar(-1, #{cursor: 'keep'})",
     }) do
       async_command(cmd)
+      poke_eventloop()
       screen:expect_unchanged()
       feed('a')
+      poke_eventloop()
       screen:expect_unchanged()
     end
 
