@@ -178,4 +178,63 @@ describe('vim.treesitter.inspect_tree', function()
     -- close source buffer window and all remaining tree windows
     n.expect_exit(n.command, 'quit')
   end)
+
+  it('shows which nodes are missing', function()
+    insert([[
+      int main() {
+          if (a.) {
+          //    ^ MISSING field_identifier here
+              if (1) d()
+              //        ^ MISSING ";" here
+          }
+      }
+      ]])
+
+    exec_lua(function()
+      vim.treesitter.start(0, 'c')
+      vim.treesitter.inspect_tree()
+    end)
+    feed('a')
+
+    expect_tree [[
+      (translation_unit ; [0, 0] - [8, 0]
+        (function_definition ; [0, 0] - [6, 1]
+          type: (primitive_type) ; [0, 0] - [0, 3]
+          declarator: (function_declarator ; [0, 4] - [0, 10]
+            declarator: (identifier) ; [0, 4] - [0, 8]
+            parameters: (parameter_list ; [0, 8] - [0, 10]
+              "(" ; [0, 8] - [0, 9]
+              ")")) ; [0, 9] - [0, 10]
+          body: (compound_statement ; [0, 11] - [6, 1]
+            "{" ; [0, 11] - [0, 12]
+            (if_statement ; [1, 4] - [5, 5]
+              "if" ; [1, 4] - [1, 6]
+              condition: (parenthesized_expression ; [1, 7] - [1, 11]
+                "(" ; [1, 7] - [1, 8]
+                (field_expression ; [1, 8] - [1, 10]
+                  argument: (identifier) ; [1, 8] - [1, 9]
+                  operator: "." ; [1, 9] - [1, 10]
+                  field: (MISSING field_identifier)) ; [1, 10] - [1, 10]
+                ")") ; [1, 10] - [1, 11]
+              consequence: (compound_statement ; [1, 12] - [5, 5]
+                "{" ; [1, 12] - [1, 13]
+                (comment) ; [2, 4] - [2, 41]
+                (if_statement ; [3, 8] - [4, 36]
+                  "if" ; [3, 8] - [3, 10]
+                  condition: (parenthesized_expression ; [3, 11] - [3, 14]
+                    "(" ; [3, 11] - [3, 12]
+                    (number_literal) ; [3, 12] - [3, 13]
+                    ")") ; [3, 13] - [3, 14]
+                  consequence: (expression_statement ; [3, 15] - [4, 36]
+                    (call_expression ; [3, 15] - [3, 18]
+                      function: (identifier) ; [3, 15] - [3, 16]
+                      arguments: (argument_list ; [3, 16] - [3, 18]
+                        "(" ; [3, 16] - [3, 17]
+                        ")")) ; [3, 17] - [3, 18]
+                    (comment) ; [4, 8] - [4, 36]
+                    (MISSING ";"))) ; [4, 36] - [4, 36]
+                "}")) ; [5, 4] - [5, 5]
+            "}"))) ; [6, 0] - [6, 1]
+      ]]
+  end)
 end)

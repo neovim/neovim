@@ -381,6 +381,7 @@ TREESITTER
   queries in addition to overriding.
 • |LanguageTree:is_valid()| now accepts a range parameter to narrow the scope
   of the validity check.
+• |:InspectTree| now shows which nodes are missing.
 
 TUI
 
