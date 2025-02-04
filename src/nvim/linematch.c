@@ -32,12 +32,8 @@ struct diffcmppath_S {
 static size_t line_len(const mmfile_t *m)
 {
   char *s = m->ptr;
-  size_t n = (size_t)m->size;
-  char *end = strnchr(s, &n, '\n');
-  if (end) {
-    return (size_t)(end - s);
-  }
-  return (size_t)m->size;
+  char *end = memchr(s, '\n', (size_t)m->size);
+  return end ? (size_t)(end - s) : (size_t)m->size;
 }
 
 #define MATCH_CHAR_MAX_LEN 800
@@ -148,9 +144,9 @@ static int count_n_matched_chars(mmfile_t **sp, const size_t n, bool iwhite)
 mmfile_t fastforward_buf_to_lnum(mmfile_t s, linenr_T lnum)
 {
   for (int i = 0; i < lnum - 1; i++) {
-    size_t n = (size_t)s.size;
-    s.ptr = strnchr(s.ptr, &n, '\n');
-    s.size = (int)n;
+    char *line_end = memchr(s.ptr, '\n', (size_t)s.size);
+    s.size = line_end ? (int)(s.size - (line_end - s.ptr)) : 0;
+    s.ptr = line_end;
     if (!s.ptr) {
       break;
     }
