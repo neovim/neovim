@@ -1932,7 +1932,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
         // Flush screen updates before blocking.
         ui_flush();
         input_get(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
-        if (!multiqueue_empty(main_loop.events)) {
+        if (!input_available() && !multiqueue_empty(main_loop.events)) {
           state_handle_k_event();
           continue;
         }
