@@ -381,9 +381,6 @@ describe('buffer cursor position is correct in terminal without number column', 
     }, {
       cols = 70,
     })
-    -- Also check for real cursor position, as it is used for stuff like input methods
-    screen._handle_busy_start = function() end
-    screen._handle_busy_stop = function() end
     screen:expect([[
                                                                             |*4
       Entering Ex mode.  Type "visual" to go to Normal mode.                |
@@ -692,9 +689,6 @@ describe('buffer cursor position is correct in terminal with number column', fun
     }, {
       cols = 70,
     })
-    -- Also check for real cursor position, as it is used for stuff like input methods
-    screen._handle_busy_start = function() end
-    screen._handle_busy_stop = function() end
     screen:expect([[
       {7:  1 }                                                                  |
       {7:  2 }                                                                  |
