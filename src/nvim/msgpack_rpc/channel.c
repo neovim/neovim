@@ -44,17 +44,20 @@
 
 static void log_request(char *dir, uint64_t channel_id, uint32_t req_id, const char *name)
 {
-  DLOGN("RPC %s %" PRIu64 ": %s id=%u: %s\n", dir, channel_id, REQ, req_id, name);
+  logmsg(LOGLVL_DBG, "RPC: ", NULL, -1, false, "%s %" PRIu64 ": %s id=%u: %s\n", dir, channel_id,
+         REQ, req_id, name);
 }
 
 static void log_response(char *dir, uint64_t channel_id, char *kind, uint32_t req_id)
 {
-  DLOGN("RPC %s %" PRIu64 ": %s id=%u\n", dir, channel_id, kind, req_id);
+  logmsg(LOGLVL_DBG, "RPC: ", NULL, -1, false, "%s %" PRIu64 ": %s id=%u\n", dir, channel_id, kind,
+         req_id);
 }
 
 static void log_notify(char *dir, uint64_t channel_id, const char *name)
 {
-  DLOGN("RPC %s %" PRIu64 ": %s %s\n", dir, channel_id, NOT, name);
+  logmsg(LOGLVL_DBG, "RPC: ", NULL, -1, false, "%s %" PRIu64 ": %s %s\n", dir, channel_id, NOT,
+         name);
 }
 
 #else
