@@ -1820,7 +1820,8 @@ static void find_top_diff_block(diff_T **thistopdiff, diff_T **nextblockblock, i
       topdiffchange = 0;
     }
 
-    // check if the fromwin topline is matched by the current diff. if so, set it to the top of the diff block
+    // check if the fromwin topline is matched by the current diff. if so,
+    // set it to the top of the diff block
     if (topline >= topdiff->df_lnum[fromidx] && topline <=
         (topdiff->df_lnum[fromidx] + topdiff->df_count[fromidx])) {
       // this line is inside the current diff block, so we will save the
@@ -1865,8 +1866,10 @@ static void count_filler_lines_and_topline(int *curlinenum_to, int *linesfiller,
       }
     } else {
       (*linesfiller) = 0;
-      ch_virtual_lines = get_max_diff_length(curdif);
-      isfiller = (curdif->df_count[toidx] ? false : true);
+      if (curdif) {
+        ch_virtual_lines = get_max_diff_length(curdif);
+        isfiller = (curdif->df_count[toidx] ? false : true);
+      }
       if (isfiller) {
         while (curdif && curdif->df_next && curdif->df_lnum[toidx] ==
                curdif->df_next->df_lnum[toidx]
@@ -2021,10 +2024,15 @@ static void run_linematch_algorithm(diff_T *dp)
   size_t ndiffs = 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if (curtab->tp_diffbuf[i] != NULL) {
-      // write the contents of the entire buffer to
-      // diffbufs_mm[diffbuffers_count]
-      diff_write_buffer(curtab->tp_diffbuf[i], &diffbufs_mm[ndiffs],
-                        dp->df_lnum[i], dp->df_lnum[i] + dp->df_count[i] - 1);
+      if (dp->df_count[i] > 0) {
+        // write the contents of the entire buffer to
+        // diffbufs_mm[diffbuffers_count]
+        diff_write_buffer(curtab->tp_diffbuf[i], &diffbufs_mm[ndiffs],
+                          dp->df_lnum[i], dp->df_lnum[i] + dp->df_count[i] - 1);
+      } else {
+        diffbufs_mm[ndiffs].size = 0;
+        diffbufs_mm[ndiffs].ptr = NULL;
+      }
 
       diffbufs[ndiffs] = &diffbufs_mm[ndiffs];
 
@@ -2060,6 +2068,12 @@ static void run_linematch_algorithm(diff_T *dp)
 /// Returns > 0 for inserting that many filler lines above it (never happens
 /// when 'diffopt' doesn't contain "filler").
 /// This should only be used for windows where 'diff' is set.
+/// When diffopt contains linematch, a changed/added/deleted line
+/// may also have filler lines above it. In such a case, the possibilities
+/// are no longer mutually exclusive. The number of filler lines is
+/// returned from diff_check, and the integer 'linestatus' passed by
+/// pointer is set to -1 to indicate a changed line, and -2 to indicate an
+/// added line
 ///
 /// @param wp
 /// @param lnum
@@ -2113,7 +2127,8 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
   // Useful for scrollbind calculations which need to count all the filler lines
   // above the screen.
   if (lnum >= wp->w_topline && lnum < wp->w_botline
-      && !dp->is_linematched && diff_linematch(dp)) {
+      && !dp->is_linematched && diff_linematch(dp)
+      && diff_check_sanity(curtab, dp)) {
     run_linematch_algorithm(dp);
   }
 

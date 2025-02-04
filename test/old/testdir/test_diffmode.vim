@@ -1017,6 +1017,41 @@ func Test_diff_screen()
   call WriteDiffFiles(buf, [], [0])
   call VerifyBoth(buf, "Test_diff_22", "")
 
+  call WriteDiffFiles(buf, ['?a', '?b', '?c'], ['!b'])
+  call VerifyInternal(buf, 'Test_diff_23', " diffopt+=linematch:30")
+
+  call WriteDiffFiles(buf, ['',
+      \ 'common line',
+      \ 'common line',
+      \ '',
+      \ 'DEFabc',
+      \ 'xyz',
+      \ 'xyz',
+      \ 'xyz',
+      \ 'DEFabc',
+      \ 'DEFabc',
+      \ 'DEFabc',
+      \ 'common line',
+      \ 'common line',
+      \ 'DEF',
+      \ 'common line',
+      \ 'DEF',
+      \ 'something' ],
+      \ ['',
+      \ 'common line',
+      \ 'common line',
+      \ '',
+      \ 'ABCabc',
+      \ 'ABCabc',
+      \ 'ABCabc',
+      \ 'ABCabc',
+      \ 'common line',
+      \ 'common line',
+      \ 'common line',
+      \ 'something'])
+  call VerifyInternal(buf, 'Test_diff_24', " diffopt+=linematch:30")
+
+
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xdifile1')
@@ -1212,7 +1247,7 @@ func CloseoffSetup()
   call setline(1, ['one', 'tow', 'three'])
   diffthis
   call assert_equal(1, &diff)
-  only!
+  bw!
 endfunc
 
 func Test_diff_closeoff()
@@ -2040,4 +2075,440 @@ func Test_diff_topline_noscroll()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_diffget_diffput_linematch()
+  CheckScreendump
+  call delete('.Xdifile1.swp')
+  call delete('.Xdifile2.swp')
+  call WriteDiffFiles(0, [], [])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2', {})
+  call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
+
+  " enable linematch
+  call term_sendkeys(buf, ":set diffopt+=linematch:30\<CR>")
+  call WriteDiffFiles(buf, ['',
+      \ 'common line',
+      \ 'common line',
+      \ '',
+      \ 'ABCabc',
+      \ 'ABCabc',
+      \ 'ABCabc',
+      \ 'ABCabc',
+      \ 'common line',
+      \ 'common line',
+      \ 'common line',
+      \ 'something' ],
+      \ ['',
+      \ 'common line',
+      \ 'common line',
+      \ '',
+      \ 'DEFabc',
+      \ 'xyz',
+      \ 'xyz',
+      \ 'xyz',
+      \ 'DEFabc',
+      \ 'DEFabc',
+      \ 'DEFabc',
+      \ 'common line',
+      \ 'common line',
+      \ 'DEF',
+      \ 'common line',
+      \ 'DEF',
+      \ 'something'])
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_1', {})
+
+  " get from window 1 from line 5 to 9
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, ":5,9diffget\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_2', {})
+
+  " undo the last diffget
+  call term_sendkeys(buf, "u")
+
+  " get from window 2 from line 5 to 10
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, ":5,10diffget\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_3', {})
+
+  " undo the last diffget
+  call term_sendkeys(buf, "u")
+
+  " get all from window 2
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, ":4,17diffget\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_4', {})
+
+  " undo the last diffget
+  call term_sendkeys(buf, "u")
+
+  " get all from window 1
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, ":4,12diffget\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_5', {})
+
+  " undo the last diffget
+  call term_sendkeys(buf, "u")
+
+  " get from window 1 using do 1 line 5
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "5gg")
+  call term_sendkeys(buf, ":diffget\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_6', {})
+
+  " undo the last diffget
+  call term_sendkeys(buf, "u")
+
+  " get from window 1 using do 2 line 6
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "6gg")
+  call term_sendkeys(buf, ":diffget\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_7', {})
+
+  " undo the last diffget
+  call term_sendkeys(buf, "u")
+
+  " get from window 1 using do 2 line 7
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "7gg")
+  call term_sendkeys(buf, ":diffget\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_8', {})
+
+  " undo the last diffget
+  call term_sendkeys(buf, "u")
+
+  " get from window 1 using do 2 line 11
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "11gg")
+  call term_sendkeys(buf, ":diffget\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_9', {})
+
+  " undo the last diffget
+  call term_sendkeys(buf, "u")
+
+  " get from window 1 using do 2 line 12
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "12gg")
+  call term_sendkeys(buf, ":diffget\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_10', {})
+
+  " undo the last diffget
+  call term_sendkeys(buf, "u")
+
+  " put from window 1 using dp 1 line 5
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "5gg")
+  call term_sendkeys(buf, ":diffput\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_11', {})
+
+  " undo the last diffput
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, "u")
+
+  " put from window 1 using dp 2 line 6
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "6gg")
+  call term_sendkeys(buf, ":diffput\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_12', {})
+
+  " undo the last diffput
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, "u")
+
+  " put from window 1 using dp 2 line 7
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "7gg")
+  call term_sendkeys(buf, ":diffput\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_13', {})
+
+  " undo the last diffput
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, "u")
+
+  " put from window 1 using dp 2 line 11
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "11gg")
+  call term_sendkeys(buf, ":diffput\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_14', {})
+
+  " undo the last diffput
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, "u")
+
+  " put from window 1 using dp 2 line 12
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "12gg")
+  call term_sendkeys(buf, ":diffput\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_15', {})
+
+  " undo the last diffput
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, "u")
+
+  " put from window 2 using dp line 6
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, "6gg")
+  call term_sendkeys(buf, ":diffput\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_16', {})
+
+  " undo the last diffput
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "u")
+
+  " put from window 2 using dp line 8
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, "8gg")
+  call term_sendkeys(buf, ":diffput\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_17', {})
+
+  " undo the last diffput
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "u")
+
+  " put from window 2 using dp line 9
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, "9gg")
+  call term_sendkeys(buf, ":diffput\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_18', {})
+
+  " undo the last diffput
+  call term_sendkeys(buf, "1\<c-w>w")
+  call term_sendkeys(buf, "u")
+
+  " put from window 2 using dp line 17
+  call term_sendkeys(buf, "2\<c-w>w")
+  call term_sendkeys(buf, "17gg")
+  call term_sendkeys(buf, ":diffput\<CR>")
+  call VerifyScreenDump(buf, 'Test_diff_get_put_linematch_19', {})
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_linematch_diff()
+  CheckScreendump
+  call delete('.Xdifile1.swp')
+  call delete('.Xdifile2.swp')
+  call WriteDiffFiles(0, [], [])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2', {})
+  call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
+
+  " enable linematch
+  call term_sendkeys(buf, ":set diffopt+=linematch:30\<CR>")
+  call WriteDiffFiles(buf, ['// abc d?',
+      \ '// d?',
+      \ '// d?' ],
+      \ ['!',
+      \ 'abc d!',
+      \ 'd!'])
+  call VerifyScreenDump(buf, 'Test_linematch_diff1', {})
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_linematch_diff_iwhite()
+  CheckScreendump
+  call delete('.Xdifile1.swp')
+  call delete('.Xdifile2.swp')
+  call WriteDiffFiles(0, [], [])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2', {})
+  call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
+
+  " setup a diff with 2 files and set linematch:30, with ignore white
+  call term_sendkeys(buf, ":set diffopt+=linematch:30\<CR>")
+  call WriteDiffFiles(buf, ['void testFunction () {',
+      \ '  for (int i = 0; i < 10; i++) {',
+      \ '    for (int j = 0; j < 10; j++) {',
+      \ '    }',
+      \ '  }',
+      \ '}' ],
+      \ ['void testFunction () {',
+      \ '  // for (int j = 0; j < 10; i++) {',
+      \ '  // }',
+      \ '}'])
+  call VerifyScreenDump(buf, 'Test_linematch_diff_iwhite1', {})
+  call term_sendkeys(buf, ":set diffopt+=iwhiteall\<CR>")
+  call VerifyScreenDump(buf, 'Test_linematch_diff_iwhite2', {})
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_linematch_diff_grouping()
+  CheckScreendump
+  call delete('.Xdifile1.swp')
+  call delete('.Xdifile2.swp')
+  call WriteDiffFiles(0, [], [])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2', {})
+  call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
+
+  " a diff that would result in multiple groups before grouping optimization
+  call term_sendkeys(buf, ":set diffopt+=linematch:30\<CR>")
+  call WriteDiffFiles(buf, ['!A',
+      \ '!B',
+      \ '!C' ],
+      \ ['?Z',
+      \ '?A',
+      \ '?B',
+      \ '?C',
+      \ '?A',
+      \ '?B',
+      \ '?B',
+      \ '?C'])
+  call VerifyScreenDump(buf, 'Test_linematch_diff_grouping1', {})
+  call WriteDiffFiles(buf, ['!A',
+      \ '!B',
+      \ '!C' ],
+      \ ['?A',
+      \ '?Z',
+      \ '?B',
+      \ '?C',
+      \ '?A',
+      \ '?B',
+      \ '?C',
+      \ '?C'])
+  call VerifyScreenDump(buf, 'Test_linematch_diff_grouping2', {})
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_linematch_diff_scroll()
+  CheckScreendump
+  call delete('.Xdifile1.swp')
+  call delete('.Xdifile2.swp')
+  call WriteDiffFiles(0, [], [])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2', {})
+  call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
+
+  " a diff that would result in multiple groups before grouping optimization
+  call term_sendkeys(buf, ":set diffopt+=linematch:30\<CR>")
+  call WriteDiffFiles(buf, ['!A',
+      \ '!B',
+      \ '!C' ],
+      \ ['?A',
+      \ '?Z',
+      \ '?B',
+      \ '?C',
+      \ '?A',
+      \ '?B',
+      \ '?C',
+      \ '?C'])
+  " scroll down to show calculation of top fill and scroll to correct line in
+  " both windows
+  call VerifyScreenDump(buf, 'Test_linematch_diff_grouping_scroll0', {})
+  call term_sendkeys(buf, "3\<c-e>")
+  call VerifyScreenDump(buf, 'Test_linematch_diff_grouping_scroll1', {})
+  call term_sendkeys(buf, "3\<c-e>")
+  call VerifyScreenDump(buf, 'Test_linematch_diff_grouping_scroll2', {})
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_linematch_line_limit_exceeded()
+  CheckScreendump
+  call delete('.Xdifile1.swp')
+  call delete('.Xdifile2.swp')
+  call WriteDiffFiles(0, [], [])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2', {})
+  call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
+
+  call term_sendkeys(buf, ":set diffopt+=linematch:10\<CR>")
+  " a diff block will not be aligned with linematch because it's contents
+  " exceed 10 lines
+  call WriteDiffFiles(buf,
+        \ ['common line',
+        \ 'HIL',
+        \ '',
+        \ 'aABCabc',
+        \ 'aABCabc',
+        \ 'aABCabc',
+        \ 'aABCabc',
+        \ 'common line',
+        \ 'HIL',
+        \ 'common line',
+        \ 'something'],
+        \ ['common line',
+        \ 'DEF',
+        \ 'GHI',
+        \ 'something',
+        \ '',
+        \ 'aDEFabc',
+        \ 'xyz',
+        \ 'xyz',
+        \ 'xyz',
+        \ 'aDEFabc',
+        \ 'aDEFabc',
+        \ 'aDEFabc',
+        \ 'common line',
+        \ 'DEF',
+        \ 'GHI',
+        \ 'something else',
+        \ 'common line',
+        \ 'something'])
+  call VerifyScreenDump(buf, 'Test_linematch_line_limit_exceeded1', {})
+  " after increasing the count to 30, the limit is not exceeded, and the
+  " alignment algorithm will run on the largest diff block here
+  call term_sendkeys(buf, ":set diffopt+=linematch:30\<CR>")
+  call VerifyScreenDump(buf, 'Test_linematch_line_limit_exceeded2', {})
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_linematch_3diffs()
+  CheckScreendump
+  call delete('.Xdifile1.swp')
+  call delete('.Xdifile2.swp')
+  call delete('.Xdifile3.swp')
+  call WriteDiffFiles3(0, [], [], [])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2 Xdifile3', {})
+  call term_sendkeys(buf, "1\<c-w>w:set autoread\<CR>")
+  call term_sendkeys(buf, "2\<c-w>w:set autoread\<CR>")
+  call term_sendkeys(buf, "3\<c-w>w:set autoread\<CR>")
+  call term_sendkeys(buf, ":set diffopt+=linematch:30\<CR>")
+  call WriteDiffFiles3(buf,
+        \ ["",
+        \ "  common line",
+        \ "      AAA",
+        \ "      AAA",
+        \ "      AAA"],
+        \ ["",
+        \ "  common line",
+        \ "  <<<<<<< HEAD",
+        \ "      AAA",
+        \ "      AAA",
+        \ "      AAA",
+        \ "  =======",
+        \ "      BBB",
+        \ "      BBB",
+        \ "      BBB",
+        \ "  >>>>>>> branch1"],
+        \ ["",
+        \ "  common line",
+        \ "      BBB",
+        \ "      BBB",
+        \ "      BBB"])
+  call VerifyScreenDump(buf, 'Test_linematch_3diffs1', {})
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
+" this used to access invalid memory
+func Test_linematch_3diffs_sanity_check()
+  CheckScreendump
+  call delete('.Xfile_linematch1.swp')
+  call delete('.Xfile_linematch2.swp')
+  call delete('.Xfile_linematch3.swp')
+  let lines =<< trim END
+    set diffopt+=linematch:60
+    call feedkeys("Aq\<esc>")
+    call feedkeys("GAklm\<esc>")
+    call feedkeys("o")
+  END
+  call writefile(lines, 'Xlinematch_3diffs.vim', 'D')
+  call writefile(['abcd', 'def', 'hij'], 'Xfile_linematch1', 'D')
+  call writefile(['defq', 'hijk', 'nopq'], 'Xfile_linematch2', 'D')
+  call writefile(['hijklm', 'nopqr', 'stuv'], 'Xfile_linematch3', 'D')
+  call WriteDiffFiles3(0, [], [], [])
+  let buf = RunVimInTerminal('-d -S Xlinematch_3diffs.vim Xfile_linematch1 Xfile_linematch2 Xfile_linematch3', {})
+  call VerifyScreenDump(buf, 'Test_linematch_3diffs2', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
 " vim: shiftwidth=2 sts=2 expandtab

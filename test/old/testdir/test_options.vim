@@ -711,6 +711,10 @@ func Test_set_completion_string_values()
   " Test empty option
   set diffopt=
   call assert_equal([], getcompletion('set diffopt-=', 'cmdline'))
+  " Test all possible values
+  call assert_equal(['filler', 'context:', 'iblank', 'icase', 'iwhite', 'iwhiteall', 'iwhiteeol', 'horizontal',
+        \ 'vertical', 'closeoff', 'hiddenoff', 'foldcolumn:', 'followwrap', 'internal', 'indent-heuristic', 'algorithm:', 'linematch:'],
+        \ getcompletion('set diffopt=', 'cmdline'))
   set diffopt&
 
   " Test escaping output
