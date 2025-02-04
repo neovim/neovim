@@ -224,9 +224,12 @@ function TSTreeView:draw(bufnr)
 
     local text ---@type string
     if item.node:named() then
-      text = string.format('(%s', item.node:type())
+      text = string.format('(%s%s', item.node:missing() and 'MISSING ' or '', item.node:type())
     else
       text = string.format('%q', item.node:type()):gsub('\n', 'n')
+      if item.node:missing() then
+        text = string.format('(MISSING %s)', text)
+      end
     end
     if item.field then
       text = string.format('%s: %s', item.field, text)
