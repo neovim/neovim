@@ -119,7 +119,7 @@ Results in the configuration: >lua
     root_markers = { '.clangd', 'compile_commands.json' },
 
     -- From the clangd configuration in init.lua
-    -- Overrides the * configuration in init.lua
+    -- Overrides the clangd configuration in <rtp>/lsp/clangd.lua
     filetypes = { 'c' },
 
     -- From the * configuration in init.lua
