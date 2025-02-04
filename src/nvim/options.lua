@@ -2170,8 +2170,8 @@ local options = {
         'followwrap',
         'internal',
         'indent-heuristic',
-        'linematch:',
         { 'algorithm:', { 'myers', 'minimal', 'patience', 'histogram' } },
+        'linematch:',
       },
       deny_duplicates = true,
       desc = [=[
