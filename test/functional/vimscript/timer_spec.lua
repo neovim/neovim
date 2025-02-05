@@ -94,12 +94,56 @@ describe('timers', function()
     assert(0 <= diff and diff <= 4, 'expected (0 <= diff <= 4), got: ' .. tostring(diff))
   end)
 
-  it('are triggered in blocking getchar() call', function()
-    command("call timer_start(5, 'MyHandler', {'repeat': -1})")
-    async_meths.nvim_command('let g:val = 0 | let g:c = getchar()')
+  it('are triggered in inputlist() call #7857', function()
+    async_meths.nvim_exec2(
+      [[
+        call timer_start(5, 'MyHandler', {'repeat': -1})
+        let g:val = 0
+        let g:n = inputlist(['input0', 'input1'])
+      ]],
+      {}
+    )
     retry(nil, nil, function()
       local val = eval('g:val')
       ok(val >= 2, '>= 2', tostring(val))
+      eq(0, eval("exists('g:n')"))
+    end)
+    feed('42<CR>')
+    eq(42, eval('g:n'))
+  end)
+
+  it('are triggered in confirm() call', function()
+    api.nvim_ui_attach(80, 24, {}) -- needed for confirm() to work
+    async_meths.nvim_exec2(
+      [[
+        call timer_start(5, 'MyHandler', {'repeat': -1})
+        let g:val = 0
+        let g:n = confirm('Are you sure?', "&Yes\n&No\n&Cancel")
+      ]],
+      {}
+    )
+    retry(nil, nil, function()
+      local val = eval('g:val')
+      ok(val >= 2, '>= 2', tostring(val))
+      eq(0, eval("exists('g:n')"))
+    end)
+    feed('c')
+    eq(3, eval('g:n'))
+  end)
+
+  it('are triggered in blocking getchar() call', function()
+    async_meths.nvim_exec2(
+      [[
+        call timer_start(5, 'MyHandler', {'repeat': -1})
+        let g:val = 0
+        let g:c = getchar()
+      ]],
+      {}
+    )
+    retry(nil, nil, function()
+      local val = eval('g:val')
+      ok(val >= 2, '>= 2', tostring(val))
+      eq(0, eval("exists('g:c')"))
       eq(0, eval('getchar(1)'))
     end)
     feed('c')
@@ -126,19 +170,29 @@ describe('timers', function()
         redraw
       endfunc
     ]])
-    async_meths.nvim_command('let g:c2 = getchar()')
+    async_meths.nvim_command("let g:c2 = getchar(-1, {'cursor': 'msg'})")
     async_meths.nvim_command(
       'call timer_start(' .. load_adjust(100) .. ", 'AddItem', {'repeat': -1})"
     )
 
     screen:expect([[
-      ^ITEM 1                                  |
+      ITEM 1                                  |
       ITEM 2                                  |
       {1:~                                       }|*3
-                                              |
+      ^                                        |
     ]])
     async_meths.nvim_command('let g:cont = 1')
 
+    screen:expect([[
+      ITEM 1                                  |
+      ITEM 2                                  |
+      ITEM 3                                  |
+      {1:~                                       }|*2
+      ^                                        |
+    ]])
+
+    feed('3')
+    eq(51, eval('g:c2'))
     screen:expect([[
       ^ITEM 1                                  |
       ITEM 2                                  |
@@ -146,19 +200,6 @@ describe('timers', function()
       {1:~                                       }|*2
                                               |
     ]])
-
-    feed('3')
-    eq(51, eval('g:c2'))
-    screen:expect {
-      grid = [[
-      ^ITEM 1                                  |
-      ITEM 2                                  |
-      ITEM 3                                  |
-      {1:~                                       }|*2
-                                              |
-    ]],
-      unchanged = true,
-    }
   end)
 
   it('can be stopped', function()

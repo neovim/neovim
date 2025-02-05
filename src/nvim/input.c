@@ -159,9 +159,9 @@ int prompt_for_input(char *prompt, int hl_id, bool one_key, bool *mouse_used)
 
   if (prompt == NULL) {
     if (mouse_used != NULL) {
-      prompt = _("Type number and <Enter> or click with the mouse (q or empty cancels):");
+      prompt = _("Type number and <Enter> or click with the mouse (q or empty cancels): ");
     } else {
-      prompt = _("Type number and <Enter> (q or empty cancels):");
+      prompt = _("Type number and <Enter> (q or empty cancels): ");
     }
   }
 
