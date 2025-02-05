@@ -140,39 +140,47 @@ static void loop_walk_cb(uv_handle_t *handle, void *arg)
 
 static bool loop_uv_close(uv_loop_t *loop, bool wait)
 {
-  bool rv = true;
   uint64_t start = wait ? os_hrtime() : 0;
-  bool didstop = false;
+
+  // Run the loop to tickle close-callbacks (which should then free memory).
+  // Use UV_RUN_NOWAIT to avoid a hang. #11820
+  uv_run(loop, UV_RUN_NOWAIT);
+  if ((uv_loop_close(loop) != UV_EBUSY) || !wait) {
+    return true;
+  }
+  {
+    uint64_t elapsed_s = (os_hrtime() - start) / 1000000000;  // seconds
+    if (elapsed_s >= 2) {
+      // Some libuv resource was not correctly deref'd. Log and bail.
+      ELOG("uv_loop_close() hang?");
+      log_uv_handles(loop);
+      return false;
+    }
+  }
+
+#if !defined(EXITFREE)
+  // Loop won’t block for I/O after this.
+  uv_stop(loop);
+  // XXX: Close all (lua/luv!) handles. But loop_walk_cb() does not call
+  // resource-specific close-callbacks, so this leaks memory...
+  uv_walk(loop, loop_walk_cb, NULL);
+#endif
+
   while (true) {
-    // Run the loop to tickle close-callbacks (which should then free memory).
-    // Use UV_RUN_NOWAIT to avoid a hang. #11820
-    uv_run(loop, didstop ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);
-    if ((uv_loop_close(loop) != UV_EBUSY) || !wait) {
+    uv_run(loop, UV_RUN_DEFAULT);
+    if (uv_loop_close(loop) != UV_EBUSY) {
       break;
     }
     uint64_t elapsed_s = (os_hrtime() - start) / 1000000000;  // seconds
     if (elapsed_s >= 2) {
       // Some libuv resource was not correctly deref'd. Log and bail.
-      rv = false;
       ELOG("uv_loop_close() hang?");
       log_uv_handles(loop);
-      break;
+      return false;
     }
-#if defined(EXITFREE)
-    (void)didstop;
-#else
-    if (!didstop) {
-      // Loop won’t block for I/O after this.
-      uv_stop(loop);
-      // XXX: Close all (lua/luv!) handles. But loop_walk_cb() does not call
-      // resource-specific close-callbacks, so this leaks memory...
-      uv_walk(loop, loop_walk_cb, NULL);
-      didstop = true;
-    }
-#endif
   }
 
-  return rv;
+  return true;
 }
 
 /// Closes `loop` and its handles, and frees its structures.
