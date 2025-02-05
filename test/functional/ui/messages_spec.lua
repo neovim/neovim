@@ -1259,7 +1259,7 @@ stack traceback:
           content = { { '' } },
           hl_id = 0,
           pos = 0,
-          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels):',
+          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
         },
       },
       messages = {
@@ -1282,7 +1282,7 @@ stack traceback:
           content = { { '1' } },
           hl_id = 0,
           pos = 1,
-          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels):',
+          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
         },
       },
       messages = {
@@ -1302,6 +1302,41 @@ stack traceback:
       ]],
       cmdline = { { abort = false } },
     })
+
+    async_meths.nvim_command("let g:n = inputlist(['input0', 'input1'])")
+    screen:expect({
+      grid = [[
+        ^Hello                    |
+        {1:~                        }|*4
+      ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          hl_id = 0,
+          pos = 0,
+          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
+        },
+      },
+      messages = {
+        {
+          content = { { 'input0\ninput1\n' } },
+          history = false,
+          kind = 'list_cmd',
+        },
+      },
+    })
+
+    feed('42<CR>')
+    screen:expect({
+      grid = [[
+        ^Hello                    |
+        {1:~                        }|*4
+      ]],
+      cmdline = { {
+        abort = false,
+      } },
+    })
+    eq(42, eval('g:n'))
   end)
 
   it('supports nvim_echo messages with multiple attrs', function()
