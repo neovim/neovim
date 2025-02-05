@@ -139,10 +139,6 @@ jobs:
           echo "Install neovim RubyGem."
           gem install --no-document --bindir "$BIN_DIR" --user-install --pre neovim
 
-          echo "Install neovim npm package"
-          npm install -g neovim
-          npm link neovim
-
           sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
           perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
 
