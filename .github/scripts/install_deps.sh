@@ -9,8 +9,9 @@ while (($# > 0)); do
   esac
 done
 
-os=$(uname -s)
-if [[ $os == Linux ]]; then
+OS=$(uname -s)
+ARCH=$(uname -m)
+if [[ $OS == Linux ]]; then
   sudo apt-get update
   sudo apt-get install -y build-essential cmake curl gettext ninja-build
 
@@ -34,12 +35,22 @@ if [[ $os == Linux ]]; then
 
     # Use default CC to avoid compilation problems when installing Python modules
     CC=cc python3 -m pip -q install --user --upgrade --break-system-packages pynvim
+
+    # Skip installing npm on aarch64 as it tends to cause intermittent segmentation faults.
+    # See https://github.com/neovim/neovim/issues/32339.
+    if [[ $ARCH != aarch64 ]]; then
+      npm install -g neovim
+      npm link neovim
+    fi
   fi
-elif [[ $os == Darwin ]]; then
+elif [[ $OS == Darwin ]]; then
   brew update --quiet
   brew install ninja
   if [[ -n $TEST ]]; then
     brew install cpanminus fswatch
+
+    npm install -g neovim
+    npm link neovim
 
     # Use default CC to avoid compilation problems when installing Python modules
     CC=cc python3 -m pip -q install --user --upgrade --break-system-packages pynvim
