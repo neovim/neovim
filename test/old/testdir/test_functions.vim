@@ -2711,11 +2711,10 @@ endfunc
 
 func Test_platform_name()
   " The system matches at most only one name.
-  let names = ['amiga', 'beos', 'bsd', 'hpux', 'linux', 'mac', 'qnx', 'sun', 'vms', 'win32', 'win32unix']
+  let names = ['amiga', 'bsd', 'hpux', 'linux', 'mac', 'qnx', 'sun', 'vms', 'win32', 'win32unix']
   call assert_inrange(0, 1, len(filter(copy(names), 'has(v:val)')))
 
   " Is Unix?
-  call assert_equal(has('beos'), has('beos') && has('unix'))
   call assert_equal(has('bsd'), has('bsd') && has('unix'))
   call assert_equal(has('hpux'), has('hpux') && has('unix'))
   call assert_equal(has('linux'), has('linux') && has('unix'))
@@ -2727,7 +2726,6 @@ func Test_platform_name()
 
   if has('unix') && executable('uname')
     let uname = system('uname')
-    call assert_equal(uname =~? 'BeOS', has('beos'))
     " GNU userland on BSD kernels (e.g., GNU/kFreeBSD) don't have BSD defined
     call assert_equal(uname =~? '\%(GNU/k\w\+\)\@<!BSD\|DragonFly', has('bsd'))
     call assert_equal(uname =~? 'HP-UX', has('hpux'))
