@@ -3075,8 +3075,11 @@ static void f_gettext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   static const char *const has_list[] = {
-#if defined(BSD) && !defined(__APPLE__)
+#if defined(BSD) && !defined(__APPLE__) && !defined(__GNU__)
     "bsd",
+#endif
+#ifdef __GNU__
+    "hurd",
 #endif
 #ifdef __linux__
     "linux",
