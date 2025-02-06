@@ -1074,6 +1074,7 @@ local extension = {
   sass = 'sass',
   sbt = 'sbt',
   scala = 'scala',
+  mill = 'scala',
   ss = 'scheme',
   scm = 'scheme',
   sld = 'scheme',
