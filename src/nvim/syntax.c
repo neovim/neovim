@@ -1644,7 +1644,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
                        ? !(spp->sp_flags & HL_CONTAINED)
                        : in_id_list(cur_si,
                                     cur_si->si_cont_list, &spp->sp_syn,
-                                    spp->sp_flags & HL_CONTAINED)))) {
+                                    spp->sp_flags)))) {
               // If we already tried matching in this line, and
               // there isn't a match before next_match_col, skip
               // this item.
@@ -2775,7 +2775,7 @@ static keyentry_T *match_keyword(char *keyword, hashtab_T *ht, stateitem_T *cur_
           : (cur_si == NULL
              ? !(kp->flags & HL_CONTAINED)
              : in_id_list(cur_si, cur_si->si_cont_list,
-                          &kp->k_syn, kp->flags & HL_CONTAINED))) {
+                          &kp->k_syn, kp->flags))) {
         return kp;
       }
     }
@@ -3931,7 +3931,7 @@ static void syn_incl_toplevel(int id, int *flagsp)
   if ((*flagsp & HL_CONTAINED) || curwin->w_s->b_syn_topgrp == 0) {
     return;
   }
-  *flagsp |= HL_CONTAINED;
+  *flagsp |= HL_CONTAINED | HL_INCLUDED_TOPLEVEL;
   if (curwin->w_s->b_syn_topgrp >= SYNID_CLUSTER) {
     // We have to alloc this, because syn_combine_list() will free it.
     int16_t *grp_list = xmalloc(2 * sizeof(*grp_list));
@@ -4977,16 +4977,13 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
           break;
         }
         if (name[1] == 'A') {
-          id = SYNID_ALLBUT + current_syn_inc_tag;
+          id = SYNID_ALLBUT;
         } else if (name[1] == 'T') {
-          if (curwin->w_s->b_syn_topgrp >= SYNID_CLUSTER) {
-            id = curwin->w_s->b_syn_topgrp;
-          } else {
-            id = SYNID_TOP + current_syn_inc_tag;
-          }
+          id = SYNID_TOP;
         } else {
-          id = SYNID_CONTAINED + current_syn_inc_tag;
+          id = SYNID_CONTAINED;
         }
+        id += current_syn_inc_tag;
       } else if (name[1] == '@') {
         if (skip) {
           id = -1;
@@ -5104,8 +5101,8 @@ static int16_t *copy_id_list(const int16_t *const list)
 /// @param cur_si     current item or NULL
 /// @param list       id list
 /// @param ssp        group id and ":syn include" tag of group
-/// @param contained  group id is contained
-static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, int contained)
+/// @param flags      group flags
+static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, int flags)
 {
   int retval;
   int16_t id = ssp->id;
@@ -5123,8 +5120,7 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
     // cur_si->si_idx is -1 for keywords, these never contain anything.
     if (cur_si->si_idx >= 0 && in_id_list(NULL, ssp->cont_in_list,
                                           &(SYN_ITEMS(syn_block)[cur_si->si_idx].sp_syn),
-                                          SYN_ITEMS(syn_block)[cur_si->si_idx].sp_flags &
-                                          HL_CONTAINED)) {
+                                          SYN_ITEMS(syn_block)[cur_si->si_idx].sp_flags)) {
       return true;
     }
   }
@@ -5136,8 +5132,13 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
   // If list is ID_LIST_ALL, we are in a transparent item that isn't
   // inside anything.  Only allow not-contained groups.
   if (list == ID_LIST_ALL) {
-    return !contained;
+    return !(flags & HL_CONTAINED);
   }
+
+  // Is this top-level (i.e. not 'contained') in the file it was declared in?
+  // For included files, this is different from HL_CONTAINED, which is set
+  // unconditionally.
+  bool toplevel = !(flags & HL_CONTAINED) || (flags & HL_INCLUDED_TOPLEVEL);
 
   // If the first item is "ALLBUT", return true if "id" is NOT in the
   // contains list.  We also require that "id" is at the same ":syn include"
@@ -5151,12 +5152,12 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
       }
     } else if (item < SYNID_CONTAINED) {
       // TOP: accept all not-contained groups in the same file
-      if (item - SYNID_TOP != ssp->inc_tag || contained) {
+      if (item - SYNID_TOP != ssp->inc_tag || !toplevel) {
         return false;
       }
     } else {
       // CONTAINED: accept all contained groups in the same file
-      if (item - SYNID_CONTAINED != ssp->inc_tag || !contained) {
+      if (item - SYNID_CONTAINED != ssp->inc_tag || toplevel) {
         return false;
       }
     }
@@ -5177,7 +5178,7 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
       // cluster that includes itself (indirectly)
       if (scl_list != NULL && depth < 30) {
         depth++;
-        int r = in_id_list(NULL, scl_list, ssp, contained);
+        int r = in_id_list(NULL, scl_list, ssp, flags);
         depth--;
         if (r) {
           return retval;
