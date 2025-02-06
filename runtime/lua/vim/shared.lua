@@ -7,7 +7,7 @@
 -- so this wouldn't be a separate case to consider)
 
 ---@nodoc
-_G.vim = _G.vim or {}
+_G.vim = _G.vim or {} --[[@as table]] -- TODO(lewis6991): better fix for flaky luals
 
 ---@generic T
 ---@param orig T

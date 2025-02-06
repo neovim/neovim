@@ -321,3 +321,33 @@ if(USE_BUNDLED_BUSTED)
 else()
   add_custom_target(lua_dev_deps)
 endif()
+
+if (CMAKE_SYSTEM_PROCESSOR MATCHES arm64)
+  set(LUALS_ARCH arm64)
+else()
+  set(LUALS_ARCH x64)
+endif()
+
+set(LUALS_VERSION 3.13.6)
+set(LUALS "lua-language-server-${LUALS_VERSION}-${CMAKE_SYSTEM_NAME}-${LUALS_ARCH}")
+set(LUALS_TARBALL ${LUALS}.tar.gz)
+set(LUALS_URL https://github.com/LuaLS/lua-language-server/releases/download/${LUALS_VERSION}/${LUALS_TARBALL})
+
+ExternalProject_Add(download_luals
+  URL ${LUALS_URL}
+  DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luals
+  SOURCE_DIR ${DEPS_BIN_DIR}/luals
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+  EXCLUDE_FROM_ALL TRUE
+  DOWNLOAD_NO_PROGRESS TRUE
+  CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
+
+file(GLOB_RECURSE LUAFILES runtime/*.lua)
+add_target(luals
+  COMMAND ${DEPS_BIN_DIR}/luals/bin/lua-language-server --configpath=${PROJECT_SOURCE_DIR}/.luarc.json --check=${PROJECT_SOURCE_DIR}/runtime
+  DEPENDS ${LUAFILES}
+  CUSTOM_COMMAND_ARGS USES_TERMINAL)
+
+add_dependencies(luals download_luals)

@@ -39,6 +39,7 @@ end
 -------------------------------------------------------------------------------
 -- Implements xpcall with coroutines
 -------------------------------------------------------------------------------
+---@diagnostic disable-next-line
 local performResume
 local oldpcall, oldxpcall = pcall, xpcall
 local pack = table.pack or function(...) return {n = select("#", ...), ...} end

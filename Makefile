@@ -126,7 +126,7 @@ functionaltest-lua: | nvim
 	$(CMAKE) --build build --target functionaltest
 
 FORMAT=formatc formatlua format
-LINT=lintlua lintsh lintc clang-analyzer lintcommit lintdoc lint
+LINT=lintlua lintsh lintc clang-analyzer lintcommit lintdoc lint luals
 TEST=functionaltest unittest
 generated-sources benchmark $(FORMAT) $(LINT) $(TEST) doc: | build/.ran-cmake
 	$(CMAKE) --build build --target $@
