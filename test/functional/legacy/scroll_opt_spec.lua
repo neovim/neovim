@@ -438,8 +438,8 @@ describe('smoothscroll', function()
       {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
       {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
       {7:  } abc abc abc abc abc     │{7:  } abc abc abc abc abc     |
-      {7:  }{27:foo}{4:                      }│{7:  }{27:barba^r}{4:                   }|
-      {7:  }{22:bar                      }│{7:  }{23:-------------------------}|
+      {7:  }{22:foo                      }│{7:  }{23:-------------------------}|
+      {7:  }{4:bar                      }│{7:  }{4:bar}{27:ba^r}{4:                   }|
       {7:  } abc abc abc abc abc abc │{7:  } abc abc abc abc abc abc |
       {7:  }abc abc abc abc abc abc a│{7:  }abc abc abc abc abc abc a|
       {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
