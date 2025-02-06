@@ -4148,6 +4148,7 @@ function vim.fn.globpath(path, expr, nosuf, list, allinks) end
 ---   fname_case  Case in file names matters (for Darwin and MS-Windows
 ---       this is not present).
 ---   gui_running  Nvim has a GUI.
+---   hurd    GNU/Hurd system.
 ---   iconv    Can use |iconv()| for conversion.
 ---   linux    Linux system.
 ---   mac    MacOS system.

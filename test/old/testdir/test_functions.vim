@@ -2655,36 +2655,6 @@ func Test_func_exists_on_reload()
   delfunc ExistingFunction
 endfunc
 
-func Test_platform_name()
-  " The system matches at most only one name.
-  let names = ['amiga', 'beos', 'bsd', 'hpux', 'linux', 'mac', 'qnx', 'sun', 'vms', 'win32', 'win32unix']
-  call assert_inrange(0, 1, len(filter(copy(names), 'has(v:val)')))
-
-  " Is Unix?
-  call assert_equal(has('beos'), has('beos') && has('unix'))
-  call assert_equal(has('bsd'), has('bsd') && has('unix'))
-  call assert_equal(has('hpux'), has('hpux') && has('unix'))
-  call assert_equal(has('linux'), has('linux') && has('unix'))
-  call assert_equal(has('mac'), has('mac') && has('unix'))
-  call assert_equal(has('qnx'), has('qnx') && has('unix'))
-  call assert_equal(has('sun'), has('sun') && has('unix'))
-  call assert_equal(has('win32'), has('win32') && !has('unix'))
-  call assert_equal(has('win32unix'), has('win32unix') && has('unix'))
-
-  if has('unix') && executable('uname')
-    let uname = system('uname')
-    call assert_equal(uname =~? 'BeOS', has('beos'))
-    " GNU userland on BSD kernels (e.g., GNU/kFreeBSD) don't have BSD defined
-    call assert_equal(uname =~? '\%(GNU/k\w\+\)\@<!BSD\|DragonFly', has('bsd'))
-    call assert_equal(uname =~? 'HP-UX', has('hpux'))
-    call assert_equal(uname =~? 'Linux', has('linux'))
-    call assert_equal(uname =~? 'Darwin', has('mac'))
-    call assert_equal(uname =~? 'QNX', has('qnx'))
-    call assert_equal(uname =~? 'SunOS', has('sun'))
-    call assert_equal(uname =~? 'CYGWIN\|MSYS', has('win32unix'))
-  endif
-endfunc
-
 " Test confirm({msg} [, {choices} [, {default} [, {type}]]])
 func Test_confirm()
   CheckUnix
@@ -2737,6 +2707,36 @@ func Test_confirm()
   call assert_fails('call confirm("Are you sure?", [])', 'E730:')
   call assert_fails('call confirm("Are you sure?", "&Yes\n&No\n", [])', 'E745:')
   call assert_fails('call confirm("Are you sure?", "&Yes\n&No\n", 0, [])', 'E730:')
+endfunc
+
+func Test_platform_name()
+  " The system matches at most only one name.
+  let names = ['amiga', 'bsd', 'hpux', 'linux', 'mac', 'qnx', 'sun', 'vms', 'win32', 'win32unix']
+  call assert_inrange(0, 1, len(filter(copy(names), 'has(v:val)')))
+
+  " Is Unix?
+  call assert_equal(has('bsd'), has('bsd') && has('unix'))
+  call assert_equal(has('hpux'), has('hpux') && has('unix'))
+  call assert_equal(has('hurd'), has('hurd') && has('unix'))
+  call assert_equal(has('linux'), has('linux') && has('unix'))
+  call assert_equal(has('mac'), has('mac') && has('unix'))
+  call assert_equal(has('qnx'), has('qnx') && has('unix'))
+  call assert_equal(has('sun'), has('sun') && has('unix'))
+  call assert_equal(has('win32'), has('win32') && !has('unix'))
+  call assert_equal(has('win32unix'), has('win32unix') && has('unix'))
+
+  if has('unix') && executable('uname')
+    let uname = system('uname')
+    " GNU userland on BSD kernels (e.g., GNU/kFreeBSD) don't have BSD defined
+    call assert_equal(uname =~? '\%(GNU/k\w\+\)\@<!BSD\|DragonFly', has('bsd'))
+    call assert_equal(uname =~? 'HP-UX', has('hpux'))
+    call assert_equal(uname =~? 'Linux', has('linux'))
+    call assert_equal(uname =~? 'Darwin', has('mac'))
+    call assert_equal(uname =~? 'QNX', has('qnx'))
+    call assert_equal(uname =~? 'SunOS', has('sun'))
+    call assert_equal(uname =~? 'CYGWIN\|MSYS', has('win32unix'))
+    call assert_equal(uname =~? 'GNU', has('hurd'))
+  endif
 endfunc
 
 func Test_readdir()
