@@ -337,6 +337,10 @@ function STHighlighter:process_response(response, client, version)
     return
   end
 
+  if not api.nvim_buf_is_valid(self.bufnr) then
+    return
+  end
+
   -- if we have a response to a delta request, update the state of our tokens
   -- appropriately. if it's a full response, just use that
   local tokens ---@type integer[]
@@ -376,8 +380,10 @@ function STHighlighter:process_response(response, client, version)
   current_result.highlights = highlights
   current_result.namespace_cleared = false
 
-  -- redraw all windows displaying buffer
-  api.nvim__redraw({ buf = self.bufnr, valid = true })
+  -- redraw all windows displaying buffer (if still valid)
+  if api.nvim_buf_is_valid(self.bufnr) then
+    api.nvim__redraw({ buf = self.bufnr, valid = true })
+  end
 end
 
 --- @param bufnr integer
