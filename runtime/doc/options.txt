@@ -2032,7 +2032,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'diffopt'* *'dip'*
-'diffopt' 'dip'		string	(default "internal,filler,closeoff")
+'diffopt' 'dip'		string	(default "internal,filler,closeoff,linematch:40")
 			global
 	Option settings for diff mode.  It can consist of the following items.
 	All are optional.  Items must be separated by a comma.

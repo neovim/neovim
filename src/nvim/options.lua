@@ -2152,7 +2152,7 @@ local options = {
     {
       abbreviation = 'dip',
       cb = 'did_set_diffopt',
-      defaults = 'internal,filler,closeoff',
+      defaults = 'internal,filler,closeoff,linematch:40',
       -- Keep this in sync with diffopt_changed().
       values = {
         'filler',
