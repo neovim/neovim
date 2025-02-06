@@ -72,7 +72,7 @@ DEFAULTS
 
 • 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
   |terminal| buffers. See |terminal-config| for an example of changing these defaults.
-• |linematch:40| is set by default for |diffopt|.
+• 'diffopt' default includes "linematch:40".
 
 DIAGNOSTICS
 
