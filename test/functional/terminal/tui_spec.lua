@@ -1951,10 +1951,10 @@ describe('TUI', function()
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen:expect {
       grid = [[
-      Vim: Caught deadly signal 'SIGTERM'               |
-                                                        |*2
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
       [Process exited 1]^                                |
-                                                        |*2
+                                                        |*3
       {3:-- TERMINAL --}                                    |
     ]],
     }
@@ -3337,9 +3337,7 @@ describe('TUI bg color', function()
   end)
 end)
 
--- These tests require `tt` because --headless/--embed
--- does not initialize the TUI.
-describe('TUI as a client', function()
+describe('TUI client', function()
   after_each(function()
     os.remove(testlog)
   end)
@@ -3449,10 +3447,10 @@ describe('TUI as a client', function()
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
     screen_client:expect {
       grid = [[
-      Vim: Caught deadly signal 'SIGTERM'               |
-                                                        |*2
+      Nvim: Caught deadly signal 'SIGTERM'              |
+                                                        |
       [Process exited 1]^                                |
-                                                        |*2
+                                                        |*3
       {3:-- TERMINAL --}                                    |
     ]],
     }
