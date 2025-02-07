@@ -845,8 +845,9 @@ void preserve_exit(const char *errmsg)
     // For TUI: exit alternate screen so that the error messages can be seen.
     ui_client_stop();
   }
-  if (errmsg != NULL) {
-    fprintf(stderr, "%s\n", errmsg);
+  if (errmsg != NULL && errmsg[0] != NUL) {
+    size_t has_eol = '\n' == errmsg[strlen(errmsg) - 1];
+    fprintf(stderr, has_eol ? "%s" : "%s\n", errmsg);
   }
   if (ui_client_channel_id) {
     os_exit(1);
@@ -857,7 +858,7 @@ void preserve_exit(const char *errmsg)
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
       if (errmsg != NULL) {
-        fprintf(stderr, "Vim: preserving files...\r\n");
+        fprintf(stderr, "Nvim: preserving files...\n");
       }
       ml_sync_all(false, false, true);  // preserve all swap files
       break;
@@ -867,7 +868,7 @@ void preserve_exit(const char *errmsg)
   ml_close_all(false);              // close all memfiles, without deleting
 
   if (errmsg != NULL) {
-    fprintf(stderr, "Vim: Finished.\r\n");
+    fprintf(stderr, "Nvim: Finished.\n");
   }
 
   getout(1);
