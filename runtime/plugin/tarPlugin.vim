@@ -1,4 +1,5 @@
 " tarPlugin.vim -- a Vim plugin for browsing tarfiles
+"
 " Original was copyright (c) 2002, Michael C. Toren <mct@toren.net>
 " Modified by Charles E. Campbell
 " Distributed under the GNU General Public License.
@@ -34,18 +35,20 @@ augroup tar
    au FileWriteCmd tarfile::*/*	call tar#Write(expand("<amatch>"))
   endif
 
-  au BufReadCmd   *.tar.gz		call tar#Browse(expand("<amatch>"))
-  au BufReadCmd   *.tar			call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.lrp			call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar			call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.bz2		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar.gz		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar.lz4		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar.lzma		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar.xz		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.Z		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar.zst		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tbz			call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tgz			call tar#Browse(expand("<amatch>"))
-  au BufReadCmd   *.tar.lzma	call tar#Browse(expand("<amatch>"))
-  au BufReadCmd   *.tar.xz		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tlz4		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.txz			call tar#Browse(expand("<amatch>"))
-  au BufReadCmd   *.tar.zst		call tar#Browse(expand("<amatch>"))
-  au BufReadCmd   *.tzst			call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tzst		call tar#Browse(expand("<amatch>"))
 augroup END
 
 " ---------------------------------------------------------------------

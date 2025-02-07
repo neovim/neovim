@@ -28,12 +28,13 @@ The plugin installs autocommands to intercept reading and writing of files
 with these extensions:
 
 	extension	compression >
-	*.Z		compress (Lempel-Ziv)
-	*.gz		gzip
 	*.bz2		bzip2
+	*.gz		gzip
+	*.lz		lzip
+	*.lz4		lz4
 	*.lzma		lzma
 	*.xz		xz
-	*.lz		lzip
+	*.Z		compress (Lempel-Ziv)
 	*.zst		zstd
 
 That's actually the only thing you need to know.  There are no options.
