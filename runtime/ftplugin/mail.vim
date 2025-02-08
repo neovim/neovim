@@ -24,6 +24,9 @@ endif
 " Set 'formatoptions' to break text lines and keep the comment leader ">".
 setlocal fo+=tcql
 
+" Set commentstring to quoting sign ">" so comment shortcuts can be used to
+" edit quoted parts of mail
+setlocal commentstring=>\ %s
 " Add n:> to 'comments, in case it was removed elsewhere
 setlocal comments+=n:>
 
