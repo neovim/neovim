@@ -813,7 +813,7 @@ func s:GetFilenameChecks() abort
     \ 'tmux': ['tmuxfile.conf', '.tmuxfile.conf', '.tmux-file.conf', '.tmux.conf', 'tmux-file.conf', 'tmux.conf', 'tmux.conf.local'],
     \ 'toml': ['file.toml', 'Gopkg.lock', 'Pipfile', '/home/user/.cargo/config', '.black'],
     \ 'tpp': ['file.tpp'],
-    \ 'trace32': ['file.cmm', 'file.t32'],
+    \ 'trace32': ['file.cmm', 'file.cmmt', 'file.t32'],
     \ 'treetop': ['file.treetop'],
     \ 'trig': ['file.trig'],
     \ 'trustees': ['trustees.conf'],
