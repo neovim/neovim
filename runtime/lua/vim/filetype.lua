@@ -1191,6 +1191,7 @@ local extension = {
   svh = 'systemverilog',
   sv = 'systemverilog',
   cmm = 'trace32',
+  cmmt = 'trace32',
   t32 = 'trace32',
   td = 'tablegen',
   tak = 'tak',
