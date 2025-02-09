@@ -5246,11 +5246,16 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
     for (const char *start = str, *end = str + len;
          start < end + extraline;
          start += line_len + 1, lnum++) {
-      assert(end - start >= 0);
-      const char *line_end = xmemscan(start, '\n', (size_t)(end - start));
+      int charlen = 0;
+      const char *line_end;
+      for (line_end = start; line_end < end; line_end++) {
+        if (*line_end == '\n') {
+          break;
+        }
+        charlen += utf_ptr2cells_len(line_end, (int)(end - line_end));
+      }
       assert(line_end - start >= 0);
       line_len = (size_t)(line_end - start);
-      int charlen = start < end ? mb_charlen_len(start, (int)line_len) : 0;
       maxlen = MAX(maxlen, (size_t)charlen);
 
       // When appending, copy the previous line and free it after.
@@ -5259,7 +5264,9 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
       if (extra > 0) {
         memcpy(s, pp[lnum].data, extra);
       }
-      memcpy(s + extra, start, line_len);
+      if (line_len > 0) {
+        memcpy(s + extra, start, line_len);
+      }
       size_t s_len = extra + line_len;
 
       if (append) {
