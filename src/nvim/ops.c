@@ -5236,10 +5236,11 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
   // Find the end of each line and save it into the array.
   if (str_list) {
     for (char **ss = (char **)str; *ss != NULL; ss++, lnum++) {
-      int charlen = mb_charlen(*ss);
-      size_t ss_len = strlen(*ss);
-      pp[lnum] = cbuf_to_string(*ss, ss_len);
-      maxlen = MAX(maxlen, (size_t)charlen);
+      pp[lnum] = cstr_to_string(*ss);
+      if (yank_type == kMTBlockWise) {
+        size_t charlen = mb_string2cells(*ss);
+        maxlen = MAX(maxlen, charlen);
+      }
     }
   } else {
     size_t line_len;
@@ -5252,7 +5253,9 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
         if (*line_end == '\n') {
           break;
         }
-        charlen += utf_ptr2cells_len(line_end, (int)(end - line_end));
+        if (yank_type == kMTBlockWise) {
+          charlen += utf_ptr2cells_len(line_end, (int)(end - line_end));
+        }
       }
       assert(line_end - start >= 0);
       line_len = (size_t)(line_end - start);
