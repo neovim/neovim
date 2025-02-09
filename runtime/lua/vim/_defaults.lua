@@ -32,27 +32,53 @@ do
   ---
   --- See |v_star-default| and |v_#-default|
   do
-    local function _visual_search(cmd)
-      assert(cmd == '/' or cmd == '?')
-      local chunks =
-        vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'), { type = vim.fn.mode() })
+    local function _visual_search(forward)
+      assert(forward == 0 or forward == 1)
+      local pos = vim.fn.getpos('.')
+      local vpos = vim.fn.getpos('v')
+      local mode = vim.fn.mode()
+      local chunks = vim.fn.getregion(pos, vpos, { type = mode })
       local esc_chunks = vim
         .iter(chunks)
         :map(function(v)
-          return vim.fn.escape(v, cmd == '/' and [[/\]] or [[?\]])
+          return vim.fn.escape(v, [[\]])
         end)
         :totable()
       local esc_pat = table.concat(esc_chunks, [[\n]])
-      local search_cmd = ([[%s\V%s%s]]):format(cmd, esc_pat, '\n')
-      return '\27' .. search_cmd
+      if #esc_pat == 0 then
+        vim.api.nvim_echo({ { 'E348: No string under cursor' } }, true, { err = true })
+        return '<Esc>'
+      end
+      local search = [[\V]] .. esc_pat
+
+      vim.fn.setreg('/', search)
+      vim.fn.histadd('/', search)
+      vim.v.searchforward = forward
+
+      -- The count has to be adjusted when searching backwards and the cursor
+      -- isn't positioned at the beginning of the selection
+      local count = vim.v.count1
+      if forward == 0 then
+        local _, line, col, _ = unpack(pos)
+        local _, vline, vcol, _ = unpack(vpos)
+        if
+          line > vline
+          or mode == 'v' and line == vline and col > vcol
+          or mode == 'V' and col ~= 1
+          or mode == '\22' and col > vcol
+        then
+          count = count + 1
+        end
+      end
+      return '<Esc>' .. count .. 'n'
     end
 
     vim.keymap.set('x', '*', function()
-      return _visual_search('/')
-    end, { desc = ':help v_star-default', expr = true, replace_keycodes = false })
+      return _visual_search(1)
+    end, { desc = ':help v_star-default', expr = true })
     vim.keymap.set('x', '#', function()
-      return _visual_search('?')
-    end, { desc = ':help v_#-default', expr = true, replace_keycodes = false })
+      return _visual_search(0)
+    end, { desc = ':help v_#-default', expr = true })
   end
 
   --- Map Y to y$. This mimics the behavior of D and C. See |Y-default|
