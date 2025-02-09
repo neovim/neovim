@@ -435,6 +435,23 @@ func Test_set_register()
   enew!
 endfunc
 
+" Test for blockwise register width calculations
+func Test_set_register_blockwise_width()
+  " Test for regular calculations and overriding the width
+  call setreg('a', "12\n1234\n123", 'b')
+  call assert_equal("\<c-v>4", getreginfo('a').regtype)
+  call setreg('a', "12\n1234\n123", 'b1')
+  call assert_equal("\<c-v>1", getreginfo('a').regtype)
+  call setreg('a', "12\n1234\n123", 'b6')
+  call assert_equal("\<c-v>6", getreginfo('a').regtype)
+
+  " Test for Unicode parsing
+  call setreg('a', "z😅😅z\n12345", 'b')
+  call assert_equal("\<c-v>6", getreginfo('a').regtype)
+  call setreg('a', ["z😅😅z", "12345"], 'b')
+  call assert_equal("\<c-v>6", getreginfo('a').regtype)
+endfunc
+
 " Test for clipboard registers (* and +)
 func Test_clipboard_regs()
   throw 'skipped: needs clipboard=autoselect,autoselectplus'
