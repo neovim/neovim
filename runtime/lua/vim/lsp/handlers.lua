@@ -90,6 +90,7 @@ RSC[ms.window_showMessageRequest] = function(_, params)
   local co, is_main = coroutine.running()
   if co and not is_main then
     local opts = {
+      kind = 'lsp_message',
       prompt = params.message .. ': ',
       format_item = function(action)
         return (action.title:gsub('\r\n', '\\r\\n')):gsub('\n', '\\n')
