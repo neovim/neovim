@@ -5236,9 +5236,10 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
   // Find the end of each line and save it into the array.
   if (str_list) {
     for (char **ss = (char **)str; *ss != NULL; ss++, lnum++) {
+      int charlen = mb_charlen(*ss);
       size_t ss_len = strlen(*ss);
       pp[lnum] = cbuf_to_string(*ss, ss_len);
-      maxlen = MAX(maxlen, ss_len);
+      maxlen = MAX(maxlen, (size_t)charlen);
     }
   } else {
     size_t line_len;
@@ -5246,8 +5247,11 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
          start < end + extraline;
          start += line_len + 1, lnum++) {
       assert(end - start >= 0);
-      line_len = (size_t)((char *)xmemscan(start, '\n', (size_t)(end - start)) - start);
-      maxlen = MAX(maxlen, line_len);
+      const char *line_end = xmemscan(start, '\n', (size_t)(end - start));
+      assert(line_end - start >= 0);
+      line_len = (size_t)(line_end - start);
+      int charlen = start < end ? mb_charlen_len(start, (int)line_len) : 0;
+      maxlen = MAX(maxlen, (size_t)charlen);
 
       // When appending, copy the previous line and free it after.
       size_t extra = append ? pp[--lnum].size : 0;
