@@ -5248,13 +5248,20 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
          start < end + extraline;
          start += line_len + 1, lnum++) {
       int charlen = 0;
-      const char *line_end;
-      for (line_end = start; line_end < end; line_end++) {
+
+      const char *line_end = start;
+      while (line_end < end) {  // find the end of the line
         if (*line_end == '\n') {
           break;
         }
         if (yank_type == kMTBlockWise) {
           charlen += utf_ptr2cells_len(line_end, (int)(end - line_end));
+        }
+
+        if (*line_end == NUL) {
+          line_end++;  // registers can have NUL chars
+        } else {
+          line_end += utf_ptr2len_len(line_end, (int)(end - line_end));
         }
       }
       assert(line_end - start >= 0);
