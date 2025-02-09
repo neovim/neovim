@@ -400,6 +400,8 @@ TUI
 
 UI
 
+• |:detach| the current UI, let the Nvim server continue running as a background
+  process. Works with the builtin TUI, and all GUIs.
 • |vim.ui.open()| (by default bound to |gx|) accepts an `opt.cmd` parameter
   which controls the tool used to open the given path or URL. If you want to
   globally set this, you can override vim.ui.open using the same approach

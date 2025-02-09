@@ -359,11 +359,11 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
 /// @param keys to be typed
 /// @return Number of bytes actually written (can be fewer than
 ///         requested if the buffer becomes full).
-Integer nvim_input(String keys)
+Integer nvim_input(uint64_t channel_id, String keys)
   FUNC_API_SINCE(1) FUNC_API_FAST
 {
   may_trigger_vim_suspend_resume(false);
-  return (Integer)input_enqueue(keys);
+  return (Integer)input_enqueue(channel_id, keys);
 }
 
 /// Send mouse event from GUI.
@@ -1485,7 +1485,8 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
   return rv;
 }
 
-/// Self-identifies the client. Sets the `client` object returned by |nvim_get_chan_info()|.
+/// Self-identifies the client, and sets optional flags on the channel. Defines the `client` object
+/// returned by |nvim_get_chan_info()|.
 ///
 /// Clients should call this just after connecting, to provide hints for debugging and
 /// orchestration. (Note: Something is better than nothing! Fields are optional, but at least set

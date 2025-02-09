@@ -301,6 +301,8 @@ EXTERN bool garbage_collect_at_exit INIT( = false);
 EXTERN sctx_T current_sctx INIT( = { 0, 0, 0 });
 // ID of the current channel making a client API call
 EXTERN uint64_t current_channel_id INIT( = 0);
+/// Last channel that invoked 'nvim_input` or got FocusGained.
+EXTERN uint64_t current_ui INIT( = 0);
 
 EXTERN bool did_source_packages INIT( = false);
 

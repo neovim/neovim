@@ -1208,8 +1208,8 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
 
                                                       *nvim_set_client_info()*
 nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
-    Self-identifies the client. Sets the `client` object returned by
-    |nvim_get_chan_info()|.
+    Self-identifies the client, and sets optional flags on the channel.
+    Defines the `client` object returned by |nvim_get_chan_info()|.
 
     Clients should call this just after connecting, to provide hints for
     debugging and orchestration. (Note: Something is better than nothing!

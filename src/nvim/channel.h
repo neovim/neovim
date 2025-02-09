@@ -31,6 +31,9 @@ struct Channel {
   } stream;
 
   bool is_rpc;
+  bool detach;  ///< Prevents self-exit on channel-close. Normally, Nvim self-exits if its primary
+                ///< RPC channel is closed, unless detach=true. Note: currently, detach=false does
+                ///< not FORCE self-exit.
   RpcState rpc;
   Terminal *term;
 

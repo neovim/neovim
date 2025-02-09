@@ -224,8 +224,7 @@ static size_t receive_msgpack(RStream *stream, const char *rbuf, size_t c, void 
   if (eof) {
     channel_close(channel->id, kChannelPartRpc, NULL);
     char buf[256];
-    snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the client",
-             channel->id);
+    snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the peer", channel->id);
     chan_close_with_error(channel, buf, LOGLVL_INF);
   }
 
@@ -293,7 +292,7 @@ static void parse_msgpack(Channel *channel)
 
       Object res = p->result;
       if (p->result.type != kObjectTypeArray) {
-        chan_close_with_error(channel, "msgpack-rpc request args has to be an array", LOGLVL_ERR);
+        chan_close_with_error(channel, "msgpack-rpc request args must be an array", LOGLVL_ERR);
         return;
       }
       Array arg = res.data.array;
@@ -487,13 +486,16 @@ void rpc_close(Channel *channel)
   channel->rpc.closed = true;
   channel_decref(channel);
 
-  if (channel->streamtype == kChannelStreamStdio
-      || (channel->id == ui_client_channel_id && channel->streamtype != kChannelStreamProc)) {
-    if (channel->streamtype == kChannelStreamStdio) {
-      // Avoid hanging when there are no other UIs and a prompt is triggered on exit.
-      remote_ui_disconnect(channel->id);
+  if (ui_client_channel_id && channel->id == ui_client_channel_id) {
+    assert(!channel->detach);  // `Channel.detach` is not currently used by the UI client.
+    exit_on_closed_chan(0);
+  } else if (channel->streamtype == kChannelStreamStdio) {
+    // Avoid hanging when there are no other UIs and a prompt is triggered on exit.
+    remote_ui_disconnect(channel->id);
+
+    if (!channel->detach) {
+      exit_on_closed_chan(0);
     }
-    exit_from_channel(0);
   }
 }
 

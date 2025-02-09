@@ -61,9 +61,14 @@ uint64_t ui_client_start_server(int argc, char **argv)
   CallbackReader on_err = CALLBACK_READER_INIT;
   on_err.fwd_err = true;
 
+#ifdef MSWIN
+  bool detach = false;  // TODO(justinmk): detach=true breaks `tt.setup_child_nvim` tests on Windows.
+#else
+  bool detach = true;
+#endif
   Channel *channel = channel_job_start(args, get_vim_var_str(VV_PROGPATH),
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
-                                       false, true, true, false, kChannelStdinPipe,
+                                       false, true, true, detach, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
   if (!channel) {
     return 0;

@@ -129,7 +129,7 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
   passes various linter checks.
 - CI for FreeBSD runs on [Cirrus CI].
 - To see CI results faster in your PR, you can temporarily set `TEST_FILE` in
-  [test.yml](https://github.com/neovim/neovim/blob/e35b9020b16985eee26e942f9a3f6b045bc3809b/.github/workflows/test.yml#L29).
+  [test.yml](https://github.com/neovim/neovim/blob/ad8e0cfc1dfd937c2577dc032e524c799a772693/.github/workflows/test.yml#L26).
 
 ### Coverity
 

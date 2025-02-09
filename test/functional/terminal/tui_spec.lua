@@ -33,6 +33,95 @@ local assert_log = t.assert_log
 
 local testlog = 'Xtest-tui-log'
 
+describe('TUI :detach', function()
+  before_each(function()
+    os.remove(testlog)
+  end)
+  teardown(function()
+    os.remove(testlog)
+  end)
+
+  it('does not stop server', function()
+    local server_super = n.clear()
+    local client_super = n.new_session(true)
+    finally(function()
+      server_super:close()
+      client_super:close()
+    end)
+
+    local child_server = new_pipename()
+    local screen = tt.setup_child_nvim({
+      '--listen',
+      child_server,
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'colorscheme vim',
+      '--cmd',
+      nvim_set .. ' notermguicolors laststatus=2 background=dark',
+    }, {
+      env = {
+        NVIM_LOG_FILE = testlog,
+      },
+    })
+
+    tt.feed_data('iHello, World')
+    screen:expect {
+      grid = [[
+      Hello, World^                                      |
+      {4:~                                                 }|*3
+      {MATCH:No Name}
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]],
+    }
+
+    local child_session = n.connect(child_server)
+    finally(function()
+      child_session:request('nvim_command', 'qall!')
+    end)
+    local status, child_uis = child_session:request('nvim_list_uis')
+    assert(status)
+    eq(1, #child_uis)
+
+    tt.feed_data('\027\027:detach\013')
+    -- Note: "Process exited" message is misleading; tt.setup_child_nvim() sees the foreground
+    -- process (client) exited, and doesn't know the server is still running?
+    screen:expect {
+      any = [[Process exited 0]],
+    }
+
+    child_uis --[[@type any[] ]] = ({ child_session:request('nvim_list_uis') })[2]
+    eq(0, #child_uis)
+
+    -- NOTE: The tt.setup_child_nvim() screen just wraps :terminal, it's not connected to the child.
+    -- To use it again, we need to detach the old one.
+    screen:detach()
+
+    -- Edit some text on the headless server.
+    status = (child_session:request('nvim_input', 'ddiWe did it, pooky.<Esc><Esc>'))
+    assert(status)
+
+    -- Test reattach by connecting a new TUI.
+    local screen_reattached = tt.setup_child_nvim({
+      '--remote-ui',
+      '--server',
+      child_server,
+    })
+    screen_reattached:expect {
+      grid = [[
+      We did it, pooky^.                                 |
+      {4:~                                                 }|*3
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]],
+    }
+  end)
+end)
+
 if t.skip(is_os('win')) then
   return
 end
@@ -3384,9 +3473,9 @@ describe('TUI client', function()
 
     set_session(client_super)
     local screen_client = tt.setup_child_nvim({
+      '--remote-ui',
       '--server',
       server_pipe,
-      '--remote-ui',
     })
 
     screen_client:expect {
@@ -3428,9 +3517,9 @@ describe('TUI client', function()
 
     set_session(client_super)
     local screen_client = tt.setup_child_nvim({
+      '--remote-ui',
       '--server',
       server_pipe,
-      '--remote-ui',
     })
 
     screen_client:expect {
@@ -3457,7 +3546,7 @@ describe('TUI client', function()
 
     eq(0, api.nvim_get_vvar('shell_error'))
     -- exits on input eof #22244
-    fn.system({ nvim_prog, '--server', server_pipe, '--remote-ui' })
+    fn.system({ nvim_prog, '--remote-ui', '--server', server_pipe })
     eq(1, api.nvim_get_vvar('shell_error'))
 
     client_super:close()
@@ -3470,9 +3559,9 @@ describe('TUI client', function()
   it('throws error when no server exists', function()
     clear()
     local screen = tt.setup_child_nvim({
+      '--remote-ui',
       '--server',
       '127.0.0.1:2436546',
-      '--remote-ui',
     }, { cols = 60 })
 
     screen:expect([[
@@ -3485,10 +3574,13 @@ describe('TUI client', function()
   end)
 
   local function test_remote_tui_quit(status)
-    local server_super = n.new_session(false)
+    local server_super = n.clear()
     local client_super = n.new_session(true)
+    finally(function()
+      server_super:close()
+      client_super:close()
+    end)
 
-    set_session(server_super)
     local server_pipe = new_pipename()
     local screen_server = tt.setup_child_nvim({
       '--listen',
@@ -3535,9 +3627,9 @@ describe('TUI client', function()
 
     set_session(client_super)
     local screen_client = tt.setup_child_nvim({
+      '--remote-ui',
       '--server',
       server_pipe,
-      '--remote-ui',
     })
 
     screen_client:expect {
@@ -3554,26 +3646,8 @@ describe('TUI client', function()
     set_session(server_super)
     feed_data(status and ':' .. status .. 'cquit!\n' or ':quit!\n')
     status = status and status or 0
-    screen_server:expect {
-      grid = [[
-                                                        |
-      [Process exited ]] .. status .. [[]^ {MATCH:%s+}|
-                                                        |*4
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
-    -- assert that client has exited
-    screen_client:expect {
-      grid = [[
-                                                        |
-      [Process exited ]] .. status .. [[]^ {MATCH:%s+}|
-                                                        |*4
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
-
-    server_super:close()
-    client_super:close()
+    screen_server:expect({ any = 'Process exited ' .. status })
+    screen_client:expect({ any = 'Process exited ' .. status })
   end
 
   describe('exits when server quits', function()

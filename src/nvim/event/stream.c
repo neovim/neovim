@@ -104,9 +104,10 @@ void stream_may_close(Stream *stream, bool rstream)
   if (stream->closed) {
     return;
   }
-  assert(!stream->closed);
   DLOG("closing Stream: %p", (void *)stream);
   stream->closed = true;
+  // TODO(justinmk): stream->close_cb is never actually invoked. Either remove it, or see if it can
+  // be used somewhere...
   stream->close_cb = NULL;
   stream->close_cb_data = NULL;
 
