@@ -1885,4 +1885,59 @@ func Test_popup_completion_many_ctrlp()
   bw!
 endfunc
 
+func Test_pum_complete_with_special_characters()
+  CheckScreendump
+
+  let lines =<< trim END
+    func Omni_test(findstart, base)
+      if a:findstart
+        return col(".")
+      endif
+      return [#{word: "func ()\n\t\nend", abbr: "function ()",}, #{word: "foobar"}, #{word: "你好\n\t\n我好"}]
+    endfunc
+    set omnifunc=Omni_test
+  END
+
+  call writefile(lines, 'Xpreviewscript', 'D')
+  let buf = RunVimInTerminal('-S Xpreviewscript', #{rows: 12})
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_01', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_02', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call term_sendkeys(buf, "Shello  hero\<ESC>hhhhha\<C-X>\<C-O>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_03', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_04', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_05', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_06', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call term_sendkeys(buf, ":hi ComplMatchIns ctermfg=red\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_07', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call term_sendkeys(buf, "Shello  hero\<ESC>hhhhha\<C-X>\<C-O>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_08', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

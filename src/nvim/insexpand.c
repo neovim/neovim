@@ -254,6 +254,7 @@ static pos_T compl_startpos;
 /// Length in bytes of the text being completed (this is deleted to be replaced
 /// by the match.)
 static int compl_length = 0;
+static linenr_T compl_lnum = 0;         ///< lnum where the completion start
 static colnr_T compl_col = 0;           ///< column where the text starts
                                         ///< that is being completed
 static colnr_T compl_ins_end_col = 0;
@@ -963,18 +964,45 @@ static void ins_compl_insert_bytes(char *p, int len)
 
 /// Checks if the column is within the currently inserted completion text
 /// column range. If it is, it returns a special highlight attribute.
-/// -1 mean normal item.
-int ins_compl_col_range_attr(int col)
+/// -1 means normal item.
+int ins_compl_col_range_attr(linenr_T lnum, int col)
 {
-  if (get_cot_flags() & kOptCotFlagFuzzy) {
+  int attr;
+  if ((get_cot_flags() & kOptCotFlagFuzzy) || (attr = syn_name2attr("ComplMatchIns")) == 0) {
     return -1;
   }
 
-  if (col >= (compl_col + (int)ins_compl_leader_len()) && col < compl_ins_end_col) {
-    return syn_name2attr("ComplMatchIns");
+  int start_col = compl_col + (int)ins_compl_leader_len();
+  if (!ins_compl_has_multiple()) {
+    return (col >= start_col && col < compl_ins_end_col) ? attr : -1;
+  }
+
+  // Multiple lines
+  if ((lnum == compl_lnum && col >= start_col && col < MAXCOL)
+      || (lnum > compl_lnum && lnum < curwin->w_cursor.lnum)
+      || (lnum == curwin->w_cursor.lnum && col <= compl_ins_end_col)) {
+    return attr;
   }
 
   return -1;
+}
+
+/// Returns true if the current completion string contains newline characters,
+/// indicating it's a multi-line completion.
+static bool ins_compl_has_multiple(void)
+{
+  return vim_strchr(compl_shown_match->cp_str.data, '\n') != NULL;
+}
+
+/// Returns true if the given line number falls within the range of a multi-line
+/// completion, i.e. between the starting line (compl_lnum) and current cursor
+/// line. Always returns false for single-line completions.
+bool ins_compl_lnum_in_range(linenr_T lnum)
+{
+  if (!ins_compl_has_multiple()) {
+    return false;
+  }
+  return lnum >= compl_lnum && lnum <= curwin->w_cursor.lnum;
 }
 
 /// Reduce the longest common string for match "match".
@@ -2777,6 +2805,7 @@ static void set_completion(colnr_T startcol, list_T *list)
     startcol = curwin->w_cursor.col;
   }
   compl_col = startcol;
+  compl_lnum = curwin->w_cursor.lnum;
   compl_length = curwin->w_cursor.col - startcol;
   // compl_pattern doesn't need to be set
   compl_orig_text = cbuf_to_string(get_cursor_line_ptr() + compl_col,
@@ -3737,6 +3766,26 @@ void ins_compl_delete(bool new_leader)
     curwin->w_cursor.col = compl_ins_end_col;
   }
 
+  char *remaining = NULL;
+  if (curwin->w_cursor.lnum > compl_lnum) {
+    if (curwin->w_cursor.col < get_cursor_line_len()) {
+      char *line = get_cursor_line_ptr();
+      remaining = xstrdup(line + curwin->w_cursor.col);
+    }
+
+    while (curwin->w_cursor.lnum > compl_lnum) {
+      if (ml_delete(curwin->w_cursor.lnum, false) == FAIL) {
+        if (remaining) {
+          XFREE_CLEAR(remaining);
+        }
+        return;
+      }
+      curwin->w_cursor.lnum--;
+    }
+    // move cursor to end of line
+    curwin->w_cursor.col = get_cursor_line_len();
+  }
+
   if ((int)curwin->w_cursor.col > col) {
     if (stop_arrow() == FAIL) {
       return;
@@ -3745,11 +3794,46 @@ void ins_compl_delete(bool new_leader)
     compl_ins_end_col = curwin->w_cursor.col;
   }
 
+  if (remaining != NULL) {
+    orig_col = curwin->w_cursor.col;
+    ins_str(remaining);
+    curwin->w_cursor.col = orig_col;
+    xfree(remaining);
+  }
+
   // TODO(vim): is this sufficient for redrawing?  Redrawing everything
   // causes flicker, thus we can't do that.
   changed_cline_bef_curs(curwin);
   // clear v:completed_item
   set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc_lock(VAR_FIXED));
+}
+
+/// Insert a completion string that contains newlines.
+/// The string is split and inserted line by line.
+static void ins_compl_expand_multiple(char *str)
+{
+  char *start = str;
+  char *curr = str;
+  while (*curr != NUL) {
+    if (*curr == '\n') {
+      // Insert the text chunk before newline
+      if (curr > start) {
+        ins_char_bytes(start, (size_t)(curr - start));
+      }
+
+      // Handle newline
+      open_line(FORWARD, OPENLINE_KEEPTRAIL, false, NULL);
+      start = curr + 1;
+    }
+    curr++;
+  }
+
+  // Handle remaining text after last newline (if any)
+  if (curr > start) {
+    ins_char_bytes(start, (size_t)(curr - start));
+  }
+
+  compl_ins_end_col = curwin->w_cursor.col;
 }
 
 /// Insert the new text being completed.
@@ -3763,13 +3847,18 @@ void ins_compl_insert(bool in_compl_func, bool move_cursor)
   char *cp_str = compl_shown_match->cp_str.data;
   size_t cp_str_len = compl_shown_match->cp_str.size;
   size_t leader_len = ins_compl_leader_len();
+  char *has_multiple = strchr(cp_str, '\n');
 
   // Make sure we don't go over the end of the string, this can happen with
   // illegal bytes.
   if (compl_len < (int)cp_str_len) {
-    ins_compl_insert_bytes(cp_str + compl_len, -1);
-    if (preinsert && move_cursor) {
-      curwin->w_cursor.col -= (colnr_T)(cp_str_len - leader_len);
+    if (has_multiple) {
+      ins_compl_expand_multiple(cp_str + compl_len);
+    } else {
+      ins_compl_insert_bytes(cp_str + compl_len, -1);
+      if (preinsert && move_cursor) {
+        curwin->w_cursor.col -= (colnr_T)(cp_str_len - leader_len);
+      }
     }
   }
   compl_used_match = !(match_at_original_text(compl_shown_match) || preinsert);
@@ -4551,6 +4640,7 @@ static int ins_compl_start(void)
   char *line = ml_get(curwin->w_cursor.lnum);
   colnr_T curs_col = curwin->w_cursor.col;
   compl_pending = 0;
+  compl_lnum = curwin->w_cursor.lnum;
 
   if ((compl_cont_status & CONT_INTRPT) == CONT_INTRPT
       && compl_cont_mode == ctrl_x_mode) {
@@ -4602,6 +4692,7 @@ static int ins_compl_start(void)
       curbuf->b_p_com = old;
       compl_length = 0;
       compl_col = curwin->w_cursor.col;
+      compl_lnum = curwin->w_cursor.lnum;
     }
   } else {
     edit_submode_pre = NULL;
