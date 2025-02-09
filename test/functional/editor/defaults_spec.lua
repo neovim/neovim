@@ -119,7 +119,9 @@ describe('default', function()
           [[testing <CR> /?\!3]],
           [[testing <CR> /?\!4]],
         })
-        n.feed('gg0vf!o*')
+        n.feed('gg0vf!')
+        n.poke_eventloop()
+        n.feed('*')
         screen:expect([[
           {3:testing <CR> /?\!}1                                          |
           {4:^testing <CR> /?\!}2                                          |
@@ -127,7 +129,7 @@ describe('default', function()
           {3:testing <CR> /?\!}4                                          |
           {1:~                                                           }|*2
           {2:[No Name] [+]                             2,1            All}|
-          /\Vtesting <CR> \/?\\!                    [2/4]             |
+          /\Vtesting <CR> /?\\!                     [2/4]             |
         ]])
         n.feed('n')
         screen:expect([[
@@ -137,9 +139,11 @@ describe('default', function()
           {3:testing <CR> /?\!}4                                          |
           {1:~                                                           }|*2
           {2:[No Name] [+]                             3,1            All}|
-          /\Vtesting <CR> \/?\\!                    [3/4]             |
+          /\Vtesting <CR> /?\\!                     [3/4]             |
         ]])
-        n.feed('G0vf!o#')
+        n.feed('G0vf!')
+        n.poke_eventloop()
+        n.feed('#')
         screen:expect([[
           {3:testing <CR> /?\!}1                                          |
           {3:testing <CR> /?\!}2                                          |
