@@ -5935,6 +5935,114 @@ describe('builtin popupmenu', function()
         ]])
         feed('<C-E><Esc>')
       end)
+
+      -- oldtest: Test_pum_complete_with_special_characters()
+      it('multi-line completion', function()
+        exec([[
+          func Omni_test(findstart, base)
+            if a:findstart
+              return col(".")
+            endif
+            return [#{word: "func ()\n\t\nend", abbr: "function ()",}, #{word: "foobar"}, #{word: "你好\n\t\n我好"}]
+          endfunc
+          set omnifunc=Omni_test
+        ]])
+
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          func ()                         |
+                                          |
+          end^                             |
+          {s:function ()    }{1:                 }|
+          {n:foobar         }{1:                 }|
+          {n:你好^@  ^@我好 }{1:                 }|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+
+        feed('<C-N>')
+        screen:expect([[
+          foobar^                          |
+          {n:function ()    }{1:                 }|
+          {s:foobar         }{1:                 }|
+          {n:你好^@  ^@我好 }{1:                 }|
+          {1:~                               }|*15
+          {2:-- }{5:match 2 of 3}                 |
+        ]])
+        feed('<C-E><ESC>')
+
+        feed('Shello  hero<ESC>hhhhha<C-X><C-O>')
+        screen:expect([[
+          hello func ()                   |
+                                          |
+          end^ hero                        |
+          {1:~    }{s: function ()    }{1:           }|
+          {1:~    }{n: foobar         }{1:           }|
+          {1:~    }{n: 你好^@  ^@我好 }{1:           }|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+
+        feed('<C-N>')
+        screen:expect([[
+          hello foobar^ hero               |
+          {1:~    }{n: function ()    }{1:           }|
+          {1:~    }{s: foobar         }{1:           }|
+          {1:~    }{n: 你好^@  ^@我好 }{1:           }|
+          {1:~                               }|*15
+          {2:-- }{5:match 2 of 3}                 |
+        ]])
+
+        feed('<C-N>')
+        screen:expect([[
+          hello 你好                      |
+                                          |
+          我好^ hero                       |
+          {1:~  }{n: function ()    }{1:             }|
+          {1:~  }{n: foobar         }{1:             }|
+          {1:~  }{s: 你好^@  ^@我好 }{1:             }|
+          {1:~                               }|*13
+          {2:-- }{5:match 3 of 3}                 |
+        ]])
+
+        feed('<C-N>')
+        screen:expect([[
+          hello ^ hero                     |
+          {1:~    }{n: function ()    }{1:           }|
+          {1:~    }{n: foobar         }{1:           }|
+          {1:~    }{n: 你好^@  ^@我好 }{1:           }|
+          {1:~                               }|*15
+          {2:-- }{8:Back at original}             |
+        ]])
+        feed('<C-E><ESC>')
+
+        command(':hi ComplMatchIns guifg=red')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          {8:func ()}                         |
+          {8:        }                        |
+          {8:end}^                             |
+          {s:function ()    }{1:                 }|
+          {n:foobar         }{1:                 }|
+          {n:你好^@  ^@我好 }{1:                 }|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-E><ESC>')
+
+        feed('Shello  hero<ESC>hhhhha<C-X><C-O>')
+        screen:expect([[
+          hello {8:func ()}                   |
+          {8:        }                        |
+          {8:end^ }hero                        |
+          {1:~    }{s: function ()    }{1:           }|
+          {1:~    }{n: foobar         }{1:           }|
+          {1:~    }{n: 你好^@  ^@我好 }{1:           }|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-E><ESC>')
+      end)
     end
   end
 
