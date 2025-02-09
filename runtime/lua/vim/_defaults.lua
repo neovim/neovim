@@ -383,9 +383,12 @@ end
 do
   --- Right click popup menu
   vim.cmd([[
-    anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
     amenu     PopUp.Open\ in\ web\ browser  gx
     anoremenu PopUp.Inspect                 <Cmd>Inspect<CR>
+    anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
+    anoremenu PopUp.Show\ Diagnostics       <Cmd>lua vim.diagnostic.open_float()<CR>
+    anoremenu PopUp.Show\ All\ Diagnostics  <Cmd>lua vim.diagnostic.setqflist()<CR>
+    anoremenu PopUp.Configure\ Diagnostics  <Cmd>help vim.diagnostic.config()<CR>
     anoremenu PopUp.-1-                     <Nop>
     vnoremenu PopUp.Cut                     "+x
     vnoremenu PopUp.Copy                    "+y
@@ -403,12 +406,29 @@ do
     vim.cmd([[
       amenu disable PopUp.Go\ to\ definition
       amenu disable PopUp.Open\ in\ web\ browser
+      amenu disable PopUp.Show\ Diagnostics
+      amenu disable PopUp.Show\ All\ Diagnostics
+      amenu disable PopUp.Configure\ Diagnostics
     ]])
 
     if ctx == 'url' then
       vim.cmd([[amenu enable PopUp.Open\ in\ web\ browser]])
     elseif ctx == 'lsp' then
       vim.cmd([[anoremenu enable PopUp.Go\ to\ definition]])
+    end
+
+    local lnum = vim.fn.getcurpos()[2] - 1 ---@type integer
+    local diagnostic = false
+    if next(vim.diagnostic.get(0, { lnum = lnum })) ~= nil then
+      diagnostic = true
+      vim.cmd([[anoremenu enable PopUp.Show\ Diagnostics]])
+    end
+
+    if diagnostic or next(vim.diagnostic.count(0)) ~= nil then
+      vim.cmd([[
+        anoremenu enable PopUp.Show\ All\ Diagnostics
+        anoremenu enable PopUp.Configure\ Diagnostics
+      ]])
     end
   end
 
