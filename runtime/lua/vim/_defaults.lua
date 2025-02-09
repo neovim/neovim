@@ -442,7 +442,6 @@ do
       local urls = require('vim.ui')._get_urls()
       local url = vim.startswith(urls[1], 'http')
       local ctx = url and 'url' or (vim.lsp.get_clients({ bufnr = 0 })[1] and 'lsp' or nil)
-
       enable_ctx_menu(ctx)
     end,
   })
