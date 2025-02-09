@@ -526,15 +526,15 @@ end
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table
 ---@return any # Nested value indexed by key (if it exists), else nil
 function vim.tbl_get(o, ...)
-  local keys = { ... }
-  if #keys == 0 then
+  local nargs = select('#', ...)
+  if nargs == 0 then
     return nil
   end
-  for i, k in ipairs(keys) do
-    o = o[k] --- @type any
+  for i = 1, nargs do
+    o = o[select(i, ...)] --- @type any
     if o == nil then
       return nil
-    elseif type(o) ~= 'table' and next(keys, i) then
+    elseif type(o) ~= 'table' and i ~= nargs then
       return nil
     end
   end
