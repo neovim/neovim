@@ -7,7 +7,7 @@
 --- documentation available at runtime/lua/vim/_meta/re.lua
 
 -- imported functions and modules
-local tonumber, type, print, error = tonumber, type, print, error
+local tonumber, type, error = tonumber, type, error
 local setmetatable = setmetatable
 local m = require"lpeg"
 
@@ -63,10 +63,10 @@ local function updatelocale ()
   mem = {}    -- restart memoization
   fmem = {}
   gmem = {}
-  local mt = {__mode = "v"}
-  setmetatable(mem, mt)
-  setmetatable(fmem, mt)
-  setmetatable(gmem, mt)
+  local mt0 = {__mode = "v"}
+  setmetatable(mem, mt0)
+  setmetatable(fmem, mt0)
+  setmetatable(gmem, mt0)
 end
 
 
@@ -74,7 +74,7 @@ updatelocale()
 
 
 
-local I = m.P(function (s,i) print(i, s:sub(1, i-1)); return i end)
+-- local I = m.P(function (s,i) print(i, s:sub(1, i-1)); return i end)
 
 
 local function patt_error (s, i)
@@ -240,7 +240,8 @@ local function find (s, p, i)
     cp = mm.P{ mm.Cp() * cp * mm.Cp() + 1 * mm.V(1) }
     fmem[p] = cp
   end
-  local i, e = cp:match(s, i or 1)
+  local e
+  i, e = cp:match(s, i or 1)
   if i then return i, e - 1
   else return i
   end
