@@ -428,7 +428,7 @@ do
     anoremenu PopUp.How-to\ disable\ mouse  <Cmd>help disable-mouse<CR>
   ]])
 
-  local function enable_ctx_menu(ctx)
+  local function enable_ctx_menu()
     vim.cmd([[
       amenu disable PopUp.Go\ to\ definition
       amenu disable PopUp.Open\ in\ web\ browser
@@ -437,9 +437,10 @@ do
       amenu disable PopUp.Configure\ Diagnostics
     ]])
 
-    if ctx == 'url' then
+    local urls = require('vim.ui')._get_urls()
+    if vim.startswith(urls[1], 'http') then
       vim.cmd([[amenu enable PopUp.Open\ in\ web\ browser]])
-    elseif ctx == 'lsp' then
+    elseif vim.lsp.get_clients({ bufnr = 0 })[1] then
       vim.cmd([[anoremenu enable PopUp.Go\ to\ definition]])
     end
 
@@ -465,10 +466,7 @@ do
     desc = 'Mouse popup menu',
     -- nested = true,
     callback = function()
-      local urls = require('vim.ui')._get_urls()
-      local url = vim.startswith(urls[1], 'http')
-      local ctx = url and 'url' or (vim.lsp.get_clients({ bufnr = 0 })[1] and 'lsp' or nil)
-      enable_ctx_menu(ctx)
+      enable_ctx_menu()
     end,
   })
 end
