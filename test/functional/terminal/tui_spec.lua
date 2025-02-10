@@ -53,10 +53,7 @@ describe('TUI :detach', function()
     local screen = tt.setup_child_nvim({
       '--listen',
       child_server,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -137,10 +134,7 @@ describe('TUI', function()
     screen = tt.setup_child_nvim({
       '--listen',
       child_server,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
       '--cmd',
@@ -2311,7 +2305,7 @@ describe('TUI', function()
     end)
     local screen = tt.setup_screen(
       0,
-      ('"%s" -u NONE -i NONE --cmd "set noswapfile noshowcmd noruler" --cmd "normal iabc" > /dev/null 2>&1 && cat testF && rm testF'):format(
+      ('"%s" --clean --cmd "set noswapfile noshowcmd noruler" --cmd "normal iabc" > /dev/null 2>&1 && cat testF && rm testF'):format(
         nvim_prog
       ),
       nil,
@@ -2331,10 +2325,7 @@ describe('TUI', function()
 
   it('<C-h> #10134', function()
     local screen = tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -2364,10 +2355,7 @@ describe('TUI', function()
 
   it('draws line with many trailing spaces correctly #24955', function()
     local screen = tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'set notermguicolors',
       '--cmd',
@@ -2401,10 +2389,7 @@ describe('TUI', function()
 
   it('draws screen lines with leading spaces correctly #29711', function()
     local screen = tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'set foldcolumn=6 | call setline(1, ["", repeat("aabb", 1000)]) | echo 42',
     }, { extra_rows = 10, cols = 66 })
@@ -2444,10 +2429,7 @@ describe('TUI', function()
     -- Set a different bg colour and change $TERM to something dumber so the `print_spaces()`
     -- codepath in `clear_region()` is hit.
     local screen = tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'set notermguicolors | highlight Normal ctermbg=red',
       '--cmd',
@@ -2488,10 +2470,7 @@ describe('TUI UIEnter/UILeave', function()
   it('fires exactly once, after VimEnter', function()
     clear()
     local screen = tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -2754,10 +2733,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   local function assert_term_colors(term, colorterm, maxcolors)
     clear({ env = { TERM = term }, args = {} })
     screen = tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -3037,10 +3013,7 @@ describe("TUI 'term' option", function()
   local function assert_term(term_envvar, term_expected)
     clear()
     screen = tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       nvim_set .. ' notermguicolors',
     }, {
@@ -3097,10 +3070,7 @@ describe('TUI', function()
   local function nvim_tui(extra_args)
     clear()
     screen = tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -3178,12 +3148,9 @@ describe('TUI', function()
 
     local child_server = new_pipename()
     screen = tt.setup_child_nvim({
+      '--clean',
       '--listen',
       child_server,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
     }, {
       env = {
         VIMRUNTIME = os.getenv('VIMRUNTIME'),
@@ -3235,12 +3202,9 @@ describe('TUI', function()
 
     local child_server = new_pipename()
     screen = tt.setup_child_nvim({
+      '--clean',
       '--listen',
       child_server,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
     }, {
       env = {
         VIMRUNTIME = os.getenv('VIMRUNTIME'),
@@ -3309,12 +3273,9 @@ describe('TUI bg color', function()
     command('set background=dark') -- set outer Nvim background
     local child_server = new_pipename()
     local screen = tt.setup_child_nvim({
+      '--clean',
       '--listen',
       child_server,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -3332,12 +3293,9 @@ describe('TUI bg color', function()
     command('set background=light') -- set outer Nvim background
     local child_server = new_pipename()
     local screen = tt.setup_child_nvim({
+      '--clean',
       '--listen',
       child_server,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -3363,10 +3321,7 @@ describe('TUI bg color', function()
       })
     ]])
     tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -3379,10 +3334,7 @@ describe('TUI bg color', function()
 
   it('triggers OptionSet from automatic background processing', function()
     local screen = tt.setup_child_nvim({
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+      '--clean',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -3403,12 +3355,9 @@ describe('TUI bg color', function()
     command('set background=dark') -- set outer Nvim background
     local child_server = new_pipename()
     local screen = tt.setup_child_nvim({
+      '--clean',
       '--listen',
       child_server,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -3438,12 +3387,9 @@ describe('TUI client', function()
     set_session(server_super)
     local server_pipe = new_pipename()
     local screen_server = tt.setup_child_nvim({
+      '--clean',
       '--listen',
       server_pipe,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -3583,12 +3529,9 @@ describe('TUI client', function()
 
     local server_pipe = new_pipename()
     local screen_server = tt.setup_child_nvim({
+      '--clean',
       '--listen',
       server_pipe,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
       '--cmd',
       'colorscheme vim',
       '--cmd',
