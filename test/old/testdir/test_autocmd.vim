@@ -4205,4 +4205,64 @@ func Test_OptionSet_cmdheight()
   set cmdheight& mouse& laststatus&
 endfunc
 
+func Test_eventignorewin()
+  defer CleanUpTestAuGroup()
+  augroup testing
+    au WinEnter * :call add(g:evs, ["WinEnter", expand("<afile>")])
+    au WinLeave * :call add(g:evs, ["WinLeave", expand("<afile>")])
+    au BufWinEnter * :call add(g:evs, ["BufWinEnter", expand("<afile>")])
+  augroup END
+
+  let g:evs = []
+  set eventignorewin=WinLeave,WinEnter
+  split foo
+  call assert_equal([['BufWinEnter', 'foo']], g:evs)
+  set eventignorewin=all
+  edit bar
+  call assert_equal([['BufWinEnter', 'foo']], g:evs)
+  set eventignorewin=
+  wincmd w
+  call assert_equal([['BufWinEnter', 'foo'], ['WinLeave', 'bar']], g:evs)
+
+  only!
+  %bwipe!
+  set eventignorewin&
+  unlet g:evs
+endfunc
+
+func Test_WinScrolled_Resized_eiw()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    call setline(1, ['foo']->repeat(32))
+    set eventignorewin=WinScrolled,WinResized
+    split
+    let [g:afile,g:resized,g:scrolled] = ['none',0,0]
+    au WinScrolled * let [g:afile,g:scrolled] = [expand('<afile>'),g:scrolled+1]
+    au WinResized * let [g:afile,g:resized] = [expand('<afile>'),g:resized+1]
+  END
+  call writefile(lines, 'Xtest_winscrolled_eiw', 'D')
+  let buf = RunVimInTerminal('-S Xtest_winscrolled_eiw', {'rows': 10})
+
+  " Both windows are ignoring resize events
+  call term_sendkeys(buf, "\<C-W>-")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":echo g:afile g:resized g:scrolled\<CR>")
+  call WaitForAssert({-> assert_equal('none 0 0', term_getline(buf, 10))}, 1000)
+
+  " And scroll events
+  call term_sendkeys(buf, "Ggg")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":echo g:afile g:resized g:scrolled\<CR>")
+  call WaitForAssert({-> assert_equal('none 0 0', term_getline(buf, 10))}, 1000)
+
+  " Un-ignore events in second window, make first window current and resize
+  call term_sendkeys(buf, ":set eventignorewin=\<CR>\<C-W>w\<C-W>+")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":echo win_getid() g:afile g:resized g:scrolled\<CR>")
+  call WaitForAssert({-> assert_equal('1000 1001 1 1', term_getline(buf, 10))}, 1000)
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

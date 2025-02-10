@@ -634,7 +634,7 @@ event_T event_name2nr(const char *start, char **end)
   if (event_names[i].name == NULL) {
     return NUM_EVENTS;
   }
-  return event_names[i].event;
+  return (event_T)abs(event_names[i].event);
 }
 
 /// Return the event number for event name "str".
@@ -643,7 +643,7 @@ event_T event_name2nr_str(String str)
 {
   for (int i = 0; event_names[i].name != NULL; i++) {
     if (str.size == event_names[i].len && STRNICMP(str.data, event_names[i].name, str.size) == 0) {
-      return event_names[i].event;
+      return (event_T)abs(event_names[i].event);
     }
   }
   return NUM_EVENTS;
@@ -658,25 +658,23 @@ const char *event_nr2name(event_T event)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
 {
   for (int i = 0; event_names[i].name != NULL; i++) {
-    if (event_names[i].event == event) {
+    if ((event_T)abs(event_names[i].event) == event) {
       return event_names[i].name;
     }
   }
   return "Unknown";
 }
 
-/// Return true if "event" is included in 'eventignore'.
+/// Return true if "event" is included in 'eventignore(win)'.
 ///
 /// @param event event to check
-static bool event_ignored(event_T event)
+bool event_ignored(event_T event, char *ei)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char *p = p_ei;
-
-  while (*p != NUL) {
-    if (STRNICMP(p, "all", 3) == 0 && (p[3] == NUL || p[3] == ',')) {
+  while (*ei != NUL) {
+    if (STRNICMP(ei, "all", 3) == 0 && (ei[3] == NUL || ei[3] == ',')) {
       return true;
-    } else if (event_name2nr(p, &p) == event) {
+    } else if (event_name2nr(ei, &ei) == event) {
       return true;
     }
   }
@@ -684,19 +682,23 @@ static bool event_ignored(event_T event)
   return false;
 }
 
-// Return OK when the contents of p_ei is valid, FAIL otherwise.
-int check_ei(void)
+/// Return OK when the contents of 'eventignore' or 'eventignorewin' is valid,
+/// FAIL otherwise.
+int check_ei(char *ei)
 {
-  char *p = p_ei;
+  bool win = ei != p_ei;
 
-  while (*p) {
-    if (STRNICMP(p, "all", 3) == 0 && (p[3] == NUL || p[3] == ',')) {
-      p += 3;
-      if (*p == ',') {
-        p++;
+  while (*ei) {
+    if (STRNICMP(ei, "all", 3) == 0 && (ei[3] == NUL || ei[3] == ',')) {
+      ei += 3;
+      if (*ei == ',') {
+        ei++;
       }
-    } else if (event_name2nr(p, &p) == NUM_EVENTS) {
-      return FAIL;
+    } else {
+      event_T event = event_name2nr(ei, &ei);
+      if (event == NUM_EVENTS || (win && event_names[event].event > 0)) {
+        return FAIL;
+      }
     }
   }
 
@@ -1631,7 +1633,24 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   }
 
   // Ignore events in 'eventignore'.
-  if (event_ignored(event)) {
+  if (event_ignored(event, p_ei)) {
+    goto BYPASS_AU;
+  }
+
+  bool win_ignore = false;
+  // If event is allowed in 'eventignorewin', check if curwin or all windows
+  // into "buf" are ignoring the event.
+  if (buf == curbuf && event_names[event].event <= 0) {
+    win_ignore = event_ignored(event, curwin->w_p_eiw);
+  } else if (buf != NULL && event_names[event].event <= 0) {
+    for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+      WinInfo *wip = kv_A(buf->b_wininfo, i);
+      if (wip->wi_win != NULL && wip->wi_win->w_buffer == buf) {
+        win_ignore = event_ignored(event, wip->wi_win->w_p_eiw);
+      }
+    }
+  }
+  if (win_ignore) {
     goto BYPASS_AU;
   }
 
@@ -2279,9 +2298,21 @@ char *expand_get_event_name(expand_T *xp, int idx)
 
 /// Function given to ExpandGeneric() to obtain the list of event names. Don't
 /// include groups.
-char *get_event_name_no_group(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+char *get_event_name_no_group(expand_T *xp FUNC_ATTR_UNUSED, int idx, bool win)
 {
-  return event_names[idx].name;
+  if (!win) {
+    return event_names[idx].name;
+  }
+
+  // Need to check subset of allowed values for 'eventignorewin'.
+  int j = 0;
+  for (int i = 0; i < NUM_EVENTS; i++) {
+    j += event_names[i].event <= 0;
+    if (j == idx + 1) {
+      return event_names[i].name;
+    }
+  }
+  return NULL;
 }
 
 /// Check whether given autocommand is supported

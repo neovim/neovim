@@ -96,6 +96,8 @@ typedef struct {
   int wo_diff;
 #define w_p_diff w_onebuf_opt.wo_diff  // 'diff'
   char *wo_fdc;
+#define w_p_eiw w_onebuf_opt.wo_eiw  // 'eventignorewin'
+  char *wo_eiw;
 #define w_p_fdc w_onebuf_opt.wo_fdc    // 'foldcolumn'
   char *wo_fdc_save;
 #define w_p_fdc_save w_onebuf_opt.wo_fdc_save  // 'fdc' saved for diff mode

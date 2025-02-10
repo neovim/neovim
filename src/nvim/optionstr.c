@@ -1082,27 +1082,32 @@ int expand_set_encoding(optexpand_T *args, int *numMatches, char ***matches)
   return expand_set_opt_generic(args, get_encoding_name, numMatches, matches);
 }
 
-/// The 'eventignore' option is changed.
-const char *did_set_eventignore(optset_T *args FUNC_ATTR_UNUSED)
+/// The 'eventignore(win)' option is changed.
+const char *did_set_eventignore(optset_T *args)
 {
-  if (check_ei() == FAIL) {
+  char **varp = (char **)args->os_varp;
+
+  if (check_ei(*varp) == FAIL) {
     return e_invarg;
   }
   return NULL;
 }
 
+static bool expand_eiw = false;
+
 static char *get_eventignore_name(expand_T *xp, int idx)
 {
-  // 'eventignore' allows special keyword "all" in addition to
+  // 'eventignore(win)' allows special keyword "all" in addition to
   // all event names.
   if (idx == 0) {
     return "all";
   }
-  return get_event_name_no_group(xp, idx - 1);
+  return get_event_name_no_group(xp, idx - 1, expand_eiw);
 }
 
 int expand_set_eventignore(optexpand_T *args, int *numMatches, char ***matches)
 {
+  expand_eiw = args->oe_varp != (char *)&p_ei;
   return expand_set_opt_generic(args, get_eventignore_name, numMatches, matches);
 }
 

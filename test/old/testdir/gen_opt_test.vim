@@ -220,6 +220,8 @@ let test_values = {
       "\ 'encoding': [['latin1'], ['xxx', '']],
       \ 'eventignore': [['', 'WinEnter', 'WinLeave,winenter', 'all,WinEnter'],
       \		['xxx']],
+      \ 'eventignorewin': [['', 'WinEnter', 'WinLeave,winenter', 'all,WinEnter'],
+      \		['xxx', 'WinNew']],
       \ 'fileencoding': [['', 'latin1', 'xxx'], []],
       \ 'fileformat': [['dos', 'unix', 'mac'], ['xxx']],
       \ 'fileformats': [['', 'dos', 'dos,unix'], ['xxx']],

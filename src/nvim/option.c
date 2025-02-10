@@ -4580,6 +4580,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_cc);
   case kOptDiff:
     return &(win->w_p_diff);
+  case kOptEventignorewin:
+    return &(win->w_p_eiw);
   case kOptFoldcolumn:
     return &(win->w_p_fdc);
   case kOptFoldenable:
@@ -4875,6 +4877,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_cc = copy_option_val(from->wo_cc);
   to->wo_diff = from->wo_diff;
   to->wo_diff_saved = from->wo_diff_saved;
+  to->wo_eiw = copy_option_val(from->wo_eiw);
   to->wo_cocu = copy_option_val(from->wo_cocu);
   to->wo_cole = from->wo_cole;
   to->wo_fdc = copy_option_val(from->wo_fdc);
@@ -4919,6 +4922,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_fde);
   check_string_option(&wop->wo_fdt);
   check_string_option(&wop->wo_fmr);
+  check_string_option(&wop->wo_eiw);
   check_string_option(&wop->wo_scl);
   check_string_option(&wop->wo_rlc);
   check_string_option(&wop->wo_sbr);
@@ -4946,6 +4950,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_fde);
   clear_string_option(&wop->wo_fdt);
   clear_string_option(&wop->wo_fmr);
+  clear_string_option(&wop->wo_eiw);
   clear_string_option(&wop->wo_scl);
   clear_string_option(&wop->wo_rlc);
   clear_string_option(&wop->wo_sbr);
