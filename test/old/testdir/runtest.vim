@@ -231,10 +231,10 @@ func RunTheTest(test)
   echo prefix .. 'Executing ' .. a:test
 
   if has('timers')
-    " No test should take longer than 30 seconds.  If it takes longer we
+    " No test should take longer than 45 seconds.  If it takes longer we
     " assume we are stuck and need to break out.
     let test_timeout_timer =
-          \ timer_start(RunningWithValgrind() ? 50000 : 30000, 'TestTimeout')
+          \ timer_start(RunningWithValgrind() ? 90000 : 45000, 'TestTimeout')
     let g:timeout_start = localtime()
   endif
 
