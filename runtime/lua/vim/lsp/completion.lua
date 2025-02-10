@@ -493,6 +493,7 @@ local function trigger(bufnr, clients)
       end
     end
     local start_col = (server_start_boundary or word_boundary) + 1
+    Context.cursor = { cursor_row, start_col }
     vim.fn.complete(start_col, matches)
   end)
 
@@ -569,8 +570,14 @@ local function on_complete_done()
     end
 
     -- Remove the already inserted word.
-    local start_char = cursor_col - #completed_item.word
-    api.nvim_buf_set_text(bufnr, cursor_row, start_char, cursor_row, cursor_col, { '' })
+    api.nvim_buf_set_text(
+      bufnr,
+      Context.cursor[1] - 1,
+      Context.cursor[2] - 1,
+      cursor_row,
+      cursor_col,
+      { '' }
+    )
   end
 
   local function apply_snippet_and_command()

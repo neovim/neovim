@@ -1078,4 +1078,42 @@ describe('vim.lsp.completion: integration', function()
       end)
     )
   end)
+
+  it('#clear multiple-lines word', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'then...end',
+          sortText = '0001',
+          insertText = 'then\n\t$0\nend',
+          kind = 15,
+          insertTextFormat = 2,
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,noselect'
+    end)
+    create_server('dummy', completion_list)
+    feed('Sif true <C-X><C-O>')
+    retry(nil, nil, function()
+      eq(
+        1,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+    feed('<C-n><C-y>')
+    eq(
+      { true, { 'if true then', '\t', 'end' } },
+      exec_lua(function()
+        return {
+          vim.snippet.active({ direction = 1 }),
+          vim.api.nvim_buf_get_lines(0, 0, -1, true),
+        }
+      end)
+    )
+  end)
 end)
