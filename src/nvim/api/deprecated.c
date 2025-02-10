@@ -633,6 +633,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
 Object nvim_get_option(String name, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
+  FUNC_API_RET_ALLOC
 {
   return get_option_from(NULL, kOptScopeGlobal, name, err);
 }
@@ -647,6 +648,7 @@ Object nvim_get_option(String name, Error *err)
 Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
+  FUNC_API_RET_ALLOC
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -689,6 +691,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
 Object nvim_win_get_option(Window window, String name, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
+  FUNC_API_RET_ALLOC
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -728,7 +731,7 @@ void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object
 /// @param       name       The option name.
 /// @param[out]  err        Details of an error that may have occurred.
 ///
-/// @return  the option value.
+/// @return  the option value. Must be freed by caller.
 static Object get_option_from(void *from, OptScope scope, String name, Error *err)
 {
   VALIDATE_S(name.size > 0, "option name", "<empty>", {
