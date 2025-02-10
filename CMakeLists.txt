@@ -346,7 +346,10 @@ ExternalProject_Add(download_luals
 
 file(GLOB_RECURSE LUAFILES runtime/*.lua)
 add_target(luals
-  COMMAND ${DEPS_BIN_DIR}/luals/bin/lua-language-server --configpath=${PROJECT_SOURCE_DIR}/.luarc.json --check=${PROJECT_SOURCE_DIR}/runtime
+  COMMAND ${DEPS_BIN_DIR}/luals/bin/lua-language-server
+    --configpath=${PROJECT_SOURCE_DIR}/.luarc.json
+    --check=${PROJECT_SOURCE_DIR}/runtime
+    --checklevel=Hint
   DEPENDS ${LUAFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 
