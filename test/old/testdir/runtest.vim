@@ -96,6 +96,9 @@ set shellslash
 " Common with all tests on all systems.
 source setup.vim
 
+" Needed for RunningWithValgrind().
+source shared.vim
+
 " For consistency run all tests with 'nocompatible' set.
 " This also enables use of line continuation.
 set nocp viminfo+=nviminfo
@@ -206,12 +209,18 @@ unlet! name
 func TestTimeout(id)
   split test.log
   call append(line('$'), '')
-  call append(line('$'), 'Test timed out: ' .. g:testfunc)
+
+  let text = 'Test timed out: ' .. g:testfunc
+  if g:timeout_start > 0
+    let text ..= strftime(' after %s seconds', localtime() - g:timeout_start)
+  endif
+  call append(line('$'), text)
   write
-  call add(v:errors, 'Test timed out: ' . g:testfunc)
+  call add(v:errors, text)
 
   cquit! 42
 endfunc
+let g:timeout_start = 0
 
 func RunTheTest(test)
   let prefix = ''
@@ -222,9 +231,11 @@ func RunTheTest(test)
   echo prefix .. 'Executing ' .. a:test
 
   if has('timers')
-    " No test should take longer than 30 seconds.  If it takes longer we
+    " No test should take longer than 45 seconds.  If it takes longer we
     " assume we are stuck and need to break out.
-    let test_timeout_timer = timer_start(30000, 'TestTimeout')
+    let test_timeout_timer =
+          \ timer_start(RunningWithValgrind() ? 90000 : 45000, 'TestTimeout')
+    let g:timeout_start = localtime()
   endif
 
   " Avoid stopping at the "hit enter" prompt
@@ -298,6 +309,7 @@ func RunTheTest(test)
 
   if has('timers')
     call timer_stop(test_timeout_timer)
+    let g:timeout_start = 0
   endif
 
   " Clear any autocommands and put back the catch-all for SwapExists.
@@ -351,7 +363,7 @@ func RunTheTest(test)
 
   " close any split windows
   while winnr('$') > 1
-    bwipe!
+    noswapfile bwipe!
   endwhile
 
   " May be editing some buffer, wipe it out.  Then we may end up in another
