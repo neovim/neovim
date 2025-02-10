@@ -36,10 +36,9 @@ typedef struct {
   int start_col;
   int end_row;
   int end_col;
-  int ordering;  ///< range insertion order
-  DecorPriority priority;
   bool owned;  ///< ephemeral decoration, free memory immediately
   DecorRangeKind kind;
+  uint64_t priority;  ///< range insertion order, subpriority << 32, hl priority << 48.
   // next pointers MUST NOT be used, these are separate ranges
   // vt->next could be pointing to freelist memory at this point
   union {

@@ -40,6 +40,7 @@ typedef struct {
   Boolean invalidate;
   Boolean ephemeral;
   Integer priority;
+  Integer subpriority;
   Boolean right_gravity;
   Boolean end_right_gravity;
   Array virt_lines;
