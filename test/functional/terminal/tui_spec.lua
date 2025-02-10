@@ -42,6 +42,47 @@ describe('TUI :detach', function()
   end)
 
   it('does not stop server', function()
+    local job_opts = {
+      env = {
+        NVIM_LOG_FILE = testlog,
+      },
+    }
+
+    if is_os('win') then
+      -- TODO(justinmk): on Windows,
+      --    - tt.setup_child_nvim() is broken.
+      --    - session.lua is broken after the pipe closes.
+      -- So this test currently just exercises __NVIM_DETACH + :detach, without asserting anything.
+
+      -- TODO(justinmk): temporary hack for Windows.
+      job_opts.env['__NVIM_DETACH'] = '1'
+      n.clear(job_opts)
+
+      local screen = Screen.new(50, 10)
+      n.feed('iHello, World')
+      screen:expect([[
+        Hello, World^                                      |
+        {1:~                                                 }|*8
+        {5:-- INSERT --}                                      |
+      ]])
+
+      -- local addr = api.nvim_get_vvar('servername')
+      eq(1, #n.api.nvim_list_uis())
+
+      -- TODO(justinmk): test util should not freak out when the pipe closes.
+      n.expect_exit(n.command, 'detach')
+
+      -- n.get_session():close() -- XXX: hangs
+      -- n.set_session(n.connect(addr)) -- XXX: hangs
+      -- eq(0, #n.api.nvim_list_uis()) -- XXX: hangs
+
+      -- Avoid a dangling process.
+      n.get_session():close('kill')
+      -- n.expect_exit(n.command, 'qall!')
+
+      return
+    end
+
     local server_super = n.clear()
     local client_super = n.new_session(true)
     finally(function()
@@ -53,16 +94,15 @@ describe('TUI :detach', function()
     local screen = tt.setup_child_nvim({
       '--listen',
       child_server,
-      '--clean',
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
       '--cmd',
       'colorscheme vim',
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
-    }, {
-      env = {
-        NVIM_LOG_FILE = testlog,
-      },
-    })
+    }, job_opts)
 
     tt.feed_data('iHello, World')
     screen:expect {
@@ -106,7 +146,8 @@ describe('TUI :detach', function()
       '--remote-ui',
       '--server',
       child_server,
-    })
+    }, job_opts)
+
     screen_reattached:expect {
       grid = [[
       We did it, pooky^.                                 |

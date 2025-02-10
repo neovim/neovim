@@ -62,7 +62,8 @@ uint64_t ui_client_start_server(int argc, char **argv)
   on_err.fwd_err = true;
 
 #ifdef MSWIN
-  bool detach = false;  // TODO(justinmk): detach=true breaks `tt.setup_child_nvim` tests on Windows.
+  // TODO(justinmk): detach breaks `tt.setup_child_nvim` tests on Windows?
+  bool detach = os_env_exists("__NVIM_DETACH");
 #else
   bool detach = true;
 #endif
