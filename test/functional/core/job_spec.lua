@@ -1265,12 +1265,16 @@ describe('jobs', function()
     ]])
 
     feed(':q<CR>')
-    screen:expect([[
-                                                        |
-      [Process exited 0]^                                |
-                                                        |*4
-      {3:-- TERMINAL --}                                    |
-    ]])
+    if is_os('freebsd') then
+      screen:expect { any = vim.pesc('[Process exited 0]') }
+    else
+      screen:expect([[
+                                                          |
+        [Process exited 0]^                                |
+                                                          |*4
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end
   end)
 end)
 

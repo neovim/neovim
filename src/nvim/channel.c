@@ -219,6 +219,7 @@ Channel *channel_alloc(ChannelStreamType type)
   chan->refcount = 1;
   chan->exit_status = -1;
   chan->streamtype = type;
+  chan->detach = false;
   assert(chan->id <= VARNUMBER_MAX);
   pmap_put(uint64_t)(&channels, chan->id, chan);
   return chan;

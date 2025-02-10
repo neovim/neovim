@@ -908,8 +908,10 @@ function M.is_asan()
   return version:match('-fsanitize=[a-z,]*address')
 end
 
--- Returns a valid, platform-independent Nvim listen address.
--- Useful for communicating with child instances.
+--- Returns a valid, platform-independent Nvim listen address.
+--- Useful for communicating with child instances.
+---
+--- @return string
 function M.new_pipename()
   -- HACK: Start a server temporarily, get the name, then stop it.
   local pipename = M.eval('serverstart()')

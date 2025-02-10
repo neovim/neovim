@@ -189,6 +189,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
   ui->wildmenu_active = false;
 
   pmap_put(uint64_t)(&connected_uis, channel_id, ui);
+  current_ui = channel_id;
   ui_attach_impl(ui, channel_id);
 
   may_trigger_vim_suspend_resume(false);
@@ -214,6 +215,7 @@ void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
   }
 
   if (gained) {
+    current_ui = channel_id;
     may_trigger_vim_suspend_resume(false);
   }
 

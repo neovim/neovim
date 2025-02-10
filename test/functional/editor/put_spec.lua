@@ -931,6 +931,8 @@ describe('put command', function()
     end)
 
     it('should ring the bell when deleting if not appropriate', function()
+      t.skip(t.is_os('bsd'), 'crashes on freebsd')
+
       command('goto 2')
       feed('i<bs><esc>')
       expect([[

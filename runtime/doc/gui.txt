@@ -47,6 +47,25 @@ can connect to any Nvim instance).
 Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
         :autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
 <
+------------------------------------------------------------------------------
+Stop or detach the current UI
+
+                                                *:detach*
+:detach
+                Detaches the current UI. Other UIs (if any) remain attached.
+                The server (typically `nvim --embed`) continues running as
+                a background process, and you can reattach to it later.
+                Before detaching, you may want to note the server address:
+                >vim
+                    :echo v:servername
+<
+                Note: The server closes the UI RPC channel, so :detach
+                inherently "works" for all UIs. But if a UI isn't expecting
+                the channel to be closed, it may be (incorrectly) reported as
+                an error.
+
+------------------------------------------------------------------------------
+GUI commands
 
                                                 *:winp* *:winpos* *E188*
 :winp[os]

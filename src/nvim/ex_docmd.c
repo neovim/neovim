@@ -14,6 +14,7 @@
 #include "auto/config.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/ui.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -21,6 +22,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
+#include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
@@ -67,6 +69,7 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
+#include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/normal_defs.h"
 #include "nvim/ops.h"
@@ -5527,6 +5530,56 @@ static void ex_tabs(exarg_T *eap)
       msg_outtrans(IObuff, 0, false);
       os_breakcheck();
     }
+  }
+}
+
+/// ":detach"
+///
+/// Detaches the current UI.
+///
+/// ":detach!" with bang (!) detaches all UIs _except_ the current UI.
+static void ex_detach(exarg_T *eap)
+{
+  // come on pooky let's burn this mf down
+  if (eap && eap->forceit) {
+    emsg("bang (!) not supported yet");
+  } else {
+    // 1. (TODO) Send "detach" UI-event (notification only).
+    // 2. Perform server-side `nvim_ui_detach`.
+    // 3. Close server-side channel without self-exit.
+
+    if (!current_ui) {
+      emsg("UI not attached");
+      return;
+    }
+
+    Channel *chan = find_channel(current_ui);
+    if (!chan) {
+      emsg(e_invchan);
+      return;
+    }
+    chan->detach = true;  // Prevent self-exit on channel-close.
+
+    // Server-side UI detach. Doesn't close the channel.
+    Error err2 = ERROR_INIT;
+    nvim_ui_detach(chan->id, &err2);
+    if (ERROR_SET(&err2)) {
+      emsg(err2.msg);  // UI disappeared already?
+      api_clear_error(&err2);
+      return;
+    }
+
+    // Server-side channel close.
+    const char *err = NULL;
+    bool rv = channel_close(chan->id, kChannelPartAll, &err);
+    if (!rv && err) {
+      emsg(err);  // UI disappeared already?
+      return;
+    }
+    // XXX: Can't do this, channel_decref() is async...
+    // assert(!find_channel(chan->id));
+
+    ILOG("detach current_ui=%" PRId64, chan->id);
   }
 }
 
