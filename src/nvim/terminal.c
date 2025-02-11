@@ -330,12 +330,29 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
   return 1;
 }
 
+static int on_apc(VTermStringFragment frag, void *user)
+{
+  if (frag.str == NULL || frag.len == 0) {
+    return 0;
+  }
+
+  if (!has_event(EVENT_TERMREQUEST)) {
+    return 1;
+  }
+
+  StringBuilder request = KV_INITIAL_VALUE;
+  kv_printf(request, "\x1b_");
+  kv_concat_len(request, frag.str, frag.len);
+  schedule_termrequest(user, request.items, request.size);
+  return 1;
+}
+
 static VTermStateFallbacks vterm_fallbacks = {
   .control = NULL,
   .csi = NULL,
   .osc = on_osc,
   .dcs = on_dcs,
-  .apc = NULL,
+  .apc = on_apc,
   .pm = NULL,
   .sos = NULL,
 };
