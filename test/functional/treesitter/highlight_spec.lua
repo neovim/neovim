@@ -891,6 +891,39 @@ describe('treesitter highlighting (lua)', function()
       ]],
     })
   end)
+
+  it('removes outdated highlights', function()
+    insert('-- int main() {}' .. string.rep("\nprint('test')", 20) .. '\n-- int other() {}')
+
+    exec_lua(function()
+      vim.cmd.norm('gg')
+      vim.treesitter.query.set(
+        'lua',
+        'injections',
+        [[((comment_content) @injection.content
+            (#set! injection.combined)
+            (#set! injection.language "c"))]]
+      )
+      vim.bo.filetype = 'lua'
+      vim.treesitter.start()
+    end)
+
+    screen:expect([[
+      {18:^-- }{16:int}{18: }{25:main}{16:()}{18: }{16:{}}                                                 |
+      {16:print(}{26:'test'}{16:)}                                                    |*16
+                                                                       |
+    ]])
+
+    exec_lua(function()
+      vim.cmd.norm('gg0dw')
+    end)
+
+    screen:expect([[
+      {25:^int} {25:main}{16:()} {16:{}}                                                    |
+      {16:print(}{26:'test'}{16:)}                                                    |*16
+                                                                       |
+    ]])
+  end)
 end)
 
 describe('treesitter highlighting (help)', function()

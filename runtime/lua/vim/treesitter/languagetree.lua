@@ -318,7 +318,13 @@ function LanguageTree:is_valid(exclude_children, range)
     end
     -- TODO: Efficiently search for possibly intersecting regions using a binary search
     for i, region in pairs(self:included_regions()) do
-      if not valid_regions[i] and intercepts_region(region, range) then
+      if
+        not valid_regions[i]
+        and (
+          intercepts_region(region, range)
+          or (self._trees[i] and intercepts_region(self._trees[i]:included_ranges(false), range))
+        )
+      then
         return false
       end
     end
