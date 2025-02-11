@@ -1671,6 +1671,18 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
                       ones where client.name matches this field.
                     • {bufnr}? (`integer`) (default: current buffer)
 
+selection_range({opts})                        *vim.lsp.buf.selection_range()*
+    Expand or shrink a selection.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {winid}? (`integer`, default: current window) Window ID
+                • {pos}? (`[integer, integer]`, default: current cursor
+                  position) Cursor position as a `(row, col)` tuple. See
+                  |nvim_win_get_cursor()|.
+                • {count}? (`integer`, default: 1) Number of times to expand
+                  the selection. Negative values shrink the selection.
+
 signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
     floating window.
