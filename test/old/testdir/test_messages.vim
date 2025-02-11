@@ -391,7 +391,7 @@ endfunc
 func Test_echo_verbose_system()
   CheckRunVimInTerminal
   CheckUnix    " needs the "seq" command
-  CheckNotMac  " doesn't use /tmp
+  CheckNotMac  " the macos TMPDIR is too long for snapshot testing
 
   let buf = RunVimInTerminal('', {'rows': 10})
   call term_sendkeys(buf, ":4 verbose echo system('seq 20')\<CR>")
