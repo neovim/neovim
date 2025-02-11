@@ -3788,6 +3788,9 @@ void ins_compl_delete(bool new_leader)
 
   if ((int)curwin->w_cursor.col > col) {
     if (stop_arrow() == FAIL) {
+      if (remaining) {
+        XFREE_CLEAR(remaining);
+      }
       return;
     }
     backspace_until_column(col);
