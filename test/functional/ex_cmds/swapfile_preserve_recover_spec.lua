@@ -14,7 +14,6 @@ local ok = t.ok
 local rmdir = n.rmdir
 local new_pipename = n.new_pipename
 local pesc = vim.pesc
-local os_kill = n.os_kill
 local set_session = n.set_session
 local async_meths = n.async_meths
 local expect_msg_seq = n.expect_msg_seq
@@ -100,7 +99,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   it('with :preserve and SIGKILL', function()
     local swappath1 = setup_swapname()
     command('preserve')
-    os_kill(eval('getpid()'))
+    eq(0, vim.uv.kill(eval('getpid()'), 'sigkill'))
     test_recover(swappath1)
   end)
 

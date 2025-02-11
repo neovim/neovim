@@ -978,18 +978,6 @@ function M.add_builddir_to_rtp()
   M.command(string.format([[set rtp+=%s/runtime]], t.paths.test_build_dir))
 end
 
---- Kill (reap) a process by PID.
---- @param pid string
---- @return boolean?
-function M.os_kill(pid)
-  return os.execute(
-    (
-      is_os('win') and 'taskkill /f /t /pid ' .. pid .. ' > nul'
-      or 'kill -9 ' .. pid .. ' > /dev/null'
-    )
-  )
-end
-
 --- Create folder with non existing parents
 --- @param path string
 --- @return boolean?

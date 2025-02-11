@@ -21,7 +21,6 @@ local rmdir = n.rmdir
 local assert_alive = n.assert_alive
 local command = n.command
 local fn = n.fn
-local os_kill = n.os_kill
 local retry = t.retry
 local api = n.api
 local NIL = vim.NIL
@@ -444,27 +443,23 @@ describe('jobs', function()
   end)
 
   it('disposed on Nvim exit', function()
-    -- use sleep, which doesn't die on stdin close
-    command(
-      "let g:j =  jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
-    )
-    local pid = eval('jobpid(g:j)')
-    neq(NIL, api.nvim_get_proc(pid))
+    -- Start a child process which doesn't die on stdin close.
+    local j = n.fn.jobstart({ n.nvim_prog, '--clean', '--headless' })
+    local pid = n.fn.jobpid(j)
+    eq('number', type(api.nvim_get_proc(pid).pid))
     clear()
     eq(NIL, api.nvim_get_proc(pid))
   end)
 
-  it('can survive the exit of nvim with "detach"', function()
-    command('let g:job_opts.detach = 1')
-    command(
-      "let g:j = jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)"
-    )
-    local pid = eval('jobpid(g:j)')
-    neq(NIL, api.nvim_get_proc(pid))
+  it('can survive Nvim exit with "detach"', function()
+    local j = n.fn.jobstart({ n.nvim_prog, '--clean', '--headless' }, { detach = true })
+    local pid = n.fn.jobpid(j)
+    eq('number', type(api.nvim_get_proc(pid).pid))
     clear()
-    neq(NIL, api.nvim_get_proc(pid))
-    -- clean up after ourselves
-    eq(0, os_kill(pid))
+    -- Still alive.
+    eq('number', type(api.nvim_get_proc(pid).pid))
+    -- Clean up after ourselves.
+    eq(0, vim.uv.kill(pid, 'sigkill'))
   end)
 
   it('can pass user data to the callback', function()
