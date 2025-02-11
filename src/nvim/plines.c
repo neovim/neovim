@@ -720,7 +720,7 @@ bool win_may_fill(win_T *wp)
 /// @return Number of filler lines above lnum
 int win_get_fill(win_T *wp, linenr_T lnum)
 {
-  int virt_lines = decor_virt_lines(wp, lnum - 1, lnum, NULL, true);
+  int virt_lines = decor_virt_lines(wp, lnum - 1, lnum, NULL, NULL, true);
 
   // be quick when there are no filler lines
   if (diffopt_filler()) {
@@ -920,7 +920,7 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last, int max)
 /// Mainly used for calculating scrolling offsets.
 int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
 {
-  int count = last - first + 1 + decor_virt_lines(wp, first - 1, last, NULL, false);
+  int count = last - first + 1 + decor_virt_lines(wp, first - 1, last, NULL, NULL, false);
 
   if (diffopt_filler()) {
     for (int lnum = first; lnum <= last; lnum++) {

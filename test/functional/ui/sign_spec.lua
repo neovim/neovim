@@ -427,7 +427,7 @@ describe('Signs', function()
       feed('<C-Y>')
       -- number column on virtual lines should be empty
       screen:expect([[
-        {8:    }VIRT LINES                                       |
+        {9:    }VIRT LINES                                       |
         {101: >> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
         {9:    }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
         {9:    }aa^a                                              |

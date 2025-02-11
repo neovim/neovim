@@ -18,6 +18,16 @@ describe('statuscolumn', function()
   before_each(function()
     clear('--cmd', 'set number nuw=1 | call setline(1, repeat(["aaaaa"], 16)) | norm GM')
     screen = Screen.new()
+    screen:add_extra_attr_ids {
+      [100] = { foreground = Screen.colors.Red, background = Screen.colors.LightGray },
+      [101] = { background = Screen.colors.Gray90, bold = true },
+      [102] = { foreground = Screen.colors.Brown, background = Screen.colors.Grey },
+      [103] = { bold = true, background = Screen.colors.Grey, foreground = Screen.colors.Blue1 },
+      [104] = { undercurl = true, special = Screen.colors.Red },
+      [105] = { foreground = Screen.colors.Red, underline = true },
+      [106] = { foreground = Screen.colors.Orange1 },
+      [107] = { foreground = Screen.colors.LightBlue },
+    }
     exec_lua('ns = vim.api.nvim_create_namespace("")')
   end)
 
@@ -238,12 +248,6 @@ describe('statuscolumn', function()
   end)
 
   it('works with wrapped lines, signs and folds', function()
-    screen:add_extra_attr_ids {
-      [100] = { foreground = Screen.colors.Red, background = Screen.colors.LightGray },
-      [101] = { background = Screen.colors.Gray90, bold = true },
-      [102] = { foreground = Screen.colors.Brown, background = Screen.colors.Grey },
-      [103] = { bold = true, background = Screen.colors.Grey, foreground = Screen.colors.Blue1 },
-    }
     command([[set cursorline stc=%C%s%=%{v:virtnum?'':v:lnum}│\ ]])
     command("call setline(1,repeat([repeat('aaaaa',10)],16))")
     command('hi! CursorLine gui=bold')
@@ -1007,15 +1011,12 @@ describe('statuscolumn', function()
 
   it('does not wrap multibyte characters at the end of a line', function()
     screen:try_resize(33, 4)
-    screen:add_extra_attr_ids {
-      [100] = { undercurl = true, special = Screen.colors.Red },
-    }
     command([[set spell stc=%l\ ]])
     command('call setline(8, "This is a line that contains ᶏ multibyte character.")')
     screen:expect([[
-      {8: 8 }^This is a line that contains {100:ᶏ}|
-      {8:   } {100:multibyte} character.         |
-      {8: 9 }{100:aaaaa}                         |
+      {8: 8 }^This is a line that contains {104:ᶏ}|
+      {8:   } {104:multibyte} character.         |
+      {8: 9 }{104:aaaaa}                         |
                                        |
     ]])
   end)
@@ -1044,45 +1045,70 @@ describe('statuscolumn', function()
       au InsertLeave * let g:insert = v:false | call nvim__redraw(#{statuscolumn:1, win:0})
     ]])
     feed('i')
-    screen:expect({
-      grid = [[
-        {8:insert}^aaaaa         │aaaaa              |
-        {8:insert}aaaaa         │aaaaa              |
-        {3:[No Name] [+]        }{2:[No Name] [+]      }|
-        {5:-- INSERT --}                            |
-      ]],
-    })
+    screen:expect([[
+      {8:insert}^aaaaa         │aaaaa              |
+      {8:insert}aaaaa         │aaaaa              |
+      {3:[No Name] [+]        }{2:[No Name] [+]      }|
+      {5:-- INSERT --}                            |
+    ]])
     feed('<esc>')
-    screen:expect({
-      grid = [[
-        ^aaaaa               │aaaaa              |
-        aaaaa               │aaaaa              |
-        {3:[No Name] [+]        }{2:[No Name] [+]      }|
-                                                |
-      ]],
-    })
+    screen:expect([[
+      ^aaaaa               │aaaaa              |
+      aaaaa               │aaaaa              |
+      {3:[No Name] [+]        }{2:[No Name] [+]      }|
+                                              |
+    ]])
     -- All windows
     command([[
       au! InsertEnter * let g:insert = v:true | call nvim__redraw(#{statuscolumn:1})
       au! InsertLeave * let g:insert = v:false | call nvim__redraw(#{statuscolumn:1})
     ]])
     feed('i')
-    screen:expect({
-      grid = [[
-        {8:insert}^aaaaa         │{8:insert}aaaaa        |
-        {8:insert}aaaaa         │{8:insert}aaaaa        |
-        {3:[No Name] [+]        }{2:[No Name] [+]      }|
-        {5:-- INSERT --}                            |
-      ]],
-    })
+    screen:expect([[
+      {8:insert}^aaaaa         │{8:insert}aaaaa        |
+      {8:insert}aaaaa         │{8:insert}aaaaa        |
+      {3:[No Name] [+]        }{2:[No Name] [+]      }|
+      {5:-- INSERT --}                            |
+    ]])
     feed('<esc>')
-    screen:expect({
-      grid = [[
-        ^aaaaa               │aaaaa              |
-        aaaaa               │aaaaa              |
-        {3:[No Name] [+]        }{2:[No Name] [+]      }|
-                                                |
-      ]],
-    })
+    screen:expect([[
+      ^aaaaa               │aaaaa              |
+      aaaaa               │aaaaa              |
+      {3:[No Name] [+]        }{2:[No Name] [+]      }|
+                                              |
+    ]])
+  end)
+
+  it('applies numhl highlight to virtual lines', function()
+    exec_lua([[
+      vim.o.statuscolumn = '%=%{%v:virtnum==0?"%l":v:virtnum>0?"↳":"•"%}│'
+      vim.o.cursorline = true
+      vim.api.nvim_set_hl(0, 'CursorLineNr', { underline = true })
+
+      vim.api.nvim_buf_set_extmark(0, ns, 0, 0, { number_hl_group = 'DiagnosticError' })
+
+      local opts_1 = { number_hl_group = 'DiagnosticWarn', virt_lines = { { { 'Hello' } }, { { 'Hello' } } }, virt_lines_above = true }
+      vim.api.nvim_buf_set_extmark(0, ns, 1, 0, opts_1)
+      opts_1.virt_lines_above = nil
+      vim.api.nvim_buf_set_extmark(0, ns, 1, 0, opts_1)
+
+      local opts_2 = { number_hl_group = 'DiagnosticInfo', virt_lines = { { { 'World' } }, { { 'World' } } }, virt_lines_above = true }
+      vim.api.nvim_buf_set_extmark(0, ns, 2, 0, opts_2)
+      opts_2.virt_lines_above = nil
+      vim.api.nvim_buf_set_extmark(0, ns, 2, 0, opts_2)
+      vim.cmd.norm('gg')
+    ]])
+    screen:expect([[
+      {105: 1│}{21:^aaaaa                                             }|
+      {106: •│}Hello                                             |*2
+      {106: 2│}aaaaa                                             |
+      {106: •│}Hello                                             |*2
+      {107: •│}World                                             |*2
+      {107: 3│}aaaaa                                             |
+      {107: •│}World                                             |*2
+      {8: 4│}aaaaa                                             |
+      {8: 5│}aaaaa                                             |
+                                                           |
+    ]])
   end)
 end)
