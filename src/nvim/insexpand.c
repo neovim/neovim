@@ -860,9 +860,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   // Copy the values to the new match structure.
   match = xcalloc(1, sizeof(compl_T));
   match->cp_number = -1;
-  if (flags & CP_ORIGINAL_TEXT) {
-    match->cp_number = 0;
-  }
+  match->cp_number = flags & CP_ORIGINAL_TEXT ? 0 : -1;
   match->cp_str = cbuf_to_string(str, (size_t)len);
 
   // match-fname is:
@@ -1192,13 +1190,9 @@ static void trigger_complete_changed_event(int cur)
     return;
   }
 
+  dict_T *item = cur < 0 ? tv_dict_alloc() : ins_compl_dict_alloc(compl_curr_match);
   dict_T *v_event = get_v_event(&save_v_event);
-  if (cur < 0) {
-    tv_dict_add_dict(v_event, S_LEN("completed_item"), tv_dict_alloc());
-  } else {
-    dict_T *item = ins_compl_dict_alloc(compl_curr_match);
-    tv_dict_add_dict(v_event, S_LEN("completed_item"), item);
-  }
+  tv_dict_add_dict(v_event, S_LEN("completed_item"), item);
   pum_set_event_info(v_event);
   tv_dict_set_keys_readonly(v_event);
 
@@ -1937,11 +1931,7 @@ static void ins_compl_new_leader(void)
 static int get_compl_len(void)
 {
   int off = (int)curwin->w_cursor.col - (int)compl_col;
-
-  if (off < 0) {
-    return 0;
-  }
-  return off;
+  return MAX(0, off);
 }
 
 /// Append one character to the match leader.  May reduce the number of
@@ -2182,11 +2172,9 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     // of the original text that has changed.
     // When using the longest match, edited the match or used
     // CTRL-E then don't use the current match.
-    char *ptr;
+    char *ptr = NULL;
     if (compl_curr_match != NULL && compl_used_match && c != Ctrl_E) {
       ptr = compl_curr_match->cp_str.data;
-    } else {
-      ptr = NULL;
     }
     ins_compl_fixRedoBufForLeader(ptr);
   }
@@ -2357,11 +2345,7 @@ bool ins_compl_prep(int c)
   } else if (ctrl_x_mode_not_default()) {
     // We're already in CTRL-X mode, do we stay in it?
     if (!vim_is_ctrl_x_key(c)) {
-      if (ctrl_x_mode_scroll()) {
-        ctrl_x_mode = CTRL_X_NORMAL;
-      } else {
-        ctrl_x_mode = CTRL_X_FINISHED;
-      }
+      ctrl_x_mode = ctrl_x_mode_scroll() ? CTRL_X_NORMAL : CTRL_X_FINISHED;
       edit_submode = NULL;
     }
     showmode();
@@ -2415,10 +2399,15 @@ static void ins_compl_fixRedoBufForLeader(char *ptr_arg)
   }
   if (compl_orig_text.data != NULL) {
     char *p = compl_orig_text.data;
-    for (len = 0; p[len] != NUL && p[len] == ptr[len]; len++) {}
+    // Find length of common prefix between original text and new completion
+    while (p[len] != NUL && p[len] == ptr[len]) {
+      len++;
+    }
+    // Adjust length to not break inside a multi-byte character
     if (len > 0) {
       len -= utf_head_off(p, p + len);
     }
+    // Add backspace characters for each remaining character in original text
     for (p += len; *p != NUL; MB_PTR_ADV(p)) {
       AppendCharToRedobuff(K_BS);
     }
@@ -2441,20 +2430,42 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
       // first call for this flag/expansion or window was closed
       wp = curwin;
     }
+
     assert(wp);
-    while ((wp = (wp->w_next != NULL ? wp->w_next : firstwin)) != curwin
-           && wp->w_buffer->b_scanned) {}
+    while (true) {
+      // Move to next window (wrap to first window if at the end)
+      wp = (wp->w_next != NULL) ? wp->w_next : firstwin;
+      // Break if we're back at start or found an unscanned buffer
+      if (wp == curwin || !wp->w_buffer->b_scanned) {
+        break;
+      }
+    }
     buf = wp->w_buffer;
   } else {
     // 'b' (just loaded buffers), 'u' (just non-loaded buffers) or 'U'
     // (unlisted buffers)
     // When completing whole lines skip unloaded buffers.
-    while ((buf = (buf->b_next != NULL ? buf->b_next : firstbuf)) != curbuf
-           && ((flag == 'U'
-                ? buf->b_p_bl
-                : (!buf->b_p_bl
-                   || (buf->b_ml.ml_mfp == NULL) != (flag == 'u')))
-               || buf->b_scanned)) {}
+    while (true) {
+      // Move to next buffer (wrap to first buffer if at the end)
+      buf = (buf->b_next != NULL) ? buf->b_next : firstbuf;
+      // Break if we're back at start buffer
+      if (buf == curbuf) {
+        break;
+      }
+
+      bool skip_buffer;
+      // Check buffer conditions based on flag
+      if (flag == 'U') {
+        skip_buffer = buf->b_p_bl;
+      } else {
+        skip_buffer = !buf->b_p_bl || (buf->b_ml.ml_mfp == NULL) != (flag == 'u');
+      }
+
+      // Break if we found a buffer that matches our criteria
+      if (!skip_buffer && !buf->b_scanned) {
+        break;
+      }
+    }
   }
   return buf;
 }
@@ -3788,6 +3799,9 @@ void ins_compl_delete(bool new_leader)
 
   if ((int)curwin->w_cursor.col > col) {
     if (stop_arrow() == FAIL) {
+      if (remaining) {
+        XFREE_CLEAR(remaining);
+      }
       return;
     }
     backspace_until_column(col);
