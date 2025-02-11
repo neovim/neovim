@@ -133,6 +133,7 @@ LSP
 • |vim.lsp.util.make_position_params()|, |vim.lsp.util.make_range_params()|
   and |vim.lsp.util.make_given_range_params()| now require the `position_encoding`
   parameter.
+• |vim.lsp.util.symbols_to_items()| now requires the `position_encoding` parameter.
 
 LUA
 
@@ -277,7 +278,8 @@ LSP
 • `:checkhealth vim.lsp` displays the server version (if available).
 • Completion side effects (including snippet expansion, execution of commands
   and application of additional text edits) is now built-in.
-• |vim.lsp.util.locations_to_items()| sets `end_col` and `end_lnum` fields.
+• |vim.lsp.util.locations_to_items()| and |vim.lsp.util.symbols_to_items()| now
+  sets `end_col` and `end_lnum` fields.
 • |vim.lsp.buf.format()| now supports passing a list of ranges
   via the `range` parameter (this requires support for the
   `textDocument/rangesFormatting` request).

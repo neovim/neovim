@@ -1775,39 +1775,57 @@ end
 
 --- Converts symbols to quickfix list items.
 ---
----@param symbols lsp.DocumentSymbol[]|lsp.SymbolInformation[]
----@param bufnr? integer
+---@param symbols lsp.DocumentSymbol[]|lsp.SymbolInformation[] list of symbols
+---@param bufnr? integer buffer handle or 0 for current, defaults to current
+---@param position_encoding? 'utf-8'|'utf-16'|'utf-32'
+---                         default to first client of buffer
 ---@return vim.quickfix.entry[] # See |setqflist()| for the format
-function M.symbols_to_items(symbols, bufnr)
-  bufnr = bufnr or 0
+function M.symbols_to_items(symbols, bufnr, position_encoding)
+  bufnr = vim._resolve_bufnr(bufnr)
+  if position_encoding == nil then
+    vim.notify_once(
+      'symbols_to_items must be called with valid position encoding',
+      vim.log.levels.WARN
+    )
+    position_encoding = vim.lsp.get_clients({ bufnr = 0 })[1].offset_encoding
+  end
+
   local items = {} --- @type vim.quickfix.entry[]
   for _, symbol in ipairs(symbols) do
-    --- @type string?, lsp.Position?
-    local filename, pos
+    --- @type string?, lsp.Range?
+    local filename, range
 
     if symbol.location then
       --- @cast symbol lsp.SymbolInformation
       filename = vim.uri_to_fname(symbol.location.uri)
-      pos = symbol.location.range.start
+      range = symbol.location.range
     elseif symbol.selectionRange then
       --- @cast symbol lsp.DocumentSymbol
       filename = api.nvim_buf_get_name(bufnr)
-      pos = symbol.selectionRange.start
+      range = symbol.selectionRange
     end
 
-    if filename and pos then
+    if filename and range then
       local kind = protocol.SymbolKind[symbol.kind] or 'Unknown'
+
+      local lnum = range['start'].line + 1
+      local col = get_line_byte_from_position(bufnr, range['start'], position_encoding) + 1
+      local end_lnum = range['end'].line + 1
+      local end_col = get_line_byte_from_position(bufnr, range['end'], position_encoding) + 1
+
       items[#items + 1] = {
         filename = filename,
-        lnum = pos.line + 1,
-        col = pos.character + 1,
+        lnum = lnum,
+        col = col,
+        end_lnum = end_lnum,
+        end_col = end_col,
         kind = kind,
         text = '[' .. kind .. '] ' .. symbol.name,
       }
     end
 
     if symbol.children then
-      list_extend(items, M.symbols_to_items(symbol.children, bufnr))
+      list_extend(items, M.symbols_to_items(symbol.children, bufnr, position_encoding))
     end
   end
 
