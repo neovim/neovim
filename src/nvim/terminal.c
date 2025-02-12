@@ -315,7 +315,7 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *payload = xmemdupz(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
     schedule_termrequest(user, payload, term->termrequest_buffer.size);
   }
   return 1;
@@ -338,7 +338,7 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *payload = xmemdupz(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
     schedule_termrequest(user, payload, term->termrequest_buffer.size);
   }
   return 1;
@@ -361,7 +361,7 @@ static int on_apc(VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *payload = xmemdupz(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
     schedule_termrequest(user, payload, term->termrequest_buffer.size);
   }
   return 1;
