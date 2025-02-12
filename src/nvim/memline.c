@@ -1880,6 +1880,11 @@ static char *ml_get_buf_impl(buf_T *buf, linenr_T lnum, bool will_change)
   static int recursive = 0;
   static char questions[4];
 
+  if (buf->b_ml.ml_mfp == NULL) {       // there are no lines
+    buf->b_ml.ml_line_len = 1;
+    return "";
+  }
+
   if (lnum > buf->b_ml.ml_line_count) {  // invalid line number
     if (recursive == 0) {
       // Avoid giving this message for a recursive call, may happen when
@@ -1897,11 +1902,6 @@ errorret:
   }
   if (lnum <= 0) {                      // pretend line 0 is line 1
     lnum = 1;
-  }
-
-  if (buf->b_ml.ml_mfp == NULL) {       // there are no lines
-    buf->b_ml.ml_line_len = 1;
-    return "";
   }
 
   // See if it is the same line as requested last time.
