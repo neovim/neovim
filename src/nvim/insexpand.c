@@ -859,7 +859,6 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   // Allocate a new match structure.
   // Copy the values to the new match structure.
   match = xcalloc(1, sizeof(compl_T));
-  match->cp_number = -1;
   match->cp_number = flags & CP_ORIGINAL_TEXT ? 0 : -1;
   match->cp_str = cbuf_to_string(str, (size_t)len);
 
