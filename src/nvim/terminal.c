@@ -334,7 +334,7 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
 
 static int on_apc(VTermStringFragment frag, void *user)
 {
-  struct terminal *term = user;
+  Terminal *term = user;
   if (frag.str == NULL || frag.len == 0) {
     return 0;
   }
@@ -344,6 +344,9 @@ static int on_apc(VTermStringFragment frag, void *user)
   }
 
   if (frag.initial) {
+    if (kv_size(term->termrequest_buffer) > 0) {
+      kv_drop(term->termrequest_buffer, kv_size(term->termrequest_buffer));
+    }
     kv_printf(term->termrequest_buffer, "\x1b_");
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
