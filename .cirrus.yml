@@ -6,7 +6,7 @@ freebsd_task:
   name: FreeBSD
   only_if: $BRANCH != "master"
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
   timeout_in: 30m
   install_script:
     - pkg install -y cmake gmake ninja unzip wget gettext python git
