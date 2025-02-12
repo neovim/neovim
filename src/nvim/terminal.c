@@ -186,7 +186,7 @@ struct terminal {
   char *selection_buffer;  /// libvterm selection buffer
   StringBuilder selection;  /// Growable array containing full selection data
 
-  StringBuilder termrequest_buffer;
+  StringBuilder termrequest_buffer;  /// Growable array containing unfinished request payload
 
   size_t refcount;                  // reference count
 };
@@ -309,15 +309,22 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
     return 1;
   }
 
-  StringBuilder request = KV_INITIAL_VALUE;
-  kv_printf(request, "\x1b]%d;", command);
-  kv_concat_len(request, frag.str, frag.len);
-  schedule_termrequest(term, request.items, request.size);
+  if (frag.initial) {
+    kv_size(term->termrequest_buffer) = 0;
+    kv_printf(term->termrequest_buffer, "\x1b]%d;", command);
+  }
+  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
+  if (frag.final) {
+    schedule_termrequest(user, term->termrequest_buffer.items, term->termrequest_buffer.size);
+    kv_init(term->termrequest_buffer);
+  }
   return 1;
 }
 
 static int on_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user)
 {
+  Terminal *term = user;
+
   if (command == NULL || frag.str == NULL) {
     return 0;
   }
@@ -325,10 +332,15 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
     return 1;
   }
 
-  StringBuilder request = KV_INITIAL_VALUE;
-  kv_printf(request, "\x1bP%*s", (int)commandlen, command);
-  kv_concat_len(request, frag.str, frag.len);
-  schedule_termrequest(user, request.items, request.size);
+  if (frag.initial) {
+    kv_size(term->termrequest_buffer) = 0;
+    kv_printf(term->termrequest_buffer, "\x1bP%*s", (int)commandlen, command);
+  }
+  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
+  if (frag.final) {
+    schedule_termrequest(user, term->termrequest_buffer.items, term->termrequest_buffer.size);
+    kv_init(term->termrequest_buffer);
+  }
   return 1;
 }
 
@@ -344,14 +356,11 @@ static int on_apc(VTermStringFragment frag, void *user)
   }
 
   if (frag.initial) {
-    if (kv_size(term->termrequest_buffer) > 0) {
-      kv_drop(term->termrequest_buffer, kv_size(term->termrequest_buffer));
-    }
+    kv_size(term->termrequest_buffer) = 0;
     kv_printf(term->termrequest_buffer, "\x1b_");
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    kv_printf(term->termrequest_buffer, "\x1b\\");
     schedule_termrequest(user, term->termrequest_buffer.items, term->termrequest_buffer.size);
     kv_init(term->termrequest_buffer);
   }
