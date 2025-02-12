@@ -186,6 +186,8 @@ struct terminal {
   char *selection_buffer;  /// libvterm selection buffer
   StringBuilder selection;  /// Growable array containing full selection data
 
+  StringBuilder termrequest_buffer;
+
   size_t refcount;                  // reference count
 };
 
@@ -332,6 +334,7 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
 
 static int on_apc(VTermStringFragment frag, void *user)
 {
+  struct terminal *term = user;
   if (frag.str == NULL || frag.len == 0) {
     return 0;
   }
@@ -340,10 +343,15 @@ static int on_apc(VTermStringFragment frag, void *user)
     return 1;
   }
 
-  StringBuilder request = KV_INITIAL_VALUE;
-  kv_printf(request, "\x1b_");
-  kv_concat_len(request, frag.str, frag.len);
-  schedule_termrequest(user, request.items, request.size);
+  if (frag.initial) {
+    kv_printf(term->termrequest_buffer, "\x1b_");
+  }
+  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
+  if (frag.final) {
+    kv_printf(term->termrequest_buffer, "\x1b\\");
+    schedule_termrequest(user, term->termrequest_buffer.items, term->termrequest_buffer.size);
+    kv_init(term->termrequest_buffer);
+  }
   return 1;
 }
 
@@ -941,6 +949,7 @@ void terminal_destroy(Terminal **termpp)
     xfree(term->title);
     xfree(term->selection_buffer);
     kv_destroy(term->selection);
+    kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
