@@ -1989,6 +1989,16 @@ vim.o.ei = vim.o.eventignore
 vim.go.eventignore = vim.o.eventignore
 vim.go.ei = vim.go.eventignore
 
+--- Similar to 'eventignore' but applies to a particular window and its
+--- buffers, for which window and buffer related autocommands can be
+--- ignored indefinitely without affecting the global 'eventignore'.
+---
+--- @type string
+vim.o.eventignorewin = ""
+vim.o.eiw = vim.o.eventignorewin
+vim.wo.eventignorewin = vim.o.eventignorewin
+vim.wo.eiw = vim.wo.eventignorewin
+
 --- In Insert mode: Use the appropriate number of spaces to insert a
 --- <Tab>.  Spaces are used in indents with the '>' and '<' commands and
 --- when 'autoindent' is on.  To insert a real tab when 'expandtab' is

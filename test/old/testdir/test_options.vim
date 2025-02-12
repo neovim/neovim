@@ -589,6 +589,7 @@ func Test_set_completion_string_values()
 
   " Other string options that queries the system rather than fixed enum names
   call assert_equal(['all', 'BufAdd'], getcompletion('set eventignore=', 'cmdline')[0:1])
+  call assert_equal(['WinLeave', 'WinResized', 'WinScrolled'], getcompletion('set eiw=', 'cmdline')[-3:-1])
   call assert_equal('latin1', getcompletion('set fileencodings=', 'cmdline')[1])
   " call assert_equal('top', getcompletion('set printoptions=', 'cmdline')[0])
   " call assert_equal('SpecialKey', getcompletion('set wincolor=', 'cmdline')[0])
@@ -2506,6 +2507,7 @@ func Test_string_option_revert_on_failure()
         \ ['eadirection', 'hor', 'a123'],
         \ ['encoding', 'utf-8', 'a123'],
         \ ['eventignore', 'TextYankPost', 'a123'],
+        \ ['eventignorewin', 'WinScrolled', 'a123'],
         \ ['fileencoding', 'utf-8', 'a123,'],
         \ ['fileformat', 'mac', 'a123'],
         \ ['fileformats', 'mac', 'a123'],

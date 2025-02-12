@@ -319,6 +319,7 @@ OPTIONS
 • 'completeopt' flag "preinsert" highlights text to be inserted.
 • 'messagesopt' configures |:messages| and |hit-enter| prompt.
 • 'tabclose' controls which tab page to focus when closing a tab page.
+• 'eventignorewin' to persistently ignore events in a window.
 
 PERFORMANCE
 

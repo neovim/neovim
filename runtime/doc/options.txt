@@ -2334,6 +2334,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    set ei=WinEnter,WinLeave
 <
 
+					*'eventignorewin'* *'eiw'*
+'eventignorewin' 'eiw'	string	(default "")
+			local to window
+	Similar to 'eventignore' but applies to a particular window and its
+	buffers, for which window and buffer related autocommands can be
+	ignored indefinitely without affecting the global 'eventignore'.
+
 				*'expandtab'* *'et'* *'noexpandtab'* *'noet'*
 'expandtab' 'et'	boolean	(default off)
 			local to buffer
