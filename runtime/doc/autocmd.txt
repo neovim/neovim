@@ -1004,8 +1004,8 @@ TermClose			When a |terminal| job ends.
 				Sets these |v:event| keys:
 				    status
 							*TermRequest*
-TermRequest			When a |:terminal| child process emits an OSC
-				or DCS sequence. Sets |v:termrequest|. The
+TermRequest			When a |:terminal| child process emits an OSC,
+				DCS or APC sequence. Sets |v:termrequest|. The
 				|event-data| is the request string.
 							*TermResponse*
 TermResponse			When Nvim receives an OSC or DCS response from
