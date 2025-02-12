@@ -853,7 +853,7 @@ int sign_item_cmp(const void *p1, const void *p2)
 static const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
                                         [kMTMetaSignHL] = kMTFilterSelect };
 
-/// Return the sign attributes on the currently refreshed row.
+/// Return the signs and highest priority sign attributes on a row.
 ///
 /// @param[out] sattrs Output array for sign text and texthl id
 /// @param[out] line_id Highest priority linehl id
@@ -904,17 +904,17 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
 
     for (size_t i = 0; i < kv_size(signs); i++) {
       DecorSignHighlight *sh = kv_A(signs, i).sh;
-      if (idx < len && sh->text[0]) {
+      if (sattrs && idx < len && sh->text[0]) {
         memcpy(sattrs[idx].text, sh->text, SIGN_WIDTH * sizeof(sattr_T));
         sattrs[idx++].hl_id = sh->hl_id;
       }
-      if (*num_id == 0) {
+      if (num_id != NULL && *num_id <= 0) {
         *num_id = sh->number_hl_id;
       }
-      if (*line_id == 0) {
+      if (line_id != NULL && *line_id <= 0) {
         *line_id = sh->line_hl_id;
       }
-      if (*cul_id == 0) {
+      if (cul_id != NULL && *cul_id <= 0) {
         *cul_id = sh->cursorline_hl_id;
       }
     }
@@ -1038,7 +1038,8 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
 static const uint32_t lines_filter[4] = {[kMTMetaLines] = kMTFilterSelect };
 
 /// @param apply_folds Only count virtual lines that are not in folds.
-int decor_virt_lines(win_T *wp, int start_row, int end_row, VirtLines *lines, bool apply_folds)
+int decor_virt_lines(win_T *wp, int start_row, int end_row, int *num_below, VirtLines *lines,
+                     bool apply_folds)
 {
   buf_T *buf = wp->w_buffer;
   if (!buf_meta_total(buf, kMTMetaLines)) {
@@ -1070,6 +1071,9 @@ int decor_virt_lines(win_T *wp, int start_row, int end_row, VirtLines *lines, bo
             virt_lines += (int)kv_size(vt->data.virt_lines);
             if (lines) {
               kv_splice(*lines, vt->data.virt_lines);
+            }
+            if (num_below && !above) {
+              (*num_below) += (int)kv_size(vt->data.virt_lines);
             }
           }
         }
