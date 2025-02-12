@@ -2153,6 +2153,41 @@ local function make_line_range_params(bufnr, start_line, end_line, position_enco
   }
 end
 
+---@class (private) vim.lsp.util._cancel_requests.Filter
+---@field bufnr? integer
+---@field clients? vim.lsp.Client[]
+---@field method? string
+---@field type? string
+
+---@private
+--- Cancel all {filter}ed requests.
+---
+---@param filter? vim.lsp.util._cancel_requests.Filter
+function M._cancel_requests(filter)
+  filter = filter or {}
+  local bufnr = filter.bufnr and vim._resolve_bufnr(filter.bufnr) or nil
+  local clients = filter.clients
+  local method = filter.method
+  local type = filter.type
+
+  for _, client in
+    ipairs(clients or vim.lsp.get_clients({
+      bufnr = bufnr,
+      method = method,
+    }))
+  do
+    for id, request in pairs(client.requests) do
+      if
+        (bufnr == nil or bufnr == request.bufnr)
+        and (method == nil or method == request.method)
+        and (type == nil or type == request.type)
+      then
+        client:cancel_request(id)
+      end
+    end
+  end
+end
+
 ---@class (private) vim.lsp.util._refresh.Opts
 ---@field bufnr integer? Buffer to refresh (default: 0)
 ---@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
@@ -2180,12 +2215,12 @@ function M._refresh(method, opts)
       if api.nvim_win_get_buf(window) == bufnr then
         local first = vim.fn.line('w0', window)
         local last = vim.fn.line('w$', window)
+        M._cancel_requests({
+          bufnr = bufnr,
+          clients = clients,
+          type = 'pending',
+        })
         for _, client in ipairs(clients) do
-          for rid, req in pairs(client.requests) do
-            if req.method == method and req.type == 'pending' and req.bufnr == bufnr then
-              client:cancel_request(rid)
-            end
-          end
           client:request(method, {
             textDocument = textDocument,
             range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
