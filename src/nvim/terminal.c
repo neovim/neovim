@@ -183,10 +183,10 @@ struct terminal {
 
   bool color_set[16];
 
-  char *selection_buffer;  /// libvterm selection buffer
-  StringBuilder selection;  /// Growable array containing full selection data
+  char *selection_buffer;  ///< libvterm selection buffer
+  StringBuilder selection;  ///< Growable array containing full selection data
 
-  StringBuilder termrequest_buffer;  /// Growable array containing unfinished request payload
+  StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request payload
 
   size_t refcount;                  // reference count
 };
