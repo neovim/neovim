@@ -2218,6 +2218,7 @@ function M._refresh(method, opts)
         M._cancel_requests({
           bufnr = bufnr,
           clients = clients,
+          method = method,
           type = 'pending',
         })
         for _, client in ipairs(clients) do
