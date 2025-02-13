@@ -5225,7 +5225,7 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
     // When ending up below 'smoothscroll' marker, move just beyond it so
     // that skipcol is not adjusted later.
     if (curwin->w_skipcol > 0 && curwin->w_cursor.lnum == curwin->w_topline) {
-      int overlap = sms_marker_overlap(curwin, -1);
+      int overlap = sms_marker_overlap(curwin, curwin->w_width_inner - width2);
       if (overlap > 0 && i == curwin->w_skipcol) {
         i += overlap;
       }

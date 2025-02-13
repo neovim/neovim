@@ -73,6 +73,7 @@ static inline int linetabsize_str(char *s)
 }
 
 /// Like linetabsize_str(), but for a given window instead of the current one.
+/// Doesn't count the size of 'listchars' "eol".
 ///
 /// @param wp
 /// @param line
