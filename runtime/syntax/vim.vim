@@ -1117,8 +1117,8 @@ endif
 syn match	vimShebang	"\%^#!.*" display
 
 syn match	vimContinue		"^\s*\zs\\"
-syn match         vimContinueComment	'^\s*\zs["#]\\ .*'
-syn match         vim9ContinueComment	"^\s*\zs#\\ .*"
+syn match	vimContinueComment	'^\s*\zs["#]\\ .*' extend
+syn match	vim9ContinueComment	"^\s*\zs#\\ .*"	 extend
 syn cluster	vimContinue	contains=vimContinue,vimContinueComment
 syn cluster	vim9Continue	contains=vimContinue,vim9ContinueComment
 
