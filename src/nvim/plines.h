@@ -81,6 +81,7 @@ static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T 
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Like linetabsize_str(), but for a given window instead of the current one.
+/// Doesn't count the size of 'listchars' "eol".
 ///
 /// @param wp
 /// @param line
