@@ -518,11 +518,14 @@ local function on_insert_char_pre(handle)
   end
 
   local char = api.nvim_get_vvar('char')
-  if not completion_timer and handle.triggers[char] then
+  local matched_clients = handle.triggers[char]
+  if not completion_timer and matched_clients then
     completion_timer = assert(vim.uv.new_timer())
     completion_timer:start(25, 0, function()
       reset_timer()
-      vim.schedule(M.trigger)
+      vim.schedule(function()
+        trigger(api.nvim_get_current_buf(), matched_clients)
+      end)
     end)
   end
 end
