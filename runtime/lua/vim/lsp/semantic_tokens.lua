@@ -288,6 +288,7 @@ function STHighlighter:send_request()
         method = method .. '/delta'
         params.previousResultId = current_result.result_id
       end
+      ---@param response? lsp.SemanticTokens|lsp.SemanticTokensDelta
       local success, request_id = client:request(method, params, function(err, response, ctx)
         -- look client up again using ctx.client_id instead of using a captured
         -- client object
@@ -298,7 +299,7 @@ function STHighlighter:send_request()
           return
         end
 
-        if err then
+        if err or not response then
           highlighter.client_state[c.id].active_request = {}
           return
         end
@@ -335,12 +336,6 @@ function STHighlighter:process_response(response, client, version)
 
   -- ignore stale responses
   if state.active_request.version and version ~= state.active_request.version then
-    return
-  end
-
-  -- skip nil responses
-  if response == nil then
-    state.active_request = {}
     return
   end
 
