@@ -658,6 +658,23 @@ do
     end,
   })
 
+  vim.api.nvim_create_autocmd('BufWinEnter', {
+    pattern = '*',
+    group = vim.api.nvim_create_augroup('FileExplorer', {}),
+    callback = function(args)
+      if vim.bo.filetype == 'directory' then
+        return
+      end
+
+      local type = (vim.uv.fs_stat(args.file) or {}).type
+      if type == 'directory' then
+        vim.schedule(function()
+          vim.ui.explorer.open(args.file)
+        end)
+      end
+    end,
+  })
+
   -- Only do the following when the TUI is attached
   local tty = nil
   for _, ui in ipairs(vim.api.nvim_list_uis()) do
