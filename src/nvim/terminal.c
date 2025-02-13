@@ -183,8 +183,10 @@ struct terminal {
 
   bool color_set[16];
 
-  char *selection_buffer;  /// libvterm selection buffer
-  StringBuilder selection;  /// Growable array containing full selection data
+  char *selection_buffer;  ///< libvterm selection buffer
+  StringBuilder selection;  ///< Growable array containing full selection data
+
+  StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request payload
 
   size_t refcount;                  // reference count
 };
@@ -307,15 +309,22 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
     return 1;
   }
 
-  StringBuilder request = KV_INITIAL_VALUE;
-  kv_printf(request, "\x1b]%d;", command);
-  kv_concat_len(request, frag.str, frag.len);
-  schedule_termrequest(term, request.items, request.size);
+  if (frag.initial) {
+    kv_size(term->termrequest_buffer) = 0;
+    kv_printf(term->termrequest_buffer, "\x1b]%d;", command);
+  }
+  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
+  if (frag.final) {
+    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    schedule_termrequest(user, payload, term->termrequest_buffer.size);
+  }
   return 1;
 }
 
 static int on_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user)
 {
+  Terminal *term = user;
+
   if (command == NULL || frag.str == NULL) {
     return 0;
   }
@@ -323,10 +332,38 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
     return 1;
   }
 
-  StringBuilder request = KV_INITIAL_VALUE;
-  kv_printf(request, "\x1bP%*s", (int)commandlen, command);
-  kv_concat_len(request, frag.str, frag.len);
-  schedule_termrequest(user, request.items, request.size);
+  if (frag.initial) {
+    kv_size(term->termrequest_buffer) = 0;
+    kv_printf(term->termrequest_buffer, "\x1bP%*s", (int)commandlen, command);
+  }
+  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
+  if (frag.final) {
+    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    schedule_termrequest(user, payload, term->termrequest_buffer.size);
+  }
+  return 1;
+}
+
+static int on_apc(VTermStringFragment frag, void *user)
+{
+  Terminal *term = user;
+  if (frag.str == NULL || frag.len == 0) {
+    return 0;
+  }
+
+  if (!has_event(EVENT_TERMREQUEST)) {
+    return 1;
+  }
+
+  if (frag.initial) {
+    kv_size(term->termrequest_buffer) = 0;
+    kv_printf(term->termrequest_buffer, "\x1b_");
+  }
+  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
+  if (frag.final) {
+    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    schedule_termrequest(user, payload, term->termrequest_buffer.size);
+  }
   return 1;
 }
 
@@ -335,7 +372,7 @@ static VTermStateFallbacks vterm_fallbacks = {
   .csi = NULL,
   .osc = on_osc,
   .dcs = on_dcs,
-  .apc = NULL,
+  .apc = on_apc,
   .pm = NULL,
   .sos = NULL,
 };
@@ -924,6 +961,7 @@ void terminal_destroy(Terminal **termpp)
     xfree(term->title);
     xfree(term->selection_buffer);
     kv_destroy(term->selection);
+    kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]

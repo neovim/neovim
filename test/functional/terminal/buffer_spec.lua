@@ -350,6 +350,17 @@ describe(':terminal buffer', function()
     eq(termbuf, eval('g:termbuf'))
   end)
 
+  it('emits TermRequest events for APC', function()
+    local term = api.nvim_open_term(0, {})
+
+    -- cwd will be inserted in a file URI, which cannot contain backs
+    local cwd = t.fix_slashes(fn.getcwd())
+    local parent = cwd:match('^(.+/)')
+    local expected = '\027_Gfile://host' .. parent
+    api.nvim_chan_send(term, string.format('%s\027\\', expected))
+    eq(expected, eval('v:termrequest'))
+  end)
+
   it('TermRequest synchronization #27572', function()
     command('autocmd! nvim.terminal TermRequest')
     local term = exec_lua([[

@@ -372,6 +372,8 @@ TERMINAL
 • The |terminal| has experimental support for the Kitty keyboard protocol
   (sometimes called "CSI u" key encoding). Only the "Disambiguate escape
   codes" mode is currently supported.
+• The |terminal| emits a |TermRequest| autocommand event when the child process
+  emits an APC control sequence.
 
 TREESITTER
 
