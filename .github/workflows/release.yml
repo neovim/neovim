@@ -13,7 +13,6 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+
 
 # Build on the oldest supported images, so we have broader compatibility
-# Build with gcc-10 to prevent triggering #14150 (default is still gcc-9 on 20.04)
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -43,12 +42,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ ubuntu-20.04, ubuntu-24.04-arm ]
+        runner: [ ubuntu-22.04, ubuntu-22.04-arm ]
         include:
-          - runner: ubuntu-20.04
+          - runner: ubuntu-22.04
             arch: x86_64
-            cc: gcc-10
-          - runner: ubuntu-24.04-arm
+          - runner: ubuntu-22.04-arm
             arch: arm64
     runs-on: ${{ matrix.runner }}
     env:
@@ -62,9 +60,8 @@ jobs:
           # Perform a full checkout #13471
           fetch-depth: 0
       - run: ./.github/scripts/install_deps.sh
+      - run: sudo apt-get install -y libfuse2
       - run: echo "CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}" >> $GITHUB_ENV
-      - if: matrix.arch == 'arm64'
-        run: sudo apt-get update && sudo apt-get install -y libfuse2t64
       - name: appimage
         run:  |
           ./scripts/genappimage.sh ${{ needs.setup.outputs.appimage_tag }}
