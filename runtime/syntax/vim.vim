@@ -253,7 +253,7 @@ syn keyword vimBehaveModel	contained	mswin	xterm
 " ====
 syn match vimCall	"\<call\=\>"	skipwhite nextgroup=vimFunc
 
-" Debuggready {{{2
+" Debuggreedy {{{2
 " ===========
 " TODO: special-cased until generalised range/count support is implemented
 syn match	vimDebuggreedy	"\<0\=debugg\%[reedy]\>" contains=vimCount
@@ -298,7 +298,7 @@ syn keyword vimAugroupKey	contained aug[roup]  skipwhite nextgroup=vimAugroupBan
 
 " Operators: {{{2
 " =========
-syn cluster	vimOperGroup	contains=@vimSpecialVar,vimFunc,vimLambda,vimOper,vimOperParen,vimNumber,vimString,vimRegister,@vimContinue,vim9Comment,vimVar,vimBoolean,vim9LambdaParams,vimNull
+syn cluster	vimOperGroup	contains=@vimContinue,@vimExprList,vim9Comment
 syn match	vimOper	"\a\@<!!"			skipwhite skipnl nextgroup=@vimOperContinue,@vimExprList,vimSpecFile
 syn match	vimOper	"||\|&&\|[-+*/%.]"		skipwhite skipnl nextgroup=@vimOperContinue,@vimExprList,vimSpecFile
 syn match	vimOper	"?"			skipwhite skipnl nextgroup=@vimOperContinue,@vimExprList
@@ -698,7 +698,7 @@ syn match	vimRegister	'\<norm\s\+\zs"[a-zA-Z0-9]'
 syn match	vimRegister	'\<normal\s\+\zs"[a-zA-Z0-9]'
 syn match	vimRegister	'@"'
 syn match	vimPlainRegister contained	'"[a-zA-Z0-9\-:.%#*+=]'
-syn match	vimLetRegister	contained	'@["0-9\-a-zA-Z#=*+_/]'
+syn match	vimLetRegister	contained	'@["0-9\-a-zA-Z:.%#=*+~_/]'
 
 syn match	vimAddress	",\zs[.$]"	skipwhite nextgroup=vimSubst1
 syn match	vimAddress	"%\ze\a"	skipwhite nextgroup=vimString,vimSubst1
