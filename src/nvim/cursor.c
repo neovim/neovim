@@ -130,7 +130,7 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
         && wp->w_width_inner != 0
         && wcol >= (colnr_T)width
         && width > 0) {
-      csize = linetabsize(wp, pos->lnum);
+      csize = linetabsize_eol(wp, pos->lnum);
       if (csize > 0) {
         csize--;
       }
