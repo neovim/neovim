@@ -233,4 +233,6 @@ function M._get_urls()
   return urls
 end
 
+M.tree = require('vim._tree')
+
 return M
