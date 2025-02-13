@@ -10,6 +10,19 @@ local EXTENDS_FORMAT = '^;+%s*extends%s*$'
 
 local M = {}
 
+---@nodoc
+---Parsed query, see |vim.treesitter.query.parse()|
+---
+---@class vim.treesitter.Query
+---@field lang string parser language name
+---@field captures string[] list of (unique) capture names defined in query
+---@field info vim.treesitter.QueryInfo query context (e.g. captures, predicates, directives)
+---@field conceal_line boolean whether this query sets conceal_lines metadata.
+---@field query TSQuery userdata query object
+---@field private _processed_patterns table<integer, vim.treesitter.query.ProcessedPattern>
+local Query = {}
+Query.__index = Query
+
 local function is_directive(name)
   return string.sub(name, -1) == '!'
 end
@@ -30,7 +43,7 @@ end
 --- Splits the query patterns into predicates and directives.
 ---@param patterns table<integer, (integer|string)[][]>
 ---@return table<integer, vim.treesitter.query.ProcessedPattern>
-local function process_patterns(patterns)
+function Query:_process_patterns(patterns)
   ---@type table<integer, vim.treesitter.query.ProcessedPattern>
   local processed_patterns = {}
 
@@ -47,6 +60,10 @@ local function process_patterns(patterns)
 
       if is_directive(pred_name) then
         table.insert(directives, pattern)
+        -- Instruct highlighter to place marks when query contains conceal_lines metadata.
+        if vim.deep_equal(pattern, { 'set!', 'conceal_lines', '' }) then
+          self.conceal_line = true
+        end
       else
         local should_match = true
         if pred_name:match('^not%-') then
@@ -63,18 +80,6 @@ local function process_patterns(patterns)
   return processed_patterns
 end
 
----@nodoc
----Parsed query, see |vim.treesitter.query.parse()|
----
----@class vim.treesitter.Query
----@field lang string parser language name
----@field captures string[] list of (unique) capture names defined in query
----@field info vim.treesitter.QueryInfo query context (e.g. captures, predicates, directives)
----@field query TSQuery userdata query object
----@field private _processed_patterns table<integer, vim.treesitter.query.ProcessedPattern>
-local Query = {}
-Query.__index = Query
-
 ---@package
 ---@see vim.treesitter.query.parse
 ---@param lang string
@@ -90,7 +95,7 @@ function Query.new(lang, ts_query)
     patterns = query_info.patterns,
   }
   self.captures = self.info.captures
-  self._processed_patterns = process_patterns(self.info.patterns)
+  self._processed_patterns = self:_process_patterns(self.info.patterns)
   return self
 end
 

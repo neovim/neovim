@@ -47,6 +47,7 @@ enum {
   kSHSpellOn = 16,
   kSHSpellOff = 32,
   kSHConceal = 64,
+  kSHConcealLines = 128,
 };
 
 typedef struct {
@@ -144,6 +145,7 @@ typedef struct {
   LuaRef redraw_end;
   LuaRef hl_def;
   LuaRef spell_nav;
+  LuaRef conceal_line;
   int hl_valid;
   bool hl_cached;
 

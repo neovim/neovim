@@ -250,7 +250,7 @@ static inline void split_node(MarkTree *b, MTNode *x, const int i, MTKey next)
   refkey(b, x, i);
   x->n++;
 
-  uint32_t meta_inc[4];
+  uint32_t meta_inc[kMTMetaCount];
   meta_describe_key(meta_inc, x->key[i]);
   for (int m = 0; m < kMTMetaCount; m++) {
     // y used contain all of z and x->key[i], discount those
@@ -451,6 +451,7 @@ static void meta_describe_key_inc(uint32_t *meta_inc, MTKey *k)
     meta_inc[kMTMetaLines] += (k->flags & MT_FLAG_DECOR_VIRT_LINES) ? 1 : 0;
     meta_inc[kMTMetaSignHL] += (k->flags & MT_FLAG_DECOR_SIGNHL) ? 1 : 0;
     meta_inc[kMTMetaSignText] += (k->flags & MT_FLAG_DECOR_SIGNTEXT) ? 1 : 0;
+    meta_inc[kMTMetaConcealLines] += (k->flags & MT_FLAG_DECOR_CONCEAL_LINES) ? 1 : 0;
   }
 }
 
@@ -505,10 +506,10 @@ void marktree_put_key(MarkTree *b, MTKey k)
     r = s;
   }
 
-  uint32_t meta_inc[4];
+  uint32_t meta_inc[kMTMetaCount];
   meta_describe_key(meta_inc, k);
   marktree_putp_aux(b, r, k, meta_inc);
-  for (int m = 0; m < 4; m++) {
+  for (int m = 0; m < kMTMetaCount; m++) {
     b->meta_root[m] += meta_inc[m];
   }
   b->n_keys++;
@@ -579,7 +580,7 @@ uint64_t marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
   assert(x->level == 0);
   MTKey intkey = x->key[itr->i];
 
-  uint32_t meta_inc[4];
+  uint32_t meta_inc[kMTMetaCount];
   meta_describe_key(meta_inc, intkey);
   if (x->n > itr->i + 1) {
     memmove(&x->key[itr->i], &x->key[itr->i + 1],
@@ -776,7 +777,7 @@ uint64_t marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
 
 void marktree_revise_meta(MarkTree *b, MarkTreeIter *itr, MTKey old_key)
 {
-  uint32_t meta_old[4], meta_new[4];
+  uint32_t meta_old[kMTMetaCount], meta_new[kMTMetaCount];
   meta_describe_key(meta_old, old_key);
   meta_describe_key(meta_new, rawkey(itr));
 
@@ -1038,7 +1039,7 @@ static MTNode *merge_node(MarkTree *b, MTNode *p, int i)
     relative(p->key[i - 1].pos, &x->key[x->n].pos);
   }
 
-  uint32_t meta_inc[4];
+  uint32_t meta_inc[kMTMetaCount];
   meta_describe_key(meta_inc, x->key[x->n]);
 
   memmove(&x->key[x->n + 1], y->key, (size_t)y->n * sizeof(MTKey));
@@ -1128,9 +1129,9 @@ static void pivot_right(MarkTree *b, MTPos p_pos, MTNode *p, const int i)
   p->key[i] = x->key[x->n - 1];
   refkey(b, p, i);
 
-  uint32_t meta_inc_y[4];
+  uint32_t meta_inc_y[kMTMetaCount];
   meta_describe_key(meta_inc_y, y->key[0]);
-  uint32_t meta_inc_x[4];
+  uint32_t meta_inc_x[kMTMetaCount];
   meta_describe_key(meta_inc_x, p->key[i]);
 
   for (int m = 0; m < kMTMetaCount; m++) {
@@ -1214,9 +1215,9 @@ static void pivot_left(MarkTree *b, MTPos p_pos, MTNode *p, int i)
   p->key[i] = y->key[0];
   refkey(b, p, i);
 
-  uint32_t meta_inc_x[4];
+  uint32_t meta_inc_x[kMTMetaCount];
   meta_describe_key(meta_inc_x, x->key[x->n]);
-  uint32_t meta_inc_y[4];
+  uint32_t meta_inc_y[kMTMetaCount];
   meta_describe_key(meta_inc_y, p->key[i]);
   for (int m = 0; m < kMTMetaCount; m++) {
     p->meta[i][m] += meta_inc_x[m];
@@ -1619,8 +1620,13 @@ bool marktree_itr_next_filter(MarkTree *b, MarkTreeIter *itr, int stop_row, int 
   return marktree_itr_check_filter(b, itr, stop_row, stop_col, meta_filter);
 }
 
-const uint32_t meta_map[4] = { MT_FLAG_DECOR_VIRT_TEXT_INLINE, MT_FLAG_DECOR_VIRT_LINES,
-                               MT_FLAG_DECOR_SIGNHL, MT_FLAG_DECOR_SIGNTEXT };
+const uint32_t meta_map[kMTMetaCount] = {
+  MT_FLAG_DECOR_VIRT_TEXT_INLINE,
+  MT_FLAG_DECOR_VIRT_LINES,
+  MT_FLAG_DECOR_SIGNHL,
+  MT_FLAG_DECOR_SIGNTEXT,
+  MT_FLAG_DECOR_CONCEAL_LINES
+};
 static bool marktree_itr_check_filter(MarkTree *b, MarkTreeIter *itr, int stop_row, int stop_col,
                                       MetaFilter meta_filter)
 {
@@ -1860,9 +1866,9 @@ static void swap_keys(MarkTree *b, MarkTreeIter *itr1, MarkTreeIter *itr2, Damag
                                    itr2->i, itr1->i }));
     }
 
-    uint32_t meta_inc_1[4];
+    uint32_t meta_inc_1[kMTMetaCount];
     meta_describe_key(meta_inc_1, rawkey(itr1));
-    uint32_t meta_inc_2[4];
+    uint32_t meta_inc_2[kMTMetaCount];
     meta_describe_key(meta_inc_2, rawkey(itr2));
 
     if (memcmp(meta_inc_1, meta_inc_2, sizeof(meta_inc_1)) != 0) {
@@ -2373,7 +2379,7 @@ size_t marktree_check_node(MarkTree *b, MTNode *x, MTPos *last, bool *last_right
     *last = x->key[x->n - 1].pos;
   }
 
-  uint32_t meta_node[4];
+  uint32_t meta_node[kMTMetaCount];
   meta_describe_node(meta_node, x);
   for (int m = 0; m < kMTMetaCount; m++) {
     assert(meta_node_ref[m] == meta_node[m]);

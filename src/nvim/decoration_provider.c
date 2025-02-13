@@ -30,7 +30,7 @@ static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
   { ns_id, kDecorProviderDisabled, LUA_NOREF, LUA_NOREF, \
     LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, -1, false, false, 0 }
+    LUA_NOREF, LUA_NOREF, -1, false, false, 0 }
 
 static void decor_provider_error(DecorProvider *provider, const char *name, const char *msg)
 {
@@ -88,6 +88,23 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
       ADD_C(args, INTEGER_OBJ(end_row));
       ADD_C(args, INTEGER_OBJ(end_col));
       decor_provider_invoke((int)i, "spell", p->spell_nav, args, true);
+    }
+  }
+}
+
+void decor_providers_invoke_conceal_line(win_T *wp, int row)
+{
+  wp->w_conceal_line_buf = wp->w_buffer;
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->state != kDecorProviderDisabled && p->conceal_line != LUA_NOREF) {
+      MAXSIZE_TEMP_ARRAY(args, 4);
+      ADD_C(args, INTEGER_OBJ(wp->handle));
+      ADD_C(args, INTEGER_OBJ(wp->w_buffer->handle));
+      ADD_C(args, INTEGER_OBJ(row));
+      if (decor_provider_invoke((int)i, "conceal_line", p->conceal_line, args, false)) {
+        wp->w_conceal_line_provider = true;
+      }
     }
   }
 }
@@ -262,6 +279,12 @@ void decor_provider_clear(DecorProvider *p)
   NLUA_CLEAR_REF(p->redraw_line);
   NLUA_CLEAR_REF(p->redraw_end);
   NLUA_CLEAR_REF(p->spell_nav);
+  if (p->conceal_line != LUA_NOREF) {
+    NLUA_CLEAR_REF(p->conceal_line);
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      wp->w_conceal_line_buf = NULL;  // invoke at least once
+    }
+  }
   p->state = kDecorProviderDisabled;
 }
 

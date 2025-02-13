@@ -80,7 +80,7 @@ int linetabsize(win_T *wp, linenr_T lnum)
   return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum), MAXCOL);
 }
 
-static const uint32_t inline_filter[4] = {[kMTMetaInline] = kMTFilterSelect };
+static const uint32_t inline_filter[kMTMetaCount] = {[kMTMetaInline] = kMTFilterSelect };
 
 /// Prepare the structure passed to charsize functions.
 ///
@@ -749,6 +749,10 @@ int plines_win(win_T *wp, linenr_T lnum, bool limit_winheight)
 /// @param limit_winheight  when true limit to window height
 int plines_win_nofill(win_T *wp, linenr_T lnum, bool limit_winheight)
 {
+  if (decor_conceal_line(wp, lnum - 1, false)) {
+    return 0;
+  }
+
   if (!wp->w_p_wrap) {
     return 1;
   }
@@ -885,6 +889,11 @@ int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const
   if (foldedp != NULL) {
     *foldedp = folded;
   }
+
+  if (decor_conceal_line(wp, lnum - 1, false)) {
+    return 0;
+  }
+
   return ((folded ? 1 : plines_win_nofill(wp, lnum, limit_winheight)) +
           (lnum == wp->w_topline ? wp->w_topfill : win_get_fill(wp, lnum)));
 }
@@ -963,8 +972,8 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
 
   if (start_vcol >= 0) {
     linenr_T lnum_next = lnum;
-    const bool folded = hasFolding(wp, lnum, &lnum, &lnum_next);
-    height_cur_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
+    hasFolding(wp, lnum, &lnum, &lnum_next);
+    height_cur_nofill = plines_win_nofill(wp, lnum, false);
     height_sum_nofill += height_cur_nofill;
     const int64_t row_off = (start_vcol < width1 || width2 <= 0)
                             ? 0
@@ -975,9 +984,9 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
 
   while (lnum <= end_lnum) {
     linenr_T lnum_next = lnum;
-    const bool folded = hasFolding(wp, lnum, &lnum, &lnum_next);
+    hasFolding(wp, lnum, &lnum, &lnum_next);
     height_sum_fill += win_get_fill(wp, lnum);
-    height_cur_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
+    height_cur_nofill = plines_win_nofill(wp, lnum, false);
     height_sum_nofill += height_cur_nofill;
     lnum = lnum_next + 1;
   }

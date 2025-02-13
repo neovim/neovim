@@ -202,6 +202,7 @@ API
   highlight group IDs.
 • |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
 • |nvim_buf_set_extmark()| `hl_group` field can be an array of layered groups
+• New |nvim_buf_set_extmark()| flag `conceal_lines` to conceal an entire line.
 • |vim.hl.range()| now has a optional `timeout` field which allows for a timed highlight
 • |nvim_buf_set_extmark()| virt_text_pos accepts `eol_right_align` to
   allow for right aligned text that truncates before covering up buffer text.
@@ -392,6 +393,8 @@ TREESITTER
 • |LanguageTree:is_valid()| now accepts a range parameter to narrow the scope
   of the validity check.
 • |:InspectTree| now shows which nodes are missing.
+• Bundled markdown highlight queries use `conceal_lines` metadata to conceal
+  code block fence lines vertically.
 
 TUI
 
