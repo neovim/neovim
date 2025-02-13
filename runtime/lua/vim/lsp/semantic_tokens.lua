@@ -294,9 +294,16 @@ function STHighlighter:send_request()
         local c = vim.lsp.get_client_by_id(ctx.client_id)
         local bufnr = assert(ctx.bufnr)
         local highlighter = STHighlighter.active[bufnr]
-        if not err and c and highlighter then
-          coroutine.wrap(STHighlighter.process_response)(highlighter, response, c, version)
+        if not (c and highlighter) then
+          return
         end
+
+        if err then
+          highlighter.client_state[c.id].active_request = {}
+          return
+        end
+
+        coroutine.wrap(STHighlighter.process_response)(highlighter, response, c, version)
       end, self.bufnr)
 
       if success then
