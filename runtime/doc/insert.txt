@@ -637,6 +637,11 @@ CTRL-N (next), and CTRL-P (previous).
 To get the current completion information, |complete_info()| can be used.
 Also see the 'infercase' option if you want to adjust the case of the match.
 
+When inserting a selected candidate word from the |popup-menu|, the part of
+the candidate word that does not match the query is highlighted using
+|hl-ComplMatchIns|. If fuzzy is enabled in 'completopt', highlighting will not
+be applied.
+
 							*complete_CTRL-E*
 When completion is active you can use CTRL-E to stop it and go back to the
 originally typed text.  The CTRL-E will not be inserted.
