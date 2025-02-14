@@ -1295,8 +1295,6 @@ static int ins_compl_build_pum(void)
           if (!compl_no_select) {
             compl_shown_match = comp;
           }
-        } else if (!fuzzy_sort && i == 0 && !compl_no_select) {
-          compl_shown_match = shown_compl;
         }
         if (!shown_match_ok && comp == compl_shown_match && !compl_no_select) {
           cur = i;
@@ -1325,6 +1323,12 @@ static int ins_compl_build_pum(void)
 
   if (compl_match_arraysize == 0) {
     return -1;
+  }
+
+  if (fuzzy_filter && !fuzzy_sort && !compl_no_select && !shown_match_ok) {
+    compl_shown_match = shown_compl;
+    shown_match_ok = true;
+    cur = 0;
   }
 
   assert(compl_match_arraysize >= 0);
