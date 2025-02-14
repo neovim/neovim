@@ -43,12 +43,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ ubuntu-20.04, ubuntu-24.04-arm ]
+        runner: [ ubuntu-22.04, ubuntu-22.04-arm ]
         include:
-          - runner: ubuntu-20.04
+          - runner: ubuntu-22.04
             arch: x86_64
             cc: gcc-10
-          - runner: ubuntu-24.04-arm
+          - runner: ubuntu-22.04-arm
             arch: arm64
     runs-on: ${{ matrix.runner }}
     env:
