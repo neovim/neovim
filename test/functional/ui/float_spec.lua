@@ -9846,7 +9846,7 @@ describe('float window', function()
       end
     end)
 
-    it("does not set winbar when float only have one line #19464", function()
+    it("1-line float does not inherit'winbar' #19464", function()
       local res = exec_lua([[
         local win = vim.api.nvim_get_current_win()
         vim.wo[win].winbar = '%f'
