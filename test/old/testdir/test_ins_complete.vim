@@ -2767,6 +2767,8 @@ func Test_complete_fuzzy_match()
   func OnPumChange()
     let g:item = get(v:event, 'completed_item', {})
     let g:word = get(g:item, 'word', v:null)
+    let g:abbr = get(g:item, 'abbr', v:null)
+    let g:selected = get(complete_info(['selected']), 'selected')
   endfunction
 
   augroup AAAAA_Group
@@ -2857,6 +2859,20 @@ func Test_complete_fuzzy_match()
   call feedkeys("S\<C-x>\<C-o>fooB\<C-Y>", 'tx')
   call assert_equal('fooBaz', getline('.'))
 
+  set cot=menuone,fuzzy,nosort
+  func CompAnother()
+    call complete(col('.'), [#{word: "do" }, #{word: "echo"}, #{word: "for (${1:expr1}, ${2:expr2}, ${3:expr3}) {\n\t$0\n}", abbr: "for" }, #{word: "foo"}])
+    return ''
+  endfunc
+  call feedkeys("i\<C-R>=CompAnother()\<CR>\<C-N>\<C-N>", 'tx')
+  call assert_equal("for", g:abbr)
+  call assert_equal(2, g:selected)
+
+  set cot+=noinsert
+  call feedkeys("i\<C-R>=CompAnother()\<CR>f", 'tx')
+  call assert_equal("for", g:abbr)
+  call assert_equal(2, g:selected)
+
   " clean up
   set omnifunc=
   bw!
@@ -2866,8 +2882,11 @@ func Test_complete_fuzzy_match()
   delfunc OnPumChange
   delfunc Omni_test
   delfunc Comp
+  delfunc CompAnother
   unlet g:item
   unlet g:word
+  unlet g:selected
+  unlet g:abbr
 endfunc
 
 " Check that tie breaking is stable for completeopt+=fuzzy (which should
