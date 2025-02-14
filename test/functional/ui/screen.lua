@@ -973,6 +973,10 @@ function Screen:_reset()
   self.wildmenu_items = nil
   self.wildmenu_pos = nil
   self._grid_win_extmarks = {}
+  self.msg_grid = nil
+  self.msg_grid_pos = nil
+  self.msg_scrolled = false
+  self.msg_sep_char = nil
 end
 
 --- @param cursor_style_enabled boolean
