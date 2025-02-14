@@ -229,6 +229,7 @@ void ui_refresh(void)
     }
     msg_scroll_flush();
   }
+  msg_ui_refresh();
 
   if (!ui_active()) {
     return;
