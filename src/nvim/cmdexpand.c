@@ -645,7 +645,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
 /// in "xp->xp_selected"
 static char *get_next_or_prev_match(int mode, expand_T *xp)
 {
-  // When no files found, return NULL
+  // When no matches found, return NULL
   if (xp->xp_numfiles <= 0) {
     return NULL;
   }
@@ -653,14 +653,15 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
   int findex = xp->xp_selected;
 
   if (mode == WILD_PREV) {
-    // Select last file if at start
+    // Select the last entry if at original text
     if (findex == -1) {
       findex = xp->xp_numfiles;
     }
+    // Otherwise select the previous entry
     findex--;
   } else if (mode == WILD_NEXT) {
-    // Select next file
-    findex = findex + 1;
+    // Select the next entry
+    findex++;
   } else if (mode == WILD_PAGEUP || mode == WILD_PAGEDOWN) {
     // Get the height of popup menu (used for both PAGEUP and PAGEDOWN)
     int ht = pum_get_height();
@@ -672,7 +673,7 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
       if (findex == 0) {
         // at the first entry, don't select any entries
         findex = -1;
-      } else if (findex == -1) {
+      } else if (findex < 0) {
         // no entry is selected. select the last entry
         findex = xp->xp_numfiles - 1;
       } else {
@@ -680,12 +681,12 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
         findex = MAX(findex - ht, 0);
       }
     } else {  // mode == WILD_PAGEDOWN
-      if (findex < 0) {
-        // no entry is selected. select the first entry
-        findex = 0;
-      } else if (findex == xp->xp_numfiles - 1) {
+      if (findex == xp->xp_numfiles - 1) {
         // at the last entry, don't select any entries
         findex = -1;
+      } else if (findex < 0) {
+        // no entry is selected. select the first entry
+        findex = 0;
       } else {
         // go down by the pum height
         findex = MIN(findex + ht, xp->xp_numfiles - 1);
@@ -698,7 +699,7 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
 
   // Handle wrapping around
   if (findex < 0 || findex >= xp->xp_numfiles) {
-    // If original string exists, return to it when wrapping around
+    // If original text exists, return to it when wrapping around
     if (xp->xp_orig != NULL) {
       findex = -1;
     } else {
@@ -716,7 +717,7 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
   }
 
   xp->xp_selected = findex;
-  // Return the original string or the selected match
+  // Return the original text or the selected match
   return xstrdup(findex == -1 ? xp->xp_orig : xp->xp_files[findex]);
 }
 
