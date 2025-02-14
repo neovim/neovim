@@ -458,6 +458,7 @@ function protocol.make_client_capabilities()
           resolveSupport = {
             properties = {
               'additionalTextEdits',
+              'command',
             },
           },
           tagSupport = {

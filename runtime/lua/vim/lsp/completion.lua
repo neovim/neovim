@@ -610,13 +610,14 @@ local function on_complete_done()
       clear_word()
       if err then
         vim.notify_once(err.message, vim.log.levels.WARN)
-      elseif result and result.additionalTextEdits then
-        lsp.util.apply_text_edits(result.additionalTextEdits, bufnr, position_encoding)
+      elseif result then
+        if result.additionalTextEdits then
+          lsp.util.apply_text_edits(result.additionalTextEdits, bufnr, position_encoding)
+        end
         if result.command then
           completion_item.command = result.command
         end
       end
-
       apply_snippet_and_command()
     end, bufnr)
   else
