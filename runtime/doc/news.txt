@@ -340,6 +340,9 @@ PERFORMANCE
 • Treesitter highlighting is now asynchronous. To force synchronous parsing,
   use `vim.g._ts_force_sync_parsing = true`.
 • Treesitter folding is now calculated asynchronously.
+• |LanguageTree:parse()| now only runs the injection query on the provided
+  range (as long as the language does not have a combined injection),
+  significantly improving |treesitter-highlight| performance.
 
 PLUGINS
 
