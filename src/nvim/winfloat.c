@@ -22,6 +22,7 @@
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
@@ -65,6 +66,12 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
     }
     wp = win_alloc(tp_last, false);
     win_init(wp, curwin, 0);
+    if (wp->w_p_wbr != NULL && fconfig.height == 1) {
+      if (wp->w_p_wbr != empty_string_option) {
+        free_string_option(wp->w_p_wbr);
+      }
+      wp->w_p_wbr = empty_string_option;
+    }
   } else {
     assert(!last);
     assert(!wp->w_floating);

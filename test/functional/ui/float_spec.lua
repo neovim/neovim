@@ -9845,6 +9845,35 @@ describe('float window', function()
         })
       end
     end)
+
+    it("1-line float does not inherit 'winbar' #19464", function()
+      local res = exec_lua([[
+        local win = vim.api.nvim_get_current_win()
+        vim.wo[win].winbar = '%f'
+        local grp = vim.api.nvim_create_augroup('asdf', { clear = true })
+        vim.api.nvim_create_autocmd('WinEnter', {
+          group = grp,
+          pattern = '*',
+          desc = 'winbar crash?',
+          callback = function()
+            vim.wo[win].winbar = '%f'
+          end,
+        })
+
+        local buf = vim.api.nvim_create_buf(false, true)
+        local float_winid = vim.api.nvim_open_win(buf, true, {
+          relative = 'win',
+          win = win,
+          border = 'single',
+          col = 1,
+          row = 1,
+          height = 1,
+          width = 40,
+        })
+        return {vim.wo[win].winbar, vim.wo[float_winid].winbar}
+      ]])
+      eq({"%f", ""}, res)
+    end)
   end
 
   describe('with ext_multigrid', function()
