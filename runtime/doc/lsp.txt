@@ -1465,7 +1465,8 @@ Lua module: vim.lsp.buf                                              *lsp-buf*
     Fields: ~
       • {items}     (`table[]`) Structured like |setqflist-what|
       • {title}?    (`string`) Title for the list.
-      • {context}?  (`table`) `ctx` from |lsp-handler|
+      • {context}?  (`{ bufnr: integer, method: string }`) Subset of `ctx`
+                    from |lsp-handler|.
 
 *vim.lsp.buf.hover.Opts*
     Extends: |vim.lsp.util.open_floating_preview.Opts|

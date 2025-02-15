@@ -264,7 +264,7 @@ end
 --- @class vim.lsp.LocationOpts.OnList
 --- @field items table[] Structured like |setqflist-what|
 --- @field title? string Title for the list.
---- @field context? table `ctx` from |lsp-handler|
+--- @field context? { bufnr: integer, method: string } Subset of `ctx` from |lsp-handler|.
 
 --- @class vim.lsp.LocationOpts: vim.lsp.ListOpts
 ---
