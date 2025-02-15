@@ -693,7 +693,6 @@ bool terminal_enter(void)
   refresh_cursor(s->term);
 
   adjust_topline(s->term, buf, 0);  // scroll to end
-  showmode();
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
   redraw_custom_title_later();
   if (!s->term->cursor.visible) {
@@ -701,6 +700,7 @@ bool terminal_enter(void)
     ui_busy_start();
   }
   ui_cursor_shape();
+  showmode();
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
   may_trigger_modechanged();
 
