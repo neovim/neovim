@@ -186,4 +186,23 @@ describe('treesitter node API', function()
     eq(lua_eval('value:type()'), lua_eval('declarator:child_with_descendant(value):type()'))
     eq(vim.NIL, lua_eval('value:child_with_descendant(value)'))
   end)
+
+  it('gets all children with a given field name', function()
+    insert([[
+      function foo(a,b,c)
+      end
+    ]])
+
+    exec_lua(function()
+      local tree = vim.treesitter.get_parser(0, 'lua'):parse()[1]
+      _G.parameters_node = assert(tree:root():named_descendant_for_range(0, 18, 0, 18))
+      _G.children_by_field = _G.parameters_node:field('name')
+    end)
+
+    eq('parameters', lua_eval('parameters_node:type()'))
+    eq(3, lua_eval('#children_by_field'))
+    eq('a', lua_eval('vim.treesitter.get_node_text(children_by_field[1], 0)'))
+    eq('b', lua_eval('vim.treesitter.get_node_text(children_by_field[2], 0)'))
+    eq('c', lua_eval('vim.treesitter.get_node_text(children_by_field[3], 0)'))
+  end)
 end)
