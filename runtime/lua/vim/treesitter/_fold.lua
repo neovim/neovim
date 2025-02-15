@@ -75,7 +75,15 @@ local function compute_folds_levels(bufnr, info, srow, erow, callback)
   erow = erow or api.nvim_buf_line_count(bufnr)
 
   local parser = info.parser
-  if not parser then
+  if
+    not parser
+    -- Parsing an empty buffer results in problems with the parsing state,
+    -- resulting in both a broken highlighter and foldexpr.
+    or api.nvim_buf_line_count(bufnr) == 1
+      and api.nvim_buf_call(bufnr, function()
+        return vim.fn.line2byte(1) <= 0
+      end)
+  then
     return
   end
 
@@ -380,7 +388,7 @@ function M.foldexpr(lnum)
 
   if not foldinfos[bufnr] then
     foldinfos[bufnr] = FoldInfo.new(bufnr)
-    api.nvim_create_autocmd({ 'BufUnload', 'VimEnter' }, {
+    api.nvim_create_autocmd({ 'BufUnload', 'VimEnter', 'FileType' }, {
       buffer = bufnr,
       once = true,
       callback = function()
