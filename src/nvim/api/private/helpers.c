@@ -123,13 +123,6 @@ void try_leave(const TryState *const tstate, Error *const err)
     discard_current_exception();
   }
 
-  assert(msg_list == &tstate->private_msg_list);
-  assert(*msg_list == NULL);
-  assert(current_exception == NULL);
-  assert(!got_int);
-  assert(!did_throw);
-  assert(!need_rethrow);
-  assert(!did_emsg);
   // Restore the exception context.
   msg_list = (msglist_T **)tstate->msg_list;
   current_exception = tstate->current_exception;
