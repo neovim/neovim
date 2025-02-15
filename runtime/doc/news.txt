@@ -175,6 +175,7 @@ TREESITTER
   the tree before returning. Scripts must call |LanguageTree:parse()| explicitly. >lua
     local p = vim.treesitter.get_parser(0, 'c')
     p:parse()
+• |vim.treesitter.get_parser()| expects its buffer to be loaded.
 <
 
 TUI
