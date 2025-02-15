@@ -998,16 +998,21 @@ static int node_symbol(lua_State *L)
 static int node_field(lua_State *L)
 {
   TSNode node = node_check(L, 1);
+  uint32_t count = ts_node_child_count(node);
+  int curr_index = 0;
 
   size_t name_len;
   const char *field_name = luaL_checklstring(L, 2, &name_len);
 
-  lua_newtable(L);  // [table]
+  lua_newtable(L);
 
-  TSNode field = ts_node_child_by_field_name(node, field_name, (uint32_t)name_len);
-  if (!ts_node_is_null(field)) {
-    push_node(L, field, 1);  // [table, node]
-    lua_rawseti(L, -2, 1);
+  for (uint32_t i = 0; i < count; i++) {
+    const char *child_field_name = ts_node_field_name_for_child(node, i);
+    if (strequal(field_name, child_field_name)) {
+      TSNode child = ts_node_child(node, i);
+      push_node(L, child, 1);
+      lua_rawseti(L, -2, ++curr_index);
+    }
   }
 
   return 1;

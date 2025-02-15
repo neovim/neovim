@@ -713,7 +713,7 @@ TSNode:extra()                                                *TSNode:extra()*
         (`boolean`)
 
 TSNode:field({name})                                          *TSNode:field()*
-    Returns a table of the nodes corresponding to the {name} field.
+    Returns a list of all the node's children that have the given field name.
 
     Parameters: ~
       • {name}  (`string`)
