@@ -13,11 +13,11 @@ Supported platforms					 *supported-platforms*
 
 `System`          `Tier`      `Versions`                  `Tested versions`
 Linux (x86_64)   1      >= 2.6.32, glibc >= 2.12     Ubuntu 24.04
-Linux (arm64)    1      >= 2.6.32, glibc >= 2.12     Ubuntu 24.04
 macOS (x86_64)   1      >= 11                        macOS 13
 macOS (arm64)    1      >= 11                        macOS 15
 Windows 64-bit   1      >= Windows 10 Version 1809   Windows Server 2022
 FreeBSD          1      >= 10                        FreeBSD 14
+Linux (arm64)    2      >= 2.6.32, glibc >= 2.12
 OpenBSD          2      >= 7
 MinGW            2      MinGW-w64
 Windows 64-bit   3      < Windows 10 Version 1809
