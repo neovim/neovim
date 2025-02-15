@@ -811,17 +811,19 @@ t2]])
     ]]
 
     -- foldexpr will return '0' for all lines
-    local levels = get_fold_levels() ---@type integer[]
-    eq(19, #levels)
-    for lnum, level in ipairs(levels) do
-      eq('0', level, string.format("foldlevel[%d] == %s; expected '0'", lnum, level))
+    local function expect_no_folds()
+      local levels = get_fold_levels() ---@type integer[]
+      eq(19, #levels)
+      for lnum, level in ipairs(levels) do
+        eq('0', level, string.format("foldlevel[%d] == %s; expected '0'", lnum, level))
+      end
     end
+    expect_no_folds()
 
     -- reload buffer as c filetype to simulate new parser being found
     feed('GA// vim: ft=c<Esc>')
     command([[write | edit]])
-
-    eq({
+    local foldlevels = {
       [1] = '>1',
       [2] = '1',
       [3] = '1',
@@ -841,6 +843,14 @@ t2]])
       [17] = '3',
       [18] = '2',
       [19] = '1',
-    }, get_fold_levels())
+    }
+    eq(foldlevels, get_fold_levels())
+
+    -- only changing filetype should change the parser again
+    command('set ft=some_filetype_without_treesitter_parser')
+    expect_no_folds()
+
+    command('set ft=c')
+    eq(foldlevels, get_fold_levels())
   end)
 end)

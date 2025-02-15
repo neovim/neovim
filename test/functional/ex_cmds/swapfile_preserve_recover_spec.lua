@@ -150,6 +150,58 @@ describe('swapfile detection', function()
     rmdir(swapdir)
   end)
 
+  it('redrawing during prompt does not break treesitter', function()
+    local testfile = 'Xtest_swapredraw.lua'
+    write_file(
+      testfile,
+      [[
+vim.o.foldmethod = 'expr'
+vim.o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+vim.defer_fn(function()
+  vim.api.nvim__redraw({ valid = false })
+end, 500)
+pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
+    ]]
+    )
+    exec(init)
+    command('edit! ' .. testfile)
+    command('preserve')
+    local nvim2 = n.new_session(true, { args = { '--clean', '--embed' }, merge = false })
+    set_session(nvim2)
+    local screen2 = Screen.new(100, 40)
+    screen2:add_extra_attr_ids({
+      [100] = { foreground = Screen.colors.NvimLightGrey2 },
+      [101] = { foreground = Screen.colors.NvimLightGreen },
+      [102] = {
+        foreground = Screen.colors.NvimLightGrey4,
+        background = Screen.colors.NvimDarkGrey1,
+      },
+      [104] = { foreground = Screen.colors.NvimLightCyan },
+      [105] = { foreground = Screen.colors.NvimDarkGrey4 },
+      [106] = {
+        foreground = Screen.colors.NvimDarkGrey3,
+        background = Screen.colors.NvimLightGrey3,
+      },
+    })
+    exec(init)
+    command('autocmd! nvim.swapfile') -- Delete the default handler (which skips the dialog).
+    feed(':edit ' .. testfile .. '<CR>')
+    feed('E:source<CR>')
+    screen2:sleep(1000)
+    feed('E')
+    screen2:expect([[
+      {100:^vim.o.foldmethod} {100:=} {101:'expr'}                                                                           |
+      {100:vim.o.foldexpr} {100:=} {101:'v:lua.vim.treesitter.foldexpr()'}                                                  |
+      {102:+--  3 lines: vim.defer_fn(function()·······························································}|
+      {104:pcall}{100:(vim.cmd.edit,} {101:'Xtest_swapredraw.lua'}{100:)}                                                         |
+                                                                                                          |
+      {105:~                                                                                                   }|*33
+      {106:Xtest_swapredraw.lua                                                              1,1            All}|
+                                                                                                          |
+    ]])
+    nvim2:close()
+  end)
+
   it('always show swapfile dialog #8840 #9027', function()
     local testfile = 'Xtest_swapdialog_file1'
 
