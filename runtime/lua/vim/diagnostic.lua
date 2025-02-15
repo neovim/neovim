@@ -1851,13 +1851,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
         -- b. Has enough space on the left.
         -- c. Is just one line.
         -- d. Is not an overlap.
-        local msg ---@type string
-        if diagnostic.code then
-          msg = string.format('%s: %s', diagnostic.code, diagnostic.message)
-        else
-          msg = diagnostic.message
-        end
-        for msg_line in msg:gmatch('([^\n]+)') do
+        for msg_line in diagnostic.message:gmatch('([^\n]+)') do
           local vline = {}
           vim.list_extend(vline, left)
           vim.list_extend(vline, center)
@@ -1879,6 +1873,16 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
     end
 
     api.nvim_buf_set_extmark(bufnr, namespace, lnum, 0, { virt_lines = virt_lines })
+  end
+end
+
+--- Default formatter for the virtual_lines handler.
+--- @param diagnostic vim.Diagnostic
+local function format_virtual_lines(diagnostic)
+  if diagnostic.code then
+    return string.format('%s: %s', diagnostic.code, diagnostic.message)
+  else
+    return diagnostic.message
   end
 end
 
@@ -1910,9 +1914,8 @@ M.handlers.virtual_lines = {
 
     api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
 
-    if opts.virtual_lines.format then
-      diagnostics = reformat_diagnostics(opts.virtual_lines.format, diagnostics)
-    end
+    diagnostics =
+      reformat_diagnostics(opts.virtual_lines.format or format_virtual_lines, diagnostics)
 
     if opts.virtual_lines.current_line == true then
       -- Create a mapping from line -> diagnostics so that we can quickly get the
