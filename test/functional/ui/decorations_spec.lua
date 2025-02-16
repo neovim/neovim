@@ -3375,6 +3375,86 @@ describe('decorations: inline virtual text', function()
     ]]}
   end)
 
+  it('draws correctly with no wrap and multibyte virtual text', function()
+    insert('12345678')
+    command('set nowrap')
+    api.nvim_buf_set_extmark(0, ns, 0, 2, {
+      virt_text = { { 'αβγ口=', 'Special' }, { '口', 'Special' } },
+      virt_text_pos = 'inline',
+    })
+    screen:expect([[
+      12{10:αβγ口=口}34567^8                                  |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      2{10:αβγ口=口}34567^8                                   |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      {10:αβγ口=口}34567^8                                    |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      {10:βγ口=口}34567^8                                     |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      {10:γ口=口}34567^8                                      |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      {10:口=口}34567^8                                       |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      {10: =口}34567^8                                        |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      {10:=口}34567^8                                         |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      {10:口}34567^8                                          |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      {10: }34567^8                                           |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      34567^8                                            |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      4567^8                                             |
+      {1:~                                                 }|
+                                                        |
+    ]])
+  end)
+
   it('tabs are the correct length with no wrap following virtual text', function()
     command('set nowrap')
     feed('itest<TAB>a<ESC>')

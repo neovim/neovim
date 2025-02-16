@@ -909,25 +909,39 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       // If the text didn't reach until the first window
       // column we need to skip cells.
       if (wlv->skip_cells > 0) {
-        // FIXME: this should use virt_text_width instead
-        int virt_text_len = wlv->n_attr;
-        if (virt_text_len > wlv->skip_cells) {
-          int len = mb_charlen2bytelen(wlv->p_extra, wlv->skip_cells);
-          wlv->n_extra -= len;
-          wlv->p_extra += len;
-          wlv->n_attr -= wlv->skip_cells;
+        int virt_text_width = (int)mb_string2cells(wlv->p_extra);
+        if (virt_text_width > wlv->skip_cells) {
+          int cells_to_skip = wlv->skip_cells;
+          // Skip cells in the text.
+          while (cells_to_skip > 0) {
+            int clen = utf_ptr2len(wlv->p_extra);
+            cells_to_skip -= utf_ptr2cells(wlv->p_extra);
+            wlv->p_extra += clen;
+            wlv->n_extra -= clen;
+            wlv->n_attr--;
+          }
+          // If a double-width char doesn't fit, pad with space.
+          if (cells_to_skip < 0) {
+            int pad_len = -cells_to_skip;
+            char *padded = get_extra_buf((size_t)(wlv->n_extra + pad_len) + 1);
+            memset(padded, ' ', (size_t)pad_len);
+            xmemcpyz(padded + pad_len, wlv->p_extra, (size_t)wlv->n_extra);
+            wlv->p_extra = padded;
+            wlv->n_extra += pad_len;
+            wlv->n_attr += pad_len;
+          }
           // Skipped cells needed to be accounted for in vcol.
           wlv->skipped_cells += wlv->skip_cells;
           wlv->skip_cells = 0;
         } else {
-          // the whole text is left of the window, drop
-          // it and advance to the next one
-          wlv->skip_cells -= virt_text_len;
+          // The whole text is left of the window, drop
+          // it and advance to the next one.
+          wlv->skip_cells -= virt_text_width;
           // Skipped cells needed to be accounted for in vcol.
-          wlv->skipped_cells += virt_text_len;
+          wlv->skipped_cells += virt_text_width;
           wlv->n_attr = 0;
           wlv->n_extra = 0;
-          // go to the start so the next virtual text chunk can be selected.
+          // Go to the start so the next virtual text chunk can be selected.
           continue;
         }
       }
