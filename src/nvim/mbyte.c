@@ -2251,24 +2251,6 @@ int mb_charlen(const char *str)
   return count;
 }
 
-int mb_charlen2bytelen(const char *str, int charlen)
-{
-  const char *p = str;
-  int count = 0;
-
-  if (p == NULL) {
-    return 0;
-  }
-
-  for (int i = 0; *p != NUL && i < charlen; i++) {
-    int b = utfc_ptr2len(p);
-    p += b;
-    count += b;
-  }
-
-  return count;
-}
-
 /// Like mb_charlen() but for a string with specified length.
 int mb_charlen_len(const char *str, int len)
 {
