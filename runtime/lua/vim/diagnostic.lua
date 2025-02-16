@@ -109,7 +109,7 @@ end
 --- @field signs vim.diagnostic.Opts.Signs
 --- @field severity_sort {reverse?:boolean}
 
---- @class vim.diagnostic.Opts.Float
+--- @class vim.diagnostic.Opts.Float : vim.lsp.util.open_floating_preview.Opts
 ---
 --- Buffer number to show diagnostics from.
 --- (default: current buffer)
