@@ -95,6 +95,7 @@ local TSCallbackNames = {
 ---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
 ---@field private _valid_regions table<integer,true> Set of valid region IDs.
+---@field private _num_valid_regions integer Number of valid regions
 ---@field private _is_entirely_valid boolean Whether the entire tree (excluding children) is valid.
 ---@field private _logger? fun(logtype: string, msg: string)
 ---@field private _logfile? file*
@@ -138,6 +139,7 @@ function LanguageTree.new(source, lang, opts)
       or query.get(lang, 'injections'),
     _injections_processed = false,
     _valid_regions = {},
+    _num_valid_regions = 0,
     _num_regions = 1,
     _is_entirely_valid = false,
     _parser = vim._create_ts_parser(lang),
@@ -246,6 +248,7 @@ end
 ---@param reload boolean|nil
 function LanguageTree:invalidate(reload)
   self._valid_regions = {}
+  self._num_valid_regions = 0
   self._is_entirely_valid = false
   self._parser:reset()
 
@@ -401,10 +404,9 @@ function LanguageTree:_parse_regions(range, thread_state)
       total_parse_time = total_parse_time + parse_time
       no_regions_parsed = no_regions_parsed + 1
       self._valid_regions[i] = true
+      self._num_valid_regions = self._num_valid_regions + 1
 
-      -- _valid_regions can have holes, but that is okay because this equality is only true when it
-      -- has no holes (meaning all regions are valid)
-      if #self._valid_regions == self._num_regions then
+      if self._num_valid_regions == self._num_regions then
         self._is_entirely_valid = true
       end
     end
@@ -745,6 +747,7 @@ function LanguageTree:_iter_regions(fn)
       -- just by checking the length of _valid_regions.
       self._valid_regions[i] = fn(i, region) and true or nil
       if not self._valid_regions[i] then
+        self._num_valid_regions = self._num_valid_regions - 1
         self:_log(function()
           return 'invalidating region', i, region_tostr(region)
         end)
