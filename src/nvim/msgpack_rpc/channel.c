@@ -486,15 +486,15 @@ void rpc_close(Channel *channel)
   channel->rpc.closed = true;
   channel_decref(channel);
 
-  if (ui_client_channel_id && channel->id == ui_client_channel_id) {
-    assert(!channel->detach);  // `Channel.detach` is not currently used by the UI client.
-    exit_on_closed_chan(0);
-  } else if (channel->streamtype == kChannelStreamStdio) {
-    // Avoid hanging when there are no other UIs and a prompt is triggered on exit.
-    remote_ui_disconnect(channel->id);
+  bool is_ui_client = ui_client_channel_id && channel->id == ui_client_channel_id;
+  if (is_ui_client || channel->streamtype == kChannelStreamStdio) {
+    if (!is_ui_client) {
+      // Avoid hanging when there are no other UIs and a prompt is triggered on exit.
+      remote_ui_disconnect(channel->id);
+    }
 
     if (!channel->detach) {
-      exit_on_closed_chan(0);
+      exit_on_closed_chan(channel->exit_status == -1 ? 0 : channel->exit_status);
     }
   }
 }
