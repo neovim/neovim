@@ -11250,6 +11250,20 @@ M.funcs = {
     returns = 'string|string[]',
     signature = 'stdpath({what})',
   },
+  stdpath__1 = {
+    args = 1,
+    fast = true,
+    name = 'stdpath',
+    params = { { 'what', "'cache'|'config'|'data'|'log'|'run'|'state'" } },
+    returns = 'string',
+  },
+  stdpath__2 = {
+    args = 1,
+    fast = true,
+    name = 'stdpath',
+    params = { { 'what', "'config_dirs'|'data_dirs'" } },
+    returns = 'string[]',
+  },
   str2float = {
     args = 1,
     base = 1,

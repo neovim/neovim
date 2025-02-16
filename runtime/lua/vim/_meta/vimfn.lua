@@ -9351,6 +9351,14 @@ function vim.fn.stdioopen(opts) end
 --- @return string|string[]
 function vim.fn.stdpath(what) end
 
+--- @param what 'cache'|'config'|'data'|'log'|'run'|'state'
+--- @return string
+function vim.fn.stdpath(what) end
+
+--- @param what 'config_dirs'|'data_dirs'
+--- @return string[]
+function vim.fn.stdpath(what) end
+
 --- Convert String {string} to a Float.  This mostly works the
 --- same as when using a floating point number in an expression,
 --- see |floating-point-format|.  But it's a bit more permissive.
