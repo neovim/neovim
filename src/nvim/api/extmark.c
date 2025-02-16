@@ -445,7 +445,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   placed below the buffer line containing the mark.
 ///
 ///               - virt_lines_above: place virtual lines above instead.
-///               - virt_lines_leftcol: Place extmarks in the leftmost
+///               - virt_lines_leftcol: Place virtual lines in the leftmost
 ///                                     column of the window, bypassing
 ///                                     sign and number columns.
 ///
