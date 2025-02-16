@@ -914,10 +914,10 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
           int cells_to_skip = wlv->skip_cells;
           // Skip cells in the text.
           while (cells_to_skip > 0) {
-            int clen = utf_ptr2len(wlv->p_extra);
+            int c_len = utfc_ptr2len(wlv->p_extra);
             cells_to_skip -= utf_ptr2cells(wlv->p_extra);
-            wlv->p_extra += clen;
-            wlv->n_extra -= clen;
+            wlv->p_extra += c_len;
+            wlv->n_extra -= c_len;
             wlv->n_attr--;
           }
           // If a double-width char doesn't fit, pad with space.

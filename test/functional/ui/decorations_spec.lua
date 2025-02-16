@@ -3379,59 +3379,59 @@ describe('decorations: inline virtual text', function()
     insert('12345678')
     command('set nowrap')
     api.nvim_buf_set_extmark(0, ns, 0, 2, {
-      virt_text = { { 'αβγ口=', 'Special' }, { '口', 'Special' } },
+      virt_text = { { 'αβ̳γ̲口=', 'Special' }, { '❤️', 'Special' } },
       virt_text_pos = 'inline',
     })
     screen:expect([[
-      12{10:αβγ口=口}34567^8                                  |
+      12{10:αβ̳γ̲口=❤️}34567^8                                  |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      2{10:αβγ口=口}34567^8                                   |
+      2{10:αβ̳γ̲口=❤️}34567^8                                   |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:αβγ口=口}34567^8                                    |
+      {10:αβ̳γ̲口=❤️}34567^8                                    |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:βγ口=口}34567^8                                     |
+      {10:β̳γ̲口=❤️}34567^8                                     |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:γ口=口}34567^8                                      |
+      {10:γ̲口=❤️}34567^8                                      |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:口=口}34567^8                                       |
+      {10:口=❤️}34567^8                                       |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10: =口}34567^8                                        |
+      {10: =❤️}34567^8                                        |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:=口}34567^8                                         |
+      {10:=❤️}34567^8                                         |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:口}34567^8                                          |
+      {10:❤️}34567^8                                          |
       {1:~                                                 }|
                                                         |
     ]])
