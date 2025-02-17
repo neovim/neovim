@@ -232,7 +232,12 @@ end
 ---@return vim.treesitter.highlighter.Query
 function TSHighlighter:get_query(lang)
   if not self._queries[lang] then
-    self._queries[lang] = TSHighlighterQuery.new(lang)
+    local success, result = pcall(TSHighlighterQuery.new, lang)
+    if not success then
+      self:destroy()
+      error(result)
+    end
+    self._queries[lang] = result
   end
 
   return self._queries[lang]
