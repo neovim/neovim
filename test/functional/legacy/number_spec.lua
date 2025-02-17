@@ -221,30 +221,25 @@ describe("'number' and 'relativenumber'", function()
       func Func(timer)
         call cursor(1, 1)
       endfunc
-
-      call timer_start(300, 'Func')
     ]])
-    screen:expect({
-      grid = [[
+    screen:expect([[
       {8:  3 }aaaaa                                         |
       {8:  2 }bbbbb                                         |
       {8:  1 }ccccc                                         |
       {8:  0 }^ddddd                                         |
       {1:~                                                 }|*3
                                                         |
-    ]],
-      timeout = 100,
-    })
-    screen:expect({
-      grid = [[
+    ]])
+    command([[call timer_start(300, 'Func')]])
+    screen:expect_unchanged(false, 100)
+    screen:expect([[
       {8:  0 }^aaaaa                                         |
       {8:  1 }bbbbb                                         |
       {8:  2 }ccccc                                         |
       {8:  3 }ddddd                                         |
       {1:~                                                 }|*3
                                                         |
-    ]],
-    })
+    ]])
   end)
 
   -- oldtest: Test_number_insert_delete_lines()

@@ -1159,30 +1159,25 @@ describe('CursorLine and CursorLineNr highlights', function()
       func Func(timer)
         call cursor(2, 1)
       endfunc
-
-      call timer_start(300, 'Func')
     ]])
-    screen:expect({
-      grid = [[
+    screen:expect([[
       aaaaa                                             |
       bbbbb                                             |
       ccccc                                             |
       {21:^ddddd                                             }|
       {1:~                                                 }|*3
                                                         |
-    ]],
-      timeout = 100,
-    })
-    screen:expect({
-      grid = [[
+    ]])
+    command([[call timer_start(300, 'Func')]])
+    screen:expect_unchanged(false, 100)
+    screen:expect([[
       aaaaa                                             |
       {21:^bbbbb                                             }|
       ccccc                                             |
       ddddd                                             |
       {1:~                                                 }|*3
                                                         |
-    ]],
-    })
+    ]])
   end)
 
   it('with split windows in diff mode', function()
@@ -1337,30 +1332,25 @@ describe('CursorColumn highlight', function()
       func Func(timer)
         call cursor(1, 1)
       endfunc
-
-      call timer_start(300, 'Func')
     ]])
-    screen:expect({
-      grid = [[
+    screen:expect([[
       aaaa{21:a}                                             |
       bbbb{21:b}                                             |
       cccc{21:c}                                             |
       dddd^d                                             |
       {1:~                                                 }|*3
                                                         |
-    ]],
-      timeout = 100,
-    })
-    screen:expect({
-      grid = [[
+    ]])
+    command([[call timer_start(300, 'Func')]])
+    screen:expect_unchanged(false, 100)
+    screen:expect([[
       ^aaaaa                                             |
       {21:b}bbbb                                             |
       {21:c}cccc                                             |
       {21:d}dddd                                             |
       {1:~                                                 }|*3
                                                         |
-    ]],
-    })
+    ]])
   end)
 
   it('is not shown on current line with virtualedit', function()
