@@ -860,42 +860,113 @@ local function get_node_ranges(node, source, metadata, include_children)
   return ranges
 end
 
----@nodoc
----@class vim.treesitter.languagetree.InjectionElem
----@field combined boolean
----@field regions Range6[][]
+---@generic K, V
+---@param tab table<K, V>
+---@return V
+local function get_or_new(tab, key)
+  local value = tab[key]
+  if value == nil then
+    value = {}
+    tab[key] = value
+  end
+  return value
+end
 
----@alias vim.treesitter.languagetree.Injection table<string,table<integer,vim.treesitter.languagetree.InjectionElem>>
+---Ranges are end-inclusive.
+---@param region Region
+---@param range Range6
+local function sorted_region_insert(region, range)
+  if range[6] < range[3] then
+    return
+  end
+  local r_begin = range[3]
 
----@param t table<integer,vim.treesitter.languagetree.Injection>
----@param tree_index integer
----@param pattern integer
----@param lang string
----@param combined boolean
----@param ranges Range6[]
-local function add_injection(t, tree_index, pattern, lang, combined, ranges)
-  if #ranges == 0 then
+  local bi = 1
+  local ei = #region + 1
+  while bi < ei do
+    local mi = bi + math.floor((ei - bi) / 2)
+    local mr_begin = region[mi][3]
+    if r_begin > mr_begin then
+      bi = mi + 1
+    else
+      ei = mi
+    end
+  end
+  table.insert(region, bi, range)
+end
+
+---@param regions Region[] All regions have at least 1 range
+---@param region Region
+local function sorted_regions_insert(regions, region)
+  if #region == 0 then
+    return
+  end
+  local r_begin = region[1][3]
+
+  local bi = 1
+  local ei = #regions + 1
+  while bi < ei do
+    local mi = bi + math.floor((ei - bi) / 2)
+    local mr_begin = regions[mi][1][3]
+    if r_begin > mr_begin then
+      bi = mi + 1
+    else
+      ei = mi
+    end
+  end
+  table.insert(regions, bi, region)
+end
+
+---@private
+---@param injections table<string, vim.treesitter.languagetree.LangInjections>
+---@param tree_i integer
+---@param pattern_i integer
+---@param injection vim.treesitter.languagetree.Injection
+function LanguageTree:_add_injection(injections, tree_i, pattern_i, injection)
+  local lang = injection.lang
+  if not lang then
+    self:_log('match from injection query failed for pattern', pattern_i)
+    return
+  end
+  if injection.scoped and injection.combined then
+    self:_log('injection query ', pattern_i, ' cannot be both scoped and combined')
+    return
+  end
+  if injection.scoped and not injection.root then
+    self:_log('injection query ', pattern_i, ' is scoped but root is nil')
+    return
+  end
+
+  if #injection.ranges == 0 then
     -- Make sure not to add an empty range set as this is interpreted to mean the whole buffer.
     return
   end
 
-  -- Each tree index should be isolated from the other nodes.
-  if not t[tree_index] then
-    t[tree_index] = {}
+  local lang_injections = injections[lang]
+  if not lang_injections then
+    lang_injections = { separate = {}, scoped = {}, combined = {} }
+    injections[lang] = lang_injections
   end
 
-  if not t[tree_index][lang] then
-    t[tree_index][lang] = {}
-  end
+  ---@type Region
+  local tree_region
 
-  -- Key this by pattern. If combined is set to true all captures of this pattern
+  -- If combined is set to true all captures of this pattern
   -- will be parsed by treesitter as the same "source".
   -- If combined is false, each "region" will be parsed as a single source.
-  if not t[tree_index][lang][pattern] then
-    t[tree_index][lang][pattern] = { combined = combined, regions = {} }
+  if injection.combined then
+    tree_region = get_or_new(lang_injections.combined, pattern_i)
+  elseif injection.scoped then
+    local by_pattern = get_or_new(lang_injections.scoped, pattern_i)
+    tree_region = get_or_new(get_or_new(by_pattern, tree_i), injection.root)
+  else
+    tree_region = {}
+    table.insert(lang_injections.separate, tree_region)
   end
 
-  table.insert(t[tree_index][lang][pattern].regions, ranges)
+  for _, range in ipairs(injection.ranges) do
+    sorted_region_insert(tree_region, range)
+  end
 end
 
 -- TODO(clason): replace by refactored `ts.has_parser` API (without side effects)
@@ -928,20 +999,33 @@ local function resolve_lang(alias)
   end
 end
 
+---@class (private) vim.treesitter.languagetree.Injection
+---@field lang string?
+---@field combined boolean
+---@field scoped boolean
+---@field root string?
+---@field ranges Range6[]
+
 ---@private
 --- Extract injections according to:
 --- https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
 ---@param match table<integer,TSNode[]>
 ---@param metadata vim.treesitter.query.TSMetadata
----@return string?, boolean, Range6[]
+---@return vim.treesitter.languagetree.Injection
 function LanguageTree:_get_injection(match, metadata)
-  local ranges = {} ---@type Range6[]
-  local combined = metadata['injection.combined'] ~= nil
   local injection_lang = metadata['injection.language'] --[[@as string?]]
   local lang = metadata['injection.self'] ~= nil and self:lang()
     or metadata['injection.parent'] ~= nil and self._parent:lang()
     or (injection_lang and resolve_lang(injection_lang))
   local include_children = metadata['injection.include-children'] ~= nil
+  ---@type vim.treesitter.languagetree.Injection
+  local result = {
+    ranges = {},
+    combined = metadata['injection.combined'] ~= nil,
+    scoped = metadata['injection.scoped'] ~= nil,
+    lang = lang,
+    root = nil,
+  }
 
   for id, nodes in pairs(match) do
     for _, node in ipairs(nodes) do
@@ -949,32 +1033,28 @@ function LanguageTree:_get_injection(match, metadata)
       -- Lang should override any other language tag
       if name == 'injection.language' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
-        lang = resolve_lang(text:lower()) -- language names are always lower case
+        result.lang = resolve_lang(text:lower()) -- language names are always lower case
       elseif name == 'injection.filename' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
         local ft = vim.filetype.match({ filename = text })
-        lang = ft and resolve_lang(ft)
+        result.lang = ft and resolve_lang(ft)
       elseif name == 'injection.content' then
-        ranges = get_node_ranges(node, self._source, metadata[id], include_children)
+        result.ranges = get_node_ranges(node, self._source, metadata[id], include_children)
+      elseif name == 'injection.root' then
+        result.root = node:id()
       end
     end
   end
 
-  return lang, combined, ranges
-end
-
---- Can't use vim.tbl_flatten since a range is just a table.
----@param regions Range6[][]
----@return Range6[]
-local function combine_regions(regions)
-  local result = {} ---@type Range6[]
-  for _, region in ipairs(regions) do
-    for _, range in ipairs(region) do
-      result[#result + 1] = range
-    end
-  end
   return result
 end
+
+---@alias Region Range6[]
+
+---@class (private) vim.treesitter.languagetree.LangInjections
+---@field separate Region[]
+---@field scoped table<integer, table<integer, table<string, Region>>> By pattern_i, tree_i, node_id
+---@field combined table<integer, Region> by pattern_i
 
 --- Gets language injection regions by language.
 ---
@@ -989,22 +1069,18 @@ function LanguageTree:_get_injections()
     return {}
   end
 
-  ---@type table<integer,vim.treesitter.languagetree.Injection>
+  ---@type table<string, vim.treesitter.languagetree.LangInjections>
   local injections = {}
 
-  for index, tree in pairs(self._trees) do
+  for tree_i, tree in pairs(self._trees) do
     local root_node = tree:root()
     local start_line, _, end_line, _ = root_node:range()
 
-    for pattern, match, metadata in
+    for pattern_i, match, metadata in
       self._injection_query:iter_matches(root_node, self._source, start_line, end_line + 1)
     do
-      local lang, combined, ranges = self:_get_injection(match, metadata)
-      if lang then
-        add_injection(injections, index, pattern, lang, combined, ranges)
-      else
-        self:_log('match from injection query failed for pattern', pattern)
-      end
+      local injection = self:_get_injection(match, metadata)
+      self:_add_injection(injections, tree_i, pattern_i, injection)
     end
   end
 
@@ -1013,21 +1089,28 @@ function LanguageTree:_get_injections()
 
   -- Generate a map by lang of node lists.
   -- Each list is a set of ranges that should be parsed together.
-  for _, lang_map in pairs(injections) do
-    for lang, patterns in pairs(lang_map) do
-      if not result[lang] then
-        result[lang] = {}
-      end
+  for lang, lang_injections in pairs(injections) do
+    ---@type Region[]
+    local regions = {}
 
-      for _, entry in pairs(patterns) do
-        if entry.combined then
-          table.insert(result[lang], combine_regions(entry.regions))
-        else
-          for _, ranges in pairs(entry.regions) do
-            table.insert(result[lang], ranges)
-          end
+    for _, region in ipairs(lang_injections.separate) do
+      sorted_regions_insert(regions, region)
+    end
+
+    for _, by_pattern in pairs(lang_injections.scoped) do
+      for _, by_tree in pairs(by_pattern) do
+        for _, region in pairs(by_tree) do
+          sorted_regions_insert(regions, region)
         end
       end
+    end
+
+    for _, region in ipairs(lang_injections.combined) do
+      sorted_regions_insert(regions, region)
+    end
+
+    if #regions > 0 then
+      result[lang] = regions
     end
   end
 
