@@ -414,11 +414,10 @@ function LanguageTree:_parse_regions(range, thread_state)
 end
 
 --- @private
---- @return number
-function LanguageTree:_add_injections()
+--- @param injections_by_lang table<string, Range6[][]>
+function LanguageTree:_add_injections(injections_by_lang)
   local seen_langs = {} ---@type table<string,boolean>
 
-  local query_time, injections_by_lang = tcall(self._get_injections, self)
   for lang, injection_regions in pairs(injections_by_lang) do
     local has_lang = pcall(language.add, lang)
 
@@ -442,8 +441,6 @@ function LanguageTree:_add_injections()
       self:remove_child(lang)
     end
   end
-
-  return query_time
 end
 
 --- @param range boolean|Range?
@@ -607,7 +604,18 @@ function LanguageTree:_parse(range, thread_state)
   end
 
   if not self._injections_processed and range then
-    query_time = self:_add_injections()
+    ---@type fun(self: vim.treesitter.LanguageTree, thread_state: ParserThreadState): table<string, Range6[][]>?
+    local get_injections = coroutine.wrap(self._get_injections)
+    local injections_by_lang
+    query_time, injections_by_lang = tcall(get_injections, self, thread_state)
+    while not injections_by_lang do
+      coroutine.yield()
+      query_time, injections_by_lang = tcall(get_injections, self, thread_state)
+    end
+
+    self:_add_injections(injections_by_lang)
+
+    thread_state.timeout = thread_state.timeout and math.max(thread_state.timeout - query_time, 0)
     self._injections_processed = true
   end
 
@@ -983,14 +991,16 @@ end
 --- TODO: Allow for an offset predicate to tailor the injection range
 ---       instead of using the entire nodes range.
 --- @private
---- @return table<string, Range6[][]>
-function LanguageTree:_get_injections()
+--- @param thread_state ParserThreadState
+--- @return table<string, Range6[][]>?
+function LanguageTree:_get_injections(thread_state)
   if not self._injection_query or #self._injection_query.captures == 0 then
     return {}
   end
 
   ---@type table<integer,vim.treesitter.languagetree.Injection>
   local injections = {}
+  local start = vim.uv.hrtime()
 
   for index, tree in pairs(self._trees) do
     local root_node = tree:root()
@@ -1004,6 +1014,12 @@ function LanguageTree:_get_injections()
         add_injection(injections, index, pattern, lang, combined, ranges)
       else
         self:_log('match from injection query failed for pattern', pattern)
+      end
+
+      -- Check the current function duration against the timeout, if it exists.
+      if thread_state.timeout and vim.uv.hrtime() - start > thread_state.timeout * 1000000 then
+        coroutine.yield()
+        start = vim.uv.hrtime()
       end
     end
   end
