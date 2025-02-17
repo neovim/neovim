@@ -26,7 +26,11 @@ typedef enum {
   kVPosWinCol,
 } VirtTextPos;
 
-typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
+/// When left_col is:
+/// - kFalse: virtual line starts after sign and number columns, etc.
+/// - kTrue: virtual line starts at window left edge
+/// - kNone: horizontal scrolling applies to virtual line
+typedef kvec_t(struct virt_line { VirtText line; TriState left_col; }) VirtLines;
 
 typedef uint16_t DecorPriority;
 #define DECOR_PRIORITY_BASE 0x1000

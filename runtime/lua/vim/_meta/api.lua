@@ -638,9 +638,11 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---     placed below the buffer line containing the mark.
 ---
 --- - virt_lines_above: place virtual lines above instead.
---- - virt_lines_leftcol: Place virtual lines in the leftmost
----                       column of the window, bypassing
----                       sign and number columns.
+--- - virt_lines_leftcol: Can be a boolean or the string "sidescroll".
+---   - `false`: virtual lines start after sign and number columns, etc..
+---   - `true`: virtual lines start at the leftmost column of the window.
+---   - "sidescroll": with 'nowrap' virtual lines can be scrolled
+---     horizontally, otherwise the same as `false`.
 ---
 --- - ephemeral : for use with `nvim_set_decoration_provider()`
 ---     callbacks. The mark will only be used for the current

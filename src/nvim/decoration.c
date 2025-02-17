@@ -1169,7 +1169,7 @@ void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *ar
 
   if (virt_lines) {
     Array all_chunks = arena_array(arena, kv_size(virt_lines->data.virt_lines));
-    bool virt_lines_leftcol = false;
+    TriState virt_lines_leftcol = kFalse;
     for (size_t i = 0; i < kv_size(virt_lines->data.virt_lines); i++) {
       virt_lines_leftcol = kv_A(virt_lines->data.virt_lines, i).left_col;
       Array chunks = virt_text_to_array(kv_A(virt_lines->data.virt_lines, i).line, hl_name, arena);
@@ -1177,7 +1177,17 @@ void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *ar
     }
     PUT_C(*dict, "virt_lines", ARRAY_OBJ(all_chunks));
     PUT_C(*dict, "virt_lines_above", BOOLEAN_OBJ(virt_lines->flags & kVTLinesAbove));
-    PUT_C(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
+    switch (virt_lines_leftcol) {
+    case kFalse:
+      PUT_C(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(false));
+      break;
+    case kTrue:
+      PUT_C(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(true));
+      break;
+    case kNone:
+      PUT_C(*dict, "virt_lines_leftcol", STATIC_CSTR_AS_OBJ("sidescroll"));
+      break;
+    }
     priority = virt_lines->priority;
   }
 
