@@ -633,7 +633,7 @@ int x = INT_MAX;
         }, get_ranges())
 
         n.feed('7ggI//<esc>')
-        exec_lua([[parser:parse({5, 6})]])
+        exec_lua([[parser:parse(true)]])
         eq('table', exec_lua('return type(parser:children().c)'))
         eq(2, exec_lua('return #parser:children().c:trees()'))
         eq({
@@ -1122,7 +1122,7 @@ print()
     )
 
     eq(
-      2,
+      1,
       exec_lua(function()
         _G.parser:parse({ 2, 6 })
         return #_G.parser:children().lua:trees()
@@ -1172,10 +1172,10 @@ print()
       eq(true, exec_lua('return vim.treesitter.get_parser():is_valid()'))
     end)
 
-    it('is fully valid after a parsing a range on parsed tree', function()
+    it('is valid within a range on parsed tree after parsing it', function()
       exec_lua('vim.treesitter.get_parser():parse({5, 7})')
       eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(true)'))
-      eq(true, exec_lua('return vim.treesitter.get_parser():is_valid()'))
+      eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(nil, {5, 7})'))
     end)
 
     describe('when adding content with injections', function()
@@ -1200,14 +1200,11 @@ print()
         eq(false, exec_lua('return vim.treesitter.get_parser():is_valid()'))
       end)
 
-      it(
-        'is fully valid after a range parse that leads to parsing not parsed injections',
-        function()
-          exec_lua('vim.treesitter.get_parser():parse({5, 7})')
-          eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(true)'))
-          eq(true, exec_lua('return vim.treesitter.get_parser():is_valid()'))
-        end
-      )
+      it('is valid within a range on parsed tree after parsing it', function()
+        exec_lua('vim.treesitter.get_parser():parse({5, 7})')
+        eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(true)'))
+        eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(nil, {5, 7})'))
+      end)
 
       it(
         'is valid excluding, invalid including children after a range parse that does not lead to parsing not parsed injections',
@@ -1249,10 +1246,10 @@ print()
         eq(false, exec_lua('return vim.treesitter.get_parser():is_valid()'))
       end)
 
-      it('is fully valid after a range parse that leads to parsing modified child tree', function()
+      it('is valid within a range parse that leads to parsing modified child tree', function()
         exec_lua('vim.treesitter.get_parser():parse({5, 7})')
         eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(true)'))
-        eq(true, exec_lua('return vim.treesitter.get_parser():is_valid()'))
+        eq(true, exec_lua('return vim.treesitter.get_parser():is_valid(nil, {5, 7})'))
       end)
 
       it(
