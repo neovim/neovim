@@ -45,6 +45,7 @@ typedef struct {
   Array virt_lines;
   Boolean virt_lines_above;
   Boolean virt_lines_leftcol;
+  String virt_lines_overflow;
   Boolean strict;
   String sign_text;
   HLGroupID sign_hl_group;

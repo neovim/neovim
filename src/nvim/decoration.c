@@ -1169,15 +1169,17 @@ void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *ar
 
   if (virt_lines) {
     Array all_chunks = arena_array(arena, kv_size(virt_lines->data.virt_lines));
-    bool virt_lines_leftcol = false;
+    int virt_lines_flags = 0;
     for (size_t i = 0; i < kv_size(virt_lines->data.virt_lines); i++) {
-      virt_lines_leftcol = kv_A(virt_lines->data.virt_lines, i).left_col;
+      virt_lines_flags = kv_A(virt_lines->data.virt_lines, i).flags;
       Array chunks = virt_text_to_array(kv_A(virt_lines->data.virt_lines, i).line, hl_name, arena);
       ADD(all_chunks, ARRAY_OBJ(chunks));
     }
     PUT_C(*dict, "virt_lines", ARRAY_OBJ(all_chunks));
     PUT_C(*dict, "virt_lines_above", BOOLEAN_OBJ(virt_lines->flags & kVTLinesAbove));
-    PUT_C(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_leftcol));
+    PUT_C(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_flags & kVLLeftcol));
+    PUT_C(*dict, "virt_lines_overflow",
+          CSTR_AS_OBJ(virt_lines_flags & kVLScroll ? "scroll" : "trunc"));
     priority = virt_lines->priority;
   }
 
