@@ -2481,7 +2481,8 @@ M.funcs = {
       When {expr3} is omitted then "force" is assumed.
 
       {expr1} is changed when {expr2} is not empty.  If necessary
-      make a copy of {expr1} first.
+      make a copy of {expr1} first or use |extendnew()| to return a
+      new List/Dictionary.
       {expr2} remains unchanged.
       When {expr1} is locked and {expr2} is not empty the operation
       fails.
