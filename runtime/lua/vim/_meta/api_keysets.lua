@@ -257,7 +257,7 @@ error('Cannot require a meta file')
 --- @field end_right_gravity? boolean
 --- @field virt_lines? any[]
 --- @field virt_lines_above? boolean
---- @field virt_lines_leftcol? boolean
+--- @field virt_lines_leftcol? boolean|string
 --- @field strict? boolean
 --- @field sign_text? string
 --- @field sign_hl_group? integer|string

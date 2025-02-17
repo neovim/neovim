@@ -44,7 +44,7 @@ typedef struct {
   Boolean end_right_gravity;
   Array virt_lines;
   Boolean virt_lines_above;
-  Boolean virt_lines_leftcol;
+  Union(Boolean, String) virt_lines_leftcol;
   Boolean strict;
   String sign_text;
   HLGroupID sign_hl_group;

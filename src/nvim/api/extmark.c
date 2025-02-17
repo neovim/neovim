@@ -445,9 +445,11 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   placed below the buffer line containing the mark.
 ///
 ///               - virt_lines_above: place virtual lines above instead.
-///               - virt_lines_leftcol: Place virtual lines in the leftmost
-///                                     column of the window, bypassing
-///                                     sign and number columns.
+///               - virt_lines_leftcol: Can be a boolean or the string "sidescroll".
+///                 - `false`: virtual lines start after sign and number columns, etc..
+///                 - `true`: virtual lines start at the leftmost column of the window.
+///                 - "sidescroll": with 'nowrap' virtual lines can be scrolled
+///                   horizontally, otherwise the same as `false`.
 ///
 ///               - ephemeral : for use with |nvim_set_decoration_provider()|
 ///                   callbacks. The mark will only be used for the current
@@ -669,7 +671,19 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     }
   }
 
-  bool virt_lines_leftcol = opts->virt_lines_leftcol;
+  TriState virt_lines_leftcol = kFalse;
+  if (HAS_KEY(opts, set_extmark, virt_lines_leftcol)) {
+    if (opts->virt_lines_leftcol.type == kObjectTypeBoolean) {
+      virt_lines_leftcol = opts->virt_lines_leftcol.data.boolean ? kTrue : kFalse;
+    } else if (opts->virt_lines_leftcol.type == kObjectTypeString
+               && strequal("sidescroll", opts->virt_lines_leftcol.data.string.data)) {
+      virt_lines_leftcol = kNone;
+    } else {
+      VALIDATE(false, "%s", "virt_lines_leftcol must Boolean or \"sidescroll\"", {
+        goto error;
+      });
+    }
+  }
 
   if (HAS_KEY(opts, set_extmark, virt_lines)) {
     Array a = opts->virt_lines;
