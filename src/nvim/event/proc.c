@@ -437,11 +437,6 @@ static void on_proc_exit(Proc *proc)
   Loop *loop = proc->loop;
   ILOG("child exited: pid=%d status=%d" PRIu64, proc->pid, proc->status);
 
-  // XXX: This assumes the TUI never spawns any other processes...?
-  if (ui_client_channel_id) {
-    exit_on_closed_chan(proc->status);
-  }
-
   // Process has terminated, but there could still be data to be read from the
   // OS. We are still in the libuv loop, so we cannot call code that polls for
   // more data directly. Instead delay the reading after the libuv loop by
