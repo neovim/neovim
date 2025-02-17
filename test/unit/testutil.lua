@@ -151,6 +151,9 @@ local function filter_complex_blocks(body)
         or string.find(line, 'mach_vm_range_recipe')
       )
     then
+      -- Remove GCC's extension keyword which is just used to disable warnings.
+      line = string.gsub(line, '__extension__', '')
+
       result[#result + 1] = line
     end
   end
