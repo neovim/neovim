@@ -192,7 +192,6 @@ syn match	vimNumber	'\<0o\=\o\+'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimC
 syn match	vimNumber	'\<0x\x\+'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment,vimSubscript
 syn match	vimNumber	'\<0z\>'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
 syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment,vimSubscript
-syn match	vimNumber	'\%(^\|\A\)\zs#\x\{6}'		skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
@@ -353,7 +352,7 @@ syn match	vim9LambdaOperatorComment contained "#.*" skipwhite skipempty nextgrou
 syn cluster	vimFuncList	contains=vimFuncBang,vimFunctionError,vimFuncKey,vimFuncScope,vimFuncSID,Tag
 syn cluster	vimDefList	contains=vimFuncBang,vimFunctionError,vimDefKey,vimFuncScope,vimFuncSID,Tag
 
-syn cluster	vimFuncBodyCommon	contains=@vimCmdList,vimCmplxRepeat,vimContinue,vimCtrlChar,vimDef,vimFBVar,vimFunc,vimFunction,vimLetHereDoc,vimNotation,vimNotFunc,vimNumber,vimOper,vimOperParen,vimRegister,vimSpecFile,vimString,vimSubst,vimFuncFold,vimDefFold
+syn cluster	vimFuncBodyCommon	contains=@vimCmdList,vimCmplxRepeat,vimContinue,vimCtrlChar,vimDef,vimFBVar,vimFunc,vimFunction,vimLetHereDoc,vimNotFunc,vimNumber,vimOper,vimOperParen,vimRegister,vimSpecFile,vimString,vimSubst,vimFuncFold,vimDefFold
 syn cluster	vimFuncBodyList	contains=@vimFuncBodyCommon,vimComment,vimLineComment,vimInsert,vimConst,vimLet,vimSearch
 syn cluster	vimDefBodyList	contains=@vimFuncBodyCommon,vim9Comment,vim9LineComment,vim9Block,vim9Const,vim9Final,vim9Var,vim9Null,vim9Boolean,vim9For,vim9LhsVariable,vim9LhsVariableList,vim9LhsRegister,vim9Search,@vimSpecialVar
 
@@ -625,7 +624,10 @@ syn match	vimCommentError	contained	+".*+
 syn match	vimEnvvar	"\$\I\i*"
 syn match	vimEnvvar	"\${\I\i*}"
 
-" In-String Specials: {{{2
+" Strings {{{2
+" =======
+
+" In-String Specials:
 " Try to catch strings, if nothing else matches (therefore it must precede the others!)
 "  vimEscapeBrace handles ["]  []"] (ie. "s don't terminate string inside [])
 syn region	vimEscapeBrace	oneline   contained transparent start="[^\\]\(\\\\\)*\[\zs\^\=\]\=" skip="\\\\\|\\\]" end="]"me=e-1
@@ -638,8 +640,6 @@ syn cluster	vimStringGroup	contains=vimEscape,vimEscapeBrace,vimPatSep,vimNotPat
 syn region	vimString	oneline keepend	matchgroup=vimString start=+[^a-zA-Z>\\@]"+lc=1 skip=+\\\\\|\\"+ matchgroup=vimStringEnd end=+"+ nextgroup=vimSubscript contains=@vimStringGroup extend
 syn region	vimString	oneline	matchgroup=vimString start=+[^a-zA-Z>\\@]'+lc=1 end=+'+		       nextgroup=vimSubscript contains=vimQuoteEscape  extend
 "syn region	vimString	oneline	start="\s/\s*\A"lc=1 skip="\\\\\|\\+" end="/"	contains=@vimStringGroup  " see tst45.vim
-syn match	vimString	contained	+"[^"]*\\$+	skipnl nextgroup=vimStringCont
-syn match	vimStringCont	contained	+\(\\\\\|.\)\{-}[^\\]"+
 
 syn match	vimEscape	contained	"\\."
 " syn match	vimEscape	contained	+\\[befnrt\"]+
@@ -679,9 +679,6 @@ syn match	vimSubstFlags	contained	"[&cegiIlnpr#]\+"
 " Vi compatibility
 syn match	vimSubstDelim	contained	"\\"
 syn match	vimSubstPat	contained	"\\\ze[/?&]" contains=vimSubstDelim nextgroup=vimSubstRep4
-
-" 'String': {{{2
-syn match	vimString	"[^(,]'[^']\{-}\zs'"
 
 " Marks, Registers, Addresses, Filters: {{{2
 syn match	vimMark	"'[a-zA-Z0-9]\ze[-+,!]"	nextgroup=vimFilter,vimMarkNumber,vimSubst1
@@ -876,22 +873,22 @@ syn match	vimMenutranslateComment +".*+ contained containedin=vimMenutranslate
 " Angle-Bracket Notation: (tnx to Michael Geddes) {{{2
 " ======================
 syn case ignore
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd]-\)\{0,4}x\=\%(f\d\{1,2}\|[^ \t:]\|space\|bar\|bslash\|nl\|newline\|lf\|linefeed\|cr\|retu\%[rn]\|enter\|k\=del\%[ete]\|bs\|backspace\|tab\|esc\|csi\|right\|paste\%(start\|end\)\|left\|help\|undo\|k\=insert\|ins\|mouse\|[kz]\=home\|[kz]\=end\|kplus\|kminus\|kdivide\|kmultiply\|kenter\|kpoint\|space\|k\=\%(page\)\=\%(\|down\|up\|k\d\>\)\)>" contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd]-\)\{0,4}x\=\%(f\d\{1,2}\|[^ \t:]\|space\|bar\|bslash\|nl\|newline\|lf\|linefeed\|cr\|retu\%[rn]\|enter\|k\=del\%[ete]\|bs\|backspace\|tab\|esc\|csi\|right\|paste\%(start\|end\)\|left\|help\|undo\|k\=insert\|ins\|mouse\|[kz]\=home\|[kz]\=end\|kplus\|kminus\|kdivide\|kmultiply\|kenter\|kpoint\|space\|k\=\%(page\)\=\%(\|down\|up\|k\d\>\)\)>" contains=vimBracket
 
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}\%(net\|dec\|jsb\|pterm\|urxvt\|sgr\)mouse>"		contains=vimBracket
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}\%(left\|middle\|right\)\%(mouse\|drag\|release\)>"	contains=vimBracket
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}left\%(mouse\|release\)nm>"			contains=vimBracket
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}x[12]\%(mouse\|drag\|release\)>"		contains=vimBracket
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}sgrmouserelease>"			contains=vimBracket
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}mouse\%(up\|down\|move\)>"			contains=vimBracket
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}scrollwheel\%(up\|down\|right\|left\)>"		contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}\%(net\|dec\|jsb\|pterm\|urxvt\|sgr\)mouse>"		contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}\%(left\|middle\|right\)\%(mouse\|drag\|release\)>"	contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}left\%(mouse\|release\)nm>"			contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}x[12]\%(mouse\|drag\|release\)>"		contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}sgrmouserelease>"			contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}mouse\%(up\|down\|move\)>"			contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}scrollwheel\%(up\|down\|right\|left\)>"		contains=vimBracket
 
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%(sid\|nop\|nul\|lt\|drop\)>"				contains=vimBracket
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%(snr\|plug\|cursorhold\|ignore\|cmd\|scriptcmd\|focus\%(gained\|lost\)\)>"	contains=vimBracket
-syn match	vimNotation	'\%(\\\|<lt>\)\=<C-R>[0-9a-z"%#:.\-=]'he=e-1				contains=vimBracket
-syn match	vimNotation	'\%#=1\%(\\\|<lt>\)\=<\%(q-\)\=\%(line[12]\|count\|bang\|reg\|args\|mods\|f-args\|f-mods\|lt\)>'	contains=vimBracket
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([cas]file\|abuf\|amatch\|cexpr\|cword\|cWORD\|client\|stack\|script\|sf\=lnum\)>"	contains=vimBracket
-syn match	vimNotation	"\%#=1\%(\\\|<lt>\)\=<\%([scamd]-\)\{0,4}char-\%(\d\+\|0\o\+\|0x\x\+\)>"		contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%(sid\|nop\|nul\|lt\|drop\)>"				contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%(snr\|plug\|cursorhold\|ignore\|cmd\|scriptcmd\|focus\%(gained\|lost\)\)>"	contains=vimBracket
+syn match	vimNotation	contained	'\%(\\\|<lt>\)\=<C-R>[0-9a-z"%#:.\-=]'he=e-1				contains=vimBracket
+syn match	vimNotation	contained	'\%#=1\%(\\\|<lt>\)\=<\%(q-\)\=\%(line[12]\|count\|bang\|reg\|args\|mods\|f-args\|f-mods\|lt\)>'	contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([cas]file\|abuf\|amatch\|cexpr\|cword\|cWORD\|client\|stack\|script\|sf\=lnum\)>"	contains=vimBracket
+syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd]-\)\{0,4}char-\%(\d\+\|0\o\+\|0x\x\+\)>"		contains=vimBracket
 
 syn match	vimBracket contained	"[\\<>]"
 syn case match
@@ -917,7 +914,7 @@ if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_novimfunctionerror")
  syn match	vimBufnrWarn	/\<bufnr\s*(\s*["']\.['"]\s*)/
 endif
 
-syn match vimNotFunc	"\<if\>\|\<el\%[seif]\>\|\<retu\%[rn]\>\|\<while\>"	skipwhite nextgroup=@vimExprList,vimNotation
+syn match	vimNotFunc	"\%#=1\<\%(if\|el\%[seif]\|retu\%[rn]\|while\)\>"	skipwhite nextgroup=@vimExprList,vimNotation
 
 " Match: {{{2
 " =====
