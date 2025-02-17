@@ -333,6 +333,14 @@ ScreenGrid *ui_comp_get_grid_at_coord(int row, int col)
       return grid;
     }
   }
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    ScreenGrid *grid = &wp->w_grid_alloc;
+    if (row >= grid->comp_row && row < grid->comp_row + grid->rows
+        && col >= grid->comp_col && col < grid->comp_col + grid->cols) {
+      return grid;
+    }
+  }
   return &default_grid;
 }
 
