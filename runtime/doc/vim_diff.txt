@@ -46,6 +46,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'compatible' is always disabled
 - 'complete' excludes "i"
 - 'define' defaults to "". The C ftplugin sets it to "^\\s*#\\s*define"
+- 'diffopt' defaults to "internal,filler,closeoff,linematch:40"
 - 'directory' defaults to ~/.local/state/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)

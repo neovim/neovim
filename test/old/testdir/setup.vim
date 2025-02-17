@@ -3,8 +3,8 @@ if exists('s:did_load')
   set commentstring=/*\ %s\ */
   set complete=.,w,b,u,t,i
   set define=^\\s*#\\s*define
-  set directory^=.
   set diffopt=internal,filler,closeoff
+  set directory^=.
   set display=
   set fillchars=vert:\|,foldsep:\|,fold:-
   set formatoptions=tcq
