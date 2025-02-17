@@ -244,6 +244,69 @@ local function match_item_by_value(value, prefix)
   return vim.startswith(value, prefix)
 end
 
+--- Generates highlight group name and symbol for LSP completion item kinds.
+--- For regular items, tries highlight groups in order: Kind, @lsp.type.kind, @kind
+--- For colors, creates a custom highlight group: @lsp.color.<hex>
+---
+--- Examples:
+---   Input:  { label = "function", kind = 3 }  -- 1 is CompletionItemKind.Function
+---   Output: "F", "Function"
+---
+---   Input:  { label = "background", kind = 16, documentation = "#ff5500" }  -- 16 is CompletionItemKind.Color
+---   Output: "■", "@lsp.color.ff5500"
+---
+--- @param item lsp.CompletionItem CompletionItem from LSP server
+--- @return string|nil symbol First character of kind or ■ for colors
+--- @return string|nil hlgroup Highlight group name if found
+local function generate_kind(item)
+  --- @type string|nil
+  local kind = lsp.protocol.CompletionItemKind[item.kind]
+  if not kind then
+    return
+  end
+
+  if item.kind == lsp.protocol.CompletionItemKind.Color then
+    local doc = get_doc(item)
+    --- @type string|nil
+    local hex
+    if #doc > 0 then
+      local r, g, b = doc:match('rgb%((%d+)%s*,?%s*(%d+)%s*,?%s*(%d+)%)')
+      if r then
+        hex = string.format('%02x%02x%02x', tonumber(r), tonumber(g), tonumber(b))
+      else
+        hex = doc:match('#?([%da-fA-F]+)')
+        if hex and #hex == 3 then
+          --- @cast hex string
+          hex = hex:gsub('.', '%1%1')
+        end
+      end
+    end
+    if hex and #hex == 6 then
+      hex = hex:lower()
+      local group = ('@lsp.color.%s'):format(hex)
+      if #api.nvim_get_hl(0, { name = group }) == 0 then
+        api.nvim_set_hl(0, group, { fg = '#' .. hex })
+      end
+      return '■', group
+    end
+  end
+
+  --- @type string
+  local lower = kind:gsub('^.', string.lower)
+  --- @type string
+  local group = ''
+
+  --- @type string[]
+  local formats = { kind, ('@lsp.type.%s'):format(lower), ('@%s'):format(lower) }
+  for _, fmt in ipairs(formats) do
+    if next(vim.api.nvim_get_hl(0, { name = fmt })) ~= nil then
+      group = fmt
+      break
+    end
+  end
+  return kind:sub(1, 1), group
+end
+
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
@@ -294,16 +357,18 @@ function M._lsp_to_complete_items(result, prefix, client_id)
       then
         hl_group = 'DiagnosticDeprecated'
       end
+      local kind, kind_hlgroup = generate_kind(item)
       local completion_item = {
         word = word,
         abbr = item.label,
-        kind = protocol.CompletionItemKind[item.kind] or 'Unknown',
+        kind = kind,
         menu = item.detail or '',
         info = get_doc(item),
         icase = 1,
         dup = 1,
         empty = 1,
         abbr_hlgroup = hl_group,
+        kind_hlgroup = kind_hlgroup,
         user_data = {
           nvim = {
             lsp = {
