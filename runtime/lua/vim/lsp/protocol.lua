@@ -693,6 +693,7 @@ end
 --- | 'workspace/didRenameFiles',
 --- | 'workspace/executeCommand',
 --- | 'workspace/symbol',
+--- | 'workspace/textDocumentContent',
 --- | 'workspace/willCreateFiles',
 --- | 'workspace/willDeleteFiles',
 --- | 'workspace/willRenameFiles',
@@ -716,6 +717,7 @@ end
 --- | 'workspace/inlayHint/refresh',
 --- | 'workspace/inlineValue/refresh',
 --- | 'workspace/semanticTokens/refresh',
+--- | 'workspace/textDocumentContent/refresh',
 --- | 'workspace/workspaceFolders',
 
 --- @alias vim.lsp.protocol.Method
@@ -1049,6 +1051,16 @@ protocol.Methods = {
   ---  need to advertise support for WorkspaceSymbols via the client capability
   ---  `workspace.symbol.resolveSupport`.
   workspace_symbol = 'workspace/symbol',
+  --- The `workspace/textDocumentContent` request is sent from the client to the
+  --- server to request the content of a text document.
+  --- @since 3.18.0
+  --- @proposed
+  workspace_textDocumentContent = 'workspace/textDocumentContent',
+  --- The `workspace/textDocumentContent` request is sent from the server to the client to refresh
+  --- the content of a specific text document.
+  --- @since 3.18.0
+  --- @proposed
+  workspace_textDocumentContent_refresh = 'workspace/textDocumentContent/refresh',
   --- The will create files request is sent from the client to the server before files are actually
   --- created as long as the creation is triggered from within the client.
   --- The request can return a `WorkspaceEdit` which will be applied to workspace before the
