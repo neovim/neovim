@@ -58,7 +58,6 @@ Copyright: Copyright (C) 2017 Charles E Campbell    *netrw-copyright*
       Changing local-only File Permission.................|netrw-gp|
       Changing To A Predecessor Directory.................|netrw-u|
       Changing To A Successor Directory...................|netrw-U|
-      Customizing Browsing With A Special Handler.........|netrw-x|
       Deleting Bookmarks..................................|netrw-mB|
       Deleting Files Or Directories.......................|netrw-D|
       Directory Exploring Commands........................|netrw-explore|
@@ -400,9 +399,6 @@ settings are described below, in |netrw-browser-options|, and in
 
  *g:netrw_menu*		=0 disable netrw's menu
 			=1 (default) netrw's menu enabled
-
- *g:netrw_nogx*		if this variable exists, then the "gx" map will not
-			be available (see |netrw-gx|)
 
  *g:netrw_uid*		(ftp) user-id,      retained on a per-vim-session basis
  *s:netrw_passwd*	(ftp) password,     retained on a per-vim-session basis
@@ -1108,7 +1104,7 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   U	Change to subsequently-visited directory             |netrw-U|
 	   v	Enter the file/directory under the cursor in a new   |netrw-v|
 		browser window.  A vertical split is used.
-	   x	View file with an associated program                 |netrw-x|
+	   x	View file with an associated program
 	   X	Execute filename under cursor via |system()|           |netrw-X|
 
 	   %	Open a new file in netrw's current directory         |netrw-%|
@@ -1461,106 +1457,6 @@ With either form of the command, netrw will first ask for confirmation
 that the removal is in fact what you want to do.  If netrw doesn't have
 permission to remove a file, it will issue an error message.
 
-CUSTOMIZING BROWSING WITH A SPECIAL HANDLER	*netrw-x* *netrw-handler* {{{2
-
-Certain files, such as html, gif, jpeg, (word/office) doc, etc, files, are
-best seen with a special handler (ie. a tool provided with your computer's
-operating system).  Netrw allows one to invoke such special handlers by:
-
-        * hitting gx with the cursor atop the file path or alternatively x
-          in a netrw buffer; the former can be disabled by defining the
-          |g:netrw_nogx| variable
-        * when in command line, typing :Open <path>, see |:Open| below.
-
-One may also use visual mode (see |visual-start|) to select the text that the
-special handler will use.  Normally gx checks for a close-by URL or file name
-to pick up the text under the cursor; one may change what |expand()| uses via the
-|g:netrw_gx| variable (options include "<cword>", "<cWORD>").  Note that
-expand("<cfile>") depends on the |'isfname'| setting.  Alternatively, one may
-select the text to be used by gx by making a visual selection (see
-|visual-block|) and then pressing gx.
-
-The selection function can be adapted for each filetype by adding a function
-`Netrw_get_URL_<filetype>`, where <filetype> is given by the 'filetype'.
-The function should return the URL or file name to be used by gx, and will
-fall back to the default behavior if it returns an empty string.
-For example, special handlers for links Markdown and HTML are
-
-" make gx work on concealed links regardless of exact cursor position: >
-
-  function Netrw_get_URL_markdown()
-    " markdown URL such as [link text](http://ya.ru 'yandex search')
-    try
-      let save_view = winsaveview()
-      if searchpair('\[.\{-}\](', '', ')\zs', 'cbW', '', line('.')) > 0
-        return matchstr(getline('.')[col('.')-1:],
-          \ '\[.\{-}\](\zs' .. g:netrw_regex_url .. '\ze\(\s\+.\{-}\)\?)')
-      endif
-      return ''
-    finally
-      call winrestview(save_view)
-    endtry
-  endfunction
-
-  function Netrw_get_URL_html()
-    " HTML URL such as <a href='http://www.python.org'>Python is here</a>
-    "                  <a href="http://www.python.org"/>
-    try
-      let save_view = winsaveview()
-      if searchpair('<a\s\+href=', '', '\%(</a>\|/>\)\zs', 'cbW', '', line('.')) > 0
-        return matchstr(getline('.')[col('.') - 1 : ],
-          \ 'href=["'.."'"..']\?\zs\S\{-}\ze["'.."'"..']\?/\?>')
-      endif
-      return ''
-    finally
-      call winrestview(save_view)
-    endtry
-  endfunction
-<
-Other than a file path, the text under the cursor may be a URL.  Netrw uses
-by default the following regular expression to determine if the text under the
-cursor is a URL:
->
-  :let g:netrw_regex_url = '\%(\%(http\|ftp\|irc\)s\?\|file\)://\S\{-}'
-<
-Associated setting variables:
-	|g:netrw_gx|	control how gx picks up the text under the cursor
-	|g:netrw_nogx|	prevent gx map while editing
-	|g:netrw_suppress_gx_mesg| controls gx's suppression of browser messages
-
-OPENING FILES AND LAUNCHING APPS	*netrw-gx* *:Open* *:Launch* {{{2
-
-Netrw determines which special handler by the following method:
-
-  * if |g:netrw_browsex_viewer| exists, then it will be used to attempt to
-    view files.
-    If the viewer you wish to use does not support handling of a remote URL
-    directory, set |g:netrw_browsex_support_remote| to 0.
-  * otherwise:
-
-    * for Windows			: explorer.exe is used
-    * for Mac OS X			: open is used.
-    * for Linux				: xdg-open is used.
-
-To open a path (or URL) <path> by the appropriate handler, type >
-
-    :Open <path>
-<
-No escaping, neither for the shell nor for Vim's command-line, is needed.
-
-To launch a specific application <app> <args>, often <args> being <path> >
-
-    :Launch <app> <args>.
-
-Since <args> can be arbitrarily complex, in particular contain many file
-paths, the escaping is left to the user.
-
-If you disabled the netrw plugin by setting g:loaded_netrwPlugin (see
-|netrw-noload|), then you can use >
-
-    :call netrw#Launch('<app> <args>')
-    :call netrw#Open('<path>')
-<
 							*netrw-curdir*
 DELETING BOOKMARKS					*netrw-mB* {{{2
 
@@ -2570,14 +2466,6 @@ your browsing preferences.  (see also: |netrw-settings|)
 				    |netrw-C|		|netrw-cr|
 				    |netrw-ctrl-r|
 
-  *g:netrw_browsex_viewer*	specify user's preference for a viewer: >
-					"kfmclient exec"
-					"gnome-open"
-<
-  *g:netrw_browsex_support_remote*
-				specify if the specified viewer supports a
-				remote URL.  (see |netrw-handler|).
-
   *g:netrw_chgperm*		Unix/Linux: "chmod PERM FILENAME"
 				Windows:    "cacls FILENAME /e /p PERM"
 				Used to change access permission for a file.
@@ -2600,12 +2488,11 @@ your browsing preferences.  (see also: |netrw-settings|)
 
   *g:Netrw_corehandler*		Allows one to specify something additional
 				to do when handling <core> files via netrw's
-				browser's "x" command (see |netrw-x|).  If
-				present, g:Netrw_corehandler specifies
-				either one or more function references
-				(see |Funcref|).  (the capital g:Netrw...
-				is required its holding a function reference)
-
+				browser's "x" command.  If present,
+				g:Netrw_corehandler specifies either one or
+				more function references (see |Funcref|).
+				(the capital g:Netrw... is required its
+				holding a function reference)
 
   *g:netrw_ctags*		="ctags"
 				The default external program used to create
@@ -2753,11 +2640,6 @@ your browsing preferences.  (see also: |netrw-settings|)
 				='[]*?`{$'  (windows
 				These characters in directory names are
 				escaped before applying glob()
-
-  *g:netrw_gx*			="<cfile>"
-				This option controls how gx (|netrw-gx|) picks
-				up the text under the cursor.  See |expand()|
-				for possibilities.
 
   *g:netrw_hide*		Controlled by the "a" map (see |netrw-a|)
 				=0 : show all
