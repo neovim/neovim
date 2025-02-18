@@ -20,12 +20,6 @@ let g:loaded_netrwPlugin = "v175"
 let s:keepcpo = &cpo
 set cpo&vim
 
-" Commands Launch/URL: {{{
-
-command -complete=shellcmd -nargs=1 Launch call netrw#Launch(trim(<q-args>))
-command -complete=file -nargs=1 Open call netrw#Open(trim(<q-args>))
-
-" }}}
 " Local Browsing Autocmds: {{{
 
 augroup FileExplorer
