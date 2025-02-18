@@ -382,6 +382,31 @@ describe(':terminal cursor', function()
       ^                                                  |
                                                         |*5
     ]])
+
+    feed('i')
+    screen:expect([[
+      tty ready                                         |
+                                                        |*5
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    -- Cursor currently hidden; request to show it while in a TermLeave autocmd.
+    -- Process events (via :sleep) to handle the escape sequence immediately.
+    command([[autocmd TermLeave * ++once call chansend(b:terminal_job_id, "\e[?25h") | sleep 1m]])
+    feed([[<C-\><C-N>]]) -- Exit terminal mode
+    screen:expect([[
+      tty ready                                         |
+      ^                                                  |
+                                                        |*5
+    ]])
+
+    feed('i')
+    screen:expect([[
+      tty ready                                         |
+      ^                                                  |
+                                                        |*4
+      {3:-- TERMINAL --}                                    |
+    ]])
   end)
 end)
 

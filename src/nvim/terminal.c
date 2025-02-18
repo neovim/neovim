@@ -662,6 +662,10 @@ bool terminal_enter(void)
   State = MODE_TERMINAL;
   mapped_ctrl_c |= MODE_TERMINAL;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
+  if (!s->term->cursor.visible) {
+    // Hide cursor if it should be hidden. Do so right after setting State, before events.
+    ui_busy_start();
+  }
 
   // Disable these options in terminal-mode. They are nonsense because cursor is
   // placed at end of buffer to "follow" output. #11072
@@ -693,14 +697,10 @@ bool terminal_enter(void)
   refresh_cursor(s->term);
 
   adjust_topline(s->term, buf, 0);  // scroll to end
+  showmode();
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
   redraw_custom_title_later();
-  if (!s->term->cursor.visible) {
-    // Hide cursor if it should be hidden
-    ui_busy_start();
-  }
   ui_cursor_shape();
-  showmode();
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
   may_trigger_modechanged();
 
@@ -716,6 +716,11 @@ bool terminal_enter(void)
   }
   State = save_state;
   RedrawingDisabled = s->save_rd;
+  if (!s->term->cursor.visible) {
+    // If cursor was hidden, show it again. Do so right after restoring State, before events.
+    ui_busy_stop();
+  }
+
   apply_autocmds(EVENT_TERMLEAVE, NULL, NULL, false, curbuf);
 
   // Restore the terminal cursor to what is set in 'guicursor'
@@ -745,10 +750,6 @@ bool terminal_enter(void)
     showmode();
   } else {
     unshowmode(true);
-  }
-  if (!s->term->cursor.visible) {
-    // If cursor was hidden, show it again
-    ui_busy_stop();
   }
   ui_cursor_shape();
   if (s->close) {
