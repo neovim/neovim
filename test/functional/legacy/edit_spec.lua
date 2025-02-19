@@ -94,7 +94,7 @@ describe('edit', function()
   end)
 
   -- oldtest: Test_edit_CAR()
-  it('insert a newline when pressing Enter, even if the pum is visible', function()
+  it('Enter inserts newline with pum at original text after adding leader', function()
     local screen = Screen.new(10, 6)
     command('set cot=menu,menuone,noselect')
     feed('Shello hero<CR>h<C-X><C-N>e')
