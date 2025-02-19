@@ -2556,7 +2556,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
       STRMOVE(filename + 1, filename);
       *filename++ = NUL;
 
-      tnp->tn_search_ctx = vim_findfile_init(buf, filename,
+      tnp->tn_search_ctx = vim_findfile_init(buf, filename, strlen(filename),
                                              r_ptr, 100,
                                              false,                   // don't free visited list
                                              FINDFILE_FILE,           // we search for a file
