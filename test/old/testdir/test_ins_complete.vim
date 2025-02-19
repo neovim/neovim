@@ -2837,7 +2837,7 @@ func Test_complete_fuzzy_match()
   call setline(1, ['Text', 'ToText', ''])
   call cursor(2, 1)
   call feedkeys("STe\<C-X>\<C-N>x\<CR>\<Esc>0", 'tx!')
-  call assert_equal('Tex', getline('.'))
+  call assert_equal('Tex', getline(line('.') - 1))
 
   " test case for nosort option
   set cot=menuone,menu,noinsert,fuzzy,nosort
