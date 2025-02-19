@@ -29,6 +29,8 @@ jobs:
       - name: Build
         run: |
           cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo' ${{ inputs.build_flags }}
+          cmake -E echo "======= CONFIGZEIT"
+          cmake -E cat build/cmake.config/auto/config.h
           cmake --build build
 
       - name: Install test deps

@@ -428,7 +428,7 @@ int main(int argc, char **argv)
     }
   }
 
-  nlua_init_defaults();
+  // nlua_init_defaults();
 
   TIME_MSG("init default mappings & autocommands");
 

@@ -5,7 +5,8 @@
 local util = require('scripts.util')
 local fmt = string.format
 
-local DEP_API_METADATA = 'build/funcs_metadata.mpack'
+print(arg[1])
+local DEP_API_METADATA = arg[1]
 local TEXT_WIDTH = 78
 
 --- @class vim.api.metadata
