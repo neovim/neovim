@@ -1,0 +1,19 @@
+name: "reviewers: add"
+on:
+  pull_request_target:
+    types: [labeled, ready_for_review, reopened]
+  workflow_call:
+jobs:
+  request-reviewer:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && !endsWith(github.actor, '[bot]')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: 'Request reviewers'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.github/scripts/reviewers_add.js')
+            await script({github, context})

@@ -1,0 +1,56 @@
+#pragma once
+
+#cmakedefine SIZEOF_INT @SIZEOF_INT@
+#cmakedefine SIZEOF_INTMAX_T @SIZEOF_INTMAX_T@
+#cmakedefine SIZEOF_LONG @SIZEOF_LONG@
+#cmakedefine SIZEOF_SIZE_T @SIZEOF_SIZE_T@
+
+#if @SIZEOF_VOID_PTR@ == 8
+#define ARCH_64
+#elif @SIZEOF_VOID_PTR@ == 4
+#define ARCH_32
+#endif
+
+#cmakedefine PROJECT_NAME "@PROJECT_NAME@"
+
+#cmakedefine HAVE__NSGETENVIRON
+#cmakedefine HAVE_FD_CLOEXEC
+#cmakedefine HAVE_FSEEKO
+#cmakedefine HAVE_LANGINFO_H
+#cmakedefine HAVE_NL_LANGINFO_CODESET
+#cmakedefine HAVE_NL_MSG_CAT_CNTR
+#cmakedefine HAVE_PWD_FUNCS
+#cmakedefine HAVE_READLINK
+#cmakedefine HAVE_STRNLEN
+#cmakedefine HAVE_STRCASECMP
+#cmakedefine HAVE_STRINGS_H
+#cmakedefine HAVE_STRNCASECMP
+#cmakedefine HAVE_STRPTIME
+#cmakedefine HAVE_XATTR
+#cmakedefine HAVE_SYS_SDT_H
+#cmakedefine HAVE_SYS_UTSNAME_H
+#cmakedefine HAVE_SYS_WAIT_H
+#cmakedefine HAVE_TERMIOS_H
+#cmakedefine HAVE_WORKING_LIBINTL
+#cmakedefine UNIX
+#cmakedefine CASE_INSENSITIVE_FILENAME
+#cmakedefine HAVE_SYS_UIO_H
+#ifdef HAVE_SYS_UIO_H
+#cmakedefine HAVE_READV
+# ifndef HAVE_READV
+#  undef HAVE_SYS_UIO_H
+# endif
+#endif
+#cmakedefine HAVE_DIRFD_AND_FLOCK
+#cmakedefine HAVE_FORKPTY
+
+#cmakedefine HAVE_BE64TOH
+#cmakedefine ORDER_BIG_ENDIAN
+#define ENDIAN_INCLUDE_FILE <@ENDIAN_INCLUDE_FILE@>
+
+#cmakedefine HAVE_EXECINFO_BACKTRACE
+#cmakedefine HAVE_BUILTIN_ADD_OVERFLOW
+#cmakedefine HAVE_WIMPLICIT_FALLTHROUGH_FLAG
+#cmakedefine HAVE_BITSCANFORWARD64
+
+#define VTERM_TEST_FILE "@VTERM_TEST_FILE@"

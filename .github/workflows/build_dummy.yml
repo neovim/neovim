@@ -1,0 +1,33 @@
+name: build_dummy
+on:
+  pull_request:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+    # This needs to be an exact complement of `paths` in the build.yml workflow.
+    # This is required to bypass required checks since a required job is always
+    # needed to run.
+    paths-ignore:
+      - '**.cmake'
+      - '**/CMakeLists.txt'
+      - '**/CMakePresets.json'
+      - 'cmake.*/**'
+      - '.github/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  old-cmake:
+    name: Test oldest supported cmake
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - run: echo "success"
+
+  use-existing-src:
+    name: Test USE_EXISTING_SRC_DIR=ON builds with no network access
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "success"

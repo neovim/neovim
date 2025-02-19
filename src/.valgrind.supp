@@ -1,0 +1,16 @@
+{
+   nss_parse_service_list
+   Memcheck:Leak
+   fun:malloc
+   fun:nss_parse_service_list
+   fun:__nss_database_lookup
+}
+{
+  uv_spawn_with_optimizations
+  Memcheck:Leak
+  fun:malloc
+  fun:uv_spawn
+  fun:libuv_proc_spawn
+  fun:proc_spawn
+  fun:job_start
+}

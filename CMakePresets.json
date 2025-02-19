@@ -1,0 +1,54 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "base",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "hidden": true
+    },
+    {
+      "name": "default",
+      "displayName": "RelWithDebInfo",
+      "description": "Enables optimizations with debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "inherits": ["base"]
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "description": "No optimizations, enables debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "inherits": ["base"]
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "description": "Optimized for performance, disables debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "inherits": ["base"]
+    },
+    {
+      "name": "iwyu",
+      "displayName": "IWYU",
+      "description": "Run include-what-you-use",
+      "cacheVariables": {
+        "ENABLE_IWYU": "ON"
+      },
+      "inherits": ["base"]
+    },
+    {
+      "name": "ci",
+      "cacheVariables": {
+        "CI_BUILD": "ON"
+      },
+      "inherits": ["base"]
+    }
+  ]
+}

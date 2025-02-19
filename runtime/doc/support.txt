@@ -1,0 +1,62 @@
+*support.txt*			    Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Support                                                              *support*
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+Supported platforms					 *supported-platforms*
+
+`System`          `Tier`      `Versions`                  `Tested versions`
+Linux (x86_64)   1      >= 2.6.32, glibc >= 2.12     Ubuntu 24.04
+macOS (x86_64)   1      >= 11                        macOS 13
+macOS (arm64)    1      >= 11                        macOS 15
+Windows 64-bit   1      >= Windows 10 Version 1809   Windows Server 2022
+FreeBSD          1      >= 10                        FreeBSD 14
+Linux (arm64)    2      >= 2.6.32, glibc >= 2.12
+OpenBSD          2      >= 7
+MinGW            2      MinGW-w64
+Windows 64-bit   3      < Windows 10 Version 1809
+
+Note: Windows 10 "Version 1809" or later is required for |:terminal|. To check
+your Windows version, run the "winver" command and look for "Version xxxx"
+(NOT "OS Build").
+
+Note: On Windows "Server" you may need to install vcruntime140.dll:
+https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
+
+Support types ~
+
+* Tier 1: Officially supported and tested with CI. Any contributed patch
+  MUST NOT break support for such platforms.
+
+* Tier 2: Officially supported, but not necessarily tested with CI. Support
+  for these platforms are maintained by best effort, without being a top
+  priority.
+
+* Tier 3: Not tested and no guarantees, and not all features may work.
+
+Adding support for a new platform ~
+
+IMPORTANT: Before attempting to add support for a new platform please open
+an issue about it for discussion.
+
+
+==============================================================================
+Common
+
+Some common notes when adding support for new platforms:
+
+CMake is the only supported build system. Nvim must be buildable on the
+platform with CMake.
+
+All functionality related to the new platform must be implemented in its own
+file inside `src/nvim/os` unless it's already done in a common file, in which
+case adding an `#ifdef` is fine.
+
+
+ vim:tw=78:ts=8:et:ft=help:norl:

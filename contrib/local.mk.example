@@ -1,0 +1,59 @@
+# Copy this to 'local.mk' in the repository root.
+# Individual entries must be uncommented to take effect.
+
+# By default, the installation prefix is '/usr/local'.
+# CMAKE_EXTRA_FLAGS += -DCMAKE_INSTALL_PREFIX=/usr/local/nvim-latest
+
+# These CFLAGS can be used in addition to those specified in CMakeLists.txt:
+# CMAKE_EXTRA_FLAGS="-DCMAKE_C_FLAGS=-ftrapv -Wlogical-op"
+
+# To turn compiler warnings into errors:
+# CMAKE_EXTRA_FLAGS += "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -Werror"
+
+# Sets the build type; defaults to Debug. Valid values:
+#
+# - Debug:          Disables optimizations (-O0), enables debug information.
+#
+# - RelWithDebInfo: Enables optimizations (-O2) with debug information.
+#
+# - MinSizeRel:     Enables all -O2 optimization that do not typically
+#                   increase code size, and performs further optimizations
+#                   designed to reduce code size (-Os).
+#                   Disables debug information.
+#
+# - Release:        Same as RelWithDebInfo, but disables debug information.
+#
+# CMAKE_BUILD_TYPE := Debug
+
+# With non-Debug builds interprocedural optimization (IPO) (which includes
+# link-time optimization (LTO)) is enabled by default, which causes the link
+# step to take a significant amount of time, which is relevant when building
+# often.  You can disable it explicitly:
+# CMAKE_EXTRA_FLAGS += -DENABLE_LTO=OFF
+
+# Log levels: DEBUG, INFO, WARNING, ERROR
+# For Debug builds all log levels are used
+# For Release and RelWithDebInfo builds only WARNING and ERROR are used, unless:
+# CMAKE_EXTRA_FLAGS += -DLOG_DEBUG
+
+# By default, nvim uses bundled versions of its required third-party
+# dependencies.
+# Uncomment these entries to instead use system-wide installations of
+# them.
+#
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_BUSTED=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_GETTEXT=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LIBICONV=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LIBUV=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LUAJIT=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_LUV=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_TS=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_TS_PARSERS=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_UNIBILIUM=OFF
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED_UTF8PROC=OFF
+#
+# Or disable all bundled dependencies at once.
+#
+# DEPS_CMAKE_FLAGS += -DUSE_BUNDLED=OFF
+
+# .DEFAULT_GOAL := nvim

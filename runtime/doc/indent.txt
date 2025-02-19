@@ -1,0 +1,1268 @@
+*indent.txt*    Nvim
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+This file is about indenting C programs and other files.
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+1. Indenting C style programs				*C-indenting*
+
+The basics for C style indenting are explained in section |30.2| of the user
+manual.
+
+Vim has options for automatically indenting C style program files. Many
+programming languages including Java and C++ follow very closely the
+formatting conventions established with C.  These options affect only the
+indent and do not perform other formatting.  There are additional options that
+affect other kinds of formatting as well as indenting, see |format-comments|,
+|fo-table|, |gq| and |formatting| for the main ones.
+
+There are in fact four main methods available for indentation, each one
+overrides the previous if it is enabled, or non-empty for 'indentexpr':
+'autoindent'	uses the indent from the previous line.
+'smartindent'	is like 'autoindent' but also recognizes some C syntax to
+		increase/reduce the indent where appropriate.
+'cindent'	Works more cleverly than the other two and is configurable to
+		different indenting styles.
+'indentexpr'	The most flexible of all: Evaluates an expression to compute
+		the indent of a line.  When non-empty this method overrides
+		the other ones.  See |indent-expression|.
+The rest of this section describes the 'cindent' option.
+
+Note that 'cindent' indenting does not work for every code scenario.  Vim
+is not a C compiler: it does not recognize all syntax.  One requirement is
+that toplevel functions have a "{" in the first column.  Otherwise they are
+easily confused with declarations.
+
+These five options control C program indenting:
+'cindent'	Enables Vim to perform C program indenting automatically.
+'cinkeys'	Specifies which keys trigger reindenting in insert mode.
+'cinoptions'	Sets your preferred indent style.
+'cinwords'	Defines keywords that start an extra indent in the next line.
+'cinscopedecls'	Defines strings that are recognized as a C++ scope declaration.
+
+If 'lisp' is not on and 'equalprg' is empty, the "=" operator indents using
+Vim's built-in algorithm rather than calling an external program.
+
+See |autocommand| for how to set the 'cindent' option automatically for C code
+files and reset it for others.
+
+					*cinkeys-format* *indentkeys-format*
+The 'cinkeys' option is a string that controls Vim's indenting in response to
+typing certain characters or commands in certain contexts.  Note that this not
+only triggers C-indenting.  When 'indentexpr' is not empty 'indentkeys' is
+used instead.  The format of 'cinkeys' and 'indentkeys' is equal.
+
+The default is "0{,0},0),0],:,0#,!^F,o,O,e" which specifies that indenting
+occurs as follows:
+
+	"0{"	if you type "{" as the first character in a line
+	"0}"	if you type "}" as the first character in a line
+	"0)"	if you type ")" as the first character in a line
+	"0]"	if you type "]" as the first character in a line
+	":"	if you type ":" after a label or case statement
+	"0#"	if you type "#" as the first character in a line
+	"!^F"	if you type CTRL-F (which is not inserted)
+	"o"	if you type a <CR> anywhere or use the "o" command (not in
+		insert mode!)
+	"O"	if you use the "O" command (not in insert mode!)
+	"e"	if you type the second 'e' for an "else" at the start of a
+		line
+
+Characters that can precede each key:				*i_CTRL-F*
+!	When a "!" precedes the key, Vim will not insert the key but will
+	instead reindent the current line.  This allows you to define a
+	command key for reindenting the current line.  CTRL-F is the default
+	key for this.  Be careful if you define CTRL-I for this because CTRL-I
+	is the ASCII code for <Tab>.
+*	When a "*" precedes the key, Vim will reindent the line before
+	inserting the key.  If 'cinkeys' contains "*<Return>", Vim reindents
+	the current line before opening a new line.
+0	When a zero precedes the key (but appears after "!" or "*") Vim will
+	reindent the line only if the key is the first character you type in
+	the line.  When used before "=" Vim will only reindent the line if
+	there is only white space before the word.
+
+When neither "!" nor "*" precedes the key, Vim reindents the line after you
+type the key.  So ";" sets the indentation of a line which includes the ";".
+
+Special key names:
+<>	Angle brackets mean spelled-out names of keys.  For example: "<Up>",
+	"<Ins>" (see |key-notation|).
+^	Letters preceded by a caret (^) are control characters.  For example:
+	"^F" is CTRL-F.
+o	Reindent a line when you use the "o" command or when Vim opens a new
+	line below the current one (e.g., when you type <Enter> in insert
+	mode).
+O	Reindent a line when you use the "O" command.
+e	Reindent a line that starts with "else" when you type the second 'e'.
+:	Reindent a line when a ':' is typed which is after a label or case
+	statement.  Don't reindent for a ":" in "class::method" for C++.  To
+	Reindent for any ":", use "<:>".
+=word	Reindent when typing the last character of "word".  "word" may
+	actually be part of another word.  Thus "=end" would cause reindenting
+	when typing the "d" in "endif" or "endwhile".  But not when typing
+	"bend".  Also reindent when completion produces a word that starts
+	with "word".  "0=word" reindents when there is only white space before
+	the word.
+=~word	Like =word, but ignore case.
+
+If you really want to reindent when you type 'o', 'O', 'e', '0', '<', '>',
+"*", ':' or '!', use "<o>", "<O>", "<e>", "<0>", "<<>", "<>>", "<*>", "<:>" or
+"<!>", respectively, for those keys.
+
+For an emacs-style indent mode where lines aren't indented every time you
+press <Enter> but only if you press <Tab>, I suggest: >
+	:set cinkeys=0{,0},:,0#,!<Tab>,!^F
+You might also want to switch off 'autoindent' then.
+
+Note: If you change the current line's indentation manually, Vim ignores the
+cindent settings for that line.  This prevents vim from reindenting after you
+have changed the indent by typing <BS>, <Tab>, or <Space> in the indent or
+used CTRL-T or CTRL-D.
+
+						*cinoptions-values*
+The 'cinoptions' option sets how Vim performs indentation.  The value after
+the option character can be one of these (N is any number):
+	N	indent N spaces
+	-N	indent N spaces to the left
+	Ns	N times 'shiftwidth' spaces
+	-Ns	N times 'shiftwidth' spaces to the left
+
+In the list below,
+"N" represents a number of your choice (the number can be negative).  When
+there is an 's' after the number, Vim multiplies the number by 'shiftwidth':
+"1s" is 'shiftwidth', "2s" is two times 'shiftwidth', etc.  You can use a
+decimal point, too: "-0.5s" is minus half a 'shiftwidth'.
+The examples below assume a 'shiftwidth' of 4.
+							*cino->*
+	>N    Amount added for "normal" indent.  Used after a line that should
+	      increase the indent (lines starting with "if", an opening brace,
+	      etc.).  (default 'shiftwidth').
+
+		cino=		    cino=>2		cino=>2s >
+		  if (cond)	      if (cond)		  if (cond)
+		  {		      {			  {
+		      foo;		foo;			  foo;
+		  }		      }			  }
+<
+							*cino-e*
+	eN    Add N to the prevailing indent inside a set of braces if the
+	      opening brace at the End of the line (more precise: is not the
+	      first character in a line).  This is useful if you want a
+	      different indent when the "{" is at the start of the line from
+	      when "{" is at the end of the line.  (default 0).
+
+		cino=		    cino=e2		cino=e-2 >
+		  if (cond) {	      if (cond) {	  if (cond) {
+		      foo;		    foo;	    foo;
+		  }		      }			  }
+		  else		      else		  else
+		  {		      {			  {
+		      bar;		  bar;		      bar;
+		  }		      }			  }
+<
+							*cino-n*
+	nN    Add N to the prevailing indent for a statement after an "if",
+	      "while", etc., if it is NOT inside a set of braces.  This is
+	      useful if you want a different indent when there is no "{"
+	      before the statement from when there is a "{" before it.
+	      (default 0).
+
+		cino=		    cino=n2		cino=n-2 >
+		  if (cond)	      if (cond)		  if (cond)
+		      foo;		    foo;	    foo;
+		  else		      else		  else
+		  {		      {			  {
+		      bar;		  bar;		      bar;
+		  }		      }			  }
+<
+							*cino-f*
+	fN    Place the first opening brace of a function or other block in
+	      column N.  This applies only for an opening brace that is not
+	      inside other braces and is at the start of the line.  What comes
+	      after the brace is put relative to this brace.  (default 0).
+
+		cino=		    cino=f.5s		cino=f1s >
+		  func()	      func()		  func()
+		  {			{		      {
+		      int foo;		    int foo;		  int foo;
+<
+							*cino-{*
+	`{N`    Place opening braces N characters from the prevailing indent.
+	      This applies only for opening braces that are inside other
+	      braces.  (default 0).
+
+		cino=		    cino={.5s		cino={1s >
+		  if (cond)	      if (cond)		  if (cond)
+		  {			{		      {
+		      foo;		  foo;		      foo;
+<
+							*cino-}*
+	`}N`    Place closing braces N characters from the matching opening
+	      brace.  (default 0).
+
+		cino=		    cino={2,}-0.5s	cino=}2 >
+		  if (cond)	      if (cond)		  if (cond)
+		  {			{		  {
+		      foo;		  foo;		      foo;
+		  }		      }			    }
+<
+							*cino-^*
+	^N    Add N to the prevailing indent inside a set of braces if the
+	      opening brace is in column 0.  This can specify a different
+	      indent for whole of a function (some may like to set it to a
+	      negative number).  (default 0).
+
+		cino=		    cino=^-2		cino=^-s >
+		  func()	      func()		  func()
+		  {		      {			  {
+		      if (cond)		if (cond)	  if (cond)
+		      {			{		  {
+			  a = b;	    a = b;	      a = b;
+		      }			}		  }
+		  }		      }			  }
+<
+							*cino-L*
+	LN    Controls placement of jump labels. If N is negative, the label
+	      will be placed at column 1. If N is non-negative, the indent of
+	      the label will be the prevailing indent minus N.  (default -1).
+
+		cino=               cino=L2             cino=Ls >
+		  func()              func()              func()
+		  {                   {                   {
+		      {                   {                   {
+		          stmt;               stmt;               stmt;
+		  LABEL:                    LABEL:            LABEL:
+		      }                   }                   }
+		  }                   }                   }
+<
+							*cino-:*
+	:N    Place case labels N characters from the indent of the switch().
+	      (default 'shiftwidth').
+
+		cino=		    cino=:0 >
+		  switch (x)	      switch(x)
+		  {		      {
+		      case 1:	      case 1:
+			  a = b;	  a = b;
+		      default:	      default:
+		  }		      }
+<
+							*cino-=*
+	=N    Place statements occurring after a case label N characters from
+	      the indent of the label.  (default 'shiftwidth').
+
+		cino=		    cino==10 >
+		   case 11:		case 11:  a = a + 1;
+		       a = a + 1;		  b = b + 1;
+<
+							*cino-l*
+	lN    If N != 0 Vim will align with a case label instead of the
+	      statement after it in the same line.
+
+		cino=			    cino=l1 >
+		    switch (a) {	      switch (a) {
+			case 1: {		  case 1: {
+				    break;	      break;
+				}		  }
+<
+							*cino-b*
+	bN    If N != 0 Vim will align a final "break" with the case label,
+	      so that case..break looks like a sort of block.  (default: 0).
+	      When using 1, consider adding "0=break" to 'cinkeys'.
+
+		cino=		    cino=b1 >
+		  switch (x)	      switch(x)
+		  {		      {
+		      case 1:		  case 1:
+			  a = b;	      a = b;
+			  break;	  break;
+
+		      default:		  default:
+			  a = 0;	      a = 0;
+			  break;	  break;
+		  }		      }
+<
+							*cino-g*
+	gN    Place C++ scope declarations N characters from the indent of the
+	      block they are in.  (default 'shiftwidth'). By default, a scope
+	      declaration is "public:", "protected:" or "private:". This can
+	      be adjusted with the 'cinscopedecls' option.
+
+		cino=		    cino=g0 >
+		  {		      {
+		      public:	      public:
+			  a = b;	  a = b;
+		      private:	      private:
+		  }		      }
+<
+							*cino-h*
+	hN    Place statements occurring after a C++ scope declaration N
+	      characters from the indent of the label.  (default
+	      'shiftwidth').
+
+		cino=		    cino=h10 >
+		   public:		public:   a = a + 1;
+		       a = a + 1;		  b = b + 1;
+<
+							*cino-N*
+	NN    Indent inside C++ namespace N characters extra compared to a
+	      normal block.  (default 0).
+
+		cino=			   cino=N-s >
+		  namespace {                namespace {
+		      void function();       void function();
+		  }                          }
+
+		  namespace my               namespace my
+		  {                          {
+		      void function();       void function();
+		  }                          }
+<
+							*cino-E*
+	EN    Indent inside C++ linkage specifications (extern "C" or
+	      extern "C++") N characters extra compared to a normal block.
+	      (default 0).
+
+		cino=			   cino=E-s >
+		  extern "C" {               extern "C" {
+		      void function();       void function();
+		  }                          }
+
+		  extern "C"                 extern "C"
+		  {                          {
+		      void function();       void function();
+		  }                          }
+<
+							*cino-p*
+	pN    Parameter declarations for K&R-style function declarations will
+	      be indented N characters from the margin.  (default
+	      'shiftwidth').
+
+		cino=		    cino=p0		cino=p2s >
+		  func(a, b)	      func(a, b)	  func(a, b)
+		      int a;	      int a;			  int a;
+		      char b;	      char b;			  char b;
+<
+							*cino-t*
+	tN    Indent a function return type declaration N characters from the
+	      margin.  (default 'shiftwidth').
+
+		cino=		    cino=t0		cino=t7 >
+		      int	      int			 int
+		  func()	      func()		  func()
+<
+							*cino-i*
+	iN    Indent C++ base class declarations and constructor
+	      initializations, if they start in a new line (otherwise they
+	      are aligned at the right side of the ':').
+	      (default 'shiftwidth').
+
+		cino=			  cino=i0 >
+		  class MyClass :	    class MyClass :
+		      public BaseClass      public BaseClass
+		  {}			    {}
+		  MyClass::MyClass() :	    MyClass::MyClass() :
+		      BaseClass(3)	    BaseClass(3)
+		  {}			    {}
+<
+							*cino-+*
+	+N    Indent a continuation line (a line that spills onto the next)
+              inside a function N additional characters.  (default
+              'shiftwidth').
+              Outside of a function, when the previous line ended in a
+              backslash, the 2 * N is used.
+
+		cino=			  cino=+10 >
+		  a = b + 9 *		    a = b + 9 *
+		      c;			      c;
+<
+							*cino-c*
+	cN    Indent comment lines after the comment opener, when there is no
+	      other text with which to align, N characters from the comment
+	      opener.  (default 3).  See also |format-comments|.
+
+		cino=			  cino=c5 >
+		  /*			    /*
+		     text.			 text.
+		   */			     */
+<
+							*cino-C*
+	CN    When N is non-zero, indent comment lines by the amount specified
+	      with the c flag above even if there is other text behind the
+	      comment opener.  (default 0).
+
+		cino=c0			  cino=c0,C1 >
+		  /********		    /********
+		    text.		    text.
+		  ********/		    ********/
+<	      (Example uses ":set comments& comments-=s1:/* comments^=s0:/*")
+
+							*cino-/*
+	/N    Indent comment lines N characters extra.  (default 0).
+		cino=			  cino=/4 >
+		  a = b;		    a = b;
+		  /* comment */			/* comment */
+		  c = d;		    c = d;
+<
+							*cino-(*
+	(N    When in unclosed parentheses, indent N characters from the line
+	      with the unclosed parenthesis.  Add a 'shiftwidth' for every
+	      extra unclosed parentheses.  When N is 0 or the unclosed
+	      parenthesis is the first non-white character in its line, line
+	      up with the next non-white character after the unclosed
+	      parenthesis.  (default 'shiftwidth' * 2).
+
+		cino=			  cino=(0 >
+		  if (c1 && (c2 ||	    if (c1 && (c2 ||
+			      c3))		       c3))
+		      foo;			foo;
+		  if (c1 &&		    if (c1 &&
+			  (c2 || c3))		(c2 || c3))
+		     {			       {
+<
+							*cino-u*
+	uN    Same as (N, but for one nesting level deeper.
+	      (default 'shiftwidth').
+
+		cino=			  cino=u2 >
+		  if (c123456789	    if (c123456789
+			  && (c22345		    && (c22345
+			      || c3))		      || c3))
+<
+							*cino-U*
+	UN    When N is non-zero, do not ignore the indenting specified by
+	      ( or u in case that the unclosed parenthesis is the first
+	      non-white character in its line.  (default 0).
+
+		cino= or cino=(s	  cino=(s,U1 >
+		  c = c1 &&		    c = c1 &&
+		      (				(
+		       c2 ||			    c2 ||
+		       c3			    c3
+		      ) && c4;			) && c4;
+<
+							*cino-w*
+	wN    When in unclosed parentheses and N is non-zero and either
+	      using "(0" or "u0", respectively, or using "U0" and the unclosed
+	      parenthesis is the first non-white character in its line, line
+	      up with the character immediately after the unclosed parenthesis
+	      rather than the first non-white character.  (default 0).
+
+		cino=(0			  cino=(0,w1 >
+		  if (   c1		    if (   c1
+			 && (   c2		&& (   c2
+				|| c3))		    || c3))
+		      foo;			foo;
+<
+							*cino-W*
+	WN    When in unclosed parentheses and N is non-zero and either
+	      using "(0" or "u0", respectively and the unclosed parenthesis is
+	      the last non-white character in its line and it is not the
+	      closing parenthesis, indent the following line N characters
+	      relative to the outer context (i.e. start of the line or the
+	      next unclosed parenthesis).  (default: 0).
+
+		cino=(0			   cino=(0,W4 >
+		  a_long_line(		    a_long_line(
+			      argument,		argument,
+			      argument);	argument);
+		  a_short_line(argument,    a_short_line(argument,
+			       argument);		 argument);
+<
+							*cino-k*
+	kN    When in unclosed parentheses which follow "if", "for" or
+	      "while" and N is non-zero, overrides the behaviour defined by
+	      "(N": causes the indent to be N characters relative to the outer
+	      context (i.e. the line where "if", "for" or "while" is).  Has
+	      no effect on deeper levels of nesting.  Affects flags like "wN"
+	      only for the "if", "for" and "while" conditions.  If 0, defaults
+	      to behaviour defined by the "(N" flag.  (default: 0).
+
+		cino=(0			   cino=(0,ks >
+		  if (condition1	    if (condition1
+		      && condition2)		    && condition2)
+		      action();			action();
+		  function(argument1	    function(argument1
+			   && argument2);	     && argument2);
+<
+							*cino-m*
+	mN    When N is non-zero, line up a line starting with a closing
+	      parenthesis with the first character of the line with the
+	      matching opening parenthesis.  (default 0).
+
+		cino=(s			  cino=(s,m1 >
+		  c = c1 && (		    c = c1 && (
+		      c2 ||			c2 ||
+		      c3			c3
+		      ) && c4;		    ) && c4;
+		  if (			    if (
+		      c1 && c2			c1 && c2
+		     )			    )
+		      foo;			foo;
+<
+							*cino-M*
+	MN    When N is non-zero, line up a line starting with a closing
+	      parenthesis with the first character of the previous line.
+	      (default 0).
+
+		cino=			  cino=M1 >
+		  if (cond1 &&		    if (cond1 &&
+			 cond2			   cond2
+		     )				   )
+<
+				*java-cinoptions* *java-indenting* *cino-j*
+	jN    Indent Java anonymous classes correctly.  Also works well for
+	      Javascript.  The value 'N' is currently unused but must be
+	      non-zero (e.g. 'j1').  'j1' will indent for example the
+	      following code snippet correctly: >
+
+		object.add(new ChangeListener() {
+		    public void stateChanged(ChangeEvent e) {
+			do_something();
+		    }
+		});
+<
+			*javascript-cinoptions* *javascript-indenting* *cino-J*
+	JN    Indent JavaScript object declarations correctly by not confusing
+	      them with labels.  The value 'N' is currently unused but must be
+	      non-zero (e.g. 'J1').  If you enable this you probably also want
+	      to set |cino-j|. >
+
+		var bar = {
+		    foo: {
+			that: this,
+			some: ok,
+		    },
+		    "bar":{
+			a : 2,
+			b: "123abc",
+			x: 4,
+			"y": 5
+		    }
+		}
+<
+								*cino-)*
+	)N    Vim searches for unclosed parentheses at most N lines away.
+	      This limits the time needed to search for parentheses.  (default
+	      20 lines).
+
+								*cino-star*
+	`*N`    Vim searches for unclosed comments at most N lines away.  This
+	      limits the time needed to search for the start of a comment.
+	      If your `/* */` comments stop indenting after N lines this is the
+	      value you will want to change.
+	      (default 70 lines).
+
+								*cino-#*
+	#N    When N is non-zero recognize shell/Perl comments starting with
+	      '#', do not recognize preprocessor lines; allow right-shifting
+	      lines that start with "#".
+	      When N is zero (default): don't recognize '#' comments, do
+	      recognize preprocessor lines; right-shifting lines that start
+	      with "#" does not work.
+
+								*cino-P*
+	PN    When N is non-zero recognize C pragmas, and indent them like any
+	      other code; does not concern other preprocessor directives.
+	      When N is zero (default): don't recognize C pragmas, treating
+	      them like every other preprocessor directive.
+
+
+The defaults, spelled out in full, are: >
+	cinoptions=>s,e0,n0,f0,{0,}0,^0,L-1,:s,=s,l0,b0,gs,hs,N0,E0,ps,ts,is,+s,
+			c3,C0,/0,(2s,us,U0,w0,W0,k0,m0,j0,J0,)20,*70,#0,P0
+
+Vim puts a line in column 1 if:
+- It starts with '#' (preprocessor directives), if 'cinkeys' contains '#0'.
+- It starts with a label (a keyword followed by ':', other than "case" and
+  "default") and 'cinoptions' does not contain an 'L' entry with a positive
+  value.
+- Any combination of indentations causes the line to have less than 0
+  indentation.
+
+==============================================================================
+2. Indenting by expression				*indent-expression*
+
+The basics for using flexible indenting are explained in section |30.3| of the
+user manual.
+
+If you want to write your own indent file, it must set the 'indentexpr'
+option.  Setting the 'indentkeys' option is often useful.
+See the $VIMRUNTIME/indent/README.txt file for hints.
+See the $VIMRUNTIME/indent directory for examples.
+
+
+REMARKS ABOUT SPECIFIC INDENT FILES ~
+
+
+CLOJURE					*ft-clojure-indent* *clojure-indent*
+
+Clojure indentation differs somewhat from traditional Lisps, due in part to
+the use of square and curly brackets, and otherwise by community convention.
+These conventions are not universally followed, so the Clojure indent script
+offers a few configuration options.
+
+
+							*g:clojure_maxlines*
+
+Sets maximum scan distance of `searchpairpos()`.  Larger values trade
+performance for correctness when dealing with very long forms.  A value of
+0 will scan without limits.  The default is 300.
+
+
+						*g:clojure_fuzzy_indent*
+					*g:clojure_fuzzy_indent_patterns*
+					*g:clojure_fuzzy_indent_blacklist*
+
+The 'lispwords' option is a list of comma-separated words that mark special
+forms whose subforms should be indented with two spaces.
+
+For example:
+>
+	(defn bad []
+	      "Incorrect indentation")
+
+	(defn good []
+	  "Correct indentation")
+<
+If you would like to specify 'lispwords' with a |pattern| instead, you can use
+the fuzzy indent feature:
+>
+	" Default
+	let g:clojure_fuzzy_indent = 1
+	let g:clojure_fuzzy_indent_patterns = ['^with', '^def', '^let']
+	let g:clojure_fuzzy_indent_blacklist =
+		\ ['-fn$', '\v^with-%(meta|out-str|loading-context)$']
+<
+|g:clojure_fuzzy_indent_patterns| and |g:clojure_fuzzy_indent_blacklist| are
+lists of patterns that will be matched against the unqualified symbol at the
+head of a list.  This means that a pattern like `"^foo"` will match all these
+candidates: `foobar`, `my.ns/foobar`, and `#'foobar`.
+
+Each candidate word is tested for special treatment in this order:
+
+	1. Return true if word is literally in 'lispwords'
+	2. Return false if word matches a pattern in
+	   |g:clojure_fuzzy_indent_blacklist|
+	3. Return true if word matches a pattern in
+	   |g:clojure_fuzzy_indent_patterns|
+	4. Return false and indent normally otherwise
+
+
+					*g:clojure_special_indent_words*
+
+Some forms in Clojure are indented such that every subform is indented by only
+two spaces, regardless of 'lispwords'.  If you have a custom construct that
+should be indented in this idiosyncratic fashion, you can add your symbols to
+the default list below.
+>
+	" Default
+	let g:clojure_special_indent_words =
+	   \ 'deftype,defrecord,reify,proxy,extend-type,extend-protocol,letfn'
+<
+
+					*g:clojure_align_multiline_strings*
+
+Align subsequent lines in multi-line strings to the column after the opening
+quote, instead of the same column.
+
+For example:
+>
+	(def default
+	  "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+	  eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+	  enim ad minim veniam, quis nostrud exercitation ullamco laboris
+	  nisi ut aliquip ex ea commodo consequat.")
+
+	(def aligned
+	  "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+	   eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+	   enim ad minim veniam, quis nostrud exercitation ullamco laboris
+	   nisi ut aliquip ex ea commodo consequat.")
+<
+
+						*g:clojure_align_subforms*
+
+By default, parenthesized compound forms that look like function calls and
+whose head subform is on its own line have subsequent subforms indented by
+two spaces relative to the opening paren:
+>
+	(foo
+	  bar
+	  baz)
+<
+Setting this option to `1` changes this behaviour so that all subforms are
+aligned to the same column, emulating the default behaviour of
+clojure-mode.el:
+>
+	(foo
+	 bar
+	 baz)
+<
+
+FORTRAN							*ft-fortran-indent*
+
+Block if, select case, select type, select rank,  where, forall, type,
+interface, associate, block, enum, critical, and change team constructs are
+indented. The indenting of subroutines, functions, modules, and program blocks
+is optional. Comments, labeled statements, and continuation lines are indented
+if the Fortran is in free source form, whereas they are not indented if the
+Fortran is in fixed source form because of the left margin requirements. Hence
+manual indent corrections will be necessary for labeled statements and
+continuation lines when fixed source form is being used.  For further
+discussion of the method used for the detection of source format see
+|ft-fortran-syntax|.
+
+Do loops ~
+All do loops are left unindented by default.  Do loops can be unstructured in
+Fortran with (possibly multiple) loops ending on a labeled executable
+statement of almost arbitrary type.  Correct indentation requires
+compiler-quality parsing.  Old code with do loops ending on labeled statements
+of arbitrary type can be indented with elaborate programs such as Tidy.
+Structured do/continue loops are also left unindented because continue
+statements are used for purposes other than ending a do loop.  Programs such
+as Tidy can convert structured do/continue loops to the do/enddo form.  Do
+loops of the do/enddo variety can be indented.  If you use only structured
+loops of the do/enddo form, you should declare this by setting the
+fortran_do_enddo variable in your vimrc as follows >
+
+   let fortran_do_enddo=1
+
+in which case do loops will be indented.  If all your loops are of do/enddo
+type only in, say, .f90 files, then you should set a buffer flag with an
+autocommand such as >
+
+  au! BufRead,BufNewFile *.f90 let b:fortran_do_enddo=1
+
+to get do loops indented in .f90 files and left alone in Fortran files with
+other extensions such as .for.
+
+Program units ~
+Indenting of program units (subroutines, functions, modules, and program
+blocks) can be increased by setting the variable fortran_indent_more and can
+be decreased by setting the variable fortran_indent_less.  These variables
+can be set for all fortran files in your vimrc as follows >
+
+  let fortran_indent_less=1
+
+A finer level of control can be achieved by setting the corresponding
+buffer-local variable as follows >
+
+  let b:fortran_indent_less=1
+
+
+HTML				*ft-html-indent* *html-indent* *html-indenting*
+
+This is about variables you can set in your vimrc to customize HTML indenting.
+
+You can set the indent for the first line after <script> and <style>
+"blocktags" (default "zero"): >
+
+      :let g:html_indent_script1 = "inc"
+      :let g:html_indent_style1 = "inc"
+<
+      VALUE	MEANING ~
+      "zero"	zero indent
+      "auto"	auto indent (same indent as the blocktag)
+      "inc"	auto indent + one indent step
+
+You can set the indent for attributes after an open <tag line: >
+
+      :let g:html_indent_attribute = 1
+<
+      VALUE	MEANING ~
+      1		auto indent, one indent step more than <tag
+      2		auto indent, two indent steps (default)
+      > 2	auto indent, more indent steps
+
+Many tags increase the indent for what follows per default (see "Add Indent
+Tags" in the script).  You can add further tags with: >
+
+      :let g:html_indent_inctags = "html,body,head,tbody"
+
+You can also remove such tags with: >
+
+      :let g:html_indent_autotags = "th,td,tr,tfoot,thead"
+
+Default value is empty for both variables.  Note: the initial "inctags" are
+only defined once per Vim session.
+
+User variables are only read when the script is sourced.  To enable your
+changes during a session, without reloading the HTML file, you can manually
+do: >
+
+      :call HtmlIndent_CheckUserSettings()
+
+Detail:
+  Calculation of indent inside "blocktags" with "alien" content:
+      BLOCKTAG   INDENT EXPR	    WHEN APPLICABLE ~
+      <script> : {customizable}	    if first line of block
+	       : cindent(v:lnum)    if attributes empty or contain "java"
+	       : -1		    else (vbscript, tcl, ...)
+      <style>  : {customizable}	    if first line of block
+	       : GetCSSIndent()	    else
+      <!-- --> : -1
+
+IDRIS2							*ft-idris2-indent*
+
+Idris 2 indentation can be configured with several variables that control the
+indentation level for different language constructs:
+
+The "g:idris2_indent_if" variable controls the indentation of `then` and `else`
+blocks after `if` statements. Defaults to 3.
+
+The "g:idris2_indent_case" variable controls the indentation of patterns in
+`case` expressions. Defaults to 5.
+
+The "g:idris2_indent_let" variable controls the indentation after `let`
+bindings. Defaults to 4.
+
+The "g:idris2_indent_rewrite" variable controls the indentation after `rewrite`
+expressions. Defaults to 8.
+
+The "g:idris2_indent_where" variable controls the indentation of `where`
+blocks. Defaults to 6.
+
+The "g:idris2_indent_do" variable controls the indentation in `do` blocks.
+Defaults to 3.
+
+Example configuration: >
+
+	let g:idris2_indent_if = 2
+	let g:idris2_indent_case = 4
+	let g:idris2_indent_let = 4
+	let g:idris2_indent_rewrite = 8
+	let g:idris2_indent_where = 6
+	let g:idris2_indent_do = 3
+<
+
+MATLAB			*ft-matlab-indent* *matlab-indent* *matlab-indenting*
+
+The setting Function indenting format in MATLAB Editor/Debugger Language
+Preferences corresponds to: >
+    :let g:MATLAB_function_indent = {0, 1 or 2 (default)}
+
+Where 0 is for Classic, 1 for Indent nested functions and 2 for Indent all
+functions.
+
+
+PHP				*ft-php-indent* *php-indent* *php-indenting*
+
+NOTE:	PHP files will be indented correctly only if PHP |syntax| is active.
+
+If you are editing a file in Unix 'fileformat' and '\r' characters are present
+before new lines, indentation won't proceed correctly ; you have to remove
+those useless characters first with a command like: >
+
+    :%s /\r$//g
+
+Or, you can simply |:let| the variable PHP_removeCRwhenUnix to 1 and the
+script will silently remove them when Vim loads a PHP file (at each |BufRead|).
+
+OPTIONS: ~
+
+PHP indenting can be altered in several ways by modifying the values of some
+global variables:
+
+					*php-comment* *PHP_autoformatcomment*
+To not enable auto-formatting of comments by default (if you want to use your
+own 'formatoptions'): >
+    :let g:PHP_autoformatcomment = 0
+
+Else, 't' will be removed from the 'formatoptions' string and "qrowcb" will be
+added, see |fo-table| for more information.
+
+
+							*PHP_outdentSLComments*
+To add extra indentation to single-line comments: >
+    :let g:PHP_outdentSLComments = N
+
+With N being the number of 'shiftwidth' to add.
+
+Only single-line comments will be affected such as: >
+    # Comment
+    // Comment
+    /* Comment */
+<
+
+							*PHP_default_indenting*
+To add extra indentation to every PHP lines with N being the number of
+'shiftwidth' to add: >
+    :let g:PHP_default_indenting = N
+
+For example, with N = 1, this will give:
+>
+    <?php
+	if (!isset($History_lst_sel))
+	    if (!isset($History_lst_sel))
+		if (!isset($History_lst_sel)) {
+		    $History_lst_sel=0;
+		} else
+		    $foo="bar";
+
+	$command_hist = TRUE;
+    ?>
+(Notice the extra indentation between the PHP container markers and the code)
+
+							*PHP_outdentphpescape*
+To indent PHP escape tags as the surrounding non-PHP code (only affects the
+PHP escape tags): >
+    :let g:PHP_outdentphpescape = 0
+<
+
+							*PHP_removeCRwhenUnix*
+To automatically remove '\r' characters when the 'fileformat' is set to Unix: >
+    :let g:PHP_removeCRwhenUnix = 1
+<
+
+							*PHP_BracesAtCodeLevel*
+To indent braces at the same level than the code they contain: >
+    :let g:PHP_BracesAtCodeLevel = 1
+
+This will give the following result: >
+    if ($foo)
+	{
+	foo();
+	}
+Instead of: >
+    if ($foo)
+    {
+	foo();
+    }
+
+NOTE:	Indenting will be a bit slower if this option is used because some
+	optimizations won't be available.
+
+					*PHP_vintage_case_default_indent*
+To indent 'case:' and 'default:' statements in switch() blocks: >
+    :let g:PHP_vintage_case_default_indent = 1
+
+In PHP braces are not required inside 'case/default' blocks therefore 'case:'
+and 'default:' are indented at the same level than the 'switch()' to avoid
+meaningless indentation. You can use the above option to return to the
+traditional way.
+
+							*PHP_noArrowMatching*
+By default the indent script will indent multi-line chained calls by matching
+the position of the '->': >
+
+    $user_name_very_long->name()
+                        ->age()
+                        ->info();
+<
+You can revert to the classic way of indenting by setting this option to 1: >
+    :let g:PHP_noArrowMatching = 1
+<
+You will obtain the following result: >
+
+    $user_name_very_long->name()
+        ->age()
+        ->info();
+<
+
+					*PHP_IndentFunctionCallParameters*
+Extra indentation levels to add to parameters in multi-line function calls. >
+    let g:PHP_IndentFunctionCallParameters = 1
+
+Function call arguments will indent 1 extra level. For two-space indentation: >
+
+    function call_the_thing(
+      $with_this,
+      $and_that
+    ) {
+      $this->do_the_thing(
+          $with_this,
+          $and_that
+      );
+    }
+<
+
+				*PHP_IndentFunctionDeclarationParameters*
+Extra indentation levels to add to arguments in multi-line function
+definitions. >
+    let g:PHP_IndentFunctionDeclarationParameters = 1
+<
+Function arguments in declarations will indent 1 extra level. For two-space
+indentation: >
+
+    function call_the_thing(
+        $with_this,
+        $and_that
+    ) {
+      $this->do_the_thing(
+        $with_this,
+        $and_that
+      );
+    }
+<
+
+PYTHON							*ft-python-indent*
+
+The amount of indent can be set with the `g:python_indent` |Dictionary|, which
+needs to be created before adding the items: >
+	let g:python_indent = {}
+The examples given are the defaults.  Note that the dictionary values are set
+to an expression, so that you can change the value of 'shiftwidth' later
+without having to update these values.
+
+Indent after an open paren: >
+	let g:python_indent.open_paren = 'shiftwidth() * 2'
+Indent after a nested paren: >
+	let g:python_indent.nested_paren = 'shiftwidth()'
+Indent for a continuation line: >
+	let g:python_indent.continue = 'shiftwidth() * 2'
+
+By default, the closing paren on a multiline construct lines up under the first
+non-whitespace character of the previous line.
+If you prefer that it's lined up under the first character of the line that
+starts the multiline construct, reset this key: >
+	let g:python_indent.closed_paren_align_last_line = v:false
+
+The method uses |searchpair()| to look back for unclosed parentheses.  This
+can sometimes be slow, thus it timeouts after 150 msec.  If you notice the
+indenting isn't correct, you can set a larger timeout in msec: >
+	let g:python_indent.searchpair_timeout = 500
+
+If looking back for unclosed parenthesis is still too slow, especially during
+a copy-paste operation, or if you don't need indenting inside multi-line
+parentheses, you can completely disable this feature: >
+	let g:python_indent.disable_parentheses_indenting = 1
+
+For backward compatibility, these variables are also supported: >
+	g:pyindent_open_paren
+	g:pyindent_nested_paren
+	g:pyindent_continue
+	g:pyindent_searchpair_timeout
+	g:pyindent_disable_parentheses_indenting
+
+
+R								*ft-r-indent*
+
+Function arguments are aligned if they span for multiple lines. If you prefer
+do not have the arguments of functions aligned, put in your |vimrc|:
+>
+   let r_indent_align_args = 0
+<
+All lines beginning with a comment character, #, get the same indentation
+level of the normal R code. Users of Emacs/ESS may be used to have lines
+beginning with a single # indented in the 40th column, ## indented as R code,
+and ### not indented. If you prefer that lines beginning with comment
+characters are aligned as they are by Emacs/ESS, put in your |vimrc|:
+>
+   let r_indent_ess_comments = 1
+<
+If you prefer that lines beginning with a single # are aligned at a column
+different from the 40th one, you should set a new value to the variable
+r_indent_comment_column, as in the example below:
+>
+   let r_indent_comment_column = 30
+<
+Any code after a line that ends with "<-" is indented. Emacs/ESS does not
+indent the code if it is a top-level function. If you prefer a behavior like
+Emacs/ESS one in this regard, put in your |vimrc|:
+>
+   let r_indent_ess_compatible = 1
+<
+Below is an example of indentation with and without this option enabled:
+>
+   ### r_indent_ess_compatible = 1           ### r_indent_ess_compatible = 0
+   foo <-                                    foo <-
+       function(x)                               function(x)
+   {                                             {
+       paste(x)                                      paste(x)
+   }                                             }
+<
+The code will be indented after lines that match the pattern
+`'\(&\||\|+\|-\|\*\|/\|=\|\~\|%\|->\)\s*$'`. If you want indentation after
+lines that match a different pattern, you should set the appropriate value of
+`r_indent_op_pattern` in your |vimrc|.
+
+
+SHELL							*ft-sh-indent*
+
+The amount of indent applied under various circumstances in a shell file can
+be configured by setting the following keys in the |Dictionary|
+b:sh_indent_defaults to a specific amount or to a |Funcref| that references a
+function that will return the amount desired:
+
+b:sh_indent_options["default"]	Default amount of indent.
+
+b:sh_indent_options["continuation-line"]
+				Amount of indent to add to a continued line.
+
+b:sh_indent_options["case-labels"]
+				Amount of indent to add for case labels.
+				(not actually implemented)
+
+b:sh_indent_options["case-statements"]
+				Amount of indent to add for case statements.
+
+b:sh_indent_options["case-breaks"]
+				Amount of indent to add (or more likely
+				remove) for case breaks.
+
+VERILOG							*ft-verilog-indent*
+
+General block statements such as if, for, case, always, initial, function,
+specify and begin, etc., are indented.  The module block statements (first
+level blocks) are not indented by default.  you can turn on the indent with
+setting a variable in the vimrc as follows: >
+
+  let b:verilog_indent_modules = 1
+
+then the module blocks will be indented.  To stop this, remove the variable: >
+
+  :unlet b:verilog_indent_modules
+
+To set the variable only for Verilog file.  The following statements can be
+used: >
+
+  au BufReadPost * if exists("b:current_syntax")
+  au BufReadPost *   if b:current_syntax == "verilog"
+  au BufReadPost *     let b:verilog_indent_modules = 1
+  au BufReadPost *   endif
+  au BufReadPost * endif
+
+Furthermore, setting the variable b:verilog_indent_width to change the
+indenting width (default is 'shiftwidth'): >
+
+  let b:verilog_indent_width = 4
+  let b:verilog_indent_width = shiftwidth() * 2
+
+In addition, you can turn the verbose mode for debug issue: >
+
+  let b:verilog_indent_verbose = 1
+
+Make sure to do ":set cmdheight=2" first to allow the display of the message.
+
+
+VHDL							*ft-vhdl-indent*
+
+Alignment of generic/port mapping statements are performed by default. This
+causes the following alignment example: >
+
+  ENTITY sync IS
+  PORT (
+         clk        : IN  STD_LOGIC;
+         reset_n    : IN  STD_LOGIC;
+         data_input : IN  STD_LOGIC;
+         data_out   : OUT STD_LOGIC
+       );
+  END ENTITY sync;
+
+To turn this off, add >
+
+  let g:vhdl_indent_genportmap = 0
+
+to the vimrc file, which causes the previous alignment example to change: >
+
+  ENTITY sync IS
+  PORT (
+    clk        : IN  STD_LOGIC;
+    reset_n    : IN  STD_LOGIC;
+    data_input : IN  STD_LOGIC;
+    data_out   : OUT STD_LOGIC
+  );
+  END ENTITY sync;
+
+
+Alignment of right-hand side assignment "<=" statements are performed by
+default. This causes the following alignment example: >
+
+  sig_out <= (bus_a(1) AND
+             (sig_b OR sig_c)) OR
+             (bus_a(0) AND sig_d);
+
+To turn this off, add >
+
+  let g:vhdl_indent_rhsassign = 0
+
+to the vimrc file, which causes the previous alignment example to change: >
+
+  sig_out <= (bus_a(1) AND
+    (sig_b OR sig_c)) OR
+    (bus_a(0) AND sig_d);
+
+
+Full-line comments (lines that begin with "--") are indented to be aligned with
+the very previous line's comment, PROVIDED that a whitespace follows after
+"--".
+
+For example: >
+
+  sig_a <= sig_b; -- start of a comment
+                  -- continuation of the comment
+                  -- more of the same comment
+
+While in Insert mode, after typing "-- " (note the space " "), hitting CTRL-F
+will align the current "-- " with the previous line's "--".
+
+If the very previous line does not contain "--", THEN the full-line comment
+will be aligned with the start of the next non-blank line that is NOT a
+full-line comment.
+
+Indenting the following code: >
+
+  sig_c <= sig_d; -- comment 0
+         -- comment 1
+               -- comment 2
+    --debug_code:
+    --PROCESS(debug_in)
+         --BEGIN
+            --  FOR i IN 15 DOWNTO 0 LOOP
+             --    debug_out(8*i+7 DOWNTO 8*i) <= debug_in(15-i);
+            --  END LOOP;
+     --END PROCESS debug_code;
+
+      -- comment 3
+  sig_e <= sig_f; -- comment 4
+           -- comment 5
+
+results in: >
+
+  sig_c <= sig_d; -- comment 0
+                  -- comment 1
+                  -- comment 2
+  --debug_code:
+  --PROCESS(debug_in)
+  --BEGIN
+  --  FOR i IN 15 DOWNTO 0 LOOP
+  --    debug_out(8*i+7 DOWNTO 8*i) <= debug_in(15-i);
+  --  END LOOP;
+  --END PROCESS debug_code;
+
+  -- comment 3
+  sig_e <= sig_f; -- comment 4
+                  -- comment 5
+
+Notice that "--debug_code:" does not align with "-- comment 2"
+because there is no whitespace that follows after "--" in "--debug_code:".
+
+Given the dynamic nature of indenting comments, indenting should be done TWICE.
+On the first pass, code will be indented. On the second pass, full-line
+comments will be indented according to the correctly indented code.
+
+
+VIM							*ft-vim-indent*
+							*g:vim_indent_cont*
+For indenting Vim scripts there is one variable that specifies the amount of
+indent for a continuation line, a line that starts with a backslash: >
+
+	:let g:vim_indent_cont = shiftwidth() * 3
+
+Three times shiftwidth is the default value.
+
+YAML							*ft-yaml-indent*
+
+By default, the yaml indent script does not try to detect multiline scalars.
+If you want to enable this, set the following variable: >
+
+  let g:yaml_indent_multiline_scalar = 1
+<
+ vim:tw=78:ts=8:noet:ft=help:norl:

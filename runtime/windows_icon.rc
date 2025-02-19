@@ -1,0 +1,4 @@
+// NOTE: this resource file *must* be in the same folder as the icon.
+// Otherwise, absolute paths would need to be used.
+// see https://learn.microsoft.com/en-us/windows/win32/menurc/icon-resource
+NEOVIM_ICON ICON "neovim.ico"

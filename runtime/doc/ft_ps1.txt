@@ -1,0 +1,64 @@
+*ft_ps1.txt*  A Windows PowerShell syntax plugin for Vim
+
+Author:  Peter Provost <https://www.github.com/PProvost>
+License: Apache 2.0
+URL:     https://github.com/PProvost/vim-ps1
+
+INTRODUCTION                                                    *ps1-syntax*
+
+This plugin provides Vim syntax, indent and filetype detection for Windows
+PowerShell scripts, modules, and XML configuration files.
+
+
+ABOUT                                                           *ps1-about*
+
+Grab the latest version or report a bug on GitHub:
+
+https://github.com/PProvost/vim-ps1
+
+
+FOLDING                                                         *ps1-folding*
+
+The ps1 syntax file provides syntax folding (see |:syn-fold|) for script blocks
+and digital signatures in scripts.
+
+When 'foldmethod' is set to "syntax" then function script blocks will be
+folded unless you use the following in your .vimrc or before opening a script: >
+
+    :let g:ps1_nofold_blocks = 1
+<
+Digital signatures in scripts will also be folded unless you use: >
+
+    :let g:ps1_nofold_sig = 1
+<
+Note: syntax folding might slow down syntax highlighting significantly,
+especially for large files.
+
+
+COMPILER                                                        *ps1-compiler*
+
+The powershell `:compiler` script configures |:make| to execute the script in
+PowerShell.
+
+It tries to pick a smart default PowerShell command: `pwsh` if available and
+`powershell` otherwise, but you can customize the command: >
+
+    :let g:ps1_makeprg_cmd = '/path/to/pwsh'
+<
+To configure whether to show the exception type information: >
+
+    :let g:ps1_efm_show_error_categories = 1
+<
+
+KEYWORD LOOKUP                                                 *ps1-keyword*
+
+To look up keywords using PowerShell's Get-Help, press the |K| key. For more
+convenient paging, the pager `less` should be installed, which is included in
+many Linux distributions and in macOS.
+
+Many other distributions are available for Windows like
+https://chocolatey.org/packages/less/. Make sure `less` is in a directory
+listed in the `PATH` environment variable, which chocolatey above does.
+
+------------------------------------------------------------------------------
+ vim:ft=help:

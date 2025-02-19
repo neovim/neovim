@@ -1,0 +1,7825 @@
+# Slovak translation of vim
+# Lubomir Host 'rajo' <rajo AT platon.sk>
+# 2005 - Platon Group, http://platon.sk/
+# $Revision: 1.4 $
+# $LastChangedDate: 2005-10-08 12:00:24 +0200 (Sat, 08 Oct 2005) $
+msgid ""
+msgstr ""
+"Project-Id-Version: vim\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-05-26 14:21+0200\n"
+"PO-Revision-Date: 2005-09-30 15:58+0200\n"
+"Last-Translator: Lubomir Host <rajo@platon.sk>\n"
+"Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
+"Language: sk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Vim 7.x\n"
+
+#: ../api/private/helpers.c:201
+#, fuzzy
+msgid "Unable to get option value"
+msgstr "Chyby za parametrom voµby"
+
+#: ../api/private/helpers.c:204
+msgid "internal error: unknown option type"
+msgstr ""
+
+#: ../buffer.c:92
+msgid "[Location List]"
+msgstr ""
+
+#: ../buffer.c:93
+msgid "[Quickfix List]"
+msgstr ""
+
+#: ../buffer.c:94
+msgid "E855: Autocommands caused command to abort"
+msgstr ""
+
+#: ../buffer.c:135
+msgid "E82: Cannot allocate any buffer, exiting..."
+msgstr "E82: Nedá sa alokova» buffer, konèím..."
+
+#: ../buffer.c:138
+msgid "E83: Cannot allocate buffer, using other one..."
+msgstr "E83: Nedá sa alokova» buffer, pou¾ijem iný..."
+
+#: ../buffer.c:763
+msgid "E515: No buffers were unloaded"
+msgstr "E515: ®iadny buffer nebol uvoµnený"
+
+#: ../buffer.c:765
+msgid "E516: No buffers were deleted"
+msgstr "E516: ®iadny buffer nebol vymazaný"
+
+#: ../buffer.c:767
+msgid "E517: No buffers were wiped out"
+msgstr "E517: ®iadny buffer nebol vymazaný"
+
+#: ../buffer.c:772
+msgid "1 buffer unloaded"
+msgstr "1 buffer uvoµnený"
+
+#: ../buffer.c:774
+#, c-format
+msgid "%d buffers unloaded"
+msgstr "%d bufferov uvoµnených"
+
+#: ../buffer.c:777
+msgid "1 buffer deleted"
+msgstr "1 buffer vymazaný"
+
+#: ../buffer.c:779
+#, c-format
+msgid "%d buffers deleted"
+msgstr "%d bufferov vymazaných"
+
+#: ../buffer.c:782
+msgid "1 buffer wiped out"
+msgstr "1 buffer odstránený"
+
+#: ../buffer.c:784
+#, c-format
+msgid "%d buffers wiped out"
+msgstr "%d bufferov odstránených"
+
+#: ../buffer.c:806
+msgid "E90: Cannot unload last buffer"
+msgstr "E90: Posledný buffer sa nedá odstráni»"
+
+#: ../buffer.c:874
+msgid "E84: No modified buffer found"
+msgstr "E84: Nebol nájdený ¾iadny zmenený buffer"
+
+#. back where we started, didn't find anything.
+#: ../buffer.c:903
+msgid "E85: There is no listed buffer"
+msgstr "E85: Nena¹iel som ¾iadny buffer"
+
+#: ../buffer.c:913
+#, c-format
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Buffer %<PRId64> neexistuje"
+
+#: ../buffer.c:915
+msgid "E87: Cannot go beyond last buffer"
+msgstr "E87: Za posledný buffer sa nedá preskoèi»"
+
+#: ../buffer.c:917
+msgid "E88: Cannot go before first buffer"
+msgstr "E88: Pred prvý buffer sa nedá preskoèi»"
+
+#: ../buffer.c:945
+#, c-format
+msgid ""
+"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+msgstr "E89: Zmeny v bufferi %<PRId64> neboli ulo¾ené (! pre vynútenie)"
+
+#. wrap around (may cause duplicates)
+#: ../buffer.c:1423
+msgid "W14: Warning: List of file names overflow"
+msgstr "W14: Varovanie: preteèenie zoznamu s názvami súborov"
+
+#: ../buffer.c:1555 ../quickfix.c:3361
+#, c-format
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: buffer %<PRId64> nenájdený"
+
+#: ../buffer.c:1798
+#, c-format
+msgid "E93: More than one match for %s"
+msgstr "E93: Vzoru %s vyhovuje viac bufferov"
+
+#: ../buffer.c:1800
+#, c-format
+msgid "E94: No matching buffer for %s"
+msgstr "E94: Vzoru %s nevyhovuje ¾iadny buffer"
+
+#: ../buffer.c:2161
+#, c-format
+msgid "line %<PRId64>"
+msgstr "riadok %<PRId64>"
+
+#: ../buffer.c:2233
+msgid "E95: Buffer with this name already exists"
+msgstr "E95: Buffer takéhoto mena u¾ existuje"
+
+#: ../buffer.c:2498
+msgid " [Modified]"
+msgstr " [Zmenený]"
+
+#: ../buffer.c:2501
+msgid "[Not edited]"
+msgstr "[Neupravovaný]"
+
+#: ../buffer.c:2504
+msgid "[New file]"
+msgstr "[Nový súbor]"
+
+#: ../buffer.c:2505
+msgid "[Read errors]"
+msgstr "[Chyby pri èítaní]"
+
+#: ../buffer.c:2506 ../buffer.c:3217 ../fileio.c:1807 ../screen.c:4895
+msgid "[RO]"
+msgstr "[RO]"
+
+#: ../buffer.c:2507 ../fileio.c:1807
+msgid "[readonly]"
+msgstr "[iba pre èítanie]"
+
+#: ../buffer.c:2524
+#, c-format
+msgid "1 line --%d%%--"
+msgstr "1 riadok --%d%%--"
+
+#: ../buffer.c:2526
+#, c-format
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> riadkov --%d%%--"
+
+#: ../buffer.c:2530
+#, c-format
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "riadok %<PRId64> z %<PRId64> --%d%%-- ståpec"
+
+#: ../buffer.c:2632 ../buffer.c:4292 ../memline.c:1554
+msgid "[No Name]"
+msgstr "[Bez mena]"
+
+#. must be a help buffer
+#: ../buffer.c:2667
+msgid "help"
+msgstr "pomocník"
+
+#: ../buffer.c:3225 ../screen.c:4883
+#, fuzzy
+msgid "[Help]"
+msgstr "[pomocník]"
+
+#: ../buffer.c:3254 ../screen.c:4887
+msgid "[Preview]"
+msgstr "[Náhµad]"
+
+#: ../buffer.c:3528
+msgid "All"
+msgstr "V¹etko"
+
+#: ../buffer.c:3528
+msgid "Bot"
+msgstr "Koniec"
+
+#: ../buffer.c:3531
+msgid "Top"
+msgstr "Zaèiatok"
+
+#: ../buffer.c:4244
+msgid ""
+"\n"
+"# Buffer list:\n"
+msgstr ""
+"\n"
+"# Zoznam bufferov:\n"
+
+#: ../buffer.c:4289
+msgid "[Scratch]"
+msgstr ""
+
+#: ../buffer.c:4529
+msgid ""
+"\n"
+"--- Signs ---"
+msgstr ""
+"\n"
+"--- Znaky ---"
+
+#: ../buffer.c:4538
+#, c-format
+msgid "Signs for %s:"
+msgstr "Znaky pre %s:"
+
+#: ../buffer.c:4543
+#, c-format
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    riadok=%<PRId64>  id=%d  meno=%s"
+
+#: ../cursor_shape.c:68
+msgid "E545: Missing colon"
+msgstr "E545: Chýba dvojbodka"
+
+#: ../cursor_shape.c:70 ../cursor_shape.c:94
+msgid "E546: Illegal mode"
+msgstr "E546: Neprípustný mód"
+
+#: ../cursor_shape.c:134
+msgid "E548: digit expected"
+msgstr "E548: oèakávaná èíslica"
+
+#: ../cursor_shape.c:138
+msgid "E549: Illegal percentage"
+msgstr "E549: Neprípustné percento"
+
+#: ../diff.c:146
+#, c-format
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Nemô¾em porovna» viac ako %<PRId64> bufferov"
+
+#: ../diff.c:753
+#, fuzzy
+msgid "E810: Cannot read or write temp files"
+msgstr "E557: Nedá sa otvori» termcap súbor"
+
+#: ../diff.c:755
+msgid "E97: Cannot create diffs"
+msgstr "E97: Nedajú sa vytvori» porovnania"
+
+#: ../diff.c:966
+#, fuzzy
+msgid "E816: Cannot read patch output"
+msgstr "E98: Nedá sa èíta» výstup porovnania"
+
+#: ../diff.c:1220
+msgid "E98: Cannot read diff output"
+msgstr "E98: Nedá sa èíta» výstup porovnania"
+
+#: ../diff.c:2081
+msgid "E99: Current buffer is not in diff mode"
+msgstr "E99: Aktuálny buffer nie je v porovnávacom móde"
+
+#: ../diff.c:2100
+#, fuzzy
+msgid "E793: No other buffer in diff mode is modifiable"
+msgstr "E100: V porovnávacom móde sa nenachádza iný buffer"
+
+#: ../diff.c:2102
+msgid "E100: No other buffer in diff mode"
+msgstr "E100: V porovnávacom móde sa nenachádza iný buffer"
+
+#: ../diff.c:2112
+msgid "E101: More than two buffers in diff mode, don't know which one to use"
+msgstr "E101: Viac ako dva buffery v porovnávacom móde; neviem, ktorý pou¾i»"
+
+#: ../diff.c:2141
+#, c-format
+msgid "E102: Can't find buffer \"%s\""
+msgstr "E102: Nedá sa nájs» buffer \"%s\""
+
+#: ../diff.c:2152
+#, c-format
+msgid "E103: Buffer \"%s\" is not in diff mode"
+msgstr "E103: Buffer \"%s\" nie je v porovnávacom móde"
+
+#: ../diff.c:2193
+msgid "E787: Buffer changed unexpectedly"
+msgstr ""
+
+# TODO: digraph
+#: ../digraph.c:1598
+msgid "E104: Escape not allowed in digraph"
+msgstr "E104: digraph nesmie obsahova» znak Escape"
+
+#: ../digraph.c:1760
+msgid "E544: Keymap file not found"
+msgstr "E544: Mapa kláves nenájdená"
+
+#: ../digraph.c:1785
+msgid "E105: Using :loadkeymap not in a sourced file"
+msgstr "E105: Pou¾itý príkaz :loadkeymap v súbore, ktorý nie je interpretovaný"
+
+#: ../digraph.c:1821
+msgid "E791: Empty keymap entry"
+msgstr ""
+
+#: ../edit.c:82
+msgid " Keyword completion (^N^P)"
+msgstr " Doplòovanie kµúèových slov (^N^P)"
+
+#. ctrl_x_mode == 0, ^P/^N compl.
+#: ../edit.c:83
+#, fuzzy
+msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+msgstr " ^X re¾im (^]^D^E^F^I^K^L^N^O^P^S^U^V^Y)"
+
+#: ../edit.c:85
+msgid " Whole line completion (^L^N^P)"
+msgstr " Doplòovanie celých riadkov (^L^N^P)"
+
+#: ../edit.c:86
+msgid " File name completion (^F^N^P)"
+msgstr " Doplòovanie názvov súborov (^F^N^P)"
+
+#: ../edit.c:87
+msgid " Tag completion (^]^N^P)"
+msgstr " Doplòovanie tagov (^]^N^P)"
+
+#: ../edit.c:88
+msgid " Path pattern completion (^N^P)"
+msgstr " Doplòovanie vzoru ciest (^N^P)"
+
+#: ../edit.c:89
+msgid " Definition completion (^D^N^P)"
+msgstr " Doplòovanie definícií (^D^N^P)"
+
+#: ../edit.c:91
+msgid " Dictionary completion (^K^N^P)"
+msgstr " Doplòovanie podµa slovníka (^K^N^P)"
+
+#: ../edit.c:92
+msgid " Thesaurus completion (^T^N^P)"
+msgstr " Doplòovanie podµa lexikonu (^T^N^P)"
+
+#: ../edit.c:93
+msgid " Command-line completion (^V^N^P)"
+msgstr " Doplòovanie príkazového riadka (^V^N^P)"
+
+#: ../edit.c:94
+msgid " User defined completion (^U^N^P)"
+msgstr " Doplòovanie celých riadkov (^U^N^P)"
+
+#: ../edit.c:95
+msgid " Omni completion (^O^N^P)"
+msgstr " Doplòovanie tagov (^O^N^P)"
+
+#: ../edit.c:96
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Doplòovanie celých riadkov (^S^N^P)"
+
+#: ../edit.c:97
+msgid " Keyword Local completion (^N^P)"
+msgstr " Miestne doplòovanie kµúèových slov (^N^P)"
+
+#: ../edit.c:100
+msgid "Hit end of paragraph"
+msgstr "Koniec odstavca"
+
+#: ../edit.c:101
+msgid "E839: Completion function changed window"
+msgstr ""
+
+#: ../edit.c:102
+msgid "E840: Completion function deleted text"
+msgstr ""
+
+#: ../edit.c:1847
+msgid "'dictionary' option is empty"
+msgstr "voµba 'dictionary' (slovník) je prázdna"
+
+#: ../edit.c:1848
+msgid "'thesaurus' option is empty"
+msgstr "voµba 'thesaurus' (lexikon) je prázdna"
+
+#: ../edit.c:2655
+#, c-format
+msgid "Scanning dictionary: %s"
+msgstr "prehµadávam slovník %s"
+
+#: ../edit.c:3079
+msgid " (insert) Scroll (^E/^Y)"
+msgstr " (insert) Rolovanie (^E/^Y)"
+
+#: ../edit.c:3081
+msgid " (replace) Scroll (^E/^Y)"
+msgstr " (replace) Rolovanie (^E/^Y)"
+
+#: ../edit.c:3587
+#, c-format
+msgid "Scanning: %s"
+msgstr "Prehµadávam: %s"
+
+#: ../edit.c:3614
+msgid "Scanning tags."
+msgstr "Prehµadávam tagy."
+
+#: ../edit.c:4519
+msgid " Adding"
+msgstr " Pridávam"
+
+#. showmode might reset the internal line pointers, so it must
+#. * be called before line = ml_get(), or when this address is no
+#. * longer needed.  -- Acevedo.
+#.
+#: ../edit.c:4562
+msgid "-- Searching..."
+msgstr "-- Hµadám..."
+
+#: ../edit.c:4618
+msgid "Back at original"
+msgstr "Východzia podoba"
+
+#: ../edit.c:4621
+msgid "Word from other line"
+msgstr "Slovo z iného riadku"
+
+#: ../edit.c:4624
+msgid "The only match"
+msgstr "Jediná zhoda"
+
+#: ../edit.c:4680
+#, c-format
+msgid "match %d of %d"
+msgstr "zhoda %d z %d"
+
+#: ../edit.c:4684
+#, c-format
+msgid "match %d"
+msgstr "zhoda %d"
+
+#: ../eval.c:137
+msgid "E18: Unexpected characters in :let"
+msgstr "E18: Neoèekávané znaky v :let"
+
+#: ../eval.c:138
+#, c-format
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: index v zozname je mimo rozsah: %<PRId64>"
+
+#: ../eval.c:139
+#, c-format
+msgid "E121: Undefined variable: %s"
+msgstr "E121: Nedefinovaná premenná: %s"
+
+#: ../eval.c:140
+msgid "E111: Missing ']'"
+msgstr "E111: Chýba ']'"
+
+#: ../eval.c:141
+#, c-format
+msgid "E686: Argument of %s must be a List"
+msgstr "E686: Argument %s musí by» Zoznam (List)"
+
+#: ../eval.c:143
+#, c-format
+msgid "E712: Argument of %s must be a List or Dictionary"
+msgstr "E712: Argument %s musí by» Zoznam (List) alebo Slovník (Dictionary)"
+
+#: ../eval.c:144
+msgid "E713: Cannot use empty key for Dictionary"
+msgstr "E713: Nemo¾no pou¾i» prázdny kµúè pre Slovník (Dictionary)"
+
+#: ../eval.c:145
+msgid "E714: List required"
+msgstr "E714: vy¾aduje sa Zoznam (List)"
+
+#: ../eval.c:146
+msgid "E715: Dictionary required"
+msgstr "E715: Vy¾aduje sa Slovník (Dictionary)"
+
+#: ../eval.c:147
+#, c-format
+msgid "E118: Too many arguments for function: %s"
+msgstr "E118: Príli¹ mnoho argumentov pre funkciu %s"
+
+#: ../eval.c:148
+#, c-format
+msgid "E716: Key not present in Dictionary: %s"
+msgstr "E716: kµúè sa v Slovníku (Dictionary) nenachádza: %s"
+
+#: ../eval.c:150
+#, c-format
+msgid "E122: Function %s already exists, add ! to replace it"
+msgstr "E122: Funkcia %s u¾ existuje. Pou¾ite ! pre jej nahradenie."
+
+#: ../eval.c:151
+msgid "E717: Dictionary entry already exists"
+msgstr "E717: Záznam v Slovníku (Dictionary) u¾ existuje"
+
+#: ../eval.c:152
+msgid "E718: Funcref required"
+msgstr "E718: Je vy¾adovaný odkaz na Funkciu (Funcref)"
+
+#: ../eval.c:153
+msgid "E719: Cannot use [:] with a Dictionary"
+msgstr "E719: Nemo¾no pou¾it [:] so Slovníkom (Dictionary)"
+
+#: ../eval.c:154
+#, c-format
+msgid "E734: Wrong variable type for %s="
+msgstr "E734: Zlý typ premennej pre %s="
+
+#: ../eval.c:155
+#, c-format
+msgid "E130: Unknown function: %s"
+msgstr "E130: Neznáma funkcia: %s"
+
+#: ../eval.c:156
+#, c-format
+msgid "E461: Illegal variable name: %s"
+msgstr "E461: Neprípustné meno premennej: %s"
+
+#: ../eval.c:157
+#, fuzzy
+msgid "E806: using Float as a String"
+msgstr "E730: Zoznam (List) pou¾itý ako Re»azec (String)"
+
+#: ../eval.c:1830
+msgid "E687: Less targets than List items"
+msgstr "E687: Menej cieµov ako polo¾iek Poµa (List items)"
+
+#: ../eval.c:1834
+msgid "E688: More targets than List items"
+msgstr "E688: Viac cieµov ako polo¾iek Poµa (List items)"
+
+#: ../eval.c:1906
+msgid "Double ; in list of variables"
+msgstr "Dvojitá ; v zozname premenných"
+
+#: ../eval.c:2078
+#, c-format
+msgid "E738: Can't list variables for %s"
+msgstr "E738: Nemo¾no vypísa» premenné pre %s"
+
+#: ../eval.c:2391
+msgid "E689: Can only index a List or Dictionary"
+msgstr "E689: Indexova» mo¾no iba Zoznam (List) alebo Slovník (Dictionary)"
+
+#: ../eval.c:2396
+msgid "E708: [:] must come last"
+msgstr "E708: [:] musí prís» ako posledná"
+
+#: ../eval.c:2439
+msgid "E709: [:] requires a List value"
+msgstr "E709: [:] vy¾aduje hodnotu Poµa (List value)"
+
+#: ../eval.c:2674
+msgid "E710: List value has more items than target"
+msgstr "E710: Hodnota Poµa (List value) má viac polo¾iek ako cieµ"
+
+#: ../eval.c:2678
+msgid "E711: List value has not enough items"
+msgstr "E711: Hodnota Poµa (List value) nemá dostatok polo¾iek"
+
+#: ../eval.c:2867
+msgid "E690: Missing \"in\" after :for"
+msgstr "E690: Chýba \"in\" po :for"
+
+#: ../eval.c:3063
+#, c-format
+msgid "E107: Missing parentheses: %s"
+msgstr "E107: Chýbajú zátvorky: %s"
+
+#: ../eval.c:3263
+#, c-format
+msgid "E108: No such variable: \"%s\""
+msgstr "E108: Premenná \"%s\" neexistuje"
+
+#: ../eval.c:3333
+msgid "E743: variable nested too deep for (un)lock"
+msgstr "E743: premenná je príli¹ vnorená na (od)blokovanie"
+
+#: ../eval.c:3630
+msgid "E109: Missing ':' after '?'"
+msgstr "E109: Po '?' chýba ':'"
+
+#: ../eval.c:3893
+msgid "E691: Can only compare List with List"
+msgstr "E691: Porovnáva» mo¾no iba Zoznam so Zoznamom (List with List)"
+
+#: ../eval.c:3895
+msgid "E692: Invalid operation for Lists"
+msgstr "E692: Neplatná operácia pre Zoznamy (Lists)"
+
+#: ../eval.c:3915
+msgid "E735: Can only compare Dictionary with Dictionary"
+msgstr ""
+"E735: Porovnáva» mo¾no iba Slovník so Slovníkom (Dictionary with Dictionary)"
+
+#: ../eval.c:3917
+msgid "E736: Invalid operation for Dictionary"
+msgstr "E736: Neplatná operácia pre Slovník"
+
+#: ../eval.c:3932
+msgid "E693: Can only compare Funcref with Funcref"
+msgstr ""
+"E693: Porovnáva» mo¾no iba odkaz na Funkciu s odkazom na Funkciu (Funcref "
+"with Funcref)"
+
+#: ../eval.c:3934
+msgid "E694: Invalid operation for Funcrefs"
+msgstr "E694: Neplatná operácia pre odkazy na Funkcie (Funcrefs)"
+
+#: ../eval.c:4277
+#, fuzzy
+msgid "E804: Cannot use '%' with Float"
+msgstr "E719: Nemo¾no pou¾it [:] so Slovníkom (Dictionary)"
+
+#: ../eval.c:4478
+msgid "E110: Missing ')'"
+msgstr "E110: Chýba ')'"
+
+#: ../eval.c:4609
+msgid "E695: Cannot index a Funcref"
+msgstr "E695: Nemo¾no indexova» odkaz na Funkciu (Funcref)"
+
+#: ../eval.c:4839
+#, c-format
+msgid "E112: Option name missing: %s"
+msgstr "E112: Chýba meno voµby: %s"
+
+#: ../eval.c:4855
+#, c-format
+msgid "E113: Unknown option: %s"
+msgstr "E113: Neznáma voµba: %s"
+
+#: ../eval.c:4904
+#, c-format
+msgid "E114: Missing quote: %s"
+msgstr "E114: Chýbajú úvodzovky: %s"
+
+#: ../eval.c:5020
+#, c-format
+msgid "E115: Missing quote: %s"
+msgstr "E115: Chýbajú úvodzovky: %s"
+
+#: ../eval.c:5084
+#, c-format
+msgid "E696: Missing comma in List: %s"
+msgstr "E696: Chýba èiarka v Zozname: %s"
+
+#: ../eval.c:5091
+#, c-format
+msgid "E697: Missing end of List ']': %s"
+msgstr "E697: Chýba koniec Zoznamu (List) ']': %s"
+
+#: ../eval.c:6475
+#, c-format
+msgid "E720: Missing colon in Dictionary: %s"
+msgstr "E720: Chýba dvojbodka v Slovníku (Dictionary): %s"
+
+#: ../eval.c:6499
+#, c-format
+msgid "E721: Duplicate key in Dictionary: \"%s\""
+msgstr "E721: Duplikovaný kµúè v Slovníku (Dictionary): \"%s\""
+
+#: ../eval.c:6517
+#, c-format
+msgid "E722: Missing comma in Dictionary: %s"
+msgstr "E722: Chýba èiarka v Slovníku (Dictionary): %s"
+
+#: ../eval.c:6524
+#, c-format
+msgid "E723: Missing end of Dictionary '}': %s"
+msgstr "E723: Chýba koniec Slovníka (Dictionary) '}': %s"
+
+#: ../eval.c:6555
+msgid "E724: variable nested too deep for displaying"
+msgstr "E724: premenná je vnorená príli¹ hlboko pre zobrazenie"
+
+#: ../eval.c:7188
+#, fuzzy, c-format
+msgid "E740: Too many arguments for function %s"
+msgstr "E118: Príli¹ mnoho argumentov pre funkciu %s"
+
+#: ../eval.c:7190
+#, fuzzy, c-format
+msgid "E116: Invalid arguments for function %s"
+msgstr "E118: Príli¹ mnoho argumentov pre funkciu %s"
+
+#: ../eval.c:7377
+#, fuzzy, c-format
+msgid "E117: Unknown function: %s"
+msgstr "E130: Neznáma funkcia: %s"
+
+#: ../eval.c:7383
+#, fuzzy, c-format
+msgid "E119: Not enough arguments for function: %s"
+msgstr "E118: Príli¹ mnoho argumentov pre funkciu %s"
+
+#: ../eval.c:7387
+#, fuzzy, c-format
+msgid "E120: Using <SID> not in a script context: %s"
+msgstr "E81: Pou¾itie <SID> mimo kontext skriptu"
+
+#: ../eval.c:7391
+#, fuzzy, c-format
+msgid "E725: Calling dict function without Dictionary: %s"
+msgstr "E720: Chýba dvojbodka v Slovníku (Dictionary): %s"
+
+#: ../eval.c:7453
+#, fuzzy
+msgid "E808: Number or Float required"
+msgstr "E521: Po = je vy¾adované èíslo"
+
+#: ../eval.c:7503
+#, fuzzy
+msgid "add() argument"
+msgstr "Chybný argument pre"
+
+#: ../eval.c:7907
+msgid "E699: Too many arguments"
+msgstr "E699: Príli¹ mnoho argumentov"
+
+#: ../eval.c:8073
+#, fuzzy
+msgid "E785: complete() can only be used in Insert mode"
+msgstr "E328: Ponuka existuje iba v inom móde"
+
+#: ../eval.c:8156
+msgid "&Ok"
+msgstr "&Ok"
+
+#: ../eval.c:8676
+#, c-format
+msgid "E737: Key already exists: %s"
+msgstr "E737: Kµúè u¾ existuje: %s"
+
+#: ../eval.c:8692
+msgid "extend() argument"
+msgstr ""
+
+#: ../eval.c:8915
+#, fuzzy
+msgid "map() argument"
+msgstr "vim [argumenty] "
+
+#: ../eval.c:8916
+msgid "filter() argument"
+msgstr ""
+
+#: ../eval.c:9229
+#, c-format
+msgid "+-%s%3ld lines: "
+msgstr "+-%s%3ld riadky: "
+
+#: ../eval.c:9291
+#, c-format
+msgid "E700: Unknown function: %s"
+msgstr "E700: Neznáma funkcia: %s"
+
+#: ../eval.c:10729
+msgid "called inputrestore() more often than inputsave()"
+msgstr "funkcia inputrestore() volaná èastej¹ie ako inputsave()"
+
+#: ../eval.c:10771
+#, fuzzy
+msgid "insert() argument"
+msgstr "Príli¹ mnoho upravovacích argumentov"
+
+#: ../eval.c:10841
+#, fuzzy
+msgid "E786: Range not allowed"
+msgstr "E745: Rozsah nie je povolený"
+
+#: ../eval.c:11140
+msgid "E701: Invalid type for len()"
+msgstr "E701: Neplatný typ pre len()"
+
+#: ../eval.c:11980
+msgid "E726: Stride is zero"
+msgstr "E726: Krok je nulový"
+
+#: ../eval.c:11982
+msgid "E727: Start past end"
+msgstr "E727: Zaèiatok presahuje koniec"
+
+#: ../eval.c:12024 ../eval.c:15297
+msgid "<empty>"
+msgstr "<prázdny>"
+
+#: ../eval.c:12282
+msgid "remove() argument"
+msgstr ""
+
+#: ../eval.c:12466
+msgid "E655: Too many symbolic links (cycle?)"
+msgstr "E655: Príli¹ mnoho symbolických odkazov (sluèka?)"
+
+#: ../eval.c:12593
+msgid "reverse() argument"
+msgstr ""
+
+#: ../eval.c:13721
+msgid "sort() argument"
+msgstr ""
+
+#: ../eval.c:13721
+#, fuzzy
+msgid "uniq() argument"
+msgstr "Chybný argument pre"
+
+#: ../eval.c:13776
+msgid "E702: Sort compare function failed"
+msgstr "E702: Funkcia na utriedenie/porovnanie zlyhala"
+
+#: ../eval.c:13806
+#, fuzzy
+msgid "E882: Uniq compare function failed"
+msgstr "E702: Funkcia na utriedenie/porovnanie zlyhala"
+
+#: ../eval.c:14085
+msgid "(Invalid)"
+msgstr "(Chybný)"
+
+#: ../eval.c:14590
+msgid "E677: Error writing temp file"
+msgstr "E677: Chyba pri zápise doèasného súboru"
+
+#: ../eval.c:16159
+#, fuzzy
+msgid "E805: Using a Float as a Number"
+msgstr "E745: Zoznam (List) pou¾itý ako èíslo"
+
+#: ../eval.c:16162
+msgid "E703: Using a Funcref as a Number"
+msgstr "E703: Pou¾itý odkaz na Funkciu (Funcref) ako èíslo"
+
+#: ../eval.c:16170
+msgid "E745: Using a List as a Number"
+msgstr "E745: Zoznam (List) pou¾itý ako èíslo"
+
+#: ../eval.c:16173
+msgid "E728: Using a Dictionary as a Number"
+msgstr "E728: Slovník (Dictionary) pou¾itý ako èíslo"
+
+#: ../eval.c:16259
+msgid "E729: using Funcref as a String"
+msgstr "E729: Odkaz na Funkciu (Funcref) pou¾itý ako Re»azec (String)"
+
+#: ../eval.c:16262
+msgid "E730: using List as a String"
+msgstr "E730: Zoznam (List) pou¾itý ako Re»azec (String)"
+
+#: ../eval.c:16265
+msgid "E731: using Dictionary as a String"
+msgstr "E731: Slovník (Dictionary) pou¾itý ako Re»azec (String)"
+
+#: ../eval.c:16619
+#, c-format
+msgid "E706: Variable type mismatch for: %s"
+msgstr "E706: Typ premennej sa nezhoduje: %s"
+
+#: ../eval.c:16705
+#, fuzzy, c-format
+msgid "E795: Cannot delete variable %s"
+msgstr "E738: Nemo¾no vypísa» premenné pre %s"
+
+#: ../eval.c:16724
+#, c-format
+msgid "E704: Funcref variable name must start with a capital: %s"
+msgstr ""
+"E704: Premenná typu odkaz na Funkciu (Funcref) musí zaèína» s veµkým "
+"písmenom: %s"
+
+#: ../eval.c:16732
+#, c-format
+msgid "E705: Variable name conflicts with existing function: %s"
+msgstr "E705: Meno premennej je v konflikte s existujúcou funkciou: %s"
+
+#: ../eval.c:16763
+#, c-format
+msgid "E741: Value is locked: %s"
+msgstr "E741: Hodnota je uzamknutá: %s"
+
+#: ../eval.c:16764 ../eval.c:16769 ../message.c:1839
+msgid "Unknown"
+msgstr "Neznámy"
+
+#: ../eval.c:16768
+#, c-format
+msgid "E742: Cannot change value of %s"
+msgstr "E742: Nemo¾no zmeni» hodnotu %s"
+
+#: ../eval.c:16838
+msgid "E698: variable nested too deep for making a copy"
+msgstr "E698: premenná je vnorená príli¹ hlboko pre skopírovanie"
+
+#: ../eval.c:17249
+#, fuzzy, c-format
+msgid "E123: Undefined function: %s"
+msgstr "E130: Neznáma funkcia: %s"
+
+#: ../eval.c:17260
+#, c-format
+msgid "E124: Missing '(': %s"
+msgstr "E124: Chýba '(': %s"
+
+#: ../eval.c:17293
+#, fuzzy
+msgid "E862: Cannot use g: here"
+msgstr "E284: Nedajú sa nastavi» IC hodnoty"
+
+#: ../eval.c:17312
+#, c-format
+msgid "E125: Illegal argument: %s"
+msgstr "E125: Neprípustný argument: %s"
+
+#: ../eval.c:17323
+#, fuzzy, c-format
+msgid "E853: Duplicate argument name: %s"
+msgstr "E125: Neprípustný argument: %s"
+
+#: ../eval.c:17416
+msgid "E126: Missing :endfunction"
+msgstr "E126: Chýba :endfunction"
+
+#: ../eval.c:17537
+#, fuzzy, c-format
+msgid "E707: Function name conflicts with variable: %s"
+msgstr "E746: Meno funkcie sa nezhoduje s menom interpretovaného súboru: %s"
+
+#: ../eval.c:17549
+#, fuzzy, c-format
+msgid "E127: Cannot redefine function %s: It is in use"
+msgstr "E131: Nedá sa vymaza» funkcia %s: je pou¾ívaná"
+
+#: ../eval.c:17604
+#, c-format
+msgid "E746: Function name does not match script file name: %s"
+msgstr "E746: Meno funkcie sa nezhoduje s menom interpretovaného súboru: %s"
+
+#: ../eval.c:17716
+msgid "E129: Function name required"
+msgstr "E129: Je vy¾adované meno funkcie"
+
+#: ../eval.c:17824
+#, fuzzy, c-format
+msgid "E128: Function name must start with a capital or \"s:\": %s"
+msgstr ""
+"E128: Názov funkcie musí zaèína» veµkým písmenom alebo obsahova» dvojbodku: "
+"%s"
+
+#: ../eval.c:17833
+#, fuzzy, c-format
+msgid "E884: Function name cannot contain a colon: %s"
+msgstr ""
+"E128: Názov funkcie musí zaèína» veµkým písmenom alebo obsahova» dvojbodku: "
+"%s"
+
+#: ../eval.c:18336
+#, c-format
+msgid "E131: Cannot delete function %s: It is in use"
+msgstr "E131: Nedá sa vymaza» funkcia %s: je pou¾ívaná"
+
+#: ../eval.c:18441
+msgid "E132: Function call depth is higher than 'maxfuncdepth'"
+msgstr "E132: Zanorenie funkcií je hlb¹ie ne¾ 'maxfuncdepth'"
+
+#: ../eval.c:18568
+#, c-format
+msgid "calling %s"
+msgstr "volám %s"
+
+#: ../eval.c:18651
+#, c-format
+msgid "%s aborted"
+msgstr "%s zru¹ený"
+
+#: ../eval.c:18653
+#, c-format
+msgid "%s returning #%<PRId64>"
+msgstr "%s vrátilo #%<PRId64>"
+
+#: ../eval.c:18670
+#, c-format
+msgid "%s returning %s"
+msgstr "%s vrátilo %s"
+
+#: ../eval.c:18691 ../ex_cmds2.c:2695
+#, c-format
+msgid "continuing in %s"
+msgstr "pokraèujem v %s"
+
+#: ../eval.c:18795
+msgid "E133: :return not inside a function"
+msgstr "E133: :return mimo funkciu"
+
+#: ../eval.c:19159
+msgid ""
+"\n"
+"# global variables:\n"
+msgstr ""
+"\n"
+"# globálne premenné:\n"
+
+#: ../eval.c:19254
+msgid ""
+"\n"
+"\tLast set from "
+msgstr ""
+"\n"
+"\tPosledné nastavenie z "
+
+#: ../eval.c:19272
+#, fuzzy
+msgid "No old files"
+msgstr "®iadne vlo¾ené súbory"
+
+#: ../ex_cmds.c:122
+#, c-format
+msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
+msgstr "<%s>%s%s  %d,  ¹estnástkovo %02x,  osmièkovo %03o"
+
+#: ../ex_cmds.c:145
+#, c-format
+msgid "> %d, Hex %04x, Octal %o"
+msgstr "> %d,  ¹estnástkovo %04x,  osmièkovo %o"
+
+#: ../ex_cmds.c:146
+#, c-format
+msgid "> %d, Hex %08x, Octal %o"
+msgstr "> %d,  ¹estnástkovo %08x,  osmièkovo %o"
+
+#: ../ex_cmds.c:684
+msgid "E134: Move lines into themselves"
+msgstr "E134: Prekrytie riadkov sebou samými"
+
+#: ../ex_cmds.c:747
+msgid "1 line moved"
+msgstr "1 riadok presunutý"
+
+#: ../ex_cmds.c:749
+#, c-format
+msgid "%<PRId64> lines moved"
+msgstr "%<PRId64> riadkov presunutých"
+
+#: ../ex_cmds.c:1175
+#, c-format
+msgid "%<PRId64> lines filtered"
+msgstr "%<PRId64> riadkov filtrovaných"
+
+#: ../ex_cmds.c:1194
+msgid "E135: *Filter* Autocommands must not change current buffer"
+msgstr "E135: Automatické príkazy *Filter* nesmú meni» aktuálny buffer"
+
+#: ../ex_cmds.c:1244
+msgid "[No write since last change]\n"
+msgstr "[Neulo¾ené zmeny]\n"
+
+#: ../ex_cmds.c:1424
+#, c-format
+msgid "%sviminfo: %s in line: "
+msgstr "%sviminfo: %s na riadku: "
+
+#: ../ex_cmds.c:1431
+msgid "E136: viminfo: Too many errors, skipping rest of file"
+msgstr "E136: viminfo: príli¹ mnoho chýb, preskakujem zbytok súboru"
+
+#: ../ex_cmds.c:1458
+#, c-format
+msgid "Reading viminfo file \"%s\"%s%s%s"
+msgstr "Èítam viminfo súbor \"%s\"%s%s%s"
+
+#: ../ex_cmds.c:1460
+msgid " info"
+msgstr " informácie"
+
+#: ../ex_cmds.c:1461
+msgid " marks"
+msgstr " znaèky"
+
+#: ../ex_cmds.c:1462
+#, fuzzy
+msgid " oldfiles"
+msgstr "®iadne vlo¾ené súbory"
+
+#: ../ex_cmds.c:1463
+msgid " FAILED"
+msgstr " ZLYHALO"
+
+#. avoid a wait_return for this message, it's annoying
+#: ../ex_cmds.c:1541
+#, c-format
+msgid "E137: Viminfo file is not writable: %s"
+msgstr "E137: Do viminfo súboru %s sa nedá zapisova»"
+
+#: ../ex_cmds.c:1626
+#, c-format
+msgid "E138: Can't write viminfo file %s!"
+msgstr "E138: Nedá sa ulo¾i» viminfo súbor %s!"
+
+#: ../ex_cmds.c:1635
+#, c-format
+msgid "Writing viminfo file \"%s\""
+msgstr "Ukládám viminfo súboru \"%s\""
+
+#. Write the info:
+#: ../ex_cmds.c:1720
+#, c-format
+msgid "# This viminfo file was generated by Vim %s.\n"
+msgstr "# Tento viminfo súbor bol vytvorený editorom Vim %s.\n"
+
+#: ../ex_cmds.c:1722
+msgid ""
+"# You may edit it if you're careful!\n"
+"\n"
+msgstr ""
+"# Pokiaµ budete opatrný, mô¾ete ho upravova».\n"
+"\n"
+
+#: ../ex_cmds.c:1723
+msgid "# Value of 'encoding' when this file was written\n"
+msgstr "# Hodnota 'encoding' (kódovania) poèas zápisu tohoto súboru\n"
+
+#: ../ex_cmds.c:1800
+msgid "Illegal starting char"
+msgstr "Neprípustný zaèiatoèný znak"
+
+#: ../ex_cmds.c:2162
+msgid "Write partial file?"
+msgstr "Ulo¾i» neúplný súbor?"
+
+#: ../ex_cmds.c:2166
+msgid "E140: Use ! to write partial buffer"
+msgstr "E140: Pou¾ite ! pre ulo¾enie neúplného bufferu"
+
+#: ../ex_cmds.c:2281
+#, c-format
+msgid "Overwrite existing file \"%s\"?"
+msgstr "Prepísa» existujúci súbor \"%s\"?"
+
+#: ../ex_cmds.c:2317
+#, c-format
+msgid "Swap file \"%s\" exists, overwrite anyway?"
+msgstr "Odkladací súbor \"%s\" existuje, aj tak prepísa»?"
+
+#: ../ex_cmds.c:2326
+#, c-format
+msgid "E768: Swap file exists: %s (:silent! overrides)"
+msgstr "E768: Odkladací súbor existuje: %s (pou¾ite :silent! pre prepísanie)"
+
+#: ../ex_cmds.c:2381
+#, c-format
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: ®iadny názov súboru pre buffer %<PRId64>"
+
+#: ../ex_cmds.c:2412
+msgid "E142: File not written: Writing is disabled by 'write' option"
+msgstr "E142: Súbor nebol ulo¾ený: ukladanie je zakázané voµbou 'write'"
+
+#: ../ex_cmds.c:2434
+#, c-format
+msgid ""
+"'readonly' option is set for \"%s\".\n"
+"Do you wish to write anyway?"
+msgstr ""
+"Pre \"%s\" je nastavená voµba 'readonly' (iba na èítanie).\n"
+"Prajete si aj tak ulo¾i»?"
+
+#: ../ex_cmds.c:2439
+#, c-format
+msgid ""
+"File permissions of \"%s\" are read-only.\n"
+"It may still be possible to write it.\n"
+"Do you wish to try?"
+msgstr ""
+
+#: ../ex_cmds.c:2451
+#, fuzzy, c-format
+msgid "E505: \"%s\" is read-only (add ! to override)"
+msgstr "je iba pre èítanie (pou¾ite ! pre vynútenie)"
+
+#: ../ex_cmds.c:3120
+#, c-format
+msgid "E143: Autocommands unexpectedly deleted new buffer %s"
+msgstr "E143: Automatické príkazy neoèakávane zmazali nový buffer %s"
+
+#: ../ex_cmds.c:3313
+msgid "E144: non-numeric argument to :z"
+msgstr "E144: neèíselný argument pre :z"
+
+#: ../ex_cmds.c:3498
+msgid "E146: Regular expressions can't be delimited by letters"
+msgstr "E146: Regulárne výrazy nesmú by» oddelené písmenami"
+
+#: ../ex_cmds.c:3964
+#, c-format
+msgid "replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
+msgstr "nahradi» %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
+
+#: ../ex_cmds.c:4379
+msgid "(Interrupted) "
+msgstr "(preru¹ený) "
+
+#: ../ex_cmds.c:4384
+msgid "1 match"
+msgstr "1 zhoda"
+
+#: ../ex_cmds.c:4384
+msgid "1 substitution"
+msgstr "1 nahradenie"
+
+#: ../ex_cmds.c:4387
+#, c-format
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> zhôd"
+
+#: ../ex_cmds.c:4388
+#, c-format
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> nahradení"
+
+#: ../ex_cmds.c:4392
+msgid " on 1 line"
+msgstr " na 1 riadku"
+
+#: ../ex_cmds.c:4395
+#, c-format
+msgid " on %<PRId64> lines"
+msgstr " na %<PRId64> riadkov"
+
+#: ../ex_cmds.c:4438
+msgid "E147: Cannot do :global recursive"
+msgstr "E147: :global sa nedá vola» rekurzívne"
+
+#: ../ex_cmds.c:4467
+msgid "E148: Regular expression missing from global"
+msgstr "E148: Pri príkaze global chýba regulárny výraz"
+
+#: ../ex_cmds.c:4508
+#, c-format
+msgid "Pattern found in every line: %s"
+msgstr "Vzor nájdený na ka¾dom riadku: %s"
+
+#: ../ex_cmds.c:4510
+#, fuzzy, c-format
+msgid "Pattern not found: %s"
+msgstr "Vzor nenájdený"
+
+#: ../ex_cmds.c:4587
+msgid ""
+"\n"
+"# Last Substitute String:\n"
+"$"
+msgstr ""
+"\n"
+"# Posledný zamieòaný re»azec:\n"
+"$"
+
+#: ../ex_cmds.c:4679
+msgid "E478: Don't panic!"
+msgstr "E478: ®iadnu paniku!"
+
+#: ../ex_cmds.c:4717
+#, c-format
+msgid "E661: Sorry, no '%s' help for %s"
+msgstr "E661: ¥utujem, ¾iadny '%s' pomocník pre %s"
+
+#: ../ex_cmds.c:4719
+#, c-format
+msgid "E149: Sorry, no help for %s"
+msgstr "E149: ¥utujem, pre %s nie je ¾iadny pomocník"
+
+#: ../ex_cmds.c:4751
+#, c-format
+msgid "Sorry, help file \"%s\" not found"
+msgstr "¥utujem, súbor \"%s\" s pomocníkom nebol nájdený"
+
+#: ../ex_cmds.c:5323
+#, c-format
+msgid "E150: Not a directory: %s"
+msgstr "E150: %s nie je adresárom"
+
+#: ../ex_cmds.c:5446
+#, c-format
+msgid "E152: Cannot open %s for writing"
+msgstr "E152: %s sa nedá sa otvori» pre zápis"
+
+#: ../ex_cmds.c:5471
+#, c-format
+msgid "E153: Unable to open %s for reading"
+msgstr "E153: %s as nedá otvori» pre èítanie"
+
+#: ../ex_cmds.c:5500
+#, c-format
+msgid "E670: Mix of help file encodings within a language: %s"
+msgstr "E670: Rôzne kódovania pre súbory s pomocníkom pre jazyk: %s"
+
+#: ../ex_cmds.c:5565
+#, c-format
+msgid "E154: Duplicate tag \"%s\" in file %s/%s"
+msgstr "E154: Duplicitný tag \"%s\" v súbore %s/%s"
+
+#: ../ex_cmds.c:5687
+#, c-format
+msgid "E160: Unknown sign command: %s"
+msgstr "E160: Neznámu príkaz pre znaèky: %s"
+
+#: ../ex_cmds.c:5704
+msgid "E156: Missing sign name"
+msgstr "E156: Chýba meno pre znaèku"
+
+#: ../ex_cmds.c:5746
+msgid "E612: Too many signs defined"
+msgstr "E612: Príli¹ mnoho definovaných znaèiek"
+
+#: ../ex_cmds.c:5813
+#, c-format
+msgid "E239: Invalid sign text: %s"
+msgstr "E239: Chybný text znaèky: %s"
+
+#: ../ex_cmds.c:5844 ../ex_cmds.c:6035
+#, c-format
+msgid "E155: Unknown sign: %s"
+msgstr "E155: Neznáma znaèka: %s"
+
+#: ../ex_cmds.c:5877
+msgid "E159: Missing sign number"
+msgstr "E159: Chýba èislo znaèky"
+
+#: ../ex_cmds.c:5971
+#, c-format
+msgid "E158: Invalid buffer name: %s"
+msgstr "E158: Chybné meno bufferu: %s"
+
+#: ../ex_cmds.c:6008
+#, c-format
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: Chybné ID znaèky: %<PRId64>"
+
+#: ../ex_cmds.c:6066
+msgid " (not supported)"
+msgstr " (nepodporované)"
+
+#: ../ex_cmds.c:6169
+msgid "[Deleted]"
+msgstr "[vymazaný]"
+
+#: ../ex_cmds2.c:139
+msgid "Entering Debug mode.  Type \"cont\" to continue."
+msgstr "Spú¹»am re¾im ladenia. Pre ukonèenie napí¹te \"cont\"."
+
+#: ../ex_cmds2.c:143 ../ex_docmd.c:759
+#, c-format
+msgid "line %<PRId64>: %s"
+msgstr "riadok %<PRId64>: %s"
+
+#: ../ex_cmds2.c:145
+#, c-format
+msgid "cmd: %s"
+msgstr "príkaz: %s"
+
+#: ../ex_cmds2.c:322
+#, c-format
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "Bod preru¹enia v \"%s%s\" na riadku %<PRId64>"
+
+#: ../ex_cmds2.c:581
+#, c-format
+msgid "E161: Breakpoint not found: %s"
+msgstr "E161: Bod preru¹enia nenájdený: %s"
+
+#: ../ex_cmds2.c:611
+msgid "No breakpoints defined"
+msgstr "Neboli definovné ¾iadne body preru¹enia"
+
+#: ../ex_cmds2.c:617
+#, c-format
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  riadok %<PRId64>"
+
+#: ../ex_cmds2.c:942
+#, fuzzy
+msgid "E750: First use \":profile start {fname}\""
+msgstr "E750: Najprv pou¾ite príkaz :profile start <meno_suboru>"
+
+#: ../ex_cmds2.c:1269
+#, c-format
+msgid "Save changes to \"%s\"?"
+msgstr "Ulo¾i» zmeny do \"%s\"?"
+
+#: ../ex_cmds2.c:1271 ../ex_docmd.c:8851
+msgid "Untitled"
+msgstr "Bez mena"
+
+#: ../ex_cmds2.c:1421
+#, c-format
+msgid "E162: No write since last change for buffer \"%s\""
+msgstr "E162: Buffer \"%s\" obsahuje neulo¾ené zmeny"
+
+#: ../ex_cmds2.c:1480
+msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
+msgstr ""
+"Varovanie: Neèakaný vstup do iného bufferu (skontrolujte automatické príkazy)"
+
+#: ../ex_cmds2.c:1826
+msgid "E163: There is only one file to edit"
+msgstr "E163: Pre úpravu bol zadaný iba jeden súbor"
+
+#: ../ex_cmds2.c:1828
+msgid "E164: Cannot go before first file"
+msgstr "E164: Nedá sa preskoèi» pred prvý súbor"
+
+#: ../ex_cmds2.c:1830
+msgid "E165: Cannot go beyond last file"
+msgstr "E165: Nedá sa preskoèi» za posledný súbor"
+
+#: ../ex_cmds2.c:2175
+#, c-format
+msgid "E666: compiler not supported: %s"
+msgstr "E666: prekladaè nie je podporovaný: %s"
+
+#: ../ex_cmds2.c:2257
+#, c-format
+msgid "Searching for \"%s\" in \"%s\""
+msgstr "Hµadám \"%s\" v \"%s\""
+
+#: ../ex_cmds2.c:2284
+#, c-format
+msgid "Searching for \"%s\""
+msgstr "Hµadám \"%s\""
+
+#: ../ex_cmds2.c:2307
+#, c-format
+msgid "not found in 'runtimepath': \"%s\""
+msgstr "súbor \"%s\" nebol nájdený v 'runtimepath'"
+
+#: ../ex_cmds2.c:2472
+#, c-format
+msgid "Cannot source a directory: \"%s\""
+msgstr "Nemo¾no interpretova» adresár: \"%s\""
+
+#: ../ex_cmds2.c:2518
+#, c-format
+msgid "could not source \"%s\""
+msgstr "nedá sa interpretova» \"%s\""
+
+#: ../ex_cmds2.c:2520
+#, c-format
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "riadok %<PRId64>: nemô¾no interpretova» \"%s\""
+
+#: ../ex_cmds2.c:2535
+#, c-format
+msgid "sourcing \"%s\""
+msgstr "interpretujem \"%s\""
+
+#: ../ex_cmds2.c:2537
+#, c-format
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "riadok %<PRId64>: interpretujem \"%s\""
+
+#: ../ex_cmds2.c:2693
+#, c-format
+msgid "finished sourcing %s"
+msgstr "dokonèená interpretácia %s"
+
+#: ../ex_cmds2.c:2765
+#, fuzzy
+msgid "modeline"
+msgstr "1 nový riadok"
+
+#: ../ex_cmds2.c:2767
+#, fuzzy
+msgid "--cmd argument"
+msgstr "vim [argumenty] "
+
+#: ../ex_cmds2.c:2769
+#, fuzzy
+msgid "-c argument"
+msgstr "vim [argumenty] "
+
+#: ../ex_cmds2.c:2771
+msgid "environment variable"
+msgstr ""
+
+#: ../ex_cmds2.c:2773
+#, fuzzy
+msgid "error handler"
+msgstr "Chyba a preru¹ené"
+
+#: ../ex_cmds2.c:3020
+msgid "W15: Warning: Wrong line separator, ^M may be missing"
+msgstr "W15: Varovanie: chybný oddeµovaè riadkov. Mo¾no chýba ^M"
+
+#: ../ex_cmds2.c:3139
+msgid "E167: :scriptencoding used outside of a sourced file"
+msgstr "E167: príkaz :scriptencoding pou¾itý mimo interpretovaný súbor"
+
+#: ../ex_cmds2.c:3166
+msgid "E168: :finish used outside of a sourced file"
+msgstr "E168: príkaz :finish pou¾itý mimo interpretovaný súbor"
+
+#: ../ex_cmds2.c:3389
+#, c-format
+msgid "Current %slanguage: \"%s\""
+msgstr "Aktuálny %sjazyk: \"%s\""
+
+#: ../ex_cmds2.c:3404
+#, c-format
+msgid "E197: Cannot set language to \"%s\""
+msgstr "E197: Nedá sa nastavi» jazyk na \"%s\""
+
+#. don't redisplay the window
+#. don't wait for return
+#: ../ex_docmd.c:387
+msgid "Entering Ex mode.  Type \"visual\" to go to Normal mode."
+msgstr "Spú¹»am Ex re¾im. Napí¹te \"visual\" pre návrat do Normálneho re¾imu."
+
+#: ../ex_docmd.c:428
+msgid "E501: At end-of-file"
+msgstr "E501: Koniec súboru"
+
+#: ../ex_docmd.c:513
+msgid "E169: Command too recursive"
+msgstr "E169: Príkaz je príli¹ rekurzívny"
+
+#: ../ex_docmd.c:1006
+#, c-format
+msgid "E605: Exception not caught: %s"
+msgstr "E605: Výnimka nezachytená: %s"
+
+#: ../ex_docmd.c:1085
+msgid "End of sourced file"
+msgstr "Koniec interpretovaného súboru"
+
+#: ../ex_docmd.c:1086
+msgid "End of function"
+msgstr "Koniec funkcie"
+
+#: ../ex_docmd.c:1628
+msgid "E464: Ambiguous use of user-defined command"
+msgstr "E464: Nejednoznaèné pou¾itie pou¾ívateµom definovaného príkazu"
+
+#: ../ex_docmd.c:1638
+msgid "E492: Not an editor command"
+msgstr "E492: Nie je príkazom editoru"
+
+#: ../ex_docmd.c:1729
+msgid "E493: Backwards range given"
+msgstr "E493: Zadaný spätný rozsah"
+
+#: ../ex_docmd.c:1733
+msgid "Backwards range given, OK to swap"
+msgstr "Zadaný spätný rozsah. OK pre zámenu"
+
+#. append
+#. typed wrong
+#: ../ex_docmd.c:1787
+msgid "E494: Use w or w>>"
+msgstr "E494: Pou¾ite w alebo w>>"
+
+#: ../ex_docmd.c:3454
+msgid "E319: The command is not available in this version"
+msgstr "E319: ¥utujem, ale tento príkaz nie je dostupný v tejto verzii"
+
+#: ../ex_docmd.c:3752
+msgid "E172: Only one file name allowed"
+msgstr "E172: Prípustný je iba jeden názov súboru"
+
+#: ../ex_docmd.c:4238
+msgid "1 more file to edit.  Quit anyway?"
+msgstr "E¹te zostáva 1 súbor k úprave. Chcete napriek tomu ukonèi» editor?"
+
+#: ../ex_docmd.c:4242
+#, c-format
+msgid "%d more files to edit.  Quit anyway?"
+msgstr "E¹te zostáva %d súborov k úprave. Chcete napriek tomu ukonèi» editor?"
+
+#: ../ex_docmd.c:4248
+msgid "E173: 1 more file to edit"
+msgstr "E173: E¹te zostáva 1 súbor k úprave."
+
+#: ../ex_docmd.c:4250
+#, c-format
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: E¹te zostáva %<PRId64> súborov k úprave."
+
+#: ../ex_docmd.c:4320
+msgid "E174: Command already exists: add ! to replace it"
+msgstr "E174: Príkaz u¾ existuje: pou¾ite ! pre predefinovanie"
+
+#: ../ex_docmd.c:4432
+msgid ""
+"\n"
+"    Name        Args Range Complete  Definition"
+msgstr ""
+"\n"
+"    Meno       Args Rozsah Úplnos»  Definícia"
+
+#: ../ex_docmd.c:4516
+msgid "No user-defined commands found"
+msgstr "Neboli nájdené ¾iadne pou¾ivateµom definované príkazy"
+
+#: ../ex_docmd.c:4538
+msgid "E175: No attribute specified"
+msgstr "E175: Neboli zadané ¾iadne vlastnosti"
+
+#: ../ex_docmd.c:4583
+msgid "E176: Invalid number of arguments"
+msgstr "E176: Chybný poèet argumentov"
+
+#: ../ex_docmd.c:4594
+msgid "E177: Count cannot be specified twice"
+msgstr "E177: Poèet nemô¾e by» zadaný dvakrát"
+
+#: ../ex_docmd.c:4603
+msgid "E178: Invalid default value for count"
+msgstr "E178: Chybná implicitná hodnota pre poèet"
+
+#: ../ex_docmd.c:4625
+msgid "E179: argument required for -complete"
+msgstr "E179: pre doplnenie (-complete) je potrebný argument"
+
+#: ../ex_docmd.c:4635
+#, c-format
+msgid "E181: Invalid attribute: %s"
+msgstr "E181: Chybná vlastnos»: %s"
+
+#: ../ex_docmd.c:4678
+msgid "E182: Invalid command name"
+msgstr "E182: Chybné meno príkazu"
+
+#: ../ex_docmd.c:4691
+msgid "E183: User defined commands must start with an uppercase letter"
+msgstr "E183: Pou¾ívateµom definované príkazy musia zaèína» veµkým písmenom"
+
+#: ../ex_docmd.c:4696
+#, fuzzy
+msgid "E841: Reserved name, cannot be used for user defined command"
+msgstr "E464: Nejednoznaèné pou¾itie pou¾ívateµom definovaného príkazu"
+
+#: ../ex_docmd.c:4751
+#, c-format
+msgid "E184: No such user-defined command: %s"
+msgstr "E184: Pou¾ívateµom definovaný príkaz %s neexistuje"
+
+#: ../ex_docmd.c:5219
+#, c-format
+msgid "E180: Invalid complete value: %s"
+msgstr "E180: Chybná hodnota doplnenia: %s"
+
+#: ../ex_docmd.c:5225
+msgid "E468: Completion argument only allowed for custom completion"
+msgstr ""
+"E468: Argument doplnenia je povolený iba pre vlastné dopåòania (completion)"
+
+#: ../ex_docmd.c:5231
+msgid "E467: Custom completion requires a function argument"
+msgstr "E467: Vlastné doplnenia vy¾adujú meno funkcie ako argument"
+
+#: ../ex_docmd.c:5257
+#, fuzzy, c-format
+msgid "E185: Cannot find color scheme '%s'"
+msgstr "E185: Schéma farieb %s nenájdená"
+
+#: ../ex_docmd.c:5263
+msgid "Greetings, Vim user!"
+msgstr "Pozdravujem, u¾ívateµ Vimu!"
+
+#: ../ex_docmd.c:5431
+#, fuzzy
+msgid "E784: Cannot close last tab page"
+msgstr "E444: Posledné okno sa nedá zatvori»"
+
+#: ../ex_docmd.c:5462
+#, fuzzy
+msgid "Already only one tab page"
+msgstr "Existuje u¾ iba jedno okno"
+
+#: ../ex_docmd.c:6004
+#, fuzzy, c-format
+msgid "Tab page %d"
+msgstr "Strana %d"
+
+#: ../ex_docmd.c:6295
+msgid "No swap file"
+msgstr "®iadny odkladací súbor"
+
+#: ../ex_docmd.c:6478
+msgid "E747: Cannot change directory, buffer is modified (add ! to override)"
+msgstr ""
+"E747: Nemo¾no zmeni» adresár, buffer je modifikovaný (pou¾ite ! pre "
+"vynútenie)"
+
+#: ../ex_docmd.c:6485
+msgid "E186: No previous directory"
+msgstr "E186: ®iadny predchádzajúci adresár"
+
+#: ../ex_docmd.c:6530
+msgid "E187: Unknown"
+msgstr "E187: Neznámy"
+
+#: ../ex_docmd.c:6610
+msgid "E465: :winsize requires two number arguments"
+msgstr "E465: :winsize (veµkos» okna) vy¾aduje dva argumenty"
+
+#: ../ex_docmd.c:6655
+msgid "E188: Obtaining window position not implemented for this platform"
+msgstr "E188: Na tejto platforme sa nedá zisti» umiestnenie okna"
+
+#: ../ex_docmd.c:6662
+msgid "E466: :winpos requires two number arguments"
+msgstr "E466: :winpos (pozícia okna) vy¾aduje dva argumenty"
+
+#: ../ex_docmd.c:7241
+#, c-format
+msgid "E739: Cannot create directory: %s"
+msgstr "E739: Nemo¾no vytvori» adresár: %s"
+
+#: ../ex_docmd.c:7268
+#, c-format
+msgid "E189: \"%s\" exists (add ! to override)"
+msgstr "E189: \"%s\" existuje (pou¾ite ! pre vynútenie)"
+
+#: ../ex_docmd.c:7273
+#, c-format
+msgid "E190: Cannot open \"%s\" for writing"
+msgstr "E190: \"%s\" sa nedá otvori» pre zápis"
+
+#. set mark
+#: ../ex_docmd.c:7294
+msgid "E191: Argument must be a letter or forward/backward quote"
+msgstr "E191: Argumentem mô¾e by» iba písmeno alebo pravý èi µavý apostrof"
+
+#: ../ex_docmd.c:7333
+msgid "E192: Recursive use of :normal too deep"
+msgstr "E192: Rekurzívne pou¾itie príkazu :normal príli¹ hlboké"
+
+#: ../ex_docmd.c:7807
+msgid "E194: No alternate file name to substitute for '#'"
+msgstr ""
+"E194: ®iadny alternatívny názov súboru, ktorým by bolo mo¾né nahradi» '#'"
+
+#: ../ex_docmd.c:7841
+msgid "E495: no autocommand file name to substitute for \"<afile>\""
+msgstr "E495: ¾iadny názov súboru, ktorým by bolo mo¾né nahradi» \"<afile>\""
+
+#: ../ex_docmd.c:7850
+msgid "E496: no autocommand buffer number to substitute for \"<abuf>\""
+msgstr "E496: ¾iadne èíslo bufferu, ktorým by bolo mo¾né nahradi» \"<abuf>\""
+
+#: ../ex_docmd.c:7861
+msgid "E497: no autocommand match name to substitute for \"<amatch>\""
+msgstr ""
+"E497: ¾iadna zhoda automatických príkazov, ktorou by bolo mo¾né nahradi» "
+"\"<amatch>\""
+
+#: ../ex_docmd.c:7870
+msgid "E498: no :source file name to substitute for \"<sfile>\""
+msgstr "E498: ¾iadny :source súbor, ktorým by bolo mo¾né nahradi» \"<sfile>\""
+
+#: ../ex_docmd.c:7876
+#, fuzzy
+msgid "E842: no line number to use for \"<slnum>\""
+msgstr "E498: ¾iadny :source súbor, ktorým by bolo mo¾né nahradi» \"<sfile>\""
+
+#: ../ex_docmd.c:7903
+#, fuzzy, c-format
+msgid "E499: Empty file name for '%' or '#', only works with \":p:h\""
+msgstr "E499: Prázdný názov súboru pre '%' alebo '#', funguje iba s \":p:h\""
+
+#: ../ex_docmd.c:7905
+msgid "E500: Evaluates to an empty string"
+msgstr "E500: Výsledkom vyhodnotenia je prázdny re»azec"
+
+#: ../ex_docmd.c:8838
+msgid "E195: Cannot open viminfo file for reading"
+msgstr "E195: Súbor viminfo sa nedá sa otvori» na èítanie"
+
+#: ../ex_eval.c:464
+msgid "E608: Cannot :throw exceptions with 'Vim' prefix"
+msgstr "E608: Nemo¾no spracova» výnimku :throw s preponou 'Vim'"
+
+#. always scroll up, don't overwrite
+#: ../ex_eval.c:496
+#, c-format
+msgid "Exception thrown: %s"
+msgstr "Spracovanie výnimky: %s"
+
+#: ../ex_eval.c:545
+#, c-format
+msgid "Exception finished: %s"
+msgstr "Výnimka ukonèená: %s"
+
+#: ../ex_eval.c:546
+#, c-format
+msgid "Exception discarded: %s"
+msgstr "Výnimka zahodená: %s"
+
+#: ../ex_eval.c:588 ../ex_eval.c:634
+#, c-format
+msgid "%s, line %<PRId64>"
+msgstr "%s, riadok %<PRId64>"
+
+#. always scroll up, don't overwrite
+#: ../ex_eval.c:608
+#, c-format
+msgid "Exception caught: %s"
+msgstr "Zachytená výnimka: %s"
+
+#: ../ex_eval.c:676
+#, c-format
+msgid "%s made pending"
+msgstr "%s prebieha"
+
+#: ../ex_eval.c:679
+#, c-format
+msgid "%s resumed"
+msgstr "%s vrátené"
+
+#: ../ex_eval.c:683
+#, c-format
+msgid "%s discarded"
+msgstr "%s zahodené"
+
+#: ../ex_eval.c:708
+msgid "Exception"
+msgstr "Výnimka"
+
+#: ../ex_eval.c:713
+msgid "Error and interrupt"
+msgstr "Chyba a preru¹ené"
+
+#: ../ex_eval.c:715
+msgid "Error"
+msgstr "Chyba"
+
+#. if (pending & CSTP_INTERRUPT)
+#: ../ex_eval.c:717
+msgid "Interrupt"
+msgstr "Preru¹ené"
+
+#: ../ex_eval.c:795
+msgid "E579: :if nesting too deep"
+msgstr "E579: vnorenie :if je príli¹ hlboké"
+
+#: ../ex_eval.c:830
+msgid "E580: :endif without :if"
+msgstr "E580: :endif bez zodpovedajúceho :if"
+
+#: ../ex_eval.c:873
+msgid "E581: :else without :if"
+msgstr "E581: :else bez zodpovedajúceho :if"
+
+#: ../ex_eval.c:876
+msgid "E582: :elseif without :if"
+msgstr "E582: :elseif bez zodpovedajúceho :if"
+
+#: ../ex_eval.c:880
+msgid "E583: multiple :else"
+msgstr "E583: viacnásobné :else"
+
+#: ../ex_eval.c:883
+msgid "E584: :elseif after :else"
+msgstr "E584: :elseif nasleduje po :else"
+
+#: ../ex_eval.c:941
+msgid "E585: :while/:for nesting too deep"
+msgstr "E585: vnorenie :while/:for je príli¹ hlboké"
+
+#: ../ex_eval.c:1028
+msgid "E586: :continue without :while or :for"
+msgstr "E586: :continue bez zodpovedajúceho :while alebo :for"
+
+#: ../ex_eval.c:1061
+msgid "E587: :break without :while or :for"
+msgstr "E587: :break bez zodpovedajúceho :while alebo :for"
+
+#: ../ex_eval.c:1102
+msgid "E732: Using :endfor with :while"
+msgstr "E732: Pou¾ité :endfor spolu s :while"
+
+#: ../ex_eval.c:1104
+msgid "E733: Using :endwhile with :for"
+msgstr "E733: Pou¾ité :endwhile spolu s :for"
+
+#: ../ex_eval.c:1247
+msgid "E601: :try nesting too deep"
+msgstr "E601: vnorenie :try je príli¹ hlboké"
+
+#: ../ex_eval.c:1317
+msgid "E603: :catch without :try"
+msgstr "E603: :catch bez :try"
+
+#. Give up for a ":catch" after ":finally" and ignore it.
+#. * Just parse.
+#: ../ex_eval.c:1332
+msgid "E604: :catch after :finally"
+msgstr "E604: :catch nasleduje po :finally"
+
+#: ../ex_eval.c:1451
+msgid "E606: :finally without :try"
+msgstr "E606: :finally bez :try"
+
+#. Give up for a multiple ":finally" and ignore it.
+#: ../ex_eval.c:1467
+msgid "E607: multiple :finally"
+msgstr "E607: viacnásobné pou¾ité :finally"
+
+#: ../ex_eval.c:1571
+msgid "E602: :endtry without :try"
+msgstr "E602: :endtry bez :try"
+
+#: ../ex_eval.c:2026
+msgid "E193: :endfunction not inside a function"
+msgstr "E193: :endfunction mimo funkciu"
+
+#: ../ex_getln.c:1643
+#, fuzzy
+msgid "E788: Not allowed to edit another buffer now"
+msgstr "E48: Nie je dovolené v bezpeènostnej schránke"
+
+#: ../ex_getln.c:1656
+#, fuzzy
+msgid "E811: Not allowed to change buffer information now"
+msgstr "E94: Vzoru %s nevyhovuje ¾iadny buffer"
+
+#: ../ex_getln.c:3178
+msgid "tagname"
+msgstr "meno tagu"
+
+#: ../ex_getln.c:3181
+msgid " kind file\n"
+msgstr " typ súboru\n"
+
+#: ../ex_getln.c:4799
+msgid "'history' option is zero"
+msgstr "'voµba 'history' je nastavená na nulu"
+
+#: ../ex_getln.c:5046
+#, c-format
+msgid ""
+"\n"
+"# %s History (newest to oldest):\n"
+msgstr ""
+"\n"
+"# História %s (zaèínajúci najnov¹ou polo¾kou):\n"
+
+#: ../ex_getln.c:5047
+msgid "Command Line"
+msgstr "Príkazový riadok"
+
+#: ../ex_getln.c:5048
+msgid "Search String"
+msgstr "Vyhµadávaný re»azec"
+
+#: ../ex_getln.c:5049
+msgid "Expression"
+msgstr "Výraz"
+
+#: ../ex_getln.c:5050
+msgid "Input Line"
+msgstr "Vstupný riadok"
+
+#: ../ex_getln.c:5117
+msgid "E198: cmd_pchar beyond the command length"
+msgstr "E198: cmd_pchar prevy¹uje då¾ku príkazu"
+
+#: ../ex_getln.c:5279
+msgid "E199: Active window or buffer deleted"
+msgstr "E199: Aktívne okno alebo buffer bol vymazaný"
+
+#: ../file_search.c:203
+msgid "E854: path too long for completion"
+msgstr ""
+
+#: ../file_search.c:446
+#, c-format
+msgid ""
+"E343: Invalid path: '**[number]' must be at the end of the path or be "
+"followed by '%s'."
+msgstr ""
+"E343: Chybná cesta: '**[èíslo] musí by» buï na konci cesty, alebo musí by»\n"
+"nasledované '%s. Viï :help path."
+
+#: ../file_search.c:1505
+#, c-format
+msgid "E344: Can't find directory \"%s\" in cdpath"
+msgstr "E344: Adresár \"%s\" sa nedá nájs» v cdpath"
+
+#: ../file_search.c:1508
+#, c-format
+msgid "E345: Can't find file \"%s\" in path"
+msgstr "E345: Súbor \"%s\" sa nepodarilo nájs»"
+
+#: ../file_search.c:1512
+#, c-format
+msgid "E346: No more directory \"%s\" found in cdpath"
+msgstr "E346: ®iadny ïal¹í adresár \"%s\" nebol v cdpath nájdený"
+
+#: ../file_search.c:1515
+#, c-format
+msgid "E347: No more file \"%s\" found in path"
+msgstr "E347: ®iadny ïal¹í súbor \"%s\" nebol v ceste nájdený"
+
+#: ../fileio.c:137
+#, fuzzy
+msgid "E812: Autocommands changed buffer or buffer name"
+msgstr "E135: Automatické príkazy *Filter* nesmú meni» aktuálny buffer"
+
+#: ../fileio.c:368
+msgid "Illegal file name"
+msgstr "Neprípustný názov súboru"
+
+#: ../fileio.c:395 ../fileio.c:476 ../fileio.c:2543 ../fileio.c:2578
+msgid "is a directory"
+msgstr "je adresárom"
+
+#: ../fileio.c:397
+msgid "is not a file"
+msgstr "nie je súborom"
+
+#: ../fileio.c:508 ../fileio.c:3522
+msgid "[New File]"
+msgstr "[nový súbor]"
+
+#: ../fileio.c:511
+msgid "[New DIRECTORY]"
+msgstr ""
+
+#: ../fileio.c:529 ../fileio.c:532
+msgid "[File too big]"
+msgstr ""
+
+#: ../fileio.c:534
+msgid "[Permission Denied]"
+msgstr "[prístup odmietnutý]"
+
+#: ../fileio.c:653
+msgid "E200: *ReadPre autocommands made the file unreadable"
+msgstr "E200: automatické príkazy *ReadPre urobili súbor neèitateµným"
+
+#: ../fileio.c:655
+msgid "E201: *ReadPre autocommands must not change current buffer"
+msgstr "E201: automatické príkazy *ReadPre nesmú meni» aktuálny buffer"
+
+#: ../fileio.c:672
+msgid "Nvim: Reading from stdin...\n"
+msgstr "Vim: èítam zo ¹tandardného vstupu...\n"
+
+#. Re-opening the original file failed!
+#: ../fileio.c:909
+msgid "E202: Conversion made file unreadable!"
+msgstr "E202: Po konverzii je súbor neèitateµný!"
+
+#. fifo or socket
+#: ../fileio.c:1782
+msgid "[fifo/socket]"
+msgstr "[pomenovaná rúra/soket]"
+
+#. fifo
+#: ../fileio.c:1788
+msgid "[fifo]"
+msgstr "[pomenovaná rúra]"
+
+#. or socket
+#: ../fileio.c:1794
+msgid "[socket]"
+msgstr "[soket]"
+
+#. or character special
+#: ../fileio.c:1801
+#, fuzzy
+msgid "[character special]"
+msgstr "1 znak"
+
+#: ../fileio.c:1815
+msgid "[CR missing]"
+msgstr "[chýba CR]"
+
+#: ../fileio.c:1819
+msgid "[long lines split]"
+msgstr "[dlhé riadky zalomené]"
+
+#: ../fileio.c:1823 ../fileio.c:3512
+msgid "[NOT converted]"
+msgstr "[neskonvertovaný]"
+
+#: ../fileio.c:1826 ../fileio.c:3515
+msgid "[converted]"
+msgstr "[skonvertovaný]"
+
+#: ../fileio.c:1831
+#, fuzzy, c-format
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[NEPRÍPUSTNÝ BAJT na riadku %<PRId64>]"
+
+#: ../fileio.c:1835
+#, c-format
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[NEPRÍPUSTNÝ BAJT na riadku %<PRId64>]"
+
+#: ../fileio.c:1838
+msgid "[READ ERRORS]"
+msgstr "[CHYBY ÈÍTANIA]"
+
+#: ../fileio.c:2104
+msgid "Can't find temp file for conversion"
+msgstr "Nedá sa nájs» doèasný súbor pre konverziu"
+
+#: ../fileio.c:2110
+msgid "Conversion with 'charconvert' failed"
+msgstr "Konverzia s 'charconvert' sa nepodarila"
+
+#: ../fileio.c:2113
+msgid "can't read output of 'charconvert'"
+msgstr "nedá sa èíta» výstup 'charconvert'"
+
+#: ../fileio.c:2437
+msgid "E676: No matching autocommands for acwrite buffer"
+msgstr "E676: ®iadne vyhovujúce automatické príkazy pre acwrite buffer "
+
+#: ../fileio.c:2466
+msgid "E203: Autocommands deleted or unloaded buffer to be written"
+msgstr ""
+"E203: Automatické príkazy zmazali èi deaktivovali buffer, ktorý mal by» "
+"ulo¾ený"
+
+#: ../fileio.c:2486
+msgid "E204: Autocommand changed number of lines in unexpected way"
+msgstr "E204: Automatický príkaz neoèakávaným spôsobom zmenil poèet riadkov"
+
+#: ../fileio.c:2548 ../fileio.c:2565
+msgid "is not a file or writable device"
+msgstr "nie je súborom ani zapisovatelným zariadením"
+
+#: ../fileio.c:2601
+msgid "is read-only (add ! to override)"
+msgstr "je iba pre èítanie (pou¾ite ! pre vynútenie)"
+
+#: ../fileio.c:2886
+msgid "E506: Can't write to backup file (add ! to override)"
+msgstr "E506: Nedá sa zapisova» do zálo¾ného súboru (pou¾ite ! pre vynútenie)"
+
+#: ../fileio.c:2898
+msgid "E507: Close error for backup file (add ! to override)"
+msgstr "E507: Chyba pri uzatváraní zálo¾ného súboru (pou¾ite ! pre vynútenie)"
+
+#: ../fileio.c:2901
+msgid "E508: Can't read file for backup (add ! to override)"
+msgstr "E508: Nedá sa naèíta» súbor pre zálohu (pou¾ite ! pre vynútenie)"
+
+#: ../fileio.c:2923
+msgid "E509: Cannot create backup file (add ! to override)"
+msgstr "E509: Nedá sa vytvori» zálo¾ný súbor (pou¾ite ! pre vynútenie)"
+
+#: ../fileio.c:3008
+msgid "E510: Can't make backup file (add ! to override)"
+msgstr "E510: Nedá sa vytvori» zálo¾ný súbor (pou¾ite ! pre vynútenie)"
+
+#. Can't write without a tempfile!
+#: ../fileio.c:3121
+msgid "E214: Can't find temp file for writing"
+msgstr "E214: Nedá sa nájs» doèasný súbor pre ukladanie"
+
+#: ../fileio.c:3134
+msgid "E213: Cannot convert (add ! to write without conversion)"
+msgstr "E213: Nedá sa spravi» konverzia (pou¾ite ! pre zápis bez konverzie)"
+
+#: ../fileio.c:3169
+msgid "E166: Can't open linked file for writing"
+msgstr "E166: Súbor sa nedá otvori» pre ukladanie"
+
+#: ../fileio.c:3173
+msgid "E212: Can't open file for writing"
+msgstr "E212: Súbor sa nedá otvori» pre ukladanie"
+
+#: ../fileio.c:3363
+msgid "E667: Fsync failed"
+msgstr "E667: Fsync zlyhal"
+
+#: ../fileio.c:3398
+msgid "E512: Close failed"
+msgstr "E512: Zatvorenie zlyhalo"
+
+#: ../fileio.c:3436
+msgid "E513: write error, conversion failed (make 'fenc' empty to override)"
+msgstr ""
+"E513: chyba pri zápise, konverzia sa nepodarila (nastavte voµbu 'fenc' na "
+"prázdnu pre vynútenie)"
+
+#: ../fileio.c:3441
+#, fuzzy, c-format
+msgid ""
+"E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
+"override)"
+msgstr ""
+"E513: chyba pri zápise, konverzia sa nepodarila (nastavte voµbu 'fenc' na "
+"prázdnu pre vynútenie)"
+
+#: ../fileio.c:3448
+msgid "E514: write error (file system full?)"
+msgstr "E514: chyba pri ukladaní (plný disk?)"
+
+#: ../fileio.c:3506
+msgid " CONVERSION ERROR"
+msgstr " CHYBA PREVODU"
+
+#: ../fileio.c:3509
+#, fuzzy, c-format
+msgid " in line %<PRId64>;"
+msgstr "riadok %<PRId64>"
+
+#: ../fileio.c:3519
+msgid "[Device]"
+msgstr "[zariadenie]"
+
+#: ../fileio.c:3522
+msgid "[New]"
+msgstr "[nový]"
+
+#: ../fileio.c:3535
+msgid " [a]"
+msgstr " [p]"
+
+#: ../fileio.c:3535
+msgid " appended"
+msgstr " pripojený"
+
+#: ../fileio.c:3537
+msgid " [w]"
+msgstr " [u]"
+
+#: ../fileio.c:3537
+msgid " written"
+msgstr " ulo¾ený"
+
+#: ../fileio.c:3579
+msgid "E205: Patchmode: can't save original file"
+msgstr "E205: patchmode: nedá sa ulo¾i» pôvodný súbor"
+
+#: ../fileio.c:3602
+msgid "E206: patchmode: can't touch empty original file"
+msgstr "E206: patchmode: nedá sa zapisova» do prázdneho pôvodného súboru"
+
+#: ../fileio.c:3616
+msgid "E207: Can't delete backup file"
+msgstr "E207: Nedá sa vymaza» zálo¾ný súbor"
+
+#: ../fileio.c:3672
+msgid ""
+"\n"
+"WARNING: Original file may be lost or damaged\n"
+msgstr ""
+"\n"
+"VAROVANIE: Obsah pôvodného súboru mô¾e by» stratený alebo po¹kodený\n"
+
+#: ../fileio.c:3675
+msgid "don't quit the editor until the file is successfully written!"
+msgstr "neukonèujte editor skôr, ne¾ bude súbor úspe¹ne ulo¾ený!"
+
+#: ../fileio.c:3795
+msgid "[dos]"
+msgstr "[dos]"
+
+#: ../fileio.c:3795
+msgid "[dos format]"
+msgstr "[dos formát]"
+
+#: ../fileio.c:3801
+msgid "[mac]"
+msgstr "[mac]"
+
+#: ../fileio.c:3801
+msgid "[mac format]"
+msgstr "[mac formát]"
+
+#: ../fileio.c:3807
+msgid "[unix]"
+msgstr "[unix]"
+
+#: ../fileio.c:3807
+msgid "[unix format]"
+msgstr "[unix formát]"
+
+#: ../fileio.c:3831
+msgid "1 line, "
+msgstr "1 riadok, "
+
+#: ../fileio.c:3833
+#, c-format
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> riadkov, "
+
+#: ../fileio.c:3836
+msgid "1 character"
+msgstr "1 znak"
+
+#: ../fileio.c:3838
+#, c-format
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> znakov"
+
+#: ../fileio.c:3849
+msgid "[noeol]"
+msgstr "[bez znaku konca riadku]"
+
+#: ../fileio.c:3849
+msgid "[Incomplete last line]"
+msgstr "[neúplný posledný riadok]"
+
+#. don't overwrite messages here
+#. must give this prompt
+#. don't use emsg() here, don't want to flush the buffers
+#: ../fileio.c:3865
+msgid "WARNING: The file has been changed since reading it!!!"
+msgstr "VAROVANIE: Súbor bol zmenený od jeho naèítania!!!"
+
+#: ../fileio.c:3867
+msgid "Do you really want to write to it"
+msgstr "Chcete ho naozaj ulo¾i»"
+
+#: ../fileio.c:4648
+#, c-format
+msgid "E208: Error writing to \"%s\""
+msgstr "E208: Chyba pri zápise do \"%s\""
+
+#: ../fileio.c:4655
+#, c-format
+msgid "E209: Error closing \"%s\""
+msgstr "E209: Chyba pri uzatváraní \"%s\""
+
+#: ../fileio.c:4657
+#, c-format
+msgid "E210: Error reading \"%s\""
+msgstr "E210: Chyba pri èítaní \"%s\""
+
+#: ../fileio.c:4883
+msgid "E246: FileChangedShell autocommand deleted buffer"
+msgstr "E246: automatický príkaz FileChangedShell vymazal buffer"
+
+#: ../fileio.c:4894
+#, c-format
+msgid "E211: File \"%s\" no longer available"
+msgstr "E211: Varovanie: súbor \"%s\" u¾ nie je dostupný"
+
+#: ../fileio.c:4906
+#, c-format
+msgid ""
+"W12: Warning: File \"%s\" has changed and the buffer was changed in Vim as "
+"well"
+msgstr ""
+"W12: Varovanie: súbor \"%s\" bol po zaèatí úpravy zmenený a buffer sa tie¾ "
+"zmenil "
+
+#: ../fileio.c:4907
+msgid "See \":help W12\" for more info."
+msgstr "Pozrite \":help W12\" pre viac informácií."
+
+#: ../fileio.c:4910
+#, c-format
+msgid "W11: Warning: File \"%s\" has changed since editing started"
+msgstr "W11: Varovanie: súbor \"%s\" bol po zaèatí úpravy zmenený"
+
+#: ../fileio.c:4911
+msgid "See \":help W11\" for more info."
+msgstr "Pozrite \":help W11\" pre viac informácií."
+
+#: ../fileio.c:4914
+#, c-format
+msgid "W16: Warning: Mode of file \"%s\" has changed since editing started"
+msgstr ""
+"W16: Varovanie: Prístupové práva k súboru \"%s\" boli po zaèatí úprav zmenené"
+
+#: ../fileio.c:4915
+msgid "See \":help W16\" for more info."
+msgstr "Pozrite \":help W16\" pre viac informácií."
+
+#: ../fileio.c:4927
+#, c-format
+msgid "W13: Warning: File \"%s\" has been created after editing started"
+msgstr "W13: Varovanie: Súbor \"%s\" bol vytvorený po zaèatí úpravy"
+
+#: ../fileio.c:4947
+msgid "Warning"
+msgstr "Varovanie"
+
+#: ../fileio.c:4948
+msgid ""
+"&OK\n"
+"&Load File"
+msgstr ""
+"&OK\n"
+"&Naèíta» súbor"
+
+#: ../fileio.c:5065
+#, c-format
+msgid "E462: Could not prepare for reloading \"%s\""
+msgstr "E462: Nemo¾no pripravi» na opätovné naèítanie \"%s\""
+
+#: ../fileio.c:5078
+#, c-format
+msgid "E321: Could not reload \"%s\""
+msgstr "E321: nedá sa obnovi» \"%s\""
+
+#: ../fileio.c:5601
+msgid "--Deleted--"
+msgstr "--Vymazaný--"
+
+#: ../fileio.c:5732
+#, c-format
+msgid "auto-removing autocommand: %s <buffer=%d>"
+msgstr "samomazací automatický príkaz: %s <buffer=%d>"
+
+#. the group doesn't exist
+#: ../fileio.c:5772
+#, c-format
+msgid "E367: No such group: \"%s\""
+msgstr "E367: Skupina \"%s\" neexistuje"
+
+#: ../fileio.c:5897
+#, c-format
+msgid "E215: Illegal character after *: %s"
+msgstr "E215: Neprípustný znak po *: %s"
+
+#: ../fileio.c:5905
+#, c-format
+msgid "E216: No such event: %s"
+msgstr "E216: Udalos» %s neexistuje"
+
+#: ../fileio.c:5907
+#, c-format
+msgid "E216: No such group or event: %s"
+msgstr "E216: Udalos» alebo skupina %s neexistuje"
+
+#. Highlight title
+#: ../fileio.c:6090
+msgid ""
+"\n"
+"--- Autocommands ---"
+msgstr ""
+"\n"
+"--- Automatické príkazy ---"
+
+#: ../fileio.c:6293
+#, c-format
+msgid "E680: <buffer=%d>: invalid buffer number "
+msgstr "E680: <buffer=%d>: chybné èíslo bufferu"
+
+#: ../fileio.c:6370
+msgid "E217: Can't execute autocommands for ALL events"
+msgstr "E217: Automatické príkazy sa nedajú spusti» pre V©ETKY udalosti"
+
+#: ../fileio.c:6393
+msgid "No matching autocommands"
+msgstr "®iadne vyhovujúce automatické príkazy"
+
+#: ../fileio.c:6831
+msgid "E218: autocommand nesting too deep"
+msgstr "E218: vnorenia automatického príkazu sú príli¹ hlboké"
+
+#: ../fileio.c:7143
+#, c-format
+msgid "%s Autocommands for \"%s\""
+msgstr "%s Automatické príkazy pre \"%s\""
+
+#: ../fileio.c:7149
+#, c-format
+msgid "Executing %s"
+msgstr "Spú¹»am %s"
+
+#: ../fileio.c:7211
+#, c-format
+msgid "autocommand %s"
+msgstr "automatický príkaz %s"
+
+#: ../fileio.c:7795
+msgid "E219: Missing {."
+msgstr "E219: Chýba {."
+
+#: ../fileio.c:7797
+msgid "E220: Missing }."
+msgstr "E220: Chýba }."
+
+#: ../fold.c:93
+msgid "E490: No fold found"
+msgstr "E490: Nebol nájdené ¾iadne vnorenie"
+
+#: ../fold.c:544
+msgid "E350: Cannot create fold with current 'foldmethod'"
+msgstr "E350: Nedá sa vytvori» vnorenie s aktuálnou metódou 'foldmethod'"
+
+#: ../fold.c:546
+msgid "E351: Cannot delete fold with current 'foldmethod'"
+msgstr "E351: Nedá sa zru¹i» vnorenie s aktuálnou metódou 'foldmethod'"
+
+#: ../fold.c:1784
+#, c-format
+msgid "+--%3ld lines folded "
+msgstr "+--%3ld riadkov zahnutých "
+
+#. buffer has already been read
+#: ../getchar.c:273
+msgid "E222: Add to read buffer"
+msgstr "E222: Prida» do bufferu pre èítanie"
+
+#: ../getchar.c:2040
+msgid "E223: recursive mapping"
+msgstr "E223: rekurzívne mapovanie"
+
+#: ../getchar.c:2849
+#, c-format
+msgid "E224: global abbreviation already exists for %s"
+msgstr "E224: pre %s u¾ globálna skratka existuje"
+
+#: ../getchar.c:2852
+#, c-format
+msgid "E225: global mapping already exists for %s"
+msgstr "E225: pre %s u¾ globálne mapovanie existuje"
+
+#: ../getchar.c:2952
+#, c-format
+msgid "E226: abbreviation already exists for %s"
+msgstr "E226: pre %s u¾ skratka existuje"
+
+#: ../getchar.c:2955
+#, c-format
+msgid "E227: mapping already exists for %s"
+msgstr "E227: pre %s u¾ mapovanie existuje"
+
+#: ../getchar.c:3008
+msgid "No abbreviation found"
+msgstr "®iadna skratka nebola nájdená"
+
+#: ../getchar.c:3010
+msgid "No mapping found"
+msgstr "®iadne mapovanie nebolo nájdené"
+
+#: ../getchar.c:3974
+msgid "E228: makemap: Illegal mode"
+msgstr "E228: makemap: neprípustný mód"
+
+#. key value of 'cedit' option
+#. type of cmdline window or 0
+#. result of cmdline window or 0
+#: ../globals.h:924
+msgid "--No lines in buffer--"
+msgstr "--Buffer neobsahuje ¾iadne riadky--"
+
+#.
+#. * The error messages that can be shared are included here.
+#. * Excluded are errors that are only used once and debugging messages.
+#.
+#: ../globals.h:996
+msgid "E470: Command aborted"
+msgstr "E470: Príkaz preru¹ený"
+
+#: ../globals.h:997
+msgid "E471: Argument required"
+msgstr "E471: Je vy¾adovaný argument"
+
+#: ../globals.h:998
+msgid "E10: \\ should be followed by /, ? or &"
+msgstr "E10: po \\ by malo nasledova» /, ? alebo &"
+
+#: ../globals.h:1000
+msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
+msgstr ""
+"E11: Chybný príkaz v okne príkazového riadku; <Enter> spú¹»a, CTRL-C ukonèuje"
+
+#: ../globals.h:1002
+msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
+msgstr ""
+"E12: Príkaz nie je z exrc/vimrc v aktuálnom adresári alebo pri hµadaní tagu "
+"povolený."
+
+#: ../globals.h:1003
+msgid "E171: Missing :endif"
+msgstr "E171: Chýba :endif"
+
+#: ../globals.h:1004
+msgid "E600: Missing :endtry"
+msgstr "E600: Chýba :endtry"
+
+#: ../globals.h:1005
+msgid "E170: Missing :endwhile"
+msgstr "E170: Chýba :endwhile"
+
+#: ../globals.h:1006
+msgid "E170: Missing :endfor"
+msgstr "E170: Chýba :endfor"
+
+#: ../globals.h:1007
+msgid "E588: :endwhile without :while"
+msgstr "E588: :endwhile bez zodpovedajúceho :while"
+
+#: ../globals.h:1008
+msgid "E588: :endfor without :for"
+msgstr "E588: :endfor bez zodpovedajúceho :for"
+
+#: ../globals.h:1009
+msgid "E13: File exists (add ! to override)"
+msgstr "E13: Súbor existuje (pou¾ite ! pre prepísanie)"
+
+#: ../globals.h:1010
+msgid "E472: Command failed"
+msgstr "E472: Príkaz zlyhal"
+
+#: ../globals.h:1011
+msgid "E473: Internal error"
+msgstr "E473: Vnútorná chyba"
+
+#: ../globals.h:1012
+msgid "Interrupted"
+msgstr "Preru¹ené"
+
+#: ../globals.h:1013
+msgid "E14: Invalid address"
+msgstr "E14: Chybná adresa"
+
+#: ../globals.h:1014
+msgid "E474: Invalid argument"
+msgstr "E474: Chybný argument"
+
+#: ../globals.h:1015
+#, c-format
+msgid "E475: Invalid argument: %s"
+msgstr "E475: Chybný argument: %s"
+
+#: ../globals.h:1016
+#, c-format
+msgid "E15: Invalid expression: %s"
+msgstr "E15: Chybný výraz: %s"
+
+#: ../globals.h:1017
+msgid "E16: Invalid range"
+msgstr "E16: Chybný rozsah"
+
+#: ../globals.h:1018
+msgid "E476: Invalid command"
+msgstr "E476: Chybný príkaz"
+
+#: ../globals.h:1019
+#, c-format
+msgid "E17: \"%s\" is a directory"
+msgstr "E17: \"%s\" je adresárom"
+
+#: ../globals.h:1020
+#, fuzzy
+msgid "E900: Invalid job id"
+msgstr "E49: Chybná hodnota veµkosti rolovania"
+
+#: ../globals.h:1021
+msgid "E901: Job table is full"
+msgstr ""
+
+#: ../globals.h:1024
+#, c-format
+msgid "E364: Library call failed for \"%s()\""
+msgstr "E364: Vyvolanie kni¾niènej funkcia zlyhalo pre \"%s()\""
+
+#: ../globals.h:1026
+msgid "E19: Mark has invalid line number"
+msgstr "E19: Znaèka má chybné èíslo riadku"
+
+#: ../globals.h:1027
+msgid "E20: Mark not set"
+msgstr "E20: Znaèka nie je nastavená"
+
+#: ../globals.h:1029
+msgid "E21: Cannot make changes, 'modifiable' is off"
+msgstr "E21: Nemo¾no robi» zmeny, voµba 'modifiable' je vypnutá"
+
+#: ../globals.h:1030
+msgid "E22: Scripts nested too deep"
+msgstr "E22: Skripty vnorené príli¹ hlboko"
+
+#: ../globals.h:1031
+msgid "E23: No alternate file"
+msgstr "E23: ®iadny alternatívny súbor"
+
+#: ../globals.h:1032
+msgid "E24: No such abbreviation"
+msgstr "E24: Taká skratka neexistuje"
+
+#: ../globals.h:1033
+msgid "E477: No ! allowed"
+msgstr "E477: ! nie je povolený"
+
+#: ../globals.h:1035
+msgid "E25: Nvim does not have a built-in GUI"
+msgstr "E25: Nedá sa pou¾í» GUI: nebolo zapnuté pri preklade programu"
+
+#: ../globals.h:1036
+#, c-format
+msgid "E28: No such highlight group name: %s"
+msgstr "E28: Skupina zvýraznenia %s neexistuje"
+
+#: ../globals.h:1037
+msgid "E29: No inserted text yet"
+msgstr "E29: Zatiaµ nie je vlo¾ený ¾iaden text"
+
+#: ../globals.h:1038
+msgid "E30: No previous command line"
+msgstr "E30: ®iadny predchádzajúci príkazový riadok"
+
+#: ../globals.h:1039
+msgid "E31: No such mapping"
+msgstr "E31: Mapovanie nenájdené"
+
+#: ../globals.h:1040
+msgid "E479: No match"
+msgstr "E479: ®iadna zhoda"
+
+#: ../globals.h:1041
+#, c-format
+msgid "E480: No match: %s"
+msgstr "E480: ®iadna zhoda: %s"
+
+#: ../globals.h:1042
+msgid "E32: No file name"
+msgstr "E32: ®iadny názov súboru"
+
+#: ../globals.h:1044
+msgid "E33: No previous substitute regular expression"
+msgstr "E33: ®iadny predchádzajúci prislúchajúci správny výraz"
+
+#: ../globals.h:1045
+msgid "E34: No previous command"
+msgstr "E34: ®iadny predchádzajúci príkaz"
+
+#: ../globals.h:1046
+msgid "E35: No previous regular expression"
+msgstr "E35: ®iadny predchádzajúci regulárny výraz"
+
+#: ../globals.h:1047
+msgid "E481: No range allowed"
+msgstr "E481: Rozsah nie je povolený"
+
+#: ../globals.h:1048
+msgid "E36: Not enough room"
+msgstr "E36: Nedostatok miesta"
+
+#: ../globals.h:1049
+#, c-format
+msgid "E482: Can't create file %s"
+msgstr "E482: Nedá sa vytvori» súbor %s"
+
+#: ../globals.h:1050
+msgid "E483: Can't get temp file name"
+msgstr "E483: Nedá sa získa» názov doèasného súboru"
+
+#: ../globals.h:1051
+#, c-format
+msgid "E484: Can't open file %s"
+msgstr "E484: Nedá sa otvori» súbor %s"
+
+#: ../globals.h:1052
+#, c-format
+msgid "E485: Can't read file %s"
+msgstr "E485: Nedá sa èíta» súbor %s"
+
+#: ../globals.h:1054
+msgid "E37: No write since last change (add ! to override)"
+msgstr "E37: Neulo¾ené zmeny (pou¾ite ! pre vynútenie)"
+
+#: ../globals.h:1055
+#, fuzzy
+msgid "E37: No write since last change"
+msgstr "[Neulo¾ené zmeny]\n"
+
+#: ../globals.h:1056
+msgid "E38: Null argument"
+msgstr "E38: Nulový argument"
+
+#: ../globals.h:1057
+msgid "E39: Number expected"
+msgstr "E39: Oèakávané èíslo"
+
+#: ../globals.h:1058
+#, c-format
+msgid "E40: Can't open errorfile %s"
+msgstr "E40: Nedá sa otvori» chybový súbor %s"
+
+#: ../globals.h:1059
+msgid "E41: Out of memory!"
+msgstr "E41: Nedostatok pamäti!"
+
+#: ../globals.h:1060
+msgid "Pattern not found"
+msgstr "Vzor nenájdený"
+
+#: ../globals.h:1061
+#, c-format
+msgid "E486: Pattern not found: %s"
+msgstr "E486: Vzor nenájdený: %s"
+
+#: ../globals.h:1062
+msgid "E487: Argument must be positive"
+msgstr "E487: Argument musí by» kladný"
+
+#: ../globals.h:1064
+msgid "E459: Cannot go back to previous directory"
+msgstr "E459: ®iadny predchádzajúci adresár"
+
+#: ../globals.h:1066
+msgid "E42: No Errors"
+msgstr "E42: ®iadne chyby"
+
+#: ../globals.h:1067
+#, fuzzy
+msgid "E776: No location list"
+msgstr "E760: Chýajúci poèet slov v %s"
+
+#: ../globals.h:1068
+msgid "E43: Damaged match string"
+msgstr "E43: Po¹kodený re»azac pre vyhµadávanie"
+
+#: ../globals.h:1069
+msgid "E44: Corrupted regexp program"
+msgstr "E44: Po¹kodený regexp program"
+
+#: ../globals.h:1071
+msgid "E45: 'readonly' option is set (add ! to override)"
+msgstr ""
+"E45: voµba 'readonly' (iba na èítanie) je nastavená (pou¾ite ! pre "
+"prepísanie)"
+
+#: ../globals.h:1073
+#, c-format
+msgid "E46: Cannot change read-only variable \"%s\""
+msgstr "E46: Nedá sa nastavi» premenná len na èítanie \"%s\""
+
+#: ../globals.h:1075
+#, fuzzy, c-format
+msgid "E794: Cannot set variable in the sandbox: \"%s\""
+msgstr "E46: Nedá sa nastavi» premenná v bezpeènostnej schránke: \"%s\""
+
+#: ../globals.h:1076
+msgid "E47: Error while reading errorfile"
+msgstr "E47: Chyba pri èítaní chybového súboru"
+
+#: ../globals.h:1078
+msgid "E48: Not allowed in sandbox"
+msgstr "E48: Nie je dovolené v bezpeènostnej schránke"
+
+#: ../globals.h:1080
+msgid "E523: Not allowed here"
+msgstr "E523: Nie je na povolené na tomto mieste"
+
+#: ../globals.h:1082
+msgid "E359: Screen mode setting not supported"
+msgstr "E359: Nastavovanie re¾imu obrazovky nie je podporované"
+
+#: ../globals.h:1083
+msgid "E49: Invalid scroll size"
+msgstr "E49: Chybná hodnota veµkosti rolovania"
+
+#: ../globals.h:1084
+msgid "E91: 'shell' option is empty"
+msgstr "E91: voµba 'shell' je prázdna"
+
+#: ../globals.h:1085
+msgid "E255: Couldn't read in sign data!"
+msgstr "E255: Chyba -- nedájú sa preèíta» oznaèovacie dáta!"
+
+#: ../globals.h:1086
+msgid "E72: Close error on swap file"
+msgstr "E72: Chyba pri uzatváraní odkladacieho súboru"
+
+#: ../globals.h:1087
+msgid "E73: tag stack empty"
+msgstr "E73: zoznam tagov je prázdny"
+
+#: ../globals.h:1088
+msgid "E74: Command too complex"
+msgstr "E74: Príkaz je príli¹ zlo¾itý"
+
+#: ../globals.h:1089
+msgid "E75: Name too long"
+msgstr "E75: Názov je príli¹ dlhý"
+
+#: ../globals.h:1090
+msgid "E76: Too many ["
+msgstr "E76: Príli¹ mnoho ["
+
+#: ../globals.h:1091
+msgid "E77: Too many file names"
+msgstr "E77: Príli¹ mnoho názvov súborov"
+
+#: ../globals.h:1092
+msgid "E488: Trailing characters"
+msgstr "E488: Nadbytoèné znaky na konci"
+
+#: ../globals.h:1093
+msgid "E78: Unknown mark"
+msgstr "E78: Neznáma znaèka"
+
+#: ../globals.h:1094
+msgid "E79: Cannot expand wildcards"
+msgstr "E79: Nemo¾no expandova» ¾olíkové znaky (wildcards)"
+
+#: ../globals.h:1096
+msgid "E591: 'winheight' cannot be smaller than 'winminheight'"
+msgstr ""
+"E591: hodnota voµby 'winheight' (vý¹ka okna) nesmie by» men¹ia ne¾ hodnota "
+"voµby 'winminheight' (minimálna vý¹ka okna)"
+
+#: ../globals.h:1098
+msgid "E592: 'winwidth' cannot be smaller than 'winminwidth'"
+msgstr ""
+"E592: hodnota voµby 'winwidth' (¹írka okna) nesmie by» men¹ia ne¾ hodnota "
+"volµy 'winminwidth' (minimálna ¹írka okna)"
+
+#: ../globals.h:1099
+msgid "E80: Error while writing"
+msgstr "E80: Chyba pri ukladaní"
+
+#: ../globals.h:1100
+msgid "Zero count"
+msgstr "Nulový poèet"
+
+#: ../globals.h:1101
+msgid "E81: Using <SID> not in a script context"
+msgstr "E81: Pou¾itie <SID> mimo kontext skriptu"
+
+#: ../globals.h:1102
+#, c-format
+msgid "E685: Internal error: %s"
+msgstr "E685: Vnútorná chyba: %s"
+
+#: ../globals.h:1104
+msgid "E363: pattern uses more memory than 'maxmempattern'"
+msgstr "E363: vzor pou¾íva viac pamäte ako 'maxmempattern'"
+
+#: ../globals.h:1105
+msgid "E749: empty buffer"
+msgstr "E749: prázdny buffer"
+
+#: ../globals.h:1108
+msgid "E682: Invalid search pattern or delimiter"
+msgstr "E682: Neprípustný hµadaný re»azec alebo oddeµovaè"
+
+#: ../globals.h:1109
+msgid "E139: File is loaded in another buffer"
+msgstr "E139: Súbor je naèítaný v inom buffere"
+
+#: ../globals.h:1110
+#, c-format
+msgid "E764: Option '%s' is not set"
+msgstr "E764: Voµba \"%s\" nie je nastavená"
+
+#: ../globals.h:1111
+#, fuzzy
+msgid "E850: Invalid register name"
+msgstr "E354: '%s' nie je prístupné meno registru"
+
+#: ../globals.h:1114
+msgid "search hit TOP, continuing at BOTTOM"
+msgstr "hµadanie dosiahlo zaèiatok, pokraèovanie od konca"
+
+#: ../globals.h:1115
+msgid "search hit BOTTOM, continuing at TOP"
+msgstr "hµadanie dosiahlo koniec, pokraèovanie od zaèiatku"
+
+#: ../if_cscope.c:85
+msgid "Add a new database"
+msgstr "Prida» novú databázu"
+
+#: ../if_cscope.c:87
+msgid "Query for a pattern"
+msgstr "Hµadanie vzoru"
+
+#: ../if_cscope.c:89
+msgid "Show this message"
+msgstr "Zobrazi» túto správu"
+
+#: ../if_cscope.c:91
+msgid "Kill a connection"
+msgstr "Ukonèi» spojenie"
+
+#: ../if_cscope.c:93
+msgid "Reinit all connections"
+msgstr "Znovu inicializova» v¹etky spojenia"
+
+#: ../if_cscope.c:95
+msgid "Show connections"
+msgstr "Zobrazi» spojenia"
+
+#: ../if_cscope.c:101
+#, c-format
+msgid "E560: Usage: cs[cope] %s"
+msgstr "E560: Pou¾itie: cs[cope] %s"
+
+#: ../if_cscope.c:225
+msgid "This cscope command does not support splitting the window.\n"
+msgstr "Tento cscope príkaz nepodporuje rozdeµovanie okna.\n"
+
+#: ../if_cscope.c:266
+msgid "E562: Usage: cstag <ident>"
+msgstr "E562: Pou¾itie: cstag <odsadenie>"
+
+#: ../if_cscope.c:313
+msgid "E257: cstag: tag not found"
+msgstr "E257: cstag: tag nenájdený"
+
+#: ../if_cscope.c:461
+#, c-format
+msgid "E563: stat(%s) error: %d"
+msgstr "E563: stat(%s) chyba: %d"
+
+#: ../if_cscope.c:551
+#, c-format
+msgid "E564: %s is not a directory or a valid cscope database"
+msgstr "E564: %s nie je ani adresárom ani správnou cscope databázou"
+
+#: ../if_cscope.c:566
+#, c-format
+msgid "Added cscope database %s"
+msgstr "Pridaná cscope databáza %s"
+
+#: ../if_cscope.c:616
+#, c-format
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: chyba pri èítaní cscope spojenia %<PRId64>"
+
+#: ../if_cscope.c:711
+msgid "E561: unknown cscope search type"
+msgstr "E561: neznámy typ cscope hµadania"
+
+#: ../if_cscope.c:752 ../if_cscope.c:789
+msgid "E566: Could not create cscope pipes"
+msgstr "E566: Nedajú sa vytvori» cscope rúry"
+
+#: ../if_cscope.c:767
+msgid "E622: Could not fork for cscope"
+msgstr "E622: Nemo¾no spusti» proces pre cscope"
+
+#: ../if_cscope.c:849
+#, fuzzy
+msgid "cs_create_connection setpgid failed"
+msgstr "spustenie cs_create_connection zlyhalo"
+
+#: ../if_cscope.c:853 ../if_cscope.c:889
+msgid "cs_create_connection exec failed"
+msgstr "spustenie cs_create_connection zlyhalo"
+
+#: ../if_cscope.c:863 ../if_cscope.c:902
+msgid "cs_create_connection: fdopen for to_fp failed"
+msgstr "cs_create_connection: volanie fdopen pre to_fp zlyhalo"
+
+#: ../if_cscope.c:865 ../if_cscope.c:906
+msgid "cs_create_connection: fdopen for fr_fp failed"
+msgstr "cs_create_connection: volanie fdopen pre fr_fp zlyhalo"
+
+#: ../if_cscope.c:890
+msgid "E623: Could not spawn cscope process"
+msgstr "E623: Nedajú sa vytvori» cscope rúry"
+
+#: ../if_cscope.c:932
+msgid "E567: no cscope connections"
+msgstr "E567: ¾iadne cscope spojenia"
+
+#: ../if_cscope.c:1009
+#, c-format
+msgid "E469: invalid cscopequickfix flag %c for %c"
+msgstr "E469: chybný cscopequickfix príznak %c pre %c"
+
+#: ../if_cscope.c:1058
+#, c-format
+msgid "E259: no matches found for cscope query %s of %s"
+msgstr "E259: cscope hµadanie %s vo vzore %s nena¹lo ¾iadnu zhodu"
+
+#: ../if_cscope.c:1142
+msgid "cscope commands:\n"
+msgstr "príkazy cscope:\n"
+
+#: ../if_cscope.c:1150
+#, fuzzy, c-format
+msgid "%-5s: %s%*s (Usage: %s)"
+msgstr "%-5s: %-30s (Pou¾itie: %s)"
+
+#: ../if_cscope.c:1155
+msgid ""
+"\n"
+"       c: Find functions calling this function\n"
+"       d: Find functions called by this function\n"
+"       e: Find this egrep pattern\n"
+"       f: Find this file\n"
+"       g: Find this definition\n"
+"       i: Find files #including this file\n"
+"       s: Find this C symbol\n"
+"       t: Find this text string\n"
+msgstr ""
+
+#: ../if_cscope.c:1226
+msgid "E568: duplicate cscope database not added"
+msgstr "E568: duplicitná cscope databáza nebola pridaná"
+
+#: ../if_cscope.c:1335
+#, c-format
+msgid "E261: cscope connection %s not found"
+msgstr "E261: cscope spojenie %s nenájdené"
+
+#: ../if_cscope.c:1364
+#, c-format
+msgid "cscope connection %s closed"
+msgstr "cscope spojenie %s ukonèené"
+
+#. should not reach here
+#: ../if_cscope.c:1486
+msgid "E570: fatal error in cs_manage_matches"
+msgstr "E570: vá¾na chyba v cs_manage_matches"
+
+#: ../if_cscope.c:1693
+#, c-format
+msgid "Cscope tag: %s"
+msgstr "Cscope tag: %s"
+
+#: ../if_cscope.c:1711
+msgid ""
+"\n"
+"   #   line"
+msgstr ""
+"\n"
+"   #   riadok"
+
+#: ../if_cscope.c:1713
+msgid "filename / context / line\n"
+msgstr "názov súboru/ kontext / riadok\n"
+
+#: ../if_cscope.c:1809
+#, c-format
+msgid "E609: Cscope error: %s"
+msgstr "E609: Chyba cscope: %s"
+
+#: ../if_cscope.c:2053
+msgid "All cscope databases reset"
+msgstr "V¹etky cscope databáze resetované"
+
+#: ../if_cscope.c:2123
+msgid "no cscope connections\n"
+msgstr "¾iadne cscope spojenia\n"
+
+#: ../if_cscope.c:2126
+msgid " # pid    database name                       prepend path\n"
+msgstr " # pid    názov databázy                      predpona cesty\n"
+
+#: ../main.c:144
+msgid "Unknown option argument"
+msgstr "Neznámy parameter voµby"
+
+#: ../main.c:146
+msgid "Too many edit arguments"
+msgstr "Príli¹ mnoho upravovacích argumentov"
+
+#: ../main.c:148
+msgid "Argument missing after"
+msgstr "Chýba argument po"
+
+#: ../main.c:150
+msgid "Garbage after option argument"
+msgstr "Chyby za parametrom voµby"
+
+#: ../main.c:152
+msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
+msgstr ""
+"Príli¹ mnoho \"+príkaz\", \"-c príkaz\" alebo \"--cmd príkaz\" argumentov"
+
+#: ../main.c:154
+msgid "Invalid argument for"
+msgstr "Chybný argument pre"
+
+#: ../main.c:294
+#, c-format
+msgid "%d files to edit\n"
+msgstr "%d súborov pre úpravu\n"
+
+#: ../main.c:1342
+msgid "Attempt to open script file again: \""
+msgstr "Pokus o opätovné otvorenie skriptu: \""
+
+#: ../main.c:1350
+msgid "Cannot open for reading: \""
+msgstr "Nedá sa otvori» pre zápis: \""
+
+#: ../main.c:1393
+msgid "Cannot open for script output: \""
+msgstr "Nedá sa otvori» pre výstup skriptu: \""
+
+#: ../main.c:1622
+msgid "Vim: Warning: Output is not to a terminal\n"
+msgstr "Vim: Varovanie: Výstup nesmeruje na terminál\n"
+
+#: ../main.c:1624
+msgid "Vim: Warning: Input is not from a terminal\n"
+msgstr "Vim: Varovanie: Vstup nepochádza z terminálu\n"
+
+#. just in case..
+#: ../main.c:1891
+msgid "pre-vimrc command line"
+msgstr "pre-vimrc príkazový riadok"
+
+#: ../main.c:1964
+#, c-format
+msgid "E282: Cannot read from \"%s\""
+msgstr "E282: Nedá sa èíta» z \"%s\""
+
+#: ../main.c:2149
+msgid ""
+"\n"
+"More info with: \"vim -h\"\n"
+msgstr ""
+"\n"
+"Podrobnej¹ie informácie získáte pomocou \"vim -h\"\n"
+
+#: ../main.c:2178
+msgid "[file ..]       edit specified file(s)"
+msgstr "[súbor ..] ..       upravi» súbor(y)"
+
+#: ../main.c:2179
+msgid "-               read text from stdin"
+msgstr "-                   èíta» text z ¹tandardného vstupu"
+
+#: ../main.c:2180
+msgid "-t tag          edit file where tag is defined"
+msgstr "-t tag          upravi» súbor na mieste definície tagu"
+
+#: ../main.c:2181
+msgid "-q [errorfile]  edit file with first error"
+msgstr "-q [chybový súbor]  upravi» súbor na mieste výskytu prvej chyby"
+
+#: ../main.c:2187
+msgid ""
+"\n"
+"\n"
+"Usage:"
+msgstr ""
+"\n"
+"\n"
+"pou¾itie:"
+
+#: ../main.c:2189
+msgid " vim [arguments] "
+msgstr "vim [argumenty] "
+
+#: ../main.c:2193
+msgid ""
+"\n"
+"   or:"
+msgstr ""
+"\n"
+"   alebo:"
+
+#: ../main.c:2196
+msgid ""
+"\n"
+"\n"
+"Arguments:\n"
+msgstr ""
+"\n"
+"\n"
+"Argumenty:\n"
+
+#: ../main.c:2197
+msgid "--\t\t\tOnly file names after this"
+msgstr "--\t\t\tMô¾u nasledova» iba názvy súborov"
+
+#: ../main.c:2199
+msgid "--literal\t\tDon't expand wildcards"
+msgstr "--literal\t\tNexpandova» ¾olíkové znaky (wildcards)"
+
+#: ../main.c:2201
+msgid "-v\t\t\tVi mode (like \"vi\")"
+msgstr "-v\t\t\tVi mód (rovnaké ako \"vi\")"
+
+#: ../main.c:2202
+msgid "-e\t\t\tEx mode (like \"ex\")"
+msgstr "-e\t\t\tEx mód (rovnaké ako \"ex\")"
+
+#: ../main.c:2203
+msgid "-E\t\t\tImproved Ex mode"
+msgstr ""
+
+#: ../main.c:2204
+msgid "-s\t\t\tSilent (batch) mode (only for \"ex\")"
+msgstr "-s\t\t\tTichý (dávkový) mód (iba pre \"ex\")"
+
+#: ../main.c:2205
+msgid "-d\t\t\tDiff mode (like \"vimdiff\")"
+msgstr "-d\t\t\tPorovnávací mód (rovnaké ako \"vimdiff\")"
+
+#: ../main.c:2206
+msgid "-y\t\t\tEasy mode (like \"evim\", modeless)"
+msgstr "-y\t\t\tJednoduchý mód (rovnaké ako \"evim\", bezmódový)"
+
+#: ../main.c:2207
+msgid "-R\t\t\tReadonly mode (like \"view\")"
+msgstr "-R\t\t\tMód iba pre èítanie (ako \"view\")"
+
+#: ../main.c:2209
+msgid "-m\t\t\tModifications (writing files) not allowed"
+msgstr "-m\t\t\tZmeny (ukladanie súborov) zakázané"
+
+#: ../main.c:2210
+msgid "-M\t\t\tModifications in text not allowed"
+msgstr "-M\t\t\tZmeny v texte zakázané"
+
+#: ../main.c:2211
+msgid "-b\t\t\tBinary mode"
+msgstr "-b\t\t\tBinárny mód"
+
+#: ../main.c:2212
+msgid "-l\t\t\tLisp mode"
+msgstr "-l\t\t\tLisp mód"
+
+#: ../main.c:2213
+msgid "-C\t\t\tCompatible with Vi: 'compatible'"
+msgstr "-C\t\t\tKompatabilný s Vi: 'compatible'"
+
+#: ../main.c:2214
+msgid "-N\t\t\tNot fully Vi compatible: 'nocompatible'"
+msgstr "-N\t\t\tKompatibilita s Vi vypnutá: 'nocompatible'"
+
+#: ../main.c:2215
+msgid "-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"
+msgstr ""
+
+#: ../main.c:2216
+msgid "-D\t\t\tDebugging mode"
+msgstr "-D\t\t\tLadiaci mód"
+
+#: ../main.c:2217
+msgid "-n\t\t\tNo swap file, use memory only"
+msgstr "-n\t\t\tNevytvára» odkladací súbor, pou¾íva» iba pamä»"
+
+#: ../main.c:2218
+msgid "-r\t\t\tList swap files and exit"
+msgstr "-r\t\t\tVypí¹ zoznam odkladacích súborov a skonèi"
+
+#: ../main.c:2219
+msgid "-r (with file name)\tRecover crashed session"
+msgstr "-r (s názvom súboru)\tObnoví preru¹ené sedenie"
+
+#: ../main.c:2220
+msgid "-L\t\t\tSame as -r"
+msgstr "-L\t\t\tRovnaké ako -r"
+
+#: ../main.c:2221
+msgid "-A\t\t\tstart in Arabic mode"
+msgstr "-A\t\t\tspusti v Arabic móde"
+
+#: ../main.c:2222
+msgid "-H\t\t\tStart in Hebrew mode"
+msgstr "-H\t\t\tspusti v hebrejskom móde"
+
+#: ../main.c:2223
+msgid "-F\t\t\tStart in Farsi mode"
+msgstr "-F\t\t\tspusti vo Farsi móde"
+
+#: ../main.c:2224
+msgid "-T <terminal>\tSet terminal type to <terminal>"
+msgstr "-T <terminál>\tNastaví typ terminálu na <terminál>"
+
+#: ../main.c:2225
+msgid "-u <vimrc>\t\tUse <vimrc> instead of any .vimrc"
+msgstr "-u <vimrc>\t\tPou¾ije <vimrc> namiesto akéhokoµvek .vimrc"
+
+#: ../main.c:2226
+msgid "--noplugin\t\tDon't load plugin scripts"
+msgstr "--noplugin\t\tNenahrá zásuvné moduly(plugin skripty)"
+
+#: ../main.c:2227
+#, fuzzy
+msgid "-p[N]\t\tOpen N tab pages (default: one for each file)"
+msgstr "-o[N]\t\tOtvorí N okien (implicitne jedno pre ka¾dý súbor)"
+
+#: ../main.c:2228
+msgid "-o[N]\t\tOpen N windows (default: one for each file)"
+msgstr "-o[N]\t\tOtvorí N okien (implicitne jedno pre ka¾dý súbor)"
+
+#: ../main.c:2229
+msgid "-O[N]\t\tLike -o but split vertically"
+msgstr "-O[N]\t\tAko -o ale rozdelí vertikálne"
+
+#: ../main.c:2230
+msgid "+\t\t\tStart at end of file"
+msgstr "+\t\t\tNastaví kurzor na koniec súboru"
+
+#: ../main.c:2231
+msgid "+<lnum>\t\tStart at line <lnum>"
+msgstr "+<riadok>\t\tNastaví kurzor na <riadok>"
+
+#: ../main.c:2232
+msgid "--cmd <command>\tExecute <command> before loading any vimrc file"
+msgstr "--cmd <príkaz>\t\tVykoná <príkaz> pred nahratím vimrc súboru"
+
+#: ../main.c:2233
+msgid "-c <command>\t\tExecute <command> after loading the first file"
+msgstr "-c <príkaz>\t\tPo nahratí prvého súboru vykoná <príkaz>"
+
+#: ../main.c:2235
+msgid "-S <session>\t\tSource file <session> after loading the first file"
+msgstr ""
+"-S <sedenie>\t\tPo nahratí prvého súboru vykoná príkazy v súbore <sedenie>"
+
+#: ../main.c:2236
+msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"
+msgstr "-s <skript>\t\tNaèíta príkazy normálneho módu zo <skriptu>"
+
+#: ../main.c:2237
+msgid "-w <scriptout>\tAppend all typed commands to file <scriptout>"
+msgstr "-w <skript>\t\tPripojí v¹etky napísané príkazy do súboru <skript>"
+
+#: ../main.c:2238
+msgid "-W <scriptout>\tWrite all typed commands to file <scriptout>"
+msgstr "-W <skript>\t\tUlo¾í v¹etky napísané príkazy do súboru <skript>"
+
+#: ../main.c:2240
+msgid "--startuptime <file>\tWrite startup timing messages to <file>"
+msgstr ""
+
+#: ../main.c:2242
+msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
+msgstr "-i <viminfo>\t\tPou¾ije <viminfo> namiesto akéhokoµvek .viminfo"
+
+#: ../main.c:2243
+msgid "-h  or  --help\tPrint Help (this message) and exit"
+msgstr "-h  alebo  --help\tVypí¹e túto nápovedu a skonèí"
+
+#: ../main.c:2244
+msgid "--version\t\tPrint version information and exit"
+msgstr "--version\t\tVypí¹e informácie o verzii a skonèí"
+
+#: ../mark.c:676
+msgid "No marks set"
+msgstr "Nie sú nastavené ¾iadne znaèky"
+
+#: ../mark.c:678
+#, c-format
+msgid "E283: No marks matching \"%s\""
+msgstr "E283:\"%s\" nevyhovujú ¾iadne znaèky"
+
+#. Highlight title
+#: ../mark.c:687
+msgid ""
+"\n"
+"mark line  col file/text"
+msgstr ""
+"\n"
+"znaèka riadok  ståpec súbor/text"
+
+#. Highlight title
+#: ../mark.c:789
+msgid ""
+"\n"
+" jump line  col file/text"
+msgstr ""
+"\n"
+" skok riadok ståpec súbor/text"
+
+#. Highlight title
+#: ../mark.c:831
+msgid ""
+"\n"
+"change line  col text"
+msgstr ""
+"\n"
+"znaèka riadok  ståpec text"
+
+#: ../mark.c:1238
+msgid ""
+"\n"
+"# File marks:\n"
+msgstr ""
+"\n"
+"# Súborové znaèky:\n"
+
+#. Write the jumplist with -'
+#: ../mark.c:1271
+msgid ""
+"\n"
+"# Jumplist (newest first):\n"
+msgstr ""
+"\n"
+"# Zoznam skokov (zaèínajúci najnov¹ou polo¾kou):\n"
+
+#: ../mark.c:1352
+msgid ""
+"\n"
+"# History of marks within files (newest to oldest):\n"
+msgstr ""
+"\n"
+"# História znaèiek v súboroch (zaèínajúci najnov¹ou polo¾kou):\n"
+
+#: ../mark.c:1431
+msgid "Missing '>'"
+msgstr "Chýba '>'"
+
+#: ../memfile.c:426
+msgid "E293: block was not locked"
+msgstr "E293: blok nebol zamknutý"
+
+#: ../memfile.c:799
+msgid "E294: Seek error in swap file read"
+msgstr "E294: Chyba posunu pri èítaní odkladacieho súboru"
+
+#: ../memfile.c:803
+msgid "E295: Read error in swap file"
+msgstr "E295: Chyba pri èítaní odkladacieho súboru"
+
+#: ../memfile.c:849
+msgid "E296: Seek error in swap file write"
+msgstr "E296: Chyba posunu pri ukladaní do odkladacieho súboru"
+
+#: ../memfile.c:865
+msgid "E297: Write error in swap file"
+msgstr "E297: Chyba pri ukladaní do odkladacieho súboru"
+
+#: ../memfile.c:1036
+msgid "E300: Swap file already exists (symlink attack?)"
+msgstr "E300: Odkladací súbor u¾ existuje (symlink útok?)"
+
+#: ../memline.c:318
+msgid "E298: Didn't get block nr 0?"
+msgstr "E298: Nedá sa získa» blok 0?"
+
+#: ../memline.c:361
+msgid "E298: Didn't get block nr 1?"
+msgstr "E298: Nedá sa získa» blok 1?"
+
+#: ../memline.c:377
+msgid "E298: Didn't get block nr 2?"
+msgstr "E298: Nedá sa získa» blok 2?"
+
+#. could not (re)open the swap file, what can we do????
+#: ../memline.c:465
+msgid "E301: Oops, lost the swap file!!!"
+msgstr "E301: Ups, odkladací súbor bol stratený!!!"
+
+#: ../memline.c:477
+msgid "E302: Could not rename swap file"
+msgstr "E302: Nedá sa premenova» odkladací súbor"
+
+#: ../memline.c:554
+#, c-format
+msgid "E303: Unable to open swap file for \"%s\", recovery impossible"
+msgstr "E303: Nedá sa otvori» odkladací súbor pre \"%s\", oprava nemo¾ná"
+
+#: ../memline.c:666
+msgid "E304: ml_upd_block0(): Didn't get block 0??"
+msgstr "E304: ml_upd_block0(): nedá sa získa» blok 0??"
+
+#. no swap files found
+#: ../memline.c:830
+#, c-format
+msgid "E305: No swap file found for %s"
+msgstr "E305: Odkladací súbor pre %s nebol nájdený"
+
+#: ../memline.c:839
+msgid "Enter number of swap file to use (0 to quit): "
+msgstr ""
+"Zadajte èíslo odkladacieho súboru, ktorý sa má pou¾it (0 pre ukonèenie): "
+
+#: ../memline.c:879
+#, c-format
+msgid "E306: Cannot open %s"
+msgstr "E306: Nedá sa otvori» %s"
+
+#: ../memline.c:897
+msgid "Unable to read block 0 from "
+msgstr "Nedá sa èíta» blok 0 z "
+
+#: ../memline.c:900
+msgid ""
+"\n"
+"Maybe no changes were made or Vim did not update the swap file."
+msgstr ""
+"\n"
+"Mo¾no nedo¹lo k ¾iadnym zmenám, alebo Vim neaktualizoval odkladací súbor."
+
+#: ../memline.c:909
+msgid " cannot be used with this version of Vim.\n"
+msgstr " nedá sa pou¾i» s touto verziou Vim.\n"
+
+#: ../memline.c:911
+msgid "Use Vim version 3.0.\n"
+msgstr "Pou¾ite Vim verziu 3.0.\n"
+
+#: ../memline.c:916
+#, c-format
+msgid "E307: %s does not look like a Vim swap file"
+msgstr "E307: %s sa nezdá by» odkladacím súborom Vim"
+
+#: ../memline.c:922
+msgid " cannot be used on this computer.\n"
+msgstr " nedá sa pou¾í» na tomto poèítaèi.\n"
+
+#: ../memline.c:924
+msgid "The file was created on "
+msgstr "Súbor bol vytvorený "
+
+#: ../memline.c:928
+msgid ""
+",\n"
+"or the file has been damaged."
+msgstr ""
+",\n"
+"alebo bol súbor po¹kodený."
+
+#: ../memline.c:945
+msgid " has been damaged (page size is smaller than minimum value).\n"
+msgstr ""
+
+#: ../memline.c:974
+#, c-format
+msgid "Using swap file \"%s\""
+msgstr "Pou¾ívam odkladací súbor \"%s\""
+
+#: ../memline.c:980
+#, c-format
+msgid "Original file \"%s\""
+msgstr "Pôvodný súbor \"%s\""
+
+#: ../memline.c:995
+msgid "E308: Warning: Original file may have been changed"
+msgstr "E308: Varovanie: Pôvodný súbor mohol by» zmenený"
+
+#: ../memline.c:1061
+#, c-format
+msgid "E309: Unable to read block 1 from %s"
+msgstr "E309: Nedá sa èíta» blok 1 z %s"
+
+#: ../memline.c:1065
+msgid "???MANY LINES MISSING"
+msgstr "???CHÝBA MNOHO RIADKOV"
+
+#: ../memline.c:1076
+msgid "???LINE COUNT WRONG"
+msgstr "???CHYBNÝ POÈET RIADKOV"
+
+#: ../memline.c:1082
+msgid "???EMPTY BLOCK"
+msgstr "???PRÁZDNY BLOK"
+
+#: ../memline.c:1103
+msgid "???LINES MISSING"
+msgstr "???CHÝBAJÚCE RIADKY"
+
+#: ../memline.c:1128
+#, c-format
+msgid "E310: Block 1 ID wrong (%s not a .swp file?)"
+msgstr "E310: ID bloku 1 je chybné (je %s odkladacím súborom?)"
+
+#: ../memline.c:1133
+msgid "???BLOCK MISSING"
+msgstr "???CHÝBA BLOK"
+
+#: ../memline.c:1147
+msgid "??? from here until ???END lines may be messed up"
+msgstr "od ??? po ???END mô¾u by» riadky pomie¹ané"
+
+#: ../memline.c:1164
+msgid "??? from here until ???END lines may have been inserted/deleted"
+msgstr "od ??? po ???END mô¾u by» riadky vlo¾ené/vymazané"
+
+#: ../memline.c:1181
+msgid "???END"
+msgstr "???KONIEC"
+
+#: ../memline.c:1238
+msgid "E311: Recovery Interrupted"
+msgstr "E311: Obnova preru¹ená"
+
+#: ../memline.c:1243
+msgid ""
+"E312: Errors detected while recovering; look for lines starting with ???"
+msgstr ""
+"E312: V priebehu obnovy do¹lo k chybám; skontrolujte riadky zaèínajúce na ???"
+
+#: ../memline.c:1245
+msgid "See \":help E312\" for more information."
+msgstr "Pozrite \":help E312\" pre ïal¹ie informácie"
+
+#: ../memline.c:1249
+msgid "Recovery completed. You should check if everything is OK."
+msgstr "Obnova dokonèená. Skontrolujte, èi je v¹etko v poriadku."
+
+#: ../memline.c:1251
+msgid ""
+"\n"
+"(You might want to write out this file under another name\n"
+msgstr ""
+"\n"
+"(Zvá¾te ulo¾enie tohoto súboru pod iným menom\n"
+
+#: ../memline.c:1252
+#, fuzzy
+msgid "and run diff with the original file to check for changes)"
+msgstr "a pomocou programu diff zistite zmeny oproti pôvodnému súboru)\n"
+
+#: ../memline.c:1254
+msgid "Recovery completed. Buffer contents equals file contents."
+msgstr ""
+
+#: ../memline.c:1255
+#, fuzzy
+msgid ""
+"\n"
+"You may want to delete the .swp file now.\n"
+"\n"
+msgstr "Potom vyma¾te odkladací súbor s príponou .swp.\n"
+"\n"
+
+#. use msg() to start the scrolling properly
+#: ../memline.c:1327
+msgid "Swap files found:"
+msgstr "Nájdené odkladacie súbory:"
+
+#: ../memline.c:1446
+msgid "   In current directory:\n"
+msgstr "   V aktuálnom adresári:\n"
+
+#: ../memline.c:1448
+msgid "   Using specified name:\n"
+msgstr "   So zadaným menom:\n"
+
+#: ../memline.c:1450
+msgid "   In directory "
+msgstr "   V adresári "
+
+#: ../memline.c:1465
+msgid "      -- none --\n"
+msgstr "      -- ¾iadne --\n"
+
+#: ../memline.c:1527
+msgid "          owned by: "
+msgstr "            vlastník: "
+
+#: ../memline.c:1529
+msgid "   dated: "
+msgstr "    dátum vytvorenia: "
+
+#: ../memline.c:1532 ../memline.c:3231
+msgid "             dated: "
+msgstr "    dátum vytvorenia: "
+
+#: ../memline.c:1548
+msgid "         [from Vim version 3.0]"
+msgstr "         [od Vim verzie 3.0]"
+
+#: ../memline.c:1550
+msgid "         [does not look like a Vim swap file]"
+msgstr "         [nevyzerá ako odkladací súbor Vim]"
+
+#: ../memline.c:1552
+msgid "         file name: "
+msgstr "        názov súboru: "
+
+#: ../memline.c:1558
+msgid ""
+"\n"
+"          modified: "
+msgstr ""
+"\n"
+"             zmenený: "
+
+#: ../memline.c:1559
+msgid "YES"
+msgstr "ÁNO"
+
+#: ../memline.c:1559
+msgid "no"
+msgstr "nie"
+
+#: ../memline.c:1562
+msgid ""
+"\n"
+"         user name: "
+msgstr ""
+"\n"
+"    u¾ívateµské meno: "
+
+#: ../memline.c:1568
+msgid "   host name: "
+msgstr "   názov poèítaèa: "
+
+#: ../memline.c:1570
+msgid ""
+"\n"
+"         host name: "
+msgstr ""
+"\n"
+"         názov poèítaèa: "
+
+#: ../memline.c:1575
+msgid ""
+"\n"
+"        process ID: "
+msgstr ""
+"\n"
+"         ID procesu : "
+
+#: ../memline.c:1579
+msgid " (still running)"
+msgstr " (stále be¾í)"
+
+#: ../memline.c:1586
+msgid ""
+"\n"
+"         [not usable on this computer]"
+msgstr ""
+"\n"
+"         [nepou¾itelné na tomto poèítaèi]"
+
+#: ../memline.c:1590
+msgid "         [cannot be read]"
+msgstr "         [nedá sa preèíta»]"
+
+#: ../memline.c:1593
+msgid "         [cannot be opened]"
+msgstr "         [nedá sa otvori»]"
+
+#: ../memline.c:1698
+msgid "E313: Cannot preserve, there is no swap file"
+msgstr "E313: Nedá sa zachova» - odkladací súbor neexistuje"
+
+#: ../memline.c:1747
+msgid "File preserved"
+msgstr "Súbor zachovaný"
+
+#: ../memline.c:1749
+msgid "E314: Preserve failed"
+msgstr "E314: Uchovanie sa nepodarilo"
+
+#: ../memline.c:1819
+#, c-format
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: chybné èíslo riadku: %<PRId64>"
+
+#: ../memline.c:1851
+#, c-format
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: nedá sa nájs» riadok %<PRId64>"
+
+#: ../memline.c:2236
+msgid "E317: pointer block id wrong 3"
+msgstr "E317: chybné èíslo ukazovateµa na blok 3"
+
+#: ../memline.c:2311
+msgid "stack_idx should be 0"
+msgstr "stack_idx by mal ma» hodnotu 3"
+
+#: ../memline.c:2369
+msgid "E318: Updated too many blocks?"
+msgstr "E318: Aktualizovaných príli¹ veµa blokov?"
+
+#: ../memline.c:2511
+msgid "E317: pointer block id wrong 4"
+msgstr "E317: chybné èíslo ukazovateµa na blok 4"
+
+#: ../memline.c:2536
+msgid "deleted block 1?"
+msgstr "vymazaný blok 1?"
+
+#: ../memline.c:2707
+#, c-format
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: Nedá sa nájs» riadok %<PRId64>"
+
+#: ../memline.c:2916
+msgid "E317: pointer block id wrong"
+msgstr "E317: chybné èíslo ukazovateµa na blok"
+
+#: ../memline.c:2930
+msgid "pe_line_count is zero"
+msgstr "pe_line_count má nulovú hodnotu"
+
+#: ../memline.c:2955
+#, c-format
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: èíslo riadku je mimo rozsah: %<PRId64> (za koncom)"
+
+#: ../memline.c:2959
+#, c-format
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: chybný poèet riadkov v bloku %<PRId64>"
+
+#: ../memline.c:2999
+msgid "Stack size increases"
+msgstr "Nárast veµkosti zásobníku"
+
+#: ../memline.c:3038
+msgid "E317: pointer block id wrong 2"
+msgstr "E317: chybný èíslo ukazovateµa na blok 2"
+
+#: ../memline.c:3070
+#, c-format
+msgid "E773: Symlink loop for \"%s\""
+msgstr ""
+
+#: ../memline.c:3221
+msgid "E325: ATTENTION"
+msgstr "E325: POZOR"
+
+#: ../memline.c:3222
+msgid ""
+"\n"
+"Found a swap file by the name \""
+msgstr ""
+"\n"
+"Nájdený odkladací súbor s menom \""
+
+#: ../memline.c:3226
+msgid "While opening file \""
+msgstr "Pri otváraní súboru \""
+
+#: ../memline.c:3239
+msgid "      NEWER than swap file!\n"
+msgstr "      NOV©Í ako odkladací súbor!\n"
+
+#: ../memline.c:3244
+#, fuzzy
+msgid ""
+"\n"
+"(1) Another program may be editing the same file.  If this is the case,\n"
+"    be careful not to end up with two different instances of the same\n"
+"    file when making changes."
+msgstr ""
+"\n"
+"(1) Súbor mô¾e by» upravovaný iným programom.\n"
+"    Ak je tomu tak, potom si dajte pozor, aby ste po ulo¾ení zmien\n"
+"    nemali dve rôzne verzie toho istého súboru.\n"
+
+#: ../memline.c:3245
+#, fuzzy
+msgid "  Quit, or continue with caution.\n"
+msgstr "    Ukonèite program, alebo opatrne pokraèujte v úpravách.\n"
+
+#: ../memline.c:3246
+#, fuzzy
+msgid "(2) An edit session for this file crashed.\n"
+msgstr ""
+"\n"
+"(2) Úprava tohoto súboru bola preru¹ená neoèakávaným ukonèením programu.\n"
+
+#: ../memline.c:3247
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Ak je tomu tak, potom pou¾ite \":recover\" alebo \"nvim -r "
+
+#: ../memline.c:3249
+msgid ""
+"\"\n"
+"    to recover the changes (see \":help recovery\").\n"
+msgstr ""
+"\"\n"
+"    pre obnovenie zmien (viï \":help recovery)\".\n"
+
+#: ../memline.c:3250
+msgid "    If you did this already, delete the swap file \""
+msgstr "    Pokiaµ ste tak u¾ urobili, tak vyma¾te odkladací súbor \""
+
+#: ../memline.c:3252
+msgid ""
+"\"\n"
+"    to avoid this message.\n"
+msgstr ""
+"\"\n"
+"    a táto správa sa u¾ nebude objavova».\n"
+
+#: ../memline.c:3450 ../memline.c:3452
+msgid "Swap file \""
+msgstr "Odkladací súbor \""
+
+#: ../memline.c:3451 ../memline.c:3455
+msgid "\" already exists!"
+msgstr "\" u¾ existuje!"
+
+#: ../memline.c:3457
+msgid "VIM - ATTENTION"
+msgstr "VIM - POZOR"
+
+#: ../memline.c:3459
+msgid "Swap file already exists!"
+msgstr "Odkladací súbor u¾ existuje!"
+
+#: ../memline.c:3464
+msgid ""
+"&Open Read-Only\n"
+"&Edit anyway\n"
+"&Recover\n"
+"&Quit\n"
+"&Abort"
+msgstr ""
+"&Otvori» iba pre èítanie\n"
+"&Pokraèova» v úpravách\n"
+"O&bnovi» súbor\n"
+"&Koniec\n"
+"&Zru¹i»"
+
+#: ../memline.c:3467
+#, fuzzy
+msgid ""
+"&Open Read-Only\n"
+"&Edit anyway\n"
+"&Recover\n"
+"&Delete it\n"
+"&Quit\n"
+"&Abort"
+msgstr ""
+"&Otvori» iba pre èítanie\n"
+"&Pokraèova» v úpravách\n"
+"O&bnovi» súbor\n"
+"&Koniec\n"
+"&Zru¹i»"
+
+#.
+#. * Change the ".swp" extension to find another file that can be used.
+#. * First decrement the last char: ".swo", ".swn", etc.
+#. * If that still isn't enough decrement the last but one char: ".svz"
+#. * Can happen when editing many "No Name" buffers.
+#.
+#. ".s?a"
+#. ".saa": tried enough, give up
+#: ../memline.c:3528
+msgid "E326: Too many swap files found"
+msgstr "E326: Príli¹ mnoho odkladacích súborov"
+
+#: ../memory.c:227
+#, c-format
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Nedostatok pamäte! (alokujem %<PRIu64> bajtov)"
+
+#: ../menu.c:62
+msgid "E327: Part of menu-item path is not sub-menu"
+msgstr "E327: Èas» cesty k predmetu ponuky nie je podponukou"
+
+#: ../menu.c:63
+msgid "E328: Menu only exists in another mode"
+msgstr "E328: Ponuka existuje iba v inom móde"
+
+#: ../menu.c:64
+#, c-format
+msgid "E329: No menu \"%s\""
+msgstr "E329: Ponuka \"%s\" neexistuje"
+
+#. Only a mnemonic or accelerator is not valid.
+#: ../menu.c:329
+#, fuzzy
+msgid "E792: Empty menu name"
+msgstr "E749: prázdny buffer"
+
+#: ../menu.c:340
+msgid "E330: Menu path must not lead to a sub-menu"
+msgstr "E330: Cesta ponuky nesmie vies» do podponuky"
+
+#: ../menu.c:365
+msgid "E331: Must not add menu items directly to menu bar"
+msgstr "E331: Polo¾ky ponuky sa nejdú pridáva» priamo na li¹tu"
+
+#: ../menu.c:370
+msgid "E332: Separator cannot be part of a menu path"
+msgstr "E332: Oddeµovaè nesmie by» èas»ou cesty ponuky"
+
+#. Now we have found the matching menu, and we list the mappings
+#. Highlight title
+#: ../menu.c:762
+msgid ""
+"\n"
+"--- Menus ---"
+msgstr ""
+"\n"
+"--- Ponuky ---"
+
+#: ../menu.c:1313
+msgid "E333: Menu path must lead to a menu item"
+msgstr "E333: Cesta ponuky musí vies» k polo¾ke ponuky"
+
+#: ../menu.c:1330
+#, c-format
+msgid "E334: Menu not found: %s"
+msgstr "E334: Ponuka nenájdená: %s"
+
+#: ../menu.c:1396
+#, c-format
+msgid "E335: Menu not defined for %s mode"
+msgstr "E335: V %s móde nie je ponuka definovaná"
+
+#: ../menu.c:1426
+msgid "E336: Menu path must lead to a sub-menu"
+msgstr "E336: Cesta ponuky musí vies» do podponuky"
+
+#: ../menu.c:1447
+msgid "E337: Menu not found - check menu names"
+msgstr "E337: Ponuka nenájdená - skontrolujte názvy ponúk"
+
+#: ../message.c:423
+#, c-format
+msgid "Error detected while processing %s:"
+msgstr "Chyba pri spracovaní %s:"
+
+#: ../message.c:445
+#, c-format
+msgid "line %4ld:"
+msgstr "riadok %4ld:"
+
+#: ../message.c:617
+#, c-format
+msgid "E354: Invalid register name: '%s'"
+msgstr "E354: '%s' nie je prístupné meno registru"
+
+#: ../message.c:986
+msgid "Interrupt: "
+msgstr "Preru¹enie: "
+
+#: ../message.c:988
+msgid "Press ENTER or type command to continue"
+msgstr "Stlaète ENTER alebo zadajte príkaz pre pokraèovanie"
+
+#: ../message.c:1843
+#, fuzzy, c-format
+msgid "%s line %<PRId64>"
+msgstr "%s, riadok %<PRId64>"
+
+#: ../message.c:2392
+msgid "-- More --"
+msgstr "-- Pokraèovanie --"
+
+#: ../message.c:2398
+msgid " SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "
+msgstr " MEDZERA/d/j: obrazovka/stránka/riadok dole, b/u/k: hore, q: koniec "
+
+#: ../message.c:3021 ../message.c:3031
+msgid "Question"
+msgstr "Otázka"
+
+# TODO: Translate as "&Ano\n&Nie" ?
+#: ../message.c:3023
+msgid ""
+"&Yes\n"
+"&No"
+msgstr ""
+"&Ano\n"
+"&Nie"
+
+# TODO: Translate as "&Ano\n&Nie\n&Zru¹i»" ?
+#: ../message.c:3033
+msgid ""
+"&Yes\n"
+"&No\n"
+"&Cancel"
+msgstr ""
+"&Ano\n"
+"&Nie\n"
+"&Zru¹i»"
+
+# TODO: Translate as "&Ano\n&Nie\n&Ulo¾i» v¹etko\nZahodi» &v¹etko\n&Zru¹i»" ?
+#: ../message.c:3045
+msgid ""
+"&Yes\n"
+"&No\n"
+"Save &All\n"
+"&Discard All\n"
+"&Cancel"
+msgstr ""
+"&Ano\n"
+"&Nie\n"
+"&Ulo¾i» v¹etko\n"
+"Zahodi» &v¹etko\n"
+"&Zru¹i»"
+
+#: ../message.c:3058
+msgid "E766: Insufficient arguments for printf()"
+msgstr "E766: Chybné argumenty pre funkciu printf()"
+
+#: ../message.c:3119
+#, fuzzy
+msgid "E807: Expected Float argument for printf()"
+msgstr "E766: Chybné argumenty pre funkciu printf()"
+
+#: ../message.c:3873
+msgid "E767: Too many arguments to printf()"
+msgstr "E767: Príli¹ mnoho argumentov pre funkciu printf()"
+
+#: ../misc1.c:2256
+msgid "W10: Warning: Changing a readonly file"
+msgstr "W10: Varovanie: mením súbor iba pre èítanie"
+
+#: ../misc1.c:2537
+#, fuzzy
+msgid "Type number and <Enter> or click with mouse (empty cancels): "
+msgstr "Zadajte èíslo ale kliknite my¹ou (<Enter> zru¹í): "
+
+#: ../misc1.c:2539
+#, fuzzy
+msgid "Type number and <Enter> (empty cancels): "
+msgstr "Zvoµte èíslo (<Enter> zru¹í): "
+
+#: ../misc1.c:2585
+msgid "1 more line"
+msgstr "1 nový riadok"
+
+#: ../misc1.c:2588
+msgid "1 line less"
+msgstr "1 vymazaný riadok"
+
+#: ../misc1.c:2593
+#, c-format
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> nových riadkov"
+
+#: ../misc1.c:2596
+#, c-format
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> vymazaných riadkov"
+
+#: ../misc1.c:2599
+msgid " (Interrupted)"
+msgstr " (Preru¹ené)"
+
+#: ../misc1.c:2635
+msgid "Beep!"
+msgstr "Piip!"
+
+#: ../misc2.c:738
+#, c-format
+msgid "Calling shell to execute: \"%s\""
+msgstr "Volám shell na spustenie: \"%s\""
+
+#: ../normal.c:183
+msgid "E349: No identifier under cursor"
+msgstr "E349: Pod kurzorom nie je ¾iadny identifikátor"
+
+#: ../normal.c:1866
+#, fuzzy
+msgid "E774: 'operatorfunc' is empty"
+msgstr "E91: voµba 'shell' je prázdna"
+
+#: ../normal.c:2637
+msgid "Warning: terminal cannot highlight"
+msgstr "Varovanie: terminál nepodporuje zvýrazòovanie"
+
+#: ../normal.c:2807
+msgid "E348: No string under cursor"
+msgstr "E348: Pod kurzorom nie je ¾iadny re»azec"
+
+#: ../normal.c:3937
+msgid "E352: Cannot erase folds with current 'foldmethod'"
+msgstr "E352: Pomocou 'foldmethod' sa nedá vymaza» vnorenie"
+
+#: ../normal.c:5897
+msgid "E664: changelist is empty"
+msgstr "E664: zoznam zmien je prázdny"
+
+#: ../normal.c:5899
+msgid "E662: At start of changelist"
+msgstr "E662: Na zaèiatku zoznamu zmien"
+
+#: ../normal.c:5901
+msgid "E663: At end of changelist"
+msgstr "E663: Na konci zoznamu zmien"
+
+#: ../normal.c:7053
+msgid "Type  :quit<Enter>  to exit Nvim"
+msgstr "Zadajte  :quit<Enter>  pre ukonèenie programu Vim"
+
+#: ../ops.c:248
+#, c-format
+msgid "1 line %sed 1 time"
+msgstr "poèet riadkov upravených naraz pomocou %s: 1"
+
+#: ../ops.c:250
+#, c-format
+msgid "1 line %sed %d times"
+msgstr "1 riadok upravený pomocou %s %d krát"
+
+#: ../ops.c:253
+#, c-format
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> riadkov upravených naraz pomocou %s"
+
+#: ../ops.c:256
+#, c-format
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> riadkov upravených pomocou %s %d krát"
+
+#: ../ops.c:592
+#, c-format
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> riadkov pre odsadenie..."
+
+#: ../ops.c:634
+msgid "1 line indented "
+msgstr "1 riadok odsadený "
+
+#: ../ops.c:636
+#, c-format
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> riadkov odsadených "
+
+#: ../ops.c:938
+msgid "E748: No previously used register"
+msgstr "E748: ®iadny predtým pou¾ívaný register"
+
+#. must display the prompt
+#: ../ops.c:1433
+msgid "cannot yank; delete anyway"
+msgstr "nedá sa kopírova»; napriek tomu vymazané"
+
+#: ../ops.c:1929
+msgid "1 line changed"
+msgstr "1 riadok zmenený"
+
+#: ../ops.c:1931
+#, c-format
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> zmenených riadkov"
+
+#: ../ops.c:2521
+msgid "block of 1 line yanked"
+msgstr "skopírovaný blok 1 riadku"
+
+#: ../ops.c:2523
+msgid "1 line yanked"
+msgstr "1 riadok skopírovaný"
+
+#: ../ops.c:2525
+#, c-format
+msgid "block of %<PRId64> lines yanked"
+msgstr "skopírovaný blok %<PRId64> riadkov"
+
+#: ../ops.c:2528
+#, c-format
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> skopírovaných riadkov"
+
+#: ../ops.c:2710
+#, c-format
+msgid "E353: Nothing in register %s"
+msgstr "E353: Register %s je prázdny"
+
+#. Highlight title
+#: ../ops.c:3185
+msgid ""
+"\n"
+"--- Registers ---"
+msgstr ""
+"\n"
+"--- Registre ---"
+
+#: ../ops.c:4455
+msgid "Illegal register name"
+msgstr "Neprípustný názov registra"
+
+#: ../ops.c:4533
+msgid ""
+"\n"
+"# Registers:\n"
+msgstr ""
+"\n"
+"# Registre:\n"
+
+#: ../ops.c:4575
+#, c-format
+msgid "E574: Unknown register type %d"
+msgstr "E574: Neznámy typ registra %d"
+
+#: ../ops.c:5089
+#, c-format
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> Ståpcov; "
+
+#: ../ops.c:5097
+#, c-format
+msgid ""
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; "
+"%<PRId64> of %<PRId64> Bytes"
+msgstr ""
+"Vybraných %s%<PRId64> z %<PRId64> Riadkov; %<PRId64> zo %<PRId64> Slov; "
+"%<PRId64> z %<PRId64> Bajtov"
+
+#: ../ops.c:5105
+#, c-format
+msgid ""
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; "
+"%<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> Bytes"
+msgstr ""
+"Vybraných %s%<PRId64> z %<PRId64> Riadkov; %<PRId64> zo %<PRId64> Slov; "
+"%<PRId64> z %<PRId64> Znakov; %<PRId64> z %<PRId64> Bajtov"
+
+#: ../ops.c:5123
+#, c-format
+msgid ""
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte "
+"%<PRId64> of %<PRId64>"
+msgstr ""
+"Ståpec %s z %s; Riadok %<PRId64> z %<PRId64>; Slovo %<PRId64> z %<PRId64>; "
+"Bajt %<PRId64> z %<PRId64>"
+
+#: ../ops.c:5133
+#, c-format
+msgid ""
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char "
+"%<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr ""
+"Ståpec %s z %s; Riadok %<PRId64> z %<PRId64>; Slovo %<PRId64> z %<PRId64>; "
+"Znak %<PRId64> z %<PRId64>; Bajt %<PRId64> z %<PRId64>"
+
+#: ../ops.c:5146
+#, c-format
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> pre BOM)"
+
+#: ../option.c:1238
+msgid "%<%f%h%m%=Page %N"
+msgstr "%<%f%h%m%=Strana %N"
+
+#: ../option.c:1574
+msgid "Thanks for flying Vim"
+msgstr "Ïakujeme za pou¾itie Vim"
+
+#. found a mismatch: skip
+#: ../option.c:2698
+msgid "E518: Unknown option"
+msgstr "E518: Neznáma voµba"
+
+#: ../option.c:2709
+msgid "E519: Option not supported"
+msgstr "E519: Voµba nie je podporovaná"
+
+#: ../option.c:2740
+msgid "E520: Not allowed in a modeline"
+msgstr "E520: Nie je v modeline povolené"
+
+#: ../option.c:2815
+msgid "E846: Key code not set"
+msgstr ""
+
+#: ../option.c:2924
+msgid "E521: Number required after ="
+msgstr "E521: Po = je vy¾adované èíslo"
+
+#: ../option.c:3226 ../option.c:3864
+msgid "E522: Not found in termcap"
+msgstr "E522: Nenájdený v termcape"
+
+#: ../option.c:3335
+#, c-format
+msgid "E539: Illegal character <%s>"
+msgstr "E539: Neprípustný znak <%s>"
+
+#: ../option.c:3862
+msgid "E529: Cannot set 'term' to empty string"
+msgstr "E529: Voµba 'term' nemô¾e by» prázdna"
+
+#: ../option.c:3885
+msgid "E589: 'backupext' and 'patchmode' are equal"
+msgstr "E589: voµby 'backupext' a 'patchmode' majú rovnakú hodnotu"
+
+#: ../option.c:3964
+msgid "E834: Conflicts with value of 'listchars'"
+msgstr ""
+
+#: ../option.c:3966
+msgid "E835: Conflicts with value of 'fillchars'"
+msgstr ""
+
+#: ../option.c:4163
+msgid "E524: Missing colon"
+msgstr "E524: Chýba dvojbodka"
+
+#: ../option.c:4165
+msgid "E525: Zero length string"
+msgstr "E525: Re»azec s nulovou då¾kou"
+
+#: ../option.c:4220
+#, c-format
+msgid "E526: Missing number after <%s>"
+msgstr "E526: Po <%s> chýba èíslo"
+
+#: ../option.c:4232
+msgid "E527: Missing comma"
+msgstr "E527: Chýba èiarka"
+
+#: ../option.c:4239
+msgid "E528: Must specify a ' value"
+msgstr "E528: Je nutné zada» hodnotu '"
+
+#: ../option.c:4271
+msgid "E595: contains unprintable or wide character"
+msgstr "E595: obsahuje netlaèiteµné znaky"
+
+#: ../option.c:4469
+#, c-format
+msgid "E535: Illegal character after <%c>"
+msgstr "E535: Neprípustný znak po <%c>"
+
+#: ../option.c:4534
+msgid "E536: comma required"
+msgstr "E536: je nutná èiarka"
+
+#: ../option.c:4543
+#, c-format
+msgid "E537: 'commentstring' must be empty or contain %s"
+msgstr ""
+"E537: 'commentstring' (komentár) musí by» prázdny alebo musí obsahova» %s"
+
+#: ../option.c:4928
+msgid "E540: Unclosed expression sequence"
+msgstr "E540: Neuzatvorené zoskupenie výrazov"
+
+#: ../option.c:4932
+msgid "E541: too many items"
+msgstr "E541: príli¹ mnoho polo¾iek"
+
+#: ../option.c:4934
+msgid "E542: unbalanced groups"
+msgstr "E542: nevyvá¾ené skupiny"
+
+#: ../option.c:5148
+msgid "E590: A preview window already exists"
+msgstr "E590: Okno náhµadu u¾ existuje"
+
+#: ../option.c:5311
+msgid "W17: Arabic requires UTF-8, do ':set encoding=utf-8'"
+msgstr ""
+"W17: Mód Arabic vy¾aduje kódovanie UTF-8, nastavte to príkazom ':set "
+"encoding=utf-8'"
+
+#: ../option.c:5623
+#, c-format
+msgid "E593: Need at least %d lines"
+msgstr "E593: Minimálny potrebný poèet riadkov je %d"
+
+#: ../option.c:5631
+#, c-format
+msgid "E594: Need at least %d columns"
+msgstr "E594: Minimálne potrebný poèet ståpcov je %d"
+
+#: ../option.c:6011
+#, c-format
+msgid "E355: Unknown option: %s"
+msgstr "E355: Neznáma voµba: %s"
+
+#. There's another character after zeros or the string
+#. * is empty.  In both cases, we are trying to set a
+#. * num option using a string.
+#: ../option.c:6037
+#, fuzzy, c-format
+msgid "E521: Number required: &%s = '%s'"
+msgstr "E521: Po = je vy¾adované èíslo"
+
+#: ../option.c:6149
+msgid ""
+"\n"
+"--- Terminal codes ---"
+msgstr ""
+"\n"
+"--- Kódy terminálu ---"
+
+#: ../option.c:6151
+msgid ""
+"\n"
+"--- Global option values ---"
+msgstr ""
+"\n"
+"--- Nastavenie globálnych volieb ---"
+
+#: ../option.c:6153
+msgid ""
+"\n"
+"--- Local option values ---"
+msgstr ""
+"\n"
+"--- Nastavenie lokálnych volieb ---"
+
+#: ../option.c:6155
+msgid ""
+"\n"
+"--- Options ---"
+msgstr ""
+"\n"
+"--- Mo¾nosti ---"
+
+#: ../option.c:6816
+msgid "E356: get_varp ERROR"
+msgstr "E356: get_varp CHYBA"
+
+#: ../option.c:7696
+#, c-format
+msgid "E357: 'langmap': Matching character missing for %s"
+msgstr "E357: 'langmap': pre %s chýba vyhovujúci znak"
+
+#: ../option.c:7715
+#, c-format
+msgid "E358: 'langmap': Extra characters after semicolon: %s"
+msgstr "E358: 'langmap': nadbytoèné znaky po bodkoèiarke: %s"
+
+#: ../os/shell.c:194
+msgid ""
+"\n"
+"Cannot execute shell "
+msgstr ""
+"\n"
+"Nedá sa spusti» shell "
+
+#: ../os/shell.c:439
+msgid ""
+"\n"
+"shell returned "
+msgstr ""
+"\n"
+" návratová hodnota shellu "
+
+#: ../os_unix.c:465 ../os_unix.c:471
+msgid ""
+"\n"
+"Could not get security context for "
+msgstr ""
+
+#: ../os_unix.c:479
+msgid ""
+"\n"
+"Could not set security context for "
+msgstr ""
+
+#: ../os_unix.c:1558 ../os_unix.c:1647
+#, c-format
+msgid "dlerror = \"%s\""
+msgstr "dlerror = \"%s\""
+
+#: ../path.c:1449
+#, c-format
+msgid "E447: Can't find file \"%s\" in path"
+msgstr "E447: Súbor \"%s\" sa nedá nájs» v ceste"
+
+#: ../quickfix.c:359
+#, c-format
+msgid "E372: Too many %%%c in format string"
+msgstr "E372: Príli¹ mnoho %%%c vo formátovacom re»azci"
+
+#: ../quickfix.c:371
+#, c-format
+msgid "E373: Unexpected %%%c in format string"
+msgstr "E373: Neoèakávaný výskyt %%%c vo formátovacom re»azci"
+
+#: ../quickfix.c:420
+msgid "E374: Missing ] in format string"
+msgstr "E374: Vo formátovacom re»azci chýba ]"
+
+#: ../quickfix.c:431
+#, c-format
+msgid "E375: Unsupported %%%c in format string"
+msgstr ""
+"E375: Nepodporovaná formátová ¹pecifikácia %%%c vo formátovacom re»azci"
+
+#: ../quickfix.c:448
+#, c-format
+msgid "E376: Invalid %%%c in format string prefix"
+msgstr "E376: Neprístupné %%%c v prefixe formátovacieho re»azca"
+
+#: ../quickfix.c:454
+#, c-format
+msgid "E377: Invalid %%%c in format string"
+msgstr "E377: Neprístupné %%%c vo formátovacom re»azci"
+
+#. nothing found
+#: ../quickfix.c:477
+msgid "E378: 'errorformat' contains no pattern"
+msgstr "E378: 'errorformat' neobsahuje ¾iadny vzor"
+
+#: ../quickfix.c:695
+msgid "E379: Missing or empty directory name"
+msgstr "E379: Chýbajúci alebo prázdny názov adresára"
+
+#: ../quickfix.c:1305
+msgid "E553: No more items"
+msgstr "E553: ®iadne ïal¹ie polo¾ky"
+
+#: ../quickfix.c:1674
+#, c-format
+msgid "(%d of %d)%s%s: "
+msgstr "(%d z %d)%s%s: "
+
+#: ../quickfix.c:1676
+msgid " (line deleted)"
+msgstr " (riadok vymazaný)"
+
+#: ../quickfix.c:1863
+msgid "E380: At bottom of quickfix stack"
+msgstr "E380: Koniec quickfix zoznamu"
+
+#: ../quickfix.c:1869
+msgid "E381: At top of quickfix stack"
+msgstr "E381: Zaèiatok quickfix zoznamu"
+
+#: ../quickfix.c:1880
+#, c-format
+msgid "error list %d of %d; %d errors"
+msgstr "zoznam chýb %d z %d; %d chýb"
+
+#: ../quickfix.c:2427
+msgid "E382: Cannot write, 'buftype' option is set"
+msgstr "E382: Nedá sa ulo¾i», je nastavená voµba 'buftype'"
+
+#: ../quickfix.c:2812
+msgid "E683: File name missing or invalid pattern"
+msgstr "E683: Chýba meno súboru alebo chybný vzor"
+
+#: ../quickfix.c:2911
+#, c-format
+msgid "Cannot open file \"%s\""
+msgstr "Nedá sa otvori» súbor \"%s\""
+
+#: ../quickfix.c:3429
+msgid "E681: Buffer is not loaded"
+msgstr "E681: Buffer nie je naèítaný"
+
+#: ../quickfix.c:3487
+#, fuzzy
+msgid "E777: String or List expected"
+msgstr "E552: oèakávaná èíslica"
+
+#: ../regexp.c:359
+#, c-format
+msgid "E369: invalid item in %s%%[]"
+msgstr "E369: chybná polo¾ka v %s%%[]"
+
+#: ../regexp.c:374
+#, c-format
+msgid "E769: Missing ] after %s["
+msgstr "E769: Chýbajúca ] po %s["
+
+#: ../regexp.c:375
+#, c-format
+msgid "E53: Unmatched %s%%("
+msgstr "E53: Nespárované %s%%("
+
+#: ../regexp.c:376
+#, c-format
+msgid "E54: Unmatched %s("
+msgstr "E54: Nespárované %s("
+
+#: ../regexp.c:377
+#, c-format
+msgid "E55: Unmatched %s)"
+msgstr "E55: Nespárované %s)"
+
+#: ../regexp.c:378
+msgid "E66: \\z( not allowed here"
+msgstr "E66: \\z( tu nie je povolené"
+
+#: ../regexp.c:379
+msgid "E67: \\z1 et al. not allowed here"
+msgstr "E67: \\z1 a spol. tu nie je povolené"
+
+#: ../regexp.c:380
+#, c-format
+msgid "E69: Missing ] after %s%%["
+msgstr "E69: Chýbajúca ] po %s%%["
+
+#: ../regexp.c:381
+#, c-format
+msgid "E70: Empty %s%%[]"
+msgstr "E70: Prázdny %s%%[]"
+
+#: ../regexp.c:1209 ../regexp.c:1224
+msgid "E339: Pattern too long"
+msgstr "E339: Vzor je príli¹ dlhý"
+
+#: ../regexp.c:1371
+msgid "E50: Too many \\z("
+msgstr "E50: Príli¹ mnoho \\z("
+
+#: ../regexp.c:1378
+#, c-format
+msgid "E51: Too many %s("
+msgstr "E51: Príli¹ mnoho %s("
+
+#: ../regexp.c:1427
+msgid "E52: Unmatched \\z("
+msgstr "E52: Nespárované \\z("
+
+#: ../regexp.c:1637
+#, c-format
+msgid "E59: invalid character after %s@"
+msgstr "E59: Neprípustný znak po %s@"
+
+#: ../regexp.c:1672
+#, c-format
+msgid "E60: Too many complex %s{...}s"
+msgstr "E60: Príli¹ komplexné %s{...}"
+
+#: ../regexp.c:1687
+#, c-format
+msgid "E61: Nested %s*"
+msgstr "E61: Vnorený %s*"
+
+#: ../regexp.c:1690
+#, c-format
+msgid "E62: Nested %s%c"
+msgstr "E62: Vnorený %s%c"
+
+#: ../regexp.c:1800
+msgid "E63: invalid use of \\_"
+msgstr "E63: Chybne pou¾ité \\_"
+
+#: ../regexp.c:1850
+#, c-format
+msgid "E64: %s%c follows nothing"
+msgstr "E64: %s%c niè nenasleduje"
+
+#: ../regexp.c:1902
+msgid "E65: Illegal back reference"
+msgstr "E65: Chybná spätná referencia"
+
+#: ../regexp.c:1943
+msgid "E68: Invalid character after \\z"
+msgstr "E68: Neprípustný znak po \\z"
+
+#: ../regexp.c:2049 ../regexp_nfa.c:1296
+#, c-format
+msgid "E678: Invalid character after %s%%[dxouU]"
+msgstr "E678: Neprípustný znak po %s%%[dxouU]"
+
+#: ../regexp.c:2107
+#, c-format
+msgid "E71: Invalid character after %s%%"
+msgstr "E71: Neprípustný znak po %s%%"
+
+#: ../regexp.c:3017
+#, c-format
+msgid "E554: Syntax error in %s{...}"
+msgstr "E554: Chyba syntaxe v %s{...}"
+
+#: ../regexp.c:3805
+msgid "External submatches:\n"
+msgstr "Vnútorné podradené zhody:\n"
+
+#: ../regexp.c:7022
+msgid ""
+"E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
+"used "
+msgstr ""
+
+#: ../regexp_nfa.c:239
+msgid "E865: (NFA) Regexp end encountered prematurely"
+msgstr ""
+
+#: ../regexp_nfa.c:240
+#, c-format
+msgid "E866: (NFA regexp) Misplaced %c"
+msgstr ""
+
+#: ../regexp_nfa.c:242
+#, c-format
+msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
+msgstr ""
+
+#: ../regexp_nfa.c:1261
+#, c-format
+msgid "E867: (NFA) Unknown operator '\\z%c'"
+msgstr ""
+
+#: ../regexp_nfa.c:1387
+#, c-format
+msgid "E867: (NFA) Unknown operator '\\%%%c'"
+msgstr ""
+
+#: ../regexp_nfa.c:1802
+#, c-format
+msgid "E869: (NFA) Unknown operator '\\@%c'"
+msgstr ""
+
+#: ../regexp_nfa.c:1831
+msgid "E870: (NFA regexp) Error reading repetition limits"
+msgstr ""
+
+#. Can't have a multi follow a multi.
+#: ../regexp_nfa.c:1895
+msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
+msgstr ""
+
+#. Too many `('
+#: ../regexp_nfa.c:2037
+msgid "E872: (NFA regexp) Too many '('"
+msgstr ""
+
+#: ../regexp_nfa.c:2042
+#, fuzzy
+msgid "E879: (NFA regexp) Too many \\z("
+msgstr "E50: Príli¹ mnoho \\z("
+
+#: ../regexp_nfa.c:2066
+msgid "E873: (NFA regexp) proper termination error"
+msgstr ""
+
+#: ../regexp_nfa.c:2599
+msgid "E874: (NFA) Could not pop the stack !"
+msgstr ""
+
+#: ../regexp_nfa.c:3298
+msgid ""
+"E875: (NFA regexp) (While converting from postfix to NFA), too many states "
+"left on stack"
+msgstr ""
+
+#: ../regexp_nfa.c:3302
+msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
+msgstr ""
+
+#: ../regexp_nfa.c:4571 ../regexp_nfa.c:4869
+msgid ""
+"Could not open temporary log file for writing, displaying on stderr ... "
+msgstr ""
+
+#: ../regexp_nfa.c:4840
+#, c-format
+msgid "(NFA) COULD NOT OPEN %s !"
+msgstr ""
+
+#: ../regexp_nfa.c:6049
+#, fuzzy
+msgid "Could not open temporary log file for writing "
+msgstr "E214: Nedá sa nájs» doèasný súbor pre ukladanie"
+
+#: ../screen.c:7435
+msgid " VREPLACE"
+msgstr " NAHRADI« VERTIKÁLNE"
+
+#: ../screen.c:7437
+msgid " REPLACE"
+msgstr " NAHRADI«"
+
+#: ../screen.c:7440
+msgid " REVERSE"
+msgstr " OBRÁTI«"
+
+#: ../screen.c:7441
+msgid " INSERT"
+msgstr " VLO®I«"
+
+#: ../screen.c:7443
+msgid " (insert)"
+msgstr " (vlo¾i»)"
+
+#: ../screen.c:7445
+msgid " (replace)"
+msgstr " (nahradi»)"
+
+#: ../screen.c:7447
+msgid " (vreplace)"
+msgstr " (nahradi» vertikálne)"
+
+#: ../screen.c:7449
+msgid " Hebrew"
+msgstr " Hebrejský"
+
+#: ../screen.c:7454
+msgid " Arabic"
+msgstr " Arabský"
+
+#: ../screen.c:7456
+msgid " (lang)"
+msgstr " (jazyk)"
+
+#: ../screen.c:7459
+msgid " (paste)"
+msgstr " (vlo¾i»)"
+
+#: ../screen.c:7469
+msgid " VISUAL"
+msgstr " VIZUÁLNE"
+
+#: ../screen.c:7470
+msgid " VISUAL LINE"
+msgstr " VIZUÁLNY RIADOK"
+
+#: ../screen.c:7471
+msgid " VISUAL BLOCK"
+msgstr " VIZUÁLNY BLOK"
+
+#: ../screen.c:7472
+msgid " SELECT"
+msgstr " ZHODY"
+
+#: ../screen.c:7473
+msgid " SELECT LINE"
+msgstr " OZNAÈ RIADOK"
+
+#: ../screen.c:7474
+msgid " SELECT BLOCK"
+msgstr " OZNAÈ BLOK"
+
+#: ../screen.c:7486 ../screen.c:7541
+msgid "recording"
+msgstr "nahrávam"
+
+#: ../search.c:487
+#, c-format
+msgid "E383: Invalid search string: %s"
+msgstr "E383: Neprípustný hµadaný re»azec: %s"
+
+#: ../search.c:832
+#, c-format
+msgid "E384: search hit TOP without match for: %s"
+msgstr "E384: hµadanie dosiahlo zaèiatok bez nájdenia %s"
+
+#: ../search.c:835
+#, c-format
+msgid "E385: search hit BOTTOM without match for: %s"
+msgstr "E385: hµadanie dosiahlo koniec bez nájdenia %s"
+
+#: ../search.c:1200
+msgid "E386: Expected '?' or '/'  after ';'"
+msgstr "E386: Po ';' oèakávam '?' alebo '/'"
+
+#: ../search.c:4085
+msgid " (includes previously listed match)"
+msgstr " (vrátane u¾ vypísaných zhôd)"
+
+#. cursor at status line
+#: ../search.c:4104
+msgid "--- Included files "
+msgstr "--- Vlo¾ené súbory"
+
+#: ../search.c:4106
+msgid "not found "
+msgstr "nenájdené "
+
+#: ../search.c:4107
+msgid "in path ---\n"
+msgstr "v ceste ---\n"
+
+#: ../search.c:4168
+msgid "  (Already listed)"
+msgstr "  (U¾ vypísané)"
+
+#: ../search.c:4170
+msgid "  NOT FOUND"
+msgstr " NENÁJDENÉ"
+
+#: ../search.c:4211
+#, c-format
+msgid "Scanning included file: %s"
+msgstr "Prehµadávam vlo¾ené súbory: %s"
+
+#: ../search.c:4216
+#, fuzzy, c-format
+msgid "Searching included file %s"
+msgstr "Prehµadávam vlo¾ené súbory: %s"
+
+#: ../search.c:4405
+msgid "E387: Match is on current line"
+msgstr "E387: Zhoda je na aktuálnom riadku"
+
+#: ../search.c:4517
+msgid "All included files were found"
+msgstr "V¹etky vlo¾ené súbory boli nájdené"
+
+#: ../search.c:4519
+msgid "No included files"
+msgstr "®iadne vlo¾ené súbory"
+
+#: ../search.c:4527
+msgid "E388: Couldn't find definition"
+msgstr "E388: Nedá sa nájs» definícia"
+
+#: ../search.c:4529
+msgid "E389: Couldn't find pattern"
+msgstr "E389: Nedá sa nájs» vzor"
+
+#: ../search.c:4668
+#, fuzzy
+msgid "Substitute "
+msgstr "1 nahradenie"
+
+#: ../search.c:4681
+#, c-format
+msgid ""
+"\n"
+"# Last %sSearch Pattern:\n"
+"~"
+msgstr ""
+
+#: ../spell.c:951
+msgid "E759: Format error in spell file"
+msgstr "E759: Chyba formátovania v spell súbore (kontrola pravopisu)"
+
+#: ../spell.c:952
+msgid "E758: Truncated spell file"
+msgstr "E758: Odseknutý spell súbor (kontrola pravopisu)"
+
+#: ../spell.c:953
+#, c-format
+msgid "Trailing text in %s line %d: %s"
+msgstr "Prebytoèný text v %s na riadku %d: %s"
+
+#: ../spell.c:954
+#, c-format
+msgid "Affix name too long in %s line %d: %s"
+msgstr "Prípona príli¶ dlhá v %s riadok %d: %s"
+
+#: ../spell.c:955
+msgid "E761: Format error in affix file FOL, LOW or UPP"
+msgstr ""
+"E761: Chyba formátovania v súbore prípon FOL, LOW alebo UPP (NASLEDUJE, MALÉ "
+"alebo VE¥KÉ)"
+
+#: ../spell.c:957
+msgid "E762: Character in FOL, LOW or UPP is out of range"
+msgstr ""
+"E762: Znak v FOL, LOW alebo UPP (NASLEDUJE, MALÉ alebo VE¥KÉ) je mimo rozsah"
+
+#: ../spell.c:958
+msgid "Compressing word tree..."
+msgstr "Robím kompresiu stromu slov..."
+
+#: ../spell.c:1951
+msgid "E756: Spell checking is not enabled"
+msgstr "E756: Kontrola pravopisu nie je zapnutá"
+
+#: ../spell.c:2249
+#, c-format
+msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
+msgstr ""
+"Varovanie: Nemo¾no nájs» zoznam slov \"%s.%s.spl\" alebo \"%s.ascii.spl\""
+
+#: ../spell.c:2473
+#, c-format
+msgid "Reading spell file \"%s\""
+msgstr "Èítam slovníkový súbor \"%s\""
+
+#: ../spell.c:2496
+msgid "E757: This does not look like a spell file"
+msgstr "E757: Toto sa nezdá by» slovníkovým súborom"
+
+#: ../spell.c:2501
+msgid "E771: Old spell file, needs to be updated"
+msgstr "E771: Starý slovníkový súbor, potrebuje by» zaktualizovaný"
+
+#: ../spell.c:2504
+msgid "E772: Spell file is for newer version of Vim"
+msgstr "E772: Slovníkový súbor je pre nov¹iu verziu Vim"
+
+#: ../spell.c:2602
+msgid "E770: Unsupported section in spell file"
+msgstr "E770: Nepodporovaná sekcia v slovníkovom súbore"
+
+#: ../spell.c:3762
+#, c-format
+msgid "Warning: region %s not supported"
+msgstr "Varovanie: región %s nie je podporovaný"
+
+#: ../spell.c:4550
+#, c-format
+msgid "Reading affix file %s..."
+msgstr "Naèítavam súbor s príponami %s..."
+
+#: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
+#, c-format
+msgid "Conversion failure for word in %s line %d: %s"
+msgstr "Konverzia slova zlyhala v %s riadok %d: %s"
+
+#: ../spell.c:4630 ../spell.c:6170
+#, c-format
+msgid "Conversion in %s not supported: from %s to %s"
+msgstr "Konverzia v %s nie je podporovaná: z %s do %s"
+
+#: ../spell.c:4642
+#, c-format
+msgid "Invalid value for FLAG in %s line %d: %s"
+msgstr "Neplatná hodnota pre príznak (FLAG) v %s riadok %d: %s"
+
+#: ../spell.c:4655
+#, c-format
+msgid "FLAG after using flags in %s line %d: %s"
+msgstr "Príznak (FLAG) po pou¾ití príznakov v %s riadok %d: %s"
+
+#: ../spell.c:4723
+#, c-format
+msgid ""
+"Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
+"%d"
+msgstr ""
+
+#: ../spell.c:4731
+#, c-format
+msgid ""
+"Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
+"%d"
+msgstr ""
+
+#: ../spell.c:4747
+#, fuzzy, c-format
+msgid "Wrong COMPOUNDRULES value in %s line %d: %s"
+msgstr "Zlá hodnota COMPOUNDMAX v %s riadok %d: %s"
+
+#: ../spell.c:4771
+#, fuzzy, c-format
+msgid "Wrong COMPOUNDWORDMAX value in %s line %d: %s"
+msgstr "Zlá hodnota COMPOUNDMAX v %s riadok %d: %s"
+
+#: ../spell.c:4777
+#, c-format
+msgid "Wrong COMPOUNDMIN value in %s line %d: %s"
+msgstr "Zlá hodnota COMPOUNDMIN v %s riadok %d: %s"
+
+#: ../spell.c:4783
+#, c-format
+msgid "Wrong COMPOUNDSYLMAX value in %s line %d: %s"
+msgstr "Zlá hodnota COMPOUNDSYLMAX v %s riadok %d: %s"
+
+#: ../spell.c:4795
+#, fuzzy, c-format
+msgid "Wrong CHECKCOMPOUNDPATTERN value in %s line %d: %s"
+msgstr "Zlá hodnota COMPOUNDMIN v %s riadok %d: %s"
+
+#: ../spell.c:4847
+#, c-format
+msgid "Different combining flag in continued affix block in %s line %d: %s"
+msgstr ""
+"Rozdielna kombinácia príznakov v nasledujúcom bloku prípon v %s riadok %d: %s"
+
+#: ../spell.c:4850
+#, c-format
+msgid "Duplicate affix in %s line %d: %s"
+msgstr "Duplicitná prípona v %s riadok %d: %s"
+
+#: ../spell.c:4871
+#, fuzzy, c-format
+msgid ""
+"Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in %s "
+"line %d: %s"
+msgstr ""
+"Prípona pou¾itá aj pre BAD/RAR/KEP/NEEDAFFIX/NEEDCOMPOUND in %s line %d: %s"
+
+#: ../spell.c:4893
+#, c-format
+msgid "Expected Y or N in %s line %d: %s"
+msgstr "Oèakávane Y alebo N v %s riadok %d: %s"
+
+#: ../spell.c:4968
+#, c-format
+msgid "Broken condition in %s line %d: %s"
+msgstr "Naru¹ená podmienka v %s riadok %d: %s"
+
+#: ../spell.c:5091
+#, fuzzy, c-format
+msgid "Expected REP(SAL) count in %s line %d"
+msgstr "Oèakávam poèet REP v %s riadok %d"
+
+#: ../spell.c:5120
+#, c-format
+msgid "Expected MAP count in %s line %d"
+msgstr "Oèakávam poèet MAP v %s riadok %d"
+
+#: ../spell.c:5132
+#, c-format
+msgid "Duplicate character in MAP in %s line %d"
+msgstr "Opakovaný znak v MAP v %s riadok %d"
+
+#: ../spell.c:5176
+#, c-format
+msgid "Unrecognized or duplicate item in %s line %d: %s"
+msgstr "Nerozpoznaná alebo opakujúca sa polo¾ka v %s riadok %d: %s"
+
+#: ../spell.c:5197
+#, c-format
+msgid "Missing FOL/LOW/UPP line in %s"
+msgstr "Chýbajúci riadok FOL/LOW/UPP v %s"
+
+#: ../spell.c:5220
+msgid "COMPOUNDSYLMAX used without SYLLABLE"
+msgstr "COMPOUNDSYLMAX pou¾itý bez SYLLABLE"
+
+#: ../spell.c:5236
+msgid "Too many postponed prefixes"
+msgstr "Príli¹ mnoho odlo¾ených prípon"
+
+#: ../spell.c:5238
+msgid "Too many compound flags"
+msgstr "Príli¹ mnoho upravovacích príznakov"
+
+#: ../spell.c:5240
+msgid "Too many postponed prefixes and/or compound flags"
+msgstr "Príli¹ mnoho odlo¾ených prípon a/alebo upravovacích príznakov"
+
+#: ../spell.c:5250
+#, c-format
+msgid "Missing SOFO%s line in %s"
+msgstr "Chýba SOFO%s riadok v %s"
+
+#: ../spell.c:5253
+#, c-format
+msgid "Both SAL and SOFO lines in %s"
+msgstr "SAL a SOFO riadky zároveò v %s"
+
+#: ../spell.c:5331
+#, c-format
+msgid "Flag is not a number in %s line %d: %s"
+msgstr "Príznak nie je èíslo v %s na riadku %d: %s"
+
+#: ../spell.c:5334
+#, c-format
+msgid "Illegal flag in %s line %d: %s"
+msgstr "Neprípustný príznak v %s riadok %d: %s"
+
+#: ../spell.c:5493 ../spell.c:5501
+#, c-format
+msgid "%s value differs from what is used in another .aff file"
+msgstr "Hodnota %s sa odli¹uje od hodnoty pou¾itej v inom .aff súbore"
+
+#: ../spell.c:5602
+#, c-format
+msgid "Reading dictionary file %s..."
+msgstr "Naèítavam slovník %s..."
+
+#: ../spell.c:5611
+#, c-format
+msgid "E760: No word count in %s"
+msgstr "E760: Chýajúci poèet slov v %s"
+
+#: ../spell.c:5669
+#, c-format
+msgid "line %6d, word %6d - %s"
+msgstr "riadok %6d, slovo %6d - %s"
+
+#: ../spell.c:5691
+#, c-format
+msgid "Duplicate word in %s line %d: %s"
+msgstr "Opakujúce sa slovo v %s riadok %d: %s"
+
+#: ../spell.c:5694
+#, c-format
+msgid "First duplicate word in %s line %d: %s"
+msgstr "Prvé duplicitné slovo v %s riadok %d: %s"
+
+#: ../spell.c:5746
+#, c-format
+msgid "%d duplicate word(s) in %s"
+msgstr "%d duplicitné slovo(á) v %s"
+
+#: ../spell.c:5748
+#, c-format
+msgid "Ignored %d word(s) with non-ASCII characters in %s"
+msgstr "Ignorovaných %d slov s nepísmennými znakmi v %s"
+
+#: ../spell.c:6115
+#, c-format
+msgid "Reading word file %s..."
+msgstr "Naèítavam súbor so slovami %s..."
+
+#: ../spell.c:6155
+#, c-format
+msgid "Duplicate /encoding= line ignored in %s line %d: %s"
+msgstr "Duplicitný riadok /encoding= v %s riadok %d ignorovaný: %s "
+
+#: ../spell.c:6159
+#, c-format
+msgid "/encoding= line after word ignored in %s line %d: %s"
+msgstr "/encoding= riadok nasledujúci po slove v %s riadok %d ignorovaný: %s"
+
+#: ../spell.c:6180
+#, c-format
+msgid "Duplicate /regions= line ignored in %s line %d: %s"
+msgstr "Duplicitný riadok /regions= v %s riadok %d ignorovaný: %s"
+
+#: ../spell.c:6185
+#, c-format
+msgid "Too many regions in %s line %d: %s"
+msgstr "Príli¹ mnoho regiónov v %s riadok %d: %s"
+
+#: ../spell.c:6198
+#, c-format
+msgid "/ line ignored in %s line %d: %s"
+msgstr "Riadok / v %s riadok %d ignorovaný: %s"
+
+#: ../spell.c:6224
+#, c-format
+msgid "Invalid region nr in %s line %d: %s"
+msgstr "Pou¾íté chybné èíslo regiónu v %s riadok %d: %s"
+
+#: ../spell.c:6230
+#, c-format
+msgid "Unrecognized flags in %s line %d: %s"
+msgstr "Nerozpoznaný príznak v %s riadok %d: %s"
+
+#: ../spell.c:6257
+#, c-format
+msgid "Ignored %d words with non-ASCII characters"
+msgstr "Ignorovaných %d slov s nepísmennými znakmi"
+
+#: ../spell.c:6656
+#, fuzzy, c-format
+msgid "Compressed %d of %d nodes; %d (%d%%) remaining"
+msgstr "Skomprimovaných %d z %d uzlov; %d%% zostáva"
+
+#: ../spell.c:7340
+#, fuzzy
+msgid "Reading back spell file..."
+msgstr "Èítam slovníkový súbor \"%s\""
+
+#. Go through the trie of good words, soundfold each word and add it to
+#. the soundfold trie.
+#: ../spell.c:7357
+msgid "Performing soundfolding..."
+msgstr ""
+
+#: ../spell.c:7368
+#, c-format
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr ""
+
+#: ../spell.c:7476
+#, c-format
+msgid "Total number of words: %d"
+msgstr ""
+
+#: ../spell.c:7655
+#, fuzzy, c-format
+msgid "Writing suggestion file %s ..."
+msgstr "Ukládám slovníkový súbor %s ..."
+
+#: ../spell.c:7707 ../spell.c:7927
+#, c-format
+msgid "Estimated runtime memory use: %d bytes"
+msgstr "Veµkos» pou¾ívanej pamäte: %d bajtov"
+
+#: ../spell.c:7820
+msgid "E751: Output file name must not have region name"
+msgstr "E751: Výstupné meno súboru nesmie ma» názov regiónu"
+
+#: ../spell.c:7822
+msgid "E754: Only up to 8 regions supported"
+msgstr "E754: Podporovaných max. 8 regiónov"
+
+#: ../spell.c:7846
+#, c-format
+msgid "E755: Invalid region in %s"
+msgstr "E755: Chybný región v %s"
+
+#: ../spell.c:7907
+msgid "Warning: both compounding and NOBREAK specified"
+msgstr "Varovanie: ¹pecifikované spájanie a nezalamovanie"
+
+#: ../spell.c:7920
+#, c-format
+msgid "Writing spell file %s..."
+msgstr "Ukládám slovníkový súbor %s..."
+
+#: ../spell.c:7925
+msgid "Done!"
+msgstr "Hotovo!"
+
+#: ../spell.c:8034
+#, c-format
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: 'spellfile' nemá %<PRId64> polo¾iek"
+
+#: ../spell.c:8074
+#, c-format
+msgid "Word '%.*s' removed from %s"
+msgstr ""
+
+#: ../spell.c:8117
+#, c-format
+msgid "Word '%.*s' added to %s"
+msgstr ""
+
+#: ../spell.c:8381
+msgid "E763: Word characters differ between spell files"
+msgstr "E763: Znaky slov sa odli¹ujú medzi slovníkovými súbormi"
+
+#: ../spell.c:8684
+msgid "Sorry, no suggestions"
+msgstr "Prepáète, ¾iadne návrhy"
+
+#: ../spell.c:8687
+#, c-format
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "Prepáète, iba %<PRId64> návrhov"
+
+#. for when 'cmdheight' > 1
+#. avoid more prompt
+#: ../spell.c:8704
+#, c-format
+msgid "Change \"%.*s\" to:"
+msgstr "Zmeni» \"%.*s\" na:"
+
+#: ../spell.c:8737
+#, c-format
+msgid " < \"%.*s\""
+msgstr " < \"%.*s\""
+
+#: ../spell.c:8882
+msgid "E752: No previous spell replacement"
+msgstr "E752: ®iadny predchádzajúce nahradenie podµa slovníka"
+
+#: ../spell.c:8925
+#, c-format
+msgid "E753: Not found: %s"
+msgstr "E753: Nenájdené: %s"
+
+#: ../spell.c:9276
+#, fuzzy, c-format
+msgid "E778: This does not look like a .sug file: %s"
+msgstr "E757: Toto sa nezdá by» slovníkovým súborom"
+
+#: ../spell.c:9282
+#, fuzzy, c-format
+msgid "E779: Old .sug file, needs to be updated: %s"
+msgstr "E771: Starý slovníkový súbor, potrebuje by» zaktualizovaný"
+
+#: ../spell.c:9286
+#, fuzzy, c-format
+msgid "E780: .sug file is for newer version of Vim: %s"
+msgstr "E772: Slovníkový súbor je pre nov¹iu verziu Vim"
+
+#: ../spell.c:9295
+#, fuzzy, c-format
+msgid "E781: .sug file doesn't match .spl file: %s"
+msgstr "E746: Meno funkcie sa nezhoduje s menom interpretovaného súboru: %s"
+
+#: ../spell.c:9305
+#, fuzzy, c-format
+msgid "E782: error while reading .sug file: %s"
+msgstr "E47: Chyba pri èítaní chybového súboru"
+
+#. This should have been checked when generating the .spl
+#. file.
+#: ../spell.c:11575
+msgid "E783: duplicate char in MAP entry"
+msgstr "E783: duplicitný znak v MAP polo¾ke"
+
+#: ../syntax.c:266
+msgid "No Syntax items defined for this buffer"
+msgstr "Pre tento buffer nie sú definované ¾iadne polo¾ky syntaxe"
+
+#: ../syntax.c:3083 ../syntax.c:3104 ../syntax.c:3127
+#, c-format
+msgid "E390: Illegal argument: %s"
+msgstr "E390: Neprípustný argument: %s"
+
+#: ../syntax.c:3299
+#, c-format
+msgid "E391: No such syntax cluster: %s"
+msgstr "E391: Syntaktická zostava %s neexistuje"
+
+#: ../syntax.c:3433
+msgid "syncing on C-style comments"
+msgstr "synchronizujem podµa komentárov jazyka C"
+
+#: ../syntax.c:3439
+msgid "no syncing"
+msgstr "¾iadne synchronizácie"
+
+#: ../syntax.c:3441
+msgid "syncing starts "
+msgstr "synchronizácia zaèína "
+
+#: ../syntax.c:3443 ../syntax.c:3506
+msgid " lines before top line"
+msgstr " riadkov pred zaèiatkom"
+
+#: ../syntax.c:3448
+msgid ""
+"\n"
+"--- Syntax sync items ---"
+msgstr ""
+"\n"
+"--- Polo¾ky synchronizácie syntaxe ---"
+
+#: ../syntax.c:3452
+msgid ""
+"\n"
+"syncing on items"
+msgstr ""
+"\n"
+"synchronizujem polo¾ky"
+
+#: ../syntax.c:3457
+msgid ""
+"\n"
+"--- Syntax items ---"
+msgstr ""
+"\n"
+"--- Polo¾ky syntaxe ---"
+
+#: ../syntax.c:3475
+#, c-format
+msgid "E392: No such syntax cluster: %s"
+msgstr "E392: Syntaktická zostava %s neexistuje"
+
+#: ../syntax.c:3497
+msgid "minimal "
+msgstr "minimálne "
+
+#: ../syntax.c:3503
+msgid "maximal "
+msgstr "maximálne "
+
+#: ../syntax.c:3513
+msgid "; match "
+msgstr "; zhoda "
+
+#: ../syntax.c:3515
+msgid " line breaks"
+msgstr " zalomení riadkov"
+
+#: ../syntax.c:4076
+msgid "E395: contains argument not accepted here"
+msgstr "E395: obsahuje argumenty, ktoré tu nie sú povolené"
+
+#: ../syntax.c:4096
+#, fuzzy
+msgid "E844: invalid cchar value"
+msgstr "E474: Chybný argument"
+
+#: ../syntax.c:4107
+msgid "E393: group[t]here not accepted here"
+msgstr "E393: group[t]here nesmie by» na tomto mieste"
+
+#: ../syntax.c:4126
+#, c-format
+msgid "E394: Didn't find region item for %s"
+msgstr "E394: Pre %s chýba polo¾ka regiónu"
+
+#: ../syntax.c:4188
+msgid "E397: Filename required"
+msgstr "E397: Vy¾adovaný názov súboru"
+
+#: ../syntax.c:4221
+#, fuzzy
+msgid "E847: Too many syntax includes"
+msgstr "E77: Príli¹ mnoho názvov súborov"
+
+#: ../syntax.c:4303
+#, c-format
+msgid "E789: Missing ']': %s"
+msgstr "E789: Chýba ']': %s"
+
+#: ../syntax.c:4531
+#, c-format
+msgid "E398: Missing '=': %s"
+msgstr "E398: Chýba '=': %s"
+
+#: ../syntax.c:4666
+#, c-format
+msgid "E399: Not enough arguments: syntax region %s"
+msgstr "E399: Príli¹ málo argumentov: oblas» syntaxe %s"
+
+#: ../syntax.c:4870
+#, fuzzy
+msgid "E848: Too many syntax clusters"
+msgstr "E391: Syntaktická zostava %s neexistuje"
+
+#: ../syntax.c:4954
+msgid "E400: No cluster specified"
+msgstr "E400: Nebola zadaná ¾iadna zostava"
+
+#. end delimiter not found
+#: ../syntax.c:4986
+#, c-format
+msgid "E401: Pattern delimiter not found: %s"
+msgstr "E401: Oddeµovaè vzoru %s nenájdený"
+
+#: ../syntax.c:5049
+#, c-format
+msgid "E402: Garbage after pattern: %s"
+msgstr "E402: Chyba za vzorom: %s"
+
+#: ../syntax.c:5120
+msgid "E403: syntax sync: line continuations pattern specified twice"
+msgstr "E403: synchronizácia syntaxe: vzor pokraèovania riadkov zadaný dvakrát"
+
+#: ../syntax.c:5169
+#, c-format
+msgid "E404: Illegal arguments: %s"
+msgstr "E404: Chybné argumenty: %s"
+
+#: ../syntax.c:5217
+#, c-format
+msgid "E405: Missing equal sign: %s"
+msgstr "E405: Chýba znamienko rovná sa: %s"
+
+#: ../syntax.c:5222
+#, c-format
+msgid "E406: Empty argument: %s"
+msgstr "E406: Prázdny argument: %s"
+
+#: ../syntax.c:5240
+#, c-format
+msgid "E407: %s not allowed here"
+msgstr "E407: %s tu nie je povolené"
+
+#: ../syntax.c:5246
+#, c-format
+msgid "E408: %s must be first in contains list"
+msgstr "E408: %s musí by» prvý v 'contains' zozname"
+
+#: ../syntax.c:5304
+#, c-format
+msgid "E409: Unknown group name: %s"
+msgstr "E409: Neznámy názov skupiny: %s"
+
+#: ../syntax.c:5512
+#, c-format
+msgid "E410: Invalid :syntax subcommand: %s"
+msgstr "E410: Chybný podradený príkaz :syntax : %s "
+
+#: ../syntax.c:5854
+msgid ""
+"  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"
+msgstr ""
+
+#: ../syntax.c:6146
+msgid "E679: recursive loop loading syncolor.vim"
+msgstr "E679: rekurzívna sluèka pri naèítavaní syncolor.vim"
+
+#: ../syntax.c:6256
+#, c-format
+msgid "E411: highlight group not found: %s"
+msgstr "E411: skupina zvýraznenia %s nebola nájdená"
+
+#: ../syntax.c:6278
+#, c-format
+msgid "E412: Not enough arguments: \":highlight link %s\""
+msgstr "E412: Príli¹ málo argumentov: \":highlight link %s\""
+
+#: ../syntax.c:6284
+#, c-format
+msgid "E413: Too many arguments: \":highlight link %s\""
+msgstr "E413: Príli¹ mnoho argumentov: \":highlight link %s\""
+
+#: ../syntax.c:6302
+msgid "E414: group has settings, highlight link ignored"
+msgstr "E414: skupina je nastavená, odkaz na zvýrazòovaciu skupinu ignorovaný"
+
+#: ../syntax.c:6367
+#, c-format
+msgid "E415: unexpected equal sign: %s"
+msgstr "E415: neoèakávané znamienko rovná sa: %s"
+
+#: ../syntax.c:6395
+#, c-format
+msgid "E416: missing equal sign: %s"
+msgstr "E416: chýba znamienko rovná sa: %s"
+
+#: ../syntax.c:6418
+#, c-format
+msgid "E417: missing argument: %s"
+msgstr "E417: chýba argument: %s"
+
+#: ../syntax.c:6446
+#, c-format
+msgid "E418: Illegal value: %s"
+msgstr "E418: Neprípustná hodnota: %s"
+
+#: ../syntax.c:6496
+msgid "E419: FG color unknown"
+msgstr "E419: farba popredia nie je známa"
+
+#: ../syntax.c:6504
+msgid "E420: BG color unknown"
+msgstr "E420: farba pozadia nie je známa"
+
+#: ../syntax.c:6564
+#, c-format
+msgid "E421: Color name or number not recognized: %s"
+msgstr "E421: Názov alebo èíslo farby nebolo rozpoznané: %s"
+
+#: ../syntax.c:6714
+#, c-format
+msgid "E422: terminal code too long: %s"
+msgstr "E422: terminálový kód je príli¹ dlhý: %s"
+
+#: ../syntax.c:6753
+#, c-format
+msgid "E423: Illegal argument: %s"
+msgstr "E423: Neprípustný argument: %s"
+
+#: ../syntax.c:6925
+msgid "E424: Too many different highlighting attributes in use"
+msgstr "E424: Pou¾ívaných príli¹ veµa odli¹ných zvýrazòovacích vlastností"
+
+#: ../syntax.c:7427
+msgid "E669: Unprintable character in group name"
+msgstr "E669: Netlaèitelný znak v mene skupiny"
+
+#: ../highlight_group.c:1756
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Chybný znak v mene skupiny"
+
+#: ../syntax.c:7448
+msgid "E849: Too many highlight and syntax groups"
+msgstr ""
+
+#: ../tag.c:104
+msgid "E555: at bottom of tag stack"
+msgstr "E555: na konci zoznamu tagov"
+
+#: ../tag.c:105
+msgid "E556: at top of tag stack"
+msgstr "E556: na zaèiatku zoznamu tagov"
+
+#: ../tag.c:380
+msgid "E425: Cannot go before first matching tag"
+msgstr "E425: Nedá sa skoèi» pred prvý vyhovujúci tag"
+
+#: ../tag.c:504
+#, c-format
+msgid "E426: tag not found: %s"
+msgstr "E426: tag %s nenájdený"
+
+#: ../tag.c:528
+msgid "  # pri kind tag"
+msgstr "  # pri typ tag"
+
+#: ../tag.c:531
+msgid "file\n"
+msgstr "súbor\n"
+
+#: ../tag.c:829
+msgid "E427: There is only one matching tag"
+msgstr "E427: Vyhovuje iba jeden tag"
+
+#: ../tag.c:831
+msgid "E428: Cannot go beyond last matching tag"
+msgstr "E428: Za posledný vyhovujúci tag sa nedá preskoèi»"
+
+#: ../tag.c:850
+#, c-format
+msgid "File \"%s\" does not exist"
+msgstr "Súbor \"%s\" neexistuje"
+
+#. Give an indication of the number of matching tags
+#: ../tag.c:859
+#, c-format
+msgid "tag %d of %d%s"
+msgstr "tag %d z %d%s"
+
+#: ../tag.c:862
+msgid " or more"
+msgstr " alebo viac"
+
+#: ../tag.c:864
+msgid "  Using tag with different case!"
+msgstr "  Pou¾ívam tag s písmom inej veµkosti!"
+
+#: ../tag.c:909
+#, c-format
+msgid "E429: File \"%s\" does not exist"
+msgstr "E429: Súbor \"%s\" neexistuje"
+
+#. Highlight title
+#: ../tag.c:960
+msgid ""
+"\n"
+"  # TO tag         FROM line  in file/text"
+msgstr ""
+"\n"
+"  # CIE¥ tag        ©TART riadok  v súbore/texte"
+
+#: ../tag.c:1303
+#, c-format
+msgid "Searching tags file %s"
+msgstr "Prehµadávam súbor tagov %s"
+
+#: ../tag.c:1545
+msgid "Ignoring long line in tags file"
+msgstr ""
+
+#: ../tag.c:1915
+#, c-format
+msgid "E431: Format error in tags file \"%s\""
+msgstr "E431: Chyba formátovania v súbore tagov \"%s\""
+
+#: ../tag.c:1917
+#, c-format
+msgid "Before byte %<PRId64>"
+msgstr "Pred bajtom %<PRId64>"
+
+#: ../tag.c:1929
+#, c-format
+msgid "E432: Tags file not sorted: %s"
+msgstr "E432: Obsah súboru tagov %s nie je zoradený"
+
+#. never opened any tags file
+#: ../tag.c:1960
+msgid "E433: No tags file"
+msgstr "E433: ®iadny súbor tagov"
+
+#: ../tag.c:2536
+msgid "E434: Can't find tag pattern"
+msgstr "E434: Nedá sa nájs» vzor tagov"
+
+#: ../tag.c:2544
+msgid "E435: Couldn't find tag, just guessing!"
+msgstr "E435: Tag sa nedá nájs», iba hádam!"
+
+#: ../tag.c:2797
+#, fuzzy, c-format
+msgid "Duplicate field name: %s"
+msgstr "Duplicitná prípona v %s riadok %d: %s"
+
+#: ../term.c:1442
+msgid "' not known. Available builtin terminals are:"
+msgstr "' nie je známy. Dostupné vstavané terminály:"
+
+#: ../term.c:1463
+msgid "defaulting to '"
+msgstr "nastavujem na '"
+
+#: ../term.c:1731
+msgid "E557: Cannot open termcap file"
+msgstr "E557: Nedá sa otvori» termcap súbor"
+
+#: ../term.c:1735
+msgid "E558: Terminal entry not found in terminfo"
+msgstr "E558: Terminfo neobsahuje polo¾ku pre tento terminál"
+
+#: ../term.c:1737
+msgid "E559: Terminal entry not found in termcap"
+msgstr "E559: Termcap neobsahuje polo¾ku pre tento terminál"
+
+#: ../term.c:1878
+#, c-format
+msgid "E436: No \"%s\" entry in termcap"
+msgstr "E436: Termcap neobsahuje polo¾ku \"%s\""
+
+#: ../term.c:2249
+msgid "E437: terminal capability \"cm\" required"
+msgstr "E437: Terminál musí ma» schopnos» \"cm\" (schopnos» pohybu kurzora)"
+
+#. Highlight title
+#: ../term.c:4376
+msgid ""
+"\n"
+"--- Terminal keys ---"
+msgstr ""
+"\n"
+"--- Klávesy terminálu ---"
+
+#: ../ui.c:481
+msgid "Vim: Error reading input, exiting...\n"
+msgstr "Vim: Chyba pri èítaní vstupu, konèím...\n"
+
+#. This happens when the FileChangedRO autocommand changes the
+#. * file in a way it becomes shorter.
+#: ../undo.c:379
+msgid "E881: Line count changed unexpectedly"
+msgstr ""
+
+#: ../undo.c:627
+#, fuzzy, c-format
+msgid "E828: Cannot open undo file for writing: %s"
+msgstr "E212: Súbor sa nedá otvori» pre ukladanie"
+
+#: ../undo.c:717
+#, c-format
+msgid "E825: Corrupted undo file (%s): %s"
+msgstr ""
+
+#: ../undo.c:1039
+msgid "Cannot write undo file in any directory in 'undodir'"
+msgstr ""
+
+#: ../undo.c:1074
+#, c-format
+msgid "Will not overwrite with undo file, cannot read: %s"
+msgstr ""
+
+#: ../undo.c:1092
+#, c-format
+msgid "Will not overwrite, this is not an undo file: %s"
+msgstr ""
+
+#: ../undo.c:1108
+msgid "Skipping undo file write, nothing to undo"
+msgstr ""
+
+#: ../undo.c:1121
+#, fuzzy, c-format
+msgid "Writing undo file: %s"
+msgstr "Ukládám viminfo súboru \"%s\""
+
+#: ../undo.c:1213
+#, fuzzy, c-format
+msgid "E829: write error in undo file: %s"
+msgstr "E297: Chyba pri ukladaní do odkladacieho súboru"
+
+#: ../undo.c:1280
+#, c-format
+msgid "Not reading undo file, owner differs: %s"
+msgstr ""
+
+#: ../undo.c:1292
+#, fuzzy, c-format
+msgid "Reading undo file: %s"
+msgstr "Naèítavam súbor so slovami %s ..."
+
+#: ../undo.c:1299
+#, fuzzy, c-format
+msgid "E822: Cannot open undo file for reading: %s"
+msgstr "E195: Súbor viminfo sa nedá sa otvori» na èítanie"
+
+#: ../undo.c:1308
+#, fuzzy, c-format
+msgid "E823: Not an undo file: %s"
+msgstr "E753: Nenájdené: %s"
+
+#: ../undo.c:1313
+#, fuzzy, c-format
+msgid "E824: Incompatible undo file: %s"
+msgstr "E484: Nedá sa otvori» súbor %s"
+
+#: ../undo.c:1328
+msgid "File contents changed, cannot use undo info"
+msgstr ""
+
+#: ../undo.c:1497
+#, fuzzy, c-format
+msgid "Finished reading undo file %s"
+msgstr "dokonèená interpretácia %s"
+
+#: ../undo.c:1586 ../undo.c:1812
+msgid "Already at oldest change"
+msgstr ""
+
+#: ../undo.c:1597 ../undo.c:1814
+msgid "Already at newest change"
+msgstr ""
+
+#: ../undo.c:1806
+#, fuzzy, c-format
+msgid "E830: Undo number %<PRId64> not found"
+msgstr "E92: buffer %<PRId64> nenájdený"
+
+#: ../undo.c:1979
+msgid "E438: u_undo: line numbers wrong"
+msgstr "E438: u_undo: èísla riadkov sú chybné"
+
+#: ../undo.c:2183
+#, fuzzy
+msgid "more line"
+msgstr "1 nový riadok"
+
+#: ../undo.c:2185
+#, fuzzy
+msgid "more lines"
+msgstr "1 nový riadok"
+
+#: ../undo.c:2187
+#, fuzzy
+msgid "line less"
+msgstr "1 vymazaný riadok"
+
+#: ../undo.c:2189
+#, fuzzy
+msgid "fewer lines"
+msgstr "%<PRId64> vymazaných riadkov"
+
+#: ../undo.c:2193
+#, fuzzy
+msgid "change"
+msgstr "1 zmena"
+
+#: ../undo.c:2195
+#, fuzzy
+msgid "changes"
+msgstr "1 zmena"
+
+#: ../undo.c:2225
+#, fuzzy, c-format
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> riadkov upravených pomocou %s %d krát"
+
+#: ../undo.c:2228
+msgid "before"
+msgstr ""
+
+#: ../undo.c:2228
+msgid "after"
+msgstr ""
+
+#: ../undo.c:2325
+#, fuzzy
+msgid "Nothing to undo"
+msgstr "®iadne mapovanie nebolo nájdené"
+
+#: ../undo.c:2330
+msgid "number changes  when               saved"
+msgstr ""
+
+#: ../undo.c:2360
+#, fuzzy, c-format
+msgid "%<PRId64> seconds ago"
+msgstr "%<PRId64> Ståpcov; "
+
+#: ../undo.c:2372
+#, fuzzy
+msgid "E790: undojoin is not allowed after undo"
+msgstr "E407: %s tu nie je povolené"
+
+#: ../undo.c:2466
+msgid "E439: undo list corrupt"
+msgstr "E439: záznam o zmenách po¹kodený"
+
+#: ../undo.c:2495
+msgid "E440: undo line missing"
+msgstr "E440: chýba opravný riadok"
+
+#: ../version.c:600
+msgid ""
+"\n"
+"Included patches: "
+msgstr ""
+"\n"
+"Pou¾ité záplaty: "
+
+#: ../version.c:627
+#, fuzzy
+msgid ""
+"\n"
+"Extra patches: "
+msgstr "Vnútorné podradené zhody:\n"
+
+#: ../version.c:639 ../version.c:864
+msgid "Modified by "
+msgstr "Zmenil "
+
+#: ../version.c:646
+msgid ""
+"\n"
+"Compiled "
+msgstr ""
+"\n"
+"Prelo¾ená "
+
+#: ../version.c:649
+msgid "by "
+msgstr " "
+
+#: ../version.c:660
+msgid ""
+"\n"
+"Huge version "
+msgstr ""
+"\n"
+"Maximálna verzia"
+
+#: ../version.c:661
+msgid "without GUI."
+msgstr "bez grafického rozhrania."
+
+#: ../version.c:662
+msgid "  Features included (+) or not (-):\n"
+msgstr "  Vlastnosti zahrnuté (+) a nezahrnuté (-):\n"
+
+#: ../version.c:667
+msgid "   system vimrc file: \""
+msgstr "          systémový vimrc súbor: \""
+
+#: ../version.c:672
+msgid "     user vimrc file: \""
+msgstr "        u¾ívateµský vimrc súbor: \""
+
+#: ../version.c:677
+msgid " 2nd user vimrc file: \""
+msgstr "  druhý u¾ívateµský vimrc súbor: \""
+
+#: ../version.c:682
+msgid " 3rd user vimrc file: \""
+msgstr "  tretí u¾ívateµský vimrc súbor: \""
+
+#: ../version.c:687
+msgid "      user exrc file: \""
+msgstr "         u¾ívateµský exrc súbor: \""
+
+#: ../version.c:692
+msgid "  2nd user exrc file: \""
+msgstr "   druhý u¾ívateµský exrc súbor: \""
+
+#: ../version.c:699
+msgid "  fall-back for $VIM: \""
+msgstr "       implicitná hodnota $VIM:\""
+
+#: ../version.c:705
+msgid " f-b for $VIMRUNTIME: \""
+msgstr " f-b pre $VIMRUNTIME: \""
+
+#: ../version.c:709
+msgid "Compilation: "
+msgstr "Preklad: "
+
+#: ../version.c:712
+msgid "Linking: "
+msgstr "Zlinkované: "
+
+#: ../version.c:717
+msgid "  DEBUG BUILD"
+msgstr "  PODPORA LADENIA"
+
+#: ../version.c:767
+msgid "VIM - Vi IMproved"
+msgstr "VIM - Vi IMproved"
+
+#: ../version.c:769
+msgid "version "
+msgstr "verzia "
+
+#: ../version.c:770
+msgid "by Bram Moolenaar et al."
+msgstr "od Brama Moolenaara a ïal¹ích"
+
+#: ../version.c:774
+msgid "Vim is open source and freely distributable"
+msgstr "Vim je voµne ¹íriteµný program s otvoreným kódom"
+
+#: ../version.c:776
+msgid "Help poor children in Uganda!"
+msgstr "Pomô¾te chudobným de»om v Ugande!"
+
+#: ../version.c:777
+msgid "type  :help iccf<Enter>       for information "
+msgstr "zadajte  :help iccf<Enter>          pre informácie         "
+
+#: ../version.c:779
+msgid "type  :q<Enter>               to exit         "
+msgstr "zadajte  :q<Enter>                  pre ukonèenie programu "
+
+#: ../version.c:780
+msgid "type  :help<Enter>  or  <F1>  for on-line help"
+msgstr "zadajte  :help<Enter>  alebo  <F1>  pre pomocníka          "
+
+#: ../version.c:781
+msgid "type  :help version7<Enter>   for version info"
+msgstr "zadajte  :help version7<Enter>      pre informácie o verzii"
+
+#: ../version.c:784
+msgid "Running in Vi compatible mode"
+msgstr "Pracujem v re¾ime kompatibility s Vi"
+
+#: ../version.c:785
+msgid "type  :set nocp<Enter>        for Vim defaults"
+msgstr "zadajte  :set nocp<Enter>           pre implicitné nastavenie Vim"
+
+#: ../version.c:786
+msgid "type  :help cp-default<Enter> for info on this"
+msgstr "podrobnej¹ie informácie získate pomocou :help cp-default<Enter>"
+
+#: ../version.c:827
+msgid "Sponsor Vim development!"
+msgstr "Zasponzorujte vývoj Vimu!"
+
+#: ../version.c:828
+msgid "Become a registered Vim user!"
+msgstr "Staòte sa registrovaným u¾ívateµom Vimu!"
+
+#: ../version.c:831
+msgid "type  :help sponsor<Enter>    for information "
+msgstr "zadajte  :help sponsor<Enter>          pre informácie         "
+
+#: ../version.c:832
+msgid "type  :help register<Enter>   for information "
+msgstr "zadajte  :help register<Enter>      pre informácie         "
+
+#: ../version.c:834
+msgid "menu  Help->Sponsor/Register  for information    "
+msgstr "bli¾¹ie informácie v ponuke  Pomocník->Sponzor/Registrácia"
+
+#: ../window.c:119
+msgid "Already only one window"
+msgstr "Existuje u¾ iba jedno okno"
+
+#: ../window.c:224
+msgid "E441: There is no preview window"
+msgstr "E441: Nenájdené ¾iadne okno náhµadu"
+
+#: ../window.c:559
+msgid "E442: Can't split topleft and botright at the same time"
+msgstr ""
+"E442: Okno sa nedá rozdeli» zároveò v móde 'vrchný-µavý' a 'spodný-"
+"pravý' ('topleft' a 'botright')"
+
+#: ../window.c:1228
+msgid "E443: Cannot rotate when another window is split"
+msgstr "E443: Nedá sa rotova», ak je iné okno rozdelené"
+
+#: ../window.c:1803
+msgid "E444: Cannot close last window"
+msgstr "E444: Posledné okno sa nedá zatvori»"
+
+#: ../window.c:1810
+#, fuzzy
+msgid "E813: Cannot close autocmd window"
+msgstr "E444: Posledné okno sa nedá zatvori»"
+
+#: ../window.c:1814
+#, fuzzy
+msgid "E814: Cannot close window, only autocmd window would remain"
+msgstr "E444: Posledné okno sa nedá zatvori»"
+
+#: ../window.c:2717
+msgid "E445: Other window contains changes"
+msgstr "E445: Iné okno obsahuje zmeny"
+
+#: ../window.c:4805
+msgid "E446: No file name under cursor"
+msgstr "E446: Pod kurzorom sa nenachádza názov súboru"
+
+#~ msgid "[Error List]"
+#~ msgstr "[Zoznam chýb]"
+
+#~ msgid "Patch file"
+#~ msgstr "Záplatový súbor"
+
+#~ msgid ""
+#~ "&OK\n"
+#~ "&Cancel"
+#~ msgstr ""
+#~ "&OK\n"
+#~ "&Zru¹i»"
+
+#~ msgid "E240: No connection to Vim server"
+#~ msgstr "E240: Neexistuje pripojenie k Vim serveru"
+
+#~ msgid "E241: Unable to send to %s"
+#~ msgstr "E241: Nemô¾em posla» na %s"
+
+#~ msgid "E277: Unable to read a server reply"
+#~ msgstr "E277: Nemô¾em èíta» odpoveï servra"
+
+#~ msgid "E258: Unable to send to client"
+#~ msgstr "E258: Nemô¾em posla» klientovi"
+
+#~ msgid "Save As"
+#~ msgstr "Ulo¾i» ako"
+
+#~ msgid "Edit File"
+#~ msgstr "Upravova» súbor"
+
+#~ msgid " (NOT FOUND)"
+#~ msgstr " (NENÁJDENÉ)"
+
+#~ msgid "Source Vim script"
+#~ msgstr "Zdrojový skript Vim"
+
+#~ msgid "Edit File in new window"
+#~ msgstr "Upravi» súbor v novom okne"
+
+#~ msgid "Append File"
+#~ msgstr "Pripoji» súbor"
+
+#~ msgid "Window position: X %d, Y %d"
+#~ msgstr "Pozícia okna: X %d, Y %d"
+
+#~ msgid "Save Redirection"
+#~ msgstr "Ulo¾i» presmerovanie"
+
+#~ msgid "Save View"
+#~ msgstr "Ulo¾i» pohµad"
+
+#~ msgid "Save Session"
+#~ msgstr "Ulo¾i» sedenie"
+
+#~ msgid "Save Setup"
+#~ msgstr "Ulo¾i» nastavenie"
+
+#~ msgid "E196: No digraphs in this version"
+#~ msgstr "E196: V tejto verzi nie sú digraphy podporované"
+
+#~ msgid "Reading from stdin..."
+#~ msgstr "Èítam zo ¹tandardného vstupu..."
+
+#~ msgid "[NL found]"
+#~ msgstr "[nájdené NL]"
+
+#~ msgid "[crypted]"
+#~ msgstr "[¹ifrovaný]"
+
+#~ msgid "[CONVERSION ERROR]"
+#~ msgstr "[CHYBA PREVODU]"
+
+#~ msgid "NetBeans disallows writes of unmodified buffers"
+#~ msgstr "NetBeans rozhranie nedovolilo zapísa» nemodifikované buffre"
+
+#~ msgid "Partial writes disallowed for NetBeans buffers"
+#~ msgstr "Èiastoèné zápisy nie sú povolené pre NetBeans buffre"
+
+# TODO: resource fork ?! Note: used only in MACOS_X version
+#~ msgid "E460: The resource fork would be lost (add ! to override)"
+#~ msgstr "E460: 'Resource fork' bude stratený (pou¾ite ! pre vynútenie)"
+
+#~ msgid "E229: Cannot start the GUI"
+#~ msgstr "E229: Nedá sa spusti» GUI (grafické rozhranie)"
+
+#~ msgid "E230: Cannot read from \"%s\""
+#~ msgstr "E230: Nedá sa èíta» z \"%s\""
+
+#~ msgid "E665: Cannot start GUI, no valid font found"
+#~ msgstr ""
+#~ "E665: Nemo¾no na¹tartova» grafické rozhranie, nenájdený ¾iaden pou¾itelný "
+#~ "font"
+
+#~ msgid "E231: 'guifontwide' invalid"
+#~ msgstr ""
+#~ "E231: voµba 'guifontwide' (nastavenie ¹irokého písma) je chybne nastavená"
+
+#~ msgid "E599: Value of 'imactivatekey' is invalid"
+#~ msgstr "E599: Hodnota 'imactivatekey' je nesprávne nastavená"
+
+#~ msgid "E254: Cannot allocate color %s"
+#~ msgstr "E254: Nedá sa alokova» farba %s"
+
+#~ msgid "No match at cursor, finding next"
+#~ msgstr "®iadna zhoda na pozícii kurzora, hµadám ïalej"
+
+#~ msgid "<cannot open> "
+#~ msgstr "<nedá sa otvori»> "
+
+#~ msgid "E616: vim_SelFile: can't get font %s"
+#~ msgstr "E616: vim_SelFile: písmo %s nie je dostupné"
+
+#~ msgid "E614: vim_SelFile: can't return to current directory"
+#~ msgstr "E614: vim_SelFile: nedá sa vráti» do aktuálneho adresára"
+
+#~ msgid "Pathname:"
+#~ msgstr "Názov cesty:"
+
+#~ msgid "E615: vim_SelFile: can't get current directory"
+#~ msgstr "E615: vim_SelFile: nedá sa zisti» aktuálny adresár"
+
+#~ msgid "OK"
+#~ msgstr "OK"
+
+#~ msgid "Cancel"
+#~ msgstr "Zru¹i»"
+
+#~ msgid "Scrollbar Widget: Could not get geometry of thumb pixmap."
+#~ msgstr "Prípravok posuvnej li¹ty: nedá sa zisti» geometria náhµadu obrázku."
+
+#~ msgid "Vim dialog"
+#~ msgstr "Vim dialóg"
+
+#~ msgid "E232: Cannot create BalloonEval with both message and callback"
+#~ msgstr ""
+#~ "E232: BalloonEval nedá sa vytvori» správou a zároveò spätným volaním"
+
+#~ msgid "Vim dialog..."
+#~ msgstr "Vim dialóg.."
+
+#~ msgid "Input _Methods"
+#~ msgstr "Vstupné metódy (_Methods)"
+
+#~ msgid "VIM - Search and Replace..."
+#~ msgstr "VIM - Nájs» a nahradi»..."
+
+#~ msgid "VIM - Search..."
+#~ msgstr "VIM - Nájs»..."
+
+#~ msgid "Find what:"
+#~ msgstr "Vyhµada»:"
+
+#~ msgid "Replace with:"
+#~ msgstr "Nahradi» s:"
+
+#~ msgid "Match whole word only"
+#~ msgstr "Hµada» len celé slová"
+
+#~ msgid "Match case"
+#~ msgstr "Zhoda veµkosti písmen"
+
+#~ msgid "Direction"
+#~ msgstr "Smer"
+
+#~ msgid "Up"
+#~ msgstr "Hore"
+
+#~ msgid "Down"
+#~ msgstr "Dolu"
+
+#~ msgid "Find Next"
+#~ msgstr "Nájs» ïal¹ie"
+
+#~ msgid "Replace"
+#~ msgstr "Nahradi»"
+
+#~ msgid "Replace All"
+#~ msgstr "Nahradi» V¹etko"
+
+#~ msgid "Vim: Received \"die\" request from session manager\n"
+#~ msgstr "Vim: Prijatá po¾iadavka na ukonèenie (die) od mana¾éra sedení\n"
+
+#~ msgid "Vim: Main window unexpectedly destroyed\n"
+#~ msgstr "Vim: Hlavné okno neoèakávane zru¹ené\n"
+
+#~ msgid "Font Selection"
+#~ msgstr "Výber Písma"
+
+#~ msgid "Used CUT_BUFFER0 instead of empty selection"
+#~ msgstr "Pou¾itý CUT_BUFFER0 namiesto prázdneho výberu"
+
+#~ msgid "&Filter"
+#~ msgstr "&Filter"
+
+#~ msgid "&Cancel"
+#~ msgstr "&Zru¹i»"
+
+#~ msgid "Directories"
+#~ msgstr "Adresáre"
+
+#~ msgid "Filter"
+#~ msgstr "Filter"
+
+#~ msgid "&Help"
+#~ msgstr "&Pomocník"
+
+#~ msgid "Files"
+#~ msgstr "Súbory"
+
+#~ msgid "&OK"
+#~ msgstr "&OK"
+
+#~ msgid "Selection"
+#~ msgstr "Výber"
+
+#~ msgid "Find &Next"
+#~ msgstr "Nájs» ïa&l¹ie"
+
+#~ msgid "&Replace"
+#~ msgstr "&Nahradi»"
+
+#~ msgid "Replace &All"
+#~ msgstr "Nahradi» &V¹etko"
+
+#~ msgid "&Undo"
+#~ msgstr "&Spä»"
+
+#~ msgid "E671: Cannot find window title \"%s\""
+#~ msgstr "E671: Nemo¾no nájs» okno s titulkom \"%s\""
+
+#~ msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
+#~ msgstr "E243: Argument nie je podporovaný: \"-%s\"; Pou¾ite OLE verziu."
+
+#~ msgid "E672: Unable to open window inside MDI application"
+#~ msgstr "E672: Nemo¾no otvori» okno vnútri MDI aplikácie"
+
+#~ msgid "Find string (use '\\\\' to find  a '\\')"
+#~ msgstr "Nájs» re»azec (pou¾ite '\\\\' ak chete nájs» '\\')"
+
+# Following warning can be ignored:
+# msgfmt -v --statistics --check -C --check-accelerators="&" -o sk.mo sk.po
+# sk.po:2497: msgstr lacks the keyboard accelerator mark '&'
+#~ msgid "Find & Replace (use '\\\\' to find  a '\\')"
+#~ msgstr "Nájs» a Nahradi» (pou¾ite '\\\\' ak chcete nájs» '\\')"
+
+#~ msgid "Not Used"
+#~ msgstr "[neupravovaný]"
+
+#~ msgid "Directory\t*.nothing\n"
+#~ msgstr "Adresár\t*.niè\n"
+
+#~ msgid ""
+#~ "Vim E458: Cannot allocate colormap entry, some colors may be incorrect"
+#~ msgstr ""
+#~ "Vim E458: Nedá sa alokova» polo¾ka mapy farieb, niektoré farby mô¾u by» "
+#~ "nesprávne"
+
+#~ msgid "E250: Fonts for the following charsets are missing in fontset %s:"
+#~ msgstr "E250: Chýba písmo pre nasledujúce znakové sady %s:"
+
+#~ msgid "E252: Fontset name: %s"
+#~ msgstr "E252: Názov sady písiem: %s"
+
+#~ msgid "Font '%s' is not fixed-width"
+#~ msgstr "Písmo '%s' nemá pevnou ¹írku"
+
+#~ msgid "E253: Fontset name: %s\n"
+#~ msgstr "E253: Názov sady písiem: %s\n"
+
+#~ msgid "Font0: %s\n"
+#~ msgstr "Písmo0: %s\n"
+
+#~ msgid "Font1: %s\n"
+#~ msgstr "Písmo1: %s\n"
+
+#~ msgid "Font%<PRId64> width is not twice that of font0\n"
+#~ msgstr "Písmo%<PRId64> nie je dvakrát ¹ir¹ie ako písmo0\n"
+
+#~ msgid "Font0 width: %<PRId64>\n"
+#~ msgstr "©írka písma0: %<PRId64>\n"
+
+#~ msgid ""
+#~ "Font1 width: %<PRId64>\n"
+#~ "\n"
+#~ msgstr ""
+#~ "©írka písma1: %<PRId64>\n"
+#~ "\n"
+
+#~ msgid "Invalid font specification"
+#~ msgstr "Chybná ¹pecifikácia písma"
+
+#~ msgid "&Dismiss"
+#~ msgstr "&Zru¹i»"
+
+#~ msgid "no specific match"
+#~ msgstr "¾iadna ¹pecifická zhoda"
+
+#~ msgid "Vim - Font Selector"
+#~ msgstr "Vim - Výber písma"
+
+#~ msgid "Name:"
+#~ msgstr "Meno:"
+
+#~ msgid "Show size in Points"
+#~ msgstr "Ukazuj veµkos» v bodoch"
+
+#~ msgid "Encoding:"
+#~ msgstr "Kódujem:"
+
+#~ msgid "Font:"
+#~ msgstr "Písmo:"
+
+#~ msgid "Style:"
+#~ msgstr "©týl"
+
+#~ msgid "Size:"
+#~ msgstr "Veµkos»:"
+
+#~ msgid "E256: Hangul automata ERROR"
+#~ msgstr "E256: Hangul ERROR - chyba kórejského spôsobu vkladania znakov"
+
+#~ msgid "E563: stat error"
+#~ msgstr "E563: chyba stat"
+
+#~ msgid "E625: cannot open cscope database: %s"
+#~ msgstr "E625: nemo¾no otvori» cscope databázu: %s"
+
+#~ msgid "E626: cannot get cscope database information"
+#~ msgstr "E626: nemo¾no získa» cscope databázové informácie"
+
+#~ msgid "E569: maximum number of cscope connections reached"
+#~ msgstr "E569: dosiahnutý maximálny poèet cscope spojení"
+
+#~ msgid ""
+#~ "???: Sorry, this command is disabled, the MzScheme library could not be "
+#~ "loaded."
+#~ msgstr ""
+#~ "???: Prepáète, tento príkaz je vypnutý, MzScheme kni¾nica nemô¾e by» "
+#~ "naèítaná."
+
+#~ msgid "invalid expression"
+#~ msgstr "chybný výraz"
+
+#~ msgid "expressions disabled at compile time"
+#~ msgstr "podpora výrazov bola vypnutá pri preklade programu"
+
+#~ msgid "hidden option"
+#~ msgstr "skrytá voµba"
+
+#~ msgid "unknown option"
+#~ msgstr "neznáma voµba"
+
+#~ msgid "window index is out of range"
+#~ msgstr "èíslo okna mimo rozsah"
+
+#~ msgid "couldn't open buffer"
+#~ msgstr "nemo¾no otvori» buffer"
+
+#~ msgid "cannot save undo information"
+#~ msgstr "nedajú sa ulo¾i» zálo¾ne (opravné) informácie"
+
+#~ msgid "cannot delete line"
+#~ msgstr "nedá sa vymaza» riadok"
+
+#~ msgid "cannot replace line"
+#~ msgstr "nedá sa nahradi» riadok"
+
+#~ msgid "cannot insert line"
+#~ msgstr "nedá sa vlo¾i» riadok"
+
+#~ msgid "string cannot contain newlines"
+#~ msgstr "re»azec nesmie obsahova» znaky nového riadku"
+
+#~ msgid "Vim error: ~a"
+#~ msgstr "Chyba Vim: ~a"
+
+#~ msgid "Vim error"
+#~ msgstr "Chyba Vim"
+
+#~ msgid "buffer is invalid"
+#~ msgstr "buffer je neplatný"
+
+#~ msgid "window is invalid"
+#~ msgstr "okno je neplatné"
+
+#~ msgid "linenr out of range"
+#~ msgstr "èíslo riadka mimo rozsah"
+
+#~ msgid "not allowed in the Vim sandbox"
+#~ msgstr "nie je dovolené v bezpeènostnej schránke"
+
+#~ msgid ""
+#~ "E263: Sorry, this command is disabled, the Python library could not be "
+#~ "loaded."
+#~ msgstr ""
+#~ "E262: Prepáète, tento príkaz je vypnutý, Python kni¾nica nemô¾e by» "
+#~ "naèítaná."
+
+#~ msgid "E659: Cannot invoke Python recursively"
+#~ msgstr "E659: Python nemô¾e by» spustený rekurzívne"
+
+#~ msgid "can't delete OutputObject attributes"
+#~ msgstr "nedá sa vymaza» vlastnos» OutputObject"
+
+#~ msgid "softspace must be an integer"
+#~ msgstr "softspace musí by» kladné celé èíslo"
+
+#~ msgid "invalid attribute"
+#~ msgstr "chybná vlastnos»"
+
+#~ msgid "writelines() requires list of strings"
+#~ msgstr "writelines() vy¾aduje zoznam re»azcov"
+
+#~ msgid "E264: Python: Error initialising I/O objects"
+#~ msgstr "E264: Python: Chyba pri inicializácii I/O objektov"
+
+#~ msgid "attempt to refer to deleted buffer"
+#~ msgstr "pokus o odkaz na vymazaný buffer"
+
+#~ msgid "line number out of range"
+#~ msgstr "èíslo riadka mimo rozsah"
+
+#~ msgid "<buffer object (deleted) at %8lX>"
+#~ msgstr "<objekt bufferu (vymazaný) na %8lX>"
+
+#~ msgid "invalid mark name"
+#~ msgstr "chybné meno znaèky"
+
+#~ msgid "no such buffer"
+#~ msgstr "¾iadny taký buffer"
+
+#~ msgid "attempt to refer to deleted window"
+#~ msgstr "pokus o odkaz na vymazané okno"
+
+#~ msgid "readonly attribute"
+#~ msgstr "vlastnos» iba pre èítanie"
+
+#~ msgid "cursor position outside buffer"
+#~ msgstr "umiestnenie kurzoru mimo buffer"
+
+#~ msgid "<window object (deleted) at %.8lX>"
+#~ msgstr "<objekt okna (vymazaný) na %.8lX>"
+
+#~ msgid "<window object (unknown) at %.8lX>"
+#~ msgstr "<objekt okna (neznámy) na %.8lX>"
+
+#~ msgid "<window %d>"
+#~ msgstr "<okno %d>"
+
+#~ msgid "no such window"
+#~ msgstr "¾iadne také okno"
+
+#~ msgid ""
+#~ "E266: Sorry, this command is disabled, the Ruby library could not be "
+#~ "loaded."
+#~ msgstr ""
+#~ "E266: Prepáète, tento príkaz je vypnutý, Ruby kni¾nica nemô¾e by» "
+#~ "naèítaná."
+
+#~ msgid "E273: unknown longjmp status %d"
+#~ msgstr "E273: Neznámy 'longjmp' stav %d"
+
+#~ msgid "Toggle implementation/definition"
+#~ msgstr "Prepnú» implementáciu/definíciu"
+
+#~ msgid "Show base class of"
+#~ msgstr "Ukáza» základnú triedu"
+
+#~ msgid "Show overridden member function"
+#~ msgstr "Ukáza» pre»a¾enú èlenskú funkciu"
+
+#~ msgid "Retrieve from file"
+#~ msgstr "Obnovi» zo súboru"
+
+#~ msgid "Retrieve from project"
+#~ msgstr "Obnovi» z projektu"
+
+#~ msgid "Retrieve from all projects"
+#~ msgstr "Obnovi» zo v¹etkých projektov"
+
+#~ msgid "Retrieve"
+#~ msgstr "Obnovi»"
+
+#~ msgid "Show source of"
+#~ msgstr "Ukáza» zdroj"
+
+#~ msgid "Find symbol"
+#~ msgstr "Nájs» znak"
+
+#~ msgid "Browse class"
+#~ msgstr "Prezrie» triedu"
+
+#~ msgid "Show class in hierarchy"
+#~ msgstr "Ukáza» triedu v hierarchii"
+
+#~ msgid "Show class in restricted hierarchy"
+#~ msgstr "Ukáza» triedu v obmedzenej hierarchii"
+
+#~ msgid "Xref refers to"
+#~ msgstr "Xref odkazuje na"
+
+#~ msgid "Xref referred by"
+#~ msgstr "Xref odkázaný z"
+
+#~ msgid "Xref has a"
+#~ msgstr "Xref má"
+
+#~ msgid "Xref used by"
+#~ msgstr "Xref pou¾itý"
+
+#~ msgid "Show docu of"
+#~ msgstr "Ukáza» dokumentáciu"
+
+#~ msgid "Generate docu for"
+#~ msgstr "Vytvori» dokumentáciu pre"
+
+#~ msgid ""
+#~ "Cannot connect to SNiFF+. Check environment (sniffemacs must be found in "
+#~ "$PATH).\n"
+#~ msgstr ""
+#~ "Zlyhalo pripojenie na SNiFF+, Preverte prostredie (sniffemacs sa musí "
+#~ "nachádza» v $PATH).\n"
+
+#~ msgid "E274: Sniff: Error during read. Disconnected"
+#~ msgstr "E274: Sniff: Chyba poèas èítania. Odpojené"
+
+#~ msgid "SNiFF+ is currently "
+#~ msgstr "SNiFF+ je aktuálne "
+
+#~ msgid "not "
+#~ msgstr "ne"
+
+#~ msgid "connected"
+#~ msgstr "pripojený"
+
+#~ msgid "E275: Unknown SNiFF+ request: %s"
+#~ msgstr "E275: Neznáma SNiFF+ po¾iadavka: %s"
+
+#~ msgid "E276: Error connecting to SNiFF+"
+#~ msgstr "E276: Chyba pripojenia na SNiFF+"
+
+#~ msgid "E278: SNiFF+ not connected"
+#~ msgstr "E278: SNiFF+ nie je pripojený"
+
+#~ msgid "E279: Not a SNiFF+ buffer"
+#~ msgstr "E279: Nie je SNiFF+ bufferom"
+
+#~ msgid "Sniff: Error during write. Disconnected"
+#~ msgstr "Sniff: Chyba zápisu. Odpojené"
+
+#~ msgid "invalid buffer number"
+#~ msgstr "chybné èíslo bufferu"
+
+#~ msgid "not implemented yet"
+#~ msgstr "nie je e¹te podporované"
+
+#~ msgid "cannot set line(s)"
+#~ msgstr "nedajú sa nastavi» riadky"
+
+#~ msgid "mark not set"
+#~ msgstr "znaèka nie je nastavená"
+
+#~ msgid "row %d column %d"
+#~ msgstr "riadok %d ståpec %d"
+
+#~ msgid "cannot insert/append line"
+#~ msgstr "nedá sa vlo¾i»/pripoji» riadok"
+
+#~ msgid "unknown flag: "
+#~ msgstr "neznámy príznak: "
+
+#~ msgid "unknown vimOption"
+#~ msgstr "neznáma voµba (vimOption)"
+
+#~ msgid "keyboard interrupt"
+#~ msgstr "preru¹enie z klávesnice"
+
+#~ msgid "vim error"
+#~ msgstr "chyba Vim"
+
+#~ msgid "cannot create buffer/window command: object is being deleted"
+#~ msgstr "nedá sa vytvori» príkaz bufferu/okna: objekt bude vymazaný"
+
+#~ msgid ""
+#~ "cannot register callback command: buffer/window is already being deleted"
+#~ msgstr ""
+#~ "nedá sa zaregistrova» príkaz spätného volania: buffer/okno u¾ bol vymazaný"
+
+#~ msgid ""
+#~ "E280: TCL FATAL ERROR: reflist corrupt!? Please report this to vim-"
+#~ "dev@vim.org"
+#~ msgstr ""
+#~ "E280: TCL FATAL ERROR: reflist po¹kodený!? Oznámte, prosím, túto chybu na "
+#~ "vim-dev@vim.org"
+
+#~ msgid "cannot register callback command: buffer/window reference not found"
+#~ msgstr ""
+#~ "nedá sa zaregistrova» príkaz spätného volania: odkaz na buffer/okno "
+#~ "nenájdený"
+
+#~ msgid ""
+#~ "E571: Sorry, this command is disabled: the Tcl library could not be "
+#~ "loaded."
+#~ msgstr ""
+#~ "E571: Prepáète, tento príkaz je vypnutý, Tcl kni¾nica nemô¾e by» naèítaná."
+
+#~ msgid ""
+#~ "E281: TCL ERROR: exit code is not int!? Please report this to vim-dev@vim."
+#~ "org"
+#~ msgstr ""
+#~ "E281: TCL CHYBA: návratový kód nie je celé èíslo!? Oznámte, prosím, túto "
+#~ "chybu na vim-dev@vim.org"
+
+#~ msgid "E572: exit code %d"
+#~ msgstr "E572: návratový kód %d"
+
+#~ msgid "cannot get line"
+#~ msgstr "nedá sa preèíta» riadok"
+
+#~ msgid "Unable to register a command server name"
+#~ msgstr "Nemô¾em zaregistrova» meno príkazového servra"
+
+#~ msgid "E248: Failed to send command to the destination program"
+#~ msgstr "E248: Chyba poèas prenosu príkazu do cieµového programu"
+
+#~ msgid "E573: Invalid server id used: %s"
+#~ msgstr "E573: Pou¾íté chybné èíslo servera: %s"
+
+#~ msgid "E251: VIM instance registry property is badly formed.  Deleted!"
+#~ msgstr "E251: VIM registrová vlastnos» je zle formátovaná.  Vymazané!"
+
+#~ msgid "This Vim was not compiled with the diff feature."
+#~ msgstr "Tento Vim nebol kompilovaný s porovnávacími funkciami."
+
+#~ msgid "Vim: Error: Failure to start gvim from NetBeans\n"
+#~ msgstr "Vim: Chyba: Chyba spú¹»ania gvim pre NetBeans\n"
+
+#~ msgid "where case is ignored prepend / to make flag upper case"
+#~ msgstr ""
+#~ "v prípade, ¾e je ignorovaná veµkos» písmen, pou¾ite znak '/' na zaèiatku, "
+#~ "aby mal príznak význam veµkého písmena"
+
+#~ msgid "-register\t\tRegister this gvim for OLE"
+#~ msgstr "-register\t\tPrihlási» gvim na OLE"
+
+#~ msgid "-unregister\t\tUnregister gvim for OLE"
+#~ msgstr "-register\t\tOdhlási» gvim z OLE"
+
+#~ msgid "-g\t\t\tRun using GUI (like \"gvim\")"
+#~ msgstr "-g\t\t\tSpusti» v grafickom (GUI) móde (rovnaké ako \"gvim\")"
+
+#~ msgid "-f  or  --nofork\tForeground: Don't fork when starting GUI"
+#~ msgstr ""
+#~ "-f  alebo  --nofork\tPopredie: Pri spustení grafického (GUI) módu sa "
+#~ "nepresunie do pozadia"
+
+#~ msgid "-V[N]\t\tVerbose level"
+#~ msgstr "-V[N]\t\tÚroveò výpisu hlá¹ok"
+
+#~ msgid "-f\t\t\tDon't use newcli to open window"
+#~ msgstr "-f\t\t\tNebude pou¾íva» newcli pre otvorenie okna"
+
+#~ msgid "-dev <device>\t\tUse <device> for I/O"
+#~ msgstr "-dev <zariadenie>\t\tPou¾i» <zariadenie> pre I/O"
+
+#~ msgid "-U <gvimrc>\t\tUse <gvimrc> instead of any .gvimrc"
+#~ msgstr "-U <gvimrc>\t\tPou¾ije <gvimrc> namiesto akéhokoµvek .gvimrc"
+
+#~ msgid "-x\t\t\tEdit encrypted files"
+#~ msgstr "-x\t\t\tÚprava za¹ifrovaných súborov"
+
+#~ msgid "-display <display>\tConnect vim to this particular X-server"
+#~ msgstr "-display <displej>\tPripojí vim na príslu¹ný X-server"
+
+#~ msgid "-X\t\t\tDo not connect to X server"
+#~ msgstr "-X\t\t\tNepripojí sa k X serveru"
+
+#~ msgid "--remote <files>\tEdit <files> in a Vim server if possible"
+#~ msgstr "--remote <súbory>\tUpravi» <súbory> na Vim servri ak je to mo¾né"
+
+#~ msgid "--remote-silent <files>  Same, don't complain if there is no server"
+#~ msgstr ""
+#~ "--remote-silent <súbory>\tTo isté, ale nes»a¾uj si, ak neexistuje server"
+
+#~ msgid ""
+#~ "--remote-wait <files>  As --remote but wait for files to have been edited"
+#~ msgstr ""
+#~ "--remote-wait <súbory>\tAko --remote ale èaká na súbory pre ukonèenie "
+#~ "úprav"
+
+#~ msgid ""
+#~ "--remote-wait-silent <files>  Same, don't complain if there is no server"
+#~ msgstr ""
+#~ "--remote-wait-silent <súbory>\tTo isté, ale nes»a¾uj si, ak neexistuje "
+#~ "server"
+
+#~ msgid "--remote-send <keys>\tSend <keys> to a Vim server and exit"
+#~ msgstr "--remote-send <voµby>\tOdo¹le <voµby> na Vim server a skonèí"
+
+#~ msgid ""
+#~ "--remote-expr <expr>\tEvaluate <expr> in a Vim server and print result"
+#~ msgstr "--remote-expr <výraz>\tSpusti <výraz> na servri a vytlaèí výsledok"
+
+#~ msgid "--serverlist\t\tList available Vim server names and exit"
+#~ msgstr "--serverlist\t\tVypí¹e zoznam mien dostupných Vim servrov a skonèí"
+
+#~ msgid "--servername <name>\tSend to/become the Vim server <name>"
+#~ msgstr "--servername <názov>\tOdo¹le na Vim server <názov>"
+
+#~ msgid ""
+#~ "\n"
+#~ "Arguments recognised by gvim (Motif version):\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Argumenty dostupné pre gvim (Motif verzia):\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Arguments recognised by gvim (neXtaw version):\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Argumenty dostupné pre gvim (neXtaw verzia):\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Arguments recognised by gvim (Athena version):\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Argumenty dostupné pre gvim (Athena verzia):\n"
+
+#~ msgid "-display <display>\tRun vim on <display>"
+#~ msgstr "-display <displej>\tSpustí vim na <displej>"
+
+#~ msgid "-iconic\t\tStart vim iconified"
+#~ msgstr "-iconic\t\tSpustí vim minimalizované"
+
+#~ msgid "-name <name>\t\tUse resource as if vim was <name>"
+#~ msgstr "-name <názov>\t\tPou¾ije resource ako by vim mal <názov>"
+
+#~ msgid "\t\t\t  (Unimplemented)\n"
+#~ msgstr "\t\t\t  (nie je implementované)\n"
+
+#~ msgid "-background <color>\tUse <color> for the background (also: -bg)"
+#~ msgstr "-background <farba>\tNastaví sa <farba> pozadia (tie¾ -bg)"
+
+#~ msgid "-foreground <color>\tUse <color> for normal text (also: -fg)"
+#~ msgstr "-foreground <farba>\tNastaví sa <farba> popredia (tie¾ -fg)"
+
+#~ msgid "-font <font>\t\tUse <font> for normal text (also: -fn)"
+#~ msgstr "-font <písmo>\t\tNastaví <písmo> normálneho textu (tie¾ -fn)"
+
+#~ msgid "-boldfont <font>\tUse <font> for bold text"
+#~ msgstr "-boldfont <písmo>\tNastaví <písmo> pre zvýraznený text"
+
+#~ msgid "-italicfont <font>\tUse <font> for italic text"
+#~ msgstr "-italicfont <písmo>\tNastaví <písmo> pre kurzívu"
+
+#~ msgid "-geometry <geom>\tUse <geom> for initial geometry (also: -geom)"
+#~ msgstr "-geometry <geometrie>\tNastaví sa <geometria> (tie¾ -geom)"
+
+#~ msgid "-borderwidth <width>\tUse a border width of <width> (also: -bw)"
+#~ msgstr "-borderwidth <¹írka>\tNastaví <¹írku> okrajov (tie¾ -bw)"
+
+#~ msgid ""
+#~ "-scrollbarwidth <width>  Use a scrollbar width of <width> (also: -sw)"
+#~ msgstr "-scrollbarwidth <¹írka>  Nastaví <¹írku> posuvnej li¹ty (tie¾ -sw)"
+
+#~ msgid "-menuheight <height>\tUse a menu bar height of <height> (also: -mh)"
+#~ msgstr "-menuheight <vý¹ka>\tNastaví <vý¹ku> ponuky (tie¾ -mh)"
+
+#~ msgid "-reverse\t\tUse reverse video (also: -rv)"
+#~ msgstr "-reverse\t\tPou¾ije reverzné farby (tie¾ -rv)"
+
+#~ msgid "+reverse\t\tDon't use reverse video (also: +rv)"
+#~ msgstr "+reverse\t\tNepou¾ije reverzné farby (tie¾ +rv)"
+
+# TODO: howto translate 'resource' in this case?
+#~ msgid "-xrm <resource>\tSet the specified resource"
+#~ msgstr "-xrm <resource>\tNastaví zadaný <resource>"
+
+#~ msgid ""
+#~ "\n"
+#~ "Arguments recognised by gvim (RISC OS version):\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Argumenty dostupné pre gvim (RISC OS verzia):\n"
+
+#~ msgid "--columns <number>\tInitial width of window in columns"
+#~ msgstr "--columns <poèet>\tPoèiatoèná ¹írka okna v ståpcoch"
+
+#~ msgid "--rows <number>\tInitial height of window in rows"
+#~ msgstr "--rows <poèet>\tPoèiatoèná vý¹ka okna v riadkoch"
+
+#~ msgid ""
+#~ "\n"
+#~ "Arguments recognised by gvim (GTK+ version):\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Argumenty dostupné pre gvim (GTK+ verzia):\n"
+
+#~ msgid "-display <display>\tRun vim on <display> (also: --display)"
+#~ msgstr "-display <displej>\tSpustí vim na <displej> (tie¾ --display)"
+
+#~ msgid "--role <role>\tSet a unique role to identify the main window"
+#~ msgstr "-role <rola>\tNastaví unikátnu rolu pre identifikáciu hlavného okna"
+
+#~ msgid "--socketid <xid>\tOpen Vim inside another GTK widget"
+#~ msgstr "--socketid <xid>\tOtvorí Vim vnútri iného GTK programu."
+
+#~ msgid ""
+#~ "\n"
+#~ "Arguments recognised by kvim (KDE version):\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Argumenty dostupné pre kvim (KDE verzia):\n"
+
+#~ msgid "-black\t\tUse reverse video"
+#~ msgstr "-black\t\tPou¾ije reverzné farby"
+
+#~ msgid "-tip\t\t\tDisplay the tip dialog on startup"
+#~ msgstr "-tip\t\t\tZobraz tip pri ¹tarte"
+
+#~ msgid "-notip\t\tDisable the tip dialog"
+#~ msgstr "-notip\t\tNezobrazuj tip pri ¹tarte"
+
+#~ msgid "--display <display>\tRun vim on <display>"
+#~ msgstr "-display <displej>\tSpustí vim na <displej>"
+
+#~ msgid "-P <parent title>\tOpen Vim inside parent application"
+#~ msgstr "-P <titulok rodièa>\tOtvor Vim vnútri materskej aplikácie"
+
+#~ msgid "No display"
+#~ msgstr "Bez grafického rozhrania"
+
+#~ msgid ": Send failed.\n"
+#~ msgstr ": Odoslanie zlyhalo.\n"
+
+#~ msgid ": Send failed. Trying to execute locally\n"
+#~ msgstr ": Odoslanie zlyhalo. Pokú¹am sa spusti» lokálne\n"
+
+#~ msgid "%d of %d edited"
+#~ msgstr "%d upravených súborov z %d"
+
+#~ msgid "No display: Send expression failed.\n"
+#~ msgstr "®iaden graf. mód: Odoslanie výrazu zlyhalo.\n"
+
+#~ msgid ": Send expression failed.\n"
+#~ msgstr ": Odoslanie výrazu zlyhalo.\n"
+
+#~ msgid "E543: Not a valid codepage"
+#~ msgstr "E543: Chybná kódová stránka"
+
+#~ msgid "E285: Failed to create input context"
+#~ msgstr "E285: Nepodarilo sa vytvori» vstupný kontext"
+
+#~ msgid "E286: Failed to open input method"
+#~ msgstr "E286: Nepodarilo sa otvori» vstupnú metódu"
+
+#~ msgid "E287: Warning: Could not set destroy callback to IM"
+#~ msgstr "E287: Varovanie: likvidaèné spätné volanie sa nedá nastavi» na IM"
+
+#~ msgid "E288: input method doesn't support any style"
+#~ msgstr "E288: vstupná metóda nepodporuje ¾iadny ¹týl"
+
+#~ msgid "E289: input method doesn't support my preedit type"
+#~ msgstr "E289: vstupná metóda nepodporuje môj 'preedit' typ"
+
+#~ msgid "E290: over-the-spot style requires fontset"
+#~ msgstr "E290: Nadbodový ¹týl vy¾aduje sadu fontov (fontset)"
+
+#~ msgid "E291: Your GTK+ is older than 1.2.3. Status area disabled"
+#~ msgstr "E291: Máte GTK+ verziu star¹iu ne¾ 1.2.3. Stavová plocha vypnutá."
+
+#~ msgid "E292: Input Method Server is not running"
+#~ msgstr "E292: Server vstupných metód nebe¾í"
+
+#~ msgid ""
+#~ "\n"
+#~ "         [not usable with this version of Vim]"
+#~ msgstr ""
+#~ "\n"
+#~ "         [nepou¾iteµné s touto verziou Vim]"
+
+#~ msgid ""
+#~ "&Open Read-Only\n"
+#~ "&Edit anyway\n"
+#~ "&Recover\n"
+#~ "&Quit\n"
+#~ "&Abort\n"
+#~ "&Delete it"
+#~ msgstr ""
+#~ "&Otvori» iba pre èítanie\n"
+#~ "&Pokraèovat v úpravách\n"
+#~ "O&bnovi» súbor\n"
+#~ "&Koniec\n"
+#~ "&Zru¹i»\n"
+#~ "Z&maza»"
+
+#~ msgid "Tear off this menu"
+#~ msgstr "Odtrhnú» tuto ponuku"
+
+#~ msgid "Select Directory dialog"
+#~ msgstr "Dialóg pre vytvorenie adresára"
+
+#~ msgid "Save File dialog"
+#~ msgstr "Dialóg pre ukladanie súborov"
+
+#~ msgid "Open File dialog"
+#~ msgstr "Dialóg pre otváranie súborov"
+
+#~ msgid "E338: Sorry, no file browser in console mode"
+#~ msgstr "E338: ¥utujem, ale konzolová verzia nepodporuje prehliadaè súborov"
+
+#~ msgid "Vim: preserving files...\n"
+#~ msgstr "Vim: zachovávam súbory...\n"
+
+#~ msgid "Vim: Finished.\n"
+#~ msgstr "Vim: ukonèený\n"
+
+#~ msgid "ERROR: "
+#~ msgstr "CHYBA: "
+
+#~ msgid ""
+#~ "\n"
+#~ "[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use "
+#~ "%<PRIu64>\n"
+#~ msgstr ""
+#~ "\n"
+#~ "[bajtov] celkom uvolnené-alokované %<PRIu64>-%<PRIu64>, vyu¾ité "
+#~ "%<PRIu64>, maximálne vyu¾itie %<PRIu64>\n"
+
+#~ msgid ""
+#~ "[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
+#~ "\n"
+#~ msgstr ""
+#~ "[volanie] celkom re/malloc(): %<PRIu64>, celkom free() %<PRIu64>\n"
+#~ "\n"
+
+#~ msgid "E340: Line is becoming too long"
+#~ msgstr "E340: Riadok sa stáva príli¹ dlhým"
+
+#~ msgid "E341: Internal error: lalloc(%<PRId64>, )"
+#~ msgstr "E341: Vnútorná chyba: lalloc(%<PRId64>, )"
+
+#~ msgid "E547: Illegal mouseshape"
+#~ msgstr "E547: Chybný tvar my¹i"
+
+#~ msgid "Enter encryption key: "
+#~ msgstr "Zadajte ¹ifrovací kµúè: "
+
+#~ msgid "Enter same key again: "
+#~ msgstr "Vlo¾te ten istý kµúè znova: "
+
+#~ msgid "Keys don't match!"
+#~ msgstr "Kµúèe sa nezhodujú!"
+
+#~ msgid "Cannot connect to Netbeans #2"
+#~ msgstr "Nedá sa pripoji» na Netbeans #2"
+
+#~ msgid "Cannot connect to Netbeans"
+#~ msgstr "Nedá sa pripoji» na Netbeans"
+
+#~ msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
+#~ msgstr ""
+#~ "E668: Zlé prístupové práva pre súbor s informáciami pre NetBeans "
+#~ "spojenie: \"%s\""
+
+#~ msgid "read from Netbeans socket"
+#~ msgstr "èítanie z Netbeans soketu"
+
+#~ msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+#~ msgstr "E658: Stratené NetBeans spojenie pre buffer %<PRId64>"
+
+#~ msgid "E505: "
+#~ msgstr "E505: "
+
+#~ msgid "freeing %<PRId64> lines"
+#~ msgstr "uvolòujem %<PRId64> riadkov"
+
+#~ msgid "E530: Cannot change term in GUI"
+#~ msgstr "E530: V grafickom móde (GUI) sa nedá meni» typ terminálu"
+
+#~ msgid "E531: Use \":gui\" to start the GUI"
+#~ msgstr "E531: Pou¾ite \"gui\" pre spustenie GUI"
+
+#~ msgid "E617: Cannot be changed in the GTK+ 2 GUI"
+#~ msgstr "E617: Nedá sa zmeni» v grafickom rozhraní GTK+ 2"
+
+#~ msgid "E596: Invalid font(s)"
+#~ msgstr "E596: Chybné písma"
+
+#~ msgid "E597: can't select fontset"
+#~ msgstr "E597: nedá sa vybra» sada písiem"
+
+#~ msgid "E598: Invalid fontset"
+#~ msgstr "E598: Chybná sada písiem"
+
+#~ msgid "E533: can't select wide font"
+#~ msgstr "E533: nedá sa vybra» ¹iroký font"
+
+#~ msgid "E534: Invalid wide font"
+#~ msgstr "E534: Chybné ¹iroké písmo"
+
+#~ msgid "E538: No mouse support"
+#~ msgstr "E538: Bez podpory my¹i"
+
+#~ msgid "cannot open "
+#~ msgstr "nedá sa otvori» "
+
+#~ msgid "VIM: Can't open window!\n"
+#~ msgstr "VIM: Nedá sa otvori» okno!\n"
+
+#~ msgid "Need Amigados version 2.04 or later\n"
+#~ msgstr "Je potrebná Amigados verzia 2.04 alebo nov¹ia\n"
+
+#~ msgid "Need %s version %<PRId64>\n"
+#~ msgstr "Potrebná %s verzia %<PRId64>\n"
+
+#~ msgid "Cannot open NIL:\n"
+#~ msgstr "Nedá sa otvori» NIL:\n"
+
+#~ msgid "Cannot create "
+#~ msgstr "Nedá sa vytvori» "
+
+#~ msgid "Vim exiting with %d\n"
+#~ msgstr "Vim ukonèený s %d\n"
+
+#~ msgid "cannot change console mode ?!\n"
+#~ msgstr "nemô¾em zmeni» konzolový mód ?!\n"
+
+#~ msgid "mch_get_shellsize: not a console??\n"
+#~ msgstr "mch_get_shellsize: nie je konzolou??\n"
+
+#~ msgid "E360: Cannot execute shell with -f option"
+#~ msgstr "E360: Nedá sa spusti» shell s -f voµbou"
+
+#~ msgid "Cannot execute "
+#~ msgstr "Nedá sa spusti» "
+
+#~ msgid "shell "
+#~ msgstr "shell "
+
+#~ msgid " returned\n"
+#~ msgstr " vrátené\n"
+
+#~ msgid "ANCHOR_BUF_SIZE too small."
+#~ msgstr "ANCHOR_BUF_SIZE príli¹ malá."
+
+#~ msgid "I/O ERROR"
+#~ msgstr "I/O CHYBA"
+
+#~ msgid "...(truncated)"
+#~ msgstr "...(skrátené)"
+
+#~ msgid "'columns' is not 80, cannot execute external commands"
+#~ msgstr "'ståpce' nie je 80, nemô¾em spusti» externý príkaz"
+
+#~ msgid "E237: Printer selection failed"
+#~ msgstr "E237: Zlyhal výber tlaèiarne"
+
+#~ msgid "to %s on %s"
+#~ msgstr "%s na %s"
+
+#~ msgid "E613: Unknown printer font: %s"
+#~ msgstr "E613: Neznámy font tlaèiarne: %s"
+
+#~ msgid "E238: Print error: %s"
+#~ msgstr "E238: Chyba tlaèe: %s"
+
+#~ msgid "Printing '%s'"
+#~ msgstr "Tlaèím '%s'"
+
+#~ msgid "E244: Illegal charset name \"%s\" in font name \"%s\""
+#~ msgstr "E244: Chybný názov znakovej sady \"%s\" v názve písma \"%s\""
+
+#~ msgid "E245: Illegal char '%c' in font name \"%s\""
+#~ msgstr "E245: Chybný znak '%c' v názve písma \"%s\""
+
+#~ msgid "Vim: Double signal, exiting\n"
+#~ msgstr "Vim: dvojitý signál, konèím\n"
+
+#~ msgid "Vim: Caught deadly signal %s\n"
+#~ msgstr "Vim: Zachytený smrtiaci signál %s\n"
+
+#~ msgid "Vim: Caught deadly signal\n"
+#~ msgstr "Vim: Zachytený smrtiaci signál\n"
+
+#~ msgid "Opening the X display took %<PRId64> msec"
+#~ msgstr "Otvorenie X displej zabralo %<PRId64> msec"
+
+#~ msgid ""
+#~ "\n"
+#~ "Vim: Got X error but we continue...\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Vim: Chyba X ale pokraèujem ...\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Vim: Got X error\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Vim: Chyba X\n"
+
+#~ msgid "Testing the X display failed"
+#~ msgstr "Testovanie X displeja zlyhalo"
+
+#~ msgid "Opening the X display timed out"
+#~ msgstr "Uplynul èas otvorenia X displeja"
+
+#~ msgid ""
+#~ "\n"
+#~ "Cannot execute shell sh\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Nedá sa spusti» sh shell\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Cannot create pipes\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Nedjú sa vytvori» rúry\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Cannot fork\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Vyvolanie fork zlyhalo\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Command terminated\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Príkaz ukonèený\n"
+
+#~ msgid "XSMP lost ICE connection"
+#~ msgstr "XSMP stratilo ICE spojenie"
+
+#~ msgid "Opening the X display failed"
+#~ msgstr "Otvorenie X displeja zlyhalo"
+
+#~ msgid "XSMP handling save-yourself request"
+#~ msgstr "XSMP spracuváva po¾iadavku na samoulo¾enie"
+
+#~ msgid "XSMP opening connection"
+#~ msgstr "XSMP otvára spojenie"
+
+#~ msgid "XSMP ICE connection watch failed"
+#~ msgstr "XSMP kontrola spojenia ICE zlyhala"
+
+#~ msgid "XSMP SmcOpenConnection failed: %s"
+#~ msgstr "XSMP SmcOpenConnection zlyhalo: %s"
+
+#~ msgid "At line"
+#~ msgstr "Na riadku"
+
+#~ msgid "Could not load vim32.dll!"
+#~ msgstr "Nemô¾em nahra» vim32.dll!"
+
+#~ msgid "VIM Error"
+#~ msgstr "VIM Chyba"
+
+#~ msgid "Could not fix up function pointers to the DLL!"
+#~ msgstr "Nemô¾em opravi» odkazy funkcií na DLL!"
+
+#~ msgid "shell returned %d"
+#~ msgstr "návratová hodnota shellu %d"
+
+#~ msgid "Vim: Caught %s event\n"
+#~ msgstr "Vim: Zachytená udalos» %s\n"
+
+#~ msgid "close"
+#~ msgstr "zavrie»"
+
+#~ msgid "logoff"
+#~ msgstr "odhlási»"
+
+#~ msgid "shutdown"
+#~ msgstr "vypnú»"
+
+#~ msgid "E371: Command not found"
+#~ msgstr "E371: Príkaz nenájdený"
+
+#~ msgid ""
+#~ "VIMRUN.EXE not found in your $PATH.\n"
+#~ "External commands will not pause after completion.\n"
+#~ "See  :help win32-vimrun  for more information."
+#~ msgstr ""
+#~ "VIMRUN.EXE nenájdený v $PATH.\n"
+#~ "Po dokonèení externých príkazov nebude výstup pozastavený.\n"
+#~ "Pozrite  :help win32-vimrun  pre viac informácií."
+
+#~ msgid "Vim Warning"
+#~ msgstr "Vim Varovanie"
+
+#~ msgid "Conversion in %s not supported"
+#~ msgstr "Konverzia v %s nie je podporovaná"
+
+#~ msgid "Character used for SLASH must be ASCII; in %s line %d: %s"
+#~ msgstr "Znak pou¾itý pre SLASH musí by» ASCII; v %s riadok %d: %s"
+
+#~ msgid "E396: containedin argument not accepted here"
+#~ msgstr "E396: obsahuje argumenty, ktoré tu nie sú povolené"
+
+#~ msgid "E430: Tag file path truncated for %s\n"
+#~ msgstr "E430: Cesta k súboru tagov %s bola orezaná\n"
+
+#~ msgid "new shell started\n"
+#~ msgstr "spustený nový shell\n"
+
+#~ msgid "No undo possible; continue anyway"
+#~ msgstr "Odstránenie zmien nie je mo¾né; chcete napriek tomu pokraèova»"
+
+#~ msgid "%<PRId64> changes"
+#~ msgstr "%<PRId64> zmien"
+
+#~ msgid ""
+#~ "\n"
+#~ "MS-Windows 16/32-bit GUI version"
+#~ msgstr ""
+#~ "\n"
+#~ "16/32 bitová GUI verzia pre MS Windows"
+
+#~ msgid ""
+#~ "\n"
+#~ "MS-Windows 32-bit GUI version"
+#~ msgstr ""
+#~ "\n"
+#~ "32 bitová GUI verzia pre MS Windows"
+
+#~ msgid " in Win32s mode"
+#~ msgstr " vo Win32 re¾ime"
+
+#~ msgid " with OLE support"
+#~ msgstr " s OLE podporou"
+
+#~ msgid ""
+#~ "\n"
+#~ "MS-Windows 32-bit console version"
+#~ msgstr ""
+#~ "\n"
+#~ "32 bitová verzia pre MS Windows konzolu"
+
+#~ msgid ""
+#~ "\n"
+#~ "MS-Windows 16-bit version"
+#~ msgstr ""
+#~ "\n"
+#~ "16 bitová verzia pre MS Windows"
+
+#~ msgid ""
+#~ "\n"
+#~ "32-bit MS-DOS version"
+#~ msgstr ""
+#~ "\n"
+#~ "32 bitová verzia pre MS-DOS"
+
+#~ msgid ""
+#~ "\n"
+#~ "16-bit MS-DOS version"
+#~ msgstr ""
+#~ "\n"
+#~ "16 bitová MS-DOS verzia"
+
+#~ msgid ""
+#~ "\n"
+#~ "MacOS X (unix) version"
+#~ msgstr ""
+#~ "\n"
+#~ "MacOS X (unix) verzia"
+
+#~ msgid ""
+#~ "\n"
+#~ "MacOS X version"
+#~ msgstr ""
+#~ "\n"
+#~ "MacOS X verzia"
+
+#~ msgid ""
+#~ "\n"
+#~ "MacOS version"
+#~ msgstr ""
+#~ "\n"
+#~ "MacOS verzia"
+
+#~ msgid ""
+#~ "\n"
+#~ "RISC OS version"
+#~ msgstr ""
+#~ "\n"
+#~ "RISC OS verzia"
+
+#~ msgid ""
+#~ "\n"
+#~ "Big version "
+#~ msgstr ""
+#~ "\n"
+#~ "Veµká verzia "
+
+#~ msgid ""
+#~ "\n"
+#~ "Normal version "
+#~ msgstr ""
+#~ "\n"
+#~ "Normálna verzia"
+
+#~ msgid ""
+#~ "\n"
+#~ "Small version "
+#~ msgstr ""
+#~ "\n"
+#~ "Malá verzia "
+
+#~ msgid ""
+#~ "\n"
+#~ "Tiny version "
+#~ msgstr ""
+#~ "\n"
+#~ "Minimálna verzia "
+
+#~ msgid "with GTK2-GNOME GUI."
+#~ msgstr "s grafickým rozhraním GTK2-GNOME."
+
+#~ msgid "with GTK-GNOME GUI."
+#~ msgstr "s grafickým rozhraním GTK-GNOME."
+
+#~ msgid "with GTK2 GUI."
+#~ msgstr "s grafickým rozhraním GTK2."
+
+#~ msgid "with GTK GUI."
+#~ msgstr "s grafickým rozhraním GTK."
+
+#~ msgid "with X11-Motif GUI."
+#~ msgstr "s grafickým rozhraním X11-Motif."
+
+#~ msgid "with X11-neXtaw GUI."
+#~ msgstr "s grafickým rozhraním X11-neXtaw."
+
+#~ msgid "with X11-Athena GUI."
+#~ msgstr "s grafickým rozhraním X11-Athena."
+
+#~ msgid "with Photon GUI."
+#~ msgstr "s grafickým rozhraním Photon."
+
+#~ msgid "with GUI."
+#~ msgstr "s grafickým rozhraním."
+
+#~ msgid "with Carbon GUI."
+#~ msgstr "s grafickým rozhraním Carbon."
+
+#~ msgid "with Cocoa GUI."
+#~ msgstr "s grafickým rozhraním Cocoa."
+
+#~ msgid "with (classic) GUI."
+#~ msgstr "s klasickým grafickým rozhraním."
+
+#~ msgid "with KDE GUI."
+#~ msgstr "s grafickým rozhraním KDE."
+
+#~ msgid "  system gvimrc file: \""
+#~ msgstr "  systémový gvimrc súbor: \""
+
+#~ msgid "    user gvimrc file: \""
+#~ msgstr "      u¾ívateµský gvimrc súbor: \""
+
+#~ msgid "2nd user gvimrc file: \""
+#~ msgstr "druhý u¾ívateµský gvimrc súbor: \""
+
+#~ msgid "3rd user gvimrc file: \""
+#~ msgstr "tretí u¾ívateµský gvimrc súbor: \""
+
+#~ msgid "    system menu file: \""
+#~ msgstr "     systémový súbor s ponukou: \""
+
+#~ msgid "Compiler: "
+#~ msgstr "Prekladaè: "
+
+#~ msgid "menu  Help->Orphans           for information    "
+#~ msgstr "bli¾¹ie informácie v ponuke  Pomocník->Samostatné"
+
+#~ msgid "Running modeless, typed text is inserted"
+#~ msgstr "Spú¹»am v bezmódovom re¾ime, písaný text je vlo¾ený"
+
+#~ msgid "menu  Edit->Global Settings->Toggle Insert Mode  "
+#~ msgstr "ponuka  Úpravy->Globálne mo¾nosti->Prepnú» re¾im vlo¾enia "
+
+#~ msgid "                              for two modes      "
+#~ msgstr "                            pre dva re¾imy       "
+
+#~ msgid "menu  Edit->Global Settings->Toggle Vi Compatible"
+#~ msgstr "ponuka  Úpravy->Globálne mo¾nostt->Prepnú» Vi kompatibilný re¾im"
+
+#~ msgid "                              for Vim defaults   "
+#~ msgstr "                 pre predvolené vlastnosti Vim   "
+
+#~ msgid "WARNING: Windows 95/98/ME detected"
+#~ msgstr "VAROVANIE: detekované Windows 95/98/ME"
+
+#~ msgid "type  :help windows95<Enter>  for info on this"
+#~ msgstr "zadajte  :help windows95<Enter>  pre podrobnej¹ie informácie"
+
+#~ msgid "E370: Could not load library %s"
+#~ msgstr "E370: Nepodarilo sa nahra» kni¾nicu %s"
+
+#~ msgid ""
+#~ "Sorry, this command is disabled: the Perl library could not be loaded."
+#~ msgstr ""
+#~ "Prepáète, tento príkaz je vypnutý, Perl kni¾nica nemô¾e by» naèítaná."
+
+#~ msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
+#~ msgstr ""
+#~ "E299: Vykonanie kódu v jazyku Perl nie je mo¾né v bezpeènostnej schránke "
+#~ "bez bezpeènostného modulu"
+
+#~ msgid "Edit with &multiple Vims"
+#~ msgstr "Upravi» s viacerý&mi Vimmi"
+
+#~ msgid "Edit with single &Vim"
+#~ msgstr "Upravi» s jedným &Vimom"
+
+#~ msgid "Diff with Vim"
+#~ msgstr "Porovna» &Vimom"
+
+#~ msgid "Edit with &Vim"
+#~ msgstr "Upravi» s &Vimom"
+
+#~ msgid "Edit with existing Vim - "
+#~ msgstr "Upravi» s existujúcim Vimom - "
+
+#~ msgid "Edits the selected file(s) with Vim"
+#~ msgstr "Upravi» vybrané súbory s Vimom"
+
+#~ msgid "Error creating process: Check if gvim is in your path!"
+#~ msgstr "Chyba vytvárania procesu: Skontrolujte, èi je gvim vo va¹ej ceste!"
+
+#~ msgid "gvimext.dll error"
+#~ msgstr "chyba gvimext.dll"
+
+#~ msgid "Path length too long!"
+#~ msgstr "Príli¹ dlhá cesta!"
+
+#~ msgid "E234: Unknown fontset: %s"
+#~ msgstr "E234: Neznáma sada písiem: %s"
+
+#~ msgid "E235: Unknown font: %s"
+#~ msgstr "E235: Neznáme písmo: %s"
+
+#~ msgid "E236: Font \"%s\" is not fixed-width"
+#~ msgstr "E236: Písmo \"%s\" nemá pevnú ¹írku"
+
+#~ msgid "E448: Could not load library function %s"
+#~ msgstr "E448: Nepodarilo sa nahra» funkciu kni¾nice %s"
+
+#~ msgid "E26: Hebrew cannot be used: Not enabled at compile time\n"
+#~ msgstr ""
+#~ "E26: Nedá sa pou¾í» hebrejský re¾im: nebol zapnutý pri preklade programu\n"
+
+#~ msgid "E27: Farsi cannot be used: Not enabled at compile time\n"
+#~ msgstr ""
+#~ "E27: Nedá sa pou¾í» farsi re¾im: nebol zapnutý pri preklade programu\n"
+
+#~ msgid "E800: Arabic cannot be used: Not enabled at compile time\n"
+#~ msgstr ""
+#~ "E800: Nedá sa pou¾í» arabic re¾im: nebol zapnutý pri preklade programu\n"
+
+#~ msgid "E247: no registered server named \"%s\""
+#~ msgstr "E247: ¾iaden registrovaný server pomenovaný \"%s\""
+
+#~ msgid "E233: cannot open display"
+#~ msgstr "E233: nedá sa otvori» displej"
+
+#~ msgid "E449: Invalid expression received"
+#~ msgstr "E449: Bol prijatý chybný výraz"
+
+#~ msgid "E463: Region is guarded, cannot modify"
+#~ msgstr "E463: Región je uzamknutý, nemo¾no modifikova»"
+
+#~ msgid "E744: NetBeans does not allow changes in read-only files"
+#~ msgstr "E744: NetBeans nepovoµuje zmeny v súboroch len na èítanie"

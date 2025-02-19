@@ -1,0 +1,93 @@
+*editorconfig.txt*  Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+                                       Type |gO| to see the table of contents.
+
+==============================================================================
+EditorConfig integration                                        *editorconfig*
+
+Nvim supports EditorConfig. When a file is opened, after running |ftplugin|s
+and |FileType| autocommands, Nvim searches all parent directories of that file
+for ".editorconfig" files, parses them, and applies any properties that match
+the opened file. Think of it like 'modeline' for an entire (recursive)
+directory. For more information see https://editorconfig.org/.
+
+                                               *g:editorconfig* *b:editorconfig*
+
+EditorConfig is enabled by default. To disable it, add to your config: >lua
+    vim.g.editorconfig = false
+<
+
+(Vimscript: `let g:editorconfig = v:false`). It can also be disabled
+per-buffer by setting the |b:editorconfig| buffer-local variable to `false`.
+
+Nvim stores the applied properties in |b:editorconfig| if it is not `false`.
+
+                                              *editorconfig-custom-properties*
+
+New properties can be added by adding a new entry to the "properties" table.
+The table key is a property name and the value is a callback function which
+accepts the number of the buffer to be modified, the value of the property in
+the `.editorconfig` file, and (optionally) a table containing all of the other
+properties and their values (useful for properties which depend on other
+properties). The value is always a string and must be coerced if necessary.
+Example: >lua
+
+    require('editorconfig').properties.foo = function(bufnr, val, opts)
+      if opts.charset and opts.charset ~= "utf-8" then
+        error("foo can only be set when charset is utf-8", 0)
+      end
+      vim.b[bufnr].foo = val
+    end
+<
+
+                                                     *editorconfig-properties*
+
+The following properties are supported by default:
+
+
+charset                                                 *editorconfig.charset*
+    One of `"utf-8"`, `"utf-8-bom"`, `"latin1"`, `"utf-16be"`, or
+    `"utf-16le"`. Sets the 'fileencoding' and 'bomb' options.
+
+end_of_line                                         *editorconfig.end_of_line*
+    One of `"lf"`, `"crlf"`, or `"cr"`. These correspond to setting
+    'fileformat' to "unix", "dos", or "mac", respectively.
+
+indent_size                                         *editorconfig.indent_size*
+    A number indicating the size of a single indent. Alternatively, use the
+    value "tab" to use the value of the tab_width property. Sets the
+    'shiftwidth' and 'softtabstop' options. If this value is not "tab" and the
+    tab_width property is not set, 'tabstop' is also set to this value.
+
+indent_style                                       *editorconfig.indent_style*
+    One of `"tab"` or `"space"`. Sets the 'expandtab' option.
+
+insert_final_newline                       *editorconfig.insert_final_newline*
+    `"true"` or `"false"` to ensure the file always has a trailing newline as
+    its last byte. Sets the 'fixendofline' and 'endofline' options.
+
+max_line_length                                 *editorconfig.max_line_length*
+    A number indicating the maximum length of a single line. Sets the
+    'textwidth' option.
+
+root                                                       *editorconfig.root*
+    If "true", then stop searching for `.editorconfig` files in parent
+    directories. This property must be at the top-level of the `.editorconfig`
+    file (i.e. it must not be within a glob section).
+
+spelling_language                             *editorconfig.spelling_language*
+    A code of the format ss or ss-TT, where ss is an ISO 639 language code and
+    TT is an ISO 3166 territory identifier. Sets the 'spelllang' option.
+
+tab_width                                             *editorconfig.tab_width*
+    The display size of a single tab character. Sets the 'tabstop' option.
+
+trim_trailing_whitespace               *editorconfig.trim_trailing_whitespace*
+    When `"true"`, trailing whitespace is automatically removed when the
+    buffer is written.
+
+
+ vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
