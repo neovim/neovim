@@ -13,7 +13,7 @@ local RpcStream = require('test.client.rpc_stream')
 --- @field private _prepare uv.uv_prepare_t
 --- @field private _timer uv.uv_timer_t
 --- @field private _is_running boolean true during `Session:run()` scope.
---- @field exec_lua_setup boolean
+--- @field closed boolean
 local Session = {}
 Session.__index = Session
 if package.loaded['jit'] then
@@ -241,6 +241,7 @@ function Session:_run(request_cb, notification_cb, timeout)
   self._prepare:stop()
   self._timer:stop()
   self._rpc_stream:read_stop()
+  -- self:close()
 end
 
 --- Nvim msgpack-RPC session.

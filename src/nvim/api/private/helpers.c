@@ -710,6 +710,9 @@ void api_set_error(Error *err, ErrorType errType, const char *format, ...)
   vsnprintf(err->msg, bufsize, format, args2);
   va_end(args2);
 
+  // Log API errors at INFO level. Aligns with emsg_multiline().
+  ILOG("API error: %s", err->msg);
+
   err->type = errType;
 }
 

@@ -14,13 +14,16 @@
 #include <string.h>
 #include <time.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/ui.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
+#include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
@@ -59,11 +62,13 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/input.h"
+#include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/plines.h"
 #include "nvim/profile.h"
@@ -5131,14 +5136,22 @@ static void nv_window(cmdarg_T *cap)
   }
 }
 
-/// CTRL-Z: Suspend
+/// CTRL-Z: suspend UI, or detach if `count` is given.
 static void nv_suspend(cmdarg_T *cap)
 {
   clearop(cap->oap);
   if (VIsual_active) {
     end_visual_mode();                  // stop Visual mode
   }
-  do_cmdline_cmd("st");
+
+  if (cap->count0 == 0) {
+    // Regular suspend.
+    // TODO(justinmk): target this to the current UI.
+    do_cmdline_cmd("suspend");
+    return;
+  }
+
+  do_cmdline_cmd("detach");
 }
 
 /// "gv": Reselect the previous Visual area.  If Visual already active,
