@@ -1117,7 +1117,7 @@ vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
     Parameters: ~
       • {ns}        (`integer`)
       • {options}   (`table<string, any>`)
-      • {callback}  (`fun()`)
+      • {callback}  (`fun(event: string, ...)`)
 
 vim.ui_detach({ns})                                          *vim.ui_detach()*
     Detach a callback previously attached with |vim.ui_attach()| for the given
