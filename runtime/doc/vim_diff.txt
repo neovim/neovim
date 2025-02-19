@@ -70,6 +70,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'mouse' defaults to "nvi", see |default-mouse| for details
 - 'mousemodel' defaults to "popup_setpos"
 - 'nrformats' defaults to "bin,hex"
+- 'omnifunc'. The Lua ftplugin sets it to "v:lua.vim.lua_omnifunc"
 - 'path' defaults to ".,,". The C ftplugin adds "/usr/include" if it exists.
 - 'ruler' is enabled
 - 'sessionoptions' includes "unix,slash", excludes "options"
