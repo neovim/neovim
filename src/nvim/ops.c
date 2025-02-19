@@ -914,16 +914,6 @@ yankreg_T *get_yank_register(int regname, int mode)
       && get_clipboard(regname, &reg, false)) {
     // reg is set to clipboard contents.
     return reg;
-  } else if (mode == YREG_PUT && (regname == '*' || regname == '+')) {
-    // in case clipboard not available and we aren't actually pasting,
-    // return an empty register
-    static yankreg_T empty_reg = { .y_array = NULL };
-    return &empty_reg;
-  } else if (mode != YREG_YANK
-             && (regname == 0 || regname == '"' || regname == '*' || regname == '+')
-             && y_previous != NULL) {
-    // in case clipboard not available, paste from previous used register
-    return y_previous;
   }
 
   int i = op_reg_index(regname);
