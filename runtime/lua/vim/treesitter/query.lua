@@ -30,9 +30,11 @@ end
 --- Splits the query patterns into predicates and directives.
 ---@param patterns table<integer, (integer|string)[][]>
 ---@return table<integer, vim.treesitter.query.ProcessedPattern>
+---@return boolean
 local function process_patterns(patterns)
   ---@type table<integer, vim.treesitter.query.ProcessedPattern>
   local processed_patterns = {}
+  local has_combined = false
 
   for k, pattern_list in pairs(patterns) do
     ---@type vim.treesitter.query.ProcessedPredicate[]
@@ -47,6 +49,9 @@ local function process_patterns(patterns)
 
       if is_directive(pred_name) then
         table.insert(directives, pattern)
+        if vim.deep_equal(pattern, { 'set!', 'injection.combined' }) then
+          has_combined = true
+        end
       else
         local should_match = true
         if pred_name:match('^not%-') then
@@ -60,7 +65,7 @@ local function process_patterns(patterns)
     processed_patterns[k] = { predicates = predicates, directives = directives }
   end
 
-  return processed_patterns
+  return processed_patterns, has_combined
 end
 
 ---@nodoc
@@ -71,6 +76,7 @@ end
 ---@field captures string[] list of (unique) capture names defined in query
 ---@field info vim.treesitter.QueryInfo query context (e.g. captures, predicates, directives)
 ---@field query TSQuery userdata query object
+---@field has_combined_injections boolean whether the query contains combined injections
 ---@field private _processed_patterns table<integer, vim.treesitter.query.ProcessedPattern>
 local Query = {}
 Query.__index = Query
@@ -90,7 +96,7 @@ function Query.new(lang, ts_query)
     patterns = query_info.patterns,
   }
   self.captures = self.info.captures
-  self._processed_patterns = process_patterns(self.info.patterns)
+  self._processed_patterns, self.has_combined_injections = process_patterns(self.info.patterns)
   return self
 end
 
