@@ -816,13 +816,13 @@ static int find_previous_pathsep(char *path, char **psep)
 static bool is_unique(char *maybe_unique, garray_T *gap, int i)
   FUNC_ATTR_NONNULL_ALL
 {
+  size_t candidate_len = strlen(maybe_unique);
   char **other_paths = gap->ga_data;
 
   for (int j = 0; j < gap->ga_len; j++) {
     if (j == i) {
       continue;  // don't compare it with itself
     }
-    size_t candidate_len = strlen(maybe_unique);
     size_t other_path_len = strlen(other_paths[j]);
     if (other_path_len < candidate_len) {
       continue;  // it's different when it's shorter
@@ -849,9 +849,10 @@ static void expand_path_option(char *curdir, char *path_option, garray_T *gap)
   FUNC_ATTR_NONNULL_ALL
 {
   char *buf = xmalloc(MAXPATHL);
+  size_t curdirlen = 0;
 
   while (*path_option != NUL) {
-    copy_option_part(&path_option, buf, MAXPATHL, " ,");
+    size_t buflen = copy_option_part(&path_option, buf, MAXPATHL, " ,");
 
     if (buf[0] == '.' && (buf[1] == NUL || vim_ispathsep(buf[1]))) {
       // Relative to current buffer:
@@ -861,34 +862,40 @@ static void expand_path_option(char *curdir, char *path_option, garray_T *gap)
         continue;
       }
       char *p = path_tail(curbuf->b_ffname);
-      size_t len = (size_t)(p - curbuf->b_ffname);
-      if (len + strlen(buf) >= MAXPATHL) {
+      size_t plen = (size_t)(p - curbuf->b_ffname);
+      if (plen + strlen(buf) >= MAXPATHL) {
         continue;
       }
       if (buf[1] == NUL) {
-        buf[len] = NUL;
+        buf[plen] = NUL;
       } else {
-        STRMOVE(buf + len, buf + 2);
+        memmove(buf + plen, buf + 2, (buflen - 2) + 1);  // +1 for NUL
       }
-      memmove(buf, curbuf->b_ffname, len);
-      simplify_filename(buf);
+      memmove(buf, curbuf->b_ffname, plen);
+      buflen = simplify_filename(buf);
     } else if (buf[0] == NUL) {
       STRCPY(buf, curdir);  // relative to current directory
+      if (curdirlen == 0) {
+        curdirlen = strlen(curdir);
+      }
+      buflen = curdirlen;
     } else if (path_with_url(buf)) {
       continue;  // URL can't be used here
     } else if (!path_is_absolute(buf)) {
       // Expand relative path to their full path equivalent
-      size_t len = strlen(curdir);
-      if (len + strlen(buf) + 3 > MAXPATHL) {
+      if (curdirlen == 0) {
+        curdirlen = strlen(curdir);
+      }
+      if (curdirlen + buflen + 3 > MAXPATHL) {
         continue;
       }
-      STRMOVE(buf + len + 1, buf);
+      memmove(buf + curdirlen + 1, buf, buflen + 1);  // +1 for NUL
       STRCPY(buf, curdir);
-      buf[len] = PATHSEP;
-      simplify_filename(buf);
+      buf[curdirlen] = PATHSEP;
+      buflen = simplify_filename(buf);
     }
 
-    GA_APPEND(char *, gap, xstrdup(buf));
+    GA_APPEND(char *, gap, xmemdupz(buf, buflen));
   }
 
   xfree(buf);
@@ -959,7 +966,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
   char *file_pattern = xmalloc(len + 2);
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
-  strcat(file_pattern, pattern);
+  STRCPY(file_pattern + 1, pattern);
   char *pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, false);
   xfree(file_pattern);
   if (pat == NULL) {
@@ -987,7 +994,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
     bool is_in_curdir = path_fnamencmp(curdir, path, (size_t)(dir_end - path)) == 0
                         && curdir[dir_end - path] == NUL;
     if (is_in_curdir) {
-      in_curdir[i] = xstrdup(path);
+      in_curdir[i] = xmemdupz(path, len);
     }
 
     // Shorten the filename while maintaining its uniqueness
@@ -1012,7 +1019,8 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
             && is_unique(pathsep_p + 1, gap, i)
             && path_cutoff != NULL && pathsep_p + 1 >= path_cutoff) {
           sort_again = true;
-          memmove(path, pathsep_p + 1, strlen(pathsep_p));
+          memmove(path, pathsep_p + 1,
+                  (size_t)((path + len) - (pathsep_p + 1)) + 1);  // +1 for NUL
           break;
         }
       }
@@ -1031,9 +1039,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
       //     c:\file.txt           c:\           .\file.txt
       short_name = path_shorten_fname(path, curdir);
       if (short_name != NULL && short_name > path + 1) {
-        STRCPY(path, ".");
-        add_pathsep(path);
-        STRMOVE(path + strlen(path), short_name);
+        vim_snprintf(path, MAXPATHL, ".%s%s", PATHSEPSTR, short_name);
       }
     }
     os_breakcheck();
@@ -1041,7 +1047,6 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
 
   // Shorten filenames in /in/current/directory/{filename}
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
-    char *rel_path;
     char *path = in_curdir[i];
 
     if (path == NULL) {
@@ -1059,10 +1064,10 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
       continue;
     }
 
-    rel_path = xmalloc(strlen(short_name) + strlen(PATHSEPSTR) + 2);
-    STRCPY(rel_path, ".");
-    add_pathsep(rel_path);
-    strcat(rel_path, short_name);
+    size_t rel_pathsize = 1 + STRLEN_LITERAL(PATHSEPSTR) + strlen(short_name) + 1;
+    char *rel_path = xmalloc(rel_pathsize);
+
+    vim_snprintf(rel_path, rel_pathsize, ".%s%s", PATHSEPSTR, short_name);
 
     xfree(fnames[i]);
     fnames[i] = rel_path;
@@ -1518,7 +1523,7 @@ void addfile(garray_T *gap, char *f, int flags)
 // its simplest form by stripping out unneeded components, if any.  The
 // resulting file name is simplified in place and will either be the same
 // length as that supplied, or shorter.
-void simplify_filename(char *filename)
+size_t simplify_filename(char *filename)
   FUNC_ATTR_NONNULL_ALL
 {
   int components = 0;
@@ -1539,10 +1544,12 @@ void simplify_filename(char *filename)
     } while (vim_ispathsep(*p));
   }
   char *start = p;        // remember start after "c:/" or "/" or "///"
+  char *p_end = p + strlen(p);  // point to NUL at end of string "p"
 #ifdef UNIX
   // Posix says that "//path" is unchanged but "///path" is "/path".
   if (start > filename + 2) {
-    STRMOVE(filename + 1, p);
+    memmove(filename + 1, p, (size_t)(p_end - p) + 1);  // +1 for NUL
+    p_end -= (size_t)(p - (filename + 1));
     start = p = filename + 1;
   }
 #endif
@@ -1551,7 +1558,8 @@ void simplify_filename(char *filename)
     // At this point "p" is pointing to the char following a single "/"
     // or "p" is at the "start" of the (absolute or relative) path name.
     if (vim_ispathsep(*p)) {
-      STRMOVE(p, p + 1);                // remove duplicate "/"
+      memmove(p, p + 1, (size_t)(p_end - (p + 1)) + 1);  // remove duplicate "/"
+      p_end--;
     } else if (p[0] == '.'
                && (vim_ispathsep(p[1]) || p[1] == NUL)) {
       if (p == start && relative) {
@@ -1569,7 +1577,8 @@ void simplify_filename(char *filename)
         } else if (p > start) {
           p--;                          // strip preceding path separator
         }
-        STRMOVE(p, tail);
+        memmove(p, tail, (size_t)(p_end - tail) + 1);
+        p_end -= (size_t)(tail - p);
       }
     } else if (p[0] == '.' && p[1] == '.'
                && (vim_ispathsep(p[2]) || p[2] == NUL)) {
@@ -1667,16 +1676,19 @@ void simplify_filename(char *filename)
             if (p > start && tail[-1] == '.') {
               p--;
             }
-            STRMOVE(p, tail);                   // strip previous component
+            memmove(p, tail, (size_t)(p_end - tail) + 1);  // strip previous component
+            p_end -= (size_t)(tail - p);
           }
 
           components--;
         }
-      } else if (p == start && !relative) {     // leading "/.." or "/../"
-        STRMOVE(p, tail);                       // strip ".." or "../"
+      } else if (p == start && !relative) {            // leading "/.." or "/../"
+        memmove(p, tail, (size_t)(p_end - tail) + 1);  // strip ".." or "../"
+        p_end -= (size_t)(tail - p);
       } else {
-        if (p == start + 2 && p[-2] == '.') {           // leading "./../"
-          STRMOVE(p - 2, p);                            // strip leading "./"
+        if (p == start + 2 && p[-2] == '.') {          // leading "./../"
+          memmove(p - 2, p, (size_t)(p_end - p) + 1);  // strip leading "./"
+          p_end -= 2;
           tail -= 2;
         }
         p = tail;                       // skip to char after ".." or "../"
@@ -1686,6 +1698,8 @@ void simplify_filename(char *filename)
       p = (char *)path_next_component(p);
     }
   } while (*p != NUL);
+
+  return (size_t)(p_end - filename);
 }
 
 /// Checks for a Windows drive letter ("C:/") at the start of the path.
