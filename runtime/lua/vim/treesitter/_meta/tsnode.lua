@@ -43,7 +43,7 @@ function TSNode:prev_named_sibling() end
 --- @return fun(): TSNode, string
 function TSNode:iter_children() end
 
---- Returns a table of the nodes corresponding to the {name} field.
+--- Returns a list of all the node's children that have the given field name.
 --- @param name string
 --- @return TSNode[]
 function TSNode:field(name) end
