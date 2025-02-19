@@ -460,7 +460,7 @@ describe('completion', function()
         June]])
     end)
 
-    it('Enter does not select original text', function()
+    it('Enter inserts new line when at original text', function()
       feed('iJ<C-x><C-u>')
       poke_eventloop()
       feed('u')
@@ -506,19 +506,23 @@ describe('completion', function()
       ]])
     end)
 
-    it('Enter selects original text after adding leader', function()
+    it('Enter inserts new line when at original text', function()
       feed('iJ<C-x><C-u>')
       poke_eventloop()
       feed('u')
       poke_eventloop()
       feed('<CR>')
-      expect('Ju')
+      expect([[
+        Ju
+        ]])
       feed('<Esc>')
       poke_eventloop()
       -- The behavior should be the same when completion has been interrupted,
       -- which can happen interactively if the completion function is slow.
-      feed('SJ<C-x><C-u>u<CR>')
-      expect('Ju')
+      feed('ggVGSJ<C-x><C-u>u<CR>')
+      expect([[
+        Ju
+        ]])
     end)
   end)
 

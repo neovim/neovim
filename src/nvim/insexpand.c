@@ -1744,6 +1744,7 @@ void ins_compl_clear(void)
   compl_cont_status = 0;
   compl_started = false;
   compl_matches = 0;
+  compl_selected_item = -1;
   compl_ins_end_col = 0;
   API_CLEAR_STRING(compl_pattern);
   API_CLEAR_STRING(compl_leader);
@@ -2300,6 +2301,7 @@ bool ins_compl_prep(int c)
 {
   bool retval = false;
   const int prev_mode = ctrl_x_mode;
+  bool handle_enter = ((c == CAR || c == NL || c == K_KENTER) && compl_selected_item == -1);
 
   // Forget any previous 'special' messages if this is actually
   // a ^X mode key - bar ^R, in which case we wait to see what it gives us.
@@ -2366,6 +2368,12 @@ bool ins_compl_prep(int c)
          && !ins_compl_pum_key(c))
         || ctrl_x_mode == CTRL_X_FINISHED) {
       retval = ins_compl_stop(c, prev_mode, retval);
+      // When it is the Enter key and no selected item, return false, and
+      // continue processing the Enter key to insert a new line in the
+      // edit function.
+      if (retval && handle_enter) {
+        retval = false;
+      }
     }
   } else if (ctrl_x_mode == CTRL_X_LOCAL_MSG) {
     // Trigger the CompleteDone event to give scripts a chance to act
