@@ -385,6 +385,8 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
     if (pty_height > 0) {
       chan->stream.pty.height = pty_height;
     }
+    chan->stream.pty.pixel_width = XPixels;
+    chan->stream.pty.pixel_height = YPixels;
   } else {
     chan->stream.uv = libuv_proc_init(&main_loop, chan);
   }
@@ -846,10 +848,11 @@ static void term_write(const char *buf, size_t size, void *data)
   wstream_write(&chan->stream.proc.in, wbuf);
 }
 
-static void term_resize(uint16_t width, uint16_t height, void *data)
+static void term_resize(uint16_t width, uint16_t height, uint16_t pixel_width,
+                        uint16_t pixel_height, void *data)
 {
   Channel *chan = data;
-  pty_proc_resize(&chan->stream.pty, width, height);
+  pty_proc_resize(&chan->stream.pty, width, height, pixel_width, pixel_height);
 }
 
 static inline void term_delayed_free(void **argv)

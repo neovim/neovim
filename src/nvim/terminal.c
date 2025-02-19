@@ -2097,7 +2097,8 @@ static void refresh_size(Terminal *term, buf_T *buf)
   vterm_get_size(term->vt, &height, &width);
   term->invalid_start = 0;
   term->invalid_end = height;
-  term->opts.resize_cb((uint16_t)width, (uint16_t)height, term->opts.data);
+  term->opts.resize_cb((uint16_t)width, (uint16_t)height, (uint16_t)XPixels, (uint16_t)YPixels,
+                       term->opts.data);
 }
 
 void on_scrollback_option_changed(Terminal *term)
