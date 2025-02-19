@@ -746,6 +746,7 @@ EXTERN int cmdwin_level INIT( = 0);   ///< cmdline recursion level
 EXTERN buf_T *cmdwin_buf INIT( = NULL);  ///< buffer of cmdline window or NULL
 EXTERN win_T *cmdwin_win INIT( = NULL);  ///< window of cmdline window or NULL
 EXTERN win_T *cmdwin_old_curwin INIT( = NULL);  ///< curwin before opening cmdline window or NULL
+EXTERN win_T *cmdline_win INIT( = NULL);  ///< window in use by ext_cmdline
 
 EXTERN char no_lines_msg[] INIT( = N_("--No lines in buffer--"));
 
