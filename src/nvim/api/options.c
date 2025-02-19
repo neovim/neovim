@@ -157,8 +157,8 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   void *from = NULL;
   char *filetype = NULL;
 
-  if (!validate_option_value_args(opts, name.data, &opt_idx, &opt_flags, &scope, &from,
-                                  &filetype, err)) {
+  if (!validate_option_value_args(opts, name.data, &opt_idx, &opt_flags, &scope, &from, &filetype,
+                                  err)) {
     return (Object)OBJECT_INIT;
   }
 
@@ -182,7 +182,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     from = ftbuf;
   }
 
-  OptVal value = get_option_value_for(opt_idx, opt_flags, scope, from, err);
+  OptVal value = get_option_value_from(opt_idx, option_ctx_from(scope, from), opt_flags);
 
   if (ftbuf != NULL) {
     // restore curwin/curbuf and a few other things
@@ -257,7 +257,11 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
   });
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, opt_idx, optval, opt_flags, scope, to, err);
+    const char *errmsg
+      = set_option_value_for(opt_idx, optval, option_ctx_from(scope, to), opt_flags);
+    if (errmsg) {
+      api_set_error(err, kErrorTypeException, "%s", errmsg);
+    }
   });
 }
 
