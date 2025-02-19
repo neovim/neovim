@@ -161,7 +161,11 @@ local function get_completion_word(item, prefix, match)
     end
   elseif item.textEdit then
     local word = item.textEdit.newText
-    return word:match('^(%S*)') or word
+    word = word:match('^(%S*)') or word
+    if item.filterText and not match(word, prefix) then
+      return item.filterText
+    end
+    return word
   elseif item.insertText and item.insertText ~= '' then
     return item.insertText
   end
@@ -492,7 +496,10 @@ local function trigger(bufnr, clients)
         vim.list_extend(matches, client_matches)
       end
     end
-    local start_col = (server_start_boundary or word_boundary) + 1
+    if #matches == 0 then
+      return
+    end
+    local start_col = math.max(server_start_boundary or 0, word_boundary) + 1
     Context.cursor = { cursor_row, start_col }
     vim.fn.complete(start_col, matches)
   end)
@@ -568,7 +575,7 @@ local function on_complete_done()
   local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
 
   local function clear_word()
-    if not expand_snippet then
+    if not expand_snippet and not completion_item.textEdit then
       return nil
     end
 
@@ -620,6 +627,17 @@ local function on_complete_done()
       end
       apply_snippet_and_command()
     end, bufnr)
+  elseif
+    completion_item.textEdit
+    and completion_item.insertTextFormat ~= lsp.protocol.InsertTextFormat.Snippet
+  then
+    clear_word()
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    lsp.util.apply_text_edits({ completion_item.textEdit }, bufnr, position_encoding)
+    api.nvim_win_set_cursor(0, {
+      cursor_row + 1,
+      Context.cursor[2] + vim.fn.strdisplaywidth(completion_item.textEdit.newText),
+    })
   else
     clear_word()
     apply_snippet_and_command()
