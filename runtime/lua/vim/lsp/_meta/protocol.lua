@@ -775,6 +775,42 @@ error('Cannot require a meta file')
 ---@proposed
 ---@class lsp.InlineCompletionRegistrationOptions: lsp.InlineCompletionOptions, lsp.TextDocumentRegistrationOptions, lsp.StaticRegistrationOptions
 
+---Parameters for the `workspace/textDocumentContent` request.
+---
+---@since 3.18.0
+---@proposed
+---@class lsp.TextDocumentContentParams
+---
+---The uri of the text document.
+---@field uri lsp.DocumentUri
+
+---Result of the `workspace/textDocumentContent` request.
+---
+---@since 3.18.0
+---@proposed
+---@class lsp.TextDocumentContentResult
+---
+---The text content of the text document. Please note, that the content of
+---any subsequent open notifications for the text document might differ
+---from the returned content due to whitespace and line ending
+---normalizations done on the client
+---@field text string
+
+---Text document content provider registration options.
+---
+---@since 3.18.0
+---@proposed
+---@class lsp.TextDocumentContentRegistrationOptions: lsp.TextDocumentContentOptions, lsp.StaticRegistrationOptions
+
+---Parameters for the `workspace/textDocumentContent/refresh` request.
+---
+---@since 3.18.0
+---@proposed
+---@class lsp.TextDocumentContentRefreshParams
+---
+---The uri of the text document to refresh.
+---@field uri lsp.DocumentUri
+
 ---@class lsp.RegistrationParams
 ---
 ---@field registrations lsp.Registration[]
@@ -1113,7 +1149,9 @@ error('Cannot require a meta file')
 ---be used if a completion item itself doesn't specify the value.
 ---
 ---If a completion list specifies a default value and a completion item
----also specifies a corresponding value the one from the item is used.
+---also specifies a corresponding value, the rules for combining these are
+---defined by `applyKinds` (if the client supports it), defaulting to
+---ApplyKind.Replace.
 ---
 ---Servers are only allowed to return default values if the client
 ---signals support for this via the `completionList.itemDefaults`
@@ -1121,6 +1159,25 @@ error('Cannot require a meta file')
 ---
 ---@since 3.17.0
 ---@field itemDefaults? lsp.CompletionItemDefaults
+---
+---Specifies how fields from a completion item should be combined with those
+---from `completionList.itemDefaults`.
+---
+---If unspecified, all fields will be treated as ApplyKind.Replace.
+---
+---If a field's value is ApplyKind.Replace, the value from a completion item
+---(if provided and not `null`) will always be used instead of the value
+---from `completionItem.itemDefaults`.
+---
+---If a field's value is ApplyKind.Merge, the values will be merged using
+---the rules defined against each field below.
+---
+---Servers are only allowed to return `applyKind` if the client
+---signals support for this via the `completionList.applyKindSupport`
+---capability.
+---
+---@since 3.18.0
+---@field applyKind? lsp.CompletionItemApplyKinds
 ---
 ---The completion items.
 ---@field items lsp.CompletionItem[]
@@ -1381,6 +1438,11 @@ error('Cannot require a meta file')
 ---
 ---@since 3.16.0
 ---@field data? lsp.LSPAny
+---
+---Tags for this code action.
+---
+---@since 3.18.0 - proposed
+---@field tags? lsp.CodeActionTag[]
 
 ---Registration options for a {@link CodeActionRequest}.
 ---@class lsp.CodeActionRegistrationOptions: lsp.TextDocumentRegistrationOptions, lsp.CodeActionOptions
@@ -1842,18 +1904,12 @@ error('Cannot require a meta file')
 ---@class lsp.Position
 ---
 ---Line position in a document (zero-based).
----
----If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
----If a line number is negative, it defaults to 0.
 ---@field line uinteger
 ---
 ---Character offset on a line in a document (zero-based).
 ---
 ---The meaning of this offset is determined by the negotiated
 ---`PositionEncodingKind`.
----
----If the character value is greater than the line length it defaults back to the
----line length.
 ---@field character uinteger
 
 ---@class lsp.SelectionRangeOptions: lsp.WorkDoneProgressOptions
@@ -2360,6 +2416,15 @@ error('Cannot require a meta file')
 ---@proposed
 ---@class lsp.InlineCompletionOptions: lsp.WorkDoneProgressOptions
 
+---Text document content provider options.
+---
+---@since 3.18.0
+---@proposed
+---@class lsp.TextDocumentContentOptions
+---
+---The schemes for which the server provides content.
+---@field schemes string[]
+
 ---General parameters to register for a notification or to register a provider.
 ---@class lsp.Registration
 ---
@@ -2720,7 +2785,9 @@ error('Cannot require a meta file')
 ---be used if a completion item itself doesn't specify the value.
 ---
 ---If a completion list specifies a default value and a completion item
----also specifies a corresponding value the one from the item is used.
+---also specifies a corresponding value, the rules for combining these are
+---defined by `applyKinds` (if the client supports it), defaulting to
+---ApplyKind.Replace.
 ---
 ---Servers are only allowed to return default values if the client
 ---signals support for this via the `completionList.itemDefaults`
@@ -2753,6 +2820,66 @@ error('Cannot require a meta file')
 ---
 ---@since 3.17.0
 ---@field data? lsp.LSPAny
+
+---Specifies how fields from a completion item should be combined with those
+---from `completionList.itemDefaults`.
+---
+---If unspecified, all fields will be treated as ApplyKind.Replace.
+---
+---If a field's value is ApplyKind.Replace, the value from a completion item (if
+---provided and not `null`) will always be used instead of the value from
+---`completionItem.itemDefaults`.
+---
+---If a field's value is ApplyKind.Merge, the values will be merged using the rules
+---defined against each field below.
+---
+---Servers are only allowed to return `applyKind` if the client
+---signals support for this via the `completionList.applyKindSupport`
+---capability.
+---
+---@since 3.18.0
+---@class lsp.CompletionItemApplyKinds
+---
+---Specifies whether commitCharacters on a completion will replace or be
+---merged with those in `completionList.itemDefaults.commitCharacters`.
+---
+---If ApplyKind.Replace, the commit characters from the completion item will
+---always be used unless not provided, in which case those from
+---`completionList.itemDefaults.commitCharacters` will be used. An
+---empty list can be used if a completion item does not have any commit
+---characters and also should not use those from
+---`completionList.itemDefaults.commitCharacters`.
+---
+---If ApplyKind.Merge the commitCharacters for the completion will be the
+---union of all values in both `completionList.itemDefaults.commitCharacters`
+---and the completion's own `commitCharacters`.
+---
+---@since 3.18.0
+---@field commitCharacters? lsp.ApplyKind
+---
+---Specifies whether the `data` field on a completion will replace or
+---be merged with data from `completionList.itemDefaults.data`.
+---
+---If ApplyKind.Replace, the data from the completion item will be used if
+---provided (and not `null`), otherwise
+---`completionList.itemDefaults.data` will be used. An empty object can
+---be used if a completion item does not have any data but also should
+---not use the value from `completionList.itemDefaults.data`.
+---
+---If ApplyKind.Merge, a shallow merge will be performed between
+---`completionList.itemDefaults.data` and the completion's own data
+---using the following rules:
+---
+---- If a completion's `data` field is not provided (or `null`), the
+---  entire `data` field from `completionList.itemDefaults.data` will be
+---  used as-is.
+---- If a completion's `data` field is provided, each field will
+---  overwrite the field of the same name in
+---  `completionList.itemDefaults.data` but no merging of nested fields
+---  within that value will occur.
+---
+---@since 3.18.0
+---@field data? lsp.ApplyKind
 
 ---Completion options.
 ---@class lsp.CompletionOptions: lsp.WorkDoneProgressOptions
@@ -3358,6 +3485,12 @@ error('Cannot require a meta file')
 ---
 ---@since 3.16.0
 ---@field fileOperations? lsp.FileOperationOptions
+---
+---The server supports the `workspace/textDocumentContent` request.
+---
+---@since 3.18.0
+---@proposed
+---@field textDocumentContent? lsp.TextDocumentContentOptions|lsp.TextDocumentContentRegistrationOptions
 
 ---@since 3.18.0
 ---@class lsp.TextDocumentContentChangePartial
@@ -3603,12 +3736,23 @@ error('Cannot require a meta file')
 ---@since 3.18.0
 ---@proposed
 ---@field foldingRange? lsp.FoldingRangeWorkspaceClientCapabilities
+---
+---Capabilities specific to the `workspace/textDocumentContent` request.
+---
+---@since 3.18.0
+---@proposed
+---@field textDocumentContent? lsp.TextDocumentContentClientCapabilities
 
 ---Text document specific client capabilities.
 ---@class lsp.TextDocumentClientCapabilities
 ---
 ---Defines which synchronization capabilities the client supports.
 ---@field synchronization? lsp.TextDocumentSyncClientCapabilities
+---
+---Defines which filters the client supports.
+---
+---@since 3.18.0
+---@field filters? lsp.TextDocumentFilterClientCapabilities
 ---
 ---Capabilities specific to the `textDocument/completion` request.
 ---@field completion? lsp.CompletionClientCapabilities
@@ -3872,7 +4016,9 @@ error('Cannot require a meta file')
 ---
 ---A glob pattern, like **/*.{ts,js}. See TextDocumentFilter for examples.
 ---
----@since 3.18.0 - support for relative patterns.
+---@since 3.18.0 - support for relative patterns. Whether clients support
+---relative patterns depends on the client capability
+---`textDocuments.filters.relativePatternSupport`.
 ---@field pattern? lsp.GlobPattern
 
 ---A document filter where `scheme` is required field.
@@ -3888,7 +4034,9 @@ error('Cannot require a meta file')
 ---
 ---A glob pattern, like **/*.{ts,js}. See TextDocumentFilter for examples.
 ---
----@since 3.18.0 - support for relative patterns.
+---@since 3.18.0 - support for relative patterns. Whether clients support
+---relative patterns depends on the client capability
+---`textDocuments.filters.relativePatternSupport`.
 ---@field pattern? lsp.GlobPattern
 
 ---A document filter where `pattern` is required field.
@@ -3904,7 +4052,9 @@ error('Cannot require a meta file')
 ---
 ---A glob pattern, like **/*.{ts,js}. See TextDocumentFilter for examples.
 ---
----@since 3.18.0 - support for relative patterns.
+---@since 3.18.0 - support for relative patterns. Whether clients support
+---relative patterns depends on the client capability
+---`textDocuments.filters.relativePatternSupport`.
 ---@field pattern lsp.GlobPattern
 
 ---A notebook document filter where `notebookType` is required field.
@@ -4167,6 +4317,15 @@ error('Cannot require a meta file')
 ---@proposed
 ---@field refreshSupport? boolean
 
+---Client capabilities for a text document content provider.
+---
+---@since 3.18.0
+---@proposed
+---@class lsp.TextDocumentContentClientCapabilities
+---
+---Text document content provider supports dynamic registration.
+---@field dynamicRegistration? boolean
+
 ---@class lsp.TextDocumentSyncClientCapabilities
 ---
 ---Whether text document synchronization supports dynamic registration.
@@ -4182,6 +4341,13 @@ error('Cannot require a meta file')
 ---
 ---The client supports did save notifications.
 ---@field didSave? boolean
+
+---@class lsp.TextDocumentFilterClientCapabilities
+---
+---The client supports Relative Patterns.
+---
+---@since 3.18.0
+---@field relativePatternSupport? boolean
 
 ---Completion client capabilities
 ---@class lsp.CompletionClientCapabilities
@@ -4376,6 +4542,12 @@ error('Cannot require a meta file')
 ---@since 3.18.0
 ---@proposed
 ---@field documentationSupport? boolean
+---
+---Client supports the tag property on a code action. Clients
+---supporting tags have to handle unknown tags gracefully.
+---
+---@since 3.18.0 - proposed
+---@field tagSupport? lsp.CodeActionTagOptions
 
 ---The client capabilities  of a {@link CodeLensRequest}.
 ---@class lsp.CodeLensClientCapabilities
@@ -4822,6 +4994,19 @@ error('Cannot require a meta file')
 ---
 ---@since 3.17.0
 ---@field itemDefaults? string[]
+---
+---Specifies whether the client supports `CompletionList.applyKind` to
+---indicate how supported values from `completionList.itemDefaults`
+---and `completion` will be combined.
+---
+---If a client supports `applyKind` it must support it for all fields
+---that it supports that are listed in `CompletionList.applyKind`. This
+---means when clients add support for new/future fields in completion
+---items the MUST also support merge for them if those fields are
+---defined in `CompletionList.applyKind`.
+---
+---@since 3.18.0
+---@field applyKindSupport? boolean
 
 ---@since 3.18.0
 ---@class lsp.ClientSignatureInformationOptions
@@ -4859,6 +5044,12 @@ error('Cannot require a meta file')
 ---
 ---The properties that a client can resolve lazily.
 ---@field properties string[]
+
+---@since 3.18.0 - proposed
+---@class lsp.CodeActionTagOptions
+---
+---The tags supported by the client.
+---@field valueSet lsp.CodeActionTag[]
 
 ---@since 3.18.0
 ---@class lsp.ClientCodeLensResolveOptions
@@ -5208,6 +5399,12 @@ error('Cannot require a meta file')
 ---| "source.fixAll" # SourceFixAll
 ---| "notebook" # Notebook
 
+---Code action tags are extra annotations that tweak the behavior of a code action.
+---
+---@since 3.18.0 - proposed
+---@alias lsp.CodeActionTag
+---| 1 # LLMGenerated
+
 ---@alias lsp.TraceValue
 ---| "off" # Off
 ---| "messages" # Messages
@@ -5224,7 +5421,6 @@ error('Cannot require a meta file')
 
 ---Predefined Language kinds
 ---@since 3.18.0
----@proposed
 ---@alias lsp.LanguageKind
 ---| "abap" # ABAP
 ---| "bat" # WindowsBat
@@ -5334,6 +5530,14 @@ error('Cannot require a meta file')
 ---| 1 # Invoked
 ---| 2 # TriggerCharacter
 ---| 3 # TriggerForIncompleteCompletions
+
+---Defines how values from a set of defaults and an individual item will be
+---merged.
+---
+---@since 3.18.0
+---@alias lsp.ApplyKind
+---| 1 # Replace
+---| 2 # Merge
 
 ---How a signature help was triggered.
 ---
@@ -5478,7 +5682,7 @@ error('Cannot require a meta file')
 ---A document filter describes a top level text document or
 ---a notebook cell document.
 ---
----@since 3.17.0 - proposed support for NotebookCellTextDocumentFilter.
+---@since 3.17.0 - support for NotebookCellTextDocumentFilter.
 ---@alias lsp.DocumentFilter lsp.TextDocumentFilter|lsp.NotebookCellTextDocumentFilter
 
 ---LSP object definition.
