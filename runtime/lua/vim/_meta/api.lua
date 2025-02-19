@@ -641,7 +641,11 @@ function vim.api.nvim_buf_line_count(buffer) end
 --- - virt_lines_leftcol: Place virtual lines in the leftmost
 ---                       column of the window, bypassing
 ---                       sign and number columns.
----
+--- - virt_lines_overflow: controls how to handle virtual lines wider
+---     than the window. Currently takes the one of the following values:
+---   - "trunc": truncate virtual lines on the right (default).
+---   - "scroll": virtual lines can scroll horizontally with 'nowrap',
+---      otherwise the same as "trunc".
 --- - ephemeral : for use with `nvim_set_decoration_provider()`
 ---     callbacks. The mark will only be used for the current
 ---     redraw cycle, and not be permantently stored in the
