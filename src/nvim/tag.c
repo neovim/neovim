@@ -813,6 +813,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
   if (msg_col == 0) {
     msg_didout = false;     // overwrite previous message
   }
+  msg_ext_set_kind("confirm");
   msg_start();
   msg_puts_hl(_("  # pri kind tag"), HLF_T, false);
   msg_clr_eos();

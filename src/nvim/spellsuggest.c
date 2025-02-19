@@ -516,7 +516,7 @@ void spell_suggest(int count)
   spell_find_suggest(line + curwin->w_cursor.col, badlen, &sug, limit,
                      true, need_cap, true);
 
-  msg_ext_set_kind("list_cmd");
+  msg_ext_set_kind("confirm");
   if (GA_EMPTY(&sug.su_ga)) {
     msg(_("Sorry, no suggestions"), 0);
   } else if (count > 0) {

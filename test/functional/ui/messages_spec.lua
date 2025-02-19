@@ -33,6 +33,7 @@ describe('ui/ext_messages', function()
     screen = Screen.new(25, 5, { rgb = true, ext_messages = true, ext_popupmenu = true })
     screen:add_extra_attr_ids {
       [100] = { undercurl = true, special = Screen.colors.Red },
+      [101] = { foreground = Screen.colors.Magenta1, bold = true },
     }
   end)
   after_each(function()
@@ -391,10 +392,52 @@ describe('ui/ext_messages', function()
       },
     })
 
+    feed('<CR>')
+    n.add_builddir_to_rtp()
+    feed(':help<CR>:tselect<CR>')
+    local tagfile = t.paths.test_build_dir .. '/runtime/doc/help.txt'
+    if t.is_os('win') then
+      tagfile = tagfile:gsub('/', '\\')
+    end
+    screen:expect({
+      grid = [[
+        ^*help.txt*      Nvim     |
+                                 |
+        {3:help.txt [Help][RO]      }|
+        line                     |
+        {2:<i_messages_spec [+][RO] }|
+      ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          hl_id = 0,
+          pos = 0,
+          prompt = 'Type number and <Enter> (q or empty cancels): ',
+        },
+      },
+      messages = {
+        {
+          content = {
+            { '  # pri kind tag', 101, 23 },
+            { '\n                        ' },
+            { 'file\n', 101, 23 },
+            { '> 1 F        ' },
+            { 'help.txt', 101, 23 },
+            { ' \n                        ' },
+            { tagfile, 18, 5 },
+            { '\n               *help.txt*\n' },
+          },
+          history = false,
+          kind = 'confirm',
+        },
+      },
+    })
+    feed('<CR>:bd<CR>')
+
     -- kind=shell for :!cmd messages
     local cmd = t.is_os('win') and 'echo stdout& echo stderr>&2& exit 3'
       or '{ echo stdout; echo stderr >&2; exit 3; }'
-    feed(('<CR>:!%s<CR>'):format(cmd))
+    feed((':!%s<CR>'):format(cmd))
     screen:expect({
       cmdline = { { abort = false } },
       messages = {
@@ -1266,7 +1309,7 @@ stack traceback:
         {
           content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
           history = false,
-          kind = 'list_cmd',
+          kind = 'confirm',
         },
       },
     })
@@ -1289,7 +1332,7 @@ stack traceback:
         {
           content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
           history = false,
-          kind = 'list_cmd',
+          kind = 'confirm',
         },
       },
     })
@@ -1321,7 +1364,7 @@ stack traceback:
         {
           content = { { 'input0\ninput1\n' } },
           history = false,
-          kind = 'list_cmd',
+          kind = 'confirm',
         },
       },
     })
