@@ -200,7 +200,7 @@ func Test_edit_07()
     endif
   endfu
   au InsertCharPre <buffer> :call DoIt()
-  call feedkeys("A\<f5>\<c-p>u\<cr>\<c-l>\<cr>", 'tx')
+  call feedkeys("A\<f5>\<c-p>u\<C-Y>\<c-l>\<cr>", 'tx')
   call assert_equal(["Jan\<c-l>",''], 1->getline('$'))
   %d
   call setline(1, 'J')
@@ -601,7 +601,7 @@ func Test_edit_CTRL_I()
   call assert_equal([include, 'two', ''], getline(1, '$'))
   call feedkeys("2ggC\<c-x>\<tab>\<down>\<down>\<cr>\<esc>", 'tnix')
   call assert_equal([include, 'three', ''], getline(1, '$'))
-  call feedkeys("2ggC\<c-x>\<tab>\<down>\<down>\<down>\<cr>\<esc>", 'tnix')
+  call feedkeys("2ggC\<c-x>\<tab>\<down>\<down>\<down>\<C-y>\<esc>", 'tnix')
   call assert_equal([include, '', ''], getline(1, '$'))
   bw!
 endfunc
@@ -629,7 +629,7 @@ func Test_edit_CTRL_K()
   %d
   call setline(1, 'A')
   call cursor(1, 1)
-  call feedkeys("A\<c-x>\<c-k>\<down>\<down>\<down>\<cr>\<esc>", 'tnix')
+  call feedkeys("A\<c-x>\<c-k>\<down>\<down>\<down>\<C-Y>\<esc>", 'tnix')
   call assert_equal(['A'], getline(1, '$'))
   %d
   call setline(1, 'A')
@@ -2307,6 +2307,17 @@ func Test_edit_backspace_smarttab_virtual_text()
   call CloseWindow()
   call prop_type_delete('theprop')
   set smarttab&
+endfunc
+
+func Test_edit_CAR()
+  set cot=menu,menuone,noselect
+  new
+
+  call feedkeys("Shello hero\<CR>h\<C-x>\<C-N>e\<CR>", 'tx')
+  call assert_equal(['hello hero', 'he', ''], getline(1, '$'))
+
+  bw!
+  set cot&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
