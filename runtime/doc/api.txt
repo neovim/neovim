@@ -22,6 +22,7 @@ MessagePack-RPC protocol with these extra (out-of-spec) constraints:
 
 1. Responses must be given in reverse order of requests (like "unwinding
    a stack").
+
 2. Nvim processes all messages (requests and notifications) in the order they
    are received.
 
