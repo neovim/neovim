@@ -46,10 +46,9 @@ before using them: >lua
     -- code for plain lua 5.1
   end
 <
-                                                                  *lua-bit*
 One exception is the LuaJIT `bit` extension, which is always available: when
 built with PUC Lua, Nvim includes a fallback implementation which provides
-`require("bit")`.
+`require("bit")`. See |lua-bit|.
 
                                                                   *lua-profile*
 If Nvim is built with LuaJIT, Lua code can be profiled via >lua
