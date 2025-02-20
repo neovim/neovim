@@ -455,8 +455,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                    otherwise the same as "trunc".
 ///               - ephemeral : for use with |nvim_set_decoration_provider()|
 ///                   callbacks. The mark will only be used for the current
-///                   redraw cycle, and not be permantently stored in the
-///                   buffer.
+///                   redraw cycle, and not be permanently stored in the buffer.
 ///               - right_gravity : boolean that indicates the direction
 ///                   the extmark will be shifted in when new text is inserted
 ///                   (true for right, false for left). Defaults to true.

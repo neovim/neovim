@@ -122,7 +122,7 @@ with |vim.notify()|: >lua
     -- Users can configure the handler
     vim.diagnostic.config({
       ["my/notify"] = {
-        log_level = vim.log.levels.INFO
+        log_level = vim.log.levels.INFO,
 
         -- This handler will only receive "error" diagnostics.
         severity = vim.diagnostic.severity.ERROR,

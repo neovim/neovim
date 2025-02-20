@@ -916,7 +916,7 @@ typedef enum {
 
 typedef enum {
   kWinStyleUnused = 0,
-  kWinStyleMinimal,  /// Minimal UI: no number column, eob markers, etc
+  kWinStyleMinimal,  ///< Minimal UI: no number column, eob markers, etc
 } WinStyle;
 
 typedef enum {
