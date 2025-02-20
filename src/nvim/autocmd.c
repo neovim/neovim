@@ -554,6 +554,7 @@ void do_augroup(char *arg, bool del_group)
     current_augroup = augroup_add(arg);
   } else {  // ":aug": list the group names
     msg_start();
+    msg_ext_set_kind("list_cmd");
 
     String name;
     int value;
@@ -855,6 +856,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
   // Print header when showing autocommands.
   if (is_showing) {
     // Highlight title
+    msg_ext_set_kind("list_cmd");
     msg_puts_title(_("\n--- Autocommands ---"));
 
     if (*arg == '*' || *arg == '|' || *arg == NUL) {

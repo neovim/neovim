@@ -3770,10 +3770,16 @@ void ex_display(exarg_T *eap)
   }
   int hl_id = HLF_8;
 
+  msg_ext_set_kind("list_cmd");
+  msg_ext_skip_flush = true;
   // Highlight title
   msg_puts_title(_("\nType Name Content"));
   for (int i = -1; i < NUM_REGISTERS && !got_int; i++) {
     int name = get_register_name(i);
+    if (arg != NULL && vim_strchr(arg, name) == NULL) {
+      continue;             // did not ask for this register
+    }
+
     switch (get_reg_type(name, NULL)) {
     case kMTLineWise:
       type = 'l'; break;
@@ -3781,10 +3787,6 @@ void ex_display(exarg_T *eap)
       type = 'c'; break;
     default:
       type = 'b'; break;
-    }
-
-    if (arg != NULL && vim_strchr(arg, name) == NULL) {
-      continue;             // did not ask for this register
     }
 
     if (i == -1) {
@@ -3890,6 +3892,7 @@ void ex_display(exarg_T *eap)
     msg_puts("\n  c  \"=   ");
     dis_msg(expr_line, false);
   }
+  msg_ext_skip_flush = false;
 }
 
 /// display a string for do_dis()
