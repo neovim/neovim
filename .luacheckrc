@@ -38,7 +38,8 @@ globals = {
   "vim.bo",
   "vim.wo",
   "vim.go",
-  "vim.env"
+  "vim.env",
+  "_",
 }
 
 exclude_files = {
