@@ -231,7 +231,8 @@ static int line_putchar(buf_T *buf, const char **pp, schar_T *dest, int maxcells
   }
 
   if (*p == TAB) {
-    cells = MIN(tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array), maxcells);
+    cells = tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array);
+    cells = MIN(cells, maxcells);
   }
 
   // When overwriting the left half of a double-width char, clear the right half.
@@ -345,7 +346,7 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
     if (vt) {
       int vcol = item->draw_col - col_off;
       int col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
-                                    vt->hl_mode, max_col, vcol);
+                                    vt->hl_mode, max_col, vcol, 0);
       if (do_eol && ((vt->pos == kVPosEndOfLine) || (vt->pos == kVPosEndOfLineRightAlign))) {
         state->eol_col = col + 1;
       }
@@ -358,32 +359,45 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
 }
 
 static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode, int max_col,
-                               int vcol)
+                               int vcol, int skip_cells)
 {
-  const char *p = "";
+  const char *virt_str = "";
   int virt_attr = 0;
   size_t virt_pos = 0;
 
   while (col < max_col) {
-    if (!*p) {
+    if (skip_cells >= 0 && *virt_str == NUL) {
       if (virt_pos >= kv_size(vt)) {
         break;
       }
       virt_attr = 0;
-      p = next_virt_text_chunk(vt, &virt_pos, &virt_attr);
-      if (p == NULL) {
+      virt_str = next_virt_text_chunk(vt, &virt_pos, &virt_attr);
+      if (virt_str == NULL) {
         break;
       }
     }
-    if (*p == NUL) {
+    // Skip cells in the text.
+    while (skip_cells > 0 && *virt_str != NUL) {
+      int c_len = utfc_ptr2len(virt_str);
+      int cells = *virt_str == TAB
+                  ? tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array)
+                  : utf_ptr2cells(virt_str);
+      skip_cells -= cells;
+      vcol += cells;
+      virt_str += c_len;
+    }
+    // If a double-width char or TAB doesn't fit, pad with spaces.
+    const char *draw_str = skip_cells < 0 ? " " : virt_str;
+    if (*draw_str == NUL) {
       continue;
     }
+    assert(skip_cells <= 0);
     int attr;
     bool through = false;
     if (hl_mode == kHlModeCombine) {
       attr = hl_combine_attr(linebuf_attr[col], virt_attr);
     } else if (hl_mode == kHlModeBlend) {
-      through = (*p == ' ');
+      through = (*draw_str == ' ');
       attr = hl_blend_attrs(linebuf_attr[col], virt_attr, &through);
     } else {
       attr = virt_attr;
@@ -397,13 +411,18 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
       // Clear the right half as well for the assertion in line_putchar().
       linebuf_char[col] = schar_from_ascii(' ');
     }
-    int cells = line_putchar(buf, &p, through ? dummy : &linebuf_char[col],
+    int cells = line_putchar(buf, &draw_str, through ? dummy : &linebuf_char[col],
                              maxcells, vcol);
     for (int c = 0; c < cells; c++) {
       linebuf_attr[col] = attr;
       col++;
     }
-    vcol += cells;
+    if (skip_cells < 0) {
+      skip_cells++;
+    } else {
+      vcol += cells;
+      virt_str = draw_str;
+    }
   }
   return col;
 }
@@ -1587,8 +1606,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
   const bool may_have_inline_virt
     = !has_foldtext && buf_meta_total(wp->w_buffer, kMTMetaInline) > 0;
-  int virt_line_index;
-  int virt_line_offset = -1;
+  int virt_line_index = -1;
+  int virt_line_flags = 0;
   // Repeat for the whole displayed line.
   while (true) {
     int has_match_conc = 0;  ///< match wants to conceal
@@ -1616,11 +1635,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         if (index > 0) {
           virt_line_index = (int)kv_size(virt_lines) - index;
           assert(virt_line_index >= 0);
-          virt_line_offset = kv_A(virt_lines, virt_line_index).left_col ? 0 : win_col_off(wp);
+          virt_line_flags = kv_A(virt_lines, virt_line_index).flags;
         }
       }
 
-      if (virt_line_offset == 0) {
+      if (virt_line_index >= 0 && (virt_line_flags & kVLLeftcol)) {
         // skip columns
       } else if (statuscol.draw) {
         // Draw 'statuscolumn' if it is set.
@@ -2715,7 +2734,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
 
       if (kv_size(fold_vt) > 0) {
-        draw_virt_text_item(buf, win_col_offset, fold_vt, kHlModeCombine, grid->cols, 0);
+        draw_virt_text_item(buf, win_col_offset, fold_vt, kHlModeCombine, grid->cols, 0, 0);
       }
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       // Set increasing virtual columns in grid->vcols[] to set correct curswant
@@ -2923,7 +2942,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 end_check:
     // At end of screen line and there is more to come: Display the line
     // so far.  If there is no more to display it is caught above.
-    if (wlv.col >= grid->cols && (!has_foldtext || virt_line_offset >= 0)
+    if (wlv.col >= grid->cols && (!has_foldtext || virt_line_index >= 0)
         && (wlv.col <= leftcols_width
             || *ptr != NUL
             || wlv.filler_todo > 0
@@ -2956,9 +2975,14 @@ end_check:
         }
       }
 
-      if (virt_line_offset >= 0) {
-        draw_virt_text_item(buf, virt_line_offset, kv_A(virt_lines, virt_line_index).line,
-                            kHlModeReplace, grid->cols, 0);
+      if (virt_line_index >= 0) {
+        draw_virt_text_item(buf,
+                            virt_line_flags & kVLLeftcol ? 0 : win_col_offset,
+                            kv_A(virt_lines, virt_line_index).line,
+                            kHlModeReplace,
+                            grid->cols,
+                            0,
+                            virt_line_flags & kVLScroll ? wp->w_leftcol : 0);
       } else if (wlv.filler_todo <= 0) {
         draw_virt_text(wp, buf, win_col_offset, &draw_col, wlv.row);
       }
@@ -3008,7 +3032,8 @@ end_check:
         statuscol.draw = false;  // don't draw status column if "n" is in 'cpo'
       }
       wlv.filler_todo--;
-      virt_line_offset = -1;
+      virt_line_index = -1;
+      virt_line_flags = 0;
       // When the filler lines are actually below the last line of the
       // file, don't draw the line itself, break here.
       if (wlv.filler_todo == 0 && (wp->w_botfill || end_fill)) {

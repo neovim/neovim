@@ -64,7 +64,7 @@
 #define NIL ((Object)OBJECT_INIT)
 #define NULL_STRING ((String)STRING_INIT)
 
-#define HAS_KEY(d, typ, key) (((d)->is_set__##typ##_ & (1 << KEYSET_OPTIDX_##typ##__##key)) != 0)
+#define HAS_KEY(d, typ, key) (((d)->is_set__##typ##_ & (1ULL << KEYSET_OPTIDX_##typ##__##key)) != 0)
 
 #define GET_BOOL_OR_TRUE(d, typ, key) (HAS_KEY(d, typ, key) ? (d)->key : true)
 
@@ -75,7 +75,7 @@
   kv_push_c(dict, ((KeyValuePair) { .key = cstr_as_string(k), .value = v }))
 
 #define PUT_KEY(d, typ, key, v) \
-  do { (d).is_set__##typ##_ |= (1 << KEYSET_OPTIDX_##typ##__##key); (d).key = v; } while (0)
+  do { (d).is_set__##typ##_ |= (1ULL << KEYSET_OPTIDX_##typ##__##key); (d).key = v; } while (0)
 
 #define ADD(array, item) \
   kv_push(array, item)
