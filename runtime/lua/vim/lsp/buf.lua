@@ -24,6 +24,7 @@ local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 
 --- @class vim.lsp.buf.hover.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
+--- @field winopts? table[] Table of window options to values
 
 --- Displays hover information about the symbol under the cursor in a floating
 --- window. The window will be dismissed on cursor move.
@@ -131,6 +132,10 @@ function M.hover(config)
     end
 
     local _, winid = lsp.util.open_floating_preview(contents, format, config)
+
+    for k, v in pairs(config.winopts) do
+      vim.api.nvim_set_option_value(k, v, { win = winid })
+    end
 
     api.nvim_create_autocmd('WinClosed', {
       pattern = tostring(winid),
