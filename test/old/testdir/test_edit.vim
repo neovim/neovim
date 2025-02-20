@@ -601,7 +601,7 @@ func Test_edit_CTRL_I()
   call assert_equal([include, 'two', ''], getline(1, '$'))
   call feedkeys("2ggC\<c-x>\<tab>\<down>\<down>\<cr>\<esc>", 'tnix')
   call assert_equal([include, 'three', ''], getline(1, '$'))
-  call feedkeys("2ggC\<c-x>\<tab>\<down>\<down>\<down>\<C-y>\<esc>", 'tnix')
+  call feedkeys("2ggC\<c-x>\<tab>\<down>\<down>\<down>\<cr>\<esc>", 'tnix')
   call assert_equal([include, '', ''], getline(1, '$'))
   bw!
 endfunc
@@ -629,7 +629,7 @@ func Test_edit_CTRL_K()
   %d
   call setline(1, 'A')
   call cursor(1, 1)
-  call feedkeys("A\<c-x>\<c-k>\<down>\<down>\<down>\<C-Y>\<esc>", 'tnix')
+  call feedkeys("A\<c-x>\<c-k>\<down>\<down>\<down>\<cr>\<esc>", 'tnix')
   call assert_equal(['A'], getline(1, '$'))
   %d
   call setline(1, 'A')
