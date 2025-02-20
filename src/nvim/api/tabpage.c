@@ -101,7 +101,7 @@ void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
 ///
 /// @param tabpage  Tabpage handle, or 0 for current tabpage
 /// @param[out] err Error details, if any
-/// @return Window handle
+/// @return |window-ID|
 Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
 {
@@ -126,7 +126,7 @@ Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
 /// Sets the current window in a tabpage
 ///
 /// @param tabpage  Tabpage handle, or 0 for current tabpage
-/// @param win Window handle, must already belong to {tabpage}
+/// @param win |window-ID|, must already belong to {tabpage}
 /// @param[out] err Error details, if any
 void nvim_tabpage_set_win(Tabpage tabpage, Window win, Error *err)
   FUNC_API_SINCE(12)
