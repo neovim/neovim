@@ -2576,15 +2576,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
     // Handle the case where we are in column 0 but not on the first
     // character of the line and the user wants us to show us a
-    // special character (via 'listchars' option "precedes:<char>".
+    // special character (via 'listchars' option "precedes:<char>").
     if (lcs_prec_todo != NUL
         && wp->w_p_list
         && (wp->w_p_wrap ? (wp->w_skipcol > 0 && wlv.row == 0) : wp->w_leftcol > 0)
         && wlv.filler_todo <= 0
         && mb_schar != NUL) {
-      mb_schar = wp->w_p_lcs_chars.prec;
       lcs_prec_todo = NUL;
-      if (schar_cells(mb_schar) > 1) {
+      // TODO(zeertzjq): handle the n_extra > 0 case
+      if (schar_cells(mb_schar) > 1 && wlv.n_extra == 0) {
         // Double-width character being overwritten by the "precedes"
         // character, need to fill up half the character.
         wlv.sc_extra = schar_from_ascii(MB_FILLER_CHAR);
@@ -2593,6 +2593,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         wlv.n_attr = 2;
         wlv.extra_attr = win_hl_attr(wp, HLF_AT);
       }
+      mb_schar = wp->w_p_lcs_chars.prec;
       mb_c = schar_get_first_codepoint(mb_schar);
       saved_attr3 = wlv.char_attr;  // save current attr
       wlv.char_attr = win_hl_attr(wp, HLF_AT);  // overwriting char_attr
