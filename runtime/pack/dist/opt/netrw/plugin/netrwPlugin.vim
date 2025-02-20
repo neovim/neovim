@@ -20,12 +20,6 @@ let g:loaded_netrwPlugin = "v175"
 let s:keepcpo = &cpo
 set cpo&vim
 
-" Commands Launch/URL: {{{
-
-command -complete=shellcmd -nargs=1 Launch call netrw#Launch(trim(<q-args>))
-command -complete=file -nargs=1 Open call netrw#Open(trim(<q-args>))
-
-" }}}
 " Local Browsing Autocmds: {{{
 
 augroup FileExplorer
@@ -84,21 +78,6 @@ command! -bang NetrwClean call netrw#Clean(<bang>0)
 
 " }}}
 " Maps: {{{
-
-if !exists("g:netrw_nogx")
-    if maparg('gx','n') == ""
-        if !hasmapto('<Plug>NetrwBrowseX')
-            nmap <unique> gx <Plug>NetrwBrowseX
-        endif
-        nno <silent> <Plug>NetrwBrowseX :call netrw#BrowseX(netrw#GX(),netrw#CheckIfRemote(netrw#GX()))<cr>
-    endif
-    if maparg('gx','x') == ""
-        if !hasmapto('<Plug>NetrwBrowseXVis')
-            xmap <unique> gx <Plug>NetrwBrowseXVis
-        endif
-        xno <silent> <Plug>NetrwBrowseXVis :<c-u>call netrw#BrowseXVis()<cr>
-    endif
-endif
 
 if exists("g:netrw_usetab") && g:netrw_usetab
     if maparg('<c-tab>','n') == ""

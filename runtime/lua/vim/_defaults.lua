@@ -24,6 +24,14 @@ do
   vim.api.nvim_create_user_command('EditQuery', function(cmd)
     vim.treesitter.query.edit(cmd.fargs[1])
   end, { desc = 'Edit treesitter query', nargs = '?' })
+
+  vim.api.nvim_create_user_command('Open', function(cmd)
+    vim.ui.open(cmd.fargs[1])
+  end, {
+    desc = 'Open file with system default handler. See :help vim.ui.open()',
+    nargs = 1,
+    complete = 'file',
+  })
 end
 
 --- Default mappings
