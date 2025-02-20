@@ -791,7 +791,8 @@ must handle.
 	    Name indicating the message kind:
 		"" (empty)	Unknown (consider a |feature-request|)
 		"bufwrite"	|:write| message
-		"confirm"	|confirm()| or |:confirm| dialog
+		"confirm"	Message preceding a prompt (|:confirm|,
+				|confirm()|, |inputlist()|, |z=,|, …)
 		"emsg"		Error (|errors|, internal error, |:throw|, …)
 		"echo"		|:echo| message
 		"echomsg"	|:echomsg| message

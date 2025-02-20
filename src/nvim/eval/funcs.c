@@ -3556,7 +3556,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  msg_ext_set_kind("list_cmd");
+  msg_ext_set_kind("confirm");
   msg_start();
   msg_row = Rows - 1;   // for when 'cmdheight' > 1
   lines_left = Rows;    // avoid more prompt
