@@ -562,10 +562,10 @@ static int insert_execute(VimState *state, int key)
   // Special handling of keys while the popup menu is visible or wanted
   // and the cursor is still in the completed word.  Only when there is
   // a match, skip this when no matches were found.
-  if (ins_compl_active()
-      && pum_wanted()
-      && curwin->w_cursor.col >= ins_compl_col()
-      && ins_compl_has_shown_match()) {
+  bool ins_completion = ins_compl_active()
+                        && curwin->w_cursor.col >= ins_compl_col()
+                        && ins_compl_has_shown_match();
+  if (ins_completion && pum_wanted()) {
     // BS: Delete one character from "compl_leader".
     if ((s->c == K_BS || s->c == Ctrl_H)
         && curwin->w_cursor.col > ins_compl_col()
@@ -615,6 +615,8 @@ static int insert_execute(VimState *state, int key)
         ins_compl_delete(false);
       }
     }
+  } else if (ins_completion && !pum_wanted() && ins_compl_preinsert_effect()) {
+    ins_compl_delete(false);
   }
 
   // Prepare for or stop CTRL-X mode. This doesn't do completion, but it does
