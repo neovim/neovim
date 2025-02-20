@@ -1913,7 +1913,7 @@ static void ins_compl_new_leader(void)
     compl_restarting = false;
   }
 
-  compl_enter_selects = !compl_used_match;
+  compl_enter_selects = !compl_used_match && compl_selected_item != -1;
 
   // Show the popup menu with a different set of matches.
   ins_compl_show_pum();
@@ -2301,7 +2301,6 @@ bool ins_compl_prep(int c)
 {
   bool retval = false;
   const int prev_mode = ctrl_x_mode;
-  bool handle_enter = ((c == CAR || c == NL || c == K_KENTER) && compl_selected_item == -1);
 
   // Forget any previous 'special' messages if this is actually
   // a ^X mode key - bar ^R, in which case we wait to see what it gives us.
@@ -2368,12 +2367,6 @@ bool ins_compl_prep(int c)
          && !ins_compl_pum_key(c))
         || ctrl_x_mode == CTRL_X_FINISHED) {
       retval = ins_compl_stop(c, prev_mode, retval);
-      // When it is the Enter key and no selected item, return false, and
-      // continue processing the Enter key to insert a new line in the
-      // edit function.
-      if (retval && handle_enter) {
-        retval = false;
-      }
     }
   } else if (ctrl_x_mode == CTRL_X_LOCAL_MSG) {
     // Trigger the CompleteDone event to give scripts a chance to act
