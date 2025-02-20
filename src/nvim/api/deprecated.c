@@ -532,7 +532,7 @@ Object window_del_var(Window window, String name, Arena *arena, Error *err)
 ///
 /// @deprecated
 ///
-/// @param tabpage  Tabpage handle, or 0 for current tabpage
+/// @param tabpage  |tab-ID|, or 0 for current tabpage
 /// @param name     Variable name
 /// @param value    Variable value
 /// @param[out] err Error details, if any
@@ -556,7 +556,7 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, Arena *arena,
 ///
 /// @deprecated
 ///
-/// @param tabpage  Tabpage handle, or 0 for current tabpage
+/// @param tabpage  |tab-ID|, or 0 for current tabpage
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Old value

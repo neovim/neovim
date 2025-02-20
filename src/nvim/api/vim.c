@@ -1106,9 +1106,9 @@ void nvim_chan_send(Integer chan, String data, Error *err)
   VALIDATE(!error, "%s", error, {});
 }
 
-/// Gets the current list of tabpage handles.
+/// Gets the current list of |tab-ID|s.
 ///
-/// @return List of tabpage handles
+/// @return List of |tab-ID|s
 ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -1129,7 +1129,7 @@ ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
 
 /// Gets the current tabpage.
 ///
-/// @return Tabpage handle
+/// @return |tab-ID|
 Tabpage nvim_get_current_tabpage(void)
   FUNC_API_SINCE(1)
 {
@@ -1138,7 +1138,7 @@ Tabpage nvim_get_current_tabpage(void)
 
 /// Sets the current tabpage.
 ///
-/// @param tabpage  Tabpage handle to focus
+/// @param tabpage  |tab-ID| to focus
 /// @param[out] err Error details, if any
 void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
