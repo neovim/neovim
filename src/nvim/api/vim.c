@@ -661,7 +661,7 @@ String nvim_get_current_line(Arena *arena, Error *err)
   return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, arena, err);
 }
 
-/// Sets the current line.
+/// Sets the text on the current line.
 ///
 /// @param line     Line contents
 /// @param[out] err Error details, if any
@@ -823,7 +823,7 @@ Buffer nvim_get_current_buf(void)
   return curbuf->handle;
 }
 
-/// Sets the current buffer.
+/// Sets the current window's buffer to `buffer`.
 ///
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
@@ -872,9 +872,9 @@ Window nvim_get_current_win(void)
   return curwin->handle;
 }
 
-/// Sets the current window.
+/// Sets the current window. Also changes tabpage, if necessary.
 ///
-/// @param window Window handle
+/// @param window Window handle to focus
 /// @param[out] err Error details, if any
 void nvim_set_current_win(Window window, Error *err)
   FUNC_API_SINCE(1)
@@ -1138,7 +1138,7 @@ Tabpage nvim_get_current_tabpage(void)
 
 /// Sets the current tabpage.
 ///
-/// @param tabpage  Tabpage handle
+/// @param tabpage  Tabpage handle to focus
 /// @param[out] err Error details, if any
 void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
