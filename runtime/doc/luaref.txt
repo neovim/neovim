@@ -3905,7 +3905,7 @@ package.cpath                                                    *package.cpath*
         variable `LUA_CPATH` (plus another default path defined in
         `luaconf.h`).
 
-package.loaded                                                *package.loaded()*
+package.loaded                                                  *package.loaded*
         A table used by `require` to control which modules are already loaded.
         When you require a module `modname` and `package.loaded[modname]` is
         not false, `require` simply returns the value stored there.

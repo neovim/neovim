@@ -1272,7 +1272,7 @@ list of buffers. |unlisted-buffer|
 			:w foobar | sp #
 <		Also see |+cmd|.
 
-:[N]bn[ext][!] [+cmd] [N]				*:bn* *:bnext* *[b* *E87*
+:[N]bn[ext][!] [+cmd] [N]				*:bn* *:bnext* *]b* *E87*
 		Go to [N]th next buffer in buffer list.  [N] defaults to one.
 		Wraps around the end of the buffer list.
 		See |:buffer-!| for [!].
@@ -1290,7 +1290,7 @@ list of buffers. |unlisted-buffer|
 		Wraps around the end of the buffer list.  Uses 'switchbuf'
 		Also see |+cmd|.
 
-:[N]bN[ext][!] [+cmd] [N]		*:bN* *:bNext* *:bp* *:bprevious* *]b* *E88*
+:[N]bN[ext][!] [+cmd] [N]		*:bN* *:bNext* *:bp* *:bprevious* *[b* *E88*
 :[N]bp[revious][!] [+cmd] [N]
 		Go to [N]th previous buffer in buffer list.  [N] defaults to
 		one.  Wraps around the start of the buffer list.

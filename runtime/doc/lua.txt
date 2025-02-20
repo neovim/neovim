@@ -4288,7 +4288,7 @@ Iter:last()                                                      *Iter:last()*
         (`any`)
 
     See also: ~
-      • Iter.rpeek
+      • |Iter:rpeek()|
 
 Iter:map({f})                                                     *Iter:map()*
     Maps the items of an iterator pipeline to the values returned by `f`.
@@ -4425,7 +4425,7 @@ Iter:rfind({f})                                                 *Iter:rfind()*
         (`any`)
 
     See also: ~
-      • Iter.find
+      • |Iter:find()|
 
 Iter:rpeek()                                                    *Iter:rpeek()*
     Gets the last value of a |list-iterator| without consuming it.
@@ -4444,7 +4444,7 @@ Iter:rpeek()                                                    *Iter:rpeek()*
         (`any`)
 
     See also: ~
-      • Iter.last
+      • |Iter:last()|
 
 Iter:rskip({n})                                                 *Iter:rskip()*
     Discards `n` values from the end of a |list-iterator| pipeline.

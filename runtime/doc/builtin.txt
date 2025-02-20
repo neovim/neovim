@@ -6462,7 +6462,7 @@ matchfuzzy({list}, {str} [, {dict}])                              *matchfuzzy()*
                 Parameters: ~
                   • {list} (`any[]`)
                   • {str} (`string`)
-                  • {dict} (`string?`)
+                  • {dict} (`table?`)
 
                 Return: ~
                   (`any`)
@@ -6492,7 +6492,7 @@ matchfuzzypos({list}, {str} [, {dict}])                        *matchfuzzypos()*
                 Parameters: ~
                   • {list} (`any[]`)
                   • {str} (`string`)
-                  • {dict} (`string?`)
+                  • {dict} (`table?`)
 
                 Return: ~
                   (`any`)

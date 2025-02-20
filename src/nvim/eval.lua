@@ -7200,7 +7200,7 @@ M.funcs = {
       <results in `['two one']`.
     ]=],
     name = 'matchfuzzy',
-    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'string' } },
+    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'table' } },
     signature = 'matchfuzzy({list}, {str} [, {dict}])',
   },
   matchfuzzypos = {
@@ -7229,7 +7229,7 @@ M.funcs = {
       <results in `[[{"id": 10, "text": "hello"}], [[2, 3]], [127]]`
     ]=],
     name = 'matchfuzzypos',
-    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'string' } },
+    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'table' } },
     signature = 'matchfuzzypos({list}, {str} [, {dict}])',
   },
   matchlist = {
