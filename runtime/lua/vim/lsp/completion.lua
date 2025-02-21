@@ -132,7 +132,7 @@ end
 --- @return string
 local function get_completion_word(item, prefix, match)
   if item.insertTextFormat == protocol.InsertTextFormat.Snippet then
-    if item.textEdit then
+    if item.textEdit or (item.insertText and item.insertText ~= '') then
       -- Use label instead of text if text has different starting characters.
       -- label is used as abbr (=displayed), but word is used for filtering
       -- This is required for things like postfix completion.
@@ -154,8 +154,6 @@ local function get_completion_word(item, prefix, match)
       else
         return word
       end
-    elseif item.insertText and item.insertText ~= '' then
-      return parse_snippet(item.insertText)
     else
       return item.label
     end
