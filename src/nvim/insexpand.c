@@ -1296,7 +1296,7 @@ static int ins_compl_build_pum(void)
             compl_shown_match = comp;
           }
         }
-        if (!shown_match_ok && comp == compl_shown_match && !compl_no_select) {
+        if (!shown_match_ok && comp == compl_shown_match) {
           cur = i;
           shown_match_ok = true;
         }
