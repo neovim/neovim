@@ -2704,6 +2704,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
   static int last_maxcount = SEARCH_STAT_DEF_MAX_COUNT;
   static int chgtick = 0;
   static char *lastpat = NULL;
+  static size_t lastpatlen = 0;
   static buf_T *lbuf = NULL;
 
   CLEAR_POINTER(stat);
@@ -2725,9 +2726,9 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
   // Unfortunately, there is no STRNICMP function.
   // XXX: above comment should be "no MB_STRCMP function" ?
   if (!(chgtick == buf_get_changedtick(curbuf)
-        && lastpat != NULL  // suppress clang/NULL passed as nonnull parameter
-        && STRNICMP(lastpat, spats[last_idx].pat, strlen(lastpat)) == 0
-        && strlen(lastpat) == strlen(spats[last_idx].pat)
+        && (lastpat != NULL  // suppress clang/NULL passed as nonnull parameter
+            && mb_strnicmp(lastpat, spats[last_idx].pat, lastpatlen) == 0
+            && lastpatlen == spats[last_idx].patlen)
         && equalpos(lastpos, *cursor_pos)
         && lbuf == curbuf)
       || wraparound || cur < 0 || (maxcount > 0 && cur > maxcount)
@@ -2780,7 +2781,8 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
     }
     if (done_search) {
       xfree(lastpat);
-      lastpat = xstrdup(spats[last_idx].pat);
+      lastpat = xstrnsave(spats[last_idx].pat, spats[last_idx].patlen);
+      lastpatlen = spats[last_idx].patlen;
       chgtick = (int)buf_get_changedtick(curbuf);
       lbuf = curbuf;
       lastpos = p;
