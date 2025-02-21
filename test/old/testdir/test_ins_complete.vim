@@ -3121,4 +3121,48 @@ function Test_completeopt_preinsert()
   delfunc Omni_test
 endfunc
 
+" Check that mark positions are correct after triggering multiline completion.
+func Test_complete_multiline_marks()
+  func Omni_test(findstart, base)
+    if a:findstart
+      return col(".")
+    endif
+    return [
+          \ #{word: "func ()\n\t\nend"},
+          \ #{word: "foobar"},
+          \ #{word: "你好\n\t\n我好"}
+          \ ]
+  endfunc
+  set omnifunc=Omni_test
+
+  new
+  let lines = mapnew(range(10), 'string(v:val)')
+  call setline(1, lines)
+  call setpos("'a", [0, 3, 1, 0])
+
+  call feedkeys("A \<C-X>\<C-O>\<C-E>\<BS>", 'tx')
+  call assert_equal(lines, getline(1, '$'))
+  call assert_equal([0, 3, 1, 0], getpos("'a"))
+
+  call feedkeys("A \<C-X>\<C-O>\<C-N>\<C-E>\<BS>", 'tx')
+  call assert_equal(lines, getline(1, '$'))
+  call assert_equal([0, 3, 1, 0], getpos("'a"))
+
+  call feedkeys("A \<C-X>\<C-O>\<C-N>\<C-N>\<C-E>\<BS>", 'tx')
+  call assert_equal(lines, getline(1, '$'))
+  call assert_equal([0, 3, 1, 0], getpos("'a"))
+
+  call feedkeys("A \<C-X>\<C-O>\<C-N>\<C-N>\<C-N>\<C-E>\<BS>", 'tx')
+  call assert_equal(lines, getline(1, '$'))
+  call assert_equal([0, 3, 1, 0], getpos("'a"))
+
+  call feedkeys("A \<C-X>\<C-O>\<C-Y>", 'tx')
+  call assert_equal(['0 func ()', "\t", 'end'] + lines[1:], getline(1, '$'))
+  call assert_equal([0, 5, 1, 0], getpos("'a"))
+
+  bw!
+  set omnifunc&
+  delfunc Omni_test
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

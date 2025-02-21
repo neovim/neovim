@@ -3795,6 +3795,7 @@ void ins_compl_delete(bool new_leader)
         }
         return;
       }
+      deleted_lines_mark(curwin->w_cursor.lnum, 1);
       curwin->w_cursor.lnum--;
     }
     // move cursor to end of line
