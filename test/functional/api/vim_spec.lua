@@ -5353,8 +5353,8 @@ describe('API', function()
     api.nvim__redraw({ tabline = true })
     screen:expect({
       grid = [[
-        {2:^tabline                                                     }|
-        {5:winbar                        }│{8:statuscolumn}foobar           |
+        {2:tabline                                                     }|
+        {5:^winbar                        }│{8:statuscolumn}foobar           |
         foobaz                        │{1:~                            }|
         {3:statusline3                    }{2:statusline3                  }|
         :echo getchar()                                             |
@@ -5366,8 +5366,8 @@ describe('API', function()
     api.nvim__redraw({ statusline = true, tabline = true })
     screen:expect({
       grid = [[
-        {2:^tabline2                                                    }|
-        {5:winbar                        }│{8:statuscolumn}foobar           |
+        {2:tabline2                                                    }|
+        {5:^winbar                        }│{8:statuscolumn}foobar           |
         foobaz                        │{1:~                            }|
         {3:statusline4                    }{2:statusline4                  }|
         :echo getchar()                                             |
@@ -5381,13 +5381,14 @@ describe('API', function()
     api.nvim__redraw({ statuscolumn = true, statusline = true, tabline = true, winbar = true })
     screen:expect({
       grid = [[
-        {2:^tabline3                                                    }|
-        {5:winbar2                       }│{5:winbar2                      }|
+        {2:tabline3                                                    }|
+        {5:^winbar2                       }│{5:winbar2                      }|
         {8:statuscolumn2}foobaz           │{8:statuscolumn}foobar           |
         {3:statusline5                    }{2:statusline5                  }|
         :echo getchar()                                             |
       ]],
     })
+
     -- Can update status widget for a specific window
     feed('<CR><CR>')
     command('let g:status=0')
