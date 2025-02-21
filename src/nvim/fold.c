@@ -2098,10 +2098,7 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
   // this in other situations, the changed lines will be redrawn anyway and
   // this method can cause the whole window to be updated.
   if (end != bot) {
-    if (wp->w_redraw_top == 0 || wp->w_redraw_top > top) {
-      wp->w_redraw_top = top;
-    }
-    wp->w_redraw_bot = MAX(wp->w_redraw_bot, end);
+    redraw_win_range_later(wp, top, end);
   }
 
   invalid_top = 0;
