@@ -285,6 +285,12 @@ function LanguageTree:lang()
   return self._lang
 end
 
+--- Get the injection regions of this tree, if any
+--- @return table<integer, Range6[]>?
+function LanguageTree:regions()
+  return self._regions
+end
+
 --- @param region Range6[]
 --- @param range? boolean|Range
 --- @return boolean
@@ -977,6 +983,32 @@ local function combine_regions(regions)
   return result
 end
 
+---Finds the intersection between two regions, assuming they are sorted in ascending order.
+---@param region1 Range6[]
+---@param region2 Range6[]?
+---@return Range6[]
+local function clip_regions(region1, region2)
+  if not region2 then
+    return region1
+  end
+
+  local i, j = 1, 1
+  local result = {}
+
+  while i <= #region1 and j <= #region2 do
+    local r1, r2 = region1[i], region2[j]
+    table.insert(result, Range.intersection(r1, r2))
+
+    if Range.cmp_pos.le(r1[4], r1[5], r2[4], r2[5]) then
+      i = i + 1
+    else
+      j = j + 1
+    end
+  end
+
+  return result
+end
+
 --- Gets language injection regions by language.
 ---
 --- This is where most of the injection processing occurs.
@@ -1025,12 +1057,13 @@ function LanguageTree:_get_injections(range, thread_state)
     end
   end
 
-  ---@type table<string,Range6[][]>
+  ---@type table<string, Range6[][]>
   local result = {}
 
   -- Generate a map by lang of node lists.
   -- Each list is a set of ranges that should be parsed together.
-  for _, lang_map in pairs(injections) do
+  for tree_index, lang_map in pairs(injections) do
+    local parent_regions = self._regions and self._regions[tree_index] or nil
     for lang, patterns in pairs(lang_map) do
       if not result[lang] then
         result[lang] = {}
@@ -1038,10 +1071,10 @@ function LanguageTree:_get_injections(range, thread_state)
 
       for _, entry in pairs(patterns) do
         if entry.combined then
-          table.insert(result[lang], combine_regions(entry.regions))
+          table.insert(result[lang], clip_regions(combine_regions(entry.regions), parent_regions))
         else
           for _, ranges in pairs(entry.regions) do
-            table.insert(result[lang], ranges)
+            table.insert(result[lang], clip_regions(ranges, parent_regions))
           end
         end
       end

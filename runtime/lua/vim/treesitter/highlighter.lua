@@ -54,6 +54,7 @@ end
 
 ---@class (private) vim.treesitter.highlighter.State
 ---@field tstree TSTree
+---@field tree vim.treesitter.LanguageTree
 ---@field next_row integer
 ---@field iter vim.treesitter.highlighter.Iter?
 ---@field highlighter_query vim.treesitter.highlighter.Query
@@ -198,6 +199,7 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
     -- for_each_tree traversal. This ensures that parents' highlight don't override children's.
     table.insert(self._highlight_states, {
       tstree = tstree,
+      tree = tree,
       next_row = 0,
       iter = nil,
       highlighter_query = highlighter_query,
@@ -297,60 +299,70 @@ local function on_line_impl(self, buf, line, is_spell_nav)
       return
     end
 
-    if state.iter == nil or state.next_row < line then
-      -- Mainly used to skip over folds
-
-      -- TODO(lewis6991): Creating a new iterator loses the cached predicate results for query
-      -- matches. Move this logic inside iter_captures() so we can maintain the cache.
-      state.iter =
-        state.highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
-    end
+    state.iter =
+      state.highlighter_query:query():iter_captures(root_node, self.bufnr, line, line + 1)
 
     local captures = state.highlighter_query:query().captures
 
-    while line >= state.next_row do
-      local capture, node, metadata, match = state.iter(line)
-
-      local range = { root_end_row + 1, 0, root_end_row + 1, 0 }
+    for capture, node, metadata, match in
+      state.highlighter_query:query():iter_captures(root_node, self.bufnr, line, line + 1)
+    do
+      local outer_range = { root_end_row + 1, 0, root_end_row + 1, 0 }
       if node then
-        range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
+        outer_range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
       end
-      local start_row, start_col, end_row, end_col = Range.unpack4(range)
+      local outer_range_start_row = Range.unpack4(outer_range)
 
-      if capture then
-        local hl = state.highlighter_query:get_hl_from_capture(capture)
+      ---@type Range4[]
+      local ranges = {}
+      if state.tree:regions() then
+        local tree_regions = state.tree:included_regions()
+        for _, region in pairs(tree_regions) do
+          for _, range in ipairs(region) do
+            table.insert(ranges, Range.intersection(outer_range, range))
+          end
+        end
+      else
+        table.insert(ranges, outer_range)
+      end
 
-        local capture_name = captures[capture]
+      for _, range in ipairs(ranges) do
+        local start_row, start_col, end_row, end_col = Range.unpack4(range)
 
-        local spell, spell_pri_offset = get_spell(capture_name)
+        if capture then
+          local hl = state.highlighter_query:get_hl_from_capture(capture)
 
-        -- The "priority" attribute can be set at the pattern level or on a particular capture
-        local priority = (
-          tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
-          or vim.hl.priorities.treesitter
-        ) + spell_pri_offset
+          local capture_name = captures[capture]
 
-        -- The "conceal" attribute can be set at the pattern level or on a particular capture
-        local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+          local spell, spell_pri_offset = get_spell(capture_name)
 
-        local url = get_url(match, buf, capture, metadata)
+          -- The "priority" attribute can be set at the pattern level or on a particular capture
+          local priority = (
+            tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
+            or vim.hl.priorities.treesitter
+          ) + spell_pri_offset
 
-        if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
-          api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
-            end_line = end_row,
-            end_col = end_col,
-            hl_group = hl,
-            ephemeral = true,
-            priority = priority,
-            conceal = conceal,
-            spell = spell,
-            url = url,
-          })
+          -- The "conceal" attribute can be set at the pattern level or on a particular capture
+          local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+
+          local url = get_url(match, buf, capture, metadata)
+
+          if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
+            api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
+              end_line = end_row,
+              end_col = end_col,
+              hl_group = hl,
+              ephemeral = true,
+              priority = priority,
+              conceal = conceal,
+              spell = spell,
+              url = url,
+            })
+          end
         end
       end
-
-      if start_row > line then
-        state.next_row = start_row
+      if outer_range_start_row > line then
+        state.next_row = outer_range_start_row
       end
     end
   end)
