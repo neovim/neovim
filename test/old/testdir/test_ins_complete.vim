@@ -3110,6 +3110,11 @@ function Test_completeopt_preinsert()
   call assert_equal("fobar", getline('.'))
   call assert_equal(5, col('.'))
 
+  set cot=preinsert
+  call feedkeys("Sfoo1 foo2\<CR>f\<C-X>\<C-N>bar", 'tx')
+  call assert_equal("fbar", getline('.'))
+  call assert_equal(4, col('.'))
+
   bw!
   set cot&
   set omnifunc&
