@@ -3684,8 +3684,6 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
   pos_T circly_end;
   bool found_new_match = false;
   bool looped_around = false;
-  char *next_word_end = NULL;
-  char *match_word = NULL;
 
   if (whole_line) {
     current_pos.lnum += dir;
@@ -3718,9 +3716,8 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
           found_new_match = fuzzy_match_str_in_line(ptr, pattern, len, &current_pos);
           if (found_new_match) {
             if (ctrl_x_mode_normal()) {
-              match_word = xstrnsave(*ptr, (size_t)(*len));
-              if (strcmp(match_word, pattern) == 0) {
-                next_word_end = find_word_start(*ptr + *len);
+              if (strncmp(*ptr, pattern, (size_t)(*len)) == 0 && pattern[*len] == NUL) {
+                char *next_word_end = find_word_start(*ptr + *len);
                 if (*next_word_end != NUL && *next_word_end != NL) {
                   // Find end of the word.
                   while (*next_word_end != NUL) {
@@ -3736,7 +3733,6 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
                 *len = (int)(next_word_end - *ptr);
                 current_pos.col = *len;
               }
-              xfree(match_word);
             }
             *pos = current_pos;
             break;
@@ -3747,7 +3743,7 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
           if (fuzzy_match_str(*ptr, pattern) > 0) {
             found_new_match = true;
             *pos = current_pos;
-            *len = (int)strlen(*ptr);
+            *len = ml_get_buf_len(buf, current_pos.lnum);
             break;
           }
         }
