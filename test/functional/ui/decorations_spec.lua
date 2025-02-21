@@ -3368,17 +3368,24 @@ describe('decorations: inline virtual text', function()
     command("set nowrap")
     api.nvim_buf_set_extmark(0, ns, 0, 2, { virt_text = { { string.rep('X', 55), 'Special' } }, virt_text_pos = 'inline' })
     feed('$')
-    screen:expect{grid=[[
+    screen:expect([[
       {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}cdefgh^i|
       {1:~                                                 }|
                                                         |
-    ]]}
+    ]])
+    command('set list listchars+=precedes:!')
+    screen:expect([[
+      {1:!}{10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}cdefgh^i|
+      {1:~                                                 }|
+                                                        |
+    ]])
   end)
 
   it('draws correctly with no wrap and multibyte virtual text', function()
     insert('12345678')
     command('set nowrap')
     api.nvim_buf_set_extmark(0, ns, 0, 2, {
+      hl_mode = 'replace',
       virt_text = { { 'α口β̳γ̲=', 'Special' }, { '❤️', 'Special' } },
       virt_text_pos = 'inline',
     })
@@ -3405,9 +3412,33 @@ describe('decorations: inline virtual text', function()
       {1:~                                                 }|
                                                         |
     ]])
+    feed('V')
+    screen:expect([[
+      {10:口β̳γ̲=❤️}{7:34567}^8                                     |
+      {1:~                                                 }|
+      {8:-- VISUAL LINE --}                                 |
+    ]])
+    command('set list listchars+=precedes:!')
+    screen:expect([[
+      {1:!<}{10:β̳γ̲=❤️}{7:34567}^8                                     |
+      {1:~                                                 }|
+      {8:-- VISUAL LINE --}                                 |
+    ]])
     feed('zl')
     screen:expect([[
-      {10: β̳γ̲=❤️}34567^8                                      |
+      {1:!}{10:β̳γ̲=❤️}{7:34567}^8                                      |
+      {1:~                                                 }|
+      {8:-- VISUAL LINE --}                                 |
+    ]])
+    command('set nolist')
+    screen:expect([[
+      {1:<}{10:β̳γ̲=❤️}{7:34567}^8                                      |
+      {1:~                                                 }|
+      {8:-- VISUAL LINE --}                                 |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      {1:<}{10:β̳γ̲=❤️}34567^8                                      |
       {1:~                                                 }|
                                                         |
     ]])
@@ -3435,9 +3466,21 @@ describe('decorations: inline virtual text', function()
       {1:~                                                 }|
                                                         |
     ]])
+    command('set list')
+    screen:expect([[
+      {1:!<}34567^8                                          |
+      {1:~                                                 }|
+                                                        |
+    ]])
     feed('zl')
     screen:expect([[
-      {10: }34567^8                                           |
+      {1:!}34567^8                                           |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    command('set nolist')
+    screen:expect([[
+      {1:<}34567^8                                           |
       {1:~                                                 }|
                                                         |
     ]])
