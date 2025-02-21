@@ -3379,47 +3379,47 @@ describe('decorations: inline virtual text', function()
     insert('12345678')
     command('set nowrap')
     api.nvim_buf_set_extmark(0, ns, 0, 2, {
-      virt_text = { { 'αβ̳γ̲口=', 'Special' }, { '❤️', 'Special' } },
+      virt_text = { { 'α口β̳γ̲=', 'Special' }, { '❤️', 'Special' } },
       virt_text_pos = 'inline',
     })
     screen:expect([[
-      12{10:αβ̳γ̲口=❤️}34567^8                                  |
+      12{10:α口β̳γ̲=❤️}34567^8                                  |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      2{10:αβ̳γ̲口=❤️}34567^8                                   |
+      2{10:α口β̳γ̲=❤️}34567^8                                   |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:αβ̳γ̲口=❤️}34567^8                                    |
+      {10:α口β̳γ̲=❤️}34567^8                                    |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:β̳γ̲口=❤️}34567^8                                     |
+      {10:口β̳γ̲=❤️}34567^8                                     |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:γ̲口=❤️}34567^8                                      |
+      {10: β̳γ̲=❤️}34567^8                                      |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10:口=❤️}34567^8                                       |
+      {10:β̳γ̲=❤️}34567^8                                       |
       {1:~                                                 }|
                                                         |
     ]])
     feed('zl')
     screen:expect([[
-      {10: =❤️}34567^8                                        |
+      {10:γ̲=❤️}34567^8                                        |
       {1:~                                                 }|
                                                         |
     ]])
@@ -5024,14 +5024,14 @@ if (h->n_buckets < new_n_buckets) { // expand
     insert('abcdefghijklmnopqrstuvwxyz')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {
       virt_lines = {
-        { { '12αβ̳γ̲口=', 'Special' }, { '❤️345678', 'Special' } },
+        { { '12α口β̳γ̲=', 'Special' }, { '❤️345678', 'Special' } },
         { { '123\t45\t678', 'NonText' } },
       },
       virt_lines_overflow = 'scroll',
     })
     screen:expect([[
       {7:  }abcdefghijklmnopqrstuvwxy^z                      |
-      {7:  }{16:12αβ̳γ̲口=❤️345678}                                |
+      {7:  }{16:12α口β̳γ̲=❤️345678}                                |
       {7:  }{1:123     45      678}                             |
       {1:~                                                 }|*8
                                                         |
@@ -5039,7 +5039,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     feed('zl')
     screen:expect([[
       {7:  }bcdefghijklmnopqrstuvwxy^z                       |
-      {7:  }{16:2αβ̳γ̲口=❤️345678}                                 |
+      {7:  }{16:2α口β̳γ̲=❤️345678}                                 |
       {7:  }{1:23     45      678}                              |
       {1:~                                                 }|*8
                                                         |
@@ -5047,7 +5047,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     feed('zl')
     screen:expect([[
       {7:  }cdefghijklmnopqrstuvwxy^z                        |
-      {7:  }{16:αβ̳γ̲口=❤️345678}                                  |
+      {7:  }{16:α口β̳γ̲=❤️345678}                                  |
       {7:  }{1:3     45      678}                               |
       {1:~                                                 }|*8
                                                         |
@@ -5055,7 +5055,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     feed('zl')
     screen:expect([[
       {7:  }defghijklmnopqrstuvwxy^z                         |
-      {7:  }{16:β̳γ̲口=❤️345678}                                   |
+      {7:  }{16:口β̳γ̲=❤️345678}                                   |
       {7:  }{1:     45      678}                                |
       {1:~                                                 }|*8
                                                         |
@@ -5063,7 +5063,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     feed('zl')
     screen:expect([[
       {7:  }efghijklmnopqrstuvwxy^z                          |
-      {7:  }{16:γ̲口=❤️345678}                                    |
+      {7:  }{16: β̳γ̲=❤️345678}                                    |
       {7:  }{1:    45      678}                                 |
       {1:~                                                 }|*8
                                                         |
@@ -5071,7 +5071,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     feed('zl')
     screen:expect([[
       {7:  }fghijklmnopqrstuvwxy^z                           |
-      {7:  }{16:口=❤️345678}                                     |
+      {7:  }{16:β̳γ̲=❤️345678}                                     |
       {7:  }{1:   45      678}                                  |
       {1:~                                                 }|*8
                                                         |
@@ -5079,7 +5079,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     feed('zl')
     screen:expect([[
       {7:  }ghijklmnopqrstuvwxy^z                            |
-      {7:  }{16: =❤️345678}                                      |
+      {7:  }{16:γ̲=❤️345678}                                      |
       {7:  }{1:  45      678}                                   |
       {1:~                                                 }|*8
                                                         |
