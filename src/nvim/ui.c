@@ -228,9 +228,7 @@ void ui_refresh(void)
     }
     msg_scroll_flush();
   }
-  if (ui_has(kUIMultigrid)) {
-    msg_multigrid_attach();
-  }
+  msg_ui_refresh();
 
   if (!ui_active()) {
     return;
