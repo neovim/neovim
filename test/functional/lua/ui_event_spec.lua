@@ -65,7 +65,7 @@ describe('vim.ui_attach', function()
         0,
         0,
         0,
-        1,
+        2,
       },
     }
 
@@ -411,17 +411,23 @@ describe('vim.ui_attach', function()
         {1:~                                                                                     }|*9
       ]],
       cmdline = { {
-        abort = false
+        abort = false,
       } },
-      messages = { {
-        content = { { "Press ENTER or type command to continue", 100, 18 } },
-        history = false,
-        kind = "return_prompt"
-      } },
-      msg_history = { {
-        content = { { "Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))", 9, 6 } },
-        kind = "emsg"
-      } },
+      messages = {
+        {
+          content = { { 'Press ENTER or type command to continue', 100, 18 } },
+          history = false,
+          kind = 'return_prompt',
+        },
+      },
+      msg_history = {
+        {
+          content = {
+            { 'Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))', 9, 6 },
+          },
+          kind = 'emsg',
+        },
+      },
     })
   end)
 
