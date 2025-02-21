@@ -282,6 +282,12 @@ function LanguageTree:lang()
   return self._lang
 end
 
+--- Get the injection regions of this tree, if any
+--- @return table<integer, Range6[]>?
+function LanguageTree:regions()
+  return self._regions
+end
+
 --- @param region Range6[]
 --- @param range? boolean|Range
 --- @return boolean
@@ -434,7 +440,7 @@ function LanguageTree:_add_injections()
         child = self:add_child(lang)
       end
 
-      child:set_included_regions(injection_regions)
+      child:set_included_regions(injection_regions, self._regions)
       seen_langs[lang] = true
     end
   end
@@ -784,7 +790,8 @@ end
 ---
 ---@private
 ---@param new_regions (Range4|Range6|TSNode)[][] List of regions this tree should manage and parse.
-function LanguageTree:set_included_regions(new_regions)
+---@param parent_regions table<integer, Range6[]>? List of parent regions
+function LanguageTree:set_included_regions(new_regions, parent_regions)
   -- Transform the tables from 4 element long to 6 element long (with byte offset)
   for _, region in ipairs(new_regions) do
     for i, range in ipairs(region) do
@@ -795,6 +802,33 @@ function LanguageTree:set_included_regions(new_regions)
         region[i] = { range:range(true) }
       end
     end
+  end
+
+  -- TODO: Make iteration efficient, potentially by using something like an interval tree
+  if parent_regions then
+    ---@type Range6[][]
+    local clipped_regions = {}
+    for _, new_region in ipairs(new_regions) do
+      ---@type Range6[]?
+      local clipped_region = nil
+      for _, region in pairs(parent_regions) do
+        for _, new_range in ipairs(new_region) do
+          for _, range in ipairs(region) do
+            local intersection = Range.intersection(range, new_range --[[@as Range6]])
+            if intersection then
+              if not clipped_region then
+                clipped_region = {}
+              end
+              table.insert(clipped_region, intersection)
+            end
+          end
+        end
+      end
+      if clipped_region then
+        clipped_regions[#clipped_regions + 1] = clipped_region
+      end
+    end
+    new_regions = clipped_regions
   end
 
   -- included_regions is not guaranteed to be list-like, but this is still sound, i.e. if

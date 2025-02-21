@@ -115,6 +115,41 @@ function M.intercepts(r1, r2)
 end
 
 ---@private
+---@param r1 Range6
+---@param r2 Range6
+---@return Range6?
+function M.intersection(r1, r2)
+  ---@type integer, integer, integer, integer, integer, integer
+  local start_line, start_col, start_byte, end_line, end_col, end_byte
+
+  if not M.intercepts(r1, r2) then
+    return nil
+  end
+
+  if M.cmp_pos.le(r1[1], r1[2], r2[1], r2[2]) then
+    start_line = r2[1]
+    start_col = r2[2]
+    start_byte = r2[3]
+  else
+    start_line = r1[1]
+    start_col = r1[2]
+    start_byte = r1[3]
+  end
+
+  if M.cmp_pos.ge(r1[4], r1[5], r2[4], r2[5]) then
+    end_line = r2[4]
+    end_col = r2[5]
+    end_byte = r2[6]
+  else
+    end_line = r1[4]
+    end_col = r1[5]
+    end_byte = r1[6]
+  end
+
+  return { start_line, start_col, start_byte, end_line, end_col, end_byte }
+end
+
+---@private
 ---@param r Range
 ---@return integer, integer, integer, integer
 function M.unpack4(r)

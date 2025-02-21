@@ -537,6 +537,7 @@ describe('treesitter highlighting (C)', function()
       highlighter.new(parser, {
         queries = {
           lua = [[
+            ; query
             (string) @string
             (comment) @comment
             (function_call (identifier) @function.call)
@@ -548,14 +549,71 @@ describe('treesitter highlighting (C)', function()
 
     screen:expect([=[
         {18:-- }{25:print}{16:(}{26:[[}                                                    |
-      {26:  -- some}                                                        |
-      {26:  -- random}                                                      |
-      {26:  -- text}                                                        |
-      {26:  -- here]]}{16:)}                                                     |
+        {18:--}{26: some}                                                        |
+        {18:--}{26: random}                                                      |
+        {18:--}{26: text}                                                        |
+        {18:--}{26: here]]}{16:)}                                                     |
       ^                                                                 |
       {1:~                                                                }|*11
                                                                        |
     ]=])
+  end)
+
+  it('supports complicated combined injections', function()
+    insert([[
+      -- # Markdown here
+      --
+      -- ```c
+      -- int main() {
+      --   printf("Hello, world!");
+      -- }
+      -- ```
+    ]])
+
+    exec_lua(function()
+      local parser = vim.treesitter.get_parser(0, 'lua', {
+        injections = {
+          lua = [[
+          ; query
+          ((comment) @injection.content
+            (#offset! @injection.content 0 3 0 1)
+            (#lua-match? @injection.content "[-][-] ")
+            (#set! injection.combined)
+            (#set! injection.include-children)
+            (#set! injection.language "markdown"))
+          ]],
+        },
+      })
+      local highlighter = vim.treesitter.highlighter
+      highlighter.new(parser, {
+        queries = {
+          lua = [[
+            ; query
+            (string) @string
+            (comment) @comment
+            (function_call (identifier) @function.call)
+            [ "(" ")" ] @punctuation.bracket
+          ]],
+        },
+      })
+    end)
+
+    screen:add_extra_attr_ids({
+      [131] = { foreground = Screen.colors.Fuchsia, bold = true },
+    })
+
+    screen:expect([[
+        {18:-- }{131:# Markdown here}                                             |
+        {18:--}                                                             |
+        {18:-- ```}{15:c}                                                        |
+        {18:-- }{16:int}{18: }{25:main}{16:()}{18: }{16:{}                                                |
+        {18:--   }{25:printf}{16:(}{26:"Hello, world!"}{16:);}                                  |
+        {18:-- }{16:}}                                                           |
+        {18:-- ```}                                                         |
+      ^                                                                 |
+      {1:~                                                                }|*9
+                                                                       |
+    ]])
   end)
 
   it("supports injecting by ft name in metadata['injection.language']", function()
