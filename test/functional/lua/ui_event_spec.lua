@@ -65,7 +65,7 @@ describe('vim.ui_attach', function()
         0,
         0,
         0,
-        1,
+        2,
       },
     }
 

@@ -712,6 +712,7 @@ wingotofile:
       break;
 
     case 'e':
+      // Only multigrid support external windows
       if (curwin->w_floating || !ui_has(kUIMultigrid)) {
         beep_flush();
         break;
@@ -819,14 +820,10 @@ void ui_ext_win_position(win_T *wp, bool validate)
 {
   wp->w_pos_changed = false;
   if (!wp->w_floating) {
-    if (ui_has(kUIMultigrid)) {
-      // Windows on the default grid don't necessarily have comp_col and comp_row set
-      // But the rest of the calculations relies on it
-      wp->w_grid_alloc.comp_col = wp->w_wincol;
-      wp->w_grid_alloc.comp_row = wp->w_winrow;
-    }
     ui_call_win_pos(wp->w_grid_alloc.handle, wp->handle, wp->w_winrow,
                     wp->w_wincol, wp->w_width, wp->w_height);
+    ui_comp_put_grid(&wp->w_grid_alloc, wp->w_winrow, wp->w_wincol,
+                     wp->w_height_outer, wp->w_width_outer, true, false);
     return;
   }
 
@@ -873,10 +870,9 @@ void ui_ext_win_position(win_T *wp, bool validate)
     if (resort) {
       ui_comp_layers_adjust(wp->w_grid_alloc.comp_index, raise);
     }
-    bool valid = (wp->w_redr_type == 0 || ui_has(kUIMultigrid));
+    bool valid = wp->w_redr_type == 0;
     if (!valid && !validate) {
       wp->w_pos_changed = true;
-      return;
     }
 
     // TODO(bfredl): ideally, compositor should work like any multigrid UI
@@ -897,16 +893,18 @@ void ui_ext_win_position(win_T *wp, bool validate)
     wp->w_wincol = comp_col;
 
     if (!c.hide) {
-      ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
-                       wp->w_height_outer, wp->w_width_outer, valid, false);
+      if (valid || validate) {
+        ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
+                         wp->w_height_outer, wp->w_width_outer, valid, false);
+        ui_check_cursor_grid(wp->w_grid_alloc.handle);
+        wp->w_grid_alloc.mouse_enabled = wp->w_config.mouse;
+      }
       String anchor = cstr_as_string(float_anchor_str[c.anchor]);
       ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
                             grid->handle, row, col, c.mouse,
                             wp->w_grid_alloc.zindex, (int)wp->w_grid_alloc.comp_index,
                             wp->w_winrow,
                             wp->w_wincol);
-      ui_check_cursor_grid(wp->w_grid_alloc.handle);
-      wp->w_grid_alloc.mouse_enabled = wp->w_config.mouse;
       if (!valid) {
         wp->w_grid_alloc.valid = false;
         redraw_later(wp, UPD_NOT_VALID);
@@ -924,7 +922,7 @@ void ui_ext_win_viewport(win_T *wp)
 {
   // NOTE: The win_viewport command is delayed until the next flush when there are pending updates.
   // This ensures that the updates and the viewport are sent together.
-  if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid && wp->w_redr_type == 0) {
+  if (wp->w_viewport_invalid && wp->w_redr_type == 0) {
     const linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
     // Avoid ml_get errors when producing "scroll_delta".
     const linenr_T cur_topline = MIN(wp->w_topline, line_count);
@@ -1302,13 +1300,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     win_init(wp, curwin, flags);
   } else if (wp->w_floating) {
     ui_comp_remove_grid(&wp->w_grid_alloc);
-    if (ui_has(kUIMultigrid)) {
-      wp->w_pos_changed = true;
-    } else {
-      // No longer a float, a non-multigrid UI shouldn't draw it as such
-      ui_call_win_hide(wp->w_grid_alloc.handle);
-      win_free_grid(wp, true);
-    }
+    wp->w_pos_changed = true;
 
     // External windows are independent of tabpages, and may have been the curwin of others.
     if (wp->w_config.external) {
@@ -2834,16 +2826,14 @@ int win_close(win_T *win, bool free_buf, bool force)
   bool was_floating = win->w_floating;
   ui_call_win_close(win->w_grid_alloc.handle);
 
-  if (win->w_floating) {
-    ui_comp_remove_grid(&win->w_grid_alloc);
-    assert(first_tabpage != NULL);  // suppress clang "Dereference of NULL pointer"
-    if (win->w_config.external) {
-      FOR_ALL_TABS(tp) {
-        if (tp != curtab && tp->tp_curwin == win) {
-          // NB: an autocmd can still abort the closing of this window,
-          // but carrying out this change anyway shouldn't be a catastrophe.
-          tp->tp_curwin = tp->tp_firstwin;
-        }
+  ui_comp_remove_grid(&win->w_grid_alloc);
+  assert(first_tabpage != NULL);  // suppress clang "Dereference of NULL pointer"
+  if (win->w_config.external) {
+    FOR_ALL_TABS(tp) {
+      if (tp != curtab && tp->tp_curwin == win) {
+        // NB: an autocmd can still abort the closing of this window,
+        // but carrying out this change anyway shouldn't be a catastrophe.
+        tp->tp_curwin = tp->tp_firstwin;
       }
     }
   }
@@ -4554,13 +4544,11 @@ static void tabpage_check_windows(tabpage_T *old_curtab)
   win_T *next_wp;
   for (win_T *wp = old_curtab->tp_firstwin; wp; wp = next_wp) {
     next_wp = wp->w_next;
-    if (wp->w_floating) {
-      if (wp->w_config.external) {
-        win_remove(wp, old_curtab);
-        win_append(lastwin_nofloating(), wp, NULL);
-      } else {
-        ui_comp_remove_grid(&wp->w_grid_alloc);
-      }
+    if (wp->w_config.external) {
+      win_remove(wp, old_curtab);
+      win_append(lastwin_nofloating(), wp, NULL);
+    } else {
+      ui_comp_remove_grid(&wp->w_grid_alloc);
     }
     wp->w_pos_changed = true;
   }
@@ -7522,6 +7510,8 @@ void win_ui_flush(bool validate)
         && wp->w_grid_alloc.chars != NULL) {
       if (tp == curtab) {
         ui_ext_win_position(wp, validate);
+        // This forces the cursor to draw at the correct new location
+        ui_check_cursor_grid(wp->w_grid.target->handle);
       } else {
         ui_call_win_hide(wp->w_grid_alloc.handle);
         wp->w_pos_changed = false;

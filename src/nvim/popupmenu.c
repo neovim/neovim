@@ -1323,7 +1323,7 @@ static void pum_position_at_mouse(int min_width)
   pum_win_row_offset = 0;
   pum_win_col_offset = 0;
 
-  if (ui_has(kUIMultigrid) && grid == 0) {
+  if (grid == 0) {
     mouse_find_win_outer(&grid, &row, &col);
   }
   if (grid > 1) {
@@ -1564,13 +1564,7 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
     mouse_col = curwin->w_grid.col_offset
                 + (curwin->w_p_rl ? curwin->w_view_width - curwin->w_wcol - 1
                                   : curwin->w_wcol);
-    if (ui_has(kUIMultigrid)) {
-      mouse_grid = curwin->w_grid.target->handle;
-    } else if (curwin->w_grid.target != &default_grid) {
-      mouse_grid = 0;
-      mouse_row += curwin->w_winrow;
-      mouse_col += curwin->w_wincol;
-    }
+    mouse_grid = curwin->w_grid.target->handle;
   }
 
   vimmenu_T *menu = menu_find(path_name);

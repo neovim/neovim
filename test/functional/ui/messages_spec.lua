@@ -711,7 +711,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*2
       ]],
       popupmenu = {
-        anchor = { 1, 2, 0 },
+        anchor = { 2, 2, 0 },
         items = { { 'alphpabet', '', '', '' }, { 'alphanum', '', '', '' } },
         pos = 1,
       },
@@ -732,7 +732,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*2
       ]],
       popupmenu = {
-        anchor = { 1, 2, 0 },
+        anchor = { 2, 2, 0 },
         items = { { 'alphpabet', '', '', '' }, { 'alphanum', '', '', '' } },
         pos = 1,
       },
@@ -752,7 +752,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*2
       ]],
       popupmenu = {
-        anchor = { 1, 2, 0 },
+        anchor = { 2, 2, 0 },
         items = { { 'alphpabet', '', '', '' }, { 'alphanum', '', '', '' } },
         pos = 0,
       },
