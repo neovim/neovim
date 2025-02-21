@@ -562,11 +562,22 @@ describe('vim.lsp.completion: item conversion', function()
           range = range0,
         },
       },
+      -- luals for snippet
+      {
+        insertText = 'for ${1:index}, ${2:value} in ipairs(${3:t}) do\n\t$0\nend',
+        insertTextFormat = 2,
+        kind = 15,
+        label = 'for .. ipairs',
+      },
     }
     local expected = {
       {
         abbr = 'copyOf(Collection<? extends E> coll) : List<E>',
         word = 'copyOf',
+      },
+      {
+        abbr = 'for .. ipairs',
+        word = 'for .. ipairs',
       },
       {
         abbr = 'insert',
