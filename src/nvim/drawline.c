@@ -2581,6 +2581,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         && wp->w_p_list
         && (wp->w_p_wrap ? (wp->w_skipcol > 0 && wlv.row == 0) : wp->w_leftcol > 0)
         && wlv.filler_todo <= 0
+        && wlv.skip_cells <= 0
         && mb_schar != NUL) {
       lcs_prec_todo = NUL;
       // TODO(zeertzjq): handle the n_extra > 0 case

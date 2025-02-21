@@ -678,6 +678,7 @@ func Test_listchars_precedes_with_wide_char()
   call setline(1, '123口456')
   call assert_equal(['123口456$ '], ScreenLines(1, 10))
   let attr = screenattr(1, 9)
+
   normal! zl
   call assert_equal(['!3口456$  '], ScreenLines(1, 10))
   call assert_equal(attr, screenattr(1, 1))
@@ -689,8 +690,7 @@ func Test_listchars_precedes_with_wide_char()
   call assert_equal(attr, screenattr(1, 1))
   call assert_equal(attr, screenattr(1, 2))
   normal! zl
-  " TODO: should it be '!' instead of '<' here?
-  call assert_equal(['<456$     '], ScreenLines(1, 10))
+  call assert_equal(['!456$     '], ScreenLines(1, 10))
   call assert_equal(attr, screenattr(1, 1))
   normal! zl
   call assert_equal(['!56$      '], ScreenLines(1, 10))
@@ -698,6 +698,27 @@ func Test_listchars_precedes_with_wide_char()
   normal! zl
   call assert_equal(['!6$       '], ScreenLines(1, 10))
   call assert_equal(attr, screenattr(1, 1))
+
+  bw!
+endfunc
+
+func Test_listchars_precedes_with_tab()
+  new
+  setlocal nowrap list listchars=eol:$,precedes:!,tab:<->
+  call setline(1, "1234\t56")
+  let expected_line = '1234<-->56$ '
+  call assert_equal([expected_line], ScreenLines(1, 12))
+  let expected_attrs = mapnew(range(1, 12), 'screenattr(1, v:val)')
+  let attr = expected_attrs[-2]
+
+  for i in range(8)
+    normal! zl
+    let expected_line = '!' .. expected_line[2:] .. ' '
+    let expected_attrs = [attr] + expected_attrs[2:] + expected_attrs[-1:]
+    call assert_equal([expected_line], ScreenLines(1, 12))
+    let attrs = mapnew(range(1, 12), 'screenattr(1, v:val)')
+    call assert_equal(expected_attrs, attrs)
+  endfor
 
   bw!
 endfunc
