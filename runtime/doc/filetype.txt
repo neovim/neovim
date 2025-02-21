@@ -708,7 +708,7 @@ Options:
 		You can also format quoted text with |gq|.
 
 Local mappings:
-<LocalLeader>q   or   \\MailQuote
+<LocalLeader>q   or   \MailQuote
 	Quotes the text selected in Visual mode, or from the cursor position
 	to the end of the file in Normal mode.  This means "> " is inserted in
 	each line.
