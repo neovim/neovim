@@ -1065,7 +1065,7 @@ describe('completion', function()
       {5:-- Keyword completion (^N^P) }{19:Back at original}               |
     ]],
       popupmenu = {
-        anchor = { 1, 3, 0 },
+        anchor = { 2, 3, 0 },
         items = { { 'foo', '', '', '' }, { 'foobar', '', '', '' } },
         pos = -1,
       },
@@ -1085,7 +1085,7 @@ describe('completion', function()
       {5:-- Keyword completion (^N^P) }{19:Back at original}               |
     ]],
       popupmenu = {
-        anchor = { 1, 3, 0 },
+        anchor = { 2, 3, 0 },
         items = { { 'foobar', '', '', '' } },
         pos = -1,
       },
