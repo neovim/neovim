@@ -153,16 +153,16 @@ describe('vim.secure', function()
       feed('v')
       screen:expect {
         grid = [[
-          ^let g:foobar = 42                                                             |
-        {1:~                                                                               }|*2
-        {2:]]
+          ^let g:foobar = 42                                                               |
+          {1:~                                                                               }|*2
+          {2:]]
           .. fn.fnamemodify(cwd, ':~')
           .. pathsep
           .. [[Xfile [RO]{MATCH:%s+}}|
-                                                                                        |
-        {1:~                                                                               }|
-        {4:[No Name]                                                                       }|
-                                                                                        |
+                                                                                          |
+          {1:~                                                                               }|
+          {4:[No Name]                                                                       }|
+                                                                                          |
       ]],
       }
 

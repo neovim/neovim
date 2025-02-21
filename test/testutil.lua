@@ -148,6 +148,7 @@ end
 --- @param actual string
 --- @return boolean
 function M.matches(pat, actual)
+  assert(pat and pat ~= '', 'pat must be a non-empty string')
   if nil ~= string.match(actual, pat) then
     return true
   end
@@ -641,28 +642,9 @@ end
 --- @param leave_indent? integer
 --- @return string
 function M.dedent(str, leave_indent)
-  -- find minimum common indent across lines
-  local indent --- @type string?
-  for line in str:gmatch('[^\n]+') do
-    local line_indent = line:match('^%s+') or ''
-    if indent == nil or #line_indent < #indent then
-      indent = line_indent
-    end
-  end
-
-  if not indent or #indent == 0 then
-    -- no minimum common indent
-    return str
-  end
-
-  local left_indent = (' '):rep(leave_indent or 0)
-  -- create a pattern for the indent
-  indent = indent:gsub('%s', '[ \t]')
-  -- strip it from the first line
-  str = str:gsub('^' .. indent, left_indent)
-  -- strip it from the remaining lines
-  str = str:gsub('[\n]' .. indent, '\n' .. left_indent)
-  return str
+  -- Last blank line often has non-matching indent, so remove it.
+  str = str:gsub('\n[ ]+$', '\n')
+  return (vim.text.indent(leave_indent or 0, str))
 end
 
 function M.intchar2lua(ch)

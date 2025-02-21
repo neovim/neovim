@@ -766,18 +766,8 @@ local function scope_more_doc(o)
 end
 
 --- @param x string
---- @return string
 local function dedent(x)
-  local xs = split(x)
-  local leading_ws = xs[1]:match('^%s*') --[[@as string]]
-  local leading_ws_pat = '^' .. leading_ws
-
-  for i in ipairs(xs) do
-    local strip_pat = xs[i]:match(leading_ws_pat) and leading_ws_pat or '^%s*'
-    xs[i] = xs[i]:gsub(strip_pat, '')
-  end
-
-  return table.concat(xs, '\n')
+  return (vim.text.indent(0, (x:gsub('\n%s-([\n]?)$', '\n%1'))))
 end
 
 --- @return table<string,vim.option_meta>

@@ -2041,11 +2041,11 @@ describe('float window', function()
           [2:----------------------------------------]|*6
           [3:----------------------------------------]|
         ## grid 2
-            neeed some dummy                      |
-            background text                       |
-            to show the effect                    |
-            of color blending                     |
-            of border shadow                      |
+          neeed some dummy                        |
+          background text                         |
+          to show the effect                      |
+          of color blending                       |
+          of border shadow                        |
           ^                                        |
         ## grid 3
                                                   |
@@ -2065,11 +2065,11 @@ describe('float window', function()
         }}
       else
         screen:expect{grid=[[
-            neeed some dummy                      |
-            background text                       |
-            to {1: halloj! }{23:e}ffect                    |
-            of {1: BORDAA  }{24:n}ding                     |
-            of {23:b}{24:order sha}dow                      |
+          neeed some dummy                        |
+          background text                         |
+          to sh{1: halloj! }{23:f}ect                      |
+          of co{1: BORDAA  }{24:i}ng                       |
+          of bo{23:r}{24:der shado}w                        |
           ^                                        |
                                                   |
         ]]}

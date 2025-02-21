@@ -227,7 +227,7 @@ describe(':source', function()
 
         feed('GVkk')
         feed_command(':source')
-        eq('   "\\ a\n    \\ b', exec_lua('return _G.a'))
+        eq(' "\\ a\n  \\ b', exec_lua('return _G.a'))
       end)
 
       it('whole buffer', function()
@@ -247,7 +247,7 @@ describe(':source', function()
         feed_command(':source')
 
         eq(12, eval('g:c'))
-        eq('    \\ 1\n   "\\ 2', exec_lua('return _G.a'))
+        eq('  \\ 1\n "\\ 2', exec_lua('return _G.a'))
         eq(':source (no file)', api.nvim_get_var('sfile_value'))
         eq(':source (no file)', api.nvim_get_var('stack_value'))
         eq(':source (no file)', api.nvim_get_var('script_value'))

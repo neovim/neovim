@@ -62,10 +62,10 @@ describe('folding', function()
 
     n.poke_eventloop()
     screen:expect([[
-        dd {{{            |
-        ee {{{ }}}        |
+      dd {{{              |
+      ee {{{ }}}          |
       {{{                 |
-        ff }}}            |*2
+      ff }}}              |*2
       ^                    |
       line 2 foldlevel=2  |
       1                   |*2
