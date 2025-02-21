@@ -3162,6 +3162,8 @@ void msg_ext_ui_flush(void)
   if (!ui_has(kUIMessages)) {
     msg_ext_kind = NULL;
     return;
+  } else if (msg_ext_skip_flush) {
+    return;
   }
 
   msg_ext_emit_chunk();
