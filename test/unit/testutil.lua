@@ -146,6 +146,8 @@ local function filter_complex_blocks(body)
         or string.find(line, 'value_init_')
         or string.find(line, 'UUID_NULL') -- static const uuid_t UUID_NULL = {...}
         or string.find(line, 'inline _Bool')
+        -- used by musl libc headers on 32-bit arches via __REDIR marco
+        or string.find(line, '__typeof__')
         -- used by macOS headers
         or string.find(line, 'typedef enum : ')
         or string.find(line, 'mach_vm_range_recipe')
