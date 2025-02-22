@@ -222,6 +222,36 @@ func Test_finddir_error()
   call assert_fails('call finddir("x", repeat("x", 5000))', 'E854:')
 endfunc
 
+func Test_findfile_with_suffixesadd()
+  let save_path = &path
+  let save_dir = getcwd()
+  set path=,,
+  call mkdir('Xfinddir1', 'pR')
+  cd Xfinddir1
+
+  call writefile([], 'foo.c', 'D')
+  call writefile([], 'bar.cpp', 'D')
+  call writefile([], 'baz.cc', 'D')
+  call writefile([], 'foo.o', 'D')
+  call writefile([], 'bar.o', 'D')
+  call writefile([], 'baz.o', 'D')
+
+  set suffixesadd=.c,.cpp
+  call assert_equal('foo.c', findfile('foo'))
+  call assert_equal('./foo.c', findfile('./foo'))
+  call assert_equal('bar.cpp', findfile('bar'))
+  call assert_equal('./bar.cpp', findfile('./bar'))
+  call assert_equal('', findfile('baz'))
+  call assert_equal('', findfile('./baz'))
+  set suffixesadd+=.cc
+  call assert_equal('baz.cc', findfile('baz'))
+  call assert_equal('./baz.cc', findfile('./baz'))
+
+  set suffixesadd&
+  call chdir(save_dir)
+  let &path = save_path
+endfunc
+
 " Test for the :find, :sfind and :tabfind commands
 func Test_find_cmd()
   new
