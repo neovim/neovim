@@ -3,7 +3,7 @@ You can install Neovim from [download](#install-from-download), [package](#insta
 ---
 
 - To start Neovim, run `nvim` (not `neovim`).
-    - [Discover plugins](https://github.com/neovim/neovim/wiki/Related-projects#plugins).
+  - [Discover plugins](https://github.com/neovim/neovim/wiki/Related-projects#plugins).
 - Before upgrading to a new version, **check [Breaking Changes](https://neovim.io/doc/user/news.html#news-breaking).**
 - For config (vimrc) see [the FAQ](https://neovim.io/doc/user/faq.html#faq-general).
 
@@ -14,14 +14,13 @@ Install from download
 
 Downloads are available on the [Releases](https://github.com/neovim/neovim/releases) page.
 
-* Latest [stable release](https://github.com/neovim/neovim/releases/latest)
-    * [macOS x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-x86_64.tar.gz)
-    * [macOS arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-arm64.tar.gz)
-    * [Linux x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz)
-    * [Linux arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-arm64.tar.gz)
-    * [Windows](https://github.com/neovim/neovim/releases/latest/download/nvim-win64.msi)
-* Latest [development prerelease](https://github.com/neovim/neovim/releases/nightly)
-
+- Latest [stable release](https://github.com/neovim/neovim/releases/latest)
+  - [macOS x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-x86_64.tar.gz)
+  - [macOS arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-arm64.tar.gz)
+  - [Linux x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz)
+  - [Linux arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-arm64.tar.gz)
+  - [Windows](https://github.com/neovim/neovim/releases/latest/download/nvim-win64.msi)
+- Latest [development prerelease](https://github.com/neovim/neovim/releases/nightly)
 
 Install from package
 ====================
@@ -42,10 +41,12 @@ Windows 8+ is required. Windows 7 or older is not supported.
 - **Development (pre-release):** `choco install neovim --pre`
 
 ### [Scoop](https://scoop.sh/)
+
 ```
 scoop bucket add main
 scoop install neovim
 ```
+
 - **Release:** `scoop install neovim`
 
 Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim](https://scoop.sh/#/apps?q=neovim)
@@ -61,18 +62,19 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
 **Optional** steps:
 
 - Add the `bin` folder (e.g. `C:\Program Files\nvim\bin`) to your PATH.
-    - This makes it easy to run `nvim` from anywhere.
+  - This makes it easy to run `nvim` from anywhere.
 - If `:set spell` does not work, create the `C:/Users/foo/AppData/Local/nvim/site/spell` folder.
   You can then copy your spell files over (for English, located
   [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.spl) and
   [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.sug));
-- For Python plugins you need the `pynvim` module. "Virtual envs" are recommended. After activating the virtual env do `pip install pynvim` (in *both*). Edit your `init.vim` so that it contains the path to the env's Python executable:
+- For Python plugins you need the `pynvim` module. "Virtual envs" are recommended. After activating the virtual env do `pip install pynvim` (in _both_). Edit your `init.vim` so that it contains the path to the env's Python executable:
+
     ```vim
     let g:python3_host_prog='C:/Users/foo/Envs/neovim3/Scripts/python.exe'
     ```
-    - Run `:checkhealth` and read `:help provider-python`.
-- **init.vim ("vimrc"):** If you already have Vim installed you can copy `%userprofile%\_vimrc` to `%userprofile%\AppData\Local\nvim\init.vim` to use your Vim config with Neovim.
 
+  - Run `:checkhealth` and read `:help provider-python`.
+- **init.vim ("vimrc"):** If you already have Vim installed you can copy `%userprofile%\_vimrc` to `%userprofile%\AppData\Local\nvim\init.vim` to use your Vim config with Neovim.
 
 ## macOS / OS X
 
@@ -107,6 +109,8 @@ For arm64:
 
 The [Releases](https://github.com/neovim/neovim/releases) page provides pre-built binaries for Linux systems.
 
+For x86_64:
+
 ```sh
 curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
 sudo rm -rf /opt/nvim
@@ -115,28 +119,86 @@ sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
 
 Then add this to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
 
-    export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
+```sh
+export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
+```
+
+For arm64:
+
+```sh
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-arm64.tar.gz
+sudo rm -rf /opt/nvim
+sudo tar -C /opt -xzf nvim-linux-arm64.tar.gz
+```
+
+Then add this to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
+
+```sh
+export PATH="$PATH:/opt/nvim-linux-arm64/bin"
+```
 
 ### AppImage ("universal" Linux package)
 
-The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppImage](https://appimage.org) that runs on most Linux systems. No installation is needed, just download `nvim-linux-x86_64.appimage` and run it. (It might not work if your Linux distribution is more than 4 years old.) The following instructions assume an `x86_64` architecture; on ARM Linux replace with `arm64`.
+The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppImage](https://appimage.org) that runs on most Linux systems. No installation is needed, just download `nvim-linux-x86_64.appimage` and run it. (It might not work if your Linux distribution is more than 4 years old).
 
-    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.appimage
-    chmod u+x nvim-linux-x86_64.appimage
-    ./nvim-linux-x86_64.appimage
+For x86_64:
+
+```sh
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.appimage
+chmod u+x nvim-linux-x86_64.appimage
+./nvim-linux-x86_64.appimage
+```
 
 To expose nvim globally:
 
-    mkdir -p /opt/nvim
-    mv nvim-linux-x86_64.appimage /opt/nvim/nvim
+```sh
+mkdir -p /opt/nvim
+mv nvim-linux-x86_64.appimage /opt/nvim/nvim
+```
 
 And the following line to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
 
-    export PATH="$PATH:/opt/nvim/"
+```sh
+export PATH="$PATH:/opt/nvim/"
+```
 
 If the `./nvim-linux-x86_64.appimage` command fails, try:
+
 ```sh
 ./nvim-linux-x86_64.appimage --appimage-extract
+./squashfs-root/AppRun --version
+
+# Optional: exposing nvim globally.
+sudo mv squashfs-root /
+sudo ln -s /squashfs-root/AppRun /usr/bin/nvim
+nvim
+```
+
+For arm64:
+
+```sh
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-arm64.appimage
+chmod u+x nvim-linux-arm64.appimage
+./nvim-linux-arm64.appimage
+```
+
+To expose nvim globally:
+
+```sh
+mkdir -p /opt/nvim
+mv nvim-linux-arm64.appimage /opt/nvim/nvim
+```
+
+And the following line to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
+
+```sh
+export PATH="$PATH:/opt/nvim/"
+```
+
+If the `./nvim-linux-arm64.appimage` command fails, try:
+
+```sh
+./nvim-linux-arm64.appimage --appimage-extract
 ./squashfs-root/AppRun --version
 
 # Optional: exposing nvim globally.
@@ -313,6 +375,7 @@ sudo snap install --edge nvim --classic
 ```
 
 ### Ubuntu
+
 As in Debian, Neovim is in [Ubuntu](https://packages.ubuntu.com/search?keywords=neovim).
 
     sudo apt install neovim
@@ -326,7 +389,7 @@ Neovim has been added to a "Personal Package Archive" (PPA). This allows you to 
 - [https://launchpad.net/~neovim-ppa/+archive/ubuntu/**stable**](https://launchpad.net/~neovim-ppa/+archive/ubuntu/stable)
 - [https://launchpad.net/~neovim-ppa/+archive/ubuntu/**unstable**](https://launchpad.net/~neovim-ppa/+archive/ubuntu/unstable)
 
-**Important:** The Neovim team does not maintain the PPA packages. For problems or questions about the PPA specifically contact https://launchpad.net/~neovim-ppa.
+**Important:** The Neovim team does not maintain the PPA packages. For problems or questions about the PPA specifically contact <https://launchpad.net/~neovim-ppa>.
 
 To be able to use **add-apt-repository** you may need to install software-properties-common:
 
@@ -393,7 +456,6 @@ or [from the ports tree](https://cvsweb.openbsd.org/cgi-bin/cvsweb/ports/editors
 ## Android
 
 [Termux](https://github.com/termux/termux-app) offers a Neovim package.
-
 
 Install from source
 ===================
