@@ -10,5 +10,5 @@ vim.keymap.set('n', '[[', function()
 end, { buffer = 0, silent = false, desc = 'Jump to previous section' })
 
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
-  .. '\n exe "nunmap <buffer> gO"'
-  .. '\n exe "nunmap <buffer> ]]" | exe "nunmap <buffer> [["'
+  .. '\n sil! exe "nunmap <buffer> gO"'
+  .. '\n sil! exe "nunmap <buffer> ]]" | sil! exe "nunmap <buffer> [["'
