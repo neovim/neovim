@@ -265,6 +265,9 @@ EDITOR
   to a literal "~" directory.
 • |hl-ComplMatchIns| shows matched text of the currently inserted completion.
 • |hl-PmenuMatch| and |hl-PmenuMatchSel| show matched text in completion popup.
+• |gO| now works in `help`, `checkhealth`, and `markdown` buffers.
+• Jump between sections in `help` and `checkhealth` buffers with `[[` and
+  `]]`.
 
 EVENTS
 
