@@ -361,4 +361,36 @@ func Test_gf_switchbuf()
   %bw!
 endfunc
 
+func Test_gf_with_suffixesadd()
+  let cwd = getcwd()
+  let dir = 'Xtestgf_sua_dir'
+  call mkdir(dir, 'R')
+  call chdir(dir)
+
+  call writefile([], 'foo.c', 'D')
+  call writefile([], 'bar.cpp', 'D')
+  call writefile([], 'baz.cc', 'D')
+  call writefile([], 'foo.o', 'D')
+  call writefile([], 'bar.o', 'D')
+  call writefile([], 'baz.o', 'D')
+
+  new
+  setlocal path=,, suffixesadd=.c,.cpp
+  call setline(1, ['./foo', './bar', './baz'])
+  exe "normal! gg\<C-W>f"
+  call assert_equal('foo.c', expand('%:t'))
+  close
+  exe "normal! 2gg\<C-W>f"
+  call assert_equal('bar.cpp', expand('%:t'))
+  close
+  call assert_fails('exe "normal! 3gg\<C-W>f"', 'E447:')
+  setlocal suffixesadd+=.cc
+  exe "normal! 3gg\<C-W>f"
+  call assert_equal('baz.cc', expand('%:t'))
+  close
+
+  %bwipe!
+  call chdir(cwd)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
