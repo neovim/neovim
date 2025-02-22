@@ -1,4 +1,14 @@
 ifeq ($(OS),Windows_NT)
+  ifeq '$(findstring ;,$(PATH))' ';'
+    UNIX_LIKE := FALSE
+  else
+    UNIX_LIKE := TRUE
+  endif
+else
+  UNIX_LIKE := TRUE
+endif
+
+ifeq ($(UNIX_LIKE),FALSE)
   SHELL := powershell.exe
   .SHELLFLAGS := -NoProfile -NoLogo
   MKDIR := @$$null = new-item -itemtype directory -force
