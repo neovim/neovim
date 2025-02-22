@@ -1417,6 +1417,11 @@ function M._make_floating_popup_size(contents, opts)
   -- make sure borders are always inside the screen
   width = math.min(width, screen_width - border_width)
 
+  -- Make sure that the width is large enough to fit the title.
+  if opts.title then
+    width = math.max(width, vim.fn.strdisplaywidth(opts.title))
+  end
+
   if wrap_at then
     wrap_at = math.min(wrap_at, width)
   end

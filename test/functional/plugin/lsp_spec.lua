@@ -3528,6 +3528,20 @@ describe('LSP', function()
         end)
       )
     end)
+
+    it('considers title when computing width', function()
+      eq(
+        { 17, 2 },
+        exec_lua(function()
+          return {
+            vim.lsp.util._make_floating_popup_size(
+              { 'foo', 'bar' },
+              { title = 'A very long title' }
+            ),
+          }
+        end)
+      )
+    end)
   end)
 
   describe('lsp.util.trim.trim_empty_lines', function()
