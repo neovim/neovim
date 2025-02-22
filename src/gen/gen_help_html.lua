@@ -131,7 +131,7 @@ local function tofile(fname, text)
   end
 end
 
----@type fun(s: string): string
+--- @param s string
 local function html_esc(s)
   return (s:gsub('&', '&amp;'):gsub('<', '&lt;'):gsub('>', '&gt;'))
 end
@@ -218,7 +218,9 @@ local function is_noise(line, noise_lines)
 end
 
 --- Creates a github issue URL at neovim/tree-sitter-vimdoc with prefilled content.
---- @return string
+--- @param fname string
+--- @param to_fname string
+--- @param sample_text string
 local function get_bug_url_vimdoc(fname, to_fname, sample_text)
   local this_url = string.format('https://neovim.io/doc/user/%s', vim.fs.basename(to_fname))
   local bug_url = (
@@ -234,7 +236,10 @@ local function get_bug_url_vimdoc(fname, to_fname, sample_text)
 end
 
 --- Creates a github issue URL at neovim/neovim with prefilled content.
---- @return string
+--- @param fname string
+--- @param to_fname string
+--- @param sample_text string
+--- @param token_name string|nil
 local function get_bug_url_nvim(fname, to_fname, sample_text, token_name)
   local this_url = string.format('https://neovim.io/doc/user/%s', vim.fs.basename(to_fname))
   local bug_url = (
@@ -298,7 +303,6 @@ end
 ---@return string
 local function getws(node, bufnr)
   local line1, c1, line2, _ = node:range()
-  ---@type string
   local raw = vim.fn.getbufline(bufnr, line1 + 1, line2 + 1)[1]
   local text_before = raw:sub(1, c1)
   local leading_ws = text_before:match('%s+$') or ''
@@ -387,7 +391,7 @@ end
 ---@param root TSNode
 ---@param level integer
 ---@param lang_tree TSTree
----@param opt table
+---@param opt { buf:integer, fname:string }
 ---@param stats table
 local function visit_validate(root, level, lang_tree, opt, stats)
   level = level or 0
@@ -422,7 +426,7 @@ local function visit_validate(root, level, lang_tree, opt, stats)
     and (not vim.tbl_contains({ 'codespan', 'taglink', 'tag' }, parent))
   then
     local text_nopunct = vim.fn.trim(text, '.,', 0) -- Ignore some punctuation.
-    local fname_basename = assert(vim.fs.basename(opt.fname))
+    local fname_basename = vim.fs.basename(opt.fname)
     if spell_dict[text_nopunct] then
       local should_ignore = (
         spell_ignore_files[fname_basename] == true
@@ -952,7 +956,6 @@ local function gen_one(fname, text, to_fname, old, commit, parser_path)
     main
   )
 
-  ---@type string
   local toc = [[
     <div class="col-narrow toc">
       <div><a href="index.html">Main</a></div>
@@ -966,8 +969,7 @@ local function gen_one(fname, text, to_fname, old, commit, parser_path)
     n = n + 1 + #h1.subheadings
   end
   for _, h1 in ipairs(headings) do
-    ---@type string
-    toc = toc .. ('<div class="help-toc-h1"><a href="#%s">%s</a>\n'):format(h1.tag, h1.name)
+    toc = string.format('%s<div class="help-toc-h1"><a href="#%s">%s</a>\n', toc, h1.tag, h1.name)
     if n < 30 or #headings < 10 then -- Show subheadings only if there aren't too many.
       for _, h2 in ipairs(h1.subheadings) do
         toc = toc
@@ -1393,7 +1395,7 @@ function M.validate(help_dir, include, parser_path)
   vim.validate('parser_path', parser_path, function(f)
     return vim.fn.filereadable(vim.fs.normalize(f)) == 1
   end, true, 'valid vimdoc.{so,dll} filepath')
-  local err_count = 0 ---@type integer
+  local err_count = 0
   local files_to_errors = {} ---@type table<string, string[]>
   ensure_runtimepath()
   tagmap = get_helptags(vim.fs.normalize(help_dir))

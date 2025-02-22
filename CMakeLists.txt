@@ -344,11 +344,14 @@ ExternalProject_Add(download_luals
   DOWNLOAD_NO_PROGRESS TRUE
   CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
 
-file(GLOB_RECURSE LUAFILES runtime/*.lua)
+# TODO(dundargoc): once all checks pass, test if changing a lua file in `test/`
+# causes this to rerun. If so then we should remove all lua files in `test/`
+# from `LUAFILES`.
+file(GLOB_RECURSE LUAFILES *.lua)
 add_target(luals
   COMMAND ${DEPS_BIN_DIR}/luals/bin/lua-language-server
     --configpath=${PROJECT_SOURCE_DIR}/.luarc.json
-    --check=${PROJECT_SOURCE_DIR}/runtime
+    --check=${PROJECT_SOURCE_DIR}
     --checklevel=Hint
   DEPENDS ${LUAFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)

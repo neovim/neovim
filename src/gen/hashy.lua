@@ -56,7 +56,7 @@ end
 
 function M.switcher(put, tab, maxlen, worst_buck_size)
   local neworder = {} --- @type string[]
-  put '  switch (len) {\n'
+  put('  switch (len) {\n')
   local bucky = worst_buck_size > 1
   for len = 1, maxlen do
     local vals = tab[len]
@@ -80,11 +80,11 @@ function M.switcher(put, tab, maxlen, worst_buck_size)
             if bucky then
               put('high = ' .. endidx .. '; ')
             end
-            put 'break;\n'
+            put('break;\n')
           end
         end
-        put '      default: break;\n'
-        put '    }\n    '
+        put('      default: break;\n')
+        put('    }\n    ')
       else
         local startidx = #neworder
         table.insert(neworder, posbuck[keys[1]][1])
@@ -94,16 +94,17 @@ function M.switcher(put, tab, maxlen, worst_buck_size)
           put('high = ' .. endidx .. '; ')
         end
       end
-      put 'break;\n'
+      put('break;\n')
     end
   end
-  put '    default: break;\n'
-  put '  }\n'
+  put('    default: break;\n')
+  put('  }\n')
   return neworder
 end
 
 function M.hashy_hash(name, strings, access)
   local stats = {}
+  ---@param str string
   local put = function(str)
     table.insert(stats, str)
   end
@@ -138,7 +139,7 @@ function M.hashy_hash(name, strings, access)
   return low;
 ]])
   end
-  put '}\n\n'
+  put('}\n\n')
   return neworder, table.concat(stats)
 end
 
