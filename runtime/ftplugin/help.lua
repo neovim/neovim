@@ -118,6 +118,6 @@ vim.keymap.set('n', 'g==', function()
 end, { buffer = true })
 
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
-  .. '\n exe "nunmap <buffer> gO" | exe "nunmap <buffer> g=="'
-  .. '\n exe "nunmap <buffer> ]]" | exe "nunmap <buffer> [["'
+  .. '\n sil! exe "nunmap <buffer> gO" | sil! exe "nunmap <buffer> g=="'
+  .. '\n sil! exe "nunmap <buffer> ]]" | sil! exe "nunmap <buffer> [["'
 vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | call v:lua.vim.treesitter.stop()'
