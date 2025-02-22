@@ -31,6 +31,8 @@ local headers = {}
 -- set of function names, used to detect duplicates
 local function_names = {}
 
+-- TODO(lewis6991): change project structure to not need suppression
+--- @diagnostic disable-next-line:different-requires
 local c_grammar = require('generators.c_grammar')
 
 local startswith = vim.startswith

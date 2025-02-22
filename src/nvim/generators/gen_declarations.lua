@@ -1,3 +1,5 @@
+-- TODO(lewis6991): change project structure to not need suppression
+--- @diagnostic disable-next-line:different-requires
 local grammar = require('generators.c_grammar').grammar
 
 --- @param fname string
