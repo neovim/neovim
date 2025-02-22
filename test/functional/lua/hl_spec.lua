@@ -9,6 +9,12 @@ local command = n.command
 local clear = n.clear
 local api = n.api
 
+local testlog = 'Xtest-highlight-log'
+
+after_each(function()
+  os.remove(testlog)
+end)
+
 describe('vim.hl.range', function()
   local screen
 
@@ -173,6 +179,7 @@ describe('vim.hl.on_yank', function()
   end)
 
   it('does not show in another window', function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
     command('vsplit')
     exec_lua(function()
       vim.api.nvim_buf_set_mark(0, '[', 1, 1, {})
@@ -188,9 +195,13 @@ describe('vim.hl.on_yank', function()
     exec_lua(function()
       vim.hl.range(0, ns, 'Search', { 0, 0 }, { 0, 0 }, { timeout = 0 })
     end)
+    if t.is_asan() then
+      t.assert_log('uv_loop_close', testlog, 100)
+    end
   end)
 
   it('removes old highlight if new one is created before old one times out', function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
     command('vnew')
     exec_lua(function()
       vim.api.nvim_buf_set_mark(0, '[', 1, 1, {})
@@ -213,5 +224,8 @@ describe('vim.hl.on_yank', function()
     exec_lua(function()
       vim.hl.range(0, ns, 'Search', { 0, 0 }, { 0, 0 }, { timeout = 0 })
     end)
+    if t.is_asan() then
+      t.assert_log('uv_loop_close', testlog, 100)
+    end
   end)
 end)
