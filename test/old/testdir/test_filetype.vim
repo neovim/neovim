@@ -672,7 +672,7 @@ func s:GetFilenameChecks() abort
     \ 'sass': ['file.sass'],
     \ 'sbt': ['file.sbt'],
     \ 'scala': ['file.scala', 'file.mill'],
-    \ 'scheme': ['file.scm', 'file.ss', 'file.sld', 'file.stsg', 'any/local/share/supertux2/config', '.lips_repl_history'],
+    \ 'scheme': ['file.scm', 'file.ss', 'file.sld', 'file.stsg', 'any/local/share/supertux2/config', '.lips_repl_history', '.guile'],
     \ 'scilab': ['file.sci', 'file.sce'],
     \ 'screen': ['.screenrc', 'screenrc'],
     \ 'scss': ['file.scss'],

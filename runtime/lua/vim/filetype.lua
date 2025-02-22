@@ -1802,6 +1802,7 @@ local filename = {
   Vagrantfile = 'ruby',
   ['smb.conf'] = 'samba',
   ['.lips_repl_history'] = 'scheme',
+  ['.guile'] = 'scheme',
   screenrc = 'screen',
   ['.screenrc'] = 'screen',
   ['/etc/sensors3.conf'] = 'sensors',
