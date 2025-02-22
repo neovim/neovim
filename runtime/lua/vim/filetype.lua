@@ -2150,11 +2150,6 @@ local pattern = {
     ['/usr/.*/gnupg/options%.skel$'] = 'gpg',
     ['/usr/share/upstart/.*%.conf$'] = 'upstart',
     ['/usr/share/upstart/.*%.override$'] = 'upstart',
-    ['/usr/share/X11/xkb/compat/'] = detect_xkb,
-    ['/usr/share/X11/xkb/geometry/'] = detect_xkb,
-    ['/usr/share/X11/xkb/keycodes/'] = detect_xkb,
-    ['/usr/share/X11/xkb/symbols/'] = detect_xkb,
-    ['/usr/share/X11/xkb/types/'] = detect_xkb,
   },
   ['/var/'] = {
     ['/var/backups/group%.bak$'] = 'group',
@@ -2328,6 +2323,13 @@ local pattern = {
     ['/%.neomutt/neomuttrc'] = detect_neomuttrc,
     ['^Neomuttrc'] = detect_neomuttrc,
     ['%.neomuttdebug'] = 'neomuttlog',
+  },
+  ['/%.?xkb/'] = {
+    ['/%.?xkb/compat/'] = detect_xkb,
+    ['/%.?xkb/geometry/'] = detect_xkb,
+    ['/%.?xkb/keycodes/'] = detect_xkb,
+    ['/%.?xkb/symbols/'] = detect_xkb,
+    ['/%.?xkb/types/'] = detect_xkb,
   },
   ['^%.'] = {
     ['^%.cshrc'] = detect.csh,
