@@ -913,6 +913,7 @@ void show_cursor_info_later(bool force)
     redraw_custom_title_later();
   }
 
+  // TODO(seandewar): also update this when the statusline is _actually_ redrawn...
   curwin->w_stl_cursor = curwin->w_cursor;
   curwin->w_stl_virtcol = curwin->w_virtcol;
   curwin->w_stl_empty = (char)empty_line;
