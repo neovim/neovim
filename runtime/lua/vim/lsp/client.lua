@@ -1056,7 +1056,7 @@ function Client:supports_method(method, bufnr)
     --- @diagnostic disable-next-line:no-unknown
     bufnr = bufnr.bufnr
   end
-  local required_capability = lsp._request_name_to_capability[method]
+  local required_capability = lsp.protocol._request_name_to_capability[method]
   -- if we don't know about the method, assume that the client supports it.
   if not required_capability then
     return true
