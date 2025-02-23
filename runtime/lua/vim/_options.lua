@@ -922,11 +922,11 @@ function Option:prepend(value) end -- luacheck: no unused
 ---@diagnostic disable-next-line:unused-local used for gen_vimdoc
 function Option:remove(value) end -- luacheck: no unused
 
----@private
+--- @nodoc
 vim.opt = create_option_accessor()
 
----@private
+--- @nodoc
 vim.opt_local = create_option_accessor('local')
 
----@private
+--- @nodoc
 vim.opt_global = create_option_accessor('global')

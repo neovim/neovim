@@ -56,7 +56,7 @@ vim._extra = {
   inspect_pos = true,
 }
 
---- @private
+--- @nodoc
 vim.log = {
   --- @enum vim.log.levels
   levels = {
