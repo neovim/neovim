@@ -2695,18 +2695,36 @@ void redraw_buf_line_later(buf_T *buf, linenr_T line, bool force)
   }
 }
 
-void redraw_buf_range_later(buf_T *buf, linenr_T firstline, linenr_T lastline)
+void redraw_win_range_later(win_T *wp, linenr_T first, linenr_T last)
+{
+  if (last >= wp->w_topline && first < wp->w_botline) {
+    if (wp->w_redraw_top == 0 || wp->w_redraw_top > first) {
+      wp->w_redraw_top = first;
+    }
+    if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < last) {
+      wp->w_redraw_bot = last;
+    }
+    redraw_later(wp, UPD_VALID);
+  }
+}
+
+/// Changed something in the current window, at buffer line "lnum", that
+/// requires that line and possibly other lines to be redrawn.
+/// Used when entering/leaving Insert mode with the cursor on a folded line.
+/// Used to remove the "$" from a change command.
+/// Note that when also inserting/deleting lines w_redraw_top and w_redraw_bot
+/// may become invalid and the whole window will have to be redrawn.
+void redrawWinline(win_T *wp, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL
+{
+  redraw_win_range_later(wp, lnum, lnum);
+}
+
+void redraw_buf_range_later(buf_T *buf, linenr_T first, linenr_T last)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf
-        && lastline >= wp->w_topline && firstline < wp->w_botline) {
-      if (wp->w_redraw_top == 0 || wp->w_redraw_top > firstline) {
-        wp->w_redraw_top = firstline;
-      }
-      if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lastline) {
-        wp->w_redraw_bot = lastline;
-      }
-      redraw_later(wp, UPD_VALID);
+    if (wp->w_buffer == buf) {
+      redraw_win_range_later(wp, first, last);
     }
   }
 }
@@ -2802,27 +2820,6 @@ void win_redraw_last_status(const frame_T *frp)
       frp = frp->fr_next;
     }
     win_redraw_last_status(frp);
-  }
-}
-
-/// Changed something in the current window, at buffer line "lnum", that
-/// requires that line and possibly other lines to be redrawn.
-/// Used when entering/leaving Insert mode with the cursor on a folded line.
-/// Used to remove the "$" from a change command.
-/// Note that when also inserting/deleting lines w_redraw_top and w_redraw_bot
-/// may become invalid and the whole window will have to be redrawn.
-void redrawWinline(win_T *wp, linenr_T lnum)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (lnum >= wp->w_topline
-      && lnum < wp->w_botline) {
-    if (wp->w_redraw_top == 0 || wp->w_redraw_top > lnum) {
-      wp->w_redraw_top = lnum;
-    }
-    if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lnum) {
-      wp->w_redraw_bot = lnum;
-    }
-    redraw_later(wp, UPD_VALID);
   }
 }
 
