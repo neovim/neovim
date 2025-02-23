@@ -106,10 +106,11 @@
 typedef struct {
   VimState state;
   Terminal *term;
-  int save_rd;              // saved value of RedrawingDisabled
+  int save_rd;          ///< saved value of RedrawingDisabled
   bool close;
-  bool got_bsl;             // if the last input was <C-\>
-  bool got_bsl_o;           // if left terminal mode with <c-\><c-o>
+  bool got_bsl;         ///< if the last input was <C-\>
+  bool got_bsl_o;       ///< if left terminal mode with <c-\><c-o>
+  bool cursor_visible;  ///< cursor's current visibility; ensures matched busy_start/stop UI events
 } TerminalState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -673,6 +674,7 @@ bool terminal_enter(void)
   assert(buf->terminal);  // Should only be called when curbuf has a terminal.
   TerminalState s[1] = { 0 };
   s->term = buf->terminal;
+  s->cursor_visible = true;  // Assume visible; may change via refresh_cursor later.
   stop_insert_mode = false;
 
   // Ensure the terminal is properly sized. Ideally window size management
@@ -685,10 +687,6 @@ bool terminal_enter(void)
   State = MODE_TERMINAL;
   mapped_ctrl_c |= MODE_TERMINAL;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
-  if (!s->term->cursor.visible) {
-    // Hide cursor if it should be hidden. Do so right after setting State, before events.
-    ui_busy_start();
-  }
 
   // Disable these options in terminal-mode. They are nonsense because cursor is
   // placed at end of buffer to "follow" output. #11072
@@ -715,10 +713,7 @@ bool terminal_enter(void)
   curwin->w_p_so = 0;
   curwin->w_p_siso = 0;
 
-  // Update the cursor shape table and flush changes to the UI
-  s->term->pending.cursor = true;
-  refresh_cursor(s->term);
-
+  s->term->pending.cursor = true;  // Update the cursor shape table
   adjust_topline(s->term, buf, 0);  // scroll to end
   showmode();
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
@@ -739,8 +734,8 @@ bool terminal_enter(void)
   }
   State = save_state;
   RedrawingDisabled = s->save_rd;
-  if (!s->term->cursor.visible) {
-    // If cursor was hidden, show it again. Do so right after restoring State, before events.
+  if (!s->cursor_visible) {
+    // If cursor was hidden, show it again. Do so right after restoring State.
     ui_busy_stop();
   }
 
@@ -805,10 +800,13 @@ static void terminal_check_cursor(void)
 //   0 if the main loop must exit
 static int terminal_check(VimState *state)
 {
+  TerminalState *const s = (TerminalState *)state;
+
   if (stop_insert_mode) {
     return 0;
   }
 
+  assert(s->term == curbuf->terminal);
   terminal_check_cursor();
   validate_cursor(curwin);
 
@@ -835,6 +833,7 @@ static int terminal_check(VimState *state)
   }
 
   setcursor();
+  refresh_cursor(s->term, &s->cursor_visible);
   ui_flush();
   return 1;
 }
@@ -937,23 +936,9 @@ static int terminal_execute(VimState *state, int key)
   }
   if (s->term != curbuf->terminal) {
     // Active terminal buffer changed, flush terminal's cursor state to the UI
-    curbuf->terminal->pending.cursor = true;
-
-    if (!s->term->cursor.visible) {
-      // If cursor was hidden, show it again
-      ui_busy_stop();
-    }
-
-    if (!curbuf->terminal->cursor.visible) {
-      // Hide cursor if it should be hidden
-      ui_busy_start();
-    }
-
-    invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
-    invalidate_terminal(curbuf->terminal,
-                        curbuf->terminal->cursor.row,
-                        curbuf->terminal->cursor.row + 1);
     s->term = curbuf->terminal;
+    s->term->pending.cursor = true;
+    invalidate_terminal(s->term, -1, -1);
   }
   return 1;
 }
@@ -1291,17 +1276,8 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     break;
 
   case VTERM_PROP_CURSORVISIBLE:
-    if (is_focused(term)) {
-      if (!val->boolean && term->cursor.visible) {
-        // Hide the cursor
-        ui_busy_start();
-      } else if (val->boolean && !term->cursor.visible) {
-        // Unhide the cursor
-        ui_busy_stop();
-      }
-      invalidate_terminal(term, -1, -1);
-    }
     term->cursor.visible = val->boolean;
+    invalidate_terminal(term, -1, -1);
     break;
 
   case VTERM_PROP_TITLE: {
@@ -2042,23 +2018,35 @@ static void refresh_terminal(Terminal *term)
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
-  // refresh_ functions assume the terminal buffer is current
+  // Some refresh_ functions assume the terminal buffer is current. Don't call refresh_cursor here,
+  // as we don't want a terminal that was possibly made temporarily current influencing the cursor.
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
   refresh_size(term, buf);
   refresh_scrollback(term, buf);
   refresh_screen(term, buf);
-  refresh_cursor(term);
   aucmd_restbuf(&aco);
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
 }
 
-static void refresh_cursor(Terminal *term)
+static void refresh_cursor(Terminal *term, bool *cursor_visible)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!is_focused(term) || !term->pending.cursor) {
+  if (!is_focused(term)) {
+    return;
+  }
+  if (term->cursor.visible != *cursor_visible) {
+    *cursor_visible = term->cursor.visible;
+    if (*cursor_visible) {
+      ui_busy_stop();
+    } else {
+      ui_busy_start();
+    }
+  }
+
+  if (!term->pending.cursor) {
     return;
   }
   term->pending.cursor = false;
@@ -2166,6 +2154,7 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Terminal *term, buf_T *buf)
 {
+  assert(buf == curbuf);  // TODO(seandewar): remove this condition
   int width, height;
   vterm_get_size(term->vt, &height, &width);
 
