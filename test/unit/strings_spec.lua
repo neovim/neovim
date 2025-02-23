@@ -156,7 +156,7 @@ describe('vim_snprintf()', function()
     eq(#expected, strings.vim_snprintf(buf, bsize, fmt, ...), ctx)
     if bsize > 0 then
       local actual = ffi.string(buf, math.min(#expected + 1, bsize))
-      eq(expected:sub(1, bsize - 1) .. '\0', actual)
+      eq(expected:sub(1, bsize - 1) .. '\0', actual, ctx)
     end
   end
 
