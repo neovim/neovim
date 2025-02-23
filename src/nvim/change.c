@@ -804,9 +804,8 @@ void ins_char_bytes(char *buf, size_t charlen)
 /// Insert a string at the cursor position.
 /// Note: Does NOT handle Replace mode.
 /// Caller must have prepared for undo.
-void ins_str(char *s)
+void ins_str(char *s, size_t slen)
 {
-  int newlen = (int)strlen(s);
   linenr_T lnum = curwin->w_cursor.lnum;
 
   if (virtual_active(curwin) && curwin->w_cursor.coladd > 0) {
@@ -817,17 +816,17 @@ void ins_str(char *s)
   char *oldp = ml_get(lnum);
   int oldlen = ml_get_len(lnum);
 
-  char *newp = xmalloc((size_t)oldlen + (size_t)newlen + 1);
+  char *newp = xmalloc((size_t)oldlen + slen + 1);
   if (col > 0) {
     memmove(newp, oldp, (size_t)col);
   }
-  memmove(newp + col, s, (size_t)newlen);
+  memmove(newp + col, s, slen);
   int bytes = oldlen - col + 1;
   assert(bytes >= 0);
-  memmove(newp + col + newlen, oldp + col, (size_t)bytes);
+  memmove(newp + col + slen, oldp + col, (size_t)bytes);
   ml_replace(lnum, newp, false);
-  inserted_bytes(lnum, col, 0, newlen);
-  curwin->w_cursor.col += newlen;
+  inserted_bytes(lnum, col, 0, (int)slen);
+  curwin->w_cursor.col += (int)slen;
 }
 
 // Delete one character under the cursor.
