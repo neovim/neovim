@@ -413,7 +413,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
             // add the additional whitespace needed after the
             // comment leader for the numbered list.
             for (int i = 0; i < padding; i++) {
-              ins_str(" ");
+              ins_str(S_LEN(" "));
             }
           } else {
             set_indent(second_indent, SIN_CHANGED);

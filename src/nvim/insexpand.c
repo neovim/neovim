@@ -3781,17 +3781,16 @@ void ins_compl_delete(bool new_leader)
     curwin->w_cursor.col = compl_ins_end_col;
   }
 
-  char *remaining = NULL;
+  String remaining = STRING_INIT;
   if (curwin->w_cursor.lnum > compl_lnum) {
     if (curwin->w_cursor.col < get_cursor_line_len()) {
-      char *line = get_cursor_line_ptr();
-      remaining = xstrdup(line + curwin->w_cursor.col);
+      remaining = cbuf_to_string(get_cursor_pos_ptr(), (size_t)get_cursor_pos_len());
     }
 
     while (curwin->w_cursor.lnum > compl_lnum) {
       if (ml_delete(curwin->w_cursor.lnum, false) == FAIL) {
-        if (remaining) {
-          XFREE_CLEAR(remaining);
+        if (remaining.data) {
+          xfree(remaining.data);
         }
         return;
       }
@@ -3804,8 +3803,8 @@ void ins_compl_delete(bool new_leader)
 
   if ((int)curwin->w_cursor.col > col) {
     if (stop_arrow() == FAIL) {
-      if (remaining) {
-        XFREE_CLEAR(remaining);
+      if (remaining.data) {
+        xfree(remaining.data);
       }
       return;
     }
@@ -3813,11 +3812,11 @@ void ins_compl_delete(bool new_leader)
     compl_ins_end_col = curwin->w_cursor.col;
   }
 
-  if (remaining != NULL) {
+  if (remaining.data != NULL) {
     orig_col = curwin->w_cursor.col;
-    ins_str(remaining);
+    ins_str(remaining.data, remaining.size);
     curwin->w_cursor.col = orig_col;
-    xfree(remaining);
+    xfree(remaining.data);
   }
 
   // TODO(vim): is this sufficient for redrawing?  Redrawing everything

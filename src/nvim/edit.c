@@ -1737,11 +1737,11 @@ void change_indent(int type, int amount, int round, bool call_changed_bytes)
     // the right screen column.
     if (vcol != (int)curwin->w_virtcol) {
       curwin->w_cursor.col = (colnr_T)new_cursor_col;
-      size_t i = (size_t)(curwin->w_virtcol - vcol);
-      char *ptr = xmallocz(i);
-      memset(ptr, ' ', i);
-      new_cursor_col += (int)i;
-      ins_str(ptr);
+      const size_t ptrlen = (size_t)(curwin->w_virtcol - vcol);
+      char *ptr = xmallocz(ptrlen);
+      memset(ptr, ' ', ptrlen);
+      new_cursor_col += (int)ptrlen;
+      ins_str(ptr, ptrlen);
       xfree(ptr);
     }
 
@@ -2014,7 +2014,7 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
         return;
       }
       p[len - 1] = NUL;
-      ins_str(p);
+      ins_str(p, (size_t)(len - 1));
       AppendToRedobuffLit(p, -1);
       ctrlv = false;
     }
@@ -2195,7 +2195,7 @@ void insertchar(int c, int flags, int second_indent)
     do_digraph(-1);                     // clear digraphs
     do_digraph((uint8_t)buf[i - 1]);               // may be the start of a digraph
     buf[i] = NUL;
-    ins_str(buf);
+    ins_str(buf, (size_t)i);
     if (flags & INSCHAR_CTRLV) {
       redo_literal((uint8_t)(*buf));
       i = 1;
@@ -3860,7 +3860,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         if (State & VREPLACE_FLAG) {
           ins_char(' ');
         } else {
-          ins_str(" ");
+          ins_str(S_LEN(" "));
           if ((State & REPLACE_FLAG)) {
             replace_push_nul();
           }
@@ -4270,7 +4270,7 @@ static bool ins_tab(void)
     if (State & VREPLACE_FLAG) {
       ins_char(' ');
     } else {
-      ins_str(" ");
+      ins_str(S_LEN(" "));
       if (State & REPLACE_FLAG) {            // no char replaced
         replace_push_nul();
       }
