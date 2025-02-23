@@ -3957,7 +3957,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  const char *cmd;
+  char *cmd;
   bool executable = true;
   char **argv = tv_to_argv(&argvars[0], &cmd, &executable);
   if (!argv) {
@@ -3969,6 +3969,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     // Wrong argument types
     semsg(_(e_invarg2), "expected dictionary");
     shell_free_argv(argv);
+    xfree(cmd);
     return;
   }
 
@@ -4011,12 +4012,14 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       // Restrict "term" field to boolean, in case we want to allow buffer numbers in the future.
       semsg(_(e_invarg2), "'term' must be Boolean");
       shell_free_argv(argv);
+      xfree(cmd);
       return;
     }
 
     if (pty && rpc) {
       semsg(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
       shell_free_argv(argv);
+      xfree(cmd);
       return;
     }
 
@@ -4025,6 +4028,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       semsg(_(e_invarg2),
             "job cannot have both 'pty' and 'overlapped' options set");
       shell_free_argv(argv);
+      xfree(cmd);
       return;
     }
 #endif
@@ -4036,6 +4040,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       if (!os_isdir(cwd)) {
         semsg(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
+        xfree(cmd);
         return;
       }
     }
@@ -4044,11 +4049,13 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (job_env && job_env->di_tv.v_type != VAR_DICT) {
       semsg(_(e_invarg2), "env");
       shell_free_argv(argv);
+      xfree(cmd);
       return;
     }
 
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
+      xfree(cmd);
       return;
     }
   }
@@ -4061,11 +4068,13 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (text_locked()) {
       text_locked_msg();
       shell_free_argv(argv);
+      xfree(cmd);
       return;
     }
     if (curbuf->b_changed) {
       emsg(_("jobstart(...,{term=true}) requires unmodified buffer"));
       shell_free_argv(argv);
+      xfree(cmd);
       return;
     }
     assert(!rpc);
@@ -4091,11 +4100,13 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                                     rpc, overlapped, detach, stdin_mode, cwd,
                                     width, height, env, &rettv->vval.v_number);
   if (!chan) {
+    xfree(cmd);
     return;
   } else if (!term) {
     channel_create_event(chan, NULL);
   } else {
     if (rettv->vval.v_number <= 0) {
+      xfree(cmd);
       return;
     }
 
@@ -4139,6 +4150,8 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     channel_create_event(chan, NULL);
     channel_decref(chan);
   }
+
+  xfree(cmd);
 }
 
 /// "jobstop()" function

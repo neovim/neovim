@@ -1462,6 +1462,58 @@ void slash_adjust(char *p)
     MB_PTR_ADV(p);
   }
 }
+
+/// Replace all backslashes with slashes
+/// Vim prefers slashes, 
+/// use to convert os-specific path formats to the vim-preferred format
+void path_separators_normalize(char *p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (path_with_url(p)) {
+    return;
+  }
+
+  if (*p == '`') {
+    // don't replace backslash in backtick quoted strings
+    const size_t len = strlen(p);
+    if (len > 2 && *(p + len - 1) == '`') {
+      return;
+    }
+  }
+
+  while (*p) {
+    if (*p == '\\') {
+      *p = '/';
+    }
+    MB_PTR_ADV(p);
+  }
+}
+
+/// Replace slashes with backslashes
+/// Use specifically to convert a path from vim-preferred slashes, for an os-specific function call
+void path_separators_specialize(char *p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (path_with_url(p)) {
+    return;
+  }
+
+  if (*p == '`') {
+    // don't replace backslash in backtick quoted strings
+    const size_t len = strlen(p);
+    if (len > 2 && *(p + len - 1) == '`') {
+      return;
+    }
+  }
+
+  while (*p) {
+    if (*p == '/') {
+      *p = '\\';
+    }
+    MB_PTR_ADV(p);
+  }
+}
+
 #endif
 
 /// Add a file to a file list.  Accepted flags:
@@ -1801,9 +1853,6 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
 
   if (strlen(fname) > (len - 1)) {
     xstrlcpy(buf, fname, len);  // truncate
-#ifdef MSWIN
-    slash_adjust(buf);
-#endif
     return FAIL;
   }
 
@@ -1816,9 +1865,6 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   if (rv == FAIL) {
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
-#ifdef MSWIN
-  slash_adjust(buf);
-#endif
   return rv;
 }
 

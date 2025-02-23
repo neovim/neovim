@@ -5791,18 +5791,23 @@ void f_foreach(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// @return  Result of `shell_build_argv()` if `cmd_tv` is a String.
 ///          Else, string values of `cmd_tv` copied to a (char **) list with
 ///          argv[0] resolved to full path ($PATHEXT-resolved on Windows).
-char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
+char **tv_to_argv(typval_T *cmd_tv, char **cmd, bool *executable)
 {
+  bool cmd_set = false;
   if (cmd_tv->v_type == VAR_STRING) {  // String => "shell semantics".
     const char *cmd_str = tv_get_string(cmd_tv);
     if (cmd) {
-      *cmd = cmd_str;
+      cmd_set = true;
+      *cmd = xstrdup(cmd_str);
     }
     return shell_build_argv(cmd_str, NULL);
   }
 
   if (cmd_tv->v_type != VAR_LIST) {
     semsg(_(e_invarg2), "expected String or List");
+    if (cmd_set) {
+      xfree(*cmd);
+    }
     return NULL;
   }
 
@@ -5810,6 +5815,9 @@ char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
   int argc = tv_list_len(argl);
   if (!argc) {
     emsg(_(e_invarg));  // List must have at least one item.
+    if (cmd_set) {
+      xfree(*cmd);
+    }
     return NULL;
   }
 
@@ -5822,11 +5830,18 @@ char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
       semsg(_(e_invargNval), "cmd", buf);
       *executable = false;
     }
+    if (cmd_set) {
+      xfree(*cmd);
+    }
     return NULL;
   }
 
   if (cmd) {
-    *cmd = exe_resolved;
+    if (cmd_set) {
+      xfree(*cmd);
+    }
+    cmd_set = true;
+    *cmd = xstrdup(exe_resolved);
   }
 
   // Build the argument vector
@@ -5838,6 +5853,9 @@ char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
       // Did emsg in tv_get_string_chk; just deallocate argv.
       shell_free_argv(argv);
       xfree(exe_resolved);
+      if (cmd_set) {
+        xfree(*cmd);
+      }
       return NULL;
     }
     argv[i++] = xstrdup(a);
@@ -5845,6 +5863,10 @@ char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
   // Replace argv[0] with absolute path. The only reason for this is to make
   // $PATHEXT work on Windows with jobstart([…]). #9569
   xfree(argv[0]);
+
+  // Args array being passed to os-specific methods, the path should be os-formatted
+  MUTATE_PATH_FOR_OS(exe_resolved);
+
   argv[0] = exe_resolved;
 
   return argv;

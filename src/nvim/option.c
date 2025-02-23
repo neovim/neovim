@@ -2438,6 +2438,7 @@ static const char *did_set_scrollbind(optset_T *args)
 /// Process the updated 'shellslash' option value.
 static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
 {
+  /* TODO Replace behavior? 
   if (p_ssl) {
     psepc = '/';
     psepcN = '\\';
@@ -2446,7 +2447,7 @@ static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
     psepc = '\\';
     psepcN = '/';
     pseps[0] = '\\';
-  }
+  }*/
 
   // need to adjust the file name arguments and buffer names.
   buflist_slash_adjust();

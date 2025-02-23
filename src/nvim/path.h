@@ -43,3 +43,18 @@ typedef enum file_comparison {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "path.h.generated.h"
 #endif
+
+#define MUTATE_PATH_NO_OP do { } while (0)
+#ifdef BACKSLASH_IN_FILENAME
+
+#define MUTATE_PATH_FOR_VIM(p) path_separators_normalize(p)
+#define MUTATE_PATH_FOR_OS(p)  path_separators_specialize(p)
+#define MUTATE_PATH_FOR_UI(p)  MUTATE_PATH_NO_OP
+
+#else
+
+# define MUTATE_PATH_FOR_VIM(p) MUTATE_PATH_NO_OP
+# define MUTATE_PATH_FOR_OS(p)  MUTATE_PATH_NO_OP
+# define MUTATE_PATH_FOR_UI(p)  MUTATE_PATH_NO_OP
+
+#endif
