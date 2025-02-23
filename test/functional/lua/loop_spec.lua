@@ -159,4 +159,39 @@ describe('vim.uv', function()
   it("is equal to require('luv')", function()
     eq(true, exec_lua("return vim.uv == require('luv')"))
   end)
+
+  it('non-string error() #32595', function()
+    local screen = Screen.new(50, 10)
+    exec_lua(function()
+      local timer = assert(vim.uv.new_timer())
+      timer:start(0, 0, function()
+        timer:close()
+        error(nil)
+      end)
+    end)
+    local s = [[
+                                                        |
+      {1:~                                                 }|*5
+      {3:                                                  }|
+      {9:Error executing callback:}                         |
+      {9:[NULL]}                                            |
+      {6:Press ENTER or type command to continue}^           |
+    ]]
+    screen:expect(s)
+    feed('<cr>')
+    n.assert_alive()
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+    exec_lua(function()
+      vim.uv.fs_stat('non-existent-file', function()
+        error(nil)
+      end)
+    end)
+    screen:expect(s)
+    feed('<cr>')
+    n.assert_alive()
+  end)
 end)
