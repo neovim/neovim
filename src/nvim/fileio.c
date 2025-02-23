@@ -353,10 +353,11 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     }
   }
 
-  if (!read_buffer && !read_stdin && !read_fifo) {
+  if (!read_stdin && fname != NULL) {
     perm = os_getperm(fname);
     // On Unix it is possible to read a directory, so we have to
     // check for it before os_open().
+  }
 
 #ifdef OPEN_CHR_FILES
 # define IS_CHR_DEV(perm, fname) S_ISCHR(perm) && is_dev_fd_file(fname)
@@ -364,6 +365,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 # define IS_CHR_DEV(perm, fname) false
 #endif
 
+  if (!read_stdin && !read_buffer && !read_fifo) {
     if (perm >= 0 && !S_ISREG(perm)                 // not a regular file ...
         && !S_ISFIFO(perm)                          // ... or fifo
         && !S_ISSOCK(perm)                          // ... or socket

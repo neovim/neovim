@@ -305,6 +305,8 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     if (read_fifo) {
       curbuf->b_p_bin = save_bin;
       if (retval == OK) {
+        // don't add READ_FIFO here, otherwise we won't be able to
+        // detect the encoding
         retval = read_buffer(false, eap, flags);
       }
     }
