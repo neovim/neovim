@@ -65,6 +65,7 @@
 --- @field winid integer
 --- @field winnr integer
 --- @field winrow integer
+--- @field lastused integer
 
 --- @class vim.quickfix.entry
 --- buffer number; must be the number of a valid buffer
