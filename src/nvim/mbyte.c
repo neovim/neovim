@@ -2187,7 +2187,7 @@ void mb_adjust_cursor(void)
 }
 
 /// Checks and adjusts cursor column. Not mode-dependent.
-/// @see check_cursor_col_win
+/// @see check_cursor_col
 ///
 /// @param  win_  Places cursor on a valid column for this window.
 void mb_check_adjust_col(void *win_)
