@@ -2078,10 +2078,6 @@ describe('float window', function()
 
     it('validates title title_pos', function()
       local buf = api.nvim_create_buf(false,false)
-      eq("title requires border to be set",
-         pcall_err(api.nvim_open_win,buf, false, {
-          relative='editor', width=9, height=2, row=2, col=5, title='Title',
-         }))
       eq("title_pos requires title to be set",
          pcall_err(api.nvim_open_win,buf, false, {
           relative='editor', width=9, height=2, row=2, col=5,
@@ -2112,10 +2108,6 @@ describe('float window', function()
 
     it('validates footer footer_pos', function()
       local buf = api.nvim_create_buf(false,false)
-      eq("footer requires border to be set",
-         pcall_err(api.nvim_open_win,buf, false, {
-          relative='editor', width=9, height=2, row=2, col=5, footer='Footer',
-         }))
       eq("footer_pos requires footer to be set",
          pcall_err(api.nvim_open_win,buf, false, {
           relative='editor', width=9, height=2, row=2, col=5,
@@ -2188,6 +2180,49 @@ describe('float window', function()
 
       api.nvim_win_close(win, false)
       assert_alive()
+    end)
+
+    it('no border with title and footer', function()
+      local buf = api.nvim_create_buf(false, false)
+      api.nvim_buf_set_lines(buf, 0, -1, true, { 'Hello' })
+      api.nvim_open_win(buf, false, {
+        relative='editor', width=9, height=2, row=2, col=5,
+        title = 'Title', footer = 'Footer'
+      })
+
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            {1:Hello    }|
+            {2:~        }|
+          ]],
+          float_pos = {
+            [4] = { 1001, "NW", 1, 2, 5, true, 50 },
+          },
+          win_viewport = {
+            [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
+            [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
+          },
+        })
+      else
+        screen:expect([[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{1:Hello    }{0:                          }|
+          {0:~    }{2:~        }{0:                          }|
+          {0:~                                       }|*2
+                                                  |
+        ]])
+      end
     end)
 
     it('border with title', function()
