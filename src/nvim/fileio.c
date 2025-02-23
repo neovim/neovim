@@ -355,8 +355,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 
   if (!read_buffer && !read_stdin && !read_fifo) {
     perm = os_getperm(fname);
-    // On Unix it is possible to read a directory, so we have to
-    // check for it before os_open().
 
 #ifdef OPEN_CHR_FILES
 # define IS_CHR_DEV(perm, fname) S_ISCHR(perm) && is_dev_fd_file(fname)
@@ -370,6 +368,8 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         && !(IS_CHR_DEV(perm, fname))
         // ... or a character special file named /dev/fd/<n>
         ) {
+      // On Unix it is possible to read a directory, so we have to
+      // check for it before os_open().
       if (S_ISDIR(perm)) {
         if (!silent) {
           filemess(curbuf, fname, _(msg_is_a_directory));
