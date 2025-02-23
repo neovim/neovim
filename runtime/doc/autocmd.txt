@@ -470,11 +470,11 @@ CompleteDone			After Insert mode completion is done.  Either
 				    reason	Reason for completion being
 						done. Can be one of:
 						- "accept": completion was
-						  accepted using |complete_CTRL-Y|.
-						- "cancel": completion was cancelled
-						  using |complete_CTRL-E|, pressing
-						  a non-keyword character, or
-						  triggering a new completion.
+						  accepted by |complete_CTRL-Y|.
+						- "cancel": completion was
+						  stopped by |complete_CTRL-E.
+						- "discard": completion was
+						  ended for other reason.
 
 							*CursorHold*
 CursorHold			When the user doesn't press a key for the time
