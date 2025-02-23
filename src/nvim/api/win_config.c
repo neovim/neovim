@@ -1240,11 +1240,6 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'title'");
       goto fail;
     }
-    // title only work with border
-    if (!HAS_KEY_X(config, border) && !fconfig->border) {
-      api_set_error(err, kErrorTypeException, "title requires border to be set");
-      goto fail;
-    }
 
     parse_bordertext(config->title, kBorderTextTitle, fconfig, err);
     if (ERROR_SET(err)) {
@@ -1265,11 +1260,6 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   if (HAS_KEY_X(config, footer)) {
     if (is_split) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'footer'");
-      goto fail;
-    }
-    // footer only work with border
-    if (!HAS_KEY_X(config, border) && !fconfig->border) {
-      api_set_error(err, kErrorTypeException, "footer requires border to be set");
       goto fail;
     }
 
