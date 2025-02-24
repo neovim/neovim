@@ -1442,6 +1442,8 @@ scripterror:
       }
 #endif
 
+      MUTATE_PATH_FOR_VIM(p);
+
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
           && !os_isdir(alist_name(&GARGLIST[0]))) {
         char *r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), true);

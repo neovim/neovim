@@ -1549,6 +1549,8 @@ void ex_file(exarg_T *eap)
   }
 
   if (*eap->arg != NUL || eap->addr_count == 1) {
+    MUTATE_PATH_FOR_VIM(eap->arg);
+
     if (rename_buffer(eap->arg) == FAIL) {
       return;
     }
@@ -1615,6 +1617,8 @@ int do_write(exarg_T *eap)
   }
 
   char *ffname = eap->arg;
+  MUTATE_PATH_FOR_VIM(ffname);
+
   if (*ffname == NUL) {
     if (eap->cmdidx == CMD_saveas) {
       emsg(_(e_argreq));

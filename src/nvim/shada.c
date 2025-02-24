@@ -1178,8 +1178,9 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
       break;
     case kSDItemChange:
     case kSDItemLocalMark: {
-      if (get_old_files && !set_has(cstr_t, &oldfiles_set, cur_entry.data.filemark.fname)) {
-        char *fname = cur_entry.data.filemark.fname;
+      char *fname = xstrdup(cur_entry.data.filemark.fname);
+      MUTATE_PATH_FOR_VIM(fname);
+      if (get_old_files && !set_has(cstr_t, &oldfiles_set, fname)) {
         if (want_marks) {
           // Do not bother with allocating memory for the string if already
           // allocated string from cur_entry can be used. It cannot be used if

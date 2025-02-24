@@ -5793,11 +5793,9 @@ void f_foreach(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///          argv[0] resolved to full path ($PATHEXT-resolved on Windows).
 char **tv_to_argv(typval_T *cmd_tv, char **cmd, bool *executable)
 {
-  bool cmd_set = false;
   if (cmd_tv->v_type == VAR_STRING) {  // String => "shell semantics".
     const char *cmd_str = tv_get_string(cmd_tv);
     if (cmd) {
-      cmd_set = true;
       *cmd = xstrdup(cmd_str);
     }
     return shell_build_argv(cmd_str, NULL);
@@ -5805,9 +5803,6 @@ char **tv_to_argv(typval_T *cmd_tv, char **cmd, bool *executable)
 
   if (cmd_tv->v_type != VAR_LIST) {
     semsg(_(e_invarg2), "expected String or List");
-    if (cmd_set) {
-      xfree(*cmd);
-    }
     return NULL;
   }
 
@@ -5815,9 +5810,6 @@ char **tv_to_argv(typval_T *cmd_tv, char **cmd, bool *executable)
   int argc = tv_list_len(argl);
   if (!argc) {
     emsg(_(e_invarg));  // List must have at least one item.
-    if (cmd_set) {
-      xfree(*cmd);
-    }
     return NULL;
   }
 
@@ -5830,17 +5822,10 @@ char **tv_to_argv(typval_T *cmd_tv, char **cmd, bool *executable)
       semsg(_(e_invargNval), "cmd", buf);
       *executable = false;
     }
-    if (cmd_set) {
-      xfree(*cmd);
-    }
     return NULL;
   }
 
   if (cmd) {
-    if (cmd_set) {
-      xfree(*cmd);
-    }
-    cmd_set = true;
     *cmd = xstrdup(exe_resolved);
   }
 
@@ -5853,7 +5838,7 @@ char **tv_to_argv(typval_T *cmd_tv, char **cmd, bool *executable)
       // Did emsg in tv_get_string_chk; just deallocate argv.
       shell_free_argv(argv);
       xfree(exe_resolved);
-      if (cmd_set) {
+      if (cmd) {
         xfree(*cmd);
       }
       return NULL;

@@ -498,8 +498,16 @@ char *FullName_save(const char *fname, bool force)
   char *buf = xmalloc(MAXPATHL);
   if (vim_FullName(fname, buf, MAXPATHL, force) == FAIL) {
     xfree(buf);
-    return xstrdup(fname);
+
+    char *result = xstrdup(fname);
+
+    MUTATE_PATH_FOR_VIM(result);
+
+    return result;
   }
+
+  MUTATE_PATH_FOR_VIM(buf);
+
   return buf;
 }
 
@@ -1893,13 +1901,16 @@ char *fix_fname(const char *fname)
     return FullName_save(fname, false);
   }
 
-  fname = xstrdup(fname);
+  char *fname_copy = xstrdup(fname);
+
+  //Hopefully catches most incoming filenames
+  MUTATE_PATH_FOR_VIM(fname_copy);
 
 # ifdef CASE_INSENSITIVE_FILENAME
-  path_fix_case((char *)fname);  // set correct case for file name
+  path_fix_case(fname_copy);  // set correct case for file name
 # endif
 
-  return (char *)fname;
+  return fname_copy;
 #endif
 }
 
