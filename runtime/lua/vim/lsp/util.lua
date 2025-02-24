@@ -1649,8 +1649,14 @@ function M.open_floating_preview(contents, syntax, opts)
 
   if do_stylize then
     vim.wo[floating_winnr].conceallevel = 2
+    vim.wo[floating_winnr].concealcursor = 'n'
     vim.bo[floating_bufnr].filetype = 'markdown'
     vim.treesitter.start(floating_bufnr)
+    if not opts.height then
+      -- Reduce window height if TS highlighter conceals code block backticks.
+      local conceal_height = api.nvim_win_text_height(floating_winnr, {}).all
+      api.nvim_win_set_height(floating_winnr, conceal_height)
+    end
   end
 
   return floating_bufnr, floating_winnr
