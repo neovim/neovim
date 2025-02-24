@@ -1006,4 +1006,21 @@ func Test_insert_small_delete_replace_mode()
   bwipe!
 endfunc
 
+" this caused an illegal memory access and a crash
+func Test_register_cursor_column_negative()
+  CheckRunVimInTerminal
+  let script =<< trim END
+    f XREGISTER
+    call setline(1, 'abcdef a')
+    call setreg("a", "\n", 'c')
+    call cursor(1, 7)
+    call feedkeys("i\<C-R>\<C-P>azyx$#\<esc>", 't')
+  END
+  call writefile(script, 'XRegister123', 'D')
+  let buf = RunVimInTerminal('-S XRegister123', {})
+  call term_sendkeys(buf, "\<c-g>")
+  call WaitForAssert({-> assert_match('XREGISTER', term_getline(buf, 19))})
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

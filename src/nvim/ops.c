@@ -3623,7 +3623,7 @@ error:
       // Put the '] mark on the first byte of the last inserted character.
       // Correct the length for change in indent.
       curbuf->b_op_end.lnum = new_lnum;
-      col = (colnr_T)y_array[y_size - 1].size - lendiff;
+      col = MAX(0, (colnr_T)y_array[y_size - 1].size - lendiff);
       if (col > 1) {
         curbuf->b_op_end.col = col - 1;
         if (y_array[y_size - 1].size > 0) {
