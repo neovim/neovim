@@ -2203,12 +2203,12 @@ local pattern = {
     ['/%.cargo/credentials$'] = 'toml',
     ['/%.init/.*%.override$'] = 'upstart',
   },
-  ['calendar/'] = {
+  ['/%.?calendar/'] = {
     ['/%.calendar/'] = starsetf('calendar'),
     ['/share/calendar/.*/calendar%.'] = starsetf('calendar'),
     ['/share/calendar/calendar%.'] = starsetf('calendar'),
   },
-  ['cmus/'] = {
+  ['/%.?cmus/'] = {
     -- */cmus/*.theme and */.cmus/*.theme
     ['/%.?cmus/.*%.theme$'] = 'cmusrc',
     -- */cmus/rc and */.cmus/rc
@@ -2266,11 +2266,6 @@ local pattern = {
     ['/%.config/upstart/.*%.override$'] = 'upstart',
     ['/%.init/.*%.conf$'] = 'upstart',
     ['/xorg%.conf%.d/.*%.conf$'] = detect.xfree86_v4,
-  },
-  ['sst%.meta'] = {
-    ['%.%-sst%.meta$'] = 'sisu',
-    ['%._sst%.meta$'] = 'sisu',
-    ['%.sst%.meta$'] = 'sisu',
   },
   ['file'] = {
     ['^Containerfile%.'] = starsetf('dockerfile'),
@@ -2418,6 +2413,7 @@ local pattern = {
     end),
     ['/queries/.*%.scm$'] = 'query', -- treesitter queries (Neovim only)
     [',v$'] = 'rcs',
+    ['%.[-_]?sst%.meta$'] = 'sisu',
     ['^svn%-commit.*%.tmp$'] = 'svn',
     ['%.swift%.gyb$'] = 'swiftgyb',
     ['termcap'] = starsetf(function(path, bufnr)
