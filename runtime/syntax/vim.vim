@@ -195,7 +195,7 @@ syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=vim
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDebuggreedy,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimFor,vimFunction,vimFuncFold,vimGlobal,vimHighlight,vimLet,vimLoadkeymap,vimLockvar,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimSet,vimSleep,vimSyntax,vimThrow,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimMenu,vimMenutranslate,@vim9CmdList
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDebuggreedy,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimFor,vimFunction,vimFuncFold,vimGlobal,vimHighlight,vimLet,vimLoadkeymap,vimLockvar,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimSet,vimSleep,vimSyntax,vimThrow,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList
 syn cluster vim9CmdList	contains=vim9Abstract,vim9Class,vim9Const,vim9Enum,vim9Export,vim9Final,vim9For,vim9Interface,vim9Type,vim9Var
 syn match vimCmdSep	"[:|]\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
 syn match vimCount	contained	"\d\+"
@@ -904,6 +904,19 @@ syn match	vimMap	"\<map\%(\s\+(\)\@="	skipwhite nextgroup=vimMapBang,vimMapMod,v
 
 " User Command Highlighting: {{{2
 syn match vimUsrCmd	'^\s*\zs\u\%(\w*\)\@>\%([(#[]\|\s\+\%([-+*/%]\=\|\.\.\)=\)\@!'
+
+" Vim user commands
+
+" Compiler plugins
+syn match	vimCompilerSet	"\<CompilerSet\>"	skipwhite nextgroup=vimSetRegion
+
+" runtime/makemenu.vim
+syn match	vimSynMenu		"\<SynMenu\>"	skipwhite nextgroup=vimSynMenuPath
+syn match	vimSynMenuPath	contained	".*\ze:"	nextgroup=vimSynMenuColon contains=vimMenuNotation
+syn match	vimSynMenuColon	contained	":"	nextgroup=vimSynMenuName
+syn match	vimSynMenuName	contained	"\w\+"
+
+syn cluster vimExUserCmdList contains=vimCompilerSet,vimSynMenu
 
 " Errors And Warnings: {{{2
 " ====================
@@ -1635,6 +1648,10 @@ if !exists("skip_vim_syntax_inits")
  hi def link vim9Var	vimCommand
  hi def link vim9Vim9ScriptArg	Special
  hi def link vim9Vim9Script	vimCommand
+
+ hi def link vimCompilerSet	vimCommand
+ hi def link vimSynMenu	vimCommand
+ hi def link vimSynMenuPath	vimMenuName
 
  hi def link nvimAutoEvent	vimAutoEvent
  hi def link nvimHLGroup	vimHLGroup
