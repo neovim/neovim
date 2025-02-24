@@ -221,7 +221,7 @@ static int nlua_fast_cfpcall(lua_State *lstate, int nargs, int nresult, int flag
     const char *error = lua_tostring(lstate, -1);
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
-                   xstrdup(error), (void *)(intptr_t)kCallback);
+                   error != NULL ? xstrdup(error) : NULL, (void *)(intptr_t)kCallback);
     lua_pop(lstate, 1);  // error message
     retval = -status;
   } else {  // LUA_OK
