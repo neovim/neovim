@@ -849,43 +849,55 @@ print()
 
   describe('trim! directive', function()
     it('can trim all whitespace', function()
-      -- luacheck: push ignore 611 613
-      insert([=[
-        print([[
-
-                  f
-           helllo
-        there
-        asdf
-        asdfassd   
-
-
-
-        ]])
-        print([[
-              
-              
-              
-        ]])
-
-        print([[]])
-
-        print([[
-        ]])
-
-        print([[     hello 😃    ]])
-      ]=])
-      -- luacheck: pop
+      exec_lua(function()
+        local lines = {
+          '        print([[',
+          '',
+          '            f',
+          '     helllo',
+          '  there',
+          '  asdf',
+          '  asdfassd   ',
+          '',
+          '',
+          '',
+          '  ]])',
+          '  print([[',
+          '        ',
+          '        ',
+          '        ',
+          '  ]])',
+          '',
+          '  print([[]])',
+          '',
+          '  print([[',
+          '  ]])',
+          '',
+          '  print([[     hello 😃    ]])',
+        }
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      end)
+      exec_lua(function()
+        vim.treesitter.start(0, 'lua')
+      end)
 
       local query_text = [[
+       ; query
+        ((string_content) @str)
+      ]]
+      eq({
+        { 'str', { 0, 16, 10, 2 } },
+        { 'str', { 11, 10, 15, 2 } },
+        { 'str', { 17, 10, 17, 10 } },
+        { 'str', { 19, 10, 20, 2 } },
+        { 'str', { 22, 10, 22, 29 } },
+      }, run_query('lua', query_text))
+
+      local trim_query_text = [[
         ; query
         ((string_content) @str
           (#trim! @str 1 1 1 1))
       ]]
-
-      exec_lua(function()
-        vim.treesitter.start(0, 'lua')
-      end)
 
       eq({
         { 'str', { 2, 12, 6, 10 } },
@@ -893,7 +905,7 @@ print()
         { 'str', { 17, 10, 17, 10 } },
         { 'str', { 19, 10, 19, 10 } },
         { 'str', { 22, 15, 22, 25 } },
-      }, run_query('lua', query_text))
+      }, run_query('lua', trim_query_text))
     end)
 
     it('trims only empty lines by default (backwards compatible)', function()
