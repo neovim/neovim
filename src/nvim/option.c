@@ -1286,11 +1286,11 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
     if (p_verbose > 0) {
       // Mention where the option was last set.
       if (varp == options[opt_idx].var) {
-        option_last_set_msg(options[opt_idx].last_set);
+        last_set_msg(options[opt_idx].script_ctx);
       } else if (option_has_scope(opt_idx, kOptScopeWin)) {
-        option_last_set_msg(curwin->w_p_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)]);
+        last_set_msg(curwin->w_p_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)]);
       } else if (option_has_scope(opt_idx, kOptScopeBuf)) {
-        option_last_set_msg(curbuf->b_p_script_ctx[option_scope_idx(opt_idx, kOptScopeBuf)]);
+        last_set_msg(curbuf->b_p_script_ctx[option_scope_idx(opt_idx, kOptScopeBuf)]);
       }
     }
 
@@ -1805,7 +1805,7 @@ bool parse_winhl_opt(const char *winhl, win_T *wp)
 sctx_T *get_option_sctx(OptIndex opt_idx)
 {
   assert(opt_idx != kOptInvalid);
-  return &options[opt_idx].last_set.script_ctx;
+  return &options[opt_idx].script_ctx;
 }
 
 /// Set the script_ctx for an option, taking care of setting the buffer- or
@@ -1814,29 +1814,25 @@ void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
 {
   bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   nlua_set_sctx(&script_ctx);
-  LastSet last_set = {
-    .script_ctx = script_ctx,
-    .channel_id = current_channel_id,
-  };
 
   // Modeline already has the line number set.
   if (!(opt_flags & OPT_MODELINE)) {
-    last_set.script_ctx.sc_lnum += SOURCING_LNUM;
+    script_ctx.sc_lnum += SOURCING_LNUM;
   }
 
   // Remember where the option was set.  For local options need to do that
   // in the buffer or window structure.
   if (both || (opt_flags & OPT_GLOBAL) || option_is_global_only(opt_idx)) {
-    options[opt_idx].last_set = last_set;
+    options[opt_idx].script_ctx = script_ctx;
   }
   if (both || (opt_flags & OPT_LOCAL)) {
     if (option_has_scope(opt_idx, kOptScopeBuf)) {
-      curbuf->b_p_script_ctx[option_scope_idx(opt_idx, kOptScopeBuf)] = last_set;
+      curbuf->b_p_script_ctx[option_scope_idx(opt_idx, kOptScopeBuf)] = script_ctx;
     } else if ((option_has_scope(opt_idx, kOptScopeWin))) {
-      curwin->w_p_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)] = last_set;
+      curwin->w_p_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)] = script_ctx;
       if (both) {
         // also setting the "all buffers" value
-        curwin->w_allbuf_opt.wo_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)] = last_set;
+        curwin->w_allbuf_opt.wo_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)] = script_ctx;
       }
     }
   }
@@ -4987,7 +4983,7 @@ void didset_window_options(win_T *wp, bool valid_cursor)
   wp->w_grid_alloc.blending = wp->w_p_winbl > 0;
 }
 
-#define COPY_OPT_SCTX(buf, bv) buf->b_p_script_ctx[bv] = options[buf_opt_idx[bv]].last_set
+#define COPY_OPT_SCTX(buf, bv) buf->b_p_script_ctx[bv] = options[buf_opt_idx[bv]].script_ctx
 
 /// Copy global option values to local options for one buffer.
 /// Used when creating a new buffer and sometimes when entering a buffer.
@@ -6349,25 +6345,25 @@ static Dict vimoption2dict(vimoption_T *opt, int opt_flags, buf_T *buf, win_T *w
 
   PUT_C(dict, "was_set", BOOLEAN_OBJ(opt->flags & kOptFlagWasSet));
 
-  LastSet last_set = { .channel_id = 0 };
+  sctx_T script_ctx = { .sc_sid = 0 };
   if (opt_flags == OPT_GLOBAL) {
-    last_set = opt->last_set;
+    script_ctx = opt->script_ctx;
   } else {
     // Scope is either OPT_LOCAL or a fallback mode was requested.
     if (option_has_scope(opt_idx, kOptScopeBuf)) {
-      last_set = buf->b_p_script_ctx[opt->scope_idx[kOptScopeBuf]];
+      script_ctx = buf->b_p_script_ctx[opt->scope_idx[kOptScopeBuf]];
     }
     if (option_has_scope(opt_idx, kOptScopeWin)) {
-      last_set = win->w_p_script_ctx[opt->scope_idx[kOptScopeWin]];
+      script_ctx = win->w_p_script_ctx[opt->scope_idx[kOptScopeWin]];
     }
-    if (opt_flags != OPT_LOCAL && last_set.script_ctx.sc_sid == 0) {
-      last_set = opt->last_set;
+    if (opt_flags != OPT_LOCAL && script_ctx.sc_sid == 0) {
+      script_ctx = opt->script_ctx;
     }
   }
 
-  PUT_C(dict, "last_set_sid", INTEGER_OBJ(last_set.script_ctx.sc_sid));
-  PUT_C(dict, "last_set_linenr", INTEGER_OBJ(last_set.script_ctx.sc_lnum));
-  PUT_C(dict, "last_set_chan", INTEGER_OBJ((int64_t)last_set.channel_id));
+  PUT_C(dict, "last_set_sid", INTEGER_OBJ(script_ctx.sc_sid));
+  PUT_C(dict, "last_set_linenr", INTEGER_OBJ(script_ctx.sc_lnum));
+  PUT_C(dict, "last_set_chan", INTEGER_OBJ((int64_t)script_ctx.sc_chan));
 
   PUT_C(dict, "type", CSTR_AS_OBJ(optval_type_get_name(option_get_type(get_opt_idx(opt)))));
   PUT_C(dict, "default", optval_as_object(opt->def_val));

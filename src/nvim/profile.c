@@ -616,11 +616,7 @@ static void func_dump_profile(FILE *fd)
         }
         if (fp->uf_script_ctx.sc_sid != 0) {
           bool should_free;
-          const LastSet last_set = (LastSet){
-            .script_ctx = fp->uf_script_ctx,
-            .channel_id = 0,
-          };
-          char *p = get_scriptname(last_set, &should_free);
+          char *p = get_scriptname(fp->uf_script_ctx, &should_free);
           fprintf(fd, "    Defined: %s:%" PRIdLINENR "\n",
                   p, fp->uf_script_ctx.sc_lnum);
           if (should_free) {

@@ -1368,7 +1368,7 @@ int eval_foldexpr(win_T *wp, int *cp)
   const bool use_sandbox = was_set_insecurely(wp, kOptFoldexpr, OPT_LOCAL);
 
   char *arg = skipwhite(wp->w_p_fde);
-  current_sctx = wp->w_p_script_ctx[kWinOptFoldexpr].script_ctx;
+  current_sctx = wp->w_p_script_ctx[kWinOptFoldexpr];
 
   emsg_off++;
   if (use_sandbox) {
@@ -7655,14 +7655,10 @@ hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char 
         // for behavioral consistency. With this different anonymous exec from
         // same file can't access each others script local stuff. We need to do
         // this all other cases except this will act like that otherwise.
-        const LastSet last_set = (LastSet){
-          .script_ctx = current_sctx,
-          .channel_id = LUA_INTERNAL_CALL,
-        };
         bool should_free;
         // should_free is ignored as script_ctx will be resolved to a fname
         // and new_script_item() will consume it.
-        char *sc_name = get_scriptname(last_set, &should_free);
+        char *sc_name = get_scriptname(current_sctx, &should_free);
         new_script_item(sc_name, &current_sctx.sc_sid);
       }
     }
@@ -8043,31 +8039,19 @@ void var_set_global(const char *const name, typval_T vartv)
 /// Should only be invoked when 'verbose' is non-zero.
 void last_set_msg(sctx_T script_ctx)
 {
-  const LastSet last_set = (LastSet){
-    .script_ctx = script_ctx,
-    .channel_id = 0,
-  };
-  option_last_set_msg(last_set);
-}
-
-/// Displays where an option was last set.
-///
-/// Should only be invoked when 'verbose' is non-zero.
-void option_last_set_msg(LastSet last_set)
-{
-  if (last_set.script_ctx.sc_sid == 0) {
+  if (script_ctx.sc_sid == 0) {
     return;
   }
 
   bool should_free;
-  char *p = get_scriptname(last_set, &should_free);
+  char *p = get_scriptname(script_ctx, &should_free);
 
   verbose_enter();
   msg_puts(_("\n\tLast set from "));
   msg_puts(p);
-  if (last_set.script_ctx.sc_lnum > 0) {
+  if (script_ctx.sc_lnum > 0) {
     msg_puts(_(line_msg));
-    msg_outnum(last_set.script_ctx.sc_lnum);
+    msg_outnum(script_ctx.sc_lnum);
   }
   if (should_free) {
     xfree(p);
