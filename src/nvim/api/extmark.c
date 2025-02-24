@@ -829,7 +829,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     }
   } else {
     if (opts->ephemeral) {
-      api_set_error(err, kErrorTypeException, "not yet implemented");
+      api_set_error(err, kErrorTypeException,
+                    "cannot set emphemeral mark outside of a decoration provider");
       goto error;
     }
 
