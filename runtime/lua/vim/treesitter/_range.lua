@@ -195,7 +195,7 @@ function M.add_bytes(source, range)
 end
 
 ---Compute intersection of a given range with the array of ranges.
----Ranges are end-exlcusive.
+---Ranges are end-exclusive.
 ---@private
 ---@param it Range4
 ---@param ranges Range4[] Sorted, non-intersecting.
