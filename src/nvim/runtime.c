@@ -2023,7 +2023,7 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   estack_push(ETYPE_SCRIPT, sname, 0);
 
   const sctx_T save_current_sctx = current_sctx;
-  if (current_sctx.sc_sid != SID_LUA) {
+  if (!script_is_lua(current_sctx.sc_sid)) {
     current_sctx.sc_sid = SID_STR;
   }
   current_sctx.sc_seq = 0;
@@ -2241,6 +2241,7 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
   } else {
     // It's new, generate a new SID.
     si = new_script_item(fname_exp, &sid);
+    si->sn_lua = path_with_extension(fname_exp, "lua");
     fname_exp = xstrdup(si->sn_name);  // used for autocmd
     if (ret_sid != NULL) {
       *ret_sid = sid;
@@ -2268,9 +2269,8 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
 
   cookie.conv.vc_type = CONV_NONE;              // no conversion
 
-  if (path_with_extension(fname_exp, "lua")) {
+  if (si->sn_lua) {
     const sctx_T current_sctx_backup = current_sctx;
-    current_sctx.sc_sid = SID_LUA;
     current_sctx.sc_lnum = 0;
     // Source the file as lua
     nlua_exec_file(fname_exp);
@@ -2354,6 +2354,18 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
 theend:
   xfree(fname_exp);
   return retval;
+}
+
+/// Checks if the script with the given script ID is a Lua script.
+bool script_is_lua(scid_T sid)
+{
+  if (sid == SID_LUA) {
+    return true;
+  }
+  if (!SCRIPT_ID_VALID(sid)) {
+    return false;
+  }
+  return SCRIPT_ITEM(sid)->sn_lua;
 }
 
 /// Find an already loaded script "name".
@@ -2447,7 +2459,8 @@ char *get_scriptname(sctx_T script_ctx, bool *should_free)
   case SID_STR:
     return _("anonymous :source");
   default: {
-    char *const sname = SCRIPT_ITEM(script_ctx.sc_sid)->sn_name;
+    scriptitem_T *const si = SCRIPT_ITEM(script_ctx.sc_sid);
+    char *sname = si->sn_name;
     if (sname == NULL) {
       snprintf(IObuff, IOSIZE, _("anonymous :source (script id %d)"),
                script_ctx.sc_sid);
@@ -2455,7 +2468,13 @@ char *get_scriptname(sctx_T script_ctx, bool *should_free)
     }
 
     *should_free = true;
-    return home_replace_save(NULL, sname);
+    sname = home_replace_save(NULL, sname);
+    if (si->sn_lua && script_ctx.sc_lnum == 0) {
+      char *const ret = concat_str(sname, _(" (run Nvim with -V1 for more details)"));
+      xfree(sname);
+      return ret;
+    }
+    return sname;
   }
   }
 }

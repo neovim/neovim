@@ -5,6 +5,7 @@ local clear = n.clear
 local eq = t.eq
 local eval = n.eval
 local exec = n.exec
+local api = n.api
 local fn = n.fn
 local mkdir_p = n.mkdir_p
 local rmdir = n.rmdir
@@ -15,9 +16,10 @@ describe('runtime:', function()
   local sep = n.get_pathsep()
   local init = 'dummy_init.lua'
 
+  -- All test cases below use the same Nvim instance.
   setup(function()
     io.open(init, 'w'):close() --  touch init file
-    clear { args = { '-u', init } }
+    clear({ args = { '-u', init } })
     exec('set rtp+=' .. plug_dir)
     exec([[
       set shell=doesnotexist
@@ -39,6 +41,8 @@ describe('runtime:', function()
   after_each(function()
     rmdir(plug_dir)
     exec('bwipe!')
+    exec('set rtp& pp&')
+    exec('set rtp+=' .. plug_dir)
   end)
 
   describe('colors', function()
@@ -402,6 +406,22 @@ describe('runtime:', function()
       exec('set spelllang=Xtest')
       eq('ABab', eval('g:seq'))
     end)
+  end)
+
+  it('lua file loaded by :runtime has proper script ID #32598', function()
+    local test_file = 'Xtest_runtime_cmd.lua'
+    write_file(
+      table.concat({ plug_dir, test_file }, sep),
+      [[
+      vim.g.script_id = tonumber(vim.fn.expand('<SID>'):match('<SNR>(%d+)_'))
+      vim.o.mouse = 'nv'
+    ]]
+    )
+    exec('runtime ' .. test_file)
+    local expected_sid = fn.getscriptinfo({ name = test_file })[1].sid
+    local sid = api.nvim_get_var('script_id')
+    eq(expected_sid, sid)
+    eq(sid, api.nvim_get_option_info2('mouse', {}).last_set_sid)
   end)
 
   it('cpp ftplugin loads c ftplugin #29053', function()

@@ -7646,22 +7646,8 @@ hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char 
                  || current_sctx.sc_sid == SID_LUA)
              && current_sctx.sc_sid <= script_items.ga_len) {
     // For anonymous scripts without a script item, create one now so script vars can be used
-    if (current_sctx.sc_sid == SID_LUA) {
-      // try to resolve lua filename & line no so it can be shown in lastset messages.
-      nlua_set_sctx(&current_sctx);
-      if (current_sctx.sc_sid != SID_LUA) {
-        // Great we have valid location. Now here this out we'll create a new
-        // script context with the name and lineno of this one. why ?
-        // for behavioral consistency. With this different anonymous exec from
-        // same file can't access each others script local stuff. We need to do
-        // this all other cases except this will act like that otherwise.
-        bool should_free;
-        // should_free is ignored as script_ctx will be resolved to a fname
-        // and new_script_item() will consume it.
-        char *sc_name = get_scriptname(current_sctx, &should_free);
-        new_script_item(sc_name, &current_sctx.sc_sid);
-      }
-    }
+    // Try to resolve lua filename & linenr so it can be shown in last-set messages.
+    nlua_set_sctx(&current_sctx);
     if (current_sctx.sc_sid == SID_STR || current_sctx.sc_sid == SID_LUA) {
       // Create SID if s: scope is accessed from Lua or anon Vimscript. #15994
       new_script_item(NULL, &current_sctx.sc_sid);
