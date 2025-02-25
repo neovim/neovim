@@ -298,9 +298,7 @@ EXTERN bool garbage_collect_at_exit INIT( = false);
 #define SID_STR         (-10)     // for sourcing a string with no script item
 
 // Script CTX being sourced or was sourced to define the current function.
-EXTERN sctx_T current_sctx INIT( = { 0, 0, 0 });
-// ID of the current channel making a client API call
-EXTERN uint64_t current_channel_id INIT( = 0);
+EXTERN sctx_T current_sctx INIT( = { 0, 0, 0, 0 });
 /// Last channel that invoked 'nvim_input` or got FocusGained.
 EXTERN uint64_t current_ui INIT( = 0);
 

@@ -1181,7 +1181,7 @@ int get_expr_indent(void)
     sandbox++;
   }
   textlock++;
-  current_sctx = curbuf->b_p_script_ctx[kBufOptIndentexpr].script_ctx;
+  current_sctx = curbuf->b_p_script_ctx[kBufOptIndentexpr];
 
   // Need to make a copy, the 'indentexpr' option could be changed while
   // evaluating it.

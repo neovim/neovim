@@ -6,17 +6,18 @@ local eq = t.eq
 local exec = n.exec
 local exec_capture = n.exec_capture
 local write_file = t.write_file
-local call_viml_function = n.api.nvim_call_function
+local api = n.api
+local fn = n.fn
 
-local function last_set_tests(cmd)
+local function last_set_lua_tests(cmd)
   local script_location, script_file
-  -- All test cases below use the same nvim instance.
+  -- All test cases below use the same Nvim instance.
   setup(function()
-    clear { args = { '-V1' } }
+    clear({ args = { '-V1' } })
     script_file = 'test_verbose.lua'
-    local current_dir = call_viml_function('getcwd', {})
-    current_dir = call_viml_function('fnamemodify', { current_dir, ':~' })
-    script_location = table.concat { current_dir, n.get_pathsep(), script_file }
+    local current_dir = fn.getcwd()
+    current_dir = fn.fnamemodify(current_dir, ':~')
+    script_location = table.concat({ current_dir, n.get_pathsep(), script_file })
 
     write_file(
       script_file,
@@ -66,7 +67,7 @@ let &tw = s:return80()\
     os.remove(script_file)
   end)
 
-  it('"Last set" for option set by Lua', function()
+  it('"Last set" for option set by nvim_set_option_value', function()
     local result = exec_capture(':verbose set hlsearch?')
     eq(
       string.format(
@@ -105,7 +106,7 @@ nohlsearch
     )
   end)
 
-  it('"Last set" for mapping set by Lua', function()
+  it('"Last set" for mapping set by nvim_set_keymap', function()
     local result = exec_capture(':verbose map <leader>key1')
     eq(
       string.format(
@@ -220,7 +221,7 @@ TestHL2        xxx guibg=Green
     )
   end)
 
-  it('"Last set" for function', function()
+  it('"Last set" for function defined by nvim_exec2', function()
     local result = exec_capture(':verbose function Close_Window')
     eq(
       string.format(
@@ -235,7 +236,7 @@ TestHL2        xxx guibg=Green
     )
   end)
 
-  it('"Last set" works with anonymous sid', function()
+  it('"Last set" works with anonymous sid from nvim_exec2', function()
     local result = exec_capture(':verbose set tw?')
     eq(
       string.format(
@@ -250,11 +251,11 @@ TestHL2        xxx guibg=Green
 end
 
 describe('lua :verbose when using :source', function()
-  last_set_tests('source')
+  last_set_lua_tests('source')
 end)
 
 describe('lua :verbose when using :luafile', function()
-  last_set_tests('luafile')
+  last_set_lua_tests('luafile')
 end)
 
 describe('lua verbose:', function()
@@ -282,6 +283,179 @@ describe('lua verbose:', function()
       [[
 nohlsearch
 	Last set from Lua (run Nvim with -V1 for more details)]],
+      result
+    )
+  end)
+end)
+
+describe(':verbose when using API from Vimscript', function()
+  local script_location, script_file
+  -- All test cases below use the same Nvim instance.
+  setup(function()
+    clear()
+    script_file = 'test_verbose.vim'
+    local current_dir = fn.getcwd()
+    current_dir = fn.fnamemodify(current_dir, ':~')
+    script_location = table.concat({ current_dir, n.get_pathsep(), script_file })
+
+    write_file(
+      script_file,
+      [[
+call nvim_set_option_value('hlsearch', v:false, {})
+call nvim_set_keymap('n', '<leader>key1', ':echo "test"<cr>', #{noremap: v:true})
+
+call nvim_create_augroup('test_group', {})
+call nvim_create_autocmd('FileType', #{
+  \ group: 'test_group',
+  \ pattern: 'cpp',
+  \ command: 'setl cindent',
+\ })
+
+call nvim_set_hl(0, 'TestHL2', #{bg: 'Green'})
+call nvim_create_user_command("TestCommand", ":echo 'Hello'", {})
+]]
+    )
+    exec('source ' .. script_file)
+  end)
+
+  teardown(function()
+    os.remove(script_file)
+  end)
+
+  it('"Last set" for option set by nvim_set_option_value', function()
+    local result = exec_capture(':verbose set hlsearch?')
+    eq(
+      string.format(
+        [[
+nohlsearch
+	Last set from %s line 1]],
+        script_location
+      ),
+      result
+    )
+  end)
+
+  it('"Last set" for mapping set by nvim_set_keymap', function()
+    local result = exec_capture(':verbose map <leader>key1')
+    eq(
+      string.format(
+        [[
+
+n  \key1       * :echo "test"<CR>
+	Last set from %s line 2]],
+        script_location
+      ),
+      result
+    )
+  end)
+
+  it('"Last set" for autocmd set by nvim_create_autocmd', function()
+    local result = exec_capture(':verbose autocmd test_group Filetype cpp')
+    eq(
+      string.format(
+        [[
+--- Autocommands ---
+test_group  FileType
+    cpp       setl cindent
+	Last set from %s line 5]],
+        script_location
+      ),
+      result
+    )
+  end)
+
+  it('"Last set" for highlight group set by nvim_set_hl', function()
+    local result = exec_capture(':verbose highlight TestHL2')
+    eq(
+      string.format(
+        [[
+TestHL2        xxx guibg=Green
+	Last set from %s line 11]],
+        script_location
+      ),
+      result
+    )
+  end)
+
+  it('"Last set" for command defined by nvim_create_user_command', function()
+    local result = exec_capture(':verbose command TestCommand')
+    eq(
+      string.format(
+        [[
+    Name              Args Address Complete    Definition
+    TestCommand       0                        :echo 'Hello'
+	Last set from %s line 12]],
+        script_location
+      ),
+      result
+    )
+  end)
+end)
+
+describe(':verbose when using API from RPC', function()
+  -- All test cases below use the same Nvim instance.
+  setup(clear)
+
+  it('"Last set" for option set by nvim_set_option_value', function()
+    api.nvim_set_option_value('hlsearch', false, {})
+    local result = exec_capture(':verbose set hlsearch?')
+    eq(
+      [[
+nohlsearch
+	Last set from API client (channel id 1)]],
+      result
+    )
+  end)
+
+  it('"Last set" for mapping set by nvim_set_keymap', function()
+    api.nvim_set_keymap('n', '<leader>key1', ':echo "test"<cr>', { noremap = true })
+    local result = exec_capture(':verbose map <leader>key1')
+    eq(
+      [[
+
+n  \key1       * :echo "test"<CR>
+	Last set from API client (channel id 1)]],
+      result
+    )
+  end)
+
+  it('"Last set" for autocmd set by nvim_create_autocmd', function()
+    api.nvim_create_augroup('test_group', {})
+    api.nvim_create_autocmd('FileType', {
+      group = 'test_group',
+      pattern = 'cpp',
+      command = 'setl cindent',
+    })
+    local result = exec_capture(':verbose autocmd test_group Filetype cpp')
+    eq(
+      [[
+--- Autocommands ---
+test_group  FileType
+    cpp       setl cindent
+	Last set from API client (channel id 1)]],
+      result
+    )
+  end)
+
+  it('"Last set" for highlight group set by nvim_set_hl', function()
+    api.nvim_set_hl(0, 'TestHL2', { bg = 'Green' })
+    local result = exec_capture(':verbose highlight TestHL2')
+    eq(
+      [[
+TestHL2        xxx guibg=Green
+	Last set from API client (channel id 1)]],
+      result
+    )
+  end)
+
+  it('"Last set" for command defined by nvim_create_user_command', function()
+    api.nvim_create_user_command('TestCommand', ":echo 'Hello'", {})
+    local result = exec_capture(':verbose command TestCommand')
+    eq(
+      [[
+    Name              Args Address Complete    Definition
+    TestCommand       0                        :echo 'Hello'
+	Last set from API client (channel id 1)]],
       result
     )
   end)

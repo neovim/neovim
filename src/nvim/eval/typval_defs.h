@@ -286,13 +286,8 @@ typedef struct {
   scid_T sc_sid;     ///< script ID
   int sc_seq;        ///< sourcing sequence number
   linenr_T sc_lnum;  ///< line number
+  uint64_t sc_chan;  ///< Only used when sc_sid is SID_API_CLIENT.
 } sctx_T;
-
-/// Stores an identifier of a script or channel that last set an option.
-typedef struct {
-  sctx_T script_ctx;       /// script context where the option was last set
-  uint64_t channel_id;     /// Only used when script_id is SID_API_CLIENT.
-} LastSet;
 
 enum { MAX_FUNC_ARGS = 20, };  ///< Maximum number of function arguments
 enum { VAR_SHORT_LEN = 20, };  ///< Short variable name length

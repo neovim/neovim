@@ -191,5 +191,5 @@ typedef struct {
   opt_expand_cb_T opt_expand_cb;
 
   OptVal def_val;                    ///< default value
-  LastSet last_set;                  ///< script in which the option was last set
+  sctx_T script_ctx;                 ///< script in which the option was last set
 } vimoption_T;
