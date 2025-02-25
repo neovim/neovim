@@ -57,6 +57,7 @@ end
 ---@field next_row integer
 ---@field iter vim.treesitter.highlighter.Iter?
 ---@field highlighter_query vim.treesitter.highlighter.Query
+---@field tree_region Range4[]
 
 ---@nodoc
 ---@class vim.treesitter.highlighter
@@ -201,6 +202,7 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
       next_row = 0,
       iter = nil,
       highlighter_query = highlighter_query,
+      tree_region = tstree:included_ranges(false),
     })
   end)
 end
@@ -336,16 +338,22 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         local url = get_url(match, buf, capture, metadata)
 
         if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
-          api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
-            end_line = end_row,
-            end_col = end_col,
+          ---@type vim.api.keyset.set_extmark
+          local opts = {
             hl_group = hl,
             ephemeral = true,
             priority = priority,
             conceal = conceal,
             spell = spell,
             url = url,
-          })
+          }
+          local clipped =
+            Range.get_intersection({ start_row, start_col, end_row, end_col }, state.tree_region)
+          for _, hl_range in ipairs(clipped) do
+            opts.end_line = hl_range[3]
+            opts.end_col = hl_range[4]
+            api.nvim_buf_set_extmark(buf, ns, hl_range[1], hl_range[2], opts)
+          end
         end
       end
 

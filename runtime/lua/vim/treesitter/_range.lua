@@ -194,4 +194,36 @@ function M.add_bytes(source, range)
   return { start_row, start_col, start_byte, end_row, end_col, end_byte }
 end
 
+---Compute intersection of a given range with the array of ranges.
+---Ranges are end-exclusive.
+---@private
+---@param it Range4
+---@param ranges Range4[] Sorted, non-intersecting.
+---@returns Range4[]
+function M.get_intersection(it, ranges)
+  ---@type Range4[]
+  local result = {}
+
+  for _, range in ipairs(ranges) do
+    if M.cmp_pos.le(it[3], it[4], range[1], range[2]) then
+      break
+    end
+    if M.cmp_pos.lt(it[1], it[2], range[3], range[4]) then
+      ---@type Range4
+      local clipped = { it[1], it[2], it[3], it[4] }
+      if M.cmp_pos.gt(range[1], range[2], it[1], it[2]) then
+        clipped[1] = range[1]
+        clipped[2] = range[2]
+      end
+      if M.cmp_pos.lt(range[3], range[4], it[3], it[4]) then
+        clipped[3] = range[3]
+        clipped[4] = range[4]
+      end
+      table.insert(result, clipped)
+    end
+  end
+
+  return result
+end
+
 return M
