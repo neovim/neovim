@@ -25,6 +25,9 @@ local function last_set_lua_tests(cmd)
 vim.api.nvim_set_option_value('hlsearch', false, {})
 vim.bo.expandtab = true
 vim.opt.number = true
+vim.api.nvim_exec2('set numberwidth=2', {})
+vim.cmd('set colorcolumn=+1')
+
 vim.api.nvim_set_keymap('n', '<leader>key1', ':echo "test"<cr>', {noremap = true})
 vim.keymap.set('n', '<leader>key2', ':echo "test"<cr>')
 
@@ -63,48 +66,34 @@ let &tw = s:return80()\
     exec(cmd .. ' ' .. script_file)
   end)
 
+  local option_checks = {
+    { 'nvim_set_option_value', 'hlsearch', 'nohlsearch' },
+    { 'vim.bo', 'expandtab', '  expandtab' },
+    { 'vim.opt', 'number', '  number' },
+    { 'nvim_exec2', 'numberwidth', '  numberwidth=2' },
+    { 'vim.cmd', 'colorcolumn', '  colorcolumn=+1' },
+  }
+
   teardown(function()
     os.remove(script_file)
   end)
 
-  it('"Last set" for option set by nvim_set_option_value', function()
-    local result = exec_capture(':verbose set hlsearch?')
-    eq(
-      string.format(
-        [[
-nohlsearch
-	Last set from %s line 1]],
-        script_location
-      ),
-      result
-    )
-  end)
-
-  it('"Last set" for option set by vim.o', function()
-    local result = exec_capture(':verbose set expandtab?')
-    eq(
-      string.format(
-        [[
-  expandtab
-	Last set from %s line 2]],
-        script_location
-      ),
-      result
-    )
-  end)
-
-  it('"Last set" for option set by vim.opt', function()
-    local result = exec_capture(':verbose set number?')
-    eq(
-      string.format(
-        [[
-  number
-	Last set from %s line 3]],
-        script_location
-      ),
-      result
-    )
-  end)
+  for linenr, check in ipairs(option_checks) do
+    it(('"Last set" for option set by %s'):format(check[1]), function()
+      local result = exec_capture((':verbose set %s?'):format(check[2]))
+      eq(
+        string.format(
+          [[
+%s
+	Last set from %s line %d]],
+          check[3],
+          script_location,
+          linenr
+        ),
+        result
+      )
+    end)
+  end
 
   it('"Last set" for mapping set by nvim_set_keymap', function()
     local result = exec_capture(':verbose map <leader>key1')
@@ -113,7 +102,7 @@ nohlsearch
         [[
 
 n  \key1       * :echo "test"<CR>
-	Last set from %s line 4]],
+	Last set from %s line 7]],
         script_location
       ),
       result
@@ -127,7 +116,7 @@ n  \key1       * :echo "test"<CR>
         [[
 
 n  \key2       * :echo "test"<CR>
-	Last set from %s line 5]],
+	Last set from %s line 8]],
         script_location
       ),
       result
@@ -142,7 +131,7 @@ n  \key2       * :echo "test"<CR>
 --- Autocommands ---
 test_group  FileType
     c         setl cindent
-	Last set from %s line 7]],
+	Last set from %s line 10]],
         script_location
       ),
       result
@@ -157,7 +146,7 @@ test_group  FileType
 --- Autocommands ---
 test_group  FileType
     cpp       setl cindent
-	Last set from %s line 13]],
+	Last set from %s line 16]],
         script_location
       ),
       result
@@ -170,7 +159,7 @@ test_group  FileType
       string.format(
         [[
 TestHL1        xxx guibg=Blue
-	Last set from %s line 19]],
+	Last set from %s line 22]],
         script_location
       ),
       result
@@ -183,7 +172,7 @@ TestHL1        xxx guibg=Blue
       string.format(
         [[
 TestHL2        xxx guibg=Green
-	Last set from %s line 20]],
+	Last set from %s line 23]],
         script_location
       ),
       result
@@ -200,7 +189,7 @@ TestHL2        xxx guibg=Green
         [[
     Name              Args Address Complete    Definition
     Bdelete           0                        :bd
-	Last set from %s line 22]],
+	Last set from %s line 25]],
         script_location
       ),
       result
@@ -214,7 +203,7 @@ TestHL2        xxx guibg=Green
         [[
     Name              Args Address Complete    Definition
     TestCommand       0                        :echo 'Hello'
-	Last set from %s line 23]],
+	Last set from %s line 26]],
         script_location
       ),
       result
@@ -227,7 +216,7 @@ TestHL2        xxx guibg=Green
       string.format(
         [[
    function Close_Window() abort
-	Last set from %s line 25
+	Last set from %s line 28
 1    wincmd -
    endfunction]],
         script_location
@@ -242,7 +231,7 @@ TestHL2        xxx guibg=Green
       string.format(
         [[
   textwidth=80
-	Last set from %s line 31]],
+	Last set from %s line 34]],
         script_location
       ),
       result
@@ -250,41 +239,89 @@ TestHL2        xxx guibg=Green
   end)
 end
 
-describe('lua :verbose when using :source', function()
+describe('lua :verbose with -V1 when using :source', function()
   last_set_lua_tests('source')
 end)
 
-describe('lua :verbose when using :luafile', function()
+describe('lua :verbose with -V1 when using :luafile', function()
   last_set_lua_tests('luafile')
 end)
 
-describe('lua verbose:', function()
-  local script_file
+describe('lua :verbose without -V1', function()
+  local script_location, script_file
 
+  -- All test cases below use the same Nvim instance.
   setup(function()
     clear()
-    script_file = 'test_luafile.lua'
+    script_file = 'test_verbose_0.lua'
+    local current_dir = fn.getcwd()
+    current_dir = fn.fnamemodify(current_dir, ':~')
+    script_location = table.concat({ current_dir, n.get_pathsep(), script_file })
     write_file(
       script_file,
       [[
-    vim.api.nvim_set_option_value('hlsearch', false, {})
-    ]]
+vim.api.nvim_set_option_value('hlsearch', false, {})
+vim.bo.expandtab = true
+vim.opt.number = true
+vim.api.nvim_exec2('set numberwidth=2', {})
+vim.cmd('set colorcolumn=+1')
+]]
     )
-    exec(':source ' .. script_file)
   end)
+
+  local option_checks = {
+    { 'nvim_set_option_value', 'hlsearch', 'nohlsearch' },
+    { 'vim.bo', 'expandtab', '  expandtab' },
+    { 'vim.opt', 'number', '  number' },
+    { 'nvim_exec2', 'numberwidth', '  numberwidth=2' },
+    { 'vim.cmd', 'colorcolumn', '  colorcolumn=+1' },
+  }
 
   teardown(function()
     os.remove(script_file)
   end)
 
-  it('is disabled when verbose = 0', function()
-    local result = exec_capture(':verbose set hlsearch?')
-    eq(
-      [[
-nohlsearch
+  describe('"Last set" shows file name when using :source', function()
+    setup(function()
+      exec(':source ' .. script_file)
+    end)
+
+    for _, check in ipairs(option_checks) do
+      it(('for option set by %s'):format(check[1]), function()
+        local result = exec_capture((':verbose set %s?'):format(check[2]))
+        eq(
+          string.format(
+            [[
+%s
+	Last set from %s (run Nvim with -V1 for more details)]],
+            check[3],
+            script_location
+          ),
+          result
+        )
+      end)
+    end
+  end)
+
+  describe('"Last set" suggests -V1 when using :luafile', function()
+    setup(function()
+      exec(':luafile ' .. script_file)
+    end)
+
+    for _, check in ipairs(option_checks) do
+      it(('for option set by %s'):format(check[1]), function()
+        local result = exec_capture((':verbose set %s?'):format(check[2]))
+        eq(
+          string.format(
+            [[
+%s
 	Last set from Lua (run Nvim with -V1 for more details)]],
-      result
-    )
+            check[3]
+          ),
+          result
+        )
+      end)
+    end
   end)
 end)
 

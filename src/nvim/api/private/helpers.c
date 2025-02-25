@@ -30,6 +30,7 @@
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/pos_defs.h"
+#include "nvim/runtime.h"
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -1057,10 +1058,18 @@ const char *get_default_stl_hl(win_T *wp, bool use_winbar, int stc_hl_id)
 sctx_T api_set_sctx(uint64_t channel_id)
 {
   sctx_T old_current_sctx = current_sctx;
+  // The script context is already properly set when calling an API from Vimscript.
   if (channel_id != VIML_INTERNAL_CALL) {
-    current_sctx.sc_sid = channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
     current_sctx.sc_lnum = 0;
-    current_sctx.sc_chan = channel_id;
+    if (channel_id == LUA_INTERNAL_CALL) {
+      // When the current script is a Lua script, don't override sc_sid.
+      if (!script_is_lua(current_sctx.sc_sid)) {
+        current_sctx.sc_sid = SID_LUA;
+      }
+    } else {
+      current_sctx.sc_sid = SID_API_CLIENT;
+      current_sctx.sc_chan = channel_id;
+    }
   }
   return old_current_sctx;
 }

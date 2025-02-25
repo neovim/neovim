@@ -6,6 +6,7 @@ local insert = n.insert
 local eq = t.eq
 local clear = n.clear
 local api = n.api
+local fn = n.fn
 local feed = n.feed
 local feed_command = n.feed_command
 local write_file = t.write_file
@@ -169,8 +170,9 @@ describe(':source', function()
     eq('4', exec_capture('echo luaeval("y")'))
   end)
 
-  it('can source lua files', function()
-    local test_file = 'test.lua'
+  --- @param verbose boolean
+  local function test_source_lua_file(verbose)
+    local test_file = 'Xtest.lua'
     write_file(
       test_file,
       [[
@@ -178,17 +180,32 @@ describe(':source', function()
       vim.g.sfile_value = vim.fn.expand('<sfile>')
       vim.g.stack_value = vim.fn.expand('<stack>')
       vim.g.script_value = vim.fn.expand('<script>')
+      vim.g.script_id = tonumber(vim.fn.expand('<SID>'):match('<SNR>(%d+)_'))
+      vim.o.mouse = 'nv'
     ]]
     )
 
     command('set shellslash')
-    command('source ' .. test_file)
+    command(('%ssource %s'):format(verbose and 'verbose ' or '', test_file))
     eq(1, eval('g:sourced_lua'))
-    matches([[/test%.lua$]], api.nvim_get_var('sfile_value'))
-    matches([[/test%.lua$]], api.nvim_get_var('stack_value'))
-    matches([[/test%.lua$]], api.nvim_get_var('script_value'))
+    matches([[/Xtest%.lua$]], api.nvim_get_var('sfile_value'))
+    matches([[/Xtest%.lua$]], api.nvim_get_var('stack_value'))
+    matches([[/Xtest%.lua$]], api.nvim_get_var('script_value'))
+
+    local expected_sid = fn.getscriptinfo({ name = test_file })[1].sid
+    local sid = api.nvim_get_var('script_id')
+    eq(expected_sid, sid)
+    eq(sid, api.nvim_get_option_info2('mouse', {}).last_set_sid)
 
     os.remove(test_file)
+  end
+
+  it('can source lua files', function()
+    test_source_lua_file(false)
+  end)
+
+  it('with :verbose modifier can source lua files', function()
+    test_source_lua_file(true)
   end)
 
   describe('can source current buffer', function()
@@ -253,7 +270,7 @@ describe(':source', function()
   end)
 
   it("doesn't throw E484 for lua parsing/runtime errors", function()
-    local test_file = 'test.lua'
+    local test_file = 'Xtest.lua'
 
     -- Does throw E484 for unreadable files
     local ok, result = pcall(exec_capture, ':source ' .. test_file .. 'noexisting')

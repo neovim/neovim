@@ -2110,7 +2110,8 @@ bool nlua_execute_on_key(int c, char *typed_buf)
 // @param[out] current
 void nlua_set_sctx(sctx_T *current)
 {
-  if (p_verbose <= 0 || current->sc_sid != SID_LUA) {
+  if (p_verbose <= 0 || (current->sc_sid > 0 && current->sc_lnum > 0)
+      || !script_is_lua(current->sc_sid)) {
     return;
   }
   lua_State *const lstate = global_lstate;
@@ -2119,6 +2120,7 @@ void nlua_set_sctx(sctx_T *current)
   // Files where internal wrappers are defined so we can ignore them
   // like vim.o/opt etc are defined in _options.lua
   char *ignorelist[] = {
+    "vim/_editor.lua",
     "vim/_options.lua",
     "vim/keymap.lua",
   };
@@ -2153,7 +2155,8 @@ void nlua_set_sctx(sctx_T *current)
   if (sid > 0) {
     xfree(source_path);
   } else {
-    new_script_item(source_path, &sid);
+    scriptitem_T *si = new_script_item(source_path, &sid);
+    si->sn_lua = true;
   }
   current->sc_sid = sid;
   current->sc_seq = -1;
