@@ -6042,6 +6042,52 @@ describe('builtin popupmenu', function()
           {2:-- }{5:match 1 of 3}                 |
         ]])
         feed('<C-E><ESC>')
+
+        command('setlocal autoindent shiftwidth=2 tabstop=2')
+        feed('Slocal a = <C-X><C-O>')
+        screen:expect([[
+          local a = {8:func ()}               |
+          {8:  }                              |
+          {8:end}^                             |
+          {1:~ }{s: function ()    }{1:              }|
+          {1:~ }{n: foobar         }{1:              }|
+          {1:~ }{n: 你好^@  ^@我好 }{1:              }|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+
+        feed('<C-Y>')
+        screen:expect([[
+          local a = {8:func ()}               |
+          {8:  }                              |
+          end^                             |
+          {1:~                               }|*16
+          {2:-- INSERT --}                    |
+        ]])
+
+        feed('<ESC>kAlocal b = <C-X><C-O>')
+        screen:expect([[
+          local a = {8:func ()}               |
+            local b = {8:func ()}             |
+          {8:    }                            |
+          {8:  end}^                           |
+          end {s: function ()    }            |
+          {1:~   }{n: foobar         }{1:            }|
+          {1:~   }{n: 你好^@  ^@我好 }{1:            }|
+          {1:~                               }|*12
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+
+        feed('<C-Y>')
+        screen:expect([[
+          local a = {8:func ()}               |
+            local b = {8:func ()}             |
+          {8:    }                            |
+            end^                           |
+          end                             |
+          {1:~                               }|*14
+          {2:-- INSERT --}                    |
+        ]])
       end)
     end
   end

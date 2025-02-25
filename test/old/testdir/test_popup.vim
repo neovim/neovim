@@ -1937,6 +1937,23 @@ func Test_pum_complete_with_special_characters()
   call VerifyScreenDump(buf, 'Test_pum_with_special_characters_08', {})
   call term_sendkeys(buf, "\<C-E>\<Esc>")
 
+  call term_sendkeys(buf, ":setlocal autoindent tabstop=2 shiftwidth=2\<CR>")
+  call term_sendkeys(buf, "Slocal a = \<C-X>\<C-O>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_09', {})
+
+  call term_sendkeys(buf, "\<C-Y>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_10', {})
+
+  call term_sendkeys(buf, "\<ESC>kAlocal b = \<C-X>\<C-O>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_11', {})
+
+  call term_sendkeys(buf, "\<C-Y>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_12', {})
+
   call StopVimInTerminal(buf)
 endfunc
 
