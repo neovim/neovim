@@ -601,6 +601,8 @@ for i = 1, #functions do
       output:write('\n  }\n')
     end
 
+    output:write('\n  const sctx_T save_current_sctx = api_set_sctx(channel_id);')
+
     -- function call
     output:write('\n  ')
     if fn.return_type ~= 'void' then
@@ -637,7 +639,9 @@ for i = 1, #functions do
     end
 
     output:write(table.concat(call_args, ', '))
-    output:write(');\n')
+    output:write(');')
+
+    output:write('\n  current_sctx = save_current_sctx;\n')
 
     if fn.can_fail then
       -- if the function can fail, also pass a pointer to the local error object
@@ -895,13 +899,22 @@ exit_0:
     if fn.ret_alloc then
       free_retval = '  api_free_' .. return_type:lower() .. '(ret);'
     end
-    write_shifted_output('    %s ret = %s(%s);\n', fn.return_type, fn.name, cparams)
+    write_shifted_output(
+      [[
+    const sctx_T save_current_sctx = api_set_sctx(LUA_INTERNAL_CALL);
+    %s ret = %s(%s);
+    current_sctx = save_current_sctx;
+    ]],
+      fn.return_type,
+      fn.name,
+      cparams
+    )
 
     local ret_type = real_type(fn.return_type)
     local ret_mode = (ret_type == 'Object') and '&' or ''
     if fn.has_lua_imp then
       -- only push onto the Lua stack if we haven't already
-      write_shifted_output(string.format(
+      write_shifted_output(
         [[
     if (lua_gettop(lstate) == 0) {
       nlua_push_%s(lstate, %sret, kNluaPushSpecial | kNluaPushFreeRefs);
@@ -909,10 +922,10 @@ exit_0:
       ]],
         return_type,
         ret_mode
-      ))
+      )
     elseif string.match(ret_type, '^KeyDict_') then
       write_shifted_output(
-        '     nlua_push_keydict(lstate, &ret, %s_table);\n',
+        '    nlua_push_keydict(lstate, &ret, %s_table);\n',
         string.sub(ret_type, 9)
       )
     else
@@ -927,7 +940,6 @@ exit_0:
 
     -- NOTE: we currently assume err_throw needs nothing from arena
     write_shifted_output(
-
       [[
   %s
   %s
@@ -941,7 +953,9 @@ exit_0:
   else
     write_shifted_output(
       [[
+    const sctx_T save_current_sctx = api_set_sctx(LUA_INTERNAL_CALL);
     %s(%s);
+    current_sctx = save_current_sctx;
   %s
   %s
     return 0;

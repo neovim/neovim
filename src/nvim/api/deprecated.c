@@ -797,9 +797,7 @@ static void set_option_to(uint64_t channel_id, void *to, OptScope scope, String 
       ? 0
       : ((scope == kOptScopeGlobal) ? OPT_GLOBAL : OPT_LOCAL);
 
-  WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, opt_idx, optval, opt_flags, scope, to, err);
-  });
+  set_option_value_for(name.data, opt_idx, optval, opt_flags, scope, to, err);
 }
 
 /// @deprecated Use nvim_exec_lua() instead.

@@ -256,9 +256,7 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
     return;
   });
 
-  WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, opt_idx, optval, opt_flags, scope, to, err);
-  });
+  set_option_value_for(name.data, opt_idx, optval, opt_flags, scope, to, err);
 }
 
 /// Gets the option information for all options.

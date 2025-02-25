@@ -187,9 +187,7 @@ void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight
 
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
   if (!ERROR_SET(err)) {
-    WITH_SCRIPT_CONTEXT(channel_id, {
-      ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
-    });
+    ns_hl_def((NS)ns_id, hl_id, attrs, link_id, val);
   }
 }
 

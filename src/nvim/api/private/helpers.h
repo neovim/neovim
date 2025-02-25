@@ -183,10 +183,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
 #endif
-
-#define WITH_SCRIPT_CONTEXT(channel_id, code) \
-  do { \
-    const sctx_T save_current_sctx = api_set_sctx(channel_id); \
-    code; \
-    current_sctx = save_current_sctx; \
-  } while (0);
