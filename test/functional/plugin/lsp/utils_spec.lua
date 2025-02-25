@@ -356,5 +356,15 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*9
                                                            |
     ]])
+    -- Entering window keeps lines concealed and doesn't end up below inner window size.
+    feed('<C-w>wG')
+    screen:expect([[
+                                                           |
+      ┌─────────┐{1:                                          }|
+      │{100:^local}{101: }{102:foo}│{1:                                          }|
+      └─────────┘{1:                                          }|
+      {1:~                                                    }|*9
+                                                           |
+    ]])
   end)
 end)

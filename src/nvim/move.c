@@ -641,9 +641,9 @@ void validate_cursor(win_T *wp)
 static void curs_rows(win_T *wp)
 {
   // Check if wp->w_lines[].wl_size is invalid
-  int all_invalid = (!redrawing()
-                     || wp->w_lines_valid == 0
-                     || wp->w_lines[0].wl_lnum > wp->w_topline);
+  bool all_invalid = (!redrawing()
+                      || wp->w_lines_valid == 0
+                      || wp->w_lines[0].wl_lnum > wp->w_topline);
   int i = 0;
   wp->w_cline_row = 0;
   for (linenr_T lnum = wp->w_topline; lnum < wp->w_cursor.lnum; i++) {
@@ -667,7 +667,7 @@ static void curs_rows(win_T *wp)
     }
     if (valid && (lnum != wp->w_topline || (wp->w_skipcol == 0 && !win_may_fill(wp)))) {
       lnum = wp->w_lines[i].wl_lastlnum + 1;
-      // Cursor inside folded lines, don't count this row
+      // Cursor inside folded or concealed lines, don't count this row
       if (lnum > wp->w_cursor.lnum) {
         break;
       }
@@ -677,7 +677,7 @@ static void curs_rows(win_T *wp)
       bool folded;
       int n = plines_correct_topline(wp, lnum, &last, true, &folded);
       lnum = last + 1;
-      if (folded && lnum > wp->w_cursor.lnum) {
+      if (lnum + decor_conceal_line(wp, lnum - 1, false) > wp->w_cursor.lnum) {
         break;
       }
       wp->w_cline_row += n;
