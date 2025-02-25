@@ -644,6 +644,136 @@ int x = INT_MAX;
           -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
+
+      it('scopes injections appropriately', function()
+        -- `injection.combined` are combined within a TSTree.
+        -- Lua injections on lines 2-4 should be combined within their
+        -- respective C injection trees, and lua injections on lines 0 and 6
+        -- are separate from each other and other lua injections on lines 2-4.
+
+        exec_lua(function()
+          local lines = {
+            [[func('int a = func("local a = [=[");')]],
+            [[]],
+            [[func('int a = func("local a = 6") + func("+ 3");')]],
+            [[func('int a = func("local a = 6") + func("+ 3");')]],
+            [[func('int a = func("local a = 6") + func("+ 3");')]],
+            [[]],
+            [[func('int a = func("]=]");')]],
+          }
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+          _G.parser = vim.treesitter.get_parser(0, 'lua', {
+            injections = {
+              lua = [[
+                ((function_call
+                  arguments: (arguments
+                    (string (string_content) @injection.content)))
+                  (#set! injection.language "c"))
+              ]],
+              c = [[
+                ((call_expression
+                  arguments: (argument_list
+                    (string_literal (string_content) @injection.content)))
+                  (#set! injection.combined)
+                  (#set! injection.language "lua"))
+              ]],
+            },
+          })
+
+          function _G.langtree_regions(parser)
+            local result_regions = {}
+
+            local regions = parser:included_regions()
+            for region_i, region in pairs(regions) do
+              local result_region = {}
+
+              for _, range in ipairs(region) do
+                table.insert(result_region, {
+                  range[1],
+                  range[2],
+                  range[4],
+                  range[5],
+                })
+              end
+
+              result_regions[region_i] = result_region
+            end
+
+            return result_regions
+          end
+          function _G.all_regions(parser)
+            local this_regions = _G.langtree_regions(parser)
+            local child_regions = {}
+            for lang, child in pairs(parser:children()) do
+              child_regions[lang] = _G.all_regions(child)
+            end
+            return { regions = this_regions, children = child_regions }
+          end
+        end)
+
+        local expected_regions = {
+          children = {}, -- nothing is parsed
+          regions = {
+            {}, -- root tree's regions is the entire buffer
+          },
+        }
+        eq(expected_regions, exec_lua('return all_regions(_G.parser)'))
+
+        exec_lua('_G.parser:parse({ 3, 0, 3, 45 })')
+
+        expected_regions = {
+          children = {
+            c = {
+              children = {
+                lua = {
+                  children = {},
+                  regions = {
+                    { { 3, 20, 3, 31 }, { 3, 42, 3, 45 } },
+                  },
+                },
+              },
+              regions = {
+                { { 3, 6, 3, 48 } },
+              },
+            },
+          },
+          regions = {
+            {},
+          },
+        }
+        eq(expected_regions, exec_lua('return all_regions(_G.parser)'))
+
+        exec_lua('_G.parser:parse(true)')
+        expected_regions = {
+          children = {
+            c = {
+              children = {
+                lua = {
+                  children = {},
+                  regions = {
+                    { { 0, 20, 0, 33 } },
+                    { { 2, 20, 2, 31 }, { 2, 42, 2, 45 } },
+                    { { 3, 20, 3, 31 }, { 3, 42, 3, 45 } },
+                    { { 4, 20, 4, 31 }, { 4, 42, 4, 45 } },
+                    { { 6, 20, 6, 23 } },
+                  },
+                },
+              },
+              regions = {
+                { { 0, 6, 0, 36 } },
+                { { 2, 6, 2, 48 } },
+                { { 3, 6, 3, 48 } },
+                { { 4, 6, 4, 48 } },
+                { { 6, 6, 6, 26 } },
+              },
+            },
+          },
+          regions = {
+            {},
+          },
+        }
+        eq(expected_regions, exec_lua('return all_regions(_G.parser)'))
+      end)
     end)
 
     describe('when using injection.self', function()
@@ -849,43 +979,55 @@ print()
 
   describe('trim! directive', function()
     it('can trim all whitespace', function()
-      -- luacheck: push ignore 611 613
-      insert([=[
-        print([[
-
-                  f
-           helllo
-        there
-        asdf
-        asdfassd   
-
-
-
-        ]])
-        print([[
-              
-              
-              
-        ]])
-
-        print([[]])
-
-        print([[
-        ]])
-
-        print([[     hello 😃    ]])
-      ]=])
-      -- luacheck: pop
+      exec_lua(function()
+        local lines = {
+          '        print([[',
+          '',
+          '            f',
+          '     helllo',
+          '  there',
+          '  asdf',
+          '  asdfassd   ',
+          '',
+          '',
+          '',
+          '  ]])',
+          '  print([[',
+          '        ',
+          '        ',
+          '        ',
+          '  ]])',
+          '',
+          '  print([[]])',
+          '',
+          '  print([[',
+          '  ]])',
+          '',
+          '  print([[     hello 😃    ]])',
+        }
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      end)
+      exec_lua(function()
+        vim.treesitter.start(0, 'lua')
+      end)
 
       local query_text = [[
+       ; query
+        ((string_content) @str)
+      ]]
+      eq({
+        { 'str', { 0, 16, 10, 2 } },
+        { 'str', { 11, 10, 15, 2 } },
+        { 'str', { 17, 10, 17, 10 } },
+        { 'str', { 19, 10, 20, 2 } },
+        { 'str', { 22, 10, 22, 29 } },
+      }, run_query('lua', query_text))
+
+      local trim_query_text = [[
         ; query
         ((string_content) @str
           (#trim! @str 1 1 1 1))
       ]]
-
-      exec_lua(function()
-        vim.treesitter.start(0, 'lua')
-      end)
 
       eq({
         { 'str', { 2, 12, 6, 10 } },
@@ -893,7 +1035,7 @@ print()
         { 'str', { 17, 10, 17, 10 } },
         { 'str', { 19, 10, 19, 10 } },
         { 'str', { 22, 15, 22, 25 } },
-      }, run_query('lua', query_text))
+      }, run_query('lua', trim_query_text))
     end)
 
     it('trims only empty lines by default (backwards compatible)', function()
