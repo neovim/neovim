@@ -3085,22 +3085,6 @@ int buflist_add(char *fname, int flags)
   return 0;
 }
 
-#if defined(BACKSLASH_IN_FILENAME)
-/// Adjust slashes in file names.  Called after 'shellslash' was set.
-void buflist_slash_adjust(void)
-{
-  FOR_ALL_BUFFERS(bp) {
-    if (bp->b_ffname != NULL) {
-      slash_adjust(bp->b_ffname);
-    }
-    if (bp->b_sfname != NULL) {
-      slash_adjust(bp->b_sfname);
-    }
-  }
-}
-
-#endif
-
 /// Set alternate cursor position for the current buffer and window "win".
 /// Also save the local window option values.
 void buflist_altfpos(win_T *win)

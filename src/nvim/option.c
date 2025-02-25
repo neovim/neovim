@@ -2450,9 +2450,6 @@ static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
   }*/
 
   // need to adjust the file name arguments and buffer names.
-  buflist_slash_adjust();
-  alist_slash_adjust();
-  scriptnames_slash_adjust();
   return NULL;
 }
 #endif

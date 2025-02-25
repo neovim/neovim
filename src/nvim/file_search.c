@@ -1857,13 +1857,6 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
     abort();
   }
 
-#ifdef BACKSLASH_IN_FILENAME
-  char new_dir_buf[MAXPATHL];
-  STRCPY(new_dir_buf, new_dir);
-  slash_adjust(new_dir_buf);
-  new_dir = new_dir_buf;
-#endif
-
   if (pre) {
     tv_dict_add_str(dict, S_LEN("directory"), new_dir);
   } else {

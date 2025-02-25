@@ -184,6 +184,10 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     ret = xmemdupz(ret, len >= 2 ? len - 1 : 0);  // Trim trailing slash.
   }
 
+  if (ret != NULL) {
+    MUTATE_PATH_FOR_VIM(ret);
+  }
+
   if ((idx == kXDGDataDirs || idx == kXDGConfigDirs) && ret != NULL) {
     ret = xdg_remove_duplicate(ret, ENV_SEPSTR);
   }
@@ -215,10 +219,6 @@ char *get_xdg_home(const XDGVarType idx)
     }
 #endif
     dir = concat_fnames_realloc(dir, IObuff, true);
-
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(dir);
-#endif
   }
   return dir;
 }

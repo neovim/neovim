@@ -47,14 +47,30 @@ typedef enum file_comparison {
 #define MUTATE_PATH_NO_OP do { } while (0)
 #ifdef BACKSLASH_IN_FILENAME
 
-#define MUTATE_PATH_FOR_VIM(p) path_separators_normalize(p)
-#define MUTATE_PATH_FOR_OS(p)  path_separators_specialize(p)
-#define MUTATE_PATH_FOR_UI(p)  MUTATE_PATH_NO_OP
+# define MUTATE_PATH_FOR_VIM(p) path_separators_to_slash(p)
+# define MUTATE_PATH_FOR_OS(p)  path_separators_to_backslash(p)
+// TODO - potential UI mutate? # define MUTATE_PATH_FOR_UI(p)  MUTATE_PATH_NO_OP
+
+# define CLONE_PATH_FOR_VIM(p) \
+         char *mutated_clone_path_for_vim = xstrdup(p);\
+         MUTATE_PATH_FOR_VIM(mutated_clone_path_for_vim);\
+         p = mutated_clone_path_for_vim
+# define CLEANUP_CLONE_PATH_FOR_VIM xfree(mutated_clone_path_for_vim)
+
+# define CLONE_PATH_FOR_OS(p) \
+         char *mutated_clone_path_for_os = xstrdup(p);\
+         MUTATE_PATH_FOR_VIM(mutated_clone_path_for_os);\
+         p = mutated_clone_path_for_os
+# define CLEANUP_CLONE_PATH_FOR_OS xfree(mutated_clone_path_for_os)
 
 #else
 
 # define MUTATE_PATH_FOR_VIM(p) MUTATE_PATH_NO_OP
 # define MUTATE_PATH_FOR_OS(p)  MUTATE_PATH_NO_OP
 # define MUTATE_PATH_FOR_UI(p)  MUTATE_PATH_NO_OP
+# define CLONE_PATH_FOR_VIM(p)  MUTATE_PATH_NO_OP
+# define CLEANUP_CLONE_PATH_FOR_VIM(p) MUTATE_PATH_NO_OP
+# define CLONE_PATH_FOR_OS(p)  MUTATE_PATH_NO_OP
+# define CLEANUP_CLONE_PATH_FOR_OS(p) MUTATE_PATH_NO_OP
 
 #endif

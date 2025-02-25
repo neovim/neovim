@@ -66,9 +66,6 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // Return the current directory
   char *cwd = xmalloc(MAXPATHL);
   if (os_dirname(cwd, MAXPATHL) != FAIL) {
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(cwd);
-#endif
     rettv->vval.v_string = xstrdup(cwd);
   }
   xfree(cwd);
@@ -143,12 +140,6 @@ void f_exepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char *path = NULL;
 
   os_can_exe(tv_get_string(&argvars[0]), &path, true);
-
-#ifdef BACKSLASH_IN_FILENAME
-  if (path != NULL) {
-    slash_adjust(path);
-  }
-#endif
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = path;
@@ -382,9 +373,6 @@ void f_getcwd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   rettv->vval.v_string = xstrdup(cwd);
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust(rettv->vval.v_string);
-#endif
 
   xfree(cwd);
 }

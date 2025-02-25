@@ -1341,6 +1341,8 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     if (add_pat == -1 || (add_pat == 0 && (flags & EW_NOTFOUND))) {
       char *t = backslash_halve_save(p);
 
+      MUTATE_PATH_FOR_VIM(t);
+
       // When EW_NOTFOUND is used, always add files and dirs.  Makes
       // "vim c:/" work.
       if (flags & EW_NOTFOUND) {
@@ -1440,41 +1442,10 @@ static int expand_backtick(garray_T *gap, char *pat, int flags)
 }
 
 #ifdef BACKSLASH_IN_FILENAME
-/// Replace all slashes by backslashes.
-/// This used to be the other way around, but MS-DOS sometimes has problems
-/// with slashes (e.g. in a command name).  We can't have mixed slashes and
-/// backslashes, because comparing file names will not work correctly.  The
-/// commands that use a file name should try to avoid the need to type a
-/// backslash twice.
-/// When 'shellslash' set do it the other way around.
-/// When the path looks like a URL leave it unmodified.
-void slash_adjust(char *p)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (path_with_url(p)) {
-    return;
-  }
-
-  if (*p == '`') {
-    // don't replace backslash in backtick quoted strings
-    const size_t len = strlen(p);
-    if (len > 2 && *(p + len - 1) == '`') {
-      return;
-    }
-  }
-
-  while (*p) {
-    if (*p == psepcN) {
-      *p = psepc;
-    }
-    MB_PTR_ADV(p);
-  }
-}
-
 /// Replace all backslashes with slashes
 /// Vim prefers slashes, 
 /// use to convert os-specific path formats to the vim-preferred format
-void path_separators_normalize(char *p)
+void path_separators_to_slash(char *p)
   FUNC_ATTR_NONNULL_ALL
 {
   if (path_with_url(p)) {
@@ -1482,7 +1453,7 @@ void path_separators_normalize(char *p)
   }
 
   if (*p == '`') {
-    // don't replace backslash in backtick quoted strings
+    // don't replace in backtick quoted strings?  Leftover from slash_adjust
     const size_t len = strlen(p);
     if (len > 2 && *(p + len - 1) == '`') {
       return;
@@ -1499,7 +1470,7 @@ void path_separators_normalize(char *p)
 
 /// Replace slashes with backslashes
 /// Use specifically to convert a path from vim-preferred slashes, for an os-specific function call
-void path_separators_specialize(char *p)
+void path_separators_to_backslash(char *p)
   FUNC_ATTR_NONNULL_ALL
 {
   if (path_with_url(p)) {
@@ -1507,7 +1478,7 @@ void path_separators_specialize(char *p)
   }
 
   if (*p == '`') {
-    // don't replace backslash in backtick quoted strings
+    // don't replace in backtick quoted strings?  Leftover from slash_adjust
     const size_t len = strlen(p);
     if (len > 2 && *(p + len - 1) == '`') {
       return;
@@ -1569,9 +1540,7 @@ void addfile(garray_T *gap, char *f, int flags)
   char *p = xmalloc(strlen(f) + 1 + isdir);
 
   STRCPY(p, f);
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust(p);
-#endif
+
   // Append a slash or backslash after directory names if none is present.
   if (isdir && (flags & EW_ADDSLASH)) {
     add_pathsep(p);

@@ -182,6 +182,8 @@ void alist_set(alist_T *al, int count, char **files, int use_curbuf, int *fnum_l
         break;
       }
 
+      MUTATE_PATH_FOR_VIM(files[i]);
+
       // May set buffer name of a buffer previously used for the
       // argument list, so that it's re-used by alist_add.
       if (fnum_list != NULL && i < fnum_len) {
@@ -218,9 +220,6 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
   arglist_locked = true;
   curwin->w_locked = true;
 
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust(fname);
-#endif
   AARGLIST(al)[al->al_ga.ga_len].ae_fname = fname;
   if (set_fnum > 0) {
     AARGLIST(al)[al->al_ga.ga_len].ae_fnum =
@@ -231,30 +230,6 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
   arglist_locked = false;
   curwin->w_locked = false;
 }
-
-#if defined(BACKSLASH_IN_FILENAME)
-
-/// Adjust slashes in file names.  Called after 'shellslash' was set.
-void alist_slash_adjust(void)
-{
-  for (int i = 0; i < GARGCOUNT; i++) {
-    if (GARGLIST[i].ae_fname != NULL) {
-      slash_adjust(GARGLIST[i].ae_fname);
-    }
-  }
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_alist != &global_alist) {
-      for (int i = 0; i < WARGCOUNT(wp); i++) {
-        if (WARGLIST(wp)[i].ae_fname != NULL) {
-          slash_adjust(WARGLIST(wp)[i].ae_fname);
-        }
-      }
-    }
-  }
-}
-
-#endif
 
 /// Isolate one argument, taking backticks.
 /// Changes the argument in-place, puts a NUL after it.  Backticks remain.

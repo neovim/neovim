@@ -2014,11 +2014,7 @@ static void findtags_add_match(findtags_state_T *st, tagptrs_T *tagpp, findtags_
     char *p = mfp;
     p[0] = (char)(mtt + 1);
     STRCPY(p + 1, st->tag_fname);
-#ifdef BACKSLASH_IN_FILENAME
-    // Ignore differences in slashes, avoid adding
-    // both path/file and path\file.
-    slash_adjust(p + 1);
-#endif
+
     p[tag_fname_len + 1] = TAG_SEP;
     char *s = p + 1 + tag_fname_len + 1;
     STRCPY(s, st->lbuf);
@@ -2435,9 +2431,6 @@ static bool found_tagfile_cb(int num_fnames, char **fnames, bool all, void *cook
   for (int i = 0; i < num_fnames; i++) {
     char *const tag_fname = xstrdup(fnames[i]);
 
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(tag_fname);
-#endif
     simplify_filename(tag_fname);
     GA_APPEND(char *, &tag_fnames, tag_fname);
 
@@ -2497,9 +2490,6 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
       tnp->tn_hf_idx++;
       STRCPY(buf, p_hf);
       STRCPY(path_tail(buf), "tags");
-#ifdef BACKSLASH_IN_FILENAME
-      slash_adjust(buf);
-#endif
       simplify_filename(buf);
 
       for (int i = 0; i < tag_fnames.ga_len; i++) {
