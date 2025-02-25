@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:          Vim
 " Maintainer:        Doug Kearns <dougkearns@gmail.com>
-" Last Change:       2025 Feb 23
+" Last Change:       2025 Feb 25
 " Former Maintainer: Bram Moolenaar <Bram@vim.org>
 " Contributors:      Riley Bruins <ribru17@gmail.com> ('commentstring'),
 "                    @Konfekt
@@ -85,6 +85,8 @@ if !exists("*" .. expand("<SID>") .. "Help")
       return ':'.topic
     elseif pre =~# '\<v:$'
       return 'v:'.topic
+    elseif pre =~# '\\$'
+      return '/\'.topic
     elseif topic ==# 'v' && post =~# ':\w\+'
       return 'v'.matchstr(post, ':\w\+')
     else
