@@ -101,6 +101,13 @@ function TSHighlighter.new(tree, opts)
     end,
   })
 
+  -- Enable conceal_lines if query exists for lang and has conceal_lines metadata.
+  local function set_conceal_lines(lang)
+    if not self._conceal_line and self:get_query(lang):query() then
+      self._conceal_line = self:get_query(lang):query().has_conceal_line
+    end
+  end
+
   tree:register_cbs({
     on_changedtree = function(...)
       self:on_changedtree(...)
@@ -112,7 +119,7 @@ function TSHighlighter.new(tree, opts)
     end,
     on_child_added = function(child)
       child:for_each_tree(function(t)
-        self._conceal_line = self._conceal_line or self:get_query(t:lang()):query().has_conceal_line
+        set_conceal_lines(t:lang())
       end)
     end,
   }, true)
@@ -130,11 +137,10 @@ function TSHighlighter.new(tree, opts)
   if opts.queries then
     for lang, query_string in pairs(opts.queries) do
       self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
-      self._conceal_line = self._conceal_line or self._queries[lang]:query().has_conceal_line
+      set_conceal_lines(lang)
     end
   end
-  self._conceal_line = self._conceal_line or self:get_query(tree:lang()):query().has_conceal_line
-
+  set_conceal_lines(tree:lang())
   self.orig_spelloptions = vim.bo[self.bufnr].spelloptions
 
   vim.bo[self.bufnr].syntax = ''
