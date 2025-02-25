@@ -1298,3 +1298,16 @@ it('starting and stopping treesitter highlight in init.lua works #29541', functi
   -- legacy syntax highlighting is used
   screen:expect(hl_grid_legacy_c)
 end)
+
+it('no nil index for missing highlight query', function()
+  clear()
+  local cqueries = vim.uv.cwd() .. '/runtime/queries/c/'
+  os.rename(cqueries .. 'highlights.scm', cqueries .. '_highlights.scm')
+  finally(function()
+    os.rename(cqueries .. '_highlights.scm', cqueries .. 'highlights.scm')
+  end)
+  exec_lua([[
+    local parser = vim.treesitter.get_parser(0, 'c')
+    vim.treesitter.highlighter.new(parser)
+  ]])
+end)
