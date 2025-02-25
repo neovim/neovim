@@ -1071,6 +1071,7 @@ bool copy_indent(int size, char *src)
 ///          OPENLINE_KEEPTRAIL keep trailing spaces
 ///          OPENLINE_MARKFIX   adjust mark positions after the line break
 ///          OPENLINE_COM_LIST  format comments with list or 2nd line indent
+///          OPENLINE_FORCE_INDENT  set indent from second_line_indent, ignore 'autoindent'
 ///
 /// "second_line_indent": indent for after ^^D in Insert mode or if flag
 ///                       OPENLINE_COM_LIST
@@ -1162,9 +1163,11 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     trunc_line = true;
   }
 
-  // If 'autoindent' and/or 'smartindent' is set, try to figure out what
-  // indent to use for the new line.
-  if (curbuf->b_p_ai || do_si) {
+  if ((flags & OPENLINE_FORCE_INDENT)) {
+    newindent = second_line_indent;
+  } else if (curbuf->b_p_ai || do_si) {
+    // If 'autoindent' and/or 'smartindent' is set, try to figure out what
+    // indent to use for the new line.
     // count white space on current line
     newindent = indent_size_ts(saved_line, curbuf->b_p_ts, curbuf->b_p_vts_array);
     if (newindent == 0 && !(flags & OPENLINE_COM_LIST)) {

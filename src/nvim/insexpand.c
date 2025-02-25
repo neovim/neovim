@@ -3833,6 +3833,7 @@ static void ins_compl_expand_multiple(char *str)
 {
   char *start = str;
   char *curr = str;
+  int base_indent = get_indent();
   while (*curr != NUL) {
     if (*curr == '\n') {
       // Insert the text chunk before newline
@@ -3841,7 +3842,7 @@ static void ins_compl_expand_multiple(char *str)
       }
 
       // Handle newline
-      open_line(FORWARD, OPENLINE_KEEPTRAIL, false, NULL);
+      open_line(FORWARD, OPENLINE_KEEPTRAIL | OPENLINE_FORCE_INDENT, base_indent, NULL);
       start = curr + 1;
     }
     curr++;
