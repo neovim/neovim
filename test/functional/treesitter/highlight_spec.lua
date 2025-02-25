@@ -513,6 +513,57 @@ describe('treesitter highlighting (C)', function()
     screen:expect { grid = injection_grid_expected_c }
   end)
 
+  it("highlights don't apply outside the tree range", function()
+    exec_lua(function()
+      local line = {
+        [==[f(]==]
+          .. [==['char *a = "local b = [[ab" "cd";', ]==]
+          .. [==['char *b = "ef" "gh]]";']==]
+          .. [==[)]==],
+      }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, line)
+
+      local parser = vim.treesitter.get_parser(0, 'lua', {
+        injections = {
+          lua = [[
+            ;query
+            ((function_call
+              arguments: (arguments
+                (string (string_content) @injection.content)))
+              (#set! injection.language "c")
+              (#set! injection.combined))
+          ]],
+          c = [[
+            ;query
+            ((string_content) @injection.content
+              (#set! injection.language "lua")
+              (#set! injection.combined))
+          ]],
+        },
+      })
+
+      vim.api.nvim_set_hl(0, '@highlight', { fg = 'red' })
+
+      local highlighter = vim.treesitter.highlighter
+      highlighter.new(parser, {
+        queries = {
+          lua = [[
+            ; query
+            (assignment_statement
+              (expression_list (string (string_content) @highlight)))
+          ]],
+          c = [[]],
+        },
+      })
+    end)
+
+    screen:expect([==[
+      ^f('char *a = "local b = [[{19:ab}" "{19:cd}";', 'char *b = "{19:ef}" "{19:gh}]]";')  |
+      {1:~                                                                }|*16
+                                                                       |
+    ]==])
+  end)
+
   it("supports injecting by ft name in metadata['injection.language']", function()
     insert(injection_text_c)
 
