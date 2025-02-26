@@ -152,6 +152,9 @@ describe('swapfile detection', function()
 
   it('redrawing during prompt does not break treesitter', function()
     local testfile = 'Xtest_swapredraw.lua'
+    finally(function()
+      os.remove(testfile)
+    end)
     write_file(
       testfile,
       [[
@@ -589,7 +592,9 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
     retry(nil, nil, function()
       eq(
         { '[Process exited 1]' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})->filter({_, s -> !empty(trim(s))})")
+        eval(
+          "[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})->filter({_, s -> !empty(trim(s))})"
+        )
       )
     end)
   end)
