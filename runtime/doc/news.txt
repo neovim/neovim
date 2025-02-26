@@ -486,6 +486,8 @@ These existing features changed their behavior.
   `%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim`. This is only an
   implementation simplification, not a behavior change.
 
+• The |shada| file no longer contains entries for 'nobuflisted' buffers.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
