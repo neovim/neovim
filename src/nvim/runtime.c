@@ -229,8 +229,7 @@ char *estack_sfile(estack_arg_T which)
 }
 
 static void stacktrace_push_item(list_T *const l, ufunc_T *const fp, const char *const event,
-                                 const linenr_T lnum, char *const filepath,
-                                 const bool filepath_alloced)
+                                 const linenr_T lnum, char *const filepath)
 {
   dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
   typval_T tv = {
@@ -246,11 +245,7 @@ static void stacktrace_push_item(list_T *const l, ufunc_T *const fp, const char 
     tv_dict_add_str(d, S_LEN("event"), event);
   }
   tv_dict_add_nr(d, S_LEN("lnum"), lnum);
-  if (filepath_alloced) {
-    tv_dict_add_allocated_str(d, S_LEN("filepath"), filepath);
-  } else {
-    tv_dict_add_str(d, S_LEN("filepath"), filepath);
-  }
+  tv_dict_add_str(d, S_LEN("filepath"), filepath);
 
   tv_list_append_tv(l, &tv);
 }
@@ -265,20 +260,18 @@ list_T *stacktrace_create(void)
     linenr_T lnum = entry->es_lnum;
 
     if (entry->es_type == ETYPE_SCRIPT) {
-      stacktrace_push_item(l, NULL, NULL, lnum, entry->es_name, false);
+      stacktrace_push_item(l, NULL, NULL, lnum, entry->es_name);
     } else if (entry->es_type == ETYPE_UFUNC) {
       ufunc_T *const fp = entry->es_info.ufunc;
       const sctx_T sctx = fp->uf_script_ctx;
-      bool filepath_alloced = false;
-      char *filepath = sctx.sc_sid > 0 ? get_scriptname(sctx, &filepath_alloced) : "";
+      char *filepath = sctx.sc_sid > 0 ? get_scriptname(sctx, NULL) : "";
       lnum += sctx.sc_lnum;
-      stacktrace_push_item(l, fp, NULL, lnum, filepath, filepath_alloced);
+      stacktrace_push_item(l, fp, NULL, lnum, filepath);
     } else if (entry->es_type == ETYPE_AUCMD) {
       const sctx_T sctx = entry->es_info.aucmd->script_ctx;
-      bool filepath_alloced = false;
-      char *filepath = sctx.sc_sid > 0 ? get_scriptname(sctx, &filepath_alloced) : "";
+      char *filepath = sctx.sc_sid > 0 ? get_scriptname(sctx, NULL) : "";
       lnum += sctx.sc_lnum;
-      stacktrace_push_item(l, NULL, entry->es_name, lnum, filepath, filepath_alloced);
+      stacktrace_push_item(l, NULL, entry->es_name, lnum, filepath);
     }
   }
   return l;
@@ -2434,9 +2427,14 @@ void scriptnames_slash_adjust(void)
 
 /// Get a pointer to a script name.  Used for ":verbose set".
 /// Message appended to "Last set from "
+///
+/// @param should_free  if non-NULL and the script name is a file path, call
+///                     home_replace_save() on it and set *should_free to true.
 char *get_scriptname(sctx_T script_ctx, bool *should_free)
 {
-  *should_free = false;
+  if (should_free != NULL) {
+    *should_free = false;
+  }
 
   switch (script_ctx.sc_sid) {
   case SID_MODELINE:
@@ -2465,9 +2463,12 @@ char *get_scriptname(sctx_T script_ctx, bool *should_free)
                script_ctx.sc_sid);
       return IObuff;
     }
-
-    *should_free = true;
-    return home_replace_save(NULL, sname);
+    if (should_free != NULL) {
+      *should_free = true;
+      return home_replace_save(NULL, sname);
+    } else {
+      return sname;
+    }
   }
   }
 }
