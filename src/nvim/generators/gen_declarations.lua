@@ -1,4 +1,6 @@
-local grammar = require('generators.c_grammar').grammar
+-- TODO(bfredl): this is ugly - rework
+local c_grammar_inputf = arg[6]
+local grammar = loadfile(c_grammar_inputf)().grammar
 
 --- @param fname string
 --- @return string?
