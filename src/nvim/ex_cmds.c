@@ -1614,6 +1614,8 @@ int do_write(exarg_T *eap)
     return FAIL;
   }
 
+  ui_busy_start();
+
   char *ffname = eap->arg;
   if (*ffname == NUL) {
     if (eap->cmdidx == CMD_saveas) {
@@ -1760,6 +1762,7 @@ int do_write(exarg_T *eap)
   }
 
 theend:
+  ui_busy_stop();
   xfree(free_fname);
   return retval;
 }
