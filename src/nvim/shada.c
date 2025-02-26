@@ -579,15 +579,6 @@ static void close_file(FileDescriptor *cookie)
   }
 }
 
-/// Check whether writing to shada file was disabled ("-i NONE" or "--clean").
-///
-/// @return true if it was disabled, false otherwise.
-static bool shada_disabled(void)
-  FUNC_ATTR_PURE
-{
-  return strequal(p_shadafile, "NONE");
-}
-
 /// Read ShaDa file
 ///
 /// @param[in]  file   File to read or NULL to use default name.
@@ -597,11 +588,11 @@ static bool shada_disabled(void)
 static int shada_read_file(const char *const file, const int flags)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (shada_disabled()) {
+  char *const fname = shada_filename(file);
+
+  if (strequal(fname, "")) {
     return FAIL;
   }
-
-  char *const fname = shada_filename(file);
 
   FileDescriptor sd_reader;
   int of_ret = file_open(&sd_reader, fname, kFileReadOnly, 0);
@@ -1298,7 +1289,12 @@ static char *shada_filename(const char *file)
 {
   if (file == NULL || *file == NUL) {
     if (p_shadafile != NULL && *p_shadafile != NUL) {
-      file = p_shadafile;
+      // Check if writing to ShaDa file was disabled ("-i NONE" or "--clean").
+      if (!strequal(p_shadafile, "NONE")) {
+        file = p_shadafile;
+      } else {
+        return "";
+      }
     } else {
       if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
         file = shada_get_default_file();
@@ -2699,11 +2695,12 @@ shada_write_exit:
 /// @return OK if writing was successful, FAIL otherwise.
 int shada_write_file(const char *const file, bool nomerge)
 {
-  if (shada_disabled()) {
+  char *const fname = shada_filename(file);
+
+  if (strequal(fname, "")) {
     return FAIL;
   }
 
-  char *const fname = shada_filename(file);
   char *tempname = NULL;
   FileDescriptor sd_writer;
   FileDescriptor sd_reader;
