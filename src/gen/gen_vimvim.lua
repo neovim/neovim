@@ -15,9 +15,9 @@ local function w(s)
   end
 end
 
-local options = require('options')
-local auevents = require('auevents')
-local ex_cmds = require('ex_cmds')
+local options = require('nvim.options')
+local auevents = require('nvim.auevents')
+local ex_cmds = require('nvim.ex_cmds')
 
 local function cmd_kw(prev_cmd, cmd)
   if not prev_cmd then

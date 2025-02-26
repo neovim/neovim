@@ -292,7 +292,7 @@ set(UI_METADATA ${PROJECT_BINARY_DIR}/ui_metadata.mpack)
 set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
-set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
+set(GENERATOR_DIR ${PROJECT_SOURCE_DIR}/src/gen)
 set(GEN_EVAL_TOUCH ${TOUCHES_DIR}/gen_doc_eval)
 set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1/jit)
 set(NVIM_RUNTIME_DIR ${PROJECT_SOURCE_DIR}/runtime)
@@ -306,7 +306,8 @@ set(EX_CMDS_GENERATOR ${GENERATOR_DIR}/gen_ex_cmds.lua)
 set(FUNCS_GENERATOR ${GENERATOR_DIR}/gen_eval.lua)
 set(GENERATOR_C_GRAMMAR ${GENERATOR_DIR}/c_grammar.lua)
 set(GENERATOR_HASHY ${GENERATOR_DIR}/hashy.lua)
-set(GENERATOR_PRELOAD ${GENERATOR_DIR}/preload.lua)
+set(GENERATOR_PRELOAD ${GENERATOR_DIR}/preload_nlua.lua)
+set(NVIM_LUA_PRELOAD ${GENERATOR_DIR}/preload.lua)
 set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(OPTIONS_GENERATOR ${GENERATOR_DIR}/gen_options.lua)
 
@@ -513,6 +514,9 @@ add_custom_command(
 
 set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0> ${PROJECT_BINARY_DIR})
 set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
+
+# Like LUA_GEN but includes also vim.fn, vim.api, vim.uv, etc
+set(NVIM_LUA $<TARGET_FILE:nvim_bin> -u NONE -l ${NVIM_LUA_PRELOAD} ${PROJECT_SOURCE_DIR})
 
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
@@ -937,12 +941,12 @@ file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
 )
 
 add_target(doc-vim
-  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l scripts/gen_vimdoc.lua
+  COMMAND ${NVIM_LUA} src/gen/gen_vimdoc.lua
   DEPENDS
     nvim
     ${API_SOURCES}
     ${LUA_SOURCES}
-    ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.lua
+    ${PROJECT_SOURCE_DIR}/src/gen/gen_vimdoc.lua
     ${NVIM_RUNTIME_DIR}/doc/api.txt
     ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
     ${NVIM_RUNTIME_DIR}/doc/lsp.txt
@@ -951,11 +955,11 @@ add_target(doc-vim
   )
 
 add_target(doc-eval
-  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+  COMMAND ${NVIM_LUA} ${PROJECT_SOURCE_DIR}/src/gen/gen_eval_files.lua
   DEPENDS
     nvim
     ${FUNCS_METADATA}
-    ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+    ${PROJECT_SOURCE_DIR}/src/gen/gen_eval_files.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
@@ -966,7 +970,7 @@ add_custom_target(doc)
 add_dependencies(doc doc-vim doc-eval)
 
 add_target(lintdoc
-  COMMAND $<TARGET_FILE:nvim_bin> -u NONE -l scripts/lintdoc.lua
+  COMMAND ${NVIM_LUA} scripts/lintdoc.lua
   DEPENDS ${DOCFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)

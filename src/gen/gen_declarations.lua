@@ -1,4 +1,4 @@
-local grammar = require('generators.c_grammar').grammar
+local grammar = require('gen.c_grammar').grammar
 
 --- @param fname string
 --- @return string?

@@ -2,7 +2,7 @@
 
 -- Generator for various vimdoc and Lua type files
 
-local util = require('scripts.util')
+local util = require('gen.util')
 local fmt = string.format
 
 local DEP_API_METADATA = 'build/funcs_metadata.mpack'
@@ -259,7 +259,7 @@ end
 local function get_api_meta()
   local ret = {} --- @type table<string, vim.EvalFn>
 
-  local cdoc_parser = require('scripts.cdoc_parser')
+  local cdoc_parser = require('gen.cdoc_parser')
 
   local f = 'src/nvim/api'
 
@@ -469,7 +469,7 @@ end
 
 --- @return table<string, vim.EvalFn>
 local function get_eval_meta()
-  return require('src/nvim/eval').funcs
+  return require('nvim.eval').funcs
 end
 
 --- Generates LuaLS docstring for a Vimscript "eval" function.
@@ -782,7 +782,7 @@ end
 
 --- @return table<string,vim.option_meta>
 local function get_option_meta()
-  local opts = require('src/nvim/options').options
+  local opts = require('nvim.options').options
   local optinfo = vim.api.nvim_get_all_options_info()
   local ret = {} --- @type table<string,vim.option_meta>
   for _, o in ipairs(opts) do
@@ -806,7 +806,7 @@ end
 
 --- @return table<string,vim.option_meta>
 local function get_vvar_meta()
-  local info = require('src/nvim/vvars').vars
+  local info = require('nvim.vvars').vars
   local ret = {} --- @type table<string,vim.option_meta>
   for name, o in pairs(info) do
     o.desc = dedent(o.desc)

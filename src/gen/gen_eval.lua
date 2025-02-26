@@ -8,7 +8,7 @@ local funcsfname = autodir .. '/funcs.generated.h'
 
 --Will generate funcs.generated.h with definition of functions static const array.
 
-local hashy = require 'generators.hashy'
+local hashy = require 'gen.hashy'
 
 local hashpipe = assert(io.open(funcsfname, 'wb'))
 
@@ -47,7 +47,7 @@ hashpipe:write([[
 
 ]])
 
-local funcs = require('eval').funcs
+local funcs = require('nvim.eval').funcs
 for _, func in pairs(funcs) do
   if func.float_func then
     func.func = 'float_op_wrapper'

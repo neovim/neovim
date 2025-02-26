@@ -7,7 +7,7 @@
 
 local mpack = vim.mpack
 
-local hashy = require 'generators.hashy'
+local hashy = require 'gen.hashy'
 
 local pre_args = 7
 assert(#arg >= pre_args)
@@ -31,7 +31,7 @@ local headers = {}
 -- set of function names, used to detect duplicates
 local function_names = {}
 
-local c_grammar = require('generators.c_grammar')
+local c_grammar = require('gen.c_grammar')
 
 local startswith = vim.startswith
 
@@ -150,7 +150,7 @@ end
 
 -- Export functions under older deprecated names.
 -- These will be removed eventually.
-local deprecated_aliases = require('api.dispatch_deprecated')
+local deprecated_aliases = require('nvim.api.dispatch_deprecated')
 for _, f in ipairs(shallowcopy(functions)) do
   local ismethod = false
   if startswith(f.name, 'nvim_') then
@@ -300,7 +300,7 @@ for i, item in ipairs(types) do
 end
 
 local packed = table.concat(pieces)
-local dump_bin_array = require('generators.dump_bin_array')
+local dump_bin_array = require('gen.dump_bin_array')
 dump_bin_array(api_metadata_output, 'packed_api_metadata', packed)
 api_metadata_output:close()
 

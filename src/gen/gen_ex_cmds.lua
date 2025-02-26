@@ -11,7 +11,7 @@ local enumfile = io.open(enumfname, 'w')
 local defsfile = io.open(defsfname, 'w')
 
 local bit = require 'bit'
-local ex_cmds = require('ex_cmds')
+local ex_cmds = require('nvim.ex_cmds')
 local defs = ex_cmds.cmds
 local flags = ex_cmds.flags
 

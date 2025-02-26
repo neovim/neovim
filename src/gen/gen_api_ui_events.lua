@@ -7,10 +7,10 @@ local remote_output = io.open(arg[3], 'wb')
 local metadata_output = io.open(arg[4], 'wb')
 local client_output = io.open(arg[5], 'wb')
 
-local c_grammar = require('generators.c_grammar')
+local c_grammar = require('gen.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
 
-local hashy = require 'generators.hashy'
+local hashy = require 'gen.hashy'
 
 local function write_signature(output, ev, prefix, notype)
   output:write('(' .. prefix)
