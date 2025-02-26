@@ -16,9 +16,9 @@
 ---   parameter is marked as [out].
 --- - Each function documentation is separated by a single line.
 
-local luacats_parser = require('scripts.luacats_parser')
-local cdoc_parser = require('scripts.cdoc_parser')
-local util = require('scripts.util')
+local luacats_parser = require('gen.luacats_parser')
+local cdoc_parser = require('gen.cdoc_parser')
+local util = require('gen.util')
 
 local fmt = string.format
 
@@ -844,7 +844,7 @@ local function get_script_path()
 end
 
 local script_path = get_script_path()
-local base_dir = vim.fs.dirname(vim.fs.dirname(script_path))
+local base_dir = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(script_path)))
 
 local function delete_lines_below(doc_file, tokenstr)
   local lines = {} --- @type string[]

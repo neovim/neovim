@@ -14,7 +14,7 @@ print('Running lintdoc ...')
 -- :helptags checks for duplicate tags.
 vim.cmd [[ helptags ALL ]]
 
-require('scripts.gen_help_html').run_validate()
-require('scripts.gen_help_html').test_gen()
+require('src.gen.gen_help_html').run_validate()
+require('src.gen.gen_help_html').test_gen()
 
 print('lintdoc PASSED.')

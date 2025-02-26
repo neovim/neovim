@@ -1,5 +1,5 @@
 --- @module 'nvim.options'
-local options = require('options')
+local options = require('nvim.options')
 local options_meta = options.options
 local cstr = options.cstr
 local valid_scopes = options.valid_scopes
@@ -418,7 +418,7 @@ end
 --- @param option_index table<string,string>
 local function gen_map(output_file, option_index)
   -- Generate option index map.
-  local hashy = require('generators.hashy')
+  local hashy = require('gen.hashy')
 
   local neworder, hashfun = hashy.hashy_hash(
     'find_option',

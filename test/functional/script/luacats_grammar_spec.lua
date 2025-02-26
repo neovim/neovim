@@ -2,7 +2,7 @@ local t = require('test.testutil')
 
 local eq = t.eq
 
-local grammar = require('scripts/luacats_grammar')
+local grammar = require('gen.luacats_grammar')
 
 describe('luacats grammar', function()
   --- @param text string

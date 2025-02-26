@@ -1,4 +1,4 @@
-local luacats_grammar = require('scripts.luacats_grammar')
+local luacats_grammar = require('gen.luacats_grammar')
 
 --- @class nvim.luacats.parser.param : nvim.luacats.Param
 

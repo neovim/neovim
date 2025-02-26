@@ -1,7 +1,7 @@
 local fileio_enum_file = arg[1]
 local names_file = arg[2]
 
-local auevents = require('auevents')
+local auevents = require('nvim.auevents')
 local events = auevents.events
 
 local enum_tgt = io.open(fileio_enum_file, 'w')

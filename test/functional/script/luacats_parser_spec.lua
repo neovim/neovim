@@ -2,7 +2,7 @@ local t = require('test.testutil')
 
 local eq = t.eq
 
-local parser = require('scripts/luacats_parser')
+local parser = require('gen.luacats_parser')
 
 --- @param name string
 --- @param text string
