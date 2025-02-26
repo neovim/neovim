@@ -292,3 +292,29 @@ describe(':source', function()
     os.remove(test_file)
   end)
 end)
+
+it('$HOME is not shortened in filepath in v:stacktrace from sourced file', function()
+  local sep = n.get_pathsep()
+  local xhome = table.concat({ vim.uv.cwd(), 'Xhome' }, sep)
+  mkdir(xhome)
+  clear({ env = { HOME = xhome } })
+  finally(function()
+    rmdir(xhome)
+  end)
+  local filepath = table.concat({ xhome, 'Xstacktrace.vim' }, sep)
+  local script = [[
+    func Xfunc()
+      throw 'Exception from Xfunc'
+    endfunc
+  ]]
+  write_file(filepath, script)
+  exec('source ' .. filepath)
+  exec([[
+    try
+      call Xfunc()
+    catch
+      let g:stacktrace = v:stacktrace
+    endtry
+  ]])
+  eq(filepath, n.eval('g:stacktrace[-1].filepath'))
+end)
