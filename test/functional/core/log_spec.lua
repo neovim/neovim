@@ -3,7 +3,7 @@ local n = require('test.functional.testnvim')()
 local tt = require('test.functional.testterm')
 
 local assert_log = t.assert_log
-local clear = n.clear
+local clear = n.clear_without_pool
 local command = n.command
 local eq = t.eq
 local exec_lua = n.exec_lua
