@@ -496,10 +496,12 @@ a]],
 
   it("fdm=indent doesn't open folds when inserting lower foldlevel line", function()
     insert([[
-      insert an unindented line under this line
-      keep the lines under this line folded
-        keep this line folded 1
-        keep this line folded 2
+        insert an unindented line under this line
+        keep the lines under this line folded
+          keep this line folded 1
+          keep this line folded 2
+
+      .
     ]])
     command('set foldmethod=indent shiftwidth=2 noautoindent')
     eq(1, fn.foldlevel(1))

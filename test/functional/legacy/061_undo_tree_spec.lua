@@ -13,9 +13,7 @@ local eval = n.eval
 local eq = t.eq
 
 local function expect_empty_buffer()
-  -- The space will be removed by t.dedent but is needed because dedent
-  -- will fail if it can not find the common indent of the given lines.
-  return expect(' ')
+  return expect('')
 end
 local function expect_line(line)
   return eq(line, eval('getline(".")'))

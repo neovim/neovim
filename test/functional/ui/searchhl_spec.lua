@@ -73,10 +73,10 @@ describe('search highlighting', function()
     -- 'hlsearch' is enabled by default. #2859
     feed('gg/text<cr>')
     screen:expect([[
-        some {2:^text}                             |
-        more {2:text}stuff                        |
-        stupid{2:texttext}stuff                   |
-        a {2:text} word                           |
+      some {2:^text}                               |
+      more {2:text}stuff                          |
+      stupid{2:texttext}stuff                     |
+      a {2:text} word                             |
                                               |
       {1:~                                       }|
       /text                                   |
@@ -85,10 +85,10 @@ describe('search highlighting', function()
     -- overlapping matches not allowed
     feed('3nx')
     screen:expect([[
-        some {2:text}                             |
-        more {2:text}stuff                        |
-        stupid{2:text}^extstuff                    |
-        a {2:text} word                           |
+      some {2:text}                               |
+      more {2:text}stuff                          |
+      stupid{2:text}^extstuff                      |
+      a {2:text} word                             |
                                               |
       {1:~                                       }|
       /text                                   |
@@ -96,10 +96,10 @@ describe('search highlighting', function()
 
     feed('ggn*') -- search for entire word
     screen:expect([[
-        some {2:text}                             |
-        more textstuff                        |
-        stupidtextextstuff                    |
-        a {2:^text} word                           |
+      some {2:text}                               |
+      more textstuff                          |
+      stupidtextextstuff                      |
+      a {2:^text} word                             |
                                               |
       {1:~                                       }|
       /\<text\>                               |
@@ -107,10 +107,10 @@ describe('search highlighting', function()
 
     feed_command('nohlsearch')
     screen:expect([[
-        some text                             |
-        more textstuff                        |
-        stupidtextextstuff                    |
-        a ^text word                           |
+      some text                               |
+      more textstuff                          |
+      stupidtextextstuff                      |
+      a ^text word                             |
                                               |
       {1:~                                       }|
       :nohlsearch                             |
@@ -641,7 +641,7 @@ describe('search highlighting', function()
     feed_command('/ial te')
     screen:expect {
       grid = [[
-        very {5:spec^ial}{2: te}{6:xt}                     |
+      very {5:spec^ial}{2: te}{6:xt}                       |
                                               |
       {1:~                                       }|*4
       {4:search hit BOTTOM, continuing at TOP}    |
@@ -652,7 +652,7 @@ describe('search highlighting', function()
           topline = 0,
           botline = 3,
           curline = 0,
-          curcol = 11,
+          curcol = 9,
           linecount = 2,
           sum_scroll_delta = 0,
         },
@@ -670,7 +670,7 @@ describe('search highlighting', function()
     }
     command('%foldopen')
     screen:expect([[
-        very {5:spec^ial}{2: te}{6:xt}                     |
+      very {5:spec^ial}{2: te}{6:xt}                       |
                                               |
       {1:~                                       }|*4
       {4:search hit BOTTOM, continuing at TOP}    |
@@ -678,7 +678,7 @@ describe('search highlighting', function()
 
     feed_command('call clearmatches()')
     screen:expect([[
-        very spec{2:^ial te}xt                     |
+      very spec{2:^ial te}xt                       |
                                               |
       {1:~                                       }|*4
       :call clearmatches()                    |
@@ -688,7 +688,7 @@ describe('search highlighting', function()
     -- nonconflicting attributes are combined
     feed_command('syntax keyword MyGroup special')
     screen:expect([[
-        very {5:spec}{7:^ial}{2: te}xt                     |
+      very {5:spec}{7:^ial}{2: te}xt                       |
                                               |
       {1:~                                       }|*4
       :syntax keyword MyGroup special         |

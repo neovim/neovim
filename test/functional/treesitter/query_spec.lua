@@ -386,8 +386,8 @@ void ui_refresh(void)
       [[((primitive_type) @c-keyword (#any-of? @c-keyword "int" "float"))]]
     )
     eq({
-      { 'c-keyword', 'primitive_type', { 2, 2, 2, 5 }, 'int' },
-      { 'c-keyword', 'primitive_type', { 3, 4, 3, 7 }, 'int' },
+      { 'c-keyword', 'primitive_type', { 2, 0, 2, 3 }, 'int' },
+      { 'c-keyword', 'primitive_type', { 3, 2, 3, 5 }, 'int' },
     }, res0)
 
     local res1 = exec_lua(
@@ -401,9 +401,9 @@ void ui_refresh(void)
       ]]
     )
     eq({
-      { 'fizzbuzz-strings', 'string_literal', { 6, 15, 6, 38 }, '"number= %d FizzBuzz\\n"' },
-      { 'fizzbuzz-strings', 'string_literal', { 8, 15, 8, 34 }, '"number= %d Fizz\\n"' },
-      { 'fizzbuzz-strings', 'string_literal', { 10, 15, 10, 34 }, '"number= %d Buzz\\n"' },
+      { 'fizzbuzz-strings', 'string_literal', { 6, 13, 6, 36 }, '"number= %d FizzBuzz\\n"' },
+      { 'fizzbuzz-strings', 'string_literal', { 8, 13, 8, 32 }, '"number= %d Fizz\\n"' },
+      { 'fizzbuzz-strings', 'string_literal', { 10, 13, 10, 32 }, '"number= %d Buzz\\n"' },
     }, res1)
   end)
 
@@ -608,9 +608,9 @@ void ui_refresh(void)
 
     eq(
       {
-        { 0, 2, 0, 8 },
-        { 1, 2, 1, 8 },
-        { 2, 2, 2, 8 },
+        { 0, 0, 0, 6 },
+        { 1, 0, 1, 6 },
+        { 2, 0, 2, 6 },
       },
       test(
         [[
@@ -636,9 +636,9 @@ void ui_refresh(void)
 
     eq(
       {
-        { 0, 2, 0, 7 },
-        { 1, 2, 1, 8 },
-        { 2, 2, 2, 7 },
+        { 0, 0, 0, 5 },
+        { 1, 0, 1, 6 },
+        { 2, 0, 2, 5 },
       },
       test(
         [[
@@ -675,9 +675,9 @@ void ui_refresh(void)
     end)
 
     eq({
-      { 0, 2, 0, 12 },
-      { 1, 2, 1, 12 },
-      { 2, 2, 2, 12 },
+      { 0, 0, 0, 10 },
+      { 1, 0, 1, 10 },
+      { 2, 0, 2, 10 },
     }, result)
   end)
 

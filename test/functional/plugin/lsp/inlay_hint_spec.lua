@@ -316,13 +316,13 @@ test text
 
   local grid_without_inlay_hints = [[
   test text                                         |
-   ^                                                 |
+  ^                                                  |
                                                     |
 ]]
 
   local grid_with_inlay_hints = [[
   {1:01234}test text                                    |
-   ^                                                 |
+  ^                                                  |
                                                     |
 ]]
 

@@ -494,9 +494,8 @@ function Screen:expect(expected, attr_ids, ...)
 
   local expected_rows = {} --- @type string[]
   if grid then
-    -- Remove the last line and dedent. Note that gsub returns more then one
-    -- value.
-    grid = dedent(grid:gsub('\n[ ]+$', ''), 0)
+    -- Dedent (ignores last line if it is blank).
+    grid = dedent(grid, 0)
     for row in grid:gmatch('[^\n]+') do
       table.insert(expected_rows, row)
     end

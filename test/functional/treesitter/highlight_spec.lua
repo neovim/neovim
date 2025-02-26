@@ -786,9 +786,9 @@ describe('treesitter highlighting (C)', function()
 
     screen:expect({
       grid = [[
-          {26:int x = 4;}                                                     |
-          {26:int y = 5;}                                                     |
-          {26:int z = 6;}                                                     |
+        {26:int x = 4;}                                                       |
+        {26:int y = 5;}                                                       |
+        {26:int z = 6;}                                                       |
         ^                                                                 |
         {1:~                                                                }|*13
                                                                          |
@@ -815,7 +815,7 @@ describe('treesitter highlighting (C)', function()
 
     screen:expect({
       grid = [[
-          void foo(int {15:*}{25:bar});                                            |
+        void foo(int {15:*}{25:bar});                                              |
         ^                                                                 |
         {1:~                                                                }|*15
                                                                          |
@@ -883,8 +883,8 @@ describe('treesitter highlighting (lua)', function()
 
     screen:expect({
       grid = [[
-          {15:local} {25:ffi} {15:=} {16:require(}{26:'ffi'}{16:)}                                     |
-          {25:ffi}{16:.}{25:cdef}{16:(}{26:"}{16:int}{26: }{16:(}{15:*}{26:fun}{16:)(int,}{26: }{16:char}{26: }{15:*}{16:);}{26:"}{16:)}                           |
+        {15:local} {25:ffi} {15:=} {16:require(}{26:'ffi'}{16:)}                                       |
+        {25:ffi}{16:.}{25:cdef}{16:(}{26:"}{16:int}{26: }{16:(}{15:*}{26:fun}{16:)(int,}{26: }{16:char}{26: }{15:*}{16:);}{26:"}{16:)}                             |
         ^                                                                 |
         {1:~                                                                }|*14
                                                                          |
@@ -1185,7 +1185,7 @@ printf('Hello World!');
         {18:```}{15:c}                                    |
         {25:printf}{16:(}{26:'Hello World!'}{16:);}                 |
         {18:```}                                     |
-           ^                                     |
+        ^                                        |
                                                 |
       ]],
     })
@@ -1271,7 +1271,7 @@ printf('Hello World!');
       {8:120 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
       {8:122 }                                    |
       {8:124 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
-      {8:126 }   ^                                 |
+      {8:126 }^                                    |
                                               |
     ]])
   end)

@@ -148,10 +148,6 @@ local function url_encode(s)
   )
 end
 
-local function expandtabs(s)
-  return s:gsub('\t', (' '):rep(8)) --[[ @as string ]]
-end
-
 local function to_titlecase(s)
   local text = ''
   for w in vim.gsplit(s, '[ \t]+') do
@@ -275,25 +271,13 @@ end
 ---
 --- Blank lines (empty or whitespace-only) are ignored.
 local function get_indent(s)
-  local min_indent = nil
-  for line in vim.gsplit(s, '\n') do
-    if line and not is_blank(line) then
-      local ws = expandtabs(line:match('^%s+') or '')
-      min_indent = (not min_indent or ws:len() < min_indent) and ws:len() or min_indent
-    end
-  end
-  return min_indent or 0
+  local _, indent = vim.text.indent(0, s, { expandtab = 8 })
+  return indent
 end
 
 --- Removes the common indent level, after expanding tabs to 8 spaces.
 local function trim_indent(s)
-  local indent_size = get_indent(s)
-  local trimmed = ''
-  for line in vim.gsplit(s, '\n') do
-    line = expandtabs(line)
-    trimmed = ('%s%s\n'):format(trimmed, line:sub(indent_size + 1))
-  end
-  return trimmed:sub(1, -2)
+  return vim.text.indent(0, s, { expandtab = 8 })
 end
 
 --- Gets raw buffer text in the node's range (+/- an offset), as a newline-delimited string.
