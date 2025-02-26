@@ -650,9 +650,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
       msg_col = 0;  // prevent leading spaces
     }
 
-    WITH_SCRIPT_CONTEXT(channel_id, {
-      execute_cmd(&ea, &cmdinfo, false);
-    });
+    execute_cmd(&ea, &cmdinfo, false);
 
     if (opts->output) {
       capture_ga = save_capture_ga;
@@ -1144,13 +1142,11 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
     });
   }
 
-  WITH_SCRIPT_CONTEXT(channel_id, {
-    if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
-                       compl_luaref, preview_luaref, addr_type_arg, luaref, force) != OK) {
-      api_set_error(err, kErrorTypeException, "Failed to create user command");
-      // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
-    }
-  });
+  if (uc_add_command(name.data, name.size, rep, argt, def, flags, context, compl_arg,
+                     compl_luaref, preview_luaref, addr_type_arg, luaref, force) != OK) {
+    api_set_error(err, kErrorTypeException, "Failed to create user command");
+    // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
+  }
 
   return;
 

@@ -601,6 +601,8 @@ for i = 1, #functions do
       output:write('\n  }\n')
     end
 
+    output:write('\n  const sctx_T save_current_sctx = api_set_sctx(channel_id);')
+
     -- function call
     output:write('\n  ')
     if fn.return_type ~= 'void' then
@@ -637,7 +639,9 @@ for i = 1, #functions do
     end
 
     output:write(table.concat(call_args, ', '))
-    output:write(');\n')
+    output:write(');')
+
+    output:write('\n  current_sctx = save_current_sctx;\n')
 
     if fn.can_fail then
       -- if the function can fail, also pass a pointer to the local error object
@@ -895,7 +899,16 @@ exit_0:
     if fn.ret_alloc then
       free_retval = '  api_free_' .. return_type:lower() .. '(ret);'
     end
-    write_shifted_output('    %s ret = %s(%s);\n', fn.return_type, fn.name, cparams)
+    write_shifted_output(
+      [[
+    const sctx_T save_current_sctx = api_set_sctx(LUA_INTERNAL_CALL);
+    %s ret = %s(%s);
+    current_sctx = save_current_sctx;
+    ]],
+      fn.return_type,
+      fn.name,
+      cparams
+    )
 
     local ret_type = real_type(fn.return_type)
     local ret_mode = (ret_type == 'Object') and '&' or ''
@@ -940,7 +953,9 @@ exit_0:
   else
     write_shifted_output(
       [[
+    const sctx_T save_current_sctx = api_set_sctx(LUA_INTERNAL_CALL);
     %s(%s);
+    current_sctx = save_current_sctx;
   %s
   %s
     return 0;

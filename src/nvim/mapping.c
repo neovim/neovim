@@ -2706,8 +2706,6 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     return;
   }
 
-  const sctx_T save_current_sctx = api_set_sctx(channel_id);
-
   MapArguments parsed_args = MAP_ARGUMENTS_INIT;
   if (opts) {
     parsed_args.nowait = opts->nowait;
@@ -2813,7 +2811,6 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   }  // switch
 
 fail_and_free:
-  current_sctx = save_current_sctx;
   NLUA_CLEAR_REF(parsed_args.rhs_lua);
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);

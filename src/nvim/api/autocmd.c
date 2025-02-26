@@ -475,19 +475,16 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
     int retval;
 
     FOREACH_ITEM(patterns, pat, {
-      WITH_SCRIPT_CONTEXT(channel_id, {
-        retval = autocmd_register(autocmd_id,
-                                  event_nr,
-                                  pat.data.string.data,
-                                  (int)pat.data.string.size,
-                                  au_group,
-                                  opts->once,
-                                  opts->nested,
-                                  desc,
-                                  handler_cmd,
-                                  &handler_fn);
-      });
-
+      retval = autocmd_register(autocmd_id,
+                                event_nr,
+                                pat.data.string.data,
+                                (int)pat.data.string.size,
+                                au_group,
+                                opts->once,
+                                opts->nested,
+                                desc,
+                                handler_cmd,
+                                &handler_fn);
       if (retval == FAIL) {
         api_set_error(err, kErrorTypeException, "Failed to set autocmd");
         goto cleanup;
@@ -621,20 +618,17 @@ Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augrou
   char *augroup_name = name.data;
   bool clear_autocmds = GET_BOOL_OR_TRUE(opts, create_augroup, clear);
 
-  int augroup = -1;
-  WITH_SCRIPT_CONTEXT(channel_id, {
-    augroup = augroup_add(augroup_name);
-    if (augroup == AUGROUP_ERROR) {
-      api_set_error(err, kErrorTypeException, "Failed to set augroup");
-      return -1;
-    }
+  int augroup = augroup_add(augroup_name);
+  if (augroup == AUGROUP_ERROR) {
+    api_set_error(err, kErrorTypeException, "Failed to set augroup");
+    return -1;
+  }
 
-    if (clear_autocmds) {
-      FOR_ALL_AUEVENTS(event) {
-        aucmd_del_for_event_and_group(event, augroup);
-      }
+  if (clear_autocmds) {
+    FOR_ALL_AUEVENTS(event) {
+      aucmd_del_for_event_and_group(event, augroup);
     }
-  });
+  }
 
   return augroup;
 }

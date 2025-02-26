@@ -180,9 +180,6 @@ TestHL2        xxx guibg=Green
   end)
 
   it('"Last set" for command defined by nvim_command', function()
-    if cmd == 'luafile' then
-      pending('nvim_command does not set the script context')
-    end
     local result = exec_capture(':verbose command Bdelete')
     eq(
       string.format(
