@@ -117,8 +117,9 @@ function M.get_session()
   return session
 end
 
-function M.set_session(s)
+function M.set_session(s, session_id)
   session = s
+  _G._nvim_session_id = session_id
 end
 
 --- @param method string
@@ -488,6 +489,18 @@ function M.clear(...)
   return M.get_session()
 end
 
+--- @type { [1]: test.Session, [2]: string? }[]
+local session_pool = {}
+
+--- @param ... string Nvim CLI args (or see overload)
+--- @return test.Session
+--- @return string? session_id
+local function create_session(...)
+  local argv, env, io_extra, session_id = M._new_argv(...)
+  local proc = ProcStream.spawn(argv, env, io_extra)
+  return Session.new(proc), session_id
+end
+
 --- Starts a new Nvim process with the given args and returns a msgpack-RPC session.
 ---
 --- Does not replace the current global session, unlike `clear()`.
@@ -495,35 +508,50 @@ end
 --- @param keep boolean (default: false) Don't close the current global session.
 --- @param ... string Nvim CLI args (or see overload)
 --- @return test.Session
---- @overload fun(keep: boolean, opts: test.session.Opts): test.Session
+--- @return string? session_id
+--- @overload fun(keep: boolean, opts: test.session.Opts): test.Session, string?
 function M.new_session(keep, ...)
   if not keep then
     M.check_close()
   end
 
-  local argv, env, io_extra = M._new_argv(...)
+  local args = { ... }
+  if #args == 0 then
+    for _ = #session_pool + 1, 10 do
+      table.insert(session_pool, { create_session() })
+    end
+    return unpack(table.remove(session_pool, 1))
+  end
 
-  local proc = ProcStream.spawn(argv, env, io_extra)
-  return Session.new(proc)
+  return create_session(...)
 end
 
 --- Starts a (non-RPC, `--headless --listen "Tx"`) Nvim process, waits for exit, and returns result.
 ---
 --- @param ... string Nvim CLI args, or `test.session.Opts` table.
 --- @return test.ProcStream
---- @overload fun(opts: test.session.Opts): test.ProcStream
+--- @return string? session_id
+--- @overload fun(opts: test.session.Opts): test.ProcStream, string?
 function M.spawn_wait(...)
   local opts = type(...) == 'string' and { args = { ... } } or ...
   opts.args_rm = opts.args_rm and opts.args_rm or {}
   table.insert(opts.args_rm, '--embed')
-  local argv, env, io_extra = M._new_argv(opts)
+  local argv, env, io_extra, session_id = M._new_argv(opts)
   local proc = ProcStream.spawn(argv, env, io_extra)
   proc.collect_text = true
   proc:read_start()
   proc:wait()
   proc:close()
-  return proc
+  return proc, session_id
 end
+
+local gen_session_id = (function()
+  local id = 0
+  return function()
+    id = id + 1
+    return id
+  end
+end)()
 
 --- @class test.session.Opts
 --- Nvim CLI args
@@ -545,8 +573,11 @@ end
 --- @return string[]
 --- @return string[]?
 --- @return uv.uv_pipe_t?
+--- @return string? session_id
 --- @overload fun(opts: test.session.Opts): string[], string[]?, uv.uv_pipe_t?
 function M._new_argv(...)
+  --- @type string?
+  local session_id
   --- @type test.session.Opts|string
   local opts = select(1, ...)
   local merge = type(opts) ~= 'table' and true or opts.merge ~= false
@@ -555,9 +586,10 @@ function M._new_argv(...)
   if merge then
     table.insert(args, '--headless')
     if _G._nvim_test_id then
+      session_id = ('S%d'):format(gen_session_id())
       -- Set the server name to the test-id for logging. #8519
       table.insert(args, '--listen')
-      table.insert(args, _G._nvim_test_id)
+      table.insert(args, session_id)
     end
   end
 
@@ -606,7 +638,7 @@ function M._new_argv(...)
   for _, arg in ipairs(new_args) do
     table.insert(args, arg)
   end
-  return args, env, io_extra
+  return args, env, io_extra, session_id
 end
 
 --- Dedents string arguments and inserts the resulting text into the current buffer.
