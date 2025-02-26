@@ -2452,15 +2452,14 @@ char *get_scriptname(sctx_T script_ctx, bool *should_free)
   case SID_WINLAYOUT:
     return _("changed window size");
   case SID_LUA:
-    return _("Lua (run Nvim with -V1 for more details)");
+    return _("Lua");
   case SID_API_CLIENT:
     snprintf(IObuff, IOSIZE, _("API client (channel id %" PRIu64 ")"), script_ctx.sc_chan);
     return IObuff;
   case SID_STR:
     return _("anonymous :source");
   default: {
-    scriptitem_T *const si = SCRIPT_ITEM(script_ctx.sc_sid);
-    char *sname = si->sn_name;
+    char *const sname = SCRIPT_ITEM(script_ctx.sc_sid)->sn_name;
     if (sname == NULL) {
       snprintf(IObuff, IOSIZE, _("anonymous :source (script id %d)"),
                script_ctx.sc_sid);
@@ -2468,13 +2467,7 @@ char *get_scriptname(sctx_T script_ctx, bool *should_free)
     }
 
     *should_free = true;
-    sname = home_replace_save(NULL, sname);
-    if (si->sn_lua && script_ctx.sc_lnum == 0) {
-      char *const ret = concat_str(sname, _(" (run Nvim with -V1 for more details)"));
-      xfree(sname);
-      return ret;
-    }
-    return sname;
+    return home_replace_save(NULL, sname);
   }
   }
 }
