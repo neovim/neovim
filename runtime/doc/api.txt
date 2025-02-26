@@ -3257,6 +3257,19 @@ nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
 ==============================================================================
 Tabpage Functions                                                *api-tabpage*
 
+nvim_open_tabpage({buffer}, {enter}, {opts})             *nvim_open_tabpage()*
+    Opens a new tabpage with a single window
+
+    Parameters: ~
+      • {buffer}  Buffer handle, or 0 for current buffer
+      • {enter}   Boolean, whether to enter the new tabpage
+      • {opts}    Optional parameters
+                  • after: Tabpage handle, open new tabpage after this
+                    tabpage. Defaults to opening after the current tabpage.
+
+    Return: ~
+        Handle to newly created tabpage
+
 nvim_tabpage_del_var({tabpage}, {name})               *nvim_tabpage_del_var()*
     Removes a tab-scoped (t:) variable
 
