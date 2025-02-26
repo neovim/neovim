@@ -44,6 +44,8 @@ void chdir(String path)
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)
   FUNC_API_NOEXPORT;
+void detach(String msg)
+  FUNC_API_SINCE(13);
 
 // First revision of the grid protocol, used by default
 void update_fg(Integer fg)

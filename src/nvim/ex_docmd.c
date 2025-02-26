@@ -5540,9 +5540,19 @@ static void ex_tabs(exarg_T *eap)
 /// ":detach!" with bang (!) detaches all UIs _except_ the current UI.
 static void ex_detach(exarg_T *eap)
 {
+  String msg;
+  size_t n;
+  char **addrs = server_address_list(&n);
+  if (n > 0) {
+    msg.size = (size_t)snprintf(IObuff, IOSIZE, _("Detached from Nvim server: %s"), addrs[0]);
+    msg.data = IObuff;
+  } else {
+    msg = STATIC_CSTR_AS_STRING("Detached from Nvim server.");
+  }
+
   // come on pooky let's burn this mf down
   if (eap && eap->forceit) {
-    emsg("bang (!) not supported yet");
+    ui_call_detach(msg);
   } else {
     // 1. (TODO) Send "detach" UI-event (notification only).
     // 2. Perform server-side `nvim_ui_detach`.
@@ -5559,6 +5569,9 @@ static void ex_detach(exarg_T *eap)
       return;
     }
     chan->detach = true;  // Prevent self-exit on channel-close.
+
+    // TODO(justinmk)
+    // ui_request_detach(chan->id, STATIC_CSTR_AS_STRING("Detached from Nvim server."));
 
     // Server-side UI detach. Doesn't close the channel.
     Error err2 = ERROR_INIT;
