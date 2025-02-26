@@ -3485,15 +3485,7 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
   new_value = optval_from_varp(opt_idx, varp);
 
   if (set_sid != SID_NONE) {
-    sctx_T script_ctx;
-
-    if (set_sid == 0) {
-      script_ctx = current_sctx;
-    } else {
-      script_ctx.sc_sid = set_sid;
-      script_ctx.sc_seq = 0;
-      script_ctx.sc_lnum = 0;
-    }
+    sctx_T script_ctx = set_sid == 0 ? current_sctx : (sctx_T){ .sc_sid = set_sid };
     // Remember where the option was set.
     set_option_sctx(opt_idx, opt_flags, script_ctx);
   }
