@@ -2565,6 +2565,7 @@ describe('vim.diagnostic', function()
       -- Legacy signs for diagnostics were deprecated in 0.10 and will be removed in 0.12
       eq(0, n.fn.has('nvim-0.12'))
 
+      n.command('set cursorline')
       n.command('sign define DiagnosticSignError text= texthl= linehl=ErrorMsg numhl=ErrorMsg')
       n.command('sign define DiagnosticSignWarn text= texthl= linehl=WarningMsg numhl=WarningMsg')
       n.command('sign define DiagnosticSignInfo text= texthl= linehl=Underlined numhl=Underlined')
@@ -2572,7 +2573,7 @@ describe('vim.diagnostic', function()
 
       local result = exec_lua(function()
         vim.diagnostic.config({
-          signs = true,
+          signs = { cursorlinehl = { 'DiagnosticError', 'DiagnosticWarn' } },
         })
 
         local diagnostics = {
@@ -2600,6 +2601,7 @@ describe('vim.diagnostic', function()
             text = s[4].sign_text or '',
             numhl = s[4].number_hl_group,
             linehl = s[4].line_hl_group,
+            culhl = s[4].cursorline_hl_group,
           }
         end
         return result
@@ -2611,6 +2613,7 @@ describe('vim.diagnostic', function()
         text = '',
         numhl = 'ErrorMsg',
         linehl = 'ErrorMsg',
+        culhl = 'DiagnosticError',
       }, result[1])
 
       eq({
@@ -2619,6 +2622,7 @@ describe('vim.diagnostic', function()
         text = '',
         numhl = 'WarningMsg',
         linehl = 'WarningMsg',
+        culhl = 'DiagnosticWarn',
       }, result[2])
     end)
   end)
