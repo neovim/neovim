@@ -228,6 +228,9 @@ void ui_refresh(void)
     }
     msg_scroll_flush();
   }
+  if (ui_has(kUIMultigrid)) {
+    msg_multigrid_attach();
+  }
 
   if (!ui_active()) {
     return;
@@ -543,6 +546,9 @@ void ui_flush(void)
   if (pending_cursor_update) {
     ui_call_grid_cursor_goto(cursor_grid_handle, cursor_row, cursor_col);
     pending_cursor_update = false;
+    // The cursor move might change the composition order, so flush again to update the windows that
+    // changed
+    win_ui_flush(false);
   }
   if (pending_mode_info_update) {
     Arena arena = ARENA_EMPTY;
