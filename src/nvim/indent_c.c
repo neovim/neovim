@@ -296,6 +296,12 @@ static pos_T *find_line_comment(void)  // XXX
   return NULL;
 }
 
+/* If signed s is negative, it is assumed to be part of a utf-8 character. */
+static bool
+cin_isIDc(uint8_t s) {
+  return (int8_t)s < 0 || vim_isIDc(s);
+}
+
 /// Checks if `text` starts with "key:".
 static bool cin_has_js_key(const char *text)
 {
@@ -307,11 +313,11 @@ static bool cin_has_js_key(const char *text)
     quote = *s;
     s++;
   }
-  if (!vim_isIDc((uint8_t)(*s))) {     // need at least one ID character
+  if (!cin_isIDc((uint8_t)(*s))) {     // need at least one ID character
     return false;
   }
 
-  while (vim_isIDc((uint8_t)(*s))) {
+  while (cin_isIDc((uint8_t)(*s))) {
     s++;
   }
   if (*s && *s == quote) {
@@ -329,11 +335,11 @@ static bool cin_has_js_key(const char *text)
 static bool cin_islabel_skip(const char **s)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!vim_isIDc((uint8_t)(**s))) {            // need at least one ID character
+  if (!cin_isIDc((uint8_t)(**s))) {            // need at least one ID character
     return false;
   }
 
-  while (vim_isIDc((uint8_t)(**s))) {
+  while (cin_isIDc((uint8_t)(**s))) {
     (*s)++;
   }
 
@@ -673,7 +679,7 @@ static int cin_first_id_amount(void)
       p = s;
     }
   }
-  for (len = 0; vim_isIDc((uint8_t)p[len]); len++) {}
+  for (len = 0; cin_isIDc((uint8_t)p[len]); len++) {}
   if (len == 0 || !ascii_iswhite(p[len]) || cin_nocode(p)) {
     return 0;
   }
@@ -968,7 +974,7 @@ done:
 
 static int cin_isif(const char *p)
 {
-  return strncmp(p, "if", 2) == 0 && !vim_isIDc((uint8_t)p[2]);
+  return strncmp(p, "if", 2) == 0 && !cin_isIDc((uint8_t)p[2]);
 }
 
 static int cin_iselse(const char *p)
@@ -976,12 +982,12 @@ static int cin_iselse(const char *p)
   if (*p == '}') {          // accept "} else"
     p = cin_skipcomment(p + 1);
   }
-  return strncmp(p, "else", 4) == 0 && !vim_isIDc((uint8_t)p[4]);
+  return strncmp(p, "else", 4) == 0 && !cin_isIDc((uint8_t)p[4]);
 }
 
 static int cin_isdo(const char *p)
 {
-  return strncmp(p, "do", 2) == 0 && !vim_isIDc((uint8_t)p[2]);
+  return strncmp(p, "do", 2) == 0 && !cin_isIDc((uint8_t)p[2]);
 }
 
 // Check if this is a "while" that should have a matching "do".
@@ -1051,7 +1057,7 @@ static int cin_is_if_for_while_before_offset(const char *line, int *poffset)
   return 0;
 
 probablyFound:
-  if (!offset || !vim_isIDc((uint8_t)line[offset - 1])) {
+  if (!offset || !cin_isIDc((uint8_t)line[offset - 1])) {
     *poffset = offset;
     return 1;
   }
@@ -1112,7 +1118,7 @@ static int cin_iswhileofdo_end(int terminated)
 
 static int cin_isbreak(const char *p)
 {
-  return strncmp(p, "break", 5) == 0 && !vim_isIDc((uint8_t)p[5]);
+  return strncmp(p, "break", 5) == 0 && !cin_isIDc((uint8_t)p[5]);
 }
 
 // Find the position of a C++ base-class declaration or
@@ -1226,8 +1232,8 @@ static int cin_is_cpp_baseclass(cpp_baseclass_cache_T *cached)
       } else {
         s = cin_skipcomment(s + 1);
       }
-    } else if ((strncmp(s, "class", 5) == 0 && !vim_isIDc((uint8_t)s[5]))
-               || (strncmp(s, "struct", 6) == 0 && !vim_isIDc((uint8_t)s[6]))) {
+    } else if ((strncmp(s, "class", 5) == 0 && !cin_isIDc((uint8_t)s[5]))
+               || (strncmp(s, "struct", 6) == 0 && !cin_isIDc((uint8_t)s[6]))) {
       class_or_struct = true;
       lookfor_ctor_init = false;
 
@@ -1247,7 +1253,7 @@ static int cin_is_cpp_baseclass(cpp_baseclass_cache_T *cached)
       } else if (s[0] == '?') {
         // Avoid seeing '() :' after '?' as constructor init.
         return false;
-      } else if (!vim_isIDc((uint8_t)s[0])) {
+      } else if (!cin_isIDc((uint8_t)s[0])) {
         // if it is not an identifier, we are wrong
         class_or_struct = false;
         lookfor_ctor_init = false;
@@ -1335,7 +1341,7 @@ static int cin_starts_with(const char *s, const char *word)
 {
   size_t l = strlen(word);
 
-  return strncmp(s, word, l) == 0 && !vim_isIDc((uint8_t)s[l]);
+  return strncmp(s, word, l) == 0 && !cin_isIDc((uint8_t)s[l]);
 }
 
 /// Recognize a `extern "C"` or `extern "C++"` linkage specifications.
