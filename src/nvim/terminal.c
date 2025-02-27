@@ -696,8 +696,6 @@ bool terminal_enter(void)
 
   adjust_topline(s->term, buf, 0);  // scroll to end
   showmode();
-  curwin->w_redr_status = true;  // For mode() in statusline. #8323
-  redraw_custom_title_later();
   ui_cursor_shape();
   // TODO(seandewar): these can change curbuf, which will absolutely explode
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
@@ -729,6 +727,12 @@ bool terminal_enter(void)
   // TODO(seandewar): cool but what if we switch terminal windows without leaving terminal mode??
   // also, the window may have just been switched, not closed... (bruh)
   if (save_curwin == curwin->handle) {  // Else: window was closed.
+    if (save_w_p_cuc != curwin->w_p_cuc) {
+      redraw_later(curwin, UPD_SOME_VALID);
+    } else if (save_w_p_cul != curwin->w_p_cul
+               || (save_w_p_cul && save_w_p_culopt_flags != curwin->w_p_culopt_flags)) {
+      redraw_later(curwin, UPD_VALID);
+    }
     curwin->w_p_cul = save_w_p_cul;
     if (save_w_p_culopt) {
       free_string_option(curwin->w_p_culopt);
@@ -795,6 +799,7 @@ static int terminal_check(VimState *state)
   assert(s->term == curbuf->terminal);
   terminal_check_cursor();
   validate_cursor(curwin);
+  show_cursor_info_later(false);
 
   if (must_redraw) {
     update_screen();
