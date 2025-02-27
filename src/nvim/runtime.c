@@ -2263,11 +2263,8 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
   cookie.conv.vc_type = CONV_NONE;              // no conversion
 
   if (si->sn_lua) {
-    const sctx_T current_sctx_backup = current_sctx;
-    current_sctx.sc_lnum = 0;
     // Source the file as lua
     nlua_exec_file(fname_exp);
-    current_sctx = current_sctx_backup;
   } else {
     // Read the first line so we can check for a UTF-8 BOM.
     firstline = (uint8_t *)getsourceline(0, (void *)&cookie, 0, true);
