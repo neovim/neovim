@@ -1862,9 +1862,21 @@ describe('builtin popupmenu', function()
               {1:~                                       }|*9
             ## grid 3
               {2:-- }{8:Back at original}                     |
+            ## grid 4 (hidden)
+              {n:1info}|
+              {n:     }|
             ## grid 5
               {n:one            }|
             ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 40,
+                win = 1000,
+              },
+            },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100 },
             },
@@ -1878,6 +1890,15 @@ describe('builtin popupmenu', function()
                 linecount = 1,
                 sum_scroll_delta = 0,
               },
+              [4] = {
+                win = 1001,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 0,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
             },
             win_viewport_margins = {
               [2] = {
@@ -1886,6 +1907,13 @@ describe('builtin popupmenu', function()
                 right = 0,
                 top = 0,
                 win = 1000,
+              },
+              [4] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1001,
               },
             },
           })
@@ -1903,27 +1931,36 @@ describe('builtin popupmenu', function()
         -- test nvim__complete_set_info
         feed('<ESC>S<C-X><C-O><C-N><C-N>')
         if multigrid then
-          screen:expect {
+          screen:expect({
             grid = [[
-          ## grid 1
-            [2:----------------------------------------]|*10
-            [3:----------------------------------------]|
-          ## grid 2
-            looooooooooooooong^                      |
-            {1:~                                       }|*9
-          ## grid 3
-            {2:-- }{5:match 3 of 3}                         |
-          ## grid 5
-            {n:one                }|
-            {n:two                }|
-            {s:looooooooooooooong }|
-          ## grid 7
-            {n:3info}|
-            {n:     }|
-          ]],
+            ## grid 1
+              [2:----------------------------------------]|*10
+              [3:----------------------------------------]|
+            ## grid 2
+              looooooooooooooong^                      |
+              {1:~                                       }|*9
+            ## grid 3
+              {2:-- }{5:match 3 of 3}                         |
+            ## grid 5
+              {n:one                }|
+              {n:two                }|
+              {s:looooooooooooooong }|
+            ## grid 6
+              {n:3info}|
+              {n:     }|
+            ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 40,
+                win = 1000,
+              },
+            },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100 },
-              [7] = { 1003, 'NW', 1, 1, 19, false, 50 },
+              [6] = { 1002, 'NW', 1, 1, 19, false, 50 },
             },
             win_viewport = {
               [2] = {
@@ -1935,8 +1972,8 @@ describe('builtin popupmenu', function()
                 linecount = 1,
                 sum_scroll_delta = 0,
               },
-              [7] = {
-                win = 1003,
+              [6] = {
+                win = 1002,
                 topline = 0,
                 botline = 2,
                 curline = 0,
@@ -1945,7 +1982,23 @@ describe('builtin popupmenu', function()
                 sum_scroll_delta = 0,
               },
             },
-          }
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+              [6] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1002,
+              },
+            },
+          })
         else
           screen:expect {
             grid = [[
@@ -1964,26 +2017,35 @@ describe('builtin popupmenu', function()
         insert(('test'):rep(5))
         feed('i<C-x><C-o>')
         if multigrid then
-          screen:expect {
+          screen:expect({
             grid = [[
-          ## grid 1
-            [2:----------------------------------------]|*10
-            [3:----------------------------------------]|
-          ## grid 2
-            itesttesttesttesttesone^t                |
-            {1:~                                       }|*9
-          ## grid 3
-            {2:-- }{5:match 1 of 3}                         |
-          ## grid 5
-            {s: one                }|
-            {n: two                }|
-            {n: looooooooooooooong }|
-          ## grid 8
-            {n:1info}|
-            {n:     }|
-          ]],
+            ## grid 1
+              [2:----------------------------------------]|*10
+              [3:----------------------------------------]|
+            ## grid 2
+              itesttesttesttesttesone^t                |
+              {1:~                                       }|*9
+            ## grid 3
+              {2:-- }{5:match 1 of 3}                         |
+            ## grid 5
+              {s: one                }|
+              {n: two                }|
+              {n: looooooooooooooong }|
+            ## grid 7
+              {n:1info}|
+              {n:     }|
+            ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 40,
+                win = 1000,
+              },
+            },
             float_pos = {
-              [8] = { 1004, 'NW', 1, 1, 14, false, 50 },
+              [7] = { 1003, 'NW', 1, 1, 14, false, 50 },
               [5] = { -1, 'NW', 2, 1, 19, false, 100 },
             },
             win_viewport = {
@@ -1996,8 +2058,8 @@ describe('builtin popupmenu', function()
                 linecount = 1,
                 sum_scroll_delta = 0,
               },
-              [8] = {
-                win = 1004,
+              [7] = {
+                win = 1003,
                 topline = 0,
                 botline = 2,
                 curline = 0,
@@ -2006,7 +2068,23 @@ describe('builtin popupmenu', function()
                 sum_scroll_delta = 0,
               },
             },
-          }
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+              [7] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1003,
+              },
+            },
+          })
         else
           screen:expect {
             grid = [[
@@ -2039,7 +2117,7 @@ describe('builtin popupmenu', function()
               {s:one                }|
               {n:two                }|
               {n:looooooooooooooong }|
-            ## grid 9
+            ## grid 8
               {n:```lua         }|
               {n:function test()}|
               {n:  print('foo') }|
@@ -2047,9 +2125,18 @@ describe('builtin popupmenu', function()
               {n:```            }|
               {n:               }|
             ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 40,
+                win = 1000,
+              },
+            },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100 },
-              [9] = { 1005, 'NW', 1, 1, 19, false, 50 },
+              [8] = { 1004, 'NW', 1, 1, 19, false, 50 },
             },
             win_viewport = {
               [2] = {
@@ -2061,8 +2148,8 @@ describe('builtin popupmenu', function()
                 linecount = 1,
                 sum_scroll_delta = 0,
               },
-              [9] = {
-                win = 1005,
+              [8] = {
+                win = 1004,
                 topline = 0,
                 botline = 6,
                 curline = 0,
@@ -2079,12 +2166,12 @@ describe('builtin popupmenu', function()
                 top = 0,
                 win = 1000,
               },
-              [9] = {
+              [8] = {
                 bottom = 0,
                 left = 0,
                 right = 0,
                 top = 0,
-                win = 1005,
+                win = 1004,
               },
             },
           })

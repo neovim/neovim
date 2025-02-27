@@ -871,6 +871,7 @@ win_T *pum_set_info(int selected, char *info)
     if (!wp) {
       return NULL;
     }
+    wp->w_p_wfb = true;
   }
   linenr_T lnum = 0;
   int max_info_width = 0;
@@ -915,7 +916,8 @@ static bool pum_set_selected(int n, int repeat)
   if (use_float && (pum_selected < 0 || pum_array[pum_selected].pum_info == NULL)) {
     win_T *wp = win_float_find_preview();
     if (wp) {
-      win_close(wp, true, true);
+      wp->w_config.hide = true;
+      win_config_float(wp, wp->w_config);
     }
   }
 
