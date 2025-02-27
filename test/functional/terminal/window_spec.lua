@@ -189,6 +189,149 @@ describe(':terminal window', function()
       ]])
     end)
   end)
+
+  it('redrawn when restoring cursorline/column', function()
+    screen:set_default_attr_ids({
+      [1] = { bold = true },
+      [2] = { foreground = 130 },
+      [3] = { foreground = 130, underline = true },
+      [12] = { underline = true },
+      [19] = { background = 7 },
+    })
+
+    feed([[<C-\><C-N>]])
+    command('setlocal cursorline')
+    screen:expect([[
+      tty ready                                         |
+      {12:^                                                  }|
+                                                        |*5
+    ]])
+    feed('i')
+    screen:expect([[
+      tty ready                                         |
+      ^                                                  |
+                                                        |*4
+      {1:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      tty ready                                         |
+      {12:^                                                  }|
+                                                        |*5
+    ]])
+
+    command('setlocal number')
+    screen:expect([[
+      {2:  1 }tty ready                                     |
+      {3:  2 }{12:^rows: 6, cols: 46                             }|
+      {2:  3 }                                              |
+      {2:  4 }                                              |
+      {2:  5 }                                              |
+      {2:  6 }                                              |
+                                                        |
+    ]])
+    feed('i')
+    screen:expect([[
+      {2:  1 }tty ready                                     |
+      {2:  2 }rows: 6, cols: 46                             |
+      {3:  3 }^                                              |
+      {2:  4 }                                              |
+      {2:  5 }                                              |
+      {2:  6 }                                              |
+      {1:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      {2:  1 }tty ready                                     |
+      {2:  2 }rows: 6, cols: 46                             |
+      {3:  3 }{12:^                                              }|
+      {2:  4 }                                              |
+      {2:  5 }                                              |
+      {2:  6 }                                              |
+                                                        |
+    ]])
+
+    command('setlocal nonumber nocursorline cursorcolumn')
+    screen:expect([[
+      {19:t}ty ready                                         |
+      {19:r}ows: 6, cols: 46                                 |
+      ^rows: 6, cols: 50                                 |
+      {19: }                                                 |*3
+                                                        |
+    ]])
+    feed('i')
+    screen:expect([[
+      tty ready                                         |
+      rows: 6, cols: 46                                 |
+      rows: 6, cols: 50                                 |
+      ^                                                  |
+                                                        |*2
+      {1:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      {19:t}ty ready                                         |
+      {19:r}ows: 6, cols: 46                                 |
+      {19:r}ows: 6, cols: 50                                 |
+      ^                                                  |
+      {19: }                                                 |*2
+                                                        |
+    ]])
+  end)
+
+  it('redraws cursor info in terminal mode', function()
+    skip(is_os('win'), '#31587')
+    command('file AMOGUS | set laststatus=2 ruler')
+    screen:expect([[
+      tty ready                                         |
+      rows: 5, cols: 50                                 |
+      ^                                                  |
+                                                        |*2
+      {120:AMOGUS [-]                      3,0-1          All}|
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed_data('you are the imposter')
+    screen:expect([[
+      tty ready                                         |
+      rows: 5, cols: 50                                 |
+      you are the imposter^                              |
+                                                        |*2
+      {120:AMOGUS [-]                      3,21           All}|
+      {5:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      tty ready                                         |
+      rows: 5, cols: 50                                 |
+      you are the imposte^r                              |
+                                                        |*2
+      {120:AMOGUS [-]                      3,20           All}|
+                                                        |
+    ]])
+  end)
+
+  it('redraws stale statuslines and mode when not updating screen', function()
+    command('file foo | set ruler | vsplit')
+    screen:expect([[
+      tty ready                │tty ready               |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │                        |
+                               │                        |*2
+      {120:<o [-] 3,0-1          All }{119:< [-] 2,0-1          Top}|
+      {5:-- TERMINAL --}                                    |
+    ]])
+    command("call win_execute(win_getid(winnr('#')), 'call cursor(1, 1)')")
+    screen:expect([[
+      tty ready                │tty ready               |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │                        |
+                               │                        |*2
+      {120:<o [-] 3,0-1          All }{119:< [-] 1,1            All}|
+      {5:-- TERMINAL --}                                    |
+    ]])
+    command('echo ""')
+    screen:expect_unchanged()
+  end)
 end)
 
 describe(':terminal with multigrid', function()

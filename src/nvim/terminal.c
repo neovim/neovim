@@ -705,18 +705,19 @@ bool terminal_enter(void)
   } else {
     curwin->w_p_cul = false;
   }
-  if (curwin->w_p_cuc) {
-    redraw_later(curwin, UPD_SOME_VALID);
-  }
   curwin->w_p_cuc = false;
   curwin->w_p_so = 0;
   curwin->w_p_siso = 0;
+  if (curwin->w_p_cuc != save_w_p_cuc) {
+    redraw_later(curwin, UPD_SOME_VALID);
+  } else if (curwin->w_p_cul != save_w_p_cul
+             || (curwin->w_p_cul && curwin->w_p_culopt_flags != save_w_p_culopt_flags)) {
+    redraw_later(curwin, UPD_VALID);
+  }
 
   s->term->pending.cursor = true;  // Update the cursor shape table
   adjust_topline(s->term, buf, 0);  // scroll to end
   showmode();
-  curwin->w_redr_status = true;  // For mode() in statusline. #8323
-  redraw_custom_title_later();
   ui_cursor_shape();
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
   may_trigger_modechanged();
@@ -744,6 +745,12 @@ bool terminal_enter(void)
   (void)parse_shape_opt(SHAPE_CURSOR);
 
   if (save_curwin == curwin->handle) {  // Else: window was closed.
+    if (save_w_p_cuc != curwin->w_p_cuc) {
+      redraw_later(curwin, UPD_SOME_VALID);
+    } else if (save_w_p_cul != curwin->w_p_cul
+               || (save_w_p_cul && save_w_p_culopt_flags != curwin->w_p_culopt_flags)) {
+      redraw_later(curwin, UPD_VALID);
+    }
     curwin->w_p_cul = save_w_p_cul;
     if (save_w_p_culopt) {
       free_string_option(curwin->w_p_culopt);
@@ -808,10 +815,18 @@ static int terminal_check(VimState *state)
   assert(s->term == curbuf->terminal);
   terminal_check_cursor();
   validate_cursor(curwin);
+  const bool text_changed = must_redraw != 0;
+  show_cursor_info_later(false);
 
   if (must_redraw) {
     update_screen();
-
+  } else {
+    redraw_statuslines();
+    if (clear_cmdline || redraw_cmdline || redraw_mode) {
+      showmode();  // clear cmdline and show mode
+    }
+  }
+  if (text_changed) {
     // Make sure an invoked autocmd doesn't delete the buffer (and the
     // terminal) under our fingers.
     curbuf->b_locked++;
@@ -826,10 +841,6 @@ static int terminal_check(VimState *state)
   }
 
   may_trigger_win_scrolled_resized();
-
-  if (need_maketitle) {  // Update title in terminal-mode. #7248
-    maketitle();
-  }
 
   setcursor();
   refresh_cursor(s->term, &s->cursor_visible);
