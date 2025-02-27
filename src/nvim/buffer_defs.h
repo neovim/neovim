@@ -413,8 +413,7 @@ struct file_buffer {
                                 // negative when lines were deleted
   kvec_t(WinInfo *) b_wininfo;  // list of last used info for each window
   disptick_T b_mod_tick_syn;    // last display tick syntax was updated
-  disptick_T b_mod_tick_decor;  // last display tick decoration providers
-                                // where invoked
+  disptick_T b_mod_tick_decor;  // last display tick decoration providers were invoked
 
   int64_t b_mtime;              // last change time of original file
   int64_t b_mtime_ns;           // nanoseconds of last change time
@@ -1324,7 +1323,4 @@ struct window_S {
   size_t w_winbar_click_defs_size;              // Size of the w_winbar_click_defs array
   StlClickDefinition *w_statuscol_click_defs;   // Status column click definitions
   size_t w_statuscol_click_defs_size;           // Size of the w_statuscol_click_defs array
-
-  buf_T *w_conceal_line_buf;                    // buffer in win when first invoked
-  bool w_conceal_line_provider;                 // whether conceal_line provider is active
 };
