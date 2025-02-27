@@ -2234,7 +2234,7 @@ make_position_params({window}, {position_encoding})
     cursor position.
 
     Parameters: ~
-      • {window}             (`integer?`) window handle or 0 for current,
+      • {window}             (`integer?`) |window-ID| or 0 for current,
                              defaults to current
       • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
@@ -2252,7 +2252,7 @@ make_range_params({window}, {position_encoding})
     `textDocument/rangeFormatting`.
 
     Parameters: ~
-      • {window}             (`integer?`) window handle or 0 for current,
+      • {window}             (`integer?`) |window-ID| or 0 for current,
                              defaults to current
       • {position_encoding}  (`"utf-8"|"utf-16"|"utf-32"`)
 

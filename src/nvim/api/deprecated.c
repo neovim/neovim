@@ -488,7 +488,7 @@ Object buffer_del_var(Buffer buffer, String name, Arena *arena, Error *err)
 ///
 /// @deprecated
 ///
-/// @param window   Window handle, or 0 for current window
+/// @param window   |window-ID|, or 0 for current window
 /// @param name     Variable name
 /// @param value    Variable value
 /// @param[out] err Error details, if any
@@ -512,7 +512,7 @@ Object window_set_var(Window window, String name, Object value, Arena *arena, Er
 ///
 /// @deprecated
 ///
-/// @param window   Window handle, or 0 for current window
+/// @param window   |window-ID|, or 0 for current window
 /// @param name     variable name
 /// @param[out] err Error details, if any
 /// @return Old value
@@ -532,7 +532,7 @@ Object window_del_var(Window window, String name, Arena *arena, Error *err)
 ///
 /// @deprecated
 ///
-/// @param tabpage  Tabpage handle, or 0 for current tabpage
+/// @param tabpage  |tab-ID|, or 0 for current tabpage
 /// @param name     Variable name
 /// @param value    Variable value
 /// @param[out] err Error details, if any
@@ -556,7 +556,7 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, Arena *arena,
 ///
 /// @deprecated
 ///
-/// @param tabpage  Tabpage handle, or 0 for current tabpage
+/// @param tabpage  |tab-ID|, or 0 for current tabpage
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 /// @return Old value
@@ -684,7 +684,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
 /// Gets a window option value
 ///
 /// @deprecated
-/// @param window   Window handle, or 0 for current window
+/// @param window   |window-ID|, or 0 for current window
 /// @param name     Option name
 /// @param[out] err Error details, if any
 /// @return Option value
@@ -707,7 +707,7 @@ Object nvim_win_get_option(Window window, String name, Error *err)
 ///
 /// @deprecated
 /// @param channel_id
-/// @param window   Window handle, or 0 for current window
+/// @param window   |window-ID|, or 0 for current window
 /// @param name     Option name
 /// @param value    Option value
 /// @param[out] err Error details, if any

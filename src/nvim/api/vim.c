@@ -661,7 +661,7 @@ String nvim_get_current_line(Arena *arena, Error *err)
   return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, arena, err);
 }
 
-/// Sets the current line.
+/// Sets the text on the current line.
 ///
 /// @param line     Line contents
 /// @param[out] err Error details, if any
@@ -823,7 +823,7 @@ Buffer nvim_get_current_buf(void)
   return curbuf->handle;
 }
 
-/// Sets the current buffer.
+/// Sets the current window's buffer to `buffer`.
 ///
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
@@ -844,7 +844,7 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
 
 /// Gets the current list of window handles.
 ///
-/// @return List of window handles
+/// @return List of |window-ID|s
 ArrayOf(Window) nvim_list_wins(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -865,16 +865,16 @@ ArrayOf(Window) nvim_list_wins(Arena *arena)
 
 /// Gets the current window.
 ///
-/// @return Window handle
+/// @return |window-ID|
 Window nvim_get_current_win(void)
   FUNC_API_SINCE(1)
 {
   return curwin->handle;
 }
 
-/// Sets the current window.
+/// Sets the current window. Also changes tabpage, if necessary.
 ///
-/// @param window Window handle
+/// @param window |window-ID| to focus
 /// @param[out] err Error details, if any
 void nvim_set_current_win(Window window, Error *err)
   FUNC_API_SINCE(1)
@@ -1106,9 +1106,9 @@ void nvim_chan_send(Integer chan, String data, Error *err)
   VALIDATE(!error, "%s", error, {});
 }
 
-/// Gets the current list of tabpage handles.
+/// Gets the current list of |tab-ID|s.
 ///
-/// @return List of tabpage handles
+/// @return List of |tab-ID|s
 ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -1129,7 +1129,7 @@ ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
 
 /// Gets the current tabpage.
 ///
-/// @return Tabpage handle
+/// @return |tab-ID|
 Tabpage nvim_get_current_tabpage(void)
   FUNC_API_SINCE(1)
 {
@@ -1138,7 +1138,7 @@ Tabpage nvim_get_current_tabpage(void)
 
 /// Sets the current tabpage.
 ///
-/// @param tabpage  Tabpage handle
+/// @param tabpage  |tab-ID| to focus
 /// @param[out] err Error details, if any
 void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)

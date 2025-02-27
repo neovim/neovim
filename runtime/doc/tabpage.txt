@@ -32,6 +32,17 @@ Tabs are also a nice way to edit a buffer temporarily without changing the
 current window layout.  Open a new tab page, do whatever you want to do and
 close the tab page.
 
+							*tab-ID* *tabid* *tabpageid*
+Each tab page has a unique identifier called the tab ID.  This identifier will
+not change within a Vim session -- even when rearranging tabs.
+|nvim_get_current_tabpage()| returns the tab ID and |nvim_list_tabpages()|
+lists tab IDs in the order they're displayed.  Additionally, the tabs are
+numbered from left to right starting at 1: this is the tab number returned by
+|tabpagenr()|. However, the tab number may change when tabs are opened,
+closed, or rearranged.  |nvim_tabpage_get_number()| converts a tab ID to a tab
+number.
+
+
 ==============================================================================
 2. Commands						*tab-page-commands*
 

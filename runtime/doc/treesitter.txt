@@ -914,7 +914,7 @@ get_captures_at_cursor({winnr})
     Returns a list of highlight capture names under the cursor
 
     Parameters: ~
-      • {winnr}  (`integer?`) Window handle or 0 for current window (default)
+      • {winnr}  (`integer?`) |window-ID| or 0 for current window (default)
 
     Return: ~
         (`string[]`) List of capture names

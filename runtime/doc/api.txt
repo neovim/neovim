@@ -810,13 +810,13 @@ nvim_get_current_tabpage()                        *nvim_get_current_tabpage()*
     Gets the current tabpage.
 
     Return: ~
-        Tabpage handle
+        |tab-ID|
 
 nvim_get_current_win()                                *nvim_get_current_win()*
     Gets the current window.
 
     Return: ~
-        Window handle
+        |window-ID|
 
 nvim_get_hl({ns_id}, {opts})                                   *nvim_get_hl()*
     Gets all or specific highlight groups in a namespace.
@@ -1032,10 +1032,10 @@ nvim_list_runtime_paths()                          *nvim_list_runtime_paths()*
         List of paths
 
 nvim_list_tabpages()                                    *nvim_list_tabpages()*
-    Gets the current list of tabpage handles.
+    Gets the current list of |tab-ID|s.
 
     Return: ~
-        List of tabpage handles
+        List of |tab-ID|s
 
 nvim_list_uis()                                              *nvim_list_uis()*
     Gets a list of dictionaries representing attached UIs.
@@ -1058,7 +1058,7 @@ nvim_list_wins()                                            *nvim_list_wins()*
     Gets the current list of window handles.
 
     Return: ~
-        List of window handles
+        List of |window-ID|s
 
 nvim_load_context({dict})                                *nvim_load_context()*
     Sets the current editor state from the given |context| map.
@@ -1269,7 +1269,7 @@ nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
                         icon. .png or .svg format is preferred.
 
 nvim_set_current_buf({buffer})                        *nvim_set_current_buf()*
-    Sets the current buffer.
+    Sets the current window's buffer to `buffer`.
 
     Attributes: ~
         not allowed when |textlock| is active or in the |cmdwin|
@@ -1284,7 +1284,7 @@ nvim_set_current_dir({dir})                           *nvim_set_current_dir()*
       • {dir}  Directory path
 
 nvim_set_current_line({line})                        *nvim_set_current_line()*
-    Sets the current line.
+    Sets the text on the current line.
 
     Attributes: ~
         not allowed when |textlock| is active
@@ -1299,16 +1299,16 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
         not allowed when |textlock| is active or in the |cmdwin|
 
     Parameters: ~
-      • {tabpage}  Tabpage handle
+      • {tabpage}  |tab-ID| to focus
 
 nvim_set_current_win({window})                        *nvim_set_current_win()*
-    Sets the current window.
+    Sets the current window. Also changes tabpage, if necessary.
 
     Attributes: ~
         not allowed when |textlock| is active or in the |cmdwin|
 
     Parameters: ~
-      • {window}  Window handle
+      • {window}  |window-ID| to focus
 
 nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
     Sets a highlight group.
@@ -2824,7 +2824,7 @@ nvim_win_call({window}, {fun})                               *nvim_win_call()*
         Lua |vim.api| only
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {fun}     Function to call inside the window (currently Lua callable
                   only)
 
@@ -2842,7 +2842,7 @@ nvim_win_close({window}, {force})                           *nvim_win_close()*
         not allowed when |textlock| is active
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {force}   Behave like `:close!` The last window of a buffer with
                   unwritten changes can be closed. The buffer will become
                   hidden, even if 'hidden' is not set.
@@ -2851,14 +2851,14 @@ nvim_win_del_var({window}, {name})                        *nvim_win_del_var()*
     Removes a window-scoped (w:) variable
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {name}    Variable name
 
 nvim_win_get_buf({window})                                *nvim_win_get_buf()*
     Gets the current buffer in a window
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
     Return: ~
         Buffer handle
@@ -2869,7 +2869,7 @@ nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
     positions). |api-indexing|
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
     Return: ~
         (row, col) tuple
@@ -2881,7 +2881,7 @@ nvim_win_get_height({window})                          *nvim_win_get_height()*
     Gets the window height
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
     Return: ~
         Height as a count of rows
@@ -2890,7 +2890,7 @@ nvim_win_get_number({window})                          *nvim_win_get_number()*
     Gets the window number
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
     Return: ~
         Window number
@@ -2899,7 +2899,7 @@ nvim_win_get_position({window})                      *nvim_win_get_position()*
     Gets the window position in display cells. First position is zero.
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
     Return: ~
         (row, col) tuple with the window position
@@ -2908,7 +2908,7 @@ nvim_win_get_tabpage({window})                        *nvim_win_get_tabpage()*
     Gets the window tabpage
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
     Return: ~
         Tabpage that contains the window
@@ -2917,7 +2917,7 @@ nvim_win_get_var({window}, {name})                        *nvim_win_get_var()*
     Gets a window-scoped (w:) variable
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {name}    Variable name
 
     Return: ~
@@ -2927,7 +2927,7 @@ nvim_win_get_width({window})                            *nvim_win_get_width()*
     Gets the window width
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
     Return: ~
         Width as a count of columns
@@ -2944,13 +2944,13 @@ nvim_win_hide({window})                                      *nvim_win_hide()*
         not allowed when |textlock| is active
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
 nvim_win_is_valid({window})                              *nvim_win_is_valid()*
     Checks if a window is valid
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
     Return: ~
         true if the window is valid, false otherwise
@@ -2962,7 +2962,7 @@ nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
         not allowed when |textlock| is active
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {buffer}  Buffer handle
 
 nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
@@ -2970,14 +2970,14 @@ nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
     scrolls the window even if it is not the current one.
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {pos}     (row, col) tuple representing the new position
 
 nvim_win_set_height({window}, {height})                *nvim_win_set_height()*
     Sets the window height.
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {height}  Height as a count of rows
 
 nvim_win_set_hl_ns({window}, {ns_id})                   *nvim_win_set_hl_ns()*
@@ -2994,7 +2994,7 @@ nvim_win_set_var({window}, {name}, {value})               *nvim_win_set_var()*
     Sets a window-scoped (w:) variable
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {name}    Variable name
       • {value}   Variable value
 
@@ -3003,7 +3003,7 @@ nvim_win_set_width({window}, {width})                   *nvim_win_set_width()*
     vertically.
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {width}   Width as a count of columns
 
 nvim_win_text_height({window}, {opts})                *nvim_win_text_height()*
@@ -3019,7 +3019,7 @@ nvim_win_text_height({window}, {opts})                *nvim_win_text_height()*
     Line indexing is similar to |nvim_buf_get_text()|.
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window.
+      • {window}  |window-ID|, or 0 for current window.
       • {opts}    Optional parameters:
                   • start_row: Starting line index, 0-based inclusive. When
                     omitted start at the very top.
@@ -3224,7 +3224,7 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                   • split: Split direction: "left", "right", "above", "below".
 
     Return: ~
-        Window handle, or 0 on error
+        |window-ID|, or 0 on error
 
 nvim_win_get_config({window})                          *nvim_win_get_config()*
     Gets window configuration.
@@ -3234,7 +3234,7 @@ nvim_win_get_config({window})                          *nvim_win_get_config()*
     `relative` is empty for normal windows.
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
 
     Return: ~
         Map defining the window configuration, see |nvim_open_win()|
@@ -3247,7 +3247,7 @@ nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
     `row`/`col` and `relative` must be reconfigured together.
 
     Parameters: ~
-      • {window}  Window handle, or 0 for current window
+      • {window}  |window-ID|, or 0 for current window
       • {config}  Map defining the window configuration, see |nvim_open_win()|
 
     See also: ~
@@ -3261,14 +3261,14 @@ nvim_tabpage_del_var({tabpage}, {name})               *nvim_tabpage_del_var()*
     Removes a tab-scoped (t:) variable
 
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
+      • {tabpage}  |tab-ID|, or 0 for current tabpage
       • {name}     Variable name
 
 nvim_tabpage_get_number({tabpage})                 *nvim_tabpage_get_number()*
     Gets the tabpage number
 
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
+      • {tabpage}  |tab-ID|, or 0 for current tabpage
 
     Return: ~
         Tabpage number
@@ -3277,7 +3277,7 @@ nvim_tabpage_get_var({tabpage}, {name})               *nvim_tabpage_get_var()*
     Gets a tab-scoped (t:) variable
 
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
+      • {tabpage}  |tab-ID|, or 0 for current tabpage
       • {name}     Variable name
 
     Return: ~
@@ -3287,16 +3287,16 @@ nvim_tabpage_get_win({tabpage})                       *nvim_tabpage_get_win()*
     Gets the current window in a tabpage
 
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
+      • {tabpage}  |tab-ID|, or 0 for current tabpage
 
     Return: ~
-        Window handle
+        |window-ID|
 
 nvim_tabpage_is_valid({tabpage})                     *nvim_tabpage_is_valid()*
     Checks if a tabpage is valid
 
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
+      • {tabpage}  |tab-ID|, or 0 for current tabpage
 
     Return: ~
         true if the tabpage is valid, false otherwise
@@ -3305,7 +3305,7 @@ nvim_tabpage_list_wins({tabpage})                   *nvim_tabpage_list_wins()*
     Gets the windows in a tabpage
 
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
+      • {tabpage}  |tab-ID|, or 0 for current tabpage
 
     Return: ~
         List of windows in `tabpage`
@@ -3315,7 +3315,7 @@ nvim_tabpage_set_var({tabpage}, {name}, {value})
     Sets a tab-scoped (t:) variable
 
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
+      • {tabpage}  |tab-ID|, or 0 for current tabpage
       • {name}     Variable name
       • {value}    Variable value
 
@@ -3323,8 +3323,8 @@ nvim_tabpage_set_win({tabpage}, {win})                *nvim_tabpage_set_win()*
     Sets the current window in a tabpage
 
     Parameters: ~
-      • {tabpage}  Tabpage handle, or 0 for current tabpage
-      • {win}      Window handle, must already belong to {tabpage}
+      • {tabpage}  |tab-ID|, or 0 for current tabpage
+      • {win}      |window-ID|, must already belong to {tabpage}
 
 
 ==============================================================================

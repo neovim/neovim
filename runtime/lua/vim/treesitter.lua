@@ -306,7 +306,7 @@ end
 
 --- Returns a list of highlight capture names under the cursor
 ---
----@param winnr (integer|nil) Window handle or 0 for current window (default)
+---@param winnr (integer|nil): |window-ID| or 0 for current window (default)
 ---
 ---@return string[] List of capture names
 function M.get_captures_at_cursor(winnr)
