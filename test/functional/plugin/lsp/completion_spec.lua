@@ -777,6 +777,32 @@ describe('vim.lsp.completion: item conversion', function()
       eq('hello', text)
     end
   )
+
+  it('when completeopt include popup', function()
+    exec_lua([[
+      vim.opt.completeopt:append('popup')
+      vim.bo.filetype = 'lua'
+    ]])
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          insertText = 'for ${1:index}, ${2:value} in ipairs(${3:t}) do\n\t$0\nend',
+          insertTextFormat = 2,
+          kind = 15,
+          label = 'for .. ipairs',
+          sortText = '0001',
+        },
+      },
+    }
+    local result = complete('|', completion_list)
+    eq(1, #result.items)
+    eq('for .. ipairs', result.items[1].word)
+    eq(
+      '```lua\nfor index, value in ipairs(t) do\n\t\nend\n```',
+      result.items[1].user_data.nvim.lsp.completion_item.documentation
+    )
+  end)
 end)
 
 --- @param name string
