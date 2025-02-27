@@ -2106,12 +2106,20 @@ bool nlua_execute_on_key(int c, char *typed_buf)
   return discard;
 }
 
-// Sets the editor "script context" during Lua execution. Used by :verbose.
-// @param[out] current
+/// Sets the editor "script context" during Lua execution. Used by :verbose.
+/// @param[out] current
 void nlua_set_sctx(sctx_T *current)
 {
-  if (p_verbose <= 0 || (current->sc_sid > 0 && current->sc_lnum > 0)
-      || !script_is_lua(current->sc_sid)) {
+  if (!script_is_lua(current->sc_sid)) {
+    return;
+  }
+
+  // This function is called after adding SOURCING_LNUM to sc_lnum.
+  // SOURCING_LNUM can sometimes be non-zero (e.g. with ETYPE_UFUNC),
+  // but it's unrelated to the line number in Lua scripts.
+  current->sc_lnum = 0;
+
+  if (p_verbose <= 0) {
     return;
   }
   lua_State *const lstate = global_lstate;

@@ -23,7 +23,7 @@ local function last_set_lua_verbose_tests(cmd, v1)
 
     write_file(
       script_file,
-      [[
+      [=[
 vim.api.nvim_set_option_value('hlsearch', false, {})
 vim.bo.expandtab = true
 vim.opt.number = true
@@ -70,8 +70,17 @@ endfunction\
 let &tw = s:return80()\
 ", {})
 
+local set_list = ([[
+  func SetList()
+%s
+    set list
+  endfunc
+  call SetList()
+]]):format(('\n'):rep(1234))
+vim.api.nvim_exec2(set_list, {})
+
 vim.api.nvim_create_autocmd('User', { pattern = 'set_mouse', callback = cb })
-]]
+]=]
     )
     exec(cmd .. ' ' .. script_file)
     exec('doautocmd User set_mouse')
@@ -255,6 +264,19 @@ TestHL2        xxx guibg=Green
   textwidth=80
 	Last set from %s]],
         loc
+      ),
+      result
+    )
+  end)
+
+  it('for option set by function in nvim_exec2', function()
+    local result = exec_capture(':verbose set list?')
+    eq(
+      string.format(
+        [[
+  list
+	Last set from %s]],
+        get_last_set_location(54)
       ),
       result
     )
