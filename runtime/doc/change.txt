@@ -282,9 +282,9 @@ gr{char}		Replace the virtual characters under the cursor with
 			most CTRL-keys, cannot be used.
 
 							*gr-default*
-			Nvim creates default mappings with "gr" as a prefix,
-			which may inhibit the behavior of |gr|. Use the
-			following to restore the builtin behavior: >
+			Nvim creates |lsp-defaults| mappings which may inhibit
+			the builtin behavior of |gr|. Use this to restore the
+			builtin behavior: >
 				nnoremap <nowait> gr gr
 <
 
