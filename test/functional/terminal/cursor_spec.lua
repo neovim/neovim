@@ -470,6 +470,90 @@ describe(':terminal cursor', function()
     eq(0, screen._mode_info[terminal_mode_idx].blinkon)
     eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
   end)
+
+  it('position correct within events', function()
+    command([[
+      bwipeout!
+      let chan_unfocused = nvim_open_term(0, {})
+      vnew
+      wincmd |
+      let chan = nvim_open_term(0, {})
+    ]])
+    feed('i')
+    eq('t', eval('mode()'))
+
+    -- Using chansend so terminal_receive happens immediately.
+    -- Do these actions in one command call, so they occur within the same terminal_execute call.
+    command([[
+      function! NowPos() abort
+        return #{pos: getpos('.')[1:], virtcol: virtcol('.', 1)}
+      endfunction
+
+      " :sleep long enough (with leeway) for the refresh_terminal uv timer event to trigger before
+      " returning the cursor position.
+      function! Pos() abort
+        let old = NowPos()
+        let i = 0
+        while i < 2
+          sleep 11m
+          let now = NowPos()
+          if old != now | return now | endif
+          let i += 1
+        endwhile
+        return now
+      endfunction
+
+      call chansend(chan, "foo")
+      let pos1 = Pos()
+
+      " double-width char at end (3 bytes)
+      call chansend(chan, "\r\nbarbaaaar哦")
+      let pos2 = Pos()
+
+      " Move to 1,12 (beyond eol; sets coladd)
+      call chansend(chan, "\e[1;12H")
+      let pos3 = Pos()
+
+      " Move to 4,1
+      call chansend(chan, "\e[4;1H")
+      let pos4 = Pos()
+
+      " Move to 4,5 (beyond eol; sets coladd)
+      call chansend(chan, "\e[4;5H")
+      let pos5 = Pos()
+
+      " Move to 2,10 (head of wide char)
+      call chansend(chan, "\e[2;10H")
+      let pos6 = Pos()
+
+      " Move to 2,11 (non-head of wide char)
+      call chansend(chan, "\e[2;11H")
+      let pos7 = Pos()
+
+      " Move to 2,12 (after wide char)
+      call chansend(chan, "\e[2;12H")
+      let pos8 = Pos()
+
+      " Move to 2,13 (beyond eol; sets coladd)
+      call chansend(chan, "\e[2;13H")
+      let pos9 = Pos()
+
+      " Cursor movement in unfocused terminal shouldn't affect us
+      call chansend(chan_unfocused, "amogus")
+      let pos10 = Pos()
+    ]])
+    eq({ pos = { 1, 4, 0 }, virtcol = { 4, 4 } }, eval('g:pos1'))
+    eq({ pos = { 2, 13, 0 }, virtcol = { 12, 12 } }, eval('g:pos2'))
+    eq({ pos = { 1, 4, 8 }, virtcol = { 12, 12 } }, eval('g:pos3'))
+    eq({ pos = { 4, 1, 0 }, virtcol = { 1, 1 } }, eval('g:pos4'))
+    eq({ pos = { 4, 1, 4 }, virtcol = { 5, 5 } }, eval('g:pos5'))
+
+    eq({ pos = { 2, 10, 0 }, virtcol = { 10, 11 } }, eval('g:pos6'))
+    eq({ pos = { 2, 10, 0 }, virtcol = { 10, 11 } }, eval('g:pos7'))
+    eq({ pos = { 2, 13, 0 }, virtcol = { 12, 12 } }, eval('g:pos8'))
+    eq({ pos = { 2, 13, 1 }, virtcol = { 13, 13 } }, eval('g:pos9'))
+    eq({ pos = { 2, 13, 1 }, virtcol = { 13, 13 } }, eval('g:pos10'))
+  end)
 end)
 
 describe('buffer cursor position is correct in terminal without number column', function()
