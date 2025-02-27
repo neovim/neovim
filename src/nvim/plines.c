@@ -884,7 +884,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 ///
 /// @param[in]  wp               window the line is in
 /// @param[in]  lnum             line number
-/// @param[out] nextp            if not NULL, the line after a fold
+/// @param[out] nextp            if not NULL, the last line of a fold
 /// @param[out] foldedp          if not NULL, whether lnum is on a fold
 /// @param[in]  cache            whether to use the window's cache for folds
 /// @param[in]  limit_winheight  when true limit to window height

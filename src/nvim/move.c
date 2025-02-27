@@ -2294,7 +2294,8 @@ void cursor_correct(win_T *wp)
   int below = wp->w_filler_rows;  // screen lines below botline
   while ((above < above_wanted || below < below_wanted) && topline < botline) {
     if (below < below_wanted && (below <= above || above >= above_wanted)) {
-      below += plines_win_full(wp, botline, &botline, NULL, true, true);
+      below += plines_win_full(wp, botline, NULL, NULL, true, true);
+      hasFolding(wp, botline, &botline, NULL);
       botline--;
     }
     if (above < above_wanted && (above < below || below >= below_wanted)) {
