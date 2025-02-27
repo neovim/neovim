@@ -228,7 +228,7 @@ static Callback tfu_cb;          // 'tagfunc' callback function
 /// a function (string), or function(<name>) or funcref(<name>) or a lambda.
 const char *did_set_tagfunc(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_ctx.buf;
 
   callback_free(&tfu_cb);
   callback_free(&buf->b_tfu_cb);
