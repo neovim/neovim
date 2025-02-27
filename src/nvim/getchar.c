@@ -155,8 +155,6 @@ static uint8_t noremapbuf_init[TYPELEN_INIT];  ///< initial typebuf.tb_noremap
 
 static size_t last_recorded_len = 0;  ///< number of last recorded chars
 
-static size_t last_get_recorded_len = 0;  ///< length of the string returned from the
-                                          ///< last call to get_recorded()
 static size_t last_get_inserted_len = 0;  ///< length of the string returned from the
                                           ///< last call to get_inserted()
 
@@ -230,7 +228,8 @@ static char *get_buffcont(buffheader_T *buffer, int dozero, size_t *len)
 /// K_SPECIAL in the returned string is escaped.
 char *get_recorded(void)
 {
-  char *p = get_buffcont(&recordbuff, true, &last_get_recorded_len);
+  size_t len;
+  char *p = get_buffcont(&recordbuff, true, &len);
   if (p == NULL) {
     return NULL;
   }
@@ -239,26 +238,18 @@ char *get_recorded(void)
 
   // Remove the characters that were added the last time, these must be the
   // (possibly mapped) characters that stopped the recording.
-  if (last_get_recorded_len >= last_recorded_len) {
-    last_get_recorded_len -= last_recorded_len;
-    p[last_get_recorded_len] = NUL;
+  if (len >= last_recorded_len) {
+    len -= last_recorded_len;
+    p[len] = NUL;
   }
 
   // When stopping recording from Insert mode with CTRL-O q, also remove the
   // CTRL-O.
-  if (last_get_recorded_len > 0 && restart_edit != 0
-      && p[last_get_recorded_len - 1] == Ctrl_O) {
-    last_get_recorded_len--;
-    p[last_get_recorded_len] = NUL;
+  if (len > 0 && restart_edit != 0 && p[len - 1] == Ctrl_O) {
+    p[len - 1] = NUL;
   }
 
   return p;
-}
-
-/// Return the length of string returned from the last call of get_recorded().
-size_t get_recorded_len(void)
-{
-  return last_get_recorded_len;
 }
 
 /// Return the contents of the redo buffer as a single string.
