@@ -24,6 +24,11 @@ error('Cannot require a meta file')
 ---@class TSLangInfo
 ---@field fields string[]
 ---@field symbols table<string,boolean>
+---@field major_version? integer
+---@field minor_version? integer
+---@field patch_version? integer
+---@field state_count integer
+---@field supertypes table<string,string[]>
 ---@field _wasm boolean
 ---@field _abi_version integer
 
