@@ -1520,10 +1520,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'completeitemalign'* *'cia'*
 'completeitemalign' 'cia'	string	(default "abbr,kind,menu")
 			global
-	A comma-separated list of |complete-items| that controls the alignment
-	and display order of items in the popup menu during Insert mode
-	completion. The supported values are abbr, kind, and menu. These
-	options allow to customize how the completion items are shown in the
+	A comma-separated list of strings that controls the alignment and
+	display order of items in the popup menu during Insert mode
+	completion.  The supported values are "abbr", "kind", and "menu".
+	These values allow customizing how |complete-items| are shown in the
 	popup menu.  Note: must always contain those three values in any
 	order.
 
