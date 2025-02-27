@@ -1,3 +1,8 @@
+option(ENABLE_TRANSLATIONS "Localizations to build" OFF)
+if(NOT ENABLE_TRANSLATIONS)
+  return()
+endif()
+
 find_package(Gettext REQUIRED)
 find_program(XGETTEXT_PRG xgettext)
 find_program(ICONV_PRG iconv)
@@ -7,8 +12,7 @@ mark_as_advanced(
   ICONV_PRG
   XGETTEXT_PRG)
 
-option(ENABLE_LANGUAGES "Localizations to build" ON)
-if(ENABLE_LANGUAGES)
+if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   set(LANGUAGES
     af
     ca
@@ -36,9 +40,7 @@ if(ENABLE_LANGUAGES)
     vi
     zh_CN.UTF-8
     zh_TW.UTF-8)
-endif()
 
-if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
   set(ENV{OLD_PO_FILE_INPUT} yes)
   set(ENV{OLD_PO_FILE_OUTPUT} yes)
 
