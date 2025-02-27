@@ -149,6 +149,73 @@ describe(':terminal cursor', function()
                                                           |*5
         {3:-- TERMINAL --}                                    |
       ]])
+
+      -- Cursor is hidden; now request to show it while in a TermLeave autocmd.
+      -- Process events (via :sleep) to handle the escape sequence now.
+      command([[autocmd TermLeave * ++once call chansend(&channel, "\e[?25h") | sleep 1m]])
+      feed([[<C-\><C-N>]]) -- Exit terminal mode; cursor should not remain hidden
+      screen:expect([[
+        tty ready                                         |
+        ^                                                  |
+                                                          |*5
+      ]])
+
+      command('bwipeout! | let chan = nvim_open_term(0, {})')
+      feed('i')
+      -- Hide the cursor, switch to a non-terminal buffer, then show the cursor; it shouldn't remain
+      -- hidden after we're kicked out of terminal mode in the new buffer.
+      -- Must ensure these actions happen within the same terminal_execute call. The stream is
+      -- internal, so polling the event loop isn't necessary (terminal_receive is directly called).
+      command([[call chansend(chan, "\e[?25l") | new floob | call chansend(chan, "\e[?25h")]])
+      screen:expect([[
+        ^                                                  |
+        {4:~                                                 }|
+        {5:floob                                             }|
+                                                          |*2
+        {18:[Scratch]                                         }|
+                                                          |
+      ]])
+
+      feed('<C-W>pi')
+      screen:expect([[
+                                                          |
+        {4:~                                                 }|
+        {1:floob                                             }|
+        ^                                                  |
+                                                          |
+        {17:[Scratch]                                         }|
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end)
+
+    it('becomes visible on TermLeave if hidden immediately by events #32456', function()
+      skip(is_os('win'), '#31587')
+      -- Reproducing the issue is quite fragile; it's easiest done in a lone test case like this
+      -- with no prior commands.
+      feed([[<C-\><C-N>]]) -- Exit terminal mode
+      screen:expect([[
+        tty ready                                         |
+        ^                                                  |
+                                                          |*5
+      ]])
+
+      -- Hide the cursor such that the escape sequence is processed as a side effect of showmode in
+      -- terminal_enter handling events (skip_showmode -> char_avail -> vpeekc -> os_breakcheck).
+      -- This requires a particular set of actions; :startinsert repros better than feed('i') here.
+      hide_cursor()
+      command('mode | startinsert')
+      screen:expect([[
+        tty ready                                         |
+                                                          |*5
+        {3:-- TERMINAL --}                                    |
+      ]])
+
+      feed([[<C-\><C-N>]]) -- Exit terminal mode
+      screen:expect([[
+        tty ready                                         |
+        ^                                                  |
+                                                          |*5
+      ]])
     end)
   end)
 
@@ -358,55 +425,134 @@ describe(':terminal cursor', function()
     eq(error_hl_id, screen._mode_info[terminal_mode_idx].hl_id)
   end)
 
-  it('restores visibility on TermLeave #32456', function()
-    skip(is_os('win'), '#31587')
+  it('uses the correct attributes', function()
     feed([[<C-\><C-N>]]) -- Exit terminal mode
-    screen:expect([[
-      tty ready                                         |
-      ^                                                  |
-                                                        |*5
+    command([[
+      bwipeout!
+      let chan1 = nvim_open_term(0, {})
+      vnew
+      let chan2 = nvim_open_term(0, {})
     ]])
-
-    tt.hide_cursor()
-    -- :startinsert repros the issue more reliably than feed('i')
-    command('mode | startinsert')
-    screen:expect([[
-      tty ready                                         |
-                                                        |*5
-      {3:-- TERMINAL --}                                    |
-    ]])
-
-    feed([[<C-\><C-N>]]) -- Exit terminal mode
-    screen:expect([[
-      tty ready                                         |
-      ^                                                  |
-                                                        |*5
-    ]])
-
     feed('i')
     screen:expect([[
-      tty ready                                         |
-                                                        |*5
+      ^                         │                        |
+                               │                        |*4
+      {17:[Scratch]                 }{18:[Scratch]               }|
       {3:-- TERMINAL --}                                    |
     ]])
+    eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
 
-    -- Cursor currently hidden; request to show it while in a TermLeave autocmd.
-    -- Process events (via :sleep) to handle the escape sequence immediately.
-    command([[autocmd TermLeave * ++once call chansend(b:terminal_job_id, "\e[?25h") | sleep 1m]])
-    feed([[<C-\><C-N>]]) -- Exit terminal mode
+    -- Modify cursor in the non-current terminal; should not affect this cursor.
+    command([[call chansend(chan1, "\e[4 q")]])
+    screen:expect_unchanged()
+    eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
+
+    -- Modify cursor in the current terminal.
+    command([[call chansend(chan2, "\e[6 q")]])
+    screen:expect_unchanged()
+    eq('vertical', screen._mode_info[terminal_mode_idx].cursor_shape)
+    eq(0, screen._mode_info[terminal_mode_idx].blinkon)
+    eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
+
+    -- Check the cursor in the other terminal reflects our changes from before.
+    command('wincmd p')
     screen:expect([[
-      tty ready                                         |
-      ^                                                  |
-                                                        |*5
+                               │^                        |
+                               │                        |*4
+      {18:[Scratch]                 }{17:[Scratch]               }|
+      {3:-- TERMINAL --}                                    |
     ]])
+    eq('horizontal', screen._mode_info[terminal_mode_idx].cursor_shape)
+    eq(0, screen._mode_info[terminal_mode_idx].blinkon)
+    eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
+  end)
 
+  it('position correct within events', function()
+    command([[
+      bwipeout!
+      let chan_unfocused = nvim_open_term(0, {})
+      vnew
+      wincmd |
+      let chan = nvim_open_term(0, {})
+    ]])
     feed('i')
-    screen:expect([[
-      tty ready                                         |
-      ^                                                  |
-                                                        |*4
-      {3:-- TERMINAL --}                                    |
+    eq('t', eval('mode()'))
+
+    -- Using chansend so terminal_receive happens immediately.
+    -- Do these actions in one command call, so they occur within the same terminal_execute call.
+    command([[
+      function! NowPos() abort
+        return #{pos: getpos('.')[1:], virtcol: virtcol('.', 1)}
+      endfunction
+
+      " :sleep long enough (with leeway) for the refresh_terminal uv timer event to trigger before
+      " returning the cursor position.
+      function! Pos() abort
+        let old = NowPos()
+        let i = 0
+        while i < 2
+          sleep 11m
+          let now = NowPos()
+          if old != now | return now | endif
+          let i += 1
+        endwhile
+        return now
+      endfunction
+
+      call chansend(chan, "foo")
+      let pos1 = Pos()
+
+      " double-width char at end (3 bytes)
+      call chansend(chan, "\r\nbarbaaaar哦")
+      let pos2 = Pos()
+
+      " Move to 1,12 (beyond eol; sets coladd)
+      call chansend(chan, "\e[1;12H")
+      let pos3 = Pos()
+
+      " Move to 4,1
+      call chansend(chan, "\e[4;1H")
+      let pos4 = Pos()
+
+      " Move to 4,5 (beyond eol; sets coladd)
+      call chansend(chan, "\e[4;5H")
+      let pos5 = Pos()
+
+      " Move to 2,10 (head of wide char)
+      call chansend(chan, "\e[2;10H")
+      let pos6 = Pos()
+
+      " Move to 2,11 (non-head of wide char)
+      call chansend(chan, "\e[2;11H")
+      let pos7 = Pos()
+
+      " Move to 2,12 (after wide char)
+      call chansend(chan, "\e[2;12H")
+      let pos8 = Pos()
+
+      " Move to 2,13 (beyond eol; sets coladd)
+      call chansend(chan, "\e[2;13H")
+      let pos9 = Pos()
+
+      " Cursor movement in unfocused terminal shouldn't affect us
+      call chansend(chan_unfocused, "amogus")
+      let pos10 = Pos()
     ]])
+    eq({ pos = { 1, 4, 0 }, virtcol = { 4, 4 } }, eval('g:pos1'))
+    eq({ pos = { 2, 13, 0 }, virtcol = { 12, 12 } }, eval('g:pos2'))
+    eq({ pos = { 1, 4, 8 }, virtcol = { 12, 12 } }, eval('g:pos3'))
+    eq({ pos = { 4, 1, 0 }, virtcol = { 1, 1 } }, eval('g:pos4'))
+    eq({ pos = { 4, 1, 4 }, virtcol = { 5, 5 } }, eval('g:pos5'))
+
+    eq({ pos = { 2, 10, 0 }, virtcol = { 10, 11 } }, eval('g:pos6'))
+    eq({ pos = { 2, 10, 0 }, virtcol = { 10, 11 } }, eval('g:pos7'))
+    eq({ pos = { 2, 13, 0 }, virtcol = { 12, 12 } }, eval('g:pos8'))
+    eq({ pos = { 2, 13, 1 }, virtcol = { 13, 13 } }, eval('g:pos9'))
+    eq({ pos = { 2, 13, 1 }, virtcol = { 13, 13 } }, eval('g:pos10'))
   end)
 end)
 
