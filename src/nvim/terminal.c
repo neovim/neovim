@@ -728,6 +728,11 @@ bool terminal_enter(void)
   // TODO(seandewar): cool but what if we switch terminal windows without leaving terminal mode??
   // also, the window may have just been switched, not closed... (bruh)
   if (save_curwin == curwin->handle) {  // Else: window was closed.
+    if (save_w_p_cul != curwin->w_p_cul
+        || (save_w_p_cul && save_w_p_culopt_flags != curwin->w_p_culopt_flags)
+        || save_w_p_cuc != curwin->w_p_cuc) {
+      redraw_later(curwin, UPD_SOME_VALID);
+    }
     curwin->w_p_cul = save_w_p_cul;
     if (save_w_p_culopt) {
       free_string_option(curwin->w_p_culopt);
