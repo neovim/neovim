@@ -66,7 +66,9 @@ API
 
 BUILD
 
-On Windows, only building with the UCRT runtime is supported.
+• On Windows, only building with the UCRT runtime is supported.
+• Translations are turned off by default. Enable by building Nvim with the
+  CMake flag `ENABLE_TRANSLATIONS=ON`.
 
 DEFAULTS
 

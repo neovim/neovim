@@ -2424,6 +2424,7 @@ end)
 
 describe('ui/msg_puts_printf', function()
   it('output multibyte characters correctly', function()
+    skip(not t.translations_enabled(), 'Nvim not built with ENABLE_TRANSLATIONS')
     local screen
     local cmd = ''
     local locale_dir = test_build_dir .. '/share/locale/ja/LC_MESSAGES'

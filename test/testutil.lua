@@ -840,4 +840,8 @@ function M.skip_fragile(pending_fn, cond)
   return false
 end
 
+function M.translations_enabled()
+  return M.paths.translations_enabled
+end
+
 return M
