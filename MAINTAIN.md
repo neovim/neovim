@@ -241,4 +241,4 @@ See also
 --------
 
 * https://github.com/neovim/neovim/issues/862
-* https://github.com/git/git/blob/master/Documentation/howto/maintain-git.txt
+* https://github.com/git/git/blob/master/Documentation/howto/maintain-git.adoc
