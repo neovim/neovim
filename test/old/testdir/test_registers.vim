@@ -266,6 +266,20 @@ func Test_zz_recording_with_select_mode_utf8_gui()
   call Run_test_recording_with_select_mode_utf8()
 endfunc
 
+func Test_recording_append_utf8()
+  new
+
+  let keys = "cc哦洛固四最倒倀\<Esc>0"
+  call feedkeys($'qr{keys}q', 'xt')
+  call assert_equal(keys, @r)
+
+  let morekeys = "A…foobar\<Esc>0"
+  call feedkeys($'qR{morekeys}q', 'xt')
+  call assert_equal(keys .. morekeys, @r)
+
+  bwipe!
+endfunc
+
 func Test_recording_with_super_mod()
   if "\<D-j>"[-1:] == '>'
     throw 'Skipped: <D- modifier not supported'
