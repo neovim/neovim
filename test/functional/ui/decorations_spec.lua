@@ -2826,7 +2826,20 @@ describe('extmark decorations', function()
       ]]
     })
     feed('jj')
-    screen:expect_unchanged()
+    screen:expect({
+      grid = [[
+        {2:  1 }^for _,item in ipairs(items) do                |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*6
+                                                          |
+      ]]
+    })
     -- Below virtual line belonging to line above concealed line is drawn.
     api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines = { { { 'line 1 below' } } } })
     -- Above virtual line belonging to concealed line isn't.
@@ -2843,6 +2856,42 @@ describe('extmark decorations', function()
       {2: 11 }    end                                       |
       {2: 12 }end                                           |
       {1:~                                                 }|*7
+                                                        |
+    ]])
+    -- w_lines.wl_lastlnum values are valid
+    command('set relativenumber concealcursor=')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { conceal_lines = "" })
+    api.nvim_buf_set_extmark(0, ns, 4, 0, { conceal_lines = "" })
+    feed('zE')
+    screen:expect([[
+      {2:  4 }for _,item in ipairs(items) do                |
+      {2:  2 }    if hl_id_cell ~= nil then                 |
+      {2:  1 }        hl_id = hl_id_cell                    |
+      {2:5   }^conceal text                                  |
+      {2:  1 }    for _ = 1, (count or 1) do                |
+      {2:  2 }        local cell = line[colpos]             |
+      {2:  3 }        cell.text = text                      |
+      {2:  4 }        cell.hl_id = hl_id                    |
+      {2:  5 }        colpos = colpos+1                     |
+      {2:  6 }    end                                       |
+      {2:  7 }end                                           |
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('jj')
+    screen:expect([[
+      {2:  6 }for _,item in ipairs(items) do                |
+      {2:  4 }    if hl_id_cell ~= nil then                 |
+      {2:  3 }        hl_id = hl_id_cell                    |
+      {2:  1 }    for _ = 1, (count or 1) do                |
+      {2:7   }^        local cell = line[colpos]             |
+      {2:  1 }        cell.text = text                      |
+      {2:  2 }        cell.hl_id = hl_id                    |
+      {2:  3 }        colpos = colpos+1                     |
+      {2:  4 }    end                                       |
+      {2:  5 }end                                           |
+      {1:~                                                 }|*4
                                                         |
     ]])
   end)
