@@ -1039,7 +1039,7 @@ int do_record(int c)
       // restore the current register name.
       yankreg_T *old_y_previous = y_previous;
 
-      retval = stuff_yank(regname, p);
+      retval = stuff_yank(regname, p, get_recorded_len());
 
       y_previous = old_y_previous;
     }
@@ -1051,7 +1051,7 @@ int do_record(int c)
 /// uppercase). "p" must have been allocated.
 ///
 /// @return  FAIL for failure, OK otherwise
-static int stuff_yank(int regname, char *p)
+static int stuff_yank(int regname, char *p, size_t plen)
 {
   // check for read-only register
   if (regname != 0 && !valid_yank_reg(regname, true)) {
@@ -1063,7 +1063,6 @@ static int stuff_yank(int regname, char *p)
     return OK;
   }
 
-  const size_t plen = strlen(p);
   yankreg_T *reg = get_yank_register(regname, YREG_YANK);
   if (is_append_register(regname) && reg->y_array != NULL) {
     String *pp = &(reg->y_array[reg->y_size - 1]);

@@ -339,7 +339,7 @@ static void insert_enter(InsertState *s)
   if (s->ptr == NULL) {
     new_insert_skip = 0;
   } else {
-    new_insert_skip = (int)strlen(s->ptr);
+    new_insert_skip = (int)get_inserted_len();
     xfree(s->ptr);
   }
 
@@ -2342,7 +2342,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   // Don't do it when "restart_edit" was set and nothing was inserted,
   // otherwise CTRL-O w and then <Left> will clear "last_insert".
   char *ptr = get_inserted();
-  int added = ptr == NULL ? 0 : (int)strlen(ptr) - new_insert_skip;
+  int added = ptr == NULL ? 0 : (int)get_inserted_len() - new_insert_skip;
   if (did_restart_edit == 0 || added > 0) {
     xfree(last_insert);
     last_insert = ptr;
@@ -2772,8 +2772,8 @@ char *get_last_insert_save(void)
   if (last_insert == NULL) {
     return NULL;
   }
-  char *s = xstrdup(last_insert + last_insert_skip);
-  int len = (int)strlen(s);
+  size_t len = strlen(last_insert + last_insert_skip);
+  char *s = xmemdupz(last_insert + last_insert_skip, len);
   if (len > 0 && s[len - 1] == ESC) {         // remove trailing ESC
     s[len - 1] = NUL;
   }
