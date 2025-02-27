@@ -47,9 +47,7 @@ static bool decor_provider_invoke(int provider_idx, const char *name, LuaRef ref
   Error err = ERROR_INIT;
 
   textlock++;
-  provider_active = true;
   Object ret = nlua_call_ref(ref, name, args, kRetNilBool, NULL, &err);
-  provider_active = false;
   textlock--;
 
   // We get the provider here via an index in case the above call to nlua_call_ref causes
@@ -92,9 +90,10 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
   }
 }
 
-void decor_providers_invoke_conceal_line(win_T *wp, int row)
+/// @return whether a provider placed any marks in the callback.
+bool decor_providers_invoke_conceal_line(win_T *wp, int row)
 {
-  wp->w_conceal_line_buf = wp->w_buffer;
+  size_t keys = wp->w_buffer->b_marktree->n_keys;
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
     if (p->state != kDecorProviderDisabled && p->conceal_line != LUA_NOREF) {
@@ -102,11 +101,10 @@ void decor_providers_invoke_conceal_line(win_T *wp, int row)
       ADD_C(args, INTEGER_OBJ(wp->handle));
       ADD_C(args, INTEGER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
-      if (decor_provider_invoke((int)i, "conceal_line", p->conceal_line, args, false)) {
-        wp->w_conceal_line_provider = true;
-      }
+      decor_provider_invoke((int)i, "conceal_line", p->conceal_line, args, true);
     }
   }
+  return wp->w_buffer->b_marktree->n_keys > keys;
 }
 
 /// For each provider invoke the 'start' callback
@@ -279,12 +277,7 @@ void decor_provider_clear(DecorProvider *p)
   NLUA_CLEAR_REF(p->redraw_line);
   NLUA_CLEAR_REF(p->redraw_end);
   NLUA_CLEAR_REF(p->spell_nav);
-  if (p->conceal_line != LUA_NOREF) {
-    NLUA_CLEAR_REF(p->conceal_line);
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      wp->w_conceal_line_buf = NULL;  // invoke at least once
-    }
-  }
+  NLUA_CLEAR_REF(p->conceal_line);
   p->state = kDecorProviderDisabled;
 }
 

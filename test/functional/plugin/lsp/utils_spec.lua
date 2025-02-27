@@ -366,5 +366,21 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*9
                                                            |
     ]])
+    -- Correct height when float inherits 'conceallevel' >= 2 #32639
+    command('close | set conceallevel=2')
+    exec_lua([[
+      vim.lsp.util.open_floating_preview({ '```lua', 'local foo', '```' }, 'markdown', {
+        border = 'single',
+        focus = false,
+      })
+    ]])
+    screen:expect([[
+      ^                                                     |
+      ┌─────────┐{1:                                          }|
+      │{100:local}{101: }{102:foo}│{1:                                          }|
+      └─────────┘{1:                                          }|
+      {1:~                                                    }|*9
+                                                           |
+    ]])
   end)
 end)

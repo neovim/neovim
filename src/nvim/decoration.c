@@ -862,15 +862,7 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
 
   // No need to scan the marktree if there are no conceal_line marks.
   if (!buf_meta_total(wp->w_buffer, kMTMetaConcealLines)) {
-    // Only invoke callback when a decor provider has indicated that it may
-    // conceal lines in a certain buffer (the callback's return value).
-    if (wp->w_conceal_line_buf != wp->w_buffer) {
-      wp->w_conceal_line_provider = false;
-    }
-    if (wp->w_conceal_line_provider || wp->w_conceal_line_buf != wp->w_buffer) {
-      goto invoke;
-    }
-    return false;
+    return decor_providers_invoke_conceal_line(wp, row);
   }
 
   // Scan the marktree for any conceal_line marks on this row.
@@ -896,19 +888,13 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
     marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_filter);
   }
 
-invoke:;
-  // Interpret increase in keys to mean this row is concealed by a callback.
-  size_t keys = wp->w_buffer->b_marktree->n_keys;
-  decor_providers_invoke_conceal_line(wp, row);
-  return wp->w_buffer->b_marktree->n_keys > keys;
+  return decor_providers_invoke_conceal_line(wp, row);
 }
 
 /// @return whether a window may have folded or concealed lines
 bool win_lines_concealed(win_T *wp)
 {
-  return hasAnyFolding(wp)
-         || (wp->w_p_cole >= 2
-             && (wp->w_conceal_line_provider || buf_meta_total(wp->w_buffer, kMTMetaConcealLines)));
+  return hasAnyFolding(wp) || wp->w_p_cole >= 2;
 }
 
 int sign_item_cmp(const void *p1, const void *p2)
