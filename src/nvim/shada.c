@@ -589,8 +589,7 @@ static int shada_read_file(const char *const file, const int flags)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *const fname = shada_filename(file);
-
-  if (strequal(fname, "")) {
+  if (fname == NULL) {
     return FAIL;
   }
 
@@ -1283,9 +1282,10 @@ static const char *shada_get_default_file(void)
 ///
 /// @param[in]  file  Forced file name or NULL.
 ///
-/// @return An allocated string containing shada file name.
+/// @return  An allocated string containing shada file name,
+///          or NULL if shada file should not be used.
 static char *shada_filename(const char *file)
-  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (file == NULL || *file == NUL) {
     if (p_shadafile != NULL && *p_shadafile != NUL) {
@@ -1293,7 +1293,7 @@ static char *shada_filename(const char *file)
       if (!strequal(p_shadafile, "NONE")) {
         file = p_shadafile;
       } else {
-        return "";
+        return NULL;
       }
     } else {
       if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
@@ -2696,8 +2696,7 @@ shada_write_exit:
 int shada_write_file(const char *const file, bool nomerge)
 {
   char *const fname = shada_filename(file);
-
-  if (strequal(fname, "")) {
+  if (fname == NULL) {
     return FAIL;
   }
 

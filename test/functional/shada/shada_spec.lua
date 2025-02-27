@@ -262,6 +262,12 @@ describe('ShaDa support code', function()
     )
   end)
 
+  it(':wshada/:rshada without arguments is no-op when shadafile=NONE', function()
+    nvim_command('set shadafile=NONE')
+    nvim_command('wshada')
+    nvim_command('rshada')
+  end)
+
   it('does not crash when ShaDa file directory is not writable', function()
     skip(is_os('win'))
 
