@@ -12,11 +12,6 @@ describe('breakindent', function()
   -- oldtest: Test_cursor_position_with_showbreak()
   it('cursor shown at correct position with showbreak', function()
     local screen = Screen.new(75, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue }, -- SignColumn
-      [2] = { bold = true }, -- ModeMsg
-    })
     exec([[
       set listchars=eol:$
       let &signcolumn = 'yes'
@@ -29,10 +24,10 @@ describe('breakindent', function()
 
     feed('AX')
     screen:expect([[
-      {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
-      {1:  }^second line                                                              |
-      {0:~                                                                          }|*3
-      {2:-- INSERT --}                                                               |
+      {7:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
+      {7:  }^second line                                                              |
+      {1:~                                                                          }|*3
+      {5:-- INSERT --}                                                               |
     ]])
     -- No line wraps, so changing 'showbreak' should lead to the same screen.
     command('setlocal showbreak=+')
@@ -43,19 +38,19 @@ describe('breakindent', function()
     -- The first line now wraps because of "eol" in 'listchars'.
     command('setlocal list')
     screen:expect([[
-      {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
-      {1:  }  {0:+^$}                                                                     |
-      {1:  }second line{0:$}                                                             |
-      {0:~                                                                          }|*2
-      {2:-- INSERT --}                                                               |
+      {7:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
+      {7:  }  {1:+^$}                                                                     |
+      {7:  }second line{1:$}                                                             |
+      {1:~                                                                          }|*2
+      {5:-- INSERT --}                                                               |
     ]])
     command('setlocal nobreakindent')
     screen:expect([[
-      {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
-      {1:  }{0:+^$}                                                                       |
-      {1:  }second line{0:$}                                                             |
-      {0:~                                                                          }|*2
-      {2:-- INSERT --}                                                               |
+      {7:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
+      {7:  }{1:+^$}                                                                       |
+      {7:  }second line{1:$}                                                             |
+      {1:~                                                                          }|*2
+      {5:-- INSERT --}                                                               |
     ]])
   end)
 

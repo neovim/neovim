@@ -294,41 +294,34 @@ describe('cmdwin', function()
   -- oldtest: Test_cmdwin_interrupted()
   it('still uses a new buffer when interrupting more prompt on open', function()
     local screen = Screen.new(30, 16)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, reverse = true }, -- StatusLine
-      [2] = { reverse = true }, -- StatusLineNC
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-      [4] = { bold = true }, -- ModeMsg
-    })
     command('set more')
     command('autocmd WinNew * highlight')
     feed('q:')
-    screen:expect({ any = pesc('{3:-- More --}^') })
+    screen:expect({ any = pesc('{6:-- More --}^') })
     feed('q')
     screen:expect([[
                                     |
-      {0:~                             }|*5
+      {1:~                             }|*5
       {2:[No Name]                     }|
-      {0::}^                             |
-      {0:~                             }|*6
-      {1:[Command Line]                }|
+      {1::}^                             |
+      {1:~                             }|*6
+      {3:[Command Line]                }|
                                     |
     ]])
     feed([[aecho 'done']])
     screen:expect([[
                                     |
-      {0:~                             }|*5
+      {1:~                             }|*5
       {2:[No Name]                     }|
-      {0::}echo 'done'^                  |
-      {0:~                             }|*6
-      {1:[Command Line]                }|
-      {4:-- INSERT --}                  |
+      {1::}echo 'done'^                  |
+      {1:~                             }|*6
+      {3:[Command Line]                }|
+      {5:-- INSERT --}                  |
     ]])
     feed('<CR>')
     screen:expect([[
       ^                              |
-      {0:~                             }|*14
+      {1:~                             }|*14
       done                          |
     ]])
   end)
