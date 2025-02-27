@@ -1679,7 +1679,7 @@ int msg_outtrans_len(const char *msgstr, int len, int hl_id, bool hist)
 
   // When drawing over the command line no need to clear it later or remove
   // the mode message.
-  if (msg_row >= cmdline_row && msg_col == 0) {
+  if (msg_silent == 0 && len > 0 && msg_row >= cmdline_row && msg_col == 0) {
     clear_cmdline = false;
     mode_displayed = false;
   }

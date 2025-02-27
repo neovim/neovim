@@ -87,6 +87,33 @@ describe('messages', function()
     ]])
   end)
 
+  -- oldtest: Test_mode_cleared_after_silent_message()
+  it('mode is cleared properly after slient message', function()
+    screen = Screen.new(60, 10)
+    exec([[
+      edit XsilentMessageMode.txt
+      call setline(1, 'foobar')
+      autocmd TextChanged * silent update
+    ]])
+    finally(function()
+      os.remove('XsilentMessageMode.txt')
+    end)
+
+    feed('v')
+    screen:expect([[
+      ^foobar                                                      |
+      {1:~                                                           }|*8
+      {5:-- VISUAL --}                                                |
+    ]])
+
+    feed('d')
+    screen:expect([[
+      ^oobar                                                       |
+      {1:~                                                           }|*8
+                                                                  |
+    ]])
+  end)
+
   describe('more prompt', function()
     before_each(function()
       command('set more')
