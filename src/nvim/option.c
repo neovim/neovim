@@ -1813,12 +1813,12 @@ sctx_T *get_option_sctx(OptIndex opt_idx)
 void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
 {
   bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
-  nlua_set_sctx(&script_ctx);
 
   // Modeline already has the line number set.
   if (!(opt_flags & OPT_MODELINE)) {
     script_ctx.sc_lnum += SOURCING_LNUM;
   }
+  nlua_set_sctx(&script_ctx);
 
   // Remember where the option was set.  For local options need to do that
   // in the buffer or window structure.
