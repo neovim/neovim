@@ -1461,19 +1461,12 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name
   }
 }
 
-void nlua_source_str(const char *code, char *name)
+void nlua_exec_ga(garray_T *ga, char *name)
 {
-  const sctx_T save_current_sctx = current_sctx;
-  current_sctx.sc_sid = SID_STR;
-  current_sctx.sc_seq = 0;
-  current_sctx.sc_lnum = 0;
-  estack_push(ETYPE_SCRIPT, name, 0);
-
+  char *code = ga_concat_strings_sep(ga, "\n");
   size_t len = strlen(code);
   nlua_typval_exec(code, len, name, NULL, 0, false, NULL);
-
-  estack_pop();
-  current_sctx = save_current_sctx;
+  xfree(code);
 }
 
 /// Call a LuaCallable given some typvals
