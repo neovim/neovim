@@ -431,7 +431,7 @@ end
 function TSHighlighter._on_conceal_line(_, _, buf, row)
   local self = TSHighlighter.active[buf]
   if not self or not self._conceal_line or self._conceal_checked[row] then
-    return self and self._conceal_line
+    return
   end
 
   -- Do not affect potentially populated highlight state.
@@ -440,7 +440,6 @@ function TSHighlighter._on_conceal_line(_, _, buf, row)
   self:prepare_highlight_states(row, row)
   on_line_impl(self, buf, row, false, true)
   self._highlight_states = highlight_states
-  return true
 end
 
 ---@private
