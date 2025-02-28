@@ -5,7 +5,7 @@
 " Contributor:		Dorai Sitaram <ds26@gte.com>
 "			C.D. MacEachern <craig.daniel.maceachern@gmail.com>
 "			Phạm Bình An <phambinhanctb2004@gmail.com>
-" Last Change:		2025 Feb 25
+" Last Change:		2025 Feb 27
 
 if exists("b:did_ftplugin")
   finish
@@ -31,11 +31,11 @@ setlocal formatoptions-=t formatoptions+=croql
 
 let &l:define = '\<function\|\<local\%(\s\+function\)\='
 
-let &l:include = '\v<((do|load)file|require)[^''"]*[''"]\zs[^''"]+'
-setlocal includeexpr=LuaInclude(v:fname)
+let &l:include = '\<\%(\%(do\|load\)file\|require\)\s*('
+setlocal includeexpr=s:LuaInclude(v:fname)
 setlocal suffixesadd=.lua
 
-let b:undo_ftplugin = "setlocal cms< com< def< fo< inc< inex< sua<"
+let b:undo_ftplugin = "setl cms< com< def< fo< inc< inex< sua<"
 
 if exists("loaded_matchit") && !exists("b:match_words")
   let b:match_ignorecase = 0
@@ -66,10 +66,10 @@ if exists("s:loaded_lua") || &cp
 endif
 let s:loaded_lua = 1
 
-function LuaInclude(fname) abort
+function s:LuaInclude(fname) abort
   let lua_ver = str2float(printf("%d.%02d", g:lua_version, g:lua_subversion))
   let fname = tr(a:fname, '.', '/')
-  let paths = lua_ver >= 5.03 ?  [ fname.'.lua', fname.'/init.lua' ] : [ fname.'.lua' ]
+  let paths = lua_ver >= 5.03 ? [fname .. ".lua", fname .. "/init.lua"] : [fname .. ".lua"]
   for path in paths
     if filereadable(path)
       return path
