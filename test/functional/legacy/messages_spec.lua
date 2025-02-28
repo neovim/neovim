@@ -92,6 +92,7 @@ describe('messages', function()
   -- oldtest: Test_mode_cleared_after_silent_message()
   it('mode is cleared properly after slient message', function()
     screen = Screen.new(60, 10)
+    screen:attach()
     exec([[
       edit XsilentMessageMode.txt
       call setline(1, 'foobar')
