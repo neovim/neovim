@@ -788,7 +788,6 @@ void free_all_mem(void)
   free_all_marks();
   alist_clear(&global_alist);
   free_homedir();
-  free_envmap();
   free_users();
   free_search_patterns();
   free_old_sub();

@@ -196,6 +196,7 @@ static void set_init_default_shell(void)
     } else {
       set_string_default(kOptShell, (char *)shell, false);
     }
+    xfree((char *)shell);
   }
 }
 

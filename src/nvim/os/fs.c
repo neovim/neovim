@@ -404,6 +404,7 @@ static bool is_executable_in_path(const char *name, char **abspath)
 end:
   xfree(buf);
   xfree(path);
+  xfree((char *)path_env);
   return rv;
 }
 
