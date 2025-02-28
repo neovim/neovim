@@ -607,6 +607,34 @@ func Test_source_buffer_vim9()
   source
   call assert_equal('red', g:Color)
 
+  " test for ++clear argument to clear all the functions/variables
+  %d _
+  let lines =<< trim END
+     g:ScriptVarFound = exists("color")
+     g:MyFuncFound = exists('*Myfunc')
+     if g:MyFuncFound
+       finish
+     endif
+     var color = 'blue'
+     def Myfunc()
+     enddef
+  END
+  call setline(1, lines)
+  vim9cmd source
+  call assert_false(g:MyFuncFound)
+  call assert_false(g:ScriptVarFound)
+  vim9cmd source
+  call assert_true(g:MyFuncFound)
+  call assert_true(g:ScriptVarFound)
+  vim9cmd source ++clear
+  call assert_false(g:MyFuncFound)
+  call assert_false(g:ScriptVarFound)
+  vim9cmd source ++clear
+  call assert_false(g:MyFuncFound)
+  call assert_false(g:ScriptVarFound)
+  call assert_fails('vim9cmd source ++clearx', 'E475:')
+  call assert_fails('vim9cmd source ++abcde', 'E484:')
+
   %bw!
 endfunc
 

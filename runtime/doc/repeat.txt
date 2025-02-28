@@ -197,13 +197,15 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Triggers the |SourcePre| autocommand.
 
 :[range]so[urce]	Read Ex commands or Lua code from the [range] of lines
-			in the current buffer.  The buffer is treated as Lua
-			code if 'filetype' is "lua" or its filename ends with
-			".lua".  When sourcing commands or Lua code from the
-			current buffer, the same script-ID |<SID>| is used
-			even if the buffer is sourced multiple times. If a
-			buffer is sourced more than once, then the functions
-			in the buffer are redefined again.
+			in the current buffer.  When [range] is omitted read
+			all lines.  The buffer is treated as Lua code if its
+			'filetype' is "lua" or its filename ends with ".lua".
+
+			When sourcing commands or Lua code from the current
+			buffer, the same script-ID |<SID>| is used even if the
+			buffer is sourced multiple times. If a buffer is
+			sourced more than once, then the functions in the
+			buffer are defined again.
 
 							*:source!*
 :so[urce]! {file}
