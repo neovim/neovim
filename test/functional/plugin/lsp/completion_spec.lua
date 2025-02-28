@@ -9,6 +9,7 @@ local neq = t.neq
 local exec_lua = n.exec_lua
 local feed = n.feed
 local retry = t.retry
+local Screen = require('test.functional.ui.screen')
 
 local create_server_definition = t_lsp.create_server_definition
 
@@ -1084,6 +1085,9 @@ describe('vim.lsp.completion: protocol', function()
         },
       },
     }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,noselect'
+    end)
     local client_id = create_server('dummy', completion_list)
 
     exec_lua(function()
@@ -1129,6 +1133,9 @@ describe('vim.lsp.completion: protocol', function()
         },
       },
     }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,noselect'
+    end)
     local client_id = create_server('dummy', completion_list, {
       resolve_result = {
         label = 'hello',
@@ -1348,6 +1355,66 @@ describe('vim.lsp.completion: integration', function()
         }
       end)
     )
+  end)
+
+  it('completionItem/resolve', function()
+    local screen = Screen.new(50, 20)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Plum1, foreground = Screen.colors.Blue },
+    })
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          insertText = 'nvim__id_array',
+          insertTextFormat = 1,
+          kind = 3,
+          label = 'nvim__id_array(arr)',
+          sortText = '0002',
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,popup'
+    end)
+    create_server('dummy', completion_list, {
+      resolve_result = {
+        detail = 'function',
+        documentation = {
+          kind = 'markdown',
+          value = [[```lua\nfunction vim.api.nvim__id_array(arr: any[])\n  -> any[]\n```]],
+        },
+        insertText = 'nvim__id_array',
+        insertTextFormat = 1,
+        kind = 3,
+        label = 'nvim__id_array(arr)',
+        sortText = '0002',
+      },
+    })
+
+    feed('Sapi.<C-X><C-O>')
+    retry(nil, nil, function()
+      eq(
+        { true, true, [[```lua\nfunction vim.api.nvim__id_array(arr: any[])\n  -> any[]\n```]] },
+        exec_lua(function()
+          local data = vim.fn.complete_info({ 'selected' })
+          return {
+            vim.api.nvim_win_is_valid(data.preview_winid),
+            vim.api.nvim_buf_is_valid(data.preview_bufnr),
+            vim.api.nvim_buf_get_lines(data.preview_bufnr, 0, -1, false)[1],
+          }
+        end)
+      )
+    end)
+    screen:expect([[
+      api.nvim__id_array^                                |
+      {1:~  }{12: nvim__id_array Function }{100:lua\nfunction vim.}{4:   }{1: }|
+      {1:~                           }{100:api.nvim__id_array(ar}{1: }|
+      {1:~                           }{100:r: any[])\n  -> any[]}{1: }|
+      {1:~                           }{100:\n}{4:                   }{1: }|
+      {1:~                                                 }|*14
+      {5:-- INSERT --}                                      |
+    ]])
   end)
 end)
 
