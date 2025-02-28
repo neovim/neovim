@@ -242,7 +242,12 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   char *p2;
 
   if (xp->xp_numfiles == -1) {
-    set_expand_context(xp);
+    if (ccline->input_fn && ccline->xp_context == EXPAND_COMMANDS) {
+      // Expand commands typed in input() function
+      set_cmd_context(xp, ccline->cmdbuff, ccline->cmdlen, ccline->cmdpos, false);
+    } else {
+      set_expand_context(xp);
+    }
     if (xp->xp_context == EXPAND_LUA) {
       nlua_expand_pat(xp);
     }
