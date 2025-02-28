@@ -94,8 +94,8 @@ static int confirm_msg_used = false;            // displaying confirm_msg
 static char *confirm_msg = NULL;            // ":confirm" message
 static char *confirm_buttons;               // ":confirm" buttons sent to cmdline as prompt
 
-MessageHistoryEntry *first_msg_hist = NULL;
-MessageHistoryEntry *last_msg_hist = NULL;
+MessageHistoryEntry *msg_hist_last = NULL;
+static MessageHistoryEntry *msg_hist_first = NULL;
 static int msg_hist_len = 0;
 static int msg_hist_max = 500;  // The default max value is 500
 
@@ -322,7 +322,7 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
   if (history && kv_size(hl_msg)) {
-    add_msg_hist_multihl(NULL, 0, 0, true, hl_msg);
+    msg_hist_add_multihl(hl_msg, !history);
   }
   is_multihl = false;
   no_wait_return--;
@@ -360,13 +360,12 @@ bool msg_keep(const char *s, int hl_id, bool keep, bool multiline)
   }
   entered++;
 
-  // Add message to history (unless it's a truncated, repeated kept or multihl message).
-  if ((s != keep_msg
-       || (*s != '<'
-           && last_msg_hist != NULL
-           && last_msg_hist->msg != NULL
-           && strcmp(s, last_msg_hist->msg) != 0)) && !is_multihl) {
-    add_msg_hist(s, -1, hl_id, multiline);
+  // Add message to history unless it's a multihl, repeated kept or truncated message.
+  if (!is_multihl
+      && (s != keep_msg
+          || (*s != '<' && msg_hist_last != NULL
+              && strcmp(s, msg_hist_last->msg.items[0].text.data) != 0))) {
+    msg_hist_add(s, -1, hl_id);
   }
 
   if (!is_multihl) {
@@ -952,7 +951,7 @@ void msg_schedule_semsg_multiline(const char *const fmt, ...)
 char *msg_trunc(char *s, bool force, int hl_id)
 {
   // Add message to history before truncating.
-  add_msg_hist(s, -1, hl_id, false);
+  msg_hist_add(s, -1, hl_id);
 
   char *ts = msg_may_trunc(force, s);
 
@@ -1006,83 +1005,73 @@ void hl_msg_free(HlMessage hl_msg)
   kv_destroy(hl_msg);
 }
 
+/// Add the message at the end of the history
+///
 /// @param[in]  len  Length of s or -1.
-static void add_msg_hist(const char *s, int len, int hl_id, bool multiline)
+static void msg_hist_add(const char *s, int len, int hl_id)
 {
-  add_msg_hist_multihl(s, len, hl_id, multiline, (HlMessage)KV_INITIAL_VALUE);
-}
-
-static void add_msg_hist_multihl(const char *s, int len, int hl_id, bool multiline,
-                                 HlMessage multihl)
-{
-  if (msg_hist_off || msg_silent != 0 || (s != NULL && *s == NUL)) {
-    hl_msg_free(multihl);
+  String text = { .size = len < 0 ? strlen(s) : (size_t)len };
+  // Remove leading and trailing newlines.
+  while (text.size > 0 && *s == '\n') {
+    text.size--;
+    s++;
+  }
+  while (text.size > 0 && s[text.size - 1] == '\n') {
+    text.size--;
+  }
+  if (text.size == 0) {
     return;
   }
 
-  // allocate an entry and add the message at the end of the history
-  struct msg_hist *p = xmalloc(sizeof(struct msg_hist));
-  if (s) {
-    if (len < 0) {
-      len = (int)strlen(s);
-    }
-    assert(len > 0);
-    // remove leading and trailing newlines
-    while (*s == '\n') {
-      s++;
-      len--;
-    }
-    while (s[len - 1] == '\n') {
-      len--;
-    }
-    p->msg = xmemdupz(s, (size_t)len);
-  } else {
-    p->msg = NULL;
+  text.data = xmemdupz(s, text.size);
+  HlMessageChunk *chunk = xmalloc(sizeof(HlMessageChunk));
+  chunk->hl_id = hl_id;
+  chunk->text = text;
+  msg_hist_add_multihl((HlMessage){ 1, 1, chunk }, false);
+}
+
+static void msg_hist_add_multihl(HlMessage msg, bool temp)
+{
+  if (msg_hist_off || msg_silent != 0) {
+    hl_msg_free(msg);
+    return;
   }
-  p->next = NULL;
-  p->hl_id = hl_id;
-  p->multiline = multiline;
-  p->multihl = multihl;
-  p->kind = msg_ext_kind;
-  if (last_msg_hist != NULL) {
-    last_msg_hist->next = p;
+
+  // Allocate an entry and add the message at the end of the history.
+  MessageHistoryEntry *entry = xmalloc(sizeof(MessageHistoryEntry));
+  entry->msg = msg;
+  entry->kind = msg_ext_kind;
+  entry->next = NULL;
+
+  if (msg_hist_first == NULL) {
+    msg_hist_first = entry;
   }
-  last_msg_hist = p;
-  if (first_msg_hist == NULL) {
-    first_msg_hist = last_msg_hist;
+  if (msg_hist_last != NULL) {
+    msg_hist_last->next = entry;
   }
-  msg_hist_len++;
+
+  msg_hist_len += !temp;
+  msg_hist_last = entry;
   msg_ext_history = true;
-
-  check_msg_hist();
+  msg_hist_clear(msg_hist_max);
 }
 
-/// Delete the first (oldest) message from the history.
-///
-/// @return  FAIL if there are no messages.
-int delete_first_msg(void)
+static void msg_hist_free_msg(MessageHistoryEntry *entry)
 {
-  if (msg_hist_len <= 0) {
-    return FAIL;
+  if (entry->next == NULL) {
+    msg_hist_last = NULL;
   }
-  struct msg_hist *p = first_msg_hist;
-  first_msg_hist = p->next;
-  if (first_msg_hist == NULL) {  // history is becoming empty
-    assert(msg_hist_len == 1);
-    last_msg_hist = NULL;
-  }
-  xfree(p->msg);
-  hl_msg_free(p->multihl);
-  xfree(p);
-  msg_hist_len--;
-  return OK;
+  msg_hist_first = entry->next;
+  hl_msg_free(entry->msg);
+  xfree(entry);
 }
 
-static void check_msg_hist(void)
+/// Delete oldest messages from the history until there are "keep" messages.
+void msg_hist_clear(int keep)
 {
-  // Don't let the message history get too big
-  while (msg_hist_len > 0 && msg_hist_len > msg_hist_max) {
-    (void)delete_first_msg();
+  while (msg_hist_len > keep || (keep == 0 && msg_hist_first != NULL)) {
+    msg_hist_len--;
+    msg_hist_free_msg(msg_hist_first);
   }
 }
 
@@ -1143,7 +1132,7 @@ int messagesopt_changed(void)
   msg_wait = messages_wait_new;
 
   msg_hist_max = messages_history_new;
-  check_msg_hist();
+  msg_hist_clear(msg_hist_max);
 
   return OK;
 }
@@ -1153,11 +1142,7 @@ void ex_messages(exarg_T *eap)
   FUNC_ATTR_NONNULL_ALL
 {
   if (strcmp(eap->arg, "clear") == 0) {
-    int keep = eap->addr_count == 0 ? 0 : eap->line2;
-
-    while (msg_hist_len > keep) {
-      delete_first_msg();
-    }
+    msg_hist_clear(eap->addr_count ? eap->line2 : 0);
     return;
   }
 
@@ -1166,66 +1151,36 @@ void ex_messages(exarg_T *eap)
     return;
   }
 
-  struct msg_hist *p = first_msg_hist;
-
-  if (eap->addr_count != 0) {
-    int c = 0;
-    // Count total messages
-    for (; p != NULL && !got_int; p = p->next) {
-      c++;
-    }
-
-    c -= eap->line2;
-
-    // Skip without number of messages specified
-    for (p = first_msg_hist; p != NULL && !got_int && c > 0; p = p->next, c--) {}
-  }
-
-  // Display what was not skipped.
-  if (ui_has(kUIMessages)) {
-    if (msg_silent) {
-      return;
-    }
-    Array entries = ARRAY_DICT_INIT;
-    for (; p != NULL; p = p->next) {
-      if (kv_size(p->multihl) || (p->msg && p->msg[0])) {
-        Array entry = ARRAY_DICT_INIT;
-        ADD(entry, CSTR_TO_OBJ(p->kind));
-        Array content = ARRAY_DICT_INIT;
-        if (kv_size(p->multihl)) {
-          for (uint32_t i = 0; i < kv_size(p->multihl); i++) {
-            HlMessageChunk chunk = kv_A(p->multihl, i);
-            Array content_entry = ARRAY_DICT_INIT;
-            ADD(content_entry, INTEGER_OBJ(chunk.hl_id ? syn_id2attr(chunk.hl_id) : 0));
-            ADD(content_entry, STRING_OBJ(copy_string(chunk.text, NULL)));
-            ADD(content_entry, INTEGER_OBJ(chunk.hl_id));
-            ADD(content, ARRAY_OBJ(content_entry));
-          }
-        } else if (p->msg && p->msg[0]) {
-          Array content_entry = ARRAY_DICT_INIT;
-          ADD(content_entry, INTEGER_OBJ(p->hl_id ? syn_id2attr(p->hl_id) : 0));
-          ADD(content_entry, CSTR_TO_OBJ(p->msg));
-          ADD(content_entry, INTEGER_OBJ(p->hl_id));
-          ADD(content, ARRAY_OBJ(content_entry));
-        }
-        ADD(entry, ARRAY_OBJ(content));
-        ADD(entries, ARRAY_OBJ(entry));
+  Array entries = ARRAY_DICT_INIT;
+  MessageHistoryEntry *p = msg_hist_first;
+  int skip = eap->addr_count ? (msg_hist_len - eap->line2) : 0;
+  while (p != NULL) {
+    if (skip-- > 0) {
+      // Skipping over messages.
+    } else if (ui_has(kUIMessages)) {
+      Array entry = ARRAY_DICT_INIT;
+      ADD(entry, CSTR_TO_OBJ(p->kind));
+      Array content = ARRAY_DICT_INIT;
+      for (uint32_t i = 0; i < kv_size(p->msg); i++) {
+        HlMessageChunk chunk = kv_A(p->msg, i);
+        Array content_entry = ARRAY_DICT_INIT;
+        ADD(content_entry, INTEGER_OBJ(chunk.hl_id ? syn_id2attr(chunk.hl_id) : 0));
+        ADD(content_entry, STRING_OBJ(copy_string(chunk.text, NULL)));
+        ADD(content_entry, INTEGER_OBJ(chunk.hl_id));
+        ADD(content, ARRAY_OBJ(content_entry));
       }
+      ADD(entry, ARRAY_OBJ(content));
+      ADD(entries, ARRAY_OBJ(entry));
+    } else {
+      msg_multihl(p->msg, p->kind, false, false);
     }
+    p = p->next;
+  }
+  if (kv_size(entries) > 0) {
     ui_call_msg_history_show(entries);
     api_free_array(entries);
     msg_ext_history_visible = true;
     wait_return(false);
-  } else {
-    msg_hist_off = true;
-    for (; p != NULL && !got_int; p = p->next) {
-      if (kv_size(p->multihl)) {
-        msg_multihl(p->multihl, p->kind, false, false);
-      } else if (p->msg != NULL) {
-        msg_keep(p->msg, p->hl_id, false, p->multiline);
-      }
-    }
-    msg_hist_off = false;
   }
 }
 
@@ -1674,7 +1629,7 @@ int msg_outtrans_len(const char *msgstr, int len, int hl_id, bool hist)
   got_int = false;
 
   if (hist) {
-    add_msg_hist(str, len, hl_id, false);
+    msg_hist_add(str, len, hl_id);
   }
 
   // When drawing over the command line no need to clear it later or remove
@@ -2164,7 +2119,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   }
 
   if (hist) {
-    add_msg_hist(str, (int)len, hl_id, false);
+    msg_hist_add(str, (int)len, hl_id);
   }
 
   // When writing something to the screen after it has scrolled, requires a
@@ -2252,6 +2207,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     const char *p = lastline ? lastline + 1 : str;
     int col = (int)(maxlen < 0 ? mb_string2cells(p) : mb_string2cells_len(p, (size_t)(maxlen)));
     msg_col = (lastline ? 0 : msg_col) + col;
+
     return;
   }
 
