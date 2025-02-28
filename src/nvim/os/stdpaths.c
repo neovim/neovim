@@ -71,8 +71,9 @@ static const char *const xdg_defaults[] = {
 const char *get_appname(bool namelike)
 {
   const char *env_val = os_getenv("NVIM_APPNAME");
+
   if (env_val == NULL || *env_val == NUL) {
-    env_val = "nvim";
+    env_val = xstrdup("nvim");
   }
 
   if (namelike) {
@@ -85,10 +86,20 @@ const char *get_appname(bool namelike)
   return env_val;
 }
 
+/// Write "name-like" value (no path separators) in `NameBuff`.
+void appname_init_namebuf(void)
+{
+  const char *appname = get_appname(true);
+  if (appname != NULL) {
+    xfree((char *)appname);
+  }
+}
+
 /// Ensure that APPNAME is valid. Must be a name or relative path.
 bool appname_is_valid(void)
 {
   const char *appname = get_appname(false);
+  bool valid = true;
   if (path_is_absolute(appname)
       // TODO(justinmk): on Windows, path_is_absolute says "/" is NOT absolute. Should it?
       || strequal(appname, "/")
@@ -101,9 +112,14 @@ bool appname_is_valid(void)
 #endif
       || strstr(appname, "/..") != NULL
       || strstr(appname, "../") != NULL) {
-    return false;
+    valid = false;
   }
-  return true;
+
+  if (appname != NULL) {
+    xfree((char *)appname);
+  }
+
+  return valid;
 }
 
 /// Remove duplicate directories in the given XDG directory.
@@ -158,10 +174,18 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   const char *const fallback = xdg_defaults[idx];
 
   const char *env_val = os_getenv(env);
+  bool memfree = false;
+
+  if (env_val != NULL) {
+    memfree = true;
+  }
 
 #ifdef MSWIN
   if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
     env_val = os_getenv(xdg_defaults_env_vars[idx]);
+    if (env_val != NULL) {
+      memfree = true;
+    }
   }
 #else
   if (env_val == NULL && os_env_exists(env)) {
@@ -188,6 +212,9 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     ret = xdg_remove_duplicate(ret, ENV_SEPSTR);
   }
 
+  if (memfree) {
+    xfree((char *)env_val);
+  }
   return ret;
 }
 
@@ -220,6 +247,11 @@ char *get_xdg_home(const XDGVarType idx)
     slash_adjust(dir);
 #endif
   }
+
+  if (appname != NULL) {
+    xfree((char *)appname);
+  }
+
   return dir;
 }
 
