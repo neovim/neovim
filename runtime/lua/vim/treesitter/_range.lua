@@ -2,6 +2,47 @@ local api = vim.api
 
 local M = {}
 
+---@class Point
+---@field start integer
+---@field end_ integer
+local Point = {}
+Point.__index = Point
+
+---@param start integer
+---@param end_ integer
+function Point.new(start, end_)
+  return setmetatable({ start = start, end_ = end_ }, Point)
+end
+
+---@param point Point
+function Point:__lt(point)
+  return M.cmp_pos.lt(self.start, self.end_, point.start, point.end_)
+end
+
+---@param point Point
+function Point:__le(point)
+  return M.cmp_pos.le(self.start, self.end_, point.start, point.end_)
+end
+
+---@param point Point
+function Point:__eq(point)
+  return M.cmp_pos.eq(self.start, self.end_, point.start, point.end_)
+end
+
+---@param range Range
+---@return Point
+function M.start_point(range)
+  local start, end_ = M.unpack4(range)
+  return Point.new(start, end_)
+end
+
+---@param range Range
+---@return Point
+function M.end_point(range)
+  local _, _, start, end_ = M.unpack4(range)
+  return Point.new(start, end_)
+end
+
 ---@class Range2
 ---@inlinedoc
 ---@field [1] integer start row
