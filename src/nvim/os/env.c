@@ -52,10 +52,6 @@
 # include "os/env.c.generated.h"
 #endif
 
-// Because `uv_os_getenv` requires allocating, we must manage a map to maintain
-// the behavior of `os_getenv`.
-static PMap(cstr_t) envmap = MAP_INIT;
-
 /// Like getenv(), but returns NULL if the variable is empty.
 /// @see os_env_exists
 const char *os_getenv(const char *name)
@@ -66,17 +62,6 @@ const char *os_getenv(const char *name)
     return NULL;
   }
   int r = 0;
-  if (map_has(cstr_t, &envmap, name)
-      && !!(e = (char *)pmap_get(cstr_t)(&envmap, name))) {
-    if (e[0] != NUL) {
-      // Found non-empty cached env var.
-      // NOTE: This risks incoherence if an in-process library changes the
-      //       environment without going through our os_setenv() wrapper.  If
-      //       that turns out to be a problem, we can just remove this codepath.
-      goto end;
-    }
-    pmap_del2(&envmap, name);
-  }
 #define INIT_SIZE 64
   size_t size = INIT_SIZE;
   char buf[INIT_SIZE];
@@ -96,7 +81,6 @@ const char *os_getenv(const char *name)
     // except when it does not include the NUL-terminator.
     e = xmemdupz(buf, size);
   }
-  pmap_put(cstr_t)(&envmap, xstrdup(name), e);
 end:
   if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
     ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
@@ -162,7 +146,6 @@ int os_setenv(const char *name, const char *value, int overwrite)
   assert(r != UV_EINVAL);
   // Destroy the old map item. Do this AFTER uv_os_setenv(), because `value`
   // could be a previous os_getenv() result.
-  pmap_del2(&envmap, name);
   if (r != 0) {
     ELOG("uv_os_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
@@ -176,7 +159,6 @@ int os_unsetenv(const char *name)
   if (name[0] == NUL) {
     return -1;
   }
-  pmap_del2(&envmap, name);
   int r = uv_os_unsetenv(name);
   if (r != 0) {
     ELOG("uv_os_unsetenv(%s) failed: %d %s", name, r, uv_err_name(r));
@@ -521,17 +503,6 @@ static char *os_uv_homedir(void)
 void free_homedir(void)
 {
   xfree(homedir);
-}
-
-void free_envmap(void)
-{
-  cstr_t name;
-  ptr_t e;
-  map_foreach(&envmap, name, e, {
-    xfree((char *)name);
-    xfree(e);
-  });
-  map_destroy(cstr_t, &envmap);
 }
 
 #endif
