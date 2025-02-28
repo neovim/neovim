@@ -2,7 +2,7 @@
 " Language:     Lua 4.0, Lua 5.0, Lua 5.1, Lua 5.2 and Lua 5.3
 " Maintainer:   Marcus Aurelius Farias <masserahguard-lua 'at' yahoo com>
 " First Author: Carlos Augusto Teixeira Mendes <cmendes 'at' inf puc-rio br>
-" Last Change:  2022 Sep 07
+" Last Change:  2025 Feb 25
 " Options:      lua_version = 4 or 5
 "               lua_subversion = 0 (for 4.0 or 5.0)
 "                               or 1, 2, 3 (for 5.1, 5.2 or 5.3)
@@ -16,6 +16,7 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+" keep in sync with ftplugin/lua.vim
 if !exists("lua_version")
   " Default is lua 5.3
   let lua_version = 5
