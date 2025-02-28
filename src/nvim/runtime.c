@@ -1746,8 +1746,7 @@ char *runtimepath_default(bool clean_arg)
   size_t config_len = 0;
   size_t vimruntime_len = 0;
   size_t libdir_len = 0;
-  const char *appname = get_appname(false);
-  size_t appname_len = strlen(appname);
+  size_t appname_len = strlen(get_appname(false));
   if (data_home != NULL) {
     data_len = strlen(data_home);
     size_t nvim_data_size = appname_len;

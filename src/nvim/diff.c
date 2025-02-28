@@ -1143,7 +1143,7 @@ static int diff_file(diffio_T *dio)
   char *const cmd = xmalloc(len);
 
   // We don't want $DIFF_OPTIONS to get in the way.
-  if (os_getenv("DIFF_OPTIONS")) {
+  if (os_env_exists("DIFF_OPTIONS", true)) {
     os_unsetenv("DIFF_OPTIONS");
   }
 

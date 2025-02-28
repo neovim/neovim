@@ -190,7 +190,7 @@ static void set_init_default_shell(void)
 {
   // Find default value for 'shell' option.
   // Don't use it if it is empty.
-  const char *shell = os_getenv("SHELL");
+  char *shell = os_getenv("SHELL");
   if (shell != NULL) {
     if (vim_strchr(shell, ' ') != NULL) {
       const size_t len = strlen(shell) + 3;  // two quotes and a trailing NUL
@@ -198,8 +198,9 @@ static void set_init_default_shell(void)
       snprintf(cmd, len, "\"%s\"", shell);
       set_string_default(kOptShell, cmd, true);
     } else {
-      set_string_default(kOptShell, (char *)shell, false);
+      set_string_default(kOptShell, shell, false);
     }
+    xfree(shell);
   }
 }
 
@@ -413,7 +414,7 @@ void set_init_1(bool clean_arg)
   // abilities (bidi namely).
   // NOTE: mlterm's author is being asked to 'set' a variable
   //       instead of an environment variable due to inheritance.
-  if (os_env_exists("MLTERM")) {
+  if (os_env_exists("MLTERM", false)) {
     set_option_value_give_err(kOptTermbidi, BOOLEAN_OPTVAL(true), 0);
   }
 

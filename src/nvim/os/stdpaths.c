@@ -70,19 +70,19 @@ static const char *const xdg_defaults[] = {
 /// @return $NVIM_APPNAME value
 const char *get_appname(bool namelike)
 {
-  const char *env_val = os_getenv("NVIM_APPNAME");
-  if (env_val == NULL || *env_val == NUL) {
-    env_val = "nvim";
+  const char *env_val = os_getenv_noalloc("NVIM_APPNAME");
+
+  if (!env_val) {
+    xstrlcpy(NameBuff, "nvim", sizeof(NameBuff));
   }
 
   if (namelike) {
     // Appname may be a relative path, replace slashes to make it name-like.
-    xstrlcpy(NameBuff, env_val, sizeof(NameBuff));
     memchrsub(NameBuff, '/', '-', sizeof(NameBuff));
     memchrsub(NameBuff, '\\', '-', sizeof(NameBuff));
   }
 
-  return env_val;
+  return NameBuff;
 }
 
 /// Ensure that APPNAME is valid. Must be a name or relative path.
@@ -157,21 +157,21 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   const char *const env = xdg_env_vars[idx];
   const char *const fallback = xdg_defaults[idx];
 
-  const char *env_val = os_getenv(env);
+  char *env_val = os_getenv(env);
 
 #ifdef MSWIN
   if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
     env_val = os_getenv(xdg_defaults_env_vars[idx]);
   }
 #else
-  if (env_val == NULL && os_env_exists(env)) {
-    env_val = "";
+  if (env_val == NULL && os_env_exists(env, false)) {
+    env_val = xstrdup("");
   }
 #endif
 
   char *ret = NULL;
   if (env_val != NULL) {
-    ret = xstrdup(env_val);
+    ret = env_val;
   } else if (fallback) {
     ret = expand_env_save((char *)fallback);
   } else if (idx == kXDGRuntimeDir) {

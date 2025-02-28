@@ -89,7 +89,7 @@ int os_get_usernames(garray_T *users)
 #endif
 #ifdef HAVE_PWD_FUNCS
   {
-    const char *user_env = os_getenv("USER");
+    char *user_env = os_getenv_noalloc("USER");
 
     // The $USER environment variable may be a valid remote user name (NIS,
     // LDAP) not already listed by getpwent(), as getpwent() only lists

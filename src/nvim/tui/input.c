@@ -139,7 +139,8 @@ void tinput_init(TermInput *input, Loop *loop)
 
   input->in_fd = STDIN_FILENO;
 
-  const char *term = os_getenv("TERM");
+  const char *term = os_getenv_noalloc("TERM");
+
   if (!term) {
     term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
