@@ -7796,6 +7796,7 @@ static void ex_checkhealth(exarg_T *eap)
     } else {
       emsg(_("E5009: Invalid 'runtimepath'"));
     }
+    xfree((char *)vimruntime_env);
   }
   semsg_multiline(err.msg);
   api_clear_error(&err);

@@ -3943,6 +3943,9 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
         if (env_var) {
           tv_dict_add_str(env, required_env_vars[i], len, env_var);
         }
+        if (env_var != NULL) {
+          xfree((char *)env_var);
+        }
       }
     }
   }
@@ -7650,6 +7653,9 @@ static void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
     }
   } while (iter != NULL);
   xfree(dirs);
+  if (appname != NULL) {
+    xfree((char *)appname);
+  }
 }
 
 /// "stdpath(type)" function
