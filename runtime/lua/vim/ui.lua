@@ -108,6 +108,8 @@ end
 --- Opens `path` with the system default handler (macOS `open`, Windows `explorer.exe`, Linux
 --- `xdg-open`, …), or returns (but does not show) an error message on failure.
 ---
+--- Can also be invoked with `:Open`. [:Open]()
+---
 --- Expands "~/" and environment variables in filesystem paths.
 ---
 --- Examples:
