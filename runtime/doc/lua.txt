@@ -2638,6 +2638,8 @@ vim.ui.open({path}, {opt})                                     *vim.ui.open()*
     `explorer.exe`, Linux `xdg-open`, …), or returns (but does not show) an
     error message on failure.
 
+    Can also be invoked with `:Open`.                                  *:Open*
+
     Expands "~/" and environment variables in filesystem paths.
 
     Examples: >lua
