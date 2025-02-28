@@ -800,6 +800,11 @@ static void terminal_check_cursor(void)
   curwin->w_wcol = term->cursor.col + win_col_off(curwin);
   curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
                               row_to_linenr(term, term->cursor.row));
+  const linenr_T topline = MAX(curbuf->b_ml.ml_line_count - curwin->w_height_inner + 1, 1);
+  // Don't update topline if unchanged to avoid unnecessary redraws.
+  if (topline != curwin->w_topline) {
+    set_topline(curwin, topline);
+  }
   // Nudge cursor when returning to normal-mode.
   int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
   coladvance(curwin, MAX(0, term->cursor.col + off));
@@ -2260,11 +2265,16 @@ static void adjust_topline(Terminal *term, buf_T *buf, int added)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
+      if (wp == curwin && is_focused(term)) {
+        // Move window cursor to terminal cursor's position and "follow" output.
+        terminal_check_cursor();
+        continue;
+      }
+
       linenr_T ml_end = buf->b_ml.ml_line_count;
       bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
-      bool focused = wp == curwin && is_focused(term);
 
-      if (following || focused) {
+      if (following) {
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;
         set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_height_inner + 1, 1));
@@ -2272,11 +2282,7 @@ static void adjust_topline(Terminal *term, buf_T *buf, int added)
         // Ensure valid cursor for each window displaying this terminal.
         wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
       }
-      if (focused) {
-        terminal_check_cursor();
-      } else {
-        mb_check_adjust_col(wp);
-      }
+      mb_check_adjust_col(wp);
     }
   }
 }

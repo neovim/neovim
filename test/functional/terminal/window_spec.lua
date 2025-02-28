@@ -3,8 +3,10 @@ local n = require('test.functional.testnvim')()
 
 local tt = require('test.functional.testterm')
 local feed_data = tt.feed_data
+local feed_csi = tt.feed_csi
 local feed, clear = n.feed, n.clear
 local poke_eventloop = n.poke_eventloop
+local exec_lua = n.exec_lua
 local command = n.command
 local retry = t.retry
 local eq = t.eq
@@ -331,6 +333,86 @@ describe(':terminal window', function()
     ]])
     command('echo ""')
     screen:expect_unchanged()
+  end)
+
+  it('has correct topline if scrolled by events', function()
+    skip(is_os('win'), '#31587')
+    local lines = {}
+    for i = 1, 10 do
+      table.insert(lines, 'cool line ' .. i)
+    end
+    feed_data(lines)
+    feed_csi('1;1H') -- Cursor to 1,1 (after any scrollback)
+
+    -- :sleep (with leeway) until the refresh_terminal uv timer event triggers before we move the
+    -- cursor. Check that the next terminal_check tails topline correctly.
+    command('set ruler | sleep 20m | call nvim_win_set_cursor(0, [1, 0])')
+    screen:expect([[
+      ^cool line 5                                       |
+      cool line 6                                       |
+      cool line 7                                       |
+      cool line 8                                       |
+      cool line 9                                       |
+      cool line 10                                      |
+      {3:-- TERMINAL --}                  6,1           Bot |
+    ]])
+    command('call nvim_win_set_cursor(0, [1, 0])')
+    screen:expect_unchanged()
+
+    feed_csi('2;5H') -- Cursor to 2,5 (after any scrollback)
+    screen:expect([[
+      cool line 5                                       |
+      cool^ line 6                                       |
+      cool line 7                                       |
+      cool line 8                                       |
+      cool line 9                                       |
+      cool line 10                                      |
+      {3:-- TERMINAL --}                  7,5           Bot |
+    ]])
+    -- Check topline correct after leaving terminal mode.
+    -- The new cursor position is one column left of the terminal's actual cursor position.
+    command('stopinsert | call nvim_win_set_cursor(0, [1, 0])')
+    screen:expect([[
+      cool line 5                                       |
+      coo^l line 6                                       |
+      cool line 7                                       |
+      cool line 8                                       |
+      cool line 9                                       |
+      cool line 10                                      |
+                                      7,4           Bot |
+    ]])
+  end)
+
+  it('not unnecessarily redrawn by events', function()
+    eq('t', eval('mode()'))
+    exec_lua(function()
+      _G.redraws = {}
+      local ns = vim.api.nvim_create_namespace('test')
+      vim.api.nvim_set_decoration_provider(ns, {
+        on_start = function()
+          table.insert(_G.redraws, 'start')
+        end,
+        on_win = function(_, win)
+          table.insert(_G.redraws, 'win ' .. win)
+        end,
+        on_end = function()
+          table.insert(_G.redraws, 'end')
+        end,
+      })
+      -- Setting a decoration provider typically causes an initial redraw.
+      vim.cmd.redraw()
+      _G.redraws = {}
+    end)
+
+    -- The event we sent above to set up the test shouldn't have caused a redraw.
+    -- For good measure, also poke the event loop.
+    poke_eventloop()
+    eq({}, exec_lua('return _G.redraws'))
+
+    -- Redraws if we do something useful, of course.
+    feed_data('foo')
+    screen:expect { any = 'foo' }
+    eq({ 'start', 'win 1000', 'end' }, exec_lua('return _G.redraws'))
   end)
 end)
 
