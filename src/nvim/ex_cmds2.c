@@ -734,7 +734,7 @@ void ex_compiler(exarg_T *eap)
 
   if (eap->forceit) {
     // ":compiler! {name}" sets global options
-    do_cmdline_cmd("command -nargs=* CompilerSet set <args>");
+    do_cmdline_cmd("command -nargs=* -keepscript CompilerSet set <args>");
   } else {
     // ":compiler! {name}" sets local options.
     // To remain backwards compatible "current_compiler" is always
