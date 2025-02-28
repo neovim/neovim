@@ -207,7 +207,8 @@ describe(':lua', function()
 
     -- ":{range}lua" fails on invalid Lua code.
     eq(
-      [[:{range}lua: Vim(lua):E5107: Error loading lua [string ":{range}lua"]:0: '=' expected near '<eof>']],
+      [[:{range}lua buffer=1: Vim(lua):E5107: Error loading lua ]]
+        .. [[[string ":{range}lua buffer=1"]:0: '=' expected near '<eof>']],
       pcall_err(command, '1lua')
     )
 

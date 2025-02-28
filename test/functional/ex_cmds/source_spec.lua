@@ -101,16 +101,14 @@ describe(':source', function()
         \ k: "v"
        "\ (o_o)
         \ }
-      let c = expand("<SID>")->empty()
+      let c = expand("<SID>")
       let s:s = 0zbeef.cafe
       let d = s:s]])
 
     command('source')
     eq('2', exec_capture('echo a'))
     eq("{'k': 'v'}", exec_capture('echo b'))
-
-    -- Script items are created only on script var access
-    eq('1', exec_capture('echo c'))
+    eq('<SNR>1_', exec_capture('echo c'))
     eq('0zBEEFCAFE', exec_capture('echo d'))
 
     exec('set cpoptions+=C')
@@ -136,6 +134,10 @@ describe(':source', function()
     feed_command(':source')
     eq('3', exec_capture('echo a'))
 
+    -- Source last line only
+    feed_command(':$source')
+    eq('Vim(echo):E117: Unknown function: s:C', exc_exec('echo D()'))
+
     -- Source from 2nd line to end of file
     feed('ggjVG')
     feed_command(':source')
@@ -143,9 +145,9 @@ describe(':source', function()
     eq("{'K': 'V'}", exec_capture('echo b'))
     eq('<SNR>1_C()', exec_capture('echo D()'))
 
-    -- Source last line only
+    -- Source last line after the lines that define s:C() have been sourced
     feed_command(':$source')
-    eq('Vim(echo):E117: Unknown function: s:C', exc_exec('echo D()'))
+    eq('<SNR>1_C()', exec_capture('echo D()'))
 
     exec('set cpoptions+=C')
     eq("Vim(let):E723: Missing end of Dictionary '}': ", exc_exec("'<,'>source"))
@@ -248,9 +250,9 @@ describe(':source', function()
 
         eq(12, eval('g:c'))
         eq('  \\ 1\n "\\ 2', exec_lua('return _G.a'))
-        eq(':source (no file)', api.nvim_get_var('sfile_value'))
-        eq(':source (no file)', api.nvim_get_var('stack_value'))
-        eq(':source (no file)', api.nvim_get_var('script_value'))
+        eq(':source buffer=1', api.nvim_get_var('sfile_value'))
+        eq(':source buffer=1', api.nvim_get_var('stack_value'))
+        eq(':source buffer=1', api.nvim_get_var('script_value'))
       end)
     end
 

@@ -2533,7 +2533,7 @@ M.cmds = {
   },
   {
     command = 'source',
-    flags = bit.bor(RANGE, DFLALL, WHOLEFOLD, BANG, FILE1, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
+    flags = bit.bor(RANGE, DFLALL, BANG, FILE1, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_LINES',
     func = 'ex_source',
   },
