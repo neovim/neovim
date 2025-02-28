@@ -1044,10 +1044,10 @@ vim.o.cfu = vim.o.completefunc
 vim.bo.completefunc = vim.o.completefunc
 vim.bo.cfu = vim.bo.completefunc
 
---- A comma-separated list of `complete-items` that controls the alignment
---- and display order of items in the popup menu during Insert mode
---- completion. The supported values are abbr, kind, and menu. These
---- options allow to customize how the completion items are shown in the
+--- A comma-separated list of strings that controls the alignment and
+--- display order of items in the popup menu during Insert mode
+--- completion.  The supported values are "abbr", "kind", and "menu".
+--- These values allow customizing how `complete-items` are shown in the
 --- popup menu.  Note: must always contain those three values in any
 --- order.
 ---
