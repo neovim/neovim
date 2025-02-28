@@ -92,6 +92,12 @@ func Test_source_error()
   call assert_fails('scriptencoding utf-8', 'E167:')
   call assert_fails('finish', 'E168:')
   " call assert_fails('scriptversion 2', 'E984:')
+  call assert_fails('source!', 'E471:')
+  new
+  call setline(1, ['', '', '', ''])
+  call assert_fails('1,3source Xscript.vim', 'E481:')
+  call assert_fails('1,3source! Xscript.vim', 'E481:')
+  bw!
 endfunc
 
 " Test for sourcing a script recursively

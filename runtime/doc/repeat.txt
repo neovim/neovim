@@ -192,14 +192,19 @@ Using Vim scripts					*using-scripts*
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 					*:so* *:source* *load-vim-script*
-:[range]so[urce] [file]	Runs |Ex-commands| or Lua code (".lua" files) from
-			[file].
-			If no [file], the current buffer is used and treated
-			as Lua code if 'filetype' is "lua" or its filename
-			ends with ".lua".
+:so[urce] {file}	Runs |Ex-commands| or Lua code (".lua" files) from
+			{file}.
 			Triggers the |SourcePre| autocommand.
+
+:[range]so[urce]	Read Ex commands or Lua code from the [range] of lines
+			in the current buffer.  The buffer is treated as Lua
+			code if 'filetype' is "lua" or its filename ends with
+			".lua".  When sourcing commands or Lua code from the
+			current buffer, the same script-ID |<SID>| is used
+			even if the buffer is sourced multiple times.
+
 							*:source!*
-:[range]so[urce]! {file}
+:so[urce]! {file}
 			Runs |Normal-mode| commands from {file}. When used
 			after |:global|, |:argdo|, |:windo|, |:bufdo|, in
 			a loop or when another command follows the display

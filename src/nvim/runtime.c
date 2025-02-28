@@ -106,6 +106,7 @@ garray_T script_items = { 0, 0, sizeof(scriptitem_T *), 20, NULL };
 /// The names of packages that once were loaded are remembered.
 static garray_T ga_loaded = { 0, 0, sizeof(char *), 4, NULL };
 
+/// last used sequence number for sourcing scripts (current_sctx.sc_seq)
 static int last_current_SID_seq = 0;
 
 /// Initialize the execution stack.
@@ -1825,8 +1826,20 @@ freeall:
 
 static void cmd_source(char *fname, exarg_T *eap)
 {
+  if (*fname != NUL && eap != NULL && eap->addr_count > 0) {
+    // if a filename is specified to :source, then a range is not allowed
+    emsg(_(e_norange));
+    return;
+  }
+
   if (eap != NULL && *fname == NUL) {
-    cmd_source_buffer(eap, false);
+    if (eap->forceit) {
+      // a file name is needed to source normal mode commands
+      emsg(_(e_argreq));
+    } else {
+      // source ex commands from the current buffer
+      cmd_source_buffer(eap, false);
+    }
   } else if (eap != NULL && eap->forceit) {
     // ":source!": read Normal mode commands
     // Need to execute the commands directly.  This is required at least
@@ -2784,11 +2797,18 @@ retry:
   return NULL;
 }
 
+/// Returns true if sourcing a script either from a file or a buffer.
+/// Otherwise returns false.
+int sourcing_a_script(exarg_T *eap)
+{
+  return getline_equal(eap->ea_getline, eap->cookie, getsourceline);
+}
+
 /// ":scriptencoding": Set encoding conversion for a sourced script.
 /// Without the multi-byte feature it's simply ignored.
 void ex_scriptencoding(exarg_T *eap)
 {
-  if (!getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
+  if (!sourcing_a_script(eap)) {
     emsg(_("E167: :scriptencoding used outside of a sourced file"));
     return;
   }
@@ -2807,7 +2827,7 @@ void ex_scriptencoding(exarg_T *eap)
 /// ":finish": Mark a sourced file as finished.
 void ex_finish(exarg_T *eap)
 {
-  if (getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
+  if (sourcing_a_script(eap)) {
     do_finish(eap, false);
   } else {
     emsg(_("E168: :finish used outside of a sourced file"));
