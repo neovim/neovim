@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 
 local tt = require('test.functional.testterm')
 local feed_data = tt.feed_data
+local feed_csi = tt.feed_csi
 local feed, clear = n.feed, n.clear
 local poke_eventloop = n.poke_eventloop
 local command = n.command
@@ -331,6 +332,54 @@ describe(':terminal window', function()
     ]])
     command('echo ""')
     screen:expect_unchanged()
+  end)
+
+  it('has correct topline if scrolled by events', function()
+    skip(is_os('win'), '#31587')
+    local lines = {}
+    for i = 1, 10 do
+      lines[#lines + 1] = 'cool line ' .. i
+    end
+    feed_data(lines)
+    feed_csi('1;1H') -- Cursor to 1,1 (after any scrollback)
+
+    -- :sleep (with leeway) until the refresh_terminal uv timer event triggers before we move the
+    -- cursor. Check that the next terminal_check tails topline correctly.
+    command('set ruler | sleep 20m | call nvim_win_set_cursor(0, [1, 0])')
+    screen:expect([[
+      ^cool line 5                                       |
+      cool line 6                                       |
+      cool line 7                                       |
+      cool line 8                                       |
+      cool line 9                                       |
+      cool line 10                                      |
+      {3:-- TERMINAL --}                  6,1           Bot |
+    ]])
+    command('call nvim_win_set_cursor(0, [1, 0])')
+    screen:expect_unchanged()
+
+    feed_csi('2;5H') -- Cursor to 2,5 (after any scrollback)
+    screen:expect([[
+      cool line 5                                       |
+      cool^ line 6                                       |
+      cool line 7                                       |
+      cool line 8                                       |
+      cool line 9                                       |
+      cool line 10                                      |
+      {3:-- TERMINAL --}                  7,5           Bot |
+    ]])
+    -- Check topline correct after leaving terminal mode.
+    -- The new cursor position is one column left of the terminal's actual cursor position.
+    command('stopinsert | call nvim_win_set_cursor(0, [1, 0])')
+    screen:expect([[
+      cool line 5                                       |
+      coo^l line 6                                       |
+      cool line 7                                       |
+      cool line 8                                       |
+      cool line 9                                       |
+      cool line 10                                      |
+                                      7,4           Bot |
+    ]])
   end)
 end)
 
