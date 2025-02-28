@@ -695,7 +695,18 @@ To enable the recognition of Markdown comments each time after removing
 re-source "javaformat.vim" for Vim versions greater than `8.2.1397`: >
 	runtime autoload/javaformat.vim
 <
+LUA							*ft-lua-plugin*
 
+					*g:lua_version* *g:lua_subversion*
+Lua filetype's 'includeexpr' and |ft-lua-syntax| highlighting use the global
+variables "g:lua_version" and "g:lua_subversion" to determine the version of
+Lua to use (5.3 is the default)
+
+For example, to use Lua 5.1, set the variables like this: >
+
+	let g:lua_version = 5
+	let g:lua_subversion = 1
+<
 MAIL							*ft-mail-plugin*
 
 Options:

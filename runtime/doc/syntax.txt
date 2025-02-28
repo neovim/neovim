@@ -1870,13 +1870,9 @@ instead, and the name of your source file should be `*.pike`
 
 LUA						*lua.vim* *ft-lua-syntax*
 
-The Lua syntax file can be used for versions 4.0, 5.0, 5.1 and 5.2 (5.2 is
-the default). You can select one of these versions using the global variables
-lua_version and lua_subversion. For example, to activate Lua
-5.1 syntax highlighting, set the variables like this: >
-
-	:let lua_version = 5
-	:let lua_subversion = 1
+The Lua syntax file can be used for versions 4.0, 5.0+. You can select one of
+these versions using the global variables |g:lua_version| and
+|g:lua_subversion|.
 
 
 MAIL						*mail.vim* *ft-mail.vim*
