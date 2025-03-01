@@ -198,6 +198,7 @@ local fattr = (
   + attr('FUNC_API_TEXTLOCK', 'textlock')
   + attr('FUNC_API_REMOTE_IMPL', 'remote_impl')
   + attr('FUNC_API_COMPOSITOR_IMPL', 'compositor_impl')
+  + attr('FUNC_API_UI_MULTIGRID', 'ui_multigrid')
   + attr('FUNC_API_CLIENT_IMPL', 'client_impl')
   + attr('FUNC_API_CLIENT_IGNORE', 'client_ignore')
   + (P('FUNC_') * rep(alpha) * opt(fill * paren(rep(1 - P(')') * any))))
