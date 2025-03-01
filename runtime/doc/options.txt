@@ -1533,13 +1533,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	A comma-separated list of options for Insert mode completion
 	|ins-completion|.  The supported values are:
 
-	   menu	    Use a popup menu to show the possible completions.  The
-		    menu is only shown when there is more than one match and
-		    sufficient colors are available.  |ins-completion-menu|
-
-	   menuone  Use the popup menu also when there is only one match.
-		    Useful when there is additional information about the
-		    match, e.g., what file it comes from.
+	   fuzzy    Enable |fuzzy-matching| for completion candidates. This
+		    allows for more flexible and intuitive matching, where
+		    characters can be skipped and matches can be found even
+		    if the exact sequence is not typed.  Only makes a
+		    difference how completion candidates are reduced from the
+		    list of alternatives, but not how the candidates are
+		    collected (using different completion types).
 
 	   longest  Only insert the longest common text of the matches.  If
 		    the menu is displayed you can use CTRL-L to add more
@@ -1547,13 +1547,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    of completion.  For buffer text the 'ignorecase' option is
 		    used.
 
-	   preview  Show extra information about the currently selected
-		    completion in the preview window.  Only works in
-		    combination with "menu" or "menuone".
+	   menu	    Use a popup menu to show the possible completions.  The
+		    menu is only shown when there is more than one match and
+		    sufficient colors are available.  |ins-completion-menu|
 
-	   popup    Show extra information about the currently selected
-		    completion in a popup window.  Only works in combination
-		    with "menu" or "menuone".  Overrides "preview".
+	   menuone  Use the popup menu also when there is only one match.
+		    Useful when there is additional information about the
+		    match, e.g., what file it comes from.
 
 	   noinsert Do not insert any text for a match until the user selects
 		    a match from the menu. Only works in combination with
@@ -1563,23 +1563,24 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    pre-selected. If both "noinsert" and "noselect" are
 		    present, "noselect" has precedence.
 
-	   fuzzy    Enable |fuzzy-matching| for completion candidates. This
-		    allows for more flexible and intuitive matching, where
-		    characters can be skipped and matches can be found even
-		    if the exact sequence is not typed.  Only makes a
-		    difference how completion candidates are reduced from the
-		    list of alternatives, but not how the candidates are
-		    collected (using different completion types).
-
 	   nosort   Disable sorting of completion candidates based on fuzzy
 		    scores when "fuzzy" is enabled. Candidates will appear
 		    in their original order.
+
+	   popup    Show extra information about the currently selected
+		    completion in a popup window.  Only works in combination
+		    with "menu" or "menuone".  Overrides "preview".
 
 	   preinsert
 		    Preinsert the portion of the first candidate word that is
 		    not part of the current completion leader and using the
 		    |hl-ComplMatchIns| highlight group. Does not work when
-		    "fuzzy" is also included.
+		    "fuzzy" is set. Requires both "menu" and "menuone" to be
+		    set.
+
+	   preview  Show extra information about the currently selected
+		    completion in the preview window.  Only works in
+		    combination with "menu" or "menuone".
 
 						*'completeslash'* *'csl'*
 'completeslash' 'csl'	string	(default "")
