@@ -1808,13 +1808,12 @@ int ins_compl_len(void)
   return compl_length;
 }
 
-/// Return TRUE when preinsert is set AND both 'menu' and 'menuone' flags
-/// are also set, otherwise return FALSE.
+/// Return true when the 'completeopt' "preinsert" flag is in effect,
+/// otherwise return false.
 static bool ins_compl_has_preinsert(void)
 {
-  return (get_cot_flags()
-          & (kOptCotFlagFuzzy|kOptCotFlagPreinsert|kOptCotFlagMenu|kOptCotFlagMenuone))
-         == (kOptCotFlagPreinsert|kOptCotFlagMenu|kOptCotFlagMenuone);
+  return (get_cot_flags() & (kOptCotFlagFuzzy|kOptCotFlagPreinsert|kOptCotFlagMenuone))
+         == (kOptCotFlagPreinsert|kOptCotFlagMenuone);
 }
 
 /// Returns true if the pre-insert effect is valid and the cursor is within

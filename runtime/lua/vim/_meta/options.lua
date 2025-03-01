@@ -1101,9 +1101,8 @@ vim.go.cia = vim.go.completeitemalign
 ---    preinsert
 --- 	    Preinsert the portion of the first candidate word that is
 --- 	    not part of the current completion leader and using the
---- 	    `hl-ComplMatchIns` highlight group. Does not work when
---- 	    "fuzzy" is set. Requires both "menu" and "menuone" to be
---- 	    set.
+--- 	    `hl-ComplMatchIns` highlight group.  In order for it to
+--- 	    work, "fuzzy" must not bet set and "menuone" must be set.
 ---
 ---    preview  Show extra information about the currently selected
 --- 	    completion in the preview window.  Only works in
