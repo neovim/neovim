@@ -3110,10 +3110,11 @@ function Test_completeopt_preinsert()
   call assert_equal("fobar", getline('.'))
   call assert_equal(5, col('.'))
 
+  " When the pum is not visible, the preinsert has no effect
   set cot=preinsert
   call feedkeys("Sfoo1 foo2\<CR>f\<C-X>\<C-N>bar", 'tx')
-  call assert_equal("fbar", getline('.'))
-  call assert_equal(4, col('.'))
+  call assert_equal("foo1bar", getline('.'))
+  call assert_equal(7, col('.'))
 
   bw!
   set cot&
