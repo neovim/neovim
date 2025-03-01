@@ -1,5 +1,5 @@
 " tar.vim: Handles browsing tarfiles -  AUTOLOAD PORTION
-" Date:		Feb 28, 2025
+" Date:		Mar 01, 2025
 " Version:	32b  (with modifications from the Vim Project)
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer: Charles E Campbell
@@ -10,6 +10,7 @@
 "   2024 Nov 11 by Vim Project: support permissions (#7379)
 "   2025 Feb 06 by Vim Project: add support for lz4 (#16591)
 "   2025 Feb 28 by Vim Project: add support for bzip3 (#16755)
+"   2025 Mar 01 by Vim Project: fix syntax error in tar#Read()
 "
 "	Contains many ideas from Michael Toren's <tar.vim>
 "
@@ -361,7 +362,7 @@ fun! tar#Read(fname,mode)
   if tarfile =~# '\.bz2$'
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
    exe "read ".fname
-  if tarfile =~# '\.bz3$'
+  elseif tarfile =~# '\.bz3$'
    exe "sil! r! bzip3 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
    exe "read ".fname
   elseif tarfile =~# '\.\(gz\)$'
