@@ -31,6 +31,7 @@ for k, v in pairs({
   loader = true,
   func = true,
   F = true,
+  img = true,
   lsp = true,
   hl = true,
   diagnostic = true,
