@@ -219,6 +219,10 @@ end
 --- Follow symbolic links.
 --- (default: `true`)
 --- @field follow? boolean
+---
+--- Do not traverse matching directories.
+--- If omitted, all directories are searched recursively.
+--- @field skip? (fun(dir: string): boolean)
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
@@ -266,6 +270,7 @@ function M.find(names, opts)
   vim.validate('type', opts.type, 'string', true)
   vim.validate('limit', opts.limit, 'number', true)
   vim.validate('follow', opts.follow, 'boolean', true)
+  vim.validate('skip', opts.skip, 'function', true)
 
   if type(names) == 'string' then
     names = { names }
@@ -356,12 +361,14 @@ function M.find(names, opts)
         end
 
         if
-          type_ == 'directory'
-          or (
-            type_ == 'link'
-            and opts.follow ~= false
-            and (vim.uv.fs_stat(f) or {}).type == 'directory'
-          )
+          (
+            type_ == 'directory'
+            or (
+              type_ == 'link'
+              and opts.follow ~= false
+              and (vim.uv.fs_stat(f) or {}).type == 'directory'
+            )
+          ) and (not opts.skip or opts.skip(f) ~= false)
         then
           dirs[#dirs + 1] = f
         end
