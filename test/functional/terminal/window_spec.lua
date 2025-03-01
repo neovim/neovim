@@ -283,12 +283,13 @@ describe(':terminal window', function()
   it('redraws cursor info in terminal mode', function()
     skip(is_os('win'), '#31587')
     command('file AMOGUS | set laststatus=2 ruler')
+    -- Expect column shown as "1" on an empty line, not "0-1" in terminal mode.
     screen:expect([[
       tty ready                                         |
       rows: 5, cols: 50                                 |
       ^                                                  |
                                                         |*2
-      {17:AMOGUS                          3,0-1          All}|
+      {17:AMOGUS                          3,1            All}|
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('you are the imposter')
@@ -309,6 +310,40 @@ describe(':terminal window', function()
       {17:AMOGUS                          3,20           All}|
                                                         |
     ]])
+
+    feed_csi('2J') -- Clear screen
+    feed_csi('1;1H') -- Cursor to 1,1
+    command('set laststatus=3')
+    feed('gg')
+    screen:expect([[
+      ^                                                  |
+                                                        |*4
+      {17:AMOGUS                          1,0-1          All}|
+                                                        |
+    ]])
+    -- Check statuslines don't show "0-1" in terminal mode.
+    feed('i')
+    screen:expect([[
+      ^                                                  |
+                                                        |*4
+      {17:AMOGUS                          1,1            All}|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- Custom statusline...
+    command([[set statusline=byte:%c\ virt:%v\ virtdash:%V]])
+    screen:expect([[
+      ^                                                  |
+                                                        |*4
+      {17:byte:1 virt:1 virtdash:                           }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]]) -- Back to normal mode
+    screen:expect([[
+      ^                                                  |
+                                                        |*4
+      {17:byte:0 virt:1 virtdash:-1                         }|
+                                                        |
+    ]])
   end)
 
   it('redraws stale statuslines and mode when not updating screen', function()
@@ -318,7 +353,7 @@ describe(':terminal window', function()
       rows: 5, cols: 25        │rows: 5, cols: 25       |
       ^                         │                        |
                                │                        |*2
-      {17:foo          3,0-1    All }{18:foo         2,0-1    Top}|
+      {17:foo          3,1      All }{18:foo         2,1      Top}|
       {3:-- TERMINAL --}                                    |
     ]])
     command("call win_execute(win_getid(winnr('#')), 'call cursor(1, 1)')")
@@ -327,7 +362,7 @@ describe(':terminal window', function()
       rows: 5, cols: 25        │rows: 5, cols: 25       |
       ^                         │                        |
                                │                        |*2
-      {17:foo          3,0-1    All }{18:foo         1,1      All}|
+      {17:foo          3,1      All }{18:foo         1,1      All}|
       {3:-- TERMINAL --}                                    |
     ]])
     command('echo ""')

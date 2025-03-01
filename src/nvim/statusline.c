@@ -510,8 +510,8 @@ void win_redr_ruler(win_T *wp)
     return;
   }
 
-  // Check if not in Insert mode and the line is empty (will show "0-1").
-  int empty_line = (State & MODE_INSERT) == 0
+  // Check if not in Insert or Terminal mode and the line is empty (will show "0-1").
+  int empty_line = (State & (MODE_INSERT | MODE_TERMINAL)) == 0
                    && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) == NUL;
 
   int width;
@@ -1524,7 +1524,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       break;
 
     case STL_COLUMN:
-      num = (State & MODE_INSERT) == 0 && empty_line ? 0 : (int)wp->w_cursor.col + 1;
+      num = (State & (MODE_INSERT | MODE_TERMINAL)) == 0
+            && empty_line ? 0 : (int)wp->w_cursor.col + 1;
       break;
 
     case STL_VIRTCOL:
@@ -1532,7 +1533,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       colnr_T virtcol = wp->w_virtcol + 1;
       // Don't display %V if it's the same as %c.
       if (opt == STL_VIRTCOL_ALT
-          && (virtcol == (colnr_T)((State & MODE_INSERT) == 0 && empty_line
+          && (virtcol == (colnr_T)((State & (MODE_INSERT | MODE_TERMINAL)) == 0 && empty_line
                                    ? 0 : (int)wp->w_cursor.col + 1))) {
         break;
       }
@@ -1595,7 +1596,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       int l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL,
                                      false);
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) || l < 0
-            ? 0 : l + 1 + ((State & MODE_INSERT) == 0 && empty_line
+            ? 0 : l + 1 + ((State & (MODE_INSERT | MODE_TERMINAL)) == 0 && empty_line
                            ? 0 : (int)wp->w_cursor.col);
       break;
     }
