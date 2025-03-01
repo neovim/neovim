@@ -883,7 +883,7 @@ bool redraw_custom_title_later(void)
 void show_cursor_info_later(bool force)
 {
   int state = get_real_state();
-  int empty_line = (State & MODE_INSERT) == 0
+  int empty_line = (State & (MODE_INSERT | MODE_TERMINAL)) == 0
                    && *ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum) == NUL;
 
   // Only draw when something changed.
