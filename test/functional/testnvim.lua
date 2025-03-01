@@ -905,11 +905,6 @@ function M.testprg(name)
   return ('%s/%s%s'):format(M.nvim_dir, name, ext)
 end
 
-function M.is_asan()
-  local version = M.eval('execute("verbose version")')
-  return version:match('-fsanitize=[a-z,]*address')
-end
-
 --- Returns a valid, platform-independent Nvim listen address.
 --- Useful for communicating with child instances.
 ---
