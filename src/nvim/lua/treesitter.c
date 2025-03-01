@@ -305,7 +305,7 @@ int tslua_inspect_lang(lua_State *L)
   lua_setfield(L, -2, "_wasm");
 
   lua_pushinteger(L, ts_language_abi_version(lang));  // [retval, version]
-  lua_setfield(L, -2, "_abi_version");
+  lua_setfield(L, -2, "abi_version");
 
   {  // Metadata
     const TSLanguageMetadata *meta = ts_language_metadata(lang);
