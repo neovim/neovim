@@ -13,10 +13,9 @@ local load_adjust = n.load_adjust
 local write_file = t.write_file
 local is_os = t.is_os
 local is_ci = t.is_ci
-local is_asan = n.is_asan
 
 clear()
-if is_asan() then
+if t.is_asan() then
   pending('ASAN build is difficult to estimate memory usage', function() end)
   return
 elseif is_os('win') then
