@@ -96,6 +96,7 @@ static char *confirm_buttons;               // ":confirm" buttons sent to cmdlin
 
 MessageHistoryEntry *msg_hist_last = NULL;
 static MessageHistoryEntry *msg_hist_first = NULL;
+static MessageHistoryEntry *msg_hist_temp = NULL;
 static int msg_hist_len = 0;
 static int msg_hist_max = 500;  // The default max value is 500
 
@@ -1040,7 +1041,9 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp)
   // Allocate an entry and add the message at the end of the history.
   MessageHistoryEntry *entry = xmalloc(sizeof(MessageHistoryEntry));
   entry->msg = msg;
+  entry->temp = temp;
   entry->kind = msg_ext_kind;
+  entry->prev = msg_hist_last;
   entry->next = NULL;
 
   if (msg_hist_first == NULL) {
@@ -1048,6 +1051,9 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp)
   }
   if (msg_hist_last != NULL) {
     msg_hist_last->next = entry;
+  }
+  if (msg_hist_temp == NULL) {
+    msg_hist_temp = entry;
   }
 
   msg_hist_len += !temp;
@@ -1059,9 +1065,18 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp)
 static void msg_hist_free_msg(MessageHistoryEntry *entry)
 {
   if (entry->next == NULL) {
-    msg_hist_last = NULL;
+    msg_hist_last = entry->prev;
+  } else {
+    entry->next->prev = entry->prev;
   }
-  msg_hist_first = entry->next;
+  if (entry->prev == NULL) {
+    msg_hist_first = entry->next;
+  } else {
+    entry->prev->next = entry->next;
+  }
+  if (entry == msg_hist_temp) {
+    msg_hist_temp = entry->next;
+  }
   hl_msg_free(entry->msg);
   xfree(entry);
 }
@@ -1070,8 +1085,19 @@ static void msg_hist_free_msg(MessageHistoryEntry *entry)
 void msg_hist_clear(int keep)
 {
   while (msg_hist_len > keep || (keep == 0 && msg_hist_first != NULL)) {
-    msg_hist_len--;
+    msg_hist_len -= !msg_hist_first->temp;
     msg_hist_free_msg(msg_hist_first);
+  }
+}
+
+void msg_hist_clear_temp(void)
+{
+  while (msg_hist_temp != NULL) {
+    MessageHistoryEntry *next = msg_hist_temp->next;
+    if (msg_hist_temp->temp) {
+      msg_hist_free_msg(msg_hist_temp);
+    }
+    msg_hist_temp = next;
   }
 }
 
@@ -1152,11 +1178,11 @@ void ex_messages(exarg_T *eap)
   }
 
   Array entries = ARRAY_DICT_INIT;
-  MessageHistoryEntry *p = msg_hist_first;
+  MessageHistoryEntry *p = eap->skip ? msg_hist_temp : msg_hist_first;
   int skip = eap->addr_count ? (msg_hist_len - eap->line2) : 0;
   while (p != NULL) {
-    if (skip-- > 0) {
-      // Skipping over messages.
+    if ((p->temp && !eap->skip) || skip-- > 0) {
+      // Skipping over count or temporary "g<" messages.
     } else if (ui_has(kUIMessages)) {
       Array entry = ARRAY_DICT_INIT;
       ADD(entry, CSTR_TO_OBJ(p->kind));
@@ -2180,6 +2206,8 @@ static void msg_ext_emit_chunk(void)
   ADD(*msg_ext_chunks, ARRAY_OBJ(chunk));
 }
 
+static bool do_clear_hist_temp = true;
+
 /// The display part of msg_puts_len().
 /// May be called recursively to display scroll-back text.
 static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse)
@@ -2208,6 +2236,10 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     int col = (int)(maxlen < 0 ? mb_string2cells(p) : mb_string2cells_len(p, (size_t)(maxlen)));
     msg_col = (lastline ? 0 : msg_col) + col;
 
+    if (do_clear_hist_temp && !strequal(msg_ext_kind, "return_prompt")) {
+      msg_hist_clear_temp();
+      do_clear_hist_temp = false;
+    }
     return;
   }
 
@@ -2574,6 +2606,7 @@ static void store_sb_text(const char **sb_str, const char *s, int hl_id, int *sb
 void may_clear_sb_text(void)
 {
   do_clear_sb_text = SB_CLEAR_ALL;
+  do_clear_hist_temp = true;
 }
 
 /// Starting to edit the command line: do not clear messages now.
@@ -2646,6 +2679,11 @@ void clear_sb_text(bool all)
 /// "g<" command.
 void show_sb_text(void)
 {
+  if (ui_has(kUIMessages)) {
+    exarg_T ea = { .arg = "", .skip = true };
+    ex_messages(&ea);
+    return;
+  }
   // Only show something if there is more than one line, otherwise it looks
   // weird, typing a command without output results in one line.
   msgchunk_T *mp = msg_sb_start(last_msgchunk);
@@ -3126,7 +3164,19 @@ void msg_ext_ui_flush(void)
   if (msg_ext_chunks->size > 0) {
     Array *tofree = msg_ext_init_chunks();
     ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history);
-    api_free_array(*tofree);
+    if (msg_ext_history || strequal(msg_ext_kind, "return_prompt")) {
+      api_free_array(*tofree);
+    } else {
+      // Add to history as temporary message for "g<".
+      HlMessage temp = KV_INITIAL_VALUE;
+      for (size_t i = 0; i < kv_size(*tofree); i++) {
+        Object *chunk = kv_A(*tofree, i).data.array.items;
+        kv_push(temp, ((HlMessageChunk){ chunk[1].data.string, (int)chunk[2].data.integer }));
+        xfree(chunk);
+      }
+      xfree(tofree->items);
+      msg_hist_add_multihl(temp, true);
+    }
     xfree(tofree);
     if (!msg_ext_overwrite) {
       msg_ext_visible++;
