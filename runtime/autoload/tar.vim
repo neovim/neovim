@@ -1,9 +1,15 @@
 " tar.vim: Handles browsing tarfiles -  AUTOLOAD PORTION
-" Date:		Feb 06, 2025
+" Date:		Feb 28, 2025
 " Version:	32b  (with modifications from the Vim Project)
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer: Charles E Campbell
 " License:	Vim License  (see vim's :help license)
+" Last Change:
+"   2024 Jan 08 by Vim Project: fix a few problems (#138331, #12637, #8109)
+"   2024 Feb 19 by Vim Project: announce adoption
+"   2024 Nov 11 by Vim Project: support permissions (#7379)
+"   2025 Feb 06 by Vim Project: add support for lz4 (#16591)
+"   2025 Feb 28 by Vim Project: add support for bzip3 (#16755)
 "
 "	Contains many ideas from Michael Toren's <tar.vim>
 "
@@ -161,6 +167,8 @@ fun! tar#Browse(tarfile)
 
    if filekind =~ "bzip2"
     exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
+   elseif filekind =~ "bzip3"
+    exe "sil! r! bzip3 -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
    elseif filekind =~ "XZ"
     exe "sil! r! xz -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
    elseif filekind =~ "Zstandard"
@@ -175,6 +183,8 @@ fun! tar#Browse(tarfile)
    exe "sil! r! cat -- ".shellescape(tarfile,1)."|gzip -d -c -|".g:tar_cmd." -".g:tar_browseoptions." - "
   elseif tarfile =~# '\.\(bz2\|tbz\|tb2\)$'
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
+  elseif tarfile =~# '\.\(bz3\|tb3\)$'
+   exe "sil! r! bzip3 -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
   elseif tarfile =~# '\.\(lzma\|tlz\)$'
    exe "sil! r! lzma -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
   elseif tarfile =~# '\.\(xz\|txz\)$'
@@ -316,6 +326,9 @@ fun! tar#Read(fname,mode)
   if  fname =~ '\.bz2$' && executable("bzcat")
    let decmp= "|bzcat"
    let doro = 1
+  elseif  fname =~ '\.bz3$' && executable("bz3cat")
+   let decmp= "|bz3cat"
+   let doro = 1
   elseif      fname =~ '\.t\=gz$'  && executable("zcat")
    let decmp= "|zcat"
    let doro = 1
@@ -334,7 +347,7 @@ fun! tar#Read(fname,mode)
   else
    let decmp=""
    let doro = 0
-   if fname =~ '\.bz2$\|\.gz$\|\.lzma$\|\.xz$\|\.zip$\|\.Z$'
+   if fname =~ '\.bz2$\|\.bz3$\|\.gz$\|\.lzma$\|\.xz$\|\.zip$\|\.Z$'
     setlocal bin
    endif
   endif
@@ -348,6 +361,9 @@ fun! tar#Read(fname,mode)
   if tarfile =~# '\.bz2$'
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
    exe "read ".fname
+  if tarfile =~# '\.bz3$'
+   exe "sil! r! bzip3 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "read ".fname
   elseif tarfile =~# '\.\(gz\)$'
    exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
    exe "read ".fname
@@ -359,6 +375,9 @@ fun! tar#Read(fname,mode)
    endif
    if filekind =~ "bzip2"
     exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+    exe "read ".fname
+   elseif filekind =~ "bzip3"
+    exe "sil! r! bzip3 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
     exe "read ".fname
    elseif filekind =~ "XZ"
     exe "sil! r! xz -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
@@ -446,6 +465,10 @@ fun! tar#Write(fname)
    call system("bzip2 -d -- ".shellescape(tarfile,0))
    let tarfile = substitute(tarfile,'\.bz2','','e')
    let compress= "bzip2 -- ".shellescape(tarfile,0)
+  elseif tarfile =~# '\.bz3'
+   call system("bzip3 -d -- ".shellescape(tarfile,0))
+   let tarfile = substitute(tarfile,'\.bz3','','e')
+   let compress= "bzip3 -- ".shellescape(tarfile,0)
   elseif tarfile =~# '\.gz'
    call system("gzip -d -- ".shellescape(tarfile,0))
    let tarfile = substitute(tarfile,'\.gz','','e')
@@ -634,6 +657,15 @@ fun! tar#Extract()
    call system(extractcmd." ".shellescape(tarbase).".tar.bz2 ".shellescape(fname))
    if v:shell_error != 0
     echohl Error | echo "***error*** ".extractcmd."j ".tarbase.".tar.bz2 ".fname.": failed!" | echohl NONE
+   else
+    echo "***note*** successfully extracted ".fname
+   endif
+
+  elseif filereadable(tarbase.".tar.bz3")
+   let extractcmd= substitute(extractcmd,"-","-j","")
+   call system(extractcmd." ".shellescape(tarbase).".tar.bz3 ".shellescape(fname))
+   if v:shell_error != 0
+    echohl Error | echo "***error*** ".extractcmd."j ".tarbase.".tar.bz3 ".fname.": failed!" | echohl NONE
    else
     echo "***note*** successfully extracted ".fname
    endif
