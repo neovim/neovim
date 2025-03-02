@@ -11,6 +11,7 @@
 "   2025 Feb 06 by Vim Project: add support for lz4 (#16591)
 "   2025 Feb 28 by Vim Project: add support for bzip3 (#16755)
 "   2025 Mar 01 by Vim Project: fix syntax error in tar#Read()
+"   2025 Mar 02 by Vim Project: escape the filename before using :read
 "
 "	Contains many ideas from Michael Toren's <tar.vim>
 "
@@ -284,6 +285,8 @@ fun! tar#Read(fname,mode)
   set report=10
   let tarfile = substitute(a:fname,'tarfile:\(.\{-}\)::.*$','\1','')
   let fname   = substitute(a:fname,'tarfile:.\{-}::\(.*\)$','\1','')
+  " be careful not to execute special crafted files
+  let escape_file = fname->fnameescape()
 
   " changing the directory to the temporary earlier to allow tar to extract the file with permissions intact
   if !exists("*mkdir")
@@ -361,13 +364,13 @@ fun! tar#Read(fname,mode)
 
   if tarfile =~# '\.bz2$'
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-   exe "read ".fname
+   exe "read ".escape_file
   elseif tarfile =~# '\.bz3$'
    exe "sil! r! bzip3 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-   exe "read ".fname
+   exe "read ".escape_file
   elseif tarfile =~# '\.\(gz\)$'
    exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-   exe "read ".fname
+   exe "read ".escape_file
   elseif tarfile =~# '\(\.tgz\|\.tbz\|\.txz\)'
    if has("unix") && executable("file")
     let filekind= system("file ".shellescape(tarfile,1))
@@ -376,40 +379,40 @@ fun! tar#Read(fname,mode)
    endif
    if filekind =~ "bzip2"
     exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-    exe "read ".fname
+    exe "read ".escape_file
    elseif filekind =~ "bzip3"
     exe "sil! r! bzip3 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-    exe "read ".fname
+    exe "read ".escape_file
    elseif filekind =~ "XZ"
     exe "sil! r! xz -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-    exe "read ".fname
+    exe "read ".escape_file
    elseif filekind =~ "Zstandard"
     exe "sil! r! zstd --decompress --stdout -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-    exe "read ".fname
+    exe "read ".escape_file
    else
     exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-    exe "read ".fname
+    exe "read ".escape_file
    endif
 
   elseif tarfile =~# '\.lrp$'
    exe "sil! r! cat -- ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-   exe "read ".fname
+   exe "read ".escape_file
   elseif tarfile =~# '\.lzma$'
    exe "sil! r! lzma -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-   exe "read ".fname
+   exe "read ".escape_file
   elseif tarfile =~# '\.\(xz\|txz\)$'
    exe "sil! r! xz --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-   exe "read ".fname
+   exe "read ".escape_file
   elseif tarfile =~# '\.\(lz4\|tlz4\)$'
    exe "sil! r! lz4 --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-   exe "read ".fname
+   exe "read ".escape_file
   else
    if tarfile =~ '^\s*-'
     " A file name starting with a dash is taken as an option.  Prepend ./ to avoid that.
     let tarfile = substitute(tarfile, '-', './-', '')
    endif
    exe "silent r! ".g:tar_cmd." -".g:tar_readoptions.shellescape(tarfile,1)." ".tar_secure.shellescape(fname,1).decmp
-   exe "read ".fname
+   exe "read ".escape_file
   endif
 
    redraw!
