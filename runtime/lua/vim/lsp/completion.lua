@@ -1,3 +1,25 @@
+--- @brief
+--- The `vim.lsp.completion` module enables insert-mode completion driven by an LSP server. Call
+--- `enable()` to make it available through Nvim builtin completion (via the |CompleteDone| event).
+--- Specify `autotrigger=true` to activate "auto-completion" when you type any of the server-defined
+--- `triggerCharacters`.
+---
+--- Example: activate LSP-driven auto-completion:
+--- ```lua
+--- vim.lsp.start({
+---   name = 'ts_ls',
+---   cmd = …,
+---   on_attach = function(client, bufnr)
+---     vim.lsp.completion.enable(true, client.id, bufnr, {
+---       autotrigger = true,
+---       convert = function(item)
+---         return { abbr = item.label:gsub('%b()', '') }
+---       end,
+---     })
+---   end,
+--- })
+--- ```
+
 local M = {}
 
 local api = vim.api
@@ -749,7 +771,7 @@ function M.enable(enable, client_id, bufnr, opts)
   end
 end
 
---- Trigger LSP completion in the current buffer.
+--- Triggers LSP completion once in the current buffer.
 function M.trigger()
   local bufnr = api.nvim_get_current_buf()
   local clients = (buf_handles[bufnr] or {}).clients or {}
