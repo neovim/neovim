@@ -16,6 +16,8 @@ error('Cannot require a meta file')
 
 ---@class TSQuery: userdata
 ---@field inspect fun(self: TSQuery): TSQueryInfo
+---@field disable_capture fun(self: TSQuery, capture_name: string)
+---@field disable_pattern fun(self: TSQuery, pattern_index: integer)
 
 ---@class (exact) TSQueryInfo
 ---@field captures string[]
