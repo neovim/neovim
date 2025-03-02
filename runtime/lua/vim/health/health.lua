@@ -86,11 +86,11 @@ local function check_config()
     ok = false
     health.error(
       'Locale does not support UTF-8. Unicode characters may not display correctly.'
-        .. ('\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s'):format(
-          vim.env.LANG,
-          vim.env.LC_ALL,
-          vim.env.LC_CTYPE
-        ),
+      .. ('\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s'):format(
+        vim.env.LANG,
+        vim.env.LC_ALL,
+        vim.env.LC_CTYPE
+      ),
       {
         'If using tmux, try the -u option.',
         'Ensure that your terminal/shell/tmux/etc inherits the environment, or set $LANG explicitly.',
@@ -110,6 +110,16 @@ local function check_config()
     )
   end
 
+  if vim.g.loaded_python3_provider and vim.g.loaded_python3_provider == 1 then
+    ok = false
+    health.error(
+      "`g:loaded_python3_provider=1` may have been set by mistake. This option should not be used to load python provider in your config.",
+      {
+        'Remove the line `vim.g.loaded_python3_provider=1` from your config or comment it out.'
+      }
+    )
+  end
+
   local writeable = true
   local shadaopt = vim.fn.split(vim.o.shada, ',')
   local shadafile = (
@@ -118,9 +128,9 @@ local function check_config()
   )
   shadafile = (
     vim.o.shadafile == ''
-      and (shadafile == '' and vim.fn.stdpath('state') .. '/shada/main.shada' or vim.fs.normalize(
-        shadafile
-      ))
+    and (shadafile == '' and vim.fn.stdpath('state') .. '/shada/main.shada' or vim.fs.normalize(
+      shadafile
+    ))
     or (vim.o.shadafile == 'NONE' and '' or vim.o.shadafile)
   )
   if shadafile ~= '' and vim.fn.glob(shadafile) == '' then
@@ -130,18 +140,18 @@ local function check_config()
     end
   end
   if
-    not writeable
-    or (
-      shadafile ~= ''
-      and (vim.fn.filereadable(shadafile) == 0 or vim.fn.filewritable(shadafile) ~= 1)
-    )
+      not writeable
+      or (
+        shadafile ~= ''
+        and (vim.fn.filereadable(shadafile) == 0 or vim.fn.filewritable(shadafile) ~= 1)
+      )
   then
     ok = false
     health.error(
       'shada file is not '
-        .. ((not writeable or vim.fn.filereadable(shadafile) == 1) and 'writeable' or 'readable')
-        .. ':\n'
-        .. shadafile
+      .. ((not writeable or vim.fn.filereadable(shadafile) == 1) and 'writeable' or 'readable')
+      .. ':\n'
+      .. shadafile
     )
   end
 
@@ -274,7 +284,7 @@ local function check_tmux()
 
   -- check escape-time
   local suggestions =
-    { 'set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10', suggest_faq }
+  { 'set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10', suggest_faq }
   local tmux_esc_time = get_tmux_option('escape-time')
   if tmux_esc_time ~= 'error' then
     if tmux_esc_time == '' then
@@ -355,15 +365,15 @@ local function check_terminal()
   local kdch1_entry = vim.fn.matchstr(out, 'key_dc=[^,[:space:]]*')
 
   if
-    shell_error()
-    and (
-      vim.fn.has('win32') == 0
-      or vim.fn.matchstr(
+      shell_error()
+      and (
+        vim.fn.has('win32') == 0
+        or vim.fn.matchstr(
           out,
           [[infocmp: couldn't open terminfo file .\+\%(conemu\|vtpcon\|win32con\)]]
         )
         == ''
-    )
+      )
   then
     health.error('command failed: ' .. cmd .. '\n' .. out)
   else
