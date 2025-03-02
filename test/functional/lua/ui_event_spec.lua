@@ -65,7 +65,7 @@ describe('vim.ui_attach', function()
         0,
         0,
         0,
-        1,
+        2,
       },
     }
 
@@ -365,6 +365,11 @@ describe('vim.ui_attach', function()
           history = true,
           kind = 'return_prompt',
         },
+        {
+          content = { { "E354: Invalid register name: '^@'", 9, 6 } },
+          history = false,
+          kind = '',
+        },
       },
     })
     feed(':1mes clear<CR>:mes<CR>')
@@ -382,46 +387,33 @@ describe('vim.ui_attach', function()
         vim.schedule(function() vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] }) end)
       end)
     ]])
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*4
+    ]])
+    feed('<esc>:1mes clear<cr>:mes<cr>')
     screen:expect({
-      grid = s1,
+      grid = [[
+        ^                                        |
+        {1:~                                       }|*4
+      ]],
+      cmdline = { {
+        abort = false,
+      } },
       messages = {
         {
-          content = {
-            {
-              'Error executing vim.schedule lua callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
-              9,
-              6,
-            },
-          },
-          history = true,
-          kind = 'lua_error',
-        },
-        {
-          content = {
-            {
-              'Error executing vim.schedule lua callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
-              9,
-              6,
-            },
-          },
-          history = true,
-          kind = 'lua_error',
-        },
-        {
           content = { { 'Press ENTER or type command to continue', 100, 18 } },
-          history = false,
+          history = true,
+          kind = 'return_prompt',
+        },
+      },
+      msg_history = {
+        {
+          content = { { 'Excessive errors in vim.ui_attach() callback from ns: 1.', 9, 6 } },
           kind = 'return_prompt',
         },
       },
     })
-    feed('<esc>:1mes clear<cr>:mes<cr>')
-    screen:expect([[
-                                              |
-      {3:                                        }|
-      {9:Excessive errors in vim.ui_attach() call}|
-      {9:back from ns: 2.}                        |
-      {100:Press ENTER or type command to continue}^ |
-    ]])
   end)
 
   it('sourcing invalid file does not crash #32166', function()
