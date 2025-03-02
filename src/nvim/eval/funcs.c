@@ -3819,7 +3819,7 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   pty_proc_resize(&data->stream.pty, (uint16_t)argvars[1].vval.v_number,
-                  (uint16_t)argvars[2].vval.v_number);
+                  (uint16_t)argvars[2].vval.v_number, 0, 0);
   rettv->vval.v_number = 1;
 }
 

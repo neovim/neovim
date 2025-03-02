@@ -37,6 +37,8 @@ typedef struct {
   bool ui_ext[kUIExtCount];  ///< Externalized UI capabilities.
   int width;
   int height;
+  int pixel_width;
+  int pixel_height;
   int pum_nlines;  /// actual nr. lines shown in PUM
   bool pum_pos;  /// UI reports back pum position?
   double pum_row;
