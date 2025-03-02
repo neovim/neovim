@@ -122,10 +122,6 @@ describe('messages', function()
     -- oldtest: Test_message_more()
     it('works', function()
       screen = Screen.new(75, 6)
-      screen:set_default_attr_ids({
-        [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-        [2] = { foreground = Screen.colors.Brown }, -- LineNr
-      })
 
       command('call setline(1, range(1, 100))')
 
@@ -140,194 +136,194 @@ describe('messages', function()
       ]])
       feed('\n')
       screen:expect([[
-        {2:  1 }1                                                                      |
-        {2:  2 }2                                                                      |
-        {2:  3 }3                                                                      |
-        {2:  4 }4                                                                      |
-        {2:  5 }5                                                                      |
-        {1:-- More --}^                                                                 |
+        {8:  1 }1                                                                      |
+        {8:  2 }2                                                                      |
+        {8:  3 }3                                                                      |
+        {8:  4 }4                                                                      |
+        {8:  5 }5                                                                      |
+        {6:-- More --}^                                                                 |
       ]])
 
       feed('?')
       screen:expect([[
-        {2:  1 }1                                                                      |
-        {2:  2 }2                                                                      |
-        {2:  3 }3                                                                      |
-        {2:  4 }4                                                                      |
-        {2:  5 }5                                                                      |
-        {1:-- More -- SPACE/d/j: screen/page/line down, b/u/k: up, q: quit }^           |
+        {8:  1 }1                                                                      |
+        {8:  2 }2                                                                      |
+        {8:  3 }3                                                                      |
+        {8:  4 }4                                                                      |
+        {8:  5 }5                                                                      |
+        {6:-- More -- SPACE/d/j: screen/page/line down, b/u/k: up, q: quit }^           |
       ]])
 
       -- Down a line with j, <CR>, <NL> or <Down>.
       feed('j')
       screen:expect([[
-        {2:  2 }2                                                                      |
-        {2:  3 }3                                                                      |
-        {2:  4 }4                                                                      |
-        {2:  5 }5                                                                      |
-        {2:  6 }6                                                                      |
-        {1:-- More --}^                                                                 |
+        {8:  2 }2                                                                      |
+        {8:  3 }3                                                                      |
+        {8:  4 }4                                                                      |
+        {8:  5 }5                                                                      |
+        {8:  6 }6                                                                      |
+        {6:-- More --}^                                                                 |
       ]])
       feed('<NL>')
       screen:expect([[
-        {2:  3 }3                                                                      |
-        {2:  4 }4                                                                      |
-        {2:  5 }5                                                                      |
-        {2:  6 }6                                                                      |
-        {2:  7 }7                                                                      |
-        {1:-- More --}^                                                                 |
+        {8:  3 }3                                                                      |
+        {8:  4 }4                                                                      |
+        {8:  5 }5                                                                      |
+        {8:  6 }6                                                                      |
+        {8:  7 }7                                                                      |
+        {6:-- More --}^                                                                 |
       ]])
       feed('<CR>')
       screen:expect([[
-        {2:  4 }4                                                                      |
-        {2:  5 }5                                                                      |
-        {2:  6 }6                                                                      |
-        {2:  7 }7                                                                      |
-        {2:  8 }8                                                                      |
-        {1:-- More --}^                                                                 |
+        {8:  4 }4                                                                      |
+        {8:  5 }5                                                                      |
+        {8:  6 }6                                                                      |
+        {8:  7 }7                                                                      |
+        {8:  8 }8                                                                      |
+        {6:-- More --}^                                                                 |
       ]])
       feed('<Down>')
       screen:expect([[
-        {2:  5 }5                                                                      |
-        {2:  6 }6                                                                      |
-        {2:  7 }7                                                                      |
-        {2:  8 }8                                                                      |
-        {2:  9 }9                                                                      |
-        {1:-- More --}^                                                                 |
+        {8:  5 }5                                                                      |
+        {8:  6 }6                                                                      |
+        {8:  7 }7                                                                      |
+        {8:  8 }8                                                                      |
+        {8:  9 }9                                                                      |
+        {6:-- More --}^                                                                 |
       ]])
 
       -- Down a screen with <Space>, f, or <PageDown>.
       feed('f')
       screen:expect([[
-        {2: 10 }10                                                                     |
-        {2: 11 }11                                                                     |
-        {2: 12 }12                                                                     |
-        {2: 13 }13                                                                     |
-        {2: 14 }14                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 10 }10                                                                     |
+        {8: 11 }11                                                                     |
+        {8: 12 }12                                                                     |
+        {8: 13 }13                                                                     |
+        {8: 14 }14                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
       feed('<Space>')
       screen:expect([[
-        {2: 15 }15                                                                     |
-        {2: 16 }16                                                                     |
-        {2: 17 }17                                                                     |
-        {2: 18 }18                                                                     |
-        {2: 19 }19                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 15 }15                                                                     |
+        {8: 16 }16                                                                     |
+        {8: 17 }17                                                                     |
+        {8: 18 }18                                                                     |
+        {8: 19 }19                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
       feed('<PageDown>')
       screen:expect([[
-        {2: 20 }20                                                                     |
-        {2: 21 }21                                                                     |
-        {2: 22 }22                                                                     |
-        {2: 23 }23                                                                     |
-        {2: 24 }24                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 20 }20                                                                     |
+        {8: 21 }21                                                                     |
+        {8: 22 }22                                                                     |
+        {8: 23 }23                                                                     |
+        {8: 24 }24                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
 
       -- Down a page (half a screen) with d.
       feed('d')
       screen:expect([[
-        {2: 23 }23                                                                     |
-        {2: 24 }24                                                                     |
-        {2: 25 }25                                                                     |
-        {2: 26 }26                                                                     |
-        {2: 27 }27                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 23 }23                                                                     |
+        {8: 24 }24                                                                     |
+        {8: 25 }25                                                                     |
+        {8: 26 }26                                                                     |
+        {8: 27 }27                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
 
       -- Down all the way with 'G'.
       feed('G')
       screen:expect([[
-        {2: 96 }96                                                                     |
-        {2: 97 }97                                                                     |
-        {2: 98 }98                                                                     |
-        {2: 99 }99                                                                     |
-        {2:100 }100                                                                    |
-        {1:Press ENTER or type command to continue}^                                    |
+        {8: 96 }96                                                                     |
+        {8: 97 }97                                                                     |
+        {8: 98 }98                                                                     |
+        {8: 99 }99                                                                     |
+        {8:100 }100                                                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
 
       -- Up a line k, <BS> or <Up>.
       feed('k')
       screen:expect([[
-        {2: 95 }95                                                                     |
-        {2: 96 }96                                                                     |
-        {2: 97 }97                                                                     |
-        {2: 98 }98                                                                     |
-        {2: 99 }99                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 95 }95                                                                     |
+        {8: 96 }96                                                                     |
+        {8: 97 }97                                                                     |
+        {8: 98 }98                                                                     |
+        {8: 99 }99                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
       feed('<BS>')
       screen:expect([[
-        {2: 94 }94                                                                     |
-        {2: 95 }95                                                                     |
-        {2: 96 }96                                                                     |
-        {2: 97 }97                                                                     |
-        {2: 98 }98                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 94 }94                                                                     |
+        {8: 95 }95                                                                     |
+        {8: 96 }96                                                                     |
+        {8: 97 }97                                                                     |
+        {8: 98 }98                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
       feed('<Up>')
       screen:expect([[
-        {2: 93 }93                                                                     |
-        {2: 94 }94                                                                     |
-        {2: 95 }95                                                                     |
-        {2: 96 }96                                                                     |
-        {2: 97 }97                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 93 }93                                                                     |
+        {8: 94 }94                                                                     |
+        {8: 95 }95                                                                     |
+        {8: 96 }96                                                                     |
+        {8: 97 }97                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
 
       -- Up a screen with b or <PageUp>.
       feed('b')
       screen:expect([[
-        {2: 88 }88                                                                     |
-        {2: 89 }89                                                                     |
-        {2: 90 }90                                                                     |
-        {2: 91 }91                                                                     |
-        {2: 92 }92                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 88 }88                                                                     |
+        {8: 89 }89                                                                     |
+        {8: 90 }90                                                                     |
+        {8: 91 }91                                                                     |
+        {8: 92 }92                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
       feed('<PageUp>')
       screen:expect([[
-        {2: 83 }83                                                                     |
-        {2: 84 }84                                                                     |
-        {2: 85 }85                                                                     |
-        {2: 86 }86                                                                     |
-        {2: 87 }87                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 83 }83                                                                     |
+        {8: 84 }84                                                                     |
+        {8: 85 }85                                                                     |
+        {8: 86 }86                                                                     |
+        {8: 87 }87                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
 
       -- Up a page (half a screen) with u.
       feed('u')
       screen:expect([[
-        {2: 80 }80                                                                     |
-        {2: 81 }81                                                                     |
-        {2: 82 }82                                                                     |
-        {2: 83 }83                                                                     |
-        {2: 84 }84                                                                     |
-        {1:-- More --}^                                                                 |
+        {8: 80 }80                                                                     |
+        {8: 81 }81                                                                     |
+        {8: 82 }82                                                                     |
+        {8: 83 }83                                                                     |
+        {8: 84 }84                                                                     |
+        {6:-- More --}^                                                                 |
       ]])
 
       -- Up all the way with 'g'.
       feed('g')
       screen:expect([[
         :%p#                                                                       |
-        {2:  1 }1                                                                      |
-        {2:  2 }2                                                                      |
-        {2:  3 }3                                                                      |
-        {2:  4 }4                                                                      |
-        {1:-- More --}^                                                                 |
+        {8:  1 }1                                                                      |
+        {8:  2 }2                                                                      |
+        {8:  3 }3                                                                      |
+        {8:  4 }4                                                                      |
+        {6:-- More --}^                                                                 |
       ]])
 
       -- All the way down. Pressing f should do nothing but pressing
       -- space should end the more prompt.
       feed('G')
       screen:expect([[
-        {2: 96 }96                                                                     |
-        {2: 97 }97                                                                     |
-        {2: 98 }98                                                                     |
-        {2: 99 }99                                                                     |
-        {2:100 }100                                                                    |
-        {1:Press ENTER or type command to continue}^                                    |
+        {8: 96 }96                                                                     |
+        {8: 97 }97                                                                     |
+        {8: 98 }98                                                                     |
+        {8: 99 }99                                                                     |
+        {8:100 }100                                                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
       feed('f')
       screen:expect_unchanged()
@@ -344,34 +340,34 @@ describe('messages', function()
       -- Pressing g< shows the previous command output.
       feed('g<lt>')
       screen:expect([[
-        {2: 96 }96                                                                     |
-        {2: 97 }97                                                                     |
-        {2: 98 }98                                                                     |
-        {2: 99 }99                                                                     |
-        {2:100 }100                                                                    |
-        {1:Press ENTER or type command to continue}^                                    |
+        {8: 96 }96                                                                     |
+        {8: 97 }97                                                                     |
+        {8: 98 }98                                                                     |
+        {8: 99 }99                                                                     |
+        {8:100 }100                                                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
 
       -- A command line that doesn't print text is appended to scrollback,
       -- even if it invokes a nested command line.
       feed([[:<C-R>=':'<CR>:<CR>g<lt>]])
       screen:expect([[
-        {2: 97 }97                                                                     |
-        {2: 98 }98                                                                     |
-        {2: 99 }99                                                                     |
-        {2:100 }100                                                                    |
+        {8: 97 }97                                                                     |
+        {8: 98 }98                                                                     |
+        {8: 99 }99                                                                     |
+        {8:100 }100                                                                    |
         :::                                                                        |
-        {1:Press ENTER or type command to continue}^                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
 
       feed(':%p#\n')
       screen:expect([[
-        {2:  1 }1                                                                      |
-        {2:  2 }2                                                                      |
-        {2:  3 }3                                                                      |
-        {2:  4 }4                                                                      |
-        {2:  5 }5                                                                      |
-        {1:-- More --}^                                                                 |
+        {8:  1 }1                                                                      |
+        {8:  2 }2                                                                      |
+        {8:  3 }3                                                                      |
+        {8:  4 }4                                                                      |
+        {8:  5 }5                                                                      |
+        {6:-- More --}^                                                                 |
       ]])
 
       -- Stop command output with q, <Esc> or CTRL-C.
@@ -388,30 +384,30 @@ describe('messages', function()
       -- Execute a : command from the more prompt
       feed(':%p#\n')
       screen:expect([[
-        {2:  1 }1                                                                      |
-        {2:  2 }2                                                                      |
-        {2:  3 }3                                                                      |
-        {2:  4 }4                                                                      |
-        {2:  5 }5                                                                      |
-        {1:-- More --}^                                                                 |
+        {8:  1 }1                                                                      |
+        {8:  2 }2                                                                      |
+        {8:  3 }3                                                                      |
+        {8:  4 }4                                                                      |
+        {8:  5 }5                                                                      |
+        {6:-- More --}^                                                                 |
       ]])
       feed(':')
       screen:expect([[
-        {2:  1 }1                                                                      |
-        {2:  2 }2                                                                      |
-        {2:  3 }3                                                                      |
-        {2:  4 }4                                                                      |
-        {2:  5 }5                                                                      |
+        {8:  1 }1                                                                      |
+        {8:  2 }2                                                                      |
+        {8:  3 }3                                                                      |
+        {8:  4 }4                                                                      |
+        {8:  5 }5                                                                      |
         :^                                                                          |
       ]])
       feed("echo 'Hello'\n")
       screen:expect([[
-        {2:  2 }2                                                                      |
-        {2:  3 }3                                                                      |
-        {2:  4 }4                                                                      |
-        {2:  5 }5                                                                      |
+        {8:  2 }2                                                                      |
+        {8:  3 }3                                                                      |
+        {8:  4 }4                                                                      |
+        {8:  5 }5                                                                      |
         Hello                                                                      |
-        {1:Press ENTER or type command to continue}^                                    |
+        {6:Press ENTER or type command to continue}^                                    |
       ]])
     end)
 
