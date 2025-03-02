@@ -274,9 +274,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 				pack/*/start/{name} ~
 
 			Note that {name} is the directory name, not the name
-			of the .vim file.  All the files matching the pattern
+			of the .vim file.  All files matching the patterns
 				pack/*/opt/{name}/plugin/**/*.vim ~
-			and
 				pack/*/opt/{name}/plugin/**/*.lua ~
 			will be sourced.  This allows for using subdirectories
 			below "plugin", just like with plugins in

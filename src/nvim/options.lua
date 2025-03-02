@@ -5802,8 +5802,8 @@ local options = {
       defaults = false,
       desc = [=[
         When on, mouse move events are delivered to the input queue and are
-        available for mapping. The default, off, avoids the mouse movement
-        overhead except when needed.
+        available for mapping |<MouseMove>|. The default, off, avoids the mouse
+        movement overhead except when needed.
         Warning: Setting this option can make pending mappings to be aborted
         when the mouse is moved.
       ]=],
@@ -5811,6 +5811,7 @@ local options = {
       redraw = { 'ui_option' },
       scope = { 'global' },
       short_desc = N_('deliver mouse move events to input queue'),
+      tags = { 'mouse-hover' },
       type = 'boolean',
       varname = 'p_mousemev',
     },

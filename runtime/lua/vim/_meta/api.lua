@@ -1152,8 +1152,7 @@ function vim.api.nvim_eval(expr) end
 ---               the "highlights" key in {opts} is true. Each element of the array is a
 ---               |Dict| with these keys:
 ---     - start: (number) Byte index (0-based) of first character that uses the highlight.
----     - group: (string) Name of highlight group. May be removed in the future, use
----     `groups` instead.
+---     - group: (string) Deprecated. Use `groups` instead.
 ---     - groups: (array) Names of stacked highlight groups (highest priority last).
 function vim.api.nvim_eval_statusline(str, opts) end
 
