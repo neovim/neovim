@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 
 local tt = require('test.functional.testterm')
 local feed_data = tt.feed_data
+local feed_csi = tt.feed_csi
 local feed, clear = n.feed, n.clear
 local poke_eventloop = n.poke_eventloop
 local command = n.command
@@ -188,6 +189,207 @@ describe(':terminal window', function()
                                                           |
       ]])
     end)
+  end)
+
+  it('redrawn when restoring cursorline/column', function()
+    screen:set_default_attr_ids({
+      [1] = { bold = true },
+      [2] = { foreground = 130 },
+      [3] = { foreground = 130, underline = true },
+      [12] = { underline = true },
+      [19] = { background = 7 },
+    })
+
+    feed([[<C-\><C-N>]])
+    command('setlocal cursorline')
+    screen:expect([[
+      tty ready                                         |
+      {12:^                                                  }|
+                                                        |*5
+    ]])
+    feed('i')
+    screen:expect([[
+      tty ready                                         |
+      ^                                                  |
+                                                        |*4
+      {1:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      tty ready                                         |
+      {12:^                                                  }|
+                                                        |*5
+    ]])
+
+    command('setlocal number')
+    screen:expect([[
+      {2:  1 }tty ready                                     |
+      {3:  2 }{12:^rows: 6, cols: 46                             }|
+      {2:  3 }                                              |
+      {2:  4 }                                              |
+      {2:  5 }                                              |
+      {2:  6 }                                              |
+                                                        |
+    ]])
+    feed('i')
+    screen:expect([[
+      {2:  1 }tty ready                                     |
+      {2:  2 }rows: 6, cols: 46                             |
+      {3:  3 }^                                              |
+      {2:  4 }                                              |
+      {2:  5 }                                              |
+      {2:  6 }                                              |
+      {1:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      {2:  1 }tty ready                                     |
+      {2:  2 }rows: 6, cols: 46                             |
+      {3:  3 }{12:^                                              }|
+      {2:  4 }                                              |
+      {2:  5 }                                              |
+      {2:  6 }                                              |
+                                                        |
+    ]])
+
+    command('setlocal nonumber nocursorline cursorcolumn')
+    screen:expect([[
+      {19:t}ty ready                                         |
+      {19:r}ows: 6, cols: 46                                 |
+      ^rows: 6, cols: 50                                 |
+      {19: }                                                 |*3
+                                                        |
+    ]])
+    feed('i')
+    screen:expect([[
+      tty ready                                         |
+      rows: 6, cols: 46                                 |
+      rows: 6, cols: 50                                 |
+      ^                                                  |
+                                                        |*2
+      {1:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      {19:t}ty ready                                         |
+      {19:r}ows: 6, cols: 46                                 |
+      {19:r}ows: 6, cols: 50                                 |
+      ^                                                  |
+      {19: }                                                 |*2
+                                                        |
+    ]])
+  end)
+
+  it('redraws cursor info in terminal mode', function()
+    command('file AMOGUS | set laststatus=2 ruler')
+    -- Expect column shown as "1" on an empty line, not "0-1" in terminal mode.
+    screen:expect([[
+      tty ready                                         |
+      rows: 5, cols: 50                                 |
+      ^                                                  |
+                                                        |*2
+      {17:AMOGUS                          3,1            All}|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('you are the imposter')
+    screen:expect([[
+      tty ready                                         |
+      rows: 5, cols: 50                                 |
+      you are the imposter^                              |
+                                                        |*2
+      {17:AMOGUS                          3,21           All}|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      tty ready                                         |
+      rows: 5, cols: 50                                 |
+      you are the imposte^r                              |
+                                                        |*2
+      {17:AMOGUS                          3,20           All}|
+                                                        |
+    ]])
+
+    feed_csi('2J') -- Clear screen
+    feed_csi('1;1H') -- Cursor to 1,1
+    command('set laststatus=3')
+    feed('gg')
+    screen:expect([[
+      ^                                                  |
+                                                        |*4
+      {17:AMOGUS                          1,0-1          All}|
+                                                        |
+    ]])
+    -- Check statuslines don't show "0-1" in terminal mode.
+    feed('i')
+    screen:expect([[
+      ^                                                  |
+                                                        |*4
+      {17:AMOGUS                          1,1            All}|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- Custom statusline...
+    command([[set statusline=byte:%c\ virt:%v\ virtdash:%V]])
+    screen:expect([[
+      ^                                                  |
+                                                        |*4
+      {17:byte:1 virt:1 virtdash:                           }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]]) -- Back to normal mode
+    screen:expect([[
+      ^                                                  |
+                                                        |*4
+      {17:byte:0 virt:1 virtdash:-1                         }|
+                                                        |
+    ]])
+  end)
+
+  it('has correct topline if scrolled by events', function()
+    local lines = {}
+    for i = 1, 10 do
+      lines[#lines + 1] = 'cool line ' .. i
+    end
+    feed_data(lines)
+    feed_csi('1;1H') -- Cursor to 1,1 (after any scrollback)
+
+    -- :sleep (with leeway) until the refresh_terminal uv timer event triggers before we move the
+    -- cursor. Check that the next terminal_check tails topline correctly.
+    command('set ruler | sleep 20m | call nvim_win_set_cursor(0, [1, 0])')
+    screen:expect([[
+      ^cool line 5                                       |
+      cool line 6                                       |
+      cool line 7                                       |
+      cool line 8                                       |
+      cool line 9                                       |
+      cool line 10                                      |
+      {3:-- TERMINAL --}                  6,1           Bot |
+    ]])
+    command('call nvim_win_set_cursor(0, [1, 0])')
+    screen:expect_unchanged()
+
+    feed_csi('2;5H') -- Cursor to 2,5 (after any scrollback)
+    screen:expect([[
+      cool line 5                                       |
+      cool^ line 6                                       |
+      cool line 7                                       |
+      cool line 8                                       |
+      cool line 9                                       |
+      cool line 10                                      |
+      {3:-- TERMINAL --}                  7,5           Bot |
+    ]])
+    -- Check topline correct after leaving terminal mode.
+    -- The new cursor position is one column left of the terminal's actual cursor position.
+    command('stopinsert | call nvim_win_set_cursor(0, [1, 0])')
+    screen:expect([[
+      cool line 5                                       |
+      coo^l line 6                                       |
+      cool line 7                                       |
+      cool line 8                                       |
+      cool line 9                                       |
+      cool line 10                                      |
+                                      7,4           Bot |
+    ]])
   end)
 end)
 
