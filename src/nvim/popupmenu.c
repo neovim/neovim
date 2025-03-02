@@ -799,14 +799,21 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
   Error err = ERROR_INIT;
   Arena arena = ARENA_EMPTY;
   Array replacement = ARRAY_DICT_INIT;
-  char *token = NULL;
-  char *line = os_strtok(info, "\n", &token);
   buf->b_p_ma = true;
-  while (line != NULL) {
-    ADD(replacement, STRING_OBJ(cstr_to_string(line)));
+
+  // Iterate through the string line by line by temporarily replacing newlines with NUl
+  for (char *curr = info, *next; curr; curr = next ? next + 1 : NULL) {
+    if ((next = strchr(curr, '\n'))) {
+      *next = NUL;  // Temporarily replace the newline with a string terminator
+    }
+
+    *max_width = MAX(*max_width, (int)mb_string2cells(curr));
+    ADD(replacement, STRING_OBJ(cstr_to_string(curr)));
     (*lnum)++;
-    (*max_width) = MAX(*max_width, (int)mb_string2cells(line));
-    line = os_strtok(NULL, "\n", &token);
+
+    if (next) {
+      *next = '\n';
+    }
   }
 
   int original_textlock = textlock;
