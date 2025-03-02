@@ -1607,15 +1607,6 @@ vim.keycode({str})                                             *vim.keycode()*
     See also: ~
       • |nvim_replace_termcodes()|
 
-vim.lua_omnifunc({find_start})                            *vim.lua_omnifunc()*
-    Omnifunc for completing Lua values from the runtime Lua interpreter,
-    similar to the builtin completion for the `:lua` command.
-
-    Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a Lua buffer.
-
-    Parameters: ~
-      • {find_start}  (`1|0`)
-
 vim.notify({msg}, {level}, {opts})                              *vim.notify()*
     Displays a notification to the user.
 
