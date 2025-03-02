@@ -913,6 +913,7 @@ function vim._expand_pat(pat, env)
 
   local match_part = string.sub(last_part, search_index, #last_part)
   local prefix_match_pat = string.sub(pat, 1, #pat - #match_part) or ''
+  local last_char = string.sub(last_part, #last_part)
 
   local final_env = env
 
@@ -971,6 +972,7 @@ function vim._expand_pat(pat, env)
         type(k) == 'string'
         and string.sub(k, 1, string.len(match_part)) == match_part
         and k:match('^[_%w]+$') ~= nil -- filter out invalid identifiers for field, e.g. 'foo#bar'
+        and (last_char ~= '.' or string.sub(k, 1, 1) ~= '_') -- don't include private fields after '.'
       then
         keys[k] = true
       end

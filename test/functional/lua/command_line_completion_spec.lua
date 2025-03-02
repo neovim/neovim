@@ -107,6 +107,30 @@ describe('nlua_expand_pat', function()
     eq({ { 'set' }, 11 }, get_completions('vim.keymap.se'))
   end)
 
+  it('should exclude private fields after "."', function()
+    eq(
+      { { 'bar' }, 4 },
+      get_completions('foo.', {
+        foo = {
+          _bar = true,
+          bar = true,
+        },
+      })
+    )
+  end)
+
+  it('should include private fields after "._"', function()
+    eq(
+      { { '_bar' }, 4 },
+      get_completions('foo._', {
+        foo = {
+          _bar = true,
+          bar = true,
+        },
+      })
+    )
+  end)
+
   it('should be able to interpolate globals', function()
     eq(
       { {
