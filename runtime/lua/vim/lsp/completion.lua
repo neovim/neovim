@@ -159,7 +159,11 @@ local function get_completion_word(item, prefix, match)
     end
   elseif item.textEdit then
     local word = item.textEdit.newText
-    return word:match('^(%S*)') or word
+    word = word:match('^(%S*)') or word
+    if item.filterText and not match(word, prefix) then
+      return item.filterText
+    end
+    return word
   elseif item.insertText and item.insertText ~= '' then
     return item.insertText
   end
@@ -394,7 +398,10 @@ function M._convert_results(
   elseif curstartbyte ~= nil and curstartbyte ~= server_start_boundary then
     server_start_boundary = client_start_boundary
   end
-  local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
+  local prefix = line:sub(
+    Context.cursor and Context.cursor[2] + 1 or (server_start_boundary or client_start_boundary) + 1,
+    cursor_col
+  )
   local matches = M._lsp_to_complete_items(result, prefix, client_id)
   return matches, server_start_boundary
 end
@@ -490,6 +497,9 @@ local function trigger(bufnr, clients)
         vim.list_extend(matches, client_matches)
       end
     end
+    if #matches == 0 then
+      return
+    end
     local start_col = (server_start_boundary or word_boundary) + 1
     Context.cursor = { cursor_row, start_col }
     vim.fn.complete(start_col, matches)
@@ -566,7 +576,7 @@ local function on_complete_done()
   local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
 
   local function clear_word()
-    if not expand_snippet then
+    if not expand_snippet and not completion_item.textEdit then
       return nil
     end
 
@@ -618,6 +628,17 @@ local function on_complete_done()
       end
       apply_snippet_and_command()
     end, bufnr)
+  elseif
+    completion_item.textEdit
+    and completion_item.insertTextFormat ~= lsp.protocol.InsertTextFormat.Snippet
+  then
+    clear_word()
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    lsp.util.apply_text_edits({ completion_item.textEdit }, bufnr, position_encoding)
+    api.nvim_win_set_cursor(0, {
+      cursor_row + 1,
+      Context.cursor[2] + vim.fn.strdisplaywidth(completion_item.textEdit.newText),
+    })
   else
     clear_word()
     apply_snippet_and_command()
@@ -660,9 +681,13 @@ local function enable_completions(client_id, bufnr, opts)
       buffer = bufnr,
       callback = function()
         local reason = api.nvim_get_vvar('event').reason --- @type string
+        if reason == 'discard' then
+          return
+        end
         if reason == 'accept' then
           on_complete_done()
         end
+        Context.cursor = nil
       end,
     })
     if opts.autotrigger then
