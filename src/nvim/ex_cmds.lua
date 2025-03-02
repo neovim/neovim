@@ -1,3 +1,6 @@
+-- TODO(dundargoc): removing following warning once
+-- https://github.com/LuaLS/lua-language-server/pull/3091 has been merged
+---@diagnostic disable: missing-parameter
 local bit = require 'bit'
 
 local M = {}
