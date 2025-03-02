@@ -214,6 +214,7 @@ M.vars = {
         reason           Reason for completion being done. |CompleteDone|
         complete_word    The word that was selected, empty if abandoned complete.
         complete_type    See |complete_info_mode|
+        windows          List of window IDs that changed on |WinResized|
     ]=],
   },
   exception = {
