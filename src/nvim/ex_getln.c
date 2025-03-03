@@ -1140,7 +1140,7 @@ static int command_line_wildchar_complete(CommandLineState *s)
           int p_wmnu_save = p_wmnu;
           p_wmnu = 0;
           // remove match
-          nextwild(&s->xpc, WILD_PREV, 0 | (options & ~kOptWimFlagNoselect), s->firstc != '@');
+          nextwild(&s->xpc, WILD_PREV, options, s->firstc != '@');
           p_wmnu = p_wmnu_save;
         }
 
