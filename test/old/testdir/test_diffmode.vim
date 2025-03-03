@@ -2045,6 +2045,30 @@ func Test_diff_overlapped_diff_blocks_will_be_merged()
   call WriteDiffFiles3(buf, ["a", "b", "c"], ["d", "e"], ["b"])
   call VerifyBoth(buf, "Test_diff_overlapped_3.39", "")
 
+  " File 3 overlaps twice, 2nd overlap completely within the existing block.
+  call WriteDiffFiles3(buf, ["foo", "a", "b", "c", "bar"], ["foo", "w", "x", "y", "z", "bar"], ["foo", "1", "a", "b", "2", "bar"])
+  call VerifyBoth(buf, "Test_diff_overlapped_3.40", "")
+
+  " File 3 overlaps twice, 2nd overlap extends beyond existing block on new
+  " side. Make sure we don't over-extend the range and hit 'bar'.
+  call WriteDiffFiles3(buf, ["foo", "a", "b", "c", "d", "bar"], ["foo", "w", "x", "y", "z", "u", "bar"], ["foo", "1", "a", "b", "2", "d", "bar"])
+  call VerifyBoth(buf, "Test_diff_overlapped_3.41", "")
+
+  " Chained overlaps. File 3's 2nd overlap spans two diff blocks and is longer
+  " than the 2nd one.
+  call WriteDiffFiles3(buf, ["foo", "a", "b", "c", "d", "e", "f", "bar"], ["foo", "w", "x", "y", "z", "e", "u", "bar"], ["foo", "1", "b", "2", "3", "d", "4", "f", "bar"])
+  call VerifyBoth(buf, "Test_diff_overlapped_3.42", "")
+
+  " File 3 has 2 overlaps. An add and a delete. First overlap's expansion hits
+  " the 2nd one. Make sure we adjust the diff block to have fewer lines.
+  call WriteDiffFiles3(buf, ["foo", "a", "b", "bar"], ["foo", "x", "y", "bar"], ["foo", "1", "a", "bar"])
+  call VerifyBoth(buf, "Test_diff_overlapped_3.43", "")
+
+  " File 3 has 2 overlaps. An add and another add. First overlap's expansion hits
+  " the 2nd one. Make sure we adjust the diff block to have more lines.
+  call WriteDiffFiles3(buf, ["foo", "a", "b", "c", "d", "bar"], ["foo", "w", "x", "y", "z", "u", "bar"], ["foo", "1", "a", "b", "3", "4", "d", "bar"])
+  call VerifyBoth(buf, "Test_diff_overlapped_3.44", "")
+
   call StopVimInTerminal(buf)
 endfunc
 

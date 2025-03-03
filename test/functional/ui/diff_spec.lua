@@ -2064,6 +2064,88 @@ it('diff mode overlapped diff blocks will be merged', function()
     {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
                                        |
   ]])
+
+  -- File 3 overlaps twice, 2nd overlap completely within the existing block.
+  WriteDiffFiles3('foo\na\nb\nc\nbar', 'foo\nw\nx\ny\nz\nbar', 'foo\n1\na\nb\n2\nbar')
+  screen:expect([[
+    {7:  }foo      │{7:  }foo      │{7:  }^foo      |
+    {7:  }{27:a}{4:        }│{7:  }{27:w}{4:        }│{7:  }{27:1}{4:        }|
+    {7:  }{27:b}{4:        }│{7:  }{27:x}{4:        }│{7:  }{27:a}{4:        }|
+    {7:  }{27:c}{4:        }│{7:  }{27:y}{4:        }│{7:  }{27:b}{4:        }|
+    {7:  }{23:---------}│{7:  }{27:z}{4:        }│{7:  }{27:2}{4:        }|
+    {7:  }bar      │{7:  }bar      │{7:  }bar      |
+    {1:~          }│{1:~          }│{1:~          }|*12
+    {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
+                                       |
+  ]])
+
+  -- File 3 overlaps twice, 2nd overlap extends beyond existing block on new
+  -- side. Make sure we don't over-extend the range and hit 'bar'.
+  WriteDiffFiles3('foo\na\nb\nc\nd\nbar', 'foo\nw\nx\ny\nz\nu\nbar', 'foo\n1\na\nb\n2\nd\nbar')
+  screen:expect([[
+    {7:  }foo      │{7:  }foo      │{7:  }^foo      |
+    {7:  }{27:a}{4:        }│{7:  }{27:w}{4:        }│{7:  }{27:1}{4:        }|
+    {7:  }{27:b}{4:        }│{7:  }{27:x}{4:        }│{7:  }{27:a}{4:        }|
+    {7:  }{27:c}{4:        }│{7:  }{27:y}{4:        }│{7:  }{27:b}{4:        }|
+    {7:  }{27:d}{4:        }│{7:  }{27:z}{4:        }│{7:  }{27:2}{4:        }|
+    {7:  }{23:---------}│{7:  }{27:u}{4:        }│{7:  }{27:d}{4:        }|
+    {7:  }bar      │{7:  }bar      │{7:  }bar      |
+    {1:~          }│{1:~          }│{1:~          }|*11
+    {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
+                                       |
+  ]])
+
+  -- Chained overlaps. File 3's 2nd overlap spans two diff blocks and is longer
+  -- than the 2nd one.
+  WriteDiffFiles3(
+    'foo\na\nb\nc\nd\ne\nf\nbar',
+    'foo\nw\nx\ny\nz\ne\nu\nbar',
+    'foo\n1\nb\n2\n3\nd\n4\nf\nbar'
+  )
+  screen:expect([[
+    {7:  }foo      │{7:  }foo      │{7:  }^foo      |
+    {7:  }{27:a}{4:        }│{7:  }{27:w}{4:        }│{7:  }{27:1}{4:        }|
+    {7:  }{27:b}{4:        }│{7:  }{27:x}{4:        }│{7:  }{27:b}{4:        }|
+    {7:  }{27:c}{4:        }│{7:  }{27:y}{4:        }│{7:  }{27:2}{4:        }|
+    {7:  }{27:d}{4:        }│{7:  }{27:z}{4:        }│{7:  }{27:3}{4:        }|
+    {7:  }{27:e}{4:        }│{7:  }{27:e}{4:        }│{7:  }{27:d}{4:        }|
+    {7:  }{27:f}{4:        }│{7:  }{27:u}{4:        }│{7:  }{27:4}{4:        }|
+    {7:  }{23:---------}│{7:  }{23:---------}│{7:  }{22:f        }|
+    {7:  }bar      │{7:  }bar      │{7:  }bar      |
+    {1:~          }│{1:~          }│{1:~          }|*9
+    {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
+                                       |
+  ]])
+
+  -- File 3 has 2 overlaps. An add and a delete. First overlap's expansion hits
+  -- the 2nd one. Make sure we adjust the diff block to have fewer lines.
+  WriteDiffFiles3('foo\na\nb\nbar', 'foo\nx\ny\nbar', 'foo\n1\na\nbar')
+  screen:expect([[
+    {7:  }foo      │{7:  }foo      │{7:  }^foo      |
+    {7:  }{27:a}{4:        }│{7:  }{27:x}{4:        }│{7:  }{27:1}{4:        }|
+    {7:  }{27:b}{4:        }│{7:  }{27:y}{4:        }│{7:  }{27:a}{4:        }|
+    {7:  }bar      │{7:  }bar      │{7:  }bar      |
+    {1:~          }│{1:~          }│{1:~          }|*14
+    {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
+                                       |
+  ]])
+
+  -- File 3 has 2 overlaps. An add and another add. First overlap's expansion hits
+  -- the 2nd one. Make sure we adjust the diff block to have more lines.
+  WriteDiffFiles3('foo\na\nb\nc\nd\nbar', 'foo\nw\nx\ny\nz\nu\nbar', 'foo\n1\na\nb\n3\n4\nd\nbar')
+  screen:expect([[
+    {7:  }foo      │{7:  }foo      │{7:  }^foo      |
+    {7:  }{27:a}{4:        }│{7:  }{27:w}{4:        }│{7:  }{27:1}{4:        }|
+    {7:  }{27:b}{4:        }│{7:  }{27:x}{4:        }│{7:  }{27:a}{4:        }|
+    {7:  }{27:c}{4:        }│{7:  }{27:y}{4:        }│{7:  }{27:b}{4:        }|
+    {7:  }{27:d}{4:        }│{7:  }{27:z}{4:        }│{7:  }{27:3}{4:        }|
+    {7:  }{23:---------}│{7:  }{27:u}{4:        }│{7:  }{27:4}{4:        }|
+    {7:  }{23:---------}│{7:  }{23:---------}│{7:  }{22:d        }|
+    {7:  }bar      │{7:  }bar      │{7:  }bar      |
+    {1:~          }│{1:~          }│{1:~          }|*10
+    {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
+                                       |
+  ]])
 end)
 
 -- oldtest: Test_diff_topline_noscroll()
