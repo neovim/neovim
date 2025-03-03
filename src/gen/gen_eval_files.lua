@@ -51,6 +51,15 @@ local LUA_API_KEYSET_OVERRIDES = {
   create_autocmd = {
     callback = 'string|(fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?)',
   },
+  win_config = {
+    anchor = "'NW'|'NE'|'SW'|'SE'",
+    relative = "'cursor'|'editor'|'laststatus'|'mouse'|'tabline'|'win'",
+    split = "'left'|'right'|'above'|'below'",
+    border = "'none'|'single'|'double'|'rounded'|'solid'|'shadow'|string[]",
+    title_pos = "'center'|'left'|'right'",
+    footer_pos = "'center'|'left'|'right'",
+    style = "'minimal'",
+  },
 }
 
 local LUA_API_PARAM_OVERRIDES = {
