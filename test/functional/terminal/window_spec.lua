@@ -415,6 +415,173 @@ describe(':terminal window', function()
     ]])
   end)
 
+  it('restores window options when switching terminals', function()
+    -- Make this a screen test to also check for proper redrawing.
+    screen:set_default_attr_ids({
+      [1] = { bold = true },
+      [2] = { foreground = Screen.colors.Gray0, background = 7, underline = true },
+      [3] = { foreground = 5, background = 7, underline = true },
+      [4] = { reverse = true },
+      [5] = { bold = true, foreground = 5 },
+      [6] = { foreground = 12 },
+      [7] = { reverse = true, bold = true },
+      [12] = { underline = true },
+      [17] = { foreground = Screen.colors.Gray0, background = 2 },
+      [18] = { foreground = 8, background = 2 },
+      [19] = { background = 7 },
+    })
+
+    feed([[<C-\><C-N>]])
+    command([[
+      file foo
+      setlocal cursorline
+      vsplit
+      setlocal nocursorline cursorcolumn
+    ]])
+    screen:expect([[
+      {19:t}ty ready                │tty ready               |
+      ^rows: 5, cols: 25        │{12:rows: 5, cols: 25       }|
+      {19: }                        │                        |*3
+      {17:foo [-]                   }{18:foo [-]                 }|
+                                                        |
+    ]])
+
+    feed('i')
+    screen:expect([[
+      tty ready                │tty ready               |
+      rows: 5, cols: 25        │{12:rows: 5, cols: 25       }|
+      ^                         │                        |
+                               │                        |*2
+      {17:foo [-]                   }{18:foo [-]                 }|
+      {1:-- TERMINAL --}                                    |
+    ]])
+    command('wincmd p')
+    screen:expect([[
+      {19:t}ty ready                │tty ready               |
+      {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
+                               │^                        |
+      {19: }                        │                        |*2
+      {18:foo [-]                   }{17:foo [-]                 }|
+      {1:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      {19:t}ty ready                │tty ready               |
+      {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
+                               │{12:^                        }|
+      {19: }                        │                        |*2
+      {18:foo [-]                   }{17:foo [-]                 }|
+                                                        |
+    ]])
+
+    -- Ensure things work when switching tabpages.
+    command('tab split | setlocal cursorline cursorcolumn')
+    screen:expect([[
+      {2: }{3:2}{2: foo }{1: foo }{4:                                     }{2:X}|
+      {19:t}ty ready                                         |
+      {19:r}ows: 5, cols: 25                                 |
+      {12:^rows: 5, cols: 50                                 }|
+      {19: }                                                 |*2
+                                                        |
+    ]])
+    feed('i')
+    screen:expect([[
+      {2: }{3:2}{2: foo }{1: foo }{4:                                     }{2:X}|
+      tty ready                                         |
+      rows: 5, cols: 25                                 |
+      rows: 5, cols: 50                                 |
+      ^                                                  |
+                                                        |
+      {1:-- TERMINAL --}                                    |
+    ]])
+    command('tabprevious')
+    screen:expect([[
+      {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
+      {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
+      rows: 5, cols: 50        │rows: 5, cols: 50       |
+      {19: }                        │^                        |
+      {19: }                        │                        |
+      {18:foo [-]                   }{17:foo [-]                 }|
+      {1:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
+      {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
+      rows: 5, cols: 50        │rows: 5, cols: 50       |
+      {19: }                        │{12:                        }|
+      {19: }                        │^                        |
+      {18:foo [-]                   }{17:foo [-]                 }|
+                                                        |
+    ]])
+    command('tabnext')
+    screen:expect([[
+      {2: }{3:2}{2: foo }{1: foo }{4:                                     }{2:X}|
+      {19:t}ty ready                                         |
+      {19:r}ows: 5, cols: 25                                 |
+      {19:r}ows: 5, cols: 50                                 |
+      {12:^                                                  }|
+      {19: }                                                 |
+                                                        |
+    ]])
+
+    -- Closing windows shouldn't break things.
+    command('tabprevious')
+    feed('i')
+    screen:expect([[
+      {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
+      {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
+      rows: 5, cols: 50        │rows: 5, cols: 50       |
+      {19: }                        │                        |
+      {19: }                        │^                        |
+      {18:foo [-]                   }{17:foo [-]                 }|
+      {1:-- TERMINAL --}                                    |
+    ]])
+    command('quit')
+    screen:expect([[
+      {1: foo }{2: foo }{4:                                       }{2:X}|
+      tty ready                                         |
+      rows: 5, cols: 25                                 |
+      rows: 5, cols: 50                                 |
+      ^                                                  |
+                                                        |
+      {1:-- TERMINAL --}                                    |
+    ]])
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      {1: foo }{2: foo }{4:                                       }{2:X}|
+      {19:t}ty ready                                         |
+      {19:r}ows: 5, cols: 25                                 |
+      {19:r}ows: 5, cols: 50                                 |
+      ^                                                  |
+      {19: }                                                 |
+                                                        |
+    ]])
+
+    -- Switching to a non-terminal.
+    command('vnew')
+    feed([[<C-W>pi]])
+    screen:expect([[
+      {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
+                               │rows: 5, cols: 25       |
+      {6:~                        }│rows: 5, cols: 50       |
+      {6:~                        }│                        |
+      {6:~                        }│^                        |
+      {4:[No Name]                 }{17:foo [-]                 }|
+      {1:-- TERMINAL --}                                    |
+    ]])
+    command('wincmd p')
+    screen:expect([[
+      {1: }{5:2}{1: [No Name] }{2: foo }{4:                               }{2:X}|
+      ^                         │{19:r}ows: 5, cols: 25       |
+      {6:~                        }│{19:r}ows: 5, cols: 50       |
+      {6:~                        }│                        |
+      {6:~                        }│{19: }                       |
+      {7:[No Name]                 }{18:foo [-]                 }|
+                                                        |
+    ]])
+  end)
+
   it('not unnecessarily redrawn by events', function()
     eq('t', eval('mode()'))
     exec_lua(function()
