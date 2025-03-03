@@ -329,6 +329,7 @@ OPTIONS
 
 • 'completeopt' flag "fuzzy" enables |fuzzy-matching| during |ins-completion|.
 • 'completeopt' flag "preinsert" highlights text to be inserted.
+• 'wildmode' flag "noselect" shows 'wildmenu' without selecting an entry.
 • 'messagesopt' configures |:messages| and |hit-enter| prompt.
 • 'tabclose' controls which tab page to focus when closing a tab page.
 • 'eventignorewin' to persistently ignore events in a window.

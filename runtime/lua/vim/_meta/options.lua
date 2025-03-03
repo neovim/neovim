@@ -7691,7 +7691,10 @@ vim.go.wmnu = vim.go.wildmenu
 --- "lastused"	When completing buffer names and more than one buffer
 --- 		matches, sort buffers by time last used (other than
 --- 		the current buffer).
---- When there is only a single match, it is fully completed in all cases.
+--- "noselect"	Do not pre-select first menu item and start 'wildmenu'
+--- 		if it is enabled.
+--- When there is only a single match, it is fully completed in all cases
+--- except when "noselect" is present.
 ---
 --- Examples of useful colon-separated values:
 --- "longest:full"	Like "longest", but also start 'wildmenu' if it is
@@ -7729,7 +7732,17 @@ vim.go.wmnu = vim.go.wildmenu
 --- ```vim
 --- 	set wildmode=longest,list
 --- ```
---- Complete longest common string, then list alternatives.
+--- Complete longest common string, then list alternatives
+---
+--- ```vim
+--- 	set wildmode=noselect:full
+--- ```
+--- Display 'wildmenu' without completing, then each full match
+---
+--- ```vim
+--- 	set wildmode=noselect:lastused,full
+--- ```
+--- Same as above, but sort buffers by time last used.
 --- More info here: `cmdline-completion`.
 ---
 --- @type string
