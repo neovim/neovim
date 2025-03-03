@@ -5,6 +5,7 @@ local uv = vim.uv
 
 local clear, command, testprg = n.clear, n.command, n.testprg
 local eval, eq, neq, retry = n.eval, t.eq, t.neq, t.retry
+local exec_lua = n.exec_lua
 local matches = t.matches
 local ok = t.ok
 local feed = n.feed
@@ -197,30 +198,63 @@ it('autocmd TermEnter, TermLeave', function()
   }, eval('g:evs'))
 end)
 
-describe('autocmd TextChangedT', function()
-  local screen
-  before_each(function()
-    clear()
-    screen = tt.setup_screen()
-  end)
+describe('autocmd TextChangedT,WinResized', function()
+  before_each(clear)
 
-  it('works', function()
+  it('TextChangedT works', function()
     command('autocmd TextChangedT * ++once let g:called = 1')
+    tt.setup_screen()
     tt.feed_data('a')
     retry(nil, nil, function()
       eq(1, api.nvim_get_var('called'))
     end)
   end)
 
-  it('cannot delete terminal buffer', function()
-    command('autocmd TextChangedT * bwipe!')
-    tt.feed_data('a')
-    screen:expect({ any = 'E937: ' })
-    feed('<CR>')
-    command('autocmd! TextChangedT')
-    matches(
-      '^E937: Attempt to delete a buffer that is in use: term://',
-      api.nvim_get_vvar('errmsg')
-    )
+  it('no crash when deleting terminal buffer', function()
+    -- Using nvim_open_term over :terminal as the former can free the terminal immediately on
+    -- close, causing the crash.
+
+    -- WinResized
+    local buf1, term1 = exec_lua(function()
+      vim.cmd.new()
+      local buf = vim.api.nvim_get_current_buf()
+      local term = vim.api.nvim_open_term(0, {
+        on_input = function()
+          vim.cmd.wincmd '_'
+        end,
+      })
+      vim.api.nvim_create_autocmd('WinResized', {
+        once = true,
+        command = 'bwipeout!',
+      })
+      return buf, term
+    end)
+    feed('ii')
+    eq(false, api.nvim_buf_is_valid(buf1))
+    eq('n', eval('mode()'))
+    eq({}, api.nvim_get_chan_info(term1)) -- Channel should've been cleaned up.
+
+    -- TextChangedT
+    local buf2, term2 = exec_lua(function()
+      vim.cmd.new()
+      local buf = vim.api.nvim_get_current_buf()
+      local term = vim.api.nvim_open_term(0, {
+        on_input = function(_, chan)
+          vim.api.nvim_chan_send(chan, 'sup')
+        end,
+      })
+      vim.api.nvim_create_autocmd('TextChangedT', {
+        once = true,
+        command = 'bwipeout!',
+      })
+      return buf, term
+    end)
+    feed('ii')
+    -- refresh_terminal is deferred, so TextChangedT may not trigger immediately.
+    retry(nil, nil, function()
+      eq(false, api.nvim_buf_is_valid(buf2))
+    end)
+    eq('n', eval('mode()'))
+    eq({}, api.nvim_get_chan_info(term2)) -- Channel should've been cleaned up.
   end)
 end)
