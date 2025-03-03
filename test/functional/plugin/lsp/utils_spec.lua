@@ -382,5 +382,23 @@ describe('vim.lsp.util', function()
       {1:~                                                    }|*9
                                                            |
     ]])
+    -- This tests the valid winline code path (why doesn't the above?).
+    exec_lua([[
+      vim.cmd.only()
+      vim.lsp.util.open_floating_preview({ 'foo', '```lua', 'local bar', '```' }, 'markdown', {
+        border = 'single',
+        focus = false,
+      })
+    ]])
+    feed('<C-W>wG')
+    screen:expect([[
+                                                           |
+      ┌─────────┐{1:                                          }|
+      │{4:foo      }│{1:                                          }|
+      │{100:^local}{101: }{102:bar}│{1:                                          }|
+      └─────────┘{1:                                          }|
+      {1:~                                                    }|*8
+                                                           |
+    ]])
   end)
 end)
