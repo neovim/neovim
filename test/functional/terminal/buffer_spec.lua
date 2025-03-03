@@ -343,6 +343,73 @@ describe(':terminal buffer', function()
                                                         |*4
     ]])
   end)
+
+  it('reports focus notifications when requested', function()
+    feed([[<C-\><C-N>]])
+    exec_lua(function()
+      local function new_test_term()
+        local chan = vim.api.nvim_open_term(0, {
+          on_input = function(_, term, buf, data)
+            if data == '\27[I' then
+              vim.api.nvim_chan_send(term, 'focused\n')
+            elseif data == '\27[O' then
+              vim.api.nvim_chan_send(term, 'unfocused\n')
+            end
+          end,
+        })
+        vim.api.nvim_chan_send(chan, '\27[?1004h') -- Enable focus reporting
+      end
+
+      vim.cmd 'edit bar'
+      new_test_term()
+      vim.cmd 'vnew foo'
+      new_test_term()
+      vim.cmd 'vsplit'
+    end)
+    screen:expect([[
+      ^                    │              │              |
+                          │              │              |*4
+      {17:foo                  }{18:foo            bar           }|
+                                                        |
+    ]])
+
+    feed('i')
+    screen:expect([[
+      focused             │focused       │              |
+      ^                    │              │              |
+                          │              │              |*3
+      {17:foo                  }{18:foo            bar           }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- Next window has the same terminal; no new notifications.
+    command('wincmd w')
+    screen:expect([[
+      focused             │focused             │        |
+                          │^                    │        |
+                          │                    │        |*3
+      {18:foo                  }{17:foo                  }{18:bar     }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- Next window has a different terminal; expect new unfocus and focus notifications.
+    command('wincmd w')
+    screen:expect([[
+      focused             │focused │focused             |
+      unfocused           │unfocuse│^                    |
+                          │        │                    |*3
+      {18:foo                  foo      }{17:bar                 }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- Leaving terminal mode; expect a new unfocus notification.
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      focused             │focused │focused             |
+      unfocused           │unfocuse│unfocused           |
+                          │        │^                    |
+                          │        │                    |*2
+      {18:foo                  foo      }{17:bar                 }|
+                                                        |
+    ]])
+  end)
 end)
 
 describe(':terminal buffer', function()
