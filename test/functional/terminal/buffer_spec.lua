@@ -390,6 +390,34 @@ describe(':terminal buffer', function()
       }, exec_lua('return _G.input'))
     end)
 
+    it('works with vim.wait() from another autocommand #32706', function()
+      command('autocmd! nvim.terminal TermRequest')
+      exec_lua([[
+        local term = vim.api.nvim_open_term(0, {})
+        vim.api.nvim_create_autocmd('TermRequest', {
+          buffer = 0,
+          callback = function(ev)
+            _G.sequence = ev.data.sequence
+            _G.v_termrequest = vim.v.termrequest
+          end,
+        })
+        vim.api.nvim_create_autocmd('TermEnter', {
+          buffer = 0,
+          callback = function()
+            vim.api.nvim_chan_send(term, '\027]11;?\027\\')
+            _G.result = vim.wait(3000, function()
+              local expected = '\027]11;?'
+              return _G.sequence == expected and _G.v_termrequest == expected
+            end)
+          end,
+        })
+      ]])
+      feed('i')
+      retry(nil, 4000, function()
+        eq(true, exec_lua('return _G.result'))
+      end)
+    end)
+
     it('includes cursor position #31609', function()
       command('autocmd! nvim.terminal TermRequest')
       local screen = Screen.new(50, 10)

@@ -510,7 +510,7 @@ void nvim_ui_term_event(uint64_t channel_id, String event, Object value, Error *
 
     MAXSIZE_TEMP_DICT(data, 1);
     PUT_C(data, "sequence", value);
-    apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, false, AUGROUP_ALL, NULL, NULL,
+    apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, true, AUGROUP_ALL, NULL, NULL,
                          &DICT_OBJ(data));
   }
 }
