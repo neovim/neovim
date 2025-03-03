@@ -155,9 +155,6 @@ static uint8_t noremapbuf_init[TYPELEN_INIT];  ///< initial typebuf.tb_noremap
 
 static size_t last_recorded_len = 0;  ///< number of last recorded chars
 
-static size_t last_get_inserted_len = 0;  ///< length of the string returned from the
-                                          ///< last call to get_inserted()
-
 enum {
   KEYLEN_PART_KEY = -1,  ///< keylen value for incomplete key-code
   KEYLEN_PART_MAP = -2,  ///< keylen value for incomplete mapping
@@ -254,15 +251,11 @@ char *get_recorded(void)
 
 /// Return the contents of the redo buffer as a single string.
 /// K_SPECIAL in the returned string is escaped.
-char *get_inserted(void)
+String get_inserted(void)
 {
-  return get_buffcont(&redobuff, false, &last_get_inserted_len);
-}
-
-/// Return the length of string returned from the last call of get_inserted().
-size_t get_inserted_len(void)
-{
-  return last_get_inserted_len;
+  size_t len = 0;
+  char *str = get_buffcont(&redobuff, false, &len);
+  return cbuf_as_string(str, len);
 }
 
 /// Add string after the current block of the given buffer

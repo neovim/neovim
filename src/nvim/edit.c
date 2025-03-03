@@ -9,6 +9,7 @@
 #include <uv.h>
 
 #include "klib/kvec.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
@@ -99,7 +100,6 @@ typedef struct {
   int did_restart_edit;              // remember if insert mode was restarted
                                      // after a ctrl+o
   bool nomove;
-  char *ptr;
 } InsertState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -163,15 +163,8 @@ static void insert_enter(InsertState *s)
   if (s->cmdchar != 'r' && s->cmdchar != 'v') {
     pos_T save_cursor = curwin->w_cursor;
 
-    if (s->cmdchar == 'R') {
-      s->ptr = "r";
-    } else if (s->cmdchar == 'V') {
-      s->ptr = "v";
-    } else {
-      s->ptr = "i";
-    }
-
-    set_vim_var_string(VV_INSERTMODE, s->ptr, 1);
+    const char *const ptr = s->cmdchar == 'R' ? "r" : s->cmdchar == 'V' ? "v" : "i";
+    set_vim_var_string(VV_INSERTMODE, ptr, 1);
     set_vim_var_string(VV_CHAR, NULL, -1);
     ins_apply_autocmds(EVENT_INSERTENTER);
 
@@ -288,14 +281,15 @@ static void insert_enter(InsertState *s)
     // column.  Eg after "^O$" or "^O80|".
     validate_virtcol(curwin);
     update_curswant();
+    const char *ptr;
     if (((ins_at_eol && curwin->w_cursor.lnum == o_lnum)
          || curwin->w_curswant > curwin->w_virtcol)
-        && *(s->ptr = get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
-      if (s->ptr[1] == NUL) {
+        && *(ptr = get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
+      if (ptr[1] == NUL) {
         curwin->w_cursor.col++;
       } else {
-        s->i = utfc_ptr2len(s->ptr);
-        if (s->ptr[s->i] == NUL) {
+        s->i = utfc_ptr2len(ptr);
+        if (ptr[s->i] == NUL) {
           curwin->w_cursor.col += s->i;
         }
       }
@@ -335,12 +329,10 @@ static void insert_enter(InsertState *s)
 
   // Get the current length of the redo buffer, those characters have to be
   // skipped if we want to get to the inserted characters.
-  s->ptr = get_inserted();
-  if (s->ptr == NULL) {
-    new_insert_skip = 0;
-  } else {
-    new_insert_skip = (int)get_inserted_len();
-    xfree(s->ptr);
+  String inserted = get_inserted();
+  new_insert_skip = (int)inserted.size;
+  if (inserted.data != NULL) {
+    xfree(inserted.data);
   }
 
   old_indent = 0;
@@ -2337,14 +2329,14 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   // Save the inserted text for later redo with ^@ and CTRL-A.
   // Don't do it when "restart_edit" was set and nothing was inserted,
   // otherwise CTRL-O w and then <Left> will clear "last_insert".
-  char *ptr = get_inserted();
-  int added = ptr == NULL ? 0 : (int)get_inserted_len() - new_insert_skip;
+  String inserted = get_inserted();
+  int added = inserted.data == NULL ? 0 : (int)inserted.size - new_insert_skip;
   if (did_restart_edit == 0 || added > 0) {
     xfree(last_insert);
-    last_insert = ptr;
+    last_insert = inserted.data;
     last_insert_skip = added < 0 ? 0 : new_insert_skip;
   } else {
-    xfree(ptr);
+    xfree(inserted.data);
   }
 
   if (!arrow_used && end_insert_pos != NULL) {
