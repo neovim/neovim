@@ -288,7 +288,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
       p1 = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
     }
     // Translate string into pattern and expand it.
-    const int use_options = (options
+    const int use_options = ((options & ~WILD_KEEP_SOLE_ITEM)
                              | WILD_HOME_REPLACE
                              | WILD_ADD_SLASH
                              | WILD_SILENT
@@ -339,7 +339,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   if (xp->xp_numfiles <= 0 && p2 == NULL) {
     beep_flush();
-  } else if (xp->xp_numfiles == 1) {
+  } else if (xp->xp_numfiles == 1 && !(options & WILD_KEEP_SOLE_ITEM)) {
     // free expanded pattern
     ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
   }

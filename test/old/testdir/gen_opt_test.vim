@@ -352,6 +352,7 @@ let test_values = {
       \		'bs'],
       \		['xxx']],
       \ 'wildmode': [['', 'full', 'longest', 'list', 'lastused', 'list:full',
+      \		'noselect', 'noselect,full', 'noselect:lastused,full',
       \		'full,longest', 'full,full,full,full'],
       \		['xxx', 'a4', 'full,full,full,full,full']],
       \ 'wildoptions': [['', 'tagfile', 'pum', 'fuzzy'], ['xxx']],

@@ -2168,22 +2168,58 @@ func Wildmode_tests()
   call assert_equal('AAA    AAAA   AAAAA', g:Sline)
   call assert_equal('"b A', @:)
 
+  " When 'wildmenu' is not set, 'noselect' completes first item
+  set wildmode=noselect
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+
+  " When 'noselect' is present, do not complete first <tab>.
+  set wildmenu
+  set wildmode=noselect
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-Y>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+
+  " When 'full' is present, complete after first <tab>.
+  set wildmode=noselect,full
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+  call feedkeys(":MyCmd o\t\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneB', @:)
+  call feedkeys(":MyCmd o\t\t\t\<C-Y>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneB', @:)
+
+  " 'noselect' has no effect when 'longest' is present.
+  set wildmode=noselect:longest
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd one', @:)
+
+  " Complete 'noselect' value in 'wildmode' option
+  set wildmode&
+  call feedkeys(":set wildmode=n\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set wildmode=noselect', @:)
+  call feedkeys(":set wildmode=\t\t\t\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set wildmode=noselect', @:)
+
   " when using longest completion match, matches shorter than the argument
   " should be ignored (happens with :help)
   set wildmode=longest,full
-  set wildmenu
   call feedkeys(":help a*\t\<C-B>\"\<CR>", 'xt')
   call assert_equal('"help a', @:)
   " non existing file
   call feedkeys(":e a1b2y3z4\t\<C-B>\"\<CR>", 'xt')
   call assert_equal('"e a1b2y3z4', @:)
-  set wildmenu&
 
   " Test for longest file name completion with 'fileignorecase'
   " On MS-Windows, file names are case insensitive.
   if has('unix')
-    call writefile([], 'XTESTfoo')
-    call writefile([], 'Xtestbar')
+    call writefile([], 'XTESTfoo', 'D')
+    call writefile([], 'Xtestbar', 'D')
     set nofileignorecase
     call feedkeys(":e XT\<Tab>\<C-B>\"\<CR>", 'xt')
     call assert_equal('"e XTESTfoo', @:)
@@ -2195,9 +2231,22 @@ func Wildmode_tests()
     call feedkeys(":e Xt\<Tab>\<C-B>\"\<CR>", 'xt')
     call assert_equal('"e Xtest', @:)
     set fileignorecase&
-    call delete('XTESTfoo')
-    call delete('Xtestbar')
   endif
+
+  " If 'noselect' is present, single item menu should not insert item
+  func! T(a, c, p)
+    return "oneA"
+  endfunc
+  command! -nargs=1 -complete=custom,T MyCmd
+  set wildmode=noselect,full
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+  " 'nowildmenu' should make 'noselect' ineffective
+  set nowildmenu
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
 
   %argdelete
   delcommand MyCmd

@@ -1082,6 +1082,9 @@ static int command_line_wildchar_complete(CommandLineState *s)
   if (wim_flags[s->wim_index] & kOptWimFlagLastused) {
     options |= WILD_BUFLASTUSED;
   }
+  if (wim_flags[0] & kOptWimFlagNoselect) {
+    options |= WILD_KEEP_SOLE_ITEM;
+  }
   if (s->xpc.xp_numfiles > 0) {       // typed p_wc at least twice
     // if 'wildmode' contains "list" may still need to list
     if (s->xpc.xp_numfiles > 1
@@ -1124,19 +1127,20 @@ static int command_line_wildchar_complete(CommandLineState *s)
     // when more than one match, and 'wildmode' first contains
     // "list", or no change and 'wildmode' contains "longest,list",
     // list all matches
-    if (res == OK && s->xpc.xp_numfiles > 1) {
+    if (res == OK
+        && s->xpc.xp_numfiles > ((wim_flags[s->wim_index] & kOptWimFlagNoselect) ? 0 : 1)) {
       // a "longest" that didn't do anything is skipped (but not
       // "list:longest")
       if (wim_flags[0] == kOptWimFlagLongest && ccline.cmdpos == j) {
         s->wim_index = 1;
       }
       if ((wim_flags[s->wim_index] & kOptWimFlagList)
-          || (p_wmnu && (wim_flags[s->wim_index] & kOptWimFlagFull) != 0)) {
+          || (p_wmnu && (wim_flags[s->wim_index] & (kOptWimFlagFull|kOptWimFlagNoselect)))) {
         if (!(wim_flags[0] & kOptWimFlagLongest)) {
           int p_wmnu_save = p_wmnu;
           p_wmnu = 0;
           // remove match
-          nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
+          nextwild(&s->xpc, WILD_PREV, options, s->firstc != '@');
           p_wmnu = p_wmnu_save;
         }
 
@@ -1146,7 +1150,8 @@ static int command_line_wildchar_complete(CommandLineState *s)
 
         if (wim_flags[s->wim_index] & kOptWimFlagLongest) {
           nextwild(&s->xpc, WILD_LONGEST, options, s->firstc != '@');
-        } else if (wim_flags[s->wim_index] & kOptWimFlagFull) {
+        } else if ((wim_flags[s->wim_index] & kOptWimFlagFull)
+                   && !(wim_flags[s->wim_index] & kOptWimFlagNoselect)) {
           nextwild(&s->xpc, WILD_NEXT, options, s->firstc != '@');
         }
       } else {
@@ -2875,6 +2880,8 @@ int check_opt_wim(void)
       new_wim_flags[idx] |= kOptWimFlagList;
     } else if (i == 8 && strncmp(p, "lastused", 8) == 0) {
       new_wim_flags[idx] |= kOptWimFlagLastused;
+    } else if (i == 8 && strncmp(p, "noselect", 8) == 0) {
+      new_wim_flags[idx] |= kOptWimFlagNoselect;
     } else {
       return FAIL;
     }
