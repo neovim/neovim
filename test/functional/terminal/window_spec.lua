@@ -495,12 +495,13 @@ describe(':terminal window', function()
       {1:-- TERMINAL --}                                    |
     ]])
     command('tabprevious')
+    -- TODO(seandewar): w_wrow's wrong if the terminal doesn't match the window size...
     screen:expect([[
       {1: }{5:2}{1: foo }{2: foo }{4:                                     }{2:X}|
       {19:r}ows: 5, cols: 25        │rows: 5, cols: 25       |
       rows: 5, cols: 50        │rows: 5, cols: 50       |
-      {19: }                        │^                        |
       {19: }                        │                        |
+      {19: }                        │^                        |
       {18:foo [-]                   }{17:foo [-]                 }|
       {1:-- TERMINAL --}                                    |
     ]])

@@ -345,12 +345,15 @@ describe(':terminal buffer', function()
         local chan = vim.api.nvim_open_term(0, {
           on_input = function(_, term, buf, data)
             if data == '\27[I' then
+              vim.b[buf].term_focused = true
               vim.api.nvim_chan_send(term, 'focused\n')
             elseif data == '\27[O' then
+              vim.b[buf].term_focused = false
               vim.api.nvim_chan_send(term, 'unfocused\n')
             end
           end,
         })
+        vim.b.term_focused = false
         vim.api.nvim_chan_send(chan, '\27[?1004h') -- Enable focus reporting
       end
 
@@ -367,6 +370,21 @@ describe(':terminal buffer', function()
                                                         |
     ]])
 
+    -- TermEnter/Leave happens *after* entering/leaving terminal mode, so focus should've changed
+    -- already by the time these events run.
+    exec_lua(function()
+      _G.last_event = nil
+      vim.api.nvim_create_autocmd({ 'TermEnter', 'TermLeave' }, {
+        callback = function(args)
+          _G.last_event = args.event
+            .. ' '
+            .. vim.fs.basename(args.file)
+            .. ' '
+            .. tostring(vim.b[args.buf].term_focused)
+        end,
+      })
+    end)
+
     feed('i')
     screen:expect([[
       focused             │focused       │              |
@@ -375,6 +393,8 @@ describe(':terminal buffer', function()
       {120:foo [-]              }{119:foo [-]        bar [-]       }|
       {5:-- TERMINAL --}                                    |
     ]])
+    eq('TermEnter foo true', exec_lua('return _G.last_event'))
+
     -- Next window has the same terminal; no new notifications.
     command('wincmd w')
     screen:expect([[
@@ -403,6 +423,7 @@ describe(':terminal buffer', function()
       {119:foo [-]              foo [-]  }{120:bar [-]             }|
                                                         |
     ]])
+    eq('TermLeave bar false', exec_lua('return _G.last_event'))
   end)
 end)
 
@@ -667,6 +688,58 @@ describe(':terminal buffer', function()
       end,
       unchanged = true,
     })
+  end)
+
+  it('does not wipeout unrelated buffer after channel closes', function()
+    local screen = Screen.new(50, 7)
+    screen:set_default_attr_ids({
+      [1] = { foreground = Screen.colors.Blue1, bold = true },
+      [2] = { reverse = true },
+      [31] = { background = Screen.colors.DarkGreen, foreground = Screen.colors.White, bold = true },
+    })
+
+    local old_buf = api.nvim_get_current_buf()
+    command('new')
+    fn.chanclose(api.nvim_open_term(0, {}))
+    local term_buf = api.nvim_get_current_buf()
+    screen:expect([[
+      ^                                                  |
+      [Terminal closed]                                 |
+      {31:[Scratch] [-]                                     }|
+                                                        |
+      {1:~                                                 }|
+      {2:[No Name]                                         }|
+                                                        |
+    ]])
+
+    -- Autocommand should not result in the wrong buffer being wiped out.
+    command('autocmd TermLeave * ++once wincmd p')
+    feed('ii')
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*5
+                                                        |
+    ]])
+    eq(old_buf, api.nvim_get_current_buf())
+    eq(false, api.nvim_buf_is_valid(term_buf))
+
+    term_buf = api.nvim_get_current_buf()
+    fn.chanclose(api.nvim_open_term(term_buf, {}))
+    screen:expect([[
+      ^                                                  |
+      [Terminal closed]                                 |
+                                                        |*5
+    ]])
+
+    -- Autocommand should not result in a heap UAF if it frees the terminal prematurely.
+    command('autocmd TermLeave * ++once bwipeout!')
+    feed('ii')
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*5
+                                                        |
+    ]])
+    eq(false, api.nvim_buf_is_valid(term_buf))
   end)
 end)
 
