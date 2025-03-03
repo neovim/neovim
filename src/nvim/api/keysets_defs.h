@@ -18,6 +18,8 @@ typedef struct {
   LuaRefOf(("win" _, Integer winid, Integer bufnr, Integer toprow, Integer botrow),
            *Boolean) on_win;
   LuaRefOf(("line" _, Integer winid, Integer bufnr, Integer row), *Boolean) on_line;
+  LuaRefOf(("range" _, Integer winid, Integer bufnr, Integer row_begin, Integer col_begin,
+            Integer row_end, Integer col_end), *Boolean) on_range;
   LuaRefOf(("end" _, Integer tick)) on_end;
   LuaRefOf(("hl_def" _)) _on_hl_def;
   LuaRefOf(("spell_nav" _)) _on_spell_nav;

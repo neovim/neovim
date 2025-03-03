@@ -203,6 +203,7 @@ API
 • |nvim__ns_set()| can set properties for a namespace
 • |nvim_echo()| `err` field to print error messages and `chunks` accepts
   highlight group IDs.
+• Decoration provider has `on_range()` callback.
 • |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
 • Additions to |nvim_buf_set_extmark()|:
   • `conceal_lines` field to conceal an entire line.
@@ -413,6 +414,7 @@ TREESITTER
 • |LanguageTree:is_valid()| now accepts a range parameter to narrow the scope
   of the validity check.
 • |:InspectTree| now shows which nodes are missing.
+• |Query:iter_captures()| supports specifying starting and ending columns.
 • Bundled markdown highlight queries use `conceal_lines` metadata to conceal
   code block fence lines vertically.
 • |vim.treesitter.language.inspect()| shows additional information, including
