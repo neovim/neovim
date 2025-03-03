@@ -246,7 +246,7 @@ local function read_query_files(filenames)
 end
 
 -- The explicitly set query strings from |vim.treesitter.query.set()|
----@type table<string,table<string,string>>
+---@type table<string,table<string,string|vim.treesitter.Query>>
 local explicit_queries = setmetatable({}, {
   __index = function(t, k)
     local lang_queries = {}
@@ -274,11 +274,11 @@ local explicit_queries = setmetatable({}, {
 ---
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g., "highlights")
----@param text string Query text (unparsed).
-function M.set(lang, query_name, text)
+---@param query string|vim.treesitter.Query the query to use
+function M.set(lang, query_name, query)
   --- @diagnostic disable-next-line: undefined-field LuaLS bad at generics
   M.get:clear(lang, query_name)
-  explicit_queries[lang][query_name] = text
+  explicit_queries[lang][query_name] = query
 end
 
 --- Returns the runtime query {query_name} for {lang}.
@@ -288,13 +288,20 @@ end
 ---
 ---@return vim.treesitter.Query? : Parsed query. `nil` if no query files are found.
 M.get = memoize('concat-2', function(lang, query_name)
+  local explicit_query = explicit_queries[lang][query_name]
   local query_string ---@type string
+  if explicit_query then
+    if type(explicit_query) ~= 'string' then
+      -- User specified a parsed query as override, use it exclusively. Reprocess
+      -- the patterns in case the caller modified them before calling set().
+      explicit_query:_process_patterns()
+      return explicit_query
+    end
 
-  if explicit_queries[lang][query_name] then
     local query_files = {}
     local base_langs = {} ---@type string[]
 
-    for line in explicit_queries[lang][query_name]:gmatch('([^\n]*)\n?') do
+    for line in explicit_query:gmatch('([^\n]*)\n?') do
       if not vim.startswith(line, ';') then
         break
       end
