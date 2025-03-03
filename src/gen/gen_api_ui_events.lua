@@ -1,11 +1,11 @@
 local mpack = vim.mpack
 
 assert(#arg == 5)
-local input = io.open(arg[1], 'rb')
-local call_output = io.open(arg[2], 'wb')
-local remote_output = io.open(arg[3], 'wb')
-local metadata_output = io.open(arg[4], 'wb')
-local client_output = io.open(arg[5], 'wb')
+local input = assert(io.open(arg[1], 'rb'))
+local call_output = assert(io.open(arg[2], 'wb'))
+local remote_output = assert(io.open(arg[3], 'wb'))
+local metadata_output = assert(io.open(arg[4], 'wb'))
+local client_output = assert(io.open(arg[5], 'wb'))
 
 local c_grammar = require('gen.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
