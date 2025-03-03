@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local tt = require('test.functional.testterm')
 local feed_data = tt.feed_data
@@ -380,6 +381,37 @@ describe(':terminal window', function()
       cool line 9                                       |
       cool line 10                                      |
                                       7,4           Bot |
+    ]])
+  end)
+
+  it('in new tabpage has correct terminal size', function()
+    screen:set_default_attr_ids({
+      [1] = { reverse = true },
+      [3] = { bold = true },
+      [17] = { background = 2, foreground = Screen.colors.Grey0 },
+      [18] = { background = 2, foreground = 8 },
+      [19] = { underline = true, foreground = Screen.colors.Grey0, background = 7 },
+      [20] = { underline = true, foreground = 5, background = 7 },
+    })
+
+    command('file foo | vsplit')
+    screen:expect([[
+      tty ready                │tty ready               |
+      rows: 5, cols: 25        │rows: 5, cols: 25       |
+      ^                         │                        |
+                               │                        |*2
+      {17:foo [-]                   }{18:foo [-]                 }|
+      {3:-- TERMINAL --}                                    |
+    ]])
+    command('tab split')
+    screen:expect([[
+      {19: }{20:2}{19: foo }{3: foo }{1:                                     }{19:X}|
+      tty ready                                         |
+      rows: 5, cols: 25                                 |
+      rows: 5, cols: 50                                 |
+      ^                                                  |
+                                                        |
+      {3:-- TERMINAL --}                                    |
     ]])
   end)
 
