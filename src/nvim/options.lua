@@ -1525,15 +1525,15 @@ local options = {
         	    match, e.g., what file it comes from.
 
            noinsert Do not insert any text for a match until the user selects
-        	    a match from the menu. Only works in combination with
+        	    a match from the menu.  Only works in combination with
         	    "menu" or "menuone". No effect if "longest" is present.
 
            noselect Same as "noinsert", except that no menu item is
-        	    pre-selected. If both "noinsert" and "noselect" are
+        	    pre-selected.  If both "noinsert" and "noselect" are
         	    present, "noselect" has precedence.
 
            nosort   Disable sorting of completion candidates based on fuzzy
-        	    scores when "fuzzy" is enabled. Candidates will appear
+        	    scores when "fuzzy" is enabled.  Candidates will appear
         	    in their original order.
 
            popup    Show extra information about the currently selected
@@ -1544,7 +1544,7 @@ local options = {
         	    Preinsert the portion of the first candidate word that is
         	    not part of the current completion leader and using the
         	    |hl-ComplMatchIns| highlight group.  In order for it to
-        	    work, "fuzzy" must not bet set and "menuone" must be set.
+        	    work, "fuzzy" must not be set and "menuone" must be set.
 
            preview  Show extra information about the currently selected
         	    completion in the preview window.  Only works in
