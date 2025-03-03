@@ -2231,6 +2231,52 @@ describe('vim.diagnostic', function()
       eq('Another error there!', result[2][4].virt_lines[1][3][1])
     end)
 
+    it('highlights multiple diagnostics in a single line by default', function()
+      local result = exec_lua(function()
+        vim.api.nvim_buf_set_lines(
+          _G.diagnostic_bufnr,
+          0,
+          -1,
+          false,
+          { 'def foo(x: int, /, y: str, *, z: float) -> None: ...' }
+        )
+
+        vim.diagnostic.config({ virtual_lines = true })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error here!', 0, 8, 0, 9, 'foo_server'),
+          _G.make_error('Another error there!', 0, 19, 0, 20, 'foo_server'),
+          _G.make_error('And another one!', 0, 30, 0, 31, 'foo_server'),
+        })
+
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        return extmarks
+      end)
+
+      --[[
+      def foo(x: int, /, y: str, *, z: float) -> None: ...
+              │          │          └──── And another one!
+              │          └──── Another error there!
+              └──── Error here!
+              ^ col=8
+                         ^ col=19
+                                    ^ col=30
+
+      11 cols between each diagnostic after the first one (10 spaces + |)
+      ]]
+
+      eq(1, #result)
+      eq(8, result[1][4].virt_lines[1][1][1]:len()) -- first space
+      eq(10, result[1][4].virt_lines[1][3][1]:len()) -- second space
+      eq(10, result[1][4].virt_lines[1][5][1]:len()) -- third space
+      eq('And another one!', result[1][4].virt_lines[1][7][1])
+      eq(8, result[1][4].virt_lines[2][1][1]:len()) -- first space
+      eq(10, result[1][4].virt_lines[2][3][1]:len()) -- second space
+      eq('Another error there!', result[1][4].virt_lines[2][5][1])
+      eq(8, result[1][4].virt_lines[3][1][1]:len()) -- first space
+      eq('Error here!', result[1][4].virt_lines[3][3][1])
+    end)
+
     it('can highlight diagnostics only in the current line', function()
       local result = exec_lua(function()
         vim.api.nvim_win_set_cursor(0, { 1, 0 })
