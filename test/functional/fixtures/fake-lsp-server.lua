@@ -789,15 +789,19 @@ function tests.code_action_with_resolve()
     end,
     body = function()
       notify('start')
-      local cmd = {
-        title = 'Command 1',
-        command = 'dummy1',
-      }
+      local cmd = { title = 'Action 1' }
       expect_request('textDocument/codeAction', function()
         return nil, { cmd }
       end)
       expect_request('codeAction/resolve', function()
-        return nil, cmd
+        return nil,
+          {
+            title = 'Action 1',
+            command = {
+              title = 'Command 1',
+              command = 'dummy1',
+            },
+          }
       end)
       notify('shutdown')
     end,
