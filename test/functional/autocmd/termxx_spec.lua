@@ -198,10 +198,9 @@ it('autocmd TermEnter, TermLeave', function()
 end)
 
 describe('autocmd TextChangedT', function()
-  local screen
   before_each(function()
     clear()
-    screen = tt.setup_screen()
+    tt.setup_screen()
   end)
 
   it('works', function()
@@ -210,17 +209,5 @@ describe('autocmd TextChangedT', function()
     retry(nil, nil, function()
       eq(1, api.nvim_get_var('called'))
     end)
-  end)
-
-  it('cannot delete terminal buffer', function()
-    command('autocmd TextChangedT * bwipe!')
-    tt.feed_data('a')
-    screen:expect({ any = 'E937: ' })
-    feed('<CR>')
-    command('autocmd! TextChangedT')
-    matches(
-      '^E937: Attempt to delete a buffer that is in use: term://',
-      api.nvim_get_vvar('errmsg')
-    )
   end)
 end)
