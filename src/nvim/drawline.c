@@ -2988,8 +2988,6 @@ end_check:
                         && wlv.filler_todo <= 0       // Not drawing diff filler lines.
                         && lcs_eol_todo               // Haven't printed the lcs_eol character.
                         && wlv.row != endrow - 1      // Not the last line being displayed.
-                        && (grid->cols == Columns     // Window spans the width of the screen,
-                            || ui_has(kUIMultigrid))  // or has dedicated grid.
                         && !wp->w_p_rl;               // Not right-to-left.
 
       int draw_col = wlv.col - wlv.boguscols;
