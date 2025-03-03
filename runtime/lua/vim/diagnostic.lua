@@ -1757,8 +1757,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
         string.rep(
           ' ',
           -- +1 because indexing starts at 0 in one API but at 1 in the other.
-          -- -1 for non-first lines, since the previous column was already drawn.
-          distance_between_cols(bufnr, diag.lnum, prev_col + 1, diag.col) - 1
+          distance_between_cols(bufnr, diag.lnum, prev_col + 1, diag.col)
         ),
       })
     else
