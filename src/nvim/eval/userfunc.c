@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
@@ -265,29 +266,16 @@ static void register_closure(ufunc_T *fp)
 }
 
 static char lambda_name[8 + NUMBUFLEN];
-static size_t lambda_namelen = 0;
 
 /// @return  a name for a lambda.  Returned in static memory.
-char *get_lambda_name(void)
+static String get_lambda_name(void)
 {
   static int lambda_no = 0;
 
   int n = snprintf(lambda_name, sizeof(lambda_name), "<lambda>%d", ++lambda_no);
-  if (n < 1) {
-    lambda_namelen = 0;
-  } else if (n >= (int)sizeof(lambda_name)) {
-    lambda_namelen = sizeof(lambda_name) - 1;
-  } else {
-    lambda_namelen = (size_t)n;
-  }
 
-  return lambda_name;
-}
-
-/// Get the length of the last lambda name.
-size_t get_lambda_name_len(void)
-{
-  return lambda_namelen;
+  return cbuf_as_string(lambda_name,
+                        n < 1 ? 0 : (size_t)MIN(n, (int)sizeof(lambda_name) - 1));
 }
 
 /// Allocate a "ufunc_T" for a function called "name".
@@ -371,10 +359,8 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
     int flags = 0;
     garray_T newlines;
 
-    char *name = get_lambda_name();
-    size_t namelen = get_lambda_name_len();
-
-    fp = alloc_ufunc(name, namelen);
+    String name = get_lambda_name();
+    fp = alloc_ufunc(name.data, name.size);
     pt = xcalloc(1, sizeof(partial_T));
 
     ga_init(&newlines, (int)sizeof(char *), 1);
@@ -4142,9 +4128,8 @@ bool set_ref_in_func(char *name, ufunc_T *fp_in, int copyID)
 /// Registers a luaref as a lambda.
 char *register_luafunc(LuaRef ref)
 {
-  char *name = get_lambda_name();
-  size_t namelen = get_lambda_name_len();
-  ufunc_T *fp = alloc_ufunc(name, namelen);
+  String name = get_lambda_name();
+  ufunc_T *fp = alloc_ufunc(name.data, name.size);
 
   fp->uf_refcount = 1;
   fp->uf_varargs = true;
