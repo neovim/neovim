@@ -897,7 +897,7 @@ static void set_info_event(void **argv)
   tv_dict_add_dict(dict, S_LEN("info"), retval.vval.v_dict);
   tv_dict_set_keys_readonly(dict);
 
-  apply_autocmds(event, NULL, NULL, false, curbuf);
+  apply_autocmds(event, NULL, NULL, true, curbuf);
 
   restore_v_event(dict, &save_v_event);
   arena_mem_free(arena_finish(&arena));
