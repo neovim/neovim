@@ -8,13 +8,6 @@ describe('search stat', function()
   before_each(function()
     clear()
     screen = Screen.new(30, 10)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [2] = { background = Screen.colors.Yellow }, -- Search
-      [3] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey }, -- Folded
-      [4] = { reverse = true }, -- IncSearch, TabLineFill
-      [5] = { foreground = Screen.colors.Red }, -- WarningMsg
-    })
   end)
 
   -- oldtest: Test_search_stat_screendump()
@@ -32,7 +25,7 @@ describe('search stat', function()
     ]])
     screen:expect([[
       foobar                        |
-      {2:^find this}                     |
+      {10:^find this}                     |
       fooooobar                     |
       foba                          |
       foobar                        |*2
@@ -45,7 +38,7 @@ describe('search stat', function()
     feed('gg0n')
     screen:expect([[
       foobar                        |
-      {2:^find this}                     |
+      {10:^find this}                     |
       fooooobar                     |
       foba                          |
       foobar                        |*2
@@ -68,7 +61,7 @@ describe('search stat', function()
     ]])
     screen:expect([[
       if                            |
-      {3:^+--  2 lines: foo·············}|
+      {13:^+--  2 lines: foo·············}|
       endif                         |
                                     |
       {1:~                             }|*5
@@ -91,16 +84,16 @@ describe('search stat', function()
     feed('/dog<CR>')
     screen:expect([[
       int cat;                      |
-      int {2:^dog};                      |
-      cat = {2:dog};                    |
+      int {10:^dog};                      |
+      cat = {10:dog};                    |
       {1:~                             }|*6
       /dog                   [1/2]  |
     ]])
     feed('G0gD')
     screen:expect([[
-      int {2:^cat};                      |
+      int {10:^cat};                      |
       int dog;                      |
-      {2:cat} = dog;                    |
+      {10:cat} = dog;                    |
       {1:~                             }|*6
                                     |
     ]])
@@ -128,9 +121,19 @@ describe('search stat', function()
 
     feed('/abc')
     screen:expect([[
-      {4:                              }|
-      {2:abc}--c                        |
-      --------{4:abc}                   |
+      {2:                              }|
+      {10:abc}--c                        |
+      --------{2:abc}                   |
+      --{10:abc}                         |
+      {1:~                             }|*5
+      /abc^                          |
+    ]])
+
+    feed('<C-G>')
+    screen:expect([[
+      {2:3/3                           }|
+      {10:abc}--c                        |
+      --------{10:abc}                   |
       --{2:abc}                         |
       {1:~                             }|*5
       /abc^                          |
@@ -138,20 +141,10 @@ describe('search stat', function()
 
     feed('<C-G>')
     screen:expect([[
-      {4:3/3                           }|
+      {2:1/3                           }|
       {2:abc}--c                        |
-      --------{2:abc}                   |
-      --{4:abc}                         |
-      {1:~                             }|*5
-      /abc^                          |
-    ]])
-
-    feed('<C-G>')
-    screen:expect([[
-      {4:1/3                           }|
-      {4:abc}--c                        |
-      --------{2:abc}                   |
-      --{2:abc}                         |
+      --------{10:abc}                   |
+      --{10:abc}                         |
       {1:~                             }|*5
       /abc^                          |
     ]])
@@ -167,7 +160,7 @@ describe('search stat', function()
 
     feed('*')
     screen:expect([[
-      {2:^test}                                                        |
+      {10:^test}                                                        |
                                                                   |
       {1:~                                                           }|*7
       /\<test\>                                            [1/1]  |
@@ -175,7 +168,7 @@ describe('search stat', function()
 
     feed('N')
     screen:expect([[
-      {2:^test}                                                        |
+      {10:^test}                                                        |
                                                                   |
       {1:~                                                           }|*7
       ?\<test\>                                            [1/1]  |
@@ -185,10 +178,10 @@ describe('search stat', function()
     feed('N')
     -- shows "Search Hit Bottom.."
     screen:expect([[
-      {2:^test}                                                        |
+      {10:^test}                                                        |
                                                                   |
       {1:~                                                           }|*7
-      {5:search hit TOP, continuing at BOTTOM}                        |
+      {19:search hit TOP, continuing at BOTTOM}                        |
     ]])
   end)
 end)

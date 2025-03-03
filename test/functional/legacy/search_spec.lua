@@ -18,13 +18,6 @@ describe('search cmdline', function()
     clear()
     command('set nohlsearch inccommand=')
     screen = Screen.new(20, 3)
-    screen:set_default_attr_ids({
-      inc = { reverse = true },
-      err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      more = { bold = true, foreground = Screen.colors.SeaGreen4 },
-      tilde = { bold = true, foreground = Screen.colors.Blue1 },
-      hl = { background = Screen.colors.Yellow },
-    })
   end)
 
   local function tenlines()
@@ -60,57 +53,57 @@ describe('search cmdline', function()
       feed('/the')
       screen:expect([[
           1                 |
-          2 {inc:the}se           |
+          2 {2:the}se           |
         /the^                |
       ]])
       feed('<C-G>')
       screen:expect([[
           2 these           |
-          3 {inc:the}             |
+          3 {2:the}             |
         /the^                |
       ]])
       eq({ 0, 0, 0, 0 }, fn.getpos('"'))
       feed('<C-G>')
       screen:expect([[
           3 the             |
-          4 {inc:the}ir           |
+          4 {2:the}ir           |
         /the^                |
       ]])
       feed('<C-G>')
       screen:expect([[
           4 their           |
-          5 {inc:the}re           |
+          5 {2:the}re           |
         /the^                |
       ]])
       feed('<C-G>')
       screen:expect([[
           5 there           |
-          6 {inc:the}ir           |
+          6 {2:the}ir           |
         /the^                |
       ]])
       feed('<C-G>')
       screen:expect([[
           6 their           |
-          7 {inc:the}             |
+          7 {2:the}             |
         /the^                |
       ]])
       feed('<C-G>')
       screen:expect([[
           7 the             |
-          8 {inc:the}m            |
+          8 {2:the}m            |
         /the^                |
       ]])
       feed('<C-G>')
       screen:expect([[
           8 them            |
-          9 {inc:the}se           |
+          9 {2:the}se           |
         /the^                |
       ]])
       screen.bell = false
       feed('<C-G>')
       if wrapscan == 'wrapscan' then
         screen:expect([[
-            2 {inc:the}se           |
+            2 {2:the}se           |
             3 the             |
           /the^                |
         ]])
@@ -118,7 +111,7 @@ describe('search cmdline', function()
         screen:expect {
           grid = [[
             8 them            |
-            9 {inc:the}se           |
+            9 {2:the}se           |
           /the^                |
         ]],
           condition = function()
@@ -136,7 +129,7 @@ describe('search cmdline', function()
 
       feed('?the')
       screen:expect([[
-          9 {inc:the}se           |
+          9 {2:the}se           |
          10 foobar          |
         ?the^                |
       ]])
@@ -144,7 +137,7 @@ describe('search cmdline', function()
       if wrapscan == 'wrapscan' then
         feed('<C-G>')
         screen:expect([[
-            2 {inc:the}se           |
+            2 {2:the}se           |
             3 the             |
           ?the^                |
         ]])
@@ -158,7 +151,7 @@ describe('search cmdline', function()
         feed('<C-G>')
         screen:expect {
           grid = [[
-            9 {inc:the}se           |
+            9 {2:the}se           |
            10 foobar          |
           ?the^                |
         ]],
@@ -176,13 +169,13 @@ describe('search cmdline', function()
       command('$')
       feed('?the')
       screen:expect([[
-          9 {inc:the}se           |
+          9 {2:the}se           |
          10 foobar          |
         ?the^                |
       ]])
       feed('<C-T>')
       screen:expect([[
-          8 {inc:the}m            |
+          8 {2:the}m            |
           9 these           |
         ?the^                |
       ]])
@@ -195,7 +188,7 @@ describe('search cmdline', function()
         end
       end
       screen:expect([[
-          2 {inc:the}se           |
+          2 {2:the}se           |
           3 the             |
         ?the^                |
       ]])
@@ -203,14 +196,14 @@ describe('search cmdline', function()
       feed('<C-T>')
       if wrapscan == 'wrapscan' then
         screen:expect([[
-            9 {inc:the}se           |
+            9 {2:the}se           |
            10 foobar          |
           ?the^                |
         ]])
       else
         screen:expect {
           grid = [[
-            2 {inc:the}se           |
+            2 {2:the}se           |
             3 the             |
           ?the^                |
         ]],
@@ -245,24 +238,24 @@ describe('search cmdline', function()
     feed('/the')
     screen:expect([[
         1                 |
-        2 {inc:the}se           |
+        2 {2:the}se           |
       /the^                |
     ]])
     feed('<C-L>')
     screen:expect([[
         1                 |
-        2 {inc:thes}e           |
+        2 {2:thes}e           |
       /thes^               |
     ]])
     feed('<C-G>')
     screen:expect([[
-        9 {inc:thes}e           |
+        9 {2:thes}e           |
        10 foobar          |
       /thes^               |
     ]])
     feed('<C-G>')
     screen:expect([[
-        2 {inc:thes}e           |
+        2 {2:thes}e           |
         3 the             |
       /thes^               |
     ]])
@@ -278,18 +271,18 @@ describe('search cmdline', function()
     feed('/the')
     screen:expect([[
         1                 |
-        2 {inc:the}se           |
+        2 {2:the}se           |
       /the^                |
     ]])
     feed('<C-L>')
     screen:expect([[
         1                 |
-        2 {inc:thes}e           |
+        2 {2:thes}e           |
       /thes^               |
     ]])
     feed('<C-G>')
     screen:expect([[
-        9 {inc:thes}e           |
+        9 {2:thes}e           |
        10 foobar          |
       /thes^               |
     ]])
@@ -309,41 +302,41 @@ describe('search cmdline', function()
     feed('/thei')
     screen:expect([[
         3 the             |
-        4 {inc:thei}r           |
+        4 {2:thei}r           |
       /thei^               |
     ]])
     -- Match from initial cursor position when modifying search
     feed('<BS>')
     screen:expect([[
         1                 |
-        2 {inc:the}se           |
+        2 {2:the}se           |
       /the^                |
     ]])
     -- New text advances to next match
     feed('s')
     screen:expect([[
         1                 |
-        2 {inc:thes}e           |
+        2 {2:thes}e           |
       /thes^               |
     ]])
     -- Stay on this match when deleting a character
     feed('<BS>')
     screen:expect([[
         1                 |
-        2 {inc:the}se           |
+        2 {2:the}se           |
       /the^                |
     ]])
     -- Advance to previous match
     feed('<C-T>')
     screen:expect([[
-        9 {inc:the}se           |
+        9 {2:the}se           |
        10 foobar          |
       /the^                |
     ]])
     -- Extend search to include next character
     feed('<C-L>')
     screen:expect([[
-        9 {inc:thes}e           |
+        9 {2:thes}e           |
        10 foobar          |
       /thes^               |
     ]])
@@ -357,13 +350,13 @@ describe('search cmdline', function()
     feed('the')
     screen:expect([[
         1                 |
-        2 {inc:the}se           |
+        2 {2:the}se           |
       /the^                |
     ]])
     feed('\\>')
     screen:expect([[
         2 these           |
-        3 {inc:the}             |
+        3 {2:the}             |
       /the\>^              |
     ]])
   end)
@@ -377,7 +370,7 @@ describe('search cmdline', function()
     feed('/the')
     screen:expect([[
         1                 |
-        2 {inc:the}se           |
+        2 {2:the}se           |
       /the^                |
     ]])
 
@@ -385,7 +378,7 @@ describe('search cmdline', function()
     feed('<C-G>')
     screen:expect([[
         2 these           |
-        3 {inc:the} theother    |
+        3 {2:the} theother    |
       /the^                |
     ]])
 
@@ -393,13 +386,13 @@ describe('search cmdline', function()
     feed('<C-G>')
     screen:expect([[
         2 these           |
-        3 the {inc:the}other    |
+        3 the {2:the}other    |
       /the^                |
     ]])
     feed('<C-G>')
     screen:expect([[
         2 these           |
-        3 the theo{inc:the}r    |
+        3 the theo{2:the}r    |
       /the^                |
     ]])
 
@@ -407,20 +400,20 @@ describe('search cmdline', function()
     feed('<C-T>')
     screen:expect([[
         2 these           |
-        3 the {inc:the}other    |
+        3 the {2:the}other    |
       /the^                |
     ]])
     feed('<C-T>')
     screen:expect([[
         2 these           |
-        3 {inc:the} theother    |
+        3 {2:the} theother    |
       /the^                |
     ]])
 
     -- Previous match, different line
     feed('<C-T>')
     screen:expect([[
-        2 {inc:the}se           |
+        2 {2:the}se           |
         3 the theother    |
       /the^                |
     ]])
@@ -436,7 +429,7 @@ describe('search cmdline', function()
         7 the             |
         8 them            |
         9 these           |
-       10 {inc:foo}bar          |
+       10 {2:foo}bar          |
       /foo^                |
     ]])
     feed('<BS>')
@@ -445,7 +438,7 @@ describe('search cmdline', function()
         7 the             |
         8 them            |
         9 these           |
-       10 {inc:fo}obar          |
+       10 {2:fo}obar          |
       /fo^                 |
     ]])
     feed('<CR>')
@@ -476,7 +469,7 @@ describe('search cmdline', function()
     feed('/foo')
     screen:expect([[
         9 these                               |
-       10 {inc:foo}bar                              |
+       10 {2:foo}bar                              |
       /foo^                                    |
     ]])
     feed('<C-W>')
@@ -488,8 +481,8 @@ describe('search cmdline', function()
     feed('<CR>')
     screen:expect([[
       /                                       |
-      {err:E35: No previous regular expression}     |
-      {more:Press ENTER or type command to continue}^ |
+      {9:E35: No previous regular expression}     |
+      {6:Press ENTER or type command to continue}^ |
     ]])
     feed('<CR>')
     eq({
@@ -613,9 +606,9 @@ describe('search cmdline', function()
 
     feed(':sort ni u /on')
     screen:expect([[
-      another {inc:on}e 2       |
-      that {hl:on}e 3          |
-      the {hl:on}e 1           |
+      another {2:on}e 2       |
+      that {10:on}e 3          |
+      the {10:on}e 1           |
       :sort ni u /on^      |
     ]])
     feed('<esc>')
@@ -629,27 +622,27 @@ describe('search cmdline', function()
 
     feed(':vimgrep on')
     screen:expect([[
-      another {inc:on}e 2                 |
-      that {hl:on}e 3                    |
-      the {hl:on}e 1                     |
+      another {2:on}e 2                 |
+      that {10:on}e 3                    |
+      the {10:on}e 1                     |
       :vimgrep on^                   |
     ]])
     feed('<esc>')
 
     feed(':vimg /on/ *.txt')
     screen:expect([[
-      another {inc:on}e 2                 |
-      that {hl:on}e 3                    |
-      the {hl:on}e 1                     |
+      another {2:on}e 2                 |
+      that {10:on}e 3                    |
+      the {10:on}e 1                     |
       :vimg /on/ *.txt^              |
     ]])
     feed('<esc>')
 
     feed(':vimgrepadd "\\<LT>on')
     screen:expect([[
-      another {inc:on}e 2                 |
-      that {hl:on}e 3                    |
-      the {hl:on}e 1                     |
+      another {2:on}e 2                 |
+      that {10:on}e 3                    |
+      the {10:on}e 1                     |
       :vimgrepadd "\<on^             |
     ]])
     feed('<esc>')
@@ -657,7 +650,7 @@ describe('search cmdline', function()
     feed(':lv "tha')
     screen:expect([[
       another one 2                 |
-      {inc:tha}t one 3                    |
+      {2:tha}t one 3                    |
       the one 1                     |
       :lv "tha^                      |
     ]])
@@ -665,9 +658,9 @@ describe('search cmdline', function()
 
     feed(':lvimgrepa "the" **/*.txt')
     screen:expect([[
-      ano{inc:the}r one 2                 |
+      ano{2:the}r one 2                 |
       that one 3                    |
-      {hl:the} one 1                     |
+      {10:the} one 1                     |
       :lvimgrepa "the" **/*.txt^     |
     ]])
     feed('<esc>')
@@ -718,7 +711,7 @@ describe('search cmdline', function()
       call feedkeys("2\<C-E>", 't')
     ]])
     local s = [[
-      {tilde:<<<} 18 19 20 21 22 2|
+      {1:<<<} 18 19 20 21 22 2|
       ^3 24                |
                           |*4
     ]]
@@ -726,13 +719,13 @@ describe('search cmdline', function()
     feed('/xx')
     screen:expect([[
                           |*4
-      {inc:xx}x                 |
+      {2:xx}x                 |
       /xx^                 |
     ]])
     feed('x')
     screen:expect([[
                           |*4
-      {inc:xxx}                 |
+      {2:xxx}                 |
       /xxx^                |
     ]])
     feed('<Esc>')
@@ -764,13 +757,14 @@ describe('Search highlight', function()
   -- oldtest: Test_hlsearch_and_visual()
   it('is combined with Visual highlight vim-patch:8.2.2797', function()
     local screen = Screen.new(40, 6)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [2] = { bold = true }, -- ModeMsg, Search
-      [3] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Black }, -- Visual
-      [4] = { background = Screen.colors.Yellow, bold = true }, -- Search
-      [5] = { background = Screen.colors.LightGrey, bold = true, foreground = Screen.colors.Black },
-    })
+    screen:add_extra_attr_ids {
+      [100] = {
+        foreground = Screen.colors.Black,
+        bold = true,
+        background = Screen.colors.LightGrey,
+      },
+      [101] = { bold = true, background = Screen.colors.Yellow },
+    }
     exec([[
       set hlsearch noincsearch
       call setline(1, repeat(["xxx yyy zzz"], 3))
@@ -780,11 +774,11 @@ describe('Search highlight', function()
     ]])
     feed('vjj')
     screen:expect([[
-      xxx {4:y}{5:yy}{3: zzz}                             |
-      {3:xxx }{5:yyy}{3: zzz}                             |
-      {3:xxx }{5:y}{4:^yy} zzz                             |
+      xxx {101:y}{100:yy}{17: zzz}                             |
+      {17:xxx }{100:yyy}{17: zzz}                             |
+      {17:xxx }{100:y}{101:^yy} zzz                             |
       {1:~                                       }|*2
-      {2:-- VISUAL --}                            |
+      {5:-- VISUAL --}                            |
     ]])
   end)
 end)
