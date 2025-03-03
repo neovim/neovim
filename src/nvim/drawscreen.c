@@ -2319,6 +2319,13 @@ static void win_update(win_T *wp)
           wp->w_lines[idx].wl_lastlnum = lnum + foldinfo.fi_lines;
           did_update = DID_FOLD;
         }
+
+        // Adjust "wl_lastlnum" for concealed lines below the last line in the window.
+        while (row == wp->w_grid.rows
+               && decor_conceal_line(wp, wp->w_lines[idx].wl_lastlnum, false)) {
+          wp->w_lines[idx].wl_lastlnum++;
+          hasFolding(wp, wp->w_lines[idx].wl_lastlnum, NULL, &wp->w_lines[idx].wl_lastlnum);
+        }
       }
 
       wp->w_lines[idx].wl_lnum = lnum;
