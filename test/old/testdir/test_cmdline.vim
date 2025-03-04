@@ -3025,6 +3025,28 @@ func Test_wildmenu_pum_rightleft()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test highlighting when pattern matches non-first character of item
+func Test_wildmenu_pum_hl_nonfirst()
+  CheckScreendump
+  let lines =<< trim END
+    set wildoptions=pum wildchar=<tab> wildmode=noselect,full
+    hi PmenuMatchSel  ctermfg=6 ctermbg=7
+    hi PmenuMatch     ctermfg=4 ctermbg=225
+    func T(a, c, p)
+      return ["oneA", "o neBneB", "aoneC"]
+    endfunc
+    command -nargs=1 -complete=customlist,T MyCmd
+  END
+
+  call writefile(lines, 'Xwildmenu_pum_hl_nonf', 'D')
+  let buf = RunVimInTerminal('-S Xwildmenu_pum_hl_nonf', #{rows: 10, cols: 50})
+
+  call term_sendkeys(buf, ":MyCmd ne\<tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_hl_match_nonf', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test highlighting matched text in cmdline completion popup menu.
 func Test_wildmenu_pum_hl_match()
   CheckScreendump
