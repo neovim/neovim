@@ -90,14 +90,17 @@ uint64_t ui_client_start_server(int argc, char **argv)
 }
 
 /// Attaches this client to the UI channel, and sets its client info.
-void ui_client_attach(int width, int height, char *term, bool rgb)
+void ui_client_attach(int width, int height, int pixel_width, int pixel_height, char *term,
+                      bool rgb)
 {
   //
   // nvim_ui_attach
   //
-  MAXSIZE_TEMP_ARRAY(args, 3);
+  MAXSIZE_TEMP_ARRAY(args, 5);
   ADD_C(args, INTEGER_OBJ(width));
   ADD_C(args, INTEGER_OBJ(height));
+  ADD_C(args, INTEGER_OBJ(pixel_width));
+  ADD_C(args, INTEGER_OBJ(pixel_height));
   MAXSIZE_TEMP_DICT(opts, 9);
   PUT_C(opts, "rgb", BOOLEAN_OBJ(rgb));
   PUT_C(opts, "ext_linegrid", BOOLEAN_OBJ(true));
@@ -165,11 +168,12 @@ void ui_client_run(bool remote_ui)
 {
   ui_client_is_remote = remote_ui;
   int width, height;
+  int pixel_width, pixel_height;
   char *term;
   bool rgb;
-  tui_start(&tui, &width, &height, &term, &rgb);
+  tui_start(&tui, &width, &height, &pixel_width, &pixel_height, &term, &rgb);
 
-  ui_client_attach(width, height, term, rgb);
+  ui_client_attach(width, height, pixel_width, pixel_height, term, rgb);
 
   // TODO(justinmk): this is for log_spec. Can remove this after nvim_log #7062 is merged.
   if (os_env_exists("__NVIM_TEST_LOG")) {
@@ -191,13 +195,15 @@ void ui_client_stop(void)
   }
 }
 
-void ui_client_set_size(int width, int height)
+void ui_client_set_size(int width, int height, int pixel_width, int pixel_height)
 {
   // The currently known size will be sent when attaching
   if (ui_client_attached) {
-    MAXSIZE_TEMP_ARRAY(args, 2);
+    MAXSIZE_TEMP_ARRAY(args, 4);
     ADD_C(args, INTEGER_OBJ((int)width));
     ADD_C(args, INTEGER_OBJ((int)height));
+    ADD_C(args, INTEGER_OBJ((int)pixel_width));
+    ADD_C(args, INTEGER_OBJ((int)pixel_height));
     rpc_send_event(ui_client_channel_id, "nvim_ui_try_resize", args);
   }
 }

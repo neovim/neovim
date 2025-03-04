@@ -196,6 +196,8 @@ void ui_refresh(void)
 
   int width = INT_MAX;
   int height = INT_MAX;
+  int pixel_width = INT_MAX;
+  int pixel_height = INT_MAX;
   bool ext_widgets[kUIExtCount];
   bool inclusive = ui_override();
   memset(ext_widgets, !!ui_active(), ARRAY_SIZE(ext_widgets));
@@ -204,6 +206,12 @@ void ui_refresh(void)
     RemoteUI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
+    if (ui->pixel_width > 0) {
+      pixel_width = MIN(ui->pixel_width, pixel_width);
+    }
+    if (ui->pixel_height > 0) {
+      pixel_height = MIN(ui->pixel_height, pixel_height);
+    }
     for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
       ext_widgets[j] &= (ui->ui_ext[j] || inclusive);
     }
@@ -243,6 +251,12 @@ void ui_refresh(void)
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
   screen_resize(width, height);
+  if (pixel_width < INT_MAX) {
+    XPixels = pixel_width;
+  }
+  if (pixel_height < INT_MAX) {
+    YPixels = pixel_height;
+  }
   p_lz = save_p_lz;
 
   ui_mode_info_set();

@@ -101,6 +101,8 @@ EXTERN struct nvim_stats_s {
 #define DFLT_ROWS       24              // default value for 'lines'
 EXTERN int Rows INIT( = DFLT_ROWS);     // nr of rows in the screen
 EXTERN int Columns INIT( = DFLT_COLS);  // nr of columns in the screen
+EXTERN int XPixels INIT( = 0);
+EXTERN int YPixels INIT( = 0);
 
 // When vgetc() is called, it sets mod_mask to the set of modifiers that are
 // held down based on the MOD_MASK_* symbols that are read first.

@@ -8,7 +8,7 @@
 
 typedef struct {
   Proc proc;
-  uint16_t width, height;
+  uint16_t width, height, pixel_width, pixel_height;
   struct winsize winsize;
   int tty_fd;
 } PtyProc;
