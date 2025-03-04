@@ -1045,7 +1045,7 @@ func Test_mark_from_yank()
   normal! yi"
   call assert_equal([0, 1, 10, 0], getpos("']"))
   normal! ya"
-  call assert_equal(getpos("']"), [0, 1, 13, 0], getpos("']"))
+  call assert_equal([0, 1, 13, 0], getpos("']"))
   " single quote object
   call setline(1, 'test ''yank''  mark')
   normal! yi'
