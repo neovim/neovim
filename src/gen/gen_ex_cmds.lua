@@ -7,8 +7,8 @@ local autodir = arg[2]
 local enumfname = includedir .. '/ex_cmds_enum.generated.h'
 local defsfname = autodir .. '/ex_cmds_defs.generated.h'
 
-local enumfile = io.open(enumfname, 'w')
-local defsfile = io.open(defsfname, 'w')
+local enumfile = assert(io.open(enumfname, 'w'))
+local defsfile = assert(io.open(defsfname, 'w'))
 
 local bit = require 'bit'
 local ex_cmds = require('nvim.ex_cmds')
@@ -91,7 +91,9 @@ static CommandDefinition cmdnames[%u] = {
   #defs,
   #defs
 ))
-local cmds, cmdidxs1, cmdidxs2 = {}, {}, {}
+local cmds = {} --- @type string[]
+local cmdidxs1 = {} --- @type table<string,string>
+local cmdidxs2 = {}
 for _, cmd in ipairs(defs) do
   if bit.band(cmd.flags, flags.RANGE) == flags.RANGE then
     assert(
@@ -121,7 +123,7 @@ for _, cmd in ipairs(defs) do
   if byte_a <= byte_cmd and byte_cmd <= byte_z then
     table.insert(cmds, cmd.command)
   end
-  local preview_func
+  local preview_func --- @type string
   if cmd.preview_func then
     preview_func = string.format('&%s', cmd.preview_func)
   else
@@ -150,7 +152,7 @@ for i = #cmds, 1, -1 do
   local cmd = cmds[i]
   -- First and second characters of the command
   local c1 = cmd:sub(1, 1)
-  cmdidxs1[c1] = i - 1
+  cmdidxs1[c1] = tostring(i - 1)
   if cmd:len() >= 2 then
     local c2 = cmd:sub(2, 2)
     local byte_c2 = string.byte(c2)

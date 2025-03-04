@@ -24,7 +24,7 @@ end
 assert(#arg >= 3 and (#arg - 1) % 2 == 0)
 
 local target_file = arg[1] or error('Need a target file')
-local target = io.open(target_file, 'w')
+local target = assert(io.open(target_file, 'w'))
 
 target:write('#include <stdint.h>\n\n')
 

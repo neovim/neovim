@@ -4,7 +4,7 @@ local syntax_file = arg[1]
 local funcs_file = arg[2]
 
 local lld = {}
-local syn_fd = io.open(syntax_file, 'w')
+local syn_fd = assert(io.open(syntax_file, 'w'))
 lld.line_length = 0
 local function w(s)
   syn_fd:write(s)
