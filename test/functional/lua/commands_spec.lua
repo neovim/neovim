@@ -174,7 +174,8 @@ describe(':lua', function()
     eq('5', exec_capture(':lua =x'))
     eq('5', exec_capture('=x'))
     exec_lua("function x() return 'hello' end")
-    eq('hello', exec_capture(':lua = x()'))
+    eq('"hello"', exec_capture(':lua = x()'))
+    eq('"hello "', exec_capture(':lua = x() .. " "'))
     exec_lua('x = {a = 1, b = 2}')
     eq('{\n  a = 1,\n  b = 2\n}', exec_capture(':lua  =x'))
     exec_lua(function()
@@ -189,14 +190,14 @@ describe(':lua', function()
     eq(
       dedent [[
       true
-      Return value]],
+      "Return value"]],
       exec_capture(':lua  =x(true)')
     )
     eq(
       dedent [[
       false
       nil
-      Error message]],
+      "Error message"]],
       exec_capture('=x(false)')
     )
   end)
