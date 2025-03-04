@@ -1202,14 +1202,9 @@ describe('smoothscroll', function()
 
   it('<<< marker shows with tabline, winbar and splits', function()
     screen:try_resize(40, 12)
-    screen:set_default_attr_ids({
-      [1] = { foreground = Screen.colors.Blue1, bold = true },
-      [2] = { reverse = true },
-      [3] = { bold = true, reverse = true },
-      [4] = { background = Screen.colors.LightMagenta },
-      [5] = { bold = true },
-      [31] = { foreground = Screen.colors.Fuchsia, bold = true },
-    })
+    screen:add_extra_attr_ids {
+      [100] = { foreground = Screen.colors.Magenta1, bold = true },
+    }
     exec([[
       call setline(1, ['Line' .. (' with some text'->repeat(7))]->repeat(7))
       set smoothscroll scrolloff=0
@@ -1232,7 +1227,7 @@ describe('smoothscroll', function()
     exec('set showtabline=2')
     feed('<C-E>')
     screen:expect([[
-      {5: }{31:2}{5:+ [No Name] }{2:                          }|
+      {5: }{100:2}{5:+ [No Name] }{2:                          }|
       {1:<<<}e text with some text with some text |
       with some text with some text           |
       Line with some text with some text with |
@@ -1248,7 +1243,7 @@ describe('smoothscroll', function()
     exec('set winbar=winbar')
     feed('<C-w>k<C-E>')
     screen:expect([[
-      {5: }{31:2}{5:+ [No Name] }{2:                          }|
+      {5: }{100:2}{5:+ [No Name] }{2:                          }|
       {5:winbar                                  }|
       {1:<<<}e text with some text with some text |
       ^with some text with some text           |
