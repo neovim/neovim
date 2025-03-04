@@ -264,7 +264,8 @@ causes the terminal emulator to write to or read from the system clipboard.
 When Nvim is running in the |TUI|, it will automatically attempt to determine if
 the host terminal emulator supports OSC 52. If it does, then Nvim will use OSC
 52 for copying and pasting if no other |clipboard-tool| is found and when
-'clipboard' is unset.
+'clipboard' is unset. NOTE: Using a terminal multiplexer (e.g. tmux) may
+inhibit automatic OSC 52 support detection.
 
 							*g:termfeatures*
 To disable the automatic detection, set the "osc52" key of |g:termfeatures| to
