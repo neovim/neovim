@@ -144,8 +144,8 @@ directory indicated in the request. >lua
   vim.api.nvim_create_autocmd({ 'TermRequest' }, {
     desc = 'Handles OSC 7 dir change requests',
     callback = function(ev)
-      if string.sub(vim.v.termrequest, 1, 4) == '\x1b]7;' then
-        local dir = string.gsub(vim.v.termrequest, '\x1b]7;file://[^/]*', '')
+      if string.sub(ev.data.sequence, 1, 4) == '\x1b]7;' then
+        local dir = string.gsub(ev.data.sequence, '\x1b]7;file://[^/]*', '')
         if vim.fn.isdirectory(dir) == 0 then
           vim.notify('invalid dir: '..dir)
           return
