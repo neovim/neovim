@@ -1513,6 +1513,21 @@ func Test_pum_highlights_match()
   call TermWait(buf, 50)
   call VerifyScreenDump(buf, 'Test_pum_highlights_11', {})
 
+  " issue #15357
+  call term_sendkeys(buf, "\<ESC>S/non_existing_folder\<C-X>\<C-F>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_highlights_15', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call term_sendkeys(buf, ":hi PmenuMatchSel ctermfg=14 ctermbg=NONE\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, ":hi PmenuMatch ctermfg=12 ctermbg=NONE\<CR>")
+  call term_sendkeys(buf, ":set cot=menu,noinsert,fuzzy\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "fb")
+  call VerifyScreenDump(buf, 'Test_pum_highlights_18', {})
+
   call term_sendkeys(buf, "\<C-E>\<Esc>")
   call TermWait(buf)
 
