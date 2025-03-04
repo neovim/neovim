@@ -221,7 +221,7 @@ static void emit_termrequest(void **argv)
   String termrequest = { .data = payload, .size = payload_length };
   Object data = STRING_OBJ(termrequest);
   set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
-  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, NULL, &data);
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, NULL, &data);
   xfree(payload);
 
   StringBuilder *term_pending_send = term->pending.send;
