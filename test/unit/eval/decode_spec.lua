@@ -70,8 +70,8 @@ describe('json_decode_string()', function()
     local rettv = ffi.new('typval_T', { v_type = decode.VAR_UNKNOWN })
     eq(0, decode.json_decode_string(s, len, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
-    neq(nil, decode.last_msg_hist)
-    eq(msg, ffi.string(decode.last_msg_hist.msg))
+    neq(nil, decode.msg_hist_last)
+    eq(msg, ffi.string(decode.msg_hist_last.msg.items[0].text.data))
   end
 
   itp('does not overflow in error messages', function()
