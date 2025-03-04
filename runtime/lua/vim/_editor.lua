@@ -1142,6 +1142,51 @@ do
   end
 end
 
+--- Returns the path to module under cursor.
+---
+--- Searchs from |current-directory| first, if not found, will
+--- search in like the way |lua-module-load| works
+---
+--- To use it for |gf|, run in a Lua buffer:
+--- ```vim
+--- setl includeexpr=v:lua.vim.lua_includeexpr()
+--- ```
+---@return string
+function vim.lua_includeexpr()
+  local fname = vim.v.fname
+  local module = fname:gsub('%.', '/')
+  local runtime = {
+    vim.b.root_dir or vim.fn.getcwd(),
+    unpack(vim.api.nvim_list_runtime_paths())
+  }
+
+  ---@param prefix string
+  ---@return string[]
+  local function templates(prefix)
+    return vim.tbl_map(function(v)
+      return prefix .. '/lua/' .. module .. v
+    end, { '.lua', '/init.lua' })
+  end
+
+  for _, dir in ipairs(runtime) do
+    for _, file in ipairs(templates(dir)) do
+      if vim.fn.filereadable(file) == 1 then
+        return file
+      end
+    end
+  end
+
+  for _, template in ipairs(vim.split(package.path, ";")) do
+    local file = template:gsub("?", module)
+    if vim.fn.filereadable(file) == 1 then
+      return file
+    end
+  end
+
+  return fname
+end
+
+
 --- "Pretty prints" the given arguments and returns them unmodified.
 ---
 --- Example:
