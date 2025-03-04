@@ -289,7 +289,7 @@ arguments separated by " " (space) instead of "\t" (tab).
 :lua {chunk}
     Executes Lua chunk {chunk}. If {chunk} starts with "=" the rest of the
     chunk is evaluated as an expression and printed. `:lua =expr` and `:=expr`
-    are equivalent to `:lua vim.print(expr)`.
+    are equivalent to `:lua print(vim.inspect(expr))`.
 
     Examples: >vim
         :lua vim.api.nvim_command('echo "Hello, Nvim!"')
