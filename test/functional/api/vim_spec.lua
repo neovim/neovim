@@ -5469,4 +5469,156 @@ describe('API', function()
 
     n.assert_alive()
   end)
+
+  describe('nvim_cmd with plus #flags', function()
+    it('handles +flags correctly', function()
+      -- Write a file for testing +flags
+      command(':call writefile(["Line 1", "Line 2", "Line 3"], "testfile")')
+
+      -- Test + command (go to the last line)
+      local result = exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit + testfile', {}))
+        return vim.fn.line('.')
+      ]])
+      eq(3, result)
+
+      -- Test +{num} command (go to line number)
+      result = exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit +1 testfile', {}))
+        return vim.fn.line('.')
+      ]])
+      eq(1, result)
+
+      -- Test +/{pattern} command (go to line with pattern)
+      result = exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit +/Line\\ 2 testfile', {}))
+        return vim.fn.line('.')
+      ]])
+      eq(2, result)
+
+      -- Test +{command} command (execute a command after opening the file)
+      result = exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit +set\\ nomodifiable testfile', {}))
+        return vim.bo.modifiable
+      ]])
+      eq(false, result)
+
+      -- Clean up
+      os.remove('testfile')
+    end)
+
+    it('handles various ++ flags correctly', function()
+      -- Test ++ff flag
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++ff=mac test_ff_mac.txt', {}))
+      ]]
+      eq('mac', api.nvim_get_option_value('fileformat', {}))
+      eq('test_ff_mac.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++fileformat=unix test_ff_unix.txt', {}))
+      ]]
+      eq('unix', api.nvim_get_option_value('fileformat', {}))
+      eq('test_ff_unix.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      -- Test ++enc flag
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++enc=utf-32 test_enc.txt', {}))
+      ]]
+      eq('ucs-4', api.nvim_get_option_value('fileencoding', {}))
+      eq('test_enc.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      -- Test ++bin and ++nobin flags
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++bin test_bin.txt', {}))
+      ]]
+      eq(true, api.nvim_get_option_value('binary', {}))
+      eq('test_bin.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++nobin test_nobin.txt', {}))
+      ]]
+      eq(false, api.nvim_get_option_value('binary', {}))
+      eq('test_nobin.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+
+      -- Test multiple flags together
+      exec_lua [[
+        vim.cmd(vim.api.nvim_parse_cmd('edit ++ff=mac ++enc=utf-32 ++bin test_multi.txt', {}))
+      ]]
+      eq(true, api.nvim_get_option_value('binary', {}))
+      eq('mac', api.nvim_get_option_value('fileformat', {}))
+      eq('ucs-4', api.nvim_get_option_value('fileencoding', {}))
+      eq('test_multi.txt', fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+    end)
+
+    it('handles invalid and incorrect ++ flags gracefully', function()
+      -- Test invalid ++ff flag
+      local result = exec_lua [[
+        local cmd = vim.api.nvim_parse_cmd('edit ++ff=invalid test_invalid_ff.txt', {})
+        local _, err = pcall(vim.cmd, cmd)
+        return err
+      ]]
+      eq('Invalid argument', result)
+
+      -- Test incorrect ++ syntax
+      result = exec_lua [[
+        local cmd = vim.api.nvim_parse_cmd('edit ++unknown=test_unknown.txt', {})
+        local _, err = pcall(vim.cmd, cmd)
+        return err
+      ]]
+      eq('Invalid argument', result)
+
+      -- Test invalid ++bin flag
+      result = exec_lua [[
+        local cmd = vim.api.nvim_parse_cmd('edit ++binabc test_invalid_bin.txt', {})
+        local _, err = pcall(vim.cmd, cmd)
+        return err
+      ]]
+      eq('Invalid argument', result)
+    end)
+
+    it('handles ++p for creating parent directory', function()
+      exec_lua [[
+        vim.cmd('edit flags_dir/test_create.txt')
+        vim.cmd(vim.api.nvim_parse_cmd('write! ++p', {}))
+      ]]
+      eq(true, fn.isdirectory('flags_dir') == 1)
+      fn.delete('flags_dir', 'rf')
+    end)
+
+    it('tests editing files with bad utf8 sequences', function()
+      -- Write a file with bad utf8 sequences
+      local file = io.open('Xfile', 'wb')
+      file:write('[\255][\192][\226\137\240][\194\194]')
+      file:close()
+
+      exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit! ++enc=utf8 Xfile', {}))
+      ]])
+      eq('[?][?][???][??]', api.nvim_get_current_line())
+
+      exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit! ++enc=utf8 ++bad=_ Xfile', {}))
+      ]])
+      eq('[_][_][___][__]', api.nvim_get_current_line())
+
+      exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit! ++enc=utf8 ++bad=drop Xfile', {}))
+      ]])
+      eq('[][][][]', api.nvim_get_current_line())
+
+      exec_lua([[
+        vim.cmd(vim.api.nvim_parse_cmd('edit! ++enc=utf8 ++bad=keep Xfile', {}))
+      ]])
+      eq('[\255][\192][\226\137\240][\194\194]', api.nvim_get_current_line())
+
+      local result = exec_lua([[
+        local _, err = pcall(vim.cmd, vim.api.nvim_parse_cmd('edit ++enc=utf8 ++bad=foo Xfile', {}))
+        return err
+      ]])
+      eq('Invalid argument', result)
+      -- Clean up
+      os.remove('Xfile')
+    end)
+  end)
 end)
