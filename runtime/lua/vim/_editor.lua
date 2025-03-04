@@ -1142,6 +1142,21 @@ do
   end
 end
 
+--- @param inspect_strings boolean use vim.inspect() for strings
+function vim._print(inspect_strings, ...)
+  local msg = {}
+  for i = 1, select('#', ...) do
+    local o = select(i, ...)
+    if not inspect_strings and type(o) == 'string' then
+      table.insert(msg, o)
+    else
+      table.insert(msg, vim.inspect(o, { newline = '\n', indent = '  ' }))
+    end
+  end
+  print(table.concat(msg, '\n'))
+  return ...
+end
+
 --- "Pretty prints" the given arguments and returns them unmodified.
 ---
 --- Example:
@@ -1155,17 +1170,7 @@ end
 --- @param ... any
 --- @return any # given arguments.
 function vim.print(...)
-  local msg = {}
-  for i = 1, select('#', ...) do
-    local o = select(i, ...)
-    if type(o) == 'string' then
-      table.insert(msg, o)
-    else
-      table.insert(msg, vim.inspect(o, { newline = '\n', indent = '  ' }))
-    end
-  end
-  print(table.concat(msg, '\n'))
-  return ...
+  return vim._print(false, ...)
 end
 
 --- Translates keycodes.
