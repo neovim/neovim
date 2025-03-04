@@ -834,9 +834,7 @@ do
         -- terminal responds to the DECRQSS with the same SGR sequence that we
         -- sent then the terminal supports truecolor.
         local decrqss = '\027P$qm\027\\'
-        if os.getenv('TMUX') then
-          decrqss = string.format('\027Ptmux;%s\027\\', decrqss:gsub('\027', '\027\027'))
-        end
+
         -- Reset attributes first, as other code may have set attributes.
         io.stdout:write(string.format('\027[0m\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
 

@@ -71,11 +71,6 @@ function M.query(caps, cb)
 
   local query = string.format('\027P+q%s\027\\', table.concat(encoded, ';'))
 
-  -- If running in tmux, wrap with the passthrough sequence
-  if os.getenv('TMUX') then
-    query = string.format('\027Ptmux;%s\027\\', query:gsub('\027', '\027\027'))
-  end
-
   io.stdout:write(query)
 
   timer:start(1000, 0, function()
