@@ -454,13 +454,37 @@ describe('vim.lsp.completion: item conversion', function()
 
   it('works on non word prefix', function()
     local completion_list = {
-      { label = ' foo', insertText = '->foo' },
+      items = {
+        {
+          detail = 'colnr_T',
+          filterText = 'w_virtcol',
+          insertText = '->w_virtcol',
+          insertTextFormat = 1,
+          kind = 5,
+          label = ' w_virtcol',
+          score = 0.59581798315048,
+          sortText = '40e77879w_virtcol',
+          textEdit = {
+            newText = '->w_virtcol',
+            range = {
+              ['end'] = {
+                character = 0,
+                line = 0,
+              },
+              start = {
+                character = 0,
+                line = 0,
+              },
+            },
+          },
+        },
+      },
     }
-    local result = complete('wp.|', completion_list, 0, 2)
+    local result = complete('.|', completion_list)
     local expected = {
       {
-        abbr = ' foo',
-        word = '->foo',
+        abbr = ' w_virtcol',
+        word = 'w_virtcol',
       },
     }
     result = vim.tbl_map(function(x)
@@ -1217,6 +1241,106 @@ describe('vim.lsp.completion: integration', function()
           vim.snippet.active({ direction = 1 }),
           vim.api.nvim_buf_get_lines(0, 0, -1, true),
         }
+      end)
+    )
+  end)
+
+  it('accept item.textEdit', function()
+    local completion_list = {
+      isIncomplete = true,
+      items = {
+        {
+          detail = 'handle_T',
+          filterText = 'handle',
+          insertText = '->handle',
+          insertTextFormat = 1,
+          kind = 5,
+          label = ' handle',
+          score = 0.43193808197975,
+          sortText = '4122d903handle',
+          textEdit = {
+            newText = '->handle',
+            range = {
+              ['end'] = {
+                character = 3,
+                line = 0,
+              },
+              start = {
+                character = 2,
+                line = 0,
+              },
+            },
+          },
+        },
+        {
+          detail = 'int',
+          filterText = 'w_alt_fnum',
+          insertText = '->w_alt_fnum',
+          insertTextFormat = 1,
+          kind = 5,
+          label = ' w_alt_fnum',
+          score = 0.43193808197975,
+          sortText = '4122d903w_alt_fnum',
+          textEdit = {
+            newText = '->w_alt_fnum',
+            range = {
+              ['end'] = {
+                character = 3,
+                line = 0,
+              },
+              start = {
+                character = 2,
+                line = 0,
+              },
+            },
+          },
+        },
+        {
+          detail = 'int',
+          filterText = 'w_arg_idx',
+          insertText = '->w_arg_idx',
+          insertTextFormat = 1,
+          kind = 5,
+          label = ' w_arg_idx',
+          score = 0.43193808197975,
+          sortText = '4122d903w_arg_idx',
+          textEdit = {
+            newText = '->w_arg_idx',
+            range = {
+              ['end'] = {
+                character = 3,
+                line = 0,
+              },
+              start = {
+                character = 2,
+                line = 0,
+              },
+            },
+          },
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+    end)
+    create_server('dummy', completion_list)
+
+    feed('iwp.<c-x><c-o>')
+    retry(nil, nil, function()
+      eq(
+        1,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+
+    -- accept textEdit
+    feed('<C-y>')
+    eq(
+      { 'wp->handle', { 1, 10 } },
+      exec_lua(function()
+        return { vim.api.nvim_get_current_line(), vim.api.nvim_win_get_cursor(0) }
       end)
     )
   end)
