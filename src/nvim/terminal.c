@@ -106,10 +106,21 @@
 typedef struct {
   VimState state;
   Terminal *term;
-  int save_rd;              // saved value of RedrawingDisabled
+  int save_rd;              ///< saved value of RedrawingDisabled
   bool close;
-  bool got_bsl;             // if the last input was <C-\>
-  bool got_bsl_o;           // if left terminal mode with <c-\><c-o>
+  bool got_bsl;             ///< if the last input was <C-\>
+  bool got_bsl_o;           ///< if left terminal mode with <c-\><c-o>
+  bool cursor_visible;
+
+  // These fields remember the prior values of window options before entering terminal mode.
+  // Valid only when save_curwin_handle != 0.
+  handle_T save_curwin_handle;
+  bool save_w_p_cul;
+  char *save_w_p_culopt;
+  uint8_t save_w_p_culopt_flags;
+  int save_w_p_cuc;
+  OptInt save_w_p_so;
+  OptInt save_w_p_siso;
 } TerminalState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -643,6 +654,75 @@ void terminal_check_size(Terminal *term)
   invalidate_terminal(term, -1, -1);
 }
 
+static void set_terminal_winopts(TerminalState *const s)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(s->save_curwin_handle == 0);
+
+  // Disable these options in terminal-mode. They are nonsense because cursor is
+  // placed at end of buffer to "follow" output. #11072
+  s->save_curwin_handle = curwin->handle;
+  s->save_w_p_cul = curwin->w_p_cul;
+  s->save_w_p_culopt = NULL;
+  s->save_w_p_culopt_flags = curwin->w_p_culopt_flags;
+  s->save_w_p_cuc = curwin->w_p_cuc;
+  s->save_w_p_so = curwin->w_p_so;
+  s->save_w_p_siso = curwin->w_p_siso;
+
+  if (curwin->w_p_cul && curwin->w_p_culopt_flags & kOptCuloptFlagNumber) {
+    if (!strequal(curwin->w_p_culopt, "number")) {
+      s->save_w_p_culopt = curwin->w_p_culopt;
+      curwin->w_p_culopt = xstrdup("number");
+    }
+    curwin->w_p_culopt_flags = kOptCuloptFlagNumber;
+  } else {
+    curwin->w_p_cul = false;
+  }
+  curwin->w_p_cuc = false;
+  curwin->w_p_so = 0;
+  curwin->w_p_siso = 0;
+
+  if (curwin->w_p_cuc != s->save_w_p_cuc) {
+    redraw_later(curwin, UPD_SOME_VALID);
+  } else if (curwin->w_p_cul != s->save_w_p_cul
+             || (curwin->w_p_cul && curwin->w_p_culopt_flags != s->save_w_p_culopt_flags)) {
+    redraw_later(curwin, UPD_VALID);
+  }
+}
+
+static void unset_terminal_winopts(TerminalState *const s)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(s->save_curwin_handle != 0);
+
+  win_T *const wp = handle_get_window(s->save_curwin_handle);
+  if (!wp) {
+    free_string_option(s->save_w_p_culopt);
+    s->save_curwin_handle = 0;
+    return;
+  }
+
+  if (win_valid(wp)) {  // No need to redraw if window not in curtab.
+    if (s->save_w_p_cuc != wp->w_p_cuc) {
+      redraw_later(wp, UPD_SOME_VALID);
+    } else if (s->save_w_p_cul != wp->w_p_cul
+               || (s->save_w_p_cul && s->save_w_p_culopt_flags != wp->w_p_culopt_flags)) {
+      redraw_later(wp, UPD_VALID);
+    }
+  }
+
+  wp->w_p_cul = s->save_w_p_cul;
+  if (s->save_w_p_culopt) {
+    free_string_option(wp->w_p_culopt);
+    wp->w_p_culopt = s->save_w_p_culopt;
+  }
+  wp->w_p_culopt_flags = s->save_w_p_culopt_flags;
+  wp->w_p_cuc = s->save_w_p_cuc;
+  wp->w_p_so = s->save_w_p_so;
+  wp->w_p_siso = s->save_w_p_siso;
+  s->save_curwin_handle = 0;
+}
+
 /// Implements MODE_TERMINAL state. :help Terminal-mode
 bool terminal_enter(void)
 {
@@ -650,6 +730,7 @@ bool terminal_enter(void)
   assert(buf->terminal);  // Should only be called when curbuf has a terminal.
   TerminalState s[1] = { 0 };
   s->term = buf->terminal;
+  s->cursor_visible = true;  // Assume visible; may change via refresh_cursor later.
   stop_insert_mode = false;
 
   // Ensure the terminal is properly sized. Ideally window size management
@@ -662,50 +743,22 @@ bool terminal_enter(void)
   State = MODE_TERMINAL;
   mapped_ctrl_c |= MODE_TERMINAL;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
-  if (!s->term->cursor.visible) {
-    // Hide cursor if it should be hidden. Do so right after setting State, before events.
-    ui_busy_start();
-  }
 
-  // Disable these options in terminal-mode. They are nonsense because cursor is
-  // placed at end of buffer to "follow" output. #11072
-  handle_T save_curwin = curwin->handle;
-  bool save_w_p_cul = curwin->w_p_cul;
-  char *save_w_p_culopt = NULL;
-  uint8_t save_w_p_culopt_flags = curwin->w_p_culopt_flags;
-  int save_w_p_cuc = curwin->w_p_cuc;
-  OptInt save_w_p_so = curwin->w_p_so;
-  OptInt save_w_p_siso = curwin->w_p_siso;
-  if (curwin->w_p_cul && curwin->w_p_culopt_flags & kOptCuloptFlagNumber) {
-    if (strcmp(curwin->w_p_culopt, "number") != 0) {
-      save_w_p_culopt = curwin->w_p_culopt;
-      curwin->w_p_culopt = xstrdup("number");
-    }
-    curwin->w_p_culopt_flags = kOptCuloptFlagNumber;
-  } else {
-    curwin->w_p_cul = false;
-  }
-  if (curwin->w_p_cuc) {
-    redraw_later(curwin, UPD_SOME_VALID);
-  }
-  curwin->w_p_cuc = false;
-  curwin->w_p_so = 0;
-  curwin->w_p_siso = 0;
+  set_terminal_winopts(s);
 
   // Update the cursor shape table and flush changes to the UI
   s->term->pending.cursor = true;
-  refresh_cursor(s->term);
+  refresh_cursor(s->term, &s->cursor_visible);
 
   adjust_topline(s->term, buf, 0);  // scroll to end
   showmode();
-  curwin->w_redr_status = true;  // For mode() in statusline. #8323
-  redraw_custom_title_later();
   ui_cursor_shape();
-  apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
-  may_trigger_modechanged();
 
   // Tell the terminal it has focus
   terminal_focus(s->term, true);
+
+  apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
+  may_trigger_modechanged();
 
   s->state.execute = terminal_execute;
   s->state.check = terminal_check;
@@ -716,33 +769,21 @@ bool terminal_enter(void)
   }
   State = save_state;
   RedrawingDisabled = s->save_rd;
-  if (!s->term->cursor.visible) {
-    // If cursor was hidden, show it again. Do so right after restoring State, before events.
+  if (!s->cursor_visible) {
+    // If cursor was hidden, show it again. Do so right after restoring State.
     ui_busy_stop();
   }
-
-  apply_autocmds(EVENT_TERMLEAVE, NULL, NULL, false, curbuf);
 
   // Restore the terminal cursor to what is set in 'guicursor'
   (void)parse_shape_opt(SHAPE_CURSOR);
 
-  if (save_curwin == curwin->handle) {  // Else: window was closed.
-    curwin->w_p_cul = save_w_p_cul;
-    if (save_w_p_culopt) {
-      free_string_option(curwin->w_p_culopt);
-      curwin->w_p_culopt = save_w_p_culopt;
-    }
-    curwin->w_p_culopt_flags = save_w_p_culopt_flags;
-    curwin->w_p_cuc = save_w_p_cuc;
-    curwin->w_p_so = save_w_p_so;
-    curwin->w_p_siso = save_w_p_siso;
-  } else if (save_w_p_culopt) {
-    free_string_option(save_w_p_culopt);
-  }
+  unset_terminal_winopts(s);
 
   // Tell the terminal it lost focus
   terminal_focus(s->term, false);
 
+  // TODO(seandewar): investigate why <c-\><c-o><c-w>p<c-\><c-o><c-w>p<c-\><c-n> between 2 terms
+  // doesnt redraw the cursor...
   if (curbuf->terminal == s->term && !s->close) {
     terminal_check_cursor();
   }
@@ -752,12 +793,15 @@ bool terminal_enter(void)
     unshowmode(true);
   }
   ui_cursor_shape();
+
+  apply_autocmds(EVENT_TERMLEAVE, NULL, NULL, false, curbuf);
+
   if (s->close) {
-    bool wipe = s->term->buf_handle != 0;
+    const handle_T buf_handle = s->term->buf_handle;  // Callback may free s->term.
     s->term->destroy = true;
     s->term->opts.close_cb(s->term->opts.data);
-    if (wipe) {
-      do_cmdline_cmd("bwipeout!");
+    if (buf_handle != 0) {
+      do_buffer(DOBUF_WIPE, DOBUF_FIRST, FORWARD, buf_handle, true);
     }
   }
 
@@ -771,47 +815,74 @@ static void terminal_check_cursor(void)
   curwin->w_wcol = term->cursor.col + win_col_off(curwin);
   curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
                               row_to_linenr(term, term->cursor.row));
+  const linenr_T topline = MAX(curbuf->b_ml.ml_line_count - curwin->w_height_inner + 1, 1);
+  // Don't update topline if it's unchanged to avoid triggering TextChangedT unnecessarily.
+  if (topline != curwin->w_topline) {
+    set_topline(curwin, topline);
+  }
   // Nudge cursor when returning to normal-mode.
   int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
   coladvance(curwin, MAX(0, term->cursor.col + off));
 }
 
-// Function executed before each iteration of terminal mode.
-// Return:
-//   1 if the iteration should continue normally
-//   0 if the main loop must exit
+/// Function executed before each iteration of terminal mode.
+///
+/// @return:
+///           1 if the iteration should continue normally
+///          -1 if the iteration should be skipped
+///           0 if the main loop must exit
 static int terminal_check(VimState *state)
 {
+  TerminalState *const s = (TerminalState *)state;
+
   if (stop_insert_mode) {
     return 0;
+  }
+  if (curbuf->terminal == NULL) {
+    return 0;
+  }
+  if (s->save_curwin_handle != curwin->handle) {
+    // Terminal window changed, update window options.
+    unset_terminal_winopts(s);
+    set_terminal_winopts(s);
+  }
+  if (s->term != curbuf->terminal) {
+    // Active terminal buffer changed, flush terminal's cursor state to the UI
+    terminal_focus(s->term, false);
+
+    s->term = curbuf->terminal;
+    s->term->pending.cursor = true;
+    invalidate_terminal(s->term, -1, -1);
+    terminal_focus(s->term, true);
   }
 
   terminal_check_cursor();
   validate_cursor(curwin);
+  const bool text_changed = must_redraw != 0;
+  show_cursor_info_later(false);
 
   if (must_redraw) {
     update_screen();
-
-    // Make sure an invoked autocmd doesn't delete the buffer (and the
-    // terminal) under our fingers.
-    curbuf->b_locked++;
-
-    // save and restore curwin and curbuf, in case the autocmd changes them
-    aco_save_T aco;
-    aucmd_prepbuf(&aco, curbuf);
-    apply_autocmds(EVENT_TEXTCHANGEDT, NULL, NULL, false, curbuf);
-    aucmd_restbuf(&aco);
-
-    curbuf->b_locked--;
+  } else {
+    redraw_statuslines();
+    if (clear_cmdline || redraw_cmdline || redraw_mode) {
+      showmode();  // clear cmdline and show mode
+    }
   }
 
+  if (text_changed) {
+    // TODO(seandewar): above changes will maybe change the behaviour of this more; untrollify this
+    apply_autocmds(EVENT_TEXTCHANGEDT, NULL, NULL, false, curbuf);
+  }
   may_trigger_win_scrolled_resized();
-
-  if (need_maketitle) {  // Update title in terminal-mode. #7248
-    maketitle();
+  if (curbuf->terminal != s->term || curwin->handle != s->save_curwin_handle) {
+    // Autocommands messed with things; try again.
+    // TODO(seandewar): this can probably cause an infinite loop from especially naughty autocmds
+    return -1;
   }
 
   setcursor();
+  refresh_cursor(s->term, &s->cursor_visible);
   ui_flush();
   return 1;
 }
@@ -909,29 +980,6 @@ static int terminal_execute(VimState *state, int key)
     terminal_send_key(s->term, key);
   }
 
-  if (curbuf->terminal == NULL) {
-    return 0;
-  }
-  if (s->term != curbuf->terminal) {
-    // Active terminal buffer changed, flush terminal's cursor state to the UI
-    curbuf->terminal->pending.cursor = true;
-
-    if (!s->term->cursor.visible) {
-      // If cursor was hidden, show it again
-      ui_busy_stop();
-    }
-
-    if (!curbuf->terminal->cursor.visible) {
-      // Hide cursor if it should be hidden
-      ui_busy_start();
-    }
-
-    invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
-    invalidate_terminal(curbuf->terminal,
-                        curbuf->terminal->cursor.row,
-                        curbuf->terminal->cursor.row + 1);
-    s->term = curbuf->terminal;
-  }
   return 1;
 }
 
@@ -1268,17 +1316,8 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     break;
 
   case VTERM_PROP_CURSORVISIBLE:
-    if (is_focused(term)) {
-      if (!val->boolean && term->cursor.visible) {
-        // Hide the cursor
-        ui_busy_start();
-      } else if (val->boolean && !term->cursor.visible) {
-        // Unhide the cursor
-        ui_busy_stop();
-      }
-      invalidate_terminal(term, -1, -1);
-    }
     term->cursor.visible = val->boolean;
+    invalidate_terminal(term, -1, -1);
     break;
 
   case VTERM_PROP_TITLE: {
@@ -2019,23 +2058,35 @@ static void refresh_terminal(Terminal *term)
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
-  // refresh_ functions assume the terminal buffer is current
+  // refresh_ functions assume the terminal buffer is current. Don't call refresh_cursor here, as we
+  // don't want a terminal that was possibly made temporarily current influencing the cursor.
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
   refresh_size(term, buf);
   refresh_scrollback(term, buf);
   refresh_screen(term, buf);
-  refresh_cursor(term);
   aucmd_restbuf(&aco);
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
 }
 
-static void refresh_cursor(Terminal *term)
+static void refresh_cursor(Terminal *term, bool *cursor_visible)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!is_focused(term) || !term->pending.cursor) {
+  if (!is_focused(term)) {
+    return;
+  }
+  if (term->cursor.visible != *cursor_visible) {
+    *cursor_visible = term->cursor.visible;
+    if (*cursor_visible) {
+      ui_busy_stop();
+    } else {
+      ui_busy_start();
+    }
+  }
+
+  if (!term->pending.cursor) {
     return;
   }
   term->pending.cursor = false;
@@ -2228,10 +2279,16 @@ static void adjust_topline(Terminal *term, buf_T *buf, int added)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
+      if (wp == curwin && is_focused(term)) {
+        // Move window cursor to terminal cursor's position and "follow" output.
+        terminal_check_cursor();
+        continue;
+      }
+
       linenr_T ml_end = buf->b_ml.ml_line_count;
       bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
 
-      if (following || (wp == curwin && is_focused(term))) {
+      if (following) {
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;
         set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_height_inner + 1, 1));
