@@ -29,6 +29,7 @@ with these extensions:
 
 	extension	compression >
 	*.bz2		bzip2
+	*.bz3		bzip3
 	*.gz		gzip
 	*.lz		lzip
 	*.lz4		lz4
