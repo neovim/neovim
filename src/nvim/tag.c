@@ -2986,6 +2986,8 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
       secure = 1;
       sandbox++;
       curwin->w_cursor.lnum = 1;  // start command in line 1
+      curwin->w_cursor.col = 0;
+      curwin->w_cursor.coladd = 0;
       do_cmdline_cmd(pbuf);
       retval = OK;
 
