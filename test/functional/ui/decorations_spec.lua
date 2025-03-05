@@ -16,7 +16,7 @@ local assert_alive = n.assert_alive
 local pcall_err = t.pcall_err
 
 describe('decorations providers', function()
-  local screen
+  local screen ---@type test.functional.ui.screen
   before_each(function()
     clear()
     screen = Screen.new(40, 8)
@@ -52,6 +52,7 @@ describe('decorations providers', function()
     posp = getmark(mark, false);
     restore_buffer(&save_buf); ]]
 
+  --- @return integer
   local function setup_provider(code)
     return exec_lua ([[
       local api = vim.api
@@ -848,7 +849,8 @@ for _,item in ipairs(items) do
 end]]
 
 describe('extmark decorations', function()
-  local screen, ns
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
   before_each( function()
     clear()
     screen = Screen.new(50, 15)
@@ -2232,7 +2234,7 @@ describe('extmark decorations', function()
 
     eq({ { 1, 0, 8, { end_col = 13, end_right_gravity = false, end_row = 0,
                        hl_eol = false, hl_group = "NonText", undo_restore = false,
-                       ns_id = 1, priority = 4096, right_gravity = true } } },
+                       ns_id = ns, priority = 4096, right_gravity = true } } },
        api.nvim_buf_get_extmarks(0, ns, {0,0}, {0, -1}, {details=true}))
   end)
 
@@ -2898,7 +2900,8 @@ describe('extmark decorations', function()
 end)
 
 describe('decorations: inline virtual text', function()
-  local screen, ns
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
   before_each( function()
     clear()
     screen = Screen.new(50, 3)
@@ -4640,7 +4643,9 @@ describe('decorations: inline virtual text', function()
 end)
 
 describe('decorations: virtual lines', function()
-  local screen, ns
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
+
   before_each(function()
     clear()
     screen = Screen.new(50, 12)
@@ -5697,7 +5702,9 @@ if (h->n_buckets < new_n_buckets) { // expand
 end)
 
 describe('decorations: signs', function()
-  local screen, ns
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
+
   before_each(function()
     clear()
     screen = Screen.new(50, 10)
@@ -6307,7 +6314,7 @@ l5
 end)
 
 describe('decorations: virt_text', function()
-  local screen
+  local screen ---@type test.functional.ui.screen
 
   before_each(function()
     clear()
@@ -6381,7 +6388,10 @@ describe('decorations: virt_text', function()
 end)
 
 describe('decorations: window scoped', function()
-  local screen, ns, win_other
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
+  local win_other ---@type integer
+
   local url = 'https://example.com'
   before_each(function()
     clear()
