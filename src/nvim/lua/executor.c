@@ -125,6 +125,28 @@ lua_State *get_global_lstate(void)
   return global_lstate;
 }
 
+/// get error on top of stack as a string
+///
+/// Might alter the top value on stack in place (but doesn't change stack height)
+///
+/// "error" points to memory on the lua stack, use
+/// or duplicate the string before using "lstate" again
+///
+/// @param[out] len length of error (can be NULL)
+static const char *nlua_get_error(lua_State *lstate, size_t *len)
+{
+  if (luaL_getmetafield(lstate, -1, "__tostring")) {
+    if (lua_isfunction(lstate, -1) && luaL_callmeta(lstate, -2, "__tostring")) {
+      // call __tostring, convert the result and replace error with it
+      lua_replace(lstate, -3);
+    }
+    // pop __tostring.
+    lua_pop(lstate, 1);
+  }
+
+  return lua_tolstring(lstate, -1, len);
+}
+
 /// Convert lua error into a Vim error message
 ///
 /// @param  lstate  Lua interpreter state.
@@ -133,22 +155,7 @@ void nlua_error(lua_State *const lstate, const char *const msg)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t len;
-  const char *str = NULL;
-
-  if (luaL_getmetafield(lstate, -1, "__tostring")) {
-    if (lua_isfunction(lstate, -1) && luaL_callmeta(lstate, -2, "__tostring")) {
-      // call __tostring, convert the result and pop result.
-      str = lua_tolstring(lstate, -1, &len);
-      lua_pop(lstate, 1);
-    }
-    // pop __tostring.
-    lua_pop(lstate, 1);
-  }
-
-  if (!str) {
-    // defer to lua default conversion, this will render tables as [NULL].
-    str = lua_tolstring(lstate, -1, &len);
-  }
+  const char *str = nlua_get_error(lstate, &len);
 
   if (in_script) {
     fprintf(stderr, msg, (int)len, str);
@@ -218,7 +225,9 @@ static int nlua_fast_cfpcall(lua_State *lstate, int nargs, int nresult, int flag
       // consider out of memory errors unrecoverable, just like xmalloc()
       preserve_exit(e_outofmem);
     }
-    const char *error = lua_tostring(lstate, -1);
+
+    size_t len;
+    const char *error = nlua_get_error(lstate, &len);
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
                    error != NULL ? xstrdup(error) : NULL, (void *)(intptr_t)kCallback);
