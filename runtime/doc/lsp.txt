@@ -50,6 +50,15 @@ Follow these steps to get LSP features:
           Lua = {
             runtime = {
               version = 'LuaJIT',
+            },
+            -- Make the server aware of Nvim runtime files. Useful if you
+            -- primarily use Lua for Nvim configuration, plugins,...
+            workspace = {
+              checkThirdParty = false,
+              library = {
+                vim.env.VIMRUNTIME,
+                -- additional paths here.
+              }
             }
           }
         }
