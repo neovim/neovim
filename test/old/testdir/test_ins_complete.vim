@@ -1208,8 +1208,8 @@ func Test_complete_cmdline()
   call assert_equal('abcxyz(', getline(3))
   com! -buffer TestCommand1 echo 'TestCommand1'
   com! -buffer TestCommand2 echo 'TestCommand2'
-  write TestCommand1Test
-  write TestCommand2Test
+  write! TestCommand1Test
+  write! TestCommand2Test
   " Test repeating <CTRL-X> <CTRL-V> and switching to another CTRL-X mode
   exe "normal oT\<C-X>\<C-V>\<C-X>\<C-V>\<C-X>\<C-F>\<Esc>"
   call assert_equal('TestCommand2Test', getline(4))
