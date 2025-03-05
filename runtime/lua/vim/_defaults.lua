@@ -515,8 +515,8 @@ do
       if channel == 0 then
         return
       end
-      local fg_request = args.data == '\027]10;?'
-      local bg_request = args.data == '\027]11;?'
+      local fg_request = args.data.sequence == '\027]10;?'
+      local bg_request = args.data.sequence == '\027]11;?'
       if fg_request or bg_request then
         -- WARN: This does not return the actual foreground/background color,
         -- but rather returns:
@@ -712,7 +712,7 @@ do
         nested = true,
         desc = "Update the value of 'background' automatically based on the terminal emulator's background color",
         callback = function(args)
-          local resp = args.data ---@type string
+          local resp = args.data.sequence ---@type string
           local r, g, b = parseosc11(resp)
           if r and g and b then
             local rr = parsecolor(r)
@@ -788,7 +788,7 @@ do
           group = group,
           nested = true,
           callback = function(args)
-            local resp = args.data ---@type string
+            local resp = args.data.sequence ---@type string
             local decrqss = resp:match('^\027P1%$r([%d;:]+)m$')
 
             if decrqss then

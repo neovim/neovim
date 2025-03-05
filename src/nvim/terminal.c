@@ -186,7 +186,7 @@ struct terminal {
   char *selection_buffer;  ///< libvterm selection buffer
   StringBuilder selection;  ///< Growable array containing full selection data
 
-  StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request payload
+  StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
 
   size_t refcount;                  // reference count
 };
@@ -213,16 +213,36 @@ static Set(ptr_t) invalidated_terminals = SET_INIT;
 static void emit_termrequest(void **argv)
 {
   Terminal *term = argv[0];
-  char *payload = argv[1];
-  size_t payload_length = (size_t)argv[2];
+  char *sequence = argv[1];
+  size_t sequence_length = (size_t)argv[2];
   StringBuilder *pending_send = argv[3];
+  int row = (int)(intptr_t)argv[4];
+  int col = (int)(intptr_t)argv[5];
+
+  if (term->sb_pending > 0) {
+    // Don't emit the event while there is pending scrollback because we need
+    // the buffer contents to be fully updated. If this is the case, re-schedule
+    // the event.
+    multiqueue_put(main_loop.events, emit_termrequest, term, sequence, (void *)sequence_length,
+                   pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col);
+    return;
+  }
+
+  set_vim_var_string(VV_TERMREQUEST, sequence, (ptrdiff_t)sequence_length);
+
+  MAXSIZE_TEMP_ARRAY(cursor, 2);
+  ADD_C(cursor, INTEGER_OBJ(row));
+  ADD_C(cursor, INTEGER_OBJ(col));
+
+  MAXSIZE_TEMP_DICT(data, 2);
+  String termrequest = { .data = sequence, .size = sequence_length };
+  PUT_C(data, "sequence", STRING_OBJ(termrequest));
+  PUT_C(data, "cursor", ARRAY_OBJ(cursor));
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
-  String termrequest = { .data = payload, .size = payload_length };
-  Object data = STRING_OBJ(termrequest);
-  set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
-  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, NULL, &data);
-  xfree(payload);
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, NULL,
+                       &DICT_OBJ(data));
+  xfree(sequence);
 
   StringBuilder *term_pending_send = term->pending.send;
   term->pending.send = NULL;
@@ -236,12 +256,15 @@ static void emit_termrequest(void **argv)
   xfree(pending_send);
 }
 
-static void schedule_termrequest(Terminal *term, char *payload, size_t payload_length)
+static void schedule_termrequest(Terminal *term, char *sequence, size_t sequence_length)
 {
   term->pending.send = xmalloc(sizeof(StringBuilder));
   kv_init(*term->pending.send);
-  multiqueue_put(main_loop.events, emit_termrequest, term, payload, (void *)payload_length,
-                 term->pending.send);
+
+  int line = row_to_linenr(term, term->cursor.row);
+  multiqueue_put(main_loop.events, emit_termrequest, term, sequence, (void *)sequence_length,
+                 term->pending.send, (void *)(intptr_t)line,
+                 (void *)(intptr_t)term->cursor.col);
 }
 
 static int parse_osc8(VTermStringFragment frag, int *attr)
@@ -315,8 +338,8 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, payload, term->termrequest_buffer.size);
+    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
   }
   return 1;
 }
@@ -338,8 +361,8 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, payload, term->termrequest_buffer.size);
+    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
   }
   return 1;
 }
@@ -361,8 +384,8 @@ static int on_apc(VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, payload, term->termrequest_buffer.size);
+    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
   }
   return 1;
 }

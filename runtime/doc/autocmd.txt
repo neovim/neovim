@@ -1004,22 +1004,32 @@ TermClose			When a |terminal| job ends.
 				    status
 							*TermRequest*
 TermRequest			When a |:terminal| child process emits an OSC,
-				DCS or APC sequence. Sets |v:termrequest|. The
-				|event-data| is the request string.
+				DCS, or APC sequence. Sets |v:termrequest|. The
+				|event-data| is a table with the following
+				fields:
+
+				- sequence: the received sequence
+				- cursor: (1,0)-indexed, buffer-relative
+				  position of the cursor when the sequence was
+				  received
+
 							*TermResponse*
 TermResponse			When Nvim receives an OSC or DCS response from
 				the host terminal. Sets |v:termresponse|. The
-				|event-data| is the response string. May be
-				triggered during another event (file I/O,
-				a shell command, or anything else that takes
-				time). Example: >lua
+				|event-data| is a table with the following fields:
+
+				- sequence: the received sequence
+
+				May be triggered during another event (file
+				I/O, a shell command, or anything else that
+				takes time). Example: >lua
 
 				-- Query the terminal palette for the RGB value of color 1
 				-- (red) using OSC 4
 				vim.api.nvim_create_autocmd('TermResponse', {
 				  once = true,
 				  callback = function(args)
-				    local resp = args.data
+				    local resp = args.data.sequence
 				    local r, g, b = resp:match("\027%]4;1;rgb:(%w+)/(%w+)/(%w+)")
 				  end,
 				})

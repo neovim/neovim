@@ -205,7 +205,9 @@ local function try_query_terminal_color(color)
     once = true,
     callback = function(args)
       hex = '#'
-        .. table.concat({ args.data:match('\027%]%d+;%d*;?rgb:(%w%w)%w%w/(%w%w)%w%w/(%w%w)%w%w') })
+        .. table.concat({
+          args.data.sequence:match('\027%]%d+;%d*;?rgb:(%w%w)%w%w/(%w%w)%w%w/(%w%w)%w%w'),
+        })
     end,
   })
   if type(color) == 'number' then
