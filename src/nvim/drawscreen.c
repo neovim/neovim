@@ -2118,13 +2118,13 @@ static void win_update(win_T *wp)
         if (wp == curwin && lnum == curwin->w_cursor.lnum) {
           conceal_cursor_used = conceal_cursor_line(curwin);
         }
-        if (idx > 0) {
-          wp->w_lines[idx - 1].wl_lastlnum = lnum + foldinfo.fi_lines - (foldinfo.fi_lines != 0);
-        }
-        if (lnum == mod_top && lnum < mod_bot) {
-          mod_top += foldinfo.fi_lines ? foldinfo.fi_lines : 1;
-        }
         if (win_get_fill(wp, lnum) == 0) {
+          if (idx > 0) {
+            wp->w_lines[idx - 1].wl_lastlnum = lnum + foldinfo.fi_lines - (foldinfo.fi_lines != 0);
+          }
+          if (lnum == mod_top && lnum < mod_bot) {
+            mod_top += foldinfo.fi_lines ? foldinfo.fi_lines : 1;
+          }
           lnum += foldinfo.fi_lines ? foldinfo.fi_lines : 1;
           spv.spv_capcol_lnum = 0;
           continue;
