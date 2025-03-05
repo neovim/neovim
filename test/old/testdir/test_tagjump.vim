@@ -1696,4 +1696,21 @@ func Test_tag_guess_short()
   set tags& cpoptions-=t
 endfunc
 
+func Test_tag_excmd_with_nostartofline()
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "f\tXfile\tascii"],
+        \ 'Xtags', 'D')
+  call writefile(['f', 'foobar'], 'Xfile', 'D')
+
+  set nostartofline
+  new Xfile
+  setlocal tags=Xtags
+  normal! G$
+  " This used to cause heap-buffer-overflow
+  tag f
+
+  bwipe!
+  set startofline&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
