@@ -943,9 +943,7 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
       exit = true;
     }
 
-    if (nvim_env != NULL) {
-      xfree((char *)nvim_env);
-    }
+    xfree((char *)nvim_env);
 
     if (exit) {
       os_exit(1);

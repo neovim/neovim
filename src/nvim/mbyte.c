@@ -2414,7 +2414,7 @@ char *enc_locale(void)
 
   const char *s;
   const char *langinfo = NULL;
-  const char *setmefree = NULL;
+  const char *tofree = NULL;
 
 #ifdef HAVE_NL_LANGINFO_CODESET
   if (!(s = nl_langinfo(CODESET)) || *s == NUL)
@@ -2423,21 +2423,21 @@ char *enc_locale(void)
     if (!(s = setlocale(LC_CTYPE, NULL)) || *s == NUL) {
       if ((s = os_getenv("LC_ALL"))) {
         memfree = true;
+        xfree((char *)s);
         if ((s = os_getenv("LC_CTYPE"))) {
+          xfree((char *)s);
           s = os_getenv("LANG");
         }
       }
     }
   }
 
-  if (s != NULL) {
-    if (s) {
-      langinfo = xstrdup(s);
-      setmefree = langinfo;
-    }
-    if (memfree) {
-      xfree((char *)s);
-    }
+  if (s) {
+    langinfo = xstrdup(s);
+    tofree = langinfo;
+  }
+  if (memfree) {
+    xfree((char *)s);
   }
 
   if (!langinfo) {
@@ -2477,7 +2477,7 @@ enc_locale_copy_enc:
     }
     buf[i] = NUL;
   }
-  xfree((char *)setmefree);
+  xfree((char *)tofree);
 
   return enc_canonize(buf);
 }

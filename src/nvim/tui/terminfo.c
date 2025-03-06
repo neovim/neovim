@@ -51,9 +51,7 @@ bool terminfo_is_bsd_console(const char *term)
   // like cursor-shaping. Assume that TERM=xterm is degraded. #8644
   const char *xtermv_env = os_getenv("XTERM_VERSION");
   bool retval = strequal(term, "xterm") && !!xtermv_env;
-  if (xtermv_env != NULL) {
-    xfree((char *)xtermv_env);
-  }
+  xfree((char *)xtermv_env);
   return retval;
 # endif
 #endif

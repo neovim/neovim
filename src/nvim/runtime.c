@@ -1636,9 +1636,7 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val, const ch
     }
   } while (iter != NULL);
 
-  if (appname != NULL) {
-    xfree((char *)appname);
-  }
+  xfree((char *)appname);
 
   return dest;
 }
@@ -1702,10 +1700,7 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
         dest += len2;
       }
     }
-
-    if (appname != NULL) {
-      xfree((char *)appname);
-    }
+    xfree((char *)appname);
   }
   *dest++ = ',';
   return dest;
@@ -1832,10 +1827,7 @@ freeall:
   xfree(config_home);
   xfree(vimruntime);
   xfree(libdir);
-
-  if (appname != NULL) {
-    xfree((char *)appname);
-  }
+  xfree((char *)appname);
 
   return rtp;
 }

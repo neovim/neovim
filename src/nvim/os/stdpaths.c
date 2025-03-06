@@ -64,6 +64,7 @@ static const char *const xdg_defaults[] = {
 };
 
 /// Gets the value of $NVIM_APPNAME, or "nvim" if not set.
+/// Result must be freed by the caller, if called with 'retval_needed == true'.
 ///
 /// @param namelike Write "name-like" value (no path separators) in `NameBuff`.
 ///
@@ -86,15 +87,6 @@ const char *get_appname(bool namelike)
   return env_val;
 }
 
-/// Write "name-like" value (no path separators) in `NameBuff`.
-void appname_init_namebuf(void)
-{
-  const char *appname = get_appname(true);
-  if (appname != NULL) {
-    xfree((char *)appname);
-  }
-}
-
 /// Ensure that APPNAME is valid. Must be a name or relative path.
 bool appname_is_valid(void)
 {
@@ -115,9 +107,7 @@ bool appname_is_valid(void)
     valid = false;
   }
 
-  if (appname != NULL) {
-    xfree((char *)appname);
-  }
+  xfree((char *)appname);
 
   return valid;
 }
@@ -174,22 +164,14 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   const char *const fallback = xdg_defaults[idx];
 
   const char *env_val = os_getenv(env);
-  bool memfree = false;
-
-  if (env_val != NULL) {
-    memfree = true;
-  }
 
 #ifdef MSWIN
   if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
-    env_val = os_getenv(xdg_defaults_env_vars[idx]);
-    if (env_val != NULL) {
-      memfree = true;
-    }
+    env_val = os_getenv(xdg_defaults_env_vars[idx]);    // 'env_val' was NULL, no xfree() is needed
   }
 #else
   if (env_val == NULL && os_env_exists(env)) {
-    env_val = "";
+    env_val = xstrdup("");
   }
 #endif
 
@@ -212,9 +194,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     ret = xdg_remove_duplicate(ret, ENV_SEPSTR);
   }
 
-  if (memfree) {
-    xfree((char *)env_val);
-  }
+  xfree((char *)env_val);
   return ret;
 }
 
@@ -248,9 +228,7 @@ char *get_xdg_home(const XDGVarType idx)
 #endif
   }
 
-  if (appname != NULL) {
-    xfree((char *)appname);
-  }
+  xfree((char *)appname);
 
   return dir;
 }

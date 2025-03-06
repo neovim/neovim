@@ -53,6 +53,7 @@
 #endif
 
 /// Like getenv(), but returns NULL if the variable is empty.
+/// Result must be freed by the caller.
 /// @see os_env_exists
 const char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
@@ -121,9 +122,16 @@ int os_setenv(const char *name, const char *value, int overwrite)
     return -1;
   }
 #ifdef MSWIN
-  if (!overwrite && os_getenv(name) != NULL) {
+  bool return_donothing = false;
+  const char *env = os_getenv(name);
+  if (!overwrite && env != NULL) {
+    return_donothing = true;
+  }
+  xfree((char *)env);
+  if (return_donothing) {
     return 0;
   }
+
   if (value[0] == NUL) {
     // Windows (Vim-compat): Empty string undefines the env var.
     return os_unsetenv(name);
@@ -411,7 +419,7 @@ void init_homedir(void)
   homedir = NULL;
 
   const char *var = os_getenv("HOME");
-  const char *setmefree = var;
+  const char *tofree = var;
 
 #ifdef MSWIN
   // Typically, $HOME is not defined on Windows, unless the user has
@@ -422,7 +430,7 @@ void init_homedir(void)
     const char *homedrive = os_getenv("HOMEDRIVE");
     const char *homepath = os_getenv("HOMEPATH");
     if (homepath == NULL) {
-      homepath = "\\";
+      homepath = xstrdup("\\");
     }
     if (homedrive != NULL
         && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
@@ -431,6 +439,8 @@ void init_homedir(void)
         var = os_buf;
       }
     }
+    xfree((char *)homepath);
+    xfree((char *)homedrive);
   }
   if (var == NULL) {
     var = os_uv_homedir();
@@ -445,10 +455,12 @@ void init_homedir(void)
       vim_snprintf(os_buf, (size_t)(p - var), "%s", var + 1);
       var = NULL;
       const char *exp = os_getenv(os_buf);
-      if (exp != NULL && *exp != NUL
-          && strlen(exp) + strlen(p) < MAXPATHL) {
-        vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
-        var = os_buf;
+      if (exp != NULL) {
+        if (*exp != NUL && strlen(exp) + strlen(p) < MAXPATHL) {
+          vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
+          var = os_buf;
+        }
+        xfree((char *)exp);
       }
     }
   }
@@ -481,7 +493,7 @@ void init_homedir(void)
   if (var != NULL) {
     homedir = xstrdup(var);
   }
-  xfree((char *)setmefree);
+  xfree((char *)tofree);
 }
 
 static char homedir_buf[MAXPATHL];
@@ -892,9 +904,7 @@ char *vim_getenv(const char *name)
 
   const char *kos_env_path = os_getenv(name);
   if (kos_env_path != NULL) {
-    char *retval = xstrdup(kos_env_path);
-    xfree((char *)kos_env_path);
-    return retval;
+    return (char *)kos_env_path;
   }
 
   bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
@@ -907,12 +917,13 @@ char *vim_getenv(const char *name)
   char *vim_path = NULL;
   if (vimruntime
       && *default_vimruntime_dir == NUL) {
-    kos_env_path = os_getenv("VIM");
+    kos_env_path = os_getenv("VIM");    // No xfree() needed for kos_env_path, as it must be NULL if we got here
     if (kos_env_path != NULL) {
       vim_path = vim_version_dir(kos_env_path);
       if (vim_path == NULL) {
         vim_path = xstrdup(kos_env_path);
       }
+      xfree((char *)kos_env_path);
     }
   }
 
@@ -1043,11 +1054,8 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
   char *homedir_env_mod = (char *)homedir_env;
   bool must_free = false;
 
-  if (homedir_env != NULL) {
-    must_free = true;
-  }
-
   if (homedir_env_mod != NULL && *homedir_env_mod == '~') {
+    must_free = true;
     size_t usedlen = 0;
     size_t flen = strlen(homedir_env_mod);
     char *fbuf = NULL;
@@ -1120,8 +1128,10 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
 
   *dst_p = NUL;
 
+  xfree((char *)homedir_env);
+
   if (must_free) {
-    xfree((char *)homedir_env);
+    xfree(homedir_env_mod);
   }
   return (size_t)(dst_p - dst);
 }
@@ -1180,6 +1190,7 @@ bool os_setenv_append_path(const char *fname)
   const char *path = os_getenv("PATH");
   const size_t pathlen = path ? strlen(path) : 0;
   const size_t newlen = pathlen + dirlen + 2;
+  bool retval = false;
   if (newlen < MAX_ENVPATHLEN) {
     char *temp = xmalloc(newlen);
     if (pathlen == 0) {
@@ -1193,9 +1204,10 @@ bool os_setenv_append_path(const char *fname)
     xstrlcat(temp, os_buf, newlen);
     os_setenv("PATH", temp, 1);
     xfree(temp);
-    return true;
+    retval = true;
   }
-  return false;
+  xfree((char *)path);
+  return retval;
 }
 
 /// Returns true if `sh` looks like it resolves to "cmd.exe".
@@ -1207,7 +1219,9 @@ bool os_shell_is_cmdexe(const char *sh)
   }
   if (striequal(sh, "$COMSPEC")) {
     const char *comspec = os_getenv("COMSPEC");
-    return striequal("cmd.exe", path_tail(comspec));
+    bool retval = striequal("cmd.exe", path_tail(comspec));
+    xfree((char *)comspec);
+    return retval;
   }
   if (striequal(sh, "cmd.exe") || striequal(sh, "cmd")) {
     return true;
