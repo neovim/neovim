@@ -198,6 +198,7 @@ local extension = {
   abap = 'abap',
   abc = 'abc',
   abl = 'abel',
+  abnf = 'abnf',
   wrm = 'acedb',
   ads = 'ada',
   ada = 'ada',
