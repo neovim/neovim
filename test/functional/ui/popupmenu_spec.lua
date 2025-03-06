@@ -7310,6 +7310,7 @@ describe('builtin popupmenu', function()
             return [#{word: "func ()\n\t\nend", abbr: "function ()",}, #{word: "foobar"}, #{word: "你好\n\t\n我好"}]
           endfunc
           set omnifunc=Omni_test
+          inoremap <F5> <Cmd>call complete(col('.'), [ "my\n\tmulti\nline", "my\n\t\tmulti\nline" ])<CR>
         ]])
 
         feed('S<C-X><C-O>')
@@ -7449,6 +7450,21 @@ describe('builtin popupmenu', function()
           {8:    }                            |
             end^                           |
           end                             |
+          {1:~                               }|*14
+          {2:-- INSERT --}                    |
+        ]])
+
+        feed('<Esc>ggVGd')
+        command('filetype indent on')
+        command('setlocal noautoindent shiftwidth& tabstop&')
+        command('setlocal ft=lua')
+        feed('S<F5>')
+        screen:expect([[
+          {8:my}                              |
+          {8:        multi}                   |
+          {8:line}^                            |
+          {s:my^@  multi^@line   }{1:            }|
+          {n:my^@    multi^@line }{1:            }|
           {1:~                               }|*14
           {2:-- INSERT --}                    |
         ]])

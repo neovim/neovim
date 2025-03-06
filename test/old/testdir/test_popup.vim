@@ -1896,6 +1896,7 @@ func Test_pum_complete_with_special_characters()
       return [#{word: "func ()\n\t\nend", abbr: "function ()",}, #{word: "foobar"}, #{word: "你好\n\t\n我好"}]
     endfunc
     set omnifunc=Omni_test
+    inoremap <F5> <Cmd>call complete(col('.'), [ "my\n\tmulti\nline", "my\n\t\tmulti\nline" ])<CR>
   END
 
   call writefile(lines, 'Xpreviewscript', 'D')
@@ -1953,6 +1954,14 @@ func Test_pum_complete_with_special_characters()
   call term_sendkeys(buf, "\<C-Y>")
   call TermWait(buf, 50)
   call VerifyScreenDump(buf, 'Test_pum_with_special_characters_12', {})
+
+  call term_sendkeys(buf, "\<ESC>ggVGd")
+  call term_sendkeys(buf, ":filetype indent on\<CR>")
+  call term_sendkeys(buf, ":set nocompatible autoindent& shiftwidth& tabstop&\<CR>")
+  call term_sendkeys(buf, ":setlocal ft=lua\<CR>")
+  call term_sendkeys(buf, "S\<F5>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_with_special_characters_13', {})
 
   call StopVimInTerminal(buf)
 endfunc
