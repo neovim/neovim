@@ -116,9 +116,7 @@ int os_get_usernames(garray_T *users)
         }
       }
     }
-    if (user_env != NULL) {
-      xfree((char *)user_env);
-    }
+    xfree((char *)user_env);
   }
 #endif
 

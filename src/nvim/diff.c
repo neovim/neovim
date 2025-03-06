@@ -1113,9 +1113,7 @@ static int diff_file(diffio_T *dio)
   if (diff_env) {
     os_unsetenv("DIFF_OPTIONS");
   }
-  if (diff_env != NULL) {
-    xfree((char *)diff_env);
-  }
+  xfree((char *)diff_env);
 
   // Build the diff command and execute it.  Always use -a, binary
   // differences are of no use.  Ignore errors, diff returns

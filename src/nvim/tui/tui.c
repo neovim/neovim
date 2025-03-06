@@ -508,30 +508,15 @@ static void terminfo_start(TUIData *tui)
   }
   flush_buf(tui);
 
-  if (term != NULL) {
-    xfree((char *)term);
-  }
-  if (tmux_env != NULL) {
-    xfree((char *)tmux_env);
-  }
-  if (colorterm != NULL) {
-    xfree((char *)colorterm);
-  }
-  if (termprg != NULL) {
-    xfree((char *)termprg);
-  }
-  if (vte_version_env != NULL) {
-    xfree((char *)vte_version_env);
-  }
-  if (konsolev_env != NULL) {
-    xfree((char *)konsolev_env);
-  }
-  if (konsole_profile_env != NULL) {
-    xfree((char *)konsole_profile_env);
-  }
-  if (konsole_dbus_session != NULL) {
-    xfree((char *)konsole_dbus_session);
-  }
+  xfree((char *)term);
+  xfree((char *)tmux_env);
+  xfree((char *)colorterm);
+  xfree((char *)termprg);
+  xfree((char *)vte_version_env);
+  xfree((char *)konsolev_env);
+  xfree((char *)konsole_profile_env);
+  xfree((char *)konsole_dbus_session);
+  xfree((char *)term_program_version_env);
 }
 
 /// Disable the alternate screen and prepare for the TUI to close.
@@ -1837,13 +1822,8 @@ void tui_guess_size(TUIData *tui)
   // Redraw on SIGWINCH event if size didn't change. #23411
   ui_client_set_size(width, height);
 
-  if (lines != NULL) {
-    xfree((char *)lines);
-  }
-
-  if (columns != NULL) {
-    xfree((char *)columns);
-  }
+  xfree((char *)lines);
+  xfree((char *)columns);
 }
 
 static void unibi_goto(TUIData *tui, int row, int col)
@@ -2318,12 +2298,8 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
     }
   }
 
-  if (env_tmux != NULL) {
-    xfree((char *)env_tmux);
-  }
-  if (xterm_version != NULL) {
-    xfree((char *)xterm_version);
-  }
+  xfree((char *)env_tmux);
+  xfree((char *)xterm_version);
 }
 
 /// This adds stuff that is not in standard terminfo as extended unibilium
@@ -2518,12 +2494,8 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
     tui->input.key_encoding = kKeyEncodingXterm;
   }
 
-  if (env_tmux != NULL) {
-    xfree((char *)env_tmux);
-  }
-  if (xterm_version != NULL) {
-    xfree((char *)xterm_version);
-  }
+  xfree((char *)env_tmux);
+  xfree((char *)xterm_version);
 }
 
 static bool should_invisible(TUIData *tui)

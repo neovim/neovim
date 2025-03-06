@@ -120,6 +120,7 @@ void os_tty_guess_term(const char **term, int out_fd)
 {
   const char *conemuansi_env = os_getenv("ConEmuANSI");
   bool conemu_ansi = strequal(conemuansi_env, "ON");
+  xfree((char *)conemuansi_env);
   bool vtp = false;
 
   HANDLE handle = (HANDLE)_get_osfhandle(out_fd);
@@ -143,9 +144,5 @@ void os_tty_guess_term(const char **term, int out_fd)
 
   if (conemu_ansi) {
     uv_tty_set_vterm_state(UV_TTY_SUPPORTED);
-  }
-
-  if (conemuansi_env != NULL) {
-    xfree((char *)conemuansi_env);
   }
 }

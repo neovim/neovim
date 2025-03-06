@@ -350,9 +350,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
       snprintf(name, sizeof(name), "%s.%-5" PRId64, ui ? "ui" : "?", pid);
     }
 
-    if (env_nvim != NULL) {
-      xfree((char *)env_nvim);
-    }
+    xfree((char *)env_nvim);
   }
 
   // Print the log message.

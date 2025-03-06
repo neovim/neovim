@@ -70,6 +70,7 @@ char *get_mess_lang(void)
 }
 
 /// Get the language used for messages from the environment.
+/// Result must be freed by the caller.
 ///
 /// This uses LC_MESSAGES when available, which it is for most systems we build for
 /// except for windows. Then fallback to get the value from the environment
@@ -79,10 +80,9 @@ static char *get_mess_env(void)
   char *p;
 
 #ifdef LC_MESSAGES
-  // Making sure that we can free() the return value
-  p = xstrdup(get_locale_val(LC_MESSAGES));
+  p = xstrdup(get_locale_val(LC_MESSAGES));   // Making sure that we can free() the return value
 #else
-  char *p = (char *)os_getenv("LC_ALL");
+  p = (char *)os_getenv("LC_ALL");
   if (p != NULL) {
     return p;
   }
@@ -97,7 +97,7 @@ static char *get_mess_env(void)
     p = NULL;  // ignore something like "1043"
   }
   if (p == NULL) {
-    p = get_locale_val(LC_CTYPE);
+    p = xstrdup(get_locale_val(LC_CTYPE));
   }
 #endif
   return p;
@@ -112,9 +112,7 @@ void set_lang_var(void)
 
   loc = get_mess_env();
   set_vim_var_string(VV_LANG, loc, -1);
-  if (loc != NULL) {
-    xfree((char *)loc);
-  }
+  xfree((char *)loc);
 
   loc = get_locale_val(LC_TIME);
   set_vim_var_string(VV_LC_TIME, loc, -1);
@@ -198,7 +196,7 @@ void ex_language(exarg_T *eap)
     }
     smsg(0, _("Current %slanguage: \"%s\""), whatstr, p);
 
-    if (memfree && p != NULL) {
+    if (memfree) {
       xfree(p);
     }
   } else {
