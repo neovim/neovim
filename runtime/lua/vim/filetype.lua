@@ -365,6 +365,7 @@ local extension = {
   csv = 'csv',
   con = 'cterm',
   feature = 'cucumber',
+  tera = 'tera',
   cuh = 'cuda',
   cu = 'cuda',
   cue = 'cue',
