@@ -212,10 +212,7 @@ static void async_cb(uv_async_t *handle)
   Loop *l = handle->loop->data;
   uv_mutex_lock(&l->mutex);
   // Flush thread_events to fast_events for processing on main loop.
-  while (!multiqueue_empty(l->thread_events)) {
-    Event ev = multiqueue_get(l->thread_events);
-    multiqueue_put_event(l->fast_events, ev);
-  }
+  multiqueue_move_events(l->fast_events, l->thread_events);
   uv_mutex_unlock(&l->mutex);
 }
 

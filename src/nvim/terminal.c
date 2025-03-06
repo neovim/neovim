@@ -178,6 +178,7 @@ struct terminal {
     bool resize;          ///< pending width/height
     bool cursor;          ///< pending cursor shape or blink change
     StringBuilder *send;  ///< When there is a pending TermRequest autocommand, block and store input.
+    MultiQueue *events;   ///< Events waiting for refresh.
   } pending;
 
   bool theme_updates;  ///< Send a theme update notification when 'bg' changes
@@ -222,9 +223,10 @@ static void emit_termrequest(void **argv)
 
   if (term->sb_pending > 0) {
     // Don't emit the event while there is pending scrollback because we need
-    // the buffer contents to be fully updated. If this is the case, re-schedule
-    // the event.
-    multiqueue_put(main_loop.events, emit_termrequest, term, sequence, (void *)sequence_length,
+    // the buffer contents to be fully updated. If this is the case, schedule
+    // the event onto the pending queue where it will be executed after the
+    // terminal is refreshed and the pending scrollback is cleared.
+    multiqueue_put(term->pending.events, emit_termrequest, term, sequence, (void *)sequence_length,
                    pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col);
     return;
   }
@@ -489,6 +491,13 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   // have as many lines as screen rows when refresh_scrollback is called
   term->invalid_start = 0;
   term->invalid_end = opts.height;
+
+  // Create a separate queue for events which need to wait for a terminal
+  // refresh. We cannot reschedule events back onto the main queue because this
+  // can create an infinite loop (#32753).
+  // This queue is never processed directly: when the terminal is refreshed, all
+  // events from this queue are copied back onto the main event queue.
+  term->pending.events = multiqueue_new_parent(NULL, NULL);
 
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
@@ -972,6 +981,7 @@ void terminal_destroy(Terminal **termpp)
     kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
+    multiqueue_free(term->pending.events);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
   }
@@ -2029,6 +2039,9 @@ static void refresh_terminal(Terminal *term)
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
+
+  // Copy pending events back to the main event queue
+  multiqueue_move_events(main_loop.events, term->pending.events);
 }
 
 static void refresh_cursor(Terminal *term, bool *cursor_visible)
