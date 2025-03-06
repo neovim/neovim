@@ -801,6 +801,7 @@ func s:GetFilenameChecks() abort
     \ 'teal': ['file.tl'],
     \ 'templ': ['file.templ'],
     \ 'template': ['file.tmpl'],
+    \ 'tera': ['file.tera'],
     \ 'teraterm': ['file.ttl'],
     \ 'terminfo': ['file.ti'],
     \ 'terraform-vars': ['file.tfvars'],

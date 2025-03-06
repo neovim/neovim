@@ -1207,6 +1207,7 @@ local extension = {
   tl = 'teal',
   templ = 'templ',
   tmpl = 'template',
+  tera = 'tera',
   ti = 'terminfo',
   dtx = 'tex',
   ltx = 'tex',
