@@ -309,6 +309,8 @@ LSP
 • |vim.lsp.config()| has been added to define default configurations for
   servers. In addition, configurations can be specified in `lsp/<name>.lua`.
 • |vim.lsp.enable()| has been added to enable servers.
+• |vim.lsp.buf.code_action()| resolves the `command` property during the
+  `codeAction/resolve` request.
 
 LUA
 

@@ -424,7 +424,7 @@ function protocol.make_client_capabilities()
         isPreferredSupport = true,
         dataSupport = true,
         resolveSupport = {
-          properties = { 'edit' },
+          properties = { 'edit', 'command' },
         },
       },
       codeLens = {

@@ -1129,6 +1129,7 @@ local function on_code_action_results(results, opts)
     if not choice then
       return
     end
+
     -- textDocument/codeAction can return either Command[] or CodeAction[]
     --
     -- CodeAction
@@ -1140,12 +1141,18 @@ local function on_code_action_results(results, opts)
     --  title: string
     --  command: string
     --  arguments?: any[]
-    --
+
     local client = assert(lsp.get_client_by_id(choice.ctx.client_id))
     local action = choice.action
     local bufnr = assert(choice.ctx.bufnr, 'Must have buffer number')
 
-    if not action.edit and client:supports_method(ms.codeAction_resolve) then
+    -- Only code actions are resolved, so if we have a command, just apply it.
+    if type(action.title) == 'string' and type(action.command) == 'string' then
+      apply_action(action, client, choice.ctx)
+      return
+    end
+
+    if not action.edit or not action.command and client:supports_method(ms.codeAction_resolve) then
       client:request(ms.codeAction_resolve, action, function(err, resolved_action)
         if err then
           if action.command then
