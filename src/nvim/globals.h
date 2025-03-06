@@ -464,6 +464,8 @@ EXTERN bool VIsual_active INIT( = false);
 EXTERN bool VIsual_select INIT( = false);
 /// Register name for Select mode
 EXTERN int VIsual_select_reg INIT( = 0);
+/// Whether incremented cursor during exclusive selection
+EXTERN bool VIsual_select_exclu_adj INIT( = false);
 /// Restart Select mode when next cmd finished
 EXTERN int restart_VIsual_select INIT( = 0);
 /// Whether to restart the selection after a Select-mode mapping or menu.

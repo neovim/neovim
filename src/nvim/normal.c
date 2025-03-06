@@ -1524,6 +1524,7 @@ static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
 /// do_pending_operator().
 void end_visual_mode(void)
 {
+  VIsual_select_exclu_adj = false;
   VIsual_active = false;
   setmouse();
   mouse_dragging = 0;
@@ -4035,17 +4036,24 @@ static int normal_search(cmdarg_T *cap, int dir, char *pat, size_t patlen, int o
 /// cap->nchar is NUL for ',' and ';' (repeat the search)
 static void nv_csearch(cmdarg_T *cap)
 {
-  bool t_cmd;
+  bool cursor_dec = false;
 
-  if (cap->cmdchar == 't' || cap->cmdchar == 'T') {
-    t_cmd = true;
-  } else {
-    t_cmd = false;
+  // If adjusted cursor position previously, unadjust it.
+  if (*p_sel == 'e' && VIsual_active && VIsual_mode == 'v'
+      && VIsual_select_exclu_adj) {
+    unadjust_for_sel();
+    cursor_dec = true;
   }
+
+  bool t_cmd = cap->cmdchar == 't' || cap->cmdchar == 'T';
 
   cap->oap->motion_type = kMTCharWise;
   if (IS_SPECIAL(cap->nchar) || searchc(cap, t_cmd) == false) {
     clearopbeep(cap->oap);
+    // Revert unadjust when failed.
+    if (cursor_dec) {
+      adjust_for_sel(cap);
+    }
     return;
   }
 
@@ -5054,6 +5062,8 @@ static void nv_visual(cmdarg_T *cap)
       n_start_visual_mode(cap->cmdchar);
       if (VIsual_mode != 'V' && *p_sel == 'e') {
         cap->count1++;          // include one more char
+      } else {
+        VIsual_select_exclu_adj = false;
       }
       if (cap->count0 > 0 && --cap->count1 > 0) {
         // With a count select that many characters or lines.
@@ -6021,6 +6031,7 @@ static void adjust_for_sel(cmdarg_T *cap)
       && gchar_cursor() != NUL && lt(VIsual, curwin->w_cursor)) {
     inc_cursor();
     cap->oap->inclusive = false;
+    VIsual_select_exclu_adj = true;
   }
 }
 
@@ -6042,7 +6053,7 @@ bool unadjust_for_sel(void)
 /// @return  true when backed up to the previous line.
 bool unadjust_for_sel_inner(pos_T *pp)
 {
-  colnr_T cs, ce;
+  VIsual_select_exclu_adj = false;
 
   if (pp->coladd > 0) {
     pp->coladd--;
@@ -6050,6 +6061,7 @@ bool unadjust_for_sel_inner(pos_T *pp)
     pp->col--;
     mark_mb_adjustpos(curbuf, pp);
     if (virtual_active(curwin)) {
+      colnr_T cs, ce;
       getvcol(curwin, pp, &cs, NULL, &ce);
       pp->coladd = ce - cs;
     }
