@@ -857,7 +857,7 @@ end
 --- Default options
 do
   --- Default 'grepprg' to ripgrep if available.
-  if vim.fn.executable('rg') == 1 then
+  if vim.fn.has('win32') == 0 and vim.fn.has('wsl') == 0 and vim.fn.executable('rg') == 1 then
     -- Use -uu to make ripgrep not check ignore files/skip dot-files
     vim.o.grepprg = 'rg --vimgrep -uu '
     vim.o.grepformat = '%f:%l:%c:%m'
