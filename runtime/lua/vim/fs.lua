@@ -219,6 +219,10 @@ end
 --- Follow symbolic links.
 --- (default: `true`)
 --- @field follow? boolean
+---
+--- Use DFS
+--- (default: `false`)
+--- @field dfs? boolean
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
@@ -266,6 +270,7 @@ function M.find(names, opts)
   vim.validate('type', opts.type, 'string', true)
   vim.validate('limit', opts.limit, 'number', true)
   vim.validate('follow', opts.follow, 'boolean', true)
+  vim.validate('dfs', opts.dfs, 'boolean', true)
 
   if type(names) == 'string' then
     names = { names }
@@ -274,6 +279,24 @@ function M.find(names, opts)
   local path = opts.path or assert(uv.cwd())
   local stop = opts.stop
   local limit = opts.limit or 1
+
+  if opts.dfs then
+    opts.dfs = false
+    local matches = {}
+    if type(names) == 'function' then
+      return vim.fs.find(names, opts)
+    end
+    for _, name in ipairs(names) do
+      local match = vim.fs.find(name, opts)
+      if match then
+        vim.list_extend(matches, match)
+      end
+      if #matches >= limit then
+        return matches
+      end
+    end
+    return matches
+  end
 
   local matches = {} --- @type string[]
 
