@@ -57,6 +57,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/input.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -96,6 +97,7 @@
 #include "nvim/ui.h"
 #include "nvim/ui_defs.h"
 #include "nvim/undo.h"
+#include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
@@ -4803,4 +4805,38 @@ void ex_oldfiles(exarg_T *eap)
       xfree(s);
     }
   }
+}
+
+void ex_bugreport(exarg_T *eap)
+{
+  msg("Nvim version:", 0);
+  list_version();
+
+  msg("$TERM environment variable:", 0);
+  const char *term = os_getenv("TERM");
+  msg(term != NULL ? term : "UNKNOWN", 0);
+
+  msg("Operating system/version:", 0);
+  Error err = ERROR_INIT;
+  Object ret = NLUA_EXEC_STATIC(
+    "if jit then "
+    "   local uname = vim.uv.os_uname() "
+    "  return string.format('%s %s %s ', uname.sysname, uname.machine, uname.release) "
+    "else "
+    "  local has_uname = vim.fn.executable('uname') == 1 "
+    "  if has_uname then "
+    "    return vim.fn.substitute(vim.fn.system('uname'), '\\n', '', '') "
+    "  elseif vim.fn.has('win64') or vim.fn.has('win32') or vim.fn.has('win16') then"
+    "    return 'Windows' "
+    "  else "
+    "    return 'Unknown OS' "
+    "  end "
+    "end",
+    (Array)ARRAY_DICT_INIT, kRetObject, NULL, &err);
+
+  assert(!ERROR_SET(&err));
+  assert(ret.type == kObjectTypeString);
+  msg(ret.data.string.data, 0);
+  api_free_object(ret);
+  msg_putchar('\n');
 }
