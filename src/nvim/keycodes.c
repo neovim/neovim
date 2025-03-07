@@ -6,6 +6,7 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
@@ -24,6 +25,7 @@
 #include "nvim/strings.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "keycode_names.generated.h"
 # include "keycodes.c.generated.h"
 #endif
 
@@ -140,214 +142,6 @@ static uint8_t modifier_keys_table[] = {
   MOD_MASK_SHIFT, 'k', 'B',                   KS_EXTRA, KE_TAB,
 
   NUL
-};
-
-static const struct key_name_entry {
-  int key;              // Special key code or ascii value
-  const char *name;           // Name of key
-} key_names_table[] = {
-  { ' ',               "Space" },
-  { TAB,               "Tab" },
-  { K_TAB,             "Tab" },
-  { NL,                "NL" },
-  { NL,                "NewLine" },     // Alternative name
-  { NL,                "LineFeed" },    // Alternative name
-  { NL,                "LF" },          // Alternative name
-  { CAR,               "CR" },
-  { CAR,               "Return" },      // Alternative name
-  { CAR,               "Enter" },       // Alternative name
-  { K_BS,              "BS" },
-  { K_BS,              "BackSpace" },   // Alternative name
-  { ESC,               "Esc" },
-  { ESC,               "Escape" },      // Alternative name
-  { CSI,               "CSI" },
-  { '|',               "Bar" },
-  { '\\',              "Bslash" },
-  { K_DEL,             "Del" },
-  { K_DEL,             "Delete" },      // Alternative name
-  { K_KDEL,            "kDel" },
-  { K_KDEL,            "KPPeriod" },    // libtermkey name
-  { K_UP,              "Up" },
-  { K_DOWN,            "Down" },
-  { K_LEFT,            "Left" },
-  { K_RIGHT,           "Right" },
-  { K_XUP,             "xUp" },
-  { K_XDOWN,           "xDown" },
-  { K_XLEFT,           "xLeft" },
-  { K_XRIGHT,          "xRight" },
-  { K_KUP,             "kUp" },
-  { K_KUP,             "KP8" },
-  { K_KDOWN,           "kDown" },
-  { K_KDOWN,           "KP2" },
-  { K_KLEFT,           "kLeft" },
-  { K_KLEFT,           "KP4" },
-  { K_KRIGHT,          "kRight" },
-  { K_KRIGHT,          "KP6" },
-
-  { K_F1,              "F1" },
-  { K_F2,              "F2" },
-  { K_F3,              "F3" },
-  { K_F4,              "F4" },
-  { K_F5,              "F5" },
-  { K_F6,              "F6" },
-  { K_F7,              "F7" },
-  { K_F8,              "F8" },
-  { K_F9,              "F9" },
-  { K_F10,             "F10" },
-
-  { K_F11,             "F11" },
-  { K_F12,             "F12" },
-  { K_F13,             "F13" },
-  { K_F14,             "F14" },
-  { K_F15,             "F15" },
-  { K_F16,             "F16" },
-  { K_F17,             "F17" },
-  { K_F18,             "F18" },
-  { K_F19,             "F19" },
-  { K_F20,             "F20" },
-
-  { K_F21,             "F21" },
-  { K_F22,             "F22" },
-  { K_F23,             "F23" },
-  { K_F24,             "F24" },
-  { K_F25,             "F25" },
-  { K_F26,             "F26" },
-  { K_F27,             "F27" },
-  { K_F28,             "F28" },
-  { K_F29,             "F29" },
-  { K_F30,             "F30" },
-
-  { K_F31,             "F31" },
-  { K_F32,             "F32" },
-  { K_F33,             "F33" },
-  { K_F34,             "F34" },
-  { K_F35,             "F35" },
-  { K_F36,             "F36" },
-  { K_F37,             "F37" },
-  { K_F38,             "F38" },
-  { K_F39,             "F39" },
-  { K_F40,             "F40" },
-
-  { K_F41,             "F41" },
-  { K_F42,             "F42" },
-  { K_F43,             "F43" },
-  { K_F44,             "F44" },
-  { K_F45,             "F45" },
-  { K_F46,             "F46" },
-  { K_F47,             "F47" },
-  { K_F48,             "F48" },
-  { K_F49,             "F49" },
-  { K_F50,             "F50" },
-
-  { K_F51,             "F51" },
-  { K_F52,             "F52" },
-  { K_F53,             "F53" },
-  { K_F54,             "F54" },
-  { K_F55,             "F55" },
-  { K_F56,             "F56" },
-  { K_F57,             "F57" },
-  { K_F58,             "F58" },
-  { K_F59,             "F59" },
-  { K_F60,             "F60" },
-
-  { K_F61,             "F61" },
-  { K_F62,             "F62" },
-  { K_F63,             "F63" },
-
-  { K_XF1,             "xF1" },
-  { K_XF2,             "xF2" },
-  { K_XF3,             "xF3" },
-  { K_XF4,             "xF4" },
-
-  { K_HELP,            "Help" },
-  { K_UNDO,            "Undo" },
-  { K_FIND,            "Find" },        // DEC key, often used as 'Home'
-  { K_KSELECT,         "Select" },      // DEC key, often used as 'End'
-  { K_INS,             "Insert" },
-  { K_INS,             "Ins" },         // Alternative name
-  { K_KINS,            "kInsert" },
-  { K_KINS,            "KP0" },
-  { K_HOME,            "Home" },
-  { K_KHOME,           "kHome" },
-  { K_KHOME,           "KP7" },
-  { K_XHOME,           "xHome" },
-  { K_ZHOME,           "zHome" },
-  { K_END,             "End" },
-  { K_KEND,            "kEnd" },
-  { K_KEND,            "KP1" },
-  { K_XEND,            "xEnd" },
-  { K_ZEND,            "zEnd" },
-  { K_PAGEUP,          "PageUp" },
-  { K_PAGEDOWN,        "PageDown" },
-  { K_KPAGEUP,         "kPageUp" },
-  { K_KPAGEUP,         "KP9" },
-  { K_KPAGEDOWN,       "kPageDown" },
-  { K_KPAGEDOWN,       "KP3" },
-  { K_KORIGIN,         "kOrigin" },
-  { K_KORIGIN,         "KP5" },
-
-  { K_KPLUS,           "kPlus" },
-  { K_KPLUS,           "KPPlus" },
-  { K_KMINUS,          "kMinus" },
-  { K_KMINUS,          "KPMinus" },
-  { K_KDIVIDE,         "kDivide" },
-  { K_KDIVIDE,         "KPDiv" },
-  { K_KMULTIPLY,       "kMultiply" },
-  { K_KMULTIPLY,       "KPMult" },
-  { K_KENTER,          "kEnter" },
-  { K_KENTER,          "KPEnter" },
-  { K_KPOINT,          "kPoint" },
-  { K_KCOMMA,          "kComma" },
-  { K_KCOMMA,          "KPComma" },
-  { K_KEQUAL,          "kEqual" },
-  { K_KEQUAL,          "KPEquals" },
-
-  { K_K0,              "k0" },
-  { K_K1,              "k1" },
-  { K_K2,              "k2" },
-  { K_K3,              "k3" },
-  { K_K4,              "k4" },
-  { K_K5,              "k5" },
-  { K_K6,              "k6" },
-  { K_K7,              "k7" },
-  { K_K8,              "k8" },
-  { K_K9,              "k9" },
-
-  { '<',               "lt" },
-
-  { K_MOUSE,           "Mouse" },
-  { K_LEFTMOUSE,       "LeftMouse" },
-  { K_LEFTMOUSE_NM,    "LeftMouseNM" },
-  { K_LEFTDRAG,        "LeftDrag" },
-  { K_LEFTRELEASE,     "LeftRelease" },
-  { K_LEFTRELEASE_NM,  "LeftReleaseNM" },
-  { K_MOUSEMOVE,       "MouseMove" },
-  { K_MIDDLEMOUSE,     "MiddleMouse" },
-  { K_MIDDLEDRAG,      "MiddleDrag" },
-  { K_MIDDLERELEASE,   "MiddleRelease" },
-  { K_RIGHTMOUSE,      "RightMouse" },
-  { K_RIGHTDRAG,       "RightDrag" },
-  { K_RIGHTRELEASE,    "RightRelease" },
-  { K_MOUSEDOWN,       "ScrollWheelUp" },
-  { K_MOUSEUP,         "ScrollWheelDown" },
-  { K_MOUSELEFT,       "ScrollWheelRight" },
-  { K_MOUSERIGHT,      "ScrollWheelLeft" },
-  { K_MOUSEDOWN,       "MouseDown" },   // OBSOLETE: Use
-  { K_MOUSEUP,         "MouseUp" },     // ScrollWheelXXX instead
-  { K_X1MOUSE,         "X1Mouse" },
-  { K_X1DRAG,          "X1Drag" },
-  { K_X1RELEASE,       "X1Release" },
-  { K_X2MOUSE,         "X2Mouse" },
-  { K_X2DRAG,          "X2Drag" },
-  { K_X2RELEASE,       "X2Release" },
-  { K_DROP,            "Drop" },
-  { K_ZERO,            "Nul" },
-  { K_SNR,             "SNR" },
-  { K_PLUG,            "Plug" },
-  { K_IGNORE,          "Ignore" },
-  { K_COMMAND,         "Cmd" },
-  { 0,                 NULL }
-  // NOTE: When adding a long name update MAX_KEY_NAME_LEN.
 };
 
 static struct mousetable {
@@ -544,15 +338,18 @@ char *get_special_key_name(int c, int modifiers)
       }
     }
   } else {            // use name of special key
-    size_t len = strlen(key_names_table[table_idx].name);
+    const String *s = key_names_table[table_idx].pref_name != NULL
+                      ? key_names_table[table_idx].pref_name
+                      : &key_names_table[table_idx].name;
 
-    if ((int)len + idx + 2 <= MAX_KEY_NAME_LEN) {
-      STRCPY(string + idx, key_names_table[table_idx].name);
-      idx += (int)len;
+    if ((int)s->size + idx + 2 <= MAX_KEY_NAME_LEN) {
+      STRCPY(string + idx, s->data);
+      idx += (int)s->size;
     }
   }
   string[idx++] = '>';
   string[idx] = NUL;
+
   return string;
 }
 
@@ -795,17 +592,13 @@ static int extract_modifiers(int key, int *modp, const bool simplify, bool *cons
 /// @return  the index when found, -1 when not found.
 int find_special_key_in_table(int c)
 {
-  int i;
-
-  for (i = 0; key_names_table[i].name != NULL; i++) {
+  for (int i = 0; i < (int)ARRAY_SIZE(key_names_table); i++) {
     if (c == key_names_table[i].key) {
-      break;
+      return i;
     }
   }
-  if (key_names_table[i].name == NULL) {
-    i = -1;
-  }
-  return i;
+
+  return -1;
 }
 
 /// Find the special key with the given name
@@ -823,20 +616,13 @@ int get_special_key_code(const char *name)
     return TERMCAP2KEY((uint8_t)name[2], (uint8_t)name[3]);
   }
 
-  for (int i = 0; key_names_table[i].name != NULL; i++) {
-    const char *const table_name = key_names_table[i].name;
-    int j;
-    for (j = 0; ascii_isident((uint8_t)name[j]) && table_name[j] != NUL; j++) {
-      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC((uint8_t)name[j])) {
-        break;
-      }
-    }
-    if (!ascii_isident((uint8_t)name[j]) && table_name[j] == NUL) {
-      return key_names_table[i].key;
-    }
+  const char *name_end = name;
+  while (ascii_isident(*name_end)) {
+    name_end++;
   }
 
-  return 0;
+  int idx = get_special_key_code_hash(name, (size_t)(name_end - name));
+  return idx >= 0 ? key_names_table[idx].key : 0;
 }
 
 /// Look up the given mouse code to return the relevant information in the other arguments.
