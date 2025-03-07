@@ -1910,7 +1910,7 @@ describe('builtin popupmenu', function()
           ]],
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100 },
-              [4] = { 1001, 'NW', 1, 1, 19, false, 50 },
+              [4] = { 1001, 'NW', 1, 1, 19, false, 9999 },
             },
             win_viewport = {
               [2] = {
@@ -1968,7 +1968,7 @@ describe('builtin popupmenu', function()
             ]],
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100 },
-              [4] = { 1001, 'NW', 1, 1, 15, false, 50 },
+              [4] = { 1001, 'NW', 1, 1, 15, false, 9999 },
             },
             win_viewport = {
               [2] = {
@@ -2130,7 +2130,7 @@ describe('builtin popupmenu', function()
             },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100 },
-              [6] = { 1002, 'NW', 1, 1, 19, false, 50 },
+              [6] = { 1002, 'NW', 1, 1, 19, false, 9999 },
             },
             win_viewport = {
               [2] = {
@@ -2215,7 +2215,7 @@ describe('builtin popupmenu', function()
               },
             },
             float_pos = {
-              [7] = { 1003, 'NW', 1, 1, 14, false, 50 },
+              [7] = { 1003, 'NW', 1, 1, 14, false, 9999 },
               [5] = { -1, 'NW', 2, 1, 19, false, 100 },
             },
             win_viewport = {
