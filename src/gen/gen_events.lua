@@ -4,8 +4,8 @@ local names_file = arg[2]
 local auevents = require('nvim.auevents')
 local events = auevents.events
 
-local enum_tgt = io.open(fileio_enum_file, 'w')
-local names_tgt = io.open(names_file, 'w')
+local enum_tgt = assert(io.open(fileio_enum_file, 'w'))
+local names_tgt = assert(io.open(names_file, 'w'))
 
 enum_tgt:write([[
 // IWYU pragma: private, include "nvim/autocmd_defs.h"

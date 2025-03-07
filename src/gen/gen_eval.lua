@@ -66,6 +66,7 @@ for _, fun in ipairs(metadata) do
   end
 end
 
+---@param name string
 local func_names = vim.tbl_filter(function(name)
   return name:match('__%d*$') == nil
 end, vim.tbl_keys(funcs))
@@ -84,7 +85,7 @@ hashpipe:write('static const EvalFuncDef functions[] = {\n')
 
 for _, name in ipairs(neworder) do
   local def = funcs[name]
-  local args = def.args or 0
+  local args = def.args or 0 --- @type integer|integer[]|string[]
   if type(args) == 'number' then
     args = { args, args }
   elseif #args == 1 then
