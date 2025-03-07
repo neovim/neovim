@@ -810,8 +810,8 @@ struct tabpage_S {
 typedef struct {
   linenr_T wl_lnum;             // buffer line number for logical line
   uint16_t wl_size;             // height in screen lines
-  char wl_valid;                // true values are valid for text in buffer
-  char wl_folded;               // true when this is a range of folded lines
+  bool wl_valid;                // true values are valid for text in buffer
+  bool wl_folded;               // true when this is a range of folded lines
   linenr_T wl_foldend;          // last buffer line number for folded line
   linenr_T wl_lastlnum;         // last buffer line number for logical line
 } wline_T;

@@ -208,8 +208,9 @@ static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, 
           wp->w_lines[i].wl_foldend += xtra;
           wp->w_lines[i].wl_lastlnum += xtra;
         }
-      } else if (wp->w_lines[i].wl_foldend >= lnum) {
-        // change somewhere inside this range of folded lines,
+      } else if (wp->w_lines[i].wl_foldend >= lnum
+                 || wp->w_lines[i].wl_lastlnum >= lnum) {
+        // change somewhere inside this range of folded or concealed lines,
         // may need to be redrawn
         wp->w_lines[i].wl_valid = false;
       }
