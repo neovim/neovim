@@ -12,7 +12,7 @@ describe('vim.inspect_pos', function()
   end)
 
   it('it returns items', function()
-    local buf, items, other_buf_syntax = exec_lua(function()
+    local buf, ns1, ns2, items, other_buf_syntax = exec_lua(function()
       local buf = vim.api.nvim_create_buf(true, false)
       local buf1 = vim.api.nvim_create_buf(true, false)
       local ns1 = vim.api.nvim_create_namespace('ns1')
@@ -25,7 +25,7 @@ describe('vim.inspect_pos', function()
       vim.api.nvim_buf_set_extmark(buf, ns1, 0, 10, { hl_group = 'Normal' })
       vim.api.nvim_buf_set_extmark(buf, ns2, 0, 10, { hl_group = 'Normal' })
       vim.cmd('syntax on')
-      return buf, vim.inspect_pos(0, 0, 10), vim.inspect_pos(buf1, 0, 10).syntax
+      return buf, ns1, ns2, vim.inspect_pos(0, 0, 10), vim.inspect_pos(buf1, 0, 10).syntax
     end)
 
     eq('', eval('v:errmsg'))
@@ -40,12 +40,12 @@ describe('vim.inspect_pos', function()
           end_row = 0,
           id = 1,
           ns = 'ns1',
-          ns_id = 1,
+          ns_id = ns1,
           opts = {
             hl_eol = false,
             hl_group = 'Normal',
             hl_group_link = 'Normal',
-            ns_id = 1,
+            ns_id = ns1,
             priority = 4096,
             right_gravity = true,
           },
@@ -57,12 +57,12 @@ describe('vim.inspect_pos', function()
           end_row = 0,
           id = 1,
           ns = '',
-          ns_id = 2,
+          ns_id = ns2,
           opts = {
             hl_eol = false,
             hl_group = 'Normal',
             hl_group_link = 'Normal',
-            ns_id = 2,
+            ns_id = ns2,
             priority = 4096,
             right_gravity = true,
           },

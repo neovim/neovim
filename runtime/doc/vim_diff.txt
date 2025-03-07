@@ -181,7 +181,10 @@ nvim.terminal:
   when 'background' is "light". While this may not reflect the actual
   foreground/background color, it permits 'background' to be retained for a
   nested Nvim instance running in the terminal emulator.
-- TermOpen: Sets default options for |terminal| buffers:
+- TermRequest: Nvim will create extmarks for shells which
+  annotate their prompts with OSC 133 escape sequences, enabling users to
+  quickly navigate between prompts using |[[| and |]]|.
+- TermOpen: Sets default options and mappings for |terminal| buffers:
     - 'nomodifiable'
     - 'undolevels' set to -1
     - 'textwidth' set to 0
@@ -193,6 +196,7 @@ nvim.terminal:
     - 'foldcolumn' set to "0"
     - 'winhighlight' uses |hl-StatusLineTerm| and |hl-StatusLineTermNC| in
       place of |hl-StatusLine| and |hl-StatusLineNC|
+    - |[[| and |]]| to navigate between shell prompts
 
 nvim.cmdwin:
 - CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.

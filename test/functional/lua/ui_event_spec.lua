@@ -372,7 +372,7 @@ describe('vim.ui_attach', function()
                                               |
       {3:                                        }|
       {9:Excessive errors in vim.ui_attach() call}|
-      {9:back from ns: 1.}                        |
+      {9:back from ns: 2.}                        |
       {100:Press ENTER or type command to continue}^ |
     ]])
     feed('<cr>')
@@ -419,7 +419,7 @@ describe('vim.ui_attach', function()
                                               |
       {3:                                        }|
       {9:Excessive errors in vim.ui_attach() call}|
-      {9:back from ns: 2.}                        |
+      {9:back from ns: 3.}                        |
       {100:Press ENTER or type command to continue}^ |
     ]])
   end)

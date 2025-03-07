@@ -244,6 +244,8 @@ DEFAULTS
     • |[a|, |]a|, |[A|, |]A| navigate through the |argument-list|
     • |[b|, |]b|, |[B|, |]B| navigate through the |buffer-list|
     • |[<Space>|, |]<Space>| add an empty line above and below the cursor
+  • |[[| and |]]| in Normal mode jump between shell prompts for shells which emit
+    OSC 133 sequences ("shell integration" or "semantic prompts").
 
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`
