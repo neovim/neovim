@@ -725,6 +725,8 @@ endif
 if has("insert_expand")
   call <SID>AddOption("complete", gettext("specifies how Insert mode completion works for CTRL-N and CTRL-P"))
   call append("$", "\t" .. s:local_to_buffer)
+  call <SID>OptionL("cfc")
+  call <SID>AddOption("completefuzzycollect", gettext("using fuzzy collect for defaule completion mode"))
   call <SID>OptionL("cpt")
   call <SID>AddOption("completeopt", gettext("whether to use a popup menu for Insert mode completion"))
   call <SID>OptionL("cot")

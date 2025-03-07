@@ -1044,6 +1044,21 @@ vim.o.cfu = vim.o.completefunc
 vim.bo.completefunc = vim.o.completefunc
 vim.bo.cfu = vim.bo.completefunc
 
+--- This option enables fuzzy collection for (only some) specific
+--- `ins-completion` modes, adjusting how items are gathered for fuzzy
+--- matching based on input.
+--- The option can contain the following values (separated by commas),
+--- each enabling fuzzy collection for a specific completion mode:
+--- files		file names
+--- keyword		keyword completion in 'complete' and current file
+--- whole_line	whole lines
+---
+--- @type string
+vim.o.completefuzzycollect = ""
+vim.o.cfc = vim.o.completefuzzycollect
+vim.go.completefuzzycollect = vim.o.completefuzzycollect
+vim.go.cfc = vim.go.completefuzzycollect
+
 --- A comma-separated list of strings that controls the alignment and
 --- display order of items in the popup menu during Insert mode
 --- completion.  The supported values are "abbr", "kind", and "menu".
@@ -1063,7 +1078,12 @@ vim.go.cia = vim.go.completeitemalign
 ---    fuzzy    Enable `fuzzy-matching` for completion candidates. This
 --- 	    allows for more flexible and intuitive matching, where
 --- 	    characters can be skipped and matches can be found even
---- 	    if the exact sequence is not typed.
+--- 	    if the exact sequence is not typed. Note: This option
+--- 	    does not affect the collection of candidate list, it only
+--- 	    controls how completion candidates are reduced from the
+--- 	    list of alternatives. If you want to use `fuzzy-matching`
+--- 	    to gather more alternatives for your candidate list,
+--- 	    see `'completefuzzycollect'`.
 ---
 ---    longest  Only insert the longest common text of the matches.  If
 --- 	    the menu is displayed you can use CTRL-L to add more

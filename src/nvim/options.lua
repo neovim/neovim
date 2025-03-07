@@ -1460,6 +1460,30 @@ local options = {
       varname = 'p_cfu',
     },
     {
+      abbreviation = 'cfc',
+      defaults = '',
+      values = { 'keyword', 'files', 'whole_line' },
+      flags = true,
+      deny_duplicates = true,
+      desc = [=[
+        This option enables fuzzy collection for (only some) specific
+        |ins-completion| modes, adjusting how items are gathered for fuzzy
+        matching based on input.
+        The option can contain the following values (separated by commas),
+        each enabling fuzzy collection for a specific completion mode:
+        files		file names
+        keyword		keyword completion in 'complete' and current file
+        whole_line	whole lines
+      ]=],
+      full_name = 'completefuzzycollect',
+      list = 'onecomma',
+      scope = { 'global' },
+      short_desc = N_('use fuzzy collection for specific completion modes'),
+      type = 'string',
+      varname = 'p_cfc',
+      flags_varname = 'cfc_flags',
+    },
+    {
       abbreviation = 'cia',
       cb = 'did_set_completeitemalign',
       defaults = 'abbr,kind,menu',
@@ -1505,7 +1529,12 @@ local options = {
            fuzzy    Enable |fuzzy-matching| for completion candidates. This
         	    allows for more flexible and intuitive matching, where
         	    characters can be skipped and matches can be found even
-        	    if the exact sequence is not typed.
+        	    if the exact sequence is not typed. Note: This option
+        	    does not affect the collection of candidate list, it only
+        	    controls how completion candidates are reduced from the
+        	    list of alternatives. If you want to use |fuzzy-matching|
+        	    to gather more alternatives for your candidate list,
+        	    see |'completefuzzycollect'|.
 
            longest  Only insert the longest common text of the matches.  If
         	    the menu is displayed you can use CTRL-L to add more
