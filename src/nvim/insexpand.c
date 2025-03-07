@@ -3427,7 +3427,7 @@ static void fuzzy_longest_match(void)
   }
 
   char *prefix = compl_best_matches[0]->cp_str.data;
-  int prefix_len = (int)strlen(prefix);
+  int prefix_len = (int)compl_best_matches[0]->cp_str.size;
 
   for (int i = 1; i < compl_num_bests; i++) {
     char *match_str = compl_best_matches[i]->cp_str.data;
@@ -3451,14 +3451,14 @@ static void fuzzy_longest_match(void)
   }
 
   char *leader = ins_compl_leader();
-  size_t leader_len = leader != NULL ? strlen(leader) : 0;
+  size_t leader_len = ins_compl_leader_len();
 
   // skip non-consecutive prefixes
-  if (strncmp(prefix, leader, leader_len) != 0) {
+  if (leader_len > 0 && strncmp(prefix, leader, leader_len) != 0) {
     goto end;
   }
 
-  prefix = xmemdupz(compl_best_matches[0]->cp_str.data, (size_t)prefix_len);
+  prefix = xmemdupz(prefix, (size_t)prefix_len);
   ins_compl_longest_insert(prefix);
   compl_cfc_longest_ins = true;
   xfree(prefix);
@@ -5051,7 +5051,7 @@ static int ins_compl_start(void)
   if (p_ic) {
     flags |= CP_ICASE;
   }
-  if (ins_compl_add(compl_orig_text.data, -1,
+  if (ins_compl_add(compl_orig_text.data, (int)compl_orig_text.size,
                     NULL, NULL, false, NULL, 0,
                     flags, false, NULL, 0) != OK) {
     API_CLEAR_STRING(compl_pattern);
