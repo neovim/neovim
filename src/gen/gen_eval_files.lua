@@ -371,10 +371,6 @@ end
 local function render_api_meta(_f, fun, write)
   write('')
 
-  if vim.startswith(fun.name, 'nvim__') then
-    write('--- @private')
-  end
-
   if fun.deprecated then
     write('--- @deprecated')
   end
