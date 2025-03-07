@@ -1501,22 +1501,6 @@ func Test_pum_highlights_match()
   call VerifyScreenDump(buf, 'Test_pum_highlights_09', {})
   call term_sendkeys(buf, "o\<BS>\<C-R>=Comp()\<CR>")
   call VerifyScreenDump(buf, 'Test_pum_highlights_09', {})
-
-  " issue #15095 wrong select
-  call term_sendkeys(buf, "\<ESC>:set completeopt=fuzzy,menu\<CR>")
-  call TermWait(buf)
-  call term_sendkeys(buf, "S hello helio hero h\<C-X>\<C-P>")
-  call TermWait(buf, 50)
-  call VerifyScreenDump(buf, 'Test_pum_highlights_10', {})
-
-  call term_sendkeys(buf, "\<ESC>S hello helio hero h\<C-X>\<C-P>\<C-P>")
-  call TermWait(buf, 50)
-  call VerifyScreenDump(buf, 'Test_pum_highlights_11', {})
-
-  " issue #15357
-  call term_sendkeys(buf, "\<ESC>S/non_existing_folder\<C-X>\<C-F>")
-  call TermWait(buf, 50)
-  call VerifyScreenDump(buf, 'Test_pum_highlights_15', {})
   call term_sendkeys(buf, "\<C-E>\<Esc>")
 
   call term_sendkeys(buf, ":hi PmenuMatchSel ctermfg=14 ctermbg=NONE\<CR>")
@@ -1530,7 +1514,34 @@ func Test_pum_highlights_match()
 
   call term_sendkeys(buf, "\<C-E>\<Esc>")
   call TermWait(buf)
+  call StopVimInTerminal(buf)
+endfunc
 
+func Test_pum_completefuzzycollect()
+  CheckScreendump
+  let lines =<< trim END
+    set completefuzzycollect=keyword,files
+    set completeopt=menu,menuone
+  END
+  call writefile(lines, 'Xscript', 'D')
+  let  buf = RunVimInTerminal('-S Xscript', {})
+
+  " issue #15095 wrong select
+  call term_sendkeys(buf, "S hello helio hero h\<C-X>\<C-P>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_completefuzzycollect_01', {})
+
+  call term_sendkeys(buf, "\<ESC>S hello helio hero h\<C-X>\<C-P>\<C-P>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_completefuzzycollect_02', {})
+
+  " issue #15357
+  call term_sendkeys(buf, "\<ESC>S/non_existing_folder\<C-X>\<C-F>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_completefuzzycollect_03', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call TermWait(buf)
   call StopVimInTerminal(buf)
 endfunc
 
