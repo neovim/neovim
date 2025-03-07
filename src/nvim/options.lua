@@ -1529,10 +1529,10 @@ local options = {
            fuzzy    Enable |fuzzy-matching| for completion candidates. This
         	    allows for more flexible and intuitive matching, where
         	    characters can be skipped and matches can be found even
-        	    if the exact sequence is not typed. Note: This option
+        	    if the exact sequence is not typed.  Note: This option
         	    does not affect the collection of candidate list, it only
         	    controls how completion candidates are reduced from the
-        	    list of alternatives. If you want to use |fuzzy-matching|
+        	    list of alternatives.  If you want to use |fuzzy-matching|
         	    to gather more alternatives for your candidate list,
         	    see |'completefuzzycollect'|.
 
