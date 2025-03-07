@@ -6,6 +6,7 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
@@ -337,15 +338,18 @@ char *get_special_key_name(int c, int modifiers)
       }
     }
   } else {            // use name of special key
-    size_t len = strlen(key_names_table[table_idx].name);
+    const String *s = key_names_table[table_idx].alt_name != NULL
+                      ? key_names_table[table_idx].alt_name
+                      : &key_names_table[table_idx].name;
 
-    if ((int)len + idx + 2 <= MAX_KEY_NAME_LEN) {
-      STRCPY(string + idx, key_names_table[table_idx].name);
-      idx += (int)len;
+    if ((int)s->size + idx + 2 <= MAX_KEY_NAME_LEN) {
+      STRCPY(string + idx, s->data);
+      idx += (int)s->size;
     }
   }
   string[idx++] = '>';
   string[idx] = NUL;
+
   return string;
 }
 
@@ -588,17 +592,51 @@ static int extract_modifiers(int key, int *modp, const bool simplify, bool *cons
 /// @return  the index when found, -1 when not found.
 int find_special_key_in_table(int c)
 {
-  int i;
-
-  for (i = 0; key_names_table[i].name != NULL; i++) {
+  for (int i = 0; i < (int)ARRAY_SIZE(key_names_table); i++) {
     if (c == key_names_table[i].key) {
-      break;
+      return i;
     }
   }
-  if (key_names_table[i].name == NULL) {
-    i = -1;
+
+  return -1;
+}
+
+/// Compare two 'struct key_name_entry' structures.
+/// Note that the target string (p1) may contain additional trailing characters
+/// that should not factor into the comparison. Example:
+/// 'LeftMouse>", "<LeftMouse>"] ...'
+/// should match with
+/// 'LeftMouse'.
+/// These characters are identified by ascii_isident().
+static int cmp_key_name_entry(const void *a, const void *b)
+{
+  const char *p1 = ((struct key_name_entry *)a)->name.data;
+  const char *p2 = ((struct key_name_entry *)b)->name.data;
+  int result = 0;
+
+  if (p1 == p2) {
+    return 0;
   }
-  return i;
+
+  while (ascii_isident(*p1) && *p2 != NUL) {
+    if ((result = TOLOWER_ASC(*p1) - TOLOWER_ASC(*p2)) != 0) {
+      break;
+    }
+    p1++;
+    p2++;
+  }
+
+  if (result == 0) {
+    if (*p2 == NUL) {
+      if (ascii_isident(*p1)) {
+        result = 1;
+      }
+    } else {
+      result = -1;
+    }
+  }
+
+  return result;
 }
 
 /// Find the special key with the given name
@@ -616,17 +654,14 @@ int get_special_key_code(const char *name)
     return TERMCAP2KEY((uint8_t)name[2], (uint8_t)name[3]);
   }
 
-  for (int i = 0; key_names_table[i].name != NULL; i++) {
-    const char *const table_name = key_names_table[i].name;
-    int j;
-    for (j = 0; ascii_isident((uint8_t)name[j]) && table_name[j] != NUL; j++) {
-      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC((uint8_t)name[j])) {
-        break;
-      }
-    }
-    if (!ascii_isident((uint8_t)name[j]) && table_name[j] == NUL) {
-      return key_names_table[i].key;
-    }
+  struct key_name_entry target = { .name.data = (char *)name };
+  struct key_name_entry *entry = bsearch(&target,
+                                         &key_names_table,
+                                         ARRAY_SIZE(key_names_table),
+                                         sizeof(key_names_table[0]),
+                                         cmp_key_name_entry);
+  if (entry != NULL) {
+    return entry->key;
   }
 
   return 0;
