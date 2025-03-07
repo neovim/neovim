@@ -187,26 +187,48 @@ event. The event is handled directly by Nvim and is not forwarded to plugins.
 
 OSC 133: shell integration			*terminal-osc133*
 
-Some shells will emit semantic escape sequences (OSC 133) to mark the
-beginning and end of a prompt. The start of a prompt is marked with the
-sequence `OSC 133 ; A`. Nvim can be configured to create signs in terminal
-buffers marking shell prompts. Example: >lua
+Shells can emit semantic escape sequences (OSC 133) to mark where each prompt
+starts and ends. The start of a prompt is marked by sequence `OSC 133 ; A ST`,
+and the end by `OSC 133 ; B ST`.
 
-    local ns = vim.api.nvim_create_namespace('terminal_prompt_markers')
+                                                *shell-prompt-config*
+You can configure your shell "rc" (e.g. ~/.bashrc) to emit OSC 133 sequences,
+or your terminal may attempt to do it for you (assuming your shell config
+doesn't interfere).
+
+- fish: https://fishshell.com/docs/current/relnotes.html#improved-terminal-support
+- kitty: https://sw.kovidgoyal.net/kitty/shell-integration/
+- vscode: https://code.visualstudio.com/docs/terminal/shell-integration
+
+To configure bash to mark the start/end of each prompt, set $PROMPT_COMMAND
+and $PS1 as follows: >bash
+
+    # Prompt start:
+    PROMPT_COMMAND='printf "\033]133;A\007"'
+    # Prompt end:
+    PS1="$PS1"'\033]133;B\007'
+<
+                                                *terminal_]]* *terminal_[[*
+The |]]| and |[[| motions jump to the next/previous prompts, if your shell
+emits OSC 133 as described above.
+
+						*terminal-shell-prompt-signs*
+To annotate each terminal prompt with a sign, call |nvim_buf_set_extmark()|
+from a |TermRequest| handler: >lua
+
+    local ns = vim.api.nvim_create_namespace('my.terminal.prompt')
     vim.api.nvim_create_autocmd('TermRequest', {
       callback = function(args)
         if string.match(args.data.sequence, '^\027]133;A') then
           local lnum = args.data.cursor[1]
           vim.api.nvim_buf_set_extmark(args.buf, ns, lnum - 1, 0, {
-            -- Replace with sign text and highlight group of choice
             sign_text = '▶',
             sign_hl_group = 'SpecialChar',
           })
         end
       end,
     })
-
-    -- Enable signcolumn in terminal buffers
+    -- Enable signcolumn in terminal buffers.
     vim.api.nvim_create_autocmd('TermOpen', {
       command = 'setlocal signcolumn=auto',
     })

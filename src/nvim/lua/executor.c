@@ -125,12 +125,11 @@ lua_State *get_global_lstate(void)
   return global_lstate;
 }
 
-/// get error on top of stack as a string
+/// Gets the Lua error at top of stack as a string, possibly modifying it in-place (but doesn't
+/// change stack height).
 ///
-/// Might alter the top value on stack in place (but doesn't change stack height)
-///
-/// "error" points to memory on the lua stack, use
-/// or duplicate the string before using "lstate" again
+/// The returned string points to memory on the Lua stack. Use or duplicate it before using
+/// `lstate` again.
 ///
 /// @param[out] len length of error (can be NULL)
 static const char *nlua_get_error(lua_State *lstate, size_t *len)
@@ -147,7 +146,7 @@ static const char *nlua_get_error(lua_State *lstate, size_t *len)
   return lua_tolstring(lstate, -1, len);
 }
 
-/// Convert lua error into a Vim error message
+/// Converts a Lua error into a Vim error message.
 ///
 /// @param  lstate  Lua interpreter state.
 /// @param[in]  msg  Message base, must contain one `%.*s`.

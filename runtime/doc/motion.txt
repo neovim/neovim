@@ -455,6 +455,8 @@ between Vi and Vim.
 			first column.  When used after an operator, then also
 			stops below a "}" in the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
+			In a :terminal buffer each shell prompt is treated as
+			a section. |terminal_]]|
 
 							*][*
 ][			[count] |section|s forward or to the next '}' in the
@@ -465,6 +467,8 @@ between Vi and Vim.
 [[			[count] |section|s backward or to the previous "{" in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
+			In a :terminal buffer each shell prompt is treated as
+			a section. |terminal_]]|
 
 							*[]*
 []			[count] |section|s backward or to the previous "}" in
@@ -498,6 +502,7 @@ A section begins after a form-feed (<C-L>) in the first column and at each of
 a set of section macros, specified by the pairs of characters in the
 'sections' option.  The default is "SHNHH HUnhsh", which defines a section to
 start at the nroff macros ".SH", ".NH", ".H", ".HU", ".nh" and ".sh".
+In a :terminal buffer each shell prompt is treated as a section. |terminal_]]|
 
 The "]]" and "[[" commands stop at the '{' in the first column.  This is
 useful to find the start of a function in a C program.  To search for a '}' in
