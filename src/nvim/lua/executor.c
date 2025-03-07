@@ -1668,13 +1668,13 @@ void ex_lua(exarg_T *const eap)
 
   // ":lua {code}", ":={expr}" or ":lua ={expr}"
   //
-  // When "=expr" is used transform it to "vim.print(expr)".
+  // When "=expr" is used transform it to "vim._print(true, expr)".
   if (eap->cmdidx == CMD_equal || code[0] == '=') {
     size_t off = (eap->cmdidx == CMD_equal) ? 0 : 1;
-    len += sizeof("vim.print()") - 1 - off;
+    len += sizeof("vim._print(true, )") - 1 - off;
     // `nlua_typval_exec` doesn't expect NUL-terminated string so `len` must end before NUL byte.
     char *code_buf = xmallocz(len);
-    vim_snprintf(code_buf, len + 1, "vim.print(%s)", code + off);
+    vim_snprintf(code_buf, len + 1, "vim._print(true, %s)", code + off);
     xfree(code);
     code = code_buf;
   }
