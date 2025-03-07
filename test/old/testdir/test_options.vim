@@ -513,6 +513,7 @@ func Test_set_completion_string_values()
   endif
   call assert_equal('.', getcompletion('set complete=', 'cmdline')[1])
   call assert_equal('menu', getcompletion('set completeopt=', 'cmdline')[1])
+  call assert_equal('keyword', getcompletion('set completefuzzycollect=', 'cmdline')[0])
   if exists('+completeslash')
     call assert_equal('backslash', getcompletion('set completeslash=', 'cmdline')[1])
   endif
