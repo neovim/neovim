@@ -1,5 +1,7 @@
 return {
   --- @type [string, string][] List of [key, name] tuples.
+  --- For keys with multiple names, put the preferred name first.
+  --- For multiple keys with the same name, put the preferred key first.
   names = {
     { [[' ']], 'Space' },
     { [[TAB]], 'Tab' },

@@ -338,8 +338,8 @@ char *get_special_key_name(int c, int modifiers)
       }
     }
   } else {            // use name of special key
-    const String *s = key_names_table[table_idx].alt_name != NULL
-                      ? key_names_table[table_idx].alt_name
+    const String *s = key_names_table[table_idx].pref_name != NULL
+                      ? key_names_table[table_idx].pref_name
                       : &key_names_table[table_idx].name;
 
     if ((int)s->size + idx + 2 <= MAX_KEY_NAME_LEN) {
@@ -601,44 +601,6 @@ int find_special_key_in_table(int c)
   return -1;
 }
 
-/// Compare two 'struct key_name_entry' structures.
-/// Note that the target string (p1) may contain additional trailing characters
-/// that should not factor into the comparison. Example:
-/// 'LeftMouse>", "<LeftMouse>"] ...'
-/// should match with
-/// 'LeftMouse'.
-/// These characters are identified by ascii_isident().
-static int cmp_key_name_entry(const void *a, const void *b)
-{
-  const char *p1 = ((struct key_name_entry *)a)->name.data;
-  const char *p2 = ((struct key_name_entry *)b)->name.data;
-  int result = 0;
-
-  if (p1 == p2) {
-    return 0;
-  }
-
-  while (ascii_isident(*p1) && *p2 != NUL) {
-    if ((result = TOLOWER_ASC(*p1) - TOLOWER_ASC(*p2)) != 0) {
-      break;
-    }
-    p1++;
-    p2++;
-  }
-
-  if (result == 0) {
-    if (*p2 == NUL) {
-      if (ascii_isident(*p1)) {
-        result = 1;
-      }
-    } else {
-      result = -1;
-    }
-  }
-
-  return result;
-}
-
 /// Find the special key with the given name
 ///
 /// @param[in]  name  Name of the special. Does not have to end with NUL, it is
@@ -654,17 +616,13 @@ int get_special_key_code(const char *name)
     return TERMCAP2KEY((uint8_t)name[2], (uint8_t)name[3]);
   }
 
-  struct key_name_entry target = { .name.data = (char *)name };
-  struct key_name_entry *entry = bsearch(&target,
-                                         &key_names_table,
-                                         ARRAY_SIZE(key_names_table),
-                                         sizeof(key_names_table[0]),
-                                         cmp_key_name_entry);
-  if (entry != NULL) {
-    return entry->key;
+  const char *name_end = name;
+  while (ascii_isident(*name_end)) {
+    name_end++;
   }
 
-  return 0;
+  int idx = get_special_key_code_hash(name, (size_t)(name_end - name));
+  return idx >= 0 ? key_names_table[idx].key : 0;
 }
 
 /// Look up the given mouse code to return the relevant information in the other arguments.
