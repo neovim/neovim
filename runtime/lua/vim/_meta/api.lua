@@ -9,19 +9,16 @@ error('Cannot require a meta file')
 
 vim.api = {}
 
---- @private
 --- @param buffer integer
 --- @param keys boolean
 --- @param dot boolean
 --- @return string
 function vim.api.nvim__buf_debug_extmarks(buffer, keys, dot) end
 
---- @private
 --- @param buffer integer
 --- @return table<string,any>
 function vim.api.nvim__buf_stats(buffer) end
 
---- @private
 --- EXPERIMENTAL: this API may change in the future.
 ---
 --- Sets info for the completion item at the given index. If the info text was shown in a window,
@@ -35,11 +32,9 @@ function vim.api.nvim__buf_stats(buffer) end
 --- - bufnr: (number) buffer id in floating window
 function vim.api.nvim__complete_set(index, opts) end
 
---- @private
 --- @return string
 function vim.api.nvim__get_lib_dir() end
 
---- @private
 --- Find files in runtime directories
 ---
 --- @param pat any[] pattern of files to search for
@@ -48,7 +43,6 @@ function vim.api.nvim__get_lib_dir() end
 --- @return string[] # list of absolute paths to the found files
 function vim.api.nvim__get_runtime(pat, all, opts) end
 
---- @private
 --- Returns object given as argument.
 ---
 --- This API function is used for testing. One should not rely on its presence
@@ -58,7 +52,6 @@ function vim.api.nvim__get_runtime(pat, all, opts) end
 --- @return any # its argument.
 function vim.api.nvim__id(obj) end
 
---- @private
 --- Returns array given as argument.
 ---
 --- This API function is used for testing. One should not rely on its presence
@@ -68,7 +61,6 @@ function vim.api.nvim__id(obj) end
 --- @return any[] # its argument.
 function vim.api.nvim__id_array(arr) end
 
---- @private
 --- Returns dict given as argument.
 ---
 --- This API function is used for testing. One should not rely on its presence
@@ -78,7 +70,6 @@ function vim.api.nvim__id_array(arr) end
 --- @return table<string,any> # its argument.
 function vim.api.nvim__id_dict(dct) end
 
---- @private
 --- Returns floating-point value given as argument.
 ---
 --- This API function is used for testing. One should not rely on its presence
@@ -88,7 +79,6 @@ function vim.api.nvim__id_dict(dct) end
 --- @return number # its argument.
 function vim.api.nvim__id_float(flt) end
 
---- @private
 --- NB: if your UI doesn't use hlstate, this will not return hlstate first time.
 --- @param grid integer
 --- @param row integer
@@ -96,12 +86,10 @@ function vim.api.nvim__id_float(flt) end
 --- @return any[]
 function vim.api.nvim__inspect_cell(grid, row, col) end
 
---- @private
 --- For testing. The condition in schar_cache_clear_if_full is hard to
 --- reach, so this function can be used to force a cache clear in a test.
 function vim.api.nvim__invalidate_glyph_cache() end
 
---- @private
 --- EXPERIMENTAL: this API will change in the future.
 ---
 --- Get the properties for namespace
@@ -110,7 +98,6 @@ function vim.api.nvim__invalidate_glyph_cache() end
 --- @return vim.api.keyset.ns_opts # Map defining the namespace properties, see |nvim__ns_set()|
 function vim.api.nvim__ns_get(ns_id) end
 
---- @private
 --- EXPERIMENTAL: this API will change in the future.
 ---
 --- Set some properties for namespace
@@ -120,7 +107,6 @@ function vim.api.nvim__ns_get(ns_id) end
 --- - wins: a list of windows to be scoped in
 function vim.api.nvim__ns_set(ns_id, opts) end
 
---- @private
 --- EXPERIMENTAL: this API may change in the future.
 ---
 --- Instruct Nvim to redraw various components.
@@ -148,21 +134,17 @@ function vim.api.nvim__ns_set(ns_id, opts) end
 --- - tabline: Redraw the 'tabline'.
 function vim.api.nvim__redraw(opts) end
 
---- @private
 --- @return any[]
 function vim.api.nvim__runtime_inspect() end
 
---- @private
 --- @param path string
 function vim.api.nvim__screenshot(path) end
 
---- @private
 --- Gets internal stats.
 ---
 --- @return table<string,any> # Map of various internal stats.
 function vim.api.nvim__stats() end
 
---- @private
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end
