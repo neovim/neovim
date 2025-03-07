@@ -25,7 +25,7 @@ describe('multiqueue (multi-level event-queue)', function()
 
   before_each(function()
     child_call_once(function()
-      parent = multiqueue.multiqueue_new_parent(ffi.NULL, ffi.NULL)
+      parent = multiqueue.multiqueue_new(ffi.NULL, ffi.NULL)
       child1 = multiqueue.multiqueue_new_child(parent)
       child2 = multiqueue.multiqueue_new_child(parent)
       child3 = multiqueue.multiqueue_new_child(parent)

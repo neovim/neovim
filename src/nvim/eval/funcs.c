@@ -4191,7 +4191,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   list_T *args = argvars[0].vval.v_list;
   Channel **jobs = xcalloc((size_t)tv_list_len(args), sizeof(*jobs));
-  MultiQueue *waiting_jobs = multiqueue_new_parent(loop_on_put, &main_loop);
+  MultiQueue *waiting_jobs = multiqueue_new(loop_on_put, &main_loop);
 
   // Validate, prepare jobs for waiting.
   int i = 0;

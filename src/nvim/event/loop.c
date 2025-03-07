@@ -21,9 +21,9 @@ void loop_init(Loop *loop, void *data)
   loop->closing = false;
   loop->uv.data = loop;
   kv_init(loop->children);
-  loop->events = multiqueue_new_parent(loop_on_put, loop);
+  loop->events = multiqueue_new(loop_on_put, loop);
   loop->fast_events = multiqueue_new_child(loop->events);
-  loop->thread_events = multiqueue_new_parent(NULL, NULL);
+  loop->thread_events = multiqueue_new(NULL, NULL);
   uv_mutex_init(&loop->mutex);
   uv_async_init(&loop->uv, &loop->async, async_cb);
   uv_signal_init(&loop->uv, &loop->children_watcher);
