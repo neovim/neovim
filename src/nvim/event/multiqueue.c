@@ -140,6 +140,16 @@ void multiqueue_put_event(MultiQueue *self, Event event)
   }
 }
 
+/// Move events from src to dest.
+void multiqueue_move_events(MultiQueue *dest, MultiQueue *src)
+  FUNC_ATTR_NONNULL_ALL
+{
+  while (!multiqueue_empty(src)) {
+    Event event = multiqueue_get(src);
+    multiqueue_put_event(dest, event);
+  }
+}
+
 void multiqueue_process_events(MultiQueue *self)
 {
   assert(self);
