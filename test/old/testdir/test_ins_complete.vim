@@ -3038,6 +3038,11 @@ func Test_cfc_with_longest()
   call writefile(['  auto int   enum register', 'why'], 'test_case4.txt', 'D')
   exe "normal ggdGSe\<C-N>\<C-N>\<ESC>"
   call assert_equal("enum", getline('.'))
+
+  set complete=ktest_case5.txt
+  call writefile(['hello friends', 'go', 'hero'], 'test_case5.txt', 'D')
+  exe "normal ggdGSh\<C-N>\<C-N>\<ESC>"
+  call assert_equal("hero", getline('.'))
   set complete&
 
   " file

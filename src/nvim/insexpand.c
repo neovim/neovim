@@ -1735,8 +1735,6 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
                 && score == compl_first_match->cp_next->cp_score) {
               compl_num_bests++;
             }
-          } else if (find_word_end(ptr) == line_end) {
-            break;
           }
         }
       }
@@ -1778,7 +1776,7 @@ char *find_word_end(char *ptr)
 /// Find the end of the line, omitting CR and NL at the end.
 ///
 /// @return  a pointer to just after the line.
-static char *find_line_end(char *ptr)
+char *find_line_end(char *ptr)
 {
   char *s = ptr + strlen(ptr);
   while (s > ptr && (s[-1] == CAR || s[-1] == NL)) {
