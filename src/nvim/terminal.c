@@ -498,7 +498,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   // can create an infinite loop (#32753).
   // This queue is never processed directly: when the terminal is refreshed, all
   // events from this queue are copied back onto the main event queue.
-  term->pending.events = multiqueue_new_parent(NULL, NULL);
+  term->pending.events = multiqueue_new(NULL, NULL);
 
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
