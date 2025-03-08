@@ -3629,8 +3629,7 @@ garray_T *fuzzy_match_str_with_pos(char *const str, const char *const pat)
 /// - `*len` is set to the length of the matched word.
 /// - `*score` contains the match score.
 ///
-/// If no match is found, `*ptr` is updated to point beyond the last word
-/// or to the end of the line.
+/// If no match is found, `*ptr` is updated to to the end of the line.
 bool fuzzy_match_str_in_line(char **ptr, char *pat, int *len, pos_T *current_pos, int *score)
 {
   char *str = *ptr;
@@ -3642,8 +3641,9 @@ bool fuzzy_match_str_in_line(char **ptr, char *pat, int *len, pos_T *current_pos
   if (str == NULL || pat == NULL) {
     return found;
   }
+  char *line_end = find_line_end(str);
 
-  while (*str != NUL) {
+  while (str < line_end) {
     // Skip non-word characters
     start = find_word_start(str);
     if (*start == NUL) {
@@ -3675,6 +3675,10 @@ bool fuzzy_match_str_in_line(char **ptr, char *pat, int *len, pos_T *current_pos
     while (*str != NUL && !vim_iswordp(str)) {
       MB_PTR_ADV(str);
     }
+  }
+
+  if (!found) {
+    *ptr = line_end;
   }
 
   return found;
