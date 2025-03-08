@@ -186,11 +186,24 @@ local function make_uncomment_function(parts)
   end
 end
 
+--- Check if we can run on this buffer
+---@return boolean
+local function check()
+  if not vim.bo.modifiable then
+    vim.api.nvim_echo({ { 'Buffer is not modifiable.', 'WarningMsg' } }, true, {})
+    return false
+  end
+  return true
+end
+
 --- Comment/uncomment buffer range
 ---@param line_start integer
 ---@param line_end integer
 ---@param ref_position? integer[]
 local function toggle_lines(line_start, line_end, ref_position)
+  if not check() then
+    return
+  end
   ref_position = ref_position or { line_start, 0 }
   local parts = get_comment_parts(ref_position)
   local lines = vim.api.nvim_buf_get_lines(0, line_start - 1, line_end, false)
@@ -243,6 +256,9 @@ end
 
 --- Select contiguous commented lines at cursor
 local function textobject()
+  if not check() then
+    return
+  end
   local lnum_cur = vim.fn.line('.')
   local parts = get_comment_parts({ lnum_cur, vim.fn.col('.') })
   local comment_check = make_comment_check(parts)
