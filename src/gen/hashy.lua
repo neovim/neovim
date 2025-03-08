@@ -129,14 +129,14 @@ function M.hashy_hash(name, strings, access, lower)
     }
   }
   return -1;
-]]):format(lower and 'mb_strnicmp' or 'memcmp', access('i')))
+]]):format(lower and 'vim_strnicmp_asc' or 'memcmp', access('i')))
   else
     put(([[
   if (low < 0 || %s(str, %s, len)) {
     return -1;
   }
   return low;
-]]):format(lower and 'mb_strnicmp' or 'memcmp', access('low')))
+]]):format(lower and 'vim_strnicmp_asc' or 'memcmp', access('low')))
   end
   put '}\n\n'
   return neworder, table.concat(stats)
