@@ -352,10 +352,14 @@ BufWritePost			After writing the whole buffer to a file
 							*ChanInfo*
 ChanInfo			State of channel changed, for instance the
 				client of a RPC channel described itself.
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
 				Sets these |v:event| keys:
 				    info	as from |nvim_get_chan_info()|
 							*ChanOpen*
 ChanOpen			Just after a channel was opened.
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
 				Sets these |v:event| keys:
 				    info	as from |nvim_get_chan_info()|
 							*CmdUndefined*
@@ -364,6 +368,8 @@ CmdUndefined			When a user command is used but it isn't
 				when it's used.  The pattern is matched
 				against the command name.  Both <amatch> and
 				<afile> expand to the command name.
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
 				NOTE: Autocompletion won't work until the
 				command is defined.  An alternative is to
 				always define the user command and have it
@@ -689,6 +695,8 @@ FuncUndefined			When a user function is used but it isn't
 				when it's used.  The pattern is matched
 				against the function name.  Both <amatch> and
 				<afile> are set to the name of the function.
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
 				NOTE: When writing Vim scripts a better
 				alternative is to use an autoloaded function.
 				See |autoload-functions|.
@@ -910,7 +918,10 @@ ShellCmdPost			After executing a shell command with |:!cmd|,
 							*Signal*
 Signal				After Nvim receives a signal. The pattern is
 				matched against the signal name. Only
-				"SIGUSR1" and "SIGWINCH" are supported.  Example: >
+				"SIGUSR1" and "SIGWINCH" are supported.
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
+				Example: >vim
 				    autocmd Signal SIGUSR1 call some#func()
 <							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with
@@ -1013,6 +1024,9 @@ TermRequest			When a |:terminal| child process emits an OSC,
 				  position of the cursor when the sequence was
 				  received
 
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
+
 							*TermResponse*
 TermResponse			When Nvim receives an OSC or DCS response from
 				the host terminal. Sets |v:termresponse|. The
@@ -1020,9 +1034,14 @@ TermResponse			When Nvim receives an OSC or DCS response from
 
 				- sequence: the received sequence
 
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
+
 				May be triggered during another event (file
 				I/O, a shell command, or anything else that
-				takes time). Example: >lua
+				takes time).
+
+				Example: >lua
 
 				-- Query the terminal palette for the RGB value of color 1
 				-- (red) using OSC 4
