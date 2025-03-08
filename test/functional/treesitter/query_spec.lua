@@ -911,5 +911,65 @@ void ui_refresh(void)
 
       eq({ 2, { 1, 1, 2, 2 } }, result)
     end)
+
+    it('supports disabling patterns', function()
+      insert([[
+        void foo(int x, int y);
+      ]])
+      local query = [[
+        ((identifier) @func
+          (#eq? @func "foo"))
+        ((identifier) @param
+          (#eq? @param "x"))
+        ((identifier) @param
+          (#eq? @param "y"))
+      ]]
+
+      local result = exec_lua(function()
+        local query0 = vim.treesitter.query.parse('c', query)
+        query0.query:disable_pattern(2)
+
+        local parser = vim.treesitter.get_parser(0, 'c')
+        local root = parser:parse()[1]:root()
+        local captures = {}
+        for id, _, _, match in query0:iter_captures(root, 0) do
+          local _, pattern = match:info()
+          captures[#captures + 1] = {id = id, pattern = pattern}
+        end
+        return captures
+      end)
+
+      eq({ { id = 1, pattern = 1 }, { id = 2, pattern = 3 } }, result)
+    end)
+
+    it('supports disabling captures', function()
+      insert([[
+        void foo(int x, int y);
+      ]])
+      local query = [[
+        ((identifier) @func
+          (#eq? @func "foo"))
+        ((identifier) @param
+          (#eq? @param "x"))
+        ((identifier) @param
+          (#eq? @param "y"))
+      ]]
+
+      local result = exec_lua(function()
+        local query0 = vim.treesitter.query.parse('c', query)
+        query0.query:disable_capture("param")
+
+        local parser = vim.treesitter.get_parser(0, 'c')
+        local root = parser:parse()[1]:root()
+        local captures = {}
+        for id, _, _, match in query0:iter_captures(root, 0) do
+          local _, pattern = match:info()
+          captures[#captures + 1] = {id = id, pattern = pattern}
+        end
+        return captures
+      end)
+
+      eq({ { id = 1, pattern = 1 } }, result)
+    end)
   end)
 end)
