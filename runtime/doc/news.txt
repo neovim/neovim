@@ -313,6 +313,7 @@ LSP
 • |vim.lsp.enable()| has been added to enable servers.
 • |vim.lsp.buf.code_action()| resolves the `command` property during the
   `codeAction/resolve` request.
+• |vim.lsp.completion()| add kind_hlgroup and color preview.
 
 LUA
 
