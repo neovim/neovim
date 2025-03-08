@@ -6348,7 +6348,7 @@ describe('LSP', function()
         vim.lsp.config('foo', {
           cmd = server.cmd,
           filetypes = { 'foo' },
-          root_dir = function(cb)
+          root_dir = function(_bufnr, cb)
             vim.system({ 'sleep', '0' }, {}, function()
               cb('some_dir')
             end)
