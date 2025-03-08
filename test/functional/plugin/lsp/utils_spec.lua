@@ -368,6 +368,7 @@ describe('vim.lsp.util', function()
     ]])
     -- Correct height when float inherits 'conceallevel' >= 2 #32639
     command('close | set conceallevel=2')
+    feed('<Ignore>') -- Prevent CursorMoved closing the next float immediately
     exec_lua([[
       vim.lsp.util.open_floating_preview({ '```lua', 'local foo', '```' }, 'markdown', {
         border = 'single',
