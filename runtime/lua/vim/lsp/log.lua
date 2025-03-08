@@ -45,6 +45,11 @@ function log.get_filename()
   return logfilename
 end
 
+--- @param s string
+function log._set_filename(s)
+  logfilename = s
+end
+
 --- @type file*?, string?
 local logfile, openerr
 
