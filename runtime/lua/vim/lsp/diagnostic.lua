@@ -237,10 +237,10 @@ end
 --- See |vim.diagnostic.config()| for configuration options.
 ---
 ---@param _ lsp.ResponseError?
----@param result lsp.PublishDiagnosticsParams
+---@param params lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
-function M.on_publish_diagnostics(_, result, ctx)
-  handle_diagnostics(result.uri, ctx.client_id, result.diagnostics, false)
+function M.on_publish_diagnostics(_, params, ctx)
+  handle_diagnostics(params.uri, ctx.client_id, params.diagnostics, false)
 end
 
 --- |lsp-handler| for the method "textDocument/diagnostic"
