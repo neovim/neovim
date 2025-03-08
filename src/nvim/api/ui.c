@@ -128,7 +128,8 @@ void remote_ui_wait_for_attach(bool only_stdio)
 /// @param height  Requested screen rows
 /// @param options  |ui-option| map
 /// @param[out] err Error details, if any
-void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict options, Error *err)
+void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Integer pixel_width,
+                    Integer pixel_height, Dict options, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (map_has(uint64_t, &connected_uis, channel_id)) {
@@ -145,6 +146,8 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
   RemoteUI *ui = xcalloc(1, sizeof(RemoteUI));
   ui->width = (int)width;
   ui->height = (int)height;
+  ui->pixel_width = (int)pixel_width;
+  ui->pixel_height = (int)pixel_height;
   ui->pum_row = -1.0;
   ui->pum_col = -1.0;
   ui->rgb = true;
@@ -201,7 +204,7 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height, Boolean enabl
 {
   MAXSIZE_TEMP_DICT(opts, 1);
   PUT_C(opts, "rgb", BOOLEAN_OBJ(enable_rgb));
-  nvim_ui_attach(channel_id, width, height, opts, err);
+  nvim_ui_attach(channel_id, width, height, 0, 0, opts, err);
 }
 
 /// Tells the nvim server if focus was gained or lost by the GUI
@@ -244,7 +247,8 @@ void remote_ui_stop(RemoteUI *ui)
 {
 }
 
-void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Error *err)
+void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Integer pixel_width,
+                        Integer pixel_height, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!map_has(uint64_t, &connected_uis, channel_id)) {
@@ -262,6 +266,8 @@ void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Erro
   RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
   ui->width = (int)width;
   ui->height = (int)height;
+  ui->pixel_width = (int)pixel_width;
+  ui->pixel_width = (int)pixel_width;
   ui_refresh();
 }
 
@@ -400,7 +406,7 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width, I
   }
 
   if (grid == DEFAULT_GRID_HANDLE) {
-    nvim_ui_try_resize(channel_id, width, height, err);
+    nvim_ui_try_resize(channel_id, width, height, 0, 0, err);
   } else {
     ui_grid_resize((handle_T)grid, (int)width, (int)height, err);
   }

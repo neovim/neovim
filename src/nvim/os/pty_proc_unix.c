@@ -171,7 +171,8 @@ int pty_proc_spawn(PtyProc *ptyproc)
   Proc *proc = (Proc *)ptyproc;
   assert(proc->err.s.closed);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
-  ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
+  ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, ptyproc->pixel_width,
+                                       ptyproc->pixel_height };
   uv_disable_stdio_inheritance();
   int master;
   int pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
@@ -229,10 +230,11 @@ const char *pty_proc_tty_name(PtyProc *ptyproc)
   return ptsname(ptyproc->tty_fd);
 }
 
-void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
+void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height, uint16_t pixel_width,
+                     uint16_t pixel_height)
   FUNC_ATTR_NONNULL_ALL
 {
-  ptyproc->winsize = (struct winsize){ height, width, 0, 0 };
+  ptyproc->winsize = (struct winsize){ height, width, pixel_width, pixel_height };
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
@@ -412,6 +414,8 @@ PtyProc pty_proc_init(Loop *loop, void *data)
   rv.proc = proc_init(loop, kProcTypePty, data);
   rv.width = 80;
   rv.height = 24;
+  rv.pixel_width = 0;
+  rv.pixel_height = 0;
   rv.tty_fd = -1;
   return rv;
 }

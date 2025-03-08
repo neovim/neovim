@@ -1066,7 +1066,8 @@ static void term_write(const char *buf, size_t size, void *data)
   textlock--;
 }
 
-static void term_resize(uint16_t width, uint16_t height, void *data)
+static void term_resize(uint16_t width, uint16_t height, uint16_t pixel_width,
+                        uint16_t pixel_height, void *data)
 {
   // TODO(bfredl): Lua callback
 }
