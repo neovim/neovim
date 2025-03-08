@@ -412,10 +412,16 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
       for (int i = col - (int)startcol; i < until - startcol; i += width) {
         width = 1;
         // negative space
-        bool thru = linebuf[i] == schar_from_ascii(' ') && bg_line[i] != NUL;
-        if (i + 1 < endcol - startcol && bg_line[i + 1] == NUL) {
-          width = 2;
-          thru &= linebuf[i + 1] == schar_from_ascii(' ');
+        bool thru = schar_isspace(linebuf[i]) && bg_line[i] != NUL;
+        if (i + 1 < until - startcol) {
+          if (linebuf[i + 1] == NUL) {
+            // If the foreground is a double-wide space, then go thru both cells
+            width = 2;
+          } else if (bg_line[i + 1] == NUL) {
+            // If bg character is double-wide then check next cell also to combine
+            width = 2;
+            thru &= schar_isspace(linebuf[i + 1]);
+          }
         }
         attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], attrbuf[i], &thru);
         if (width == 2) {
