@@ -246,12 +246,6 @@ Added		added line in a diff
 Changed		changed line in a diff
 Removed		removed line in a diff
 
-The names marked with * are the preferred groups; the others are minor groups.
-For the preferred groups, the "syntax.vim" file contains default highlighting.
-The minor groups are linked to the preferred groups, so they get the same
-highlighting.  You can override these defaults by using ":highlight" commands
-after sourcing the "syntax.vim" file.
-
 Note that highlight group names are not case sensitive.  "String" and "string"
 can be used for the same group.
 
@@ -4816,16 +4810,20 @@ is mostly used, because it looks better.
 ==============================================================================
 13. Highlight command			*:highlight* *:hi* *E28* *E411* *E415*
 
-There are two types of highlight groups:
-- The built-in |highlight-groups|.
-- The ones used for specific languages.  For these the name starts with the
-  name of the language.  Many of these don't have any attributes, but are
-  linked to a group of the second type.
-							*hitest.vim*
-You can see all the groups currently active with this command: >
-    :so $VIMRUNTIME/syntax/hitest.vim
-This will open a new window containing all highlight group names, displayed
-in their own color.
+Nvim uses a range of highlight groups which fall into two categories: Editor
+interface and syntax highlighting. In rough order of importance, these are
+- basic editor |highlight-groups|
+- standard syntax |group-name|s (in addition, syntax files can define
+  language-specific groups, which are prefixed with the language name)
+- |diagnostic-highlights|
+- |tree-sitter-highlight-groups|
+- |lsp-semantic-highlight| groups
+- |lsp-highlight| of symbols and references
+
+Where appropriate, highlight groups are linked by default to one of the more basic
+groups, but colorschemes are expected to cover all of them. Under each tag,
+the corresponding highlight groups are highlighted using the current
+colorscheme.
 
 						*:colo* *:colorscheme* *E185*
 :colo[rscheme]		Output the name of the currently active color scheme.
