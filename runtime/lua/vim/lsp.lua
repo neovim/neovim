@@ -373,26 +373,31 @@ lsp.config = setmetatable({ _configs = {} }, {
     validate('name', name, 'string')
 
     local rconfig = lsp._enabled_configs[name] or {}
-    self._configs[name] = self._configs[name] or {}
 
     if not rconfig.resolved_config then
       -- Resolve configs from lsp/*.lua
       -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
-      local rtp_config = {} ---@type vim.lsp.Config
+      local rtp_config --- @type vim.lsp.Config?
       for _, v in ipairs(api.nvim_get_runtime_file(('lsp/%s.lua'):format(name), true)) do
         local config = assert(loadfile(v))() ---@type any?
         if type(config) == 'table' then
-          rtp_config = vim.tbl_deep_extend('force', rtp_config, config)
+          --- @type vim.lsp.Config?
+          rtp_config = vim.tbl_deep_extend('force', rtp_config or {}, config)
         else
           log.warn(string.format('%s does not return a table, ignoring', v))
         end
       end
 
+      if not rtp_config and not self._configs[name] then
+        log.warn(string.format('%s does not have a configuration', name))
+        return
+      end
+
       rconfig.resolved_config = vim.tbl_deep_extend(
         'force',
         lsp.config._configs['*'] or {},
-        rtp_config,
-        lsp.config._configs[name] or {}
+        rtp_config or {},
+        self._configs[name] or {}
       )
       rconfig.resolved_config.name = name
     end
@@ -452,24 +457,26 @@ local function lsp_enable_callback(bufnr)
 
   for name in vim.spairs(lsp._enabled_configs) do
     local config = lsp.config[name]
-    validate('cmd', config.cmd, { 'function', 'table' })
-    validate('cmd', config.reuse_client, 'function', true)
+    if config then
+      validate('cmd', config.cmd, { 'function', 'table' })
+      validate('cmd', config.reuse_client, 'function', true)
 
-    if can_start(config) then
-      -- Deepcopy config so changes done in the client
-      -- do not propagate back to the enabled configs.
-      config = vim.deepcopy(config)
+      if can_start(config) then
+        -- Deepcopy config so changes done in the client
+        -- do not propagate back to the enabled configs.
+        config = vim.deepcopy(config)
 
-      if type(config.root_dir) == 'function' then
-        ---@param root_dir string
-        config.root_dir(function(root_dir)
-          config.root_dir = root_dir
-          vim.schedule(function()
-            start(config)
+        if type(config.root_dir) == 'function' then
+          ---@param root_dir string
+          config.root_dir(function(root_dir)
+            config.root_dir = root_dir
+            vim.schedule(function()
+              start(config)
+            end)
           end)
-        end)
-      else
-        start(config)
+        else
+          start(config)
+        end
       end
     end
   end
