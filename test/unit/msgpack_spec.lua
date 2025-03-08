@@ -75,5 +75,16 @@ describe('msgpack', function()
       local finished = unpacker_advance(unpacker)
       eq(true, finished)
     end)
+
+    itp('packs strings with lengths between 20 and 31 bytes as fixstr', function()
+      local packer = ffi.new('PackerBuffer')
+      lib.packer_buffer_init(packer)
+
+      for len = 20, 31 do
+        local str = string.rep('a', len)
+        lib.mpack_str({ data = str, size = len }, packer)
+        eq(0xa0 + len, string.byte(packer.startptr))
+      end
+    end)
   end)
 end)
