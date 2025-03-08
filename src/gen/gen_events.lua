@@ -3,9 +3,14 @@ local names_file = arg[2]
 
 local auevents = require('nvim.auevents')
 local events = auevents.events
+local aliases = auevents.aliases
 
-local enum_tgt = io.open(fileio_enum_file, 'w')
-local names_tgt = io.open(names_file, 'w')
+--- @type string[]
+local names = vim.tbl_keys(vim.tbl_extend('error', events, aliases))
+table.sort(names)
+
+local enum_tgt = assert(io.open(fileio_enum_file, 'w'))
+local names_tgt = assert(io.open(names_file, 'w'))
 
 enum_tgt:write([[
 // IWYU pragma: private, include "nvim/autocmd_defs.h"
@@ -18,23 +23,25 @@ static const struct event_name {
   int event;
 } event_names[] = {]])
 
-local aliases = 0
-for i, event in ipairs(events) do
-  enum_tgt:write(('\n  EVENT_%s = %u,'):format(event[1]:upper(), i + aliases - 1))
+for i, name in ipairs(names) do
+  enum_tgt:write(('\n  EVENT_%s = %u,'):format(name:upper(), i - 1))
+  local pref_name = aliases[name] ~= nil and aliases[name] or name
+  local win_local = events[pref_name]
+  assert(win_local ~= nil)
   -- Events with positive keys aren't allowed in 'eventignorewin'.
-  local event_int = ('%sEVENT_%s'):format(event[3] and '-' or '', event[1]:upper())
-  names_tgt:write(('\n  {%u, "%s", %s},'):format(#event[1], event[1], event_int))
-  for _, alias in ipairs(event[2]) do
-    aliases = aliases + 1
-    names_tgt:write(('\n  {%u, "%s", %s},'):format(#alias, alias, event_int))
-    enum_tgt:write(('\n  EVENT_%s = %u,'):format(alias:upper(), i + aliases - 1))
-  end
-  if i == #events then -- Last item.
-    enum_tgt:write(('\n  NUM_EVENTS = %u,'):format(i + aliases))
-  end
+  names_tgt:write(
+    ('\n  [EVENT_%s] = {%u, "%s", %sEVENT_%s},'):format(
+      name:upper(),
+      #name,
+      name,
+      win_local and '-' or '',
+      pref_name:upper()
+    )
+  )
 end
 
-names_tgt:write('\n  {0, NULL, (event_T)0},\n};\n')
+enum_tgt:write(('\n  NUM_EVENTS = %u,'):format(#names))
+names_tgt:write('\n  [NUM_EVENTS] = {0, NULL, (event_T)0},\n};\n')
 names_tgt:write('\nstatic AutoCmdVec autocmds[NUM_EVENTS] = { 0 };\n')
 names_tgt:close()
 
