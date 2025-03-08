@@ -140,8 +140,11 @@ void tinput_init(TermInput *input, Loop *loop)
   input->in_fd = STDIN_FILENO;
 
   const char *term = os_getenv("TERM");
+  bool memfree = true;
+
   if (!term) {
     term = "";  // termkey_new_abstract assumes non-null (#2745)
+    memfree = false;
   }
 
   input->tk = termkey_new_abstract(term,
@@ -162,6 +165,10 @@ void tinput_init(TermInput *input, Loop *loop)
 
   uv_timer_init(&loop->uv, &input->bg_query_timer);
   input->bg_query_timer.data = input;
+
+  if (memfree) {
+    xfree((char *)term);
+  }
 }
 
 void tinput_destroy(TermInput *input)

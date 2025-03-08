@@ -3264,6 +3264,7 @@ static void vim_mktempdir(void)
   char tmp[TEMP_FILE_PATH_MAXLEN];
   char path[TEMP_FILE_PATH_MAXLEN];
   char user[40] = { 0 };
+  const char *tmpdir;
 
   os_get_username(user, sizeof(user));
   // Usernames may contain slashes! #19240
@@ -3278,12 +3279,18 @@ static void vim_mktempdir(void)
     expand_env((char *)temp_dirs[i], tmp, TEMP_FILE_PATH_MAXLEN - 64);
     if (!os_isdir(tmp)) {
       if (strequal("$TMPDIR", temp_dirs[i])) {
-        if (!os_getenv("TMPDIR")) {
+        tmpdir = os_getenv("TMPDIR");
+        if (!tmpdir) {
           DLOG("$TMPDIR is unset");
         } else {
           WLOG("$TMPDIR tempdir not a directory (or does not exist): \"%s\"", tmp);
         }
       }
+
+      if (tmpdir != NULL) {
+        xfree((char *)tmpdir);
+      }
+
       continue;
     }
 

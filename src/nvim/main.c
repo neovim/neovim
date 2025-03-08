@@ -932,16 +932,27 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   Object rvobj = OBJECT_INIT;
 
   if (is_ui) {
+    const char *nvim_env = os_getenv("NVIM");
+    bool exit = false;
     if (!chan) {
       fprintf(stderr, "Remote ui failed to start: %s\n", connect_error);
-      os_exit(1);
-    } else if (strequal(server_addr, os_getenv("NVIM"))) {
+      exit = true;
+    } else if (strequal(server_addr, nvim_env)) {
       fprintf(stderr, "%s", "Cannot attach UI of :terminal child to its parent. ");
       fprintf(stderr, "%s\n", "(Unset $NVIM to skip this check)");
+      exit = true;
+    }
+
+    if (nvim_env != NULL) {
+      xfree((char *)nvim_env);
+    }
+
+    if (exit) {
       os_exit(1);
     }
 
     ui_client_channel_id = chan;
+
     return;
   }
 
@@ -2129,6 +2140,8 @@ static int execute_env(char *env)
 
   estack_pop();
   current_sctx = save_current_sctx;
+
+  xfree((char *)initstr);
   return OK;
 }
 
