@@ -285,10 +285,11 @@ end
 --- rootUri, and rootPath on initialization. Unused if `root_dir` is provided.
 --- @field root_markers? string[]
 ---
---- Directory where the LSP server will base its workspaceFolders, rootUri, and rootPath on
---- initialization. If a function, it accepts a single callback argument which must be called with
---- the value of root_dir to use. The LSP server will not be started until the callback is called.
---- @field root_dir? string|fun(cb:fun(string))
+--- Directory where the LSP server will base its workspaceFolders, rootUri, and
+--- rootPath on initialization. If a function, it is passed the buffer number
+--- and a callback argument which must be called with the value of root_dir to
+--- use. The LSP server will not be started until the callback is called.
+--- @field root_dir? string|fun(bufnr: integer, cb:fun(root_dir?:string))
 ---
 --- Predicate used to decide if a client should be re-used. Used on all
 --- running clients. The default implementation re-uses a client if name and
@@ -462,7 +463,7 @@ local function lsp_enable_callback(bufnr)
 
       if type(config.root_dir) == 'function' then
         ---@param root_dir string
-        config.root_dir(function(root_dir)
+        config.root_dir(bufnr, function(root_dir)
           config.root_dir = root_dir
           vim.schedule(function()
             start(config)
