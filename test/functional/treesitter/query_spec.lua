@@ -912,4 +912,52 @@ void ui_refresh(void)
       eq({ 2, { 1, 1, 2, 2 } }, result)
     end)
   end)
+
+  describe('TSQuery', function()
+    local source = [[
+      void foo(int x, int y);
+    ]]
+
+    local query_text = [[
+      ((identifier) @func
+        (#eq? @func "foo"))
+      ((identifier) @param
+        (#eq? @param "x"))
+      ((identifier) @param
+        (#eq? @param "y"))
+    ]]
+
+    ---@param query string
+    ---@param disabled { capture: string?, pattern: integer? }
+    local function get_patterns(query, disabled)
+      local q = vim.treesitter.query.parse('c', query)
+      if disabled.capture then
+        q.query:disable_capture(disabled.capture)
+      end
+      if disabled.pattern then
+        q.query:disable_pattern(disabled.pattern)
+      end
+
+      local parser = vim.treesitter.get_parser(0, 'c')
+      local root = parser:parse()[1]:root()
+      local captures = {} ---@type {id: number, pattern: number}[]
+      for id, _, _, match in q:iter_captures(root, 0) do
+        local _, pattern = match:info()
+        captures[#captures + 1] = { id = id, pattern = pattern }
+      end
+      return captures
+    end
+
+    it('supports disabling patterns', function()
+      insert(source)
+      local result = exec_lua(get_patterns, query_text, { pattern = 2 })
+      eq({ { id = 1, pattern = 1 }, { id = 2, pattern = 3 } }, result)
+    end)
+
+    it('supports disabling captures', function()
+      insert(source)
+      local result = exec_lua(get_patterns, query_text, { capture = 'param' })
+      eq({ { id = 1, pattern = 1 } }, result)
+    end)
+  end)
 end)

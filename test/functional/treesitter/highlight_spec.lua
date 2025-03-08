@@ -640,8 +640,14 @@ describe('treesitter highlighting (C)', function()
     }
 
     eq({
-      { capture = 'constant', metadata = { priority = '101' }, lang = 'c', id = 14 },
-      { capture = 'type', metadata = {}, lang = 'c', id = 3 },
+      {
+        capture = 'constant',
+        metadata = { priority = '101' },
+        lang = 'c',
+        id = 14,
+        pattern_id = 23,
+      },
+      { capture = 'type', metadata = {}, lang = 'c', id = 3, pattern_id = 16 },
     }, exec_lua [[ return vim.treesitter.get_captures_at_pos(0, 0, 2) ]])
   end)
 
