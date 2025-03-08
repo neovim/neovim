@@ -170,7 +170,8 @@ struct terminal {
   struct {
     int row, col;
     int shape;
-    bool visible;
+    bool visible;  ///< Terminal wants to show cursor.
+                   ///< `TerminalState.cursor_visible` indicates whether it is actually shown.
     bool blink;
   } cursor;
 

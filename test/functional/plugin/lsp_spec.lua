@@ -2526,7 +2526,7 @@ describe('LSP', function()
       )
     end)
 
-    it('Supports file creation with CreateFile payload', function()
+    it('supports file creation with CreateFile payload', function()
       local tmpfile = tmpname(false)
       local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
       local edit = {
@@ -2544,7 +2544,7 @@ describe('LSP', function()
     end)
 
     it(
-      'Supports file creation in folder that needs to be created with CreateFile payload',
+      'supports file creation in folder that needs to be created with CreateFile payload',
       function()
         local tmpfile = tmpname(false) .. '/dummy/x/'
         local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
@@ -2647,7 +2647,7 @@ describe('LSP', function()
   describe('lsp.util.rename', function()
     local pathsep = n.get_pathsep()
 
-    it('Can rename an existing file', function()
+    it('can rename an existing file', function()
       local old = tmpname()
       write_file(old, 'Test content')
       local new = tmpname(false)
@@ -2668,7 +2668,7 @@ describe('LSP', function()
       os.remove(new)
     end)
 
-    it('Can rename a directory', function()
+    it('can rename a directory', function()
       -- only reserve the name, file must not exist for the test scenario
       local old_dir = tmpname(false)
       local new_dir = tmpname(false)
@@ -2695,7 +2695,7 @@ describe('LSP', function()
       os.remove(new_dir)
     end)
 
-    it('Does not touch buffers that do not match path prefix', function()
+    it('does not touch buffers that do not match path prefix', function()
       local old = tmpname(false)
       local new = tmpname(false)
       n.mkdir_p(old)
@@ -2730,7 +2730,7 @@ describe('LSP', function()
     end)
 
     it(
-      'Does not rename file if target exists and ignoreIfExists is set or overwrite is false',
+      'does not rename file if target exists and ignoreIfExists is set or overwrite is false',
       function()
         local old = tmpname()
         write_file(old, 'Old File')
@@ -2753,7 +2753,7 @@ describe('LSP', function()
       end
     )
 
-    it('Maintains undo information for loaded buffer', function()
+    it('maintains undo information for loaded buffer', function()
       local old = tmpname()
       write_file(old, 'line')
       local new = tmpname(false)
@@ -2777,7 +2777,7 @@ describe('LSP', function()
       eq(true, undo_kept)
     end)
 
-    it('Maintains undo information for unloaded buffer', function()
+    it('maintains undo information for unloaded buffer', function()
       local old = tmpname()
       write_file(old, 'line')
       local new = tmpname(false)
@@ -2798,7 +2798,7 @@ describe('LSP', function()
       eq(true, undo_kept)
     end)
 
-    it('Does not rename file when it conflicts with a buffer without file', function()
+    it('does not rename file when it conflicts with a buffer without file', function()
       local old = tmpname()
       write_file(old, 'Old File')
       local new = tmpname(false)
@@ -2817,7 +2817,7 @@ describe('LSP', function()
       eq('Old File', read_file(old))
     end)
 
-    it('Does override target if overwrite is true', function()
+    it('does override target if overwrite is true', function()
       local old = tmpname()
       write_file(old, 'Old file')
       local new = tmpname()
@@ -2833,7 +2833,7 @@ describe('LSP', function()
   end)
 
   describe('lsp.util.locations_to_items', function()
-    it('Convert Location[] to items', function()
+    it('convert Location[] to items', function()
       local expected_template = {
         {
           filename = '/fake/uri',
@@ -2879,7 +2879,7 @@ describe('LSP', function()
       end
     end)
 
-    it('Convert LocationLink[] to items', function()
+    it('convert LocationLink[] to items', function()
       local expected = {
         {
           filename = '/fake/uri',
@@ -2926,7 +2926,7 @@ describe('LSP', function()
 
   describe('lsp.util.symbols_to_items', function()
     describe('convert DocumentSymbol[] to items', function()
-      it('DocumentSymbol has children', function()
+      it('documentSymbol has children', function()
         local expected = {
           {
             col = 1,
@@ -3047,7 +3047,7 @@ describe('LSP', function()
         )
       end)
 
-      it('DocumentSymbol has no children', function()
+      it('documentSymbol has no children', function()
         local expected = {
           {
             col = 1,
@@ -4387,7 +4387,7 @@ describe('LSP', function()
   end)
 
   describe('vim.lsp.buf.code_action', function()
-    it('Calls client side command if available', function()
+    it('calls client side command if available', function()
       local client --- @type vim.lsp.Client
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
@@ -4431,7 +4431,7 @@ describe('LSP', function()
       }
     end)
 
-    it('Calls workspace/executeCommand if no client side command', function()
+    it('calls workspace/executeCommand if no client side command', function()
       local client --- @type vim.lsp.Client
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
@@ -4472,7 +4472,7 @@ describe('LSP', function()
       })
     end)
 
-    it('Filters and automatically applies action if requested', function()
+    it('filters and automatically applies action if requested', function()
       local client --- @type vim.lsp.Client
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
@@ -4547,7 +4547,7 @@ describe('LSP', function()
       }
     end)
 
-    it('Fallback to command execution on resolve error', function()
+    it('fallback to command execution on resolve error', function()
       clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
@@ -4592,7 +4592,7 @@ describe('LSP', function()
       eq('command:1', result[5].params.command)
     end)
 
-    it('Resolves command property', function()
+    it('resolves command property', function()
       clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
@@ -4639,14 +4639,14 @@ describe('LSP', function()
   end)
 
   describe('vim.lsp.commands', function()
-    it('Accepts only string keys', function()
+    it('accepts only string keys', function()
       matches(
         '.*The key for commands in `vim.lsp.commands` must be a string',
         pcall_err(exec_lua, 'vim.lsp.commands[1] = function() end')
       )
     end)
 
-    it('Accepts only function values', function()
+    it('accepts only function values', function()
       matches(
         '.*Command added to `vim.lsp.commands` must be a function',
         pcall_err(exec_lua, 'vim.lsp.commands.dummy = 10')
@@ -4880,7 +4880,7 @@ describe('LSP', function()
   end)
 
   describe('vim.lsp.buf.format', function()
-    it('Aborts with notify if no client matches filter', function()
+    it('aborts with notify if no client matches filter', function()
       local client --- @type vim.lsp.Client
       test_rpc_server {
         test_name = 'basic_init',
@@ -4906,7 +4906,7 @@ describe('LSP', function()
       }
     end)
 
-    it('Sends textDocument/formatting request to format buffer', function()
+    it('sends textDocument/formatting request to format buffer', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
         { NIL, {}, { method = 'start', client_id = 1 } },
@@ -4940,7 +4940,7 @@ describe('LSP', function()
       }
     end)
 
-    it('Sends textDocument/rangeFormatting request to format a range', function()
+    it('sends textDocument/rangeFormatting request to format a range', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
         { NIL, {}, { method = 'start', client_id = 1 } },
@@ -4981,7 +4981,7 @@ describe('LSP', function()
       }
     end)
 
-    it('Sends textDocument/rangesFormatting request to format multiple ranges', function()
+    it('sends textDocument/rangesFormatting request to format multiple ranges', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
         { NIL, {}, { method = 'start', client_id = 1 } },
@@ -5028,7 +5028,7 @@ describe('LSP', function()
       }
     end)
 
-    it('Can format async', function()
+    it('can format async', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
         { NIL, {}, { method = 'start', client_id = 1 } },
@@ -5157,7 +5157,7 @@ describe('LSP', function()
       eq(expected_range, result[5].params.range)
     end)
 
-    it('Aborts with notify if no clients support requested method', function()
+    it('aborts with notify if no clients support requested method', function()
       exec_lua(create_server_definition)
       exec_lua(function()
         vim.notify = function(msg, _)
