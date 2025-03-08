@@ -575,22 +575,22 @@ int x = INT_MAX;
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 7, 0 }, -- root tree
+          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 3, 14, 3, 17 }, -- VALUE 123
           { 4, 15, 4, 18 }, -- VALUE1 123
           { 5, 15, 5, 18 }, -- VALUE2 123
-          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
         n.feed('ggo<esc>')
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
+          { 2, 26, 2, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          { 3, 29, 3, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 4, 14, 4, 17 }, -- VALUE 123
           { 5, 15, 5, 18 }, -- VALUE1 123
           { 6, 15, 6, 18 }, -- VALUE2 123
-          { 2, 26, 2, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          { 3, 29, 3, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
     end)
@@ -613,11 +613,11 @@ int x = INT_MAX;
         eq(2, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 7, 0 }, -- root tree
+          { 1, 26, 2, 66 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 3, 14, 5, 18 }, -- VALUE 123
           -- VALUE1 123
           -- VALUE2 123
-          { 1, 26, 2, 66 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
         n.feed('ggo<esc>')
@@ -625,11 +625,11 @@ int x = INT_MAX;
         eq(2, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
-          { 4, 14, 6, 18 }, -- VALUE 123
-          -- VALUE1 123
-          -- VALUE2 123
           { 2, 26, 3, 66 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
           -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
+          -- VALUE 123
+          { 4, 14, 6, 18 }, -- VALUE1 123
+          -- VALUE2 123
         }, get_ranges())
 
         n.feed('7ggI//<esc>')
@@ -638,10 +638,10 @@ int x = INT_MAX;
         eq(2, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
-          { 4, 14, 5, 18 }, -- VALUE 123
-          -- VALUE1 123
           { 2, 26, 3, 66 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
           -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
+          -- VALUE 123
+          { 4, 14, 5, 18 }, -- VALUE1 123
         }, get_ranges())
       end)
 
@@ -794,22 +794,22 @@ int x = INT_MAX;
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 7, 0 }, -- root tree
+          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 3, 14, 3, 17 }, -- VALUE 123
           { 4, 15, 4, 18 }, -- VALUE1 123
           { 5, 15, 5, 18 }, -- VALUE2 123
-          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
         n.feed('ggo<esc>')
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
+          { 2, 26, 2, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          { 3, 29, 3, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 4, 14, 4, 17 }, -- VALUE 123
           { 5, 15, 5, 18 }, -- VALUE1 123
           { 6, 15, 6, 18 }, -- VALUE2 123
-          { 2, 26, 2, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          { 3, 29, 3, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
     end)
@@ -831,11 +831,11 @@ int x = INT_MAX;
         eq('table', exec_lua('return type(parser:children().c)'))
         eq({
           { 0, 0, 7, 0 }, -- root tree
+          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 3, 16, 3, 16 }, -- VALUE 123
           { 4, 17, 4, 17 }, -- VALUE1 123
           { 5, 17, 5, 17 }, -- VALUE2 123
-          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
       it('should list all directives', function()
