@@ -1869,8 +1869,13 @@ enable({enable}, {client_id}, {bufnr}, {opts})
       • {opts}       (`vim.lsp.completion.BufferOpts?`) See
                      |vim.lsp.completion.BufferOpts|.
 
-trigger()                                       *vim.lsp.completion.trigger()*
+trigger({opts})                                 *vim.lsp.completion.trigger()*
     Triggers LSP completion once in the current buffer.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {ctx}? (`lsp.CompletionContext`) Completion context.
+                  Defaults to a trigger kind of `invoked`.
 
 
 ==============================================================================

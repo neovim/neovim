@@ -424,9 +424,10 @@ end
 --- @param clients table<integer, vim.lsp.Client> # keys != client_id
 --- @param bufnr integer
 --- @param win integer
+--- @param ctx? lsp.CompletionContext
 --- @param callback fun(responses: table<integer, { err: lsp.ResponseError, result: vim.lsp.CompletionResult }>)
 --- @return function # Cancellation function
-local function request(clients, bufnr, win, callback)
+local function request(clients, bufnr, win, ctx, callback)
   local responses = {} --- @type table<integer, { err: lsp.ResponseError, result: any }>
   local request_ids = {} --- @type table<integer, integer>
   local remaining_requests = vim.tbl_count(clients)
@@ -434,6 +435,8 @@ local function request(clients, bufnr, win, callback)
   for _, client in pairs(clients) do
     local client_id = client.id
     local params = lsp.util.make_position_params(win, client.offset_encoding)
+    --- @cast params lsp.CompletionParams
+    params.context = ctx
     local ok, request_id = client:request(ms.textDocument_completion, params, function(err, result)
       responses[client_id] = { err = err, result = result }
       remaining_requests = remaining_requests - 1
@@ -457,7 +460,10 @@ local function request(clients, bufnr, win, callback)
   end
 end
 
-local function trigger(bufnr, clients)
+--- @param bufnr integer
+--- @param clients vim.lsp.Client[]
+--- @param ctx? lsp.CompletionContext
+local function trigger(bufnr, clients, ctx)
   reset_timer()
   Context:cancel_pending()
 
@@ -473,7 +479,7 @@ local function trigger(bufnr, clients)
   local start_time = vim.uv.hrtime()
   Context.last_request_time = start_time
 
-  local cancel_request = request(clients, bufnr, win, function(responses)
+  local cancel_request = request(clients, bufnr, win, ctx, function(responses)
     local end_time = vim.uv.hrtime()
     rtt_ms = compute_new_average((end_time - start_time) * ns_to_ms)
 
@@ -527,11 +533,20 @@ local function on_insert_char_pre(handle)
       reset_timer()
 
       local debounce_ms = next_debounce()
+      local ctx = { triggerKind = protocol.CompletionTriggerKind.TriggerForIncompleteCompletions }
       if debounce_ms == 0 then
-        vim.schedule(M.trigger)
+        vim.schedule(function()
+          M.trigger(ctx)
+        end)
       else
         completion_timer = new_timer()
-        completion_timer:start(debounce_ms, 0, vim.schedule_wrap(M.trigger))
+        completion_timer:start(
+          debounce_ms,
+          0,
+          vim.schedule_wrap(function()
+            M.trigger(ctx)
+          end)
+        )
       end
     end
 
@@ -545,7 +560,11 @@ local function on_insert_char_pre(handle)
     completion_timer:start(25, 0, function()
       reset_timer()
       vim.schedule(function()
-        trigger(api.nvim_get_current_buf(), matched_clients)
+        trigger(
+          api.nvim_get_current_buf(),
+          matched_clients,
+          { triggerKind = protocol.CompletionTriggerKind.TriggerCharacter, triggerCharacter = char }
+        )
       end)
     end)
   end
@@ -771,11 +790,20 @@ function M.enable(enable, client_id, bufnr, opts)
   end
 end
 
+--- @inlinedoc
+--- @class vim.lsp.completion.trigger.Opts
+--- @field ctx? lsp.CompletionContext Completion context. Defaults to a trigger kind of `invoked`.
+
 --- Triggers LSP completion once in the current buffer.
-function M.trigger()
+---
+--- @param opts? vim.lsp.completion.trigger.Opts
+function M.trigger(opts)
+  opts = opts or {}
+  local ctx = opts.ctx or { triggerKind = protocol.CompletionTriggerKind.Invoked }
   local bufnr = api.nvim_get_current_buf()
   local clients = (buf_handles[bufnr] or {}).clients or {}
-  trigger(bufnr, clients)
+
+  trigger(bufnr, clients, ctx)
 end
 
 --- Implements 'omnifunc' compatible LSP completion.
@@ -800,7 +828,7 @@ function M._omnifunc(findstart, base)
     return findstart == 1 and -1 or {}
   end
 
-  trigger(bufnr, clients)
+  trigger(bufnr, clients, { triggerKind = protocol.CompletionTriggerKind.Invoked })
 
   -- Return -2 to signal that we should continue completion so that we can
   -- async complete.

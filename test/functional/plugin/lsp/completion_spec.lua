@@ -1127,6 +1127,73 @@ describe('vim.lsp.completion: protocol', function()
       eq('foo', matches[1].abbr)
     end)
   end)
+
+  it('sends completion context when invoked', function()
+    local params = exec_lua(function()
+      local params
+      local server = _G._create_server({
+        capabilities = {
+          completionProvider = true,
+        },
+        handlers = {
+          ['textDocument/completion'] = function(_, params0, callback)
+            params = params0
+            callback(nil, nil)
+          end,
+        },
+      })
+
+      local bufnr = vim.api.nvim_get_current_buf()
+      vim.api.nvim_win_set_buf(0, bufnr)
+      vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+        on_attach = function(client, bufnr0)
+          vim.lsp.completion.enable(true, client.id, bufnr0)
+        end,
+      })
+
+      vim.lsp.completion.trigger()
+
+      return params
+    end)
+
+    eq({ triggerKind = 1 }, params.context)
+  end)
+
+  it('sends completion context with trigger characters', function()
+    exec_lua(function()
+      local server = _G._create_server({
+        capabilities = {
+          completionProvider = {
+            triggerCharacters = { 'h' },
+          },
+        },
+        handlers = {
+          ['textDocument/completion'] = function(_, params, callback)
+            _G.params = params
+            callback(nil, { isIncomplete = false, items = { label = 'hello' } })
+          end,
+        },
+      })
+
+      local bufnr = vim.api.nvim_get_current_buf()
+      vim.api.nvim_win_set_buf(0, bufnr)
+      vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+        on_attach = function(client, bufnr0)
+          vim.lsp.completion.enable(true, client.id, bufnr0, { autotrigger = true })
+        end,
+      })
+    end)
+
+    feed('ih')
+
+    retry(100, nil, function()
+      eq({ triggerKind = 2, triggerCharacter = 'h' }, exec_lua('return _G.params.context'))
+    end)
+  end)
 end)
 
 describe('vim.lsp.completion: integration', function()
