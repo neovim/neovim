@@ -1,4 +1,4 @@
-// Terminal UI functions. Invoked (by ui_client.c) on the UI process.
+// Terminal UI functions. Invoked by the UI process (ui_client.c), not the server.
 
 #include <assert.h>
 #include <inttypes.h>
