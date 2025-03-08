@@ -247,6 +247,9 @@ DEFAULTS
   • |[[| and |]]| in Normal mode jump between shell prompts for shells which emit
     OSC 133 sequences ("shell integration" or "semantic prompts").
 
+• Options:
+  • Lua |ftplugin| sets |'omnifunc'| to `"v:lua.vim.lua_omnifunc"`.
+
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`
     when a snippet is active and jumpable forwards.
