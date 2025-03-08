@@ -113,19 +113,12 @@ w('\nsyn case ignore')
 local vimau_start = 'syn keyword vimAutoEvent contained '
 w('\n\n' .. vimau_start)
 
-for _, au in ipairs(auevents.events) do
-  if not auevents.nvim_specific[au[1]] then
+for au, _ in vim.spairs(vim.tbl_extend('error', auevents.events, auevents.aliases)) do
+  if not auevents.nvim_specific[au] then
     if lld.line_length > 850 then
       w('\n' .. vimau_start)
     end
-    w(' ' .. au[1])
-    for _, alias in ipairs(au[2]) do
-      if lld.line_length > 850 then
-        w('\n' .. vimau_start)
-      end
-      -- au[1] is aliased to alias
-      w(' ' .. alias)
-    end
+    w(' ' .. au)
   end
 end
 
