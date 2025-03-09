@@ -15,6 +15,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mark_defs.h"
 #include "nvim/math.h"
+#include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
@@ -334,7 +335,7 @@ static bool cin_islabel_skip(const char **s)
   }
 
   while (vim_isIDc((uint8_t)(**s))) {
-    (*s)++;
+    (*s) += utfc_ptr2len(*s);
   }
 
   *s = cin_skipcomment(*s);
