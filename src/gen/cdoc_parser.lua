@@ -171,6 +171,7 @@ local function process_proto(item, state)
     end
   end
 
+  cur_obj.since = item.since
   cur_obj.deprecated_since = item.deprecated_since
 
   -- Remove some arguments
