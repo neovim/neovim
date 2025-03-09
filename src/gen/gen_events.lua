@@ -1,6 +1,7 @@
 local fileio_enum_file = arg[1]
 local names_file = arg[2]
 
+local hashy = require('gen.hashy')
 local auevents = require('nvim.auevents')
 local events = auevents.events
 local aliases = auevents.aliases
@@ -41,9 +42,27 @@ for i, name in ipairs(names) do
 end
 
 enum_tgt:write(('\n  NUM_EVENTS = %u,'):format(#names))
-names_tgt:write('\n  [NUM_EVENTS] = {0, NULL, (event_T)0},\n};\n')
-names_tgt:write('\nstatic AutoCmdVec autocmds[NUM_EVENTS] = { 0 };\n')
-names_tgt:close()
-
 enum_tgt:write('\n} event_T;\n')
 enum_tgt:close()
+
+names_tgt:write('\n  [NUM_EVENTS] = {0, NULL, (event_T)0},\n};\n')
+names_tgt:write('\nstatic AutoCmdVec autocmds[NUM_EVENTS] = { 0 };\n')
+
+local hashorder = vim.tbl_map(string.lower, names)
+table.sort(hashorder)
+local hashfun
+hashorder, hashfun = hashy.hashy_hash('event_name2nr', hashorder, function(idx)
+  return 'event_names[event_hash[' .. idx .. ']].name'
+end, true)
+
+names_tgt:write([[
+
+static const event_T event_hash[] = {]])
+
+for _, lower_name in ipairs(hashorder) do
+  names_tgt:write(('\n  EVENT_%s,'):format(lower_name:upper()))
+end
+
+names_tgt:write('\n};\n\n')
+names_tgt:write('static ' .. hashfun)
+names_tgt:close()
