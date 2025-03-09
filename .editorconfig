@@ -10,7 +10,7 @@ insert_final_newline = true
 [*.{c,h,in,lua}]
 max_line_length = 100
 
-[src/nvim/eval.lua]
+[src/nvim/{eval,vvars}.lua]
 max_line_length = 68
 
 [*.py]
