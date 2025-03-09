@@ -1420,8 +1420,8 @@ vimrc file again).
 						*FileExplorer*
 There is one group that is recognized by Vim: FileExplorer.  If this group
 exists Vim assumes that editing a directory is possible and will trigger a
-plugin that lists the files in that directory.  This is used by the |netrw|
-plugin.  This allows you to do: >
+plugin that lists the files in that directory.  This is used by directory
+browser plugins.  This allows you to do: >
 	browse edit
 
 ==============================================================================
@@ -1695,7 +1695,7 @@ and "++ff=" argument that are effective.  These should be used for the command
 that reads/writes the file.  The |v:cmdbang| variable is one when "!" was
 used, zero otherwise.
 
-See the $VIMRUNTIME/plugin/netrwPlugin.vim for examples.
+See the $VIMRUNTIME/pack/dist/opt/netrw/plugin/netrwPlugin.vim for examples.
 
 ==============================================================================
 11. Disabling autocommands				*autocmd-disable*
