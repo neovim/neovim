@@ -1,6 +1,6 @@
 " Vim plugin for showing matching parens
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2024 May 18
+" Last Change:	2025 Mar 08
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Exit quickly when:
@@ -114,6 +114,17 @@ func s:Highlight_Matching_Pair()
           \ .. 'string\|character\|singlequote\|escape\|symbol\|comment'
           \ .. "') != -1"
   else
+    " do not attempt to match when the syntax item where the cursor is
+    " indicates there does not exist a matching parenthesis, e.g. for shells
+    " case statement: "case $var in foobar)"
+    "
+    " add the check behind a filetype check, so it only needs to be
+    " evaluated for certain filetypes
+    if ['sh']->index(&filetype) >= 0 &&
+        \ synstack(".", col("."))->indexof({_, id -> synIDattr(id, "name")
+        \ =~? "shSnglCase"}) >= 0
+      return
+    endif
     " Build an expression that detects whether the current cursor position is
     " in certain syntax types (string, comment, etc.), for use as
     " searchpairpos()'s skip argument.
