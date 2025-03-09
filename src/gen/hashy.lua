@@ -106,8 +106,8 @@ function M.switcher(put, tab, maxlen, worst_buck_size, icase)
   return neworder
 end
 
---- @param icase boolean generate a case-insensitive hash function.
----                      `strings` must not have mixed case when using this.
+--- @param icase? boolean generate a case-insensitive hash function.
+---                       `strings` must not have mixed case when using this.
 function M.hashy_hash(name, strings, access, icase)
   local stats = {}
   local put = function(str)
