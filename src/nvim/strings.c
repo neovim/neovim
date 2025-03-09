@@ -475,6 +475,28 @@ bool striequal(const char *a, const char *b)
   return (a == NULL && b == NULL) || (a && b && STRICMP(a, b) == 0);
 }
 
+/// Compare two ASCII strings, for length "len", ignoring case, ignoring locale.
+///
+/// @return 0 for match, < 0 for smaller, > 0 for bigger
+int vim_strnicmp_asc(const char *s1, const char *s2, size_t len)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int i = 0;
+  while (len > 0) {
+    i = TOLOWER_ASC(*s1) - TOLOWER_ASC(*s2);
+    if (i != 0) {
+      break;                       // this character is different
+    }
+    if (*s1 == NUL) {
+      break;                       // strings match until NUL
+    }
+    s1++;
+    s2++;
+    len--;
+  }
+  return i;
+}
+
 /// strchr() version which handles multibyte strings
 ///
 /// @param[in]  string  String to search in.
