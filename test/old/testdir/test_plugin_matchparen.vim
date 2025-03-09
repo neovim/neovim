@@ -139,4 +139,36 @@ func Test_matchparen_mbyte()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test for ignoring certain parenthesis
+func Test_matchparen_ignore_sh_case()
+  CheckScreendump
+
+  let lines =<< trim END
+    source $VIMRUNTIME/plugin/matchparen.vim
+    set ft=sh
+    call setline(1, [
+          \ '#!/bin/sh',
+          \ 'SUSUWU_PRINT() (',
+          \ '  case "${LEVEL}" in',
+          \ '    "$SUSUWU_SH_NOTICE")',
+          \ '    ${SUSUWU_S} && return 1',
+          \ '  ;;',
+          \ '    "$SUSUWU_SH_DEBUG")',
+          \ '    (! ${SUSUWU_VERBOSE}) && return 1',
+          \ '  ;;',
+          \ '  esac',
+          \ '  # snip',
+          \ ')'
+          \ ])
+    call cursor(4, 26)
+  END
+
+  let filename = 'Xmatchparen_sh'
+  call writefile(lines, filename, 'D')
+
+  let buf = RunVimInTerminal('-S '.filename, #{rows: 10})
+  call VerifyScreenDump(buf, 'Test_matchparen_sh_case_1', {})
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -195,4 +195,48 @@ describe('matchparen', function()
       {5:-- INSERT --}                  |
     ]])
   end)
+
+  -- oldtest: Test_matchparen_ignore_sh_case()
+  it('ignores shell case statements', function()
+    local screen = Screen.new(40, 15)
+    exec([[
+      syntax on
+      source $VIMRUNTIME/plugin/matchparen.vim
+      set ft=sh
+      call setline(1, [
+            \ '#!/bin/sh',
+            \ 'SUSUWU_PRINT() (',
+            \ '  case "${LEVEL}" in',
+            \ '    "$SUSUWU_SH_NOTICE")',
+            \ '    ${SUSUWU_S} && return 1',
+            \ '  ;;',
+            \ '    "$SUSUWU_SH_DEBUG")',
+            \ '    (! ${SUSUWU_VERBOSE}) && return 1',
+            \ '  ;;',
+            \ '  esac',
+            \ '  # snip',
+            \ ')'
+            \ ])
+      call cursor(4, 26)
+    ]])
+    screen:add_extra_attr_ids({
+      [100] = { foreground = tonumber('0x6a0dad') },
+    })
+    screen:expect([[
+      {18:#!/bin/sh}                               |
+      {25:SUSUWU_PRINT() (}                        |
+        {15:case} {15:"}{100:${LEVEL}}{15:"} {15:in}                    |
+          {15:"}{100:$SUSUWU_SH_NOTICE}{15:"^)}                |
+          {100:${SUSUWU_S}} {15:&&} {15:return} {26:1}             |
+        {15:;;}                                    |
+          {15:"}{100:$SUSUWU_SH_DEBUG}{15:")}                 |
+          {100:(}{15:!} {100:${SUSUWU_VERBOSE})} {15:&&} {15:return} {26:1}   |
+        {15:;;}                                    |
+        {15:esac}                                  |
+        {18:# snip}                                |
+      {25:)}                                       |
+      {1:~                                       }|*2
+                                              |
+    ]])
+  end)
 end)
