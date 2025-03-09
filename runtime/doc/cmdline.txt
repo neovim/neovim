@@ -83,6 +83,10 @@ CTRL-Q		Same as CTRL-V.  But with some terminals it is used for
 CTRL-SHIFT-V				*c_CTRL-SHIFT-V* *c_CTRL-SHIFT-Q*
 CTRL-SHIFT-Q	Works just like CTRL-V, but do not try to include the CTRL
 		modifier into the key.
+		Note: When CTRL-SHIFT-V is intercepted by your system (e.g.,
+		to paste text) you can often use CTRL-SHIFT-Q instead.
+		However, in some terminals (e.g. GNOME Terminal), CTRL-SHIFT-Q
+		quits the terminal without confirmation.
 
 							*c_<Left>* *c_Left*
 <Left>		cursor left.  See 'wildmenu' for behavior during wildmenu

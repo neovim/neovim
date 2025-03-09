@@ -212,6 +212,10 @@ CTRL-Q		Same as CTRL-V.
 CTRL-SHIFT-V				*i_CTRL-SHIFT-V* *i_CTRL-SHIFT-Q*
 CTRL-SHIFT-Q	Works just like CTRL-V, but do not try to include the CTRL
 		modifier into the key.
+		Note: When CTRL-SHIFT-V is intercepted by your system (e.g.,
+		to paste text) you can often use CTRL-SHIFT-Q instead.
+		However, in some terminals (e.g. GNOME Terminal), CTRL-SHIFT-Q
+		quits the terminal without confirmation.
 
 CTRL-X		Enter CTRL-X mode.  This is a sub-mode where commands can
 		be given to complete words or scroll the window.  See
