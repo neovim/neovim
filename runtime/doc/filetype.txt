@@ -821,6 +821,12 @@ the PDF.  The following are treated as tags:
 
 These maps can be disabled with >
 	:let g:no_pdf_maps = 1
+
+PLSQL							*ft-plsql-plugin*
+
+To enable syntax folding in PL/SQL filetypes, set the following variable: >
+
+	:let g:plsql_fold = 1
 <
 
 PYTHON						*ft-python-plugin* *PEP8*

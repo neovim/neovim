@@ -4,7 +4,7 @@
 " Previous Maintainer: Jeff Lanzarotta (jefflanzarotta at yahoo dot com)
 " Previous Maintainer: C. Laurence Gonsalves (clgonsal@kami.com)
 " URL: https://github.com/lee-lindley/vim_plsql_syntax
-" Last Change: Sep 19, 2022   
+" Last Change: Mar 09, 2025   
 " History  Carsten Czarski (carsten dot czarski at oracle com)
 "               add handling for typical SQL*Plus commands (rem, start, host, set, etc)
 "               add error highlight for non-breaking space
@@ -694,7 +694,6 @@ syn region plsqlSqlPlusCommand  start="^\(SET\|DEFINE\|PROMPT\|ACCEPT\|EXEC\|HOS
 syn region plsqlSqlPlusRunFile  start="^\(@\|@@\)" skip="\\$" end="$" keepend extend
 
 if get(g:,"plsql_fold",0) == 1
-    setlocal foldmethod=syntax
     syn sync fromstart
 
     syn cluster plsqlProcedureGroup contains=plsqlProcedure
