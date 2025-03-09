@@ -109,6 +109,19 @@ func Test_preproc_indent()
   close!
 endfunc
 
+func Test_userlabel_indent()
+  new
+  call setline(1, ['{', 'label:'])
+  normal GV=
+  call assert_equal('label:', getline(2))
+
+  call setline(2, 'läbél:')
+  normal GV=
+  call assert_equal('läbél:', getline(2))
+
+  close!
+endfunc
+
 " Test for 'copyindent'
 func Test_copyindent()
   new
