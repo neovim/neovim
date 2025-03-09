@@ -238,6 +238,8 @@ Boolean nvim_buf_detach(uint64_t channel_id, Buffer buffer, Error *err)
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
 ///
+/// @see |nvim_buf_get_text()|
+///
 /// @param channel_id
 /// @param buffer           Buffer id, or 0 for current buffer
 /// @param start            First line index
@@ -294,7 +296,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted
 /// as length+1+index: -1 refers to the index past the end. So to change
-/// or delete the last element use start=-2 and end=-1.
+/// or delete the last line use start=-2 and end=-1.
 ///
 /// To insert lines at a given index, set `start` and `end` to the same index.
 /// To delete a range of lines, set `replacement` to an empty array.
@@ -685,10 +687,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   });
 }
 
-/// Gets a range from the buffer.
-///
-/// This differs from |nvim_buf_get_lines()| in that it allows retrieving only
-/// portions of a line.
+/// Gets a range from the buffer (may be partial lines, unlike |nvim_buf_get_lines()|).
 ///
 /// Indexing is zero-based. Row indices are end-inclusive, and column indices
 /// are end-exclusive.

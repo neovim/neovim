@@ -872,7 +872,7 @@ Window nvim_get_current_win(void)
   return curwin->handle;
 }
 
-/// Sets the current window. Also changes tabpage, if necessary.
+/// Sets the current window (and tabpage, implicitly).
 ///
 /// @param window |window-ID| to focus
 /// @param[out] err Error details, if any

@@ -2349,12 +2349,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when 'autoindent' is on.  To insert a real tab when 'expandtab' is
 	on, use CTRL-V<Tab>.  See also |:retab| and |ins-expandtab|.
 
-					*'exrc'* *'ex'* *'noexrc'* *'noex'*
+	*'exrc'* *'ex'* *'noexrc'* *'noex'* *project-config* *workspace-config*
 'exrc' 'ex'		boolean	(default off)
 			global
-	Automatically execute .nvim.lua, .nvimrc, and .exrc files in the
-	current directory, if the file is in the |trust| list. Use |:trust| to
-	manage trusted files. See also |vim.secure.read()|.
+	Enables project-local configuration. Nvim will execute any .nvim.lua,
+	.nvimrc, or .exrc file found in the |current-directory|, if the file is
+	in the |trust| list. Use |:trust| to manage trusted files. See also
+	|vim.secure.read()|.
 
 	Compare 'exrc' to |editorconfig|:
 	- 'exrc' can execute any code; editorconfig only specifies settings.

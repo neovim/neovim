@@ -272,9 +272,9 @@ Grid Events (line-based)					  *ui-linegrid*
 Activated by the `ext_linegrid` |ui-option|. Recommended for all new UIs.
 Deactivates |ui-grid-old| implicitly.
 
-The biggest change compared to |ui-grid-old| is to use a single `grid_line`
-event to update the contents of a screen line (whereas the old protocol used
-a combination of cursor, highlight and text events)
+Unlike |ui-grid-old|, this UI extension emits a single `grid_line` event to
+update a screen-line (whereas the old protocol emitted separate cursor,
+highlight and text events per screen-line).
 
 Most of these events take a `grid` index as first parameter.  Grid 1 is the
 global grid used by default for the entire editor screen state. The
@@ -351,8 +351,7 @@ numerical highlight ids to the actual attributes.
 	affected by redefined ids, so UIs do not need to keep track of this
 	themselves.
 
-	`info` is an empty array by default, and will be used by the
-	|ui-hlstate| extension explained below.
+	`info` is an empty array unless |ui-hlstate| is enabled.
 
 ["hl_group_set", name, hl_id] ~
 	The built-in highlight group `name` was set to use the attributes `hl_id`
@@ -540,20 +539,23 @@ is not active. New UIs should implement |ui-linegrid| instead.
 		+-------------------------+
 <
 ==============================================================================
-Detailed highlight state Extension				  *ui-hlstate*
+Highlight Events						  *ui-hlstate*
 
 Activated by the `ext_hlstate` |ui-option|.
 Activates |ui-linegrid| implicitly.
 
-By default Nvim will only describe grid cells using the final calculated
-highlight attributes, as described by the dict keys in |ui-event-highlight_set|.
-The `ext_hlstate` extension allows to the UI to also receive a semantic
-description of the highlights active in a cell. In this mode highlights will be
-predefined in a table, see |ui-event-hl_attr_define| and |ui-event-grid_line|.
-The `info` parameter in `hl_attr_define` will contain a semantic description
-of the highlights. As highlight groups can be combined, this will be an array
-of items, with the item with highest priority last. Each item is a dictionary
-with the following possible keys:
+If `ext_hlstate` is enabled, Nvim will emit detailed highlight state in
+|ui-linegrid| events. Otherwise (by default) Nvim only describes grid cells
+using the final calculated highlight attributes described at
+|ui-event-highlight_set|.
+
+`ext_hlstate` provides a semantic description of active highlights for each
+grid cell. Highlights are predefined in a table, see |ui-event-hl_attr_define|
+and |ui-event-grid_line|.
+
+The `info` parameter in `hl_attr_define` contains a semantic description of
+the highlights. Because highlight groups can be combined, this is an array
+where the highest-priority item is last. Each item is a dict with these keys:
 
     `kind`:	always present. One of the following values:
 	"ui":       Builtin UI highlight. |highlight-groups|
@@ -670,6 +672,10 @@ Activated by the `ext_popupmenu` |ui-option|.
 
 This UI extension delegates presentation of the |popupmenu-completion| and
 command-line 'wildmenu'.
+
+The UI decides how to present the menu. For example, depending on the last
+`mode_change` event, command-line wildmenu may be presented horizontally,
+while insert-mode completion would show a vertical popupmenu.
 
 ["popupmenu_show", items, selected, row, col, grid] ~
 	Show |popupmenu-completion|. `items` is an array of completion items

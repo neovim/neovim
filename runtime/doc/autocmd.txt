@@ -743,6 +743,12 @@ InsertLeavePre			Just before leaving Insert mode.  Also when
 							*InsertLeave*
 InsertLeave			Just after leaving Insert mode.  Also when
 				using CTRL-O |i_CTRL-O|.  But not for |i_CTRL-C|.
+LspAttach			See |LspAttach|
+LspDetach			See |LspDetach|
+LspNotify			See |LspNotify|
+LspProgress			See |LspProgress|
+LspRequest			See |LspRequest|
+LspTokenUpdate			See |LspTokenUpdate|
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
 				right mouse button).  Useful for adjusting the
@@ -1128,9 +1134,8 @@ VimLeave			Before exiting Vim, just after writing the
 				Not triggered if |v:dying| is 2 or more.
 							*VimLeavePre*
 VimLeavePre			Before exiting Vim, just before writing the
-				.shada file.  This is executed only once,
-				if there is a match with the name of what
-				happens to be the current buffer when exiting.
+				|shada| file.  Executed only once, if the
+				pattern matches the current buffer on exit.
 				Mostly useful with a "*" pattern. >
 				   :autocmd VimLeavePre * call CleanupStuff()
 <				Use |v:dying| to detect an abnormal exit.

@@ -2010,9 +2010,10 @@ vim.o.et = vim.o.expandtab
 vim.bo.expandtab = vim.o.expandtab
 vim.bo.et = vim.bo.expandtab
 
---- Automatically execute .nvim.lua, .nvimrc, and .exrc files in the
---- current directory, if the file is in the `trust` list. Use `:trust` to
---- manage trusted files. See also `vim.secure.read()`.
+--- Enables project-local configuration. Nvim will execute any .nvim.lua,
+--- .nvimrc, or .exrc file found in the `current-directory`, if the file is
+--- in the `trust` list. Use `:trust` to manage trusted files. See also
+--- `vim.secure.read()`.
 ---
 --- Compare 'exrc' to `editorconfig`:
 --- - 'exrc' can execute any code; editorconfig only specifies settings.

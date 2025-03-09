@@ -1416,7 +1416,7 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
       • {tabpage}  |tab-ID| to focus
 
 nvim_set_current_win({window})                        *nvim_set_current_win()*
-    Sets the current window. Also changes tabpage, if necessary.
+    Sets the current window (and tabpage, implicitly).
 
     Attributes: ~
         not allowed when |textlock| is active or in the |cmdwin|
@@ -2450,6 +2450,9 @@ nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
     Return: ~
         Array of lines, or empty array for unloaded buffer.
 
+    See also: ~
+      • |nvim_buf_get_text()|
+
 nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
     Returns a `(row,col)` tuple representing the position of the named mark.
     "End of line" column position is returned as |v:maxcol| (big number). See
@@ -2508,10 +2511,8 @@ nvim_buf_get_offset({buffer}, {index})                 *nvim_buf_get_offset()*
                                                          *nvim_buf_get_text()*
 nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                   {opts})
-    Gets a range from the buffer.
-
-    This differs from |nvim_buf_get_lines()| in that it allows retrieving only
-    portions of a line.
+    Gets a range from the buffer (may be partial lines, unlike
+    |nvim_buf_get_lines()|).
 
     Indexing is zero-based. Row indices are end-inclusive, and column indices
     are end-exclusive.
@@ -2605,7 +2606,7 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
 
     Indexing is zero-based, end-exclusive. Negative indices are interpreted as
     length+1+index: -1 refers to the index past the end. So to change or
-    delete the last element use start=-2 and end=-1.
+    delete the last line use start=-2 and end=-1.
 
     To insert lines at a given index, set `start` and `end` to the same index.
     To delete a range of lines, set `replacement` to an empty array.

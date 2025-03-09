@@ -65,74 +65,9 @@ Follow these steps to get LSP features:
 5. (Optional) Configure keymaps and autocommands to use LSP features.
    |lsp-attach|
 
-                                                        *lsp-config*
+==============================================================================
+DEFAULTS                                                *lsp-defaults*
 
-Configurations for LSP clients is done via |vim.lsp.config()|.
-
-When an LSP client starts, it resolves a configuration by merging
-configurations, in increasing priority, from the following:
-
-1. Configuration defined for the `'*'` name.
-
-2. Configuration from the result of merging all tables returned by
-   `lsp/<name>.lua` files in 'runtimepath' for a server of name `name`.
-
-3. Configurations defined anywhere else.
-
-Note: The merge semantics of configurations follow the behaviour of
-|vim.tbl_deep_extend()|.
-
-Example:
-
-Given: >lua
-  -- Defined in init.lua
-  vim.lsp.config('*', {
-    capabilities = {
-      textDocument = {
-        semanticTokens = {
-          multilineTokenSupport = true,
-        }
-      }
-    },
-    root_markers = { '.git' },
-  })
-
-  -- Defined in ../lsp/clangd.lua
-  return {
-    cmd = { 'clangd' },
-    root_markers = { '.clangd', 'compile_commands.json' },
-    filetypes = { 'c', 'cpp' },
-  }
-
-  -- Defined in init.lua
-  vim.lsp.config('clangd', {
-    filetypes = { 'c' },
-  })
-<
-Results in the configuration: >lua
-  {
-    -- From the clangd configuration in <rtp>/lsp/clangd.lua
-    cmd = { 'clangd' },
-
-    -- From the clangd configuration in <rtp>/lsp/clangd.lua
-    -- Overrides the * configuration in init.lua
-    root_markers = { '.clangd', 'compile_commands.json' },
-
-    -- From the clangd configuration in init.lua
-    -- Overrides the clangd configuration in <rtp>/lsp/clangd.lua
-    filetypes = { 'c' },
-
-    -- From the * configuration in init.lua
-    capabilities = {
-      textDocument = {
-        semanticTokens = {
-          multilineTokenSupport = true,
-        }
-      }
-    }
-  }
-<
-                                                        *lsp-defaults*
 When the Nvim LSP client starts it enables diagnostics |vim.diagnostic| (see
 |vim.diagnostic.config()| to customize). It also sets various default options,
 listed below, if (1) the language server supports the functionality and (2)
@@ -177,26 +112,95 @@ To override or delete any of the above defaults, set or unset the options on
       end,
     })
 <
+==============================================================================
+CONFIG                                                  *lsp-config*
+
+You can configure LSP behavior statically via vim.lsp.config(), and
+dynamically via |lsp-attach| or |Client:on_attach()|.
+
+Use |vim.lsp.config()| to define, and selectively enable, LSP configurations.
+This is basically a wrapper around |vim.lsp.start()| which allows you to share
+and merge configs (which may be provided by Nvim or third-party plugins).
+
+When an LSP client starts, it resolves its configuration by merging from the
+following (in increasing priority):
+
+1. Configuration defined for the `'*'` name.
+2. Configuration from the result of merging all tables returned by
+   `lsp/<name>.lua` files in 'runtimepath' for a server of name `name`.
+3. Configurations defined anywhere else.
+
+Note: The merge semantics of configurations follow the behaviour of
+|vim.tbl_deep_extend()|.
+
+Example: given the following configs... >lua
+  -- Defined in init.lua
+  vim.lsp.config('*', {
+    capabilities = {
+      textDocument = {
+        semanticTokens = {
+          multilineTokenSupport = true,
+        }
+      }
+    },
+    root_markers = { '.git' },
+  })
+
+  -- Defined in <rtp>/lsp/clangd.lua
+  return {
+    cmd = { 'clangd' },
+    root_markers = { '.clangd', 'compile_commands.json' },
+    filetypes = { 'c', 'cpp' },
+  }
+
+  -- Defined in init.lua
+  vim.lsp.config('clangd', {
+    filetypes = { 'c' },
+  })
+<
+...the merged result is: >lua
+  {
+    -- From the clangd configuration in <rtp>/lsp/clangd.lua
+    cmd = { 'clangd' },
+
+    -- From the clangd configuration in <rtp>/lsp/clangd.lua
+    -- Overrides the "*" configuration in init.lua
+    root_markers = { '.clangd', 'compile_commands.json' },
+
+    -- From the clangd configuration in init.lua
+    -- Overrides the clangd configuration in <rtp>/lsp/clangd.lua
+    filetypes = { 'c' },
+
+    -- From the "*" configuration in init.lua
+    capabilities = {
+      textDocument = {
+        semanticTokens = {
+          multilineTokenSupport = true,
+        }
+      }
+    }
+  }
+<
                                                         *lsp-attach*
-To use other LSP features, set keymaps and other buffer options on
-|LspAttach|. Not all language servers provide the same capabilities. Use
-capability checks to ensure you only use features supported by the language
-server. Example: >lua
+To use LSP features beyond those provided by Nvim (see |lsp-buf|), you can set
+keymaps and options on |Client:on_attach()| or |LspAttach|. Not all language
+servers provide the same capabilities; check `supports_method()` in your
+LspAttach handler. Example: >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(args)
         local client = vim.lsp.get_client_by_id(args.data.client_id)
         if client:supports_method('textDocument/implementation') then
-          -- Create a keymap for vim.lsp.buf.implementation
+          -- Create a keymap for vim.lsp.buf.implementation ...
         end
 
+        -- Enable auto-completion.
         if client:supports_method('textDocument/completion') then
-          -- Enable auto-completion
           vim.lsp.completion.enable(true, client.id, args.buf, {autotrigger = true})
         end
 
+        -- Format the current buffer on save.
         if client:supports_method('textDocument/formatting') then
-          -- Format the current buffer on save
           vim.api.nvim_create_autocmd('BufWritePre', {
             buffer = args.buf,
             callback = function()
@@ -207,12 +211,9 @@ server. Example: >lua
       end,
     })
 <
-To learn what capabilities are available you can run the following command in
-a buffer with a started LSP client: >vim
+To see the capabilities for a given server, try this in a LSP-enabled buffer: >vim
 
     :lua =vim.lsp.get_clients()[1].server_capabilities
-
-Full list of features provided by default can be found in |lsp-buf|.
 
 ================================================================================
 FAQ                                                     *lsp-faq*
@@ -537,14 +538,31 @@ the exact definition):
 EVENTS                                                            *lsp-events*
 
 LspAttach                                                          *LspAttach*
-    After an LSP client attaches to a buffer. The |autocmd-pattern| is the
-    name of the buffer. When used from Lua, the client ID is passed to the
-    callback in the "data" table. See |lsp-attach| for an example.
+    After an LSP client performs "initialize" and attaches to a buffer. The
+    |autocmd-pattern| is the buffer name. The client ID is passed in the
+    Lua handler |event-data| argument.
+
+    Note: If the LSP server performs dynamic registration, capabilities may be
+    registered any time _after_ LspAttach. In that case you may want to handle
+    the "registerCapability" event. Example: >lua
+
+    vim.lsp.handlers['client/registerCapability'] = (function(overridden)
+      return function(err, res, ctx)
+        local result = overridden(err, res, ctx)
+        local client = vim.lsp.get_client_by_id(ctx.client_id)
+        if not client then
+          return
+        end
+        -- Call your custom on_attach logic...
+        -- my_on_attach(client, vim.api.nvim_get_current_buf())
+        return result
+      end
+    end)(vim.lsp.handlers['client/registerCapability'])
 
 LspDetach                                                          *LspDetach*
-    Just before an LSP client detaches from a buffer. The |autocmd-pattern|
-    is the name of the buffer. When used from Lua, the client ID is passed
-    to the callback in the "data" table. Example: >lua
+    Just before an LSP client detaches from a buffer. The |autocmd-pattern| is
+    the buffer name. The client ID is passed in the Lua handler |event-data|
+    argument. Example: >lua
 
     vim.api.nvim_create_autocmd('LspDetach', {
       callback = function(args)
@@ -566,8 +584,8 @@ LspNotify                                                          *LspNotify*
     This event is triggered after each successful notification sent to an
     LSP server.
 
-    When used from Lua, the client_id, LSP method, and parameters are sent
-    in the "data" table. Example: >lua
+    The client_id, LSP method, and parameters are sent in the Lua handler
+    |event-data| table argument. Example: >lua
 
     vim.api.nvim_create_autocmd('LspNotify', {
       callback = function(args)
@@ -592,9 +610,9 @@ LspProgress                                                       *LspProgress*
     If the server sends a "work done progress", the `pattern` is set to `kind`
     (one of `begin`, `report` or `end`).
 
-    When used from Lua, the event contains a `data` table with `client_id` and
-    `params` properties. `params` will contain the request params sent by the
-    server (see `lsp.ProgressParams`).
+    The Lua handler |event-data| argument has `client_id` and `params`
+    properties, where `params` is the request params sent by the server (see
+    `lsp.ProgressParams`).
 
     Example: >vim
         autocmd LspProgress * redrawstatus
@@ -611,11 +629,10 @@ LspRequest                                                        *LspRequest*
     is requested using `client.cancel_request(request_id)`, then this event
     will trigger with {type} == `cancel`.
 
-    When used from Lua, the client ID, request ID, and request are sent in
-    the "data" table. See {requests} in |vim.lsp.Client| for details on the
-    {request} value. If the request type is `complete`, the request will be
-    deleted from the client's pending requests table immediately after
-    calling the event's callbacks. Example: >lua
+    The Lua handler |event-data| argument has the client ID, request ID, and
+    request (described at |vim.lsp.Client|, {requests} field). If the request
+    type is `complete`, the request will be deleted from the client's pending
+    requests table after processing the event handlers. Example: >lua
 
     vim.api.nvim_create_autocmd('LspRequest', {
       callback = function(args)
@@ -641,11 +658,9 @@ LspRequest                                                        *LspRequest*
 LspTokenUpdate                                                *LspTokenUpdate*
     When a visible semantic token is sent or updated by the LSP server, or
     when an existing token becomes visible for the first time. The
-    |autocmd-pattern| is the name of the buffer. When used from Lua, the
-    token and client ID are passed to the callback in the "data" table. The
-    token fields are documented in |vim.lsp.semantic_tokens.get_at_pos()|.
-    Example:
-    >lua
+    |autocmd-pattern| is the buffer name. The Lua handler |event-data|
+    argument has the client ID and token (see
+    |vim.lsp.semantic_tokens.get_at_pos()|). Example: >lua
 
     vim.api.nvim_create_autocmd('LspTokenUpdate', {
       callback = function(args)
@@ -1842,6 +1857,8 @@ activate "auto-completion" when you type any of the server-defined
 `triggerCharacters`.
 
 Example: activate LSP-driven auto-completion: >lua
+    -- Works best with completeopt=noselect.
+    vim.cmd[[set completeopt+=menuone,noselect,popup]]
     vim.lsp.start({
       name = 'ts_ls',
       cmd = …,
