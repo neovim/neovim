@@ -4816,7 +4816,7 @@ interface and syntax highlighting. In rough order of importance, these are
 - standard syntax |group-name|s (in addition, syntax files can define
   language-specific groups, which are prefixed with the language name)
 - |diagnostic-highlights|
-- |tree-sitter-highlight-groups|
+- |treesitter-highlight-groups|
 - |lsp-semantic-highlight| groups
 - |lsp-highlight| of symbols and references
 

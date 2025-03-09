@@ -789,7 +789,7 @@ must handle.
 		"" (empty)	Unknown (consider a |feature-request|)
 		"bufwrite"	|:write| message
 		"confirm"	Message preceding a prompt (|:confirm|,
-				|confirm()|, |inputlist()|, |z=,|, …)
+				|confirm()|, |inputlist()|, |z=|, …)
 		"emsg"		Error (|errors|, internal error, |:throw|, …)
 		"echo"		|:echo| message
 		"echomsg"	|:echomsg| message

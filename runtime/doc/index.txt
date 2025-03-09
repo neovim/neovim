@@ -786,8 +786,7 @@ tag		char	      note action in Normal mode	~
 |gu|		gu{motion}	2  make Nmove text lowercase
 |gv|		gv		   reselect the previous Visual area
 |gw|		gw{motion}	2  format Nmove text and keep cursor
-|netrw-gx|	gx		   execute application for file name under the
-				   cursor (only with |netrw| plugin)
+|gx|		gx		   execute application for filepath at cursor
 |g@|		g@{motion}	   call 'operatorfunc'
 |g~|		g~{motion}	2  swap case for Nmove text
 |g<Down>|	g<Down>		1  same as "gj"
