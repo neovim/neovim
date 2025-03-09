@@ -671,7 +671,7 @@ describe('ext_multigrid', function()
         {21:     }|
         {22:~    }|*4
       ]], float_pos={
-        [4] = {1001, "SE", 2, 16, 58, true, 50};
+        [4] = {1001, "SE", 2, 16, 58, true, 50, 1, 8, 48};
       }}
     end)
 
@@ -693,7 +693,7 @@ describe('ext_multigrid', function()
         {24: foo}|
         {21: bar}|
       ]], float_pos={
-        [4] = {-1, "NW", 2, 15, 55, false, 100};
+        [4] = {-1, "SW", 2, 14, 49, false, 100, 1, 12, 49};
       }}
       feed('<C-E><Esc>')
 
@@ -715,7 +715,7 @@ describe('ext_multigrid', function()
         {24:            oof}|
         {21:            rab}|
       ]], float_pos={
-        [4] = {-1, "NW", 2, 16, 45, false, 100};
+        [4] = {-1, "SW", 2, 15, 45, false, 100, 1, 13, 45};
       }}
       feed('<C-E><Esc>')
 
@@ -737,7 +737,7 @@ describe('ext_multigrid', function()
         {24: undefine       }|
         {21: unplace        }|
       ]], float_pos={
-        [4] = {-1, "SW", 1, 13, 5, false, 250};
+        [4] = {-1, "SW", 1, 13, 5, false, 250, 2, 11, 5};
       }}
     end)
 
@@ -1346,7 +1346,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "NW", 2, 2, 5, false, 250};
+      [6] = {-1, "NW", 2, 2, 5, false, 250, 2, 7, 36};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1420,7 +1420,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "NW", 4, 1, 63, false, 250};
+      [6] = {-1, "NW", 4, 1, 63, false, 250, 2, 1, 63};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1542,7 +1542,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "SW", 4, 9, 0, false, 250};
+      [6] = {-1, "SW", 4, 9, 0, false, 250, 2, 14, 0};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1674,7 +1674,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "NW", 4, 10, 0, false, 250};
+      [6] = {-1, "NW", 4, 10, 0, false, 250, 2, 16, 0};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -2857,4 +2857,71 @@ describe('ext_multigrid', function()
       }})
     end)
   end)
+
+  it('message grid is shown at the correct position remote re-attach', function()
+    feed(':test')
+    local expected = {
+        grid = [[
+        ## grid 1
+          [2:-----------------------------------------------------]|*12
+          {11:[No Name]                                            }|
+          [3:-----------------------------------------------------]|
+        ## grid 2
+                                                               |
+          {1:~                                                    }|*11
+        ## grid 3
+          :test^                                                |
+        ]],
+        win_pos = {
+        [2] = {
+          height = 12,
+          startcol = 0,
+          startrow = 0,
+          width = 53,
+          win = 1000
+        }
+      },
+        win_viewport = {
+        [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      },
+        win_viewport_margins = {
+        [2] = {
+          bottom = 0,
+          left = 0,
+          right = 0,
+          top = 0,
+          win = 1000
+        }
+      },
+      reset = true
+    }
+    screen:expect(expected)
+    feed('<cr>')
+    screen:detach()
+    screen:attach()
+    feed(':test')
+    screen:expect(expected)
+  end)
+end)
+
+it('headless attach with showcmd', function()
+  clear{args={'--headless'}}
+  local screen = Screen.new(80, 24, {ext_multigrid=true})
+  command('set showcmd')
+  feed('1234')
+  screen:expect({
+    grid = [[
+    ## grid 1
+      [2:--------------------------------------------------------------------------------]|*23
+      [3:--------------------------------------------------------------------------------]|
+    ## grid 2
+      ^                                                                                |
+      {1:~                                                                               }|*22
+    ## grid 3
+                                                                           1234       |
+    ]],
+    win_viewport = {
+      [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+    },
+  })
 end)
