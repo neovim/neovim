@@ -101,20 +101,19 @@ local function ga_alloc(itemsize, growsize)
 end
 
 local function check_emsg(f, msg)
-  local saved_last_msg_hist = lib.last_msg_hist
-  if saved_last_msg_hist == nil then
-    saved_last_msg_hist = nil
+  local saved_msg_hist_last = lib.msg_hist_last
+  if saved_msg_hist_last == nil then
+    saved_msg_hist_last = nil
   end
   local ret = { f() }
-  local last_msg = lib.last_msg_hist ~= nil and ffi.string(lib.last_msg_hist.msg) or nil
   if msg ~= nil then
-    eq(msg, last_msg)
-    neq(saved_last_msg_hist, lib.last_msg_hist)
+    eq(msg, ffi.string(lib.msg_hist_last.msg.items[0].text.data))
+    neq(saved_msg_hist_last, lib.msg_hist_last)
   else
-    if saved_last_msg_hist ~= lib.last_msg_hist then
-      eq(nil, last_msg)
+    if saved_msg_hist_last ~= lib.msg_hist_last then
+      eq(nil, lib.msg_hist_last)
     else
-      eq(saved_last_msg_hist, lib.last_msg_hist)
+      eq(saved_msg_hist_last, lib.msg_hist_last)
     end
   end
   return unpack(ret)

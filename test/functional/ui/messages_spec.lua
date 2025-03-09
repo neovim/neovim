@@ -1571,6 +1571,48 @@ stack traceback:
       end,
     })
   end)
+
+  it('g< mapping shows recent messages', function()
+    command('echo "foo" | echo "bar"')
+    local s1 = [[
+      ^                         |
+      {1:~                        }|*4
+    ]]
+    screen:expect({
+      grid = s1,
+      messages = {
+        {
+          content = { { 'bar' } },
+          history = false,
+          kind = 'echo',
+        },
+      },
+    })
+    feed(':messages<CR>g<lt>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'Press ENTER or type command to continue', 6, 18 } },
+          history = false,
+          kind = 'return_prompt',
+        },
+      },
+      msg_history = {
+        {
+          content = { { 'foo' } },
+          kind = 'echo',
+        },
+        {
+          content = { { 'bar' } },
+          kind = 'echo',
+        },
+      },
+    })
+  end)
 end)
 
 describe('ui/builtin messages', function()

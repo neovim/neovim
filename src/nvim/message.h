@@ -28,10 +28,7 @@ enum {
   VIM_DISCARDALL = 6,
 };
 
-/// First message
-extern MessageHistoryEntry *first_msg_hist;
-/// Last message
-extern MessageHistoryEntry *last_msg_hist;
+extern MessageHistoryEntry *msg_hist_last;
 
 EXTERN bool msg_ext_need_clear INIT( = false);
 // Set to true to force grouping a set of message chunks into a single `cmdline_show` event.
