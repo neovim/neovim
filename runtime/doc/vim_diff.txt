@@ -771,8 +771,8 @@ Options:
     noremap <C-\><C-G> <C-\><C-N><Cmd>startinsert<CR>
     cnoremap <C-\><C-G> <C-\><C-N><Cmd>startinsert<CR>
     inoremap <C-\><C-G> <C-X><C-Z>
-    autocmd CmdWinEnter * noremap <buffer> <C-C> <C-C>
-    autocmd CmdWinEnter * inoremap <buffer> <C-C> <C-C>
+    autocmd CmdwinEnter * noremap <buffer> <C-C> <C-C>
+    autocmd CmdwinEnter * inoremap <buffer> <C-C> <C-C>
 
     lua << EOF
       vim.on_key(function(c)
