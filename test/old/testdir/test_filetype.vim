@@ -916,8 +916,6 @@ func s:GetFilenameChecks() abort
     \         '.zcompdump', '.zlogin', '.zlogout', '.zshenv', '.zshrc', '.zsh_history',
     \         '.zcompdump-file', '.zlog', '.zlog-file', '.zsh', '.zsh-file',
     \         'any/etc/zprofile', 'zlog', 'zlog-file', 'zsh', 'zsh-file'],
-    \
-    \ 'help': [$VIMRUNTIME .. '/doc/help.txt'],
     \ }
 endfunc
 
@@ -1616,6 +1614,23 @@ func Test_haredoc_file()
   bwipe!
   unlet g:filetype_haredoc
   unlet g:haredoc_search_depth
+
+  filetype off
+endfunc
+
+func Test_help_file()
+  filetype on
+  call assert_true(mkdir('doc', 'pR'))
+
+  call writefile(['some text', 'vim:ft=help:'], 'doc/help.txt', 'D')
+  split doc/help.txt
+  call assert_equal('help', &filetype)
+  bwipe!
+
+  call writefile(['some text'], 'doc/nothelp.txt', 'D')
+  split doc/nothelp.txt
+  call assert_notequal('help', &filetype)
+  bwipe!
 
   filetype off
 endfunc
