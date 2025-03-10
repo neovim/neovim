@@ -313,6 +313,8 @@ LSP
 • |vim.lsp.enable()| has been added to enable servers.
 • |vim.lsp.buf.code_action()| resolves the `command` property during the
   `codeAction/resolve` request.
+• The `textDocument/completion` request now includes the completion context in
+  its parameters.
 
 LUA
 

@@ -476,9 +476,7 @@ function protocol.make_client_capabilities()
             'data',
           },
         },
-
-        -- TODO(tjdevries): Implement this
-        contextSupport = false,
+        contextSupport = true,
       },
       declaration = {
         linkSupport = true,
