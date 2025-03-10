@@ -1854,8 +1854,55 @@ describe('builtin popupmenu', function()
       before_each(function()
         --row must > 10
         screen:try_resize(40, 11)
+        screen:add_extra_attr_ids({
+          [100] = { foreground = Screen.colors.Blue1, bold = true },
+          [101] = { foreground = Screen.colors.SeaGreen4, bold = true },
+          [102] = { background = Screen.colors.Red1, foreground = Screen.colors.Grey100 },
+          [103] = { foreground = Screen.colors.Red1 },
+          [104] = { background = Screen.colors.Green, foreground = Screen.colors.Grey100 },
+          [105] = {
+            background = Screen.colors.Plum1,
+            foreground = Screen.colors.Brown,
+            bold = true,
+          },
+          [106] = { background = Screen.colors.Plum1, foreground = Screen.colors.Cyan4 },
+          [107] = { background = Screen.colors.Plum1, foreground = Screen.colors.SlateBlue },
+          [108] = { background = Screen.colors.Plum1, foreground = Screen.colors.Fuchsia },
+          n = { background = Screen.colors.Plum1 },
+          c = { background = Screen.colors.Grey0 },
+          xs = { background = Screen.colors.Grey, foreground = Screen.colors.Grey0 },
+          ks = { background = Screen.colors.Grey, foreground = Screen.colors.Red1 },
+          kn = { background = Screen.colors.Plum1, foreground = Screen.colors.Red1 },
+          s = { background = Screen.colors.Grey },
+          xn = { background = Screen.colors.Plum1, foreground = Screen.colors.Grey100 },
+          mn = { background = Screen.colors.Plum1, foreground = Screen.colors.Blue1 },
+          ds = { background = Screen.colors.Grey, foreground = Screen.colors.Red4 },
+          ms = { background = Screen.colors.Grey, foreground = Screen.colors.Blue1 },
+          dn = { background = Screen.colors.Plum1, foreground = Screen.colors.Red4 },
+          ums = {
+            background = Screen.colors.Grey,
+            foreground = Screen.colors.Blue1,
+            underline = true,
+          },
+          umn = {
+            background = Screen.colors.Plum1,
+            foreground = Screen.colors.Blue1,
+            underline = true,
+          },
+          uds = {
+            background = Screen.colors.Grey,
+            foreground = Screen.colors.Red4,
+            underline = true,
+          },
+          udn = {
+            background = Screen.colors.Plum1,
+            foreground = Screen.colors.Red4,
+            underline = true,
+          },
+        })
         exec([[
           let g:list = [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "looooooooooooooong"}]
+          let g:bufnrs = []
           funct Omni_test(findstart, base)
             if a:findstart
               return col(".") - 1
@@ -1866,13 +1913,16 @@ describe('builtin popupmenu', function()
           set completeopt=menu,popup
           funct Set_info()
             let comp_info = complete_info()
+            if get(comp_info, 'preview_bufnr', 0) > 0
+              call add(g:bufnrs, comp_info['preview_bufnr'])
+            endif
             if comp_info['selected'] == 2
               call nvim__complete_set(comp_info['selected'], {"info": "3info"})
             endif
           endfunc
           funct TsHl()
-            let comp_info = complete_info()
-            if get(comp_info, 'previewbufnr', 0) > 0
+            let comp_info = complete_info(['selected'])
+            if get(comp_info, 'preview_bufnr', 0) > 0
               call v:lua.vim.treesitter.start(comp_info['preview_bufnr'], 'markdown')
             endif
             if comp_info['selected'] == 0
@@ -1904,9 +1954,9 @@ describe('builtin popupmenu', function()
               [3:----------------------------------------]|
             ## grid 2
               one^                                     |
-              {1:~                                       }|*9
+              {100:~                                       }|*9
             ## grid 3
-              {2:-- }{5:match 1 of 3}                         |
+              {5:-- }{101:match 1 of 3}                         |
             ## grid 4
               {n:1info}|
             ## grid 5
@@ -1967,11 +2017,11 @@ describe('builtin popupmenu', function()
         else
           screen:expect([[
             one^                                     |
-            {s:one                }{n:1info}{1:                }|
-            {n:two                }{1:                     }|
-            {n:looooooooooooooong }{1:                     }|
-            {1:~                                       }|*6
-            {2:-- }{5:match 1 of 3}                         |
+            {s:one                }{n:1info}{100:                }|
+            {n:two                }{100:                     }|
+            {n:looooooooooooooong }{100:                     }|
+            {100:~                                       }|*6
+            {5:-- }{101:match 1 of 3}                         |
           ]])
         end
 
@@ -1986,9 +2036,9 @@ describe('builtin popupmenu', function()
               [3:----------------------------------------]|
             ## grid 2
               on^                                      |
-              {1:~                                       }|*9
+              {100:~                                       }|*9
             ## grid 3
-              {2:-- }{5:match 1 of 3}                         |
+              {5:-- }{101:match 1 of 3}                         |
             ## grid 4
               {n:1info}|
             ## grid 5
@@ -2047,9 +2097,9 @@ describe('builtin popupmenu', function()
         else
           screen:expect([[
             on^                                      |
-            {s:one            }{n:1info}{1:                    }|
-            {1:~                                       }|*8
-            {2:-- }{5:match 1 of 3}                         |
+            {s:one            }{n:1info}{100:                    }|
+            {100:~                                       }|*8
+            {5:-- }{101:match 1 of 3}                         |
           ]])
         end
 
@@ -2063,9 +2113,9 @@ describe('builtin popupmenu', function()
               [3:----------------------------------------]|
             ## grid 2
               on^                                      |
-              {1:~                                       }|*9
+              {100:~                                       }|*9
             ## grid 3
-              {2:-- }{8:Back at original}                     |
+              {5:-- }{103:Back at original}                     |
             ## grid 4 (hidden)
               {n:1info}|
             ## grid 5
@@ -2121,14 +2171,12 @@ describe('builtin popupmenu', function()
             },
           })
         else
-          screen:expect({
-            grid = [[
-              on^                                      |
-              {n:one            }{1:                         }|
-              {1:~                                       }|*8
-              {2:-- }{8:Back at original}                     |
-            ]],
-          })
+          screen:expect([[
+            on^                                      |
+            {n:one            }{100:                         }|
+            {100:~                                       }|*8
+            {5:-- }{103:Back at original}                     |
+          ]])
         end
         feed('<C-E><ESC>')
       end)
@@ -2143,9 +2191,9 @@ describe('builtin popupmenu', function()
               [3:----------------------------------------]|
             ## grid 2
               looooooooooooooong^                      |
-              {1:~                                       }|*9
+              {100:~                                       }|*9
             ## grid 3
-              {2:-- }{5:match 3 of 3}                         |
+              {5:-- }{101:match 3 of 3}                         |
             ## grid 4
               {n:3info}|
             ## grid 5
@@ -2206,11 +2254,11 @@ describe('builtin popupmenu', function()
         else
           screen:expect([[
             looooooooooooooong^                      |
-            {n:one                3info}{1:                }|
-            {n:two                }{1:                     }|
-            {s:looooooooooooooong }{1:                     }|
-            {1:~                                       }|*6
-            {2:-- }{5:match 3 of 3}                         |
+            {n:one                3info}{100:                }|
+            {n:two                }{100:                     }|
+            {s:looooooooooooooong }{100:                     }|
+            {100:~                                       }|*6
+            {5:-- }{101:match 3 of 3}                         |
           ]])
         end
         feed('<C-E><ESC>')
@@ -2227,9 +2275,9 @@ describe('builtin popupmenu', function()
               [3:----------------------------------------]|
             ## grid 2
               testtesttesttesttesone^t                 |
-              {1:~                                       }|*9
+              {100:~                                       }|*9
             ## grid 3
-              {2:-- }{5:match 1 of 3}                         |
+              {5:-- }{101:match 1 of 3}                         |
             ## grid 4
               {n:1info}|
             ## grid 5
@@ -2290,11 +2338,11 @@ describe('builtin popupmenu', function()
         else
           screen:expect([[
             testtesttesttesttesone^t                 |
-            {1:~            }{n:1info}{s: one                }{1:  }|
-            {1:~                 }{n: two                }{1:  }|
-            {1:~                 }{n: looooooooooooooong }{1:  }|
-            {1:~                                       }|*6
-            {2:-- }{5:match 1 of 3}                         |
+            {100:~            }{n:1info}{s: one                }{100:  }|
+            {100:~                 }{n: two                }{100:  }|
+            {100:~                 }{n: looooooooooooooong }{100:  }|
+            {100:~                                       }|*6
+            {5:-- }{101:match 1 of 3}                         |
           ]])
         end
         feed('<C-E><Esc>')
@@ -2311,15 +2359,15 @@ describe('builtin popupmenu', function()
               [3:----------------------------------------]|
             ## grid 2
               one^                                     |
-              {1:~                                       }|*9
+              {100:~                                       }|*9
             ## grid 3
-              {2:-- }{5:match 1 of 3}                         |
+              {5:-- }{101:match 1 of 3}                         |
             ## grid 4
-              {n:```lua         }|
-              {n:function test()}|
-              {n:  print('foo') }|
-              {n:end            }|
-              {n:```            }|
+              {mn:```}{105:lua}{n:         }|
+              {105:function}{mn: }{106:test}{107:()}|
+              {mn:  }{107:print(}{108:'foo'}{107:)}{n: }|
+              {105:end}{n:            }|
+              {mn:```}{n:            }|
             ## grid 5
               {s:one                }|
               {n:two                }|
@@ -2378,20 +2426,19 @@ describe('builtin popupmenu', function()
         else
           screen:expect([[
             one^                                     |
-            {s:one                }{n:```lua         }{1:      }|
-            {n:two                function test()}{1:      }|
-            {n:looooooooooooooong   print('foo') }{1:      }|
-            {1:~                  }{n:end            }{1:      }|
-            {1:~                  }{n:```            }{1:      }|
-            {1:~                                       }|*4
-            {2:-- }{5:match 1 of 3}                         |
-          ]])
+            {s:one                }{mn:```}{105:lua}{n:         }{100:      }|
+            {n:two                }{105:function}{mn: }{106:test}{107:()}{100:      }|
+            {n:looooooooooooooong }{mn:  }{107:print(}{108:'foo'}{107:)}{n: }{100:      }|
+            {100:~                  }{105:end}{n:            }{100:      }|
+            {100:~                  }{mn:```}{n:            }{100:      }|
+            {100:~                                       }|*4
+            {5:-- }{101:match 1 of 3}                         |
+        ]])
         end
         feed('<C-E><ESC>')
       end)
 
-      it('#avoid modified original info text', function()
-        screen:try_resize(40, 11)
+      it('avoid modified original info text #test', function()
         command('call Append_multipe()')
         feed('S<C-x><C-o><C-P><C-P>')
         if multigrid then
@@ -2402,9 +2449,9 @@ describe('builtin popupmenu', function()
               [3:----------------------------------------]|
             ## grid 2
               for .. ipairs^                           |
-              {1:~                                       }|*9
+              {100:~                                       }|*9
             ## grid 3
-              {2:-- }{5:match 1 of 4}                         |
+              {5:-- }{101:match 1 of 4}                         |
             ## grid 4
               {n:one                }|
               {n:two                }|
@@ -2471,14 +2518,14 @@ describe('builtin popupmenu', function()
         else
           screen:expect([[
             for .. ipairs^                           |
-            {n:one                ```lua              }{1: }|
-            {n:two                for index, value in }{1: }|
-            {n:looooooooooooooong ipairs(t) do        }{1: }|
-            {s:for .. ipairs      }{n:                    }{1: }|
-            {1:~                  }{n:end                 }{1: }|
-            {1:~                  }{n:```                 }{1: }|
-            {1:~                                       }|*3
-            {2:-- }{5:match 1 of 4}                         |
+            {n:one                ```lua              }{100: }|
+            {n:two                for index, value in }{100: }|
+            {n:looooooooooooooong ipairs(t) do        }{100: }|
+            {s:for .. ipairs      }{n:                    }{100: }|
+            {100:~                  }{n:end                 }{100: }|
+            {100:~                  }{n:```                 }{100: }|
+            {100:~                                       }|*3
+            {5:-- }{101:match 1 of 4}                         |
           ]])
         end
 
@@ -2487,6 +2534,11 @@ describe('builtin popupmenu', function()
           screen:expect_unchanged()
         end
         feed('<C-E><ESC>')
+      end)
+
+      it('popup info window reuses bufnr', function()
+        feed('S<C-x><C-o><C-N>')
+        eq(1, n.eval([[len(uniq(copy(g:bufnrs))) == 1]]))
       end)
     end)
 
