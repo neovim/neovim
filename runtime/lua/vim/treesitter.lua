@@ -288,15 +288,19 @@ function M.get_captures_at_pos(bufnr, row, col)
 
     local iter = q:query():iter_captures(root, buf_highlighter.bufnr, row, row + 1)
 
-    for id, node, metadata in iter do
+    for id, node, metadata, match in iter do
       if M.is_in_node_range(node, row, col) then
         ---@diagnostic disable-next-line: invisible
         local capture = q._query.captures[id] -- name of the capture in the query
         if capture ~= nil then
-          table.insert(
-            matches,
-            { capture = capture, metadata = metadata, lang = tree:lang(), id = id }
-          )
+          local _, pattern_id = match:info()
+          table.insert(matches, {
+            capture = capture,
+            metadata = metadata,
+            lang = tree:lang(),
+            id = id,
+            pattern_id = pattern_id,
+          })
         end
       end
     end

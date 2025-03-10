@@ -10,7 +10,6 @@ local EXTENDS_FORMAT = '^;+%s*extends%s*$'
 
 local M = {}
 
----@nodoc
 ---Parsed query, see |vim.treesitter.query.parse()|
 ---
 ---@class vim.treesitter.Query
@@ -344,9 +343,10 @@ api.nvim_create_autocmd('OptionSet', {
 
 --- Parses a {query} string and returns a `Query` object (|lua-treesitter-query|), which can be used
 --- to search the tree for the query patterns (via |Query:iter_captures()|, |Query:iter_matches()|),
---- or inspect the query via these fields:
+--- or inspect/modify the query via these fields:
 ---   - `captures`: a list of unique capture names defined in the query (alias: `info.captures`).
 ---   - `info.patterns`: information about predicates.
+---   - `query`: the underlying |TSQuery| which can be used to disable patterns or captures.
 ---
 --- Example:
 --- ```lua
