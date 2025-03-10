@@ -212,7 +212,7 @@ and $PS1 as follows: >bash
 The |]]| and |[[| motions jump to the next/previous prompts, if your shell
 emits OSC 133 as described above.
 
-						*terminal-shell-prompt-signs*
+						*shell-prompt-signs*
 To annotate each terminal prompt with a sign, call |nvim_buf_set_extmark()|
 from a |TermRequest| handler: >lua
 

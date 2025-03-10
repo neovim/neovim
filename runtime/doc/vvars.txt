@@ -567,13 +567,18 @@ v:servername
 		                                                     *$NVIM*
 		$NVIM is set by |terminal| and |jobstart()|, and is thus
 		a hint that the current environment is a subprocess of Nvim.
-		Example: >vim
-		  if $NVIM
-		    echo nvim_get_chan_info(v:parent)
-		  endif
-<
 
-		Note the contents of $NVIM may change in the future.
+		Example: a child Nvim process can detect and make requests to
+		its parent Nvim: >lua
+
+		  if vim.env.NVIM then
+		    local ok, chan = pcall(vim.fn.sockconnect, 'pipe', vim.env.NVIM, {rpc=true})
+		    if ok and chan then
+		      local client = vim.api.nvim_get_chan_info(chan).client
+		      local map = vim.rpcrequest(chan, 'nvim_exec_lua', [[return vim.fn.maparg(..., 't', false, true)]], { lhs })
+		    end
+		  end
+<
 
 				*v:shell_error* *shell_error-variable*
 v:shell_error
