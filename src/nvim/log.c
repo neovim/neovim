@@ -336,7 +336,9 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
   // TODO(justinmk): expose this as v:name ?
   if (regen) {
     // Parent servername ($NVIM).
-    const char *parent = path_tail(os_getenv(ENV_NVIM));
+    const char *env_nvim = os_getenv(ENV_NVIM);
+    const char *parent = path_tail(env_nvim);
+
     // Servername. Empty until starting=false.
     const char *serv = path_tail(get_vim_var_str(VV_SEND_SERVER));
     if (parent[0] != NUL) {
@@ -346,6 +348,10 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
     } else {
       int64_t pid = os_get_pid();
       snprintf(name, sizeof(name), "%s.%-5" PRId64, ui ? "ui" : "?", pid);
+    }
+
+    if (env_nvim != NULL) {
+      xfree((char *)env_nvim);
     }
   }
 
