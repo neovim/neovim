@@ -336,7 +336,7 @@ Upon loading a file, Vim finds the relevant syntax file as follows:
 ==============================================================================
 4. Conversion to HTML				*convert-to-HTML* *2html.vim*
 
-The old to html converter has ben replaced by a Lua version and the
+The old to html converter has been replaced by a Lua version and the
 documentation has been moved to |:TOhtml|.
 
 ==============================================================================
