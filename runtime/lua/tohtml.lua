@@ -1372,6 +1372,7 @@ local function win_to_html(winid, opt)
   state_generate_style(state)
 
   local html = {}
+  table.insert(html, '<!-- vim: set nomodeline: -->')
   extend_html(html, function()
     extend_head(html, global_state)
     extend_body(html, function()
