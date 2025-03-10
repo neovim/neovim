@@ -43,7 +43,7 @@ pub fn build(b: *std.Build) !void {
     // puc lua 5.1 is not ReleaseSafe "safe"
     const optimize_lua = if (optimize == .Debug) .ReleaseSmall else optimize;
 
-    const use_luajit = b.option(bool, "luajit", "use luajit") orelse true;
+    const use_luajit = b.option(bool, "luajit", "use luajit") orelse false;
     const host_use_luajit = if (cross_compiling) false else use_luajit;
     const E = enum { luajit, lua51 }; // E-E-E-H
 

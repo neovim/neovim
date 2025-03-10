@@ -39,7 +39,7 @@ pub fn build(b: *std.Build) !void {
         lib.root_module.addCMacro("_POSIX_C_SOURCE", "200112");
     }
 
-    if (target.result.isDarwin()) {
+    if (target.result.os.tag.isDarwin()) {
         lib.root_module.addCMacro("_DARWIN_UNLIMITED_SELECT", "1");
         lib.root_module.addCMacro("_DARWIN_USE_64_BIT_INODE", "1");
     }
@@ -84,7 +84,7 @@ pub fn build(b: *std.Build) !void {
         } });
     }
 
-    if (target.result.os.tag == .linux or target.result.isDarwin()) {
+    if (target.result.os.tag == .linux or target.result.os.tag.isDarwin()) {
         lib.addCSourceFiles(.{ .root = root, .files = &.{
             "src/unix/proctitle.c",
         } });
@@ -99,20 +99,20 @@ pub fn build(b: *std.Build) !void {
         } });
     }
 
-    if (target.result.isBSD()) {
+    if (target.result.os.tag.isBSD()) {
         lib.addCSourceFiles(.{ .root = root, .files = &.{
             "src/unix/bsd-ifaddrs.c",
             "src/unix/kqueue.c",
         } });
     }
 
-    if (target.result.isDarwin() or target.result.os.tag == .openbsd) {
+    if (target.result.os.tag.isDarwin() or target.result.os.tag == .openbsd) {
         lib.addCSourceFiles(.{ .root = root, .files = &.{
             "src/unix/random-getentropy.c",
         } });
     }
 
-    if (target.result.isDarwin()) {
+    if (target.result.os.tag.isDarwin()) {
         lib.addCSourceFiles(.{ .root = root, .files = &.{
             "src/unix/darwin-proctitle.c",
             "src/unix/darwin.c",

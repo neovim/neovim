@@ -1,5 +1,6 @@
 .{
-    .name = "neovim",
+    .name = .neovim,
+    .fingerprint = 0x66eb090879307a38,
     .version = "0.0.0",
 
     // This field is optional.
@@ -27,13 +28,17 @@
             .hash = "1220e75685f00c242fbf6c1c60e98dd1b24ba99e38277970a10636e44ed08cf2af8a",
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.25.1#f5afe475deb7c0bae6407fb776c76824f717bb61",
-            .hash = "12208206dd80ff4c034b425c4a1eb0cd322bcff0ac7289a1c4c1a8fecd5b9db47bf7",
+            .url = "git+https://github.com/tree-sitter/tree-sitter#f09c94bdacd23479ef00272d50b158d1acbfab6d",
+            .hash = "tree_sitter-0.25.1-N04Ud1i6CwDwubEovIMqjAs0Lm3r21HWJAFp9k3JGiQG",
         },
         .libuv = .{ .path = "./deps/libuv" },
         .utf8proc = .{ .path = "./deps/utf8proc/" },
         .unibilium = .{ .path = "./deps/unibilium/" },
         .iconv_apple = .{ .path = "./deps/iconv_apple/", .lazy = true },
+        .lua_wrapper = .{
+            .url = "git+https://github.com/natecraddock/ziglua#7bfb3c2b87220cdc89ef01cc99a200dad7a28e50",
+            .hash = "lua_wrapper-0.1.0-OyMC27fOBAAU3E2ueB-EWGSgsuCFQZL83pT0nQJ1ufOI",
+        },
     },
     .paths = .{
         // This makes *all* files, recursively, included in this package. It is generally
