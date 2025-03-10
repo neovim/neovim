@@ -301,6 +301,8 @@ function Screen:attach(session)
   if self._default_attr_ids == nil then
     self._default_attr_ids = Screen._global_default_attr_ids
   end
+
+  session:request('nvim_set_client_info', 'screen.lua', '1.0.0', 'ui', {}, {})
 end
 
 function Screen:detach()

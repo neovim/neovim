@@ -64,6 +64,11 @@ Stop or detach the current UI
                 the channel to be closed, it may be (incorrectly) reported as
                 an error.
 
+                Note: on Windows this command won't work unless you define
+                environment variable `__NVIM_DETACH=1` before starting `nvim`.
+                And even then it still might not work. Create a |bug-report|
+                to give feedback!
+
 ------------------------------------------------------------------------------
 GUI commands
 
