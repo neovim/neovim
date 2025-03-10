@@ -1628,8 +1628,19 @@ func Test_help_file()
   call assert_equal('help', &filetype)
   bwipe!
 
+  call writefile(['some text', 'Copyright: |manual-copyright| vim:ft=help:'],
+        \ 'doc/help1.txt', 'D')
+  split doc/help1.txt
+  call assert_equal('help', &filetype)
+  bwipe!
+
   call writefile(['some text'], 'doc/nothelp.txt', 'D')
   split doc/nothelp.txt
+  call assert_notequal('help', &filetype)
+  bwipe!
+
+  call writefile(['some text', '`vim:ft=help`'], 'doc/nothelp1.txt', 'D')
+  split doc/nothelp1.txt
   call assert_notequal('help', &filetype)
   bwipe!
 

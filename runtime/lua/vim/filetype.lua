@@ -2417,7 +2417,7 @@ local pattern = {
     ['^%.?gtkrc'] = starsetf('gtkrc'),
     ['/doc/.*%.txt$'] = function(_, bufnr)
       local line = M._getline(bufnr, -1)
-      local ml = line:find('vim:')
+      local ml = line:find('^vim:') or line:find('%svim:')
       if ml and M._matchregex(line:sub(ml), [[\<\(ft\|filetype\)=help\>]]) then
         return 'help'
       end
