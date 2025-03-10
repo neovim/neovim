@@ -1039,12 +1039,9 @@ static bool pum_set_selected(int n, int repeat)
             && (curbuf->b_nwindows == 1)
             && (curbuf->b_fname == NULL)
             && bt_nofile(curbuf)
-            && (curbuf->b_p_bh[0] == 'w')
-            && !use_float) {
+            && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
-          while (!buf_is_empty(curbuf)) {
-            ml_delete(1, false);
-          }
+          buf_clear();
         } else {
           // Don't want to sync undo in the current buffer.
           no_u_sync++;
