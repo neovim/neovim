@@ -1619,6 +1619,7 @@ func Test_haredoc_file()
 endfunc
 
 func Test_help_file()
+  set nomodeline
   filetype on
   call assert_true(mkdir('doc', 'pR'))
 
@@ -1633,6 +1634,7 @@ func Test_help_file()
   bwipe!
 
   filetype off
+  set modeline&
 endfunc
 
 func Test_hook_file()
