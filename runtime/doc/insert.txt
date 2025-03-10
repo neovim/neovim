@@ -643,7 +643,7 @@ Also see the 'infercase' option if you want to adjust the case of the match.
 
 When inserting a selected candidate word from the |popup-menu|, the part of
 the candidate word that does not match the query is highlighted using
-|hl-ComplMatchIns|. If fuzzy is enabled in 'completeopt', highlighting will
+|hl-ComplMatchIns|.  If fuzzy is enabled in 'completeopt', highlighting will
 not be applied.
 
 							*complete_CTRL-E*
