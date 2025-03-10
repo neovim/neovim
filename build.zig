@@ -47,14 +47,14 @@ pub fn build(b: *std.Build) !void {
     const host_use_luajit = if (cross_compiling) false else use_luajit;
     const E = enum { luajit, lua51 }; // E-E-E-H
 
-    const ziglua = b.dependency("ziglua", .{
+    const ziglua = b.dependency("lua_wrapper", .{
         .target = target,
         .optimize = optimize_lua,
         .lang = if (use_luajit) E.luajit else E.lua51,
         .shared = false,
     });
 
-    const ziglua_host = if (cross_compiling) b.dependency("ziglua", .{
+    const ziglua_host = if (cross_compiling) b.dependency("lua_wrapper", .{
         .target = target_host,
         .optimize = optimize_lua,
         .lang = if (host_use_luajit) E.luajit else E.lua51,

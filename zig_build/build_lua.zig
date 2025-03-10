@@ -34,7 +34,7 @@ pub fn build_nlua0(
     });
 
     for ([2]*std.Build.Module{ nlua0_mod, exe_unit_tests.root_module }) |mod| {
-        mod.addImport("ziglua", ziglua.module("ziglua"));
+        mod.addImport("ziglua", ziglua.module("lua_wrapper"));
         mod.addImport("embedded_data", embedded_data);
         // addImport already links by itself. but we need headers as well..
         mod.linkLibrary(ziglua.artifact("lua"));

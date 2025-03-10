@@ -11,9 +11,9 @@
     // lpeg fetching from https://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.0.2.tar.gz doesn't work, bundlevendor for now
 
     .dependencies = .{
-        .ziglua = .{
-            .url = "git+https://github.com/natecraddock/ziglua#86abd0ac13c80ca09b296c64ff8a2817557126c9",
-            .hash = "1220b77010019fed709e40347b4770f49cdf856445eddc40bf9ab1a4efa024de4f99",
+        .lua_wrapper = .{
+            .url = "git+https://github.com/natecraddock/ziglua#7bfb3c2b87220cdc89ef01cc99a200dad7a28e50",
+            .hash = "lua_wrapper-0.1.0-OyMC27fOBAAU3E2ueB-EWGSgsuCFQZL83pT0nQJ1ufOI",
         },
         .lpeg = .{
             .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
@@ -35,10 +35,6 @@
         .utf8proc = .{ .path = "./deps/utf8proc/" },
         .unibilium = .{ .path = "./deps/unibilium/" },
         .iconv_apple = .{ .path = "./deps/iconv_apple/", .lazy = true },
-        .lua_wrapper = .{
-            .url = "git+https://github.com/natecraddock/ziglua#7bfb3c2b87220cdc89ef01cc99a200dad7a28e50",
-            .hash = "lua_wrapper-0.1.0-OyMC27fOBAAU3E2ueB-EWGSgsuCFQZL83pT0nQJ1ufOI",
-        },
     },
     .paths = .{
         // This makes *all* files, recursively, included in this package. It is generally
