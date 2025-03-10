@@ -4819,6 +4819,7 @@ interface and syntax highlighting. In rough order of importance, these are
 - |treesitter-highlight-groups|
 - |lsp-semantic-highlight| groups
 - |lsp-highlight| of symbols and references
+- |lsp-completion-highlight| groups
 
 Where appropriate, highlight groups are linked by default to one of the more basic
 groups, but colorschemes are expected to cover all of them. Under each tag,
