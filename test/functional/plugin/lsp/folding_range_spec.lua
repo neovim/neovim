@@ -612,7 +612,7 @@ static int foldLevel(linenr_T lnum)
       })
     end)
 
-    it('is defered when the buffer is not up-to-date', function()
+    it('is deferred when the buffer is not up-to-date', function()
       exec_lua(function()
         vim.lsp.foldclose('comment')
         vim.lsp.util.buf_versions[bufnr] = 0
