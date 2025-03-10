@@ -1240,6 +1240,26 @@ This Lua |treesitter-query| interface allows you to create queries and use
 them to parse text. See |vim.treesitter.query.parse()| for a working example.
 
 
+*vim.treesitter.Query*
+    Parsed query, see |vim.treesitter.query.parse()|
+
+    Fields: ~
+      • {lang}                     (`string`) parser language name
+      • {captures}                 (`string[]`) list of (unique) capture names
+                                   defined in query
+      • {info}                     (`vim.treesitter.QueryInfo`) query context
+                                   (e.g. captures, predicates, directives)
+      • {has_conceal_line}         (`boolean`) whether the query sets
+                                   conceal_lines metadata
+      • {has_combined_injections}  (`boolean`) whether the query contains
+                                   combined injections
+      • {query}                    (`TSQuery`) userdata query object
+      • {iter_captures}            (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?): fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
+                                   See |Query:iter_captures()|.
+      • {iter_matches}             (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
+                                   See |Query:iter_matches()|.
+
+
                                         *vim.treesitter.query.add_directive()*
 add_directive({name}, {handler}, {opts})
     Adds a new directive to be used in queries
@@ -1307,7 +1327,7 @@ get({lang}, {query_name})                         *vim.treesitter.query.get()*
 
     Return: ~
         (`vim.treesitter.Query?`) Parsed query. `nil` if no query files are
-        found.
+        found. See |vim.treesitter.Query|.
 
                                             *vim.treesitter.query.get_files()*
 get_files({lang}, {query_name}, {is_included})
@@ -1373,10 +1393,12 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
     Parses a {query} string and returns a `Query` object
     (|lua-treesitter-query|), which can be used to search the tree for the
     query patterns (via |Query:iter_captures()|, |Query:iter_matches()|), or
-    inspect the query via these fields:
+    inspect/modify the query via these fields:
     • `captures`: a list of unique capture names defined in the query (alias:
       `info.captures`).
     • `info.patterns`: information about predicates.
+    • `query`: the underlying |TSQuery| which can be used to disable patterns
+      or captures.
 
     Example: >lua
         local query = vim.treesitter.query.parse('vimdoc', [[
@@ -1396,7 +1418,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       • {query}  (`string`) Query text, in s-expr syntax
 
     Return: ~
-        (`vim.treesitter.Query`) Parsed query
+        (`vim.treesitter.Query`) Parsed query . See |vim.treesitter.Query|.
 
     See also: ~
       • |vim.treesitter.query.get()|
@@ -1512,6 +1534,56 @@ set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
       • {lang}        (`string`) Language to use for the query
       • {query_name}  (`string`) Name of the query (e.g., "highlights")
       • {text}        (`string`) Query text (unparsed).
+
+
+
+
+*TSQuery*
+    Extends: |userdata|
+
+    Reference to an object held by the treesitter library that is used as a
+    component of the |vim.treesitter.Query| for language feature support. See
+    |treesitter-query| for more about queries or
+    |vim.treesitter.query.parse()| for an example of how to obtain a query
+    object.
+
+    Fields: ~
+      • {disable_capture}  (`fun(self: TSQuery, capture_name: string)`) See
+                           |TSQuery:disable_capture()|.
+      • {disable_pattern}  (`fun(self: TSQuery, pattern_index: integer)`) See
+                           |TSQuery:disable_pattern()|.
+
+
+TSQuery:disable_capture({capture_name})            *TSQuery:disable_capture()*
+    Disable a specific capture in this query; once disabled the capture cannot
+    be re-enabled. {capture_name} should not include a leading "@".
+
+    Example: To disable the `@variable.parameter` capture from the vimdoc
+    highlights query: >lua
+        local query = vim.treesitter.query.get('vimdoc', 'highlights')
+        query.query:disable_capture("variable.parameter")
+        vim.treesitter.get_parser():parse()
+<
+
+    Parameters: ~
+      • {capture_name}  (`string`)
+
+TSQuery:disable_pattern({pattern_index})           *TSQuery:disable_pattern()*
+    Disable a specific pattern in this query; once disabled the pattern cannot
+    be re-enabled. The {pattern_index} for a particular match can be obtained
+    with |:Inspect!|, or by reading the source of the query (i.e. from
+    |vim.treesitter.query.get_files()|).
+
+    Example: To disable `|` links in vimdoc but keep other `@markup.link`s
+    highlighted: >lua
+        local link_pattern = 9 -- from :Inspect!
+        local query = vim.treesitter.query.get('vimdoc', 'highlights')
+        query.query:disable_pattern(link_pattern)
+        local tree = vim.treesitter.get_parser():parse()[1]
+<
+
+    Parameters: ~
+      • {pattern_index}  (`integer`)
 
 
 ==============================================================================
