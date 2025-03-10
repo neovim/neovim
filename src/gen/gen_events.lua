@@ -8,7 +8,9 @@ local aliases = auevents.aliases
 
 --- @type string[]
 local names = vim.tbl_keys(vim.tbl_extend('error', events, aliases))
-table.sort(names)
+table.sort(names, function(a, b)
+  return a:lower() < b:lower()
+end)
 
 local enum_tgt = assert(io.open(fileio_enum_file, 'w'))
 local names_tgt = assert(io.open(names_file, 'w'))
@@ -22,7 +24,7 @@ static const struct event_name {
   size_t len;
   char *name;
   int event;
-} event_names[] = {]])
+} event_names[NUM_EVENTS] = {]])
 
 for i, name in ipairs(names) do
   enum_tgt:write(('\n  EVENT_%s = %u,'):format(name:upper(), i - 1))
@@ -45,11 +47,10 @@ enum_tgt:write(('\n  NUM_EVENTS = %u,'):format(#names))
 enum_tgt:write('\n} event_T;\n')
 enum_tgt:close()
 
-names_tgt:write('\n  [NUM_EVENTS] = {0, NULL, (event_T)0},\n};\n')
+names_tgt:write('\n};\n')
 names_tgt:write('\nstatic AutoCmdVec autocmds[NUM_EVENTS] = { 0 };\n')
 
 local hashorder = vim.tbl_map(string.lower, names)
-table.sort(hashorder)
 local hashfun
 hashorder, hashfun = hashy.hashy_hash('event_name2nr', hashorder, function(idx)
   return 'event_names[event_hash[' .. idx .. ']].name'

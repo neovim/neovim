@@ -2267,7 +2267,7 @@ char *set_context_in_autocmd(expand_T *xp, char *arg, bool doautocmd)
   return NULL;
 }
 
-// Function given to ExpandGeneric() to obtain the list of event names.
+/// Function given to ExpandGeneric() to obtain the list of event names.
 char *expand_get_event_name(expand_T *xp, int idx)
 {
   (void)xp;  // xp is a required parameter to be used with ExpandGeneric
@@ -2283,14 +2283,23 @@ char *expand_get_event_name(expand_T *xp, int idx)
     return name;
   }
 
+  int i = idx - next_augroup_id;
+  if (i < 0 || i >= NUM_EVENTS) {
+    return NULL;
+  }
+
   // List event names
-  return event_names[idx - next_augroup_id].name;
+  return event_names[i].name;
 }
 
 /// Function given to ExpandGeneric() to obtain the list of event names. Don't
 /// include groups.
 char *get_event_name_no_group(expand_T *xp FUNC_ATTR_UNUSED, int idx, bool win)
 {
+  if (idx < 0 || idx >= NUM_EVENTS) {
+    return NULL;
+  }
+
   if (!win) {
     return event_names[idx].name;
   }
