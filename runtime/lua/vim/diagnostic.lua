@@ -1871,7 +1871,10 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
       end
     end
 
-    api.nvim_buf_set_extmark(bufnr, namespace, lnum, 0, { virt_lines = virt_lines })
+    api.nvim_buf_set_extmark(bufnr, namespace, lnum, 0, {
+      virt_lines_overflow = 'scroll',
+      virt_lines = virt_lines,
+    })
   end
 end
 
