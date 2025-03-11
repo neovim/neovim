@@ -9,6 +9,7 @@ local insert = n.insert
 local write_file = t.write_file
 local dedent = t.dedent
 local exec = n.exec
+local exec_lua = n.exec_lua
 local eq = t.eq
 local api = n.api
 
@@ -1561,6 +1562,18 @@ it('diff mode overlapped diff blocks will be merged', function()
   write_file('Xdiin1', 'a\nb')
   write_file('Xdinew1', 'x\nx')
   write_file('Xdiout1', '1c1\n2c2')
+
+  -- see: https://github.com/neovim/neovim/pull/32644#issuecomment-2715655096
+  exec_lua(function()
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      pcall(function()
+        vim.api.nvim_buf_call(buf, function()
+          vim.cmd('edit!')
+        end)
+      end)
+    end
+  end)
+
   command('set diffexpr=DiffExprStub()')
   screen:expect([[
     {7:  }{27:a}{4:              }│{7:  }{27:^x}{4:              }|
