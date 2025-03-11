@@ -15,10 +15,19 @@
 #include <tree_sitter/api.h>
 #include <uv.h>
 
+#include "nvim/option_vars.h"
+
+#ifdef NEOWASM
+# define HAVE_WASMTIME
+typedef struct wasm_engine_t wasm_engine_t;
+#endif
+
 #include "nvim/os/time.h"
 
 #ifdef HAVE_WASMTIME
-# include <wasm.h>
+# ifndef NEOWASM
+#  include <wasm.h>
+# endif
 
 # include "nvim/os/fs.h"
 #endif
@@ -167,10 +176,12 @@ static const TSLanguage *load_language_from_wasm(lua_State *L, const char *path,
   luaL_error(L, "Not supported");
   return NULL;
 #else
+# ifndef NEOWASM
   if (wasmengine == NULL) {
     wasmengine = wasm_engine_new();
   }
   assert(wasmengine != NULL);
+# endif
 
   TSWasmError werr = { 0 };
   if (ts_wasmstore == NULL) {
@@ -191,7 +202,9 @@ static const TSLanguage *load_language_from_wasm(lua_State *L, const char *path,
   const TSLanguage *lang = ts_wasm_store_load_language(ts_wasmstore, lang_name, data,
                                                        (uint32_t)file_size, &werr);
 
+# ifndef NEOWASM
   xfree(data);
+# endif
 
   if (werr.kind > 0) {
     luaL_error(L, "Failed to load WASM parser %s: (%s) %s", path, wasmerr_to_str(werr.kind),
@@ -383,7 +396,7 @@ int tslua_push_parser(lua_State *L)
 
 #ifdef HAVE_WASMTIME
   if (ts_language_is_wasm(lang)) {
-    assert(wasmengine != NULL);
+    assert(ts_wasmstore != NULL);
     ts_parser_set_wasm_store(*parser, ts_wasmstore);
   }
 #endif
@@ -1742,7 +1755,9 @@ void tslua_free(void)
 {
 #ifdef HAVE_WASMTIME
   if (wasmengine != NULL) {
+# ifndef NEOWASM
     wasm_engine_delete(wasmengine);
+# endif
   }
   if (ts_wasmstore != NULL) {
     ts_wasm_store_delete(ts_wasmstore);

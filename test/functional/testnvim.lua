@@ -17,7 +17,8 @@ local sleep = uv.sleep
 --- Functions executing in the current nvim session/process being tested.
 local M = {}
 
-local runtime_set = 'set runtimepath^=./build/lib/nvim/'
+-- this is bullshit, just use the right one
+M.runtime_set = 'set runtimepath^=./zig-out/lib,./build/lib/nvim/'
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 M.nvim_set = (
@@ -33,7 +34,7 @@ M.nvim_argv = {
   'NONE',
   -- XXX: find treesitter parsers.
   '--cmd',
-  runtime_set,
+  M.runtime_set,
   '--cmd',
   M.nvim_set,
   -- Remove default user commands and mappings.
@@ -424,7 +425,7 @@ local function remove_args(args, args_rm)
       last = ''
     elseif vim.tbl_contains(args_rm, arg) then
       last = arg
-    elseif arg == runtime_set and vim.tbl_contains(args_rm, 'runtimepath') then
+    elseif arg == M.runtime_set and vim.tbl_contains(args_rm, 'runtimepath') then
       table.remove(new_args) -- Remove the preceding "--cmd".
       last = ''
     else
