@@ -200,13 +200,10 @@ doesn't interfere).
 - kitty: https://sw.kovidgoyal.net/kitty/shell-integration/
 - vscode: https://code.visualstudio.com/docs/terminal/shell-integration
 
-To configure bash to mark the start/end of each prompt, set $PROMPT_COMMAND
-and $PS1 as follows: >bash
+To configure bash to mark the start of each prompt, set $PROMPT_COMMAND: >bash
 
     # Prompt start:
     PROMPT_COMMAND='printf "\033]133;A\007"'
-    # Prompt end:
-    PS1="$PS1"'\033]133;B\007'
 <
                                                 *terminal_]]* *terminal_[[*
 The |]]| and |[[| motions jump to the next/previous prompts, if your shell
