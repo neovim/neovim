@@ -953,35 +953,37 @@ int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
 
 /// Get the number of screen lines a range of text will take in window "wp".
 ///
-/// @param[in] start_lnum  Starting line number, 1-based inclusive.
-/// @param[in] start_vcol  >= 0: Starting virtual column index on "start_lnum",
-///                              0-based inclusive, rounded down to full screen lines.
-///                        < 0:  Count a full "start_lnum", including filler lines above.
-/// @param[in] end_lnum    Ending line number, 1-based inclusive.
-/// @param[in] end_vcol    >= 0: Ending virtual column index on "end_lnum",
-///                              0-based exclusive, rounded up to full screen lines.
-///                        < 0:  Count a full "end_lnum", not including filler lines below.
-/// @param[out] fill       If not NULL, set to the number of filler lines in the range.
+/// @param[in] start_lnum    Starting line number, 1-based inclusive.
+/// @param[in] start_vcol    >= 0: Starting virtual column index on "start_lnum",
+///                                0-based inclusive, rounded down to full screen lines.
+///                          < 0:  Count a full "start_lnum", including filler lines above.
+/// @param[in,out] end_lnum  Ending line number, 1-based inclusive. Set to last line for
+///                          which the height is calculated (smaller if "max" is reached).
+/// @param[in,out] end_vcol  >= 0: Ending virtual column index on "end_lnum",
+///                                0-based exclusive, rounded up to full screen lines.
+///                          < 0:  Count a full "end_lnum", not including filler lines below.
+///                          Set to the number of columns in "end_lnum" to reach "max".
+/// @param[in] max           Don't calculate the height for lines beyond the line where "max"
+///                          height is reached.
+/// @param[out] fill         If not NULL, set to the number of filler lines in the range.
 int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_t start_vcol,
-                        const linenr_T end_lnum, const int64_t end_vcol, int64_t *const fill)
+                        linenr_T *const end_lnum, int64_t *const end_vcol, int64_t *const fill,
+                        int64_t const max)
 {
-  int width1 = 0;
-  int width2 = 0;
-  if (start_vcol >= 0 || end_vcol >= 0) {
-    width1 = wp->w_width_inner - win_col_off(wp);
-    width2 = width1 + win_col_off2(wp);
-    width1 = MAX(width1, 0);
-    width2 = MAX(width2, 0);
-  }
-
+  int width1 = wp->w_width_inner - win_col_off(wp);
+  int width2 = width1 + win_col_off2(wp);
+  width1 = MAX(width1, 0);
+  width2 = MAX(width2, 0);
   int64_t height_sum_fill = 0;
   int64_t height_cur_nofill = 0;
   int64_t height_sum_nofill = 0;
   linenr_T lnum = start_lnum;
+  linenr_T cur_lnum = lnum;
+  bool cur_folded = false;
 
   if (start_vcol >= 0) {
     linenr_T lnum_next = lnum;
-    hasFolding(wp, lnum, &lnum, &lnum_next);
+    cur_folded = hasFolding(wp, lnum, &lnum, &lnum_next);
     height_cur_nofill = plines_win_nofill(wp, lnum, false);
     height_sum_nofill += height_cur_nofill;
     const int64_t row_off = (start_vcol < width1 || width2 <= 0)
@@ -991,25 +993,42 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
     lnum = lnum_next + 1;
   }
 
-  while (lnum <= end_lnum) {
+  while (lnum <= *end_lnum && height_sum_nofill + height_sum_fill < max) {
     linenr_T lnum_next = lnum;
-    hasFolding(wp, lnum, &lnum, &lnum_next);
+    cur_folded = hasFolding(wp, lnum, &lnum, &lnum_next);
     height_sum_fill += win_get_fill(wp, lnum);
     height_cur_nofill = plines_win_nofill(wp, lnum, false);
     height_sum_nofill += height_cur_nofill;
+    cur_lnum = lnum;
     lnum = lnum_next + 1;
   }
 
-  if (end_vcol >= 0) {
+  int64_t vcol_end = *end_vcol;
+  bool use_vcol = vcol_end >= 0 && lnum > *end_lnum;
+  if (use_vcol) {
     height_sum_nofill -= height_cur_nofill;
-    const int64_t row_off = end_vcol == 0
+    const int64_t row_off = vcol_end == 0
                             ? 0
-                            : (end_vcol <= width1 || width2 <= 0)
+                            : (vcol_end <= width1 || width2 <= 0)
                             ? 1
-                            : 1 + (end_vcol - width1 + width2 - 1) / width2;
+                            : 1 + (vcol_end - width1 + width2 - 1) / width2;
     height_sum_nofill += MIN(row_off, height_cur_nofill);
   }
 
+  if (cur_folded) {
+    vcol_end = 0;
+  } else {
+    int linesize = linetabsize_eol(wp, cur_lnum);
+    vcol_end = MIN(use_vcol ? vcol_end : INT64_MAX, linesize);
+  }
+
+  int64_t overflow = height_sum_nofill + height_sum_fill - max;
+  if (overflow > 0 && width2 > 0 && vcol_end > width2) {
+    vcol_end -= (vcol_end - width1) % width2 + (overflow - 1) * width2;
+  }
+
+  *end_lnum = cur_lnum;
+  *end_vcol = vcol_end;
   if (fill != NULL) {
     *fill = height_sum_fill;
   }
