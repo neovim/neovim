@@ -179,7 +179,7 @@ static void deadly_signal(int signum)
 
   snprintf(IObuff, IOSIZE, "Nvim: Caught deadly signal '%s'\n", signal_name(signum));
 
-  if (p_awa && signum != SIGTERM){
+  if (p_awa && signum != SIGTERM) {
     autowrite_all();
   }
 
