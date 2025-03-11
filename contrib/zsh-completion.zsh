@@ -19,7 +19,7 @@ arguments=(
   '-O+[open N vertical windows (default: one per file)]'
   '-p+[open N tab pages (default: one per file)]'
   '-R[read-only (view) mode]'
-  {-v,--version}'[print version information]'
+  '(- *)'{-v,--version}'[print version information]'
   '-V[verbose \[level\]\[file\]]'
   '--api-info[write msgpack-encoded API metadata to stdout]'
   '--clean["Factory defaults" (skip user config and plugins, shada)]'
