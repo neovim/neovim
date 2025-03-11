@@ -8,7 +8,7 @@ arguments=(
   '--cmd[execute <cmd> before any config]'
   '-l[\[args...\] Execute Lua <script> (with optional args)]'
   '-S[source <session> after loading the first file]'
-  '-s[read Normal mode commands from <scriptin>]'
+  '-s[read Normal mode commands from <scriptin>] file:_files'
   '-u[use this config file]'
   '-d[diff mode]'
   {-es,-Es}'[silent (batch) mode]'
