@@ -229,6 +229,7 @@ typedef struct {
   Integer end_row;
   Integer start_vcol;
   Integer end_vcol;
+  Integer max_height;
 } Dict(win_text_height);
 
 typedef struct {
