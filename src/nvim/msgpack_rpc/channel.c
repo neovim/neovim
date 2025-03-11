@@ -484,6 +484,16 @@ void rpc_close(Channel *channel)
   }
 
   channel->rpc.closed = true;
+
+  // Scheduled to avoid running UILeave autocommands in a libuv handler.
+  multiqueue_put(main_loop.fast_events, rpc_close_event, channel);
+}
+
+static void rpc_close_event(void **argv)
+{
+  Channel *channel = (Channel *)argv[0];
+  assert(channel);
+
   channel_decref(channel);
 
   bool is_ui_client = ui_client_channel_id && channel->id == ui_client_channel_id;
