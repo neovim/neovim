@@ -491,7 +491,7 @@ describe('LSP', function()
               vim._with({ buf = _G.BUFFER }, function()
                 keymap = vim.fn.maparg('K', 'n', false, false)
               end)
-              return keymap:match('<Lua %d+: .+/runtime/lua/vim/lsp%.lua:%d+>') ~= nil
+              return keymap:match('<Lua %d+: .*runtime/lua/vim/lsp%.lua:%d+>') ~= nil
             end)
           )
         end,
@@ -499,6 +499,9 @@ describe('LSP', function()
     end)
 
     it('should overwrite options set by ftplugins', function()
+      if t.is_zig_build() then
+        return pending('TODO: broken with zig build')
+      end
       local client --- @type vim.lsp.Client
       local BUFFER_1 --- @type integer
       local BUFFER_2 --- @type integer

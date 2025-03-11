@@ -47,7 +47,8 @@ local setup_treesitter = function()
 end
 
 before_each(function()
-  clear({ args_rm = { '--cmd' }, args = { '--clean' } })
+  -- avoid options, but we still need TS parsers
+  clear({ args_rm = { '--cmd' }, args = { '--clean', '--cmd', n.runtime_set } })
 end)
 
 describe('commenting', function()

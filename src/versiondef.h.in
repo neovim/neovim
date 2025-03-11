@@ -6,7 +6,6 @@
 #define NVIM_VERSION_PATCH @NVIM_VERSION_PATCH@
 #define NVIM_VERSION_PRERELEASE "@NVIM_VERSION_PRERELEASE@"
 
-#cmakedefine NVIM_VERSION_MEDIUM "@NVIM_VERSION_MEDIUM@"
 #ifndef NVIM_VERSION_MEDIUM
 # include "auto/versiondef_git.h"
 #endif

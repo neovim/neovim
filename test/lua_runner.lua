@@ -2,10 +2,10 @@ local platform = vim.uv.os_uname()
 local deps_install_dir = table.remove(_G.arg, 1)
 local subcommand = table.remove(_G.arg, 1)
 local suffix = (platform and platform.sysname:lower():find 'windows') and '.dll' or '.so'
-package.path = (deps_install_dir .. '/share/lua/5.1/?.lua;')
-  .. (deps_install_dir .. '/share/lua/5.1/?/init.lua;')
+package.path = (deps_install_dir .. '/?.lua;')
+  .. (deps_install_dir .. '/?/init.lua;')
   .. package.path
-package.cpath = deps_install_dir .. '/lib/lua/5.1/?' .. suffix .. ';' .. package.cpath
+package.cpath = deps_install_dir .. '/?' .. suffix .. ';' .. package.cpath
 
 local uv = vim.uv
 

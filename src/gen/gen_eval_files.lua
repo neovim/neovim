@@ -5,7 +5,7 @@
 local util = require('gen.util')
 local fmt = string.format
 
-local DEP_API_METADATA = 'build/funcs_metadata.mpack'
+local DEP_API_METADATA = arg[1]
 local TEXT_WIDTH = 78
 
 --- @class vim.api.metadata
