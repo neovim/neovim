@@ -76,7 +76,9 @@ end
 ---
 ---@package
 function TSTreeView:new(bufnr, lang)
-  local parser = vim.treesitter.get_parser(bufnr or 0, lang, { error = false })
+  bufnr = bufnr or 0
+  lang = lang or vim.treesitter.language.get_lang(vim.bo[bufnr].filetype)
+  local parser = vim.treesitter.get_parser(bufnr, lang, { error = false })
   if not parser then
     return nil,
       string.format(
@@ -334,7 +336,13 @@ function M.inspect_tree(opts)
 
   -- window id for source buffer
   local win = api.nvim_get_current_win()
-  local treeview = assert(TSTreeView:new(buf, opts.lang))
+  local treeview, err = TSTreeView:new(buf, opts.lang)
+  if err and err:match('no parser for lang') then
+    vim.api.nvim_echo({ { err, 'WarningMsg' } }, true, {})
+    return
+  elseif not treeview then
+    error(err)
+  end
 
   -- Close any existing inspector window
   if vim.b[buf].dev_inspect then
