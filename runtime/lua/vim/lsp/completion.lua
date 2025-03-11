@@ -536,7 +536,7 @@ local function on_insert_char_pre(handle)
       local ctx = { triggerKind = protocol.CompletionTriggerKind.TriggerForIncompleteCompletions }
       if debounce_ms == 0 then
         vim.schedule(function()
-          M.trigger(ctx)
+          M.trigger({ ctx = ctx })
         end)
       else
         completion_timer = new_timer()
@@ -544,7 +544,7 @@ local function on_insert_char_pre(handle)
           debounce_ms,
           0,
           vim.schedule_wrap(function()
-            M.trigger(ctx)
+            M.trigger({ ctx = ctx })
           end)
         )
       end
