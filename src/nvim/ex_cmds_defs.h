@@ -124,6 +124,7 @@ struct exarg {
   linenr_T line2;               ///< the second line number or count
   colnr_T col1;                 ///< the first column number
   colnr_T col2;                 ///< the second column number or count
+  int blockwise;                ///< true for blockwise interpretation of lines and columns
   cmd_addr_T addr_type;         ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
   char *do_ecmd_cmd;            ///< +command arg to be used in edited file

@@ -1507,12 +1507,12 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
   CLEAR_POINTER(cmdinfo);
 
   // Initialize eap
-  // TODO: try col = 0
   *eap = (exarg_T){
     .line1 = 1,
-    .col1 = 1,
+    .col1 = 0,
     .line2 = 1,
-    .col2 = 1,
+    .col2 = 0,
+    .blockwise = 0,
     .cmd = cmdline,
     .cmdlinep = &cmdline,
     .ea_getline = NULL,
@@ -2681,7 +2681,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     case 't':
       if (checkforcmd(&p, "tab", 3)) {
         if (!skip_only) {
-          pos_T addr = get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
+          rpos_T addr = get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
                                        false, 1, errormsg);
           int tabnr = (int)addr.lnum;
           if (eap->cmd == NULL) {
@@ -2834,7 +2834,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   int address_count = 1;
   linenr_T lnum;
   colnr_T cnum;
-  pos_T addr;
+  rpos_T addr;
   bool need_check_cursor = false;
   int ret = FAIL;
 
@@ -2849,6 +2849,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
                        eap->addr_count == 0, address_count++, errormsg);
     lnum = addr.lnum;
     cnum = addr.col;
+    eap->blockwise = addr.blockwise;
 
     if (eap->cmd == NULL) {  // error detected
       goto theend;
@@ -3337,12 +3338,16 @@ uint32_t excmd_get_argt(cmdidx_T idx)
 /// @return the "cmd" pointer advanced to beyond the range.
 char *skip_range(const char *cmd, int *ctx)
 {
-  while (vim_strchr(" \t0123456789.$%'/?-+,;\\", (uint8_t)(*cmd)) != NULL) {
+  while (vim_strchr(" \t0123456789.$%'`/?-+,;\\", (uint8_t)(*cmd)) != NULL) {
     if (*cmd == '\\') {
       if (cmd[1] == '?' || cmd[1] == '/' || cmd[1] == '&') {
         cmd++;
       } else {
         break;
+      }
+    } else if (*cmd == '`') {
+      if (*++cmd == NUL && ctx != NULL) {
+        *ctx = EXPAND_NOTHING;
       }
     } else if (*cmd == '\'') {
       if (*++cmd == NUL && ctx != NULL) {
@@ -3391,8 +3396,8 @@ static const char *addr_error(cmd_addr_T addr_type)
 /// @param address_count  1 for first, >1 after comma
 /// @param errormsg       Error message, if any
 ///
-/// @return               MAXLNUM when no Ex address was found.
-static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
+/// @return               rpos_T with lnum=MAXLNUM and col=MAXCOL when no Ex address was found.
+static rpos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
                             int to_other_file, int address_count, const char **errormsg)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3405,7 +3410,7 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
   char *cmd = skipwhite(*ptr);
   linenr_T lnum = MAXLNUM;
   colnr_T cnum = MAXCOL;
-  pos_T addr = { lnum, cnum, 0};
+  rpos_T addr = { lnum, cnum, false};
 
   do {
     switch (*cmd) {
@@ -3499,7 +3504,9 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
       break;
 
     case '\'':                              // ''' - mark
-      if (*++cmd == NUL) {
+    case '`':                               // '`' - charwise or block range
+      c = (uint8_t)(*cmd++);
+      if (*cmd == NUL) {
         cmd = NULL;
         goto error;
       }
@@ -3512,7 +3519,7 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
         cmd++;
       } else {
         // Only accept a mark in another file when it is
-        // used by itself: ":'M".
+        // used by itself: ":'M" or ":`M".
         MarkGet flag = to_other_file && cmd[1] == NUL ? kMarkAll : kMarkBufLocal;
         fmark_T *fm = mark_get(curbuf, curwin, NULL, flag, *cmd);
         cmd++;
@@ -3527,6 +3534,11 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
             goto error;
           }
           assert(fm != NULL);
+
+          if (c == '`') {
+              addr.blockwise = true;
+          }
+
           lnum = fm->mark.lnum;
           cnum = fm->mark.col;
         }
@@ -6368,7 +6380,7 @@ static void ex_iput(exarg_T *eap)
 static void ex_copymove(exarg_T *eap)
 {
   const char *errormsg = NULL;
-  pos_T addr = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1, &errormsg);
+  rpos_T addr = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1, &errormsg);
   linenr_T n = addr.lnum;
   if (eap->arg == NULL) {  // error detected
     if (errormsg != NULL) {

@@ -205,7 +205,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char *addr;
   switch (ea.addr_type) {
   case ADDR_LINES:
-    addr = "line";
+    addr = (ea.blockwise == true) ? "block" : "line";
     break;
   case ADDR_ARGUMENTS:
     addr = "arg";
@@ -232,6 +232,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
     addr = "?";
     break;
   }
+
   PUT_KEY(result, cmd, addr, cstr_as_string(addr));
   PUT_KEY(result, cmd, nextcmd, cstr_as_string(ea.nextcmd));
 
