@@ -433,6 +433,8 @@ TREESITTER
   a specific pattern or capture in a query.
 • |vim.treesitter.get_captures_at_pos()| returns the `pattern_id` of the
   pattern used to match each capture.
+• |Query:iter_captures()| now accepts an `opts` parameter, similar to
+  |Query:iter_matches()|.
 
 TUI
 

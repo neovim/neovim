@@ -1254,7 +1254,7 @@ them to parse text. See |vim.treesitter.query.parse()| for a working example.
       • {has_combined_injections}  (`boolean`) whether the query contains
                                    combined injections
       • {query}                    (`TSQuery`) userdata query object
-      • {iter_captures}            (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?): fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
+      • {iter_captures}            (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
                                    See |Query:iter_captures()|.
       • {iter_matches}             (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
                                    See |Query:iter_matches()|.
@@ -1424,7 +1424,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       • |vim.treesitter.query.get()|
 
                                                        *Query:iter_captures()*
-Query:iter_captures({node}, {source}, {start}, {stop})
+Query:iter_captures({node}, {source}, {start}, {stop}, {opts})
     Iterates over all captures from all matches in {node}.
 
     {source} is required if the query contains predicates; then the caller
@@ -1463,6 +1463,12 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   `node:start()`.
       • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
                   Defaults to `node:end_()`.
+      • {opts}    (`table?`) Optional keyword arguments:
+                  • max_start_depth (integer) if non-zero, sets the maximum
+                    start depth for each match. This is used to prevent
+                    traversing too deep into a tree.
+                  • match_limit (integer) Set the maximum number of
+                    in-progress matches (Default: 256).
 
     Return: ~
         (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
