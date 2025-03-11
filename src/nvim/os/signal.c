@@ -12,9 +12,11 @@
 #include "nvim/eval.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/signal.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/signal.h"
 
 #ifdef SIGPWR
@@ -176,6 +178,10 @@ static void deadly_signal(int signum)
   ILOG("got signal %d (%s)", signum, signal_name(signum));
 
   snprintf(IObuff, IOSIZE, "Nvim: Caught deadly signal '%s'\n", signal_name(signum));
+
+  if (p_awa && signum != SIGTERM){
+    autowrite_all();
+  }
 
   // Preserve files and exit.
   preserve_exit(IObuff);
