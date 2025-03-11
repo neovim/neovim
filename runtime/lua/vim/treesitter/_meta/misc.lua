@@ -14,9 +14,6 @@ error('Cannot require a meta file')
 ---@field _set_logger fun(self: TSParser, lex: boolean, parse: boolean, cb: TSLoggerCallback)
 ---@field _logger fun(self: TSParser): TSLoggerCallback
 
----@class TSQuery: userdata
----@field inspect fun(self: TSQuery): TSQueryInfo
-
 ---@class (exact) TSQueryInfo
 ---@field captures string[]
 ---@field patterns table<integer, (integer|string)[][]>
