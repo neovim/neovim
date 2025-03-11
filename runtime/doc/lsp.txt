@@ -1750,13 +1750,13 @@ on_diagnostic({error}, {result}, {ctx})
       • {ctx}     (`lsp.HandlerContext`)
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
-on_publish_diagnostics({_}, {result}, {ctx})
+on_publish_diagnostics({_}, {params}, {ctx})
     |lsp-handler| for the method "textDocument/publishDiagnostics"
 
     See |vim.diagnostic.config()| for configuration options.
 
     Parameters: ~
-      • {result}  (`lsp.PublishDiagnosticsParams`)
+      • {params}  (`lsp.PublishDiagnosticsParams`)
       • {ctx}     (`lsp.HandlerContext`)
 
 
