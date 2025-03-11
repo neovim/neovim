@@ -12,7 +12,7 @@ arguments=(
   '-u[use this config file]'
   '-d[diff mode]'
   {-es,-Es}'[silent (batch) mode]'
-  {-h,--help}'[print this help message]'
+  '(- *)'{-h,--help}'[print this help message]'
   '-i[use this shada file]'
   '-n[no swap file, use memory only]'
   '-o+[open N windows (default: one per file)]'
