@@ -16,26 +16,38 @@
 # include "os/pty_proc_win.c.generated.h"
 #endif
 
-static void CALLBACK pty_proc_finish1(void *context, BOOLEAN unused)
+static void CALLBACK pty_proc_terminate_cb(void *context, BOOLEAN unused)
   FUNC_ATTR_NONNULL_ALL
 {
   PtyProc *ptyproc = (PtyProc *)context;
   Proc *proc = (Proc *)ptyproc;
 
   os_conpty_free(ptyproc->conpty);
-  // NB: pty_proc_finish1() is called on a separate thread,
-  // but the timer only works properly if it's started by the main thread.
-  loop_schedule_fast(proc->loop, event_create(start_wait_eof_timer, ptyproc));
+  // NB: pty_proc_terminate_cb() is called on a separate thread,
+  // but finishing up the process needs to be done on the main thread.
+  loop_schedule_fast(proc->loop, event_create(pty_proc_finish_when_eof, ptyproc));
 }
 
-static void start_wait_eof_timer(void **argv)
+static void pty_proc_finish_when_eof(void **argv)
   FUNC_ATTR_NONNULL_ALL
 {
   PtyProc *ptyproc = (PtyProc *)argv[0];
 
   if (ptyproc->finish_wait != NULL) {
-    uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
+    if (pty_proc_can_finish(ptyproc)) {
+      pty_proc_finish(ptyproc);
+    } else {
+      uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
+    }
   }
+}
+
+static bool pty_proc_can_finish(PtyProc *ptyproc)
+{
+  Proc *proc = (Proc *)ptyproc;
+
+  assert(ptyproc->finish_wait != NULL);
+  return proc->out.s.closed || proc->out.did_eof || !uv_is_readable(proc->out.s.uvstream);
 }
 
 /// @returns zero on success, or negative error code.
@@ -120,7 +132,7 @@ int pty_proc_spawn(PtyProc *ptyproc)
   ptyproc->wait_eof_timer.data = (void *)ptyproc;
   if (!RegisterWaitForSingleObject(&ptyproc->finish_wait,
                                    proc_handle,
-                                   pty_proc_finish1,
+                                   pty_proc_terminate_cb,
                                    ptyproc,
                                    INFINITE,
                                    WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE)) {
@@ -213,16 +225,13 @@ static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   FUNC_ATTR_NONNULL_ALL
 {
   PtyProc *ptyproc = wait_eof_timer->data;
-  Proc *proc = (Proc *)ptyproc;
-
-  assert(ptyproc->finish_wait != NULL);
-  if (proc->out.s.closed || proc->out.did_eof || !uv_is_readable(proc->out.s.uvstream)) {
+  if (pty_proc_can_finish(ptyproc)) {
     uv_timer_stop(&ptyproc->wait_eof_timer);
-    pty_proc_finish2(ptyproc);
+    pty_proc_finish(ptyproc);
   }
 }
 
-static void pty_proc_finish2(PtyProc *ptyproc)
+static void pty_proc_finish(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
   Proc *proc = (Proc *)ptyproc;
