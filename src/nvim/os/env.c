@@ -89,6 +89,26 @@ end:
   return e;
 }
 
+/// Like getenv(), loading the result to `NameBuff`
+/// @see os_env_exists
+char *os_getenv_noalloc(const char *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (name[0] == NUL) {
+    return NULL;
+  }
+
+  size_t size = sizeof(NameBuff);
+  int r = uv_os_getenv(name, NameBuff, &size);
+  if (r != 0 || size == 0 || NameBuff[0] == NUL) {
+    if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
+      ELOG("uv_os_getenv_noalloc(%s) failed: %d %s", name, r, uv_err_name(r));
+    }
+    return NULL;
+  }
+  return NameBuff;
+}
+
 /// Returns true if environment variable `name` is defined (even if empty).
 /// Returns false if not found (UV_ENOENT) or other failure.
 bool os_env_exists(const char *name)
@@ -107,6 +127,26 @@ bool os_env_exists(const char *name)
     ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
   return (r == 0 || r == UV_ENOBUFS);
+}
+
+/// Returns true if environment variable `name` is defined (i.e. exists and not empty).
+/// Returns false if not found (UV_ENOENT) or other failure.
+bool os_env_defined(const char *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (name[0] == NUL) {
+    return false;
+  }
+  // Use a tiny buffer because we don't care about the value: if uv_os_getenv()
+  // returns UV_ENOBUFS with a positive size, the env var was found.
+  char buf[2];
+  size_t size = sizeof(buf);
+  int r = uv_os_getenv(name, buf, &size);
+  assert(r != UV_EINVAL);
+  if (r != 0 && r != UV_ENOENT && r != UV_ENOBUFS) {
+    ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
+  }
+  return ((r == 0 && size > 0) || r == UV_ENOBUFS);
 }
 
 /// Sets an environment variable.
