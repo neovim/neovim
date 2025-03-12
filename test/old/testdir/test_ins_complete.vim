@@ -2982,6 +2982,12 @@ func Test_complete_fuzzy_collect()
   call feedkeys("STe\<C-X>\<C-N>x\<CR>\<Esc>0", 'tx!')
   call assert_equal('Tex', getline(line('.') - 1))
 
+  call setline(1, ['fuzzy', 'fuzzycollect', 'completefuzzycollect'])
+  call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
+  call assert_equal('fuzzycollect', getline(line('.') - 1))
+  call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
+  call assert_equal('completefuzzycollect', getline(line('.') - 1))
+
   bw!
   bw!
   set completeopt& cfc& cpt&

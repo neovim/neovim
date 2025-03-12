@@ -3219,7 +3219,7 @@ enum {
 ///          the "st->e_cpt" option value and process the next matching source.
 ///          INS_COMPL_CPT_END if all the values in "st->e_cpt" are processed.
 static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_arg,
-                                  pos_T *start_match_pos, bool in_fuzzy)
+                                  pos_T *start_match_pos, bool fuzzy_collect)
 {
   int compl_type = -1;
   int status = INS_COMPL_CPT_OK;
@@ -3235,7 +3235,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
     st->first_match_pos = *start_match_pos;
     // Move the cursor back one character so that ^N can match the
     // word immediately after the cursor.
-    if (ctrl_x_mode_normal() && (!in_fuzzy && dec(&st->first_match_pos) < 0)) {
+    if (ctrl_x_mode_normal() && (!fuzzy_collect && dec(&st->first_match_pos) < 0)) {
       // Move the cursor to after the last character in the
       // buffer, so that word at start of buffer is found
       // correctly.
@@ -3924,7 +3924,6 @@ static int ins_compl_get_exp(pos_T *ini)
   static bool st_cleared = false;
   int found_new_match;
   int type = ctrl_x_mode;
-  bool in_fuzzy = (get_cot_flags() & kOptCotFlagFuzzy) != 0;
 
   assert(curbuf != NULL);
 
@@ -3961,7 +3960,7 @@ static int ins_compl_get_exp(pos_T *ini)
     // entries from 'complete' that look in loaded buffers.
     if ((ctrl_x_mode_normal() || ctrl_x_mode_line_or_eval())
         && (!compl_started || st.found_all)) {
-      int status = process_next_cpt_value(&st, &type, ini, in_fuzzy);
+      int status = process_next_cpt_value(&st, &type, ini, cfc_has_mode());
       if (status == INS_COMPL_CPT_END) {
         break;
       }
