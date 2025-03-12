@@ -6174,7 +6174,7 @@ function vim.fn.min(expr) end
 --- the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
 --- the user, readable for others).  Use 0o700 to make it
 --- unreadable for others.  This is used for the newly created
---- directories.  Note an umask is applied to {prot} (on Unix).
+--- directories.  Note: umask is applied to {prot} (on Unix).
 --- Example: >vim
 ---   call mkdir($HOME .. "/tmp/foo/bar", "p", 0o700)
 ---
