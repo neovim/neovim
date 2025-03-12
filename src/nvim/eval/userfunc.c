@@ -1246,7 +1246,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   int save_did_emsg = did_emsg;
   did_emsg = false;
 
-  if (default_arg_err && (fp->uf_flags & FC_ABORT)) {
+  if (default_arg_err && (fp->uf_flags & FC_ABORT || trylevel > 0)) {
     did_emsg = true;
   } else if (islambda) {
     char *p = *(char **)fp->uf_lines.ga_data + 7;
