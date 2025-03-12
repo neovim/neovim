@@ -124,8 +124,7 @@
 ///       - `row=0` and `col=0` if `anchor` is "SW" or "SE"
 ///         (thus like a tooltip near the buffer text).
 ///   - row: Row position in units of "screen cell height", may be fractional.
-///   - col: Column position in units of "screen cell width", may be
-///            fractional.
+///   - col: Column position in units of screen cell width, may be fractional.
 ///   - focusable: Enable focus by user actions (wincmds, mouse events).
 ///       Defaults to true. Non-focusable windows can be entered by
 ///       |nvim_set_current_win()|, or, when the `mouse` field is set to true,
@@ -205,6 +204,8 @@
 ///           focused on it.
 ///   - vertical: Split vertically |:vertical|.
 ///   - split: Split direction: "left", "right", "above", "below".
+///   - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the |cmdline-completion|
+///     popupmenu to this window, with an offset in screen cell width.
 ///
 /// @param[out] err Error details, if any
 ///
@@ -286,6 +287,10 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       api_set_error(err, kErrorTypeException, "Failed to create window");
     }
     goto cleanup;
+  }
+
+  if (fconfig._cmdline_offset < INT_MAX) {
+    cmdline_win = wp;
   }
 
   // Autocommands may close `wp` or move it to another tabpage, so update and check `tp` after each
@@ -636,6 +641,11 @@ restore_curwin:
       didset_window_options(win, true);
     }
   }
+  if (fconfig._cmdline_offset < INT_MAX) {
+    cmdline_win = win;
+  } else if (win == cmdline_win && fconfig._cmdline_offset == INT_MAX) {
+    cmdline_win = NULL;
+  }
 #undef HAS_KEY_X
 }
 
@@ -768,6 +778,9 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   const char *rel = (wp->w_floating && !config->external
                      ? float_relative_str[config->relative] : "");
   PUT_KEY_X(rv, relative, cstr_as_string(rel));
+  if (config->_cmdline_offset < INT_MAX) {
+    PUT_KEY_X(rv, _cmdline_offset, config->_cmdline_offset);
+  }
 
   return rv;
 }
@@ -1316,6 +1329,10 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
 
   if (HAS_KEY_X(config, hide)) {
     fconfig->hide = config->hide;
+  }
+
+  if (HAS_KEY_X(config, _cmdline_offset)) {
+    fconfig->_cmdline_offset = (int)config->_cmdline_offset;
   }
 
   return true;

@@ -158,13 +158,15 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     if (State & MODE_CMDLINE) {
       below_row = cmdline_row;
     }
+    win_T *target_win = (State & MODE_CMDLINE) ? cmdline_win : curwin;
     pum_win_row_offset = 0;
     pum_win_col_offset = 0;
 
     // wildoptions=pum
     if (State == MODE_CMDLINE) {
-      pum_win_row = ui_has(kUICmdline) ? 0 : cmdline_row;
-      cursor_col = cmd_startcol;
+      pum_win_row = cmdline_win ? cmdline_win->w_wrow : ui_has(kUICmdline) ? 0 : cmdline_row;
+      cursor_col = (cmdline_win ? cmdline_win->w_config._cmdline_offset : 0) + cmd_startcol;
+      cursor_col %= cmdline_win ? cmdline_win->w_view_width : Columns;
       pum_anchor_grid = ui_has(kUICmdline) ? -1 : DEFAULT_GRID_HANDLE;
     } else {
       // anchor position: the start of the completed word
@@ -174,19 +176,21 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       } else {
         cursor_col = curwin->w_wcol;
       }
+    }
 
-      pum_anchor_grid = (int)curwin->w_grid.target->handle;
-      pum_win_row += curwin->w_grid.row_offset;
-      cursor_col += curwin->w_grid.col_offset;
-      if (curwin->w_grid.target != &default_grid) {
-        pum_win_row += curwin->w_winrow;
-        cursor_col += curwin->w_wincol;
-        // ext_popupmenu should always anchor to the default grid when multigrid is disabled
+    if (target_win != NULL) {
+      // ext_popupmenu should always anchor to the default grid when multigrid is disabled
+      pum_anchor_grid = target_win->w_grid.target->handle;
+      pum_win_row += target_win->w_grid.row_offset;
+      cursor_col += target_win->w_grid.col_offset;
+      if (target_win->w_grid.target != &default_grid) {
+        pum_win_row += target_win->w_winrow;
+        cursor_col += target_win->w_wincol;
         if (!ui_has(kUIMultigrid)) {
-          pum_anchor_grid = (int)default_grid.handle;
+          pum_anchor_grid = DEFAULT_GRID_HANDLE;
         } else {
-          pum_win_row_offset = curwin->w_winrow;
-          pum_win_col_offset = curwin->w_wincol;
+          pum_win_row_offset = target_win->w_winrow;
+          pum_win_col_offset = target_win->w_wincol;
         }
       }
     }
@@ -236,12 +240,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
     int min_row = 0;
     int min_col = 0;
-    int max_col = MAX(Columns, curwin->w_wincol + curwin->w_view_width);
-    if (State & MODE_CMDLINE) {
-      max_col = Columns;
-    }
-    int win_start_col = curwin->w_wincol;
-    int win_end_col = W_ENDCOL(curwin);
+    int max_col = MAX(Columns, target_win ? (target_win->w_wincol + target_win->w_view_width) : 0);
+    int win_start_col = target_win ? target_win->w_wincol : 0;
+    int win_end_col = target_win ? W_ENDCOL(target_win) : 0;
 
     // Figure out the size and position of the pum.
     pum_height = MIN(size, PUM_DEF_HEIGHT);
@@ -256,12 +257,12 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // pum above "pum_win_row"
       pum_above = true;
 
-      if (State == MODE_CMDLINE) {
-        // for cmdline pum, no need for context lines
+      if (State == MODE_CMDLINE && target_win == NULL) {
+        // For cmdline pum, no need for context lines unless target_win is set
         context_lines = 0;
       } else {
         // Leave two lines of context if possible
-        context_lines = MIN(2, curwin->w_wrow - curwin->w_cline_row);
+        context_lines = MIN(2, target_win->w_wrow - target_win->w_cline_row);
       }
 
       if (pum_win_row - min_row >= size + context_lines) {
@@ -280,14 +281,14 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // pum below "pum_win_row"
       pum_above = false;
 
-      if (State == MODE_CMDLINE) {
-        // for cmdline pum, no need for context lines
+      if (State == MODE_CMDLINE && target_win == NULL) {
+        // for cmdline pum, no need for context lines unless target_win is set
         context_lines = 0;
       } else {
         // Leave two lines of context if possible
-        validate_cheight(curwin);
-        int cline_visible_offset = curwin->w_cline_row +
-                                   curwin->w_cline_height - curwin->w_wrow;
+        validate_cheight(target_win);
+        int cline_visible_offset = target_win->w_cline_row +
+                                   target_win->w_cline_height - target_win->w_wrow;
         context_lines = MIN(3, cline_visible_offset);
       }
 

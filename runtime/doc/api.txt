@@ -3475,8 +3475,8 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                       like a tooltip near the buffer text).
                   • row: Row position in units of "screen cell height", may be
                     fractional.
-                  • col: Column position in units of "screen cell width", may
-                    be fractional.
+                  • col: Column position in units of screen cell width, may be
+                    fractional.
                   • focusable: Enable focus by user actions (wincmds, mouse
                     events). Defaults to true. Non-focusable windows can be
                     entered by |nvim_set_current_win()|, or, when the `mouse`
@@ -3558,6 +3558,9 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                     cursor will be invisible when focused on it.
                   • vertical: Split vertically |:vertical|.
                   • split: Split direction: "left", "right", "above", "below".
+                  • _cmdline_offset: (EXPERIMENTAL) When provided, anchor the
+                    |cmdline-completion| popupmenu to this window, with an
+                    offset in screen cell width.
 
     Return: ~
         |window-ID|, or 0 on error
