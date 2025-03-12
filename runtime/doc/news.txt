@@ -330,8 +330,8 @@ LUA
 • |vim.json.encode()| has an option to enable forward slash escaping
 • |vim.fs.abspath()| converts paths to absolute paths.
 • |vim.fs.relpath()| gets relative path compared to base path.
-• |vim.fs.dir()| and |vim.fs.find()| now follow symbolic links by default,
-  the behavior can be turn off using the new `follow` option.
+• |vim.fs.dir()| and |vim.fs.find()| can now follow symbolic links,
+  the behavior can be turn on using the new `follow` option.
 • |vim.text.indent()| indents/dedents text.
 
 OPTIONS

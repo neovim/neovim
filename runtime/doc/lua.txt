@@ -2985,7 +2985,7 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                 • skip: (fun(dir_name: string): boolean)|nil Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1
-                • follow: boolean|nil Follow symbolic links. (default: true)
+                • follow: boolean|nil Follow symbolic links. (default: false)
 
     Return: ~
         (`Iterator`) over items in {path}. Each iteration yields two values:
@@ -3058,7 +3058,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • {limit}? (`number`, default: `1`) Stop the search after
                    finding this many matches. Use `math.huge` to place no
                    limit on the number of matches.
-                 • {follow}? (`boolean`, default: `true`) Follow symbolic
+                 • {follow}? (`boolean`, default: `false`) Follow symbolic
                    links.
 
     Return: ~
