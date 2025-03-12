@@ -944,7 +944,13 @@ describe('jobs', function()
           echon "\nccc"
         endfunc
       ]])
-      feed_command('call PrintAndWait()')
+      feed(':call PrintAndWait()')
+      screen:expect([[
+                                                          |
+        {1:~                                                 }|*4
+        :call PrintAndWait()^                              |
+      ]])
+      feed('<CR>')
       screen:expect {
         grid = [[
                                                           |
