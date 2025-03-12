@@ -21,6 +21,7 @@ if get(b:, 'context_ignore_makefile', get(g:, 'context_ignore_makefile', 0)) ||
         \ . (get(b:, 'context_synctex', get(g:, 'context_synctex', 0)) ? '1' : '0')
         \ . ' ' . get(b:, 'context_extra_options', get(g:, 'context_extra_options', ''))
         \ . ' ' . shellescape(expand('%:p:t'))
+  " CompilerSet makeprg=context
   execute 'CompilerSet makeprg=' .. escape(s:makeprg, ' ')
 else
   let current_compiler = 'make'
