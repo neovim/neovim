@@ -350,8 +350,7 @@ char *get_locales(expand_T *xp, int idx)
 void lang_init(void)
 {
 #ifdef __APPLE__
-  const char *lang_env = os_getenv("LANG");
-  if (lang_env == NULL) {
+  if (!os_env_defined("LANG")) {
     char buf[50] = { 0 };
 
     // $LANG is not set, either because it was unset or Nvim was started
@@ -370,8 +369,6 @@ void lang_init(void)
     } else {
       ELOG("$LANG is empty and the macOS primary language cannot be inferred.");
     }
-  } else {
-    xfree((char *)lang_env);
   }
 #endif
 }

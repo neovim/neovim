@@ -1109,11 +1109,9 @@ static int diff_file(diffio_T *dio)
   char *const cmd = xmalloc(len);
 
   // We don't want $DIFF_OPTIONS to get in the way.
-  const char *diff_env = os_getenv("DIFF_OPTIONS");
-  if (diff_env) {
+  if (os_env_defined("DIFF_OPTIONS")) {
     os_unsetenv("DIFF_OPTIONS");
   }
-  xfree((char *)diff_env);
 
   // Build the diff command and execute it.  Always use -a, binary
   // differences are of no use.  Ignore errors, diff returns
