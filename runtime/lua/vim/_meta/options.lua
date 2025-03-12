@@ -1044,14 +1044,23 @@ vim.o.cfu = vim.o.completefunc
 vim.bo.completefunc = vim.o.completefunc
 vim.bo.cfu = vim.bo.completefunc
 
---- This option enables fuzzy collection for (only some) specific
---- `ins-completion` modes, adjusting how items are gathered for fuzzy
---- matching based on input.
---- The option can contain the following values (separated by commas),
---- each enabling fuzzy collection for a specific completion mode:
---- files		file names
---- keyword		keyword completion in 'complete' and current file
---- whole_line	whole lines
+--- A comma-separated list of option enables fuzzy collection for specific
+--- `ins-completion` modes, affecting how items are gathered during
+--- completion. When set, fuzzy matching is used to find completion
+--- candidates instead of the standard prefix-based matching. This option
+--- can contain the following values are:
+---
+--- keyword		keywords in the current file `i_CTRL-X_CTRL-N`
+--- 		keywords with the ".", "w", "b", "u", "U" and
+--- 		"k{dict}" flags in 'complete'. `i_CTRL-N` `i_CTRL-P`
+---
+--- files		file names  `i_CTRL-X_CTRL-F`
+---
+--- whole_line	whole lines `i_CTRL-X_CTRL-L`
+---
+--- When used with 'completeopt' "longest" option, fuzzy collection can
+--- identify the longest common string among the best fuzzy matches and
+--- automatically insert it.
 ---
 --- @type string
 vim.o.completefuzzycollect = ""

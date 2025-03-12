@@ -3629,7 +3629,7 @@ garray_T *fuzzy_match_str_with_pos(char *const str, const char *const pat)
 /// - `*len` is set to the length of the matched word.
 /// - `*score` contains the match score.
 ///
-/// If no match is found, `*ptr` is updated to to the end of the line.
+/// If no match is found, `*ptr` is updated to the end of the line.
 bool fuzzy_match_str_in_line(char **ptr, char *pat, int *len, pos_T *current_pos, int *score)
 {
   char *str = *ptr;
@@ -3699,9 +3699,6 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
   bool looped_around = false;
 
   bool whole_line = ctrl_x_mode_whole_line();
-  if (whole_line) {
-    current_pos.lnum += dir;
-  }
 
   if (buf == curbuf) {
     circly_end = *start_pos;
@@ -3709,6 +3706,10 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
     circly_end.lnum = buf->b_ml.ml_line_count;
     circly_end.col = 0;
     circly_end.coladd = 0;
+  }
+
+  if (whole_line && start_pos->lnum != pos->lnum) {
+    current_pos.lnum += dir;
   }
 
   while (true) {
@@ -3721,11 +3722,14 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
     if (current_pos.lnum >= 1 && current_pos.lnum <= buf->b_ml.ml_line_count) {
       // Get the current line buffer
       *ptr = ml_get_buf(buf, current_pos.lnum);
+      if (!whole_line) {
+        *ptr += current_pos.col;
+      }
+
       // If ptr is end of line is reached, move to next line
       // or previous line based on direction
       if (*ptr != NULL && **ptr != NUL) {
         if (!whole_line) {
-          *ptr += current_pos.col;
           // Try to find a fuzzy match in the current line starting
           // from current position
           found_new_match = fuzzy_match_str_in_line(ptr, pattern,
@@ -3743,8 +3747,6 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
                     }
                     next_word_end += l;
                   }
-                } else if (looped_around) {
-                  found_new_match = false;
                 }
                 *len = (int)(next_word_end - *ptr);
                 current_pos.col = *len;
