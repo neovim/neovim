@@ -1044,11 +1044,11 @@ vim.o.cfu = vim.o.completefunc
 vim.bo.completefunc = vim.o.completefunc
 vim.bo.cfu = vim.bo.completefunc
 
---- A comma-separated list of option enables fuzzy collection for specific
---- `ins-completion` modes, affecting how items are gathered during
---- completion. When set, fuzzy matching is used to find completion
---- candidates instead of the standard prefix-based matching. This option
---- can contain the following values are:
+--- A comma-separated list of strings to enable fuzzy collection for
+--- specific `ins-completion` modes, affecting how matches are gathered
+--- during completion.  For specified modes, fuzzy matching is used to
+--- find completion candidates instead of the standard prefix-based
+--- matching.  This option can contain the following values:
 ---
 --- keyword		keywords in the current file `i_CTRL-X_CTRL-N`
 --- 		keywords with the ".", "w", "b", "u", "U" and
