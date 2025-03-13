@@ -215,7 +215,7 @@ describe('vim.hl.on_yank', function()
     end)
   end)
 
-  it('highlight last character with exclusive motion', function()
+  it('highlights last character with exclusive motion', function()
     local screen = Screen.new(60, 4)
     screen:add_extra_attr_ids({
       [100] = { foreground = Screen.colors.Blue, background = Screen.colors.Yellow, bold = true },
