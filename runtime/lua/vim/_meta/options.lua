@@ -1050,17 +1050,18 @@ vim.bo.cfu = vim.bo.completefunc
 --- find completion candidates instead of the standard prefix-based
 --- matching.  This option can contain the following values:
 ---
---- keyword		keywords in the current file `i_CTRL-X_CTRL-N`
---- 		keywords with the ".", "w", "b", "u", "U" and
---- 		"k{dict}" flags in 'complete'. `i_CTRL-N` `i_CTRL-P`
+--- keyword		keywords in the current file	`i_CTRL-X_CTRL-N`
+--- 		keywords with flags ".", "w",	`i_CTRL-N` `i_CTRL-P`
+--- 		"b", "u", "U" and "k{dict}" in 'complete'
+--- 		keywords in 'dictionary'	`i_CTRL-X_CTRL-K`
 ---
---- files		file names  `i_CTRL-X_CTRL-F`
+--- files		file names			`i_CTRL-X_CTRL-F`
 ---
---- whole_line	whole lines `i_CTRL-X_CTRL-L`
+--- whole_line	whole lines			`i_CTRL-X_CTRL-L`
 ---
---- When used with 'completeopt' "longest" option, fuzzy collection can
---- identify the longest common string among the best fuzzy matches and
---- automatically insert it.
+--- When using the 'completeopt' "longest" option value, fuzzy collection
+--- can identify the longest common string among the best fuzzy matches
+--- and insert it automatically.
 ---
 --- @type string
 vim.o.completefuzzycollect = ""

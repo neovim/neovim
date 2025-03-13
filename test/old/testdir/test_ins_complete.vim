@@ -2988,8 +2988,17 @@ func Test_complete_fuzzy_collect()
   call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
   call assert_equal('completefuzzycollect', getline(line('.') - 1))
 
+  " keywords in 'dictonary'
+  call writefile(['hello', 'think'], 'test_dict.txt', 'D')
+  set dict=test_dict.txt
+  call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<CR>\<Esc>0", 'tx!')
+  call assert_equal('hello', getline(line('.') - 1))
+  call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
+  call assert_equal('think', getline(line('.') - 1))
+
   bw!
   bw!
+  set dict&
   set completeopt& cfc& cpt&
 endfunc
 
