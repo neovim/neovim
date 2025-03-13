@@ -118,9 +118,7 @@ void os_title_reset(void)
 /// @param out_fd stdout file descriptor
 void os_tty_guess_term(const char **term, int out_fd)
 {
-  const char *conemuansi_env = os_getenv("ConEmuANSI");
-  bool conemu_ansi = strequal(conemuansi_env, "ON");
-  xfree((char *)conemuansi_env);
+  bool conemu_ansi = strequal(os_getenv("ConEmuANSI"), "ON");
   bool vtp = false;
 
   HANDLE handle = (HANDLE)_get_osfhandle(out_fd);

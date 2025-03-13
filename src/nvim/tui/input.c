@@ -139,10 +139,10 @@ void tinput_init(TermInput *input, Loop *loop)
 
   input->in_fd = STDIN_FILENO;
 
-  const char *term = os_getenv("TERM");
+  const char *term = os_getenv_noalloc("TERM");
 
   if (!term) {
-    term = xstrdup("");  // termkey_new_abstract assumes non-null (#2745)
+    term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
 
   input->tk = termkey_new_abstract(term,
@@ -163,8 +163,6 @@ void tinput_init(TermInput *input, Loop *loop)
 
   uv_timer_init(&loop->uv, &input->bg_query_timer);
   input->bg_query_timer.data = input;
-
-  xfree((char *)term);
 }
 
 void tinput_destroy(TermInput *input)

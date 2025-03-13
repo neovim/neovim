@@ -49,10 +49,7 @@ bool terminfo_is_bsd_console(const char *term)
 # if defined(__FreeBSD__)
   // FreeBSD console sets TERM=xterm, but it does not support xterm features
   // like cursor-shaping. Assume that TERM=xterm is degraded. #8644
-  const char *xtermv_env = os_getenv("XTERM_VERSION");
-  bool retval = strequal(term, "xterm") && !!xtermv_env;
-  xfree((char *)xtermv_env);
-  return retval;
+  return strequal(os_getenv_noalloc("XTERM_VERSION"), "xterm") && !!xtermv_env;
 # endif
 #endif
   return false;

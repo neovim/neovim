@@ -71,13 +71,11 @@ static const char *const xdg_defaults[] = {
 /// @return $NVIM_APPNAME value
 const char *get_appname(bool namelike)
 {
-  const char *env_val = os_getenv("NVIM_APPNAME");
+  const char *env_val = os_getenv_noalloc("NVIM_APPNAME");
 
-  if (env_val == NULL || *env_val == NUL) {
-    env_val = xstrdup("nvim");
+  if (!env_val) {
+    xstrlcpy(NameBuff, "nvim", sizeof(NameBuff));
   }
-  xstrlcpy(NameBuff, env_val, sizeof(NameBuff));
-  xfree((char *)env_val);
 
   if (namelike) {
     // Appname may be a relative path, replace slashes to make it name-like.

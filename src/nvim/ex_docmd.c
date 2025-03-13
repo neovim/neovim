@@ -7793,8 +7793,8 @@ static void ex_checkhealth(exarg_T *eap)
     return;
   }
 
-  const char *vimruntime_env = os_getenv("VIMRUNTIME");
-  if (vimruntime_env == NULL) {
+  char *vimruntime_env = os_getenv_noalloc("VIMRUNTIME");
+  if (!vimruntime_env) {
     emsg(_("E5009: $VIMRUNTIME is empty or unset"));
   } else {
     bool rtp_ok = NULL != strstr(p_rtp, vimruntime_env);
@@ -7803,7 +7803,6 @@ static void ex_checkhealth(exarg_T *eap)
     } else {
       emsg(_("E5009: Invalid 'runtimepath'"));
     }
-    xfree((char *)vimruntime_env);
   }
   semsg_multiline("emsg", err.msg);
   api_clear_error(&err);

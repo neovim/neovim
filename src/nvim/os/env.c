@@ -1258,10 +1258,8 @@ bool os_shell_is_cmdexe(const char *sh)
     return false;
   }
   if (striequal(sh, "$COMSPEC")) {
-    const char *comspec = os_getenv("COMSPEC");
-    bool retval = striequal("cmd.exe", path_tail(comspec));
-    xfree((char *)comspec);
-    return retval;
+    char *comspec = os_getenv_noalloc("COMSPEC");
+    return striequal("cmd.exe", path_tail(comspec));
   }
   if (striequal(sh, "cmd.exe") || striequal(sh, "cmd")) {
     return true;

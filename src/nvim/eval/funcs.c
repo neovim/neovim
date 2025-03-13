@@ -3939,11 +3939,9 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
       size_t len = strlen(required_env_vars[i]);
       dictitem_T *dv = tv_dict_find(env, required_env_vars[i], (ptrdiff_t)len);
       if (!dv) {
-        const char *env_var = os_getenv(required_env_vars[i]);
-        if (env_var) {
-          tv_dict_add_str(env, required_env_vars[i], len, env_var);
+        if (os_env_defined(required_env_vars[i])) {
+          tv_dict_add_str(env, required_env_vars[i], len, os_getenv(required_env_vars[i]));
         }
-        xfree((char *)env_var);
       }
     }
   }
