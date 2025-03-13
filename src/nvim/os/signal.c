@@ -23,7 +23,7 @@
 # include "nvim/memline.h"
 #endif
 
-static SignalWatcher spipe, shup, squit, sterm, susr1, swinch;
+static SignalWatcher spipe, shup, squit, sterm, susr1, swinch, ststp;
 #ifdef SIGPWR
 static SignalWatcher spwr;
 #endif
@@ -46,6 +46,7 @@ void signal_init(void)
   }
 #endif
 
+  signal_watcher_init(&main_loop, &ststp, NULL);
   signal_watcher_init(&main_loop, &spipe, NULL);
   signal_watcher_init(&main_loop, &shup, NULL);
   signal_watcher_init(&main_loop, &squit, NULL);
@@ -65,6 +66,7 @@ void signal_init(void)
 void signal_teardown(void)
 {
   signal_stop();
+  signal_watcher_close(&ststp, NULL);
   signal_watcher_close(&spipe, NULL);
   signal_watcher_close(&shup, NULL);
   signal_watcher_close(&squit, NULL);
@@ -82,6 +84,7 @@ void signal_teardown(void)
 
 void signal_start(void)
 {
+  signal_watcher_start(&ststp, on_signal, SIGTSTP);
 #ifdef SIGPIPE
   signal_watcher_start(&spipe, on_signal, SIGPIPE);
 #endif
@@ -103,6 +106,7 @@ void signal_start(void)
 
 void signal_stop(void)
 {
+  signal_watcher_stop(&ststp);
 #ifdef SIGPIPE
   signal_watcher_stop(&spipe);
 #endif
@@ -135,6 +139,8 @@ void signal_accept_deadly(void)
 static char *signal_name(int signum)
 {
   switch (signum) {
+  case SIGTSTP:
+    return "SIGTSTP";
 #ifdef SIGPWR
   case SIGPWR:
     return "SIGPWR";
@@ -202,6 +208,7 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
     // Ignore
     break;
 #endif
+  case SIGTSTP:
   case SIGTERM:
 #ifdef SIGQUIT
   case SIGQUIT:
