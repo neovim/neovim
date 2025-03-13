@@ -2028,7 +2028,13 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
           echon "\nccc"
         endfunc
       ]]):format(to_block))
-      feed(':call PrintAndWait()<CR>')
+      feed(':call PrintAndWait()')
+      screen:expect([[
+                                                                    |
+        {1:~                                                           }|*5
+        :call PrintAndWait()^                                        |
+      ]])
+      feed('<CR>')
       screen:expect {
         grid = [[
                                                                     |
