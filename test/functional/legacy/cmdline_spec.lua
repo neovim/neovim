@@ -115,6 +115,77 @@ describe('cmdline', function()
     ]])
   end)
 
+  -- oldtest: Test_wildmenu_with_input_func()
+  it('wildmenu works with input() function', function()
+    local screen = Screen.new(60, 8)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Yellow, foreground = Screen.colors.Black },
+    })
+
+    feed(":call input('Command? ', '', 'command')<CR>")
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*6
+      Command? ^                                                   |
+    ]])
+    feed('ech<Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {100:echo}{3:  echoerr  echohl  echomsg  echon                       }|
+      Command? echo^                                               |
+    ]])
+    feed('<Space>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*6
+      Command? echo ^                                              |
+    ]])
+    feed('bufn<Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {100:bufname(}{3:  bufnr(                                            }|
+      Command? echo bufname(^                                      |
+    ]])
+    feed('<CR>')
+
+    command('set wildoptions+=pum')
+
+    feed(":call input('Command? ', '', 'command')<CR>")
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*6
+      Command? ^                                                   |
+    ]])
+    feed('ech<Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {1:~       }{12: echo           }{1:                                    }|
+      {1:~       }{4: echoerr        }{1:                                    }|
+      {1:~       }{4: echohl         }{1:                                    }|
+      {1:~       }{4: echomsg        }{1:                                    }|
+      {1:~       }{4: echon          }{1:                                    }|
+      Command? echo^                                               |
+    ]])
+    feed('<Space>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*6
+      Command? echo ^                                              |
+    ]])
+    feed('bufn<Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*4
+      {1:~            }{12: bufname(       }{1:                               }|
+      {1:~            }{4: bufnr(         }{1:                               }|
+      Command? echo bufname(^                                      |
+    ]])
+    feed('<CR>')
+  end)
+
   -- oldtest: Test_redraw_in_autocmd()
   it('cmdline cursor position is correct after :redraw with cmdheight=2', function()
     local screen = Screen.new(30, 6)
