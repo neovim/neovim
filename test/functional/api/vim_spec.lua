@@ -4965,8 +4965,12 @@ describe('API', function()
         pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = true }, {})
       )
       eq(
-        "Invalid 'range': expected <=2 elements",
-        pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { 1, 2, 3, 4 } }, {})
+        "Invalid 'range': expected <=2 or 4 elements",
+        pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { 1, 2, 3, 4, 5 } }, {})
+      )
+      eq(
+        "Invalid 'range': expected <=2 or 4 elements",
+        pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { 1, 2, 3 } }, {})
       )
       eq(
         'Invalid range element: expected non-negative Integer',
@@ -5048,6 +5052,30 @@ describe('API', function()
       expect [[
         line1
         you didn't expect this
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range', function()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_cmd({
+        cmd = 'substitute',
+        args = { '/.*/line4/' },
+        range = { 3, 5, 6, 10 } },
+        {})
+      expect [[
+        line1
+        line2
+        line3
+        line4
         line5
         line6
       ]]

@@ -104,6 +104,12 @@ error('Cannot require a meta file')
 --- The final line of the command range <line2>
 --- @field line2 integer
 ---
+--- The starting column of the command range <col1>
+--- @field col1 integer
+---
+--- The final column of the command range <col2>
+--- @field col2 integer
+---
 --- The number of items in the command range: 0, 1, or 2 <range>
 --- @field range integer
 ---

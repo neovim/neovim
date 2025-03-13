@@ -455,7 +455,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
   if (HAS_KEY(cmd, cmd, range)) {
     VALIDATE_MOD((ea.argt & EX_RANGE), "range", cmd->cmd.data);
-    VALIDATE_EXP((cmd->range.size <= 2), "range", "<=2 elements", NULL, {
+    VALIDATE_EXP((cmd->range.size <= 2 || cmd->range.size == 4), "range", "<=2 or 4 elements", NULL, {
       goto end;
     });
 
@@ -472,7 +472,16 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
     if (range.size > 0) {
       ea.line1 = (linenr_T)range.items[0].data.integer;
-      ea.line2 = (linenr_T)range.items[range.size - 1].data.integer;
+
+      if (range.size <= 2) {
+        ea.line2 = (linenr_T)range.items[range.size - 1].data.integer;
+      }
+
+      if (range.size == 4) {
+        ea.line2 = (linenr_T)range.items[1].data.integer;
+        ea.col1 = (linenr_T)range.items[2].data.integer;
+        ea.col2 = (linenr_T)range.items[3].data.integer;
+      }
     }
 
     VALIDATE_S((invalid_range(&ea) == NULL), "range", "", {
@@ -869,6 +878,8 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                 - bang: (boolean) "true" if the command was executed with a ! modifier [<bang>]
 ///                 - line1: (number) The starting line of the command range [<line1>]
 ///                 - line2: (number) The final line of the command range [<line2>]
+///                 - col1: (number) The starting column of the command range [<col1>]
+///                 - col2: (number) The final line of the command range [<col2>]
 ///                 - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
 ///                 - count: (number) Any count supplied [<count>]
 ///                 - reg: (string) The optional register, if specified [<reg>]

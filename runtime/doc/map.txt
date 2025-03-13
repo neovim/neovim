@@ -1672,6 +1672,10 @@ The valid escape sequences are
 	<line1>	The starting line of the command range.
 						*<line2>*
 	<line2>	The final line of the command range.
+						*<col1>*
+	<col1>	The starting column of the command range.
+						*<col2>*
+	<col2>	The final column of the command range.
 						*<range>*
 	<range> The number of items in the command range: 0, 1 or 2
 						*<count>*

@@ -1013,6 +1013,8 @@ function vim.api.nvim_create_namespace(name) end
 --- - bang: (boolean) "true" if the command was executed with a ! modifier [<bang>]
 --- - line1: (number) The starting line of the command range [<line1>]
 --- - line2: (number) The final line of the command range [<line2>]
+--- - col1: (number) The starting column of the command range [<col1>]
+--- - col2: (number) The final column of the command range [<col2>]
 --- - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
 --- - count: (number) Any count supplied [<count>]
 --- - reg: (string) The optional register, if specified [<reg>]
