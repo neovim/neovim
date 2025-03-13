@@ -406,6 +406,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   bool msg_didout_before_start = false;
   int count = 0;                        // line number count
   bool did_inc = false;                 // incremented RedrawingDisabled
+  int block_indent = -1;                // indent for ext_cmdline block event
   int retval = OK;
   cstack_T cstack = {                   // conditional stack
     .cs_idx = -1,
@@ -573,16 +574,18 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
     // 2. If no line given, get an allocated line with fgetline().
     if (next_cmdline == NULL) {
-      // Need to set msg_didout for the first line after an ":if",
-      // otherwise the ":if" will be overwritten.
-      if (count == 1 && getline_equal(fgetline, cookie, getexline)) {
-        msg_didout = true;
+      int indent = cstack.cs_idx < 0 ? 0 : (cstack.cs_idx + 1) * 2;
+      if (count >= 1 && getline_equal(fgetline, cookie, getexline)) {
+        if (ui_has(kUICmdline)) {
+          ui_ext_cmdline_block_append((size_t)MAX(0, block_indent), last_cmdline);
+          block_indent = indent;
+        } else if (count == 1) {
+          // Need to set msg_didout for the first line after an ":if",
+          // otherwise the ":if" will be overwritten.
+          msg_didout = true;
+        }
       }
-      if (fgetline == NULL
-          || (next_cmdline = fgetline(':', cookie,
-                                      cstack.cs_idx <
-                                      0 ? 0 : (cstack.cs_idx + 1) * 2,
-                                      true)) == NULL) {
+      if (fgetline == NULL || (next_cmdline = fgetline(':', cookie, indent, true)) == NULL) {
         // Don't call wait_return() for aborted command line.  The NULL
         // returned for the end of a sourced file or executed function
         // doesn't do this.
@@ -937,6 +940,10 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       msg_didout |= msg_didout_before_start;
       wait_return(false);
     }
+  }
+
+  if (block_indent >= 0) {
+    ui_ext_cmdline_block_leave();
   }
 
   did_endif = false;    // in case do_cmdline used recursively
