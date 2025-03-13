@@ -14,6 +14,7 @@
 " 2024 Aug 05 by Vim Project: clean-up and make it work with shellslash on Windows
 " 2024 Aug 18 by Vim Project: correctly handle special globbing chars
 " 2024 Aug 21 by Vim Project: simplify condition to detect MS-Windows
+" 2025 Mar 11 by Vim Project: handle filenames with leading '-' correctly
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -342,6 +343,11 @@ fun! zip#Extract()
    return
   endif
   let target = fname->substitute('\[', '[[]', 'g')
+  " unzip 6.0 does not support -- to denote end-of-arguments
+  " unzip 6.1 (2010) apparently supports, it, but hasn't been released
+  " so the workaround is to use glob '[-]' so that it won't be considered an argument
+  " else, it would be possible to use 'unzip -o <file.zip> '-d/tmp' to extract the whole archive
+  let target = target->substitute('^-', '[&]', '')
   if &shell =~ 'cmd' && has("win32")
     let target = target
 		\ ->substitute('[?*]', '[&]', 'g')
