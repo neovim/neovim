@@ -382,10 +382,6 @@ describe('ui/ext_messages', function()
     feed('<CR>')
     n.add_builddir_to_rtp()
     feed(':help<CR>:tselect<CR>')
-    local tagfile = t.paths.test_build_dir .. '/runtime/doc/help.txt'
-    if t.is_os('win') then
-      tagfile = tagfile:gsub('/', '\\')
-    end
     screen:expect({
       grid = [[
         ^*help.txt*      Nvim     |
@@ -402,22 +398,21 @@ describe('ui/ext_messages', function()
           prompt = 'Type number and <Enter> (q or empty cancels): ',
         },
       },
-      messages = {
-        {
-          content = {
-            { '  # pri kind tag', 101, 23 },
-            { '\n                        ' },
-            { 'file\n', 101, 23 },
-            { '> 1 F        ' },
-            { 'help.txt', 101, 23 },
-            { ' \n                        ' },
-            { tagfile, 18, 5 },
-            { '\n               *help.txt*\n' },
-          },
-          history = false,
-          kind = 'confirm',
-        },
-      },
+      -- Message depends on runtimepath, only test the static text...
+      condition = function()
+        for _, msg in ipairs(screen.messages) do
+          eq(false, msg.history)
+          eq('confirm', msg.kind)
+          eq({ 150, '  # pri kind tag', 23 }, msg.content[1])
+          eq({ 0, '\n                        ', 0 }, msg.content[2])
+          eq({ 150, 'file\n', 23 }, msg.content[3])
+          eq({ 0, '> 1 F        ', 0 }, msg.content[4])
+          eq({ 150, 'help.txt', 23 }, msg.content[5])
+          eq({ 0, ' \n                        ', 0 }, msg.content[6])
+          eq({ 0, '\n               *help.txt*', 0 }, msg.content[#msg.content])
+        end
+        screen.messages = {}
+      end,
     })
     feed('<CR>:bd<CR>')
 
@@ -1330,7 +1325,7 @@ stack traceback:
       },
       messages = {
         {
-          content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
+          content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"' } },
           history = false,
           kind = 'confirm',
         },
@@ -1353,7 +1348,7 @@ stack traceback:
       },
       messages = {
         {
-          content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
+          content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"' } },
           history = false,
           kind = 'confirm',
         },
@@ -1385,7 +1380,7 @@ stack traceback:
       },
       messages = {
         {
-          content = { { 'input0\ninput1\n' } },
+          content = { { 'input0\ninput1' } },
           history = false,
           kind = 'confirm',
         },

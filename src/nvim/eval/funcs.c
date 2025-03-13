@@ -3563,16 +3563,19 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   msg_scroll = true;
   msg_clr_eos();
 
-  TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
+  list_T *l = argvars[0].vval.v_list;
+  TV_LIST_ITER_CONST(l, li, {
     msg_puts(tv_get_string(TV_LIST_ITEM_TV(li)));
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages) || TV_LIST_ITEM_NEXT(l, li) != NULL) {
+      msg_putchar('\n');
+    }
   });
 
   // Ask for choice.
   bool mouse_used = false;
   int selected = prompt_for_input(NULL, 0, false, &mouse_used);
   if (mouse_used) {
-    selected = tv_list_len(argvars[0].vval.v_list) - (cmdline_row - mouse_row);
+    selected = tv_list_len(l) - (cmdline_row - mouse_row);
   }
 
   rettv->vval.v_number = selected;
