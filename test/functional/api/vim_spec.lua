@@ -5068,15 +5068,16 @@ describe('API', function()
       ]]
       api.nvim_cmd({
         cmd = 'substitute',
-        args = { '/.*/line4/' },
+        addr = 'line',
+        args = { '/.*/foo/' },
         range = { 3, 5, 6, 10 } },
         {})
       expect [[
         line1
         line2
-        line3
-        line4
-        line5
+        line3foo
+        foo
+        fooline5
         line6
       ]]
     end)
