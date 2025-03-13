@@ -792,14 +792,13 @@ int ins_compl_add_infercase(char *str_arg, int len, bool icase, char *fname, Dir
 /// Check if ctrl_x_mode has been configured in 'completefuzzycollect'
 static bool cfc_has_mode(void)
 {
-  switch (ctrl_x_mode) {
-  case CTRL_X_NORMAL:
+  if (ctrl_x_mode_normal() || ctrl_x_mode_dictionary()) {
     return (cfc_flags & kOptCfcFlagKeyword) != 0;
-  case CTRL_X_FILES:
+  } else if (ctrl_x_mode_files()) {
     return (cfc_flags & kOptCfcFlagFiles) != 0;
-  case CTRL_X_WHOLE_LINE:
+  } else if (ctrl_x_mode_whole_line()) {
     return (cfc_flags & kOptCfcFlagWholeLine) != 0;
-  default:
+  } else {
     return false;
   }
 }
@@ -1670,7 +1669,7 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
                             regmatch_T *regmatch, char *buf, Direction *dir)
   FUNC_ATTR_NONNULL_ARG(2, 7)
 {
-  bool in_fuzzy_collect = cfc_has_mode() && ctrl_x_mode_normal();
+  bool in_fuzzy_collect = cfc_has_mode();
 
   char *leader = in_fuzzy_collect ? ins_compl_leader() : NULL;
   int leader_len = in_fuzzy_collect ? (int)ins_compl_leader_len() : 0;
