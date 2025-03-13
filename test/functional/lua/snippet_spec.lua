@@ -26,7 +26,7 @@ describe('vim.snippet', function()
           else
             return key
           end
-        end, { desc = 'vim.snippet.jump if active, otherwise ' .. key, expr = true })
+        end, { silent = true, expr = true })
       end
 
       set_snippet_jump(1, '<Tab>')
