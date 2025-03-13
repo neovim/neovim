@@ -525,12 +525,14 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
 
   if (term->sb_buffer == NULL) {
     // Local 'scrollback' _after_ autocmds.
-    if (buf->b_p_scbk < 1) {
+    if (buf->b_p_scbk < 0) {
       buf->b_p_scbk = SB_MAX;
     }
     // Configure the scrollback buffer.
     term->sb_size = (size_t)buf->b_p_scbk;
-    term->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * term->sb_size);
+    if (term->sb_size) {
+      term->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * term->sb_size);
+    }
   }
 
   // Configure the color palette. Try to get the color from:
@@ -2136,7 +2138,7 @@ void on_scrollback_option_changed(Terminal *term)
 /// Adjusts scrollback storage and the terminal buffer scrollback lines
 static void adjust_scrollback(Terminal *term, buf_T *buf)
 {
-  if (buf->b_p_scbk < 1) {  // Local 'scrollback' was set to -1.
+  if (buf->b_p_scbk < 0) {  // Local 'scrollback' was set to -1.
     buf->b_p_scbk = SB_MAX;
   }
   const size_t scbk = (size_t)buf->b_p_scbk;
@@ -2159,10 +2161,9 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
   // Resize the scrollback storage.
   size_t sb_region = sizeof(ScrollbackLine *) * scbk;
   if (scbk != term->sb_size) {
-    term->sb_buffer = xrealloc(term->sb_buffer, sb_region);
+    term->sb_buffer = scbk ? xrealloc(term->sb_buffer, sb_region) : NULL;
+    term->sb_size = scbk;
   }
-
-  term->sb_size = scbk;
 }
 
 // Refresh the scrollback of an invalidated terminal.
