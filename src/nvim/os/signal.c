@@ -23,12 +23,9 @@
 # include "nvim/memline.h"
 #endif
 
-static SignalWatcher spipe, shup, squit, sterm, susr1, swinch;
+static SignalWatcher spipe, shup, squit, sterm, susr1, swinch, ststp;
 #ifdef SIGPWR
 static SignalWatcher spwr;
-#endif
-#ifdef SIGTSTP
-static SignalWatcher ststp;
 #endif
 
 static bool rejecting_deadly;
@@ -53,9 +50,7 @@ void signal_init(void)
   signal_watcher_init(&main_loop, &shup, NULL);
   signal_watcher_init(&main_loop, &squit, NULL);
   signal_watcher_init(&main_loop, &sterm, NULL);
-#ifdef SIGTSTP
   signal_watcher_init(&main_loop, &ststp, NULL);
-#endif
 #ifdef SIGPWR
   signal_watcher_init(&main_loop, &spwr, NULL);
 #endif
@@ -75,9 +70,7 @@ void signal_teardown(void)
   signal_watcher_close(&shup, NULL);
   signal_watcher_close(&squit, NULL);
   signal_watcher_close(&sterm, NULL);
-#ifdef SIGTSTP
   signal_watcher_close(&ststp, NULL);
-#endif
 #ifdef SIGPWR
   signal_watcher_close(&spwr, NULL);
 #endif
@@ -123,9 +116,7 @@ void signal_stop(void)
   signal_watcher_stop(&squit);
 #endif
   signal_watcher_stop(&sterm);
-#ifdef SIGTSTP
   signal_watcher_stop(&ststp);
-#endif
 #ifdef SIGPWR
   signal_watcher_stop(&spwr);
 #endif
