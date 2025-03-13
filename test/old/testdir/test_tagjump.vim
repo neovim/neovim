@@ -1623,4 +1623,39 @@ func Test_tagbsearch()
   set tags& tagbsearch&
 endfunc
 
+" Test tag guessing with very short names
+func Test_tag_guess_short()
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "y\tXf\t/^y()/"],
+        \ 'Xt', 'D')
+  set tags=Xt cpoptions+=t
+  call writefile(['', 'int * y () {}', ''], 'Xf', 'D')
+
+  let v:statusmsg = ''
+  let @/ = ''
+  ta y
+  call assert_match('E435:', v:statusmsg)
+  call assert_equal(2, line('.'))
+  call assert_match('<y', @/)
+
+  set tags& cpoptions-=t
+endfunc
+
+func Test_tag_excmd_with_nostartofline()
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "f\tXfile\tascii"],
+        \ 'Xtags', 'D')
+  call writefile(['f', 'foobar'], 'Xfile', 'D')
+
+  set nostartofline
+  new Xfile
+  setlocal tags=Xtags
+  normal! G$
+  " This used to cause heap-buffer-overflow
+  tag f
+
+  bwipe!
+  set startofline&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
