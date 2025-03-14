@@ -574,7 +574,7 @@ describe('mappings with <Cmd>', function()
     eq('i', eval('mode(1)'))
 
     -- also works as part of abbreviation
-    feed('<space>foo ')
+    feed(' foo ')
     screen:expect([[
       in bar ^deed some short little lines                              |
       of stuff test text                                               |
