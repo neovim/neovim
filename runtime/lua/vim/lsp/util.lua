@@ -1345,7 +1345,7 @@ local function close_preview_window(winnr, bufnrs)
       return
     end
 
-    local augroup = 'preview_window_' .. winnr
+    local augroup = 'nvim.preview_window_' .. winnr
     pcall(api.nvim_del_augroup_by_name, augroup)
     pcall(api.nvim_win_close, winnr, true)
   end)
