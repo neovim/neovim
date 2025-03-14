@@ -1241,7 +1241,9 @@ describe('vim.lsp.completion: integration', function()
         }
       end)
     )
-    feed('<tab>')
+    exec_lua(function()
+      vim.snippet.jump(1)
+    end)
     eq(
       #'hello friends',
       exec_lua(function()
