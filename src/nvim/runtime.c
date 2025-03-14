@@ -1635,9 +1635,6 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val, const ch
       *dest++ = ',';
     }
   } while (iter != NULL);
-
-  xfree((char *)appname);
-
   return dest;
 }
 
@@ -1700,7 +1697,6 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
         dest += len2;
       }
     }
-    xfree((char *)appname);
   }
   *dest++ = ',';
   return dest;
@@ -1750,8 +1746,7 @@ char *runtimepath_default(bool clean_arg)
   size_t config_len = 0;
   size_t vimruntime_len = 0;
   size_t libdir_len = 0;
-  const char *appname = get_appname(false);
-  size_t appname_len = strlen(appname);
+  size_t appname_len = strlen(get_appname(false));
   if (data_home != NULL) {
     data_len = strlen(data_home);
     size_t nvim_data_size = appname_len;
@@ -1827,7 +1822,6 @@ freeall:
   xfree(config_home);
   xfree(vimruntime);
   xfree(libdir);
-  xfree((char *)appname);
 
   return rtp;
 }

@@ -76,15 +76,16 @@ const char *get_appname(bool namelike)
   if (env_val == NULL || *env_val == NUL) {
     env_val = xstrdup("nvim");
   }
+  xstrlcpy(NameBuff, env_val, sizeof(NameBuff));
+  xfree((char *)env_val);
 
   if (namelike) {
     // Appname may be a relative path, replace slashes to make it name-like.
-    xstrlcpy(NameBuff, env_val, sizeof(NameBuff));
     memchrsub(NameBuff, '/', '-', sizeof(NameBuff));
     memchrsub(NameBuff, '\\', '-', sizeof(NameBuff));
   }
 
-  return env_val;
+  return NameBuff;
 }
 
 /// Ensure that APPNAME is valid. Must be a name or relative path.
@@ -106,8 +107,6 @@ bool appname_is_valid(void)
       || strstr(appname, "../") != NULL) {
     valid = false;
   }
-
-  xfree((char *)appname);
 
   return valid;
 }
@@ -167,7 +166,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
 
 #ifdef MSWIN
   if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
-    env_val = os_getenv(xdg_defaults_env_vars[idx]);    // 'env_val' was NULL, no xfree() is needed
+    env_val = os_getenv(xdg_defaults_env_vars[idx]);
   }
 #else
   if (env_val == NULL && os_env_exists(env)) {
@@ -227,9 +226,6 @@ char *get_xdg_home(const XDGVarType idx)
     slash_adjust(dir);
 #endif
   }
-
-  xfree((char *)appname);
-
   return dir;
 }
 
