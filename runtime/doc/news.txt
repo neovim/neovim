@@ -323,6 +323,7 @@ LUA
   and `vim.fn`.
 • Documentation for |lua-bit|.
 • |vim.fs.rm()| can delete files and directories.
+• |vim.filetype.match()| now takes `fast` option to perform fast detection.
 • |vim.validate()| now has a new signature which uses less tables,
   is more performant and easier to read.
 • |vim.str_byteindex()| and |vim.str_utfindex()| gained overload signatures
@@ -345,6 +346,7 @@ OPTIONS
 
 PERFORMANCE
 
+• |vim.filetype.match()| overall performance is improved.
 • Significantly reduced redraw time for long lines with treesitter
   highlighting.
 • LSP diagnostics and inlay hints are de-duplicated (new requests cancel
