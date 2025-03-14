@@ -41,6 +41,11 @@ jobs:
           wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-aarch64.zip
           (cd "$BIN_DIR"; unzip stylua*.zip)
 
+      - name: Install ts_query_ls
+        run: |
+          wget --directory-prefix="$BIN_DIR" https://github.com/ribru17/ts_query_ls/releases/latest/download/ts_query_ls-aarch64-unknown-linux-gnu.tar.gz
+          (cd "$BIN_DIR"; tar -xzvf ts_query_ls-aarch64-unknown-linux-gnu.tar.gz)
+
       - name: Build third-party deps
         run: |
           cmake -S cmake.deps -B .deps -G Ninja
@@ -68,6 +73,10 @@ jobs:
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh
         run: cmake --build build --target lintsh
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: lintquery
+        run: cmake --build build --target lintquery
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: clint.lua

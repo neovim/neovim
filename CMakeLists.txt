@@ -236,6 +236,8 @@ find_program(SHELLCHECK_PRG shellcheck ${LINT_REQUIRED})
 mark_as_advanced(SHELLCHECK_PRG)
 find_program(STYLUA_PRG stylua ${LINT_REQUIRED})
 mark_as_advanced(STYLUA_PRG)
+find_program(TS_QUERY_LS_PRG ts_query_ls ${LINT_REQUIRED})
+mark_as_advanced(TS_QUERY_LS_PRG)
 
 set(STYLUA_DIRS runtime scripts src test contrib)
 
@@ -277,12 +279,24 @@ add_glob_target(
   GLOB_PAT *.sh
   TOUCH_STRATEGY PER_DIR)
 
+add_custom_target(lintquery-compilation
+  COMMAND ${TS_QUERY_LS_PRG}
+  check ${PROJECT_SOURCE_DIR}/runtime/queries --config
+  '{"parser_install_directories": ["${DEPS_PREFIX}/lib/nvim/parser"]}')
+
+add_custom_target(lintquery-format
+  COMMAND ${TS_QUERY_LS_PRG}
+  format ${PROJECT_SOURCE_DIR}/runtime/queries --check)
+
+add_custom_target(lintquery)
+add_dependencies(lintquery lintquery-compilation lintquery-format)
+
 add_custom_target(lintcommit
   COMMAND $<TARGET_FILE:nvim_bin> --clean -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
 add_dependencies(lintcommit nvim_bin)
 
 add_custom_target(lint)
-add_dependencies(lint lintc lintlua lintsh)
+add_dependencies(lint lintc lintlua lintsh lintquery)
 
 # Format
 add_glob_target(
@@ -301,8 +315,13 @@ add_custom_target(formatlua2
     "${PROJECT_SOURCE_DIR}/test/functional/ui/multigrid_spec.lua"
 )
 add_dependencies(formatlua formatlua2)
+
+add_custom_target(formatquery
+  COMMAND ${TS_QUERY_LS_PRG}
+  format ${PROJECT_SOURCE_DIR}/runtime/queries)
+
 add_custom_target(format)
-add_dependencies(format formatc formatlua)
+add_dependencies(format formatc formatlua formatquery)
 
 install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1

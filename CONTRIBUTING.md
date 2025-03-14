@@ -183,9 +183,11 @@ make lint
 
 - You can format files by using:
   ```bash
-  make format  # or formatc, formatlua
+  make format  # or formatc, formatlua, formatquery
   ```
-  This will format changed Lua and C files with all appropriate flags set.
+  This will format changed C, Lua, and treesitter query files with all
+  appropriate flags set.
+
 - Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
   the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
   ```vim
