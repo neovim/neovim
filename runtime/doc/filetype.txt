@@ -620,6 +620,7 @@ possibilities: >
 
 	:Cycle  " to cycle between the previous commands
 <
+The `:Cycle` command is also mapped to the CTRL-A and CTRL-X keys.
 For details, see `git-rebase --help`.
 
 GO							*ft-go-plugin*
