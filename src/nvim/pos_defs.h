@@ -1,7 +1,6 @@
 #pragma once
 
 #include <inttypes.h>
-#include <stdbool.h>
 
 /// Line number type
 typedef int32_t linenr_T;
@@ -35,10 +34,3 @@ typedef struct {
   linenr_T lnum;        ///< line number
   colnr_T col;          ///< column number
 } lpos_T;
-
-/// for range position in file or buffer
-typedef struct {
-  linenr_T lnum;        ///< line number
-  colnr_T col;          ///< column number
-  bool blockwise;        ///< 'false' if charwise range
-} rpos_T;
