@@ -902,9 +902,9 @@ char *vim_getenv(const char *name)
   }
 #endif
 
-  const char *kos_env_path = os_getenv(name);
+  char *kos_env_path = (char *)os_getenv(name);
   if (kos_env_path != NULL) {
-    return (char *)kos_env_path;
+    return kos_env_path;
   }
 
   bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
@@ -917,13 +917,13 @@ char *vim_getenv(const char *name)
   char *vim_path = NULL;
   if (vimruntime
       && *default_vimruntime_dir == NUL) {
-    kos_env_path = os_getenv("VIM");    // No xfree() needed for kos_env_path, as it must be NULL if we got here
+    kos_env_path = (char *)os_getenv("VIM");    // kos_env_path was NULL.
     if (kos_env_path != NULL) {
       vim_path = vim_version_dir(kos_env_path);
       if (vim_path == NULL) {
         vim_path = xstrdup(kos_env_path);
       }
-      xfree((char *)kos_env_path);
+      xfree(kos_env_path);
     }
   }
 

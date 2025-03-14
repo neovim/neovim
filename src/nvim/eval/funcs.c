@@ -7651,7 +7651,6 @@ static void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
     }
   } while (iter != NULL);
   xfree(dirs);
-  xfree((char *)appname);
 }
 
 /// "stdpath(type)" function

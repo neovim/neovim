@@ -91,7 +91,6 @@ static char tz_cache[64];
 struct tm *os_localtime_r(const time_t *restrict clock,
                           struct tm *restrict result) FUNC_ATTR_NONNULL_ALL
 {
-  bool memfree = false;
 #ifdef UNIX
   // POSIX provides localtime_r() as a thread-safe version of localtime().
   //
@@ -101,9 +100,7 @@ struct tm *os_localtime_r(const time_t *restrict clock,
   // as it does with localtime(), and we don't want to call tzset() every time.
   const char *tz = os_getenv("TZ");
   if (tz == NULL) {
-    tz = "";
-  } else {
-    memfree = true;
+    tz = xstrdup("");
   }
 
   if (strncmp(tz_cache, tz, sizeof(tz_cache) - 1) != 0) {
@@ -111,9 +108,7 @@ struct tm *os_localtime_r(const time_t *restrict clock,
     xstrlcpy(tz_cache, tz, sizeof(tz_cache));
   }
 
-  if (memfree) {
-    xfree((char *)tz);
-  }
+  xfree((char *)tz);
 
   return localtime_r(clock, result);  // NOLINT(runtime/threadsafe_fn)
 #else
