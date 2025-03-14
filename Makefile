@@ -144,8 +144,8 @@ test/old/testdir/%.vim: phony_force nvim
 functionaltest-lua: | nvim
 	$(CMAKE) --build build --target functionaltest
 
-FORMAT=formatc formatlua format
-LINT=lintlua lintsh lintc clang-analyzer lintcommit lintdoc lintdocurls lint luals
+FORMAT=formatc formatlua formatquery format
+LINT=lintlua lintsh lintc clang-analyzer lintcommit lintdoc lintdocurls lint luals lintquery
 TEST=functionaltest unittest
 generated-sources benchmark $(FORMAT) $(LINT) $(TEST) doc: | build/.ran-cmake
 	$(CMAKE) --build build --target $@
