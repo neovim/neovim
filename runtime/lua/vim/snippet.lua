@@ -306,7 +306,7 @@ function Session:set_group_gravity(index, right_gravity)
   end
 end
 
-local M = { session = nil }
+local M = { _sessions = {} }
 
 --- Displays the choices for the given tabstop as completion items.
 ---
@@ -397,7 +397,7 @@ local function setup_autocmds(bufnr)
       local cursor_row, cursor_col = cursor_pos()
 
       -- The cursor left the snippet region.
-      local snippet_range = get_extmark_range(bufnr, M._session.extmark_id)
+      local snippet_range = get_extmark_range(bufnr, M._current_session.extmark_id)
       if
         cursor_row < snippet_range[1]
         or (cursor_row == snippet_range[1] and cursor_col < snippet_range[2])
@@ -408,7 +408,7 @@ local function setup_autocmds(bufnr)
         return true
       end
 
-      for tabstop_index, tabstops in pairs(M._session.tabstops) do
+      for tabstop_index, tabstops in pairs(M._current_session.tabstops) do
         for _, tabstop in ipairs(tabstops) do
           local range = tabstop:get_range()
           if
@@ -434,7 +434,7 @@ local function setup_autocmds(bufnr)
     buffer = bufnr,
     callback = function()
       -- Check that the snippet hasn't been deleted.
-      local snippet_range = get_extmark_range(M._session.bufnr, M._session.extmark_id)
+      local snippet_range = get_extmark_range(M._current_session.bufnr, M._current_session.extmark_id)
       if
         (snippet_range[1] == snippet_range[3] and snippet_range[2] == snippet_range[4])
         or snippet_range[3] + 1 > vim.fn.line('$')
@@ -447,9 +447,9 @@ local function setup_autocmds(bufnr)
       end
 
       -- Sync the tabstops in the current group.
-      local current_tabstop = M._session.current_tabstop
+      local current_tabstop = M._current_session.current_tabstop
       local current_text = current_tabstop:get_text()
-      for _, tabstop in ipairs(M._session.tabstops[current_tabstop.index]) do
+      for _, tabstop in ipairs(M._current_session.tabstops[current_tabstop.index]) do
         if tabstop.extmark_id ~= current_tabstop.extmark_id then
           tabstop:set_text(current_text)
         end
@@ -594,7 +594,8 @@ function M.expand(input)
     right_gravity = false,
     end_right_gravity = true,
   })
-  M._session = Session.new(bufnr, snippet_extmark, tabstop_data)
+  M._current_session = Session.new(bufnr, snippet_extmark, tabstop_data)
+  table.insert(M._sessions, M._current_session)
 
   -- Jump to the first tabstop.
   M.jump(1)
@@ -619,13 +620,13 @@ end
 --- @param direction (vim.snippet.Direction) Navigation direction. -1 for previous, 1 for next.
 function M.jump(direction)
   -- Get the tabstop index to jump to.
-  local dest_index = M._session and M._session:get_dest_index(direction)
+  local dest_index = M._current_session and M._current_session:get_dest_index(direction)
   if not dest_index then
     return
   end
 
   -- Find the tabstop with the lowest range.
-  local tabstops = M._session.tabstops[dest_index]
+  local tabstops = M._current_session.tabstops[dest_index]
   local dest = tabstops[1]
   for _, tabstop in ipairs(tabstops) do
     local dest_range, range = dest:get_range(), tabstop:get_range()
@@ -635,19 +636,19 @@ function M.jump(direction)
   end
 
   -- Clear the autocommands so that we can move the cursor freely while selecting the tabstop.
-  vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
+  vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._current_session.bufnr })
 
   -- Deactivate expansion of the current tabstop.
-  M._session:set_group_gravity(M._session.current_tabstop.index, true)
+  M._current_session:set_group_gravity(M._current_session.current_tabstop.index, true)
 
-  M._session.current_tabstop = dest
+  M._current_session.current_tabstop = dest
   select_tabstop(dest)
 
   -- Activate expansion of the destination tabstop.
-  M._session:set_group_gravity(dest.index, false)
+  M._current_session:set_group_gravity(dest.index, false)
 
   -- Restore the autocommands.
-  setup_autocmds(M._session.bufnr)
+  setup_autocmds(M._current_session.bufnr)
 end
 
 --- @class vim.snippet.ActiveFilter
@@ -673,11 +674,11 @@ end
 --- can be jumped in the given direction.
 --- @return boolean
 function M.active(filter)
-  local active = M._session ~= nil and M._session.bufnr == vim.api.nvim_get_current_buf()
+  local active = M._current_session ~= nil and M._current_session.bufnr == vim.api.nvim_get_current_buf()
 
   local in_direction = true
   if active and filter and filter.direction then
-    in_direction = M._session:get_dest_index(filter.direction) ~= nil
+    in_direction = M._current_session:get_dest_index(filter.direction) ~= nil
   end
 
   return active and in_direction
@@ -689,12 +690,15 @@ function M.stop()
     return
   end
 
-  M._session:restore_keymaps()
+  if #M._sessions == 1 then
+    M._current_session:restore_keymaps()
 
-  vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
-  vim.api.nvim_buf_clear_namespace(M._session.bufnr, snippet_ns, 0, -1)
+    vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._current_session.bufnr })
+    vim.api.nvim_buf_clear_namespace(M._current_session.bufnr, snippet_ns, 0, -1)
+  end
 
-  M._session = nil
+  table.remove(M._sessions)
+  M._current_session = #M._sessions > 0 and M._sessions[#M._sessions] or nil
 end
 
 return M
