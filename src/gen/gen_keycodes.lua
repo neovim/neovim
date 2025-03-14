@@ -5,34 +5,33 @@ local keycodes = require('nvim.keycodes')
 
 local keycode_names = keycodes.names
 
---- @type table<string,integer>
+local hashorder = {} --- @type string[]
+
+--- @type table<string,integer[]>
 --- Maps lower-case key names to their original indexes.
+--- When multiple keys have the same name (e.g. TAB and K_TAB),
+--- the name will have multiple original indexes.
 local name_orig_idx = {}
 
 --- @type table<string,integer>
 --- Maps keys to the original indexes of their preferred names.
 local key_orig_idx = {}
 
---- @type [string, string][]
---- When multiple keys have the same name (e.g. TAB and K_TAB), only the first one
---- is added to the two tables above, and the other keys are added here.
-local extra_keys = {}
-
 for i, keycode in ipairs(keycode_names) do
   local key = keycode[1]
   local name = keycode[2]
   local name_lower = name:lower()
+  table.insert(hashorder, name_lower)
   if name_orig_idx[name_lower] == nil then
-    name_orig_idx[name_lower] = i
-    if key_orig_idx[key] == nil then
-      key_orig_idx[key] = i
-    end
+    name_orig_idx[name_lower] = { i }
   else
-    table.insert(extra_keys, keycode)
+    table.insert(name_orig_idx[name_lower], i)
+  end
+  if key_orig_idx[key] == nil then
+    key_orig_idx[key] = i
   end
 end
 
-local hashorder = vim.tbl_keys(name_orig_idx)
 table.sort(hashorder)
 local hashfun
 hashorder, hashfun = hashy.hashy_hash('get_special_key_code', hashorder, function(idx)
@@ -43,13 +42,16 @@ end, true)
 --- Maps keys to the (after hash) indexes of the entries with preferred names.
 local key_hash_idx = {}
 
+local name_orig_idx_ = vim.deepcopy(name_orig_idx)
 for i, lower_name in ipairs(hashorder) do
-  local orig_idx = name_orig_idx[lower_name]
-  local key = keycode_names[orig_idx][1]
+  local orig_idx = table.remove(name_orig_idx_[lower_name], 1)
+  local keycode = keycode_names[orig_idx]
+  local key = keycode[1]
   if key_orig_idx[key] == orig_idx then
     key_hash_idx[key] = i
   end
 end
+assert(vim.iter(vim.tbl_values(name_orig_idx_)):all(vim.tbl_isempty))
 
 local names_tgt = assert(io.open(names_file, 'w'))
 names_tgt:write([[
@@ -60,8 +62,10 @@ static const struct key_name_entry {
                             ///< (may be NULL or point to the name in another entry)
 } key_names_table[] = {]])
 
+name_orig_idx_ = vim.deepcopy(name_orig_idx)
 for i, lower_name in ipairs(hashorder) do
-  local keycode = keycode_names[name_orig_idx[lower_name]]
+  local orig_idx = table.remove(name_orig_idx_[lower_name], 1)
+  local keycode = keycode_names[orig_idx]
   local key = keycode[1]
   local name = keycode[2]
   local pref_idx = key_hash_idx[key]
@@ -74,12 +78,7 @@ for i, lower_name in ipairs(hashorder) do
     )
   )
 end
-
-for _, keycode in ipairs(extra_keys) do
-  local key = keycode[1]
-  local name = keycode[2]
-  names_tgt:write(('\n  {%s, {"%s", %u}, NULL},'):format(key, name, #name))
-end
+assert(vim.iter(vim.tbl_values(name_orig_idx_)):all(vim.tbl_isempty))
 
 names_tgt:write('\n};\n\n')
 names_tgt:write('static ' .. hashfun)
