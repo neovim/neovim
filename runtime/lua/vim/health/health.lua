@@ -110,6 +110,16 @@ local function check_config()
     )
   end
 
+  if vim.g.loaded_python3_provider and vim.g.loaded_python3_provider == 1 then
+    ok = false
+    health.error(
+      '`g:loaded_python3_provider=1` may have been set by mistake. This option should not be used to load python provider in your config.',
+      {
+        'Remove the line `vim.g.loaded_python3_provider=1` from your config or comment it out.',
+      }
+    )
+  end
+
   local writeable = true
   local shadaopt = vim.fn.split(vim.o.shada, ',')
   local shadafile = (
