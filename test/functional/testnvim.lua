@@ -620,6 +620,8 @@ function M.insert(...)
   nvim_feed('<ESC>')
 end
 
+--- @deprecated Use `command()` or `feed()` instead.
+---
 --- Executes an ex-command by user input. Because nvim_input() is used, Vimscript
 --- errors will not manifest as client (lua) errors. Use command() for that.
 --- @param ... string

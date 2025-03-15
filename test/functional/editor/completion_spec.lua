@@ -4,8 +4,8 @@ local Screen = require('test.functional.ui.screen')
 
 local assert_alive = n.assert_alive
 local clear, feed = n.clear, n.feed
-local eval, eq, neq, ok = n.eval, t.eq, t.neq, t.ok
-local feed_command, source, expect = n.feed_command, n.source, n.expect
+local eval, eq, ok = n.eval, t.eq, t.ok
+local source, expect = n.source, n.expect
 local fn = n.fn
 local command = n.command
 local api = n.api
@@ -17,6 +17,11 @@ describe('completion', function()
 
   before_each(function()
     clear()
+    source([[
+      set completeopt-=noselect
+      " Avoid tags completion (if running test locally).
+      set complete-=t
+    ]])
     screen = Screen.new(60, 8)
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Gray0, background = Screen.colors.Yellow },
@@ -57,29 +62,12 @@ describe('completion', function()
     it('is readonly', function()
       screen:try_resize(80, 8)
       feed('ifoo<ESC>o<C-x><C-n><ESC>')
-      feed_command('let v:completed_item.word = "bar"')
-      neq(nil, string.find(eval('v:errmsg'), '^E46: '))
-      feed_command('let v:errmsg = ""')
-
-      feed_command('let v:completed_item.abbr = "bar"')
-      neq(nil, string.find(eval('v:errmsg'), '^E46: '))
-      feed_command('let v:errmsg = ""')
-
-      feed_command('let v:completed_item.menu = "bar"')
-      neq(nil, string.find(eval('v:errmsg'), '^E46: '))
-      feed_command('let v:errmsg = ""')
-
-      feed_command('let v:completed_item.info = "bar"')
-      neq(nil, string.find(eval('v:errmsg'), '^E46: '))
-      feed_command('let v:errmsg = ""')
-
-      feed_command('let v:completed_item.kind = "bar"')
-      neq(nil, string.find(eval('v:errmsg'), '^E46: '))
-      feed_command('let v:errmsg = ""')
-
-      feed_command('let v:completed_item.user_data = "bar"')
-      neq(nil, string.find(eval('v:errmsg'), '^E46: '))
-      feed_command('let v:errmsg = ""')
+      t.matches('E46%: ', t.pcall_err(command, 'let v:completed_item.word = "bar"'))
+      t.matches('E46%: ', t.pcall_err(command, 'let v:completed_item.abbr = "bar"'))
+      t.matches('E46%: ', t.pcall_err(command, 'let v:completed_item.menu = "bar"'))
+      t.matches('E46%: ', t.pcall_err(command, 'let v:completed_item.info = "bar"'))
+      t.matches('E46%: ', t.pcall_err(command, 'let v:completed_item.kind = "bar"'))
+      t.matches('E46%: ', t.pcall_err(command, 'let v:completed_item.user_data = "bar"'))
     end)
     it('returns expected dict in omni completion', function()
       source([[
@@ -122,7 +110,7 @@ describe('completion', function()
     end)
 
     it('inserts the first candidate if default', function()
-      feed_command('set completeopt+=menuone')
+      command('set completeopt+=menuone')
       feed('ifoo<ESC>o')
       screen:expect([[
         foo                                                         |
@@ -160,7 +148,7 @@ describe('completion', function()
       eq('foo', eval('getline(3)'))
     end)
     it('selects the first candidate if noinsert', function()
-      feed_command('set completeopt+=menuone,noinsert')
+      command('set completeopt+=menuone,noinsert')
       feed('ifoo<ESC>o<C-x><C-n>')
       screen:expect([[
         foo                                                         |
@@ -190,7 +178,7 @@ describe('completion', function()
       eq('foo', eval('getline(3)'))
     end)
     it('does not insert the first candidate if noselect', function()
-      feed_command('set completeopt+=menuone,noselect')
+      command('set completeopt+=menuone,noselect')
       feed('ifoo<ESC>o<C-x><C-n>')
       screen:expect([[
         foo                                                         |
@@ -221,7 +209,7 @@ describe('completion', function()
       eq('bar', eval('getline(3)'))
     end)
     it('does not select/insert the first candidate if noselect and noinsert', function()
-      feed_command('set completeopt+=menuone,noselect,noinsert')
+      command('set completeopt+=menuone,noselect,noinsert')
       feed('ifoo<ESC>o<C-x><C-n>')
       screen:expect([[
         foo                                                         |
@@ -258,14 +246,14 @@ describe('completion', function()
       eq('', eval('getline(3)'))
     end)
     it('does not change modified state if noinsert', function()
-      feed_command('set completeopt+=menuone,noinsert')
-      feed_command('setlocal nomodified')
+      command('set completeopt+=menuone,noinsert')
+      command('setlocal nomodified')
       feed('i<C-r>=TestComplete()<CR><ESC>')
       eq(0, eval('&l:modified'))
     end)
     it('does not change modified state if noselect', function()
-      feed_command('set completeopt+=menuone,noselect')
-      feed_command('setlocal nomodified')
+      command('set completeopt+=menuone,noselect')
+      command('setlocal nomodified')
       feed('i<C-r>=TestComplete()<CR><ESC>')
       eq(0, eval('&l:modified'))
     end)
@@ -279,8 +267,8 @@ describe('completion', function()
         return ''
       endfunction
       ]])
-      feed_command('set completeopt+=noselect,noinsert')
-      feed_command('inoremap <right> <c-r>=TestComplete()<cr>')
+      command('set completeopt+=noselect,noinsert')
+      command('inoremap <right> <c-r>=TestComplete()<cr>')
     end)
 
     local tests = {
@@ -534,7 +522,7 @@ describe('completion', function()
         return ''
       endfunction
       ]])
-      feed_command('set completeopt=menuone,noselect')
+      command('set completeopt=menuone,noselect')
     end)
 
     it('works', function()
@@ -792,7 +780,7 @@ describe('completion', function()
   end)
 
   it('disables folding during completion', function()
-    feed_command('set foldmethod=indent')
+    command('set foldmethod=indent')
     feed('i<Tab>foo<CR><Tab>bar<Esc>gg')
     screen:expect([[
               ^foo                                                 |
@@ -811,7 +799,7 @@ describe('completion', function()
   end)
 
   it('popupmenu is not interrupted by events', function()
-    feed_command('set complete=.')
+    command('set complete=.')
 
     feed('ifoobar fooegg<cr>f<c-p>')
     screen:expect([[
@@ -1027,8 +1015,8 @@ describe('completion', function()
   end)
 
   it("'ignorecase' 'infercase' CTRL-X CTRL-N #6451", function()
-    feed_command('set ignorecase infercase')
-    feed_command('edit runtime/doc/credits.txt')
+    command('set ignorecase infercase')
+    command('edit runtime/doc/credits.txt')
     feed('oX<C-X><C-N>')
     screen:expect {
       grid = [[
