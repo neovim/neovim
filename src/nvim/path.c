@@ -627,7 +627,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
 
   // Make room for file name.  When doing encoding conversion the actual
   // length may be quite a bit longer, thus use the maximum possible length.
-  const size_t buflen = MAXPATHL;
+  const size_t buflen = strlen(path) + MAXPATHL;
   char *buf = xmalloc(buflen);
 
   // Find the first part in the path name that contains a wildcard.
@@ -740,7 +740,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
                   && path_fnamencmp(path + (s - buf), name, (size_t)(e - s)) == 0))) {
-        STRCPY(s, name);
+        xstrlcpy(s, name, buflen - (size_t)(s - buf));
         len = strlen(buf);
 
         if (starstar && stardepth < 100) {
