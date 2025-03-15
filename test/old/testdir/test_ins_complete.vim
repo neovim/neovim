@@ -2998,53 +2998,55 @@ function Test_completeopt_preinsert()
   endfunc
   set omnifunc=Omni_test
   set completeopt=menu,menuone,preinsert
+  func GetLine()
+    let g:line = getline('.')
+    let g:col = col('.')
+  endfunc
 
   new
-  call feedkeys("S\<C-X>\<C-O>f", 'tx')
-  call assert_equal("fobar", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
+  inoremap <buffer><F5> <C-R>=GetLine()<CR>
+  call feedkeys("S\<C-X>\<C-O>f\<F5>\<ESC>", 'tx')
+  call assert_equal("fobar", g:line)
+  call assert_equal(2, g:col)
 
-  call feedkeys("S\<C-X>\<C-O>foo", 'tx')
-  call assert_equal("foobar", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
+  call feedkeys("S\<C-X>\<C-O>foo\<F5><ESC>", 'tx')
+  call assert_equal("foobar", g:line)
 
   call feedkeys("S\<C-X>\<C-O>foo\<BS>\<BS>\<BS>", 'tx')
   call assert_equal("", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
 
   " delete a character and input new leader
-  call feedkeys("S\<C-X>\<C-O>foo\<BS>b", 'tx')
-  call assert_equal("fobar", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
+  call feedkeys("S\<C-X>\<C-O>foo\<BS>b\<F5>\<ESC>", 'tx')
+  call assert_equal("fobar", g:line)
+  call assert_equal(4, g:col)
 
   " delete preinsert when prepare completion
   call feedkeys("S\<C-X>\<C-O>f\<Space>", 'tx')
   call assert_equal("f ", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
 
-  call feedkeys("S\<C-X>\<C-O>你", 'tx')
-  call assert_equal("你的", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
+  call feedkeys("S\<C-X>\<C-O>你\<F5>\<ESC>", 'tx')
+  call assert_equal("你的", g:line)
+  call assert_equal(4, g:col)
 
-  call feedkeys("S\<C-X>\<C-O>你好", 'tx')
-  call assert_equal("你好世界", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
+  call feedkeys("S\<C-X>\<C-O>你好\<F5>\<ESC>", 'tx')
+  call assert_equal("你好世界", g:line)
+  call assert_equal(7, g:col)
 
-  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>f", 'tx')
-  call assert_equal("hello  fobar wo", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>f\<F5>\<ESC>", 'tx')
+  call assert_equal("hello  fobar wo", g:line)
+  call assert_equal(9, g:col)
 
-  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>f\<BS>", 'tx')
-  call assert_equal("hello   wo", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>f\<BS>\<F5>\<ESC>", 'tx')
+  call assert_equal("hello   wo", g:line)
+  call assert_equal(8, g:col)
 
-  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>foo", 'tx')
-  call assert_equal("hello  foobar wo", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>foo\<F5>\<ESC>", 'tx')
+  call assert_equal("hello  foobar wo", g:line)
+  call assert_equal(11, g:col)
 
-  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>foo\<BS>b", 'tx')
-  call assert_equal("hello  fobar wo", getline('.'))
-  call feedkeys("\<C-E>\<ESC>", 'tx')
+  call feedkeys("Shello   wo\<Left>\<Left>\<Left>\<C-X>\<C-O>foo\<BS>b\<F5>\<ESC>", 'tx')
+  call assert_equal("hello  fobar wo", g:line)
+  call assert_equal(11, g:col)
 
   " confirm
   call feedkeys("S\<C-X>\<C-O>f\<C-Y>", 'tx')
@@ -3056,9 +3058,9 @@ function Test_completeopt_preinsert()
   call assert_equal("fo", getline('.'))
   call assert_equal(2, col('.'))
 
-  call feedkeys("S hello hero\<CR>h\<C-X>\<C-N>", 'tx')
-  call assert_equal("hello", getline('.'))
-  call assert_equal(1, col('.'))
+  call feedkeys("S hello hero\<CR>h\<C-X>\<C-N>\<F5>\<ESC>", 'tx')
+  call assert_equal("hello", g:line)
+  call assert_equal(2, col('.'))
 
   call feedkeys("Sh\<C-X>\<C-N>\<C-Y>", 'tx')
   call assert_equal("hello", getline('.'))
@@ -3078,17 +3080,17 @@ function Test_completeopt_preinsert()
   call assert_equal(1, col('.'))
 
   " whole line
-  call feedkeys("Shello hero\<CR>\<C-X>\<C-L>", 'tx')
-  call assert_equal("hello hero", getline('.'))
-  call assert_equal(1, col('.'))
+  call feedkeys("Shello hero\<CR>\<C-X>\<C-L>\<F5>\<ESC>", 'tx')
+  call assert_equal("hello hero", g:line)
+  call assert_equal(1, g:col)
 
-  call feedkeys("Shello hero\<CR>he\<C-X>\<C-L>", 'tx')
-  call assert_equal("hello hero", getline('.'))
-  call assert_equal(2, col('.'))
+  call feedkeys("Shello hero\<CR>he\<C-X>\<C-L>\<F5>\<ESC>", 'tx')
+  call assert_equal("hello hero", g:line)
+  call assert_equal(3, g:col)
 
-  call feedkeys("Shello hero\<CR>h\<C-X>\<C-N>er", 'tx')
-  call assert_equal("hero", getline('.'))
-  call assert_equal(3, col('.'))
+  call feedkeys("Shello hero\<CR>h\<C-X>\<C-N>er\<F5>\<ESC>", 'tx')
+  call assert_equal("hero", g:line)
+  call assert_equal(4, g:col)
 
   " can not work with fuzzy
   set cot+=fuzzy
@@ -3098,13 +3100,13 @@ function Test_completeopt_preinsert()
 
   " test for fuzzy and noinsert
   set cot+=noinsert
-  call feedkeys("S\<C-X>\<C-O>fb", 'tx')
-  call assert_equal("fb", getline('.'))
-  call assert_equal(2, col('.'))
+  call feedkeys("S\<C-X>\<C-O>fb\<F5>\<ESC>", 'tx')
+  call assert_equal("fb", g:line)
+  call assert_equal(3, g:col)
 
-  call feedkeys("S\<C-X>\<C-O>你", 'tx')
-  call assert_equal("你", getline('.'))
-  call assert_equal(1, col('.'))
+  call feedkeys("S\<C-X>\<C-O>你\<F5>\<ESC>", 'tx')
+  call assert_equal("你", g:line)
+  call assert_equal(4, g:col)
 
   call feedkeys("S\<C-X>\<C-O>fb\<C-Y>", 'tx')
   call assert_equal("fobar", getline('.'))
@@ -3117,9 +3119,15 @@ function Test_completeopt_preinsert()
   call assert_equal(7, col('.'))
 
   set cot=preinsert,menuone
-  call feedkeys("Sfoo1 foo2\<CR>f\<C-X>\<C-N>", 'tx')
-  call assert_equal("foo1", getline('.'))
-  call assert_equal(1, col('.'))
+  call feedkeys("Sfoo1 foo2\<CR>f\<C-X>\<C-N>\<F5>\<ESC>", 'tx')
+  call assert_equal("foo1", g:line)
+  call assert_equal(2, g:col)
+
+  inoremap <buffer> <f3> <cmd>call complete(4, [{'word': "fobar"}, {'word': "foobar"}])<CR>
+  call feedkeys("Swp.\<F3>\<F5>\<BS>\<ESC>", 'tx')
+  call assert_equal("wp.fobar", g:line)
+  call assert_equal(4, g:col)
+  call assert_equal("wp.", getline('.'))
 
   bw!
   set cot&
