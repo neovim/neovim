@@ -1,12 +1,14 @@
 " Vim plugin for showing matching parens
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Mar 08
+" Last Change:	2025 Mar 14
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Exit quickly when:
 " - this plugin was already loaded (or disabled)
 " - when 'compatible' is set
-if exists("g:loaded_matchparen") || &cp
+" - Vim has no support for :defer
+if exists("g:loaded_matchparen") || &cp ||
+      \ exists(":defer") != 2
   finish
 endif
 let g:loaded_matchparen = 1
@@ -21,17 +23,13 @@ if !exists("g:matchparen_disable_cursor_hl")
   let g:matchparen_disable_cursor_hl = 0
 endif
 
-let s:has_matchaddpos = exists('*matchaddpos')
-
 augroup matchparen
   " Replace all matchparen autocommands
   autocmd! CursorMoved,CursorMovedI,WinEnter,WinScrolled * call s:Highlight_Matching_Pair()
   autocmd! BufWinEnter * autocmd SafeState * ++once call s:Highlight_Matching_Pair()
   autocmd! WinLeave,BufLeave * call s:Remove_Matches()
-  if exists('##TextChanged')
-    autocmd! TextChanged,TextChangedI * call s:Highlight_Matching_Pair()
-    autocmd! TextChangedP * call s:Remove_Matches()
-  endif
+  autocmd! TextChanged,TextChangedI * call s:Highlight_Matching_Pair()
+  autocmd! TextChangedP * call s:Remove_Matches()
 augroup END
 
 " Skip the rest if it was already done.
@@ -97,14 +95,9 @@ func s:Highlight_Matching_Pair()
   " Find the match.  When it was just before the cursor move it there for a
   " moment.
   if before > 0
-    let has_getcurpos = exists("*getcurpos")
-    if has_getcurpos
-      " getcurpos() is more efficient but doesn't exist before 7.4.313.
-      let save_cursor = getcurpos()
-    else
-      let save_cursor = winsaveview()
-    endif
+    let save_cursor = getcurpos()
     call cursor(c_lnum, c_col - before)
+    defer setpos('.', save_cursor)
   endif
 
   if !has("syntax") || !exists("g:syntax_on")
@@ -196,30 +189,12 @@ func s:Highlight_Matching_Pair()
     let [m_lnum, m_col] = searchpairpos(c, '', c2, s_flags, s_skip, stopline)
   endtry
 
-  if before > 0
-    if has_getcurpos
-      call setpos('.', save_cursor)
-    else
-      call winrestview(save_cursor)
-    endif
-  endif
-
   " If a match is found setup match highlighting.
-  if m_lnum > 0 && m_lnum >= stoplinetop && m_lnum <= stoplinebottom 
-    if s:has_matchaddpos
-      if !g:matchparen_disable_cursor_hl
-        call add(w:matchparen_ids, matchaddpos('MatchParen', [[c_lnum, c_col - before], [m_lnum, m_col]], 10))
-      else
-        call add(w:matchparen_ids, matchaddpos('MatchParen', [[m_lnum, m_col]], 10))
-      endif
+  if m_lnum > 0 && m_lnum >= stoplinetop && m_lnum <= stoplinebottom
+    if !g:matchparen_disable_cursor_hl
+      call add(w:matchparen_ids, matchaddpos('MatchParen', [[c_lnum, c_col - before], [m_lnum, m_col]], 10))
     else
-      if !g:matchparen_disable_cursor_hl
-        exe '3match MatchParen /\(\%' . c_lnum . 'l\%' . (c_col - before) .
-              \ 'c\)\|\(\%' . m_lnum . 'l\%' . m_col . 'c\)/'
-      else
-        exe '3match MatchParen /\(\%' . m_lnum . 'l\%' . m_col . 'c\)/'
-      endif
-      call add(w:matchparen_ids, 3)
+      call add(w:matchparen_ids, matchaddpos('MatchParen', [[m_lnum, m_col]], 10))
     endif
     let w:paren_hl_on = 1
   endif
