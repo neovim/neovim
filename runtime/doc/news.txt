@@ -243,8 +243,8 @@ DEFAULTS
     • |[<Space>|, |]<Space>| add an empty line above and below the cursor
 
 • Options:
-  • Lua |ftplugin| sets 'omnifunc' to `"v:lua.vim.lua_omnifunc"`.
-  • Lua |ftplugin| sets 'foldexpr' to `"v:lua.vim.treesitter.foldexpr()"`.
+  • Lua |ftplugin| sets 'omnifunc' to "v:lua.vim.lua_omnifunc".
+  • Lua |ftplugin| sets 'foldexpr' to "v:lua.vim.treesitter.foldexpr()".
 
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`
