@@ -1311,7 +1311,7 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    it('with preview-window above and tall and inverted', function()
+    it('with preview-window above, tall and inverted', function()
       feed(':ped<CR><c-w>8+')
       feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
       feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -1392,7 +1392,7 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    it('with preview-window above and short and inverted', function()
+    it('with preview-window above, short and inverted', function()
       feed(':ped<CR><c-w>4+')
       feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
       feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -1468,7 +1468,7 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    it('with preview-window below and inverted', function()
+    it('with preview-window below, inverted', function()
       feed(':ped<CR><c-w>4+<c-w>r')
       feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
       feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -1716,7 +1716,7 @@ describe('builtin popupmenu', function()
           return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
         endfunc
         set omnifunc=Omni_test
-        set completeopt+=longest
+        set completeopt-=popup completeopt+=longest,preview
       ]])
       feed('Gi<C-X><C-O>')
       if multigrid then
@@ -1850,7 +1850,7 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    describe('floating window preview popup', function()
+    describe('completeopt=popup shows preview in floatwin', function()
       before_each(function()
         --row must > 10
         screen:try_resize(40, 11)
@@ -2264,7 +2264,7 @@ describe('builtin popupmenu', function()
         feed('<C-E><ESC>')
       end)
 
-      it('popup preview place in left', function()
+      it('popup preview placed to left', function()
         insert(('test'):rep(5))
         feed('i<C-x><C-o>')
         if multigrid then
@@ -7258,6 +7258,7 @@ describe('builtin popupmenu', function()
             endif
             return [#{word: "foo", info: "info"}, #{word: "bar"}, #{word: "你好"}]
           endfunc
+          set completeopt-=popup completeopt+=preview
           set omnifunc=Omni_test
           hi ComplMatchIns guifg=red
         ]])
@@ -7374,6 +7375,9 @@ describe('builtin popupmenu', function()
             endif
             return [#{word: "foo"}, #{word: "bar"}, #{word: "你好"}]
           endfunc
+          set completeopt-=popup completeopt+=preview
+          " Avoid unwanted results in case local workspace has a "tags" file.
+          set complete-=t
           set omnifunc=Omni_test
           hi Normal guibg=blue
           hi CursorLine guibg=green guifg=white
@@ -7437,7 +7441,7 @@ describe('builtin popupmenu', function()
         feed('<Esc>')
 
         -- Does not highlight the compl leader
-        command('set cot+=menuone,noselect')
+        command('set completeopt+=menuone,noselect')
         feed('S<C-X><C-O>')
         local pum_start = [[
           {10:^                                }|
@@ -7457,7 +7461,7 @@ describe('builtin popupmenu', function()
         ]])
         feed('<C-E><ESC>')
 
-        command('set cot+=fuzzy')
+        command('set completeopt+=fuzzy')
         feed('S<C-X><C-O>')
         screen:expect(pum_start)
         feed('f<C-N>')
@@ -7469,7 +7473,7 @@ describe('builtin popupmenu', function()
         ]])
         feed('<C-E><Esc>')
 
-        command('set cot-=fuzzy')
+        command('set completeopt-=fuzzy')
         feed('Sf<C-N>')
         screen:expect([[
           {10:f^                               }|
