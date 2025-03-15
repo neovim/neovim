@@ -1506,6 +1506,11 @@ both major engines implemented element, even if this is not in standards it
 will be suggested. All other elements are not placed in suggestion list.
 
 
+LUA                                                     *ft-lua-omni*
+
+Lua |ftplugin| sets 'omnifunc' to |vim.lua_omnifunc()|.
+
+
 PHP							*ft-php-omni*
 
 Completion of PHP code requires a tags file for completion of data from

@@ -246,6 +246,10 @@ DEFAULTS
   • 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
     |terminal| buffers. |terminal-config| shows how to change these defaults.
 
+• Options:
+  • Lua |ftplugin| sets 'omnifunc' to "v:lua.vim.lua_omnifunc".
+  • Lua |ftplugin| sets 'foldexpr' to "v:lua.vim.treesitter.foldexpr()".
+
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`
     when a snippet is active and jumpable forwards.
