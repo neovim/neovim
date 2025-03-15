@@ -242,6 +242,7 @@ DEFAULTS
     OSC 133 sequences ("shell integration" or "semantic prompts").
 
 • Options:
+  • 'completeopt' defaults to "menu,noselect,popup".
   • 'diffopt' default includes "linematch:40".
   • 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
     |terminal| buffers. |terminal-config| shows how to change these defaults.

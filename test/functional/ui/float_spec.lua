@@ -27,6 +27,7 @@ describe('float window', function()
   before_each(function()
     clear()
     command('hi VertSplit gui=reverse')
+    command('set completeopt-=noselect')
   end)
 
   it('behavior', function()
