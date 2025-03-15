@@ -859,10 +859,10 @@ void ui_ext_win_position(win_T *wp, bool validate)
       }
     } else {
       bool valid = (wp->w_redr_type == 0);
-      if (!valid && !validate) {
-        wp->w_pos_changed = true;
-        return;
-      }
+      // if (!valid && !validate) {
+      //   wp->w_pos_changed = true;
+      //   return;
+      // }
       // TODO(bfredl): ideally, compositor should work like any multigrid UI
       // and use standard win_pos events.
       bool east = c.anchor & kFloatAnchorEast;
@@ -921,22 +921,26 @@ void ui_ext_win_viewport(win_T *wp)
     last_botline = MIN(last_botline, line_count);
     if (cur_topline < last_topline
         || (cur_topline == last_topline && wp->w_skipcol < last_skipcol)) {
+      int64_t vcole = last_skipcol;
+      linenr_T lnume = last_topline;
       if (last_topline > 0 && cur_botline < last_topline) {
         // Scrolling too many lines: only give an approximate "scroll_delta".
-        delta -= win_text_height(wp, cur_topline, wp->w_skipcol, cur_botline, 0, NULL);
         delta -= last_topline - cur_botline;
-      } else {
-        delta -= win_text_height(wp, cur_topline, wp->w_skipcol, last_topline, last_skipcol, NULL);
+        lnume = cur_botline;
+        vcole = 0;
       }
+      delta -= win_text_height(wp, cur_topline, wp->w_skipcol, &lnume, &vcole, NULL, INT64_MAX);
     } else if (cur_topline > last_topline
                || (cur_topline == last_topline && wp->w_skipcol > last_skipcol)) {
+      int64_t vcole = wp->w_skipcol;
+      linenr_T lnume = cur_topline;
       if (last_botline > 0 && cur_topline > last_botline) {
         // Scrolling too many lines: only give an approximate "scroll_delta".
-        delta += win_text_height(wp, last_topline, last_skipcol, last_botline, 0, NULL);
         delta += cur_topline - last_botline;
-      } else {
-        delta += win_text_height(wp, last_topline, last_skipcol, cur_topline, wp->w_skipcol, NULL);
+        lnume = last_botline;
+        vcole = 0;
       }
+      delta += win_text_height(wp, last_topline, last_skipcol, &lnume, &vcole, NULL, INT64_MAX);
     }
     delta += last_topfill;
     delta -= wp->w_topfill;
