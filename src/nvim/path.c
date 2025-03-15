@@ -627,7 +627,8 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
 
   // Make room for file name.  When doing encoding conversion the actual
   // length may be quite a bit longer, thus use the maximum possible length.
-  char *buf = xmalloc(MAXPATHL);
+  const size_t buflen = strlen(path) + MAXPATHL;
+  char *buf = xmalloc(buflen);
 
   // Find the first part in the path name that contains a wildcard.
   // When EW_ICASE is set every letter is considered to be a wildcard.
@@ -739,20 +740,19 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
                   && path_fnamencmp(path + (s - buf), name, (size_t)(e - s)) == 0))) {
-        STRCPY(s, name);
+        xstrlcpy(s, name, buflen - (size_t)(s - buf));
         len = strlen(buf);
 
         if (starstar && stardepth < 100) {
           // For "**" in the pattern first go deeper in the tree to
           // find matches.
-          STRCPY(buf + len, "/**");  // NOLINT
-          STRCPY(buf + len + 3, path_end);
+          vim_snprintf(buf + len, buflen - len, "/**%s", path_end);  // NOLINT
           stardepth++;
           do_path_expand(gap, buf, len + 1, flags, true);
           stardepth--;
         }
 
-        STRCPY(buf + len, path_end);
+        vim_snprintf(buf + len, buflen - len, "%s", path_end);
         if (path_has_exp_wildcard(path_end)) {      // handle more wildcards
           // need to expand another component of the path
           // remove backslashes for the remaining components only
