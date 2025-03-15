@@ -25,6 +25,7 @@ describe('ui/ext_popupmenu', function()
         call complete(1, [{'word':'foo', 'abbr':'fo', 'menu':'the foo', 'info':'foo-y', 'kind':'x'}, 'bar', 'spam'])
         return ''
       endfunction
+      set completeopt-=noselect
     ]])
   end)
 
@@ -905,7 +906,12 @@ describe('ui/ext_popupmenu', function()
 end)
 
 describe("builtin popupmenu 'pumblend'", function()
-  before_each(clear)
+  before_each(function()
+    clear()
+    source([[
+      set completeopt-=noselect
+    ]])
+  end)
 
   it('RGB-color', function()
     local screen = Screen.new(60, 14)
@@ -1141,7 +1147,12 @@ describe("builtin popupmenu 'pumblend'", function()
 end)
 
 describe('builtin popupmenu', function()
-  before_each(clear)
+  before_each(function()
+    clear()
+    source([[
+      set completeopt-=noselect
+    ]])
+  end)
 
   local function with_ext_multigrid(multigrid)
     local screen

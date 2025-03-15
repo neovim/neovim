@@ -1,6 +1,7 @@
 if exists('s:did_load')
   " Align Nvim defaults to Vim.
   set commentstring=/*\ %s\ */
+  set completeopt-=noselect,popup
   set complete=.,w,b,u,t,i
   set define=^\\s*#\\s*define
   set diffopt=internal,filler,closeoff

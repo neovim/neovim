@@ -40,6 +40,7 @@ describe('vim.ui_attach', function()
   end
 
   it('can receive popupmenu events', function()
+    n.command('set completeopt-=noselect')
     exec_lua [[ vim.ui_attach(ns, {ext_popupmenu=true}, on_event) ]]
     feed('ifo')
     screen:expect {

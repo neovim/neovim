@@ -18,6 +18,7 @@ local retry = t.retry
 describe('vim.snippet', function()
   before_each(function()
     clear()
+    n.command('set completeopt-=noselect')
     exec_lua(function()
       local function set_snippet_jump(direction, key)
         vim.keymap.set({ 'i', 's' }, key, function()

@@ -4140,7 +4140,7 @@ stack traceback:
 
   it('vim.lua_omnifunc', function()
     local screen = Screen.new(60, 5)
-    command [[ set omnifunc=v:lua.vim.lua_omnifunc ]]
+    command [[ set omnifunc=v:lua.vim.lua_omnifunc completeopt-=noselect ]]
 
     -- Note: the implementation is shared with lua command line completion.
     -- More tests for completion in lua/command_line_completion_spec.lua

@@ -512,7 +512,7 @@ func Test_set_completion_string_values()
     call assert_match('unnamed', getcompletion('set clipboard=', 'cmdline')[0])
   endif
   call assert_equal('.', getcompletion('set complete=', 'cmdline')[1])
-  call assert_equal('menu', getcompletion('set completeopt=', 'cmdline')[1])
+  call assert_equal('menuone', getcompletion('set completeopt=', 'cmdline')[1])
   if exists('+completeslash')
     call assert_equal('backslash', getcompletion('set completeslash=', 'cmdline')[1])
   endif

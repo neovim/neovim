@@ -1483,7 +1483,7 @@ local options = {
     {
       abbreviation = 'cot',
       cb = 'did_set_completeopt',
-      defaults = 'menu,popup',
+      defaults = 'menu,noselect,popup',
       values = {
         'menu',
         'menuone',

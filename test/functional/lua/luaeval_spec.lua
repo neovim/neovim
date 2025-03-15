@@ -510,6 +510,7 @@ describe('v:lua', function()
 
   it('works in func options', function()
     local screen = Screen.new(60, 8)
+    command('set completeopt-=noselect')
     api.nvim_set_option_value('omnifunc', 'v:lua.mymod.omni', {})
     feed('isome st<c-x><c-o>')
     screen:expect{grid=[[
