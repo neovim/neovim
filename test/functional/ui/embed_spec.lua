@@ -344,3 +344,40 @@ describe('--embed --listen UI', function()
     eq({ 'VimEnter', ('UIEnter:%d'):format(api_info[1]) }, var)
   end)
 end)
+
+describe('UI :detach', function()
+  after_each(function()
+    check_close()
+    -- os.remove(testlog)
+  end)
+
+  it('xxx1', function()
+    -- io_extra = pipe.read,
+    clear { args_rm = { '--headless' }, env = { NVIM_LOG_FILE = 'testlog' } }
+
+    -- attach immediately after startup, for early UI
+    -- rpc_async: Avoid hanging. #24888
+    -- local pipe = assert(uv.pipe())
+    -- local screen = Screen.new(40, 8, { stdin_fd = 3 }, false)
+    -- screen.rpc_async = true -- Avoid hanging. #24888
+    -- screen:attach()
+
+    -- n.expect_exit(1, n.command, 'detach')
+    -- eq('EOF was received from Nvim. Likely the Nvim process crashed.',
+    --   t.pcall_err(n.command, 'detach'))
+    local addr = n.eval('v:servername')
+    -- local s = n.get_session()
+
+    -- TODO(justinmk): using request(), because expect_exit() hangs for some reason.
+    -- local _, rv = s:request('nvim_command', 'detach')
+    n.expect_exit(n.command, 'detach')
+    -- XXX: :detach closes the stream, it didn't "crash", .
+    -- eq('EOF was received from Nvim. Likely the Nvim process crashed.', rv and rv[2] or '?')
+    -- ok(s.closed)
+
+    local s2 = n.connect(addr)
+    n.set_session(s2)
+    n.assert_alive()
+    n.expect_exit(1, n.command, 'qall!')
+  end)
+end)
