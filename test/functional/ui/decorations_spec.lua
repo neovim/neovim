@@ -6366,6 +6366,30 @@ l5
       ]]
     })
   end)
+
+  it('signcolumn correctly tracked with signs beyond eob and pair end before start', function()
+    api.nvim_set_option_value('signcolumn', 'auto:2', {})
+    api.nvim_set_option_value('filetype', 'lua', {})
+    api.nvim_buf_set_lines(0, 0, -1, false, {'foo', 'bar'})
+    api.nvim_buf_set_extmark(0, ns, 2, 0, {sign_text='S1'})
+    api.nvim_set_hl(0, 'SignColumn', { link = 'Error' })
+    screen:expect([[
+      ^foo                                               |
+      bar                                               |
+      {1:~                                                 }|*7
+                                                        |
+    ]])
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text='S2', end_row = 1})
+    api.nvim_buf_set_lines(0, 0, -1, false, {'-- foo', '-- bar'})
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    screen:expect([[
+      ^-- foo                                            |
+      -- bar                                            |
+      {1:~                                                 }|*7
+                                                        |
+    ]])
+    assert_alive()
+  end)
 end)
 
 describe('decorations: virt_text', function()

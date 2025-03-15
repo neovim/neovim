@@ -182,8 +182,9 @@ DecorSignHighlight decor_sh_from_inline(DecorHighlightInline item)
 
 void buf_put_decor(buf_T *buf, DecorInline decor, int row, int row2)
 {
-  if (decor.ext) {
+  if (decor.ext && row < buf->b_ml.ml_line_count) {
     uint32_t idx = decor.data.ext.sh_idx;
+    row2 = MIN(buf->b_ml.ml_line_count - 1, row2);
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
       buf_put_decor_sh(buf, sh, row, row2);
@@ -222,16 +223,17 @@ void buf_put_decor_sh(buf_T *buf, DecorSignHighlight *sh, int row1, int row2)
 void buf_decor_remove(buf_T *buf, int row1, int row2, int col1, DecorInline decor, bool free)
 {
   decor_redraw(buf, row1, row2, col1, decor);
-  if (decor.ext) {
+  if (decor.ext && row1 < buf->b_ml.ml_line_count) {
     uint32_t idx = decor.data.ext.sh_idx;
+    row2 = MIN(buf->b_ml.ml_line_count - 1, row2);
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
       buf_remove_decor_sh(buf, row1, row2, sh);
       idx = sh->next;
     }
-    if (free) {
-      decor_free(decor);
-    }
+  }
+  if (free) {
+    decor_free(decor);
   }
 }
 

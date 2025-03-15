@@ -135,7 +135,7 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
   } else if (!mt_invalid(key) && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
     row1 = MIN(alt.pos.row, MIN(key.pos.row, row));
     row2 = MAX(alt.pos.row, MAX(key.pos.row, row));
-    buf_signcols_count_range(buf, row1, row2, 0, kTrue);
+    buf_signcols_count_range(buf, row1, MIN(curbuf->b_ml.ml_line_count - 1, row2), 0, kTrue);
   }
 
   if (move) {
@@ -145,7 +145,7 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
   if (invalid) {
     buf_put_decor(buf, mt_decor(key), MIN(row, key.pos.row), MAX(row, key.pos.row));
   } else if (!mt_invalid(key) && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
-    buf_signcols_count_range(buf, row1, row2, 0, kNone);
+    buf_signcols_count_range(buf, row1, MIN(curbuf->b_ml.ml_line_count - 1, row2), 0, kNone);
   }
 }
 
@@ -180,7 +180,9 @@ void extmark_del(buf_T *buf, MarkTreeIter *itr, MTKey key, bool restore)
   }
 
   if (mt_decor_any(key)) {
-    if (mt_invalid(key)) {
+    // If key is an end mark it has been found first while iterating the marktree,
+    // indicating the decor is already invalid.
+    if (mt_invalid(key) || mt_end(key)) {
       decor_free(mt_decor(key));
     } else {
       buf_decor_remove(buf, key.pos.row, key2.pos.row, key.pos.col, mt_decor(key), true);
@@ -575,7 +577,8 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
 
   // Remove signs inside edited region from "b_signcols.count", add after splicing.
   if (old_row > 0 || new_row > 0) {
-    buf_signcols_count_range(buf, start_row, start_row + old_row, 0, kTrue);
+    int row2 = MIN(buf->b_ml.ml_line_count - (new_row - old_row) - 1, start_row + old_row);
+    buf_signcols_count_range(buf, start_row, row2, 0, kTrue);
   }
 
   marktree_splice(buf->b_marktree, (int32_t)start_row, start_col,
@@ -583,7 +586,8 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                   new_row, new_col);
 
   if (old_row > 0 || new_row > 0) {
-    buf_signcols_count_range(buf, start_row, start_row + new_row, 0, kNone);
+    int row2 = MIN(buf->b_ml.ml_line_count - 1, start_row + new_row);
+    buf_signcols_count_range(buf, start_row, row2, 0, kNone);
   }
 
   if (undo == kExtmarkUndo) {
