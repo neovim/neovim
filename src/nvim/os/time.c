@@ -100,12 +100,16 @@ struct tm *os_localtime_r(const time_t *restrict clock,
   // as it does with localtime(), and we don't want to call tzset() every time.
   const char *tz = os_getenv("TZ");
   if (tz == NULL) {
-    tz = "";
+    tz = xstrdup("");
   }
+
   if (strncmp(tz_cache, tz, sizeof(tz_cache) - 1) != 0) {
     tzset();
     xstrlcpy(tz_cache, tz, sizeof(tz_cache));
   }
+
+  xfree((char *)tz);
+
   return localtime_r(clock, result);  // NOLINT(runtime/threadsafe_fn)
 #else
   // Windows version of localtime() is thread-safe.

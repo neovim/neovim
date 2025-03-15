@@ -116,6 +116,7 @@ int os_get_usernames(garray_T *users)
         }
       }
     }
+    xfree((char *)user_env);
   }
 #endif
 

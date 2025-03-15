@@ -92,6 +92,7 @@ void os_icon_init(void)
                                  LR_LOADFROMFILE | LR_LOADMAP3DCOLORS);
       os_icon_set(hVimIcon, hVimIcon);
     }
+    xfree((char *)vimruntime);
   }
 }
 
@@ -117,7 +118,9 @@ void os_title_reset(void)
 /// @param out_fd stdout file descriptor
 void os_tty_guess_term(const char **term, int out_fd)
 {
-  bool conemu_ansi = strequal(os_getenv("ConEmuANSI"), "ON");
+  const char *conemuansi_env = os_getenv("ConEmuANSI");
+  bool conemu_ansi = strequal(conemuansi_env, "ON");
+  xfree((char *)conemuansi_env);
   bool vtp = false;
 
   HANDLE handle = (HANDLE)_get_osfhandle(out_fd);

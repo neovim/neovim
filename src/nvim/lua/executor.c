@@ -837,6 +837,7 @@ void nlua_init(char **argv, int argc, int lua_arg0)
   if (!env || !*env) {
     nlua_track_refs = true;
   }
+  xfree((char *)env);
 #endif
 
   lua_State *lstate = luaL_newstate();
@@ -1285,7 +1286,9 @@ static int nlua_empty_dict_tostring(lua_State *lstate)
 /// @param  lstate  Lua interpreter state.
 static int nlua_getenv(lua_State *lstate)
 {
-  lua_pushstring(lstate, os_getenv(luaL_checkstring(lstate, 1)));
+  const char *lstate_var = os_getenv(luaL_checkstring(lstate, 1));
+  lua_pushstring(lstate, lstate_var);
+  xfree((char *)lstate_var);
   return 1;
 }
 #endif

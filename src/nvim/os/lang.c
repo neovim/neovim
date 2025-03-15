@@ -70,16 +70,19 @@ char *get_mess_lang(void)
 }
 
 /// Get the language used for messages from the environment.
+/// Result must be freed by the caller.
 ///
 /// This uses LC_MESSAGES when available, which it is for most systems we build for
 /// except for windows. Then fallback to get the value from the environment
 /// ourselves, and use LC_CTYPE as a last resort.
 static char *get_mess_env(void)
 {
+  char *p;
+
 #ifdef LC_MESSAGES
-  return get_locale_val(LC_MESSAGES);
+  p = xstrdup(get_locale_val(LC_MESSAGES));   // Making sure that we can free() the return value
 #else
-  char *p = (char *)os_getenv("LC_ALL");
+  p = (char *)os_getenv("LC_ALL");
   if (p != NULL) {
     return p;
   }
@@ -94,10 +97,10 @@ static char *get_mess_env(void)
     p = NULL;  // ignore something like "1043"
   }
   if (p == NULL) {
-    p = get_locale_val(LC_CTYPE);
+    p = xstrdup(get_locale_val(LC_CTYPE));
   }
-  return p;
 #endif
+  return p;
 }
 
 /// Set the "v:lang" variable according to the current locale setting.
@@ -109,6 +112,7 @@ void set_lang_var(void)
 
   loc = get_mess_env();
   set_vim_var_string(VV_LANG, loc, -1);
+  xfree((char *)loc);
 
   loc = get_locale_val(LC_TIME);
   set_vim_var_string(VV_LC_TIME, loc, -1);
@@ -159,6 +163,7 @@ void ex_language(exarg_T *eap)
   // Allow abbreviation, but require at least 3 characters to avoid
   // confusion with a two letter language name "me" or "ct".
   char *p = skiptowhite(eap->arg);
+  bool memfree = false;
   if ((*p == NUL || ascii_iswhite(*p)) && p - eap->arg >= 3) {
     if (STRNICMP(eap->arg, "messages", p - eap->arg) == 0) {
       what = VIM_LC_MESSAGES;
@@ -182,6 +187,7 @@ void ex_language(exarg_T *eap)
   if (*name == NUL) {
     if (what == VIM_LC_MESSAGES) {
       p = get_mess_env();
+      memfree = true;
     } else {
       p = setlocale(what, NULL);
     }
@@ -189,6 +195,10 @@ void ex_language(exarg_T *eap)
       p = "Unknown";
     }
     smsg(0, _("Current %slanguage: \"%s\""), whatstr, p);
+
+    if (memfree) {
+      xfree(p);
+    }
   } else {
 #ifndef LC_MESSAGES
     if (what == VIM_LC_MESSAGES) {
@@ -340,7 +350,8 @@ char *get_locales(expand_T *xp, int idx)
 void lang_init(void)
 {
 #ifdef __APPLE__
-  if (os_getenv("LANG") == NULL) {
+  const char *lang_env = os_getenv("LANG");
+  if (lang_env == NULL) {
     char buf[50] = { 0 };
 
     // $LANG is not set, either because it was unset or Nvim was started
@@ -359,6 +370,8 @@ void lang_init(void)
     } else {
       ELOG("$LANG is empty and the macOS primary language cannot be inferred.");
     }
+  } else {
+    xfree((char *)lang_env);
   }
 #endif
 }
