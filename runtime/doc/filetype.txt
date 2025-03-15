@@ -615,7 +615,7 @@ with interactive `git rebase`: >
 	:Reword " to pick this commit, but change the commit message
 	:Squash " to squash this commit into the previous one
 
-In addition, the following comamnd can be used to cycle between the different
+In addition, the following command can be used to cycle between the different
 possibilities: >
 
 	:Cycle  " to cycle between the previous commands
