@@ -70,12 +70,6 @@ BUILD
 • Translations are turned off by default. Enable by building Nvim with the
   CMake flag `ENABLE_TRANSLATIONS=ON`.
 
-DEFAULTS
-
-• 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
-  |terminal| buffers. See |terminal-config| for an example of changing these defaults.
-• 'diffopt' default includes "linematch:40".
-
 DIAGNOSTICS
 
 • The "underline" diagnostics handler sorts diagnostics by severity when using
@@ -246,6 +240,11 @@ DEFAULTS
     • |[<Space>|, |]<Space>| add an empty line above and below the cursor
   • |[[| and |]]| in Normal mode jump between shell prompts for shells which emit
     OSC 133 sequences ("shell integration" or "semantic prompts").
+
+• Options:
+  • 'diffopt' default includes "linematch:40".
+  • 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
+    |terminal| buffers. |terminal-config| shows how to change these defaults.
 
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`
