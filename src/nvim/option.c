@@ -1275,7 +1275,10 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
           && !option_has_type(opt_idx, kOptValTypeBoolean))) {
     // print value
     if (*did_show) {
-      msg_putchar('\n');                // cursor below last one
+      // newline only in default tui
+      if (!ui_gui_attached()) {
+        msg_putchar('\n');              // cursor below last one
+      }
     } else {
       gotocmdline(true);                // cursor at status line
       *did_show = true;                 // remember that we did a line
