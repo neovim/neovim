@@ -842,7 +842,7 @@ Short explanation of each option:		*option-list*
 'selection'	  'sel'     what type of selection to use
 'selectmode'	  'slm'     when to use Select mode instead of Visual mode
 'sessionoptions'  'ssop'    options for |:mksession|
-'shada'		  'sd'	    use .shada file upon startup and exiting
+'shada'		  'sd'	    use |shada| file upon startup and exiting
 'shell'		  'sh'	    name of shell to use for external commands
 'shellcmdflag'	  'shcf'    flag to shell to execute one command
 'shellpipe'	  'sp'	    string to put output of ":make" in error file

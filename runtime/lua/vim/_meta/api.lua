@@ -430,6 +430,8 @@ function vim.api.nvim_buf_get_keymap(buffer, mode) end
 --- Out-of-bounds indices are clamped to the nearest valid value, unless
 --- `strict_indexing` is set.
 ---
+---
+--- @see vim.api.nvim_buf_get_text
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param start integer First line index
 --- @param end_ integer Last line index, exclusive
@@ -483,10 +485,7 @@ function vim.api.nvim_buf_get_offset(buffer, index) end
 --- @return any
 function vim.api.nvim_buf_get_option(buffer, name) end
 
---- Gets a range from the buffer.
----
---- This differs from `nvim_buf_get_lines()` in that it allows retrieving only
---- portions of a line.
+--- Gets a range from the buffer (may be partial lines, unlike `nvim_buf_get_lines()`).
 ---
 --- Indexing is zero-based. Row indices are end-inclusive, and column indices
 --- are end-exclusive.
@@ -696,7 +695,7 @@ function vim.api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts) end
 ---
 --- Indexing is zero-based, end-exclusive. Negative indices are interpreted
 --- as length+1+index: -1 refers to the index past the end. So to change
---- or delete the last element use start=-2 and end=-1.
+--- or delete the last line use start=-2 and end=-1.
 ---
 --- To insert lines at a given index, set `start` and `end` to the same index.
 --- To delete a range of lines, set `replacement` to an empty array.
