@@ -934,6 +934,9 @@ func CheckItems(checks)
   set noswapfile
   for [ft, names] in items(a:checks)
     for i in range(0, len(names) - 1)
+      if isdirectory(fnameescape(names[i]))
+        continue
+      endif
       new
       try
         exe 'edit ' .. fnameescape(names[i])
