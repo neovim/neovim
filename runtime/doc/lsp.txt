@@ -1870,7 +1870,7 @@ enable({enable}, {client_id}, {bufnr}, {opts})
       • {opts}       (`vim.lsp.completion.BufferOpts?`) See
                      |vim.lsp.completion.BufferOpts|.
 
-show({opts})                                       *vim.lsp.completion.show()*
+get({opts})                                         *vim.lsp.completion.get()*
     Triggers LSP completion once in the current buffer.
 
     Parameters: ~

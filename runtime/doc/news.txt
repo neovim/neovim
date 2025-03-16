@@ -29,7 +29,8 @@ LSP
 • `vim.lsp.buf.document_symbol()` uses the |location-list| by default. Use
   `vim.lsp.buf.document_symbol({ loclist = false })` to use the |quickfix|
   list.
-
+• `vim.lsp.completion.trigger()` has been renamed to
+  |vim.lsp.completion.get()|.
 
 OPTIONS
 
