@@ -13,12 +13,8 @@ local OK = 0
 local cimp = cimport('./src/nvim/os/os.h')
 
 describe('env.c', function()
-  local function os_env_exists(name)
-    return cimp.os_env_exists(to_cstr(name))
-  end
-
-  local function os_env_defined(name)
-    return cimp.os_env_defined(to_cstr(name))
+  local function os_env_exists(name, defined)
+    return cimp.os_env_exists(to_cstr(name), defined)
   end
 
   local function os_setenv(name, value, override)
@@ -48,31 +44,31 @@ describe('env.c', function()
   end
 
   itp('os_env_exists', function()
-    eq(false, os_env_exists(''))
-    eq(false, os_env_exists('      '))
-    eq(false, os_env_exists('\t'))
-    eq(false, os_env_exists('\n'))
-    eq(false, os_env_exists('AaあB <= very weird name...'))
+    eq(false, os_env_exists('', false))
+    eq(false, os_env_exists('      ', false))
+    eq(false, os_env_exists('\t', false))
+    eq(false, os_env_exists('\n', false))
+    eq(false, os_env_exists('AaあB <= very weird name...', false))
 
     local varname = 'NVIM_UNIT_TEST_os_env_exists'
-    eq(false, os_env_exists(varname))
+    eq(false, os_env_exists(varname, false))
     eq(OK, os_setenv(varname, 'foo bar baz ...', 1))
-    eq(true, os_env_exists(varname))
+    eq(true, os_env_exists(varname, false))
   end)
 
   itp('os_env_defined', function()
-    eq(false, os_env_defined(''))
-    eq(false, os_env_defined('      '))
-    eq(false, os_env_defined('\t'))
-    eq(false, os_env_defined('\n'))
-    eq(false, os_env_defined('AaあB <= very weird name...'))
+    eq(false, os_env_exists('', true))
+    eq(false, os_env_exists('      ', true))
+    eq(false, os_env_exists('\t', true))
+    eq(false, os_env_exists('\n', true))
+    eq(false, os_env_exists('AaあB <= very weird name...', true))
 
     local varname = 'NVIM_UNIT_TEST_os_env_defined'
-    eq(false, os_env_defined(varname))
+    eq(false, os_env_exists(varname, true))
     eq(OK, os_setenv(varname, '', 1))
-    eq(false, os_env_defined(varname))
+    eq(false, os_env_exists(varname, true))
     eq(OK, os_setenv(varname, 'foo bar baz ...', 1))
-    eq(true, os_env_defined(varname))
+    eq(true, os_env_exists(varname, true))
   end)
 
   describe('os_setenv', function()
@@ -210,7 +206,7 @@ describe('env.c', function()
     -- Depending on the platform the var might be unset or set as ''
     assert.True(os_getenv(name) == nil or os_getenv(name) == '')
     if os_getenv(name) == nil then
-      eq(false, os_env_exists(name))
+      eq(false, os_env_exists(name, false))
     end
   end)
 

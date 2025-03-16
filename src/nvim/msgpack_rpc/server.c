@@ -42,7 +42,7 @@ bool server_init(const char *listen_addr)
 
   // $NVIM_LISTEN_ADDRESS (deprecated)
   if (!listen_addr || listen_addr[0] == '\0') {
-    if (os_env_defined(ENV_LISTEN)) {
+    if (os_env_exists(ENV_LISTEN, true)) {
       user_arg = kFalse;  // User-provided env var.
       listen_addr = os_getenv(ENV_LISTEN);
     } else {
@@ -55,7 +55,7 @@ bool server_init(const char *listen_addr)
   int rv = server_start(listen_addr);
 
   // TODO(justinmk): this is for log_spec. Can remove this after nvim_log #7062 is merged.
-  if (os_env_exists("__NVIM_TEST_LOG")) {
+  if (os_env_exists("__NVIM_TEST_LOG", false)) {
     ELOG("test log message");
   }
 
@@ -74,7 +74,7 @@ bool server_init(const char *listen_addr)
   ok = false;
 
 end:
-  if (os_env_exists(ENV_LISTEN)) {
+  if (os_env_exists(ENV_LISTEN, false)) {
     // Unset $NVIM_LISTEN_ADDRESS, it's a liability hereafter. It is "input only", it must not be
     // leaked to child jobs or :terminal.
     os_unsetenv(ENV_LISTEN);

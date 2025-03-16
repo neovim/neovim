@@ -410,7 +410,7 @@ void set_init_1(bool clean_arg)
   // abilities (bidi namely).
   // NOTE: mlterm's author is being asked to 'set' a variable
   //       instead of an environment variable due to inheritance.
-  if (os_env_exists("MLTERM")) {
+  if (os_env_exists("MLTERM", false)) {
     set_option_value_give_err(kOptTermbidi, BOOLEAN_OPTVAL(true), 0);
   }
 

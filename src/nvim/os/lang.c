@@ -70,6 +70,7 @@ char *get_mess_lang(void)
 }
 
 /// Get the language used for messages from the environment.
+/// The function may be using NameBuff.
 ///
 /// This uses LC_MESSAGES when available, which it is for most systems we build for
 /// except for windows. Then fallback to get the value from the environment
@@ -341,7 +342,7 @@ char *get_locales(expand_T *xp, int idx)
 void lang_init(void)
 {
 #ifdef __APPLE__
-  if (!os_env_defined("LANG")) {
+  if (!os_env_exists("LANG", true)) {
     char buf[50] = { 0 };
 
     // $LANG is not set, either because it was unset or Nvim was started

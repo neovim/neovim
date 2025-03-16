@@ -1614,7 +1614,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *p = tv_get_string(&argvars[0]);
   if (*p == '$') {  // Environment variable.
     // First try "normal" environment variables (fast).
-    if (os_env_exists(p + 1)) {
+    if (os_env_exists(p + 1, false)) {
       n = true;
     } else {
       // Try expanding things like $VIM and ${HOME}.
@@ -3939,8 +3939,9 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
       size_t len = strlen(required_env_vars[i]);
       dictitem_T *dv = tv_dict_find(env, required_env_vars[i], (ptrdiff_t)len);
       if (!dv) {
-        if (os_env_defined(required_env_vars[i])) {
-          tv_dict_add_str(env, required_env_vars[i], len, os_getenv(required_env_vars[i]));
+        if (os_env_exists(required_env_vars[i], true)) {
+          tv_dict_add_allocated_str(env, required_env_vars[i], len,
+                                    os_getenv_noalloc(required_env_vars[i]));
         }
       }
     }

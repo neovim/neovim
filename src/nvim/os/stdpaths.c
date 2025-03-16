@@ -167,7 +167,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     env_val = os_getenv(xdg_defaults_env_vars[idx]);
   }
 #else
-  if (env_val == NULL && os_env_exists(env)) {
+  if (env_val == NULL && os_env_exists(env, false)) {
     env_val = xstrdup("");
   }
 #endif

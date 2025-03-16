@@ -111,7 +111,11 @@ char *os_getenv_noalloc(const char *name)
 
 /// Returns true if environment variable `name` is defined (even if empty).
 /// Returns false if not found (UV_ENOENT) or other failure.
-bool os_env_exists(const char *name)
+///
+/// @param name the environment variable in question
+/// @param defined whether the variable has a valid value, or may be empty
+/// @return whether the variable exists (and is defined)
+bool os_env_exists(const char *name, bool defined)
   FUNC_ATTR_NONNULL_ALL
 {
   if (name[0] == NUL) {
@@ -119,26 +123,6 @@ bool os_env_exists(const char *name)
   }
   // Use a tiny buffer because we don't care about the value: if uv_os_getenv()
   // returns UV_ENOBUFS, the env var was found.
-  char buf[1];
-  size_t size = sizeof(buf);
-  int r = uv_os_getenv(name, buf, &size);
-  assert(r != UV_EINVAL);
-  if (r != 0 && r != UV_ENOENT && r != UV_ENOBUFS) {
-    ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
-  }
-  return (r == 0 || r == UV_ENOBUFS);
-}
-
-/// Returns true if environment variable `name` is defined (i.e. exists and not empty).
-/// Returns false if not found (UV_ENOENT) or other failure.
-bool os_env_defined(const char *name)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (name[0] == NUL) {
-    return false;
-  }
-  // Use a tiny buffer because we don't care about the value: if uv_os_getenv()
-  // returns UV_ENOBUFS with a positive size, the env var was found.
   char buf[2];
   size_t size = sizeof(buf);
   int r = uv_os_getenv(name, buf, &size);
@@ -146,7 +130,7 @@ bool os_env_defined(const char *name)
   if (r != 0 && r != UV_ENOENT && r != UV_ENOBUFS) {
     ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
-  return ((r == 0 && size > 0) || r == UV_ENOBUFS);
+  return ((r == 0 && (!defined || size > 0)) || r == UV_ENOBUFS);
 }
 
 /// Sets an environment variable.
@@ -177,7 +161,7 @@ int os_setenv(const char *name, const char *value, int overwrite)
     return os_unsetenv(name);
   }
 #else
-  if (!overwrite && os_env_exists(name)) {
+  if (!overwrite && os_env_exists(name, false)) {
     return 0;
   }
 #endif
