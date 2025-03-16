@@ -326,6 +326,8 @@ LUA
   `vim.o`, `vim.wo`, `vim.bo`, `vim.opt`, `vim.opt_local`, `vim.opt_global`,
   and `vim.fn`.
 • Documentation for |lua-bit|.
+• |gf| in Lua buffers can go to module in same repo, |runtime-search-path| and
+  |package.path|.
 • |vim.fs.rm()| can delete files and directories.
 • |vim.validate()| now has a new signature which uses less tables,
   is more performant and easier to read.
