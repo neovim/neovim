@@ -60,8 +60,6 @@ API
   This is not expected to break clients because there are no known clients
   that actually use the `return_type` field or the parameter type names
   reported by |--api-info| or |nvim_get_api_info()|.
-• |nvim_open_win()| supports a `mouse` field that allows configuring mouse
-  interaction with the window separately from `focusable` field.
 • Renamed `nvim__id_dictionary` (unsupported/experimental API) to
   `nvim__id_dict`.
 
@@ -201,6 +199,8 @@ API
 • |nvim__ns_set()| can set properties for a namespace
 • |nvim_echo()| `err` field to print error messages and `chunks` accepts
   highlight group IDs.
+• |nvim_open_win()| supports a `mouse` field that allows configuring mouse
+  interaction with the window separately from `focusable` field.
 • |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
 • Additions to |nvim_buf_set_extmark()|:
   • `conceal_lines` field to conceal an entire line.
