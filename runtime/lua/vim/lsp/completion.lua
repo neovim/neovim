@@ -536,7 +536,7 @@ local function on_insert_char_pre(handle)
       local ctx = { triggerKind = protocol.CompletionTriggerKind.TriggerForIncompleteCompletions }
       if debounce_ms == 0 then
         vim.schedule(function()
-          M.trigger({ ctx = ctx })
+          M.get({ ctx = ctx })
         end)
       else
         completion_timer = new_timer()
@@ -544,7 +544,7 @@ local function on_insert_char_pre(handle)
           debounce_ms,
           0,
           vim.schedule_wrap(function()
-            M.trigger({ ctx = ctx })
+            M.get({ ctx = ctx })
           end)
         )
       end
@@ -791,13 +791,13 @@ function M.enable(enable, client_id, bufnr, opts)
 end
 
 --- @inlinedoc
---- @class vim.lsp.completion.trigger.Opts
+--- @class vim.lsp.completion.get.Opts
 --- @field ctx? lsp.CompletionContext Completion context. Defaults to a trigger kind of `invoked`.
 
 --- Triggers LSP completion once in the current buffer.
 ---
---- @param opts? vim.lsp.completion.trigger.Opts
-function M.trigger(opts)
+--- @param opts? vim.lsp.completion.get.Opts
+function M.get(opts)
   opts = opts or {}
   local ctx = opts.ctx or { triggerKind = protocol.CompletionTriggerKind.Invoked }
   local bufnr = api.nvim_get_current_buf()
