@@ -192,7 +192,7 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 
 /// Gets the position (0-indexed) of an |extmark|.
 ///
-/// @param buffer  Buffer handle, or 0 for current buffer
+/// @param buffer  Buffer id, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param id  Extmark id
 /// @param opts  Optional parameters. Keys:
@@ -269,7 +269,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// vim.print(ms)
 /// ```
 ///
-/// @param buffer  Buffer handle, or 0 for current buffer
+/// @param buffer  Buffer id, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()| or -1 for all namespaces
 /// @param start  Start of range: a 0-indexed (row, col) or valid extmark id
 /// (whose position defines the bound). |api-indexing|
@@ -374,7 +374,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 /// An earlier end position is not an error, but then it behaves like an empty
 /// range (no highlighting).
 ///
-/// @param buffer  Buffer handle, or 0 for current buffer
+/// @param buffer  Buffer id, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param line  Line where to place the mark, 0-based. |api-indexing|
 /// @param col  Column where to place the mark, 0-based. |api-indexing|
@@ -922,7 +922,7 @@ error:
 
 /// Removes an |extmark|.
 ///
-/// @param buffer Buffer handle, or 0 for current buffer
+/// @param buffer Buffer id, or 0 for current buffer
 /// @param ns_id Namespace id from |nvim_create_namespace()|
 /// @param id Extmark id
 /// @param[out] err   Error details, if any
@@ -948,7 +948,7 @@ Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *er
 /// Lines are 0-indexed. |api-indexing|  To clear the namespace in the entire
 /// buffer, specify line_start=0 and line_end=-1.
 ///
-/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param buffer     Buffer id, or 0 for current buffer
 /// @param ns_id      Namespace to clear, or -1 to clear all namespaces.
 /// @param line_start Start of range of lines to clear
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
