@@ -318,7 +318,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
         word = word,
         abbr = item.label,
         kind = protocol.CompletionItemKind[item.kind] or 'Unknown',
-        menu = item.detail or '',
+        menu = vim.tbl_get(item, 'labelDetails', 'description') or item.detail or '',
         info = get_doc(item),
         icase = 1,
         dup = 1,
