@@ -212,6 +212,18 @@ describe('vim.health', function()
       n.expect([[
       ERROR: No healthchecks found.]])
     end)
+
+    it('nested lua/ directory', function()
+      command('checkhealth lua')
+      n.expect([[
+
+      ==============================================================================
+      test_plug.lua:                         require("test_plug.lua.health").check()
+
+      nested lua/ directory ~
+      - OK everything is ok
+      ]])
+    end)
   end)
 end)
 

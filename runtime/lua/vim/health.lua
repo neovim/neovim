@@ -118,7 +118,13 @@ local function filepath_to_healthcheck(path)
     func = 'health#' .. name .. '#check'
     filetype = 'v'
   else
-    local subpath = path:gsub('.*/lua/', '')
+    local rtp = vim
+      .iter(vim.api.nvim_list_runtime_paths())
+      :map(vim.fs.normalize)
+      :find(function(rtp0)
+        return vim.fs.relpath(rtp0, path)
+      end)
+    local subpath = path:gsub('^' .. vim.pesc(rtp .. '/lua/'), '')
     if vim.fs.basename(subpath) == 'health.lua' then
       -- */health.lua
       name = vim.fs.dirname(subpath)

@@ -299,7 +299,7 @@ void tui_set_key_encoding(TUIData *tui)
     // Progressive enhancement flags:
     //   0b01   (1) Disambiguate escape codes
     //   0b10   (2) Report event types
-    out(tui, S_LEN("\x1b[>3u"));
+    out(tui, S_LEN("\x1b[>1u"));
     break;
   case kKeyEncodingXterm:
     out(tui, S_LEN("\x1b[>4;2m"));
