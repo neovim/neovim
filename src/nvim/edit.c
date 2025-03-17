@@ -2708,20 +2708,21 @@ int stuff_inserted(int c, int count, int no_esc)
   }
 
   if (insert->size > 0) {
-    char *p;
     // look for the last ESC in 'insert'
-    for (p = insert->data + (insert->size - 1); p >= insert->data; p--) {
+    for (char *p = insert->data + insert->size - 1; p >= insert->data; p--) {
       if (*p == ESC) {
         insert->size = (size_t)(p - insert->data);
         break;
       }
     }
+  }
 
+  if (insert->size > 0) {
+    char *p = insert->data + insert->size - 1;
     // when the last char is either "0" or "^" it will be quoted if no ESC
     // comes after it OR if it will inserted more than once and "ptr"
     // starts with ^D.  -- Acevedo
-    if (p >= insert->data
-        && (*p == '0' || *p == '^')
+    if ((*p == '0' || *p == '^')
         && (no_esc || (*insert->data == Ctrl_D && count > 1))) {
       last = *p;
       insert->size--;

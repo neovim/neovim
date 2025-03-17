@@ -328,4 +328,31 @@ func Test_put_list()
   bw!
 endfunc
 
+" Test pasting the '.' register
+func Test_put_inserted()
+  new
+
+  for s in ['', '…', '0', '^', '+0', '+^', '…0', '…^']
+    call setline(1, 'foobar')
+    exe $"normal! A{s}\<Esc>"
+    call assert_equal($'foobar{s}', getline(1))
+    normal! ".p
+    call assert_equal($'foobar{s}{s}', getline(1))
+    normal! ".2p
+    call assert_equal($'foobar{s}{s}{s}{s}', getline(1))
+  endfor
+
+  for s in ['0', '^', '+0', '+^', '…0', '…^']
+    call setline(1, "\t\t\t\t\tfoobar")
+    exe $"normal! A\<C-D>{s}\<Esc>"
+    call assert_equal($"\t\t\t\tfoobar{s}", getline(1))
+    normal! ".p
+    call assert_equal($"\t\t\tfoobar{s}{s}", getline(1))
+    normal! ".2p
+    call assert_equal($"\tfoobar{s}{s}{s}{s}", getline(1))
+  endfor
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
