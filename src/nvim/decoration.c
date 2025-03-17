@@ -245,8 +245,8 @@ void buf_remove_decor_sh(buf_T *buf, int row1, int row2, DecorSignHighlight *sh)
         buf_signcols_count_range(buf, row1, row2, -1, kFalse);
       } else {
         may_force_numberwidth_recompute(buf, true);
-        buf->b_signcols.resized = true;
-        buf->b_signcols.max = buf->b_signcols.count[0] = 0;
+        buf->b_signcols.count[0] = 0;
+        buf->b_signcols.max = 0;
       }
     }
   }
@@ -1069,7 +1069,6 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
     if (clear != kTrue && width > 0) {
       buf->b_signcols.count[width - 1]++;
       if (width > buf->b_signcols.max) {
-        buf->b_signcols.resized = true;
         buf->b_signcols.max = width;
       }
     }

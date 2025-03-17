@@ -702,8 +702,8 @@ struct file_buffer {
 
   struct {
     int max;                    // maximum number of signs on a single line
+    int last_max;               // value of max when the buffer was last drawn
     int count[SIGN_SHOW_MAX];   // number of lines with number of signs
-    bool resized;               // whether max changed at start of redraw
     bool autom;                 // whether 'signcolumn' is displayed in "auto:n>1"
                                 // configured window. "b_signcols" calculation
                                 // is skipped if false.
