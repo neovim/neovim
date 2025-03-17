@@ -428,6 +428,12 @@ describe('API/extmarks', function()
     set_extmark(ns, marks[3], 0, 2) -- check is inclusive
     local rv = get_extmarks(ns, { 2, 3 }, { 0, 2 })
     eq({ { marks[1], 2, 1 }, { marks[2], 1, 4 }, { marks[3], 0, 2 } }, rv)
+    -- doesn't include paired marks whose start pos > lower bound twice
+    local m1 = set_extmark(ns, nil, 0, 0, { end_row = 1, end_col = 4 })
+    local m2 = set_extmark(ns, nil, 1, 0, { end_row = 1, end_col = 4 })
+    local m3 = set_extmark(ns, nil, 1, 2, { end_row = 1, end_col = 4 })
+    rv = get_extmarks(ns, { 1, 3 }, { 1, 2 }, { overlap = true })
+    eq({ { m1, 0, 0 }, { m2, 1, 0 }, { m3, 1, 2 } }, rv)
   end)
 
   it('get_marks limit=0 returns nothing', function()

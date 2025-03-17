@@ -273,7 +273,13 @@ ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_co
 
     MTPair pair;
     while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
-      push_mark(&array, ns_id, type_filter, pair);
+      // When iterating in reverse, don't include pairs whose start mark
+      // will be encountered below.
+      if (!reverse
+          || pair.start.pos.row < u_row
+          || (pair.start.pos.row == u_row && pair.start.pos.col < u_col)) {
+        push_mark(&array, ns_id, type_filter, pair);
+      }
     }
   } else {
     // Find all the marks beginning with the start position
