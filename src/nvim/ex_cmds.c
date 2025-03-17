@@ -1110,14 +1110,19 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
     // Use a pipe to write stdin of the command, do not use a temp file.
     shell_flags |= kShellOptWrite;
     curbuf->b_op_start.lnum = line1;
+    curbuf->b_op_start.col = col1;
     curbuf->b_op_end.lnum = line2;
+    curbuf->b_op_end.col = col2;
   } else if (do_in && do_out && !stmp) {
     // Use a pipe to write stdin and fetch stdout of the command, do not
     // use a temp file.
     shell_flags |= kShellOptRead | kShellOptWrite;
     curbuf->b_op_start.lnum = line1;
+    curbuf->b_op_start.col = col1;
     curbuf->b_op_end.lnum = line2;
+    curbuf->b_op_end.col = col2;
     curwin->w_cursor.lnum = line2;
+    curwin->w_cursor.col = col2;
   } else if ((do_in && (itmp = vim_tempname()) == NULL)
              || (do_out && (otmp = vim_tempname()) == NULL)) {
     emsg(_(e_notmp));

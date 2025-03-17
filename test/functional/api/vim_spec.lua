@@ -5085,6 +5085,20 @@ describe('API', function()
       eq('', api.nvim_cmd({ cmd = 'Foo', bang = false }, { output = true }))
     end)
 
+    it('works with |:!| into shell command', function()
+      insert [[
+        line1
+        line2
+        line3you
+         expect thisline4
+        line5
+      ]]
+      local buf = api.nvim_get_current_buf()
+      api.nvim_buf_set_mark(buf, '<', 3, 6, {})
+      api.nvim_buf_set_mark(buf, '>', 4, 12, {})
+      eq('you\n expect this', command_output([[:'<,'>!cat]]))
+    end)
+
     it('works with modifiers', function()
       -- with silent = true output is still captured
       eq(
