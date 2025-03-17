@@ -200,13 +200,6 @@ function M.get_namespace(client_id, is_pull)
   end
 end
 
-local function convert_severity(opt)
-  if type(opt) == 'table' and not opt.severity and opt.severity_limit then
-    vim.deprecate('severity_limit', '{min = severity} See vim.diagnostic.severity', '0.11')
-    opt.severity = { min = severity_lsp_to_vim(opt.severity_limit) }
-  end
-end
-
 --- @param uri string
 --- @param client_id? integer
 --- @param diagnostics lsp.Diagnostic[]
@@ -303,7 +296,6 @@ end
 ---@private
 function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
   vim.deprecate('vim.lsp.diagnostic.get_line_diagnostics', 'vim.diagnostic.get', '0.12')
-  convert_severity(opts)
   local diag_opts = {} --- @type vim.diagnostic.GetOpts
 
   if opts and opts.severity then
