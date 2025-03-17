@@ -178,8 +178,8 @@ ENVIRONMENT VARIABLES
     • get the server name (use |v:servername| instead)
     • detect a parent Nvim (use |$NVIM| instead)
   • Ignored if --listen is given.
-  • Unset by |terminal| and |jobstart()| unless explicitly given by the "env"
-    option. Example: >vim
+  • Unset at startup (after |v:servername| is initialized). Can be explicitly
+    provided to |terminal| and |jobstart()| by the "env" option. Example: >vim
 	call jobstart(['foo'], { 'env': { 'NVIM_LISTEN_ADDRESS': v:servername  } })
 <
 

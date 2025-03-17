@@ -674,8 +674,9 @@ M.vars = {
       Read-only.
 
                                                            *$NVIM*
-      $NVIM is set by |terminal| and |jobstart()|, and is thus
-      a hint that the current environment is a subprocess of Nvim.
+      $NVIM is set to v:servername by |terminal| and |jobstart()|,
+      and is thus a hint that the current environment is a child
+      (direct subprocess) of Nvim.
 
       Example: a child Nvim process can detect and make requests to
       its parent Nvim: >lua

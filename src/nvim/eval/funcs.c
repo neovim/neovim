@@ -3834,6 +3834,7 @@ static const char *pty_ignored_env_vars[] = {
   "COLORFGBG",
   "COLORTERM",
 #endif
+  // Nvim-owned env vars. #6764
   "VIM",
   "VIMRUNTIME",
   NULL
@@ -3870,9 +3871,8 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
     tv_dict_free(temp_env.vval.v_dict);
 
     if (pty) {
-      // These environment variables generally shouldn't be propagated to the
-      // child process.  We're removing them here so the user can still decide
-      // they want to explicitly set them.
+      // These env vars shouldn't propagate to the child process. #6764
+      // Remove them here, then the user may decide to explicitly set them below.
       for (size_t i = 0;
            i < ARRAY_SIZE(pty_ignored_env_vars) && pty_ignored_env_vars[i];
            i++) {

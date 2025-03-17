@@ -3716,7 +3716,7 @@ nvim_create_augroup({name}, {opts})                    *nvim_create_augroup()*
     Create or get an autocommand group |autocmd-groups|.
 
     To get an existing group id, do: >lua
-        local id = vim.api.nvim_create_augroup("MyGroup", {
+        local id = vim.api.nvim_create_augroup('my.lsp.config', {
             clear = false
         })
 <
@@ -3742,8 +3742,8 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
     string).
 
     Example using Lua callback: >lua
-        vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
-          pattern = {"*.c", "*.h"},
+        vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
+          pattern = {'*.c', '*.h'},
           callback = function(ev)
             print(string.format('event fired: %s', vim.inspect(ev)))
           end
@@ -3751,15 +3751,15 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
 <
 
     Example using an Ex command as the handler: >lua
-        vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
-          pattern = {"*.c", "*.h"},
+        vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
+          pattern = {'*.c', '*.h'},
           command = "echo 'Entering a C or C++ file'",
         })
 <
 
     Note: `pattern` is NOT automatically expanded (unlike with |:autocmd|),
     thus names like "$HOME" and "~" must be expanded explicitly: >lua
-        pattern = vim.fn.expand("~") .. "/some/path/*.py"
+        pattern = vim.fn.expand('~') .. '/some/path/*.py'
 <
 
     Attributes: ~
@@ -3881,14 +3881,14 @@ nvim_get_autocmds({opts})                                *nvim_get_autocmds()*
     These examples will get autocommands matching ALL the given criteria: >lua
         -- Matches all criteria
         autocommands = vim.api.nvim_get_autocmds({
-          group = "MyGroup",
-          event = {"BufEnter", "BufWinEnter"},
-          pattern = {"*.c", "*.h"}
+          group = 'MyGroup',
+          event = {'BufEnter', 'BufWinEnter'},
+          pattern = {'*.c', '*.h'}
         })
 
         -- All commands from one group
         autocommands = vim.api.nvim_get_autocmds({
-          group = "MyGroup",
+          group = 'MyGroup',
         })
 <
 

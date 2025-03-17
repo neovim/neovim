@@ -165,7 +165,7 @@ void event_init(void)
 }
 
 /// @returns false if main_loop could not be closed gracefully
-bool event_teardown(void)
+static bool event_teardown(void)
 {
   if (!main_loop.events) {
     input_stop();
