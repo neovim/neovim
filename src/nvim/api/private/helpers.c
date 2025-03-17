@@ -472,7 +472,7 @@ int64_t normalize_index(buf_T *buf, int64_t index, bool end_exclusive, bool *oob
 
 /// Returns a substring of a buffer line
 ///
-/// @param buf          Buffer handle
+/// @param buf          Buffer id
 /// @param lnum         Line number (1-based)
 /// @param start_col    Starting byte offset into line (0-based)
 /// @param end_col      Ending byte offset into line (0-based, exclusive)

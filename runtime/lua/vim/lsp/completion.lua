@@ -6,6 +6,8 @@
 ---
 --- Example: activate LSP-driven auto-completion:
 --- ```lua
+--- -- Works best with completeopt=noselect.
+--- vim.cmd[[set completeopt+=menuone,noselect,popup]]
 --- vim.lsp.start({
 ---   name = 'ts_ls',
 ---   cmd = …,

@@ -2663,9 +2663,10 @@ local options = {
       abbreviation = 'ex',
       defaults = false,
       desc = [=[
-        Automatically execute .nvim.lua, .nvimrc, and .exrc files in the
-        current directory, if the file is in the |trust| list. Use |:trust| to
-        manage trusted files. See also |vim.secure.read()|.
+        Enables project-local configuration. Nvim will execute any .nvim.lua,
+        .nvimrc, or .exrc file found in the |current-directory|, if the file is
+        in the |trust| list. Use |:trust| to manage trusted files. See also
+        |vim.secure.read()|.
 
         Compare 'exrc' to |editorconfig|:
         - 'exrc' can execute any code; editorconfig only specifies settings.
@@ -2678,6 +2679,7 @@ local options = {
       scope = { 'global' },
       secure = true,
       short_desc = N_('read .nvimrc and .exrc in the current directory'),
+      tags = { 'project-config', 'workspace-config' },
       type = 'boolean',
       varname = 'p_exrc',
     },

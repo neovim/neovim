@@ -585,7 +585,7 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
                    buffer.
 
     Return: ~
-        Buffer handle, or 0 on error
+        Buffer id, or 0 on error
 
     See also: ~
       • buf_open_scratch
@@ -835,7 +835,7 @@ nvim_get_current_buf()                                *nvim_get_current_buf()*
         Since: 0.1.0
 
     Return: ~
-        Buffer handle
+        Buffer id
 
 nvim_get_current_line()                              *nvim_get_current_line()*
     Gets the current line.
@@ -1087,7 +1087,7 @@ nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
       • {col}       Mouse column-position (zero-based, like redraw events)
 
 nvim_list_bufs()                                            *nvim_list_bufs()*
-    Gets the current list of buffer handles
+    Gets the current list of buffers.
 
     Includes unlisted (unloaded/deleted) buffers, like `:ls!`. Use
     |nvim_buf_is_loaded()| to check if a buffer is loaded.
@@ -1096,7 +1096,7 @@ nvim_list_bufs()                                            *nvim_list_bufs()*
         Since: 0.1.0
 
     Return: ~
-        List of buffer handles
+        List of buffer ids
 
 nvim_list_chans()                                          *nvim_list_chans()*
     Get information about all open channels.
@@ -1147,7 +1147,7 @@ nvim_list_uis()                                              *nvim_list_uis()*
         • "chan" |channel-id| of remote UI
 
 nvim_list_wins()                                            *nvim_list_wins()*
-    Gets the current list of window handles.
+    Gets the current list of all |window-ID|s in all tabpages.
 
     Attributes: ~
         Since: 0.1.0
@@ -1384,7 +1384,7 @@ nvim_set_current_buf({buffer})                        *nvim_set_current_buf()*
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}  Buffer handle
+      • {buffer}  Buffer id
 
 nvim_set_current_dir({dir})                           *nvim_set_current_dir()*
     Changes the global working directory.
@@ -1416,7 +1416,7 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
       • {tabpage}  |tab-ID| to focus
 
 nvim_set_current_win({window})                        *nvim_set_current_win()*
-    Sets the current window. Also changes tabpage, if necessary.
+    Sets the current window (and tabpage, implicitly).
 
     Attributes: ~
         not allowed when |textlock| is active or in the |cmdwin|
@@ -1880,7 +1880,7 @@ nvim_buf_create_user_command({buffer}, {name}, {command}, {opts})
         Since: 0.7.0
 
     Parameters: ~
-      • {buffer}   Buffer handle, or 0 for current buffer.
+      • {buffer}   Buffer id, or 0 for current buffer.
 
     See also: ~
       • nvim_create_user_command
@@ -1896,7 +1896,7 @@ nvim_buf_del_user_command({buffer}, {name})
         Since: 0.7.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer.
+      • {buffer}  Buffer id, or 0 for current buffer.
       • {name}    Name of the command to delete.
 
 nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
@@ -1906,7 +1906,7 @@ nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
         Since: 0.3.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {opts}    Optional parameters. Currently not used.
 
     Return: ~
@@ -2238,7 +2238,7 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
         Since: 0.3.0
 
     Parameters: ~
-      • {buffer}       Buffer handle, or 0 for current buffer
+      • {buffer}       Buffer id, or 0 for current buffer
       • {send_buffer}  True if the initial notification should contain the
                        whole buffer: first notification will be
                        `nvim_buf_lines_event`. Else the first notification
@@ -2248,7 +2248,7 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                        • on_lines: Lua callback invoked on change. Return a
                          truthy value (not `false` or `nil`) to detach. Args:
                          • the string "lines"
-                         • buffer handle
+                         • buffer id
                          • b:changedtick
                          • first line that changed (zero-indexed)
                          • last line that was changed
@@ -2261,7 +2261,7 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                          change compared to on_lines. Return a truthy value
                          (not `false` or `nil`) to detach. Args:
                          • the string "bytes"
-                         • buffer handle
+                         • buffer id
                          • b:changedtick
                          • start row of the changed text (zero-indexed)
                          • start column of the changed text
@@ -2280,15 +2280,15 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                        • on_changedtick: Lua callback invoked on changedtick
                          increment without text change. Args:
                          • the string "changedtick"
-                         • buffer handle
+                         • buffer id
                          • b:changedtick
                        • on_detach: Lua callback invoked on detach. Args:
                          • the string "detach"
-                         • buffer handle
+                         • buffer id
                        • on_reload: Lua callback invoked on reload. The entire
                          buffer content should be considered changed. Args:
                          • the string "reload"
-                         • buffer handle
+                         • buffer id
                        • utf_sizes: include UTF-32 and UTF-16 size of the
                          replaced region, as args to `on_lines`.
                        • preview: also attach to command preview (i.e.
@@ -2320,7 +2320,7 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
         Since: 0.5.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {fun}     Function to call inside the buffer (currently Lua callable
                   only)
 
@@ -2334,7 +2334,7 @@ nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
         Since: 0.4.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
 
     See also: ~
       • |nvim_del_keymap()|
@@ -2367,7 +2367,7 @@ nvim_buf_del_var({buffer}, {name})                        *nvim_buf_del_var()*
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {name}    Variable name
 
 nvim_buf_delete({buffer}, {opts})                          *nvim_buf_delete()*
@@ -2378,7 +2378,7 @@ nvim_buf_delete({buffer}, {opts})                          *nvim_buf_delete()*
         Since: 0.5.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {opts}    Optional parameters. Keys:
                   • force: Force deletion and ignore unsaved changes.
                   • unload: Unloaded only, do not delete. See |:bunload|
@@ -2391,7 +2391,7 @@ nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
         Since: 0.3.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
 
     Return: ~
         False if detach failed (because the buffer isn't loaded); otherwise
@@ -2408,7 +2408,7 @@ nvim_buf_get_changedtick({buffer})                *nvim_buf_get_changedtick()*
         Since: 0.2.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
 
     Return: ~
         `b:changedtick` value.
@@ -2420,12 +2420,12 @@ nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
         Since: 0.2.1
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {mode}    Mode short-name ("n", "i", "v", ...)
 
     Return: ~
         Array of |maparg()|-like dictionaries describing mappings. The
-        "buffer" key holds the associated buffer handle.
+        "buffer" key holds the associated buffer id.
 
                                                         *nvim_buf_get_lines()*
 nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
@@ -2442,13 +2442,16 @@ nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}           Buffer handle, or 0 for current buffer
+      • {buffer}           Buffer id, or 0 for current buffer
       • {start}            First line index
       • {end}              Last line index, exclusive
       • {strict_indexing}  Whether out-of-bounds should be an error.
 
     Return: ~
         Array of lines, or empty array for unloaded buffer.
+
+    See also: ~
+      • |nvim_buf_get_text()|
 
 nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
     Returns a `(row,col)` tuple representing the position of the named mark.
@@ -2461,7 +2464,7 @@ nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {name}    Mark name
 
     Return: ~
@@ -2479,7 +2482,7 @@ nvim_buf_get_name({buffer})                              *nvim_buf_get_name()*
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
 
     Return: ~
         Buffer name
@@ -2499,7 +2502,7 @@ nvim_buf_get_offset({buffer}, {index})                 *nvim_buf_get_offset()*
         Since: 0.3.2
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {index}   Line index
 
     Return: ~
@@ -2508,10 +2511,8 @@ nvim_buf_get_offset({buffer}, {index})                 *nvim_buf_get_offset()*
                                                          *nvim_buf_get_text()*
 nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                   {opts})
-    Gets a range from the buffer.
-
-    This differs from |nvim_buf_get_lines()| in that it allows retrieving only
-    portions of a line.
+    Gets a range from the buffer (may be partial lines, unlike
+    |nvim_buf_get_lines()|).
 
     Indexing is zero-based. Row indices are end-inclusive, and column indices
     are end-exclusive.
@@ -2522,7 +2523,7 @@ nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
         Since: 0.7.0
 
     Parameters: ~
-      • {buffer}     Buffer handle, or 0 for current buffer
+      • {buffer}     Buffer id, or 0 for current buffer
       • {start_row}  First line index
       • {start_col}  Starting column (byte offset) on first line
       • {end_row}    Last line index, inclusive
@@ -2539,7 +2540,7 @@ nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {name}    Variable name
 
     Return: ~
@@ -2553,7 +2554,7 @@ nvim_buf_is_loaded({buffer})                            *nvim_buf_is_loaded()*
         Since: 0.3.2
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
 
     Return: ~
         true if the buffer is valid and loaded, false otherwise.
@@ -2569,7 +2570,7 @@ nvim_buf_is_valid({buffer})                              *nvim_buf_is_valid()*
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
 
     Return: ~
         true if the buffer is valid, false otherwise.
@@ -2581,7 +2582,7 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
 
     Return: ~
         Line count, or 0 for unloaded buffer. |api-buffer|
@@ -2594,7 +2595,7 @@ nvim_buf_set_keymap({buffer}, {mode}, {lhs}, {rhs}, {opts})
         Since: 0.4.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
 
     See also: ~
       • |nvim_set_keymap()|
@@ -2605,7 +2606,7 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
 
     Indexing is zero-based, end-exclusive. Negative indices are interpreted as
     length+1+index: -1 refers to the index past the end. So to change or
-    delete the last element use start=-2 and end=-1.
+    delete the last line use start=-2 and end=-1.
 
     To insert lines at a given index, set `start` and `end` to the same index.
     To delete a range of lines, set `replacement` to an empty array.
@@ -2618,7 +2619,7 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}           Buffer handle, or 0 for current buffer
+      • {buffer}           Buffer id, or 0 for current buffer
       • {start}            First line index
       • {end}              Last line index, exclusive
       • {strict_indexing}  Whether out-of-bounds should be an error.
@@ -2661,7 +2662,7 @@ nvim_buf_set_name({buffer}, {name})                      *nvim_buf_set_name()*
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {name}    Buffer name
 
                                                          *nvim_buf_set_text()*
@@ -2691,7 +2692,7 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
         Since: 0.5.0
 
     Parameters: ~
-      • {buffer}       Buffer handle, or 0 for current buffer
+      • {buffer}       Buffer id, or 0 for current buffer
       • {start_row}    First line index
       • {start_col}    Starting column (byte offset) on first line
       • {end_row}      Last line index, inclusive
@@ -2705,7 +2706,7 @@ nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
         Since: 0.1.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {name}    Variable name
       • {value}   Variable value
 
@@ -2725,7 +2726,7 @@ nvim_buf_clear_namespace({buffer}, {ns_id}, {line_start}, {line_end})
         Since: 0.3.2
 
     Parameters: ~
-      • {buffer}      Buffer handle, or 0 for current buffer
+      • {buffer}      Buffer id, or 0 for current buffer
       • {ns_id}       Namespace to clear, or -1 to clear all namespaces.
       • {line_start}  Start of range of lines to clear
       • {line_end}    End of range of lines to clear (exclusive) or -1 to
@@ -2738,7 +2739,7 @@ nvim_buf_del_extmark({buffer}, {ns_id}, {id})         *nvim_buf_del_extmark()*
         Since: 0.5.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {ns_id}   Namespace id from |nvim_create_namespace()|
       • {id}      Extmark id
 
@@ -2753,7 +2754,7 @@ nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
         Since: 0.5.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {ns_id}   Namespace id from |nvim_create_namespace()|
       • {id}      Extmark id
       • {opts}    Optional parameters. Keys:
@@ -2806,7 +2807,7 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
         Since: 0.5.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {ns_id}   Namespace id from |nvim_create_namespace()| or -1 for all
                   namespaces
       • {start}   Start of range: a 0-indexed (row, col) or valid extmark id
@@ -2849,7 +2850,7 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
         Since: 0.5.0
 
     Parameters: ~
-      • {buffer}  Buffer handle, or 0 for current buffer
+      • {buffer}  Buffer id, or 0 for current buffer
       • {ns_id}   Namespace id from |nvim_create_namespace()|
       • {line}    Line where to place the mark, 0-based. |api-indexing|
       • {col}     Column where to place the mark, 0-based. |api-indexing|
@@ -3140,7 +3141,7 @@ nvim_win_get_buf({window})                                *nvim_win_get_buf()*
       • {window}  |window-ID|, or 0 for current window
 
     Return: ~
-        Buffer handle
+        Buffer id
 
 nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
     Gets the (1,0)-indexed, buffer-relative cursor position for a given window
@@ -3268,7 +3269,7 @@ nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
 
     Parameters: ~
       • {window}  |window-ID|, or 0 for current window
-      • {buffer}  Buffer handle
+      • {buffer}  Buffer id
 
 nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
     Sets the (1,0)-indexed cursor position in the window. |api-indexing| This
