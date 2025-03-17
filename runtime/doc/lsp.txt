@@ -364,7 +364,7 @@ Handlers can be set by (in increasing priority):
     vim.lsp.start {
       ..., -- Other configuration omitted.
       handlers = {
-        ['textDocument/publishDiagnostics'] = my_custom_server_definition
+        ['textDocument/publishDiagnostics'] = my_custom_diagnostics_handler
       },
     }
 
