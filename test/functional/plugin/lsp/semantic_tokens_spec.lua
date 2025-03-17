@@ -600,6 +600,39 @@ describe('semantic token highlighting', function()
       }
     end)
 
+    it('resets active request after receiving error responses from the server', function()
+      local error = { code = -32801, message = 'Content modified' }
+      exec_lua(function()
+        _G.server2 = _G._create_server({
+          capabilities = {
+            semanticTokensProvider = {
+              full = { delta = false },
+            },
+          },
+          handlers = {
+            -- There is same logic for handling nil responses and error responses,
+            -- so keep responses not nil.
+            --
+            -- if an error response was not be handled, this test will hang on here.
+            --- @param callback function
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              callback(error, vim.fn.json_decode(response))
+            end,
+            --- @param callback function
+            ['textDocument/semanticTokens/full/delta'] = function(_, _, callback)
+              callback(error, vim.fn.json_decode(response))
+            end,
+          },
+        })
+        return vim.lsp.start({ name = 'dummy', cmd = _G.server2.cmd })
+      end)
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|*14
+                                                |
+      ]])
+    end)
+
     it('does not send delta requests if not supported by server', function()
       insert(text)
       exec_lua(function()
