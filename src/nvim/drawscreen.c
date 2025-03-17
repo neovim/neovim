@@ -671,11 +671,10 @@ int update_screen(void)
 
   win_check_ns_hl(NULL);
 
-  // Reset b_mod_set and b_signcols.resized flags.  Going through all windows is
-  // probably faster than going through all buffers (there could be many buffers).
+  // Reset b_mod_set.  Going through all windows is probably faster than going
+  // through all buffers (there could be many buffers).
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     wp->w_buffer->b_mod_set = false;
-    wp->w_buffer->b_signcols.resized = false;
   }
 
   updating_screen = false;
@@ -1242,12 +1241,11 @@ static bool win_redraw_signcols(win_T *wp)
   }
 
   while (buf->b_signcols.max > 0 && buf->b_signcols.count[buf->b_signcols.max - 1] == 0) {
-    buf->b_signcols.resized = true;
     buf->b_signcols.max--;
   }
 
   int width = MIN(wp->w_maxscwidth, buf->b_signcols.max);
-  bool rebuild_stc = buf->b_signcols.resized && *wp->w_p_stc != NUL;
+  bool rebuild_stc = buf->b_signcols.max != buf->b_signcols.last_max && *wp->w_p_stc != NUL;
 
   if (rebuild_stc) {
     wp->w_nrwidth_line_count = 0;
@@ -1536,11 +1534,11 @@ static void win_update(win_T *wp)
 
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (win->w_buffer == wp->w_buffer && win_redraw_signcols(win)) {
-      win->w_lines_valid = 0;
       changed_line_abv_curs_win(win);
       redraw_later(win, UPD_NOT_VALID);
     }
   }
+  buf->b_signcols.last_max = buf->b_signcols.max;
 
   init_search_hl(wp, &screen_search_hl);
 
