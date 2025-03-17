@@ -523,7 +523,8 @@ REMOVED FEATURES                                                 *news-removed*
 
 These deprecated features were removed.
 
-• N/A
+• option `severity_limit` for `vim.lsp.diagnostic` (use `min=severity`
+  instead |vim.diagnostic.severity|).
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
