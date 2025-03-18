@@ -3091,9 +3091,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                    limit on the number of matches.
                  • {follow}? (`boolean`, default: `false`) Follow symbolic
                    links.
-                 • {skip}? (`fun(dir: string): boolean`) Do not traverse
-                   matching directories. If omitted, all directories are
-                   searched recursively.
+                 • {filter}? (`fun(dir: string): boolean`) Traverse Matching
+                   directories. If omitted, all directories are searched
+                   recursively.
 
     Return: ~
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching

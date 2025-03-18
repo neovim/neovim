@@ -94,6 +94,9 @@ LSP
 • `client.on_attach()`			Use |Client:on_attach()| instead.
 • `vim.lsp.start_client()`		Use |vim.lsp.start()| instead.
 
+FS
+• The "skip" parameter used by |vim.fs.dir()| is deprecated in favor of "filter"
+
 LUA
 • vim.region()		Use |getregionpos()| instead.
 • *vim.highlight*	Renamed to |vim.hl|.
