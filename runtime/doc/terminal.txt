@@ -185,13 +185,12 @@ clipboard.
 OSC 52 sequences sent from the :terminal buffer do not emit a |TermRequest|
 event. The event is handled directly by Nvim and is not forwarded to plugins.
 
-OSC 133: shell integration			*terminal-osc133*
+OSC 133: shell integration			*terminal-osc133* *shell-prompt*
 
 Shells can emit semantic escape sequences (OSC 133) to mark where each prompt
 starts and ends. The start of a prompt is marked by sequence `OSC 133 ; A ST`,
 and the end by `OSC 133 ; B ST`.
 
-                                                *shell-prompt-config*
 You can configure your shell "rc" (e.g. ~/.bashrc) to emit OSC 133 sequences,
 or your terminal may attempt to do it for you (assuming your shell config
 doesn't interfere).
@@ -214,6 +213,9 @@ emits OSC 133 as described above.
 To annotate each terminal prompt with a sign, call |nvim_buf_set_extmark()|
 from a |TermRequest| handler: >lua
 
+    vim.api.nvim_create_autocmd('TermOpen', {
+      command = 'setlocal signcolumn=auto',
+    })
     local ns = vim.api.nvim_create_namespace('my.terminal.prompt')
     vim.api.nvim_create_autocmd('TermRequest', {
       callback = function(args)
@@ -225,10 +227,6 @@ from a |TermRequest| handler: >lua
           })
         end
       end,
-    })
-    -- Enable signcolumn in terminal buffers.
-    vim.api.nvim_create_autocmd('TermOpen', {
-      command = 'setlocal signcolumn=auto',
     })
 <
 ==============================================================================

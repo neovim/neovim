@@ -185,11 +185,14 @@ Example: given the following configs... >lua
 To use LSP features beyond those provided by Nvim (see |lsp-buf|), you can set
 keymaps and options on |Client:on_attach()| or |LspAttach|. Not all language
 servers provide the same capabilities; check `supports_method()` in your
-LspAttach handler. Example: >lua
+LspAttach handler.
+                                                        *lsp-lint* *lsp-format*
+Example: Enable auto-completion and auto-formatting ("linting"): >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
+      group = vim.api.nvim_create_augroup('my.lsp', {}),
       callback = function(args)
-        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
         if client:supports_method('textDocument/implementation') then
           -- Create a keymap for vim.lsp.buf.implementation ...
         end
@@ -199,12 +202,15 @@ LspAttach handler. Example: >lua
           vim.lsp.completion.enable(true, client.id, args.buf, {autotrigger = true})
         end
 
-        -- Format the current buffer on save.
-        if client:supports_method('textDocument/formatting') then
+        -- Auto-format ("lint") on save.
+        -- Usually not needed if server supports "textDocument/willSaveWaitUntil".
+        if not client:supports_method('textDocument/willSaveWaitUntil')
+            and client:supports_method('textDocument/formatting') then
           vim.api.nvim_create_autocmd('BufWritePre', {
+            group = vim.api.nvim_create_augroup('my.lsp', {clear=false}),
             buffer = args.buf,
             callback = function()
-              vim.lsp.buf.format({bufnr = args.buf, id = client.id})
+              vim.lsp.buf.format({ bufnr = args.buf, id = client.id, timeout_ms = 1000 })
             end,
           })
         end
@@ -238,20 +244,18 @@ FAQ                                                     *lsp-faq*
      " (async = false is the default for format)
      autocmd BufWritePre *.rs lua vim.lsp.buf.format({ async = false })
 <
-                                                           *lsp-vs-treesitter*
+                                                        *lsp-vs-treesitter*
 - Q: How do LSP and Treesitter compare?
 - A: LSP requires a client and language server. The language server uses
      semantic analysis to understand code at a project level. This provides
      language servers with the ability to rename across files, find
      definitions in external libraries and more.
 
-     Treesitter is a language parsing library that provides excellent tools
+     |treesitter| is a language parsing library that provides excellent tools
      for incrementally parsing text and handling errors. This makes it a great
      fit for editors to understand the contents of the current file for things
      like syntax highlighting, simple goto-definitions, scope analysis and
      more.
-
-     LSP and Treesitter are both great tools for editing and inspecting code.
 
 ================================================================================
 LSP API                                                 *lsp-api*

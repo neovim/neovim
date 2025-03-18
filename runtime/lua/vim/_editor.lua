@@ -8,7 +8,7 @@
 --       - "opt-in": runtime/pack/dist/opt/
 --    2. runtime/lua/vim/ (the runtime): Lazy-loaded modules. Examples: `inspect`, `lpeg`.
 --    3. runtime/lua/vim/shared.lua: pure Lua functions which always are available. Used in the test
---       runner, as well as worker threads and processes launched from Nvim.
+--       runner, and worker threads/processes launched from Nvim.
 --    4. runtime/lua/vim/_editor.lua: Eager-loaded code which directly interacts with the Nvim
 --       editor state. Only available in the main thread.
 --

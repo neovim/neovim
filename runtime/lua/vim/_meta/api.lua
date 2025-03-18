@@ -885,7 +885,7 @@ function vim.api.nvim_command_output(command) end
 --- To get an existing group id, do:
 ---
 --- ```lua
---- local id = vim.api.nvim_create_augroup("MyGroup", {
+--- local id = vim.api.nvim_create_augroup('my.lsp.config', {
 ---     clear = false
 --- })
 --- ```
@@ -904,8 +904,8 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- Example using Lua callback:
 ---
 --- ```lua
---- vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
----   pattern = {"*.c", "*.h"},
+--- vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
+---   pattern = {'*.c', '*.h'},
 ---   callback = function(ev)
 ---     print(string.format('event fired: %s', vim.inspect(ev)))
 ---   end
@@ -915,8 +915,8 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- Example using an Ex command as the handler:
 ---
 --- ```lua
---- vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
----   pattern = {"*.c", "*.h"},
+--- vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
+---   pattern = {'*.c', '*.h'},
 ---   command = "echo 'Entering a C or C++ file'",
 --- })
 --- ```
@@ -925,7 +925,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- and "~" must be expanded explicitly:
 ---
 --- ```lua
---- pattern = vim.fn.expand("~") .. "/some/path/*.py"
+--- pattern = vim.fn.expand('~') .. '/some/path/*.py'
 --- ```
 ---
 --- @see `:help autocommand`
@@ -1222,14 +1222,14 @@ function vim.api.nvim_get_all_options_info() end
 --- ```lua
 --- -- Matches all criteria
 --- autocommands = vim.api.nvim_get_autocmds({
----   group = "MyGroup",
----   event = {"BufEnter", "BufWinEnter"},
----   pattern = {"*.c", "*.h"}
+---   group = 'MyGroup',
+---   event = {'BufEnter', 'BufWinEnter'},
+---   pattern = {'*.c', '*.h'}
 --- })
 ---
 --- -- All commands from one group
 --- autocommands = vim.api.nvim_get_autocmds({
----   group = "MyGroup",
+---   group = 'MyGroup',
 --- })
 --- ```
 ---
