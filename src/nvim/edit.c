@@ -2753,13 +2753,12 @@ int stuff_inserted(int c, int count, int no_esc)
 }
 
 String *get_last_insert(void)
-  FUNC_ATTR_PURE
 {
   static String insert = STRING_INIT;
 
   insert = last_insert.data == NULL ? NULL_STRING : (String){
-    insert.data = last_insert.data + last_insert_skip,
-    insert.size = last_insert.size - (size_t)last_insert_skip,
+    .data = last_insert.data + last_insert_skip,
+    .size = last_insert.size - (size_t)last_insert_skip,
   };
 
   return &insert;
