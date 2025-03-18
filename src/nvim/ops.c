@@ -3849,7 +3849,8 @@ void ex_display(exarg_T *eap)
   }
 
   // display last inserted text
-  if ((p = get_last_insert()->data) != NULL
+  String insert = get_last_insert();
+  if ((p = insert.data) != NULL
       && (arg == NULL || vim_strchr(arg, '.') != NULL) && !got_int
       && !message_filtered(p)) {
     msg_puts("\n  c  \".   ");
