@@ -180,11 +180,14 @@ void extmark_del(buf_T *buf, MarkTreeIter *itr, MTKey key, bool restore)
   }
 
   if (mt_decor_any(key)) {
-    // If key is an end mark it has been found first while iterating the marktree,
-    // indicating the decor is already invalid.
-    if (mt_invalid(key) || mt_end(key)) {
+    if (mt_invalid(key)) {
       decor_free(mt_decor(key));
     } else {
+      if (mt_end(key)) {
+        MTKey k = key;
+        key = key2;
+        key2 = k;
+      }
       buf_decor_remove(buf, key.pos.row, key2.pos.row, key.pos.col, mt_decor(key), true);
     }
   }
