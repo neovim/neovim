@@ -7150,6 +7150,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	UI-dependent. Works best with RGB colors. 'termguicolors'
 
+							*'winborder'*
+'winborder'		string	(default "")
+			global
+	Defines the default border style of floating windows. The default value
+	is empty, which is equivalent to "none". Valid values include:
+	- "none": No border.
+	- "single": A single line box.
+	- "double": A double line box.
+	- "rounded": Like "single", but with rounded corners ("╭" etc.).
+	- "solid": Adds padding by a single whitespace cell.
+	- "shadow": A drop shadow effect by blending with the background.
+
 							*'window'* *'wi'*
 'window' 'wi'		number	(default screen height - 1)
 			global

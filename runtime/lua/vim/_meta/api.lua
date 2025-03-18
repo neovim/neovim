@@ -1797,17 +1797,11 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---                  'fillchars' to a space char, and clearing the
 ---                  `hl-EndOfBuffer` region in 'winhighlight'.
 --- - border: Style of (optional) window border. This can either be a string
----   or an array. The string values are
----   - "none": No border (default).
----   - "single": A single line box.
----   - "double": A double line box.
----   - "rounded": Like "single", but with rounded corners ("╭" etc.).
----   - "solid": Adds padding by a single whitespace cell.
----   - "shadow": A drop shadow effect by blending with the background.
----   - If it is an array, it should have a length of eight or any divisor of
----     eight. The array will specify the eight chars building up the border
----     in a clockwise fashion starting with the top-left corner. As an
----     example, the double box style could be specified as:
+---   or an array. The string values are the same as those described in 'winborder'.
+---   If it is an array, it should have a length of eight or any divisor of
+---   eight. The array will specify the eight chars building up the border
+---   in a clockwise fashion starting with the top-left corner. As an
+---   example, the double box style could be specified as:
 ---     ```
 ---     [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
 ---     ```

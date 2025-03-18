@@ -348,6 +348,7 @@ OPTIONS
 • 'messagesopt' configures |:messages| and |hit-enter| prompt.
 • 'tabclose' controls which tab page to focus when closing a tab page.
 • 'eventignorewin' to persistently ignore events in a window.
+• 'winborder' sets the default border for |floating-windows|
 
 PERFORMANCE
 
