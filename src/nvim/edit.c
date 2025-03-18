@@ -2390,6 +2390,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
                                       end_insert_pos->lnum))
         && end_insert_pos->lnum <= curbuf->b_ml.ml_line_count) {
       pos_T tpos = curwin->w_cursor;
+      colnr_T prev_col = end_insert_pos->col;
 
       curwin->w_cursor = *end_insert_pos;
       check_cursor_col(curwin);        // make sure it is not past the line
@@ -2407,7 +2408,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
       }
       if (curwin->w_cursor.lnum != tpos.lnum) {
         curwin->w_cursor = tpos;
-      } else {
+      } else if (curwin->w_cursor.col < prev_col) {
         // reset tpos, could have been invalidated in the loop above
         tpos = curwin->w_cursor;
         tpos.col++;

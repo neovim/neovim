@@ -466,6 +466,64 @@ func Test_autoindent_remove_indent()
   call delete('Xarifile')
 endfunc
 
+func Test_edit_esc_after_CR_autoindent()
+  new
+  setlocal autoindent
+  autocmd InsertLeavePre * let g:prev_cursor = getpos('.')
+
+  call setline(1, 'foobar')
+  exe "normal! $hi\<CR>\<Esc>"
+  call assert_equal(['foob', 'ar'], getline(1, '$'))
+  call assert_equal([0, 2, 1, 0], getpos('.'))
+  call assert_equal([0, 2, 1, 0], getpos("'^"))
+  call assert_equal([0, 2, 1, 0], g:prev_cursor)
+  %d
+
+  call setline(1, 'foobar')
+  exe "normal! $i\<CR>\<Esc>"
+  call assert_equal(['fooba', 'r'], getline(1, '$'))
+  call assert_equal([0, 2, 1, 0], getpos('.'))
+  call assert_equal([0, 2, 1, 0], getpos("'^"))
+  call assert_equal([0, 2, 1, 0], g:prev_cursor)
+  %d
+
+  call setline(1, 'foobar')
+  exe "normal! A\<CR>\<Esc>"
+  call assert_equal(['foobar', ''], getline(1, '$'))
+  call assert_equal([0, 2, 1, 0], getpos('.'))
+  call assert_equal([0, 2, 1, 0], getpos("'^"))
+  call assert_equal([0, 2, 1, 0], g:prev_cursor)
+  %d
+
+  call setline(1, '  foobar')
+  exe "normal! $hi\<CR>\<Esc>"
+  call assert_equal(['  foob', '  ar'], getline(1, '$'))
+  call assert_equal([0, 2, 2, 0], getpos('.'))
+  call assert_equal([0, 2, 3, 0], getpos("'^"))
+  call assert_equal([0, 2, 3, 0], g:prev_cursor)
+  %d
+
+  call setline(1, '  foobar')
+  exe "normal! $i\<CR>\<Esc>"
+  call assert_equal(['  fooba', '  r'], getline(1, '$'))
+  call assert_equal([0, 2, 2, 0], getpos('.'))
+  call assert_equal([0, 2, 3, 0], getpos("'^"))
+  call assert_equal([0, 2, 3, 0], g:prev_cursor)
+  %d
+
+  call setline(1, '  foobar')
+  exe "normal! A\<CR>\<Esc>"
+  call assert_equal(['  foobar', ''], getline(1, '$'))
+  call assert_equal([0, 2, 1, 0], getpos('.'))
+  call assert_equal([0, 2, 1, 0], getpos("'^"))
+  call assert_equal([0, 2, 1, 0], g:prev_cursor)
+  %d
+
+  autocmd! InsertLeavePre
+  unlet g:prev_cursor
+  bwipe!
+endfunc
+
 func Test_edit_CR()
   " Test for <CR> in insert mode
   " basically only in quickfix mode it's tested, the rest
