@@ -5356,7 +5356,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
 
       // Fuzzy string match
       CLEAR_FIELD(matches);
-      while (fuzzy_match(str + col, spat, false, &score, matches, (int)sz) > 0) {
+      while (fuzzy_match(str + col, spat, false, &score, matches, (int)sz, true) > 0) {
         // Pass the buffer number so that it gets used even for a
         // dummy buffer, unless duplicate_name is set, then the
         // buffer will be wiped out below.
