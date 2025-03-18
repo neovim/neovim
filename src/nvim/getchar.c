@@ -3254,7 +3254,7 @@ bool map_execute_lua(bool may_repeat)
   Array args = ARRAY_DICT_INIT;
   nlua_call_ref(ref, NULL, args, kRetNilBool, NULL, &err);
   if (ERROR_SET(&err)) {
-    semsg_multiline("E5108: %s", err.msg);
+    semsg_multiline("emsg", "E5108: %s", err.msg);
     api_clear_error(&err);
   }
 

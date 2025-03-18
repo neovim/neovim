@@ -313,6 +313,7 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
     msg_ext_set_kind(kind);
   }
   is_multihl = true;
+  msg_ext_skip_flush = true;
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     if (err) {
@@ -325,6 +326,7 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
   if (history && kv_size(hl_msg)) {
     msg_hist_add_multihl(hl_msg, false);
   }
+  msg_ext_skip_flush = false;
   is_multihl = false;
   no_wait_return--;
   msg_end();
@@ -640,9 +642,6 @@ void msg_source(int hl_id)
     msg_scroll = true;  // this will take more than one line
     msg(p, hl_id);
     xfree(p);
-    if (is_multihl) {
-      msg_start();  // avoided in msg_keep() but need the "msg_didout" newline here
-    }
   }
   p = get_emsg_lnum();
   if (p != NULL) {
@@ -656,6 +655,9 @@ void msg_source(int hl_id)
     XFREE_CLEAR(last_sourcing_name);
     if (SOURCING_NAME != NULL) {
       last_sourcing_name = xstrdup(SOURCING_NAME);
+      if (!redirecting()) {
+        msg_putchar_hl('\n', hl_id);
+      }
     }
   }
   no_wait_return--;
@@ -780,21 +782,19 @@ bool emsg_multiline(const char *s, const char *kind, int hl_id, bool multiline)
   }                           // wait_return() has reset need_wait_return
                               // and a redraw is expected because
                               // msg_scrolled is non-zero
-  if (msg_ext_kind == NULL) {
-    msg_ext_set_kind(kind);
-  }
+  msg_ext_set_kind(kind);
 
   // Display name and line number for the source of the error.
   msg_scroll = true;
+  bool save_msg_skip_flush = msg_ext_skip_flush;
+  msg_ext_skip_flush = true;
   msg_source(hl_id);
-
-  if (msg_ext_kind == NULL) {
-    msg_ext_set_kind(kind);
-  }
 
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
-  return msg_keep(s, hl_id, false, multiline);
+  int rv = msg_keep(s, hl_id, false, multiline);
+  msg_ext_skip_flush = save_msg_skip_flush;
+  return rv;
 }
 
 /// emsg() - display an error message
@@ -831,7 +831,7 @@ bool semsg(const char *const fmt, ...)
 
 #define MULTILINE_BUFSIZE 8192
 
-bool semsg_multiline(const char *const fmt, ...)
+bool semsg_multiline(const char *kind, const char *const fmt, ...)
 {
   bool ret;
   va_list ap;
@@ -845,7 +845,7 @@ bool semsg_multiline(const char *const fmt, ...)
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
   va_end(ap);
 
-  ret = emsg_multiline(errbuf, "emsg", HLF_E, true);
+  ret = emsg_multiline(errbuf, kind, HLF_E, true);
 
   return ret;
 }
@@ -1431,6 +1431,7 @@ static void hit_return_msg(bool newline_sb)
     msg_putchar('\n');
   }
   p_more = false;       // don't want to see this message when scrolling back
+  msg_ext_skip_flush = false;
   msg_ext_set_kind("return_prompt");
   if (got_int) {
     msg_puts(_("Interrupt: "));

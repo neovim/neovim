@@ -7804,7 +7804,7 @@ static void ex_checkhealth(exarg_T *eap)
       emsg(_("E5009: Invalid 'runtimepath'"));
     }
   }
-  semsg_multiline(err.msg);
+  semsg_multiline("emsg", err.msg);
   api_clear_error(&err);
 }
 
