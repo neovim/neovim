@@ -6,17 +6,6 @@ local uv = vim.uv
 
 local M = {}
 
-local default_border = {
-  { '', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { ' ', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { '', 'NormalFloat' },
-  { ' ', 'NormalFloat' },
-}
-
 --- @param border string|(string|[string,string])[]
 local function border_error(border)
   error(
@@ -43,7 +32,11 @@ local border_size = {
 --- @return integer height
 --- @return integer width
 local function get_border_size(opts)
-  local border = opts and opts.border or default_border
+  local border = opts and opts.border or vim.o.winborder
+
+  if border == '' then
+    border = 'none'
+  end
 
   if type(border) == 'string' then
     if not border_size[border] then
@@ -884,7 +877,7 @@ function M.make_floating_popup_options(width, height, opts)
       or 'cursor',
     style = 'minimal',
     width = width,
-    border = opts.border or default_border,
+    border = opts.border,
     zindex = opts.zindex or (api.nvim_win_get_config(0).zindex or 49) + 1,
     title = title,
     title_pos = title_pos,
