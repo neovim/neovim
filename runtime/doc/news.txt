@@ -338,6 +338,7 @@ LUA
 • |vim.fs.relpath()| gets relative path compared to base path.
 • |vim.fs.dir()| and |vim.fs.find()| can now follow symbolic links,
   the behavior can be turn on using the new `follow` option.
+• |vim.fs.find()| has an option to filter the directory traversal.
 • |vim.text.indent()| indents/dedents text.
 
 OPTIONS

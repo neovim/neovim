@@ -154,7 +154,7 @@ describe('vim.fs', function()
       )
     end)
 
-    it('works with opts.depth, opts.skip and opts.follow', function()
+    it('works with opts.depth, opts.filter and opts.follow', function()
       io.open('testd/a1', 'w'):close()
       io.open('testd/b1', 'w'):close()
       io.open('testd/c1', 'w'):close()
@@ -168,18 +168,18 @@ describe('vim.fs', function()
       io.open('testd/a/b/c/b4', 'w'):close()
       io.open('testd/a/b/c/c4', 'w'):close()
 
-      local function run(dir, depth, skip, follow)
+      local function run(dir, depth, filter, follow)
         return exec_lua(function(follow_)
           local r = {} --- @type table<string, string>
-          local skip_f --- @type function
-          if skip then
-            skip_f = function(n0)
-              if vim.tbl_contains(skip or {}, n0) then
+          local filter_f --- @type function
+          if filter then
+            filter_f = function(n0)
+              if vim.tbl_contains(filter or {}, n0) then
                 return false
               end
             end
           end
-          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f, follow = follow_ }) do
+          for name, type_ in vim.fs.dir(dir, { depth = depth, filter = filter_f, follow = follow_ }) do
             r[name] = type_
           end
           return r
@@ -251,11 +251,24 @@ describe('vim.fs', function()
       eq({ nvim_prog }, vim.fs.find(nvim_prog_basename, { path = test_build_dir, type = 'file' }))
 
       eq(
+        { vim.fs.dirname(test_build_dir) .. '/runtime/syntax/python.vim' },
+        vim.fs.find('python.vim', {
+          path = vim.fs.dirname(test_build_dir),
+          type = 'file',
+          limit = 4,
+          filter = function(dir)
+            local white_list = { runtime = true, syntax = true }
+            return white_list[vim.fs.basename(dir)] ~= nil
+          end,
+        })
+      )
+
+      eq(
         {},
         vim.fs.find(nvim_prog_basename, {
           path = vim.fs.dirname(test_build_dir),
           type = 'file',
-          skip = function(dir)
+          filter = function(dir)
             return not (vim.fs.basename(dir):match('^build'))
           end,
         })
