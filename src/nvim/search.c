@@ -2996,7 +2996,7 @@ typedef struct {
 /// are in "matches".
 static int fuzzy_match_compute_score(const char *const fuzpat, const char *const str,
                                      const int strSz, const uint32_t *const matches,
-                                     const int numMatches)
+                                     const int numMatches, bool camelcase)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   assert(numMatches > 0);  // suppress clang "result of operation is garbage"
@@ -3055,7 +3055,7 @@ static int fuzzy_match_compute_score(const char *const fuzpat, const char *const
       curr = utf_ptr2char(p);
 
       // Enhanced camel case scoring
-      if (mb_islower(neighbor) && mb_isupper(curr)) {
+      if (camelcase && mb_islower(neighbor) && mb_isupper(curr)) {
         score += CAMEL_BONUS * 2;  // Double the camel case bonus
         is_camel = true;
         consecutive_camel++;
@@ -3114,7 +3114,8 @@ static int fuzzy_match_compute_score(const char *const fuzpat, const char *const
 static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t strIdx,
                                  int *const outScore, const char *const strBegin, const int strLen,
                                  const uint32_t *const srcMatches, uint32_t *const matches,
-                                 const int maxMatches, int nextMatch, int *const recursionCount)
+                                 const int maxMatches, int nextMatch, int *const recursionCount,
+                                 bool camelcase)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5, 8, 11) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Recursion params
@@ -3161,7 +3162,7 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
       if (fuzzy_match_recursive(fuzpat, next_char, strIdx + 1, &recursiveScore, strBegin, strLen,
                                 matches, recursiveMatches,
                                 sizeof(recursiveMatches) / sizeof(recursiveMatches[0]), nextMatch,
-                                recursionCount)) {
+                                recursionCount, camelcase)) {
         // Pick best recursive score
         if (!recursiveMatch || recursiveScore > bestRecursiveScore) {
           memcpy(bestRecursiveMatches, recursiveMatches,
@@ -3184,7 +3185,7 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
 
   // Calculate score
   if (matched) {
-    *outScore = fuzzy_match_compute_score(fuzpat, strBegin, strLen, matches, nextMatch);
+    *outScore = fuzzy_match_compute_score(fuzpat, strBegin, strLen, matches, nextMatch, camelcase);
   }
 
   // Return best result
@@ -3213,7 +3214,7 @@ static int fuzzy_match_recursive(const char *fuzpat, const char *str, uint32_t s
 /// @return true if "pat_arg" matches "str". Also returns the match score in
 /// "outScore" and the matching character positions in "matches".
 bool fuzzy_match(char *const str, const char *const pat_arg, const bool matchseq,
-                 int *const outScore, uint32_t *const matches, const int maxMatches)
+                 int *const outScore, uint32_t *const matches, const int maxMatches, bool camelcase)
   FUNC_ATTR_NONNULL_ALL
 {
   const int len = mb_charlen(str);
@@ -3251,7 +3252,7 @@ bool fuzzy_match(char *const str, const char *const pat_arg, const bool matchseq
     const int matchCount
       = fuzzy_match_recursive(pat, str, 0, &score, str, len, NULL,
                               matches + numMatches,
-                              maxMatches - numMatches, 0, &recursionCount);
+                              maxMatches - numMatches, 0, &recursionCount, camelcase);
     if (matchCount == 0) {
       numMatches = 0;
       break;
@@ -3301,7 +3302,7 @@ static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
 static void fuzzy_match_in_list(list_T *const l, char *const str, const bool matchseq,
                                 const char *const key, Callback *const item_cb,
                                 const bool retmatchpos, list_T *const fmatchlist,
-                                const int max_matches)
+                                const int max_matches, bool camelcase)
   FUNC_ATTR_NONNULL_ARG(2, 5, 7)
 {
   int len = tv_list_len(l);
@@ -3352,7 +3353,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
 
     int score;
     if (itemstr != NULL && fuzzy_match(itemstr, str, matchseq, &score, matches,
-                                       MAX_FUZZY_MATCHES)) {
+                                       MAX_FUZZY_MATCHES, camelcase)) {
       items[match_count].idx = (int)match_count;
       items[match_count].item = li;
       items[match_count].score = score;
@@ -3452,6 +3453,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
   const char *key = NULL;
   bool matchseq = false;
   int max_matches = 0;
+  bool camelcase = true;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (tv_check_for_nonnull_dict_arg(argvars, 2) == FAIL) {
       return;
@@ -3481,6 +3483,14 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
       max_matches = (int)tv_get_number_chk(&di->di_tv, NULL);
     }
 
+    if ((di = tv_dict_find(d, "camelcase", -1)) != NULL) {
+      if (di->di_tv.v_type != VAR_BOOL) {
+        semsg(_(e_invarg2), "camelcase");
+        return;
+      }
+      camelcase = tv_get_bool_chk(&di->di_tv, NULL);
+    }
+
     if (tv_dict_find(d, "matchseq", -1) != NULL) {
       matchseq = true;
     }
@@ -3500,7 +3510,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
 
   fuzzy_match_in_list(argvars[0].vval.v_list,
                       (char *)tv_get_string(&argvars[1]), matchseq, key,
-                      &cb, retmatchpos, rettv->vval.v_list, max_matches);
+                      &cb, retmatchpos, rettv->vval.v_list, max_matches, camelcase);
   callback_free(&cb);
 }
 
@@ -3584,7 +3594,7 @@ int fuzzy_match_str(char *const str, const char *const pat)
 
   int score = 0;
   uint32_t matchpos[MAX_FUZZY_MATCHES];
-  fuzzy_match(str, pat, true, &score, matchpos, sizeof(matchpos) / sizeof(matchpos[0]));
+  fuzzy_match(str, pat, true, &score, matchpos, sizeof(matchpos) / sizeof(matchpos[0]), true);
 
   return score;
 }
@@ -3602,7 +3612,7 @@ garray_T *fuzzy_match_str_with_pos(char *const str, const char *const pat)
 
   unsigned matches[MAX_FUZZY_MATCHES];
   int score = 0;
-  if (!fuzzy_match(str, pat, false, &score, matches, MAX_FUZZY_MATCHES)
+  if (!fuzzy_match(str, pat, false, &score, matches, MAX_FUZZY_MATCHES, true)
       || score == 0) {
     ga_clear(match_positions);
     xfree(match_positions);
