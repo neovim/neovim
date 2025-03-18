@@ -420,6 +420,7 @@ end
 function M.expand(input)
   local snippet = G.parse(input)
   local snippet_text = {}
+  ---@type string
   local base_indent = vim.api.nvim_get_current_line():match('^%s*') or ''
 
   -- Get the placeholders we should use for each tabstop index.
@@ -454,12 +455,6 @@ function M.expand(input)
   ---
   --- @param text string|string[]
   local function append_to_snippet(text)
-    local snippet_lines = text_to_lines(snippet_text)
-    -- Get the base indentation based on the current line and the last line of the snippet.
-    if #snippet_lines > 0 then
-      base_indent = base_indent .. (snippet_lines[#snippet_lines]:match('(^%s+)%S') or '') --- @type string
-    end
-
     local shiftwidth = vim.fn.shiftwidth()
     local curbuf = vim.api.nvim_get_current_buf()
     local expandtab = vim.bo[curbuf].expandtab
