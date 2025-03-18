@@ -1848,6 +1848,7 @@ local filename = {
   ['pending.data'] = 'taskdata',
   ['completed.data'] = 'taskdata',
   ['undo.data'] = 'taskdata',
+  ['uv.lock'] = 'toml',
   ['.tclshrc'] = 'tcl',
   ['.wishrc'] = 'tcl',
   ['.tclsh-history'] = 'tcl',
