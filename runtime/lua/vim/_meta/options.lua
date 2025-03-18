@@ -7840,7 +7840,7 @@ vim.wo.winbl = vim.wo.winblend
 --- - "solid": Adds padding by a single whitespace cell.
 --- - "shadow": A drop shadow effect by blending with the background.
 ---
---- @type string
+--- @type 'double'|'single'|'shadow'|'rounded'|'solid'|'none'
 vim.o.winborder = ""
 vim.go.winborder = vim.o.winborder
 
