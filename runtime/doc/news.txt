@@ -215,6 +215,10 @@ DEFAULTS
 
 • Highlighting:
   • Improved styling of :checkhealth and :help buffers.
+  • Enabled treesitter highlighting for all builtin |treesitter-parsers|:
+    • C
+    • Vimscript
+    • Markdown
 
 • Mappings:
   • |grn| in Normal mode maps to |vim.lsp.buf.rename()|
