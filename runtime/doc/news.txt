@@ -185,6 +185,12 @@ DEFAULTS
 • 'statusline' includes |vim.diagnostic.status()|
 • Project-local configuration ('exrc') is also loaded from parent directories.
   Unset 'exrc' to stop further search.
+• Highlighting:
+  • Improved styling of :checkhealth and :help buffers.
+  • Enabled treesitter highlighting for all builtin |treesitter-parsers|:
+    • C
+    • Vimscript
+    • Markdown
 • Mappings:
   • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
 • 'shada' default now excludes "/tmp/" and "/private/" paths to reduce clutter in |:oldfiles|.
