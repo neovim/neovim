@@ -10190,7 +10190,6 @@ local options = {
     },
     {
       defaults = { if_true = '' },
-      cb = 'did_set_winborder',
       values = { '', 'double', 'single', 'shadow', 'rounded', 'solid', 'none' },
       desc = [=[
         Defines the default border style of floating windows. The default value
