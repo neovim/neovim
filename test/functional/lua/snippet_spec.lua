@@ -79,6 +79,10 @@ describe('vim.snippet', function()
     -- Regression test: #29658
     api.nvim_buf_set_lines(curbuf, 0, -1, false, {})
     test_expand_success({ '${1:foo^bar}\n' }, { 'foo^bar', '' })
+
+    -- Regression test: #30950
+    api.nvim_buf_set_lines(curbuf, 0, -1, false, {})
+    test_expand_success({ 'a^ b$1', 'b$2', 'd' }, { 'a^ b', 'b', 'd' })
   end)
 
   it('replaces tabs with spaces when expandtab is set', function()
