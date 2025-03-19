@@ -1825,6 +1825,14 @@ describe('API/win', function()
       )
     end)
 
+    it("can create split window when 'winborder' is set", function()
+      local old_win = api.nvim_get_current_win()
+      api.nvim_set_option_value('winborder', 'single', {})
+      local new_win = api.nvim_open_win(0, false, { split = 'right', win = 0 })
+      eq({ 'row', { { 'leaf', old_win }, { 'leaf', new_win } } }, fn.winlayout())
+      eq('', api.nvim_win_get_config(new_win).relative)
+    end)
+
     describe("with 'autochdir'", function()
       local topdir
       local otherbuf

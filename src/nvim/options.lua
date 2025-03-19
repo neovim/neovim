@@ -10205,7 +10205,7 @@ local options = {
       scope = { 'global' },
       short_desc = N_('border of floating window'),
       type = 'string',
-      varname = 'p_winbd',
+      varname = 'p_winborder',
     },
     {
       abbreviation = 'wi',
