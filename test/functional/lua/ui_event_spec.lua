@@ -362,7 +362,7 @@ describe('vim.ui_attach', function()
       messages = {
         {
           content = { { 'Press ENTER or type command to continue', 100, 18 } },
-          history = true,
+          history = false,
           kind = 'return_prompt',
         },
       },

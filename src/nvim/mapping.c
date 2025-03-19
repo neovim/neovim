@@ -1664,7 +1664,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
     }
     api_free_object(ret);
     if (ERROR_SET(&err)) {
-      semsg_multiline("E5108: %s", err.msg);
+      semsg_multiline("emsg", "E5108: %s", err.msg);
       api_clear_error(&err);
     }
   } else {

@@ -2064,7 +2064,7 @@ static void do_exrc_initialization(void)
       xfree(str);
       if (ERROR_SET(&err)) {
         semsg("Error detected while processing %s:", VIMRC_LUA_FILE);
-        semsg_multiline(err.msg);
+        semsg_multiline("emsg", err.msg);
         api_clear_error(&err);
       }
     }

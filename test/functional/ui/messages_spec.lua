@@ -181,19 +181,11 @@ describe('ui/ext_messages', function()
       cmdline = { { abort = false } },
       messages = {
         {
-          content = { { 'Error detected while processing :', 9, 6 } },
+          content = {
+            { 'Error detected while processing :\nE605: Exception not caught: foo', 9, 6 },
+          },
           history = true,
           kind = 'emsg',
-        },
-        {
-          content = { { 'E605: Exception not caught: foo', 9, 6 } },
-          history = true,
-          kind = 'emsg',
-        },
-        {
-          content = { { 'Press ENTER or type command to continue', 6, 18 } },
-          history = false,
-          kind = 'return_prompt',
         },
       },
     }
