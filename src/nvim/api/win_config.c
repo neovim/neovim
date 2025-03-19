@@ -1273,13 +1273,18 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     }
   }
 
-  if (HAS_KEY_X(config, border) || *p_winbd != NUL) {
+  Object border_style = OBJECT_INIT;
+  if (HAS_KEY_X(config, border)) {
     if (is_split) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'border'");
       goto fail;
     }
-    Object style = config->border.type != kObjectTypeNil ? config->border : CSTR_AS_OBJ(p_winbd);
-    parse_border_style(style, fconfig, err);
+    border_style = config->border;
+  } else if (*p_winborder != NUL) {
+    border_style = CSTR_AS_OBJ(p_winborder);
+  }
+  if (border_style.type != kObjectTypeNil) {
+    parse_border_style(border_style, fconfig, err);
     if (ERROR_SET(err)) {
       goto fail;
     }
