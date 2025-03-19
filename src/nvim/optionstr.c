@@ -2005,15 +2005,6 @@ const char *did_set_winhighlight(optset_T *args)
   return NULL;
 }
 
-/// The 'winborder' option is changed.
-const char *did_set_winborder(optset_T *args)
-{
-  if (opt_strings_flags(p_winbd, opt_winborder_values, NULL, true) != OK) {
-    return e_invarg;
-  }
-  return NULL;
-}
-
 int expand_set_winhighlight(optexpand_T *args, int *numMatches, char ***matches)
 {
   return expand_set_opt_generic(args, get_highlight_name, numMatches, matches);
