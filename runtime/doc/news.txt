@@ -127,7 +127,8 @@ LSP
 
 LUA
 
-• todo
+• |K| in Lua buffers and Lua code block in |help| buffers can open |help|
+documentation for the symbol under the cursor.
 
 OPTIONS
 

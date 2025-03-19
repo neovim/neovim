@@ -112,7 +112,15 @@ vim.keymap.set('n', 'g==', function()
   end
 end, { buffer = true })
 
+vim.bo.keywordprg = ':HelpKeywordPrg'
+
+vim.api.nvim_buf_create_user_command(0, 'HelpKeywordPrg', function()
+  require('vim._ftplugin.help').keywordprg()
+end, { nargs = '*' })
+
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
   .. '\n sil! exe "nunmap <buffer> gO" | sil! exe "nunmap <buffer> g=="'
   .. '\n sil! exe "nunmap <buffer> ]]" | sil! exe "nunmap <buffer> [["'
+  .. '\n sil! setl keywordprg<'
+  .. '\n delcommand -buffer HelpKeywordPrg'
 vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | call v:lua.vim.treesitter.stop()'
