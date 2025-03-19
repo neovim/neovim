@@ -57,7 +57,7 @@ end
 
 vim.keymap.set('n', 'gO', function()
   require('vim.treesitter._headings').show_toc()
-end, { buffer = 0, silent = true, desc = 'Show table of contents for current buffer' })
+end, { buffer = 0, silent = true, desc = 'Show an Outline of the current buffer' })
 
 vim.keymap.set('n', ']]', function()
   require('vim.treesitter._headings').jump({ count = 1 })
