@@ -1325,7 +1325,11 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
           recursive = true;
           did_expand_in_path = true;
         } else {
+          // Recursive gen_expand_wildcards() can only happen here when called from an
+          // event handler in os_breakcheck(), in which case it should be allowed.
+          recursive = false;
           size_t tmp_add_pat = path_expand(&ga, p, flags);
+          recursive = true;
           assert(tmp_add_pat <= INT_MAX);
           add_pat = (int)tmp_add_pat;
         }
@@ -1349,7 +1353,11 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     }
 
     if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & (EW_PATH | EW_CDPATH))) {
+      // Recursive gen_expand_wildcards() can only happen here when called from an
+      // event handler in os_breakcheck(), in which case it should be allowed.
+      recursive = false;
       uniquefy_paths(&ga, p, path_option);
+      recursive = true;
     }
     if (p != pat[i]) {
       xfree(p);
