@@ -1273,12 +1273,19 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     }
   }
 
-  if (HAS_KEY_X(config, border) || *p_winbd != NUL) {
+  if (HAS_KEY_X(config, border)) {
     if (is_split) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'border'");
       goto fail;
     }
     Object style = config->border.type != kObjectTypeNil ? config->border : CSTR_AS_OBJ(p_winbd);
+    parse_border_style(style, fconfig, err);
+    if (ERROR_SET(err)) {
+      goto fail;
+    }
+  } else if (!is_split && *p_winbd != NUL) {
+    // Only apply global winborder to floating windows
+    Object style = CSTR_AS_OBJ(p_winbd);
     parse_border_style(style, fconfig, err);
     if (ERROR_SET(err)) {
       goto fail;

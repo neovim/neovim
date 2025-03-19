@@ -10155,6 +10155,23 @@ describe('float window', function()
 
       -- it is currently not supported.
       eq('Vim(set):E474: Invalid argument: winborder=custom', pcall_err(command, 'set winborder=custom'))
+
+      -- Try to create a split window with winborder set
+      local result = exec_lua([[
+        local win_id = vim.api.nvim_open_win(0, false, {
+           split = 'right',
+           win = 0
+         })
+         return {
+           success = win_id > 0,
+           is_floating = vim.api.nvim_win_get_config(win_id).relative ~= ''
+         }
+       ]])
+
+      -- Should succeed
+      eq(true, result.success)
+      -- Should NOT be a floating window
+      eq(false, result.is_floating)
     end)
   end
 
