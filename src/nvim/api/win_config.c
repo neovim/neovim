@@ -1280,7 +1280,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
       goto fail;
     }
     border_style = config->border;
-  } else if (*p_winborder != NUL) {
+  } else if (*p_winborder != NUL && (wp == NULL || !wp->w_floating)) {
     border_style = CSTR_AS_OBJ(p_winborder);
   }
   if (border_style.type != kObjectTypeNil) {
