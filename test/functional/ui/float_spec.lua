@@ -10088,7 +10088,7 @@ describe('float window', function()
       -- respect config.border
       command('set winborder=rounded')
       config.border = 'single'
-      api.nvim_open_win(buf, false, config)
+      local winid = api.nvim_open_win(buf, false, config)
       if multigrid then
         screen:expect({
           grid = [[
@@ -10153,6 +10153,11 @@ describe('float window', function()
         ]])
       end
 
+      -- don't use winborder when reconfig a floating window
+      config.border = nil
+      api.nvim_win_set_config(winid, config)
+      screen:expect_unchanged()
+      command('fclose!')
       -- it is currently not supported.
       eq('Vim(set):E474: Invalid argument: winborder=custom', pcall_err(command, 'set winborder=custom'))
     end)
