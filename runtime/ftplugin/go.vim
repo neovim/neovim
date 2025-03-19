@@ -1,9 +1,10 @@
 " Vim filetype plugin file
 " Language:	Go
-" Maintainer:	David Barnett (https://github.com/google/vim-ft-go)
+" Maintainer:	David Barnett (https://github.com/google/vim-ft-go is archived)
 " Last Change:	2014 Aug 16
 " 2024 Jul 16 by Vim Project (add recommended indent style)
 " 2025 Mar 07 by Vim Project (add formatprg and keywordprg option #16804)
+" 2025 Mar 18 by Vim Project (use :term for 'keywordprg' #16911)
 
 if exists('b:did_ftplugin')
   finish
@@ -33,10 +34,8 @@ if !exists('*' .. expand('<SID>') .. 'GoKeywordPrg')
     setl iskeyword+=.
     try
       let cmd = 'go doc -C ' . shellescape(expand('%:h')) . ' ' . shellescape(expand('<cword>'))
-      if has('nvim')
-        exe "term" cmd
-        startinsert
-        tmap <buffer> <Esc> <Cmd>call jobstop(&channel) <Bar> bdelete<CR>
+      if has('gui_running') || has('nvim')
+        exe 'hor term' cmd
       else
         exe '!' . cmd
       endif
