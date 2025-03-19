@@ -1886,6 +1886,7 @@ Example: activate LSP-driven auto-completion: >lua
                         `triggerCharacters`.
       • {convert}?      (`fun(item: lsp.CompletionItem): table`) Transforms an
                         LSP CompletionItem to |complete-items|.
+      • {fuzzyopts}?    (`table`) vim.fn.matchfuzzy.dict
 
 
                                                  *vim.lsp.completion.enable()*

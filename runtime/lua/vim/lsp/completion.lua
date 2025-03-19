@@ -257,7 +257,13 @@ local function match_item_by_value(value, prefix)
     return true
   end
   if vim.o.completeopt:find('fuzzy') ~= nil then
-    return next(vim.fn.matchfuzzy({ value }, prefix)) ~= nil
+    local fuzzyopts = vim.tbl_get(buf_handles, api.nvim_get_current_buf(), 'fuzzyopts')
+    if fuzzyopts and next(fuzzyopts) == nil then
+      fuzzyopts = nil
+    end
+    local result = fuzzyopts and vim.fn.matchfuzzy({ value }, prefix, fuzzyopts)
+      or vim.fn.matchfuzzy({ value }, prefix)
+    return next(result) ~= nil
   end
 
   if vim.o.ignorecase and (not vim.o.smartcase or not prefix:find('%u')) then
@@ -676,6 +682,7 @@ end
 --- @class vim.lsp.completion.BufferOpts
 --- @field autotrigger? boolean  Default: false When true, completion triggers automatically based on the server's `triggerCharacters`.
 --- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
+--- @field fuzzyopts? table vim.fn.matchfuzzy.dict
 
 ---@param client_id integer
 ---@param bufnr integer
@@ -683,7 +690,7 @@ end
 local function enable_completions(client_id, bufnr, opts)
   local buf_handle = buf_handles[bufnr]
   if not buf_handle then
-    buf_handle = { clients = {}, triggers = {}, convert = opts.convert }
+    buf_handle = { clients = {}, triggers = {}, convert = opts.convert, fuzzyopts = opts.fuzzyopts }
     buf_handles[bufnr] = buf_handle
 
     -- Attach to buffer events.

@@ -297,3 +297,8 @@
 --- A list of dictionaries with information about
 --- undo blocks.
 --- @field entries vim.fn.undotree.entry[]
+
+--- @class vim.fn.matchfuzzy.dict
+--- @field matchseq? any
+--- @field limit? integer
+--- @field camelcase? boolean
