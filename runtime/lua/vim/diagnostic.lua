@@ -1952,8 +1952,8 @@ M.handlers.virtual_lines = {
       diagnostic_cache_extmarks[bufnr][ns.user_data.virt_lines_ns] = {}
       if api.nvim_buf_is_valid(bufnr) then
         api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_lines_ns, 0, -1)
+        api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
       end
-      api.nvim_clear_autocmds({ group = ns.user_data.virt_lines_augroup, buffer = bufnr })
     end
   end,
 }
