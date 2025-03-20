@@ -2172,7 +2172,7 @@ static inline void replace_numbered_mark(WriteMergerState *const wms, const size
 static inline void find_removable_bufs(Set(ptr_t) *removable_bufs)
 {
   FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ffname != NULL && shada_removable(buf->b_ffname)) {
+    if ((buf->b_ffname != NULL && shada_removable(buf->b_ffname)) || !buf->b_p_bl) {
       set_put(ptr_t, removable_bufs, (ptr_t)buf);
     }
   }
