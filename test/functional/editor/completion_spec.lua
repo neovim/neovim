@@ -928,6 +928,13 @@ describe('completion', function()
       command('set wildoptions+=fuzzy')
       eq({ 'vim' }, fn.getcompletion('vi', 'lua'))
     end)
+
+    it('completes _defer_require() modules', function()
+      -- vim.lsp.c<tab> -> vim.lsp.completion
+      ok(vim.tbl_contains(fn.getcompletion('lua vim.lsp.c', 'cmdline'), 'completion'))
+      -- vim.lsp.completion.g<tab> -> vim.lsp.completion.get
+      ok(vim.tbl_contains(fn.getcompletion('lua vim.lsp.completion.g', 'cmdline'), 'get'))
+    end)
   end)
 
   it('cmdline completion supports various string options', function()
