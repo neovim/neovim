@@ -2667,7 +2667,8 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
   if (win != NULL) {
     wip->wi_changelistidx = win->w_changelistidx;
   }
-  if (copy_options && win != NULL) {
+  if (copy_options && win != NULL
+      && !(win->w_floating && win->w_float_config.style == kWinStyleMinimal)) {
     // Save the window-specific option values.
     copy_winopt(&win->w_onebuf_opt, &wip->wi_opt);
     wip->wi_fold_manual = win->w_fold_manual;
