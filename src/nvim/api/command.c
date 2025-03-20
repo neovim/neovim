@@ -28,6 +28,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/ops.h"
+#include "nvim/optionstr.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
@@ -318,7 +319,6 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   char *cmdline = NULL;
   char *cmdname = NULL;
   ArrayOf(String) args = ARRAY_DICT_INIT;
-
   String retv = (String)STRING_INIT;
 
 #define OBJ_TO_BOOL(var, value, default, varname) \
@@ -633,6 +633,24 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   // This also sets the values of ea.cmd, ea.arg, ea.args and ea.arglens.
   build_cmdline_str(&cmdline, &ea, &cmdinfo, args);
   ea.cmdlinep = &cmdline;
+
+  // set when Not Implemented
+  const int ni = is_cmd_ni(ea.cmdidx);
+
+  // Check for "++opt=val" argument.
+  if (ea.argt & EX_ARGOPT) {
+    while (ea.arg[0] == '+' && ea.arg[1] == '+') {
+      if (getargopt(&ea) == FAIL && !ni) {
+        api_set_error(err, kErrorTypeValidation, "Invalid argument");
+        goto end;
+      }
+    }
+  }
+
+  // Check for "+command" argument.
+  if ((ea.argt & EX_CMDARG) && !ea.usefilter) {
+    ea.do_ecmd_cmd = getargcmd(&ea.arg);
+  }
 
   garray_T capture_local;
   const int save_msg_silent = msg_silent;
