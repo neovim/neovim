@@ -6,6 +6,7 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"
@@ -712,6 +713,13 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
   }
 }
 
+static void ui_attach_error(uint32_t ns_id, const char *name, const char *msg)
+{
+  const char *ns = describe_ns((NS)ns_id, "(UNKNOWN PLUGIN)");
+  ELOG("Error in \"%s\" UI event handler (ns=%s):\n%s", name, ns, msg);
+  msg_schedule_semsg_multiline("Error in \"%s\" UI event handler (ns=%s):\n%s", name, ns, msg);
+}
+
 void ui_call_event(char *name, bool fast, Array args)
 {
   bool handled = false;
@@ -735,7 +743,7 @@ void ui_call_event(char *name, bool fast, Array args)
       handled = true;
     }
     if (ERROR_SET(&err)) {
-      ELOG("Error executing UI event callback: %s", err.msg);
+      ui_attach_error(ns_id, name, err.msg);
       ui_remove_cb(ns_id, true);
     }
     api_clear_error(&err);
@@ -792,13 +800,14 @@ void ui_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
 void ui_remove_cb(uint32_t ns_id, bool checkerr)
 {
   UIEventCallback *item = pmap_get(uint32_t)(&ui_event_cbs, ns_id);
-  if (item && (!checkerr || ++item->errors > 10)) {
+  if (item && (!checkerr || ++item->errors > CB_MAX_ERROR)) {
     pmap_del(uint32_t)(&ui_event_cbs, ns_id, NULL);
     free_ui_event_callback(item);
     ui_cb_update_ext();
     ui_refresh();
     if (checkerr) {
-      msg_schedule_semsg("Excessive errors in vim.ui_attach() callback from ns: %d.", ns_id);
+      const char *ns = describe_ns((NS)ns_id, "(UNKNOWN PLUGIN)");
+      msg_schedule_semsg("Excessive errors in vim.ui_attach() callback (ns=%s)", ns);
     }
   }
 }
