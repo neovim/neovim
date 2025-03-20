@@ -804,6 +804,12 @@ TSNode:named_child_count()                        *TSNode:named_child_count()*
     Return: ~
         (`integer`)
 
+TSNode:named_children()                              *TSNode:named_children()*
+    Returns a list of the node's named children.
+
+    Return: ~
+        (`TSNode[]`)
+
                                          *TSNode:named_descendant_for_range()*
 TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row},
                                   {end_col})
