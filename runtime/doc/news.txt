@@ -481,6 +481,8 @@ VIMSCRIPT
 • |getchar()| and |getcharstr()| have optional {opts} |Dict| argument to control:
   cursor behavior, return type, and whether to simplify the returned key.
 
+• Added |nvim_tabpage_get()| and |nvim_tabpage_set()| to manage tabpage configuration.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
