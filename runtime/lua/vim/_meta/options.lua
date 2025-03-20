@@ -5716,7 +5716,7 @@ vim.go.ssl = vim.go.shellslash
 --- `system()` does not respect this option, it always uses pipes.
 ---
 --- @type boolean
-vim.o.shelltemp = true
+vim.o.shelltemp = false
 vim.o.stmp = vim.o.shelltemp
 vim.go.shelltemp = vim.o.shelltemp
 vim.go.stmp = vim.go.shelltemp
