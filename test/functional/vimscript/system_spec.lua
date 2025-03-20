@@ -597,7 +597,7 @@ describe('shell :!', function()
       2]])
     feed(':4verbose %w !sort<cr>')
     screen:expect {
-      any = [[Executing command: .?sort %< .*]],
+      any = [[Executing command: "sort".*]],
     }
     feed('<CR>')
     n.set_shell_powershell(true)
