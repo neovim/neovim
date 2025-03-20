@@ -24,6 +24,23 @@ describe('nlua_expand_pat', function()
 
   it('returns empty table when nothing matches', function()
     eq({ {}, 0 }, get_completions('foo', { bar = true }))
+
+    -- can access non-exist field
+    for _, m in ipairs {
+      'vim.',
+      'vim.lsp.',
+      'vim.treesitter.',
+      'vim.deepcopy.',
+      'vim.fn.',
+      'vim.api.',
+      'vim.o.',
+      'vim.b.',
+    } do
+      eq({ {}, m:len() }, get_completions(m .. 'foo'))
+      eq({ {}, 0 }, get_completions(m .. 'foo.'))
+      eq({ {}, 0 }, get_completions(m .. 'foo.bar'))
+      eq({ {}, 0 }, get_completions(m .. 'foo.bar.'))
+    end
   end)
 
   it('returns nice completions with function call prefix', function()
@@ -99,10 +116,26 @@ describe('nlua_expand_pat', function()
 
   it('with lazy submodules of "vim" global', function()
     eq({ { 'inspect', 'inspect_pos' }, 4 }, get_completions('vim.inspec'))
-
     eq({ { 'treesitter' }, 4 }, get_completions('vim.treesi'))
-
+    eq({ { 'dev' }, 15 }, get_completions('vim.treesitter.de'))
+    eq({ { 'edit_query' }, 19 }, get_completions('vim.treesitter.dev.edit_'))
     eq({ { 'set' }, 11 }, get_completions('vim.keymap.se'))
+  end)
+
+  it('include keys in mt.__index and ._submodules', function()
+    eq(
+      { { 'bar1', 'bar2', 'bar3' }, 4 },
+      exec_lua(function() -- metatable cannot be serialized
+        return {
+          vim._expand_pat('foo.', {
+            foo = setmetatable(
+              { bar1 = true, _submodules = { bar2 = true } },
+              { __index = { bar3 = true } }
+            ),
+          }),
+        }
+      end)
+    )
   end)
 
   it('excludes private fields after "."', function()
