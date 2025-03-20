@@ -596,15 +596,9 @@ describe('shell :!', function()
       4
       2]])
     feed(':4verbose %w !sort<cr>')
-    if is_os('win') then
-      screen:expect {
-        any = [[Executing command: .?sort %< .*]],
-      }
-    else
-      screen:expect {
-        any = [[Executing command: .?%(sort%) %< .*]],
-      }
-    end
+    screen:expect {
+      any = [[Executing command: .?sort %< .*]],
+    }
     feed('<CR>')
     n.set_shell_powershell(true)
     feed(':4verbose %w !sort<cr>')
