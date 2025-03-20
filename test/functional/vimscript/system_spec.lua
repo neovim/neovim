@@ -600,12 +600,17 @@ describe('shell :!', function()
       any = [[Executing command: "sort".*]],
     }
     feed('<CR>')
-    n.set_shell_powershell(true)
-    feed(':4verbose %w !sort<cr>')
-    screen:expect {
-      any = [[Executing command: .?& { Get%-Content .* | & sort }]],
-    }
-    feed('<CR>')
+
+    if not n.has_powershell() then
+      pending('powershell not found, skip powershell part', function() end)
+    else
+      n.set_shell_powershell(true)
+      feed(':4verbose %w !& sort<cr>')
+      screen:expect {
+        any = [[Executing command: "& sort".*]],
+      }
+      feed('<CR>')
+    end
     n.expect_exit(command, 'qall!')
   end)
 end)
