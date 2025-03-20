@@ -574,7 +574,7 @@ describe('shell :!', function()
     else
       feed(':4verbose %!& sort -r<cr>')
       screen:expect {
-        any = [[Executing command: "& sort %-R".*]],
+        any = [[Executing command: "& sort %-r".*]],
       }
     end
     feed('<CR>')
