@@ -759,6 +759,7 @@ describe('decorations providers', function()
   end)
 
   it('errors gracefully', function()
+    screen:try_resize(65, screen._height)
     insert(mulholland)
 
     setup_provider [[
@@ -767,16 +768,16 @@ describe('decorations providers', function()
     end
     ]]
 
-    screen:expect{grid=[[
-      {2:Error in decoration provider ns1.start:} |
-      {2:Error executing lua: [string "<nvim>"]:4}|
-      {2:: Foo}                                   |
-      {2:stack traceback:}                        |
-      {2:        [C]: in function 'error'}        |
-      {2:        [string "<nvim>"]:4: in function}|
-      {2: <[string "<nvim>"]:3>}                  |
-      {18:Press ENTER or type command to continue}^ |
-    ]]}
+    screen:expect([[
+      // just to see if there was an accident                          |
+      {8:                                                                 }|
+      {2:Error in decoration provider "start" (ns=ns1):}                   |
+      {2:Error executing lua: [string "<nvim>"]:4: Foo}                    |
+      {2:stack traceback:}                                                 |
+      {2:        [C]: in function 'error'}                                 |
+      {2:        [string "<nvim>"]:4: in function <[string "<nvim>"]:3>}   |
+      {18:Press ENTER or type command to continue}^                          |
+    ]])
   end)
 
   it('can add new providers during redraw #26652', function()
