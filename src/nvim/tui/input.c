@@ -642,24 +642,21 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
     switch (initial) {
     case '?':
       // Kitty keyboard protocol query response.
-      if (input->waiting_for_kkp_response) {
-        input->waiting_for_kkp_response = false;
-        input->key_encoding = kKeyEncodingKitty;
-        tui_set_key_encoding(input->tui_data);
-      }
+      input->key_encoding = kKeyEncodingKitty;
+      tui_set_key_encoding(input->tui_data);
 
+      // Clear the DA1 callback, we don't care about it anymore.
+      input->callbacks.primary_device_attr = NULL;
       break;
     }
     break;
   case 'c':
     switch (initial) {
     case '?':
-      // Primary Device Attributes response
-      if (input->waiting_for_kkp_response) {
-        input->waiting_for_kkp_response = false;
-
-        // Enable the fallback key encoding (if any)
-        tui_set_key_encoding(input->tui_data);
+      // Primary Device Attributes (DA1) response
+      if (input->callbacks.primary_device_attr) {
+        input->callbacks.primary_device_attr(input->tui_data);
+        input->callbacks.primary_device_attr = NULL;
       }
 
       break;

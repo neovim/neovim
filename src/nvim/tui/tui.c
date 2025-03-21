@@ -18,6 +18,7 @@
 #include "nvim/cursor_shape.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/signal.h"
 #include "nvim/event/stream.h"
 #include "nvim/globals.h"
@@ -287,8 +288,28 @@ void tui_enable_extended_underline(TUIData *tui)
 static void tui_query_kitty_keyboard(TUIData *tui)
   FUNC_ATTR_NONNULL_ALL
 {
-  tui->input.waiting_for_kkp_response = true;
+  // Set the key encoding to the fallback value when the primary device
+  // attributes (DA1) response is received. If the response to the kitty query
+  // is received first, this function won't be called.
+  tui->input.callbacks.primary_device_attr = tui_set_key_encoding;
   out(tui, S_LEN("\x1b[?u\x1b[c"));
+}
+
+static void tui_reset_kitty_keyboard(TUIData *tui)
+{
+  if (tui->input.callbacks.primary_device_attr) {
+    // We've been called after receiving a DA1 response. Nothing to do.
+    return;
+  }
+
+  // Send a DA1 request after disabling key events. When we receive the
+  // response, we know there are no more key events to receive.
+  tui->input.callbacks.primary_device_attr = tui_reset_kitty_keyboard;
+  out(tui, S_LEN("\x1b[<u\x1b[c"));
+
+  // Immediately flush the buffer and wait for the DA1 response.
+  flush_buf(tui);
+  LOOP_PROCESS_EVENTS_UNTIL(tui->loop, NULL, 500, tui->input.callbacks.primary_device_attr == NULL);
 }
 
 void tui_set_key_encoding(TUIData *tui)
@@ -314,7 +335,7 @@ static void tui_reset_key_encoding(TUIData *tui)
 {
   switch (tui->input.key_encoding) {
   case kKeyEncodingKitty:
-    out(tui, S_LEN("\x1b[<u"));
+    tui_reset_kitty_keyboard(tui);
     break;
   case kKeyEncodingXterm:
     out(tui, S_LEN("\x1b[>4;0m"));
@@ -520,9 +541,6 @@ static void terminfo_stop(TUIData *tui)
   unibi_out(tui, unibi_cursor_normal);
   unibi_out(tui, unibi_keypad_local);
 
-  // Reset the key encoding
-  tui_reset_key_encoding(tui);
-
   // Disable resize events
   tui_set_term_mode(tui, kTermModeResizeEvents, false);
   if (tui->did_set_grapheme_cluster_mode) {
@@ -592,6 +610,12 @@ static void tui_terminal_stop(TUIData *tui)
     tui->stopped = true;
     return;
   }
+
+  // Reset the key encoding. Do this before stopping the input channel because
+  // we may need to wait for a response to know that all key events have been
+  // received.
+  tui_reset_key_encoding(tui);
+
   tinput_stop(&tui->input);
   // Position the cursor on the last screen line, below all the text
   cursor_goto(tui, tui->height - 1, 0);
@@ -2464,7 +2488,9 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
 
   if (!kitty && (vte_version == 0 || vte_version >= 5400)) {
     // Fallback to Xterm's modifyOtherKeys if terminal does not support the
-    // Kitty keyboard protocol
+    // Kitty keyboard protocol. We don't actually enable the key encoding here
+    // though: it won't be enabled until the terminal responds to our query for
+    // kitty keyboard support.
     tui->input.key_encoding = kKeyEncodingXterm;
   }
 }
