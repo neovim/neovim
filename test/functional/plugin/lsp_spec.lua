@@ -3529,7 +3529,7 @@ describe('LSP', function()
       )
     end)
 
-    it('considers title when computing width', function()
+    it('considers string title when computing width', function()
       eq(
         { 17, 2 },
         exec_lua(function()
@@ -3537,6 +3537,20 @@ describe('LSP', function()
             vim.lsp.util._make_floating_popup_size(
               { 'foo', 'bar' },
               { title = 'A very long title' }
+            ),
+          }
+        end)
+      )
+    end)
+
+    it('considers [string,string][] title when computing width', function()
+      eq(
+        { 17, 2 },
+        exec_lua(function()
+          return {
+            vim.lsp.util._make_floating_popup_size(
+              { 'foo', 'bar' },
+              { title = { { 'A very ', 'Normal' }, { 'long title', 'Normal' } } }
             ),
           }
         end)
