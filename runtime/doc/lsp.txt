@@ -370,7 +370,7 @@ Handlers can be set by (in increasing priority):
     vim.lsp.start {
       ..., -- Other configuration omitted.
       handlers = {
-        ['textDocument/publishDiagnostics'] = my_custom_server_definition
+        ['textDocument/publishDiagnostics'] = my_custom_diagnostics_handler
       },
     }
 
@@ -2498,7 +2498,7 @@ set_level({level})                                   *vim.lsp.log.set_level()*
     Sets the current log level.
 
     Parameters: ~
-      • {level}  (`string|integer`) One of `vim.lsp.log.levels`
+      • {level}  (`string|integer`) One of |vim.log.levels|
 
 should_log({level})                                 *vim.lsp.log.should_log()*
     Checks whether the level is sufficient for logging.
