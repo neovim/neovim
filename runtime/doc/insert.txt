@@ -1015,7 +1015,7 @@ CTRL-X CTRL-U		Guess what kind of item is in front of the cursor and
 			previous one.
 
 
-Omni completion						*compl-omni*
+Omni completion					*omnicompletion* *compl-omni*
 
 Completion is done by a function that can be defined by the user with the
 'omnifunc' option.  This is to be used for filetype-specific completion.

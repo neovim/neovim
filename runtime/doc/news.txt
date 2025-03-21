@@ -246,8 +246,6 @@ DEFAULTS
   • 'diffopt' default includes "linematch:40".
   • 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
     |terminal| buffers. |terminal-config| shows how to change these defaults.
-
-• Options:
   • Lua |ftplugin| sets 'omnifunc' to "v:lua.vim.lua_omnifunc".
   • Lua |ftplugin| sets 'foldexpr' to "v:lua.vim.treesitter.foldexpr()".
 

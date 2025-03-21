@@ -59,10 +59,12 @@ Follow these steps to get LSP features:
    Example: >lua
      vim.lsp.enable('luals')
 <
-4. Check that the buffer is attached to the server: >vim
+4. Restart Nvim, or use ":edit" to reload the buffer.
+
+5. Check that LSP is active ("attached") for the buffer: >vim
     :checkhealth vim.lsp
 <
-5. (Optional) Configure keymaps and autocommands to use LSP features.
+6. (Optional) Configure keymaps and autocommands to use LSP features.
    |lsp-attach|
 
 ==============================================================================
@@ -197,7 +199,7 @@ Example: Enable auto-completion and auto-formatting ("linting"): >lua
           -- Create a keymap for vim.lsp.buf.implementation ...
         end
 
-        -- Enable auto-completion.
+        -- Enable auto-completion. Note: Use CTRL-Y to select an item. |complete_CTRL-Y|
         if client:supports_method('textDocument/completion') then
           vim.lsp.completion.enable(true, client.id, args.buf, {autotrigger = true})
         end
@@ -1858,10 +1860,12 @@ The `vim.lsp.completion` module enables insert-mode completion driven by an
 LSP server. Call `enable()` to make it available through Nvim builtin
 completion (via the |CompleteDone| event). Specify `autotrigger=true` to
 activate "auto-completion" when you type any of the server-defined
-`triggerCharacters`.
+`triggerCharacters`. Use CTRL-Y to select an item from the completion menu.
+|complete_CTRL-Y|
 
 Example: activate LSP-driven auto-completion: >lua
     -- Works best with completeopt=noselect.
+    -- Use CTRL-Y to select an item. |complete_CTRL-Y|
     vim.cmd[[set completeopt+=menuone,noselect,popup]]
     vim.lsp.start({
       name = 'ts_ls',
@@ -1878,30 +1882,37 @@ Example: activate LSP-driven auto-completion: >lua
 <
 
 
-*vim.lsp.completion.BufferOpts*
-
-    Fields: ~
-      • {autotrigger}?  (`boolean`) Default: false When true, completion
-                        triggers automatically based on the server's
-                        `triggerCharacters`.
-      • {convert}?      (`fun(item: lsp.CompletionItem): table`) Transforms an
-                        LSP CompletionItem to |complete-items|.
-
-
                                                  *vim.lsp.completion.enable()*
 enable({enable}, {client_id}, {bufnr}, {opts})
     Enables or disables completions from the given language client in the
-    given buffer.
+    given buffer. Example: |lsp-attach| |lsp-completion|
 
     Parameters: ~
       • {enable}     (`boolean`) True to enable, false to disable
       • {client_id}  (`integer`) Client ID
       • {bufnr}      (`integer`) Buffer handle, or 0 for the current buffer
-      • {opts}       (`vim.lsp.completion.BufferOpts?`) See
-                     |vim.lsp.completion.BufferOpts|.
+      • {opts}       (`table?`) A table with the following fields:
+                     • {autotrigger}? (`boolean`) (default: false) When true,
+                       completion triggers automatically based on the server's
+                       `triggerCharacters`.
+                     • {convert}? (`fun(item: lsp.CompletionItem): table`)
+                       Transforms an LSP CompletionItem to |complete-items|.
 
 get({opts})                                         *vim.lsp.completion.get()*
-    Triggers LSP completion once in the current buffer.
+    Triggers LSP completion once in the current buffer, if LSP completion is
+    enabled (see |lsp-attach| |lsp-completion|).
+
+    Used by the default LSP |omnicompletion| provider |vim.lsp.omnifunc()|,
+    thus |i_CTRL-X_CTRL-O| invokes this in LSP-enabled buffers. Use CTRL-Y to
+    select an item from the completion menu. |complete_CTRL-Y|
+
+    To invoke manually with CTRL-space, use this mapping: >lua
+        -- Use CTRL-space to trigger LSP completion.
+        -- Use CTRL-Y to select an item. |complete_CTRL-Y|
+        vim.keymap.set('i', '<c-space>', function()
+          vim.lsp.completion.get()
+        end)
+<
 
     Parameters: ~
       • {opts}  (`table?`) A table with the following fields:
