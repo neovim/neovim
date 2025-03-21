@@ -2996,6 +2996,10 @@ func Test_complete_fuzzy_collect()
   call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
   call assert_equal('think', getline(line('.') - 1))
 
+  call setline(1, ['foo bar fuzzy', 'completefuzzycollect'])
+  call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-Y>\<Esc>0", 'tx!')
+  call assert_equal('completefuzzycollect', getline('.'))
+
   bw!
   bw!
   set dict&
