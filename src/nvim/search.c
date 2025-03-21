@@ -3749,7 +3749,6 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
                   }
                 }
                 *len = (int)(next_word_end - *ptr);
-                current_pos.col = *len;
               }
             }
             *pos = current_pos;
