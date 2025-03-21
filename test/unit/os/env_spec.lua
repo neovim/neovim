@@ -13,8 +13,8 @@ local OK = 0
 local cimp = cimport('./src/nvim/os/os.h')
 
 describe('env.c', function()
-  local function os_env_exists(name)
-    return cimp.os_env_exists(to_cstr(name))
+  local function os_env_exists(name, defined)
+    return cimp.os_env_exists(to_cstr(name), defined)
   end
 
   local function os_setenv(name, value, override)
@@ -34,17 +34,41 @@ describe('env.c', function()
     end
   end
 
+  local function os_getenv_noalloc(name)
+    local rval = cimp.os_getenv_noalloc(to_cstr(name))
+    if rval ~= NULL then
+      return ffi.string(rval)
+    else
+      return NULL
+    end
+  end
+
   itp('os_env_exists', function()
-    eq(false, os_env_exists(''))
-    eq(false, os_env_exists('      '))
-    eq(false, os_env_exists('\t'))
-    eq(false, os_env_exists('\n'))
-    eq(false, os_env_exists('AaあB <= very weird name...'))
+    eq(false, os_env_exists('', false))
+    eq(false, os_env_exists('      ', false))
+    eq(false, os_env_exists('\t', false))
+    eq(false, os_env_exists('\n', false))
+    eq(false, os_env_exists('AaあB <= very weird name...', false))
 
     local varname = 'NVIM_UNIT_TEST_os_env_exists'
-    eq(false, os_env_exists(varname))
+    eq(false, os_env_exists(varname, false))
     eq(OK, os_setenv(varname, 'foo bar baz ...', 1))
-    eq(true, os_env_exists(varname))
+    eq(true, os_env_exists(varname, false))
+  end)
+
+  itp('os_env_defined', function()
+    eq(false, os_env_exists('', true))
+    eq(false, os_env_exists('      ', true))
+    eq(false, os_env_exists('\t', true))
+    eq(false, os_env_exists('\n', true))
+    eq(false, os_env_exists('AaあB <= very weird name...', true))
+
+    local varname = 'NVIM_UNIT_TEST_os_env_defined'
+    eq(false, os_env_exists(varname, true))
+    eq(OK, os_setenv(varname, '', 1))
+    eq(false, os_env_exists(varname, true))
+    eq(OK, os_setenv(varname, 'foo bar baz ...', 1))
+    eq(true, os_env_exists(varname, true))
   end)
 
   describe('os_setenv', function()
@@ -147,6 +171,32 @@ describe('env.c', function()
     end)
   end)
 
+  describe('os_getenv_noalloc', function()
+    itp('reads an env var without memory allocation', function()
+      local name = 'NVIM_UNIT_TEST_GETENV_1N'
+      local value = 'NVIM_UNIT_TEST_GETENV_1V'
+      eq(NULL, os_getenv_noalloc(name))
+      -- Use os_setenv because Lua doesn't have setenv.
+      os_setenv(name, value, 1)
+      eq(value, os_getenv_noalloc(name))
+
+      -- Can't get a too big value.
+      local bigval = ('x'):rep(256)
+      eq(OK, os_setenv(name, bigval, 1))
+      eq(bigval, os_getenv_noalloc(name))
+
+      -- Set non-empty, then set empty.
+      eq(OK, os_setenv(name, 'non-empty', 1))
+      eq('non-empty', os_getenv(name))
+      eq(OK, os_setenv(name, '', 1))
+      eq(NULL, os_getenv_noalloc(name))
+    end)
+
+    itp('returns NULL if the env var is not found', function()
+      eq(NULL, os_getenv_noalloc('NVIM_UNIT_TEST_GETENV_NOTFOUND'))
+    end)
+  end)
+
   itp('os_unsetenv', function()
     local name = 'TEST_UNSETENV'
     local value = 'TESTVALUE'
@@ -156,7 +206,7 @@ describe('env.c', function()
     -- Depending on the platform the var might be unset or set as ''
     assert.True(os_getenv(name) == nil or os_getenv(name) == '')
     if os_getenv(name) == nil then
-      eq(false, os_env_exists(name))
+      eq(false, os_env_exists(name, false))
     end
   end)
 

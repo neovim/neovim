@@ -64,31 +64,33 @@ static const char *const xdg_defaults[] = {
 };
 
 /// Gets the value of $NVIM_APPNAME, or "nvim" if not set.
+/// Result must be freed by the caller, if called with 'retval_needed == true'.
 ///
 /// @param namelike Write "name-like" value (no path separators) in `NameBuff`.
 ///
 /// @return $NVIM_APPNAME value
 const char *get_appname(bool namelike)
 {
-  const char *env_val = os_getenv("NVIM_APPNAME");
-  if (env_val == NULL || *env_val == NUL) {
-    env_val = "nvim";
+  const char *env_val = os_getenv_noalloc("NVIM_APPNAME");
+
+  if (!env_val) {
+    xstrlcpy(NameBuff, "nvim", sizeof(NameBuff));
   }
 
   if (namelike) {
     // Appname may be a relative path, replace slashes to make it name-like.
-    xstrlcpy(NameBuff, env_val, sizeof(NameBuff));
     memchrsub(NameBuff, '/', '-', sizeof(NameBuff));
     memchrsub(NameBuff, '\\', '-', sizeof(NameBuff));
   }
 
-  return env_val;
+  return NameBuff;
 }
 
 /// Ensure that APPNAME is valid. Must be a name or relative path.
 bool appname_is_valid(void)
 {
   const char *appname = get_appname(false);
+  bool valid = true;
   if (path_is_absolute(appname)
       // TODO(justinmk): on Windows, path_is_absolute says "/" is NOT absolute. Should it?
       || strequal(appname, "/")
@@ -101,9 +103,10 @@ bool appname_is_valid(void)
 #endif
       || strstr(appname, "/..") != NULL
       || strstr(appname, "../") != NULL) {
-    return false;
+    valid = false;
   }
-  return true;
+
+  return valid;
 }
 
 /// Remove duplicate directories in the given XDG directory.
@@ -164,8 +167,8 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     env_val = os_getenv(xdg_defaults_env_vars[idx]);
   }
 #else
-  if (env_val == NULL && os_env_exists(env)) {
-    env_val = "";
+  if (env_val == NULL && os_env_exists(env, false)) {
+    env_val = xstrdup("");
   }
 #endif
 
@@ -188,6 +191,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     ret = xdg_remove_duplicate(ret, ENV_SEPSTR);
   }
 
+  xfree((char *)env_val);
   return ret;
 }
 

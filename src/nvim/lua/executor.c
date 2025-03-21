@@ -831,8 +831,7 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 void nlua_init(char **argv, int argc, int lua_arg0)
 {
 #ifdef NLUA_TRACK_REFS
-  const char *env = os_getenv("NVIM_LUA_NOTRACK");
-  if (!env || !*env) {
+  if (os_env_exists("NVIM_LUA_NOTRACK", true)) {
     nlua_track_refs = true;
   }
 #endif
@@ -1283,7 +1282,9 @@ static int nlua_empty_dict_tostring(lua_State *lstate)
 /// @param  lstate  Lua interpreter state.
 static int nlua_getenv(lua_State *lstate)
 {
-  lua_pushstring(lstate, os_getenv(luaL_checkstring(lstate, 1)));
+  const char *lstate_var = os_getenv(luaL_checkstring(lstate, 1));
+  lua_pushstring(lstate, lstate_var);
+  xfree((char *)lstate_var);
   return 1;
 }
 #endif
