@@ -120,6 +120,9 @@ typedef struct {
 
   void *os_win;
   void *os_buf;
+
+  // default value for the option
+  OptValData *os_def;
 } optset_T;
 
 /// Type for the callback function that is invoked after an option value is
