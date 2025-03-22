@@ -74,10 +74,4 @@ function M.paste(reg)
   end
 end
 
-M.tool = {
-  name = 'OSC 52',
-  copy = { ['+'] = M.copy('+'), ['*'] = M.copy('*') },
-  paste = { ['+'] = M.paste('+'), ['*'] = M.paste('*') },
-}
-
 return M
