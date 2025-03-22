@@ -603,14 +603,15 @@ describe('shell :!', function()
 
     if not n.has_powershell() then
       pending('powershell not found, skip powershell part', function() end)
-    else
-      n.set_shell_powershell(true)
-      feed(':4verbose %w !& sort<cr>')
-      screen:expect {
-        any = [[Executing command: "& sort".*]],
-      }
-      feed('<CR>')
+      return
     end
+
+    n.set_shell_powershell(true)
+    feed(':4verbose %w !& sort<cr>')
+    screen:expect {
+      any = [[Executing command: "& sort".*]],
+    }
+    feed('<CR>')
     n.expect_exit(command, 'qall!')
   end)
 end)

@@ -35,6 +35,11 @@ local function prepare_gz_file(name, text)
   eq(nil, vim.uv.fs_stat(name))
 end
 
+local function prepare_file(name, text)
+  os.remove(name)
+  write_file(name, text)
+end
+
 describe('file reading, writing and bufnew and filter autocommands', function()
   local text1 = dedent([[
       start of testfile
@@ -63,69 +68,69 @@ describe('file reading, writing and bufnew and filter autocommands', function()
   end)
   teardown(function()
     os.remove('Xtestfile.gz')
+    os.remove('Xtestfile')
+    os.remove('XtestfileByFileReadPost')
     os.remove('Xtest.c')
     os.remove('test.out')
   end)
 
-  if not has_gzip() then
-    pending('skipped (missing `gzip` utility)', function() end)
-  else
-    it('FileReadPost (using gzip)', function()
-      prepare_gz_file('Xtestfile', text1)
-      --execute('au FileChangedShell * echo "caught FileChangedShell"')
-      feed_command('set bin')
-      feed_command("au FileReadPost    *.gz   '[,']!gzip -d")
-      -- Read and decompress the testfile.
-      feed_command('$r Xtestfile.gz')
-      expect('\n' .. text1)
-    end)
+  it('FileReadPost', function()
+    feed_command('set bin')
+    prepare_file('Xtestfile', text1)
+    os.remove('XtestfileByFileReadPost')
+    --execute('au FileChangedShell * echo "caught FileChangedShell"')
+    feed_command("au FileReadPost    Xtestfile   '[,']w XtestfileByFileReadPost")
+    -- Read the testfile.
+    feed_command('$r Xtestfile')
+    expect('\n' .. text1)
+    eq(text1, read_file('XtestfileByFileReadPost'))
+  end)
 
-    it('BufReadPre, BufReadPost (using gzip)', function()
-      prepare_gz_file('Xtestfile', text1)
-      local gzip_data = read_file('Xtestfile.gz')
-      -- Setup autocommands to decompress before reading and re-compress afterwards.
-      feed_command("au BufReadPre   *.gz  exe '!gzip -d ' . shellescape(expand('<afile>'))")
-      feed_command("au BufReadPre   *.gz  call rename(expand('<afile>:r'), expand('<afile>'))")
-      feed_command("au BufReadPost  *.gz  call rename(expand('<afile>'), expand('<afile>:r'))")
-      feed_command("au BufReadPost  *.gz  exe '!gzip ' . shellescape(expand('<afile>:r'))")
-      -- Edit compressed file.
-      feed_command('e! Xtestfile.gz')
-      -- Discard all prompts and messages.
-      feed('<C-L>')
-      -- Expect the decompressed file in the buffer.
-      expect(text1)
-      -- Expect the original file to be unchanged.
-      eq(gzip_data, read_file('Xtestfile.gz'))
-    end)
+  it('BufReadPre, BufReadPost (using gzip)', function()
+    prepare_gz_file('Xtestfile', text1)
+    local gzip_data = read_file('Xtestfile.gz')
+    -- Setup autocommands to decompress before reading and re-compress afterwards.
+    feed_command("au BufReadPre   *.gz  exe '!gzip -d ' . shellescape(expand('<afile>'))")
+    feed_command("au BufReadPre   *.gz  call rename(expand('<afile>:r'), expand('<afile>'))")
+    feed_command("au BufReadPost  *.gz  call rename(expand('<afile>'), expand('<afile>:r'))")
+    feed_command("au BufReadPost  *.gz  exe '!gzip ' . shellescape(expand('<afile>:r'))")
+    -- Edit compressed file.
+    feed_command('e! Xtestfile.gz')
+    -- Discard all prompts and messages.
+    feed('<C-L>')
+    -- Expect the decompressed file in the buffer.
+    expect(text1)
+    -- Expect the original file to be unchanged.
+    eq(gzip_data, read_file('Xtestfile.gz'))
+  end)
 
     -- luacheck: ignore 621 (Indentation)
     -- luacheck: ignore 611 (Line contains only whitespaces)
-    it('FileReadPre, FileReadPost', function()
-      prepare_gz_file('Xtestfile', text1)
-      feed_command(
-        'au! FileReadPre    *.gz   exe "silent !gzip -d " . shellescape(expand("<afile>"))'
-      )
-      feed_command('au  FileReadPre    *.gz   call rename(expand("<afile>:r"), expand("<afile>"))')
-      feed_command("au! FileReadPost   *.gz   '[,']s/l/L/")
-      -- Read compressed file.
-      feed_command('$r Xtestfile.gz')
-      -- Discard all prompts and messages.
-      feed('<C-L>')
-      expect([[
-	
-	start of testfiLe
-	Line 2	Abcdefghijklmnopqrstuvwxyz
-	Line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	Line 4	Abcdefghijklmnopqrstuvwxyz
-	Line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	Line 6	Abcdefghijklmnopqrstuvwxyz
-	Line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	Line 8	Abcdefghijklmnopqrstuvwxyz
-	Line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	Line 10 Abcdefghijklmnopqrstuvwxyz
-	end of testfiLe]])
-    end)
-  end
+  it('FileReadPre, FileReadPost', function()
+    prepare_gz_file('Xtestfile', text1)
+    feed_command(
+      'au! FileReadPre    *.gz   exe "silent !gzip -d " . shellescape(expand("<afile>"))'
+    )
+    feed_command('au  FileReadPre    *.gz   call rename(expand("<afile>:r"), expand("<afile>"))')
+    feed_command("au! FileReadPost   *.gz   '[,']s/l/L/")
+    -- Read compressed file.
+    feed_command('$r Xtestfile.gz')
+    -- Discard all prompts and messages.
+    feed('<C-L>')
+    expect([[
+      
+      start of testfiLe
+      Line 2	Abcdefghijklmnopqrstuvwxyz
+      Line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      Line 4	Abcdefghijklmnopqrstuvwxyz
+      Line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      Line 6	Abcdefghijklmnopqrstuvwxyz
+      Line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      Line 8	Abcdefghijklmnopqrstuvwxyz
+      Line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      Line 10 Abcdefghijklmnopqrstuvwxyz
+      end of testfiLe]])
+  end)
 
   it('FileAppendPre, FileAppendPost', function()
     feed_command('au BufNewFile      *.c    read Xtest.c')
