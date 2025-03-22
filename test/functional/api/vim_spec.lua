@@ -853,6 +853,59 @@ describe('API', function()
         feed('u') -- Undo.
         expect(expected1)
       end)
+      it('stream: multiple chunks sets the correct mark [', function()
+        api.nvim_paste('1/chunk 1 (start)\n', true, 1)
+        eq({ 0, 1, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('1/chunk 2\n', true, 2)
+        eq({ 0, 2, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('1/chunk 3 (end)\n', true, 3)
+        local expected1 = [[
+          1/chunk 1 (start)
+          1/chunk 2
+          1/chunk 3 (end)
+          ]]
+        expect(expected1)
+        eq({ 0, 1, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('aaaaaa', true, -1)
+        eq({ 0, 4, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('bbbbbb', true, 1)
+        eq({ 0, 4, 7, 0 }, fn.getpos("'["))
+        api.nvim_paste('cccccc', true, 2)
+        eq({ 0, 4, 13, 0 }, fn.getpos("'["))
+        api.nvim_paste('dddddd\n', true, 3)
+        eq({ 0, 4, 7, 0 }, fn.getpos("'["))
+        expected1 = [[
+          1/chunk 1 (start)
+          1/chunk 2
+          1/chunk 3 (end)
+          aaaaaabbbbbbccccccdddddd
+          ]]
+        expect(expected1)
+        -- Only pastes an empty line
+        api.nvim_paste('', true, -1)
+        eq({ 0, 5, 1, 0 }, fn.getpos("'["))
+        -- Pastes some empty chunks between non-empty chunks
+        api.nvim_paste('', true, 1)
+        eq({ 0, 5, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('a', true, 2)
+        eq({ 0, 5, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('a', true, 2)
+        eq({ 0, 5, 2, 0 }, fn.getpos("'["))
+        api.nvim_paste('', true, 2)
+        eq({ 0, 5, 2, 0 }, fn.getpos("'["))
+        api.nvim_paste('a', true, 2)
+        eq({ 0, 5, 3, 0 }, fn.getpos("'["))
+        api.nvim_paste('a\n', true, 3)
+        eq({ 0, 5, 1, 0 }, fn.getpos("'["))
+        expected1 = [[
+          1/chunk 1 (start)
+          1/chunk 2
+          1/chunk 3 (end)
+          aaaaaabbbbbbccccccdddddd
+          aaaa
+          ]]
+        expect(expected1)
+      end)
       it('stream: Insert mode', function()
         -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
         feed('afoo<Esc>u')
