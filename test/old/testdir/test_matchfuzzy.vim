@@ -90,6 +90,10 @@ func Test_matchfuzzy()
   let l = [{'id' : 5, 'name' : 'foo'}, {'id' : 6, 'name' : []}, {'id' : 7}]
   call assert_fails("let x = matchfuzzy(l, 'foo', {'key' : 'name'})", 'E730:')
 
+  " camcelcase
+  call assert_equal(['Cursor', 'CurSearch', 'CursorLine', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor'], matchfuzzy(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur', {"camelcase": v:false}))
+  call assert_equal(['lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'Cursor', 'CurSearch', 'CursorLine'], matchfuzzy(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur'))
+
   " Test in latin1 encoding
   let save_enc = &encoding
   " Nvim supports utf-8 encoding only
@@ -175,6 +179,15 @@ func Test_matchfuzzypos()
 
   let l = [{'id' : 5, 'name' : 'foo'}, {'id' : 6, 'name' : []}, {'id' : 7}]
   call assert_fails("let x = matchfuzzypos(l, 'foo', {'key' : 'name'})", 'E730:')
+
+  "camelcase
+  call assert_equal([['lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'Cursor', 'CurSearch', 'CursorLine'], [[1, 2, 3], [2, 3, 4], [2, 3, 4], [6, 7, 8], [0, 1, 2], [0, 1, 2], [0, 1, 2]], [318, 311, 308, 303, 267, 264, 263]],
+      \ matchfuzzypos(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur'))
+
+  call assert_equal([['Cursor', 'CurSearch', 'CursorLine', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor'], [[0, 1, 2], [0, 1, 2], [0, 1, 2], [1, 2, 3], [2, 3, 4], [2, 3, 4], [6, 7, 8]], [267, 264, 263, 246, 239, 236, 231]],
+        \ matchfuzzypos(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur', {"camelcase": v:false}))
+  call assert_equal([['things', 'sThings', 'thisThings'], [[0, 1, 2, 3], [1, 2, 3, 4], [0, 1, 2, 7]], [333, 287, 279]],
+        \ matchfuzzypos(['things','sThings', 'thisThings'], 'thin', {'camelcase': v:false}))
 endfunc
 
 " Test for matchfuzzy() with multibyte characters
