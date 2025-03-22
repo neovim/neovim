@@ -213,7 +213,7 @@ end
 vim.inspect = vim.inspect
 
 do
-  local tdots, tick, got_line1, undo_started, trailing_nl = 0, 0, false, false, false
+  local startpos, tdots, tick, got_line1, undo_started, trailing_nl = nil, 0, 0, false, false, false
 
   --- Paste handler, invoked by |nvim_paste()|.
   ---
@@ -329,7 +329,13 @@ do
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
     if is_last_chunk then
+      if startpos then
+        vim.fn.setpos("'[", startpos)
+        startpos = nil
+      end
       vim.api.nvim_command('redraw' .. (tick > 1 and '|echo ""' or ''))
+    elseif startpos == nil then
+      startpos = vim.fn.getpos("'[")
     end
     return true -- Paste will not continue if not returning `true`.
   end
