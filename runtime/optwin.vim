@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Feb 08
+" Last Change:	2025 Mar 07
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " If there already is an option window, jump to that one.
@@ -725,6 +725,8 @@ endif
 if has("insert_expand")
   call <SID>AddOption("complete", gettext("specifies how Insert mode completion works for CTRL-N and CTRL-P"))
   call append("$", "\t" .. s:local_to_buffer)
+  call <SID>OptionL("cfc")
+  call <SID>AddOption("completefuzzycollect", gettext("use fuzzy collection for specific completion modes"))
   call <SID>OptionL("cpt")
   call <SID>AddOption("completeopt", gettext("whether to use a popup menu for Insert mode completion"))
   call <SID>OptionL("cot")

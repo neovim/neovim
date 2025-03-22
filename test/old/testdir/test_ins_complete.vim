@@ -2763,7 +2763,7 @@ func Test_completefunc_first_call_complete_add()
   bwipe!
 endfunc
 
-func Test_complete_fuzzy_match()
+func Test_complete_opt_fuzzy()
   func OnPumChange()
     let g:item = get(v:event, 'completed_item', {})
     let g:word = get(g:item, 'word', v:null)
@@ -2819,26 +2819,6 @@ func Test_complete_fuzzy_match()
   call feedkeys("S\<C-x>\<C-o>fb\<C-n>", 'tx')
   call assert_equal('fooBaz', g:word)
 
-  " avoid breaking default completion behavior
-  set completeopt=fuzzy,menu
-  call setline(1, ['hello help hero h'])
-  " Use "!" flag of feedkeys() so that ex_normal_busy is not set and
-  " ins_compl_check_keys() is not skipped.
-  " Add a "0" after the <Esc> to avoid waiting for an escape sequence.
-  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('hello help hero hello', getline('.'))
-  set completeopt+=noinsert
-  call setline(1, ['hello help hero h'])
-  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('hello help hero h', getline('.'))
-
-  " issue #15526
-  set completeopt=fuzzy,menuone,menu,noselect
-  call setline(1, ['Text', 'ToText', ''])
-  call cursor(2, 1)
-  call feedkeys("STe\<C-X>\<C-N>x\<CR>\<Esc>0", 'tx!')
-  call assert_equal('Tex', getline(line('.') - 1))
-
   " test case for nosort option
   set cot=menuone,menu,noinsert,fuzzy,nosort
   " "fooBaz" should have a higher score when the leader is "fb".
@@ -2890,11 +2870,262 @@ func Test_complete_fuzzy_match()
   delfunc OnPumChange
   delfunc Omni_test
   delfunc Comp
-  delfunc CompAnother
   unlet g:item
   unlet g:word
-  unlet g:selected
   unlet g:abbr
+endfunc
+
+func Test_complete_fuzzy_collect()
+  new
+  redraw  " need this to prevent NULL dereference in Nvim
+  set completefuzzycollect=keyword,files,whole_line
+  call setline(1, ['hello help hero h'])
+  " Use "!" flag of feedkeys() so that ex_normal_busy is not set and
+  " ins_compl_check_keys() is not skipped.
+  " Add a "0" after the <Esc> to avoid waiting for an escape sequence.
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('hello help hero hello', getline('.'))
+  set completeopt+=noinsert
+  call setline(1, ['hello help hero h'])
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('hello help hero h', getline('.'))
+
+  set completeopt-=noinsert
+  call setline(1, ['xyz  yxz  x'])
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('xyz  yxz  xyz', getline('.'))
+  " can fuzzy get yxz when use Ctrl-N twice
+  call setline(1, ['xyz  yxz  x'])
+  call feedkeys("A\<C-X>\<C-N>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('xyz  yxz  yxz', getline('.'))
+
+  call setline(1, ['你好 你'])
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('你好 你好', getline('.'))
+  call setline(1, ['你的 我的 的'])
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('你的 我的 你的', getline('.'))
+  " can fuzzy get multiple-byte word when use Ctrl-N twice
+  call setline(1, ['你的 我的 的'])
+  call feedkeys("A\<C-X>\<C-N>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('你的 我的 我的', getline('.'))
+
+  " fuzzy on file
+  call writefile([''], 'fobar', 'D')
+  call writefile([''], 'foobar', 'D')
+  call setline(1, ['fob'])
+  call cursor(1, 1)
+  call feedkeys("A\<C-X>\<C-f>\<Esc>0", 'tx!')
+  call assert_equal('fobar', getline('.'))
+  call feedkeys("Sfob\<C-X>\<C-f>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('foobar', getline('.'))
+  call feedkeys("S../\<C-X>\<C-f>\<Esc>0", 'tx!')
+  call assert_match('../*', getline('.'))
+  call feedkeys("S../td\<C-X>\<C-f>\<Esc>0", 'tx!')
+  call assert_match('../testdir', getline('.'))
+
+  " can get completion from other buffer
+  vnew
+  call setline(1, ["completeness,", "compatibility", "Composite", "Omnipotent"])
+  wincmd p
+  call feedkeys("Somp\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('completeness', getline('.'))
+  call feedkeys("Somp\<C-N>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('compatibility', getline('.'))
+  call feedkeys("Somp\<C-P>\<Esc>0", 'tx!')
+  call assert_equal('Omnipotent', getline('.'))
+  call feedkeys("Somp\<C-P>\<C-P>\<Esc>0", 'tx!')
+  call assert_equal('Composite', getline('.'))
+  call feedkeys("S omp\<C-N>\<Esc>0", 'tx!')
+  call assert_equal(' completeness', getline('.'))
+
+  " fuzzy on whole line completion
+  call setline(1, ["world is on fire", "no one can save me but you", 'user can execute', ''])
+  call cursor(4, 1)
+  call feedkeys("Swio\<C-X>\<C-L>\<Esc>0", 'tx!')
+  call assert_equal('world is on fire', getline('.'))
+  call feedkeys("Su\<C-X>\<C-L>\<C-P>\<Esc>0", 'tx!')
+  call assert_equal('no one can save me but you', getline('.'))
+
+  " issue #15412
+  call setline(1, ['alpha bravio charlie'])
+  call feedkeys("Salpha\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio', getline('.'))
+  call feedkeys("Salp\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha', getline('.'))
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio', getline('.'))
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio charlie', getline('.'))
+
+  set complete-=i
+  call feedkeys("Salp\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha', getline('.'))
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio', getline('.'))
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio charlie', getline('.'))
+
+  call setline(1, ['alpha bravio charlie', 'alpha another'])
+  call feedkeys("Salpha\<C-X>\<C-N>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha another', getline('.'))
+  call setline(1, ['你好 我好', '你好 他好'])
+  call feedkeys("S你好\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('你好 我好', getline('.'))
+  call feedkeys("S你好\<C-X>\<C-N>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('你好 他好', getline('.'))
+
+  " issue #15526
+  set completeopt=menuone,menu,noselect
+  call setline(1, ['Text', 'ToText', ''])
+  call cursor(3, 1)
+  call feedkeys("STe\<C-X>\<C-N>x\<CR>\<Esc>0", 'tx!')
+  call assert_equal('Tex', getline(line('.') - 1))
+
+  call setline(1, ['fuzzy', 'fuzzycollect', 'completefuzzycollect'])
+  call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
+  call assert_equal('fuzzycollect', getline(line('.') - 1))
+  call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
+  call assert_equal('completefuzzycollect', getline(line('.') - 1))
+
+  " keywords in 'dictonary'
+  call writefile(['hello', 'think'], 'test_dict.txt', 'D')
+  set dict=test_dict.txt
+  call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<CR>\<Esc>0", 'tx!')
+  call assert_equal('hello', getline(line('.') - 1))
+  call feedkeys("Sh\<C-X>\<C-K>\<C-N>\<C-N>\<CR>\<Esc>0", 'tx!')
+  call assert_equal('think', getline(line('.') - 1))
+
+  call setline(1, ['foo bar fuzzy', 'completefuzzycollect'])
+  call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-Y>\<Esc>0", 'tx!')
+  call assert_equal('completefuzzycollect', getline('.'))
+
+  bw!
+  bw!
+  set dict&
+  set completeopt& cfc& cpt&
+endfunc
+
+func Test_cfc_with_longest()
+  new
+  set completefuzzycollect=keyword,files,whole_line
+  set completeopt=menu,menuone,longest,fuzzy
+
+  " keyword
+  exe "normal ggdGShello helio think h\<C-X>\<C-N>\<ESC>"
+  call assert_equal("hello helio think hel", getline('.'))
+  exe "normal hello helio think h\<C-X>\<C-P>\<ESC>"
+  call assert_equal("hello helio think hel", getline('.'))
+
+  " skip non-consecutive prefixes
+  exe "normal ggdGShello helio heo\<C-X>\<C-N>\<ESC>"
+  call assert_equal("hello helio heo", getline('.'))
+
+  " kdcit
+  call writefile(['help'], 'test_keyword.txt', 'D')
+  set complete=ktest_keyword.txt
+  exe "normal ggdGSh\<C-N>\<ESC>"
+  " auto insert help when only have one match
+  call assert_equal("help", getline('.'))
+  call writefile(['hello', 'help', 'think'], 'xtest_keyword.txt', 'D')
+  set complete=kxtest_keyword.txt
+  " auto insert hel
+  exe "normal ggdGSh\<C-N>\<ESC>"
+  call assert_equal("hel", getline('.'))
+
+  " line start with a space
+  call writefile([' hello'], 'test_case1.txt', 'D')
+  set complete=ktest_case1.txt
+  exe "normal ggdGSh\<C-N>\<ESC>"
+  call assert_equal("hello", getline('.'))
+
+  " multiple matches
+  set complete=ktest_case2.txt
+  call writefile([' hello help what'], 'test_case2.txt', 'D')
+  exe "normal ggdGSh\<C-N>\<C-N>\<C-N>\<C-N>\<ESC>"
+  call assert_equal("what", getline('.'))
+
+  " multiple lines of matches
+  set complete=ktest_case3.txt
+  call writefile([' hello help what', 'hola', '     hey'], 'test_case3.txt', 'D')
+  exe "normal ggdGSh\<C-N>\<C-N>\<ESC>"
+  call assert_equal("hey", getline('.'))
+  exe "normal ggdGSh\<C-N>\<C-N>\<C-N>\<C-N>\<ESC>"
+  call assert_equal("hola", getline('.'))
+
+  set complete=ktest_case4.txt
+  call writefile(['  auto int   enum register', 'why'], 'test_case4.txt', 'D')
+  exe "normal ggdGSe\<C-N>\<C-N>\<ESC>"
+  call assert_equal("enum", getline('.'))
+
+  set complete=ktest_case5.txt
+  call writefile(['hello friends', 'go', 'hero'], 'test_case5.txt', 'D')
+  exe "normal ggdGSh\<C-N>\<C-N>\<ESC>"
+  call assert_equal("hero", getline('.'))
+  set complete&
+
+  " file
+  call writefile([''], 'hello', 'D')
+  call writefile([''], 'helio', 'D')
+  exe "normal ggdGS./h\<C-X>\<C-f>\<ESC>"
+  call assert_equal('./hel', getline('.'))
+
+  " word
+  call setline(1, ['what do you think', 'why i have that', ''])
+  call cursor(3,1)
+  call feedkeys("Sw\<C-X>\<C-l>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('wh', getline('.'))
+
+  exe "normal ggdG"
+  " auto complete when only one match
+  exe "normal Shello\<CR>h\<C-X>\<C-N>\<esc>"
+  call assert_equal('hello', getline('.'))
+  exe "normal Sh\<C-N>\<C-P>\<esc>"
+  call assert_equal('hello', getline('.'))
+
+  exe "normal Shello\<CR>h\<C-X>\<C-N>\<Esc>cch\<C-X>\<C-N>\<Esc>"
+  call assert_equal('hello', getline('.'))
+
+  " continue search for new leader after insert common prefix
+  exe "normal ohellokate\<CR>h\<C-X>\<C-N>k\<C-y>\<esc>"
+  call assert_equal('hellokate', getline('.'))
+
+  bw!
+  set completeopt&
+  set completefuzzycollect&
+endfunc
+
+func Test_completefuzzycollect_with_completeslash()
+  CheckMSWindows
+
+  call writefile([''], 'fobar', 'D')
+  let orig_shellslash = &shellslash
+  set cpt&
+  new
+  set completefuzzycollect=files
+  set noshellslash
+
+  " Test with completeslash unset
+  set completeslash=
+  call setline(1, ['.\fob'])
+  call feedkeys("A\<C-X>\<C-F>\<Esc>0", 'tx!')
+  call assert_equal('.\fobar', getline('.'))
+
+  " Test with completeslash=backslash
+  set completeslash=backslash
+  call feedkeys("S.\\fob\<C-X>\<C-F>\<Esc>0", 'tx!')
+  call assert_equal('.\fobar', getline('.'))
+
+  " Test with completeslash=slash
+  set completeslash=slash
+  call feedkeys("S.\\fob\<C-X>\<C-F>\<Esc>0", 'tx!')
+  call assert_equal('./fobar', getline('.'))
+
+  " Reset and clean up
+  let &shellslash = orig_shellslash
+  set completeslash=
+  set completefuzzycollect&
+  %bw!
 endfunc
 
 " Check that tie breaking is stable for completeopt+=fuzzy (which should
@@ -2915,6 +3146,16 @@ func Test_complete_fuzzy_match_tie()
 
   bwipe!
   set completeopt&
+endfunc
+
+func Test_complete_backwards_default()
+  new
+  call append(1, ['foobar', 'foobaz'])
+  new
+  call feedkeys("i\<c-p>", 'tx')
+  call assert_equal('foobaz', getline('.'))
+  bw!
+  bw!
 endfunc
 
 func Test_complete_info_matches()
