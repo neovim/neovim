@@ -8539,7 +8539,14 @@ local options = {
     {
       abbreviation = 'stl',
       cb = 'did_set_statusline',
-      defaults = '',
+      defaults = table.concat({
+        '%<',
+        '%f %h%w%m%r',
+        '%=',
+        '%-10S',
+        '%k ',
+        "%{%&ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : ''%}",
+      }),
       desc = [=[
         When non-empty, this option determines the content of the status line.
         Also see |status-line|.
