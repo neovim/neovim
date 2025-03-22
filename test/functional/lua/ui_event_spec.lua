@@ -32,7 +32,6 @@ describe('vim.ui_attach', function()
     ]]
 
     screen = Screen.new(40, 5)
-    screen:add_extra_attr_ids({ [100] = { bold = true, foreground = Screen.colors.SeaGreen } })
   end)
 
   local function expect_events(expected)
@@ -216,7 +215,7 @@ describe('vim.ui_attach', function()
       },
       messages = {
         {
-          content = { { '\nSave changes?\n', 100, 10 } },
+          content = { { '\nSave changes?\n', 6, 10 } },
           history = false,
           kind = 'confirm',
         },
@@ -316,16 +315,38 @@ describe('vim.ui_attach', function()
       },
     })
   end)
+end)
+
+describe('vim.ui_attach', function()
+  before_each(function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
+  end)
+
+  after_each(function()
+    check_close()
+    os.remove(testlog)
+  end)
+
+  it('error in callback is logged', function()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('test')
+      vim.ui_attach(ns, { ext_popupmenu = true }, function() error(42) end)
+    ]])
+    feed('ifoo<CR>foobar<CR>fo<C-X><C-N>')
+    assert_log('Error in "popupmenu_show" UI event handler %(ns=test%):', testlog, 100)
+    assert_log('Error executing lua: .*: 42', testlog, 100)
+  end)
 
   it('detaches after excessive errors', function()
-    screen:try_resize(86, 10)
+    local screen = Screen.new(86, 10)
+    screen:add_extra_attr_ids({ [100] = { bold = true, foreground = Screen.colors.SeaGreen } })
     exec_lua([[
       vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(ev)
         if ev:find('msg') then
           vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] })
         end
       end)
-      ]])
+    ]])
     local s1 = [[
       ^                                                                                      |
       {1:~                                                                                     }|*9
@@ -417,27 +438,6 @@ describe('vim.ui_attach', function()
       {1:~                                                                                     }|*8
       {9:Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))}                    |
     ]])
-  end)
-end)
-
-describe('vim.ui_attach', function()
-  before_each(function()
-    clear({ env = { NVIM_LOG_FILE = testlog } })
-  end)
-
-  after_each(function()
-    check_close()
-    os.remove(testlog)
-  end)
-
-  it('error in callback is logged', function()
-    exec_lua([[
-      local ns = vim.api.nvim_create_namespace('test')
-      vim.ui_attach(ns, { ext_popupmenu = true }, function() error(42) end)
-    ]])
-    feed('ifoo<CR>foobar<CR>fo<C-X><C-N>')
-    assert_log('Error in "popupmenu_show" UI event handler %(ns=test%):', testlog, 100)
-    assert_log('Error executing lua: .*: 42', testlog, 100)
   end)
 
   it('sourcing invalid file does not crash #32166', function()
