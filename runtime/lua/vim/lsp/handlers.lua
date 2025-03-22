@@ -476,10 +476,11 @@ end
 --- @overload fun(direction:'to'): fun(_, result: lsp.CallHierarchyOutgoingCall[]?)
 local function make_call_hierarchy_handler(direction)
   --- @param result lsp.CallHierarchyIncomingCall[]|lsp.CallHierarchyOutgoingCall[]
-  return function(_, result)
+  return function(_, result, ctx, config)
     if not result then
       return
     end
+    config = config or {}
     local items = {}
     for _, call_hierarchy_call in pairs(result) do
       --- @type lsp.CallHierarchyItem
@@ -493,8 +494,18 @@ local function make_call_hierarchy_handler(direction)
         })
       end
     end
-    vim.fn.setqflist({}, ' ', { title = 'LSP call hierarchy', items = items })
-    vim.cmd('botright copen')
+
+    local list = { title = 'LSP call hierarchy', items = items, context = ctx }
+    if config.on_list then
+      assert(vim.is_callable(config.on_list), 'on_list is not a function')
+      config.on_list(list)
+    elseif config.loclist then
+      vim.fn.setloclist(0, {}, ' ', list)
+      vim.cmd.lopen()
+    else
+      vim.fn.setqflist({}, ' ', list)
+      vim.cmd('botright copen')
+    end
   end
 end
 
@@ -509,7 +520,7 @@ RCS[ms.callHierarchy_outgoingCalls] = make_call_hierarchy_handler('to')
 --- Displays type hierarchy in the quickfix window.
 local function make_type_hierarchy_handler()
   --- @param result lsp.TypeHierarchyItem[]
-  return function(_, result, ctx, _)
+  return function(_, result, ctx, config)
     if not result then
       return
     end
@@ -534,8 +545,19 @@ local function make_type_hierarchy_handler()
         col = col + 1,
       })
     end
-    vim.fn.setqflist({}, ' ', { title = 'LSP type hierarchy', items = items })
-    vim.cmd('botright copen')
+
+    config = config or {}
+    local list = { title = 'LSP type hierarchy', items = items }
+    if config.on_list then
+      assert(vim.is_callable(config.on_list), 'on_list is not a function')
+      config.on_list(list)
+    elseif config.loclist then
+      vim.fn.setloclist(0, {}, ' ', list)
+      vim.cmd.lopen()
+    else
+      vim.fn.setqflist({}, ' ', list)
+      vim.cmd('botright copen')
+    end
   end
 end
 
