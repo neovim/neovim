@@ -328,14 +328,15 @@ do
       -- message when there are zero dots.
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
-    if is_last_chunk then
-      if startpos then
-        vim.fn.setpos("'[", startpos)
-        startpos = nil
-      end
-      vim.api.nvim_command('redraw' .. (tick > 1 and '|echo ""' or ''))
-    elseif startpos == nil then
+    if startpos == nil then
       startpos = vim.fn.getpos("'[")
+    end
+    if phase == 2 or phase == 3 then
+      vim.fn.setpos("'[", assert(startpos))
+    end
+    if is_last_chunk then
+      startpos = nil
+      vim.api.nvim_command('redraw' .. (tick > 1 and '|echo ""' or ''))
     end
     return true -- Paste will not continue if not returning `true`.
   end
