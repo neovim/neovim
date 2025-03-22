@@ -3438,7 +3438,8 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     .os_errbuf = errbuf,
     .os_errbuflen = errbuflen,
     .os_buf = curbuf,
-    .os_win = curwin
+    .os_win = curwin,
+    .os_def = &opt->def_val.data
   };
 
   if (direct) {

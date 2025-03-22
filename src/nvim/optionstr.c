@@ -1792,6 +1792,16 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
   }
   const char *errmsg = NULL;
   char *s = *varp;
+
+  // reset statusline to default when setting global option and empty string is being set
+  if (!rulerformat && !statuscolumn
+      && ((args->os_flags & OPT_GLOBAL) || !(args->os_flags & OPT_LOCAL))
+      && s[0] == NUL) {
+    xfree(*varp);
+    *varp = xstrdup(args->os_def->string.data);
+    s = *varp;
+  }
+
   if (rulerformat && *s == '%') {
     // set ru_wid if 'ruf' starts with "%99("
     if (*++s == '-') {        // ignore a '-'
