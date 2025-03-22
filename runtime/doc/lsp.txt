@@ -2101,7 +2101,7 @@ Lua module: vim.lsp.util                                            *lsp-util*
       • {border}?        (`string|(string|[string,string])[]`) override
                          `border`
       • {zindex}?        (`integer`) override `zindex`, defaults to 50
-      • {title}?         (`string`)
+      • {title}?         (`string|[string,string][]`)
       • {title_pos}?     (`'left'|'center'|'right'`)
       • {relative}?      (`'mouse'|'cursor'|'editor'`) (default: `'cursor'`)
       • {anchor_bias}?   (`'auto'|'above'|'below'`, default: `'auto'`) Adjusts
