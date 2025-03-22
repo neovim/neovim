@@ -853,7 +853,7 @@ describe('API', function()
         feed('u') -- Undo.
         expect(expected1)
       end)
-      it('stream: multiple chunks sets the correct mark [', function()
+      it("stream: multiple chunks sets correct '[ mark", function()
         api.nvim_paste('1/chunk 1 (start)\n', true, 1)
         eq({ 0, 1, 1, 0 }, fn.getpos("'["))
         api.nvim_paste('1/chunk 2\n', true, 2)
