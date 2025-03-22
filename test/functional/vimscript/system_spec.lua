@@ -567,14 +567,14 @@ describe('shell :!', function()
       4
       2]])
     if is_os('win') then
-      feed(':4verbose %!sort /R<cr>')
+      feed(':4verbose %!& sort /R<cr>')
       screen:expect {
-        any = [[Executing command: .?& { Get%-Content .* | & sort /R } 2>&1 | %%{ "$_" } | Out%-File .*; exit $LastExitCode"]],
+        any = [[Executing command: "& sort /R".*]],
       }
     else
-      feed(':4verbose %!sort -r<cr>')
+      feed(':4verbose %!& sort -r<cr>')
       screen:expect {
-        any = [[Executing command: .?& { Get%-Content .* | & sort %-r } 2>&1 | %%{ "$_" } | Out%-File .*; exit $LastExitCode"]],
+        any = [[Executing command: "& sort %-r".*]],
       }
     end
     feed('<CR>')
@@ -596,20 +596,19 @@ describe('shell :!', function()
       4
       2]])
     feed(':4verbose %w !sort<cr>')
-    if is_os('win') then
-      screen:expect {
-        any = [[Executing command: .?sort %< .*]],
-      }
-    else
-      screen:expect {
-        any = [[Executing command: .?%(sort%) %< .*]],
-      }
-    end
-    feed('<CR>')
-    n.set_shell_powershell(true)
-    feed(':4verbose %w !sort<cr>')
     screen:expect {
-      any = [[Executing command: .?& { Get%-Content .* | & sort }]],
+      any = [[Executing command: "sort".*]],
+    }
+    feed('<CR>')
+
+    if not n.has_powershell() then
+      return
+    end
+
+    n.set_shell_powershell(true)
+    feed(':4verbose %w !& sort<cr>')
+    screen:expect {
+      any = [[Executing command: "& sort".*]],
     }
     feed('<CR>')
     n.expect_exit(command, 'qall!')

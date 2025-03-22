@@ -1381,7 +1381,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
       xstrlcat(buf, cmd, len - 1);
       xstrlcat(buf, " }", len - 1);
     } else {
-      xstrlcpy(buf, cmd, len - 1);
+      xstrlcpy(buf, cmd, len);
     }
   } else {
 #if defined(UNIX)
