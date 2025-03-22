@@ -881,7 +881,7 @@ describe('API', function()
           aaaaaabbbbbbccccccdddddd
           ]]
         expect(expected1)
-        -- Only pastes an empty line
+        -- Only pastes an empty chunk
         api.nvim_paste('', true, -1)
         eq({ 0, 5, 1, 0 }, fn.getpos("'["))
         -- Pastes some empty chunks between non-empty chunks
