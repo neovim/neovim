@@ -8541,11 +8541,11 @@ local options = {
       cb = 'did_set_statusline',
       defaults = table.concat({
         '%<',
-        '%f %h%w%m%r',
+        "%f %h%w%{%&modified ? '[+] ' : ''%}%r",
         '%=',
-        '%-10S',
-        '%k ',
-        "%{%&ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : ''%}",
+        "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
+        "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
+        "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
       }),
       desc = [=[
         When non-empty, this option determines the content of the status line.
