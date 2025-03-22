@@ -365,6 +365,7 @@ static void request_event(void **argv)
     goto free_ret;
   }
 
+  current_channel_id = channel->id;
   Object result = handler.fn(channel->id, e->args, &e->used_mem, &error);
   if (e->type == kMessageTypeRequest || ERROR_SET(&error)) {
     // Send the response.

@@ -204,6 +204,14 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height, Boolean enabl
   nvim_ui_attach(channel_id, width, height, opts, err);
 }
 
+void ui_request_detach(uint64_t chan, String msg)
+{
+  RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, chan);
+  if (ui) {
+    remote_ui_detach(ui, msg);
+  }
+}
+
 /// Tells the nvim server if focus was gained or lost by the GUI
 void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
   FUNC_API_SINCE(11) FUNC_API_REMOTE_ONLY
