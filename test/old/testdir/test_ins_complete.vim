@@ -955,7 +955,7 @@ func Test_complete_with_longest()
   inoremap <buffer> <f3> <cmd>call complete(1, ["iaax", "iaay", "iaaz"])<cr>
 
   " default: insert first match
-  set completeopt&
+  set completeopt& completeopt-=noselect,popup
   call setline(1, ['i'])
   exe "normal Aa\<f3>\<esc>"
   call assert_equal('iaax', getline(1))
@@ -1223,6 +1223,7 @@ endfunc
 " Test for <CTRL-X> <CTRL-Z> stopping completion without changing the match
 func Test_complete_stop()
   new
+  setlocal completeopt-=noselect,popup
   func Save_mode1()
     let g:mode1 = mode(1)
     return ''
@@ -1247,7 +1248,7 @@ func Test_complete_stop()
   call assert_equal('ic', g:mode1)
   call assert_equal('i', g:mode2)
   call assert_equal('aaa bbb ccc aaa bb', getline(1))
-  set completeopt&
+  set completeopt& completeopt-=noselect,popup
   exe "normal A d\<C-N>\<F1>\<C-X>\<C-Z>\<F2>\<Esc>"
   call assert_equal('ic', g:mode1)
   call assert_equal('i', g:mode2)
@@ -1433,6 +1434,7 @@ endfunc
 " <C-X> to cancel the current completion mode.
 func Test_complete_local_expansion()
   new
+  setlocal completeopt-=noselect,popup
   set complete=t
   call setline(1, ['abc', 'def'])
   exe "normal! Go\<C-X>\<C-P>"
@@ -1460,7 +1462,7 @@ func Test_complete_local_expansion()
   " when only one <C-X> is used to interrupt, do normal expansion
   exe "normal! Go\<C-X>\<C-F>\<C-X>\<C-P>"
   call assert_equal("", getline(11))
-  set completeopt&
+  set completeopt& completeopt-=noselect,popup
 
   " using two <C-X> in non-completion mode and restarting the same mode
   exe "normal! God\<C-X>\<C-X>\<C-P>\<C-X>\<C-X>\<C-P>\<C-Y>"
@@ -1497,7 +1499,7 @@ func Test_complete_undo()
   call assert_equal("abo", getline(3))
   undo
   call assert_equal("a", getline(3))
-  set completeopt&
+  set completeopt& completeopt-=noselect,popup
   %d
   " undo for line completion
   call setline(1, ['above that change', 'below that change'])
@@ -1555,7 +1557,7 @@ func Test_complete_items()
   exe "normal! o\<C-R>=CompleteItems(2)\<CR>one\<C-N>\<C-Y>"
   call assert_equal('oNE', getline(4))
   call assert_equal('u8', v:completed_item.user_data)
-  set completeopt&
+  set completeopt& completeopt-=noselect,popup
   exe "normal! o\<C-R>=CompleteItems(3)\<CR>"
   call assert_equal('', getline(5))
   exe "normal! o\<C-R>=CompleteItems(4)\<CR>"
