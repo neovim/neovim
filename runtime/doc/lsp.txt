@@ -2131,13 +2131,15 @@ apply_text_document_edit({text_document_edit}, {index}, {position_encoding})
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 
                                              *vim.lsp.util.apply_text_edits()*
-apply_text_edits({text_edits}, {bufnr}, {position_encoding})
+apply_text_edits({text_edits}, {bufnr}, {position_encoding}, {adjust_end})
     Applies a list of text edits to a buffer.
 
     Parameters: ~
       • {text_edits}         (`lsp.TextEdit[]`)
       • {bufnr}              (`integer`) Buffer id
       • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
+      • {adjust_end}         (`boolean?`) adjust end_col to start_col when
+                             end_col equals end of line
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
