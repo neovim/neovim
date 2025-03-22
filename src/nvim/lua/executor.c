@@ -1889,7 +1889,7 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, tslua_add_language_from_object);
   lua_setfield(lstate, -2, "_ts_add_language_from_object");
 
-#ifdef HAVE_WASMTIME
+#if defined(HAVE_WASMTIME) || defined(NEOWASM)
   lua_pushcfunction(lstate, tslua_add_language_from_wasm);
   lua_setfield(lstate, -2, "_ts_add_language_from_wasm");
 #endif
