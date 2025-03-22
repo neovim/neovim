@@ -917,6 +917,30 @@ function vim._expand_pat(pat, env)
 
   local final_env = env
 
+  --- @param m table
+  --- @param k string
+  --- @return any
+  local function safe_tbl_get(m, k)
+    if rawget(m, k) then
+      return rawget(m, k)
+    end
+
+    local mt = getmetatable(m)
+    if not mt then
+      return m == vim and vim._extra[k] or nil
+    end
+
+    -- use mt.__index, _submodules as fallback
+    if type(mt.__index) == 'table' then
+      return rawget(mt.__index, k)
+    end
+
+    local sub = rawget(m, '_submodules')
+    if sub and type(sub) == 'table' and rawget(sub, k) then
+      return m[k] -- access to required module
+    end
+  end
+
   for _, part in ipairs(parts) do
     if type(final_env) ~= 'table' then
       return {}, 0
@@ -947,16 +971,7 @@ function vim._expand_pat(pat, env)
 
       key = result
     end
-    local field = rawget(final_env, key)
-    if field == nil then
-      local mt = getmetatable(final_env)
-      if mt and type(mt.__index) == 'table' then
-        field = rawget(mt.__index, key)
-      elseif final_env == vim and (vim._submodules[key] or vim._extra[key]) then
-        field = vim[key] --- @type any
-      end
-    end
-    final_env = field
+    final_env = safe_tbl_get(final_env, key)
 
     if not final_env then
       return {}, 0
@@ -986,15 +1001,18 @@ function vim._expand_pat(pat, env)
 
   if type(final_env) == 'table' then
     insert_keys(final_env)
+    local sub = rawget(final_env, '_submodules')
+    if type(sub) == 'table' then
+      insert_keys(sub)
+    end
+    if final_env == vim then
+      insert_keys(vim._extra)
+    end
   end
+
   local mt = getmetatable(final_env)
   if mt and type(mt.__index) == 'table' then
     insert_keys(mt.__index)
-  end
-
-  if final_env == vim then
-    insert_keys(vim._submodules)
-    insert_keys(vim._extra)
   end
 
   -- Completion for dict accessors (special vim variables and vim.fn)
