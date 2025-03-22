@@ -602,7 +602,6 @@ describe('shell :!', function()
     feed('<CR>')
 
     if not n.has_powershell() then
-      pending('powershell not found, skip powershell part', function() end)
       return
     end
 
