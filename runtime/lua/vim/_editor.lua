@@ -331,7 +331,7 @@ do
     if startpos == nil then
       startpos = vim.fn.getpos("'[")
     else
-      vim.fn.setpos("'[", assert(startpos))
+      vim.fn.setpos("'[", startpos)
     end
     if is_last_chunk then
       startpos = nil
