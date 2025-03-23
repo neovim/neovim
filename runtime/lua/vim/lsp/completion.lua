@@ -56,9 +56,9 @@ local buf_handles = {}
 --- @nodoc
 --- @class vim.lsp.completion.Context
 local Context = {
-  cursor = nil, --- @type [integer, integer]?
+  cursor = nil,            --- @type [integer, integer]?
   last_request_time = nil, --- @type integer?
-  pending_requests = {}, --- @type function[]
+  pending_requests = {},   --- @type function[]
   isIncomplete = false,
 }
 
@@ -312,8 +312,8 @@ function M._lsp_to_complete_items(result, prefix, client_id)
       local word = get_completion_word(item, prefix, match_item_by_value)
       local hl_group = ''
       if
-        item.deprecated
-        or vim.list_contains((item.tags or {}), protocol.CompletionTag.Deprecated)
+          item.deprecated
+          or vim.list_contains((item.tags or {}), protocol.CompletionTag.Deprecated)
       then
         hl_group = 'DiagnosticDeprecated'
       end
@@ -388,14 +388,14 @@ end
 --- @return table[] matches
 --- @return integer? server_start_boundary
 function M._convert_results(
-  line,
-  lnum,
-  cursor_col,
-  client_id,
-  client_start_boundary,
-  server_start_boundary,
-  result,
-  encoding
+    line,
+    lnum,
+    cursor_col,
+    client_id,
+    client_start_boundary,
+    server_start_boundary,
+    result,
+    encoding
 )
   -- Completion response items may be relative to a position different than `client_start_boundary`.
   -- Concrete example, with lua-language-server:
@@ -431,7 +431,7 @@ end
 --- @param callback fun(responses: table<integer, { err: lsp.ResponseError, result: vim.lsp.CompletionResult }>)
 --- @return function # Cancellation function
 local function request(clients, bufnr, win, ctx, callback)
-  local responses = {} --- @type table<integer, { err: lsp.ResponseError, result: any }>
+  local responses = {}   --- @type table<integer, { err: lsp.ResponseError, result: any }>
   local request_ids = {} --- @type table<integer, integer>
   local remaining_requests = vim.tbl_count(clients)
 
@@ -552,13 +552,15 @@ local function on_insert_char_pre(handle)
         )
       end
     end
-
     return
   end
 
   local char = api.nvim_get_vvar('char')
   local matched_clients = handle.triggers[char]
-  if not completion_timer and matched_clients then
+
+  if completion_timer then return end
+
+  if matched_clients then
     completion_timer = assert(vim.uv.new_timer())
     completion_timer:start(25, 0, function()
       reset_timer()
@@ -570,8 +572,24 @@ local function on_insert_char_pre(handle)
         )
       end)
     end)
+  elseif char:match("%w") then
+    completion_timer = assert(vim.uv.new_timer())
+    completion_timer:start(25, 0, function()
+      reset_timer()
+      vim.schedule(function()
+        trigger(
+          api.nvim_get_current_buf(),
+          handle.clients,
+          { triggerKind = protocol.CompletionTriggerKind.Invoked }
+        )
+      end)
+    end)
   end
 end
+
+
+
+
 
 local function on_insert_leave()
   reset_timer()
@@ -588,7 +606,8 @@ local function on_complete_done()
 
   local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
   cursor_row = cursor_row - 1
-  local completion_item = completed_item.user_data.nvim.lsp.completion_item --- @type lsp.CompletionItem
+  local completion_item = completed_item.user_data.nvim.lsp
+      .completion_item                                          --- @type lsp.CompletionItem
   local client_id = completed_item.user_data.nvim.lsp.client_id --- @type integer
   if not completion_item or not client_id then
     Context:reset()
@@ -597,7 +616,7 @@ local function on_complete_done()
 
   local bufnr = api.nvim_get_current_buf()
   local expand_snippet = completion_item.insertTextFormat == protocol.InsertTextFormat.Snippet
-    and (completion_item.textEdit ~= nil or completion_item.insertText ~= nil)
+      and (completion_item.textEdit ~= nil or completion_item.insertText ~= nil)
 
   Context:reset()
 
