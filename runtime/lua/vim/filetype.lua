@@ -2263,6 +2263,8 @@ local pattern = {
     ['^named.*%.conf$'] = 'named',
     ['^rndc.*%.conf$'] = 'named',
     ['/openvpn/.*/.*%.conf$'] = 'openvpn',
+    ['/pipewire/.*%.conf$'] = 'spajson',
+    ['/wireplumber/.*%.conf$'] = 'spajson',
     ['/%.ssh/.*%.conf$'] = 'sshconfig',
     ['^%.?tmux.*%.conf$'] = 'tmux',
     ['^%.?tmux.*%.conf'] = { 'tmux', { priority = -1 } },
