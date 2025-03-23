@@ -330,8 +330,7 @@ do
     end
     if startpos == nil then
       startpos = vim.fn.getpos("'[")
-    end
-    if phase == 2 or phase == 3 then
+    else
       vim.fn.setpos("'[", assert(startpos))
     end
     if is_last_chunk then
