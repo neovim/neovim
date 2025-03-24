@@ -317,15 +317,15 @@ describe('global statusline', function()
     screen:expect([[
                           │                │ │^                    |
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
-      {1:~                   }│{2:< Name] 0,0-1   }│{1:~}│{1:~                   }|
+      {1:~                   }│{2:<-1          All}│{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{3:<No Name] 0,0-1  All}|
+      {1:~                   }│{1:~               }│{1:~}│{3:< 0,0-1          All}|
       {1:~                   }│{1:~               }│{1:~}│                    |
-      {2:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
+      {2:< 0,0-1          All <-1          All <}│{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*3
-      {2:[No Name]            0,0-1          All <No Name] 0,0-1  All}|
+      {2:[No Name]            0,0-1          All < 0,0-1          All}|
                                                                   |
     ]])
 
@@ -349,12 +349,12 @@ describe('global statusline', function()
     screen:expect([[
                           │                │ │^                    |
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
-      {1:~                   }│{2:< Name] 0,0-1   }│{1:~}│{1:~                   }|
+      {1:~                   }│{2:<-1          All}│{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{3:<No Name] 0,0-1  All}|
+      {1:~                   }│{1:~               }│{1:~}│{3:< 0,0-1          All}|
       {1:~                   }│{1:~               }│{1:~}│                    |
-      {2:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
+      {2:< 0,0-1          All <-1          All <}│{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*4
                                                 0,0-1         All |
@@ -676,7 +676,7 @@ describe('statusline', function()
     screen:expect([[
       ^                                        |
       {1:~                                       }|*2
-      {3:[No Name]             1longlonglong     }|
+      {3:[No Name]                  1longlonglong}|
                           │                   |
       {1:~                   }│{1:~                  }|*2
                             3longlonglong     |
@@ -687,7 +687,7 @@ describe('statusline', function()
     screen:expect([[
                                               |
       {1:~                                       }|*2
-      {2:[No Name]             1longlonglong     }|
+      {2:[No Name]                  1longlonglong}|
       ^                    │                   |
       {1:~                   }│{1:~                  }|*2
                             2longlonglong     |
@@ -697,7 +697,7 @@ describe('statusline', function()
     screen:expect([[
                                               |
       {1:~                                       }|*2
-      {2:[No Name]             1longlonglong     }|
+      {2:[No Name]                  1longlonglong}|
                           │^                   |
       {1:~                   }│{1:~                  }|*2
                             3longlonglong     |
@@ -723,7 +723,7 @@ describe('statusline', function()
     screen:expect([[
                          │^                    |
       {1:~                  }│{1:~                   }|*5
-      {2:[No Name]           }{3:[No Name] 1234      }|
+      {2:[No Name]           }{3:<o Name] 1234       }|
                                               |
     ]])
     feed('<Esc>')
