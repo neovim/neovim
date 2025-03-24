@@ -340,6 +340,7 @@ OPTIONS
 • 'messagesopt' configures |:messages| and |hit-enter| prompt.
 • 'tabclose' controls which tab page to focus when closing a tab page.
 • 'eventignorewin' to persistently ignore events in a window.
+• 'autowriteall' write all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
 
 PERFORMANCE
 
