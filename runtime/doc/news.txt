@@ -11,39 +11,6 @@ For changes in the previous release, see |news-0.10|.
                                        Type |gO| to see the table of contents.
 
 ==============================================================================
-BREAKING CHANGES IN HEAD OR EXPERIMENTAL                    *news-breaking-dev*
-
-              ====== Remove this section before release. ======
-
-The following changes to UNRELEASED features were made during the development
-cycle (Nvim HEAD, the "master" branch).
-
-EXPERIMENTS
-
-• Removed `vim.loader.disable()`. Use `vim.loader.enable(false)` instead.
-
-LSP
-
-• `lsp/` runtimepath files should return a table instead of calling
-  |vim.lsp.config()| (or assigning to `vim.lsp.config`). See |lsp-config|
-• `vim.lsp.buf.document_symbol()` uses the |location-list| by default. Use
-  `vim.lsp.buf.document_symbol({ loclist = false })` to use the |quickfix|
-  list.
-• `vim.lsp.completion.trigger()` has been renamed to
-  |vim.lsp.completion.get()|.
-
-OPTIONS
-
-• 'jumpoptions' flag "unload" has been renamed to "clean".
-• The `msghistory` option has been removed in favor of 'messagesopt'.
-
-TREESITTER
-
-• *TSNode:child_containing_descendant()* has been removed in the tree-sitter
-  library and is no longer available; use |TSNode:child_with_descendant()|
-  instead.
-
-==============================================================================
 BREAKING CHANGES                                                *news-breaking*
 
 These changes may require adaptations in your config or plugins.
@@ -266,7 +233,6 @@ DIAGNOSTICS
 
 EDITOR
 
-• Use |g==| in :help docs to execute Lua and Vimscript code examples.
 • Improved |paste| handling for redo (dot-repeat) and macros (|recording|):
   • Redoing a large paste is significantly faster and ignores 'autoindent'.
   • Replaying a macro with |@| also replays pasted text.

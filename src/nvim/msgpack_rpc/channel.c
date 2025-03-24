@@ -518,7 +518,7 @@ void rpc_free(Channel *channel)
   api_free_dict(channel->rpc.info);
 }
 
-/// Logs a fatal error received from a channel, then closes the channel.
+/// Closes a channel after receiving fatal error, and logs a message.
 static void chan_close_on_err(Channel *channel, char *msg, int loglevel)
 {
   for (size_t i = 0; i < kv_size(channel->rpc.call_stack); i++) {
