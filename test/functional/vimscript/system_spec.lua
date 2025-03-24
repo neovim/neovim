@@ -573,7 +573,7 @@ describe('shell :!', function()
     if is_os('win') then
       feed(':4verbose %!& Sort-Object -Descending<cr>')
       screen:expect {
-        any = [[Executing command: "& sort /R".*]],
+        any = [[Executing command: "& Sort-Object -Descending".*]],
       }
     else
       feed(':4verbose %!& sort -r<cr>')
