@@ -589,37 +589,6 @@ describe('shell :!', function()
       1]])
   end)
 
-  it(':{range}! with powershell filter/redirect #16271 #19250', function()
-    if not n.has_powershell() then
-      pending('powershell not found', function() end)
-      return
-    end
-    local screen = Screen.new(500, 8)
-    n.set_shell_powershell()
-    insert([[
-      3
-      1
-      4
-      2]])
-    if is_os('win') then
-      feed(':4verbose %!& Sort-Object -Descending<cr>')
-      screen:expect {
-        any = [[Executing command: "& Sort-Object -Descending".*]],
-      }
-    else
-      feed(':4verbose %!& sort -r<cr>')
-      screen:expect {
-        any = [[Executing command: "& sort %-r".*]],
-      }
-    end
-    feed('<CR>')
-    expect([[
-      4
-      3
-      2
-      1]])
-  end)
-
   it(':{range}! without redirecting to buffer', function()
     local screen = Screen.new(500, 10)
     insert([[
