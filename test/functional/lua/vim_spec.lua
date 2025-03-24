@@ -4011,9 +4011,9 @@ stack traceback:
       ]]
       screen:expect [[
         19                            |
-        {2:[No Name] [+]  20,1         3%}|
+        {2:< Name] [+] 20,1            3%}|
         ^19                            |
-        {3:[No Name] [+]  20,1         3%}|
+        {3:< Name] [+] 20,1            3%}|
                                       |
       ]]
       exec_lua [[
@@ -4022,9 +4022,9 @@ stack traceback:
       ]]
       screen:expect [[
         99                            |
-        {2:[No Name] [+]  100,1       19%}|
+        {2:< Name] [+] 100,1          19%}|
         ^19                            |
-        {3:[No Name] [+]  20,1         3%}|
+        {3:< Name] [+] 20,1            3%}|
                                       |
       ]]
     end)
