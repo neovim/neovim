@@ -2285,9 +2285,9 @@ describe('TUI', function()
     screen:expect([[
       ^                         │                        |
       {2:~                        }│{4:~                       }|*5
-      {2:~                        }│{5:[No Name]   0,0-1    All}|
+      {2:~                        }│{5:<ame] 0,0-1          All}|
       {2:~                        }│                        |
-      {5:new                       }{6:{MATCH:<.*[/\]nvim }}|
+      {5:new                       }{6:{MATCH:<.*[/\]nvim} [-] }|
                                                         |
     ]])
   end)
@@ -2519,7 +2519,7 @@ describe('TUI', function()
       grid = [[
       ^aaaaaaaaaaaa                                      |
       aaaaaaaaaaaa                                      |*3
-      < [+] 1,1                                         |
+      <        All                                      |
                                                         |
       -- TERMINAL --                                    |
     ]],
