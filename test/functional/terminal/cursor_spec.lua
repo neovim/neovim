@@ -172,7 +172,7 @@ describe(':terminal cursor', function()
         {4:~                                                 }|
         {5:floob                                             }|
                                                           |*2
-        {18:[Scratch]                                         }|
+        {18:[Scratch] [-]                                     }|
                                                           |
       ]])
 
@@ -183,7 +183,7 @@ describe(':terminal cursor', function()
         {1:floob                                             }|
         ^                                                  |
                                                           |
-        {17:[Scratch]                                         }|
+        {17:[Scratch] [-]                                     }|
         {3:-- TERMINAL --}                                    |
       ]])
     end)
@@ -437,7 +437,7 @@ describe(':terminal cursor', function()
     screen:expect([[
       ^                         │                        |
                                │                        |*4
-      {17:[Scratch]                 }{18:[Scratch]               }|
+      {17:[Scratch] [-]             }{18:[Scratch] [-]           }|
       {3:-- TERMINAL --}                                    |
     ]])
     eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
@@ -463,7 +463,7 @@ describe(':terminal cursor', function()
     screen:expect([[
                                │^                        |
                                │                        |*4
-      {18:[Scratch]                 }{17:[Scratch]               }|
+      {18:[Scratch] [-]             }{17:[Scratch] [-]           }|
       {3:-- TERMINAL --}                                    |
     ]])
     eq('horizontal', screen._mode_info[terminal_mode_idx].cursor_shape)
