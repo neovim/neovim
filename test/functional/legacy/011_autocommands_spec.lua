@@ -108,8 +108,8 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     end)
   end
 
-    -- luacheck: ignore 621 (Indentation)
-    -- luacheck: ignore 611 (Line contains only whitespaces)
+  -- luacheck: ignore 621 (Indentation)
+  -- luacheck: ignore 611 (Line contains only whitespaces)
   it('FileReadPre, FileReadPost', function()
     prepare_gz_file('Xtestfile', text1)
     feed_command(
