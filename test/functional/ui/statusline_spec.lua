@@ -767,3 +767,29 @@ describe('statusline', function()
     ]])
   end)
 end)
+
+describe("Default statusline", function()
+  before_each(function()
+    clear()
+    screen = Screen.new(60, 16)
+    screen:add_extra_attr_ids {
+      [100] = { foreground = Screen.colors.Magenta1, bold = true },
+    }
+    command('set laststatus=2')
+    command('set ruler')
+  end)
+
+  it("setting statusline to empty string sets default statusline", function()
+    local default_statusline="%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
+    exec_lua("vim.o.statusline = ''")
+
+    eq(default_statusline, eval('&statusline'))
+
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
+  end)
+end)
