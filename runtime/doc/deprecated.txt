@@ -16,13 +16,13 @@ Deprecated features
 DEPRECATED IN 0.11					*deprecated-0.11*
 
 API
-• nvim_notify()		Use |nvim_echo()| or `nvim_exec_lua("vim.notify(...)", ...)` instead.
-• nvim_subscribe()	Plugins must maintain their own "multicast" channels list.
-• nvim_unsubscribe()	Plugins must maintain their own "multicast" channels list.
-• nvim_out_write()	Use |nvim_echo()|.
-• nvim_err_write()	Use |nvim_echo()| with `{err=true}`.
-• nvim_err_writeln()	Use |nvim_echo()| with `{err=true}`.
-• nvim_buf_add_highlight()	Use |vim.hl.range()| or |nvim_buf_set_extmark()|
+• *nvim_notify()*		Use |nvim_echo()| or `nvim_exec_lua("vim.notify(...)", ...)` instead.
+• *nvim_subscribe()*	Plugins must maintain their own "multicast" channels list.
+• *nvim_unsubscribe()*	Plugins must maintain their own "multicast" channels list.
+• *nvim_out_write()*	Use |nvim_echo()|.
+• *nvim_err_write()*	Use |nvim_echo()| with `{err=true}`.
+• *nvim_err_writeln()*	Use |nvim_echo()| with `{err=true}`.
+• *nvim_buf_add_highlight()*	Use |vim.hl.range()| or |nvim_buf_set_extmark()|
 
 DIAGNOSTICS
 • *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count=1, float=true}` instead.
@@ -61,7 +61,7 @@ LSP
 • `vim.lsp.start_client()`		Use |vim.lsp.start()| instead.
 
 LUA
-• vim.region()		Use |getregionpos()| instead.
+• *vim.region()*		Use |getregionpos()| instead.
 • *vim.highlight*	Renamed to |vim.hl|.
 • vim.validate(opts: table) Use form 1. See |vim.validate()|.
 
@@ -257,7 +257,7 @@ LSP FUNCTIONS
 						or |vim.lsp.buf.format()| instead.
 
 LUA
-• vim.register_keystroke_callback()	Use |vim.on_key()| instead.
+• *vim.register_keystroke_callback()*	Use |vim.on_key()| instead.
 
 NORMAL COMMANDS
 • *]f* *[f*		Same as "gf".
