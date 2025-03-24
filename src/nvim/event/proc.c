@@ -437,6 +437,17 @@ static void on_proc_exit(Proc *proc)
   Loop *loop = proc->loop;
   ILOG("child exited: pid=%d status=%d" PRIu64, proc->pid, proc->status);
 
+#ifdef MSWIN
+  // XXX: This assumes the TUI never spawns any other processes...?
+  // TODO(justinmk): figure out why rpc_close sometimes(??) isn't called, then remove this jank.
+  // Theories:
+  // - EOF not received in receive_msgpack, then doesn't call chan_close_on_err().
+  // - proc_close_handles not tickled by ui_client.c's LOOP_PROCESS_EVENTS?
+  if (ui_client_channel_id) {
+    exit_on_closed_chan(proc->status);
+  }
+#endif
+
   // Process has terminated, but there could still be data to be read from the
   // OS. We are still in the libuv loop, so we cannot call code that polls for
   // more data directly. Instead delay the reading after the libuv loop by
