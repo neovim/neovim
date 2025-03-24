@@ -379,7 +379,7 @@ describe('search highlighting', function()
       bar baz {2:foo}         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
       bar {2:foo} baz         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
       {1:~                   }│{MATCH:.*}|*2
-      {4:[No Name] [+]        }{5:term               }|
+      {4:[No Name] [+]        }{5:term [-]           }|
       /foo^                                    |
     ]])
   end)
