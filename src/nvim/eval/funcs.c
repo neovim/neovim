@@ -3940,8 +3940,8 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
       dictitem_T *dv = tv_dict_find(env, required_env_vars[i], (ptrdiff_t)len);
       if (!dv) {
         if (os_env_exists(required_env_vars[i], true)) {
-          tv_dict_add_allocated_str(env, required_env_vars[i], len,
-                                    os_getenv_noalloc(required_env_vars[i]));
+          tv_dict_add_str(env, required_env_vars[i], len,
+                          os_getenv_noalloc(required_env_vars[i]));
         }
       }
     }

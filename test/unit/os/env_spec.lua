@@ -43,7 +43,7 @@ describe('env.c', function()
     end
   end
 
-  itp('os_env_exists', function()
+  itp('os_env_exists(..., false)', function()
     eq(false, os_env_exists('', false))
     eq(false, os_env_exists('      ', false))
     eq(false, os_env_exists('\t', false))
@@ -56,7 +56,7 @@ describe('env.c', function()
     eq(true, os_env_exists(varname, false))
   end)
 
-  itp('os_env_defined', function()
+  itp('os_env_exists(..., true)', function()
     eq(false, os_env_exists('', true))
     eq(false, os_env_exists('      ', true))
     eq(false, os_env_exists('\t', true))

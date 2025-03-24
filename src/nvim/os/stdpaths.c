@@ -160,7 +160,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   const char *const env = xdg_env_vars[idx];
   const char *const fallback = xdg_defaults[idx];
 
-  const char *env_val = os_getenv(env);
+  char *env_val = os_getenv(env);
 
 #ifdef MSWIN
   if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
@@ -191,7 +191,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     ret = xdg_remove_duplicate(ret, ENV_SEPSTR);
   }
 
-  xfree((char *)env_val);
+  xfree(env_val);
   return ret;
 }
 

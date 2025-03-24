@@ -1282,9 +1282,9 @@ static int nlua_empty_dict_tostring(lua_State *lstate)
 /// @param  lstate  Lua interpreter state.
 static int nlua_getenv(lua_State *lstate)
 {
-  const char *lstate_var = os_getenv(luaL_checkstring(lstate, 1));
+  char *lstate_var = os_getenv(luaL_checkstring(lstate, 1));
   lua_pushstring(lstate, lstate_var);
-  xfree((char *)lstate_var);
+  xfree(lstate_var);
   return 1;
 }
 #endif

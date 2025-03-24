@@ -82,7 +82,7 @@ void os_icon_init(void)
   hOrigIconSmall = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_SMALL, (LPARAM)0);
   hOrigIcon = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_BIG, (LPARAM)0);
 
-  const char *vimruntime = os_getenv("VIMRUNTIME");
+  char *vimruntime = os_getenv("VIMRUNTIME");
   if (vimruntime != NULL) {
     snprintf(NameBuff, MAXPATHL, "%s/neovim.ico", vimruntime);
     if (!os_path_exists(NameBuff)) {
@@ -92,7 +92,7 @@ void os_icon_init(void)
                                  LR_LOADFROMFILE | LR_LOADMAP3DCOLORS);
       os_icon_set(hVimIcon, hVimIcon);
     }
-    xfree((char *)vimruntime);
+    xfree(vimruntime);
   }
 }
 

@@ -932,7 +932,7 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   Object rvobj = OBJECT_INIT;
 
   if (is_ui) {
-    const char *nvim_env = os_getenv("NVIM");
+    char *nvim_env = os_getenv("NVIM");
     bool exit = false;
     if (!chan) {
       fprintf(stderr, "Remote ui failed to start: %s\n", connect_error);
@@ -943,7 +943,7 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
       exit = true;
     }
 
-    xfree((char *)nvim_env);
+    xfree(nvim_env);
 
     if (exit) {
       os_exit(1);
@@ -2124,7 +2124,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
 static int execute_env(char *env)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *initstr = os_getenv(env);
+  char *initstr = os_getenv(env);
   if (initstr == NULL) {
     return FAIL;
   }
@@ -2139,7 +2139,7 @@ static int execute_env(char *env)
   estack_pop();
   current_sctx = save_current_sctx;
 
-  xfree((char *)initstr);
+  xfree(initstr);
   return OK;
 }
 

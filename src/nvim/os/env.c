@@ -55,7 +55,7 @@
 /// Like getenv(), but returns NULL if the variable is empty.
 /// Result must be freed by the caller.
 /// @see os_env_exists
-const char *os_getenv(const char *name)
+char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   char *e = NULL;
@@ -89,7 +89,7 @@ end:
   return e;
 }
 
-/// Like getenv(), loading the result to `NameBuff`
+/// Like getenv(), but returns a pointer to `NameBuff` instead of allocating.
 /// @see os_env_exists
 char *os_getenv_noalloc(const char *name)
   FUNC_ATTR_NONNULL_ALL
@@ -102,7 +102,7 @@ char *os_getenv_noalloc(const char *name)
   int r = uv_os_getenv(name, NameBuff, &size);
   if (r != 0 || size == 0 || NameBuff[0] == NUL) {
     if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
-      ELOG("uv_os_getenv_noalloc(%s) failed: %d %s", name, r, uv_err_name(r));
+      ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
     }
     return NULL;
   }
@@ -147,11 +147,11 @@ int os_setenv(const char *name, const char *value, int overwrite)
   }
 #ifdef MSWIN
   bool return_donothing = false;
-  const char *env = os_getenv(name);
+  char *env = os_getenv(name);
   if (!overwrite && env != NULL) {
     return_donothing = true;
   }
-  xfree((char *)env);
+  xfree(env);
   if (return_donothing) {
     return 0;
   }
@@ -442,8 +442,8 @@ void init_homedir(void)
   xfree(homedir);
   homedir = NULL;
 
-  const char *var = os_getenv("HOME");
-  const char *tofree = var;
+  char *var = os_getenv("HOME");
+  char *tofree = var;
 
 #ifdef MSWIN
   // Typically, $HOME is not defined on Windows, unless the user has
@@ -451,8 +451,8 @@ void init_homedir(void)
   // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
   // each user. Try constructing $HOME from these.
   if (var == NULL) {
-    const char *homedrive = os_getenv("HOMEDRIVE");
-    const char *homepath = os_getenv("HOMEPATH");
+    char *homedrive = os_getenv("HOMEDRIVE");
+    char *homepath = os_getenv("HOMEPATH");
     if (homepath == NULL) {
       homepath = xstrdup("\\");
     }
@@ -463,8 +463,8 @@ void init_homedir(void)
         var = os_buf;
       }
     }
-    xfree((char *)homepath);
-    xfree((char *)homedrive);
+    xfree(homepath);
+    xfree(homedrive);
   }
   if (var == NULL) {
     var = os_uv_homedir();
@@ -478,13 +478,13 @@ void init_homedir(void)
     if (p != NULL) {
       vim_snprintf(os_buf, (size_t)(p - var), "%s", var + 1);
       var = NULL;
-      const char *exp = os_getenv(os_buf);
+      char *exp = os_getenv(os_buf);
       if (exp != NULL) {
         if (*exp != NUL && strlen(exp) + strlen(p) < MAXPATHL) {
           vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
           var = os_buf;
         }
-        xfree((char *)exp);
+        xfree(exp);
       }
     }
   }
@@ -517,7 +517,7 @@ void init_homedir(void)
   if (var != NULL) {
     homedir = xstrdup(var);
   }
-  xfree((char *)tofree);
+  xfree(tofree);
 }
 
 static char homedir_buf[MAXPATHL];
@@ -926,7 +926,7 @@ char *vim_getenv(const char *name)
   }
 #endif
 
-  char *kos_env_path = (char *)os_getenv(name);
+  char *kos_env_path = os_getenv(name);
   if (kos_env_path != NULL) {
     return kos_env_path;
   }
@@ -941,7 +941,7 @@ char *vim_getenv(const char *name)
   char *vim_path = NULL;
   if (vimruntime
       && *default_vimruntime_dir == NUL) {
-    kos_env_path = (char *)os_getenv("VIM");    // kos_env_path was NULL.
+    kos_env_path = os_getenv("VIM");    // kos_env_path was NULL.
     if (kos_env_path != NULL) {
       vim_path = vim_version_dir(kos_env_path);
       if (vim_path == NULL) {
@@ -1069,13 +1069,13 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
     dirlen = strlen(homedir);
   }
 
-  const char *homedir_env = os_getenv("HOME");
+  char *homedir_env = os_getenv("HOME");
 #ifdef MSWIN
   if (homedir_env == NULL) {
     homedir_env = os_getenv("USERPROFILE");
   }
 #endif
-  char *homedir_env_mod = (char *)homedir_env;
+  char *homedir_env_mod = homedir_env;
   bool must_free = false;
 
   if (homedir_env_mod != NULL && *homedir_env_mod == '~') {
@@ -1152,7 +1152,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
 
   *dst_p = NUL;
 
-  xfree((char *)homedir_env);
+  xfree(homedir_env);
 
   if (must_free) {
     xfree(homedir_env_mod);
@@ -1211,7 +1211,7 @@ bool os_setenv_append_path(const char *fname)
   size_t dirlen = (size_t)(tail - fname);
   assert(tail >= fname && dirlen + 1 < sizeof(os_buf));
   xmemcpyz(os_buf, fname, dirlen);
-  const char *path = os_getenv("PATH");
+  char *path = os_getenv("PATH");
   const size_t pathlen = path ? strlen(path) : 0;
   const size_t newlen = pathlen + dirlen + 2;
   bool retval = false;
@@ -1230,7 +1230,7 @@ bool os_setenv_append_path(const char *fname)
     xfree(temp);
     retval = true;
   }
-  xfree((char *)path);
+  xfree(path);
   return retval;
 }
 

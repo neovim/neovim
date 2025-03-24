@@ -186,7 +186,7 @@ static void set_init_default_shell(void)
 {
   // Find default value for 'shell' option.
   // Don't use it if it is empty.
-  const char *shell = os_getenv("SHELL");
+  char *shell = os_getenv("SHELL");
   if (shell != NULL) {
     if (vim_strchr(shell, ' ') != NULL) {
       const size_t len = strlen(shell) + 3;  // two quotes and a trailing NUL
@@ -194,9 +194,9 @@ static void set_init_default_shell(void)
       snprintf(cmd, len, "\"%s\"", shell);
       set_string_default(kOptShell, cmd, true);
     } else {
-      set_string_default(kOptShell, (char *)shell, false);
+      set_string_default(kOptShell, shell, false);
     }
-    xfree((char *)shell);
+    xfree(shell);
   }
 }
 
