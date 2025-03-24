@@ -8541,7 +8541,7 @@ local options = {
       cb = 'did_set_statusline',
       defaults = table.concat({
         '%<',
-        "%f ",
+        '%f ',
         "%{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}",
         '%=',
         "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",

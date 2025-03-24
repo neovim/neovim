@@ -283,15 +283,73 @@ describe('ui/ext_messages', function()
     screen:expect({
       grid = s2,
       popupmenu = {
-      anchor = { 1, 1, 0 },
-      items = { { "line", "", "", "" }, { "line1", "", "", "" }, { "line2", "", "", "" }, { "lineFolded", "", "", "" }, { "line_breakcheck", "", "", "" }, { "line_count", "", "", "" }, { "line_do_arabic_shape", "", "", "" }, { "line_hl_group", "", "", "" }, { "line_hl_id", "", "", "" }, { "line_msg", "", "", "" }, { "line_offset", "", "", "" }, { "line_rhs", "", "", "" }, { "linearGradient-1", "", "", "" }, { "linearGradient-2", "", "", "" }, { "linearGradient-3", "", "", "" }, { "linebuf_mirror", "", "", "" }, { "lineinfo", "", "", "" }, { "lineinfos", "", "", "" }, { "linematch_nbuffers", "", "", "" }, { "linenr_T", "", "", "" }, { "lines", "", "", "" }, { "lines_equal", "", "", "" }, { "lines_subset", "", "", "" }, { "linesize_fast", "", "", "" }, { "linesize_regular", "", "", "" }, { "linetabsize", "", "", "" }, { "linetabsize_col", "", "", "" }, { "linetabsize_eol", "", "", "" }, { "linetabsize_str", "", "", "" }, { "linewhite", "", "", "" }, { "line3", "", "", "" }, { "line_attr", "", "", "" }, { "line_attr_lowprio", "", "", "" }, { "line_count_info", "", "", "" }, { "line_is_white", "", "", "" }, { "line_len", "", "", "" }, { "line_map", "", "", "" }, { "line_map_size", "", "", "" }, { "line_popcount", "", "", "" }, { "line_putchar", "", "", "" }, { "linear", "", "", "" }, { "linebuf", "", "", "" }, { "linebuf_size", "", "", "" }, { "linecopy", "", "", "" }, { "linefeed", "", "", "" }, { "linelen", "", "", "" }, { "linematch", "", "", "" }, { "linematch_lines", "", "", "" }, { "linematched_filler_lines", "", "", "" }, { "linenr_to_row", "", "", "" }, { "lineoff_T", "", "", "" }, { "linepos", "", "", "" }, { "lines_filter", "", "", "" }, { "lines_gap", "", "", "" }, { "lines_needed", "", "", "" } },
-      pos = 0
-    },
-      messages = { {
-        content = { { "match 1 of 55", 3, 19 } },
-        history = false,
-        kind = "completion"
-      } },
+        anchor = { 1, 1, 0 },
+        items = {
+          { 'line', '', '', '' },
+          { 'line1', '', '', '' },
+          { 'line2', '', '', '' },
+          { 'lineFolded', '', '', '' },
+          { 'line_breakcheck', '', '', '' },
+          { 'line_count', '', '', '' },
+          { 'line_do_arabic_shape', '', '', '' },
+          { 'line_hl_group', '', '', '' },
+          { 'line_hl_id', '', '', '' },
+          { 'line_msg', '', '', '' },
+          { 'line_offset', '', '', '' },
+          { 'line_rhs', '', '', '' },
+          { 'linearGradient-1', '', '', '' },
+          { 'linearGradient-2', '', '', '' },
+          { 'linearGradient-3', '', '', '' },
+          { 'linebuf_mirror', '', '', '' },
+          { 'lineinfo', '', '', '' },
+          { 'lineinfos', '', '', '' },
+          { 'linematch_nbuffers', '', '', '' },
+          { 'linenr_T', '', '', '' },
+          { 'lines', '', '', '' },
+          { 'lines_equal', '', '', '' },
+          { 'lines_subset', '', '', '' },
+          { 'linesize_fast', '', '', '' },
+          { 'linesize_regular', '', '', '' },
+          { 'linetabsize', '', '', '' },
+          { 'linetabsize_col', '', '', '' },
+          { 'linetabsize_eol', '', '', '' },
+          { 'linetabsize_str', '', '', '' },
+          { 'linewhite', '', '', '' },
+          { 'line3', '', '', '' },
+          { 'line_attr', '', '', '' },
+          { 'line_attr_lowprio', '', '', '' },
+          { 'line_count_info', '', '', '' },
+          { 'line_is_white', '', '', '' },
+          { 'line_len', '', '', '' },
+          { 'line_map', '', '', '' },
+          { 'line_map_size', '', '', '' },
+          { 'line_popcount', '', '', '' },
+          { 'line_putchar', '', '', '' },
+          { 'linear', '', '', '' },
+          { 'linebuf', '', '', '' },
+          { 'linebuf_size', '', '', '' },
+          { 'linecopy', '', '', '' },
+          { 'linefeed', '', '', '' },
+          { 'linelen', '', '', '' },
+          { 'linematch', '', '', '' },
+          { 'linematch_lines', '', '', '' },
+          { 'linematched_filler_lines', '', '', '' },
+          { 'linenr_to_row', '', '', '' },
+          { 'lineoff_T', '', '', '' },
+          { 'linepos', '', '', '' },
+          { 'lines_filter', '', '', '' },
+          { 'lines_gap', '', '', '' },
+          { 'lines_needed', '', '', '' },
+        },
+        pos = 0,
+      },
+      messages = {
+        {
+          content = { { 'match 1 of 55', 3, 19 } },
+          history = false,
+          kind = 'completion',
+        },
+      },
     })
     feed('<Esc>l')
     command('set showmode')
@@ -1078,7 +1136,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*2
         {3:<] [+] 2,0-1          All}|
       ]],
-      ruler = { { "2,0-1   All" } },
+      ruler = { { '2,0-1   All' } },
     })
   end)
 
