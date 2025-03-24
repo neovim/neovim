@@ -521,7 +521,6 @@ void rpc_free(Channel *channel)
 /// Logs a fatal error received from a channel, then closes the channel.
 static void chan_close_on_err(Channel *channel, char *msg, int loglevel)
 {
-  LOG(loglevel, "RPC: %s", msg);
   for (size_t i = 0; i < kv_size(channel->rpc.call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
     frame->returned = true;
@@ -530,6 +529,8 @@ static void chan_close_on_err(Channel *channel, char *msg, int loglevel)
   }
 
   channel_close(channel->id, kChannelPartRpc, NULL);
+
+  LOG(loglevel, "RPC: %s", msg);
 }
 
 static void serialize_request(Channel **chans, size_t nchans, uint32_t request_id,
