@@ -355,10 +355,19 @@ describe('au OptionSet', function()
 
     it('with string global-local (to window) option', function()
       local oldval = eval('&statusline')
-      local default_statusline = "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
+      local default_statusline =
+        "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
 
       command('set statusline=foo')
-      expected_combination({ 'statusline', oldval, oldval, default_statusline, 'foo', 'global', 'set' })
+      expected_combination({
+        'statusline',
+        oldval,
+        oldval,
+        default_statusline,
+        'foo',
+        'global',
+        'set',
+      })
 
       -- Note: v:option_old is the old global value for global-local options.
       -- but the old local value for all other kinds of options.
