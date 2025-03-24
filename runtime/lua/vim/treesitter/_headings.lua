@@ -87,7 +87,7 @@ local get_headings = vim.func._memoize(hash_tick, function(bufnr)
   return headings
 end)
 
---- Show a table of contents for the help buffer in a loclist
+--- Shows an Outline (table of contents) of the current buffer, in the loclist.
 function M.show_toc()
   local bufnr = api.nvim_get_current_buf()
   local headings = get_headings(bufnr)
@@ -104,7 +104,7 @@ function M.show_toc()
     end
   end
   vim.fn.setloclist(0, headings, ' ')
-  vim.fn.setloclist(0, {}, 'a', { title = 'Help TOC' })
+  vim.fn.setloclist(0, {}, 'a', { title = 'Table of contents' })
   vim.cmd.lopen()
 end
 

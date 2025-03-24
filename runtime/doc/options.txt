@@ -1528,7 +1528,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	order.
 
 						*'completeopt'* *'cot'*
-'completeopt' 'cot'	string	(default "menu,preview")
+'completeopt' 'cot'	string	(default "menu,popup")
 			global or local to buffer |global-local|
 	A comma-separated list of options for Insert mode completion
 	|ins-completion|.  The supported values are:
@@ -2349,12 +2349,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when 'autoindent' is on.  To insert a real tab when 'expandtab' is
 	on, use CTRL-V<Tab>.  See also |:retab| and |ins-expandtab|.
 
-					*'exrc'* *'ex'* *'noexrc'* *'noex'*
+	*'exrc'* *'ex'* *'noexrc'* *'noex'* *project-config* *workspace-config*
 'exrc' 'ex'		boolean	(default off)
 			global
-	Automatically execute .nvim.lua, .nvimrc, and .exrc files in the
-	current directory, if the file is in the |trust| list. Use |:trust| to
-	manage trusted files. See also |vim.secure.read()|.
+	Enables project-local configuration. Nvim will execute any .nvim.lua,
+	.nvimrc, or .exrc file found in the |current-directory|, if the file is
+	in the |trust| list. Use |:trust| to manage trusted files. See also
+	|vim.secure.read()|.
 
 	Compare 'exrc' to |editorconfig|:
 	- 'exrc' can execute any code; editorconfig only specifies settings.
@@ -7148,6 +7149,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 	transparent background. Values between 0-30 are typically most useful.
 
 	UI-dependent. Works best with RGB colors. 'termguicolors'
+
+							*'winborder'*
+'winborder'		string	(default "")
+			global
+	Defines the default border style of floating windows. The default value
+	is empty, which is equivalent to "none". Valid values include:
+	- "none": No border.
+	- "single": A single line box.
+	- "double": A double line box.
+	- "rounded": Like "single", but with rounded corners ("╭" etc.).
+	- "solid": Adds padding by a single whitespace cell.
+	- "shadow": A drop shadow effect by blending with the background.
 
 							*'window'* *'wi'*
 'window' 'wi'		number	(default screen height - 1)

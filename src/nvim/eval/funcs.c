@@ -368,7 +368,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   Object result = handler.fn(VIML_INTERNAL_CALL, args, &arena, &err);
 
   if (ERROR_SET(&err)) {
-    semsg_multiline(e_api_error, err.msg);
+    semsg_multiline("emsg", e_api_error, err.msg);
     goto end;
   }
 
@@ -3563,16 +3563,19 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   msg_scroll = true;
   msg_clr_eos();
 
-  TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
+  list_T *l = argvars[0].vval.v_list;
+  TV_LIST_ITER_CONST(l, li, {
     msg_puts(tv_get_string(TV_LIST_ITEM_TV(li)));
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages) || TV_LIST_ITEM_NEXT(l, li) != NULL) {
+      msg_putchar('\n');
+    }
   });
 
   // Ask for choice.
   bool mouse_used = false;
   int selected = prompt_for_input(NULL, 0, false, &mouse_used);
   if (mouse_used) {
-    selected = tv_list_len(argvars[0].vval.v_list) - (cmdline_row - mouse_row);
+    selected = tv_list_len(l) - (cmdline_row - mouse_row);
   }
 
   rettv->vval.v_number = selected;
@@ -3831,6 +3834,7 @@ static const char *pty_ignored_env_vars[] = {
   "COLORFGBG",
   "COLORTERM",
 #endif
+  // Nvim-owned env vars. #6764
   "VIM",
   "VIMRUNTIME",
   NULL
@@ -3867,9 +3871,8 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
     tv_dict_free(temp_env.vval.v_dict);
 
     if (pty) {
-      // These environment variables generally shouldn't be propagated to the
-      // child process.  We're removing them here so the user can still decide
-      // they want to explicitly set them.
+      // These env vars shouldn't propagate to the child process. #6764
+      // Remove them here, then the user may decide to explicitly set them below.
       for (size_t i = 0;
            i < ARRAY_SIZE(pty_ignored_env_vars) && pty_ignored_env_vars[i];
            i++) {
@@ -6411,12 +6414,11 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (chan) {
       name = get_client_info(chan, "name");
     }
-    msg_ext_set_kind("rpc_error");
     if (name) {
-      semsg_multiline("Error invoking '%s' on channel %" PRIu64 " (%s):\n%s",
+      semsg_multiline("rpc_error", "Error invoking '%s' on channel %" PRIu64 " (%s):\n%s",
                       method, chan_id, name, err.msg);
     } else {
-      semsg_multiline("Error invoking '%s' on channel %" PRIu64 ":\n%s",
+      semsg_multiline("rpc_error", "Error invoking '%s' on channel %" PRIu64 ":\n%s",
                       method, chan_id, err.msg);
     }
 

@@ -182,7 +182,7 @@ function M.on_yank(opts)
   vim.api.nvim__ns_set(yank_ns, { wins = { winid } })
   M.range(bufnr, yank_ns, higroup, "'[", "']", {
     regtype = event.regtype,
-    inclusive = event.inclusive,
+    inclusive = true,
     priority = opts.priority or M.priorities.user,
     timeout = opts.timeout or 150,
   })

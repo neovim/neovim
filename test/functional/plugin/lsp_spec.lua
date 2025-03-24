@@ -3529,7 +3529,7 @@ describe('LSP', function()
       )
     end)
 
-    it('considers title when computing width', function()
+    it('considers string title when computing width', function()
       eq(
         { 17, 2 },
         exec_lua(function()
@@ -3537,6 +3537,20 @@ describe('LSP', function()
             vim.lsp.util._make_floating_popup_size(
               { 'foo', 'bar' },
               { title = 'A very long title' }
+            ),
+          }
+        end)
+      )
+    end)
+
+    it('considers [string,string][] title when computing width', function()
+      eq(
+        { 17, 2 },
+        exec_lua(function()
+          return {
+            vim.lsp.util._make_floating_popup_size(
+              { 'foo', 'bar' },
+              { title = { { 'A very ', 'Normal' }, { 'long title', 'Normal' } } }
             ),
           }
         end)
@@ -6348,7 +6362,8 @@ describe('LSP', function()
         vim.lsp.config('foo', {
           cmd = server.cmd,
           filetypes = { 'foo' },
-          root_dir = function(cb)
+          root_dir = function(bufnr, cb)
+            assert(tmp1 == vim.api.nvim_buf_get_name(bufnr))
             vim.system({ 'sleep', '0' }, {}, function()
               cb('some_dir')
             end)
@@ -6368,6 +6383,36 @@ describe('LSP', function()
           end)
         )
       end)
+    end)
+
+    it('validates config on attach', function()
+      local tmp1 = t.tmpname(true)
+      exec_lua(function()
+        vim.lsp.log._set_filename(fake_lsp_logfile)
+      end)
+
+      local function test_cfg(cfg, err)
+        exec_lua(function()
+          vim.lsp.config['foo'] = {}
+          vim.lsp.config('foo', cfg)
+          vim.lsp.enable('foo')
+          vim.cmd.edit(assert(tmp1))
+          vim.bo.filetype = 'foo'
+        end)
+
+        retry(nil, 1000, function()
+          assert_log(err, fake_lsp_logfile)
+        end)
+      end
+
+      test_cfg({
+        cmd = { 'lolling' },
+      }, 'cannot start foo due to config error: .* lolling is not executable')
+
+      test_cfg({
+        cmd = { 'cat' },
+        filetypes = true,
+      }, 'cannot start foo due to config error: .* filetypes: expected table, got boolean')
     end)
   end)
 end)

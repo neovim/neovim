@@ -277,6 +277,9 @@ To disable the automatic detection, set the "osc52" key of |g:termfeatures| to
 To force Nvim to always use the OSC 52 provider you can use the following
 |g:clipboard| definition: >lua
 
+    vim.g.clipboard = 'osc52'
+
+Which is equivalent to: >lua
     vim.g.clipboard = {
       name = 'OSC 52',
       copy = {

@@ -75,6 +75,7 @@ let test_values = {
       \ 'shada': [['', '''50', '"30'], ['xxx']],
       \ 'termpastefilter': [['BS', 'HT', 'FF', 'ESC', 'DEL', 'C0', 'C1', 'C0,C1'],
       \		['xxx', 'C0,C1,xxx']],
+      \ 'winborder': [['rounded', 'none', 'single', 'solid'], ['xxx', 'none,solid']],
       \ 'winhighlight': [['', 'a:b', 'a:', 'a:b,c:d'],
       \		['a', ':', ':b', 'a:b:c', 'a:/', '/:b', ',', 'a:b,,', 'a:b,c']],
       \

@@ -210,6 +210,9 @@ endfunc
 
 " Test 'tabline' with truncated double-width label at the start.
 func Test_tabline_truncated_double_width()
+  let save_TabLine = nvim_get_hl(0, #{name: 'TabLine'})
+  " Nvim: avoid combining TabLine with TabLineFill in custom tabline
+  hi TabLine cterm=underline,nocombine gui=underline,nocombine
   tabnew
   redraw
   call assert_match('X$', Screenline(1))
@@ -226,6 +229,7 @@ func Test_tabline_truncated_double_width()
 
   bw!
   set tabline=
+  call nvim_set_hl(0, 'TabLine', save_TabLine)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

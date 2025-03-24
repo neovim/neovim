@@ -259,12 +259,12 @@
 --- write.  The number is the write count.  The
 --- first write has number 1, the last one the
 --- "save_last" mentioned above.
---- @field save integer
+--- @field save? integer
 ---
 --- Alternate entry.  This is again a List of undo
 --- blocks.  Each item may again have an "alt"
 --- item.
---- @field alt vim.fn.undotree.entry[]
+--- @field alt? vim.fn.undotree.entry[]
 
 --- @class vim.fn.undotree.ret
 ---

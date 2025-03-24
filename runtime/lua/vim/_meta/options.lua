@@ -1109,7 +1109,7 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    combination with "menu" or "menuone".
 ---
 --- @type string
-vim.o.completeopt = "menu,preview"
+vim.o.completeopt = "menu,popup"
 vim.o.cot = vim.o.completeopt
 vim.bo.completeopt = vim.o.completeopt
 vim.bo.cot = vim.bo.completeopt
@@ -2010,9 +2010,10 @@ vim.o.et = vim.o.expandtab
 vim.bo.expandtab = vim.o.expandtab
 vim.bo.et = vim.bo.expandtab
 
---- Automatically execute .nvim.lua, .nvimrc, and .exrc files in the
---- current directory, if the file is in the `trust` list. Use `:trust` to
---- manage trusted files. See also `vim.secure.read()`.
+--- Enables project-local configuration. Nvim will execute any .nvim.lua,
+--- .nvimrc, or .exrc file found in the `current-directory`, if the file is
+--- in the `trust` list. Use `:trust` to manage trusted files. See also
+--- `vim.secure.read()`.
 ---
 --- Compare 'exrc' to `editorconfig`:
 --- - 'exrc' can execute any code; editorconfig only specifies settings.
@@ -7830,6 +7831,19 @@ vim.o.winblend = 0
 vim.o.winbl = vim.o.winblend
 vim.wo.winblend = vim.o.winblend
 vim.wo.winbl = vim.wo.winblend
+
+--- Defines the default border style of floating windows. The default value
+--- is empty, which is equivalent to "none". Valid values include:
+--- - "none": No border.
+--- - "single": A single line box.
+--- - "double": A double line box.
+--- - "rounded": Like "single", but with rounded corners ("╭" etc.).
+--- - "solid": Adds padding by a single whitespace cell.
+--- - "shadow": A drop shadow effect by blending with the background.
+---
+--- @type ''|'double'|'single'|'shadow'|'rounded'|'solid'|'none'
+vim.o.winborder = ""
+vim.go.winborder = vim.o.winborder
 
 --- Window height used for `CTRL-F` and `CTRL-B` when there is only one
 --- window and the value is smaller than 'lines' minus one.  The screen

@@ -10,7 +10,6 @@ local EXTENDS_FORMAT = '^;+%s*extends%s*$'
 
 local M = {}
 
----@nodoc
 ---Parsed query, see |vim.treesitter.query.parse()|
 ---
 ---@class vim.treesitter.Query
@@ -344,9 +343,10 @@ api.nvim_create_autocmd('OptionSet', {
 
 --- Parses a {query} string and returns a `Query` object (|lua-treesitter-query|), which can be used
 --- to search the tree for the query patterns (via |Query:iter_captures()|, |Query:iter_matches()|),
---- or inspect the query via these fields:
+--- or inspect/modify the query via these fields:
 ---   - `captures`: a list of unique capture names defined in the query (alias: `info.captures`).
 ---   - `info.patterns`: information about predicates.
+---   - `query`: the underlying |TSQuery| which can be used to disable patterns or captures.
 ---
 --- Example:
 --- ```lua
@@ -960,12 +960,19 @@ end
 ---@param source (integer|string) Source buffer or string to extract text from
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
+---@param opts? table Optional keyword arguments:
+---   - max_start_depth (integer) if non-zero, sets the maximum start depth
+---     for each match. This is used to prevent traversing too deep into a tree.
+---   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
 ---
 ---@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree):
 ---        capture id, capture node, metadata, match, tree
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
-function Query:iter_captures(node, source, start, stop)
+function Query:iter_captures(node, source, start, stop, opts)
+  opts = opts or {}
+  opts.match_limit = opts.match_limit or 256
+
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
@@ -974,7 +981,7 @@ function Query:iter_captures(node, source, start, stop)
 
   -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
   local tree = node:tree():copy()
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, { match_limit = 256 })
+  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
 
   -- For faster checks that a match is not in the cache.
   local highest_cached_match_id = -1

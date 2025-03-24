@@ -3329,6 +3329,55 @@ describe('TUI', function()
     retry(nil, 1000, function()
       eq({ true, { osc52 = true } }, { child_session:request('nvim_eval', 'g:termfeatures') })
     end)
+
+    -- Attach another (non-TUI) UI to the child instance
+    local alt = Screen.new(nil, nil, nil, child_session)
+
+    -- Detach the first (primary) client so only the second UI is attached
+    feed_data(':detach\n')
+
+    alt:expect({ any = '%[No Name%]' })
+
+    -- osc52 should be cleared from termfeatures
+    eq({ true, {} }, { child_session:request('nvim_eval', 'g:termfeatures') })
+
+    alt:detach()
+  end)
+
+  it('does not query the terminal for OSC 52 support when disabled', function()
+    clear()
+    exec_lua([[
+      _G.query = false
+      vim.api.nvim_create_autocmd('TermRequest', {
+        callback = function(args)
+          local req = args.data.sequence
+          local sequence = req:match('^\027P%+q([%x;]+)$')
+          if sequence and vim.text.hexdecode(sequence) == 'Ms' then
+            _G.query = true
+          end
+        end,
+      })
+    ]])
+
+    local child_server = new_pipename()
+    screen = tt.setup_child_nvim({
+      '--listen',
+      child_server,
+      -- Use --clean instead of -u NONE to load the osc52 plugin
+      '--clean',
+      '--cmd',
+      'let g:termfeatures = #{osc52: v:false}',
+    }, {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+      },
+    })
+
+    screen:expect({ any = '%[No Name%]' })
+
+    local child_session = n.connect(child_server)
+    eq({ true, { osc52 = false } }, { child_session:request('nvim_eval', 'g:termfeatures') })
+    eq(false, exec_lua([[return _G.query]]))
   end)
 end)
 

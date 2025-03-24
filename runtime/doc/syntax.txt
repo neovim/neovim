@@ -336,7 +336,7 @@ Upon loading a file, Vim finds the relevant syntax file as follows:
 ==============================================================================
 4. Conversion to HTML				*convert-to-HTML* *2html.vim*
 
-The old to html converter has ben replaced by a Lua version and the
+The old to html converter has been replaced by a Lua version and the
 documentation has been moved to |:TOhtml|.
 
 ==============================================================================
@@ -811,6 +811,21 @@ doesn't work for you, or you don't edit Progress at all, use this in your
 startup vimrc: >
    :let filetype_w = "cweb"
 
+CSHARP							 *cs.vim* *ft-cs-syntax*
+
+C# raw string literals may use any number of quote marks to encapsulate the
+block, and raw interpolated string literals may use any number of braces to
+encapsulate the interpolation, e.g. >
+
+    $$$""""Hello {{{name}}}""""
+<
+By default, Vim highlights 3-8 quote marks, and 1-8 interpolation braces.
+The maximum numbers of quotes and braces recognized can configured using the
+following variables:
+
+    Variable					Default ~
+    g:cs_raw_string_quote_count			8
+    g:cs_raw_string_interpolation_brace_count	8
 
 DART						*dart.vim* *ft-dart-syntax*
 

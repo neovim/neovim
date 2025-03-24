@@ -652,7 +652,7 @@ end
 ---
 --- ```
 ---
----@see Iter.find
+---@see |Iter:find()|
 ---
 ---@param f any
 ---@return any
@@ -757,7 +757,7 @@ end
 --- -- 4
 --- ```
 ---
----@see Iter.last
+---@see |Iter:last()|
 ---
 ---@return any
 function Iter:rpeek()
@@ -942,7 +942,7 @@ end
 ---
 --- ```
 ---
----@see Iter.rpeek
+---@see |Iter:rpeek()|
 ---
 ---@return any
 function Iter:last()

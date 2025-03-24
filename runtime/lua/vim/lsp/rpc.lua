@@ -278,10 +278,8 @@ function Client:encode_and_send(payload)
   if self.transport:is_closing() then
     return false
   end
-  local jsonstr = assert(
-    vim.json.encode(payload),
-    string.format("Couldn't encode payload '%s'", vim.inspect(payload))
-  )
+  local jsonstr = vim.json.encode(payload)
+
   self.transport:write(format_message_with_content_length(jsonstr))
   return true
 end

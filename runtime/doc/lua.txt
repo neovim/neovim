@@ -2985,7 +2985,7 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                 • skip: (fun(dir_name: string): boolean)|nil Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1
-                • follow: boolean|nil Follow symbolic links. (default: true)
+                • follow: boolean|nil Follow symbolic links. (default: false)
 
     Return: ~
         (`Iterator`) over items in {path}. Each iteration yields two values:
@@ -3058,7 +3058,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • {limit}? (`number`, default: `1`) Stop the search after
                    finding this many matches. Use `math.huge` to place no
                    limit on the number of matches.
-                 • {follow}? (`boolean`, default: `true`) Follow symbolic
+                 • {follow}? (`boolean`, default: `false`) Follow symbolic
                    links.
 
     Return: ~
@@ -4288,7 +4288,7 @@ Iter:last()                                                      *Iter:last()*
         (`any`)
 
     See also: ~
-      • Iter.rpeek
+      • |Iter:rpeek()|
 
 Iter:map({f})                                                     *Iter:map()*
     Maps the items of an iterator pipeline to the values returned by `f`.
@@ -4425,7 +4425,7 @@ Iter:rfind({f})                                                 *Iter:rfind()*
         (`any`)
 
     See also: ~
-      • Iter.find
+      • |Iter:find()|
 
 Iter:rpeek()                                                    *Iter:rpeek()*
     Gets the last value of a |list-iterator| without consuming it.
@@ -4444,7 +4444,7 @@ Iter:rpeek()                                                    *Iter:rpeek()*
         (`any`)
 
     See also: ~
-      • Iter.last
+      • |Iter:last()|
 
 Iter:rskip({n})                                                 *Iter:rskip()*
     Discards `n` values from the end of a |list-iterator| pipeline.
@@ -4551,16 +4551,6 @@ vim.snippet.active({filter})                            *vim.snippet.active()*
     Returns `true` if there's an active snippet in the current buffer,
     applying the given filter if provided.
 
-    You can use this function to navigate a snippet as follows: >lua
-        vim.keymap.set({ 'i', 's' }, '<Tab>', function()
-           if vim.snippet.active({ direction = 1 }) then
-             return '<Cmd>lua vim.snippet.jump(1)<CR>'
-           else
-             return '<Tab>'
-           end
-         end, { expr = true })
-<
-
     Parameters: ~
       • {filter}  (`vim.snippet.ActiveFilter?`) Filter to constrain the search
                   with:
@@ -4585,14 +4575,15 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
     Jumps to the next (or previous) placeholder in the current snippet, if
     possible.
 
-    For example, map `<Tab>` to jump while a snippet is active: >lua
+    By default `<Tab>` is setup to jump if a snippet is active. The default
+    mapping looks like: >lua
         vim.keymap.set({ 'i', 's' }, '<Tab>', function()
            if vim.snippet.active({ direction = 1 }) then
              return '<Cmd>lua vim.snippet.jump(1)<CR>'
            else
              return '<Tab>'
            end
-         end, { expr = true })
+         end, { descr = '...', expr = true, silent = true })
 <
 
     Parameters: ~

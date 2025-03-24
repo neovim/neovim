@@ -57,7 +57,7 @@ end
 
 vim.keymap.set('n', 'gO', function()
   require('vim.treesitter._headings').show_toc()
-end, { buffer = 0, silent = true, desc = 'Show table of contents for current buffer' })
+end, { buffer = 0, silent = true, desc = 'Show an Outline of the current buffer' })
 
 vim.keymap.set('n', ']]', function()
   require('vim.treesitter._headings').jump({ count = 1 })
@@ -82,9 +82,7 @@ local query = vim.treesitter.query.parse(
 ]]
 )
 local root = parser:parse()[1]:root()
-local run_message_ns = vim.api.nvim_create_namespace('nvim.vimdoc.run_message')
 
-vim.api.nvim_buf_clear_namespace(0, run_message_ns, 0, -1)
 for _, match, metadata in query:iter_matches(root, 0, 0, -1) do
   for id, nodes in pairs(match) do
     local name = query.captures[id]
@@ -92,9 +90,6 @@ for _, match, metadata in query:iter_matches(root, 0, 0, -1) do
     local start, _, end_ = node:parent():range()
 
     if name == 'code' then
-      vim.api.nvim_buf_set_extmark(0, run_message_ns, start, 0, {
-        virt_text = { { 'Run with `g==`', 'LspCodeLens' } },
-      })
       local code = vim.treesitter.get_node_text(node, 0)
       local lang_node = match[metadata[id].lang][1] --[[@as TSNode]]
       local lang = vim.treesitter.get_node_text(lang_node, 0)

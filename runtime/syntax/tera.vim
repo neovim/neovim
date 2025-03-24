@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Tera
 " Maintainer:	Muntasir Mahmud <muntasir.joypurhat@gmail.com>
-" Last Change:	2025 Mar 09
+" Last Change:	2025 Mar 11
 
 if exists("b:current_syntax")
   finish
@@ -31,13 +31,13 @@ else
 endif
 
 " Tera comment blocks: {# comment #}
-syn region teraCommentBlock start="{#" end="#}" contains=@Spell containedin=cssDefinition,cssStyle,htmlHead,htmlTitle
+syn region teraCommentBlock start="{#" end="#}" contains=@Spell
 
 " Tera statements: {% if condition %}
-syn region teraStatement start="{%" end="%}" contains=teraKeyword,teraString,teraNumber,teraFunction,teraBoolean,teraFilter,teraOperator containedin=cssDefinition,cssStyle,htmlHead,htmlTitle
+syn region teraStatement start="{%" end="%}" contains=teraKeyword,teraString,teraNumber,teraFunction,teraBoolean,teraFilter,teraOperator
 
 " Tera expressions: {{ variable }}
-syn region teraExpression start="{{" end="}}" contains=teraString,teraNumber,teraFunction,teraBoolean,teraFilter,teraOperator,teraIdentifier containedin=cssDefinition,cssStyle,htmlHead,htmlTitle
+syn region teraExpression start="{{" end="}}" contains=teraString,teraNumber,teraFunction,teraBoolean,teraFilter,teraOperator,teraIdentifier
 
 " Special handling for raw blocks - content inside shouldn't be processed
 syn region teraRawBlock start="{% raw %}" end="{% endraw %}" contains=TOP,teraCommentBlock,teraStatement,teraExpression
@@ -45,7 +45,7 @@ syn region teraRawBlock start="{% raw %}" end="{% endraw %}" contains=TOP,teraCo
 " Control structure keywords
 syn keyword teraKeyword contained if else elif endif for endfor in macro endmacro
 syn keyword teraKeyword contained block endblock extends include import set endset
-syn keyword teraKeyword contained break continue filter endfilter raw endraw with endwith
+syn keyword teraKeyword contained break continue filter endfilter raw endraw
 
 " Identifiers - define before operators for correct priority
 syn match teraIdentifier contained "\<\w\+\>"
@@ -79,11 +79,9 @@ hi def link teraIdentifier Identifier
 hi def link teraString String
 hi def link teraNumber Number
 hi def link teraBoolean Boolean
-hi def link teraFilter PreProc
-
-" Special highlighting for blocks and expressions
-hi def link teraStatement PreProc
-hi def link teraExpression PreProc
+hi def link teraFilter Function
+hi def link teraStatement Statement
+hi def link teraExpression Statement
 
 " Clean up script-local variables
 unlet s:filename

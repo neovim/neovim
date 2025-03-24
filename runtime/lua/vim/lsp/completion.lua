@@ -2,10 +2,13 @@
 --- The `vim.lsp.completion` module enables insert-mode completion driven by an LSP server. Call
 --- `enable()` to make it available through Nvim builtin completion (via the |CompleteDone| event).
 --- Specify `autotrigger=true` to activate "auto-completion" when you type any of the server-defined
---- `triggerCharacters`.
+--- `triggerCharacters`. Use CTRL-Y to select an item from the completion menu. |complete_CTRL-Y|
 ---
 --- Example: activate LSP-driven auto-completion:
 --- ```lua
+--- -- Works best with completeopt=noselect.
+--- -- Use CTRL-Y to select an item. |complete_CTRL-Y|
+--- vim.cmd[[set completeopt+=menuone,noselect,popup]]
 --- vim.lsp.start({
 ---   name = 'ts_ls',
 ---   cmd = …,
@@ -424,9 +427,10 @@ end
 --- @param clients table<integer, vim.lsp.Client> # keys != client_id
 --- @param bufnr integer
 --- @param win integer
+--- @param ctx? lsp.CompletionContext
 --- @param callback fun(responses: table<integer, { err: lsp.ResponseError, result: vim.lsp.CompletionResult }>)
 --- @return function # Cancellation function
-local function request(clients, bufnr, win, callback)
+local function request(clients, bufnr, win, ctx, callback)
   local responses = {} --- @type table<integer, { err: lsp.ResponseError, result: any }>
   local request_ids = {} --- @type table<integer, integer>
   local remaining_requests = vim.tbl_count(clients)
@@ -434,6 +438,8 @@ local function request(clients, bufnr, win, callback)
   for _, client in pairs(clients) do
     local client_id = client.id
     local params = lsp.util.make_position_params(win, client.offset_encoding)
+    --- @cast params lsp.CompletionParams
+    params.context = ctx
     local ok, request_id = client:request(ms.textDocument_completion, params, function(err, result)
       responses[client_id] = { err = err, result = result }
       remaining_requests = remaining_requests - 1
@@ -457,7 +463,10 @@ local function request(clients, bufnr, win, callback)
   end
 end
 
-local function trigger(bufnr, clients)
+--- @param bufnr integer
+--- @param clients vim.lsp.Client[]
+--- @param ctx? lsp.CompletionContext
+local function trigger(bufnr, clients, ctx)
   reset_timer()
   Context:cancel_pending()
 
@@ -473,7 +482,7 @@ local function trigger(bufnr, clients)
   local start_time = vim.uv.hrtime()
   Context.last_request_time = start_time
 
-  local cancel_request = request(clients, bufnr, win, function(responses)
+  local cancel_request = request(clients, bufnr, win, ctx, function(responses)
     local end_time = vim.uv.hrtime()
     rtt_ms = compute_new_average((end_time - start_time) * ns_to_ms)
 
@@ -527,11 +536,20 @@ local function on_insert_char_pre(handle)
       reset_timer()
 
       local debounce_ms = next_debounce()
+      local ctx = { triggerKind = protocol.CompletionTriggerKind.TriggerForIncompleteCompletions }
       if debounce_ms == 0 then
-        vim.schedule(M.trigger)
+        vim.schedule(function()
+          M.get({ ctx = ctx })
+        end)
       else
         completion_timer = new_timer()
-        completion_timer:start(debounce_ms, 0, vim.schedule_wrap(M.trigger))
+        completion_timer:start(
+          debounce_ms,
+          0,
+          vim.schedule_wrap(function()
+            M.get({ ctx = ctx })
+          end)
+        )
       end
     end
 
@@ -545,7 +563,11 @@ local function on_insert_char_pre(handle)
     completion_timer:start(25, 0, function()
       reset_timer()
       vim.schedule(function()
-        trigger(api.nvim_get_current_buf(), matched_clients)
+        trigger(
+          api.nvim_get_current_buf(),
+          matched_clients,
+          { triggerKind = protocol.CompletionTriggerKind.TriggerCharacter, triggerCharacter = char }
+        )
       end)
     end)
   end
@@ -652,8 +674,9 @@ local function get_augroup(bufnr)
   return string.format('nvim.lsp.completion_%d', bufnr)
 end
 
+--- @inlinedoc
 --- @class vim.lsp.completion.BufferOpts
---- @field autotrigger? boolean  Default: false When true, completion triggers automatically based on the server's `triggerCharacters`.
+--- @field autotrigger? boolean  (default: false) When true, completion triggers automatically based on the server's `triggerCharacters`.
 --- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
 
 ---@param client_id integer
@@ -756,6 +779,7 @@ local function disable_completions(client_id, bufnr)
 end
 
 --- Enables or disables completions from the given language client in the given buffer.
+--- Example: |lsp-attach| |lsp-completion|
 ---
 --- @param enable boolean True to enable, false to disable
 --- @param client_id integer Client ID
@@ -771,11 +795,34 @@ function M.enable(enable, client_id, bufnr, opts)
   end
 end
 
---- Triggers LSP completion once in the current buffer.
-function M.trigger()
+--- @inlinedoc
+--- @class vim.lsp.completion.get.Opts
+--- @field ctx? lsp.CompletionContext Completion context. Defaults to a trigger kind of `invoked`.
+
+--- Triggers LSP completion once in the current buffer, if LSP completion is enabled
+--- (see |lsp-attach| |lsp-completion|).
+---
+--- Used by the default LSP |omnicompletion| provider |vim.lsp.omnifunc()|, thus |i_CTRL-X_CTRL-O|
+--- invokes this in LSP-enabled buffers. Use CTRL-Y to select an item from the completion menu.
+--- |complete_CTRL-Y|
+---
+--- To invoke manually with CTRL-space, use this mapping:
+--- ```lua
+--- -- Use CTRL-space to trigger LSP completion.
+--- -- Use CTRL-Y to select an item. |complete_CTRL-Y|
+--- vim.keymap.set('i', '<c-space>', function()
+---   vim.lsp.completion.get()
+--- end)
+--- ```
+---
+--- @param opts? vim.lsp.completion.get.Opts
+function M.get(opts)
+  opts = opts or {}
+  local ctx = opts.ctx or { triggerKind = protocol.CompletionTriggerKind.Invoked }
   local bufnr = api.nvim_get_current_buf()
   local clients = (buf_handles[bufnr] or {}).clients or {}
-  trigger(bufnr, clients)
+
+  trigger(bufnr, clients, ctx)
 end
 
 --- Implements 'omnifunc' compatible LSP completion.
@@ -800,7 +847,7 @@ function M._omnifunc(findstart, base)
     return findstart == 1 and -1 or {}
   end
 
-  trigger(bufnr, clients)
+  trigger(bufnr, clients, { triggerKind = protocol.CompletionTriggerKind.Invoked })
 
   -- Return -2 to signal that we should continue completion so that we can
   -- async complete.

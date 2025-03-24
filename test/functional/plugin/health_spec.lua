@@ -212,6 +212,36 @@ describe('vim.health', function()
       n.expect([[
       ERROR: No healthchecks found.]])
     end)
+
+    it('nested lua/ directory', function()
+      command('checkhealth lua')
+      n.expect([[
+
+      ==============================================================================
+      test_plug.lua:                         require("test_plug.lua.health").check()
+
+      nested lua/ directory ~
+      - OK everything is ok
+      ]])
+    end)
+
+    it('&rtp can contain nested path (by packadd)', function()
+      -- re-add to ensure this appears before new nested rtp
+      command([[set runtimepath-=test/functional/fixtures]])
+      command([[set runtimepath+=test/functional/fixtures]])
+      command('set packpath+=test/functional/fixtures')
+      -- set rtp+=test/functional/fixtures/pack/foo/opt/healthy
+      command('packadd healthy')
+      command('checkhealth nest')
+      n.expect([[
+
+      ==============================================================================
+      nest:                                           require("nest.health").check()
+
+      healthy pack ~
+      - OK healthy ok
+      ]])
+    end)
   end)
 end)
 

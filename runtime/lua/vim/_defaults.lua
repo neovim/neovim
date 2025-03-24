@@ -9,17 +9,17 @@ do
   end, { desc = 'Inspect highlights and extmarks at the cursor', bang = true })
 
   vim.api.nvim_create_user_command('InspectTree', function(cmd)
+    local opts = { lang = cmd.fargs[1] }
+
     if cmd.mods ~= '' or cmd.count ~= 0 then
       local count = cmd.count ~= 0 and cmd.count or ''
       local new = cmd.mods ~= '' and 'new' or 'vnew'
 
-      vim.treesitter.inspect_tree({
-        command = ('%s %s%s'):format(cmd.mods, count, new),
-      })
-    else
-      vim.treesitter.inspect_tree()
+      opts.command = ('%s %s%s'):format(cmd.mods, count, new)
     end
-  end, { desc = 'Inspect treesitter language tree for buffer', count = true })
+
+    vim.treesitter.inspect_tree(opts)
+  end, { desc = 'Inspect treesitter language tree for buffer', count = true, nargs = '?' })
 
   vim.api.nvim_create_user_command('EditQuery', function(cmd)
     vim.treesitter.query.edit(cmd.fargs[1])
@@ -216,6 +216,27 @@ do
     vim.keymap.set({ 'i', 's' }, '<C-S>', function()
       vim.lsp.buf.signature_help()
     end, { desc = 'vim.lsp.buf.signature_help()' })
+  end
+
+  do
+    ---@param direction vim.snippet.Direction
+    ---@param key string
+    local function set_snippet_jump(direction, key)
+      vim.keymap.set({ 'i', 's' }, key, function()
+        if vim.snippet.active({ direction = direction }) then
+          return string.format('<Cmd>lua vim.snippet.jump(%d)<CR>', direction)
+        else
+          return key
+        end
+      end, {
+        desc = 'vim.snippet.jump if active, otherwise ' .. key,
+        expr = true,
+        silent = true,
+      })
+    end
+
+    set_snippet_jump(1, '<Tab>')
+    set_snippet_jump(-1, '<S-Tab>')
   end
 
   --- Map [d and ]d to move to the previous/next diagnostic. Map <C-W>d to open a floating window

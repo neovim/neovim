@@ -2072,10 +2072,20 @@ func Test_input_func()
   call assert_fails("call input('F:', '', 'invalid')", 'E180:')
   call assert_fails("call input('F:', '', [])", 'E730:')
 
-  " Test for using 'command' as the completion function
+  " Test for using "command" as the completion function
   call feedkeys(":let c = input('Command? ', '', 'command')\<CR>"
         \ .. "echo bufnam\<C-A>\<CR>", 'xt')
   call assert_equal('echo bufname(', c)
+
+  " Test for using "shellcmdline" as the completion function
+  call feedkeys(":let c = input('Shell? ', '', 'shellcmdline')\<CR>"
+        \ .. "vim test_functions.\<C-A>\<CR>", 'xt')
+  call assert_equal('vim test_functions.vim', c)
+  if executable('whoami')
+    call feedkeys(":let c = input('Shell? ', '', 'shellcmdline')\<CR>"
+          \ .. "whoam\<C-A>\<CR>", 'xt')
+    call assert_match('\<whoami\>', c)
+  endif
 endfunc
 
 " Test for the inputdialog() function

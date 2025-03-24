@@ -75,3 +75,5 @@ error('Cannot require a meta file')
 --- @field reason? string Reason for completion being done. |CompleteDone|
 --- The word that was selected, empty if abandoned complete. @field complete_word? string
 --- @field complete_type? string See |complete_info_mode|
+--- List of window IDs that changed on |WinResized|
+--- @field windows? integer[]

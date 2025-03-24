@@ -1483,7 +1483,7 @@ local options = {
     {
       abbreviation = 'cot',
       cb = 'did_set_completeopt',
-      defaults = 'menu,preview',
+      defaults = 'menu,popup',
       values = {
         'menu',
         'menuone',
@@ -2663,9 +2663,10 @@ local options = {
       abbreviation = 'ex',
       defaults = false,
       desc = [=[
-        Automatically execute .nvim.lua, .nvimrc, and .exrc files in the
-        current directory, if the file is in the |trust| list. Use |:trust| to
-        manage trusted files. See also |vim.secure.read()|.
+        Enables project-local configuration. Nvim will execute any .nvim.lua,
+        .nvimrc, or .exrc file found in the |current-directory|, if the file is
+        in the |trust| list. Use |:trust| to manage trusted files. See also
+        |vim.secure.read()|.
 
         Compare 'exrc' to |editorconfig|:
         - 'exrc' can execute any code; editorconfig only specifies settings.
@@ -2678,6 +2679,7 @@ local options = {
       scope = { 'global' },
       secure = true,
       short_desc = N_('read .nvimrc and .exrc in the current directory'),
+      tags = { 'project-config', 'workspace-config' },
       type = 'boolean',
       varname = 'p_exrc',
     },
@@ -10185,6 +10187,25 @@ local options = {
       scope = { 'win' },
       short_desc = N_('Controls transparency level for floating windows'),
       type = 'number',
+    },
+    {
+      defaults = { if_true = '' },
+      values = { '', 'double', 'single', 'shadow', 'rounded', 'solid', 'none' },
+      desc = [=[
+        Defines the default border style of floating windows. The default value
+        is empty, which is equivalent to "none". Valid values include:
+        - "none": No border.
+        - "single": A single line box.
+        - "double": A double line box.
+        - "rounded": Like "single", but with rounded corners ("╭" etc.).
+        - "solid": Adds padding by a single whitespace cell.
+        - "shadow": A drop shadow effect by blending with the background.
+      ]=],
+      full_name = 'winborder',
+      scope = { 'global' },
+      short_desc = N_('border of floating window'),
+      type = 'string',
+      varname = 'p_winborder',
     },
     {
       abbreviation = 'wi',

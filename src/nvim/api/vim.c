@@ -790,12 +790,12 @@ error:
   hl_msg_free(hl_msg);
 }
 
-/// Gets the current list of buffer handles
+/// Gets the current list of buffers.
 ///
 /// Includes unlisted (unloaded/deleted) buffers, like `:ls!`.
 /// Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
 ///
-/// @return List of buffer handles
+/// @return List of buffer ids
 ArrayOf(Buffer) nvim_list_bufs(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -816,7 +816,7 @@ ArrayOf(Buffer) nvim_list_bufs(Arena *arena)
 
 /// Gets the current buffer.
 ///
-/// @return Buffer handle
+/// @return Buffer id
 Buffer nvim_get_current_buf(void)
   FUNC_API_SINCE(1)
 {
@@ -825,7 +825,7 @@ Buffer nvim_get_current_buf(void)
 
 /// Sets the current window's buffer to `buffer`.
 ///
-/// @param buffer   Buffer handle
+/// @param buffer   Buffer id
 /// @param[out] err Error details, if any
 void nvim_set_current_buf(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
@@ -842,7 +842,7 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
   });
 }
 
-/// Gets the current list of window handles.
+/// Gets the current list of all |window-ID|s in all tabpages.
 ///
 /// @return List of |window-ID|s
 ArrayOf(Window) nvim_list_wins(Arena *arena)
@@ -872,7 +872,7 @@ Window nvim_get_current_win(void)
   return curwin->handle;
 }
 
-/// Sets the current window. Also changes tabpage, if necessary.
+/// Sets the current window (and tabpage, implicitly).
 ///
 /// @param window |window-ID| to focus
 /// @param[out] err Error details, if any
@@ -897,7 +897,7 @@ void nvim_set_current_win(Window window, Error *err)
 /// @param scratch Creates a "throwaway" |scratch-buffer| for temporary work
 ///                (always 'nomodified'). Also sets 'nomodeline' on the buffer.
 /// @param[out] err Error details, if any
-/// @return Buffer handle, or 0 on error
+/// @return Buffer id, or 0 on error
 ///
 /// @see buf_open_scratch
 Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)

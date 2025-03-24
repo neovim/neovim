@@ -603,6 +603,25 @@ One command, :DiffGitCached, is provided to show a diff of the current commit
 in the preview window.  It is equivalent to calling "git diff --cached" plus
 any arguments given to the command.
 
+GIT REBASE						*ft-gitrebase-plugin*
+
+The gitrebase filetype defines the following buffer-local commands, to help
+with interactive `git rebase`: >
+
+	:Drop   " to discard this commit
+	:Edit   " to stop for editing this commit
+	:Fixup  " to squash (but discard the message) into the previous one
+	:Pick   " to pick this commit (the cursor is on)
+	:Reword " to pick this commit, but change the commit message
+	:Squash " to squash this commit into the previous one
+
+In addition, the following command can be used to cycle between the different
+possibilities: >
+
+	:Cycle  " to cycle between the previous commands
+<
+The `:Cycle` command is also mapped to the CTRL-A and CTRL-X keys.
+For details, see `git-rebase --help`.
 
 GO							*ft-go-plugin*
 

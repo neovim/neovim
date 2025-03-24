@@ -29,7 +29,8 @@ LSP
 • `vim.lsp.buf.document_symbol()` uses the |location-list| by default. Use
   `vim.lsp.buf.document_symbol({ loclist = false })` to use the |quickfix|
   list.
-
+• `vim.lsp.completion.trigger()` has been renamed to
+  |vim.lsp.completion.get()|.
 
 OPTIONS
 
@@ -59,8 +60,6 @@ API
   This is not expected to break clients because there are no known clients
   that actually use the `return_type` field or the parameter type names
   reported by |--api-info| or |nvim_get_api_info()|.
-• |nvim_open_win()| supports a `mouse` field that allows configuring mouse
-  interaction with the window separately from `focusable` field.
 • Renamed `nvim__id_dictionary` (unsupported/experimental API) to
   `nvim__id_dict`.
 
@@ -69,12 +68,6 @@ BUILD
 • On Windows, only building with the UCRT runtime is supported.
 • Translations are turned off by default. Enable by building Nvim with the
   CMake flag `ENABLE_TRANSLATIONS=ON`.
-
-DEFAULTS
-
-• 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
-  |terminal| buffers. See |terminal-config| for an example of changing these defaults.
-• 'diffopt' default includes "linematch:40".
 
 DIAGNOSTICS
 
@@ -206,6 +199,8 @@ API
 • |nvim__ns_set()| can set properties for a namespace
 • |nvim_echo()| `err` field to print error messages and `chunks` accepts
   highlight group IDs.
+• |nvim_open_win()| supports a `mouse` field that allows configuring mouse
+  interaction with the window separately from `focusable` field.
 • |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
 • Additions to |nvim_buf_set_extmark()|:
   • `conceal_lines` field to conceal an entire line.
@@ -246,6 +241,13 @@ DEFAULTS
     • |[<Space>|, |]<Space>| add an empty line above and below the cursor
   • |[[| and |]]| in Normal mode jump between shell prompts for shells which emit
     OSC 133 sequences ("shell integration" or "semantic prompts").
+
+• Options:
+  • 'diffopt' default includes "linematch:40".
+  • 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
+    |terminal| buffers. |terminal-config| shows how to change these defaults.
+  • Lua |ftplugin| sets 'omnifunc' to "v:lua.vim.lua_omnifunc".
+  • Lua |ftplugin| sets 'foldexpr' to "v:lua.vim.treesitter.foldexpr()".
 
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`
@@ -313,6 +315,8 @@ LSP
 • |vim.lsp.enable()| has been added to enable servers.
 • |vim.lsp.buf.code_action()| resolves the `command` property during the
   `codeAction/resolve` request.
+• The `textDocument/completion` request now includes the completion context in
+  its parameters.
 
 LUA
 
@@ -320,6 +324,8 @@ LUA
   `vim.o`, `vim.wo`, `vim.bo`, `vim.opt`, `vim.opt_local`, `vim.opt_global`,
   and `vim.fn`.
 • Documentation for |lua-bit|.
+• |gf| in Lua buffers can go to module in same repo, |runtime-search-path| and
+  |package.path|.
 • |vim.fs.rm()| can delete files and directories.
 • |vim.validate()| now has a new signature which uses less tables,
   is more performant and easier to read.
@@ -328,8 +334,8 @@ LUA
 • |vim.json.encode()| has an option to enable forward slash escaping
 • |vim.fs.abspath()| converts paths to absolute paths.
 • |vim.fs.relpath()| gets relative path compared to base path.
-• |vim.fs.dir()| and |vim.fs.find()| now follow symbolic links by default,
-  the behavior can be turn off using the new `follow` option.
+• |vim.fs.dir()| and |vim.fs.find()| can now follow symbolic links,
+  the behavior can be turn on using the new `follow` option.
 • |vim.text.indent()| indents/dedents text.
 
 OPTIONS
@@ -341,6 +347,7 @@ OPTIONS
 • 'tabclose' controls which tab page to focus when closing a tab page.
 • 'eventignorewin' to persistently ignore events in a window.
 • 'autowriteall' write all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
+• 'winborder' sets the default border for |floating-windows|
 
 PERFORMANCE
 
@@ -361,6 +368,7 @@ PERFORMANCE
   significantly improving |treesitter-highlight| performance.
 • Treesitter injection query iteration is now asynchronous, making edits in
   large buffers with combined injections much quicker.
+• 10x reduction in blocking time when attaching an LSP to a large buffer.
 
 PLUGINS
 
@@ -428,6 +436,12 @@ TREESITTER
   code block fence lines vertically.
 • |vim.treesitter.language.inspect()| shows additional information, including
   parser version for ABI 15 parsers.
+• |TSQuery:disable_pattern()| and |TSQuery:disable_capture()| to turn off
+  a specific pattern or capture in a query.
+• |vim.treesitter.get_captures_at_pos()| returns the `pattern_id` of the
+  pattern used to match each capture.
+• |Query:iter_captures()| now accepts an `opts` parameter, similar to
+  |Query:iter_matches()|.
 
 TUI
 
@@ -511,7 +525,8 @@ REMOVED FEATURES                                                 *news-removed*
 
 These deprecated features were removed.
 
-• N/A
+• option `severity_limit` for `vim.lsp.diagnostic` (use `min=severity`
+  instead |vim.diagnostic.severity|).
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*

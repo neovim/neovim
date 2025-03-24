@@ -6,6 +6,7 @@
 "		2024 Apr 03 by the Vim Project (removed :CompilerSet definition)
 "		2024 Apr 05 by the Vim Project (avoid leaving behind g:makeprg)
 "		2024 Nov 19 by the Vim Project (properly escape makeprg setting)
+"		2025 Mar 11 by the Vim Project (add comment for Dispatch)
 
 if exists("current_compiler")
 	finish
@@ -28,6 +29,7 @@ if exists('b:tex_ignore_makefile') || exists('g:tex_ignore_makefile') ||
 		let current_compiler = "latex"
 	endif
 	let s:makeprg=current_compiler .. ' -interaction=nonstopmode'
+	" CompilerSet makeprg=latex
 	execute 'CompilerSet makeprg=' .. escape(s:makeprg, ' \|"')
 else
 	let current_compiler = 'make'

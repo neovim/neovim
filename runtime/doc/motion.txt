@@ -852,7 +852,7 @@ unrelated.
 
 'a - 'z		lowercase marks, valid within one file
 'A - 'Z		uppercase marks, also called file marks, valid between files
-'0 - '9		numbered marks, set from .shada file
+'0 - '9		numbered marks, set from |shada| file
 
 Lowercase marks 'a to 'z are remembered as long as the file remains in the
 buffer list.  If you remove the file from the buffer list, all its marks are

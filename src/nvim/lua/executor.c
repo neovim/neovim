@@ -160,8 +160,7 @@ void nlua_error(lua_State *const lstate, const char *const msg)
     fprintf(stderr, msg, (int)len, str);
     fprintf(stderr, "\n");
   } else {
-    msg_ext_set_kind("lua_error");
-    semsg_multiline(msg, (int)len, str);
+    semsg_multiline("lua_error", msg, (int)len, str);
   }
 
   lua_pop(lstate, 1);
@@ -191,16 +190,15 @@ static void nlua_luv_error_event(void **argv)
 {
   char *error = (char *)argv[0];
   luv_err_t type = (luv_err_t)(intptr_t)argv[1];
-  msg_ext_set_kind("lua_error");
   switch (type) {
   case kCallback:
-    semsg_multiline("Error executing callback:\n%s", error);
+    semsg_multiline("lua_error", "Error executing callback:\n%s", error);
     break;
   case kThread:
-    semsg_multiline("Error in luv thread:\n%s", error);
+    semsg_multiline("lua_error", "Error in luv thread:\n%s", error);
     break;
   case kThreadCallback:
-    semsg_multiline("Error in luv callback, thread:\n%s", error);
+    semsg_multiline("lua_error", "Error in luv callback, thread:\n%s", error);
     break;
   default:
     break;

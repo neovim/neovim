@@ -59,7 +59,7 @@ _do_release_commit() {
     $__sed -i.bk 's/(NVIM_API_PRERELEASE) true/\1 false/' CMakeLists.txt
     build/bin/nvim --api-info > "test/functional/fixtures/api_level_$__API_LEVEL.mpack"
     git add "test/functional/fixtures/api_level_${__API_LEVEL}.mpack"
-    VIMRUNTIME=./runtime build/bin/nvim -u NONE -l src/gen/preload.lua src/gen/gen_vimdoc.lua
+    make doc
     git add -u -- runtime/doc/
   fi
 

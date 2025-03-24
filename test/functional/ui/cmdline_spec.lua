@@ -865,6 +865,59 @@ local function test_cmdline(linegrid)
       },
     })
   end)
+
+  it('works with conditionals', function()
+    local s1 = [[
+      ^                         |
+      {1:~                        }|*3
+                               |
+    ]]
+    screen:expect(s1)
+    feed(':if 1<CR>')
+    screen:expect({
+      grid = s1,
+      cmdline = {
+        {
+          content = { { '' } },
+          firstc = ':',
+          indent = 2,
+          pos = 0,
+        },
+      },
+      cmdline_block = { { { 'if 1' } } },
+    })
+    feed(':let x = 1<CR>')
+    screen:expect({
+      grid = s1,
+      cmdline = {
+        {
+          content = { { '' } },
+          firstc = ':',
+          indent = 2,
+          pos = 0,
+        },
+      },
+      cmdline_block = { { { 'if 1' } }, { { '  :let x = 1' } } },
+    })
+    feed(':endif')
+    screen:expect({
+      grid = s1,
+      cmdline = {
+        {
+          content = { { ':endif' } },
+          firstc = ':',
+          indent = 2,
+          pos = 6,
+        },
+      },
+      cmdline_block = { { { 'if 1' } }, { { '  :let x = 1' } } },
+    })
+    feed('<CR>')
+    screen:expect({
+      grid = s1,
+      cmdline = { { abort = false } },
+    })
+  end)
 end
 
 -- the representation of cmdline and cmdline_block contents changed with ext_linegrid
