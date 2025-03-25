@@ -770,6 +770,7 @@ end)
 
 describe('Default statusline', function()
   local screen
+
   before_each(function()
     clear()
     screen = Screen.new(60, 16)
@@ -781,8 +782,12 @@ describe('Default statusline', function()
   end)
 
   it('setting statusline to empty string sets default statusline', function()
+    exec_lua("vim.o.statusline = 'asdf'")
+    eq('asdf', eval('&statusline'))
+
     local default_statusline =
       "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
+
     exec_lua("vim.o.statusline = ''")
 
     eq(default_statusline, eval('&statusline'))
