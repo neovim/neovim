@@ -4639,4 +4639,70 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
         (`string[]`)
 
 
+==============================================================================
+Lua module: elisp                                                  *vim.elisp*
+
+TODO: docs
+
+
+*vim.elisp.eval.promise*
+    A promise object. Most often returned when `(recursive-edit)` is called.
+    • The value of the resolved promise.
+
+    Fields: ~
+      • {[1]}  (`'promise'`)
+      • {[2]}  (`true|'error'?`) Always the string `'promise'`. Useful to
+               distinguish from `vim.elisp.obj` whose first element will never
+               be `'promise'`.
+      • {[3]}  (`vim.elisp.obj?`) - When `nil`: The promise is still pending.
+               • When `true`: The promise is resolved.
+               • When `'error'`: There was an error while evaluating. See
+                 |vim.elisp.obj|.
+
+*vim.elisp.obj*
+    Lua table representing an elisp object.
+
+
+elisp.eval({form}, {callback})                            *elisp.elisp.eval()*
+    Evaluates a string or an |vim.elisp.object|.
+
+    Parameters: ~
+      • {form}      (`string|vim.elisp.obj`)
+      • {callback}  (`fun(ret:vim.elisp.obj?)?`) Runs when the promise is
+                    resolved.
+
+    Return: ~
+        (`vim.elisp.obj|vim.elisp.eval.promise?`) The last value, simplar to
+        `(progn ...)`. If there's no such value (happens when {form} is empty
+        or just comments) then `nil` is returned. If `(recursive-edit)` is
+        called, returns `vim.elisp.eval.promise`.
+
+elisp.init()                                              *elisp.elisp.init()*
+    Initializes the elisp module.
+
+    (TODO: change this later) You must/may set the following global lua
+    variables before calling this function:
+    • `_G.vim_elisp_load_path` (`string[]`) NEEDED, a list of lisp
+      directories. Typically `{'/usr/share/emacs/29.4/lisp/'}`
+    • `_G.vim_elisp_data_path` (`string`) NEEDED, the data directory.
+      Typically {'/usr/share/emacs/29.4/etc/'}
+    • `_G.vim_elisp_optimize_jit` (`boolean?`) Optional, optimizes the jit by
+      disabling it in specific places. Defaults to `false`.
+    • `_G.vim_elisp_compile_lisp_to_lua_path` (`string?`) Optional, where to
+      place compiled lisp files.
+
+    Return: ~
+        (`nil`)
+
+elisp.load({path})                                        *elisp.elisp.load()*
+    Loads a lisp file.
+
+    Parameters: ~
+      • {path}  (`string`)
+
+    Return: ~
+        (`vim.elisp.obj|vim.elisp.eval.promise?`) See |vim.elisp.eval|'s
+        return value explanation.
+
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
