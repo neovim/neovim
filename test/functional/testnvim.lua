@@ -670,8 +670,8 @@ function M.set_shell_powershell(fake)
     let &shellcmdflag .= '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();'
     let &shellcmdflag .= '$PSDefaultParameterValues[''*:Encoding'']=''utf8'';'
     let &shellcmdflag .= ']] .. cmd .. [['
-    let &shellredir = '2>&1 | Out-File %s; exit $LastExitCode'
-    let &shellpipe  = '2>&1 | Tee-Object %s; exit $LastExitCode'
+    let &shellredir = '2>&1 | %%{ "$_" } | Out-File %s; exit $LastExitCode'
+    let &shellpipe  = '2>&1 | %%{ "$_" } | Tee-Object %s; exit $LastExitCode'
   ]])
   return found
 end
