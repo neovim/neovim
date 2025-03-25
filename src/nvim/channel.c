@@ -315,6 +315,7 @@ static void channel_destroy_early(Channel *chan)
     abort();
   }
   pmap_del(uint64_t)(&channels, chan->id, NULL);
+  // XXX: ??? this is used in `free_channel_event`, how can this work?!
   chan->id = 0;
 
   if ((--chan->refcount != 0)) {
