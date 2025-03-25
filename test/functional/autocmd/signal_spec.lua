@@ -45,20 +45,16 @@ describe('autocmd Signal', function()
     posix_kill('USR1', fn.getpid())
     eq(nil, next_msg(500))
   end)
-
 end)
-
-
 
 describe('autowriteall on kill', function()
   before_each(clear)
 
   local function test_deadly_sig(signame, awa, should_write)
-
     local testfile = 'Xtest_SIG' .. signame .. (awa and '_awa' or '_noawa')
     local teststr = 'Testaaaaaaa'
 
-    if (awa) then
+    if awa then
       command('set awa')
     end
 
@@ -66,10 +62,7 @@ describe('autowriteall on kill', function()
     feed('i' .. teststr)
     posix_kill(signame, fn.getpid())
 
-    eq(
-      (should_write and (teststr .. '\n') or nil),
-      read_file(testfile)
-    )
+    eq((should_write and (teststr .. '\n') or nil), read_file(testfile))
   end
 
   it('write if SIGHUP & awa on', function()
@@ -111,5 +104,4 @@ describe('autowriteall on kill', function()
   it('dont write if SIGKILL & awa off', function()
     test_deadly_sig('KILL', false, false)
   end)
-
 end)
