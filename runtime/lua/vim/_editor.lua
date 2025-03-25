@@ -1031,7 +1031,7 @@ function vim._expand_pat(pat, env)
   end
 
   -- Completion for dict accessors (special vim variables and vim.fn)
-  if mt and vim.tbl_contains({ vim.g, vim.t, vim.w, vim.b, vim.v, vim.fn }, final_env) then
+  if mt and vim.tbl_contains({ vim.g, vim.t, vim.w, vim.b, vim.v, vim.env, vim.fn }, final_env) then
     local prefix, type = unpack(
       vim.fn == final_env and { '', 'function' }
         or vim.g == final_env and { 'g:', 'var' }
@@ -1039,6 +1039,7 @@ function vim._expand_pat(pat, env)
         or vim.w == final_env and { 'w:', 'var' }
         or vim.b == final_env and { 'b:', 'var' }
         or vim.v == final_env and { 'v:', 'var' }
+        or vim.env == final_env and { '', 'environment' }
         or { nil, nil }
     )
     assert(prefix and type, "Can't resolve final_env")
