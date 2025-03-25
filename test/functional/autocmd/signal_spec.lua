@@ -10,6 +10,7 @@ local is_os = t.is_os
 local skip = t.skip
 local read_file = t.read_file
 local feed = n.feed
+local retry = t.retry
 
 if skip(is_os('win'), 'Only applies to POSIX systems') then
   return
@@ -62,7 +63,9 @@ describe('autowriteall on kill', function()
     feed('i' .. teststr)
     posix_kill(signame, fn.getpid())
 
-    eq((should_write and (teststr .. '\n') or nil), read_file(testfile))
+    retry(nil, 1000, function()
+      eq((should_write and (teststr .. '\n') or nil), read_file(testfile))
+    end)
   end
 
   it('write if SIGHUP & awa on', function()
