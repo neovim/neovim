@@ -1152,9 +1152,9 @@ int nlua_call(lua_State *lstate)
   size_t name_len;
   const char *name = luaL_checklstring(lstate, 1, &name_len);
   if (!nlua_is_deferred_safe() && !viml_func_is_fast(name)) {
-    size_t length = strlen(name) + strlen("Vimscript function ") + 1;
+    size_t length = strlen(name) + sizeof("Vimscript function \"\"") + 1;
     char *str = xmalloc(length);
-    vim_snprintf(str, length, "Vimscript function %s", name);
+    vim_snprintf(str, length, "Vimscript function \"%s\"", name);
     int ret = luaL_error(lstate, e_fast_api_disabled, str);
     xfree(str);
     return ret;
