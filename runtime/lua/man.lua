@@ -646,7 +646,7 @@ function M.init_pager()
   if vim.fn.bufexists(man_bufname) == 1 then
     local new_bufname = man_bufname
     while vim.fn.bufexists(new_bufname) == 1 do
-      new_bufname = new_bufname .. '_copy'
+      new_bufname = man_bufname .. '?dedup=' .. tostring(i)
     end
     vim.cmd.file({ new_bufname, mods = { silent = true } })
   elseif not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
