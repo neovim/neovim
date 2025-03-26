@@ -81,7 +81,8 @@ PLUGINS
 
 TREESITTER
 
-• todo
+• The "all" option to |Query:iter_matches()|, which was introduced in Nvim
+  0.11 to aide in transitioning to the new behavior, has been removed.
 
 TUI
 
