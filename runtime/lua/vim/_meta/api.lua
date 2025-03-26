@@ -1796,41 +1796,40 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---                   region is hidden by setting `eob` flag of
 ---                  'fillchars' to a space char, and clearing the
 ---                  `hl-EndOfBuffer` region in 'winhighlight'.
---- - border: Style of (optional) window border. This can either be a string
----   or an array. The string values are the same as those described in 'winborder'.
----   If it is an array, it should have a length of eight or any divisor of
----   eight. The array will specify the eight chars building up the border
----   in a clockwise fashion starting with the top-left corner. As an
----   example, the double box style could be specified as:
----     ```
----     [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
----     ```
----     If the number of chars are less than eight, they will be repeated. Thus
----     an ASCII border could be specified as
----     ```
----     [ "/", "-", \"\\\\\", "|" ],
----     ```
----     or all chars the same as
----     ```
----     [ "x" ].
----     ```
----   An empty string can be used to turn off a specific border, for instance,
+--- - border: (`string|string[]`) (defaults to 'winborder' option) Window border. The string form
+---   accepts the same values as the 'winborder' option. The array form must have a length of
+---   eight or any divisor of eight, specifying the chars that form the border in a clockwise
+---   fashion starting from the top-left corner. For example, the double-box style can be
+---   specified as:
 ---   ```
----     [ "", "", "", ">", "", "", "", "<" ]
+---   [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
 ---   ```
----   will only make vertical borders but not horizontal ones.
----   By default, `FloatBorder` highlight is used, which links to `WinSeparator`
----   when not defined.  It could also be specified by character:
+---   If fewer than eight chars are given, they will be repeated. An ASCII border could be
+---   specified as:
 ---   ```
----     [ ["+", "MyCorner"], ["x", "MyBorder"] ].
+---   [ "/", "-", \"\\\\\", "|" ],
 ---   ```
---- - title: Title (optional) in window border, string or list.
+---   Or one char for all sides:
+---   ```
+---   [ "x" ].
+---   ```
+---   Empty string can be used to hide a specific border. This example will show only vertical
+---   borders, not horizontal:
+---   ```
+---   [ "", "", "", ">", "", "", "", "<" ]
+---   ```
+---   By default, `hl-FloatBorder` highlight is used, which links to `hl-WinSeparator` when not
+---   defined.  Each border side can specify an optional highlight:
+---   ```
+---   [ ["+", "MyCorner"], ["x", "MyBorder"] ].
+---   ```
+--- - title: (optional) Title in window border, string or list.
 ---   List should consist of `[text, highlight]` tuples.
 ---   If string, or a tuple lacks a highlight, the default highlight group is `FloatTitle`.
 --- - title_pos: Title position. Must be set with `title` option.
 ---   Value can be one of "left", "center", or "right".
 ---   Default is `"left"`.
---- - footer: Footer (optional) in window border, string or list.
+--- - footer: (optional) Footer in window border, string or list.
 ---   List should consist of `[text, highlight]` tuples.
 ---   If string, or a tuple lacks a highlight, the default highlight group is `FloatFooter`.
 --- - footer_pos: Footer position. Must be set with `footer` option.
