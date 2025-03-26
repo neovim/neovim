@@ -13,6 +13,33 @@ They should not be used in new scripts, and old scripts should be updated.
 Deprecated features
 
 ------------------------------------------------------------------------------
+DEPRECATED IN 0.12					*deprecated-0.12*
+
+API
+
+• todo
+
+DIAGNOSTICS
+
+• todo
+
+HIGHLIGHTS
+
+• todo
+
+LSP
+
+• todo
+
+LUA
+
+• todo
+
+VIMSCRIPT
+
+• todo
+
+------------------------------------------------------------------------------
 DEPRECATED IN 0.11					*deprecated-0.11*
 
 API
