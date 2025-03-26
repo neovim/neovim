@@ -275,6 +275,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
 
         return vim.diagnostic.get(diagnostic_bufnr)
@@ -300,6 +301,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
         return vim.diagnostic.get(diagnostic_bufnr)
       end)
@@ -320,6 +322,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
       end)
 
@@ -358,6 +361,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
       end)
 
@@ -392,6 +396,7 @@ describe('vim.lsp.diagnostic', function()
           }, {}, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             client_id = client_id,
+            bufnr = diagnostic_bufnr,
           })
 
           return _G.requests
@@ -408,6 +413,7 @@ describe('vim.lsp.diagnostic', function()
           }, {}, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             client_id = client_id,
+            bufnr = diagnostic_bufnr,
           })
 
           return _G.requests
@@ -424,6 +430,7 @@ describe('vim.lsp.diagnostic', function()
           }, {}, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             client_id = client_id,
+            bufnr = diagnostic_bufnr,
           })
 
           return _G.requests
