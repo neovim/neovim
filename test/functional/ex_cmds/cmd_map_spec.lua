@@ -593,6 +593,7 @@ describe('mappings with <Cmd>', function()
   end)
 
   it('works in insert completion (Ctrl-X) mode', function()
+    command('set completeopt-=noselect')
     feed('os<c-x><c-n>')
     screen:expect([[
       some short lines                                                 |
