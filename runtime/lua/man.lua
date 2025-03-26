@@ -649,8 +649,7 @@ function M.init_pager()
       new_bufname = new_bufname .. '_copy'
     end
     vim.cmd.file({ new_bufname, mods = { silent = true } })
-  else
-    if not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
+  elseif not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
       vim.cmd.file({ man_bufname, mods = { silent = true } })
     end
   end
