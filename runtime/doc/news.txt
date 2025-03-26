@@ -127,6 +127,8 @@ TREESITTER
   `metadata[capture_id].offset`. The offset will be applied in
   |vim.treesitter.get_range()|, which should be preferred over reading
   metadata directly for retrieving node ranges.
+• The "all" option to |Query:iter_matches()|, which was introduced in Nvim
+  0.11 to aid in transitioning to the new behavior, has been removed.
 
 TUI
 
