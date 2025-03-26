@@ -625,14 +625,6 @@ describe('vim.diagnostic', function()
         pcall_err(exec_lua, [[vim.diagnostic.enable(42, {})]])
       )
       matches('expected boolean, got table', pcall_err(exec_lua, [[vim.diagnostic.enable({}, 42)]]))
-
-      -- Deprecated signature.
-      matches('Invalid buffer id: 42', pcall_err(exec_lua, [[vim.diagnostic.enable(42)]]))
-      -- Deprecated signature.
-      matches(
-        'namespace does not exist or is anonymous',
-        pcall_err(exec_lua, [[vim.diagnostic.enable(nil, 42)]])
-      )
     end)
 
     it('without arguments', function()
@@ -828,7 +820,7 @@ describe('vim.diagnostic', function()
     end)
 
     --- @return table
-    local function test_enable(legacy)
+    local function test_enable()
       return exec_lua(function()
         local other_bufnr = vim.api.nvim_create_buf(true, false)
 
@@ -860,11 +852,7 @@ describe('vim.diagnostic', function()
             + _G.count_extmarks(other_bufnr, _G.diagnostic_ns)
         )
 
-        if legacy then
-          vim.diagnostic.disable(_G.diagnostic_bufnr, _G.diagnostic_ns)
-        else
-          vim.diagnostic.enable(false, { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns })
-        end
+        vim.diagnostic.enable(false, { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns })
 
         table.insert(
           result,
@@ -873,11 +861,7 @@ describe('vim.diagnostic', function()
             + _G.count_extmarks(other_bufnr, _G.diagnostic_ns)
         )
 
-        if legacy then
-          vim.diagnostic.disable(_G.diagnostic_bufnr, _G.other_ns)
-        else
-          vim.diagnostic.enable(false, { bufnr = _G.diagnostic_bufnr, ns_id = _G.other_ns })
-        end
+        vim.diagnostic.enable(false, { bufnr = _G.diagnostic_bufnr, ns_id = _G.other_ns })
 
         table.insert(
           result,
@@ -886,11 +870,7 @@ describe('vim.diagnostic', function()
             + _G.count_extmarks(other_bufnr, _G.diagnostic_ns)
         )
 
-        if legacy then
-          vim.diagnostic.enable(_G.diagnostic_bufnr, _G.diagnostic_ns)
-        else
-          vim.diagnostic.enable(true, { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns })
-        end
+        vim.diagnostic.enable(true, { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns })
 
         table.insert(
           result,
@@ -899,13 +879,8 @@ describe('vim.diagnostic', function()
             + _G.count_extmarks(other_bufnr, _G.diagnostic_ns)
         )
 
-        if legacy then
-          -- Should have no effect
-          vim.diagnostic.disable(other_bufnr, _G.other_ns)
-        else
-          -- Should have no effect
-          vim.diagnostic.enable(false, { bufnr = other_bufnr, ns_id = _G.other_ns })
-        end
+        -- Should have no effect
+        vim.diagnostic.enable(false, { bufnr = other_bufnr, ns_id = _G.other_ns })
 
         table.insert(
           result,
@@ -919,17 +894,7 @@ describe('vim.diagnostic', function()
     end
 
     it('with both buffer and namespace arguments', function()
-      local result = test_enable(false)
-      eq(4, result[1])
-      eq(2, result[2])
-      eq(1, result[3])
-      eq(3, result[4])
-      eq(3, result[5])
-    end)
-
-    it('with both buffer and namespace arguments (deprecated signature)', function()
-      -- Exercise the legacy/deprecated signature.
-      local result = test_enable(true)
+      local result = test_enable()
       eq(4, result[1])
       eq(2, result[2])
       eq(1, result[3])
@@ -2664,67 +2629,6 @@ describe('vim.diagnostic', function()
         eq({}, result)
       end
     end)
-
-    it('respects legacy signs placed with :sign define or sign_define #26618', function()
-      -- Legacy signs for diagnostics were deprecated in 0.10 and will be removed in 0.12
-      -- eq(0, n.fn.has('nvim-0.12'))
-
-      n.command('sign define DiagnosticSignError text= texthl= linehl=ErrorMsg numhl=ErrorMsg')
-      n.command('sign define DiagnosticSignWarn text= texthl= linehl=WarningMsg numhl=WarningMsg')
-      n.command('sign define DiagnosticSignInfo text= texthl= linehl=Underlined numhl=Underlined')
-      n.command('sign define DiagnosticSignHint text= texthl= linehl=Underlined numhl=Underlined')
-
-      local result = exec_lua(function()
-        vim.diagnostic.config({
-          signs = true,
-        })
-
-        local diagnostics = {
-          _G.make_error('Error', 1, 1, 1, 2),
-          _G.make_warning('Warning', 3, 3, 3, 3),
-        }
-
-        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
-
-        local ns = vim.diagnostic.get_namespace(_G.diagnostic_ns)
-        local sign_ns = ns.user_data.sign_ns
-
-        local signs = vim.api.nvim_buf_get_extmarks(
-          _G.diagnostic_bufnr,
-          sign_ns,
-          0,
-          -1,
-          { type = 'sign', details = true }
-        )
-        local result = {}
-        for _, s in ipairs(signs) do
-          result[#result + 1] = {
-            lnum = s[2] + 1,
-            name = s[4].sign_hl_group,
-            text = s[4].sign_text or '',
-            numhl = s[4].number_hl_group,
-            linehl = s[4].line_hl_group,
-          }
-        end
-        return result
-      end)
-
-      eq({
-        lnum = 2,
-        name = 'DiagnosticSignError',
-        text = '',
-        numhl = 'ErrorMsg',
-        linehl = 'ErrorMsg',
-      }, result[1])
-
-      eq({
-        lnum = 4,
-        name = 'DiagnosticSignWarn',
-        text = '',
-        numhl = 'WarningMsg',
-        linehl = 'WarningMsg',
-      }, result[2])
-    end)
   end)
 
   describe('open_float()', function()
@@ -3820,38 +3724,6 @@ describe('vim.diagnostic', function()
             vim.diagnostic.is_enabled { bufnr = _G.diagnostic_bufnr },
             vim.diagnostic.is_enabled { bufnr = _G.diagnostic_bufnr, ns_id = _G.diagnostic_ns },
             vim.diagnostic.is_enabled { bufnr = 0, ns_id = _G.diagnostic_ns },
-          }
-        end)
-      )
-    end)
-
-    it('is_disabled (deprecated)', function()
-      eq(
-        { true, true, true, true },
-        exec_lua(function()
-          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
-            _G.make_error('Diagnostic #1', 1, 1, 1, 1),
-          })
-          vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
-          vim.diagnostic.disable()
-          return {
-            vim.diagnostic.is_disabled(),
-            vim.diagnostic.is_disabled(_G.diagnostic_bufnr),
-            vim.diagnostic.is_disabled(_G.diagnostic_bufnr, _G.diagnostic_ns),
-            vim.diagnostic.is_disabled(0, _G.diagnostic_ns),
-          }
-        end)
-      )
-
-      eq(
-        { false, false, false, false },
-        exec_lua(function()
-          vim.diagnostic.enable()
-          return {
-            vim.diagnostic.is_disabled(),
-            vim.diagnostic.is_disabled(_G.diagnostic_bufnr),
-            vim.diagnostic.is_disabled(_G.diagnostic_bufnr, _G.diagnostic_ns),
-            vim.diagnostic.is_disabled(0, _G.diagnostic_ns),
           }
         end)
       )
