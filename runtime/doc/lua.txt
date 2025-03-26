@@ -2978,7 +2978,7 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                 |vim.fs.normalize()|.
       • {opts}  (`table?`) Optional keyword arguments:
                 • depth: integer|nil How deep the traverse (default 1)
-                • skip: (fun(dir_name: string): boolean)|nil Predicate to
+                • filter: (fun(dir_name: string): boolean)|nil Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1
                 • follow: boolean|nil Follow symbolic links. (default: false)
@@ -3056,6 +3056,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                    limit on the number of matches.
                  • {follow}? (`boolean`, default: `false`) Follow symbolic
                    links.
+                 • {filter}? (`fun(dir: string): boolean`) Traverse Matching
+                   directories. If omitted, all directories are searched
+                   recursively.
 
     Return: ~
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
