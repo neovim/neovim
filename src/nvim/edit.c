@@ -1077,7 +1077,7 @@ check_pum:
       cmdwin_result = CAR;
       return 0;
     }
-    if (bt_prompt(curbuf)) {
+    if (mod_mask & MOD_MASK_SHIFT && bt_prompt(curbuf)) {
       invoke_prompt_callback();
       if (!bt_prompt(curbuf)) {
         // buffer changed to a non-prompt buffer, get out of
@@ -1532,9 +1532,12 @@ static void init_prompt(int cmdchar_todo)
 {
   char *prompt = prompt_text();
 
-  curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+  if (curwin->w_cursor.lnum < curbuf->b_prompt_submitted) {
+    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+  }
   char *text = get_cursor_line_ptr();
-  if (strncmp(text, prompt, strlen(prompt)) != 0) {
+  if (curbuf->b_prompt_submitted == curbuf->b_ml.ml_line_count
+      && strncmp(text, prompt, strlen(prompt)) != 0) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
       ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
@@ -1547,7 +1550,8 @@ static void init_prompt(int cmdchar_todo)
   }
 
   // Insert always starts after the prompt, allow editing text after it.
-  if (Insstart_orig.lnum != curwin->w_cursor.lnum || Insstart_orig.col != (colnr_T)strlen(prompt)) {
+  if (curbuf->b_prompt_submitted == curbuf->b_ml.ml_line_count
+      && (Insstart_orig.lnum != curwin->w_cursor.lnum || Insstart_orig.col != (colnr_T)strlen(prompt))) {
     Insstart.lnum = curwin->w_cursor.lnum;
     Insstart.col = (colnr_T)strlen(prompt);
     Insstart_orig = Insstart;
@@ -1557,9 +1561,12 @@ static void init_prompt(int cmdchar_todo)
   }
 
   if (cmdchar_todo == 'A') {
+    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(curwin, MAXCOL);
   }
-  curwin->w_cursor.col = MAX(curwin->w_cursor.col, (colnr_T)strlen(prompt));
+  if (curbuf->b_prompt_submitted == curbuf->b_ml.ml_line_count) {
+    curwin->w_cursor.col = MAX(curwin->w_cursor.col, (colnr_T)strlen(prompt));
+  }
   // Make sure the cursor is in a valid position.
   check_cursor(curwin);
 }
@@ -1568,8 +1575,9 @@ static void init_prompt(int cmdchar_todo)
 bool prompt_curpos_editable(void)
   FUNC_ATTR_PURE
 {
-  return curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count
-         && curwin->w_cursor.col >= (int)strlen(prompt_text());
+  return curwin->w_cursor.lnum > curbuf->b_prompt_submitted
+         || (curwin->w_cursor.lnum == curbuf->b_prompt_submitted
+             && curwin->w_cursor.col >= (int)strlen(prompt_text()));
 }
 
 // Undo the previous edit_putchar().

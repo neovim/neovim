@@ -698,6 +698,7 @@ struct file_buffer {
   Callback b_prompt_callback;   // set by prompt_setcallback()
   Callback b_prompt_interrupt;  // set by prompt_setinterrupt()
   int b_prompt_insert;          // value for restart_edit when entering
+  linenr_T b_prompt_submitted;   // how many lines have already been submitted
                                 // a prompt buffer window.
 
   synblock_T b_s;               // Info related to syntax highlighting.  w_s
