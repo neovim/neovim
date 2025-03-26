@@ -64,7 +64,6 @@ static const char *const xdg_defaults[] = {
 };
 
 /// Gets the value of $NVIM_APPNAME, or "nvim" if not set.
-/// Result must be freed by the caller, if called with 'retval_needed == true'.
 ///
 /// @param namelike Write "name-like" value (no path separators) in `NameBuff`.
 ///
@@ -90,7 +89,6 @@ const char *get_appname(bool namelike)
 bool appname_is_valid(void)
 {
   const char *appname = get_appname(false);
-  bool valid = true;
   if (path_is_absolute(appname)
       // TODO(justinmk): on Windows, path_is_absolute says "/" is NOT absolute. Should it?
       || strequal(appname, "/")
@@ -103,10 +101,10 @@ bool appname_is_valid(void)
 #endif
       || strstr(appname, "/..") != NULL
       || strstr(appname, "../") != NULL) {
-    valid = false;
+    return false;
   }
 
-  return valid;
+  return true;
 }
 
 /// Remove duplicate directories in the given XDG directory.
@@ -174,7 +172,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
 
   char *ret = NULL;
   if (env_val != NULL) {
-    ret = xstrdup(env_val);
+    ret = env_val;
   } else if (fallback) {
     ret = expand_env_save((char *)fallback);
   } else if (idx == kXDGRuntimeDir) {
@@ -191,7 +189,6 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
     ret = xdg_remove_duplicate(ret, ENV_SEPSTR);
   }
 
-  xfree(env_val);
   return ret;
 }
 

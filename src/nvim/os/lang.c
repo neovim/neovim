@@ -77,11 +77,10 @@ char *get_mess_lang(void)
 /// ourselves, and use LC_CTYPE as a last resort.
 static char *get_mess_env(void)
 {
-  char *p;
-
 #ifdef LC_MESSAGES
-  p = get_locale_val(LC_MESSAGES);   // Making sure that we can free() the return value
+  return get_locale_val(LC_MESSAGES);
 #else
+  char *p;
   p = os_getenv_noalloc("LC_ALL");
   if (p != NULL) {
     return p;
@@ -99,8 +98,8 @@ static char *get_mess_env(void)
   if (p == NULL) {
     p = get_locale_val(LC_CTYPE);
   }
-#endif
   return p;
+#endif
 }
 
 /// Set the "v:lang" variable according to the current locale setting.
@@ -110,7 +109,8 @@ void set_lang_var(void)
   const char *loc = get_locale_val(LC_CTYPE);
   set_vim_var_string(VV_CTYPE, loc, -1);
 
-  set_vim_var_string(VV_LANG, get_mess_env(), -1);
+  loc = get_mess_env();
+  set_vim_var_string(VV_LANG, loc, -1);
 
   loc = get_locale_val(LC_TIME);
   set_vim_var_string(VV_LC_TIME, loc, -1);

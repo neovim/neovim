@@ -55,6 +55,7 @@
 /// Like getenv(), but returns NULL if the variable is empty.
 /// Result must be freed by the caller.
 /// @see os_env_exists
+/// @see os_getenv_noalloc
 char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -90,6 +91,7 @@ end:
 }
 
 /// Like getenv(), but returns a pointer to `NameBuff` instead of allocating.
+/// Value is truncated if it exceeds sizeof(NameBuff).
 /// @see os_env_exists
 char *os_getenv_noalloc(const char *name)
   FUNC_ATTR_NONNULL_ALL
@@ -101,7 +103,7 @@ char *os_getenv_noalloc(const char *name)
   size_t size = sizeof(NameBuff);
   int r = uv_os_getenv(name, NameBuff, &size);
   if (r != 0 || size == 0 || NameBuff[0] == NUL) {
-    if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
+    if (r != 0 && r != UV_UNKNOWN) {
       ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
     }
     return NULL;
@@ -147,12 +149,7 @@ int os_setenv(const char *name, const char *value, int overwrite)
   }
 #ifdef MSWIN
   bool return_donothing = false;
-  char *env = os_getenv(name);
-  if (!overwrite && env != NULL) {
-    return_donothing = true;
-  }
-  xfree(env);
-  if (return_donothing) {
+  if (!overwrite && !os_env_exists(name, true)) {
     return 0;
   }
 
@@ -176,8 +173,6 @@ int os_setenv(const char *name, const char *value, int overwrite)
 #endif
   r = uv_os_setenv(name, value);
   assert(r != UV_EINVAL);
-  // Destroy the old map item. Do this AFTER uv_os_setenv(), because `value`
-  // could be a previous os_getenv() result.
   if (r != 0) {
     ELOG("uv_os_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
@@ -945,9 +940,10 @@ char *vim_getenv(const char *name)
     if (kos_env_path != NULL) {
       vim_path = vim_version_dir(kos_env_path);
       if (vim_path == NULL) {
-        vim_path = xstrdup(kos_env_path);
+        vim_path = kos_env_path;
+      } else {
+        xfree(kos_env_path);
       }
-      xfree(kos_env_path);
     }
   }
 

@@ -406,8 +406,6 @@ static void terminfo_start(TUIData *tui)
   char *termprg = os_getenv("TERM_PROGRAM");
   char *vte_version_env = os_getenv("VTE_VERSION");
   char *konsolev_env = os_getenv("KONSOLE_VERSION");
-  char *konsole_profile_env = os_getenv("KONSOLE_PROFILE_NAME");
-  char *konsole_dbus_session = os_getenv("KONSOLE_DBUS_SESSION");
   char *term_program_version_env = os_getenv("TERM_PROGRAM_VERSION");
 
   int vtev = vte_version_env ? (int)strtol(vte_version_env, NULL, 10) : 0;
@@ -415,7 +413,8 @@ static void terminfo_start(TUIData *tui)
   bool nsterm = (termprg && strstr(termprg, "Apple_Terminal"))
                 || terminfo_is_term_family(term, "nsterm");
   bool konsole = terminfo_is_term_family(term, "konsole")
-                 || konsole_profile_env || konsole_dbus_session;
+                 || os_env_exists("KONSOLE_PROFILE_NAME", true)
+                 || os_env_exists("KONSOLE_DBUS_SESSION", true);
   int konsolev = konsolev_env ? (int)strtol(konsolev_env, NULL, 10)
                               : (konsole ? 1 : 0);
   bool wezterm = strequal(termprg, "WezTerm");
@@ -514,8 +513,6 @@ static void terminfo_start(TUIData *tui)
   xfree(termprg);
   xfree(vte_version_env);
   xfree(konsolev_env);
-  xfree(konsole_profile_env);
-  xfree(konsole_dbus_session);
   xfree(term_program_version_env);
 }
 
