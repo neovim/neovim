@@ -8663,30 +8663,41 @@ void invoke_prompt_callback(void)
 {
   typval_T rettv;
   typval_T argv[2];
-  linenr_T lnum = curbuf->b_ml.ml_line_count;
+  linenr_T lnum_start = curbuf->b_prompt_submitted;
+  linenr_T lnum_last = curbuf->b_ml.ml_line_count;
 
   // Add a new line for the prompt before invoking the callback, so that
   // text can always be inserted above the last line.
-  ml_append(lnum, "", 0, false);
-  appended_lines_mark(lnum, 1);
-  curwin->w_cursor.lnum = lnum + 1;
+  ml_append(lnum_last, "", 0, false);
+  appended_lines_mark(lnum_last, 1);
+  curwin->w_cursor.lnum = lnum_last + 1;
   curwin->w_cursor.col = 0;
 
   if (curbuf->b_prompt_callback.type == kCallbackNone) {
+    curbuf->b_prompt_submitted = curbuf->b_ml.ml_line_count;
     return;
   }
-  char *text = ml_get(lnum);
+  char *text = ml_get(lnum_start);
   char *prompt = prompt_text();
   if (strlen(text) >= strlen(prompt)) {
     text += strlen(prompt);
   }
+
+  char *full_text = xstrdup(text);
+  for (linenr_T i = lnum_start+1; i <= lnum_last; i++) {
+    char *new_text = join_str(full_text, ml_get(i), "\n");
+    xfree(full_text);
+    full_text = new_text;
+  }
   argv[0].v_type = VAR_STRING;
-  argv[0].vval.v_string = xstrdup(text);
+  argv[0].vval.v_string = xstrdup(full_text);
   argv[1].v_type = VAR_UNKNOWN;
 
   callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
   tv_clear(&argv[0]);
   tv_clear(&rettv);
+  xfree(full_text);
+  curbuf->b_prompt_submitted = curbuf->b_ml.ml_line_count;
 }
 
 /// @return  true when the interrupt callback was invoked.
