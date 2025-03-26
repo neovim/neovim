@@ -228,7 +228,7 @@ describe(':Man', function()
     matches('quit works!!', fn.system(args, { 'manpage contents' }))
   end)
 
-  it('Raw manpage into (:Man!) will create new buffer #30132', function ()
+  it('raw manpage into (:Man!) creates a new buffer #30132', function ()
     local args = {
       nvim_prog,
       '--headless',
