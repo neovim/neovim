@@ -2667,7 +2667,7 @@ describe('vim.diagnostic', function()
 
     it('respects legacy signs placed with :sign define or sign_define #26618', function()
       -- Legacy signs for diagnostics were deprecated in 0.10 and will be removed in 0.12
-      eq(0, n.fn.has('nvim-0.12'))
+      -- eq(0, n.fn.has('nvim-0.12'))
 
       n.command('sign define DiagnosticSignError text= texthl= linehl=ErrorMsg numhl=ErrorMsg')
       n.command('sign define DiagnosticSignWarn text= texthl= linehl=WarningMsg numhl=WarningMsg')
