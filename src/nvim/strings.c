@@ -574,6 +574,20 @@ char *concat_str(const char *restrict str1, const char *restrict str2)
   return dest;
 }
 
+/// Concatenate two strings with separator in middle and return the result in allocated memory.
+char *join_str(const char *restrict str1, const char *restrict str2, const char *restrict sep)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+{
+  size_t l = strlen(str1);
+  size_t s = strlen(sep);
+  char *dest = xmalloc(l + s + strlen(str2) + 1);
+  STRCPY(dest, str1);
+  STRCPY(dest + l, sep);
+  STRCPY(dest + l + s, str2);
+  return dest;
+}
+
+
 static const char *const e_printf =
   N_("E766: Insufficient arguments for printf()");
 
