@@ -182,6 +182,7 @@ DEFAULTS
 
 • Highlighting:
   • Improved styling of :checkhealth and :help buffers.
+  • Syntax highlighting for PRQL.
 
 • Mappings:
   • |grn| in Normal mode maps to |vim.lsp.buf.rename()|
