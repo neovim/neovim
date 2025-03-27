@@ -338,10 +338,7 @@ char *get_special_key_name(int c, int modifiers)
       }
     }
   } else {            // use name of special key
-    const String *s = key_names_table[table_idx].pref_name != NULL
-                      ? key_names_table[table_idx].pref_name
-                      : &key_names_table[table_idx].name;
-
+    const String *s = &key_names_table[table_idx].name;
     if ((int)s->size + idx + 2 <= MAX_KEY_NAME_LEN) {
       STRCPY(string + idx, s->data);
       idx += (int)s->size;
@@ -593,7 +590,7 @@ static int extract_modifiers(int key, int *modp, const bool simplify, bool *cons
 int find_special_key_in_table(int c)
 {
   for (int i = 0; i < (int)ARRAY_SIZE(key_names_table); i++) {
-    if (c == key_names_table[i].key) {
+    if (c == key_names_table[i].key && !key_names_table[i].is_alt) {
       return i;
     }
   }
