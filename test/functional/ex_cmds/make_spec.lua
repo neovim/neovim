@@ -43,18 +43,18 @@ describe(':make', function()
     end)
 
     it('captures stderr & non zero exit code using "cmdlets"', function()
-      api.nvim_set_option_value('shellpipe', '2>&1 | $input | Tee-Object %s; exit $LastExitCode', {})
+      api.nvim_set_option_value('shellpipe', '2>&1 | Tee-Object -FilePath %s; exit $LastExitCode', {})
       api.nvim_set_option_value('makeprg', testprg('shell-test') .. ' foo', {})
       local out = eval('execute("make")')
       -- Error message is captured in the file and printed in the footer
       matches(
-        '[\r\n]+.*[\r\n]+Unknown first argument%: foo[\r\n]+%(1 of 1%)%: Unknown first argument%: foo',
+        '[\n]+.*[\n]+Unknown first argument%: foo[\n]+%(1 of 1%)%: Unknown first argument%: foo',
         out
       )
     end)
 
     it('captures stderr & zero exit code using "cmdlets"', function()
-      api.nvim_set_option_value('shellpipe', '2>&1 | $input | Tee-Object %s; exit $LastExitCode', {})
+      api.nvim_set_option_value('shellpipe', '2>&1 | Tee-Object -FilePath %s; exit $LastExitCode', {})
       api.nvim_set_option_value('makeprg', testprg('shell-test'), {})
       local out = eval('execute("make")')
       -- Ensure there are no "shell returned X" messages between
