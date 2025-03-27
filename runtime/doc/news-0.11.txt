@@ -122,10 +122,6 @@ OPTIONS
 • Setting |hidden-options| now gives an error. In particular, setting
   'noshellslash' is now only allowed on Windows.
 
-PLUGINS
-
-• TODO
-
 TREESITTER
 
 • |Query:iter_matches()| correctly returns all matching nodes in a match
@@ -139,12 +135,11 @@ TREESITTER
   if no languages are explicitly registered.
 • |vim.treesitter.language.add()| returns `true` if a parser was loaded
   successfully and `nil,errmsg` otherwise instead of throwing an error.
-• |vim.treesitter.get_parser()| and |vim.treesitter.start()| no longer parse
-  the tree before returning. Scripts must call |LanguageTree:parse()| explicitly. >lua
+• |vim.treesitter.get_parser()| and |vim.treesitter.start()| no longer parse the
+  tree before returning. Scripts must call |LanguageTree:parse()| explicitly. >lua
     local p = vim.treesitter.get_parser(0, 'c')
     p:parse()
 • |vim.treesitter.get_parser()| expects its buffer to be loaded.
-<
 
 TUI
 
@@ -179,7 +174,6 @@ API
     aligned text that truncates before covering up buffer text.
   • `virt_lines_overflow` field accepts value `scroll` to enable horizontal
     scrolling for virtual lines with 'nowrap'.
-• |vim.hl.range()| now has a optional `timeout` field which allows for a timed highlight
 
 DEFAULTS
 
@@ -245,8 +239,7 @@ EDITOR
 • |hl-ComplMatchIns| shows matched text of the currently inserted completion.
 • |hl-PmenuMatch| and |hl-PmenuMatchSel| show matched text in completion popup.
 • |gO| now works in `help`, `checkhealth`, and `markdown` buffers.
-• Jump between sections in `help` and `checkhealth` buffers with `[[` and
-  `]]`.
+• Jump between sections in `help` and `checkhealth` buffers with `[[` and `]]`.
 
 EVENTS
 
@@ -305,6 +298,8 @@ LUA
 • |vim.fs.relpath()| gets relative path compared to base path.
 • |vim.fs.dir()| and |vim.fs.find()| can now follow symbolic links,
   the behavior can be turn on using the new `follow` option.
+• |vim.hl.range()| now has a optional `timeout` field which allows for a timed
+  highlight.
 • |vim.text.indent()| indents/dedents text.
 
 OPTIONS
@@ -315,7 +310,7 @@ OPTIONS
 • 'messagesopt' configures |:messages| and |hit-enter| prompt.
 • 'tabclose' controls which tab page to focus when closing a tab page.
 • 'eventignorewin' to persistently ignore events in a window.
-• 'winborder' sets the default border for |floating-windows|
+• 'winborder' sets the default border for |floating-windows|.
 
 PERFORMANCE
 

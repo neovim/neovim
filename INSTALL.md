@@ -62,7 +62,7 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
 
 - Add the `bin` folder (e.g. `C:\Program Files\nvim\bin`) to your PATH.
     - This makes it easy to run `nvim` from anywhere.
-- If `:set spell` does not work, create the `C:/Users/foo/AppData/Local/nvim/site/spell` folder.
+- If `:set spell` does not work, create the `%LOCALAPPDATA%/nvim-data/site/spell` folder.
   You can then copy your spell files over (for English, located
   [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.spl) and
   [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.sug));
