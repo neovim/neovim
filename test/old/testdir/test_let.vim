@@ -93,6 +93,26 @@ func Test_let()
   let [l[0], l[1]] = [10, 20]
   call assert_equal([10, 20, 3], l)
 
+  " Test for using curly brace name in the LHS of an assignment
+  let listvar = [1, 2]
+  let s = 'listvar'
+  let {s} = [3, 4]
+  call assert_equal([3, 4], listvar)
+
+  " Test for using curly brace name as a list and as list index in the LHS of
+  " an assignment
+  let listvar = [1, 2]
+  let idx = 1
+  let s = 'listvar'
+  let {s}[0] = 10
+  let s = 'idx'
+  let listvar[{s}] = 20
+  call assert_equal([10, 20], listvar)
+  let s1 = 'listvar'
+  let s2 = 'idx'
+  let {s1}[{s2}] = 30
+  call assert_equal([10, 30], listvar)
+
   " Test for errors in conditional expression
   call assert_fails('let val = [] ? 1 : 2', 'E745:')
   call assert_fails('let val = 1 ? 5+ : 6', 'E121:')
