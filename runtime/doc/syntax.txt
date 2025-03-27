@@ -3032,24 +3032,24 @@ cases pertain, then the first line of the file is examined (ex. looking for
 /bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a shelltype, then
 that shelltype is used.  However some files (ex. .profile) are known to be
 shell files but the type is not apparent.  Furthermore, on many systems sh is
-symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (Posix).
+symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (POSIX).
 
 One may specify a global default by instantiating one of the following
 variables in your vimrc:
 
    ksh: >
 	let g:is_kornshell = 1
-<   posix:  (using this is nearly the same as setting g:is_kornshell to 1) >
+<   posix: (default) >
 	let g:is_posix     = 1
 <   bash: >
 	let g:is_bash	   = 1
-<   sh: (default) Bourne shell >
+<   dash: >
+	let g:is_dash	   = 1
+<   sh: Bourne shell >
 	let g:is_sh	   = 1
 
-<   (dash users should use posix)
-
 If there's no "#! ..." line, and the user hasn't availed themself of a default
-sh.vim syntax setting as just shown, then syntax/sh.vim will assume the Bourne
+sh.vim syntax setting as just shown, then syntax/sh.vim will assume the POSIX
 shell syntax.  No need to quote RFCs or market penetration statistics in error
 reports, please -- just select the default version of the sh your system uses
 and install the associated "let..." in your <.vimrc>.
