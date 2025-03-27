@@ -196,6 +196,10 @@ win_T *swbuf_goto_win_with_buf(buf_T *buf)
   return wp;
 }
 
+// 'cmdheight' value explicitly set by the user: window commands are allowed to
+// resize the topframe to values higher than this minimum, but not lower.
+static OptInt min_set_ch = 1;
+
 /// all CTRL-W window commands are handled here, called from normal_cmd().
 ///
 /// @param xchar  extra char from ":wincmd gx" or NUL
@@ -513,7 +517,7 @@ newwindow:
   // set current window height
   case Ctrl__:
   case '_':
-    win_setheight(Prenum ? Prenum : Rows - 1);
+    win_setheight(Prenum ? Prenum : Rows - (int)min_set_ch);
     break;
 
   // increase current window width
@@ -3504,10 +3508,6 @@ static bool is_bottom_win(win_T *wp)
   }
   return true;
 }
-
-// 'cmdheight' value explicitly set by the user: window commands are allowed to
-// resize the topframe to values higher than this minimum, but not lower.
-static OptInt min_set_ch = 1;
 
 /// Set a new height for a frame.  Recursively sets the height for contained
 /// frames and windows.  Caller must take care of positions.
