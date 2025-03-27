@@ -16,6 +16,7 @@ hashpipe:write([[
 #include "nvim/arglist.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdhist.h"
+#include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/eval.h"
 #include "nvim/eval/buffer.h"
