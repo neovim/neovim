@@ -47,6 +47,7 @@ hi('WildMenu',     { fg = 'Black', bg = 'Yellow',       ctermfg = 'Black', cterm
 hi('VertSplit',      { link = 'Normal' })
 hi('WinSeparator',   { link = 'VertSplit' })
 hi('WinBarNC',       { link = 'WinBar' })
+hi('DiffTextAdd',    { link = 'DiffText' })
 hi('EndOfBuffer',    { link = 'NonText' })
 hi('LineNrAbove',    { link = 'LineNr' })
 hi('LineNrBelow',    { link = 'LineNr' })

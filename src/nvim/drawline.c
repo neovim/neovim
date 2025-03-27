@@ -844,6 +844,18 @@ static void apply_cursorline_highlight(win_T *wp, winlinevars_T *wlv)
   }
 }
 
+static void set_line_attr_for_diff(win_T *wp, winlinevars_T *wlv)
+{
+  wlv->line_attr = win_hl_attr(wp, (int)wlv->diff_hlf);
+  // Overlay CursorLine onto diff-mode highlight.
+  if (wlv->cul_attr) {
+    wlv->line_attr = 0 != wlv->line_attr_lowprio  // Low-priority CursorLine
+                     ? hl_combine_attr(hl_combine_attr(wlv->cul_attr, wlv->line_attr),
+                                       hl_get_underline())
+                     : hl_combine_attr(wlv->line_attr, wlv->cul_attr);
+  }
+}
+
 /// Checks if there is more inline virtual text that need to be drawn.
 static bool has_more_inline_virt(winlinevars_T *wlv, ptrdiff_t v)
 {
@@ -1259,14 +1271,28 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
   int linestatus = 0;
   wlv.filler_lines = diff_check_with_linestatus(wp, lnum, &linestatus);
+  diffline_T line_changes = { 0 };
+  int change_index = -1;
   if (wlv.filler_lines < 0 || linestatus < 0) {
     if (wlv.filler_lines == -1 || linestatus == -1) {
-      if (diff_find_change(wp, lnum, &change_start, &change_end)) {
-        wlv.diff_hlf = HLF_ADD;             // added line
-      } else if (change_start == 0) {
-        wlv.diff_hlf = HLF_TXD;             // changed text
+      if (diff_find_change(wp, lnum, &line_changes)) {
+        wlv.diff_hlf = HLF_ADD;      // added line
+      } else if (line_changes.num_changes > 0) {
+        bool added = diff_change_parse(&line_changes, &line_changes.changes[0],
+                                       &change_start, &change_end);
+        if (change_start == 0) {
+          if (added) {
+            wlv.diff_hlf = HLF_TXA;  // added text on changed line
+          } else {
+            wlv.diff_hlf = HLF_TXD;  // changed text on changed line
+          }
+        } else {
+          wlv.diff_hlf = HLF_CHD;    // unchanged text on changed line
+        }
+        change_index = 0;
       } else {
-        wlv.diff_hlf = HLF_CHD;             // changed line
+        wlv.diff_hlf = HLF_CHD;      // changed line
+        change_index = 0;
       }
     } else {
       wlv.diff_hlf = HLF_ADD;               // added line
@@ -1846,24 +1872,32 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
 
       if (wlv.diff_hlf != (hlf_T)0) {
+        if (line_changes.num_changes > 0
+            && change_index >= 0
+            && change_index < line_changes.num_changes - 1) {
+          if (ptr - line
+              >= line_changes.changes[change_index + 1].dc_start[line_changes.bufidx]) {
+            change_index += 1;
+          }
+        }
+        bool added = false;
+        if (line_changes.num_changes > 0 && change_index >= 0
+            && change_index < line_changes.num_changes) {
+          added = diff_change_parse(&line_changes, &line_changes.changes[change_index],
+                                    &change_start, &change_end);
+        }
         // When there is extra text (eg: virtual text) it gets the
         // diff highlighting for the line, but not for changed text.
         if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
             && wlv.n_extra == 0) {
-          wlv.diff_hlf = HLF_TXD;                   // changed text
+          wlv.diff_hlf = added ? HLF_TXA : HLF_TXD;   // added/changed text
         }
-        if (wlv.diff_hlf == HLF_TXD && ((ptr - line > change_end && wlv.n_extra == 0)
-                                        || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
-          wlv.diff_hlf = HLF_CHD;                   // changed line
+        if ((wlv.diff_hlf == HLF_TXD || wlv.diff_hlf == HLF_TXA)
+            && ((ptr - line >= change_end && wlv.n_extra == 0)
+                || (wlv.n_extra > 0 && wlv.extra_for_extmark))) {
+          wlv.diff_hlf = HLF_CHD;                     // changed line
         }
-        wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
-        // Overlay CursorLine onto diff-mode highlight.
-        if (wlv.cul_attr) {
-          wlv.line_attr = 0 != wlv.line_attr_lowprio  // Low-priority CursorLine
-                          ? hl_combine_attr(hl_combine_attr(wlv.cul_attr, wlv.line_attr),
-                                            hl_get_underline())
-                          : hl_combine_attr(wlv.line_attr, wlv.cul_attr);
-        }
+        set_line_attr_for_diff(wp, &wlv);
       }
 
       // Decide which of the highlight attributes to use.
@@ -2727,8 +2761,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         const int cuc_attr = win_hl_attr(wp, HLF_CUC);
         const int mc_attr = win_hl_attr(wp, HLF_MC);
 
-        if (wlv.diff_hlf == HLF_TXD) {
+        if (wlv.diff_hlf == HLF_TXD || wlv.diff_hlf == HLF_TXA) {
           wlv.diff_hlf = HLF_CHD;
+          set_line_attr_for_diff(wp, &wlv);
         }
 
         const int diff_attr = wlv.diff_hlf != 0

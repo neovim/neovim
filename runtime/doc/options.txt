@@ -2056,7 +2056,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'diffopt'* *'dip'*
-'diffopt' 'dip'		string	(default "internal,filler,closeoff,linematch:40")
+'diffopt' 'dip'		string	(default "internal,filler,closeoff,inline:simple,linematch:40")
 			global
 	Option settings for diff mode.  It can consist of the following items.
 	All are optional.  Items must be separated by a comma.
@@ -2118,6 +2118,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 		indent-heuristic
 				Use the indent heuristic for the internal
 				diff library.
+
+		inline:{text}	Highlight inline differences within a change.
+				See |view-diffs|.  Supported values are:
+
+				none    Do not perform inline highlighting.
+				simple  Highlight from first different
+					character to the last one in each
+					line. This is the default if nothing
+					is set.
+				char    Use internal diff to perform a
+					character-wise diff and highlight the
+					difference.
+				word    Use internal diff to perform a
+					|word|-wise diff and highlight the
+					difference.
 
 		internal	Use the internal diff library.  This is
 				ignored when 'diffexpr' is set.  *E960*

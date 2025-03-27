@@ -229,11 +229,11 @@ describe('ui/ext_messages', function()
         {
           content = {
             { '\n@character     ' },
-            { 'xxx', 26, 155 },
+            { 'xxx', 26, 156 },
             { ' ' },
             { 'links to', 18, 5 },
             { ' Character\n@character.special ' },
-            { 'xxx', 16, 156 },
+            { 'xxx', 16, 157 },
             { ' ' },
             { 'links to', 18, 5 },
             { ' SpecialChar' },
@@ -300,7 +300,7 @@ describe('ui/ext_messages', function()
       cmdline = { { abort = false } },
       messages = {
         {
-          content = { { 'Error', 9, 6 }, { 'Message', 16, 99 } },
+          content = { { 'Error', 9, 6 }, { 'Message', 16, 100 } },
           history = true,
           kind = 'echoerr',
         },
@@ -940,7 +940,7 @@ describe('ui/ext_messages', function()
         ^                         |
         {1:~                        }|*4
       ]],
-      ruler = { { '0,0-1   All', 9, 61 } },
+      ruler = { { '0,0-1   All', 9, 62 } },
     })
     command('hi clear MsgArea')
     feed('i')
