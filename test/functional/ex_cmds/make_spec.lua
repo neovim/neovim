@@ -52,7 +52,7 @@ describe(':make', function()
       local out = eval('execute("make")')
       -- Error message is captured in the file and printed in the footer
       matches(
-        '[\n]+.*[\n]+Unknown first argument%: foo[\n]+shell returned 3[\n]+%(1 of 1%)%: Unknown first argument%: foo',
+        '[\n]+.*[\n]+.*Unknown first argument%: foo%^%[%[0m[\n]+shell returned 3[\n]+%(1 of 1%)%: Unknown first argument%: foo',
         out
       )
     end)
@@ -67,7 +67,7 @@ describe(':make', function()
       local out = eval('execute("make")')
       -- Ensure there are no "shell returned X" messages between
       -- command and last line (indicating zero exit)
-      matches('LastExitCode%s+ready [$]%s+[(]', out)
+      matches('.*ready [$]%s+%^%[%[0m', out)
       matches('\n.*%: ready [$]', out)
     end)
   end)

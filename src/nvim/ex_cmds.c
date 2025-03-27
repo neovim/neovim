@@ -1344,6 +1344,7 @@ static char *find_pipe(const char *cmd)
 /// @param cmd  Command to execute.
 /// @param itmp NULL or the input file.
 /// @param otmp NULL or the output file.
+/// @param do_in true if stdin is needed.
 /// @returns an allocated string with the shell command.
 char *make_filter_cmd(char *cmd, char *itmp, char *otmp, bool do_in)
 {

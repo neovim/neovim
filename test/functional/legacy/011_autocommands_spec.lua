@@ -106,35 +106,35 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       -- Expect the original file to be unchanged.
       eq(gzip_data, read_file('Xtestfile.gz'))
     end)
-  end
 
-  -- luacheck: ignore 621 (Indentation)
-  -- luacheck: ignore 611 (Line contains only whitespaces)
-  it('FileReadPre, FileReadPost', function()
-    prepare_gz_file('Xtestfile', text1)
-    feed_command(
-      'au! FileReadPre    *.gz   exe "silent !gzip -d " . shellescape(expand("<afile>"))'
-    )
-    feed_command('au  FileReadPre    *.gz   call rename(expand("<afile>:r"), expand("<afile>"))')
-    feed_command("au! FileReadPost   *.gz   '[,']s/l/L/")
-    -- Read compressed file.
-    feed_command('$r Xtestfile.gz')
-    -- Discard all prompts and messages.
-    feed('<C-L>')
-    expect([[
-      
-      start of testfiLe
-      Line 2	Abcdefghijklmnopqrstuvwxyz
-      Line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      Line 4	Abcdefghijklmnopqrstuvwxyz
-      Line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      Line 6	Abcdefghijklmnopqrstuvwxyz
-      Line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      Line 8	Abcdefghijklmnopqrstuvwxyz
-      Line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      Line 10 Abcdefghijklmnopqrstuvwxyz
-      end of testfiLe]])
-  end)
+    -- luacheck: ignore 621 (Indentation)
+    -- luacheck: ignore 611 (Line contains only whitespaces)
+    it('FileReadPre, FileReadPost', function()
+      prepare_gz_file('Xtestfile', text1)
+      feed_command(
+        'au! FileReadPre    *.gz   exe "silent !gzip -d " . shellescape(expand("<afile>"))'
+      )
+      feed_command('au  FileReadPre    *.gz   call rename(expand("<afile>:r"), expand("<afile>"))')
+      feed_command("au! FileReadPost   *.gz   '[,']s/l/L/")
+      -- Read compressed file.
+      feed_command('$r Xtestfile.gz')
+      -- Discard all prompts and messages.
+      feed('<C-L>')
+      expect([[
+        
+        start of testfiLe
+        Line 2	Abcdefghijklmnopqrstuvwxyz
+        Line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        Line 4	Abcdefghijklmnopqrstuvwxyz
+        Line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        Line 6	Abcdefghijklmnopqrstuvwxyz
+        Line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        Line 8	Abcdefghijklmnopqrstuvwxyz
+        Line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        Line 10 Abcdefghijklmnopqrstuvwxyz
+        end of testfiLe]])
+    end)
+  end
 
   it('FileAppendPre, FileAppendPost', function()
     feed_command('au BufNewFile      *.c    read Xtest.c')
