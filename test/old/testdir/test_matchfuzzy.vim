@@ -78,6 +78,7 @@ func Test_matchfuzzy()
   " Nvim's callback implementation is different, so E6000 is expected instead,
   " call assert_fails("let x = matchfuzzy(l, 'cam', {'text_cb' : []})", 'E921:')
   call assert_fails("let x = matchfuzzy(l, 'cam', {'text_cb' : []})", 'E6000:')
+  call assert_fails("let x = matchfuzzy(l, 'foo', {'key' : 123})", 'E475: Invalid value for argument key: 123')
   call assert_fails("let x = matchfuzzy(l, 'foo', {'key' : []})", 'E730:')
   call assert_fails("let x = matchfuzzy(l, 'cam', v:_null_dict)", 'E1297:')
   call assert_fails("let x = matchfuzzy(l, 'foo', {'key' : v:_null_string})", 'E475:')
@@ -89,6 +90,17 @@ func Test_matchfuzzy()
 
   let l = [{'id' : 5, 'name' : 'foo'}, {'id' : 6, 'name' : []}, {'id' : 7}]
   call assert_fails("let x = matchfuzzy(l, 'foo', {'key' : 'name'})", 'E730:')
+
+  " camelcase
+  call assert_equal(['lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'Cursor', 'CurSearch', 'CursorLine'],
+        \ matchfuzzy(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur'))
+  call assert_equal(['lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'Cursor', 'CurSearch', 'CursorLine'],
+        \ matchfuzzy(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur', {"camelcase": v:true}))
+  call assert_equal(['Cursor', 'CurSearch', 'CursorLine', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor'],
+        \ matchfuzzy(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur', {"camelcase": v:false}))
+  call assert_equal(['things', 'sThings', 'thisThings'],
+        \ matchfuzzy(['things','sThings', 'thisThings'], 'thin', {'camelcase': v:false}))
+  call assert_fails("let x = matchfuzzy([], 'foo', {'camelcase': []})", 'E475: Invalid value for argument camelcase')
 
   " Test in latin1 encoding
   let save_enc = &encoding
@@ -155,6 +167,7 @@ func Test_matchfuzzypos()
   " Nvim's callback implementation is different, so E6000 is expected instead,
   " call assert_fails("let x = matchfuzzypos(l, 'cam', {'text_cb' : []})", 'E921:')
   call assert_fails("let x = matchfuzzypos(l, 'cam', {'text_cb' : []})", 'E6000:')
+  call assert_fails("let x = matchfuzzypos(l, 'foo', {'key' : 123})", 'E475: Invalid value for argument key: 123')
   call assert_fails("let x = matchfuzzypos(l, 'foo', {'key' : []})", 'E730:')
   call assert_fails("let x = matchfuzzypos(l, 'cam', v:_null_dict)", 'E1297:')
   call assert_fails("let x = matchfuzzypos(l, 'foo', {'key' : v:_null_string})", 'E475:')
@@ -175,6 +188,17 @@ func Test_matchfuzzypos()
 
   let l = [{'id' : 5, 'name' : 'foo'}, {'id' : 6, 'name' : []}, {'id' : 7}]
   call assert_fails("let x = matchfuzzypos(l, 'foo', {'key' : 'name'})", 'E730:')
+
+  " camelcase
+  call assert_equal([['lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'Cursor', 'CurSearch', 'CursorLine'], [[1, 2, 3], [2, 3, 4], [2, 3, 4], [6, 7, 8], [0, 1, 2], [0, 1, 2], [0, 1, 2]], [318, 311, 308, 303, 267, 264, 263]],
+        \ matchfuzzypos(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur'))
+  call assert_equal([['lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'Cursor', 'CurSearch', 'CursorLine'], [[1, 2, 3], [2, 3, 4], [2, 3, 4], [6, 7, 8], [0, 1, 2], [0, 1, 2], [0, 1, 2]], [318, 311, 308, 303, 267, 264, 263]],
+        \ matchfuzzypos(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur', {"camelcase": v:true}))
+  call assert_equal([['Cursor', 'CurSearch', 'CursorLine', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor'], [[0, 1, 2], [0, 1, 2], [0, 1, 2], [1, 2, 3], [2, 3, 4], [2, 3, 4], [6, 7, 8]], [267, 264, 263, 246, 239, 236, 231]],
+        \ matchfuzzypos(['Cursor', 'lCursor', 'shCurlyIn', 'shCurlyError', 'TracesCursor', 'CurSearch', 'CursorLine'], 'Cur', {"camelcase": v:false}))
+  call assert_equal([['things', 'sThings', 'thisThings'], [[0, 1, 2, 3], [1, 2, 3, 4], [0, 1, 2, 7]], [333, 287, 279]],
+        \ matchfuzzypos(['things','sThings', 'thisThings'], 'thin', {'camelcase': v:false}))
+  call assert_fails("let x = matchfuzzypos([], 'foo', {'camelcase': []})", 'E475: Invalid value for argument camelcase')
 endfunc
 
 " Test for matchfuzzy() with multibyte characters
@@ -265,6 +289,7 @@ func Test_matchfuzzy_limit()
   call assert_equal(['2', '2'], x->matchfuzzy('2', #{limit: 2}))
   call assert_equal(['2', '2'], x->matchfuzzy('2', #{limit: 3}))
   call assert_fails("call matchfuzzy(x, '2', #{limit: '2'})", 'E475:')
+  call assert_fails("call matchfuzzy(x, '2', #{limit: []})", 'E475:')
 
   let l = [{'id': 5, 'val': 'crayon'}, {'id': 6, 'val': 'camera'}]
   call assert_equal([{'id': 5, 'val': 'crayon'}, {'id': 6, 'val': 'camera'}], l->matchfuzzy('c', #{text_cb: {v -> v.val}}))
