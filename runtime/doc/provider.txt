@@ -35,7 +35,7 @@ if you already have it (some package managers install the module with Nvim
 itself).
 
 For Python 3 plugins:
-1. Make sure Python 3.4+ is available in your $PATH.
+1. Make sure Python 3.9+ is available in your $PATH.
 2. Install the module (try "python" if "python3" is missing): >bash
    python3 -m pip install --user --upgrade pynvim
 
