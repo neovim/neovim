@@ -1105,6 +1105,11 @@ inside of strings can change!  Also see 'softtabstop' option. >
 :[line]pu[t]! [x]	Put the text [from register x] before [line] (default
 			current line).
 
+							*:ip* *:iput*
+:[line]ip[ut] [x]	like |:put|, but adjust indent to the current line
+
+:[line]ip[ut]! [x]	like |:put|!, but adjust indent to the current line
+
 ["x]]p		    or					*]p* *]<MiddleMouse>*
 ["x]]<MiddleMouse>	Like "p", but adjust the indent to the current line.
 			Using the mouse only works when 'mouse' contains 'n'
