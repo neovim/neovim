@@ -671,11 +671,10 @@ int update_screen(void)
 
   win_check_ns_hl(NULL);
 
-  // Reset b_mod_set and b_signcols.resized flags.  Going through all windows is
-  // probably faster than going through all buffers (there could be many buffers).
+  // Reset b_mod_set.  Going through all windows is probably faster than going
+  // through all buffers (there could be many buffers).
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     wp->w_buffer->b_mod_set = false;
-    wp->w_buffer->b_signcols.resized = false;
   }
 
   updating_screen = false;
@@ -1238,16 +1237,15 @@ static bool win_redraw_signcols(win_T *wp)
   if (!buf->b_signcols.autom
       && (*wp->w_p_stc != NUL || (wp->w_maxscwidth > 1 && wp->w_minscwidth != wp->w_maxscwidth))) {
     buf->b_signcols.autom = true;
-    buf_signcols_count_range(buf, 0, buf->b_ml.ml_line_count, MAXLNUM, kFalse);
+    buf_signcols_count_range(buf, 0, buf->b_ml.ml_line_count - 1, MAXLNUM, kFalse);
   }
 
   while (buf->b_signcols.max > 0 && buf->b_signcols.count[buf->b_signcols.max - 1] == 0) {
-    buf->b_signcols.resized = true;
     buf->b_signcols.max--;
   }
 
   int width = MIN(wp->w_maxscwidth, buf->b_signcols.max);
-  bool rebuild_stc = buf->b_signcols.resized && *wp->w_p_stc != NUL;
+  bool rebuild_stc = buf->b_signcols.max != buf->b_signcols.last_max && *wp->w_p_stc != NUL;
 
   if (rebuild_stc) {
     wp->w_nrwidth_line_count = 0;
@@ -1536,11 +1534,11 @@ static void win_update(win_T *wp)
 
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (win->w_buffer == wp->w_buffer && win_redraw_signcols(win)) {
-      win->w_lines_valid = 0;
       changed_line_abv_curs_win(win);
       redraw_later(win, UPD_NOT_VALID);
     }
   }
+  buf->b_signcols.last_max = buf->b_signcols.max;
 
   init_search_hl(wp, &screen_search_hl);
 
@@ -1702,6 +1700,16 @@ static void win_update(win_T *wp)
     }
   }
 
+  // Below logic compares wp->w_topline against wp->w_lines[0].wl_lnum,
+  // which may point to a line below wp->w_topline if it is concealed;
+  // incurring scrolling even though wp->w_topline is still the same.
+  // Compare against an adjusted topline instead:
+  linenr_T topline_conceal = wp->w_topline;
+  while (decor_conceal_line(wp, topline_conceal - 1, false)) {
+    topline_conceal++;
+    hasFolding(wp, topline_conceal, NULL, &topline_conceal);
+  }
+
   // If there are no changes on the screen that require a complete redraw,
   // handle three cases:
   // 1: we are off the top of the screen by a few lines: scroll down
@@ -1714,12 +1722,12 @@ static void win_update(win_T *wp)
     if (mod_top != 0
         && wp->w_topline == mod_top
         && (!wp->w_lines[0].wl_valid
-            || wp->w_topline == wp->w_lines[0].wl_lnum)) {
+            || topline_conceal == wp->w_lines[0].wl_lnum)) {
       // w_topline is the first changed line and window is not scrolled,
       // the scrolling from changed lines will be done further down.
     } else if (wp->w_lines[0].wl_valid
-               && (wp->w_topline < wp->w_lines[0].wl_lnum
-                   || (wp->w_topline == wp->w_lines[0].wl_lnum
+               && (topline_conceal < wp->w_lines[0].wl_lnum
+                   || (topline_conceal == wp->w_lines[0].wl_lnum
                        && wp->w_topfill > wp->w_old_topfill))) {
       // New topline is above old topline: May scroll down.
       int j;

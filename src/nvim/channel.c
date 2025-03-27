@@ -514,8 +514,7 @@ void channel_from_connection(SocketWatcher *watcher)
   channel_create_event(channel, watcher->addr);
 }
 
-/// Creates an API channel from stdin/stdout. This is used when embedding
-/// Neovim
+/// Creates an API channel from stdin/stdout. Used when embedding Nvim.
 uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **error)
   FUNC_ATTR_NONNULL_ALL
 {

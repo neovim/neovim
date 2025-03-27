@@ -104,14 +104,14 @@ struct map_arguments {
   char alt_lhs[MAXMAPLEN + 1];
   size_t alt_lhs_len;
 
-  char *rhs;  /// The {rhs} of the mapping.
+  char *rhs;  ///< The {rhs} of the mapping.
   size_t rhs_len;
-  LuaRef rhs_lua;  /// lua function as {rhs}
-  bool rhs_is_noop;  /// True when the {rhs} should be <Nop>.
+  LuaRef rhs_lua;  ///< lua function as {rhs}
+  bool rhs_is_noop;  ///< True when the {rhs} should be <Nop>.
 
-  char *orig_rhs;  /// The original text of the {rhs}.
+  char *orig_rhs;  ///< The original text of the {rhs}.
   size_t orig_rhs_len;
-  char *desc;  /// map description
+  char *desc;  ///< map description
 };
 typedef struct map_arguments MapArguments;
 #define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, false, \
@@ -1664,7 +1664,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
     }
     api_free_object(ret);
     if (ERROR_SET(&err)) {
-      semsg_multiline("E5108: %s", err.msg);
+      semsg_multiline("emsg", "E5108: %s", err.msg);
       api_clear_error(&err);
     }
   } else {

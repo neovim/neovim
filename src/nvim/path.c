@@ -613,7 +613,6 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
   FUNC_ATTR_NONNULL_ALL
 {
   int start_len = gap->ga_len;
-  size_t len;
   bool starstar = false;
   static int stardepth = 0;  // depth for "**" expansion
 
@@ -625,9 +624,9 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
     }
   }
 
-  // Make room for file name.  When doing encoding conversion the actual
-  // length may be quite a bit longer, thus use the maximum possible length.
-  char *buf = xmalloc(MAXPATHL);
+  // Make room for file name (a bit too much to stay on the safe side).
+  const size_t buflen = strlen(path) + MAXPATHL;
+  char *buf = xmalloc(buflen);
 
   // Find the first part in the path name that contains a wildcard.
   // When EW_ICASE is set every letter is considered to be a wildcard.
@@ -656,10 +655,10 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
                ) {
       e = p;
     }
-    len = (size_t)(utfc_ptr2len(path_end));
-    memcpy(p, path_end, len);
-    p += len;
-    path_end += len;
+    int charlen = utfc_ptr2len(path_end);
+    memcpy(p, path_end, (size_t)charlen);
+    p += charlen;
+    path_end += charlen;
   }
   e = p;
   *e = NUL;
@@ -713,13 +712,14 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
     return 0;
   }
 
+  size_t len = (size_t)(s - buf);
   // If "**" is by itself, this is the first time we encounter it and more
   // is following then find matches without any directory.
   if (!didstar && stardepth < 100 && starstar && e - s == 2
       && *path_end == '/') {
-    STRCPY(s, path_end + 1);
+    vim_snprintf(s, buflen - len, "%s", path_end + 1);
     stardepth++;
-    do_path_expand(gap, buf, (size_t)(s - buf), flags, true);
+    do_path_expand(gap, buf, len, flags, true);
     stardepth--;
   }
   *s = NUL;
@@ -731,6 +731,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
     const char *name;
     scandir_next_with_dots(NULL);  // initialize
     while (!got_int && (name = scandir_next_with_dots(&dir)) != NULL) {
+      len = (size_t)(s - buf);
       if ((name[0] != '.'
            || starts_with_dot
            || ((flags & EW_DODOT)
@@ -738,21 +739,22 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
                && (name[1] != '.' || name[2] != NUL)))
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
-                  && path_fnamencmp(path + (s - buf), name, (size_t)(e - s)) == 0))) {
-        STRCPY(s, name);
-        len = strlen(buf);
+                  && path_fnamencmp(path + len, name, (size_t)(e - s)) == 0))) {
+        len += (size_t)vim_snprintf(s, buflen - len, "%s", name);
+        if (len + 1 >= buflen) {
+          continue;
+        }
 
         if (starstar && stardepth < 100) {
           // For "**" in the pattern first go deeper in the tree to
           // find matches.
-          STRCPY(buf + len, "/**");  // NOLINT
-          STRCPY(buf + len + 3, path_end);
+          vim_snprintf(buf + len, buflen - len, "/**%s", path_end);  // NOLINT
           stardepth++;
           do_path_expand(gap, buf, len + 1, flags, true);
           stardepth--;
         }
 
-        STRCPY(buf + len, path_end);
+        vim_snprintf(buf + len, buflen - len, "%s", path_end);
         if (path_has_exp_wildcard(path_end)) {      // handle more wildcards
           // need to expand another component of the path
           // remove backslashes for the remaining components only
@@ -1323,7 +1325,11 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
           recursive = true;
           did_expand_in_path = true;
         } else {
+          // Recursive gen_expand_wildcards() can only happen here when called from an
+          // event handler in os_breakcheck(), in which case it should be allowed.
+          recursive = false;
           size_t tmp_add_pat = path_expand(&ga, p, flags);
+          recursive = true;
           assert(tmp_add_pat <= INT_MAX);
           add_pat = (int)tmp_add_pat;
         }
@@ -1347,7 +1353,11 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     }
 
     if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & (EW_PATH | EW_CDPATH))) {
+      // Recursive gen_expand_wildcards() can only happen here when called from an
+      // event handler in os_breakcheck(), in which case it should be allowed.
+      recursive = false;
       uniquefy_paths(&ga, p, path_option);
+      recursive = true;
     }
     if (p != pat[i]) {
       xfree(p);

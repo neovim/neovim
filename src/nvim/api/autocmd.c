@@ -53,14 +53,14 @@ static int64_t next_autocmd_id = 1;
 /// ```lua
 /// -- Matches all criteria
 /// autocommands = vim.api.nvim_get_autocmds({
-///   group = "MyGroup",
-///   event = {"BufEnter", "BufWinEnter"},
-///   pattern = {"*.c", "*.h"}
+///   group = 'MyGroup',
+///   event = {'BufEnter', 'BufWinEnter'},
+///   pattern = {'*.c', '*.h'}
 /// })
 ///
 /// -- All commands from one group
 /// autocommands = vim.api.nvim_get_autocmds({
-///   group = "MyGroup",
+///   group = 'MyGroup',
 /// })
 /// ```
 ///
@@ -336,8 +336,8 @@ cleanup:
 /// Example using Lua callback:
 ///
 /// ```lua
-/// vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
-///   pattern = {"*.c", "*.h"},
+/// vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
+///   pattern = {'*.c', '*.h'},
 ///   callback = function(ev)
 ///     print(string.format('event fired: %s', vim.inspect(ev)))
 ///   end
@@ -347,8 +347,8 @@ cleanup:
 /// Example using an Ex command as the handler:
 ///
 /// ```lua
-/// vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
-///   pattern = {"*.c", "*.h"},
+/// vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
+///   pattern = {'*.c', '*.h'},
 ///   command = "echo 'Entering a C or C++ file'",
 /// })
 /// ```
@@ -357,7 +357,7 @@ cleanup:
 /// and "~" must be expanded explicitly:
 ///
 /// ```lua
-/// pattern = vim.fn.expand("~") .. "/some/path/*.py"
+/// pattern = vim.fn.expand('~') .. '/some/path/*.py'
 /// ```
 ///
 /// @param event (string|array) Event(s) that will trigger the handler (`callback` or `command`).
@@ -603,7 +603,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Arena *arena, Error *err)
 /// To get an existing group id, do:
 ///
 /// ```lua
-/// local id = vim.api.nvim_create_augroup("MyGroup", {
+/// local id = vim.api.nvim_create_augroup('my.lsp.config', {
 ///     clear = false
 /// })
 /// ```

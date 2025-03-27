@@ -839,21 +839,6 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
   buf->b_p_ma = false;
 }
 
-/// Calculate the total height (in screen lines) of the first 'count' buffer lines in window 'wp'.
-/// Takes line wrapping and other display factors into account.
-///
-/// @param wp    Window pointer
-/// @param count Number of buffer lines to measure (1-based)
-/// @return      Total height in screen lines
-static inline int pum_preview_win_height(win_T *wp, linenr_T count)
-{
-  int height = 0;
-  for (int i = 1; i <= count; i++) {
-    height += plines_win(wp, i, false);
-  }
-  return height;
-}
-
 /// adjust floating info preview window position
 static void pum_adjust_info_position(win_T *wp, int width)
 {
@@ -878,7 +863,7 @@ static void pum_adjust_info_position(win_T *wp, int width)
   wp->w_config.anchor = pum_above ? kFloatAnchorSouth : 0;
   linenr_T count = wp->w_buffer->b_ml.ml_line_count;
   wp->w_width_inner = wp->w_config.width;
-  wp->w_config.height = MIN(Rows, pum_preview_win_height(wp, count));
+  wp->w_config.height = plines_m_win(wp, wp->w_topline, count, Rows);
   wp->w_config.row = pum_above ? pum_row + wp->w_config.height : pum_row;
   wp->w_config.hide = false;
   win_config_float(wp, wp->w_config);
@@ -903,6 +888,7 @@ win_T *pum_set_info(int selected, char *info)
     if (!wp) {
       return NULL;
     }
+    wp->w_topline = 1;
     wp->w_p_wfb = true;
   }
   linenr_T lnum = 0;

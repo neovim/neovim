@@ -51,7 +51,7 @@ describe('runtime:', function()
       mkdir_p(colorscheme_folder)
     end)
 
-    it('lua colorschemes work and are included in cmdline completion', function()
+    it('Lua colorschemes work and are included in cmdline completion', function()
       local colorscheme_file = table.concat({ colorscheme_folder, 'new_colorscheme.lua' }, sep)
       write_file(colorscheme_file, [[vim.g.lua_colorscheme = 1]])
 
@@ -129,7 +129,7 @@ describe('runtime:', function()
       mkdir_p(compiler_folder)
     end)
 
-    it('lua compilers work and are included in cmdline completion', function()
+    it('Lua compilers work and are included in cmdline completion', function()
       local compiler_file = compiler_folder .. sep .. 'new_compiler.lua'
       write_file(compiler_file, [[vim.b.lua_compiler = 1]])
 
@@ -170,7 +170,7 @@ describe('runtime:', function()
   describe('ftplugin', function()
     local ftplugin_folder = table.concat({ plug_dir, 'ftplugin' }, sep)
 
-    it('lua ftplugins work and are included in cmdline completion', function()
+    it('Lua ftplugins work and are included in cmdline completion', function()
       mkdir_p(ftplugin_folder)
       local ftplugin_file = table.concat({ ftplugin_folder, 'new-ft.lua' }, sep)
       write_file(ftplugin_file, [[vim.b.lua_ftplugin = 1]])
@@ -283,7 +283,7 @@ describe('runtime:', function()
   describe('indent', function()
     local indent_folder = table.concat({ plug_dir, 'indent' }, sep)
 
-    it('lua indents work and are included in cmdline completion', function()
+    it('Lua indents work and are included in cmdline completion', function()
       mkdir_p(indent_folder)
       local indent_file = table.concat({ indent_folder, 'new-ft.lua' }, sep)
       write_file(indent_file, [[vim.b.lua_indent = 1]])
@@ -328,23 +328,23 @@ describe('runtime:', function()
       exec([[let b:current_syntax = '']])
     end)
 
-    it('loads lua syntaxes on filetype change', function()
+    it('loads Lua syntaxes on filetype change', function()
       exec('set filetype=my-lang')
       eq('my-lang', eval('b:current_syntax'))
     end)
 
-    it('loads lua syntaxes on syntax change', function()
+    it('loads Lua syntaxes on syntax change', function()
       exec('set syntax=my-lang')
       eq('my-lang', eval('b:current_syntax'))
     end)
 
-    it('loads lua syntaxes for :ownsyntax', function()
+    it('loads Lua syntaxes for :ownsyntax', function()
       exec('ownsyntax my-lang')
       eq('my-lang', eval('w:current_syntax'))
       eq('', eval('b:current_syntax'))
     end)
 
-    it('lua syntaxes are included in cmdline completion', function()
+    it('Lua syntaxes are included in cmdline completion', function()
       eq({ 'my-lang' }, fn.getcompletion('my-l', 'filetype'))
       eq({ 'my-lang' }, fn.getcompletion('my-l', 'syntax'))
       eq({ 'syntax/my-lang.lua' }, fn.getcompletion('syntax/my-l', 'runtime'))
@@ -408,7 +408,7 @@ describe('runtime:', function()
     end)
   end)
 
-  it('lua file loaded by :runtime has proper script ID #32598', function()
+  it('Lua file loaded by :runtime has proper script ID #32598', function()
     local test_file = 'Xtest_runtime_cmd.lua'
     write_file(
       table.concat({ plug_dir, test_file }, sep),

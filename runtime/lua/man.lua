@@ -800,7 +800,7 @@ function M.show_toc()
   end
 
   fn.setloclist(0, toc, ' ')
-  fn.setloclist(0, {}, 'a', { title = 'Man TOC' })
+  fn.setloclist(0, {}, 'a', { title = 'Table of contents' })
   vim.cmd.lopen()
   vim.w.qf_toc = bufname
 end

@@ -1460,6 +1460,40 @@ local options = {
       varname = 'p_cfu',
     },
     {
+      abbreviation = 'cfc',
+      defaults = '',
+      values = { 'keyword', 'files', 'whole_line' },
+      flags = true,
+      deny_duplicates = true,
+      desc = [=[
+        A comma-separated list of strings to enable fuzzy collection for
+        specific |ins-completion| modes, affecting how matches are gathered
+        during completion.  For specified modes, fuzzy matching is used to
+        find completion candidates instead of the standard prefix-based
+        matching.  This option can contain the following values:
+
+        keyword		keywords in the current file	|i_CTRL-X_CTRL-N|
+        		keywords with flags ".", "w",	|i_CTRL-N| |i_CTRL-P|
+        		"b", "u", "U" and "k{dict}" in 'complete'
+        		keywords in 'dictionary'	|i_CTRL-X_CTRL-K|
+
+        files		file names			|i_CTRL-X_CTRL-F|
+
+        whole_line	whole lines			|i_CTRL-X_CTRL-L|
+
+        When using the 'completeopt' "longest" option value, fuzzy collection
+        can identify the longest common string among the best fuzzy matches
+        and insert it automatically.
+      ]=],
+      full_name = 'completefuzzycollect',
+      list = 'onecomma',
+      scope = { 'global' },
+      short_desc = N_('use fuzzy collection for specific completion modes'),
+      type = 'string',
+      varname = 'p_cfc',
+      flags_varname = 'cfc_flags',
+    },
+    {
       abbreviation = 'cia',
       cb = 'did_set_completeitemalign',
       defaults = 'abbr,kind,menu',
@@ -1483,7 +1517,7 @@ local options = {
     {
       abbreviation = 'cot',
       cb = 'did_set_completeopt',
-      defaults = 'menu,preview',
+      defaults = 'menu,popup',
       values = {
         'menu',
         'menuone',
@@ -1505,10 +1539,12 @@ local options = {
            fuzzy    Enable |fuzzy-matching| for completion candidates. This
         	    allows for more flexible and intuitive matching, where
         	    characters can be skipped and matches can be found even
-        	    if the exact sequence is not typed.  Only makes a
-        	    difference how completion candidates are reduced from the
-        	    list of alternatives, but not how the candidates are
-        	    collected (using different completion types).
+        	    if the exact sequence is not typed.  Note: This option
+        	    does not affect the collection of candidate list, it only
+        	    controls how completion candidates are reduced from the
+        	    list of alternatives.  If you want to use |fuzzy-matching|
+        	    to gather more alternatives for your candidate list,
+        	    see |'completefuzzycollect'|.
 
            longest  Only insert the longest common text of the matches.  If
         	    the menu is displayed you can use CTRL-L to add more
@@ -2663,9 +2699,10 @@ local options = {
       abbreviation = 'ex',
       defaults = false,
       desc = [=[
-        Automatically execute .nvim.lua, .nvimrc, and .exrc files in the
-        current directory, if the file is in the |trust| list. Use |:trust| to
-        manage trusted files. See also |vim.secure.read()|.
+        Enables project-local configuration. Nvim will execute any .nvim.lua,
+        .nvimrc, or .exrc file found in the |current-directory|, if the file is
+        in the |trust| list. Use |:trust| to manage trusted files. See also
+        |vim.secure.read()|.
 
         Compare 'exrc' to |editorconfig|:
         - 'exrc' can execute any code; editorconfig only specifies settings.
@@ -2678,6 +2715,7 @@ local options = {
       scope = { 'global' },
       secure = true,
       short_desc = N_('read .nvimrc and .exrc in the current directory'),
+      tags = { 'project-config', 'workspace-config' },
       type = 'boolean',
       varname = 'p_exrc',
     },
@@ -10185,6 +10223,25 @@ local options = {
       scope = { 'win' },
       short_desc = N_('Controls transparency level for floating windows'),
       type = 'number',
+    },
+    {
+      defaults = { if_true = '' },
+      values = { '', 'double', 'single', 'shadow', 'rounded', 'solid', 'none' },
+      desc = [=[
+        Defines the default border style of floating windows. The default value
+        is empty, which is equivalent to "none". Valid values include:
+        - "none": No border.
+        - "single": A single line box.
+        - "double": A double line box.
+        - "rounded": Like "single", but with rounded corners ("╭" etc.).
+        - "solid": Adds padding by a single whitespace cell.
+        - "shadow": A drop shadow effect by blending with the background.
+      ]=],
+      full_name = 'winborder',
+      scope = { 'global' },
+      short_desc = N_('border of floating window'),
+      type = 'string',
+      varname = 'p_winborder',
     },
     {
       abbreviation = 'wi',

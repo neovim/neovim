@@ -643,7 +643,7 @@ Also see the 'infercase' option if you want to adjust the case of the match.
 
 When inserting a selected candidate word from the |popup-menu|, the part of
 the candidate word that does not match the query is highlighted using
-|hl-ComplMatchIns|. If fuzzy is enabled in 'completeopt', highlighting will
+|hl-ComplMatchIns|.  If fuzzy is enabled in 'completeopt', highlighting will
 not be applied.
 
 							*complete_CTRL-E*
@@ -1015,7 +1015,7 @@ CTRL-X CTRL-U		Guess what kind of item is in front of the cursor and
 			previous one.
 
 
-Omni completion						*compl-omni*
+Omni completion					*omnicompletion* *compl-omni*
 
 Completion is done by a function that can be defined by the user with the
 'omnifunc' option.  This is to be used for filetype-specific completion.
@@ -1092,19 +1092,20 @@ CTRL-X CTRL-Z		Stop completion without changing the text.
 
 AUTO-COMPLETION						*compl-autocomplete*
 
-To get basic "autocompletion" without installing a plugin, try this script: >lua
+To get LSP-driven auto-completion, see |lsp-completion|. To get basic
+auto-completion without installing plugins or LSP, try this: >lua
 
-  local triggers = {"."}
-  vim.api.nvim_create_autocmd("InsertCharPre", {
+  local triggers = {'.'}
+  vim.api.nvim_create_autocmd('InsertCharPre', {
     buffer = vim.api.nvim_get_current_buf(),
     callback = function()
-      if vim.fn.pumvisible() == 1 or vim.fn.state("m") == "m" then
+      if vim.fn.pumvisible() == 1 or vim.fn.state('m') == 'm' then
         return
       end
       local char = vim.v.char
       if vim.list_contains(triggers, char) then
-        local key = vim.keycode("<C-x><C-n>")
-        vim.api.nvim_feedkeys(key, "m", false)
+        local key = vim.keycode('<C-x><C-n>')
+        vim.api.nvim_feedkeys(key, 'm', false)
       end
     end
   })
@@ -1504,6 +1505,11 @@ Regardless from state of implementation in browsers but if element is defined
 in standards, completion plugin will place element in suggestion list. When
 both major engines implemented element, even if this is not in standards it
 will be suggested. All other elements are not placed in suggestion list.
+
+
+LUA                                                     *ft-lua-omni*
+
+Lua |ftplugin| sets 'omnifunc' to |vim.lua_omnifunc()|.
 
 
 PHP							*ft-php-omni*

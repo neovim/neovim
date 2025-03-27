@@ -212,6 +212,37 @@ func Test_wildmenu_screendump()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_wildmenu_with_input_func()
+  CheckScreendump
+
+  let buf = RunVimInTerminal('-c "set wildmenu"', {'rows': 8})
+
+  call term_sendkeys(buf, ":call input('Command? ', '', 'command')\<CR>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_1', {})
+  call term_sendkeys(buf, "ech\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_2', {})
+  call term_sendkeys(buf, "\<Space>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_3', {})
+  call term_sendkeys(buf, "bufn\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_4', {})
+  call term_sendkeys(buf, "\<CR>")
+
+  call term_sendkeys(buf, ":set wildoptions+=pum\<CR>")
+
+  call term_sendkeys(buf, ":call input('Command? ', '', 'command')\<CR>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_5', {})
+  call term_sendkeys(buf, "ech\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_6', {})
+  call term_sendkeys(buf, "\<Space>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_7', {})
+  call term_sendkeys(buf, "bufn\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_8', {})
+  call term_sendkeys(buf, "\<CR>")
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_redraw_in_autocmd()
   CheckScreendump
 

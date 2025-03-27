@@ -64,6 +64,8 @@ Stop or detach the current UI
                 the channel to be closed, it may be (incorrectly) reported as
                 an error.
 
+                Note: Not supported on Windows, currently.
+
 ------------------------------------------------------------------------------
 GUI commands
 

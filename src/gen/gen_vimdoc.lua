@@ -328,10 +328,12 @@ local config = {
       'treesitter.lua',
       'language.lua',
       'query.lua',
+      'tsquery.lua',
       'highlighter.lua',
       'languagetree.lua',
       'dev.lua',
     },
+    append_only = { 'tsquery.lua' },
     files = {
       'runtime/lua/vim/treesitter/_meta/',
       'runtime/lua/vim/treesitter.lua',

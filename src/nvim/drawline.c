@@ -664,11 +664,15 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv)
 }
 
 /// Build and draw the 'statuscolumn' string for line "lnum" in window "wp".
-static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int virtnum, int col_rows,
+static void draw_statuscol(win_T *wp, winlinevars_T *wlv, int virtnum, int col_rows,
                            statuscol_T *stcp)
 {
-  // When called for the first non-filler row of line "lnum" set num v:vars
-  linenr_T relnum = virtnum == 0 ? abs(get_cursor_rel_lnum(wp, lnum)) : -1;
+  // Adjust lnum for filler lines belonging to the line above and set lnum v:vars for first
+  // row, first non-filler line, and first filler line belonging to the current line.
+  linenr_T lnum = wlv->lnum - ((wlv->n_virt_lines - wlv->filler_todo) < wlv->n_virt_below);
+  linenr_T relnum = (virtnum == -wlv->filler_lines || virtnum == 0
+                     || virtnum == (wlv->n_virt_below - wlv->filler_lines))
+                    ? abs(get_cursor_rel_lnum(wp, lnum)) : -1;
 
   char buf[MAXPATHL];
   // When a buffer's line count has changed, make a best estimate for the full
@@ -1639,7 +1643,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       } else if (statuscol.draw) {
         // Draw 'statuscolumn' if it is set.
         const int v = (int)(ptr - line);
-        draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, col_rows, &statuscol);
+        draw_statuscol(wp, &wlv, wlv.row - startrow - wlv.filler_lines, col_rows, &statuscol);
         if (wp->w_redr_statuscol) {
           break;
         }

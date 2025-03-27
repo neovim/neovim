@@ -700,12 +700,13 @@ int check_ei(char *ei)
 // Returns the old value of 'eventignore' in allocated memory.
 char *au_event_disable(char *what)
 {
-  char *save_ei = xstrdup(p_ei);
-  char *new_ei = xstrnsave(p_ei, strlen(p_ei) + strlen(what));
+  size_t p_ei_len = strlen(p_ei);
+  char *save_ei = xmemdupz(p_ei, p_ei_len);
+  char *new_ei = xstrnsave(p_ei, p_ei_len + strlen(what));
   if (*what == ',' && *p_ei == NUL) {
     STRCPY(new_ei, what + 1);
   } else {
-    strcat(new_ei, what);
+    STRCPY(new_ei + p_ei_len, what);
   }
   set_option_direct(kOptEventignore, CSTR_AS_OPTVAL(new_ei), 0, SID_NONE);
   xfree(new_ei);

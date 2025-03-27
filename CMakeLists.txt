@@ -140,14 +140,14 @@ endif()
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 11)
+set(NVIM_VERSION_MINOR 12)
 set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 13)        # Bump this after any API/stdlib change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE true)
+set(NVIM_API_PRERELEASE false)
 
 # We _want_ assertions in RelWithDebInfo build-type.
 if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
@@ -304,6 +304,7 @@ ExternalProject_Add(uncrustify
   DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/uncrustify
   CMAKE_ARGS ${DEPS_CMAKE_ARGS}
     -D CMAKE_RUNTIME_OUTPUT_DIRECTORY=${DEPS_BIN_DIR}
+    -D CMAKE_SKIP_RPATH=true
   EXCLUDE_FROM_ALL TRUE
   ${EXTERNALPROJECT_OPTIONS})
 
@@ -328,7 +329,7 @@ else()
   set(LUALS_ARCH x64)
 endif()
 
-set(LUALS_VERSION 3.13.6)
+set(LUALS_VERSION 3.13.9)
 set(LUALS "lua-language-server-${LUALS_VERSION}-${CMAKE_SYSTEM_NAME}-${LUALS_ARCH}")
 set(LUALS_TARBALL ${LUALS}.tar.gz)
 set(LUALS_URL https://github.com/LuaLS/lua-language-server/releases/download/${LUALS_VERSION}/${LUALS_TARBALL})

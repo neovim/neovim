@@ -45,6 +45,11 @@ function log.get_filename()
   return logfilename
 end
 
+--- @param s string
+function log._set_filename(s)
+  logfilename = s
+end
+
 --- @type file*?, string?
 local logfile, openerr
 
@@ -143,7 +148,7 @@ log.trace = create_logger('TRACE', log_levels.TRACE)
 log.warn = create_logger('WARN', log_levels.WARN)
 
 --- Sets the current log level.
----@param level (string|integer) One of `vim.lsp.log.levels`
+---@param level (string|integer) One of |vim.log.levels|
 function log.set_level(level)
   if type(level) == 'string' then
     current_log_level =

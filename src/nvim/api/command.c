@@ -504,7 +504,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     VALIDATE((regname != '='), "%s", "Cannot use register \"=", {
       goto end;
     });
-    VALIDATE(valid_yank_reg(regname, ea.cmdidx != CMD_put && !IS_USER_CMDIDX(ea.cmdidx)),
+    VALIDATE(valid_yank_reg(regname,
+                            (!IS_USER_CMDIDX(ea.cmdidx)
+                             && ea.cmdidx != CMD_put && ea.cmdidx != CMD_iput)),
              "Invalid register: \"%c", regname, {
       goto end;
     });
@@ -897,7 +899,7 @@ void nvim_del_user_command(String name, Error *err)
 
 /// Creates a buffer-local command |user-commands|.
 ///
-/// @param  buffer  Buffer handle, or 0 for current buffer.
+/// @param  buffer  Buffer id, or 0 for current buffer.
 /// @param[out] err Error details, if any.
 /// @see nvim_create_user_command
 void nvim_buf_create_user_command(uint64_t channel_id, Buffer buffer, String name, Object command,
@@ -920,7 +922,7 @@ void nvim_buf_create_user_command(uint64_t channel_id, Buffer buffer, String nam
 /// Only commands created with |:command-buffer| or
 /// |nvim_buf_create_user_command()| can be deleted with this function.
 ///
-/// @param  buffer  Buffer handle, or 0 for current buffer.
+/// @param  buffer  Buffer id, or 0 for current buffer.
 /// @param  name    Name of the command to delete.
 /// @param[out] err Error details, if any.
 void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
@@ -1178,7 +1180,7 @@ Dict nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
 
 /// Gets a map of buffer-local |user-commands|.
 ///
-/// @param  buffer  Buffer handle, or 0 for current buffer
+/// @param  buffer  Buffer id, or 0 for current buffer
 /// @param  opts  Optional parameters. Currently not used.
 /// @param[out]  err   Error details, if any.
 ///

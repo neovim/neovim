@@ -168,6 +168,12 @@ func Test_matchparen_ignore_sh_case()
 
   let buf = RunVimInTerminal('-S '.filename, #{rows: 10})
   call VerifyScreenDump(buf, 'Test_matchparen_sh_case_1', {})
+  " Send keys one by one so that CursorMoved is triggered.
+  for c in 'A foobar'
+    call term_sendkeys(buf, c)
+    call term_wait(buf)
+  endfor
+  call VerifyScreenDump(buf, 'Test_matchparen_sh_case_2', {})
   call StopVimInTerminal(buf)
 endfunc
 

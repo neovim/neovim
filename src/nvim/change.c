@@ -1820,7 +1820,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
       saved_line[curwin->w_cursor.col] = NUL;
       // Remove trailing white space, unless OPENLINE_KEEPTRAIL used.
       if (trunc_line && !(flags & OPENLINE_KEEPTRAIL)) {
-        truncate_spaces(saved_line);
+        truncate_spaces(saved_line, (size_t)curwin->w_cursor.col);
       }
       ml_replace(curwin->w_cursor.lnum, saved_line, false);
 

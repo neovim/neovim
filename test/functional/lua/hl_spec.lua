@@ -214,4 +214,37 @@ describe('vim.hl.on_yank', function()
       vim.hl.range(0, ns, 'Search', { 0, 0 }, { 0, 0 }, { timeout = 0 })
     end)
   end)
+
+  it('highlights last character with exclusive motion', function()
+    local screen = Screen.new(60, 4)
+    screen:add_extra_attr_ids({
+      [100] = { foreground = Screen.colors.Blue, background = Screen.colors.Yellow, bold = true },
+    })
+    command('autocmd TextYankPost * lua vim.hl.on_yank{timeout=100000}')
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      [[foo(bar) 'baz']],
+      [[foo(bar) 'baz']],
+    })
+    n.feed('yw')
+    screen:expect([[
+      {2:^foo}(bar) 'baz'                                              |
+      foo(bar) 'baz'                                              |
+      {1:~                                                           }|
+                                                                  |
+    ]])
+    n.feed("yi'")
+    screen:expect([[
+      foo(bar) '{2:^baz}'                                              |
+      foo(bar) 'baz'                                              |
+      {1:~                                                           }|
+                                                                  |
+    ]])
+    n.feed('yvj')
+    screen:expect([[
+      foo(bar) '{2:^baz'}                                              |
+      {2:foo(bar) '}baz'                                              |
+      {1:~                                                           }|
+                                                                  |
+    ]])
+  end)
 end)

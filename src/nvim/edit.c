@@ -120,7 +120,8 @@ static colnr_T Insstart_textlen;        // length of line when insert started
 static colnr_T Insstart_blank_vcol;     // vcol for first inserted blank
 static bool update_Insstart_orig = true;  // set Insstart_orig to Insstart
 
-static char *last_insert = NULL;        // the text of the previous insert, K_SPECIAL is escaped
+/// the text of the previous insert, K_SPECIAL is escaped
+static String last_insert = STRING_INIT;
 static int last_insert_skip;            // nr of chars in front of previous insert
 static int new_insert_skip;             // nr of chars in front of current insert
 static int did_restart_edit;            // "restart_edit" when calling edit()
@@ -1816,12 +1817,12 @@ void change_indent(int type, int amount, int round, bool call_changed_bytes)
 /// Truncate the space at the end of a line.  This is to be used only in an
 /// insert mode.  It handles fixing the replace stack for MODE_REPLACE and
 /// MODE_VREPLACE modes.
-void truncate_spaces(char *line)
+void truncate_spaces(char *line, size_t len)
 {
   int i;
 
   // find start of trailing white space
-  for (i = (int)strlen(line) - 1; i >= 0 && ascii_iswhite(line[i]); i--) {
+  for (i = (int)len - 1; i >= 0 && ascii_iswhite(line[i]); i--) {
     if (State & REPLACE_FLAG) {
       replace_join(0);              // remove a NUL from the replace stack
     }
@@ -2332,8 +2333,8 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   String inserted = get_inserted();
   int added = inserted.data == NULL ? 0 : (int)inserted.size - new_insert_skip;
   if (did_restart_edit == 0 || added > 0) {
-    xfree(last_insert);
-    last_insert = inserted.data;
+    xfree(last_insert.data);
+    last_insert = inserted;  // structure copy
     last_insert_skip = added < 0 ? 0 : new_insert_skip;
   } else {
     xfree(inserted.data);
@@ -2389,6 +2390,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
                                       end_insert_pos->lnum))
         && end_insert_pos->lnum <= curbuf->b_ml.ml_line_count) {
       pos_T tpos = curwin->w_cursor;
+      colnr_T prev_col = end_insert_pos->col;
 
       curwin->w_cursor = *end_insert_pos;
       check_cursor_col(curwin);        // make sure it is not past the line
@@ -2406,7 +2408,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
       }
       if (curwin->w_cursor.lnum != tpos.lnum) {
         curwin->w_cursor = tpos;
-      } else {
+      } else if (curwin->w_cursor.col < prev_col) {
         // reset tpos, could have been invalidated in the loop above
         tpos = curwin->w_cursor;
         tpos.col++;
@@ -2440,23 +2442,24 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 // Used for the replace command.
 void set_last_insert(int c)
 {
-  xfree(last_insert);
-  last_insert = xmalloc(MB_MAXBYTES * 3 + 5);
-  char *s = last_insert;
+  xfree(last_insert.data);
+  last_insert.data = xmalloc(MB_MAXBYTES * 3 + 5);
+  char *s = last_insert.data;
   // Use the CTRL-V only when entering a special char
   if (c < ' ' || c == DEL) {
     *s++ = Ctrl_V;
   }
   s = add_char2buf(c, s);
   *s++ = ESC;
-  *s++ = NUL;
+  *s = NUL;
+  last_insert.size = (size_t)(s - last_insert.data);
   last_insert_skip = 0;
 }
 
 #if defined(EXITFREE)
 void free_last_insert(void)
 {
-  XFREE_CLEAR(last_insert);
+  API_CLEAR_STRING(last_insert);
 }
 #endif
 
@@ -2692,11 +2695,10 @@ int cursor_down(int n, bool upd_topline)
 /// @param no_esc  Don't add an ESC at the end
 int stuff_inserted(int c, int count, int no_esc)
 {
-  char *esc_ptr;
   char last = NUL;
 
-  char *ptr = get_last_insert();
-  if (ptr == NULL) {
+  String insert = get_last_insert();  // text to be inserted
+  if (insert.data == NULL) {
     emsg(_(e_noinstext));
     return FAIL;
   }
@@ -2705,36 +2707,43 @@ int stuff_inserted(int c, int count, int no_esc)
   if (c != NUL) {
     stuffcharReadbuff(c);
   }
-  if ((esc_ptr = strrchr(ptr, ESC)) != NULL) {
-    // remove the ESC.
-    *esc_ptr = NUL;
+
+  if (insert.size > 0) {
+    // look for the last ESC in 'insert'
+    for (char *p = insert.data + insert.size - 1; p >= insert.data; p--) {
+      if (*p == ESC) {
+        insert.size = (size_t)(p - insert.data);
+        break;
+      }
+    }
   }
 
-  // when the last char is either "0" or "^" it will be quoted if no ESC
-  // comes after it OR if it will inserted more than once and "ptr"
-  // starts with ^D.  -- Acevedo
-  char *last_ptr = (esc_ptr ? esc_ptr : ptr + strlen(ptr)) - 1;
-  if (last_ptr >= ptr && (*last_ptr == '0' || *last_ptr == '^')
-      && (no_esc || (*ptr == Ctrl_D && count > 1))) {
-    last = *last_ptr;
-    *last_ptr = NUL;
+  if (insert.size > 0) {
+    char *p = insert.data + insert.size - 1;
+    // when the last char is either "0" or "^" it will be quoted if no ESC
+    // comes after it OR if it will inserted more than once and "ptr"
+    // starts with ^D.  -- Acevedo
+    if ((*p == '0' || *p == '^')
+        && (no_esc || (*insert.data == Ctrl_D && count > 1))) {
+      last = *p;
+      insert.size--;
+    }
   }
 
   do {
-    stuffReadbuff(ptr);
+    stuffReadbuffLen(insert.data, (ptrdiff_t)insert.size);
     // A trailing "0" is inserted as "<C-V>048", "^" as "<C-V>^".
-    if (last) {
-      stuffReadbuff(last == '0' ? "\026\060\064\070" : "\026^");
+    switch (last) {
+    case '0':
+      stuffReadbuffLen(S_LEN("\026\060\064\070"));
+      break;
+    case '^':
+      stuffReadbuffLen(S_LEN("\026^"));
+      break;
+    default:
+      break;
     }
   } while (--count > 0);
-
-  if (last) {
-    *last_ptr = last;
-  }
-
-  if (esc_ptr != NULL) {
-    *esc_ptr = ESC;         // put the ESC back
-  }
 
   // may want to stuff a trailing ESC, to get out of Insert mode
   if (!no_esc) {
@@ -2744,28 +2753,29 @@ int stuff_inserted(int c, int count, int no_esc)
   return OK;
 }
 
-char *get_last_insert(void)
+String get_last_insert(void)
   FUNC_ATTR_PURE
 {
-  if (last_insert == NULL) {
-    return NULL;
-  }
-  return last_insert + last_insert_skip;
+  return last_insert.data == NULL ? NULL_STRING : (String){
+    .data = last_insert.data + last_insert_skip,
+    .size = last_insert.size - (size_t)last_insert_skip,
+  };
 }
 
 // Get last inserted string, and remove trailing <Esc>.
 // Returns pointer to allocated memory (must be freed) or NULL.
 char *get_last_insert_save(void)
 {
-  if (last_insert == NULL) {
+  String insert = get_last_insert();
+
+  if (insert.data == NULL) {
     return NULL;
   }
-  size_t len = strlen(last_insert + last_insert_skip);
-  char *s = xmemdupz(last_insert + last_insert_skip, len);
-  if (len > 0 && s[len - 1] == ESC) {         // remove trailing ESC
-    s[len - 1] = NUL;
-  }
 
+  char *s = xmemdupz(insert.data, insert.size);
+  if (insert.size > 0 && s[insert.size - 1] == ESC) {  // remain trailing ESC
+    s[insert.size - 1] = NUL;
+  }
   return s;
 }
 
@@ -3507,7 +3517,7 @@ static bool ins_start_select(int c)
     if (mod_mask) {
       const char buf[] = { (char)K_SPECIAL, (char)KS_MODIFIER,
                            (char)(uint8_t)mod_mask, NUL };
-      stuffReadbuff(buf);
+      stuffReadbuffLen(buf, 3);
     }
     stuffcharReadbuff(c);
     return true;
@@ -4705,11 +4715,12 @@ static char *do_insert_char_pre(int c)
   if (!has_event(EVENT_INSERTCHARPRE)) {
     return NULL;
   }
-  buf[utf_char2bytes(c, buf)] = NUL;
+  size_t buflen = (size_t)utf_char2bytes(c, buf);
+  buf[buflen] = NUL;
 
   // Lock the text to avoid weird things from happening.
   textlock++;
-  set_vim_var_string(VV_CHAR, buf, -1);
+  set_vim_var_string(VV_CHAR, buf, (ptrdiff_t)buflen);  // set v:char
 
   char *res = NULL;
   if (ins_apply_autocmds(EVENT_INSERTCHARPRE)) {

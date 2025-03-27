@@ -26,11 +26,11 @@ return {
     ChanInfo = false, -- info was received about channel
     ChanOpen = false, -- channel was opened
     CmdUndefined = false, -- command undefined
-    CmdWinEnter = false, -- after entering the cmdline window
-    CmdWinLeave = false, -- before leaving the cmdline window
     CmdlineChanged = false, -- command line was modified
     CmdlineEnter = false, -- after entering cmdline mode
     CmdlineLeave = false, -- before leaving cmdline mode
+    CmdwinEnter = false, -- after entering the cmdline window
+    CmdwinLeave = false, -- before leaving the cmdline window
     ColorScheme = false, -- after loading a colorscheme
     ColorSchemePre = false, -- before loading a colorscheme
     CompleteChanged = false, -- after popup menu changed

@@ -1491,6 +1491,8 @@ static struct luaL_Reg query_meta[] = {
   { "__gc", query_gc },
   { "__tostring", query_tostring },
   { "inspect", query_inspect },
+  { "disable_capture", query_disable_capture },
+  { "disable_pattern", query_disable_pattern },
   { NULL, NULL }
 };
 
@@ -1687,6 +1689,23 @@ static int query_inspect(lua_State *L)
   lua_setfield(L, -2, "captures");  // [retval]
 
   return 1;
+}
+
+static int query_disable_capture(lua_State *L)
+{
+  TSQuery *query = query_check(L, 1);
+  size_t name_len;
+  const char *name = luaL_checklstring(L, 2, &name_len);
+  ts_query_disable_capture(query, name, (uint32_t)name_len);
+  return 0;
+}
+
+static int query_disable_pattern(lua_State *L)
+{
+  TSQuery *query = query_check(L, 1);
+  const uint32_t pattern_index = (uint32_t)luaL_checkinteger(L, 2);
+  ts_query_disable_pattern(query, pattern_index - 1);
+  return 0;
 }
 
 // Library init

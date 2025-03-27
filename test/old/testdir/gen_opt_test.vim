@@ -75,6 +75,7 @@ let test_values = {
       \ 'shada': [['', '''50', '"30'], ['xxx']],
       \ 'termpastefilter': [['BS', 'HT', 'FF', 'ESC', 'DEL', 'C0', 'C1', 'C0,C1'],
       \		['xxx', 'C0,C1,xxx']],
+      \ 'winborder': [['rounded', 'none', 'single', 'solid'], ['xxx', 'none,solid']],
       \ 'winhighlight': [['', 'a:b', 'a:', 'a:b,c:d'],
       \		['a', ':', ':b', 'a:b:c', 'a:/', '/:b', ',', 'a:b,,', 'a:b,c']],
       \
@@ -188,6 +189,9 @@ let test_values = {
       "\ 'completeopt': [['', 'menu', 'menuone', 'longest', 'preview', 'popup',
       "\ "		'popuphidden', 'noinsert', 'noselect', 'fuzzy', 'preinsert', 'menu,longest'],
       "\ "		['xxx', 'menu,,,longest,']],
+      \ 'completefuzzycollect': [['', 'keyword', 'files', 'whole_line',
+      \		'keyword,whole_line', 'files,whole_line', 'keyword,files,whole_line'],
+      \		['xxx', 'keyword,,,whole_line,']],
       \ 'completeitemalign': [['abbr,kind,menu', 'menu,abbr,kind'],
       \		['', 'xxx', 'abbr', 'abbr,menu', 'abbr,menu,kind,abbr',
       \		'abbr1234,kind,menu']],

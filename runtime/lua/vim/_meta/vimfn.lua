@@ -5815,6 +5815,9 @@ function vim.fn.matchend(expr, pat, start, count) end
 ---     given sequence.
 ---     limit  Maximum number of matches in {list} to be
 ---     returned.  Zero means no limit.
+---     camelcase  Use enhanced camel case scoring making results
+---     better suited for completion related to
+---     programming languages.  Defaults to v:true.
 ---
 --- If {list} is a list of dictionaries, then the optional {dict}
 --- argument supports the following additional items:
@@ -5868,7 +5871,7 @@ function vim.fn.matchend(expr, pat, start, count) end
 ---
 --- @param list any[]
 --- @param str string
---- @param dict? string
+--- @param dict? table
 --- @return any
 function vim.fn.matchfuzzy(list, str, dict) end
 
@@ -5895,7 +5898,7 @@ function vim.fn.matchfuzzy(list, str, dict) end
 ---
 --- @param list any[]
 --- @param str string
---- @param dict? string
+--- @param dict? table
 --- @return any
 function vim.fn.matchfuzzypos(list, str, dict) end
 
@@ -6173,10 +6176,9 @@ function vim.fn.min(expr) end
 --- If {prot} is given it is used to set the protection bits of
 --- the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
 --- the user, readable for others).  Use 0o700 to make it
---- unreadable for others.
----
---- {prot} is applied for all parts of {name}.  Thus if you create
---- /tmp/foo/bar then /tmp/foo will be created with 0o700. Example: >vim
+--- unreadable for others.  This is used for the newly created
+--- directories.  Note: umask is applied to {prot} (on Unix).
+--- Example: >vim
 ---   call mkdir($HOME .. "/tmp/foo/bar", "p", 0o700)
 ---
 --- <This function is not available in the |sandbox|.

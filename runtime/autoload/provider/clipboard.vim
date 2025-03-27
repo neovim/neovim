@@ -59,6 +59,14 @@ function! s:split_cmd(cmd) abort
   return (type(a:cmd) == v:t_string) ? split(a:cmd, " ") : a:cmd
 endfunction
 
+function! s:set_osc52() abort
+  let s:copy['+'] = v:lua.require'vim.ui.clipboard.osc52'.copy('+')
+  let s:copy['*'] = v:lua.require'vim.ui.clipboard.osc52'.copy('*')
+  let s:paste['+'] = v:lua.require'vim.ui.clipboard.osc52'.paste('+')
+  let s:paste['*'] = v:lua.require'vim.ui.clipboard.osc52'.paste('*')
+  return 'OSC 52'
+endfunction
+
 let s:cache_enabled = 1
 let s:err = ''
 
@@ -69,6 +77,13 @@ endfunction
 function! provider#clipboard#Executable() abort
   " Setting g:clipboard to v:false explicitly opts-in to using the "builtin" clipboard providers below
   if exists('g:clipboard') && g:clipboard isnot# v:false
+    if v:t_string ==# type(g:clipboard)
+      if 'osc52' == g:clipboard
+        " User opted-in to OSC 52 by manually setting g:clipboard.
+        return s:set_osc52()
+      endif
+    endif
+
     if type({}) isnot# type(g:clipboard)
           \ || type({}) isnot# type(get(g:clipboard, 'copy', v:null))
           \ || type({}) isnot# type(get(g:clipboard, 'paste', v:null))
@@ -172,11 +187,7 @@ function! provider#clipboard#Executable() abort
   elseif get(get(g:, 'termfeatures', {}), 'osc52') && &clipboard ==# ''
     " Don't use OSC 52 when 'clipboard' is set. It can be slow and cause a lot
     " of user prompts. Users can opt-in to it by setting g:clipboard manually.
-    let s:copy['+'] = v:lua.require'vim.ui.clipboard.osc52'.copy('+')
-    let s:copy['*'] = v:lua.require'vim.ui.clipboard.osc52'.copy('*')
-    let s:paste['+'] = v:lua.require'vim.ui.clipboard.osc52'.paste('+')
-    let s:paste['*'] = v:lua.require'vim.ui.clipboard.osc52'.paste('*')
-    return 'OSC 52'
+    return s:set_osc52()
   endif
 
   let s:err = 'clipboard: No clipboard tool. :help clipboard'

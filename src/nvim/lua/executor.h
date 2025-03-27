@@ -44,6 +44,9 @@ typedef enum {
   kRetLuaref,  ///< return value becomes a single Luaref, regardless of type (except NIL)
 } LuaRetMode;
 
+/// Maximum number of errors in vim.ui_attach() and decor provider callbacks.
+enum { CB_MAX_ERROR = 3, };
+
 /// To use with kRetNilBool for quick truthiness check
 #define LUARET_TRUTHY(res) ((res).type == kObjectTypeBoolean && (res).data.boolean == true)
 

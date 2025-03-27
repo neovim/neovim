@@ -1,3 +1,5 @@
+-- Generates C code to bridge API <=> Lua.
+--
 -- Example (manual) invocation:
 --
 --    make
@@ -192,7 +194,7 @@ for _, f in ipairs(shallowcopy(functions)) do
           .. ' has deprecated alias\n'
           .. newname
           .. ' which has a separate implementation.\n'
-          .. 'Please remove it from src/nvim/api/dispatch_deprecated.lua'
+          .. 'Remove it from src/nvim/api/dispatch_deprecated.lua'
       )
       os.exit(1)
     end
@@ -729,6 +731,10 @@ output:write('\n')
 
 local lua_c_functions = {}
 
+--- Generates C code to bridge RPC API <=> Lua.
+---
+--- Inspect the result here:
+---    build/src/nvim/auto/api/private/dispatch_wrappers.generated.h
 local function process_function(fn)
   local lua_c_function_name = ('nlua_api_%s'):format(fn.name)
   write_shifted_output(

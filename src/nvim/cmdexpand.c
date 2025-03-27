@@ -2407,6 +2407,10 @@ void set_cmd_context(expand_T *xp, char *str, int len, int col, int use_ccline)
     xp->xp_context = ccline->xp_context;
     xp->xp_pattern = ccline->cmdbuff;
     xp->xp_arg = ccline->xp_arg;
+    if (xp->xp_context == EXPAND_SHELLCMDLINE) {
+      int context = xp->xp_context;
+      set_context_for_wildcard_arg(NULL, xp->xp_pattern, false, xp, &context);
+    }
   } else {
     while (nextcomm != NULL) {
       nextcomm = set_one_cmd_context(xp, nextcomm);

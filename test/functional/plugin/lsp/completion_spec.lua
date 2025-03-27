@@ -847,7 +847,7 @@ describe('vim.lsp.completion: protocol', function()
     exec_lua(function()
       local win = vim.api.nvim_get_current_win()
       vim.api.nvim_win_set_cursor(win, pos)
-      vim.lsp.completion.trigger()
+      vim.lsp.completion.get()
     end)
 
     retry(nil, nil, function()
@@ -1153,7 +1153,7 @@ describe('vim.lsp.completion: protocol', function()
         end,
       })
 
-      vim.lsp.completion.trigger()
+      vim.lsp.completion.get()
 
       return params
     end)
@@ -1241,7 +1241,9 @@ describe('vim.lsp.completion: integration', function()
         }
       end)
     )
-    feed('<tab>')
+    exec_lua(function()
+      vim.snippet.jump(1)
+    end)
     eq(
       #'hello friends',
       exec_lua(function()

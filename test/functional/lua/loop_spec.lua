@@ -233,7 +233,7 @@ describe('vim.uv', function()
     screen:expect([[
       {3:                                                  }|
       {9:Error executing callback:}                         |
-      {9:uv_idle_t: 0x{MATCH:%w+}}                         |
+      {9:uv_idle_t: 0x{MATCH:%w+}}{MATCH: +}|
       {6:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')

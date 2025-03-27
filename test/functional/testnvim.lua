@@ -366,7 +366,7 @@ end
 --- @param ... string
 function M.feed(...)
   for _, v in ipairs({ ... }) do
-    nvim_feed(dedent(v))
+    nvim_feed(v)
   end
 end
 
@@ -615,11 +615,13 @@ function M.insert(...)
   nvim_feed('i')
   for _, v in ipairs({ ... }) do
     local escaped = v:gsub('<', '<lt>')
-    M.feed(escaped) -- This also dedents :P
+    nvim_feed(dedent(escaped))
   end
   nvim_feed('<ESC>')
 end
 
+--- @deprecated Use `command()` or `feed()` instead.
+---
 --- Executes an ex-command by user input. Because nvim_input() is used, Vimscript
 --- errors will not manifest as client (lua) errors. Use command() for that.
 --- @param ... string

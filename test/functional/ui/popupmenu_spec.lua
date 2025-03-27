@@ -1311,7 +1311,7 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    it('with preview-window above and tall and inverted', function()
+    it('with preview-window above, tall and inverted', function()
       feed(':ped<CR><c-w>8+')
       feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
       feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -1392,7 +1392,7 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    it('with preview-window above and short and inverted', function()
+    it('with preview-window above, short and inverted', function()
       feed(':ped<CR><c-w>4+')
       feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
       feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -1468,7 +1468,7 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    it('with preview-window below and inverted', function()
+    it('with preview-window below, inverted', function()
       feed(':ped<CR><c-w>4+<c-w>r')
       feed('iaa<cr>bb<cr>cc<cr>dd<cr>ee<cr>')
       feed('ff<cr>gg<cr>hh<cr>ii<cr>jj<cr>')
@@ -1716,7 +1716,7 @@ describe('builtin popupmenu', function()
           return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
         endfunc
         set omnifunc=Omni_test
-        set completeopt+=longest
+        set completeopt-=popup completeopt+=longest,preview
       ]])
       feed('Gi<C-X><C-O>')
       if multigrid then
@@ -1850,7 +1850,7 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    describe('floating window preview popup', function()
+    describe('completeopt=popup shows preview in floatwin', function()
       before_each(function()
         --row must > 10
         screen:try_resize(40, 11)
@@ -2264,7 +2264,7 @@ describe('builtin popupmenu', function()
         feed('<C-E><ESC>')
       end)
 
-      it('popup preview place in left', function()
+      it('popup preview placed to left', function()
         insert(('test'):rep(5))
         feed('i<C-x><C-o>')
         if multigrid then
@@ -6932,29 +6932,58 @@ describe('builtin popupmenu', function()
         ]])
         feed('o<BS><C-R>=Comp()<CR>')
         screen:expect_unchanged(true)
+        feed('<C-E><Esc>')
 
-        feed('<Esc>')
-        command('set completeopt+=fuzzy,menu')
+        command('hi PmenuMatchSel guibg=NONE')
+        command('hi PmenuMatch guibg=NONE')
+        command('set cot=menu,noinsert,fuzzy')
+        feed('S<C-X><C-O>')
+        screen:expect(pum_start)
+        feed('fb')
+        screen:expect([[
+          fb^                              |
+          {ms:f}{s:oo}{ms:B}{s:az  fookind }{1:                }|
+          {mn:f}{n:oo}{mn:b}{n:ar  fookind }{1:                }|
+          {mn:f}{n:oo}{mn:b}{n:ala fookind }{1:                }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+
+        feed('<C-E><Esc>')
+      end)
+
+      it('completefuzzycollect', function()
+        exec([[
+          set completefuzzycollect=keyword,files
+          set completeopt=menu,menuone
+        ]])
+
         feed('S hello helio hero h<C-X><C-P>')
         screen:expect([[
-           hello helio hero h^             |
-          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
-          {1:~                }{n: }{mn:h}{n:elio        }{1: }|
-          {1:~                }{s: }{ms:h}{s:ero         }{1: }|
+           hello helio hero hello^         |
+          {1:~                }{n: hero         }{1: }|
+          {1:~                }{n: helio        }{1: }|
+          {1:~                }{s: hello        }{1: }|
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])
 
         feed('<Esc>S hello helio hero h<C-X><C-P><C-P>')
         screen:expect([[
-           hello helio hero h^             |
-          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
-          {1:~                }{s: }{ms:h}{s:elio        }{1: }|
-          {1:~                }{n: }{mn:h}{n:ero         }{1: }|
+           hello helio hero helio^         |
+          {1:~                }{n: hero         }{1: }|
+          {1:~                }{s: helio        }{1: }|
+          {1:~                }{n: hello        }{1: }|
           {1:~                               }|*15
           {2:-- }{5:match 2 of 3}                 |
         ]])
 
+        feed('<Esc>S/non_existing_folder<C-X><C-F>')
+        screen:expect([[
+          /non_existing_folder^            |
+          {1:~                               }|*18
+          {2:-- }{6:Pattern not found}            |
+        ]])
         feed('<C-E><Esc>')
       end)
 
@@ -7258,6 +7287,7 @@ describe('builtin popupmenu', function()
             endif
             return [#{word: "foo", info: "info"}, #{word: "bar"}, #{word: "你好"}]
           endfunc
+          set completeopt-=popup completeopt+=preview
           set omnifunc=Omni_test
           hi ComplMatchIns guifg=red
         ]])
@@ -7374,6 +7404,9 @@ describe('builtin popupmenu', function()
             endif
             return [#{word: "foo"}, #{word: "bar"}, #{word: "你好"}]
           endfunc
+          set completeopt-=popup completeopt+=preview
+          " Avoid unwanted results in case local workspace has a "tags" file.
+          set complete-=t
           set omnifunc=Omni_test
           hi Normal guibg=blue
           hi CursorLine guibg=green guifg=white
@@ -7437,7 +7470,7 @@ describe('builtin popupmenu', function()
         feed('<Esc>')
 
         -- Does not highlight the compl leader
-        command('set cot+=menuone,noselect')
+        command('set completeopt+=menuone,noselect')
         feed('S<C-X><C-O>')
         local pum_start = [[
           {10:^                                }|
@@ -7457,7 +7490,7 @@ describe('builtin popupmenu', function()
         ]])
         feed('<C-E><ESC>')
 
-        command('set cot+=fuzzy')
+        command('set completeopt+=fuzzy')
         feed('S<C-X><C-O>')
         screen:expect(pum_start)
         feed('f<C-N>')
@@ -7469,7 +7502,7 @@ describe('builtin popupmenu', function()
         ]])
         feed('<C-E><Esc>')
 
-        command('set cot-=fuzzy')
+        command('set completeopt-=fuzzy')
         feed('Sf<C-N>')
         screen:expect([[
           {10:f^                               }|

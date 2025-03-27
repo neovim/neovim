@@ -19,23 +19,42 @@ function M.check()
 
   health.start('Treesitter parsers')
   local parsers = vim.api.nvim_get_runtime_file('parser/*', true)
-  for _, parser in pairs(parsers) do
+
+  ---@class ParserEntry
+  ---@field name string
+  ---@field path string
+
+  local sorted_parsers = {} ---@type ParserEntry[]
+
+  for _, parser in ipairs(parsers) do
     local parsername = vim.fn.fnamemodify(parser, ':t:r')
-    local is_loadable, err_or_nil = pcall(ts.language.add, parsername)
+    table.insert(sorted_parsers, { name = parsername, path = parser })
+  end
+
+  table.sort(sorted_parsers, function(a, b)
+    if a.name == b.name then
+      return a.path < b.path
+    else
+      return a.name < b.name
+    end
+  end)
+
+  for _, parser in ipairs(sorted_parsers) do
+    local is_loadable, err_or_nil = pcall(ts.language.add, parser.name)
 
     if not is_loadable then
       health.error(
         string.format(
           'Parser "%s" failed to load (path: %s): %s',
-          parsername,
-          parser,
+          parser.name,
+          parser.path,
           err_or_nil or '?'
         )
       )
     else
-      local lang = ts.language.inspect(parsername)
+      local lang = ts.language.inspect(parser.name)
       health.ok(
-        string.format('Parser: %-20s ABI: %d, path: %s', parsername, lang.abi_version, parser)
+        string.format('Parser: %-20s ABI: %d, path: %s', parser.name, lang.abi_version, parser.path)
       )
     end
   end

@@ -183,9 +183,8 @@ describe('multibyte text', function()
     feed_command('/^{/+1')
     feed_command('set noai tw=2 fo=tm')
     feed('gqgqjgqgqo<cr>')
-    -- Literal spaces will be trimmed from the by feed().
-    feed('<space><space>Ｘ<cr>')
-    feed('<space><space>Ｘa<esc>')
+    feed('  Ｘ<cr>')
+    feed('  Ｘa<esc>')
     expect([[
       {
         Ｘ

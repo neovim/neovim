@@ -1825,6 +1825,14 @@ describe('API/win', function()
       )
     end)
 
+    it("can create split window when 'winborder' is set", function()
+      local old_win = api.nvim_get_current_win()
+      api.nvim_set_option_value('winborder', 'single', {})
+      local new_win = api.nvim_open_win(0, false, { split = 'right', win = 0 })
+      eq({ 'row', { { 'leaf', old_win }, { 'leaf', new_win } } }, fn.winlayout())
+      eq('', api.nvim_win_get_config(new_win).relative)
+    end)
+
     describe("with 'autochdir'", function()
       local topdir
       local otherbuf
@@ -1899,6 +1907,38 @@ describe('API/win', function()
   end)
 
   describe('set_config', function()
+    it("uses 'winborder' when converting a split to a floating window", function()
+      api.nvim_set_option_value('winborder', 'single', {})
+      command('split')
+      local winid = api.nvim_get_current_win()
+      -- Convert split to float without specifying border
+      api.nvim_win_set_config(winid, {
+        relative = 'editor',
+        row = 2,
+        col = 2,
+        width = 10,
+        height = 5,
+      })
+      local config = api.nvim_win_get_config(winid)
+      eq('┌', config.border[1])
+    end)
+
+    it('erases border of a floating window when converting to split window', function()
+      api.nvim_set_option_value('winborder', 'single', {})
+      local winid = api.nvim_open_win(api.nvim_create_buf(false, false), false, {
+        relative = 'editor',
+        row = 2,
+        col = 2,
+        width = 10,
+        height = 5,
+      })
+      local config = api.nvim_win_get_config(winid)
+      eq('┌', config.border[1])
+      api.nvim_win_set_config(winid, { split = 'right', win = 0 })
+      config = api.nvim_win_get_config(winid)
+      eq(nil, config.border)
+    end)
+
     it('moves a split into a float', function()
       local win = api.nvim_open_win(0, true, {
         vertical = false,

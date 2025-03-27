@@ -6494,7 +6494,9 @@ M.funcs = {
     base = 1,
     desc = [=[
       Evaluate Lua expression {expr} and return its result converted
-      to Vim data structures. See |lua-eval| for more details.
+      to Vim data structures. See |lua-eval| for details.
+
+      See also |v:lua-call|.
 
     ]=],
     lua = false,
@@ -7148,6 +7150,9 @@ M.funcs = {
       		given sequence.
           limit	Maximum number of matches in {list} to be
       		returned.  Zero means no limit.
+          camelcase	Use enhanced camel case scoring making results
+      		better suited for completion related to
+      		programming languages.  Defaults to v:true.
 
       If {list} is a list of dictionaries, then the optional {dict}
       argument supports the following additional items:
@@ -7200,7 +7205,7 @@ M.funcs = {
       <results in `['two one']`.
     ]=],
     name = 'matchfuzzy',
-    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'string' } },
+    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'table' } },
     signature = 'matchfuzzy({list}, {str} [, {dict}])',
   },
   matchfuzzypos = {
@@ -7229,7 +7234,7 @@ M.funcs = {
       <results in `[[{"id": 10, "text": "hello"}], [[2, 3]], [127]]`
     ]=],
     name = 'matchfuzzypos',
-    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'string' } },
+    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'table' } },
     signature = 'matchfuzzypos({list}, {str} [, {dict}])',
   },
   matchlist = {
@@ -7550,10 +7555,9 @@ M.funcs = {
       If {prot} is given it is used to set the protection bits of
       the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
       the user, readable for others).  Use 0o700 to make it
-      unreadable for others.
-
-      {prot} is applied for all parts of {name}.  Thus if you create
-      /tmp/foo/bar then /tmp/foo will be created with 0o700. Example: >vim
+      unreadable for others.  This is used for the newly created
+      directories.  Note: umask is applied to {prot} (on Unix).
+      Example: >vim
       	call mkdir($HOME .. "/tmp/foo/bar", "p", 0o700)
 
       <This function is not available in the |sandbox|.

@@ -84,6 +84,7 @@ void didset_string_options(void)
   check_str_opt(kOptCasemap, NULL);
   check_str_opt(kOptBackupcopy, NULL);
   check_str_opt(kOptBelloff, NULL);
+  check_str_opt(kOptCompletefuzzycollect, NULL);
   check_str_opt(kOptCompleteopt, NULL);
   check_str_opt(kOptSessionoptions, NULL);
   check_str_opt(kOptViewoptions, NULL);

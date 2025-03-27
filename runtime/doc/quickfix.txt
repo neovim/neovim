@@ -1681,6 +1681,13 @@ shells and OSes and also does not allow to use other available TeX options,
 if any.  If your TeX doesn't support "-interaction=nonstopmode", please
 report it with different means to express \nonstopmode from the command line.
 
+TSC COMPILER						*compiler-tsc*
+
+The executable and compiler options can be added to 'makeprg' by setting the
+b/g:tsc_makeprg variable.  For example: >
+
+	let b:tsc_makeprg = "npx tsc --noEmit"
+
 TYPST COMPILER						*compiler-typst*
 
 Vim includes a compiler plugin for Typst files. This compiler is enabled

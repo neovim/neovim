@@ -1,4 +1,4 @@
-*news-10.txt*    Nvim
+*news-0.10.txt*    Nvim
 
 
                             NVIM REFERENCE MANUAL

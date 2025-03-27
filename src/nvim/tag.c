@@ -961,7 +961,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
         break;
       }
     }
-    if (msg_col) {
+    if (msg_col && (!ui_has(kUIMessages) || i < num_matches - 1)) {
       msg_putchar('\n');
     }
     os_breakcheck();
