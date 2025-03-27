@@ -3466,7 +3466,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
     if ((di = tv_dict_find(d, "key", -1)) != NULL) {
       if (di->di_tv.v_type != VAR_STRING || di->di_tv.vval.v_string == NULL
           || *di->di_tv.vval.v_string == NUL) {
-        semsg(_(e_invarg2), tv_get_string(&di->di_tv));
+        semsg(_(e_invargNval), "key", tv_get_string(&di->di_tv));
         return;
       }
       key = tv_get_string(&di->di_tv);
@@ -3477,7 +3477,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
 
     if ((di = tv_dict_find(d, "limit", -1)) != NULL) {
       if (di->di_tv.v_type != VAR_NUMBER) {
-        semsg(_(e_invarg2), tv_get_string(&di->di_tv));
+        semsg(_(e_invargval), "limit");
         return;
       }
       max_matches = (int)tv_get_number_chk(&di->di_tv, NULL);
@@ -3485,7 +3485,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
 
     if ((di = tv_dict_find(d, "camelcase", -1)) != NULL) {
       if (di->di_tv.v_type != VAR_BOOL) {
-        semsg(_(e_invarg2), "camelcase");
+        semsg(_(e_invargval), "camelcase");
         return;
       }
       camelcase = tv_get_bool_chk(&di->di_tv, NULL);
