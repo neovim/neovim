@@ -29,6 +29,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -3487,4 +3488,61 @@ static int xdiff_out(int start_a, int count_a, int start_b, int count_b, void *p
     .count_new = count_b,
   }));
   return 0;
+}
+
+/// "diff_filler()" function
+void f_diff_filler(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->vval.v_number = MAX(0, diff_check(curwin, tv_get_lnum(argvars)));
+}
+
+/// "diff_hlID()" function
+void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  linenr_T lnum = tv_get_lnum(argvars);
+  static linenr_T prev_lnum = 0;
+  static varnumber_T changedtick = 0;
+  static int fnum = 0;
+  static int change_start = 0;
+  static int change_end = 0;
+  static hlf_T hlID = (hlf_T)0;
+
+  if (lnum < 0) {       // ignore type error in {lnum} arg
+    lnum = 0;
+  }
+  if (lnum != prev_lnum
+      || changedtick != buf_get_changedtick(curbuf)
+      || fnum != curbuf->b_fnum) {
+    // New line, buffer, change: need to get the values.
+    int linestatus = 0;
+    int filler_lines = diff_check_with_linestatus(curwin, lnum, &linestatus);
+    if (filler_lines < 0 || linestatus < 0) {
+      if (filler_lines == -1 || linestatus == -1) {
+        change_start = MAXCOL;
+        change_end = -1;
+        if (diff_find_change(curwin, lnum, &change_start, &change_end)) {
+          hlID = HLF_ADD;               // added line
+        } else {
+          hlID = HLF_CHD;               // changed line
+        }
+      } else {
+        hlID = HLF_ADD;         // added line
+      }
+    } else {
+      hlID = (hlf_T)0;
+    }
+    prev_lnum = lnum;
+    changedtick = buf_get_changedtick(curbuf);
+    fnum = curbuf->b_fnum;
+  }
+
+  if (hlID == HLF_CHD || hlID == HLF_TXD) {
+    int col = (int)tv_get_number(&argvars[1]) - 1;  // Ignore type error in {col}.
+    if (col >= change_start && col <= change_end) {
+      hlID = HLF_TXD;  // Changed text.
+    } else {
+      hlID = HLF_CHD;  // Changed line.
+    }
+  }
+  rettv->vval.v_number = hlID;
 }
