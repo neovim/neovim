@@ -48,7 +48,7 @@ describe(':make', function()
         '2>&1 | Tee-Object -FilePath %s; exit $LastExitCode',
         {}
       )
-      api.nvim_set_option_value('makeprg', testprg('shell-test') .. ' foo', {})
+      api.nvim_set_option_value('makeprg', '& ' .. testprg('shell-test') .. ' foo', {})
       local out = eval('execute("make")')
       -- Error message is captured in the file and printed in the footer
       matches(
@@ -63,7 +63,7 @@ describe(':make', function()
         '2>&1 | Tee-Object -FilePath %s; exit $LastExitCode',
         {}
       )
-      api.nvim_set_option_value('makeprg', testprg('shell-test'), {})
+      api.nvim_set_option_value('makeprg', '& ' .. testprg('shell-test'), {})
       local out = eval('execute("make")')
       -- Ensure there are no "shell returned X" messages between
       -- command and last line (indicating zero exit)
