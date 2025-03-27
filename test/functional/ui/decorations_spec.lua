@@ -2956,6 +2956,28 @@ describe('extmark decorations', function()
       {1:~                                                 }|*3
                                                         |
     ]])
+    -- No scrolling for concealed topline #33033
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_lines_above = true, virt_lines = { { { "virt_above 2" } } } })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { conceal_lines = "" })
+    feed('ggjj')
+    screen:expect([[
+      {2:    }virt_above 2                                  |
+      {2:  2 }    local text, hl_id_cell, count = unpack(ite|
+      {2:    }m)                                            |
+      {2:  3 }^    if hl_id_cell ~= nil then                 |
+      {2:  4 }        hl_id = hl_id_cell                    |
+      {2:  5 }conceal text                                  |
+      {2:  6 }    for _ = 1, (count or 1) do                |
+      {2:  7 }        local cell = line[colpos]             |
+      {2:  8 }        cell.text = text                      |
+      {2:  9 }        cell.hl_id = hl_id                    |
+      {2: 10 }        colpos = colpos+1                     |
+      {2: 11 }    end                                       |
+      {2: 12 }end                                           |
+      {1:~                                                 }|
+                                                        |
+    ]])
   end)
 end)
 
