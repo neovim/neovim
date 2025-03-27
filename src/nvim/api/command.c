@@ -504,7 +504,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     VALIDATE((regname != '='), "%s", "Cannot use register \"=", {
       goto end;
     });
-    VALIDATE(valid_yank_reg(regname, ea.cmdidx != CMD_put && !IS_USER_CMDIDX(ea.cmdidx)),
+    VALIDATE(valid_yank_reg(regname,
+                            (!IS_USER_CMDIDX(ea.cmdidx)
+                             && ea.cmdidx != CMD_put && ea.cmdidx != CMD_iput)),
              "Invalid register: \"%c", regname, {
       goto end;
     });

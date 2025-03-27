@@ -73,16 +73,18 @@ func Test_put_fails_when_nomodifiable()
   setlocal nomodifiable
 
   normal! yy
-  call assert_fails(':put', 'E21')
-  call assert_fails(':put!', 'E21')
-  call assert_fails(':normal! p', 'E21')
-  call assert_fails(':normal! gp', 'E21')
-  call assert_fails(':normal! P', 'E21')
-  call assert_fails(':normal! gP', 'E21')
+  call assert_fails(':put', 'E21:')
+  call assert_fails(':put!', 'E21:')
+  call assert_fails(':iput', 'E21:')
+  call assert_fails(':iput!', 'E21:')
+  call assert_fails(':normal! p', 'E21:')
+  call assert_fails(':normal! gp', 'E21:')
+  call assert_fails(':normal! P', 'E21:')
+  call assert_fails(':normal! gP', 'E21:')
 
   if has('mouse')
     set mouse=n
-    call assert_fails('execute "normal! \<MiddleMouse>"', 'E21')
+    call assert_fails('execute "normal! \<MiddleMouse>"', 'E21:')
     set mouse&
   endif
 
@@ -132,7 +134,7 @@ func Test_put_visual_delete_all_lines()
   let @r = ''
   normal! VG"rgp
   call assert_equal(1, line('$'))
-  close!
+  bw!
 endfunc
 
 func Test_gp_with_count_leaves_cursor_at_end()
@@ -325,6 +327,82 @@ func Test_put_list()
   let l = ['a', 'b', 'c']
   put! =l
   call assert_equal(['a', 'b', 'c', ''], getline(1, '$'))
+  bw!
+endfunc
+
+func Test_iput_multiline()
+  new
+  setlocal noexpandtab
+  call setline(1, "\<Tab>foo")
+  call setreg('0', "bar\n\<Tab>bar2\nbar3", 'l')
+  iput
+  call assert_equal(["\<Tab>bar", "\<Tab>\<Tab>bar2", "\<Tab>bar3"], getline(2, 4))
+  setlocal expandtab tabstop=8 shiftwidth=8 noshiftround
+  iput
+  call assert_equal([repeat(' ', 8) . "bar",
+        \ repeat(' ', 16) . "bar2",
+        \ repeat(' ', 8) . "bar3"], getline(5, 7))
+  bw!
+endfunc
+
+func Test_iput_beforeafter_tab()
+  new
+  setlocal noexpandtab
+  call setline(1, "\<Tab>foo")
+  call setreg('0', "bar", 'l')
+  iput
+  call assert_equal(["\<Tab>bar"], getline(2, '$'))
+  call feedkeys("k", 'x')
+  iput!
+  call assert_equal("\<Tab>bar", getline(1))
+  call assert_equal("\<Tab>bar", getline(3))
+  bw!
+endfunc
+
+func Test_iput_beforeafter_expandtab()
+  new
+  setlocal expandtab tabstop=8 shiftwidth=8 noshiftround
+  call setline(1, "\<Tab>foo")
+  call setreg('0', "bar", 'l')
+  iput
+  call assert_equal([repeat(' ', 8) . "bar"], getline(2, '$'))
+  :1iput!
+  call assert_equal(repeat(' ', 8) . "bar", getline(1))
+  bw!
+endfunc
+
+func Test_iput_invalidrange()
+  new
+  call setreg('0', "bar", 'l')
+  call assert_fails(':10iput', 'E16:')
+  bw!
+endfunc
+
+func Test_iput_zero_range()
+  new
+  let _var = [getreg('a'), getregtype('a')]
+  call setreg('a', 'foobar', 'l')
+  call setline(1, range(1, 2))
+  call cursor(1, 1)
+  0iput a
+  call assert_equal(['foobar', '1', '2'], getline(1, '$'))
+  %d
+  call setline(1, range(1, 2))
+  call cursor(1, 1)
+  0iput! a
+  call assert_equal(['foobar', '1', '2'], getline(1, '$'))
+  call setreg('a', _var[0], _var[1])
+  bw!
+endfunc
+
+func Test_iput_not_put()
+  new
+  call setline(1, "\<Tab>foo")
+  call setreg('0', "bar", 'l')
+  iput
+  call assert_equal("\<Tab>bar", getline(2))
+  put
+  call assert_equal("bar", getline(3))
   bw!
 endfunc
 

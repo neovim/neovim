@@ -115,7 +115,7 @@ DIAGNOSTICS
 
 EDITOR
 
-• todo
+• |:iput| works like |:put| but adjusts indent.
 
 EVENTS
 

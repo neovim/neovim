@@ -1393,8 +1393,9 @@ static void parse_register(exarg_T *eap)
       // Do not allow register = for user commands
       && (!IS_USER_CMDIDX(eap->cmdidx) || *eap->arg != '=')
       && !((eap->argt & EX_COUNT) && ascii_isdigit(*eap->arg))) {
-    if (valid_yank_reg(*eap->arg, (eap->cmdidx != CMD_put
-                                   && !IS_USER_CMDIDX(eap->cmdidx)))) {
+    if (valid_yank_reg(*eap->arg,
+                       (!IS_USER_CMDIDX(eap->cmdidx)
+                        && eap->cmdidx != CMD_put && eap->cmdidx != CMD_iput))) {
       eap->regname = (uint8_t)(*eap->arg++);
       // for '=' register: accept the rest of the line as an expression
       if (eap->arg[-1] == '=' && eap->arg[0] != NUL) {
@@ -1752,7 +1753,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
 
   if (!MODIFIABLE(curbuf) && (eap->argt & EX_MODIFY)
       // allow :put in terminals
-      && !(curbuf->terminal && eap->cmdidx == CMD_put)) {
+      && !(curbuf->terminal && (eap->cmdidx == CMD_put || eap->cmdidx == CMD_iput))) {
     errormsg = _(e_modifiable);
     goto end;
   }
@@ -2155,7 +2156,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     }
     if (!MODIFIABLE(curbuf) && (ea.argt & EX_MODIFY)
         // allow :put in terminals
-        && (!curbuf->terminal || ea.cmdidx != CMD_put)) {
+        && !(curbuf->terminal && (ea.cmdidx == CMD_put || ea.cmdidx == CMD_iput))) {
       // Command not allowed in non-'modifiable' buffer
       errormsg = _(e_modifiable);
       goto doend;
@@ -6304,6 +6305,20 @@ static void ex_put(exarg_T *eap)
   check_cursor_col(curwin);
   do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1,
          PUT_LINE|PUT_CURSLINE);
+}
+
+/// ":iput".
+static void ex_iput(exarg_T *eap)
+{
+  // ":0iput" works like ":1iput!".
+  if (eap->line2 == 0) {
+    eap->line2 = 1;
+    eap->forceit = true;
+  }
+  curwin->w_cursor.lnum = eap->line2;
+  check_cursor_col(curwin);
+  do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1L,
+         PUT_LINE|PUT_CURSLINE|PUT_FIXINDENT);
 }
 
 /// Handle ":copy" and ":move".
