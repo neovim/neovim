@@ -23,7 +23,7 @@ describe(':make', function()
       n.set_shell_powershell()
     end)
 
-    it('captures stderr & non zero exit code #14349', function()
+    it('captures stderr & non zero exit code using "commands" #14349', function()
       api.nvim_set_option_value('makeprg', testprg('shell-test') .. ' foo', {})
       local out = eval('execute("make")')
       -- Error message is captured in the file and printed in the footer
@@ -33,7 +33,28 @@ describe(':make', function()
       )
     end)
 
-    it('captures stderr & zero exit code #14349', function()
+    it('captures stderr & zero exit code using "commands" #14349', function()
+      api.nvim_set_option_value('makeprg', testprg('shell-test'), {})
+      local out = eval('execute("make")')
+      -- Ensure there are no "shell returned X" messages between
+      -- command and last line (indicating zero exit)
+      matches('LastExitCode%s+ready [$]%s+[(]', out)
+      matches('\n.*%: ready [$]', out)
+    end)
+
+    it('captures stderr & non zero exit code using "cmdlets"', function()
+      api.nvim_set_option_value('shellpipe', '2>&1 | $input | Tee-Object %s; exit $LastExitCode', {})
+      api.nvim_set_option_value('makeprg', testprg('shell-test') .. ' foo', {})
+      local out = eval('execute("make")')
+      -- Error message is captured in the file and printed in the footer
+      matches(
+        '[\r\n]+.*[\r\n]+Unknown first argument%: foo[\r\n]+%(1 of 1%)%: Unknown first argument%: foo',
+        out
+      )
+    end)
+
+    it('captures stderr & zero exit code using "cmdlets"', function()
+      api.nvim_set_option_value('shellpipe', '2>&1 | $input | Tee-Object %s; exit $LastExitCode', {})
       api.nvim_set_option_value('makeprg', testprg('shell-test'), {})
       local out = eval('execute("make")')
       -- Ensure there are no "shell returned X" messages between
