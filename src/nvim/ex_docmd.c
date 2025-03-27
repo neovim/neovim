@@ -1335,6 +1335,10 @@ void set_cmd_dflall_range(exarg_T *eap)
   eap->line1 = 1;
   switch (eap->addr_type) {
   case ADDR_LINES:
+    eap->line2 = curbuf->b_ml.ml_line_count;
+    eap->col1 = 1;
+    eap->col2 = ml_get_buf_len(curbuf, curbuf->b_ml.ml_line_count);
+    break;
   case ADDR_OTHER:
     eap->line2 = curbuf->b_ml.ml_line_count;
     break;
@@ -1503,7 +1507,9 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
   // Initialize eap
   *eap = (exarg_T){
     .line1 = 1,
+    .col1 = 0,
     .line2 = 1,
+    .col2 = 0,
     .cmd = cmdline,
     .cmdlinep = &cmdline,
     .ea_getline = NULL,
@@ -2672,8 +2678,9 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     case 't':
       if (checkforcmd(&p, "tab", 3)) {
         if (!skip_only) {
-          int tabnr = (int)get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
+          pos_T addr = get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
                                        false, 1, errormsg);
+          int tabnr = (int)addr.lnum;
           if (eap->cmd == NULL) {
             return false;
           }
@@ -2823,6 +2830,8 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
 {
   int address_count = 1;
   linenr_T lnum;
+  colnr_T cnum;
+  pos_T addr;
   bool need_check_cursor = false;
   int ret = FAIL;
 
@@ -2830,20 +2839,27 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   while (true) {
     eap->line1 = eap->line2;
     eap->line2 = get_cmd_default_range(eap);
+    eap->col1 = eap->col2;
+    eap->col2 = 0;
     eap->cmd = skipwhite(eap->cmd);
-    lnum = get_address(eap, &eap->cmd, eap->addr_type, eap->skip, silent,
+    addr = get_address(eap, &eap->cmd, eap->addr_type, eap->skip, silent,
                        eap->addr_count == 0, address_count++, errormsg);
+    lnum = addr.lnum;
+    cnum = addr.col;
+
     if (eap->cmd == NULL) {  // error detected
       goto theend;
     }
-    if (lnum == MAXLNUM) {
+    if (lnum == MAXLNUM && cnum == MAXCOL) {
       if (*eap->cmd == '%') {  // '%' - all lines
         eap->cmd++;
         switch (eap->addr_type) {
         case ADDR_LINES:
         case ADDR_OTHER:
           eap->line1 = 1;
+          eap->col1  = 1;
           eap->line2 = curbuf->b_ml.ml_line_count;
+          eap->col2  = ml_get_buf_len(curbuf, curbuf->b_ml.ml_line_count);
           break;
         case ADDR_LOADED_BUFFERS: {
           buf_T *buf = firstbuf;
@@ -2916,17 +2932,24 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           }
           assert(fm != NULL);
           eap->line1 = fm->mark.lnum;
+          eap->col1 = fm->mark.col;
           fm = mark_get_visual(curbuf, '>');
           if (!mark_check(fm, errormsg)) {
             goto theend;
           }
           assert(fm != NULL);
           eap->line2 = fm->mark.lnum;
+          eap->col2 = fm->mark.col;
           eap->addr_count++;
         }
       }
     } else {
       eap->line2 = lnum;
+
+      if (cnum != MAXCOL)
+      {
+        eap->col2 = cnum;
+      }
     }
     eap->addr_count++;
 
@@ -3366,7 +3389,7 @@ static const char *addr_error(cmd_addr_T addr_type)
 /// @param errormsg       Error message, if any
 ///
 /// @return               MAXLNUM when no Ex address was found.
-static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
+static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
                             int to_other_file, int address_count, const char **errormsg)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3378,6 +3401,9 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
 
   char *cmd = skipwhite(*ptr);
   linenr_T lnum = MAXLNUM;
+  colnr_T cnum = MAXCOL;
+  pos_T addr = { lnum, cnum, 0};
+
   do {
     switch (*cmd) {
     case '.':                               // '.' - Cursor position
@@ -3386,6 +3412,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
       case ADDR_LINES:
       case ADDR_OTHER:
         lnum = curwin->w_cursor.lnum;
+        cnum = curwin->w_cursor.col;
         break;
       case ADDR_WINDOWS:
         lnum = CURRENT_WIN_NR;
@@ -3422,6 +3449,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
       case ADDR_LINES:
       case ADDR_OTHER:
         lnum = curbuf->b_ml.ml_line_count;
+        cnum = curbuf->b_ml.ml_line_len;
         break;
       case ADDR_WINDOWS:
         lnum = LAST_WIN_NR;
@@ -3489,6 +3517,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
           mark_move_to(fm, 0);
           // Jumped to another file.
           lnum = curwin->w_cursor.lnum;
+          cnum = curwin->w_cursor.col;
         } else {
           if (!mark_check(fm, errormsg)) {
             cmd = NULL;
@@ -3496,6 +3525,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
           }
           assert(fm != NULL);
           lnum = fm->mark.lnum;
+          cnum = fm->mark.col;
         }
       }
       break;
@@ -3589,7 +3619,10 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
 
     while (true) {
       cmd = skipwhite(cmd);
-      if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd)) {
+      if (*cmd != '-' &&
+          *cmd != '+' &&
+          *cmd != '.' &&
+          !ascii_isdigit(*cmd)) {
         break;
       }
 
@@ -3632,12 +3665,12 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
       if (ascii_isdigit(*cmd)) {
         i = '+';                        // "number" is same as "+number"
       } else {
-        i = (uint8_t)(*cmd++);
+        i = (uint8_t)(*cmd++);          // '+', '-', '.'
       }
       if (!ascii_isdigit(*cmd)) {       // '+' is '+1'
         n = 1;
       } else {
-        // "number", "+number" or "-number"
+        // "number" or ".number" or "+number" or "-number"
         n = getdigits_int32(&cmd, false, MAXLNUM);
         if (n == MAXLNUM) {
           *errormsg = _(e_line_number_out_of_range);
@@ -3659,7 +3692,9 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
             && address_count >= 2) {
           hasFolding(curwin, lnum, NULL, &lnum);
         }
-        if (i == '-') {
+        if (i == '.') {
+          cnum = n;
+        } else if (i == '-') {
           lnum -= n;
         } else {
           if (lnum >= 0 && n >= INT32_MAX - lnum) {
@@ -3673,9 +3708,12 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
     }
   } while (*cmd == '/' || *cmd == '?');
 
+  addr.lnum = lnum;
+  addr.col = cnum;
+
 error:
   *ptr = cmd;
-  return lnum;
+  return addr;
 }
 
 /// Get flags from an Ex command argument.
@@ -3719,15 +3757,17 @@ static void ex_script_ni(exarg_T *eap)
 char *invalid_range(exarg_T *eap)
 {
   buf_T *buf;
-  if (eap->line1 < 0 || eap->line2 < 0 || eap->line1 > eap->line2) {
+  if (eap->line1 < 0 || eap->line2 < 0 || eap->line1 > eap->line2 ||
+      eap->col1 < 0 || eap->col2 < 0 ||
+     (eap->col1 > eap->col2 && eap->line1 == eap->line2)) {
     return _(e_invrange);
   }
 
   if (eap->argt & EX_RANGE) {
     switch (eap->addr_type) {
     case ADDR_LINES:
-      if (eap->line2 > (curbuf->b_ml.ml_line_count
-                        + (eap->cmdidx == CMD_diffget))) {
+      if (eap->line2 > (curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget)) ||
+          eap->col2 > ml_get_buf_len(curbuf, eap->line2)) {
         return _(e_invrange);
       }
       break;
@@ -6325,7 +6365,8 @@ static void ex_iput(exarg_T *eap)
 static void ex_copymove(exarg_T *eap)
 {
   const char *errormsg = NULL;
-  linenr_T n = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1, &errormsg);
+  pos_T addr = get_address(eap, &eap->arg, eap->addr_type, false, false, false, 1, &errormsg);
+  linenr_T n = addr.lnum;
   if (eap->arg == NULL) {  // error detected
     if (errormsg != NULL) {
       emsg(errormsg);
