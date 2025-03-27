@@ -558,7 +558,7 @@ end)
 describe('shell :!', function()
   before_each(clear)
 
-  it(':{range}! with powershell using "sort" filter/redirect #16271 #19250', function()
+  it(':{range}! with powershell using "commands" filter/redirect #16271 #19250', function()
     if not n.has_powershell() then
       pending('powershell not found', function() end)
       return
@@ -589,7 +589,7 @@ describe('shell :!', function()
       1]])
   end)
 
-  it(':{range}! with powershell using "Sort-Object" filter/redirect #16271 #19250', function()
+  it(':{range}! with powershell using "cmdlets" filter/redirect #16271 #19250', function()
     if not n.has_powershell() then
       pending('powershell not found', function() end)
       return
