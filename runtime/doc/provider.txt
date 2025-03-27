@@ -11,7 +11,7 @@ the providers and how to install them.
 						*E319*
 Use of a feature requiring a missing provider is an error: >
 
-    E319: No "foo" provider found. Run ":checkhealth provider"
+    E319: No "foo" provider found. Run ":checkhealth vim.provider"
 
 Run the |:checkhealth| command, and review the sections below.
 

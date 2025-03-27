@@ -8530,7 +8530,7 @@ void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 typval_T eval_call_provider(char *provider, char *method, list_T *arguments, bool discard)
 {
   if (!eval_has_provider(provider, false)) {
-    semsg("E319: No \"%s\" provider found. Run \":checkhealth provider\"",
+    semsg("E319: No \"%s\" provider found. Run \":checkhealth vim.provider\"",
           provider);
     return (typval_T){
       .v_type = VAR_NUMBER,
