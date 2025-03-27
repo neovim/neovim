@@ -666,7 +666,7 @@ function M.set_shell_powershell(fake)
   M.exec([[
     let &shell = ']] .. shell .. [['
     set shellquote= shellxquote=
-    let &shellcmdflag = '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command '
+    let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command '
     let &shellcmdflag .= '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();'
     let &shellcmdflag .= '$PSDefaultParameterValues[''*:Encoding'']=''utf8'';'
     let &shellcmdflag .= ']] .. cmd .. [['
