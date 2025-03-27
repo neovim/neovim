@@ -131,7 +131,8 @@ LUA
 
 OPTIONS
 
-• todo
+• 'completefuzzycollect' enables fuzzy collection of candidates for (some)
+  |ins-completion| modes.
 
 PERFORMANCE
 
