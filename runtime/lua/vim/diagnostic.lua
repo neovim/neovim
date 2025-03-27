@@ -1674,6 +1674,42 @@ local function distance_between_cols(bufnr, lnum, start_col, end_col)
   end)
 end
 
+-- Split a string into multiple lines, each no longer than max_width
+-- The split will only occur on spaces to preserve readability
+-- @param str string
+-- @param max_width integer
+local function split_line(str, max_width)
+  if #str <= max_width then
+    return { str }
+  end
+
+  local lines = {}
+  local current_line = ''
+
+  for word in string.gmatch(str, '%S+') do
+    -- If adding this word would exceed max_width
+    if #current_line + #word + 1 > max_width then
+      -- Add the current line to our results
+      table.insert(lines, current_line)
+      current_line = word
+    else
+      -- Add word to the current line with a space if needed
+      if current_line ~= '' then
+        current_line = current_line .. ' ' .. word
+      else
+        current_line = word
+      end
+    end
+  end
+
+  -- Don't forget the last line
+  if current_line ~= '' then
+    table.insert(lines, current_line)
+  end
+
+  return lines
+end
+
 --- @param namespace integer
 --- @param bufnr integer
 --- @param diagnostics vim.Diagnostic[]
@@ -1797,6 +1833,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
         else
           center_char = chars.up_right
         end
+
         local center = {
           {
             string.format('%s%s', center_char, string.rep(chars.horizontal, 4) .. ' '),
@@ -1804,12 +1841,26 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
           },
         }
 
+        ---@type string[]
+        local lines = {}
+        local sign_column_width = vim.fn.getwininfo(vim.fn.win_getid())[1].textoff
+        local text_area_width = vim.api.nvim_win_get_width(0) - sign_column_width
+
+        for msg_line in diagnostic.message:gmatch('([^\n]+)') do
+          vim.list_extend(
+            lines,
+
+            -- Split the line into multiple lines if it's longer than the distance between the
+            -- diagnostic and the end of the text area
+            split_line(msg_line, text_area_width - diagnostic.col - #center[1] - #left[1] - 2)
+          )
+        end
         -- We can draw on the left side if and only if:
         -- a. Is the last one stacked this line.
         -- b. Has enough space on the left.
         -- c. Is just one line.
         -- d. Is not an overlap.
-        for msg_line in diagnostic.message:gmatch('([^\n]+)') do
+        for _, msg_line in ipairs(lines) do
           local vline = {}
           vim.list_extend(vline, left)
           vim.list_extend(vline, center)
