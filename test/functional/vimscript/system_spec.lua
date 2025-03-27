@@ -558,7 +558,7 @@ end)
 describe('shell :!', function()
   before_each(clear)
 
-  it(':{range}! with powershell filter/redirect #16271 #19250', function()
+  it(':{range}! with powershell using "sort" filter/redirect #16271 #19250', function()
     if not n.has_powershell() then
       pending('powershell not found', function() end)
       return
@@ -571,16 +571,40 @@ describe('shell :!', function()
       4
       2]])
     if is_os('win') then
-      feed(':4verbose %!Sort-Object -Descending<cr>')
+      feed(':4verbose %!& sort /R<cr>')
       screen:expect {
-        any = [[Executing command: "Sort%-Object %-Descending".*]],
+        any = [[Executing command: " $input | & sort /R".*]],
       }
     else
       feed(':4verbose %!& sort -r<cr>')
       screen:expect {
-        any = [[Executing command: "& sort %-r".*]],
+        any = [[Executing command: " $input | & sort %-r".*]],
       }
     end
+    feed('<CR>')
+    expect([[
+      4
+      3
+      2
+      1]])
+  end)
+
+  it(':{range}! with powershell using "Sort-Object" filter/redirect #16271 #19250', function()
+    if not n.has_powershell() then
+      pending('powershell not found', function() end)
+      return
+    end
+    local screen = Screen.new(500, 8)
+    n.set_shell_powershell()
+    insert([[
+      3
+      1
+      4
+      2]])
+    feed(':4verbose %!Sort-Object -Descending<cr>')
+    screen:expect {
+      any = [[Executing command: " $input | Sort%-Object %-Descending".*]],
+    }
     feed('<CR>')
     expect([[
       4
@@ -609,7 +633,7 @@ describe('shell :!', function()
     n.set_shell_powershell(true)
     feed(':4verbose %w !& sort<cr>')
     screen:expect {
-      any = [[Executing command: "& sort".*]],
+      any = [[Executing command: " $input | & sort".*]],
     }
     feed('<CR>')
     n.expect_exit(command, 'qall!')
