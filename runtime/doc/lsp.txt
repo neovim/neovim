@@ -201,6 +201,10 @@ Example: Enable auto-completion and auto-formatting ("linting"): >lua
 
         -- Enable auto-completion. Note: Use CTRL-Y to select an item. |complete_CTRL-Y|
         if client:supports_method('textDocument/completion') then
+          -- Optional: trigger autocompletion on EVERY keypress. May be slow!
+          -- local chars = {}; for i = 32, 126 do table.insert(chars, string.char(i)) end
+          -- client.server_capabilities.completionProvider.triggerCharacters = chars
+
           vim.lsp.completion.enable(true, client.id, args.buf, {autotrigger = true})
         end
 
@@ -1881,11 +1885,34 @@ Example: activate LSP-driven auto-completion: >lua
     })
 <
 
+                                                          *lsp-autocompletion*
+
+The LSP `triggerCharacters` field decides when to trigger autocompletion. If
+you want to trigger on EVERY keypress you can either:
+• Extend `client.server_capabilities.completionProvider.triggerCharacters` on
+  `LspAttach`, before you call
+  `vim.lsp.completion.enable(… {autotrigger=true})`. See the |lsp-attach|
+  example.
+• Call `vim.lsp.completion.get()` from the handler described at
+  |compl-autocomplete|.
+
 
                                                  *vim.lsp.completion.enable()*
 enable({enable}, {client_id}, {bufnr}, {opts})
     Enables or disables completions from the given language client in the
-    given buffer. Example: |lsp-attach| |lsp-completion|
+    given buffer. Effects of enabling completions are:
+    • Calling |vim.lsp.completion.get()| uses the enabled clients to retrieve
+      completion candidates
+    • Accepting a completion candidate using `<c-y>` applies side effects like
+      expanding snippets, text edits (e.g. insert import statements) and
+      executing associated commands. This works for completions triggered via
+      autotrigger, omnifunc or completion.get()
+
+    Example: |lsp-attach| |lsp-completion|
+
+    Note: the behavior of `autotrigger=true` is controlled by the LSP
+    `triggerCharacters` field. You can override it on LspAttach, see
+    |lsp-autocompletion|.
 
     Parameters: ~
       • {enable}     (`boolean`) True to enable, false to disable

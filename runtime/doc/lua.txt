@@ -435,18 +435,12 @@ where the args are converted to Lua values. The expression >vim
 is equivalent to the Lua chunk >lua
     return somemod.func(...)
 
-In addition, functions of packages can be accessed like >vim
+Lua module functions can be accessed like: >vim
     call v:lua.require'mypack'.func(arg1, arg2)
     call v:lua.require'mypack.submod'.func(arg1, arg2)
 Note: Only single quote form without parens is allowed. Using
-`require"mypack"` or `require('mypack')` as prefixes do NOT work (the latter
-is still valid as a function call of itself, in case require returns a useful
-value).
+`require"mypack"` or `require('mypack')` as a prefix does NOT work.
 
-The `v:lua` prefix may be used to call Lua functions as |method|s. For
-example: >vim
-    :eval arg1->v:lua.somemod.func(arg2)
-<
 You can use `v:lua` in "func" options like 'tagfunc', 'omnifunc', etc.
 For example consider the following Lua omnifunc handler: >lua
 
@@ -457,11 +451,13 @@ For example consider the following Lua omnifunc handler: >lua
         return {'stuff', 'steam', 'strange things'}
       end
     end
+    -- Note: The module ("mymod") must be a Lua global, or use require() as
+    -- shown above to access it from a package.
     vim.bo[buf].omnifunc = 'v:lua.mymod.omnifunc'
 
-Note: The module ("mymod" in the above example) must either be a Lua global,
-or use require() as shown above to access it from a package.
-
+You can also use `v:lua` to call Lua functions as Vimscript |method|s: >vim
+    :eval arg1->v:lua.somemod.func(arg2)
+<
 Note: `v:lua` without a call is not allowed in a Vimscript expression:
 |Funcref|s cannot represent Lua functions. The following are errors: >vim
 
@@ -3173,9 +3169,10 @@ vim.fs.relpath({base}, {target}, {opts})                    *vim.fs.relpath()*
         (`string?`)
 
 vim.fs.rm({path}, {opts})                                        *vim.fs.rm()*
-    WARNING: This feature is experimental/unstable.
-
     Remove files or directories
+
+    Attributes: ~
+        Since: 0.11.0
 
     Parameters: ~
       • {path}  (`string`) Path to remove

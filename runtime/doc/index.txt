@@ -1348,6 +1348,8 @@ tag		command		action ~
 |:inoreabbrev|	:inorea[bbrev]	like ":noreabbrev" but for Insert mode
 |:inoremenu|	:inoreme[nu]	like ":noremenu" but for Insert mode
 |:intro|	:int[ro]	print the introductory message
+|:iput|		:ip[ut]		like |:put|, but adjust the indent to the
+				current line
 |:isearch|	:is[earch]	list one line where identifier matches
 |:isplit|	:isp[lit]	split window and jump to definition of
 				identifier

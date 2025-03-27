@@ -1352,6 +1352,12 @@ describe('cmdline height', function()
     -- cmdheight unchanged.
     eq(1, eval('&cmdheight'))
   end)
+
+  it('not increased to 0 from 1 with wincmd _', function()
+    command('set cmdheight=0 laststatus=0')
+    command('wincmd _')
+    eq(0, eval('&cmdheight'))
+  end)
 end)
 
 describe('cmdheight=0', function()

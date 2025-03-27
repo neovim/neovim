@@ -22,6 +22,14 @@
 ---   end,
 --- })
 --- ```
+---
+--- [lsp-autocompletion]()
+---
+--- The LSP `triggerCharacters` field decides when to trigger autocompletion. If you want to trigger
+--- on EVERY keypress you can either:
+--- - Extend `client.server_capabilities.completionProvider.triggerCharacters` on `LspAttach`,
+---   before you call `vim.lsp.completion.enable(… {autotrigger=true})`. See the |lsp-attach| example.
+--- - Call `vim.lsp.completion.get()` from the handler described at |compl-autocomplete|.
 
 local M = {}
 
@@ -778,8 +786,21 @@ local function disable_completions(client_id, bufnr)
   end
 end
 
---- Enables or disables completions from the given language client in the given buffer.
+--- Enables or disables completions from the given language client in the given
+--- buffer. Effects of enabling completions are:
+---
+--- - Calling |vim.lsp.completion.get()| uses the enabled clients to retrieve
+---   completion candidates
+---
+--- - Accepting a completion candidate using `<c-y>` applies side effects like
+---   expanding snippets, text edits (e.g. insert import statements) and
+---   executing associated commands. This works for completions triggered via
+---   autotrigger, omnifunc or completion.get()
+---
 --- Example: |lsp-attach| |lsp-completion|
+---
+--- Note: the behavior of `autotrigger=true` is controlled by the LSP `triggerCharacters` field. You
+--- can override it on LspAttach, see |lsp-autocompletion|.
 ---
 --- @param enable boolean True to enable, false to disable
 --- @param client_id integer Client ID

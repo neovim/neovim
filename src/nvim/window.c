@@ -196,6 +196,10 @@ win_T *swbuf_goto_win_with_buf(buf_T *buf)
   return wp;
 }
 
+// 'cmdheight' value explicitly set by the user: window commands are allowed to
+// resize the topframe to values higher than this minimum, but not lower.
+static OptInt min_set_ch = 1;
+
 /// all CTRL-W window commands are handled here, called from normal_cmd().
 ///
 /// @param xchar  extra char from ":wincmd gx" or NUL
@@ -513,7 +517,7 @@ newwindow:
   // set current window height
   case Ctrl__:
   case '_':
-    win_setheight(Prenum ? Prenum : Rows - 1);
+    win_setheight(Prenum ? Prenum : Rows - (int)min_set_ch);
     break;
 
   // increase current window width
@@ -3505,10 +3509,6 @@ static bool is_bottom_win(win_T *wp)
   return true;
 }
 
-// 'cmdheight' value explicitly set by the user: window commands are allowed to
-// resize the topframe to values higher than this minimum, but not lower.
-static OptInt min_set_ch = 1;
-
 /// Set a new height for a frame.  Recursively sets the height for contained
 /// frames and windows.  Caller must take care of positions.
 ///
@@ -6431,7 +6431,7 @@ void win_fix_scroll(bool resize)
           && wp->w_botline - 1 <= wp->w_buffer->b_ml.ml_line_count) {
         int diff = (wp->w_winrow - wp->w_prev_winrow)
                    + (wp->w_height - wp->w_prev_height);
-        linenr_T lnum = wp->w_cursor.lnum;
+        pos_T cursor = wp->w_cursor;
         wp->w_cursor.lnum = wp->w_botline - 1;
 
         // Add difference in height and row to botline.
@@ -6445,7 +6445,8 @@ void win_fix_scroll(bool resize)
         // screen.
         wp->w_fraction = FRACTION_MULT;
         scroll_to_fraction(wp, wp->w_prev_height);
-        wp->w_cursor.lnum = lnum;
+        wp->w_cursor = cursor;
+        wp->w_valid &= ~VALID_WCOL;
       } else if (wp == curwin) {
         wp->w_valid &= ~VALID_CROW;
       }

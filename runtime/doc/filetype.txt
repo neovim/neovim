@@ -791,14 +791,11 @@ Variables:
 To use Nvim as a manpager: >bash
     export MANPAGER='nvim +Man!'
 
-Note that when running `man` from the shell and with that `MANPAGER` in your
-environment, `man` will pre-format the manpage using `groff`. Thus, Nvim
-will inevitably display the manual page as it was passed to it from stdin. One
-of the caveats of this is that the width will _always_ be hard-wrapped and not
-soft wrapped as with `g:man_hardwrap=0`. You can set in your environment: >bash
-    export MANWIDTH=999
-
-So `groff`'s pre-formatting output will be the same as with `g:man_hardwrap=0` i.e soft-wrapped.
+Note: when running `man` from the shell with Nvim as `$MANPAGER`, `man` will
+pre-format the manpage using `groff`, and Nvim will display the manual page as
+it was received from stdin (it can't "undo" the hard-wrap caused by
+man/groff). To prevent man/groff from hard-wrapping the manpage, you can set
+`$MANWIDTH=999` in your environment.
 
 To disable bold highlighting: >vim
     :highlight link manBold Normal

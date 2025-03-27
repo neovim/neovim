@@ -6932,29 +6932,58 @@ describe('builtin popupmenu', function()
         ]])
         feed('o<BS><C-R>=Comp()<CR>')
         screen:expect_unchanged(true)
+        feed('<C-E><Esc>')
 
-        feed('<Esc>')
-        command('set completeopt+=fuzzy,menu')
+        command('hi PmenuMatchSel guibg=NONE')
+        command('hi PmenuMatch guibg=NONE')
+        command('set cot=menu,noinsert,fuzzy')
+        feed('S<C-X><C-O>')
+        screen:expect(pum_start)
+        feed('fb')
+        screen:expect([[
+          fb^                              |
+          {ms:f}{s:oo}{ms:B}{s:az  fookind }{1:                }|
+          {mn:f}{n:oo}{mn:b}{n:ar  fookind }{1:                }|
+          {mn:f}{n:oo}{mn:b}{n:ala fookind }{1:                }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+
+        feed('<C-E><Esc>')
+      end)
+
+      it('completefuzzycollect', function()
+        exec([[
+          set completefuzzycollect=keyword,files
+          set completeopt=menu,menuone
+        ]])
+
         feed('S hello helio hero h<C-X><C-P>')
         screen:expect([[
-           hello helio hero h^             |
-          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
-          {1:~                }{n: }{mn:h}{n:elio        }{1: }|
-          {1:~                }{s: }{ms:h}{s:ero         }{1: }|
+           hello helio hero hello^         |
+          {1:~                }{n: hero         }{1: }|
+          {1:~                }{n: helio        }{1: }|
+          {1:~                }{s: hello        }{1: }|
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])
 
         feed('<Esc>S hello helio hero h<C-X><C-P><C-P>')
         screen:expect([[
-           hello helio hero h^             |
-          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
-          {1:~                }{s: }{ms:h}{s:elio        }{1: }|
-          {1:~                }{n: }{mn:h}{n:ero         }{1: }|
+           hello helio hero helio^         |
+          {1:~                }{n: hero         }{1: }|
+          {1:~                }{s: helio        }{1: }|
+          {1:~                }{n: hello        }{1: }|
           {1:~                               }|*15
           {2:-- }{5:match 2 of 3}                 |
         ]])
 
+        feed('<Esc>S/non_existing_folder<C-X><C-F>')
+        screen:expect([[
+          /non_existing_folder^            |
+          {1:~                               }|*18
+          {2:-- }{6:Pattern not found}            |
+        ]])
         feed('<C-E><Esc>')
       end)
 

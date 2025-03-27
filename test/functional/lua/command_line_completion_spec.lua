@@ -269,6 +269,18 @@ describe('nlua_expand_pat', function()
       }
       eq(expected, actual)
     end)
+
+    it('vim.env', function()
+      exec_lua [[
+        vim.env.NLUA_ENV_VAR = 'foo'
+      ]]
+      local actual = get_completions('vim.env.NLUA')
+      local expected = {
+        { 'NLUA_ENV_VAR' },
+        #'vim.env.',
+      }
+      eq(expected, actual)
+    end)
   end)
 
   describe('completes', function()

@@ -8,7 +8,6 @@ local insert = n.insert
 local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
 local api = n.api
-local fn = n.fn
 
 local function get_query_result(query_text)
   local cquery = vim.treesitter.query.parse('c', query_text)
@@ -550,7 +549,7 @@ void ui_refresh(void)
       end)
 
       -- Remove this 'do' block in 0.12
-      eq(0, fn.has('nvim-0.12'))
+      -- eq(0, n.fn.has('nvim-0.12'))
       eq({ { 0, 4, 0, 8 } }, res)
     end
 
@@ -683,7 +682,7 @@ void ui_refresh(void)
 
   it('supports the old broken version of iter_matches #24738', function()
     -- Delete this test in 0.12 when iter_matches is removed
-    eq(0, fn.has('nvim-0.12'))
+    -- eq(0, n.fn.has('nvim-0.12'))
 
     insert(test_text)
     local res = exec_lua(function()

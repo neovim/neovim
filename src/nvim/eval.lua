@@ -6494,7 +6494,9 @@ M.funcs = {
     base = 1,
     desc = [=[
       Evaluate Lua expression {expr} and return its result converted
-      to Vim data structures. See |lua-eval| for more details.
+      to Vim data structures. See |lua-eval| for details.
+
+      See also |v:lua-call|.
 
     ]=],
     lua = false,
@@ -7148,6 +7150,9 @@ M.funcs = {
       		given sequence.
           limit	Maximum number of matches in {list} to be
       		returned.  Zero means no limit.
+          camelcase	Use enhanced camel case scoring making results
+      		better suited for completion related to
+      		programming languages.  Defaults to v:true.
 
       If {list} is a list of dictionaries, then the optional {dict}
       argument supports the following additional items:
