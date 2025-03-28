@@ -399,7 +399,7 @@ syn keyword eighthMath decimal hex base@ base!
 syn match eighthInteger '\<-\=[0-9.]*[0-9.]\+\>'
 
 " recognize hex and binary numbers, the '$' and '%' notation is for eighth
-syn match eighthInteger '\<\$\x*\x\+\>' " *1* --- dont't mess
+syn match eighthInteger '\<\$\x*\x\+\>' " *1* --- don't mess
 syn match eighthInteger '\<\x*\d\x*\>'  " *2* --- this order!
 syn match eighthInteger '\<%[0-1]*[0-1]\+\>'
 syn match eighthInteger "\<'.\>"
@@ -430,7 +430,7 @@ syn region eighthComment start="\zs\\" end="$" contains=eighthTodo,@Spell
 syn region eighthComment start="\zs--\s" end="$" contains=eighthTodo,@Spell
 syn region eighthComment start="\zs(\*\_[:space:]" end="\_[:space:]\*)\ze" contains=eightTodo,@Spell
 
-" The default methods for highlighting. Can be overriden later.
+" The default methods for highlighting. Can be overridden later.
 hi def link eighthTodo Todo
 hi def link eighthNeeds2 Include
 hi def link eighthNeeds Error

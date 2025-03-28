@@ -126,7 +126,7 @@ syn match revavocs /[^~ ]*\~\>/
 syn keyword revamath decimal hex base binary octal
 syn match revainteger '\<-\=[0-9.]*[0-9.]\+\>'
 " recognize hex and binary numbers, the '$' and '%' notation is for greva
-syn match revainteger '\<\$\x*\x\+\>' " *1* --- dont't mess
+syn match revainteger '\<\$\x*\x\+\>' " *1* --- don't mess
 syn match revainteger '\<\x*\d\x*\>'  " *2* --- this order!
 syn match revainteger '\<%[0-1]*[0-1]\+\>'
 syn match revainteger "\<'.\>"

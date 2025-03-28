@@ -330,7 +330,7 @@ SynDisplay match informNumber "\<\$\$[01]\+\>"
 " Comments
 syn match informComment "!.*" contains=informTodo
 
-" Syncronization
+" Synchronization
 syn sync match informSyncStringEnd grouphere NONE /"[;,]\s*$/
 syn sync match informSyncRoutineEnd grouphere NONE /][;,]\s*$/
 syn sync match informSyncCommentEnd grouphere NONE /^\s*!.*$/

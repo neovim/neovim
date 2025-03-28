@@ -255,7 +255,7 @@ hi def link sasDataLine SpecialChar
 hi def link sasFormat SpecialChar
 hi def link sasReserved Special
 
-" Syncronize from beginning to keep large blocks from losing
+" Synchronize from beginning to keep large blocks from losing
 " syntax coloring while moving through code.
 syn sync fromstart
 

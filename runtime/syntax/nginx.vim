@@ -1960,7 +1960,7 @@ syn keyword ngxDirectiveThirdParty srcache_default_expire
 syn keyword ngxDirectiveThirdParty srcache_max_expire
 
 " SSSD Info Module <https://github.com/veruu/ngx_sssd_info>
-" Retrives additional attributes from SSSD for current authentizated user
+" Retrieves additional attributes from SSSD for current authentizated user
 syn keyword ngxDirectiveThirdParty sssd_info
 syn keyword ngxDirectiveThirdParty sssd_info_output_to
 syn keyword ngxDirectiveThirdParty sssd_info_groups

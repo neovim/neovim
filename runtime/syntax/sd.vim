@@ -19,7 +19,7 @@ syn case ignore
 " Comments
 syn match sdComment /\s*[#;].*$/
 
-" IP Adresses
+" IP Addresses
 syn cluster sdIPCluster contains=sdIPError,sdIPSpecial
 syn match sdIPError /\%(\d\{4,}\|25[6-9]\|2[6-9]\d\|[3-9]\d\{2}\)[\.0-9]*/ contained
 syn match sdIPSpecial /\%(127\.\d\{1,3}\.\d\{1,3}\.\d\{1,3}\)/ contained
