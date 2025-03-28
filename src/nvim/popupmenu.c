@@ -199,6 +199,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     }
 
     int def_width = (int)p_pw;
+    if (p_pmw > 0 && def_width > p_pmw) {
+      def_width = (int)p_pmw;
+    }
 
     win_T *pvwin = NULL;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -307,6 +310,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
     pum_compute_size();
     int max_width = pum_base_width;
+    if (p_pmw > 0 && max_width > p_pmw) {
+      max_width = (int)p_pmw;
+    }
 
     // if there are more items than room we need a scrollbar
     if (pum_height < size) {
@@ -339,6 +345,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       if (pum_width > content_width && pum_width > p_pw) {
         // Reduce width to fit item
         pum_width = MAX(content_width, (int)p_pw);
+        if (p_pmw > 0 && pum_width > p_pmw) {
+          pum_width = (int)p_pmw;
+        }
       } else if (((cursor_col - min_col > p_pw
                    || cursor_col - min_col > max_width) && !pum_rl)
                  || (pum_rl && (cursor_col < max_col - p_pw
@@ -365,6 +374,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
         if (pum_width < p_pw) {
           pum_width = (int)p_pw;
+          if (p_pmw > 0 && pum_width > p_pmw) {
+            pum_width = (int)p_pmw;
+          }
           if (pum_rl) {
             if (pum_width > pum_col - min_col) {
               pum_width = pum_col - min_col;
@@ -376,6 +388,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
           }
         } else if (pum_width > content_width && pum_width > p_pw) {
           pum_width = MAX(content_width, (int)p_pw);
+          if (p_pmw > 0 && pum_width > p_pmw) {
+            pum_width = (int)p_pmw;
+          }
         }
       }
     } else if (max_col - min_col < def_width) {
@@ -386,10 +401,16 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         pum_col = min_col;
       }
       pum_width = max_col - min_col - 1;
+      if (p_pmw > 0 && pum_width > p_pmw) {
+        pum_width = (int)p_pmw;
+      }
     } else {
       if (max_width > p_pw) {
         // truncate
         max_width = (int)p_pw;
+      }
+      if (p_pmw > 0 && max_width > p_pmw) {
+        max_width = (int)p_pmw;
       }
       if (pum_rl) {
         pum_col = min_col + max_width - 1;
@@ -640,6 +661,11 @@ void pum_redraw(void)
     bool last_isabbr = order[2] == CPT_ABBR;
     int orig_attr = -1;
 
+    bool need_ellipsis = false;
+    int used_cells = 0;
+    int ellipsis_width = 3;
+    char *last_char = NULL;
+
     for (int j = 0; j < 3; j++) {
       int item_type = order[j];
       hlf = hlfs[item_type];
@@ -685,6 +711,7 @@ void pum_redraw(void)
             char *rt = reverse_text(st);
             char *rt_start = rt;
             int cells = vim_strsize(rt);
+            need_ellipsis = p_pmw > ellipsis_width && pum_width == p_pmw && cells > pum_width;
 
             if (cells > pum_width) {
               do {
@@ -692,7 +719,43 @@ void pum_redraw(void)
                 MB_PTR_ADV(rt);
               } while (cells > pum_width);
 
-              if (cells < pum_width) {
+              if (need_ellipsis) {
+                char *orig_rt = rt;
+                while (*orig_rt != NUL) {
+                  int char_cells = utf_ptr2cells(orig_rt);
+                  if (used_cells + char_cells > ellipsis_width) {
+                    break;
+                  }
+                  used_cells += char_cells;
+                  MB_PTR_ADV(orig_rt);
+                  last_char = orig_rt;
+                }
+
+                if (last_char != NULL) {
+                  int over_cell = 0;
+                  if (used_cells < ellipsis_width) {
+                    over_cell = ellipsis_width - used_cells;
+                    MB_PTR_ADV(orig_rt);
+                    last_char = orig_rt;
+                  }
+
+                  int kept_len = (int)strlen(last_char);
+                  char *new_str = xmalloc((size_t)ellipsis_width + (size_t)over_cell +
+                                          (size_t)kept_len + 1);
+                  if (!new_str) {
+                    return;
+                  }
+                  memset(new_str, '.', (size_t)ellipsis_width);
+                  if (over_cell > 0) {
+                    memset(new_str + ellipsis_width, ' ', (size_t)over_cell);
+                  }
+                  memcpy(new_str + ellipsis_width + over_cell, last_char, (size_t)kept_len);
+                  new_str[ellipsis_width + kept_len + over_cell] = NUL;
+                  char *old_rt = rt_start;
+                  rt = rt_start = new_str;
+                  xfree(old_rt);
+                }
+              } else if (cells < pum_width) {
                 // Most left character requires 2-cells but only 1 cell is available on
                 // screen.  Put a '<' on the left of the pum item.
                 *(--rt) = '<';
@@ -710,6 +773,55 @@ void pum_redraw(void)
             xfree(st);
             grid_col -= width;
           } else {
+            int size = (int)strlen(st);
+            int cells = (int)mb_string2cells(st);
+            need_ellipsis = p_pmw > ellipsis_width && pum_width == p_pmw
+                            && grid_col + cells > pum_col + pum_width;
+
+            // only draw the text that fits
+            while (size > 0 && pum_col + cells > pum_width + pum_col) {
+              size--;
+              size -= utf_head_off(st, st + size);
+              cells -= utf_ptr2cells(st + size);
+            }
+
+            // Add '...' indicator if truncated due to p_pmw
+            if (need_ellipsis) {
+              char *st_end = st + size;
+
+              while (st_end > st) {
+                int char_cells = utf_ptr2cells(st_end);
+                if (used_cells + char_cells > ellipsis_width) {
+                  break;
+                }
+                used_cells += char_cells;
+                MB_PTR_BACK(st, st_end);
+                last_char = st_end;
+              }
+
+              if (last_char != NULL) {
+                int over_cell = 0;
+                if (used_cells < ellipsis_width) {
+                  MB_PTR_BACK(st, st_end);
+                  last_char = st_end;
+                  over_cell = ellipsis_width - used_cells;
+                }
+                int kept_len = (int)(last_char - st);
+                char *new_str = xmalloc((size_t)ellipsis_width + (size_t)over_cell +
+                                        (size_t)kept_len + 1);
+                if (!new_str) {
+                  return;
+                }
+                memcpy(new_str, st, (size_t)kept_len);
+                if (over_cell > 0) {
+                  memset(new_str + kept_len, ' ', (size_t)over_cell);
+                }
+                memset(new_str + kept_len + over_cell, '.', (size_t)ellipsis_width);
+                new_str[kept_len + ellipsis_width + over_cell] = NUL;
+                xfree(st);
+                st = new_str;
+              }
+            }
             if (attrs == NULL) {
               grid_line_puts(grid_col, st, -1, attr);
             } else {

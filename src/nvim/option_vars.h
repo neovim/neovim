@@ -305,6 +305,7 @@ EXTERN char *p_csl;             ///< 'completeslash'
 #endif
 EXTERN OptInt p_pb;             ///< 'pumblend'
 EXTERN OptInt p_ph;             ///< 'pumheight'
+EXTERN OptInt p_pmw;            ///< 'pummaxwidth'
 EXTERN OptInt p_pw;             ///< 'pumwidth'
 EXTERN char *p_com;             ///< 'comments'
 EXTERN char *p_cpo;             ///< 'cpoptions'

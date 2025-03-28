@@ -7681,6 +7681,115 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                    |
         ]])
       end)
+
+      -- old test Test_pum_maxwidth
+      it('pummaxwidth #test', function()
+        feed('S123456789_123456789_123456789_a<CR>123456789_123456789_123456789_b<CR>            123<ESC>gg')
+        feed('G"zyy')
+        feed('A<C-N>')
+        screen:expect([[
+          123456789_123456789_123456789_a |
+          123456789_123456789_123456789_b |
+                      123456789_123456789_|
+          123456789_a^                     |
+          {1:~          }{s: 123456789_123456789_}|
+          {1:~          }{n: 123456789_123456789_}|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+        feed('<Esc>3Gdd"zp')
+
+        command('set pummaxwidth=10')
+        feed('GA<C-N>')
+        screen:expect([[
+          123456789_123456789_123456789_a |
+          123456789_123456789_123456789_b |
+                      123456789_123456789_|
+          123456789_a^                     |
+          {1:~          }{s: 1234567...}{1:          }|
+          {1:~          }{n: 1234567...}{1:          }|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+        feed('<Esc>3Gdd"zp')
+
+        command('set pummaxwidth=20')
+        feed('GA<C-N>')
+        screen:expect([[
+          123456789_123456789_123456789_a |
+          123456789_123456789_123456789_b |
+                      123456789_123456789_|
+          123456789_a^                     |
+          {1:~          }{s: 123456789_123456789_}|
+          {1:~          }{n: 123456789_123456789_}|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+        feed('<Esc>3Gdd"zp')
+
+        -- failed
+        command('set pummaxwidth=8 pumwidth=20')
+        feed('GA<C-N>')
+      end)
+
+      -- old test Test_pum_maxwidth_multibyte
+      it('pummaxwidth multibyte', function()
+        exec([[
+          func Omni_test(findstart, base)
+             if a:findstart
+               return col(".")
+             endif
+             return [
+               \ #{word: "123456789_123456789_123456789_"},
+               \ #{word: "一二三四五六七八九十"},
+               \ ]
+           endfunc
+           set omnifunc=Omni_test
+        ]])
+
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          123456789_123456789_123456789_^  |
+          {s:123456789_123456789_123456789_ }{1: }|
+          {n:一二三四五六七八九十           }{1: }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+        feed('<ESC>')
+
+        command('set pummaxwidth=10')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          123456789_123456789_123456789_^  |
+          {s:1234567...}{1:                      }|
+          {n:一二三 ...}{1:                      }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+        feed('<ESC>')
+
+        command('set rightleft')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+           ^ _987654321_987654321_987654321|
+          {1:                      }{s:...7654321}|
+          {1:                      }{n:... 三二一}|
+          {1:                               ~}|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+        feed('<ESC>')
+        command('set rl&')
+
+        command('set pummaxwidth=2')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          123456789_123456789_123456789_^  |
+          {s:12}{1:                              }|
+          {n:一}{1:                              }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+      end)
     end
   end
 
