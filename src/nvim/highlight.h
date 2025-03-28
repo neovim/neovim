@@ -45,6 +45,7 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_CHD] = "DiffChange",
   [HLF_DED] = "DiffDelete",
   [HLF_TXD] = "DiffText",
+  [HLF_TXA] = "DiffTextAdd",
   [HLF_SC] = "SignColumn",
   [HLF_CONCEAL] = "Conceal",
   [HLF_SPB] = "SpellBad",

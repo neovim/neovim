@@ -430,13 +430,13 @@ endfunc
 
 func Common_icase_test()
   edit one
-  call setline(1, ['One', 'Two', 'Three', 'Four', 'Fi#ve'])
+  call setline(1, ['One', 'Two', 'Three', 'Four', 'Fi#vϵ', 'Si⃗x', 'Se⃗ve⃗n'])
   redraw
   let normattr = screenattr(1, 1)
   diffthis
 
   botright vert new two
-  call setline(1, ['one', 'TWO', 'Three ', 'Four', 'fI=VE'])
+  call setline(1, ['one', 'TWO', 'Three ', 'Four', 'fI=VΕ', 'SI⃗x', 'SEvE⃗n'])
   diffthis
 
   redraw
@@ -444,10 +444,13 @@ func Common_icase_test()
   call assert_equal(normattr, screenattr(2, 1))
   call assert_notequal(normattr, screenattr(3, 1))
   call assert_equal(normattr, screenattr(4, 1))
+  call assert_equal(normattr, screenattr(6, 2))
+  call assert_notequal(normattr, screenattr(7, 2))
 
   let dtextattr = screenattr(5, 3)
   call assert_notequal(dtextattr, screenattr(5, 1))
   call assert_notequal(dtextattr, screenattr(5, 5))
+  call assert_notequal(dtextattr, screenattr(7, 4))
 
   diffoff!
   %bwipe!
@@ -779,10 +782,10 @@ endfunc
 
 func Test_diff_hlID()
   new
-  call setline(1, [1, 2, 3])
+  call setline(1, [1, 2, 3, 'Yz', 'a dxxg',])
   diffthis
   vnew
-  call setline(1, ['1x', 2, 'x', 3])
+  call setline(1, ['1x', 2, 'x', 3, 'yx', 'abc defg'])
   diffthis
   redraw
 
@@ -793,6 +796,26 @@ func Test_diff_hlID()
   call diff_hlID(2, 1)->synIDattr("name")->assert_equal("")
   call diff_hlID(3, 1)->synIDattr("name")->assert_equal("DiffAdd")
   eval 4->diff_hlID(1)->synIDattr("name")->assert_equal("")
+  call diff_hlID(5, 1)->synIDattr("name")->assert_equal("DiffText")
+  call diff_hlID(5, 2)->synIDattr("name")->assert_equal("DiffText")
+
+  set diffopt+=icase " test that caching is invalidated by diffopt change
+  call diff_hlID(5, 1)->synIDattr("name")->assert_equal("DiffChange")
+  set diffopt-=icase
+  call diff_hlID(5, 1)->synIDattr("name")->assert_equal("DiffText")
+
+  call diff_hlID(6, 1)->synIDattr("name")->assert_equal("DiffChange")
+  call diff_hlID(6, 2)->synIDattr("name")->assert_equal("DiffText")
+  call diff_hlID(6, 4)->synIDattr("name")->assert_equal("DiffText")
+  call diff_hlID(6, 7)->synIDattr("name")->assert_equal("DiffText")
+  call diff_hlID(6, 8)->synIDattr("name")->assert_equal("DiffChange")
+  set diffopt+=inline:char
+  call diff_hlID(6, 1)->synIDattr("name")->assert_equal("DiffChange")
+  call diff_hlID(6, 2)->synIDattr("name")->assert_equal("DiffTextAdd")
+  call diff_hlID(6, 4)->synIDattr("name")->assert_equal("DiffChange")
+  call diff_hlID(6, 7)->synIDattr("name")->assert_equal("DiffText")
+  call diff_hlID(6, 8)->synIDattr("name")->assert_equal("DiffChange")
+  set diffopt-=inline:char
 
   wincmd w
   call assert_equal(synIDattr(diff_hlID(1, 1), "name"), "DiffChange")
@@ -2096,6 +2119,178 @@ func Test_diff_topline_noscroll()
   call term_sendkeys(buf, "\<C-W>p")
   call term_wait(buf)
   call VerifyScreenDump(buf, 'Test_diff_topline_4', {})
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test inline highlighting which shows what's different within each diff block
+func Test_diff_inline()
+  CheckScreendump
+
+  call WriteDiffFiles(0, [], [])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2', {})
+  call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
+
+  call WriteDiffFiles(buf, ["abcdef ghi jk n", "x", "y"], ["aBcef gHi lm n", "y", "z"])
+  call VerifyInternal(buf, "Test_diff_inline_01", "")
+  call VerifyInternal(buf, "Test_diff_inline_02", " diffopt+=inline:none")
+
+  " inline:simple is the same as default
+  call VerifyInternal(buf, "Test_diff_inline_01", " diffopt+=inline:simple")
+
+  call VerifyInternal(buf, "Test_diff_inline_03", " diffopt+=inline:char")
+  call VerifyInternal(buf, "Test_diff_inline_04", " diffopt+=inline:word")
+
+  " multiple inline values will the last one
+  call VerifyInternal(buf, "Test_diff_inline_01", " diffopt+=inline:none,inline:char,inline:simple")
+  call VerifyInternal(buf, "Test_diff_inline_02", " diffopt+=inline:simple,inline:word,inline:none")
+  call VerifyInternal(buf, "Test_diff_inline_03", " diffopt+=inline:simple,inline:word,inline:char")
+
+  " DiffTextAdd highlight
+  call term_sendkeys(buf, ":hi DiffTextAdd ctermbg=blue\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_05", " diffopt+=inline:char")
+
+  " Live update in insert mode
+  call term_sendkeys(buf, "\<Esc>isometext")
+  call VerifyScreenDump(buf, "Test_diff_inline_06", {})
+  call term_sendkeys(buf, "\<Esc>u")
+
+  " icase simple scenarios
+  call VerifyInternal(buf, "Test_diff_inline_07", " diffopt+=inline:simple,icase")
+  call VerifyInternal(buf, "Test_diff_inline_08", " diffopt+=inline:char,icase")
+  call VerifyInternal(buf, "Test_diff_inline_09", " diffopt+=inline:word,icase")
+
+  " diff algorithms should affect highlight
+  call WriteDiffFiles(buf, ["apples and oranges"], ["oranges and apples"])
+  call VerifyInternal(buf, "Test_diff_inline_10", " diffopt+=inline:char")
+  call VerifyInternal(buf, "Test_diff_inline_11", " diffopt+=inline:char,algorithm:patience")
+
+  " icase: composing chars and Unicode fold case edge cases
+  call WriteDiffFiles(buf,
+        \ ["1 - sigma in 6σ and Ὀδυσσεύς", "1 - angstrom in åå", "1 - composing: ii⃗I⃗"],
+        \ ["2 - Sigma in 6Σ and ὈΔΥΣΣΕΎΣ", "2 - Angstrom in ÅÅ", "2 - Composing: i⃗I⃗I⃗"])
+  call VerifyInternal(buf, "Test_diff_inline_12", " diffopt+=inline:char")
+  call VerifyInternal(buf, "Test_diff_inline_13", " diffopt+=inline:char,icase")
+
+  " wide chars
+  call WriteDiffFiles(buf, ["abc😅xde一", "f🚀g"], ["abcy😢de", "二f🚀g"])
+  call VerifyInternal(buf, "Test_diff_inline_14", " diffopt+=inline:char,icase")
+
+  " NUL char (\n below is internally substituted as NUL)
+  call WriteDiffFiles(buf, ["1\n34\n5\n6"], ["1234\n5", "6"])
+  call VerifyInternal(buf, "Test_diff_inline_15", " diffopt+=inline:char")
+
+  " word diff: always use first buffer's iskeyword and ignore others' for consistency
+  call WriteDiffFiles(buf, ["foo+bar test"], ["foo+baz test"])
+  call VerifyInternal(buf, "Test_diff_inline_word_01", " diffopt+=inline:word")
+
+  call term_sendkeys(buf, ":set iskeyword+=+\<CR>:diffupdate\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_word_02", " diffopt+=inline:word")
+
+  call term_sendkeys(buf, ":set iskeyword&\<CR>:wincmd w\<CR>")
+  call term_sendkeys(buf, ":set iskeyword+=+\<CR>:wincmd w\<CR>:diffupdate\<CR>")
+  " Use the previous screen dump as 2nd buffer's iskeyword does not matter
+  call VerifyInternal(buf, "Test_diff_inline_word_01", " diffopt+=inline:word")
+
+  call term_sendkeys(buf, ":windo set iskeyword&\<CR>:1wincmd w\<CR>")
+
+  " char diff: should slide highlight to whitespace boundary if possible for
+  " better readability (by using forced indent-heuristics). A wrong result
+  " would be if the highlight is "Bar, prefix". It should be "prefixBar, "
+  " instead.
+  call WriteDiffFiles(buf, ["prefixFoo, prefixEnd"], ["prefixFoo, prefixBar, prefixEnd"])
+  call VerifyInternal(buf, "Test_diff_inline_char_01", " diffopt+=inline:char")
+
+  " char diff: small gaps between inline diff blocks will be merged during refine step
+  " - first segment: test that we iteratively merge small gaps after we merged
+  "   adjacent blocks, but only with limited number (set to 4) of iterations.
+  " - second and third segments: show that we need a large enough adjacent block to
+  "   trigger a merge.
+  " - fourth segment: small gaps are not merged when adjacent large block is
+  "   on a different line.
+  call WriteDiffFiles(buf,
+        \ ["abcdefghijklmno", "anchor1",
+        \  "abcdefghijklmno", "anchor2",
+        \  "abcdefghijklmno", "anchor3",
+        \  "test", "multiline"],
+        \ ["a?c?e?g?i?k???o",  "anchor1",
+        \  "a??de?????klmno",  "anchor2",
+        \  "a??de??????lmno", "anchor3",
+        \  "t?s?", "??????i?e"])
+  call VerifyInternal(buf, "Test_diff_inline_char_02", " diffopt+=inline:char")
+
+  " Test multi-line blocks and whitespace
+  call WriteDiffFiles(buf,
+        \ ["this   is   ", "sometest text foo", "baz abc def ", "one", "word another word", "additional line"],
+        \ ["this is some test", "texts", "foo bar abX Yef     ", "oneword another word"])
+  call VerifyInternal(buf, "Test_diff_inline_multiline_01", " diffopt+=inline:char,iwhite")
+  call VerifyInternal(buf, "Test_diff_inline_multiline_02", " diffopt+=inline:word,iwhite")
+  call VerifyInternal(buf, "Test_diff_inline_multiline_03", " diffopt+=inline:char,iwhiteeol")
+  call VerifyInternal(buf, "Test_diff_inline_multiline_04", " diffopt+=inline:word,iwhiteeol")
+  call VerifyInternal(buf, "Test_diff_inline_multiline_05", " diffopt+=inline:char,iwhiteall")
+  call VerifyInternal(buf, "Test_diff_inline_multiline_06", " diffopt+=inline:word,iwhiteall")
+
+  " newline should be highlighted too when 'list' is set
+  call term_sendkeys(buf, ":windo set list\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_multiline_07", " diffopt+=inline:char")
+  call VerifyInternal(buf, "Test_diff_inline_multiline_08", " diffopt+=inline:char,iwhite")
+  call VerifyInternal(buf, "Test_diff_inline_multiline_09", " diffopt+=inline:char,iwhiteeol")
+  call VerifyInternal(buf, "Test_diff_inline_multiline_10", " diffopt+=inline:char,iwhiteall")
+  call term_sendkeys(buf, ":windo set nolist\<CR>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_diff_inline_multibuffer()
+  CheckScreendump
+
+  call WriteDiffFiles3(0, [], [], [])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2 Xdifile3', {})
+  call term_sendkeys(buf, ":windo set autoread\<CR>:1wincmd w\<CR>")
+  call term_sendkeys(buf, ":hi DiffTextAdd ctermbg=blue\<CR>")
+
+  call WriteDiffFiles3(buf,
+        \ ["That is buffer1.", "anchor", "Some random text", "anchor"],
+        \ ["This is buffer2.", "anchor", "Some text", "anchor", "buffer2/3"],
+        \ ["This is buffer3. Last.", "anchor", "Some more", "text here.", "anchor", "only in buffer2/3", "not in buffer1"])
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_01", " diffopt+=inline:char")
+
+  " Close one of the buffer and make sure it updates correctly
+  call term_sendkeys(buf, ":diffoff\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_02", " diffopt+=inline:char")
+
+  " Update text in the non-diff buffer and nothing should be changed
+  call term_sendkeys(buf, "\<Esc>isometext")
+  call VerifyScreenDump(buf, "Test_diff_inline_multibuffer_03", {})
+  call term_sendkeys(buf, "\<Esc>u")
+
+  call term_sendkeys(buf, ":diffthis\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_01", " diffopt+=inline:char")
+
+  " Test that removing first buffer from diff will in turn use the next
+  " earliest buffer's iskeyword during word diff.
+  call WriteDiffFiles3(buf,
+        \ ["This+is=a-setence"],
+        \ ["This+is=another-setence"],
+        \ ["That+is=a-setence"])
+  call term_sendkeys(buf, ":set iskeyword+=+\<CR>:2wincmd w\<CR>:set iskeyword+=-\<CR>:1wincmd w\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_04", " diffopt+=inline:word")
+  call term_sendkeys(buf, ":diffoff\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_05", " diffopt+=inline:word")
+  call term_sendkeys(buf, ":diffthis\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_04", " diffopt+=inline:word")
+
+  " Test multi-buffer char diff refinement, and that removing a buffer from
+  " diff will update the others properly.
+  call WriteDiffFiles3(buf,
+        \ ["abcdefghijkYmYYY"],
+        \ ["aXXdXXghijklmnop"],
+        \ ["abcdefghijkYmYop"])
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_06", " diffopt+=inline:char")
+  call term_sendkeys(buf, ":diffoff\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_07", " diffopt+=inline:char")
+  call term_sendkeys(buf, ":diffthis\<CR>")
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_06", " diffopt+=inline:char")
+
   call StopVimInTerminal(buf)
 endfunc
 

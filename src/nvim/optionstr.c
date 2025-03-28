@@ -1018,6 +1018,16 @@ int expand_set_diffopt(optexpand_T *args, int *numMatches, char ***matches)
                                    numMatches,
                                    matches);
     }
+    // Within "inline:", we have a subgroup of possible options.
+    const size_t inline_len = strlen("inline:");
+    if (xp->xp_pattern - args->oe_set_arg >= (int)inline_len
+        && strncmp(xp->xp_pattern - inline_len, "inline:", inline_len) == 0) {
+      return expand_set_opt_string(args,
+                                   opt_dip_inline_values,
+                                   ARRAY_SIZE(opt_dip_inline_values) - 1,
+                                   numMatches,
+                                   matches);
+    }
     return FAIL;
   }
 

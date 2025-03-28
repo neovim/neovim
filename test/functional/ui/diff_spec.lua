@@ -1555,7 +1555,6 @@ it('diff mode overlapped diff blocks will be merged', function()
 
   local screen = Screen.new(35, 20)
   command('set winwidth=10 diffopt=filler,internal')
-
   command('args Xdifile1 Xdifile2 | vert all | windo diffthis')
 
   WriteDiffFiles('a\nb', 'x\nx')
@@ -2251,4 +2250,537 @@ it('diff mode does not scroll with line("w0")', function()
     {2:[No Name] [+]          }{3:[No Name] [+]         }|
     9                                            |
   ]])
+end)
+
+-- oldtest: Test_diff_inline()
+it('diff mode inline highlighting', function()
+  write_file('Xdifile1', '')
+  write_file('Xdifile2', '')
+  finally(function()
+    os.remove('Xdifile1')
+    os.remove('Xdifile2')
+  end)
+
+  local screen = Screen.new(37, 20)
+  screen:add_extra_attr_ids({
+    [100] = { background = Screen.colors.Blue1 },
+    [101] = { bold = true, background = Screen.colors.Red, foreground = Screen.colors.Blue1 },
+    [102] = { background = Screen.colors.LightMagenta, foreground = Screen.colors.Blue1 },
+    [103] = { bold = true, background = Screen.colors.Blue1, foreground = Screen.colors.Blue1 },
+    [104] = { bold = true, background = Screen.colors.LightBlue, foreground = Screen.colors.Blue1 },
+  })
+  command('set winwidth=10')
+  command('args Xdifile1 Xdifile2 | vert all | windo diffthis | 1wincmd w')
+
+  WriteDiffFiles('abcdef ghi jk n\nx\ny', 'aBcef gHi lm n\ny\nz')
+  command('set diffopt=internal,filler')
+  local s1 = [[
+    {7:  }{4:^a}{27:bcdef ghi jk}{4: n }│{7:  }{4:a}{27:Bcef gHi lm}{4: n  }|
+    {7:  }{22:x               }│{7:  }{23:----------------}|
+    {7:  }y               │{7:  }y               |
+    {7:  }{23:----------------}│{7:  }{22:z               }|
+    {1:~                 }│{1:~                 }|*14
+    {3:Xdifile1           }{2:Xdifile2          }|
+                                         |
+  ]]
+  screen:expect(s1)
+  command('set diffopt=internal,filler diffopt+=inline:none')
+  local s2 = [[
+    {7:  }{4:^abcdef ghi jk n }│{7:  }{4:aBcef gHi lm n  }|
+    {7:  }{22:x               }│{7:  }{23:----------------}|
+    {7:  }y               │{7:  }y               |
+    {7:  }{23:----------------}│{7:  }{22:z               }|
+    {1:~                 }│{1:~                 }|*14
+    {3:Xdifile1           }{2:Xdifile2          }|
+                                         |
+  ]]
+  screen:expect(s2)
+
+  -- inline:simple is the same as default
+  command('set diffopt=internal,filler diffopt+=inline:simple')
+  screen:expect(s1)
+
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  local s3 = [[
+    {7:  }{4:^a}{27:b}{4:c}{27:d}{4:ef g}{27:h}{4:i }{27:jk}{4: n }│{7:  }{4:a}{27:B}{4:cef g}{27:H}{4:i }{27:lm}{4: n  }|
+    {7:  }{22:x               }│{7:  }{23:----------------}|
+    {7:  }y               │{7:  }y               |
+    {7:  }{23:----------------}│{7:  }{22:z               }|
+    {1:~                 }│{1:~                 }|*14
+    {3:Xdifile1           }{2:Xdifile2          }|
+                                         |
+  ]]
+  screen:expect(s3)
+
+  command('set diffopt=internal,filler diffopt+=inline:word')
+  screen:expect([[
+    {7:  }{27:^abcdef}{4: }{27:ghi}{4: }{27:jk}{4: n }│{7:  }{27:aBcef}{4: }{27:gHi}{4: }{27:lm}{4: n  }|
+    {7:  }{22:x               }│{7:  }{23:----------------}|
+    {7:  }y               │{7:  }y               |
+    {7:  }{23:----------------}│{7:  }{22:z               }|
+    {1:~                 }│{1:~                 }|*14
+    {3:Xdifile1           }{2:Xdifile2          }|
+                                         |
+  ]])
+
+  -- multiple inline values will the last one
+  command('set diffopt=internal,filler diffopt+=inline:none,inline:char,inline:simple')
+  screen:expect(s1)
+  command('set diffopt=internal,filler diffopt+=inline:simple,inline:word,inline:none')
+  screen:expect(s2)
+  command('set diffopt=internal,filler diffopt+=inline:simple,inline:word,inline:char')
+  screen:expect(s3)
+
+  -- DiffTextAdd highlight
+  command('hi DiffTextAdd guibg=blue')
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  screen:expect([[
+    {7:  }{4:^a}{27:b}{4:c}{100:d}{4:ef g}{27:h}{4:i }{27:jk}{4: n }│{7:  }{4:a}{27:B}{4:cef g}{27:H}{4:i }{27:lm}{4: n  }|
+    {7:  }{22:x               }│{7:  }{23:----------------}|
+    {7:  }y               │{7:  }y               |
+    {7:  }{23:----------------}│{7:  }{22:z               }|
+    {1:~                 }│{1:~                 }|*14
+    {3:Xdifile1           }{2:Xdifile2          }|
+                                         |
+  ]])
+
+  -- Live update in insert mode
+  feed('isometext')
+  screen:expect([[
+    {7:  }{27:sometext^abcd}{4:ef g}│{7:  }{27:aBc}{4:ef g}{27:H}{4:i }{27:lm}{4: n  }|
+    {7:  }{22:x               }│{7:  }{23:----------------}|
+    {7:  }y               │{7:  }y               |
+    {7:  }{23:----------------}│{7:  }{22:z               }|
+    {1:~                 }│{1:~                 }|*14
+    {3:Xdifile1 [+]       }{2:Xdifile2          }|
+    {5:-- INSERT --}                         |
+  ]])
+  feed('<Esc>')
+  command('silent! undo')
+
+  -- icase simple scenarios
+  command('set diffopt=internal,filler diffopt+=inline:simple,icase')
+  screen:expect([[
+    {7:  }{4:^abc}{27:def ghi jk}{4: n }│{7:  }{4:aBc}{27:ef gHi lm}{4: n  }|
+    {7:  }{22:x               }│{7:  }{23:----------------}|
+    {7:  }y               │{7:  }y               |
+    {7:  }{23:----------------}│{7:  }{22:z               }|
+    {1:~                 }│{1:~                 }|*14
+    {3:Xdifile1           }{2:Xdifile2          }|
+                                         |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:char,icase')
+  screen:expect([[
+    {7:  }{4:^abc}{100:d}{4:ef ghi }{27:jk}{4: n }│{7:  }{4:aBcef gHi }{27:lm}{4: n  }|
+    {7:  }{22:x               }│{7:  }{23:----------------}|
+    {7:  }y               │{7:  }y               |
+    {7:  }{23:----------------}│{7:  }{22:z               }|
+    {1:~                 }│{1:~                 }|*14
+    {3:Xdifile1           }{2:Xdifile2          }|
+                                         |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:word,icase')
+  screen:expect([[
+    {7:  }{27:^abcdef}{4: ghi }{27:jk}{4: n }│{7:  }{27:aBcef}{4: gHi }{27:lm}{4: n  }|
+    {7:  }{22:x               }│{7:  }{23:----------------}|
+    {7:  }y               │{7:  }y               |
+    {7:  }{23:----------------}│{7:  }{22:z               }|
+    {1:~                 }│{1:~                 }|*14
+    {3:Xdifile1           }{2:Xdifile2          }|
+                                         |
+  ]])
+
+  screen:try_resize(45, 20)
+  command('wincmd =')
+  -- diff algorithms should affect highlight
+  WriteDiffFiles('apples and oranges', 'oranges and apples')
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  screen:expect([[
+    {7:  }{27:^appl}{4:es and }{27:orang}{4:es  }│{7:  }{27:orang}{4:es and }{27:appl}{4:es  }|
+    {1:~                     }│{1:~                     }|*17
+    {3:Xdifile1               }{2:Xdifile2              }|
+                                                 |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:char,algorithm:patience')
+  screen:expect([[
+    {7:  }{100:^apples and }{4:oranges  }│{7:  }{4:oranges}{100: and apples}{4:  }|
+    {1:~                     }│{1:~                     }|*17
+    {3:Xdifile1               }{2:Xdifile2              }|
+                                                 |
+  ]])
+
+  screen:try_resize(65, 20)
+  command('wincmd =')
+  -- icase: composing chars and Unicode fold case edge cases
+  WriteDiffFiles(
+    '1 - sigma in 6σ and Ὀδυσσεύς\n1 - angstrom in åå\n1 - composing: ii⃗I⃗',
+    '2 - Sigma in 6Σ and ὈΔΥΣΣΕΎΣ\n2 - Angstrom in ÅÅ\n2 - Composing: i⃗I⃗I⃗'
+  )
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  screen:expect([[
+    {7:  }{27:^1}{4: - }{27:s}{4:igma in 6}{27:σ}{4: and Ὀ}{27:δυσσεύς}{4:  }│{7:  }{27:2}{4: - }{27:S}{4:igma in 6}{27:Σ}{4: and Ὀ}{27:ΔΥΣΣΕΎΣ}{4:  }|
+    {7:  }{27:1}{4: - }{27:a}{4:ngstrom in }{27:åå}{4:            }│{7:  }{27:2}{4: - }{27:A}{4:ngstrom in }{27:ÅÅ}{4:            }|
+    {7:  }{27:1}{4: - }{27:c}{4:omposing: }{100:i}{4:i⃗I⃗            }│{7:  }{27:2}{4: - }{27:C}{4:omposing: i⃗I⃗}{100:I⃗}{4:            }|
+    {1:~                               }│{1:~                               }|*15
+    {3:Xdifile1                         }{2:Xdifile2                        }|
+                                                                     |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:char,icase')
+  screen:expect([[
+    {7:  }{27:^1}{4: - sigma in 6σ and Ὀδυσσεύς  }│{7:  }{27:2}{4: - Sigma in 6Σ and ὈΔΥΣΣΕΎΣ  }|
+    {7:  }{27:1}{4: - angstrom in åå            }│{7:  }{27:2}{4: - Angstrom in ÅÅ            }|
+    {7:  }{27:1}{4: - composing: }{27:i}{4:i⃗I⃗            }│{7:  }{27:2}{4: - Composing: }{27:i⃗}{4:I⃗I⃗            }|
+    {1:~                               }│{1:~                               }|*15
+    {3:Xdifile1                         }{2:Xdifile2                        }|
+                                                                     |
+  ]])
+
+  screen:try_resize(35, 20)
+  command('wincmd =')
+  -- wide chars
+  WriteDiffFiles('abc😅xde一\nf🚀g', 'abcy😢de\n二f🚀g')
+  command('set diffopt=internal,filler diffopt+=inline:char,icase')
+  screen:expect([[
+    {7:  }{4:^abc}{27:😅x}{4:de}{100:一}{4:     }│{7:  }{4:abc}{27:y😢}{4:de       }|
+    {7:  }{4:f🚀g           }│{7:  }{100:二}{4:f🚀g         }|
+    {1:~                }│{1:~                }|*16
+    {3:Xdifile1          }{2:Xdifile2         }|
+                                       |
+  ]])
+
+  -- NUL char
+  WriteDiffFiles('1\00034\0005\0006', '1234\0005\n6')
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  screen:expect([[
+    {7:  }{4:^1}{101:^@}{4:34}{102:^@}{4:5}{101:^@}{4:6    }│{7:  }{4:1}{27:2}{4:34}{102:^@}{4:5        }|
+    {7:  }{23:---------------}│{7:  }{4:6              }|
+    {1:~                }│{1:~                }|*16
+    {3:Xdifile1          }{2:Xdifile2         }|
+                                       |
+  ]])
+
+  -- word diff: always use first buffer's iskeyword and ignore others' for consistency
+  WriteDiffFiles('foo+bar test', 'foo+baz test')
+  command('set diffopt=internal,filler diffopt+=inline:word')
+  local sw1 = [[
+    {7:  }{4:^foo+}{27:bar}{4: test   }│{7:  }{4:foo+}{27:baz}{4: test   }|
+    {1:~                }│{1:~                }|*17
+    {3:Xdifile1          }{2:Xdifile2         }|
+                                       |
+  ]]
+  screen:expect(sw1)
+
+  command('set iskeyword+=+ | diffupdate')
+  screen:expect([[
+    {7:  }{27:^foo+bar}{4: test   }│{7:  }{27:foo+baz}{4: test   }|
+    {1:~                }│{1:~                }|*17
+    {3:Xdifile1          }{2:Xdifile2         }|
+                                       |
+  ]])
+
+  command('set iskeyword& | wincmd w')
+  command('set iskeyword+=+ | wincmd w | diffupdate')
+  -- Use the previous screen as 2nd buffer's iskeyword does not matter
+  screen:expect(sw1)
+
+  command('windo set iskeyword& | 1wincmd w')
+
+  screen:try_resize(69, 20)
+  command('wincmd =')
+  -- char diff: should slide highlight to whitespace boundary if possible for
+  -- better readability (by using forced indent-heuristics). A wrong result
+  -- would be if the highlight is "Bar, prefix". It should be "prefixBar, "
+  -- instead.
+  WriteDiffFiles('prefixFoo, prefixEnd', 'prefixFoo, prefixBar, prefixEnd')
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  screen:expect([[
+    {7:  }{4:^prefixFoo, prefixEnd            }│{7:  }{4:prefixFoo, }{100:prefixBar, }{4:prefixEnd }|
+    {1:~                                 }│{1:~                                 }|*17
+    {3:Xdifile1                           }{2:Xdifile2                          }|
+                                                                         |
+  ]])
+
+  screen:try_resize(39, 20)
+  command('wincmd =')
+  -- char diff: small gaps between inline diff blocks will be merged during refine step
+  -- - first segment: test that we iteratively merge small gaps after we merged
+  --   adjacent blocks, but only with limited number (set to 4) of iterations.
+  -- - second and third segments: show that we need a large enough adjacent block to
+  --   trigger a merge.
+  -- - fourth segment: small gaps are not merged when adjacent large block is
+  --   on a different line.
+  WriteDiffFiles(
+    'abcdefghijklmno\nanchor1\n'
+      .. 'abcdefghijklmno\nanchor2\n'
+      .. 'abcdefghijklmno\nanchor3\n'
+      .. 'test\nmultiline',
+    'a?c?e?g?i?k???o\nanchor1\n'
+      .. 'a??de?????klmno\nanchor2\n'
+      .. 'a??de??????lmno\nanchor3\n'
+      .. 't?s?\n??????i?e'
+  )
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  screen:expect([[
+    {7:  }{4:^a}{27:b}{4:c}{27:defghijklmn}{4:o  }│{7:  }{4:a}{27:?}{4:c}{27:?e?g?i?k???}{4:o  }|
+    {7:  }anchor1          │{7:  }anchor1          |
+    {7:  }{4:a}{27:bc}{4:de}{27:fghij}{4:klmno  }│{7:  }{4:a}{27:??}{4:de}{27:?????}{4:klmno  }|
+    {7:  }anchor2          │{7:  }anchor2          |
+    {7:  }{4:a}{27:bcdefghijk}{4:lmno  }│{7:  }{4:a}{27:??de??????}{4:lmno  }|
+    {7:  }anchor3          │{7:  }anchor3          |
+    {7:  }{4:t}{27:e}{4:s}{27:t}{4:             }│{7:  }{4:t}{27:?}{4:s}{27:?}{4:             }|
+    {7:  }{27:multilin}{4:e        }│{7:  }{27:??????i?}{4:e        }|
+    {1:~                  }│{1:~                  }|*10
+    {3:Xdifile1            }{2:Xdifile2           }|
+                                           |
+  ]])
+
+  screen:try_resize(49, 20)
+  command('wincmd =')
+  -- Test multi-line blocks and whitespace
+  WriteDiffFiles(
+    'this   is   \nsometest text foo\nbaz abc def \none\nword another word\nadditional line',
+    'this is some test\ntexts\nfoo bar abX Yef     \noneword another word'
+  )
+  command('set diffopt=internal,filler diffopt+=inline:char,iwhite')
+  screen:expect([[
+    {7:  }{4:^this   is             }│{7:  }{4:this is some}{100: }{4:test     }|
+    {7:  }{4:sometest text foo     }│{7:  }{4:text}{100:s}{4:                 }|
+    {7:  }{4:ba}{27:z}{4: ab}{27:c}{4: }{27:d}{4:ef           }│{7:  }{4:foo ba}{27:r}{4: ab}{27:X}{4: }{27:Y}{4:ef       }|
+    {7:  }{4:one                   }│{7:  }{4:oneword another word  }|
+    {7:  }{4:word another word     }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line       }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {3:Xdifile1                 }{2:Xdifile2                }|
+                                                     |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:word,iwhite')
+  screen:expect([[
+    {7:  }{4:^this   is             }│{7:  }{4:this is }{27:some}{4: }{27:test}{4:     }|
+    {7:  }{27:sometest}{4: }{27:text}{4: }{27:foo}{4:     }│{7:  }{27:texts}{4:                 }|
+    {7:  }{27:baz}{4: }{27:abc}{4: }{27:def}{4:           }│{7:  }{27:foo}{4: }{27:bar}{4: }{27:abX}{4: }{27:Yef}{4:       }|
+    {7:  }{27:one}{4:                   }│{7:  }{27:oneword}{4: another word  }|
+    {7:  }{27:word}{4: another word     }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line       }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {3:Xdifile1                 }{2:Xdifile2                }|
+                                                     |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:char,iwhiteeol')
+  screen:expect([[
+    {7:  }{4:^this }{100:  }{4:is             }│{7:  }{4:this is some}{100: }{4:test     }|
+    {7:  }{4:sometest text foo     }│{7:  }{4:text}{100:s}{4:                 }|
+    {7:  }{4:ba}{27:z}{4: ab}{27:c}{4: }{27:d}{4:ef           }│{7:  }{4:foo ba}{27:r}{4: ab}{27:X}{4: }{27:Y}{4:ef       }|
+    {7:  }{4:one                   }│{7:  }{4:oneword another word  }|
+    {7:  }{4:word another word     }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line       }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {3:Xdifile1                 }{2:Xdifile2                }|
+                                                     |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:word,iwhiteeol')
+  screen:expect([[
+    {7:  }{4:^this }{100:  }{4:is             }│{7:  }{4:this is }{27:some}{4: }{27:test}{4:     }|
+    {7:  }{27:sometest}{4: }{27:text}{4: foo     }│{7:  }{27:texts}{4:                 }|
+    {7:  }{27:baz}{4: }{27:abc}{4: }{27:def}{4:           }│{7:  }{4:foo }{27:bar}{4: }{27:abX}{4: }{27:Yef}{4:       }|
+    {7:  }{27:one}{4:                   }│{7:  }{27:oneword}{4: another word  }|
+    {7:  }{27:word}{4: another word     }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line       }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {3:Xdifile1                 }{2:Xdifile2                }|
+                                                     |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:char,iwhiteall')
+  screen:expect([[
+    {7:  }{4:^this   is             }│{7:  }{4:this is some test     }|
+    {7:  }{4:sometest text foo     }│{7:  }{4:text}{100:s}{4:                 }|
+    {7:  }{4:ba}{27:z}{4: ab}{27:c d}{4:ef           }│{7:  }{4:foo ba}{27:r}{4: ab}{27:X Y}{4:ef       }|
+    {7:  }{4:one                   }│{7:  }{4:oneword another word  }|
+    {7:  }{4:word another word     }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line       }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {3:Xdifile1                 }{2:Xdifile2                }|
+                                                     |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:word,iwhiteall')
+  screen:expect([[
+    {7:  }{4:^this   is             }│{7:  }{4:this is }{27:some test}{4:     }|
+    {7:  }{27:sometest text}{4: foo     }│{7:  }{27:texts}{4:                 }|
+    {7:  }{27:baz abc def }{4:          }│{7:  }{4:foo }{27:bar abX Yef     }{4:  }|
+    {7:  }{27:one}{4:                   }│{7:  }{27:oneword}{4: another word  }|
+    {7:  }{27:word}{4: another word     }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line       }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {3:Xdifile1                 }{2:Xdifile2                }|
+                                                     |
+  ]])
+
+  -- newline should be highlighted too when 'list' is set
+  command('windo set list listchars=eol:$')
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  screen:expect([[
+    {7:  }{4:this }{100:  }{4:is }{100:  }{103:$}{4:         }│{7:  }{4:^this is some}{100: }{4:test}{101:$}{4:    }|
+    {7:  }{4:sometest}{27: }{4:text}{27: }{4:foo}{101:$}{4:    }│{7:  }{4:text}{27:s}{101:$}{4:                }|
+    {7:  }{4:ba}{27:z}{4: ab}{27:c}{4: }{27:d}{4:ef }{11:$}{4:         }│{7:  }{4:foo}{27: }{4:ba}{27:r}{4: ab}{27:X}{4: }{27:Y}{4:ef }{100:    }{11:$}{4: }|
+    {7:  }{4:one}{103:$}{4:                  }│{7:  }{4:oneword another word}{11:$}{4: }|
+    {7:  }{4:word another word}{11:$}{4:    }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line}{104:$}{22:      }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {2:Xdifile1                 }{3:Xdifile2                }|
+                                                     |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:char,iwhite')
+  screen:expect([[
+    {7:  }{4:this   is   }{11:$}{4:         }│{7:  }{4:^this is some}{100: }{4:test}{11:$}{4:    }|
+    {7:  }{4:sometest text foo}{11:$}{4:    }│{7:  }{4:text}{100:s}{11:$}{4:                }|
+    {7:  }{4:ba}{27:z}{4: ab}{27:c}{4: }{27:d}{4:ef }{11:$}{4:         }│{7:  }{4:foo ba}{27:r}{4: ab}{27:X}{4: }{27:Y}{4:ef     }{11:$}{4: }|
+    {7:  }{4:one}{103:$}{4:                  }│{7:  }{4:oneword another word}{11:$}{4: }|
+    {7:  }{4:word another word}{11:$}{4:    }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line}{104:$}{22:      }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {2:Xdifile1                 }{3:Xdifile2                }|
+                                                     |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:char,iwhiteeol')
+  screen:expect([[
+    {7:  }{4:this }{100:  }{4:is   }{11:$}{4:         }│{7:  }{4:^this is some}{100: }{4:test}{11:$}{4:    }|
+    {7:  }{4:sometest text foo}{11:$}{4:    }│{7:  }{4:text}{100:s}{11:$}{4:                }|
+    {7:  }{4:ba}{27:z}{4: ab}{27:c}{4: }{27:d}{4:ef }{11:$}{4:         }│{7:  }{4:foo ba}{27:r}{4: ab}{27:X}{4: }{27:Y}{4:ef     }{11:$}{4: }|
+    {7:  }{4:one}{103:$}{4:                  }│{7:  }{4:oneword another word}{11:$}{4: }|
+    {7:  }{4:word another word}{11:$}{4:    }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line}{104:$}{22:      }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {2:Xdifile1                 }{3:Xdifile2                }|
+                                                     |
+  ]])
+  command('set diffopt=internal,filler diffopt+=inline:char,iwhiteall')
+  screen:expect([[
+    {7:  }{4:this   is   }{11:$}{4:         }│{7:  }{4:^this is some test}{11:$}{4:    }|
+    {7:  }{4:sometest text foo}{11:$}{4:    }│{7:  }{4:text}{100:s}{11:$}{4:                }|
+    {7:  }{4:ba}{27:z}{4: ab}{27:c d}{4:ef }{11:$}{4:         }│{7:  }{4:foo ba}{27:r}{4: ab}{27:X Y}{4:ef     }{11:$}{4: }|
+    {7:  }{4:one}{11:$}{4:                  }│{7:  }{4:oneword another word}{11:$}{4: }|
+    {7:  }{4:word another word}{11:$}{4:    }│{7:  }{23:----------------------}|
+    {7:  }{22:additional line}{104:$}{22:      }│{7:  }{23:----------------------}|
+    {1:~                       }│{1:~                       }|*12
+    {2:Xdifile1                 }{3:Xdifile2                }|
+                                                     |
+  ]])
+  command('windo set nolist')
+end)
+
+-- oldtest: Test_diff_inline_multibuffer()
+it('diff mode inline highlighting with 3 buffers', function()
+  write_file('Xdifile1', '')
+  write_file('Xdifile2', '')
+  write_file('Xdifile3', '')
+  finally(function()
+    os.remove('Xdifile1')
+    os.remove('Xdifile2')
+    os.remove('Xdifile3')
+  end)
+
+  local screen = Screen.new(75, 20)
+  screen:add_extra_attr_ids({
+    [100] = { background = Screen.colors.Blue1 },
+  })
+  command('args Xdifile1 Xdifile2 Xdifile3 | vert all | windo diffthis | 1wincmd w')
+  command('wincmd =')
+  command('hi DiffTextAdd guibg=Blue')
+
+  WriteDiffFiles3(
+    'That is buffer1.\nanchor\nSome random text\nanchor',
+    'This is buffer2.\nanchor\nSome text\nanchor\nbuffer2/3',
+    'This is buffer3. Last.\nanchor\nSome more\ntext here.\nanchor\nonly in buffer2/3\nnot in buffer1'
+  )
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  local s1 = [[
+    {7:  }{4:^Th}{27:at}{4: is buffer}{27:1}{4:.       }│{7:  }{4:Th}{27:is}{4: is buffer}{27:2}{4:.      }│{7:  }{4:Th}{27:is}{4: is buffer}{27:3. Last}{4:.}|
+    {7:  }anchor                 │{7:  }anchor                │{7:  }anchor                |
+    {7:  }{4:Some }{27:random }{4:text       }│{7:  }{4:Some text             }│{7:  }{4:Some }{27:more}{4:             }|
+    {7:  }{23:-----------------------}│{7:  }{23:----------------------}│{7:  }{4:text}{100: here.}{4:            }|
+    {7:  }anchor                 │{7:  }anchor                │{7:  }anchor                |
+    {7:  }{23:-----------------------}│{7:  }{4:buffer2/3             }│{7:  }{100:only in }{4:buffer2/3     }|
+    {7:  }{23:-----------------------}│{7:  }{23:----------------------}│{7:  }{22:not in buffer1        }|
+    {1:~                        }│{1:~                       }│{1:~                       }|*11
+    {3:Xdifile1                  }{2:Xdifile2                 Xdifile3                }|
+                                                                               |
+  ]]
+  screen:expect(s1)
+
+  -- Close one of the buffers and make sure it updates correctly
+  command('diffoff')
+  screen:expect([[
+    ^That is buffer1.         │{7:  }{4:This is buffer}{27:2}{4:.      }│{7:  }{4:This is buffer}{27:3. Last}{4:.}|
+    anchor                   │{7:  }anchor                │{7:  }anchor                |
+    Some random text         │{7:  }{4:Some text             }│{7:  }{4:Some }{100:more}{4:             }|
+    anchor                   │{7:  }{23:----------------------}│{7:  }{4:text}{100: here.}{4:            }|
+    {1:~                        }│{7:  }anchor                │{7:  }anchor                |
+    {1:~                        }│{7:  }{4:buffer2/3             }│{7:  }{100:only in }{4:buffer2/3     }|
+    {1:~                        }│{7:  }{23:----------------------}│{7:  }{22:not in buffer1        }|
+    {1:~                        }│{1:~                       }│{1:~                       }|*11
+    {3:Xdifile1                  }{2:Xdifile2                 Xdifile3                }|
+                                                                               |
+  ]])
+
+  -- Update text in the non-diff buffer and nothing should be changed
+  feed('isometext')
+  screen:expect([[
+    sometext^That is buffer1. │{7:  }{4:This is buffer}{27:2}{4:.      }│{7:  }{4:This is buffer}{27:3. Last}{4:.}|
+    anchor                   │{7:  }anchor                │{7:  }anchor                |
+    Some random text         │{7:  }{4:Some text             }│{7:  }{4:Some }{100:more}{4:             }|
+    anchor                   │{7:  }{23:----------------------}│{7:  }{4:text}{100: here.}{4:            }|
+    {1:~                        }│{7:  }anchor                │{7:  }anchor                |
+    {1:~                        }│{7:  }{4:buffer2/3             }│{7:  }{100:only in }{4:buffer2/3     }|
+    {1:~                        }│{7:  }{23:----------------------}│{7:  }{22:not in buffer1        }|
+    {1:~                        }│{1:~                       }│{1:~                       }|*11
+    {3:Xdifile1 [+]              }{2:Xdifile2                 Xdifile3                }|
+    {5:-- INSERT --}                                                               |
+  ]])
+  feed('<Esc>')
+  command('silent! undo')
+
+  command('diffthis')
+  screen:expect(s1)
+
+  -- Test that removing first buffer from diff will in turn use the next
+  -- earliest buffer's iskeyword during word diff.
+  WriteDiffFiles3('This+is=a-setence', 'This+is=another-setence', 'That+is=a-setence')
+  command('set iskeyword+=+ | 2wincmd w | set iskeyword+=- | 1wincmd w')
+  command('set diffopt=internal,filler diffopt+=inline:word')
+  local s4 = [[
+    {7:  }{27:^This+is}{4:=}{27:a}{4:-setence      }│{7:  }{27:This+is}{4:=}{27:another}{4:-setenc}│{7:  }{27:That+is}{4:=}{27:a}{4:-setence     }|
+    {1:~                        }│{1:~                       }│{1:~                       }|*17
+    {3:Xdifile1                  }{2:Xdifile2                 Xdifile3                }|
+                                                                               |
+  ]]
+  screen:expect(s4)
+  command('diffoff')
+  screen:expect([[
+    ^This+is=a-setence        │{7:  }{27:This}{4:+is=}{27:another-setenc}│{7:  }{27:That}{4:+is=}{27:a-setence}{4:     }|
+    {1:~                        }│{1:~                       }│{1:~                       }|*17
+    {3:Xdifile1                  }{2:Xdifile2                 Xdifile3                }|
+                                                                               |
+  ]])
+  command('diffthis')
+  screen:expect(s4)
+
+  -- Test multi-buffer char diff refinement, and that removing a buffer from
+  -- diff will update the others properly.
+  WriteDiffFiles3('abcdefghijkYmYYY', 'aXXdXXghijklmnop', 'abcdefghijkYmYop')
+  command('set diffopt=internal,filler diffopt+=inline:char')
+  local s6 = [[
+    {7:  }{4:^a}{27:bcdef}{4:ghijk}{27:YmYYY}{4:       }│{7:  }{4:a}{27:XXdXX}{4:ghijk}{27:lmnop}{4:      }│{7:  }{4:a}{27:bcdef}{4:ghijk}{27:YmYop}{4:      }|
+    {1:~                        }│{1:~                       }│{1:~                       }|*17
+    {3:Xdifile1                  }{2:Xdifile2                 Xdifile3                }|
+                                                                               |
+  ]]
+  screen:expect(s6)
+  command('diffoff')
+  screen:expect([[
+    ^abcdefghijkYmYYY         │{7:  }{4:a}{27:XXdXX}{4:ghijk}{27:l}{4:m}{27:n}{4:op      }│{7:  }{4:a}{27:bcdef}{4:ghijk}{27:Y}{4:m}{27:Y}{4:op      }|
+    {1:~                        }│{1:~                       }│{1:~                       }|*17
+    {3:Xdifile1                  }{2:Xdifile2                 Xdifile3                }|
+                                                                               |
+  ]])
+  command('diffthis')
+  screen:expect(s6)
 end)

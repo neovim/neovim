@@ -159,6 +159,7 @@ static const char *highlight_init_both[] = {
   "default link CursorIM         Cursor",
   "default link CursorLineFold   FoldColumn",
   "default link CursorLineSign   SignColumn",
+  "default link DiffTextAdd      DiffText",
   "default link EndOfBuffer      NonText",
   "default link FloatBorder      NormalFloat",
   "default link FloatFooter      FloatTitle",

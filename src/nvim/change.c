@@ -240,6 +240,7 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (win->w_buffer == buf && win->w_p_diff && diff_internal()) {
       curtab->tp_diff_update = true;
+      diff_update_line(lnum);
     }
   }
 
