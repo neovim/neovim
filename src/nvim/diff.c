@@ -3232,7 +3232,6 @@ bool diff_find_change(win_T *wp, linenr_T lnum, diffline_T *diffline)
 
     // Create a mock diffline struct. We always only have one so no need to
     // allocate memory.
-    idx = diff_buf_idx(wp->w_buffer, curtab);
     CLEAR_FIELD(simple_diffline_change);
     diffline->changes = &simple_diffline_change;
     diffline->num_changes = 1;
