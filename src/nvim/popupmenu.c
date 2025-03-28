@@ -658,6 +658,7 @@ void pum_redraw(void)
     // Do this 3 times and order from p_cia
     int grid_col = col_off;
     int totwidth = 0;
+    bool need_ellipsis = false;
     int order[3];
     int items_width_array[3] = { pum_base_width, pum_kind_width, pum_extra_width };
     pum_align_order(order);
@@ -710,9 +711,10 @@ void pum_redraw(void)
             char *rt = reverse_text(st);
             char *rt_start = rt;
             int cells = vim_strsize(rt);
-            bool need_ellipsis = p_pmw > ellipsis_width
-                                 && pum_width == p_pmw
-                                 && grid_col - cells < col_off - pum_width;
+            if (p_pmw > ellipsis_width && pum_width == p_pmw
+                && grid_col - cells < col_off - pum_width) {
+              need_ellipsis = true;
+            }
 
             if (grid_col - cells < col_off - pum_width) {
               do {
@@ -720,41 +722,7 @@ void pum_redraw(void)
                 MB_PTR_ADV(rt);
               } while (grid_col - cells < col_off - pum_width);
 
-              if (need_ellipsis) {
-                char *orig_rt = rt;
-                int used_cells = 0;
-                char *last_char = NULL;
-                while (*orig_rt != NUL) {
-                  int char_cells = utf_ptr2cells(orig_rt);
-                  if (used_cells + char_cells > ellipsis_width) {
-                    break;
-                  }
-                  used_cells += char_cells;
-                  MB_PTR_ADV(orig_rt);
-                  last_char = orig_rt;
-                }
-
-                if (last_char != NULL) {
-                  int over_cell = 0;
-                  if (used_cells < ellipsis_width) {
-                    over_cell = ellipsis_width - used_cells;
-                    MB_PTR_ADV(orig_rt);
-                    last_char = orig_rt;
-                  }
-                  size_t kept_len = strlen(last_char);
-                  char *new_str = xmalloc((size_t)ellipsis_width + (size_t)over_cell
-                                          + kept_len + 1);
-                  memset(new_str, '.', (size_t)ellipsis_width);
-                  if (over_cell > 0) {
-                    memset(new_str + ellipsis_width, ' ', (size_t)over_cell);
-                  }
-                  memcpy(new_str + ellipsis_width + over_cell, last_char, kept_len);
-                  new_str[(size_t)ellipsis_width + kept_len + (size_t)over_cell] = NUL;
-                  char *old_rt = rt_start;
-                  rt = rt_start = new_str;
-                  xfree(old_rt);
-                }
-              } else if (grid_col - cells > col_off - pum_width) {
+              if (grid_col - cells > col_off - pum_width) {
                 // Most left character requires 2-cells but only 1 cell is available on
                 // screen.  Put a '<' on the left of the pum item.
                 *(--rt) = '<';
@@ -772,57 +740,16 @@ void pum_redraw(void)
             xfree(st);
             grid_col -= width;
           } else {
-            size_t size = strlen(st);
-            int cells = (int)mb_string2cells_len(st, size);
-            bool need_ellipsis = p_pmw > ellipsis_width
-                                 && pum_width == p_pmw
-                                 && grid_col + cells > col_off + pum_width;
-
-            // Add '...' indicator if truncated due to p_pmw
-            if (need_ellipsis) {
-              while (size > 0 && grid_col + cells > col_off + pum_width) {
-                size--;
-                size -= (size_t)utf_head_off(st, st + size);
-                cells -= utf_ptr2cells(st + size);
-              }
-              char *st_end = st + size;
-              int used_cells = 0;
-              char *last_char = NULL;
-              while (st_end > st) {
-                int char_cells = utf_ptr2cells(st_end);
-                if (used_cells + char_cells > ellipsis_width) {
-                  break;
-                }
-                used_cells += char_cells;
-                MB_PTR_BACK(st, st_end);
-                last_char = st_end;
-              }
-
-              if (last_char != NULL) {
-                int over_cell = 0;
-                if (used_cells < ellipsis_width) {
-                  MB_PTR_BACK(st, st_end);
-                  last_char = st_end;
-                  over_cell = ellipsis_width - used_cells;
-                }
-                size_t kept_len = (size_t)(last_char - st);
-                char *new_str = xmalloc((size_t)ellipsis_width + (size_t)over_cell
-                                        + kept_len + 1);
-                memcpy(new_str, st, kept_len);
-                if (over_cell > 0) {
-                  memset(new_str + kept_len, ' ', (size_t)over_cell);
-                }
-                memset(new_str + kept_len + over_cell, '.', (size_t)ellipsis_width);
-                new_str[kept_len + (size_t)ellipsis_width + (size_t)over_cell] = NUL;
-                xfree(st);
-                st = new_str;
-              }
+            int cells = (int)mb_string2cells(st);
+            if (p_pmw > ellipsis_width && pum_width == p_pmw
+                && grid_col + cells > col_off + pum_width) {
+              need_ellipsis = true;
             }
 
             if (attrs == NULL) {
               grid_line_puts(grid_col, st, -1, attr);
             } else {
-              pum_grid_puts_with_attrs(grid_col, vim_strsize(st), st, -1, attrs);
+              pum_grid_puts_with_attrs(grid_col, cells, st, -1, attrs);
             }
 
             xfree(st);
@@ -881,9 +808,24 @@ void pum_redraw(void)
     }
 
     if (pum_rl) {
-      grid_line_fill(col_off - pum_width + 1, grid_col + 1, schar_from_ascii(' '), orig_attr);
+      const int lcol = col_off - pum_width + 1;
+      grid_line_fill(lcol, grid_col + 1, schar_from_ascii(' '), orig_attr);
+      if (need_ellipsis) {
+        bool over_wide = pum_width > ellipsis_width && linebuf_char[lcol + ellipsis_width] == NUL;
+        grid_line_fill(lcol, lcol + ellipsis_width, schar_from_ascii('.'), orig_attr);
+        if (over_wide) {
+          grid_line_put_schar(lcol + ellipsis_width, schar_from_ascii(' '), orig_attr);
+        }
+      }
     } else {
-      grid_line_fill(grid_col, col_off + pum_width, schar_from_ascii(' '), orig_attr);
+      const int rcol = col_off + pum_width;
+      grid_line_fill(grid_col, rcol, schar_from_ascii(' '), orig_attr);
+      if (need_ellipsis) {
+        if (pum_width > ellipsis_width && linebuf_char[rcol - ellipsis_width] == NUL) {
+          grid_line_put_schar(rcol - ellipsis_width - 1, schar_from_ascii(' '), orig_attr);
+        }
+        grid_line_fill(rcol - ellipsis_width, rcol, schar_from_ascii('.'), orig_attr);
+      }
     }
 
     if (pum_scrollbar > 0) {

@@ -5796,6 +5796,152 @@ describe('builtin popupmenu', function()
       feed('<Esc>')
     end)
 
+    it([['pummaxwidth' works with "kind" and "menu"]], function()
+      exec([[
+        func Omni_test(findstart, base)
+          if a:findstart
+            return col(".")
+          endif
+          return [
+            \ #{word: "foo", menu: "fooMenu", kind: "fooKind"},
+            \ #{word: "bar", menu: "barMenu", kind: "barKind"},
+            \ #{word: "baz", menu: "bazMenu", kind: "bazKind"},
+            \ ]
+        endfunc
+        set omnifunc=Omni_test
+      ]])
+
+      command('set pummaxwidth=14')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+          foo^                             |
+          {1:~                               }|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:foo fooKind...}|
+          {n:bar barKind...}|
+          {n:baz bazKind...}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+          foo^                             |
+          {s:foo fooKind...}{1:                  }|
+          {n:bar barKind...}{1:                  }|
+          {n:baz bazKind...}{1:                  }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+
+      command('set rightleft')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+                                      ^ oof|
+          {1:                               ~}|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:...dniKoof oof}|
+          {n:...dniKrab rab}|
+          {n:...dniKzab zab}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 18, false, 100 } },
+        })
+      else
+        screen:expect([[
+                                      ^ oof|
+          {1:                  }{s:...dniKoof oof}|
+          {1:                  }{n:...dniKrab rab}|
+          {1:                  }{n:...dniKzab zab}|
+          {1:                               ~}|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+      command('set norightleft')
+
+      command('set pummaxwidth=13')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+          foo^                             |
+          {1:~                               }|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:foo fooKin...}|
+          {n:bar barKin...}|
+          {n:baz bazKin...}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+          foo^                             |
+          {s:foo fooKin...}{1:                   }|
+          {n:bar barKin...}{1:                   }|
+          {n:baz bazKin...}{1:                   }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+
+      command('set rightleft')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+                                      ^ oof|
+          {1:                               ~}|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:...niKoof oof}|
+          {n:...niKrab rab}|
+          {n:...niKzab zab}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 19, false, 100 } },
+        })
+      else
+        screen:expect([[
+                                      ^ oof|
+          {1:                   }{s:...niKoof oof}|
+          {1:                   }{n:...niKrab rab}|
+          {1:                   }{n:...niKzab zab}|
+          {1:                               ~}|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+      command('set norightleft')
+    end)
+
     it('does not crash when displayed in last column with rightleft #12032', function()
       local col = 30
       local items = { 'word', 'choice', 'text', 'thing' }
