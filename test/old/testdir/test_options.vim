@@ -313,11 +313,18 @@ func Test_set_completion()
   call feedkeys(":set suffixes:\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set suffixes:.bak,~,.o,.h,.info,.swp,.obj', @:)
 
-  " Expand key codes.
+  " " Expand key codes.
   " call feedkeys(":set <H\<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"set <Help> <Home>', @:)
-
-  " Expand terminal options.
+  " " <BackSpace> (alt name) and <BS> should both show up in auto-complete
+  " call feedkeys(":set <B\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set <BackSpace> <Bar> <BS> <Bslash>', @:)
+  " " <ScrollWheelDown> has alt name <MouseUp> but it should not show up here
+  " " nor show up as duplicates
+  " call feedkeys(":set <ScrollWheel\<C-A>\<C-B>\"\<CR>", 'tx')
+  " call assert_equal('"set <ScrollWheelDown> <ScrollWheelLeft> <ScrollWheelRight> <ScrollWheelUp>', @:)
+  "
+  " " Expand terminal options.
   " call feedkeys(":set t_A\<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"set t_AB t_AF t_AU t_AL', @:)
   " call assert_fails('call feedkeys(":set <t_afoo>=\<C-A>\<CR>", "xt")', 'E474:')
