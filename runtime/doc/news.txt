@@ -160,7 +160,7 @@ TUI
 
 UI
 
-• todo
+• |ui-multigrid| provides composition information and absolute coordinates.
 
 VIMSCRIPT
 
