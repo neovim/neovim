@@ -180,10 +180,16 @@ describe('env.c', function()
       os_setenv(name, value, 1)
       eq(value, os_getenv_noalloc(name))
 
-      -- Can't get a too big value.
       local bigval = ('x'):rep(256)
       eq(OK, os_setenv(name, bigval, 1))
       eq(bigval, os_getenv_noalloc(name))
+
+      -- Variable size above NameBuff size gets truncated
+      -- This assumes MAXPATHL is 4096 bytes.
+      local verybigval = ('y'):rep(4096)
+      local trunc = string.sub(verybigval, 0, 4095)
+      eq(OK, os_setenv(name, verybigval, 1))
+      eq(trunc, os_getenv_noalloc(name))
 
       -- Set non-empty, then set empty.
       eq(OK, os_setenv(name, 'non-empty', 1))

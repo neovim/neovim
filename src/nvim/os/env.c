@@ -102,8 +102,17 @@ char *os_getenv_noalloc(const char *name)
 
   size_t size = sizeof(NameBuff);
   int r = uv_os_getenv(name, NameBuff, &size);
+  if (r == UV_ENOBUFS) {
+    char *e = xmalloc(size);
+    r = uv_os_getenv(name, e, &size);
+    if (r == 0 && size != 0 && e[0] != NUL) {
+      xmemcpyz(NameBuff, e, sizeof(NameBuff) - 1);
+    }
+    xfree(e);
+  }
+
   if (r != 0 || size == 0 || NameBuff[0] == NUL) {
-    if (r != 0 && r != UV_UNKNOWN) {
+    if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
       ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
     }
     return NULL;
