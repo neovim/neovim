@@ -655,6 +655,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   bool in_winbar = (jump_flags & MOUSE_WINBAR);
   bool in_statuscol = (jump_flags & MOUSE_STATUSCOL);
   bool in_status_line = (jump_flags & IN_STATUS_LINE);
+  bool in_global_statusline = in_status_line && global_stl_height() > 0;
   bool in_sep_line = (jump_flags & IN_SEP_LINE);
 
   if ((in_winbar || in_status_line || in_statuscol) && is_click) {
@@ -671,7 +672,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
                                                     : in_winbar ? wp->w_winbar_click_defs
                                                                 : wp->w_statuscol_click_defs;
 
-    if (in_status_line && global_stl_height() > 0) {
+    if (in_global_statusline) {
       // global statusline is displayed for the current window,
       // and spans the whole screen.
       click_defs = curwin->w_status_click_defs;
@@ -681,7 +682,11 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     if (in_statuscol && wp->w_p_rl) {
       click_col = wp->w_width_inner - click_col - 1;
     }
-    if (in_statuscol && click_col >= (int)wp->w_statuscol_click_defs_size) {
+
+    if ((in_statuscol && click_col >= (int)wp->w_statuscol_click_defs_size)
+        || (in_status_line
+            && click_col >=
+            (int)(in_global_statusline ? curwin : wp)->w_status_click_defs_size)) {
       return false;
     }
 

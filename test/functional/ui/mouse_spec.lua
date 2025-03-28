@@ -1719,6 +1719,20 @@ describe('ui/mouse/input', function()
     ]])
   end)
 
+  it("mouse click on window separator in statusline doesn't crash", function()
+    api.nvim_set_option_value('winwidth', 1, {})
+    api.nvim_set_option_value('statusline', '%f', {})
+
+    command('vsplit')
+    command('redraw')
+
+    local lines = api.nvim_get_option_value('lines', {})
+    local columns = api.nvim_get_option_value('columns', {})
+
+    api.nvim_input_mouse('left', 'press', '', 0, lines - 1, math.floor(columns / 2))
+    command('redraw')
+  end)
+
   it('getmousepos() works correctly', function()
     local winwidth = api.nvim_get_option_value('winwidth', {})
     -- Set winwidth=1 so that window sizes don't change.
