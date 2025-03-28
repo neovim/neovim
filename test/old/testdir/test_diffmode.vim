@@ -2212,8 +2212,8 @@ func Test_diff_inline()
         \  "abcdefghijklmno", "anchor2",
         \  "abcdefghijklmno", "anchor3",
         \  "test", "multiline"],
-        \ ["a?c?e?g?i?k???o",  "anchor1",
-        \  "a??de?????klmno",  "anchor2",
+        \ ["a?c?e?g?i?k???o", "anchor1",
+        \  "a??de?????klmno", "anchor2",
         \  "a??de??????lmno", "anchor3",
         \  "t?s?", "??????i?e"])
   call VerifyInternal(buf, "Test_diff_inline_char_02", " diffopt+=inline:char")
@@ -2254,7 +2254,7 @@ func Test_diff_inline_multibuffer()
         \ ["This is buffer3. Last.", "anchor", "Some more", "text here.", "anchor", "only in buffer2/3", "not in buffer1"])
   call VerifyInternal(buf, "Test_diff_inline_multibuffer_01", " diffopt+=inline:char")
 
-  " Close one of the buffer and make sure it updates correctly
+  " Close one of the buffers and make sure it updates correctly
   call term_sendkeys(buf, ":diffoff\<CR>")
   call VerifyInternal(buf, "Test_diff_inline_multibuffer_02", " diffopt+=inline:char")
 

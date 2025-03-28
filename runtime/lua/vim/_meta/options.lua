@@ -1722,8 +1722,8 @@ vim.go.dex = vim.go.diffexpr
 --- 			none    Do not perform inline highlighting.
 --- 			simple  Highlight from first different
 --- 				character to the last one in each
---- 				line. This is the default if nothing
---- 				is set.
+--- 				line.  This is the default if no
+--- 				`inline:` value is set.
 --- 			char    Use internal diff to perform a
 --- 				character-wise diff and highlight the
 --- 				difference.
