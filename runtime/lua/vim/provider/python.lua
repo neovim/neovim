@@ -1,5 +1,5 @@
 local M = {}
-local min_version = '3.7'
+local min_version = '3.9'
 local s_err ---@type string?
 local s_host ---@type string?
 
