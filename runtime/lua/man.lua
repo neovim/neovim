@@ -645,13 +645,14 @@ function M.init_pager()
   -- so if the buffer already exists, create new with a non existing name.
   if vim.fn.bufexists(man_bufname) == 1 then
     local new_bufname = man_bufname
+    local i = 1
     while vim.fn.bufexists(new_bufname) == 1 do
       new_bufname = man_bufname .. '?new=' .. tostring(i)
+      i = i + 1
     end
     vim.cmd.file({ new_bufname, mods = { silent = true } })
   elseif not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
-      vim.cmd.file({ man_bufname, mods = { silent = true } })
-    end
+    vim.cmd.file({ man_bufname, mods = { silent = true } })
   end
 
   set_options()
