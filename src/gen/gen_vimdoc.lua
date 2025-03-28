@@ -118,6 +118,7 @@ local config = {
       'tabpage.c',
       'autocmd.c',
       'ui.c',
+      'fold.c',
     },
     exclude_types = true,
     fn_name_pat = 'nvim_.*',

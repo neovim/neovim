@@ -458,3 +458,9 @@ typedef struct {
   Integer c;
   String f;
 } Dict(_shada_buflist_item);
+
+typedef struct {
+  OptionalKeys is_set__fold_info_;
+  Integer first;
+  Integer last;
+} Dict(fold_info);
