@@ -79,6 +79,7 @@ LUA
 OPTIONS
 
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
+• 'pummaxwidth' sets maximum width for the completion popup menu.
 
 PLUGINS
 

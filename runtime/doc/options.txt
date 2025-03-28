@@ -4623,6 +4623,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Maximum number of items to show in the popup menu
 	(|ins-completion-menu|). Zero means "use available screen space".
 
+						*'pummaxwidth'* *'pmw'*
+'pummaxwidth' 'pmw'	number	(default 0)
+			global
+	Maximum width for the popup menu (|ins-completion-menu|).  When zero,
+	there is no maximum width limit, otherwise the popup menu will never be
+	wider than this value.  Truncated text will be indicated by "..." at the
+	end.  Takes precedence over 'pumwidth'.
+
 						*'pumwidth'* *'pw'*
 'pumwidth' 'pw'		number	(default 15)
 			global

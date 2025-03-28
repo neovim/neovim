@@ -6426,6 +6426,21 @@ local options = {
       varname = 'p_ph',
     },
     {
+      abbreviation = 'pmw',
+      defaults = 0,
+      desc = [=[
+        Maximum width for the popup menu (|ins-completion-menu|).  When zero,
+        there is no maximum width limit, otherwise the popup menu will never be
+        wider than this value.  Truncated text will be indicated by "..." at the
+        end.  Takes precedence over 'pumwidth'.
+      ]=],
+      full_name = 'pummaxwidth',
+      scope = { 'global' },
+      short_desc = N_('maximum width of the popup menu'),
+      type = 'number',
+      varname = 'p_pmw',
+    },
+    {
       abbreviation = 'pw',
       defaults = 15,
       desc = [=[
