@@ -2023,6 +2023,11 @@ func Test_pum_maxwidth()
   call VerifyScreenDump(buf, 'Test_pum_maxwidth_04', {'rows': 8})
   call term_sendkeys(buf, "\<Esc>3Gdd\"zp")
 
+  call term_sendkeys(buf, ":set lines=10 columns=32\<CR>")
+  call term_sendkeys(buf, "GA\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_09', {'rows': 10, 'cols': 32})
+  call term_sendkeys(buf, "\<Esc>3Gdd\"zp")
+
   call StopVimInTerminal(buf)
 endfunc
 

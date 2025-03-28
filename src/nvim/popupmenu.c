@@ -391,6 +391,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
           if (p_pmw > 0 && pum_width > p_pmw) {
             pum_width = (int)p_pmw;
           }
+        } else if (p_pmw > 0 && pum_width > p_pmw) {
+          pum_width = (int)p_pmw;
         }
       }
     } else if (max_col - min_col < def_width) {
