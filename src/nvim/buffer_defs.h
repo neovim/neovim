@@ -777,7 +777,7 @@ struct diffblock_S {
 typedef struct diffline_change_S diffline_change_T;
 struct diffline_change_S {
   colnr_T dc_start[DB_COUNT];       ///< byte offset of start of range in the line
-  colnr_T dc_end[DB_COUNT];         ///< 1 paste byte offset of end of range in line
+  colnr_T dc_end[DB_COUNT];         ///< 1 past byte offset of end of range in line
   int dc_start_lnum_off[DB_COUNT];  ///< starting line offset
   int dc_end_lnum_off[DB_COUNT];    ///< end line offset
 };
