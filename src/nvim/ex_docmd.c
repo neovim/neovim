@@ -407,6 +407,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   int count = 0;                        // line number count
   bool did_inc = false;                 // incremented RedrawingDisabled
   int block_indent = -1;                // indent for ext_cmdline block event
+  char *block_line = NULL;              // block_line for ext_cmdline block event
   int retval = OK;
   cstack_T cstack = {                   // conditional stack
     .cs_idx = -1,
@@ -577,8 +578,9 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       int indent = cstack.cs_idx < 0 ? 0 : (cstack.cs_idx + 1) * 2;
       if (count >= 1 && getline_equal(fgetline, cookie, getexline)) {
         if (ui_has(kUICmdline)) {
-          char *line = last_cmdline ? last_cmdline : "";
+          char *line = block_line == last_cmdline ? "" : last_cmdline;
           ui_ext_cmdline_block_append((size_t)MAX(0, block_indent), line);
+          block_line = last_cmdline;
           block_indent = indent;
         } else if (count == 1) {
           // Need to set msg_didout for the first line after an ":if",
@@ -684,7 +686,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
       // If the command was typed, remember it for the ':' register.
       // Do this AFTER executing the command to make :@: work.
-      if (getline_equal(fgetline, cookie, getexline)) {
+      if (getline_equal(fgetline, cookie, getexline) && new_last_cmdline != NULL) {
         xfree(last_cmdline);
         last_cmdline = new_last_cmdline;
         new_last_cmdline = NULL;

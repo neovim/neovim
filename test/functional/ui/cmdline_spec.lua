@@ -900,6 +900,7 @@ local function test_cmdline(linegrid)
       cmdline_block = { { { 'if 1' } }, { { '  let x = 1' } } },
     })
     feed('<CR>')
+    eq('let x = 1', eval('@:'))
     screen:expect({
       grid = s1,
       cmdline = {
