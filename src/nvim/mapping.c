@@ -2804,8 +2804,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     api_set_error(err, kErrorTypeException, e_nomap, 0);
     goto fail_and_free;
   case 5:
-    api_set_error(err, kErrorTypeException,
-                  "E227: mapping already exists for %s", parsed_args.lhs);
+    api_set_error(err, kErrorTypeException, e_mapping_already_exists_for_str, lhs.data);
     goto fail_and_free;
   default:
     assert(false && "Unrecognized return code!");
