@@ -1723,12 +1723,12 @@ cycles for such a feature to become either integrated into the platform or
 withdrawn from this effort.  To cater for early adopters, there is optional
 support in Vim for syntax related preview features that are implemented.  You
 can request it by specifying a list of preview feature numbers as follows: >
-	:let g:java_syntax_previews = [455, 476]
+	:let g:java_syntax_previews = [488, 494]
 
 The supported JEP numbers are to be drawn from this table:
 	`430`: String Templates [JDK 21]
-	`455`: Primitive types in Patterns, instanceof, and switch
-	`476`: Module Import Declarations
+	`488`: Primitive types in Patterns, instanceof, and switch
+	`494`: Module Import Declarations
 
 Note that as soon as the particular preview feature will have been integrated
 into the Java platform, its entry will be removed from the table and related
