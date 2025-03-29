@@ -814,6 +814,12 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       'E227: Mapping already exists for <tab>',
       pcall_err(api.nvim_set_keymap, 'n', '<tab>', 'rhs', { unique = true })
     )
+
+    api.nvim_set_keymap('ia', 'lhs', 'rhs', {})
+    eq(
+      'E226: Abbreviation already exists for lhs',
+      pcall_err(api.nvim_set_keymap, 'ia', 'lhs', 'rhs', { unique = true })
+    )
   end)
 
   it('can set <expr> mappings whose RHS change dynamically', function()
