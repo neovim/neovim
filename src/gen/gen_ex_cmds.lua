@@ -1,17 +1,15 @@
-local includedir = arg[1]
-local autodir = arg[2]
-
 -- Will generate files ex_cmds_enum.generated.h with cmdidx_T enum
 -- and ex_cmds_defs.generated.h with main Ex commands definitions.
 
-local enumfname = includedir .. '/ex_cmds_enum.generated.h'
-local defsfname = autodir .. '/ex_cmds_defs.generated.h'
+local enumfname = arg[1] -- '/ex_cmds_enum.generated.h'
+local defsfname = arg[2] -- '/ex_cmds_defs.generated.h'
+local ex_cmds_name = arg[3] -- 'ex_cmds.lua'
 
 local enumfile = io.open(enumfname, 'w')
 local defsfile = io.open(defsfname, 'w')
 
 local bit = require 'bit'
-local ex_cmds = require('nvim.ex_cmds')
+local ex_cmds = loadfile(ex_cmds_name)()
 local defs = ex_cmds.cmds
 local flags = ex_cmds.flags
 
