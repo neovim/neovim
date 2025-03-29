@@ -128,7 +128,7 @@ LSP
 
 LUA
 
-• todo
+• |vim.filetype.match()| now takes `fast` option to perform fast detection.
 
 OPTIONS
 
