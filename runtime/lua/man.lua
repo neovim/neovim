@@ -639,8 +639,20 @@ function M.init_pager()
   local _, sect, err = pcall(parse_ref, ref)
   vim.b.man_sect = err ~= nil and sect or ''
 
-  if not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
-    vim.cmd.file({ 'man://' .. fn.fnameescape(ref):lower(), mods = { silent = true } })
+  local man_bufname = 'man://' .. fn.fnameescape(ref):lower()
+
+  -- Raw manpage into (:Man!) overlooks `match('man://')` condition,
+  -- so if the buffer already exists, create new with a non existing name.
+  if vim.fn.bufexists(man_bufname) == 1 then
+    local new_bufname = man_bufname
+    local i = 1
+    while vim.fn.bufexists(new_bufname) == 1 do
+      new_bufname = man_bufname .. '?new=' .. tostring(i)
+      i = i + 1
+    end
+    vim.cmd.file({ new_bufname, mods = { silent = true } })
+  elseif not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
+    vim.cmd.file({ man_bufname, mods = { silent = true } })
   end
 
   set_options()
