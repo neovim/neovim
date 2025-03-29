@@ -710,7 +710,7 @@ void pum_redraw(void)
           if (pum_rl) {
             char *rt = reverse_text(st);
             char *rt_start = rt;
-            int cells = vim_strsize(rt);
+            int cells = (int)mb_string2cells(rt);
             if (p_pmw > ellipsis_width && pum_width == p_pmw
                 && grid_col - cells < col_off - pum_width) {
               need_ellipsis = true;
