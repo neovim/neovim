@@ -43,8 +43,10 @@
 local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
 local Range = require('vim.treesitter._range')
+local hrtime = vim.uv.hrtime
 
-local default_parse_timeout_ms = 3
+-- Parse in 3ms chunks.
+local default_parse_timeout_ns = 3 * 1000000
 
 ---@type Range2
 local entire_document_range = { 0, math.huge }
@@ -198,16 +200,16 @@ function LanguageTree:_set_logger()
   self._parser:_set_logger(log_lex, log_parse, self._logger)
 end
 
----Measure execution time of a function
+---Measure execution time of a function, in nanoseconds.
 ---@generic R1, R2, R3
 ---@param f fun(): R1, R2, R3
 ---@return number, R1, R2, R3
 local function tcall(f, ...)
-  local start = vim.uv.hrtime()
+  local start = hrtime()
   ---@diagnostic disable-next-line
   local r = { f(...) }
   --- @type number
-  local duration = (vim.uv.hrtime() - start) / 1000000
+  local duration = hrtime() - start
   --- @diagnostic disable-next-line: redundant-return-value
   return duration, unpack(r)
 end
@@ -388,18 +390,29 @@ function LanguageTree:_parse_regions(range, thread_state)
       )
     then
       self._parser:set_included_ranges(ranges)
-      self._parser:set_timeout(thread_state.timeout and thread_state.timeout * 1000 or 0) -- ms -> micros
 
-      local parse_time, tree, tree_changes =
-        tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
+      local parse_time, tree, tree_changes = tcall(
+        self._parser.parse,
+        self._parser,
+        self._trees[i],
+        self._source,
+        true,
+        thread_state.timeout
+      )
       while true do
         if tree then
           break
         end
         coroutine.yield(self._trees, false)
 
-        parse_time, tree, tree_changes =
-          tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
+        parse_time, tree, tree_changes = tcall(
+          self._parser.parse,
+          self._parser,
+          self._trees[i],
+          self._source,
+          true,
+          thread_state.timeout
+        )
       end
 
       self:_subtract_time(thread_state, parse_time)
@@ -503,7 +516,7 @@ function LanguageTree:_async_parse(range, on_parse)
   local buf = is_buffer_parser and vim.b[source] or nil
   local ct = is_buffer_parser and buf.changedtick or nil
   local total_parse_time = 0
-  local redrawtime = vim.o.redrawtime
+  local redrawtime = vim.o.redrawtime * 1000000
 
   local thread_state = {} ---@type ParserThreadState
 
@@ -526,7 +539,7 @@ function LanguageTree:_async_parse(range, on_parse)
       end
     end
 
-    thread_state.timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ms or nil
+    thread_state.timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ns or nil
     local parse_time, trees, finished = tcall(parse, self, range, thread_state)
     total_parse_time = total_parse_time + parse_time
 
@@ -987,7 +1000,7 @@ function LanguageTree:_get_injections(range, thread_state)
     return {}
   end
 
-  local start = vim.uv.hrtime()
+  local start = hrtime()
 
   ---@type table<string,Range6[][]>
   local result = {}
@@ -1016,9 +1029,9 @@ function LanguageTree:_get_injections(range, thread_state)
       end
 
       -- Check the current function duration against the timeout, if it exists.
-      local current_time = vim.uv.hrtime()
-      self:_subtract_time(thread_state, (current_time - start) / 1000000)
-      start = current_time
+      local current_time = hrtime()
+      self:_subtract_time(thread_state, current_time - start)
+      start = hrtime()
     end
   end
 
