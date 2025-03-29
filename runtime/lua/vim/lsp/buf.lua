@@ -816,9 +816,9 @@ end
 --- @param client_id integer
 --- @param method string
 --- @param params table
---- @param handler? lsp.Handler
 --- @param bufnr? integer
-local function request_with_id(client_id, method, params, handler, bufnr)
+--- @param opts? vim.lsp.ListOpts
+local function request_with_id(client_id, method, params, bufnr, opts)
   local client = lsp.get_client_by_id(client_id)
   if not client then
     vim.notify(
@@ -826,6 +826,10 @@ local function request_with_id(client_id, method, params, handler, bufnr)
       vim.log.levels.WARN
     )
     return
+  end
+  local handler = function(err, result, ctx, config)
+    local handler = client.handlers[method] or lsp.handlers[method]
+    handler(err, result, ctx, vim.tbl_extend('force', config or {}, opts))
   end
   client:request(method, params, handler, bufnr)
 end
@@ -846,7 +850,8 @@ local hierarchy_methods = {
 }
 
 --- @param method string
-local function hierarchy(method)
+--- @param opts? vim.lsp.ListOpts
+local function hierarchy(method, opts)
   local kind = hierarchy_methods[method]
   if not kind then
     error('unsupported method ' .. method)
@@ -870,7 +875,7 @@ local function hierarchy(method)
       vim.notify('No item resolved', vim.log.levels.WARN)
     elseif #results == 1 then
       local client_id, item = results[1][1], results[1][2]
-      request_with_id(client_id, method, { item = item }, nil, bufnr)
+      request_with_id(client_id, method, { item = item }, bufnr, opts)
     else
       vim.ui.select(results, {
         prompt = string.format('Select a %s hierarchy item:', kind),
@@ -881,7 +886,7 @@ local function hierarchy(method)
       }, function(x)
         if x then
           local client_id, item = x[1], x[2]
-          request_with_id(client_id, method, { item = item }, nil, bufnr)
+          request_with_id(client_id, method, { item = item }, bufnr, opts)
         end
       end)
     end
@@ -914,24 +919,27 @@ end
 --- Lists all the call sites of the symbol under the cursor in the
 --- |quickfix| window. If the symbol can resolve to multiple
 --- items, the user can pick one in the |inputlist()|.
-function M.incoming_calls()
-  hierarchy(ms.callHierarchy_incomingCalls)
+---@param opts? vim.lsp.ListOpts
+function M.incoming_calls(opts)
+  hierarchy(ms.callHierarchy_incomingCalls, opts)
 end
 
 --- Lists all the items that are called by the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one in the |inputlist()|.
-function M.outgoing_calls()
-  hierarchy(ms.callHierarchy_outgoingCalls)
+---@param opts? vim.lsp.ListOpts
+function M.outgoing_calls(opts)
+  hierarchy(ms.callHierarchy_outgoingCalls, opts)
 end
 
 --- Lists all the subtypes or supertypes of the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one using |vim.ui.select()|.
 ---@param kind "subtypes"|"supertypes"
-function M.typehierarchy(kind)
+---@param opts? vim.lsp.ListOpts
+function M.typehierarchy(kind, opts)
   local method = kind == 'subtypes' and ms.typeHierarchy_subtypes or ms.typeHierarchy_supertypes
-  hierarchy(method)
+  hierarchy(method, opts)
 end
 
 --- List workspace folders.
