@@ -2095,7 +2095,7 @@ local patterns_text = {
   -- Mason
   ['^<[%%&].*>'] = 'mason',
   -- Vim scripts (must have '" vim' as the first line to trigger this)
-  ['^" *[vV]im$['] = 'vim',
+  ['^" *[vV]im$'] = 'vim',
   -- libcxx and libstdc++ standard library headers like ["iostream["] do not have
   -- an extension, recognize the Emacs file mode.
   ['%-%*%-.*[cC]%+%+.*%-%*%-'] = 'cpp',
