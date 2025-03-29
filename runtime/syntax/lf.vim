@@ -2,15 +2,18 @@
 " Language: lf file manager configuration file (lfrc)
 " Maintainer: Andis Sprinkis <andis@sprinkis.com>
 " Former Maintainer: Cameron Wright
-" Former URL: https://github.com/andis-sprinkis/lf-vim
-" Last Change: 13 October 2024
+" URL: https://github.com/andis-sprinkis/lf-vim
+" Last Change: 28 March 2025
+" 29 Mar 2025 by Vim Project (save and restore 'cpo' setting)
 "
 " The shell syntax highlighting is configurable. See $VIMRUNTIME/doc/syntax.txt
-" lf version: 32
+" lf version: 34
 
 if exists("b:current_syntax")
     finish
 endif
+let s:cpo = &cpo
+set cpo&vim
 
 let b:current_syntax = "lf"
 
@@ -33,122 +36,80 @@ syn keyword  lfKeyword        set setlocal cmd map cmap skipwhite
 
 "{{{ Options Keywords
 syn keyword  lfOptions
-    \ quit
-    \ up
-    \ half-up
-    \ page-up
-    \ scroll-up
-    \ down
-    \ half-down
-    \ page-down
-    \ scroll-down
-    \ updir
-    \ open
-    \ jump-next
-    \ jump-prev
-    \ top
-    \ bottom
-    \ high
-    \ middle
-    \ low
-    \ toggle
-    \ invert
-    \ invert-below
-    \ unselect
-    \ glob-select
-    \ glob-unselect
-    \ calcdirsize
-    \ clearmaps
-    \ copy
-    \ cut
-    \ paste
-    \ clear
-    \ sync
-    \ draw
-    \ redraw
-    \ load
-    \ reload
-    \ echo
-    \ echomsg
-    \ echoerr
-    \ cd
-    \ select
-    \ delete
-    \ rename
-    \ source
-    \ push
-    \ read
-    \ shell
-    \ shell-pipe
-    \ shell-wait
-    \ shell-async
-    \ find
-    \ find-back
-    \ find-next
-    \ find-prev
-    \ search
-    \ search-back
-    \ search-next
-    \ search-prev
-    \ filter
-    \ setfilter
-    \ mark-save
-    \ mark-load
-    \ mark-remove
-    \ tag
-    \ tag-toggle
-    \ cmd-escape
-    \ cmd-complete
-    \ cmd-menu-complete
-    \ cmd-menu-complete-back
-    \ cmd-menu-accept
-    \ cmd-enter
-    \ cmd-interrupt
-    \ cmd-history-next
-    \ cmd-history-prev
-    \ cmd-left
-    \ cmd-right
-    \ cmd-home
-    \ cmd-end
-    \ cmd-delete
-    \ cmd-delete-back
-    \ cmd-delete-home
-    \ cmd-delete-end
-    \ cmd-delete-unix-word
-    \ cmd-yank
-    \ cmd-transpose
-    \ cmd-transpose-word
-    \ cmd-word
-    \ cmd-word-back
-    \ cmd-delete-word
-    \ cmd-delete-word-back
-    \ cmd-capitalize-word
-    \ cmd-uppercase-word
-    \ cmd-lowercase-word
     \ anchorfind
     \ autoquit
     \ borderfmt
+    \ bottom
+    \ calcdirsize
+    \ cd
     \ cleaner
+    \ clear
+    \ clearmaps
+    \ cmd-capitalize-word
+    \ cmd-complete
+    \ cmd-delete
+    \ cmd-delete-back
+    \ cmd-delete-end
+    \ cmd-delete-home
+    \ cmd-delete-unix-word
+    \ cmd-delete-word
+    \ cmd-delete-word-back
+    \ cmd-end
+    \ cmd-enter
+    \ cmd-escape
+    \ cmd-history-next
+    \ cmd-history-prev
+    \ cmd-home
+    \ cmd-interrupt
+    \ cmd-left
+    \ cmd-lowercase-word
+    \ cmd-menu-accept
+    \ cmd-menu-complete
+    \ cmd-menu-complete-back
+    \ cmd-right
+    \ cmd-transpose
+    \ cmd-transpose-word
+    \ cmd-uppercase-word
+    \ cmd-word
+    \ cmd-word-back
+    \ cmd-yank
+    \ copy
     \ copyfmt
     \ cursoractivefmt
     \ cursorparentfmt
     \ cursorpreviewfmt
+    \ cut
     \ cutfmt
+    \ delete
     \ dircache
     \ dircounts
     \ dirfirst
     \ dironly
     \ dirpreviews
+    \ down
+    \ draw
     \ drawbox
     \ dupfilefmt
+    \ echo
+    \ echoerr
+    \ echomsg
     \ errorfmt
     \ filesep
+    \ filter
+    \ find
+    \ find-back
+    \ find-next
+    \ find-prev
     \ findlen
+    \ glob-select
+    \ glob-unselect
     \ globfilter
     \ globsearch
+    \ half-down
+    \ half-up
     \ hidden
     \ hiddenfiles
-    \ hidecursorinactive
+    \ high
     \ history
     \ icons
     \ ifs
@@ -159,45 +120,90 @@ syn keyword  lfOptions
     \ info
     \ infotimefmtnew
     \ infotimefmtold
+    \ invert
+    \ invert-below
+    \ jump-next
+    \ jump-prev
+    \ load
+    \ locale
+    \ low
+    \ mark-load
+    \ mark-remove
+    \ mark-save
+    \ middle
     \ mouse
     \ number
     \ numberfmt
+    \ on-cd
+    \ on-focus-gained
+    \ on-focus-lost
+    \ on-init
+    \ on-quit
+    \ on-redraw
+    \ on-select
+    \ open
+    \ page-down
+    \ page-up
+    \ paste
     \ period
+    \ pre-cd
     \ preserve
     \ preview
     \ previewer
     \ promptfmt
+    \ push
+    \ quit
     \ ratios
+    \ read
+    \ redraw
     \ relativenumber
+    \ reload
+    \ rename
     \ reverse
     \ roundbox
-    \ ruler
     \ rulerfmt
+    \ scroll-down
+    \ scroll-up
     \ scrolloff
+    \ search
+    \ search-back
+    \ search-next
+    \ search-prev
+    \ select
     \ selectfmt
     \ selmode
+    \ setfilter
     \ shell
+    \ shell-async
+    \ shell-pipe
+    \ shell-wait
     \ shellflag
     \ shellopts
+    \ showbinds
     \ sixel
     \ smartcase
     \ smartdia
     \ sortby
+    \ source
     \ statfmt
+    \ sync
     \ tabstop
+    \ tag
+    \ tag-toggle
     \ tagfmt
     \ tempmarks
     \ timefmt
+    \ toggle
+    \ top
     \ truncatechar
     \ truncatepct
+    \ unselect
+    \ up
+    \ updir
     \ waitmsg
+    \ watch
     \ wrapscan
     \ wrapscroll
-    \ pre-cd
-    \ on-cd
-    \ on-select
-    \ on-redraw
-    \ on-quit
 "}}}
 
 "{{{ Special Matching
@@ -234,3 +240,5 @@ hi def link  lfExternalShell  Normal
 hi def link  lfExternalPatch  Special
 hi def link  lfIgnore         Special
 "}}}
+let &cpo = s:cpo
+unlet s:cpo
