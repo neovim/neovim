@@ -284,7 +284,7 @@ end
 --- @param msg string
 --- @param ... string|string[] Optional advice
 function M.warn(msg, ...)
-  local input = format_report_message('🤔 WARNING', msg, ...)
+  local input = format_report_message('⚠️ WARNING', msg, ...)
   collect_output(input)
 end
 
