@@ -786,7 +786,7 @@ describe('Default statusline', function()
     eq('asdf', eval('&statusline'))
 
     local default_statusline =
-      "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
+      "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
 
     exec_lua("vim.o.statusline = ''")
 
