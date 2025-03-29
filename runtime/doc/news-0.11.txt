@@ -56,6 +56,9 @@ EDITOR
   it moves to another help buffer.
 • Bells from a |terminal| buffer are now silent by default, unless 'belloff'
   option doesn't contain "term" or "all".
+• Renamed autocmd group `nvim_swapfile` to `nvim.swapfile`. |default-autocmds|
+  If you always want the swapfile dialog, delete the `nvim.swapfile` group:
+  `autocmd! nvim.swapfile`.
 
 EVENTS
 
