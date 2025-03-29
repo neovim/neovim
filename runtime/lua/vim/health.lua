@@ -449,11 +449,15 @@ function M._check(mods, plugin_names)
   vim.print('')
 
   -- Quit with 'q' inside healthcheck buffers.
-  vim.keymap.set('n', 'q', function()
-    if not pcall(vim.cmd.close) then
-      vim.cmd.bdelete()
+  vim._with({ buf = bufnr }, function()
+    if vim.fn.maparg('q', 'n', false, false) == '' then
+      vim.keymap.set('n', 'q', function()
+        if not pcall(vim.cmd.close) then
+          vim.cmd.bdelete()
+        end
+      end, { buffer = bufnr, silent = true, noremap = true, nowait = true })
     end
-  end, { buffer = bufnr, silent = true, noremap = true, nowait = true })
+  end)
 
   -- Once we're done writing checks, set nomodifiable.
   vim.bo[bufnr].modifiable = false
