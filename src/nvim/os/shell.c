@@ -778,7 +778,7 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   }
 
   // Add the redirection stuff
-  char *command = make_filter_cmd(cmd, infile, tempname);
+  char *command = make_filter_cmd(cmd, infile, tempname, false);
 
   // Call the shell to execute the command (errors are ignored).
   // Don't check timestamps here.
