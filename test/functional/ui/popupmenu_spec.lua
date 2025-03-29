@@ -5478,7 +5478,471 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    it('does not crash when displayed in the last column with rightleft #12032', function()
+    -- oldtest: Test_pum_maxwidth()
+    it('"pummaxwidth"', function()
+      screen:try_resize(60, 8)
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        '123456789_123456789_123456789_a',
+        '123456789_123456789_123456789_b',
+        '            123',
+      })
+      feed('G"zyy')
+      feed('A<C-X><C-N>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:------------------------------------------------------------]|*7
+          [3:------------------------------------------------------------]|
+        ## grid 2
+          123456789_123456789_123456789_a                             |
+          123456789_123456789_123456789_b                             |
+                      123456789_123456789_123456789_a^                 |
+          {1:~                                                           }|*4
+        ## grid 3
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}             |
+        ## grid 4
+          {s: 123456789_123456789_123456789_a }|
+          {n: 123456789_123456789_123456789_b }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100 } },
+        })
+      else
+        screen:expect([[
+          123456789_123456789_123456789_a                             |
+          123456789_123456789_123456789_b                             |
+                      123456789_123456789_123456789_a^                 |
+          {1:~          }{s: 123456789_123456789_123456789_a }{1:                }|
+          {1:~          }{n: 123456789_123456789_123456789_b }{1:                }|
+          {1:~                                                           }|*2
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}             |
+        ]])
+      end
+      feed('<Esc>3Gdd"zp')
+
+      command('set pummaxwidth=10')
+      feed('GA<C-X><C-N>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:------------------------------------------------------------]|*7
+          [3:------------------------------------------------------------]|
+        ## grid 2
+          123456789_123456789_123456789_a                             |
+          123456789_123456789_123456789_b                             |
+                      123456789_123456789_123456789_a^                 |
+          {1:~                                                           }|*4
+        ## grid 3
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}             |
+        ## grid 4
+          {s: 1234567...}|
+          {n: 1234567...}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100 } },
+        })
+      else
+        screen:expect([[
+          123456789_123456789_123456789_a                             |
+          123456789_123456789_123456789_b                             |
+                      123456789_123456789_123456789_a^                 |
+          {1:~          }{s: 1234567...}{1:                                      }|
+          {1:~          }{n: 1234567...}{1:                                      }|
+          {1:~                                                           }|*2
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}             |
+        ]])
+      end
+      feed('<Esc>3Gdd"zp')
+
+      command('set pummaxwidth=20')
+      feed('GA<C-X><C-N>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:------------------------------------------------------------]|*7
+          [3:------------------------------------------------------------]|
+        ## grid 2
+          123456789_123456789_123456789_a                             |
+          123456789_123456789_123456789_b                             |
+                      123456789_123456789_123456789_a^                 |
+          {1:~                                                           }|*4
+        ## grid 3
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}             |
+        ## grid 4
+          {s: 123456789_1234567...}|
+          {n: 123456789_1234567...}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100 } },
+        })
+      else
+        screen:expect([[
+          123456789_123456789_123456789_a                             |
+          123456789_123456789_123456789_b                             |
+                      123456789_123456789_123456789_a^                 |
+          {1:~          }{s: 123456789_1234567...}{1:                            }|
+          {1:~          }{n: 123456789_1234567...}{1:                            }|
+          {1:~                                                           }|*2
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}             |
+        ]])
+      end
+      feed('<Esc>3Gdd"zp')
+
+      command('set pumwidth=20 pummaxwidth=8')
+      feed('GA<C-X><C-N>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:------------------------------------------------------------]|*7
+          [3:------------------------------------------------------------]|
+        ## grid 2
+          123456789_123456789_123456789_a                             |
+          123456789_123456789_123456789_b                             |
+                      123456789_123456789_123456789_a^                 |
+          {1:~                                                           }|*4
+        ## grid 3
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}             |
+        ## grid 4
+          {s: 12345...}|
+          {n: 12345...}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 3, 11, false, 100 } },
+        })
+      else
+        screen:expect([[
+          123456789_123456789_123456789_a                             |
+          123456789_123456789_123456789_b                             |
+                      123456789_123456789_123456789_a^                 |
+          {1:~          }{s: 12345...}{1:                                        }|
+          {1:~          }{n: 12345...}{1:                                        }|
+          {1:~                                                           }|*2
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}             |
+        ]])
+      end
+      feed('<Esc>3Gdd"zp')
+
+      screen:try_resize(32, 10)
+      feed('GA<C-X><C-N>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*9
+          [3:--------------------------------]|
+        ## grid 2
+          123456789_123456789_123456789_a |
+          123456789_123456789_123456789_b |
+                      123456789_123456789_|
+          123456789_a^                     |
+          {1:~                               }|*5
+        ## grid 3
+          {2:-- }{5:match 1 of 2}                 |
+        ## grid 4
+          {s: 12345...}|
+          {n: 12345...}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 4, 11, false, 100 } },
+        })
+      else
+        screen:expect([[
+          123456789_123456789_123456789_a |
+          123456789_123456789_123456789_b |
+                      123456789_123456789_|
+          123456789_a^                     |
+          {1:~          }{s: 12345...}{1:            }|
+          {1:~          }{n: 12345...}{1:            }|
+          {1:~                               }|*3
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+      end
+      feed('<Esc>3Gdd"zp')
+    end)
+
+    -- oldtest: Test_pum_maxwidth_multibyte()
+    it("'pummaxwidth' with multibyte", function()
+      screen:try_resize(60, 8)
+      exec([[
+        func Omni_test(findstart, base)
+          if a:findstart
+            return col(".")
+          endif
+          return [
+            \ #{word: "123456789_123456789_123456789_"},
+            \ #{word: "一二三四五六七八九十"},
+            \ ]
+        endfunc
+        set omnifunc=Omni_test
+      ]])
+
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:------------------------------------------------------------]|*7
+          [3:------------------------------------------------------------]|
+        ## grid 2
+          123456789_123456789_123456789_^                              |
+          {1:~                                                           }|*6
+        ## grid 3
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+        ## grid 4
+          {s:123456789_123456789_123456789_ }|
+          {n:一二三四五六七八九十           }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+          123456789_123456789_123456789_^                              |
+          {s:123456789_123456789_123456789_ }{1:                             }|
+          {n:一二三四五六七八九十           }{1:                             }|
+          {1:~                                                           }|*4
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+        ]])
+      end
+      feed('<Esc>')
+
+      command('set pummaxwidth=10')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:------------------------------------------------------------]|*7
+          [3:------------------------------------------------------------]|
+        ## grid 2
+          123456789_123456789_123456789_^                              |
+          {1:~                                                           }|*6
+        ## grid 3
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+        ## grid 4
+          {s:1234567...}|
+          {n:一二三 ...}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+          123456789_123456789_123456789_^                              |
+          {s:1234567...}{1:                                                  }|
+          {n:一二三 ...}{1:                                                  }|
+          {1:~                                                           }|*4
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+        ]])
+      end
+      feed('<Esc>')
+
+      command('set rightleft')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:------------------------------------------------------------]|*7
+          [3:------------------------------------------------------------]|
+        ## grid 2
+                                       ^ _987654321_987654321_987654321|
+          {1:                                                           ~}|*6
+        ## grid 3
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+        ## grid 4
+          {s:...7654321}|
+          {n:... 三二一}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 50, false, 100 } },
+        })
+      else
+        screen:expect([[
+                                       ^ _987654321_987654321_987654321|
+          {1:                                                  }{s:...7654321}|
+          {1:                                                  }{n:... 三二一}|
+          {1:                                                           ~}|*4
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+        ]])
+      end
+      feed('<Esc>')
+      command('set norightleft')
+
+      command('set pummaxwidth=2')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:------------------------------------------------------------]|*7
+          [3:------------------------------------------------------------]|
+        ## grid 2
+          123456789_123456789_123456789_^                              |
+          {1:~                                                           }|*6
+        ## grid 3
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+        ## grid 4
+          {s:12}|
+          {n:一}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+          123456789_123456789_123456789_^                              |
+          {s:12}{1:                                                          }|
+          {n:一}{1:                                                          }|
+          {1:~                                                           }|*4
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+        ]])
+      end
+      feed('<Esc>')
+    end)
+
+    it([['pummaxwidth' works with "kind" and "menu"]], function()
+      exec([[
+        func Omni_test(findstart, base)
+          if a:findstart
+            return col(".")
+          endif
+          return [
+            \ #{word: "foo", menu: "fooMenu", kind: "fooKind"},
+            \ #{word: "bar", menu: "barMenu", kind: "barKind"},
+            \ #{word: "baz", menu: "bazMenu", kind: "bazKind"},
+            \ ]
+        endfunc
+        set omnifunc=Omni_test
+      ]])
+
+      command('set pummaxwidth=14')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+          foo^                             |
+          {1:~                               }|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:foo fooKind...}|
+          {n:bar barKind...}|
+          {n:baz bazKind...}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+          foo^                             |
+          {s:foo fooKind...}{1:                  }|
+          {n:bar barKind...}{1:                  }|
+          {n:baz bazKind...}{1:                  }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+
+      command('set rightleft')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+                                      ^ oof|
+          {1:                               ~}|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:...dniKoof oof}|
+          {n:...dniKrab rab}|
+          {n:...dniKzab zab}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 18, false, 100 } },
+        })
+      else
+        screen:expect([[
+                                      ^ oof|
+          {1:                  }{s:...dniKoof oof}|
+          {1:                  }{n:...dniKrab rab}|
+          {1:                  }{n:...dniKzab zab}|
+          {1:                               ~}|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+      command('set norightleft')
+
+      command('set pummaxwidth=13')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+          foo^                             |
+          {1:~                               }|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:foo fooKin...}|
+          {n:bar barKin...}|
+          {n:baz bazKin...}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+          foo^                             |
+          {s:foo fooKin...}{1:                   }|
+          {n:bar barKin...}{1:                   }|
+          {n:baz bazKin...}{1:                   }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+
+      command('set rightleft')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+                                      ^ oof|
+          {1:                               ~}|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:...niKoof oof}|
+          {n:...niKrab rab}|
+          {n:...niKzab zab}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 19, false, 100 } },
+        })
+      else
+        screen:expect([[
+                                      ^ oof|
+          {1:                   }{s:...niKoof oof}|
+          {1:                   }{n:...niKrab rab}|
+          {1:                   }{n:...niKzab zab}|
+          {1:                               ~}|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+      command('set norightleft')
+    end)
+
+    it('does not crash when displayed in last column with rightleft #12032', function()
       local col = 30
       local items = { 'word', 'choice', 'text', 'thing' }
       local max_len = 0

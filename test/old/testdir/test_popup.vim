@@ -1992,4 +1992,86 @@ func Test_pum_complete_with_special_characters()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_maxwidth()
+  CheckScreendump
+
+  let lines =<< trim END
+    123456789_123456789_123456789_a
+    123456789_123456789_123456789_b
+                123
+  END
+  call writefile(lines, 'Xtest', 'D')
+  let buf = RunVimInTerminal('Xtest', {})
+
+  call term_sendkeys(buf, "G\"zyy")
+  call term_sendkeys(buf, "A\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_01', {'rows': 8})
+  call term_sendkeys(buf, "\<Esc>3Gdd\"zp")
+
+  call term_sendkeys(buf, ":set pummaxwidth=10\<CR>")
+  call term_sendkeys(buf, "GA\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_02', {'rows': 8})
+  call term_sendkeys(buf, "\<Esc>3Gdd\"zp")
+
+  call term_sendkeys(buf, ":set pummaxwidth=20\<CR>")
+  call term_sendkeys(buf, "GA\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_03', {'rows': 8})
+  call term_sendkeys(buf, "\<Esc>3Gdd\"zp")
+
+  call term_sendkeys(buf, ":set pumwidth=20 pummaxwidth=8\<CR>")
+  call term_sendkeys(buf, "GA\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_04', {'rows': 8})
+  call term_sendkeys(buf, "\<Esc>3Gdd\"zp")
+
+  call term_sendkeys(buf, ":set lines=10 columns=32\<CR>")
+  call term_sendkeys(buf, "GA\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_09', {'rows': 10, 'cols': 32})
+  call term_sendkeys(buf, "\<Esc>3Gdd\"zp")
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_pum_maxwidth_multibyte()
+  CheckScreendump
+
+  let lines =<< trim END
+    func Omni_test(findstart, base)
+      if a:findstart
+        return col(".")
+      endif
+      return [
+        \ #{word: "123456789_123456789_123456789_"},
+        \ #{word: "一二三四五六七八九十"},
+        \ ]
+    endfunc
+    set omnifunc=Omni_test
+  END
+  call writefile(lines, 'Xtest', 'D')
+  let  buf = RunVimInTerminal('-S Xtest', {})
+  call TermWait(buf)
+
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_05', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set pummaxwidth=10\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_06', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call term_sendkeys(buf, "S\<C-X>\<C-O>")
+    call VerifyScreenDump(buf, 'Test_pum_maxwidth_07', {'rows': 8})
+    call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
+  endif
+
+  call term_sendkeys(buf, ":set pummaxwidth=2\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_08', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

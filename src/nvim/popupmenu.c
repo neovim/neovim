@@ -199,6 +199,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     }
 
     int def_width = (int)p_pw;
+    if (p_pmw > 0 && def_width > p_pmw) {
+      def_width = (int)p_pmw;
+    }
 
     win_T *pvwin = NULL;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -307,6 +310,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
     pum_compute_size();
     int max_width = pum_base_width;
+    if (p_pmw > 0 && max_width > p_pmw) {
+      max_width = (int)p_pmw;
+    }
 
     // if there are more items than room we need a scrollbar
     if (pum_height < size) {
@@ -339,6 +345,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       if (pum_width > content_width && pum_width > p_pw) {
         // Reduce width to fit item
         pum_width = MAX(content_width, (int)p_pw);
+        if (p_pmw > 0 && pum_width > p_pmw) {
+          pum_width = (int)p_pmw;
+        }
       } else if (((cursor_col - min_col > p_pw
                    || cursor_col - min_col > max_width) && !pum_rl)
                  || (pum_rl && (cursor_col < max_col - p_pw
@@ -365,6 +374,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
         if (pum_width < p_pw) {
           pum_width = (int)p_pw;
+          if (p_pmw > 0 && pum_width > p_pmw) {
+            pum_width = (int)p_pmw;
+          }
           if (pum_rl) {
             if (pum_width > pum_col - min_col) {
               pum_width = pum_col - min_col;
@@ -376,6 +388,11 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
           }
         } else if (pum_width > content_width && pum_width > p_pw) {
           pum_width = MAX(content_width, (int)p_pw);
+          if (p_pmw > 0 && pum_width > p_pmw) {
+            pum_width = (int)p_pmw;
+          }
+        } else if (p_pmw > 0 && pum_width > p_pmw) {
+          pum_width = (int)p_pmw;
         }
       }
     } else if (max_col - min_col < def_width) {
@@ -386,10 +403,16 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         pum_col = min_col;
       }
       pum_width = max_col - min_col - 1;
+      if (p_pmw > 0 && pum_width > p_pmw) {
+        pum_width = (int)p_pmw;
+      }
     } else {
       if (max_width > p_pw) {
         // truncate
         max_width = (int)p_pw;
+      }
+      if (p_pmw > 0 && max_width > p_pmw) {
+        max_width = (int)p_pmw;
       }
       if (pum_rl) {
         pum_col = min_col + max_width - 1;
@@ -611,6 +634,8 @@ void pum_redraw(void)
     thumb_pos = (pum_first * (pum_height - thumb_height) + scroll_range / 2) / scroll_range;
   }
 
+  const int ellipsis_width = 3;
+
   for (int i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
     const hlf_T *const hlfs = (idx == pum_selected) ? hlfsSel : hlfsNorm;
@@ -633,6 +658,7 @@ void pum_redraw(void)
     // Do this 3 times and order from p_cia
     int grid_col = col_off;
     int totwidth = 0;
+    bool need_ellipsis = false;
     int order[3];
     int items_width_array[3] = { pum_base_width, pum_kind_width, pum_extra_width };
     pum_align_order(order);
@@ -684,7 +710,11 @@ void pum_redraw(void)
           if (pum_rl) {
             char *rt = reverse_text(st);
             char *rt_start = rt;
-            int cells = vim_strsize(rt);
+            int cells = (int)mb_string2cells(rt);
+            if (p_pmw > ellipsis_width && pum_width == p_pmw
+                && grid_col - cells < col_off - pum_width) {
+              need_ellipsis = true;
+            }
 
             if (grid_col - cells < col_off - pum_width) {
               do {
@@ -710,10 +740,16 @@ void pum_redraw(void)
             xfree(st);
             grid_col -= width;
           } else {
+            int cells = (int)mb_string2cells(st);
+            if (p_pmw > ellipsis_width && pum_width == p_pmw
+                && grid_col + cells > col_off + pum_width) {
+              need_ellipsis = true;
+            }
+
             if (attrs == NULL) {
               grid_line_puts(grid_col, st, -1, attr);
             } else {
-              pum_grid_puts_with_attrs(grid_col, vim_strsize(st), st, -1, attrs);
+              pum_grid_puts_with_attrs(grid_col, cells, st, -1, attrs);
             }
 
             xfree(st);
@@ -772,9 +808,24 @@ void pum_redraw(void)
     }
 
     if (pum_rl) {
-      grid_line_fill(col_off - pum_width + 1, grid_col + 1, schar_from_ascii(' '), orig_attr);
+      const int lcol = col_off - pum_width + 1;
+      grid_line_fill(lcol, grid_col + 1, schar_from_ascii(' '), orig_attr);
+      if (need_ellipsis) {
+        bool over_wide = pum_width > ellipsis_width && linebuf_char[lcol + ellipsis_width] == NUL;
+        grid_line_fill(lcol, lcol + ellipsis_width, schar_from_ascii('.'), orig_attr);
+        if (over_wide) {
+          grid_line_put_schar(lcol + ellipsis_width, schar_from_ascii(' '), orig_attr);
+        }
+      }
     } else {
-      grid_line_fill(grid_col, col_off + pum_width, schar_from_ascii(' '), orig_attr);
+      const int rcol = col_off + pum_width;
+      grid_line_fill(grid_col, rcol, schar_from_ascii(' '), orig_attr);
+      if (need_ellipsis) {
+        if (pum_width > ellipsis_width && linebuf_char[rcol - ellipsis_width] == NUL) {
+          grid_line_put_schar(rcol - ellipsis_width - 1, schar_from_ascii(' '), orig_attr);
+        }
+        grid_line_fill(rcol - ellipsis_width, rcol, schar_from_ascii('.'), orig_attr);
+      }
     }
 
     if (pum_scrollbar > 0) {
