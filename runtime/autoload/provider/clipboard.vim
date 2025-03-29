@@ -5,11 +5,11 @@
 if exists('g:loaded_clipboard_provider')
   finish
 endif
-" Default to 1.  provider#clipboard#Executable() may set 2.
+" Default to 0.  provider#clipboard#Executable() may set 2.
 " To force a reload:
 "   :unlet g:loaded_clipboard_provider
 "   :runtime autoload/provider/clipboard.vim
-let g:loaded_clipboard_provider = 1
+let g:loaded_clipboard_provider = 0
 
 let s:copy = {}
 let s:paste = {}
@@ -284,4 +284,4 @@ function! provider#clipboard#Call(method, args) abort
 endfunction
 
 " eval_has_provider() decides based on this variable.
-let g:loaded_clipboard_provider = empty(provider#clipboard#Executable()) ? 1 : 2
+let g:loaded_clipboard_provider = empty(provider#clipboard#Executable()) ? 0 : 2
