@@ -62,6 +62,7 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/plines.h"
+#include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/quickfix.h"
 #include "nvim/search.h"
@@ -804,6 +805,12 @@ void ui_ext_win_position(win_T *wp, bool validate)
 {
   wp->w_pos_changed = false;
   if (!wp->w_floating) {
+    if (ui_has(kUIMultigrid)) {
+      // Windows on the default grid don't necessarily have comp_col and comp_row set
+      // But the rest of the calculations relies on it
+      wp->w_grid_alloc.comp_col = wp->w_wincol;
+      wp->w_grid_alloc.comp_row = wp->w_winrow;
+    }
     ui_call_win_pos(wp->w_grid_alloc.handle, wp->handle, wp->w_winrow,
                     wp->w_wincol, wp->w_width, wp->w_height);
     return;
@@ -852,50 +859,51 @@ void ui_ext_win_position(win_T *wp, bool validate)
     if (resort) {
       ui_comp_layers_adjust(wp->w_grid_alloc.comp_index, raise);
     }
-    if (ui_has(kUIMultigrid)) {
-      String anchor = cstr_as_string(float_anchor_str[c.anchor]);
-      if (!c.hide) {
+    bool valid = (wp->w_redr_type == 0 || ui_has(kUIMultigrid));
+    if (!valid && !validate) {
+      wp->w_pos_changed = true;
+      return;
+    }
+
+    // TODO(bfredl): ideally, compositor should work like any multigrid UI
+    // and use standard win_pos events.
+    bool east = c.anchor & kFloatAnchorEast;
+    bool south = c.anchor & kFloatAnchorSouth;
+
+    int comp_row = (int)row - (south ? wp->w_height_outer : 0);
+    int comp_col = (int)col - (east ? wp->w_width_outer : 0);
+    int above_ch = wp->w_config.zindex < kZIndexMessages ? (int)p_ch : 0;
+    comp_row += grid->comp_row;
+    comp_col += grid->comp_col;
+    comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - above_ch), 0);
+    if (!c.fixed || east) {
+      comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
+    }
+    wp->w_winrow = comp_row;
+    wp->w_wincol = comp_col;
+
+    if (!c.hide) {
+      ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
+                       wp->w_height_outer, wp->w_width_outer, valid, false);
+      if (ui_has(kUIMultigrid)) {
+        String anchor = cstr_as_string(float_anchor_str[c.anchor]);
         ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
                               grid->handle, row, col, c.mouse,
-                              wp->w_grid_alloc.zindex);
-      } else {
-        ui_call_win_hide(wp->w_grid_alloc.handle);
+                              wp->w_grid_alloc.zindex, (int)wp->w_grid_alloc.comp_index,
+                              wp->w_winrow,
+                              wp->w_wincol);
+      }
+      ui_check_cursor_grid(wp->w_grid_alloc.handle);
+      wp->w_grid_alloc.mouse_enabled = wp->w_config.mouse;
+      if (!valid) {
+        wp->w_grid_alloc.valid = false;
+        redraw_later(wp, UPD_NOT_VALID);
       }
     } else {
-      bool valid = (wp->w_redr_type == 0);
-      if (!valid && !validate) {
-        wp->w_pos_changed = true;
-        return;
+      if (ui_has(kUIMultigrid)) {
+        ui_call_win_hide(wp->w_grid_alloc.handle);
       }
-      // TODO(bfredl): ideally, compositor should work like any multigrid UI
-      // and use standard win_pos events.
-      bool east = c.anchor & kFloatAnchorEast;
-      bool south = c.anchor & kFloatAnchorSouth;
-
-      int comp_row = (int)row - (south ? wp->w_height_outer : 0);
-      int comp_col = (int)col - (east ? wp->w_width_outer : 0);
-      int above_ch = wp->w_config.zindex < kZIndexMessages ? (int)p_ch : 0;
-      comp_row += grid->comp_row;
-      comp_col += grid->comp_col;
-      comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - above_ch), 0);
-      if (!c.fixed || east) {
-        comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
-      }
-      wp->w_winrow = comp_row;
-      wp->w_wincol = comp_col;
-
-      if (!c.hide) {
-        ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
-                         wp->w_height_outer, wp->w_width_outer, valid, false);
-        ui_check_cursor_grid(wp->w_grid_alloc.handle);
-        wp->w_grid_alloc.mouse_enabled = wp->w_config.mouse;
-        if (!valid) {
-          wp->w_grid_alloc.valid = false;
-          redraw_later(wp, UPD_NOT_VALID);
-        }
-      } else {
-        ui_comp_remove_grid(&wp->w_grid_alloc);
-      }
+      ui_comp_remove_grid(&wp->w_grid_alloc);
     }
   } else {
     ui_call_win_external_pos(wp->w_grid_alloc.handle, wp->handle);
@@ -7456,18 +7464,25 @@ void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
 void win_ui_flush(bool validate)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_pos_changed && wp->w_grid_alloc.chars != NULL) {
+    if ((wp->w_pos_changed || wp->w_grid_alloc.composition_updated)
+        && wp->w_grid_alloc.chars != NULL) {
       if (tp == curtab) {
         ui_ext_win_position(wp, validate);
       } else {
         ui_call_win_hide(wp->w_grid_alloc.handle);
         wp->w_pos_changed = false;
       }
+      wp->w_grid_alloc.composition_updated = false;
     }
     if (tp == curtab) {
       ui_ext_win_viewport(wp);
     }
   }
+  // The popupmenu could also have moved or changed its comp_index
+  pum_ui_flush();
+
+  // And the message
+  msg_ui_flush();
 }
 
 win_T *lastwin_nofloating(void)

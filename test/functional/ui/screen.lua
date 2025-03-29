@@ -953,11 +953,13 @@ function Screen:_handle_grid_resize(grid, width, height)
   }
 end
 
-function Screen:_handle_msg_set_pos(grid, row, scrolled, char)
+function Screen:_handle_msg_set_pos(grid, row, scrolled, char, zindex, compindex)
   self.msg_grid = grid
   self.msg_grid_pos = row
   self.msg_scrolled = scrolled
   self.msg_sep_char = char
+  self.msg_zindex = zindex
+  self.msg_compindex = compindex
 end
 
 function Screen:_handle_flush() end
@@ -973,6 +975,10 @@ function Screen:_reset()
   self.wildmenu_items = nil
   self.wildmenu_pos = nil
   self._grid_win_extmarks = {}
+  self.msg_grid = nil
+  self.msg_grid_pos = nil
+  self.msg_scrolled = false
+  self.msg_sep_char = nil
 end
 
 --- @param cursor_style_enabled boolean
