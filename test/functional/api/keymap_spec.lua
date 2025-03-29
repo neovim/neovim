@@ -803,11 +803,17 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('throws appropriate error messages when setting <unique> maps', function()
     api.nvim_set_keymap('l', 'lhs', 'rhs', {})
     eq(
-      'E227: mapping already exists for lhs',
+      'E227: Mapping already exists for lhs',
       pcall_err(api.nvim_set_keymap, 'l', 'lhs', 'rhs', { unique = true })
     )
     -- different mapmode, no error should be thrown
     api.nvim_set_keymap('t', 'lhs', 'rhs', { unique = true })
+
+    api.nvim_set_keymap('n', '<tab>', 'rhs', {})
+    eq(
+      'E227: Mapping already exists for <tab>',
+      pcall_err(api.nvim_set_keymap, 'n', '<tab>', 'rhs', { unique = true })
+    )
   end)
 
   it('can set <expr> mappings whose RHS change dynamically', function()
