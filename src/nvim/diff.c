@@ -3214,10 +3214,6 @@ bool diff_find_change(win_T *wp, linenr_T lnum, diffline_T *diffline)
     return false;
   }
 
-  if (lnum - dp->df_lnum[idx] > INT_MAX) {
-    // Integer overflow protection
-    return false;
-  }
   int off = lnum - dp->df_lnum[idx];
 
   if (!(diff_flags & ALL_INLINE_DIFF)) {
