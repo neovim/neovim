@@ -4041,4 +4041,22 @@ nvim_ui_try_resize_grid({grid}, {width}, {height})
       • {height}  The new requested height.
 
 
+==============================================================================
+Fold Functions                                                      *api-fold*
+
+nvim__fold_info({window}, {lnum})                          *nvim__fold_info()*
+    WARNING: This feature is experimental/unstable.
+
+    Gets the start and end lines for the closed fold on the given line
+
+    Parameters: ~
+      • {window}  |window-ID|, or 0 for current window
+      • {lnum}    The line number to check (0-indexed)
+
+    Return: ~
+        Dict containing fold information, with these keys:
+        • first: The start line of the current closed fold, or `nil` if none
+        • last: The end line of the current closed fold, or `nil` if none
+
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
