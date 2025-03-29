@@ -789,7 +789,10 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
     Parameters: ~
       • {bufnr}       (`integer`) Buffer handle, or 0 for current.
       • {method}      (`string`) LSP method name
-      • {params}      (`table?`) Parameters to send to the server
+      • {params}      (`table|(fun(client: vim.lsp.Client, bufnr: integer): table?)?`)
+                      Parameters to send to the server. Can also be passed as
+                      a function that returns the params table for cases where
+                      parameters are specific to the client.
       • {timeout_ms}  (`integer?`, default: `1000`) Maximum time in
                       milliseconds to wait for a result.
 
