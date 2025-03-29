@@ -31,8 +31,11 @@ Maximum display width	   Unix and Win32: 1024 characters, otherwise 255
 Maximum lhs of a mapping   50 characters.
 Number of different highlighting types: over 30000
 Range of a Number variable:  -2147483648 to 2147483647 (might be more on 64
-			   bit systems)
+			   bit systems)  See also: |v:numbermax|,
+			   |v:numbermin| and |v:numbersize|
 Maximum length of a line in a tags file: 512 bytes.
+							*E1541*
+Maximum value for |/\U| and |/\%U|: 2147483647 (for 32bit integer).
 
 Information for undo and text in registers is kept in memory, thus when making
 (big) changes the amount of (virtual) memory available limits the number of
