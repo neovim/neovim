@@ -48,7 +48,7 @@ describe('autocmd Signal', function()
   end)
 end)
 
-describe('autowriteall on kill', function()
+describe("'autowriteall' on signal exit", function()
   before_each(clear)
 
   local function test_deadly_sig(signame, awa, should_write)
