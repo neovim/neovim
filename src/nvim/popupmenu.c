@@ -686,13 +686,13 @@ void pum_redraw(void)
             char *rt_start = rt;
             int cells = vim_strsize(rt);
 
-            if (cells > pum_width) {
+            if (grid_col - cells < col_off - pum_width) {
               do {
                 cells -= utf_ptr2cells(rt);
                 MB_PTR_ADV(rt);
-              } while (cells > pum_width);
+              } while (grid_col - cells < col_off - pum_width);
 
-              if (cells < pum_width) {
+              if (grid_col - cells > col_off - pum_width) {
                 // Most left character requires 2-cells but only 1 cell is available on
                 // screen.  Put a '<' on the left of the pum item.
                 *(--rt) = '<';

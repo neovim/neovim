@@ -5498,31 +5498,115 @@ describe('builtin popupmenu', function()
       screen:try_resize(32, 8)
       command('set completeopt+=menuone,noselect')
       feed('i' .. string.rep(' ', 13))
-      fn.complete(14, { '哦哦哦哦哦哦哦哦哦哦' })
+
+      fn.complete(14, { '一二三四五六七八九十' })
       if multigrid then
         screen:expect({
           grid = [[
-          ## grid 1
-            [2:--------------------------------]|*7
-            [3:--------------------------------]|
-          ## grid 2
-                         ^                   |
-            {1:~                               }|*6
-          ## grid 3
-            {2:-- INSERT --}                    |
-          ## grid 4
-            {n: 哦哦哦哦哦哦哦哦哦>}|
+        ## grid 1
+          [2:--------------------------------]|*7
+          [3:--------------------------------]|
+        ## grid 2
+                       ^                   |
+          {1:~                               }|*6
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {n: 一二三四五六七八九>}|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 12, false, 100 } },
         })
       else
         screen:expect([[
                        ^                   |
-          {1:~           }{n: 哦哦哦哦哦哦哦哦哦>}|
+          {1:~           }{n: 一二三四五六七八九>}|
           {1:~                               }|*5
           {2:-- INSERT --}                    |
         ]])
       end
+      feed('<C-E>')
+
+      fn.complete(14, { { word = '一二三', kind = '四五六', menu = '七八九十' } })
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*7
+          [3:--------------------------------]|
+        ## grid 2
+                       ^                   |
+          {1:~                               }|*6
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {n: 一二三 四五六 七八>}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 12, false, 100 } },
+        })
+      else
+        screen:expect([[
+                       ^                   |
+          {1:~           }{n: 一二三 四五六 七八>}|
+          {1:~                               }|*5
+          {2:-- INSERT --}                    |
+        ]])
+      end
+      feed('<C-E>')
+
+      command('set rightleft')
+      fn.complete(14, { '一二三四五六七八九十' })
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*7
+          [3:--------------------------------]|
+        ## grid 2
+                            ^              |
+          {1:                               ~}|*6
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {n:<九八七六五四三二一 }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+                            ^              |
+          {n:<九八七六五四三二一 }{1:           ~}|
+          {1:                               ~}|*5
+          {2:-- INSERT --}                    |
+        ]])
+      end
+      feed('<C-E>')
+
+      fn.complete(14, { { word = '一二三', kind = '四五六', menu = '七八九十' } })
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*7
+          [3:--------------------------------]|
+        ## grid 2
+                            ^              |
+          {1:                               ~}|*6
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {n:<八七 六五四 三二一 }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+                            ^              |
+          {n:<八七 六五四 三二一 }{1:           ~}|
+          {1:                               ~}|*5
+          {2:-- INSERT --}                    |
+        ]])
+      end
+      feed('<C-E>')
     end)
 
     it('truncates double-width character correctly with scrollbar', function()
@@ -5530,37 +5614,140 @@ describe('builtin popupmenu', function()
       command('set completeopt+=noselect')
       command('set pumheight=4')
       feed('i' .. string.rep(' ', 12))
-      local items = {}
+      local items1 = {}
+      local items2 = {}
       for _ = 1, 8 do
-        table.insert(items, { word = '哦哦哦哦哦哦哦哦哦哦', equal = 1, dup = 1 })
+        table.insert(items1, { word = '一二三四五六七八九十', equal = 1, dup = 1 })
       end
-      fn.complete(13, items)
+      for _ = 1, 2 do
+        table.insert(
+          items2,
+          { word = 'abcdef', kind = 'ghijkl', menu = 'mnopqrst', equal = 1, dup = 1 }
+        )
+      end
+      for _ = 3, 8 do
+        table.insert(
+          items2,
+          { word = '一二三', kind = '四五六', menu = '七八九十', equal = 1, dup = 1 }
+        )
+      end
+
+      fn.complete(13, items1)
       if multigrid then
         screen:expect({
           grid = [[
-          ## grid 1
-            [2:--------------------------------]|*7
-            [3:--------------------------------]|
-          ## grid 2
-                        ^                    |
-            {1:~                               }|*6
-          ## grid 3
-            {2:-- INSERT --}                    |
-          ## grid 4
-            {n: 哦哦哦哦哦哦哦哦哦>}{c: }|*2
-            {n: 哦哦哦哦哦哦哦哦哦>}{s: }|*2
+        ## grid 1
+          [2:--------------------------------]|*7
+          [3:--------------------------------]|
+        ## grid 2
+                      ^                    |
+          {1:~                               }|*6
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {n: 一二三四五六七八九>}{c: }|*2
+          {n: 一二三四五六七八九>}{s: }|*2
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 11, false, 100 } },
         })
       else
         screen:expect([[
                       ^                    |
-          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|*2
-          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|*2
+          {1:~          }{n: 一二三四五六七八九>}{c: }|*2
+          {1:~          }{n: 一二三四五六七八九>}{s: }|*2
           {1:~                               }|*2
           {2:-- INSERT --}                    |
         ]])
       end
+      feed('<C-E>')
+
+      fn.complete(13, items2)
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*7
+          [3:--------------------------------]|
+        ## grid 2
+                      ^                    |
+          {1:~                               }|*6
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {n: abcdef ghijkl mnopq}{c: }|*2
+          {n: 一二三 四五六 七八>}{s: }|*2
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 11, false, 100 } },
+        })
+      else
+        screen:expect([[
+                      ^                    |
+          {1:~          }{n: abcdef ghijkl mnopq}{c: }|*2
+          {1:~          }{n: 一二三 四五六 七八>}{s: }|*2
+          {1:~                               }|*2
+          {2:-- INSERT --}                    |
+        ]])
+      end
+      feed('<C-E>')
+
+      command('set rightleft')
+      fn.complete(13, items1)
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*7
+          [3:--------------------------------]|
+        ## grid 2
+                             ^             |
+          {1:                               ~}|*6
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {c: }{n:<九八七六五四三二一 }|*2
+          {s: }{n:<九八七六五四三二一 }|*2
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+                             ^             |
+          {c: }{n:<九八七六五四三二一 }{1:          ~}|*2
+          {s: }{n:<九八七六五四三二一 }{1:          ~}|*2
+          {1:                               ~}|*2
+          {2:-- INSERT --}                    |
+        ]])
+      end
+      feed('<C-E>')
+
+      fn.complete(13, items2)
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*7
+          [3:--------------------------------]|
+        ## grid 2
+                             ^             |
+          {1:                               ~}|*6
+        ## grid 3
+          {2:-- INSERT --}                    |
+        ## grid 4
+          {c: }{n:qponm lkjihg fedcba }|*2
+          {s: }{n:<八七 六五四 三二一 }|*2
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
+        })
+      else
+        screen:expect([[
+                             ^             |
+          {c: }{n:qponm lkjihg fedcba }{1:          ~}|*2
+          {s: }{n:<八七 六五四 三二一 }{1:          ~}|*2
+          {1:                               ~}|*2
+          {2:-- INSERT --}                    |
+        ]])
+      end
+      feed('<C-E>')
     end)
 
     it('supports mousemodel=popup', function()
