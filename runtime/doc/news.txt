@@ -134,6 +134,7 @@ OPTIONS
 
 • 'completefuzzycollect' enables fuzzy collection of candidates for (some)
   |ins-completion| modes.
+• 'autowriteall' write all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
 
 PERFORMANCE
 
