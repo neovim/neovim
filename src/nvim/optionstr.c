@@ -1794,11 +1794,8 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
   char *s = *varp;
 
   // reset statusline to default when setting global option and empty string is being set
-  if (!rulerformat && !statuscolumn
-      && ((args->os_flags & OPT_GLOBAL) || !(args->os_flags & OPT_LOCAL))
-      && s[0] == NUL) {
-    xfree(*varp);
-    *varp = xstrdup(args->os_def->string.data);
+  if (args->os_idx == kOptStatusline && s[0] == NUL) {
+    *varp = get_option_default(args->os_idx, args->os_flags).data.string.data;
     s = *varp;
   }
 
