@@ -43,6 +43,7 @@
 local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
 local Range = require('vim.treesitter._range')
+local ITree = require('vim.treesitter._interval_tree')
 
 local default_parse_timeout_ms = 3
 
@@ -87,7 +88,7 @@ local TSCallbackNames = {
 ---@field private _ranges_being_parsed table<string, boolean>
 ---Table of callback queues, keyed by each region for which the callbacks should be run
 ---@field private _cb_queues table<string, fun(err?: string, trees?: table<integer, TSTree>)[]>
----@field private _regions table<integer, Range6[]>?
+---@field private _regions ITree?
 ---The total number of regions. Since _regions can have holes, we cannot simply read this value from #_regions.
 ---@field private _num_regions integer
 ---List of regions this tree should manage and parse. If nil then regions are
@@ -229,7 +230,7 @@ function LanguageTree:_log(...)
   end
 
   local info = debug.getinfo(2, 'nl')
-  local nregions = vim.tbl_count(self:included_regions())
+  local nregions = self._num_regions
   local prefix =
     string.format('%s:%d: (#regions=%d) ', info.name or '???', info.currentline or 0, nregions)
 
@@ -285,31 +286,6 @@ function LanguageTree:lang()
   return self._lang
 end
 
---- @param region Range6[]
---- @param range? boolean|Range
---- @return boolean
-local function intercepts_region(region, range)
-  if #region == 0 then
-    return true
-  end
-
-  if range == nil then
-    return false
-  end
-
-  if type(range) == 'boolean' then
-    return range
-  end
-
-  for _, r in ipairs(region) do
-    if Range.intercepts(r, range) then
-      return true
-    end
-  end
-
-  return false
-end
-
 --- Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()| reflects the latest
 --- state of the source. If invalid, user should call |LanguageTree:parse()|.
 ---@param exclude_children boolean? whether to ignore the validity of children (default `false`)
@@ -322,16 +298,14 @@ function LanguageTree:is_valid(exclude_children, range)
     if not range then
       return false
     end
-    -- TODO: Efficiently search for possibly intersecting regions using a binary search
-    for i, region in pairs(self:included_regions()) do
-      if
-        not valid_regions[i]
-        and (
-          intercepts_region(region, range)
-          or (self._trees[i] and intercepts_region(self._trees[i]:included_ranges(false), range))
-        )
-      then
-        return false
+    if not self._regions then
+      return false
+    else
+      local overlapping = self._regions:find_overlapping_intervals(range)
+      for _, node in ipairs(overlapping) do
+        if not valid_regions[node.index] then
+          return false
+        end
       end
     end
   end
@@ -379,43 +353,48 @@ function LanguageTree:_parse_regions(range, thread_state)
 
   -- If there are no ranges, set to an empty list
   -- so the included ranges in the parser are cleared.
-  for i, ranges in pairs(self:included_regions()) do
-    if
-      not self._valid_regions[i]
-      and (
-        intercepts_region(ranges, range)
-        or (self._trees[i] and intercepts_region(self._trees[i]:included_ranges(false), range))
-      )
-    then
-      self._parser:set_included_ranges(ranges)
-      self._parser:set_timeout(thread_state.timeout and thread_state.timeout * 1000 or 0) -- ms -> micros
+  ---@param ranges Range6[]
+  ---@param tree_index integer
+  local function parse_ranges(ranges, tree_index)
+    self._parser:set_included_ranges(ranges)
+    self._parser:set_timeout(thread_state.timeout and thread_state.timeout * 1000 or 0) -- ms -> micros
 
-      local parse_time, tree, tree_changes =
-        tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
-      while true do
-        if tree then
-          break
-        end
-        coroutine.yield(self._trees, false)
-
-        parse_time, tree, tree_changes =
-          tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
+    local parse_time, tree, tree_changes =
+      tcall(self._parser.parse, self._parser, self._trees[tree_index], self._source, true)
+    while true do
+      if tree then
+        break
       end
+      coroutine.yield(self._trees, false)
 
-      self:_subtract_time(thread_state, parse_time)
+      parse_time, tree, tree_changes =
+        tcall(self._parser.parse, self._parser, self._trees[tree_index], self._source, true)
+    end
 
-      self:_do_callback('changedtree', tree_changes, tree)
-      self._trees[i] = tree
-      vim.list_extend(changes, tree_changes)
+    self:_subtract_time(thread_state, parse_time)
 
-      total_parse_time = total_parse_time + parse_time
-      no_regions_parsed = no_regions_parsed + 1
-      self._valid_regions[i] = true
-      self._num_valid_regions = self._num_valid_regions + 1
+    self:_do_callback('changedtree', tree_changes, tree)
+    self._trees[tree_index] = tree
+    vim.list_extend(changes, tree_changes)
 
-      if self._num_valid_regions == self._num_regions then
-        self._is_entirely_valid = true
-      end
+    total_parse_time = total_parse_time + parse_time
+    no_regions_parsed = no_regions_parsed + 1
+    self._valid_regions[tree_index] = true
+    self._num_valid_regions = self._num_valid_regions + 1
+
+    if self._num_valid_regions == self._num_regions then
+      self._is_entirely_valid = true
+    end
+  end
+
+  if not self._regions then
+    parse_ranges({}, 1)
+  else
+    local intersecting = (range and range ~= true)
+        and self._regions:find_overlapping_intervals(range)
+      or self._regions:nodes()
+    for _, region in ipairs(intersecting) do
+      parse_ranges(region.region, region.index)
     end
   end
 
@@ -424,7 +403,8 @@ end
 
 --- @private
 --- @param injections_by_lang table<string, Range6[][]>
-function LanguageTree:_add_injections(injections_by_lang)
+--- @param thread_state ParserThreadState
+function LanguageTree:_add_injections(injections_by_lang, thread_state)
   local seen_langs = {} ---@type table<string,boolean>
 
   for lang, injection_regions in pairs(injections_by_lang) do
@@ -440,7 +420,7 @@ function LanguageTree:_add_injections(injections_by_lang)
         child = self:add_child(lang)
       end
 
-      child:set_included_regions(injection_regions)
+      child:set_included_regions(injection_regions, thread_state)
       seen_langs[lang] = true
     end
   end
@@ -621,7 +601,7 @@ function LanguageTree:_parse(range, thread_state)
     )
   then
     local injections_by_lang = self:_get_injections(range, thread_state)
-    local time = tcall(self._add_injections, self, injections_by_lang)
+    local time = tcall(self._add_injections, self, injections_by_lang, thread_state)
     self:_subtract_time(thread_state, time)
   end
 
@@ -724,42 +704,6 @@ local function region_tostr(region)
   return string.format('[%d:%d-%d:%d]', srow, scol, erow, ecol)
 end
 
----@private
----Iterate through all the regions. fn returns a boolean to indicate if the
----region is valid or not.
----@param fn fun(index: integer, region: Range6[]): boolean
-function LanguageTree:_iter_regions(fn)
-  if vim.deep_equal(self._valid_regions, {}) then
-    return
-  end
-
-  if self._is_entirely_valid then
-    self:_log('was valid')
-  end
-
-  local all_valid = true
-
-  for i, region in pairs(self:included_regions()) do
-    if self._valid_regions[i] then
-      -- Setting this to nil rather than false allows us to determine if all regions were parsed
-      -- just by checking the length of _valid_regions.
-      self._valid_regions[i] = fn(i, region) and true or nil
-      if not self._valid_regions[i] then
-        self._num_valid_regions = self._num_valid_regions - 1
-        self:_log(function()
-          return 'invalidating region', i, region_tostr(region)
-        end)
-      end
-    end
-
-    if not self._valid_regions[i] then
-      all_valid = false
-    end
-  end
-
-  self._is_entirely_valid = all_valid
-end
-
 --- Sets the included regions that should be parsed by this |LanguageTree|.
 --- A region is a set of nodes and/or ranges that will be parsed in the same context.
 ---
@@ -776,7 +720,8 @@ end
 ---
 ---@private
 ---@param new_regions (Range4|Range6|TSNode)[][] List of regions this tree should manage and parse.
-function LanguageTree:set_included_regions(new_regions)
+---@param thread_state ParserThreadState?
+function LanguageTree:set_included_regions(new_regions, thread_state)
   -- Transform the tables from 4 element long to 6 element long (with byte offset)
   for _, region in ipairs(new_regions) do
     for i, range in ipairs(region) do
@@ -789,24 +734,26 @@ function LanguageTree:set_included_regions(new_regions)
     end
   end
 
-  -- included_regions is not guaranteed to be list-like, but this is still sound, i.e. if
-  -- new_regions is different from included_regions, then outdated regions in included_regions are
-  -- invalidated. For example, if included_regions = new_regions ++ hole ++ outdated_regions, then
-  -- outdated_regions is invalidated by _iter_regions in else branch.
-  if #self:included_regions() ~= #new_regions then
-    -- TODO(lewis6991): inefficient; invalidate trees incrementally
-    for _, t in pairs(self._trees) do
-      self:_do_callback('changedtree', t:included_ranges(true), t)
+  local now = vim.uv.hrtime()
+  local itree = ITree.from_sorted_regions(new_regions, function()
+    if thread_state then
+      local time = (vim.uv.hrtime() - now) / 1000000
+      self:_subtract_time(thread_state, time)
+      now = vim.uv.hrtime()
     end
-    self._trees = {}
-    self:invalidate()
-  else
-    self:_iter_regions(function(i, region)
-      return vim.deep_equal(new_regions[i], region)
-    end)
-  end
+  end)
 
-  self._regions = new_regions
+  -- Clear all injection trees because we don't have incremental tree invalidation
+  -- TODO(lewis6991): inefficient; invalidate trees incrementally
+  for _, t in pairs(self._trees) do
+    self:_do_callback('changedtree', t:included_ranges(true), t)
+  end
+  if self._regions then
+    self._trees = {}
+  end
+  self:invalidate()
+
+  self._regions = itree
   self._num_regions = #new_regions
 end
 
@@ -815,10 +762,15 @@ end
 ---outside the requested range.
 ---Each list represents a range in the form of
 ---{ {start_row}, {start_col}, {start_bytes}, {end_row}, {end_col}, {end_bytes} }.
----@return table<integer, Range6[]>
+---@return Range6[][]
 function LanguageTree:included_regions()
   if self._regions then
-    return self._regions
+    ---@type Range6[][]
+    local regions = {}
+    for _, node in ipairs(self._regions:nodes()) do
+      regions[#regions + 1] = node.region
+    end
+    return regions
   end
 
   -- treesitter.c will default empty ranges to { -1, -1, -1, -1, -1, -1} (the full range)
@@ -1070,14 +1022,6 @@ function LanguageTree:_edit(
 
   self._parser:reset()
 
-  if self._regions then
-    local regions = {} ---@type table<integer, Range6[]>
-    for i, tree in pairs(self._trees) do
-      regions[i] = tree:included_ranges(true)
-    end
-    self._regions = regions
-  end
-
   local changed_range = {
     start_row,
     start_col,
@@ -1088,18 +1032,24 @@ function LanguageTree:_edit(
   }
 
   -- Validate regions after editing the tree
-  self:_iter_regions(function(_, region)
-    if #region == 0 then
-      -- empty region, use the full source
-      return false
-    end
-    for _, r in ipairs(region) do
-      if Range.intercepts(r, changed_range) then
-        return false
+  if not self._regions then
+    self._is_entirely_valid = false
+    self._num_valid_regions = 0
+    self._valid_regions = {}
+  else
+    local overlapping = self._regions:find_overlapping_intervals(changed_range)
+    for _, node in ipairs(overlapping) do
+      local i = node.index
+      if self._valid_regions[i] then
+        self._num_valid_regions = self._num_valid_regions - 1
+        self._is_entirely_valid = false
+        self._valid_regions[i] = nil
+        self:_log(function()
+          return 'invalidating region', i, region_tostr(node.region)
+        end)
       end
     end
-    return true
-  end)
+  end
 
   for _, child in pairs(self._children) do
     child:_edit(
