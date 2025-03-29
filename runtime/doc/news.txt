@@ -172,7 +172,8 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• todo
+• |spellfile| uses `stdpath('data')/spell` as default location instead of the
+  first writable directoy in 'runtimepath'.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
