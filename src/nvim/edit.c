@@ -2774,7 +2774,7 @@ char *get_last_insert_save(void)
 
   char *s = xmemdupz(insert.data, insert.size);
   if (insert.size > 0 && s[insert.size - 1] == ESC) {  // remain trailing ESC
-    s[insert.size - 1] = NUL;
+    s[--insert.size] = NUL;
   }
   return s;
 }
