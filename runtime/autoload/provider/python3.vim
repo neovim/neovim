@@ -11,5 +11,5 @@ function! provider#python3#Require(host) abort
 endfunction
 
 let s:prog = v:lua.vim.provider.python.detect_by_module('neovim')
-let g:loaded_python3_provider = empty(s:prog) ? 1 : 2
+let g:loaded_python3_provider = empty(s:prog) ? 0 : 2
 call v:lua.require'vim.provider.python'.start()
