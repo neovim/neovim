@@ -288,7 +288,7 @@ LUA
 
 • Command-line completions for: `vim.g`, `vim.t`, `vim.w`, `vim.b`, `vim.v`,
   `vim.o`, `vim.wo`, `vim.bo`, `vim.opt`, `vim.opt_local`, `vim.opt_global`,
-  and `vim.fn`.
+  `vim.env` and `vim.fn`.
 • Documentation for |lua-bit|.
 • |gf| in Lua buffers can go to module in same repo, |runtime-search-path| and
   |package.path|.
