@@ -22,6 +22,9 @@ describe("'autowriteall' on signal exit", function()
   local function test_deadly_sig(signame, awa, should_write)
     local testfile = 'Xtest_SIG' .. signame .. (awa and '_awa' or '_noawa')
     local teststr = 'Testaaaaaaa'
+    finally(function()
+      os.remove(testfile)
+    end)
 
     if awa then
       command('set autowriteall')
