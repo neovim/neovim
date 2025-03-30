@@ -36,40 +36,40 @@ describe("'autowriteall' on signal exit", function()
 
   -- Works on windows
   it('dont write if SIGTERM & awa on', function()
-    test_deadly_sig('sigterm', true, false)
+    test_deadly_sig(15, true, false)
   end)
   it('dont write if SIGTERM & awa off', function()
-    test_deadly_sig('sigterm', false, false)
+    test_deadly_sig(15, false, false)
   end)
 
-  -- Error on windows
+  -- ENOSYS: function not implemented
   it('write if SIGHUP & awa on', function()
     -- skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig('sighup', true, true)
+    test_deadly_sig(1, true, true)
   end)
   it('dont write if SIGHUP & awa off', function()
     -- skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig('sighup', false, false)
+    test_deadly_sig(1, false, false)
   end)
 
   -- Error on windows
   it('write if SIGTSTP & awa on', function()
     -- skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig('sigtstp', true, true)
+    test_deadly_sig(20, true, true)
   end)
   it('dont write if SIGTSTP & awa off', function()
     -- skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig('sigtstp', false, false)
+    test_deadly_sig(20, false, false)
   end)
 
   -- Timeout on windows
   it('write if SIGQUIT & awa on', function()
-    skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig('sigquit', true, true)
+    -- skip(is_os('win'), 'Timeout on Windows')
+    test_deadly_sig(3, true, true)
   end)
   it('dont write if SIGQUIT & awa off', function()
-    skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig('sigquit', false, false)
+    -- skip(is_os('win'), 'Timeout on Windows')
+    test_deadly_sig(3, false, false)
   end)
 end)
 
