@@ -564,7 +564,7 @@ local function version_info(python)
 
   local nvim_path_base = vim.fn.fnamemodify(nvim_path, [[:~:h]])
   local version_status = 'unknown; ' .. nvim_path_base
-  if is_bad_response(nvim_version) and is_bad_response(pypi_version) then
+  if not is_bad_response(nvim_version) and not is_bad_response(pypi_version) then
     if vim.version.lt(nvim_version, pypi_version) then
       version_status = 'outdated; from ' .. nvim_path_base
     else
