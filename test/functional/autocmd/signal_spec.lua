@@ -43,7 +43,7 @@ describe('autocmd Signal', function()
 
   it('does not match unknown patterns', function()
     command('autocmd Signal SIGUSR2 call rpcnotify(1, "foo")')
-    posix_kill('USR1', fn.getpid())
+    posix_kill('USR2', fn.getpid())
     eq(nil, next_msg(500))
   end)
 end)
