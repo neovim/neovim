@@ -5670,6 +5670,8 @@ describe('builtin popupmenu', function()
           return [
             \ #{word: "123456789_123456789_123456789_"},
             \ #{word: "一二三四五六七八九十"},
+            \ #{word: "abcdefghij"},
+            \ #{word: "上下左右"},
             \ ]
         endfunc
         set omnifunc=Omni_test
@@ -5686,10 +5688,12 @@ describe('builtin popupmenu', function()
           123456789_123456789_123456789_^                              |
           {1:~                                                           }|*6
         ## grid 3
-          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
         ## grid 4
           {s:123456789_123456789_123456789_ }|
           {n:一二三四五六七八九十           }|
+          {n:abcdefghij                     }|
+          {n:上下左右                       }|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
         })
@@ -5698,8 +5702,10 @@ describe('builtin popupmenu', function()
           123456789_123456789_123456789_^                              |
           {s:123456789_123456789_123456789_ }{1:                             }|
           {n:一二三四五六七八九十           }{1:                             }|
-          {1:~                                                           }|*4
-          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+          {n:abcdefghij                     }{1:                             }|
+          {n:上下左右                       }{1:                             }|
+          {1:~                                                           }|*2
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
         ]])
       end
       feed('<Esc>')
@@ -5716,10 +5722,12 @@ describe('builtin popupmenu', function()
           123456789_123456789_123456789_^                              |
           {1:~                                                           }|*6
         ## grid 3
-          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
         ## grid 4
           {s:1234567...}|
           {n:一二三 ...}|
+          {n:abcdefghij}|
+          {n:上下左右  }|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
         })
@@ -5728,8 +5736,10 @@ describe('builtin popupmenu', function()
           123456789_123456789_123456789_^                              |
           {s:1234567...}{1:                                                  }|
           {n:一二三 ...}{1:                                                  }|
-          {1:~                                                           }|*4
-          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+          {n:abcdefghij}{1:                                                  }|
+          {n:上下左右  }{1:                                                  }|
+          {1:~                                                           }|*2
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
         ]])
       end
       feed('<Esc>')
@@ -5746,10 +5756,12 @@ describe('builtin popupmenu', function()
                                        ^ _987654321_987654321_987654321|
           {1:                                                           ~}|*6
         ## grid 3
-          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
         ## grid 4
           {s:...7654321}|
           {n:... 三二一}|
+          {n:jihgfedcba}|
+          {n:  右左下上}|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 50, false, 100 } },
         })
@@ -5758,8 +5770,10 @@ describe('builtin popupmenu', function()
                                        ^ _987654321_987654321_987654321|
           {1:                                                  }{s:...7654321}|
           {1:                                                  }{n:... 三二一}|
-          {1:                                                           ~}|*4
-          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+          {1:                                                  }{n:jihgfedcba}|
+          {1:                                                  }{n:  右左下上}|
+          {1:                                                           ~}|*2
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
         ]])
       end
       feed('<Esc>')
@@ -5777,10 +5791,12 @@ describe('builtin popupmenu', function()
           123456789_123456789_123456789_^                              |
           {1:~                                                           }|*6
         ## grid 3
-          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
         ## grid 4
           {s:12}|
           {n:一}|
+          {n:ab}|
+          {n:上}|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100 } },
         })
@@ -5789,8 +5805,10 @@ describe('builtin popupmenu', function()
           123456789_123456789_123456789_^                              |
           {s:12}{1:                                                          }|
           {n:一}{1:                                                          }|
-          {1:~                                                           }|*4
-          {2:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+          {n:ab}{1:                                                          }|
+          {n:上}{1:                                                          }|
+          {1:~                                                           }|*2
+          {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
         ]])
       end
       feed('<Esc>')
