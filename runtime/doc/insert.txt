@@ -651,10 +651,11 @@ When completion is active you can use CTRL-E to stop it and go back to the
 originally typed text.  The CTRL-E will not be inserted.
 
 							*complete_CTRL-Y*
-When the popup menu is displayed you can use CTRL-Y to stop completion and
-accept the currently selected entry.  The CTRL-Y is not inserted.  Typing a
-space, Enter, or some other unprintable character will leave completion mode
-and insert that typed character.
+When the popup menu is displayed, CTRL-Y stops completion and accepts the
+currently selected entry.  Typing a space, Enter, or some other unprintable
+character will leave completion mode and insert that typed character. If you
+want to use <Enter> to accept a completion item, use this mapping: >vim
+    inoremap <expr> <cr> pumvisible() ? '<c-y>' : '<cr>'
 
 When the popup menu is displayed there are a few more special keys, see
 |popupmenu-keys|.

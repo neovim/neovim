@@ -213,7 +213,7 @@ The following new features were added.
   • By default, the swapfile "ATTENTION" |E325| dialog is skipped if the
     swapfile is owned by a running Nvim process, instead of prompting. If you
     always want the swapfile dialog, delete the default SwapExists handler:
-    `autocmd! nvim_swapfile`. |default-autocmds|
+    `autocmd! nvim.swapfile`. |default-autocmds|
   • Navigating the |jumplist| with CTRL+O, CTRL+I behaves more intuitively
     when deleting buffers, and avoids "invalid buffer" cases. #25461
   • |:fclose| command.

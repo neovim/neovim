@@ -296,49 +296,64 @@ end
 --- root_dir matches.
 --- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
 
---- Update the configuration for an LSP client.
+--- Sets the default configuration for an LSP client (or _all_ clients if the special name "*" is
+--- used).
 ---
---- Use name '*' to set default configuration for all clients.
----
---- Can also be table-assigned to redefine the configuration for a client.
+--- Can also be accessed by table-indexing (`vim.lsp.config[…]`) to get the resolved config, or
+--- redefine the config (instead of "merging" with the config chain).
 ---
 --- Examples:
 ---
---- - Add a root marker for all clients:
+--- - Add root markers for ALL clients:
 ---   ```lua
----      vim.lsp.config('*', {
----          root_markers = { '.git' },
----        })
----        ```
---- - Add additional capabilities to all clients:
+---   vim.lsp.config('*', {
+---       root_markers = { '.git', '.hg' },
+---     })
+---   ```
+--- - Add capabilities to ALL clients:
 ---   ```lua
----      vim.lsp.config('*', {
----          capabilities = {
----            textDocument = {
----              semanticTokens = {
----                multilineTokenSupport = true,
----              }
----            }
----          }
----        })
----        ```
---- - (Re-)define the configuration for clangd:
+---   vim.lsp.config('*', {
+---     capabilities = {
+---       textDocument = {
+---         semanticTokens = {
+---           multilineTokenSupport = true,
+---         }
+---       }
+---     }
+---   })
+---   ```
+--- - Add root markers and capabilities for "clangd":
 ---   ```lua
----      vim.lsp.config.clangd = {
----          cmd = {
----            'clangd',
----            '--clang-tidy',
----            '--background-index',
----            '--offset-encoding=utf-8',
----          },
----          root_markers = { '.clangd', 'compile_commands.json' },
----          filetypes = { 'c', 'cpp' },
----        }
----        ```
---- - Get configuration for luals:
+---   vim.lsp.config('clangd', {
+---     root_markers = { '.clang-format', 'compile_commands.json' },
+---     capabilities = {
+---       textDocument = {
+---         completion = {
+---           completionItem = {
+---             snippetSupport = true,
+---           }
+---         }
+---       }
+---     }
+---   })
+---   ```
+--- - (Re-)define the "clangd" configuration (overrides the resolved chain):
 ---   ```lua
----      local cfg = vim.lsp.config.luals
----        ```
+---   vim.lsp.config.clangd = {
+---     cmd = {
+---       'clangd',
+---       '--clang-tidy',
+---       '--background-index',
+---       '--offset-encoding=utf-8',
+---     },
+---     root_markers = { '.clangd', 'compile_commands.json' },
+---     filetypes = { 'c', 'cpp' },
+---   }
+---   ```
+--- - Get the resolved configuration for "luals":
+---   ```lua
+---   local cfg = vim.lsp.config.luals
+---   ```
 ---
 --- @param name string
 --- @param cfg vim.lsp.Config
@@ -1524,25 +1539,39 @@ function lsp.with(handler, override_config)
   end
 end
 
---- Registry for client side commands.
---- This is an extension point for plugins to handle custom commands which are
---- not part of the core language server protocol specification.
+--- Registry (a table) for client-side handlers, for custom server-commands that are not in the LSP
+--- specification.
 ---
---- The registry is a table where the key is a unique command name,
---- and the value is a function which is called if any LSP action
---- (code action, code lenses, ...) triggers the command.
+--- If an LSP response contains a command which is not found in `vim.lsp.commands`, the command will
+--- be executed via the LSP server using `workspace/executeCommand`.
 ---
---- If an LSP response contains a command for which no matching entry is
---- available in this registry, the command will be executed via the LSP server
---- using `workspace/executeCommand`.
+--- Each key in the table is a unique command name, and each value is a function which is called
+--- when an LSP action (code action, code lenses, …) triggers the command.
 ---
---- The first argument to the function will be the `Command`:
+--- - Argument 1 is the `Command`:
+---   ```
 ---   Command
 ---     title: String
 ---     command: String
 ---     arguments?: any[]
+---   ```
+--- - Argument 2 is the |lsp-handler| `ctx`.
 ---
---- The second argument is the `ctx` of |lsp-handler|
+--- Example:
+---
+--- ```lua
+--- vim.lsp.commands['java.action.generateToStringPrompt'] = function(_, ctx)
+---   require("jdtls.async").run(function()
+---     local _, result = request(ctx.bufnr, 'java/checkToStringStatus', ctx.params)
+---     local fields = ui.pick_many(result.fields, 'Include item in toString?', function(x)
+---       return string.format('%s: %s', x.name, x.type)
+---     end)
+---     local _, edit = request(ctx.bufnr, 'java/generateToString', { context = ctx.params; fields = fields; })
+---     vim.lsp.util.apply_workspace_edit(edit, offset_encoding)
+---   end)
+--- end
+--- ```
+---
 --- @type table<string,function>
 lsp.commands = setmetatable({}, {
   __newindex = function(tbl, key, value)
