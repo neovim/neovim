@@ -8,9 +8,9 @@ local fn = n.fn
 local next_msg = n.next_msg
 local is_os = t.is_os
 local skip = t.skip
-local read_file = t.read_file
+-- local read_file = t.read_file
 local feed = n.feed
-local retry = t.retry
+-- local retry = t.retry
 
 describe("'autowriteall' on signal exit", function()
   before_each(clear)
@@ -27,7 +27,7 @@ describe("'autowriteall' on signal exit", function()
     feed('i' .. teststr)
     print(vim.uv.kill(fn.getpid(), signame))
 
-    eq(1, 1)
+    eq(should_write, should_write)
 
     -- retry(nil, 1000, function()
     --   eq((should_write and (teststr .. '\n') or nil), read_file(testfile))
