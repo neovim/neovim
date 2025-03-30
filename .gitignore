@@ -10,7 +10,6 @@ compile_commands.json
 /.idea/
 
 # Build/deps dir
-/build/
 /.deps/
 /tmp/
 /.clangd/
