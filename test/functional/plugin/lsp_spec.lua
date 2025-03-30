@@ -6414,5 +6414,40 @@ describe('LSP', function()
         filetypes = true,
       }, 'cannot start foo due to config error: .* filetypes: expected table, got boolean')
     end)
+
+    it('does not start without workspace if workspace_required=true', function()
+      exec_lua(create_server_definition)
+
+      local tmp1 = t.tmpname(true)
+
+      eq(
+        { workspace_required = false },
+        exec_lua(function()
+          local server = _G._create_server({
+            handlers = {
+              initialize = function(_, _, callback)
+                callback(nil, { capabilities = {} })
+              end,
+            },
+          })
+
+          local ws_required = { cmd = server.cmd, workspace_required = true, filetypes = { 'foo' } }
+          local ws_not_required = vim.deepcopy(ws_required)
+          ws_not_required.workspace_required = false
+
+          vim.lsp.config('ws_required', ws_required)
+          vim.lsp.config('ws_not_required', ws_not_required)
+          vim.lsp.enable('ws_required')
+          vim.lsp.enable('ws_not_required')
+
+          vim.cmd.edit(assert(tmp1))
+          vim.bo.filetype = 'foo'
+
+          local clients = vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })
+          assert(1 == #clients)
+          return { workspace_required = clients[1].config.workspace_required }
+        end)
+      )
+    end)
   end)
 end)
