@@ -8,7 +8,7 @@ local fn = n.fn
 local next_msg = n.next_msg
 local is_os = t.is_os
 local skip = t.skip
--- local read_file = t.read_file
+local read_file = t.read_file
 local feed = n.feed
 -- local retry = t.retry
 
@@ -26,6 +26,7 @@ describe("'autowriteall' on signal exit", function()
     command('edit ' .. testfile)
     feed('i' .. teststr)
     print(vim.uv.kill(fn.getpid(), signame))
+    print(read_file(testfile))
 
     eq(should_write, should_write)
 
@@ -42,34 +43,32 @@ describe("'autowriteall' on signal exit", function()
     test_deadly_sig('sigterm', false, false)
   end)
 
-  -- ENOSYS: function not implemented
+  -- The sigup instead of sighup is not a typo
   it('write if SIGHUP & awa on', function()
-    -- skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig('sighup', true, true)
+    test_deadly_sig('sigup', true, true)
   end)
   it('dont write if SIGHUP & awa off', function()
-    -- skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig('sigup', false, false)
   end)
 
   -- Error on windows
   it('write if SIGTSTP & awa on', function()
     -- skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig(20, true, true)
+    test_deadly_sig('notarealsignal', true, true)
   end)
   it('dont write if SIGTSTP & awa off', function()
     -- skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig(20, false, false)
+    test_deadly_sig('sigtstp', false, false)
   end)
 
   -- Takes 6min to run, causes the CI job to timeout
   it('write if SIGQUIT & awa on', function()
     skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig(3, true, true)
+    test_deadly_sig('sigquit', true, true)
   end)
   it('dont write if SIGQUIT & awa off', function()
     skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig(3, false, false)
+    test_deadly_sig('sigquit', false, false)
   end)
 end)
 
