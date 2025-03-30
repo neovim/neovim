@@ -622,10 +622,10 @@ do
       end
       vim.wo[0][0].winhighlight = winhl .. 'StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC'
 
-      vim.keymap.set('n', '[[', function()
+      vim.keymap.set({ 'n', 'x' }, '[[', function()
         jump_to_prompt(nvim_terminal_prompt_ns, 0, args.buf, -vim.v.count1)
       end, { buffer = args.buf, desc = 'Jump [count] shell prompts backward' })
-      vim.keymap.set('n', ']]', function()
+      vim.keymap.set({ 'n', 'x' }, ']]', function()
         jump_to_prompt(nvim_terminal_prompt_ns, 0, args.buf, vim.v.count1)
       end, { buffer = args.buf, desc = 'Jump [count] shell prompts forward' })
     end,
