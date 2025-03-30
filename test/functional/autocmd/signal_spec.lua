@@ -36,20 +36,20 @@ describe("'autowriteall' on signal exit", function()
 
   -- Works on windows
   it('dont write if SIGTERM & awa on', function()
-    test_deadly_sig(15, true, false)
+    test_deadly_sig('sigterm', true, false)
   end)
   it('dont write if SIGTERM & awa off', function()
-    test_deadly_sig(15, false, false)
+    test_deadly_sig('sigterm', false, false)
   end)
 
   -- ENOSYS: function not implemented
   it('write if SIGHUP & awa on', function()
     -- skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig(1, true, true)
+    test_deadly_sig('sighup', true, true)
   end)
   it('dont write if SIGHUP & awa off', function()
     -- skip(is_os('win'), 'Timeout on Windows')
-    test_deadly_sig(1, false, false)
+    test_deadly_sig('sigup', false, false)
   end)
 
   -- Error on windows
@@ -62,13 +62,13 @@ describe("'autowriteall' on signal exit", function()
     test_deadly_sig(20, false, false)
   end)
 
-  -- Timeout on windows
+  -- Takes 6min to run, causes the CI job to timeout
   it('write if SIGQUIT & awa on', function()
-    -- skip(is_os('win'), 'Timeout on Windows')
+    skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig(3, true, true)
   end)
   it('dont write if SIGQUIT & awa off', function()
-    -- skip(is_os('win'), 'Timeout on Windows')
+    skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig(3, false, false)
   end)
 end)
