@@ -135,6 +135,8 @@ OPTIONS
 • 'completefuzzycollect' enables fuzzy collection of candidates for (some)
   |ins-completion| modes.
 
+• 'winborder' add bold style.
+
 PERFORMANCE
 
 • todo

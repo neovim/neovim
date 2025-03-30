@@ -7893,8 +7893,9 @@ vim.wo.winbl = vim.wo.winblend
 --- - "rounded": Like "single", but with rounded corners ("╭" etc.).
 --- - "solid": Adds padding by a single whitespace cell.
 --- - "shadow": A drop shadow effect by blending with the background.
+--- - "bold": A bold line box.
 ---
---- @type ''|'double'|'single'|'shadow'|'rounded'|'solid'|'none'
+--- @type ''|'double'|'single'|'shadow'|'rounded'|'solid'|'bold'|'none'
 vim.o.winborder = ""
 vim.go.winborder = vim.o.winborder
 
