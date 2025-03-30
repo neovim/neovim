@@ -61,7 +61,7 @@ describe("'autowriteall' on signal exit", function()
 
     command('edit ' .. testfile)
     feed('i' .. teststr)
-    posix_kill(signame, fn.getpid())
+    vim.uv.kill(fn.getpid(), signame)
 
     retry(nil, 1000, function()
       eq((should_write and (teststr .. '\n') or nil), read_file(testfile))
@@ -69,42 +69,42 @@ describe("'autowriteall' on signal exit", function()
   end
 
   it('write if SIGHUP & awa on', function()
-    test_deadly_sig('HUP', true, true)
+    test_deadly_sig('sighup', true, true)
   end)
 
   it('write if SIGQUIT & awa on', function()
-    test_deadly_sig('QUIT', true, true)
+    test_deadly_sig('sigquit', true, true)
   end)
 
   it('write if SIGTSTP & awa on', function()
-    test_deadly_sig('TSTP', true, true)
+    test_deadly_sig('sigtstp', true, true)
   end)
 
   it('dont write if SIGTERM & awa on', function()
-    test_deadly_sig('TERM', true, false)
+    test_deadly_sig('sigterm', true, false)
   end)
 
   it('dont write if SIGKILL & awa on', function()
-    test_deadly_sig('KILL', true, false)
+    test_deadly_sig('sigkill', true, false)
   end)
 
   it('dont write if SIGHUP & awa off', function()
-    test_deadly_sig('HUP', false, false)
+    test_deadly_sig('sighup', false, false)
   end)
 
   it('dont write if SIGQUIT & awa off', function()
-    test_deadly_sig('HUP', false, false)
+    test_deadly_sig('sigquit', false, false)
   end)
 
   it('dont write if SIGTSTP & awa off', function()
-    test_deadly_sig('TSTP', false, false)
+    test_deadly_sig('sigtstp', false, false)
   end)
 
   it('dont write if SIGTERM & awa off', function()
-    test_deadly_sig('TERM', false, false)
+    test_deadly_sig('sigterm', false, false)
   end)
 
   it('dont write if SIGKILL & awa off', function()
-    test_deadly_sig('KILL', false, false)
+    test_deadly_sig('sigkill', false, false)
   end)
 end)
