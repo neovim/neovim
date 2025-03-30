@@ -33,12 +33,12 @@ describe("'autowriteall' on signal exit", function()
   end
 
   it('write if SIGHUP & awa on', function()
-    -- skip(is_os('win'), 'Timeout on Windows')
+    skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig('sighup', true, true)
   end)
 
   it('write if SIGQUIT & awa on', function()
-    skip(is_os('win'), 'Timeout on Windows')
+    -- skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig('sigquit', true, true)
   end)
 
@@ -58,12 +58,12 @@ describe("'autowriteall' on signal exit", function()
   end)
 
   it('dont write if SIGHUP & awa off', function()
-    -- skip(is_os('win'), 'Timeout on Windows')
+    skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig('sighup', false, false)
   end)
 
   it('dont write if SIGQUIT & awa off', function()
-    skip(is_os('win'), 'Timeout on Windows')
+    -- skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig('sigquit', false, false)
   end)
 
