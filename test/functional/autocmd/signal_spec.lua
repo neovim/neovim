@@ -24,7 +24,7 @@ describe("'autowriteall' on signal exit", function()
     local teststr = 'Testaaaaaaa'
 
     if awa then
-      command('set awa')
+      command('set autowriteall')
     end
 
     command('edit ' .. testfile)
