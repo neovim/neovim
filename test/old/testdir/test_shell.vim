@@ -281,4 +281,18 @@ func Test_shell_no_prevcmd()
   call delete('Xtestdone')
 endfunc
 
+func Test_shell_filter_buffer_with_nul_bytes()
+  CheckUnix
+  new
+  set noshelltemp
+  " \n is a NUL byte
+  let lines = ["aaa\nbbb\nccc\nddd\neee", "fff\nggg\nhhh\niii\njjj"]
+  call setline(1, lines)
+  %!cat
+  call assert_equal(lines, getline(1, '$'))
+
+  set shelltemp&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
