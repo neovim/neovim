@@ -26,7 +26,7 @@ describe("'autowriteall' on signal exit", function()
     command('edit ' .. testfile)
     feed('i' .. teststr)
     command('wa')
-    vim.uv.kill(fn.getpid(), signame)
+    print(vim.uv.kill(fn.getpid(), signame))
 
     retry(nil, 5000, function()
       print("'" .. read_file(testfile) .. "'")
