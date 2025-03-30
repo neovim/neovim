@@ -16,10 +16,6 @@ if skip(is_os('win'), 'Only applies to POSIX systems') then
   return
 end
 
--- local function posix_kill(signame, pid)
---   os.execute('kill -s ' .. signame .. ' -- ' .. pid .. ' >/dev/null')
--- end
-
 describe('autocmd Signal', function()
   before_each(clear)
 
