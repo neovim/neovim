@@ -275,7 +275,7 @@ end
 ---
 --- @param msg string
 function M.ok(msg)
-  local input = format_report_message('OK', msg)
+  local input = format_report_message('✅ OK', msg)
   collect_output(input)
 end
 
@@ -284,7 +284,7 @@ end
 --- @param msg string
 --- @param ... string|string[] Optional advice
 function M.warn(msg, ...)
-  local input = format_report_message('WARNING', msg, ...)
+  local input = format_report_message('⚠️ WARNING', msg, ...)
   collect_output(input)
 end
 
@@ -293,7 +293,7 @@ end
 --- @param msg string
 --- @param ... string|string[] Optional advice
 function M.error(msg, ...)
-  local input = format_report_message('ERROR', msg, ...)
+  local input = format_report_message('❌ ERROR', msg, ...)
   collect_output(input)
 end
 
