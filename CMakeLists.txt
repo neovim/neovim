@@ -35,6 +35,11 @@ include(InstallHelpers)
 include(PreventInTreeBuilds)
 include(Util)
 
+if(NOT PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+  # Auto-create a .gitignore in the specified "build" directory.
+  file(GENERATE OUTPUT .gitignore CONTENT "*")
+endif()
+
 #-------------------------------------------------------------------------------
 # User settings
 #-------------------------------------------------------------------------------
