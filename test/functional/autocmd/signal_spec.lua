@@ -12,38 +12,6 @@ local read_file = t.read_file
 local feed = n.feed
 local retry = t.retry
 
-if skip(is_os('win'), 'Only applies to POSIX systems') then
-  return
-end
-
-describe('autocmd Signal', function()
-  before_each(clear)
-
-  it('matches *', function()
-    command('autocmd Signal * call rpcnotify(1, "foo")')
-    vim.uv.kill(fn.getpid(), 'sigusr1')
-    eq({ 'notification', 'foo', {} }, next_msg())
-  end)
-
-  it('matches SIGUSR1', function()
-    command('autocmd Signal SIGUSR1 call rpcnotify(1, "foo")')
-    vim.uv.kill(fn.getpid(), 'sigusr1')
-    eq({ 'notification', 'foo', {} }, next_msg())
-  end)
-
-  it('matches SIGWINCH', function()
-    command('autocmd Signal SIGWINCH call rpcnotify(1, "foo")')
-    vim.uv.kill(fn.getpid(), 'sigwinch')
-    eq({ 'notification', 'foo', {} }, next_msg())
-  end)
-
-  it('does not match unknown patterns', function()
-    command('autocmd Signal SIGUSR2 call rpcnotify(1, "foo")')
-    vim.uv.kill(fn.getpid(), 'sigusr2')
-    eq(nil, next_msg(500))
-  end)
-end)
-
 describe("'autowriteall' on signal exit", function()
   before_each(clear)
 
@@ -102,5 +70,37 @@ describe("'autowriteall' on signal exit", function()
 
   it('dont write if SIGKILL & awa off', function()
     test_deadly_sig('sigkill', false, false)
+  end)
+end)
+
+if skip(is_os('win'), 'Only applies to POSIX systems') then
+  return
+end
+
+describe('autocmd Signal', function()
+  before_each(clear)
+
+  it('matches *', function()
+    command('autocmd Signal * call rpcnotify(1, "foo")')
+    vim.uv.kill(fn.getpid(), 'sigusr1')
+    eq({ 'notification', 'foo', {} }, next_msg())
+  end)
+
+  it('matches SIGUSR1', function()
+    command('autocmd Signal SIGUSR1 call rpcnotify(1, "foo")')
+    vim.uv.kill(fn.getpid(), 'sigusr1')
+    eq({ 'notification', 'foo', {} }, next_msg())
+  end)
+
+  it('matches SIGWINCH', function()
+    command('autocmd Signal SIGWINCH call rpcnotify(1, "foo")')
+    vim.uv.kill(fn.getpid(), 'sigwinch')
+    eq({ 'notification', 'foo', {} }, next_msg())
+  end)
+
+  it('does not match unknown patterns', function()
+    command('autocmd Signal SIGUSR2 call rpcnotify(1, "foo")')
+    vim.uv.kill(fn.getpid(), 'sigusr2')
+    eq(nil, next_msg(500))
   end)
 end)
