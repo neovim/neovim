@@ -297,6 +297,50 @@ int main() {
         end)
       )
     end)
+
+    it('does not request hints from lsp when disabled', function()
+      exec_lua(function()
+        _G.server2 = _G._create_server({
+          capabilities = {
+            inlayHintProvider = true,
+          },
+          handlers = {
+            ['textDocument/inlayHint'] = function(_, _, callback)
+              _G.got_inlay_hint_request = true
+              callback(nil, {})
+            end,
+          },
+        })
+        _G.client2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
+      end)
+
+      local function was_request_sent()
+        return exec_lua(function()
+          return _G.got_inlay_hint_request == true
+        end)
+      end
+
+      eq(false, was_request_sent())
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.get()
+      end)
+
+      eq(false, was_request_sent())
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
+        vim.lsp.inlay_hint.get()
+      end)
+
+      eq(false, was_request_sent())
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      end)
+
+      eq(true, was_request_sent())
+    end)
   end)
 end)
 
