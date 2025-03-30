@@ -188,15 +188,19 @@ Examples: >lua
 ==============================================================================
 IMPORTING LUA MODULES                                        *lua-module-load*
 
-Modules are searched for under the directories specified in 'runtimepath', in
-the order they appear.  Any "." in the module name is treated as a directory
-separator when searching.  For a module `foo.bar`, each directory is searched
-for `lua/foo/bar.lua`, then `lua/foo/bar/init.lua`.  If no files are found,
-the directories are searched again for a shared library with a name matching
-`lua/foo/bar.?`, where `?` is a list of suffixes (such as `so` or `dll`) derived from
-the initial value of |package.cpath|. If still no files are found, Nvim falls
-back to Lua's default search mechanism. The first script found is run and
-`require()` returns the value returned by the script if any, else `true`.
+Modules are searched for under the directories specified in 'runtimepath' and
+|packages-runtimepath|, in the order they appear in the output of this command
+>vim
+	:echo nvim_list_runtime_paths()
+<
+Any "." in the module name is treated as a directory separator when searching.
+For a module `foo.bar`, each directory is searched for `lua/foo/bar.lua`, then
+`lua/foo/bar/init.lua`.  If no files are found, the directories are searched
+again for a shared library with a name matching `lua/foo/bar.?`, where `?` is
+a list of suffixes (such as `so` or `dll`) derived from the initial value of
+|package.cpath|. If still no files are found, Nvim falls back to Lua's default
+search mechanism. The first script found is run and `require()` returns the
+value returned by the script if any, else `true`.
 
 The return value is cached after the first call to `require()` for each module,
 with subsequent calls returning the cached value without searching for, or
@@ -214,56 +218,9 @@ and loads the first module found ("first wins"): >
     bar/lua/mod.so
     bar/lua/mod.dll
 <
-                                                        *lua-package-path*
-Nvim automatically adjusts |package.path| and |package.cpath| according to the
-effective 'runtimepath' value. Adjustment happens whenever 'runtimepath' is
-changed. `package.path` is adjusted by simply appending `/lua/?.lua` and
-`/lua/?/init.lua` to each directory from 'runtimepath' (`/` is actually the
-first character of `package.config`).
-
-Similarly to |package.path|, modified directories from 'runtimepath' are also
-added to |package.cpath|. In this case, instead of appending `/lua/?.lua` and
-`/lua/?/init.lua` to each runtimepath, all unique `?`-containing suffixes of
-the existing |package.cpath| are used. Example:
-
-- 1. Given that
-   - 'runtimepath' contains `/foo/bar,/xxx;yyy/baz,/abc`;
-   - initial |package.cpath| (defined at compile-time or derived from
-     `$LUA_CPATH` / `$LUA_INIT`) contains `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
-- 2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in
-     order: parts of the path starting from the first path component containing
-     question mark and preceding path separator.
-- 3. The suffix of `/def/?.so`, namely `/?.so` is not unique, as it’s the same
-     as the suffix of the first path from |package.path| (i.e. `./?.so`). Which
-     leaves `/?.so` and `/a?d/j/g.elf`, in this order.
-- 4. 'runtimepath' has three paths: `/foo/bar`, `/xxx;yyy/baz` and `/abc`. The
-     second one contains a semicolon which is a paths separator so it is out,
-     leaving only `/foo/bar` and `/abc`, in order.
-- 5. The cartesian product of paths from 4. and suffixes from 3. is taken,
-     giving four variants. In each variant a `/lua` path segment is inserted
-     between path and suffix, leaving:
-     - `/foo/bar/lua/?.so`
-     - `/foo/bar/lua/a?d/j/g.elf`
-     - `/abc/lua/?.so`
-     - `/abc/lua/a?d/j/g.elf`
-- 6. New paths are prepended to the original |package.cpath|.
-
-The result will look like this: >
-
-    /foo/bar,/xxx;yyy/baz,/abc ('runtimepath')
-    × ./?.so;/def/ghi/a?d/j/g.elf;/def/?.so (package.cpath)
-    = /foo/bar/lua/?.so;/foo/bar/lua/a?d/j/g.elf;/abc/lua/?.so;/abc/lua/a?d/j/g.elf;./?.so;/def/ghi/a?d/j/g.elf;/def/?.so
-
 Note:
 
-- To track 'runtimepath' updates, paths added at previous update are
-  remembered and removed at the next update, while all paths derived from the
-  new 'runtimepath' are prepended as described above. This allows removing
-  paths when path is removed from 'runtimepath', adding paths when they are
-  added and reordering |package.path|/|package.cpath| content if 'runtimepath'
-  was reordered.
-
-- Although adjustments happen automatically, Nvim does not track current
+- Although 'runtimepath' is tracked, Nvim does not track current
   values of |package.path| or |package.cpath|. If you happen to delete some
   paths from there you can set 'runtimepath' to trigger an update: >vim
       let &runtimepath = &runtimepath

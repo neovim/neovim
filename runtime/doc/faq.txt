@@ -205,17 +205,11 @@ Other hints:
 
 :CHECKHEALTH REPORTS E5009: INVALID $VIMRUNTIME ~
 
-This means `health#check()` couldn't load, which suggests that |$VIMRUNTIME|
-or 'runtimepath' is broken.
+This means |$VIMRUNTIME| or 'runtimepath' is broken.
 
 - |$VIMRUNTIME| must point to Nvim's runtime files, not Vim's.
 - The |$VIMRUNTIME| directory contents should be readable by the current user.
 - Verify that `:echo &runtimepath` contains the $VIMRUNTIME path.
-- Check the output of: >vim
-
-    :call health#check()
-    :verbose func health#check
-<
 
 NEOVIM CAN'T FIND ITS RUNTIME ~
 
