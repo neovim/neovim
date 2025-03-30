@@ -60,7 +60,6 @@ describe("'autowriteall' on signal exit", function()
     test_deadly_sig('sigtstp', false, false)
   end)
 
-  -- Takes 6min to run, causes the CI job to timeout
   it('write if SIGQUIT & awa on', function()
     test_deadly_sig('sigquit', true, true)
   end)
