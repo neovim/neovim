@@ -2042,6 +2042,8 @@ func Test_pum_maxwidth_multibyte()
       return [
         \ #{word: "123456789_123456789_123456789_"},
         \ #{word: "一二三四五六七八九十"},
+        \ #{word: "abcdefghij"},
+        \ #{word: "上下左右"},
         \ ]
     endfunc
     set omnifunc=Omni_test
