@@ -12,6 +12,10 @@ local read_file = t.read_file
 local feed = n.feed
 local retry = t.retry
 
+if skip(is_os('win'), 'Only applies to POSIX systems') then
+  return
+end
+
 describe("'autowriteall' on signal exit", function()
   before_each(clear)
 
@@ -25,56 +29,42 @@ describe("'autowriteall' on signal exit", function()
 
     command('edit ' .. testfile)
     feed('i' .. teststr)
-    -- command('wa')
-    print(vim.uv.kill(fn.getpid(), signame))
+    vim.uv.kill(fn.getpid(), signame)
 
     retry(nil, 5000, function()
-      print("'" .. read_file(testfile) .. "'")
       eq((should_write and (teststr .. '\n') or nil), read_file(testfile))
     end)
   end
 
-  -- Works on windows
-  -- it('dont write if SIGTERM & awa on', function()
-  --   test_deadly_sig('sigterm', true, false)
-  -- end)
-  -- it('dont write if SIGTERM & awa off', function()
-  --   test_deadly_sig('sigterm', false, false)
-  -- end)
+  it('dont write if SIGTERM & awa on', function()
+    test_deadly_sig('sigterm', true, false)
+  end)
+  it('dont write if SIGTERM & awa off', function()
+    test_deadly_sig('sigterm', false, false)
+  end)
 
-  --- Error on windows
   it('write if SIGHUP & awa on', function()
-    skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig('sighup', true, true)
   end)
-  -- it('dont write if SIGHUP & awa off', function()
-  --   test_deadly_sig('sighup', false, false)
-  -- end)
+  it('dont write if SIGHUP & awa off', function()
+    test_deadly_sig('sighup', false, false)
+  end)
 
-  -- Error on windows
   it('write if SIGTSTP & awa on', function()
-    -- skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig('sigtstp', true, true)
   end)
-  -- it('dont write if SIGTSTP & awa off', function()
-  --   skip(is_os('win'), 'Timeout on Windows')
-  --   test_deadly_sig('sigtstp', false, false)
-  -- end)
+  it('dont write if SIGTSTP & awa off', function()
+    test_deadly_sig('sigtstp', false, false)
+  end)
 
   -- Takes 6min to run, causes the CI job to timeout
   it('write if SIGQUIT & awa on', function()
-    skip(is_os('win'), 'Timeout on Windows')
     test_deadly_sig('sigquit', true, true)
   end)
-  -- it('dont write if SIGQUIT & awa off', function()
-  --   skip(is_os('win'), 'Timeout on Windows')
-  --   test_deadly_sig('sigquit', false, false)
-  -- end)
+  it('dont write if SIGQUIT & awa off', function()
+    test_deadly_sig('sigquit', false, false)
+  end)
 end)
-
-if skip(is_os('win'), 'Only applies to POSIX systems') then
-  return
-end
 
 describe('autocmd Signal', function()
   before_each(clear)
