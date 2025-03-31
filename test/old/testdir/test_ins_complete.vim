@@ -3420,4 +3420,33 @@ func Test_complete_multiline_marks()
   delfunc Omni_test
 endfunc
 
+func Test_complete_append_selected_match_default()
+  " when typing a normal character during completion,
+  " completion is ended, see
+  " :h popupmenu-completion ("There are three states:")
+  func PrintMenuWords()
+    let info = complete_info(["selected", "matches"])
+    call map(info.matches, {_, v -> v.word})
+    return info
+  endfunc
+
+  new
+  call setline(1, ["fo", "foo", "foobar", "fobarbaz"])
+  exe "normal! Gof\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('fo{''matches'': [''fo'', ''foo'', ''foobar'', ''fobarbaz''], ''selected'': 0}', getline(5))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "fobarbaz"])
+  exe "normal! Gof\<c-n>o\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('foo{''matches'': [], ''selected'': -1}', getline(5))
+  %d
+  set completeopt=menu,noselect
+  call setline(1, ["fo", "foo", "foobar", "fobarbaz"])
+  exe "normal! Gof\<c-n>\<c-n>o\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('foo{''matches'': [], ''selected'': -1}', getline(5))
+  bw!
+
+  set completeopt&
+  delfunc PrintMenuWords
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
