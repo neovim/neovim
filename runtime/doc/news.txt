@@ -314,6 +314,8 @@ OPTIONS
 • 'eventignorewin' to persistently ignore events in a window.
 • 'winborder' sets the default border for |floating-windows|
 
+• 'winborder' add bold style.
+
 PERFORMANCE
 
 • Significantly reduced redraw time for long lines with treesitter
