@@ -124,8 +124,6 @@ OPTIONS
 
 PLUGINS
 
-• TODO
-
 TREESITTER
 
 • |Query:iter_matches()| correctly returns all matching nodes in a match
