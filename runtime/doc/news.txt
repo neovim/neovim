@@ -135,9 +135,7 @@ OPTIONS
 • 'completefuzzycollect' enables fuzzy collection of candidates for (some)
   |ins-completion| modes.
 • 'autowriteall' write all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
-
-• 'winborder' add bold style.
-
+• 'winborder' "bold" style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 
 PERFORMANCE
