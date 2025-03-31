@@ -153,7 +153,7 @@ M.funcs = {
 
     ]=],
     name = 'append',
-    params = { { 'lnum', 'integer' }, { 'text', 'string|string[]' } },
+    params = { { 'lnum', 'integer|string' }, { 'text', 'string|string[]' } },
     returns = '0|1',
     signature = 'append({lnum}, {text})',
   },
@@ -1235,7 +1235,7 @@ M.funcs = {
 
     ]=],
     name = 'cindent',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'cindent({lnum})',
   },
@@ -1663,7 +1663,7 @@ M.funcs = {
     args = { 1, 3 },
     base = 1,
     name = 'cursor',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'off', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' }, { 'off', 'integer' } },
     signature = 'cursor({lnum}, {col} [, {off}])',
   },
   cursor__1 = {
@@ -1898,7 +1898,7 @@ M.funcs = {
 
     ]=],
     name = 'diff_filler',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'diff_filler({lnum})',
   },
@@ -1918,7 +1918,7 @@ M.funcs = {
 
     ]=],
     name = 'diff_hlID',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' } },
     signature = 'diff_hlID({lnum}, {col})',
   },
   digraph_get = {
@@ -2915,7 +2915,7 @@ M.funcs = {
 
     ]=],
     name = 'foldclosed',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'foldclosed({lnum})',
   },
@@ -2931,7 +2931,7 @@ M.funcs = {
 
     ]=],
     name = 'foldclosedend',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'foldclosedend({lnum})',
   },
@@ -2952,7 +2952,7 @@ M.funcs = {
 
     ]=],
     name = 'foldlevel',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'foldlevel({lnum})',
   },
@@ -2993,7 +2993,7 @@ M.funcs = {
 
     ]=],
     name = 'foldtextresult',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'string',
     signature = 'foldtextresult({lnum})',
   },
@@ -4126,7 +4126,7 @@ M.funcs = {
     args = { 2 },
     base = 1,
     name = 'getline',
-    params = { { 'lnum', 'integer' }, { 'end', 'true|number|string|table' } },
+    params = { { 'lnum', 'integer|string' }, { 'end', 'true|number|string|table' } },
     returns = 'string|string[]',
   },
   getloclist = {
@@ -6374,7 +6374,7 @@ M.funcs = {
 
     ]=],
     name = 'line2byte',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'line2byte({lnum})',
   },
@@ -6390,7 +6390,7 @@ M.funcs = {
 
     ]=],
     name = 'lispindent',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'lispindent({lnum})',
   },
@@ -7751,7 +7751,7 @@ M.funcs = {
 
     ]=],
     name = 'nextnonblank',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'nextnonblank({lnum})',
   },
@@ -7899,7 +7899,7 @@ M.funcs = {
 
     ]=],
     name = 'prevnonblank',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'prevnonblank({lnum})',
   },
@@ -9775,7 +9775,7 @@ M.funcs = {
     args = { 1, 3 },
     base = 1,
     name = 'setcursorcharpos',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'off', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' }, { 'off', 'integer' } },
     signature = 'setcursorcharpos({lnum}, {col} [, {off}])',
   },
   setcursorcharpos__1 = {
@@ -9870,7 +9870,7 @@ M.funcs = {
 
     ]=],
     name = 'setline',
-    params = { { 'lnum', 'integer' }, { 'text', 'any' } },
+    params = { { 'lnum', 'integer|string' }, { 'text', 'any' } },
     signature = 'setline({lnum}, {text})',
   },
   setloclist = {
@@ -11939,7 +11939,7 @@ M.funcs = {
       <
     ]=],
     name = 'synID',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'trans', '0|1' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' }, { 'trans', '0|1' } },
     returns = 'integer',
     signature = 'synID({lnum}, {col}, {trans})',
   },
@@ -12046,7 +12046,7 @@ M.funcs = {
       mechanisms |syntax-vs-match|.
     ]=],
     name = 'synconcealed',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' } },
     returns = '[integer, string, integer]',
     signature = 'synconcealed({lnum}, {col})',
   },
@@ -12072,7 +12072,7 @@ M.funcs = {
       valid positions.
     ]=],
     name = 'synstack',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' } },
     returns = 'integer[]',
     signature = 'synstack({lnum}, {col})',
   },
