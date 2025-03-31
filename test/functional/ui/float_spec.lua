@@ -1759,15 +1759,117 @@ describe('float window', function()
       -- support: ascii char, UTF-8 char, composed char, highlight per char
       api.nvim_win_set_config(win, {border={"x", {"å", "ErrorMsg"}, {"\\"}, {"n̈̊", "Search"}}})
       eq({"x", {"å", "ErrorMsg"}, "\\", {"n̈̊", "Search"}, "x", {"å", "ErrorMsg"}, "\\", {"n̈̊", "Search"}}, api.nvim_win_get_config(win).border)
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|*6
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|*5
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:x}{7:ååååååååå}{5:\}|
+          {17:n̈̊}{1: halloj! }{17:n̈̊}|
+          {17:n̈̊}{1: BORDAA  }{17:n̈̊}|
+          {5:\}{7:ååååååååå}{5:x}|
+        ]], float_pos={
+          [4] = { 1001, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:x}{7:ååååååååå}{5:\}{0:                        }|
+          {0:~    }{17:n̈̊}{1: halloj! }{17:n̈̊}{0:                        }|
+          {0:~    }{17:n̈̊}{1: BORDAA  }{17:n̈̊}{0:                        }|
+          {0:~    }{5:\}{7:ååååååååå}{5:x}{0:                        }|
+                                                  |
+        ]]}
+      end
 
       api.nvim_win_set_config(win, {border="none"})
       eq(nil, api.nvim_win_get_config(win).border)
 
       api.nvim_win_set_config(win, {border={"", "", "", ">", "", "", "", "<"}})
       eq({"", "", "", ">", "", "", "", "<"}, api.nvim_win_get_config(win).border)
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|*6
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|*5
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:<}{1: halloj! }{5:>}|
+          {5:<}{1: BORDAA  }{5:>}|
+        ]], float_pos={
+          [4] = { 1001, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0};
+        },
+        win_viewport_margins={
+          [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
+          [4] = {win = 1001, top = 0, bottom = 0, left = 1, right = 1};
+        }
+      }
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:<}{1: halloj! }{5:>}{0:                        }|
+          {0:~    }{5:<}{1: BORDAA  }{5:>}{0:                        }|
+          {0:~                                       }|*2
+                                                  |
+        ]]}
+      end
 
       api.nvim_win_set_config(win, {border={"", "_", "", "", "", "-", "", ""}})
       eq({"", "_", "", "", "", "-", "", ""}, api.nvim_win_get_config(win).border)
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|*6
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|*5
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:_________}|
+          {1: halloj! }|
+          {1: BORDAA  }|
+          {5:---------}|
+        ]], float_pos={
+          [4] = { 1001, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0};
+        },
+        win_viewport_margins={
+          [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
+          [4] = {win = 1001, top = 1, bottom = 1, left = 0, right = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:_________}{0:                          }|
+          {0:~    }{1: halloj! }{0:                          }|
+          {0:~    }{1: BORDAA  }{0:                          }|
+          {0:~    }{5:---------}{0:                          }|
+                                                  |
+        ]]}
+      end
 
       insert [[
         neeed some dummy
