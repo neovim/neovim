@@ -7208,6 +7208,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- "rounded": Like "single", but with rounded corners ("╭" etc.).
 	- "solid": Adds padding by a single whitespace cell.
 	- "shadow": A drop shadow effect by blending with the background.
+	- "bold": A bold line box.
 
 							*'window'* *'wi'*
 'window' 'wi'		number	(default screen height - 1)

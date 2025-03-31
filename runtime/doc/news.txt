@@ -136,6 +136,8 @@ OPTIONS
   |ins-completion| modes.
 • 'autowriteall' write all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
 
+• 'winborder' add bold style.
+
 PERFORMANCE
 
 • todo

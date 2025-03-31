@@ -942,6 +942,7 @@ static void parse_border_style(Object style, WinConfig *fconfig, Error *err)
     { opt_winborder_values[3], { "", "", " ", " ", " ", " ", " ", "" }, true },
     { opt_winborder_values[4], { "╭", "─", "╮", "│", "╯", "─", "╰", "│" }, false },
     { opt_winborder_values[5], { " ", " ", " ", " ", " ", " ", " ", " " }, false },
+    { opt_winborder_values[6], { "┏", "━", "┓", "┃", "┛", "━", "┗", "┃" }, false },
     { NULL, { { NUL } }, false },
   };
 
