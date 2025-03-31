@@ -6414,5 +6414,36 @@ describe('LSP', function()
         filetypes = true,
       }, 'cannot start foo due to config error: .* filetypes: expected table, got boolean')
     end)
+
+    it('does not allow wildcards in config name', function()
+      local err =
+        '.../lsp.lua:0: name: expected non%-wildcard string, got foo%*%. Info: LSP config name cannot contain wildcard %("%*"%)'
+
+      matches(
+        err,
+        pcall_err(exec_lua, function()
+          local _ = vim.lsp.config['foo*']
+        end)
+      )
+
+      matches(
+        err,
+        pcall_err(exec_lua, function()
+          vim.lsp.config['foo*'] = {}
+        end)
+      )
+
+      matches(
+        err,
+        pcall_err(exec_lua, function()
+          vim.lsp.config('foo*', {})
+        end)
+      )
+
+      -- Exception for '*'
+      pcall(exec_lua, function()
+        vim.lsp.config('*', {})
+      end)
+    end)
   end)
 end)

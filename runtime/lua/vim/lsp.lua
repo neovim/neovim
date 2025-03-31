@@ -362,6 +362,19 @@ local function invalidate_enabled_config(name)
   end
 end
 
+--- @param name any
+local function validate_config_name(name)
+  validate('name', name, function(value)
+    if type(value) ~= 'string' then
+      return false
+    end
+    if value ~= '*' and value:match('%*') then
+      return false, 'LSP config name cannot contain wildcard ("*")'
+    end
+    return true
+  end, 'non-wildcard string')
+end
+
 --- @nodoc
 --- @class vim.lsp.config
 --- @field [string] vim.lsp.Config
@@ -371,11 +384,16 @@ lsp.config = setmetatable({ _configs = {} }, {
   --- @param name string
   --- @return vim.lsp.Config
   __index = function(self, name)
-    validate('name', name, 'string')
+    validate_config_name(name)
 
     local rconfig = lsp._enabled_configs[name] or {}
 
     if not rconfig.resolved_config then
+      if name == '*' then
+        rconfig.resolved_config = lsp.config._configs['*'] or {}
+        return rconfig.resolved_config
+      end
+
       -- Resolve configs from lsp/*.lua
       -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
       local rtp_config --- @type vim.lsp.Config?
@@ -385,12 +403,12 @@ lsp.config = setmetatable({ _configs = {} }, {
           --- @type vim.lsp.Config?
           rtp_config = vim.tbl_deep_extend('force', rtp_config or {}, config)
         else
-          log.warn(string.format('%s does not return a table, ignoring', v))
+          log.warn(('%s does not return a table, ignoring'):format(v))
         end
       end
 
       if not rtp_config and not self._configs[name] then
-        log.warn(string.format('%s does not have a configuration', name))
+        log.warn(('%s does not have a configuration'):format(name))
         return
       end
 
@@ -410,7 +428,7 @@ lsp.config = setmetatable({ _configs = {} }, {
   --- @param name string
   --- @param cfg vim.lsp.Config
   __newindex = function(self, name, cfg)
-    validate('name', name, 'string')
+    validate_config_name(name)
     validate('cfg', cfg, 'table')
     invalidate_enabled_config(name)
     self._configs[name] = cfg
@@ -420,7 +438,7 @@ lsp.config = setmetatable({ _configs = {} }, {
   --- @param name string
   --- @param cfg vim.lsp.Config
   __call = function(self, name, cfg)
-    validate('name', name, 'string')
+    validate_config_name(name)
     validate('cfg', cfg, 'table')
     invalidate_enabled_config(name)
     self[name] = vim.tbl_deep_extend('force', self._configs[name] or {}, cfg)
