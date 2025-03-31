@@ -184,14 +184,14 @@
 --- @field signs vim.fn.sign[]
 
 --- @class vim.fn.sign_place.dict
---- @field lnum? integer
+--- @field lnum? integer|string
 --- @field priority? integer
 
 --- @class vim.fn.sign_placelist.list.item
 --- @field buffer integer|string
 --- @field group? string
 --- @field id? integer
---- @field lnum integer
+--- @field lnum? integer|string
 --- @field name string
 --- @field priority? integer
 
