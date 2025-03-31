@@ -12,16 +12,18 @@
 #include "nvim/eval.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/signal.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/signal.h"
 
 #ifdef SIGPWR
 # include "nvim/memline.h"
 #endif
 
-static SignalWatcher spipe, shup, squit, sterm, susr1, swinch;
+static SignalWatcher spipe, shup, squit, sterm, susr1, swinch, ststp;
 #ifdef SIGPWR
 static SignalWatcher spwr;
 #endif
@@ -48,6 +50,7 @@ void signal_init(void)
   signal_watcher_init(&main_loop, &shup, NULL);
   signal_watcher_init(&main_loop, &squit, NULL);
   signal_watcher_init(&main_loop, &sterm, NULL);
+  signal_watcher_init(&main_loop, &ststp, NULL);
 #ifdef SIGPWR
   signal_watcher_init(&main_loop, &spwr, NULL);
 #endif
@@ -67,6 +70,7 @@ void signal_teardown(void)
   signal_watcher_close(&shup, NULL);
   signal_watcher_close(&squit, NULL);
   signal_watcher_close(&sterm, NULL);
+  signal_watcher_close(&ststp, NULL);
 #ifdef SIGPWR
   signal_watcher_close(&spwr, NULL);
 #endif
@@ -88,6 +92,9 @@ void signal_start(void)
   signal_watcher_start(&squit, on_signal, SIGQUIT);
 #endif
   signal_watcher_start(&sterm, on_signal, SIGTERM);
+#ifdef SIGTSTP
+  signal_watcher_start(&ststp, on_signal, SIGTSTP);
+#endif
 #ifdef SIGPWR
   signal_watcher_start(&spwr, on_signal, SIGPWR);
 #endif
@@ -109,6 +116,7 @@ void signal_stop(void)
   signal_watcher_stop(&squit);
 #endif
   signal_watcher_stop(&sterm);
+  signal_watcher_stop(&ststp);
 #ifdef SIGPWR
   signal_watcher_stop(&spwr);
 #endif
@@ -143,6 +151,10 @@ static char *signal_name(int signum)
 #endif
   case SIGTERM:
     return "SIGTERM";
+#ifdef SIGTSTP
+  case SIGTSTP:
+    return "SIGTSTP";
+#endif
 #ifdef SIGQUIT
   case SIGQUIT:
     return "SIGQUIT";
@@ -177,6 +189,10 @@ static void deadly_signal(int signum)
 
   snprintf(IObuff, IOSIZE, "Nvim: Caught deadly signal '%s'\n", signal_name(signum));
 
+  if (p_awa && signum != SIGTERM) {
+    autowrite_all();
+  }
+
   // Preserve files and exit.
   preserve_exit(IObuff);
 }
@@ -197,6 +213,9 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
     break;
 #endif
   case SIGTERM:
+#ifdef SIGTSTP
+  case SIGTSTP:
+#endif
 #ifdef SIGQUIT
   case SIGQUIT:
 #endif
