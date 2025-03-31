@@ -110,7 +110,7 @@ append({lnum}, {text})                                                *append()*
 <
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {text} (`string|string[]`)
 
                 Return: ~
@@ -1047,7 +1047,7 @@ cindent({lnum})                                                      *cindent()*
 		To get or set indent of lines in a string, see |vim.text.indent()|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -1637,7 +1637,7 @@ diff_filler({lnum})                                              *diff_filler()*
 		Returns 0 if the current window is not in diff mode.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -1654,7 +1654,7 @@ diff_hlID({lnum}, {col})                                           *diff_hlID()*
 		syntax information about the highlighting.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {col} (`integer`)
 
                 Return: ~
@@ -2563,7 +2563,7 @@ foldclosed({lnum})                                                *foldclosed()*
 		line, "'m" mark m, etc.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -2576,7 +2576,7 @@ foldclosedend({lnum})                                          *foldclosedend()*
 		line, "'m" mark m, etc.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -2594,7 +2594,7 @@ foldlevel({lnum})                                                  *foldlevel()*
 		line, "'m" mark m, etc.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -2629,7 +2629,7 @@ foldtextresult({lnum})                                        *foldtextresult()*
 		Useful when exporting folded text, e.g., to HTML.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`string`)
@@ -5706,7 +5706,7 @@ line2byte({lnum})                                                  *line2byte()*
 		Also see |byte2line()|, |go| and |:goto|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -5719,7 +5719,7 @@ lispindent({lnum})                                                *lispindent()*
 		When {lnum} is invalid, -1 is returned.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -6993,7 +6993,7 @@ nextnonblank({lnum})                                            *nextnonblank()*
 		See also |prevnonblank()|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -7127,7 +7127,7 @@ prevnonblank({lnum})                                            *prevnonblank()*
 		Also see |nextnonblank()|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -8940,7 +8940,7 @@ setline({lnum}, {text})                                              *setline()*
 <		Note: The '[ and '] marks are not set.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {text} (`any`)
 
                 Return: ~
@@ -10854,7 +10854,7 @@ synID({lnum}, {col}, {trans})                                          *synID()*
 <
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {col} (`integer`)
                   • {trans} (`0|1`)
 
@@ -10959,7 +10959,7 @@ synconcealed({lnum}, {col})                                     *synconcealed()*
 		mechanisms |syntax-vs-match|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {col} (`integer`)
 
                 Return: ~
@@ -10985,7 +10985,7 @@ synstack({lnum}, {col})                                             *synstack()*
 		valid positions.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {col} (`integer`)
 
                 Return: ~
