@@ -3005,6 +3005,13 @@ describe('extmark decorations', function()
       {1:~                                                 }|
                                                         |
     ]])
+    -- No asymmetric topline for <C-E><C-Y> #33182
+    feed('4<C-E>')
+    exec('set concealcursor=n')
+    api.nvim_buf_set_extmark(0, ns, 4, 0, { conceal_lines = "" })
+    eq(5, n.fn.line('w0'))
+    feed('<C-E><C-Y>')
+    eq(5, n.fn.line('w0'))
   end)
 end)
 
