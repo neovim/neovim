@@ -1,5 +1,6 @@
 " Author: Stephen Sugden <stephen@stephensugden.com>
 " Last Modified: 2023-09-11
+" Last Change:   2025 Mar 31 by Vim project (rename s:RustfmtConfigOptions())
 "
 " Adapted from https://github.com/fatih/vim-go
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
@@ -61,7 +62,7 @@ function! s:RustfmtWriteMode()
     endif
 endfunction
 
-function! s:RustfmtConfigOptions()
+function! rustfmt#RustfmtConfigOptions()
     let l:rustfmt_toml = findfile('rustfmt.toml', expand('%:p:h') . ';')
     if l:rustfmt_toml !=# ''
         return '--config-path '.shellescape(fnamemodify(l:rustfmt_toml, ":p"))
@@ -84,7 +85,7 @@ function! s:RustfmtCommandRange(filename, line1, line2)
 
     let l:arg = {"file": shellescape(a:filename), "range": [a:line1, a:line2]}
     let l:write_mode = s:RustfmtWriteMode()
-    let l:rustfmt_config = s:RustfmtConfigOptions()
+    let l:rustfmt_config = rustfmt#RustfmtConfigOptions()
 
     " FIXME: When --file-lines gets to be stable, add version range checking
     " accordingly.
@@ -99,7 +100,7 @@ endfunction
 
 function! s:RustfmtCommand()
     let write_mode = g:rustfmt_emit_files ? '--emit=stdout' : '--write-mode=display'
-    let config = s:RustfmtConfigOptions()
+    let config = rustfmt#RustfmtConfigOptions()
     return join([g:rustfmt_command, write_mode, config, g:rustfmt_options])
 endfunction
 
