@@ -1363,8 +1363,9 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
           }
           wp->w_botline -= wp->w_topline - first;
           wp->w_topline = first;
+        } else if (decor_conceal_line(wp, wp->w_topline - 1, false)) {
+          todo++;
         } else {
-          todo += decor_conceal_line(wp, wp->w_topline - 1, false);
           if (do_sms) {
             int size = linetabsize_eol(wp, wp->w_topline);
             if (size > width1) {
@@ -1386,6 +1387,13 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
     wp->w_botline--;                // approximate w_botline
     invalidate_botline(wp);
   }
+
+  // Adjust for concealed lines above w_topline
+  while (wp->w_topline > 1 && decor_conceal_line(wp, wp->w_topline - 2, false)) {
+    wp->w_topline--;
+    hasFolding(wp, wp->w_topline, &wp->w_topline, NULL);
+  }
+
   wp->w_wrow += done;               // keep w_wrow updated
   wp->w_cline_row += done;          // keep w_cline_row updated
 
