@@ -6762,7 +6762,7 @@ M.funcs = {
     args = { 1, 3 },
     base = 1,
     name = 'mapset',
-    params = { { 'mode', 'string' }, { 'abbr', 'boolean' }, { 'dict', 'boolean' } },
+    params = { { 'mode', 'string' }, { 'abbr', 'boolean' }, { 'dict', 'table<string,any>' } },
     signature = 'mapset({mode}, {abbr}, {dict})',
   },
   mapset__1 = {
@@ -6806,7 +6806,7 @@ M.funcs = {
       <
     ]=],
     name = 'mapset',
-    params = { { 'dict', 'boolean' } },
+    params = { { 'dict', 'table<string,any>' } },
     signature = 'mapset({dict})',
   },
   match = {
