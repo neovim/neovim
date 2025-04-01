@@ -685,15 +685,16 @@ function M.edit_query(lang)
     end,
   })
 
-  api.nvim_buf_set_lines(query_buf, 0, -1, false, {
-    ';; Write queries here (see $VIMRUNTIME/queries/ for examples).',
-    ';; Move cursor to a capture ("@foo") to highlight matches in the source buffer.',
-    ';; Completion for grammar nodes is available (:help compl-omni)',
-    '',
-    '',
+  local ns = vim.api.nvim_create_namespace('nvim.treesitter.queryhint')
+  api.nvim_buf_set_extmark(query_buf, ns, 0, 0, {
+    virt_lines = {
+      { { 'Write queries here (see $VIMRUNTIME/queries/ for examples).', 'Conceal' } },
+      { { 'Move cursor to a capture ("@foo") to highlight matches in the source buffer.', 'Conceal' } },
+      { { 'Completion for grammar nodes is available (:help compl-omni)', 'Conceal' } },
+    },
+    virt_lines_above = true,
   })
-  vim.cmd('normal! G')
-  vim.cmd.startinsert()
+  vim.cmd('normal! zt')
 
   return true
 end
