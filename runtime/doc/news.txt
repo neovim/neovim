@@ -104,7 +104,7 @@ The following new features were added.
 
 API
 
-• todo
+• Decoration provider has `on_range()` callback.
 
 DEFAULTS
 
@@ -156,7 +156,7 @@ TERMINAL
 
 TREESITTER
 
-• todo
+• |Query:iter_captures()| supports specifying starting and ending columns.
 
 TUI
 
