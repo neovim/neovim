@@ -1151,7 +1151,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
     }
 
-    decor_providers_invoke_line(wp, lnum - 1);
+    decor_providers_invoke_line(wp, lnum - 1);  // may invalidate wp->w_virtcol
+    validate_virtcol(wp);
 
     has_decor = decor_redraw_line(wp, lnum - 1, &decor_state);
 
