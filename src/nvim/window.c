@@ -6634,7 +6634,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   int prev_height = wp->w_height_inner;
   int height = wp->w_height_request;
   if (height == 0) {
-    height = wp->w_height - wp->w_winbar_height;
+    height = MAX(0, wp->w_height - wp->w_winbar_height);
   }
 
   if (height != prev_height) {
