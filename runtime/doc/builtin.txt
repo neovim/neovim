@@ -6090,7 +6090,7 @@ mapset({dict})
 <
 
                 Parameters: ~
-                  • {dict} (`boolean`)
+                  • {dict} (`table`)
 
                 Return: ~
                   (`any`)

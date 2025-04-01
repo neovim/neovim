@@ -5479,7 +5479,7 @@ function vim.fn.mapnew(expr1, expr2) end
 
 --- @param mode string
 --- @param abbr? boolean
---- @param dict? boolean
+--- @param dict? table
 --- @return any
 function vim.fn.mapset(mode, abbr, dict) end
 
@@ -5519,7 +5519,7 @@ function vim.fn.mapset(mode, abbr, dict) end
 ---   endfor
 --- <
 ---
---- @param dict boolean
+--- @param dict table
 --- @return any
 function vim.fn.mapset(dict) end
 
