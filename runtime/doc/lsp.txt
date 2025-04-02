@@ -2495,32 +2495,6 @@ show_document({location}, {position_encoding}, {opts})
     Return: ~
         (`boolean`) `true` if succeeded
 
-                                             *vim.lsp.util.stylize_markdown()*
-stylize_markdown({bufnr}, {contents}, {opts})
-    Converts markdown into syntax highlighted regions by stripping the code
-    blocks and converting them into highlighted code. This will by default
-    insert a blank line separator after those code block regions to improve
-    readability.
-
-    This method configures the given buffer and returns the lines to set.
-
-    If you want to open a popup with fancy markdown, use
-    `open_floating_preview` instead
-
-    Parameters: ~
-      • {bufnr}     (`integer`)
-      • {contents}  (`string[]`) of lines to show in window
-      • {opts}      (`table?`) with optional fields
-                    • height of floating window
-                    • width of floating window
-                    • wrap_at character to wrap at for computing height
-                    • max_width maximal width of floating window
-                    • max_height maximal height of floating window
-                    • separator insert separator after code block
-
-    Return: ~
-        (`table`) stripped content
-
                                              *vim.lsp.util.symbols_to_items()*
 symbols_to_items({symbols}, {bufnr}, {position_encoding})
     Converts symbols to quickfix list items.

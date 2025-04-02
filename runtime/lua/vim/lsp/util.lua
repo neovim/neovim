@@ -1079,6 +1079,7 @@ local function get_markdown_fences()
   return fences
 end
 
+--- @deprecated
 --- Converts markdown into syntax highlighted regions by stripping the code
 --- blocks and converting them into highlighted code.
 --- This will by default insert a blank line separator after those code block
@@ -1099,6 +1100,7 @@ end
 ---  - separator insert separator after code block
 ---@return table stripped content
 function M.stylize_markdown(bufnr, contents, opts)
+  vim.deprecate('vim.lsp.util.stylize_markdown', nil, '0.14')
   validate('contents', contents, 'table')
   validate('opts', opts, 'table', true)
   opts = opts or {}

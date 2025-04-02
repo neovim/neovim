@@ -190,6 +190,6 @@ These deprecated features were removed.
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 
-See |deprecated-0.11|.
+See |deprecated-0.12|.
 
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
