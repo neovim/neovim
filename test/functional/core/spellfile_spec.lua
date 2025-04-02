@@ -118,7 +118,7 @@ describe('spellfile', function()
     api.nvim_set_option_value('spellfile', fname, {})
   end)
 
-  describe('default', function ()
+  describe('default location', function ()
     it("is stdpath('data')/spell/en.utf-8.add", function ()
       n.command('set spell')
       n.insert('abc')

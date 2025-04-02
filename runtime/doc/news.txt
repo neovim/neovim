@@ -172,7 +172,7 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• |spellfile| uses `stdpath('data')/spell` as default location instead of the
+• |spellfile| location defaults to `stdpath("data").."/spell/"` instead of the
   first writable directoy in 'runtimepath'.
 
 ==============================================================================
