@@ -5548,6 +5548,9 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
 }
 
 // Initialize 'spellfile' for the current buffer.
+//
+// If the location does not exist, create it. Defaults to
+// stdpath("data") + "/spell/{spelllang}.{encoding}.add".
 static void init_spellfile(void)
 {
   char *lend;
@@ -5573,18 +5576,11 @@ static void init_spellfile(void)
 
   if (!aspath) {
     char *xdg_path = get_xdg_home(kXDGDataHome);
-    // if (!xdg_path) {
-    //   xfree(buf);
-    //   return;
-    // }
-
     xstrlcpy(buf, xdg_path, buf_len);
     xfree(xdg_path);
 
-    // Append "/spell"
     xstrlcat(buf, "/spell", buf_len);
 
-    // Create the directory if needed
     char *failed_dir;
     if (os_mkdir_recurse(buf, 0755, &failed_dir, NULL) != 0) {
       xfree(buf);
@@ -5606,8 +5602,8 @@ static void init_spellfile(void)
   char *fname = LANGP_ENTRY(curwin->w_s->b_langp, 0)->lp_slang->sl_fname;
   const char *enc_suffix =
     (fname != NULL && strstr(path_tail(fname), ".ascii.") != NULL) ? "ascii" : spell_enc();
-
   vim_snprintf(buf + strlen(buf), buf_len - strlen(buf), ".%s.add", enc_suffix);
+
   set_option_value_give_err(kOptSpellfile, CSTR_AS_OPTVAL(buf), OPT_LOCAL);
   xfree(buf);
 }
