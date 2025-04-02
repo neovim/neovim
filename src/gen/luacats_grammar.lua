@@ -170,6 +170,7 @@ local ty_name = Cg(ty_ident, 'name')
 local opt_parent = opt(colon * Cg(ty_ident, 'parent'))
 local lname = (ident + ellipsis) * opt(P('?'))
 
+-- stylua: ignore
 local grammar = P {
   rep1(P('@') * (v.ats + v.ext_ats)),
 
