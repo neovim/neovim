@@ -123,7 +123,10 @@ describe('spellfile', function()
       n.command('set spell')
       n.insert('abc')
       n.feed('zg')
-      eq(testdir .. '/xdg_data/nvim/spell/en.utf-8.add', api.nvim_get_option_value('spellfile', {}))
+      eq(
+        t.fix_slashes(fn.stdpath('data') .. '/spell/en.utf-8.add'),
+        t.fix_slashes(api.nvim_get_option_value('spellfile', {}))
+      )
     end)
 
     it("is not set if stdpath('data') is not writable", function()
