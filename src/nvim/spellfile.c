@@ -5585,8 +5585,10 @@ static void init_spellfile(void)
     xstrlcat(buf, "/spell", buf_len);
 
     // Create the directory if needed
-    if (os_mkdir_recurse(buf, 0755, &buf, NULL) != 0) {
+    char *failed_dir;
+    if (os_mkdir_recurse(buf, 0755, &failed_dir, NULL) != 0) {
       xfree(buf);
+      xfree(failed_dir);
       return;
     }
   } else {
