@@ -189,29 +189,29 @@ function! provider#clipboard#Executable() abort
       if 'osc52' == g:clipboard
         " User opted-in to OSC 52 by manually setting g:clipboard.
         return s:set_osc52()
-      elseif ('pbcopy' == g:clipboard || 'mac' == g:clipboard) && has('mac')
+      elseif 'pbcopy' == g:clipboard
         return s:set_pbcopy()
-      elseif ('wl-copy' == g:clipboard || 'wayland' == g:clipboard) && !empty($WAYLAND_DISPLAY) && executable('wl-copy') && executable('wl-paste')
+      elseif 'wl-copy' == g:clipboard
         return s:set_wayland()
-      elseif 'wayclip' == g:clipboard && !empty($WAYLAND_DISPLAY) && executable('waycopy') && executable('waypaste')
+      elseif 'wayclip' == g:clipboard
         return s:set_wayclip()
-      elseif 'xsel' == g:clipboard && !empty($DISPLAY) && executable('xsel') && s:cmd_ok('xsel -o -b')
+      elseif 'xsel' == g:clipboard
         return s:set_xsel()
-      elseif 'xclip' == g:clipboard && !empty($DISPLAY) && executable('xclip')
+      elseif 'xclip' == g:clipboard
         return s:set_xclip()
-      elseif 'lemonade' == g:clipboard && executable('lemonade')
+      elseif 'lemonade' == g:clipboard
         return s:set_lemonade()
-      elseif 'doitclient' == g:clipboard && executable('doitclient')
+      elseif 'doitclient' == g:clipboard
         return s:set_doitclient()
-      elseif 'win32yank' == g:clipboard && executable('win32yank.exe')
+      elseif 'win32yank' == g:clipboard
         return s:set_win32yank()
-      elseif 'putclip' == g:clipboard && executable('putclip') && executable('getclip')
+      elseif 'putclip' == g:clipboard
         return s:set_putclip()
-      elseif 'clip' == g:clipboard && executable('clip') && executable('powershell')
+      elseif 'clip' == g:clipboard
         return s:set_clip()
-      elseif 'termux' == g:clipboard && executable('termux-clipboard-set')
+      elseif 'termux' == g:clipboard
         return s:set_termux()
-      elseif 'tmux' == g:clipboard && executable('tmux') && (!empty($TMUX) || 0 == jobwait([jobstart(['tmux', 'list-buffers'])], 2000)[0])
+      elseif 'tmux' == g:clipboard
         return s:set_tmux()
       endif
     endif
@@ -262,7 +262,8 @@ function! provider#clipboard#Executable() abort
     " of user prompts. Users can opt-in to it by setting g:clipboard manually.
     return s:set_osc52()
   endif
-  
+
+  let s:err = 'clipboard: No clipboard tool. :help clipboard'
   return ''
 endfunction
 

@@ -246,7 +246,6 @@ Nvim also supports setting g:clipboard to a string to use a builtin clipboard pr
   - "xclip"          - Use xclip for X11 clipboard
   - "xsel"           - Use xsel for X11 clipboard
   - "wl-copy"        - Use Wayland clipboard with wl-copy/wl-paste
-  - "wayland"        - Alias for "wl-copy" (Wayland clipboard)
   - "wayclip"        - Use Wayland clipboard with waycopy/waypaste
   - "lemonade"       - Use lemonade clipboard (for SSH)
   - "doitclient"     - Use doitclient clipboard (for SSH)
@@ -255,7 +254,6 @@ Nvim also supports setting g:clipboard to a string to use a builtin clipboard pr
   - "putclip"        - Use putclip/getclip clipboard (for Windows/Cygwin)
   - "termux"         - Use Termux clipboard
   - "pbcopy"         - Use macOS clipboard
-  - "mac"            - Alias for "pbcopy" (macOS clipboard)
   - "osc52"          - Use OSC 52 sequence
 
 Example: >vim
