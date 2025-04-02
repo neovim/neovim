@@ -862,6 +862,9 @@ void buf_freeall(buf_T *buf, int flags)
   }
   syntax_clear(&buf->b_s);          // reset syntax info
   buf->b_flags &= ~BF_READERR;      // a read error is no longer relevant
+
+  xfree(buf->b_localdir);
+  xfree(buf->b_prevdir);
 }
 
 /// Free a buffer structure and the things it contains related to the buffer
@@ -1690,6 +1693,9 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   if (bufref_valid(&prevbufref) && prevbuf->terminal != NULL) {
     terminal_check_size(prevbuf->terminal);
   }
+
+  // Maybe cd to buffer-local directory
+  fix_current_dir(false);
 }
 
 /// Enter a new current buffer.

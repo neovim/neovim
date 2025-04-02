@@ -2937,6 +2937,12 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     redraw_curbuf_later(UPD_NOT_VALID);  // redraw this buffer later
   }
 
+  // If editing a buffer in the current window, make sure to update to the
+  // buffer's working directory.
+  if (oldwin == curwin) {
+    fix_current_dir(false);
+  }
+
   // Change directories when the 'acd' option is set.
   do_autochdir();
 

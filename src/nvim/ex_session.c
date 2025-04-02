@@ -818,8 +818,8 @@ static int makeopens(FILE *fd, char *dirnow)
     }
 
     // Restore the tab-local working directory if specified
-    // Do this before the windows, so that the window-local directory can
-    // override the tab-local directory.
+    // Do this before the buffers and windows, so that the buffer-local or
+    // window-local directory can override the tab-local directory.
     if ((ssop_flags & kOptSsopFlagCurdir) && tp->tp_localdir != NULL) {
       if (fputs("tcd ", fd) < 0
           || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
@@ -827,6 +827,40 @@ static int makeopens(FILE *fd, char *dirnow)
         return FAIL;
       }
       did_lcd = true;
+    }
+
+    // Restore the buffer-local working directory if specified
+    // Do this before the windows, so that the window-local directory can override the tab-local or buffer-local directory.
+    // If there's a local buffer directory, create an autocmd to :bcd once BufEnter triggers
+
+    // NOTE: this is kind of hacky.
+    // If theres a buffer-local directory, create an autocmd that runs :bcd once
+    // we enter the buffer
+    FOR_ALL_BUFFERS(buf) {
+      if (buf->b_localdir != NULL) {
+        // store bufnr in s:bufnr
+        // let s:bufnr = bufnr(BUFFER_FILENAME)
+        if (fprintf(fd, "let s:bufnr = bufnr('") < 0) {
+          return FAIL;
+        }
+        if (ses_fname(fd, buf, &ssop_flags, false) == FAIL) {
+          return FAIL;
+        }
+        if (fprintf(fd, "')\n") < 0) {
+          return FAIL;
+        }
+
+        // autocmd BufEnter <buffer=s:bufnr> ++once :bcd BUFFER_LOCALDIR
+        if (fprintf(fd, "execute 'autocmd BufEnter <buffer=' . s:bufnr . '> ++once bcd ") < 0) {
+          return FAIL;
+        }
+        if (ses_put_fname(fd, buf->b_localdir, &ssop_flags) == FAIL) {
+          return FAIL;
+        }
+        if (fprintf(fd, "'\n") < 0) {
+          return FAIL;
+        }
+      }
     }
 
     // Restore the view of the window (options, file, cursor, etc.).

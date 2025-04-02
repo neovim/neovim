@@ -3227,27 +3227,37 @@ function vim.fn.getcurpos(winid) end
 function vim.fn.getcursorcharpos(winid) end
 
 --- With no arguments, returns the name of the effective
---- |current-directory|. With {winnr} or {tabnr} the working
---- directory of that scope is returned, and 'autochdir' is
---- ignored. Tabs and windows are identified by their respective
---- numbers, 0 means current tab or window. Missing tab number
+--- |current-directory|. With {winnr} or {tabnr} or {bufnr} the
+--- working directory of that scope is returned, and 'autochdir' is
+--- ignored. Tabs, windows and buffers are identified by their respective
+--- numbers, 0 means current tab or window or buffer. Missing tab number
 --- implies 0. Thus the following are equivalent: >vim
 ---   getcwd(0)
 ---   getcwd(0, 0)
 --- <If {winnr} is -1 it is ignored, only the tab is resolved.
 --- {winnr} can be the window number or the |window-ID|.
---- If both {winnr} and {tabnr} are -1 the global working
---- directory is returned.
+--- If both {winnr} and {tabnr} are -1 and {bufnr} is missing the
+--- global working directory is returned.
 --- Note: When {tabnr} is -1 Vim returns an empty string to
 --- signal that it is invalid, whereas Nvim returns either the
 --- global working directory if {winnr} is -1 or the working
 --- directory of the window indicated by {winnr}.
---- Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
+
+--- If {bufnr} is provided, {winnr} and {tabnr} must be -1 and the
+--- working directory of that buffer is returned. If {bufnr} is -1,
+--- it is ignored, and the global working directory is returned.
+--- Examples of buffer usage: >vim
+---       getcwd(-1, -1, 0)  " Get current buffer's directory
+---       getcwd(-1, -1, 3)  " Get directory of buffer #3
+---       getcwd(-1, -1, -1) " Get global directory
+---       getcwd(-1, -1)     " Get global directory
+--- <Throw error if the arguments are invalid. |E5000| |E5001| |E5002| |E5006|
 ---
 --- @param winnr? integer
 --- @param tabnr? integer
+--- @param bufnr? integer
 --- @return string
-function vim.fn.getcwd(winnr, tabnr) end
+function vim.fn.getcwd(winnr, tabnr, bufnr) end
 
 --- Return the value of environment variable {name}.  The {name}
 --- argument is a string, without a leading '$'.  Example: >vim
@@ -4315,9 +4325,10 @@ function vim.fn.has_key(dict, key) end
 
 --- The result is a Number, which is 1 when the window has set a
 --- local path via |:lcd| or when {winnr} is -1 and the tabpage
---- has set a local path via |:tcd|, otherwise 0.
+--- has set a local path via |:tcd|, or when {winnr} and {tabnr} are
+--- -1 and {bufnr} has set a local path via |:bcd|, otherwise 0.
 ---
---- Tabs and windows are identified by their respective numbers,
+--- Tabs, windows and buffers are identified by their respective numbers,
 --- 0 means current tab or window. Missing argument implies 0.
 --- Thus the following are equivalent: >vim
 ---   echo haslocaldir()
@@ -4327,12 +4338,18 @@ function vim.fn.has_key(dict, key) end
 --- With {winnr} and {tabnr} use the window in that tabpage.
 --- {winnr} can be the window number or the |window-ID|.
 --- If {winnr} is -1 it is ignored, only the tab is resolved.
---- Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
+--- If {bufnr} is provided, {winnr} and {tabnr} must be -1 and
+--- only the buffer is resolved.
+--- Examples of buffer usage: >vim
+---   haslocaldir(-1, -1, 0)  " Check if current buffer has local directory
+---   haslocaldir(-1, -1, 3)  " Check if buffer #3 has local directory
+--- >Throw error if the arguments are invalid. |E5000| |E5001| |E5002| |E5006|
 ---
 --- @param winnr? integer
 --- @param tabnr? integer
+--- @param bufnr? integer
 --- @return 0|1
-function vim.fn.haslocaldir(winnr, tabnr) end
+function vim.fn.haslocaldir(winnr, tabnr, bufnr) end
 
 --- The result is a Number, which is TRUE if there is a mapping
 --- that contains {what} in somewhere in the rhs (what it is

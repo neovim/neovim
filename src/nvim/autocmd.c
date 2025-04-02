@@ -1332,9 +1332,11 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     buf->b_nwindows++;
     win_init_empty(auc_win);  // set cursor and topline to safe values
 
-    // Make sure w_localdir, tp_localdir and globaldir are NULL to avoid a
+    // Make sure w_localdir, b_localdir, tp_localdir and globaldir are NULL to avoid a
     // chdir() in win_enter_ext().
     XFREE_CLEAR(auc_win->w_localdir);
+    aco->b_localdir = curbuf->b_localdir;
+    curbuf->b_localdir = NULL;
     aco->tp_localdir = curtab->tp_localdir;
     curtab->tp_localdir = NULL;
     aco->globaldir = globaldir;
@@ -1441,8 +1443,10 @@ win_found:
     // If :lcd has been used in the autocommand window, correct current
     // directory before restoring tp_localdir and globaldir.
     if (awp->w_localdir != NULL) {
-      win_fix_current_dir();
+      fix_current_dir(true);
     }
+    xfree(curbuf->b_localdir);
+    curbuf->b_localdir = aco->b_localdir;
     xfree(curtab->tp_localdir);
     curtab->tp_localdir = aco->tp_localdir;
     xfree(globaldir);
