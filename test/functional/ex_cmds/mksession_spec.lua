@@ -21,16 +21,19 @@ local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
 describe(':mksession', function()
   local session_file = file_prefix .. '.vim'
-  local tab_dir = file_prefix .. '.d'
+  local tab_dir = file_prefix .. '.tab.d'
+  local buf_dir = file_prefix .. '.buf.d'
 
   before_each(function()
     clear()
     mkdir(tab_dir)
+    mkdir(buf_dir)
   end)
 
   after_each(function()
     os.remove(session_file)
     rmdir(tab_dir)
+    rmdir(buf_dir)
   end)
 
   it('restores same :terminal buf in splits', function()
@@ -259,5 +262,50 @@ describe(':mksession', function()
     eq(cmdheight, api.nvim_get_option_value('cmdheight', {}))
 
     os.remove(tmpfile)
+  end)
+
+  it('restores buffer-local working directories', function()
+    local tmpfile_base = file_prefix .. '-tmpfile'
+    local cwd_dir = fn.getcwd()
+
+    command('edit ' .. tmpfile_base .. '1')
+    command('edit ' .. tmpfile_base .. '2')
+    command('bcd ' .. buf_dir)
+    command('b# ')
+    command('mksession ' .. session_file)
+
+    -- Create a new test instance of Nvim.
+    clear()
+
+    command('silent source ' .. session_file)
+    command('b ' .. get_pathsep() .. tmpfile_base .. '2')
+    eq(cwd_dir .. get_pathsep() .. buf_dir, fn.getcwd())
+  end)
+
+  it('restores buffer-local working directories when used with tabs', function()
+    local tmpfile_base = file_prefix .. '-tmpfile'
+    local cwd_dir = fn.getcwd()
+
+    command('edit ' .. tmpfile_base .. '1')
+    command('tabnew ')
+    command('edit ' .. tmpfile_base .. '2')
+    command('tcd ' .. tab_dir)
+    command('bcd ' .. '..')
+    command('bcd ' .. buf_dir)
+    command('tabfirst')
+    command('mksession ' .. session_file)
+
+    -- Create a new test instance of Nvim.
+    clear()
+
+    command('source ' .. session_file)
+    -- First tab should have the original working directory.
+    command('tabnext 1')
+    eq(cwd_dir, fn.getcwd())
+    -- Second tab should have the tab-local working directory.
+    command('tabnext 2')
+    eq(cwd_dir .. get_pathsep() .. tab_dir, fn.getcwd(-1, 0))
+    -- Buffer in second tab should have buffer-local working directory
+    eq(cwd_dir .. get_pathsep() .. buf_dir, fn.getcwd(-1, -1, 0))
   end)
 end)
