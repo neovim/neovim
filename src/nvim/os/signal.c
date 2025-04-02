@@ -212,10 +212,14 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
     // Ignore
     break;
 #endif
-  case SIGTERM:
 #ifdef SIGTSTP
   case SIGTSTP:
+    if (p_awa) {
+      autowrite_all();
+    }
+    break;
 #endif
+  case SIGTERM:
 #ifdef SIGQUIT
   case SIGQUIT:
 #endif
