@@ -1676,6 +1676,9 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   if (bufref_valid(&prevbufref) && prevbuf->terminal != NULL) {
     terminal_check_size(prevbuf->terminal);
   }
+
+  // Maybe cd to buffer-local directory
+  fix_current_dir(false);
 }
 
 /// Enter a new current buffer.
