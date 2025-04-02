@@ -3788,7 +3788,6 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               redraw_later(curwin, UPD_SOME_VALID);
               show_cursor_info_later(true);
               update_screen();
-              highlight_match = false;
               redraw_later(curwin, UPD_SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
@@ -3797,6 +3796,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               snprintf(IObuff, IOSIZE, p, sub);
               p = xstrdup(IObuff);
               typed = prompt_for_input(p, HLF_R, true, NULL);
+              highlight_match = false;
               xfree(p);
 
               msg_didout = false;                 // don't scroll up
