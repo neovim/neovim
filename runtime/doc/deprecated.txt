@@ -29,7 +29,8 @@ HIGHLIGHTS
 
 LSP
 
-• todo
+• *vim.lsp.util.stylize_markdown()"	Use |vim.treesitter.start()| with
+					`vim.wo.conceallevel = 2`.
 
 LUA
 
