@@ -822,9 +822,8 @@ static int makeopens(FILE *fd, char *dirnow)
       return FAIL;
     }
 
-    // Restore the tab-local working directory if specified
-    // Do this before the windows, so that the window-local directory can
-    // override the tab-local directory.
+    // Restore the tab-local working directory if specified. Do this before the buffers and windows,
+    // so the buf-local / win-local directory can override the tab-local directory.
     if ((ssop_flags & kOptSsopFlagCurdir) && tp->tp_localdir != NULL) {
       if (fputs("tcd ", fd) < 0
           || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
@@ -832,6 +831,32 @@ static int makeopens(FILE *fd, char *dirnow)
         return FAIL;
       }
       did_lcd = true;
+    }
+
+    // Restore buffer-local CWD (:bcd) via a one-shot BufEnter handler: there is no reliable point
+    // during session-load where all buffers are entered. Re-applied per tab, AFTER the ":tcd"
+    // above: ":tcd" clears the b_localdir of the then-current buffer, which may be a buffer whose
+    // autocmd already fired.
+    if (ssop_flags & kOptSsopFlagCurdir) {
+      FOR_ALL_BUFFERS(buf) {
+        if (buf->b_localdir == NULL || buf->b_fname == NULL || !buf->b_p_bl
+            || (only_save_windows && buf->b_nwindows == 0)
+            || (buf->b_help && !(ssop_flags & kOptSsopFlagHelp))
+            || (bt_terminal(buf) && !(ssop_flags & kOptSsopFlagTerminal))) {
+          continue;
+        }
+        // `bufadd()` finds the buffer by exact (literal) name.
+        if (fputs("lua vim.api.nvim_create_autocmd('BufEnter', { once = true, "
+                  "buffer = vim.fn.bufadd([=[", fd) < 0
+            || fputs(ses_get_fname(buf, &ssop_flags), fd) < 0
+            || fputs("]=]), callback = function() vim.cmd.bcd({ [=[", fd) < 0
+            || fputs(buf->b_localdir, fd) < 0
+            || fputs("]=], magic = { file = false, bar = false } }) end })\n", fd) < 0) {
+          return FAIL;
+        }
+        // Cwd may change when the autocmd fires: filenames must be written absolute from here on.
+        did_lcd = true;
+      }
     }
 
     // Restore the view of the window (options, file, cursor, etc.).

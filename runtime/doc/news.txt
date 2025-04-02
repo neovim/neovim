@@ -247,6 +247,8 @@ DIAGNOSTICS
 
 EDITOR
 
+• |:bcd| sets a buffer-local directory. |getcwd()| and |haslocaldir()| take
+  `bufnr` as a third parameter.
 • |:command-completion-customlist| can return a list of dictionaries with
   kind/menu/info/abbr for the popup menu.
 • |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|) is implemented as a "normal"

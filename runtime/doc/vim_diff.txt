@@ -695,8 +695,8 @@ Vimscript compatibility:
 Working directory (Vim implemented some of these after Nvim):
 - |DirChanged| and |DirChangedPre| can be triggered when switching to another
   window or tab.
-- |getcwd()| and |haslocaldir()| may throw errors if the tabpage or window
-  cannot be found.  *E5000* *E5001* *E5002*
+- |getcwd()| and |haslocaldir()| may throw errors if the tabpage, window, or
+  buffer cannot be found.  *E5000* *E5001* *E5002* *E5006* *E5007*
 - |haslocaldir()| checks for tab-local directory if and only if -1 is passed as
   window number, and its only possible returns values are 0 and 1.
 - `getcwd(-1)` is equivalent to `getcwd(-1, 0)` instead of returning the global

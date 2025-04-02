@@ -256,6 +256,7 @@ static void ctx_cwd_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp)
   char cwd[MAXPATHL];
   if (curwin != wp
       && (curwin->w_localdir != NULL || (wp != NULL && wp->w_localdir != NULL)
+          || curbuf->b_localdir != NULL || (wp != NULL && wp->w_buffer->b_localdir != NULL)
           || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL))
           || p_acd)) {
     cs->cs_cwd_status = os_dirname(cwd, MAXPATHL);
@@ -342,9 +343,12 @@ static win_T *ctx_win_prep(CtxSwitch *cs, buf_T *buf)
   buf->b_nwindows++;
   win_init_empty(cw_win);  // set cursor and topline to safe values
 
-  // Make sure w_localdir, tp_localdir, globaldir are NULL: the switched-to code runs in the actual
-  // cwd (no chdir on switch), and a pooled tmp-window must not carry a stale w_localdir.
+  // Make sure w_localdir, b_localdir, tp_localdir, globaldir are NULL: the switched-to code runs
+  // in the actual cwd (no chdir on switch), and a pooled tmp-window must not carry a stale
+  // w_localdir.
   XFREE_CLEAR(cw_win->w_localdir);
+  cs->cs_b_localdir = buf->b_localdir;
+  buf->b_localdir = NULL;
   cs->cs_tp_localdir = curtab->tp_localdir;
   curtab->tp_localdir = NULL;
   cs->cs_globaldir = globaldir;
@@ -577,9 +581,15 @@ void ctx_restore(CtxSwitch *cs)
     hash_init(&cwp->w_vars->dv_hashtab);          // re-use the hashtab
 
     // If :lcd has been used in the autocommand window, correct current
-    // directory before restoring tp_localdir and globaldir.
+    // directory before restoring b_localdir, tp_localdir and globaldir.
     if (cwp->w_localdir != NULL) {
-      win_fix_current_dir();
+      fix_current_dir(true);
+    }
+    if (bufref_valid(&cs->cs_new_curbuf)) {
+      xfree(cs->cs_new_curbuf.br_buf->b_localdir);
+      cs->cs_new_curbuf.br_buf->b_localdir = cs->cs_b_localdir;
+    } else {
+      xfree(cs->cs_b_localdir);
     }
     xfree(curtab->tp_localdir);
     curtab->tp_localdir = cs->cs_tp_localdir;
