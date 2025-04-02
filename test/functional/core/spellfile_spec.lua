@@ -128,7 +128,7 @@ describe('spellfile', function()
 
     it("is not set if stdpath('data') is not writable", function()
       n.command('set spell')
-      vim.uv.fs_mkdir(testdir .. '/xdg_data', 444)
+      fn.writefile({ '' }, testdir .. '/xdg_data')
       n.insert('abc')
       eq("Vim(normal):E764: Option 'spellfile' is not set", exc_exec('normal! zg'))
     end)
