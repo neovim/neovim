@@ -67,6 +67,113 @@ function! s:set_osc52() abort
   return 'OSC 52'
 endfunction
 
+function! s:set_pbcopy() abort
+  let s:copy['+'] = ['pbcopy']
+  let s:paste['+'] = ['pbpaste']
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
+  let s:cache_enabled = 0
+  return 'pbcopy'
+endfunction
+
+function! s:set_wayland() abort
+  let s:copy['+'] = ['wl-copy', '--type', 'text/plain']
+  let s:paste['+'] = ['wl-paste', '--no-newline']
+  let s:copy['*'] = ['wl-copy', '--primary', '--type', 'text/plain']
+  let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
+  return 'wl-copy'
+endfunction
+
+function! s:set_wayclip() abort
+  let s:copy['+'] = ['waycopy', '-t', 'text/plain']
+  let s:paste['+'] = ['waypaste', '-t', 'text/plain']
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
+  return 'wayclip'
+endfunction
+
+function! s:set_xsel() abort
+  let s:copy['+'] = ['xsel', '--nodetach', '-i', '-b']
+  let s:paste['+'] = ['xsel', '-o', '-b']
+  let s:copy['*'] = ['xsel', '--nodetach', '-i', '-p']
+  let s:paste['*'] = ['xsel', '-o', '-p']
+  return 'xsel'
+endfunction
+
+function! s:set_xclip() abort
+  let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
+  let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
+  let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
+  let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
+  return 'xclip'
+endfunction
+
+function! s:set_lemonade() abort
+  let s:copy['+'] = ['lemonade', 'copy']
+  let s:paste['+'] = ['lemonade', 'paste']
+  let s:copy['*'] = ['lemonade', 'copy']
+  let s:paste['*'] = ['lemonade', 'paste']
+  return 'lemonade'
+endfunction
+
+function! s:set_doitclient() abort
+  let s:copy['+'] = ['doitclient', 'wclip']
+  let s:paste['+'] = ['doitclient', 'wclip', '-r']
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
+  return 'doitclient'
+endfunction
+
+function! s:set_win32yank() abort
+  if has('wsl') && getftype(exepath('win32yank.exe')) == 'link'
+    let win32yank = resolve(exepath('win32yank.exe'))
+  else
+    let win32yank = 'win32yank.exe'
+  endif
+  let s:copy['+'] = [win32yank, '-i', '--crlf']
+  let s:paste['+'] = [win32yank, '-o', '--lf']
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
+  return 'win32yank'
+endfunction
+
+function! s:set_putclip() abort
+  let s:copy['+'] = ['putclip']
+  let s:paste['+'] = ['getclip']
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
+  return 'putclip'
+endfunction
+
+function! s:set_clip() abort
+  let s:copy['+'] = ['clip']
+  let s:paste['+'] = ['powershell', '-NoProfile', '-NoLogo', '-Command', 'Get-Clipboard']
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
+  return 'clip'
+endfunction
+
+function! s:set_termux() abort
+  let s:copy['+'] = ['termux-clipboard-set']
+  let s:paste['+'] = ['termux-clipboard-get']
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
+  return 'termux-clipboard'
+endfunction
+
+function! s:set_tmux() abort
+  let tmux_v = v:lua.vim.version.parse(system(['tmux', '-V']))
+  if !empty(tmux_v) && !v:lua.vim.version.lt(tmux_v, [3,2,0])
+    let s:copy['+'] = ['tmux', 'load-buffer', '-w', '-']
+  else
+    let s:copy['+'] = ['tmux', 'load-buffer', '-']
+  endif
+  let s:paste['+'] = ['tmux', 'save-buffer', '-']
+  let s:copy['*'] = s:copy['+']
+  let s:paste['*'] = s:paste['+']
+  return 'tmux'
+endfunction
+
 let s:cache_enabled = 1
 let s:err = ''
 
@@ -78,9 +185,34 @@ function! provider#clipboard#Executable() abort
   " Setting g:clipboard to v:false explicitly opts-in to using the "builtin" clipboard providers below
   if exists('g:clipboard') && g:clipboard isnot# v:false
     if v:t_string ==# type(g:clipboard)
+      " Handle string form of g:clipboard for all builtin providers
       if 'osc52' == g:clipboard
         " User opted-in to OSC 52 by manually setting g:clipboard.
         return s:set_osc52()
+      elseif 'pbcopy' == g:clipboard
+        return s:set_pbcopy()
+      elseif 'wl-copy' == g:clipboard
+        return s:set_wayland()
+      elseif 'wayclip' == g:clipboard
+        return s:set_wayclip()
+      elseif 'xsel' == g:clipboard
+        return s:set_xsel()
+      elseif 'xclip' == g:clipboard
+        return s:set_xclip()
+      elseif 'lemonade' == g:clipboard
+        return s:set_lemonade()
+      elseif 'doitclient' == g:clipboard
+        return s:set_doitclient()
+      elseif 'win32yank' == g:clipboard
+        return s:set_win32yank()
+      elseif 'putclip' == g:clipboard
+        return s:set_putclip()
+      elseif 'clip' == g:clipboard
+        return s:set_clip()
+      elseif 'termux' == g:clipboard
+        return s:set_termux()
+      elseif 'tmux' == g:clipboard
+        return s:set_tmux()
       endif
     endif
 
@@ -102,88 +234,29 @@ function! provider#clipboard#Executable() abort
     let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
     return get(g:clipboard, 'name', 'g:clipboard')
   elseif has('mac')
-    let s:copy['+'] = ['pbcopy']
-    let s:paste['+'] = ['pbpaste']
-    let s:copy['*'] = s:copy['+']
-    let s:paste['*'] = s:paste['+']
-    let s:cache_enabled = 0
-    return 'pbcopy'
+    return s:set_pbcopy()
   elseif !empty($WAYLAND_DISPLAY) && executable('wl-copy') && executable('wl-paste')
-    let s:copy['+'] = ['wl-copy', '--type', 'text/plain']
-    let s:paste['+'] = ['wl-paste', '--no-newline']
-    let s:copy['*'] = ['wl-copy', '--primary', '--type', 'text/plain']
-    let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
-    return 'wl-copy'
+    return s:set_wayland()
   elseif !empty($WAYLAND_DISPLAY) && executable('waycopy') && executable('waypaste')
-    let s:copy['+'] = ['waycopy', '-t', 'text/plain']
-    let s:paste['+'] = ['waypaste', '-t', 'text/plain']
-    let s:copy['*'] = s:copy['+']
-    let s:paste['*'] = s:paste['+']
-    return 'wayclip'
+    return s:set_wayclip()
   elseif !empty($DISPLAY) && executable('xsel') && s:cmd_ok('xsel -o -b')
-    let s:copy['+'] = ['xsel', '--nodetach', '-i', '-b']
-    let s:paste['+'] = ['xsel', '-o', '-b']
-    let s:copy['*'] = ['xsel', '--nodetach', '-i', '-p']
-    let s:paste['*'] = ['xsel', '-o', '-p']
-    return 'xsel'
+    return s:set_xsel()
   elseif !empty($DISPLAY) && executable('xclip')
-    let s:copy['+'] = ['xclip', '-quiet', '-i', '-selection', 'clipboard']
-    let s:paste['+'] = ['xclip', '-o', '-selection', 'clipboard']
-    let s:copy['*'] = ['xclip', '-quiet', '-i', '-selection', 'primary']
-    let s:paste['*'] = ['xclip', '-o', '-selection', 'primary']
-    return 'xclip'
+    return s:set_xclip()
   elseif executable('lemonade')
-    let s:copy['+'] = ['lemonade', 'copy']
-    let s:paste['+'] = ['lemonade', 'paste']
-    let s:copy['*'] = ['lemonade', 'copy']
-    let s:paste['*'] = ['lemonade', 'paste']
-    return 'lemonade'
+    return s:set_lemonade()
   elseif executable('doitclient')
-    let s:copy['+'] = ['doitclient', 'wclip']
-    let s:paste['+'] = ['doitclient', 'wclip', '-r']
-    let s:copy['*'] = s:copy['+']
-    let s:paste['*'] = s:paste['+']
-    return 'doitclient'
+    return s:set_doitclient()
   elseif executable('win32yank.exe')
-    if has('wsl') && getftype(exepath('win32yank.exe')) == 'link'
-      let win32yank = resolve(exepath('win32yank.exe'))
-    else
-      let win32yank = 'win32yank.exe'
-    endif
-    let s:copy['+'] = [win32yank, '-i', '--crlf']
-    let s:paste['+'] = [win32yank, '-o', '--lf']
-    let s:copy['*'] = s:copy['+']
-    let s:paste['*'] = s:paste['+']
-    return 'win32yank'
+    return s:set_win32yank()
   elseif executable('putclip') && executable('getclip')
-    let s:copy['+'] = ['putclip']
-    let s:paste['+'] = ['getclip']
-    let s:copy['*'] = s:copy['+']
-    let s:paste['*'] = s:paste['+']
-    return 'putclip'
+    return s:set_putclip()
   elseif executable('clip') && executable('powershell')
-    let s:copy['+'] = ['clip']
-    let s:paste['+'] = ['powershell', '-NoProfile', '-NoLogo', '-Command', 'Get-Clipboard']
-    let s:copy['*'] = s:copy['+']
-    let s:paste['*'] = s:paste['+']
-    return 'clip'
+    return s:set_clip()
   elseif executable('termux-clipboard-set')
-    let s:copy['+'] = ['termux-clipboard-set']
-    let s:paste['+'] = ['termux-clipboard-get']
-    let s:copy['*'] = s:copy['+']
-    let s:paste['*'] = s:paste['+']
-    return 'termux-clipboard'
+    return s:set_termux()
   elseif executable('tmux') && (!empty($TMUX) || 0 == jobwait([jobstart(['tmux', 'list-buffers'])], 2000)[0])
-    let tmux_v = v:lua.vim.version.parse(system(['tmux', '-V']))
-    if !empty(tmux_v) && !v:lua.vim.version.lt(tmux_v, [3,2,0])
-      let s:copy['+'] = ['tmux', 'load-buffer', '-w', '-']
-    else
-      let s:copy['+'] = ['tmux', 'load-buffer', '-']
-    endif
-    let s:paste['+'] = ['tmux', 'save-buffer', '-']
-    let s:copy['*'] = s:copy['+']
-    let s:paste['*'] = s:paste['+']
-    return 'tmux'
+    return s:set_tmux()
   elseif get(get(g:, 'termfeatures', {}), 'osc52') && &clipboard ==# ''
     " Don't use OSC 52 when 'clipboard' is set. It can be slow and cause a lot
     " of user prompts. Users can opt-in to it by setting g:clipboard manually.

@@ -316,6 +316,8 @@ OPTIONS
 
 • 'winborder' add bold style.
 
+• |g:clipboard| accepts a string name to force any builtin clipboard tool.
+
 PERFORMANCE
 
 • Significantly reduced redraw time for long lines with treesitter
