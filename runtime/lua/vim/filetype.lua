@@ -380,6 +380,7 @@ local extension = {
   dat = detect.dat,
   Dat = detect.dat,
   DAT = detect.dat,
+  dax = 'dax',
   dcd = 'dcd',
   decl = detect.decl,
   dec = detect.decl,

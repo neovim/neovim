@@ -213,6 +213,7 @@ func s:GetFilenameChecks() abort
     \ 'dafny': ['file.dfy'],
     \ 'dart': ['file.dart', 'file.drt'],
     \ 'datascript': ['file.ds'],
+    \ 'dax': ['file.dax'],
     \ 'dcd': ['file.dcd'],
     \ 'deb822sources': ['/etc/apt/sources.list.d/file.sources', 'any/etc/apt/sources.list.d/file.sources'],
     \ 'debchangelog': ['changelog.Debian', 'changelog.dch', 'NEWS.Debian', 'NEWS.dch', '/debian/changelog'],
