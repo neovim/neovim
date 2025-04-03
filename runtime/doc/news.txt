@@ -138,6 +138,8 @@ OPTIONS
 
 • 'winborder' add bold style.
 
+• |g:clipboard| accepts a string name to force any builtin clipboard tool.
+
 PERFORMANCE
 
 • todo
