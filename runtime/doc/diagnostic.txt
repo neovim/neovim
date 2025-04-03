@@ -574,8 +574,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 *vim.diagnostic.Opts.Signs*
 
     Fields: ~
-      • {severity}?  (`vim.diagnostic.SeverityFilter`) Only show virtual text
-                     for diagnostics matching the given severity
+      • {severity}?  (`vim.diagnostic.SeverityFilter`) Only show signs for
+                     diagnostics matching the given severity
                      |diagnostic-severity|
       • {priority}?  (`integer`, default: `10`) Base priority to use for
                      signs. When {severity_sort} is used, the priority of a
@@ -607,6 +607,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 *vim.diagnostic.Opts.VirtualLines*
 
     Fields: ~
+      • {severity}?      (`vim.diagnostic.SeverityFilter`) Only show virtual
+                         lines for diagnostics matching the given severity
+                         |diagnostic-severity|
       • {current_line}?  (`boolean`, default: `false`) Only show diagnostics
                          for the current line.
       • {format}?        (`fun(diagnostic:vim.Diagnostic): string?`) A

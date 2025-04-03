@@ -241,6 +241,10 @@ end
 
 --- @class vim.diagnostic.Opts.VirtualLines
 ---
+--- Only show virtual lines for diagnostics matching the given
+--- severity |diagnostic-severity|
+--- @field severity? vim.diagnostic.SeverityFilter
+---
 --- Only show diagnostics for the current line.
 --- (default: `false`)
 --- @field current_line? boolean
@@ -252,7 +256,7 @@ end
 
 --- @class vim.diagnostic.Opts.Signs
 ---
---- Only show virtual text for diagnostics matching the given
+--- Only show signs for diagnostics matching the given
 --- severity |diagnostic-severity|
 --- @field severity? vim.diagnostic.SeverityFilter
 ---
