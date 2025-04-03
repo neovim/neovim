@@ -2881,6 +2881,12 @@ func Test_complete_fuzzy_match()
   call feedkeys("i\<C-R>=CompAnother()\<CR>\<C-P>\<C-P>", 'tx')
   call assert_equal("for", g:abbr)
 
+  set cot=menu,fuzzy
+  call feedkeys("Sblue\<CR>bar\<CR>b\<C-X>\<C-P>\<C-Y>\<ESC>", 'tx')
+  call assert_equal('bar', getline('.'))
+  call feedkeys("Sb\<C-X>\<C-N>\<C-Y>\<ESC>", 'tx')
+  call assert_equal('blue', getline('.'))
+
   " clean up
   set omnifunc=
   bw!
