@@ -1242,6 +1242,12 @@ static int ins_compl_build_pum(void)
   // match after it, don't highlight anything.
   bool shown_match_ok = match_at_original_text(compl_shown_match);
 
+  bool update_shown_match = fuzzy_filter;
+  if (fuzzy_filter && ctrl_x_mode_normal()
+      && compl_leader.data == NULL && compl_shown_match->cp_score > 0) {
+    update_shown_match = false;
+  }
+
   if (strequal(compl_leader.data, compl_orig_text.data) && !shown_match_ok) {
     compl_shown_match = compl_no_select ? compl_first_match : compl_first_match->cp_next;
   }
@@ -1290,7 +1296,7 @@ static int ins_compl_build_pum(void)
         }
         // Update the maximum fuzzy score and the shown match
         // if the current item's score is higher
-        if (fuzzy_sort && comp->cp_score > max_fuzzy_score) {
+        if (fuzzy_sort && comp->cp_score > max_fuzzy_score && update_shown_match) {
           did_find_shown_match = true;
           max_fuzzy_score = comp->cp_score;
           if (!compl_no_select) {
