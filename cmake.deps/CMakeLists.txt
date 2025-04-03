@@ -110,7 +110,14 @@ if(USE_BUNDLED_UNIBILIUM)
 endif()
 
 if(USE_BUNDLED_LIBUV)
-  include(BuildLibuv)
+  include(CheckSymbolExists)
+  check_symbol_exists(pthread_getname_np "pthread.h" HAVE_PTHREAD_GETNAME_NP)
+
+  if(HAVE_PTHREAD_GETNAME_NP)
+    include(BuildLibuv)
+  else()
+    set(USE_BUNDLED_LIBUV OFF)
+  endif()
 endif()
 
 if(USE_BUNDLED_LUAJIT)
