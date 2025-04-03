@@ -38,7 +38,7 @@ describe('vim.secure', function()
     end)
 
     it('works', function()
-      local screen = Screen.new(80, 8)
+      local screen = Screen.new(500, 8)
       screen:set_default_attr_ids({
         [1] = { bold = true, foreground = Screen.colors.Blue1 },
         [2] = { bold = true, reverse = true },
@@ -46,129 +46,99 @@ describe('vim.secure', function()
         [4] = { reverse = true },
       })
 
-      --- XXX: screen:expect() may fail if this path is too long.
       local cwd = fn.getcwd()
+      if #cwd + 23 > 500 then
+        pending('path too long')
+        return
+      end
 
       -- Need to use feed_command instead of exec_lua because of the confirmation prompt
       feed_command([[lua vim.secure.read('Xfile')]])
-      screen:expect {
-        grid = [[
-                                                                                        |
-        {1:~                                                                               }|*3
-        {2:                                                                                }|
-        :lua vim.secure.read('Xfile')                                                   |
-        {3:]]
-          .. cwd
-          .. pathsep
-          .. [[Xfile is not trusted.}{MATCH:%s+}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^                                             |
-      ]],
-      }
+      screen:expect([[
+        {MATCH: +}|
+        {1:~{MATCH: +}}|*3
+        {2:{MATCH: +}}|
+        :lua vim.secure.read('Xfile'){MATCH: +}|
+        {3:]] .. cwd .. pathsep .. [[Xfile is not trusted.}{MATCH: +}|
+        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+      ]])
       feed('d')
-      screen:expect {
-        grid = [[
-        ^                                                                                |
-        {1:~                                                                               }|*6
-                                                                                        |
-      ]],
-      }
+      screen:expect([[
+        ^{MATCH: +}|
+        {1:~{MATCH: +}}|*6
+        {MATCH: +}|
+      ]])
 
-      local trust = read_file(stdpath('state') .. pathsep .. 'trust')
+      local trust = assert(read_file(stdpath('state') .. pathsep .. 'trust'))
       eq(string.format('! %s', cwd .. pathsep .. 'Xfile'), vim.trim(trust))
       eq(vim.NIL, exec_lua([[return vim.secure.read('Xfile')]]))
 
       os.remove(stdpath('state') .. pathsep .. 'trust')
 
       feed_command([[lua vim.secure.read('Xfile')]])
-      screen:expect {
-        grid = [[
-                                                                                        |
-        {1:~                                                                               }|*3
-        {2:                                                                                }|
-        :lua vim.secure.read('Xfile')                                                   |
-        {3:]]
-          .. cwd
-          .. pathsep
-          .. [[Xfile is not trusted.}{MATCH:%s+}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^                                             |
-      ]],
-      }
+      screen:expect([[
+        {MATCH: +}|
+        {1:~{MATCH: +}}|*3
+        {2:{MATCH: +}}|
+        :lua vim.secure.read('Xfile'){MATCH: +}|
+        {3:]] .. cwd .. pathsep .. [[Xfile is not trusted.}{MATCH: +}|
+        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+      ]])
       feed('a')
-      screen:expect {
-        grid = [[
-        ^                                                                                |
-        {1:~                                                                               }|*6
-                                                                                        |
-      ]],
-      }
+      screen:expect([[
+        ^{MATCH: +}|
+        {1:~{MATCH: +}}|*6
+        {MATCH: +}|
+      ]])
 
-      local hash = fn.sha256(read_file('Xfile'))
-      trust = read_file(stdpath('state') .. pathsep .. 'trust')
+      local hash = fn.sha256(assert(read_file('Xfile')))
+      trust = assert(read_file(stdpath('state') .. pathsep .. 'trust'))
       eq(string.format('%s %s', hash, cwd .. pathsep .. 'Xfile'), vim.trim(trust))
       eq(vim.NIL, exec_lua([[vim.secure.read('Xfile')]]))
 
       os.remove(stdpath('state') .. pathsep .. 'trust')
 
       feed_command([[lua vim.secure.read('Xfile')]])
-      screen:expect {
-        grid = [[
-                                                                                        |
-        {1:~                                                                               }|*3
-        {2:                                                                                }|
-        :lua vim.secure.read('Xfile')                                                   |
-        {3:]]
-          .. cwd
-          .. pathsep
-          .. [[Xfile is not trusted.}{MATCH:%s+}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^                                             |
-      ]],
-      }
+      screen:expect([[
+        {MATCH: +}|
+        {1:~{MATCH: +}}|*3
+        {2:{MATCH: +}}|
+        :lua vim.secure.read('Xfile'){MATCH: +}|
+        {3:]] .. cwd .. pathsep .. [[Xfile is not trusted.}{MATCH: +}|
+        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+      ]])
       feed('i')
-      screen:expect {
-        grid = [[
-        ^                                                                                |
-        {1:~                                                                               }|*6
-                                                                                        |
-      ]],
-      }
+      screen:expect([[
+        ^{MATCH: +}|
+        {1:~{MATCH: +}}|*6
+        {MATCH: +}|
+      ]])
 
       -- Trust database is not updated
-      trust = read_file(stdpath('state') .. pathsep .. 'trust')
-      eq(nil, trust)
+      eq(nil, read_file(stdpath('state') .. pathsep .. 'trust'))
 
       feed_command([[lua vim.secure.read('Xfile')]])
-      screen:expect {
-        grid = [[
-                                                                                        |
-        {1:~                                                                               }|*3
-        {2:                                                                                }|
-        :lua vim.secure.read('Xfile')                                                   |
-        {3:]]
-          .. cwd
-          .. pathsep
-          .. [[Xfile is not trusted.}{MATCH:%s+}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^                                             |
-      ]],
-      }
+      screen:expect([[
+        {MATCH: +}|
+        {1:~{MATCH: +}}|*3
+        {2:{MATCH: +}}|
+        :lua vim.secure.read('Xfile'){MATCH: +}|
+        {3:]] .. cwd .. pathsep .. [[Xfile is not trusted.}{MATCH: +}|
+        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+      ]])
       feed('v')
-      screen:expect {
-        grid = [[
-          ^let g:foobar = 42                                                               |
-          {1:~                                                                               }|*2
-          {2:]]
-          .. fn.fnamemodify(cwd, ':~')
-          .. pathsep
-          .. [[Xfile [RO]{MATCH:%s+}}|
-                                                                                          |
-          {1:~                                                                               }|
-          {4:[No Name]                                                                       }|
-                                                                                          |
-      ]],
-      }
+      screen:expect([[
+        ^let g:foobar = 42{MATCH: +}|
+        {1:~{MATCH: +}}|*2
+        {2:]] .. fn.fnamemodify(cwd, ':~') .. pathsep .. [[Xfile [RO]{MATCH: +}}|
+        {MATCH: +}|
+        {1:~{MATCH: +}}|
+        {4:[No Name]{MATCH: +}}|
+        {MATCH: +}|
+      ]])
 
       -- Trust database is not updated
-      trust = read_file(stdpath('state') .. pathsep .. 'trust')
-      eq(nil, trust)
+      eq(nil, read_file(stdpath('state') .. pathsep .. 'trust'))
 
       -- Cannot write file
       pcall_err(command, 'write')
