@@ -640,6 +640,12 @@ vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
                    • {timeout}? (`integer`, default: -1 no timeout) Time in ms
                      before highlight is cleared
 
+    Return (multiple): ~
+        (`uv.uv_timer_t?`) range_timer A timer which manages how much time the
+        highlight has left
+        (`fun()?`) range_clear A function which allows clearing the highlight
+        manually. nil is returned if timeout is not specified
+
 
 ==============================================================================
 VIM.DIFF                                                            *vim.diff*

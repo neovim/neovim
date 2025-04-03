@@ -104,7 +104,7 @@ The following new features were added.
 
 API
 
-• todo
+• |vim.hl.range()| now allows multiple timed highlights
 
 DEFAULTS
 
