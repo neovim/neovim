@@ -240,6 +240,27 @@ The "copy" function stores a list of lines and the register type. The "paste"
 function returns the clipboard as a `[lines, regtype]` list, where `lines` is
 a list of lines and `regtype` is a register type conforming to |setreg()|.
 
+Nvim also supports setting g:clipboard to a string to use a builtin clipboard provider:
+
+  - "tmux"           - Use tmux clipboard
+  - "xclip"          - Use xclip for X11 clipboard
+  - "xsel"           - Use xsel for X11 clipboard
+  - "wl-copy"        - Use Wayland clipboard with wl-copy/wl-paste
+  - "wayclip"        - Use Wayland clipboard with waycopy/waypaste
+  - "lemonade"       - Use lemonade clipboard (for SSH)
+  - "doitclient"     - Use doitclient clipboard (for SSH)
+  - "win32yank"      - Use win32yank clipboard (for Windows)
+  - "clip"           - Use clip/powershell clipboard (for Windows)
+  - "putclip"        - Use putclip/getclip clipboard (for Windows/Cygwin)
+  - "termux"         - Use Termux clipboard
+  - "pbcopy"         - Use macOS clipboard
+  - "osc52"          - Use OSC 52 sequence
+
+Example: >vim
+    let g:clipboard = 'tmux'
+
+This is equivalent to using the full dictionary configuration for tmux shown above.
+
 							      *clipboard-wsl*
 For Windows WSL, try this g:clipboard definition:
 >vim
