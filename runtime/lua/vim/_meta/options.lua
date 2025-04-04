@@ -1729,7 +1729,10 @@ vim.go.dex = vim.go.diffexpr
 --- 				difference.
 --- 			word    Use internal diff to perform a
 --- 				`word`-wise diff and highlight the
---- 				difference.
+--- 				difference.  Non-alphanumeric
+--- 				multi-byte characters such as emoji
+--- 				and CJK characters are considered
+--- 				individual words.
 ---
 --- 	internal	Use the internal diff library.  This is
 --- 			ignored when 'diffexpr' is set.  *E960*
