@@ -78,7 +78,7 @@ void mpack_float8(char **ptr, double i)
 void mpack_str(String str, PackerBuffer *packer)
 {
   const size_t len = str.size;
-  if (len < 20) {
+  if (len < 32) {
     mpack_w(&packer->ptr, 0xa0 | len);
   } else if (len < 0xff) {
     mpack_w(&packer->ptr, 0xd9);
@@ -184,7 +184,7 @@ void mpack_object(Object *obj, PackerBuffer *packer)
 
 void mpack_object_array(Array arr, PackerBuffer *packer)
 {
-  mpack_array(&packer->ptr, (uint32_t)arr.size);
+  mpack_array(&packer.ptr, (uint32_t)arr.size);
   if (arr.size > 0) {
     Object container = ARRAY_OBJ(arr);
     mpack_object_inner(&arr.items[0], arr.size > 1 ? &container : NULL, 1, packer);
