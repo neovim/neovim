@@ -3363,8 +3363,8 @@ void verbose_enter(void)
   }
   if (msg_ext_kind != verbose_kind) {
     pre_verbose_kind = msg_ext_kind;
-    msg_ext_set_kind("verbose");
   }
+  msg_ext_set_kind("verbose");
 }
 
 /// After giving verbose message.
