@@ -606,6 +606,7 @@ func s:GetFilenameChecks() abort
     \ 'povini': ['.povrayrc'],
     \ 'ppd': ['file.ppd'],
     \ 'ppwiz': ['file.it', 'file.ih'],
+    \ 'pq': ['file.pq'],
     \ 'prisma': ['file.prisma'],
     \ 'privoxy': ['file.action'],
     \ 'proc': ['file.pc'],
