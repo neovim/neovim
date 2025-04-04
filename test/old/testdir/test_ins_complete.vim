@@ -2886,6 +2886,8 @@ func Test_complete_fuzzy_match()
   call assert_equal('bar', getline('.'))
   call feedkeys("Sb\<C-X>\<C-N>\<C-Y>\<ESC>", 'tx')
   call assert_equal('blue', getline('.'))
+  call feedkeys("Sb\<C-X>\<C-P>\<C-N>\<C-Y>\<ESC>", 'tx')
+  call assert_equal('b', getline('.'))
 
   " clean up
   set omnifunc=
