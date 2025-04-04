@@ -8,6 +8,7 @@
 "		2025 Jan 06 add $PS0 to bashSpecialVariables (#16394)
 "		2025 Jan 18 add bash coproc, remove duplicate syn keywords (#16467)
 "		2025 Mar 21 update shell capability detection (#16939)
+"		2025 Apr 03 command substitution opening paren at EOL (#17026)
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -389,7 +390,7 @@ syn match   shEscape	contained	'\%(^\)\@!\%(\\\\\)*\\.'	nextgroup=shComment
 " systems too, however, so the following syntax will flag $(..) as
 " an Error under /bin/sh.  By consensus of vimdev'ers!
 if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
- syn region shCommandSub matchgroup=shCmdSubRegion start="\$(\ze[^(]"  skip='\\\\\|\\.' end=")"  contains=@shCommandSubList
+ syn region shCommandSub matchgroup=shCmdSubRegion start="\$((\@!"  skip='\\\\\|\\.' end=")"  contains=@shCommandSubList
  if exists("b:is_kornshell")
   syn region shSubshare matchgroup=shCmdSubRegion start="\${\ze[ \t\n<]"  skip='\\\\\|\\.' end="\zs[ \t\n;]}"  contains=@shCommandSubList
   syn region shValsub matchgroup=shCmdSubRegion start="\${|"  skip='\\\\\|\\.' end="}"  contains=@shCommandSubList
