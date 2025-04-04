@@ -3170,8 +3170,8 @@ describe('syntax/shada.vim', function()
       month = htsnum(os.date('%m', 0)),
       day = htsnum(os.date('%d', 0)),
       hour = htsnum(os.date('!%H', 0)),
-      minute = htsnum(os.date('%M', 0)),
-      second = htsnum(os.date('%S', 0)),
+      minute = htsnum(os.date('!%M', 0)),
+      second = htsnum(os.date('!%S', 0)),
     }
     local msh = function(s)
       return {
