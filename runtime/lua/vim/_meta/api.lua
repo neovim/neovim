@@ -1762,8 +1762,7 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---     - `row=0` and `col=0` if `anchor` is "SW" or "SE"
 ---       (thus like a tooltip near the buffer text).
 --- - row: Row position in units of "screen cell height", may be fractional.
---- - col: Column position in units of "screen cell width", may be
----          fractional.
+--- - col: Column position in units of screen cell width, may be fractional.
 --- - focusable: Enable focus by user actions (wincmds, mouse events).
 ---     Defaults to true. Non-focusable windows can be entered by
 ---     `nvim_set_current_win()`, or, when the `mouse` field is set to true,
@@ -1842,6 +1841,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- - hide: If true the floating window will be hidden.
 --- - vertical: Split vertically `:vertical`.
 --- - split: Split direction: "left", "right", "above", "below".
+--- - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the `cmdline-completion`
+---   popupmenu to this window, with an offset in screen cell width.
 --- @return integer # |window-ID|, or 0 on error
 function vim.api.nvim_open_win(buffer, enter, config) end
 
