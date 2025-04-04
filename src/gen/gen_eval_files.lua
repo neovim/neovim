@@ -251,6 +251,76 @@ local function norm_text(x, special)
   )
 end
 
+--- @param items string[]
+--- @param conjunction string
+--- @return string
+--- Example: "foo, bar, or baz"
+local function join_with_conjunction(items, conjunction)
+  if #items == 0 then
+    return ''
+  elseif #items == 1 then
+    return items[1]
+  elseif #items == 2 then
+    return items[1] .. ' ' .. conjunction .. ' ' .. items[2]
+  end
+
+  local parts = {} --- @type string[]
+  for i = 1, #items - 1 do
+    parts[#parts + 1] = items[i]
+  end
+  return table.concat(parts, ', ') .. ', ' .. conjunction .. ' ' .. items[#items]
+end
+
+--- @param fun vim.EvalFn
+--- @return string?
+--- Example: "Lua: Prefer |math.abs()|."
+local function see_lua_text(fun)
+  if not fun.see_lua or fun.see_lua == false then
+    return
+  end
+
+  return 'Lua: Prefer ' .. join_with_conjunction(fun.see_lua, 'or') .. '.'
+end
+
+local VIMDOC_PARAGRAPH_PREFIX = '\t\t'
+local VIMDOC_PARAGRAPH_INDENT = 16 -- Two tabs in rendered vimdoc.
+
+--- @param text string
+--- @return string
+--- Example: "\t\tLua: Prefer |math.abs()|."
+local function tab_indent_vimdoc(text)
+  return VIMDOC_PARAGRAPH_PREFIX
+    .. util
+      .md_to_vimdoc(text, 0, 0, TEXT_WIDTH - VIMDOC_PARAGRAPH_INDENT)
+      :gsub('\n', '\n' .. VIMDOC_PARAGRAPH_PREFIX)
+end
+
+--- @param fun vim.EvalFn
+--- @param write fun(line: string)
+--- Example first line: "--- Lua: Prefer |math.abs()|."
+local function render_eval_see_lua_meta(fun, write)
+  local text = see_lua_text(fun)
+  if not text then
+    return
+  end
+
+  write('--- ' .. text)
+  write('---')
+end
+
+--- @param fun vim.EvalFn
+--- @param write fun(line: string)
+--- Example first line: "\t\tLua: Prefer |math.abs()|."
+local function render_eval_see_lua_doc(fun, write)
+  local text = see_lua_text(fun)
+  if not text then
+    return
+  end
+
+  write(tab_indent_vimdoc(text))
+  write('')
+end
+
 --- Generates LuaLS docstring for an API function.
 --- @param _f string
 --- @param fun vim.EvalFn
@@ -393,6 +463,8 @@ local function render_eval_meta(f, fun, write)
     write('--- @deprecated')
   end
 
+  render_eval_see_lua_meta(fun, write)
+
   local desc = fun.desc --[[@as string?]]
 
   if desc then
@@ -472,6 +544,8 @@ local function render_eval_doc(f, fun, write)
   end
 
   render_sig_and_tag(fun.name or f, not f:find('__%d+$'), fun, write)
+
+  render_eval_see_lua_doc(fun, write)
 
   if not fun.desc then
     return

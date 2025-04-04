@@ -17,6 +17,10 @@
 --- @field params [string, string, string][]
 --- @field notes? string[]
 --- @field see? string[]
+---
+--- Recommended alternatives if calling from Lua.
+--- `false` means there is no useful Lua replacement to suggest.
+--- @field see_lua? string[]|false
 --- @field lua? false Do not render type information
 --- @field tags? string[] Extra tags
 --- @field data? string Used by gen_eval.lua
@@ -52,6 +56,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     signature = 'abs({expr})',
     returns = 'number',
+    see_lua = { '|math.abs()|' },
   },
   acos = {
     args = 1,
@@ -75,6 +80,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'acos({expr})',
+    see_lua = { '|math.acos()|' },
   },
   add = {
     args = 2,
@@ -96,6 +102,7 @@ M.funcs = {
     returns = 'any',
     returns_desc = [=[Resulting |List| or |Blob|, or 1 if {object} is not a |List| or a |Blob|.]=],
     signature = 'add({object}, {expr})',
+    see_lua = { '|table.insert()| for lists and `..` for blobs' },
   },
   ['and'] = {
     args = 2,
@@ -112,6 +119,7 @@ M.funcs = {
     params = { { 'expr', 'number' }, { 'expr', 'number' } },
     returns = 'integer',
     signature = 'and({expr}, {expr})',
+    see_lua = { '|bit.band()|' },
   },
   api_info = {
     desc = [=[
@@ -150,6 +158,7 @@ M.funcs = {
     params = { { 'lnum', 'integer|string' }, { 'text', 'string|string[]' } },
     returns = '0|1',
     signature = 'append({lnum}, {text})',
+    see_lua = { '|nvim_buf_set_lines()|' },
   },
   appendbufline = {
     args = 3,
@@ -180,6 +189,7 @@ M.funcs = {
     params = { { 'buf', 'integer|string' }, { 'lnum', 'integer' }, { 'text', 'string' } },
     returns = '0|1',
     signature = 'appendbufline({buf}, {lnum}, {text})',
+    see_lua = { '|nvim_buf_set_lines()|' },
   },
   argc = {
     args = { 0, 1 },
@@ -275,6 +285,7 @@ M.funcs = {
     params = { { 'expr', 'any' } },
     returns = 'number',
     signature = 'asin({expr})',
+    see_lua = { '|math.asin()|' },
   },
   assert_beeps = {
     args = 1,
@@ -316,6 +327,7 @@ M.funcs = {
     params = { { 'expected', 'any' }, { 'actual', 'any' }, { 'msg', 'any' } },
     returns = '0|1',
     signature = 'assert_equal({expected}, {actual} [, {msg}])',
+    see_lua = { '|assert()| with |vim.deep_equal()|' },
   },
   assert_equalfile = {
     args = { 2, 3 },
@@ -353,6 +365,7 @@ M.funcs = {
     params = { { 'error', 'any' }, { 'msg', 'any' } },
     returns = '0|1',
     signature = 'assert_exception({error} [, {msg}])',
+    see_lua = false,
   },
   assert_fails = {
     args = { 1, 5 },
@@ -402,6 +415,7 @@ M.funcs = {
     },
     returns = '0|1',
     signature = 'assert_fails({cmd} [, {error} [, {msg} [, {lnum} [, {context}]]]])',
+    see_lua = false,
   },
   assert_false = {
     args = { 1, 2 },
@@ -422,6 +436,7 @@ M.funcs = {
     params = { { 'actual', 'any' }, { 'msg', 'any' } },
     returns = '0|1',
     signature = 'assert_false({actual} [, {msg}])',
+    see_lua = { '|assert()|' },
   },
   assert_inrange = {
     args = { 3, 4 },
@@ -443,6 +458,7 @@ M.funcs = {
     },
     returns = '0|1',
     signature = 'assert_inrange({lower}, {upper}, {actual} [, {msg}])',
+    see_lua = { '|assert()|' },
   },
   assert_match = {
     args = { 2, 3 },
@@ -545,6 +561,7 @@ M.funcs = {
     params = { { 'actual', 'any' }, { 'msg', 'string' } },
     returns = '0|1',
     signature = 'assert_true({actual} [, {msg}])',
+    see_lua = { '|assert()|' },
   },
   atan = {
     args = 1,
@@ -566,6 +583,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'atan({expr})',
+    see_lua = { '|math.atan()|' },
   },
   atan2 = {
     args = 2,
@@ -587,6 +605,7 @@ M.funcs = {
     params = { { 'expr1', 'number' }, { 'expr2', 'number' } },
     returns = 'number',
     signature = 'atan2({expr1}, {expr2})',
+    see_lua = { '|math.atan2()|' },
   },
   blob2list = {
     args = 1,
@@ -604,6 +623,7 @@ M.funcs = {
     params = { { 'blob', 'any' } },
     returns = 'any[]',
     signature = 'blob2list({blob})',
+    see_lua = false,
   },
   browse = {
     args = 4,
@@ -668,6 +688,7 @@ M.funcs = {
     params = { { 'name', 'string' } },
     returns = 'integer',
     signature = 'bufadd({name})',
+    see_lua = false,
   },
   bufexists = {
     args = 1,
@@ -699,6 +720,7 @@ M.funcs = {
     params = { { 'buf', 'any' } },
     returns = '0|1',
     signature = 'bufexists({buf})',
+    see_lua = { '|nvim_buf_is_valid()| after resolving {buf} to a bufnr' },
   },
   buffer_exists = {
     args = 1,
@@ -712,6 +734,7 @@ M.funcs = {
     params = VARARGS,
     returns = '0|1',
     signature = 'buffer_exists({buf})',
+    see_lua = { '|nvim_buf_is_valid()| after resolving {buf} to a bufnr' },
   },
   buffer_name = {
     args = { 0, 1 },
@@ -725,6 +748,7 @@ M.funcs = {
     params = VARARGS,
     returns = 'string',
     signature = 'buffer_name([{buf}])',
+    see_lua = { '|nvim_buf_get_name()| after resolving {buf} to a bufnr' },
   },
   buffer_number = {
     args = { 0, 1 },
@@ -738,6 +762,9 @@ M.funcs = {
     params = VARARGS,
     returns = 'integer',
     signature = 'buffer_number([{buf} [, {create}]])',
+    see_lua = {
+      '|nvim_get_current_buf()| when omitted, or |nvim_create_buf()| with |nvim_buf_set_name()| for creating; name lookup, "$", "%", "#", and {create} semantics differ',
+    },
   },
   buflisted = {
     args = 1,
@@ -753,6 +780,7 @@ M.funcs = {
     params = { { 'buf', 'any' } },
     returns = '0|1',
     signature = 'buflisted({buf})',
+    see_lua = { '|vim.bo| or |nvim_get_option_value()| after resolving {buf} to a bufnr' },
   },
   bufload = {
     args = 1,
@@ -787,6 +815,7 @@ M.funcs = {
     params = { { 'buf', 'any' } },
     returns = '0|1',
     signature = 'bufloaded({buf})',
+    see_lua = { '|nvim_buf_is_loaded()| after resolving {buf} to a bufnr' },
   },
   bufname = {
     args = { 0, 1 },
@@ -826,6 +855,7 @@ M.funcs = {
     params = { { 'buf', 'integer|string' } },
     returns = 'string',
     signature = 'bufname([{buf}])',
+    see_lua = { '|nvim_buf_get_name()| after resolving {buf} to a bufnr' },
   },
   bufnr = {
     args = { 0, 2 },
@@ -853,6 +883,9 @@ M.funcs = {
     params = { { 'buf', 'integer|string' }, { 'create', 'any' } },
     returns = 'integer',
     signature = 'bufnr([{buf} [, {create}]])',
+    see_lua = {
+      '|nvim_get_current_buf()| when omitted, or |nvim_create_buf()| with |nvim_buf_set_name()| for creating; name lookup, "$", "%", "#", and {create} semantics differ',
+    },
   },
   bufwinid = {
     args = 1,
@@ -873,6 +906,9 @@ M.funcs = {
     params = { { 'buf', 'any' } },
     returns = 'integer',
     signature = 'bufwinid({buf})',
+    see_lua = {
+      '|nvim_tabpage_list_wins()| with |nvim_win_get_buf()| after resolving {buf}; only the current tabpage is checked and no-match semantics differ',
+    },
   },
   bufwinnr = {
     args = 1,
@@ -893,6 +929,9 @@ M.funcs = {
     params = { { 'buf', 'any' } },
     returns = 'integer',
     signature = 'bufwinnr({buf})',
+    see_lua = {
+      '|nvim_tabpage_list_wins()| with |nvim_win_get_buf()| and |nvim_win_get_number()| after resolving {buf}; only the current tabpage is checked and no-match semantics differ',
+    },
   },
   byte2line = {
     args = 1,
@@ -957,6 +996,9 @@ M.funcs = {
     params = { { 'expr', 'any' }, { 'nr', 'integer' }, { 'utf16', 'any' } },
     returns = 'integer',
     signature = 'byteidx({expr}, {nr} [, {utf16}])',
+    see_lua = {
+      '|vim.str_byteindex()| for string input with `"utf-32"` or `"utf-16"` and `strict_indexing = false`; composing characters and out-of-range semantics differ',
+    },
   },
   byteidxcomp = {
     args = { 2, 3 },
@@ -978,6 +1020,9 @@ M.funcs = {
     params = { { 'expr', 'any' }, { 'nr', 'integer' }, { 'utf16', 'any' } },
     returns = 'integer',
     signature = 'byteidxcomp({expr}, {nr} [, {utf16}])',
+    see_lua = {
+      '|vim.str_byteindex()| with `"utf-32"` or `"utf-16"` and `strict_indexing = false`',
+    },
   },
   call = {
     args = { 2, 3 },
@@ -997,6 +1042,7 @@ M.funcs = {
     returns = 'any',
     signature = 'call({func}, {arglist} [, {dict}])',
     tags = { 'E699' },
+    see_lua = false,
   },
   ceil = {
     args = 1,
@@ -1021,6 +1067,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'ceil({expr})',
+    see_lua = { '|math.ceil()|' },
   },
   chanclose = {
     args = { 1, 2 },
@@ -1078,6 +1125,7 @@ M.funcs = {
     params = { { 'id', 'number' }, { 'data', 'string|string[]' } },
     returns = '0|1',
     signature = 'chansend({id}, {data})',
+    see_lua = { '|nvim_chan_send()| for string data; list input and the return value differ' },
   },
   char2nr = {
     args = { 1, 2 },
@@ -1103,6 +1151,7 @@ M.funcs = {
     params = { { 'string', 'string' }, { 'utf8', 'any' } },
     returns = '0|1',
     signature = 'char2nr({string} [, {utf8}])',
+    see_lua = { '|string.byte()|: only works with ASCII' },
   },
   charclass = {
     args = 1,
@@ -1141,6 +1190,9 @@ M.funcs = {
     params = { { 'expr', 'string|any[]' }, { 'winid', 'integer' } },
     returns = 'integer',
     signature = 'charcol({expr} [, {winid}])',
+    see_lua = {
+      '|nvim_win_get_cursor()| with |vim.str_utfindex()| for ".", or |nvim_get_current_line()| with |vim.str_utfindex()| for "$"; marks, list input, and window semantics differ',
+    },
   },
   charidx = {
     args = { 2, 4 },
@@ -1188,6 +1240,9 @@ M.funcs = {
     },
     returns = 'integer',
     signature = 'charidx({string}, {idx} [, {countcc} [, {utf16}]])',
+    see_lua = {
+      '|vim.str_utfindex()| for string input with `"utf-32"` or `"utf-16"` and `strict_indexing = false`; `countcc = false` and out-of-range semantics differ',
+    },
   },
   chdir = {
     args = { 1, 2 },
@@ -1227,6 +1282,9 @@ M.funcs = {
     params = { { 'dir', 'string' }, { 'scope', 'string' } },
     returns = 'string',
     signature = 'chdir({dir} [, {scope}])',
+    see_lua = {
+      '|nvim_set_current_dir()| for the global directory; tab-local, window-local, and return semantics differ',
+    },
   },
   cindent = {
     args = 1,
@@ -1245,6 +1303,7 @@ M.funcs = {
     params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'cindent({lnum})',
+    see_lua = false,
   },
   clearmatches = {
     args = { 0, 1 },
@@ -1335,6 +1394,9 @@ M.funcs = {
     params = { { 'expr', 'string|any[]' }, { 'winid', 'integer' } },
     returns = 'integer',
     signature = 'col({expr} [, {winid}])',
+    see_lua = {
+      '|nvim_win_get_cursor()| for "." (add 1), or Lua `#` on |nvim_get_current_line()| for "$"; marks, list input, and `virtualedit` differ',
+    },
   },
   complete = {
     args = 2,
@@ -1576,6 +1638,7 @@ M.funcs = {
     params = { { 'expr', 'T' } },
     returns = 'T',
     signature = 'copy({expr})',
+    see_lua = { '|vim.deepcopy()|; deeper than Vimscript |copy()|' },
   },
   cos = {
     args = 1,
@@ -1596,6 +1659,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'cos({expr})',
+    see_lua = { '|math.cos()|' },
   },
   cosh = {
     args = 1,
@@ -1617,6 +1681,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'cosh({expr})',
+    see_lua = { '|math.cosh()|' },
   },
   count = {
     args = { 2, 4 },
@@ -1707,6 +1772,7 @@ M.funcs = {
     name = 'cursor',
     params = { { 'lnum', 'integer|string' }, { 'col', 'integer' }, { 'off', 'integer' } },
     signature = 'cursor({lnum}, {col} [, {off}])',
+    see_lua = false, -- see cursor__1
   },
   cursor__1 = {
     args = { 1, 3 },
@@ -1747,6 +1813,9 @@ M.funcs = {
     name = 'cursor',
     params = { { 'list', 'integer[]' } },
     signature = 'cursor({list})',
+    see_lua = {
+      '|nvim_win_set_cursor()| with `{lnum, col - 1}`; `off`, `curswant`, and failure semantics differ',
+    },
   },
   debugbreak = {
     args = { 1, 1 },
@@ -1764,6 +1833,9 @@ M.funcs = {
     name = 'debugbreak',
     params = { { 'pid', 'integer' } },
     signature = 'debugbreak({pid})',
+    see_lua = {
+      '|uv.kill()| with `"sigtrap"` (or `"sigint"` outside MS-Windows); exact semantics differ',
+    },
   },
   deepcopy = {
     args = { 1, 2 },
@@ -1795,13 +1867,12 @@ M.funcs = {
     params = { { 'expr', 'T' }, { 'noref', 'boolean' } },
     returns = 'T',
     signature = 'deepcopy({expr} [, {noref}])',
+    see_lua = { '|vim.deepcopy()|' },
   },
   delete = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      Lua: see |vim.fs.rm()|.
-
       Without {flags} or with {flags} empty: Deletes the file by the
       name {fname}.
 
@@ -1825,6 +1896,7 @@ M.funcs = {
     params = { { 'fname', 'string' }, { 'flags', 'string' } },
     returns = 'integer',
     signature = 'delete({fname} [, {flags}])',
+    see_lua = { '|vim.fs.rm()|' },
   },
   deletebufline = {
     args = { 2, 3 },
@@ -1851,6 +1923,7 @@ M.funcs = {
       { 'last', 'integer|string' },
     },
     signature = 'deletebufline({buf}, {first} [, {last}])',
+    see_lua = { '|nvim_buf_set_lines()|' },
   },
   dictwatcheradd = {
     args = 3,
@@ -1897,6 +1970,7 @@ M.funcs = {
     name = 'dictwatcheradd',
     params = { { 'dict', 'table' }, { 'pattern', 'string' }, { 'callback', 'function' } },
     signature = 'dictwatcheradd({dict}, {pattern}, {callback})',
+    see_lua = false,
   },
   dictwatcherdel = {
     args = 3,
@@ -1908,6 +1982,7 @@ M.funcs = {
     name = 'dictwatcherdel',
     params = { { 'dict', 'any' }, { 'pattern', 'string' }, { 'callback', 'function' } },
     signature = 'dictwatcherdel({dict}, {pattern}, {callback})',
+    see_lua = false,
   },
   did_filetype = {
     desc = [=[
@@ -2078,6 +2153,7 @@ M.funcs = {
     params = { { 'expr', 'any' } },
     returns = 'integer',
     signature = 'empty({expr})',
+    see_lua = { 'plain Lua emptiness checks, or |vim.tbl_isempty()| for tables' },
   },
   environ = {
     desc = [=[
@@ -2094,6 +2170,7 @@ M.funcs = {
     name = 'environ',
     params = {},
     signature = 'environ()',
+    see_lua = { '|uv.os_environ()| for the full environment table; |vim.env| for keyed access' },
   },
   escape = {
     args = 2,
@@ -2127,6 +2204,7 @@ M.funcs = {
     name = 'eval',
     params = { { 'string', 'string' } },
     signature = 'eval({string})',
+    see_lua = false,
   },
   eventhandler = {
     desc = [=[
@@ -2222,6 +2300,7 @@ M.funcs = {
     },
     returns = 'string',
     signature = 'execute({command} [, {silent}])',
+    see_lua = { '|nvim_exec()|', '|vim.cmd()|' },
   },
   exepath = {
     args = 1,
@@ -2356,6 +2435,7 @@ M.funcs = {
     name = 'exp',
     params = { { 'expr', 'number' } },
     signature = 'exp({expr})',
+    see_lua = { '|math.exp()|' },
   },
   expand = {
     args = { 1, 3 },
@@ -2547,6 +2627,9 @@ M.funcs = {
     name = 'extend',
     params = { { 'expr1', 'table' }, { 'expr2', 'table' }, { 'expr3', 'table' } },
     signature = 'extend({expr1}, {expr2} [, {expr3}])',
+    see_lua = {
+      '|vim.list_extend()| for lists, or |vim.tbl_extend()| and |vim.tbl_deep_extend()| for dicts; insertion and keep/force/error behavior differ',
+    },
   },
   extendnew = {
     args = { 2, 3 },
@@ -2559,6 +2642,9 @@ M.funcs = {
     name = 'extendnew',
     params = { { 'expr1', 'table' }, { 'expr2', 'table' }, { 'expr3', 'table' } },
     signature = 'extendnew({expr1}, {expr2} [, {expr3}])',
+    see_lua = {
+      '|vim.list_extend()| on a copy for lists, or |vim.tbl_extend()| and |vim.tbl_deep_extend()| for dicts; insertion and keep/force/error behavior differ',
+    },
   },
   feedkeys = {
     args = { 1, 2 },
@@ -2613,6 +2699,7 @@ M.funcs = {
     name = 'feedkeys',
     params = { { 'string', 'string' }, { 'mode', 'string' } },
     signature = 'feedkeys({string} [, {mode}])',
+    see_lua = { '|nvim_feedkeys()|' },
   },
   file_readable = {
     args = 1,
@@ -2625,6 +2712,7 @@ M.funcs = {
     name = 'file_readable',
     params = { { 'file', 'string' } },
     signature = 'file_readable({file})',
+    see_lua = { '|uv.fs_access()| with `"R"` and |uv.fs_stat()| to exclude directories' },
   },
   filecopy = {
     args = 2,
@@ -2642,6 +2730,7 @@ M.funcs = {
     params = { { 'from', 'string' }, { 'to', 'string' } },
     returns = '0|1',
     signature = 'filecopy({from}, {to})',
+    see_lua = { '|uv.fs_copyfile()| with `{ excl = true }`; return semantics differ' },
   },
   filereadable = {
     args = 1,
@@ -2669,6 +2758,7 @@ M.funcs = {
     params = { { 'file', 'string' } },
     returns = '0|1',
     signature = 'filereadable({file})',
+    see_lua = { '|uv.fs_access()| with `"R"` and |uv.fs_stat()| to exclude directories' },
   },
   filewritable = {
     args = 1,
@@ -2685,6 +2775,9 @@ M.funcs = {
     params = { { 'file', 'string' } },
     returns = '0|1',
     signature = 'filewritable({file})',
+    see_lua = {
+      '|uv.fs_access()| with `"W"` and |uv.fs_stat()| if you need Vim\'s `2` return for directories',
+    },
   },
   filter = {
     args = 2,
@@ -2746,6 +2839,7 @@ M.funcs = {
     name = 'filter',
     params = { { 'expr1', 'string|table' }, { 'expr2', 'string|function' } },
     signature = 'filter({expr1}, {expr2})',
+    see_lua = { '|vim.tbl_filter()| for lists; dicts, strings, and blobs differ' },
   },
   finddir = {
     args = { 1, 3 },
@@ -2773,6 +2867,9 @@ M.funcs = {
     params = { { 'name', 'string' }, { 'path', 'string' }, { 'count', 'integer' } },
     returns = 'string|string[]',
     signature = 'finddir({name} [, {path} [, {count}]])',
+    see_lua = {
+      "|vim.fs.find()| with `type = 'directory'`; `path`, `count`, and return semantics differ",
+    },
   },
   findfile = {
     args = { 1, 3 },
@@ -2790,6 +2887,9 @@ M.funcs = {
     params = { { 'name', 'string' }, { 'path', 'string' }, { 'count', 'integer' } },
     returns = 'string|string[]',
     signature = 'findfile({name} [, {path} [, {count}]])',
+    see_lua = {
+      "|vim.fs.find()|; `path`, `count`, return semantics, and |'suffixesadd'| handling differ",
+    },
   },
   flatten = {
     args = { 1, 2 },
@@ -2818,6 +2918,9 @@ M.funcs = {
     params = { { 'list', 'any[]' }, { 'maxdepth', 'integer' } },
     returns = 'any[]|0',
     signature = 'flatten({list} [, {maxdepth}])',
+    see_lua = {
+      '`vim.iter(list):flatten():totable()` for a new flattened list; in-place updates and `maxdepth` differ',
+    },
   },
   flattennew = {
     args = { 1, 2 },
@@ -2829,6 +2932,9 @@ M.funcs = {
     params = { { 'list', 'any[]' }, { 'maxdepth', 'integer' } },
     returns = 'any[]|0',
     signature = 'flattennew({list} [, {maxdepth}])',
+    see_lua = {
+      '`vim.iter(list):flatten():totable()` for a new flattened list; `maxdepth` differs',
+    },
   },
   float2nr = {
     args = 1,
@@ -2859,6 +2965,7 @@ M.funcs = {
     name = 'float2nr',
     params = { { 'expr', 'number' } },
     signature = 'float2nr({expr})',
+    see_lua = { '|math.modf()| (first return value)' },
   },
   floor = {
     args = 1,
@@ -2881,6 +2988,7 @@ M.funcs = {
     name = 'floor',
     params = { { 'expr', 'number' } },
     signature = 'floor({expr})',
+    see_lua = { '|math.floor()|' },
   },
   fmod = {
     args = 2,
@@ -2905,6 +3013,7 @@ M.funcs = {
     name = 'fmod',
     params = { { 'expr1', 'number' }, { 'expr2', 'number' } },
     signature = 'fmod({expr1}, {expr2})',
+    see_lua = { '|math.fmod()|' },
   },
   fnameescape = {
     args = 1,
@@ -2932,6 +3041,9 @@ M.funcs = {
     params = { { 'string', 'string' } },
     returns = 'string',
     signature = 'fnameescape({string})',
+    see_lua = {
+      '|nvim_cmd()| or |vim.cmd()| with structured arguments to avoid Ex filename escaping',
+    },
   },
   fnamemodify = {
     args = 2,
@@ -2959,6 +3071,9 @@ M.funcs = {
     params = { { 'fname', 'string' }, { 'mods', 'string' } },
     returns = 'string',
     signature = 'fnamemodify({fname}, {mods})',
+    see_lua = {
+      '|vim.fs.dirname()|, |vim.fs.basename()|, |vim.fs.abspath()|, and |vim.fs.normalize()| for common path modifiers; modifier coverage differs',
+    },
   },
   foldclosed = {
     args = 1,
@@ -3096,6 +3211,7 @@ M.funcs = {
     params = { { 'expr1', 'string|table' }, { 'expr2', 'string|function' } },
     returns = 'string|table',
     signature = 'foreach({expr1}, {expr2})',
+    see_lua = { '|pairs()|', '|ipairs()|' },
   },
   foreground = {
     args = 0,
@@ -3142,6 +3258,7 @@ M.funcs = {
     name = 'funcref',
     params = { { 'name', 'string' }, { 'arglist', 'any' }, { 'dict', 'any' } },
     signature = 'funcref({name} [, {arglist}] [, {dict}])',
+    see_lua = false,
   },
   ['function'] = {
     args = { 1, 3 },
@@ -3233,6 +3350,7 @@ M.funcs = {
     params = { { 'name', 'string' }, { 'arglist', 'any' }, { 'dict', 'any' } },
     signature = 'function({name} [, {arglist}] [, {dict}])',
     tags = { 'partial', 'E700', 'E923' },
+    see_lua = false,
   },
   garbagecollect = {
     args = { 0, 1 },
@@ -3259,6 +3377,7 @@ M.funcs = {
     name = 'garbagecollect',
     params = { { 'atexit', 'boolean' } },
     signature = 'garbagecollect([{atexit}])',
+    see_lua = false,
   },
   get = {
     args = { 2, 3 },
@@ -3272,6 +3391,7 @@ M.funcs = {
     params = { { 'list', 'any[]' }, { 'idx', 'integer' }, { 'default', 'any' } },
     signature = 'get({list}, {idx} [, {default}])',
     tags = { 'get()-list' },
+    see_lua = false,
   },
   get__1 = {
     args = { 2, 3 },
@@ -3285,6 +3405,7 @@ M.funcs = {
     params = { { 'blob', 'string' }, { 'idx', 'integer' }, { 'default', 'any' } },
     signature = 'get({blob}, {idx} [, {default}])',
     tags = { 'get()-blob' },
+    see_lua = false,
   },
   get__2 = {
     args = { 2, 3 },
@@ -3301,6 +3422,7 @@ M.funcs = {
     params = { { 'dict', 'table<string,any>' }, { 'key', 'string' }, { 'default', 'any' } },
     signature = 'get({dict}, {key} [, {default}])',
     tags = { 'get()-dict' },
+    see_lua = false,
   },
   get__3 = {
     args = { 2, 3 },
@@ -3332,6 +3454,7 @@ M.funcs = {
     returns = 'any',
     signature = 'get({func}, {what})',
     tags = { 'get()-func' },
+    see_lua = false,
   },
   getbufinfo = {
     args = { 0, 1 },
@@ -3451,6 +3574,7 @@ M.funcs = {
     params = { { 'buf', 'integer|string' }, { 'lnum', 'integer' }, { 'end', 'integer' } },
     returns = 'string[]',
     signature = 'getbufline({buf}, {lnum} [, {end}])',
+    see_lua = { '|nvim_buf_get_lines()|' },
   },
   getbufoneline = {
     args = 2,
@@ -3463,6 +3587,7 @@ M.funcs = {
     params = { { 'buf', 'integer|string' }, { 'lnum', 'integer' } },
     signature = 'getbufoneline({buf}, {lnum})',
     returns = 'string',
+    see_lua = { '|nvim_buf_get_lines()|' },
   },
   getbufvar = {
     args = { 2, 3 },
@@ -3492,6 +3617,9 @@ M.funcs = {
     name = 'getbufvar',
     params = { { 'buf', 'integer|string' }, { 'varname', 'string' }, { 'def', 'any' } },
     signature = 'getbufvar({buf}, {varname} [, {def}])',
+    see_lua = {
+      '|nvim_buf_get_var()| or |vim.b| after resolving {buf} to a bufnr; option names use |nvim_get_option_value()| or |vim.bo|',
+    },
   },
   getcellwidths = {
     desc = [=[
@@ -3966,6 +4094,9 @@ M.funcs = {
     params = { { 'winid', 'integer' } },
     returns = '[integer, integer, integer, integer, integer]',
     signature = 'getcurpos([{winid}])',
+    see_lua = {
+      '|nvim_win_get_cursor()|; return shape, 0-based column, and `curswant`/invalid-window semantics differ',
+    },
   },
   getcursorcharpos = {
     args = { 0, 1 },
@@ -4011,6 +4142,9 @@ M.funcs = {
     params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
     returns = 'string',
     signature = 'getcwd([{winnr} [, {tabnr}]])',
+    see_lua = {
+      '|uv.cwd()| for the global working directory; tab-local and window-local scopes differ',
+    },
   },
   getenv = {
     args = 1,
@@ -4029,6 +4163,7 @@ M.funcs = {
     params = { { 'name', 'string' } },
     returns = 'string',
     signature = 'getenv({name})',
+    see_lua = { '|vim.env|' },
   },
   getfontname = {
     args = { 0, 1 },
@@ -4073,6 +4208,7 @@ M.funcs = {
     params = { { 'fname', 'string' } },
     returns = 'string',
     signature = 'getfperm({fname})',
+    see_lua = { '|uv.fs_stat()|' },
   },
   getfsize = {
     args = 1,
@@ -4090,6 +4226,7 @@ M.funcs = {
     params = { { 'fname', 'string' } },
     returns = 'integer',
     signature = 'getfsize({fname})',
+    see_lua = { '|uv.fs_stat()|' },
   },
   getftime = {
     args = 1,
@@ -4107,6 +4244,7 @@ M.funcs = {
     params = { { 'fname', 'string' } },
     returns = 'integer',
     signature = 'getftime({fname})',
+    see_lua = { '|uv.fs_stat()|' },
   },
   getftype = {
     args = 1,
@@ -4137,6 +4275,7 @@ M.funcs = {
     params = { { 'fname', 'string' } },
     returns = "'file'|'dir'|'link'|'bdev'|'cdev'|'socket'|'fifo'|'other'",
     signature = 'getftype({fname})',
+    see_lua = { '|uv.fs_stat()|' },
   },
   getjumplist = {
     args = { 0, 2 },
@@ -4166,6 +4305,9 @@ M.funcs = {
     params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
     signature = 'getjumplist([{winnr} [, {tabnr}]])',
     returns = 'vim.fn.getjumplist.ret',
+    see_lua = {
+      '|nvim_get_context()| for current jump history; window/tab arguments and return shape differ',
+    },
   },
   getline = {
     args = { 1, 2 },
@@ -4199,6 +4341,7 @@ M.funcs = {
     params = { { 'lnum', 'integer|string' }, { 'end', 'nil|false' } },
     signature = 'getline({lnum} [, {end}])',
     returns = 'string',
+    see_lua = { '|nvim_get_current_line()|', '|nvim_buf_get_lines()|' },
   },
   getline__1 = {
     args = { 2 },
@@ -4206,6 +4349,7 @@ M.funcs = {
     name = 'getline',
     params = { { 'lnum', 'integer|string' }, { 'end', 'true|number|string|table' } },
     returns = 'string|string[]',
+    see_lua = { '|nvim_get_current_line()|', '|nvim_buf_get_lines()|' },
   },
   getloclist = {
     args = { 1, 2 },
@@ -4359,6 +4503,7 @@ M.funcs = {
     params = {},
     returns = 'integer',
     signature = 'getpid()',
+    see_lua = { '|uv.os_getpid()|' },
   },
   getpos = {
     args = 1,
@@ -4429,6 +4574,9 @@ M.funcs = {
     params = { { 'expr', 'string' } },
     returns = '[integer, integer, integer, integer]',
     signature = 'getpos({expr})',
+    see_lua = {
+      '|nvim_win_get_cursor()| for "." or |nvim_buf_get_mark()| for marks; return shape, `off`, and special-position semantics differ',
+    },
   },
   getqflist = {
     args = { 0, 1 },
@@ -4812,6 +4960,7 @@ M.funcs = {
     params = {},
     returns = 'table[]',
     signature = 'getstacktrace()',
+    see_lua = { '|debug.traceback()|' },
   },
   gettabinfo = {
     args = { 0, 1 },
@@ -4851,6 +5000,7 @@ M.funcs = {
     name = 'gettabvar',
     params = { { 'tabnr', 'integer' }, { 'varname', 'string' }, { 'def', 'any' } },
     signature = 'gettabvar({tabnr}, {varname} [, {def}])',
+    see_lua = { '|nvim_tabpage_get_var()|', '|vim.t|' },
   },
   gettabwinvar = {
     args = { 3, 4 },
@@ -4890,6 +5040,9 @@ M.funcs = {
       { 'def', 'any' },
     },
     signature = 'gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])',
+    see_lua = {
+      '|nvim_win_get_var()| or |vim.w| after resolving {tabnr} and {winnr} to a winid; option names use |nvim_get_option_value()| or |vim.wo|',
+    },
   },
   gettagstack = {
     args = { 0, 1 },
@@ -5056,6 +5209,9 @@ M.funcs = {
     name = 'getwinvar',
     params = { { 'winnr', 'integer' }, { 'varname', 'string' }, { 'def', 'any' } },
     signature = 'getwinvar({winnr}, {varname} [, {def}])',
+    see_lua = {
+      '|nvim_win_get_var()| or |vim.w| after resolving {winnr}; option names use |nvim_get_option_value()| or |vim.wo|',
+    },
   },
   glob = {
     args = { 1, 4 },
@@ -5272,6 +5428,7 @@ M.funcs = {
     params = { { 'dict', 'table' }, { 'key', 'string' } },
     returns = '0|1',
     signature = 'has_key({dict}, {key})',
+    see_lua = { '`dict[key] ~= nil`' },
   },
   haslocaldir = {
     args = { 0, 2 },
@@ -5349,6 +5506,7 @@ M.funcs = {
     func = 'f_hlID',
     params = { { 'name', 'string' } },
     signature = 'highlightID({name})',
+    see_lua = { '|nvim_get_hl()|' },
   },
   highlight_exists = {
     args = 1,
@@ -5360,6 +5518,7 @@ M.funcs = {
     func = 'f_hlexists',
     params = { { 'name', 'string' } },
     signature = 'highlight_exists({name})',
+    see_lua = { '|nvim_get_hl()|' },
   },
   histadd = {
     args = 2,
@@ -5491,6 +5650,7 @@ M.funcs = {
     params = { { 'name', 'string' } },
     returns = 'integer',
     signature = 'hlID({name})',
+    see_lua = { '|nvim_get_hl()|' },
   },
   hlexists = {
     args = 1,
@@ -5506,6 +5666,7 @@ M.funcs = {
     params = { { 'name', 'string' } },
     returns = '0|1',
     signature = 'hlexists({name})',
+    see_lua = { '|nvim_get_hl()|' },
   },
   hostname = {
     desc = [=[
@@ -5518,6 +5679,7 @@ M.funcs = {
     params = {},
     returns = 'string',
     signature = 'hostname()',
+    see_lua = { '|uv.os_gethostname()|' },
   },
   iconv = {
     args = 3,
@@ -5540,6 +5702,7 @@ M.funcs = {
     params = { { 'string', 'string' }, { 'from', 'string' }, { 'to', 'string' } },
     returns = 'string',
     signature = 'iconv({string}, {from}, {to})',
+    see_lua = { '|vim.iconv()|' },
   },
   id = {
     args = 1,
@@ -5564,6 +5727,7 @@ M.funcs = {
     params = { { 'expr', 'any' } },
     returns = 'string',
     signature = 'id({expr})',
+    see_lua = false,
   },
   indent = {
     args = 1,
@@ -5619,6 +5783,9 @@ M.funcs = {
     params = { { 'object', 'any' }, { 'expr', 'any' }, { 'start', 'integer' }, { 'ic', 'boolean' } },
     returns = 'integer',
     signature = 'index({object}, {expr} [, {start} [, {ic}]])',
+    see_lua = {
+      '|vim.iter()| with |Iter:enumerate()| and |Iter:find()| for lists; result is 1-based, and `start`, `ic`, and Blob semantics differ',
+    },
   },
   indexof = {
     args = { 2, 3 },
@@ -5667,6 +5834,9 @@ M.funcs = {
     params = { { 'object', 'any' }, { 'expr', 'any' }, { 'opts', 'table' } },
     returns = 'integer',
     signature = 'indexof({object}, {expr} [, {opts}])',
+    see_lua = {
+      '|vim.iter()| with |Iter:enumerate()| and |Iter:find()| for list predicates; result is 1-based, and `startidx` and Blob semantics differ',
+    },
   },
   input = {
     args = { 1, 3 },
@@ -5676,6 +5846,7 @@ M.funcs = {
     params = { { 'prompt', 'string' }, { 'text', 'string' }, { 'completion', 'string' } },
     returns = 'string',
     signature = 'input({prompt} [, {text} [, {completion}]])',
+    see_lua = { '|vim.ui.input()| for callback-based input' },
   },
   input__1 = {
     args = { 1, 3 },
@@ -5796,6 +5967,7 @@ M.funcs = {
     params = { { 'opts', 'table' } },
     returns = 'string',
     signature = 'input({opts})',
+    see_lua = { '|vim.ui.input()| for callback-based input' },
   },
   inputdialog = {
     args = { 1, 3 },
@@ -5806,6 +5978,7 @@ M.funcs = {
     ]=],
     params = VARARGS,
     signature = 'input(...)',
+    see_lua = { '|vim.ui.input()| for callback-based input' },
   },
   inputlist = {
     args = 1,
@@ -5831,6 +6004,9 @@ M.funcs = {
     name = 'inputlist',
     params = { { 'textlist', 'string[]' } },
     signature = 'inputlist({textlist})',
+    see_lua = {
+      '|vim.ui.select()| for simple selection menus; callback, returned item, and out-of-range semantics differ',
+    },
   },
   inputrestore = {
     desc = [=[
@@ -5903,6 +6079,7 @@ M.funcs = {
     name = 'insert',
     params = { { 'object', 'any' }, { 'item', 'any' }, { 'idx', 'integer' } },
     signature = 'insert({object}, {item} [, {idx}])',
+    see_lua = { '|table.insert()| for lists; blob insertion and negative indexes differ' },
   },
   interrupt = {
     args = 0,
@@ -5923,6 +6100,7 @@ M.funcs = {
     name = 'interrupt',
     params = {},
     signature = 'interrupt()',
+    see_lua = false,
   },
   invert = {
     args = 1,
@@ -5937,6 +6115,7 @@ M.funcs = {
     params = { { 'expr', 'integer' } },
     returns = 'integer',
     signature = 'invert({expr})',
+    see_lua = { '|bit.bnot()|' },
   },
   isabsolutepath = {
     args = 1,
@@ -5977,6 +6156,7 @@ M.funcs = {
     params = { { 'directory', 'string' } },
     returns = '0|1',
     signature = 'isdirectory({directory})',
+    see_lua = { '|uv.fs_stat()| and check `type == "directory"`' },
   },
   isinf = {
     args = 1,
@@ -5994,6 +6174,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = '1|0|-1',
     signature = 'isinf({expr})',
+    see_lua = { '`expr == math.huge and 1 or expr == -math.huge and -1 or 0`' },
   },
   islocked = {
     args = 1,
@@ -6018,6 +6199,7 @@ M.funcs = {
     returns = '0|1',
     signature = 'islocked({expr})',
     tags = { 'E786' },
+    see_lua = false,
   },
   isnan = {
     args = 1,
@@ -6032,6 +6214,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = '0|1',
     signature = 'isnan({expr})',
+    see_lua = { '`expr ~= expr`' },
   },
   items = {
     args = 1,
@@ -6059,6 +6242,7 @@ M.funcs = {
     name = 'items',
     params = { { 'expr', 'table|string' } },
     signature = 'items({expr})',
+    see_lua = { '|pairs()|', '|ipairs()|' },
   },
   jobclose = {
     args = { 1, 2 },
@@ -6079,6 +6263,7 @@ M.funcs = {
     params = { { 'job', 'integer' } },
     returns = 'integer',
     signature = 'jobpid({job})',
+    see_lua = { '|vim.system()| object `.pid`; |job-id| and channel semantics differ' },
   },
   jobresize = {
     args = 3,
@@ -6100,12 +6285,11 @@ M.funcs = {
     func = 'f_chansend',
     params = VARARGS,
     signature = 'jobsend({id}, {data})',
+    see_lua = { '|nvim_chan_send()| for string data; list input and the return value differ' },
   },
   jobstart = {
     args = { 1, 2 },
     desc = [=[
-      Lua: Prefer |vim.system()| (unless using `rpc`, `pty`, or `term`).
-
       Spawns {cmd} as a job.
       If {cmd} is a List it runs directly (no 'shell').
       If {cmd} is a String it runs in the 'shell', like this: >vim
@@ -6200,6 +6384,9 @@ M.funcs = {
     params = { { 'cmd', 'string|string[]' }, { 'opts', 'table' } },
     returns = 'integer',
     signature = 'jobstart({cmd} [, {opts}])',
+    see_lua = {
+      '|vim.system()| for simple processes; |RPC|, PTY/term, streaming callbacks, and shell-string behavior differ',
+    },
   },
   jobstop = {
     args = 1,
@@ -6217,6 +6404,7 @@ M.funcs = {
     params = { { 'id', 'integer' } },
     returns = 'integer',
     signature = 'jobstop({id})',
+    see_lua = { '|SystemObj:kill()| on a |vim.system()| object; |job-id| semantics differ' },
   },
   jobwait = {
     args = { 1, 2 },
@@ -6245,6 +6433,9 @@ M.funcs = {
     params = { { 'jobs', 'integer[]' }, { 'timeout', 'integer' } },
     returns = 'integer[]',
     signature = 'jobwait({jobs} [, {timeout}])',
+    see_lua = {
+      '|SystemObj:wait()| on a |vim.system()| object; list input and status values differ',
+    },
   },
   join = {
     args = { 1, 2 },
@@ -6265,6 +6456,7 @@ M.funcs = {
     params = { { 'list', 'any[]' }, { 'sep', 'string' } },
     returns = 'string',
     signature = 'join({list} [, {sep}])',
+    see_lua = { '|table.concat()| for string lists; non-string values stringify differently' },
   },
   json_decode = {
     args = 1,
@@ -6288,6 +6480,7 @@ M.funcs = {
     name = 'json_decode',
     params = { { 'expr', 'any' } },
     signature = 'json_decode({expr})',
+    see_lua = { '|vim.json.decode()|' },
   },
   json_encode = {
     args = 1,
@@ -6309,6 +6502,7 @@ M.funcs = {
     params = { { 'expr', 'any' } },
     returns = 'string',
     signature = 'json_encode({expr})',
+    see_lua = { '|vim.json.encode()|' },
   },
   keys = {
     args = 1,
@@ -6322,6 +6516,7 @@ M.funcs = {
     params = { { 'dict', 'table' } },
     returns = 'string[]',
     signature = 'keys({dict})',
+    see_lua = { '|vim.tbl_keys()|' },
   },
   keytrans = {
     args = 1,
@@ -6367,6 +6562,7 @@ M.funcs = {
     returns = 'integer',
     signature = 'len({expr})',
     tags = { 'E701' },
+    see_lua = { 'Lua `#` operator for strings and lists', '`#vim.tbl_keys(expr)` for dicts' },
   },
   libcall = {
     args = 3,
@@ -6418,6 +6614,7 @@ M.funcs = {
     params = { { 'libname', 'string' }, { 'funcname', 'string' }, { 'argument', 'any' } },
     signature = 'libcall({libname}, {funcname}, {argument})',
     tags = { 'E364', 'E368' },
+    see_lua = { '|package.loadlib()|', '`ffi.load()`' },
   },
   libcallnr = {
     args = 3,
@@ -6434,6 +6631,7 @@ M.funcs = {
     name = 'libcallnr',
     params = { { 'libname', 'string' }, { 'funcname', 'string' }, { 'argument', 'any' } },
     signature = 'libcallnr({libname}, {funcname}, {argument})',
+    see_lua = { '|package.loadlib()|', '`ffi.load()`' },
   },
   line = {
     args = { 1, 2 },
@@ -6463,6 +6661,9 @@ M.funcs = {
     params = { { 'expr', 'string|integer[]' }, { 'winid', 'integer' } },
     returns = 'integer',
     signature = 'line({expr} [, {winid}])',
+    see_lua = {
+      '|nvim_win_get_cursor()| for "." or |nvim_buf_line_count()| for "$"; marks, lists, and other position expressions differ',
+    },
   },
   line2byte = {
     args = 1,
@@ -6485,6 +6686,9 @@ M.funcs = {
     params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'line2byte({lnum})',
+    see_lua = {
+      "|nvim_buf_get_offset()| with `lnum - 1`; 'fileformat' and invalid-line semantics differ",
+    },
   },
   lispindent = {
     args = 1,
@@ -6520,6 +6724,7 @@ M.funcs = {
     params = { { 'list', 'any[]' } },
     returns = 'string',
     signature = 'list2blob({list})',
+    see_lua = false,
   },
   list2str = {
     args = { 1, 2 },
@@ -6545,6 +6750,7 @@ M.funcs = {
     params = { { 'list', 'any[]' }, { 'utf8', 'boolean' } },
     returns = 'string',
     signature = 'list2str({list} [, {utf8}])',
+    see_lua = false,
   },
   localtime = {
     desc = [=[
@@ -6555,6 +6761,7 @@ M.funcs = {
     params = {},
     returns = 'integer',
     signature = 'localtime()',
+    see_lua = { '|os.time()|' },
   },
   log = {
     args = 1,
@@ -6576,6 +6783,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'log({expr})',
+    see_lua = { '|math.log()|' },
   },
   log10 = {
     args = 1,
@@ -6596,6 +6804,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'log10({expr})',
+    see_lua = { '|math.log10()|' },
   },
   luaeval = {
     args = { 1, 2 },
@@ -6611,6 +6820,7 @@ M.funcs = {
     name = 'luaeval',
     params = { { 'expr', 'string' }, { 'expr', 'any[]' } },
     signature = 'luaeval({expr} [, {expr}])',
+    see_lua = { 'plain Lua expressions and values directly' },
   },
   map = {
     args = 2,
@@ -6673,6 +6883,9 @@ M.funcs = {
     name = 'map',
     params = { { 'expr1', 'string|table|any[]' }, { 'expr2', 'string|function' } },
     signature = 'map({expr1}, {expr2})',
+    see_lua = {
+      '|vim.tbl_map()| for array-like tables; dict, string, blob, and in-place behavior differ',
+    },
   },
   maparg = {
     args = { 1, 4 },
@@ -6865,6 +7078,9 @@ M.funcs = {
     name = 'mapnew',
     params = { { 'expr1', 'any' }, { 'expr2', 'any' } },
     signature = 'mapnew({expr1}, {expr2})',
+    see_lua = {
+      '|vim.tbl_map()| for tables; string, blob, and `v:key` callback behavior differ',
+    },
   },
   mapset = {
     args = { 1, 3 },
@@ -7495,6 +7711,9 @@ M.funcs = {
     params = { { 'expr', 'any' } },
     returns = 'number',
     signature = 'max({expr})',
+    see_lua = {
+      '|math.max()| with `unpack(expr)` for lists; dict values and empty inputs need custom handling',
+    },
   },
   menu_get = {
     args = { 1, 2 },
@@ -7644,6 +7863,9 @@ M.funcs = {
     params = { { 'expr', 'any' } },
     returns = 'number',
     signature = 'min({expr})',
+    see_lua = {
+      '|math.min()| with `unpack(expr)` for lists; dict values and empty inputs need custom handling',
+    },
   },
   mkdir = {
     args = { 1, 3 },
@@ -7693,6 +7915,9 @@ M.funcs = {
     returns = 'integer',
     signature = 'mkdir({name} [, {flags} [, {prot}]])',
     tags = { 'E739' },
+    see_lua = {
+      '|uv.fs_mkdir()| for simple directory creation; `"p"`, `"D"`, `"R"`, and return semantics differ',
+    },
   },
   mode = {
     args = { 0, 1 },
@@ -7755,6 +7980,9 @@ M.funcs = {
     name = 'mode',
     params = { { 'expr', 'any' } },
     signature = 'mode([{expr}])',
+    see_lua = {
+      '|nvim_get_mode()|; use the `.mode` field. It always returns the full mode string, unlike |mode()| without a non-zero {expr}',
+    },
   },
   msgpackdump = {
     args = { 1, 2 },
@@ -7780,6 +8008,9 @@ M.funcs = {
     name = 'msgpackdump',
     params = { { 'list', 'any' }, { 'type', 'any' } },
     signature = 'msgpackdump({list} [, {type}])',
+    see_lua = {
+      '|vim.mpack.encode()|; list wrapping, return shape, and special-dict semantics differ',
+    },
   },
   msgpackparse = {
     args = 1,
@@ -7854,6 +8085,7 @@ M.funcs = {
     name = 'msgpackparse',
     params = { { 'data', 'any' } },
     signature = 'msgpackparse({data})',
+    see_lua = { '|vim.mpack.decode()|; input and special-dict semantics differ' },
   },
   nextnonblank = {
     args = 1,
@@ -7896,6 +8128,7 @@ M.funcs = {
     params = { { 'expr', 'integer' }, { 'utf8', 'boolean' } },
     returns = 'string',
     signature = 'nr2char({expr} [, {utf8}])',
+    see_lua = { '|string.char()|: only works with ASCII' },
   },
   nvim_api__ = {
     args = 1,
@@ -7916,6 +8149,7 @@ M.funcs = {
     params = VARARGS,
     signature = 'nvim_...({...})',
     tags = { 'E5555', 'eval-api' },
+    see_lua = { '|vim.api|' },
   },
   ['or'] = {
     args = 2,
@@ -7935,6 +8169,7 @@ M.funcs = {
     name = 'or',
     params = { { 'expr', 'number' }, { 'expr', 'number' } },
     signature = 'or({expr}, {expr})',
+    see_lua = { '|bit.bor()|' },
   },
   pathshorten = {
     args = { 1, 2 },
@@ -8002,6 +8237,7 @@ M.funcs = {
     params = { { 'x', 'number' }, { 'y', 'number' } },
     returns = 'number',
     signature = 'pow({x}, {y})',
+    see_lua = { '|math.pow()|' },
   },
   preinserted = {
     desc = [=[
@@ -8365,6 +8601,7 @@ M.funcs = {
     params = { { 'fmt', 'string' }, { 'expr1', 'any' } },
     signature = 'printf({fmt}, {expr1} ...)',
     returns = 'string',
+    see_lua = { '|string.format()|' },
   },
   prompt_appendbuf = {
     args = 2,
@@ -8597,6 +8834,7 @@ M.funcs = {
     name = 'rand',
     params = { { 'expr', 'number' } },
     signature = 'rand([{expr}])',
+    see_lua = { '|math.random()|' },
   },
   range = {
     args = { 1, 3 },
@@ -8655,6 +8893,9 @@ M.funcs = {
     name = 'readblob',
     params = { { 'fname', 'string' }, { 'offset', 'integer' }, { 'size', 'integer' } },
     signature = 'readblob({fname} [, {offset} [, {size}]])',
+    see_lua = {
+      '|io.open()| with `:read("*a")` in binary mode for whole-file reads; offset, size, and Blob return differ',
+    },
   },
   readdir = {
     args = { 1, 2 },
@@ -8693,6 +8934,7 @@ M.funcs = {
     name = 'readdir',
     params = { { 'directory', 'string' }, { 'expr', 'integer|string|fun(name: string): integer' } },
     signature = 'readdir({directory} [, {expr}])',
+    see_lua = { '|vim.fs.dir()| as an iterator, then collect and filter results as needed' },
   },
   readfile = {
     args = { 1, 3 },
@@ -8735,6 +8977,9 @@ M.funcs = {
     params = { { 'fname', 'string' }, { 'type', 'string' }, { 'max', 'integer' } },
     returns = 'string[]',
     signature = 'readfile({fname} [, {type} [, {max}]])',
+    see_lua = {
+      '|io.open()| with `:read("*a")`, then split lines as needed; `{type}`, `{max}`, and Blob return differ',
+    },
   },
   reduce = {
     args = { 2, 3 },
@@ -8767,6 +9012,7 @@ M.funcs = {
     },
     returns = 'T',
     signature = 'reduce({object}, {func} [, {initial}])',
+    see_lua = { '|Iter:fold()|' },
   },
   reg_executing = {
     desc = [=[
@@ -8840,6 +9086,7 @@ M.funcs = {
     name = 'reltime',
     params = { { 'start', 'any' }, { 'end', 'any' } },
     signature = 'reltime({start}, {end})',
+    see_lua = { '|uv.hrtime()|' },
   },
   reltimefloat = {
     args = 1,
@@ -8860,6 +9107,7 @@ M.funcs = {
     name = 'reltimefloat',
     params = { { 'time', 'any' } },
     signature = 'reltimefloat({time})',
+    see_lua = { '|uv.hrtime()| with `(finish - start) / 1e9` for elapsed seconds' },
   },
   reltimestr = {
     args = 1,
@@ -8890,6 +9138,7 @@ M.funcs = {
     name = 'remove',
     params = { { 'list', 'any' }, { 'idx', 'integer' } },
     signature = 'remove({list}, {idx})',
+    see_lua = { '|table.remove()|' },
   },
   remove__1 = {
     args = { 2, 3 },
@@ -8954,6 +9203,9 @@ M.funcs = {
     name = 'remove',
     params = { { 'dict', 'any' }, { 'key', 'string' } },
     signature = 'remove({dict}, {key})',
+    see_lua = {
+      '`local value = dict[key]; dict[key] = nil` for dicts; missing-key behavior differs',
+    },
   },
   rename = {
     args = 2,
@@ -8971,6 +9223,7 @@ M.funcs = {
     params = { { 'from', 'string' }, { 'to', 'string' } },
     returns = 'integer',
     signature = 'rename({from}, {to})',
+    see_lua = { '|uv.fs_rename()|', '|os.rename()|' },
   },
   ['repeat'] = {
     args = 2,
@@ -8990,6 +9243,7 @@ M.funcs = {
     name = 'repeat',
     params = { { 'expr', 'any' }, { 'count', 'integer' } },
     signature = 'repeat({expr}, {count})',
+    see_lua = { '|string.rep()| for strings; lists need manual repetition' },
   },
   resolve = {
     args = 1,
@@ -9034,6 +9288,9 @@ M.funcs = {
     params = { { 'object', 'T[]' } },
     returns = 'T[]',
     signature = 'reverse({object})',
+    see_lua = {
+      '`vim.iter(list):rev():totable()` for lists; strings, blobs, and in-place behavior differ',
+    },
   },
   round = {
     args = 1,
@@ -9058,6 +9315,9 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'round({expr})',
+    see_lua = {
+      '`expr >= 0 and math.floor(expr + 0.5) or math.ceil(expr - 0.5)` for half-away-from-zero rounding',
+    },
   },
   rpcnotify = {
     args = { 2 },
@@ -9072,6 +9332,7 @@ M.funcs = {
     params = { { 'channel', 'integer' }, { 'event', 'string' }, { '...', 'any' } },
     returns = 'integer',
     signature = 'rpcnotify({channel}, {event} [, {args}...])',
+    see_lua = { '|vim.rpcnotify()|' },
   },
   rpcrequest = {
     args = { 2 },
@@ -9085,6 +9346,7 @@ M.funcs = {
     name = 'rpcrequest',
     params = { { 'channel', 'integer' }, { 'method', 'string' }, { '...', 'any' } },
     signature = 'rpcrequest({channel}, {method} [, {args}...])',
+    see_lua = { '|vim.rpcrequest()|' },
   },
   rpcstart = {
     deprecated = true,
@@ -9805,6 +10067,7 @@ M.funcs = {
     params = { { 'buf', 'integer|string' }, { 'lnum', 'integer' }, { 'text', 'string|string[]' } },
     returns = 'integer',
     signature = 'setbufline({buf}, {lnum}, {text})',
+    see_lua = { '|nvim_buf_set_lines()|' },
   },
   setbufvar = {
     args = 3,
@@ -9827,6 +10090,9 @@ M.funcs = {
     name = 'setbufvar',
     params = { { 'buf', 'integer|string' }, { 'varname', 'string' }, { 'val', 'any' } },
     signature = 'setbufvar({buf}, {varname}, {val})',
+    see_lua = {
+      '|nvim_buf_set_var()| or |vim.b| after resolving {buf} to a bufnr; option names use |nvim_set_option_value()|',
+    },
   },
   setcellwidths = {
     args = 1,
@@ -9887,6 +10153,9 @@ M.funcs = {
     name = 'setcharpos',
     params = { { 'expr', 'string' }, { 'list', 'integer[]' } },
     signature = 'setcharpos({expr}, {list})',
+    see_lua = {
+      '|nvim_win_set_cursor()| or |nvim_buf_set_mark()| with |vim.str_byteindex()|; special positions, `off`, and `curswant` differ',
+    },
   },
   setcharsearch = {
     args = 1,
@@ -9961,6 +10230,9 @@ M.funcs = {
     name = 'setcursorcharpos',
     params = { { 'lnum', 'integer|string' }, { 'col', 'integer' }, { 'off', 'integer' } },
     signature = 'setcursorcharpos({lnum}, {col} [, {off}])',
+    see_lua = {
+      '|nvim_win_set_cursor()| with |vim.str_byteindex()|; `off`, return values, and special line forms differ',
+    },
   },
   setcursorcharpos__1 = {
     args = { 1, 3 },
@@ -9981,6 +10253,9 @@ M.funcs = {
     name = 'setcursorcharpos',
     params = { { 'list', 'integer[]' } },
     signature = 'setcursorcharpos({list})',
+    see_lua = {
+      '|nvim_win_set_cursor()| with |vim.str_byteindex()|; list shape, `off`, and return values differ',
+    },
   },
   setenv = {
     args = 2,
@@ -9996,6 +10271,7 @@ M.funcs = {
     name = 'setenv',
     params = { { 'name', 'string' }, { 'val', 'string' } },
     signature = 'setenv({name}, {val})',
+    see_lua = { '|vim.env|' },
   },
   setfperm = {
     args = 2,
@@ -10021,6 +10297,7 @@ M.funcs = {
     name = 'setfperm',
     params = { { 'fname', 'string' }, { 'mode', 'string' } },
     signature = 'setfperm({fname}, {mode})',
+    see_lua = { '|uv.fs_chmod()|' },
   },
   setline = {
     args = 2,
@@ -10057,6 +10334,7 @@ M.funcs = {
     name = 'setline',
     params = { { 'lnum', 'integer|string' }, { 'text', 'any' } },
     signature = 'setline({lnum}, {text})',
+    see_lua = { '|nvim_set_current_line()|', '|nvim_buf_set_lines()|' },
   },
   setloclist = {
     args = { 2, 4 },
@@ -10164,6 +10442,9 @@ M.funcs = {
     name = 'setpos',
     params = { { 'expr', 'string' }, { 'list', 'integer[]' } },
     signature = 'setpos({expr}, {list})',
+    see_lua = {
+      '|nvim_win_set_cursor()| for "." or |nvim_buf_set_mark()| for marks; special positions, `off`, and `curswant` differ',
+    },
   },
   setqflist = {
     args = { 1, 3 },
@@ -10373,6 +10654,7 @@ M.funcs = {
     name = 'settabvar',
     params = { { 'tabnr', 'integer' }, { 'varname', 'string' }, { 'val', 'any' } },
     signature = 'settabvar({tabnr}, {varname}, {val})',
+    see_lua = { '|nvim_tabpage_set_var()|', '|vim.t|' },
   },
   settabwinvar = {
     args = 4,
@@ -10402,6 +10684,9 @@ M.funcs = {
       { 'val', 'any' },
     },
     signature = 'settabwinvar({tabnr}, {winnr}, {varname}, {val})',
+    see_lua = {
+      '|nvim_win_set_var()| or |vim.w| after resolving {tabnr} and {winnr} to a winid; option names use |nvim_set_option_value()|',
+    },
   },
   settagstack = {
     args = { 2, 3 },
@@ -10457,6 +10742,9 @@ M.funcs = {
     name = 'setwinvar',
     params = { { 'nr', 'integer' }, { 'varname', 'string' }, { 'val', 'any' } },
     signature = 'setwinvar({nr}, {varname}, {val})',
+    see_lua = {
+      '|nvim_win_set_var()| or |vim.w| after resolving {nr} to a winid; option names use |nvim_set_option_value()|',
+    },
   },
   sha256 = {
     args = 1,
@@ -10512,6 +10800,9 @@ M.funcs = {
     params = { { 'string', 'string' }, { 'special', 'boolean' } },
     returns = 'string',
     signature = 'shellescape({string} [, {special}])',
+    see_lua = {
+      '|vim.system()| with list args to avoid shell escaping; `:!` and {special} semantics differ',
+    },
   },
   shiftwidth = {
     args = { 0, 1 },
@@ -10542,6 +10833,9 @@ M.funcs = {
     params = { { 'col', 'integer' } },
     signature = 'shiftwidth([{col}])',
     returns = 'integer',
+    see_lua = {
+      "|vim.bo| for simple cases: `vim.bo.shiftwidth > 0 and vim.bo.shiftwidth or vim.bo.tabstop`; `{col}` and 'vartabstop' semantics differ",
+    },
   },
   sign_define = {
     args = { 1, 2 },
@@ -10550,6 +10844,7 @@ M.funcs = {
     params = { { 'name', 'string' }, { 'dict', 'vim.fn.sign_define.dict' } },
     signature = 'sign_define({name} [, {dict}])',
     returns = '0|-1',
+    see_lua = false,
   },
   sign_define__1 = {
     args = { 1, 2 },
@@ -10605,6 +10900,7 @@ M.funcs = {
     params = { { 'list', 'vim.fn.sign_define.dict[]' } },
     signature = 'sign_define({list})',
     returns = '(0|-1)[]',
+    see_lua = false,
   },
   sign_getdefined = {
     args = { 0, 1 },
@@ -10650,6 +10946,7 @@ M.funcs = {
     params = { { 'name', 'string' } },
     signature = 'sign_getdefined([{name}])',
     returns = 'vim.fn.sign_getdefined.ret.item[]',
+    see_lua = false,
   },
   sign_getplaced = {
     args = { 0, 2 },
@@ -10719,6 +11016,7 @@ M.funcs = {
     params = { { 'buf', 'integer|string' }, { 'dict', 'vim.fn.sign_getplaced.dict' } },
     signature = 'sign_getplaced([{buf} [, {dict}]])',
     returns = 'vim.fn.sign_getplaced.ret.item[]',
+    see_lua = false,
   },
   sign_jump = {
     args = 3,
@@ -10743,6 +11041,7 @@ M.funcs = {
     params = { { 'id', 'integer' }, { 'group', 'string' }, { 'buf', 'integer|string' } },
     signature = 'sign_jump({id}, {group}, {buf})',
     returns = 'integer',
+    see_lua = false,
   },
   sign_place = {
     args = { 4, 5 },
@@ -10806,6 +11105,7 @@ M.funcs = {
     },
     signature = 'sign_place({id}, {group}, {name}, {buf} [, {dict}])',
     returns = 'integer',
+    see_lua = false,
   },
   sign_placelist = {
     args = 1,
@@ -10874,6 +11174,7 @@ M.funcs = {
     params = { { 'list', 'vim.fn.sign_placelist.list.item[]' } },
     signature = 'sign_placelist({list})',
     returns = 'integer[]',
+    see_lua = false,
   },
   sign_undefine = {
     args = { 0, 1 },
@@ -10882,6 +11183,7 @@ M.funcs = {
     params = { { 'name', 'string' } },
     signature = 'sign_undefine([{name}])',
     returns = '0|-1',
+    see_lua = false,
   },
   sign_undefine__1 = {
     args = { 0, 1 },
@@ -10913,6 +11215,7 @@ M.funcs = {
     params = { { 'list', 'string[]' } },
     signature = 'sign_undefine({list})',
     returns = 'integer[]',
+    see_lua = false,
   },
   sign_unplace = {
     args = { 1, 2 },
@@ -10964,6 +11267,7 @@ M.funcs = {
     params = { { 'group', 'string' }, { 'dict', 'vim.fn.sign_unplace.dict' } },
     signature = 'sign_unplace({group} [, {dict}])',
     returns = '0|-1',
+    see_lua = false,
   },
   sign_unplacelist = {
     args = 1,
@@ -11001,6 +11305,7 @@ M.funcs = {
     params = { { 'list', 'vim.fn.sign_unplacelist.list.item' } },
     signature = 'sign_unplacelist({list})',
     returns = '(0|-1)[]',
+    see_lua = false,
   },
   simplify = {
     args = 1,
@@ -11027,6 +11332,9 @@ M.funcs = {
     params = { { 'filename', 'string' } },
     returns = 'string',
     signature = 'simplify({filename})',
+    see_lua = {
+      '|vim.fs.normalize()|; `~`/$VAR expansion and leading `./` or trailing `/` handling differ',
+    },
   },
   sin = {
     args = 1,
@@ -11047,6 +11355,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'sin({expr})',
+    see_lua = { '|math.sin()|' },
   },
   sinh = {
     args = 1,
@@ -11067,6 +11376,7 @@ M.funcs = {
     name = 'sinh',
     params = { { 'expr', 'number' } },
     signature = 'sinh({expr})',
+    see_lua = { '|math.sinh()|' },
   },
   slice = {
     args = { 2, 3 },
@@ -11199,6 +11509,9 @@ M.funcs = {
     params = { { 'list', 'T[]' }, { 'how', 'string|function' }, { 'dict', 'any' } },
     returns = 'T[]',
     signature = 'sort({list} [, {how} [, {dict}]])',
+    see_lua = {
+      "|table.sort()| with a custom comparator; it is not stable and Vim's `i`/`l`/`n`/`N`/`f` modes differ",
+    },
   },
   soundfold = {
     args = 1,
@@ -11248,6 +11561,9 @@ M.funcs = {
     name = 'spellbadword',
     params = { { 'sentence', 'string' } },
     signature = 'spellbadword([{sentence}])',
+    see_lua = {
+      '|vim.spell.check()| for string input; it returns all matches with positions, not just the first one or cursor-moving behavior',
+    },
   },
   spellsuggest = {
     args = { 1, 3 },
@@ -11312,6 +11628,7 @@ M.funcs = {
     params = { { 'string', 'string' }, { 'pattern', 'string' }, { 'keepempty', 'boolean' } },
     returns = 'string[]',
     signature = 'split({string} [, {pattern} [, {keepempty}]])',
+    see_lua = { '|vim.split()|' },
   },
   sqrt = {
     args = 1,
@@ -11334,6 +11651,7 @@ M.funcs = {
     name = 'sqrt',
     params = { { 'expr', 'number' } },
     signature = 'sqrt({expr})',
+    see_lua = { '|math.sqrt()|' },
   },
   srand = {
     args = { 0, 1 },
@@ -11356,6 +11674,7 @@ M.funcs = {
     name = 'srand',
     params = { { 'expr', 'number' } },
     signature = 'srand([{expr}])',
+    see_lua = { '|math.randomseed()|' },
   },
   state = {
     args = { 0, 1 },
@@ -11495,6 +11814,9 @@ M.funcs = {
     name = 'str2float',
     params = { { 'string', 'string' }, { 'quoted', 'boolean' } },
     signature = 'str2float({string} [, {quoted}])',
+    see_lua = {
+      '|tonumber()| for simple numbers; quoted digits, hex forms, and trailing text differ',
+    },
   },
   str2list = {
     args = { 1, 2 },
@@ -11542,6 +11864,9 @@ M.funcs = {
     name = 'str2nr',
     params = { { 'string', 'string' }, { 'base', 'integer' } },
     signature = 'str2nr({string} [, {base}])',
+    see_lua = {
+      '|tonumber()| for simple numbers; quoted digits, base prefixes, and trailing text differ',
+    },
   },
   strcharlen = {
     args = 1,
@@ -11626,6 +11951,7 @@ M.funcs = {
     params = { { 'string', 'string' }, { 'skipcc', '0|1|boolean' } },
     returns = 'integer',
     signature = 'strchars({string} [, {skipcc}])',
+    see_lua = { '|vim.str_utfindex()| for codepoint counts; `skipcc` handling differs' },
   },
   strdisplaywidth = {
     args = { 1, 2 },
@@ -11652,6 +11978,9 @@ M.funcs = {
     params = { { 'string', 'string' }, { 'col', 'integer' } },
     returns = 'integer',
     signature = 'strdisplaywidth({string} [, {col}])',
+    see_lua = {
+      '|nvim_strwidth()| when `{col}` is 0; Tab expansion and window-option semantics differ',
+    },
   },
   strftime = {
     args = { 1, 2 },
@@ -11677,6 +12006,7 @@ M.funcs = {
     params = { { 'format', 'string' }, { 'time', 'number' } },
     returns = 'string',
     signature = 'strftime({format} [, {time}])',
+    see_lua = { '|os.date()|' },
   },
   strgetchar = {
     args = 2,
@@ -11724,6 +12054,9 @@ M.funcs = {
     params = { { 'haystack', 'string' }, { 'needle', 'string' }, { 'start', 'integer' } },
     returns = 'integer',
     signature = 'stridx({haystack}, {needle} [, {start}])',
+    see_lua = {
+      '|string.find()| with `plain = true` and `start + 1`, then subtract 1; missing matches return nil instead of -1',
+    },
   },
   string = {
     args = 1,
@@ -11760,6 +12093,7 @@ M.funcs = {
     params = { { 'expr', 'any' } },
     returns = 'string',
     signature = 'string({expr})',
+    see_lua = { '|vim.inspect()| for tables, or |tostring()| for scalars' },
   },
   strlen = {
     args = 1,
@@ -11777,6 +12111,7 @@ M.funcs = {
     params = { { 'string', 'string' } },
     returns = 'integer',
     signature = 'strlen({string})',
+    see_lua = { '|string.len()|' },
   },
   strpart = {
     args = { 2, 4 },
@@ -11818,6 +12153,7 @@ M.funcs = {
     },
     returns = 'string',
     signature = 'strpart({src}, {start} [, {len} [, {chars}]])',
+    see_lua = { '|string.sub()| for byte slices; negative `start` and the `chars` flag differ' },
   },
   strptime = {
     args = 2,
@@ -11880,6 +12216,9 @@ M.funcs = {
     },
     returns = 'integer',
     signature = 'strridx({haystack}, {needle} [, {start}])',
+    see_lua = {
+      '|string.find()| in a loop with `plain = true`, then subtract 1; empty-needle and missing-match semantics differ',
+    },
   },
   strtrans = {
     args = 1,
@@ -11928,6 +12267,7 @@ M.funcs = {
     params = { { 'string', 'string' }, { 'countcc', '0|1' } },
     returns = 'integer',
     signature = 'strutf16len({string} [, {countcc}])',
+    see_lua = { '|vim.str_utfindex()| with `"utf-16"`; `countcc = false` semantics differ' },
   },
   strwidth = {
     args = 1,
@@ -11948,6 +12288,7 @@ M.funcs = {
     params = { { 'string', 'string' } },
     returns = 'integer',
     signature = 'strwidth({string})',
+    see_lua = { '|nvim_strwidth()|' },
   },
   submatch = {
     args = { 1, 2 },
@@ -12050,6 +12391,9 @@ M.funcs = {
     },
     returns = 'string',
     signature = 'substitute({string}, {pat}, {sub}, {flags})',
+    see_lua = {
+      '|string.gsub()| for common substitutions; Vim patterns, flags, and replacement semantics differ',
+    },
   },
   swapfilelist = {
     desc = [=[
@@ -12286,8 +12630,6 @@ M.funcs = {
     base = 1,
     tags = { 'E677' },
     desc = [=[
-      Lua: Prefer |vim.system()|.
-
       Gets the output of {cmd} as a |string| (|systemlist()| returns
       a |List|) and sets |v:shell_error| to the error code.
       {cmd} is treated as in |jobstart()|:
@@ -12342,6 +12684,9 @@ M.funcs = {
     },
     returns = 'string',
     signature = 'system({cmd} [, {input}])',
+    see_lua = {
+      '`vim.system(...):wait().stdout` for string output; string commands use the shell in Vimscript, not by default in Lua',
+    },
   },
   systemlist = {
     args = { 1, 3 },
@@ -12371,6 +12716,9 @@ M.funcs = {
     -- returns = "string[]|''",
     returns = 'string[]',
     signature = 'systemlist({cmd} [, {input} [, {keepempty}]])',
+    see_lua = {
+      '`vim.system(...):wait().stdout` split into lines; string commands use the shell in Vimscript, not by default in Lua',
+    },
   },
   tabpagebuflist = {
     args = { 0, 1 },
@@ -12392,6 +12740,9 @@ M.funcs = {
     name = 'tabpagebuflist',
     params = { { 'arg', 'integer' } },
     signature = 'tabpagebuflist([{arg}])',
+    see_lua = {
+      '|nvim_tabpage_list_wins()| with |nvim_win_get_buf()|; invalid tabpages error instead of returning 0',
+    },
   },
   tabpagenr = {
     args = { 0, 1 },
@@ -12413,6 +12764,9 @@ M.funcs = {
     params = { { 'arg', "'$'|'#'" } },
     returns = 'integer',
     signature = 'tabpagenr([{arg}])',
+    see_lua = {
+      '|nvim_tabpage_get_number()| with |nvim_get_current_tabpage()| for the current tab, or `#vim.api.nvim_list_tabpages()` for "$"; "#" differs',
+    },
   },
   tabpagewinnr = {
     args = { 1, 2 },
@@ -12435,6 +12789,9 @@ M.funcs = {
     params = { { 'tabarg', 'integer' }, { 'arg', "'$'|'#'" } },
     returns = 'integer',
     signature = 'tabpagewinnr({tabarg} [, {arg}])',
+    see_lua = {
+      '|nvim_win_get_number()| with |nvim_tabpage_get_win()| for the current window, or the length of |nvim_tabpage_list_wins()| for "$"; "#" and invalid-tab behavior differ',
+    },
   },
   tagfiles = {
     desc = [=[
@@ -12517,6 +12874,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'tan({expr})',
+    see_lua = { '|math.tan()|' },
   },
   tanh = {
     args = 1,
@@ -12538,6 +12896,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'tanh({expr})',
+    see_lua = { '|math.tanh()|' },
   },
   tempname = {
     desc = [=[
@@ -12552,6 +12911,9 @@ M.funcs = {
     params = {},
     returns = 'string',
     signature = 'tempname()',
+    see_lua = {
+      "|os.tmpname()| for a temporary name; Nvim's |tempdir| and nonexistence are not guaranteed",
+    },
   },
   termopen = {
     deprecated = true,
@@ -12663,6 +13025,9 @@ M.funcs = {
     name = 'timer_start',
     params = { { 'time', 'number' }, { 'callback', 'string|function' }, { 'options', 'table' } },
     signature = 'timer_start({time}, {callback} [, {options}])',
+    see_lua = {
+      '|vim.defer_fn()| for one-shot timers, or |uv.new_timer()| for repeating timers; callback and handle semantics differ',
+    },
   },
   timer_stop = {
     args = 1,
@@ -12676,6 +13041,9 @@ M.funcs = {
     name = 'timer_stop',
     params = { { 'timer', 'integer' } },
     signature = 'timer_stop({timer})',
+    see_lua = {
+      '|uv.timer_stop()| and |uv.close()| on a stored |uv.new_timer()| handle; timer IDs differ',
+    },
   },
   timer_stopall = {
     args = 0,
@@ -12701,6 +13069,7 @@ M.funcs = {
     params = { { 'expr', 'string' } },
     returns = 'string',
     signature = 'tolower({expr})',
+    see_lua = { '|string.lower()|' },
   },
   toupper = {
     args = 1,
@@ -12715,6 +13084,7 @@ M.funcs = {
     params = { { 'expr', 'string' } },
     returns = 'string',
     signature = 'toupper({expr})',
+    see_lua = { '|string.upper()|' },
   },
   tr = {
     args = 3,
@@ -12775,6 +13145,7 @@ M.funcs = {
     params = { { 'text', 'string' }, { 'mask', 'string' }, { 'dir', '0|1|2' } },
     returns = 'string',
     signature = 'trim({text} [, {mask} [, {dir}]])',
+    see_lua = { '|vim.trim()|' },
   },
   trunc = {
     args = 1,
@@ -12798,6 +13169,7 @@ M.funcs = {
     params = { { 'expr', 'number' } },
     returns = 'integer',
     signature = 'trunc({expr})',
+    see_lua = { '|math.modf()| (first return value)' },
   },
   type = {
     args = 1,
@@ -12836,6 +13208,7 @@ M.funcs = {
     params = { { 'expr', 'any' } },
     returns = 'integer',
     signature = 'type({expr})',
+    see_lua = { '|lua-type()| for most Lua type checks; Vim type IDs differ' },
   },
   undofile = {
     args = 1,
@@ -12914,8 +13287,6 @@ M.funcs = {
     base = 1,
     tags = { 'E882' },
     desc = [=[
-      Lua: Prefer |vim.list.unique()|.
-
       Remove second and succeeding copies of repeated adjacent
       {list} items in-place.  Returns {list}.  If you want a list
       to remain unmodified make a copy first: >vim
@@ -12931,6 +13302,7 @@ M.funcs = {
     params = { { 'list', 'any' }, { 'func', 'any' }, { 'dict', 'any' } },
     returns = 'any[]|0',
     signature = 'uniq({list} [, {func} [, {dict}]])',
+    see_lua = { '|vim.list.unique()|' },
   },
   utf16idx = {
     args = { 2, 4 },
@@ -12973,6 +13345,9 @@ M.funcs = {
     },
     returns = 'integer',
     signature = 'utf16idx({string}, {idx} [, {countcc} [, {charidx}]])',
+    see_lua = {
+      '|vim.str_utfindex()| with `"utf-16"` and `strict_indexing = false`; `countcc` and `charidx` semantics differ',
+    },
   },
   values = {
     args = 1,
@@ -12986,6 +13361,7 @@ M.funcs = {
     name = 'values',
     params = { { 'dict', 'any' } },
     signature = 'values({dict})',
+    see_lua = { '|vim.tbl_values()|' },
   },
   virtcol = {
     args = { 1, 3 },
@@ -13121,6 +13497,7 @@ M.funcs = {
     name = 'wait',
     params = { { 'timeout', 'integer' }, { 'condition', 'any' }, { 'interval', 'number' } },
     signature = 'wait({timeout}, {condition} [, {interval}])',
+    see_lua = { '|vim.wait()|' },
   },
   wildmenumode = {
     desc = [=[
@@ -13186,6 +13563,7 @@ M.funcs = {
     name = 'win_execute',
     params = { { 'id', 'integer' }, { 'command', 'string' }, { 'silent', 'boolean' } },
     signature = 'win_execute({id}, {command} [, {silent}])',
+    see_lua = { '|nvim_win_call()|' },
   },
   win_findbuf = {
     args = 1,
@@ -13199,6 +13577,7 @@ M.funcs = {
     params = { { 'bufnr', 'integer' } },
     returns = 'integer[]',
     signature = 'win_findbuf({bufnr})',
+    see_lua = { '|nvim_list_wins()| with |nvim_win_get_buf()|' },
   },
   win_getid = {
     args = { 0, 2 },
@@ -13217,6 +13596,9 @@ M.funcs = {
     params = { { 'win', 'integer' }, { 'tab', 'integer' } },
     returns = 'integer',
     signature = 'win_getid([{win} [, {tab}]])',
+    see_lua = {
+      '|nvim_get_current_win()| when omitted, or |nvim_tabpage_list_wins()| with |nvim_win_get_number()| after resolving {tab}; invalid windows return 0 in Vimscript',
+    },
   },
   win_gettype = {
     args = { 0, 1 },
@@ -13259,6 +13641,7 @@ M.funcs = {
     params = { { 'expr', 'integer' } },
     returns = '0|1',
     signature = 'win_gotoid({expr})',
+    see_lua = { '|nvim_set_current_win()|; invalid IDs error instead of returning FALSE' },
   },
   win_id2tabwin = {
     args = 1,
@@ -13272,6 +13655,9 @@ M.funcs = {
     name = 'win_id2tabwin',
     params = { { 'expr', 'integer' } },
     signature = 'win_id2tabwin({expr})',
+    see_lua = {
+      '|nvim_win_get_tabpage()| and |nvim_win_get_number()| for valid windows; invalid IDs error instead of returning `[0, 0]`',
+    },
   },
   win_id2win = {
     args = 1,
@@ -13285,6 +13671,9 @@ M.funcs = {
     params = { { 'expr', 'integer' } },
     returns = 'integer',
     signature = 'win_id2win({expr})',
+    see_lua = {
+      '|nvim_win_get_number()| for valid windows; windows outside the current tabpage and invalid IDs differ',
+    },
   },
   win_move_separator = {
     args = 2,
@@ -13343,6 +13732,9 @@ M.funcs = {
     name = 'win_screenpos',
     params = { { 'nr', 'integer' } },
     signature = 'win_screenpos({nr})',
+    see_lua = {
+      '|nvim_win_get_position()| and add 1 to row and col; invalid-window semantics differ',
+    },
   },
   win_splitmove = {
     args = { 2, 3 },
@@ -13389,6 +13781,7 @@ M.funcs = {
     params = { { 'nr', 'integer' } },
     returns = 'integer',
     signature = 'winbufnr({nr})',
+    see_lua = { '|nvim_win_get_buf()|' },
   },
   wincol = {
     desc = [=[
@@ -13432,6 +13825,7 @@ M.funcs = {
     params = { { 'nr', 'integer' } },
     returns = 'integer',
     signature = 'winheight({nr})',
+    see_lua = false,
   },
   winlayout = {
     args = { 0, 1 },
@@ -13529,6 +13923,9 @@ M.funcs = {
     params = { { 'arg', 'string|integer' } },
     returns = 'integer',
     signature = 'winnr([{arg}])',
+    see_lua = {
+      '|nvim_win_get_number()| with |nvim_get_current_win()| for the current window, or |nvim_tabpage_list_wins()| with |nvim_get_current_tabpage()| for "$"; "#", motion args, and hidden windows differ',
+    },
   },
   winrestcmd = {
     desc = [=[
@@ -13629,6 +14026,7 @@ M.funcs = {
     params = { { 'nr', 'integer' } },
     returns = 'integer',
     signature = 'winwidth({nr})',
+    see_lua = false,
   },
   wordcount = {
     desc = [=[
@@ -13725,6 +14123,7 @@ M.funcs = {
     params = { { 'expr', 'integer' }, { 'expr', 'integer' } },
     returns = 'integer',
     signature = 'xor({expr}, {expr})',
+    see_lua = { '|bit.bxor()|' },
   },
 }
 
