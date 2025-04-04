@@ -953,6 +953,7 @@ local extension = {
   ppd = 'ppd',
   it = 'ppwiz',
   ih = 'ppwiz',
+  pq = 'pq',
   action = 'privoxy',
   prg = detect.prg,
   Prg = detect.prg,
