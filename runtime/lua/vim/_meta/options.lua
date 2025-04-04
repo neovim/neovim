@@ -6123,11 +6123,10 @@ vim.bo.spc = vim.bo.spellcapcheck
 --- It may also be a comma-separated list of names.  A count before the
 --- `zg` and `zw` commands can be used to access each.  This allows using
 --- a personal word list file and a project word list file.
---- When a word is added while this option is empty Vim will set it for
---- you: Using the first directory in 'runtimepath' that is writable.  If
---- there is no "spell" directory yet it will be created.  For the file
---- name the first language name that appears in 'spelllang' is used,
---- ignoring the region.
+--- When a word is added while this option is empty Nvim will use
+--- (and auto-create) `stdpath('data')/spell/`. For the file name the
+--- first language name that appears in 'spelllang' is used, ignoring the
+--- region.
 --- The resulting ".spl" file will be used for spell checking, it does not
 --- have to appear in 'spelllang'.
 --- Normally one file is used for all regions, but you can add the region
