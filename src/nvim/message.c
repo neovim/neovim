@@ -171,7 +171,9 @@ static void ui_ext_msg_set_pos(int row, bool scrolled)
   char buf[MAX_SCHAR_SIZE];
   size_t size = schar_get(buf, curwin->w_p_fcs_chars.msgsep);
   ui_call_msg_set_pos(msg_grid.handle, row, scrolled,
-                      (String){ .data = buf, .size = size });
+                      (String){ .data = buf, .size = size }, msg_grid.zindex,
+                      (int)msg_grid.comp_index);
+  msg_grid.composition_updated = false;
 }
 
 void msg_grid_set_pos(int row, bool scrolled)
@@ -2525,6 +2527,13 @@ void msg_ui_refresh(void)
 {
   if (ui_has(kUIMultigrid) && msg_grid.chars) {
     ui_call_grid_resize(msg_grid.handle, msg_grid.cols, msg_grid.rows);
+    ui_ext_msg_set_pos(msg_grid_pos, msg_scrolled);
+  }
+}
+
+void msg_ui_flush(void)
+{
+  if (ui_has(kUIMultigrid) && msg_grid.chars && msg_grid.composition_updated) {
     ui_ext_msg_set_pos(msg_grid_pos, msg_scrolled);
   }
 }
