@@ -838,6 +838,26 @@ describe('decorations providers', function()
                                               |
     ]])
   end)
+
+  it('decor provider is enabled again for next redraw after on_win disabled it', function()
+    exec_lua(function()
+      vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace(''), {
+        on_win = function()
+          return false
+        end,
+        on_buf = function()
+          _G.did_buf = (_G.did_buf or 0) + 1
+        end,
+      })
+    end)
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'foo' })
+    screen:expect([[
+      ^foo                                     |
+      {1:~                                       }|*6
+                                              |
+    ]])
+    eq(1, exec_lua('return _G.did_buf'))
+  end)
 end)
 
 describe('decoration_providers', function()
