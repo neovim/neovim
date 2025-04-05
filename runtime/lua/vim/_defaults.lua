@@ -432,6 +432,17 @@ do
       return 'g@l'
     end, { expr = true, desc = 'Add empty line below cursor' })
   end
+
+  -- Prompt buffer mappings
+  vim.api.nvim_create_autocmd({ "BufEnter", "BufModifiedSet" }, {
+    pattern = "*",
+    callback = function ()
+      vim.keymap.set("i", "<CR>", require("vim.prompt").prompt_send, { buffer = true })
+      vim.keymap.set("i", "<S-CR>", function ()
+        require("vim.prompt").add_line(true)
+      end, { buffer = true })
+    end
+  })
 end
 
 --- Default menus
