@@ -2903,3 +2903,30 @@ ArrayOf(Dict) keymap_array(String mode, buf_T *buf, Arena *arena)
 
   return arena_take_arraybuilder(arena, &mappings);
 }
+
+/// Add an insert-mode abbreviation.
+///
+/// @param lhs  Left-hand side of the abbreviation
+/// @param rhs  Right-hand side expansion text
+void add_iabbrev(const char *lhs, const char *rhs)
+  FUNC_ATTR_NONNULL_ALL
+{
+  MapArguments args = MAP_ARGUMENTS_INIT;
+  args.rhs = xstrdup(rhs);
+  args.orig_rhs = xstrdup(rhs);
+  args.rhs_lua = LUA_NOREF;
+
+  map_add(NULL,
+          NULL,
+          &first_abbr,
+          lhs,
+          &args,
+          false,
+          MODE_INSERT,
+          true,
+          0,
+          0,
+          false);
+
+  no_abbr = false;
+}
