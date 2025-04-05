@@ -513,6 +513,51 @@ describe('treesitter highlighting (C)', function()
     screen:expect { grid = injection_grid_expected_c }
   end)
 
+  it('supports combined injections #31777', function()
+    exec_lua(function()
+      local lines = {
+        '-- print([[',
+        '-- some',
+        '-- random',
+        '-- text',
+        '-- here]])',
+      }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      local parser = vim.treesitter.get_parser(0, 'lua', {
+        injections = {
+          lua = [[
+          ; query
+          ((comment_content) @injection.content
+            (#set! injection.self)
+            (#set! injection.combined))
+          ]],
+        },
+      })
+      local highlighter = vim.treesitter.highlighter
+      highlighter.new(parser, {
+        queries = {
+          lua = [[
+            ; query
+            (string) @string
+            (comment) @comment
+            (function_call (identifier) @function.call)
+            [ "(" ")" ] @punctuation.bracket
+          ]],
+        },
+      })
+    end)
+
+    screen:expect([=[
+      {18:^-- }{25:print}{16:(}{26:[[}                                                      |
+      {26:-- some}                                                          |
+      {26:-- random}                                                        |
+      {26:-- text}                                                          |
+      {26:-- here]]}{16:)}                                                       |
+      {1:~                                                                }|*12
+                                                                       |
+    ]=])
+  end)
+
   it("supports injecting by ft name in metadata['injection.language']", function()
     insert(injection_text_c)
 
