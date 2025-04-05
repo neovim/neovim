@@ -222,6 +222,7 @@ describe('vim.hl.on_yank', function()
 
   it('does not show errors even if buffer is wiped before timeout', function()
     command('new')
+    n.feed('ifoo<esc>') -- set '[, ']
     exec_lua(function()
       vim.hl.on_yank({
         timeout = 10,
