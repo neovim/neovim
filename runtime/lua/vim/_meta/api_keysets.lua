@@ -312,12 +312,14 @@ error('Cannot require a meta file')
 --- @field noautocmd? boolean
 --- @field fixed? boolean
 --- @field hide? boolean
+--- @field _cmdline_offset? integer
 
 --- @class vim.api.keyset.win_text_height
 --- @field start_row? integer
 --- @field end_row? integer
 --- @field start_vcol? integer
 --- @field end_vcol? integer
+--- @field max_height? integer
 
 --- @class vim.api.keyset.xdl_diff
 --- @field on_hunk? fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer?
