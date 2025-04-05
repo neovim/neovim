@@ -82,7 +82,7 @@ void os_icon_init(void)
   hOrigIconSmall = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_SMALL, (LPARAM)0);
   hOrigIcon = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_BIG, (LPARAM)0);
 
-  const char *vimruntime = os_getenv("VIMRUNTIME");
+  char *vimruntime = os_getenv("VIMRUNTIME");
   if (vimruntime != NULL) {
     snprintf(NameBuff, MAXPATHL, "%s/neovim.ico", vimruntime);
     if (!os_path_exists(NameBuff)) {
@@ -92,6 +92,7 @@ void os_icon_init(void)
                                  LR_LOADFROMFILE | LR_LOADMAP3DCOLORS);
       os_icon_set(hVimIcon, hVimIcon);
     }
+    xfree(vimruntime);
   }
 }
 
@@ -117,7 +118,7 @@ void os_title_reset(void)
 /// @param out_fd stdout file descriptor
 void os_tty_guess_term(const char **term, int out_fd)
 {
-  bool conemu_ansi = strequal(os_getenv("ConEmuANSI"), "ON");
+  bool conemu_ansi = strequal(os_getenv_noalloc("ConEmuANSI"), "ON");
   bool vtp = false;
 
   HANDLE handle = (HANDLE)_get_osfhandle(out_fd);
