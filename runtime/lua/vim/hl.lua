@@ -129,7 +129,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
 
   local range_hl_clear = function()
     for _, mark in ipairs(extmarks) do
-      api.nvim_buf_del_extmark(bufnr, ns, mark)
+      pcall(api.nvim_buf_del_extmark, bufnr, ns, mark)
     end
   end
 
