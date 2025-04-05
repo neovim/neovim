@@ -803,15 +803,6 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
         (`string?`) err On timeout, cancel, or error, `err` is a string
         describing the failure reason, and `result` is nil.
 
-client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
-    Checks whether a client is stopped.
-
-    Parameters: ~
-      • {client_id}  (`integer`)
-
-    Return: ~
-        (`boolean`) stopped true if client is stopped, false otherwise.
-
 commands                                                    *vim.lsp.commands*
     Registry (a table) for client-side handlers, for custom server-commands
     that are not in the LSP specification.
