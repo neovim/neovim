@@ -10881,14 +10881,13 @@ function vim.fn.wincol() end
 --- @return string
 function vim.fn.windowsversion() end
 
---- The result is a Number, which is the height of window {nr}.
---- {nr} can be the window number or the |window-ID|.
---- When {nr} is zero, the height of the current window is
---- returned.  When window {nr} doesn't exist, -1 is returned.
---- An existing window always has a height of zero or more.
---- This excludes any window toolbar line.
+--- Gets the height of |window-ID| {nr} (zero for "current
+--- window"), excluding any 'winbar' and 'statusline'. Returns -1
+--- if window {nr} doesn't exist. An existing window always has
+--- a height of zero or more.
+---
 --- Examples: >vim
----   echo "The current window has " .. winheight(0) .. " lines."
+---   echo "Current window has " .. winheight(0) .. " lines."
 --- <
 ---
 --- @param nr integer
@@ -11040,18 +11039,21 @@ function vim.fn.winrestview(dict) end
 --- @return vim.fn.winsaveview.ret
 function vim.fn.winsaveview() end
 
---- The result is a Number, which is the width of window {nr}.
---- {nr} can be the window number or the |window-ID|.
---- When {nr} is zero, the width of the current window is
---- returned.  When window {nr} doesn't exist, -1 is returned.
---- An existing window always has a width of zero or more.
---- Examples: >vim
----   echo "The current window has " .. winwidth(0) .. " columns."
+--- Gets the width of |window-ID| {nr} (zero for "current
+--- window"), including columns (|sign-column|, 'statuscolumn',
+--- etc.). Returns -1 if window {nr} doesn't exist. An existing
+--- window always has a width of zero or more.
+---
+--- Example: >vim
+---   echo "Current window has " .. winwidth(0) .. " columns."
 ---   if winwidth(0) <= 50
 ---     50 wincmd |
 ---   endif
---- <For getting the terminal or screen size, see the 'columns'
---- option.
+--- <
+--- To get the buffer "viewport", use |getwininfo()|: >vim
+---     :echo getwininfo(win_getid())[0].width - getwininfo(win_getid())[0].textoff
+--- <
+--- To get the Nvim screen size, see the 'columns' option.
 ---
 --- @param nr integer
 --- @return integer
