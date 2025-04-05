@@ -259,11 +259,9 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
 ///
 /// if upper_lnum or upper_col are negative the buffer
 /// will be searched to the start, or end
-/// reverse can be set to control the order of the array
 /// amount = amount of marks to find or INT64_MAX for all
 ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_row,
-                             colnr_T u_col, int64_t amount, bool reverse, ExtmarkType type_filter,
-                             bool overlap)
+                             colnr_T u_col, int64_t amount, ExtmarkType type_filter, bool overlap)
 {
   ExtmarkInfoArray array = KV_INITIAL_VALUE;
   MarkTreeIter itr[1];
@@ -281,29 +279,21 @@ ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_co
   } else {
     // Find all the marks beginning with the start position
     marktree_itr_get_ext(buf->b_marktree, MTPos(l_row, l_col),
-                         itr, reverse, false, NULL, NULL);
+                         itr, false, false, NULL, NULL);
   }
 
-  int order = reverse ? -1 : 1;
   while ((int64_t)kv_size(array) < amount) {
     MTKey mark = marktree_itr_current(itr);
     if (mark.pos.row < 0
-        || (mark.pos.row - u_row) * order > 0
-        || (mark.pos.row == u_row && (mark.pos.col - u_col) * order > 0)) {
+        || (mark.pos.row > u_row)
+        || (mark.pos.row == u_row && mark.pos.col > u_col)) {
       break;
     }
-    if (mt_end(mark)) {
-      goto next_mark;
+    if (!mt_end(mark)) {
+      MTKey end = marktree_get_alt(buf->b_marktree, mark, NULL);
+      push_mark(&array, ns_id, type_filter, mtpair_from(mark, end));
     }
-
-    MTKey end = marktree_get_alt(buf->b_marktree, mark, NULL);
-    push_mark(&array, ns_id, type_filter, mtpair_from(mark, end));
-next_mark:
-    if (reverse) {
-      marktree_itr_prev(buf->b_marktree, itr);
-    } else {
-      marktree_itr_next(buf->b_marktree, itr);
-    }
+    marktree_itr_next(buf->b_marktree, itr);
   }
   return array;
 }
