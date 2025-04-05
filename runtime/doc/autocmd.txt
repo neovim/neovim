@@ -1186,6 +1186,13 @@ WinScrolled			After any window in the current tab page
 				or changed width or height.  See
 				|win-scrolled-resized|.
 
+				Note: This can not be skipped with
+				`:noautocmd`, because it triggers after
+				processing normal commands when Vim is back in
+				the main loop.  If you want to disable this,
+				consider setting the 'eventignore' option
+				instead.
+
 				The pattern is matched against the |window-ID|
 				of the first window that scrolled or resized.
 				Both <amatch> and <afile> are set to the
