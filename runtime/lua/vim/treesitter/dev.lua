@@ -96,16 +96,22 @@ function TSTreeView:new(bufnr, lang)
 
   parser:for_each_tree(function(parent_tree, parent_ltree)
     local parent = parent_tree:root()
+    local start_row, start_col, end_row, end_col = parent:range()
     for _, child in pairs(parent_ltree:children()) do
       for _, tree in pairs(child:trees()) do
         local r = tree:root()
-        local node = assert(parent:named_descendant_for_range(r:range()))
-        local id = node:id()
-        if not injections[id] or r:byte_length() > injections[id].root:byte_length() then
-          injections[id] = {
-            lang = child:lang(),
-            root = r,
-          }
+        local start_row_, start_col_, end_row_, end_col_ = r:range()
+        -- Check if r is inside parent.
+        if (start_row < start_row_ or (start_row == start_row_ and start_col <= start_col_)) and
+            (end_row > end_row_ or (end_row == end_row_ and end_col >= end_col_)) then
+          local node = assert(parent:named_descendant_for_range(r:range()))
+          local id = node:id()
+          if not injections[id] or r:byte_length() > injections[id].root:byte_length() then
+            injections[id] = {
+              lang = child:lang(),
+              root = r,
+            }
+        end
         end
       end
     end
