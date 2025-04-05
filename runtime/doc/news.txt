@@ -172,6 +172,8 @@ VIMSCRIPT
 
 • todo
 
+• Added |nvim_tabpage_get()| and |nvim_tabpage_set()| to manage tabpage configuration.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
