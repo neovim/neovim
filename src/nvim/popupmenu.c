@@ -40,6 +40,7 @@
 #include "nvim/memory_defs.h"
 #include "nvim/menu.h"
 #include "nvim/message.h"
+#include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -75,6 +76,8 @@ static bool pum_rl;                 // true when popupmenu is drawn 'rightleft'
 static int pum_anchor_grid;         // grid where position is defined
 static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum, right column if 'rightleft'
+static int pum_win_row_offset;      // The row offset needed to convert to window relative coordinates
+static int pum_win_col_offset;      // The column offset needed to convert to window relative coordinates
 static int pum_left_col;            // left column of pum, before padding or scrollbar
 static bool pum_above;              // pum is drawn above cursor line
 
@@ -151,7 +154,12 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     pum_is_drawn = true;
     validate_cursor_col(curwin);
     int above_row = 0;
-    int below_row = cmdline_row;
+    int below_row = MAX(cmdline_row, curwin->w_winrow + curwin->w_grid.rows);
+    if (State & MODE_CMDLINE) {
+      below_row = cmdline_row;
+    }
+    pum_win_row_offset = 0;
+    pum_win_col_offset = 0;
 
     // wildoptions=pum
     if (State == MODE_CMDLINE) {
@@ -170,10 +178,11 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       pum_anchor_grid = (int)curwin->w_grid.target->handle;
       pum_win_row += curwin->w_grid.row_offset;
       cursor_col += curwin->w_grid.col_offset;
-      if (!ui_has(kUIMultigrid) && curwin->w_grid.target != &default_grid) {
-        pum_anchor_grid = (int)default_grid.handle;
+      if (curwin->w_grid.target != &default_grid) {
         pum_win_row += curwin->w_winrow;
         cursor_col += curwin->w_wincol;
+        pum_win_row_offset = curwin->w_winrow;
+        pum_win_col_offset = curwin->w_wincol;
       }
     }
 
@@ -189,7 +198,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
           ADD_C(item, CSTR_AS_OBJ(array[i].pum_info));
           ADD_C(arr, ARRAY_OBJ(item));
         }
-        ui_call_popupmenu_show(arr, selected, pum_win_row, cursor_col,
+        ui_call_popupmenu_show(arr, selected, pum_win_row - pum_win_row_offset,
+                               cursor_col - pum_win_col_offset,
                                pum_anchor_grid);
         arena_mem_free(arena_finish(&arena));
       } else {
@@ -221,18 +231,12 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
     int min_row = 0;
     int min_col = 0;
-    int max_col = Columns;
+    int max_col = MAX(Columns, curwin->w_wincol + curwin->w_grid.cols);
+    if (State & MODE_CMDLINE) {
+      max_col = Columns;
+    }
     int win_start_col = curwin->w_wincol;
     int win_end_col = W_ENDCOL(curwin);
-    if (!(State & MODE_CMDLINE) && ui_has(kUIMultigrid)) {
-      above_row -= curwin->w_winrow;
-      below_row = MAX(below_row - curwin->w_winrow, curwin->w_grid.rows);
-      min_row = -curwin->w_winrow;
-      min_col = -curwin->w_wincol;
-      max_col = MAX(Columns - curwin->w_wincol, curwin->w_grid.cols);
-      win_start_col = 0;
-      win_end_col = curwin->w_grid.cols;
-    }
 
     // Figure out the size and position of the pum.
     pum_height = MIN(size, PUM_DEF_HEIGHT);
@@ -580,13 +584,13 @@ void pum_redraw(void)
   if (pum_rl) {
     col_off = pum_width - 1;
     assert(!(State & MODE_CMDLINE));
-    int win_end_col = ui_has(kUIMultigrid) ? curwin->w_grid.cols : W_ENDCOL(curwin);
+    int win_end_col = W_ENDCOL(curwin);
     if (pum_col < win_end_col - 1) {
       grid_width += 1;
       extra_space = true;
     }
   } else {
-    int min_col = (!(State & MODE_CMDLINE) && ui_has(kUIMultigrid)) ? -curwin->w_wincol : 0;
+    int min_col = 0;
     if (pum_col > min_col) {
       grid_width += 1;
       col_off = 1;
@@ -615,12 +619,12 @@ void pum_redraw(void)
   } else if (invalid_grid) {
     grid_invalidate(&pum_grid);
   }
-  if (ui_has(kUIMultigrid)) {
-    const char *anchor = pum_above ? "SW" : "NW";
-    int row_off = pum_above ? -pum_height : 0;
-    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
-                          pum_row - row_off, pum_left_col, false, pum_grid.zindex);
-  }
+  const char *anchor = pum_above ? "SW" : "NW";
+  int row_off = pum_above ? -pum_height : 0;
+  ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
+                        pum_row - row_off - pum_win_row_offset, pum_left_col - pum_win_col_offset,
+                        false, pum_grid.zindex, (int)pum_grid.comp_index, pum_grid.comp_row,
+                        pum_grid.comp_col);
 
   int scroll_range = pum_size - pum_height;
   // Never display more than we have
@@ -1205,10 +1209,8 @@ void pum_check_clear(void)
       ui_call_popupmenu_hide();
     } else {
       ui_comp_remove_grid(&pum_grid);
-      if (ui_has(kUIMultigrid)) {
-        ui_call_win_close(pum_grid.handle);
-        ui_call_grid_destroy(pum_grid.handle);
-      }
+      ui_call_win_close(pum_grid.handle);
+      ui_call_grid_destroy(pum_grid.handle);
       // TODO(bfredl): consider keeping float grids allocated.
       grid_free(&pum_grid);
     }
@@ -1305,36 +1307,55 @@ static void pum_position_at_mouse(int min_width)
   int min_col = 0;
   int max_row = Rows;
   int max_col = Columns;
-  if (mouse_grid > 1) {
-    win_T *wp = get_win_by_grid_handle(mouse_grid);
+  int grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+  pum_win_row_offset = 0;
+  pum_win_col_offset = 0;
+
+  if (grid == 0 || grid == 1) {
+    win_T *wp = mouse_find_win(&grid, &row, &col);
+    // mouse_find_win compensates for the offset due to winbar for example
+    // but we don't want that here
+    row += wp->w_winrow_off;
+    col += wp->w_wincol_off;
+  }
+  if (grid > 1) {
+    win_T *wp = get_win_by_grid_handle(grid);
     if (wp != NULL) {
-      min_row = -wp->w_winrow;
-      min_col = -wp->w_wincol;
-      max_row = MAX(Rows - wp->w_winrow, wp->w_grid.rows);
-      max_col = MAX(Columns - wp->w_wincol, wp->w_grid.cols);
+      row += wp->w_winrow;
+      col += wp->w_wincol;
+      pum_win_row_offset = wp->w_winrow;
+      pum_win_col_offset = wp->w_wincol;
+
+      if (wp->w_height_inner > 0 || wp->w_width_inner > 0) {
+        // When the user has requested a different grid size, let the popupmenu extend to the size
+        // of it.
+        max_row = MAX(Rows - wp->w_winrow, wp->w_winrow + wp->w_grid.rows);
+        max_col = MAX(Columns - wp->w_wincol, wp->w_wincol + wp->w_grid.cols);
+      }
     }
   }
-  if (pum_grid.handle != 0 && mouse_grid == pum_grid.handle) {
+  if (pum_grid.handle != 0 && grid == pum_grid.handle) {
     // Repositioning the menu by right-clicking on itself
-    mouse_grid = pum_anchor_grid;
-    mouse_row += pum_row;
-    mouse_col += pum_left_col;
+    row += pum_row;
+    col += pum_left_col;
   } else {
-    pum_anchor_grid = mouse_grid;
+    pum_anchor_grid = grid;
   }
 
-  if (max_row - mouse_row > pum_size || max_row - mouse_row > mouse_row - min_row) {
+  if (max_row - row > pum_size || max_row - row > row - min_row) {
     // Enough space below the mouse row,
     // or there is more space below the mouse row than above.
     pum_above = false;
-    pum_row = mouse_row + 1;
+    pum_row = row + 1;
     if (pum_height > max_row - pum_row) {
       pum_height = max_row - pum_row;
     }
   } else {
     // Show above the mouse row, reduce height if it does not fit.
     pum_above = true;
-    pum_row = mouse_row - pum_size;
+    pum_row = row - pum_size;
     if (pum_row < min_row) {
       pum_height += pum_row - min_row;
       pum_row = min_row;
@@ -1342,20 +1363,20 @@ static void pum_position_at_mouse(int min_width)
   }
 
   if (pum_rl) {
-    if (mouse_col - min_col + 1 >= pum_base_width
-        || mouse_col - min_col + 1 > min_width) {
+    if (col - min_col + 1 >= pum_base_width
+        || col - min_col + 1 > min_width) {
       // Enough space to show at mouse column.
-      pum_col = mouse_col;
+      pum_col = col;
     } else {
       // Not enough space, left align with window.
       pum_col = min_col + MIN(pum_base_width, min_width) - 1;
     }
     pum_width = pum_col - min_col + 1;
   } else {
-    if (max_col - mouse_col >= pum_base_width
-        || max_col - mouse_col > min_width) {
+    if (max_col - col >= pum_base_width
+        || max_col - col > min_width) {
       // Enough space to show at mouse column.
-      pum_col = mouse_col;
+      pum_col = col;
     } else {
       // Not enough space, right align with window.
       pum_col = max_col - MIN(pum_base_width, min_width);
@@ -1369,16 +1390,24 @@ static void pum_position_at_mouse(int min_width)
 /// Select the pum entry at the mouse position.
 static void pum_select_mouse_pos(void)
 {
-  if (mouse_grid == pum_grid.handle) {
-    pum_selected = mouse_row;
+  int grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+
+  if (grid == 0) {
+    mouse_find_win(&grid, &row, &col);
+  }
+
+  if (grid == pum_grid.handle) {
+    pum_selected = row;
     return;
-  } else if (mouse_grid != pum_anchor_grid || mouse_col < pum_grid.comp_col
-             || mouse_col >= pum_grid.comp_col + pum_grid.comp_width) {
+  } else if (grid != pum_anchor_grid || col < pum_grid.comp_col
+             || col >= pum_grid.comp_col + pum_grid.comp_width) {
     pum_selected = -1;
     return;
   }
 
-  int idx = mouse_row - pum_grid.comp_row;
+  int idx = row - pum_grid.comp_row;
 
   if (idx < 0 || idx >= pum_grid.comp_height) {
     pum_selected = -1;
@@ -1526,17 +1555,25 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
     mouse_col = curwin->w_grid.col_offset
                 + (curwin->w_p_rl ? curwin->w_width_inner - curwin->w_wcol - 1
                                   : curwin->w_wcol);
-    if (ui_has(kUIMultigrid)) {
-      mouse_grid = curwin->w_grid.target->handle;
-    } else if (curwin->w_grid.target != &default_grid) {
-      mouse_grid = 0;
-      mouse_row += curwin->w_winrow;
-      mouse_col += curwin->w_wincol;
-    }
+    mouse_grid = curwin->w_grid.target->handle;
   }
 
   vimmenu_T *menu = menu_find(path_name);
   if (menu != NULL) {
     pum_show_popupmenu(menu);
+  }
+}
+
+void pum_ui_flush(void)
+{
+  if (pum_is_drawn && !pum_external && pum_grid.handle != 0
+      && pum_grid.composition_updated) {
+    const char *anchor = pum_above ? "SW" : "NW";
+    int row_off = pum_above ? -pum_height : 0;
+    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
+                          pum_row - row_off - pum_win_row_offset, pum_left_col - pum_win_col_offset,
+                          false, pum_grid.zindex, (int)pum_grid.comp_index, pum_grid.comp_row,
+                          pum_grid.comp_col);
+    pum_grid.composition_updated = false;
   }
 }
