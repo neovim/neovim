@@ -15,6 +15,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/fold.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
