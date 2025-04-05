@@ -4261,6 +4261,90 @@ describe('API', function()
         },
       }, api.nvim_parse_cmd('4,6s/math.random/math.max/', {}))
     end)
+    it('works with marker charwise ranges', function()
+      insert(('xxxxxxxxx\n'):rep(6))
+      local buf = api.nvim_get_current_buf()
+      api.nvim_buf_set_mark(buf, '<', 4, 5, {})
+      api.nvim_buf_set_mark(buf, '>', 6, 9, {})
+      eq({
+        cmd = 'substitute',
+        args = { '/math.random/math.max/' },
+        bang = false,
+        range = { 4, 6, 5, 9 },
+        addr = 'line',
+        magic = {
+          file = false,
+          bar = false,
+        },
+        nargs = '*',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            pattern = '',
+            force = false,
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+      }, api.nvim_parse_cmd('\'<,\'>s/math.random/math.max/', {}))
+    end)
+    it('works with explicit charwise ranges', function()
+      eq({
+        cmd = 'substitute',
+        args = { '/math.random/math.max/' },
+        bang = false,
+        range = { 4, 6, 5, 9 },
+        addr = 'line',
+        magic = {
+          file = false,
+          bar = false,
+        },
+        nargs = '*',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            pattern = '',
+            force = false,
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+      }, api.nvim_parse_cmd('4.5,6.9s/math.random/math.max/', {}))
+    end)
     it('works with count', function()
       eq({
         cmd = 'buffer',
@@ -4821,8 +4905,12 @@ describe('API', function()
         pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = true }, {})
       )
       eq(
-        "Invalid 'range': expected <=2 elements",
-        pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { 1, 2, 3, 4 } }, {})
+        "Invalid 'range': expected <=2 or 4 elements",
+        pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { 1, 2, 3, 4, 5 } }, {})
+      )
+      eq(
+        "Invalid 'range': expected <=2 or 4 elements",
+        pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { 1, 2, 3 } }, {})
       )
       eq(
         'Invalid range element: expected non-negative Integer',
@@ -4909,6 +4997,31 @@ describe('API', function()
       ]]
     end)
 
+    it('works with charwise range', function()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_cmd({
+        cmd = 'substitute',
+        addr = 'line',
+        args = { '/.*/foo/' },
+        range = { 3, 5, 6, 10 } },
+        {})
+      expect [[
+        line1
+        line2
+        line3foo
+        foo
+        fooline5
+        line6
+      ]]
+    end)
+
     it('works with count', function()
       insert [[
         line1
@@ -4954,6 +5067,20 @@ describe('API', function()
       api.nvim_create_user_command('Foo', 'echo "<bang>"', { bang = true })
       eq('!', api.nvim_cmd({ cmd = 'Foo', bang = true }, { output = true }))
       eq('', api.nvim_cmd({ cmd = 'Foo', bang = false }, { output = true }))
+    end)
+
+    it('works with |:!| into shell command', function()
+      insert [[
+        line1
+        line2
+        line3you
+         expect thisline4
+        line5
+      ]]
+      local buf = api.nvim_get_current_buf()
+      api.nvim_buf_set_mark(buf, '<', 3, 6, {})
+      api.nvim_buf_set_mark(buf, '>', 4, 12, {})
+      eq('you\n expect this', command_output([[:'<,'>!cat]]))
     end)
 
     it('works with modifiers', function()
