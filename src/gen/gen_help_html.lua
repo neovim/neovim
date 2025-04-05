@@ -72,6 +72,7 @@ local new_layout = {
   ['gui.txt'] = true,
   ['intro.txt'] = true,
   ['lua.txt'] = true,
+  ['lua-guide.txt'] = true,
   ['luaref.txt'] = true,
   ['news.txt'] = true,
   ['news-0.9.txt'] = true,

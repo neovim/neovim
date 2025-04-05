@@ -752,6 +752,9 @@ buf_is_attached({bufnr}, {client_id})              *vim.lsp.buf_is_attached()*
 buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
     Send a notification to a server
 
+    Attributes: ~
+        Since: 0.5.0
+
     Parameters: ~
       • {bufnr}   (`integer?`) The number of the buffer
       • {method}  (`string`) Name of the request method
@@ -764,6 +767,9 @@ buf_notify({bufnr}, {method}, {params})                 *vim.lsp.buf_notify()*
 buf_request_all({bufnr}, {method}, {params}, {handler})
     Sends an async request for all active clients attached to the buffer and
     executes the `handler` callback with the combined result.
+
+    Attributes: ~
+        Since: 0.5.0
 
     Parameters: ~
       • {bufnr}    (`integer`) Buffer handle, or 0 for current.
@@ -786,6 +792,9 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
     Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the
     result. Parameters are the same as |vim.lsp.buf_request_all()| but the
     result is different. Waits a maximum of {timeout_ms}.
+
+    Attributes: ~
+        Since: 0.5.0
 
     Parameters: ~
       • {bufnr}       (`integer`) Buffer handle, or 0 for current.
@@ -890,6 +899,9 @@ config({name}, {cfg})                                       *vim.lsp.config()*
       local cfg = vim.lsp.config.luals
 <
 
+    Attributes: ~
+        Since: 0.11.0
+
     Parameters: ~
       • {name}  (`string`)
       • {cfg}   (`vim.lsp.Config`) See |vim.lsp.Config|.
@@ -904,6 +916,9 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
 
           vim.lsp.enable({'luals', 'pyright'})
 <
+
+    Attributes: ~
+        Since: 0.11.0
 
     Parameters: ~
       • {name}    (`string|string[]`) Name(s) of client(s) to enable.
@@ -921,6 +936,9 @@ foldclose({kind}, {winid})                               *vim.lsp.foldclose()*
           end,
         })
 <
+
+    Attributes: ~
+        Since: 0.11.0
 
     Parameters: ~
       • {kind}   (`lsp.FoldingRangeKind`) Kind to close, one of "comment",
@@ -986,8 +1004,8 @@ get_buffers_by_client_id({client_id})
         (`integer[]`) buffers list of buffer ids
 
 get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
-    Gets a client by id, or nil if the id is invalid. The returned client may
-    not yet be fully initialized.
+    Gets a client by id, or nil if the id is invalid or the client was
+    stopped. The returned client may not yet be fully initialized.
 
     Parameters: ~
       • {client_id}  (`integer`) client id
@@ -997,6 +1015,9 @@ get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
 
 get_clients({filter})                                  *vim.lsp.get_clients()*
     Get active clients.
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {filter}  (`table?`) Key-value pairs used to filter the returned
@@ -1084,6 +1105,9 @@ start({config}, {opts})                                      *vim.lsp.start()*
     make sure to call |vim.lsp.start()| within a |FileType| autocmd. Either
     use |:au|, |nvim_create_autocmd()| or put the call in a
     `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
+
+    Attributes: ~
+        Since: 0.8.0
 
     Parameters: ~
       • {config}  (`vim.lsp.ClientConfig`) Configuration for the server. See

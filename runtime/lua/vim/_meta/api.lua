@@ -324,12 +324,18 @@ function vim.api.nvim_buf_del_user_command(buffer, name) end
 --- @param name string Variable name
 function vim.api.nvim_buf_del_var(buffer, name) end
 
---- Deletes the buffer. See `:bwipeout`
+--- Deletes a buffer and its metadata (like `:bwipeout`).
+---
+--- To get `:bdelete` behavior, reset 'buflisted' and pass `unload=true`:
+--- ```lua
+--- vim.bo.buflisted = false
+--- vim.api.nvim_buf_delete(0, { unload = true })
+--- ```
 ---
 --- @param buffer integer Buffer id, or 0 for current buffer
 --- @param opts vim.api.keyset.buf_delete Optional parameters. Keys:
---- - force:  Force deletion and ignore unsaved changes.
---- - unload: Unloaded only, do not delete. See `:bunload`
+--- - force:  Force deletion, ignore unsaved changes.
+--- - unload: Unloaded only (`:bunload`), do not delete.
 function vim.api.nvim_buf_delete(buffer, opts) end
 
 --- Gets a changed tick of a buffer

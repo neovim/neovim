@@ -2371,7 +2371,12 @@ nvim_buf_del_var({buffer}, {name})                        *nvim_buf_del_var()*
       • {name}    Variable name
 
 nvim_buf_delete({buffer}, {opts})                          *nvim_buf_delete()*
-    Deletes the buffer. See |:bwipeout|
+    Deletes a buffer and its metadata (like |:bwipeout|).
+
+    To get |:bdelete| behavior, reset 'buflisted' and pass `unload=true`: >lua
+        vim.bo.buflisted = false
+        vim.api.nvim_buf_delete(0, { unload = true })
+<
 
     Attributes: ~
         not allowed when |textlock| is active or in the |cmdwin|
@@ -2380,8 +2385,8 @@ nvim_buf_delete({buffer}, {opts})                          *nvim_buf_delete()*
     Parameters: ~
       • {buffer}  Buffer id, or 0 for current buffer
       • {opts}    Optional parameters. Keys:
-                  • force: Force deletion and ignore unsaved changes.
-                  • unload: Unloaded only, do not delete. See |:bunload|
+                  • force: Force deletion, ignore unsaved changes.
+                  • unload: Unloaded only (|:bunload|), do not delete.
 
 nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
     Deactivates buffer-update events on the channel.

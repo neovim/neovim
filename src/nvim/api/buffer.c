@@ -1002,12 +1002,18 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
   return buf && buf->b_ml.ml_mfp != NULL;
 }
 
-/// Deletes the buffer. See |:bwipeout|
+/// Deletes a buffer and its metadata (like |:bwipeout|).
+///
+/// To get |:bdelete| behavior, reset 'buflisted' and pass `unload=true`:
+/// ```lua
+/// vim.bo.buflisted = false
+/// vim.api.nvim_buf_delete(0, { unload = true })
+/// ```
 ///
 /// @param buffer Buffer id, or 0 for current buffer
 /// @param opts  Optional parameters. Keys:
-///          - force:  Force deletion and ignore unsaved changes.
-///          - unload: Unloaded only, do not delete. See |:bunload|
+///          - force:  Force deletion, ignore unsaved changes.
+///          - unload: Unloaded only (|:bunload|), do not delete.
 void nvim_buf_delete(Buffer buffer, Dict(buf_delete) *opts, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_TEXTLOCK

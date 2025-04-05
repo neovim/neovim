@@ -355,6 +355,8 @@ end
 ---   local cfg = vim.lsp.config.luals
 ---   ```
 ---
+---@since 13
+---
 --- @param name string
 --- @param cfg vim.lsp.Config
 --- @diagnostic disable-next-line:assign-type-mismatch
@@ -547,6 +549,8 @@ end
 ---   vim.lsp.enable({'luals', 'pyright'})
 --- ```
 ---
+---@since 13
+---
 --- @param name string|string[] Name(s) of client(s) to enable.
 --- @param enable? boolean `true|nil` to enable, `false` to disable.
 function lsp.enable(name, enable)
@@ -634,6 +638,8 @@ end
 --- make sure to call |vim.lsp.start()| within a |FileType| autocmd.
 --- Either use |:au|, |nvim_create_autocmd()| or put the call in a
 --- `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
+---
+--- @since 10
 ---
 --- @param config vim.lsp.ClientConfig Configuration for the server.
 --- @param opts vim.lsp.start.Opts? Optional keyword arguments.
@@ -1016,7 +1022,7 @@ function lsp.buf_is_attached(bufnr, client_id)
   return lsp.get_clients({ bufnr = bufnr, id = client_id, _uninitialized = true })[1] ~= nil
 end
 
---- Gets a client by id, or nil if the id is invalid.
+--- Gets a client by id, or nil if the id is invalid or the client was stopped.
 --- The returned client may not yet be fully initialized.
 ---
 ---@param client_id integer client id
@@ -1087,6 +1093,8 @@ end
 --- @field package _uninitialized? boolean
 
 --- Get active clients.
+---
+---@since 12
 ---
 ---@param filter? vim.lsp.get_clients.Filter
 ---@return vim.lsp.Client[]: List of |vim.lsp.Client| objects
@@ -1235,6 +1243,8 @@ end
 --- Sends an async request for all active clients attached to the buffer and executes the `handler`
 --- callback with the combined result.
 ---
+---@since 7
+---
 ---@param bufnr (integer) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params? table|(fun(client: vim.lsp.Client, bufnr: integer): table?) Parameters to send to the server.
@@ -1272,6 +1282,8 @@ end
 --- Parameters are the same as |vim.lsp.buf_request_all()| but the result is
 --- different. Waits a maximum of {timeout_ms}.
 ---
+---@since 7
+---
 ---@param bufnr integer Buffer handle, or 0 for current.
 ---@param method string LSP method name
 ---@param params? table|(fun(client: vim.lsp.Client, bufnr: integer): table?) Parameters to send to the server.
@@ -1301,6 +1313,9 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
 end
 
 --- Send a notification to a server
+---
+---@since 7
+---
 ---@param bufnr (integer|nil) The number of the buffer
 ---@param method (string) Name of the request method
 ---@param params (any) Arguments to send to the server
@@ -1455,6 +1470,8 @@ end
 ---   end,
 --- })
 --- ```
+---
+---@since 13
 ---
 ---@param kind lsp.FoldingRangeKind Kind to close, one of "comment", "imports" or "region".
 ---@param winid? integer Defaults to the current window.
