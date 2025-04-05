@@ -417,11 +417,11 @@ void remove_bom(char *s)
   }
 }
 
-// Get class of pointer:
-// 0 for blank or NUL
-// 1 for punctuation
-// 2 for an (ASCII) word character
-// >2 for other word characters
+/// Get class of pointer:
+/// 0 for blank or NUL
+/// 1 for punctuation
+/// 2 for an alphanumeric word character
+/// >2 for other word characters, including CJK and emoji
 int mb_get_class(const char *p)
   FUNC_ATTR_PURE
 {

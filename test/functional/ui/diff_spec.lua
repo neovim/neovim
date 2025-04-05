@@ -2485,6 +2485,22 @@ it('diff mode inline highlighting', function()
 
   command('windo set iskeyword& | 1wincmd w')
 
+  screen:try_resize(75, 20)
+  command('wincmd =')
+  -- word diff: test handling of multi-byte characters. Only alphanumeric chars
+  -- (e.g. Greek alphabet, but not CJK/emoji) count as words.
+  WriteDiffFiles(
+    '🚀⛵️一二三ひらがなΔέλτα Δelta foobar',
+    '🚀🛸一二四ひらなδέλτα δelta foobar'
+  )
+  command('set diffopt=internal,filler diffopt+=inline:word')
+  screen:expect([[
+    {7:  }{4:^🚀}{27:⛵️}{4:一二}{27:三}{4:ひら}{100:が}{4:な}{27:Δέλτα}{4: }{27:Δelta}{4: fooba}│{7:  }{4:🚀}{27:🛸}{4:一二}{27:四}{4:ひらな}{27:δέλτα}{4: }{27:δelta}{4: foobar }|
+    {1:~                                    }│{1:~                                    }|*17
+    {3:Xdifile1                              }{2:Xdifile2                             }|
+                                                                               |
+  ]])
+
   screen:try_resize(69, 20)
   command('wincmd =')
   -- char diff: should slide highlight to whitespace boundary if possible for

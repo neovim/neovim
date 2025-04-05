@@ -2193,6 +2193,11 @@ func Test_diff_inline()
 
   call term_sendkeys(buf, ":windo set iskeyword&\<CR>:1wincmd w\<CR>")
 
+  " word diff: test handling of multi-byte characters. Only alphanumeric chars
+  " (e.g. Greek alphabet, but not CJK/emoji) count as words.
+  call WriteDiffFiles(buf, ["🚀⛵️一二三ひらがなΔέλτα Δelta foobar"], ["🚀🛸一二四ひらなδέλτα δelta foobar"])
+  call VerifyInternal(buf, "Test_diff_inline_word_03", " diffopt+=inline:word")
+
   " char diff: should slide highlight to whitespace boundary if possible for
   " better readability (by using forced indent-heuristics). A wrong result
   " would be if the highlight is "Bar, prefix". It should be "prefixBar, "
