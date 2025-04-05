@@ -128,6 +128,9 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   end
 
   local range_hl_clear = function()
+    if not api.nvim_buf_is_valid(bufnr) then
+      return
+    end
     for _, mark in ipairs(extmarks) do
       api.nvim_buf_del_extmark(bufnr, ns, mark)
     end
