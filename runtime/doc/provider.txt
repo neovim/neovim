@@ -182,121 +182,112 @@ the "+" and/or "*" registers explicitly): >vim
 See 'clipboard' for details and options.
 
 							      *clipboard-tool*
-The presence of a working clipboard tool implicitly enables the '+' and "*"
-registers. Nvim looks for these clipboard tools, in order of priority:
+The presence of a working clipboard tool implicitly enables the "+" and "*"
+registers. Nvim supports these clipboard tools, in order of priority:
 
-  - |g:clipboard| (unless unset or `false`)
-  - pbcopy, pbpaste (macOS)
-  - wl-copy, wl-paste (if $WAYLAND_DISPLAY is set)
-  - waycopy, waypaste (if $WAYLAND_DISPLAY is set)
-  - xsel (if $DISPLAY is set)
-  - xclip (if $DISPLAY is set)
-  - lemonade (for SSH) https://github.com/pocke/lemonade
-  - doitclient (for SSH) https://www.chiark.greenend.org.uk/~sgtatham/doit/
-  - *win32yank* (Windows)
-  - putclip, getclip (Windows) https://cygwin.com/packages/summary/cygutils.html
-  - clip, powershell (Windows) https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/clip
-  - termux (via termux-clipboard-set, termux-clipboard-set)
-  - tmux (if $TMUX is set)
+- |g:clipboard| : User override (if set to a dict or any string "name" below;
+  e.g. `g:clipboard="tmux"` forces tmux clipboard and skips auto-detection).
+- "pbcopy"    : pbcopy, pbpaste (macOS)
+- "wl-copy"   : wl-copy, wl-paste (if $WAYLAND_DISPLAY is set)
+- "wayclip"   : waycopy, waypaste (if $WAYLAND_DISPLAY is set)
+- "xsel"      : xsel (if $DISPLAY is set)
+- "xclip"     : xclip (if $DISPLAY is set)
+- "lemonade"  : lemonade (for SSH) https://github.com/pocke/lemonade
+- "doitclient": doitclient (for SSH) https://www.chiark.greenend.org.uk/~sgtatham/doit/
+- "win32yank" : *win32yank* (Windows)
+- "putclip"   : putclip, getclip (Windows) https://cygwin.com/packages/summary/cygutils.html
+- "clip"      : clip, powershell (Windows) https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/clip
+- "termux"    : termux (via termux-clipboard-set, termux-clipboard-set)
+- "tmux"      : tmux (if $TMUX is set)
+- "osc52"     : |clipboard-osc52| (if supported by your terminal)
 
 								 *g:clipboard*
-To configure a custom clipboard tool, set g:clipboard to a dictionary.
-For example this configuration integrates the tmux clipboard: >vim
-
-    let g:clipboard = {
-          \   'name': 'myClipboard',
-          \   'copy': {
-          \      '+': ['tmux', 'load-buffer', '-'],
-          \      '*': ['tmux', 'load-buffer', '-'],
-          \    },
-          \   'paste': {
-          \      '+': ['tmux', 'save-buffer', '-'],
-          \      '*': ['tmux', 'save-buffer', '-'],
-          \   },
-          \   'cache_enabled': 1,
-          \ }
+To configure a custom clipboard tool, set `g:clipboard` to a string name (from
+the above |clipboard-tool| list), or dict (to explicitly specify the shell
+commands or |lambda| functions).
 
 If "cache_enabled" is |TRUE| then when a selection is copied Nvim will cache
 the selection until the copy command process dies. When pasting, if the copy
 process has not died the cached selection is applied.
 
-g:clipboard can also use functions (see |lambda|) instead of strings.
-For example this configuration uses the g:foo variable as a fake clipboard:
->vim
-
-    let g:clipboard = {
-          \   'name': 'myClipboard',
-          \   'copy': {
-          \      '+': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
-          \      '*': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
-          \    },
-          \   'paste': {
-          \      '+': {-> get(g:, 'foo', [])},
-          \      '*': {-> get(g:, 'foo', [])},
-          \   },
-          \ }
-
 The "copy" function stores a list of lines and the register type. The "paste"
 function returns the clipboard as a `[lines, regtype]` list, where `lines` is
 a list of lines and `regtype` is a register type conforming to |setreg()|.
 
-Nvim also supports setting g:clipboard to a string to use a builtin clipboard provider:
+Example: set to "osc52" to force OSC52, skipping auto-detection of terminal
+support: >vim
 
-  - "tmux"           - Use tmux clipboard
-  - "xclip"          - Use xclip for X11 clipboard
-  - "xsel"           - Use xsel for X11 clipboard
-  - "wl-copy"        - Use Wayland clipboard with wl-copy/wl-paste
-  - "wayclip"        - Use Wayland clipboard with waycopy/waypaste
-  - "lemonade"       - Use lemonade clipboard (for SSH)
-  - "doitclient"     - Use doitclient clipboard (for SSH)
-  - "win32yank"      - Use win32yank clipboard (for Windows)
-  - "clip"           - Use clip/powershell clipboard (for Windows)
-  - "putclip"        - Use putclip/getclip clipboard (for Windows/Cygwin)
-  - "termux"         - Use Termux clipboard
-  - "pbcopy"         - Use macOS clipboard
-  - "osc52"          - Use OSC 52 sequence
+    let g:clipboard = 'osc52'
 
-Example: >vim
-    let g:clipboard = 'tmux'
+Example: set to "wayclip" to force waycopy/waypaste: >vim
 
-This is equivalent to using the full dictionary configuration for tmux shown above.
+    let g:clipboard = 'wayclip'
 
+Example: set to a dict which integrates the tmux clipboard: >vim
+
+    let g:clipboard = {
+      \   'name': 'myClipboard',
+      \   'copy': {
+      \      '+': ['tmux', 'load-buffer', '-'],
+      \      '*': ['tmux', 'load-buffer', '-'],
+      \    },
+      \   'paste': {
+      \      '+': ['tmux', 'save-buffer', '-'],
+      \      '*': ['tmux', 'save-buffer', '-'],
+      \   },
+      \   'cache_enabled': 1,
+      \ }
+
+
+Example: set to a dict which uses g:foo as a fake clipboard: >vim
+
+    let g:clipboard = {
+      \   'name': 'myClipboard',
+      \   'copy': {
+      \      '+': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
+      \      '*': {lines, regtype -> extend(g:, {'foo': [lines, regtype]}) },
+      \    },
+      \   'paste': {
+      \      '+': {-> get(g:, 'foo', [])},
+      \      '*': {-> get(g:, 'foo', [])},
+      \   },
+      \ }
+<
 							      *clipboard-wsl*
 For Windows WSL, try this g:clipboard definition:
 >vim
     let g:clipboard = {
-                \   'name': 'WslClipboard',
-                \   'copy': {
-                \      '+': 'clip.exe',
-                \      '*': 'clip.exe',
-                \    },
-                \   'paste': {
-                \      '+': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-                \      '*': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-                \   },
-                \   'cache_enabled': 0,
-                \ }
+      \   'name': 'WslClipboard',
+      \   'copy': {
+      \      '+': 'clip.exe',
+      \      '*': 'clip.exe',
+      \    },
+      \   'paste': {
+      \      '+': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+      \      '*': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+      \   },
+      \   'cache_enabled': 0,
+      \ }
 <
 							    *clipboard-osc52*
 Nvim bundles a clipboard provider that allows copying to the system clipboard
-using OSC 52. OSC 52 is an Operating System Command control sequence that
-causes the terminal emulator to write to or read from the system clipboard.
+using OSC 52, an "Operating System Command" control-sequence that causes the
+terminal emulator to write to or read from the system clipboard.
 
-When Nvim is running in the |TUI|, it will automatically attempt to determine if
-the host terminal emulator supports OSC 52. If it does, then Nvim will use OSC
-52 for copying and pasting if no other |clipboard-tool| is found and when
-'clipboard' is unset. NOTE: Using a terminal multiplexer (e.g. tmux) may
-inhibit automatic OSC 52 support detection.
+When Nvim is running in the |TUI|, it automatically detects host terminal
+support for OSC 52. If successful, then Nvim will use OSC 52 for copying and
+pasting if no other |clipboard-tool| is found and when 'clipboard' is unset.
+NOTE: Using a terminal multiplexer (e.g. tmux) may inhibit automatic OSC 52
+support detection.
 
 							*g:termfeatures*
 To disable the automatic detection, set the "osc52" key of |g:termfeatures| to
-|v:false| in the |config| file. Example: >lua
+false early in your |config|. Example: >lua
 	local termfeatures = vim.g.termfeatures or {}
 	termfeatures.osc52 = false
 	vim.g.termfeatures = termfeatures
 <
-To force Nvim to always use the OSC 52 provider you can use the following
-|g:clipboard| definition: >lua
+To force Nvim to use the OSC 52 provider you can set |g:clipboard|: >lua
 
     vim.g.clipboard = 'osc52'
 
@@ -313,7 +304,7 @@ Which is equivalent to: >lua
       },
     }
 <
-Note that not all terminal emulators support reading from the system clipboard
+Note: not all terminal emulators support reading from the system clipboard
 (and even for those that do, users should be aware of the security
 implications), so using OSC 52 for pasting may not be possible (and not
 necessary, because you can |paste| instead using your system paste function).
