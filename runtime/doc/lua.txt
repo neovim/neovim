@@ -3973,7 +3973,7 @@ vim.version.range({spec})                                *vim.version.range()*
 <
 
     `:has()` checks if a version is in the range (inclusive `from`, exclusive
-    `to`).
+    `to`. If `from` and `to` are the same, then 'to' will be inclusive).
 
     Example: >lua
         local r = vim.version.range('1.0.0 - 2.0.0')

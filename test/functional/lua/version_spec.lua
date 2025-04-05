@@ -55,9 +55,9 @@ describe('version', function()
 
   describe('range', function()
     local tests = {
-      ['1.2.3'] = { from = { 1, 2, 3 }, to = { 1, 2, 4 } },
+      ['1.2.3'] = { from = { 1, 2, 3 }, to = { 1, 2, 3 } },
       ['1.2'] = { from = { 1, 2, 0 }, to = { 1, 3, 0 } },
-      ['=1.2.3'] = { from = { 1, 2, 3 }, to = { 1, 2, 4 } },
+      ['=1.2.3'] = { from = { 1, 2, 3 }, to = { 1, 2, 3 } },
       ['>1.2.3'] = { from = { 1, 2, 4 } },
       ['>=1.2.3'] = { from = { 1, 2, 3 } },
       ['<1.2.3'] = { from = { 0, 0, 0 }, to = { 1, 2, 3 } },
@@ -100,17 +100,31 @@ describe('version', function()
       end)
 
       it('[to] not in range ' .. input .. ' to:' .. tostring(range.to), function()
-        if range.to then
+        if range.to and range.to ~= range.from then
           assert(not (range.to < range.to))
           assert(not range:has(range.to))
+        end
+      end)
+
+      it('[to] in range ' .. input .. ' to:' .. tostring(range.to), function()
+        if range.to and range.to == range.from then
+          assert(range:has(range.to))
         end
       end)
     end
 
     it('handles prerelease', function()
-      assert(not vim.version.range('1.2.3'):has('1.2.3-alpha'))
-      assert(vim.version.range('1.2.3-alpha'):has('1.2.3-alpha'))
-      assert(not vim.version.range('1.2.3-alpha'):has('1.2.3-beta'))
+      assert(not vim.version.range('1.2.3'):has('1.2.3-alpha'), '1.2.3 should not have 1.2.3-alpha')
+      assert(
+        vim.version.range('1.2.3-alpha'):has('1.2.3-alpha'),
+        '1.2.3-alpha should have 1.2.3-alpha'
+      )
+      assert(
+        not vim.version.range('1.2.3-alpha'):has('1.2.3-beta'),
+        '1.2.3-alpha should not have 1.2.3-beta'
+      )
+      assert(vim.version.range('>0.10'):has('0.12.0-dev'), '>0.10 should have 0.12.0-dev')
+      assert(not vim.version.range('>=0.12'):has('0.12.0-dev'), '>=0.12 should not have 0.12.0-dev')
     end)
 
     it('returns nil with empty version', function()
