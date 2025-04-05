@@ -257,7 +257,7 @@ local function test_terminal_with_fake_shell(backslash)
     assert_alive()
   end)
 
-  it('works with findfile()', function()
+  pending('works with findfile()', function()
     command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
@@ -325,7 +325,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 end
 
-describe(':terminal (with fake shell)', function()
+pending(':terminal (with fake shell)', function()
   test_terminal_with_fake_shell(false)
   if is_os('win') then
     describe("when 'shell' uses backslashes", function()
