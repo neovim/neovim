@@ -114,7 +114,7 @@ describe('Diff mode screen with 3 diffs open', function()
       {7:  }{8:  5 }{4:    }{27:BBB}{4:                    }│{7:  }{8:  7 }{4:    }{27:BBB}{4:                   }│{7:  }{8:  5 }{4:    }{27:AAA}{4:                    }|
       {7:  }{8:    }{23:---------------------------}│{7:  }{8:  8 }{22:>>>>>>> branch1           }│{7:  }{8:    }{23:---------------------------}|
       {1:~                                }│{1:~                               }│{1:~                                }|*6
-      {2:<test-functional-diff-screen-1.3  }{3:<functional-diff-screen-1.2 [+]  }{2:Xtest-functional-diff-screen-1   }|
+      {2:Xtest-functional-diff-screen-1.3  }{3:<functional-diff-screen-1.2 [+]  }{2:Xtest-functional-diff-screen-1   }|
       :5,7diffget screen-1.3                                                                              |
       ]])
       end)
@@ -135,7 +135,7 @@ describe('Diff mode screen with 3 diffs open', function()
       {7:  }{8:  5 }    BBB                    │{7:  }{8: 10 }    BBB                   │{7:  }{8:  9 }    BBB                    |
       {7:  }{8:    }{23:---------------------------}│{7:  }{8: 11 }{4:>>>>>>> branch1           }│{7:  }{8: 10 }{4:>>>>>>> branch1            }|
       {1:~                                }│{1:~                               }│{1:~                                }|*3
-      {2:<test-functional-diff-screen-1.3  <est-functional-diff-screen-1.2  }{3:<st-functional-diff-screen-1 [+] }|
+      {2:Xtest-functional-diff-screen-1.3  <est-functional-diff-screen-1.2  }{3:<st-functional-diff-screen-1 [+] }|
       :5,6diffget screen-1.2                                                                              |
       ]])
       end)
@@ -156,7 +156,7 @@ describe('Diff mode screen with 3 diffs open', function()
       {7:  }{8:  5 }    BBB                    │{7:  }{8: 10 }    BBB                   │{7:  }{8:  7 }    BBB                    |
       {7:  }{8:    }{23:---------------------------}│{7:  }{8: 11 }{22:>>>>>>> branch1           }│{7:  }{8:    }{23:---------------------------}|
       {1:~                                }│{1:~                               }│{1:~                                }|*3
-      {2:<test-functional-diff-screen-1.3  }{3:<est-functional-diff-screen-1.2  }{2:<st-functional-diff-screen-1 [+] }|
+      {2:Xtest-functional-diff-screen-1.3  }{3:<est-functional-diff-screen-1.2  }{2:<st-functional-diff-screen-1 [+] }|
       :6,8diffput screen-1                                                                                |
       ]])
       end)
@@ -176,7 +176,7 @@ describe('Diff mode screen with 3 diffs open', function()
       {7:  }{8:  5 }    BBB                    │{7:  }{8: 10 }    BBB                   │{7:  }{8:  9 }    BBB                    |
       {7:  }{8:    }{23:---------------------------}│{7:  }{8: 11 }{4:>>>>>>> branch1           }│{7:  }{8: 10 }{4:>>>>>>> branch1            }|
       {1:~                                }│{1:~                               }│{1:~                                }|*3
-      {2:<test-functional-diff-screen-1.3  }{3:<est-functional-diff-screen-1.2  }{2:<st-functional-diff-screen-1 [+] }|
+      {2:Xtest-functional-diff-screen-1.3  }{3:<est-functional-diff-screen-1.2  }{2:<st-functional-diff-screen-1 [+] }|
       :6,11diffput screen-1                                                                               |
       ]])
       end)
