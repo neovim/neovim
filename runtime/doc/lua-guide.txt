@@ -31,7 +31,7 @@ with Nvim through Lua (the "API"). This API consists of three different
 layers:
 
 1. The "Vim API" inherited from Vim: |Ex-commands| and |builtin-functions| as
-well as |user-function|s in Vimscript. These are accessed through |vim.cmd()|
+well as |user-functions| in Vimscript. These are accessed through |vim.cmd()|
 and |vim.fn| respectively, which are discussed under |lua-guide-vimscript|
 below.
 
@@ -226,7 +226,7 @@ Vimscript are automatically converted:
 
     vim.fn.jobstart('ls', { on_stdout = print_stdout })
 <
-This works for both |builtin-functions| and |user-function|s.
+This works for both |builtin-functions| and |user-functions|.
 
 Note that hashes (`#`) are not valid characters for identifiers in Lua, so,
 e.g., |autoload| functions have to be called with this syntax:
