@@ -1,0 +1,73 @@
+name: windows
+on:
+  workflow_call:
+    inputs:
+      build_flags:
+        type: string
+      functionaltest_timeout:
+        default: 20
+        type: number
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [functional, old]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - name: Build deps
+        run: |
+          cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
+          cmake --build .deps
+
+      - name: Build
+        run: |
+          cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo' ${{ inputs.build_flags }}
+          cmake --build build
+
+      - name: Install test deps
+        run: |
+          $PSNativeCommandArgumentPassing = 'Legacy'
+
+          & build\bin\nvim.exe "--version"
+
+          # Ensure that the "win32" feature is set.
+          & build\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"'
+
+          python -m pip install pynvim
+          # Sanity check
+          python -c "import pynvim; print(str(pynvim))"
+
+          node --version
+          npm.cmd --version
+
+          npm.cmd install -g neovim
+          Get-Command -CommandType Application neovim-node-host.cmd
+          npm.cmd link neovim
+
+      - if: ${{ matrix.test == 'functional' }}
+        name: functionaltest
+        timeout-minutes: ${{ inputs.functionaltest_timeout }}
+        run: cmake --build build --target functionaltest
+
+      - if: ${{ matrix.test == 'old' }}
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: unzip
+          pacboy: >-
+            make:p gcc:p diffutils:p
+          release: false
+
+      - if: ${{ matrix.test == 'old' }}
+        name: oldtest
+        shell: msys2 {0}
+        run: |
+          cd test/old/testdir
+          mingw32-make VERBOSE=1

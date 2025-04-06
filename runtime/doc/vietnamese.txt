@@ -1,0 +1,73 @@
+*vietnamese.txt*   Nvim
+
+
+		  VIM REFERENCE MANUAL    by Phạm Bình An
+
+                                      Type |gO| to see the table of contents.
+
+===============================================================================
+1. Introduction
+							*vietnamese-intro*
+Vim supports Vietnamese language in the following ways:
+
+- Built-in |vietnamese-keymap|, which allows you to type Vietnamese characters
+  in |Insert-mode| and |search-commands| using US keyboard layout.
+- Localization in Vietnamese. See |vietnamese-l10n|
+
+===============================================================================
+2. Vietnamese keymaps
+							*vietnamese-keymap*
+To switch between languages you can use your system native keyboard switcher,
+or use one of the Vietnamese keymaps included in the Vim distribution, like
+below >
+    :set keymap=vietnamese-telex_utf-8
+<
+See |'keymap'| for more information.
+
+In the latter case, you can type Vietnamese even if you do not have a
+Vietnamese input method engine (IME) or you want Vim to be independent from a
+system-wide keyboard settings (when |'imdisable'| is set). You can also |:map|
+a key to switch between keyboards.
+
+Vim comes with the following Vietnamese keymaps:
+- *vietnamese-telex_utf-8*	Telex input method, |UTF-8| encoding.
+- *vietnamese-viqr_utf-8*	VIQR input method, |UTF-8| encoding.
+- *vietnamese-vni_utf-8*	VNI input method, |UTF-8| encoding.
+
+                                                   *vietnamese-ime_diff*
+Since these keymaps were designed to be minimalistic, they do not support all
+features of the corresponding input methods. The differences are described
+below:
+
+- You can only type each character individually, entering the base letter first
+  and then the diacritics later.  For example, to type the word `nến` using
+  |vietnamese-vni_utf-8|, you must type `ne61n`, not `nen61` or `ne6n1`
+- For characters with more than 1 diacritic, you need to type vowel mark before
+  tone mark. For example, to type `ồ` using |vietnamese-telex_utf-8|, you need
+  to type `oof`, not `ofo`.
+- With |vietnamese-telex_utf-8|, you need to type all uppercase letters to
+  produce uppercase characters with diacritics. For example, `Ừ` must be typed
+  as `UWF`.
+- With |vietnamese-telex_utf-8|, the escape character `\` from VNI is added,
+  hence the confusing `ooo` input to type `oo` is removed, which could lead to
+  ambiguities.  For example, to type the word `Đoòng`, you would type
+  `DDo\ofng`.
+- Simple Telex (both v1 and v2), including the `w[]{}` style, is not
+  supported.
+- Removing diacritics using `z` in Telex or `0` in VNI and VIQR is not supported.
+
+===============================================================================
+3. Localization
+							*vietnamese-l10n*
+Vim |messages| are also available in Vietnamese.  If you wish to see messages
+in Vietnamese, you can run the command |:language| with an argument being the
+name of the Vietnamese locale.  For example, >
+	:language vi_VN
+< or >
+	:language vi_VN.utf-8
+<
+Note that the name of the Vietnamese locale may vary depending on your system.
+See |mbyte-first| for details.
+
+===============================================================================
+vim:tw=78:ts=8:noet:ft=help:norl:

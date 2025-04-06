@@ -1,0 +1,20 @@
+add_library(test_lib INTERFACE)
+if(WIN32)
+  target_compile_definitions(test_lib INTERFACE MSWIN)
+endif()
+target_link_libraries(test_lib INTERFACE nvim_bin)
+
+add_executable(tty-test EXCLUDE_FROM_ALL tty-test.c)
+add_executable(shell-test EXCLUDE_FROM_ALL shell-test.c)
+# Fake pwsh (powershell) for testing make_filter_cmd(). #16271
+add_executable(pwsh-test EXCLUDE_FROM_ALL shell-test.c)
+add_executable(printargs-test EXCLUDE_FROM_ALL printargs-test.c)
+add_executable(printenv-test EXCLUDE_FROM_ALL printenv-test.c)
+add_executable(streams-test EXCLUDE_FROM_ALL streams-test.c)
+
+target_link_libraries(tty-test PRIVATE test_lib)
+target_link_libraries(shell-test PRIVATE test_lib)
+target_link_libraries(pwsh-test PRIVATE test_lib)
+target_link_libraries(printargs-test PRIVATE test_lib)
+target_link_libraries(printenv-test PRIVATE test_lib)
+target_link_libraries(streams-test PRIVATE test_lib)

@@ -1,0 +1,643 @@
+*usr_30.txt*	Nvim
+
+		     VIM USER MANUAL - by Bram Moolenaar
+
+			      Editing programs
+
+
+Vim has various commands that aid in writing computer programs.  Compile a
+program and directly jump to reported errors.  Automatically set the indent
+for many languages and format comments.
+
+|30.1|	Compiling
+|30.2|	Indenting C files
+|30.3|	Automatic indenting
+|30.4|	Other indenting
+|30.5|	Tabs and spaces
+|30.6|	Formatting comments
+
+     Next chapter: |usr_31.txt|  Exploiting the GUI
+ Previous chapter: |usr_29.txt|  Moving through programs
+Table of contents: |usr_toc.txt|
+
+==============================================================================
+*30.1*	Compiling
+
+Vim has a set of so called "quickfix" commands.  They enable you to compile a
+program from within Vim and then go through the errors generated and fix them
+(hopefully).  You can then recompile and fix any new errors that are found
+until finally your program compiles without any error.
+
+The following command runs the program "make" (supplying it with any argument
+you give) and captures the results: >
+
+	:make {arguments}
+
+If errors were generated, they are captured and the editor positions you where
+the first error occurred.
+   Take a look at an example ":make" session.  (Typical :make sessions generate
+far more errors and fewer stupid ones.)  After typing ":make" the screen looks
+like this:
+
+	:!make | &tee /tmp/vim215953.err ~
+	gcc -g -Wall -o prog main.c sub.c ~
+	main.c: In function 'main': ~
+	main.c:6: too many arguments to function 'do_sub' ~
+	main.c: At top level: ~
+	main.c:10: parse error before '}' ~
+	make: *** [prog] Error 1 ~
+
+	2 returned ~
+	"main.c" 11L, 111C ~
+	(3 of 6): too many arguments to function 'do_sub' ~
+	Press ENTER or type command to continue ~
+
+From this you can see that you have errors in the file "main.c".  When you
+press <Enter>, Vim displays the file "main.c", with the cursor positioned on
+line 6, the first line with an error.  You did not need to specify the file or
+the line number, Vim knew where to go by looking in the error messages.
+>
+		+---------------------------------------------------+
+		|int main()					    |
+		|{						    |
+		|	int i=3;				    |
+      cursor -> |	do_sub("foo");				    |
+		|	++i;					    |
+		|	return (0);				    |
+		|}						    |
+		|}						    |
+		| ~						    |
+		|(3 of 12): too many arguments to function 'do_sub' |
+		+---------------------------------------------------+
+<
+The following command goes to where the next error occurs: >
+
+	:cnext
+
+Vim jumps to line 10, the last line in the file, where there is an extra '}'.
+   When there is not enough room, Vim will shorten the error message.  To see
+the whole message use: >
+
+	:cc
+
+You can get an overview of all the error messages with the ":clist" command.
+The output looks like this: >
+
+	:clist
+<	3 main.c: 6:too many arguments to function 'do_sub' ~
+	5 main.c: 10:parse error before '}' ~
+
+Only the lines where Vim recognized a file name and line number are listed
+here.  It assumes those are the interesting lines and the rest is just boring
+messages.  However, sometimes unrecognized lines do contain something you want
+to see.  Output from the linker, for example, about an undefined function.
+To see all the messages add a "!" to the command: >
+
+	:clist!
+<	1 gcc -g -Wall -o prog main.c sub.c ~
+	2 main.c: In function 'main': ~
+	3 main.c:6: too many arguments to function 'do_sub' ~
+	4 main.c: At top level: ~
+	5 main.c:10: parse error before '}' ~
+	6 make: *** [prog] Error 1 ~
+
+Vim will highlight the current error.  To go back to the previous error, use:
+>
+	:cprevious
+
+Other commands to move around in the error list:
+
+	:cfirst		to first error
+	:clast		to last error
+	:cc 3		to error nr 3
+
+
+USING ANOTHER COMPILER
+
+The name of the program to run when the ":make" command is executed is defined
+by the 'makeprg' option.  Usually this is set to "make", but Visual C++ users
+should set this to "nmake" by executing the following command: >
+
+	:set makeprg=nmake
+
+You can also include arguments in this option.  Special characters need to
+be escaped with a backslash.  Example: >
+
+	:set makeprg=nmake\ -f\ project.mak
+
+You can include special Vim keywords in the command specification.  The %
+character expands to the name of the current file.  So if you execute the
+command: >
+	:set makeprg=make\ %:S
+
+When you are editing main.c, then ":make" executes the following command: >
+
+	make main.c
+
+This is not too useful, so you will refine the command a little and use the :r
+(root) modifier: >
+
+	:set makeprg=make\ %:r:S.o
+
+Now the command executed is as follows: >
+
+	make main.o
+
+More about these modifiers here: |filename-modifiers|.
+
+
+OLD ERROR LISTS
+
+Suppose you ":make" a program.  There is a warning message in one file and an
+error message in another.  You fix the error and use ":make" again to check if
+it was really fixed.  Now you want to look at the warning message.  It doesn't
+show up in the last error list, since the file with the warning wasn't
+compiled again.  You can go back to the previous error list with: >
+
+	:colder
+
+Then use ":clist" and ":cc {nr}" to jump to the place with the warning.
+   To go forward to the next error list: >
+
+	:cnewer
+
+Vim remembers ten error lists.
+
+
+SWITCHING COMPILERS
+
+You have to tell Vim what format the error messages are that your compiler
+produces.  This is done with the 'errorformat' option.  The syntax of this
+option is quite complicated and it can be made to fit almost any compiler.
+You can find the explanation here: |errorformat|.
+
+You might be using various different compilers.  Setting the 'makeprg' option,
+and especially the 'errorformat' each time is not easy.  Vim offers a simple
+method for this.  For example, to switch to using the Microsoft Visual C++
+compiler: >
+
+	:compiler msvc
+
+This will find the Vim script for the "msvc" compiler and set the appropriate
+options.
+   You can write your own compiler files.  See |write-compiler-plugin|.
+
+
+OUTPUT REDIRECTION
+
+The ":make" command redirects the output of the executed program to an error
+file.  How this works depends on various things, such as the 'shell'.  If your
+":make" command doesn't capture the output, check the 'makeef' and
+'shellpipe' options.  The 'shellquote' and 'shellxquote' options might also
+matter.
+
+In case you can't get ":make" to redirect the file for you, an alternative is
+to compile the program in another window and redirect the output into a file.
+Then have Vim read this file with: >
+
+	:cfile {filename}
+
+Jumping to errors will work like with the ":make" command.
+
+==============================================================================
+*30.2*	Indenting C style text
+
+A program is much easier to understand when the lines have been properly
+indented.  Vim offers various ways to make this less work.  For C or C style
+programs like Java or C++, set the 'cindent' option.  Vim knows a lot about C
+programs and will try very hard to automatically set the indent for you.  Set
+the 'shiftwidth' option to the amount of spaces you want for a deeper level.
+Four spaces will work fine.  One ":set" command will do it: >
+
+	:set cindent shiftwidth=4
+
+With this option enabled, when you type something such as "if (x)", the next
+line will automatically be indented an additional level.
+
+				    if (flag)
+	Automatic indent   --->		do_the_work();
+	Automatic unindent <--	    if (other_flag) {
+	Automatic indent   --->		do_file();
+	keep indent			do_some_more();
+	Automatic unindent <--	    }
+
+When you type something in curly braces ({}), the text will be indented at the
+start and unindented at the end.  The unindenting will happen after typing the
+'}', since Vim can't guess what you are going to type.
+
+One side effect of automatic indentation is that it helps you catch errors in
+your code early.  When you type a } to finish a function, only to find that
+the automatic indentation gives it more indent than what you expected, there
+is probably a } missing.  Use the "%" command to find out which { matches the
+} you typed.
+   A missing ) and ; also cause extra indent.  Thus if you get more white
+space than you would expect, check the preceding lines.
+
+When you have code that is badly formatted, or you inserted and deleted lines,
+you need to re-indent the lines.  The "=" operator does this.  The simplest
+form is: >
+
+	==
+
+This indents the current line.  Like with all operators, there are three ways
+to use it.  In Visual mode "=" indents the selected lines.  A useful text
+object is "a{".  This selects the current {} block.  Thus, to re-indent the
+code block the cursor is in: >
+
+	=a{
+
+If you have really badly indented code, you can re-indent the whole file with:
+>
+	gg=G
+
+However, don't do this in files that have been carefully indented manually.
+The automatic indenting does a good job, but in some situations you might want
+to overrule it.
+
+
+SETTING INDENT STYLE
+
+Different people have different styles of indentation.  By default Vim does a
+pretty good job of indenting in a way that 90% of programmers do.  There are
+different styles, however; so if you want to, you can customize the
+indentation style with the 'cinoptions' option.
+   By default 'cinoptions' is empty and Vim uses the default style.  You can
+add various items where you want something different.  For example, to make
+curly braces be placed like this:
+
+	if (flag) ~
+	  { ~
+	    i = 8; ~
+	    j = 0; ~
+	  } ~
+
+Use this command: >
+
+	:set cinoptions+={2
+
+There are many of these items.  See |cinoptions-values|.
+
+==============================================================================
+*30.3*	Automatic indenting
+
+You don't want to switch on the 'cindent' option manually every time you edit
+a C file.  This is how you make it work automatically: >
+
+	:filetype indent on
+
+Actually, this does a lot more than switching on 'cindent' for C files.  First
+of all, it enables detecting the type of a file.  That's the same as what is
+used for syntax highlighting.
+   When the filetype is known, Vim will search for an indent file for this
+type of file.  The Vim distribution includes a number of these for various
+programming languages.  This indent file will then prepare for automatic
+indenting specifically for this file.
+
+If you don't like the automatic indenting, you can switch it off again: >
+
+	:filetype indent off
+
+If you don't like the indenting for one specific type of file, this is how you
+avoid it.  Create a file with just this one line: >
+
+	:let b:did_indent = 1
+
+Now you need to write this in a file with a specific name:
+
+	{directory}/indent/{filetype}.vim
+
+The {filetype} is the name of the file type, such as "cpp" or "java".  You can
+see the exact name that Vim detected with this command: >
+
+	:set filetype
+
+In this file the output is:
+
+	filetype=help ~
+
+Thus you would use "help" for {filetype}.
+   For the {directory} part you need to use your runtime directory.  Look at
+the output of this command: >
+
+	set runtimepath
+
+Now use the first item, the name before the first comma.  Thus if the output
+looks like this:
+
+	runtimepath=~/.config/nvim,/usr/local/share/vim/vim60/runtime,~/.config/nvim/after ~
+
+You use "~/.config/nvim" for {directory}.  Then the resulting file name is:
+
+	~/.config/nvim/indent/help.vim ~
+
+Instead of switching the indenting off, you could write your own indent file.
+How to do that is explained here: |indent-expression|.
+
+==============================================================================
+*30.4*	Other indenting
+
+The simplest form of automatic indenting is with the 'autoindent' option.
+It uses the indent from the previous line.  A bit smarter is the 'smartindent'
+option.  This is useful for languages where no indent file is available.
+'smartindent' is not as smart as 'cindent', but smarter than 'autoindent'.
+   With 'smartindent' set, an extra level of indentation is added for each {
+and removed for each }.  An extra level of indentation will also be added for
+any of the words in the 'cinwords' option.  Lines that begin with # are
+treated specially: all indentation is removed.  This is done so that
+preprocessor directives will all start in column 1.  The indentation is
+restored for the next line.
+
+
+CORRECTING INDENTS
+
+When you are using 'autoindent' or 'smartindent' to get the indent of the
+previous line, there will be many times when you need to add or remove one
+'shiftwidth' worth of indent.  A quick way to do this is using the CTRL-D and
+CTRL-T commands in Insert mode.
+   For example, you are typing a shell script that is supposed to look like
+this:
+
+	if test -n a; then ~
+	   echo a ~
+	   echo "-------" ~
+	fi ~
+
+Start off by setting these options: >
+
+	:set autoindent shiftwidth=3
+
+You start by typing the first line, <Enter> and the start of the second line:
+
+	if test -n a; then ~
+	echo ~
+
+Now you see that you need an extra indent.  Type CTRL-T.  The result:
+
+	if test -n a; then ~
+	   echo ~
+
+The CTRL-T command, in Insert mode, adds one 'shiftwidth' to the indent, no
+matter where in the line you are.
+   You continue typing the second line, <Enter> and the third line.  This time
+the indent is OK.  Then <Enter> and the last line.  Now you have this:
+
+	if test -n a; then ~
+	   echo a ~
+	   echo "-------" ~
+	   fi ~
+
+To remove the superfluous indent in the last line press CTRL-D.  This deletes
+one 'shiftwidth' worth of indent, no matter where you are in the line.
+   When you are in Normal mode, you can use the ">>" and "<<" commands to
+shift lines.  ">" and "<" are operators, thus you have the usual three ways to
+specify the lines you want to indent.  A useful combination is: >
+
+	>i{
+
+This adds one indent to the current block of lines, inside {}.  The { and }
+lines themselves are left unmodified.  ">a{" includes them.  In this example
+the cursor is on "printf":
+
+	original text		after ">i{"		after ">a{"
+
+	if (flag)		if (flag)		if (flag) ~
+	{			{			    { ~
+	printf("yes");		    printf("yes");	    printf("yes"); ~
+	flag = 0;		    flag = 0;		    flag = 0;  ~
+	}			}			    } ~
+
+==============================================================================
+*30.5*	Tabs and spaces
+
+'tabstop' is set to eight by default.  Although you can change it, you quickly
+run into trouble later.  Other programs won't know what tabstop value you
+used.  They probably use the default value of eight, and your text suddenly
+looks very different.  Also, most printers use a fixed tabstop value of eight.
+Thus it's best to keep 'tabstop' alone.  (If you edit a file which was written
+with a different tabstop setting, see |25.3| for how to fix that.)
+   For indenting lines in a program, using a multiple of eight spaces makes
+you quickly run into the right border of the window.  Using a single space
+doesn't provide enough visual difference.  Many people prefer to use four
+spaces, a good compromise.
+   Since a <Tab> is eight spaces and you want to use an indent of four spaces,
+you can't use a <Tab> character to make your indent.  There are two ways to
+handle this:
+
+1.  Use a mix of <Tab> and space characters.  Since a <Tab> takes the place of
+    eight spaces, you have fewer characters in your file.  Inserting a <Tab>
+    is quicker than eight spaces.  Backspacing works faster as well.
+
+2.  Use spaces only.  This avoids the trouble with programs that use a
+    different tabstop value.
+
+Fortunately, Vim supports both methods quite well.
+
+
+SPACES AND TABS
+
+If you are using a combination of tabs and spaces, you just edit normally.
+The Vim defaults do a fine job of handling things.
+   You can make life a little easier by setting the 'softtabstop' option.
+This option tells Vim to make the <Tab> key look and feel as if tabs were set
+at the value of 'softtabstop', but actually use a combination of tabs and
+spaces.
+   After you execute the following command, every time you press the <Tab> key
+the cursor moves to the next 4-column boundary: >
+
+	:set softtabstop=4
+
+When you start in the first column and press <Tab>, you get 4 spaces inserted
+in your text.  The second time, Vim takes out the 4 spaces and puts in a <Tab>
+(thus taking you to column 8).  Thus Vim uses as many <Tab>s as possible, and
+then fills up with spaces.
+   When backspacing it works the other way around.  A <BS> will always delete
+the amount specified with 'softtabstop'.  Then <Tab>s are used as many as
+possible and spaces to fill the gap.
+   The following shows what happens pressing <Tab> a few times, and then using
+<BS>.  A "." stands for a space and "------->" for a <Tab>.
+
+	type			  result ~
+	<Tab>			  ....
+	<Tab><Tab>		  ------->
+	<Tab><Tab><Tab>		  ------->....
+	<Tab><Tab><Tab><BS>	  ------->
+	<Tab><Tab><Tab><BS><BS>   ....
+
+An alternative is to use the 'smarttab' option.  When it's set, Vim uses
+'shiftwidth' for a <Tab> typed in the indent of a line, and a real <Tab> when
+typed after the first non-blank character.  However, <BS> doesn't work like
+with 'softtabstop'.
+
+
+JUST SPACES
+
+If you want absolutely no tabs in your file, you can set the 'expandtab'
+option: >
+
+	:set expandtab
+
+When this option is set, the <Tab> key inserts a series of spaces.  Thus you
+get the same amount of white space as if a <Tab> character was inserted, but
+there isn't a real <Tab> character in your file.
+   The backspace key will delete each space by itself.  Thus after typing one
+<Tab> you have to press the <BS> key up to eight times to undo it.  If you are
+in the indent, pressing CTRL-D will be a lot quicker.
+
+
+CHANGING TABS IN SPACES (AND BACK)
+
+Setting 'expandtab' does not affect any existing tabs.  In other words, any
+tabs in the document remain tabs.  If you want to convert tabs to spaces, use
+the ":retab" command.  Use these commands: >
+
+	:set expandtab
+	:%retab
+
+Now Vim will have changed all indents to use spaces instead of tabs.  However,
+all tabs that come after a non-blank character are kept.  If you want these to
+be converted as well, add a !: >
+
+	:%retab!
+
+This is a little bit dangerous, because it can also change tabs inside a
+string.  To check if these exist, you could use this: >
+
+	/"[^"\t]*\t[^"]*"
+
+It's recommended not to use hard tabs inside a string.  Replace them with
+"\t" to avoid trouble.
+
+The other way around works just as well: >
+
+	:set noexpandtab
+	:%retab!
+
+==============================================================================
+*30.6*	Formatting comments
+
+One of the great things about Vim is that it understands comments.  You can
+ask Vim to format a comment and it will do the right thing.
+   Suppose, for example, that you have the following comment: >c
+
+	/*
+	 * This is a test
+	 * of the text formatting.
+	 */
+
+You then ask Vim to format it by positioning the cursor at the start of the
+comment and type: >
+
+	gq]/
+
+"gq" is the operator to format text.  "]/" is the motion that takes you to the
+end of a comment.  The result is: >c
+
+	/*
+	 * This is a test of the text formatting.
+	 */
+
+Notice that Vim properly handled the beginning of each line.
+  An alternative is to select the text that is to be formatted in Visual mode
+and type "gq".
+
+To add a new line to the comment, position the cursor on the middle line and
+press "o".  The result looks like this: >c
+
+	/*
+	 * This is a test of the text formatting.
+	 *
+	 */
+
+Vim has automatically inserted a star and a space for you.  Now you can type
+the comment text.  When it gets longer than 'textwidth', Vim will break the
+line.  Again, the star is inserted automatically: >c
+
+	/*
+	 * This is a test of the text formatting.
+	 * Typing a lot of text here will make Vim
+	 * break
+	 */
+
+For this to work some flags must be present in 'formatoptions':
+
+	r	insert the star when typing <Enter> in Insert mode
+	o	insert the star when using "o" or "O" in Normal mode
+	c	break comment text according to 'textwidth'
+
+See |fo-table| for more flags.
+
+
+DEFINING A COMMENT
+
+The 'comments' option defines what a comment looks like.  Vim distinguishes
+between a single-line comment and a comment that has a different start, end
+and middle part.
+   Many single-line comments start with a specific character.  In C++ // is
+used, in Makefiles #, in Vim scripts ".  For example, to make Vim understand
+C++ comments: >
+
+	:set comments=://
+
+The colon separates the flags of an item from the text by which the comment is
+recognized.  The general form of an item in 'comments' is:
+
+	{flags}:{text}
+
+The {flags} part can be empty, as in this case.
+   Several of these items can be concatenated, separated by commas.  This
+allows recognizing different types of comments at the same time.  For example,
+let's edit an e-mail message.  When replying, the text that others wrote is
+preceded with ">" and "!" characters.  This command would work: >
+
+	:set comments=n:>,n:!
+
+There are two items, one for comments starting with ">" and one for comments
+that start with "!".  Both use the flag "n".  This means that these comments
+nest.  Thus a line starting with ">" may have another comment after the ">".
+This allows formatting a message like this:
+
+	> ! Did you see that site? ~
+	> ! It looks really great. ~
+	> I don't like it.  The ~
+	> colors are terrible. ~
+	What is the URL of that ~
+	site? ~
+
+Try setting 'textwidth' to a different value, e.g., 80, and format the text by
+Visually selecting it and typing "gq".  The result is:
+
+	> ! Did you see that site?  It looks really great. ~
+	> I don't like it.  The colors are terrible. ~
+	What is the URL of that site? ~
+
+You will notice that Vim did not move text from one type of comment to
+another.  The "I" in the second line would have fit at the end of the first
+line, but since that line starts with "> !" and the second line with ">", Vim
+knows that this is a different kind of comment.
+
+
+A THREE PART COMMENT
+
+A C comment starts with "/*", has "*" in the middle and "*/" at the end.  The
+entry in 'comments' for this looks like this: >
+
+	:set comments=s1:/*,mb:*,ex:*/
+
+The start is defined with "s1:/*".  The "s" indicates the start of a
+three-piece comment.  The colon separates the flags from the text by which the
+comment is recognized: "/*".  There is one flag: "1".  This tells Vim that the
+middle part has an offset of one space.
+   The middle part "mb:*" starts with "m", which indicates it is a middle
+part.  The "b" flag means that a blank must follow the text.  Otherwise Vim
+would consider text like "*pointer" also to be the middle of a comment.
+   The end part "ex:*/" has the "e" for identification.  The "x" flag has a
+special meaning.  It means that after Vim automatically inserted a star,
+typing / will remove the extra space.
+
+For more details see |format-comments|.
+
+==============================================================================
+
+Next chapter: |usr_31.txt|  Exploiting the GUI
+
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

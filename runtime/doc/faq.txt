@@ -1,0 +1,471 @@
+*faq.txt*		 Nvim
+
+                            NVIM REFERENCE MANUAL
+
+
+Frequently asked Questions                                        *faq*
+
+                                  Type |gO| to see the table of contents.
+
+==============================================================================
+General Questions                                                 *faq-general*
+
+
+WHERE SHOULD I PUT MY CONFIG (VIMRC)? ~
+
+See |config|; you can copy (or symlink) your existing vimrc. |nvim-from-vim|
+
+
+HOW STABLE IS THE DEVELOPMENT (PRE-RELEASE) VERSION? ~
+
+The unstable (pre-release)
+https://github.com/neovim/neovim/releases/tag/nightly version of Nvim
+("HEAD", i.e. the `master` branch) is used to aggressively stage new features
+and changes. It's usually stable, but will occasionally break your workflow.
+We depend on HEAD users to report "blind spots" that were not caught by
+automated tests.
+
+Use the stable (release) https://github.com/neovim/neovim/releases/latest
+version for a more predictable experience.
+
+
+CAN I USE LUA-BASED VIM PLUGINS (E.G. NEOCOMPLETE)? ~
+
+No. Starting with Nvim 0.2 PR #4411
+https://github.com/neovim/neovim/pull/4411 Lua is built-in, but the legacy
+Vim `if_lua` interface is not supported.
+
+
+HOW CAN I USE "TRUE COLOR" IN THE TERMINAL? ~
+
+Truecolor (24bit colors) are enabled by default if a supporting terminal is
+detected. If your terminal is not detected but you are sure it supports
+truecolor, add this to your |init.vim|:
+>vim
+    set termguicolors
+<
+
+NVIM SHOWS WEIRD SYMBOLS (`�[2 q`) WHEN CHANGING MODES ~
+
+This is a bug in your terminal emulator. It happens because Nvim sends
+cursor-shape termcodes by default, if the terminal appears to be
+xterm-compatible (`TERM=xterm-256color`).
+
+To workaround the issue, you can:
+
+- Use a different terminal emulator
+- Disable 'guicursor' in your Nvim config: >vim
+
+    :set guicursor=
+    " Workaround some broken plugins which set guicursor indiscriminately.
+    :autocmd OptionSet guicursor noautocmd set guicursor=
+<
+See also |$TERM| for recommended values of `$TERM`.
+
+
+HOW TO CHANGE CURSOR SHAPE IN THE TERMINAL? ~
+
+- For Nvim 0.1.7 or older: see the note about `NVIM_TUI_ENABLE_CURSOR_SHAPE` in `man nvim`.
+- For Nvim 0.2 or newer: cursor styling is controlled by the 'guicursor' option.
+    - To _disable_ cursor-styling, set 'guicursor' to empty: >vim
+
+            :set guicursor=
+            " Workaround some broken plugins which set guicursor indiscriminately.
+            :autocmd OptionSet guicursor noautocmd set guicursor=
+<
+    - If you want a non-blinking cursor, use `blinkon0`. See 'guicursor'.
+    - 'guicursor' is enabled by default, unless Nvim thinks your terminal doesn't
+        support it. If you're sure that your terminal supports cursor-shaping, set
+        'guicursor' in your |init.vim|, as described in 'guicursor'.
+- The Vim terminal options |t_SI| and `t_EI` are ignored, like all other |t_xx| options.
+- Old versions of libvte (gnome-terminal, roxterm, terminator, ...) do not
+  support cursor style control codes. #2537
+  https://github.com/neovim/neovim/issues/2537
+
+
+HOW TO CHANGE CURSOR COLOR IN THE TERMINAL? ~
+
+Cursor styling (shape, color, behavior) is controlled by 'guicursor', even in
+the terminal. Cursor color (as opposed to shape) only works if
+'termguicolors' is set.
+
+'guicursor' gives an example, but here's a more complicated example
+which sets different colors in insert-mode and normal-mode:
+>vim
+    :set termguicolors
+    :hi Cursor guifg=green guibg=green
+    :hi Cursor2 guifg=red guibg=red
+    :set guicursor=n-v-c:block-Cursor/lCursor,i-ci-ve:ver25-Cursor2/lCursor2,r-cr:hor20,o:hor50
+<
+
+CURSOR STYLE ISN'T RESTORED AFTER EXITING OR SUSPENDING AND RESUMING NVIM ~
+
+Terminals do not provide a way to query the cursor style. Use autocommands to
+manage the cursor style:
+>vim
+    au VimEnter,VimResume * set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50
+      \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
+      \,sm:block-blinkwait175-blinkoff150-blinkon175
+
+    au VimLeave,VimSuspend * set guicursor=a:block-blinkon0
+<
+
+CURSOR SHAPE DOESN'T CHANGE IN TMUX ~
+
+tmux decides that, not Nvim. See |tui-cursor-shape| for a fix.
+
+See #3165 https://github.com/neovim/neovim/pull/3165 for discussion.
+
+
+CURSOR FLICKER IN TMUX? ~
+
+If cursor `_` appears and disappears very quickly when opening nvim without a
+document under tmux, and you set |ctermbg| in `EndOfBuffer` and `Normal`, try
+setting these to `NONE`:
+>vim
+    hi EndOfBuffer ctermbg=NONE ctermfg=200 cterm=NONE
+    hi Normal ctermbg=NONE ctermfg=200 cterm=NONE
+<
+
+WHAT HAPPENED TO --remote AND FRIENDS? ~
+
+|--remote| is partly supported. |clientserver|
+
+If you require flags from Vim that are missing in Nvim, you can use
+https://github.com/mhinz/neovim-remote instead.
+
+==============================================================================
+Runtime issues                                                *faq-runtime*
+
+
+COPYING TO X11 PRIMARY SELECTION WITH THE MOUSE DOESN'T WORK ~
+
+`clipboard=autoselect` is not implemented yet
+https://github.com/neovim/neovim/issues/2325. You may find this workaround to
+be useful:
+>vim
+    vnoremap <LeftRelease> "*ygv
+    vnoremap <2-LeftRelease> "*ygv
+<
+
+MY CTRL-H MAPPING DOESN'T WORK ~
+
+This was fixed in Nvim 0.2. If you are running Nvim 0.1.7 or older,
+adjust your terminal's "kbs" (key_backspace) terminfo entry:
+>vim
+    infocmp $TERM | sed 's/kbs=^[hH]/kbs=\\177/' > $TERM.ti
+    tic $TERM.ti
+<
+(Feel free to delete the temporary `*.ti` file created after running the above
+commands).
+
+
+<HOME> OR SOME OTHER "SPECIAL" KEY DOESN'T WORK ~
+
+Make sure |$TERM| is set correctly.
+
+- For screen or tmux, `$TERM` should be `screen-256color` (not `xterm-256color`!)
+- In other cases if "256" does not appear in the string it's probably wrong.
+  Try `TERM=xterm-256color`.
+
+
+:! AND SYSTEM() DO WEIRD THINGS WITH INTERACTIVE PROCESSES ~
+
+Interactive commands are supported by |:terminal| in Nvim. But |:!| and
+|system()| do not support interactive commands, primarily because Nvim UIs use
+stdio for msgpack communication, but also for performance, reliability, and
+consistency across platforms (see
+https://vimhelp.org/gui_x11.txt.html#gui-pty).
+
+See also #1496 https://github.com/neovim/neovim/issues/1496 and #8217
+https://github.com/neovim/neovim/issues/8217#issuecomment-402152307.
+
+
+PYTHON SUPPORT ISN'T WORKING ~
+
+Run |:checkhealth| in Nvim for automatic diagnosis.
+
+Other hints:
+
+- The python `neovim` module was renamed to `pynvim` (long ago).
+- If you're using pyenv or virtualenv for the `pynvim` module
+    https://pypi.org/project/pynvim/, you must set `g:python3_host_prog` to
+    the virtualenv's interpreter path.
+- Read |provider-python|.
+- Be sure you have the latest version of the `pynvim` Python module: >bash
+
+    python -m pip install setuptools
+    python -m pip install --upgrade pynvim
+    python3 -m pip install --upgrade pynvim
+<
+- Try with `nvim -u NORC` to make sure your config (|init.vim|) isn't causing a
+    problem. If you get `E117: Unknown function`, that means there's a runtime
+    issue: |faq-runtime|.
+
+
+:CHECKHEALTH REPORTS E5009: INVALID $VIMRUNTIME ~
+
+This means |$VIMRUNTIME| or 'runtimepath' is broken.
+
+- |$VIMRUNTIME| must point to Nvim's runtime files, not Vim's.
+- The |$VIMRUNTIME| directory contents should be readable by the current user.
+- Verify that `:echo &runtimepath` contains the $VIMRUNTIME path.
+
+NEOVIM CAN'T FIND ITS RUNTIME ~
+
+This is the case if `:help nvim` shows `E149: Sorry, no help for nvim`.
+
+Make sure that |$VIM| and |$VIMRUNTIME| point to Nvim's (as opposed to
+Vim's) runtime by checking `:echo $VIM` and `:echo $VIMRUNTIME`. This should
+give something like `/usr/share/nvim` resp. `/usr/share/nvim/runtime`.
+
+Also make sure that you don't accidentally overwrite your runtimepath
+(`:set runtimepath?`), which includes the above |$VIMRUNTIME| by default (see
+'runtimepath').
+
+
+NEOVIM IS SLOW ~
+
+
+Use a fast terminal emulator:
+
+- kitty https://github.com/kovidgoyal/kitty
+- alacritty https://github.com/jwilm/alacritty
+
+
+Use an optimized build:
+
+`:checkhealth nvim` should report one of these "build types":
+>
+    Build type: RelWithDebInfo
+    Build type: MinSizeRel
+    Build type: Release
+<
+If it reports `Build type: Debug` and you're building Nvim from source, see
+https://github.com/neovim/neovim/blob/master/BUILD.md.
+
+
+COLORS AREN'T DISPLAYED CORRECTLY ~
+
+Ensure that |$TERM| is set correctly.
+
+From a shell, run `TERM=xterm-256color nvim`. If colors are displayed
+correctly, then export that value of `TERM` in your user profile (usually
+`~/.profile`):
+>bash
+    export TERM=xterm-256color
+<
+If you're using `tmux`, instead add this to your `tmux.conf`:
+>bash
+    set -g default-terminal "tmux-256color"
+<
+
+For GNU `screen`, configure your `.screenrc`
+<https://wiki.archlinux.org/index.php/GNU_Screen#Use_256_colors>:
+>
+    term screen-256color
+<
+
+NOTE: Nvim ignores `t_Co` and other |t_xx| terminal codes.
+
+
+NEOVIM CAN'T READ UTF-8 CHARACTERS ~
+
+Run the following from the command line:
+>bash
+    locale | grep -E '(LANG|LC_CTYPE|LC_ALL)=(.*\.)?(UTF|utf)-?8'
+<
+If there's no results, you might not be using a UTF-8 locale. See these issues:
+- https://github.com/neovim/neovim/issues/1601
+- https://github.com/neovim/neovim/issues/1858
+- https://github.com/neovim/neovim/issues/2386
+
+
+ESC IN TMUX OR GNU SCREEN IS DELAYED ~
+
+This is a common problem
+https://www.google.com/?q=tmux%20vim%20escape%20delay in `tmux` / `screen`
+(see also https://github.com/tmux/tmux/issues/131#issuecomment-145853211). The
+corresponding timeout needs to be tweaked to a low value (10-20ms).
+
+`.tmux.conf`:
+>
+    set -g escape-time 10
+    # Or for tmux >= 2.6
+    set -sg escape-time 10
+<
+`.screenrc`:
+>
+    maptimeout 10
+<
+
+"WHY DOESN'T THIS HAPPEN IN VIM?"
+
+It does happen (try `vim -N -u NONE`), but if you hit a key quickly after
+ESC then Vim interprets the ESC as ESC instead of ALT (META). You won't
+notice the delay unless you closely observe the cursor. The tradeoff is that
+Vim won't understand ALT (META) key-chords, so for example `nnoremap <M-a>`
+won't work. ALT (META) key-chords always work in Nvim.
+See also `:help xterm-cursor-keys` in Vim.
+
+Nvim 0.3 mimics the Vim behavior while still fully supporting ALT mappings. See
+|i_ALT|.
+
+
+ESC IN GNU SCREEN IS LOST WHEN MOUSE MODE IS ENABLED ~
+
+This happens because of a bug in screen https://savannah.gnu.org/bugs/?60196 :
+in mouse mode, screen assumes that `ESC` is part of a mouse sequence and will
+wait an unlimited time for the rest of the sequence, regardless of
+`maptimeout`. Until it's fixed in screen, there's no known workaround for
+this other than double-pressing escape, which causes a single escape to be
+passed through to Nvim.
+
+
+CALLING INPUTLIST(), ECHOMSG, ... IN FILETYPE PLUGINS AND AUTOCMD DOES NOT WORK ~
+
+- https://github.com/neovim/neovim/issues/10008
+- https://github.com/neovim/neovim/issues/10116
+- https://github.com/neovim/neovim/issues/12288
+- https://github.com/vim/vim/issues/4379
+
+This is because Nvim sets `shortmess+=F` by default. Vim behaves the same way
+with `set shortmes+=F`. There are plans to improve this, but meanwhile as a
+workaround, use `set shortmess-=F` or use `unsilent` as follows.
+>vim
+    unsilent let var = inputlist(['1. item1', '2. item2'])
+    autocmd BufNewFile * unsilent echomsg 'The autocmd has been fired.'
+<
+
+G:CLIPBOARD SETTINGS ARE NOT USED. ~
+
+If the clipboard provider is already loaded, you will need to reload it after
+configuration. Use the following configuration.
+>vim
+    let g:clipboard = { 'name' : ... }
+    if exists('g:loaded_clipboard_provider')
+      unlet g:loaded_clipboard_provider
+      runtime autoload/provider/clipboard.vim
+    endif
+<
+
+Or, if you want automatic reloading when assigning to |g:clipboard|, set
+|init.vim| as follows.
+>vim
+    function! s:clipboard_changed(...) abort
+      if exists('g:loaded_clipboard_provider')
+        unlet g:loaded_clipboard_provider
+      endif
+      runtime autoload/provider/clipboard.vim
+    endfunction
+
+    if !exists('s:loaded")
+      call dictwatcheradd(g:, 'clipboard', function('s:clipboard_changed'))
+    endif
+    let s:loaded = v:true
+<
+
+==============================================================================
+Build issues                                                    *faq-build*
+
+
+GENERAL BUILD ISSUES ~
+
+Run `make distclean && make` to rule out a stale build environment causing the
+failure.
+
+
+SETTINGS IN LOCAL.MK DON'T TAKE EFFECT ~
+
+CMake caches build settings, so you might need to run `rm -r build && make`
+after modifying `local.mk`.
+
+
+CMAKE ERRORS ~
+
+`configure_file Problem configuring file`
+
+This is probably a permissions issue, which can happen if you run `make` as the
+root user, then later run an unprivileged `make`. To fix this, run
+`rm -rf build` and try again.
+
+
+GENERATING HELPTAGS FAILED ~
+
+If re-installation fails with "Generating helptags failed", try removing the
+previously installed runtime directory (if `CMAKE_INSTALL_PREFIX` is not set
+during building, the default is `/usr/local/share/nvim`):
+>bash
+    rm -r /usr/local/share/nvim
+<
+
+==============================================================================
+Design                                                         *faq-design*
+
+
+WHY NOT USE JSON FOR RPC? ~
+
+- JSON cannot easily/efficiently handle binary data
+- JSON specification is ambiguous: https://seriot.ch/parsing_json.php
+
+
+WHY EMBED LUA INSTEAD OF X? ~
+
+- Lua is a very small language, ideal for embedding. The biggest advantage of
+  Python/Ruby/etc is their huge collection of libraries, but that isn't
+  relevant for Nvim, where Nvim is the "batteries included" library:
+  introducing another stdlib would be redundant.
+- Lua 5.1 is a complete language: the syntax is frozen. This is great for
+  backwards compatibility.
+- Nvim also uses Lua internally as an alternative to C. Extra performance is
+  useful there, as opposed to a slow language like Python or Vim9script.
+- LuaJIT is one of the fastest runtimes on the planet, 10x faster than Python
+  and "Vim9script" https://vimhelp.org/vim9.txt.html , 100x faster than
+  Vimscript.
+- Python/JS cost more than Lua in terms of size and portability, and there are
+  already numerous Python/JS-based editors. So Python/JS would make Nvim
+  bigger and less portable, in exchange for a non-differentiating feature.
+
+See also:
+
+- Why Lua https://web.archive.org/web/20150219224654/https://blog.datamules.com/blog/2012/01/30/why-lua/
+- The Design of Lua https://cacm.acm.org/magazines/2018/11/232214-a-look-at-the-design-of-lua/fulltext
+- Scripting architecture considerations http://oldblog.antirez.com/post/redis-and-scripting.html
+- LuaJIT performance https://julialang.org/benchmarks/
+- Discussion of JavaScript vs Lua https://github.com/vim/vim/pull/5198#issuecomment-554693754
+- Discussion Python embedding https://lobste.rs/s/pnuak4/mercurial_s_journey_reflections_on#c_zshdwy
+
+
+WHY LUA 5.1 INSTEAD OF LUA 5.3+? ~
+
+Lua 5.1 is a different language than 5.3. The Lua org makes breaking changes
+with every new version, so even if we switched (not upgraded, but switched) to
+5.3 we gain nothing when they create the next new language in 5.4, 5.5, etc.
+And we would lose LuaJIT, which is far more valuable than Lua 5.3+.
+
+Lua 5.1 is a complete language. To "upgrade" it, add libraries, not syntax.
+Nvim itself already is a pretty good "stdlib" for Lua, and we will continue to
+grow and enhance it. Changing the rules of Lua gains nothing in this context.
+
+
+WILL NEOVIM TRANSLATE VIMSCRIPT TO LUA, INSTEAD OF EXECUTING VIMSCRIPT DIRECTLY? ~
+
+- We are experimenting with vim9jit https://github.com/tjdevries/vim9jit to
+  transpile Vim9script (Vim9's Vimscript variant) to Lua and have used this to
+  port Vim9 plugins https://github.com/neovim/neovim/pull/21662 to Nvim Lua.
+- We have no plans for transpiling legacy Vimscript.
+
+
+ARE PLUGIN AUTHORS ENCOURAGED TO PORT THEIR PLUGINS FROM VIMSCRIPT TO LUA? DO YOU PLAN ON SUPPORTING VIMSCRIPT INDEFINITELY? (#1152) ~
+
+We don't anticipate any reason to deprecate Vimscript, which is a valuable DSL
+https://en.wikipedia.org/wiki/Domain-specific_language for text-editing tasks.
+Maintaining Vimscript compatibility is less costly than a mass migration of
+existing Vim plugins.
+
+Porting from Vimscript to Lua just for the heck of it gains nothing. Nvim is
+emphatically a fork of Vim in order to leverage the work already spent on
+thousands of Vim plugins, while enabling new types of plugins and
+integrations.
+
+vim:tw=78:ts=8:noet:ft=help:norl:

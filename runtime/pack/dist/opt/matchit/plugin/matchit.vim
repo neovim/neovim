@@ -1,0 +1,127 @@
+"  matchit.vim: (global plugin) Extended "%" matching
+"  Maintainer:  Christian Brabandt
+"  Version:     1.20
+"  Last Change: 2024 May 20
+"  Repository:  https://github.com/chrisbra/matchit
+"  Previous URL:http://www.vim.org/script.php?script_id=39
+"  Previous Maintainer:  Benji Fisher PhD   <benji@member.AMS.org>
+
+" Documentation:
+"  The documentation is in a separate file: ../doc/matchit.txt
+
+" Credits:
+"  Vim editor by Bram Moolenaar (Thanks, Bram!)
+"  Original script and design by Raul Segura Acevedo
+"  Support for comments by Douglas Potts
+"  Support for back references and other improvements by Benji Fisher
+"  Support for many languages by Johannes Zellner
+"  Suggestions for improvement, bug reports, and support for additional
+"  languages by Jordi-Albert Batalla, Neil Bird, Servatius Brandt, Mark
+"  Collett, Stephen Wall, Dany St-Amant, Yuheng Xie, and Johannes Zellner.
+
+" Debugging:
+"  If you'd like to try the built-in debugging commands...
+"   :MatchDebug      to activate debugging for the current buffer
+"  This saves the values of several key script variables as buffer-local
+"  variables.  See the MatchDebug() function, below, for details.
+
+" TODO:  I should think about multi-line patterns for b:match_words.
+"   This would require an option:  how many lines to scan (default 1).
+"   This would be useful for Python, maybe also for *ML.
+" TODO:  Maybe I should add a menu so that people will actually use some of
+"   the features that I have implemented.
+" TODO:  Eliminate the MultiMatch function.  Add yet another argument to
+"   Match_wrapper() instead.
+" TODO:  Allow :let b:match_words = '\(\(foo\)\(bar\)\):\3\2:end\1'
+" TODO:  Make backrefs safer by using '\V' (very no-magic).
+" TODO:  Add a level of indirection, so that custom % scripts can use my
+"   work but extend it.
+
+" Allow user to prevent loading and prevent duplicate loading.
+if exists("g:loaded_matchit") || &cp
+  finish
+endif
+let g:loaded_matchit = 1
+
+let s:save_cpo = &cpo
+set cpo&vim
+
+fun MatchEnable()
+  nnoremap <silent> <Plug>(MatchitNormalForward)     :<C-U>call matchit#Match_wrapper('',1,'n')<CR>
+  nnoremap <silent> <Plug>(MatchitNormalBackward)    :<C-U>call matchit#Match_wrapper('',0,'n')<CR>
+  xnoremap <silent> <Plug>(MatchitVisualForward)     :<C-U>call matchit#Match_wrapper('',1,'v')<CR>
+        \:if col("''") != col("$") \| exe ":normal! m'" \| endif<cr>gv``
+  xnoremap <silent> <Plug>(MatchitVisualBackward)    :<C-U>call matchit#Match_wrapper('',0,'v')<CR>m'gv``
+  onoremap <silent> <Plug>(MatchitOperationForward)  :<C-U>call matchit#Match_wrapper('',1,'o')<CR>
+  onoremap <silent> <Plug>(MatchitOperationBackward) :<C-U>call matchit#Match_wrapper('',0,'o')<CR>
+
+  " Analogues of [{ and ]} using matching patterns:
+  nnoremap <silent> <Plug>(MatchitNormalMultiBackward)    :<C-U>call matchit#MultiMatch("bW", "n")<CR>
+  nnoremap <silent> <Plug>(MatchitNormalMultiForward)     :<C-U>call matchit#MultiMatch("W",  "n")<CR>
+  xnoremap <silent> <Plug>(MatchitVisualMultiBackward)    :<C-U>call matchit#MultiMatch("bW", "n")<CR>m'gv``
+  xnoremap <silent> <Plug>(MatchitVisualMultiForward)     :<C-U>call matchit#MultiMatch("W",  "n")<CR>m'gv``
+  onoremap <silent> <Plug>(MatchitOperationMultiBackward) :<C-U>call matchit#MultiMatch("bW", "o")<CR>
+  onoremap <silent> <Plug>(MatchitOperationMultiForward)  :<C-U>call matchit#MultiMatch("W",  "o")<CR>
+
+  " text object:
+  xmap <silent> <Plug>(MatchitVisualTextObject) <Plug>(MatchitVisualMultiBackward)o<Plug>(MatchitVisualMultiForward)
+
+  if !exists("g:no_plugin_maps")
+    nmap <silent> %  <Plug>(MatchitNormalForward)
+    nmap <silent> g% <Plug>(MatchitNormalBackward)
+    xmap <silent> %  <Plug>(MatchitVisualForward)
+    xmap <silent> g% <Plug>(MatchitVisualBackward)
+    omap <silent> %  <Plug>(MatchitOperationForward)
+    omap <silent> g% <Plug>(MatchitOperationBackward)
+
+    " Analogues of [{ and ]} using matching patterns:
+    nmap <silent> [% <Plug>(MatchitNormalMultiBackward)
+    nmap <silent> ]% <Plug>(MatchitNormalMultiForward)
+    xmap <silent> [% <Plug>(MatchitVisualMultiBackward)
+    xmap <silent> ]% <Plug>(MatchitVisualMultiForward)
+    omap <silent> [% <Plug>(MatchitOperationMultiBackward)
+    omap <silent> ]% <Plug>(MatchitOperationMultiForward)
+
+    " Text object
+    xmap a% <Plug>(MatchitVisualTextObject)
+  endif
+endfun
+
+fun MatchDisable()
+  " remove all the setup keymappings
+  nunmap %
+  nunmap g%
+  xunmap %
+  xunmap g%
+  ounmap %
+  ounmap g%
+
+  nunmap [%
+  nunmap ]%
+  xunmap [%
+  xunmap ]%
+  ounmap [%
+  ounmap ]%
+
+  xunmap a%
+endfun
+
+" Call this function to turn on debugging information.  Every time the main
+" script is run, buffer variables will be saved.  These can be used directly
+" or viewed using the menu items below.
+if !exists(":MatchDebug")
+  command! -nargs=0 MatchDebug call matchit#Match_debug()
+endif
+if !exists(":MatchDisable")
+  command! -nargs=0 MatchDisable :call MatchDisable()
+endif
+if !exists(":MatchEnable")
+  command! -nargs=0 MatchEnable :call MatchEnable()
+endif
+
+call MatchEnable()
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
+
+" vim:sts=2:sw=2:et:

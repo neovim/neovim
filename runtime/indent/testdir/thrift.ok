@@ -1,0 +1,38 @@
+// vim: set ft=thrift sw=4 et:
+
+# START_INDENT
+namespace cpp foo
+namespace java com.foo.thrift
+
+include "Status.thrift"
+
+// These are supporting structs for JniFrontend.java, which serves as the glue
+// between our C++ execution environment and the Java frontend.
+
+struct TSetSessionParams {
+    1: required string user
+}
+
+struct TAuthenticateParams {
+    1: required string user
+    2: required string passwd
+    3: optional string host
+    4: optional string db_name
+    5: optional list<string> table_names;
+}
+
+/* {
+ * xxxx
+ * }
+ */
+// TColumnDesc
+struct TColumnDesc {
+    // {
+    4: optional string tableName
+    5: optional string columnDefault
+    // Let FE control the type, which makes it easier to modify and display complex types
+    6: optional string columnTypeStr // deprecated
+    7: optional string dataType
+    // }
+}
+# END_INDENT

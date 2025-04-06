@@ -1,0 +1,91 @@
+build:
+  - changed-files:
+    - any-glob-to-any-file: [ CMakeLists.txt, "**/CMakeLists.txt", "**/Makefile", "**/*.cmake", cmake.deps/**/* ]
+
+checkhealth:
+  - changed-files:
+    - any-glob-to-any-file: [ "**/health.lua" ]
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file: [ .github/actions/**, .github/workflows/**, .github/scripts/** ]
+
+clipboard:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/autoload/provider/clipboard.vim ]
+
+column:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/sign* ]
+
+comment:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/_comment.lua ]
+
+defaults:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/_defaults.lua ]
+
+diagnostic:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/diagnostic.lua ]
+
+diff:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/diff.* ]
+
+documentation:
+  - changed-files:
+    - any-glob-to-all-files: [ runtime/doc/*, "**/*.md" ]
+
+editorconfig:
+  - changed-files:
+    - any-glob-to-any-file: [ .editorconfig, runtime/lua/editorconfig.lua, runtime/plugin/editorconfig.lua ]
+
+filetype:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/filetype.lua, runtime/lua/vim/filetype/detect.lua ]
+
+filesystem:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/fs.lua ]
+
+folds:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/fold* ]
+
+lsp:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/lsp.lua, runtime/lua/vim/lsp/* ]
+
+mouse:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/mouse* ]
+
+netrw:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/autoload/netrw.vim, runtime/plugin/netrwPlugin.vim ]
+
+snippet:
+  - changed-files:
+    - any-glob-to-any-file: [ runtime/lua/vim/snippet.lua ]
+
+spell:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/spell* ]
+
+terminal:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/terminal.* ]
+
+test:
+  - changed-files:
+    - any-glob-to-all-files: [test/**/*]
+
+treesitter:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/lua/treesitter.*, runtime/lua/vim/treesitter.lua, runtime/lua/vim/treesitter/*, runtime/queries/**/* ]
+
+tui:
+  - changed-files:
+    - any-glob-to-any-file: [ src/nvim/tui/tui.* ]

@@ -1,0 +1,33 @@
+name: 'Cache'
+description: "This action caches neovim dependencies"
+runs:
+  using: "composite"
+  steps:
+    - run: echo "CACHE_KEY=${{ github.workflow }}" >> $GITHUB_ENV
+      shell: bash
+
+    - run: echo "CACHE_KEY=${{ github.job }}" >> $GITHUB_ENV
+      shell: bash
+
+    - if: ${{ matrix }}
+      run: echo "CACHE_KEY=$CACHE_KEY-${{ join(matrix.*, '-') }}" >> $GITHUB_ENV
+      shell: bash
+
+    - if: ${{ matrix.build }}
+      run: echo "CACHE_KEY=$CACHE_KEY-${{ join(matrix.build.*, '-') }}" >> $GITHUB_ENV
+      shell: bash
+
+    - id: image
+      run: echo "version=$ImageVersion" >> $GITHUB_OUTPUT
+      shell: bash
+
+    # Avoid using '**/CMakeLists.txt' (or any pattern starting with '**/') even
+    # if it makes the expression below simpler. hashFiles() has a timer that
+    # will fail the job if it times out, which can happen if there are too many
+    # files to search through.
+    - uses: actions/cache@v4
+      with:
+        path: .deps
+        key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ hashFiles('cmake**',
+          '.github/**', 'CMakeLists.txt',
+          'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}

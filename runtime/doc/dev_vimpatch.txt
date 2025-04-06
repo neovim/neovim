@@ -1,0 +1,361 @@
+*dev_vimpatch.txt*          Nvim
+
+                            NVIM REFERENCE MANUAL
+
+Merging patches from Vim                                    *dev-vimpatch*
+
+
+Nvim was forked from Vim 7.4.160; it is kept up-to-date with relevant Vim
+patches in order to avoid duplicate work. Run `vim-patch.sh`
+https://github.com/neovim/neovim/blob/master/scripts/vim-patch.sh to see the
+status of Vim patches:
+>bash
+    ./scripts/vim-patch.sh -l
+<
+Everyone is welcome to |dev-vimpatch-pull-requests| for relevant Vim
+patches, but some types of patches are |dev-vimpatch-not-applicable|.
+See |dev-vimpatch-quickstart| to get started immediately.
+
+
+                                         Type |gO| to see the table of contents.
+
+==============================================================================
+QUICKSTART                                        *dev-vimpatch-quickstart*
+
+1. Pull the Nvim source:
+>bash
+    git clone https://github.com/neovim/neovim.git
+<
+2. Run `./scripts/vim-patch.sh -l` to see the list of missing Vim patches.
+
+3. Choose a patch from the list (usually the oldest one), e.g. `8.0.0123`.
+
+   - Check for open vim-patch PRs
+     https://github.com/neovim/neovim/pulls?q=is%3Apr+is%3Aopen+label%3Avim-patch.
+
+4. Run `./scripts/vim-patch.sh -p 8.0.0123`
+
+5. Follow the instructions given by the script.
+
+NOTES ~
+
+- It's strongly recommended to work on the oldest missing patch, because
+  later patches might depend on the changes.
+- Use `git log --grep` or `git log -G` to search the Nvim/Vim source history
+  (even deleted code). E.g. to find `reset_option_was_set`: >bash
+
+    git log -p -G reset_option_was_set
+<
+- Pass `git log` options like `--grep` and `-G` to `./scripts/vim-patch.sh -L`
+  to filter unmerged Vim patches E.g. to find `+quickfix` patches: >bash
+
+    ./scripts/vim-patch.sh -L --grep quickfix -- src
+<
+==============================================================================
+PULL REQUESTS                                  *dev-vimpatch-pull-requests*
+
+Note: vim-patch.sh automates these steps for you. Use it!
+
+- Install `gh` (https://cli.github.com/) if you want to use `vim-patch.sh` to
+  create PRs automatically
+- The pull request title should include `vim-patch:8.x.xxxx` (no whitespace)
+- The commit message
+  https://github.com/neovim/neovim/commit/4ccf1125ff569eccfc34abc4ad794044c5ab7455
+  should include:
+    - A token indicating the Vim patch number, formatted as follows:
+      `vim-patch:8.0.0123` (no whitespace)
+    - A URL pointing to the Vim commit:
+      https://github.com/vim/vim/commit/c8020ee825b9d9196b1329c0e097424576fc9b3a
+    - The original Vim commit message, including author
+
+Reviewers: hint for reviewing `runtime/` patches
+https://github.com/neovim/neovim/pull/1744#issuecomment-68202876
+
+==============================================================================
+NA (NOT APPLICABLE) PATCHES                    *dev-vimpatch-not-applicable*
+
+Many Vim patches are not applicable to Nvim. If you find NA patches, visit an
+open "version.c: update" pull request
+https://github.com/neovim/neovim/pulls?q=is%3Apr+author%3Aapp%2Fgithub-actions+version.c+is%3Aopen
+and mention the NA patches in a comment (please edit/update one comment,
+rather than adding a new comment for each patch).
+
+If there are no open `version.c: update` pull requests, include NA patches in
+a commit message in the following format:
+>
+    vim-patch:<version-or-commit>
+    vim-patch:<version-or-commit>
+    ...
+<
+where `<version-or-commit>` is a valid Vim version (like `8.0.0123`) or
+commit-id (SHA). Each patch is on a separate line.
+
+It is preferred to include NA patches by squashing it in applicable Vim
+patches, especially if the Vim patches are related. First line of the commit
+message should be from the applicable Vim patch.
+>
+    ./scripts/vim-patch -p <na-patch>
+    ./scripts/vim-patch -p <na-patch>
+    ...
+    ./scripts/vim-patch -P <patch>
+    git rebase -i master
+<
+Example:
+https://github.com/neovim/neovim/commit/00f60c2ce78fc1280e93d5a36bc7b2267d5f4ac6
+
+TYPES OF "NOT APPLICABLE" VIM PATCHES ~
+
+- Vim9script features, and anything related to `:scriptversion`. (Nvim
+  supports Vimscript version 1 only.) Be aware that patches labelled `Vim9:`
+  may still contain applicable fixes to other parts of the codebase, so these
+  patch need to be checked individually.
+- Updates to `testdir/Makefile` are usually NA because the Makefile implicitly
+  finds
+  https://github.com/neovim/neovim/commit/8a677f8a4bff6005fa39f090c14e970c3dfdbe6e#diff-b3c6ad6680a25a1b42095879e3a87104R52
+  all `test_*.vim` files.
+- Compiler warning fixes: Nvim strives to have no warnings at all, and has a
+  very different build system from Vim.
+    - Note: Coverity fixes in Vim are relevant to Nvim.
+- `*.proto` changes: Nvim autogenerates function prototypes
+- `#ifdef` tweaking: For example, Vim decided to enable `FEAT_VISUAL` for all
+  platforms - but Nvim already does that. Adding new `FEAT_` guards also isn't
+  relevant to Nvim.
+- Legacy system support: Fixes for legacy systems such as Amiga, OS/2 Xenix,
+  Mac OS 9, Windows older than XP SP2, are not needed because they are not
+  supported by Nvim.
+    - NA files: `src/Make_*`, `src/testdir/Make__*`
+- `if_*.c` changes: `if_python.c` et. al. were removed.
+- `term.c` changes: the Nvim TUI uses `libtermkey` to read terminal sequences;
+  Vim's `term.c` was removed.
+- `job` patches: incompatible API and implementation
+    - NA files: `src/channel_*`, `src/job_*`, `src/testdir/test_channel_*`,
+      `src/testdir/test_job_*`
+- `:terminal` patches that modify NA files: incompatible API and
+  implementation
+    - NA files: `src/terminal_*`, `src/testdir/test_terminal_*`
+- `defaults.vim` patches
+- Most GUI-related changes: Nvim GUIs are implemented external to the core C
+  codebase.
+    - NA files: `src/gui_*`, `src/gvim_*`, `src/GvimExt/*`, `src/testdir/test_gui*`
+- `balloon` changes: Nvim does not support balloon feature
+    - NA files: `src/beval_*`, `src/testdir/test_balloon_*`
+- Screendump tests from `test_popupwin.vim`, `test_popupwin_textprop.vim`:
+  https://github.com/neovim/neovim/pull/12741#issuecomment-704677141
+- json changes: incompatible API https://github.com/neovim/neovim/pull/4131
+    - NA files: `src/json*`, `src/testdir/test_json.vim`
+- `test_restricted.vim` restricted mode is removed in
+  https://github.com/neovim/neovim/pull/11996
+- Many tests in `test_prompt_buffer.vim` require incompatible Vim features
+  such as `channel`; they should still be included, but skipped
+- non-runtime documentation: Moved to https://neovim.io/doc/,
+    - NA files: `Filelist`, `README`, `INSTALL`,
+- Anything else might be relevant; err on the side of caution, and post an
+  issue if you aren't sure.
+
+==============================================================================
+VERSION.C                                          *dev-vimpatch-version.c*
+
+The list of Vim patches in `src/nvim/version.c` is automatically updated
+https://github.com/neovim/neovim/pull/7780 based on the presence of
+`vim-patch:xxx` tokens in the Nvim git log.
+
+- Don't update `src/nvim/version.c` yourself.
+    - `scripts/vim-patch.sh -p` intentionally omits `version.c` to avoid merge
+      conflicts and save time when porting a patch.
+- The automation script (`scripts/vimpatch.lua`) only recognizes tokens like
+  `vim-patch:8.0.1206`, not `vim-patch:<hash>`.
+
+==============================================================================
+CODE DIFFERENCES                            *dev-vimpatch-code-differences*
+
+The following functions have been removed or deprecated in favor of newer
+alternatives. See `memory.c`
+https://github.com/neovim/neovim/blob/master/src/nvim/memory.c for more
+information.
+>
+  -----------------------------------------------------------------------
+  Deprecated or removed                                 Replacement
+  -----------------------------------------------------------------------
+  vim_free                                                 xfree
+  VIM_CLEAR(&foo)                                    XFREE_CLEAR(foo)
+  malloc alloc lalloc lalloc_id ALLOC_ONE                 xmalloc
+  calloc lalloc_clear                                     xcalloc
+  realloc vim_realloc                                    xrealloc
+  mch_memmove                                             memmove
+  vim_memset copy_chars copy_spaces                       memset
+  vim_strbyte                                             strchr
+  vim_strncpy strncpy                               xstrlcpy/xmemcpyz
+  vim_strcat strncat                                     xstrlcat
+  VIM_ISWHITE                                          ascii_iswhite
+  IS_WHITE_OR_NUL                                  ascii_iswhite_or_nul
+  IS_WHITE_NL_OR_NUL                              ascii_iswhite_nl_or_nul
+  vim_isalpha                                           mb_isalpha
+  vim_isNormalIDc                                      ascii_isident
+  vim_islower vim_isupper                          mb_islower mb_isupper
+  vim_tolower vim_toupper                          mb_tolower mb_toupper
+  mb_ptr2len                                           utfc_ptr2len
+  mb_ptr2len_len                                     utfc_ptr2len_len
+  mb_char2len                                          utf_char2len
+  mb_char2bytes                                       utf_char2bytes
+  mb_ptr2cells                                         utf_ptr2cells
+  mb_ptr2cells_len                                   utf_ptr2cells_len
+  mb_char2cells                                       utf_char2cells
+  mb_off2cells                                         utf_off2cells
+  mb_ptr2char                                          utf_ptr2char
+  mb_head_off                                          utf_head_off
+  mb_tail_off                                          utf_cp_bounds
+  mb_strnicmp2                                         utf_strnicmp
+  MB_STRNICMP2                                         utf_strnicmp
+  mb_lefthalve                                        grid_lefthalve
+  mb_fix_col                                           grid_fix_col
+  utf_off2cells                                       grid_off2cells
+  ml_get_curline                                    get_cursor_line_ptr
+  ml_get_cursor                                     get_cursor_pos_ptr
+  ml_get_curline_len                                get_cursor_line_len
+  ml_get_cursor_len                                 get_cursor_pos_len
+  screen_char                                             ui_line
+  screen_line                                        grid_put_linebuf
+  screen_* (most functions)                               grid_*
+  update_prepare, update_finish #9484                  removed; use update_screen only
+  ARRAY_LENGTH                                          ARRAY_SIZE
+  vim_strsave_escape_csi                           vim_strsave_escape_ks
+  vim_unescape_csi                                    vim_unescape_ks
+  gettail                                                path_tail
+  mch_isFullName                                     path_is_absolute
+  script_do_profile                                    profile_init
+
+  -----------------------------------------------------------------------
+<
+Make sure to note the difference between `utf_` and `utfc_` when replacing
+`mb_` functions. Also indirect call syntax `(*mb_ptr2len)(...)` should be
+replaced with an ordinary function call `utfc_ptr2len(...)`.
+>
+  -----------------------------------------------------------------------
+  Data type    Format (Vim source)     Portable format (Nvim source)
+  ------------ ----------------------- ----------------------------------
+  long long    "%lld"                  "%" PRId64
+  size_t       "%ld"                   "%zu"
+  linenr_T     "%ld"                   "%" PRIdLINENR
+  -----------------------------------------------------------------------
+<
+- See also: https://github.com/neovim/neovim/pull/1729#discussion_r22423779
+- Vim's `ga_init2` was renamed to `ga_init` and the original `ga_init` is
+  gone.
+- "Old style" Vim tests (`src/testdir/*.in`) should be converted to Lua tests
+  (see #1286 https://github.com/neovim/neovim/issues/1286 and #1328
+  https://github.com/neovim/neovim/pull/1328). See Checklist for migrating
+  legacy tests
+  https://github.com/neovim/neovim/blob/master/test/README.md#checklist-for-migrating-legacy-tests.
+    - However, please do not convert "new style" Vim tests
+      (`src/testdir/*.vim`) to Lua. The "new style" Vim tests are faster than
+      the old ones, and converting them takes time and effort better spent
+      elsewhere. Just copy them to `test/old/testdir/*.vim`.
+- Conditions that check `enc_utf8` or `has_mbyte` are obsolete (only the
+  "true" case is applicable).
+    - `enc_utf8` and `has_mbyte` macros were removed in
+      https://github.com/neovim/neovim/pull/13293
+- Check for `CSI` in typeahead buffer is only necessary in Vim with
+  `FEAT_GUI`. `CSI` does not have a special meaning in typeahead buffer in
+  Nvim. (also see https://github.com/neovim/neovim/pull/16936)
+
+==============================================================================
+LIST MANAGEMENT                              *dev-vimpatch-list-management*
+
+Management of lists (types `list_T` and `listitem_T` from vim) was changed in
+https://github.com/neovim/neovim/pull/7708/. There is a lint against the "old"
+usage, but here are the most important changes.
+
+Declarations for the table
+
+- `list_T list`: a list
+- `listitem_T li`: an item of `list`
+- `int val` a value for `lv_copyID`
+
+>
+  --------------------------------------------------------------------------------------
+  Old                             New                                  Comment
+  ------------------------------- ------------------------------------------------------
+  list->lv_first                  tv_list_first(list)
+  list->lv_last                   tv_list_last(list)
+  li->li_next                     TV_LIST_ITEM_NEXT(list, li)          To be avoided if possible, must use list which li belongs to.
+  li->li_prev                     TV_LIST_ITEM_PREV(list, li)          To be avoided if possible, must use list which li belongs to.
+                                  Suggestion by @ZyX-l:                Use TV_LIST_ITER or indexing instead of the previous two calls.
+  list->lv_len                    tv_list_len(list)
+  list->lv_lock                   tv_list_locked(list)
+  &li->li_tv                      TV_LIST_ITEM_TV(li)
+  list->lv_refcount++             tv_list_ref(list)
+  val = list->lv_copyID           val = tv_list_copyid(list)
+  list->lv_copyID = val           tv_list_set_copyid(list, val)
+
+  for (li = list->lv_first;       TV_LIST_ITER_CONST(list, li,         Use TV_LIST_ITER(...) if you need to
+  li != NULL && another_cond;     { if (another_cond) {break;} code})  modify list items (note: assigning copyID is also modification and this happens
+  li = li->li_next) code                                               always when recursively traversing a list).
+
+  --------------------------------------------------------------------------------------
+<
+For more details and some more advanced usage, see `typval.h` and `typval.c`.
+
+==============================================================================
+DOCUMENTATION DIFFERENCES          *dev-vimpatch-documentation*
+
+The following should be removed from all imported documentation, and not be
+used in new documentation:
+
+- `{Only when compiled with ...}`: the vast majority of features have been
+  made non-optional (see https://github.com/neovim/neovim/wiki/Introduction)
+
+==============================================================================
+FILETYPE DETECTION                 *dev-vimpatch-filetype*
+
+Nvim's filetype detection behavior matches Vim, but is implemented as part of
+|vim.filetype| (see `$VIMRUNTIME/lua/vim/filetype.lua`). The logic is encoded in
+three tables, listed in order of precedence (the first match is returned):
+1. `filename` for literal full path or basename lookup;
+2. `pattern` for matching filenames or paths against |lua-patterns|, optimized
+   for fast lookup;
+3. `extension` for literal extension lookup.
+
+Logic that requires checking file contents or buffer variables is implemented
+in `$VIMRUNTIME/lua/vim/filetype/detect.lua`.
+
+When porting filetype patches from Vim, keep the following in mind:
+
+Prefer explicit filenames or extensions over patterns, especially for case
+insensitive matches (see https://github.com/neovim/neovim/pull/29800): >
+    "*[mM]akefile" regex -> "makefile", "Makefile" filenames
+    "*.js\c"       regex -> "js", "jS", "Js", "jS" extensions
+
+Pattern matching has several differences:
+- It is done using explicit Lua patterns without implicit anchoring instead
+  of Vim regexes: >
+    "*/debian/changelog" -> "/debian/changelog$"
+    "*/bind/db.*"        -> "/bind/db%."
+<
+- Filetype patterns are grouped by their parent pattern to improve matching
+  performance: If the parent pattern does not match, skip testing all child
+  patterns. Note that unlike leaf patterns, parent patterns do not have
+  special matching behaviour if they contain a `/`.
+
+  When adding a new filetype with pattern matching, consider the following:
+  - If there is already a group with appropriate parent pattern, use it.
+  - If there can be a fast and specific enough pattern to group at least 3
+    filetype patterns, add it as a separate grouped entry.
+
+  New parent patterns should be
+  - fast: rule of thumb is that it should be a short explicit string
+  (i.e. no quantifiers or character sets);
+  - specific: rules of thumb, in order:
+    - full directory name (e.g., `"/etc/"`, `"/log/"`);
+    - part of a rare enough directory name (e.g., `"/conf"`, `"git/"`);
+    - string rarely used in real full paths (e.g., `"nginx"`).
+
+  Example:
+  - Filetype pattern: `".*/etc/a2ps/.*%.cfg"`
+  - Good parents: `"/etc/"` or `"%.cfg$"`
+  - Bad parents: `"%."` (fast but not specific) or `"/a2ps/.*%."` (specific
+    but slow)
+
+  When modifying an existing regular pattern, make sure that it still fits its
+  group.
+
+vim:tw=78:ts=8:noet:ft=help:norl:

@@ -1,0 +1,59 @@
+*dev_arch.txt*          Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+How to develop Nvim, explanation of modules and subsystems    *dev-arch*
+
+The top of each major module has (or should have) an overview in a comment at
+the top of its file. The purpose of this document is to give:
+
+1. an overview of how it all fits together
+2. how-to guides for common tasks such as:
+    - deprecating public functions
+    - adding a new public (API) function
+    - adding a new public (UI) event
+3. TODO: move src/nvim/README.md into this doc.
+
+                                  Type |gO| to see the table of contents.
+
+==============================================================================
+Data structures
+
+Use `kvec.h` for most lists. When you absolutely need a linked list, use
+`lib/queue_defs.h` which defines an "intrusive" linked list.
+
+==============================================================================
+UI events
+
+The source files most directly involved with UI events are:
+1. `src/nvim/ui.*`: calls handler functions of registered UI structs (independent from msgpack-rpc)
+2. `src/nvim/api/ui.*`: forwards messages over msgpack-rpc to remote UIs.
+
+UI events are defined in `src/nvim/api/ui_events.in.h` , this file is not
+compiled directly, rather it parsed by
+`src/nvim/generators/gen_api_ui_events.lua` which autogenerates wrapper
+functions used by the source files above. It also generates metadata
+accessible as `api_info().ui_events`.
+
+See commit d3a8e9217f39c59dd7762bd22a76b8bd03ca85ff for an example of adding
+a new UI event.
+
+UI events are deferred to UIs, which implies a deepcopy of the UI event data.
+
+Remember to bump NVIM_API_LEVEL if it wasn't already during this development
+cycle.
+
+Other references:
+- |msgpack-rpc|
+- |ui|
+- https://github.com/neovim/neovim/pull/3246
+- https://github.com/neovim/neovim/pull/18375
+- https://github.com/neovim/neovim/pull/21605
+
+
+
+==============================================================================
+
+vim:tw=78:ts=8:sw=4:et:ft=help:norl:

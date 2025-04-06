@@ -1,0 +1,16 @@
+# Dummy workflow of lintcommit.yml. lintcommit is a required check, but it's
+# only designed to work on master. Since required checks are always required to
+# run, we can essentially "skip" the lintcommit on release branches with this
+# dummy check that automatically passes.
+name: lintcommit_dummy
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - 'release-[0-9]+.[0-9]+'
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - run: echo "success"

@@ -1,0 +1,193 @@
+*news.txt*    Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Notable changes since Nvim 0.11                                 *news*
+
+For changes in the previous release, see |news-0.11|.
+
+                                       Type |gO| to see the table of contents.
+
+==============================================================================
+BREAKING CHANGES IN HEAD OR EXPERIMENTAL                    *news-breaking-dev*
+
+              ====== Remove this section before release. ======
+
+The following changes to UNRELEASED features were made during the development
+cycle (Nvim HEAD, the "master" branch).
+
+EXPERIMENTS
+
+• todo
+
+LSP
+
+• todo
+
+OPTIONS
+
+• todo
+
+TREESITTER
+
+• todo
+
+==============================================================================
+BREAKING CHANGES                                                *news-breaking*
+
+These changes may require adaptations in your config or plugins.
+
+API
+
+• todo
+
+BUILD
+
+• todo
+
+DIAGNOSTICS
+
+• |diagnostic-signs| can no longer be configured with |:sign-define| or
+  |sign_define()| (deprecated in Nvim 0.10 |deprecated-0.10|).
+• |vim.diagnostic.disable()| and |vim.diagnostic.is_disabled()| (deprecated in
+  Nvim 0.10 |deprecated-0.10|) are removed.
+• The legacy signature of |vim.diagnostic.enable()| (deprecated in Nvim 0.10
+  |deprecated-0.10|) is no longer supported.
+
+EDITOR
+
+• todo
+
+EVENTS
+
+• todo
+
+HIGHLIGHTS
+
+• |hl-DiffTextAdd| highlights added text within a changed line.
+
+LSP
+
+• todo
+
+LUA
+
+• todo
+
+OPTIONS
+
+• 'diffopt' `inline:` configures diff highlighting for changes within a line.
+• 'pummaxwidth' sets maximum width for the completion popup menu.
+
+PLUGINS
+
+• todo
+
+TREESITTER
+
+• todo
+
+TUI
+
+• todo
+
+VIMSCRIPT
+
+• todo
+
+==============================================================================
+NEW FEATURES                                                    *news-features*
+
+The following new features were added.
+
+API
+
+• |vim.hl.range()| now allows multiple timed highlights
+
+DEFAULTS
+
+• todo
+
+DIAGNOSTICS
+
+• todo
+
+EDITOR
+
+• |:iput| works like |:put| but adjusts indent.
+
+EVENTS
+
+• todo
+
+LSP
+
+• |vim.lsp.ClientConfig| gained `workspace_required`.
+
+LUA
+
+• todo
+
+OPTIONS
+
+• 'completefuzzycollect' enables fuzzy collection of candidates for (some)
+  |ins-completion| modes.
+• 'autowriteall' write all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
+• 'winborder' "bold" style.
+• |g:clipboard| accepts a string name to force any builtin clipboard tool.
+
+PERFORMANCE
+
+• todo
+
+PLUGINS
+
+• todo
+
+STARTUP
+
+• todo
+
+TERMINAL
+
+• todo
+
+TREESITTER
+
+• todo
+
+TUI
+
+• todo
+
+UI
+
+• todo
+
+VIMSCRIPT
+
+• todo
+
+==============================================================================
+CHANGED FEATURES                                                 *news-changed*
+
+These existing features changed their behavior.
+
+• 'spellfile' location defaults to `stdpath("data").."/spell/"` instead of the
+  first writable directoy in 'runtimepath'.
+
+==============================================================================
+REMOVED FEATURES                                                 *news-removed*
+
+These deprecated features were removed.
+
+• todo
+
+==============================================================================
+DEPRECATIONS                                                *news-deprecations*
+
+See |deprecated-0.12|.
+
+ vim:tw=78:ts=8:sw=2:et:ft=help:norl:

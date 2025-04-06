@@ -1,0 +1,77 @@
+*ft_hare.txt*	Support for the Hare programming language
+
+==============================================================================
+CONTENTS								*hare*
+
+1. Introduction							  |hare-intro|
+2. Filetype plugin						 |hare-plugin|
+3. Settings						       |hare-settings|
+
+==============================================================================
+INTRODUCTION							  *hare-intro*
+
+This plugin provides syntax highlighting, indentation, and other functionality
+for the Hare programming language. Support is also provided for README files
+inside Hare modules, but this must be enabled by setting |g:filetype_haredoc|.
+
+==============================================================================
+FILETYPE PLUGIN							 *hare-plugin*
+
+This plugin automatically sets the value of 'path' to include the contents of
+the HAREPATH environment variable, allowing commands such as |gf| to directly
+open standard library or third-party modules. If HAREPATH is not set, it
+defaults to the recommended paths for most Unix-like filesystems, namely
+/usr/src/hare/stdlib and /usr/src/hare/third-party.
+
+==============================================================================
+SETTINGS						       *hare-settings*
+
+This plugin provides a small number of variables that you can define in your
+vimrc to configure its behavior.
+
+							  *g:filetype_haredoc*
+This plugin is able to automatically detect Hare modules and set the "haredoc"
+filetype for any README files. As the recursive directory search used as a
+heuristic has a minor performance impact, this feature is disabled by default
+and must be specifically opted into: >
+	let g:filetype_haredoc = 1
+<
+See |g:haredoc_search_depth| for ways to tweak the searching behavior.
+
+						    *g:hare_recommended_style*
+The following options are set by default, in accordance with the official Hare
+style guide: >
+	setlocal noexpandtab
+	setlocal shiftwidth=0
+	setlocal softtabstop=0
+	setlocal tabstop=8
+	setlocal textwidth=80
+<
+To disable this behavior: >
+	let g:hare_recommended_style = 0
+<
+							  *g:hare_space_error*
+By default, trailing whitespace and tabs preceded by space characters are
+highlighted as errors. This is automatically turned off when in insert mode.
+To disable this highlighting completely: >
+	let g:hare_space_error = 0
+<
+						      *g:haredoc_search_depth*
+By default, when |g:filetype_haredoc| is enabled, only the current directory
+and its immediate subdirectories are searched for Hare files. The maximum
+search depth may be adjusted with: >
+	let g:haredoc_search_depth = 2
+<
+	Value		Effect~
+	0		Only search the current directory.
+	1		Search the current directory and immediate
+			subdirectories.
+	2		Search the current directory and two levels of
+			subdirectories.
+
+The maximum search depth can be set to any integer, but using values higher
+than 2 is not recommended, and will likely provide no tangible benefit in most
+situations.
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

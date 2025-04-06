@@ -1,0 +1,79 @@
+WarningsAsErrors: '*,-clang-diagnostic-unused-function'
+Checks: >
+  Enable all warnings by default. This ensures we don't miss new and useful
+  warnings when a new version of clang-tidy is dropped.
+
+  IMPORTANT
+  clang-tidy doesn't support comments but we can simulate comments by just
+  writing text directly here. These are then interpreted as warnings and will
+  be dropped. As long as you start every sentence with a capital letter and
+  don't use commas in your "comments" you should be fine,
+  *,
+
+  Untriaged warnings. Please categorize them accordingly if you find a relevant
+  section for it,
+  -bugprone-assignment-in-if-condition,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-multi-level-implicit-pointer-conversion,
+  -bugprone-not-null-terminated-result,
+  -bugprone-suspicious-memory-comparison,
+  -bugprone-switch-missing-default-case,
+  -cert-env33-c,
+  -cert-err33-c,
+  -cert-err34-c,
+  -concurrency-mt-unsafe,
+  -cppcoreguidelines-narrowing-conversions,
+
+  Warnings that may be useful, but are too inconsistent to enable by default
+  May yield useful results with some manual triaging,
+  -bugprone-branch-clone,
+  -bugprone-macro-parentheses,
+  -bugprone-sizeof-expression,
+  -hicpp-multiway-paths-covered,
+  -hicpp-signed-bitwise,
+  -misc-unused-parameters,
+  -modernize-macro-to-enum,
+  -readability-avoid-nested-conditional-operator,
+  -readability-else-after-return,
+  -readability-enum-initial-value,
+  -readability-function-size,
+  -readability-isolate-declaration,
+
+  Warnings that are rarely useful,
+  -altera-*, Checks related to OpenCL programming for FPGAs. Not relevant,
+  -android-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-inc-dec-in-conditions,
+  -bugprone-swapped-arguments,
+  -clang-analyzer-*, Already covered by the cmake target "clang-analyzer",
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-init-variables,
+  -llvm-header-guard, We use #pragma once,
+  -llvmlibc-restrict-system-libc-headers, We want to use glibc,
+  -misc-include-cleaner, Looks useful but redundant with IWYU. We may replace IWYU with this one day,
+  -misc-misplaced-const,
+  -misc-no-recursion,
+  -performance-no-int-to-ptr,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-math-missing-parentheses,
+  -readability-redundant-declaration, Conflicts with our header generation scripts,
+  -readability-suspicious-call-argument,
+
+  Aliases. These are just duplicates of other warnings and should always be ignored,
+  -bugprone-narrowing-conversions,
+  -cert-dcl37-c,
+  -cert-dcl51-cpp,
+  -cert-exp42-c,
+  -cert-flp37-c,
+  -cert-int09-c,
+  -cert-msc24-c,
+  -cert-msc33-c,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-macro-to-enum,
+  -google-readability-braces-around-statements,
+  -google-readability-function-size,
+  -hicpp-braces-around-statements,
+  -hicpp-function-size,
+  -llvm-else-after-return,

@@ -1,0 +1,471 @@
+*news-0.10.txt*    Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Notable changes since Nvim 0.9                                  *news-0.10*
+
+For changes in the previous release, see |news-0.9|.
+
+                                       Type |gO| to see the table of contents.
+
+==============================================================================
+BREAKING CHANGES
+
+These changes may require adaptations in your config or plugins.
+
+• API:
+  • |nvim_open_win()| now blocks all autocommands when `noautocmd` is set,
+    rather than just those from setting the `buffer` to display in the window.
+
+• Defaults:
+  • Default color scheme has been updated to be "Nvim branded" and accessible.
+    Use `:colorscheme vim` to revert to the old legacy color scheme.
+    • These Nvim specific highlight groups are now defined in a meaningfully
+      different way and might need an update:
+      • |hl-FloatBorder| is linked to |hl-NormalFloat| instead of |hl-WinSeparator|.
+      • |hl-NormalFloat| is not linked to |hl-Pmenu|.
+      • |hl-WinBar| has different background.
+      • |hl-WinBarNC| is similar to |hl-WinBar| but not bold.
+      • |hl-WinSeparator| is linked to |hl-Normal| instead of |hl-VertSplit|.
+    • This also might result into some color schemes looking differently due
+      to them relying on implicit assumptions about how highlight groups are
+      defined by default. To account for this, define all attributes of
+      highlight groups explicitly. Alternatively, use `:colorscheme vim` or
+      `:source $VIMRUNTIME/colors/vim.lua` to restore previous definitions.
+  • 'termguicolors' is enabled by default when Nvim is able to determine that
+    the host terminal emulator supports 24-bit color.
+
+• Editor:
+  • When switching windows, |CursorMoved| autocommands trigger when Nvim is
+    back on the main loop rather than immediately. This is more compatible
+    with Vim.
+  • "#" followed by a digit no longer stands for a function key at the start
+    of the lhs of a mapping.
+  • |shm-q| now fully hides macro recording message instead of only shortening it.
+  • Signs placed through the legacy |sign-commands| are now stored and
+    displayed as |extmarks| internally. Along with the following changes:
+    • A sign placed twice in the same group with the same identifier will be
+      moved.
+    • Legacy signs are always deleted along with the line it is placed on.
+    • Legacy and extmark signs will show up in both |:sign-place-list| and
+      |nvim_buf_get_extmarks()|.
+    • Legacy and extmark signs are displayed and listed with the same priority:
+        line number -> priority -> sign id -> recently placed
+  • `:behave` was removed.
+    • If you used `:behave xterm`, the following is equivalent: >vim
+
+      set mousemodel=extend
+<
+    • If you used `:behave mswin`, the following is equivalent: >vim
+
+      set selection=exclusive
+      set selectmode=mouse,key
+      set mousemodel=popup
+      set keymodel=startsel,stopsel
+<
+• Events:
+  • Returning any truthy value from a callback passed to
+    |nvim_create_autocmd()| (rather than just `true`) will delete the
+    autocommand.
+
+• LSP:
+  • |LanguageTree:parse()| will no longer parse injections by default and now
+    requires an explicit range argument to be passed. If injections are
+    required, provide an explicit range via `parser:parse({ start_row, end_row })`.
+  • |vim.lsp.util.parse_snippet()| will now strictly follow the snippet
+    grammar defined by LSP, and hence previously parsed snippets might now be
+    considered invalid input.
+  • |vim.lsp.codelens.refresh()| now takes an `opts` argument. With this
+    change, the default behavior of just refreshing the current buffer has
+    been replaced by refreshing all buffers.
+  • |vim.lsp.util.extract_completion_items()| will no longer return reliable
+    results, since it does not apply `itemDefaults` when its input is
+    a `CompletionList`. Moreover, since support for LSP
+    `completionList.itemDefaults` was added, some third party plugins might be
+    negatively impacted in case the language servers support the feature but
+    the plugin does not. If necessary, the respective capability can be
+    removed when calling |vim.lsp.protocol.make_client_capabilities()|.
+  • |LspRequest| and LspProgressUpdate (renamed to |LspProgress|) autocmds
+    were promoted from |User| autocmds to first class citizens.
+
+• Lua:
+  • |-l| ensures output ends with a newline if the script prints messages and
+    doesn't cause Nvim to exit.
+  • Removed functions from the |vim.json| module:
+    • Unnecessary, undocumented functions which caused global side-effects.
+    • `vim.json.null` is redundant with `vim.NIL`.
+    • `vim.json.array_mt` (and related) is redundant with `vim.empty_dict()`.
+  • |vim.islist()| now checks whether a table is actually list-like (i.e., has
+    integer keys without gaps and starting from 1). For the previous behavior
+    (only check for integer keys, allow gaps or not starting with 1), use
+    |vim.isarray()|.
+  • Renamed `vim.treesitter.playground` to `vim.treesitter.dev`.
+
+• Options:
+  • Removed some Vim 5.0<= option compatibilities:
+    • 'backspace' no longer supports number values. Instead:
+      • for `backspace=0` set `backspace=` (empty)
+      • for `backspace=1` set `backspace=indent,eol`
+      • for `backspace=2` set `backspace=indent,eol,start` (default behavior in Nvim)
+      • for `backspace=3` set `backspace=indent,eol,nostop`
+    • 'backupdir' and 'directory' will no longer remove a `>` at the start of
+      the option.
+  • |OptionSet| autocommand args |v:option_new|, |v:option_old|,
+    |v:option_oldlocal|, |v:option_oldglobal| now have the type of the option
+    instead of always being strings. |v:option_old| is now the old global
+    value for all global-local options, instead of just string global-local
+    options.
+  • Local value for a global-local number/boolean option is now unset when the
+    option is set (e.g. using |:set| or |nvim_set_option_value()|) without
+    a scope, which means they now behave the same way as string options.
+
+• Plugins:
+  • |:TOhtml| has been rewritten in Lua to support Nvim-specific decorations,
+    and many options have been removed.
+
+• Treesitter:
+  • Treesitter highlight groups have been renamed to be more in line with
+    upstream tree-sitter and Helix to make it easier to share queries. The
+    full list is documented in |treesitter-highlight-groups|.
+
+• TUI:
+  • In some cases, the cursor in the Nvim |TUI| used to blink even without
+    configuring 'guicursor' as mentioned in |cursor-blinking|. This was a bug
+    that has now been fixed. If your cursor has stopped blinking, add the
+    following (or similar, adapted to user preference) to your |config| file: >vim
+      set guicursor+=n-v-c:blinkon500-blinkoff500
+<
+
+==============================================================================
+NEW FEATURES
+
+The following new features were added.
+
+• API:
+  • Passing 0 to |nvim_get_chan_info()| gets info about the current channel.
+  • |nvim_buf_set_extmark()| supports inline virtual text.
+  • |nvim_win_text_height()| computes the number of screen lines occupied
+    by a range of text in a given window.
+  • New RPC client type `msgpack-rpc` is added for |nvim_set_client_info()| to
+    support fully MessagePack-RPC compliant clients.
+  • Floating windows can now be hidden by setting `hide` in |nvim_open_win()| or
+    |nvim_win_set_config()|.
+  • |nvim_input_mouse()| supports mouse buttons "x1" and "x2".
+  • Added "force_crlf" option field in |nvim_open_term()|.
+  • Added |nvim_tabpage_set_win()| to set the current window of a tabpage.
+  • Mapping APIs now support abbreviations when mode short-name has suffix "a".
+  • Floating windows can now show footer with new `footer` and `footer_pos`
+    config fields. Uses |hl-FloatFooter| by default.
+  • |extmarks| can set a "url" highlight attribute, so the text region can
+    become a clickable hyperlink (assuming UI support). The TUI renders URLs
+    using the OSC 8 control sequence, enabling clickable text in supporting
+    terminals.
+  • |nvim_open_win()| and |nvim_win_set_config()| now support opening normal
+    (split) windows, moving floating windows into split windows, and opening
+    windows in non-current tabpages.
+  • Flags added to |nvim_buf_set_extmark()|:
+    • "undo_restore": opt-out extmarks of precise undo tracking.
+    • "invalidate": automatically hide or delete extmarks.
+    • "virt_text_repeat_linebreak": repeat virtual text on wrapped lines.
+  • Extmarks now fully support multi-line ranges, and a single extmark can be
+    used to highlight a range of arbitrary length. The |nvim_buf_set_extmark()|
+    API function already allowed you to define such ranges, but highlight
+    regions were not rendered consistently for a range that covers more than
+    one line break. This has now been fixed. Signs defined as part of
+    a multi-line extmark also apply to every line in the range, not just the
+    first. In addition, |nvim_buf_get_extmarks()| has gained an "overlap"
+    option to return such ranges even if they started before the specified
+    position.
+
+• Defaults:
+  • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
+    by default on Mac and Windows. Disabled on Linux since there currently
+    isn't a viable backend for watching files that scales well for large
+    directories.
+  • On Windows 'isfname' does not include ":". Drive letters are handled
+    correctly without it. (Use |gF| for filepaths suffixed with ":line:col").
+  • 'comments' includes "fb:•".
+  • 'shortmess' includes the "C" flag.
+  • 'grepprg' uses the -H and -I flags for grep by default,
+    and defaults to using ripgrep if available.
+  • "]d" and "[d" in Normal mode map to |vim.diagnostic.goto_next()| and
+    |vim.diagnostic.goto_prev()|, respectively. |]d-default| |[d-default|
+  • <C-W>d (and <C-W><C-D>) map to |vim.diagnostic.open_float()|
+    |CTRL-W_d-default|
+  • |vim.lsp.start()| sets the following default keymaps (assuming server
+    support):
+    • |K| in Normal mode maps to |vim.lsp.buf.hover()|, unless 'keywordprg'
+      was customized before calling |vim.lsp.start()|.
+  • Automatic linting of treesitter query files (see |ft-query-plugin|).
+    Can be disabled via: >lua
+      vim.g.query_lint_on = {}
+<
+  • Enabled treesitter highlighting for:
+    • Treesitter query files
+    • Vim help files
+    • Lua files
+
+• Editor:
+  • Better cmdline completion for string option value. |complete-set-option|
+    • Try it with `:set listchars=<Tab>`
+  • By default, the swapfile "ATTENTION" |E325| dialog is skipped if the
+    swapfile is owned by a running Nvim process, instead of prompting. If you
+    always want the swapfile dialog, delete the default SwapExists handler:
+    `autocmd! nvim.swapfile`. |default-autocmds|
+  • Navigating the |jumplist| with CTRL+O, CTRL+I behaves more intuitively
+    when deleting buffers, and avoids "invalid buffer" cases. #25461
+  • |:fclose| command.
+  • |v_Q-default| and |v_@-default| repeat a register for each line of a linewise
+    visual selection.
+  • Clicking on a tabpage in the tabline with the middle mouse button closes it.
+  • |:checkhealth| buffer can be opened in a split window using modifiers like
+    |:vertical|, |:horizontal| and |:botright|.
+
+• Events:
+  • |vim.on_key()| callbacks receive a second argument for keys typed before
+    mappings are applied.
+
+• LSP:
+  • LSP method names are available in |vim.lsp.protocol.Methods|.
+  • Implemented LSP inlay hints: |lsp-inlay_hint|
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_inlayHint
+  • Implemented pull diagnostic textDocument/diagnostic: |vim.lsp.diagnostic.on_diagnostic()|
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_diagnostic
+  • Implemented LSP type hierarchy: |vim.lsp.buf.typehierarchy()|
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_prepareTypeHierarchy
+  • |vim.lsp.status()| consumes the last progress messages as a string.
+  • LSP client now always saves and restores named buffer marks when applying
+    text edits.
+  • LSP client now supports the `positionEncoding` server capability. If a server
+    responds with the `positionEncoding` capability in its initialization
+    response, Nvim automatically sets the client's `offset_encoding` field.
+  • Dynamic registration of LSP capabilities. An implication of this change is
+    that checking a client's `server_capabilities` is no longer a sufficient
+    indicator to see if a server supports a feature. Instead use
+    `client.supports_method(<method>)`. It considers both the dynamic
+    capabilities and static `server_capabilities`.
+  • `anchor_bias` option to lsp-handlers aids in positioning of floating
+    windows.
+  • |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to
+    the original LSP `Location` or `LocationLink`.
+  • Added support for connecting to servers using named pipes (Windows) or
+    Unix domain sockets (Unix) via |vim.lsp.rpc.connect()|.
+  • Added support for `completionList.itemDefaults`, reducing overhead when
+    computing completion items where properties often share the same value
+    (e.g. `commitCharacters`). Note that this might affect plugins and
+    language servers that don't support the feature, and in such cases the
+    respective capability can be unset.
+  • |vim.lsp.start()| accepts a "silent" option for suppressing messages
+    if an LSP server failed to start.
+  • |vim.lsp.buf.definition()|, |vim.lsp.buf.declaration()|,
+    |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()| now
+    support the `loclist` field of |vim.lsp.ListOpts|.
+
+• Lua:
+  • |:lua| with a |[range]| executes that range as Lua code, in any buffer.
+  • |:source| without arguments treats a buffer with 'filetype' of "lua" as
+    Lua code regardless of its extension.
+  • Vimscript function |exists()| supports checking |v:lua| functions.
+  • |vim.iter()| is a generic interface for all |iterable| objects (tables,
+    |iterator|s).
+  • |vim.snippet| provides a mode for expanding and navigating snippets.
+  • |vim.ringbuf()| is a generic ring buffer (data structure).
+  • |vim.deepcopy()| gained a `noref` argument to avoid hashing table values.
+  • |vim.keycode()| translates keycodes in a string.
+  • |vim.system()| runs commands / starts processes.
+  • |vim.lpeg| and |vim.re| expose the bundled Lpeg expression grammar parser
+    and its regex interface.
+  • |vim.base64.encode()| and |vim.base64.decode()| encode and decode strings
+    using Base64 encoding.
+  • |vim.text.hexencode()| and |vim.text.hexdecode()| convert strings to and
+    from byte representations.
+  • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
+    Windows `explorer`, Linux `xdg-open`, etc.)
+  • |vim.wo| can now be double indexed for |:setlocal| behaviour. Currently
+    only `0` for the buffer index is supported.
+  • Improved messages for type errors in `vim.api.*` calls (including `opts` params).
+  • Lua type annotations for:
+    • `vim.*`
+    • `vim.fn.*`
+    • `vim.api.*`
+    • `vim.v.*`
+  • Functions that take a severity as an optional parameter (e.g.
+    |vim.diagnostic.get()|) now also accept a list of severities |vim.diagnostic.severity|
+  • |vim.diagnostic.count()| returns the number of diagnostics for a given
+    buffer and/or namespace, by severity. This is a faster alternative to
+    |vim.diagnostic.get()| when only the number of diagnostics is needed, but
+    not the diagnostics themselves.
+  • |vim.diagnostic.is_enabled()|
+  • |vim.version.le()|, |vim.version.ge()|
+  • |vim.fs.root()| finds project root directories from a list of "root
+    markers".
+  • |vim.tbl_contains()| now works for general tables and allows specifying
+    a predicate function that is checked for each value. (Use
+    |vim.list_contains()| for checking list-like tables (integer keys without
+    gaps) for literal values.)
+  • vim.region() can use a string accepted by |getpos()| as position.
+
+• Options:
+  • 'winfixbuf' keeps a window focused onto a specific buffer
+  • 'smoothscroll' option to scroll by screen line rather than by text line
+    when 'wrap' is set.
+  • 'foldtext' now supports virtual text format. |fold-foldtext|
+  • 'foldtext' can be set to an empty string to disable and render the line:
+    as normal with regular highlighting and no line wrapping.
+  • 'complete' option supports "f" flag for completing buffer names.
+  • 'completeopt' option supports "popup" flag to show extra information in
+    a floating window.
+  • 'errorfile' (|-q|) accepts `-` as an alias for stdin.
+
+• Performance:
+  • 'diffopt' "linematch" scoring algorithm now favours larger and less groups
+    https://github.com/neovim/neovim/pull/23611
+  • Treesitter highlighting now parses injections incrementally during
+    screen redraws only for the line range being rendered. This significantly
+    improves performance in large files with many injections.
+  • 'breakindent' performance is significantly improved for wrapped lines.
+  • Cursor movement, insertion with [count] and |screenpos()| are now faster.
+
+• Plugins:
+  • Nvim now includes |commenting| support.
+  • |:Man| supports the `:hide` modifier to open page in the current window.
+  • |:Man| respects 'wrapmargin'
+
+• Startup:
+  • |$NVIM_APPNAME| can be set to a relative path instead of only a name.
+  • |--startuptime| reports startup times for both processes (TUI + server) as
+    separate sections.
+
+• Terminal:
+  • |:terminal| accepts some |:command-modifiers| (specifically |:horizontal|
+    and those that affect splitting a window).
+  • Terminal buffers emit a |TermRequest| autocommand event when the child
+    process emits an OSC or DCS control sequence.
+  • Terminal buffers respond to OSC background and foreground requests.
+    |default-autocmds|
+
+• Treesitter:
+  • Bundled parser and queries (highlight, folds) for Markdown (used for LSP
+    hover).
+  • |:InspectTree| shows root nodes.
+  • |:InspectTree| now supports |folding|.
+  • |:InspectTree| shows node ranges in 0-based instead of 1-based indexing.
+  • |vim.treesitter.foldexpr()| now recognizes folds captured using a
+    quantified query pattern.
+  • |vim.treesitter.query.omnifunc()| provides completion in treesitter query
+    files (set by default).
+  • |vim.treesitter.query.edit()| provides live editing of treesitter queries.
+  • |Query:iter_matches()| now has the ability to set the maximum start depth
+    for matches.
+  • `@injection.language` now has smarter resolution and will fall back to
+    language aliases (e.g., filetype or custom shorthands) registered via
+    |vim.treesitter.language.register()| and/or attempt lower case variants of
+    the text.
+  • `@injection.filename` will try to match the node text via
+    |vim.filetype.match()| and treat the result as a language name in the same
+    way as `@injection.language`.
+  • The `#set!` directive supports `injection.self` and `injection.parent` for
+    injecting either the current node's language or the parent
+    |LanguageTree|'s language, respectively.
+  • The `#set!` directive can set the "url" property of a node to have the
+    node emit a hyperlink. Hyperlinks are UI specific: in the TUI, the OSC 8
+    control sequence is used.
+  • Improved error messages for query parsing.
+
+• TUI:
+  • Builtin TUI can now recognize "super" (|<D-|) and "meta" (|<T-|) modifiers
+    in a terminal emulator that supports |tui-csiu|.
+  • The |TermResponse| event can be used with |v:termresponse| to read escape
+    sequence responses from the host terminal.
+  • A clipboard provider which uses OSC 52 to copy the selection to the system
+    clipboard is now bundled by default and will be automatically enabled under
+    certain conditions. |clipboard-osc52|
+  • 'termsync' option asks the host terminal to buffer screen updates until
+    the redraw cycle is complete. Requires support from the host terminal.
+
+• UI:
+  • Enhanced support for rendering multibyte characters using composing
+    characters: the maximum limit was increased from 1+6 codepoints to
+    31 bytes, which is guaranteed to fit all chars from before but often more.
+    • NOTE: the regexp engine still has a hard-coded limit of considering
+      6 composing chars only.
+
+
+==============================================================================
+CHANGED FEATURES
+
+These existing features changed their behavior.
+
+• API:
+  • |nvim_buf_call()| and |nvim_win_call()| now preserve any return value (NB:
+    not multiple return values)
+
+• Editor:
+  • |gx| now uses |vim.ui.open()| and not netrw. To customize, you can redefine
+    `vim.ui.open` or remap `gx`. To continue using netrw (deprecated): >vim
+    :call netrw#BrowseX(expand(exists("g:netrw_gx") ? g:netrw_gx : '<cfile>'), netrw#CheckIfRemote())<CR>
+
+• LSP:
+  • LSP hover and signature help now use Treesitter for highlighting of
+    Markdown content. Note that highlighting of code examples requires
+    a matching parser and may be affected by custom queries.
+  • |LspRequest| autocmd callbacks contain more information about the LSP
+    request status update that occurred.
+
+• Lua:
+  • |vim.wait()| cannot be called in |api-fast|.
+  • |vim.diagnostic.config()| now accepts virtual text relevant options to
+    |nvim_buf_set_extmark()| (e.g. "virt_text_pos" and "hl_mode") in its
+    "virtual_text" table, which gives users more control over how diagnostic
+    virtual text is displayed.
+  • |vim.diagnostic.get()| and |vim.diagnostic.count()| accept multiple
+    namespaces rather than just a single namespace.
+  • |vim.diagnostic.enable()| gained new parameters, and the old signature is
+    deprecated.
+  • |vim.diagnostic.config()| now accepts a function for the virtual_text.prefix
+    option, which allows for rendering e.g., diagnostic severities differently.
+
+• Options:
+  • Attempting to set an invalid keycode option (e.g. `set t_foo=123`) no
+    longer gives an error.
+
+• Terminal:
+  • Terminal buffers started with no arguments (and use 'shell') close
+    automatically if the job exited without error, eliminating the (often
+    unwanted) "[Process exited 0]" message. |default-autocmds|
+
+• Treesitter:
+  • |Query:iter_matches()|, |vim.treesitter.query.add_predicate()|, and
+    |vim.treesitter.query.add_directive()| accept a new `all` option which
+    ensures that all matching nodes are returned as a table. The default option
+    `all=false` returns only a single node, breaking captures with quantifiers
+    like `(comment)+ @comment`; it is only provided for backward compatibility
+    and will be removed after Nvim 0.10.
+  • |vim.treesitter.query.add_predicate()| and
+    |vim.treesitter.query.add_directive()| now accept an options table rather
+    than a boolean "force" argument. To force a predicate or directive to
+    override an existing predicate or directive, use `{ force = true }`.
+
+==============================================================================
+REMOVED FEATURES
+
+These deprecated features were removed.
+
+• Vimball support, including `:Vimuntar` command
+
+• Support for legacy treesitter injection queries
+
+• 'shortmess' flags:
+  • |shm-f|. Always use "(3 of 5)", never "(file 3 of 5)".
+  • |shm-i|. Always use "[noeol]".
+  • |shm-x|. Always use "[dos]", "[unix]" and "[mac]".
+  • |shm-n|. Always use "[New]".
+
+==============================================================================
+DEPRECATIONS
+
+See |deprecated-0.10|.
+
+ vim:tw=78:ts=8:sw=2:et:ft=help:norl:

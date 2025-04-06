@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime": {
+    "version": "LuaJIT"
+  },
+  "workspace": {
+    "library": [
+      "../runtime/lua",
+      "../src",
+      "../build/usr/share/lua/5.1",
+      "../build",
+      "${3rd}/busted/library",
+      "${3rd}/luassert/library",
+      "${3rd}/luv/library"
+    ],
+    "checkThirdParty": "Disable"
+  },
+  "diagnostics": {
+    "groupFileStatus": {
+      "strict": "Opened",
+      "strong": "Opened"
+    },
+    "groupSeverity": {
+      "strong": "Warning",
+      "strict": "Warning"
+    },
+    "unusedLocalExclude": [ "_*" ]
+  }
+}

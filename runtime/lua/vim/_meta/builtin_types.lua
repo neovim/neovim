@@ -1,0 +1,299 @@
+--- @class vim.fn.sign
+--- @field group string
+--- @field id integer
+--- @field lnum integer
+--- @field name string
+--- @field priority integer
+
+--- @class vim.fn.getbufinfo.dict
+--- @field buflisted? 0|1
+--- @field bufloaded? 0|1
+--- @field bufmodified? 0|1
+
+--- @class vim.fn.getbufinfo.ret.item
+--- @field bufnr integer
+--- @field changed 0|1
+--- @field changedtick integer
+--- @field hidden 0|1
+--- @field lastused integer
+--- @field linecount integer
+--- @field listed 0|1
+--- @field lnum integer
+--- @field loaded 0|1
+--- @field name string
+--- @field signs vim.fn.sign[]
+--- @field variables table<string,any>
+--- @field windows integer[]
+
+--- @alias vim.fn.getjumplist.ret [vim.fn.getjumplist.ret.item[], integer]
+
+--- @class vim.fn.getjumplist.ret.item
+--- @field bufnr integer
+--- @field col integer
+--- @field coladd integer
+--- @field filename? string
+--- @field lnum integer
+
+--- @class vim.fn.getmarklist.ret.item
+--- @field mark string
+--- @field pos [integer, integer, integer, integer]
+--- @field file string
+
+--- @class vim.fn.getmousepos.ret
+--- @field screenrow integer
+--- @field screencol integer
+--- @field winid integer
+--- @field winrow integer
+--- @field wincol integer
+--- @field line integer
+--- @field column integer
+
+--- @class vim.fn.getwininfo.ret.item
+--- @field botline integer
+--- @field bufnr integer
+--- @field height integer
+--- @field loclist integer
+--- @field quickfix integer
+--- @field tabnr integer
+--- @field terminal integer
+--- @field textoff integer
+--- @field topline integer
+--- @field variables table<string,any>
+--- @field width integer
+--- @field winbar integer
+--- @field wincol integer
+--- @field winid integer
+--- @field winnr integer
+--- @field winrow integer
+
+--- @class vim.quickfix.entry
+--- buffer number; must be the number of a valid buffer
+--- @field bufnr? integer
+---
+--- name of a file; only used when "bufnr" is not
+--- present or it is invalid.
+--- @field filename? string
+---
+--- name of a module; if given it will be used in
+--- quickfix error window instead of the filename.
+--- @field module? string
+---
+--- line number in the file
+--- @field lnum? integer
+---
+--- end of lines, if the item spans multiple lines
+--- @field end_lnum? integer
+---
+--- search pattern used to locate the error
+--- @field pattern? string
+---
+--- column number
+--- @field col? integer
+---
+--- when non-zero: "col" is visual column
+--- when zero: "col" is byte index
+--- @field vcol? integer
+---
+--- end column, if the item spans multiple columns
+--- @field end_col? integer
+---
+--- error number
+--- @field nr? integer
+---
+--- description of the error
+--- @field text? string
+---
+--- single-character error type, 'E', 'W', etc.
+--- @field type? string
+---
+--- recognized error message
+--- @field valid? boolean
+---
+--- custom data associated with the item, can be
+--- any type.
+--- @field user_data? any
+
+--- @class vim.fn.setqflist.what
+---
+--- quickfix list context. See |quickfix-context|
+--- @field context? table
+---
+--- errorformat to use when parsing text from
+--- "lines". If this is not present, then the
+--- 'errorformat' option value is used.
+--- See |quickfix-parse|
+--- @field efm? string
+---
+--- quickfix list identifier |quickfix-ID|
+--- @field id? integer
+--- index of the current entry in the quickfix
+--- list specified by "id" or "nr". If set to '$',
+--- then the last entry in the list is set as the
+--- current entry. See |quickfix-index|
+--- @field idx? integer
+---
+--- list of quickfix entries. Same as the {list}
+--- argument.
+--- @field items? vim.quickfix.entry[]
+---
+--- use 'errorformat' to parse a list of lines and
+--- add the resulting entries to the quickfix list
+--- {nr} or {id}. Only a |List| value is supported.
+--- See |quickfix-parse|
+--- @field lines? string[]
+---
+--- list number in the quickfix stack; zero
+--- means the current quickfix list and "$" means
+--- the last quickfix list.
+--- @field nr? integer
+---
+--- function to get the text to display in the
+--- quickfix window. The value can be the name of
+--- a function or a funcref or a lambda. Refer
+--- to |quickfix-window-function| for an explanation
+--- of how to write the function and an example.
+--- @field quickfixtextfunc? function
+---
+--- quickfix list title text. See |quickfix-title|
+--- @field title? string
+
+--- @class vim.fn.sign_define.dict
+--- @field text string
+--- @field icon? string
+--- @field linehl? string
+--- @field numhl? string
+--- @field texthl? string
+--- @field culhl? string
+
+--- @class vim.fn.sign_getdefined.ret.item
+--- @field name string
+--- @field text string
+--- @field icon? string
+--- @field texthl? string
+--- @field culhl? string
+--- @field numhl? string
+--- @field linehl? string
+
+--- @class vim.fn.sign_getplaced.dict
+--- @field group? string
+--- @field id? integer
+--- @field lnum? string|integer
+
+--- @class vim.fn.sign_getplaced.ret.item
+--- @field bufnr integer
+--- @field signs vim.fn.sign[]
+
+--- @class vim.fn.sign_place.dict
+--- @field lnum? integer|string
+--- @field priority? integer
+
+--- @class vim.fn.sign_placelist.list.item
+--- @field buffer integer|string
+--- @field group? string
+--- @field id? integer
+--- @field lnum? integer|string
+--- @field name string
+--- @field priority? integer
+
+--- @class vim.fn.sign_unplace.dict
+--- @field buffer? integer|string
+--- @field id? integer
+
+--- @class vim.fn.sign_unplacelist.list.item
+--- @field buffer? integer|string
+--- @field group? string
+--- @field id? integer
+
+--- @class vim.fn.winrestview.dict
+--- @field col? integer
+--- @field coladd? integer
+--- @field curswant? integer
+--- @field leftcol? integer
+--- @field lnum? integer
+--- @field skipcol? integer
+--- @field topfill? integer
+--- @field topline? integer
+
+--- @class vim.fn.winsaveview.ret: vim.fn.winrestview.dict
+--- @field col integer
+--- @field coladd integer
+--- @field curswant integer
+--- @field leftcol integer
+--- @field lnum integer
+--- @field skipcol integer
+--- @field topfill integer
+--- @field topline integer
+
+--- @class vim.fn.getscriptinfo.ret
+--- @field autoload false
+--- @field functions? string[]
+--- @field name string
+--- @field sid string
+--- @field variables? table<string, any>
+--- @field version 1
+
+--- @class vim.fn.undotree.entry
+---
+--- Undo sequence number.  Same as what appears in
+--- \|:undolist|.
+--- @field seq integer
+---
+--- Timestamp when the change happened.  Use
+--- \|strftime()| to convert to something readable.
+--- @field time integer
+---
+--- Only appears in the item that is the last one
+--- that was added.  This marks the last change
+--- and where further changes will be added.
+--- @field newhead? integer
+---
+--- Only appears in the item that is the last one
+--- that was undone.  This marks the current
+--- position in the undo tree, the block that will
+--- be used by a redo command.  When nothing was
+--- undone after the last change this item will
+--- not appear anywhere.
+--- @field curhead? integer
+---
+--- Only appears on the last block before a file
+--- write.  The number is the write count.  The
+--- first write has number 1, the last one the
+--- "save_last" mentioned above.
+--- @field save? integer
+---
+--- Alternate entry.  This is again a List of undo
+--- blocks.  Each item may again have an "alt"
+--- item.
+--- @field alt? vim.fn.undotree.entry[]
+
+--- @class vim.fn.undotree.ret
+---
+--- The highest undo sequence number used.
+--- @field seq_last integer
+---
+--- The sequence number of the current position in
+--- the undo tree.  This differs from "seq_last"
+--- when some changes were undone.
+--- @field seq_cur integer
+---
+--- Time last used for |:earlier| and related
+--- commands.  Use |strftime()| to convert to
+--- something readable.
+--- @field time_cur integer
+---
+--- Number of the last file write.  Zero when no
+--- write yet.
+--- @field save_last integer
+---
+--- Number of the current position in the undo
+--- tree.
+--- @field save_cur integer
+---
+--- Non-zero when the last undo block was synced.
+--- This happens when waiting from input from the
+--- user.  See |undo-blocks|.
+--- @field synced integer
+---
+--- A list of dictionaries with information about
+--- undo blocks.
+--- @field entries vim.fn.undotree.entry[]
