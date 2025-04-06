@@ -237,7 +237,7 @@ end
 ---@param changes Range6[]
 function TSHighlighter:on_changedtree(changes)
   for _, ch in ipairs(changes) do
-    api.nvim__redraw({ buf = self.bufnr, range = { ch[1], ch[4] }, flush = false })
+    api.nvim__redraw({ buf = self.bufnr, range = { ch[1], ch[4] + 1 }, flush = false })
     -- Only invalidate the _conceal_checked range if _conceal_line is set and
     -- ch[4] is not UINT32_MAX (empty range on first changedtree).
     if ch[4] == 2 ^ 32 - 1 then
