@@ -177,7 +177,7 @@ local function get_locations(method, opts)
   ---@type vim.quickfix.entry[]
   local all_items = {}
 
-  ---@param result nil|lsp.Location|lsp.Location[]
+  ---@param result lsp.Location|lsp.Location[]?
   ---@param client vim.lsp.Client
   local function on_response(_, result, client)
     local locations = {}
@@ -322,7 +322,7 @@ local function process_signature_help_results(results)
       )
       api.nvim_command('redraw')
     else
-      local result = r.result --- @type lsp.SignatureHelp
+      local result = r.result
       if result and result.signatures and result.signatures[1] then
         for i, sig in ipairs(result.signatures) do
           sig.activeParameter = sig.activeParameter or result.activeParameter

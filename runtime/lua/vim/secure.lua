@@ -134,6 +134,9 @@ function M.read(path)
     1
   )
 
+  --- @type string?
+  local ret_contents = contents
+
   if not ok and result ~= 'Keyboard interrupt' then
     error(result)
   elseif not ok or result == 0 or result == 1 then
@@ -146,7 +149,7 @@ function M.read(path)
   elseif result == 3 then
     -- Deny
     trust[fullpath] = '!'
-    contents = nil
+    ret_contents = nil
   elseif result == 4 then
     -- Allow
     trust[fullpath] = hash
@@ -154,7 +157,7 @@ function M.read(path)
 
   write_trust(trust)
 
-  return contents
+  return ret_contents
 end
 
 --- @class vim.trust.opts

@@ -380,7 +380,6 @@ end
 
 --- Enable pull diagnostics for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@private
 function M._enable(bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
 

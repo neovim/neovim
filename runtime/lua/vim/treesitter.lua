@@ -28,7 +28,7 @@ M.minimum_language_version = vim._ts_get_minimum_language_version()
 ---
 ---@param bufnr integer Buffer the parser will be tied to (0 for current buffer)
 ---@param lang string Language of the parser
----@param opts (table|nil) Options to pass to the created language tree
+---@param opts vim.treesitter.LanguageTree.new.Opts?
 ---
 ---@return vim.treesitter.LanguageTree object to use for parsing
 function M._create_parser(bufnr, lang, opts)
@@ -124,7 +124,7 @@ end
 ---
 ---@param str string Text to parse
 ---@param lang string Language of this string
----@param opts (table|nil) Options to pass to the created language tree
+---@param opts vim.treesitter.LanguageTree.new.Opts?
 ---
 ---@return vim.treesitter.LanguageTree object to use for parsing
 function M.get_string_parser(str, lang, opts)
@@ -281,17 +281,18 @@ function M.get_captures_at_pos(bufnr, row, col)
 
     local q = buf_highlighter:get_query(tree:lang())
 
+    local query = q:query()
     -- Some injected languages may not have highlight queries.
-    if not q:query() then
+    if not query then
       return
     end
 
-    local iter = q:query():iter_captures(root, buf_highlighter.bufnr, row, row + 1)
+    local iter = query:iter_captures(root, buf_highlighter.bufnr, row, row + 1)
 
     for id, node, metadata, match in iter do
       if M.is_in_node_range(node, row, col) then
         ---@diagnostic disable-next-line: invisible
-        local capture = q._query.captures[id] -- name of the capture in the query
+        local capture = query.captures[id] -- name of the capture in the query
         if capture ~= nil then
           local _, pattern_id = match:info()
           table.insert(matches, {
@@ -453,20 +454,9 @@ end
 --- Can also be shown with `:InspectTree`. [:InspectTree]()
 ---
 ---@since 11
----@param opts table|nil Optional options table with the following possible keys:
----                      - lang (string|nil): The language of the source buffer. If omitted, detect
----                        from the filetype of the source buffer.
----                      - bufnr (integer|nil): Buffer to draw the tree into. If omitted, a new
----                        buffer is created.
----                      - winid (integer|nil): Window id to display the tree buffer in. If omitted,
----                        a new window is created with {command}.
----                      - command (string|nil): Vimscript command to create the window. Default
----                        value is "60vnew". Only used when {winid} is nil.
----                      - title (string|fun(bufnr:integer):string|nil): Title of the window. If a
----                        function, it accepts the buffer number of the source buffer as its only
----                        argument and should return a string.
+---@param opts vim.treesitter.dev.inspect_tree.Opts?
 function M.inspect_tree(opts)
-  ---@diagnostic disable-next-line: invisible
+  ---@diagnostic disable-next-line: invisible, access-invisible
   M.dev.inspect_tree(opts)
 end
 

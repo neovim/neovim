@@ -54,7 +54,6 @@ function lsp._unsupported_method(method)
   return msg
 end
 
----@private
 ---@param workspace_folders string|lsp.WorkspaceFolder[]?
 ---@return lsp.WorkspaceFolder[]?
 function lsp._get_workspace_folders(workspace_folders)
@@ -110,10 +109,9 @@ lsp.client_errors = vim.tbl_extend(
   client_error('ON_EXIT_CALLBACK_ERROR')
 )
 
----@private
 --- Returns full text of buffer {bufnr} as a string.
 ---
----@param bufnr (number) Buffer handle, or 0 for current.
+---@param bufnr integer Buffer handle, or 0 for current.
 ---@return string # Buffer text as string.
 function lsp._buf_get_full_text(bufnr)
   local line_ending = lsp._buf_get_line_ending(bufnr)
@@ -260,10 +258,11 @@ local function create_and_init_client(config)
   if not ok then
     return nil, res --[[@as string]]
   end
+  --- @cast res -string
 
   local client = assert(res)
 
-  --- @diagnostic disable-next-line: invisible
+  --- @diagnostic disable-next-line: invisible, access-invisible
   table.insert(client._on_exit_cbs, on_client_exit)
 
   all_clients[client.id] = client
@@ -428,7 +427,7 @@ end
 lsp.config = setmetatable({ _configs = {} }, {
   --- @param self vim.lsp.config
   --- @param name string
-  --- @return vim.lsp.Config
+  --- @return vim.lsp.Config?
   __index = function(self, name)
     validate_config_name(name)
 
@@ -1191,7 +1190,7 @@ function lsp.get_clients(filter)
     if
       client
       and (filter.id == nil or client.id == filter.id)
-      and (filter.bufnr == nil or client.attached_buffers[bufnr])
+      and (bufnr == nil or client.attached_buffers[bufnr])
       and (filter.name == nil or client.name == filter.name)
       and (filter.method == nil or client:supports_method(filter.method, filter.bufnr))
       and (filter._uninitialized or client.initialized)
@@ -1499,7 +1498,7 @@ end
 ---@param pattern string Pattern used to find a workspace symbol
 ---@param flags string See |tag-function|
 ---
----@return table[] tags A list of matching tags
+---@return table[]|vim.NIL tags A list of matching tags
 function lsp.tagfunc(pattern, flags)
   return vim.lsp._tagfunc(pattern, flags)
 end
@@ -1612,11 +1611,7 @@ lsp.log_levels = log.levels
 ---
 ---@param level (integer|string) the case insensitive level name or number
 function lsp.set_log_level(level)
-  if type(level) == 'string' or type(level) == 'number' then
-    log.set_level(level)
-  else
-    error(string.format('Invalid log level: %q', level))
-  end
+  log.set_level(level)
 end
 
 --- Gets the path of the logfile used by the LSP client.

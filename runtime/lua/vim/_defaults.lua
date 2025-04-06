@@ -275,7 +275,7 @@ do
   --- vim-unimpaired style mappings. See: https://github.com/tpope/vim-unimpaired
   do
     --- Execute a command and print errors without a stacktrace.
-    --- @param opts table Arguments to |nvim_cmd()|
+    --- @param opts vim.api.keyset.cmd Arguments to |nvim_cmd()|
     local function cmd(opts)
       local ok, err = pcall(vim.api.nvim_cmd, opts, {})
       if not ok then
@@ -733,7 +733,7 @@ do
           return nil
         end
 
-        local max = tonumber(string.rep('f', #c), 16)
+        local max = assert(tonumber(string.rep('f', #c), 16))
         return val / max
       end
 
