@@ -41,7 +41,7 @@ These changes may require adaptations in your config or plugins.
 
 API
 
-• todo
+• Introduce |vim.api.nvim_buf_del| and deprecate |vim.api.nvim_buf_delete|.
 
 BUILD
 
