@@ -1253,7 +1253,16 @@ static size_t write_output(char *output, size_t remaining, bool eof)
   char *start = output;
   size_t off = 0;
   while (off < remaining) {
-    if (output[off] == NL) {
+    if (output[off] == CAR && output[off+1] == NL) {
+      output[off] = NUL;
+      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1,
+                false);
+      size_t skip = off + 2;
+      output += skip;
+      remaining -= skip;
+      off = 0;
+      continue;
+    } else if (output[off] == CAR || output[off] == NL) {
       // Insert the line
       output[off] = NUL;
       ml_append(curwin->w_cursor.lnum++, output, (int)off + 1,
@@ -1276,7 +1285,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
     if (remaining) {
       // append unfinished line
       ml_append(curwin->w_cursor.lnum++, output, 0, false);
-      // remember that the NL was missing
+      // remember that the line endig was missing
       curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
       output += remaining;
     } else {
