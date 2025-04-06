@@ -2201,7 +2201,6 @@ end
 ---@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
 ---@field client_id? integer Client ID to refresh (default: all clients)
 
----@private
 --- Request updated LSP information for a buffer.
 ---
 ---@param method string LSP method to call

@@ -182,3 +182,10 @@ appimage-%:
 	bash scripts/genappimage.sh $*
 
 .PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
+
+.PHONY: emmylua-check
+emmylua-check: luv
+	emmylua_check --config=$(PWD)/.luarc.json runtime/lua
+
+luv:
+	git clone https://github.com/LuaCATS/luv
