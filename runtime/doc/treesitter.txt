@@ -1055,7 +1055,9 @@ get_string_parser({str}, {lang}, {opts})
     Parameters: ~
       • {str}   (`string`) Text to parse
       • {lang}  (`string`) Language of this string
-      • {opts}  (`table?`) Options to pass to the created language tree
+      • {opts}  (`table?`) Optional arguments:
+                • {queries}? (`table<string,string>`) -- Deprecated
+                • {injections}? (`table<string,string>`)
 
     Return: ~
         (`vim.treesitter.LanguageTree`) object to use for parsing
@@ -1075,18 +1077,17 @@ inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
         Since: 0.9.0
 
     Parameters: ~
-      • {opts}  (`table?`) Optional options table with the following possible
-                keys:
-                • lang (string|nil): The language of the source buffer. If
-                  omitted, detect from the filetype of the source buffer.
-                • bufnr (integer|nil): Buffer to draw the tree into. If
+      • {opts}  (`table?`) A table with the following fields:
+                • {lang} (`string?`) The language of the source buffer. If
+                  omitted, the filetype of the source buffer is used.
+                • {bufnr} (`integer?`) Buffer to draw the tree into. If
                   omitted, a new buffer is created.
-                • winid (integer|nil): Window id to display the tree buffer
+                • {winid} (`integer?`) Window id to display the tree buffer
                   in. If omitted, a new window is created with {command}.
-                • command (string|nil): Vimscript command to create the
+                • {command} (`string?`) Vimscript command to create the
                   window. Default value is "60vnew". Only used when {winid} is
                   nil.
-                • title (string|fun(bufnr:integer):string|nil): Title of the
+                • {title}? (`string|fun(bufnr:integer):string?`) Title of the
                   window. If a function, it accepts the buffer number of the
                   source buffer as its only argument and should return a
                   string.

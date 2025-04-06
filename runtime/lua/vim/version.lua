@@ -56,16 +56,15 @@ local M = {}
 
 ---@nodoc
 ---@class vim.Version
----@field [1] number
----@field [2] number
----@field [3] number
----@field major number
----@field minor number
----@field patch number
+---@field [1] integer
+---@field [2] integer
+---@field [3] integer
+---@field major integer
+---@field minor integer
+---@field patch integer
 ---@field prerelease? string
 ---@field build? string
 local Version = {}
-Version.__index = Version
 
 --- Compares prerelease strings: per semver, number parts must be must be treated as numbers:
 --- "pre1.10" is greater than "pre1.2". https://semver.org/#spec-item-11
@@ -80,13 +79,16 @@ local function cmp_prerel(prerel1, prerel2)
   local iter1 = prerel1:gmatch('([^0-9]*)(%d*)')
   local iter2 = prerel2:gmatch('([^0-9]*)(%d*)')
   while true do
-    local word1, n1 = iter1() --- @type string?, string|number|nil
-    local word2, n2 = iter2() --- @type string?, string|number|nil
+    local word1, n1s = iter1() --- @type string?, string?
+    local word2, n2s = iter2() --- @type string?, string?
     if word1 == nil and word2 == nil then -- Done iterating.
       return 0
     end
-    word1, n1, word2, n2 =
-      word1 or '', n1 and tonumber(n1) or 0, word2 or '', n2 and tonumber(n2) or 0
+    word1 = word1 or ''
+    local n1 = n1s and tonumber(n1s) or 0
+    word2 = word2 or ''
+    local n2 = n2s and tonumber(n2s) or 0
+
     if word1 ~= word2 then
       return word1 < word2 and -1 or 1
     end
@@ -96,8 +98,14 @@ local function cmp_prerel(prerel1, prerel2)
   end
 end
 
+--- @param key integer
 function Version:__index(key)
-  return type(key) == 'number' and ({ self.major, self.minor, self.patch })[key] or Version[key]
+  return ({ self.major, self.minor, self.patch })[key]
+end
+
+--- @param key integer
+function foo(key)
+  return ({ 1, 2, 3 })[key]
 end
 
 function Version:__newindex(key, value)
@@ -154,7 +162,7 @@ end
 ---
 --- Creates a new Version object, or returns `nil` if `version` is invalid.
 ---
---- @param version string|number[]|vim.Version
+--- @param version string|number[]|vim.Version?
 --- @param strict? boolean Reject "1.0", "0-x", "3.2a" or other non-conforming version strings
 --- @return vim.Version?
 function M._version(version, strict) -- Adapted from https://github.com/folke/lazy.nvim
@@ -174,8 +182,8 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
     version = version:match('%d[^ ]*')
   end
 
-  if version == nil then
-    return nil
+  if not version then
+    return
   end
 
   local prerel = version:match('%-([^+]*)')
@@ -231,8 +239,11 @@ local VersionRange = {}
 ---@param version string|vim.Version
 function VersionRange:has(version)
   if type(version) == 'string' then
-    ---@diagnostic disable-next-line: cast-local-type
-    version = M.parse(version)
+    local parsed = M.parse(version)
+    if not parsed then
+      return
+    end
+    version = parsed
   elseif getmetatable(version) ~= Version then
     -- Need metatable to compare versions.
     version = setmetatable(vim.deepcopy(version, true), Version)
@@ -284,7 +295,6 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
     return setmetatable({ from = M.parse('0.0.0') }, { __index = VersionRange })
   end
 
-  ---@type number?
   local hyphen = spec:find(' - ', 1, true)
   if hyphen then
     local a = spec:sub(1, hyphen - 1)
@@ -297,8 +307,10 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
       to = rb and (#parts == 3 and rb.from or rb.to),
     }, { __index = VersionRange })
   end
-  ---@type string, string
   local mods, version = spec:lower():match('^([%^=<>~]*)(.*)$')
+  if not (mods or version) then
+    return
+  end
   version = version:gsub('%.[%*x]', '')
   local parts = vim.split(version:gsub('%-.*', ''), '.', { plain = true })
   if #parts < 3 and mods == '' then
@@ -345,7 +357,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
   end
 end
 
----@param v string|vim.Version
+---@param v string|integer[]|vim.Version
 ---@return string
 local function create_err_msg(v)
   if type(v) == 'string' then
@@ -375,8 +387,8 @@ end
 --- @note Per semver, build metadata is ignored when comparing two otherwise-equivalent versions.
 --- @since 11
 ---
----@param v1 vim.Version|number[]|string Version object.
----@param v2 vim.Version|number[]|string Version to compare with `v1`.
+---@param v1 vim.Version|integer[]|string Version object.
+---@param v2 vim.Version|integer[]|string Version to compare with `v1`.
 ---@return integer -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 function M.cmp(v1, v2)
   local v1_parsed = assert(M._version(v1), create_err_msg(v1))
@@ -392,8 +404,8 @@ end
 
 ---Returns `true` if the given versions are equal. See |vim.version.cmp()| for usage.
 ---@since 11
----@param v1 vim.Version|number[]|string
----@param v2 vim.Version|number[]|string
+---@param v1 vim.Version|integer[]|string
+---@param v2 vim.Version|integer[]|string
 ---@return boolean
 function M.eq(v1, v2)
   return M.cmp(v1, v2) == 0
@@ -401,8 +413,8 @@ end
 
 ---Returns `true` if `v1 <= v2`. See |vim.version.cmp()| for usage.
 ---@since 12
----@param v1 vim.Version|number[]|string
----@param v2 vim.Version|number[]|string
+---@param v1 vim.Version|integer[]|string
+---@param v2 vim.Version|integer[]|string
 ---@return boolean
 function M.le(v1, v2)
   return M.cmp(v1, v2) <= 0
@@ -410,8 +422,8 @@ end
 
 ---Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
 ---@since 11
----@param v1 vim.Version|number[]|string
----@param v2 vim.Version|number[]|string
+---@param v1 vim.Version|integer[]|string
+---@param v2 vim.Version|integer[]|string
 ---@return boolean
 function M.lt(v1, v2)
   return M.cmp(v1, v2) == -1
@@ -419,8 +431,8 @@ end
 
 ---Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
 ---@since 12
----@param v1 vim.Version|number[]|string
----@param v2 vim.Version|number[]|string
+---@param v1 vim.Version|integer[]|string
+---@param v2 vim.Version|integer[]|string
 ---@return boolean
 function M.ge(v1, v2)
   return M.cmp(v1, v2) >= 0
@@ -428,8 +440,8 @@ end
 
 ---Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
 ---@since 11
----@param v1 vim.Version|number[]|string
----@param v2 vim.Version|number[]|string
+---@param v1 vim.Version|integer[]|string
+---@param v2 vim.Version|integer[]|string
 ---@return boolean
 function M.gt(v1, v2)
   return M.cmp(v1, v2) == 1

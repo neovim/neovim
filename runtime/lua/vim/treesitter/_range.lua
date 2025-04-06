@@ -72,7 +72,6 @@ M.cmp_pos = {
 
 setmetatable(M.cmp_pos, { __call = cmp_pos })
 
----@private
 ---Check if a variable is a valid range object
 ---@param r any
 ---@return boolean
@@ -92,7 +91,6 @@ function M.validate(r)
   return true
 end
 
----@private
 ---@param r1 Range
 ---@param r2 Range
 ---@return boolean
@@ -113,7 +111,6 @@ function M.intercepts(r1, r2)
   return true
 end
 
----@private
 ---@param r1 Range6
 ---@param r2 Range6
 ---@return Range6?
@@ -123,10 +120,11 @@ function M.intersection(r1, r2)
   end
   local rs = M.cmp_pos.le(r1[1], r1[2], r2[1], r2[2]) and r2 or r1
   local re = M.cmp_pos.ge(r1[4], r1[5], r2[4], r2[5]) and r2 or r1
+  --- @diagnostic disable-next-line: return-type-mismatch
+  -- EmmyLuaLs/emmlua-analyzer-rust#343
   return { rs[1], rs[2], rs[3], re[4], re[5], re[6] }
 end
 
----@private
 ---@param r Range
 ---@return integer, integer, integer, integer
 function M.unpack4(r)
@@ -137,14 +135,12 @@ function M.unpack4(r)
   return r[1], r[2], r[3 + off_1], r[4 + off_1]
 end
 
----@private
 ---@param r Range6
 ---@return integer, integer, integer, integer, integer, integer
 function M.unpack6(r)
   return r[1], r[2], r[3], r[4], r[5], r[6]
 end
 
----@private
 ---@param r1 Range
 ---@param r2 Range
 ---@return boolean whether r1 contains r2
@@ -188,7 +184,6 @@ local function get_offset(source, index)
   return byte
 end
 
----@private
 ---@param source integer|string
 ---@param range Range
 ---@return Range6
@@ -202,6 +197,8 @@ function M.add_bytes(source, range)
   local start_byte = get_offset(source, start_row) + start_col
   local end_byte = get_offset(source, end_row) + end_col
 
+  --- @diagnostic disable-next-line: return-type-mismatch
+  -- EmmyLuaLs/emmlua-analyzer-rust#343
   return { start_row, start_col, start_byte, end_row, end_col, end_byte }
 end
 

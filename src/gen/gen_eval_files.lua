@@ -32,6 +32,7 @@ local LUA_API_RETURN_OVERRIDES = {
   nvim_get_command = 'table<string,vim.api.keyset.command_info>',
   nvim_get_keymap = 'vim.api.keyset.get_keymap[]',
   nvim_get_mark = 'vim.api.keyset.get_mark',
+  nvim_eval_statusline = 'vim.api.keyset.eval_statusline_ret',
 
   -- Can also return table<string,vim.api.keyset.get_hl_info>, however we need to
   -- pick one to get some benefit.

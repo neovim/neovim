@@ -626,10 +626,10 @@ vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
       • {bufnr}    (`integer`) Buffer number to apply highlighting to
       • {ns}       (`integer`) Namespace to add highlight to
       • {higroup}  (`string`) Highlight group to use for highlighting
-      • {start}    (`integer[]|string`) Start of region as a (line, column)
-                   tuple or string accepted by |getpos()|
-      • {finish}   (`integer[]|string`) End of region as a (line, column)
-                   tuple or string accepted by |getpos()|
+      • {start}    (`[integer,integer]|string`) Start of region as a (line,
+                   column) tuple or string accepted by |getpos()|
+      • {finish}   (`[integer,integer]|string`) End of region as a (line,
+                   column) tuple or string accepted by |getpos()|
       • {opts}     (`table?`) A table with the following fields:
                    • {regtype}? (`string`, default: `'v'` i.e. charwise) Type
                      of range. See |getregtype()|
@@ -1521,7 +1521,7 @@ vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
                    `fn`
 
     Return: ~
-        (`table`) timer luv timer object
+        (`uv.uv_timer_t`) timer luv timer object
 
                                                              *vim.deprecate()*
 vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
@@ -2162,12 +2162,12 @@ vim.spairs({t})                                                 *vim.spairs()*
     Enumerates key-value pairs of a table, ordered by key.
 
     Parameters: ~
-      • {t}  (`table`) Dict-like table
+      • {t}  (`table<K, V>`) Dict-like table
 
     Return (multiple): ~
         (`fun(table: table<K, V>, index?: K):K, V`) |for-in| iterator over
         sorted keys and their values
-        (`table`)
+        (`table<K, V>`)
 
     See also: ~
       • Based on
@@ -3936,8 +3936,8 @@ vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
         Since: 0.9.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`) Version object.
-      • {v2}  (`vim.Version|number[]|string`) Version to compare with `v1`.
+      • {v1}  (`vim.Version|integer[]|string`) Version object.
+      • {v2}  (`vim.Version|integer[]|string`) Version to compare with `v1`.
 
     Return: ~
         (`integer`) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
@@ -3950,11 +3950,16 @@ vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
         Since: 0.9.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)
+
+vim.version.foo({key})                                     *vim.version.foo()*
+
+    Parameters: ~
+      • {key}  (`integer`)
 
 vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
     Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
@@ -3963,8 +3968,8 @@ vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
         Since: 0.10.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3976,8 +3981,8 @@ vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
         Since: 0.9.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3998,8 +4003,8 @@ vim.version.le({v1}, {v2})                                  *vim.version.le()*
         Since: 0.10.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)
@@ -4011,8 +4016,8 @@ vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
         Since: 0.9.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)
@@ -4263,7 +4268,7 @@ Iter:flatten({depth})                                         *Iter:flatten()*
 <
 
     Parameters: ~
-      • {depth}  (`number?`) Depth to which |list-iterator| should be
+      • {depth}  (`integer?`) Depth to which |list-iterator| should be
                  flattened (defaults to 1)
 
     Return: ~
@@ -4390,7 +4395,7 @@ Iter:nth({n})                                                     *Iter:nth()*
 <
 
     Parameters: ~
-      • {n}  (`number`) Index of the value to return. May be negative if the
+      • {n}  (`integer`) Index of the value to return. May be negative if the
              source is a |list-iterator|.
 
     Return: ~
@@ -4497,7 +4502,7 @@ Iter:rskip({n})                                                 *Iter:rskip()*
 <
 
     Parameters: ~
-      • {n}  (`number`) Number of values to skip.
+      • {n}  (`integer`) Number of values to skip.
 
     Return: ~
         (`Iter`)
@@ -4513,7 +4518,7 @@ Iter:skip({n})                                                   *Iter:skip()*
 <
 
     Parameters: ~
-      • {n}  (`number`) Number of values to skip.
+      • {n}  (`integer`) Number of values to skip.
 
     Return: ~
         (`Iter`)
@@ -4524,8 +4529,8 @@ Iter:slice({first}, {last})                                     *Iter:slice()*
     Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
 
     Parameters: ~
-      • {first}  (`number`)
-      • {last}   (`number`)
+      • {first}  (`integer`)
+      • {last}   (`integer`)
 
     Return: ~
         (`Iter`)
@@ -4684,7 +4689,7 @@ vim.text.indent({size}, {text}, {opts})                    *vim.text.indent()*
     Parameters: ~
       • {size}  (`integer`) Number of spaces.
       • {text}  (`string`) Text to indent.
-      • {opts}  (`{ expandtab?: number }?`)
+      • {opts}  (`{ expandtab?: integer }?`)
 
     Return (multiple): ~
         (`string`) Indented text.

@@ -103,6 +103,10 @@ local function compute_folds_levels(bufnr, info, srow, erow, callback)
         return
       end
 
+      -- EmmyLuaLs/emmlua-analyzer-rust#491
+      -- srow has lost its narrows type in a nested closure
+      srow = srow or 0
+
       -- Collect folds starting from srow - 1, because we should first subtract the folds that end at
       -- srow - 1 from the level of srow - 1 to get accurate level of srow.
       for _, match, metadata in query:iter_matches(tree:root(), bufnr, math.max(srow - 1, 0), erow) do
@@ -214,6 +218,8 @@ function FoldInfo:foldupdate(bufnr, srow, erow)
   if self.foldupdate_range then
     edit_range(self.foldupdate_range, srow, erow, erow)
   else
+    --- @diagnostic disable-next-line: assign-type-mismatch
+    --- EmmyLuaLs/emmylua-analyzer-rust#343
     self.foldupdate_range = { srow, erow }
   end
 
@@ -356,6 +362,8 @@ local function on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, 
     if foldinfo.on_bytes_range then
       edit_range(foldinfo.on_bytes_range, start_row, end_row_old, end_row_new)
     else
+      --- @diagnostic disable-next-line: assign-type-mismatch
+      --- EmmyLuaLs/emmylua-analyzer-rust#343
       foldinfo.on_bytes_range = { start_row, end_row_new }
     end
     if foldinfo.foldupdate_range then

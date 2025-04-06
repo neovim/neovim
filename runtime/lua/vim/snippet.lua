@@ -86,6 +86,8 @@ local function compute_tabstop_range(snippet, placeholder)
   local end_col = (start_row == end_row and start_col or 0)
     + #(placeholder_text[#placeholder_text] or '')
 
+  ---@diagnostic disable-next-line: return-type-mismatch
+  --- EmmyLuaLs/emmylua-analyzer-rust#343
   return { start_row, start_col, end_row, end_col }
 end
 
@@ -96,9 +98,11 @@ end
 --- @return Range4
 local function get_extmark_range(bufnr, extmark_id)
   local mark = vim.api.nvim_buf_get_extmark_by_id(bufnr, snippet_ns, extmark_id, { details = true })
+  local details = assert(mark[3])
 
-  --- @diagnostic disable-next-line: undefined-field
-  return { mark[1], mark[2], mark[3].end_row, mark[3].end_col }
+  --- @diagnostic disable-next-line: return-type-mismatch
+  --- EmmyLuaLs/emmylua-analyzer-rust#343
+  return { mark[1], mark[2], details.end_row, details.end_col }
 end
 
 --- @class (private) vim.snippet.Tabstop
@@ -198,6 +202,8 @@ function Session.new(bufnr, snippet_extmark, tabstop_data)
     bufnr = bufnr,
     extmark_id = snippet_extmark,
     tabstops = {},
+    --- @diagnostic disable-next-line: param-type-not-match
+    --- EmmyLuaLs/emmylua-analyzer-rust#343
     current_tabstop = Tabstop.new(0, bufnr, { 0, 0, 0, 0 }),
     tab_keymaps = { i = nil, s = nil },
     shift_tab_keymaps = { i = nil, s = nil },
@@ -492,7 +498,8 @@ function M.expand(input)
         -- Unknown variable, make this a tabstop and use the variable name as a placeholder.
         value = data.name
         local tabstop_indexes = vim.tbl_keys(tabstop_data)
-        local index = math.max(unpack((#tabstop_indexes == 0 and { 0 }) or tabstop_indexes)) + 1
+        ---@diagnostic disable-next-line: param-type-not-match
+        local index = #tabstop_indexes == 0 and 1 or (math.max(unpack(tabstop_indexes)) + 1)
         add_tabstop(index, value)
       end
       append_to_snippet(value)
@@ -556,7 +563,7 @@ function M.jump(direction)
 
   -- Find the tabstop with the lowest range.
   local tabstops = M._session.tabstops[dest_index]
-  local dest = tabstops[1]
+  local dest = assert(tabstops[1])
   for _, tabstop in ipairs(tabstops) do
     local dest_range, range = dest:get_range(), tabstop:get_range()
     if (range[1] < dest_range[1]) or (range[1] == dest_range[1] and range[2] < dest_range[2]) then

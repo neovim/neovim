@@ -88,6 +88,7 @@ local function modifiers_from_number(x, modifiers_table)
   return modifiers
 end
 
+--- @async
 --- Converts a raw token list to a list of highlight ranges used by the on_win callback
 ---
 ---@param data integer[]
@@ -159,7 +160,7 @@ end
 
 --- Construct a new STHighlighter for the buffer
 ---
----@private
+---@package
 ---@param bufnr integer
 ---@return STHighlighter
 function STHighlighter.new(bufnr)
@@ -325,7 +326,7 @@ end
 ---
 --- Finally, a redraw command is issued to force nvim to redraw the screen to
 --- pick up changed highlight tokens.
----
+---@async
 ---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
 ---@private
 function STHighlighter:process_response(response, client, version)

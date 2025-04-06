@@ -248,7 +248,7 @@ local function on_inotifywait_output(data, opts, callback)
   local d = vim.split(data, '%s+')
 
   -- only consider the last reported event
-  local path, event, file = d[1], d[2], d[#d]
+  local path, event, file = assert(d[1]), assert(d[2]), assert(d[#d])
   local fullpath = vim.fs.joinpath(path, file)
 
   if skip(fullpath, opts) then

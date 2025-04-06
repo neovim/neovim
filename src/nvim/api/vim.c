@@ -1999,8 +1999,8 @@ Array nvim_get_mark(String name, Dict(empty) *opts, Arena *arena, Error *err)
 ///       - str: (string) Characters that will be displayed on the statusline.
 ///       - width: (number) Display width of the statusline.
 ///       - highlights: Array containing highlight information of the statusline. Only included when
-///                     the "highlights" key in {opts} is true. Each element of the array is a
-///                     |Dict| with these keys:
+///                     the "highlights" key in {opts} is true. Each element of the array is a |Dict|
+///                     with these keys:
 ///           - start: (number) Byte index (0-based) of first character that uses the highlight.
 ///           - group: (string) Deprecated. Use `groups` instead.
 ///           - groups: (array) Names of stacked highlight groups (highest priority last).
