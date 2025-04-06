@@ -397,7 +397,7 @@ describe('semantic token highlighting', function()
         {},
         exec_lua(function()
           local bufnr = vim.api.nvim_get_current_buf()
-          vim.api.nvim_buf_delete(bufnr, { force = true })
+          vim.api.nvim_buf_del(bufnr, { force = true })
           return vim.lsp.semantic_tokens.__STHighlighter.active
         end)
       )

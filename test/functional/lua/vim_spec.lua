@@ -3882,7 +3882,7 @@ stack traceback:
             return vim.api.nvim_get_current_buf() == buf
               and vim.api.nvim_get_option_value('cindent', {buf = buf})
               and fn()
-          end) and vim.api.nvim_buf_delete(buf, {}) == nil
+          end) and vim.api.nvim_buf_del(buf, {}) == nil
         end
 
         return scratch_buf_call(function()

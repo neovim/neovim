@@ -589,7 +589,7 @@ describe('LSP', function()
         assert(client_id, 'lsp.start must return client_id')
         local client = assert(vim.lsp.get_client_by_id(client_id))
         local num_attached_before = vim.tbl_count(client.attached_buffers)
-        vim.api.nvim_buf_delete(bufnr, { force = true })
+        vim.api.nvim_buf_del(bufnr, { force = true })
         local num_attached_after = vim.tbl_count(client.attached_buffers)
         return {
           bufnr = bufnr,
@@ -624,7 +624,7 @@ describe('LSP', function()
           name = 'detach-dummy',
           cmd = server.cmd,
           on_init = function()
-            vim.api.nvim_buf_delete(bufnr, {})
+            vim.api.nvim_buf_del(bufnr, {})
             on_init_called = true
           end,
         }))
@@ -658,7 +658,7 @@ describe('LSP', function()
           cmd = server.cmd,
         })
         vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'hello' })
-        vim.api.nvim_buf_delete(bufnr, {})
+        vim.api.nvim_buf_del(bufnr, {})
         local ok = vim.wait(1000, function()
           return initialized
         end)
@@ -4862,7 +4862,7 @@ describe('LSP', function()
           vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'Some contents' })
           vim.lsp.buf_attach_client(bufnr, _G.CLIENT_ID)
         end
-        vim.api.nvim_buf_delete(default_buf, { force = true })
+        vim.api.nvim_buf_del(default_buf, { force = true })
 
         _G.REQUEST_COUNT = vim.tbl_count(lens_title_per_fake_uri)
         _G.RESPONSES = {}
