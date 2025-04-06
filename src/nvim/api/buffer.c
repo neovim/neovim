@@ -1008,8 +1008,8 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
 /// @param opts  Optional parameters. Keys:
 ///          - force:  Force deletion and ignore unsaved changes.
 ///          - unload: Unloaded only, do not delete. See |:bunload|
-void nvim_buf_delete(Buffer buffer, Dict(buf_delete) *opts, Error *err)
-  FUNC_API_SINCE(7)
+void nvim_buf_del(Buffer buffer, Dict(buf_delete) *opts, Error *err)
+  FUNC_API_SINCE(14)
   FUNC_API_TEXTLOCK
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -1032,6 +1032,20 @@ void nvim_buf_delete(Buffer buffer, Dict(buf_delete) *opts, Error *err)
     api_set_error(err, kErrorTypeException, "Failed to unload buffer.");
     return;
   }
+}
+
+/// @deprecated Use nvim_buf_del() instead.
+///
+/// @param buffer Buffer id, or 0 for current buffer
+/// @param opts  Optional parameters. Keys:
+///          - force:  Force deletion and ignore unsaved changes.
+///          - unload: Unloaded only, do not delete. See |:bunload|
+void nvim_buf_delete(Buffer buffer, Dict(buf_delete) *opts, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_DEPRECATED_SINCE(14)
+  FUNC_API_TEXTLOCK
+{
+  nvim_buf_del(buffer, opts, err);
 }
 
 /// Checks if a buffer is valid.

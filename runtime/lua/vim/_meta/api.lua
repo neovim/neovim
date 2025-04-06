@@ -279,6 +279,14 @@ function vim.api.nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end) e
 --- @param opts vim.api.keyset.user_command
 function vim.api.nvim_buf_create_user_command(buffer, name, command, opts) end
 
+--- Deletes the buffer. See `:bwipeout`
+---
+--- @param buffer integer Buffer id, or 0 for current buffer
+--- @param opts vim.api.keyset.buf_delete Optional parameters. Keys:
+--- - force:  Force deletion and ignore unsaved changes.
+--- - unload: Unloaded only, do not delete. See `:bunload`
+function vim.api.nvim_buf_del(buffer, opts) end
+
 --- Removes an `extmark`.
 ---
 --- @param buffer integer Buffer id, or 0 for current buffer
@@ -324,12 +332,9 @@ function vim.api.nvim_buf_del_user_command(buffer, name) end
 --- @param name string Variable name
 function vim.api.nvim_buf_del_var(buffer, name) end
 
---- Deletes the buffer. See `:bwipeout`
----
---- @param buffer integer Buffer id, or 0 for current buffer
---- @param opts vim.api.keyset.buf_delete Optional parameters. Keys:
---- - force:  Force deletion and ignore unsaved changes.
---- - unload: Unloaded only, do not delete. See `:bunload`
+--- @deprecated
+--- @param buffer integer
+--- @param opts vim.api.keyset.buf_delete
 function vim.api.nvim_buf_delete(buffer, opts) end
 
 --- Gets a changed tick of a buffer
