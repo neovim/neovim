@@ -29,7 +29,8 @@ HIGHLIGHTS
 
 LSP
 
-• *vim.lsp.util.stylize_markdown()"	Use |vim.treesitter.start()| with
+• *vim.lsp.client_is_stopped()*		Use |vim.lsp.get_client_by_id()| instead.
+• *vim.lsp.util.stylize_markdown()*	Use |vim.treesitter.start()| with
 					`vim.wo.conceallevel = 2`.
 
 LUA
