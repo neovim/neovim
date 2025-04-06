@@ -293,7 +293,7 @@ describe('vim._with', function()
               and with_recursive_nested_bufs()
           end
           return vim._with({ buf = other_buf }, callback) and
-            api.nvim_buf_delete(other_buf, {}) == nil
+            api.nvim_buf_del(other_buf, {}) == nil
         end
 
         return with_recursive_nested_bufs()

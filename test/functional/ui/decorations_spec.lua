@@ -6290,7 +6290,7 @@ l5
                           |
     ]])
     api.nvim_win_set_buf(0, api.nvim_create_buf(false, true))
-    api.nvim_buf_delete(buf, {unload=true, force=true})
+    api.nvim_buf_del(buf, {unload=true, force=true})
     api.nvim_buf_set_lines(buf, 0, -1, false, {''})
     api.nvim_win_set_buf(0, buf)
     screen:expect{grid=[[

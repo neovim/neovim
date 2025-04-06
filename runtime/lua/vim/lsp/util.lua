@@ -549,7 +549,7 @@ function M.rename(old_fname, new_fname, opts)
         return
       end
       -- no need to preserve if such a buffer is empty
-      api.nvim_buf_delete(existing_buf, {})
+      api.nvim_buf_del(existing_buf, {})
     end
 
     buf_rename[b] = { from = old_bname, to = new_bname }
@@ -605,7 +605,7 @@ local function delete_file(change)
     force = opts.ignoreIfNotExists,
     recursive = opts.recursive,
   })
-  api.nvim_buf_delete(bufnr, { force = true })
+  api.nvim_buf_del(bufnr, { force = true })
 end
 
 --- Applies a `WorkspaceEdit`.
