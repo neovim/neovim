@@ -175,7 +175,7 @@ local validate = vim.validate
 ---
 --- Response from the server sent on `initialize` describing the server's
 --- capabilities.
---- @field server_capabilities lsp.ServerCapabilities?
+--- @field server_capabilities lsp.ServerCapabilities
 ---
 --- Response from the server sent on `initialize` describing information about
 --- the server.
@@ -229,13 +229,13 @@ local validate = vim.validate
 --- @field private _before_init_cb? vim.lsp.client.before_init_cb
 --- @field private _on_attach_cbs vim.lsp.client.on_attach_cb[]
 --- @field private _on_init_cbs vim.lsp.client.on_init_cb[]
---- @field private _on_exit_cbs vim.lsp.client.on_exit_cb[]
+--- @field package _on_exit_cbs vim.lsp.client.on_exit_cb[]
 --- @field private _on_error_cb? fun(code: integer, err: string)
 local Client = {}
 Client.__index = Client
 
 --- @param obj table<string,any>
---- @param cls table<string,function>
+--- @param cls table<string,function?>
 --- @param name string
 local function method_wrapper(obj, cls, name)
   local meth = assert(cls[name])
@@ -339,7 +339,7 @@ local function validate_config(config)
   )
 end
 
---- @param trace string
+--- @param trace string?
 --- @return 'off'|'messages'|'verbose'
 local function get_trace(trace)
   local valid_traces = {
@@ -445,16 +445,16 @@ function Client.create(config)
   --- @type vim.lsp.rpc.Dispatchers
   local dispatchers = {
     notification = function(...)
-      return self:_notification(...)
+      self:_notification(...)
     end,
     server_request = function(...)
       return self:_server_request(...)
     end,
     on_error = function(...)
-      return self:_on_error(...)
+      self:_on_error(...)
     end,
     on_exit = function(...)
-      return self:_on_exit(...)
+      self:_on_exit(...)
     end,
   }
 
@@ -602,7 +602,7 @@ end
 
 --- @private
 --- @param id integer
---- @param req_type 'pending'|'complete'|'cancel'|
+--- @param req_type 'pending'|'complete'|'cancel'
 --- @param bufnr? integer (only required for req_type='pending')
 --- @param method? string (only required for req_type='pending')
 function Client:_process_request(id, req_type, bufnr, method)
@@ -838,7 +838,7 @@ end
 --- @param registrations lsp.Registration[]
 function Client:_register_dynamic(registrations)
   -- remove duplicates
-  self:_unregister_dynamic(registrations)
+  self:_unregister_dynamic(registrations --[[@as lsp.Unregistration[] ]])
   for _, reg in ipairs(registrations) do
     local method = reg.method
     if not self.registrations[method] then
