@@ -1,11 +1,12 @@
-" Vim filetype plugin file.
-" Language:		Lua
-" Maintainer:		Doug Kearns <dougkearns@gmail.com>
-" Previous Maintainer:	Max Ischenko <mfi@ukr.net>
-" Contributor:		Dorai Sitaram <ds26@gte.com>
-"			C.D. MacEachern <craig.daniel.maceachern@gmail.com>
-"			Phạm Bình An <phambinhanctb2004@gmail.com>
-" Last Change:		2025 Feb 27
+" Language:             Lua
+" Maintainer:           Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:  Max Ischenko <mfi@ukr.net>
+" Contributor:          Dorai Sitaram <ds26@gte.com>
+"                       C.D. MacEachern <craig.daniel.maceachern@gmail.com>
+"                       Tyler Miller <tmillr@proton.me>
+"                       Phạm Bình An <phambinhanctb2004@gmail.com>
+"                       @konfekt
+" Last Change:          2025 Apr 04
 
 if exists("b:did_ftplugin")
   finish
@@ -40,11 +41,11 @@ let b:undo_ftplugin = "setl cms< com< def< fo< inc< inex< sua<"
 if exists("loaded_matchit") && !exists("b:match_words")
   let b:match_ignorecase = 0
   let b:match_words =
-	\ '\<\%(do\|function\|if\)\>:' ..
-	\ '\<\%(return\|else\|elseif\)\>:' ..
-	\ '\<end\>,' ..
-	\ '\<repeat\>:\<until\>,' ..
-	\ '\%(--\)\=\[\(=*\)\[:]\1]'
+        \ '\<\%(do\|function\|if\)\>:' ..
+        \ '\<\%(return\|else\|elseif\)\>:' ..
+        \ '\<end\>,' ..
+        \ '\<repeat\>:\<until\>,' ..
+        \ '\%(--\)\=\[\(=*\)\[:]\1]'
   let b:undo_ftplugin ..= " | unlet! b:match_words b:match_ignorecase"
 endif
 
