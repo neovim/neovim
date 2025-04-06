@@ -122,7 +122,6 @@ Let's assume you have the following directory structure:
     |-- syntax/
     |-- init.vim
 <
-
 Then the following Lua code will load `myluamodule.lua`:
 >lua
     require("myluamodule")
@@ -135,7 +134,6 @@ Similarly, loading `other_modules/anothermodule.lua` is done via
     -- or
     require('other_modules.anothermodule')
 <
-
 Note how "submodules" are just subdirectories; the `.` is equivalent to the
 path separator `/` (even on Windows).
 
@@ -531,7 +529,6 @@ Examples:
       callback = function() print("My Plugin Works!") end,
     })
 <
-
 Nvim will always call a Lua function with a single table containing information
 about the triggered autocommand. The most useful keys are
 • `match`: a string that matched the `pattern` (see |<amatch>|)
