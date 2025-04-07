@@ -157,10 +157,10 @@ describe('linebreak', function()
       	abcdef hijklmn	pqrstuvwxyz 1060ABCDEFGHIJKLMNOP 
 
       Test 1: set linebreak + set list + fancy listchars
-      ▕———abcdef          
-      +hijklmn▕———        
+      ▕———abcdef hijklmn▕—
       +pqrstuvwxyz␣1060ABC
       +DEFGHIJKLMNOPˑ¶    
+      ~                   
 
       Test 2: set nolinebreak list
       ▕———abcdef hijklmn▕—
