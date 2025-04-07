@@ -155,7 +155,7 @@ function vim._os_proc_info(pid)
   if pid == nil or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
   end
-  local cmd = { 'ps', '-p', pid, '-o', 'comm=' }
+  local cmd = { 'ps', '-p', tostring(pid), '-o', 'comm=' }
   local r = vim.system(cmd):wait()
   local name = assert(r.stdout)
   if r.code == 1 and vim.trim(name) == '' then
@@ -163,7 +163,7 @@ function vim._os_proc_info(pid)
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
-  local ppid_string = assert(vim.system({ 'ps', '-p', pid, '-o', 'ppid=' }):wait().stdout)
+  local ppid_string = assert(vim.system({ 'ps', '-p', tostring(pid), '-o', 'ppid=' }):wait().stdout)
   -- Remove trailing whitespace.
   name = vim.trim(name):gsub('^.*/', '')
   local ppid = tonumber(ppid_string) or -1
@@ -180,15 +180,16 @@ function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
   end
-  local cmd = { 'pgrep', '-P', ppid }
+  local cmd = { 'pgrep', '-P', tostring(ppid) }
   local r = vim.system(cmd):wait()
-  if r.code == 1 and vim.trim(r.stdout) == '' then
+  local stdout = assert(r.stdout)
+  if r.code == 1 and vim.trim(stdout) == '' then
     return {} -- Process not found.
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
   local children = {}
-  for s in r.stdout:gmatch('%S+') do
+  for s in stdout:gmatch('%S+') do
     local i = tonumber(s)
     if i ~= nil then
       table.insert(children, i)
@@ -440,6 +441,7 @@ local VIM_CMD_ARG_MAX = 20
 ---                            to |nvim_cmd()| where `opts` is empty.
 ---@see |ex-cmd-index|
 vim.cmd = setmetatable({}, {
+  --- @param command string|vim.api.keyset.cmd
   __call = function(_, command)
     if type(command) == 'table' then
       return vim.api.nvim_cmd(command, {})
@@ -449,6 +451,7 @@ vim.cmd = setmetatable({}, {
     end
   end,
   --- @param t table<string,function>
+  --- @param command string
   __index = function(t, command)
     t[command] = function(...)
       local opts --- @type vim.api.keyset.cmd
@@ -561,21 +564,21 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
 
   local region = {}
   for l = pos1[1], pos2[1] do
-    local c1 --- @type number
-    local c2 --- @type number
+    local c1 --- @type integer
+    local c2 --- @type integer
     if regtype:byte() == 22 then -- block selection: take width from regtype
       c1 = pos1[2]
-      c2 = c1 + tonumber(regtype:sub(2))
+      c2 = c1 + tonumber(regtype:sub(2)) --[[@as integer]]
       -- and adjust for non-ASCII characters
       local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
       local utflen = vim.str_utfindex(bufline, 'utf-32', #bufline)
       if c1 <= utflen then
-        c1 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c1)))
+        c2 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c2))) --[[@as integer]]
       else
         c1 = #bufline + 1
       end
       if c2 <= utflen then
-        c2 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c2)))
+        c2 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c2))) --[[@as integer]]
       else
         c2 = #bufline + 1
       end
@@ -766,7 +769,8 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
       'vim.str_byteindex(s, encoding, index, strict_indexing)',
       '1.0'
     )
-    local old_index = encoding
+    local old_index = encoding --[[@as integer]]
+    --- @cast index boolean
     local use_utf16 = index or false
     return vim._str_byteindex(s, old_index, use_utf16) or error('index out of range')
   end
@@ -831,8 +835,8 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
       'vim.str_utfindex(s, encoding, index, strict_indexing)',
       '1.0'
     )
-    local old_index = encoding
-    local col32, col16 = vim._str_utfindex(s, old_index) --[[@as integer,integer]]
+    local old_index = encoding --[[@as integer?]]
+    local col32, col16 = vim._str_utfindex(s, old_index)
     if not col32 or not col16 then
       error('index out of range')
     end
@@ -874,7 +878,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
     local len = #s
     return index <= len and index or (strict_indexing and error('index out of range') or len)
   end
-  local col32, col16 = vim._str_utfindex(s, index) --[[@as integer?,integer?]]
+  local col32, col16 = vim._str_utfindex(s, index)
   local col = encoding == 'utf-16' and col16 or col32
   if col then
     return col
@@ -882,7 +886,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
   if strict_indexing then
     error('index out of range')
   end
-  local max32, max16 = vim._str_utfindex(s)--[[@as integer integer]]
+  local max32, max16 = vim._str_utfindex(s)
   return encoding == 'utf-16' and max16 or max32
 end
 
@@ -893,7 +897,8 @@ end
 --- 2. Can we get it to return things from global namespace even with `print(` in front.
 ---
 --- @param pat string
---- @return any[], integer
+--- @param env? table<string,any>
+--- @return string[], integer
 function vim._expand_pat(pat, env)
   env = env or _G
 
@@ -1080,10 +1085,10 @@ function vim._expand_pat(pat, env)
     insert_keys(vim.iter(options):filter(filter):fold({}, _fold_to_map))
   end
 
-  keys = vim.tbl_keys(keys)
-  table.sort(keys)
+  local keys_s = vim.tbl_keys(keys)
+  table.sort(keys_s)
 
-  return keys, #prefix_match_pat
+  return keys_s, #prefix_match_pat
 end
 
 --- @param lua_string string
@@ -1350,8 +1355,8 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
     -- Show a warning only if feature is hard-deprecated (see MAINTAIN.md).
     -- Example: if removal `version` is 0.12 (soft-deprecated since 0.10-dev), show warnings
     -- starting at 0.11, including 0.11-dev.
-    local major, minor = version:match('(%d+)%.(%d+)')
-    major, minor = tonumber(major), tonumber(minor)
+    local major_s, minor_s = version:match('(%d+)%.(%d+)')
+    local major, minor = assert(tonumber(major_s)), assert(tonumber(minor_s))
     local nvim_major = 0 --- Current Nvim major version.
 
     -- We can't "subtract" from a major version, so:

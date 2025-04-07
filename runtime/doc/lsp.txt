@@ -1205,7 +1205,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {config}                (`vim.lsp.ClientConfig`) copy of the table
                                 that was passed by the user to
                                 |vim.lsp.start()|. See |vim.lsp.ClientConfig|.
-      • {server_capabilities}   (`lsp.ServerCapabilities?`) Response from the
+      • {server_capabilities}   (`lsp.ServerCapabilities`) Response from the
                                 server sent on `initialize` describing the
                                 server's capabilities.
       • {server_info}           (`lsp.ServerInfo?`) Response from the server

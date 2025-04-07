@@ -15,7 +15,7 @@ local TSTreeView = {}
 ---@class (private) vim.treesitter.dev.TSTreeViewOpts
 ---@field anon boolean If true, display anonymous nodes.
 ---@field lang boolean If true, display the language alongside each node.
----@field indent number Number of spaces to indent nested lines.
+---@field indent integer Number of spaces to indent nested lines.
 
 ---@class (private) vim.treesitter.dev.Node
 ---@field node TSNode Treesitter node
@@ -203,7 +203,7 @@ local function set_inspector_cursor(treeview, lang, source_buf, inspect_buf, ins
   local cursor_node_id = cursor_node:id()
   for i, v in treeview:iter() do
     if v.node:id() == cursor_node_id then
-      local start = v.depth * treeview.opts.indent ---@type integer
+      local start = v.depth * treeview.opts.indent
       local end_col = start + #v.text
       api.nvim_buf_set_extmark(inspect_buf, treeview.ns, i - 1, start, {
         end_col = end_col,
