@@ -393,12 +393,16 @@ for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
     end)
     local err5001 = 'Vim(call):E5001: Higher scope cannot be -1 if lower scope is >= 0.'
     local err5006 = 'Vim(call):E5006: Window and tab scope must be -1 when using buffer scope'
+    local err5007 = 'Vim(call):E5007: Cannot find buffer number.'
     it('fails on -1 if previous arg is >=0', function()
       eq(err5001, exc_exec('call ' .. cmd .. '(0, -1)'))
     end)
     it('fails when 1st and 2nd args != -1 when 3rd arg > -1', function()
-      eq(err5006, exc_exec('call ' .. cmd .. '(0, 0, 0)'))
-      eq(err5006, exc_exec('call ' .. cmd .. '(1, 2, 3)'))
+      eq(err5006, t.pcall_err(command, 'call ' .. cmd .. '(0, 0, 0)'))
+      eq(err5006, t.pcall_err(command, 'call ' .. cmd .. '(1, 2, 3)'))
+    end)
+    it('fails when passing a bufnr that does not exit', function()
+      eq(err5007, t.pcall_err(command, 'call ' .. cmd .. '(-1, -1, 99999)'))
     end)
 
     -- Test wrong number of arguments
