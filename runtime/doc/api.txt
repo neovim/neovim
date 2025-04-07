@@ -2327,6 +2327,22 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
     Return: ~
         Return value of function.
 
+nvim_buf_del({buffer}, {opts})                                *nvim_buf_del()*
+    WARNING: This feature is experimental/unstable.
+
+    Deletes the buffer with options. See |:bwipeout| |:bdelete| |:bunload|
+
+    Attributes: ~
+        not allowed when |textlock| is active or in the |cmdwin|
+
+    Parameters: ~
+      • {buffer}  Buffer id, or 0 for current buffer
+      • {opts}    Optional parameters. Keys:
+                  • type: Delete type, including "delete", "wipeout",
+                    "unload".
+                  • force: Force deletion and ignore unsaved changes.
+                  • preserve_layout: Close the buffer but keep the window.
+
 nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
     Unmaps a buffer-local |mapping| for the given mode.
 

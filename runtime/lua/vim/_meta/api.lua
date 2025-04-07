@@ -279,6 +279,15 @@ function vim.api.nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end) e
 --- @param opts vim.api.keyset.user_command
 function vim.api.nvim_buf_create_user_command(buffer, name, command, opts) end
 
+--- Deletes the buffer with options. See `:bwipeout` `:bdelete` `:bunload`
+---
+--- @param buffer integer Buffer id, or 0 for current buffer
+--- @param opts vim.api.keyset.buf_del Optional parameters. Keys:
+--- - type:   Delete type, including "delete", "wipeout", "unload".
+--- - force:  Force deletion and ignore unsaved changes.
+--- - preserve_layout: Close the buffer but keep the window.
+function vim.api.nvim_buf_del(buffer, opts) end
+
 --- Removes an `extmark`.
 ---
 --- @param buffer integer Buffer id, or 0 for current buffer

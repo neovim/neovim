@@ -12,6 +12,11 @@ error('Cannot require a meta file')
 --- @field utf_sizes? boolean
 --- @field preview? boolean
 
+--- @class vim.api.keyset.buf_del
+--- @field type? string
+--- @field force? boolean
+--- @field preserve_layout? boolean
+
 --- @class vim.api.keyset.buf_delete
 --- @field force? boolean
 --- @field unload? boolean

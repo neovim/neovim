@@ -369,6 +369,13 @@ typedef struct {
 } Dict(buf_attach);
 
 typedef struct {
+  OptionalKeys is_set__buf_del_;
+  String  type;
+  Boolean force;
+  Boolean preserve_layout;
+} Dict(buf_del);
+
+typedef struct {
   OptionalKeys is_set__buf_delete_;
   Boolean force;
   Boolean unload;

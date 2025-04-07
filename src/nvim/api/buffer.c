@@ -1002,6 +1002,55 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
   return buf && buf->b_ml.ml_mfp != NULL;
 }
 
+/// Deletes the buffer with options. See |:bwipeout| |:bdelete| |:bunload|
+///
+/// @param buffer Buffer id, or 0 for current buffer
+/// @param opts  Optional parameters. Keys:
+///          - type:   Delete type, including "delete", "wipeout", "unload".
+///          - force:  Force deletion and ignore unsaved changes.
+///          - preserve_layout: Close the buffer but keep the window.
+void nvim_buf_del(Buffer buffer, Dict(buf_del) *opts, Error *err)
+  FUNC_API_SINCE(14)
+  FUNC_API_TEXTLOCK
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (ERROR_SET(err)) {
+    return;
+  }
+
+  int flags = opts->force;
+
+  if (opts->preserve_layout) {
+    flags ^= DOBUF_PRESERVELAYOUT;
+  }
+
+  const char *type = (HAS_KEY(opts, buf_del, type) && strlen(opts->type.data) > 0) ? opts->type.data : "delete";
+
+  int action;
+  if (strequal("delete", type)) {
+    action = DOBUF_DEL;
+  } else if (strequal("unload", type)) {
+    action = DOBUF_UNLOAD;
+  } else if (strequal("wipeout", type)) {
+    action = DOBUF_WIPE;
+  } else {
+    api_set_error(err, kErrorTypeValidation, "Unsupported delete type.");
+    return;
+  }
+
+  int result = do_buffer(action,
+                         DOBUF_FIRST,
+                         FORWARD,
+                         buf->handle,
+                         flags);
+
+  if (result == FAIL) {
+    api_set_error(err, kErrorTypeException, "Failed to unload buffer.");
+    return;
+  }
+}
+
 /// Deletes the buffer. See |:bwipeout|
 ///
 /// @param buffer Buffer id, or 0 for current buffer

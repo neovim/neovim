@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -1577,9 +1578,9 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
   return OK;
 }
 
-int do_buffer(int action, int start, int dir, int count, int forceit)
+int do_buffer(int action, int start, int dir, int count, int flags)
 {
-  return do_buffer_ext(action, start, dir, count, forceit ? DOBUF_FORCEIT : 0);
+  return do_buffer_ext(action, start, dir, count, flags);
 }
 
 /// Set current buffer to "buf".  Executes autocommands and closes current
