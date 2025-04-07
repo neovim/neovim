@@ -883,6 +883,8 @@ function vim.fn.charidx(string, idx, countcc, utf16) end
 --- changed to the scope of the current directory:
 ---     - If the window local directory (|:lcd|) is set, it
 ---       changes the current working directory for that scope.
+---     - If the buffer local directory (|:bcd|) is set, it
+---       changes the current working directory for that scope.
 ---     - Otherwise, if the tab page local directory (|:tcd|) is
 ---       set, it changes the current directory for that scope.
 ---     - Otherwise, changes the global directory for that scope.
@@ -890,6 +892,7 @@ function vim.fn.charidx(string, idx, countcc, utf16) end
 --- If {scope} is present, changes the current working directory
 --- for the specified scope:
 ---     "window"  Changes the window local directory.  |:lcd|
+---     "buffer"  Changes the window local directory.  |:bcd|
 ---     "tabpage"  Changes the tab page local directory.  |:tcd|
 ---     "global"  Changes the global directory.  |:cd|
 ---
@@ -3228,9 +3231,12 @@ function vim.fn.getcursorcharpos(winid) end
 
 --- With no arguments, returns the name of the effective
 --- |current-directory|. With {winnr} or {tabnr} or {bufnr} the
---- working directory of that scope is returned, and 'autochdir' is
---- ignored. Tabs, windows and buffers are identified by their respective
---- numbers, 0 means current tab or window or buffer. Missing tab number
+--- working directory of that scope is returned, and 'autochdir'
+--- is ignored.
+---
+--- Tabs, windows and buffers are identified by their respective
+--- numbers, 0 means current tab or window or buffer. Missing tab
+--- number
 --- implies 0. Thus the following are equivalent: >vim
 ---   getcwd(0)
 ---   getcwd(0, 0)
@@ -3242,16 +3248,18 @@ function vim.fn.getcursorcharpos(winid) end
 --- signal that it is invalid, whereas Nvim returns either the
 --- global working directory if {winnr} is -1 or the working
 --- directory of the window indicated by {winnr}.
-
+---
 --- If {bufnr} is provided, {winnr} and {tabnr} must be -1 and the
---- working directory of that buffer is returned. If {bufnr} is -1,
---- it is ignored, and the global working directory is returned.
+--- working directory of that buffer is returned. If {bufnr} is
+--- -1, it is ignored, and the global working directory is
+--- returned.
 --- Examples of buffer usage: >vim
 ---       getcwd(-1, -1, 0)  " Get current buffer's directory
 ---       getcwd(-1, -1, 3)  " Get directory of buffer #3
 ---       getcwd(-1, -1, -1) " Get global directory
 ---       getcwd(-1, -1)     " Get global directory
---- <Throw error if the arguments are invalid. |E5000| |E5001| |E5002| |E5006|
+--- <Throw error if the arguments are invalid.
+--- |E5000| |E5001| |E5002| |E5006| |E5007|
 ---
 --- @param winnr? integer
 --- @param tabnr? integer
@@ -4325,12 +4333,13 @@ function vim.fn.has_key(dict, key) end
 
 --- The result is a Number, which is 1 when the window has set a
 --- local path via |:lcd| or when {winnr} is -1 and the tabpage
---- has set a local path via |:tcd|, or when {winnr} and {tabnr} are
---- -1 and {bufnr} has set a local path via |:bcd|, otherwise 0.
+--- has set a local path via |:tcd|, or when {winnr} and {tabnr}
+--- are -1 and {bufnr} has set a local path via |:bcd|, otherwise
+--- 0.
 ---
---- Tabs, windows and buffers are identified by their respective numbers,
---- 0 means current tab or window. Missing argument implies 0.
---- Thus the following are equivalent: >vim
+--- Tabs, windows and buffers are identified by their respective
+--- numbers, 0 means current tab or window. Missing argument
+--- implies 0. Thus the following are equivalent: >vim
 ---   echo haslocaldir()
 ---   echo haslocaldir(0)
 ---   echo haslocaldir(0, 0)
@@ -4341,9 +4350,10 @@ function vim.fn.has_key(dict, key) end
 --- If {bufnr} is provided, {winnr} and {tabnr} must be -1 and
 --- only the buffer is resolved.
 --- Examples of buffer usage: >vim
----   haslocaldir(-1, -1, 0)  " Check if current buffer has local directory
----   haslocaldir(-1, -1, 3)  " Check if buffer #3 has local directory
---- >Throw error if the arguments are invalid. |E5000| |E5001| |E5002| |E5006|
+---   haslocaldir(-1, -1, 0) " Current buf has a local directory?
+---   haslocaldir(-1, -1, 3) " Buf #3 has a local directory?
+--- >Throw error if the arguments are invalid.
+--- |E5000| |E5001| |E5002| |E5006| |E5007|
 ---
 --- @param winnr? integer
 --- @param tabnr? integer
