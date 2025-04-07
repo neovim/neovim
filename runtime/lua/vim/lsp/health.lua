@@ -111,8 +111,8 @@ local function check_watcher()
     watchfunc_name = 'libuv-watch'
   elseif watchfunc == vim._watch.watchdirs then
     watchfunc_name = 'libuv-watchdirs'
-  elseif watchfunc == vim._watch.inotifywait then
-    watchfunc_name = 'inotifywait'
+  elseif watchfunc == vim._watch.inotify then
+    watchfunc_name = 'inotify'
   else
     local nm = debug.getinfo(watchfunc, 'S').source
     watchfunc_name = string.format('Custom (%s)', nm)
