@@ -130,7 +130,7 @@ LSP
 
 LUA
 
-• todo
+• Lua type annotations for `vim.uv`.
 
 OPTIONS
 
