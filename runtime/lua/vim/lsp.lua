@@ -53,7 +53,6 @@ function lsp._unsupported_method(method)
   return msg
 end
 
----@private
 ---@param workspace_folders string|lsp.WorkspaceFolder[]?
 ---@return lsp.WorkspaceFolder[]?
 function lsp._get_workspace_folders(workspace_folders)
@@ -259,10 +258,11 @@ local function create_and_init_client(config)
   if not ok then
     return nil, res --[[@as string]]
   end
+  --- @cast res -string
 
   local client = assert(res)
 
-  --- @diagnostic disable-next-line: invisible
+  --- @diagnostic disable-next-line: invisible, access-invisible
   table.insert(client._on_exit_cbs, on_client_exit)
 
   all_clients[client.id] = client
@@ -399,7 +399,7 @@ end
 lsp.config = setmetatable({ _configs = {} }, {
   --- @param self vim.lsp.config
   --- @param name string
-  --- @return vim.lsp.Config
+  --- @return vim.lsp.Config?
   __index = function(self, name)
     validate_config_name(name)
 
@@ -1532,11 +1532,7 @@ lsp.log_levels = log.levels
 ---
 ---@param level (integer|string) the case insensitive level name or number
 function lsp.set_log_level(level)
-  if type(level) == 'string' or type(level) == 'number' then
-    log.set_level(level)
-  else
-    error(string.format('Invalid log level: %q', level))
-  end
+  log.set_level(level)
 end
 
 --- Gets the path of the logfile used by the LSP client.
