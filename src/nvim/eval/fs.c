@@ -714,6 +714,7 @@ void f_getcwd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       buf = find_buffer_by_handle(argv[BUFFER_IDX], &err);
       if (ERROR_SET(&err)) {
         emsg(_("E5007: Cannot find buffer number."));
+        xfree(err.msg);
         return;
       }
     }
@@ -1091,6 +1092,7 @@ void f_haslocaldir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       buf = find_buffer_by_handle(argv[BUFFER_IDX], &err);
       if (ERROR_SET(&err)) {
         emsg(_("E5007: Cannot find buffer number."));
+        xfree(err.msg);
         return;
       }
     }
