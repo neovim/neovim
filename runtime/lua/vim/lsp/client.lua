@@ -156,7 +156,7 @@ local validate = vim.validate
 --- the encoding used for communicating with the server.
 --- You can modify this in the `config`'s `on_init` method
 --- before text is sent to the server.
---- @field offset_encoding string
+--- @field offset_encoding 'utf-8'|'utf-16'|'utf-32'
 ---
 --- The handlers used by the client as described in |lsp-handler|.
 --- @field handlers table<string,lsp.Handler>
