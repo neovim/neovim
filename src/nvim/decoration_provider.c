@@ -118,6 +118,8 @@ void decor_providers_start(void)
       ADD_C(args, INTEGER_OBJ((int)display_tick));
       bool active = decor_provider_invoke((int)i, "start", p->redraw_start, args, true);
       kv_A(decor_providers, i).state = active ? kDecorProviderActive : kDecorProviderRedrawDisabled;
+    } else if (p->state != kDecorProviderDisabled) {
+      kv_A(decor_providers, i).state = kDecorProviderActive;
     }
   }
 }
@@ -220,7 +222,6 @@ void decor_providers_invoke_end(void)
       MAXSIZE_TEMP_ARRAY(args, 1);
       ADD_C(args, INTEGER_OBJ((int)display_tick));
       decor_provider_invoke((int)i, "end", p->redraw_end, args, true);
-      kv_A(decor_providers, i).state = kDecorProviderActive;
     }
   }
   decor_check_to_be_deleted();
