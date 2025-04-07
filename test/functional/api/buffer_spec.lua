@@ -2097,9 +2097,19 @@ describe('api/buf', function()
   end)
 
   describe('nvim_buf_del', function()
-    it('empty options', function()
+    it('empty options (equal to type delete)', function()
+      -- unnamed buffer
       command('new')
-      local b = api.nvim_create_buf(true, false)
+      local b = api.nvim_get_current_buf()
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, {})
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 0)
+
+      -- named buffer
+      command('edit A')
+      b = api.nvim_get_current_buf()
       ok(api.nvim_buf_is_valid(b))
       api.nvim_buf_del(b, {})
       ok(not api.nvim_buf_is_loaded(b))
@@ -2107,34 +2117,140 @@ describe('api/buf', function()
       ok(fn.buflisted(b) == 0)
     end)
 
-    it('only unload', function()
+    it('delete current buffer', function()
+      -- unnamed buffer
+      command('new')
+      local b = api.nvim_get_current_buf()
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, { type = 'delete' })
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 0)
+
+      -- named buffer
+      command('edit A')
+      b = api.nvim_get_current_buf()
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, { type = 'delete' })
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 0)
+    end)
+
+    it('delete other buffer', function()
+      -- buf 1: the inited unnamed buffer
+      -- buf 2: named A
+      command('new')
+      command('edit A')
+      -- buf 3: unnamed -> current buffer
+      command('new')
+
+      -- unnamed buffer
+      local b = 1
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, { type = 'delete' })
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 0)
+
+      -- named buffer
+      b = 2
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, { type = 'delete' })
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 0)
+    end)
+
+    it('unload current buffer', function()
+      -- unnamed buffer
       command('new')
       local b = api.nvim_get_current_buf()
       ok(api.nvim_buf_is_valid(b))
       api.nvim_buf_del(b, { type = 'unload' })
       ok(not api.nvim_buf_is_loaded(b))
       ok(api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 0)
+
+      -- named buffer
+      command('new')
+      command('edit A')
+      b = api.nvim_get_current_buf()
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, { type = 'unload' })
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 1)
     end)
 
-    it('wipeout', function()
+    it('unload other buffer', function()
+      -- buf 1: the inited unnamed buffer
+      -- buf 2: named A
+      command('new')
+      command('edit A')
+      -- buf 3: unnamed -> current buffer
+      command('new')
+
+      -- unnamed buffer
+      local b = 1
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, { type = 'unload' })
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 0)
+
+      -- named buffer
+      b = 2
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, { type = 'unload' })
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 1)
+    end)
+
+    it('wipeout current buffer', function()
+      -- unnamed buffer
       command('new')
       local b = api.nvim_get_current_buf()
       ok(api.nvim_buf_is_valid(b))
       api.nvim_buf_del(b, { type = 'wipeout' })
       ok(not api.nvim_buf_is_loaded(b))
       ok(not api.nvim_buf_is_valid(b))
-    end)
+      ok(fn.buflisted(b) == 0)
 
-    it('preserver layout', function()
-      command('new')
-      local b = api.nvim_get_current_buf()
-      local w = api.nvim_get_current_win()
+      -- named buffer
+      command('edit A')
+      b = api.nvim_get_current_buf()
       ok(api.nvim_buf_is_valid(b))
-      ok(api.nvim_win_is_valid(w))
-      api.nvim_buf_del(b, { preserve_layout = true })
+      api.nvim_buf_del(b, { type = 'wipeout' })
       ok(not api.nvim_buf_is_loaded(b))
       ok(not api.nvim_buf_is_valid(b))
-      ok(api.nvim_win_is_valid(w))
+      ok(fn.buflisted(b) == 0)
+    end)
+
+    it('wipeout other buffer', function()
+      -- buf 1: the inited unnamed buffer
+      -- buf 2: named A
+      command('new')
+      command('edit A')
+      -- buf 3: unnamed -> current buffer
+      command('new')
+
+      -- unnamed buffer
+      local b = 1
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, { type = 'wipeout' })
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(not api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 0)
+
+      -- named buffer
+      b = 2
+      ok(api.nvim_buf_is_valid(b))
+      api.nvim_buf_del(b, { type = 'wipeout' })
+      ok(not api.nvim_buf_is_loaded(b))
+      ok(not api.nvim_buf_is_valid(b))
+      ok(fn.buflisted(b) == 0)
     end)
   end)
 
