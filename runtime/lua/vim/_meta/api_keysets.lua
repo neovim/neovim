@@ -15,7 +15,6 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.buf_del
 --- @field type? string
 --- @field force? boolean
---- @field preserve_layout? boolean
 
 --- @class vim.api.keyset.buf_delete
 --- @field force? boolean

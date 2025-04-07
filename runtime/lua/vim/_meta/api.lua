@@ -285,7 +285,6 @@ function vim.api.nvim_buf_create_user_command(buffer, name, command, opts) end
 --- @param opts vim.api.keyset.buf_del Optional parameters. Keys:
 --- - type:   Delete type, including "delete", "wipeout", "unload".
 --- - force:  Force deletion and ignore unsaved changes.
---- - preserve_layout: Close the buffer but keep the window.
 function vim.api.nvim_buf_del(buffer, opts) end
 
 --- Removes an `extmark`.

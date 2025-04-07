@@ -57,10 +57,9 @@ enum dobuf_start_values {
 
 /// Values for flags argument of do_buffer_ext()
 enum dobuf_flags_value {
-  DOBUF_FORCEIT        = 1,  ///< :cmd!
-  DOBUF_SKIPHELP       = 4,  ///< skip or keep help buffers depending on b_help of the
-                             ///< starting buffer
-  DOBUF_PRESERVELAYOUT = 8,  /// < close buffer but don't close window
+  DOBUF_FORCEIT  = 1,  ///< :cmd!
+  DOBUF_SKIPHELP = 4,  ///< skip or keep help buffers depending on b_help of the
+                       ///< starting buffer
 };
 
 /// flags for buf_freeall()

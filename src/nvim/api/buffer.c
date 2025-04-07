@@ -1008,7 +1008,6 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
 /// @param opts  Optional parameters. Keys:
 ///          - type:   Delete type, including "delete", "wipeout", "unload".
 ///          - force:  Force deletion and ignore unsaved changes.
-///          - preserve_layout: Close the buffer but keep the window.
 void nvim_buf_del(Buffer buffer, Dict(buf_del) *opts, Error *err)
   FUNC_API_SINCE(14)
   FUNC_API_TEXTLOCK
@@ -1019,11 +1018,7 @@ void nvim_buf_del(Buffer buffer, Dict(buf_del) *opts, Error *err)
     return;
   }
 
-  int flags = opts->force;
-
-  if (opts->preserve_layout) {
-    flags ^= DOBUF_PRESERVELAYOUT;
-  }
+  bool force = opts->force;
 
   const char *type = (HAS_KEY(opts, buf_del, type) && strlen(opts->type.data) > 0) ? opts->type.data : "delete";
 
@@ -1043,7 +1038,7 @@ void nvim_buf_del(Buffer buffer, Dict(buf_del) *opts, Error *err)
                          DOBUF_FIRST,
                          FORWARD,
                          buf->handle,
-                         flags);
+                         force);
 
   if (result == FAIL) {
     api_set_error(err, kErrorTypeException, "Failed to unload buffer.");

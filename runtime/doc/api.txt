@@ -2341,7 +2341,6 @@ nvim_buf_del({buffer}, {opts})                                *nvim_buf_del()*
                   • type: Delete type, including "delete", "wipeout",
                     "unload".
                   • force: Force deletion and ignore unsaved changes.
-                  • preserve_layout: Close the buffer but keep the window.
 
 nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
     Unmaps a buffer-local |mapping| for the given mode.

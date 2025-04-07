@@ -372,7 +372,6 @@ typedef struct {
   OptionalKeys is_set__buf_del_;
   String  type;
   Boolean force;
-  Boolean preserve_layout;
 } Dict(buf_del);
 
 typedef struct {
