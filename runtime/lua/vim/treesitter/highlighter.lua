@@ -136,6 +136,7 @@ function TSHighlighter.new(tree, opts)
   -- string query... if one is not provided it will be looked up by file.
   if opts.queries then
     for lang, query_string in pairs(opts.queries) do
+      ---@diagnostic disable-next-line: access-invisible
       self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
       set_conceal_lines(lang)
     end
@@ -255,6 +256,7 @@ end
 ---@return vim.treesitter.highlighter.Query
 function TSHighlighter:get_query(lang)
   if not self._queries[lang] then
+    ---@diagnostic disable-next-line: access-invisible
     local success, result = pcall(TSHighlighterQuery.new, lang)
     if not success then
       self:destroy()
@@ -272,7 +274,7 @@ end
 --- @param metadata vim.treesitter.query.TSMetadata
 --- @return string?
 local function get_url(match, bufnr, capture, metadata)
-  ---@type string|number|nil
+  ---@type string|integer|nil
   local url = metadata[capture] and metadata[capture].url
 
   if not url or type(url) == 'string' then

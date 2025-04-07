@@ -36,3 +36,17 @@ vim.uri_to_fname = uri.uri_to_fname
 vim.uri_to_bufnr = uri.uri_to_bufnr
 
 vim.provider = require('vim.provider')
+
+--- @param s string
+--- @param index integer
+--- @param utf16? boolean
+--- @return integer?
+
+function vim._str_byteindex(s, index, utf16) end
+
+--- @param s string
+--- @param index? integer
+--- @return integer? utf32_index
+--- @return integer? utf16_index
+--- @overload fun(s: string): integer, integer
+function vim._str_utfindex(s, index) end

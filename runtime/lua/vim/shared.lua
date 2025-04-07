@@ -1014,7 +1014,7 @@ do
   ---
   --- @param name string Argument name
   --- @param value any Argument value
-  --- @param validator vim.validate.Validator
+  --- @param validator vim.validate.Validator :
   ---   - (`string|string[]`): Any value that can be returned from |lua-type()| in addition to
   ---     `'callable'`: `'boolean'`, `'callable'`, `'function'`, `'nil'`, `'number'`, `'string'`, `'table'`,
   ---     `'thread'`, `'userdata'`.
@@ -1181,7 +1181,6 @@ do
   end
 end
 
---- @private
 --- @generic T
 --- @param root string
 --- @param mod T
@@ -1201,7 +1200,6 @@ function vim._defer_require(root, mod)
   })
 end
 
---- @private
 --- Creates a module alias/shim that lazy-loads a target module.
 ---
 --- Unlike `vim.defaulttable()` this also:

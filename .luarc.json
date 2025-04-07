@@ -9,6 +9,7 @@
       "${3rd}/busted/library"
     ],
     "ignoreDir": [
+      ".deps",
       "test",
       "_vim9script.lua"
     ],
