@@ -40,7 +40,6 @@ local function starsetf(ft, priority)
   }
 end
 
----@private
 --- Get a line range from the buffer.
 ---@param bufnr integer The buffer to get the lines from
 ---@param start_lnum integer|nil The line number of the first line (inclusive, 1-based)
@@ -55,7 +54,6 @@ function M._getlines(bufnr, start_lnum, end_lnum)
   return api.nvim_buf_get_lines(bufnr, 0, -1, false)
 end
 
----@private
 --- Get a single line from the buffer.
 ---@param bufnr integer The buffer to get the lines from
 ---@param start_lnum integer The line number of the first line (inclusive, 1-based)
@@ -65,7 +63,6 @@ function M._getline(bufnr, start_lnum)
   return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
 end
 
----@private
 --- Check whether a string matches any of the given Lua patterns.
 ---
 ---@param s string? The string to check
@@ -83,7 +80,6 @@ function M._findany(s, patterns)
   return false
 end
 
----@private
 --- Get the next non-whitespace line in the buffer.
 ---
 ---@param bufnr integer The buffer to get the line from
@@ -102,7 +98,6 @@ do
   --- @type table<string,vim.regex>
   local regex_cache = {}
 
-  ---@private
   --- Check whether the given string matches the Vim regex pattern.
   --- @param s string?
   --- @param pattern string
