@@ -126,6 +126,10 @@ static const char e_number_required_after_equal[]
   = N_("E521: Number required after =");
 static const char e_preview_window_already_exists[]
   = N_("E590: A preview window already exists");
+static const char e_cannot_have_negative_or_zero_number_of_quickfix[]
+  = N_("E1542: Cannot have a negative or zero number of quickfix/location lists");
+static const char e_cannot_have_more_than_hundred_quickfix[]
+  = N_("E1543: Cannot have more than a hundred quickfix/location lists");
 
 static char *p_term = NULL;
 static char *p_ttytype = NULL;
@@ -2701,6 +2705,23 @@ static const char *did_set_wrap(optset_T *args)
   return NULL;
 }
 
+/// Process the new 'chistory' or 'lhistory' option value. 'chistory' will
+/// be used if args->os_varp is the same as p_chi, else 'lhistory'.
+static const char *did_set_xhistory(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  bool is_p_chi = (OptInt *)args->os_varp == &p_chi;
+  OptInt *arg = is_p_chi ? &p_chi : (OptInt *)args->os_varp;
+
+  if (is_p_chi) {
+    qf_resize_stack((int)(*arg));
+  } else {
+    ll_resize_stack(win, (int)(*arg));
+  }
+
+  return NULL;
+}
+
 // When 'syntax' is set, load the syntax of that name
 static void do_syntax_autocmd(buf_T *buf, bool value_changed)
 {
@@ -2940,6 +2961,14 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
       return e_positive;
     } else if (value > TABSTOP_MAX) {
       return e_invarg;
+    }
+    break;
+  case kOptChistory:
+  case kOptLhistory:
+    if (value < 1) {
+      return e_cannot_have_negative_or_zero_number_of_quickfix;
+    } else if (value > 100) {
+      return e_cannot_have_more_than_hundred_quickfix;
     }
     break;
   default:
@@ -4604,6 +4633,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_wfw);
   case kOptPreviewwindow:
     return &(win->w_p_pvw);
+  case kOptLhistory:
+    return &(win->w_p_lhi);
   case kOptRightleft:
     return &(win->w_p_rl);
   case kOptRightleftcmd:
@@ -4883,6 +4914,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fdt = copy_option_val(from->wo_fdt);
   to->wo_fmr = copy_option_val(from->wo_fmr);
   to->wo_scl = copy_option_val(from->wo_scl);
+  to->wo_lhi = from->wo_lhi;
   to->wo_winhl = copy_option_val(from->wo_winhl);
   to->wo_winbl = from->wo_winbl;
   to->wo_stc = copy_option_val(from->wo_stc);

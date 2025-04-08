@@ -31,12 +31,12 @@ From inside Vim an easy way to run a command and handle the output is with the
 The 'errorformat' option should be set to match the error messages from your
 compiler (see |errorformat| below).
 
-							*quickfix-ID*
+					*quickfix-stack* *quickfix-ID*
 Each quickfix list has a unique identifier called the quickfix ID and this
 number will not change within a Vim session. The |getqflist()| function can be
 used to get the identifier assigned to a list. There is also a quickfix list
-number which may change whenever more than ten lists are added to a quickfix
-stack.
+number which may change whenever more than 'chistory' lists are added to a
+quickfix stack.
 
 						*location-list* *E776*
 A location list is a window-local quickfix list. You get one after commands
@@ -848,10 +848,12 @@ using these functions are below:
 =============================================================================
 3. Using more than one list of errors			*quickfix-error-lists*
 
-So far has been assumed that there is only one list of errors.  Actually the
-ten last used lists are remembered.  When starting a new list, the previous
-ones are automatically kept.  Two commands can be used to access older error
-lists.  They set one of the existing error lists as the current one.
+So far it has been assumed that there is only one list of errors.  Actually
+there can be multiple used lists that are remembered; see 'chistory' and
+'lhistory'.
+When starting a new list, the previous ones are automatically kept.  Two
+commands can be used to access older error lists.  They set one of the
+existing error lists as the current one.
 
 						*:colder* *:col* *E380*
 :col[der] [count]	Go to older error list.  When [count] is given, do

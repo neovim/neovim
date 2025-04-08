@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Mar 28
+" Last Change:	2025 Apr 06
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " If there already is an option window, jump to that one.
@@ -366,6 +366,13 @@ if has("linebreak")
   call <SID>AddOption("numberwidth", gettext("number of columns to use for the line number"))
   call append("$", "\t" .. s:local_to_window)
   call <SID>OptionL("nuw")
+endif
+if has("quickfix")
+  call <SID>AddOption("chistory", gettext("maximum number of quickfix lists that can be stored in history"))
+  call <SID>OptionL("chi")
+  call <SID>AddOption("lhistory", gettext("maximum number of location lists that can be stored in history"))
+  call append("$", "\t" .. s:local_to_window)
+  call <SID>OptionL("lhi")
 endif
 if has("conceal")
   call <SID>AddOption("conceallevel", gettext("controls whether concealable text is hidden"))

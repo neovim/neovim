@@ -238,6 +238,9 @@ void early_init(mparm_T *paramp)
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype
+
+  // initialize quickfix list
+  qf_init_stack();
 }
 
 #ifdef MAKE_LIB
