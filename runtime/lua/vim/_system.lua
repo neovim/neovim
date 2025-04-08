@@ -99,7 +99,7 @@ function SystemObj:wait(timeout)
     end, nil, true)
   end
 
-  return state.result
+  return assert(state.result)
 end
 
 --- @param data string[]|string|nil
