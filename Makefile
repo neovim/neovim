@@ -185,7 +185,12 @@ appimage-%:
 
 .PHONY: emmylua-check
 emmylua-check: luv
-	emmylua_check --config=$(PWD)/.luarc.json runtime/lua
+	-emmylua_check \
+		--output-format=json \
+		--config=$(PWD)/.luarc.json \
+		--output diag.json \
+		runtime/lua
+	jq 'map(.diagnostics | length) | add' diag.json
 
 luv:
 	git clone https://github.com/LuaCATS/luv
