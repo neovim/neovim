@@ -106,6 +106,7 @@
 local M = {}
 
 local s_output = {} ---@type string[]
+local check_summary = { warn = 0, error = 0 }
 
 -- From a path return a list [{name}, {func}, {type}] representing a healthcheck
 local function filepath_to_healthcheck(path)
@@ -286,6 +287,7 @@ end
 function M.warn(msg, ...)
   local input = format_report_message('⚠️ WARNING', msg, ...)
   collect_output(input)
+  check_summary['warn'] = check_summary['warn'] + 1
 end
 
 --- Reports an error.
@@ -295,6 +297,7 @@ end
 function M.error(msg, ...)
   local input = format_report_message('❌ ERROR', msg, ...)
   collect_output(input)
+  check_summary['error'] = check_summary['error'] + 1
 end
 
 local path2name = function(path)
@@ -339,6 +342,23 @@ M._complete = function()
   local rv = vim.tbl_keys(unique)
   table.sort(rv)
   return rv
+end
+
+--- Gets the results heading for the current report section.
+---
+---@return string
+local function get_summary()
+  local s = ''
+  local errors = check_summary['error']
+  local warns = check_summary['warn']
+
+  s = s .. (warns > 0 and (' %2d ⚠️'):format(warns) or '')
+  s = s .. (errors > 0 and (' %2d ❌'):format(errors) or '')
+  if errors == 0 and warns == 0 then
+    s = s .. '✅'
+  end
+
+  return s
 end
 
 --- Runs the specified healthchecks.
@@ -397,9 +417,9 @@ function M._check(mods, plugin_names)
     local func = value[1]
     local type = value[2]
     s_output = {}
+    check_summary = { warn = 0, error = 0 }
 
     if func == '' then
-      s_output = {}
       M.error('No healthcheck found for "' .. name .. '" plugin.')
     end
     if type == 'v' then
@@ -420,10 +440,12 @@ function M._check(mods, plugin_names)
       M.error('The healthcheck report for "' .. name .. '" plugin is empty.')
     end
 
+    local report = get_summary()
+    local replen = vim.fn.strwidth(report)
     local header = {
       string.rep('=', 78),
-      -- Example: `foo.health: [ …] require("foo.health").check()`
-      ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - func:len()), func),
+      -- Example: `foo.health: [ …] 1 ⚠️  5 ❌`
+      ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - replen), report),
       '',
     }
 
