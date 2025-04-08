@@ -2076,6 +2076,69 @@ func Test_pum_maxwidth_multibyte()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_maxwidth_with_many_items()
+  CheckScreendump
+
+  let lines =<< trim END
+    func Omni_test(findstart, base)
+    if a:findstart
+      return col(".")
+    endif
+    return [
+      \ #{word: "foo", menu: "fooMenu", kind: "fooKind"},
+      \ #{word: "bar", menu: "barMenu", kind: "barKind"},
+      \ #{word: "baz", menu: "bazMenu", kind: "bazKind"},
+      \ ]
+    endfunc
+    set omnifunc=Omni_test
+  END
+  call writefile(lines, 'Xtest', 'D')
+  let  buf = RunVimInTerminal('-S Xtest', {})
+  call TermWait(buf)
+
+  call term_sendkeys(buf, ":set pummaxwidth=20\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_with_many_items_01', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set pummaxwidth=19\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_with_many_items_02', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set pummaxwidth=18\<CR>")   " display Ellipsis
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_with_many_items_03', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set pummaxwidth=16\<CR>")   " display Ellipsis
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_with_many_items_04', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set pummaxwidth=15\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_with_many_items_05', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set pummaxwidth=12\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_with_many_items_06', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set pummaxwidth=10\<CR>")   " display Ellipsis
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_with_many_items_07', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set pummaxwidth=1\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_with_many_items_08', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_pum_clear_when_switch_tab_or_win()
   CheckScreendump
 
