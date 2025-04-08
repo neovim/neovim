@@ -2064,6 +2064,29 @@ theend:
   return retval;
 }
 
+/// set v:swapcommand for the SwapExists autocommands.
+///
+/// @param command  [+cmd] to be executed (e.g. +10).
+/// @param newlnum  if > 0: put cursor on this line number (if possible)
+//
+/// @return 1 if swapcommand was actually set, 0 otherwise
+bool set_swapcommand(char *command, linenr_T newlnum)
+{
+  if ((command == NULL && newlnum <= 0) || *get_vim_var_str(VV_SWAPCOMMAND) != NUL) {
+    return false;
+  }
+  const size_t len = (command != NULL) ? strlen(command) + 3 : 30;
+  char *const p = xmalloc(len);
+  if (command != NULL) {
+    vim_snprintf(p, len, ":%s\r", command);
+  } else {
+    vim_snprintf(p, len, "%" PRId64 "G", (int64_t)newlnum);
+  }
+  set_vim_var_string(VV_SWAPCOMMAND, p, -1);
+  xfree(p);
+  return true;
+}
+
 /// start editing a new file
 ///
 /// @param fnum     file number; if zero use ffname/sfname
@@ -2197,20 +2220,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     oldwin = NULL;
   }
 
-  if ((command != NULL || newlnum > 0)
-      && *get_vim_var_str(VV_SWAPCOMMAND) == NUL) {
-    // Set v:swapcommand for the SwapExists autocommands.
-    const size_t len = (command != NULL) ? strlen(command) + 3 : 30;
-    char *const p = xmalloc(len);
-    if (command != NULL) {
-      vim_snprintf(p, len, ":%s\r", command);
-    } else {
-      vim_snprintf(p, len, "%" PRId64 "G", (int64_t)newlnum);
-    }
-    set_vim_var_string(VV_SWAPCOMMAND, p, -1);
-    did_set_swapcommand = true;
-    xfree(p);
-  }
+  did_set_swapcommand = set_swapcommand(command, newlnum);
 
   // If we are starting to edit another file, open a (new) buffer.
   // Otherwise we re-use the current buffer.
