@@ -2905,11 +2905,13 @@ describe('extmark decorations', function()
       {2:  1 }for _,item in ipairs(items) do                |
       {2:    }line 1 below                                  |
       {2:  6 }^    for _ = 1, (count or 1) do                |
+      {2:  7 }        local cell = line[colpos]             |
+      {2:  8 }        cell.text = text                      |
       {2:  9 }        cell.hl_id = hl_id                    |
       {2: 10 }        colpos = colpos+1                     |
       {2: 11 }    end                                       |
       {2: 12 }end                                           |
-      {1:~                                                 }|*7
+      {1:~                                                 }|*5
                                                         |
     ]])
     -- w_lines.wl_lastlnum values are valid

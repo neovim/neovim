@@ -2188,20 +2188,10 @@ static void win_update(win_T *wp)
           // rows, and may insert/delete lines
           int j = idx;
           for (l = lnum; l < mod_bot; l++) {
-            linenr_T first = l;
-            int prev_rows = new_rows;
-            if (hasFolding(wp, l, NULL, &l)) {
-              new_rows += !decor_conceal_line(wp, first - 1, false);
-            } else if (l == wp->w_topline) {
-              int n = plines_win_nofill(wp, l, false) + wp->w_topfill
-                      - adjust_plines_for_skipcol(wp);
-              n = MIN(n, wp->w_height_inner);
-              new_rows += n;
-            } else {
-              new_rows += plines_win(wp, l, true);
-            }
-            // Do not increment when height was 0 (for a concealed line).
-            j += (prev_rows != new_rows);
+            int n = plines_win_full(wp, l, &l, NULL, true, false);
+            n -= (l == wp->w_topline ? adjust_plines_for_skipcol(wp) : 0);
+            new_rows += MIN(n, wp->w_height_inner);
+            j += n > 0;  // don't count concealed lines
             if (new_rows > wp->w_grid.rows - row - 2) {
               // it's getting too much, must redraw the rest
               new_rows = 9999;
