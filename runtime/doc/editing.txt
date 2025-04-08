@@ -1399,7 +1399,6 @@ exist, the next-higher scope in the hierarchy applies.
 			current buffer.  The current directory for other
 			windows or buffers or tabs is not changed.
 
-
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
 			current window.  The current directory for other
