@@ -8,6 +8,12 @@ local M = {}
 --- @param env? table<string,string|number>
 --- @return string
 local function system(cmd, silent, env)
+  if vim.fn.executable(cmd[1]) == 0 then
+    error(string.format('not found: "%s"', cmd[1]), 0)
+  elseif vim.uv.fs_access(cmd[1], 'X') then
+    error(string.format('not executable : "%s"', cmd[1]), 0)
+  end
+
   local r = vim.system(cmd, { env = env, timeout = 10000 }):wait()
 
   if not silent then
@@ -577,7 +583,10 @@ function M.man_complete(arg_lead, cmd_line)
     return {}
   end
 
-  local pages = get_paths(name, sect)
+  local ok, pages = pcall(get_paths, name, sect)
+  if not ok then
+    return nil
+  end
 
   -- We check for duplicates in case the same manpage in different languages
   -- was found.
