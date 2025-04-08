@@ -888,6 +888,17 @@ void ex_drop(exarg_T *eap)
       if (curbuf->b_ml.ml_flags & ML_EMPTY) {
         ex_rewind(eap);
       }
+
+      // execute [+cmd]
+      if (eap->do_ecmd_cmd) {
+        bool did_set_swapcommand = set_swapcommand(eap->do_ecmd_cmd, 0);
+        do_cmdline(eap->do_ecmd_cmd, NULL, NULL, DOCMD_VERBOSE);
+        if (did_set_swapcommand) {
+          set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
+        }
+      }
+
+      // no need to execute [++opts] - they only apply for newly loaded buffers.
       return;
     }
   }
