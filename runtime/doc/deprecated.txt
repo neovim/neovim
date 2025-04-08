@@ -41,6 +41,7 @@ LSP
 LUA
 
 • *vim.diff()*				Renamed to |vim.text.diff()|
+• The "skip" parameter used by |vim.fs.dir()| is deprecated in favor of "filter"
 
 VIMSCRIPT
 
@@ -93,9 +94,6 @@ LSP
 • `client.supports_method()`		Use |Client:supports_method()| instead.
 • `client.on_attach()`			Use |Client:on_attach()| instead.
 • `vim.lsp.start_client()`		Use |vim.lsp.start()| instead.
-
-FS
-• The "skip" parameter used by |vim.fs.dir()| is deprecated in favor of "filter"
 
 LUA
 • vim.region()		Use |getregionpos()| instead.

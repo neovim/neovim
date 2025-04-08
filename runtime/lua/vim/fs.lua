@@ -163,11 +163,8 @@ function M.dir(path, opts)
   vim.validate('follow', opts.follow, 'boolean', true)
 
   if opts.skip ~= nil then
-    vim.deprecate('opts.skip', 'opts.filter', '0.13')
-    if opts.filter == nil then
-      opts.filter = opts.skip
-      opts.skip = nil
-    end
+    vim.deprecate('opts.skip', 'opts.filter', '1.0')
+    opts.filter = opts.filter or opts.skip --- @type fun(dir_name: string): boolean|nil
   end
 
   path = M.normalize(path)
@@ -240,7 +237,7 @@ end
 --- (default: `false`)
 --- @field follow? boolean
 ---
---- Traverse Matching directories.
+--- Predicate that decides if a directory is traversed. Return true to traverse a directory, or false to skip.
 --- If omitted, all directories are searched recursively.
 --- @field filter? (fun(dir: string): boolean)
 
