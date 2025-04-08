@@ -78,6 +78,7 @@ LUA
 
 OPTIONS
 
+• 'chistory' and 'lhistory' set size of the |quickfix-stack|.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'pummaxwidth' sets maximum width for the completion popup menu.
 

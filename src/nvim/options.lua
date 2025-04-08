@@ -1123,6 +1123,25 @@ local options = {
       varname = 'p_ccv',
     },
     {
+      abbreviation = 'chi',
+      cb = 'did_set_xhistory',
+      defaults = 10,
+      desc = [=[
+        Number of quickfix lists that should be remembered for the quickfix
+        stack.  Must be between 1 and 100.  If the option is set to a value
+        that is lower than the amount of entries in the quickfix list stack,
+        entries will be removed starting from the oldest one.  If the current
+        quickfix list was removed, then the quickfix list at top of the stack
+        (the most recently created) will be used in its place.  For additional
+        info, see |quickfix-stack|.
+      ]=],
+      full_name = 'chistory',
+      scope = { 'global' },
+      short_desc = N_('number of quickfix lists stored in history'),
+      type = 'number',
+      varname = 'p_chi',
+    },
+    {
       abbreviation = 'cin',
       defaults = false,
       desc = [=[
@@ -5021,6 +5040,24 @@ local options = {
       short_desc = N_("don't redraw while executing macros"),
       type = 'boolean',
       varname = 'p_lz',
+    },
+    {
+      abbreviation = 'lhi',
+      cb = 'did_set_xhistory',
+      defaults = 10,
+      desc = [=[
+        Like 'chistory', but for the location list stack associated with the
+        current window.  If the option is changed in either the location list
+        window itself or the the window that is associated with the location
+        list stack, the new value will also be applied to the other one.  This
+        means this value will always be the same for a given location list
+        window and its corresponding window.  See |quickfix-stack| for
+        additional info.
+      ]=],
+      full_name = 'lhistory',
+      scope = { 'win' },
+      short_desc = N_('number of location lists stored in history'),
+      type = 'number',
     },
     {
       abbreviation = 'lbr',

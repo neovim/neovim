@@ -1326,6 +1326,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+						*'chistory'* *'chi'*
+'chistory' 'chi'	number	(default 10)
+			global
+	Number of quickfix lists that should be remembered for the quickfix
+	stack.  Must be between 1 and 100.  If the option is set to a value
+	that is lower than the amount of entries in the quickfix list stack,
+	entries will be removed starting from the oldest one.  If the current
+	quickfix list was removed, then the quickfix list at top of the stack
+	(the most recently created) will be used in its place.  For additional
+	info, see |quickfix-stack|.
+
 				*'cindent'* *'cin'* *'nocindent'* *'nocin'*
 'cindent' 'cin'		boolean	(default off)
 			local to buffer
@@ -3779,6 +3790,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This may occasionally cause display errors.  It is only meant to be set
 	temporarily when performing an operation where redrawing may cause
 	flickering or cause a slowdown.
+
+						*'lhistory'* *'lhi'*
+'lhistory' 'lhi'	number	(default 10)
+			local to window
+	Like 'chistory', but for the location list stack associated with the
+	current window.  If the option is changed in either the location list
+	window itself or the the window that is associated with the location
+	list stack, the new value will also be applied to the other one.  This
+	means this value will always be the same for a given location list
+	window and its corresponding window.  See |quickfix-stack| for
+	additional info.
 
 			*'linebreak'* *'lbr'* *'nolinebreak'* *'nolbr'*
 'linebreak' 'lbr'	boolean	(default off)
