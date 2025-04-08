@@ -186,6 +186,14 @@ static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, 
     approximate_botline_win(wp);
   }
 
+  // If lines have been inserted/deleted and the buffer has virt_lines, or
+  // inline virt_text with 'wrap' enabled, invalidate the line after the changed
+  // lines. virt_lines may now be drawn above that line, and inline virt_text
+  // may cause that line to wrap.
+  if ((xtra < 0 && wp->w_p_wrap && buf_meta_total(wp->w_buffer, kMTMetaInline))
+      || (xtra != 0 && buf_meta_total(wp->w_buffer, kMTMetaLines))) {
+    lnume++;
+  }
   // Check if any w_lines[] entries have become invalid.
   // For entries below the change: Correct the lnums for inserted/deleted lines.
   // Makes it possible to stop displaying after the change.
@@ -194,12 +202,7 @@ static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, 
       if (wp->w_lines[i].wl_lnum >= lnum) {
         // Do not change wl_lnum at index zero, it is used to compare with w_topline.
         // Invalidate it instead.
-        // If lines haven been inserted/deleted and the buffer has virt_lines,
-        // invalidate the line after the changed lines as some virt_lines may
-        // now be drawn above a different line.
-        if (i == 0 || wp->w_lines[i].wl_lnum < lnume
-            || (xtra != 0 && wp->w_lines[i].wl_lnum == lnume
-                && buf_meta_total(wp->w_buffer, kMTMetaLines) > 0)) {
+        if (i == 0 || wp->w_lines[i].wl_lnum < lnume) {
           // line included in change
           wp->w_lines[i].wl_valid = false;
         } else if (xtra != 0) {
@@ -208,8 +211,7 @@ static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, 
           wp->w_lines[i].wl_foldend += xtra;
           wp->w_lines[i].wl_lastlnum += xtra;
         }
-      } else if (wp->w_lines[i].wl_foldend >= lnum
-                 || wp->w_lines[i].wl_lastlnum >= lnum) {
+      } else if (wp->w_lines[i].wl_lastlnum >= lnum) {
         // change somewhere inside this range of folded or concealed lines,
         // may need to be redrawn
         wp->w_lines[i].wl_valid = false;
@@ -412,24 +414,6 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
   }
 }
 
-static void changedOneline(buf_T *buf, linenr_T lnum)
-{
-  if (buf->b_mod_set) {
-    // find the maximum area that must be redisplayed
-    if (lnum < buf->b_mod_top) {
-      buf->b_mod_top = lnum;
-    } else if (lnum >= buf->b_mod_bot) {
-      buf->b_mod_bot = lnum + 1;
-    }
-  } else {
-    // set the area that must be redisplayed to one line
-    buf->b_mod_set = true;
-    buf->b_mod_top = lnum;
-    buf->b_mod_bot = lnum + 1;
-    buf->b_mod_xlines = 0;
-  }
-}
-
 /// Changed bytes within a single line for the current buffer.
 /// - marks the windows on this buffer to be redisplayed
 /// - marks the buffer changed by calling changed()
@@ -437,7 +421,7 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
 /// Careful: may trigger autocommands that reload the buffer.
 void changed_bytes(linenr_T lnum, colnr_T col)
 {
-  changedOneline(curbuf, lnum);
+  changed_lines_redraw_buf(curbuf, lnum, lnum + 1, 0);
   changed_common(curbuf, lnum, col, lnum + 1, 0);
   // When text has been changed at the end of the line, possibly the start of
   // the next line may have SpellCap that should be removed or it needs to be
@@ -458,7 +442,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
         redraw_later(wp, UPD_VALID);
         linenr_T wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
-          changedOneline(wp->w_buffer, wlnum);
+          changed_lines_redraw_buf(wp->w_buffer, wlnum, wlnum + 1, 0);
         }
       }
     }
@@ -523,6 +507,14 @@ void deleted_lines_mark(linenr_T lnum, int count)
 /// @param xtra number of extra lines (negative when deleting)
 void changed_lines_redraw_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, linenr_T xtra)
 {
+  // If lines have been deleted and there may be decorations in the buffer, ensure
+  // win_update() calculates the height of, and redraws the line to which or whence
+  // from its mark may have moved. When lines are deleted, a virt_line mark may
+  // have moved be drawn two lines below so increase by one more.
+  if (xtra != 0 && buf->b_marktree->n_keys > 0) {
+    lnume += 1 + (xtra < 0 && buf_meta_total(buf, kMTMetaLines));
+  }
+
   if (buf->b_mod_set) {
     // find the maximum area that must be redisplayed
     buf->b_mod_top = MIN(buf->b_mod_top, lnum);
