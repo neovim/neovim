@@ -105,7 +105,7 @@ end
 --- @return fun():string? : Iterator over the split components
 function vim.gsplit(s, sep, opts)
   local plain --- @type boolean?
-  local trimempty = false
+  local trimempty = false --- @type boolean?
   if type(opts) == 'boolean' then
     plain = opts -- For backwards compatibility.
   else
@@ -124,12 +124,13 @@ function vim.gsplit(s, sep, opts)
   local empty_start = true -- Only empty segments seen so far.
 
   --- @param i integer?
-  --- @param j integer
+  --- @param j integer?
   --- @param ... unknown
   --- @return string
   --- @return ...
   local function _pass(i, j, ...)
     if i then
+      assert(j)
       assert(j + 1 > start, 'Infinite loop detected')
       local seg = s:sub(start, i - 1)
       start = j + 1
@@ -869,6 +870,7 @@ do
         return string.format('%s: expected %s, got %s', param_name, expected, type(val))
       end
     elseif vim.is_callable(validator) then
+      --- @cast validator fun(v:any):boolean, string?
       -- Check user-provided validation function
       local valid, opt_msg = validator(val)
       if not valid then

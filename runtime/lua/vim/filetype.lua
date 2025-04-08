@@ -120,7 +120,7 @@ local detect = setmetatable({}, {
   --- @return function
   __index = function(t, k)
     t[k] = function(...)
-      return require('vim.filetype.detect')[k](...)
+      return assert(require('vim.filetype.detect')[k])(...)
     end
     return t[k]
   end,
@@ -210,7 +210,7 @@ local extension = {
   art = 'art',
   asciidoc = 'asciidoc',
   adoc = 'asciidoc',
-  asa = function(path, bufnr)
+  asa = function(_path, _bufnr)
     if vim.g.filetype_asa then
       return vim.g.filetype_asa
     end
@@ -261,7 +261,7 @@ local extension = {
   bsd = 'bsdl',
   bsdl = 'bsdl',
   bst = 'bst',
-  btm = function(path, bufnr)
+  btm = function(_path, _bufnr)
     return (vim.g.dosbatch_syntax_for_btm and vim.g.dosbatch_syntax_for_btm ~= 0) and 'dosbatch'
       or 'btm'
   end,
@@ -314,7 +314,7 @@ local extension = {
   atg = 'coco',
   recipe = 'conaryrecipe',
   ctags = 'conf',
-  hook = function(path, bufnr)
+  hook = function(_path, bufnr)
     return M._getline(bufnr, 1) == '[Trigger]' and 'confini' or nil
   end,
   nmconnection = 'confini',
@@ -730,7 +730,7 @@ local extension = {
   at = 'm4',
   mc = detect.mc,
   quake = 'm3quake',
-  m4 = function(path, bufnr)
+  m4 = function(path, _bufnr)
     local pathl = path:lower()
     return not (pathl:find('html%.m4$') or pathl:find('fvwm2rc')) and 'm4' or nil
   end,
@@ -1776,12 +1776,12 @@ local filename = {
   ['/etc/pinforc'] = 'pinfo',
   ['/.pinforc'] = 'pinfo',
   ['.povrayrc'] = 'povini',
-  printcap = function(path, bufnr)
+  printcap = function(_path, _bufnr)
     return 'ptcap', function(b)
       vim.b[b].ptcap_type = 'print'
     end
   end,
-  termcap = function(path, bufnr)
+  termcap = function(_path, _bufnr)
     return 'ptcap', function(b)
       vim.b[b].ptcap_type = 'term'
     end
@@ -2022,7 +2022,7 @@ local pattern = {
     ['/etc/modprobe%.'] = starsetf('modconf'),
     ['/etc/modules%.conf$'] = 'modconf',
     ['/etc/modules$'] = 'modconf',
-    ['/etc/modutils/'] = starsetf(function(path, bufnr)
+    ['/etc/modutils/'] = starsetf(function(path, _bufnr)
       if fn.executable(fn.expand(path)) ~= 1 then
         return 'modconf'
       end
@@ -2509,7 +2509,7 @@ local pattern = {
     [',v$'] = 'rcs',
     ['^svn%-commit.*%.tmp$'] = 'svn',
     ['%.swift%.gyb$'] = 'swiftgyb',
-    ['termcap'] = starsetf(function(path, bufnr)
+    ['termcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('term')
     end),
     ['%.t%.html$'] = 'tilde',
@@ -2601,7 +2601,7 @@ local function normalize_path(path, as_pattern)
     if as_pattern then
       -- Escape Lua's metacharacters when $HOME is used in a pattern.
       -- The rest of path should already be properly escaped.
-      normal = vim.pesc(vim.env.HOME) .. normal:sub(2)
+      normal = vim.pesc(assert(vim.env.HOME)) .. normal:sub(2)
     else
       normal = vim.env.HOME .. normal:sub(2) --- @type string
     end

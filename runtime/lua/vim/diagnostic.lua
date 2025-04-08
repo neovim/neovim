@@ -406,7 +406,7 @@ end
 --- @field [1] integer id
 --- @field [2] integer start
 --- @field [3] integer end
---- @field [4] table details
+--- @field [4] vim.api.keyset.set_extmark details
 
 --- @type table<integer,table<integer,vim.diagnostic._extmark[]>>
 local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_namespace_cacher_mt)
@@ -417,7 +417,7 @@ local diagnostic_attached_buffers = {}
 --- @type table<integer,true|table<integer,true>>
 local diagnostic_disabled = {}
 
---- @type table<integer,table<integer,table>>
+--- @type table<integer,table<integer,vim.diagnostic.OptsResolved>>
 local bufs_waiting_to_update = setmetatable({}, bufnr_and_namespace_cacher_mt)
 
 --- @class vim.diagnostic.NS
@@ -433,8 +433,8 @@ local all_namespaces = {}
 ---@return vim.diagnostic.Severity?
 local function to_severity(severity)
   if type(severity) == 'string' then
-    assert(M.severity[string.upper(severity)], string.format('Invalid severity: %s', severity))
-    return M.severity[string.upper(severity)]
+    local sev = M.severity(string.upper(severity))
+    return (assert(sev, string.format('Invalid severity: %s', severity)))
   end
   return severity
 end
@@ -468,7 +468,9 @@ local function severity_predicate(severity)
 
   --- @param d vim.Diagnostic
   return function(d)
-    return severities[d.severity]
+    if d.severity then
+      return severities[d.severity]
+    end
   end
 end
 
@@ -663,7 +665,9 @@ end
 --- @param diagnostics vim.Diagnostic[]
 local function set_diagnostic_cache(namespace, bufnr, diagnostics)
   for _, diagnostic in ipairs(diagnostics) do
+    ---@diagnostic disable-next-line: unnecessary-assert
     assert(diagnostic.lnum, 'Diagnostic line number is required')
+    ---@diagnostic disable-next-line: unnecessary-assert
     assert(diagnostic.col, 'Diagnostic column is required')
     diagnostic.severity = diagnostic.severity and to_severity(diagnostic.severity)
       or M.severity.ERROR
@@ -766,7 +770,7 @@ local insert_leave_auto_cmds = { 'InsertLeave', 'CursorHoldI' }
 
 --- @param namespace integer
 --- @param bufnr integer
---- @param args any[]
+--- @param args vim.diagnostic.OptsResolved
 local function schedule_display(namespace, bufnr, args)
   bufs_waiting_to_update[bufnr][namespace] = args
 
