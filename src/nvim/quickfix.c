@@ -2001,11 +2001,11 @@ static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, in
   return QF_OK;
 }
 
-/// Resize global quickfix stack to be able to hold n amount of lists.
-void qf_resize_quickfix_stack(int n)
+/// Resize quickfix stack to be able to hold n amount of lists.
+void qf_resize_stack(int n)
 {
   assert(ql_info != NULL);
-  qf_resize_stack(ql_info, n);
+  qf_resize_stack_base(ql_info, n);
 }
 
 /// Resize location list stack for window 'wp' to be able to hold n amount of lists.
@@ -2020,11 +2020,12 @@ void ll_resize_stack(win_T *wp, int n)
   }
 
   qf_info_T *qi = ll_get_or_alloc_list(wp);
-  qf_resize_stack(qi, n);
+  qf_resize_stack_base(qi, n);
 }
 
-/// Resize quickfix stack to be able to hold n amount of quickfix lists.
-static void qf_resize_stack(qf_info_T *qi, int n)
+/// Resize quickfix/location lists stack to be able to hold n amount of lists.
+static void qf_resize_stack_base(qf_info_T *qi, int n)
+  FUNC_ATTR_NONNULL_ALL
 {
   int amount_to_rm = 0;
   size_t lsz = sizeof(*qi->qf_lists);
@@ -2054,13 +2055,10 @@ static void qf_resize_stack(qf_info_T *qi, int n)
   qf_update_buffer(qi, NULL);
 }
 
-/// Initialize global quickfix list, should only be called once.
-void qf_init_quickfix_stack(void)
+/// Initialize quickfix list, should only be called once.
+void qf_init_stack(void)
 {
-  ql_info_actual.qf_lists = qf_alloc_list_stack((int)p_chi);
-  ql_info = &ql_info_actual;
-  ql_info->qfl_type = QFLT_QUICKFIX;
-  ql_info->qf_maxcount = (int)p_chi;
+  ql_info = qf_alloc_stack(QFLT_QUICKFIX, (int)p_chi);
 }
 
 /// Sync a location list window's 'lhistory' value to the parent window
@@ -2093,8 +2091,13 @@ static void qf_sync_win_to_llw(win_T *pwp)
 static qf_info_T *qf_alloc_stack(qfltype_T qfltype, int n)
   FUNC_ATTR_NONNULL_RET
 {
-  qf_info_T *qi = xcalloc(1, sizeof(qf_info_T));
-  qi->qf_refcount++;
+  qf_info_T *qi;
+  if (qfltype == QFLT_QUICKFIX) {
+    qi = &ql_info_actual;
+  } else {
+    qi = xcalloc(1, sizeof(qf_info_T));
+    qi->qf_refcount++;
+  }
   qi->qfl_type = qfltype;
   qi->qf_bufnr = INVALID_QFBUFNR;
   qi->qf_lists = qf_alloc_list_stack(n);
@@ -7049,12 +7052,13 @@ static void qf_free_stack(win_T *wp, qf_info_T *qi)
 /// When "what" is not NULL then only set some properties.
 int set_errorlist(win_T *wp, list_T *list, int action, char *title, dict_T *what)
 {
-  qf_info_T *qi = ql_info;
-  assert(qi != NULL);
-
+  qf_info_T *qi;
   if (wp != NULL) {
     qi = ll_get_or_alloc_list(wp);
+  } else {
+    qi = ql_info;
   }
+  assert(qi != NULL);
 
   if (action == 'f') {
     // Free the entire quickfix or location list stack

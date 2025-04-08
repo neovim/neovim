@@ -2714,7 +2714,7 @@ static const char *did_set_xhistory(optset_T *args)
   OptInt *arg = is_p_chi ? &p_chi : (OptInt *)args->os_varp;
 
   if (is_p_chi) {
-    qf_resize_quickfix_stack((int)(*arg));
+    qf_resize_stack((int)(*arg));
   } else {
     ll_resize_stack(win, (int)(*arg));
   }
