@@ -2011,9 +2011,9 @@ void qf_resize_stack(int n)
 /// Resize location list stack for window 'wp' to be able to hold n amount of lists.
 void ll_resize_stack(win_T *wp, int n)
 {
-  // check if current window is a location list window;
+  // check if given window is a location list window;
   // if so then sync its 'lhistory' to the parent window or vice versa
-  if (IS_LL_WINDOW(curwin)) {
+  if (IS_LL_WINDOW(wp)) {
     qf_sync_llw_to_win(wp);
   } else {
     qf_sync_win_to_llw(wp);
@@ -2107,7 +2107,6 @@ static qf_info_T *qf_alloc_stack(qfltype_T qfltype, int n)
 }
 
 /// Allocate memory for qf_lists member of qf_info_T struct.
-/// 'actual' is the actual amount of lists that have been allocated for
 static qf_list_T *qf_alloc_list_stack(int n)
   FUNC_ATTR_NONNULL_RET
 {

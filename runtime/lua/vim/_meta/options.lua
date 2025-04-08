@@ -3744,13 +3744,12 @@ vim.o.lz = vim.o.lazyredraw
 vim.go.lazyredraw = vim.o.lazyredraw
 vim.go.lz = vim.go.lazyredraw
 
---- Like 'chistory', but for the location list stack associated with the
---- current window.  If the option is changed in either the location list
---- window itself or the the window that is associated with the location
---- list stack, the new value will also be applied to the other one.  This
---- means this value will always be the same for a given location list
---- window and its corresponding window.  See `quickfix-stack` for
---- additional info.
+--- Like 'chistory', but for the location list stack associated with a
+--- window.  If the option is changed in either the location list window
+--- itself or the window that is associated with the location list stack,
+--- the new value will also be applied to the other one.  This means this
+--- value will always be the same for a given location list window and its
+--- corresponding window.  See `quickfix-stack` for additional info.
 ---
 --- @type integer
 vim.o.lhistory = 10
