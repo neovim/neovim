@@ -6596,4 +6596,12 @@ func Test_hardlink_fname()
   call Xtest_hardlink_fname('l')
 endfunc
 
+func Test_quickfix_close_buffer_crash()
+  new
+  lexpr 'test' | lopen
+  wincmd k
+  lclose
+  wincmd q
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
