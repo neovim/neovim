@@ -51,7 +51,7 @@ describe(':make', function()
       local out = eval('execute("make")')
       -- Error message is captured in the file and printed in the footer
       matches(
-        '[\n]+.*[\n]+.*Unknown first argument%: foo%^%[%[0m[\n]+shell returned 3[\n]+%(1 of 1%)%: Unknown first argument%: foo',
+        '[\r\n]+.*[\r\n]+.*Unknown first argument%: foo%^%[%[0m[\r\n]+shell returned 3[\r\n]+%(1 of 1%)%: Unknown first argument%: foo',
         out
       )
     end)
