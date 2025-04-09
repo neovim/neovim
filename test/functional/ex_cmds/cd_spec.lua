@@ -362,6 +362,29 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
   end)
 end
 
+for _, cmd in ipairs { 'bcd', 'bchdir' } do
+  describe(':' .. cmd, function()
+    before_each(function()
+      clear()
+      for _, d in pairs(directories) do
+        mkdir(d)
+      end
+      directories.start = cwd()
+    end)
+
+    after_each(function()
+      for _, d in pairs(directories) do
+        vim.uv.fs_rmdir(d)
+      end
+    end)
+
+    it('works after deleting the only buffer', function()
+      command(cmd .. ' ' .. directories.buffer)
+      command('bd') -- delete buffer
+    end)
+  end)
+end
+
 -- Test legal parameters for 'getcwd' and 'haslocaldir'
 for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
   describe(cmd .. '()', function()

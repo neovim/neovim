@@ -863,8 +863,10 @@ void buf_freeall(buf_T *buf, int flags)
   syntax_clear(&buf->b_s);          // reset syntax info
   buf->b_flags &= ~BF_READERR;      // a read error is no longer relevant
 
-  xfree(buf->b_localdir);
-  xfree(buf->b_prevdir);
+  // buflist_new() might reuse this buf (when curbuf_reusable()), so we
+  // have to clear b_localdir or we might try to cd into garbage!
+  XFREE_CLEAR(buf->b_localdir);
+  XFREE_CLEAR(buf->b_prevdir);
 }
 
 /// Free a buffer structure and the things it contains related to the buffer
