@@ -24,6 +24,7 @@ local border_size = {
   rounded = { 2, 2 },
   solid = { 2, 2 },
   shadow = { 1, 1 },
+  bold = { 2, 2 },
 }
 
 --- Check the border given by opts or the default border for the additional
