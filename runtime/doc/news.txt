@@ -118,6 +118,7 @@ DIAGNOSTICS
 EDITOR
 
 • |:iput| works like |:put| but adjusts indent.
+• |omnicompletion| in `help` buffer. |ft-help-omni|
 
 EVENTS
 
