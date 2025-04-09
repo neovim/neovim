@@ -720,6 +720,11 @@ struct file_buffer {
   MarkTree b_marktree[1];
   Map(uint32_t, uint32_t) b_extmark_ns[1];         // extmark namespaces
 
+  // Store the line count as it was before appending or inserting lines.
+  // Used to determine a valid range before splicing marks, when the line
+  // count has already changed.
+  int b_prev_line_count;
+
   // array of channel_id:s which have asked to receive updates for this
   // buffer.
   kvec_t(uint64_t) update_channels;
