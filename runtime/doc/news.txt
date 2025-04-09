@@ -165,7 +165,7 @@ TUI
 
 UI
 
-• todo
+• |:checkhealth| shows a summary in the header for every healthcheck.
 
 VIMSCRIPT
 
