@@ -27,10 +27,7 @@ describe(':make', function()
       api.nvim_set_option_value('makeprg', testprg('shell-test') .. ' foo', {})
       local out = eval('execute("make")')
       -- Error message is captured in the file and printed in the footer
-      matches(
-        '[\r\n]+.*[\r\n]+%(1 of 1%)%: Unknown first argument%: foo',
-        out
-      )
+      matches( '[\r\n]+.*[\r\n]+%(1 of 1%)%: Unknown first argument%: foo', out)
     end)
 
     it('captures stderr & zero exit code using "commands" #14349', function()

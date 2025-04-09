@@ -1253,7 +1253,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
   char *start = output;
   size_t off = 0;
   while (off < remaining) {
-    if (output[off] == CAR && output[off+1] == NL) {
+    if (output[off] == CAR && output[off + 1] == NL) {
       output[off] = NUL;
       ml_append(curwin->w_cursor.lnum++, output, (int)off + 1,
                 false);
