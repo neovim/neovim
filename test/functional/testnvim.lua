@@ -668,8 +668,7 @@ function M.set_shell_powershell(fake)
     set shellquote= shellxquote=
     let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command '
     let &shellcmdflag .= '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();'
-    let &shellcmdflag .= '$PSDefaultParameterValues[''*:Encoding'']=''utf8'';'
-    let &shellcmdflag .= '$ErrorActionPreference=''SilentlyContinue'';'
+    let &shellcmdflag .= '$PSDefaultParameterValues[''Out-File:Encoding'']=''utf8'';'
     let &shellcmdflag .= ']] .. cmd .. [['
     let &shellredir = '2>&1 | %%{ "$_" } | Out-File %s; exit $LastExitCode'
     let &shellpipe  = '> %s 2>&1'
