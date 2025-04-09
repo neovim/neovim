@@ -571,14 +571,14 @@ describe('shell :!', function()
       4
       2]])
     if is_os('win') then
-      feed(':4verbose %!& sort /R<cr>')
+      feed(':4verbose %!sort /R<cr>')
       screen:expect {
-        any = [[Executing command: " $input | & sort /R".*]],
+        any = [[Executing command: " $input | sort /R".*]],
       }
     else
-      feed(':4verbose %!& sort -r<cr>')
+      feed(':4verbose %!sort -r<cr>')
       screen:expect {
-        any = [[Executing command: " $input | & sort %-r".*]],
+        any = [[Executing command: " $input | sort %-r".*]],
       }
     end
     feed('<CR>')
@@ -631,9 +631,9 @@ describe('shell :!', function()
     end
 
     n.set_shell_powershell(true)
-    feed(':4verbose %w !& sort<cr>')
+    feed(':4verbose %w !sort<cr>')
     screen:expect {
-      any = [[Executing command: " $input | & sort".*]],
+      any = [[Executing command: " $input | sort".*]],
     }
     feed('<CR>')
     n.expect_exit(command, 'qall!')
