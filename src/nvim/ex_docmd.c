@@ -4504,7 +4504,7 @@ static void ex_bunload(exarg_T *eap)
   eap->errmsg = do_bufdel(eap->cmdidx == CMD_bdelete
                           ? DOBUF_DEL
                           : eap->cmdidx == CMD_bwipeout
-                          ? DOBUF_WIPE
+                          ? DOBUF_WIPE_BRUTAL
                           : DOBUF_UNLOAD,
                           eap->arg, eap->addr_count, (int)eap->line1, (int)eap->line2,
                           eap->forceit);
