@@ -1730,7 +1730,6 @@ local filename = {
   ['.ondirrc'] = 'ondir',
   opam = 'opam',
   ['opam.locked'] = 'opam',
-  ['pacman.log'] = 'pacmanlog',
   ['/etc/pam.conf'] = 'pamconf',
   ['pam_env.conf'] = 'pamenv',
   ['.pam_environment'] = 'pamenv',
@@ -2480,6 +2479,9 @@ local pattern = {
     ['/octave/history$'] = 'octave',
     ['%.opam%.locked$'] = 'opam',
     ['%.opam%.template$'] = 'opam',
+    ['^pacman%.log'] = starsetf(function(path, bufnr)
+      return vim.uv.fs_stat(path) and 'pacmanlog' or nil
+    end),
     ['printcap'] = starsetf(function(path, bufnr)
       return require('vim.filetype.detect').printcap('print')
     end),
