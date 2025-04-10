@@ -572,7 +572,6 @@ func s:GetFilenameChecks() abort
     \ 'opl': ['file.OPL', 'file.OPl', 'file.OpL', 'file.Opl', 'file.oPL', 'file.oPl', 'file.opL', 'file.opl'],
     \ 'ora': ['file.ora'],
     \ 'org': ['file.org', 'file.org_archive'],
-    \ 'pacmanlog': ['pacman.log'],
     \ 'pamconf': ['/etc/pam.conf', '/etc/pam.d/file', 'any/etc/pam.conf', 'any/etc/pam.d/file'],
     \ 'pamenv': ['/etc/security/pam_env.conf', '/home/user/.pam_environment', '.pam_environment', 'pam_env.conf'],
     \ 'pandoc': ['file.pandoc', 'file.pdk', 'file.pd', 'file.pdc'],
@@ -2889,6 +2888,18 @@ func Test_org_file()
   call assert_equal('org', &filetype)
   bwipe!
 
+  filetype off
+endfunc
+
+" Filetypes detected from names of existing files
+func Test_pacmanlog()
+  filetype on
+  for fname in ['pacman.log', 'pacman.log.1', 'pacman.log-20250123']
+    call writefile(["[2025-01-23T01:23:45+0000] [PACMAN] Running 'pacman -S -y --config /etc/pacman.conf --'"], fname, 'D')
+    exe 'split ' .. fname
+    call assert_equal('pacmanlog', &filetype, 'for text: ' .. string(fname))
+    bwipe!
+  endfor
   filetype off
 endfunc
 
