@@ -1285,7 +1285,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
     if (remaining) {
       // append unfinished line
       ml_append(curwin->w_cursor.lnum++, output, 0, false);
-      // remember that the line endig was missing
+      // remember that the line ending was missing
       curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
       output += remaining;
     } else {
