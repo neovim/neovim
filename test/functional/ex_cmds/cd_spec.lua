@@ -382,6 +382,22 @@ for _, cmd in ipairs { 'bcd', 'bchdir' } do
       command(cmd .. ' ' .. directories.buffer)
       command('bd') -- delete buffer
     end)
+
+    it('makes :new use the buffer-local directory', function()
+      local globalDir = directories.start
+      command(cmd .. ' ' .. directories.buffer)
+
+      command(':new')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+      command('wincmd x') -- close :new window
+
+      command(':vnew')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+      command('wincmd x') -- close :vnew window
+
+      command(':enew')
+      eq(globalDir .. pathsep .. directories.buffer, cwd())
+    end)
   end)
 end
 
