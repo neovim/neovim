@@ -178,7 +178,7 @@ func Test_matchparen_ignore_sh_case()
 endfunc
 
 " Test for the WinScrolled event
-func Test_scroll_winenter()
+func Test_scroll_winscrolled()
   CheckScreendump
 
   let lines =<< trim END
