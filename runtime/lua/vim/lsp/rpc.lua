@@ -21,7 +21,7 @@ end
 --- @param header string The header to parse
 --- @return integer
 local function get_content_length(header)
-  for line in header:gmatch('(.-)\r\n') do
+  for line in header:gmatch('(.-)\r?\n') do
     if line == '' then
       break
     end
