@@ -261,4 +261,35 @@ describe('matchparen', function()
       {5:-- INSERT --}                            |
     ]])
   end)
+
+  -- oldtest: Test_scroll_winenter()
+  it('with scrolling', function()
+    local screen = Screen.new(30, 7)
+    exec([[
+      source $VIMRUNTIME/plugin/matchparen.vim
+      set scrolloff=1
+      call setline(1, ['foobar {', '', '', '', '}'])
+      call cursor(5, 1)
+    ]])
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Aqua },
+    })
+    local s1 = [[
+      foobar {100:{}                      |
+                                    |*3
+      {100:^}}                             |
+      {1:~                             }|
+                                    |
+    ]]
+    screen:expect(s1)
+    feed('<C-E>')
+    screen:expect([[
+                                    |*3
+      ^}                             |
+      {1:~                             }|*2
+                                    |
+    ]])
+    feed('<C-Y>')
+    screen:expect(s1)
+  end)
 end)
