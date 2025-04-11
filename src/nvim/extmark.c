@@ -580,8 +580,9 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
 
   // Remove signs inside edited region from "b_signcols.count", add after splicing.
   if (old_row > 0 || new_row > 0) {
-    int row2 = MIN(buf->b_ml.ml_line_count - (new_row - old_row) - 1, start_row + old_row);
-    buf_signcols_count_range(buf, start_row, row2, 0, kTrue);
+    int count = buf->b_prev_line_count > 0 ? buf->b_prev_line_count : buf->b_ml.ml_line_count;
+    buf_signcols_count_range(buf, start_row, MIN(count - 1, start_row + old_row), 0, kTrue);
+    buf->b_prev_line_count = 0;
   }
 
   marktree_splice(buf->b_marktree, (int32_t)start_row, start_col,
