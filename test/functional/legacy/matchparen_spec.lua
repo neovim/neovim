@@ -262,7 +262,7 @@ describe('matchparen', function()
     ]])
   end)
 
-  -- oldtest: Test_scroll_winenter()
+  -- oldtest: Test_scroll_winscrolled()
   it('with scrolling', function()
     local screen = Screen.new(30, 7)
     exec([[
