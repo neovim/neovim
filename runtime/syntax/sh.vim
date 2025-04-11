@@ -9,6 +9,7 @@
 "		2025 Jan 18 add bash coproc, remove duplicate syn keywords (#16467)
 "		2025 Mar 21 update shell capability detection (#16939)
 "		2025 Apr 03 command substitution opening paren at EOL (#17026)
+"		2025 Apr 10 improve shell detection (#17084)
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -23,11 +24,13 @@ endif
 let b:is_sh = 1
 
 " If the shell script itself specifies which shell to use, use it
-if getline(1) =~ '\<ksh\>'
+let s:shebang = getline(1)
+
+if s:shebang =~ '^#!.\{-2,}\<ksh\>'
  let b:is_kornshell = 1
-elseif getline(1) =~ '\<bash\>'
+elseif s:shebang =~ '^#!.\{-2,}\<bash\>'
  let b:is_bash      = 1
-elseif getline(1) =~ '\<dash\>'
+elseif s:shebang =~ '^#!.\{-2,}\<dash\>'
  let b:is_dash      = 1
 " handling /bin/sh with is_kornshell/is_sh {{{1
 " b:is_sh will be set when "#! /bin/sh" is found;
@@ -69,6 +72,8 @@ elseif !exists("b:is_kornshell") && !exists("b:is_bash") && !exists("b:is_posix"
   unlet s:shell
  endif
 endif
+
+unlet s:shebang
 
 " if b:is_dash, set b:is_posix too
 if exists("b:is_dash")

@@ -1502,33 +1502,36 @@ local function sh(path, contents, name)
 
   -- Get the name from the first line if not specified
   name = name or contents[1]
-  if matchregex(name, [[\<csh\>]]) then
+  if name:find('^csh$') or matchregex(name, [[^#!.\{-2,}\<csh\>]]) then
     -- Some .sh scripts contain #!/bin/csh.
     return M.shell(path, contents, 'csh')
+  elseif name:find('^tcsh$') or matchregex(name, [[^#!.\{-2,}\<tcsh\>]]) then
     -- Some .sh scripts contain #!/bin/tcsh.
-  elseif matchregex(name, [[\<tcsh\>]]) then
     return M.shell(path, contents, 'tcsh')
+  elseif name:find('^zsh$') or matchregex(name, [[^#!.\{-2,}\<zsh\>]]) then
     -- Some .sh scripts contain #!/bin/zsh.
-  elseif matchregex(name, [[\<zsh\>]]) then
     return M.shell(path, contents, 'zsh')
   end
 
   local on_detect --- @type fun(b: integer)?
 
-  if matchregex(name, [[\<ksh\>]]) then
+  if name:find('^ksh$') or matchregex(name, [[^#!.\{-2,}\<ksh\>]]) then
     on_detect = function(b)
       vim.b[b].is_kornshell = 1
       vim.b[b].is_bash = nil
       vim.b[b].is_sh = nil
     end
-  elseif vim.g.bash_is_sh or matchregex(name, [[\<\(bash\|bash2\)\>]]) then
+  elseif
+    vim.g.bash_is_sh
+    or name:find('^bash2?$')
+    or matchregex(name, [[^#!.\{-2,}\<bash2\=\>]])
+  then
     on_detect = function(b)
       vim.b[b].is_bash = 1
       vim.b[b].is_kornshell = nil
       vim.b[b].is_sh = nil
     end
-    -- Ubuntu links sh to dash
-  elseif matchregex(name, [[\<\(sh\|dash\)\>]]) then
+  elseif findany(name, { '^sh$', '^dash$' }) or matchregex(name, [[^#!.\{-2,}\<\%(da\)\=sh\>]]) then -- Ubuntu links "sh" to "dash"
     on_detect = function(b)
       vim.b[b].is_sh = 1
       vim.b[b].is_kornshell = nil
