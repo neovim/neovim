@@ -66,6 +66,8 @@ typedef enum {
   HLF_AT,         ///< @ characters at end of screen, characters that don't really exist in the text
   HLF_D,          ///< directories in CTRL-D listing
   HLF_E,          ///< error messages
+  HLF_SE,         ///< stderr messages (from shell)
+  HLF_SO,         ///< stdout messages (from shell)
   HLF_I,          ///< incremental search
   HLF_L,          ///< last search string
   HLF_LC,         ///< current search match
