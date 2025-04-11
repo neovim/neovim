@@ -560,7 +560,6 @@ describe('shell :!', function()
 
   it(':{range}! with powershell using "commands" filter/redirect #16271 #19250', function()
     if not n.has_powershell() then
-      pending('powershell not found', function() end)
       return
     end
     local screen = Screen.new(500, 8)
