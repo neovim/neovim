@@ -1265,8 +1265,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
     } else if (output[off] == CAR || output[off] == NL) {
       // Insert the line
       output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1,
-                false);
+      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
       size_t skip = off + 1;
       output += skip;
       remaining -= skip;
