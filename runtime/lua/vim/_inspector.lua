@@ -104,30 +104,32 @@ function vim.inspect_pos(bufnr, row, col, filter)
 
   --- Convert an extmark tuple into a table
   local function to_map(extmark)
-    extmark = {
+    local opts = resolve_hl(extmark[4])
+    return {
       id = extmark[1],
       row = extmark[2],
       col = extmark[3],
-      opts = resolve_hl(extmark[4]),
+      end_row = opts.end_row or extmark[2],
+      end_col = opts.end_col or extmark[3],
+      opts = opts,
+      ns_id = opts.ns_id,
+      ns = nsmap[opts.ns_id] or '',
     }
-    extmark.ns_id = extmark.opts.ns_id
-    extmark.ns = nsmap[extmark.ns_id] or ''
-    extmark.end_row = extmark.opts.end_row or extmark.row -- inclusive
-    extmark.end_col = extmark.opts.end_col or (extmark.col + 1) -- exclusive
-    return extmark
   end
 
-  --- Check if an extmark overlaps this position
-  local function is_here(extmark)
-    return (row >= extmark.row and row <= extmark.end_row) -- within the rows of the extmark
-      and (row > extmark.row or col >= extmark.col) -- either not the first row, or in range of the col
-      and (row < extmark.end_row or col < extmark.end_col) -- either not in the last row or in range of the col
+  --- Exclude end_col and unpaired marks from the overlapping marks, unless
+  --- filter.extmarks == 'all' (a highlight is drawn until end_col - 1).
+  local function exclude_end_col(extmark)
+    return filter.extmarks == 'all' or row < extmark.end_row or col < extmark.end_col
   end
 
-  -- all extmarks at this position
-  local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, 0, -1, { details = true })
+  -- All overlapping extmarks at this position:
+  local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, { row, col }, { row, col }, {
+    details = true,
+    overlap = true,
+  })
   extmarks = vim.tbl_map(to_map, extmarks)
-  extmarks = vim.tbl_filter(is_here, extmarks)
+  extmarks = vim.tbl_filter(exclude_end_col, extmarks)
 
   if filter.semantic_tokens then
     results.semantic_tokens = vim.tbl_filter(function(extmark)

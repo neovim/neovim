@@ -223,12 +223,11 @@ function vim.schedule(fn) end
 ---     - If {callback} errors, the error is raised.
 function vim.wait(time, callback, interval, fast_only) end
 
---- Attach to |ui-events|, similar to |nvim_ui_attach()| but receive events
---- as Lua callback. Can be used to implement screen elements like
---- popupmenu or message handling in Lua.
+--- Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events in a Lua callback.
+--- Used to implement screen elements like popupmenu or message handling in Lua.
 ---
---- {options} should be a dictionary-like table, where `ext_...` options should
---- be set to true to receive events for the respective external element.
+--- {options} is a dict with one or more `ext_…` |ui-option|s set to true to enable events for
+--- the respective UI element.
 ---
 --- {callback} receives event name plus additional parameters. See |ui-popupmenu|
 --- and the sections below for event format for respective events.
@@ -250,14 +249,14 @@ function vim.wait(time, callback, interval, fast_only) end
 --- ns = vim.api.nvim_create_namespace('my_fancy_pum')
 ---
 --- vim.ui_attach(ns, {ext_popupmenu=true}, function(event, ...)
----   if event == "popupmenu_show" then
+---   if event == 'popupmenu_show' then
 ---     local items, selected, row, col, grid = ...
----     print("display pum ", #items)
----   elseif event == "popupmenu_select" then
+---     print('display pum ', #items)
+---   elseif event == 'popupmenu_select' then
 ---     local selected = ...
----     print("selected", selected)
----   elseif event == "popupmenu_hide" then
----     print("FIN")
+---     print('selected', selected)
+---   elseif event == 'popupmenu_hide' then
+---     print('FIN')
 ---   end
 --- end)
 --- ```

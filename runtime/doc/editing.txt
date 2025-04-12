@@ -1496,9 +1496,8 @@ Or, when starting gvim from a shell: >
 Note that if a FileChangedShell autocommand is defined you will not get a
 warning message or prompt.  The autocommand is expected to handle this.
 
-There is no warning for a directory (e.g., with |netrw-browse|).  But you do
-get warned if you started editing a new file and it was created as a directory
-later.
+There is no warning for a directory.  But you do get warned if you started
+editing a new file and it was created as a directory later.
 
 When Vim notices the timestamp of a file has changed, and the file is being
 edited in a buffer but has not changed, Vim checks if the contents of the file

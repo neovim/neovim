@@ -1,4 +1,4 @@
-// Terminal UI functions. Invoked (by ui_client.c) on the UI process.
+// Terminal UI functions. Invoked by the UI process (ui_client.c), not the server.
 
 #include <assert.h>
 #include <inttypes.h>
@@ -1576,7 +1576,8 @@ void tui_suspend(TUIData *tui)
   tui_terminal_stop(tui);
   stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
 
-  kill(0, SIGTSTP);
+  // Avoid os/signal.c SIGTSTP handler. ex_stop calls auto_writeall. #33258
+  kill(0, SIGSTOP);
 
   tui_terminal_start(tui);
   tui_terminal_after_startup(tui);

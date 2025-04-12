@@ -3,7 +3,7 @@
 " Maintainer:          Nick Jensen <nickspoon@gmail.com>
 " Former Maintainers:  Anduin Withers <awithers@anduin.com>
 "                      Johannes Zellner <johannes@zellner.org>
-" Last Change:         2022-11-16
+" Last Change:         2025-03-14
 " Filenames:           *.cs
 " License:             Vim (see :h license)
 " Repository:          https://github.com/nickspoons/vim-cs
@@ -190,6 +190,18 @@ syn match	csUnicodeNumber	+\\U00\x\{6}+ contained contains=csUnicodeSpecifier di
 syn match	csUnicodeSpecifier	+\\[uUx]+ contained display
 
 syn region	csString	matchgroup=csQuote start=+"+ end=+"\%(u8\)\=+ end=+$+ extend contains=csSpecialChar,csSpecialError,csUnicodeNumber,@Spell
+
+for s:i in range(3, get(g:, "cs_raw_string_quote_count", 8))
+  exe 'syn region csRawString'       .. s:i .. ' matchgroup=csQuote start=+\z("\{' .. s:i .. '}\)+ end=+\z1+ oneline nextgroup=csRawStringError' .. s:i
+  exe 'syn region csRawString'       .. s:i .. ' matchgroup=csQuote start=+\z("\{' .. s:i .. '}\)\s*$+ end=+^\s*\z1+ nextgroup=csRawStringError' .. s:i .. ' contains=csRawStringError' .. s:i
+  exe 'syn match  csRawStringError'  .. s:i .. ' /\%("\{'        .. s:i .. '}\)\@' .. s:i .. '<="\+/ contained'
+  exe 'syn match  csRawStringError'  .. s:i .. ' /\S.\{-}\s*"\{' .. s:i .. '}"\@!/ contained'
+
+  exe 'hi def link csRawString'      .. s:i .. ' csString'
+  exe 'hi def link csRawStringError' .. s:i .. ' Error'
+endfor
+unlet s:i
+
 syn match	csCharacter	"'[^']*'" contains=csSpecialChar,csSpecialCharError,csUnicodeNumber display
 syn match	csCharacter	"'\\''" contains=csSpecialChar display
 syn match	csCharacter	"'[^\\]'" display
@@ -217,11 +229,26 @@ syn match	csInterpolationAlignDel	+,+ contained display
 syn match	csInterpolationFormatDel	+:+ contained display
 
 syn region	csVerbatimString	matchgroup=csQuote start=+@"+ end=+"\%(u8\)\=+ skip=+""+ extend contains=csVerbatimQuote,@Spell
+
+" Interpolated raw string literals
+for s:i in range(1, get(g:, "cs_raw_string_interpolation_brace_count", 8))
+  exe 'syn region csInterpolatedRawString'       .. s:i .. ' matchgroup=csQuote start=+$\{' .. s:i .. '}\z("""\+\)+ end=+\z1+ extend contains=csInterpolation' .. s:i .. ',csInterpolationDelimiterError' .. s:i .. ',@Spell'
+  exe 'syn match  csInterpolationDelimiterError' .. s:i .. ' "}\{' .. s:i .. '}" contained'
+  exe 'syn match  csInterpolationDelimiterError' .. s:i .. ' "{\{' .. 2 * s:i .. ',}" contained'
+  exe 'syn match  csInterpolationDelimiterError' .. s:i .. ' "}\{' .. 2 * s:i .. ',}" contained'
+  exe 'syn region csInterpolation'               .. s:i .. ' matchgroup=csInterpolationDelimiter start=+\%({\{' .. s:i .. '}\)\@' .. s:i .. '<!{\{' .. s:i .. '}{\@!+ end=+}\@<!}\{' .. s:i .. '}\%(}\{' .. s:i .. '}\)\@!+' ..
+        \ ' keepend contained contains=@csAll,csBraced,csBracketed,csInterpolationAlign,csInterpolationFormat,csInterpolationDelimiterError' .. s:i
+
+  exe 'hi def link csInterpolationDelimiterError' .. s:i .. ' Error'
+  exe 'hi def link csInterpolatedRawString'       .. s:i .. ' csRawString'
+endfor
+unlet s:i
+
 syn match	csVerbatimQuote	+""+ contained
 
 syn region	csInterVerbString	matchgroup=csQuote start=+$@"+ start=+@$"+ end=+"\%(u8\)\=+ skip=+""+ extend contains=csInterpolation,csEscapedInterpolation,csSpecialChar,csSpecialError,csUnicodeNumber,csVerbatimQuote,@Spell
 
-syn cluster	csString	contains=csString,csInterpolatedString,csVerbatimString,csInterVerbString
+syn cluster	csString	contains=csString,csInterpolatedString,csVerbatimString,csInterVerbString,csRawString
 
 syn cluster	csLiteral	contains=csBoolean,@csNumber,csCharacter,@csString,csNull
 
@@ -282,6 +309,8 @@ hi def link	csLogicSymbols	Operator
 hi def link	csSpecialError	Error
 hi def link	csSpecialCharError	Error
 hi def link	csString	String
+hi def link	csRawString	csString
+hi def link	csRawStringError	Error
 hi def link	csQuote	String
 hi def link	csInterpolatedString	String
 hi def link	csVerbatimString	String

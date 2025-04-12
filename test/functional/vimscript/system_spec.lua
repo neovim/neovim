@@ -558,9 +558,12 @@ end)
 describe('shell :!', function()
   before_each(clear)
 
-  it(':{range}! with powershell filter/redirect #16271 #19250', function()
+  it(':{range}! with powershell using "commands" filter/redirect #16271 #19250', function()
+    if not n.has_powershell() then
+      return
+    end
     local screen = Screen.new(500, 8)
-    local found = n.set_shell_powershell(true)
+    n.set_shell_powershell()
     insert([[
       3
       1
@@ -569,23 +572,44 @@ describe('shell :!', function()
     if is_os('win') then
       feed(':4verbose %!sort /R<cr>')
       screen:expect {
-        any = [[Executing command: .?& { Get%-Content .* | & sort /R } 2>&1 | %%{ "$_" } | Out%-File .*; exit $LastExitCode"]],
+        any = [[Executing command: " $input | sort /R".*]],
       }
     else
       feed(':4verbose %!sort -r<cr>')
       screen:expect {
-        any = [[Executing command: .?& { Get%-Content .* | & sort %-r } 2>&1 | %%{ "$_" } | Out%-File .*; exit $LastExitCode"]],
+        any = [[Executing command: " $input | sort %-r".*]],
       }
     end
     feed('<CR>')
-    if found then
-      -- Not using fake powershell, so we can test the result.
-      expect([[
-        4
-        3
-        2
-        1]])
+    expect([[
+      4
+      3
+      2
+      1]])
+  end)
+
+  it(':{range}! with powershell using "cmdlets" filter/redirect #16271 #19250', function()
+    if not n.has_powershell() then
+      pending('powershell not found', function() end)
+      return
     end
+    local screen = Screen.new(500, 8)
+    n.set_shell_powershell()
+    insert([[
+      3
+      1
+      4
+      2]])
+    feed(':4verbose %!Sort-Object -Descending<cr>')
+    screen:expect {
+      any = [[Executing command: " $input | Sort%-Object %-Descending".*]],
+    }
+    feed('<CR>')
+    expect([[
+      4
+      3
+      2
+      1]])
   end)
 
   it(':{range}! without redirecting to buffer', function()
@@ -596,20 +620,19 @@ describe('shell :!', function()
       4
       2]])
     feed(':4verbose %w !sort<cr>')
-    if is_os('win') then
-      screen:expect {
-        any = [[Executing command: .?sort %< .*]],
-      }
-    else
-      screen:expect {
-        any = [[Executing command: .?%(sort%) %< .*]],
-      }
-    end
+    screen:expect {
+      any = [[Executing command: "sort".*]],
+    }
     feed('<CR>')
+
+    if not n.has_powershell() then
+      return
+    end
+
     n.set_shell_powershell(true)
     feed(':4verbose %w !sort<cr>')
     screen:expect {
-      any = [[Executing command: .?& { Get%-Content .* | & sort }]],
+      any = [[Executing command: " $input | sort".*]],
     }
     feed('<CR>')
     n.expect_exit(command, 'qall!')

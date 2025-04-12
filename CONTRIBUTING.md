@@ -256,17 +256,17 @@ make lintdoc
 ```
 
 If you need to modify or debug the documentation flow, these are the main files:
-- `./scripts/gen_vimdoc.lua`:
+- `./src/gen/gen_vimdoc.lua`:
   Main doc generator. Parses C and Lua files to render vimdoc files.
-- `./scripts/luacats_parser.lua`:
+- `./src/gen/luacats_parser.lua`:
   Documentation parser for Lua files.
-- `./scripts/cdoc_parser.lua`:
+- `./src/gen/cdoc_parser.lua`:
   Documentation parser for C files.
-- `./scripts/luacats_grammar.lua`:
+- `./src/gen/luacats_grammar.lua`:
   Lpeg grammar for LuaCATS
-- `./scripts/cdoc_grammar.lua`:
+- `./src/gen/cdoc_grammar.lua`:
   Lpeg grammar for C doc comments
-- `./scripts/gen_eval_files.lua`:
+- `./src/gen/gen_eval_files.lua`:
   Generates documentation and Lua type files from metadata files:
   ```
   runtime/lua/vim/*     =>  runtime/doc/lua.txt

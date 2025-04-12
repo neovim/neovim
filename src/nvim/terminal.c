@@ -106,10 +106,11 @@
 typedef struct {
   VimState state;
   Terminal *term;
-  int save_rd;              // saved value of RedrawingDisabled
+  int save_rd;          ///< saved value of RedrawingDisabled
   bool close;
-  bool got_bsl;             // if the last input was <C-\>
-  bool got_bsl_o;           // if left terminal mode with <c-\><c-o>
+  bool got_bsl;         ///< if the last input was <C-\>
+  bool got_bsl_o;       ///< if left terminal mode with <c-\><c-o>
+  bool cursor_visible;  ///< cursor's current visibility; ensures matched busy_start/stop UI events
 } TerminalState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -169,7 +170,8 @@ struct terminal {
   struct {
     int row, col;
     int shape;
-    bool visible;
+    bool visible;  ///< Terminal wants to show cursor.
+                   ///< `TerminalState.cursor_visible` indicates whether it is actually shown.
     bool blink;
   } cursor;
 
@@ -177,6 +179,7 @@ struct terminal {
     bool resize;          ///< pending width/height
     bool cursor;          ///< pending cursor shape or blink change
     StringBuilder *send;  ///< When there is a pending TermRequest autocommand, block and store input.
+    MultiQueue *events;   ///< Events waiting for refresh.
   } pending;
 
   bool theme_updates;  ///< Send a theme update notification when 'bg' changes
@@ -186,7 +189,7 @@ struct terminal {
   char *selection_buffer;  ///< libvterm selection buffer
   StringBuilder selection;  ///< Growable array containing full selection data
 
-  StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request payload
+  StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
 
   size_t refcount;                  // reference count
 };
@@ -213,16 +216,37 @@ static Set(ptr_t) invalidated_terminals = SET_INIT;
 static void emit_termrequest(void **argv)
 {
   Terminal *term = argv[0];
-  char *payload = argv[1];
-  size_t payload_length = (size_t)argv[2];
+  char *sequence = argv[1];
+  size_t sequence_length = (size_t)argv[2];
   StringBuilder *pending_send = argv[3];
+  int row = (int)(intptr_t)argv[4];
+  int col = (int)(intptr_t)argv[5];
+
+  if (term->sb_pending > 0) {
+    // Don't emit the event while there is pending scrollback because we need
+    // the buffer contents to be fully updated. If this is the case, schedule
+    // the event onto the pending queue where it will be executed after the
+    // terminal is refreshed and the pending scrollback is cleared.
+    multiqueue_put(term->pending.events, emit_termrequest, term, sequence, (void *)sequence_length,
+                   pending_send, (void *)(intptr_t)row, (void *)(intptr_t)col);
+    return;
+  }
+
+  set_vim_var_string(VV_TERMREQUEST, sequence, (ptrdiff_t)sequence_length);
+
+  MAXSIZE_TEMP_ARRAY(cursor, 2);
+  ADD_C(cursor, INTEGER_OBJ(row));
+  ADD_C(cursor, INTEGER_OBJ(col));
+
+  MAXSIZE_TEMP_DICT(data, 2);
+  String termrequest = { .data = sequence, .size = sequence_length };
+  PUT_C(data, "sequence", STRING_OBJ(termrequest));
+  PUT_C(data, "cursor", ARRAY_OBJ(cursor));
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
-  String termrequest = { .data = payload, .size = payload_length };
-  Object data = STRING_OBJ(termrequest);
-  set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
-  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, NULL, &data);
-  xfree(payload);
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, NULL,
+                       &DICT_OBJ(data));
+  xfree(sequence);
 
   StringBuilder *term_pending_send = term->pending.send;
   term->pending.send = NULL;
@@ -236,12 +260,15 @@ static void emit_termrequest(void **argv)
   xfree(pending_send);
 }
 
-static void schedule_termrequest(Terminal *term, char *payload, size_t payload_length)
+static void schedule_termrequest(Terminal *term, char *sequence, size_t sequence_length)
 {
   term->pending.send = xmalloc(sizeof(StringBuilder));
   kv_init(*term->pending.send);
-  multiqueue_put(main_loop.events, emit_termrequest, term, payload, (void *)payload_length,
-                 term->pending.send);
+
+  int line = row_to_linenr(term, term->cursor.row);
+  multiqueue_put(main_loop.events, emit_termrequest, term, sequence, (void *)sequence_length,
+                 term->pending.send, (void *)(intptr_t)line,
+                 (void *)(intptr_t)term->cursor.col);
 }
 
 static int parse_osc8(VTermStringFragment frag, int *attr)
@@ -315,8 +342,8 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, payload, term->termrequest_buffer.size);
+    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
   }
   return 1;
 }
@@ -338,8 +365,8 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, payload, term->termrequest_buffer.size);
+    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
   }
   return 1;
 }
@@ -361,8 +388,8 @@ static int on_apc(VTermStringFragment frag, void *user)
   }
   kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
   if (frag.final) {
-    char *payload = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
-    schedule_termrequest(user, payload, term->termrequest_buffer.size);
+    char *sequence = xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size);
+    schedule_termrequest(user, sequence, term->termrequest_buffer.size);
   }
   return 1;
 }
@@ -465,6 +492,13 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   // have as many lines as screen rows when refresh_scrollback is called
   term->invalid_start = 0;
   term->invalid_end = opts.height;
+
+  // Create a separate queue for events which need to wait for a terminal
+  // refresh. We cannot reschedule events back onto the main queue because this
+  // can create an infinite loop (#32753).
+  // This queue is never processed directly: when the terminal is refreshed, all
+  // events from this queue are copied back onto the main event queue.
+  term->pending.events = multiqueue_new(NULL, NULL);
 
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
@@ -650,6 +684,7 @@ bool terminal_enter(void)
   assert(buf->terminal);  // Should only be called when curbuf has a terminal.
   TerminalState s[1] = { 0 };
   s->term = buf->terminal;
+  s->cursor_visible = true;  // Assume visible; may change via refresh_cursor later.
   stop_insert_mode = false;
 
   // Ensure the terminal is properly sized. Ideally window size management
@@ -662,10 +697,6 @@ bool terminal_enter(void)
   State = MODE_TERMINAL;
   mapped_ctrl_c |= MODE_TERMINAL;  // Always map CTRL-C to avoid interrupt.
   RedrawingDisabled = false;
-  if (!s->term->cursor.visible) {
-    // Hide cursor if it should be hidden. Do so right after setting State, before events.
-    ui_busy_start();
-  }
 
   // Disable these options in terminal-mode. They are nonsense because cursor is
   // placed at end of buffer to "follow" output. #11072
@@ -692,10 +723,7 @@ bool terminal_enter(void)
   curwin->w_p_so = 0;
   curwin->w_p_siso = 0;
 
-  // Update the cursor shape table and flush changes to the UI
-  s->term->pending.cursor = true;
-  refresh_cursor(s->term);
-
+  s->term->pending.cursor = true;  // Update the cursor shape table
   adjust_topline(s->term, buf, 0);  // scroll to end
   showmode();
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
@@ -716,8 +744,8 @@ bool terminal_enter(void)
   }
   State = save_state;
   RedrawingDisabled = s->save_rd;
-  if (!s->term->cursor.visible) {
-    // If cursor was hidden, show it again. Do so right after restoring State, before events.
+  if (!s->cursor_visible) {
+    // If cursor was hidden, show it again. Do so right after restoring State.
     ui_busy_stop();
   }
 
@@ -782,10 +810,13 @@ static void terminal_check_cursor(void)
 //   0 if the main loop must exit
 static int terminal_check(VimState *state)
 {
+  TerminalState *const s = (TerminalState *)state;
+
   if (stop_insert_mode) {
     return 0;
   }
 
+  assert(s->term == curbuf->terminal);
   terminal_check_cursor();
   validate_cursor(curwin);
 
@@ -812,6 +843,7 @@ static int terminal_check(VimState *state)
   }
 
   setcursor();
+  refresh_cursor(s->term, &s->cursor_visible);
   ui_flush();
   return 1;
 }
@@ -914,23 +946,9 @@ static int terminal_execute(VimState *state, int key)
   }
   if (s->term != curbuf->terminal) {
     // Active terminal buffer changed, flush terminal's cursor state to the UI
-    curbuf->terminal->pending.cursor = true;
-
-    if (!s->term->cursor.visible) {
-      // If cursor was hidden, show it again
-      ui_busy_stop();
-    }
-
-    if (!curbuf->terminal->cursor.visible) {
-      // Hide cursor if it should be hidden
-      ui_busy_start();
-    }
-
-    invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
-    invalidate_terminal(curbuf->terminal,
-                        curbuf->terminal->cursor.row,
-                        curbuf->terminal->cursor.row + 1);
     s->term = curbuf->terminal;
+    s->term->pending.cursor = true;
+    invalidate_terminal(s->term, -1, -1);
   }
   return 1;
 }
@@ -964,6 +982,7 @@ void terminal_destroy(Terminal **termpp)
     kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
+    multiqueue_free(term->pending.events);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
   }
@@ -1268,17 +1287,8 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     break;
 
   case VTERM_PROP_CURSORVISIBLE:
-    if (is_focused(term)) {
-      if (!val->boolean && term->cursor.visible) {
-        // Hide the cursor
-        ui_busy_start();
-      } else if (val->boolean && !term->cursor.visible) {
-        // Unhide the cursor
-        ui_busy_stop();
-      }
-      invalidate_terminal(term, -1, -1);
-    }
     term->cursor.visible = val->boolean;
+    invalidate_terminal(term, -1, -1);
     break;
 
   case VTERM_PROP_TITLE: {
@@ -2019,23 +2029,38 @@ static void refresh_terminal(Terminal *term)
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
-  // refresh_ functions assume the terminal buffer is current
+  // Some refresh_ functions assume the terminal buffer is current. Don't call refresh_cursor here,
+  // as we don't want a terminal that was possibly made temporarily current influencing the cursor.
   aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
   refresh_size(term, buf);
   refresh_scrollback(term, buf);
   refresh_screen(term, buf);
-  refresh_cursor(term);
   aucmd_restbuf(&aco);
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
+
+  // Copy pending events back to the main event queue
+  multiqueue_move_events(main_loop.events, term->pending.events);
 }
 
-static void refresh_cursor(Terminal *term)
+static void refresh_cursor(Terminal *term, bool *cursor_visible)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!is_focused(term) || !term->pending.cursor) {
+  if (!is_focused(term)) {
+    return;
+  }
+  if (term->cursor.visible != *cursor_visible) {
+    *cursor_visible = term->cursor.visible;
+    if (*cursor_visible) {
+      ui_busy_stop();
+    } else {
+      ui_busy_start();
+    }
+  }
+
+  if (!term->pending.cursor) {
     return;
   }
   term->pending.cursor = false;
@@ -2143,6 +2168,7 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Terminal *term, buf_T *buf)
 {
+  assert(buf == curbuf);  // TODO(seandewar): remove this condition
   int width, height;
   vterm_get_size(term->vt, &height, &width);
 

@@ -1948,28 +1948,26 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   case 0:
     settermprop_string(state, VTERM_PROP_ICONNAME, frag);
     settermprop_string(state, VTERM_PROP_TITLE, frag);
-    return 1;
+    break;
 
   case 1:
     settermprop_string(state, VTERM_PROP_ICONNAME, frag);
-    return 1;
+    break;
 
   case 2:
     settermprop_string(state, VTERM_PROP_TITLE, frag);
-    return 1;
+    break;
 
   case 52:
     if (state->selection.callbacks) {
       osc_selection(state, frag);
     }
+    break;
+  }
 
-    return 1;
-
-  default:
-    if (state->fallbacks && state->fallbacks->osc) {
-      if ((*state->fallbacks->osc)(command, frag, state->fbdata)) {
-        return 1;
-      }
+  if (state->fallbacks && state->fallbacks->osc) {
+    if ((*state->fallbacks->osc)(command, frag, state->fbdata)) {
+      return 1;
     }
   }
 

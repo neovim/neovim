@@ -3,7 +3,7 @@ if exists('s:did_load')
   set commentstring=/*\ %s\ */
   set complete=.,w,b,u,t,i
   set define=^\\s*#\\s*define
-  set diffopt=internal,filler,closeoff
+  set diffopt=internal,filler,closeoff,inline:simple
   set directory^=.
   set display=
   set fillchars=vert:\|,foldsep:\|,fold:-
@@ -19,6 +19,7 @@ if exists('s:did_load')
   set nohlsearch noincsearch
   set nrformats=bin,octal,hex
   set shortmess=filnxtToOS
+  set shelltemp
   set sidescroll=0
   set tags=./tags,tags
   set undodir^=.

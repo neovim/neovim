@@ -379,7 +379,8 @@ argument.
 
 							*--embed*
 --embed		Use stdin/stdout as a msgpack-RPC channel, so applications can
-		embed and control Nvim via the RPC |API|.
+		embed and control Nvim via the RPC |API|. If the channel is
+		closed (except by |:detach|), Nvim exits.
 
 		Waits for the client ("embedder") to call |nvim_ui_attach()|
 		before sourcing startup files and reading buffers, so that UIs
@@ -389,15 +390,14 @@ argument.
 		During this pre-startup phase the user config is of course not
 		available (similar to `--cmd`).
 
-		Embedders _not_ using the UI protocol must pass |--headless|: >
+		Non-UI embedders must pass |--headless|, then startup will
+		continue without waiting for `nvim_ui_attach`: >
 		    nvim --embed --headless
-
-<		Then startup will continue without waiting for `nvim_ui_attach`.
-		This is equivalent to: >
+<		which is equivalent to: >
 		    nvim --headless --cmd "call stdioopen({'rpc': v:true})"
 <
-		Embedders that use the UI protocol on a socket connection must
-		pass |--listen| as well as |--embed|: >
+		UI embedders that want the UI protocol on a socket (instead of
+		stdio) must pass |--listen| as well as |--embed|: >
 		    nvim --embed --listen addr
 
 <		See also: |ui-startup| |channel-stdio|

@@ -86,19 +86,17 @@ Bit operations
 y = bit.tobit(x)                                                   *bit.tobit()*
     Normalizes a number to the numeric range for bit operations and returns
     it. This function is usually not needed since all bit operations already
-    normalize all of their input arguments. Check the |luabit-semantics| for
-    details.
+    normalize all of their input arguments. See |lua-bit-semantics|.
 
     Example: >lua
-        print(0xffffffff)                --> 4294967295 (*)
+        print(0xffffffff)                --> 4294967295 (see Note)
         print(bit.tobit(0xffffffff))     --> -1
         printx(bit.tobit(0xffffffff))    --> 0xffffffff
         print(bit.tobit(0xffffffff + 1)) --> 0
         print(bit.tobit(2^40 + 1234))    --> 1234
 <
-    (*) See the treatment of |lua-bit-hex-literals| for an explanation why the
-    printed numbers in the first two lines differ (if your Lua installation
-    uses a double number type).
+    Note: |lua-bit-hex-literals| explains why the numbers printed in the first
+    two lines differ (if your Lua installation uses a double number type).
 
 y = bit.tohex(x [,n])                                           *bit.tohex()*
     Converts its first argument to a hex string. The number of hex digits is
@@ -369,7 +367,7 @@ strongly advised not to rely on undefined or implementation-defined behavior.
         - Non-integral numbers may be rounded or truncated in an
           implementation-defined way. This means the result could differ between
           different BitOp versions, different Lua VMs, on different platforms or
-          even between interpreted vs. compiled code (as in |LuaJIT|). Avoid
+          even between interpreted vs. compiled code (as in LuaJIT). Avoid
           passing fractional numbers to bitwise functions. Use `math.floor()` or
           `math.ceil()` to get defined behavior.
 - Lua provides auto-coercion of string arguments to numbers by default. This

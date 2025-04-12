@@ -262,6 +262,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/os/stdpaths_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/os/time_defs.h"
 #include "nvim/path.h"
@@ -5547,9 +5548,11 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
 }
 
 // Initialize 'spellfile' for the current buffer.
+//
+// If the location does not exist, create it. Defaults to
+// stdpath("data") + "/spell/{spelllang}.{encoding}.add".
 static void init_spellfile(void)
 {
-  int l;
   char *lend;
   bool aspath = false;
   char *lstart = curbuf->b_s.b_p_spl;
@@ -5557,8 +5560,6 @@ static void init_spellfile(void)
   if (*curwin->w_s->b_p_spl == NUL || GA_EMPTY(&curwin->w_s->b_langp)) {
     return;
   }
-
-  char *buf = xmalloc(MAXPATHL);
 
   // Find the end of the language name.  Exclude the region.  If there
   // is a path separator remember the start of the tail.
@@ -5570,49 +5571,40 @@ static void init_spellfile(void)
     }
   }
 
-  // Loop over all entries in 'runtimepath'.  Use the first one where we
-  // are allowed to write.
-  char *rtp = p_rtp;
-  while (*rtp != NUL) {
-    if (aspath) {
-      // Use directory of an entry with path, e.g., for
-      // "/dir/lg.utf-8.spl" use "/dir".
-      xmemcpyz(buf, curbuf->b_s.b_p_spl, (size_t)(lstart - curbuf->b_s.b_p_spl - 1));
-    } else {
-      // Copy the path from 'runtimepath' to buf[].
-      copy_option_part(&rtp, buf, MAXPATHL, ",");
-    }
-    if (os_file_is_writable(buf) == 2) {
-      // Use the first language name from 'spelllang' and the
-      // encoding used in the first loaded .spl file.
-      if (aspath) {
-        xmemcpyz(buf, curbuf->b_s.b_p_spl, (size_t)(lend - curbuf->b_s.b_p_spl));
-      } else {
-        // Create the "spell" directory if it doesn't exist yet.
-        l = (int)strlen(buf);
-        vim_snprintf(buf + l, MAXPATHL - (size_t)l, "/spell");
-        if (os_file_is_writable(buf) != 2) {
-          os_mkdir(buf, 0755);
-        }
+  char *buf = xmalloc(MAXPATHL);
+  size_t buf_len = MAXPATHL;
 
-        l = (int)strlen(buf);
-        vim_snprintf(buf + l, MAXPATHL - (size_t)l,
-                     "/%.*s", (int)(lend - lstart), lstart);
-      }
-      l = (int)strlen(buf);
-      char *fname = LANGP_ENTRY(curwin->w_s->b_langp, 0)
-                    ->lp_slang->sl_fname;
-      vim_snprintf(buf + l, MAXPATHL - (size_t)l, ".%s.add",
-                   ((fname != NULL
-                     && strstr(path_tail(fname), ".ascii.") != NULL)
-                    ? "ascii"
-                    : spell_enc()));
-      set_option_value_give_err(kOptSpellfile, CSTR_AS_OPTVAL(buf), OPT_LOCAL);
-      break;
+  if (!aspath) {
+    char *xdg_path = get_xdg_home(kXDGDataHome);
+    xstrlcpy(buf, xdg_path, buf_len);
+    xfree(xdg_path);
+
+    xstrlcat(buf, "/spell", buf_len);
+
+    char *failed_dir;
+    if (os_mkdir_recurse(buf, 0755, &failed_dir, NULL) != 0) {
+      xfree(buf);
+      xfree(failed_dir);
+      return;
     }
-    aspath = false;
+  } else {
+    if ((size_t)(lend - curbuf->b_s.b_p_spl) >= buf_len) {
+      xfree(buf);
+      return;
+    }
+    xmemcpyz(buf, curbuf->b_s.b_p_spl, (size_t)(lend - curbuf->b_s.b_p_spl));
   }
 
+  // Append spelllang
+  vim_snprintf(buf + strlen(buf), buf_len - strlen(buf), "/%.*s", (int)(lend - lstart), lstart);
+
+  // Append ".ascii.add" or ".{enc}.add"
+  char *fname = LANGP_ENTRY(curwin->w_s->b_langp, 0)->lp_slang->sl_fname;
+  const char *enc_suffix =
+    (fname != NULL && strstr(path_tail(fname), ".ascii.") != NULL) ? "ascii" : spell_enc();
+  vim_snprintf(buf + strlen(buf), buf_len - strlen(buf), ".%s.add", enc_suffix);
+
+  set_option_value_give_err(kOptSpellfile, CSTR_AS_OPTVAL(buf), OPT_LOCAL);
   xfree(buf);
 }
 

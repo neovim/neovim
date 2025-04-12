@@ -778,7 +778,7 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   }
 
   // Add the redirection stuff
-  char *command = make_filter_cmd(cmd, infile, tempname);
+  char *command = make_filter_cmd(cmd, infile, tempname, false);
 
   // Call the shell to execute the command (errors are ignored).
   // Don't check timestamps here.
@@ -1211,7 +1211,6 @@ static void read_input(StringBuilder *buf)
   size_t lplen = (size_t)ml_get_len(lnum);
 
   while (true) {
-    lplen -= written;
     if (lplen == 0) {
       len = 0;
     } else if (lp[written] == NL) {
@@ -1220,11 +1219,11 @@ static void read_input(StringBuilder *buf)
       kv_push(*buf, NUL);
     } else {
       char *s = vim_strchr(lp + written, NL);
-      len = s == NULL ? lplen : (size_t)(s - (lp + written));
+      len = s == NULL ? lplen - written : (size_t)(s - (lp + written));
       kv_concat_len(*buf, lp + written, len);
     }
 
-    if (len == lplen) {
+    if (len == lplen - written) {
       // Finished a line, add a NL, unless this line should not have one.
       if (lnum != curbuf->b_op_end.lnum
           || (!curbuf->b_p_bin && curbuf->b_p_fixeol)
@@ -1254,11 +1253,19 @@ static size_t write_output(char *output, size_t remaining, bool eof)
   char *start = output;
   size_t off = 0;
   while (off < remaining) {
-    if (output[off] == NL) {
+    // CRLF
+    if (output[off] == CAR && output[off + 1] == NL) {
+      output[off] = NUL;
+      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
+      size_t skip = off + 2;
+      output += skip;
+      remaining -= skip;
+      off = 0;
+      continue;
+    } else if (output[off] == CAR || output[off] == NL) {
       // Insert the line
       output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1,
-                false);
+      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
       size_t skip = off + 1;
       output += skip;
       remaining -= skip;
@@ -1277,7 +1284,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
     if (remaining) {
       // append unfinished line
       ml_append(curwin->w_cursor.lnum++, output, 0, false);
-      // remember that the NL was missing
+      // remember that the line ending was missing
       curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
       output += remaining;
     } else {

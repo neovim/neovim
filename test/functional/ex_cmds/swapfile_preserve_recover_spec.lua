@@ -152,6 +152,9 @@ describe('swapfile detection', function()
 
   it('redrawing during prompt does not break treesitter', function()
     local testfile = 'Xtest_swapredraw.lua'
+    finally(function()
+      os.remove(testfile)
+    end)
     write_file(
       testfile,
       [[
@@ -194,8 +197,7 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
       {100:vim.o.foldexpr} {100:=} {101:'v:lua.vim.treesitter.foldexpr()'}                                                  |
       {102:+--  3 lines: vim.defer_fn(function()·······························································}|
       {104:pcall}{100:(vim.cmd.edit,} {101:'Xtest_swapredraw.lua'}{100:)}                                                         |
-                                                                                                          |
-      {105:~                                                                                                   }|*33
+      {105:~                                                                                                   }|*34
       {106:Xtest_swapredraw.lua                                                              1,1            All}|
                                                                                                           |
     ]])
@@ -589,8 +591,10 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
     api.nvim_chan_send(chan, 'q')
     retry(nil, nil, function()
       eq(
-        { '', '[Process exited 1]', '' },
-        eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})")
+        { '[Process exited 1]' },
+        eval(
+          "[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})->filter({_, s -> !empty(trim(s))})"
+        )
       )
     end)
   end)

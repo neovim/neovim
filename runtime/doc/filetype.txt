@@ -603,6 +603,25 @@ One command, :DiffGitCached, is provided to show a diff of the current commit
 in the preview window.  It is equivalent to calling "git diff --cached" plus
 any arguments given to the command.
 
+GIT REBASE						*ft-gitrebase-plugin*
+
+The gitrebase filetype defines the following buffer-local commands, to help
+with interactive `git rebase`: >
+
+	:Drop   " to discard this commit
+	:Edit   " to stop for editing this commit
+	:Fixup  " to squash (but discard the message) into the previous one
+	:Pick   " to pick this commit (the cursor is on)
+	:Reword " to pick this commit, but change the commit message
+	:Squash " to squash this commit into the previous one
+
+In addition, the following command can be used to cycle between the different
+possibilities: >
+
+	:Cycle  " to cycle between the previous commands
+<
+The `:Cycle` command is also mapped to the CTRL-A and CTRL-X keys.
+For details, see `git-rebase --help`.
 
 GO							*ft-go-plugin*
 
@@ -695,7 +714,18 @@ To enable the recognition of Markdown comments each time after removing
 re-source "javaformat.vim" for Vim versions greater than `8.2.1397`: >
 	runtime autoload/javaformat.vim
 <
+LUA							*ft-lua-plugin*
 
+					*g:lua_version* *g:lua_subversion*
+Lua filetype's 'includeexpr' and |ft-lua-syntax| highlighting use the global
+variables "g:lua_version" and "g:lua_subversion" to determine the version of
+Lua to use (5.3 is the default)
+
+For example, to use Lua 5.1, set the variables like this: >
+
+	let g:lua_version = 5
+	let g:lua_subversion = 1
+<
 MAIL							*ft-mail-plugin*
 
 Options:
@@ -736,9 +766,9 @@ Man                       Open the manpage for the <cWORD> (man buffers)
 Man!                      Display the current buffer contents as a manpage.
 
 |:Man| accepts command modifiers. For example, to use a vertical split: >vim
-     :vertical Man printf
+    :vertical Man printf
 To reuse the current window: >vim
-     :hide Man printf
+    :hide Man printf
 
 Local mappings:
 K or CTRL-]               Jump to the manpage for the <cWORD> under the
@@ -758,25 +788,27 @@ Variables:
                           empty. Enabled by default. Set |FALSE| to enable soft
                           wrapping.
 
-To use Nvim as a manpager: >sh
-     export MANPAGER='nvim +Man!'
+To use Nvim as a manpager: >bash
+    export MANPAGER='nvim +Man!'
 
-Note that when running `man` from the shell and with that `MANPAGER` in your
-environment, `man` will pre-format the manpage using `groff`. Thus, Nvim
-will inevitably display the manual page as it was passed to it from stdin. One
-of the caveats of this is that the width will _always_ be hard-wrapped and not
-soft wrapped as with `g:man_hardwrap=0`. You can set in your environment: >sh
-     export MANWIDTH=999
+Note: when running `man` from the shell with Nvim as `$MANPAGER`, `man` will
+pre-format the manpage using `groff`, and Nvim will display the manual page as
+it was received from stdin (it can't "undo" the hard-wrap caused by
+man/groff). To prevent man/groff from hard-wrapping the manpage, you can set
+`$MANWIDTH=999` in your environment.
 
-So `groff`'s pre-formatting output will be the same as with `g:man_hardwrap=0` i.e soft-wrapped.
+To disable bold highlighting: >vim
+    :highlight link manBold Normal
 
-To disable bold highlighting: >
-     :highlight link manBold Normal
+Troubleshooting:
 
-An alternative to using `MANPAGER` in shell can be redefined `man`, for example: >sh
-     man() {
-          nvim "+hide Man $1"
-     }
+If you see an error like: >
+    fuse: mount failed: Permission denied
+this may be caused by AppArmor sandboxing. To fix this, add a local override
+in e.g. `/etc/apparmor.d/local/usr.bin.man`: >bash
+    mount fstype=fuse.nvim options=(ro, nosuid, nodev) -> /tmp/**,
+    /usr/bin/fusermount Ux,
+See also https://github.com/neovim/neovim/issues/30268 .
 
 MARKDOWN						*ft-markdown-plugin*
 
@@ -805,6 +837,12 @@ the PDF.  The following are treated as tags:
 
 These maps can be disabled with >
 	:let g:no_pdf_maps = 1
+
+PLSQL							*ft-plsql-plugin*
+
+To enable syntax folding in PL/SQL filetypes, set the following variable: >
+
+	:let g:plsql_fold = 1
 <
 
 PYTHON						*ft-python-plugin* *PEP8*

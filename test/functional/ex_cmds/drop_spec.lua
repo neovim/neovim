@@ -75,4 +75,25 @@ describe(':drop', function()
       :drop Xdrop_modified.txt           |
     ]])
   end)
+
+  it('jumps to line number when passed +line', function()
+    exec([[
+      edit Xdrop_line.txt
+      call append(0, "I just miss doing art. Don't you?")
+      call append(1, "It is not so hard as we have supposed.")
+      call append(2, "We are propelled by disaster. We are moving swiftly.")
+    ]])
+    feed_command('drop +2 Xdrop_line.txt')
+    screen:expect([[
+      I just miss doing art. Don't you?  |
+      ^It is not so hard as we have suppos|
+      ed.                                |
+      We are propelled by disaster. We ar|
+      e moving swiftly.                  |
+                                         |
+      {0:~                                  }|*2
+      {1:Xdrop_line.txt [+]                 }|
+      :drop +2 Xdrop_line.txt            |
+    ]])
+  end)
 end)

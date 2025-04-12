@@ -1934,6 +1934,18 @@ func Test_splitkeep_misc()
   set splitkeep&
 endfunc
 
+func Test_splitkeep_screen_cursor_pos()
+  new
+  set splitkeep=screen
+  call setline(1, ["longer than the last", "shorter"])
+  norm! $
+  wincmd s
+  close
+  call assert_equal([0, 1, 20, 0], getpos('.'))
+  %bwipeout!
+  set splitkeep&
+endfunc
+
 func Test_splitkeep_cursor()
   CheckScreendump
   let lines =<< trim END

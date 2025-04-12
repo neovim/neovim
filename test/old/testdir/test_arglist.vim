@@ -555,9 +555,34 @@ endfunc
 func Test_argdo()
   next! Xa.c Xb.c Xc.c
   new
+
+  let g:bufenter = 0
+  let g:bufleave = 0
+  autocmd BufEnter * let g:bufenter += 1
+  autocmd BufLeave * let g:bufleave += 1
+
   let l = []
   argdo call add(l, expand('%'))
   call assert_equal(['Xa.c', 'Xb.c', 'Xc.c'], l)
+  call assert_equal(3, g:bufenter)
+  call assert_equal(3, g:bufleave)
+
+  let g:bufenter = 0
+  let g:bufleave = 0
+
+  set eventignore=BufEnter,BufLeave
+  let l = []
+  argdo call add(l, expand('%'))
+  call assert_equal(['Xa.c', 'Xb.c', 'Xc.c'], l)
+  call assert_equal(0, g:bufenter)
+  call assert_equal(0, g:bufleave)
+  call assert_equal('BufEnter,BufLeave', &eventignore)
+  set eventignore&
+
+  autocmd! BufEnter
+  autocmd! BufLeave
+  unlet g:bufenter
+  unlet g:bufleave
   bwipe Xa.c Xb.c Xc.c
 endfunc
 

@@ -227,6 +227,10 @@ char *get_recorded(void)
 {
   size_t len;
   char *p = get_buffcont(&recordbuff, true, &len);
+  if (p == NULL) {
+    return NULL;
+  }
+
   free_buff(&recordbuff);
 
   // Remove the characters that were added the last time, these must be the
@@ -247,9 +251,11 @@ char *get_recorded(void)
 
 /// Return the contents of the redo buffer as a single string.
 /// K_SPECIAL in the returned string is escaped.
-char *get_inserted(void)
+String get_inserted(void)
 {
-  return get_buffcont(&redobuff, false, NULL);
+  size_t len = 0;
+  char *str = get_buffcont(&redobuff, false, &len);
+  return cbuf_as_string(str, len);
 }
 
 /// Add string after the current block of the given buffer
@@ -3248,7 +3254,7 @@ bool map_execute_lua(bool may_repeat)
   Array args = ARRAY_DICT_INIT;
   nlua_call_ref(ref, NULL, args, kRetNilBool, NULL, &err);
   if (ERROR_SET(&err)) {
-    semsg_multiline("E5108: %s", err.msg);
+    semsg_multiline("emsg", "E5108: %s", err.msg);
     api_clear_error(&err);
   }
 

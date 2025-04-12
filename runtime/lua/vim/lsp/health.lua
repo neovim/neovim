@@ -111,8 +111,8 @@ local function check_watcher()
     watchfunc_name = 'libuv-watch'
   elseif watchfunc == vim._watch.watchdirs then
     watchfunc_name = 'libuv-watchdirs'
-  elseif watchfunc == vim._watch.inotifywait then
-    watchfunc_name = 'inotifywait'
+  elseif watchfunc == vim._watch.inotify then
+    watchfunc_name = 'inotify'
   else
     local nm = debug.getinfo(watchfunc, 'S').source
     watchfunc_name = string.format('Custom (%s)', nm)
@@ -187,26 +187,32 @@ local function check_enabled_configs()
     local config = vim.lsp.config[name]
     local text = {} --- @type string[]
     text[#text + 1] = ('%s:'):format(name)
-    for k, v in
-      vim.spairs(config --[[@as table<string,any>]])
-    do
-      local v_str --- @type string?
-      if k == 'name' then
-        v_str = nil
-      elseif k == 'filetypes' or k == 'root_markers' then
-        v_str = table.concat(v, ', ')
-      elseif type(v) == 'function' then
-        v_str = func_tostring(v)
-      else
-        v_str = vim.inspect(v, { newline = '\n  ' })
-      end
+    if not config then
+      report_warn(
+        ("'%s' config not found. Ensure that vim.lsp.config('%s') was called."):format(name, name)
+      )
+    else
+      for k, v in
+        vim.spairs(config --[[@as table<string,any>]])
+      do
+        local v_str --- @type string?
+        if k == 'name' then
+          v_str = nil
+        elseif k == 'filetypes' or k == 'root_markers' then
+          v_str = table.concat(v, ', ')
+        elseif type(v) == 'function' then
+          v_str = func_tostring(v)
+        else
+          v_str = vim.inspect(v, { newline = '\n  ' })
+        end
 
-      if k == 'cmd' and type(v) == 'table' and vim.fn.executable(v[1]) == 0 then
-        report_warn(("'%s' is not executable. Configuration will not be used."):format(v[1]))
-      end
+        if k == 'cmd' and type(v) == 'table' and vim.fn.executable(v[1]) == 0 then
+          report_warn(("'%s' is not executable. Configuration will not be used."):format(v[1]))
+        end
 
-      if v_str then
-        text[#text + 1] = ('- %s: %s'):format(k, v_str)
+        if v_str then
+          text[#text + 1] = ('- %s: %s'):format(k, v_str)
+        end
       end
     end
     text[#text + 1] = ''

@@ -3,6 +3,7 @@
 " Maintainer:	Chris Morgan <me@chrismorgan.info>
 " Last Change:	2024 Mar 17
 "		2024 May 23 by Riley Bruins <ribru17@gmail.com ('commentstring')
+"		2025 Mar 31 by Vim project (set 'formatprg' option)
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 if exists("b:did_ftplugin")
@@ -56,6 +57,19 @@ setlocal include=\\v^\\s*(pub\\s+)?use\\s+\\zs(\\f\|:)+
 setlocal includeexpr=rust#IncludeExpr(v:fname)
 
 setlocal suffixesadd=.rs
+
+if executable(get(g:, 'rustfmt_command', 'rustfmt'))
+    if get(g:, "rustfmt_fail_silently", 0)
+        augroup rust.vim.FailSilently
+            autocmd! * <buffer>
+            autocmd ShellFilterPost <buffer> if v:shell_error | execute 'echom "shell filter returned error " . v:shell_error . ", undoing changes"' | undo | endif
+        augroup END
+    endif
+
+    let &l:formatprg = get(g:, 'rustfmt_command', 'rustfmt') . ' ' .
+                \ get(g:, 'rustfmt_options', '') . ' ' .
+                \ rustfmt#RustfmtConfigOptions()
+endif
 
 if exists("g:ftplugin_rust_source_path")
     let &l:path=g:ftplugin_rust_source_path . ',' . &l:path
@@ -149,7 +163,7 @@ endif
 
 let b:undo_ftplugin = "
             \ compiler make |
-            \ setlocal formatoptions< comments< commentstring< include< includeexpr< suffixesadd<
+            \ setlocal formatoptions< comments< commentstring< include< includeexpr< suffixesadd< formatprg<
             \|if exists('b:rust_set_style')
                 \|setlocal tabstop< shiftwidth< softtabstop< expandtab< textwidth<
                 \|endif

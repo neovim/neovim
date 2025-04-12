@@ -180,11 +180,11 @@ Standard plugins ~
 						*standard-plugin-list*
 |pi_gzip.txt|		Reading and writing compressed files
 |pi_msgpack.txt|	msgpack utilities
-|pi_netrw.txt|		Reading and writing files over a network
 |pi_paren.txt|		Highlight matching parens
 |pi_spec.txt|		Filetype plugin to work with rpm spec files
 |pi_tar.txt|		Tar file explorer
 |pi_zip.txt|		Zip archive explorer
+|netrw|			Reading and writing files over a network
 
 Local additions ~
 							*local-additions*

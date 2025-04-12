@@ -62,12 +62,12 @@ describe("'listchars'", function()
       ..bb>---<<$
       ...cccc><$
       dd........ee<<>-$
-      <$
+      $
       >-------aa>-----$
       ..bb>---..$
       ...cccc>.$
       dd........ee..>-$
-      .$]])
+      $]])
   end)
 
   it('works with :list', function()

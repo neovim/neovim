@@ -24,6 +24,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
@@ -1523,6 +1524,7 @@ static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
 /// do_pending_operator().
 void end_visual_mode(void)
 {
+  VIsual_select_exclu_adj = false;
   VIsual_active = false;
   setmouse();
   mouse_dragging = 0;
@@ -2486,7 +2488,7 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
 /// 'dist' must be positive.
 ///
 /// @return  true if able to move cursor, false otherwise.
-bool nv_screengo(oparg_T *oap, int dir, int dist)
+bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
 {
   int linelen = linetabsize(curwin, curwin->w_cursor.lnum);
   bool retval = true;
@@ -2548,7 +2550,7 @@ bool nv_screengo(oparg_T *oap, int dir, int dist)
             retval = false;
             break;
           }
-          cursor_up_inner(curwin, 1);
+          cursor_up_inner(curwin, 1, skip_conceal);
 
           linelen = linetabsize(curwin, curwin->w_cursor.lnum);
           if (linelen > width1) {
@@ -2573,7 +2575,7 @@ bool nv_screengo(oparg_T *oap, int dir, int dist)
             retval = false;
             break;
           }
-          cursor_down_inner(curwin, 1);
+          cursor_down_inner(curwin, 1, skip_conceal);
           curwin->w_curswant %= width2;
 
           // Check if the cursor has moved below the number display
@@ -3616,12 +3618,11 @@ static void nv_scroll(cmdarg_T *cap)
     if (cap->count1 - 1 >= curwin->w_cursor.lnum) {
       curwin->w_cursor.lnum = 1;
     } else {
-      if (hasAnyFolding(curwin)) {
+      if (win_lines_concealed(curwin)) {
         // Count a fold for one screen line.
-        for (n = cap->count1 - 1; n > 0
-             && curwin->w_cursor.lnum > curwin->w_topline; n--) {
-          hasFolding(curwin, curwin->w_cursor.lnum,
-                     &curwin->w_cursor.lnum, NULL);
+        for (n = cap->count1 - 1; n > 0 && curwin->w_cursor.lnum > curwin->w_topline; n--) {
+          hasFolding(curwin, curwin->w_cursor.lnum, &curwin->w_cursor.lnum, NULL);
+          n += decor_conceal_line(curwin, curwin->w_cursor.lnum, true);
           if (curwin->w_cursor.lnum > curwin->w_topline) {
             curwin->w_cursor.lnum--;
           }
@@ -3634,8 +3635,7 @@ static void nv_scroll(cmdarg_T *cap)
     if (cap->cmdchar == 'M') {
       int used = 0;
       // Don't count filler lines above the window.
-      used -= win_get_fill(curwin, curwin->w_topline)
-              - curwin->w_topfill;
+      used -= win_get_fill(curwin, curwin->w_topline) - curwin->w_topfill;
       validate_botline(curwin);  // make sure w_empty_rows is valid
       int half = (curwin->w_height_inner - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
@@ -3658,10 +3658,11 @@ static void nv_scroll(cmdarg_T *cap)
       }
     } else {  // (cap->cmdchar == 'H')
       n = cap->count1 - 1;
-      if (hasAnyFolding(curwin)) {
+      if (win_lines_concealed(curwin)) {
         // Count a fold for one screen line.
         lnum = curwin->w_topline;
-        while (n-- > 0 && lnum < curwin->w_botline - 1) {
+        while ((decor_conceal_line(curwin, lnum - 1, true) || n-- > 0)
+               && lnum < curwin->w_botline - 1) {
           hasFolding(curwin, lnum, NULL, &lnum);
           lnum++;
         }
@@ -4035,17 +4036,24 @@ static int normal_search(cmdarg_T *cap, int dir, char *pat, size_t patlen, int o
 /// cap->nchar is NUL for ',' and ';' (repeat the search)
 static void nv_csearch(cmdarg_T *cap)
 {
-  bool t_cmd;
+  bool cursor_dec = false;
 
-  if (cap->cmdchar == 't' || cap->cmdchar == 'T') {
-    t_cmd = true;
-  } else {
-    t_cmd = false;
+  // If adjusted cursor position previously, unadjust it.
+  if (*p_sel == 'e' && VIsual_active && VIsual_mode == 'v'
+      && VIsual_select_exclu_adj) {
+    unadjust_for_sel();
+    cursor_dec = true;
   }
+
+  bool t_cmd = cap->cmdchar == 't' || cap->cmdchar == 'T';
 
   cap->oap->motion_type = kMTCharWise;
   if (IS_SPECIAL(cap->nchar) || searchc(cap, t_cmd) == false) {
     clearopbeep(cap->oap);
+    // Revert unadjust when failed.
+    if (cursor_dec) {
+      adjust_for_sel(cap);
+    }
     return;
   }
 
@@ -5054,6 +5062,8 @@ static void nv_visual(cmdarg_T *cap)
       n_start_visual_mode(cap->cmdchar);
       if (VIsual_mode != 'V' && *p_sel == 'e') {
         cap->count1++;          // include one more char
+      } else {
+        VIsual_select_exclu_adj = false;
       }
       if (cap->count0 > 0 && --cap->count1 > 0) {
         // With a count select that many characters or lines.
@@ -5316,7 +5326,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
           curwin->w_cursor.col--;
         }
       }
-    } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == false) {
+    } else if (nv_screengo(oap, FORWARD, cap->count1 - 1, false) == false) {
       clearopbeep(oap);
     }
   } else {
@@ -5443,7 +5453,7 @@ static void nv_g_cmd(cmdarg_T *cap)
       oap->motion_type = kMTLineWise;
       i = cursor_down(cap->count1, oap->op_type == OP_NOP);
     } else {
-      i = nv_screengo(oap, FORWARD, cap->count1);
+      i = nv_screengo(oap, FORWARD, cap->count1, false);
     }
     if (!i) {
       clearopbeep(oap);
@@ -5457,7 +5467,7 @@ static void nv_g_cmd(cmdarg_T *cap)
       oap->motion_type = kMTLineWise;
       i = cursor_up(cap->count1, oap->op_type == OP_NOP);
     } else {
-      i = nv_screengo(oap, BACKWARD, cap->count1);
+      i = nv_screengo(oap, BACKWARD, cap->count1, false);
     }
     if (!i) {
       clearopbeep(oap);
@@ -6021,6 +6031,7 @@ static void adjust_for_sel(cmdarg_T *cap)
       && gchar_cursor() != NUL && lt(VIsual, curwin->w_cursor)) {
     inc_cursor();
     cap->oap->inclusive = false;
+    VIsual_select_exclu_adj = true;
   }
 }
 
@@ -6042,7 +6053,7 @@ bool unadjust_for_sel(void)
 /// @return  true when backed up to the previous line.
 bool unadjust_for_sel_inner(pos_T *pp)
 {
-  colnr_T cs, ce;
+  VIsual_select_exclu_adj = false;
 
   if (pp->coladd > 0) {
     pp->coladd--;
@@ -6050,6 +6061,7 @@ bool unadjust_for_sel_inner(pos_T *pp)
     pp->col--;
     mark_mb_adjustpos(curbuf, pp);
     if (virtual_active(curwin)) {
+      colnr_T cs, ce;
       getvcol(curwin, pp, &cs, NULL, &ce);
       pp->coladd = ce - cs;
     }

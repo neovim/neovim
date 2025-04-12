@@ -502,9 +502,7 @@ describe('ext_hlstate detailed highlights', function()
     local num_lines = 500
     insert('first line\n')
     for _ = 1, num_lines do
-      insert([[
-        line
-      ]])
+      api.nvim_paste('  line\n', false, -1)
     end
     insert('last line')
 

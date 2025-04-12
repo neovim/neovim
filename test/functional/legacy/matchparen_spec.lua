@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = n.clear
 local exec = n.exec
 local feed = n.feed
+local poke_eventloop = n.poke_eventloop
 
 describe('matchparen', function()
   before_each(clear)
@@ -194,5 +195,101 @@ describe('matchparen', function()
       {1:~                             }|*7
       {5:-- INSERT --}                  |
     ]])
+  end)
+
+  -- oldtest: Test_matchparen_ignore_sh_case()
+  it('ignores shell case statements', function()
+    local screen = Screen.new(40, 15)
+    exec([[
+      syntax on
+      source $VIMRUNTIME/plugin/matchparen.vim
+      set ft=sh
+      call setline(1, [
+            \ '#!/bin/sh',
+            \ 'SUSUWU_PRINT() (',
+            \ '  case "${LEVEL}" in',
+            \ '    "$SUSUWU_SH_NOTICE")',
+            \ '    ${SUSUWU_S} && return 1',
+            \ '  ;;',
+            \ '    "$SUSUWU_SH_DEBUG")',
+            \ '    (! ${SUSUWU_VERBOSE}) && return 1',
+            \ '  ;;',
+            \ '  esac',
+            \ '  # snip',
+            \ ')'
+            \ ])
+      call cursor(4, 26)
+    ]])
+    screen:add_extra_attr_ids({
+      [100] = { foreground = tonumber('0x6a0dad') },
+    })
+    screen:expect([[
+      {18:#!/bin/sh}                               |
+      {25:SUSUWU_PRINT() (}                        |
+        {15:case} {15:"}{100:${LEVEL}}{15:"} {15:in}                    |
+          {15:"}{100:$SUSUWU_SH_NOTICE}{15:"^)}                |
+          {100:${SUSUWU_S}} {15:&&} {15:return} {26:1}             |
+        {15:;;}                                    |
+          {15:"}{100:$SUSUWU_SH_DEBUG}{15:")}                 |
+          {100:(}{15:!} {100:${SUSUWU_VERBOSE})} {15:&&} {15:return} {26:1}   |
+        {15:;;}                                    |
+        {15:esac}                                  |
+        {18:# snip}                                |
+      {25:)}                                       |
+      {1:~                                       }|*2
+                                              |
+    ]])
+    -- Send keys one by one so that CursorMoved is triggered.
+    for _, c in ipairs({ 'A', ' ', 'f', 'o', 'o', 'b', 'a', 'r' }) do
+      feed(c)
+      poke_eventloop()
+    end
+    screen:expect([[
+      {18:#!/bin/sh}                               |
+      {25:SUSUWU_PRINT() (}                        |
+        {15:case} {15:"}{100:${LEVEL}}{15:"} {15:in}                    |
+          {15:"}{100:$SUSUWU_SH_NOTICE}{15:")} foobar^         |
+          {100:${SUSUWU_S}} {15:&&} {15:return} {26:1}             |
+        {15:;;}                                    |
+          {15:"}{100:$SUSUWU_SH_DEBUG}{15:")}                 |
+          {100:(}{15:!} {100:${SUSUWU_VERBOSE})} {15:&&} {15:return} {26:1}   |
+        {15:;;}                                    |
+        {15:esac}                                  |
+        {18:# snip}                                |
+      {25:)}                                       |
+      {1:~                                       }|*2
+      {5:-- INSERT --}                            |
+    ]])
+  end)
+
+  -- oldtest: Test_scroll_winscrolled()
+  it('with scrolling', function()
+    local screen = Screen.new(30, 7)
+    exec([[
+      source $VIMRUNTIME/plugin/matchparen.vim
+      set scrolloff=1
+      call setline(1, ['foobar {', '', '', '', '}'])
+      call cursor(5, 1)
+    ]])
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Aqua },
+    })
+    local s1 = [[
+      foobar {100:{}                      |
+                                    |*3
+      {100:^}}                             |
+      {1:~                             }|
+                                    |
+    ]]
+    screen:expect(s1)
+    feed('<C-E>')
+    screen:expect([[
+                                    |*3
+      ^}                             |
+      {1:~                             }|*2
+                                    |
+    ]])
+    feed('<C-Y>')
+    screen:expect(s1)
   end)
 end)

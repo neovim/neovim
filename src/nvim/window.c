@@ -196,6 +196,10 @@ win_T *swbuf_goto_win_with_buf(buf_T *buf)
   return wp;
 }
 
+// 'cmdheight' value explicitly set by the user: window commands are allowed to
+// resize the topframe to values higher than this minimum, but not lower.
+static OptInt min_set_ch = 1;
+
 /// all CTRL-W window commands are handled here, called from normal_cmd().
 ///
 /// @param xchar  extra char from ":wincmd gx" or NUL
@@ -513,7 +517,7 @@ newwindow:
   // set current window height
   case Ctrl__:
   case '_':
-    win_setheight(Prenum ? Prenum : Rows - 1);
+    win_setheight(Prenum ? Prenum : Rows - (int)min_set_ch);
     break;
 
   // increase current window width
@@ -3505,10 +3509,6 @@ static bool is_bottom_win(win_T *wp)
   return true;
 }
 
-// 'cmdheight' value explicitly set by the user: window commands are allowed to
-// resize the topframe to values higher than this minimum, but not lower.
-static OptInt min_set_ch = 1;
-
 /// Set a new height for a frame.  Recursively sets the height for contained
 /// frames and windows.  Caller must take care of positions.
 ///
@@ -6431,21 +6431,22 @@ void win_fix_scroll(bool resize)
           && wp->w_botline - 1 <= wp->w_buffer->b_ml.ml_line_count) {
         int diff = (wp->w_winrow - wp->w_prev_winrow)
                    + (wp->w_height - wp->w_prev_height);
-        linenr_T lnum = wp->w_cursor.lnum;
+        pos_T cursor = wp->w_cursor;
         wp->w_cursor.lnum = wp->w_botline - 1;
 
         // Add difference in height and row to botline.
         if (diff > 0) {
-          cursor_down_inner(wp, diff);
+          cursor_down_inner(wp, diff, false);
         } else {
-          cursor_up_inner(wp, -diff);
+          cursor_up_inner(wp, -diff, false);
         }
 
         // Scroll to put the new cursor position at the bottom of the
         // screen.
         wp->w_fraction = FRACTION_MULT;
         scroll_to_fraction(wp, wp->w_prev_height);
-        wp->w_cursor.lnum = lnum;
+        wp->w_cursor = cursor;
+        wp->w_valid &= ~VALID_WCOL;
       } else if (wp == curwin) {
         wp->w_valid &= ~VALID_CROW;
       }
@@ -6485,11 +6486,11 @@ static void win_fix_cursor(bool normal)
   linenr_T lnum = wp->w_cursor.lnum;
 
   wp->w_cursor.lnum = wp->w_topline;
-  cursor_down_inner(wp, so);
+  cursor_down_inner(wp, so, false);
   linenr_T top = wp->w_cursor.lnum;
 
   wp->w_cursor.lnum = wp->w_botline - 1;
-  cursor_up_inner(wp, so);
+  cursor_up_inner(wp, so, false);
   linenr_T bot = wp->w_cursor.lnum;
 
   wp->w_cursor.lnum = lnum;
@@ -6583,7 +6584,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
         hasFolding(wp, lnum, &lnum, NULL);
         if (lnum == 1) {
           // first line in buffer is folded
-          line_size = 1;
+          line_size = !decor_conceal_line(wp, lnum - 1, false);
           sline--;
           break;
         }
@@ -6633,7 +6634,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   int prev_height = wp->w_height_inner;
   int height = wp->w_height_request;
   if (height == 0) {
-    height = wp->w_height - wp->w_winbar_height;
+    height = MAX(0, wp->w_height - wp->w_winbar_height);
   }
 
   if (height != prev_height) {
@@ -6714,8 +6715,8 @@ void win_comp_scroll(win_T *wp)
 
   if (wp->w_p_scr != old_w_p_scr) {
     // Used by "verbose set scroll".
-    wp->w_p_script_ctx[kWinOptScroll].script_ctx.sc_sid = SID_WINLAYOUT;
-    wp->w_p_script_ctx[kWinOptScroll].script_ctx.sc_lnum = 0;
+    wp->w_p_script_ctx[kWinOptScroll].sc_sid = SID_WINLAYOUT;
+    wp->w_p_script_ctx[kWinOptScroll].sc_lnum = 0;
   }
 }
 

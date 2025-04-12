@@ -43,8 +43,10 @@
 local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
 local Range = require('vim.treesitter._range')
+local hrtime = vim.uv.hrtime
 
-local default_parse_timeout_ms = 3
+-- Parse in 3ms chunks.
+local default_parse_timeout_ns = 3 * 1000000
 
 ---@type Range2
 local entire_document_range = { 0, math.huge }
@@ -198,16 +200,16 @@ function LanguageTree:_set_logger()
   self._parser:_set_logger(log_lex, log_parse, self._logger)
 end
 
----Measure execution time of a function
+---Measure execution time of a function, in nanoseconds.
 ---@generic R1, R2, R3
 ---@param f fun(): R1, R2, R3
 ---@return number, R1, R2, R3
 local function tcall(f, ...)
-  local start = vim.uv.hrtime()
+  local start = hrtime()
   ---@diagnostic disable-next-line
   local r = { f(...) }
   --- @type number
-  local duration = (vim.uv.hrtime() - start) / 1000000
+  local duration = hrtime() - start
   --- @diagnostic disable-next-line: redundant-return-value
   return duration, unpack(r)
 end
@@ -388,18 +390,29 @@ function LanguageTree:_parse_regions(range, thread_state)
       )
     then
       self._parser:set_included_ranges(ranges)
-      self._parser:set_timeout(thread_state.timeout and thread_state.timeout * 1000 or 0) -- ms -> micros
 
-      local parse_time, tree, tree_changes =
-        tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
+      local parse_time, tree, tree_changes = tcall(
+        self._parser.parse,
+        self._parser,
+        self._trees[i],
+        self._source,
+        true,
+        thread_state.timeout
+      )
       while true do
         if tree then
           break
         end
         coroutine.yield(self._trees, false)
 
-        parse_time, tree, tree_changes =
-          tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
+        parse_time, tree, tree_changes = tcall(
+          self._parser.parse,
+          self._parser,
+          self._trees[i],
+          self._source,
+          true,
+          thread_state.timeout
+        )
       end
 
       self:_subtract_time(thread_state, parse_time)
@@ -503,7 +516,7 @@ function LanguageTree:_async_parse(range, on_parse)
   local buf = is_buffer_parser and vim.b[source] or nil
   local ct = is_buffer_parser and buf.changedtick or nil
   local total_parse_time = 0
-  local redrawtime = vim.o.redrawtime
+  local redrawtime = vim.o.redrawtime * 1000000
 
   local thread_state = {} ---@type ParserThreadState
 
@@ -526,7 +539,7 @@ function LanguageTree:_async_parse(range, on_parse)
       end
     end
 
-    thread_state.timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ms or nil
+    thread_state.timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ns or nil
     local parse_time, trees, finished = tcall(parse, self, range, thread_state)
     total_parse_time = total_parse_time + parse_time
 
@@ -868,35 +881,42 @@ end
 
 ---@alias vim.treesitter.languagetree.Injection table<string,table<integer,vim.treesitter.languagetree.InjectionElem>>
 
----@param t table<integer,vim.treesitter.languagetree.Injection>
----@param tree_index integer
+---@param t vim.treesitter.languagetree.Injection
 ---@param pattern integer
 ---@param lang string
 ---@param combined boolean
 ---@param ranges Range6[]
-local function add_injection(t, tree_index, pattern, lang, combined, ranges)
+---@param result table<string,Range6[][]>
+local function add_injection(t, pattern, lang, combined, ranges, result)
   if #ranges == 0 then
     -- Make sure not to add an empty range set as this is interpreted to mean the whole buffer.
     return
   end
 
-  -- Each tree index should be isolated from the other nodes.
-  if not t[tree_index] then
-    t[tree_index] = {}
+  if not result[lang] then
+    result[lang] = {}
   end
 
-  if not t[tree_index][lang] then
-    t[tree_index][lang] = {}
+  if not combined then
+    table.insert(result[lang], ranges)
+    return
   end
 
-  -- Key this by pattern. If combined is set to true all captures of this pattern
+  if not t[lang] then
+    t[lang] = {}
+  end
+
+  -- Key this by pattern. For combined injections, all captures of this pattern
   -- will be parsed by treesitter as the same "source".
-  -- If combined is false, each "region" will be parsed as a single source.
-  if not t[tree_index][lang][pattern] then
-    t[tree_index][lang][pattern] = { combined = combined, regions = {} }
+  if not t[lang][pattern] then
+    local regions = {}
+    t[lang][pattern] = regions
+    table.insert(result[lang], regions)
   end
 
-  table.insert(t[tree_index][lang][pattern].regions, ranges)
+  for _, range in ipairs(ranges) do
+    table.insert(t[lang][pattern], range)
+  end
 end
 
 -- TODO(clason): replace by refactored `ts.has_parser` API (without side effects)
@@ -964,19 +984,6 @@ function LanguageTree:_get_injection(match, metadata)
   return lang, combined, ranges
 end
 
---- Can't use vim.tbl_flatten since a range is just a table.
----@param regions Range6[][]
----@return Range6[]
-local function combine_regions(regions)
-  local result = {} ---@type Range6[]
-  for _, region in ipairs(regions) do
-    for _, range in ipairs(region) do
-      result[#result + 1] = range
-    end
-  end
-  return result
-end
-
 --- Gets language injection regions by language.
 ---
 --- This is where most of the injection processing occurs.
@@ -993,13 +1000,16 @@ function LanguageTree:_get_injections(range, thread_state)
     return {}
   end
 
-  ---@type table<integer,vim.treesitter.languagetree.Injection>
-  local injections = {}
-  local start = vim.uv.hrtime()
+  local start = hrtime()
+
+  ---@type table<string,Range6[][]>
+  local result = {}
 
   local full_scan = range == true or self._injection_query.has_combined_injections
 
-  for index, tree in pairs(self._trees) do
+  for _, tree in pairs(self._trees) do
+    ---@type vim.treesitter.languagetree.Injection
+    local injections = {}
     local root_node = tree:root()
     local start_line, end_line ---@type integer, integer
     if full_scan then
@@ -1013,38 +1023,15 @@ function LanguageTree:_get_injections(range, thread_state)
     do
       local lang, combined, ranges = self:_get_injection(match, metadata)
       if lang then
-        add_injection(injections, index, pattern, lang, combined, ranges)
+        add_injection(injections, pattern, lang, combined, ranges, result)
       else
         self:_log('match from injection query failed for pattern', pattern)
       end
 
       -- Check the current function duration against the timeout, if it exists.
-      local current_time = vim.uv.hrtime()
-      self:_subtract_time(thread_state, (current_time - start) / 1000000)
-      start = current_time
-    end
-  end
-
-  ---@type table<string,Range6[][]>
-  local result = {}
-
-  -- Generate a map by lang of node lists.
-  -- Each list is a set of ranges that should be parsed together.
-  for _, lang_map in pairs(injections) do
-    for lang, patterns in pairs(lang_map) do
-      if not result[lang] then
-        result[lang] = {}
-      end
-
-      for _, entry in pairs(patterns) do
-        if entry.combined then
-          table.insert(result[lang], combine_regions(entry.regions))
-        else
-          for _, ranges in pairs(entry.regions) do
-            table.insert(result[lang], ranges)
-          end
-        end
-      end
+      local current_time = hrtime()
+      self:_subtract_time(thread_state, current_time - start)
+      start = hrtime()
     end
   end
 

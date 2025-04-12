@@ -34,7 +34,7 @@ function M.query(caps, cb)
   local id = vim.api.nvim_create_autocmd('TermResponse', {
     nested = true,
     callback = function(args)
-      local resp = args.data ---@type string
+      local resp = args.data.sequence ---@type string
       local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
       if k and rest then
         local cap = vim.text.hexdecode(k)
@@ -70,11 +70,6 @@ function M.query(caps, cb)
   end
 
   local query = string.format('\027P+q%s\027\\', table.concat(encoded, ';'))
-
-  -- If running in tmux, wrap with the passthrough sequence
-  if os.getenv('TMUX') then
-    query = string.format('\027Ptmux;%s\027\\', query:gsub('\027', '\027\027'))
-  end
 
   io.stdout:write(query)
 

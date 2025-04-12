@@ -333,60 +333,151 @@ describe(':terminal buffer', function()
     command('bdelete!')
   end)
 
-  it('emits TermRequest events #26972', function()
-    local term = api.nvim_open_term(0, {})
-    local termbuf = api.nvim_get_current_buf()
+  describe('TermRequest', function()
+    it('emits events #26972', function()
+      local term = api.nvim_open_term(0, {})
+      local termbuf = api.nvim_get_current_buf()
 
-    -- Test that <abuf> is the terminal buffer, not the current buffer
-    command('au TermRequest * let g:termbuf = +expand("<abuf>")')
-    command('wincmd p')
+      -- Test that <abuf> is the terminal buffer, not the current buffer
+      command('au TermRequest * let g:termbuf = +expand("<abuf>")')
+      command('wincmd p')
 
-    -- cwd will be inserted in a file URI, which cannot contain backs
-    local cwd = t.fix_slashes(fn.getcwd())
-    local parent = cwd:match('^(.+/)')
-    local expected = '\027]7;file://host' .. parent
-    api.nvim_chan_send(term, string.format('%s\027\\', expected))
-    eq(expected, eval('v:termrequest'))
-    eq(termbuf, eval('g:termbuf'))
-  end)
+      -- cwd will be inserted in a file URI, which cannot contain backs
+      local cwd = t.fix_slashes(fn.getcwd())
+      local parent = cwd:match('^(.+/)')
+      local expected = '\027]7;file://host' .. parent
+      api.nvim_chan_send(term, string.format('%s\027\\', expected))
+      eq(expected, eval('v:termrequest'))
+      eq(termbuf, eval('g:termbuf'))
+    end)
 
-  it('emits TermRequest events for APC', function()
-    local term = api.nvim_open_term(0, {})
+    it('emits events for APC', function()
+      local term = api.nvim_open_term(0, {})
 
-    -- cwd will be inserted in a file URI, which cannot contain backs
-    local cwd = t.fix_slashes(fn.getcwd())
-    local parent = cwd:match('^(.+/)')
-    local expected = '\027_Gfile://host' .. parent
-    api.nvim_chan_send(term, string.format('%s\027\\', expected))
-    eq(expected, eval('v:termrequest'))
-  end)
+      -- cwd will be inserted in a file URI, which cannot contain backs
+      local cwd = t.fix_slashes(fn.getcwd())
+      local parent = cwd:match('^(.+/)')
+      local expected = '\027_Gfile://host' .. parent
+      api.nvim_chan_send(term, string.format('%s\027\\', expected))
+      eq(expected, eval('v:termrequest'))
+    end)
 
-  it('TermRequest synchronization #27572', function()
-    command('autocmd! nvim.terminal TermRequest')
-    local term = exec_lua([[
-      _G.input = {}
-      local term = vim.api.nvim_open_term(0, {
-        on_input = function(_, _, _, data)
-          table.insert(_G.input, data)
-        end,
-        force_crlf = false,
-      })
-      vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          if args.data == '\027]11;?' then
-            table.insert(_G.input, '\027]11;rgb:0000/0000/0000\027\\')
+    it('synchronization #27572', function()
+      command('autocmd! nvim.terminal TermRequest')
+      local term = exec_lua([[
+        _G.input = {}
+        local term = vim.api.nvim_open_term(0, {
+          on_input = function(_, _, _, data)
+            table.insert(_G.input, data)
+          end,
+          force_crlf = false,
+        })
+        vim.api.nvim_create_autocmd('TermRequest', {
+          callback = function(args)
+            if args.data.sequence == '\027]11;?' then
+              table.insert(_G.input, '\027]11;rgb:0000/0000/0000\027\\')
+            end
           end
-        end
-      })
-      return term
-    ]])
-    api.nvim_chan_send(term, '\027]11;?\007\027[5n\027]11;?\007\027[5n')
-    eq({
-      '\027]11;rgb:0000/0000/0000\027\\',
-      '\027[0n',
-      '\027]11;rgb:0000/0000/0000\027\\',
-      '\027[0n',
-    }, exec_lua('return _G.input'))
+        })
+        return term
+      ]])
+      api.nvim_chan_send(term, '\027]11;?\007\027[5n\027]11;?\007\027[5n')
+      eq({
+        '\027]11;rgb:0000/0000/0000\027\\',
+        '\027[0n',
+        '\027]11;rgb:0000/0000/0000\027\\',
+        '\027[0n',
+      }, exec_lua('return _G.input'))
+    end)
+
+    it('works with vim.wait() from another autocommand #32706', function()
+      command('autocmd! nvim.terminal TermRequest')
+      exec_lua([[
+        local term = vim.api.nvim_open_term(0, {})
+        vim.api.nvim_create_autocmd('TermRequest', {
+          buffer = 0,
+          callback = function(ev)
+            _G.sequence = ev.data.sequence
+            _G.v_termrequest = vim.v.termrequest
+          end,
+        })
+        vim.api.nvim_create_autocmd('TermEnter', {
+          buffer = 0,
+          callback = function()
+            vim.api.nvim_chan_send(term, '\027]11;?\027\\')
+            _G.result = vim.wait(3000, function()
+              local expected = '\027]11;?'
+              return _G.sequence == expected and _G.v_termrequest == expected
+            end)
+          end,
+        })
+      ]])
+      feed('i')
+      retry(nil, 4000, function()
+        eq(true, exec_lua('return _G.result'))
+      end)
+    end)
+
+    it('includes cursor position #31609', function()
+      command('autocmd! nvim.terminal TermRequest')
+      local screen = Screen.new(50, 10)
+      local term = exec_lua([[
+        _G.cursor = {}
+        local term = vim.api.nvim_open_term(0, {})
+        vim.api.nvim_create_autocmd('TermRequest', {
+          callback = function(args)
+            _G.cursor = args.data.cursor
+          end
+        })
+        return term
+      ]])
+      -- Enter terminal mode so that the cursor follows the output
+      feed('a')
+
+      -- Put some lines into the scrollback. This tests the conversion from terminal line to buffer
+      -- line.
+      api.nvim_chan_send(term, string.rep('>\n', 20))
+      screen:expect([[
+        >                                                 |*8
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+
+      -- Emit an OSC escape sequence
+      api.nvim_chan_send(term, 'Hello\nworld!\027]133;D\027\\')
+      screen:expect([[
+        >                                                 |*7
+        Hello                                             |
+        world!^                                            |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 22, 6 }, exec_lua('return _G.cursor'))
+    end)
+
+    it('does not cause hang in vim.wait() #32753', function()
+      local screen = Screen.new(50, 10)
+
+      exec_lua(function()
+        local term = vim.api.nvim_open_term(0, {})
+
+        -- Write OSC sequence with pending scrollback. TermRequest will
+        -- reschedule itself onto an event queue until the pending scrollback is
+        -- processed (i.e. the terminal is refreshed).
+        vim.api.nvim_chan_send(term, string.format('%s\027]133;;\007', string.rep('a\n', 100)))
+
+        -- vim.wait() drains the event queue. The terminal won't be refreshed
+        -- until the event queue is empty. This test ensures that TermRequest
+        -- does not continuously reschedule itself onto the same event queue,
+        -- causing an infinite loop.
+        vim.wait(100)
+      end)
+
+      screen:expect([[
+        ^a                                                 |
+        a                                                 |*8
+                                                          |
+      ]])
+    end)
   end)
 
   it('no heap-buffer-overflow when using jobstart("echo",{term=true}) #3161', function()

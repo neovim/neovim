@@ -1,7 +1,7 @@
 " Tests for the sha256() function.
 
 source check.vim
-CheckFeature cryptv
+" CheckFeature cryptv
 CheckFunction sha256
 
 function Test_sha256()

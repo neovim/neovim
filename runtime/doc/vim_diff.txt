@@ -34,7 +34,8 @@ Defaults                                            *defaults* *nvim-defaults*
   looking differently due to them relying on how highlight groups are defined
   by default. Add ":colorscheme vim" to |init.vim| or
   ":source $VIMRUNTIME/colors/vim.lua" to your color scheme file to restore
-  the old default links and colors.
+  the old default links and colors. See |:highlight| for a list of highlight
+  groups colorschemes should set.
 
 - 'autoindent' is enabled
 - 'autoread' is enabled (works in all UIs, including terminal)
@@ -45,8 +46,9 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'commentstring' defaults to ""
 - 'compatible' is always disabled
 - 'complete' excludes "i"
+- 'completeopt' defaults to "menu,popup"
 - 'define' defaults to "". The C ftplugin sets it to "^\\s*#\\s*define"
-- 'diffopt' defaults to "internal,filler,closeoff,linematch:40"
+- 'diffopt' defaults to "internal,filler,closeoff,inline:simple,linematch:40"
 - 'directory' defaults to ~/.local/state/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
@@ -77,6 +79,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'showcmd' is enabled
 - 'sidescroll' defaults to 1
 - 'smarttab' is enabled
+- 'spellfile' defaults to `stdpath("data").."/spell/"`
 - 'startofline' is disabled
 - 'switchbuf' defaults to "uselast"
 - 'tabpagemax' defaults to 50
@@ -181,7 +184,10 @@ nvim.terminal:
   when 'background' is "light". While this may not reflect the actual
   foreground/background color, it permits 'background' to be retained for a
   nested Nvim instance running in the terminal emulator.
-- TermOpen: Sets default options for |terminal| buffers:
+- TermRequest: Nvim will create extmarks for shells which
+  annotate their prompts with OSC 133 escape sequences, enabling users to
+  quickly navigate between prompts using |[[| and |]]|.
+- TermOpen: Sets default options and mappings for |terminal| buffers:
     - 'nomodifiable'
     - 'undolevels' set to -1
     - 'textwidth' set to 0
@@ -193,6 +199,7 @@ nvim.terminal:
     - 'foldcolumn' set to "0"
     - 'winhighlight' uses |hl-StatusLineTerm| and |hl-StatusLineTermNC| in
       place of |hl-StatusLine| and |hl-StatusLineNC|
+    - |[[| and |]]| to navigate between shell prompts
 
 nvim.cmdwin:
 - CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
@@ -766,8 +773,8 @@ Options:
     noremap <C-\><C-G> <C-\><C-N><Cmd>startinsert<CR>
     cnoremap <C-\><C-G> <C-\><C-N><Cmd>startinsert<CR>
     inoremap <C-\><C-G> <C-X><C-Z>
-    autocmd CmdWinEnter * noremap <buffer> <C-C> <C-C>
-    autocmd CmdWinEnter * inoremap <buffer> <C-C> <C-C>
+    autocmd CmdwinEnter * noremap <buffer> <C-C> <C-C>
+    autocmd CmdwinEnter * inoremap <buffer> <C-C> <C-C>
 
     lua << EOF
       vim.on_key(function(c)

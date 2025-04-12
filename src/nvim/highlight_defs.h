@@ -93,6 +93,7 @@ typedef enum {
   HLF_CHD,        ///< Changed diff line
   HLF_DED,        ///< Deleted diff line
   HLF_TXD,        ///< Text Changed in diff line
+  HLF_TXA,        ///< Text Added in changed diff line
   HLF_SC,         ///< Sign column
   HLF_CONCEAL,    ///< Concealed text
   HLF_SPB,        ///< SpellBad

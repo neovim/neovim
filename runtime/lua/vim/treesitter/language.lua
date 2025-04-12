@@ -168,12 +168,16 @@ end
 
 --- Inspects the provided language.
 ---
---- Inspecting provides some useful information on the language like node and field names, ABI
---- version, and whether the language came from a WASM module.
+--- Inspecting provides some useful information on the language like ABI version, parser state count
+--- (a measure of parser complexity), node and field names, and whether the language came from a
+--- WASM module.
 ---
 --- Node names are returned in a table mapping each node name to a `boolean` indicating whether or
 --- not the node is named (i.e., not anonymous). Anonymous nodes are surrounded with double quotes
 --- (`"`).
+---
+--- For ABI 15 parsers, also show parser metadata (major, minor, patch version) and a table of
+--- supertypes with their respective subtypes.
 ---
 ---@param lang string Language
 ---@return TSLangInfo

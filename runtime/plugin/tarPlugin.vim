@@ -38,6 +38,7 @@ augroup tar
   au BufReadCmd   *.lrp			call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar			call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.bz2		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar.bz3		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.gz		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.lz4		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.lzma		call tar#Browse(expand("<amatch>"))

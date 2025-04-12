@@ -961,7 +961,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
         break;
       }
     }
-    if (msg_col) {
+    if (msg_col && (!ui_has(kUIMessages) || i < num_matches - 1)) {
       msg_putchar('\n');
     }
     os_breakcheck();
@@ -2986,6 +2986,8 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
       secure = 1;
       sandbox++;
       curwin->w_cursor.lnum = 1;  // start command in line 1
+      curwin->w_cursor.col = 0;
+      curwin->w_cursor.coladd = 0;
       do_cmdline_cmd(pbuf);
       retval = OK;
 

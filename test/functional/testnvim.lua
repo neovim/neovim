@@ -366,7 +366,7 @@ end
 --- @param ... string
 function M.feed(...)
   for _, v in ipairs({ ... }) do
-    nvim_feed(dedent(v))
+    nvim_feed(v)
   end
 end
 
@@ -609,16 +609,19 @@ function M._new_argv(...)
   return args, env, io_extra
 end
 
+--- Dedents string arguments and inserts the resulting text into the current buffer.
 --- @param ... string
 function M.insert(...)
   nvim_feed('i')
   for _, v in ipairs({ ... }) do
     local escaped = v:gsub('<', '<lt>')
-    M.feed(escaped)
+    nvim_feed(dedent(escaped))
   end
   nvim_feed('<ESC>')
 end
 
+--- @deprecated Use `command()` or `feed()` instead.
+---
 --- Executes an ex-command by user input. Because nvim_input() is used, Vimscript
 --- errors will not manifest as client (lua) errors. Use command() for that.
 --- @param ... string
@@ -639,7 +642,7 @@ function M.source(code)
 end
 
 function M.has_powershell()
-  return M.eval('executable("' .. (is_os('win') and 'powershell' or 'pwsh') .. '")') == 1
+  return M.eval('executable("pwsh")') == 1
 end
 
 --- Sets Nvim shell to powershell.
@@ -652,7 +655,7 @@ function M.set_shell_powershell(fake)
   if not fake then
     assert(found)
   end
-  local shell = found and (is_os('win') and 'powershell' or 'pwsh') or M.testprg('pwsh-test')
+  local shell = found and 'pwsh' or M.testprg('pwsh-test')
   local cmd = 'Remove-Item -Force '
     .. table.concat(
       is_os('win') and { 'alias:cat', 'alias:echo', 'alias:sleep', 'alias:sort', 'alias:tee' }
@@ -668,7 +671,7 @@ function M.set_shell_powershell(fake)
     let &shellcmdflag .= '$PSDefaultParameterValues[''Out-File:Encoding'']=''utf8'';'
     let &shellcmdflag .= ']] .. cmd .. [['
     let &shellredir = '2>&1 | %%{ "$_" } | Out-File %s; exit $LastExitCode'
-    let &shellpipe  = '2>&1 | %%{ "$_" } | tee %s; exit $LastExitCode'
+    let &shellpipe  = '> %s 2>&1'
   ]])
   return found
 end
@@ -812,6 +815,7 @@ function M.rmdir(path)
   end
 end
 
+--- @deprecated Use `t.pcall_err()` to check failure, or `n.command()` to check success.
 function M.exc_exec(cmd)
   M.command(([[
     try
@@ -901,11 +905,6 @@ end
 function M.testprg(name)
   local ext = is_os('win') and '.exe' or ''
   return ('%s/%s%s'):format(M.nvim_dir, name, ext)
-end
-
-function M.is_asan()
-  local version = M.eval('execute("verbose version")')
-  return version:match('-fsanitize=[a-z,]*address')
 end
 
 --- Returns a valid, platform-independent Nvim listen address.

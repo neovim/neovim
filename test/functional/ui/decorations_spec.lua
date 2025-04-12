@@ -15,8 +15,28 @@ local eq = t.eq
 local assert_alive = n.assert_alive
 local pcall_err = t.pcall_err
 
+--- @return integer
+local function setup_provider(code)
+  return exec_lua ([[
+    local api = vim.api
+    _G.ns1 = api.nvim_create_namespace "ns1"
+  ]] .. (code or [[
+    beamtrace = {}
+    local function on_do(kind, ...)
+      table.insert(beamtrace, {kind, ...})
+    end
+  ]]) .. [[
+    api.nvim_set_decoration_provider(_G.ns1, {
+      on_start = on_do; on_buf = on_do;
+      on_win = on_do; on_line = on_do;
+      on_end = on_do; _on_spell_nav = on_do;
+    })
+    return _G.ns1
+  ]])
+end
+
 describe('decorations providers', function()
-  local screen
+  local screen ---@type test.functional.ui.screen
   before_each(function()
     clear()
     screen = Screen.new(40, 8)
@@ -51,25 +71,6 @@ describe('decorations providers', function()
     switch_buffer(&save_buf, buf);
     posp = getmark(mark, false);
     restore_buffer(&save_buf); ]]
-
-  local function setup_provider(code)
-    return exec_lua ([[
-      local api = vim.api
-      _G.ns1 = api.nvim_create_namespace "ns1"
-    ]] .. (code or [[
-      beamtrace = {}
-      local function on_do(kind, ...)
-        table.insert(beamtrace, {kind, ...})
-      end
-    ]]) .. [[
-      api.nvim_set_decoration_provider(_G.ns1, {
-        on_start = on_do; on_buf = on_do;
-        on_win = on_do; on_line = on_do;
-        on_end = on_do; _on_spell_nav = on_do;
-      })
-      return _G.ns1
-    ]])
-  end
 
   local function check_trace(expected)
     local actual = exec_lua [[ local b = beamtrace beamtrace = {} return b ]]
@@ -757,27 +758,6 @@ describe('decorations providers', function()
     ]])
   end)
 
-  it('errors gracefully', function()
-    insert(mulholland)
-
-    setup_provider [[
-    function on_do(...)
-      error "Foo"
-    end
-    ]]
-
-    screen:expect{grid=[[
-      {2:Error in decoration provider ns1.start:} |
-      {2:Error executing lua: [string "<nvim>"]:4}|
-      {2:: Foo}                                   |
-      {2:stack traceback:}                        |
-      {2:        [C]: in function 'error'}        |
-      {2:        [string "<nvim>"]:4: in function}|
-      {2: <[string "<nvim>"]:3>}                  |
-      {18:Press ENTER or type command to continue}^ |
-    ]]}
-  end)
-
   it('can add new providers during redraw #26652', function()
     setup_provider [[
     local ns = api.nvim_create_namespace('test_no_add')
@@ -831,6 +811,79 @@ describe('decorations providers', function()
                                               |
     ]])
   end)
+
+  it('inline virt_text does not result in wrong cursor column #33153', function()
+    insert("line1 with a lot of text\nline2 with a lot of text")
+    setup_provider([[
+      _G.do_win = false
+      vim.keymap.set('n', 'f', function()
+        _G.do_win = true
+        vim.cmd('redraw!')
+      end)
+      vim.o.concealcursor = 'n'
+      function on_do(event)
+        if event == 'win' and _G.do_win then
+          vim.api.nvim_buf_set_extmark(0, ns1, 1, 0, {
+            virt_text = { { 'virt_text ' } },
+            virt_text_pos = 'inline'
+          })
+        end
+      end
+    ]])
+    feed('f')
+    screen:expect([[
+      line1 with a lot of text                |
+      virt_text line2 with a lot of tex^t      |
+      {1:~                                       }|*5
+                                              |
+    ]])
+  end)
+
+  it('decor provider is enabled again for next redraw after on_win disabled it', function()
+    exec_lua(function()
+      vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace(''), {
+        on_win = function()
+          return false
+        end,
+        on_buf = function()
+          _G.did_buf = (_G.did_buf or 0) + 1
+        end,
+      })
+    end)
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'foo' })
+    screen:expect([[
+      ^foo                                     |
+      {1:~                                       }|*6
+                                              |
+    ]])
+    eq(1, exec_lua('return _G.did_buf'))
+  end)
+end)
+
+describe('decoration_providers', function()
+  it('errors and logs gracefully', function()
+    local testlog = 'Xtest_decorations_log'
+    clear({ env = { NVIM_LOG_FILE = testlog } })
+    local screen = Screen.new(65, 7)
+    setup_provider([[
+      function on_do(...)
+        error "Foo"
+      end
+    ]])
+    screen:expect([[
+      {3:                                                                 }|
+      {9:Error in decoration provider "start" (ns=ns1):}                   |
+      {9:Error executing lua: [string "<nvim>"]:4: Foo}                    |
+      {9:stack traceback:}                                                 |
+      {9:        [C]: in function 'error'}                                 |
+      {9:        [string "<nvim>"]:4: in function <[string "<nvim>"]:3>}   |
+      {6:Press ENTER or type command to continue}^                          |
+    ]])
+    t.assert_log('Error in decoration provider "start" %(ns=ns1%):', testlog, 100)
+    t.assert_log('Error executing lua: %[string "<nvim>"%]:4: Foo', testlog, 100)
+    n.check_close()
+    os.remove(testlog)
+  end)
 end)
 
 local example_text = [[
@@ -848,7 +901,8 @@ for _,item in ipairs(items) do
 end]]
 
 describe('extmark decorations', function()
-  local screen, ns
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
   before_each( function()
     clear()
     screen = Screen.new(50, 15)
@@ -2232,7 +2286,7 @@ describe('extmark decorations', function()
 
     eq({ { 1, 0, 8, { end_col = 13, end_right_gravity = false, end_row = 0,
                        hl_eol = false, hl_group = "NonText", undo_restore = false,
-                       ns_id = 1, priority = 4096, right_gravity = true } } },
+                       ns_id = ns, priority = 4096, right_gravity = true } } },
        api.nvim_buf_get_extmarks(0, ns, {0,0}, {0, -1}, {details=true}))
   end)
 
@@ -2625,10 +2679,382 @@ describe('extmark decorations', function()
                                                         |
     ]])
   end)
+
+  it ('conceal_lines', function()
+    insert(example_text)
+    exec('set number conceallevel=3')
+    feed('ggj')
+    local not_concealed = {
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  2 }^    local text, hl_id_cell, count = unpack(ite|
+        {2:    }m)                                            |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  4 }        hl_id = hl_id_cell                    |
+        {2:  5 }    end                                       |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|
+                                                          |
+      ]]
+    }
+    screen:expect(not_concealed)
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { conceal_lines = "" })
+    screen:expect_unchanged()
+    feed('j')
+    local concealed = {
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }^    if hl_id_cell ~= nil then                 |
+        {2:  4 }        hl_id = hl_id_cell                    |
+        {2:  5 }    end                                       |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*3
+                                                          |
+      ]]
+    }
+    screen:expect(concealed)
+    feed('k')
+    screen:expect(not_concealed)
+    exec('set concealcursor=n')
+    screen:expect(concealed)
+    api.nvim_buf_set_extmark(0, ns, 3, 0, { conceal_lines = "" })
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }^    if hl_id_cell ~= nil then                 |
+        {2:  5 }    end                                       |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*4
+                                                          |
+      ]]
+    })
+    feed('kjj')
+    screen:expect_unchanged()
+    api.nvim_buf_set_extmark(0, ns, 4, 0, { conceal_lines = "" })
+    feed('kjjjC')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  5 }^                                              |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*4
+        {24:-- INSERT --}                                      |
+      ]]
+    })
+    feed('<esc>')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  6 }^    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*5
+                                                          |
+      ]]
+    })
+    feed('kji')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  5 }^                                              |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*4
+        {24:-- INSERT --}                                      |
+      ]]
+    })
+    feed('conceal text')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  5 }conceal text^                                  |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*4
+        {24:-- INSERT --}                                      |
+      ]]
+    })
+    feed('<esc>')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  6 }    for _ =^ 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*5
+                                                          |
+      ]]
+    })
+    feed('ggzfj')
+    screen:expect({
+      grid = [[
+        {2:  1 }{33:^+--  2 lines: for _,item in ipairs(items) do··}|
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*5
+                                                          |
+      ]]
+    })
+    feed('j')
+    screen:expect({
+      grid = [[
+        {2:  1 }{33:+--  2 lines: for _,item in ipairs(items) do··}|
+        {2:  3 }^    if hl_id_cell ~= nil then                 |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*5
+                                                          |
+      ]]
+    })
+    feed('ggzdjzfj')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  6 }^    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*6
+                                                          |
+      ]]
+    })
+    feed('jj')
+    screen:expect({
+      grid = [[
+        {2:  1 }^for _,item in ipairs(items) do                |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*6
+                                                          |
+      ]]
+    })
+    -- Below virtual line belonging to line above concealed line is drawn.
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines = { { { 'line 1 below' } } } })
+    -- Above virtual line belonging to concealed line isn't.
+    api.nvim_buf_set_extmark(0, ns, 1, 0, {
+      virt_lines = { { { 'line 2 above' } } },
+      virt_lines_above = true
+    })
+    screen:expect([[
+      {2:  1 }for _,item in ipairs(items) do                |
+      {2:    }line 1 below                                  |
+      {2:  6 }^    for _ = 1, (count or 1) do                |
+      {2:  7 }        local cell = line[colpos]             |
+      {2:  8 }        cell.text = text                      |
+      {2:  9 }        cell.hl_id = hl_id                    |
+      {2: 10 }        colpos = colpos+1                     |
+      {2: 11 }    end                                       |
+      {2: 12 }end                                           |
+      {1:~                                                 }|*5
+                                                        |
+    ]])
+    -- w_lines.wl_lastlnum values are valid
+    command('set relativenumber concealcursor=')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { conceal_lines = "" })
+    api.nvim_buf_set_extmark(0, ns, 4, 0, { conceal_lines = "" })
+    feed('zE')
+    screen:expect([[
+      {2:  4 }for _,item in ipairs(items) do                |
+      {2:  2 }    if hl_id_cell ~= nil then                 |
+      {2:  1 }        hl_id = hl_id_cell                    |
+      {2:5   }^conceal text                                  |
+      {2:  1 }    for _ = 1, (count or 1) do                |
+      {2:  2 }        local cell = line[colpos]             |
+      {2:  3 }        cell.text = text                      |
+      {2:  4 }        cell.hl_id = hl_id                    |
+      {2:  5 }        colpos = colpos+1                     |
+      {2:  6 }    end                                       |
+      {2:  7 }end                                           |
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('jj')
+    screen:expect([[
+      {2:  6 }for _,item in ipairs(items) do                |
+      {2:  4 }    if hl_id_cell ~= nil then                 |
+      {2:  3 }        hl_id = hl_id_cell                    |
+      {2:  1 }    for _ = 1, (count or 1) do                |
+      {2:7   }^        local cell = line[colpos]             |
+      {2:  1 }        cell.text = text                      |
+      {2:  2 }        cell.hl_id = hl_id                    |
+      {2:  3 }        colpos = colpos+1                     |
+      {2:  4 }    end                                       |
+      {2:  5 }end                                           |
+      {1:~                                                 }|*4
+                                                        |
+    ]])
+    -- Also with above virtual line #32744
+    command('set nornu')
+    api.nvim_buf_set_extmark(0, ns, 3, 0, { virt_lines = { { { "virt_below 4" } } } })
+    feed('6G')
+    screen:expect([[
+      {2:  1 }for _,item in ipairs(items) do                |
+      {2:  3 }    if hl_id_cell ~= nil then                 |
+      {2:  4 }        hl_id = hl_id_cell                    |
+      {2:    }virt_below 4                                  |
+      {2:  6 }    ^for _ = 1, (count or 1) do                |
+      {2:  7 }        local cell = line[colpos]             |
+      {2:  8 }        cell.text = text                      |
+      {2:  9 }        cell.hl_id = hl_id                    |
+      {2: 10 }        colpos = colpos+1                     |
+      {2: 11 }    end                                       |
+      {2: 12 }end                                           |
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('j')
+    screen:expect([[
+      {2:  1 }for _,item in ipairs(items) do                |
+      {2:  3 }    if hl_id_cell ~= nil then                 |
+      {2:  4 }        hl_id = hl_id_cell                    |
+      {2:    }virt_below 4                                  |
+      {2:  6 }    for _ = 1, (count or 1) do                |
+      {2:  7 }    ^    local cell = line[colpos]             |
+      {2:  8 }        cell.text = text                      |
+      {2:  9 }        cell.hl_id = hl_id                    |
+      {2: 10 }        colpos = colpos+1                     |
+      {2: 11 }    end                                       |
+      {2: 12 }end                                           |
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    -- Even when virtual line is added as line is concealed #32762
+    feed('5G')
+    api.nvim_buf_clear_namespace(0, ns, 3, 4)
+    feed('j')
+    api.nvim_buf_set_extmark(0, ns, 3, 0, { virt_lines = { { { "virt_below 4" } } } })
+    screen:expect([[
+      {2:  1 }for _,item in ipairs(items) do                |
+      {2:  3 }    if hl_id_cell ~= nil then                 |
+      {2:  4 }        hl_id = hl_id_cell                    |
+      {2:    }virt_below 4                                  |
+      {2:  6 }^    for _ = 1, (count or 1) do                |
+      {2:  7 }        local cell = line[colpos]             |
+      {2:  8 }        cell.text = text                      |
+      {2:  9 }        cell.hl_id = hl_id                    |
+      {2: 10 }        colpos = colpos+1                     |
+      {2: 11 }    end                                       |
+      {2: 12 }end                                           |
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    -- No scrolling for concealed topline #33033
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_lines_above = true, virt_lines = { { { "virt_above 2" } } } })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { conceal_lines = "" })
+    feed('ggjj')
+    screen:expect([[
+      {2:    }virt_above 2                                  |
+      {2:  2 }    local text, hl_id_cell, count = unpack(ite|
+      {2:    }m)                                            |
+      {2:  3 }^    if hl_id_cell ~= nil then                 |
+      {2:  4 }        hl_id = hl_id_cell                    |
+      {2:  5 }conceal text                                  |
+      {2:  6 }    for _ = 1, (count or 1) do                |
+      {2:  7 }        local cell = line[colpos]             |
+      {2:  8 }        cell.text = text                      |
+      {2:  9 }        cell.hl_id = hl_id                    |
+      {2: 10 }        colpos = colpos+1                     |
+      {2: 11 }    end                                       |
+      {2: 12 }end                                           |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    -- No asymmetric topline for <C-E><C-Y> #33182
+    feed('4<C-E>')
+    exec('set concealcursor=n')
+    api.nvim_buf_set_extmark(0, ns, 4, 0, { conceal_lines = "" })
+    eq(5, n.fn.line('w0'))
+    feed('<C-E><C-Y>')
+    eq(5, n.fn.line('w0'))
+  end)
+
+  it('redraws the line from which a left gravity mark has moved #27369', function()
+    fn.setline(1, {'aaa', 'bbb', 'ccc', 'ddd' })
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_text = {{'foo'}}, right_gravity = false })
+    feed('yyp')
+    screen:expect([[
+      aaa                                               |
+      ^aaa foo                                           |
+      bbb                                               |
+      ccc                                               |
+      ddd                                               |
+      {1:~                                                 }|*9
+                                                        |
+    ]])
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
-  local screen, ns
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
   before_each( function()
     clear()
     screen = Screen.new(50, 3)
@@ -4349,6 +4775,67 @@ describe('decorations: inline virtual text', function()
     ]])
   end)
 
+  it('is redrawn correctly after delete or redo #27370', function()
+    screen:try_resize(50, 12)
+    exec([[
+      call setline(1, ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff'])
+      call setline(3, repeat('c', winwidth(0) - 1))
+    ]])
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_text = { { '!!!' } }, virt_text_pos = 'inline' })
+    feed('j')
+    local before_delete = [[
+      aaa                                               |
+      !!!^bbb                                            |
+      ccccccccccccccccccccccccccccccccccccccccccccccccc |
+      ddd                                               |
+      eee                                               |
+      fff                                               |
+      {1:~                                                 }|*5
+                                                        |
+    ]]
+    screen:expect(before_delete)
+    feed('dd')
+    local after_delete = [[
+      aaa                                               |
+      !!!^ccccccccccccccccccccccccccccccccccccccccccccccc|
+      cc                                                |
+      ddd                                               |
+      eee                                               |
+      fff                                               |
+      {1:~                                                 }|*5
+                                                        |
+    ]]
+    screen:expect(after_delete)
+    command('silent undo')
+    screen:expect(before_delete)
+    command('silent redo')
+    screen:expect(after_delete)
+    command('silent undo')
+    screen:expect(before_delete)
+    command('set report=100')
+    feed('yypk2P')
+    before_delete = [[
+      aaa                                               |
+      ^bbb                                               |
+      bbb                                               |
+      !!!bbb                                            |
+      bbb                                               |
+      ccccccccccccccccccccccccccccccccccccccccccccccccc |
+      ddd                                               |
+      eee                                               |
+      fff                                               |
+      {1:~                                                 }|*2
+                                                        |
+    ]]
+    screen:expect(before_delete)
+    feed('4dd')
+    screen:expect(after_delete)
+    command('silent undo')
+    screen:expect(before_delete)
+    command('silent redo')
+    screen:expect(after_delete)
+  end)
+
   it('cursor position is correct with invalidated inline virt text', function()
     screen:try_resize(50, 8)
     api.nvim_buf_set_lines(0, 0, -1, false, { ('a'):rep(48), ('b'):rep(48) })
@@ -4370,7 +4857,9 @@ describe('decorations: inline virtual text', function()
 end)
 
 describe('decorations: virtual lines', function()
-  local screen, ns
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
+
   before_each(function()
     clear()
     screen = Screen.new(50, 12)
@@ -5427,7 +5916,9 @@ if (h->n_buckets < new_n_buckets) { // expand
 end)
 
 describe('decorations: signs', function()
-  local screen, ns
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
+
   before_each(function()
     clear()
     screen = Screen.new(50, 10)
@@ -6034,26 +6525,45 @@ l5
       ]]
     })
   end)
+
+  it('signcolumn correctly tracked with signs beyond eob and pair end before start', function()
+    api.nvim_set_option_value('signcolumn', 'auto:2', {})
+    api.nvim_set_option_value('filetype', 'lua', {})
+    api.nvim_buf_set_lines(0, 0, -1, false, {'foo', 'bar'})
+    api.nvim_buf_set_extmark(0, ns, 2, 0, {sign_text='S1'})
+    api.nvim_set_hl(0, 'SignColumn', { link = 'Error' })
+    screen:expect([[
+      ^foo                                               |
+      bar                                               |
+      {1:~                                                 }|*7
+                                                        |
+    ]])
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text='S2', end_row = 1})
+    api.nvim_buf_set_lines(0, 0, -1, false, {'-- foo', '-- bar'})
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    screen:expect([[
+      ^-- foo                                            |
+      -- bar                                            |
+      {1:~                                                 }|*7
+                                                        |
+    ]])
+    assert_alive()
+  end)
 end)
 
 describe('decorations: virt_text', function()
-  local screen
+  local ns, screen ---@type integer, test.functional.ui.screen
 
   before_each(function()
     clear()
     screen = Screen.new(50, 10)
+    ns = api.nvim_create_namespace('test')
   end)
 
   it('avoids regression in #17638', function()
-    exec_lua[[
-      vim.wo.number = true
-      vim.wo.relativenumber = true
-    ]]
-
+    command 'set number relativenumber'
     command 'normal 4ohello'
     command 'normal aVIRTUAL'
-
-    local ns = api.nvim_create_namespace('test')
 
     api.nvim_buf_set_extmark(0, ns, 2, 0, {
       virt_text = {{"hello", "String"}},
@@ -6095,7 +6605,6 @@ describe('decorations: virt_text', function()
                                                         |
     ]]}
 
-    local ns = api.nvim_create_namespace('ns')
     for row = 1, 5 do
       api.nvim_buf_set_extmark(0, ns, row, 0, { id = 1, virt_text = {{'world', 'Normal'}} })
     end
@@ -6108,10 +6617,37 @@ describe('decorations: virt_text', function()
                                                         |
     ]]}
   end)
+
+  it('redraws correctly when removing mark whose end ends up in front of start', function()
+    command('normal 5ohello')
+    api.nvim_buf_set_extmark(0, ns, 2, 0, { end_col = 1, virt_text = {{'world', 'Normal'}} })
+    screen:expect([[
+                                                        |
+      hello                                             |
+      hello world                                       |
+      hello                                             |*2
+      hell^o                                             |
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('3Gdd')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    screen:expect([[
+                                                        |
+      hello                                             |
+      ^hello                                             |
+      hello                                             |*2
+      {1:~                                                 }|*4
+                                                        |
+    ]])
+  end)
 end)
 
 describe('decorations: window scoped', function()
-  local screen, ns, win_other
+  local screen ---@type test.functional.ui.screen
+  local ns ---@type integer
+  local win_other ---@type integer
+
   local url = 'https://example.com'
   before_each(function()
     clear()
@@ -6456,4 +6992,3 @@ describe('decorations: window scoped', function()
     eq({ wins = {} }, api.nvim__ns_get(ns))
   end)
 end)
-

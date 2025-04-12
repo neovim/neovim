@@ -30,6 +30,7 @@
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/pos_defs.h"
+#include "nvim/runtime.h"
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -471,7 +472,7 @@ int64_t normalize_index(buf_T *buf, int64_t index, bool end_exclusive, bool *oob
 
 /// Returns a substring of a buffer line
 ///
-/// @param buf          Buffer handle
+/// @param buf          Buffer id
 /// @param lnum         Line number (1-based)
 /// @param start_col    Starting byte offset into line (0-based)
 /// @param end_col      Ending byte offset into line (0-based, exclusive)
@@ -1049,32 +1050,26 @@ const char *get_default_stl_hl(win_T *wp, bool use_winbar, int stc_hl_id)
   }
 }
 
-int find_sid(uint64_t channel_id)
-{
-  switch (channel_id) {
-  case VIML_INTERNAL_CALL:
-  // TODO(autocmd): Figure out what this should be
-  // return SID_API_CLIENT;
-  case LUA_INTERNAL_CALL:
-    return SID_LUA;
-  default:
-    return SID_API_CLIENT;
-  }
-}
-
 /// Sets sctx for API calls.
 ///
-/// @param channel_id     api clients id. Used to determine if it's a internal
-///                       call or a rpc call.
-/// @return returns       previous value of current_sctx. To be used
-///                       to be used for restoring sctx to previous state.
+/// @param channel_id  api client id to determine if it's a internal or RPC call.
+///
+/// @return  previous value of current_sctx. To be used later for restoring sctx.
 sctx_T api_set_sctx(uint64_t channel_id)
 {
   sctx_T old_current_sctx = current_sctx;
+  // The script context is already properly set when calling an API from Vimscript.
   if (channel_id != VIML_INTERNAL_CALL) {
-    current_sctx.sc_sid =
-      channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
     current_sctx.sc_lnum = 0;
+    if (channel_id == LUA_INTERNAL_CALL) {
+      // When the current script is a Lua script, don't override sc_sid.
+      if (!script_is_lua(current_sctx.sc_sid)) {
+        current_sctx.sc_sid = SID_LUA;
+      }
+    } else {
+      current_sctx.sc_sid = SID_API_CLIENT;
+      current_sctx.sc_chan = channel_id;
+    }
   }
   return old_current_sctx;
 }

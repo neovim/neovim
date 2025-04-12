@@ -661,7 +661,7 @@ String nvim_get_current_line(Arena *arena, Error *err)
   return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, arena, err);
 }
 
-/// Sets the current line.
+/// Sets the text on the current line.
 ///
 /// @param line     Line contents
 /// @param[out] err Error details, if any
@@ -790,12 +790,12 @@ error:
   hl_msg_free(hl_msg);
 }
 
-/// Gets the current list of buffer handles
+/// Gets the current list of buffers.
 ///
 /// Includes unlisted (unloaded/deleted) buffers, like `:ls!`.
 /// Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
 ///
-/// @return List of buffer handles
+/// @return List of buffer ids
 ArrayOf(Buffer) nvim_list_bufs(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -816,16 +816,16 @@ ArrayOf(Buffer) nvim_list_bufs(Arena *arena)
 
 /// Gets the current buffer.
 ///
-/// @return Buffer handle
+/// @return Buffer id
 Buffer nvim_get_current_buf(void)
   FUNC_API_SINCE(1)
 {
   return curbuf->handle;
 }
 
-/// Sets the current buffer.
+/// Sets the current window's buffer to `buffer`.
 ///
-/// @param buffer   Buffer handle
+/// @param buffer   Buffer id
 /// @param[out] err Error details, if any
 void nvim_set_current_buf(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
@@ -842,9 +842,9 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
   });
 }
 
-/// Gets the current list of window handles.
+/// Gets the current list of all |window-ID|s in all tabpages.
 ///
-/// @return List of window handles
+/// @return List of |window-ID|s
 ArrayOf(Window) nvim_list_wins(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -865,16 +865,16 @@ ArrayOf(Window) nvim_list_wins(Arena *arena)
 
 /// Gets the current window.
 ///
-/// @return Window handle
+/// @return |window-ID|
 Window nvim_get_current_win(void)
   FUNC_API_SINCE(1)
 {
   return curwin->handle;
 }
 
-/// Sets the current window.
+/// Sets the current window (and tabpage, implicitly).
 ///
-/// @param window Window handle
+/// @param window |window-ID| to focus
 /// @param[out] err Error details, if any
 void nvim_set_current_win(Window window, Error *err)
   FUNC_API_SINCE(1)
@@ -897,7 +897,7 @@ void nvim_set_current_win(Window window, Error *err)
 /// @param scratch Creates a "throwaway" |scratch-buffer| for temporary work
 ///                (always 'nomodified'). Also sets 'nomodeline' on the buffer.
 /// @param[out] err Error details, if any
-/// @return Buffer handle, or 0 on error
+/// @return Buffer id, or 0 on error
 ///
 /// @see buf_open_scratch
 Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
@@ -1106,9 +1106,9 @@ void nvim_chan_send(Integer chan, String data, Error *err)
   VALIDATE(!error, "%s", error, {});
 }
 
-/// Gets the current list of tabpage handles.
+/// Gets the current list of |tab-ID|s.
 ///
-/// @return List of tabpage handles
+/// @return List of |tab-ID|s
 ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
   FUNC_API_SINCE(1)
 {
@@ -1129,7 +1129,7 @@ ArrayOf(Tabpage) nvim_list_tabpages(Arena *arena)
 
 /// Gets the current tabpage.
 ///
-/// @return Tabpage handle
+/// @return |tab-ID|
 Tabpage nvim_get_current_tabpage(void)
   FUNC_API_SINCE(1)
 {
@@ -1138,7 +1138,7 @@ Tabpage nvim_get_current_tabpage(void)
 
 /// Sets the current tabpage.
 ///
-/// @param tabpage  Tabpage handle
+/// @param tabpage  |tab-ID| to focus
 /// @param[out] err Error details, if any
 void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
@@ -1985,8 +1985,7 @@ Array nvim_get_mark(String name, Dict(empty) *opts, Arena *arena, Error *err)
 ///                     the "highlights" key in {opts} is true. Each element of the array is a
 ///                     |Dict| with these keys:
 ///           - start: (number) Byte index (0-based) of first character that uses the highlight.
-///           - group: (string) Name of highlight group. May be removed in the future, use
-///           `groups` instead.
+///           - group: (string) Deprecated. Use `groups` instead.
 ///           - groups: (array) Names of stacked highlight groups (highest priority last).
 Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(8) FUNC_API_FAST

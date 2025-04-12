@@ -494,9 +494,8 @@ function Screen:expect(expected, attr_ids, ...)
 
   local expected_rows = {} --- @type string[]
   if grid then
-    -- Remove the last line and dedent. Note that gsub returns more then one
-    -- value.
-    grid = dedent(grid:gsub('\n[ ]+$', ''), 0)
+    -- Dedent (ignores last line if it is blank).
+    grid = dedent(grid, 0)
     for row in grid:gmatch('[^\n]+') do
       table.insert(expected_rows, row)
     end
@@ -974,6 +973,10 @@ function Screen:_reset()
   self.wildmenu_items = nil
   self.wildmenu_pos = nil
   self._grid_win_extmarks = {}
+  self.msg_grid = nil
+  self.msg_grid_pos = nil
+  self.msg_scrolled = false
+  self.msg_sep_char = nil
 end
 
 --- @param cursor_style_enabled boolean

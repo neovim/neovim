@@ -212,6 +212,37 @@ func Test_wildmenu_screendump()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_wildmenu_with_input_func()
+  CheckScreendump
+
+  let buf = RunVimInTerminal('-c "set wildmenu"', {'rows': 8})
+
+  call term_sendkeys(buf, ":call input('Command? ', '', 'command')\<CR>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_1', {})
+  call term_sendkeys(buf, "ech\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_2', {})
+  call term_sendkeys(buf, "\<Space>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_3', {})
+  call term_sendkeys(buf, "bufn\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_4', {})
+  call term_sendkeys(buf, "\<CR>")
+
+  call term_sendkeys(buf, ":set wildoptions+=pum\<CR>")
+
+  call term_sendkeys(buf, ":call input('Command? ', '', 'command')\<CR>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_5', {})
+  call term_sendkeys(buf, "ech\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_6', {})
+  call term_sendkeys(buf, "\<Space>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_7', {})
+  call term_sendkeys(buf, "bufn\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_input_func_8', {})
+  call term_sendkeys(buf, "\<CR>")
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_redraw_in_autocmd()
   CheckScreendump
 
@@ -2168,22 +2199,58 @@ func Wildmode_tests()
   call assert_equal('AAA    AAAA   AAAAA', g:Sline)
   call assert_equal('"b A', @:)
 
+  " When 'wildmenu' is not set, 'noselect' completes first item
+  set wildmode=noselect
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+
+  " When 'noselect' is present, do not complete first <tab>.
+  set wildmenu
+  set wildmode=noselect
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-Y>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+
+  " When 'full' is present, complete after first <tab>.
+  set wildmode=noselect,full
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+  call feedkeys(":MyCmd o\t\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneB', @:)
+  call feedkeys(":MyCmd o\t\t\t\<C-Y>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneB', @:)
+
+  " 'noselect' has no effect when 'longest' is present.
+  set wildmode=noselect:longest
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd one', @:)
+
+  " Complete 'noselect' value in 'wildmode' option
+  set wildmode&
+  call feedkeys(":set wildmode=n\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set wildmode=noselect', @:)
+  call feedkeys(":set wildmode=\t\t\t\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set wildmode=noselect', @:)
+
   " when using longest completion match, matches shorter than the argument
   " should be ignored (happens with :help)
   set wildmode=longest,full
-  set wildmenu
   call feedkeys(":help a*\t\<C-B>\"\<CR>", 'xt')
   call assert_equal('"help a', @:)
   " non existing file
   call feedkeys(":e a1b2y3z4\t\<C-B>\"\<CR>", 'xt')
   call assert_equal('"e a1b2y3z4', @:)
-  set wildmenu&
 
   " Test for longest file name completion with 'fileignorecase'
   " On MS-Windows, file names are case insensitive.
   if has('unix')
-    call writefile([], 'XTESTfoo')
-    call writefile([], 'Xtestbar')
+    call writefile([], 'XTESTfoo', 'D')
+    call writefile([], 'Xtestbar', 'D')
     set nofileignorecase
     call feedkeys(":e XT\<Tab>\<C-B>\"\<CR>", 'xt')
     call assert_equal('"e XTESTfoo', @:)
@@ -2195,9 +2262,22 @@ func Wildmode_tests()
     call feedkeys(":e Xt\<Tab>\<C-B>\"\<CR>", 'xt')
     call assert_equal('"e Xtest', @:)
     set fileignorecase&
-    call delete('XTESTfoo')
-    call delete('Xtestbar')
   endif
+
+  " If 'noselect' is present, single item menu should not insert item
+  func! T(a, c, p)
+    return "oneA"
+  endfunc
+  command! -nargs=1 -complete=custom,T MyCmd
+  set wildmode=noselect,full
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+  " 'nowildmenu' should make 'noselect' ineffective
+  set nowildmenu
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
 
   %argdelete
   delcommand MyCmd
@@ -2973,6 +3053,28 @@ func Test_wildmenu_pum_rightleft()
   call term_sendkeys(buf, ":sign \<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_rl', {})
 
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test highlighting when pattern matches non-first character of item
+func Test_wildmenu_pum_hl_nonfirst()
+  CheckScreendump
+  let lines =<< trim END
+    set wildoptions=pum wildchar=<tab> wildmode=noselect,full
+    hi PmenuMatchSel  ctermfg=6 ctermbg=7
+    hi PmenuMatch     ctermfg=4 ctermbg=225
+    func T(a, c, p)
+      return ["oneA", "o neBneB", "aoneC"]
+    endfunc
+    command -nargs=1 -complete=customlist,T MyCmd
+  END
+
+  call writefile(lines, 'Xwildmenu_pum_hl_nonf', 'D')
+  let buf = RunVimInTerminal('-S Xwildmenu_pum_hl_nonf', #{rows: 10, cols: 50})
+
+  call term_sendkeys(buf, ":MyCmd ne\<tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_hl_match_nonf', {})
+  call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
 endfunc
 

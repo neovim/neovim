@@ -236,6 +236,7 @@ error('Cannot require a meta file')
 --- @field on_end? fun(_: "end", tick: integer)
 --- @field _on_hl_def? fun(_: "hl_def")
 --- @field _on_spell_nav? fun(_: "spell_nav")
+--- @field _on_conceal_line? fun(_: "conceal_line")
 
 --- @class vim.api.keyset.set_extmark
 --- @field id? integer
@@ -266,6 +267,7 @@ error('Cannot require a meta file')
 --- @field line_hl_group? integer|string
 --- @field cursorline_hl_group? integer|string
 --- @field conceal? string
+--- @field conceal_lines? string
 --- @field spell? boolean
 --- @field ui_watched? boolean
 --- @field undo_restore? boolean
@@ -291,9 +293,9 @@ error('Cannot require a meta file')
 --- @field col? number
 --- @field width? integer
 --- @field height? integer
---- @field anchor? string
---- @field relative? string
---- @field split? string
+--- @field anchor? 'NW'|'NE'|'SW'|'SE'
+--- @field relative? 'cursor'|'editor'|'laststatus'|'mouse'|'tabline'|'win'
+--- @field split? 'left'|'right'|'above'|'below'
 --- @field win? integer
 --- @field bufpos? integer[]
 --- @field external? boolean
@@ -301,12 +303,12 @@ error('Cannot require a meta file')
 --- @field mouse? boolean
 --- @field vertical? boolean
 --- @field zindex? integer
---- @field border? any
+--- @field border? 'none'|'single'|'double'|'rounded'|'solid'|'shadow'|string[]
 --- @field title? any
---- @field title_pos? string
+--- @field title_pos? 'center'|'left'|'right'
 --- @field footer? any
---- @field footer_pos? string
---- @field style? string
+--- @field footer_pos? 'center'|'left'|'right'
+--- @field style? 'minimal'
 --- @field noautocmd? boolean
 --- @field fixed? boolean
 --- @field hide? boolean

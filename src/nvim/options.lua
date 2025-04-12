@@ -1123,6 +1123,25 @@ local options = {
       varname = 'p_ccv',
     },
     {
+      abbreviation = 'chi',
+      cb = 'did_set_xhistory',
+      defaults = 10,
+      desc = [=[
+        Number of quickfix lists that should be remembered for the quickfix
+        stack.  Must be between 1 and 100.  If the option is set to a value
+        that is lower than the amount of entries in the quickfix list stack,
+        entries will be removed starting from the oldest one.  If the current
+        quickfix list was removed, then the quickfix list at top of the stack
+        (the most recently created) will be used in its place.  For additional
+        info, see |quickfix-stack|.
+      ]=],
+      full_name = 'chistory',
+      scope = { 'global' },
+      short_desc = N_('number of quickfix lists stored in history'),
+      type = 'number',
+      varname = 'p_chi',
+    },
+    {
       abbreviation = 'cin',
       defaults = false,
       desc = [=[
@@ -1460,16 +1479,50 @@ local options = {
       varname = 'p_cfu',
     },
     {
+      abbreviation = 'cfc',
+      defaults = '',
+      values = { 'keyword', 'files', 'whole_line' },
+      flags = true,
+      deny_duplicates = true,
+      desc = [=[
+        A comma-separated list of strings to enable fuzzy collection for
+        specific |ins-completion| modes, affecting how matches are gathered
+        during completion.  For specified modes, fuzzy matching is used to
+        find completion candidates instead of the standard prefix-based
+        matching.  This option can contain the following values:
+
+        keyword		keywords in the current file	|i_CTRL-X_CTRL-N|
+        		keywords with flags ".", "w",	|i_CTRL-N| |i_CTRL-P|
+        		"b", "u", "U" and "k{dict}" in 'complete'
+        		keywords in 'dictionary'	|i_CTRL-X_CTRL-K|
+
+        files		file names			|i_CTRL-X_CTRL-F|
+
+        whole_line	whole lines			|i_CTRL-X_CTRL-L|
+
+        When using the 'completeopt' "longest" option value, fuzzy collection
+        can identify the longest common string among the best fuzzy matches
+        and insert it automatically.
+      ]=],
+      full_name = 'completefuzzycollect',
+      list = 'onecomma',
+      scope = { 'global' },
+      short_desc = N_('use fuzzy collection for specific completion modes'),
+      type = 'string',
+      varname = 'p_cfc',
+      flags_varname = 'cfc_flags',
+    },
+    {
       abbreviation = 'cia',
       cb = 'did_set_completeitemalign',
       defaults = 'abbr,kind,menu',
       flags = true,
       deny_duplicates = true,
       desc = [=[
-        A comma-separated list of |complete-items| that controls the alignment
-        and display order of items in the popup menu during Insert mode
-        completion. The supported values are abbr, kind, and menu. These
-        options allow to customize how the completion items are shown in the
+        A comma-separated list of strings that controls the alignment and
+        display order of items in the popup menu during Insert mode
+        completion.  The supported values are "abbr", "kind", and "menu".
+        These values allow customizing how |complete-items| are shown in the
         popup menu.  Note: must always contain those three values in any
         order.
       ]=],
@@ -1483,7 +1536,7 @@ local options = {
     {
       abbreviation = 'cot',
       cb = 'did_set_completeopt',
-      defaults = 'menu,preview',
+      defaults = 'menu,popup',
       values = {
         'menu',
         'menuone',
@@ -1502,6 +1555,22 @@ local options = {
         A comma-separated list of options for Insert mode completion
         |ins-completion|.  The supported values are:
 
+           fuzzy    Enable |fuzzy-matching| for completion candidates. This
+        	    allows for more flexible and intuitive matching, where
+        	    characters can be skipped and matches can be found even
+        	    if the exact sequence is not typed.  Note: This option
+        	    does not affect the collection of candidate list, it only
+        	    controls how completion candidates are reduced from the
+        	    list of alternatives.  If you want to use |fuzzy-matching|
+        	    to gather more alternatives for your candidate list,
+        	    see |'completefuzzycollect'|.
+
+           longest  Only insert the longest common text of the matches.  If
+        	    the menu is displayed you can use CTRL-L to add more
+        	    characters.  Whether case is ignored depends on the kind
+        	    of completion.  For buffer text the 'ignorecase' option is
+        	    used.
+
            menu	    Use a popup menu to show the possible completions.  The
         	    menu is only shown when there is more than one match and
         	    sufficient colors are available.  |ins-completion-menu|
@@ -1510,45 +1579,31 @@ local options = {
         	    Useful when there is additional information about the
         	    match, e.g., what file it comes from.
 
-           longest  Only insert the longest common text of the matches.  If
-        	    the menu is displayed you can use CTRL-L to add more
-        	    characters.  Whether case is ignored depends on the kind
-        	    of completion.  For buffer text the 'ignorecase' option is
-        	    used.
+           noinsert Do not insert any text for a match until the user selects
+        	    a match from the menu.  Only works in combination with
+        	    "menu" or "menuone". No effect if "longest" is present.
 
-           preview  Show extra information about the currently selected
-        	    completion in the preview window.  Only works in
-        	    combination with "menu" or "menuone".
+           noselect Same as "noinsert", except that no menu item is
+        	    pre-selected.  If both "noinsert" and "noselect" are
+        	    present, "noselect" has precedence.
+
+           nosort   Disable sorting of completion candidates based on fuzzy
+        	    scores when "fuzzy" is enabled.  Candidates will appear
+        	    in their original order.
 
            popup    Show extra information about the currently selected
         	    completion in a popup window.  Only works in combination
         	    with "menu" or "menuone".  Overrides "preview".
 
-           noinsert Do not insert any text for a match until the user selects
-        	    a match from the menu. Only works in combination with
-        	    "menu" or "menuone". No effect if "longest" is present.
-
-           noselect Same as "noinsert", except that no menu item is
-        	    pre-selected. If both "noinsert" and "noselect" are
-        	    present, "noselect" has precedence.
-
-           fuzzy    Enable |fuzzy-matching| for completion candidates. This
-        	    allows for more flexible and intuitive matching, where
-        	    characters can be skipped and matches can be found even
-        	    if the exact sequence is not typed.  Only makes a
-        	    difference how completion candidates are reduced from the
-        	    list of alternatives, but not how the candidates are
-        	    collected (using different completion types).
-
-           nosort   Disable sorting of completion candidates based on fuzzy
-        	    scores when "fuzzy" is enabled. Candidates will appear
-        	    in their original order.
-
            preinsert
         	    Preinsert the portion of the first candidate word that is
         	    not part of the current completion leader and using the
-        	    |hl-ComplMatchIns| highlight group. Does not work when
-        	    "fuzzy" is also included.
+        	    |hl-ComplMatchIns| highlight group.  In order for it to
+        	    work, "fuzzy" must not be set and "menuone" must be set.
+
+           preview  Show extra information about the currently selected
+        	    completion in the preview window.  Only works in
+        	    combination with "menu" or "menuone".
       ]=],
       full_name = 'completeopt',
       list = 'onecomma',
@@ -2152,7 +2207,7 @@ local options = {
     {
       abbreviation = 'dip',
       cb = 'did_set_diffopt',
-      defaults = 'internal,filler,closeoff,linematch:40',
+      defaults = 'internal,filler,closeoff,inline:simple,linematch:40',
       -- Keep this in sync with diffopt_changed().
       values = {
         'filler',
@@ -2171,6 +2226,7 @@ local options = {
         'internal',
         'indent-heuristic',
         { 'algorithm:', { 'myers', 'minimal', 'patience', 'histogram' } },
+        { 'inline:', { 'none', 'simple', 'char', 'word' } },
         'linematch:',
       },
       deny_duplicates = true,
@@ -2235,6 +2291,24 @@ local options = {
         	indent-heuristic
         			Use the indent heuristic for the internal
         			diff library.
+
+        	inline:{text}	Highlight inline differences within a change.
+        			See |view-diffs|.  Supported values are:
+
+        			none    Do not perform inline highlighting.
+        			simple  Highlight from first different
+        				character to the last one in each
+        				line.  This is the default if no
+        				`inline:` value is set.
+        			char    Use internal diff to perform a
+        				character-wise diff and highlight the
+        				difference.
+        			word    Use internal diff to perform a
+        				|word|-wise diff and highlight the
+        				difference.  Non-alphanumeric
+        				multi-byte characters such as emoji
+        				and CJK characters are considered
+        				individual words.
 
         	internal	Use the internal diff library.  This is
         			ignored when 'diffexpr' is set.  *E960*
@@ -2663,9 +2737,10 @@ local options = {
       abbreviation = 'ex',
       defaults = false,
       desc = [=[
-        Automatically execute .nvim.lua, .nvimrc, and .exrc files in the
-        current directory, if the file is in the |trust| list. Use |:trust| to
-        manage trusted files. See also |vim.secure.read()|.
+        Enables project-local configuration. Nvim will execute any .nvim.lua,
+        .nvimrc, or .exrc file found in the |current-directory|, if the file is
+        in the |trust| list. Use |:trust| to manage trusted files. See also
+        |vim.secure.read()|.
 
         Compare 'exrc' to |editorconfig|:
         - 'exrc' can execute any code; editorconfig only specifies settings.
@@ -2678,6 +2753,7 @@ local options = {
       scope = { 'global' },
       secure = true,
       short_desc = N_('read .nvimrc and .exrc in the current directory'),
+      tags = { 'project-config', 'workspace-config' },
       type = 'boolean',
       varname = 'p_exrc',
     },
@@ -4787,7 +4863,9 @@ local options = {
     {
       abbreviation = 'kp',
       defaults = {
-        if_true = ':Man',
+        condition = 'MSWIN',
+        if_true = ':help',
+        if_false = ':Man',
         doc = '":Man", Windows: ":help"',
       },
       desc = [=[
@@ -4962,6 +5040,23 @@ local options = {
       short_desc = N_("don't redraw while executing macros"),
       type = 'boolean',
       varname = 'p_lz',
+    },
+    {
+      abbreviation = 'lhi',
+      cb = 'did_set_xhistory',
+      defaults = 10,
+      desc = [=[
+        Like 'chistory', but for the location list stack associated with a
+        window.  If the option is changed in either the location list window
+        itself or the window that is associated with the location list stack,
+        the new value will also be applied to the other one.  This means this
+        value will always be the same for a given location list window and its
+        corresponding window.  See |quickfix-stack| for additional info.
+      ]=],
+      full_name = 'lhistory',
+      scope = { 'win' },
+      short_desc = N_('number of location lists stored in history'),
+      type = 'number',
     },
     {
       abbreviation = 'lbr',
@@ -5802,8 +5897,8 @@ local options = {
       defaults = false,
       desc = [=[
         When on, mouse move events are delivered to the input queue and are
-        available for mapping. The default, off, avoids the mouse movement
-        overhead except when needed.
+        available for mapping |<MouseMove>|. The default, off, avoids the mouse
+        movement overhead except when needed.
         Warning: Setting this option can make pending mappings to be aborted
         when the mouse is moved.
       ]=],
@@ -5811,6 +5906,7 @@ local options = {
       redraw = { 'ui_option' },
       scope = { 'global' },
       short_desc = N_('deliver mouse move events to input queue'),
+      tags = { 'mouse-hover' },
       type = 'boolean',
       varname = 'p_mousemev',
     },
@@ -6235,7 +6331,7 @@ local options = {
         	set path=,,
         <	- A directory name may end in a ':' or '/'.
         - Environment variables are expanded |:set_env|.
-        - When using |netrw.vim| URLs can be used.  For example, adding
+        - When using |netrw| URLs can be used.  For example, adding
           "https://www.vim.org" will make ":find index.html" work.
         - Search upwards and downwards in a directory tree using "*", "**" and
           ";".  See |file-searching| for info and syntax.
@@ -6369,6 +6465,21 @@ local options = {
       short_desc = N_('maximum height of the popup menu'),
       type = 'number',
       varname = 'p_ph',
+    },
+    {
+      abbreviation = 'pmw',
+      defaults = 0,
+      desc = [=[
+        Maximum width for the popup menu (|ins-completion-menu|).  When zero,
+        there is no maximum width limit, otherwise the popup menu will never be
+        wider than this value.  Truncated text will be indicated by "..." at the
+        end.  Takes precedence over 'pumwidth'.
+      ]=],
+      full_name = 'pummaxwidth',
+      scope = { 'global' },
+      short_desc = N_('maximum width of the popup menu'),
+      type = 'number',
+      varname = 'p_pmw',
     },
     {
       abbreviation = 'pw',
@@ -7510,7 +7621,7 @@ local options = {
     },
     {
       abbreviation = 'stmp',
-      defaults = true,
+      defaults = false,
       desc = [=[
         When on, use temp files for shell commands.  When off use a pipe.
         When using a pipe is not possible temp files are used anyway.
@@ -8088,11 +8199,10 @@ local options = {
         It may also be a comma-separated list of names.  A count before the
         |zg| and |zw| commands can be used to access each.  This allows using
         a personal word list file and a project word list file.
-        When a word is added while this option is empty Vim will set it for
-        you: Using the first directory in 'runtimepath' that is writable.  If
-        there is no "spell" directory yet it will be created.  For the file
-        name the first language name that appears in 'spelllang' is used,
-        ignoring the region.
+        When a word is added while this option is empty Nvim will use
+        (and auto-create) `stdpath('data')/spell/`. For the file name the
+        first language name that appears in 'spelllang' is used, ignoring the
+        region.
         The resulting ".spl" file will be used for spell checking, it does not
         have to appear in 'spelllang'.
         Normally one file is used for all regions, but you can add the region
@@ -10019,7 +10129,7 @@ local options = {
       cb = 'did_set_wildmode',
       defaults = 'full',
       -- Keep this in sync with check_opt_wim().
-      values = { 'full', 'longest', 'list', 'lastused' },
+      values = { 'full', 'longest', 'list', 'lastused', 'noselect' },
       flags = true,
       deny_duplicates = false,
       desc = [=[
@@ -10041,7 +10151,10 @@ local options = {
         "lastused"	When completing buffer names and more than one buffer
         		matches, sort buffers by time last used (other than
         		the current buffer).
-        When there is only a single match, it is fully completed in all cases.
+        "noselect"	Do not pre-select first menu item and start 'wildmenu'
+        		if it is enabled.
+        When there is only a single match, it is fully completed in all cases
+        except when "noselect" is present.
 
         Examples of useful colon-separated values:
         "longest:full"	Like "longest", but also start 'wildmenu' if it is
@@ -10064,7 +10177,11 @@ local options = {
         	set wildmode=list,full
         <	List all matches without completing, then each full match >vim
         	set wildmode=longest,list
-        <	Complete longest common string, then list alternatives.
+        <	Complete longest common string, then list alternatives >vim
+        	set wildmode=noselect:full
+        <	Display 'wildmenu' without completing, then each full match >vim
+        	set wildmode=noselect:lastused,full
+        <	Same as above, but sort buffers by time last used.
         More info here: |cmdline-completion|.
       ]=],
       full_name = 'wildmode',
@@ -10177,6 +10294,26 @@ local options = {
       scope = { 'win' },
       short_desc = N_('Controls transparency level for floating windows'),
       type = 'number',
+    },
+    {
+      defaults = { if_true = '' },
+      values = { '', 'double', 'single', 'shadow', 'rounded', 'solid', 'bold', 'none' },
+      desc = [=[
+        Defines the default border style of floating windows. The default value
+        is empty, which is equivalent to "none". Valid values include:
+        - "bold": Bold line box.
+        - "double": Double-line box.
+        - "none": No border.
+        - "rounded": Like "single", but with rounded corners ("╭" etc.).
+        - "shadow": Drop shadow effect, by blending with the background.
+        - "single": Single-line box.
+        - "solid": Adds padding by a single whitespace cell.
+      ]=],
+      full_name = 'winborder',
+      scope = { 'global' },
+      short_desc = N_('border of floating window'),
+      type = 'string',
+      varname = 'p_winborder',
     },
     {
       abbreviation = 'wi',

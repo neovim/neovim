@@ -188,15 +188,19 @@ Examples: >lua
 ==============================================================================
 IMPORTING LUA MODULES                                        *lua-module-load*
 
-Modules are searched for under the directories specified in 'runtimepath', in
-the order they appear.  Any "." in the module name is treated as a directory
-separator when searching.  For a module `foo.bar`, each directory is searched
-for `lua/foo/bar.lua`, then `lua/foo/bar/init.lua`.  If no files are found,
-the directories are searched again for a shared library with a name matching
-`lua/foo/bar.?`, where `?` is a list of suffixes (such as `so` or `dll`) derived from
-the initial value of |package.cpath|. If still no files are found, Nvim falls
-back to Lua's default search mechanism. The first script found is run and
-`require()` returns the value returned by the script if any, else `true`.
+Modules are searched for under the directories specified in 'runtimepath' and
+|packages-runtimepath|, in the order they appear in the output of this command
+>vim
+	:echo nvim_list_runtime_paths()
+<
+Any "." in the module name is treated as a directory separator when searching.
+For a module `foo.bar`, each directory is searched for `lua/foo/bar.lua`, then
+`lua/foo/bar/init.lua`.  If no files are found, the directories are searched
+again for a shared library with a name matching `lua/foo/bar.?`, where `?` is
+a list of suffixes (such as `so` or `dll`) derived from the initial value of
+|package.cpath|. If still no files are found, Nvim falls back to Lua's default
+search mechanism. The first script found is run and `require()` returns the
+value returned by the script if any, else `true`.
 
 The return value is cached after the first call to `require()` for each module,
 with subsequent calls returning the cached value without searching for, or
@@ -214,56 +218,9 @@ and loads the first module found ("first wins"): >
     bar/lua/mod.so
     bar/lua/mod.dll
 <
-                                                        *lua-package-path*
-Nvim automatically adjusts |package.path| and |package.cpath| according to the
-effective 'runtimepath' value. Adjustment happens whenever 'runtimepath' is
-changed. `package.path` is adjusted by simply appending `/lua/?.lua` and
-`/lua/?/init.lua` to each directory from 'runtimepath' (`/` is actually the
-first character of `package.config`).
-
-Similarly to |package.path|, modified directories from 'runtimepath' are also
-added to |package.cpath|. In this case, instead of appending `/lua/?.lua` and
-`/lua/?/init.lua` to each runtimepath, all unique `?`-containing suffixes of
-the existing |package.cpath| are used. Example:
-
-- 1. Given that
-   - 'runtimepath' contains `/foo/bar,/xxx;yyy/baz,/abc`;
-   - initial |package.cpath| (defined at compile-time or derived from
-     `$LUA_CPATH` / `$LUA_INIT`) contains `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
-- 2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in
-     order: parts of the path starting from the first path component containing
-     question mark and preceding path separator.
-- 3. The suffix of `/def/?.so`, namely `/?.so` is not unique, as it’s the same
-     as the suffix of the first path from |package.path| (i.e. `./?.so`). Which
-     leaves `/?.so` and `/a?d/j/g.elf`, in this order.
-- 4. 'runtimepath' has three paths: `/foo/bar`, `/xxx;yyy/baz` and `/abc`. The
-     second one contains a semicolon which is a paths separator so it is out,
-     leaving only `/foo/bar` and `/abc`, in order.
-- 5. The cartesian product of paths from 4. and suffixes from 3. is taken,
-     giving four variants. In each variant a `/lua` path segment is inserted
-     between path and suffix, leaving:
-     - `/foo/bar/lua/?.so`
-     - `/foo/bar/lua/a?d/j/g.elf`
-     - `/abc/lua/?.so`
-     - `/abc/lua/a?d/j/g.elf`
-- 6. New paths are prepended to the original |package.cpath|.
-
-The result will look like this: >
-
-    /foo/bar,/xxx;yyy/baz,/abc ('runtimepath')
-    × ./?.so;/def/ghi/a?d/j/g.elf;/def/?.so (package.cpath)
-    = /foo/bar/lua/?.so;/foo/bar/lua/a?d/j/g.elf;/abc/lua/?.so;/abc/lua/a?d/j/g.elf;./?.so;/def/ghi/a?d/j/g.elf;/def/?.so
-
 Note:
 
-- To track 'runtimepath' updates, paths added at previous update are
-  remembered and removed at the next update, while all paths derived from the
-  new 'runtimepath' are prepended as described above. This allows removing
-  paths when path is removed from 'runtimepath', adding paths when they are
-  added and reordering |package.path|/|package.cpath| content if 'runtimepath'
-  was reordered.
-
-- Although adjustments happen automatically, Nvim does not track current
+- Although 'runtimepath' is tracked, Nvim does not track current
   values of |package.path| or |package.cpath|. If you happen to delete some
   paths from there you can set 'runtimepath' to trigger an update: >vim
       let &runtimepath = &runtimepath
@@ -289,7 +246,7 @@ arguments separated by " " (space) instead of "\t" (tab).
 :lua {chunk}
     Executes Lua chunk {chunk}. If {chunk} starts with "=" the rest of the
     chunk is evaluated as an expression and printed. `:lua =expr` and `:=expr`
-    are equivalent to `:lua vim.print(expr)`.
+    are equivalent to `:lua print(vim.inspect(expr))`.
 
     Examples: >vim
         :lua vim.api.nvim_command('echo "Hello, Nvim!"')
@@ -435,18 +392,12 @@ where the args are converted to Lua values. The expression >vim
 is equivalent to the Lua chunk >lua
     return somemod.func(...)
 
-In addition, functions of packages can be accessed like >vim
+Lua module functions can be accessed like: >vim
     call v:lua.require'mypack'.func(arg1, arg2)
     call v:lua.require'mypack.submod'.func(arg1, arg2)
 Note: Only single quote form without parens is allowed. Using
-`require"mypack"` or `require('mypack')` as prefixes do NOT work (the latter
-is still valid as a function call of itself, in case require returns a useful
-value).
+`require"mypack"` or `require('mypack')` as a prefix does NOT work.
 
-The `v:lua` prefix may be used to call Lua functions as |method|s. For
-example: >vim
-    :eval arg1->v:lua.somemod.func(arg2)
-<
 You can use `v:lua` in "func" options like 'tagfunc', 'omnifunc', etc.
 For example consider the following Lua omnifunc handler: >lua
 
@@ -457,11 +408,13 @@ For example consider the following Lua omnifunc handler: >lua
         return {'stuff', 'steam', 'strange things'}
       end
     end
+    -- Note: The module ("mymod") must be a Lua global, or use require() as
+    -- shown above to access it from a package.
     vim.bo[buf].omnifunc = 'v:lua.mymod.omnifunc'
 
-Note: The module ("mymod" in the above example) must either be a Lua global,
-or use require() as shown above to access it from a package.
-
+You can also use `v:lua` to call Lua functions as Vimscript |method|s: >vim
+    :eval arg1->v:lua.somemod.func(arg2)
+<
 Note: `v:lua` without a call is not allowed in a Vimscript expression:
 |Funcref|s cannot represent Lua functions. The following are errors: >vim
 
@@ -575,7 +528,7 @@ Example: File-change detection                                    *watch-file*
                                                          *inotify-limitations*
 When on Linux you may need to increase the maximum number of `inotify` watches
 and queued events as the default limit can be too low. To increase the limit,
-run: >sh
+run: >bash
     sysctl fs.inotify.max_user_watches=494462
 <
 This will increase the limit to 494462 watches and queued events. These lines
@@ -686,6 +639,12 @@ vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
                      `vim.hl.priorities.user`) Highlight priority
                    • {timeout}? (`integer`, default: -1 no timeout) Time in ms
                      before highlight is cleared
+
+    Return (multiple): ~
+        (`uv.uv_timer_t?`) range_timer A timer which manages how much time the
+        highlight has left
+        (`fun()?`) range_clear A function which allows clearing the highlight
+        manually. nil is returned if timeout is not specified
 
 
 ==============================================================================
@@ -1075,13 +1034,12 @@ vim.stricmp({a}, {b})                                          *vim.stricmp()*
 vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
     WARNING: This feature is experimental/unstable.
 
-    Attach to |ui-events|, similar to |nvim_ui_attach()| but receive events as
-    Lua callback. Can be used to implement screen elements like popupmenu or
+    Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events
+    in a Lua callback. Used to implement screen elements like popupmenu or
     message handling in Lua.
 
-    {options} should be a dictionary-like table, where `ext_...` options
-    should be set to true to receive events for the respective external
-    element.
+    {options} is a dict with one or more `ext_…` |ui-option|s set to true to
+    enable events for the respective UI element.
 
     {callback} receives event name plus additional parameters. See
     |ui-popupmenu| and the sections below for event format for respective
@@ -1102,14 +1060,14 @@ vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
         ns = vim.api.nvim_create_namespace('my_fancy_pum')
 
         vim.ui_attach(ns, {ext_popupmenu=true}, function(event, ...)
-          if event == "popupmenu_show" then
+          if event == 'popupmenu_show' then
             local items, selected, row, col, grid = ...
-            print("display pum ", #items)
-          elseif event == "popupmenu_select" then
+            print('display pum ', #items)
+          elseif event == 'popupmenu_select' then
             local selected = ...
-            print("selected", selected)
-          elseif event == "popupmenu_hide" then
-            print("FIN")
+            print('selected', selected)
+          elseif event == 'popupmenu_hide' then
+            print('FIN')
           end
         end)
 <
@@ -2638,6 +2596,8 @@ vim.ui.open({path}, {opt})                                     *vim.ui.open()*
     `explorer.exe`, Linux `xdg-open`, …), or returns (but does not show) an
     error message on failure.
 
+    Can also be invoked with `:Open`.                                  *:Open*
+
     Expands "~/" and environment variables in filesystem paths.
 
     Examples: >lua
@@ -2984,7 +2944,7 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                 • skip: (fun(dir_name: string): boolean)|nil Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1
-                • follow: boolean|nil Follow symbolic links. (default: true)
+                • follow: boolean|nil Follow symbolic links. (default: false)
 
     Return: ~
         (`Iterator`) over items in {path}. Each iteration yields two values:
@@ -3057,7 +3017,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • {limit}? (`number`, default: `1`) Stop the search after
                    finding this many matches. Use `math.huge` to place no
                    limit on the number of matches.
-                 • {follow}? (`boolean`, default: `true`) Follow symbolic
+                 • {follow}? (`boolean`, default: `false`) Follow symbolic
                    links.
 
     Return: ~
@@ -3172,9 +3132,10 @@ vim.fs.relpath({base}, {target}, {opts})                    *vim.fs.relpath()*
         (`string?`)
 
 vim.fs.rm({path}, {opts})                                        *vim.fs.rm()*
-    WARNING: This feature is experimental/unstable.
-
     Remove files or directories
+
+    Attributes: ~
+        Since: 0.11.0
 
     Parameters: ~
       • {path}  (`string`) Path to remove
@@ -4287,7 +4248,7 @@ Iter:last()                                                      *Iter:last()*
         (`any`)
 
     See also: ~
-      • Iter.rpeek
+      • |Iter:rpeek()|
 
 Iter:map({f})                                                     *Iter:map()*
     Maps the items of an iterator pipeline to the values returned by `f`.
@@ -4424,7 +4385,7 @@ Iter:rfind({f})                                                 *Iter:rfind()*
         (`any`)
 
     See also: ~
-      • Iter.find
+      • |Iter:find()|
 
 Iter:rpeek()                                                    *Iter:rpeek()*
     Gets the last value of a |list-iterator| without consuming it.
@@ -4443,7 +4404,7 @@ Iter:rpeek()                                                    *Iter:rpeek()*
         (`any`)
 
     See also: ~
-      • Iter.last
+      • |Iter:last()|
 
 Iter:rskip({n})                                                 *Iter:rskip()*
     Discards `n` values from the end of a |list-iterator| pipeline.
@@ -4550,16 +4511,6 @@ vim.snippet.active({filter})                            *vim.snippet.active()*
     Returns `true` if there's an active snippet in the current buffer,
     applying the given filter if provided.
 
-    You can use this function to navigate a snippet as follows: >lua
-        vim.keymap.set({ 'i', 's' }, '<Tab>', function()
-           if vim.snippet.active({ direction = 1 }) then
-             return '<Cmd>lua vim.snippet.jump(1)<CR>'
-           else
-             return '<Tab>'
-           end
-         end, { expr = true })
-<
-
     Parameters: ~
       • {filter}  (`vim.snippet.ActiveFilter?`) Filter to constrain the search
                   with:
@@ -4584,14 +4535,15 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
     Jumps to the next (or previous) placeholder in the current snippet, if
     possible.
 
-    For example, map `<Tab>` to jump while a snippet is active: >lua
+    By default `<Tab>` is setup to jump if a snippet is active. The default
+    mapping looks like: >lua
         vim.keymap.set({ 'i', 's' }, '<Tab>', function()
            if vim.snippet.active({ direction = 1 }) then
              return '<Cmd>lua vim.snippet.jump(1)<CR>'
            else
              return '<Tab>'
            end
-         end, { expr = true })
+         end, { descr = '...', expr = true, silent = true })
 <
 
     Parameters: ~
@@ -4623,6 +4575,41 @@ vim.text.hexencode({str})                               *vim.text.hexencode()*
 
     Return: ~
         (`string`) Hex encoded string
+
+vim.text.indent({size}, {text}, {opts})                    *vim.text.indent()*
+    Sets the indent (i.e. the common leading whitespace) of non-empty lines in
+    `text` to `size` spaces/tabs.
+
+    Indent is calculated by number of consecutive indent chars.
+    • The first indented, non-empty line decides the indent char (space/tab):
+      • `SPC SPC TAB …` = two-space indent.
+      • `TAB SPC …` = one-tab indent.
+    • Set `opts.expandtab` to treat tabs as spaces.
+
+    To "dedent" (remove the common indent), pass `size=0`: >lua
+        vim.print(vim.text.indent(0, ' a\n  b\n'))
+<
+
+    To adjust relative-to an existing indent, call indent() twice: >lua
+        local indented, old_indent = vim.text.indent(0, ' a\n b\n')
+        indented = vim.text.indent(old_indent + 2, indented)
+        vim.print(indented)
+<
+
+    To ignore the final, blank line when calculating the indent, use gsub()
+    before calling indent(): >lua
+        local text = '  a\n  b\n '
+        vim.print(vim.text.indent(0, (text:gsub('\n[\t ]+\n?$', '\n'))))
+<
+
+    Parameters: ~
+      • {size}  (`integer`) Number of spaces.
+      • {text}  (`string`) Text to indent.
+      • {opts}  (`{ expandtab?: number }?`)
+
+    Return (multiple): ~
+        (`string`) Indented text.
+        (`integer`) Indent size before modification.
 
 
 ==============================================================================

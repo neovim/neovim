@@ -242,7 +242,12 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   char *p2;
 
   if (xp->xp_numfiles == -1) {
-    set_expand_context(xp);
+    if (ccline->input_fn && ccline->xp_context == EXPAND_COMMANDS) {
+      // Expand commands typed in input() function
+      set_cmd_context(xp, ccline->cmdbuff, ccline->cmdlen, ccline->cmdpos, false);
+    } else {
+      set_expand_context(xp);
+    }
     if (xp->xp_context == EXPAND_LUA) {
       nlua_expand_pat(xp);
     }
@@ -283,7 +288,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
       p1 = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
     }
     // Translate string into pattern and expand it.
-    const int use_options = (options
+    const int use_options = ((options & ~WILD_KEEP_SOLE_ITEM)
                              | WILD_HOME_REPLACE
                              | WILD_ADD_SLASH
                              | WILD_SILENT
@@ -334,7 +339,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   if (xp->xp_numfiles <= 0 && p2 == NULL) {
     beep_flush();
-  } else if (xp->xp_numfiles == 1) {
+  } else if (xp->xp_numfiles == 1 && !(options & WILD_KEEP_SOLE_ITEM)) {
     // free expanded pattern
     ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
   }
@@ -2402,6 +2407,10 @@ void set_cmd_context(expand_T *xp, char *str, int len, int col, int use_ccline)
     xp->xp_context = ccline->xp_context;
     xp->xp_pattern = ccline->cmdbuff;
     xp->xp_arg = ccline->xp_arg;
+    if (xp->xp_context == EXPAND_SHELLCMDLINE) {
+      int context = xp->xp_context;
+      set_context_for_wildcard_arg(NULL, xp->xp_pattern, false, xp, &context);
+    }
   } else {
     while (nextcomm != NULL) {
       nextcomm = set_one_cmd_context(xp, nextcomm);

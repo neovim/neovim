@@ -5,6 +5,8 @@ for p in ("${TEST_INCLUDE_DIRS}" .. ";"):gmatch("[^;]+") do
   table.insert(M.include_paths, p)
 end
 
+M.translations_enabled = "${ENABLE_TRANSLATIONS}" == "ON"
+M.is_asan = "${ENABLE_ASAN_UBSAN}" == "ON"
 M.vterm_test_file = "${VTERM_TEST_FILE}"
 M.test_build_dir = "${CMAKE_BINARY_DIR}"
 M.test_source_path = "${CMAKE_SOURCE_DIR}"

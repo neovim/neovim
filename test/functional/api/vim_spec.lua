@@ -140,7 +140,7 @@ describe('API', function()
     it(':verbose set {option}?', function()
       api.nvim_exec2('set nowrap', { output = false })
       eq(
-        { output = 'nowrap\n\tLast set from anonymous :source' },
+        { output = 'nowrap\n\tLast set from anonymous :source line 1' },
         api.nvim_exec2('verbose set wrap?', { output = true })
       )
 
@@ -153,7 +153,7 @@ describe('API', function()
         { output = false }
       )
       eq(
-        { output = 'nowrap\n\tLast set from anonymous :source (script id 1)' },
+        { output = 'nowrap\n\tLast set from anonymous :source (script id 1) line 2' },
         api.nvim_exec2('verbose set wrap?', { output = true })
       )
     end)
@@ -296,16 +296,21 @@ describe('API', function()
       eq('ñxx', api.nvim_get_current_line())
     end)
 
+    it('can use :finish', function()
+      api.nvim_exec2('let g:var = 123\nfinish\nlet g:var = 456', {})
+      eq(123, api.nvim_get_var('var'))
+    end)
+
     it('execution error', function()
       eq(
-        'nvim_exec2(): Vim:E492: Not an editor command: bogus_command',
+        'nvim_exec2(), line 1: Vim:E492: Not an editor command: bogus_command',
         pcall_err(request, 'nvim_exec2', 'bogus_command', {})
       )
       eq('', api.nvim_eval('v:errmsg')) -- v:errmsg was not updated.
       eq('', eval('v:exception'))
 
       eq(
-        'nvim_exec2(): Vim(buffer):E86: Buffer 23487 does not exist',
+        'nvim_exec2(), line 1: Vim(buffer):E86: Buffer 23487 does not exist',
         pcall_err(request, 'nvim_exec2', 'buffer 23487', {})
       )
       eq('', eval('v:errmsg')) -- v:errmsg was not updated.
@@ -338,16 +343,27 @@ describe('API', function()
       write_file(sourcing_fname, 'call nvim_exec2("source ' .. fname .. '", {"output": v:false})\n')
       api.nvim_exec2('set verbose=2', { output = false })
       local traceback_output = dedent([[
-        line 0: sourcing "%s"
-        line 0: sourcing "%s"
+        sourcing "nvim_exec2()"
+        line 1: sourcing "nvim_exec2() called at nvim_exec2():1"
+        line 1: sourcing "%s"
+        line 1: sourcing "nvim_exec2() called at %s:1"
+        line 1: sourcing "%s"
         hello
         finished sourcing %s
         continuing in nvim_exec2() called at %s:1
+        finished sourcing nvim_exec2() called at %s:1
+        continuing in %s
         finished sourcing %s
-        continuing in nvim_exec2() called at nvim_exec2():0]]):format(
+        continuing in nvim_exec2() called at nvim_exec2():1
+        finished sourcing nvim_exec2() called at nvim_exec2():1
+        continuing in nvim_exec2()
+        finished sourcing nvim_exec2()]]):format(
+        sourcing_fname,
         sourcing_fname,
         fname,
         fname,
+        sourcing_fname,
+        sourcing_fname,
         sourcing_fname,
         sourcing_fname
       )
@@ -836,6 +852,39 @@ describe('API', function()
           ]])
         feed('u') -- Undo.
         expect(expected1)
+      end)
+      it("stream: multiple chunks sets correct '[ mark", function()
+        -- Pastes single chunk
+        api.nvim_paste('aaaaaa\n', true, -1)
+        eq({ 0, 1, 1, 0 }, fn.getpos("'["))
+        -- Pastes an empty chunk
+        api.nvim_paste('', true, -1)
+        eq({ 0, 2, 1, 0 }, fn.getpos("'["))
+        -- Pastes some chunks on empty line
+        api.nvim_paste('1/chunk 1 (start)\n', true, 1)
+        eq({ 0, 2, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('1/chunk 2\n', true, 2)
+        eq({ 0, 2, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('1/chunk 3 (end)\n', true, 3)
+        eq({ 0, 2, 1, 0 }, fn.getpos("'["))
+        -- Pastes some chunks on non-empty line
+        api.nvim_paste('aaaaaa', true, -1)
+        eq({ 0, 5, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('bbbbbb', true, 1)
+        eq({ 0, 5, 7, 0 }, fn.getpos("'["))
+        api.nvim_paste('cccccc', true, 2)
+        eq({ 0, 5, 7, 0 }, fn.getpos("'["))
+        api.nvim_paste('dddddd\n', true, 3)
+        eq({ 0, 5, 7, 0 }, fn.getpos("'["))
+        -- Pastes some empty chunks between non-empty chunks
+        api.nvim_paste('', true, 1)
+        eq({ 0, 5, 7, 0 }, fn.getpos("'["))
+        api.nvim_paste('a', true, 2)
+        eq({ 0, 6, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('', true, 2)
+        eq({ 0, 6, 1, 0 }, fn.getpos("'["))
+        api.nvim_paste('a', true, 3)
+        eq({ 0, 6, 1, 0 }, fn.getpos("'["))
       end)
       it('stream: Insert mode', function()
         -- If nvim_paste() calls :undojoin without making any changes, this makes it an error.
@@ -3151,14 +3200,23 @@ describe('API', function()
 
   describe('nvim_create_namespace', function()
     it('works', function()
-      eq({}, api.nvim_get_namespaces())
-      eq(1, api.nvim_create_namespace('ns-1'))
-      eq(2, api.nvim_create_namespace('ns-2'))
-      eq(1, api.nvim_create_namespace('ns-1'))
-      eq({ ['ns-1'] = 1, ['ns-2'] = 2 }, api.nvim_get_namespaces())
-      eq(3, api.nvim_create_namespace(''))
-      eq(4, api.nvim_create_namespace(''))
-      eq({ ['ns-1'] = 1, ['ns-2'] = 2 }, api.nvim_get_namespaces())
+      local orig = api.nvim_get_namespaces()
+      local base = vim.iter(orig):fold(0, function(acc, _, v)
+        return math.max(acc, v)
+      end)
+      eq(base + 1, api.nvim_create_namespace('ns-1'))
+      eq(base + 2, api.nvim_create_namespace('ns-2'))
+      eq(base + 1, api.nvim_create_namespace('ns-1'))
+
+      local expected = vim.tbl_extend('error', orig, {
+        ['ns-1'] = base + 1,
+        ['ns-2'] = base + 2,
+      })
+
+      eq(expected, api.nvim_get_namespaces())
+      eq(base + 3, api.nvim_create_namespace(''))
+      eq(base + 4, api.nvim_create_namespace(''))
+      eq(expected, api.nvim_get_namespaces())
     end)
   end)
 

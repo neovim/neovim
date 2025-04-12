@@ -21,6 +21,7 @@ typedef struct {
   LuaRefOf(("end" _, Integer tick)) on_end;
   LuaRefOf(("hl_def" _)) _on_hl_def;
   LuaRefOf(("spell_nav" _)) _on_spell_nav;
+  LuaRefOf(("conceal_line" _)) _on_conceal_line;
 } Dict(set_decoration_provider);
 
 typedef struct {
@@ -53,6 +54,7 @@ typedef struct {
   HLGroupID line_hl_group;
   HLGroupID cursorline_hl_group;
   String conceal;
+  String conceal_lines;
   Boolean spell;
   Boolean ui_watched;
   Boolean undo_restore;

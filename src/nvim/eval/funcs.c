@@ -34,7 +34,6 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/context.h"
 #include "nvim/cursor.h"
-#include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
@@ -368,7 +367,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   Object result = handler.fn(VIML_INTERNAL_CALL, args, &arena, &err);
 
   if (ERROR_SET(&err)) {
-    semsg_multiline(e_api_error, err.msg);
+    semsg_multiline("emsg", e_api_error, err.msg);
     goto end;
   }
 
@@ -1298,63 +1297,6 @@ static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, EvalFuncData fp
 static void f_did_filetype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = curbuf->b_did_filetype;
-}
-
-/// "diff_filler()" function
-static void f_diff_filler(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->vval.v_number = MAX(0, diff_check(curwin, tv_get_lnum(argvars)));
-}
-
-/// "diff_hlID()" function
-static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  linenr_T lnum = tv_get_lnum(argvars);
-  static linenr_T prev_lnum = 0;
-  static varnumber_T changedtick = 0;
-  static int fnum = 0;
-  static int change_start = 0;
-  static int change_end = 0;
-  static hlf_T hlID = (hlf_T)0;
-
-  if (lnum < 0) {       // ignore type error in {lnum} arg
-    lnum = 0;
-  }
-  if (lnum != prev_lnum
-      || changedtick != buf_get_changedtick(curbuf)
-      || fnum != curbuf->b_fnum) {
-    // New line, buffer, change: need to get the values.
-    int linestatus = 0;
-    int filler_lines = diff_check_with_linestatus(curwin, lnum, &linestatus);
-    if (filler_lines < 0 || linestatus < 0) {
-      if (filler_lines == -1 || linestatus == -1) {
-        change_start = MAXCOL;
-        change_end = -1;
-        if (diff_find_change(curwin, lnum, &change_start, &change_end)) {
-          hlID = HLF_ADD;               // added line
-        } else {
-          hlID = HLF_CHD;               // changed line
-        }
-      } else {
-        hlID = HLF_ADD;         // added line
-      }
-    } else {
-      hlID = (hlf_T)0;
-    }
-    prev_lnum = lnum;
-    changedtick = buf_get_changedtick(curbuf);
-    fnum = curbuf->b_fnum;
-  }
-
-  if (hlID == HLF_CHD || hlID == HLF_TXD) {
-    int col = (int)tv_get_number(&argvars[1]) - 1;  // Ignore type error in {col}.
-    if (col >= change_start && col <= change_end) {
-      hlID = HLF_TXD;  // Changed text.
-    } else {
-      hlID = HLF_CHD;  // Changed line.
-    }
-  }
-  rettv->vval.v_number = hlID;
 }
 
 /// "empty({expr})" function
@@ -3563,16 +3505,19 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   msg_scroll = true;
   msg_clr_eos();
 
-  TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
+  list_T *l = argvars[0].vval.v_list;
+  TV_LIST_ITER_CONST(l, li, {
     msg_puts(tv_get_string(TV_LIST_ITEM_TV(li)));
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages) || TV_LIST_ITEM_NEXT(l, li) != NULL) {
+      msg_putchar('\n');
+    }
   });
 
   // Ask for choice.
   bool mouse_used = false;
   int selected = prompt_for_input(NULL, 0, false, &mouse_used);
   if (mouse_used) {
-    selected = tv_list_len(argvars[0].vval.v_list) - (cmdline_row - mouse_row);
+    selected = tv_list_len(l) - (cmdline_row - mouse_row);
   }
 
   rettv->vval.v_number = selected;
@@ -3831,6 +3776,7 @@ static const char *pty_ignored_env_vars[] = {
   "COLORFGBG",
   "COLORTERM",
 #endif
+  // Nvim-owned env vars. #6764
   "VIM",
   "VIMRUNTIME",
   NULL
@@ -3867,9 +3813,8 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
     tv_dict_free(temp_env.vval.v_dict);
 
     if (pty) {
-      // These environment variables generally shouldn't be propagated to the
-      // child process.  We're removing them here so the user can still decide
-      // they want to explicitly set them.
+      // These env vars shouldn't propagate to the child process. #6764
+      // Remove them here, then the user may decide to explicitly set them below.
       for (size_t i = 0;
            i < ARRAY_SIZE(pty_ignored_env_vars) && pty_ignored_env_vars[i];
            i++) {
@@ -4191,7 +4136,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   list_T *args = argvars[0].vval.v_list;
   Channel **jobs = xcalloc((size_t)tv_list_len(args), sizeof(*jobs));
-  MultiQueue *waiting_jobs = multiqueue_new_parent(loop_on_put, &main_loop);
+  MultiQueue *waiting_jobs = multiqueue_new(loop_on_put, &main_loop);
 
   // Validate, prepare jobs for waiting.
   int i = 0;
@@ -6411,12 +6356,11 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (chan) {
       name = get_client_info(chan, "name");
     }
-    msg_ext_set_kind("rpc_error");
     if (name) {
-      semsg_multiline("Error invoking '%s' on channel %" PRIu64 " (%s):\n%s",
+      semsg_multiline("rpc_error", "Error invoking '%s' on channel %" PRIu64 " (%s):\n%s",
                       method, chan_id, name, err.msg);
     } else {
-      semsg_multiline("Error invoking '%s' on channel %" PRIu64 ":\n%s",
+      semsg_multiline("rpc_error", "Error invoking '%s' on channel %" PRIu64 ":\n%s",
                       method, chan_id, err.msg);
     }
 

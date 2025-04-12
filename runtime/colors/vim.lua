@@ -17,7 +17,7 @@ local hi = function(name, val)
   val.force = true
 
   -- Make sure that `cterm` attribute is not populated from `gui`
-  val.cterm = val.cterm or {}
+  val.cterm = val.cterm or {} ---@type vim.api.keyset.highlight
 
   -- Define global highlight
   vim.api.nvim_set_hl(0, name, val)
@@ -47,6 +47,7 @@ hi('WildMenu',     { fg = 'Black', bg = 'Yellow',       ctermfg = 'Black', cterm
 hi('VertSplit',      { link = 'Normal' })
 hi('WinSeparator',   { link = 'VertSplit' })
 hi('WinBarNC',       { link = 'WinBar' })
+hi('DiffTextAdd',    { link = 'DiffText' })
 hi('EndOfBuffer',    { link = 'NonText' })
 hi('LineNrAbove',    { link = 'LineNr' })
 hi('LineNrBelow',    { link = 'LineNr' })

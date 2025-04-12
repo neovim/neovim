@@ -6,6 +6,7 @@
   "workspace": {
     "library": [
       "../runtime/lua",
+      "../src",
       "../build/usr/share/lua/5.1",
       "../build",
       "${3rd}/busted/library",

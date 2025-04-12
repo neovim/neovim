@@ -19,6 +19,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
+#include "nvim/normal.h"
 #include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
 #include "nvim/search.h"
@@ -427,6 +428,13 @@ int end_word(int count, bool bigword, bool stop, bool empty)
 
   curwin->w_cursor.coladd = 0;
   cls_bigword = bigword;
+
+  // If adjusted cursor position previously, unadjust it.
+  if (*p_sel == 'e' && VIsual_active && VIsual_mode == 'v'
+      && VIsual_select_exclu_adj) {
+    unadjust_for_sel();
+  }
+
   while (--count >= 0) {
     // When inside a range of folded lines, move to the last char of the
     // last line.

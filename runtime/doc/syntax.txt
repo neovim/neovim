@@ -246,12 +246,6 @@ Added		added line in a diff
 Changed		changed line in a diff
 Removed		removed line in a diff
 
-The names marked with * are the preferred groups; the others are minor groups.
-For the preferred groups, the "syntax.vim" file contains default highlighting.
-The minor groups are linked to the preferred groups, so they get the same
-highlighting.  You can override these defaults by using ":highlight" commands
-after sourcing the "syntax.vim" file.
-
 Note that highlight group names are not case sensitive.  "String" and "string"
 can be used for the same group.
 
@@ -342,7 +336,7 @@ Upon loading a file, Vim finds the relevant syntax file as follows:
 ==============================================================================
 4. Conversion to HTML				*convert-to-HTML* *2html.vim*
 
-The old to html converter has ben replaced by a Lua version and the
+The old to html converter has been replaced by a Lua version and the
 documentation has been moved to |:TOhtml|.
 
 ==============================================================================
@@ -817,6 +811,21 @@ doesn't work for you, or you don't edit Progress at all, use this in your
 startup vimrc: >
    :let filetype_w = "cweb"
 
+CSHARP							 *cs.vim* *ft-cs-syntax*
+
+C# raw string literals may use any number of quote marks to encapsulate the
+block, and raw interpolated string literals may use any number of braces to
+encapsulate the interpolation, e.g. >
+
+    $$$""""Hello {{{name}}}""""
+<
+By default, Vim highlights 3-8 quote marks, and 1-8 interpolation braces.
+The maximum numbers of quotes and braces recognized can configured using the
+following variables:
+
+    Variable					Default ~
+    g:cs_raw_string_quote_count			8
+    g:cs_raw_string_interpolation_brace_count	8
 
 DART						*dart.vim* *ft-dart-syntax*
 
@@ -1714,12 +1723,12 @@ cycles for such a feature to become either integrated into the platform or
 withdrawn from this effort.  To cater for early adopters, there is optional
 support in Vim for syntax related preview features that are implemented.  You
 can request it by specifying a list of preview feature numbers as follows: >
-	:let g:java_syntax_previews = [455, 476]
+	:let g:java_syntax_previews = [488, 494]
 
 The supported JEP numbers are to be drawn from this table:
 	`430`: String Templates [JDK 21]
-	`455`: Primitive types in Patterns, instanceof, and switch
-	`476`: Module Import Declarations
+	`488`: Primitive types in Patterns, instanceof, and switch
+	`494`: Module Import Declarations
 
 Note that as soon as the particular preview feature will have been integrated
 into the Java platform, its entry will be removed from the table and related
@@ -1870,13 +1879,9 @@ instead, and the name of your source file should be `*.pike`
 
 LUA						*lua.vim* *ft-lua-syntax*
 
-The Lua syntax file can be used for versions 4.0, 5.0, 5.1 and 5.2 (5.2 is
-the default). You can select one of these versions using the global variables
-lua_version and lua_subversion. For example, to activate Lua
-5.1 syntax highlighting, set the variables like this: >
-
-	:let lua_version = 5
-	:let lua_subversion = 1
+The Lua syntax file can be used for versions 4.0, 5.0+. You can select one of
+these versions using the global variables |g:lua_version| and
+|g:lua_subversion|.
 
 
 MAIL						*mail.vim* *ft-mail.vim*
@@ -3027,24 +3032,24 @@ cases pertain, then the first line of the file is examined (ex. looking for
 /bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a shelltype, then
 that shelltype is used.  However some files (ex. .profile) are known to be
 shell files but the type is not apparent.  Furthermore, on many systems sh is
-symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (Posix).
+symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (POSIX).
 
 One may specify a global default by instantiating one of the following
 variables in your vimrc:
 
    ksh: >
 	let g:is_kornshell = 1
-<   posix:  (using this is nearly the same as setting g:is_kornshell to 1) >
+<   posix: (default) >
 	let g:is_posix     = 1
 <   bash: >
 	let g:is_bash	   = 1
-<   sh: (default) Bourne shell >
+<   dash: >
+	let g:is_dash	   = 1
+<   sh: Bourne shell >
 	let g:is_sh	   = 1
 
-<   (dash users should use posix)
-
 If there's no "#! ..." line, and the user hasn't availed themself of a default
-sh.vim syntax setting as just shown, then syntax/sh.vim will assume the Bourne
+sh.vim syntax setting as just shown, then syntax/sh.vim will assume the POSIX
 shell syntax.  No need to quote RFCs or market penetration statistics in error
 reports, please -- just select the default version of the sh your system uses
 and install the associated "let..." in your <.vimrc>.
@@ -4820,16 +4825,20 @@ is mostly used, because it looks better.
 ==============================================================================
 13. Highlight command			*:highlight* *:hi* *E28* *E411* *E415*
 
-There are two types of highlight groups:
-- The built-in |highlight-groups|.
-- The ones used for specific languages.  For these the name starts with the
-  name of the language.  Many of these don't have any attributes, but are
-  linked to a group of the second type.
-							*hitest.vim*
-You can see all the groups currently active with this command: >
-    :so $VIMRUNTIME/syntax/hitest.vim
-This will open a new window containing all highlight group names, displayed
-in their own color.
+Nvim uses a range of highlight groups which fall into two categories: Editor
+interface and syntax highlighting. In rough order of importance, these are
+- basic editor |highlight-groups|
+- standard syntax |group-name|s (in addition, syntax files can define
+  language-specific groups, which are prefixed with the language name)
+- |diagnostic-highlights|
+- |treesitter-highlight-groups|
+- |lsp-semantic-highlight| groups
+- |lsp-highlight| of symbols and references
+
+Where appropriate, highlight groups are linked by default to one of the more basic
+groups, but colorschemes are expected to cover all of them. Under each tag,
+the corresponding highlight groups are highlighted using the current
+colorscheme.
 
 						*:colo* *:colorscheme* *E185*
 :colo[rscheme]		Output the name of the currently active color scheme.
@@ -5168,8 +5177,11 @@ DiffChange	Diff mode: Changed line. |diff.txt|
 DiffDelete	Diff mode: Deleted line. |diff.txt|
 							*hl-DiffText*
 DiffText	Diff mode: Changed text within a changed line. |diff.txt|
+							*hl-DiffTextAdd*
+DiffTextAdd	Diff mode: Added text within a changed line.  Linked to
+		|hl-DiffText| by default. |diff.txt|
 							*hl-EndOfBuffer*
-EndOfBuffer	Filler lines (~) after the end of the buffer.
+EndOfBuffer	Filler lines (~) after the last line in the buffer.
 		By default, this is highlighted like |hl-NonText|.
 							*hl-TermCursor*
 TermCursor	Cursor in a focused terminal.

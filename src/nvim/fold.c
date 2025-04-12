@@ -194,7 +194,7 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
     const int x = find_wl_entry(win, lnum);
     if (x >= 0) {
       first = win->w_lines[x].wl_lnum;
-      last = win->w_lines[x].wl_lastlnum;
+      last = win->w_lines[x].wl_foldend;
       had_folded = win->w_lines[x].wl_folded;
     }
   }
@@ -971,7 +971,7 @@ int find_wl_entry(win_T *win, linenr_T lnum)
       if (lnum < win->w_lines[i].wl_lnum) {
         return -1;
       }
-      if (lnum <= win->w_lines[i].wl_lastlnum) {
+      if (lnum <= win->w_lines[i].wl_foldend) {
         return i;
       }
     }
@@ -1731,7 +1731,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
 
       curwin = wp;
       curbuf = wp->w_buffer;
-      current_sctx = wp->w_p_script_ctx[kWinOptFoldtext].script_ctx;
+      current_sctx = wp->w_p_script_ctx[kWinOptFoldtext];
 
       emsg_off++;  // handle exceptions, but don't display errors
 

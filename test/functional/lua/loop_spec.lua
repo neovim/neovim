@@ -159,4 +159,87 @@ describe('vim.uv', function()
   it("is equal to require('luv')", function()
     eq(true, exec_lua("return vim.uv == require('luv')"))
   end)
+
+  it('non-string error() #32595', function()
+    local screen = Screen.new(50, 10)
+    exec_lua(function()
+      local timer = assert(vim.uv.new_timer())
+      timer:start(0, 0, function()
+        timer:close()
+        error(nil)
+      end)
+    end)
+    local s = [[
+                                                        |
+      {1:~                                                 }|*5
+      {3:                                                  }|
+      {9:Error executing callback:}                         |
+      {9:[NULL]}                                            |
+      {6:Press ENTER or type command to continue}^           |
+    ]]
+    screen:expect(s)
+    feed('<cr>')
+    n.assert_alive()
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+    exec_lua(function()
+      vim.uv.fs_stat('non-existent-file', function()
+        error(nil)
+      end)
+    end)
+    screen:expect(s)
+    feed('<cr>')
+    n.assert_alive()
+  end)
+
+  it("doesn't crash on async callbacks throwing nil error", function()
+    local screen = Screen.new(50, 4)
+
+    exec_lua(function()
+      _G.idle = vim.uv.new_idle()
+      _G.idle:start(function()
+        _G.idle:stop()
+        error()
+      end)
+    end)
+
+    screen:expect([[
+      {3:                                                  }|
+      {9:Error executing callback:}                         |
+      {9:[NULL]}                                            |
+      {6:Press ENTER or type command to continue}^           |
+    ]])
+    feed('<cr>')
+
+    exec_lua(function()
+      _G.idle:close()
+    end)
+  end)
+
+  it("doesn't crash on async callbacks throwing object as an error", function()
+    local screen = Screen.new(50, 4)
+
+    exec_lua(function()
+      _G.idle = vim.uv.new_idle()
+      _G.idle:start(function()
+        _G.idle:stop()
+        error(_G.idle) -- userdata with __tostring method
+      end)
+    end)
+
+    screen:expect([[
+      {3:                                                  }|
+      {9:Error executing callback:}                         |
+      {9:uv_idle_t: 0x{MATCH:%w+}}{MATCH: +}|
+      {6:Press ENTER or type command to continue}^           |
+    ]])
+    feed('<cr>')
+
+    exec_lua(function()
+      _G.idle:close()
+    end)
+  end)
 end)

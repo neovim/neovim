@@ -165,7 +165,7 @@ void event_init(void)
 }
 
 /// @returns false if main_loop could not be closed gracefully
-bool event_teardown(void)
+static bool event_teardown(void)
 {
   if (!main_loop.events) {
     input_stop();
@@ -238,6 +238,9 @@ void early_init(mparm_T *paramp)
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype
+
+  // initialize quickfix list
+  qf_init_stack();
 }
 
 #ifdef MAKE_LIB
@@ -2064,7 +2067,7 @@ static void do_exrc_initialization(void)
       xfree(str);
       if (ERROR_SET(&err)) {
         semsg("Error detected while processing %s:", VIMRC_LUA_FILE);
-        semsg_multiline(err.msg);
+        semsg_multiline("emsg", err.msg);
         api_clear_error(&err);
       }
     }

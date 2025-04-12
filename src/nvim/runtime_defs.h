@@ -49,6 +49,7 @@ typedef struct {
   scriptvar_T *sn_vars;         ///< stores s: variables for this script
 
   char *sn_name;
+  bool sn_lua;                  ///< true for a lua script
   bool sn_prof_on;              ///< true when script is/was profiled
   bool sn_pr_force;             ///< forceit: profile functions in this script
   proftime_T sn_pr_child;       ///< time set when going into first child

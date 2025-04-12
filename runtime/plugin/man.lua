@@ -8,7 +8,7 @@ vim.api.nvim_create_user_command('Man', function(params)
   if params.bang then
     man.init_pager()
   else
-    local err = man.open_page(params.count, params.smods, params.fargs)
+    local _, err = pcall(man.open_page, params.count, params.smods, params.fargs)
     if err then
       vim.notify('man.lua: ' .. err, vim.log.levels.ERROR)
     end

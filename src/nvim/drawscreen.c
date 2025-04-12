@@ -147,6 +147,11 @@ void conceal_check_cursor_line(void)
   }
 
   redrawWinline(curwin, curwin->w_cursor.lnum);
+
+  // Concealed line visibility toggled.
+  if (decor_conceal_line(curwin, curwin->w_cursor.lnum - 1, true)) {
+    changed_window_setting(curwin);
+  }
   // Need to recompute cursor column, e.g., when starting Visual mode
   // without concealing.
   curs_columns(curwin, true);
@@ -666,11 +671,10 @@ int update_screen(void)
 
   win_check_ns_hl(NULL);
 
-  // Reset b_mod_set and b_signcols.resized flags.  Going through all windows is
-  // probably faster than going through all buffers (there could be many buffers).
+  // Reset b_mod_set.  Going through all windows is probably faster than going
+  // through all buffers (there could be many buffers).
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     wp->w_buffer->b_mod_set = false;
-    wp->w_buffer->b_signcols.resized = false;
   }
 
   updating_screen = false;
@@ -1233,16 +1237,15 @@ static bool win_redraw_signcols(win_T *wp)
   if (!buf->b_signcols.autom
       && (*wp->w_p_stc != NUL || (wp->w_maxscwidth > 1 && wp->w_minscwidth != wp->w_maxscwidth))) {
     buf->b_signcols.autom = true;
-    buf_signcols_count_range(buf, 0, buf->b_ml.ml_line_count, MAXLNUM, kFalse);
+    buf_signcols_count_range(buf, 0, buf->b_ml.ml_line_count - 1, MAXLNUM, kFalse);
   }
 
   while (buf->b_signcols.max > 0 && buf->b_signcols.count[buf->b_signcols.max - 1] == 0) {
-    buf->b_signcols.resized = true;
     buf->b_signcols.max--;
   }
 
   int width = MIN(wp->w_maxscwidth, buf->b_signcols.max);
-  bool rebuild_stc = buf->b_signcols.resized && *wp->w_p_stc != NUL;
+  bool rebuild_stc = buf->b_signcols.max != buf->b_signcols.last_max && *wp->w_p_stc != NUL;
 
   if (rebuild_stc) {
     wp->w_nrwidth_line_count = 0;
@@ -1531,11 +1534,11 @@ static void win_update(win_T *wp)
 
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (win->w_buffer == wp->w_buffer && win_redraw_signcols(win)) {
-      win->w_lines_valid = 0;
       changed_line_abv_curs_win(win);
       redraw_later(win, UPD_NOT_VALID);
     }
   }
+  buf->b_signcols.last_max = buf->b_signcols.max;
 
   init_search_hl(wp, &screen_search_hl);
 
@@ -1621,7 +1624,7 @@ static void win_update(win_T *wp)
       }
     }
 
-    if (mod_top != 0 && hasAnyFolding(wp)) {
+    if (mod_top != 0 && win_lines_concealed(wp)) {
       // A change in a line can cause lines above it to become folded or
       // unfolded.  Find the top most buffer line that may be affected.
       // If the line was previously folded and displayed, get the first
@@ -1697,6 +1700,16 @@ static void win_update(win_T *wp)
     }
   }
 
+  // Below logic compares wp->w_topline against wp->w_lines[0].wl_lnum,
+  // which may point to a line below wp->w_topline if it is concealed;
+  // incurring scrolling even though wp->w_topline is still the same.
+  // Compare against an adjusted topline instead:
+  linenr_T topline_conceal = wp->w_topline;
+  while (decor_conceal_line(wp, topline_conceal - 1, false)) {
+    topline_conceal++;
+    hasFolding(wp, topline_conceal, NULL, &topline_conceal);
+  }
+
   // If there are no changes on the screen that require a complete redraw,
   // handle three cases:
   // 1: we are off the top of the screen by a few lines: scroll down
@@ -1709,21 +1722,21 @@ static void win_update(win_T *wp)
     if (mod_top != 0
         && wp->w_topline == mod_top
         && (!wp->w_lines[0].wl_valid
-            || wp->w_topline == wp->w_lines[0].wl_lnum)) {
+            || topline_conceal == wp->w_lines[0].wl_lnum)) {
       // w_topline is the first changed line and window is not scrolled,
       // the scrolling from changed lines will be done further down.
     } else if (wp->w_lines[0].wl_valid
-               && (wp->w_topline < wp->w_lines[0].wl_lnum
-                   || (wp->w_topline == wp->w_lines[0].wl_lnum
+               && (topline_conceal < wp->w_lines[0].wl_lnum
+                   || (topline_conceal == wp->w_lines[0].wl_lnum
                        && wp->w_topfill > wp->w_old_topfill))) {
       // New topline is above old topline: May scroll down.
       int j;
-      if (hasAnyFolding(wp)) {
-        // count the number of lines we are off, counting a sequence
-        // of folded lines as one
+      if (win_lines_concealed(wp)) {
+        // Count the number of lines we are off, counting a sequence
+        // of folded lines as one, and skip concealed lines.
         j = 0;
         for (linenr_T ln = wp->w_topline; ln < wp->w_lines[0].wl_lnum; ln++) {
-          j++;
+          j += !decor_conceal_line(wp, ln - 1, false);
           if (j >= wp->w_grid.rows - 2) {
             break;
           }
@@ -2101,6 +2114,31 @@ static void win_update(win_T *wp)
         top_to_mod = false;
       }
 
+      // When lines are folded, display one line for all of them.
+      // Otherwise, display normally (can be several display lines when
+      // 'wrap' is on).
+      foldinfo_T foldinfo = wp->w_p_cul && lnum == wp->w_cursor.lnum
+                            ? cursorline_fi : fold_info(wp, lnum);
+
+      // If the line is concealed and has no filler lines, go to the next line.
+      bool concealed = decor_conceal_line(wp, lnum - 1, false);
+      if (concealed) {
+        if (wp == curwin && lnum == curwin->w_cursor.lnum) {
+          conceal_cursor_used = conceal_cursor_line(curwin);
+        }
+        if (win_get_fill(wp, lnum) == 0) {
+          if (idx > 0) {
+            wp->w_lines[idx - 1].wl_lastlnum = lnum + foldinfo.fi_lines - (foldinfo.fi_lines != 0);
+          }
+          if (lnum == mod_top && lnum < mod_bot) {
+            mod_top += foldinfo.fi_lines ? foldinfo.fi_lines : 1;
+          }
+          lnum += foldinfo.fi_lines ? foldinfo.fi_lines : 1;
+          spv.spv_capcol_lnum = 0;
+          continue;
+        }
+      }
+
       // When at start of changed lines: May scroll following lines
       // up or down to minimize redrawing.
       // Don't do this when the change continues until the end.
@@ -2150,17 +2188,10 @@ static void win_update(win_T *wp)
           // rows, and may insert/delete lines
           int j = idx;
           for (l = lnum; l < mod_bot; l++) {
-            if (hasFolding(wp, l, NULL, &l)) {
-              new_rows++;
-            } else if (l == wp->w_topline) {
-              int n = plines_win_nofill(wp, l, false) + wp->w_topfill
-                      - adjust_plines_for_skipcol(wp);
-              n = MIN(n, wp->w_height_inner);
-              new_rows += n;
-            } else {
-              new_rows += plines_win(wp, l, true);
-            }
-            j++;
+            int n = plines_win_full(wp, l, &l, NULL, true, false);
+            n -= (l == wp->w_topline ? adjust_plines_for_skipcol(wp) : 0);
+            new_rows += MIN(n, wp->w_height_inner);
+            j += n > 0;  // don't count concealed lines
             if (new_rows > wp->w_grid.rows - row - 2) {
               // it's getting too much, must redraw the rest
               new_rows = 9999;
@@ -2242,12 +2273,6 @@ static void win_update(win_T *wp)
         }
       }
 
-      // When lines are folded, display one line for all of them.
-      // Otherwise, display normally (can be several display lines when
-      // 'wrap' is on).
-      foldinfo_T foldinfo = wp->w_p_cul && lnum == wp->w_cursor.lnum
-                            ? cursorline_fi : fold_info(wp, lnum);
-
       if (foldinfo.fi_lines == 0
           && idx < wp->w_lines_valid
           && wp->w_lines[idx].wl_valid
@@ -2267,11 +2292,11 @@ static void win_update(win_T *wp)
           syntax_end_parsing(wp, syntax_last_parsed + 1);
         }
 
-        bool display_buf_line = (foldinfo.fi_lines == 0 || *wp->w_p_fdt == NUL);
+        bool display_buf_line = !concealed && (foldinfo.fi_lines == 0 || *wp->w_p_fdt == NUL);
 
         // Display one line
         spellvars_T zero_spv = { 0 };
-        row = win_line(wp, lnum, srow, wp->w_grid.rows, 0,
+        row = win_line(wp, lnum, srow, wp->w_grid.rows, 0, concealed,
                        display_buf_line ? &spv : &zero_spv, foldinfo);
 
         if (display_buf_line) {
@@ -2282,13 +2307,22 @@ static void win_update(win_T *wp)
 
         if (foldinfo.fi_lines == 0) {
           wp->w_lines[idx].wl_folded = false;
+          wp->w_lines[idx].wl_foldend = lnum;
           wp->w_lines[idx].wl_lastlnum = lnum;
           did_update = DID_LINE;
         } else {
           foldinfo.fi_lines--;
           wp->w_lines[idx].wl_folded = true;
+          wp->w_lines[idx].wl_foldend = lnum + foldinfo.fi_lines;
           wp->w_lines[idx].wl_lastlnum = lnum + foldinfo.fi_lines;
           did_update = DID_FOLD;
+        }
+
+        // Adjust "wl_lastlnum" for concealed lines below the last line in the window.
+        while (row == wp->w_grid.rows
+               && decor_conceal_line(wp, wp->w_lines[idx].wl_lastlnum, false)) {
+          wp->w_lines[idx].wl_lastlnum++;
+          hasFolding(wp, wp->w_lines[idx].wl_lastlnum, NULL, &wp->w_lines[idx].wl_lastlnum);
         }
       }
 
@@ -2313,12 +2347,13 @@ static void win_update(win_T *wp)
       // - 'number' is set and below inserted/deleted lines, or
       // - 'relativenumber' is set and cursor moved vertically,
       // the text doesn't need to be redrawn, but the number column does.
-      if ((wp->w_p_nu && mod_top != 0 && lnum >= mod_bot
-           && buf->b_mod_set && buf->b_mod_xlines != 0)
-          || (wp->w_p_rnu && wp->w_last_cursor_lnum_rnu != wp->w_cursor.lnum)) {
+      if (((wp->w_p_nu && mod_top != 0 && lnum >= mod_bot
+            && buf->b_mod_set && buf->b_mod_xlines != 0)
+           || (wp->w_p_rnu && wp->w_last_cursor_lnum_rnu != wp->w_cursor.lnum))
+          && !decor_conceal_line(wp, lnum - 1, true)) {
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum
                           ? cursorline_fi : fold_info(wp, lnum);
-        win_line(wp, lnum, srow, wp->w_grid.rows, wp->w_lines[idx].wl_size, &spv, info);
+        win_line(wp, lnum, srow, wp->w_grid.rows, wp->w_lines[idx].wl_size, false, &spv, info);
       }
 
       // This line does not need to be drawn, advance to the next one.
@@ -2414,7 +2449,7 @@ redr_statuscol:
         // for ml_line_count+1 and only draw filler lines
         spellvars_T zero_spv = { 0 };
         foldinfo_T zero_foldinfo = { 0 };
-        row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, 0, &zero_spv, zero_foldinfo);
+        row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, 0, false, &zero_spv, zero_foldinfo);
         if (wp->w_redr_statuscol) {
           eof = false;
           goto redr_statuscol;

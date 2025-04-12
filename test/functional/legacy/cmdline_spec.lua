@@ -115,6 +115,77 @@ describe('cmdline', function()
     ]])
   end)
 
+  -- oldtest: Test_wildmenu_with_input_func()
+  it('wildmenu works with input() function', function()
+    local screen = Screen.new(60, 8)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Yellow, foreground = Screen.colors.Black },
+    })
+
+    feed(":call input('Command? ', '', 'command')<CR>")
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*6
+      Command? ^                                                   |
+    ]])
+    feed('ech<Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {100:echo}{3:  echoerr  echohl  echomsg  echon                       }|
+      Command? echo^                                               |
+    ]])
+    feed('<Space>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*6
+      Command? echo ^                                              |
+    ]])
+    feed('bufn<Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {100:bufname(}{3:  bufnr(                                            }|
+      Command? echo bufname(^                                      |
+    ]])
+    feed('<CR>')
+
+    command('set wildoptions+=pum')
+
+    feed(":call input('Command? ', '', 'command')<CR>")
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*6
+      Command? ^                                                   |
+    ]])
+    feed('ech<Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {1:~       }{12: echo           }{1:                                    }|
+      {1:~       }{4: echoerr        }{1:                                    }|
+      {1:~       }{4: echohl         }{1:                                    }|
+      {1:~       }{4: echomsg        }{1:                                    }|
+      {1:~       }{4: echon          }{1:                                    }|
+      Command? echo^                                               |
+    ]])
+    feed('<Space>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*6
+      Command? echo ^                                              |
+    ]])
+    feed('bufn<Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*4
+      {1:~            }{12: bufname(       }{1:                               }|
+      {1:~            }{4: bufnr(         }{1:                               }|
+      Command? echo bufname(^                                      |
+    ]])
+    feed('<CR>')
+  end)
+
   -- oldtest: Test_redraw_in_autocmd()
   it('cmdline cursor position is correct after :redraw with cmdheight=2', function()
     local screen = Screen.new(30, 6)
@@ -294,41 +365,34 @@ describe('cmdwin', function()
   -- oldtest: Test_cmdwin_interrupted()
   it('still uses a new buffer when interrupting more prompt on open', function()
     local screen = Screen.new(30, 16)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, reverse = true }, -- StatusLine
-      [2] = { reverse = true }, -- StatusLineNC
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-      [4] = { bold = true }, -- ModeMsg
-    })
     command('set more')
     command('autocmd WinNew * highlight')
     feed('q:')
-    screen:expect({ any = pesc('{3:-- More --}^') })
+    screen:expect({ any = pesc('{6:-- More --}^') })
     feed('q')
     screen:expect([[
                                     |
-      {0:~                             }|*5
+      {1:~                             }|*5
       {2:[No Name]                     }|
-      {0::}^                             |
-      {0:~                             }|*6
-      {1:[Command Line]                }|
+      {1::}^                             |
+      {1:~                             }|*6
+      {3:[Command Line]                }|
                                     |
     ]])
     feed([[aecho 'done']])
     screen:expect([[
                                     |
-      {0:~                             }|*5
+      {1:~                             }|*5
       {2:[No Name]                     }|
-      {0::}echo 'done'^                  |
-      {0:~                             }|*6
-      {1:[Command Line]                }|
-      {4:-- INSERT --}                  |
+      {1::}echo 'done'^                  |
+      {1:~                             }|*6
+      {3:[Command Line]                }|
+      {5:-- INSERT --}                  |
     ]])
     feed('<CR>')
     screen:expect([[
       ^                              |
-      {0:~                             }|*14
+      {1:~                             }|*14
       done                          |
     ]])
   end)

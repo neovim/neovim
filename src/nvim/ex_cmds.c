@@ -1151,7 +1151,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   }
 
   // Create the shell command in allocated memory.
-  char *cmd_buf = make_filter_cmd(cmd, itmp, otmp);
+  char *cmd_buf = make_filter_cmd(cmd, itmp, otmp, do_in);
   ui_cursor_goto(Rows - 1, 0);
 
   if (do_out) {
@@ -1349,8 +1349,9 @@ static char *find_pipe(const char *cmd)
 /// @param cmd  Command to execute.
 /// @param itmp NULL or the input file.
 /// @param otmp NULL or the output file.
+/// @param do_in true if stdin is needed.
 /// @returns an allocated string with the shell command.
-char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
+char *make_filter_cmd(char *cmd, char *itmp, char *otmp, bool do_in)
 {
   bool is_fish_shell =
 #if defined(UNIX)
@@ -1372,6 +1373,11 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
     len += is_pwsh ? strlen(itmp) + sizeof("& { Get-Content " " | & " " }") - 1 + 6  // +6: #20530
                    : strlen(itmp) + sizeof(" { " " < " " } ") - 1;
   }
+
+  if (do_in && is_pwsh) {
+    len += sizeof(" $input | ");
+  }
+
   if (otmp != NULL) {
     len += strlen(otmp) + strlen(p_srr) + 2;  // two extra spaces ("  "),
   }
@@ -1385,8 +1391,11 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
       xstrlcat(buf, " | & ", len - 1);  // FIXME: add `&` ourself or leave to user?
       xstrlcat(buf, cmd, len - 1);
       xstrlcat(buf, " }", len - 1);
+    } else if (do_in) {
+      xstrlcpy(buf, " $input | ", len - 1);
+      xstrlcat(buf, cmd, len);
     } else {
-      xstrlcpy(buf, cmd, len - 1);
+      xstrlcpy(buf, cmd, len);
     }
   } else {
 #if defined(UNIX)
@@ -2069,6 +2078,29 @@ theend:
   return retval;
 }
 
+/// set v:swapcommand for the SwapExists autocommands.
+///
+/// @param command  [+cmd] to be executed (e.g. +10).
+/// @param newlnum  if > 0: put cursor on this line number (if possible)
+//
+/// @return 1 if swapcommand was actually set, 0 otherwise
+bool set_swapcommand(char *command, linenr_T newlnum)
+{
+  if ((command == NULL && newlnum <= 0) || *get_vim_var_str(VV_SWAPCOMMAND) != NUL) {
+    return false;
+  }
+  const size_t len = (command != NULL) ? strlen(command) + 3 : 30;
+  char *const p = xmalloc(len);
+  if (command != NULL) {
+    vim_snprintf(p, len, ":%s\r", command);
+  } else {
+    vim_snprintf(p, len, "%" PRId64 "G", (int64_t)newlnum);
+  }
+  set_vim_var_string(VV_SWAPCOMMAND, p, -1);
+  xfree(p);
+  return true;
+}
+
 /// start editing a new file
 ///
 /// @param fnum     file number; if zero use ffname/sfname
@@ -2202,20 +2234,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     oldwin = NULL;
   }
 
-  if ((command != NULL || newlnum > 0)
-      && *get_vim_var_str(VV_SWAPCOMMAND) == NUL) {
-    // Set v:swapcommand for the SwapExists autocommands.
-    const size_t len = (command != NULL) ? strlen(command) + 3 : 30;
-    char *const p = xmalloc(len);
-    if (command != NULL) {
-      vim_snprintf(p, len, ":%s\r", command);
-    } else {
-      vim_snprintf(p, len, "%" PRId64 "G", (int64_t)newlnum);
-    }
-    set_vim_var_string(VV_SWAPCOMMAND, p, -1);
-    did_set_swapcommand = true;
-    xfree(p);
-  }
+  did_set_swapcommand = set_swapcommand(command, newlnum);
 
   // If we are starting to edit another file, open a (new) buffer.
   // Otherwise we re-use the current buffer.
@@ -3793,7 +3812,6 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               redraw_later(curwin, UPD_SOME_VALID);
               show_cursor_info_later(true);
               update_screen();
-              highlight_match = false;
               redraw_later(curwin, UPD_SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
@@ -3802,6 +3820,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               snprintf(IObuff, IOSIZE, p, sub);
               p = xstrdup(IObuff);
               typed = prompt_for_input(p, HLF_R, true, NULL);
+              highlight_match = false;
               xfree(p);
 
               msg_didout = false;                 // don't scroll up

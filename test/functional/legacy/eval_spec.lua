@@ -200,6 +200,7 @@ describe('eval', function()
       abcFc=]])
   end)
 
+  -- luacheck: ignore 611 (Line contains only whitespace)
   it('appending NL with setreg()', function()
     command('so test_eval_setup.vim')
 
@@ -222,6 +223,7 @@ describe('eval', function()
     command([[call SetReg('D', "\n", 'l')]])
     command([[call SetReg('E', "\n")]])
     command([[call SetReg('F', "\n", 'b')]])
+    command("$put ='.'")
     expect([[
 
       {{{2 setreg('A', ']] .. '\000' .. [[')
@@ -256,7 +258,8 @@ describe('eval', function()
       F: type ]] .. "\0220; value: abcF2\000 (['abcF2', '']), expr: abcF2\000" .. [[ (['abcF2', ''])
       ==
       =abcF2=
-       ]])
+       
+      .]])
   end)
 
   it('setting and appending list with setreg()', function()

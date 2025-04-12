@@ -149,6 +149,73 @@ describe(':terminal cursor', function()
                                                           |*5
         {3:-- TERMINAL --}                                    |
       ]])
+
+      -- Cursor is hidden; now request to show it while in a TermLeave autocmd.
+      -- Process events (via :sleep) to handle the escape sequence now.
+      command([[autocmd TermLeave * ++once call chansend(&channel, "\e[?25h") | sleep 1m]])
+      feed([[<C-\><C-N>]]) -- Exit terminal mode; cursor should not remain hidden
+      screen:expect([[
+        tty ready                                         |
+        ^                                                  |
+                                                          |*5
+      ]])
+
+      command('bwipeout! | let chan = nvim_open_term(0, {})')
+      feed('i')
+      -- Hide the cursor, switch to a non-terminal buffer, then show the cursor; it shouldn't remain
+      -- hidden after we're kicked out of terminal mode in the new buffer.
+      -- Must ensure these actions happen within the same terminal_execute call. The stream is
+      -- internal, so polling the event loop isn't necessary (terminal_receive is directly called).
+      command([[call chansend(chan, "\e[?25l") | new floob | call chansend(chan, "\e[?25h")]])
+      screen:expect([[
+        ^                                                  |
+        {4:~                                                 }|
+        {5:floob                                             }|
+                                                          |*2
+        {18:[Scratch]                                         }|
+                                                          |
+      ]])
+
+      feed('<C-W>pi')
+      screen:expect([[
+                                                          |
+        {4:~                                                 }|
+        {1:floob                                             }|
+        ^                                                  |
+                                                          |
+        {17:[Scratch]                                         }|
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end)
+
+    it('becomes visible on TermLeave if hidden immediately by events #32456', function()
+      skip(is_os('win'), '#31587')
+      -- Reproducing the issue is quite fragile; it's easiest done in a lone test case like this
+      -- with no prior commands.
+      feed([[<C-\><C-N>]])
+      screen:expect([[
+        tty ready                                         |
+        ^                                                  |
+                                                          |*5
+      ]])
+
+      -- Hide the cursor such that the escape sequence is processed as a side effect of showmode in
+      -- terminal_enter handling events (skip_showmode -> char_avail -> vpeekc -> os_breakcheck).
+      -- This requires a particular set of actions; :startinsert repros better than feed('i') here.
+      hide_cursor()
+      command('mode | startinsert')
+      screen:expect([[
+        tty ready                                         |
+                                                          |*5
+        {3:-- TERMINAL --}                                    |
+      ]])
+
+      feed([[<C-\><C-N>]])
+      screen:expect([[
+        tty ready                                         |
+        ^                                                  |
+                                                          |*5
+      ]])
     end)
   end)
 
@@ -358,55 +425,50 @@ describe(':terminal cursor', function()
     eq(error_hl_id, screen._mode_info[terminal_mode_idx].hl_id)
   end)
 
-  it('restores visibility on TermLeave #32456', function()
-    skip(is_os('win'), '#31587')
-    feed([[<C-\><C-N>]]) -- Exit terminal mode
-    screen:expect([[
-      tty ready                                         |
-      ^                                                  |
-                                                        |*5
+  it('uses the correct attributes', function()
+    feed([[<C-\><C-N>]])
+    command([[
+      bwipeout!
+      let chan1 = nvim_open_term(0, {})
+      vnew
+      let chan2 = nvim_open_term(0, {})
     ]])
-
-    tt.hide_cursor()
-    -- :startinsert repros the issue more reliably than feed('i')
-    command('mode | startinsert')
-    screen:expect([[
-      tty ready                                         |
-                                                        |*5
-      {3:-- TERMINAL --}                                    |
-    ]])
-
-    feed([[<C-\><C-N>]]) -- Exit terminal mode
-    screen:expect([[
-      tty ready                                         |
-      ^                                                  |
-                                                        |*5
-    ]])
-
     feed('i')
     screen:expect([[
-      tty ready                                         |
-                                                        |*5
+      ^                         │                        |
+                               │                        |*4
+      {17:[Scratch]                 }{18:[Scratch]               }|
       {3:-- TERMINAL --}                                    |
     ]])
+    eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
 
-    -- Cursor currently hidden; request to show it while in a TermLeave autocmd.
-    -- Process events (via :sleep) to handle the escape sequence immediately.
-    command([[autocmd TermLeave * ++once call chansend(b:terminal_job_id, "\e[?25h") | sleep 1m]])
-    feed([[<C-\><C-N>]]) -- Exit terminal mode
-    screen:expect([[
-      tty ready                                         |
-      ^                                                  |
-                                                        |*5
-    ]])
+    -- Modify cursor in the non-current terminal; should not affect this cursor.
+    command([[call chansend(chan1, "\e[4 q")]])
+    screen:expect_unchanged()
+    eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
 
-    feed('i')
+    -- Modify cursor in the current terminal.
+    command([[call chansend(chan2, "\e[6 q")]])
+    screen:expect_unchanged()
+    eq('vertical', screen._mode_info[terminal_mode_idx].cursor_shape)
+    eq(0, screen._mode_info[terminal_mode_idx].blinkon)
+    eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
+
+    -- Check the cursor in the other terminal reflects our changes from before.
+    command('wincmd p')
     screen:expect([[
-      tty ready                                         |
-      ^                                                  |
-                                                        |*4
+                               │^                        |
+                               │                        |*4
+      {18:[Scratch]                 }{17:[Scratch]               }|
       {3:-- TERMINAL --}                                    |
     ]])
+    eq('horizontal', screen._mode_info[terminal_mode_idx].cursor_shape)
+    eq(0, screen._mode_info[terminal_mode_idx].blinkon)
+    eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
   end)
 end)
 

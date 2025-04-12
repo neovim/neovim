@@ -110,7 +110,7 @@ append({lnum}, {text})                                                *append()*
 <
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {text} (`string|string[]`)
 
                 Return: ~
@@ -1038,15 +1038,16 @@ chdir({dir})                                                           *chdir()*
                   (`string`)
 
 cindent({lnum})                                                      *cindent()*
-		Get the amount of indent for line {lnum} according the C
-		indenting rules, as with 'cindent'.
+		Get the amount of indent for line {lnum} according the
+		|C-indenting| rules, as with 'cindent'.
 		The indent is counted in spaces, the value of 'tabstop' is
 		relevant.  {lnum} is used just like in |getline()|.
 		When {lnum} is invalid -1 is returned.
-		See |C-indenting|.
+
+		To get or set indent of lines in a string, see |vim.text.indent()|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -1636,7 +1637,7 @@ diff_filler({lnum})                                              *diff_filler()*
 		Returns 0 if the current window is not in diff mode.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -1653,7 +1654,7 @@ diff_hlID({lnum}, {col})                                           *diff_hlID()*
 		syntax information about the highlighting.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {col} (`integer`)
 
                 Return: ~
@@ -2562,7 +2563,7 @@ foldclosed({lnum})                                                *foldclosed()*
 		line, "'m" mark m, etc.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -2575,7 +2576,7 @@ foldclosedend({lnum})                                          *foldclosedend()*
 		line, "'m" mark m, etc.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -2593,7 +2594,7 @@ foldlevel({lnum})                                                  *foldlevel()*
 		line, "'m" mark m, etc.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -2628,7 +2629,7 @@ foldtextresult({lnum})                                        *foldtextresult()*
 		Useful when exporting folded text, e.g., to HTML.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`string`)
@@ -4902,6 +4903,8 @@ indent({lnum})                                                        *indent()*
 		|getline()|.
 		When {lnum} is invalid -1 is returned.
 
+		To get or set indent of lines in a string, see |vim.text.indent()|.
+
                 Parameters: ~
                   • {lnum} (`integer|string`)
 
@@ -5703,7 +5706,7 @@ line2byte({lnum})                                                  *line2byte()*
 		Also see |byte2line()|, |go| and |:goto|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -5716,7 +5719,7 @@ lispindent({lnum})                                                *lispindent()*
 		When {lnum} is invalid, -1 is returned.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -5802,7 +5805,9 @@ log10({expr})                                                          *log10()*
 
 luaeval({expr} [, {expr}])                                           *luaeval()*
 		Evaluate Lua expression {expr} and return its result converted
-		to Vim data structures. See |lua-eval| for more details.
+		to Vim data structures. See |lua-eval| for details.
+
+		See also |v:lua-call|.
 
                 Parameters: ~
                   • {expr} (`string`)
@@ -5903,9 +5908,8 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])                       *maparg()*
 		When {abbr} is there and it is |TRUE| use abbreviations
 		instead of mappings.
 
-		When {dict} is there and it is |TRUE| return a dictionary
-		containing all the information of the mapping with the
-		following items:			*mapping-dict*
+		When {dict} is |TRUE|, return a dictionary describing the
+		mapping, with these items:		*mapping-dict*
 		  "lhs"	     The {lhs} of the mapping as it would be typed
 		  "lhsraw"   The {lhs} of the mapping as raw bytes
 		  "lhsrawalt" The {lhs} of the mapping as raw bytes, alternate
@@ -6086,7 +6090,7 @@ mapset({dict})
 <
 
                 Parameters: ~
-                  • {dict} (`boolean`)
+                  • {dict} (`table<string,any>`)
 
                 Return: ~
                   (`any`)
@@ -6406,6 +6410,9 @@ matchfuzzy({list}, {str} [, {dict}])                              *matchfuzzy()*
 				given sequence.
 		    limit	Maximum number of matches in {list} to be
 				returned.  Zero means no limit.
+		    camelcase	Use enhanced camel case scoring making results
+				better suited for completion related to
+				programming languages.  Defaults to v:true.
 
 		If {list} is a list of dictionaries, then the optional {dict}
 		argument supports the following additional items:
@@ -6460,7 +6467,7 @@ matchfuzzy({list}, {str} [, {dict}])                              *matchfuzzy()*
                 Parameters: ~
                   • {list} (`any[]`)
                   • {str} (`string`)
-                  • {dict} (`string?`)
+                  • {dict} (`table?`)
 
                 Return: ~
                   (`any`)
@@ -6490,7 +6497,7 @@ matchfuzzypos({list}, {str} [, {dict}])                        *matchfuzzypos()*
                 Parameters: ~
                   • {list} (`any[]`)
                   • {str} (`string`)
-                  • {dict} (`string?`)
+                  • {dict} (`table?`)
 
                 Return: ~
                   (`any`)
@@ -6794,10 +6801,9 @@ mkdir({name} [, {flags} [, {prot}]])                              *mkdir()* *E73
 		If {prot} is given it is used to set the protection bits of
 		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
 		the user, readable for others).  Use 0o700 to make it
-		unreadable for others.
-
-		{prot} is applied for all parts of {name}.  Thus if you create
-		/tmp/foo/bar then /tmp/foo will be created with 0o700. Example: >vim
+		unreadable for others.  This is used for the newly created
+		directories.  Note: umask is applied to {prot} (on Unix).
+		Example: >vim
 			call mkdir($HOME .. "/tmp/foo/bar", "p", 0o700)
 
 <		This function is not available in the |sandbox|.
@@ -6987,7 +6993,7 @@ nextnonblank({lnum})                                            *nextnonblank()*
 		See also |prevnonblank()|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -7121,7 +7127,7 @@ prevnonblank({lnum})                                            *prevnonblank()*
 		Also see |nextnonblank()|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
 
                 Return: ~
                   (`integer`)
@@ -7500,6 +7506,7 @@ prompt_setcallback({buf}, {expr})                         *prompt_setcallback()*
 		     endif
 		   endfunc
 		   call prompt_setcallback(bufnr(), function('s:TextEntered'))
+<
 
                 Parameters: ~
                   • {buf} (`integer|string`)
@@ -8933,7 +8940,7 @@ setline({lnum}, {text})                                              *setline()*
 <		Note: The '[ and '] marks are not set.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {text} (`any`)
 
                 Return: ~
@@ -10223,7 +10230,9 @@ stdioopen({opts})                                                  *stdioopen()*
 
 stdpath({what})                                                *stdpath()* *E6100*
 		Returns |standard-path| locations of various default files and
-		directories.
+		directories. The locations are driven by |base-directories|
+		which you can configure via |$NVIM_APPNAME| or the `$XDG_…`
+		environment variables.
 
 		{what}       Type    Description ~
 		cache        String  Cache directory: arbitrary temporary
@@ -10845,7 +10854,7 @@ synID({lnum}, {col}, {trans})                                          *synID()*
 <
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {col} (`integer`)
                   • {trans} (`0|1`)
 
@@ -10950,7 +10959,7 @@ synconcealed({lnum}, {col})                                     *synconcealed()*
 		mechanisms |syntax-vs-match|.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {col} (`integer`)
 
                 Return: ~
@@ -10976,7 +10985,7 @@ synstack({lnum}, {col})                                             *synstack()*
 		valid positions.
 
                 Parameters: ~
-                  • {lnum} (`integer`)
+                  • {lnum} (`integer|string`)
                   • {col} (`integer`)
 
                 Return: ~
@@ -11966,14 +11975,13 @@ windowsversion()                                              *windowsversion()*
                   (`string`)
 
 winheight({nr})                                                    *winheight()*
-		The result is a Number, which is the height of window {nr}.
-		{nr} can be the window number or the |window-ID|.
-		When {nr} is zero, the height of the current window is
-		returned.  When window {nr} doesn't exist, -1 is returned.
-		An existing window always has a height of zero or more.
-		This excludes any window toolbar line.
+		Gets the height of |window-ID| {nr} (zero for "current
+		window"), excluding any 'winbar' and 'statusline'. Returns -1
+		if window {nr} doesn't exist. An existing window always has
+		a height of zero or more.
+
 		Examples: >vim
-		  echo "The current window has " .. winheight(0) .. " lines."
+		  echo "Current window has " .. winheight(0) .. " lines."
 <
 
                 Parameters: ~
@@ -12140,18 +12148,21 @@ winsaveview()                                                    *winsaveview()*
                   (`vim.fn.winsaveview.ret`)
 
 winwidth({nr})                                                      *winwidth()*
-		The result is a Number, which is the width of window {nr}.
-		{nr} can be the window number or the |window-ID|.
-		When {nr} is zero, the width of the current window is
-		returned.  When window {nr} doesn't exist, -1 is returned.
-		An existing window always has a width of zero or more.
-		Examples: >vim
-		  echo "The current window has " .. winwidth(0) .. " columns."
+		Gets the width of |window-ID| {nr} (zero for "current
+		window"), including columns (|sign-column|, 'statuscolumn',
+		etc.). Returns -1 if window {nr} doesn't exist. An existing
+		window always has a width of zero or more.
+
+		Example: >vim
+		  echo "Current window has " .. winwidth(0) .. " columns."
 		  if winwidth(0) <= 50
 		    50 wincmd |
 		  endif
-<		For getting the terminal or screen size, see the 'columns'
-		option.
+<
+		To get the buffer "viewport", use |getwininfo()|: >vim
+		    :echo getwininfo(win_getid())[0].width - getwininfo(win_getid())[0].textoff
+<
+		To get the Nvim screen size, see the 'columns' option.
 
                 Parameters: ~
                   • {nr} (`integer`)

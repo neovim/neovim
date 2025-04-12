@@ -7,6 +7,7 @@
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 " Changelog:
+"          20250318  - Detect local arrays in functions
 "          20241411  - Detect dash character in function keyword for
 "                      bash mode (issue #16049)
 "          20190726  - Correctly skip if keywords in syntax comments
@@ -73,6 +74,8 @@ function! s:indent_value(option)
 endfunction
 
 function! GetShIndent()
+  let mode = mode()
+
   let curline = getline(v:lnum)
   let lnum = prevnonblank(v:lnum - 1)
   if lnum == 0
@@ -86,8 +89,11 @@ function! GetShIndent()
 
   " Check contents of previous lines
   " should not apply to e.g. commented lines
-  if line =~ '^\s*\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>' ||
-        \  (&ft is# 'zsh' && line =~ '^\s*\<\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>')
+
+  if s:start_block(line)
+    let ind += s:indent_value('default')
+  elseif line =~ '^\s*\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>\($\|\s\)' ||
+        \  (&ft is# 'zsh' && line =~ '^\s*\<\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>\($\|\s\)')
     if !s:is_end_expression(line)
       let ind += s:indent_value('default')
     endif
@@ -111,7 +117,7 @@ function! GetShIndent()
       let ind += s:indent_value('continuation-line')
     endif
   elseif s:end_block(line) && !s:start_block(line)
-    let ind = indent(lnum)
+    let ind -= s:indent_value('default')
   elseif pnum != 0 &&
         \ s:is_continuation_line(pline) &&
         \ !s:end_block(curline) &&
@@ -122,7 +128,7 @@ function! GetShIndent()
     while !s:is_empty(getline(i)) && i > pnum
       let i -= 1
     endw
-    if i == pnum
+    if i == pnum && (s:is_continuation_line(line) || pline =~ '{\s*\(#.*\)\=$')
       let ind += ind2
     else
       let ind = ind2
@@ -136,7 +142,11 @@ function! GetShIndent()
   " TODO: should we do the same for other "end" lines?
   if curline =~ '^\s*\%(fi\);\?\s*\%(#.*\)\=$'
     let ind = indent(v:lnum)
-    let previous_line = searchpair('\<if\>', '', '\<fi\>\zs', 'bnW', 'synIDattr(synID(line("."),col("."), 1),"name") =~? "comment\\|quote"')
+    " in insert mode, try to place the cursor after the fi statement
+    let endp = '\<fi\>' .. (mode ==? 'i' ? '\zs' : '')
+    let startp = '^\s*\<if\>'
+    let previous_line = searchpair(startp, '', endp , 'bnW', 
+          \ 'synIDattr(synID(line("."),col("."), 1),"name") =~? "comment\\|quote\\|option"')
     if previous_line > 0
       let ind = indent(previous_line)
     endif
@@ -167,7 +177,13 @@ function! GetShIndent()
   elseif match(map(synstack(v:lnum, 1), 'synIDattr(v:val, "name")'), '\c\mheredoc') > -1
     return indent(v:lnum)
   elseif s:is_comment(line) && s:is_empty(getline(v:lnum-1))
-    return indent(v:lnum)
+    if s:is_in_block(v:lnum)
+      " return indent of line in same block
+      return indent(lnum)
+    else
+      " use indent of current line
+      return indent(v:lnum)
+    endif
   endif
 
   return ind > 0 ? ind : 0
@@ -203,7 +219,18 @@ function! s:is_function_definition(line)
 endfunction
 
 function! s:is_array(line)
-  return a:line =~ '^\s*\<\k\+\>=('
+  return a:line =~ '^\s*\(\(declare\|typeset\|local\)\s\+\(-[Aalrtu]\+\s\+\)\?\)\?\<\k\+\>=('
+endfunction
+
+function! s:is_in_block(line)
+  " checks whether a:line is whithin a 
+  " block e.g. a shell function
+  " foo() {
+  " ..
+  " }
+  let prevline = searchpair('{', '', '}', 'bnW', 'synIDattr(synID(line("."),col("."), 1),"name") =~? "comment\\|quote"')
+  let nextline = searchpair('{', '', '}', 'nW', 'synIDattr(synID(line("."),col("."), 1),"name") =~? "comment\\|quote"')
+  return a:line > prevline && a:line < nextline
 endfunction
 
 function! s:is_case_label(line, pnum)
@@ -280,15 +307,7 @@ function! s:end_block(line)
 endfunction
 
 function! s:start_block(line)
-  return a:line =~ '{\s*\(#.*\)\?$'
-endfunction
-
-function! s:find_start_block(lnum)
-  let i = a:lnum
-  while i > 1 && !s:start_block(getline(i))
-    let i -= 1
-  endwhile
-  return i
+  return a:line =~ '^[^#]*[{(]\s*\(#.*\)\?$'
 endfunction
 
 function! s:is_comment(line)
@@ -300,7 +319,11 @@ function! s:is_end_expression(line)
 endfunction
 
 function! s:is_bash()
-  return get(g:, 'is_bash', 0) || get(b:, 'is_bash', 0)
+  if &ft is# 'bash' || getline(1) is# '#!/bin/bash'
+    return v:true
+  else
+    return get(g:, 'is_bash', 0) || get(b:, 'is_bash', 0)
+  endif
 endfunction
 
 let &cpo = s:cpo_save

@@ -106,10 +106,11 @@
 local M = {}
 
 local s_output = {} ---@type string[]
+local check_summary = { warn = 0, error = 0 }
 
 -- From a path return a list [{name}, {func}, {type}] representing a healthcheck
 local function filepath_to_healthcheck(path)
-  path = vim.fs.normalize(path)
+  path = vim.fs.abspath(vim.fs.normalize(path))
   local name --- @type string
   local func --- @type string
   local filetype --- @type string
@@ -118,7 +119,17 @@ local function filepath_to_healthcheck(path)
     func = 'health#' .. name .. '#check'
     filetype = 'v'
   else
-    local subpath = path:gsub('.*/lua/', '')
+    local rtp_lua = vim
+      .iter(vim.api.nvim_get_runtime_file('lua/', true))
+      :map(function(rtp_lua)
+        return vim.fs.abspath(vim.fs.normalize(rtp_lua))
+      end)
+      :find(function(rtp_lua)
+        return vim.fs.relpath(rtp_lua, path)
+      end)
+    -- "/path/to/rtp/lua/foo/bar/health.lua" => "foo/bar/health.lua"
+    -- "/another/rtp/lua/baz/health/init.lua" => "baz/health/init.lua"
+    local subpath = path:gsub('^' .. vim.pesc(rtp_lua), ''):gsub('^/+', '')
     if vim.fs.basename(subpath) == 'health.lua' then
       -- */health.lua
       name = vim.fs.dirname(subpath)
@@ -186,18 +197,13 @@ local function get_healthcheck(plugin_names)
   return healthchecks
 end
 
---- Indents lines *except* line 1 of a string if it contains newlines.
+--- Indents lines *except* line 1 of a multiline string.
 ---
 --- @param s string
 --- @param columns integer
 --- @return string
 local function indent_after_line1(s, columns)
-  local lines = vim.split(s, '\n')
-  local indent = string.rep(' ', columns)
-  for i = 2, #lines do
-    lines[i] = indent .. lines[i]
-  end
-  return table.concat(lines, '\n')
+  return (vim.text.indent(columns, s):gsub('^%s+', ''))
 end
 
 --- Changes ':h clipboard' to ':help |clipboard|'.
@@ -270,7 +276,7 @@ end
 ---
 --- @param msg string
 function M.ok(msg)
-  local input = format_report_message('OK', msg)
+  local input = format_report_message('✅ OK', msg)
   collect_output(input)
 end
 
@@ -279,8 +285,9 @@ end
 --- @param msg string
 --- @param ... string|string[] Optional advice
 function M.warn(msg, ...)
-  local input = format_report_message('WARNING', msg, ...)
+  local input = format_report_message('⚠️ WARNING', msg, ...)
   collect_output(input)
+  check_summary['warn'] = check_summary['warn'] + 1
 end
 
 --- Reports an error.
@@ -288,8 +295,9 @@ end
 --- @param msg string
 --- @param ... string|string[] Optional advice
 function M.error(msg, ...)
-  local input = format_report_message('ERROR', msg, ...)
+  local input = format_report_message('❌ ERROR', msg, ...)
   collect_output(input)
+  check_summary['error'] = check_summary['error'] + 1
 end
 
 local path2name = function(path)
@@ -334,6 +342,23 @@ M._complete = function()
   local rv = vim.tbl_keys(unique)
   table.sort(rv)
   return rv
+end
+
+--- Gets the results heading for the current report section.
+---
+---@return string
+local function get_summary()
+  local s = ''
+  local errors = check_summary['error']
+  local warns = check_summary['warn']
+
+  s = s .. (warns > 0 and (' %2d ⚠️'):format(warns) or '')
+  s = s .. (errors > 0 and (' %2d ❌'):format(errors) or '')
+  if errors == 0 and warns == 0 then
+    s = s .. '✅'
+  end
+
+  return s
 end
 
 --- Runs the specified healthchecks.
@@ -392,9 +417,9 @@ function M._check(mods, plugin_names)
     local func = value[1]
     local type = value[2]
     s_output = {}
+    check_summary = { warn = 0, error = 0 }
 
     if func == '' then
-      s_output = {}
       M.error('No healthcheck found for "' .. name .. '" plugin.')
     end
     if type == 'v' then
@@ -415,10 +440,12 @@ function M._check(mods, plugin_names)
       M.error('The healthcheck report for "' .. name .. '" plugin is empty.')
     end
 
+    local report = get_summary()
+    local replen = vim.fn.strwidth(report)
     local header = {
       string.rep('=', 78),
-      -- Example: `foo.health: [ …] require("foo.health").check()`
-      ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - func:len()), func),
+      -- Example: `foo.health: [ …] 1 ⚠️  5 ❌`
+      ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - replen), report),
       '',
     }
 
@@ -444,11 +471,15 @@ function M._check(mods, plugin_names)
   vim.print('')
 
   -- Quit with 'q' inside healthcheck buffers.
-  vim.keymap.set('n', 'q', function()
-    if not pcall(vim.cmd.close) then
-      vim.cmd.bdelete()
+  vim._with({ buf = bufnr }, function()
+    if vim.fn.maparg('q', 'n', false, false) == '' then
+      vim.keymap.set('n', 'q', function()
+        if not pcall(vim.cmd.close) then
+          vim.cmd.bdelete()
+        end
+      end, { buffer = bufnr, silent = true, noremap = true, nowait = true })
     end
-  end, { buffer = bufnr, silent = true, noremap = true, nowait = true })
+  end)
 
   -- Once we're done writing checks, set nomodifiable.
   vim.bo[bufnr].modifiable = false

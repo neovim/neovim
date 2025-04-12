@@ -153,7 +153,7 @@ M.funcs = {
 
     ]=],
     name = 'append',
-    params = { { 'lnum', 'integer' }, { 'text', 'string|string[]' } },
+    params = { { 'lnum', 'integer|string' }, { 'text', 'string|string[]' } },
     returns = '0|1',
     signature = 'append({lnum}, {text})',
   },
@@ -1225,16 +1225,17 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Get the amount of indent for line {lnum} according the C
-      indenting rules, as with 'cindent'.
+      Get the amount of indent for line {lnum} according the
+      |C-indenting| rules, as with 'cindent'.
       The indent is counted in spaces, the value of 'tabstop' is
       relevant.  {lnum} is used just like in |getline()|.
       When {lnum} is invalid -1 is returned.
-      See |C-indenting|.
+
+      To get or set indent of lines in a string, see |vim.text.indent()|.
 
     ]=],
     name = 'cindent',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'cindent({lnum})',
   },
@@ -1662,7 +1663,7 @@ M.funcs = {
     args = { 1, 3 },
     base = 1,
     name = 'cursor',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'off', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' }, { 'off', 'integer' } },
     signature = 'cursor({lnum}, {col} [, {off}])',
   },
   cursor__1 = {
@@ -1897,7 +1898,7 @@ M.funcs = {
 
     ]=],
     name = 'diff_filler',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'diff_filler({lnum})',
   },
@@ -1917,7 +1918,7 @@ M.funcs = {
 
     ]=],
     name = 'diff_hlID',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' } },
     signature = 'diff_hlID({lnum}, {col})',
   },
   digraph_get = {
@@ -2914,7 +2915,7 @@ M.funcs = {
 
     ]=],
     name = 'foldclosed',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'foldclosed({lnum})',
   },
@@ -2930,7 +2931,7 @@ M.funcs = {
 
     ]=],
     name = 'foldclosedend',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'foldclosedend({lnum})',
   },
@@ -2951,7 +2952,7 @@ M.funcs = {
 
     ]=],
     name = 'foldlevel',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'foldlevel({lnum})',
   },
@@ -2992,7 +2993,7 @@ M.funcs = {
 
     ]=],
     name = 'foldtextresult',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'string',
     signature = 'foldtextresult({lnum})',
   },
@@ -4125,7 +4126,7 @@ M.funcs = {
     args = { 2 },
     base = 1,
     name = 'getline',
-    params = { { 'lnum', 'integer' }, { 'end', 'true|number|string|table' } },
+    params = { { 'lnum', 'integer|string' }, { 'end', 'true|number|string|table' } },
     returns = 'string|string[]',
   },
   getloclist = {
@@ -5473,6 +5474,8 @@ M.funcs = {
       |getline()|.
       When {lnum} is invalid -1 is returned.
 
+      To get or set indent of lines in a string, see |vim.text.indent()|.
+
     ]=],
     name = 'indent',
     params = { { 'lnum', 'integer|string' } },
@@ -6371,7 +6374,7 @@ M.funcs = {
 
     ]=],
     name = 'line2byte',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'line2byte({lnum})',
   },
@@ -6387,7 +6390,7 @@ M.funcs = {
 
     ]=],
     name = 'lispindent',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'lispindent({lnum})',
   },
@@ -6491,7 +6494,9 @@ M.funcs = {
     base = 1,
     desc = [=[
       Evaluate Lua expression {expr} and return its result converted
-      to Vim data structures. See |lua-eval| for more details.
+      to Vim data structures. See |lua-eval| for details.
+
+      See also |v:lua-call|.
 
     ]=],
     lua = false,
@@ -6595,9 +6600,8 @@ M.funcs = {
       When {abbr} is there and it is |TRUE| use abbreviations
       instead of mappings.
 
-      When {dict} is there and it is |TRUE| return a dictionary
-      containing all the information of the mapping with the
-      following items:			*mapping-dict*
+      When {dict} is |TRUE|, return a dictionary describing the
+      mapping, with these items:		*mapping-dict*
         "lhs"	     The {lhs} of the mapping as it would be typed
         "lhsraw"   The {lhs} of the mapping as raw bytes
         "lhsrawalt" The {lhs} of the mapping as raw bytes, alternate
@@ -6659,7 +6663,7 @@ M.funcs = {
       { 'abbr', 'boolean' },
       { 'dict', 'true' },
     },
-    returns = 'string|table<string,any>',
+    returns = 'table<string,any>',
   },
   mapcheck = {
     args = { 1, 3 },
@@ -6758,7 +6762,7 @@ M.funcs = {
     args = { 1, 3 },
     base = 1,
     name = 'mapset',
-    params = { { 'mode', 'string' }, { 'abbr', 'boolean' }, { 'dict', 'boolean' } },
+    params = { { 'mode', 'string' }, { 'abbr', 'boolean' }, { 'dict', 'table<string,any>' } },
     signature = 'mapset({mode}, {abbr}, {dict})',
   },
   mapset__1 = {
@@ -6802,7 +6806,7 @@ M.funcs = {
       <
     ]=],
     name = 'mapset',
-    params = { { 'dict', 'boolean' } },
+    params = { { 'dict', 'table<string,any>' } },
     signature = 'mapset({dict})',
   },
   match = {
@@ -7146,6 +7150,9 @@ M.funcs = {
       		given sequence.
           limit	Maximum number of matches in {list} to be
       		returned.  Zero means no limit.
+          camelcase	Use enhanced camel case scoring making results
+      		better suited for completion related to
+      		programming languages.  Defaults to v:true.
 
       If {list} is a list of dictionaries, then the optional {dict}
       argument supports the following additional items:
@@ -7198,7 +7205,7 @@ M.funcs = {
       <results in `['two one']`.
     ]=],
     name = 'matchfuzzy',
-    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'string' } },
+    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'table' } },
     signature = 'matchfuzzy({list}, {str} [, {dict}])',
   },
   matchfuzzypos = {
@@ -7227,7 +7234,7 @@ M.funcs = {
       <results in `[[{"id": 10, "text": "hello"}], [[2, 3]], [127]]`
     ]=],
     name = 'matchfuzzypos',
-    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'string' } },
+    params = { { 'list', 'any[]' }, { 'str', 'string' }, { 'dict', 'table' } },
     signature = 'matchfuzzypos({list}, {str} [, {dict}])',
   },
   matchlist = {
@@ -7548,10 +7555,9 @@ M.funcs = {
       If {prot} is given it is used to set the protection bits of
       the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
       the user, readable for others).  Use 0o700 to make it
-      unreadable for others.
-
-      {prot} is applied for all parts of {name}.  Thus if you create
-      /tmp/foo/bar then /tmp/foo will be created with 0o700. Example: >vim
+      unreadable for others.  This is used for the newly created
+      directories.  Note: umask is applied to {prot} (on Unix).
+      Example: >vim
       	call mkdir($HOME .. "/tmp/foo/bar", "p", 0o700)
 
       <This function is not available in the |sandbox|.
@@ -7745,7 +7751,7 @@ M.funcs = {
 
     ]=],
     name = 'nextnonblank',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'nextnonblank({lnum})',
   },
@@ -7893,7 +7899,7 @@ M.funcs = {
 
     ]=],
     name = 'prevnonblank',
-    params = { { 'lnum', 'integer' } },
+    params = { { 'lnum', 'integer|string' } },
     returns = 'integer',
     signature = 'prevnonblank({lnum})',
   },
@@ -8278,7 +8284,7 @@ M.funcs = {
            endif
          endfunc
          call prompt_setcallback(bufnr(), function('s:TextEntered'))
-
+      <
     ]=],
     name = 'prompt_setcallback',
     params = { { 'buf', 'integer|string' }, { 'expr', 'string|function' } },
@@ -9769,7 +9775,7 @@ M.funcs = {
     args = { 1, 3 },
     base = 1,
     name = 'setcursorcharpos',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'off', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' }, { 'off', 'integer' } },
     signature = 'setcursorcharpos({lnum}, {col} [, {off}])',
   },
   setcursorcharpos__1 = {
@@ -9864,7 +9870,7 @@ M.funcs = {
 
     ]=],
     name = 'setline',
-    params = { { 'lnum', 'integer' }, { 'text', 'any' } },
+    params = { { 'lnum', 'integer|string' }, { 'text', 'any' } },
     signature = 'setline({lnum}, {text})',
   },
   setloclist = {
@@ -11225,7 +11231,9 @@ M.funcs = {
     tags = { 'E6100' },
     desc = [=[
       Returns |standard-path| locations of various default files and
-      directories.
+      directories. The locations are driven by |base-directories|
+      which you can configure via |$NVIM_APPNAME| or the `$XDG_…`
+      environment variables.
 
       {what}       Type    Description ~
       cache        String  Cache directory: arbitrary temporary
@@ -11931,7 +11939,7 @@ M.funcs = {
       <
     ]=],
     name = 'synID',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'trans', '0|1' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' }, { 'trans', '0|1' } },
     returns = 'integer',
     signature = 'synID({lnum}, {col}, {trans})',
   },
@@ -12038,7 +12046,7 @@ M.funcs = {
       mechanisms |syntax-vs-match|.
     ]=],
     name = 'synconcealed',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' } },
     returns = '[integer, string, integer]',
     signature = 'synconcealed({lnum}, {col})',
   },
@@ -12064,7 +12072,7 @@ M.funcs = {
       valid positions.
     ]=],
     name = 'synstack',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
+    params = { { 'lnum', 'integer|string' }, { 'col', 'integer' } },
     returns = 'integer[]',
     signature = 'synstack({lnum}, {col})',
   },
@@ -13177,16 +13185,14 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the height of window {nr}.
-      {nr} can be the window number or the |window-ID|.
-      When {nr} is zero, the height of the current window is
-      returned.  When window {nr} doesn't exist, -1 is returned.
-      An existing window always has a height of zero or more.
-      This excludes any window toolbar line.
-      Examples: >vim
-        echo "The current window has " .. winheight(0) .. " lines."
-      <
+      Gets the height of |window-ID| {nr} (zero for "current
+      window"), excluding any 'winbar' and 'statusline'. Returns -1
+      if window {nr} doesn't exist. An existing window always has
+      a height of zero or more.
 
+      Examples: >vim
+        echo "Current window has " .. winheight(0) .. " lines."
+      <
     ]=],
     name = 'winheight',
     params = { { 'nr', 'integer' } },
@@ -13369,19 +13375,21 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      The result is a Number, which is the width of window {nr}.
-      {nr} can be the window number or the |window-ID|.
-      When {nr} is zero, the width of the current window is
-      returned.  When window {nr} doesn't exist, -1 is returned.
-      An existing window always has a width of zero or more.
-      Examples: >vim
-        echo "The current window has " .. winwidth(0) .. " columns."
+      Gets the width of |window-ID| {nr} (zero for "current
+      window"), including columns (|sign-column|, 'statuscolumn',
+      etc.). Returns -1 if window {nr} doesn't exist. An existing
+      window always has a width of zero or more.
+
+      Example: >vim
+        echo "Current window has " .. winwidth(0) .. " columns."
         if winwidth(0) <= 50
           50 wincmd |
         endif
-      <For getting the terminal or screen size, see the 'columns'
-      option.
-
+      <
+      To get the buffer "viewport", use |getwininfo()|: >vim
+          :echo getwininfo(win_getid())[0].width - getwininfo(win_getid())[0].textoff
+      <
+      To get the Nvim screen size, see the 'columns' option.
     ]=],
     name = 'winwidth',
     params = { { 'nr', 'integer' } },

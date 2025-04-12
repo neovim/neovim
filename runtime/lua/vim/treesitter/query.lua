@@ -10,6 +10,19 @@ local EXTENDS_FORMAT = '^;+%s*extends%s*$'
 
 local M = {}
 
+---Parsed query, see |vim.treesitter.query.parse()|
+---
+---@class vim.treesitter.Query
+---@field lang string parser language name
+---@field captures string[] list of (unique) capture names defined in query
+---@field info vim.treesitter.QueryInfo query context (e.g. captures, predicates, directives)
+---@field has_conceal_line boolean whether the query sets conceal_lines metadata
+---@field has_combined_injections boolean whether the query contains combined injections
+---@field query TSQuery userdata query object
+---@field private _processed_patterns table<integer, vim.treesitter.query.ProcessedPattern>
+local Query = {}
+Query.__index = Query
+
 local function is_directive(name)
   return string.sub(name, -1) == '!'
 end
@@ -28,15 +41,10 @@ end
 ---@field directives vim.treesitter.query.ProcessedDirective[]
 
 --- Splits the query patterns into predicates and directives.
----@param patterns table<integer, (integer|string)[][]>
----@return table<integer, vim.treesitter.query.ProcessedPattern>
----@return boolean
-local function process_patterns(patterns)
-  ---@type table<integer, vim.treesitter.query.ProcessedPattern>
-  local processed_patterns = {}
-  local has_combined = false
+function Query:_process_patterns()
+  self._processed_patterns = {}
 
-  for k, pattern_list in pairs(patterns) do
+  for k, pattern_list in pairs(self.info.patterns) do
     ---@type vim.treesitter.query.ProcessedPredicate[]
     local predicates = {}
     ---@type vim.treesitter.query.ProcessedDirective[]
@@ -50,7 +58,10 @@ local function process_patterns(patterns)
       if is_directive(pred_name) then
         table.insert(directives, pattern)
         if vim.deep_equal(pattern, { 'set!', 'injection.combined' }) then
-          has_combined = true
+          self.has_combined_injections = true
+        end
+        if vim.deep_equal(pattern, { 'set!', 'conceal_lines', '' }) then
+          self.has_conceal_line = true
         end
       else
         local should_match = true
@@ -62,24 +73,9 @@ local function process_patterns(patterns)
       end
     end
 
-    processed_patterns[k] = { predicates = predicates, directives = directives }
+    self._processed_patterns[k] = { predicates = predicates, directives = directives }
   end
-
-  return processed_patterns, has_combined
 end
-
----@nodoc
----Parsed query, see |vim.treesitter.query.parse()|
----
----@class vim.treesitter.Query
----@field lang string parser language name
----@field captures string[] list of (unique) capture names defined in query
----@field info vim.treesitter.QueryInfo query context (e.g. captures, predicates, directives)
----@field query TSQuery userdata query object
----@field has_combined_injections boolean whether the query contains combined injections
----@field private _processed_patterns table<integer, vim.treesitter.query.ProcessedPattern>
-local Query = {}
-Query.__index = Query
 
 ---@package
 ---@see vim.treesitter.query.parse
@@ -96,7 +92,7 @@ function Query.new(lang, ts_query)
     patterns = query_info.patterns,
   }
   self.captures = self.info.captures
-  self._processed_patterns, self.has_combined_injections = process_patterns(self.info.patterns)
+  self:_process_patterns()
   return self
 end
 
@@ -347,9 +343,10 @@ api.nvim_create_autocmd('OptionSet', {
 
 --- Parses a {query} string and returns a `Query` object (|lua-treesitter-query|), which can be used
 --- to search the tree for the query patterns (via |Query:iter_captures()|, |Query:iter_matches()|),
---- or inspect the query via these fields:
+--- or inspect/modify the query via these fields:
 ---   - `captures`: a list of unique capture names defined in the query (alias: `info.captures`).
 ---   - `info.patterns`: information about predicates.
+---   - `query`: the underlying |TSQuery| which can be used to disable patterns or captures.
 ---
 --- Example:
 --- ```lua
@@ -611,6 +608,7 @@ predicate_handlers['any-vim-match?'] = predicate_handlers['any-match?']
 ---@class vim.treesitter.query.TSMetadata
 ---@field range? Range
 ---@field conceal? string
+---@field bo.commentstring? string
 ---@field [integer]? vim.treesitter.query.TSMetadata
 ---@field [string]? integer|string
 
@@ -962,12 +960,19 @@ end
 ---@param source (integer|string) Source buffer or string to extract text from
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
+---@param opts? table Optional keyword arguments:
+---   - max_start_depth (integer) if non-zero, sets the maximum start depth
+---     for each match. This is used to prevent traversing too deep into a tree.
+---   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
 ---
 ---@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree):
 ---        capture id, capture node, metadata, match, tree
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
-function Query:iter_captures(node, source, start, stop)
+function Query:iter_captures(node, source, start, stop, opts)
+  opts = opts or {}
+  opts.match_limit = opts.match_limit or 256
+
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
@@ -976,7 +981,7 @@ function Query:iter_captures(node, source, start, stop)
 
   -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
   local tree = node:tree():copy()
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, { match_limit = 256 })
+  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
 
   -- For faster checks that a match is not in the cache.
   local highest_cached_match_id = -1

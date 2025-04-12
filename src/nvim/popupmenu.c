@@ -199,6 +199,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     }
 
     int def_width = (int)p_pw;
+    if (p_pmw > 0 && def_width > p_pmw) {
+      def_width = (int)p_pmw;
+    }
 
     win_T *pvwin = NULL;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -307,6 +310,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
     pum_compute_size();
     int max_width = pum_base_width;
+    if (p_pmw > 0 && max_width > p_pmw) {
+      max_width = (int)p_pmw;
+    }
 
     // if there are more items than room we need a scrollbar
     if (pum_height < size) {
@@ -339,6 +345,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       if (pum_width > content_width && pum_width > p_pw) {
         // Reduce width to fit item
         pum_width = MAX(content_width, (int)p_pw);
+        if (p_pmw > 0 && pum_width > p_pmw) {
+          pum_width = (int)p_pmw;
+        }
       } else if (((cursor_col - min_col > p_pw
                    || cursor_col - min_col > max_width) && !pum_rl)
                  || (pum_rl && (cursor_col < max_col - p_pw
@@ -365,6 +374,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
         if (pum_width < p_pw) {
           pum_width = (int)p_pw;
+          if (p_pmw > 0 && pum_width > p_pmw) {
+            pum_width = (int)p_pmw;
+          }
           if (pum_rl) {
             if (pum_width > pum_col - min_col) {
               pum_width = pum_col - min_col;
@@ -376,6 +388,11 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
           }
         } else if (pum_width > content_width && pum_width > p_pw) {
           pum_width = MAX(content_width, (int)p_pw);
+          if (p_pmw > 0 && pum_width > p_pmw) {
+            pum_width = (int)p_pmw;
+          }
+        } else if (p_pmw > 0 && pum_width > p_pmw) {
+          pum_width = (int)p_pmw;
         }
       }
     } else if (max_col - min_col < def_width) {
@@ -386,10 +403,16 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         pum_col = min_col;
       }
       pum_width = max_col - min_col - 1;
+      if (p_pmw > 0 && pum_width > p_pmw) {
+        pum_width = (int)p_pmw;
+      }
     } else {
       if (max_width > p_pw) {
         // truncate
         max_width = (int)p_pw;
+      }
+      if (p_pmw > 0 && max_width > p_pmw) {
+        max_width = (int)p_pmw;
       }
       if (pum_rl) {
         pum_col = min_col + max_width - 1;
@@ -430,12 +453,10 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
   size_t leader_len = strlen(leader);
 
   garray_T *ga = NULL;
-  bool matched_start = false;
+  int matched_len = -1;
 
   if (in_fuzzy) {
     ga = fuzzy_match_str_with_pos(text, leader);
-  } else {
-    matched_start = mb_strnicmp(text, leader, leader_len) == 0;
   }
 
   const char *ptr = text;
@@ -456,10 +477,16 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
           break;
         }
       }
-    } else if (matched_start && ptr < text + leader_len) {
-      new_attr = win_hl_attr(curwin, is_select ? HLF_PMSI : HLF_PMNI);
-      new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PMNI), new_attr);
-      new_attr = hl_combine_attr(win_hl_attr(curwin, (int)hlf), new_attr);
+    } else {
+      if (matched_len < 0 && mb_strnicmp(ptr, leader, leader_len) == 0) {
+        matched_len = (int)leader_len;
+      }
+      if (matched_len > 0) {
+        new_attr = win_hl_attr(curwin, is_select ? HLF_PMSI : HLF_PMNI);
+        new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PMNI), new_attr);
+        new_attr = hl_combine_attr(win_hl_attr(curwin, (int)hlf), new_attr);
+        matched_len--;
+      }
     }
 
     new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), new_attr);
@@ -607,6 +634,8 @@ void pum_redraw(void)
     thumb_pos = (pum_first * (pum_height - thumb_height) + scroll_range / 2) / scroll_range;
   }
 
+  const int ellipsis_width = 3;
+
   for (int i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
     const hlf_T *const hlfs = (idx == pum_selected) ? hlfsSel : hlfsNorm;
@@ -629,6 +658,7 @@ void pum_redraw(void)
     // Do this 3 times and order from p_cia
     int grid_col = col_off;
     int totwidth = 0;
+    bool need_ellipsis = false;
     int order[3];
     int items_width_array[3] = { pum_base_width, pum_kind_width, pum_extra_width };
     pum_align_order(order);
@@ -680,15 +710,19 @@ void pum_redraw(void)
           if (pum_rl) {
             char *rt = reverse_text(st);
             char *rt_start = rt;
-            int cells = vim_strsize(rt);
+            int cells = (int)mb_string2cells(rt);
+            if (p_pmw > ellipsis_width && pum_width == p_pmw
+                && grid_col - cells < col_off - pum_width) {
+              need_ellipsis = true;
+            }
 
-            if (cells > pum_width) {
+            if (grid_col - cells < col_off - pum_width) {
               do {
                 cells -= utf_ptr2cells(rt);
                 MB_PTR_ADV(rt);
-              } while (cells > pum_width);
+              } while (grid_col - cells < col_off - pum_width);
 
-              if (cells < pum_width) {
+              if (grid_col - cells > col_off - pum_width) {
                 // Most left character requires 2-cells but only 1 cell is available on
                 // screen.  Put a '<' on the left of the pum item.
                 *(--rt) = '<';
@@ -706,10 +740,16 @@ void pum_redraw(void)
             xfree(st);
             grid_col -= width;
           } else {
+            int cells = (int)mb_string2cells(st);
+            if (p_pmw > ellipsis_width && pum_width == p_pmw
+                && grid_col + cells > col_off + pum_width) {
+              need_ellipsis = true;
+            }
+
             if (attrs == NULL) {
               grid_line_puts(grid_col, st, -1, attr);
             } else {
-              pum_grid_puts_with_attrs(grid_col, vim_strsize(st), st, -1, attrs);
+              pum_grid_puts_with_attrs(grid_col, cells, st, -1, attrs);
             }
 
             xfree(st);
@@ -768,9 +808,24 @@ void pum_redraw(void)
     }
 
     if (pum_rl) {
-      grid_line_fill(col_off - pum_width + 1, grid_col + 1, schar_from_ascii(' '), orig_attr);
+      const int lcol = col_off - pum_width + 1;
+      grid_line_fill(lcol, grid_col + 1, schar_from_ascii(' '), orig_attr);
+      if (need_ellipsis) {
+        bool over_wide = pum_width > ellipsis_width && linebuf_char[lcol + ellipsis_width] == NUL;
+        grid_line_fill(lcol, lcol + ellipsis_width, schar_from_ascii('.'), orig_attr);
+        if (over_wide) {
+          grid_line_put_schar(lcol + ellipsis_width, schar_from_ascii(' '), orig_attr);
+        }
+      }
     } else {
-      grid_line_fill(grid_col, col_off + pum_width, schar_from_ascii(' '), orig_attr);
+      const int rcol = col_off + pum_width;
+      grid_line_fill(grid_col, rcol, schar_from_ascii(' '), orig_attr);
+      if (need_ellipsis) {
+        if (pum_width > ellipsis_width && linebuf_char[rcol - ellipsis_width] == NUL) {
+          grid_line_put_schar(rcol - ellipsis_width - 1, schar_from_ascii(' '), orig_attr);
+        }
+        grid_line_fill(rcol - ellipsis_width, rcol, schar_from_ascii('.'), orig_attr);
+      }
     }
 
     if (pum_scrollbar > 0) {
@@ -799,14 +854,25 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
   Error err = ERROR_INIT;
   Arena arena = ARENA_EMPTY;
   Array replacement = ARRAY_DICT_INIT;
-  char *token = NULL;
-  char *line = os_strtok(info, "\n", &token);
   buf->b_p_ma = true;
-  while (line != NULL) {
-    ADD(replacement, STRING_OBJ(cstr_to_string(line)));
+
+  // Iterate through the string line by line by temporarily replacing newlines with NUL
+  for (char *curr = info, *next; curr; curr = next ? next + 1 : NULL) {
+    if ((next = strchr(curr, '\n'))) {
+      *next = NUL;  // Temporarily replace the newline with a string terminator
+    }
+    // Only skip if this is an empty line AND it's the last line
+    if (*curr == '\0' && !next) {
+      break;
+    }
+
+    *max_width = MAX(*max_width, (int)mb_string2cells(curr));
+    ADD(replacement, STRING_OBJ(cstr_to_string(curr)));
     (*lnum)++;
-    (*max_width) = MAX(*max_width, (int)mb_string2cells(line));
-    line = os_strtok(NULL, "\n", &token);
+
+    if (next) {
+      *next = '\n';
+    }
   }
 
   int original_textlock = textlock;
@@ -825,7 +891,7 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
 }
 
 /// adjust floating info preview window position
-static void pum_adjust_info_position(win_T *wp, int height, int width)
+static void pum_adjust_info_position(win_T *wp, int width)
 {
   int col = pum_col + pum_width + pum_scrollbar + 1;
   // TODO(glepnir): support config align border by using completepopup
@@ -846,8 +912,10 @@ static void pum_adjust_info_position(win_T *wp, int height, int width)
   }
   // when pum_above is SW otherwise is NW
   wp->w_config.anchor = pum_above ? kFloatAnchorSouth : 0;
-  wp->w_config.row = pum_above ? pum_row + height : pum_row;
-  wp->w_config.height = MIN(Rows, height);
+  linenr_T count = wp->w_buffer->b_ml.ml_line_count;
+  wp->w_width_inner = wp->w_config.width;
+  wp->w_config.height = plines_m_win(wp, wp->w_topline, count, Rows);
+  wp->w_config.row = pum_above ? pum_row + wp->w_config.height : pum_row;
   wp->w_config.hide = false;
   win_config_float(wp, wp->w_config);
 }
@@ -871,6 +939,8 @@ win_T *pum_set_info(int selected, char *info)
     if (!wp) {
       return NULL;
     }
+    wp->w_topline = 1;
+    wp->w_p_wfb = true;
   }
   linenr_T lnum = 0;
   int max_info_width = 0;
@@ -879,10 +949,7 @@ win_T *pum_set_info(int selected, char *info)
   RedrawingDisabled--;
   redraw_later(wp, UPD_NOT_VALID);
 
-  if (wp->w_p_wrap) {
-    lnum += plines_win(wp, lnum, true);
-  }
-  pum_adjust_info_position(wp, lnum, max_info_width);
+  pum_adjust_info_position(wp, max_info_width);
   unblock_autocmds();
   return wp;
 }
@@ -915,7 +982,8 @@ static bool pum_set_selected(int n, int repeat)
   if (use_float && (pum_selected < 0 || pum_array[pum_selected].pum_info == NULL)) {
     win_T *wp = win_float_find_preview();
     if (wp) {
-      win_close(wp, true, true);
+      wp->w_config.hide = true;
+      win_config_float(wp, wp->w_config);
     }
   }
 
@@ -1008,12 +1076,9 @@ static bool pum_set_selected(int n, int repeat)
             && (curbuf->b_nwindows == 1)
             && (curbuf->b_fname == NULL)
             && bt_nofile(curbuf)
-            && (curbuf->b_p_bh[0] == 'w')
-            && !use_float) {
+            && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
-          while (!buf_is_empty(curbuf)) {
-            ml_delete(1, false);
-          }
+          buf_clear();
         } else {
           // Don't want to sync undo in the current buffer.
           no_u_sync++;
@@ -1057,11 +1122,8 @@ static bool pum_set_selected(int n, int repeat)
           curwin->w_cursor.col = 0;
 
           if (use_float) {
-            if (curwin->w_p_wrap) {
-              lnum += plines_win(curwin, lnum, true);
-            }
             // adjust floating window by actually height and max info text width
-            pum_adjust_info_position(curwin, lnum, max_info_width);
+            pum_adjust_info_position(curwin, max_info_width);
           }
 
           if ((curwin != curwin_save && win_valid(curwin_save))

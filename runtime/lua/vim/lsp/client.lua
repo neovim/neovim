@@ -6,7 +6,7 @@ local ms = lsp.protocol.Methods
 local changetracking = lsp._changetracking
 local validate = vim.validate
 
---- @alias vim.lsp.client.on_init_cb fun(client: vim.lsp.Client, initialize_result: lsp.InitializeResult)
+--- @alias vim.lsp.client.on_init_cb fun(client: vim.lsp.Client, init_result: lsp.InitializeResult)
 --- @alias vim.lsp.client.on_attach_cb fun(client: vim.lsp.Client, bufnr: integer)
 --- @alias vim.lsp.client.on_exit_cb fun(code: integer, signal: integer, client_id: integer)
 --- @alias vim.lsp.client.before_init_cb fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
@@ -63,6 +63,9 @@ local validate = vim.validate
 --- folder in this list. See `workspaceFolders` in the LSP spec.
 --- @field workspace_folders? lsp.WorkspaceFolder[]
 ---
+--- (default false) Server requires a workspace (no "single file" support).
+--- @field workspace_required? boolean
+---
 --- Map overriding the default capabilities defined by |vim.lsp.protocol.make_client_capabilities()|,
 --- passed to the language server on initialization. Hint: use make_client_capabilities() and modify
 --- its result.
@@ -108,11 +111,11 @@ local validate = vim.validate
 --- You can use this to modify parameters before they are sent.
 --- @field before_init? fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
 ---
---- Callback invoked after LSP "initialize", where `result` is a table of `capabilities`
---- and anything else the server may send. For example, clangd sends
---- `initialize_result.offsetEncoding` if `capabilities.offsetEncoding` was sent to it.
---- You can only modify the `client.offset_encoding` here before any notifications are sent.
---- @field on_init? elem_or_list<fun(client: vim.lsp.Client, initialize_result: lsp.InitializeResult)>
+--- Callback invoked after LSP "initialize", where `result` is a table of `capabilities` and
+--- anything else the server may send. For example, clangd sends `init_result.offsetEncoding` if
+--- `capabilities.offsetEncoding` was sent to it. You can only modify the `client.offset_encoding`
+--- here before any notifications are sent.
+--- @field on_init? elem_or_list<fun(client: vim.lsp.Client, init_result: lsp.InitializeResult)>
 ---
 --- Callback invoked on client exit.
 ---   - code: exit code of the process
@@ -506,7 +509,7 @@ function Client:initialize()
     root_path = vim.uri_to_fname(root_uri)
   end
 
-  local initialize_params = {
+  local init_params = {
     -- The process Id of the parent process that started the server. Is null if
     -- the process has not been started by another process.  If the parent
     -- process is not alive then the server should exit (see exit notification)
@@ -536,15 +539,15 @@ function Client:initialize()
   self:_run_callbacks(
     { self._before_init_cb },
     lsp.client_errors.BEFORE_INIT_CALLBACK_ERROR,
-    initialize_params,
+    init_params,
     config
   )
 
-  log.trace(self._log_prefix, 'initialize_params', initialize_params)
+  log.trace(self._log_prefix, 'init_params', init_params)
 
   local rpc = self.rpc
 
-  rpc.request('initialize', initialize_params, function(init_err, result)
+  rpc.request('initialize', init_params, function(init_err, result)
     assert(not init_err, tostring(init_err))
     assert(result, 'server sent empty result')
     rpc.notify('initialized', vim.empty_dict())

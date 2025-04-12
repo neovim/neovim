@@ -1219,6 +1219,12 @@ M.cmds = {
     func = 'ex_intro',
   },
   {
+    command = 'iput',
+    flags = bit.bor(RANGE, WHOLEFOLD, BANG, REGSTR, TRLBAR, ZEROR, CMDWIN, LOCK_OK, MODIFY),
+    addr_type = 'ADDR_LINES',
+    func = 'ex_iput',
+  },
+  {
     command = 'isearch',
     flags = bit.bor(BANG, RANGE, DFLALL, WHOLEFOLD, EXTRA, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_LINES',
@@ -2533,7 +2539,7 @@ M.cmds = {
   },
   {
     command = 'source',
-    flags = bit.bor(RANGE, DFLALL, WHOLEFOLD, BANG, FILE1, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
+    flags = bit.bor(RANGE, DFLALL, BANG, FILE1, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_LINES',
     func = 'ex_source',
   },

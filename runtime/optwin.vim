@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Feb 08
+" Last Change:	2025 Apr 06
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " If there already is an option window, jump to that one.
@@ -367,6 +367,13 @@ if has("linebreak")
   call append("$", "\t" .. s:local_to_window)
   call <SID>OptionL("nuw")
 endif
+if has("quickfix")
+  call <SID>AddOption("chistory", gettext("maximum number of quickfix lists that can be stored in history"))
+  call <SID>OptionL("chi")
+  call <SID>AddOption("lhistory", gettext("maximum number of location lists that can be stored in history"))
+  call append("$", "\t" .. s:local_to_window)
+  call <SID>OptionL("lhi")
+endif
 if has("conceal")
   call <SID>AddOption("conceallevel", gettext("controls whether concealable text is hidden"))
   call append("$", "\t" .. s:local_to_window)
@@ -725,6 +732,8 @@ endif
 if has("insert_expand")
   call <SID>AddOption("complete", gettext("specifies how Insert mode completion works for CTRL-N and CTRL-P"))
   call append("$", "\t" .. s:local_to_buffer)
+  call <SID>OptionL("cfc")
+  call <SID>AddOption("completefuzzycollect", gettext("use fuzzy collection for specific completion modes"))
   call <SID>OptionL("cpt")
   call <SID>AddOption("completeopt", gettext("whether to use a popup menu for Insert mode completion"))
   call <SID>OptionL("cot")
@@ -734,6 +743,8 @@ if has("insert_expand")
   call <SID>OptionG("ph", &ph)
   call <SID>AddOption("pumwidth", gettext("minimum width of the popup menu"))
   call <SID>OptionG("pw", &pw)
+  call <SID>AddOption("pummaxwidth", gettext("maximum width of the popup menu"))
+  call <SID>OptionG("pmw", &pmw)
   call <SID>AddOption("completefunc", gettext("user defined function for Insert mode completion"))
   call append("$", "\t" .. s:local_to_buffer)
   call <SID>OptionL("cfu")
