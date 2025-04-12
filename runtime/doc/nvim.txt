@@ -75,6 +75,8 @@ the same Nvim configuration on all of your machines, by creating
 ==============================================================================
 What next?                                                   *nvim-quickstart*
 
+See |lua-guide| for practical notes on using Lua to configure Nvim.
+
 If you are just trying out Nvim for a few minutes, and want to see the
 extremes of what it can do, try one of these popular "extension packs" or
 "distributions" (Note: Nvim is not affiliated with these projects, and does
