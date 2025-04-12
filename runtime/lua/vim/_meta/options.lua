@@ -2084,6 +2084,15 @@ vim.bo.et = vim.bo.expandtab
 --- - 'exrc' can execute any code; editorconfig only specifies settings.
 --- - 'exrc' is Nvim-specific; editorconfig works in other editors.
 ---
+--- To achieve project-local LSP configuration:
+--- 1. Enable 'exrc'.
+--- 2. Place LSP configs at ".nvim/lsp/*.lua" in your project root.
+--- 3. Create ".nvim.lua" in your project root directory with this line:
+---
+--- ```lua
+---      vim.cmd[[set runtimepath+=.nvim]]
+--- ```
+---
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
@@ -6442,8 +6451,7 @@ vim.o.stc = vim.o.statuscolumn
 vim.wo.statuscolumn = vim.o.statuscolumn
 vim.wo.stc = vim.wo.statuscolumn
 
---- When non-empty, this option determines the content of the status line.
---- Also see `status-line`.
+--- Sets the `status-line`.
 ---
 --- The option consists of printf style '%' items interspersed with
 --- normal text.  Each status line item is of the form:

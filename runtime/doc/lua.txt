@@ -2900,7 +2900,7 @@ Use |uv.fs_stat()| to check a file's type, and whether it exists.
 
 Example: >lua
   if vim.uv.fs_stat(file) then
-    vim.print("file exists")
+    vim.print('file exists')
   end
 <
 
@@ -2955,7 +2955,8 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
         "fifo", "socket", "char", "block", "unknown".
 
 vim.fs.dirname({file})                                      *vim.fs.dirname()*
-    Return the parent directory of the given path
+    Gets the parent directory of the given path (not expanded/resolved, the
+    caller must do that).
 
     Attributes: ~
         Since: 0.8.0
@@ -2980,16 +2981,17 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
     narrow the search to find only that type.
 
     Examples: >lua
-        -- list all test directories under the runtime directory
-        local test_dirs = vim.fs.find(
-          {'test', 'tst', 'testdir'},
-          {limit = math.huge, type = 'directory', path = './runtime/'}
+        -- List all test directories under the runtime directory.
+        local dirs = vim.fs.find(
+          { 'test', 'tst', 'testdir' },
+          { limit = math.huge, type = 'directory', path = './runtime/' }
         )
 
-        -- get all files ending with .cpp or .hpp inside lib/
-        local cpp_hpp = vim.fs.find(function(name, path)
+        -- Get all "lib/*.cpp" and "lib/*.hpp" files, using Lua patterns.
+        -- Or use `vim.glob.to_lpeg(…):match(…)` for glob/wildcard matching.
+        local files = vim.fs.find(function(name, path)
           return name:match('.*%.[ch]pp$') and path:match('[/\\]lib$')
-        end, {limit = math.huge, type = 'file'})
+        end, { limit = math.huge, type = 'file' })
 <
 
     Attributes: ~
@@ -3089,19 +3091,20 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
         (`string`) Normalized path
 
 vim.fs.parents({start})                                     *vim.fs.parents()*
-    Iterate over all the parents of the given path.
+    Iterate over all the parents of the given path (not expanded/resolved, the
+    caller must do that).
 
     Example: >lua
         local root_dir
         for dir in vim.fs.parents(vim.api.nvim_buf_get_name(0)) do
-          if vim.fn.isdirectory(dir .. "/.git") == 1 then
+          if vim.fn.isdirectory(dir .. '/.git') == 1 then
             root_dir = dir
             break
           end
         end
 
         if root_dir then
-          print("Found git repository at", root_dir)
+          print('Found git repository at', root_dir)
         end
 <
 

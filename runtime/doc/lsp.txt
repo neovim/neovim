@@ -287,38 +287,33 @@ They are also listed below.
 
 - `'callHierarchy/incomingCalls'`
 - `'callHierarchy/outgoingCalls'`
-- `'textDocument/codeAction'`
+- `'client/registerCapability'`
+- `'client/unregisterCapability'`
+- `'signature_help'`
+- `'textDocument/codeLens'`
 - `'textDocument/completion'`
-- `'textDocument/declaration'`
-- `'textDocument/definition'`
 - `'textDocument/diagnostic'`
 - `'textDocument/documentHighlight'`
 - `'textDocument/documentSymbol'`
-- `'textDocument/foldingRange'`
 - `'textDocument/formatting'`
 - `'textDocument/hover'`
-- `'textDocument/implementation'`
 - `'textDocument/inlayHint'`
-- `'textDocument/prepareTypeHierarchy'`
 - `'textDocument/publishDiagnostics'`
 - `'textDocument/rangeFormatting'`
-- `'textDocument/rangesFormatting'`
-- `'textDocument/references'`
 - `'textDocument/rename'`
-- `'textDocument/semanticTokens/full'`
-- `'textDocument/semanticTokens/full/delta'`
 - `'textDocument/signatureHelp'`
-- `'textDocument/typeDefinition*'`
 - `'typeHierarchy/subtypes'`
 - `'typeHierarchy/supertypes'`
 - `'window/logMessage'`
-- `'window/showMessage'`
 - `'window/showDocument'`
+- `'window/showMessage'`
 - `'window/showMessageRequest'`
+- `'window/workDoneProgress/create'`
 - `'workspace/applyEdit'`
 - `'workspace/configuration'`
 - `'workspace/executeCommand'`
 - `'workspace/inlayHint/refresh'`
+- `'workspace/semanticTokens/refresh'`
 - `'workspace/symbol'`
 - `'workspace/workspaceFolders'`
 
@@ -553,10 +548,19 @@ LspAttach                                                          *LspAttach*
     |autocmd-pattern| is the buffer name. The client ID is passed in the
     Lua handler |event-data| argument.
 
+    Example: >lua
+    vim.api.nvim_create_autocmd('LspAttach', {
+      callback = function(ev)
+        local client = vim.lsp.get_client_by_id(ev.data.client_id)
+        -- ...
+      end
+    })
+<
     Note: If the LSP server performs dynamic registration, capabilities may be
     registered any time _after_ LspAttach. In that case you may want to handle
-    the "registerCapability" event. Example: >lua
+    the "registerCapability" event.
 
+    Example: >lua
     vim.lsp.handlers['client/registerCapability'] = (function(overridden)
       return function(err, res, ctx)
         local result = overridden(err, res, ctx)
@@ -573,8 +577,9 @@ LspAttach                                                          *LspAttach*
 LspDetach                                                          *LspDetach*
     Just before an LSP client detaches from a buffer. The |autocmd-pattern| is
     the buffer name. The client ID is passed in the Lua handler |event-data|
-    argument. Example: >lua
+    argument.
 
+    Example: >lua
     vim.api.nvim_create_autocmd('LspDetach', {
       callback = function(args)
         -- Get the detaching client
@@ -596,8 +601,9 @@ LspNotify                                                          *LspNotify*
     LSP server.
 
     The client_id, LSP method, and parameters are sent in the Lua handler
-    |event-data| table argument. Example: >lua
+    |event-data| table argument.
 
+    Example: >lua
     vim.api.nvim_create_autocmd('LspNotify', {
       callback = function(args)
         local bufnr = args.buf
@@ -643,8 +649,9 @@ LspRequest                                                        *LspRequest*
     The Lua handler |event-data| argument has the client ID, request ID, and
     request (described at |vim.lsp.Client|, {requests} field). If the request
     type is `complete`, the request will be deleted from the client's pending
-    requests table after processing the event handlers. Example: >lua
+    requests table after processing the event handlers.
 
+    Example: >lua
     vim.api.nvim_create_autocmd('LspRequest', {
       callback = function(args)
         local bufnr = args.buf
@@ -671,8 +678,9 @@ LspTokenUpdate                                                *LspTokenUpdate*
     when an existing token becomes visible for the first time. The
     |autocmd-pattern| is the buffer name. The Lua handler |event-data|
     argument has the client ID and token (see
-    |vim.lsp.semantic_tokens.get_at_pos()|). Example: >lua
+    |vim.lsp.semantic_tokens.get_at_pos()|).
 
+    Example: >lua
     vim.api.nvim_create_autocmd('LspTokenUpdate', {
       callback = function(args)
         local token = args.data.token
@@ -704,14 +712,16 @@ Lua module: vim.lsp                                                 *lsp-core*
                          the LSP server will base its workspaceFolders,
                          rootUri, and rootPath on initialization. Unused if
                          `root_dir` is provided.
-      • {root_dir}?      (`string|fun(bufnr: integer, cb:fun(root_dir?:string))`)
-                         Directory where the LSP server will base its
-                         workspaceFolders, rootUri, and rootPath on
-                         initialization. If a function, it is passed the
-                         buffer number and a callback argument which must be
-                         called with the value of root_dir to use. The LSP
-                         server will not be started until the callback is
-                         called.
+      • {root_dir}?      (`string|fun(bufnr: integer, on_dir:fun(root_dir?:string))`)
+                         *lsp-root_dir()* Directory where the LSP server will
+                         base its workspaceFolders, rootUri, and rootPath on
+                         initialization. The function form receives a buffer
+                         number and `on_dir` callback, which must be called to
+                         provide root_dir as a string. LSP will not be
+                         activated for the buffer unless `on_dir` is called;
+                         thus a `root_dir()` function can dynamically decide
+                         whether to activate (or skip) LSP per-buffer. See
+                         example at |vim.lsp.enable()|.
       • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                          Predicate used to decide if a client should be
                          re-used. Used on all running clients. The default
@@ -907,14 +917,24 @@ config({name}, {cfg})                                       *vim.lsp.config()*
       • {cfg}   (`vim.lsp.Config`) See |vim.lsp.Config|.
 
 enable({name}, {enable})                                    *vim.lsp.enable()*
-    Enable an LSP server to automatically start when opening a buffer.
-
-    Uses configuration defined with `vim.lsp.config`.
+    Auto-starts LSP when a buffer is opened, based on the |lsp-config|
+    `filetypes`, `root_markers`, and `root_dir` fields.
 
     Examples: >lua
-          vim.lsp.enable('clangd')
+        vim.lsp.enable('clangd')
+        vim.lsp.enable({'luals', 'pyright'})
+<
 
-          vim.lsp.enable({'luals', 'pyright'})
+    Example: To dynamically decide whether LSP is activated, define a
+    |lsp-root_dir()| function which calls `on_dir()` only when you want that
+    config to activate: >lua
+        vim.lsp.config('lua_ls', {
+          root_dir = function(bufnr, on_dir)
+            if not vim.fn.bufname(bufnr):match('%.txt$') then
+              on_dir(vim.fn.getcwd())
+            end
+          end
+        })
 <
 
     Attributes: ~
@@ -1316,7 +1336,11 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                in this list. See `workspaceFolders` in the LSP
                                spec.
       • {workspace_required}?  (`boolean`) (default false) Server requires a
-                               workspace (no "single file" support).
+                               workspace (no "single file" support). Note:
+                               Without a workspace, cross-file features
+                               (navigation, hover) may or may not work
+                               depending on the language server, even if the
+                               server doesn't require a workspace.
       • {capabilities}?        (`lsp.ClientCapabilities`) Map overriding the
                                default capabilities defined by
                                |vim.lsp.protocol.make_client_capabilities()|,
@@ -1592,7 +1616,8 @@ clear_references()                            *vim.lsp.buf.clear_references()*
     Removes document highlights from current buffer.
 
 code_action({opts})                                *vim.lsp.buf.code_action()*
-    Selects a code action available at the current cursor position.
+    Selects a code action (LSP: "textDocument/codeAction" request) available
+    at cursor position.
 
     Parameters: ~
       • {opts}  (`table?`) A table with the following fields:
@@ -2574,6 +2599,27 @@ symbols_to_items({symbols}, {bufnr}, {position_encoding})
 
 ==============================================================================
 Lua module: vim.lsp.log                                              *lsp-log*
+
+The `vim.lsp.log` module provides logging for the Nvim LSP client.
+
+When debugging language servers, it is helpful to enable extra-verbose logging
+of the LSP client RPC events. Example: >lua
+    vim.lsp.set_log_level 'trace'
+    require('vim.lsp.log').set_format_func(vim.inspect)
+<
+
+Then try to run the language server, and open the log with: >vim
+    :lua vim.cmd('tabnew ' .. vim.lsp.get_log_path())
+<
+
+(Or use `:LspLog` if you have nvim-lspconfig installed.)
+
+Note:
+• Remember to DISABLE verbose logging ("debug" or "trace" level), else you may
+  encounter performance issues.
+• "ERROR" messages containing "stderr" only indicate that the log was sent to
+  stderr. Many servers send harmless messages via stderr.
+
 
 get_filename()                                    *vim.lsp.log.get_filename()*
     Returns the log filename.

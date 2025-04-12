@@ -8021,7 +8021,7 @@ describe('float window', function()
         ]])
       end
 
-      -- Test for \u2800 (braille blank unicode character)
+      -- Treat for \u2800 (braille blank) as whitespace.
       local braille_blank = "\226\160\128"
       api.nvim_buf_set_lines(buf, 0, -1, true, {"test" .. braille_blank, "", "popup"..braille_blank.."   text"})
       if multigrid then
