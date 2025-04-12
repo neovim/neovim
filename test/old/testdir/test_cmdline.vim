@@ -2055,7 +2055,6 @@ endfunc
 " Test error: "E135: *Filter* Autocommands must not change current buffer"
 func Test_cmd_bang_E135()
   new
-  set shelltemp
   call setline(1, ['a', 'b', 'c', 'd'])
   augroup test_cmd_filter_E135
     au!

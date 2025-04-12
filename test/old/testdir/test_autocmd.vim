@@ -2835,9 +2835,6 @@ func Test_ReadWrite_Autocmds()
   " being modified outside of Vim (noticed on Solaris).
   au FileChangedShell * echo 'caught FileChangedShell'
 
-  " FileWritePre, FileWritePost are only triggered with shelltemp here
-  let shelltemp = &shelltemp
-  set shelltemp			" need temp files here
   " Test for the FileReadPost, FileWritePre and FileWritePost autocmds
   augroup Test1
     au!
@@ -2881,8 +2878,6 @@ func Test_ReadWrite_Autocmds()
   augroup Test1
     au!
   augroup END
-
-  let &shelltemp = shelltemp
 
   " Test for the FileAppendPre and FileAppendPost autocmds
   augroup Test2
