@@ -35,6 +35,11 @@ local function prepare_gz_file(name, text)
   eq(nil, vim.uv.fs_stat(name))
 end
 
+local function prepare_file(name, text)
+  os.remove(name)
+  write_file(name, text)
+end
+
 describe('file reading, writing and bufnew and filter autocommands', function()
   local text1 = dedent([[
       start of testfile
@@ -63,23 +68,27 @@ describe('file reading, writing and bufnew and filter autocommands', function()
   end)
   teardown(function()
     os.remove('Xtestfile.gz')
+    os.remove('Xtestfile')
+    os.remove('XtestfileByFileReadPost')
     os.remove('Xtest.c')
     os.remove('test.out')
+  end)
+
+  it('FileReadPost', function()
+    feed_command('set bin')
+    prepare_file('Xtestfile', text1)
+    os.remove('XtestfileByFileReadPost')
+    --execute('au FileChangedShell * echo "caught FileChangedShell"')
+    feed_command("au FileReadPost    Xtestfile   '[,']w XtestfileByFileReadPost")
+    -- Read the testfile.
+    feed_command('$r Xtestfile')
+    expect('\n' .. text1)
+    eq(text1, read_file('XtestfileByFileReadPost'))
   end)
 
   if not has_gzip() then
     pending('skipped (missing `gzip` utility)', function() end)
   else
-    it('FileReadPost (using gzip)', function()
-      prepare_gz_file('Xtestfile', text1)
-      --execute('au FileChangedShell * echo "caught FileChangedShell"')
-      feed_command('set bin')
-      feed_command("au FileReadPost    *.gz   '[,']!gzip -d")
-      -- Read and decompress the testfile.
-      feed_command('$r Xtestfile.gz')
-      expect('\n' .. text1)
-    end)
-
     it('BufReadPre, BufReadPost (using gzip)', function()
       prepare_gz_file('Xtestfile', text1)
       local gzip_data = read_file('Xtestfile.gz')
@@ -112,18 +121,18 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       -- Discard all prompts and messages.
       feed('<C-L>')
       expect([[
-	
-	start of testfiLe
-	Line 2	Abcdefghijklmnopqrstuvwxyz
-	Line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	Line 4	Abcdefghijklmnopqrstuvwxyz
-	Line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	Line 6	Abcdefghijklmnopqrstuvwxyz
-	Line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	Line 8	Abcdefghijklmnopqrstuvwxyz
-	Line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	Line 10 Abcdefghijklmnopqrstuvwxyz
-	end of testfiLe]])
+        
+        start of testfiLe
+        Line 2	Abcdefghijklmnopqrstuvwxyz
+        Line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        Line 4	Abcdefghijklmnopqrstuvwxyz
+        Line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        Line 6	Abcdefghijklmnopqrstuvwxyz
+        Line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        Line 8	Abcdefghijklmnopqrstuvwxyz
+        Line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        Line 10 Abcdefghijklmnopqrstuvwxyz
+        end of testfiLe]])
     end)
   end
 

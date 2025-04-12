@@ -5411,7 +5411,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Also see 'completeslash'.
 
 			*'shelltemp'* *'stmp'* *'noshelltemp'* *'nostmp'*
-'shelltemp' 'stmp'	boolean	(default on)
+'shelltemp' 'stmp'	boolean	(default off)
 			global
 	When on, use temp files for shell commands.  When off use a pipe.
 	When using a pipe is not possible temp files are used anyway.

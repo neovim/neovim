@@ -7621,7 +7621,7 @@ local options = {
     },
     {
       abbreviation = 'stmp',
-      defaults = true,
+      defaults = false,
       desc = [=[
         When on, use temp files for shell commands.  When off use a pipe.
         When using a pipe is not possible temp files are used anyway.

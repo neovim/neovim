@@ -778,7 +778,7 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   }
 
   // Add the redirection stuff
-  char *command = make_filter_cmd(cmd, infile, tempname);
+  char *command = make_filter_cmd(cmd, infile, tempname, false);
 
   // Call the shell to execute the command (errors are ignored).
   // Don't check timestamps here.
@@ -1253,11 +1253,19 @@ static size_t write_output(char *output, size_t remaining, bool eof)
   char *start = output;
   size_t off = 0;
   while (off < remaining) {
-    if (output[off] == NL) {
+    // CRLF
+    if (output[off] == CAR && output[off + 1] == NL) {
+      output[off] = NUL;
+      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
+      size_t skip = off + 2;
+      output += skip;
+      remaining -= skip;
+      off = 0;
+      continue;
+    } else if (output[off] == CAR || output[off] == NL) {
       // Insert the line
       output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1,
-                false);
+      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
       size_t skip = off + 1;
       output += skip;
       remaining -= skip;
@@ -1276,7 +1284,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
     if (remaining) {
       // append unfinished line
       ml_append(curwin->w_cursor.lnum++, output, 0, false);
-      // remember that the NL was missing
+      // remember that the line ending was missing
       curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
       output += remaining;
     } else {

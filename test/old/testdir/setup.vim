@@ -19,6 +19,7 @@ if exists('s:did_load')
   set nohlsearch noincsearch
   set nrformats=bin,octal,hex
   set shortmess=filnxtToOS
+  set shelltemp
   set sidescroll=0
   set tags=./tags,tags
   set undodir^=.
