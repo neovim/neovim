@@ -66,7 +66,7 @@ EVENTS
 
 HIGHLIGHTS
 
-• |hl-DiffTextAdd| highlights added text within a changed line.
+• todo
 
 LSP
 
@@ -125,6 +125,10 @@ EVENTS
 
 • todo
 
+HIGHLIGHTS
+
+• |hl-DiffTextAdd| highlights added text within a changed line.
+
 LSP
 
 • |vim.lsp.ClientConfig| gained `workspace_required`.
@@ -135,9 +139,11 @@ LUA
 
 OPTIONS
 
+• 'autowriteall' writes all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
 • 'completefuzzycollect' enables fuzzy collection of candidates for (some)
   |ins-completion| modes.
-• 'autowriteall' write all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
+• 'diffopt' `inline:` configures diff highlighting for changes within a line.
+• 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'winborder' "bold" style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 

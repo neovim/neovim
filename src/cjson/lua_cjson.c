@@ -844,7 +844,7 @@ static void json_append_object(lua_State *l, json_encode_t *ctx,
     strbuf_append_char(json, '}');
 }
 
-/* Serialise Lua data into JSON string. Return 1 if error an error happend, else 0 */
+/* Serialise Lua data into JSON string. Return 1 if an error happened, else 0. */
 static int json_append_data(lua_State *l, json_encode_t *ctx,
                              int current_depth)
 {
