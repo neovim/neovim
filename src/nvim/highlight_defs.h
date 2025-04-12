@@ -66,8 +66,6 @@ typedef enum {
   HLF_AT,         ///< @ characters at end of screen, characters that don't really exist in the text
   HLF_D,          ///< directories in CTRL-D listing
   HLF_E,          ///< error messages
-  HLF_SE,         ///< stderr messages (from shell)
-  HLF_SO,         ///< stdout messages (from shell)
   HLF_I,          ///< incremental search
   HLF_L,          ///< last search string
   HLF_LC,         ///< current search match
@@ -132,6 +130,8 @@ typedef enum {
   HLF_BFOOTER,    ///< Float Border Footer
   HLF_TS,         ///< status line for terminal window
   HLF_TSNC,       ///< status line for non-current terminal window
+  HLF_SE,         ///< stderr messages (from shell)
+  HLF_SO,         ///< stdout messages (from shell)
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 
