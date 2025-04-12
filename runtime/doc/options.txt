@@ -156,7 +156,7 @@ A few examples: >
    :set makeprg=make,file	    results in "make,file"
    :set makeprg=make\\,file	    results in "make\,file"
    :set tags=tags,file		    results in "tags" and "file"
-   :set tags=tags\\,file	    results in "tags,file"
+   :set tags=tags\\,file	    results in "tags\,file"
    :let &tags='tags\,file'	    (same as above)
 
 The "|" character separates a ":set" command from a following command.  To
