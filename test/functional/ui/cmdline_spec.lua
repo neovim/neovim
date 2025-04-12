@@ -858,7 +858,7 @@ local function test_cmdline(linegrid)
       cmdline = {
         {
           content = { { '' } },
-          hl_id = 243,
+          hl_id = 245,
           pos = 0,
           prompt = 'Prompt:',
         },
