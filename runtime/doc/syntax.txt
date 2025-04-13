@@ -1972,6 +1972,12 @@ have the following in your vimrc: >
 
 	let filetype_m = "mma"
 
+MBSYNC					*mbsync.vim* *ft-mbsync-syntax*
+
+The mbsync application uses a configuration file to setup mailboxes names,
+user and password. All files ending with `.mbsyncrc` or with the name
+`isyncrc` will be recognized as mbsync configuration files.
+
 MEDIAWIKI					*ft-mediawiki-syntax*
 
 By default, syntax highlighting includes basic HTML tags like style and
