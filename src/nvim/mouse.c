@@ -9,6 +9,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
@@ -1657,6 +1658,12 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     }
     row -= count;
     lnum++;
+  }
+
+  // Mouse row reached, adjust lnum for concealed lines.
+  while (decor_conceal_line(win, lnum - 1, false)) {
+    lnum++;
+    hasFolding(win, lnum, NULL, &lnum);
   }
 
   if (!retval) {
