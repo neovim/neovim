@@ -180,6 +180,38 @@ function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
   end
+  -- Linux: Use procfs directly
+  if vim.fn.has('linux') == 1 then
+    local children = {}
+    local task_path = string.format('/proc/%d/task/', ppid)
+    -- Check if process exists
+    local proc_exists = vim.loop.fs_stat(string.format('/proc/%d', ppid))
+    if not proc_exists then
+      return {} -- Process not found.
+    end
+    -- Get all task directories
+    ---@type string[]
+    local task_dirs = vim.fn.glob(task_path .. '*', false, true)
+    for _, dir in ipairs(task_dirs) do
+      local tid = vim.fn.fnamemodify(dir, ':t')
+      if tid:match('^%d+$') then
+        local children_file = string.format('%s%s/children', task_path, tid)
+        local ok, children_content = pcall(vim.fn.readfile, children_file, 'b')
+        if ok and #children_content > 0 then
+          -- Parse child PIDs
+          ---@type string
+          local child_pids_line = children_content[1]
+          for child_pid in child_pids_line:gmatch('%d+') do
+            local pid = tonumber(child_pid)
+            if pid and not vim.tbl_contains(children, pid) then
+              table.insert(children, pid)
+            end
+          end
+        end
+      end
+    end
+    return children
+  end
   local cmd = { 'pgrep', '-P', ppid }
   local r = vim.system(cmd):wait()
   if r.code == 1 and vim.trim(r.stdout) == '' then
