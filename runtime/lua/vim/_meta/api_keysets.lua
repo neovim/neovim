@@ -112,6 +112,10 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.exec_opts
 --- @field output? boolean
 
+--- @class vim.api.keyset.fold_info
+--- @field first? integer
+--- @field last? integer
+
 --- @class vim.api.keyset.get_autocmds
 --- @field event? string|string[]
 --- @field group? integer|string

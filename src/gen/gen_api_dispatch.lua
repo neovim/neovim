@@ -5,7 +5,7 @@
 --    make
 --    cp build/nvim_version.lua src/nvim/
 --    cd src/nvim
---    nvim -l generators/gen_api_dispatch.lua "../../build/src/nvim/auto/api/private/dispatch_wrappers.generated.h" "../../build/src/nvim/auto/api/private/api_metadata.generated.h" "../../build/funcs_metadata.mpack" "../../build/src/nvim/auto/lua_api_c_bindings.generated.h" "../../build/src/nvim/auto/keysets_defs.generated.h" "../../build/ui_metadata.mpack" "../../build/cmake.config/auto/versiondef_git.h" "./api/autocmd.h" "./api/buffer.h" "./api/command.h" "./api/deprecated.h" "./api/extmark.h" "./api/keysets_defs.h" "./api/options.h" "./api/tabpage.h" "./api/ui.h" "./api/vim.h" "./api/vimscript.h" "./api/win_config.h" "./api/window.h" "../../build/include/api/autocmd.h.generated.h" "../../build/include/api/buffer.h.generated.h" "../../build/include/api/command.h.generated.h" "../../build/include/api/deprecated.h.generated.h" "../../build/include/api/extmark.h.generated.h" "../../build/include/api/options.h.generated.h" "../../build/include/api/tabpage.h.generated.h" "../../build/include/api/ui.h.generated.h" "../../build/include/api/vim.h.generated.h" "../../build/include/api/vimscript.h.generated.h" "../../build/include/api/win_config.h.generated.h" "../../build/include/api/window.h.generated.h"
+--    nvim -l generators/gen_api_dispatch.lua "../../build/src/nvim/auto/api/private/dispatch_wrappers.generated.h" "../../build/src/nvim/auto/api/private/api_metadata.generated.h" "../../build/funcs_metadata.mpack" "../../build/src/nvim/auto/lua_api_c_bindings.generated.h" "../../build/src/nvim/auto/keysets_defs.generated.h" "../../build/ui_metadata.mpack" "../../build/cmake.config/auto/versiondef_git.h" "./api/fold.h" "./api/autocmd.h" "./api/buffer.h" "./api/command.h" "./api/deprecated.h" "./api/extmark.h" "./api/keysets_defs.h" "./api/options.h" "./api/tabpage.h" "./api/ui.h" "./api/vim.h" "./api/vimscript.h" "./api/win_config.h" "./api/window.h" "../../build/include/api/fold.h.generated.h" "../../build/include/api/autocmd.h.generated.h" "../../build/include/api/buffer.h.generated.h" "../../build/include/api/command.h.generated.h" "../../build/include/api/deprecated.h.generated.h" "../../build/include/api/extmark.h.generated.h" "../../build/include/api/options.h.generated.h" "../../build/include/api/tabpage.h.generated.h" "../../build/include/api/ui.h.generated.h" "../../build/include/api/vim.h.generated.h" "../../build/include/api/vimscript.h.generated.h" "../../build/include/api/win_config.h.generated.h" "../../build/include/api/window.h.generated.h"
 
 local mpack = vim.mpack
 
@@ -337,6 +337,7 @@ output:write([[
 #include "nvim/api/vimscript.h"
 #include "nvim/api/win_config.h"
 #include "nvim/api/window.h"
+#include "nvim/api/fold.h"
 #include "nvim/ui_client.h"
 
 ]])

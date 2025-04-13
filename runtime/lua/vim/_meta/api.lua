@@ -32,6 +32,15 @@ function vim.api.nvim__buf_stats(buffer) end
 --- - bufnr: (number) buffer id in floating window
 function vim.api.nvim__complete_set(index, opts) end
 
+--- Gets the start and end lines for the closed fold on the given line
+---
+--- @param window integer `window-ID`, or 0 for current window
+--- @param lnum integer The line number to check (0-indexed)
+--- @return vim.api.keyset.fold_info # Dict containing fold information, with these keys:
+--- - first: The start line of the current closed fold, or `nil` if none
+--- - last: The end line of the current closed fold, or `nil` if none
+function vim.api.nvim__fold_info(window, lnum) end
+
 --- @return string
 function vim.api.nvim__get_lib_dir() end
 
