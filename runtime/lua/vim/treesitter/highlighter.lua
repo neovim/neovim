@@ -322,6 +322,8 @@ local function on_line_impl(self, buf, line, on_spell, on_conceal)
       return
     end
 
+    local tree_region = state.tstree:included_ranges(true)
+
     if state.iter == nil or state.next_row < line then
       -- Mainly used to skip over folds
 
@@ -336,56 +338,63 @@ local function on_line_impl(self, buf, line, on_spell, on_conceal)
     while line >= state.next_row do
       local capture, node, metadata, match = state.iter(line)
 
-      local range = { root_end_row + 1, 0, root_end_row + 1, 0 }
+      local outer_range = { root_end_row + 1, 0, root_end_row + 1, 0 }
       if node then
-        range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
+        outer_range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
       end
-      local start_row, start_col, end_row, end_col = Range.unpack4(range)
+      local outer_range_start_row = outer_range[1]
 
-      if capture then
-        local hl = state.highlighter_query:get_hl_from_capture(capture)
+      for _, range in ipairs(tree_region) do
+        local intersection = Range.intersection(range, outer_range)
+        if intersection then
+          local start_row, start_col, end_row, end_col = Range.unpack4(intersection)
 
-        local capture_name = captures[capture]
+          if capture then
+            local hl = state.highlighter_query:get_hl_from_capture(capture)
 
-        local spell, spell_pri_offset = get_spell(capture_name)
+            local capture_name = captures[capture]
 
-        -- The "priority" attribute can be set at the pattern level or on a particular capture
-        local priority = (
-          tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
-          or vim.hl.priorities.treesitter
-        ) + spell_pri_offset
+            local spell, spell_pri_offset = get_spell(capture_name)
 
-        -- The "conceal" attribute can be set at the pattern level or on a particular capture
-        local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+            -- The "priority" attribute can be set at the pattern level or on a particular capture
+            local priority = (
+              tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
+              or vim.hl.priorities.treesitter
+            ) + spell_pri_offset
 
-        local url = get_url(match, buf, capture, metadata)
+            -- The "conceal" attribute can be set at the pattern level or on a particular capture
+            local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
 
-        if hl and end_row >= line and not on_conceal and (not on_spell or spell ~= nil) then
-          api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
-            end_line = end_row,
-            end_col = end_col,
-            hl_group = hl,
-            ephemeral = true,
-            priority = priority,
-            conceal = conceal,
-            spell = spell,
-            url = url,
-          })
-        end
+            local url = get_url(match, buf, capture, metadata)
 
-        if
-          (metadata.conceal_lines or metadata[capture] and metadata[capture].conceal_lines)
-          and #api.nvim_buf_get_extmarks(buf, ns, { start_row, 0 }, { start_row, 0 }, {}) == 0
-        then
-          api.nvim_buf_set_extmark(buf, ns, start_row, 0, {
-            end_line = end_row,
-            conceal_lines = '',
-          })
+            if hl and end_row >= line and not on_conceal and (not on_spell or spell ~= nil) then
+              api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
+                end_line = end_row,
+                end_col = end_col,
+                hl_group = hl,
+                ephemeral = true,
+                priority = priority,
+                conceal = conceal,
+                spell = spell,
+                url = url,
+              })
+            end
+
+            if
+              (metadata.conceal_lines or metadata[capture] and metadata[capture].conceal_lines)
+              and #api.nvim_buf_get_extmarks(buf, ns, { start_row, 0 }, { start_row, 0 }, {}) == 0
+            then
+              api.nvim_buf_set_extmark(buf, ns, start_row, 0, {
+                end_line = end_row,
+                conceal_lines = '',
+              })
+            end
+          end
         end
       end
 
-      if start_row > line then
-        state.next_row = start_row
+      if outer_range_start_row > line then
+        state.next_row = outer_range_start_row
       end
     end
   end)
