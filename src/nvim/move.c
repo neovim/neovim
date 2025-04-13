@@ -2333,6 +2333,7 @@ void cursor_correct(win_T *wp)
         ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW);
     }
   }
+  check_cursor_moved(wp);
   wp->w_valid |= VALID_TOPLINE;
   wp->w_viewport_invalid = true;
 }
