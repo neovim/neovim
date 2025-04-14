@@ -3242,7 +3242,7 @@ static int ExpandUserList(expand_T *xp, char ***matches, int *numMatches)
 
 static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
 {
-  typval_T rettv;
+  typval_T rettv = TV_INITIAL_VALUE;
   nlua_call_user_expand_func(xp, &rettv);
   if (rettv.v_type != VAR_LIST) {
     tv_clear(&rettv);
