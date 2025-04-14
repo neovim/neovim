@@ -10155,7 +10155,7 @@ local options = {
         		applies to buffer name completion.
         "noselect"	If 'wildmenu' is enabled, show the menu but do not
         		preselect the first item.
-        If only one match exists, it is completed fully—unless "noselect" is
+        If only one match exists, it is completed fully, unless "noselect" is
         specified.
 
         Some useful combinations of colon-separated values:
@@ -10191,7 +10191,7 @@ local options = {
         <	Show 'wildmenu' without completing or selecting on first press
         Cycle full matches on second press >vim
         	set wildmode=noselect:lastused,full
-        <	Same as above, but buffer matches are sorted by last used
+        <	Same as above, but buffer matches are sorted by time last used
         More info here: |cmdline-completion|.
       ]=],
       full_name = 'wildmode',
