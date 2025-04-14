@@ -10133,55 +10133,65 @@ local options = {
       flags = true,
       deny_duplicates = false,
       desc = [=[
-        Completion mode that is used for the character specified with
-        'wildchar'.  It is a comma-separated list of up to four parts.  Each
-        part specifies what to do for each consecutive use of 'wildchar'.  The
-        first part specifies the behavior for the first use of 'wildchar',
-        The second part for the second use, etc.
+        Completion mode used for the character specified with 'wildchar'.
+        This option is a comma-separated list of up to four parts,
+        corresponding to the first, second, third, and fourth presses of
+        'wildchar'.  Each part is a colon-separated list of completion
+        behaviors, which are applied simultaneously during that phase.
 
-        Each part consists of a colon separated list consisting of the
-        following possible values:
-        ""		Complete only the first match.
-        "full"		Complete the next full match.  After the last match,
-        		the original string is used and then the first match
-        		again.  Will also start 'wildmenu' if it is enabled.
-        "longest"	Complete till longest common string.  If this doesn't
-        		result in a longer string, use the next part.
-        "list"		When more than one match, list all matches.
-        "lastused"	When completing buffer names and more than one buffer
-        		matches, sort buffers by time last used (other than
-        		the current buffer).
-        "noselect"	Do not pre-select first menu item and start 'wildmenu'
-        		if it is enabled.
-        When there is only a single match, it is fully completed in all cases
-        except when "noselect" is present.
+        The possible behavior values are:
+        ""		Only complete (insert) the first match.  No further
+        		matches are cycled or listed.
+        "full"		Complete the next full match.  Cycles through all
+        		matches, returning to the original input after the
+        		last match.  If 'wildmenu' is enabled, it will be
+        		shown.
+        "longest"	Complete to the longest common substring.  If this
+        		doesn't extend the input, the next 'wildmode' part is
+        		used.
+        "list"		If multiple matches are found, list all of them.
+        "lastused"	When completing buffer names, sort them by most
+        		recently used (excluding the current buffer).  Only
+        		applies to buffer name completion.
+        "noselect"	If 'wildmenu' is enabled, show the menu but do not
+        		preselect the first item.
+        If only one match exists, it is completed fully, unless "noselect" is
+        specified.
 
-        Examples of useful colon-separated values:
-        "longest:full"	Like "longest", but also start 'wildmenu' if it is
-        		enabled.  Will not complete to the next full match.
-        "list:full"	When more than one match, list all matches and
-        		complete first match.
-        "list:longest"	When more than one match, list all matches and
-        		complete till longest common string.
-        "list:lastused" When more than one buffer matches, list all matches
-        		and sort buffers by time last used (other than the
-        		current buffer).
+        Some useful combinations of colon-separated values:
+        "longest:full"		Start with the longest common string and show
+        			'wildmenu' (if enabled).  Does not cycle
+        			through full matches.
+        "list:full"		List all matches and complete first match.
+        "list:longest"		List all matches and complete till the longest
+        			common prefix.
+        "list:lastused"		List all matches.  When completing buffers,
+        			sort them by most recently used (excluding the
+        			current buffer).
+        "noselect:lastused"	Do not preselect the first item in 'wildmenu'
+        			if it is active.  When completing buffers,
+        			sort them by most recently used (excluding the
+        			current buffer).
 
         Examples: >vim
         	set wildmode=full
-        <	Complete first full match, next match, etc.  (the default) >vim
+        <	Complete full match on every press (default behavior) >vim
         	set wildmode=longest,full
-        <	Complete longest common string, then each full match >vim
+        <	First press: longest common substring
+        Second press: cycle through full matches >vim
         	set wildmode=list:full
-        <	List all matches and complete each full match >vim
+        <	First press: list all matches and complete the first one >vim
         	set wildmode=list,full
-        <	List all matches without completing, then each full match >vim
+        <	First press: list matches only
+        Second press: complete full matches >vim
         	set wildmode=longest,list
-        <	Complete longest common string, then list alternatives >vim
+        <	First press: longest common substring
+        Second press: list all matches >vim
         	set wildmode=noselect:full
-        <	Display 'wildmenu' without completing, then each full match >vim
+        <	Show 'wildmenu' without completing or selecting on first press
+        Cycle full matches on second press >vim
         	set wildmode=noselect:lastused,full
-        <	Same as above, but sort buffers by time last used.
+        <	Same as above, but buffer matches are sorted by time last used
         More info here: |cmdline-completion|.
       ]=],
       full_name = 'wildmode',
