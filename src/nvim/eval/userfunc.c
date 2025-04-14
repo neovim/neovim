@@ -2252,6 +2252,98 @@ static void list_functions(regmatch_T *regmatch)
   }
 }
 
+/// ":function /pat": list functions matching pattern.
+static char *list_functions_matching_pat(exarg_T *eap)
+{
+  char *p = skip_regexp(eap->arg + 1, '/', true);
+  if (!eap->skip) {
+    regmatch_T regmatch;
+
+    char c = *p;
+    *p = NUL;
+    regmatch.regprog = vim_regcomp(eap->arg + 1, RE_MAGIC);
+    *p = c;
+    if (regmatch.regprog != NULL) {
+      regmatch.rm_ic = p_ic;
+      list_functions(&regmatch);
+      vim_regfree(regmatch.regprog);
+    }
+  }
+  if (*p == '/') {
+    p++;
+  }
+
+  return p;
+}
+
+/// List function "name".
+/// If bang is given:
+///  - include "!" in function head
+///  - exclude line numbers from function body
+/// Returns the function pointer or NULL on failure.
+static ufunc_T *list_one_function(exarg_T *eap, char *name, char *p)
+{
+  if (!ends_excmd(*skipwhite(p))) {
+    semsg(_(e_trailing_arg), p);
+    return NULL;
+  }
+
+  eap->nextcmd = check_nextcmd(p);
+
+  if (eap->nextcmd != NULL) {
+    *p = NUL;
+  }
+
+  if (eap->skip || got_int) {
+    return NULL;
+  }
+
+  ufunc_T *fp = find_func(name);
+
+  if (fp == NULL) {
+    emsg_funcname(N_("E123: Undefined function: %s"), name);
+    return NULL;
+  }
+
+  // Check no function was added or removed from a callback, e.g. at
+  // the more prompt.  "fp" may then be invalid.
+  const int prev_ht_changed = func_hashtab.ht_changed;
+
+  if (list_func_head(fp, !eap->forceit, eap->forceit) != OK) {
+    return fp;
+  }
+
+  for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
+    if (FUNCLINE(fp, j) == NULL) {
+      continue;
+    }
+    msg_putchar('\n');
+    if (!eap->forceit) {
+      msg_outnum(j + 1);
+      if (j < 9) {
+        msg_putchar(' ');
+      }
+      if (j < 99) {
+        msg_putchar(' ');
+      }
+      if (function_list_modified(prev_ht_changed)) {
+        break;
+      }
+    }
+    msg_prt_line(FUNCLINE(fp, j), false);
+    line_breakcheck();  // show multiple lines at a time!
+  }
+
+  if (!got_int) {
+    msg_putchar('\n');
+    if (!function_list_modified(prev_ht_changed)) {
+      msg_puts(eap->forceit ? "endfunction" : "   endfunction");
+    }
+  }
+
+  return fp;
+}
+
 #define MAX_FUNC_NESTING 50
 
 /// Read the body of a function, put every line in "newlines".
@@ -2563,23 +2655,7 @@ void ex_function(exarg_T *eap)
 
   // ":function /pat": list functions matching pattern.
   if (*eap->arg == '/') {
-    char *p = skip_regexp(eap->arg + 1, '/', true);
-    if (!eap->skip) {
-      regmatch_T regmatch;
-
-      char c = *p;
-      *p = NUL;
-      regmatch.regprog = vim_regcomp(eap->arg + 1, RE_MAGIC);
-      *p = c;
-      if (regmatch.regprog != NULL) {
-        regmatch.rm_ic = p_ic;
-        list_functions(&regmatch);
-        vim_regfree(regmatch.regprog);
-      }
-    }
-    if (*p == '/') {
-      p++;
-    }
+    char *p = list_functions_matching_pat(eap);
     eap->nextcmd = check_nextcmd(p);
     return;
   }
@@ -2620,60 +2696,9 @@ void ex_function(exarg_T *eap)
   const int saved_did_emsg = did_emsg;
   did_emsg = false;
 
-  //
   // ":function func" with only function name: list function.
-  // If bang is given:
-  //  - include "!" in function head
-  //  - exclude line numbers from function body
-  //
   if (!paren) {
-    if (!ends_excmd(*skipwhite(p))) {
-      semsg(_(e_trailing_arg), p);
-      goto ret_free;
-    }
-    eap->nextcmd = check_nextcmd(p);
-    if (eap->nextcmd != NULL) {
-      *p = NUL;
-    }
-    if (!eap->skip && !got_int) {
-      fp = find_func(name);
-      if (fp != NULL) {
-        // Check no function was added or removed from a callback, e.g. at
-        // the more prompt.  "fp" may then be invalid.
-        const int prev_ht_changed = func_hashtab.ht_changed;
-
-        if (list_func_head(fp, !eap->forceit, eap->forceit) == OK) {
-          for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
-            if (FUNCLINE(fp, j) == NULL) {
-              continue;
-            }
-            msg_putchar('\n');
-            if (!eap->forceit) {
-              msg_outnum(j + 1);
-              if (j < 9) {
-                msg_putchar(' ');
-              }
-              if (j < 99) {
-                msg_putchar(' ');
-              }
-              if (function_list_modified(prev_ht_changed)) {
-                break;
-              }
-            }
-            msg_prt_line(FUNCLINE(fp, j), false);
-            line_breakcheck();  // show multiple lines at a time!
-          }
-          if (!got_int) {
-            msg_putchar('\n');
-            if (!function_list_modified(prev_ht_changed)) {
-              msg_puts(eap->forceit ? "endfunction" : "   endfunction");
-            }
-          }
-        }
-      } else {
-        emsg_funcname(N_("E123: Undefined function: %s"), name);
-      }
-    }
+    fp = list_one_function(eap, name, p);
     goto ret_free;
   }
 
