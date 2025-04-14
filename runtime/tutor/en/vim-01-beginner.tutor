@@ -15,7 +15,8 @@ times to move the cursor so that Lesson 0 completely fills the screen.
 
 NOTE: The commands in the lessons will modify the text, but those changes
 won't be saved. Don't worry about messing things up; just remember that
-pressing [<Esc>](<Esc>) and then [u](u) will undo the latest change. To redo, press [<Ctrl> + r](<Ctrl> + r).
+pressing [<Esc>](<Esc>) and then [u](u) will undo the latest change. To redo, press
+[<Ctrl> + r](<Ctrl> + r).
 
 This tutorial is interactive, and there are a few things you should know.
 - Type [<Enter>](<Enter>) on links [like this](holy-grail    ) to open the linked help section.
