@@ -1661,7 +1661,8 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   }
 
   // Mouse row reached, adjust lnum for concealed lines.
-  while (decor_conceal_line(win, lnum - 1, false)) {
+  while (lnum < win->w_buffer->b_ml.ml_line_count
+         && decor_conceal_line(win, lnum - 1, false)) {
     lnum++;
     hasFolding(win, lnum, NULL, &lnum);
   }
