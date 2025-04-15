@@ -11,12 +11,13 @@ on:
 
 jobs:
   windows:
-    runs-on: windows-2022
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
+        runner: [windows-2022, windows-11-arm]
         test: [functional, old]
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
