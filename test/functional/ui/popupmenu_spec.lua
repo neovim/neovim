@@ -1164,6 +1164,7 @@ describe('builtin popupmenu', function()
         [8] = { foreground = Screen.colors.Red },
         [9] = { foreground = Screen.colors.Yellow, background = Screen.colors.Green },
         [10] = { foreground = Screen.colors.White, background = Screen.colors.Green },
+        [11] = { background = Screen.colors.LightGrey, underline = true },
         ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey },
         kn = { foreground = Screen.colors.Red, background = Screen.colors.Plum1 },
         xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey },
@@ -4343,12 +4344,32 @@ describe('builtin popupmenu', function()
       end
     end)
 
-    if not multigrid then
-      it('with multiline messages', function()
-        screen:try_resize(40, 8)
-        feed('ixx<cr>')
-        command('imap <f2> <cmd>echoerr "very"\\|echoerr "much"\\|echoerr "error"<cr>')
-        fn.complete(1, { 'word', 'choice', 'text', 'thing' })
+    it('with multiline messages', function()
+      screen:try_resize(40, 8)
+      feed('ixx<cr>')
+      command('imap <f2> <cmd>echoerr "very"\\|echoerr "much"\\|echoerr "error"<cr>')
+      fn.complete(1, { 'word', 'choice', 'text', 'thing' })
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:----------------------------------------]|*7
+          [3:----------------------------------------]|
+        ## grid 2
+          xx                                      |
+          word^                                    |
+          {1:~                                       }|*5
+        ## grid 3
+          {2:-- INSERT --}                            |
+        ## grid 4
+          {s:word           }|
+          {n:choice         }|
+          {n:text           }|
+          {n:thing          }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
+        })
+      else
         screen:expect([[
           xx                                      |
           word^                                    |
@@ -4359,8 +4380,33 @@ describe('builtin popupmenu', function()
           {1:~                                       }|
           {2:-- INSERT --}                            |
         ]])
+      end
 
-        feed('<f2>')
+      feed('<f2>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:----------------------------------------]|*4
+          [3:----------------------------------------]|*4
+        ## grid 2
+          xx                                      |
+          word                                    |
+          {1:~                                       }|*5
+        ## grid 3
+          {6:very}                                    |
+          {6:much}                                    |
+          {6:error}                                   |
+          {5:Press ENTER or type command to continue}^ |
+        ## grid 4
+          {s:word           }|
+          {n:choice         }|
+          {n:text           }|
+          {n:thing          }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
+        })
+      else
         screen:expect([[
           xx                                      |
           word                                    |
@@ -4371,8 +4417,30 @@ describe('builtin popupmenu', function()
           {6:error}                                   |
           {5:Press ENTER or type command to continue}^ |
         ]])
+      end
 
-        feed('<cr>')
+      feed('<cr>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:----------------------------------------]|*7
+          [3:----------------------------------------]|
+        ## grid 2
+          xx                                      |
+          word^                                    |
+          {1:~                                       }|*5
+        ## grid 3
+          {2:-- INSERT --}                            |
+        ## grid 4
+          {s:word           }|
+          {n:choice         }|
+          {n:text           }|
+          {n:thing          }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
+        })
+      else
         screen:expect([[
           xx                                      |
           word^                                    |
@@ -4383,8 +4451,30 @@ describe('builtin popupmenu', function()
           {1:~                                       }|
           {2:-- INSERT --}                            |
         ]])
+      end
 
-        feed('<c-n>')
+      feed('<c-n>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:----------------------------------------]|*7
+          [3:----------------------------------------]|
+        ## grid 2
+          xx                                      |
+          choice^                                  |
+          {1:~                                       }|*5
+        ## grid 3
+          {2:-- INSERT --}                            |
+        ## grid 4
+          {n:word           }|
+          {s:choice         }|
+          {n:text           }|
+          {n:thing          }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
+        })
+      else
         screen:expect([[
           xx                                      |
           choice^                                  |
@@ -4395,35 +4485,92 @@ describe('builtin popupmenu', function()
           {1:~                                       }|
           {2:-- INSERT --}                            |
         ]])
+      end
 
-        command('split')
+      command('split')
+      feed('<c-u>')
+      fn.complete(1, { 'word', 'choice', 'text', 'thing' })
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [5:----------------------------------------]|*3
+          {4:[No Name] [+]                           }|
+          [2:----------------------------------------]|*2
+          {3:[No Name] [+]                           }|
+          [3:----------------------------------------]|
+        ## grid 2
+          xx                                      |
+          word                                    |
+        ## grid 3
+          {2:-- INSERT --}                            |
+        ## grid 4
+          {s:word           }|
+          {n:choice         }|
+          {n:text           }|
+          {n:thing          }|
+        ## grid 5
+          xx                                      |
+          word^                                    |
+          {1:~                                       }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 5, 2, 0, false, 100, 1, 2, 0 } },
+        })
+      else
         screen:expect([[
           xx                                      |
-          choice^                                  |
-          {n:word           }{1:                         }|
-          {s:choice         }{4:                         }|
+          word^                                    |
+          {s:word           }{1:                         }|
+          {n:choice         }{4:                         }|
           {n:text           }                         |
           {n:thing          }                         |
           {3:[No Name] [+]                           }|
           {2:-- INSERT --}                            |
         ]])
+      end
 
-        api.nvim_input_mouse('wheel', 'down', '', 0, 6, 15)
-        screen:expect {
+      api.nvim_input_mouse('wheel', 'down', '', 0, 6, 15)
+      if multigrid then
+        screen:expect({
           grid = [[
+        ## grid 1
+          [5:----------------------------------------]|*3
+          {4:[No Name] [+]                           }|
+          [2:----------------------------------------]|*2
+          {3:[No Name] [+]                           }|
+          [3:----------------------------------------]|
+        ## grid 2
+          word                                    |
+          {1:~                                       }|
+        ## grid 3
+          {2:-- INSERT --}                            |
+        ## grid 4
+          {s:word           }|
+          {n:choice         }|
+          {n:text           }|
+          {n:thing          }|
+        ## grid 5
           xx                                      |
-          choice^                                  |
-          {n:word           }{1:                         }|
-          {s:choice         }{4:                         }|
+          word^                                    |
+          {1:~                                       }|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 5, 2, 0, false, 100, 1, 2, 0 } },
+        })
+      else
+        screen:expect([[
+          xx                                      |
+          word^                                    |
+          {s:word           }{1:                         }|
+          {n:choice         }{4:                         }|
           {n:text           }                         |
           {n:thing          }{1:                         }|
           {3:[No Name] [+]                           }|
           {2:-- INSERT --}                            |
-        ]],
-          unchanged = true,
-        }
-      end)
+        ]])
+      end
+    end)
 
+    if not multigrid then
       it('with kind, menu and abbr attributes', function()
         screen:try_resize(40, 8)
         feed('ixx ')
@@ -8348,6 +8495,53 @@ describe('builtin popupmenu', function()
           {n:my^@    multi^@line }{1:            }|
           {1:~                               }|*14
           {2:-- INSERT --}                    |
+        ]])
+      end)
+
+      -- oldtest: Test_pum_clear_when_switch_tab_or_win()
+      it('is cleared when switching tab or win', function()
+        screen:try_resize(55, 20)
+        exec([[
+          inoremap <F4> <Cmd>wincmd w<CR>
+          inoremap <F5> <Cmd>tabnext<CR>
+        ]])
+
+        command('tabe')
+        feed('Aaa aaa <C-X><C-N>')
+        screen:expect([[
+          {11: [No Name] }{2: + [No Name] }{3:                              }{11:X}|
+          aa aaa aa^                                              |
+          {1:~     }{s: aa             }{1:                                 }|
+          {1:~     }{n: aaa            }{1:                                 }|
+          {1:~                                                      }|*15
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}        |
+        ]])
+        feed('<F5>')
+        screen:expect([[
+          {2: [No Name] }{11: + [No Name] }{3:                              }{11:X}|
+          ^                                                       |
+          {1:~                                                      }|*17
+          {2:-- INSERT --}                                           |
+        ]])
+        feed('<Esc>')
+        command('tabclose!')
+
+        command('vnew win_b')
+        feed('Abb bbb <C-X><C-N>')
+        screen:expect([[
+          bb bbb bb^                  │aa aaa aa                  |
+          {1:~     }{s: bb             }{1:     }│{1:~                          }|
+          {1:~     }{n: bbb            }{1:     }│{1:~                          }|
+          {1:~                          }│{1:~                          }|*15
+          {4:win_b [+]                   }{3:[No Name] [+]              }|
+          {2:-- Keyword Local completion (^N^P) }{5:match 1 of 2}        |
+        ]])
+        feed('<F4>')
+        screen:expect([[
+          bb bbb bb                  │aa aaa a^a                  |
+          {1:~                          }│{1:~                          }|*17
+          {3:win_b [+]                   }{4:[No Name] [+]              }|
+          {2:-- INSERT --}                                           |
         ]])
       end)
     end
