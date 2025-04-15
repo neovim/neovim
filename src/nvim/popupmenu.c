@@ -688,6 +688,9 @@ void pum_redraw(void)
       int width = 0;
       char *s = NULL;
       p = pum_get_item(idx, item_type);
+
+      const bool next_isempty = j + 1 < 3 && pum_get_item(idx, order[j + 1]) == NULL;
+
       if (p != NULL) {
         for (;; MB_PTR_ADV(p)) {
           if (s == NULL) {
@@ -721,12 +724,12 @@ void pum_redraw(void)
             char *rt = reverse_text(st);
             char *rt_start = rt;
             int cells = (int)mb_string2cells(rt);
-            if (pum_width == p_pmw
-                && (pum_width - totwidth < cells
-                    || (j + 1 < 3 && pum_get_item(idx, order[j + 1]) != NULL))) {
+            int pad = next_isempty ? 0 : 2;
+            if (pum_width == p_pmw && pum_width - totwidth < cells + pad) {
               need_fcs_trunc = true;
             }
 
+            // only draw the text that fits
             if (grid_col - cells < col_off - pum_width) {
               do {
                 cells -= utf_ptr2cells(rt);
@@ -752,9 +755,8 @@ void pum_redraw(void)
             grid_col -= width;
           } else {
             int cells = (int)mb_string2cells(st);
-            if (pum_width == p_pmw
-                && (pum_width - totwidth < cells
-                    || (j + 1 < 3 && pum_get_item(idx, order[j + 1]) != NULL))) {
+            int pad = next_isempty ? 0 : 2;
+            if (pum_width == p_pmw && pum_width - totwidth < cells + pad) {
               need_fcs_trunc = true;
             }
 
@@ -796,10 +798,6 @@ void pum_redraw(void)
         n = order[j] == CPT_ABBR ? 1 : 0;
       }
 
-      bool next_isempty = false;
-      if (j + 1 < 3) {
-        next_isempty = pum_get_item(idx, order[j + 1]) == NULL;
-      }
       // Stop when there is nothing more to display.
       if ((j == 2)
           || (next_isempty && (j == 1 || (j == 0 && pum_get_item(idx, order[j + 2]) == NULL)))
