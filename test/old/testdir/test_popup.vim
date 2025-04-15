@@ -2160,6 +2160,20 @@ func Test_pum_maxwidth_multibyte()
     call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
   endif
 
+  call term_sendkeys(buf, ":set pummaxwidth=16\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_21', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call TermWait(buf, 50)
+    call term_sendkeys(buf, "S\<C-X>\<C-O>")
+    call VerifyScreenDump(buf, 'Test_pum_maxwidth_22', {'rows': 8})
+    call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
+  endif
+
   call StopVimInTerminal(buf)
 endfunc
 

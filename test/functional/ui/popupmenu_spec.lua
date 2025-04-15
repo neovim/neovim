@@ -6334,6 +6334,71 @@ describe('builtin popupmenu', function()
       end
       feed('<Esc>')
       command('set norightleft')
+
+      command('set pummaxwidth=16')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+          foo^                             |
+          {1:~                               }|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:foo        fooK>}|
+          {n:bar        一二>}|
+          {n:一二三四五 multi}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+        })
+      else
+        screen:expect([[
+          foo^                             |
+          {s:foo        fooK>}{1:                }|
+          {n:bar        一二>}{1:                }|
+          {n:一二三四五 multi}{1:                }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+
+      command('set rightleft')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+                                      ^ oof|
+          {1:                               ~}|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 3}                 |
+        ## grid 4
+          {s:<Koof        oof}|
+          {n:<二一        rab}|
+          {n:itlum 五四三二一}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 16, false, 100, 1, 1, 16 } },
+        })
+      else
+        screen:expect([[
+                                      ^ oof|
+          {1:                }{s:<Koof        oof}|
+          {1:                }{n:<二一        rab}|
+          {1:                }{n:itlum 五四三二一}|
+          {1:                               ~}|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end
+      feed('<Esc>')
+      command('set norightleft')
     end)
 
     it('does not crash when displayed in last column with rightleft #12032', function()
