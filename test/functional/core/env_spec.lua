@@ -6,7 +6,6 @@ local clear = n.clear
 local exec_capture = n.exec_capture
 local command = n.command
 
-
 describe('vim.uv', function()
   before_each(function()
     clear()
