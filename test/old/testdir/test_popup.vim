@@ -2076,4 +2076,36 @@ func Test_pum_maxwidth_multibyte()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_clear_when_switch_tab_or_win()
+  CheckScreendump
+
+  let lines =<< trim END
+    inoremap <F4> <Cmd>wincmd w<CR>
+    inoremap <F5> <Cmd>tabnext<CR>
+  END
+
+  call writefile(lines, 'Xtest', 'D')
+  let buf = RunVimInTerminal('-S Xtest', {})
+
+  call term_sendkeys(buf, ":tabe\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "Aaa aaa \<C-N>")
+  call VerifyScreenDump(buf, 'Test_tabnext_clear_pum_01', {})
+  call term_sendkeys(buf, "\<F5>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_tabnext_clear_pum_02', {})
+  call term_sendkeys(buf, "\<ESC>:tabclose!\<CR>")
+
+  call term_sendkeys(buf, ":vnew win_b\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "Abb bbb \<C-N>")
+  call VerifyScreenDump(buf, 'Test_switchwin_clear_pum_01', {})
+  call term_sendkeys(buf, "\<F4>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_switchwin_clear_pum_02', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
