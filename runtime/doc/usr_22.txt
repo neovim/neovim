@@ -101,7 +101,7 @@ The <F1> key thus brings you to a netrw directory browsing contents help page.
 It's a regular help page; use the usual |CTRL-]| to jump to tagged help items
 and |CTRL-O| to jump back.
 
-To select files for display and editing: (with the cursor is atop a filename)
+To select files for display and editing: (with the cursor atop a filename)
 
 	<enter>		Open the file in the current window.	   |netrw-cr|
 	o		Horizontally split window and display file |netrw-o|
