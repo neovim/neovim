@@ -2503,14 +2503,14 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
 
   col_off1 = win_col_off(curwin);
   col_off2 = col_off1 - win_col_off2(curwin);
-  width1 = curwin->w_width_inner - col_off1;
-  width2 = curwin->w_width_inner - col_off2;
+  width1 = curwin->w_view_width - col_off1;
+  width2 = curwin->w_view_width - col_off2;
 
   if (width2 == 0) {
     width2 = 1;  // Avoid divide by zero.
   }
 
-  if (curwin->w_width_inner != 0) {
+  if (curwin->w_view_width != 0) {
     int n;
     // Instead of sticking at the last character of the buffer line we
     // try to stick in the last column of the screen.
@@ -2843,7 +2843,7 @@ static void nv_zet(cmdarg_T *cap)
 
   // "zH" - scroll screen right half-page
   case 'H':
-    cap->count1 *= curwin->w_width_inner / 2;
+    cap->count1 *= curwin->w_view_width / 2;
     FALLTHROUGH;
 
   // "zh" - scroll screen to the right
@@ -2857,7 +2857,7 @@ static void nv_zet(cmdarg_T *cap)
 
   // "zL" - scroll window left half-page
   case 'L':
-    cap->count1 *= curwin->w_width_inner / 2;
+    cap->count1 *= curwin->w_view_width / 2;
     FALLTHROUGH;
 
   // "zl" - scroll window to the left if not wrapping
@@ -2896,7 +2896,7 @@ static void nv_zet(cmdarg_T *cap)
       } else {
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
       }
-      int n = curwin->w_width_inner - win_col_off(curwin);
+      int n = curwin->w_view_width - win_col_off(curwin);
       if (col + siso < n) {
         col = 0;
       } else {
@@ -3637,7 +3637,7 @@ static void nv_scroll(cmdarg_T *cap)
       // Don't count filler lines above the window.
       used -= win_get_fill(curwin, curwin->w_topline) - curwin->w_topfill;
       validate_botline(curwin);  // make sure w_empty_rows is valid
-      int half = (curwin->w_height_inner - curwin->w_empty_rows + 1) / 2;
+      int half = (curwin->w_view_height - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
         // Count half the number of filler lines to be "below this
         // line" and half to be "above the next line".
@@ -3653,7 +3653,7 @@ static void nv_scroll(cmdarg_T *cap)
           n = lnum - curwin->w_topline;
         }
       }
-      if (n > 0 && used > curwin->w_height_inner) {
+      if (n > 0 && used > curwin->w_view_height) {
         n--;
       }
     } else {  // (cap->cmdchar == 'H')
@@ -5222,8 +5222,8 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
 
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
-  if (curwin->w_p_wrap && curwin->w_width_inner != 0) {
-    int width1 = curwin->w_width_inner - win_col_off(curwin);
+  if (curwin->w_p_wrap && curwin->w_view_width != 0) {
+    int width1 = curwin->w_view_width - win_col_off(curwin);
     int width2 = width1 + win_col_off2(curwin);
 
     validate_virtcol(curwin);
@@ -5235,7 +5235,7 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
     // When ending up below 'smoothscroll' marker, move just beyond it so
     // that skipcol is not adjusted later.
     if (curwin->w_skipcol > 0 && curwin->w_cursor.lnum == curwin->w_topline) {
-      int overlap = sms_marker_overlap(curwin, curwin->w_width_inner - width2);
+      int overlap = sms_marker_overlap(curwin, curwin->w_view_width - width2);
       if (overlap > 0 && i == curwin->w_skipcol) {
         i += overlap;
       }
@@ -5247,7 +5247,7 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
   // 'relativenumber' is on and lines are wrapping the middle can be more
   // to the left.
   if (cap->nchar == 'm') {
-    i += (curwin->w_width_inner - win_col_off(curwin)
+    i += (curwin->w_view_width - win_col_off(curwin)
           + ((curwin->w_p_wrap && i > 0) ? win_col_off2(curwin) : 0)) / 2;
   }
   coladvance(curwin, (colnr_T)i);
@@ -5303,10 +5303,10 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = true;
-  if (curwin->w_p_wrap && curwin->w_width_inner != 0) {
+  if (curwin->w_p_wrap && curwin->w_view_width != 0) {
     curwin->w_curswant = MAXCOL;              // so we stay at the end
     if (cap->count1 == 1) {
-      int width1 = curwin->w_width_inner - col_off;
+      int width1 = curwin->w_view_width - col_off;
       int width2 = width1 + win_col_off2(curwin);
 
       validate_virtcol(curwin);
@@ -5334,7 +5334,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
       // if it fails, let the cursor still move to the last char
       cursor_down(cap->count1 - 1, false);
     }
-    i = curwin->w_leftcol + curwin->w_width_inner - col_off - 1;
+    i = curwin->w_leftcol + curwin->w_view_width - col_off - 1;
     coladvance(curwin, (colnr_T)i);
 
     // if the character doesn't fit move one back
@@ -5342,7 +5342,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
       colnr_T vcol;
 
       getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol);
-      if (vcol >= curwin->w_leftcol + curwin->w_width_inner - col_off) {
+      if (vcol >= curwin->w_leftcol + curwin->w_view_width - col_off) {
         curwin->w_cursor.col--;
       }
     }

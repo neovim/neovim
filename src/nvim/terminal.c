@@ -659,9 +659,9 @@ void terminal_check_size(Terminal *term)
     }
     if (wp->w_buffer && wp->w_buffer->terminal == term) {
       const uint16_t win_width =
-        (uint16_t)(MAX(0, wp->w_width_inner - win_col_off(wp)));
+        (uint16_t)(MAX(0, wp->w_view_width - win_col_off(wp)));
       width = MAX(width, win_width);
-      height = (uint16_t)MAX(height, wp->w_height_inner);
+      height = (uint16_t)MAX(height, wp->w_view_height);
     }
   }
 
@@ -2260,7 +2260,7 @@ static void adjust_topline(Terminal *term, buf_T *buf, int added)
       if (following || (wp == curwin && is_focused(term))) {
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;
-        set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_height_inner + 1, 1));
+        set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_view_height + 1, 1));
       } else {
         // Ensure valid cursor for each window displaying this terminal.
         wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);

@@ -101,7 +101,7 @@ void win_redr_status(win_T *wp)
       attr = win_hl_attr(wp, HLF_C);
       fillchar = wp->w_p_fcs_chars.vert;
     }
-    grid_line_start(&default_grid, W_ENDROW(wp));
+    grid_line_start(&default_gridview, W_ENDROW(wp));
     grid_line_put_schar(W_ENDCOL(wp), fillchar, attr);
     grid_line_flush();
   }
@@ -252,8 +252,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     opt_scope = ((*wp->w_p_wbr != NUL) ? OPT_LOCAL : 0);
     row = -1;  // row zero is first row of text
     col = 0;
-    grid = &wp->w_grid;
-    grid_adjust(&grid, &row, &col);
+    grid = grid_adjust(&wp->w_grid, &row, &col);
 
     if (row < 0) {
       goto theend;
@@ -261,7 +260,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
     fillchar = wp->w_p_fcs_chars.wbr;
     attr = (wp == curwin) ? win_hl_attr(wp, HLF_WBR) : win_hl_attr(wp, HLF_WBRNC);
-    maxwidth = wp->w_width_inner;
+    maxwidth = wp->w_view_width;
     stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
     wp->w_winbar_click_defs = stl_alloc_click_defs(wp->w_winbar_click_defs, maxwidth,
                                                    &wp->w_winbar_click_defs_size);
@@ -294,8 +293,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       col = MAX(ru_col - (Columns - maxwidth), (maxwidth + 1) / 2);
       maxwidth -= col;
       if (!in_status_line) {
-        grid = &msg_grid_adj;
         row = Rows - 1;
+        grid = grid_adjust(&msg_grid_adj, &row, &col);
         maxwidth--;  // writing in last column may cause scrolling
         fillchar = schar_from_ascii(' ');
         attr = HL_ATTR(HLF_MSG);
@@ -335,7 +334,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
   // Draw each snippet with the specified highlighting.
   if (!draw_ruler) {
-    grid_line_start(grid, row);
+    screengrid_line_start(grid, row, 0);
   }
 
   int curattr = attr;
@@ -643,7 +642,7 @@ void draw_tabline(void)
     int col = 0;
     win_T *cwp;
     int wincount;
-    grid_line_start(&default_grid, 0);
+    grid_line_start(&default_gridview, 0);
     FOR_ALL_TABS(tp) {
       tabcount++;
     }

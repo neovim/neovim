@@ -249,19 +249,19 @@ static int get_fpos_of_mouse(pos_T *mpos)
 
   if (!below_buffer && *wp->w_p_stc != NUL
       && (wp->w_p_rl
-          ? wincol >= wp->w_width_inner - win_col_off(wp)
+          ? wincol >= wp->w_view_width - win_col_off(wp)
           : wincol < win_col_off(wp))) {
     return MOUSE_STATUSCOL;
   }
 
   // winpos and height may change in win_enter()!
-  if (winrow >= wp->w_height_inner + wp->w_status_height) {  // Below window
+  if (winrow >= wp->w_view_height + wp->w_status_height) {  // Below window
     if (mouse_grid <= 1 && mouse_row < Rows - p_ch
         && mouse_row >= Rows - p_ch - global_stl_height()) {  // In global status line
       return IN_STATUS_LINE;
     }
     return IN_UNKNOWN;
-  } else if (winrow >= wp->w_height_inner) {  // In window status line
+  } else if (winrow >= wp->w_view_height) {  // In window status line
     return IN_STATUS_LINE;
   }
 
@@ -269,7 +269,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
     return MOUSE_WINBAR;
   }
 
-  if (wincol >= wp->w_width_inner) {  // In vertical separator line
+  if (wincol >= wp->w_view_width) {  // In vertical separator line
     return IN_SEP_LINE;
   }
 
@@ -682,7 +682,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     }
 
     if (in_statuscol && wp->w_p_rl) {
-      click_col = wp->w_width_inner - click_col - 1;
+      click_col = wp->w_view_width - click_col - 1;
     }
 
     if ((in_statuscol && click_col >= (int)wp->w_statuscol_click_defs_size)
@@ -1053,7 +1053,7 @@ void do_mousescroll(cmdarg_T *cap)
     }
   } else {
     // Horizontal scrolling
-    int step = shift_or_ctrl ? curwin->w_width_inner : (int)p_mousescroll_hor;
+    int step = shift_or_ctrl ? curwin->w_view_width : (int)p_mousescroll_hor;
     colnr_T leftcol = curwin->w_leftcol + (cap->arg == MSCR_RIGHT ? -step : +step);
     leftcol = MAX(leftcol, 0);
     do_mousescroll_horiz(leftcol);
@@ -1277,7 +1277,7 @@ retnomove:
   on_statuscol = !below_window && !on_status_line && !on_sep_line && !on_winbar
                  && *wp->w_p_stc != NUL
                  && (wp->w_p_rl
-                     ? col >= wp->w_width_inner - win_col_off(wp)
+                     ? col >= wp->w_view_width - win_col_off(wp)
                      : col < win_col_off(wp));
 
   // The rightmost character of the status line might be a vertical
@@ -1346,7 +1346,7 @@ retnomove:
             || (!status_line_offset
                 && !sep_line_offset
                 && (wp->w_p_rl
-                    ? col < wp->w_width_inner - fdc
+                    ? col < wp->w_view_width - fdc
                     : col >= fdc + (wp != cmdwin_win ? 0 : 1))
                 && (flags & MOUSE_MAY_STOP_VIS)))) {
       end_visual_mode();
@@ -1455,7 +1455,7 @@ retnomove:
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
       redraw_later(curwin, UPD_VALID);
       row = 0;
-    } else if (row >= curwin->w_height_inner) {
+    } else if (row >= curwin->w_view_height) {
       count = 0;
       for (first = true; curwin->w_topline < curbuf->b_ml.ml_line_count;) {
         if (curwin->w_topfill > 0) {
@@ -1464,7 +1464,7 @@ retnomove:
           count += plines_win(curwin, curwin->w_topline, true);
         }
 
-        if (!first && count > row - curwin->w_height_inner + 1) {
+        if (!first && count > row - curwin->w_view_height + 1) {
           break;
         }
         first = false;
@@ -1484,7 +1484,7 @@ retnomove:
       redraw_later(curwin, UPD_VALID);
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
-      row = curwin->w_height_inner - 1;
+      row = curwin->w_view_height - 1;
     } else if (row == 0) {
       // When dragging the mouse, while the text has been scrolled up as
       // far as it goes, moving the mouse in the top line should scroll
@@ -1615,7 +1615,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   int count;
 
   if (win->w_p_rl) {
-    col = win->w_width_inner - 1 - col;
+    col = win->w_view_width - 1 - col;
   }
 
   linenr_T lnum = win->w_topline;
@@ -1631,7 +1631,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     }
 
     if (win->w_skipcol > 0 && lnum == win->w_topline) {
-      int width1 = win->w_width_inner - win_col_off(win);
+      int width1 = win->w_view_width - win_col_off(win);
 
       if (width1 > 0) {
         int skip_lines = 0;
@@ -1673,7 +1673,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     // Compute the column without wrapping.
     int off = win_col_off(win) - win_col_off2(win);
     col = MAX(col, off);
-    col += row * (win->w_width_inner - off);
+    col += row * (win->w_view_width - off);
 
     // Add skip column for the topline.
     if (lnum == win->w_topline) {
@@ -1750,8 +1750,8 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
     win_T *wp = get_win_by_grid_handle(*gridp);
     if (wp && wp->w_grid_alloc.chars
         && !(wp->w_floating && !wp->w_config.mouse)) {
-      *rowp = MIN(*rowp - wp->w_grid.row_offset, wp->w_grid.rows - 1);
-      *colp = MIN(*colp - wp->w_grid.col_offset, wp->w_grid.cols - 1);
+      *rowp = MIN(*rowp - wp->w_grid.row_offset, wp->w_view_height - 1);
+      *colp = MIN(*colp - wp->w_grid.col_offset, wp->w_view_width - 1);
       return wp;
     }
   } else if (*gridp == 0) {
@@ -1884,10 +1884,9 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
       || curwin->w_redr_type != 0) {
     return;
   }
-  ScreenGrid *gp = &curwin->w_grid;
   int start_row = 0;
   int start_col = 0;
-  grid_adjust(&gp, &start_row, &start_col);
+  ScreenGrid *gp = grid_adjust(&curwin->w_grid, &start_row, &start_col);
   if (gp->handle != click_grid || gp->chars == NULL) {
     return;
   }

@@ -1034,8 +1034,8 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     .data = chan,
     // NB: overridden in terminal_check_size if a window is already
     // displaying the buffer
-    .width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0),
-    .height = (uint16_t)curwin->w_height_inner,
+    .width = (uint16_t)MAX(curwin->w_view_width - win_col_off(curwin), 0),
+    .height = (uint16_t)curwin->w_view_height,
     .write_cb = term_write,
     .resize_cb = term_resize,
     .close_cb = term_close,
@@ -2197,11 +2197,13 @@ static void redraw_status(win_T *wp, Dict(redraw) *opts, bool *flush)
     wp->w_nrwidth_line_count = 0;
     changed_window_setting(wp);
   }
+
+  int old_row_offset = wp->w_grid.row_offset;
   win_grid_alloc(wp);
 
   // Flush later in case winbar was just hidden or shown for the first time, or
   // statuscolumn is being drawn.
-  if (wp->w_lines_valid == 0) {
+  if (wp->w_lines_valid == 0 || wp->w_grid.row_offset != old_row_offset) {
     *flush = true;
   }
 

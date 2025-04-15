@@ -479,7 +479,7 @@ static int insert_check(VimState *state)
                                                 curbuf->b_p_ts,
                                                 curbuf->b_p_vts_array,
                                                 false)
-        && curwin->w_wrow == curwin->w_height_inner - 1 - get_scrolloff_value(curwin)
+        && curwin->w_wrow == curwin->w_view_height - 1 - get_scrolloff_value(curwin)
         && (curwin->w_cursor.lnum != curwin->w_topline
             || curwin->w_topfill > 0)) {
       if (curwin->w_topfill > 0) {
@@ -1478,7 +1478,7 @@ void edit_putchar(int c, bool highlight)
   pc_status = PC_STATUS_UNSET;
   grid_line_start(&curwin->w_grid, pc_row);
   if (curwin->w_p_rl) {
-    pc_col = curwin->w_grid.cols - 1 - curwin->w_wcol;
+    pc_col = curwin->w_view_width - 1 - curwin->w_wcol;
 
     if (grid_line_getchar(pc_col, NULL) == NUL) {
       grid_line_put_schar(pc_col - 1, schar_from_ascii(' '), attr);
@@ -1603,7 +1603,7 @@ void display_dollar(colnr_T col_arg)
   char *p = get_cursor_line_ptr();
   curwin->w_cursor.col -= utf_head_off(p, p + col);
   curs_columns(curwin, false);              // Recompute w_wrow and w_wcol
-  if (curwin->w_wcol < curwin->w_grid.cols) {
+  if (curwin->w_wcol < curwin->w_view_width) {
     edit_putchar('$', false);
     dollar_vcol = curwin->w_virtcol;
   }

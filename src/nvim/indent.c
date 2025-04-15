@@ -851,7 +851,7 @@ int get_breakindent_win(win_T *wp, char *line)
   static char *prev_flp = NULL;  // cached formatlistpat value
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
-  const int eff_wwidth = wp->w_width_inner - win_col_off(wp) + win_col_off2(wp);
+  const int eff_wwidth = wp->w_view_width - win_col_off(wp) + win_col_off2(wp);
 
   // In list mode, if 'listchars' "tab" isn't set, a TAB is displayed as ^I.
   const bool no_ts = wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL;

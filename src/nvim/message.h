@@ -34,8 +34,8 @@ EXTERN bool msg_ext_need_clear INIT( = false);
 // Set to true to force grouping a set of message chunks into a single `cmdline_show` event.
 EXTERN bool msg_ext_skip_flush INIT( = false);
 
-/// allocated grid for messages. Used when display+=msgsep is set, or
-/// ext_multigrid is active. See also the description at msg_scroll_flush()
+/// allocated grid for messages. Used unless ext_messages is active.
+/// See also the description at msg_scroll_flush()
 EXTERN ScreenGrid msg_grid INIT( = SCREEN_GRID_INIT);
 EXTERN int msg_grid_pos INIT( = 0);
 
@@ -45,7 +45,7 @@ EXTERN int msg_grid_pos INIT( = 0);
 /// for legacy (display-=msgsep) message scroll behavior.
 /// TODO(bfredl): refactor "internal" message logic, msg_row etc
 /// to use the correct positions already.
-EXTERN ScreenGrid msg_grid_adj INIT( = SCREEN_GRID_INIT);
+EXTERN GridView msg_grid_adj INIT( = { 0 });
 
 /// value of msg_scrolled at latest msg_scroll_flush.
 EXTERN int msg_scrolled_at_flush INIT( = 0);

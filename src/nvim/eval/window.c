@@ -321,13 +321,13 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   tv_dict_add_nr(dict, S_LEN("tabnr"), tpnr);
   tv_dict_add_nr(dict, S_LEN("winnr"), winnr);
   tv_dict_add_nr(dict, S_LEN("winid"), wp->handle);
-  tv_dict_add_nr(dict, S_LEN("height"), wp->w_height_inner);
+  tv_dict_add_nr(dict, S_LEN("height"), wp->w_view_height);
   tv_dict_add_nr(dict, S_LEN("winrow"), wp->w_winrow + 1);
   tv_dict_add_nr(dict, S_LEN("topline"), wp->w_topline);
   tv_dict_add_nr(dict, S_LEN("botline"), wp->w_botline - 1);
   tv_dict_add_nr(dict, S_LEN("leftcol"), wp->w_leftcol);
   tv_dict_add_nr(dict, S_LEN("winbar"), wp->w_winbar_height);
-  tv_dict_add_nr(dict, S_LEN("width"), wp->w_width_inner);
+  tv_dict_add_nr(dict, S_LEN("width"), wp->w_view_width);
   tv_dict_add_nr(dict, S_LEN("bufnr"), wp->w_buffer->b_fnum);
   tv_dict_add_nr(dict, S_LEN("wincol"), wp->w_wincol + 1);
   tv_dict_add_nr(dict, S_LEN("textoff"), win_col_off(wp));
@@ -786,7 +786,7 @@ void f_winheight(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (wp == NULL) {
     rettv->vval.v_number = -1;
   } else {
-    rettv->vval.v_number = wp->w_height_inner;
+    rettv->vval.v_number = wp->w_view_height;
   }
 }
 
@@ -923,7 +923,7 @@ void f_winwidth(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (wp == NULL) {
     rettv->vval.v_number = -1;
   } else {
-    rettv->vval.v_number = wp->w_width_inner;
+    rettv->vval.v_number = wp->w_view_width;
   }
 }
 

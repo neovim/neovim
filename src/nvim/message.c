@@ -173,7 +173,7 @@ static void ui_ext_msg_set_pos(int row, bool scrolled)
   ui_call_msg_set_pos(msg_grid.handle, row, scrolled,
                       (String){ .data = buf, .size = size }, msg_grid.zindex,
                       (int)msg_grid.comp_index);
-  msg_grid.composition_updated = false;
+  msg_grid.pending_comp_index_update = false;
 }
 
 void msg_grid_set_pos(int row, bool scrolled)
@@ -235,7 +235,6 @@ void msg_grid_validate(void)
       grid_clear(&msg_grid_adj, Rows - diff, Rows, 0, Columns, HL_ATTR(HLF_MSG));
     }
   }
-  msg_grid_adj.cols = Columns;
 
   if (msg_grid.chars && !msg_scrolled && cmdline_row < msg_grid_pos) {
     // TODO(bfredl): this should already be the case, but fails in some
@@ -2384,18 +2383,17 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
 void msg_line_flush(void)
 {
   if (cmdmsg_rl) {
-    grid_line_mirror();
+    grid_line_mirror(msg_grid.cols);
   }
   grid_line_flush_if_valid_row();
 }
 
 void msg_cursor_goto(int row, int col)
 {
-  ScreenGrid *grid = &msg_grid_adj;
   if (cmdmsg_rl) {
     col = Columns - 1 - col;
   }
-  grid_adjust(&grid, &row, &col);
+  ScreenGrid *grid = grid_adjust(&msg_grid_adj, &row, &col);
   ui_grid_cursor_goto(grid->handle, row, col);
 }
 
@@ -2533,7 +2531,7 @@ void msg_ui_refresh(void)
 
 void msg_ui_flush(void)
 {
-  if (ui_has(kUIMultigrid) && msg_grid.chars && msg_grid.composition_updated) {
+  if (ui_has(kUIMultigrid) && msg_grid.chars && msg_grid.pending_comp_index_update) {
     ui_ext_msg_set_pos(msg_grid_pos, msg_scrolled);
   }
 }
@@ -2978,7 +2976,7 @@ static bool do_more_prompt(int typed_char)
           }
 
           if (toscroll == -1 && !to_redraw) {
-            grid_ins_lines(&msg_grid_adj, 0, 1, Rows, 0, Columns);
+            grid_ins_lines(&msg_grid, 0, 1, Rows, 0, Columns);
             grid_clear(&msg_grid_adj, 0, 1, 0, Columns, HL_ATTR(HLF_MSG));
             // display line at top
             disp_sb_line(0, mp);

@@ -65,14 +65,6 @@ struct ScreenGrid {
   // external UI.
   bool throttled;
 
-  // TODO(bfredl): maybe physical grids and "views" (i e drawing
-  // specifications) should be two separate types?
-  // offsets for the grid relative to another grid. Used for grids
-  // that are views into another, actually allocated grid 'target'
-  int row_offset;
-  int col_offset;
-  ScreenGrid *target;
-
   // whether the compositor should blend the grid with the background grid
   bool blending;
 
@@ -103,12 +95,20 @@ struct ScreenGrid {
   // moving around grids etc.
   bool comp_disabled;
 
-  bool composition_updated;
+  // need to resend win_float_pos or similar due to comp_index change
+  bool pending_comp_index_update;
 };
 
 #define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
-                           false, 0, 0, NULL, false, true, 0, \
+                           false, false, true, 0, \
                            0, 0, 0, 0, 0,  false, true }
+
+/// Represents the position of a viewport within a ScreenGrid
+typedef struct {
+  ScreenGrid *target;
+  int row_offset;
+  int col_offset;
+} GridView;
 
 typedef struct {
   int args[3];
