@@ -228,6 +228,24 @@ describe(':Man', function()
     matches('quit works!!', fn.system(args, { 'manpage contents' }))
   end)
 
+  it('raw manpage into (:Man!) creates a new buffer #30132', function()
+    local args = {
+      nvim_prog,
+      '--headless',
+      '+Man! foo',
+      '+echo bufname()',
+      '+enew',
+      '+Man! foo',
+      '+echo bufname()',
+      '+enew',
+      '+Man! foo',
+      '+echo bufname()',
+      '+q',
+    }
+    local out = fn.system(args, { 'manpage contents' })
+    assert(out and out:match('man://%?new=%d'))
+  end)
+
   it('reports non-existent man pages for absolute paths', function()
     skip(is_ci('cirrus'))
     local actual_file = tmpname()
