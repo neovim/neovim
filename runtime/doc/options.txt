@@ -2642,6 +2642,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  lastline	'@'		'display' contains lastline/truncate
 	  trunc		'>'		truncated text in the
 					|ins-completion-menu|.
+	  truncrl	'<'		same as "trunc' in 'rightleft' mode
 
 	Any one that is omitted will fall back to the default.
 
@@ -2681,6 +2682,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  lastline	NonText			|hl-NonText|
 	  trunc		one of the many Popup menu highlighting groups like
 			|hl-PmenuSel|
+	  truncrl	same as "trunc"
 
 					*'findfunc'* *'ffu'* *E1514*
 'findfunc' 'ffu'	string	(default "")

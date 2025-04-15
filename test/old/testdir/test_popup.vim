@@ -2132,7 +2132,7 @@ func Test_pum_maxwidth_multibyte()
     call VerifyScreenDump(buf, 'Test_pum_maxwidth_16', {'rows': 8})
     call term_sendkeys(buf, "\<ESC>")
 
-    call term_sendkeys(buf, ":set fcs+=trunc:…\<CR>")
+    call term_sendkeys(buf, ":set fcs+=truncrl:…\<CR>")
     call term_sendkeys(buf, "S\<C-X>\<C-O>")
     call VerifyScreenDump(buf, 'Test_pum_maxwidth_17', {'rows': 8})
     call term_sendkeys(buf, "\<ESC>")

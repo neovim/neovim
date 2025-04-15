@@ -2133,6 +2133,7 @@ static const struct chars_tab fcs_tab[] = {
   CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~", NULL),
   CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@", NULL),
   CHARSTAB_ENTRY(&fcs_chars.trunc,      "trunc",     ">", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.truncrl,    "truncrl",   "<", NULL),
 };
 
 static lcs_chars_T lcs_chars;

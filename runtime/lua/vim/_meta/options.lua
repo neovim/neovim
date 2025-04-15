@@ -2334,6 +2334,7 @@ vim.bo.ft = vim.bo.filetype
 ---   lastline	'@'		'display' contains lastline/truncate
 ---   trunc		'>'		truncated text in the
 --- 				`ins-completion-menu`.
+---   truncrl	'<'		same as "trunc' in 'rightleft' mode
 ---
 --- Any one that is omitted will fall back to the default.
 ---
@@ -2376,6 +2377,7 @@ vim.bo.ft = vim.bo.filetype
 ---   lastline	NonText			`hl-NonText`
 ---   trunc		one of the many Popup menu highlighting groups like
 --- 		`hl-PmenuSel`
+---   truncrl	same as "trunc"
 ---
 --- @type string
 vim.o.fillchars = ""

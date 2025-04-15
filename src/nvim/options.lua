@@ -3062,6 +3062,7 @@ local options = {
           lastline	'@'		'display' contains lastline/truncate
           trunc		'>'		truncated text in the
         				|ins-completion-menu|.
+          truncrl	'<'		same as "trunc' in 'rightleft' mode
 
         Any one that is omitted will fall back to the default.
 
@@ -3101,6 +3102,7 @@ local options = {
           lastline	NonText			|hl-NonText|
           trunc		one of the many Popup menu highlighting groups like
         		|hl-PmenuSel|
+          truncrl	same as "trunc"
       ]=],
       expand_cb = 'expand_set_chars_option',
       full_name = 'fillchars',

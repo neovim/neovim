@@ -1057,6 +1057,7 @@ typedef struct {
   schar_T eob;
   schar_T lastline;
   schar_T trunc;
+  schar_T truncrl;
 } fcs_chars_T;
 
 /// Structure which contains all information that belongs to a window.

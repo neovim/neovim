@@ -577,7 +577,8 @@ void pum_redraw(void)
   int thumb_pos = 0;
   int thumb_height = 1;
   int n;
-  schar_T fcs_trunc = curwin->w_p_fcs_chars.trunc;
+  const schar_T fcs_trunc = pum_rl ? curwin->w_p_fcs_chars.truncrl
+                                   : curwin->w_p_fcs_chars.trunc;
 
   //                         "word"   "kind"   "extra text"
   const hlf_T hlfsNorm[3] = { HLF_PNI, HLF_PNK, HLF_PNX };
@@ -720,7 +721,9 @@ void pum_redraw(void)
             char *rt = reverse_text(st);
             char *rt_start = rt;
             int cells = (int)mb_string2cells(rt);
-            if (pum_width == p_pmw && totwidth + 1 + cells >= pum_width) {
+            if (pum_width == p_pmw
+                && (pum_width - totwidth < cells
+                    || (j + 1 < 3 && pum_get_item(idx, order[j + 1]) != NULL))) {
               need_fcs_trunc = true;
             }
 
@@ -749,7 +752,9 @@ void pum_redraw(void)
             grid_col -= width;
           } else {
             int cells = (int)mb_string2cells(st);
-            if (pum_width == p_pmw && totwidth + 1 + cells >= pum_width) {
+            if (pum_width == p_pmw
+                && (pum_width - totwidth < cells
+                    || (j + 1 < 3 && pum_get_item(idx, order[j + 1]) != NULL))) {
               need_fcs_trunc = true;
             }
 
@@ -818,8 +823,7 @@ void pum_redraw(void)
       const int lcol = col_off - pum_width + 1;
       grid_line_fill(lcol, grid_col + 1, schar_from_ascii(' '), orig_attr);
       if (need_fcs_trunc) {
-        linebuf_char[lcol] = fcs_trunc != NUL && fcs_trunc != schar_from_ascii('>')
-                             ? fcs_trunc : schar_from_ascii('<');
+        linebuf_char[lcol] = fcs_trunc != NUL ? fcs_trunc : schar_from_ascii('<');
         if (pum_width > 1 && linebuf_char[lcol + 1] == NUL) {
           linebuf_char[lcol + 1] = schar_from_ascii(' ');
         }

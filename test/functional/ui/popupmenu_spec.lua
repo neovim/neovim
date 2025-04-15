@@ -5891,7 +5891,7 @@ describe('builtin popupmenu', function()
         ## grid 4
           {s:123456789>}|
           {n:一二三四 >}|
-          {n:abcdefghi>}|
+          {n:abcdefghij}|
           {n:上下左右  }|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
@@ -5901,7 +5901,7 @@ describe('builtin popupmenu', function()
           123456789_123456789_123456789_^                              |
           {s:123456789>}{1:                                                  }|
           {n:一二三四 >}{1:                                                  }|
-          {n:abcdefghi>}{1:                                                  }|
+          {n:abcdefghij}{1:                                                  }|
           {n:上下左右  }{1:                                                  }|
           {1:~                                                           }|*2
           {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
@@ -5925,7 +5925,7 @@ describe('builtin popupmenu', function()
         ## grid 4
           {s:<987654321}|
           {n:< 四三二一}|
-          {n:<ihgfedcba}|
+          {n:jihgfedcba}|
           {n:  右左下上}|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 50, false, 100, 1, 1, 50 } },
@@ -5935,7 +5935,7 @@ describe('builtin popupmenu', function()
                                        ^ _987654321_987654321_987654321|
           {1:                                                  }{s:<987654321}|
           {1:                                                  }{n:< 四三二一}|
-          {1:                                                  }{n:<ihgfedcba}|
+          {1:                                                  }{n:jihgfedcba}|
           {1:                                                  }{n:  右左下上}|
           {1:                                                           ~}|*2
           {2:-- Omni completion (^O^N^P) }{5:match 1 of 4}                    |
@@ -6207,7 +6207,7 @@ describe('builtin popupmenu', function()
       end
       feed('<Esc>')
 
-      command('set fcs+=trunc:…')
+      command('set fcs+=truncrl:…')
       feed('S<C-X><C-O>')
       if multigrid then
         screen:expect({
