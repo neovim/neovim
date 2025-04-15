@@ -80,8 +80,7 @@ static char *get_mess_env(void)
 #ifdef LC_MESSAGES
   return get_locale_val(LC_MESSAGES);
 #else
-  char *p;
-  p = os_getenv_noalloc("LC_ALL");
+  char *p = os_getenv_noalloc("LC_ALL");
   if (p != NULL) {
     return p;
   }

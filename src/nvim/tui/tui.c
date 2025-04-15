@@ -1792,12 +1792,10 @@ void tui_guess_size(TUIData *tui)
 
   // 2 - use $LINES/$COLUMNS if available
   const char *val;
-  lines = os_getenv("LINES");
-  columns = os_getenv("COLUMNS");
   int advance;
-  if ((val = lines)
+  if ((val = os_getenv_noalloc("LINES"))
       && sscanf(val, "%d%n", &height, &advance) != EOF && advance
-      && (val = columns)
+      && (val = os_getenv_noalloc("COLUMNS"))
       && sscanf(val, "%d%n", &width, &advance) != EOF && advance) {
     goto end;
   }

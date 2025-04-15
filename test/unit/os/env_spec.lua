@@ -13,8 +13,8 @@ local OK = 0
 local cimp = cimport('./src/nvim/os/os.h')
 
 describe('env.c', function()
-  local function os_env_exists(name, defined)
-    return cimp.os_env_exists(to_cstr(name), defined)
+  local function os_env_exists(name, nonempty)
+    return cimp.os_env_exists(to_cstr(name), nonempty)
   end
 
   local function os_setenv(name, value, override)

@@ -90,7 +90,7 @@ end:
   return e;
 }
 
-/// Like getenv(), but returns a pointer to `NameBuff` instead of allocating.
+/// Like getenv(), but returns a pointer to `NameBuff` instead of allocating, or NULL on failure.
 /// Value is truncated if it exceeds sizeof(NameBuff).
 /// @see os_env_exists
 char *os_getenv_noalloc(const char *name)
@@ -124,8 +124,8 @@ char *os_getenv_noalloc(const char *name)
 /// Returns false if not found (UV_ENOENT) or other failure.
 ///
 /// @param name the environment variable in question
-/// @param nonempty whether the variable has a valid value, or may be empty
-/// @return whether the variable exists (and is defined)
+/// @param nonempty Require a non-empty value. Treat empty as "does not exist".
+/// @return whether the variable exists
 bool os_env_exists(const char *name, bool nonempty)
   FUNC_ATTR_NONNULL_ALL
 {

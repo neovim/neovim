@@ -120,12 +120,12 @@ char *server_address_new(const char *name)
   static uint32_t count = 0;
   char fmt[ADDRESS_MAX_SIZE];
 #ifdef MSWIN
-  (void)get_appname(true);    // Call to initialize NameBuf with appname
+  (void)get_appname(true);  // Writes appname to NameBuf.
   int r = snprintf(fmt, sizeof(fmt), "\\\\.\\pipe\\%s.%" PRIu64 ".%" PRIu32,
                    name ? name : NameBuff, os_get_pid(), count++);
 #else
   char *dir = stdpaths_get_xdg_var(kXDGRuntimeDir);
-  (void)get_appname(true);    // Call to initialize NameBuf with appname
+  (void)get_appname(true);  // Writes appname to NameBuf.
   int r = snprintf(fmt, sizeof(fmt), "%s/%s.%" PRIu64 ".%" PRIu32,
                    dir, name ? name : NameBuff, os_get_pid(), count++);
   xfree(dir);
