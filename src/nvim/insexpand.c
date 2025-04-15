@@ -265,6 +265,9 @@ static extmark_undo_vec_t compl_orig_extmarks;
 static int compl_cont_mode = 0;
 static expand_T compl_xp;
 
+static win_T *compl_curr_win = NULL;  ///< win where completion is active
+static buf_T *compl_curr_buf = NULL;  ///< buf where completion is active
+
 // List of flags for method of completion.
 static int compl_cont_status = 0;
 #define CONT_ADDING    1        ///< "normal" or "adding" expansion
@@ -1753,6 +1756,8 @@ void ins_compl_clear(void)
   compl_matches = 0;
   compl_selected_item = -1;
   compl_ins_end_col = 0;
+  compl_curr_win = NULL;
+  compl_curr_buf = NULL;
   API_CLEAR_STRING(compl_pattern);
   API_CLEAR_STRING(compl_leader);
   edit_submode_extra = NULL;
@@ -1773,7 +1778,7 @@ bool ins_compl_active(void)
 /// Return true when wp is the actual completion window
 bool ins_compl_win_active(win_T *wp)
 {
-  return ins_compl_active() && !(wp->w_p_pvw || wp->w_float_is_info);
+  return ins_compl_active() && wp == compl_curr_win && wp->w_buffer == compl_curr_buf;
 }
 
 /// Selected one of the matches.  When false the match was edited or using the
@@ -2298,6 +2303,12 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   xfree(word);
 
   return retval;
+}
+
+/// Cancel completion.
+bool ins_compl_cancel(void)
+{
+  return ins_compl_stop(' ', ctrl_x_mode, true);
 }
 
 /// Prepare for Insert mode completion, or stop it.
@@ -4851,6 +4862,8 @@ int ins_complete(int c, bool enable_pum)
     return FAIL;
   }
 
+  compl_curr_win = curwin;
+  compl_curr_buf = curwin->w_buffer;
   compl_shown_match = compl_curr_match;
   compl_shows_dir = compl_direction;
 
