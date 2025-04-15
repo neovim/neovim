@@ -1329,7 +1329,7 @@ struct window_S {
   int w_tagstackidx;                    // idx just below active entry
   int w_tagstacklen;                    // number of tags on stack
 
-  ScreenGrid w_grid;                    // the grid specific to the window
+  GridViewPort w_grid;                  // area to draw on, excluding borders and winbar
   ScreenGrid w_grid_alloc;              // the grid specific to the window
   bool w_pos_changed;                   // true if window position changed
   bool w_floating;                      ///< whether the window is floating

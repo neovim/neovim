@@ -831,10 +831,9 @@ void ui_ext_win_position(win_T *wp, bool validate)
         if (win->w_pos_changed && win->w_grid_alloc.chars != NULL && win_valid(win)) {
           ui_ext_win_position(win, validate);
         }
-        grid = &win->w_grid;
         int row_off = 0;
         int col_off = 0;
-        grid_adjust(&grid, &row_off, &col_off);
+        grid = grid_adjust(&win->w_grid, &row_off, &col_off);
         row += row_off;
         col += col_off;
         if (c.bufpos.lnum >= 0) {
@@ -6766,7 +6765,7 @@ void command_height(void)
 
   // Clear the cmdheight area.
   if (msg_scrolled == 0 && full_screen) {
-    ScreenGrid *grid = &default_grid;
+    GridViewPort *grid = &default_gridview;
     if (!ui_has(kUIMessages)) {
       msg_grid_validate();
       grid = &msg_grid_adj;

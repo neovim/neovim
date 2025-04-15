@@ -1041,7 +1041,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
              spellvars_T *spv, foldinfo_T foldinfo)
 {
   colnr_T vcol_prev = -1;             // "wlv.vcol" of previous character
-  ScreenGrid *grid = &wp->w_grid;     // grid specific to the window
+  GridViewPort *grid = &wp->w_grid;     // grid specific to the window
 
   const bool in_curline = wp == curwin && lnum == curwin->w_cursor.lnum;
   const bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
@@ -3064,10 +3064,9 @@ end_check:
 
       wlv_put_linebuf(wp, &wlv, draw_col, true, bg_attr, wrap ? SLF_WRAP : 0);
       if (wrap) {
-        ScreenGrid *current_grid = grid;
         int current_row = wlv.row;
         int dummy_col = 0;  // unused
-        grid_adjust(&current_grid, &current_row, &dummy_col);
+        ScreenGrid *current_grid = grid_adjust(grid, &current_row, &dummy_col);
 
         // Force a redraw of the first column of the next line.
         current_grid->attrs[current_grid->line_offset[current_row + 1]] = -1;
@@ -3132,7 +3131,7 @@ end_check:
 static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, bool clear_end,
                             int bg_attr, int flags)
 {
-  ScreenGrid *grid = &wp->w_grid;
+  GridViewPort *grid = &wp->w_grid;
 
   int startcol = 0;
   int clear_width = clear_end ? grid->cols : endcol;
@@ -3171,6 +3170,6 @@ static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, boo
 
   int row = wlv->row;
   int coloff = 0;
-  grid_adjust(&grid, &row, &coloff);
-  grid_put_linebuf(grid, row, coloff, startcol, endcol, clear_width, bg_attr, wlv->vcol - 1, flags);
+  ScreenGrid *g = grid_adjust(grid, &row, &coloff);
+  grid_put_linebuf(g, row, coloff, startcol, endcol, clear_width, bg_attr, wlv->vcol - 1, flags);
 }

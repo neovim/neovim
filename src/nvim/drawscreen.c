@@ -210,8 +210,6 @@ bool default_grid_alloc(void)
   default_grid.comp_height = Rows;
   default_grid.comp_width = Columns;
 
-  default_grid.row_offset = 0;
-  default_grid.col_offset = 0;
   default_grid.handle = DEFAULT_GRID_HANDLE;
 
   resizing = false;
@@ -569,7 +567,7 @@ int update_screen(void)
 
   // might need to clear space on default_grid for the message area.
   if (type == UPD_NOT_VALID && clear_cmdline && !ui_has(kUIMessages)) {
-    grid_clear(&default_grid, Rows - (int)p_ch, Rows, 0, Columns, 0);
+    grid_clear(&default_gridview, Rows - (int)p_ch, Rows, 0, Columns, 0);
   }
 
   ui_comp_set_screen_valid(true);
@@ -777,7 +775,7 @@ static void win_redr_border(win_T *wp)
   int icol = wp->w_width_inner;
 
   if (adj[0]) {
-    grid_line_start(grid, 0);
+    screengrid_line_start(grid, 0, 0);
     if (adj[3]) {
       grid_line_put_schar(0, chars[0], attrs[0]);
     }
@@ -799,20 +797,20 @@ static void win_redr_border(win_T *wp)
 
   for (int i = 0; i < irow; i++) {
     if (adj[3]) {
-      grid_line_start(grid, i + adj[0]);
+      screengrid_line_start(grid, i + adj[0], 0);
       grid_line_put_schar(0, chars[7], attrs[7]);
       grid_line_flush();
     }
     if (adj[1]) {
       int ic = (i == 0 && !adj[0] && chars[2]) ? 2 : 3;
-      grid_line_start(grid, i + adj[0]);
+      screengrid_line_start(grid, i + adj[0], 0);
       grid_line_put_schar(icol + adj[3], chars[ic], attrs[ic]);
       grid_line_flush();
     }
   }
 
   if (adj[2]) {
-    grid_line_start(grid, irow + adj[0]);
+    screengrid_line_start(grid, irow + adj[0], 0);
     if (adj[3]) {
       grid_line_put_schar(0, chars[6], attrs[6]);
     }
@@ -847,7 +845,6 @@ void setcursor_mayforce(win_T *wp, bool force)
   if (force || redrawing()) {
     validate_cursor(wp);
 
-    ScreenGrid *grid = &wp->w_grid;
     int row = wp->w_wrow;
     int col = wp->w_wcol;
     if (wp->w_p_rl) {
@@ -858,7 +855,7 @@ void setcursor_mayforce(win_T *wp, bool force)
                                                && vim_isprintc(utf_ptr2char(cursor))) ? 2 : 1);
     }
 
-    grid_adjust(&grid, &row, &col);
+    ScreenGrid *grid = grid_adjust(&wp->w_grid, &row, &col);
     ui_grid_cursor_goto(grid->handle, row, col);
   }
 }
@@ -1338,7 +1335,7 @@ static void draw_vsep_win(win_T *wp)
 
   // draw the vertical separator right of this window
   for (int row = wp->w_winrow; row < W_ENDROW(wp); row++) {
-    grid_line_start(&default_grid, row);
+    screengrid_line_start(&default_grid, row, 0);
     grid_line_put_schar(W_ENDCOL(wp), wp->w_p_fcs_chars.vert, win_hl_attr(wp, HLF_C));
     grid_line_flush();
   }
@@ -1352,7 +1349,7 @@ static void draw_hsep_win(win_T *wp)
   }
 
   // draw the horizontal separator below this window
-  grid_line_start(&default_grid, W_ENDROW(wp));
+  screengrid_line_start(&default_grid, W_ENDROW(wp), 0);
   grid_line_fill(wp->w_wincol, W_ENDCOL(wp), wp->w_p_fcs_chars.horiz, win_hl_attr(wp, HLF_C));
   grid_line_flush();
 }
@@ -1417,22 +1414,22 @@ static void draw_sep_connectors_win(win_T *wp)
   bool bot_right = !(win_at_bottom || win_at_right);
 
   if (top_left) {
-    grid_line_start(&default_grid, wp->w_winrow - 1);
+    screengrid_line_start(&default_grid, wp->w_winrow - 1, 0);
     grid_line_put_schar(wp->w_wincol - 1, get_corner_sep_connector(wp, WC_TOP_LEFT), hl);
     grid_line_flush();
   }
   if (top_right) {
-    grid_line_start(&default_grid, wp->w_winrow - 1);
+    screengrid_line_start(&default_grid, wp->w_winrow - 1, 0);
     grid_line_put_schar(W_ENDCOL(wp), get_corner_sep_connector(wp, WC_TOP_RIGHT), hl);
     grid_line_flush();
   }
   if (bot_left) {
-    grid_line_start(&default_grid, W_ENDROW(wp));
+    screengrid_line_start(&default_grid, W_ENDROW(wp), 0);
     grid_line_put_schar(wp->w_wincol - 1, get_corner_sep_connector(wp, WC_BOTTOM_LEFT), hl);
     grid_line_flush();
   }
   if (bot_right) {
-    grid_line_start(&default_grid, W_ENDROW(wp));
+    screengrid_line_start(&default_grid, W_ENDROW(wp), 0);
     grid_line_put_schar(W_ENDCOL(wp), get_corner_sep_connector(wp, WC_BOTTOM_RIGHT), hl);
     grid_line_flush();
   }
@@ -2555,12 +2552,16 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
     return;
   }
 
+  int col = 0;
+  int row_off = 0;
+  ScreenGrid *grid = grid_adjust(&wp->w_grid, &row_off, &col);
+
   if (line_count < 0) {
-    grid_del_lines(&wp->w_grid, row, -line_count,
-                   wp->w_grid.rows, 0, wp->w_grid.cols);
+    grid_del_lines(grid, row + row_off, -line_count,
+                   wp->w_grid.rows + row_off, col, wp->w_grid.cols);
   } else {
-    grid_ins_lines(&wp->w_grid, row, line_count,
-                   wp->w_grid.rows, 0, wp->w_grid.cols);
+    grid_ins_lines(grid, row + row_off, line_count,
+                   wp->w_grid.rows + row_off, col, wp->w_grid.cols);
   }
 }
 
@@ -2598,7 +2599,7 @@ void win_draw_end(win_T *wp, schar_T c1, bool draw_margin, int startrow, int end
     grid_line_clear_end(n, wp->w_grid.cols, attr);
 
     if (wp->w_p_rl) {
-      grid_line_mirror();
+      grid_line_mirror(wp->w_grid.cols);
     }
     grid_line_flush();
   }
