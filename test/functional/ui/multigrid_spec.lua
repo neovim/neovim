@@ -671,7 +671,7 @@ describe('ext_multigrid', function()
         {21:     }|
         {22:~    }|*4
       ]], float_pos={
-        [4] = {1001, "SE", 2, 16, 58, true, 50};
+        [4] = {1001, "SE", 2, 16, 58, true, 50, 1, 8, 48};
       }}
     end)
 
@@ -693,7 +693,7 @@ describe('ext_multigrid', function()
         {24: foo}|
         {21: bar}|
       ]], float_pos={
-        [4] = {-1, "NW", 2, 15, 55, false, 100};
+        [4] = {-1, "NW", 2, 15, 55, false, 100, 1, 15, 55};
       }}
       feed('<C-E><Esc>')
 
@@ -715,7 +715,7 @@ describe('ext_multigrid', function()
         {24:            oof}|
         {21:            rab}|
       ]], float_pos={
-        [4] = {-1, "NW", 2, 16, 45, false, 100};
+        [4] = {-1, "NW", 2, 16, 45, false, 100, 1, 16, 45};
       }}
       feed('<C-E><Esc>')
 
@@ -737,7 +737,7 @@ describe('ext_multigrid', function()
         {24: undefine       }|
         {21: unplace        }|
       ]], float_pos={
-        [4] = {-1, "SW", 1, 13, 5, false, 250};
+        [4] = {-1, "SW", 1, 13, 5, false, 250, 2, 11, 5};
       }}
     end)
 
@@ -1346,7 +1346,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "NW", 2, 2, 5, false, 250};
+      [6] = {-1, "NW", 2, 2, 5, false, 250, 2, 7, 36};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1420,7 +1420,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "NW", 4, 1, 63, false, 250};
+      [6] = {-1, "NW", 4, 1, 63, false, 250, 2, 1, 63};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1542,7 +1542,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "SW", 4, 9, 0, false, 250};
+      [6] = {-1, "SW", 4, 9, 0, false, 250, 2, 14, 0};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1674,7 +1674,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "NW", 4, 10, 0, false, 250};
+      [6] = {-1, "NW", 4, 10, 0, false, 250, 2, 16, 0};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[

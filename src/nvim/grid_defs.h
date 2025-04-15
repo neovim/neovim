@@ -102,11 +102,13 @@ struct ScreenGrid {
   // compositor should momentarily ignore the grid. Used internally when
   // moving around grids etc.
   bool comp_disabled;
+
+  bool composition_updated;
 };
 
 #define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
                            false, 0, 0, NULL, false, true, 0, \
-                           0, 0, 0, 0, 0,  false }
+                           0, 0, 0, 0, 0,  false, true }
 
 typedef struct {
   int args[3];
