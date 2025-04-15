@@ -613,7 +613,7 @@ end
 --- Suppress error reporting if the LSP server fails to start (default false).
 --- @field silent? boolean
 ---
---- @field package _root_markers? string[]
+--- @field package _root_markers? (string|string[])[]
 
 --- Create a new LSP client and start a language server or reuses an already
 --- running client if one is found matching `name` and `root_dir`.
@@ -662,8 +662,16 @@ function lsp.start(config, opts)
   local bufnr = vim._resolve_bufnr(opts.bufnr)
 
   if not config.root_dir and opts._root_markers then
+    validate('root_markers', opts._root_markers, 'table')
     config = vim.deepcopy(config)
-    config.root_dir = vim.fs.root(bufnr, opts._root_markers)
+
+    for _, marker in ipairs(opts._root_markers) do
+      local root = vim.fs.root(bufnr, marker)
+      if root ~= nil then
+        config.root_dir = root
+        break
+      end
+    end
   end
 
   if
