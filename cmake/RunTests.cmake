@@ -68,7 +68,7 @@ endif()
 execute_process(
   # Note: because of "-ll" (low-level interpreter mode), some modules like
   # _editor.lua are not loaded.
-  COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/lua_runner.lua ${DEPS_INSTALL_DIR} busted -v -o test.busted.outputHandlers.nvim
+  COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/lua_runner.lua ${DEPS_INSTALL_DIR}/share/lua/5.1/ busted -v -o test.busted.outputHandlers.nvim
     --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
     --lpath=${WORKING_DIR}/src/?.lua
