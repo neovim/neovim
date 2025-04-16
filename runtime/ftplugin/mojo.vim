@@ -2,11 +2,15 @@
 " Language:	Mojo
 " Maintainer:	Riley Bruins <ribru17@gmail.com>
 " Last Change:	2024 Jul 07
+" 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
 
 if exists('b:did_ftplugin')
   finish
 endif
 let b:did_ftplugin = 1
+
+let s:cpo_save = &cpo
+set cpo&vim
 
 setlocal include=^\\s*\\(from\\\|import\\)
 setlocal define=^\\s*\\(\\(async\\s\\+\\)\\?def\\\|class\\)
@@ -39,3 +43,6 @@ let b:undo_ftplugin = 'setlocal include<'
       \ . '|setlocal suffixesadd<'
       \ . '|setlocal comments<'
       \ . '|setlocal commentstring<'
+
+let &cpo = s:cpo_save
+unlet s:cpo_save

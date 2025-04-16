@@ -2,10 +2,14 @@
 " Language: pacman.log
 " Maintainer: Ronan Pigott <ronan@rjp.ie>
 " Last Change: 2023 Dec 04
+" 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
 
 if exists("b:current_syntax")
   finish
 endif
+
+let s:cpo_save = &cpo
+set cpo&vim
 
 syn sync maxlines=1
 syn region pacmanlogMsg start='\S' end='$' keepend contains=pacmanlogTransaction,pacmanlogALPMMsg
@@ -39,3 +43,6 @@ hi def link pacmanlogPackageName    Normal
 hi def link pacmanlogPackageVersion Comment
 
 let b:current_syntax = "pacmanlog"
+
+let &cpo = s:cpo_save
+unlet s:cpo_save

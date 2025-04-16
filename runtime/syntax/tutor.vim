@@ -1,6 +1,13 @@
+" Language:	Vim Tutor
+" Maintainer:	Vim Project
+" Last Change:	2025 Apr 16
+
 if exists("b:current_syntax")
     finish
 endif
+
+let s:cpo_save = &cpo
+set cpo&vim
 
 syn include @VIM syntax/vim.vim
 unlet b:current_syntax
@@ -77,3 +84,5 @@ hi def link tutorInlineX tutorX
 hi def link tutorShellPrompt Delimiter
 
 let b:current_syntax = "tutor"
+let &cpo = s:cpo_save
+unlet s:cpo_save
