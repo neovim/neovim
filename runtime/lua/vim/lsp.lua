@@ -108,10 +108,9 @@ lsp.client_errors = vim.tbl_extend(
   client_error('ON_EXIT_CALLBACK_ERROR')
 )
 
----@private
 --- Returns full text of buffer {bufnr} as a string.
 ---
----@param bufnr (number) Buffer handle, or 0 for current.
+---@param bufnr integer Buffer handle, or 0 for current.
 ---@return string # Buffer text as string.
 function lsp._buf_get_full_text(bufnr)
   local line_ending = lsp._buf_get_line_ending(bufnr)
@@ -1111,7 +1110,7 @@ function lsp.get_clients(filter)
     if
       client
       and (filter.id == nil or client.id == filter.id)
-      and (filter.bufnr == nil or client.attached_buffers[bufnr])
+      and (bufnr == nil or client.attached_buffers[bufnr])
       and (filter.name == nil or client.name == filter.name)
       and (filter.method == nil or client:supports_method(filter.method, filter.bufnr))
       and (filter._uninitialized or client.initialized)
@@ -1419,7 +1418,7 @@ end
 ---@param pattern string Pattern used to find a workspace symbol
 ---@param flags string See |tag-function|
 ---
----@return table[] tags A list of matching tags
+---@return table[]|vim.NIL tags A list of matching tags
 function lsp.tagfunc(pattern, flags)
   return vim.lsp._tagfunc(pattern, flags)
 end
