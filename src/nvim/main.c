@@ -938,12 +938,11 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
     if (!chan) {
       fprintf(stderr, "Remote ui failed to start: %s\n", connect_error);
       os_exit(1);
-    } else if (strequal(server_addr, os_getenv("NVIM"))) {
+    } else if (strequal(server_addr, os_getenv_noalloc("NVIM"))) {
       fprintf(stderr, "%s", "Cannot attach UI of :terminal child to its parent. ");
       fprintf(stderr, "%s\n", "(Unset $NVIM to skip this check)");
       os_exit(1);
     }
-
     ui_client_channel_id = chan;
     return;
   }
@@ -2118,7 +2117,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
 static int execute_env(char *env)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *initstr = os_getenv(env);
+  char *initstr = os_getenv(env);
   if (initstr == NULL) {
     return FAIL;
   }
@@ -2132,6 +2131,8 @@ static int execute_env(char *env)
 
   estack_pop();
   current_sctx = save_current_sctx;
+
+  xfree(initstr);
   return OK;
 }
 

@@ -63,7 +63,7 @@ uint64_t ui_client_start_server(int argc, char **argv)
 
 #ifdef MSWIN
   // TODO(justinmk): detach breaks `tt.setup_child_nvim` tests on Windows?
-  bool detach = os_env_exists("__NVIM_DETACH");
+  bool detach = os_env_exists("__NVIM_DETACH", true);
 #else
   bool detach = true;
 #endif
@@ -172,7 +172,7 @@ void ui_client_run(bool remote_ui)
   ui_client_attach(width, height, term, rgb);
 
   // TODO(justinmk): this is for log_spec. Can remove this after nvim_log #7062 is merged.
-  if (os_env_exists("__NVIM_TEST_LOG")) {
+  if (os_env_exists("__NVIM_TEST_LOG", true)) {
     ELOG("test log message");
   }
 

@@ -379,7 +379,7 @@ static void terminfo_start(TUIData *tui)
   tui->out_isatty = os_isatty(tui->out_fd);
   tui->input.tui_data = tui;
 
-  const char *term = os_getenv("TERM");
+  char *term = os_getenv("TERM");
 #ifdef MSWIN
   os_tty_guess_term(&term, tui->out_fd);
   os_setenv("TERM", term, 1);
@@ -401,23 +401,25 @@ static void terminfo_start(TUIData *tui)
   }
 
   // None of the following work over SSH; see :help TERM .
-  const char *colorterm = os_getenv("COLORTERM");
-  const char *termprg = os_getenv("TERM_PROGRAM");
-  const char *vte_version_env = os_getenv("VTE_VERSION");
+  char *colorterm = os_getenv("COLORTERM");
+  char *termprg = os_getenv("TERM_PROGRAM");
+  char *vte_version_env = os_getenv("VTE_VERSION");
+  char *konsolev_env = os_getenv("KONSOLE_VERSION");
+  char *term_program_version_env = os_getenv("TERM_PROGRAM_VERSION");
+
   int vtev = vte_version_env ? (int)strtol(vte_version_env, NULL, 10) : 0;
   bool iterm_env = termprg && strstr(termprg, "iTerm.app");
   bool nsterm = (termprg && strstr(termprg, "Apple_Terminal"))
                 || terminfo_is_term_family(term, "nsterm");
   bool konsole = terminfo_is_term_family(term, "konsole")
-                 || os_getenv("KONSOLE_PROFILE_NAME")
-                 || os_getenv("KONSOLE_DBUS_SESSION");
-  const char *konsolev_env = os_getenv("KONSOLE_VERSION");
+                 || os_env_exists("KONSOLE_PROFILE_NAME", true)
+                 || os_env_exists("KONSOLE_DBUS_SESSION", true);
   int konsolev = konsolev_env ? (int)strtol(konsolev_env, NULL, 10)
                               : (konsole ? 1 : 0);
   bool wezterm = strequal(termprg, "WezTerm");
-  const char *weztermv = wezterm ? os_getenv("TERM_PROGRAM_VERSION") : NULL;
+  const char *weztermv = wezterm ? term_program_version_env : NULL;
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
+  bool tmux = terminfo_is_term_family(term, "tmux") || os_env_exists("TMUX", true);
 
   // truecolor support must be checked before patching/augmenting terminfo
   tui->rgb = term_has_truecolor(tui, colorterm);
@@ -503,6 +505,13 @@ static void terminfo_start(TUIData *tui)
     }
   }
   flush_buf(tui);
+
+  xfree(term);
+  xfree(colorterm);
+  xfree(termprg);
+  xfree(vte_version_env);
+  xfree(konsolev_env);
+  xfree(term_program_version_env);
 }
 
 /// Disable the alternate screen and prepare for the TUI to close.
@@ -1772,6 +1781,8 @@ void tui_guess_size(TUIData *tui)
 {
   int width = 0;
   int height = 0;
+  char *lines = NULL;
+  char *columns = NULL;
 
   // 1 - try from a system call (ioctl/TIOCGWINSZ on unix)
   if (tui->out_isatty
@@ -1782,9 +1793,9 @@ void tui_guess_size(TUIData *tui)
   // 2 - use $LINES/$COLUMNS if available
   const char *val;
   int advance;
-  if ((val = os_getenv("LINES"))
+  if ((val = os_getenv_noalloc("LINES"))
       && sscanf(val, "%d%n", &height, &advance) != EOF && advance
-      && (val = os_getenv("COLUMNS"))
+      && (val = os_getenv_noalloc("COLUMNS"))
       && sscanf(val, "%d%n", &width, &advance) != EOF && advance) {
     goto end;
   }
@@ -1804,6 +1815,9 @@ void tui_guess_size(TUIData *tui)
 
   // Redraw on SIGWINCH event if size didn't change. #23411
   ui_client_set_size(width, height);
+
+  xfree(lines);
+  xfree(columns);
 }
 
 static void unibi_goto(TUIData *tui, int row, int col)
@@ -1965,7 +1979,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
                                 int vte_version, int konsolev, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = tui->ut;
-  const char *xterm_version = os_getenv("XTERM_VERSION");
+  char *xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = terminfo_is_term_family(term, "xterm")
                // Treat Terminal.app as generic xterm-like, for now.
                || nsterm;
@@ -1977,7 +1991,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
+  bool tmux = terminfo_is_term_family(term, "tmux") || os_env_exists("TMUX", true);
   bool st = terminfo_is_term_family(term, "st");
   bool gnome = terminfo_is_term_family(term, "gnome")
                || terminfo_is_term_family(term, "vte");
@@ -2276,6 +2290,8 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
                         "\x1b]50;\x07");
     }
   }
+
+  xfree(xterm_version);
 }
 
 /// This adds stuff that is not in standard terminfo as extended unibilium
@@ -2284,6 +2300,7 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
                              const char *weztermv, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = tui->ut;
+  char *xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = terminfo_is_term_family(term, "xterm")
                // Treat Terminal.app as generic xterm-like, for now.
                || nsterm;
@@ -2294,7 +2311,7 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
+  bool tmux = terminfo_is_term_family(term, "tmux") || os_env_exists("TMUX", true);
   bool st = terminfo_is_term_family(term, "st");
   bool iterm = terminfo_is_term_family(term, "iterm")
                || terminfo_is_term_family(term, "iterm2")
@@ -2305,7 +2322,6 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
 
-  const char *xterm_version = os_getenv("XTERM_VERSION");
   bool true_xterm = xterm && !!xterm_version && !bsdvt;
 
   // Only define this capability for terminal types that we know understand it.
@@ -2468,6 +2484,8 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
     // Kitty keyboard protocol
     tui->input.key_encoding = kKeyEncodingXterm;
   }
+
+  xfree(xterm_version);
 }
 
 static bool should_invisible(TUIData *tui)
