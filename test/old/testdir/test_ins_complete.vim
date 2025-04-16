@@ -3457,4 +3457,119 @@ func Test_complete_append_selected_match_default()
   delfunc PrintMenuWords
 endfunc
 
+" Test 'nearest' flag of 'completeopt'
+func Test_nearest_cpt_option()
+
+  func PrintMenuWords()
+    let info = complete_info(["selected", "matches"])
+    call map(info.matches, {_, v -> v.word})
+    return info
+  endfunc
+
+  new
+  set completeopt+=nearest
+  call setline(1, ["fo", "foo", "foobar"])
+  exe "normal! Gof\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('foobar{''matches'': [''foobar'', ''foo'', ''fo''], ''selected'': 0}', getline(4))
+  %d
+  call setline(1, ["fo", "foo", "foobar"])
+  exe "normal! Of\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('foobar{''matches'': [''fo'', ''foo'', ''foobar''], ''selected'': 2}', getline(1))
+  %d
+
+  set completeopt=menu,noselect,nearest
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! Gof\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foobarbaz'', ''foobar'', ''foo'', ''fo''], ''selected'': -1}', getline(5))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! Gof\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foobarbaz'', ''foobar'', ''foo'', ''fo''], ''selected'': -1}', getline(5))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! Of\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''fo'', ''foo'', ''foobar'', ''foobarbaz''], ''selected'': -1}', getline(1))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! Of\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''fo'', ''foo'', ''foobar'', ''foobarbaz''], ''selected'': -1}', getline(1))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! of\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foo'', ''fo'', ''foobar'', ''foobarbaz''], ''selected'': -1}', getline(2))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! of\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foo'', ''fo'', ''foobar'', ''foobarbaz''], ''selected'': -1}', getline(2))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! jof\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foobar'', ''foo'', ''foobarbaz'', ''fo''], ''selected'': -1}', getline(3))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! jof\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foobar'', ''foo'', ''foobarbaz'', ''fo''], ''selected'': -1}', getline(3))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! 2jof\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foobarbaz'', ''foobar'', ''foo'', ''fo''], ''selected'': -1}', getline(4))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! 2jof\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foobarbaz'', ''foobar'', ''foo'', ''fo''], ''selected'': -1}', getline(4))
+
+  %d
+  set completeopt=menuone,noselect,nearest
+  call setline(1, "foo")
+  exe "normal! Of\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foo''], ''selected'': -1}', getline(1))
+  %d
+  call setline(1, "foo")
+  exe "normal! o\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('{''matches'': [''foo''], ''selected'': -1}', getline(2))
+  %d
+  exe "normal! o\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('', getline(1))
+  %d
+  exe "normal! o\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('', getline(1))
+
+  " Reposition match: node is at tail but score is too small
+  %d
+  call setline(1, ["foo1", "bar1", "bar2", "foo2", "foo1"])
+  exe "normal! of\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foo1'', ''foo2''], ''selected'': -1}', getline(2))
+  " Reposition match: node is in middle but score is too big
+  %d
+  call setline(1, ["foo1", "bar1", "bar2", "foo3", "foo1", "foo2"])
+  exe "normal! of\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foo1'', ''foo3'', ''foo2''], ''selected'': -1}', getline(2))
+
+  set completeopt=menu,longest,nearest
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! of\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('fo{''matches'': [''foo'', ''fo'', ''foobar'', ''foobarbaz''], ''selected'': -1}', getline(2))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! 2jof\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('fo{''matches'': [''foobarbaz'', ''foobar'', ''foo'', ''fo''], ''selected'': -1}', getline(4))
+
+  " No effect if 'fuzzy' is present
+  set completeopt&
+  set completeopt+=fuzzy,nearest
+  %d
+  call setline(1, ["foo", "fo", "foobarbaz", "foobar"])
+  exe "normal! of\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('fo{''matches'': [''fo'', ''foobarbaz'', ''foobar'', ''foo''], ''selected'': 0}', getline(2))
+  %d
+  call setline(1, ["fo", "foo", "foobar", "foobarbaz"])
+  exe "normal! 2jof\<c-p>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('foobar{''matches'': [''foobarbaz'', ''fo'', ''foo'', ''foobar''], ''selected'': 3}', getline(4))
+  bw!
+
+  set completeopt&
+  delfunc PrintMenuWords
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
