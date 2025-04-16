@@ -2851,15 +2851,48 @@ endfunc
 func Test_make_file()
   filetype on
 
+  " BSD Makefile
+  call writefile([''], 'BSDmakefile', 'D')
+  split BSDmakefile
+  call assert_equal('bsd', get(b:, 'make_flavor', ''))
+  bwipe!
+
+  call writefile(['.ifmake all', '.endif'], 'XMakefile.mak', 'D')
+  split XMakefile.mak
+  call assert_equal('bsd', get(b:, 'make_flavor', ''))
+  bwipe!
+
+  " GNU Makefile
+  call writefile([''], 'GNUmakefile', 'D')
+  split GNUmakefile
+  call assert_equal('gnu', get(b:, 'make_flavor', ''))
+  bwipe!
+
+  call writefile(['ifeq ($(foo),foo)', 'endif'], 'XMakefile.mak', 'D')
+  split XMakefile.mak
+  call assert_equal('gnu', get(b:, 'make_flavor', ''))
+  bwipe!
+
+  call writefile(['define foo', 'endef'], 'XMakefile.mak', 'D')
+  split XMakefile.mak
+  call assert_equal('gnu', get(b:, 'make_flavor', ''))
+  bwipe!
+
+  call writefile(['vim := $(wildcard *.vim)'], 'XMakefile.mak', 'D')
+  split XMakefile.mak
+  call assert_equal('gnu', get(b:, 'make_flavor', ''))
+  bwipe!
+
   " Microsoft Makefile
   call writefile(['# Makefile for Windows', '!if "$(VIMDLL)" == "yes"'], 'XMakefile.mak', 'D')
   split XMakefile.mak
-  call assert_equal(1, get(b:, 'make_microsoft', 0))
+  call assert_equal('microsoft', get(b:, 'make_flavor', ''))
   bwipe!
 
+  " BSD or GNU
   call writefile(['# get the list of tests', 'include testdir/Make_all.mak'], 'XMakefile.mak', 'D')
   split XMakefile.mak
-  call assert_equal(0, get(b:, 'make_microsoft', 0))
+  call assert_notequal('microsoft', get(b:, 'make_flavor', ''))
   bwipe!
 
   filetype off

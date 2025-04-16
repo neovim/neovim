@@ -1021,16 +1021,46 @@ end
 
 --- Check if it is a Microsoft Makefile
 --- @type vim.filetype.mapfn
-function M.make(_, bufnr)
-  vim.b.make_microsoft = nil
+function M.make(path, bufnr)
+  vim.b.make_flavor = nil
+
+  -- 1. filename
+  local file_name = fn.fnamemodify(path, ':t')
+  if file_name == 'BSDmakefile' then
+    vim.b.make_flavor = 'bsd'
+    return 'make'
+  elseif file_name == 'GNUmakefile' then
+    vim.b.make_flavor = 'gnu'
+    return 'make'
+  end
+
+  -- 2. user's setting
+  if vim.g.make_flavor ~= nil then
+    vim.b.make_flavor = vim.g.make_flavor
+    return 'make'
+  elseif vim.g.make_microsoft ~= nil then
+    vim._truncated_echo_once(
+      "make_microsoft is deprecated; try g:make_flavor = 'microsoft' instead"
+    )
+    vim.b.make_flavor = 'microsoft'
+    return 'make'
+  end
+
+  -- 3. try to detect a flavor from file content
   for _, line in ipairs(getlines(bufnr, 1, 1000)) do
     if matchregex(line, [[\c^\s*!\s*\(ifn\=\(def\)\=\|include\|message\|error\)\>]]) then
-      vim.b.make_microsoft = 1
+      vim.b.make_flavor = 'microsoft'
       break
     elseif
-      matchregex(line, [[^ *ifn\=\(eq\|def\)\>]])
-      or findany(line, { '^ *[-s]?%s', '^ *%w+%s*[!?:+]=' })
+      matchregex(line, [[^\.\%(export\|error\|for\|if\%(n\=\%(def\|make\)\)\=\|info\|warning\)\>]])
     then
+      vim.b.make_flavor = 'bsd'
+      break
+    elseif
+      matchregex(line, [[^ *\%(ifn\=\%(eq\|def\)\|define\|override\)\>]])
+      or line:find('%$[({][a-z-]+%s+%S+') -- a function call, e.g. $(shell pwd)
+    then
+      vim.b.make_flavor = 'gnu'
       break
     end
   end

@@ -2290,7 +2290,7 @@ local pattern = {
     ['^Containerfile%.'] = starsetf('dockerfile'),
     ['^Dockerfile%.'] = starsetf('dockerfile'),
     ['[mM]akefile$'] = detect.make,
-    ['^[mM]akefile'] = starsetf('make'),
+    ['^[mM]akefile'] = starsetf(detect.make),
     ['^[rR]akefile'] = starsetf('ruby'),
     ['^%.profile'] = detect.sh,
   },
