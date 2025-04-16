@@ -3,12 +3,16 @@
 " Home: http://en.wikipedia.org/wiki/Wikipedia:Text_editor_support#Vim
 " Last Change: 2024 Jul 14
 " Credits: chikamichi
+" 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
 "
 
 if exists("b:did_ftplugin")
   finish
 endif
 let b:did_ftplugin = 1
+
+let s:cpo_save = &cpo
+set cpo&vim
 
 " Many MediaWiki wikis prefer line breaks only at the end of paragraphs
 " (like in a text processor), which results in long, wrapping lines.
@@ -40,3 +44,6 @@ setlocal foldmethod=expr
 
 let b:undo_ftplugin = "setl commentstring< comments< formatoptions< foldexpr< foldmethod<"
 let b:undo_ftplugin += " matchpairs< linebreak< wrap< textwidth<"
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
