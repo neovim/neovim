@@ -16,6 +16,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
@@ -50,6 +51,7 @@
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -4153,6 +4155,8 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
   }
 
   linenr_T old_line_count = buf->b_ml.ml_line_count;
+  colnr_T old_endcol = old_line_count == 1 ? ml_get_buf_len(buf, old_line_count) : 0;
+  bcount_t old_byte_count = get_region_bytecount(buf, 1, old_line_count, 0, old_endcol);
   int qf_winid = 0;
 
   win_T *win;
@@ -4187,6 +4191,13 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 
   qf_fill_buffer(qf_get_curlist(qi), buf, old_last, qf_winid);
   buf_inc_changedtick(buf);
+
+  linenr_T new_line_count = buf->b_ml.ml_line_count;
+  colnr_T new_endcol = new_line_count == 1 ? ml_get_buf_len(buf, 1) : 0;
+  bcount_t new_byte_count = get_region_bytecount(buf, old_line_count, new_line_count, 0, new_endcol);
+  buf_updates_send_splice(buf, new_line_count - 1, 0, old_byte_count,
+                          old_line_count - 1, old_endcol, old_byte_count,
+                          new_line_count - 1, 0, new_byte_count);
 
   if (old_last == NULL) {
     qf_win_pos_update(qi, 0);
