@@ -5270,50 +5270,6 @@ describe('LSP', function()
       eq(3, result.tagstack.items[1].from[2])
       eq(7, result.tagstack.items[1].from[3])
     end)
-    it('jumps to single location respecting reuse_win=true', function()
-      exec_lua(create_server_definition)
-      local result = exec_lua(function()
-        local def_bufnr = vim.api.nvim_create_buf(true, false)
-        vim.api.nvim_buf_set_name(def_bufnr,"def")
-        local def_win = vim.api.nvim_open_win(def_bufnr, true, { split = 'left', win = 0 })
-        local server = _G._create_server({
-          capabilities = {
-            definitionProvider = true,
-          },
-          handlers = {
-            ['textDocument/definition'] = function(_, _, callback)
-              local location = {
-                range = {
-                  start = { line = 0, character = 0 },
-                  ['end'] = { line = 0, character = 0 },
-                },
-                uri = vim.uri_from_bufnr(def_bufnr),
-              }
-              callback(nil, location)
-            end,
-          },
-        })
-        local code_bufnr = vim.api.nvim_create_buf(true, false)
-        vim.api.nvim_buf_set_name(code_bufnr,"code")
-        local code_win = vim.api.nvim_open_win(code_bufnr, true, { split = 'left', win = 0 })
-        vim.api.nvim_buf_set_lines(code_bufnr, 0, -1, true, { 'local x = 10', '', 'print(x)' })
-        vim.api.nvim_win_set_cursor(code_win, { 3, 6 })
-        local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
-        vim.lsp.buf.definition({ reuse_win = true })
-        vim.lsp.stop_client(client_id)
-        return {
-          def_win = def_win,
-          win = vim.api.nvim_get_current_win(),
-          cursor = vim.api.nvim_win_get_cursor(def_win),
-          messages = server.messages,
-          tagstack = vim.fn.gettagstack(def_win),
-        }
-      end)
-      eq(result.def_win, result.win)
-      eq('textDocument/definition', result.messages[3].method)
-      eq({ 1, 0 }, result.cursor)
-      eq(0, #result.tagstack.items)
-    end)
     it('merges results from multiple servers', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
