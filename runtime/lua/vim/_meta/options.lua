@@ -1123,6 +1123,10 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    Useful when there is additional information about the
 --- 	    match, e.g., what file it comes from.
 ---
+---    nearest  Matches are presented in order of proximity to the cursor
+--- 	    position.  This applies only to matches from the current
+--- 	    buffer.  No effect if "fuzzy" is present.
+---
 ---    noinsert Do not insert any text for a match until the user selects
 --- 	    a match from the menu.  Only works in combination with
 --- 	    "menu" or "menuone". No effect if "longest" is present.
