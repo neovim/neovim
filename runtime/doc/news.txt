@@ -133,6 +133,8 @@ HIGHLIGHTS
 LSP
 
 • |vim.lsp.ClientConfig| gained `workspace_required`.
+• Support for `textDocument/documentLink`: |lsp-buf|
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentLink
 
 LUA
 

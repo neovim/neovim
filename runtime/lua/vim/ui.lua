@@ -173,6 +173,27 @@ function M.open(path, opt)
   return vim.system(cmd, job_opt), nil
 end
 
+--- Return the first client attached that supports `textDocument/documentLink`, if any.
+---@param buf integer
+---@return vim.lsp.Client?
+local function buf_support_document_link(buf)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local clients = vim.lsp.get_clients({ bufnr = bufnr })
+  return vim.iter(clients):find(function(client)
+    return client:supports_method('textDocument/documentLink', buf)
+  end)
+end
+
+--- Checks if a lsp.Position is inside a lsp.Range.
+---@param position lsp.Position
+---@param range lsp.Range
+---@return boolean
+local function position_in_range(position, range)
+  return (position.line > range.start.line and position.line < range['end'].line)
+    or (position.line == range.start.line and position.character >= range.start.character)
+    or (position.line == range['end'].line and position.character <= range['end'].character)
+end
+
 --- Returns all URLs at cursor, if any.
 --- @return string[]
 function M._get_urls()
@@ -182,6 +203,26 @@ function M._get_urls()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local row = cursor[1] - 1
   local col = cursor[2]
+
+  local document_link_client = buf_support_document_link(bufnr)
+
+  if document_link_client then
+    local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
+    local position =
+      vim.lsp.util.make_position_params(0, document_link_client.offset_encoding).position
+
+    local buf_links =
+      document_link_client:request_sync('textDocument/documentLink', params, 1000, bufnr).result
+
+    local link = vim.iter(buf_links):find(function(document_link)
+      return position_in_range(position, document_link.range)
+    end)
+
+    if link then
+      table.insert(urls, link.target)
+    end
+  end
+
   local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, { row, col }, { row, col }, {
     details = true,
     type = 'highlight',

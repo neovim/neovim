@@ -280,6 +280,17 @@ RCS[ms.workspace_symbol] = response_to_list(util.symbols_to_items, 'symbols', fu
 end)
 
 --- @deprecated remove in 0.13
+--- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentLink
+RCS[ms.textDocument_documentLink] = response_to_list(
+  util.links_to_items,
+  'document links',
+  function(ctx)
+    local fname = vim.fn.fnamemodify(vim.uri_to_fname(ctx.params.textDocument.uri), ':.')
+    return string.format('Links in %s', fname)
+  end
+)
+
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
 RCS[ms.textDocument_rename] = function(_, result, ctx)
   if not result then

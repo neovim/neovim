@@ -1656,6 +1656,13 @@ document_symbol({opts})                        *vim.lsp.buf.document_symbol()*
     Parameters: ~
       • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
 
+document_link({opts})                            *vim.lsp.buf.document_link()*
+    Lists all links in the current buffer in the |location-list|.
+
+    Parameters: ~
+      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+
+
 format({opts})                                          *vim.lsp.buf.format()*
     Formats a buffer using the attached (and optionally filtered) language
     server clients.
