@@ -625,6 +625,16 @@ possibilities: >
 The `:Cycle` command is also mapped to the CTRL-A and CTRL-X keys.
 For details, see `git-rebase --help`.
 
+GLEAM						*ft-gleam-plugin*
+
+By default the following options are set for the recommended gleam style: >
+
+	setlocal expandtab shiftwidth=2 softtabstop=2
+
+To disable this behavior, set the following variable in your vimrc: >
+
+	let g:gleam_recommended_style = 0
+
 GO							*ft-go-plugin*
 
 By default the following options are set, based on Golang official docs: >
