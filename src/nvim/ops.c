@@ -966,16 +966,23 @@ yankreg_T *copy_register(int name)
 }
 
 /// Check if the current yank register has kMTLineWise register type
-bool yank_register_mline(int regname)
+/// For valid, non-blackhole registers also provides pointer to the register
+/// structure prepared for pasting.
+///
+/// @param regname The name of the register used or 0 for the unnamed register
+/// @param reg Pointer to store yankreg_T* for the requested register. Will be
+///        set to NULL for invalid or blackhole registers.
+bool yank_register_mline(int regname, yankreg_T **reg)
 {
+  *reg = NULL;
   if (regname != 0 && !valid_yank_reg(regname, false)) {
     return false;
   }
   if (regname == '_') {  // black hole is always empty
     return false;
   }
-  yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
-  return reg->y_type == kMTLineWise;
+  *reg = get_yank_register(regname, YREG_PASTE);
+  return (*reg)->y_type == kMTLineWise;
 }
 
 /// Start or stop recording into a yank register.
@@ -1322,7 +1329,7 @@ static int put_in_typebuf(char *s, bool esc, bool colon, int silent)
 /// @param literally_arg  insert literally, not as if typed
 ///
 /// @return FAIL for failure, OK otherwise
-int insert_reg(int regname, bool literally_arg)
+int insert_reg(int regname, yankreg_T *reg, bool literally_arg)
 {
   int retval = OK;
   bool allocated;
@@ -1353,7 +1360,9 @@ int insert_reg(int regname, bool literally_arg)
       xfree(arg);
     }
   } else {  // Name or number register.
-    yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
+    if (reg == NULL) {
+      reg = get_yank_register(regname, YREG_PASTE);
+    }
     if (reg->y_array == NULL) {
       retval = FAIL;
     } else {
