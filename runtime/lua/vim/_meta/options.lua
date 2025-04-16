@@ -2307,8 +2307,8 @@ vim.o.ft = vim.o.filetype
 vim.bo.filetype = vim.o.filetype
 vim.bo.ft = vim.bo.filetype
 
---- Characters to fill the statuslines, vertical separators and special
---- lines in the window.
+--- Characters to fill the statuslines, vertical separators, special
+--- lines in the window and truncated text in the `ins-completion-menu`.
 --- It is a comma-separated list of items.  Each item has a name, a colon
 --- and the value of that item: `E1511`
 ---
@@ -2332,6 +2332,9 @@ vim.bo.ft = vim.bo.filetype
 ---   msgsep	' '		message separator 'display'
 ---   eob		'~'		empty lines at the end of a buffer
 ---   lastline	'@'		'display' contains lastline/truncate
+---   trunc		'>'		truncated text in the
+--- 				`ins-completion-menu`.
+---   truncrl	'<'		same as "trunc' in 'rightleft' mode
 ---
 --- Any one that is omitted will fall back to the default.
 ---
@@ -2366,9 +2369,15 @@ vim.bo.ft = vim.bo.filetype
 ---   vertright	WinSeparator		`hl-WinSeparator`
 ---   verthoriz	WinSeparator		`hl-WinSeparator`
 ---   fold		Folded			`hl-Folded`
+---   foldopen	FoldColumn		`hl-FoldColumn`
+---   foldclose	FoldColumn		`hl-FoldColumn`
+---   foldsep	FoldColumn		`hl-FoldColumn`
 ---   diff		DiffDelete		`hl-DiffDelete`
 ---   eob		EndOfBuffer		`hl-EndOfBuffer`
 ---   lastline	NonText			`hl-NonText`
+---   trunc		one of the many Popup menu highlighting groups like
+--- 		`hl-PmenuSel`
+---   truncrl	same as "trunc"
 ---
 --- @type string
 vim.o.fillchars = ""
@@ -4838,8 +4847,10 @@ vim.go.ph = vim.go.pumheight
 
 --- Maximum width for the popup menu (`ins-completion-menu`).  When zero,
 --- there is no maximum width limit, otherwise the popup menu will never be
---- wider than this value.  Truncated text will be indicated by "..." at the
---- end.  Takes precedence over 'pumwidth'.
+--- wider than this value.  Truncated text will be indicated by "trunc"
+--- value of 'fillchars' option.
+---
+--- This option takes precedence over 'pumwidth'.
 ---
 --- @type integer
 vim.o.pummaxwidth = 0

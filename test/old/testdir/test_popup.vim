@@ -2024,8 +2024,9 @@ func Test_pum_maxwidth()
   call term_sendkeys(buf, "\<Esc>3Gdd\"zp")
 
   call term_sendkeys(buf, ":set lines=10 columns=32\<CR>")
+  call TermWait(buf, 50)
   call term_sendkeys(buf, "GA\<C-N>")
-  call VerifyScreenDump(buf, 'Test_pum_maxwidth_09', {'rows': 10, 'cols': 32})
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_05', {'rows': 10, 'cols': 32})
   call term_sendkeys(buf, "\<Esc>3Gdd\"zp")
 
   call StopVimInTerminal(buf)
@@ -2035,43 +2036,143 @@ func Test_pum_maxwidth_multibyte()
   CheckScreendump
 
   let lines =<< trim END
+    let g:change = 0
     func Omni_test(findstart, base)
       if a:findstart
         return col(".")
       endif
-      return [
-        \ #{word: "123456789_123456789_123456789_"},
-        \ #{word: "一二三四五六七八九十"},
-        \ #{word: "abcdefghij"},
-        \ #{word: "上下左右"},
-        \ ]
+      if g:change == 0
+        return [
+          \ #{word: "123456789_123456789_123456789_"},
+          \ #{word: "一二三四五六七八九十"},
+          \ #{word: "abcdefghij"},
+          \ #{word: "上下左右"},
+          \ ]
+      elseif g:change == 1
+        return [
+          \ #{word: "foo", menu: "fooMenu", kind: "fooKind"},
+          \ #{word: "bar", menu: "barMenu", kind: "barKind"},
+          \ #{word: "baz", menu: "bazMenu", kind: "bazKind"},
+          \ ]
+      elseif g:change == 2
+        return [
+          \ #{word: "foo", menu: "fooMenu", kind: "fooKind"},
+          \ #{word: "bar", menu: "fooMenu", kind: "一二三四"},
+          \ #{word: "一二三四五", kind: "multi"},
+          \ ]
+      else
+        return [#{word: "bar", menu: "fooMenu", kind: "一二三"}]
+      endif
     endfunc
     set omnifunc=Omni_test
+    set cot+=menuone
   END
   call writefile(lines, 'Xtest', 'D')
   let  buf = RunVimInTerminal('-S Xtest', {})
   call TermWait(buf)
 
   call term_sendkeys(buf, "S\<C-X>\<C-O>")
-  call VerifyScreenDump(buf, 'Test_pum_maxwidth_05', {'rows': 8})
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_06', {'rows': 8})
   call term_sendkeys(buf, "\<ESC>")
 
   call term_sendkeys(buf, ":set pummaxwidth=10\<CR>")
   call term_sendkeys(buf, "S\<C-X>\<C-O>")
-  call VerifyScreenDump(buf, 'Test_pum_maxwidth_06', {'rows': 8})
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_07', {'rows': 8})
   call term_sendkeys(buf, "\<ESC>")
 
   if has('rightleft')
     call term_sendkeys(buf, ":set rightleft\<CR>")
     call term_sendkeys(buf, "S\<C-X>\<C-O>")
-    call VerifyScreenDump(buf, 'Test_pum_maxwidth_07', {'rows': 8})
+    call VerifyScreenDump(buf, 'Test_pum_maxwidth_08', {'rows': 8})
     call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
   endif
 
   call term_sendkeys(buf, ":set pummaxwidth=2\<CR>")
   call term_sendkeys(buf, "S\<C-X>\<C-O>")
-  call VerifyScreenDump(buf, 'Test_pum_maxwidth_08', {'rows': 8})
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_09', {'rows': 8})
   call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set pummaxwidth=14\<CR>")
+  call term_sendkeys(buf, ":let g:change=1\<CR>S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_10', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  " Unicode Character U+2026 but one cell
+  call term_sendkeys(buf, ":set fcs+=trunc:…\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_11', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":let g:change=2\<CR>S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_12', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set fcs&\<CR>")
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_13', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  call term_sendkeys(buf, ":set fcs=trunc:_\<CR>")
+  call term_sendkeys(buf, ":let g:change=1\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_14', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+  call term_sendkeys(buf, ":set fcs&\<CR>")
+
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call term_sendkeys(buf, "S\<C-X>\<C-O>")
+    call VerifyScreenDump(buf, 'Test_pum_maxwidth_15', {'rows': 8})
+    call term_sendkeys(buf, "\<ESC>")
+
+    call term_sendkeys(buf, ":let g:change=2\<CR>")
+    call TermWait(buf, 50)
+    call term_sendkeys(buf, "S\<C-X>\<C-O>")
+    call VerifyScreenDump(buf, 'Test_pum_maxwidth_16', {'rows': 8})
+    call term_sendkeys(buf, "\<ESC>")
+
+    call term_sendkeys(buf, ":set fcs+=truncrl:…\<CR>")
+    call term_sendkeys(buf, "S\<C-X>\<C-O>")
+    call VerifyScreenDump(buf, 'Test_pum_maxwidth_17', {'rows': 8})
+    call term_sendkeys(buf, "\<ESC>")
+
+    call term_sendkeys(buf, ":set fcs&\<CR>")
+    call term_sendkeys(buf, ":let g:change=3\<CR>")
+    call TermWait(buf, 50)
+    call term_sendkeys(buf, "S\<C-X>\<C-O>")
+    call VerifyScreenDump(buf, 'Test_pum_maxwidth_18', {'rows': 8})
+    call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
+  endif
+
+  call term_sendkeys(buf, ":set pummaxwidth=4\<CR>")
+  call term_sendkeys(buf, ":let g:change=2\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_19', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call TermWait(buf, 50)
+    call term_sendkeys(buf, "S\<C-X>\<C-O>")
+    call VerifyScreenDump(buf, 'Test_pum_maxwidth_20', {'rows': 8})
+    call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
+  endif
+
+  call term_sendkeys(buf, ":set pummaxwidth=16\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_21', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
+
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call TermWait(buf, 50)
+    call term_sendkeys(buf, "S\<C-X>\<C-O>")
+    call VerifyScreenDump(buf, 'Test_pum_maxwidth_22', {'rows': 8})
+    call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
+  endif
 
   call StopVimInTerminal(buf)
 endfunc
