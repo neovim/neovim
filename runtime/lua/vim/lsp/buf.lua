@@ -813,6 +813,14 @@ function M.document_symbol(opts)
   request_with_opts(ms.textDocument_documentSymbol, params, opts)
 end
 
+--- Lists all links in the current buffer in the |location-list|.
+--- @param opts? vim.lsp.ListOpts
+function M.document_link(opts)
+  opts = vim.tbl_deep_extend('keep', opts or {}, { loclist = true })
+  local params = { textDocument = util.make_text_document_params() }
+  request_with_opts(ms.textDocument_documentLink, params, opts)
+end
+
 --- @param client_id integer
 --- @param method string
 --- @param params table

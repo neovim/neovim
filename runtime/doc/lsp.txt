@@ -1650,18 +1650,17 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
     highlights. |hl-LspReferenceText| |hl-LspReferenceRead|
     |hl-LspReferenceWrite|
 
-document_symbol({opts})                        *vim.lsp.buf.document_symbol()*
-    Lists all symbols in the current buffer in the |location-list|.
-
-    Parameters: ~
-      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
-
 document_link({opts})                            *vim.lsp.buf.document_link()*
     Lists all links in the current buffer in the |location-list|.
 
     Parameters: ~
       • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
 
+document_symbol({opts})                        *vim.lsp.buf.document_symbol()*
+    Lists all symbols in the current buffer in the |location-list|.
+
+    Parameters: ~
+      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
 
 format({opts})                                          *vim.lsp.buf.format()*
     Formats a buffer using the attached (and optionally filtered) language
@@ -2326,6 +2325,20 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
 
     See also: ~
       • 'shiftwidth'
+
+                                               *vim.lsp.util.links_to_items()*
+links_to_items({links}, {bufnr}, {position_encoding})
+    Converts links to quickfix list items.
+
+    Parameters: ~
+      • {links}              (`lsp.DocumentLink[]`)
+      • {bufnr}              (`integer?`) buffer handle or 0 for current,
+                             defaults to current
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) default to first
+                             client of buffer
+
+    Return: ~
+        (`vim.quickfix.entry[]`) See |setqflist()| for the format
 
                                            *vim.lsp.util.locations_to_items()*
 locations_to_items({locations}, {position_encoding})
