@@ -3250,7 +3250,7 @@ static void ins_reg(void)
 
       do_put(regname, NULL, BACKWARD, 1,
              (literally == Ctrl_P ? PUT_FIXINDENT : 0) | PUT_CURSEND);
-    } else if (insert_reg(regname, literally) == FAIL) {
+    } else if (insert_reg(regname, NULL, literally) == FAIL) {
       vim_beep(kOptBoFlagRegister);
       need_redraw = true;  // remove the '"'
     } else if (stop_insert_mode) {
