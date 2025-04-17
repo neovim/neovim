@@ -278,6 +278,7 @@ local config = {
       'inlay_hint.lua',
       'tagfunc.lua',
       'semantic_tokens.lua',
+      'document_color.lua',
       'handlers.lua',
       'util.lua',
       'log.lua',

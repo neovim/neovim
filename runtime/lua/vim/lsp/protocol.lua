@@ -532,6 +532,9 @@ function protocol.make_client_capabilities()
       callHierarchy = {
         dynamicRegistration = false,
       },
+      colorProvider = {
+        dynamicRegistration = false,
+      },
     },
     workspace = {
       symbol = {
