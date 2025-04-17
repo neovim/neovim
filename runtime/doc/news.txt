@@ -128,6 +128,8 @@ EVENTS
 LSP
 
 • |vim.lsp.ClientConfig| gained `workspace_required`.
+• Support for `textDocument/documentColor`: |lsp-document_color|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
 
 LUA
 
