@@ -2869,6 +2869,14 @@ func Test_complete_opt_fuzzy()
   call feedkeys("Sb\<C-X>\<C-P>\<C-N>\<C-Y>\<ESC>", 'tx')
   call assert_equal('b', getline('.'))
 
+  " chain completion
+  call feedkeys("Slore spum\<CR>lor\<C-X>\<C-P>\<C-X>\<C-P>\<ESC>", 'tx')
+  call assert_equal('lore spum', getline('.'))
+
+  " issue #15412
+  call feedkeys("Salpha bravio charlie\<CR>alpha\<C-X>\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>\<ESC>", 'tx')
+  call assert_equal('alpha bravio charlie', getline('.'))
+
   " clean up
   set omnifunc=
   bw!
@@ -2955,34 +2963,6 @@ func Test_complete_fuzzy_collect()
   call feedkeys("Su\<C-X>\<C-L>\<C-P>\<Esc>0", 'tx!')
   call assert_equal('no one can save me but you', getline('.'))
 
-  " issue #15412
-  call setline(1, ['alpha bravio charlie'])
-  call feedkeys("Salpha\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('alpha bravio', getline('.'))
-  call feedkeys("Salp\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('alpha', getline('.'))
-  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('alpha bravio', getline('.'))
-  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('alpha bravio charlie', getline('.'))
-
-  set complete-=i
-  call feedkeys("Salp\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('alpha', getline('.'))
-  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('alpha bravio', getline('.'))
-  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('alpha bravio charlie', getline('.'))
-
-  call setline(1, ['alpha bravio charlie', 'alpha another'])
-  call feedkeys("Salpha\<C-X>\<C-N>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('alpha another', getline('.'))
-  call setline(1, ['你好 我好', '你好 他好'])
-  call feedkeys("S你好\<C-X>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('你好 我好', getline('.'))
-  call feedkeys("S你好\<C-X>\<C-N>\<C-N>\<Esc>0", 'tx!')
-  call assert_equal('你好 他好', getline('.'))
-
   " issue #15526
   set completeopt=menuone,menu,noselect
   call setline(1, ['Text', 'ToText', ''])
@@ -3007,6 +2987,11 @@ func Test_complete_fuzzy_collect()
   call setline(1, ['foo bar fuzzy', 'completefuzzycollect'])
   call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-Y>\<Esc>0", 'tx!')
   call assert_equal('completefuzzycollect', getline('.'))
+
+  execute('%d _')
+  call setline(1, ['fuzzy', 'fuzzy foo', "fuzzy bar", 'fuzzycollect'])
+  call feedkeys("Gofuzzy\<C-X>\<C-N>\<C-N>\<C-N>\<C-Y>\<Esc>0", 'tx!')
+  call assert_equal('fuzzycollect', getline('.'))
 
   bw!
   bw!

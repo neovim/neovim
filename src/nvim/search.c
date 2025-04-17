@@ -3745,22 +3745,6 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
           found_new_match = fuzzy_match_str_in_line(ptr, pattern,
                                                     len, &current_pos, score);
           if (found_new_match) {
-            if (ctrl_x_mode_normal()) {
-              if (strncmp(*ptr, pattern, (size_t)(*len)) == 0 && pattern[*len] == NUL) {
-                char *next_word_end = find_word_start(*ptr + *len);
-                if (*next_word_end != NUL && *next_word_end != NL) {
-                  // Find end of the word.
-                  while (*next_word_end != NUL) {
-                    int l = utfc_ptr2len(next_word_end);
-                    if (l < 2 && !vim_iswordc(*next_word_end)) {
-                      break;
-                    }
-                    next_word_end += l;
-                  }
-                }
-                *len = (int)(next_word_end - *ptr);
-              }
-            }
             *pos = current_pos;
             break;
           } else if (looped_around && current_pos.lnum == circly_end.lnum) {
