@@ -768,7 +768,7 @@ describe('statusline', function()
   end)
 end)
 
-describe('Default statusline', function()
+describe('default statusline', function()
   local screen
 
   before_each(function()

@@ -405,8 +405,8 @@ describe('au OptionSet', function()
         'setlocal',
       })
 
-      -- -- Note: v:option_old is the old global value for global-local options.
-      -- -- but the old local value for all other kinds of options.
+      -- Note: v:option_old is the old global value for global-local options.
+      -- but the old local value for all other kinds of options.
       command('noa setglobal statusline=bar')
       command('noa setlocal statusline=baz')
       command('set statusline=foo')
