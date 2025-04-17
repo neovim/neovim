@@ -1285,7 +1285,7 @@ end
 ---@since 7
 ---
 ---@param bufnr integer Buffer handle, or 0 for current.
----@param method string LSP method name
+---@param method vim.lsp.protocol.Method.ClientToServer.Request LSP method name
 ---@param params? table|(fun(client: vim.lsp.Client, bufnr: integer): table?) Parameters to send to the server.
 ---               Can also be passed as a function that returns the params table for cases where
 ---               parameters are specific to the client.

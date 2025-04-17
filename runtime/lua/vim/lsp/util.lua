@@ -2164,7 +2164,7 @@ end
 ---@class (private) vim.lsp.util._cancel_requests.Filter
 ---@field bufnr? integer
 ---@field clients? vim.lsp.Client[]
----@field method? string
+---@field method? vim.lsp.protocol.Method.ClientToServer.Request
 ---@field type? string
 
 ---@private
