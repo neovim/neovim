@@ -109,6 +109,10 @@ if executable('gem')
   let $GEM_PATH = system('gem env gempath')
 endif
 
+" Have current $HOME available as $ORIGHOME.  $HOME is used for option
+" defaults before we get here, and test_mksession checks that.
+let $ORIGHOME = $HOME
+
 " Make sure $HOME does not get read or written.
 let $HOME = expand(getcwd() . '/XfakeHOME')
 if !isdirectory($HOME)
