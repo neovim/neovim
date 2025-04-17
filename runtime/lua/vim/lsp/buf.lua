@@ -158,7 +158,7 @@ local function request_with_opts(name, params, opts)
   lsp.buf_request(0, name, params, req_handler)
 end
 
----@param method string
+---@param method vim.lsp.protocol.Method.ClientToServer.Request
 ---@param opts? vim.lsp.LocationOpts
 local function get_locations(method, opts)
   opts = opts or {}
@@ -814,7 +814,7 @@ function M.document_symbol(opts)
 end
 
 --- @param client_id integer
---- @param method string
+--- @param method vim.lsp.protocol.Method.ClientToServer.Request
 --- @param params table
 --- @param handler? lsp.Handler
 --- @param bufnr? integer
@@ -845,7 +845,7 @@ local hierarchy_methods = {
   [ms.callHierarchy_outgoingCalls] = 'call',
 }
 
---- @param method string
+--- @param method vim.lsp.protocol.Method.ClientToServer.Request
 local function hierarchy(method)
   local kind = hierarchy_methods[method]
   if not kind then
