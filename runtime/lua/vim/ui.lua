@@ -1,4 +1,5 @@
 local M = {}
+local ms = vim.lsp.protocol.Methods
 
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
 --- work until `on_choice`.
@@ -173,17 +174,6 @@ function M.open(path, opt)
   return vim.system(cmd, job_opt), nil
 end
 
---- Return the first client attached that supports `textDocument/documentLink`, if any.
----@param buf integer
----@return vim.lsp.Client?
-local function buf_support_document_link(buf)
-  local bufnr = vim.api.nvim_get_current_buf()
-  local clients = vim.lsp.get_clients({ bufnr = bufnr })
-  return vim.iter(clients):find(function(client)
-    return client:supports_method('textDocument/documentLink', buf)
-  end)
-end
-
 --- Checks if a lsp.Position is inside a lsp.Range.
 ---@param position lsp.Position
 ---@param range lsp.Range
@@ -204,22 +194,31 @@ function M._get_urls()
   local row = cursor[1] - 1
   local col = cursor[2]
 
-  local document_link_client = buf_support_document_link(bufnr)
+  local document_link_clients =
+    vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_documentLink })
 
-  if document_link_client then
+  if #document_link_clients ~= 0 then
     local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
-    local position =
-      vim.lsp.util.make_position_params(0, document_link_client.offset_encoding).position
 
-    local buf_links =
-      document_link_client:request_sync('textDocument/documentLink', params, 1000, bufnr).result
+    for _, client in ipairs(document_link_clients) do
+      local position = vim.lsp.util.make_position_params(0, client.offset_encoding).position
 
-    local link = vim.iter(buf_links):find(function(document_link)
-      return position_in_range(position, document_link.range)
-    end)
+      local response = client:request_sync(ms.textDocument_documentLink, params, 1000, bufnr)
 
-    if link then
-      table.insert(urls, link.target)
+      if response then
+        local link = vim.iter(response.result):find(function(document_link)
+          return position_in_range(position, document_link.range)
+        end)
+
+        if link then
+          ---@type string
+          local target = link.target
+          if vim.startswith(target, 'file:///') then
+            target = vim.uri_to_fname(target)
+          end
+          table.insert(urls, target)
+        end
+      end
     end
   end
 

@@ -2326,20 +2326,6 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
     See also: ~
       • 'shiftwidth'
 
-                                               *vim.lsp.util.links_to_items()*
-links_to_items({links}, {bufnr}, {position_encoding})
-    Converts links to quickfix list items.
-
-    Parameters: ~
-      • {links}              (`lsp.DocumentLink[]`)
-      • {bufnr}              (`integer?`) buffer handle or 0 for current,
-                             defaults to current
-      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) default to first
-                             client of buffer
-
-    Return: ~
-        (`vim.quickfix.entry[]`) See |setqflist()| for the format
-
                                            *vim.lsp.util.locations_to_items()*
 locations_to_items({locations}, {position_encoding})
     Returns the items with the byte position calculated correctly and in

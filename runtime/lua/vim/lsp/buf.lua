@@ -813,12 +813,114 @@ function M.document_symbol(opts)
   request_with_opts(ms.textDocument_documentSymbol, params, opts)
 end
 
+---
+--- The returned function has an optional {config} parameter that accepts |vim.lsp.ListOpts|
+---
+---@param map_result fun(resp, bufnr: integer, position_encoding: 'utf-8'|'utf-16'|'utf-32'): table to convert the response
+---@param entity string name of the resource used in a `not found` error message
+---@param title_fn fun(ctx: lsp.HandlerContext): string Function to call to generate list title
+---@return lsp.Handler
+local function response_to_list(map_result, entity, title_fn)
+  --- @diagnostic disable-next-line:redundant-parameter
+  return function(_, result, ctx, config)
+    if not result or vim.tbl_isempty(result) then
+      vim.notify('No ' .. entity .. ' found')
+      return
+    end
+    config = config or {}
+    local title = title_fn(ctx)
+    local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+    local items = map_result(result, ctx.bufnr, client.offset_encoding)
+
+    local list = { title = title, items = items, context = ctx }
+    if config.on_list then
+      assert(vim.is_callable(config.on_list), 'on_list is not a function')
+      config.on_list(list)
+    elseif config.loclist then
+      vim.fn.setloclist(0, {}, ' ', list)
+      vim.cmd.lopen()
+    else
+      vim.fn.setqflist({}, ' ', list)
+      vim.cmd('botright copen')
+    end
+  end
+end
+
+--- Converts links to quickfix list items.
+---
+---@param links lsp.DocumentLink[]
+---@param bufnr? integer buffer handle or 0 for current, defaults to current
+---@param position_encoding? 'utf-8'|'utf-16'|'utf-32'
+---                         default to first client of buffer
+---@return vim.quickfix.entry[] # See |setqflist()| for the format
+local function links_to_items(links, bufnr, position_encoding)
+  bufnr = vim._resolve_bufnr(bufnr)
+  if position_encoding == nil then
+    vim.notify_once(
+      'links_to_items must be called with valid position encoding',
+      vim.log.levels.WARN
+    )
+    position_encoding = vim.lsp.get_clients({ bufnr = 0 })[1].offset_encoding
+  end
+
+  local items = {} --- @type vim.quickfix.entry[]
+  for _, link in ipairs(links) do
+    --- @type string?, lsp.Range?
+    local uri, range = link.target, link.range
+    if uri and range then
+      ---@type integer?, integer?, integer?, integer?
+      local lnum, col, end_lnum, end_col
+
+      ---@type string, string
+      local filename, text
+      if vim.startswith(uri, 'file:///') then
+        filename = vim.uri_to_fname(uri)
+        text = filename
+      else
+        filename = vim.uri_to_fname(vim.uri_from_bufnr(bufnr))
+        text = uri
+        lnum = range.start.line + 1
+        col = util.character_offset(
+          bufnr,
+          range.start.line,
+          range.start.character,
+          position_encoding
+        ) + 1
+        end_lnum = range['end'].line + 1
+        end_col = util.character_offset(
+          bufnr,
+          range['end'].line,
+          range['end'].character,
+          position_encoding
+        ) + 1
+      end
+
+      items[#items + 1] = {
+        filename = filename,
+        lnum = lnum or 1,
+        col = col or 1,
+        end_lnum = end_lnum or 1,
+        end_col = end_col or 1,
+        text = text,
+      }
+    end
+  end
+
+  return items
+end
+
 --- Lists all links in the current buffer in the |location-list|.
 --- @param opts? vim.lsp.ListOpts
 function M.document_link(opts)
   opts = vim.tbl_deep_extend('keep', opts or {}, { loclist = true })
   local params = { textDocument = util.make_text_document_params() }
-  request_with_opts(ms.textDocument_documentLink, params, opts)
+
+  local handler = response_to_list(links_to_items, 'document links', function(ctx)
+    local fname = vim.fn.fnamemodify(vim.uri_to_fname(ctx.params.textDocument.uri), ':.')
+    return string.format('Links in %s', fname)
+  end)
+
+  lsp.buf_request(0, ms.textDocument_documentLink, params, handler)
 end
 
 --- @param client_id integer

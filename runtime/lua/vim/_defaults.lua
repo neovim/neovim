@@ -129,7 +129,7 @@ do
     { silent = true, expr = true, desc = ':help v_@-default' }
   )
 
-  --- Map |gx| to call |vim.ui.open| on the <cfile> at cursor.
+  --- Map |gx| to call |vim.ui.open| on the <cfile> or `textDocument/documentLink` at cursor.
   do
     local function do_open(uri)
       local cmd, err = vim.ui.open(uri)
@@ -163,6 +163,25 @@ do
         vim.notify(err, vim.log.levels.ERROR)
       end
     end, { desc = gx_desc })
+  end
+
+  --- Map |gf| to call `vim.cmd.edit` on the <cfile> or `textDocument/documentLink` at cursor.
+  do
+    local function do_open(path)
+      ---@type boolean, string?
+      local _, err = pcall(vim.cmd.edit, path)
+      return err
+    end
+
+    local gf_desc = 'Opens filepath or URI under cursor in neovim'
+    vim.keymap.set({ 'n' }, 'gf', function()
+      for _, path in ipairs(require('vim.ui')._get_urls()) do
+        local err = do_open(path)
+        if err then
+          vim.notify(err, vim.log.levels.ERROR)
+        end
+      end
+    end, { desc = gf_desc })
   end
 
   --- Default maps for built-in commenting.
