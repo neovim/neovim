@@ -83,9 +83,12 @@ local lint_query = [[;; query
 --- @return vim.treesitter.ParseError
 local function get_error_entry(err, node)
   local start_line, start_col = node:range()
-  local line_offset, col_offset, msg = err:gmatch('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')() ---@type string, string, string
-  start_line, start_col =
-    start_line + tonumber(line_offset) - 1, start_col + tonumber(col_offset) - 1
+  local line_offset_s, col_offset_s, msg =
+    err:gmatch('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')() ---@type string, string, string
+  local line_offset = tonumber(line_offset_s) --[[@as integer]]
+  local col_offset = tonumber(col_offset_s) --[[@as integer]]
+  start_line = start_line + line_offset - 1
+  start_col = start_col + col_offset - 1
   local end_line, end_col = start_line, start_col
   if msg:match('^Invalid syntax') or msg:match('^Impossible') then
     -- Use the length of the underlined node
