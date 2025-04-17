@@ -459,16 +459,17 @@ vim.cmd = setmetatable({}, {
         --- @type vim.api.keyset.cmd
         opts = select(1, ...)
 
+        local args = opts --[[@as string[] ]]
+
         -- Move indexed positions in opts to opt.args
-        if opts[1] and not opts.args then
+        if args[1] and not opts.args then
           opts.args = {}
           for i = 1, VIM_CMD_ARG_MAX do
-            if not opts[i] then
+            if not args[i] then
               break
             end
-            opts.args[i] = opts[i]
-            --- @diagnostic disable-next-line: no-unknown
-            opts[i] = nil
+            opts.args[i] = args[i]
+            args[i] = nil
           end
         end
       else
@@ -660,7 +661,7 @@ do
   end
 end
 
-local on_key_cbs = {} --- @type table<integer,[function, table]>
+local on_key_cbs = {} --- @type table<integer,[(fun(key: string, typed: string): string?), table]>
 
 --- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
 --- yes every, input key.

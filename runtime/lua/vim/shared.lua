@@ -606,9 +606,9 @@ function vim.spairs(t)
   --- @cast t table<any,any>
 
   -- collect the keys
-  local keys = {}
+  local keys = {} --- @type string[]
   for k in pairs(t) do
-    table.insert(keys, k)
+    keys[#keys + 1] = k
   end
   table.sort(keys)
 
@@ -854,7 +854,7 @@ do
 
   --- @param param_name string
   --- @param val any
-  --- @param validator vim.validate.Validator
+  --- @param validator type | 'callable' | (type|'callable')[] | fun(v:any):boolean, string?
   --- @param message? string
   --- @param allow_alias? boolean Allow short type names: 'n', 's', 't', 'b', 'f', 'c'
   --- @return string?
@@ -1257,6 +1257,13 @@ end
 --- @field go? table<string, any>
 --- @field wo? table<string, any>
 
+--- @nodoc
+--- @class vim.context.state.result : vim.context.state
+--- @field bo table<string, any>
+--- @field env table<string, any>
+--- @field go table<string, any>
+--- @field wo table<string, any>
+
 local scope_map = { buf = 'bo', global = 'go', win = 'wo' }
 local scope_order = { 'o', 'wo', 'bo', 'go', 'env' }
 local state_restore_order = { 'bo', 'wo', 'go', 'env' }
@@ -1265,7 +1272,7 @@ local state_restore_order = { 'bo', 'wo', 'go', 'env' }
 --- @param context vim.context.mods
 --- @return vim.context.state
 local get_context_state = function(context)
-  --- @type vim.context.state
+  --- @type vim.context.state.result
   local res = { bo = {}, env = {}, go = {}, wo = {} }
 
   -- Use specific order from possibly most to least intrusive
