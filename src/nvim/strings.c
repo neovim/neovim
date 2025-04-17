@@ -1027,7 +1027,7 @@ static void format_overflow_error(const char *pstart)
   xfree(argcopy);
 }
 
-enum { MAX_ALLOWED_STRING_WIDTH = 6400, };
+enum { MAX_ALLOWED_STRING_WIDTH = 1048576, };  // 1MiB
 
 static int get_unsigned_int(const char *pstart, const char **p, unsigned *uj, bool overflow_err)
 {
