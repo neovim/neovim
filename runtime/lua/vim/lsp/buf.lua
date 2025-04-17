@@ -215,7 +215,13 @@ local function get_locations(method, opts)
         vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
 
         vim.bo[b].buflisted = true
-        local w = opts.reuse_win and vim.fn.win_findbuf(b)[1] or win
+        local w = win
+        if opts.reuse_win then
+          w = vim.fn.win_findbuf(b)[1] or w
+          if w ~= win then
+            api.nvim_set_current_win(w)
+          end
+        end
         api.nvim_win_set_buf(w, b)
         api.nvim_win_set_cursor(w, { item.lnum, item.col - 1 })
         vim._with({ win = w }, function()
