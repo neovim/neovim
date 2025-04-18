@@ -782,6 +782,9 @@ function lsp._set_defaults(client, bufnr)
   if client:supports_method(ms.textDocument_diagnostic) then
     lsp.diagnostic._enable(bufnr)
   end
+  if client:supports_method(ms.textDocument_documentLink) then
+    vim.bo[bufnr].includeexpr = 'v:lua.vim.lsp.includeexpr()'
+  end
 end
 
 --- @deprecated
@@ -1422,6 +1425,16 @@ end
 ---@return table[] tags A list of matching tags
 function lsp.tagfunc(pattern, flags)
   return vim.lsp._tagfunc(pattern, flags)
+end
+
+--- Provides an interface between the built-in client and 'includeexpr'.
+---
+--- When used with normal mode commands (e.g. |gf| |gF| |CTRL-W_CTRL-F|) this will invoke
+--- the "textDocument/documentLink" LSP method to find the link under the cursor.
+--- If no results are returned from any LSP servers, falls back to using built-in includeexpr.
+---
+function lsp.includeexpr()
+  return vim.ui._get_urls()[1]
 end
 
 --- Provides an interface between the built-in client and a `foldexpr` function.
