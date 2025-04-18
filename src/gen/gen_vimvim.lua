@@ -4,7 +4,7 @@ local syntax_file = arg[1]
 local funcs_file = arg[2]
 
 local lld = {}
-local syn_fd = io.open(syntax_file, 'w')
+local syn_fd = assert(io.open(syntax_file, 'w'))
 lld.line_length = 0
 local function w(s)
   syn_fd:write(s)
@@ -18,6 +18,7 @@ end
 local options = require('nvim.options')
 local auevents = require('nvim.auevents')
 local ex_cmds = require('nvim.ex_cmds')
+local vvars = require('nvim.vvars')
 
 local function cmd_kw(prev_cmd, cmd)
   if not prev_cmd then
@@ -54,7 +55,6 @@ end
 local vimcmd_start = 'syn keyword vimCommand contained '
 local vimcmd_end = ' nextgroup=vimBang'
 w(vimcmd_start)
-
 local prev_cmd = nil
 for _, cmd_desc in ipairs(ex_cmds.cmds) do
   if lld.line_length > 850 then
@@ -80,13 +80,11 @@ for _, cmd_desc in ipairs(ex_cmds.cmds) do
   end
   prev_cmd = cmd
 end
-
 w(vimcmd_end .. '\n')
 
 local vimopt_start = 'syn keyword vimOption contained '
 local vimopt_end = ' skipwhite nextgroup=vimSetEqual,vimSetMod'
 w('\n' .. vimopt_start)
-
 for _, opt_desc in ipairs(options.options) do
   if not opt_desc.immutable then
     if lld.line_length > 850 then
@@ -106,13 +104,25 @@ for _, opt_desc in ipairs(options.options) do
     end
   end
 end
-
 w(vimopt_end .. '\n')
 
-w('\nsyn case ignore')
+local vimoptvar_start = 'syn keyword vimOptionVarName contained '
+w('\n' .. vimoptvar_start)
+for _, opt_desc in ipairs(options.options) do
+  if not opt_desc.immutable then
+    if lld.line_length > 850 then
+      w('\n' .. vimoptvar_start)
+    end
+    w(' ' .. opt_desc.full_name)
+    if opt_desc.abbreviation then
+      w(' ' .. opt_desc.abbreviation)
+    end
+  end
+end
+
+w('\n\nsyn case ignore')
 local vimau_start = 'syn keyword vimAutoEvent contained '
 w('\n\n' .. vimau_start)
-
 for au, _ in vim.spairs(vim.tbl_extend('error', auevents.events, auevents.aliases)) do
   if not auevents.nvim_specific[au] then
     if lld.line_length > 850 then
@@ -124,7 +134,6 @@ end
 
 local nvimau_start = 'syn keyword nvimAutoEvent contained '
 w('\n\n' .. nvimau_start)
-
 for au, _ in vim.spairs(auevents.nvim_specific) do
   if lld.line_length > 850 then
     w('\n' .. nvimau_start)
@@ -143,6 +152,15 @@ for _, name in ipairs(funcs) do
     end
     w(' ' .. name)
   end
+end
+
+local vimvvar_start = 'syn keyword vimVimVarName contained '
+w('\n\n' .. vimvvar_start)
+for name, _ in vim.spairs(vvars.vars) do
+  if lld.line_length > 850 then
+    w('\n' .. vimvvar_start)
+  end
+  w(' ' .. name)
 end
 
 w('\n')
