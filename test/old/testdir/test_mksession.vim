@@ -1205,7 +1205,10 @@ func Test_mkview_default_home()
     " use escape() to handle backslash path separators
     call assert_match('^' .. escape($ORIGHOME, '\') .. '/vimfiles', &viewdir)
   elseif has('unix')
-    call assert_match('^' .. $ORIGHOME .. '/.vim', &viewdir)
+    call assert_match(
+          \ '^' .. $ORIGHOME .. '/.vim\|' ..
+          \ '^' .. $XDG_CONFIG_HOME .. '/vim'
+          \ , &viewdir)
   elseif has('amiga')
     call assert_match('^home:vimfiles', &viewdir)
   elseif has('mac')
