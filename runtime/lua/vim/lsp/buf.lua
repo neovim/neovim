@@ -920,7 +920,9 @@ function M.document_link(opts)
     return string.format('Links in %s', fname)
   end)
 
-  lsp.buf_request(0, ms.textDocument_documentLink, params, handler)
+  lsp.buf_request(0, ms.textDocument_documentLink, params, function(err, result, ctx, config)
+    handler(err, result, ctx, vim.tbl_extend('force', config or {}, opts))
+  end)
 end
 
 --- @param client_id integer
