@@ -1087,4 +1087,13 @@ func Test_mark_from_yank()
   bw!
 endfunc
 
+func Test_insert_small_delete_linewise()
+  new
+  call setline(1, ['foo'])
+  call cursor(1, 1)
+  exe ":norm! \"-cc\<C-R>-"
+  call assert_equal(['foo', ''], getline(1, '$'))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
