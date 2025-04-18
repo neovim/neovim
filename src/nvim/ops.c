@@ -297,12 +297,12 @@ static int get_vts_sum(const int *vts_array, int index)
   int sum = 0;
   int i;
 
-  // Perform the summation for indeces within the actual array.
+  // Perform the summation for indices within the actual array.
   for (i = 1; i <= index && i <= vts_array[0]; i++) {
     sum += vts_array[i];
   }
 
-  // Add topstops whose indeces exceed the actual array.
+  // Add tabstops whose indices exceed the actual array.
   if (i <= index) {
     sum += vts_array[vts_array[0]] * (index - vts_array[0]);
   }
