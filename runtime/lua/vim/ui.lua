@@ -213,7 +213,7 @@ function M._get_urls()
         if link then
           ---@type string
           local target = link.target
-          if vim.startswith(target, 'file:///') then
+          if vim.startswith(target, 'file://') then
             target = vim.uri_to_fname(target)
           end
           table.insert(urls, target)
