@@ -214,7 +214,7 @@ syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=vim
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDebuggreedy,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimFor,vimFunction,vimFuncFold,vimGlobal,vimHighlight,vimLet,vimLoadkeymap,vimLockvar,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimSet,vimSleep,vimSyntax,vimThrow,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDebuggreedy,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimFor,vimFunction,vimFuncFold,vimGlobal,vimHighlight,vimLet,vimLoadkeymap,vimLockvar,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimRedir,vimSet,vimSleep,vimSyntax,vimThrow,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList
 syn cluster vim9CmdList	contains=vim9Abstract,vim9Class,vim9Const,vim9Enum,vim9Export,vim9Final,vim9For,vim9Interface,vim9Type,vim9Var
 syn match vimCmdSep	"\\\@1<!|"	skipwhite nextgroup=@vimCmdList,vimSubst1,vimFunc
 syn match vimCmdSep	":\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
@@ -1010,6 +1010,24 @@ syn region	vimMatchPattern	contained	matchgroup=Delimiter start="\z([!#$%&'()*+,
 syn match	vimNormal		"\<norm\%[al]\>!\=" skipwhite nextgroup=vimNormalArg contains=vimBang
 syn region	vimNormalArg	contained	start="\S" skip=+\n\s*\\\|\n\s*["#]\\ + end="$" contains=@vimContinue
 
+" Redir: {{{2
+" =====
+syn match	vimRedir		"\<redir\=\>"	skipwhite nextgroup=vimRedirBang,vimRedirFileOperator,vimRedirVariableOperator,vimRedirRegister,vimRedirEnd
+syn match	vimRedirBang	       contained	"\a\@1<=!"	skipwhite nextgroup=vimRedirFileOperator
+
+syn match	vimRedirFileOperator     contained	">>\="	skipwhite nextgroup=vimRedirFile
+syn region	vimRedirFile	       contained
+      \ start="\S"
+      \ matchgroup=Normal
+      \ end="\s*$"
+      \ end="\s*\ze[|"]"
+      \ nextgroup=vimCmdSep,vimComment
+      \ contains=vimSpecFile
+syn match	vimRedirRegisterOperator contained	">>\="
+syn match	vimRedirRegister	       contained	"@[a-zA-Z*+"]"	nextgroup=vimRedirRegisterOperator
+syn match	vimRedirVariableOperator contained	"=>>\="	skipwhite nextgroup=vimVar
+syn keyword	vimRedirEnd	       contained	END
+
 " Sleep: {{{2
 " =====
 syn keyword	vimSleep		sl[eep]		skipwhite nextgroup=vimSleepBang,vimSleepArg
@@ -1587,7 +1605,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimLetHereDoc	vimString
  hi def link vimLetHereDocStart	Special
  hi def link vimLetHereDocStop	Special
- hi def link vimLetRegister	Special
+ hi def link vimLetRegister	vimRegister
  hi def link vimLineComment	vimComment
  hi def link vimMapBang	vimBang
  hi def link vimMapLeader	vimBracket
@@ -1633,6 +1651,13 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimPlainMark	vimMark
  hi def link vimPlainRegister	vimRegister
  hi def link vimQuoteEscape	vimEscape
+ hi def link vimRedir	vimCommand
+ hi def link vimRedirBang	vimBang
+ hi def link vimRedirFileOperator	vimOper
+ hi def link vimRedirRegisterOperator	vimOper
+ hi def link vimRedirVariableOperator	vimOper
+ hi def link vimRedirEnd	Special
+ hi def link vimRedirRegister	vimRegister
  hi def link vimRegister	SpecialChar
  hi def link vimScriptDelim	Comment
  hi def link vimSearch	vimString
