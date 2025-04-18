@@ -1202,7 +1202,8 @@ endfunc
 func Test_mkview_default_home()
   throw 'Skipped: N/A'
   if has('win32')
-    call assert_match('^' .. $ORIGHOME .. '/vimfiles', &viewdir)
+    " use escape() to handle backslash path separators
+    call assert_match('^' .. escape($ORIGHOME, '\') .. '/vimfiles', &viewdir)
   elseif has('unix')
     call assert_match('^' .. $ORIGHOME .. '/.vim', &viewdir)
   elseif has('amiga')
