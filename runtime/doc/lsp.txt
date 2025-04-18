@@ -1043,7 +1043,7 @@ includeexpr()                                          *vim.lsp.includeexpr()*
 
     When |gf| and related commands fails with the default first try, this will
     invoke the "textDocument/documentLink" LSP method to find the link under
-    the cursor, falls back to |cfile|
+    the cursor, falls back to `cfile`
 
 omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
     Implements 'omnifunc' compatible LSP completion.
