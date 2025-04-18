@@ -1175,7 +1175,7 @@ end
 --- @type vim.filetype.mapfn
 function M.nroff(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
-    if line:find('^%.') then
+    if line:find('^%.%S%S?') then
       return 'nroff'
     end
   end

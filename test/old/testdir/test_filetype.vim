@@ -2918,6 +2918,20 @@ func Test_map_file()
   filetype off
 endfunc
 
+func Test_nroff_file()
+  filetype on
+
+  call writefile(['.TH vim 1 "YYYY Mth DD"'], 'Xfile.1', 'D')
+  split Xfile.1
+  call assert_equal('nroff', &filetype)
+  bwipe!
+
+  call writefile(['. /etc/profile'], 'Xfile.1', 'D')
+  split Xfile.1
+  call assert_notequal('nroff', &filetype)
+  bwipe!
+endfunc
+
 func Test_org_file()
   filetype on
 
