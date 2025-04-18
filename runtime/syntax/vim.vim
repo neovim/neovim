@@ -345,28 +345,22 @@ syn cluster	vimOperContinue		contains=vimOperContinue,vimOperContinueComment
 " Lambda Expressions: {{{2
 " ==================
 syn match	vimLambdaOperator	contained	"->" skipwhite nextgroup=@vimExprList
-syn region	vimLambda	contained	matchgroup=Delimiter start="{\ze[[:space:][:alnum:]_.,]*->" end="}" end="$" skip=+\s*\n\s*\\\|\s*\n\s*"\\ + contains=@vimContinue,@vimExprList,vimLambdaParams
-syn match	vimLambdaParams	contained	"{\@1<=.\{-}\%(->\)\@=" nextgroup=vimLambdaOperator contains=vimFuncParam
+syn region	vimLambda	contained
+      \ matchgroup=vimLambdaBrace
+      \ start=+{\ze[[:space:][:alnum:]_.,]*\%(\n\s*\%(\\[[:space:][:alnum:]_.,]*\|"\\ .*\)\)*->+
+      \ skip=+\n\s*\%(\\\|"\\ \)+
+      \ end="}" end="$"
+      \ contains=@vimContinue,@vimExprList,vimLambdaParams
+syn match	vimLambdaParams	contained	"\%({\n\=\)\@1<=\_.\{-}\%(->\)\@=" nextgroup=vimLambdaOperator contains=@vimContinue,vimFuncParam
 
-syn match	vim9LambdaOperator    contained	"=>" skipwhite skipempty nextgroup=@vimExprList,vim9LambdaBlock,vim9LambdaOperatorComment
-syn match	vim9LambdaParamsParen contained	"[()]"
-syn region	vim9LambdaParams	    contained
-      \ matchgroup=vim9LambdaParamsParen
-      \ start="(\ze\s*\(\.\.\.\)\=\h\w*[,:]\%(\s\|$\)"
-      \ start="(\ze\s*\n
-        "\ line continuations
-        \\%(\s*\%(#\\ .*\|\\\s*\)\n\)*\s*\\\s*
-        "\ parameter names
-        \\(\.\.\.\)\=\h\w*[,:]\%(\s\|$\)"
-      \ end=")\ze\%(:\s\|\s\+=>\)"
-      \ matchgroup=vimContinue
-      \ end="^\s*\\\ze\s\+=>"
-      \ skipwhite nextgroup=vim9LambdaReturnType,vim9LambdaOperator
-      \ contains=@vim9Continue,vimDefParam,vim9LambdaParamsParen
-syn match	vim9LambdaParams	    contained     "(\s*)\|(\s*\(\.\.\.\)\=\h\w*\s*)\ze\%(:\s\|\s\+=>\)" skipwhite nextgroup=vim9LambdaReturnType,vim9LambdaOperator contains=vimDefParam,vim9LambdaParamsParen
-
-syn region	vim9LambdaReturnType  contained	start=":\s" end="$" end="\ze#" end="\ze=>" skipwhite skipempty nextgroup=vim9LambdaOperator,vim9LamdaOperatorComment contains=vimTypeSep transparent
-syn region	vim9LambdaBlock	    contained	matchgroup=vimSep start="{" end="^\s*\zs}" contains=@vimDefBodyList
+syn match	vim9LambdaOperator   contained	"=>" skipwhite skipempty nextgroup=@vimExprList,vim9LambdaBlock,vim9LambdaOperatorComment
+syn match	vim9LambdaParen      contained	"[()]"
+syn match	vim9LambdaParams	   contained
+      \ "(\%(\<func(\|[^(]\)*\%(\n\s*\\\%(\<func(\|[^(]\)*\|\n\s*#\\ .*\)*\ze\s\+=>"
+      \ skipwhite nextgroup=vim9LambdaOperator
+      \ contains=@vim9Continue,vimDefParam,vim9LambdaParen,vim9LambdaReturnType
+syn region	vim9LambdaReturnType contained	start=")\@<=:\s" end="\ze\s*#" end="\ze\s*=>" contains=@vim9Continue,@vimType transparent
+syn region	vim9LambdaBlock	   contained	matchgroup=vimSep start="{" end="^\s*\zs}" contains=@vimDefBodyList
 
 syn match	vim9LambdaOperatorComment contained "#.*" skipwhite skipempty nextgroup=@vimExprList,vim9LambdaBlock,vim9LambdaOperatorComment
 
@@ -441,9 +435,10 @@ syn match	vimParamType	contained	":\s"	skipwhite skipnl nextgroup=@vimType conta
 
 syn match	vimTypeSep	contained	":\%(\s\|\n\)\@=" skipwhite nextgroup=@vimType
 syn keyword	vimType	contained	any blob bool channel float job number string void
-syn match	vimType	contained	"\<func\>"
-syn region	vimCompoundType	contained	matchgroup=vimType start="\<func("            end=")" nextgroup=vimTypeSep contains=@vimType oneline transparent
-syn region	vimCompoundType   contained         matchgroup=vimType start="\<\%(list\|dict\)<" end=">"                      contains=@vimType oneline transparent
+syn match	vimType	contained	"\<\%(func\)\>"
+syn region	vimCompoundType	contained	matchgroup=vimType start="\<func("	          end=")" nextgroup=vimTypeSep contains=@vim9Continue,@vimType transparent
+syn region	vimCompoundType	contained	matchgroup=vimType start="\<tuple<"           end=">"                      contains=@vim9Continue,@vimType transparent
+syn region	vimCompoundType	contained	matchgroup=vimType start="\<\%(list\|dict\)<" end=">"		   contains=@vimType oneline       transparent
 syn match	vimUserType	contained	"\<\%(\h\w*\.\)*\u\w*\>"
 
 syn cluster vimType contains=vimType,vimCompoundType,vimUserType
@@ -1567,6 +1562,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vim9KeymapLineComment	vimKeymapLineComment
  hi def link vimKeymapLineComment	vimComment
  hi def link vimKeymapTailComment	vimComment
+ hi def link vimLambdaBrace	Delimiter
  hi def link vimLambdaOperator	vimOper
  hi def link vimLet	vimCommand
  hi def link vimLetHereDoc	vimString
@@ -1723,7 +1719,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vim9Interface	vimCommand
  hi def link vim9LambdaOperator	vimOper
  hi def link vim9LambdaOperatorComment	vim9Comment
- hi def link vim9LambdaParamsParen	vimParenSep
+ hi def link vim9LambdaParen	vimParenSep
  hi def link vim9LhsRegister	vimLetRegister
  hi def link vim9LhsVariable	vimVar
  hi def link vim9LineComment	vimComment
