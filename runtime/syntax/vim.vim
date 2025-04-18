@@ -757,12 +757,31 @@ syn match	vimCmplxRepeat	'@[0-9a-z".=@:]\ze\($\|[^a-zA-Z]\>\)'
 
 " Set command and associated set-options (vimOptions) with comment {{{2
 syn match	vimSet		"\<\%(setl\%[ocal]\|setg\%[lobal]\|se\%[t]\)\>" skipwhite nextgroup=vimSetBang,vimSetArgs
-syn region	vimSetArgs	contained	start="\S" skip=+\\|\|\n\s*\\\|\n\s*["#]\\ + matchgroup=vimCmdSep end="|" end="$" matchgroup=vimNotation end="<[cC][rR]>" keepend contains=@vimComment,@vimContinue,vimErrSetting,vimOption,vimSetAll,vimSetTermcap
-syn region	vimSetEqual	contained	matchgroup=vimOper start="[=:]\|[-+^]=" skip=+\\|\|\\\s\|\n\s*\\\|\n\s*["#]\\ \|^\s*\\\|^\s*["#]\\ + matchgroup=vimCmdSep end="|" end="\ze\s" end="$" contains=@vimContinue,vimCtrlChar,vimEnvvar,vimNotation,vimSetSep
+syn region	vimSetComment	contained	start=+"+ skip=+\n\s*\%(\\\||"\\ \)+ end="$" contains=@vimCommentGroup,vimCommentString extend
+syn match	vimSetCmdSep	contained	"|" skipwhite nextgroup=@vimCmdList,vimSubst1,vimFunc
+syn match	vimSetEscape	contained	"\\\%(\\[|"]\|.\)"
+syn match	vimSetBarEscape	contained	"\\|"
+syn match	vimSetQuoteEscape	contained	+\\"+
+syn region	vimSetArgs	contained
+      \ start="\S"
+      \ skip=+\n\s*\%(\\\|["#]\\ \)\|^\s*"\\ +
+      \ end=+\ze\\\@1<![|"]+
+      "\ assume this isn't an escaped char with backslash on the previous line
+      \ end=+^\s*\\\ze[|"]+
+      \ end="\ze\s#"
+      \ end="$"
+      \ nextgroup=vimSetCmdSep,vimSetComment,vim9Comment
+      \ contains=@vimContinue,vimErrSetting,vimOption,vimSetAll,vimSetTermcap
+      \ keepend
+syn region	vimSetEqual	contained
+      \ matchgroup=vimOper
+      \ start="[=:]\|[-+^]="
+      \ skip=+\\\s\|^\s*\%(\\\|["#]\\ \)+
+      \ end="\ze\s"
+      \ contains=@vimContinue,vimCtrlChar,vimEnvvar,vimNotation,vimSetSep,vimSetEscape,vimSetBarEscape,vimSetQuoteEscape
 syn match	vimSetBang	contained	"\a\@1<=!" skipwhite nextgroup=vimSetAll,vimSetTermcap
 syn keyword	vimSetAll	contained	all nextgroup=vimSetMod
 syn keyword	vimSetTermcap	contained	termcap
-syn region	vimSetString	contained	start=+="+hs=s+1	skip=+\\\\\|\\"+  end=+"+	contains=vimCtrlChar
 syn match	vimSetSep	contained	"[,:]"
 syn match	vimSetMod	contained	"\a\@1<=\%(&vim\=\|[!&?<]\)"
 
@@ -1622,9 +1641,9 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimSet	vimCommand
  hi def link vimSetAll	vimOption
  hi def link vimSetBang	vimBang
+ hi def link vimSetComment	vimComment
  hi def link vimSetMod	vimOption
  hi def link vimSetSep	vimSep
- hi def link vimSetString	vimString
  hi def link vimSetTermcap	vimOption
  hi def link vimShebang	PreProc
  hi def link vimSleep	vimCommand
