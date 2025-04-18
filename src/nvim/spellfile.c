@@ -5550,7 +5550,7 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
 // Initialize 'spellfile' for the current buffer.
 //
 // If the location does not exist, create it. Defaults to
-// stdpath("data") + "/spell/{spelllang}.{encoding}.add".
+// stdpath("data") + "/site/spell/{spelllang}.{encoding}.add".
 static void init_spellfile(void)
 {
   char *lend;
