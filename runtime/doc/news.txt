@@ -186,7 +186,7 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• 'spellfile' location defaults to `stdpath("data").."/spell/"` instead of the
+• 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of the
   first writable directoy in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
 

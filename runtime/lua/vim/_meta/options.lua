@@ -6169,7 +6169,7 @@ vim.bo.spc = vim.bo.spellcapcheck
 --- `zg` and `zw` commands can be used to access each.  This allows using
 --- a personal word list file and a project word list file.
 --- When a word is added while this option is empty Nvim will use
---- (and auto-create) `stdpath('data')/spell/`. For the file name the
+--- (and auto-create) `stdpath('data')/site/spell/`. For the file name the
 --- first language name that appears in 'spelllang' is used, ignoring the
 --- region.
 --- The resulting ".spl" file will be used for spell checking, it does not

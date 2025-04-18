@@ -5550,7 +5550,7 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
 // Initialize 'spellfile' for the current buffer.
 //
 // If the location does not exist, create it. Defaults to
-// stdpath("data") + "/spell/{spelllang}.{encoding}.add".
+// stdpath("data") + "/site/spell/{spelllang}.{encoding}.add".
 static void init_spellfile(void)
 {
   char *lend;
@@ -5579,7 +5579,7 @@ static void init_spellfile(void)
     xstrlcpy(buf, xdg_path, buf_len);
     xfree(xdg_path);
 
-    xstrlcat(buf, "/spell", buf_len);
+    xstrlcat(buf, "/site/spell", buf_len);
 
     char *failed_dir;
     if (os_mkdir_recurse(buf, 0755, &failed_dir, NULL) != 0) {
