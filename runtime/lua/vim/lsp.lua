@@ -1432,9 +1432,9 @@ end
 
 --- Provides an interface between the built-in client and 'includeexpr'.
 ---
---- When 'goto file' commands (e.g. |gf| |gF| |CTRL-W_CTRL-F|) fails with the
---- default first try, this will invoke the "textDocument/documentLink"
---- LSP method to find the link under the cursor.
+--- When 'goto file' commands (e.g. |gf|) fails with the default first try,
+--- this will invoke the "textDocument/documentLink" LSP method to find
+--- the link under the cursor, falls back to |cfile|
 ---
 function lsp.includeexpr()
   return vim.ui._get_urls()[1]
