@@ -1432,7 +1432,7 @@ end
 
 --- Provides an interface between the built-in client and 'includeexpr'.
 ---
---- When 'goto file' commands (e.g. |gf|) fails with the default first try,
+--- When |gf| and related commands fails with the default first try,
 --- this will invoke the "textDocument/documentLink" LSP method to find
 --- the link under the cursor, falls back to |cfile|
 ---
