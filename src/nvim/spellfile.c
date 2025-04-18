@@ -5579,7 +5579,7 @@ static void init_spellfile(void)
     xstrlcpy(buf, xdg_path, buf_len);
     xfree(xdg_path);
 
-    xstrlcat(buf, "/spell", buf_len);
+    xstrlcat(buf, "/site/spell", buf_len);
 
     char *failed_dir;
     if (os_mkdir_recurse(buf, 0755, &failed_dir, NULL) != 0) {
