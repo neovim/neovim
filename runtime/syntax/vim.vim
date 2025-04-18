@@ -8,14 +8,22 @@
 " #############################################################################
 " #############################################################################
 
-" Quit when a syntax file was already loaded {{{2
+" Quit when a syntax file was already loaded {{{1
 if exists("b:current_syntax")
   finish
 endif
 let s:keepcpo = &cpo
 set cpo&vim
 
+" Feature testing {{{1
+
 let s:vim9script = "\n" .. getline(1, 32)->join("\n") =~# '\n\s*vim9\%[script]\>'
+
+function s:has(feature)
+  return has(a:feature) || index(get(g:, "vimsyn_vim_features", []), a:feature) != -1
+endfunction
+
+" Automatically generated keyword lists: {{{1
 
 " vimTodo: contains common special-notices for comments {{{2
 " Use the vimCommentGroup cluster to add your own.
@@ -29,10 +37,8 @@ syn keyword vimStdPlugin contained Arguments Asm Break Cfilter Clear Continue Di
 
 " Vim-specific options {{{2
 syn keyword vimOnlyOption contained	biosk bioskey cp compatible consk conskey cm cryptmethod edcompatible guipty key macatsui mzq mzquantum osfiletype oft renderoptions rop st shelltype sn shortname tenc termencoding ta textauto tx textmode tf ttyfast ttym ttymouse tbi ttybuiltin wiv weirdinvert
-
 " Turn-off setting variants
 syn keyword vimOnlyOption contained	nobiosk nobioskey noconsk noconskey nocp nocompatible noguipty nomacatsui nosn noshortname nota notextauto notx notextmode notf nottyfast notbi nottybuiltin nowiv noweirdinvert
-
 " Invertible setting variants
 syn keyword vimOnlyOption contained	invbiosk invbioskey invconsk invconskey invcp invcompatible invguipty invmacatsui invsn invshortname invta invtextauto invtx invtextmode invtf invttyfast invtbi invttybuiltin invwiv invweirdinvert
 " termcap codes (which can also be set) {{{2
@@ -48,6 +54,19 @@ syn match   vimTermOption contained	"t_*7"
 syn match   vimTermOption contained	"t_&8"
 syn match   vimTermOption contained	"t_%i"
 syn match   vimTermOption contained	"t_k;"
+
+" vimOptions: These are the variable names {{{2
+" GEN_SYN_VIM: vimOption term output code variable, START_STR='syn keyword vimOptionVarName contained', END_STR=''
+syn keyword vimOptionVarName contained t_AB t_AF t_AU t_AL t_al t_bc t_BE t_BD t_cd t_ce t_Ce t_CF t_cl t_cm t_Co t_CS t_Cs t_cs t_CV t_da t_db t_DL t_dl t_ds t_Ds t_EC t_EI t_fs t_fd t_fe t_GP t_IE t_IS t_ke t_ks t_le t_mb t_md t_me t_mr t_ms t_nd t_op t_RF t_RB t_RC t_RI t_Ri t_RK t_RS t_RT t_RV t_Sb t_SC t_se t_Sf t_SH t_SI t_Si t_so t_SR t_sr t_ST t_Te t_te t_TE t_ti t_TI t_Ts t_ts t_u7 t_ue t_us t_Us t_ut t_vb t_ve t_vi t_VS t_vs t_WP t_WS t_XM t_xn t_xs t_ZH t_ZR t_8f t_8b t_8u t_xo
+syn keyword vimOptionVarName contained	t_F1 t_F2 t_F3 t_F4 t_F5 t_F6 t_F7 t_F8 t_F9 t_k1 t_K1 t_k2 t_k3 t_K3 t_k4 t_K4 t_k5 t_K5 t_k6 t_K6 t_k7 t_K7 t_k8 t_K8 t_k9 t_K9 t_KA t_kb t_kB t_KB t_KC t_kd t_kD t_KD t_KE t_KF t_KG t_kh t_KH t_kI t_KI t_KJ t_KK t_kl t_KL t_kN t_kP t_kr t_ku
+syn match   vimOptionVarName contained	"t_%1"
+syn match   vimOptionVarName contained	"t_#2"
+syn match   vimOptionVarName contained	"t_#4"
+syn match   vimOptionVarName contained	"t_@7"
+syn match   vimOptionVarName contained	"t_*7"
+syn match   vimOptionVarName contained	"t_&8"
+syn match   vimOptionVarName contained	"t_%i"
+syn match   vimOptionVarName contained	"t_k;"
 
 " unsupported settings: these are supported by vi but don't do anything in vim {{{2
 " GEN_SYN_VIM: Missing vimOption, START_STR='syn keyword vimErrSetting contained', END_STR=''
@@ -206,14 +225,17 @@ syn match vimBang	      contained	"!"
 syn region vimSubscript contained	matchgroup=vimSubscriptBracket start="\[" end="]" nextgroup=vimSubscript contains=@vimExprList
 
 syn match vimVar	      contained	"\<\h[a-zA-Z0-9#_]*\>"	nextgroup=vimSubscript contains=vim9Super,vim9This
-syn match vimVar		"\<[bwglstav]:\h[a-zA-Z0-9#_]*\>"	nextgroup=vimSubscript
-syn match vimVar		"\<a:\%(000\|\d\+\)\>"	nextgroup=vimSubscript
-syn match vimFBVar      contained   "\<[bwglsta]:\h[a-zA-Z0-9#_]*\>"	nextgroup=vimSubscript
+syn match vimVar		"\<[bwglstav]:\h[a-zA-Z0-9#_]*\>"	nextgroup=vimSubscript contains=vimVarScope
+syn match vimVar		"\<a:\%(000\|1\=[0-9]\|20\)\>"	nextgroup=vimSubscript contains=vimVarScope
+syn match vimFBVar      contained	"\<[bwglsta]:\h[a-zA-Z0-9#_]*\>"	nextgroup=vimSubscript contains=vimVarScope
 
-syn match vimVimVar	"\<v:\h\w*\>"		nextgroup=vimSubscript
-syn match vimOptionVar      	"&\%([lg]:\)\=\a\+\>"	nextgroup=vimSubscript
-syn match vimOptionVar	"&t_\S[a-zA-Z0-9]\>"	nextgroup=vimSubscript
-syn match vimOptionVar        	"&t_k;"		nextgroup=vimSubscript
+" match the scope prefix independently of the retrofitted scope dictionary
+syn match vimVarScope   contained	"\<[bwglstav]:"
+syn match vimVimVar     contained	"\<[bwglstav]:\%(\h\|\d\)\@!"	nextgroup=vimSubscript
+
+syn match vimVarNameError contained "\<\h\w*\>"
+syn match vimVimVar	"\<v:"		nextgroup=vimSubscript,vimVimVarName,vimVarNameError
+syn match vimOptionVar	"&\%([lg]:\)\="		nextgroup=vimSubscript,vimOptionVarName,vimVarNameError
 syn cluster vimSpecialVar	contains=vimEnvvar,vimLetRegister,vimOptionVar,vimVimVar
 
 Vim9 syn match vim9LhsVariable	"\s\=\h[a-zA-Z0-9#_]*\ze\s\+[-+/*%]\=="
@@ -734,7 +756,7 @@ syn match	vimUnletBang	contained	"\a\@1<=!"	skipwhite nextgroup=vimUnletVars
 syn region	vimUnletVars	contained
       \ start="$\I\|\h" skip=+\n\s*\\\|\n\s*"\\ \|^\s*"\\ + end="$" end="\ze[|"]"
       \ nextgroup=vimCmdSep,vimComment
-      \ contains=@vimContinue,vimEnvvar,vimVar
+      \ contains=@vimContinue,vimEnvvar,vimVar,vimVimVar
 
 VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='\%(^\z(\s*\)\S.*\)\@<==<<\s*trim\%(\s\+\)\@>\z(\L\S*\)'	matchgroup=vimLetHereDocStop end='^\z1\=\z2$' extend
 VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='=<<\%(\s*\)\@>\z(\L\S*\)'			matchgroup=vimLetHereDocStop end='^\z1$' extend
@@ -1457,7 +1479,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimFuncMod	Special
  hi def link vimFuncParam	vimVar
  hi def link vimFuncParamEquals	vimOper
- hi def link vimFuncScope	vimVar
+ hi def link vimFuncScope	vimVarScope
  hi def link vimFuncSID	vimNotation
  hi def link vimGroupAdd	vimSynOption
  hi def link vimGroupName	vimGroup
@@ -1528,7 +1550,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimOperContinueComment	vimContinueComment
  hi def link vimOption	PreProc
  hi def link vimOptionVar	Identifier
- hi def link vimVimVar	Identifier
+ hi def link vimOptionVarName	Identifier
  hi def link vimParenSep	Delimiter
  hi def link vimPatSepErr	vimError
  hi def link vimPatSepR	vimPatSep
@@ -1612,6 +1634,9 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimUserCmdKey	vimCommand
  hi def link vimUserFunc	Normal
  hi def link vimVar	Normal
+ hi def link vimVarScope	Identifier
+ hi def link vimVimVar	Identifier
+ hi def link vimVimVarName	Identifier
  hi def link vimWarn	WarningMsg
 
  hi def link vim9Abstract	vimCommand
