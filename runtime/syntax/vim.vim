@@ -214,7 +214,7 @@ syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=vim
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDebuggreedy,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimFor,vimFunction,vimFuncFold,vimGlobal,vimHighlight,vimLet,vimLoadkeymap,vimLockvar,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimRedir,vimSet,vimSleep,vimSyntax,vimThrow,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDebuggreedy,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimFor,vimFunction,vimFuncFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimThrow,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList
 syn cluster vim9CmdList	contains=vim9Abstract,vim9Class,vim9Const,vim9Enum,vim9Export,vim9Final,vim9For,vim9Interface,vim9Type,vim9Var
 syn match vimCmdSep	"\\\@1<!|"	skipwhite nextgroup=@vimCmdList,vimSubst1,vimFunc
 syn match vimCmdSep	":\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
@@ -911,6 +911,93 @@ syn cluster	vimEcho	contains=vimEcho,vimEchohl
 
 syn region	vimExecute	matchgroup=vimCommand start="\<exe\%[cute]\>" skip=+\\|\|\n\s*\\\|\n\s*"\\ + matchgroup=vimCmdSep end="|" excludenl end="$" contains=@vimContinue,@vimExprList transparent
 
+" Filter: {{{2
+" ======
+syn match	vimExFilter		"\<filt\%[er]\>"	skipwhite nextgroup=vimExFilterBang,vimExFilterPattern
+syn match	vimExFilterBang	 contained	"\a\@1<=!"	skipwhite nextgroup=vimExFilterPattern
+syn region	vimExFilterPattern contained
+      \ start="[[:ident:]]"	
+      \ end="\ze[[:space:]\n]"
+      \ skipwhite nextgroup=@vimCmdList
+      \ contains=@vimSubstList
+      \ oneline
+syn region	vimExFilterPattern contained
+      \ matchgroup=Delimiter
+      \ start="\z([^[:space:][:ident:]|"]\)"
+      \ skip="\\\\\|\\\z1"
+      \ end="\z1"
+      \ skipwhite nextgroup=@vimCmdList
+      \ contains=@vimSubstList
+      \ oneline
+
+" Grep and Make: {{{2
+" =============
+" | is the command separator, escaped with \| all other backslashes are passed through literally, no tail comments
+syn match	vimGrep		"\<l\=gr\%[ep]\>"		skipwhite nextgroup=vimGrepBang,vimGrepArgs,vimCmdSep
+syn match	vimGrepadd		"\<l\=grepa\%[dd]\>"	skipwhite nextgroup=vimGrepBang,vimGrepArgs,vimCmdSep
+syn region	vimGrepArgs	contained
+      \ start="|\@!\S"
+      \ skip=+\n\s*\%(\\\|[#"]\\ \)+
+      \ matchgroup=vimCmdSep
+      \ end="|"
+      \ end="$"
+      "\ TODO: include vimSpecFile
+      \ contains=vimGrepBarEscape
+syn match	vimGrepBarEscape	contained	"\\|"
+syn match	vimGrepBang	contained	"\a\@1<=!"		skipwhite nextgroup=vimGrepArgs,vimCmdSep
+
+syn match	vimMake		"\<l\=make\=\>"		skipwhite nextgroup=vimMakeBang,vimMakeArgs,vimCmdSep
+syn region	vimMakeArgs	contained
+      \ start="|\@!\S"
+      \ skip=+\n\s*\%(\\\|[#"]\\ \)+
+      \ matchgroup=vimCmdSep
+      \ end="|"
+      \ end="$"
+      "\ TODO: include vimSpecFile
+      \ contains=vimMakeBarEscape
+syn match	vimMakeBarEscape	contained	"\\|"
+syn match	vimMakeBang	contained	"\a\@1<=!"		skipwhite nextgroup=vimMakeArgs,vimCmdSep
+
+syn match	vimHelpgrep		"\<l\=helpg\%[rep]\>"	skipwhite nextgroup=vimHelpgrepBang,vimHelpgrepPattern
+syn region	vimHelpgrepPattern	contained
+      \ start="\S"
+      \ matchgroup=Special
+      \ end="@\w\w\>"
+      \ end="$"
+      \ contains=@vimSubstList
+      \ oneline
+
+" Vimgrep: {{{2
+" =======
+syn match	vimVimgrep		"\<l\=vim\%[grep]\>"	skipwhite nextgroup=vimVimgrepBang,vimVimgrepPattern
+syn match	vimVimgrepadd		"\<l\=vimgrepa\%[dd]\>"	skipwhite nextgroup=vimVimgrepBang,vimVimgrepPattern
+syn match	vimVimgrepBang	  contained	"\a\@1<=!"		skipwhite nextgroup=vimVimgrepPattern
+syn region	vimVimgrepPattern   contained
+      \ start="[[:ident:]]"			    
+      \ end="\ze[[:space:]\n]"
+      \ skipwhite nextgroup=vimVimgrepFile,vimCmdSep
+      \ contains=@vimSubstList
+      \ oneline
+syn region	vimVimgrepPattern   contained
+      \ matchgroup=Delimiter
+      \ start="\z([^[:space:][:ident:]|"]\)"
+      \ skip="\\\\\|\\\z1"
+      \ end="\z1"
+      \ skipwhite nextgroup=vimVimgrepFlags,vimVimgrepFile,vimCmdSep
+      \ contains=@vimSubstList
+      \ oneline
+syn match	vimVimgrepEscape	  contained	"\\\%(\\|\|.\)"
+syn match	vimVimgrepBarEscape contained	"\\|"
+syn region	vimVimgrepFile	  contained
+      \ start="|\@!\S"
+      \ matchgroup=vimCmdSep
+      \ end="|"
+      \ end="\ze\s"
+      \ end="$"
+      \ skipwhite nextgroup=vimVimgrepFile
+      \ contains=vimSpecFile,vimVimgrepEscape,vimVimgrepBarEscape
+syn match	vimVimgrepFlags	  contained	"\<[gjf]\{,3\}\>" skipwhite nextgroup=vimVimgrepfile
+
 " Maps: {{{2
 " ====
 " GEN_SYN_VIM: vimCommand map, START_STR='syn keyword vimMap', END_STR='skipwhite nextgroup=vimMapMod,vimMapLhs'
@@ -1058,6 +1145,23 @@ syn keyword	vimRedirEnd	       contained	END
 syn keyword	vimSleep		sl[eep]		skipwhite nextgroup=vimSleepBang,vimSleepArg
 syn match	vimSleepBang	contained	"\a\@1<=!"		skipwhite nextgroup=vimSleepArg
 syn match	vimSleepArg	contained	"\<\%(\d\+\)\=m\=\>"
+
+" Sort: {{{2
+" ====
+syn match	vimSort		"\<sort\=\>"			skipwhite nextgroup=vimSortBang,@vimSortOptions,vimSortPattern,vimCmdSep
+syn match	vimSortBang	  contained	"\a\@1<=!"			skipwhite nextgroup=@vimSortOptions,vimSortPattern,vimCmdSep
+syn match	vimSortOptionsError contained	"\a\+"
+syn match	vimSortOptions	  contained	"\<[ilur]*[nfxob]\=[ilur]*\>"		skipwhite nextgroup=vimSortPattern,vimCmdSep
+syn region	vimSortPattern	  contained
+      \ matchgroup=Delimiter
+      \ start="\z([^[:space:][:alpha:]|]\)"
+      \ skip="\\\\\|\\\z1"
+      \ end="\z1"
+      \ skipwhite nextgroup=@vimSortOptions,vimCmdSep
+      \ contains=@vimSubstList
+      \ oneline
+
+syn cluster vimSortOptions contains=vimSortOptions,vimSortOptionsError
 
 " Syntax: {{{2
 "=======
@@ -1522,6 +1626,7 @@ if !exists("skip_vim_syntax_inits")
   hi def link vimHiKeyError	vimError
   hi def link vimMapModErr	vimError
   hi def link vimShebangError	vimError
+  hi def link vimSortOptionsError	Error
   hi def link vimSubstFlagErr	vimError
   hi def link vimSynCaseError	vimError
   hi def link vimSyncError	vimError
@@ -1578,6 +1683,8 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimEnvvar	PreProc
  hi def link vimError	Error
  hi def link vimEscape	Special
+ hi def link vimExFilter	vimCommand
+ hi def link vimExFilterBang	vimCommand
  hi def link vimFBVar	vimVar
  hi def link vimFgBgAttrib	vimHiAttrib
  hi def link vimFuncEcho	vimCommand
@@ -1595,11 +1702,15 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimFuncParamEquals	vimOper
  hi def link vimFuncScope	vimVarScope
  hi def link vimFuncSID	vimNotation
+ hi def link vimGrep	vimCommand
+ hi def link vimGrepadd	vimCommand
+ hi def link vimGrepBang	vimBang
  hi def link vimGroupAdd	vimSynOption
  hi def link vimGroupName	Normal
  hi def link vimGroupRem	vimSynOption
  hi def link vimGroupSpecial	Special
  hi def link vimGroup	Type
+ hi def link vimHelpgrep	vimCommand
  hi def link vimHiAttrib	PreProc
  hi def link vimHiBang	vimBang
  hi def link vimHiBlend	vimHiTerm
@@ -1632,6 +1743,9 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimLetHereDocStop	Special
  hi def link vimLetRegister	vimRegister
  hi def link vimLineComment	vimComment
+ hi def link vimMake	vimCommand
+ hi def link vimMakeadd	vimCommand
+ hi def link vimMakeBang	vimBang
  hi def link vimMapBang	vimBang
  hi def link vimMapLeader	vimBracket
  hi def link vimMapLeaderKey	vimNotation
@@ -1699,6 +1813,9 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimSleep	vimCommand
  hi def link vimSleepArg	Constant
  hi def link vimSleepBang	vimBang
+ hi def link vimSort	vimCommand
+ hi def link vimSortBang	vimBang
+ hi def link vimSortOptions	Special
  hi def link vimSpecFile	Identifier
  hi def link vimSpecFileMod	vimSpecFile
  hi def link vimSpecial	Type
@@ -1766,6 +1883,10 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimUserFunc	Normal
  hi def link vimVar	Normal
  hi def link vimVarScope	Identifier
+ hi def link vimVimgrep	vimCommand
+ hi def link vimVimgrepadd	vimCommand
+ hi def link vimVimgrepBang	vimBang
+ hi def link vimVimgrepFlags	Special
  hi def link vimVimVar	Identifier
  hi def link vimVimVarName	Identifier
  hi def link vimWarn	WarningMsg
