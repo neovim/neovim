@@ -967,6 +967,10 @@ NOTE: Completion works for many commands. It is especially useful for `:help`{vi
  6. While in command mode, press `<C-d>`{normal} to see possible completions.
     Press `<Tab>`{normal} to use the completion menu and select a match.
 
+# What's next?
+
+Run `:help nvim-quickstart`{vim} to get started with configuring or extending Nvim.
+
 # CONCLUSION
 
 This was intended to give a brief overview of the Neovim editor, just enough to
