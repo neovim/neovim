@@ -4147,7 +4147,7 @@ void separate_nextcmd(exarg_T *eap)
 }
 
 /// get + command from ex argument
-static char *getargcmd(char **argp)
+char *getargcmd(char **argp)
 {
   char *arg = *argp;
   char *command = NULL;
@@ -4222,7 +4222,7 @@ static char *get_bad_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 /// Get "++opt=arg" argument.
 ///
 /// @return  FAIL or OK.
-static int getargopt(exarg_T *eap)
+int getargopt(exarg_T *eap)
 {
   char *arg = eap->arg + 2;
   int *pp = NULL;
