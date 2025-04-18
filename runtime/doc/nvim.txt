@@ -75,7 +75,15 @@ the same Nvim configuration on all of your machines, by creating
 ==============================================================================
 What next?                                                   *nvim-quickstart*
 
+If you want to use Lua to configure Nvim, you can copy an example
+configuration to your |init.lua|
+>vim
+    :exe 'edit' stdpath('config') .. '/init.lua'
+    :read $VIMRUNTIME/example_init.lua
+<
 See |lua-guide| for practical notes on using Lua to configure Nvim.
+
+"IDE" features in Nvim are provided by Language Server Protocol. See |lsp|
 
 If you are just trying out Nvim for a few minutes, and want to see the
 extremes of what it can do, try one of these popular "extension packs" or

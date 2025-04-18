@@ -93,10 +93,9 @@ Finally, you can include Lua code in a Vimscript file by putting it inside a
 Using Lua files on startup                                    *lua-guide-config*
 
 Nvim supports using `init.vim` or `init.lua` as the configuration file, but
-not both at the same time. This should be placed in your |config| directory,
-which is typically `~/.config/nvim` for Linux, BSD, or macOS, and
-`~/AppData/Local/nvim/` for Windows. Note that you can use Lua in `init.vim`
-and Vimscript in `init.lua`, which will be covered below.
+not both at the same time. This should be placed in your |config| directory
+(run `:echo stdpath('config')` to see where it is). Note that you can also use
+Lua in `init.vim` and Vimscript in `init.lua`, which will be covered below.
 
 If you'd like to run any other Lua script on |startup| automatically, then you
 can simply put it in `plugin/` in your |'runtimepath'|.

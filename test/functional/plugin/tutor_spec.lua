@@ -131,7 +131,7 @@ describe(':Tutor', function()
       {0:  }University. E-mail: {2:bware@mines.colorado.edu}.                                  |
     ]]
 
-    feed(':969<CR>zt')
+    feed(':973<CR>zt')
     screen:expect(expected)
   end)
 end)
