@@ -2417,19 +2417,21 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
     // Initialize substitute replacement string
     SubReplacementString sub;
     sub_get_replacement(&sub);
-    wms->replacement = (PossiblyFreedShadaEntry) {
-      .can_free_entry = false,
-      .data = {
-        .type = kSDItemSubString,
-        .timestamp = sub.timestamp,
+    if (sub.sub != NULL) {  // Don't store empty replacement string
+      wms->replacement = (PossiblyFreedShadaEntry) {
+        .can_free_entry = false,
         .data = {
-          .sub_string = {
-            .sub = sub.sub,
-          }
-        },
-        .additional_data = sub.additional_data,
-      }
-    };
+          .type = kSDItemSubString,
+          .timestamp = sub.timestamp,
+          .data = {
+            .sub_string = {
+              .sub = sub.sub,
+            }
+          },
+          .additional_data = sub.additional_data,
+        }
+      };
+    }
   }
 
   // Initialize global marks
