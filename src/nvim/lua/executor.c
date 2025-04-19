@@ -1813,10 +1813,14 @@ bool nlua_exec_file(const char *path)
     // Read all input from stdin, unless interrupted (ctrl-c).
     while (true) {
       if (got_int) {  // User canceled.
+        file_close(&stdin_dup, false);
+        kv_destroy(sb);
         return false;
       }
       ptrdiff_t read_size = file_read(&stdin_dup, IObuff, 64);
       if (read_size < 0) {  // Error.
+        file_close(&stdin_dup, false);
+        kv_destroy(sb);
         return false;
       }
       if (read_size > 0) {
