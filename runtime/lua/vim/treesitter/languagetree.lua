@@ -83,7 +83,7 @@ local TSCallbackNames = {
 ---@field private _children table<string,vim.treesitter.LanguageTree> Injected languages
 ---@field private _injection_query vim.treesitter.Query Queries defining injected languages
 ---@field private _processed_injection_range Range? Range for which injections have been processed
----@field private _opts table Options
+---@field private _opts vim.treesitter.LanguageTree.new.Opts Options
 ---@field private _parser TSParser Parser for language
 ---Table of regions for which the tree is currently running an async parse
 ---@field private _ranges_being_parsed table<string, boolean>
@@ -103,7 +103,7 @@ local TSCallbackNames = {
 ---@field private _num_valid_regions integer Number of valid regions
 ---@field private _is_entirely_valid boolean Whether the entire tree (excluding children) is valid.
 ---@field private _logger? fun(logtype: string, msg: string)
----@field private _logfile? file*
+---@field private _logfile? file
 local LanguageTree = {}
 
 ---Optional arguments:
@@ -133,7 +133,7 @@ function LanguageTree.new(source, lang, opts)
 
   local injections = opts.injections or {}
 
-  --- @class vim.treesitter.LanguageTree
+  --- @type vim.treesitter.LanguageTree
   local self = {
     _source = source,
     _lang = lang,
@@ -201,15 +201,14 @@ function LanguageTree:_set_logger()
 end
 
 ---Measure execution time of a function, in nanoseconds.
----@generic R1, R2, R3
----@param f fun(): R1, R2, R3
----@return number, R1, R2, R3
+---@generic T, R
+---@param f fun(...: T...): R...
+---@return integer, R...
 local function tcall(f, ...)
-  local start = hrtime()
+  local start = hrtime() --[[@as integer]]
   ---@diagnostic disable-next-line
   local r = { f(...) }
-  --- @type number
-  local duration = hrtime() - start
+  local duration = (hrtime() --[[@as integer]]) - start
   --- @diagnostic disable-next-line: redundant-return-value
   return duration, unpack(r)
 end
@@ -368,6 +367,7 @@ function LanguageTree:source()
   return self._source
 end
 
+--- @async
 --- @private
 --- @param range boolean|Range?
 --- @param thread_state ParserThreadState
@@ -526,7 +526,7 @@ function LanguageTree:_async_parse(range, on_parse)
   local function step()
     if is_buffer_parser then
       if
-        not vim.api.nvim_buf_is_valid(source --[[@as number]])
+        not vim.api.nvim_buf_is_valid(source --[[@as integer]])
       then
         return nil
       end
@@ -586,6 +586,7 @@ function LanguageTree:parse(range, on_parse)
   return trees
 end
 
+---@async
 ---@param thread_state ParserThreadState
 ---@param time integer
 function LanguageTree:_subtract_time(thread_state, time)
@@ -596,6 +597,7 @@ function LanguageTree:_subtract_time(thread_state, time)
 end
 
 --- @private
+--- @async
 --- @param range boolean|Range|nil
 --- @param thread_state ParserThreadState
 --- @return table<integer, TSTree> trees

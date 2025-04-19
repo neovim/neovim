@@ -113,6 +113,7 @@ local function get_lines_info(lines, parts)
   for _, l in ipairs(lines) do
     -- Update lines indent: minimum of all indents except blank lines
     local _, indent_width_cur, indent_cur = l:find('^(%s*)')
+    assert(indent_width_cur and indent_cur)
 
     -- Ignore blank lines completely when making a decision
     if indent_width_cur < l:len() then
@@ -165,6 +166,7 @@ local function make_uncomment_function(parts)
   local regex = '^(%s*)' .. l_esc .. '(.*)' .. r_esc .. '(%s-)$'
   local regex_trimmed = '^(%s*)' .. vim.trim(l_esc) .. '(.*)' .. vim.trim(r_esc) .. '(%s-)$'
 
+  --- @param line string
   return function(line)
     -- Try regex with exact comment parts first, fall back to trimmed parts
     local indent, new_line, trail = line:match(regex)
