@@ -1580,7 +1580,10 @@ function vim.api.nvim_input(keys) end
 --- The same specifiers are used as for a key press, except
 --- that the "-" separator is optional, so "C-A-", "c-a"
 --- and "CA" can all be used to specify Ctrl+Alt+click.
---- @param grid integer Grid number if the client uses `ui-multigrid`, else 0.
+--- @param grid integer Grid number if the client uses `ui-multigrid`, with manual positioning of the
+--- windows else 0. If you are using multigrid and let nvim determine the positioning
+--- of the windows when using multigrid, you can pass 0 and nvim will find the window
+--- grid for you. You can combine both approaches.
 --- @param row integer Mouse row-position (zero-based, like redraw events)
 --- @param col integer Mouse column-position (zero-based, like redraw events)
 function vim.api.nvim_input_mouse(button, action, modifier, grid, row, col) end
