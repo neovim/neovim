@@ -1201,6 +1201,57 @@ describe('API/win', function()
         api.nvim_win_text_height(0, { start_row = 0, start_vcol = 220, end_row = 2, end_vcol = 42 })
       )
     end)
+
+    it('with virtual lines around a fold', function()
+      local X = api.nvim_get_vvar('maxcol')
+      local screen = Screen.new(45, 10)
+      exec([[
+        call setline(1, range(1, 8))
+        3,6fold
+      ]])
+      local ns = api.nvim_create_namespace('TEST')
+      api.nvim_buf_set_extmark(
+        0,
+        ns,
+        1,
+        0,
+        { virt_lines = { { { 'VIRT LINE 1' } }, { { 'VIRT LINE 2' } } } }
+      )
+      api.nvim_buf_set_extmark(
+        0,
+        ns,
+        6,
+        0,
+        { virt_lines = { { { 'VIRT LINE 3' } } }, virt_lines_above = true }
+      )
+      screen:expect([[
+        ^1                                            |
+        2                                            |
+        VIRT LINE 1                                  |
+        VIRT LINE 2                                  |
+        {13:+--  4 lines: 3······························}|
+        VIRT LINE 3                                  |
+        7                                            |
+        8                                            |
+        {1:~                                            }|
+                                                     |
+      ]])
+      eq({ all = 8, fill = 3 }, api.nvim_win_text_height(0, {}))
+      eq({ all = 5, fill = 2 }, api.nvim_win_text_height(0, { end_row = 2 }))
+      eq({ all = 5, fill = 2 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = X }))
+      eq({ all = 5, fill = 2 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = 90 }))
+      eq({ all = 5, fill = 2 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = 46 }))
+      eq({ all = 5, fill = 2 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = 45 }))
+      eq({ all = 5, fill = 2 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = 1 }))
+      eq({ all = 4, fill = 2 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = 0 }))
+      eq({ all = 3, fill = 1 }, api.nvim_win_text_height(0, { start_row = 6 }))
+      eq({ all = 2, fill = 0 }, api.nvim_win_text_height(0, { start_row = 6, start_vcol = 0 }))
+      eq({ all = 2, fill = 0 }, api.nvim_win_text_height(0, { start_row = 6, start_vcol = 44 }))
+      eq({ all = 1, fill = 0 }, api.nvim_win_text_height(0, { start_row = 6, start_vcol = 45 }))
+      eq({ all = 1, fill = 0 }, api.nvim_win_text_height(0, { start_row = 6, start_vcol = 89 }))
+      eq({ all = 1, fill = 0 }, api.nvim_win_text_height(0, { start_row = 6, start_vcol = 90 }))
+      eq({ all = 1, fill = 0 }, api.nvim_win_text_height(0, { start_row = 6, start_vcol = X }))
+    end)
   end)
 
   describe('open_win', function()
