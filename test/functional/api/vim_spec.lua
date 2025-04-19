@@ -4307,7 +4307,6 @@ describe('API', function()
         cmd = 'put',
         args = {},
         bang = false,
-        range = {},
         reg = '+',
         addr = 'line',
         magic = {
@@ -4346,7 +4345,6 @@ describe('API', function()
         cmd = 'put',
         args = {},
         bang = false,
-        range = {},
         reg = '',
         addr = 'line',
         magic = {
@@ -4429,7 +4427,6 @@ describe('API', function()
         cmd = 'write',
         args = {},
         bang = true,
-        range = {},
         addr = 'line',
         magic = {
           file = true,
@@ -4470,7 +4467,6 @@ describe('API', function()
           cmd = 'split',
           args = { 'foo.txt' },
           bang = false,
-          range = {},
           addr = '?',
           magic = {
             file = true,
@@ -4514,7 +4510,6 @@ describe('API', function()
           cmd = 'split',
           args = { 'foo.txt' },
           bang = false,
-          range = {},
           addr = '?',
           magic = {
             file = true,
@@ -4600,7 +4595,6 @@ describe('API', function()
         cmd = 'argadd',
         args = { 'a.txt' },
         bang = false,
-        range = {},
         addr = 'arg',
         magic = {
           file = true,
