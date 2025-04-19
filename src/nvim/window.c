@@ -423,7 +423,7 @@ newwindow:
       // First create a new tab with the window, then go back to
       // the old tab and close the window there.
       win_T *wp = curwin;
-      if (win_new_tabpage(Prenum, NULL) == OK
+      if (win_new_tabpage(Prenum, NULL, true) != NULL
           && valid_tabpage(oldtab)) {
         tabpage_T *newtab = curtab;
         goto_tabpage_tp(oldtab, true, true);
@@ -4177,28 +4177,31 @@ void free_tabpage(tabpage_T *tp)
 /// @param after Put new tabpage after tabpage "after", or after the current
 ///              tabpage in case of 0.
 /// @param filename Will be passed to apply_autocmds().
-/// @return Was the new tabpage created successfully? FAIL or OK.
-int win_new_tabpage(int after, char *filename)
+/// @return Pointer to the new tabpage, or NULL if error.
+tabpage_T *win_new_tabpage(int after, char *filename, bool enter)
 {
   tabpage_T *old_curtab = curtab;
+  win_T *old_curwin = curwin;
 
   if (cmdwin_type != 0) {
     emsg(_(e_cmdwin));
-    return FAIL;
+    return NULL;
   }
 
   tabpage_T *newtp = alloc_tabpage();
 
   // Remember the current windows in this Tab page.
-  if (leave_tabpage(curbuf, true) == FAIL) {
+  if (enter && leave_tabpage(curbuf, true) == FAIL) {
     xfree(newtp);
-    return FAIL;
+    return NULL;
   }
 
   newtp->tp_localdir = old_curtab->tp_localdir
                        ? xstrdup(old_curtab->tp_localdir) : NULL;
 
-  curtab = newtp;
+  if (enter) {
+    curtab = newtp;
+  }
 
   // Create a new empty window.
   if (win_alloc_firstwin(old_curtab->tp_curwin) == OK) {
@@ -4230,26 +4233,35 @@ int win_new_tabpage(int after, char *filename)
 
     newtp->tp_topframe = topframe;
     last_status(false);
-
     redraw_all_later(UPD_NOT_VALID);
 
-    tabpage_check_windows(old_curtab);
+    if (enter) {
+      tabpage_check_windows(old_curtab);
 
-    lastused_tabpage = old_curtab;
+      lastused_tabpage = old_curtab;
 
-    entering_window(curwin);
+      entering_window(curwin);
+    }
 
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
-    apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
+    if (enter) {
+      apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
+    }
     apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
-    apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+    if (enter) {
+      apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+    }
 
-    return OK;
+    if (!enter && win_valid(old_curwin)) {
+      curwin = old_curwin;
+    }
+
+    return newtp;
   }
 
   // Failed, get back the previous Tab page
   enter_tabpage(curtab, curbuf, true, true);
-  return FAIL;
+  return NULL;
 }
 
 // Open a new tab page if ":tab cmd" was used.  It will edit the same buffer,
@@ -4265,11 +4277,11 @@ int may_open_tabpage(void)
 
   cmdmod.cmod_tab = 0;         // reset it to avoid doing it twice
   postponed_split_tab = 0;
-  int status = win_new_tabpage(n, NULL);
-  if (status == OK) {
+  tabpage_T *tp = win_new_tabpage(n, NULL, true);
+  if (tp != NULL) {
     apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
   }
-  return status;
+  return tp == NULL ? FAIL : OK;
 }
 
 // Create up to "maxcount" tabpages with empty windows.
@@ -4287,7 +4299,7 @@ int make_tabpages(int maxcount)
 
   int todo;
   for (todo = count - 1; todo > 0; todo--) {
-    if (win_new_tabpage(0, NULL) == FAIL) {
+    if (win_new_tabpage(0, NULL, true) == NULL) {
       break;
     }
   }
