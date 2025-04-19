@@ -658,6 +658,33 @@ local function diagnostics_at_cursor(diagnostics)
   return cursor_diagnostics
 end
 
+--- @param diagnostics table<integer, vim.Diagnostic[]>
+--- @return vim.Diagnostic[]
+local function diagnostics_not_at_cursor(diagnostics)
+  local cursor_lnum = api.nvim_win_get_cursor(0)[1] - 1
+
+  local non_cursor_diagnostics = {} --- @type table<integer, vim.Diagnostic[]>
+
+  for lnum, line_diags in pairs(diagnostics) do
+    local filtered_line_diags = {} --- @type vim.Diagnostic[]
+
+    for _, diag in ipairs(line_diags) do
+      local end_lnum = diag.end_lnum or diag.lnum
+
+      if cursor_lnum < diag.lnum or cursor_lnum > end_lnum then
+        table.insert(filtered_line_diags, diag)
+      end
+    end
+
+    -- if we found any diagnostics in this iteration, record them
+    if #filtered_line_diags > 0 then
+      non_cursor_diagnostics[lnum] = filtered_line_diags
+    end
+  end
+
+  return non_cursor_diagnostics
+end
+
 --- @param namespace integer
 --- @param bufnr integer
 --- @param diagnostics vim.Diagnostic[]
@@ -1621,28 +1648,29 @@ M.handlers.virtual_text = {
 
     local line_diagnostics = diagnostic_lines(diagnostics)
 
-    if opts.virtual_text.current_line == true then
-      api.nvim_create_autocmd('CursorMoved', {
-        buffer = bufnr,
-        group = ns.user_data.virt_text_augroup,
-        callback = function()
-          local lnum = api.nvim_win_get_cursor(0)[1] - 1
-          render_virtual_text(
-            ns.user_data.virt_text_ns,
-            bufnr,
-            { [lnum] = diagnostics_at_cursor(line_diagnostics) },
-            opts.virtual_text
-          )
-        end,
-      })
-      -- Also show diagnostics for the current line before the first CursorMoved event.
+    local render_virtual_text_by_cursor_pos = function()
       local lnum = api.nvim_win_get_cursor(0)[1] - 1
+
+      local diagnostics_by_cursor_pos = opts.virtual_text.current_line
+          and { [lnum] = diagnostics_at_cursor(line_diagnostics) }
+        or diagnostics_not_at_cursor(line_diagnostics)
+
       render_virtual_text(
         ns.user_data.virt_text_ns,
         bufnr,
-        { [lnum] = diagnostics_at_cursor(line_diagnostics) },
+        diagnostics_by_cursor_pos,
         opts.virtual_text
       )
+    end
+
+    if opts.virtual_text.current_line ~= nil then
+      api.nvim_create_autocmd('CursorMoved', {
+        buffer = bufnr,
+        group = ns.user_data.virt_text_augroup,
+        callback = render_virtual_text_by_cursor_pos,
+      })
+      -- Also show diagnostics for the current line before the first CursorMoved event.
+      render_virtual_text_by_cursor_pos()
     else
       render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, opts.virtual_text)
     end
