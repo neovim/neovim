@@ -262,7 +262,7 @@ describe('ui/cursor', function()
         m.attr = { background = Screen.colors.DarkGray }
       end
       if m.id_lm then
-        m.id_lm = 73
+        m.id_lm = 75
         m.attr_lm = {}
       end
     end

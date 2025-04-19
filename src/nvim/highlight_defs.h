@@ -130,6 +130,8 @@ typedef enum {
   HLF_BFOOTER,    ///< Float Border Footer
   HLF_TS,         ///< status line for terminal window
   HLF_TSNC,       ///< status line for non-current terminal window
+  HLF_SE,         ///< stderr messages (from shell)
+  HLF_SO,         ///< stdout messages (from shell)
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 
