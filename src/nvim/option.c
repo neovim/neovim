@@ -439,7 +439,7 @@ void set_init_1(bool clean_arg)
 /// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 ///
 /// @return Default value of option for the scope specified in opt_flags.
-static OptVal get_option_default(const OptIndex opt_idx, int opt_flags)
+OptVal get_option_default(const OptIndex opt_idx, int opt_flags)
 {
   vimoption_T *opt = &options[opt_idx];
   bool is_global_local_option = option_is_global_local(opt_idx);
@@ -3468,7 +3468,7 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     .os_errbuf = errbuf,
     .os_errbuflen = errbuflen,
     .os_buf = curbuf,
-    .os_win = curwin
+    .os_win = curwin,
   };
 
   if (direct) {

@@ -2271,6 +2271,8 @@ describe('TUI', function()
       '--cmd',
       'set notermguicolors',
       '--cmd',
+      nvim_set,
+      '--cmd',
       'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile',
     }, {
       term = true,
@@ -2284,10 +2286,9 @@ describe('TUI', function()
     ]])
     screen:expect([[
       ^                         │                        |
-      {2:~                        }│{4:~                       }|*5
-      {2:~                        }│{5:[No Name]   0,0-1    All}|
+      {2:~                        }│{4:~                       }|*6
       {2:~                        }│                        |
-      {5:new                       }{6:{MATCH:<.*[/\]nvim }}|
+      {5:new                       }{6:{MATCH:<.*[/\]nvim} [-] }|
                                                         |
     ]])
   end)
@@ -2519,7 +2520,7 @@ describe('TUI', function()
       grid = [[
       ^aaaaaaaaaaaa                                      |
       aaaaaaaaaaaa                                      |*3
-      < [+] 1,1                                         |
+      <        All                                      |
                                                         |
       -- TERMINAL --                                    |
     ]],

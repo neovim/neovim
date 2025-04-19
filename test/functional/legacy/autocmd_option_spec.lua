@@ -355,21 +355,55 @@ describe('au OptionSet', function()
 
     it('with string global-local (to window) option', function()
       local oldval = eval('&statusline')
+      local default_statusline =
+        "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
 
       command('set statusline=foo')
-      expected_combination({ 'statusline', oldval, oldval, '', 'foo', 'global', 'set' })
+      expected_combination({
+        'statusline',
+        oldval,
+        oldval,
+        oldval,
+        'foo',
+        'global',
+        'set',
+      })
 
       -- Note: v:option_old is the old global value for global-local options.
       -- but the old local value for all other kinds of options.
       command('set statusline&')
-      expected_combination({ 'statusline', 'foo', 'foo', 'foo', oldval, 'global', 'set' })
+      expected_combination({
+        'statusline',
+        'foo',
+        'foo',
+        'foo',
+        default_statusline,
+        'global',
+        'set',
+      })
 
       command('setglobal statusline=bar')
-      expected_combination({ 'statusline', oldval, '', oldval, 'bar', 'global', 'setglobal' })
+      expected_combination({
+        'statusline',
+        default_statusline,
+        '',
+        default_statusline,
+        'bar',
+        'global',
+        'setglobal',
+      })
 
       command('noa set statusline&')
       command('setlocal statusline=baz')
-      expected_combination({ 'statusline', oldval, oldval, '', 'baz', 'local', 'setlocal' })
+      expected_combination({
+        'statusline',
+        default_statusline,
+        default_statusline,
+        '',
+        'baz',
+        'local',
+        'setlocal',
+      })
 
       -- Note: v:option_old is the old global value for global-local options.
       -- but the old local value for all other kinds of options.

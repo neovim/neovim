@@ -1756,7 +1756,7 @@ describe('builtin popupmenu', function()
           grid = [[
           ## grid 1
             [5:--------------------------------]|*3
-            {3:[Scratch] [Preview]             }|
+            {3:[Scratch] [Preview][-]          }|
             [2:--------------------------------]|*14
             {4:[No Name] [+]                   }|
             [3:--------------------------------]|
@@ -1781,7 +1781,7 @@ describe('builtin popupmenu', function()
         screen:expect([[
           1info                           |
           {1:~                               }|*2
-          {3:[Scratch] [Preview]             }|
+          {3:[Scratch] [Preview][-]          }|
           one^                             |
           {s:one            }{1:                 }|
           {n:two            }{1:                 }|
@@ -8493,7 +8493,7 @@ describe('builtin popupmenu', function()
         screen:expect([[
           info                            |
           {1:~                               }|*2
-          {3:[Scratch] [Preview]             }|
+          {3:[Scratch] [Preview][-]          }|
           {8:foo}^                             |
           {s:foo            }{1:                 }|
           {n:bar            }{1:                 }|
