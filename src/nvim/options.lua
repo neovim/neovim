@@ -1580,8 +1580,10 @@ local options = {
         	    Useful when there is additional information about the
         	    match, e.g., what file it comes from.
 
-           nearest  Matches are presented in order of proximity to the cursor
-        	    position.  This applies only to matches from the current
+           nearest  Matches are listed based on their proximity to the cursor
+        	    position, unlike the default behavior, which only
+        	    considers proximity for matches appearing below the
+        	    cursor.  This applies only to matches from the current
         	    buffer.  No effect if "fuzzy" is present.
 
            noinsert Do not insert any text for a match until the user selects
