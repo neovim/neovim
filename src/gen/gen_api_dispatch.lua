@@ -73,6 +73,9 @@ local function add_function(fn)
       fn.receives_arena = true
       fn.parameters[#fn.parameters] = nil
     end
+    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][2] == 'opts' then
+      fn.has_opts = true
+    end
   end
 end
 
@@ -451,19 +454,41 @@ for i = 1, #functions do
       local param = fn.parameters[j]
       local rt = real_type(param[1])
       local converted = 'arg_' .. j
-      output:write('\n  ' .. rt .. ' ' .. converted .. ';')
+      if j ~= #fn.parameters or not fn.has_opts then
+        output:write('\n  ' .. rt .. ' ' .. converted .. ';')
+      else
+        output:write('\n  ' .. rt .. ' ' .. converted .. ' = { 0 };')
+      end
     end
     output:write('\n')
+
+    local blk_argsize = true
     if not fn.receives_array_args then
-      output:write('\n  if (args.size != ' .. #fn.parameters .. ') {')
-      output:write(
-        '\n    api_set_error(error, kErrorTypeException, \
-        "Wrong number of arguments: expecting '
-          .. #fn.parameters
-          .. ' but got %zu", args.size);'
-      )
-      output:write('\n    goto cleanup;')
-      output:write('\n  }\n')
+      local args_num = #fn.parameters
+      local extra_msg = ''
+      if fn.has_opts == true then
+        args_num = args_num - 1
+        extra_msg = 'at least '
+        if args_num > 0 then
+          output:write('\n  if (args.size < ' .. args_num .. ') {')
+        else
+          blk_argsize = false
+        end
+      else
+        output:write('\n  if (args.size != ' .. #fn.parameters .. ') {')
+      end
+
+      if blk_argsize then
+        output:write(
+          '\n    api_set_error(error, kErrorTypeException, \
+          "Wrong number of arguments: expecting '
+            .. extra_msg
+            .. args_num
+            .. ' but got %zu", args.size);'
+        )
+        output:write('\n    goto cleanup;')
+        output:write('\n  }\n')
+      end
     end
 
     -- Validation/conversion for each argument
@@ -475,11 +500,25 @@ for i = 1, #functions do
       if rt == 'Object' then
         output:write('\n  ' .. converted .. ' = args.items[' .. (j - 1) .. '];\n')
       elseif rt:match('^KeyDict_') then
+        local opt_arg_block = fn.has_opts == true and j == #fn.parameters
+        local indent = ''
+
+        if opt_arg_block then
+          output:write('\n  if (args.size == ' .. j .. ') {')
+          indent = '  '
+        end
+
         converted = '&' .. converted
-        output:write('\n  if (args.items[' .. (j - 1) .. '].type == kObjectTypeDict) {') --luacheck: ignore 631
-        output:write('\n    memset(' .. converted .. ', 0, sizeof(*' .. converted .. '));') -- TODO: neeeee
         output:write(
-          '\n    if (!api_dict_to_keydict('
+          '\n' .. indent .. '  if (args.items[' .. (j - 1) .. '].type == kObjectTypeDict) {'
+        ) --luacheck: ignore 631
+        output:write(
+          '\n' .. indent .. '    memset(' .. converted .. ', 0, sizeof(*' .. converted .. '));'
+        ) -- TODO: neeeee
+        output:write(
+          '\n'
+            .. indent
+            .. '    if (!api_dict_to_keydict('
             .. converted
             .. ', '
             .. rt
@@ -487,20 +526,26 @@ for i = 1, #functions do
             .. (j - 1)
             .. '].data.dict, error)) {'
         )
-        output:write('\n      goto cleanup;')
-        output:write('\n    }')
+        output:write('\n' .. indent .. '      goto cleanup;')
+        output:write('\n' .. indent .. '    }')
         output:write(
-          '\n  } else if (args.items['
+          '\n'
+            .. indent
+            .. '  } else if (args.items['
             .. (j - 1)
             .. '].type == kObjectTypeArray && args.items['
             .. (j - 1)
             .. '].data.array.size == 0) {'
         ) --luacheck: ignore 631
-        output:write('\n    memset(' .. converted .. ', 0, sizeof(*' .. converted .. '));')
-
-        output:write('\n  } else {')
         output:write(
-          '\n    api_set_error(error, kErrorTypeException, \
+          '\n' .. indent .. '    memset(' .. converted .. ', 0, sizeof(*' .. converted .. '));'
+        )
+
+        output:write('\n' .. indent .. '  } else {')
+        output:write(
+          '\n'
+            .. indent
+            .. '    api_set_error(error, kErrorTypeException, \
           "Wrong type for argument '
             .. j
             .. ' when calling '
@@ -509,8 +554,12 @@ for i = 1, #functions do
             .. param[1]
             .. '");'
         )
-        output:write('\n    goto cleanup;')
-        output:write('\n  }\n')
+        output:write('\n' .. indent .. '    goto cleanup;')
+        output:write('\n' .. indent .. '  }\n')
+
+        if opt_arg_block then
+          output:write('\n  }')
+        end
       else
         if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') then
           -- Buffer, Window, and Tabpage have a specific type, but are stored in integer
@@ -745,16 +794,27 @@ local function process_function(fn)
     Error err = ERROR_INIT;
     Arena arena = ARENA_EMPTY;
     char *err_param = 0;
-    if (lua_gettop(lstate) != %i) {
-      api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
+  ]],
+    lua_c_function_name
+  )
+
+  local ex_0 = false
+  if #fn.parameters > 1 or not fn.has_opts then
+    write_shifted_output(
+      [[
+    if (lua_gettop(lstate) %s %i) {
+      api_set_error(&err, kErrorTypeValidation, "Expected %s%i argument%s");
       goto exit_0;
     }
-  ]],
-    lua_c_function_name,
-    #fn.parameters,
-    #fn.parameters,
-    (#fn.parameters == 1) and '' or 's'
-  )
+    ]],
+      fn.has_opts and '<' or '!=',
+      fn.has_opts and #fn.parameters - 1 or #fn.parameters,
+      fn.has_opts and 'at least ' or '',
+      fn.has_opts and #fn.parameters - 1 or #fn.parameters,
+      (#fn.parameters == 1 or #fn.parameters == 2 and fn.has_opts) and '' or 's'
+    )
+    ex_0 = true
+  end
   lua_c_functions[#lua_c_functions + 1] = {
     binding = lua_c_function_name,
     api = fn.name,
@@ -778,6 +838,7 @@ local function process_function(fn)
       goto exit_0;
     }
     ]])
+    ex_0 = true
   elseif fn.textlock_allow_cmdwin then
     write_shifted_output([[
     if (textlock != 0 || expr_map_locked()) {
@@ -785,6 +846,7 @@ local function process_function(fn)
       goto exit_0;
     }
     ]])
+    ex_0 = true
   end
 
   local cparams = ''
@@ -806,17 +868,34 @@ local function process_function(fn)
     end
     local errshift = 0
     local seterr = ''
+    local indent = ''
     if string.match(param_type, '^KeyDict_') then
-      write_shifted_output(
-        [[
+      if fn.has_opts and j == #fn.parameters then
+        write_shifted_output(
+          [[
+    %s %s = KEYDICT_INIT;
+    if (lua_gettop(lstate) == %d) {
+      nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &arena, &err);
+      ]],
+          param_type,
+          cparam,
+          #fn.parameters,
+          cparam,
+          param_type
+        )
+        indent = '  '
+      else
+        write_shifted_output(
+          [[
     %s %s = KEYDICT_INIT;
     nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &arena, &err);
-    ]],
-        param_type,
-        cparam,
-        cparam,
-        param_type
-      )
+      ]],
+          param_type,
+          cparam,
+          cparam,
+          param_type
+        )
+      end
       cparam = '&' .. cparam
       errshift = 1 -- free incomplete dict on error
       arg_free_code = '  api_luarefs_free_keydict('
@@ -827,23 +906,38 @@ local function process_function(fn)
     else
       write_shifted_output(
         [[
-    const %s %s = nlua_pop_%s(lstate, %s&arena, &err);]],
+    const %s %s = nlua_pop_%s(lstate, %s&arena, &err);
+      ]],
         param[1],
         cparam,
         param_type,
         extra
       )
-      seterr = '\n      err_param = "' .. param[2] .. '";'
+      seterr = '\n ' .. indent .. '   err_param = "' .. param[2] .. '";'
     end
 
-    write_shifted_output([[
+    write_shifted_output(
+      [[
+    %sif (ERROR_SET(&err)) {%s
+    %s  goto exit_%u;
+    %s}
 
-    if (ERROR_SET(&err)) {]] .. seterr .. [[
+    ]],
+      indent,
+      seterr,
+      indent,
+      #fn.parameters - j + errshift,
+      indent
+    )
 
-      goto exit_%u;
+    if #fn.parameters - j + errshift == 0 then
+      ex_0 = true
+    end
+    if indent ~= '' then
+      write_shifted_output([[
     }
-
-    ]], #fn.parameters - j + errshift)
+      ]])
+    end
     free_code[#free_code + 1] = arg_free_code
     cparams = cparam .. ', ' .. cparams
   end
@@ -873,9 +967,10 @@ local function process_function(fn)
       free_at_exit_code = free_at_exit_code .. ('\nexit_%u:\n%s'):format(rev_i, code)
     end
   end
-  local err_throw_code = [[
+  local err_throw_code = string.format(
+    [[
 
-exit_0:
+%s
   arena_mem_free(arena_finish(&arena));
   if (ERROR_SET(&err)) {
     luaL_where(lstate, 1);
@@ -889,7 +984,10 @@ exit_0:
     lua_concat(lstate, err_param ? 5 : 2);
     return lua_error(lstate);
   }
-]]
+]],
+    ex_0 and 'exit_0:' or ''
+  )
+
   local return_type
   if fn.return_type ~= 'void' then
     if fn.return_type:match('^ArrayOf') then
