@@ -2396,8 +2396,10 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
     } while (var_iter != NULL);
   }
 
-  // Initialize jump list
-  wms->jumps_size = shada_init_jumps(wms->jumps, &removable_bufs);
+  if (num_marked_files > 0) {  // Skip if '0 in 'shada'
+    // Initialize jump list
+    wms->jumps_size = shada_init_jumps(wms->jumps, &removable_bufs);
+  }
 
   const bool search_highlighted = !(no_hlsearch
                                     || find_shada_parameter('h') != NULL);
