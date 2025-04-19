@@ -191,6 +191,18 @@ M.cmds = {
     func = 'ex_edit',
   },
   {
+    command = 'bcd',
+    flags = bit.bor(BANG, FILE1, TRLBAR, CMDWIN, LOCK_OK),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_cd',
+  },
+  {
+    command = 'bchdir',
+    flags = bit.bor(BANG, FILE1, TRLBAR, CMDWIN, LOCK_OK),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_cd',
+  },
+  {
     command = 'bdelete',
     flags = bit.bor(BANG, RANGE, BUFNAME, COUNT, EXTRA, TRLBAR),
     addr_type = 'ADDR_BUFFERS',
