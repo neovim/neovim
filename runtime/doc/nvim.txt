@@ -75,8 +75,6 @@ the same Nvim configuration on all of your machines, by creating
 ==============================================================================
 What next?                                                   *nvim-quickstart*
 
-See |lua-guide| for practical notes on using Lua to configure Nvim.
-
 If you are just trying out Nvim for a few minutes, and want to see the
 extremes of what it can do, try one of these popular "extension packs" or
 "distributions" (Note: Nvim is not affiliated with these projects, and does
@@ -89,6 +87,10 @@ not support them):
 However, in general, we recommend (eventually) taking time to learn Nvim from
 its stock configuration, and incrementally setting options and adding plugins
 to your |config| as you find an explicit need to do so.
+
+If you want to use Lua to configure Nvim, see |lua-guide|
+
+"IDE" features in Nvim are provided by Language Server Protocol. See |lsp|
 
 ==============================================================================
  vim:tw=78:ts=8:et:ft=help:norl:
