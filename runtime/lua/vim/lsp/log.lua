@@ -1,4 +1,25 @@
--- Logger for language client plugin.
+--- @brief
+--- The `vim.lsp.log` module provides logging for the Nvim LSP client.
+---
+--- When debugging language servers, it is helpful to enable extra-verbose logging of the LSP client
+--- RPC events. Example:
+--- ```lua
+--- vim.lsp.set_log_level 'trace'
+--- require('vim.lsp.log').set_format_func(vim.inspect)
+--- ```
+---
+--- Then try to run the language server, and open the log with:
+--- ```vim
+--- :lua vim.cmd('tabnew ' .. vim.lsp.get_log_path())
+--- ```
+---
+--- (Or use `:LspLog` if you have nvim-lspconfig installed.)
+---
+--- Note:
+--- - Remember to DISABLE verbose logging ("debug" or "trace" level), else you may encounter
+---   performance issues.
+--- - "ERROR" messages containing "stderr" only indicate that the log was sent to stderr. Many
+---   servers send harmless messages via stderr.
 
 local log = {}
 

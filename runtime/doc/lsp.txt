@@ -704,7 +704,7 @@ Lua module: vim.lsp                                                 *lsp-core*
                          the LSP server will base its workspaceFolders,
                          rootUri, and rootPath on initialization. Unused if
                          `root_dir` is provided.
-      • {root_dir}?      (`string|fun(bufnr: integer, cb:fun(root_dir?:string))`)
+      • {root_dir}?      (`string|fun(bufnr: integer, on_dir:fun(root_dir?:string))`)
                          Directory where the LSP server will base its
                          workspaceFolders, rootUri, and rootPath on
                          initialization. If a function, it is passed the
@@ -1316,7 +1316,11 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                in this list. See `workspaceFolders` in the LSP
                                spec.
       • {workspace_required}?  (`boolean`) (default false) Server requires a
-                               workspace (no "single file" support).
+                               workspace (no "single file" support). Note:
+                               Without a workspace, cross-file features
+                               (navigation, hover) may or may not work
+                               depending on the language server, even if the
+                               server doesn't require a workspace.
       • {capabilities}?        (`lsp.ClientCapabilities`) Map overriding the
                                default capabilities defined by
                                |vim.lsp.protocol.make_client_capabilities()|,
@@ -2528,6 +2532,27 @@ symbols_to_items({symbols}, {bufnr}, {position_encoding})
 
 ==============================================================================
 Lua module: vim.lsp.log                                              *lsp-log*
+
+The `vim.lsp.log` module provides logging for the Nvim LSP client.
+
+When debugging language servers, it is helpful to enable extra-verbose logging
+of the LSP client RPC events. Example: >lua
+    vim.lsp.log.set_level('trace')
+    vim.lsp.log.set_format_func(vim.inspect)
+<
+
+Then try to run the language server, and open the log with: >vim
+    :lua vim.cmd('tabnew ' .. vim.lsp.log.get_filename())
+<
+
+(Or use `:LspLog` if you have nvim-lspconfig installed.)
+
+Note:
+• Remember to DISABLE verbose logging ("debug" or "trace" level), else you may
+  encounter performance issues.
+• "ERROR" messages containing "stderr" only indicate that the log was sent to
+  stderr. Many servers send harmless messages via stderr.
+
 
 get_filename()                                    *vim.lsp.log.get_filename()*
     Returns the log filename.

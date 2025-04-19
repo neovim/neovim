@@ -289,7 +289,7 @@ end
 --- rootPath on initialization. If a function, it is passed the buffer number
 --- and a callback argument which must be called with the value of root_dir to
 --- use. The LSP server will not be started until the callback is called.
---- @field root_dir? string|fun(bufnr: integer, cb:fun(root_dir?:string))
+--- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
 ---
 --- Predicate used to decide if a client should be re-used. Used on all
 --- running clients. The default implementation re-uses a client if name and
