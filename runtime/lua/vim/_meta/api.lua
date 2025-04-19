@@ -1768,8 +1768,7 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---     - `row=0` and `col=0` if `anchor` is "SW" or "SE"
 ---       (thus like a tooltip near the buffer text).
 --- - row: Row position in units of "screen cell height", may be fractional.
---- - col: Column position in units of "screen cell width", may be
----          fractional.
+--- - col: Column position in units of screen cell width, may be fractional.
 --- - focusable: Enable focus by user actions (wincmds, mouse events).
 ---     Defaults to true. Non-focusable windows can be entered by
 ---     `nvim_set_current_win()`, or, when the `mouse` field is set to true,
@@ -1848,6 +1847,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- - hide: If true the floating window will be hidden.
 --- - vertical: Split vertically `:vertical`.
 --- - split: Split direction: "left", "right", "above", "below".
+--- - _cmdline_offset: (EXPERIMENTAL) When provided, anchor the `cmdline-completion`
+---   popupmenu to this window, with an offset in screen cell width.
 --- @return integer # |window-ID|, or 0 on error
 function vim.api.nvim_open_win(buffer, enter, config) end
 
@@ -2527,8 +2528,20 @@ function vim.api.nvim_win_set_width(window, width) end
 --- - end_vcol: Ending virtual column index on "end_row",
 ---             0-based exclusive, rounded up to full screen lines.
 ---             When omitted include the whole line.
+--- - max_height: Don't add the height of lines below the row
+---               for which this height is reached. Useful to e.g. limit the
+---               height to the window height, avoiding unnecessary work. Or
+---               to find out how many buffer lines beyond "start_row" take
+---               up a certain number of logical lines (returned in
+---               "end_row" and "end_vcol").
 --- @return table<string,any> # Dict containing text height information, with these keys:
 --- - all: The total number of screen lines occupied by the range.
 --- - fill: The number of diff filler or virtual lines among them.
+--- - end_row: The row for which "max_height" is reached (first row of a
+---   closed fold), or "end_row" from {opts} if "max_height" isn't reached.
+--- - end_vcol: Number of columns used up by "end_row" to reach
+---   "max_height", or if "max_height" isn't reached, either "end_vcol"
+---   from {opts} or the number of columns in "end_row". 0 if "end_row" is
+---   a closed fold.
 ---
 function vim.api.nvim_win_text_height(window, opts) end
