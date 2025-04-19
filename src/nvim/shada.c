@@ -2401,20 +2401,20 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
     wms->jumps_size = shada_init_jumps(wms->jumps, &removable_bufs);
   }
 
-  const bool search_highlighted = !(no_hlsearch
-                                    || find_shada_parameter('h') != NULL);
-  const bool search_last_used = search_was_last_used();
+  if (dump_one_history[HIST_SEARCH] > 0) {  // Skip if /0 in 'shada'
+    const bool search_highlighted = !(no_hlsearch
+                                      || find_shada_parameter('h') != NULL);
+    const bool search_last_used = search_was_last_used();
 
-  // Initialize search pattern
-  add_search_pattern(&wms->search_pattern, &get_search_pattern, false,
-                     search_last_used, search_highlighted);
+    // Initialize search pattern
+    add_search_pattern(&wms->search_pattern, &get_search_pattern, false,
+                       search_last_used, search_highlighted);
 
-  // Initialize substitute search pattern
-  add_search_pattern(&wms->sub_search_pattern, &get_substitute_pattern, true,
-                     search_last_used, search_highlighted);
+    // Initialize substitute search pattern
+    add_search_pattern(&wms->sub_search_pattern, &get_substitute_pattern, true,
+                       search_last_used, search_highlighted);
 
-  // Initialize substitute replacement string
-  {
+    // Initialize substitute replacement string
     SubReplacementString sub;
     sub_get_replacement(&sub);
     wms->replacement = (PossiblyFreedShadaEntry) {

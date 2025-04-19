@@ -6,6 +6,7 @@ local t_shada = require('test.functional.shada.testutil')
 local nvim_command, fn, api, nvim_feed, eq = n.command, n.fn, n.api, n.feed, t.eq
 local assert_alive = n.assert_alive
 local expect_exit = n.expect_exit
+local pcall_err = t.pcall_err
 
 local reset, clear = t_shada.reset, t_shada.clear
 
@@ -104,6 +105,16 @@ describe('ShaDa support code', function()
     eq('c', fn.histget('>', -1))
   end)
 
+  it('does not dump last search pattern if /0 in shada', function()
+    nvim_command('set shada+=/0')
+    nvim_command('silent! /test/')
+    expect_exit(nvim_command, 'qall!')
+    reset()
+    nvim_command('language C')
+    local err = pcall_err(n.exec_capture, 'normal! n')
+    eq('nvim_exec2(), line 1: Vim(normal):E35: No previous regular expression', err)
+  end)
+
   it('dumps and loads last search pattern with offset', function()
     api.nvim_set_option_value('wrapscan', false, {})
     fn.setline('.', { 'foo', 'bar--' })
@@ -182,6 +193,22 @@ describe('ShaDa support code', function()
     eq('goo', fn.getline(1))
   end)
 
+  it('does not dump last substitute pattern or replacement string if /0 in shada', function()
+    nvim_command('set shada+=/0')
+    fn.setline('.', { 'foo', 'bar' })
+    nvim_command('%s/f/g/g')
+    eq('goo', fn.getline(1))
+    expect_exit(nvim_command, 'qall!')
+    reset()
+    fn.setline('.', { 'foo', 'bar' })
+    nvim_command('language C')
+    local err = pcall_err(nvim_command, '&')
+    eq('Vim(&):E33: No previous substitute regular expression', err)
+    nvim_feed('/f\n')
+    err = pcall_err(nvim_command, '~&')
+    eq('Vim(~):E33: No previous substitute regular expression', err)
+  end)
+
   it('dumps and loads history with UTF-8 characters', function()
     reset()
     nvim_feed(':echo "«"\n')
@@ -210,7 +237,6 @@ describe('ShaDa support code', function()
 
   it('dumps and loads search pattern with UTF-8 characters', function()
     nvim_command('silent! /«/')
-    nvim_command('set shada+=/0')
     expect_exit(nvim_command, 'qall!')
     reset()
     fn.setline('.', { '\171«' })
@@ -222,7 +248,6 @@ describe('ShaDa support code', function()
   it('dumps and loads search pattern with 8-bit single-byte', function()
     -- \171 is U+00AB LEFT-POINTING DOUBLE ANGLE QUOTATION MARK in latin1
     nvim_command('silent! /\171/')
-    nvim_command('set shada+=/0')
     expect_exit(nvim_command, 'qall!')
     reset()
     fn.setline('.', { '\171«' })
