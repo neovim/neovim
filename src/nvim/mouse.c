@@ -1884,10 +1884,9 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
       || curwin->w_redr_type != 0) {
     return;
   }
-  ScreenGrid *gp = &curwin->w_grid;
   int start_row = 0;
   int start_col = 0;
-  grid_adjust(&gp, &start_row, &start_col);
+  ScreenGrid *gp = grid_adjust(&curwin->w_grid, &start_row, &start_col);
   if (gp->handle != click_grid || gp->chars == NULL) {
     return;
   }

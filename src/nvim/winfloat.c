@@ -243,12 +243,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
     if (parent) {
       row += parent->w_winrow;
       col += parent->w_wincol;
-      ScreenGrid *grid = &parent->w_grid;
-      int row_off = 0;
-      int col_off = 0;
-      grid_adjust(&grid, &row_off, &col_off);
-      row += row_off;
-      col += col_off;
+      grid_adjust(&parent->w_grid, &row, &col);
       if (wp->w_config.bufpos.lnum >= 0) {
         pos_T pos = { MIN(wp->w_config.bufpos.lnum + 1, parent->w_buffer->b_ml.ml_line_count),
                       wp->w_config.bufpos.col, 0 };

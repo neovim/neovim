@@ -65,14 +65,6 @@ struct ScreenGrid {
   // external UI.
   bool throttled;
 
-  // TODO(bfredl): maybe physical grids and "views" (i e drawing
-  // specifications) should be two separate types?
-  // offsets for the grid relative to another grid. Used for grids
-  // that are views into another, actually allocated grid 'target'
-  int row_offset;
-  int col_offset;
-  ScreenGrid *target;
-
   // whether the compositor should blend the grid with the background grid
   bool blending;
 
@@ -107,8 +99,21 @@ struct ScreenGrid {
 };
 
 #define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
-                           false, 0, 0, NULL, false, true, 0, \
+                           false, false, true, 0, \
                            0, 0, 0, 0, 0,  false, true }
+
+/// Represents a rectangular area within a grid
+//
+/// TODO: "rows" and "cols" are only set for window grids. this should be cleaned up
+/// but then it can be assumed that row_offset+rows <= target->rows by consumer
+/// TODO: msg_grid_adj is still a lie, and not needed after the msgsep-ocalypse
+typedef struct {
+  ScreenGrid *target;
+  int row_offset;
+  int col_offset;
+  int rows;
+  int cols;
+} GridViewPort;
 
 typedef struct {
   int args[3];

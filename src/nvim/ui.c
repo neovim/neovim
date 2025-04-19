@@ -549,6 +549,7 @@ void ui_flush(void)
     // changed
     win_ui_flush(false);
   }
+  // TODO: win_ui_flush() once here??
   if (pending_mode_info_update) {
     Arena arena = ARENA_EMPTY;
     Array style = mode_style_array(&arena);

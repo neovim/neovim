@@ -653,7 +653,7 @@ void pum_redraw(void)
     int attr = win_hl_attr(curwin, (int)hlf);
     attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), attr);
 
-    grid_line_start(&pum_grid, row);
+    screengrid_line_start(&pum_grid, row, 0);
 
     // prepend a space if there is room
     if (extra_space) {
