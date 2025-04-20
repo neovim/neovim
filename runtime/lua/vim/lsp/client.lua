@@ -1100,7 +1100,7 @@ end
 --- @private
 --- Handles a request from an LSP server by invoking the corresponding handler.
 ---
---- @param method (string) LSP method name
+--- @param method (vim.lsp.protocol.Method.ServerToClient) LSP method name
 --- @param params (table) The parameters for that method
 --- @return any result
 --- @return lsp.ResponseError error code and message set in case an exception happens during the request.
