@@ -3334,7 +3334,7 @@ void maketitle(void)
       }
     } else {
       // Format: "fname + (path) (1 of 2) - Nvim".
-      char *default_titlestring = "%t%( %M%)%( (%{expand(\"%:~:h\")})%)%a - Nvim";
+      char *default_titlestring = "%t%( %M%)%( (%{expand(\"%:p:~:h\")})%)%a - Nvim";
       build_stl_str_hl(curwin, buf, sizeof(buf), default_titlestring,
                        kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL, NULL);
       title_str = buf;

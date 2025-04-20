@@ -7268,7 +7268,7 @@ vim.go.titleold = vim.o.titleold
 --- The default behaviour is equivalent to:
 ---
 --- ```vim
----     set titlestring=%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim
+---     set titlestring=%t%(\ %M%)%(\ \(%{expand(\"%:p:~:h\")}\)%)%a\ -\ Nvim
 --- ```
 ---
 --- This option cannot be set in a modeline when 'modelineexpr' is off.

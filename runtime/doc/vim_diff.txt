@@ -639,7 +639,7 @@ Working directory (Vim implemented some of these after Nvim):
 Options:
 - 'titlestring' uses printf-style '%' items (see: 'statusline') to implement
   the default behaviour. The implementation is equivalent to setting
-  'titlestring' to `%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim`.
+  'titlestring' to `%t%(\ %M%)%(\ \(%{expand(\"%:p:~:h\")}\)%)%a\ -\ Nvim`.
 
 ==============================================================================
 Missing features                                         *nvim-missing*
