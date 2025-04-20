@@ -450,10 +450,7 @@ grow and enhance it. Changing the rules of Lua gains nothing in this context.
 
 WILL NEOVIM TRANSLATE VIMSCRIPT TO LUA, INSTEAD OF EXECUTING VIMSCRIPT DIRECTLY? ~
 
-- We are experimenting with vim9jit https://github.com/tjdevries/vim9jit to
-  transpile Vim9script (Vim9's Vimscript variant) to Lua and have used this to
-  port Vim9 plugins https://github.com/neovim/neovim/pull/21662 to Nvim Lua.
-- We have no plans for transpiling legacy Vimscript.
+We have no plans for transpiling Vimscript. It was explored in https://github.com/tjdevries/vim9jit
 
 
 ARE PLUGIN AUTHORS ENCOURAGED TO PORT THEIR PLUGINS FROM VIMSCRIPT TO LUA? DO YOU PLAN ON SUPPORTING VIMSCRIPT INDEFINITELY? (#1152) ~
@@ -467,5 +464,9 @@ Porting from Vimscript to Lua just for the heck of it gains nothing. Nvim is
 emphatically a fork of Vim in order to leverage the work already spent on
 thousands of Vim plugins, while enabling new types of plugins and
 integrations.
+
+That being said, reimplementing legacy plugins in Lua in order to make use of
+Nvim API and to integrate with Nvim-specific features such as treesitter can
+be worthwhile.
 
 vim:tw=78:ts=8:noet:ft=help:norl:
