@@ -509,6 +509,13 @@ function Client:initialize()
     root_path = vim.uri_to_fname(root_uri)
   end
 
+  -- Ensure empty tables for initializationOptions are serialized as objects, not arrays
+  local init_options = config.init_options
+  if type(init_options) == 'table' and vim.tbl_isempty(init_options) then
+    -- For empty tables, ensure they're serialized as objects
+    init_options = vim.empty_dict()
+  end
+
   local init_params = {
     -- The process Id of the parent process that started the server. Is null if
     -- the process has not been started by another process.  If the parent
@@ -530,7 +537,7 @@ function Client:initialize()
     rootUri = root_uri or vim.NIL,
     workspaceFolders = self.workspace_folders or vim.NIL,
     -- User provided initialization options.
-    initializationOptions = config.init_options,
+    initializationOptions = init_options,
     capabilities = self.capabilities,
     trace = self._trace,
     workDoneToken = '1',
