@@ -1282,10 +1282,10 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
     if (*did_show) {
       msg_putchar('\n');                // cursor below last one
     } else {
+      msg_ext_set_kind("list_cmd");
       gotocmdline(true);                // cursor at status line
       *did_show = true;                 // remember that we did a line
     }
-    msg_ext_set_kind("list_cmd");
     showoneopt(&options[opt_idx], opt_flags);
 
     if (p_verbose > 0) {
