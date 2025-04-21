@@ -1170,12 +1170,17 @@ function M.news(_, bufnr)
   end
 end
 
---- This function checks if one of the first five lines start with a dot. In
---- that case it is probably an nroff file.
+--- This function checks if one of the first five lines start with a typical
+--- nroff pattern in man files.  In that case it is probably an nroff file.
 --- @type vim.filetype.mapfn
 function M.nroff(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
-    if line:find('^%.') then
+    if
+      matchregex(
+        line,
+        [[^\%([.']\s*\%(TH\|D[dt]\|S[Hh]\|d[es]1\?\|so\)\s\+\S\|[.'']\s*ig\>\|\%([.'']\s*\)\?\\"\)]]
+      )
+    then
       return 'nroff'
     end
   end
