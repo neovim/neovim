@@ -375,8 +375,11 @@ function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 --- vim.api.nvim_buf_get_extmarks(0, my_ns, {0,0}, {-1,-1}, {})
 --- ```
 ---
---- If `end` is less than `start`, traversal works backwards. (Useful
---- with `limit`, to get the first marks prior to a given position.)
+--- If `end` is less than `start`, marks are returned in reverse order.
+--- (Useful with `limit`, to get the first marks prior to a given position.)
+---
+--- Note: For a reverse range, `limit` does not actually affect the traversed
+--- range, just how many marks are returned
 ---
 --- Note: when using extmark ranges (marks with a end_row/end_col position)
 --- the `overlap` option might be useful. Otherwise only the start position
