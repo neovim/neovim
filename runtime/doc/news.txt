@@ -122,7 +122,7 @@ EDITOR
 
 EVENTS
 
-• todo
+• |CmdlineLeavePre| triggered before preparing to leave the command line.
 
 HIGHLIGHTS
 
@@ -180,7 +180,7 @@ UI
 
 VIMSCRIPT
 
-• todo
+• |cmdcomplete_info()| gets current cmdline completion info.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
