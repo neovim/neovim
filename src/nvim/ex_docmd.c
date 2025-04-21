@@ -3519,6 +3519,39 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
           mark_move_to(fm, 0);
           // Jumped to another file.
           lnum = curwin->w_cursor.lnum;
+        } else {
+          if (!mark_check(fm, errormsg)) {
+            cmd = NULL;
+            goto error;
+          }
+          assert(fm != NULL);
+          lnum = fm->mark.lnum;
+        }
+      }
+      break;
+
+    case '`':                              // '`' - mark
+      if (*++cmd == NUL) {
+        cmd = NULL;
+        goto error;
+      }
+      if (addr_type != ADDR_LINES) {
+        *errormsg = addr_error(addr_type);
+        cmd = NULL;
+        goto error;
+      }
+      if (skip) {
+        cmd++;
+      } else {
+        // Only accept a mark in another file when it is
+        // used by itself: ":'M".
+        MarkGet flag = to_other_file && cmd[1] == NUL ? kMarkAll : kMarkBufLocal;
+        fmark_T *fm = mark_get(curbuf, curwin, NULL, flag, *cmd);
+        cmd++;
+        if (fm != NULL && fm->fnum != curbuf->handle) {
+          mark_move_to(fm, 0);
+          // Jumped to another file.
+          lnum = curwin->w_cursor.lnum;
           cnum = curwin->w_cursor.col;
         } else {
           if (!mark_check(fm, errormsg)) {
