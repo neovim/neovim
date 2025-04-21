@@ -4291,7 +4291,7 @@ describe('API', function()
         args = { '/math.random/math.max/' },
         bang = false,
         range = { 4, 6, 5, 9 },
-        addr = 'line',
+        addr = 'char',
         magic = {
           file = false,
           bar = false,
@@ -4331,7 +4331,7 @@ describe('API', function()
         args = { '/math.random/math.max/' },
         bang = false,
         range = { 4, 6, 5, 9 },
-        addr = 'line',
+        addr = 'char',
         magic = {
           file = false,
           bar = false,
@@ -5024,7 +5024,7 @@ describe('API', function()
       ]]
       api.nvim_cmd({
         cmd = 'substitute',
-        addr = 'line',
+        addr = 'char',
         args = { '/.*/foo/' },
         range = { 3, 5, 6, 10 } },
         {})

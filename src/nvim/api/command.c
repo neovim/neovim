@@ -205,7 +205,11 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char *addr;
   switch (ea.addr_type) {
   case ADDR_LINES:
-    addr = "line";
+    if (ea.col1 > 0 && ea.col2 > 0) {
+      addr = "char";
+    } else {
+      addr = "line";
+    }
     break;
   case ADDR_ARGUMENTS:
     addr = "arg";

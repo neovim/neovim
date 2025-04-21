@@ -921,8 +921,6 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   FUNC_ATTR_NONNULL_ALL
 {
   char *arg = eap->arg;             // command
-  linenr_T line1 = eap->line1;        // start of range
-  linenr_T line2 = eap->line2;        // end of range
   char *newcmd = NULL;              // the new command
   bool free_newcmd = false;           // need to free() newcmd
   int scroll_save = msg_scroll;
@@ -1035,7 +1033,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   } else {                            // :range!
     // Careful: This may recursively call do_bang() again! (because of
     // autocommands)
-    do_filter(line1, line2, eap, newcmd, do_in, do_out);
+    do_filter(eap, newcmd, do_in, do_out);
     apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, false, curbuf);
   }
 
@@ -1060,13 +1058,17 @@ theend:
 /// We use output redirection if do_out is true.
 ///
 /// @param eap  for forced 'ff' and 'fenc'
-static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, bool do_in,
+static void do_filter(exarg_T *eap, char *cmd, bool do_in,
                       bool do_out)
 {
   char *itmp = NULL;
   char *otmp = NULL;
   buf_T *old_curbuf = curbuf;
   int shell_flags = 0;
+  linenr_T line1 = eap->line1;
+  linenr_T line2 = eap->line2;
+  colnr_T col1 = eap->col1;
+  colnr_T col2 = eap->col2;
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
   const int stmp = p_stmp;
@@ -1083,7 +1085,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   pos_T cursor_save = curwin->w_cursor;
   linenr_T linecount = line2 - line1 + 1;
   curwin->w_cursor.lnum = line1;
-  curwin->w_cursor.col = 0;
+  curwin->w_cursor.col = col1;
   changed_line_abv_curs();
   invalidate_botline(curwin);
 
