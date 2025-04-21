@@ -2526,9 +2526,20 @@ function vim.api.nvim_win_set_width(window, width) end
 ---               When omitted include the whole line.
 --- - end_vcol: Ending virtual column index on "end_row",
 ---             0-based exclusive, rounded up to full screen lines.
----             When omitted include the whole line.
+---             When 0 only include diff filler and virtual lines above
+---             "end_row". When omitted include the whole line.
+--- - max_height: Don't add the height of lines below the row
+---               for which this height is reached. Useful to e.g. limit the
+---               height to the window height, avoiding unnecessary work. Or
+---               to find out how many buffer lines beyond "start_row" take
+---               up a certain number of logical lines (returned in
+---               "end_row" and "end_vcol").
 --- @return table<string,any> # Dict containing text height information, with these keys:
 --- - all: The total number of screen lines occupied by the range.
 --- - fill: The number of diff filler or virtual lines among them.
+--- - end_row: The row on which the returned height is reached (first row of
+---   a closed fold).
+--- - end_vcol: Ending virtual column in "end_row" where "max_height" or the returned
+---   height is reached. 0 if "end_row" is a closed fold.
 ---
 function vim.api.nvim_win_text_height(window, opts) end

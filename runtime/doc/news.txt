@@ -108,6 +108,9 @@ The following new features were added.
 API
 
 • |vim.hl.range()| now allows multiple timed highlights
+• |nvim_win_text_height()| can limit the lines checked when a certain
+  `max_height` is reached, and returns the `end_row` and `end_vcol` for which
+  `max_height` or the calculated height is reached.
 
 DEFAULTS
 
