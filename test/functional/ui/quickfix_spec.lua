@@ -69,7 +69,7 @@ describe('quickfix selection highlight', function()
       {14:|}{3:4}{14:|} Line                 |
       {14:|}{3:5}{14:|} Line                 |
       {14:||}                       |
-      {4:[Quickfix List]          }|
+      {4:[Quickfix List] [-]      }|
                                |
     ]])
 
@@ -84,7 +84,7 @@ describe('quickfix selection highlight', function()
       {14:|}{3:4}{14:|} Line                 |
       {14:|}{3:5}{14:|} Line                 |
       {14:||}                       |
-      {4:[Quickfix List]          }|
+      {4:[Quickfix List] [-]      }|
                                |
     ]])
   end)
@@ -103,7 +103,7 @@ describe('quickfix selection highlight', function()
       {14:|}{3:4}{14:|} Line                 |
       {14:|}{3:5}{14:|} Line                 |
       {14:||}                       |
-      {4:[Quickfix List]          }|
+      {4:[Quickfix List] [-]      }|
                                |
     ]])
 
@@ -118,7 +118,7 @@ describe('quickfix selection highlight', function()
       {14:|}{3:4}{14:|} Line                 |
       {14:|}{3:5}{14:|} Line                 |
       {14:||}                       |
-      {4:[Quickfix List]          }|
+      {4:[Quickfix List] [-]      }|
                                |
     ]])
   end)
@@ -139,7 +139,7 @@ describe('quickfix selection highlight', function()
       {14:|}{3:4}{14:|} Line                 |
       {14:|}{3:5}{14:|} Line                 |
       {14:||}                       |
-      {4:[Quickfix List]          }|
+      {4:[Quickfix List] [-]      }|
                                |
     ]])
 
@@ -154,7 +154,7 @@ describe('quickfix selection highlight', function()
       {14:|}{3:4}{14:|} Line                 |
       {14:|}{3:5}{14:|} Line                 |
       {14:||}                       |
-      {4:[Quickfix List]          }|
+      {4:[Quickfix List] [-]      }|
                                |
     ]])
   end)
@@ -175,7 +175,7 @@ describe('quickfix selection highlight', function()
       {14:|}{3:4}{14:|} Line                 |
       {14:|}{3:5}{14:|} Line                 |
       {14:||}                       |
-      {4:[Quickfix List]          }|
+      {4:[Quickfix List] [-]      }|
                                |
     ]])
 
@@ -190,7 +190,7 @@ describe('quickfix selection highlight', function()
       {14:|}{3:4}{14:|} Line                 |
       {14:|}{3:5}{14:|} Line                 |
       {14:||}                       |
-      {4:[Quickfix List]          }|
+      {4:[Quickfix List] [-]      }|
                                |
     ]])
   end)

@@ -274,7 +274,7 @@ describe('API/win', function()
         ccc                           │ccc                          |
         {21:dd^d                           }│{21:ddd                          }|
         {1:~                             }│{1:~                            }|*2
-        {3:[No Name] [+]  4,3         All }{2:[No Name] [+]  4,3        All}|
+        {3:< Name] [+] 4,3            All }{2:<Name] [+] 4,3            All}|
                                                                     |
       ]])
       api.nvim_win_set_cursor(oldwin, { 1, 0 })
@@ -284,7 +284,7 @@ describe('API/win', function()
         ccc                           │ccc                          |
         {21:dd^d                           }│ddd                          |
         {1:~                             }│{1:~                            }|*2
-        {3:[No Name] [+]  4,3         All }{2:[No Name] [+]  1,1        All}|
+        {3:< Name] [+] 4,3            All }{2:<Name] [+] 1,1            All}|
                                                                     |
       ]])
     end)
@@ -465,11 +465,17 @@ describe('API/win', function()
       -- global-local option
       api.nvim_set_option_value('statusline', 'window-status', { win = 0 })
       eq('window-status', api.nvim_get_option_value('statusline', { win = 0 }))
-      eq('', api.nvim_get_option_value('statusline', { scope = 'global' }))
+      eq(
+        "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+        api.nvim_get_option_value('statusline', { scope = 'global' })
+      )
       command('set modified')
       command('enew') -- global-local: not preserved in new buffer
       -- confirm local value was not copied
-      eq('', api.nvim_get_option_value('statusline', { win = 0 }))
+      eq(
+        "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+        api.nvim_get_option_value('statusline', { win = 0 })
+      )
       eq('', eval('&l:statusline'))
     end)
 
