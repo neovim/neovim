@@ -1605,12 +1605,11 @@ stack traceback:
 
   it('g< mapping shows recent messages', function()
     command('echo "foo" | echo "bar"')
-    local s1 = [[
-      ^                         |
-      {1:~                        }|*4
-    ]]
     screen:expect({
-      grid = s1,
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
       messages = {
         {
           content = { { 'bar' } },
@@ -1640,6 +1639,23 @@ stack traceback:
         {
           content = { { 'bar' } },
           kind = 'echo',
+        },
+      },
+    })
+  end)
+
+  it('single event for multiple :set options', function()
+    command('set sw ts sts')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { '  shiftwidth=8\n  tabstop=8\n  softtabstop=0' } },
+          history = false,
+          kind = 'list_cmd',
         },
       },
     })
