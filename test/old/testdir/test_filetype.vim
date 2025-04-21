@@ -2921,8 +2921,18 @@ endfunc
 func Test_nroff_file()
   filetype on
 
-  call writefile(['.TH vim 1 "YYYY Mth DD"'], 'Xfile.1', 'D')
+  call writefile(['.TH VIM 1 "YYYY Mth DD"'], 'Xfile.1', 'D')
   split Xfile.1
+  call assert_equal('nroff', &filetype)
+  bwipe!
+
+  call writefile(['.Dd $Mdocdate$', '.Dt "DETECTION TEST" "7"', '.Os'], 'Xfile.7', 'D')
+  split Xfile.7
+  call assert_equal('nroff', &filetype)
+  bwipe!
+
+  call writefile(['''\" t'], 'Xfile.3p', 'D')
+  split Xfile.3p
   call assert_equal('nroff', &filetype)
   bwipe!
 
