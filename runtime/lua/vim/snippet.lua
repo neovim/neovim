@@ -284,9 +284,7 @@ local function select_tabstop(tabstop)
   --- @param row integer
   --- @param col integer
   local function move_cursor_to(row, col)
-    local line = vim.fn.getline(row) --[[ @as string ]]
-    col = math.max(vim.fn.strchars(line:sub(1, col)) - 1, 0)
-    feedkeys(string.format('%sG0%s', row, string.rep('<Right>', col)))
+    feedkeys(string.format('%sG%s|', row, col))
   end
 
   local range = tabstop:get_range()
