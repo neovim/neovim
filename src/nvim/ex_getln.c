@@ -1302,8 +1302,8 @@ static int command_line_execute(VimState *state, int key)
   }
 
   // Trigger CmdlineLeavePre autocommand
-  if (ccline.cmdfirstc != NUL && (s->c == '\n' || s->c == '\r' || s->c == K_KENTER
-                                  || s->c == ESC || s->c == Ctrl_C)) {
+  if (s->c == '\n' || s->c == '\r' || s->c == K_KENTER
+      || s->c == ESC || s->c == Ctrl_C) {
     trigger_cmd_autocmd(get_cmdline_type(), EVENT_CMDLINELEAVEPRE);
   }
 

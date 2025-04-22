@@ -1065,6 +1065,7 @@ int showmatches(expand_T *xp, bool wildmenu)
 
   // Save cmdline before expansion
   if (ccline->cmdbuff != NULL) {
+    xfree(cmdline_orig);
     cmdline_orig = xstrnsave(ccline->cmdbuff, (size_t)ccline->cmdlen);
   }
 

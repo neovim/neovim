@@ -1279,7 +1279,7 @@ M.funcs = {
     name = 'cmdcomplete_info',
     params = {},
     returns = 'table<string,any>',
-    signature = 'cmdcomplete_info([{what}])',
+    signature = 'cmdcomplete_info()',
   },
   col = {
     args = { 1, 2 },

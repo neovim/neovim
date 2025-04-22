@@ -1959,6 +1959,12 @@ func Test_Cmdline_Trigger()
   call assert_equal('', g:log)
   call feedkeys(":echo hello", "tx")
   call assert_equal('CmdlineLeavePre', g:log)
+  let g:count = 0
+  autocmd CmdlineLeavePre * let g:count += 1
+  call feedkeys(":let c = input('? ')\<cr>B\<cr>", "tx")
+  call assert_equal(2, g:count)
+  unlet! g:count
+  unlet! g:log
   bw!
 endfunc
 

@@ -1061,7 +1061,7 @@ clearmatches([{win}])                                           *clearmatches()*
                 Parameters: ~
                   • {win} (`integer?`)
 
-cmdcomplete_info([{what}])                                  *cmdcomplete_info()*
+cmdcomplete_info()                                          *cmdcomplete_info()*
 		Returns a |Dictionary| with information about cmdline
 		completion.  See |cmdline-completion|.
 		The items are:
