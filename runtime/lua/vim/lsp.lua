@@ -272,6 +272,12 @@ local function create_and_init_client(config)
   return client.id, nil
 end
 
+-- Note fields in vim.lsp.Config should have an explicit opt-out value.
+-- This is so that when they are merged with vim.tbl_deep_extend, values can be fully
+-- overridden. This should be done for:
+-- - Fields that have a non-literal default (e.g. reuse_client, name, cmd_cwd)
+-- - Fields of type function
+
 --- @class vim.lsp.Config : vim.lsp.ClientConfig
 ---
 --- See `cmd` in [vim.lsp.ClientConfig].
@@ -289,12 +295,12 @@ end
 --- rootPath on initialization. If a function, it is passed the buffer number
 --- and a callback argument which must be called with the value of root_dir to
 --- use. The LSP server will not be started until the callback is called.
---- @field root_dir? string|fun(bufnr: integer, cb:fun(root_dir?:string))
+--- @field root_dir? string|fun(bufnr: integer, cb:fun(root_dir?:string))|false
 ---
 --- Predicate used to decide if a client should be re-used. Used on all
---- running clients. The default implementation re-uses a client if name and
---- root_dir matches.
---- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+--- running clients. If `false`, uses the default implementation. The default
+--- implementation re-uses a client if name and root_dir matches.
+--- @field reuse_client? (fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean)|false
 
 --- Sets the default configuration for an LSP client (or _all_ clients if the special name "*" is
 --- used).
@@ -474,10 +480,22 @@ local function validate_cmd(v)
   return type(v) == 'function'
 end
 
+--- Augments a validator function with support for optional (false) values.
+--- @param f string
+--- @return fun(v): boolean # The augmented function. Also returns true if {v} is
+local function optional_validator(f)
+  return function(v)
+    if type(f) == 'string' then
+      return not v or type(v) == f
+    end
+    return not v or f(v)
+  end
+end
+
 --- @param config vim.lsp.Config
 local function validate_config(config)
   validate('cmd', config.cmd, validate_cmd, 'expected function or table with executable command')
-  validate('reuse_client', config.reuse_client, 'function', true)
+  validate('reuse_client', config.reuse_client, optional_validator('function'), 'function|false')
   validate('filetypes', config.filetypes, 'table', true)
 end
 
@@ -503,7 +521,7 @@ end
 local function start_config(bufnr, config)
   return vim.lsp.start(config, {
     bufnr = bufnr,
-    reuse_client = config.reuse_client,
+    reuse_client = config.reuse_client or nil,
     _root_markers = config.root_markers,
   })
 end

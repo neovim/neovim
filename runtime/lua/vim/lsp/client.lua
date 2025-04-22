@@ -41,7 +41,7 @@ local validate = vim.validate
 ---
 --- Directory to launch the `cmd` process. Not related to `root_dir`.
 --- (default: cwd)
---- @field cmd_cwd? string
+--- @field cmd_cwd? string|false
 ---
 --- Environment flags to pass to the LSP on spawn.
 --- Must be specified using a table.
@@ -55,7 +55,7 @@ local validate = vim.validate
 --- Daemonize the server process so that it runs in a separate process group from Nvim.
 --- Nvim will shutdown the process on exit, but if Nvim fails to exit cleanly this could leave
 --- behind orphaned server processes.
---- (default: true)
+--- (default: `true`)
 --- @field detached? boolean
 ---
 --- List of workspace folders passed to the language server.
@@ -63,7 +63,8 @@ local validate = vim.validate
 --- folder in this list. See `workspaceFolders` in the LSP spec.
 --- @field workspace_folders? lsp.WorkspaceFolder[]
 ---
---- (default false) Server requires a workspace (no "single file" support).
+--- Server requires a workspace (no "single file" support).
+--- (default: `false`)
 --- @field workspace_required? boolean
 ---
 --- Map overriding the default capabilities defined by |vim.lsp.protocol.make_client_capabilities()|,
@@ -92,24 +93,26 @@ local validate = vim.validate
 ---
 --- Name in log messages.
 --- (default: client-id)
---- @field name? string
+--- @field name? string|false
 ---
---- Language ID as string. Defaults to the buffer filetype.
---- @field get_language_id? fun(bufnr: integer, filetype: string): string
+--- Language ID as string.
+--- (default: buffer filetype)
+--- @field get_language_id? (fun(bufnr: integer, filetype: string): string)|false
 ---
 --- Called "position encoding" in LSP spec, the encoding that the LSP server expects.
 --- Client does not verify this is correct.
+--- (default: `'utf-16'`)
 --- @field offset_encoding? 'utf-8'|'utf-16'|'utf-32'
 ---
 --- Callback invoked when the client operation throws an error. `code` is a number describing the error.
 --- Other arguments may be passed depending on the error kind.  See `vim.lsp.rpc.client_errors`
 --- for possible errors. Use `vim.lsp.rpc.client_errors[code]` to get human-friendly name.
---- @field on_error? fun(code: integer, err: string)
+--- @field on_error? fun(code: integer, err: string)|false
 ---
 --- Callback invoked before the LSP "initialize" phase, where `params` contains the parameters
 --- being sent to the server and `config` is the config that was passed to |vim.lsp.start()|.
 --- You can use this to modify parameters before they are sent.
---- @field before_init? fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
+--- @field before_init? fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)|false
 ---
 --- Callback invoked after LSP "initialize", where `result` is a table of `capabilities` and
 --- anything else the server may send. For example, clangd sends `init_result.offsetEncoding` if
@@ -127,7 +130,7 @@ local validate = vim.validate
 --- @field on_attach? elem_or_list<fun(client: vim.lsp.Client, bufnr: integer)>
 ---
 --- Passed directly to the language server in the initialize request. Invalid/empty values will
---- (default: "off")
+--- (default: `'off'`)
 --- @field trace? 'off'|'messages'|'verbose'
 ---
 --- A table with flags for the client. The current (experimental) flags are:
@@ -289,13 +292,16 @@ local function validate_encoding(encoding)
 end
 
 --- Augments a validator function with support for optional (nil) values.
---- @param fn (fun(v): boolean) The original validator function; should return a
+--- @param f string|(fun(v): boolean) The original validator function; should return a
 --- bool.
 --- @return fun(v): boolean # The augmented function. Also returns true if {v} is
 --- `nil`.
-local function optional_validator(fn)
+local function optional_validator(f)
   return function(v)
-    return v == nil or fn(v)
+    if type(f) == 'string' then
+      return not v or type(v) == f
+    end
+    return not v or f(v)
   end
 end
 
@@ -317,14 +323,14 @@ local function validate_config(config)
   validate('cmd_cwd', config.cmd_cwd, optional_validator(is_dir), 'directory')
   validate('cmd_env', config.cmd_env, 'table', true)
   validate('detached', config.detached, 'boolean', true)
-  validate('name', config.name, 'string', true)
-  validate('on_error', config.on_error, 'function', true)
+  validate('name', config.name, optional_validator('string'), 'string|false')
+  validate('on_error', config.on_error, optional_validator('function'), 'function|false')
   validate('on_exit', config.on_exit, { 'function', 'table' }, true)
   validate('on_init', config.on_init, { 'function', 'table' }, true)
   validate('on_attach', config.on_attach, { 'function', 'table' }, true)
   validate('settings', config.settings, 'table', true)
   validate('commands', config.commands, 'table', true)
-  validate('before_init', config.before_init, { 'function', 'table' }, true)
+  validate('before_init', config.before_init, optional_validator('function'), 'function|false')
   validate('offset_encoding', config.offset_encoding, 'string', true)
   validate('flags', config.flags, 'table', true)
   validate('get_language_id', config.get_language_id, 'function', true)
@@ -395,11 +401,11 @@ function Client.create(config)
     capabilities = config.capabilities,
     workspace_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir),
     root_dir = config.root_dir,
-    _before_init_cb = config.before_init,
+    _before_init_cb = config.before_init or nil,
     _on_init_cbs = vim._ensure_list(config.on_init),
     _on_exit_cbs = vim._ensure_list(config.on_exit),
     _on_attach_cbs = vim._ensure_list(config.on_attach),
-    _on_error_cb = config.on_error,
+    _on_error_cb = config.on_error or nil,
     _trace = get_trace(config.trace),
 
     --- Contains $/progress report messages.
@@ -464,7 +470,7 @@ function Client.create(config)
     self.rpc = config_cmd(dispatchers)
   else
     self.rpc = lsp.rpc.start(config_cmd, dispatchers, {
-      cwd = config.cmd_cwd,
+      cwd = config.cmd_cwd or nil,
       env = config.cmd_env,
       detached = config.detached,
     })

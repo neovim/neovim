@@ -134,7 +134,8 @@ following (in increasing priority):
 3. Configurations defined anywhere else.
 
 Note: The merge semantics of configurations follow the behaviour of
-|vim.tbl_deep_extend()|.
+|vim.tbl_deep_extend()|. To allow fields to be overriden, fields that have a
+non-literal default are allowed to be set to `false`.
 
 Example: given the following configs... >lua
   -- Defined in init.lua
@@ -704,7 +705,7 @@ Lua module: vim.lsp                                                 *lsp-core*
                          the LSP server will base its workspaceFolders,
                          rootUri, and rootPath on initialization. Unused if
                          `root_dir` is provided.
-      • {root_dir}?      (`string|fun(bufnr: integer, cb:fun(root_dir?:string))`)
+      • {root_dir}?      (`string|fun(bufnr: integer, cb:fun(root_dir?:string))|false`)
                          Directory where the LSP server will base its
                          workspaceFolders, rootUri, and rootPath on
                          initialization. If a function, it is passed the
@@ -712,9 +713,10 @@ Lua module: vim.lsp                                                 *lsp-core*
                          called with the value of root_dir to use. The LSP
                          server will not be started until the callback is
                          called.
-      • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
+      • {reuse_client}?  (`(fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean)|false`)
                          Predicate used to decide if a client should be
-                         re-used. Used on all running clients. The default
+                         re-used. Used on all running clients. If `false`,
+                         uses the default implementation. The default
                          implementation re-uses a client if name and root_dir
                          matches.
 
@@ -1296,26 +1298,28 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                |vim.lsp.rpc.notify()|. For TCP there is a
                                builtin RPC client factory:
                                |vim.lsp.rpc.connect()|
-      • {cmd_cwd}?             (`string`, default: cwd) Directory to launch
-                               the `cmd` process. Not related to `root_dir`.
+      • {cmd_cwd}?             (`string|false`, default: cwd) Directory to
+                               launch the `cmd` process. Not related to
+                               `root_dir`.
       • {cmd_env}?             (`table`) Environment flags to pass to the LSP
                                on spawn. Must be specified using a table.
                                Non-string values are coerced to string.
                                Example: >lua
                                    { PORT = 8080; HOST = "0.0.0.0"; }
 <
-      • {detached}?            (`boolean`, default: true) Daemonize the server
-                               process so that it runs in a separate process
-                               group from Nvim. Nvim will shutdown the process
-                               on exit, but if Nvim fails to exit cleanly this
-                               could leave behind orphaned server processes.
+      • {detached}?            (`boolean`, default: `true`) Daemonize the
+                               server process so that it runs in a separate
+                               process group from Nvim. Nvim will shutdown the
+                               process on exit, but if Nvim fails to exit
+                               cleanly this could leave behind orphaned server
+                               processes.
       • {workspace_folders}?   (`lsp.WorkspaceFolder[]`) List of workspace
                                folders passed to the language server. For
                                backwards compatibility rootUri and rootPath
                                will be derived from the first workspace folder
                                in this list. See `workspaceFolders` in the LSP
                                spec.
-      • {workspace_required}?  (`boolean`) (default false) Server requires a
+      • {workspace_required}?  (`boolean`, default: `false`) Server requires a
                                workspace (no "single file" support).
       • {capabilities}?        (`lsp.ClientCapabilities`) Map overriding the
                                default capabilities defined by
@@ -1344,24 +1348,23 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                initialization request as
                                `initializationOptions`. See `initialize` in
                                the LSP spec.
-      • {name}?                (`string`, default: client-id) Name in log
-                               messages.
-      • {get_language_id}?     (`fun(bufnr: integer, filetype: string): string`)
-                               Language ID as string. Defaults to the buffer
-                               filetype.
-      • {offset_encoding}?     (`'utf-8'|'utf-16'|'utf-32'`) Called "position
-                               encoding" in LSP spec, the encoding that the
-                               LSP server expects. Client does not verify this
-                               is correct.
-      • {on_error}?            (`fun(code: integer, err: string)`) Callback
-                               invoked when the client operation throws an
-                               error. `code` is a number describing the error.
-                               Other arguments may be passed depending on the
-                               error kind. See `vim.lsp.rpc.client_errors` for
-                               possible errors. Use
-                               `vim.lsp.rpc.client_errors[code]` to get
-                               human-friendly name.
-      • {before_init}?         (`fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)`)
+      • {name}?                (`string|false`, default: client-id) Name in
+                               log messages.
+      • {get_language_id}?     (`(fun(bufnr: integer, filetype: string): string)|false`, default: buffer filetype)
+                               Language ID as string.
+      • {offset_encoding}?     (`'utf-8'|'utf-16'|'utf-32'`, default:
+                               `'utf-16'`) Called "position encoding" in LSP
+                               spec, the encoding that the LSP server expects.
+                               Client does not verify this is correct.
+      • {on_error}?            (`fun(code: integer, err: string)|false`)
+                               Callback invoked when the client operation
+                               throws an error. `code` is a number describing
+                               the error. Other arguments may be passed
+                               depending on the error kind. See
+                               `vim.lsp.rpc.client_errors` for possible
+                               errors. Use `vim.lsp.rpc.client_errors[code]`
+                               to get human-friendly name.
+      • {before_init}?         (`fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)|false`)
                                Callback invoked before the LSP "initialize"
                                phase, where `params` contains the parameters
                                being sent to the server and `config` is the
@@ -1386,9 +1389,10 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {on_attach}?           (`elem_or_list<fun(client: vim.lsp.Client, bufnr: integer)>`)
                                Callback invoked when client attaches to a
                                buffer.
-      • {trace}?               (`'off'|'messages'|'verbose'`, default: "off")
-                               Passed directly to the language server in the
-                               initialize request. Invalid/empty values will
+      • {trace}?               (`'off'|'messages'|'verbose'`, default:
+                               `'off'`) Passed directly to the language server
+                               in the initialize request. Invalid/empty values
+                               will
       • {flags}?               (`table`) A table with flags for the client.
                                The current (experimental) flags are:
                                • {allow_incremental_sync}? (`boolean`,
