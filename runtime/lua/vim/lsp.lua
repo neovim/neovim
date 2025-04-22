@@ -462,6 +462,51 @@ lsp.config = setmetatable({ _configs = {} }, {
   end,
 })
 
+--- Resolves an LSP configuration into a fully usable client configuration.
+---
+--- This function is typically used to prepare a |vim.lsp.ClientConfig| from a
+--- user-defined |vim.lsp.Config|. If the configuration requires a workspace and
+--- none is found, the resolution is aborted.
+---
+--- @param bufnr integer Buffer number for which the config is being resolved.
+--- @param config vim.lsp.Config The base LSP configuration to resolve.
+--- @param on_resolve fun(config: vim.lsp.ClientConfig, opts: vim.lsp.start.Opts)
+--- Callback invoked once the config is resolved.
+--- @return vim.lsp.ClientConfig?
+function lsp.resolve_config(bufnr, config, on_resolve)
+  if not config.root_dir and config.root_markers then
+    config = vim.deepcopy(config)
+    config.root_dir = vim.fs.root(bufnr, config.root_markers)
+  end
+
+  if
+    not config.root_dir
+    and (not config.workspace_folders or #config.workspace_folders == 0)
+    and config.workspace_required
+  then
+    log.info(
+      ('skipping config "%s": workspace_required=true, no workspace found'):format(config.name)
+    )
+    return nil
+  end
+
+  -- Deepcopy config so changes done in the client
+  -- do not propagate back to the enabled configs.
+  config = vim.deepcopy(config)
+
+  if type(config.root_dir) == 'function' then
+    ---@param root_dir string
+    config.root_dir(bufnr, function(root_dir)
+      config.root_dir = root_dir
+      vim.schedule(function()
+        on_resolve(config, { reuse_client = config.reuse_client })
+      end)
+    end)
+  else
+    on_resolve(config, { reuse_client = config.reuse_client })
+  end
+end
+
 local lsp_enable_autocmd_id --- @type integer?
 
 local function validate_cmd(v)
@@ -499,16 +544,6 @@ local function can_start(bufnr, name, config)
 end
 
 --- @param bufnr integer
---- @param config vim.lsp.Config
-local function start_config(bufnr, config)
-  return vim.lsp.start(config, {
-    bufnr = bufnr,
-    reuse_client = config.reuse_client,
-    _root_markers = config.root_markers,
-  })
-end
-
---- @param bufnr integer
 local function lsp_enable_callback(bufnr)
   -- Only ever attach to buffers that represent an actual file.
   if vim.bo[bufnr].buftype ~= '' then
@@ -518,21 +553,12 @@ local function lsp_enable_callback(bufnr)
   for name in vim.spairs(lsp._enabled_configs) do
     local config = lsp.config[name]
     if config and can_start(bufnr, name, config) then
-      -- Deepcopy config so changes done in the client
-      -- do not propagate back to the enabled configs.
-      config = vim.deepcopy(config)
-
-      if type(config.root_dir) == 'function' then
-        ---@param root_dir string
-        config.root_dir(bufnr, function(root_dir)
-          config.root_dir = root_dir
-          vim.schedule(function()
-            start_config(bufnr, config)
-          end)
-        end)
-      else
-        start_config(bufnr, config)
-      end
+      lsp.resolve_config(bufnr, config, function(resolved_config, opts)
+        vim.lsp.start(resolved_config, {
+          bufnr = bufnr,
+          reuse_client = opts.reuse_client,
+        })
+      end)
     end
   end
 end
@@ -600,8 +626,6 @@ end
 ---
 --- Suppress error reporting if the LSP server fails to start (default false).
 --- @field silent? boolean
----
---- @field package _root_markers? string[]
 
 --- Create a new LSP client and start a language server or reuses an already
 --- running client if one is found matching `name` and `root_dir`.
@@ -648,22 +672,6 @@ function lsp.start(config, opts)
   opts = opts or {}
   local reuse_client = opts.reuse_client or reuse_client_default
   local bufnr = vim._resolve_bufnr(opts.bufnr)
-
-  if not config.root_dir and opts._root_markers then
-    config = vim.deepcopy(config)
-    config.root_dir = vim.fs.root(bufnr, opts._root_markers)
-  end
-
-  if
-    not config.root_dir
-    and (not config.workspace_folders or #config.workspace_folders == 0)
-    and config.workspace_required
-  then
-    log.info(
-      ('skipping config "%s": workspace_required=true, no workspace found'):format(config.name)
-    )
-    return
-  end
 
   for _, client in pairs(all_clients) do
     if reuse_client(client, config) then
