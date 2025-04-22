@@ -7947,7 +7947,8 @@ describe('float window', function()
         qui officia deserunt mollit anim id est
         laborum.]])
       local buf = api.nvim_create_buf(false,false)
-      api.nvim_buf_set_lines(buf, 0, -1, true, {"test\u{2800}", "", "popup\u{2800}   text"})
+      local test_data = {"test", "", "popup    text"}
+      api.nvim_buf_set_lines(buf, 0, -1, true, test_data)
       local win = api.nvim_open_win(buf, false, {relative='editor', width=15, height=3, row=2, col=5})
       if multigrid then
         screen:expect{grid=[[
@@ -7966,17 +7967,17 @@ describe('float window', function()
         ## grid 3
                                                             |
         ## grid 4
-          {1:test]].."\u{2800}"..[[          }|
+          {1:test           }|
           {1:               }|
-          {1:popup]].."\u{2800}"..[[   text  }|
+          {1:popup    text  }|
         ]], float_pos={[4] = {1001, "NW", 1, 2, 5, true, 50, 1, 2, 5}}}
       else
         screen:expect([[
           Ut enim ad minim veniam, quis nostrud             |
           exercitation ullamco laboris nisi ut aliquip ex   |
-          ea co{1:test]].."\u{2800}"..[[          }. Duis aute irure dolor in    |
+          ea co{1:test           }. Duis aute irure dolor in    |
           repre{1:               }uptate velit esse cillum      |
-          dolor{1:popup]].."\u{2800}"..[[   text  }la pariatur. Excepteur sint   |
+          dolor{1:popup    text  }la pariatur. Excepteur sint   |
           occaecat cupidatat non proident, sunt in culpa    |
           qui officia deserunt mollit anim id est           |
           laborum^.                                          |
@@ -8002,9 +8003,9 @@ describe('float window', function()
         ## grid 3
                                                             |
         ## grid 4
-          {9:test]].."\u{2800}"..[[          }|
+          {9:test           }|
           {9:               }|
-          {9:popup]].."\u{2800}"..[[   text  }|
+          {9:popup    text  }|
         ]], float_pos={[4] = {1001, "NW", 1, 2, 5, true, 50, 1, 2, 5}}, unchanged=true}
       else
         screen:expect([[
@@ -8019,6 +8020,45 @@ describe('float window', function()
                                                             |
         ]])
       end
+
+      -- Test for \u2800 (braille blank unicode character)
+      local braille_blank = "\226\160\128"
+      api.nvim_buf_set_lines(buf, 0, -1, true, {"test" .. braille_blank, "", "popup"..braille_blank.."   text"})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|*8
+          [3:--------------------------------------------------]|
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 3
+                                                            |
+        ## grid 4
+          {9:test]] .. braille_blank .. [[          }|
+          {9:               }|
+          {9:popup]] .. braille_blank .. [[   text  }|
+        ]], float_pos={[4] = {1001, "NW", 1, 2, 5, true, 50, 1, 2, 5}}, unchanged=true}
+      else
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{2:test}{3:o consequat}. Duis aute irure dolor in    |
+          repre{3:henderit in vol}uptate velit esse cillum      |
+          dolor{2:popup}{3:fugi}{2:text}{3:ul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]])
+      end
+      api.nvim_buf_set_lines(buf, 0, -1, true, test_data)
 
       -- Check that 'winblend' works with NormalNC highlight
       api.nvim_set_option_value('winhighlight', 'NormalNC:Visual', {win = win})
@@ -8039,9 +8079,9 @@ describe('float window', function()
         ## grid 3
                                                             |
         ## grid 4
-          {13:test]].."\u{2800}"..[[          }|
+          {13:test           }|
           {13:               }|
-          {13:popup]].."\u{2800}"..[[   text  }|
+          {13:popup    text  }|
         ]], float_pos={[4] = {1001, "NW", 1, 2, 5, true, 50, 1, 2, 5}}}
       else
         screen:expect([[
@@ -8084,9 +8124,9 @@ describe('float window', function()
         ## grid 3
                                                             |
         ## grid 4
-          {9:test]].."\u{2800}"..[[          }|
+          {9:test           }|
           {9:               }|
-          {10:popup]].."\u{2800}"..[[   text}{9:  }|
+          {10:popup    text}{9:  }|
         ]], float_pos={[4] = {1001, "NW", 1, 2, 5, true, 50, 1, 2, 5}}}
       else
         screen:expect([[
@@ -8094,7 +8134,7 @@ describe('float window', function()
           exercitation ullamco laboris nisi ut aliquip ex   |
           ea co{2:test}{3:o consequat}. Duis aute irure dolor in    |
           repre{3:henderit in vol}uptate velit esse cillum      |
-          dolor{10:popup]].."\u{2800}"..[[   text}{3:ul}la pariatur. Excepteur sint   |
+          dolor{10:popup    text}{3:ul}la pariatur. Excepteur sint   |
           occaecat cupidatat non proident, sunt in culpa    |
           qui officia deserunt mollit anim id est           |
           laborum^.                                          |
@@ -8120,9 +8160,9 @@ describe('float window', function()
         ## grid 3
                                                             |
         ## grid 4
-          {9:test]].."\u{2800}"..[[          }|
+          {9:test           }|
           {9:               }|
-          {11:popup]].."\u{2800}"..[[   text}{9:  }|
+          {11:popup    text}{9:  }|
         ]], float_pos={[4] = {1001, "NW", 1, 2, 5, true, 50, 1, 2, 5}}, unchanged=true}
       else
         screen:expect([[
@@ -8157,7 +8197,7 @@ describe('float window', function()
         ## grid 3
                                                             |
         ## grid 4
-          {11:popup]].."\u{2800}"..[[   text}{9:  }|
+          {11:popup    text}{9:  }|
           {12:~              }|*2
         ]], float_pos={[4] = {1001, "NW", 1, 2, 5, true, 50, 1, 2, 5}}}
       else
@@ -8199,7 +8239,7 @@ describe('float window', function()
                                                             |
         ## grid 4
           {17:┌}{23:Title}{17:──────────┐}|
-          {17:│}{11:popup]].."\u{2800}"..[[   text}{18:  }{17:│}|
+          {17:│}{11:popup    text}{18:  }{17:│}|
           {17:│}{19:~              }{17:│}|*2
           {17:└}{23:Footer}{17:─────────┘}|
         ]], float_pos={[4] = {1001, "NW", 1, 2, 5, true, 50, 1, 2, 5}}}
