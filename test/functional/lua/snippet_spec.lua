@@ -307,4 +307,10 @@ describe('vim.snippet', function()
     ]]
     )
   end)
+
+  it('correct visual selection with multi-byte text', function()
+    test_expand_success({ 'function(${1:var})' }, { '口口function(var)' }, nil, '口口')
+    feed('foo')
+    eq({ '口口function(foo)' }, buf_lines(0))
+  end)
 end)
