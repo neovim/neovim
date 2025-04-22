@@ -1,0 +1,20 @@
+# vim:ft=make
+# START_INDENT
+.POSIX :
+MAKEFLAGS += -rR
+
+.SUFFIXES: .F .f
+FC = f95
+FFLAGS =
+CPPFLAGS =
+
+.PHONY: help
+help:
+@echo indentation test
+
+.F.f:
+$(FC) $(CPPFLAGS) -E $< > $@
+
+.f.o:
+$(FC) $(FFLAGS) -c -o $@ $<
+# END_INDENT
