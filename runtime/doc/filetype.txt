@@ -1129,6 +1129,13 @@ functions with [[ and ]].  Move around comments with ]" and [".
 The mappings can be disabled with: >
 	let g:no_vim_maps = 1
 
+YAML							*ft-yaml-plugin*
+By default, the YAML filetype plugin enables the following options: >
+	setlocal shiftwidth=2 softtabstop=2
+
+To disable this, set the following variable: >
+	let g:yaml_recommended_style = 0
+
 
 ZIG							*ft-zig-plugin*
 
