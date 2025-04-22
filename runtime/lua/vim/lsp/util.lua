@@ -2201,6 +2201,7 @@ end
 ---@field bufnr integer? Buffer to refresh (default: 0)
 ---@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
 ---@field client_id? integer Client ID to refresh (default: all clients)
+---@field handler? lsp.Handler
 
 ---@private
 --- Request updated LSP information for a buffer.
@@ -2234,7 +2235,7 @@ function M._refresh(method, opts)
           client:request(method, {
             textDocument = textDocument,
             range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
-          }, nil, bufnr)
+          }, opts.handler, bufnr)
         end
       end
     end
@@ -2248,7 +2249,7 @@ function M._refresh(method, opts)
           api.nvim_buf_line_count(bufnr) - 1,
           client.offset_encoding
         ),
-      }, nil, bufnr)
+      }, opts.handler, bufnr)
     end
   end
 end
