@@ -17,6 +17,10 @@ typedef enum {
   kKeyEncodingXterm,   ///< Xterm's modifyOtherKeys encoding (XTMODKEYS)
 } KeyEncoding;
 
+typedef struct {
+  void (*primary_device_attr)(TUIData *tui);
+} TermInputCallbacks;
+
 #define KEY_BUFFER_SIZE 0x1000
 typedef struct {
   int in_fd;
@@ -24,8 +28,7 @@ typedef struct {
   int8_t paste;
   bool ttimeout;
 
-  bool waiting_for_kkp_response;  ///< True if we are expecting to receive a response to a query for
-                                  ///< Kitty keyboard protocol support
+  TermInputCallbacks callbacks;
 
   KeyEncoding key_encoding;       ///< The key encoding used by the terminal emulator
 
