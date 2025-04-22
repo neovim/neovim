@@ -1027,6 +1027,7 @@ do
   --- @overload fun(name: string, val: any, validator: vim.validate.Validator, message: string)
   --- @overload fun(spec: table<string,[any, vim.validate.Validator, boolean|string]>)
   function vim.validate(name, value, validator, optional, message)
+    --- @cast validator vim.validate.Validator?
     local err_msg --- @type string?
     if validator then -- Form 1
       -- Check validator as a string first to optimize the common case.
