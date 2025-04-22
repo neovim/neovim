@@ -348,10 +348,12 @@ function M.run(cmd, opts, on_exit)
     stderr = stderr,
     stderr_data = stderr_data,
   }
+  local cmd1 = assert(cmd[1])
+  local args = vim.list_slice(cmd, 2)
 
   --- @diagnostic disable-next-line:missing-fields
-  state.handle, state.pid = spawn(cmd[1], {
-    args = vim.list_slice(cmd, 2),
+  state.handle, state.pid = spawn(cmd1, {
+    args = args,
     stdio = { stdin, stdout, stderr },
     cwd = opts.cwd,
     --- @diagnostic disable-next-line:assign-type-mismatch
