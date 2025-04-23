@@ -4307,7 +4307,6 @@ describe('API', function()
         cmd = 'put',
         args = {},
         bang = false,
-        range = {},
         reg = '+',
         addr = 'line',
         magic = {
@@ -4346,7 +4345,6 @@ describe('API', function()
         cmd = 'put',
         args = {},
         bang = false,
-        range = {},
         reg = '',
         addr = 'line',
         magic = {
@@ -4429,7 +4427,6 @@ describe('API', function()
         cmd = 'write',
         args = {},
         bang = true,
-        range = {},
         addr = 'line',
         magic = {
           file = true,
@@ -4470,7 +4467,6 @@ describe('API', function()
           cmd = 'split',
           args = { 'foo.txt' },
           bang = false,
-          range = {},
           addr = '?',
           magic = {
             file = true,
@@ -4514,7 +4510,6 @@ describe('API', function()
           cmd = 'split',
           args = { 'foo.txt' },
           bang = false,
-          range = {},
           addr = '?',
           magic = {
             file = true,
@@ -4600,7 +4595,6 @@ describe('API', function()
         cmd = 'argadd',
         args = { 'a.txt' },
         bang = false,
-        range = {},
         addr = 'arg',
         magic = {
           file = true,
@@ -4775,6 +4769,8 @@ describe('API', function()
       eq('foo', api.nvim_cmd(api.nvim_parse_cmd('echo "foo"', {}), { output = true }))
       api.nvim_cmd(api.nvim_parse_cmd('set cursorline', {}), {})
       eq(true, api.nvim_get_option_value('cursorline', {}))
+      -- Roundtrip on :bdelete which does not accept "range". #33394
+      api.nvim_cmd(api.nvim_parse_cmd('bdelete', {}), {})
     end)
     it('no side-effects (error messages) in pcall() #20339', function()
       eq(
