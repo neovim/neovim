@@ -40,7 +40,7 @@ local function cmd_kw(prev_cmd, cmd)
 end
 
 -- Exclude these from the vimCommand keyword list, they are handled specially
--- in syntax/vim.vim (vimAugroupKey, vimAutoCmd, vimGlobal, vimSubst). #9327
+-- in syntax/vim.vim (vimAugroupKey, vimAutocmd, vimGlobal, vimSubst). #9327
 local function is_special_cased_cmd(cmd)
   return (
     cmd == 'augroup'
@@ -122,26 +122,32 @@ end
 
 w('\n\nsyn case ignore')
 local vimau_start = 'syn keyword vimAutoEvent contained '
+local vimau_end = ' skipwhite nextgroup=vimAutoEventSep,@vimAutocmdPattern'
 w('\n\n' .. vimau_start)
 for au, _ in vim.spairs(vim.tbl_extend('error', auevents.events, auevents.aliases)) do
-  if not auevents.nvim_specific[au] then
+  -- "User" requires a user defined argument event.
+  -- (Separately specified in vim.vim).
+  if au ~= 'User' and not auevents.nvim_specific[au] then
     if lld.line_length > 850 then
-      w('\n' .. vimau_start)
+      w(vimau_end .. '\n' .. vimau_start)
     end
     w(' ' .. au)
   end
 end
+w(vimau_end .. '\n')
 
 local nvimau_start = 'syn keyword nvimAutoEvent contained '
-w('\n\n' .. nvimau_start)
+local nvimau_end = vimau_end
+w('\n' .. nvimau_start)
 for au, _ in vim.spairs(auevents.nvim_specific) do
   if lld.line_length > 850 then
-    w('\n' .. nvimau_start)
+    w(nvimau_end .. '\n' .. nvimau_start)
   end
   w(' ' .. au)
 end
+w(nvimau_end .. '\n')
 
-w('\n\nsyn case match')
+w('\nsyn case match')
 local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
 local funcs = mpack.decode(io.open(funcs_file, 'rb'):read('*all'))
