@@ -3223,7 +3223,7 @@ func Test_complete_info_completed()
   set cot&
 endfunc
 
-function Test_completeopt_preinsert()
+func Test_completeopt_preinsert()
   func Omni_test(findstart, base)
     if a:findstart
       return col(".")
@@ -3362,6 +3362,47 @@ function Test_completeopt_preinsert()
   call assert_equal("wp.fobar", g:line)
   call assert_equal(4, g:col)
   call assert_equal("wp.", getline('.'))
+
+  %delete _
+  let &l:undolevels = &l:undolevels
+  normal! ifoo
+  let &l:undolevels = &l:undolevels
+  normal! obar
+  let &l:undolevels = &l:undolevels
+  normal! obaz
+  let &l:undolevels = &l:undolevels
+
+  func CheckUndo()
+    let g:errmsg = ''
+    call assert_equal(['foo', 'bar', 'baz'], getline(1, '$'))
+    undo
+    call assert_equal(['foo', 'bar'], getline(1, '$'))
+    undo
+    call assert_equal(['foo'], getline(1, '$'))
+    undo
+    call assert_equal([''], getline(1, '$'))
+    later 3
+    call assert_equal(['foo', 'bar', 'baz'], getline(1, '$'))
+    call assert_equal('', v:errmsg)
+  endfunc
+
+  " Check that switching buffer with "preinsert" doesn't corrupt undo.
+  new
+  setlocal bufhidden=wipe
+  inoremap <buffer> <F2> <Cmd>enew!<CR>
+  call feedkeys("i\<C-X>\<C-O>\<F2>\<Esc>", 'tx')
+  bwipe!
+  call CheckUndo()
+
+  " Check that closing window with "preinsert" doesn't corrupt undo.
+  new
+  setlocal bufhidden=wipe
+  inoremap <buffer> <F2> <Cmd>close!<CR>
+  call feedkeys("i\<C-X>\<C-O>\<F2>\<Esc>", 'tx')
+  call CheckUndo()
+
+  %delete _
+  delfunc CheckUndo
 
   bw!
   set cot&
