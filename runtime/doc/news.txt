@@ -70,7 +70,7 @@ HIGHLIGHTS
 
 LSP
 
-• todo
+• `root_markers` in |vim.lsp.Config| can now be ordered by priority.
 
 LUA
 

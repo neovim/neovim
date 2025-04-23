@@ -296,27 +296,33 @@ end
 --- Directory markers (.e.g. '.git/') where the LSP server will base its workspaceFolders,
 --- rootUri, and rootPath on initialization. Unused if `root_dir` is provided.
 ---
---- It's possibile to specify marker's priority. The default behaviour performs a
---- folder-up first search, but it can be configured to look for multple markers in each
---- directory before going up.
+--- The list order decides the priority. To indicate "equal priority", specify names in a nested list (`{ { 'a', 'b' }, ... }`)
+--- Each entry in this list is a set of one or more markers. For each set, Nvim
+--- will search upwards for each marker contained in the set. If a marker is
+--- found, the directory which contains that marker is used as the root
+--- directory. If no markers from the set are found, the process is repeated
+--- with the next set in the list.
 ---
---- Example (default, folder-up first):
+--- Example:
 ---
 --- ```lua
 ---   root_markers = { 'stylua.toml', '.git' }
 --- ```
 ---
---- Looks for `stylua.toml` in every folder going up, if it isn't found it does
---- the same for `.git`.
+--- Find the first parent directory containing the file `stylua.toml`. If not
+--- found, find the first parent directory containing the file or directory
+--- `.git`.
 ---
---- Example (mixed priorities):
+--- Example:
 ---
 --- ```lua
 ---   root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
 --- ```
 ---
---- Looks for both `.stylua.toml` and `.luarc.json` (in this order) in every
---- folder going up, if none of them is found it does the same for `.git`.
+--- Find the first parent directory containing EITHER `stylua.toml` or
+--- `.luarc.json`. If not found, find the first parent directory containing the
+--- file or directory `.git`.
+---
 --- @field root_markers? (string|string[])[]
 
 --- Sets the default configuration for an LSP client (or _all_ clients if the special name "*" is
