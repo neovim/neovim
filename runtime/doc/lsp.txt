@@ -41,6 +41,7 @@ Follow these steps to get LSP features:
         -- current buffer that contains either a ".luarc.json" or a
         -- ".luarc.jsonc" file. Files that share a root directory will reuse
         -- the connection to the same LSP server.
+        -- It also supports priorities see |vim.lsp.Config|
         root_markers = { '.luarc.json', '.luarc.jsonc' },
 
         -- Specific settings to send to the server. The schema for this is
@@ -722,9 +723,30 @@ Lua module: vim.lsp                                                 *lsp-core*
                          the buffer. Thus a `root_dir()` function can
                          dynamically decide per-buffer whether to activate (or
                          skip) LSP. See example at |vim.lsp.enable()|.
-      • {root_markers}?  (`string[]`) Directory markers (e.g. ".git/",
-                         "package.json") used to decide `root_dir`. Unused if
-                         `root_dir` is provided.
+      • {root_markers}?  (`(string|string[])[]`) Directory markers (.e.g.
+                         '.git/') where the LSP server will base its
+                         workspaceFolders, rootUri, and rootPath on
+                         initialization. Unused if `root_dir` is provided.
+
+                         It's possibile to specify marker's priority. The
+                         default behaviour performs a folder-up first search,
+                         but it can be configured to look for multple markers
+                         in each directory before going up.
+
+                         Example (default, folder-up first): >lua
+                               root_markers = { 'stylua.toml', '.git' }
+<
+
+                         Looks for `stylua.toml` in every folder going up, if
+                         it isn't found it does the same for `.git`.
+
+                         Example (mixed priorities): >lua
+                               root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
+<
+
+                         Looks for both `.stylua.toml` and `.luarc.json` (in
+                         this order) in every folder going up, if none of them
+                         is found it does the same for `.git`.
 
 
 buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*

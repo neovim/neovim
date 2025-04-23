@@ -293,9 +293,31 @@ end
 --- example at |vim.lsp.enable()|.
 --- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
 ---
---- Directory markers (e.g. ".git/", "package.json") used to decide `root_dir`. Unused if `root_dir`
---- is provided.
---- @field root_markers? string[]
+--- Directory markers (.e.g. '.git/') where the LSP server will base its workspaceFolders,
+--- rootUri, and rootPath on initialization. Unused if `root_dir` is provided.
+---
+--- It's possibile to specify marker's priority. The default behaviour performs a
+--- folder-up first search, but it can be configured to look for multple markers in each
+--- directory before going up.
+---
+--- Example (default, folder-up first):
+---
+--- ```lua
+---   root_markers = { 'stylua.toml', '.git' }
+--- ```
+---
+--- Looks for `stylua.toml` in every folder going up, if it isn't found it does
+--- the same for `.git`.
+---
+--- Example (mixed priorities):
+---
+--- ```lua
+---   root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
+--- ```
+---
+--- Looks for both `.stylua.toml` and `.luarc.json` (in this order) in every
+--- folder going up, if none of them is found it does the same for `.git`.
+--- @field root_markers? (string|string[])[]
 
 --- Sets the default configuration for an LSP client (or _all_ clients if the special name "*" is
 --- used).
