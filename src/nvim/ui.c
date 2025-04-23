@@ -539,7 +539,21 @@ void ui_flush(void)
   if (!ui_active()) {
     return;
   }
+
+  static bool was_busy = false;
+
   cmdline_ui_flush();
+
+  if (State != MODE_CMDLINE && curwin->w_floating && curwin->w_config.hide) {
+    if (!was_busy) {
+      ui_call_busy_start();
+      was_busy = true;
+    }
+  } else if (was_busy) {
+    ui_call_busy_stop();
+    was_busy = false;
+  }
+
   win_ui_flush(false);
   msg_ext_ui_flush();
   msg_scroll_flush();

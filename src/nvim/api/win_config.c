@@ -201,7 +201,8 @@
 ///     the call.
 ///   - fixed: If true when anchor is NW or SW, the float window
 ///            would be kept fixed even if the window would be truncated.
-///   - hide: If true the floating window will be hidden.
+///   - hide: If true the floating window will be hidden and the cursor will be invisible when
+///           focused on it.
 ///   - vertical: Split vertically |:vertical|.
 ///   - split: Split direction: "left", "right", "above", "below".
 ///
