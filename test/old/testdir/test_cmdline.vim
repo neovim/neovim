@@ -4287,4 +4287,50 @@ func Test_cd_bslash_completion_windows()
   let &shellslash = save_shellslash
 endfunc
 
+" Test cmdcomplete_info() with CmdlineLeavePre autocmd
+func Test_cmdcomplete_info()
+  augroup test_CmdlineLeavePre
+    autocmd!
+    " Calling expand() should not interfere with cmdcomplete_info().
+    autocmd CmdlineLeavePre * call expand('test_cmdline.*')
+    autocmd CmdlineLeavePre * let g:cmdcomplete_info = string(cmdcomplete_info())
+  augroup END
+  new
+  call assert_equal({}, cmdcomplete_info())
+  call feedkeys(":h echom\<cr>", "tx") " No expansion
+  call assert_equal('{}', g:cmdcomplete_info)
+  call feedkeys(":h echoms\<tab>\<cr>", "tx")
+  call assert_equal('{''cmdline_orig'': '''', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 0, ''matches'': ['':echom'', '':echomsg''], ''selected'': 0}',
+        \ g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 0, ''matches'': ['':echom'', '':echomsg''], ''selected'': 1}',
+        \ g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<tab>\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 0, ''matches'': ['':echom'', '':echomsg''], ''selected'': -1}',
+        \ g:cmdcomplete_info)
+
+  set wildoptions=pum
+  call feedkeys(":h echoms\<tab>\<cr>", "tx")
+  call assert_equal('{''cmdline_orig'': '''', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 1, ''matches'': ['':echom'', '':echomsg''], ''selected'': 0}',
+        \ g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 1, ''matches'': ['':echom'', '':echomsg''], ''selected'': 1}',
+        \ g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<tab>\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 1, ''matches'': ['':echom'', '':echomsg''], ''selected'': -1}',
+        \ g:cmdcomplete_info)
+  bw!
+  set wildoptions&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

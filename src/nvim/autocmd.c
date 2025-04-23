@@ -1726,6 +1726,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     // Don't try expanding the following events.
     if (event == EVENT_CMDLINECHANGED
         || event == EVENT_CMDLINEENTER
+        || event == EVENT_CMDLINELEAVEPRE
         || event == EVENT_CMDLINELEAVE
         || event == EVENT_CMDUNDEFINED
         || event == EVENT_CURSORMOVEDC

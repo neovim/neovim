@@ -91,6 +91,8 @@ static int compl_match_arraysize;
 /// First column in cmdline of the matched item for completion.
 static int compl_startcol;
 static int compl_selected;
+/// cmdline before expansion
+static char *cmdline_orig = NULL;
 
 #define SHOW_MATCH(m) (showtail ? showmatches_gettail(matches[m], false) : matches[m])
 
@@ -401,6 +403,7 @@ void cmdline_pum_remove(void)
 {
   pum_undisplay(true);
   XFREE_CLEAR(compl_match_array);
+  compl_match_arraysize = 0;
 }
 
 void cmdline_pum_cleanup(CmdlineInfo *cclp)
@@ -979,6 +982,11 @@ void ExpandCleanup(expand_T *xp)
   XFREE_CLEAR(xp->xp_orig);
 }
 
+void clear_cmdline_orig(void)
+{
+  XFREE_CLEAR(cmdline_orig);
+}
+
 /// Display one line of completion matches. Multiple matches are displayed in
 /// each line (used by wildmode=list and CTRL-D)
 ///
@@ -1058,6 +1066,12 @@ int showmatches(expand_T *xp, bool wildmenu)
   int lines;
   int columns;
   bool showtail;
+
+  // Save cmdline before expansion
+  if (ccline->cmdbuff != NULL) {
+    xfree(cmdline_orig);
+    cmdline_orig = xstrnsave(ccline->cmdbuff, (size_t)ccline->cmdlen);
+  }
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
@@ -3652,4 +3666,31 @@ theend:
   }
   xfree(pat);
   ExpandCleanup(&xpc);
+}
+
+/// "cmdcomplete_info()" function
+void f_cmdcomplete_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  CmdlineInfo *ccline = get_cmdline_info();
+
+  tv_dict_alloc_ret(rettv);
+  if (ccline == NULL || ccline->xpc == NULL || ccline->xpc->xp_files == NULL) {
+    return;
+  }
+
+  dict_T *retdict = rettv->vval.v_dict;
+  int ret = tv_dict_add_str(retdict, S_LEN("cmdline_orig"), cmdline_orig);
+  if (ret == OK) {
+    ret = tv_dict_add_nr(retdict, S_LEN("pum_visible"), pum_visible());
+  }
+  if (ret == OK) {
+    ret = tv_dict_add_nr(retdict, S_LEN("selected"), ccline->xpc->xp_selected);
+  }
+  if (ret == OK) {
+    list_T *li = tv_list_alloc(ccline->xpc->xp_numfiles);
+    ret = tv_dict_add_list(retdict, S_LEN("matches"), li);
+    for (int idx = 0; ret == OK && idx < ccline->xpc->xp_numfiles; idx++) {
+      tv_list_append_string(li, ccline->xpc->xp_files[idx], -1);
+    }
+  }
 }
