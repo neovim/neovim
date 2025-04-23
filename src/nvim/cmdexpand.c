@@ -110,6 +110,7 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_FILES
          && xp->xp_context != EXPAND_FILES_IN_PATH
          && xp->xp_context != EXPAND_FILETYPE
+         && xp->xp_context != EXPAND_FILETYPECMD
          && xp->xp_context != EXPAND_FINDFUNC
          && xp->xp_context != EXPAND_HELP
          && xp->xp_context != EXPAND_KEYMAP
@@ -1765,6 +1766,19 @@ static const char *set_context_in_lang_cmd(expand_T *xp, const char *arg)
 }
 
 static enum {
+  EXP_FILETYPECMD_ALL,     ///< expand all :filetype values
+  EXP_FILETYPECMD_PLUGIN,  ///< expand plugin on off
+  EXP_FILETYPECMD_INDENT,  ///< expand indent on off
+  EXP_FILETYPECMD_ONOFF,   ///< expand on off
+} filetype_expand_what;
+
+enum {
+  EXPAND_FILETYPECMD_PLUGIN = 0x01,
+  EXPAND_FILETYPECMD_INDENT = 0x02,
+  EXPAND_FILETYPECMD_ONOFF  = 0x04,
+};
+
+static enum {
   EXP_BREAKPT_ADD,  ///< expand ":breakadd" sub-commands
   EXP_BREAKPT_DEL,  ///< expand ":breakdel" sub-commands
   EXP_PROFDEL,      ///< expand ":profdel" sub-commands
@@ -1831,6 +1845,47 @@ static const char *set_context_in_scriptnames_cmd(expand_T *xp, const char *arg)
   }
 
   xp->xp_context = EXPAND_SCRIPTNAMES;
+  xp->xp_pattern = p;
+
+  return NULL;
+}
+
+/// Set the completion context for the :filetype command. Always returns NULL.
+static const char *set_context_in_filetype_cmd(expand_T *xp, const char *arg)
+{
+  xp->xp_context = EXPAND_FILETYPECMD;
+  xp->xp_pattern = (char *)arg;
+  filetype_expand_what = EXP_FILETYPECMD_ALL;
+
+  char *p = skipwhite(arg);
+  if (*p == NUL) {
+    return NULL;
+  }
+
+  int val = 0;
+
+  while (true) {
+    if (strncmp(p, "plugin", 6) == 0) {
+      val |= EXPAND_FILETYPECMD_PLUGIN;
+      p = skipwhite(p + 6);
+      continue;
+    }
+    if (strncmp(p, "indent", 6) == 0) {
+      val |= EXPAND_FILETYPECMD_INDENT;
+      p = skipwhite(p + 6);
+      continue;
+    }
+    break;
+  }
+
+  if ((val & EXPAND_FILETYPECMD_PLUGIN) && (val & EXPAND_FILETYPECMD_INDENT)) {
+    filetype_expand_what = EXP_FILETYPECMD_ONOFF;
+  } else if ((val & EXPAND_FILETYPECMD_PLUGIN)) {
+    filetype_expand_what = EXP_FILETYPECMD_INDENT;
+  } else if ((val & EXPAND_FILETYPECMD_INDENT)) {
+    filetype_expand_what = EXP_FILETYPECMD_PLUGIN;
+  }
+
   xp->xp_pattern = p;
 
   return NULL;
@@ -2197,6 +2252,9 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
 
   case CMD_scriptnames:
     return set_context_in_scriptnames_cmd(xp, arg);
+
+  case CMD_filetype:
+    return set_context_in_filetype_cmd(xp, arg);
 
   case CMD_lua:
   case CMD_equal:
@@ -2566,6 +2624,30 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
 }
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
+/// ":filetype {plugin,indent}" command.
+static char *get_filetypecmd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  char *opts_all[] = { "indent", "plugin", "on", "off" };
+  char *opts_plugin[] = { "plugin", "on", "off" };
+  char *opts_indent[] = { "indent", "on", "off" };
+  char *opts_onoff[] = { "on", "off" };
+
+  if (filetype_expand_what == EXP_FILETYPECMD_ALL && idx < 4) {
+    return opts_all[idx];
+  }
+  if (filetype_expand_what == EXP_FILETYPECMD_PLUGIN && idx < 3) {
+    return opts_plugin[idx];
+  }
+  if (filetype_expand_what == EXP_FILETYPECMD_INDENT && idx < 3) {
+    return opts_indent[idx];
+  }
+  if (filetype_expand_what == EXP_FILETYPECMD_ONOFF && idx < 2) {
+    return opts_onoff[idx];
+  }
+  return NULL;
+}
+
+/// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":breakadd {expr, file, func, here}" command.
 /// ":breakdel {func, file, here}" command.
 static char *get_breakadd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
@@ -2660,6 +2742,7 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     int escaped;
   } tab[] = {
     { EXPAND_COMMANDS, get_command_name, false, true },
+    { EXPAND_FILETYPECMD, get_filetypecmd_arg, true, true },
     { EXPAND_MAPCLEAR, get_mapclear_arg, true, true },
     { EXPAND_MESSAGES, get_messages_arg, true, true },
     { EXPAND_HISTORY, get_history_arg, true, true },
@@ -3642,6 +3725,9 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     int context = EXPAND_SHELLCMDLINE;
     set_context_for_wildcard_arg(NULL, xpc.xp_pattern, false, &xpc, &context);
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+  }
+  if (xpc.xp_context == EXPAND_FILETYPECMD) {
+    filetype_expand_what = EXP_FILETYPECMD_ALL;
   }
 
 theend:
