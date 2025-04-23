@@ -9492,6 +9492,211 @@ describe('float window', function()
                                                   |
         ]])
       end
+
+      --
+      -- Cursor visibility:
+      --
+      -- Cursor is not visible in a hide=true floating window.
+      api.nvim_set_current_win(win)
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+                                                    |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4 (hidden)
+            {1:          }|
+            {2:~         }|
+          ]], win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1000
+          },
+          [4] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1001
+          }
+        }
+        })
+      else
+        screen:expect({
+          grid = [[
+                                                    |
+            {0:~                                       }|*5
+                                                    |
+          ]]
+        })
+      end
+
+      -- Show cursor if cmdline is entered while curwin is a hide=true floating window.
+      feed(':')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+                                                    |
+            {0:~                                       }|*5
+          ## grid 3
+            :^                                       |
+          ## grid 4 (hidden)
+            {1:          }|
+            {2:~         }|
+          ]], win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1000
+          },
+          [4] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1001
+          }
+        }
+        })
+      else
+        screen:expect({
+          grid = [[
+                                                    |
+            {0:~                                       }|*5
+            :^                                       |
+          ]]
+        })
+      end
+      feed('<ESC>')
+
+      -- Show cursor after switching to a normal window (hide=false).
+      api.nvim_set_current_win(cwin)
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4 (hidden)
+            {1:          }|
+            {2:~         }|
+          ]], win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1000
+          },
+          [4] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1001
+          }
+        }
+        })
+      else
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {0:~                                       }|*5
+                                                    |
+          ]]
+        })
+      end
+      api.nvim_set_current_win(win)
+      local win1 = api.nvim_open_win(buf, false, {relative='editor', width=4, height=4, row=1, col=2})
+      api.nvim_set_current_win(win1)
+      if multigrid then
+      screen:expect({
+        grid = [[
+        ## grid 1
+          [2:----------------------------------------]|*6
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|*5
+        ## grid 3
+                                                  |
+        ## grid 4 (hidden)
+          {1:          }|
+          {2:~         }|
+        ## grid 5
+          {1:^    }|
+          {2:~   }|*3
+        ]], float_pos={
+        [5] = {1002, "NW", 1, 1, 2, true, 50, 1, 1, 2};
+      }, win_viewport={
+        [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        [5] = {win = 1002, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      }, win_viewport_margins={
+        [2] = {
+          bottom = 0,
+          left = 0,
+          right = 0,
+          top = 0,
+          win = 1000
+        },
+        [4] = {
+          bottom = 0,
+          left = 0,
+          right = 0,
+          top = 0,
+          win = 1001
+        },
+        [5] = {
+          bottom = 0,
+          left = 0,
+          right = 0,
+          top = 0,
+          win = 1002
+        }
+      }
+      })
+      else
+        screen:expect({
+          grid = [[
+                                                    |
+            {0:~ }{1:^    }{0:                                  }|
+            {0:~ }{2:~   }{0:                                  }|*3
+            {0:~                                       }|
+                                                    |
+          ]]
+        })
+      end
+      api.nvim_win_close(win1, true)
+
       -- check window jump with hide
       feed('<C-W><C-W>')
       -- should keep on current window
