@@ -6313,7 +6313,7 @@ describe('LSP', function()
   end)
 
   describe('vim.lsp.config() and vim.lsp.enable()', function()
-    it('can merge settings from "*"', function()
+    it('merges settings from "*"', function()
       eq(
         {
           name = 'foo',
@@ -6325,6 +6325,15 @@ describe('LSP', function()
           vim.lsp.config('foo', { cmd = { 'foo' } })
 
           return vim.lsp.config['foo']
+        end)
+      )
+    end)
+
+    it('config("bogus") shows a hint', function()
+      matches(
+        'hint%: to resolve a config',
+        pcall_err(exec_lua, function()
+          vim.print(vim.lsp.config('non-existent-config'))
         end)
       )
     end)
@@ -6650,21 +6659,18 @@ describe('LSP', function()
           local _ = vim.lsp.config['foo*']
         end)
       )
-
       matches(
         err,
         pcall_err(exec_lua, function()
           vim.lsp.config['foo*'] = {}
         end)
       )
-
       matches(
         err,
         pcall_err(exec_lua, function()
           vim.lsp.config('foo*', {})
         end)
       )
-
       -- Exception for '*'
       pcall(exec_lua, function()
         vim.lsp.config('*', {})

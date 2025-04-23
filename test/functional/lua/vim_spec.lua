@@ -1556,10 +1556,15 @@ describe('lua stdlib', function()
       pcall_err(exec_lua, "vim.validate('arg1', nil, {'number', 'string'})")
     )
 
-    -- Pass an additional message back.
+    -- Validator func can return an extra "Info" message.
     matches(
       'arg1: expected %?, got 3. Info: TEST_MSG',
       pcall_err(exec_lua, "vim.validate('arg1', 3, function(a) return a == 1, 'TEST_MSG' end)")
+    )
+    -- Caller can override the "expected" message.
+    eq(
+      'arg1: expected TEST_MSG, got nil',
+      pcall_err(exec_lua, "vim.validate('arg1', nil, 'table', 'TEST_MSG')")
     )
   end)
 
