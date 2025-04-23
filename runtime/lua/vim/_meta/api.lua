@@ -458,7 +458,7 @@ function vim.api.nvim_buf_get_lines(buffer, start, end_, strict_indexing) end
 --- @see vim.api.nvim_buf_del_mark
 --- @param buffer integer Buffer id, or 0 for current buffer
 --- @param name string Mark name
---- @return integer[] # (row, col) tuple, (0, 0) if the mark is not set, or is an
+--- @return [integer, integer] # (row, col) tuple, (0, 0) if the mark is not set, or is an
 --- uppercase/file mark set in another buffer.
 function vim.api.nvim_buf_get_mark(buffer, name) end
 
@@ -2382,7 +2382,7 @@ function vim.api.nvim_win_get_config(window) end
 ---
 --- @see `:help getcurpos()`
 --- @param window integer `window-ID`, or 0 for current window
---- @return integer[] # (row, col) tuple
+--- @return [integer, integer] # (row, col) tuple
 function vim.api.nvim_win_get_cursor(window) end
 
 --- Gets the window height
@@ -2406,7 +2406,7 @@ function vim.api.nvim_win_get_option(window, name) end
 --- Gets the window position in display cells. First position is zero.
 ---
 --- @param window integer `window-ID`, or 0 for current window
---- @return integer[] # (row, col) tuple with the window position
+--- @return [integer, integer] # (row, col) tuple with the window position
 function vim.api.nvim_win_get_position(window) end
 
 --- Gets the window tabpage
@@ -2467,7 +2467,7 @@ function vim.api.nvim_win_set_config(window, config) end
 --- This scrolls the window even if it is not the current one.
 ---
 --- @param window integer `window-ID`, or 0 for current window
---- @param pos integer[] (row, col) tuple representing the new position
+--- @param pos [integer, integer] (row, col) tuple representing the new position
 function vim.api.nvim_win_set_cursor(window, pos) end
 
 --- Sets the window height.
