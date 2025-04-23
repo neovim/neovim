@@ -4287,10 +4287,12 @@ func Test_cd_bslash_completion_windows()
   let &shellslash = save_shellslash
 endfunc
 
-" Testg cmdcomplete_info() with CmdlineLeavePre autocmd
+" Test cmdcomplete_info() with CmdlineLeavePre autocmd
 func Test_cmdcomplete_info()
   augroup test_CmdlineLeavePre
     autocmd!
+    " Calling expand() should not interfere with cmdcomplete_info().
+    autocmd CmdlineLeavePre * call expand('test_cmdline.*')
     autocmd CmdlineLeavePre * let g:cmdcomplete_info = string(cmdcomplete_info())
   augroup END
   new

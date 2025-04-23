@@ -970,7 +970,6 @@ void ExpandInit(expand_T *xp)
   xp->xp_backslash = XP_BS_NONE;
   xp->xp_prefix = XP_PREFIX_NONE;
   xp->xp_numfiles = -1;
-  XFREE_CLEAR(cmdline_orig);
 }
 
 /// Cleanup an expand structure after use.
@@ -981,6 +980,11 @@ void ExpandCleanup(expand_T *xp)
     xp->xp_numfiles = -1;
   }
   XFREE_CLEAR(xp->xp_orig);
+}
+
+void clear_cmdline_orig(void)
+{
+  XFREE_CLEAR(cmdline_orig);
 }
 
 /// Display one line of completion matches. Multiple matches are displayed in
