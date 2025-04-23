@@ -7947,7 +7947,8 @@ describe('float window', function()
         qui officia deserunt mollit anim id est
         laborum.]])
       local buf = api.nvim_create_buf(false,false)
-      api.nvim_buf_set_lines(buf, 0, -1, true, {"test", "", "popup    text"})
+      local test_data = {"test", "", "popup    text"}
+      api.nvim_buf_set_lines(buf, 0, -1, true, test_data)
       local win = api.nvim_open_win(buf, false, {relative='editor', width=15, height=3, row=2, col=5})
       if multigrid then
         screen:expect{grid=[[
@@ -8019,6 +8020,45 @@ describe('float window', function()
                                                             |
         ]])
       end
+
+      -- Test for \u2800 (braille blank unicode character)
+      local braille_blank = "\226\160\128"
+      api.nvim_buf_set_lines(buf, 0, -1, true, {"test" .. braille_blank, "", "popup"..braille_blank.."   text"})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|*8
+          [3:--------------------------------------------------]|
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 3
+                                                            |
+        ## grid 4
+          {9:test]] .. braille_blank .. [[          }|
+          {9:               }|
+          {9:popup]] .. braille_blank .. [[   text  }|
+        ]], float_pos={[4] = {1001, "NW", 1, 2, 5, true, 50, 1, 2, 5}}, unchanged=true}
+      else
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{2:test}{3:o consequat}. Duis aute irure dolor in    |
+          repre{3:henderit in vol}uptate velit esse cillum      |
+          dolor{2:popup}{3:fugi}{2:text}{3:ul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]])
+      end
+      api.nvim_buf_set_lines(buf, 0, -1, true, test_data)
 
       -- Check that 'winblend' works with NormalNC highlight
       api.nvim_set_option_value('winhighlight', 'NormalNC:Visual', {win = win})
