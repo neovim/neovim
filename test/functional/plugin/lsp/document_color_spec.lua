@@ -159,6 +159,15 @@ body {
         end)
       )
     end)
+
+    it('does not error when called on a new unattached buffer', function()
+      eq(
+        false,
+        exec_lua(function()
+          return vim.lsp.document_color.is_enabled(vim.api.nvim_create_buf(false, true))
+        end)
+      )
+    end)
   end)
 
   describe('enable()', function()

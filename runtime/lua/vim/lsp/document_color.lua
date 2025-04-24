@@ -238,7 +238,13 @@ end
 function M.is_enabled(bufnr)
   vim.validate('bufnr', bufnr, 'number', true)
 
-  return bufstates[vim._resolve_bufnr(bufnr)].enabled
+  bufnr = vim._resolve_bufnr(bufnr)
+
+  if not bufstates[bufnr] then
+    reset_bufstate(bufnr, false)
+  end
+
+  return bufstates[bufnr].enabled
 end
 
 --- Enables document highlighting from the given language client in the given buffer.
