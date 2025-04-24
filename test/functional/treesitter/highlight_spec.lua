@@ -82,7 +82,7 @@ local hl_grid_legacy_c = [[
     {15:return} {26:0};                                                      |
   }                                                                |
   {1:~                                                                }|*2
-                                                                   |
+  14 more lines                                                    |
 ]]
 
 local hl_grid_ts_c = [[
@@ -102,7 +102,7 @@ local hl_grid_ts_c = [[
     {15:return} {26:0};                                                      |
   }                                                                |
   {1:~                                                                }|*2
-                                                                   |
+  {MATCH:1?4? m?o?r?e? l?i?n?e?s?.*}|
 ]]
 
 local test_text_c = [[
