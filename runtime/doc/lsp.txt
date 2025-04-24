@@ -1055,6 +1055,25 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
       • |complete-items|
       • |CompleteDone|
 
+                                                    *vim.lsp.resolve_config()*
+resolve_config({bufnr}, {config}, {on_resolve})
+    Resolves an LSP configuration into a fully usable client configuration.
+
+    This function is typically used to prepare a |vim.lsp.ClientConfig| from a
+    user-defined |vim.lsp.Config|. If the configuration requires a workspace
+    and none is found, the resolution is aborted.
+
+    Parameters: ~
+      • {bufnr}       (`integer`) Buffer number for which the config is being
+                      resolved.
+      • {config}      (`vim.lsp.Config`) The base LSP configuration to
+                      resolve. See |vim.lsp.Config|.
+      • {on_resolve}  (`fun(config: vim.lsp.ClientConfig, opts: vim.lsp.start.Opts)`)
+                      Callback invoked once the config is resolved.
+
+    Return: ~
+        (`vim.lsp.ClientConfig?`) See |vim.lsp.ClientConfig|.
+
 set_log_level({level})                               *vim.lsp.set_log_level()*
     Sets the global log level for LSP logging.
 
