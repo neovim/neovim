@@ -175,6 +175,18 @@ end
 local function buf_enable(bufnr)
   reset_bufstate(bufnr, true)
 
+  api.nvim_buf_attach(bufnr, false, {
+    on_reload = function(_, buf)
+      buf_clear(buf)
+      if bufstates[buf].enabled then
+        buf_refresh(buf)
+      end
+    end,
+    on_detach = function(_, buf)
+      buf_disable(buf)
+    end,
+  })
+
   api.nvim_create_autocmd('LspNotify', {
     buffer = bufnr,
     group = document_color_augroup,
@@ -188,25 +200,6 @@ local function buf_enable(bufnr)
       then
         buf_refresh(args.buf, args.data.client_id)
       end
-    end,
-  })
-
-  api.nvim_create_autocmd('LspAttach', {
-    buffer = bufnr,
-    group = document_color_augroup,
-    desc = 'Enable document_color when LSP client attaches',
-    callback = function(args)
-      api.nvim_buf_attach(args.buf, false, {
-        on_reload = function(_, buf)
-          buf_clear(buf)
-          if bufstates[buf].enabled then
-            buf_refresh(buf)
-          end
-        end,
-        on_detach = function(_, buf)
-          buf_disable(buf)
-        end,
-      })
     end,
   })
 
