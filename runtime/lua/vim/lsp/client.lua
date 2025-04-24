@@ -63,6 +63,9 @@ local validate = vim.validate
 --- folder in this list. See `workspaceFolders` in the LSP spec.
 --- @field workspace_folders? lsp.WorkspaceFolder[]
 ---
+--- (default false) Server requires a workspace (no "single file" support).
+--- @field workspace_required? boolean
+---
 --- Map overriding the default capabilities defined by |vim.lsp.protocol.make_client_capabilities()|,
 --- passed to the language server on initialization. Hint: use make_client_capabilities() and modify
 --- its result.

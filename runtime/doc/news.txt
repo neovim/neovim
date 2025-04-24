@@ -276,6 +276,7 @@ LSP
   `codeAction/resolve` request.
 • The `textDocument/completion` request now includes the completion context in
   its parameters.
+• |vim.lsp.Config| gained `workspace_required`.
 
 LUA
 
