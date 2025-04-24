@@ -3831,6 +3831,7 @@ M.funcs = {
       file		file and directory names
       file_in_path	file and directory names in |'path'|
       filetype	filetype names |'filetype'|
+      filetypecmd	|:filetype| suboptions
       function	function name
       help		help subjects
       highlight	highlight groups
