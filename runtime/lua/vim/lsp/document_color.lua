@@ -249,7 +249,7 @@ end
 ---   callback = function(args)
 ---     local client = vim.lsp.get_client_by_id(args.data.client_id)
 ---
----     if client:supports_method('textDocument/documentColor')
+---     if client:supports_method('textDocument/documentColor') then
 ---       vim.lsp.document_color.enable(true, args.buf)
 ---     end
 ---   end
