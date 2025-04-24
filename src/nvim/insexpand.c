@@ -2613,8 +2613,8 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
     while (true) {
       // Move to next window (wrap to first window if at the end)
       wp = (wp->w_next != NULL) ? wp->w_next : firstwin;
-      // Break if we're back at start or found an unscanned buffer
-      if (wp == curwin || !wp->w_buffer->b_scanned) {
+      // Break if we're back at start or found an unscanned buffer (in a focusable window)
+      if (wp == curwin || (!wp->w_buffer->b_scanned && wp->w_config.focusable)) {
         break;
       }
     }
