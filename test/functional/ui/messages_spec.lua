@@ -1663,6 +1663,22 @@ stack traceback:
       },
     })
   end)
+
+  it('clears showmode after insert_expand mode', function()
+    feed('i<C-N>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      showmode = { { '-- Keyword completion (^N^P) ', 5, 11 }, { 'Pattern not found', 9, 6 } },
+    })
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*4
+    ]])
+  end)
 end)
 
 describe('ui/builtin messages', function()

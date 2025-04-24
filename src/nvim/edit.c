@@ -3458,7 +3458,7 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
     showmode();
   } else if (p_smd && (got_int || !skip_showmode())
              && !(p_ch == 0 && !ui_has(kUIMessages))) {
-    msg("", 0);
+    unshowmode(false);
   }
   // Exit Insert mode
   return true;
