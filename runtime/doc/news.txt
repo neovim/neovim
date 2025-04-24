@@ -175,7 +175,11 @@ OPTIONS
 
 PERFORMANCE
 
-• todo
+• |vim.glob.to_lpeg()| uses a new LPeg-based implementation (Peglob) that
+  provides ~50% speedup for complex patterns. The implementation restores
+  support for nested braces and follows LSP 3.17 specification with
+  additional constraints for improved correctness and resistance to
+  backtracking edge cases.
 
 PLUGINS
 
