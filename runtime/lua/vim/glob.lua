@@ -181,8 +181,8 @@ local function add_cond(a, b)
     elseif type(b) == 'table' then
       for i = 1, #b do
         table.insert(a, b[i])
-        return a
       end
+      return a
     end
   end
 end
@@ -212,7 +212,7 @@ end
 ---
 ---@param utf8_str string UTF-8 character
 ---@return number Codepoint value
-local function codepoint(utf8_str)
+local function to_codepoint(utf8_str)
   local codepoint = 0
   local byte_count = 0
 
@@ -266,7 +266,7 @@ local function class(inv, ranges)
     end
   end
   for _, v in ipairs(ranges) do
-    patt = patt + (type(v) == 'table' and m.utfR(codepoint(v[1]), codepoint(v[2])) or m.P(v))
+    patt = patt + (type(v) == 'table' and m.utfR(to_codepoint(v[1]), to_codepoint(v[2])) or m.P(v))
   end
   if inv == '!' then
     patt = m.P(1) - patt
