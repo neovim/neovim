@@ -11,7 +11,6 @@
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/packer.h"
 #include "nvim/types_defs.h"
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/packer.c.generated.h"
 #endif
@@ -73,6 +72,7 @@ void mpack_float8(char **ptr, double i)
   mpack_w(ptr, 0xcb);
   mpack_w8(ptr, (char *)&i);
 }
+
 static int msgpack_pack_string(msgpack_packer *const packer, const String str)
 {
   const size_t len = str.size;
@@ -234,10 +234,12 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
     case kObjectTypeDict:
     case kObjectTypeArray: {}
       size_t current_size;
-      if (current->type == kObjectTypeArray) {
+      if (current->type == kObjectTypeArray)
+ {
         current_size = current->data.array.size;
         mpack_array(&packer->ptr, (uint32_t)current_size);
-      } else {
+      }
+ else {
         current_size = current->data.dict.size;
         mpack_map(&packer->ptr, (uint32_t)current_size);
       }
@@ -274,7 +276,8 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
       if (container_idx >= arr.size) {
         container = NULL;
       }
-    } else {
+    }
+ else {
       Dict dict = container->data.dict;
       KeyValuePair *it = &dict.items[container_idx++];
       mpack_check_buffer(packer);
