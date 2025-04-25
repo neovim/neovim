@@ -6793,7 +6793,7 @@ describe('builtin popupmenu', function()
       end
       if multigrid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 18)
-        screen:expect {
+        screen:expect({
           grid = [[
         ## grid 1
           [2:--------------------------------]|*5
@@ -6809,7 +6809,7 @@ describe('builtin popupmenu', function()
           {n: baz }|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 17, false, 250, 2, 1, 17 } },
-        }
+        })
       else
         feed('<RightMouse><18,0>')
         screen:expect([[
@@ -6904,37 +6904,13 @@ describe('builtin popupmenu', function()
       no_menu_screen = no_menu_screen:gsub([['baz']], [['foo']])
       screen:expect(no_menu_screen)
       eq('foo', api.nvim_get_var('menustr'))
+      no_sel_screen = screen_replace(no_sel_screen, [['baz']], [['foo']])
 
       eq(false, screen.options.mousemoveevent)
       if multigrid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 4)
-        no_sel_screen = {
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-          :let g:menustr = 'foo'          |
-        ## grid 4
-          {n: foo }|
-          {n: bar }|
-          {n: baz }|
-        ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        }
       else
         feed('<RightMouse><4,0>')
-        no_sel_screen = [[
-          ^popup menu test                 |
-          {1:~  }{n: foo }{1:                        }|
-          {1:~  }{n: bar }{1:                        }|
-          {1:~  }{n: baz }{1:                        }|
-          {1:~                               }|
-          :let g:menustr = 'foo'          |
-        ]]
       end
       screen:expect(no_sel_screen)
       eq(true, screen.options.mousemoveevent)
