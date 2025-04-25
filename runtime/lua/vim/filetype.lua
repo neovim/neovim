@@ -1003,6 +1003,7 @@ local extension = {
   py = 'python',
   pyi = 'python',
   ptl = 'python',
+  ipy = 'python',
   ql = 'ql',
   qll = 'ql',
   qml = 'qml',
