@@ -629,7 +629,7 @@ func s:GetFilenameChecks() abort
     \ 'pymanifest': ['MANIFEST.in'],
     \ 'pyret': ['file.arr'],
     \ 'pyrex': ['file.pyx', 'file.pxd', 'file.pxi', 'file.pyx+'],
-    \ 'python': ['file.py', 'file.pyw', '.pythonstartup', '.pythonrc', '.python_history', '.jline-jython.history', 'file.ptl', 'file.pyi', 'SConstruct'],
+    \ 'python': ['file.py', 'file.pyw', '.pythonstartup', '.pythonrc', '.python_history', '.jline-jython.history', 'file.ptl', 'file.pyi', 'SConstruct', 'file.ipy'],
     \ 'ql': ['file.ql', 'file.qll'],
     \ 'qml': ['file.qml', 'file.qbs'],
     \ 'qmldir': ['qmldir'],
