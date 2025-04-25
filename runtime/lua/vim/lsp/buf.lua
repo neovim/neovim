@@ -829,7 +829,7 @@ local function response_to_list(map_result, entity, title_fn)
     end
     config = config or {}
     local title = title_fn(ctx)
-    local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+    local client = assert(lsp.get_client_by_id(ctx.client_id))
     local items = map_result(result, ctx.bufnr, client.offset_encoding)
 
     local list = { title = title, items = items, context = ctx }
@@ -860,7 +860,7 @@ local function links_to_items(links, bufnr, position_encoding)
       'links_to_items must be called with valid position encoding',
       vim.log.levels.WARN
     )
-    position_encoding = vim.lsp.get_clients({ bufnr = 0 })[1].offset_encoding
+    position_encoding = lsp.get_clients({ bufnr = bufnr })[1].offset_encoding
   end
 
   local items = {} --- @type vim.quickfix.entry[]
@@ -920,8 +920,40 @@ function M.document_link(opts)
     return string.format('Links in %s', fname)
   end)
 
-  lsp.buf_request(0, ms.textDocument_documentLink, params, function(err, result, ctx, config)
-    handler(err, result, ctx, vim.tbl_extend('force', config or {}, opts))
+  lsp.buf_request_all(0, ms.textDocument_documentLink, params, function(results, ctx)
+    local bufnr = assert(ctx.bufnr)
+    if api.nvim_get_current_buf() ~= bufnr then
+      -- Ignore result since buffer changed. This happens for slow language servers.
+      return
+    end
+
+    -- Filter errors from results
+    local results1 = {} --- @type table<integer,lsp.DocumentLink[]>
+
+    for client_id, resp in pairs(results) do
+      local err, result = resp.err, resp.result
+      if err then
+        lsp.log.error(err.code, err.message)
+      elseif result then
+        results1[client_id] = result
+      end
+    end
+
+    local nresults = #vim.tbl_keys(results1)
+
+    local result_list = {}
+
+    for client_id, resp in pairs(results1) do
+      if nresults > 1 then
+        local client_name = assert(lsp.get_client_by_id(client_id)).name
+        for _, link in ipairs(resp) do
+          link.target = string.format('[%s] %s', client_name, link.target)
+        end
+      end
+      vim.list_extend(result_list, resp)
+    end
+
+    handler(nil, result_list, ctx, opts)
   end)
 end
 

@@ -129,7 +129,7 @@ do
     { silent = true, expr = true, desc = ':help v_@-default' }
   )
 
-  --- Map |gx| to call |vim.ui.open| on the <cfile> or `textDocument/documentLink` at cursor.
+  --- Map |gx| to call |vim.ui.open| on the <cfile> or `textDocument/documentLink` under the cursor.
   do
     local function do_open(uri)
       local cmd, err = vim.ui.open(uri)
