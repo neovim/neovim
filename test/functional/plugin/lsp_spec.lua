@@ -5230,7 +5230,7 @@ describe('LSP', function()
   end)
 
   describe('lsp.buf.definition', function()
-    it('jumps to single location', function()
+    it('jumps to single location and can reuse win', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local bufnr = vim.api.nvim_get_current_buf()
@@ -5256,8 +5256,10 @@ describe('LSP', function()
         vim.api.nvim_win_set_cursor(win, { 3, 6 })
         local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
         vim.lsp.buf.definition()
-        vim.lsp.stop_client(client_id)
         return {
+          win = win,
+          bufnr = bufnr,
+          client_id = client_id,
           cursor = vim.api.nvim_win_get_cursor(win),
           messages = server.messages,
           tagstack = vim.fn.gettagstack(win),
@@ -5269,6 +5271,15 @@ describe('LSP', function()
       eq('x', result.tagstack.items[1].tagname)
       eq(3, result.tagstack.items[1].from[2])
       eq(7, result.tagstack.items[1].from[3])
+
+      n.feed(':vnew<CR>')
+      api.nvim_win_set_buf(0, result.bufnr)
+      api.nvim_win_set_cursor(0, { 3, 6 })
+      n.feed(':=vim.lsp.buf.definition({ reuse_win = true })<CR>')
+      eq(result.win, api.nvim_get_current_win())
+      exec_lua(function()
+        vim.lsp.stop_client(result.client_id)
+      end)
     end)
     it('merges results from multiple servers', function()
       exec_lua(create_server_definition)

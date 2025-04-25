@@ -158,7 +158,7 @@ local function request_with_opts(name, params, opts)
   lsp.buf_request(0, name, params, req_handler)
 end
 
----@param method string
+---@param method vim.lsp.protocol.Method.ClientToServer.Request
 ---@param opts? vim.lsp.LocationOpts
 local function get_locations(method, opts)
   opts = opts or {}
@@ -215,7 +215,13 @@ local function get_locations(method, opts)
         vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
 
         vim.bo[b].buflisted = true
-        local w = opts.reuse_win and vim.fn.win_findbuf(b)[1] or win
+        local w = win
+        if opts.reuse_win then
+          w = vim.fn.win_findbuf(b)[1] or w
+          if w ~= win then
+            api.nvim_set_current_win(w)
+          end
+        end
         api.nvim_win_set_buf(w, b)
         api.nvim_win_set_cursor(w, { item.lnum, item.col - 1 })
         vim._with({ win = w }, function()
@@ -958,7 +964,7 @@ function M.document_link(opts)
 end
 
 --- @param client_id integer
---- @param method string
+--- @param method vim.lsp.protocol.Method.ClientToServer.Request
 --- @param params table
 --- @param handler? lsp.Handler
 --- @param bufnr? integer
@@ -989,7 +995,7 @@ local hierarchy_methods = {
   [ms.callHierarchy_outgoingCalls] = 'call',
 }
 
---- @param method string
+--- @param method vim.lsp.protocol.Method.ClientToServer.Request
 local function hierarchy(method)
   local kind = hierarchy_methods[method]
   if not kind then

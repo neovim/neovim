@@ -422,10 +422,12 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
       for (int i = col - (int)startcol; i < until - startcol; i += width) {
         width = 1;
         // negative space
-        bool thru = linebuf[i] == schar_from_ascii(' ') && bg_line[i] != NUL;
+        bool thru = (linebuf[i] == schar_from_ascii(' ')
+                     || linebuf[i] == schar_from_char(L'\u2800')) && bg_line[i] != NUL;
         if (i + 1 < endcol - startcol && bg_line[i + 1] == NUL) {
           width = 2;
-          thru &= linebuf[i + 1] == schar_from_ascii(' ');
+          thru &= (linebuf[i + 1] == schar_from_ascii(' ')
+                   || linebuf[i + 1] == schar_from_char(L'\u2800'));
         }
         attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], attrbuf[i], &thru);
         if (width == 2) {

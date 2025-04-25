@@ -78,6 +78,7 @@ static int pum_col;                 // left column of pum, right column if 'righ
 static int pum_win_row_offset;      // The row offset needed to convert to window relative coordinates
 static int pum_win_col_offset;      // The column offset needed to convert to window relative coordinates
 static int pum_left_col;            // left column of pum, before padding or scrollbar
+static int pum_right_col;           // right column of pum, after padding or scrollbar
 static bool pum_above;              // pum is drawn above cursor line
 
 static bool pum_is_visible = false;
@@ -577,6 +578,8 @@ void pum_redraw(void)
   int thumb_pos = 0;
   int thumb_height = 1;
   int n;
+  const schar_T fcs_trunc = pum_rl ? curwin->w_p_fcs_chars.truncrl
+                                   : curwin->w_p_fcs_chars.trunc;
 
   //                         "word"   "kind"   "extra text"
   const hlf_T hlfsNorm[3] = { HLF_PNI, HLF_PNK, HLF_PNX };
@@ -611,6 +614,7 @@ void pum_redraw(void)
   grid_assign_handle(&pum_grid);
 
   pum_left_col = pum_col - col_off;
+  pum_right_col = pum_left_col + grid_width;
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_left_col,
                                 pum_height, grid_width, false, true);
   bool invalid_grid = moved || pum_invalid;
@@ -644,8 +648,6 @@ void pum_redraw(void)
     thumb_pos = (pum_first * (pum_height - thumb_height) + scroll_range / 2) / scroll_range;
   }
 
-  const int ellipsis_width = 3;
-
   for (int i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
     const hlf_T *const hlfs = (idx == pum_selected) ? hlfsSel : hlfsNorm;
@@ -668,7 +670,7 @@ void pum_redraw(void)
     // Do this 3 times and order from p_cia
     int grid_col = col_off;
     int totwidth = 0;
-    bool need_ellipsis = false;
+    bool need_fcs_trunc = false;
     int order[3];
     int items_width_array[3] = { pum_base_width, pum_kind_width, pum_extra_width };
     pum_align_order(order);
@@ -688,6 +690,9 @@ void pum_redraw(void)
       int width = 0;
       char *s = NULL;
       p = pum_get_item(idx, item_type);
+
+      const bool next_isempty = j + 1 < 3 && pum_get_item(idx, order[j + 1]) == NULL;
+
       if (p != NULL) {
         for (;; MB_PTR_ADV(p)) {
           if (s == NULL) {
@@ -721,11 +726,12 @@ void pum_redraw(void)
             char *rt = reverse_text(st);
             char *rt_start = rt;
             int cells = (int)mb_string2cells(rt);
-            if (p_pmw > ellipsis_width && pum_width == p_pmw
-                && grid_col - cells < col_off - pum_width) {
-              need_ellipsis = true;
+            int pad = next_isempty ? 0 : 2;
+            if (pum_width == p_pmw && pum_width - totwidth < cells + pad) {
+              need_fcs_trunc = true;
             }
 
+            // only draw the text that fits
             if (grid_col - cells < col_off - pum_width) {
               do {
                 cells -= utf_ptr2cells(rt);
@@ -751,9 +757,9 @@ void pum_redraw(void)
             grid_col -= width;
           } else {
             int cells = (int)mb_string2cells(st);
-            if (p_pmw > ellipsis_width && pum_width == p_pmw
-                && grid_col + cells > col_off + pum_width) {
-              need_ellipsis = true;
+            int pad = next_isempty ? 0 : 2;
+            if (pum_width == p_pmw && pum_width - totwidth < cells + pad) {
+              need_fcs_trunc = true;
             }
 
             if (attrs == NULL) {
@@ -794,10 +800,6 @@ void pum_redraw(void)
         n = order[j] == CPT_ABBR ? 1 : 0;
       }
 
-      bool next_isempty = false;
-      if (j + 1 < 3) {
-        next_isempty = pum_get_item(idx, order[j + 1]) == NULL;
-      }
       // Stop when there is nothing more to display.
       if ((j == 2)
           || (next_isempty && (j == 1 || (j == 0 && pum_get_item(idx, order[j + 2]) == NULL)))
@@ -820,21 +822,20 @@ void pum_redraw(void)
     if (pum_rl) {
       const int lcol = col_off - pum_width + 1;
       grid_line_fill(lcol, grid_col + 1, schar_from_ascii(' '), orig_attr);
-      if (need_ellipsis) {
-        bool over_wide = pum_width > ellipsis_width && linebuf_char[lcol + ellipsis_width] == NUL;
-        grid_line_fill(lcol, lcol + ellipsis_width, schar_from_ascii('.'), orig_attr);
-        if (over_wide) {
-          grid_line_put_schar(lcol + ellipsis_width, schar_from_ascii(' '), orig_attr);
+      if (need_fcs_trunc) {
+        linebuf_char[lcol] = fcs_trunc != NUL ? fcs_trunc : schar_from_ascii('<');
+        if (pum_width > 1 && linebuf_char[lcol + 1] == NUL) {
+          linebuf_char[lcol + 1] = schar_from_ascii(' ');
         }
       }
     } else {
       const int rcol = col_off + pum_width;
       grid_line_fill(grid_col, rcol, schar_from_ascii(' '), orig_attr);
-      if (need_ellipsis) {
-        if (pum_width > ellipsis_width && linebuf_char[rcol - ellipsis_width] == NUL) {
-          grid_line_put_schar(rcol - ellipsis_width - 1, schar_from_ascii(' '), orig_attr);
+      if (need_fcs_trunc) {
+        if (pum_width > 1 && linebuf_char[rcol - 1] == NUL) {
+          linebuf_char[rcol - 2] = schar_from_ascii(' ');
         }
-        grid_line_fill(rcol - ellipsis_width, rcol, schar_from_ascii('.'), orig_attr);
+        linebuf_char[rcol - 1] = fcs_trunc != NUL ? fcs_trunc : schar_from_ascii('>');
       }
     }
 
@@ -1393,15 +1394,16 @@ static void pum_select_mouse_pos(void)
   if (mouse_grid == pum_grid.handle) {
     pum_selected = mouse_row;
     return;
-  } else if (mouse_grid != pum_anchor_grid || mouse_col < pum_grid.comp_col
-             || mouse_col >= pum_grid.comp_col + pum_grid.comp_width) {
+  } else if (mouse_grid != pum_anchor_grid
+             || mouse_col < pum_left_col - pum_win_col_offset
+             || mouse_col >= pum_right_col - pum_win_col_offset) {
     pum_selected = -1;
     return;
   }
 
-  int idx = mouse_row - pum_grid.comp_row;
+  int idx = mouse_row - (pum_row - pum_win_row_offset);
 
-  if (idx < 0 || idx >= pum_grid.comp_height) {
+  if (idx < 0 || idx >= pum_height) {
     pum_selected = -1;
   } else if (*pum_array[idx].pum_text != NUL) {
     pum_selected = idx;

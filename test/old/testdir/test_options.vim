@@ -1137,11 +1137,14 @@ func Test_backupskip()
     call setenv(var, '/duplicate/path')
   endfor
 
+  " unset $HOME, so that it won't try to read init files
+  let saveenv['HOME'] = getenv("HOME")
+  call setenv('HOME', v:null)
   exe 'silent !' . cmd
   call assert_equal(['errors:'], readfile('Xtestout'))
 
   " restore environment variables
-  for var in ['TMPDIR', 'TMP', 'TEMP']
+  for var in ['TMPDIR', 'TMP', 'TEMP', 'HOME']
     call setenv(var, saveenv[var])
   endfor
 

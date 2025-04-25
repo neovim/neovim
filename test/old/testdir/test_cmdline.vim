@@ -548,6 +548,13 @@ func Test_getcompletion()
   let l = getcompletion('kill', 'expression')
   call assert_equal([], l)
 
+  let l = getcompletion('', 'filetypecmd')
+  call assert_equal(["indent", "off", "on", "plugin"], l)
+  let l = getcompletion('not', 'filetypecmd')
+  call assert_equal([], l)
+  let l = getcompletion('o', 'filetypecmd')
+  call assert_equal(['off', 'on'], l)
+
   let l = getcompletion('tag', 'function')
   call assert_true(index(l, 'taglist(') >= 0)
   let l = getcompletion('paint', 'function')
@@ -3240,6 +3247,26 @@ func Test_fuzzy_completion_behave()
   set wildoptions&
 endfunc
 
+" :filetype suboptions completion
+func Test_completion_filetypecmd()
+  set wildoptions&
+  call feedkeys(":filetype \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype indent off on plugin', @:)
+  call feedkeys(":filetype plugin \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype plugin indent off on', @:)
+  call feedkeys(":filetype indent \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype indent off on plugin', @:)
+  call feedkeys(":filetype i\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype indent', @:)
+  call feedkeys(":filetype p\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype plugin', @:)
+  call feedkeys(":filetype o\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype off on', @:)
+  call feedkeys(":filetype indent of\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype indent off', @:)
+  set wildoptions&
+endfunc
+
 " " colorscheme name fuzzy completion - NOT supported
 " func Test_fuzzy_completion_colorscheme()
 " endfunc
@@ -4285,6 +4312,52 @@ func Test_cd_bslash_completion_windows()
   call feedkeys(":cd XXXa\\_b\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"cd XXXa\_b\', @:)
   let &shellslash = save_shellslash
+endfunc
+
+" Test cmdcomplete_info() with CmdlineLeavePre autocmd
+func Test_cmdcomplete_info()
+  augroup test_CmdlineLeavePre
+    autocmd!
+    " Calling expand() should not interfere with cmdcomplete_info().
+    autocmd CmdlineLeavePre * call expand('test_cmdline.*')
+    autocmd CmdlineLeavePre * let g:cmdcomplete_info = string(cmdcomplete_info())
+  augroup END
+  new
+  call assert_equal({}, cmdcomplete_info())
+  call feedkeys(":h echom\<cr>", "tx") " No expansion
+  call assert_equal('{}', g:cmdcomplete_info)
+  call feedkeys(":h echoms\<tab>\<cr>", "tx")
+  call assert_equal('{''cmdline_orig'': '''', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 0, ''matches'': ['':echom'', '':echomsg''], ''selected'': 0}',
+        \ g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 0, ''matches'': ['':echom'', '':echomsg''], ''selected'': 1}',
+        \ g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<tab>\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 0, ''matches'': ['':echom'', '':echomsg''], ''selected'': -1}',
+        \ g:cmdcomplete_info)
+
+  set wildoptions=pum
+  call feedkeys(":h echoms\<tab>\<cr>", "tx")
+  call assert_equal('{''cmdline_orig'': '''', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 1, ''matches'': ['':echom'', '':echomsg''], ''selected'': 0}',
+        \ g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 1, ''matches'': ['':echom'', '':echomsg''], ''selected'': 1}',
+        \ g:cmdcomplete_info)
+  call feedkeys(":h echom\<tab>\<tab>\<tab>\<cr>", "tx")
+  call assert_equal(
+        \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 1, ''matches'': ['':echom'', '':echomsg''], ''selected'': -1}',
+        \ g:cmdcomplete_info)
+  bw!
+  set wildoptions&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

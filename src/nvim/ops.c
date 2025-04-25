@@ -297,12 +297,12 @@ static int get_vts_sum(const int *vts_array, int index)
   int sum = 0;
   int i;
 
-  // Perform the summation for indeces within the actual array.
+  // Perform the summation for indices within the actual array.
   for (i = 1; i <= index && i <= vts_array[0]; i++) {
     sum += vts_array[i];
   }
 
-  // Add topstops whose indeces exceed the actual array.
+  // Add tabstops whose indices exceed the actual array.
   if (i <= index) {
     sum += vts_array[vts_array[0]] * (index - vts_array[0]);
   }
@@ -1367,7 +1367,7 @@ int insert_reg(int regname, yankreg_T *reg, bool literally_arg)
       retval = FAIL;
     } else {
       for (size_t i = 0; i < reg->y_size; i++) {
-        if (regname == '-') {
+        if (regname == '-' && reg->y_type == kMTCharWise) {
           Direction dir = BACKWARD;
           if ((State & REPLACE_FLAG) != 0) {
             pos_T curpos;
@@ -1388,11 +1388,11 @@ int insert_reg(int regname, yankreg_T *reg, bool literally_arg)
           do_put(regname, NULL, dir, 1, PUT_CURSEND);
         } else {
           stuffescaped(reg->y_array[i].data, literally);
-        }
-        // Insert a newline between lines and after last line if
-        // y_type is kMTLineWise.
-        if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
-          stuffcharReadbuff('\n');
+          // Insert a newline between lines and after last line if
+          // y_type is kMTLineWise.
+          if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
+            stuffcharReadbuff('\n');
+          }
         }
       }
     }

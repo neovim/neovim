@@ -2334,9 +2334,10 @@ static bool set_ctrl_x_mode(const int c)
 static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
 {
   // Remove pre-inserted text when present.
-  if (ins_compl_preinsert_effect()) {
+  if (ins_compl_preinsert_effect() && ins_compl_win_active(curwin)) {
     ins_compl_delete(false);
   }
+
   // Get here when we have finished typing a sequence of ^N and
   // ^P or other completion characters in CTRL-X mode.  Free up
   // memory that was used, and make sure we can redo the insert.
@@ -2417,10 +2418,6 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     }
     restore_orig_extmarks();
     retval = true;
-  }
-
-  if ((c == Ctrl_W || c == Ctrl_U) && ins_compl_preinsert_effect()) {
-    ins_compl_delete(false);
   }
 
   auto_format(false, true);
@@ -5106,7 +5103,6 @@ static int ins_compl_start(void)
     line = ml_get(curwin->w_cursor.lnum);
   }
 
-  bool in_fuzzy = get_cot_flags() & kOptCotFlagFuzzy;
   if (compl_status_adding()) {
     edit_submode_pre = _(" Adding");
     if (ctrl_x_mode_line_or_eval()) {
@@ -5121,7 +5117,7 @@ static int ins_compl_start(void)
       compl_length = 0;
       compl_col = curwin->w_cursor.col;
       compl_lnum = curwin->w_cursor.lnum;
-    } else if (ctrl_x_mode_normal() && in_fuzzy) {
+    } else if (ctrl_x_mode_normal() && cfc_has_mode()) {
       compl_startpos = curwin->w_cursor;
       compl_cont_status &= CONT_S_IPOS;
     }

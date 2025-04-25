@@ -921,6 +921,7 @@ Command line:					*command-line-functions*
 	getcmdwintype()		return the current command-line window type
 	getcompletion()		list of command-line completion matches
 	fullcommand()		get full command name
+	cmdcomplete_info()	get command-line completion information
 
 Quickfix and location lists:			*quickfix-functions*
 	getqflist()		list of quickfix errors

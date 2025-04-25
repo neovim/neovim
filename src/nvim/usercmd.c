@@ -72,6 +72,7 @@ static const char *command_complete[] = {
   [EXPAND_FILES] = "file",
   [EXPAND_FILES_IN_PATH] = "file_in_path",
   [EXPAND_FILETYPE] = "filetype",
+  [EXPAND_FILETYPECMD] = "filetypecmd",
   [EXPAND_FUNCTIONS] = "function",
   [EXPAND_HELP] = "help",
   [EXPAND_HIGHLIGHT] = "highlight",

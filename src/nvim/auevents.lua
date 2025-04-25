@@ -29,6 +29,7 @@ return {
     CmdlineChanged = false, -- command line was modified
     CmdlineEnter = false, -- after entering cmdline mode
     CmdlineLeave = false, -- before leaving cmdline mode
+    CmdlineLeavePre = false, -- just before leaving the command line
     CmdwinEnter = false, -- after entering the cmdline window
     CmdwinLeave = false, -- before leaving the cmdline window
     ColorScheme = false, -- after loading a colorscheme

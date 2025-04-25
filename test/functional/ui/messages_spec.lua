@@ -422,7 +422,7 @@ describe('ui/ext_messages', function()
       grid = [[
         ^*help.txt*      Nvim     |
                                  |
-        {3:help.txt [Help][RO]      }|
+        {3:help.txt [Help][-][RO]   }|
         line                     |
         {2:<i_messages_spec [+][RO] }|
       ]],
@@ -1068,12 +1068,15 @@ describe('ui/ext_messages', function()
     -- when ruler is part of statusline it is not externalized.
     -- this will be added as part of future ext_statusline support
     command('set laststatus=2')
-    screen:expect([[
-      abcde                    |
-      ^                         |
-      {1:~                        }|*2
-      {3:<o Name] [+] 2,0-1    All}|
-    ]])
+    screen:expect({
+      grid = [[
+        abcde                    |
+        ^                         |
+        {1:~                        }|*2
+        {3:<] [+] 2,0-1          All}|
+      ]],
+      ruler = { { '2,0-1   All' } },
+    })
   end)
 
   it('keeps history of message of different kinds', function()
@@ -1605,12 +1608,11 @@ stack traceback:
 
   it('g< mapping shows recent messages', function()
     command('echo "foo" | echo "bar"')
-    local s1 = [[
-      ^                         |
-      {1:~                        }|*4
-    ]]
     screen:expect({
-      grid = s1,
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
       messages = {
         {
           content = { { 'bar' } },
@@ -1643,6 +1645,39 @@ stack traceback:
         },
       },
     })
+  end)
+
+  it('single event for multiple :set options', function()
+    command('set sw ts sts')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { '  shiftwidth=8\n  tabstop=8\n  softtabstop=0' } },
+          history = false,
+          kind = 'list_cmd',
+        },
+      },
+    })
+  end)
+
+  it('clears showmode after insert_expand mode', function()
+    feed('i<C-N>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      showmode = { { '-- Keyword completion (^N^P) ', 5, 11 }, { 'Pattern not found', 9, 6 } },
+    })
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*4
+    ]])
   end)
 end)
 

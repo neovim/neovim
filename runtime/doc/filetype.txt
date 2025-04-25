@@ -156,6 +156,8 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.inc`		g:filetype_inc
 	`*.lsl`		g:filetype_lsl
 	`*.m`		g:filetype_m		|ft-mathematica-syntax|
+	`*[mM]makefile,*.mk,*.mak,[mM]akefile*`
+			g:make_flavor		|ft-make-syntax|
 	`*.markdown,*.mdown,*.mkd,*.mkdn,*.mdwn,*.md`
 			g:filetype_md		|ft-pandoc-syntax|
 	`*.mod`		g:filetype_mod
@@ -622,6 +624,16 @@ possibilities: >
 <
 The `:Cycle` command is also mapped to the CTRL-A and CTRL-X keys.
 For details, see `git-rebase --help`.
+
+GLEAM						*ft-gleam-plugin*
+
+By default the following options are set for the recommended gleam style: >
+
+	setlocal expandtab shiftwidth=2 softtabstop=2
+
+To disable this behavior, set the following variable in your vimrc: >
+
+	let g:gleam_recommended_style = 0
 
 GO							*ft-go-plugin*
 
@@ -1116,6 +1128,13 @@ functions with [[ and ]].  Move around comments with ]" and [".
 
 The mappings can be disabled with: >
 	let g:no_vim_maps = 1
+
+YAML							*ft-yaml-plugin*
+By default, the YAML filetype plugin enables the following options: >
+	setlocal shiftwidth=2 softtabstop=2
+
+To disable this, set the following variable: >
+	let g:yaml_recommended_style = 0
 
 
 ZIG							*ft-zig-plugin*

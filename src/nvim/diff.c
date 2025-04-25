@@ -2916,7 +2916,7 @@ static void diff_refine_inline_char_highlight(diff_T *dp_orig, garray_T *linemap
   } while (pass++ < 4);  // use limited number of passes to avoid excessive looping
 }
 
-/// Find the inline difference within a diff block among differnt buffers.  Do
+/// Find the inline difference within a diff block among different buffers.  Do
 /// this by splitting each block's content into characters or words, and then
 /// use internal xdiff to calculate the per-character/word diff.  The result is
 /// stored in dp instead of returned by the function.
@@ -4076,7 +4076,7 @@ void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   diffline_T diffline = { 0 };
   // Remember the results if using simple since it's recalculated per
   // call. Otherwise just call diff_find_change() every time since
-  // internally the result is cached interally.
+  // internally the result is cached internally.
   const bool cache_results = !(diff_flags & ALL_INLINE_DIFF);
 
   linenr_T lnum = tv_get_lnum(argvars);

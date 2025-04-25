@@ -78,10 +78,6 @@ LUA
 
 OPTIONS
 
-• 'chistory' and 'lhistory' set size of the |quickfix-stack|.
-• 'completeopt' flag "nearset" sorts completion results by distance to cursor.
-• 'diffopt' `inline:` configures diff highlighting for changes within a line.
-• 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'shelltemp' defaults to "false".
 
 PLUGINS
@@ -107,7 +103,9 @@ The following new features were added.
 
 API
 
-• |vim.hl.range()| now allows multiple timed highlights
+• |nvim_win_text_height()| can limit the lines checked when a certain
+  `max_height` is reached, and returns the `end_row` and `end_vcol` for which
+  `max_height` or the calculated height is reached.
 
 DEFAULTS
 
@@ -124,7 +122,7 @@ EDITOR
 
 EVENTS
 
-• todo
+• |CmdlineLeavePre| triggered before preparing to leave the command line.
 
 HIGHLIGHTS
 
@@ -133,6 +131,8 @@ HIGHLIGHTS
 LSP
 
 • |vim.lsp.ClientConfig| gained `workspace_required`.
+• Support for `textDocument/documentColor`: |lsp-document_color|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
 • Support for `textDocument/documentLink`: |lsp-buf|
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentLink
   - `vim.lsp.buf.documentLink()` lists all links in the document
@@ -143,12 +143,15 @@ LSP
 LUA
 
 • Lua type annotations for `vim.uv`.
+• |vim.hl.range()| now allows multiple timed highlights.
 
 OPTIONS
 
 • 'autowriteall' writes all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
+• 'chistory' and 'lhistory' set size of the |quickfix-stack|.
 • 'completefuzzycollect' enables fuzzy collection of candidates for (some)
   |ins-completion| modes.
+• 'completeopt' flag "nearset" sorts completion results by distance to cursor.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'winborder' "bold" style.
@@ -185,15 +188,15 @@ UI
 
 VIMSCRIPT
 
-• todo
+• |cmdcomplete_info()| gets current cmdline completion info.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• 'spellfile' location defaults to `stdpath("data").."/spell/"` instead of the
-  first writable directoy in 'runtimepath'.
+• 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of
+  the first writable directory in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
 
 ==============================================================================

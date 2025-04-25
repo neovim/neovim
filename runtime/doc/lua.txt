@@ -1031,15 +1031,12 @@ vim.stricmp({a}, {b})                                          *vim.stricmp()*
         (`0|1|-1`) if strings are equal, {a} is greater than {b} or {a} is
         lesser than {b}, respectively.
 
-vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
+vim.ui_attach({ns}, {opts}, {callback})                      *vim.ui_attach()*
     WARNING: This feature is experimental/unstable.
 
     Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events
     in a Lua callback. Used to implement screen elements like popupmenu or
     message handling in Lua.
-
-    {options} is a dict with one or more `ext_…` |ui-option|s set to true to
-    enable events for the respective UI element.
 
     {callback} receives event name plus additional parameters. See
     |ui-popupmenu| and the sections below for event format for respective
@@ -1073,16 +1070,21 @@ vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
 <
 
     Parameters: ~
-      • {ns}        (`integer`)
-      • {options}   (`table<string, any>`)
-      • {callback}  (`fun()`)
+      • {ns}        (`integer`) Namespace ID
+      • {opts}      (`table<string, any>`) Optional parameters.
+                    • {ext_…}? (`boolean`) Any of |ui-ext-options|, if true
+                      enable events for the respective UI element.
+                    • {set_cmdheight}? (`boolean`) If false, avoid setting
+                      'cmdheight' to 0 when `ext_messages` is enabled.
+      • {callback}  (`fun(event: string, ...)`) Function called for each UI
+                    event
 
 vim.ui_detach({ns})                                          *vim.ui_detach()*
     Detach a callback previously attached with |vim.ui_attach()| for the given
     namespace {ns}.
 
     Parameters: ~
-      • {ns}  (`integer`)
+      • {ns}  (`integer`) Namespace ID
 
 vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
     Wait for {time} in milliseconds until {callback} returns `true`.

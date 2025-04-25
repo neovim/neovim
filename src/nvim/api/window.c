@@ -483,10 +483,21 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
 ///                              When omitted include the whole line.
 ///                - end_vcol: Ending virtual column index on "end_row",
 ///                            0-based exclusive, rounded up to full screen lines.
-///                            When omitted include the whole line.
+///                            When 0 only include diff filler and virtual lines above
+///                            "end_row". When omitted include the whole line.
+///                - max_height: Don't add the height of lines below the row
+///                              for which this height is reached. Useful to e.g. limit the
+///                              height to the window height, avoiding unnecessary work. Or
+///                              to find out how many buffer lines beyond "start_row" take
+///                              up a certain number of logical lines (returned in
+///                              "end_row" and "end_vcol").
 /// @return  Dict containing text height information, with these keys:
 ///          - all: The total number of screen lines occupied by the range.
 ///          - fill: The number of diff filler or virtual lines among them.
+///          - end_row: The row on which the returned height is reached (first row of
+///            a closed fold).
+///          - end_vcol: Ending virtual column in "end_row" where "max_height" or the returned
+///            height is reached. 0 if "end_row" is a closed fold.
 ///
 /// @see |virtcol()| for text width.
 Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *arena, Error *err)
@@ -545,6 +556,14 @@ Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *are
     });
   }
 
+  int64_t max = INT64_MAX;
+  if (HAS_KEY(opts, win_text_height, max_height)) {
+    VALIDATE_RANGE(opts->max_height > 0, "max_height", {
+      return rv;
+    });
+    max = opts->max_height;
+  }
+
   if (start_lnum == end_lnum && start_vcol >= 0 && end_vcol >= 0) {
     VALIDATE((start_vcol <= end_vcol), "%s", "'start_vcol' is higher than 'end_vcol'", {
       return rv;
@@ -552,7 +571,7 @@ Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *are
   }
 
   int64_t fill = 0;
-  int64_t all = win_text_height(win, start_lnum, start_vcol, end_lnum, end_vcol, &fill);
+  int64_t all = win_text_height(win, start_lnum, start_vcol, &end_lnum, &end_vcol, &fill, max);
   if (!HAS_KEY(opts, win_text_height, end_row)) {
     const int64_t end_fill = win_get_fill(win, line_count + 1);
     fill += end_fill;
@@ -560,5 +579,7 @@ Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *are
   }
   PUT_C(rv, "all", INTEGER_OBJ(all));
   PUT_C(rv, "fill", INTEGER_OBJ(fill));
+  PUT_C(rv, "end_row", INTEGER_OBJ(end_lnum - 1));
+  PUT_C(rv, "end_vcol", INTEGER_OBJ(end_vcol));
   return rv;
 }

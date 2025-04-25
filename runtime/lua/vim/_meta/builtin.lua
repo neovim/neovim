@@ -226,9 +226,6 @@ function vim.wait(time, callback, interval, fast_only) end
 --- Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events in a Lua callback.
 --- Used to implement screen elements like popupmenu or message handling in Lua.
 ---
---- {options} is a dict with one or more `ext_…` |ui-option|s set to true to enable events for
---- the respective UI element.
----
 --- {callback} receives event name plus additional parameters. See |ui-popupmenu|
 --- and the sections below for event format for respective events.
 ---
@@ -263,12 +260,16 @@ function vim.wait(time, callback, interval, fast_only) end
 ---
 --- @since 0
 ---
---- @param ns integer
---- @param options table<string, any>
---- @param callback fun()
-function vim.ui_attach(ns, options, callback) end
+--- @param ns integer Namespace ID
+--- @param opts table<string, any> Optional parameters.
+---             - {ext_…}? (`boolean`) Any of |ui-ext-options|, if true
+---               enable events for the respective UI element.
+---             - {set_cmdheight}? (`boolean`) If false, avoid setting
+---               'cmdheight' to 0 when `ext_messages` is enabled.
+--- @param callback fun(event: string, ...) Function called for each UI event
+function vim.ui_attach(ns, opts, callback) end
 
 --- Detach a callback previously attached with |vim.ui_attach()| for the
 --- given namespace {ns}.
---- @param ns integer
+--- @param ns integer Namespace ID
 function vim.ui_detach(ns) end

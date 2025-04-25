@@ -21,3 +21,4 @@ EXTERN Array noargs INIT(= ARRAY_DICT_INIT);
 // vim.ui_attach() namespace of currently executed callback.
 EXTERN uint32_t ui_event_ns_id INIT( = 0);
 EXTERN MultiQueue *resize_events INIT( = NULL);
+EXTERN bool ui_refresh_cmdheight INIT( = true);
