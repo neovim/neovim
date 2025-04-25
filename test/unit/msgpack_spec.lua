@@ -1,7 +1,7 @@
 local t = require('test.unit.testutil')
 local cimport = t.cimport
 local itp = t.gen_itp(it)
-local lib = cimport('./src/nvim/msgpack_rpc/unpacker.h', './src/nvim/memory.h')
+local lib = cimport('./src/nvim/msgpack_rpc/packer.h', './src/nvim/msgpack_rpc/unpacker.h', './src/nvim/memory.h')
 local ffi = t.ffi
 local eq = t.eq
 local to_cstr = t.to_cstr
@@ -77,13 +77,13 @@ describe('msgpack', function()
     end)
 
     itp('packs strings with lengths between 20 and 31 bytes as fixstr', function()
-      local packer = ffi.new('PackerBuffer')
-      lib.packer_buffer_init(packer)
+      -- PackerBuffer sbuf = packer_string_buffer();
+      local packer = lib.packer_string_buffer()
 
       for len = 20, 31 do
         local str = string.rep('a', len)
-        lib.mpack_str({ data = str, size = len }, packer)
-        eq(0xa0 + len, string.byte(packer.startptr))
+        lib.mpack_str({ data = to_cstr(str), size = len }, packer)
+        eq(0xa0 + len, string.byte(ffi.string(packer.startptr)))
       end
     end)
   end)
