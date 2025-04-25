@@ -335,7 +335,7 @@ api.nvim_set_decoration_provider(document_color_ns, {
     for client_id, client_hls in pairs(bufstate.hl_info) do
       local ns = bufstate.ns_by_client_id[client_id]
       if not ns then
-        ns = api.nvim_create_namespace('lsp_document_color_client_' .. client_id)
+        ns = api.nvim_create_namespace('nvim.lsp.document_color.client' .. client_id)
         bufstate.ns_by_client_id[client_id] = ns
       end
       api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
