@@ -78,6 +78,7 @@ static int pum_col;                 // left column of pum, right column if 'righ
 static int pum_win_row_offset;      // The row offset needed to convert to window relative coordinates
 static int pum_win_col_offset;      // The column offset needed to convert to window relative coordinates
 static int pum_left_col;            // left column of pum, before padding or scrollbar
+static int pum_right_col;           // right column of pum, after padding or scrollbar
 static bool pum_above;              // pum is drawn above cursor line
 
 static bool pum_is_visible = false;
@@ -613,6 +614,7 @@ void pum_redraw(void)
   grid_assign_handle(&pum_grid);
 
   pum_left_col = pum_col - col_off;
+  pum_right_col = pum_left_col + grid_width;
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_left_col,
                                 pum_height, grid_width, false, true);
   bool invalid_grid = moved || pum_invalid;
@@ -1392,15 +1394,16 @@ static void pum_select_mouse_pos(void)
   if (mouse_grid == pum_grid.handle) {
     pum_selected = mouse_row;
     return;
-  } else if (mouse_grid != pum_anchor_grid || mouse_col < pum_grid.comp_col
-             || mouse_col >= pum_grid.comp_col + pum_grid.comp_width) {
+  } else if (mouse_grid != pum_anchor_grid
+             || mouse_col < pum_left_col - pum_win_col_offset
+             || mouse_col >= pum_right_col - pum_win_col_offset) {
     pum_selected = -1;
     return;
   }
 
-  int idx = mouse_row - pum_grid.comp_row;
+  int idx = mouse_row - (pum_row - pum_win_row_offset);
 
-  if (idx < 0 || idx >= pum_grid.comp_height) {
+  if (idx < 0 || idx >= pum_height) {
     pum_selected = -1;
   } else if (*pum_array[idx].pum_text != NUL) {
     pum_selected = idx;

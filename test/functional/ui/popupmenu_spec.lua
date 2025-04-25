@@ -692,7 +692,7 @@ describe('ui/ext_popupmenu', function()
     end)
   end)
 
-  it('<PageUP>, <PageDown> works without ui_pum_set_height', function()
+  it('<PageUp>, <PageDown> works without ui_pum_set_height', function()
     source_complete_month()
     local month_expected = {
       { 'January', '', '', '' },
@@ -6687,9 +6687,26 @@ describe('builtin popupmenu', function()
         menu PopUp.baz :let g:menustr = 'baz'<CR>
       ]])
 
+      --- @param state string|test.function.ui.screen.Expect
+      --- @param str string
+      --- @param repl string
+      --- @return string|test.function.ui.screen.Expect
+      local function screen_replace(state, str, repl)
+        if type(state) == 'string' then
+          local new_state = state:gsub(vim.pesc(str), vim.pesc(repl))
+          return new_state
+        end
+        local new_state = vim.deepcopy(state)
+        local grid = assert(new_state.grid)
+        grid = grid:gsub(vim.pesc(str), vim.pesc(repl))
+        new_state.grid = grid
+        return new_state
+      end
+
+      local no_sel_screen ---@type string|test.function.ui.screen.Expect
       if multigrid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 4)
-        screen:expect({
+        no_sel_screen = {
           grid = [[
         ## grid 1
           [2:--------------------------------]|*5
@@ -6705,80 +6722,27 @@ describe('builtin popupmenu', function()
           {n: baz }|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        })
+        }
       else
         feed('<RightMouse><4,0>')
-        screen:expect([[
+        no_sel_screen = [[
           ^popup menu test                 |
           {1:~  }{n: foo }{1:                        }|
           {1:~  }{n: bar }{1:                        }|
           {1:~  }{n: baz }{1:                        }|
           {1:~                               }|
                                           |
-        ]])
+        ]]
       end
+      screen:expect(no_sel_screen)
       feed('<Down>')
-      if multigrid then
-        screen:expect({
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-                                          |
-        ## grid 4
-          {s: foo }|
-          {n: bar }|
-          {n: baz }|
-        ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        })
-      else
-        screen:expect([[
-          ^popup menu test                 |
-          {1:~  }{s: foo }{1:                        }|
-          {1:~  }{n: bar }{1:                        }|
-          {1:~  }{n: baz }{1:                        }|
-          {1:~                               }|
-                                          |
-        ]])
-      end
+      screen:expect(screen_replace(no_sel_screen, '{n: foo }', '{s: foo }'))
       feed('<Down>')
-      if multigrid then
-        screen:expect({
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-                                          |
-        ## grid 4
-          {n: foo }|
-          {s: bar }|
-          {n: baz }|
-        ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        })
-      else
-        screen:expect([[
-          ^popup menu test                 |
-          {1:~  }{n: foo }{1:                        }|
-          {1:~  }{s: bar }{1:                        }|
-          {1:~  }{n: baz }{1:                        }|
-          {1:~                               }|
-                                          |
-        ]])
-      end
+      screen:expect(screen_replace(no_sel_screen, '{n: bar }', '{s: bar }'))
       feed('<CR>')
+      local no_menu_screen ---@type string
       if multigrid then
-        screen:expect({
-          grid = [[
+        no_menu_screen = [[
         ## grid 1
           [2:--------------------------------]|*5
           [3:--------------------------------]|
@@ -6787,15 +6751,15 @@ describe('builtin popupmenu', function()
           {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'bar'          |
-        ]],
-        })
+        ]]
       else
-        screen:expect([[
+        no_menu_screen = [[
           ^popup menu test                 |
           {1:~                               }|*4
           :let g:menustr = 'bar'          |
-        ]])
+        ]]
       end
+      screen:expect(no_menu_screen)
       eq('bar', api.nvim_get_var('menustr'))
 
       if multigrid then
@@ -6888,31 +6852,16 @@ describe('builtin popupmenu', function()
       end
       if multigrid then
         api.nvim_input_mouse('left', 'press', '', 4, 2, 2)
-        screen:expect({
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-          :let g:menustr = 'baz'          |
-        ]],
-        })
       else
         feed('<LeftMouse><21,5>')
-        screen:expect([[
-          ^popup menu test                 |
-          {1:~                               }|*4
-          :let g:menustr = 'baz'          |
-        ]])
       end
+      no_menu_screen = no_menu_screen:gsub([['bar']], [['baz']])
+      screen:expect(no_menu_screen)
       eq('baz', api.nvim_get_var('menustr'))
 
       if multigrid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 4)
-        screen:expect({
+        no_sel_screen = {
           grid = [[
         ## grid 1
           [2:--------------------------------]|*5
@@ -6928,76 +6877,38 @@ describe('builtin popupmenu', function()
           {n: baz }|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        })
+        }
       else
         feed('<RightMouse><4,0>')
-        screen:expect([[
+        no_sel_screen = [[
           ^popup menu test                 |
           {1:~  }{n: foo }{1:                        }|
           {1:~  }{n: bar }{1:                        }|
           {1:~  }{n: baz }{1:                        }|
           {1:~                               }|
           :let g:menustr = 'baz'          |
-        ]])
+        ]]
       end
+      screen:expect(no_sel_screen)
       if multigrid then
         api.nvim_input_mouse('right', 'drag', '', 2, 3, 6)
-        screen:expect({
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-          :let g:menustr = 'baz'          |
-        ## grid 4
-          {n: foo }|
-          {n: bar }|
-          {s: baz }|
-        ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        })
       else
         feed('<RightDrag><6,3>')
-        screen:expect([[
-          ^popup menu test                 |
-          {1:~  }{n: foo }{1:                        }|
-          {1:~  }{n: bar }{1:                        }|
-          {1:~  }{s: baz }{1:                        }|
-          {1:~                               }|
-          :let g:menustr = 'baz'          |
-        ]])
       end
+      screen:expect(screen_replace(no_sel_screen, '{n: baz }', '{s: baz }'))
       if multigrid then
         api.nvim_input_mouse('right', 'release', '', 2, 1, 6)
-        screen:expect({
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-          :let g:menustr = 'foo'          |
-        ]],
-        })
       else
         feed('<RightRelease><6,1>')
-        screen:expect([[
-          ^popup menu test                 |
-          {1:~                               }|*4
-          :let g:menustr = 'foo'          |
-        ]])
       end
+      no_menu_screen = no_menu_screen:gsub([['baz']], [['foo']])
+      screen:expect(no_menu_screen)
       eq('foo', api.nvim_get_var('menustr'))
 
       eq(false, screen.options.mousemoveevent)
       if multigrid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 4)
-        screen:expect({
+        no_sel_screen = {
           grid = [[
         ## grid 1
           [2:--------------------------------]|*5
@@ -7013,134 +6924,48 @@ describe('builtin popupmenu', function()
           {n: baz }|
         ]],
           float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        })
+        }
       else
         feed('<RightMouse><4,0>')
-        screen:expect([[
+        no_sel_screen = [[
           ^popup menu test                 |
           {1:~  }{n: foo }{1:                        }|
           {1:~  }{n: bar }{1:                        }|
           {1:~  }{n: baz }{1:                        }|
           {1:~                               }|
           :let g:menustr = 'foo'          |
-        ]])
+        ]]
       end
+      screen:expect(no_sel_screen)
       eq(true, screen.options.mousemoveevent)
       if multigrid then
         api.nvim_input_mouse('wheel', 'up', '', 2, 0, 4)
-        screen:expect({
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-          :let g:menustr = 'foo'          |
-        ## grid 4
-          {s: foo }|
-          {n: bar }|
-          {n: baz }|
-        ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        })
       else
         feed('<ScrollWheelUp><4,0>')
-        screen:expect([[
-          ^popup menu test                 |
-          {1:~  }{s: foo }{1:                        }|
-          {1:~  }{n: bar }{1:                        }|
-          {1:~  }{n: baz }{1:                        }|
-          {1:~                               }|
-          :let g:menustr = 'foo'          |
-        ]])
       end
+      screen:expect(screen_replace(no_sel_screen, '{n: foo }', '{s: foo }'))
       eq(true, screen.options.mousemoveevent)
       if multigrid then
         api.nvim_input_mouse('move', '', '', 4, 2, 3)
-        screen:expect({
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-          :let g:menustr = 'foo'          |
-        ## grid 4
-          {n: foo }|
-          {n: bar }|
-          {s: baz }|
-        ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        })
       else
         feed('<MouseMove><6,3>')
-        screen:expect([[
-          ^popup menu test                 |
-          {1:~  }{n: foo }{1:                        }|
-          {1:~  }{n: bar }{1:                        }|
-          {1:~  }{s: baz }{1:                        }|
-          {1:~                               }|
-          :let g:menustr = 'foo'          |
-        ]])
       end
+      screen:expect(screen_replace(no_sel_screen, '{n: baz }', '{s: baz }'))
       eq(true, screen.options.mousemoveevent)
       if multigrid then
         api.nvim_input_mouse('wheel', 'down', '', 4, 2, 3)
-        screen:expect({
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-          :let g:menustr = 'foo'          |
-        ## grid 4
-          {n: foo }|
-          {s: bar }|
-          {n: baz }|
-        ]],
-          float_pos = { [4] = { -1, 'NW', 2, 1, 3, false, 250, 2, 1, 3 } },
-        })
       else
         feed('<ScrollWheelDown><6,3>')
-        screen:expect([[
-          ^popup menu test                 |
-          {1:~  }{n: foo }{1:                        }|
-          {1:~  }{s: bar }{1:                        }|
-          {1:~  }{n: baz }{1:                        }|
-          {1:~                               }|
-          :let g:menustr = 'foo'          |
-        ]])
       end
+      screen:expect(screen_replace(no_sel_screen, '{n: bar }', '{s: bar }'))
       eq(true, screen.options.mousemoveevent)
       if multigrid then
         api.nvim_input_mouse('left', 'press', '', 4, 1, 3)
-        screen:expect({
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*5
-          [3:--------------------------------]|
-        ## grid 2
-          ^popup menu test                 |
-          {1:~                               }|*4
-        ## grid 3
-          :let g:menustr = 'bar'          |
-        ]],
-        })
       else
         feed('<LeftMouse><6,2>')
-        screen:expect([[
-          ^popup menu test                 |
-          {1:~                               }|*4
-          :let g:menustr = 'bar'          |
-        ]])
       end
+      no_menu_screen = no_menu_screen:gsub([['foo']], [['bar']])
+      screen:expect(no_menu_screen)
       eq(false, screen.options.mousemoveevent)
       eq('bar', api.nvim_get_var('menustr'))
 
@@ -7289,7 +7114,7 @@ describe('builtin popupmenu', function()
       command('setlocal winbar=WINBAR')
       if multigrid then
         api.nvim_input_mouse('right', 'press', '', 6, 1, 14)
-        screen:expect({
+        no_sel_screen = {
           grid = [[
         ## grid 1
           [2:--------------------------------]|*2
@@ -7313,23 +7138,28 @@ describe('builtin popupmenu', function()
           ^popup menu test |
         ]],
           float_pos = { [4] = { -1, 'SW', 6, 1, 12, false, 250, 2, 1, 28 } },
-        })
+        }
       else
         feed('<RightMouse><30,4>')
-        screen:expect([[
+        no_sel_screen = [[
           popup menu test                 |
           {1:~                           }{n: foo}|
           {3:[No Name] [+]               }{n: bar}|
           popup menu test│{2:WINBAR      }{n: baz}|
           {1:~              }│^popup menu test |
           :let g:menustr = 'foo'          |
-        ]])
+        ]]
       end
-      local no_menu_screen ---@type string|test.function.ui.screen.Expect
+      screen:expect(no_sel_screen)
+      if multigrid then
+        api.nvim_input_mouse('right', 'drag', '', 6, 0, 15)
+      else
+        feed('<RightDrag><31,3>')
+      end
+      screen:expect(screen_replace(no_sel_screen, '{n: baz}', '{s: baz}'))
       if multigrid then
         api.nvim_input_mouse('left', 'press', '', 4, 1, 2)
-        no_menu_screen = {
-          grid = [[
+        screen:expect([[
         ## grid 1
           [2:--------------------------------]|*2
           {3:[No Name] [+]                   }|
@@ -7346,124 +7176,212 @@ describe('builtin popupmenu', function()
         ## grid 6
           {2:WINBAR          }|
           ^popup menu test |
-        ]],
-        }
+        ]])
       else
         feed('<LeftMouse><31,2>')
-        no_menu_screen = {
-          grid = [[
+        screen:expect([[
           popup menu test                 |
           {1:~                               }|
           {3:[No Name] [+]                   }|
           popup menu test│{2:WINBAR          }|
           {1:~              }│^popup menu test |
           :let g:menustr = 'bar'          |
-        ]],
-        }
+        ]])
       end
-      screen:expect(no_menu_screen)
       eq('bar', api.nvim_get_var('menustr'))
 
-      local no_sel_screen ---@type string|test.function.ui.screen.Expect
+      command([[let g:menustr = '']])
+      screen:try_resize(32, 9)
+      command('wincmd t | 4vsplit | wincmd l | topleft 1split')
+      if multigrid then
+        no_menu_screen = [[
+        ## grid 1
+          [8:--------------------------------]|
+          {4:[No Name] [+]                   }|
+          [7:----]│[2:---------------------------]|*2
+          {3:<+]  [No Name] [+]              }|
+          [5:---------------]│[6:----------------]|*3
+          [3:--------------------------------]|
+        ## grid 2
+          popup menu test            |
+          {1:~                          }|
+        ## grid 3
+                                          |
+        ## grid 5
+          popup menu test|
+          {1:~              }|*2
+        ## grid 6
+          {2:WINBAR          }|
+          popup menu test |
+          {1:~               }|
+        ## grid 7
+          popu|
+          p me|
+        ## grid 8
+          ^popup menu test                 |
+        ]]
+      else
+        no_menu_screen = [[
+          ^popup menu test                 |
+          {4:[No Name] [+]                   }|
+          popu│popup menu test            |
+          p me│{1:~                          }|
+          {3:<+]  [No Name] [+]              }|
+          popup menu test│{2:WINBAR          }|
+          {1:~              }│popup menu test |
+          {1:~              }│{1:~               }|
+                                          |
+        ]]
+      end
+      screen:expect(no_menu_screen)
+
       if multigrid then
         no_sel_screen = {
           grid = [[
         ## grid 1
-          [2:--------------------------------]|*2
-          {3:[No Name] [+]                   }|
-          [5:---------------]│[6:----------------]|*2
+          [8:--------------------------------]|
+          {4:[No Name] [+]                   }|
+          [7:----]│[2:---------------------------]|*2
+          {3:<+]  [No Name] [+]              }|
+          [5:---------------]│[6:----------------]|*3
           [3:--------------------------------]|
         ## grid 2
-          popup menu test                 |
-          {1:~                               }|
+          popup menu test            |
+          {1:~                          }|
         ## grid 3
-          :let g:menustr = 'bar'          |
+                                          |
         ## grid 4
           {n: foo }|
           {n: bar }|
           {n: baz }|
         ## grid 5
           popup menu test|
-          {1:~              }|
-        ## grid 6
-          {2:WINBAR          }|
-          ^popup menu test |
-        ]],
-          float_pos = { [4] = { -1, 'NW', 1, 1, 19, false, 250, 2, 1, 19 } },
-        }
-      else
-        no_sel_screen = {
-          grid = [[
-          popup menu test                 |
-          {1:~                  }{n: foo }{1:        }|
-          {3:[No Name] [+]      }{n: bar }{3:        }|
-          popup menu test│{2:WIN}{n: baz }{2:        }|
-          {1:~              }│^popup menu test |
-          :let g:menustr = 'bar'          |
-        ]],
-        }
-      end
-      local sel_screens = {} ---@type (string|test.function.ui.screen.Expect)[]
-      for i, s in ipairs({ 'foo', 'bar', 'baz' }) do
-        local sel_screen = vim.deepcopy(no_sel_screen)
-        local grid = assert(sel_screen.grid)
-        grid = grid:gsub(vim.pesc(('{n: %s }'):format(s)), ('{s: %s }'):format(s))
-        sel_screen.grid = grid
-        sel_screens[i] = sel_screen
-      end
-
-      command([[let g:menustr = '']])
-      local g = multigrid and 1 or 0
-
-      api.nvim_input_mouse('right', 'press', '', g, 0, 20)
-      screen:expect(no_sel_screen)
-      api.nvim_input_mouse('move', '', '', g, 1, 19)
-      screen:expect(sel_screens[1])
-      api.nvim_input_mouse('move', '', '', g, 1, 18)
-      screen:expect(no_sel_screen)
-      api.nvim_input_mouse('move', '', '', g, 2, 23)
-      screen:expect(sel_screens[2])
-      api.nvim_input_mouse('move', '', '', g, 2, 24)
-      screen:expect(no_sel_screen)
-      api.nvim_input_mouse('move', '', '', g, 3, 19)
-      screen:expect(sel_screens[3])
-      api.nvim_input_mouse('left', 'press', '', g, 3, 18)
-      screen:expect(no_menu_screen)
-      eq('', api.nvim_get_var('menustr'))
-
-      command('wincmd t | set rightleft')
-      if multigrid then
-        no_menu_screen = {
-          grid = [[
-        ## grid 1
-          [2:--------------------------------]|*2
-          {4:[No Name] [+]                   }|
-          [5:---------------]│[6:----------------]|*2
-          [3:--------------------------------]|
-        ## grid 2
-                           tset unem pupo^p|
-          {1:                               ~}|
-        ## grid 3
-          :let g:menustr = 'bar'          |
-        ## grid 5
-          popup menu test|
-          {1:~              }|
+          {1:~              }|*2
         ## grid 6
           {2:WINBAR          }|
           popup menu test |
+          {1:~               }|
+        ## grid 7
+          popu|
+          p me|
+        ## grid 8
+          ^popup menu test                 |
         ]],
+          float_pos = { [4] = { -1, 'NW', 1, 1, 14, false, 250, 2, 1, 14 } },
         }
       else
-        no_menu_screen = {
+        no_sel_screen = {
           grid = [[
-                           tset unem pupo^p|
-          {1:                               ~}|
+          ^popup menu test                 |
           {4:[No Name] [+]                   }|
-          popup menu test│{2:WINBAR          }|
+          popu│popup menu test            |
+          p me│{1:~             }{n: foo }{1:        }|
+          {3:<+]  [No Name] [+] }{n: bar }{3:        }|
+          popup menu test│{2:WIN}{n: baz }{2:        }|
           {1:~              }│popup menu test |
-          :let g:menustr = 'bar'          |
+          {1:~              }│{1:~               }|
+                                          |
         ]],
         }
+      end
+
+      local pos = {
+        { 0, 2, 20 },
+        { 0, 3, 19 },
+        { 0, 3, 18 },
+        { 0, 4, 23 },
+        { 0, 4, 24 },
+        { 0, 5, 19 },
+        { 0, 5, 18 },
+      }
+      if multigrid then
+        for i = 1, 7 do
+          local _, row, col = unpack(pos[i])
+          pos[i] = { 1, row - 2, col - 5 }
+        end
+      end
+
+      api.nvim_input_mouse('right', 'press', '', unpack(pos[1]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[2]))
+      screen:expect(screen_replace(no_sel_screen, '{n: foo }', '{s: foo }'))
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[3]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[4]))
+      screen:expect(screen_replace(no_sel_screen, '{n: bar }', '{s: bar }'))
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[5]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[6]))
+      screen:expect(screen_replace(no_sel_screen, '{n: baz }', '{s: baz }'))
+      api.nvim_input_mouse('right', 'release', '', unpack(pos[7]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('left', 'press', '', unpack(pos[7]))
+      screen:expect(no_menu_screen)
+      eq('', api.nvim_get_var('menustr'))
+
+      if multigrid then
+        for i = 2, 6, 2 do
+          local _, row, col = unpack(pos[i])
+          pos[i] = { 4, row - 1, col - 14 }
+        end
+      end
+
+      api.nvim_input_mouse('right', 'press', '', unpack(pos[1]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('move', '', '', unpack(pos[2]))
+      screen:expect(screen_replace(no_sel_screen, '{n: foo }', '{s: foo }'))
+      api.nvim_input_mouse('move', '', '', unpack(pos[3]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('move', '', '', unpack(pos[4]))
+      screen:expect(screen_replace(no_sel_screen, '{n: bar }', '{s: bar }'))
+      api.nvim_input_mouse('move', '', '', unpack(pos[5]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('move', '', '', unpack(pos[6]))
+      screen:expect(screen_replace(no_sel_screen, '{n: baz }', '{s: baz }'))
+      api.nvim_input_mouse('left', 'press', '', unpack(pos[7]))
+      screen:expect(no_menu_screen)
+      eq('', api.nvim_get_var('menustr'))
+
+      command('set rightleft | wincmd p | set rightleft | wincmd p')
+      if multigrid then
+        no_menu_screen = [[
+        ## grid 1
+          [8:--------------------------------]|
+          {4:[No Name] [+]                   }|
+          [7:----]│[2:---------------------------]|*2
+          {3:<+]  [No Name] [+]              }|
+          [5:---------------]│[6:----------------]|*3
+          [3:--------------------------------]|
+        ## grid 2
+                      tset unem pupop|
+          {1:                          ~}|
+        ## grid 3
+                                          |
+        ## grid 5
+          popup menu test|
+          {1:~              }|*2
+        ## grid 6
+          {2:WINBAR          }|
+          popup menu test |
+          {1:~               }|
+        ## grid 7
+          popu|
+          p me|
+        ## grid 8
+                           tset unem pupo^p|
+        ]]
+      else
+        no_menu_screen = [[
+                           tset unem pupo^p|
+          {4:[No Name] [+]                   }|
+          popu│            tset unem pupop|
+          p me│{1:                          ~}|
+          {3:<+]  [No Name] [+]              }|
+          popup menu test│{2:WINBAR          }|
+          {1:~              }│popup menu test |
+          {1:~              }│{1:~               }|
+                                          |
+        ]]
       end
       screen:expect(no_menu_screen)
 
@@ -7471,62 +7389,106 @@ describe('builtin popupmenu', function()
         no_sel_screen = {
           grid = [[
         ## grid 1
-          [2:--------------------------------]|*2
+          [8:--------------------------------]|
           {4:[No Name] [+]                   }|
-          [5:---------------]│[6:----------------]|*2
+          [7:----]│[2:---------------------------]|*2
+          {3:<+]  [No Name] [+]              }|
+          [5:---------------]│[6:----------------]|*3
           [3:--------------------------------]|
         ## grid 2
-                           tset unem pupo^p|
-          {1:                               ~}|
+                      tset unem pupop|
+          {1:                          ~}|
         ## grid 3
-          :let g:menustr = 'bar'          |
+                                          |
         ## grid 4
           {n: oof }|
           {n: rab }|
           {n: zab }|
         ## grid 5
           popup menu test|
-          {1:~              }|
+          {1:~              }|*2
         ## grid 6
           {2:WINBAR          }|
           popup menu test |
+          {1:~               }|
+        ## grid 7
+          popu|
+          p me|
+        ## grid 8
+                           tset unem pupo^p|
         ]],
-          float_pos = { [4] = { -1, 'NW', 1, 1, 17, false, 250, 2, 1, 17 } },
+          float_pos = { [4] = { -1, 'NW', 1, 1, 12, false, 250, 2, 1, 12 } },
         }
       else
         no_sel_screen = {
           grid = [[
                            tset unem pupo^p|
-          {1:                 }{n: oof }{1:         ~}|
-          {4:[No Name] [+]    }{n: rab }{4:          }|
+          {4:[No Name] [+]                   }|
+          popu│            tset unem pupop|
+          p me│{1:            }{n: oof }{1:         ~}|
+          {3:<+]  [No Name] [+}{n: rab }{3:          }|
           popup menu test│{2:W}{n: zab }{2:          }|
           {1:~              }│popup menu test |
-          :let g:menustr = 'bar'          |
+          {1:~              }│{1:~               }|
+                                          |
         ]],
         }
       end
-      for i, s in ipairs({ 'oof', 'rab', 'zab' }) do
-        local sel_screen = vim.deepcopy(no_sel_screen)
-        local grid = assert(sel_screen.grid)
-        grid = grid:gsub(vim.pesc(('{n: %s }'):format(s)), ('{s: %s }'):format(s))
-        sel_screen.grid = grid
-        sel_screens[i] = sel_screen
+
+      pos = {
+        { 0, 2, 20 },
+        { 0, 3, 21 },
+        { 0, 3, 22 },
+        { 0, 4, 17 },
+        { 0, 4, 16 },
+        { 0, 5, 21 },
+        { 0, 5, 22 },
+      }
+      if multigrid then
+        for i = 1, 7 do
+          local _, row, col = unpack(pos[i])
+          pos[i] = { 1, row - 2, col - 5 }
+        end
       end
 
-      api.nvim_input_mouse('right', 'press', '', g, 0, 20)
+      api.nvim_input_mouse('right', 'press', '', unpack(pos[1]))
       screen:expect(no_sel_screen)
-      api.nvim_input_mouse('move', '', '', g, 1, 21)
-      screen:expect(sel_screens[1])
-      api.nvim_input_mouse('move', '', '', g, 1, 22)
+      api.nvim_input_mouse('move', '', '', unpack(pos[2]))
+      screen:expect(screen_replace(no_sel_screen, '{n: oof }', '{s: oof }'))
+      api.nvim_input_mouse('move', '', '', unpack(pos[3]))
       screen:expect(no_sel_screen)
-      api.nvim_input_mouse('move', '', '', g, 2, 17)
-      screen:expect(sel_screens[2])
-      api.nvim_input_mouse('move', '', '', g, 2, 16)
+      api.nvim_input_mouse('move', '', '', unpack(pos[4]))
+      screen:expect(screen_replace(no_sel_screen, '{n: rab }', '{s: rab }'))
+      api.nvim_input_mouse('move', '', '', unpack(pos[5]))
       screen:expect(no_sel_screen)
-      api.nvim_input_mouse('move', '', '', g, 3, 21)
-      screen:expect(sel_screens[3])
-      api.nvim_input_mouse('left', 'press', '', g, 3, 22)
+      api.nvim_input_mouse('move', '', '', unpack(pos[6]))
+      screen:expect(screen_replace(no_sel_screen, '{n: zab }', '{s: zab }'))
+      api.nvim_input_mouse('left', 'press', '', unpack(pos[7]))
       screen:expect(no_menu_screen)
+      eq('', api.nvim_get_var('menustr'))
+
+      if multigrid then
+        for i = 2, 6, 2 do
+          local _, row, col = unpack(pos[i])
+          pos[i] = { 4, row - 1, col - 12 }
+        end
+      end
+
+      api.nvim_input_mouse('right', 'press', '', unpack(pos[1]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[2]))
+      screen:expect(screen_replace(no_sel_screen, '{n: oof }', '{s: oof }'))
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[3]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[4]))
+      screen:expect(screen_replace(no_sel_screen, '{n: rab }', '{s: rab }'))
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[5]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('right', 'drag', '', unpack(pos[6]))
+      screen:expect(screen_replace(no_sel_screen, '{n: zab }', '{s: zab }'))
+      api.nvim_input_mouse('right', 'release', '', unpack(pos[7]))
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('left', 'press', '', unpack(pos[7]))
       eq('', api.nvim_get_var('menustr'))
 
       command('set norightleft')
