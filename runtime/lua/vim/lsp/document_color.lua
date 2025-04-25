@@ -18,8 +18,7 @@ local M = {}
 --- @field buf_version? table<integer, integer> (client_id -> version) Buffer version for which the color ranges correspond to
 --- @field applied_version table<integer, integer?> (client_id -> buffer version) Last buffer version for which we applied color ranges
 --- @field hl_info table<integer, vim.lsp.document_color.HighlightInfo[]?> (client_id -> color highlights) Processed highlight information
---- @field ns_by_client_id table<integer, integer> (client_id -> namespace) per-client extmark
---- namespace
+--- @field ns_by_client_id table<integer, integer> (client_id -> namespace) per-client extmark namespace
 
 --- @type table<integer, vim.lsp.document_color.BufState?>
 local bufstates = {}
@@ -118,10 +117,10 @@ local function on_document_color(err, result, ctx)
   local client_id = ctx.client_id
 
   if
-    util.buf_versions[bufnr] ~= ctx.version
-    or not result
-    or not api.nvim_buf_is_loaded(bufnr)
-    or not bufstate.enabled
+      util.buf_versions[bufnr] ~= ctx.version
+      or not result
+      or not api.nvim_buf_is_loaded(bufnr)
+      or not bufstate.enabled
   then
     return
   end
@@ -205,8 +204,8 @@ local function buf_enable(bufnr)
       local method = args.data.method --- @type string
 
       if
-        (method == ms.textDocument_didChange or method == ms.textDocument_didOpen)
-        and bufstates[args.buf].enabled
+          (method == ms.textDocument_didChange or method == ms.textDocument_didOpen)
+          and bufstates[args.buf].enabled
       then
         buf_refresh(args.buf, args.data.client_id)
       end
@@ -221,9 +220,9 @@ local function buf_enable(bufnr)
       local clients = lsp.get_clients({ bufnr = args.buf, method = ms.textDocument_documentColor })
 
       if
-        not vim.iter(clients):any(function(c)
-          return c.id ~= args.data.client_id
-        end)
+          not vim.iter(clients):any(function(c)
+            return c.id ~= args.data.client_id
+          end)
       then
         -- There are no clients left in the buffer that support document color, so turn it off.
         buf_disable(args.buf)
@@ -316,12 +315,12 @@ api.nvim_set_decoration_provider(document_color_ns, {
     local bufstate = assert(bufstates[bufnr])
 
     local all_applied = #bufstate.applied_version > 0
-      and vim.iter(pairs(bufstate.applied_version)):all(function(client_id, buf_version)
-        return buf_version == bufstate.buf_version[client_id]
-      end)
+        and vim.iter(pairs(bufstate.applied_version)):all(function(client_id, buf_version)
+          return buf_version == bufstate.buf_version[client_id]
+        end)
 
     for _, client in
-      ipairs(lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_documentColor }))
+    ipairs(lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_documentColor }))
     do
       if bufstate.buf_version[client.id] ~= util.buf_versions[bufnr] or all_applied then
         return
