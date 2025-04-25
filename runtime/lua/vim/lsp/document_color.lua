@@ -92,7 +92,7 @@ end
 --- @param bufnr integer
 --- @param enabled boolean
 local function reset_bufstate(bufnr, enabled)
-  for _, ns in ipairs(bufstates[bufnr].ns_by_client_id) do
+  for _, ns in ipairs(bufstates[bufnr].ns_by_client_id or {}) do
     api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
   end
   bufstates[bufnr] = {
