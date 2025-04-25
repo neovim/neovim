@@ -201,7 +201,7 @@ function M._get_urls()
     local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
 
     for _, client in ipairs(document_link_clients) do
-      local position = vim.lsp.util.make_position_params(bufnr, client.offset_encoding).position
+      local position = vim.lsp.util.make_position_params(0, client.offset_encoding).position
 
       local response = client:request_sync(ms.textDocument_documentLink, params, 1000, bufnr)
 

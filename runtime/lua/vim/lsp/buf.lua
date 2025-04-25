@@ -819,100 +819,72 @@ function M.document_symbol(opts)
   request_with_opts(ms.textDocument_documentSymbol, params, opts)
 end
 
----
---- The returned function has an optional {config} parameter that accepts |vim.lsp.ListOpts|
----
----@param map_result fun(resp, bufnr: integer, position_encoding: 'utf-8'|'utf-16'|'utf-32'): table to convert the response
----@param entity string name of the resource used in a `not found` error message
----@param title_fn fun(ctx: lsp.HandlerContext): string Function to call to generate list title
----@return lsp.Handler
-local function response_to_list(map_result, entity, title_fn)
-  --- @diagnostic disable-next-line:redundant-parameter
-  return function(_, result, ctx, config)
-    if not result or vim.tbl_isempty(result) then
-      vim.notify('No ' .. entity .. ' found')
-      return
-    end
-    config = config or {}
-    local title = title_fn(ctx)
-    local client = assert(lsp.get_client_by_id(ctx.client_id))
-    local items = map_result(result, ctx.bufnr, client.offset_encoding)
-
-    local list = { title = title, items = items, context = ctx }
-    if config.on_list then
-      assert(vim.is_callable(config.on_list), 'on_list is not a function')
-      config.on_list(list)
-    elseif config.loclist then
-      vim.fn.setloclist(0, {}, ' ', list)
-      vim.cmd.lopen()
-    else
-      vim.fn.setqflist({}, ' ', list)
-      vim.cmd('botright copen')
-    end
+--- Open loclist/quickfix based on |vim.lsp.ListOpts|
+---@param title string
+---@param items vim.quickfix.entry[]
+---@param ctx lsp.HandlerContext
+---@param config vim.lsp.ListOpts
+local function open_list(title, items, ctx, config)
+  local list = { title = title, items = items, context = ctx }
+  if config.on_list then
+    assert(vim.is_callable(config.on_list), 'on_list is not a function')
+    config.on_list(list)
+  elseif config.loclist then
+    vim.fn.setloclist(0, {}, ' ', list)
+    vim.cmd.lopen()
+  else
+    vim.fn.setqflist({}, ' ', list)
+    vim.cmd('botright copen')
   end
 end
 
---- Converts links to quickfix list items.
+--- Converts a lsp.documentLink to quickfix entry
 ---
----@param links lsp.DocumentLink[]
----@param bufnr? integer buffer handle or 0 for current, defaults to current
----@param position_encoding? 'utf-8'|'utf-16'|'utf-32'
----                         default to first client of buffer
----@return vim.quickfix.entry[] # See |setqflist()| for the format
-local function links_to_items(links, bufnr, position_encoding)
-  bufnr = vim._resolve_bufnr(bufnr)
-  if position_encoding == nil then
-    vim.notify_once(
-      'links_to_items must be called with valid position encoding',
-      vim.log.levels.WARN
-    )
-    position_encoding = lsp.get_clients({ bufnr = bufnr })[1].offset_encoding
-  end
+---@param link lsp.DocumentLink
+---@param bufnr integer
+---@param client vim.lsp.Client
+---@param show_client_name boolean
+---@return vim.quickfix.entry?
+local function link_to_qf_entry(link, bufnr, client, show_client_name)
+  local position_encoding, name = client.offset_encoding, client.name
+  local uri, range = link.target, link.range
+  if uri and range then
+    ---@type integer?, integer?, integer?, integer?
+    local lnum, col, end_lnum, end_col
 
-  local items = {} --- @type vim.quickfix.entry[]
-  for _, link in ipairs(links) do
-    --- @type string?, lsp.Range?
-    local uri, range = link.target, link.range
-    if uri and range then
-      ---@type integer?, integer?, integer?, integer?
-      local lnum, col, end_lnum, end_col
-
-      ---@type string, string
-      local filename, text
-      if vim.startswith(uri, 'file:///') then
-        filename = vim.uri_to_fname(uri)
-        text = filename
-      else
-        filename = vim.uri_to_fname(vim.uri_from_bufnr(bufnr))
-        text = uri
-        lnum = range.start.line + 1
-        col = util.character_offset(
-          bufnr,
-          range.start.line,
-          range.start.character,
-          position_encoding
-        ) + 1
-        end_lnum = range['end'].line + 1
-        end_col = util.character_offset(
-          bufnr,
-          range['end'].line,
-          range['end'].character,
-          position_encoding
-        ) + 1
-      end
-
-      items[#items + 1] = {
-        filename = filename,
-        lnum = lnum or 1,
-        col = col or 1,
-        end_lnum = end_lnum or 1,
-        end_col = end_col or 1,
-        text = text,
-      }
+    ---@type string, string
+    local filename, text
+    if vim.startswith(uri, 'file:///') then
+      filename = vim.uri_to_fname(uri)
+      text = filename
+    else
+      filename = vim.uri_to_fname(vim.uri_from_bufnr(bufnr))
+      text = uri
+      lnum = range.start.line + 1
+      col = util.character_offset(bufnr, range.start.line, range.start.character, position_encoding)
+        + 1
+      end_lnum = range['end'].line + 1
+      end_col = util.character_offset(
+        bufnr,
+        range['end'].line,
+        range['end'].character,
+        position_encoding
+      ) + 1
     end
-  end
 
-  return items
+    if show_client_name then
+      text = string.format('[%s] %s', name, text)
+    end
+
+    return {
+      filename = filename,
+      lnum = lnum or 1,
+      col = col or 1,
+      end_lnum = end_lnum or 1,
+      end_col = end_col or 1,
+      text = text,
+    }
+  end
 end
 
 --- Lists all links in the current buffer in the |location-list|.
@@ -920,11 +892,6 @@ end
 function M.document_link(opts)
   opts = vim.tbl_deep_extend('keep', opts or {}, { loclist = true })
   local params = { textDocument = util.make_text_document_params() }
-
-  local handler = response_to_list(links_to_items, 'document links', function(ctx)
-    local fname = vim.fn.fnamemodify(vim.uri_to_fname(ctx.params.textDocument.uri), ':.')
-    return string.format('Links in %s', fname)
-  end)
 
   lsp.buf_request_all(0, ms.textDocument_documentLink, params, function(results, ctx)
     local bufnr = assert(ctx.bufnr)
@@ -945,21 +912,19 @@ function M.document_link(opts)
       end
     end
 
-    local nresults = #vim.tbl_keys(results1)
+    ---@type boolean
+    local multiple_client = #vim.tbl_keys(results1) > 1
 
-    local result_list = {}
-
-    for client_id, resp in pairs(results1) do
-      if nresults > 1 then
-        local client_name = assert(lsp.get_client_by_id(client_id)).name
-        for _, link in ipairs(resp) do
-          link.target = string.format('[%s] %s', client_name, link.target)
-        end
+    ---@type vim.quickfix.entry[]
+    local items = {}
+    for client_id, links in pairs(results1) do
+      local client = assert(lsp.get_client_by_id(client_id))
+      for _, link in ipairs(links) do
+        items[#items + 1] = link_to_qf_entry(link, bufnr, client, multiple_client)
       end
-      vim.list_extend(result_list, resp)
     end
 
-    handler(nil, result_list, ctx, opts)
+    open_list('Document Links', items, ctx, opts)
   end)
 end
 
