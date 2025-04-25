@@ -157,10 +157,10 @@ local function buf_clear(bufnr)
   local bufstate = assert(bufstates[bufnr])
   local client_ids = vim.tbl_keys(bufstate.hl_info) --- @type integer[]
 
-  for _, id in ipairs(client_ids) do
-    local ns = bufstate.ns_by_client_id[id]
+  for _, client_id in ipairs(client_ids) do
+    local ns = bufstate.ns_by_client_id[client_id]
     api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
-    bufstate.hl_info[id] = {}
+    bufstate.hl_info[client_id] = {}
   end
 
   api.nvim_buf_clear_namespace(bufnr, document_color_ns, 0, -1)
