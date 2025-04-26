@@ -338,7 +338,6 @@ end
 --- Refresh diagnostics, only if we have attached clients that support it
 ---@param bufnr (integer) buffer number
 ---@param opts? table Additional options to pass to util._refresh
----@private
 local function _refresh(bufnr, opts)
   opts = opts or {}
   opts['bufnr'] = bufnr
@@ -347,7 +346,6 @@ end
 
 --- Enable pull diagnostics for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@private
 function M._enable(bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
 

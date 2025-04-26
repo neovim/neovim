@@ -38,7 +38,7 @@ local lsp = vim.lsp
 local protocol = lsp.protocol
 local ms = protocol.Methods
 
-local rtt_ms = 50
+local rtt_ms = 50.0
 local ns_to_ms = 0.000001
 
 --- @alias vim.lsp.CompletionResult lsp.CompletionList | lsp.CompletionItem[]
@@ -110,7 +110,7 @@ end
 local function exp_avg(window, warmup)
   local count = 0
   local sum = 0
-  local value = 0
+  local value = 0.0
 
   return function(sample)
     if count < warmup then
@@ -384,7 +384,7 @@ local function adjust_start_col(lnum, line, items, encoding)
   end
 end
 
---- @private
+--- @package
 --- @param line string line content
 --- @param lnum integer 0-indexed line number
 --- @param cursor_col integer

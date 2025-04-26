@@ -16,6 +16,10 @@ local function get_qf_id_for_title(title)
   return nil
 end
 
+--- @class vim.Diagnostic.Cached : vim.Diagnostic
+--- @field end_lnum integer
+--- @field end_col integer
+
 --- [diagnostic-structure]()
 ---
 --- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
@@ -100,7 +104,7 @@ end
 --- Default values for |vim.diagnostic.jump()|. See |vim.diagnostic.Opts.Jump|.
 --- @field jump? vim.diagnostic.Opts.Jump
 
---- @class (private) vim.diagnostic.OptsResolved
+--- @class (private) vim.diagnostic.OptsResolved : vim.diagnostic.Opts
 --- @field float vim.diagnostic.Opts.Float
 --- @field update_in_insert boolean
 --- @field underline vim.diagnostic.Opts.Underline
@@ -381,7 +385,7 @@ local bufnr_and_namespace_cacher_mt = {
 }
 
 -- bufnr -> ns -> Diagnostic[]
-local diagnostic_cache = {} --- @type table<integer,table<integer,vim.Diagnostic[]>>
+local diagnostic_cache = {} --- @type table<integer,table<integer,vim.Diagnostic.Cached[]>>
 do
   local group = api.nvim_create_augroup('nvim.diagnostic.buf_wipeout', {})
   setmetatable(diagnostic_cache, {
@@ -406,7 +410,7 @@ end
 --- @field [1] integer id
 --- @field [2] integer start
 --- @field [3] integer end
---- @field [4] table details
+--- @field [4] vim.api.keyset.set_extmark details
 
 --- @type table<integer,table<integer,vim.diagnostic._extmark[]>>
 local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_namespace_cacher_mt)
@@ -417,7 +421,7 @@ local diagnostic_attached_buffers = {}
 --- @type table<integer,true|table<integer,true>>
 local diagnostic_disabled = {}
 
---- @type table<integer,table<integer,table>>
+--- @type table<integer,table<integer,vim.diagnostic.OptsResolved>>
 local bufs_waiting_to_update = setmetatable({}, bufnr_and_namespace_cacher_mt)
 
 --- @class vim.diagnostic.NS
@@ -433,8 +437,8 @@ local all_namespaces = {}
 ---@return vim.diagnostic.Severity?
 local function to_severity(severity)
   if type(severity) == 'string' then
-    assert(M.severity[string.upper(severity)], string.format('Invalid severity: %s', severity))
-    return M.severity[string.upper(severity)]
+    local sev = M.severity(string.upper(severity))
+    return (assert(sev, string.format('Invalid severity: %s', severity)))
   end
   return severity
 end
@@ -468,7 +472,9 @@ local function severity_predicate(severity)
 
   --- @param d vim.Diagnostic
   return function(d)
-    return severities[d.severity]
+    if d.severity then
+      return severities[d.severity]
+    end
   end
 end
 
@@ -586,7 +592,7 @@ local function get_resolved_options(opts, namespace, bufnr)
       resolved[k] = resolve_optional_value(k, resolved[k], namespace, bufnr)
     end
   end
-  return resolved
+  return resolved --[[@as vim.diagnostic.OptsResolved]]
 end
 
 -- Default diagnostic highlights
@@ -663,7 +669,9 @@ end
 --- @param diagnostics vim.Diagnostic[]
 local function set_diagnostic_cache(namespace, bufnr, diagnostics)
   for _, diagnostic in ipairs(diagnostics) do
+    ---@diagnostic disable-next-line: unnecessary-assert
     assert(diagnostic.lnum, 'Diagnostic line number is required')
+    ---@diagnostic disable-next-line: unnecessary-assert
     assert(diagnostic.col, 'Diagnostic column is required')
     diagnostic.severity = diagnostic.severity and to_severity(diagnostic.severity)
       or M.severity.ERROR
@@ -766,7 +774,7 @@ local insert_leave_auto_cmds = { 'InsertLeave', 'CursorHoldI' }
 
 --- @param namespace integer
 --- @param bufnr integer
---- @param args any[]
+--- @param args vim.diagnostic.OptsResolved
 local function schedule_display(namespace, bufnr, args)
   bufs_waiting_to_update[bufnr][namespace] = args
 
@@ -809,7 +817,7 @@ local function get_diagnostics(bufnr, opts, clamp)
     namespace = { namespace }
   end
 
-  ---@cast namespace integer[]
+  ---@cast namespace integer[]?
 
   local diagnostics = {}
 
@@ -831,7 +839,7 @@ local function get_diagnostics(bufnr, opts, clamp)
     end
 
   ---@param b integer
-  ---@param d vim.Diagnostic
+  ---@param d vim.Diagnostic.Cached
   local function add(b, d)
     if
       match_severity(d)
@@ -849,7 +857,7 @@ local function get_diagnostics(bufnr, opts, clamp)
         then
           d = vim.deepcopy(d, true)
           d.lnum = math.max(math.min(d.lnum, line_count), 0)
-          d.end_lnum = math.max(math.min(assert(d.end_lnum), line_count), 0)
+          d.end_lnum = math.max(math.min(d.end_lnum, line_count), 0)
           d.col = math.max(d.col, 0)
           d.end_col = math.max(d.end_col, 0)
         end
@@ -859,7 +867,7 @@ local function get_diagnostics(bufnr, opts, clamp)
   end
 
   --- @param buf integer
-  --- @param diags vim.Diagnostic[]
+  --- @param diags vim.Diagnostic.Cached[]
   local function add_all_diags(buf, diags)
     for _, diagnostic in pairs(diags) do
       add(buf, diagnostic)

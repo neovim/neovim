@@ -6,7 +6,7 @@ local M = {}
 local function add_blank(above)
   local offset = above and 1 or 0
   local repeated = vim.fn['repeat']({ '' }, vim.v.count1)
-  local linenr = vim.api.nvim_win_get_cursor(0)[1]
+  local linenr = assert(vim.api.nvim_win_get_cursor(0)[1])
   vim.api.nvim_buf_set_lines(0, linenr - offset, linenr - offset, true, repeated)
 end
 

@@ -105,7 +105,7 @@ end
 --- @return fun():string? : Iterator over the split components
 function vim.gsplit(s, sep, opts)
   local plain --- @type boolean?
-  local trimempty = false
+  local trimempty = false --- @type boolean?
   if type(opts) == 'boolean' then
     plain = opts -- For backwards compatibility.
   else
@@ -124,12 +124,13 @@ function vim.gsplit(s, sep, opts)
   local empty_start = true -- Only empty segments seen so far.
 
   --- @param i integer?
-  --- @param j integer
+  --- @param j integer?
   --- @param ... unknown
   --- @return string
   --- @return ...
   local function _pass(i, j, ...)
     if i then
+      assert(j)
       assert(j + 1 > start, 'Infinite loop detected')
       local seg = s:sub(start, i - 1)
       start = j + 1
@@ -605,9 +606,9 @@ function vim.spairs(t)
   --- @cast t table<any,any>
 
   -- collect the keys
-  local keys = {}
+  local keys = {} --- @type string[]
   for k in pairs(t) do
-    table.insert(keys, k)
+    keys[#keys + 1] = k
   end
   table.sort(keys)
 
@@ -853,7 +854,7 @@ do
 
   --- @param param_name string
   --- @param val any
-  --- @param validator vim.validate.Validator
+  --- @param validator type | 'callable' | (type|'callable')[] | fun(v:any):boolean, string?
   --- @param message? string
   --- @param allow_alias? boolean Allow short type names: 'n', 's', 't', 'b', 'f', 'c'
   --- @return string?
@@ -869,6 +870,7 @@ do
         return string.format('%s: expected %s, got %s', param_name, expected, type(val))
       end
     elseif vim.is_callable(validator) then
+      --- @cast validator fun(v:any):boolean, string?
       -- Check user-provided validation function
       local valid, opt_msg = validator(val)
       if not valid then
@@ -1014,7 +1016,7 @@ do
   ---
   --- @param name string Argument name
   --- @param value any Argument value
-  --- @param validator vim.validate.Validator
+  --- @param validator vim.validate.Validator :
   ---   - (`string|string[]`): Any value that can be returned from |lua-type()| in addition to
   ---     `'callable'`: `'boolean'`, `'callable'`, `'function'`, `'nil'`, `'number'`, `'string'`, `'table'`,
   ---     `'thread'`, `'userdata'`.
@@ -1025,6 +1027,7 @@ do
   --- @overload fun(name: string, val: any, validator: vim.validate.Validator, message: string)
   --- @overload fun(spec: table<string,[any, vim.validate.Validator, boolean|string]>)
   function vim.validate(name, value, validator, optional, message)
+    --- @cast validator vim.validate.Validator?
     local err_msg --- @type string?
     if validator then -- Form 1
       -- Check validator as a string first to optimize the common case.
@@ -1181,7 +1184,6 @@ do
   end
 end
 
---- @private
 --- @generic T
 --- @param root string
 --- @param mod T
@@ -1201,7 +1203,6 @@ function vim._defer_require(root, mod)
   })
 end
 
---- @private
 --- Creates a module alias/shim that lazy-loads a target module.
 ---
 --- Unlike `vim.defaulttable()` this also:
@@ -1257,6 +1258,13 @@ end
 --- @field go? table<string, any>
 --- @field wo? table<string, any>
 
+--- @nodoc
+--- @class vim.context.state.result : vim.context.state
+--- @field bo table<string, any>
+--- @field env table<string, any>
+--- @field go table<string, any>
+--- @field wo table<string, any>
+
 local scope_map = { buf = 'bo', global = 'go', win = 'wo' }
 local scope_order = { 'o', 'wo', 'bo', 'go', 'env' }
 local state_restore_order = { 'bo', 'wo', 'go', 'env' }
@@ -1265,7 +1273,7 @@ local state_restore_order = { 'bo', 'wo', 'go', 'env' }
 --- @param context vim.context.mods
 --- @return vim.context.state
 local get_context_state = function(context)
-  --- @type vim.context.state
+  --- @type vim.context.state.result
   local res = { bo = {}, env = {}, go = {}, wo = {} }
 
   -- Use specific order from possibly most to least intrusive

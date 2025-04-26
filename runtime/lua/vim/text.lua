@@ -79,7 +79,7 @@ end
 ---
 --- @param size integer Number of spaces.
 --- @param text string Text to indent.
---- @param opts? { expandtab?: number }
+--- @param opts? { expandtab?: integer }
 --- @return string # Indented text.
 --- @return integer # Indent size _before_ modification.
 function M.indent(size, text, opts)
@@ -91,7 +91,7 @@ function M.indent(size, text, opts)
   local tabspaces = opts.expandtab and (' '):rep(opts.expandtab) or nil
 
   --- Minimum common indent shared by all lines.
-  local old_indent --[[@type number?]]
+  local old_indent ---@type integer?
   local prefix = tabspaces and ' ' or nil -- Indent char (space or tab).
   --- Check all non-empty lines, capturing leading whitespace (if any).
   --- @diagnostic disable-next-line: no-unknown

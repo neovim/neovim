@@ -2203,7 +2203,6 @@ end
 ---@field client_id? integer Client ID to refresh (default: all clients)
 ---@field handler? lsp.Handler
 
----@private
 --- Request updated LSP information for a buffer.
 ---
 ---@param method string LSP method to call
