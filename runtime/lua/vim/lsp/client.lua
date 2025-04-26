@@ -678,6 +678,12 @@ function Client:request(method, params, handler, bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
   local version = lsp.util.buf_versions[bufnr]
   log.debug(self._log_prefix, 'client.request', self.id, method, params, handler, bufnr)
+
+  -- Detect if request resolved synchronously (only possible with in-process servers).
+  local already_responded = false
+  local request_registered = false
+
+  -- NOTE: rpc.request might call an in-process (Lua) server, thus may be synchronous.
   local success, request_id = self.rpc.request(method, params, function(err, result)
     handler(err, result, {
       method = method,
@@ -688,11 +694,15 @@ function Client:request(method, params, handler, bufnr)
     })
   end, function(request_id)
     -- Called when the server sends a response to the request (including cancelled acknowledgment).
-    self:_process_request(request_id, 'complete')
+    if request_registered then
+      self:_process_request(request_id, 'complete')
+    end
+    already_responded = true
   end)
 
-  if success and request_id then
+  if success and request_id and not already_responded then
     self:_process_request(request_id, 'pending', bufnr, method)
+    request_registered = true
   end
 
   return success, request_id
