@@ -36,8 +36,7 @@ local augroup = api.nvim_create_augroup('nvim.lsp.inlayhint', {})
 --- Store hints for a specific buffer and client
 ---@param result lsp.InlayHint[]?
 ---@param ctx lsp.HandlerContext
----@private
-function M.on_inlayhint(err, result, ctx)
+local function on_inlayhint(err, result, ctx)
   if err then
     log.error('inlayhint', err)
     return
@@ -96,7 +95,7 @@ function M.on_refresh(err, _, ctx)
       if api.nvim_win_get_buf(winid) == bufnr then
         if bufstates[bufnr] and bufstates[bufnr].enabled then
           bufstates[bufnr].applied = {}
-          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
+          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr, handler = on_inlayhint })
         end
       end
     end
@@ -235,6 +234,7 @@ end
 local function _refresh(bufnr, opts)
   opts = opts or {}
   opts['bufnr'] = bufnr
+  opts.handler = on_inlayhint
   util._refresh(ms.textDocument_inlayHint, opts)
 end
 

@@ -223,11 +223,6 @@ RCS[ms.textDocument_codeLens] = function(...)
   return vim.lsp.codelens.on_codelens(...)
 end
 
---- @private
-RCS[ms.textDocument_inlayHint] = function(...)
-  return vim.lsp.inlay_hint.on_inlayhint(...)
-end
-
 --- Return a function that converts LSP responses to list items and opens the list
 ---
 --- The returned function has an optional {config} parameter that accepts |vim.lsp.ListOpts|
