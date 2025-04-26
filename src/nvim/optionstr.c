@@ -85,6 +85,7 @@ void didset_string_options(void)
   check_str_opt(kOptBackupcopy, NULL);
   check_str_opt(kOptBelloff, NULL);
   check_str_opt(kOptCompletefuzzycollect, NULL);
+  check_str_opt(kOptIsexpand, NULL);
   check_str_opt(kOptCompleteopt, NULL);
   check_str_opt(kOptSessionoptions, NULL);
   check_str_opt(kOptViewoptions, NULL);
@@ -1314,6 +1315,44 @@ const char *did_set_inccommand(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
   return did_set_str_generic(args);
+}
+
+/// The 'isexpand' option is changed.
+const char *did_set_isexpand(optset_T *args)
+{
+  char *ise = p_ise;
+  char *p;
+  bool last_was_comma = false;
+
+  if (args->os_flags & OPT_LOCAL) {
+    ise = curbuf->b_p_ise;
+  }
+
+  for (p = ise; *p != NUL;) {
+    if (*p == '\\' && p[1] == ',') {
+      p += 2;
+      last_was_comma = false;
+      continue;
+    }
+
+    if (*p == ',') {
+      if (last_was_comma) {
+        return e_invarg;
+      }
+      last_was_comma = true;
+      p++;
+      continue;
+    }
+
+    last_was_comma = false;
+    MB_PTR_ADV(p);
+  }
+
+  if (last_was_comma) {
+    return e_invarg;
+  }
+
+  return NULL;
 }
 
 /// The 'iskeyword' option is changed.

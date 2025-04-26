@@ -4460,6 +4460,8 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
       return &(buf->b_p_def);
     case kOptInclude:
       return &(buf->b_p_inc);
+    case kOptIsexpand:
+      return &(buf->b_p_ise);
     case kOptCompleteopt:
       return &(buf->b_p_cot);
     case kOptDictionary:
@@ -4545,6 +4547,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_def != NUL ? &(buf->b_p_def) : p->var;
   case kOptInclude:
     return *buf->b_p_inc != NUL ? &(buf->b_p_inc) : p->var;
+  case kOptIsexpand:
+    return *buf->b_p_ise != NUL ? &(buf->b_p_ise) : p->var;
   case kOptCompleteopt:
     return *buf->b_p_cot != NUL ? &(buf->b_p_cot) : p->var;
   case kOptDictionary:
