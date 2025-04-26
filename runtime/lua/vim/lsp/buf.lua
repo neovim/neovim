@@ -370,7 +370,7 @@ function M.signature_help(config)
 
     local ft = vim.bo[ctx.bufnr].filetype
     local total = #signatures
-    local can_cycle = total > 1 and config.focusable
+    local can_cycle = total > 1 and config.focusable ~= false
     local idx = active_signature - 1
 
     --- @param update_win? integer
@@ -386,7 +386,9 @@ function M.signature_help(config)
         return
       end
 
-      local sfx = can_cycle and string.format(' (%d/%d) (<C-s> to cycle)', idx, total) or ''
+      local sfx = total > 1
+          and string.format(' (%d/%d)%s', idx, total, can_cycle and ' (<C-s> to cycle)' or '')
+        or ''
       local title = string.format('Signature Help: %s%s', client.name, sfx)
       if config.border then
         config.title = title
