@@ -1050,9 +1050,10 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
       get_mode(last_mode);
     }
 
-    // If the event is CursorMoved, update the last cursor position
+    // If the event is CursorMoved or CursorMovedI, update the last cursor position
     // position to avoid immediately triggering the autocommand
-    if (event == EVENT_CURSORMOVED && !has_event(EVENT_CURSORMOVED)) {
+    if ((event == EVENT_CURSORMOVED && !has_event(EVENT_CURSORMOVED))
+        || (event == EVENT_CURSORMOVEDI && !has_event(EVENT_CURSORMOVEDI))) {
       last_cursormoved_win = curwin;
       last_cursormoved = curwin->w_cursor;
     }
@@ -1725,6 +1726,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     // Don't try expanding the following events.
     if (event == EVENT_CMDLINECHANGED
         || event == EVENT_CMDLINEENTER
+        || event == EVENT_CMDLINELEAVEPRE
         || event == EVENT_CMDLINELEAVE
         || event == EVENT_CMDUNDEFINED
         || event == EVENT_CURSORMOVEDC

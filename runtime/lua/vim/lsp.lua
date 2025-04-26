@@ -12,6 +12,7 @@ local lsp = vim._defer_require('vim.lsp', {
   codelens = ..., --- @module 'vim.lsp.codelens'
   completion = ..., --- @module 'vim.lsp.completion'
   diagnostic = ..., --- @module 'vim.lsp.diagnostic'
+  document_color = ..., --- @module 'vim.lsp.document_color'
   handlers = ..., --- @module 'vim.lsp.handlers'
   inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
   log = ..., --- @module 'vim.lsp.log'
@@ -43,7 +44,7 @@ lsp._resolve_to_request = {
 ---@private
 --- Called by the client when trying to call a method that's not
 --- supported in any of the servers registered for the current buffer.
----@param method (string) name of the method
+---@param method (vim.lsp.protocol.Method.ClientToServer) name of the method
 function lsp._unsupported_method(method)
   local msg = string.format(
     'method %s is not supported by any of the servers registered for the current buffer',
@@ -1183,7 +1184,7 @@ api.nvim_create_autocmd('VimLeavePre', {
 --- buffer.
 ---
 ---@param bufnr (integer) Buffer handle, or 0 for current.
----@param method (string) LSP method name
+---@param method (vim.lsp.protocol.Method.ClientToServer.Request) LSP method name
 ---@param params? table|(fun(client: vim.lsp.Client, bufnr: integer): table?) Parameters to send to the server
 ---@param handler? lsp.Handler See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
@@ -1246,7 +1247,7 @@ end
 ---@since 7
 ---
 ---@param bufnr (integer) Buffer handle, or 0 for current.
----@param method (string) LSP method name
+---@param method (vim.lsp.protocol.Method.ClientToServer.Request) LSP method name
 ---@param params? table|(fun(client: vim.lsp.Client, bufnr: integer): table?) Parameters to send to the server.
 ---               Can also be passed as a function that returns the params table for cases where
 ---               parameters are specific to the client.
@@ -1285,7 +1286,7 @@ end
 ---@since 7
 ---
 ---@param bufnr integer Buffer handle, or 0 for current.
----@param method string LSP method name
+---@param method vim.lsp.protocol.Method.ClientToServer.Request LSP method name
 ---@param params? table|(fun(client: vim.lsp.Client, bufnr: integer): table?) Parameters to send to the server.
 ---               Can also be passed as a function that returns the params table for cases where
 ---               parameters are specific to the client.
@@ -1317,7 +1318,7 @@ end
 ---@since 7
 ---
 ---@param bufnr (integer|nil) The number of the buffer
----@param method (string) Name of the request method
+---@param method (vim.lsp.protocol.Method.ClientToServer.Notification) Name of the request method
 ---@param params (any) Arguments to send to the server
 ---
 ---@return boolean success true if any client returns true; false otherwise

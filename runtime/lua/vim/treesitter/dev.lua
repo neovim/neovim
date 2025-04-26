@@ -1,5 +1,7 @@
 local api = vim.api
 
+local Range = require('vim.treesitter._range')
+
 local M = {}
 
 ---@class (private) vim.treesitter.dev.TSTreeView
@@ -96,16 +98,20 @@ function TSTreeView:new(bufnr, lang)
 
   parser:for_each_tree(function(parent_tree, parent_ltree)
     local parent = parent_tree:root()
+    local parent_range = { parent:range() }
     for _, child in pairs(parent_ltree:children()) do
       for _, tree in pairs(child:trees()) do
         local r = tree:root()
-        local node = assert(parent:named_descendant_for_range(r:range()))
-        local id = node:id()
-        if not injections[id] or r:byte_length() > injections[id].root:byte_length() then
-          injections[id] = {
-            lang = child:lang(),
-            root = r,
-          }
+        local r_range = { r:range() }
+        if Range.contains(parent_range, r_range) then
+          local node = assert(parent:named_descendant_for_range(r:range()))
+          local id = node:id()
+          if not injections[id] or r:byte_length() > injections[id].root:byte_length() then
+            injections[id] = {
+              lang = child:lang(),
+              root = r,
+            }
+          end
         end
       end
     end

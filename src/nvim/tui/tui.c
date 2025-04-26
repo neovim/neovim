@@ -18,6 +18,7 @@
 #include "nvim/cursor_shape.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/signal.h"
 #include "nvim/event/stream.h"
 #include "nvim/globals.h"
@@ -45,6 +46,10 @@
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
+
+// Maximum amount of time (in ms) to wait to receive a Device Attributes
+// response before exiting.
+#define EXIT_TIMEOUT_MS 1000
 
 #define OUTBUF_SIZE 0xffff
 
@@ -100,6 +105,7 @@ struct TUIData {
   bool bce;
   bool mouse_enabled;
   bool mouse_move_enabled;
+  bool mouse_enabled_save;
   bool title_enabled;
   bool sync_output;
   bool busy, is_invisible, want_invisible;
@@ -287,7 +293,8 @@ void tui_enable_extended_underline(TUIData *tui)
 static void tui_query_kitty_keyboard(TUIData *tui)
   FUNC_ATTR_NONNULL_ALL
 {
-  tui->input.waiting_for_kkp_response = true;
+  // Set the key encoding whenever the Device Attributes (DA1) response is received.
+  tui->input.callbacks.primary_device_attr = tui_set_key_encoding;
   out(tui, S_LEN("\x1b[?u\x1b[c"));
 }
 
@@ -379,7 +386,7 @@ static void terminfo_start(TUIData *tui)
   tui->out_isatty = os_isatty(tui->out_fd);
   tui->input.tui_data = tui;
 
-  const char *term = os_getenv("TERM");
+  char *term = os_getenv("TERM");
 #ifdef MSWIN
   os_tty_guess_term(&term, tui->out_fd);
   os_setenv("TERM", term, 1);
@@ -401,23 +408,25 @@ static void terminfo_start(TUIData *tui)
   }
 
   // None of the following work over SSH; see :help TERM .
-  const char *colorterm = os_getenv("COLORTERM");
-  const char *termprg = os_getenv("TERM_PROGRAM");
-  const char *vte_version_env = os_getenv("VTE_VERSION");
+  char *colorterm = os_getenv("COLORTERM");
+  char *termprg = os_getenv("TERM_PROGRAM");
+  char *vte_version_env = os_getenv("VTE_VERSION");
+  char *konsolev_env = os_getenv("KONSOLE_VERSION");
+  char *term_program_version_env = os_getenv("TERM_PROGRAM_VERSION");
+
   int vtev = vte_version_env ? (int)strtol(vte_version_env, NULL, 10) : 0;
   bool iterm_env = termprg && strstr(termprg, "iTerm.app");
   bool nsterm = (termprg && strstr(termprg, "Apple_Terminal"))
                 || terminfo_is_term_family(term, "nsterm");
   bool konsole = terminfo_is_term_family(term, "konsole")
-                 || os_getenv("KONSOLE_PROFILE_NAME")
-                 || os_getenv("KONSOLE_DBUS_SESSION");
-  const char *konsolev_env = os_getenv("KONSOLE_VERSION");
+                 || os_env_exists("KONSOLE_PROFILE_NAME", true)
+                 || os_env_exists("KONSOLE_DBUS_SESSION", true);
   int konsolev = konsolev_env ? (int)strtol(konsolev_env, NULL, 10)
                               : (konsole ? 1 : 0);
   bool wezterm = strequal(termprg, "WezTerm");
-  const char *weztermv = wezterm ? os_getenv("TERM_PROGRAM_VERSION") : NULL;
+  const char *weztermv = wezterm ? term_program_version_env : NULL;
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
+  bool tmux = terminfo_is_term_family(term, "tmux") || os_env_exists("TMUX", true);
 
   // truecolor support must be checked before patching/augmenting terminfo
   tui->rgb = term_has_truecolor(tui, colorterm);
@@ -503,10 +512,17 @@ static void terminfo_start(TUIData *tui)
     }
   }
   flush_buf(tui);
+
+  xfree(term);
+  xfree(colorterm);
+  xfree(termprg);
+  xfree(vte_version_env);
+  xfree(konsolev_env);
+  xfree(term_program_version_env);
 }
 
-/// Disable the alternate screen and prepare for the TUI to close.
-static void terminfo_stop(TUIData *tui)
+/// Disable various terminal modes and other features.
+static void terminfo_disable(TUIData *tui)
 {
   // Disable theme update notifications. We do this first to avoid getting any
   // more notifications after we reset the cursor and any color palette changes.
@@ -531,16 +547,6 @@ static void terminfo_stop(TUIData *tui)
 
   // May restore old title before exiting alternate screen.
   tui_set_title(tui, NULL_STRING);
-  if (ui_client_exit_status == 0) {
-    ui_client_exit_status = tui->seen_error_exit;
-  }
-  // if nvim exited with nonzero status, without indicated this was an
-  // intentional exit (like `:1cquit`), it likely was an internal failure.
-  // Don't clobber the stderr error message in this case.
-  if (ui_client_exit_status == tui->seen_error_exit) {
-    // Exit alternate screen.
-    unibi_out(tui, unibi_exit_ca_mode);
-  }
   if (tui->cursor_has_color) {
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
@@ -548,6 +554,29 @@ static void terminfo_stop(TUIData *tui)
   unibi_out_ext(tui, tui->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out_ext(tui, tui->unibi_ext.disable_focus_reporting);
+
+  // Send a DA1 request. When the terminal responds we know that it has
+  // processed all of our requests and won't be emitting anymore sequences.
+  out(tui, S_LEN("\x1b[c"));
+
+  // Immediately flush the buffer and wait for the DA1 response.
+  flush_buf(tui);
+}
+
+/// Disable the alternate screen and prepare for the TUI to close.
+static void terminfo_stop(TUIData *tui)
+{
+  if (ui_client_exit_status == 0) {
+    ui_client_exit_status = tui->seen_error_exit;
+  }
+
+  // if nvim exited with nonzero status, without indicated this was an
+  // intentional exit (like `:1cquit`), it likely was an internal failure.
+  // Don't clobber the stderr error message in this case.
+  if (ui_client_exit_status == tui->seen_error_exit) {
+    // Exit alternate screen.
+    unibi_out(tui, unibi_exit_ca_mode);
+  }
 
   flush_buf(tui);
   uv_tty_reset_mode();
@@ -583,8 +612,14 @@ static void tui_terminal_after_startup(TUIData *tui)
   flush_buf(tui);
 }
 
-/// Stop the terminal but allow it to restart later (like after suspend)
-static void tui_terminal_stop(TUIData *tui)
+void tui_error_exit(TUIData *tui, Integer status)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tui->seen_error_exit = (int)status;
+}
+
+void tui_stop(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (uv_is_closing((uv_handle_t *)&tui->output_handle)) {
     // Race between SIGCONT (tui.c) and SIGHUP (os/signal.c)? #8075
@@ -592,26 +627,40 @@ static void tui_terminal_stop(TUIData *tui)
     tui->stopped = true;
     return;
   }
+
+  tui->input.callbacks.primary_device_attr = tui_stop_cb;
+  terminfo_disable(tui);
+
+  // Wait until DA1 response is received
+  LOOP_PROCESS_EVENTS_UNTIL(tui->loop, tui->loop->events, EXIT_TIMEOUT_MS, tui->stopped);
+
+  tui_terminal_stop(tui);
+  stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
+  tinput_destroy(&tui->input);
+  signal_watcher_stop(&tui->winch_handle);
+  signal_watcher_close(&tui->winch_handle, NULL);
+  uv_close((uv_handle_t *)&tui->startup_delay_timer, NULL);
+}
+
+/// Callback function called when the response to the Device Attributes (DA1)
+/// request is sent during shutdown.
+static void tui_stop_cb(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tui->stopped = true;
+}
+
+/// Stop the terminal but allow it to restart later (like after suspend)
+///
+/// This is called after we receive the response to the DA1 request sent from
+/// terminfo_disable.
+static void tui_terminal_stop(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
   tinput_stop(&tui->input);
   // Position the cursor on the last screen line, below all the text
   cursor_goto(tui, tui->height - 1, 0);
   terminfo_stop(tui);
-}
-
-void tui_error_exit(TUIData *tui, Integer status)
-{
-  tui->seen_error_exit = (int)status;
-}
-
-void tui_stop(TUIData *tui)
-{
-  tui_terminal_stop(tui);
-  stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
-  tinput_destroy(&tui->input);
-  tui->stopped = true;
-  signal_watcher_stop(&tui->winch_handle);
-  signal_watcher_close(&tui->winch_handle, NULL);
-  uv_close((uv_handle_t *)&tui->startup_delay_timer, NULL);
 }
 
 /// Returns true if UI `ui` is stopped.
@@ -1572,7 +1621,16 @@ void tui_suspend(TUIData *tui)
 // on a non-UNIX system, this is a no-op
 #ifdef UNIX
   ui_client_detach();
-  bool enable_mouse = tui->mouse_enabled;
+  tui->mouse_enabled_save = tui->mouse_enabled;
+  tui->input.callbacks.primary_device_attr = tui_suspend_cb;
+  terminfo_disable(tui);
+#endif
+}
+
+#ifdef UNIX
+static void tui_suspend_cb(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
   tui_terminal_stop(tui);
   stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
 
@@ -1581,13 +1639,13 @@ void tui_suspend(TUIData *tui)
 
   tui_terminal_start(tui);
   tui_terminal_after_startup(tui);
-  if (enable_mouse) {
+  if (tui->mouse_enabled_save) {
     tui_mouse_on(tui);
   }
   stream_set_blocking(tui->input.in_fd, false);  // libuv expects this
   ui_client_attach(tui->width, tui->height, tui->term, tui->rgb);
-#endif
 }
+#endif
 
 void tui_set_title(TUIData *tui, String title)
 {
@@ -1772,6 +1830,8 @@ void tui_guess_size(TUIData *tui)
 {
   int width = 0;
   int height = 0;
+  char *lines = NULL;
+  char *columns = NULL;
 
   // 1 - try from a system call (ioctl/TIOCGWINSZ on unix)
   if (tui->out_isatty
@@ -1782,9 +1842,9 @@ void tui_guess_size(TUIData *tui)
   // 2 - use $LINES/$COLUMNS if available
   const char *val;
   int advance;
-  if ((val = os_getenv("LINES"))
+  if ((val = os_getenv_noalloc("LINES"))
       && sscanf(val, "%d%n", &height, &advance) != EOF && advance
-      && (val = os_getenv("COLUMNS"))
+      && (val = os_getenv_noalloc("COLUMNS"))
       && sscanf(val, "%d%n", &width, &advance) != EOF && advance) {
     goto end;
   }
@@ -1804,6 +1864,9 @@ void tui_guess_size(TUIData *tui)
 
   // Redraw on SIGWINCH event if size didn't change. #23411
   ui_client_set_size(width, height);
+
+  xfree(lines);
+  xfree(columns);
 }
 
 static void unibi_goto(TUIData *tui, int row, int col)
@@ -1965,7 +2028,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
                                 int vte_version, int konsolev, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = tui->ut;
-  const char *xterm_version = os_getenv("XTERM_VERSION");
+  char *xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = terminfo_is_term_family(term, "xterm")
                // Treat Terminal.app as generic xterm-like, for now.
                || nsterm;
@@ -1977,7 +2040,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
+  bool tmux = terminfo_is_term_family(term, "tmux") || os_env_exists("TMUX", true);
   bool st = terminfo_is_term_family(term, "st");
   bool gnome = terminfo_is_term_family(term, "gnome")
                || terminfo_is_term_family(term, "vte");
@@ -2276,6 +2339,8 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
                         "\x1b]50;\x07");
     }
   }
+
+  xfree(xterm_version);
 }
 
 /// This adds stuff that is not in standard terminfo as extended unibilium
@@ -2284,6 +2349,7 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
                              const char *weztermv, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = tui->ut;
+  char *xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = terminfo_is_term_family(term, "xterm")
                // Treat Terminal.app as generic xterm-like, for now.
                || nsterm;
@@ -2294,7 +2360,7 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
+  bool tmux = terminfo_is_term_family(term, "tmux") || os_env_exists("TMUX", true);
   bool st = terminfo_is_term_family(term, "st");
   bool iterm = terminfo_is_term_family(term, "iterm")
                || terminfo_is_term_family(term, "iterm2")
@@ -2305,7 +2371,6 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
 
-  const char *xterm_version = os_getenv("XTERM_VERSION");
   bool true_xterm = xterm && !!xterm_version && !bsdvt;
 
   // Only define this capability for terminal types that we know understand it.
@@ -2465,9 +2530,13 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
 
   if (!kitty && (vte_version == 0 || vte_version >= 5400)) {
     // Fallback to Xterm's modifyOtherKeys if terminal does not support the
-    // Kitty keyboard protocol
+    // Kitty keyboard protocol. We don't actually enable the key encoding here
+    // though: it won't be enabled until the terminal responds to our query for
+    // kitty keyboard support.
     tui->input.key_encoding = kKeyEncodingXterm;
   }
+
+  xfree(xterm_version);
 }
 
 static bool should_invisible(TUIData *tui)

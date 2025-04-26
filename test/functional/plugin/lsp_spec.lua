@@ -5,7 +5,6 @@ local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local assert_log = t.assert_log
 local buf_lines = n.buf_lines
-local clear = n.clear
 local command = n.command
 local dedent = t.dedent
 local exec_lua = n.exec_lua
@@ -290,7 +289,6 @@ describe('LSP', function()
     it(
       "should set the client's offset_encoding when positionEncoding capability is supported",
       function()
-        clear()
         exec_lua(create_server_definition)
         local result = exec_lua(function()
           local server = _G._create_server({
@@ -573,7 +571,6 @@ describe('LSP', function()
     end)
 
     it('should detach buffer on bufwipe', function()
-      clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local server = _G._create_server()
@@ -606,7 +603,6 @@ describe('LSP', function()
     end)
 
     it('should not re-attach buffer if it was deleted in on_init #28575', function()
-      clear()
       exec_lua(create_server_definition)
       exec_lua(function()
         local server = _G._create_server({
@@ -637,7 +633,6 @@ describe('LSP', function()
     end)
 
     it('should allow on_lines + nvim_buf_delete during LSP initialization #28575', function()
-      clear()
       exec_lua(create_server_definition)
       exec_lua(function()
         local initialized = false
@@ -812,7 +807,6 @@ describe('LSP', function()
     end)
 
     it('BufWritePre does not send notifications if server lacks willSave capabilities', function()
-      clear()
       exec_lua(create_server_definition)
       local messages = exec_lua(function()
         local server = _G._create_server({
@@ -837,7 +831,6 @@ describe('LSP', function()
     end)
 
     it('BufWritePre sends willSave / willSaveWaitUntil, applies textEdits', function()
-      clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local server = _G._create_server({
@@ -1250,6 +1243,65 @@ describe('LSP', function()
           end
         end,
       }
+    end)
+
+    it('request should not be pending for sync responses (in-process LS)', function()
+      --- @type boolean
+      local pending_request = exec_lua(function()
+        local function server(dispatchers)
+          local closing = false
+          local srv = {}
+          local request_id = 0
+
+          function srv.request(method, _params, callback, notify_reply_callback)
+            if method == 'textDocument/formatting' then
+              callback(nil, {})
+            elseif method == 'initialize' then
+              callback(nil, {
+                capabilities = {
+                  textDocument = {
+                    formatting = true,
+                  },
+                },
+              })
+            elseif method == 'shutdown' then
+              callback(nil, nil)
+            end
+            request_id = request_id + 1
+            if notify_reply_callback then
+              notify_reply_callback(request_id)
+            end
+            return true, request_id
+          end
+
+          function srv.notify(method)
+            if method == 'exit' then
+              dispatchers.on_exit(0, 15)
+            end
+          end
+          function srv.is_closing()
+            return closing
+          end
+          function srv.terminate()
+            closing = true
+          end
+
+          return srv
+        end
+
+        local client_id = assert(vim.lsp.start({ cmd = server }))
+        local client = assert(vim.lsp.get_client_by_id(client_id))
+
+        local ok, request_id = client:request('textDocument/formatting', {})
+        assert(ok)
+
+        local has_pending = client.requests[request_id] ~= nil
+        vim.lsp.stop_client(client_id)
+
+        return has_pending
+      end)
+
+      eq(false, pending_request, 'expected no pending requests')
     end)
 
     it('should trigger LspRequest autocmd when requests table changes', function()
@@ -3810,7 +3862,6 @@ describe('LSP', function()
     end)
 
     it('opens the quickfix list with the right subtypes', function()
-      clear()
       exec_lua(create_server_definition)
       local qflist = exec_lua(function()
         local clangd_response = {
@@ -3958,7 +4009,6 @@ describe('LSP', function()
     end)
 
     it('opens the quickfix list with the right subtypes and details', function()
-      clear()
       exec_lua(create_server_definition)
       local qflist = exec_lua(function()
         local jdtls_response = {
@@ -4059,7 +4109,6 @@ describe('LSP', function()
     end)
 
     it('opens the quickfix list with the right supertypes', function()
-      clear()
       exec_lua(create_server_definition)
       local qflist = exec_lua(function()
         local clangd_response = {
@@ -4208,7 +4257,6 @@ describe('LSP', function()
     end)
 
     it('opens the quickfix list with the right supertypes and details', function()
-      clear()
       exec_lua(create_server_definition)
       local qflist = exec_lua(function()
         local jdtls_response = {
@@ -4562,7 +4610,6 @@ describe('LSP', function()
     end)
 
     it('fallback to command execution on resolve error', function()
-      clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local server = _G._create_server({
@@ -4607,7 +4654,6 @@ describe('LSP', function()
     end)
 
     it('resolves command property', function()
-      clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local server = _G._create_server({
@@ -4817,7 +4863,6 @@ describe('LSP', function()
         ['file:///fake/uri1'] = 'Lens1',
         ['file:///fake/uri2'] = 'Lens2',
       }
-      clear()
       exec_lua(create_server_definition)
 
       -- setup lsp
@@ -5230,7 +5275,7 @@ describe('LSP', function()
   end)
 
   describe('lsp.buf.definition', function()
-    it('jumps to single location', function()
+    it('jumps to single location and can reuse win', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local bufnr = vim.api.nvim_get_current_buf()
@@ -5256,8 +5301,10 @@ describe('LSP', function()
         vim.api.nvim_win_set_cursor(win, { 3, 6 })
         local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
         vim.lsp.buf.definition()
-        vim.lsp.stop_client(client_id)
         return {
+          win = win,
+          bufnr = bufnr,
+          client_id = client_id,
           cursor = vim.api.nvim_win_get_cursor(win),
           messages = server.messages,
           tagstack = vim.fn.gettagstack(win),
@@ -5269,6 +5316,15 @@ describe('LSP', function()
       eq('x', result.tagstack.items[1].tagname)
       eq(3, result.tagstack.items[1].from[2])
       eq(7, result.tagstack.items[1].from[3])
+
+      n.feed(':vnew<CR>')
+      api.nvim_win_set_buf(0, result.bufnr)
+      api.nvim_win_set_cursor(0, { 3, 6 })
+      n.feed(':=vim.lsp.buf.definition({ reuse_win = true })<CR>')
+      eq(result.win, api.nvim_get_current_win())
+      exec_lua(function()
+        vim.lsp.stop_client(result.client_id)
+      end)
     end)
     it('merges results from multiple servers', function()
       exec_lua(create_server_definition)
@@ -5316,7 +5372,6 @@ describe('LSP', function()
 
   describe('vim.lsp.tagfunc', function()
     before_each(function()
-      clear()
       ---@type lsp.Location[]
       local mock_locations = {
         {
@@ -5657,7 +5712,7 @@ describe('LSP', function()
     local created, changed, deleted
 
     setup(function()
-      clear()
+      n.clear()
       created = exec_lua([[return vim.lsp.protocol.FileChangeType.Created]])
       changed = exec_lua([[return vim.lsp.protocol.FileChangeType.Changed]])
       deleted = exec_lua([[return vim.lsp.protocol.FileChangeType.Deleted]])

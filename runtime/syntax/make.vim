@@ -4,6 +4,7 @@
 " Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:		https://github.com/vim/vim/blob/master/runtime/syntax/make.vim
 " Last Change:	2022 Nov 06
+" 2025 Apr 15 by Vim project: rework Make flavor detection (#17089)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -13,6 +14,9 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+" enable GNU extension when b:make_flavor is not set—detection failed or Makefile is POSIX-compliant
+let s:make_flavor = 'gnu'
+
 " some special characters
 syn match makeSpecial	"^\s*[@+-]\+"
 syn match makeNextLine	"\\\n\s*"
@@ -21,14 +25,16 @@ syn match makeNextLine	"\\\n\s*"
 syn region makeDefine start="^\s*define\s" end="^\s*endef\s*\(#.*\)\?$"
 	\ contains=makeStatement,makeIdent,makePreCondit,makeDefine
 
-" Microsoft Makefile specials
-syn case ignore
-syn match makeInclude	"^!\s*include\s.*$"
-syn match makePreCondit "^!\s*\(cmdswitches\|error\|message\|include\|if\|ifdef\|ifndef\|else\|else\s*if\|else\s*ifdef\|else\s*ifndef\|endif\|undef\)\>"
-syn case match
+if get(b:, 'make_flavor', s:make_flavor) == 'microsoft'
+  " Microsoft Makefile specials
+  syn case ignore
+  syn match makeInclude	"^!\s*include\s.*$"
+  syn match makePreCondit "^!\s*\(cmdswitches\|error\|message\|include\|if\|ifdef\|ifndef\|else\|else\s*if\|else\s*ifdef\|else\s*ifndef\|endif\|undef\)\>"
+  syn case match
+endif
 
 " identifiers
-if exists("b:make_microsoft") || exists("make_microsoft")
+if get(b:, 'make_flavor', s:make_flavor) == 'microsoft'
   syn region makeIdent	start="\$(" end=")" contains=makeStatement,makeIdent
   syn region makeIdent	start="\${" end="}" contains=makeStatement,makeIdent
 else
@@ -59,12 +65,30 @@ syn match makeTarget           "^[~A-Za-z0-9_./$(){}%*@-][A-Za-z0-9_./\t $(){}%*
 	\ skipnl nextgroup=makeCommands,makeCommandError
 
 syn region makeSpecTarget	transparent matchgroup=makeSpecTarget
-	\ start="^\.\(SUFFIXES\|PHONY\|DEFAULT\|PRECIOUS\|IGNORE\|SILENT\|EXPORT_ALL_VARIABLES\|KEEP_STATE\|LIBPATTERNS\|NOTPARALLEL\|DELETE_ON_ERROR\|INTERMEDIATE\|POSIX\|SECONDARY\|ONESHELL\)\>\s*:\{1,2}[^:=]"rs=e-1
+	\ start="^\.\(SUFFIXES\|PHONY\|DEFAULT\|PRECIOUS\|IGNORE\|SILENT\|NOTPARALLEL\|POSIX\)\>\s*:\{1,2}[^:=]"rs=e-1
 	\ end="[^\\]$" keepend
 	\ contains=makeIdent,makeSpecTarget,makeNextLine,makeComment skipnl nextGroup=makeCommands
-syn match makeSpecTarget	"^\.\(SUFFIXES\|PHONY\|DEFAULT\|PRECIOUS\|IGNORE\|SILENT\|EXPORT_ALL_VARIABLES\|KEEP_STATE\|LIBPATTERNS\|NOTPARALLEL\|DELETE_ON_ERROR\|INTERMEDIATE\|POSIX\|SECONDARY\|ONESHELL\)\>\s*::\=\s*$"
+syn match makeSpecTarget	"^\.\(SUFFIXES\|PHONY\|DEFAULT\|PRECIOUS\|IGNORE\|SILENT\|NOTPARALLEL\|POSIX\)\>\s*::\=\s*$"
 	\ contains=makeIdent,makeComment
 	\ skipnl nextgroup=makeCommands,makeCommandError
+
+if get(b:, 'make_flavor', s:make_flavor) == 'bsd'
+  syn region makeSpecTarget	transparent matchgroup=makeSpecTarget
+	\ start="^\.DELETE_ON_ERROR\>\s*:\{1,2}[^:=]"rs=e-1
+	\ end="[^\\]$" keepend
+	\ contains=makeIdent,makeSpecTarget,makeNextLine,makeComment skipnl nextGroup=makeCommands
+  syn match makeSpecTarget	"^\.DELETE_ON_ERROR\>\s*::\=\s*$"
+	\ contains=makeIdent,makeComment
+	\ skipnl nextgroup=makeCommands,makeCommandError
+elseif get(b:, 'make_flavor', s:make_flavor) == 'gnu'
+  syn region makeSpecTarget	transparent matchgroup=makeSpecTarget
+	\ start="^\.\(EXPORT_ALL_VARIABLES\|DELETE_ON_ERROR\|INTERMEDIATE\|KEEP_STATE\|LIBPATTERNS\|ONESHELL\|SECONDARY\)\>\s*:\{1,2}[^:=]"rs=e-1
+	\ end="[^\\]$" keepend
+	\ contains=makeIdent,makeSpecTarget,makeNextLine,makeComment skipnl nextGroup=makeCommands
+  syn match makeSpecTarget	"^\.\(EXPORT_ALL_VARIABLES\|DELETE_ON_ERROR\|INTERMEDIATE\|KEEP_STATE\|LIBPATTERNS\|ONESHELL\|SECONDARY\)\>\s*::\=\s*$"
+	\ contains=makeIdent,makeComment
+	\ skipnl nextgroup=makeCommands,makeCommandError
+endif
 
 syn match makeCommandError "^\s\+\S.*" contained
 syn region makeCommands contained start=";"hs=s+1 start="^\t"
@@ -74,17 +98,19 @@ syn region makeCommands contained start=";"hs=s+1 start="^\t"
 syn match makeCmdNextLine	"\\\n."he=e-1 contained
 
 " some directives
-syn match makePreCondit	"^ *\(ifn\=\(eq\|def\)\>\|else\(\s\+ifn\=\(eq\|def\)\)\=\>\|endif\>\)"
 syn match makeInclude	"^ *[-s]\=include\s.*$"
-syn match makeStatement	"^ *vpath"
 syn match makeExport    "^ *\(export\|unexport\)\>"
-syn match makeOverride	"^ *override\>"
-" Statements / Functions (GNU make)
-syn match makeStatement contained "(\(abspath\|addprefix\|addsuffix\|and\|basename\|call\|dir\|error\|eval\|file\|filter-out\|filter\|findstring\|firstword\|flavor\|foreach\|guile\|if\|info\|join\|lastword\|notdir\|or\|origin\|patsubst\|realpath\|shell\|sort\|strip\|subst\|suffix\|value\|warning\|wildcard\|word\|wordlist\|words\)\>"ms=s+1
+if get(b:, 'make_flavor', s:make_flavor) == 'gnu'
+  " Statements / Functions (GNU make)
+  syn match makePreCondit	"^ *\(ifn\=\(eq\|def\)\>\|else\(\s\+ifn\=\(eq\|def\)\)\=\>\|endif\>\)"
+  syn match makeStatement	"^ *vpath\>"
+  syn match makeOverride	"^ *override\>"
+  syn match makeStatement contained "[({]\(abspath\|addprefix\|addsuffix\|and\|basename\|call\|dir\|error\|eval\|file\|filter-out\|filter\|findstring\|firstword\|flavor\|foreach\|guile\|if\|info\|intcmp\|join\|lastword\|let\|notdir\|or\|origin\|patsubst\|realpath\|shell\|sort\|strip\|subst\|suffix\|value\|warning\|wildcard\|word\|wordlist\|words\)\>"ms=s+1
+endif
 
 " Comment
 if !exists("make_no_comments")
-  if exists("b:make_microsoft") || exists("make_microsoft")
+  if get(b:, 'make_flavor', s:make_flavor) == 'microsoft'
     syn match   makeComment	"#.*" contains=@Spell,makeTodo
   else
     syn region  makeComment	start="#" end="^$" end="[^\\]$" keepend contains=@Spell,makeTodo

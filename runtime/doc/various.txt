@@ -111,7 +111,9 @@ gx			Opens the current filepath or URL (decided by
 
 						*:p* *:pr* *:print* *E749*
 :[range]p[rint] [flags]
-			Print [range] lines (default current line).
+			Print [range] lines (default current line).  Can also
+			be spelled `:[range]|` due to Vi compatibility (see
+			|:bar|).  Gives an error in an empty buffer.
 			In the GUI you can use the File.Print menu entry.
 			See |ex-flags| for [flags].
 			The |:filter| command can be used to only show lines

@@ -177,33 +177,25 @@ describe('API/win', function()
       local win = curwin()
       feed('gg')
 
-      screen:expect {
-        grid = [[
+      local s1 = [[
         ^prologue                      |
                                       |*8
-      ]],
-      }
+      ]]
+      screen:expect(s1)
       -- cursor position is at beginning
       eq({ 1, 0 }, api.nvim_win_get_cursor(win))
 
       -- move cursor to end
       api.nvim_win_set_cursor(win, { 101, 0 })
-      screen:expect {
-        grid = [[
+      screen:expect([[
                                       |*7
         ^epilogue                      |
                                       |
-      ]],
-      }
+      ]])
 
       -- move cursor to the beginning again
       api.nvim_win_set_cursor(win, { 1, 0 })
-      screen:expect {
-        grid = [[
-        ^prologue                      |
-                                      |*8
-      ]],
-      }
+      screen:expect(s1)
 
       -- move focus to new window
       command('new')
@@ -211,8 +203,7 @@ describe('API/win', function()
 
       -- sanity check, cursor position is kept
       eq({ 1, 0 }, api.nvim_win_get_cursor(win))
-      screen:expect {
-        grid = [[
+      local s2 = [[
         ^                              |
         {1:~                             }|*2
         {3:[No Name]                     }|
@@ -220,13 +211,12 @@ describe('API/win', function()
                                       |*2
         {2:[No Name] [+]                 }|
                                       |
-      ]],
-      }
+      ]]
+      screen:expect(s2)
 
       -- move cursor to end
       api.nvim_win_set_cursor(win, { 101, 0 })
-      screen:expect {
-        grid = [[
+      screen:expect([[
         ^                              |
         {1:~                             }|*2
         {3:[No Name]                     }|
@@ -234,22 +224,11 @@ describe('API/win', function()
         epilogue                      |
         {2:[No Name] [+]                 }|
                                       |
-      ]],
-      }
+      ]])
 
       -- move cursor to the beginning again
       api.nvim_win_set_cursor(win, { 1, 0 })
-      screen:expect {
-        grid = [[
-        ^                              |
-        {1:~                             }|*2
-        {3:[No Name]                     }|
-        prologue                      |
-                                      |*2
-        {2:[No Name] [+]                 }|
-                                      |
-      ]],
-      }
+      screen:expect(s2)
 
       -- curwin didn't change back
       neq(win, curwin())
@@ -295,7 +274,7 @@ describe('API/win', function()
         ccc                           │ccc                          |
         {21:dd^d                           }│{21:ddd                          }|
         {1:~                             }│{1:~                            }|*2
-        {3:[No Name] [+]  4,3         All }{2:[No Name] [+]  4,3        All}|
+        {3:< Name] [+] 4,3            All }{2:<Name] [+] 4,3            All}|
                                                                     |
       ]])
       api.nvim_win_set_cursor(oldwin, { 1, 0 })
@@ -305,7 +284,7 @@ describe('API/win', function()
         ccc                           │ccc                          |
         {21:dd^d                           }│ddd                          |
         {1:~                             }│{1:~                            }|*2
-        {3:[No Name] [+]  4,3         All }{2:[No Name] [+]  1,1        All}|
+        {3:< Name] [+] 4,3            All }{2:<Name] [+] 1,1            All}|
                                                                     |
       ]])
     end)
@@ -486,11 +465,17 @@ describe('API/win', function()
       -- global-local option
       api.nvim_set_option_value('statusline', 'window-status', { win = 0 })
       eq('window-status', api.nvim_get_option_value('statusline', { win = 0 }))
-      eq('', api.nvim_get_option_value('statusline', { scope = 'global' }))
+      eq(
+        "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+        api.nvim_get_option_value('statusline', { scope = 'global' })
+      )
       command('set modified')
       command('enew') -- global-local: not preserved in new buffer
       -- confirm local value was not copied
-      eq('', api.nvim_get_option_value('statusline', { win = 0 }))
+      eq(
+        "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+        api.nvim_get_option_value('statusline', { win = 0 })
+      )
       eq('', eval('&l:statusline'))
     end)
 
@@ -860,8 +845,14 @@ describe('API/win', function()
   end)
 
   describe('text_height', function()
+    local screen, ns, X
+    before_each(function()
+      screen = Screen.new(45, 22)
+      ns = api.nvim_create_namespace('')
+      X = api.nvim_get_vvar('maxcol')
+    end)
+
     it('validation', function()
-      local X = api.nvim_get_vvar('maxcol')
       insert([[
         aaa
         bbb
@@ -902,6 +893,10 @@ describe('API/win', function()
         pcall_err(api.nvim_win_text_height, 0, { end_row = 2, end_vcol = X + 1 })
       )
       eq(
+        "Invalid 'max_height': out of range",
+        pcall_err(api.nvim_win_text_height, 0, { max_height = 0 })
+      )
+      eq(
         "'start_vcol' is higher than 'end_vcol'",
         pcall_err(
           api.nvim_win_text_height,
@@ -912,8 +907,6 @@ describe('API/win', function()
     end)
 
     it('with two diff windows', function()
-      local X = api.nvim_get_vvar('maxcol')
-      local screen = Screen.new(45, 22)
       exec([[
         set diffopt+=context:2 number
         let expr = 'printf("%08d", v:val) .. repeat("!", v:val)'
@@ -923,8 +916,7 @@ describe('API/win', function()
         windo diffthis
       ]])
       feed('24gg')
-      screen:expect {
-        grid = [[
+      screen:expect([[
         {7:  }{8:    }{23:----------------}│{7:  }{8:  1 }{22:00000001!       }|
         {7:  }{8:    }{23:----------------}│{7:  }{8:  2 }{22:00000002!!      }|
         {7:  }{8:  1 }00000003!!!     │{7:  }{8:  3 }00000003!!!     |
@@ -947,80 +939,155 @@ describe('API/win', function()
         {7:  }{8: 41 }{22:00000050!!!!!!!!}│{7:  }{8:    }{23:----------------}|
         {2:[No Name] [+]          }{3:[No Name] [+]         }|
                                                      |
-      ]],
-      }
+      ]])
       screen:try_resize(45, 3)
-      screen:expect {
-        grid = [[
+      screen:expect([[
         {7:  }{8: 19 }00000028!!!!!!!!│{7:  }{8: 24 }^00000028!!!!!!!!|
         {2:[No Name] [+]          }{3:[No Name] [+]         }|
                                                      |
-      ]],
-      }
-      eq({ all = 20, fill = 5 }, api.nvim_win_text_height(1000, {}))
-      eq({ all = 20, fill = 5 }, api.nvim_win_text_height(1001, {}))
-      eq({ all = 20, fill = 5 }, api.nvim_win_text_height(1000, { start_row = 0 }))
-      eq({ all = 20, fill = 5 }, api.nvim_win_text_height(1001, { start_row = 0 }))
-      eq({ all = 15, fill = 0 }, api.nvim_win_text_height(1000, { end_row = -1 }))
-      eq({ all = 15, fill = 0 }, api.nvim_win_text_height(1000, { end_row = 40 }))
-      eq({ all = 20, fill = 5 }, api.nvim_win_text_height(1001, { end_row = -1 }))
-      eq({ all = 20, fill = 5 }, api.nvim_win_text_height(1001, { end_row = 40 }))
-      eq({ all = 10, fill = 5 }, api.nvim_win_text_height(1000, { start_row = 23 }))
-      eq({ all = 13, fill = 3 }, api.nvim_win_text_height(1001, { start_row = 18 }))
-      eq({ all = 11, fill = 0 }, api.nvim_win_text_height(1000, { end_row = 23 }))
-      eq({ all = 11, fill = 5 }, api.nvim_win_text_height(1001, { end_row = 18 }))
-      eq({ all = 11, fill = 0 }, api.nvim_win_text_height(1000, { start_row = 3, end_row = 39 }))
-      eq({ all = 11, fill = 3 }, api.nvim_win_text_height(1001, { start_row = 1, end_row = 34 }))
-      eq({ all = 9, fill = 0 }, api.nvim_win_text_height(1000, { start_row = 4, end_row = 38 }))
-      eq({ all = 9, fill = 3 }, api.nvim_win_text_height(1001, { start_row = 2, end_row = 33 }))
-      eq({ all = 9, fill = 0 }, api.nvim_win_text_height(1000, { start_row = 5, end_row = 37 }))
-      eq({ all = 9, fill = 3 }, api.nvim_win_text_height(1001, { start_row = 3, end_row = 32 }))
-      eq({ all = 9, fill = 0 }, api.nvim_win_text_height(1000, { start_row = 17, end_row = 25 }))
-      eq({ all = 9, fill = 3 }, api.nvim_win_text_height(1001, { start_row = 15, end_row = 20 }))
-      eq({ all = 7, fill = 0 }, api.nvim_win_text_height(1000, { start_row = 18, end_row = 24 }))
-      eq({ all = 7, fill = 3 }, api.nvim_win_text_height(1001, { start_row = 16, end_row = 19 }))
-      eq({ all = 6, fill = 5 }, api.nvim_win_text_height(1000, { start_row = -1 }))
-      eq({ all = 5, fill = 5 }, api.nvim_win_text_height(1000, { start_row = -1, start_vcol = X }))
+      ]])
+      eq({ all = 20, fill = 5, end_row = 40, end_vcol = 53 }, api.nvim_win_text_height(1000, {}))
+      eq({ all = 20, fill = 5, end_row = 40, end_vcol = 58 }, api.nvim_win_text_height(1001, {}))
       eq(
-        { all = 0, fill = 0 },
+        { all = 20, fill = 5, end_row = 40, end_vcol = 53 },
+        api.nvim_win_text_height(1000, { start_row = 0 })
+      )
+      eq(
+        { all = 20, fill = 5, end_row = 40, end_vcol = 58 },
+        api.nvim_win_text_height(1001, { start_row = 0 })
+      )
+      eq(
+        { all = 15, fill = 0, end_row = 40, end_vcol = 53 },
+        api.nvim_win_text_height(1000, { end_row = -1 })
+      )
+      eq(
+        { all = 15, fill = 0, end_row = 40, end_vcol = 53 },
+        api.nvim_win_text_height(1000, { end_row = 40 })
+      )
+      eq(
+        { all = 20, fill = 5, end_row = 40, end_vcol = 58 },
+        api.nvim_win_text_height(1001, { end_row = -1 })
+      )
+      eq(
+        { all = 20, fill = 5, end_row = 40, end_vcol = 58 },
+        api.nvim_win_text_height(1001, { end_row = 40 })
+      )
+      eq(
+        { all = 10, fill = 5, end_row = 40, end_vcol = 53 },
+        api.nvim_win_text_height(1000, { start_row = 23 })
+      )
+      eq(
+        { all = 13, fill = 3, end_row = 40, end_vcol = 58 },
+        api.nvim_win_text_height(1001, { start_row = 18 })
+      )
+      eq(
+        { all = 11, fill = 0, end_row = 23, end_vcol = 36 },
+        api.nvim_win_text_height(1000, { end_row = 23 })
+      )
+      eq(
+        { all = 11, fill = 5, end_row = 18, end_vcol = 36 },
+        api.nvim_win_text_height(1001, { end_row = 18 })
+      )
+      eq(
+        { all = 11, fill = 0, end_row = 39, end_vcol = 52 },
+        api.nvim_win_text_height(1000, { start_row = 3, end_row = 39 })
+      )
+      eq(
+        { all = 11, fill = 3, end_row = 34, end_vcol = 52 },
+        api.nvim_win_text_height(1001, { start_row = 1, end_row = 34 })
+      )
+      eq(
+        { all = 9, fill = 0, end_row = 25, end_vcol = 0 },
+        api.nvim_win_text_height(1000, { start_row = 4, end_row = 38 })
+      )
+      eq(
+        { all = 9, fill = 3, end_row = 20, end_vcol = 0 },
+        api.nvim_win_text_height(1001, { start_row = 2, end_row = 33 })
+      )
+      eq(
+        { all = 9, fill = 0, end_row = 25, end_vcol = 0 },
+        api.nvim_win_text_height(1000, { start_row = 5, end_row = 37 })
+      )
+      eq(
+        { all = 9, fill = 3, end_row = 20, end_vcol = 0 },
+        api.nvim_win_text_height(1001, { start_row = 3, end_row = 32 })
+      )
+      eq(
+        { all = 9, fill = 0, end_row = 25, end_vcol = 0 },
+        api.nvim_win_text_height(1000, { start_row = 17, end_row = 25 })
+      )
+      eq(
+        { all = 9, fill = 3, end_row = 20, end_vcol = 0 },
+        api.nvim_win_text_height(1001, { start_row = 15, end_row = 20 })
+      )
+      eq(
+        { all = 7, fill = 0, end_row = 24, end_vcol = 37 },
+        api.nvim_win_text_height(1000, { start_row = 18, end_row = 24 })
+      )
+      eq(
+        { all = 7, fill = 3, end_row = 19, end_vcol = 37 },
+        api.nvim_win_text_height(1001, { start_row = 16, end_row = 19 })
+      )
+      eq(
+        { all = 6, fill = 5, end_row = 40, end_vcol = 53 },
+        api.nvim_win_text_height(1000, { start_row = -1 })
+      )
+      eq(
+        { all = 5, fill = 5, end_row = 40, end_vcol = 53 },
+        api.nvim_win_text_height(1000, { start_row = -1, start_vcol = X })
+      )
+      eq(
+        { all = 0, fill = 0, end_row = 40, end_vcol = 53 },
         api.nvim_win_text_height(1000, { start_row = -1, start_vcol = X, end_row = -1 })
       )
       eq(
-        { all = 0, fill = 0 },
+        { all = 0, fill = 0, end_row = 40, end_vcol = 53 },
         api.nvim_win_text_height(
           1000,
           { start_row = -1, start_vcol = X, end_row = -1, end_vcol = X }
         )
       )
       eq(
-        { all = 1, fill = 0 },
+        { all = 1, fill = 0, end_row = 40, end_vcol = 53 },
         api.nvim_win_text_height(
           1000,
           { start_row = -1, start_vcol = 0, end_row = -1, end_vcol = X }
         )
       )
-      eq({ all = 3, fill = 2 }, api.nvim_win_text_height(1001, { end_row = 0 }))
-      eq({ all = 2, fill = 2 }, api.nvim_win_text_height(1001, { end_row = 0, end_vcol = 0 }))
       eq(
-        { all = 2, fill = 2 },
+        { all = 3, fill = 2, end_row = 0, end_vcol = 11 },
+        api.nvim_win_text_height(1001, { end_row = 0 })
+      )
+      eq(
+        { all = 2, fill = 2, end_row = 0, end_vcol = 0 },
+        api.nvim_win_text_height(1001, { end_row = 0, end_vcol = 0 })
+      )
+      eq(
+        { all = 2, fill = 2, end_row = 0, end_vcol = 0 },
         api.nvim_win_text_height(1001, { start_row = 0, end_row = 0, end_vcol = 0 })
       )
       eq(
-        { all = 0, fill = 0 },
+        { all = 0, fill = 0, end_row = 0, end_vcol = 0 },
         api.nvim_win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = 0 })
       )
       eq(
-        { all = 1, fill = 0 },
+        { all = 1, fill = 0, end_row = 0, end_vcol = 11 },
         api.nvim_win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = X })
       )
-      eq({ all = 11, fill = 5 }, api.nvim_win_text_height(1001, { end_row = 18 }))
       eq(
-        { all = 9, fill = 3 },
+        { all = 11, fill = 5, end_row = 18, end_vcol = 36 },
+        api.nvim_win_text_height(1001, { end_row = 18 })
+      )
+      eq(
+        { all = 9, fill = 3, end_row = 18, end_vcol = 36 },
         api.nvim_win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 18 })
       )
-      eq({ all = 10, fill = 5 }, api.nvim_win_text_height(1001, { end_row = 18, end_vcol = 0 }))
       eq(
-        { all = 8, fill = 3 },
+        { all = 10, fill = 5, end_row = 18, end_vcol = 0 },
+        api.nvim_win_text_height(1001, { end_row = 18, end_vcol = 0 })
+      )
+      eq(
+        { all = 8, fill = 3, end_row = 18, end_vcol = 0 },
         api.nvim_win_text_height(
           1001,
           { start_row = 0, start_vcol = 0, end_row = 18, end_vcol = 0 }
@@ -1029,13 +1096,10 @@ describe('API/win', function()
     end)
 
     it('with wrapped lines', function()
-      local X = api.nvim_get_vvar('maxcol')
-      local screen = Screen.new(45, 22)
       exec([[
         set number cpoptions+=n
         call setline(1, repeat([repeat('foobar-', 36)], 3))
       ]])
-      local ns = api.nvim_create_namespace('')
       api.nvim_buf_set_extmark(
         0,
         ns,
@@ -1050,8 +1114,7 @@ describe('API/win', function()
         200,
         { virt_text = { { ('!'):rep(75), 'Search' } }, virt_text_pos = 'inline' }
       )
-      screen:expect {
-        grid = [[
+      screen:expect([[
         {8:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
         -foobar-foobar-foobar-foobar-foobar-foobar-fo|
         obar-foobar-foobar-foobar-foobar-foobar-fooba|
@@ -1074,131 +1137,291 @@ describe('API/win', function()
         {10:!!!!!!!!!}ar-foobar-foobar-foobar-foobar-fooba|
         r-foobar-foobar-                             |
                                                      |
-      ]],
-      }
+      ]])
       screen:try_resize(45, 2)
-      screen:expect {
-        grid = [[
+      screen:expect([[
         {8:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
                                                      |
-      ]],
-      }
-      eq({ all = 21, fill = 0 }, api.nvim_win_text_height(0, {}))
-      eq({ all = 6, fill = 0 }, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }))
-      eq({ all = 7, fill = 0 }, api.nvim_win_text_height(0, { start_row = 1, end_row = 1 }))
-      eq({ all = 8, fill = 0 }, api.nvim_win_text_height(0, { start_row = 2, end_row = 2 }))
+      ]])
+      eq({ all = 21, fill = 0, end_row = 2, end_vcol = 327 }, api.nvim_win_text_height(0, {}))
       eq(
-        { all = 0, fill = 0 },
+        { all = 6, fill = 0, end_row = 0, end_vcol = 252 },
+        api.nvim_win_text_height(0, { start_row = 0, end_row = 0 })
+      )
+      eq(
+        { all = 7, fill = 0, end_row = 1, end_vcol = 267 },
+        api.nvim_win_text_height(0, { start_row = 1, end_row = 1 })
+      )
+      eq(
+        { all = 8, fill = 0, end_row = 2, end_vcol = 327 },
+        api.nvim_win_text_height(0, { start_row = 2, end_row = 2 })
+      )
+      eq(
+        { all = 0, fill = 0, end_row = 1, end_vcol = 0 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 0 })
       )
       eq(
-        { all = 1, fill = 0 },
+        { all = 1, fill = 0, end_row = 1, end_vcol = 41 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 41 })
       )
       eq(
-        { all = 2, fill = 0 },
+        { all = 2, fill = 0, end_row = 1, end_vcol = 42 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 42 })
       )
       eq(
-        { all = 2, fill = 0 },
+        { all = 2, fill = 0, end_row = 1, end_vcol = 86 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 86 })
       )
       eq(
-        { all = 3, fill = 0 },
+        { all = 3, fill = 0, end_row = 1, end_vcol = 87 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 87 })
       )
       eq(
-        { all = 6, fill = 0 },
+        { all = 6, fill = 0, end_row = 1, end_vcol = 266 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 266 })
       )
       eq(
-        { all = 7, fill = 0 },
+        { all = 7, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 267 })
       )
       eq(
-        { all = 7, fill = 0 },
+        { all = 7, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 311 })
       )
       eq(
-        { all = 7, fill = 0 },
+        { all = 7, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 312 })
       )
       eq(
-        { all = 7, fill = 0 },
+        { all = 7, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = X })
       )
       eq(
-        { all = 7, fill = 0 },
+        { all = 7, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 40, end_row = 1, end_vcol = X })
       )
       eq(
-        { all = 6, fill = 0 },
+        { all = 6, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 41, end_row = 1, end_vcol = X })
       )
       eq(
-        { all = 6, fill = 0 },
+        { all = 6, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 85, end_row = 1, end_vcol = X })
       )
       eq(
-        { all = 5, fill = 0 },
+        { all = 5, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 86, end_row = 1, end_vcol = X })
       )
       eq(
-        { all = 2, fill = 0 },
+        { all = 2, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 265, end_row = 1, end_vcol = X })
       )
       eq(
-        { all = 1, fill = 0 },
+        { all = 1, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 266, end_row = 1, end_vcol = X })
       )
       eq(
-        { all = 1, fill = 0 },
+        { all = 1, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 310, end_row = 1, end_vcol = X })
       )
       eq(
-        { all = 0, fill = 0 },
+        { all = 0, fill = 0, end_row = 1, end_vcol = 267 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 311, end_row = 1, end_vcol = X })
       )
       eq(
-        { all = 1, fill = 0 },
+        { all = 1, fill = 0, end_row = 1, end_vcol = 131 },
         api.nvim_win_text_height(0, { start_row = 1, start_vcol = 86, end_row = 1, end_vcol = 131 })
       )
       eq(
-        { all = 1, fill = 0 },
+        { all = 1, fill = 0, end_row = 1, end_vcol = 266 },
         api.nvim_win_text_height(
           0,
           { start_row = 1, start_vcol = 221, end_row = 1, end_vcol = 266 }
         )
       )
-      eq({ all = 18, fill = 0 }, api.nvim_win_text_height(0, { start_row = 0, start_vcol = 131 }))
-      eq({ all = 19, fill = 0 }, api.nvim_win_text_height(0, { start_row = 0, start_vcol = 130 }))
-      eq({ all = 20, fill = 0 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = 311 }))
-      eq({ all = 21, fill = 0 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = 312 }))
       eq(
-        { all = 17, fill = 0 },
+        { all = 18, fill = 0, end_row = 2, end_vcol = 327 },
+        api.nvim_win_text_height(0, { start_row = 0, start_vcol = 131 })
+      )
+      eq(
+        { all = 19, fill = 0, end_row = 2, end_vcol = 327 },
+        api.nvim_win_text_height(0, { start_row = 0, start_vcol = 130 })
+      )
+      eq(
+        { all = 20, fill = 0, end_row = 2, end_vcol = 311 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = 311 })
+      )
+      eq(
+        { all = 21, fill = 0, end_row = 2, end_vcol = 312 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = 312 })
+      )
+      eq(
+        { all = 17, fill = 0, end_row = 2, end_vcol = 311 },
         api.nvim_win_text_height(
           0,
           { start_row = 0, start_vcol = 131, end_row = 2, end_vcol = 311 }
         )
       )
       eq(
-        { all = 19, fill = 0 },
+        { all = 19, fill = 0, end_row = 2, end_vcol = 312 },
         api.nvim_win_text_height(
           0,
           { start_row = 0, start_vcol = 130, end_row = 2, end_vcol = 312 }
         )
       )
-      eq({ all = 16, fill = 0 }, api.nvim_win_text_height(0, { start_row = 0, start_vcol = 221 }))
-      eq({ all = 17, fill = 0 }, api.nvim_win_text_height(0, { start_row = 0, start_vcol = 220 }))
-      eq({ all = 14, fill = 0 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = 41 }))
-      eq({ all = 15, fill = 0 }, api.nvim_win_text_height(0, { end_row = 2, end_vcol = 42 }))
       eq(
-        { all = 9, fill = 0 },
+        { all = 16, fill = 0, end_row = 2, end_vcol = 327 },
+        api.nvim_win_text_height(0, { start_row = 0, start_vcol = 221 })
+      )
+      eq(
+        { all = 17, fill = 0, end_row = 2, end_vcol = 327 },
+        api.nvim_win_text_height(0, { start_row = 0, start_vcol = 220 })
+      )
+      eq(
+        { all = 14, fill = 0, end_row = 2, end_vcol = 41 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = 41 })
+      )
+      eq(
+        { all = 15, fill = 0, end_row = 2, end_vcol = 42 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = 42 })
+      )
+      eq(
+        { all = 9, fill = 0, end_row = 2, end_vcol = 41 },
         api.nvim_win_text_height(0, { start_row = 0, start_vcol = 221, end_row = 2, end_vcol = 41 })
       )
       eq(
-        { all = 11, fill = 0 },
+        { all = 11, fill = 0, end_row = 2, end_vcol = 42 },
         api.nvim_win_text_height(0, { start_row = 0, start_vcol = 220, end_row = 2, end_vcol = 42 })
+      )
+      exec('call setline(1, "foo")')
+      eq(
+        { all = 1, fill = 0, end_row = 0, end_vcol = 3 },
+        api.nvim_win_text_height(0, { max_height = 1 })
+      )
+      eq(
+        { all = 8, fill = 0, end_row = 1, end_vcol = 41 },
+        api.nvim_win_text_height(0, { max_height = 2 })
+      )
+      eq(
+        { all = 2, fill = 0, end_row = 1, end_vcol = 1 },
+        api.nvim_win_text_height(0, { max_height = 2, end_row = 1, end_vcol = 1 })
+      )
+      eq(
+        { all = 8, fill = 0, end_row = 1, end_vcol = 41 },
+        api.nvim_win_text_height(0, { max_height = 2, end_row = 2, end_vcol = 1 })
+      )
+    end)
+
+    it('with virtual lines around a fold', function()
+      screen:try_resize(45, 10)
+      exec([[
+        call setline(1, range(1, 8))
+        3,6fold
+      ]])
+      api.nvim_buf_set_extmark(
+        0,
+        ns,
+        1,
+        0,
+        { virt_lines = { { { 'VIRT LINE 1' } }, { { 'VIRT LINE 2' } } } }
+      )
+      api.nvim_buf_set_extmark(
+        0,
+        ns,
+        6,
+        0,
+        { virt_lines = { { { 'VIRT LINE 3' } } }, virt_lines_above = true }
+      )
+      screen:expect([[
+        ^1                                            |
+        2                                            |
+        VIRT LINE 1                                  |
+        VIRT LINE 2                                  |
+        {13:+--  4 lines: 3······························}|
+        VIRT LINE 3                                  |
+        7                                            |
+        8                                            |
+        {1:~                                            }|
+                                                     |
+      ]])
+      eq({ all = 8, fill = 3, end_row = 7, end_vcol = 1 }, api.nvim_win_text_height(0, {}))
+      eq(
+        { all = 5, fill = 2, end_row = 2, end_vcol = 0 },
+        api.nvim_win_text_height(0, { end_row = 2 })
+      )
+      eq(
+        { all = 5, fill = 2, end_row = 2, end_vcol = 0 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = X })
+      )
+      eq(
+        { all = 5, fill = 2, end_row = 2, end_vcol = 0 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = 90 })
+      )
+      eq(
+        { all = 5, fill = 2, end_row = 2, end_vcol = 0 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = 46 })
+      )
+      eq(
+        { all = 5, fill = 2, end_row = 2, end_vcol = 0 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = 45 })
+      )
+      eq(
+        { all = 5, fill = 2, end_row = 2, end_vcol = 0 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = 1 })
+      )
+      eq(
+        { all = 4, fill = 2, end_row = 2, end_vcol = 0 },
+        api.nvim_win_text_height(0, { end_row = 2, end_vcol = 0 })
+      )
+      eq(
+        { all = 6, fill = 3, end_row = 7, end_vcol = 1 },
+        api.nvim_win_text_height(0, { start_row = 2 })
+      )
+      eq(
+        { all = 4, fill = 1, end_row = 7, end_vcol = 1 },
+        api.nvim_win_text_height(0, { start_row = 2, start_vcol = 0 })
+      )
+      eq(
+        { all = 4, fill = 1, end_row = 7, end_vcol = 1 },
+        api.nvim_win_text_height(0, { start_row = 2, start_vcol = 44 })
+      )
+      eq(
+        { all = 3, fill = 1, end_row = 7, end_vcol = 1 },
+        api.nvim_win_text_height(0, { start_row = 2, start_vcol = 45 })
+      )
+      eq(
+        { all = 3, fill = 1, end_row = 7, end_vcol = 1 },
+        api.nvim_win_text_height(0, { start_row = 2, start_vcol = 89 })
+      )
+      eq(
+        { all = 3, fill = 1, end_row = 7, end_vcol = 1 },
+        api.nvim_win_text_height(0, { start_row = 2, start_vcol = 90 })
+      )
+      eq(
+        { all = 3, fill = 1, end_row = 7, end_vcol = 1 },
+        api.nvim_win_text_height(0, { start_row = 2, start_vcol = X })
+      )
+    end)
+
+    it('with virt_lines above max_height row', function()
+      screen:try_resize(45, 10)
+      exec('call setline(1, range(1, 7) + ["foo"->repeat(20)])')
+      api.nvim_buf_set_extmark(0, ns, 6, 0, { virt_lines = { { { 'VIRT LINE 1' } } } })
+      screen:expect([[
+        ^1                                            |
+        2                                            |
+        3                                            |
+        4                                            |
+        5                                            |
+        6                                            |
+        7                                            |
+        VIRT LINE 1                                  |
+        foofoofoofoofoofoofoofoofoofoofoofoofoofoo{1:@@@}|
+                                                     |
+      ]])
+      eq(
+        { all = 10, fill = 1, end_row = 7, end_vcol = 45 },
+        api.nvim_win_text_height(0, { max_height = api.nvim_win_get_height(0) })
       )
     end)
   end)

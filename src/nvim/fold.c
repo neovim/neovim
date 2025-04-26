@@ -3099,7 +3099,7 @@ static int put_folds_recurse(FILE *fd, garray_T *gap, linenr_T off)
     if (put_folds_recurse(fd, &fp->fd_nested, off + fp->fd_top) == FAIL) {
       return FAIL;
     }
-    if (fprintf(fd, "%" PRId64 ",%" PRId64 "fold",
+    if (fprintf(fd, "sil! %" PRId64 ",%" PRId64 "fold",
                 (int64_t)fp->fd_top + off,
                 (int64_t)(fp->fd_top + off + fp->fd_len - 1)) < 0
         || put_eol(fd) == FAIL) {
@@ -3121,9 +3121,10 @@ static int put_foldopen_recurse(FILE *fd, win_T *wp, garray_T *gap, linenr_T off
     if (fp->fd_flags != FD_LEVEL) {
       if (!GA_EMPTY(&fp->fd_nested)) {
         // open nested folds while this fold is open
+        // ignore errors
         if (fprintf(fd, "%" PRId64, (int64_t)fp->fd_top + off) < 0
             || put_eol(fd) == FAIL
-            || put_line(fd, "normal! zo") == FAIL) {
+            || put_line(fd, "sil! normal! zo") == FAIL) {
           return FAIL;
         }
         if (put_foldopen_recurse(fd, wp, &fp->fd_nested,
@@ -3164,7 +3165,7 @@ static int put_fold_open_close(FILE *fd, fold_T *fp, linenr_T off)
 {
   if (fprintf(fd, "%" PRIdLINENR, fp->fd_top + off) < 0
       || put_eol(fd) == FAIL
-      || fprintf(fd, "normal! z%c",
+      || fprintf(fd, "sil! normal! z%c",
                  fp->fd_flags == FD_CLOSED ? 'c' : 'o') < 0
       || put_eol(fd) == FAIL) {
     return FAIL;

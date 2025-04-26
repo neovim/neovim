@@ -1250,6 +1250,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
   pos_T save_pos = curwin->w_cursor;
   int result = callback_call(&curbuf->b_tfu_cb, 3, args, &rettv);
   curwin->w_cursor = save_pos;  // restore the cursor position
+  check_cursor(curwin);         // make sure cursor position is valid
   d->dv_refcount--;
 
   if (result == FAIL) {

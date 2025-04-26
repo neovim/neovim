@@ -245,7 +245,7 @@ local function spawn(cmd, opts, on_exit, on_error)
   local handle, pid_or_err = uv.spawn(cmd, opts, on_exit)
   if not handle then
     on_error()
-    error(pid_or_err)
+    error(('%s: "%s"'):format(pid_or_err, cmd))
   end
   return handle, pid_or_err --[[@as integer]]
 end

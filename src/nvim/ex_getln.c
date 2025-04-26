@@ -745,6 +745,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   ExpandInit(&s->xpc);
   ccline.xpc = &s->xpc;
+  clear_cmdline_orig();
 
   cmdmsg_rl = (curwin->w_p_rl && *curwin->w_p_rlc == 's'
                && (s->firstc == '/' || s->firstc == '?'));
@@ -901,6 +902,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   ExpandCleanup(&s->xpc);
   ccline.xpc = NULL;
+  clear_cmdline_orig();
 
   finish_incsearch_highlighting(s->gotesc, &s->is_state, false);
 
@@ -1299,6 +1301,12 @@ static int command_line_execute(VimState *state, int key)
       wild_type = (s->c == Ctrl_E) ? WILD_CANCEL : WILD_APPLY;
       nextwild(&s->xpc, wild_type, WILD_NO_BEEP, s->firstc != '@');
     }
+  }
+
+  // Trigger CmdlineLeavePre autocommand
+  if (s->c == '\n' || s->c == '\r' || s->c == K_KENTER
+      || s->c == ESC || s->c == Ctrl_C) {
+    trigger_cmd_autocmd(get_cmdline_type(), EVENT_CMDLINELEAVEPRE);
   }
 
   // The wildmenu is cleared if the pressed key is not used for

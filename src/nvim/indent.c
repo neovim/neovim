@@ -488,6 +488,7 @@ bool set_indent(int size, int flags)
   int todo = size;
   int ind_len = 0;  // Measured in characters.
   char *p = oldline = get_cursor_line_ptr();
+  int line_len = get_cursor_line_len() + 1;  // size of the line (including the NUL)
 
   // Calculate the buffer size for the new indent, and check to see if it
   // isn't already set.
@@ -584,8 +585,8 @@ bool set_indent(int size, int flags)
     p = oldline;
   } else {
     p = skipwhite(p);
+    line_len -= (int)(p - oldline);
   }
-  int line_len = (int)strlen(p) + 1;
 
   // If 'preserveindent' and 'expandtab' are both set keep the original
   // characters and allocate accordingly.  We will fill the rest with spaces
@@ -1028,6 +1029,7 @@ void ex_retab(exarg_T *eap)
   }
   for (linenr_T lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     char *ptr = ml_get(lnum);
+    int old_len = ml_get_len(lnum);
     int col = 0;
     int64_t vcol = 0;
     bool did_undo = false;  // called u_save for current line
@@ -1071,7 +1073,6 @@ void ex_retab(exarg_T *eap)
 
             // len is actual number of white characters used
             len = num_spaces + num_tabs;
-            int old_len = (int)strlen(ptr);
             const int new_len = old_len - col + start_col + len + 1;
             if (new_len <= 0 || new_len >= MAXCOL) {
               emsg_text_too_long();
@@ -1099,6 +1100,7 @@ void ex_retab(exarg_T *eap)
             }
             last_line = lnum;
             ptr = new_line;
+            old_len = new_len - 1;
             col = start_col + len;
           }
         }
@@ -1410,10 +1412,8 @@ static int lisp_match(char *p)
   char *word = *curbuf->b_p_lw != NUL ? curbuf->b_p_lw : p_lispwords;
 
   while (*word != NUL) {
-    copy_option_part(&word, buf, sizeof(buf), ",");
-    int len = (int)strlen(buf);
-
-    if ((strncmp(buf, p, (size_t)len) == 0) && ascii_iswhite_or_nul(p[len])) {
+    size_t len = copy_option_part(&word, buf, sizeof(buf), ",");
+    if ((strncmp(buf, p, len) == 0) && ascii_iswhite_or_nul(p[len])) {
       return true;
     }
   }

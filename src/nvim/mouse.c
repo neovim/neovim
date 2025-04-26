@@ -9,6 +9,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
@@ -502,15 +503,16 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     // happens for the GUI).
     if ((State & MODE_INSERT)) {
       if (regname == '.') {
-        insert_reg(regname, true);
+        insert_reg(regname, NULL, true);
       } else {
         if (regname == 0 && eval_has_provider("clipboard", false)) {
           regname = '*';
         }
-        if ((State & REPLACE_FLAG) && !yank_register_mline(regname)) {
-          insert_reg(regname, true);
+        yankreg_T *reg = NULL;
+        if ((State & REPLACE_FLAG) && !yank_register_mline(regname, &reg)) {
+          insert_reg(regname, reg, true);
         } else {
-          do_put(regname, NULL, BACKWARD, 1,
+          do_put(regname, reg, BACKWARD, 1,
                  (fixindent ? PUT_FIXINDENT : 0) | PUT_CURSEND);
 
           // Repeat it with CTRL-R CTRL-O r or CTRL-R CTRL-P r
@@ -832,7 +834,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     if (regname == 0 && eval_has_provider("clipboard", false)) {
       regname = '*';
     }
-    if (yank_register_mline(regname)) {
+    yankreg_T *reg = NULL;
+    if (yank_register_mline(regname, &reg)) {
       if (mouse_past_bottom) {
         dir = FORWARD;
       }
@@ -854,7 +857,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     if (restart_edit != 0) {
       where_paste_started = curwin->w_cursor;
     }
-    do_put(regname, NULL, dir, count,
+    do_put(regname, reg, dir, count,
            (fixindent ? PUT_FIXINDENT : 0)| PUT_CURSEND);
   } else if (((mod_mask & MOD_MASK_CTRL) || (mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK)
              && bt_quickfix(curbuf)) {
@@ -1657,6 +1660,13 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     }
     row -= count;
     lnum++;
+  }
+
+  // Mouse row reached, adjust lnum for concealed lines.
+  while (lnum < win->w_buffer->b_ml.ml_line_count
+         && decor_conceal_line(win, lnum - 1, false)) {
+    lnum++;
+    hasFolding(win, lnum, NULL, &lnum);
   }
 
   if (!retval) {

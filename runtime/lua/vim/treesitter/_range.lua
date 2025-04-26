@@ -115,6 +115,19 @@ function M.intercepts(r1, r2)
 end
 
 ---@private
+---@param r1 Range6
+---@param r2 Range6
+---@return Range6?
+function M.intersection(r1, r2)
+  if not M.intercepts(r1, r2) then
+    return nil
+  end
+  local rs = M.cmp_pos.le(r1[1], r1[2], r2[1], r2[2]) and r2 or r1
+  local re = M.cmp_pos.ge(r1[4], r1[5], r2[4], r2[5]) and r2 or r1
+  return { rs[1], rs[2], rs[3], re[4], re[5], re[6] }
+end
+
+---@private
 ---@param r Range
 ---@return integer, integer, integer, integer
 function M.unpack4(r)

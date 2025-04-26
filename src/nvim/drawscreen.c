@@ -1705,7 +1705,8 @@ static void win_update(win_T *wp)
   // incurring scrolling even though wp->w_topline is still the same.
   // Compare against an adjusted topline instead:
   linenr_T topline_conceal = wp->w_topline;
-  while (decor_conceal_line(wp, topline_conceal - 1, false)) {
+  while (topline_conceal < buf->b_ml.ml_line_count
+         && decor_conceal_line(wp, topline_conceal - 1, false)) {
     topline_conceal++;
     hasFolding(wp, topline_conceal, NULL, &topline_conceal);
   }
@@ -2320,6 +2321,7 @@ static void win_update(win_T *wp)
 
         // Adjust "wl_lastlnum" for concealed lines below the last line in the window.
         while (row == wp->w_grid.rows
+               && wp->w_lines[idx].wl_lastlnum < buf->b_ml.ml_line_count
                && decor_conceal_line(wp, wp->w_lines[idx].wl_lastlnum, false)) {
           wp->w_lines[idx].wl_lastlnum++;
           hasFolding(wp, wp->w_lines[idx].wl_lastlnum, NULL, &wp->w_lines[idx].wl_lastlnum);

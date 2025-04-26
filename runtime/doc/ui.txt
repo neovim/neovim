@@ -609,12 +609,31 @@ tabs.
 	size). If the window was previously hidden, it should now be shown
 	again.
 
-["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, mouse_enabled, zindex] ~
-	Display or reconfigure floating window `win`. The window should be
-	displayed above another grid `anchor_grid` at the specified position
-	`anchor_row` and `anchor_col`. For the meaning of `anchor` and more details
-	of positioning, see |nvim_open_win()|. `mouse_enabled` is true if the
-	window can receive mouse events.
+["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, mouse_enabled, zindex, compindex, screen_row, screen_col] ~
+	Display or reconfigure floating window `win`.
+
+	There are two alternative ways of positioning the window
+	  -  Manually - The window should be displayed above another grid
+	     `anchor_grid` at the specified position `anchor_row` and
+	     `anchor_col`. For the meaning of `anchor` and more details of
+	     positioning, see |nvim_open_win()|. NOTE: you have to manually
+	     ensure that the window fits the screen, possibly by further
+	     reposition it. Ignore `screen_row` and `screen_col` in this case.
+	  - Let nvim take care of the positioning - You can ignore `anchor`
+	    and display the window at `screen_row` and `screen_col`.
+
+	`mouse_enabled` is true if the window can receive mouse events.
+
+	`zindex` is the configured zindex, while `compindex` is the exact
+	rendering order of the windows determined by nvim. To render exactly
+	like the TUI, first render all the non-floating windows, then render
+	in the `compindex` order, overwriting any floating window cells.
+	Finally, blend the floating window cells against the non-floating
+	background. To add more blending, you can group the windows by zindex,
+	and blend between the layers. But note that windows inside the same
+	zindex should still overwrite previous cells inside the same layer
+	without blending. This ensures that plugins that render multiple
+	windows, to add borders for example, work as expected.
 
 ["win_external_pos", grid, win] ~
 	Display or reconfigure external window `win`. The window should be
@@ -627,7 +646,7 @@ tabs.
 ["win_close", grid] ~
 	Close the window.
 
-["msg_set_pos", grid, row, scrolled, sep_char] ~
+["msg_set_pos", grid, row, scrolled, sep_char, zindex, compindex] ~
 	Display messages on `grid`.  The grid will be displayed at `row` on
 	the default grid (grid=1), covering the full column width. `scrolled`
 	indicates whether the message area has been scrolled to cover other
@@ -637,6 +656,10 @@ tabs.
 
 	When |ui-messages| is active, no message grid is used, and this event
 	will not be sent.
+
+	`zindex` and `compindex` have the same meaning as for `win_float_pos`.
+	The `zindex` always has a fixed value of 200 and included for
+	completeness.
 
 ["win_viewport", grid, win, topline, botline, curline, curcol, line_count, scroll_delta] ~
 	Indicates the range of buffer text displayed in the window, as well

@@ -10,7 +10,6 @@
     ],
     "ignoreDir": [
       "test",
-      "_vim9script.lua"
     ],
     "checkThirdParty": "Disable"
   },

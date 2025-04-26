@@ -158,7 +158,7 @@ local function request_with_opts(name, params, opts)
   lsp.buf_request(0, name, params, req_handler)
 end
 
----@param method string
+---@param method vim.lsp.protocol.Method.ClientToServer.Request
 ---@param opts? vim.lsp.LocationOpts
 local function get_locations(method, opts)
   opts = opts or {}
@@ -215,7 +215,13 @@ local function get_locations(method, opts)
         vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
 
         vim.bo[b].buflisted = true
-        local w = opts.reuse_win and vim.fn.win_findbuf(b)[1] or win
+        local w = win
+        if opts.reuse_win then
+          w = vim.fn.win_findbuf(b)[1] or w
+          if w ~= win then
+            api.nvim_set_current_win(w)
+          end
+        end
         api.nvim_win_set_buf(w, b)
         api.nvim_win_set_cursor(w, { item.lnum, item.col - 1 })
         vim._with({ win = w }, function()
@@ -303,6 +309,7 @@ end
 --- @param results table<integer,{err: lsp.ResponseError?, result: lsp.SignatureHelp?}>
 local function process_signature_help_results(results)
   local signatures = {} --- @type [vim.lsp.Client,lsp.SignatureInformation][]
+  local active_signature = 1
 
   -- Pre-process results
   for client_id, r in pairs(results) do
@@ -317,15 +324,19 @@ local function process_signature_help_results(results)
     else
       local result = r.result --- @type lsp.SignatureHelp
       if result and result.signatures and result.signatures[1] then
-        for _, sig in ipairs(result.signatures) do
+        for i, sig in ipairs(result.signatures) do
           sig.activeParameter = sig.activeParameter or result.activeParameter
-          signatures[#signatures + 1] = { client, sig }
+          local idx = #signatures + 1
+          if (result.activeSignature or 0) + 1 == i then
+            active_signature = idx
+          end
+          signatures[idx] = { client, sig }
         end
       end
     end
   end
 
-  return signatures
+  return signatures, active_signature
 end
 
 local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
@@ -348,7 +359,7 @@ function M.signature_help(config)
       return
     end
 
-    local signatures = process_signature_help_results(results)
+    local signatures, active_signature = process_signature_help_results(results)
 
     if not next(signatures) then
       if config.silent ~= true then
@@ -359,8 +370,8 @@ function M.signature_help(config)
 
     local ft = vim.bo[ctx.bufnr].filetype
     local total = #signatures
-    local can_cycle = total > 1 and config.focusable
-    local idx = 0
+    local can_cycle = total > 1 and config.focusable ~= false
+    local idx = active_signature - 1
 
     --- @param update_win? integer
     local function show_signature(update_win)
@@ -375,7 +386,9 @@ function M.signature_help(config)
         return
       end
 
-      local sfx = can_cycle and string.format(' (%d/%d) (<C-s> to cycle)', idx, total) or ''
+      local sfx = total > 1
+          and string.format(' (%d/%d)%s', idx, total, can_cycle and ' (<C-s> to cycle)' or '')
+        or ''
       local title = string.format('Signature Help: %s%s', client.name, sfx)
       if config.border then
         config.title = title
@@ -814,7 +827,7 @@ function M.document_symbol(opts)
 end
 
 --- @param client_id integer
---- @param method string
+--- @param method vim.lsp.protocol.Method.ClientToServer.Request
 --- @param params table
 --- @param handler? lsp.Handler
 --- @param bufnr? integer
@@ -845,7 +858,7 @@ local hierarchy_methods = {
   [ms.callHierarchy_outgoingCalls] = 'call',
 }
 
---- @param method string
+--- @param method vim.lsp.protocol.Method.ClientToServer.Request
 local function hierarchy(method)
   local kind = hierarchy_methods[method]
   if not kind then

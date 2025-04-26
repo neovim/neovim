@@ -682,7 +682,7 @@ static int nlua_ui_attach(lua_State *lstate)
     return luaL_error(lstate, "invalid ns_id");
   }
   if (!lua_istable(lstate, 2)) {
-    return luaL_error(lstate, "ext_widgets must be a table");
+    return luaL_error(lstate, "opts must be a table");
   }
   if (!lua_isfunction(lstate, 3)) {
     return luaL_error(lstate, "callback must be a Lua function");
@@ -699,13 +699,18 @@ static int nlua_ui_attach(lua_State *lstate)
     const char *s = lua_tolstring(lstate, -2, &len);
     bool val = lua_toboolean(lstate, -1);
 
-    for (size_t i = 0; i < kUIGlobalCount; i++) {
-      if (strequal(s, ui_ext_names[i])) {
-        if (val) {
-          tbl_has_true_val = true;
+    if (strequal(s, "set_cmdheight")) {
+      ui_refresh_cmdheight = val;
+      goto ok;
+    } else {
+      for (size_t i = 0; i < kUIGlobalCount; i++) {
+        if (strequal(s, ui_ext_names[i])) {
+          if (val) {
+            tbl_has_true_val = true;
+          }
+          ext_widgets[i] = val;
+          goto ok;
         }
-        ext_widgets[i] = val;
-        goto ok;
       }
     }
 
@@ -715,11 +720,12 @@ ok:
   }
 
   if (!tbl_has_true_val) {
-    return luaL_error(lstate, "ext_widgets table must contain at least one 'true' value");
+    return luaL_error(lstate, "opts table must contain at least one 'true' ext_widget");
   }
 
   LuaRef ui_event_cb = nlua_ref_global(lstate, 3);
   ui_add_cb(ns_id, ui_event_cb, ext_widgets);
+  ui_refresh_cmdheight = true;
   return 0;
 }
 
@@ -831,8 +837,7 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 void nlua_init(char **argv, int argc, int lua_arg0)
 {
 #ifdef NLUA_TRACK_REFS
-  const char *env = os_getenv("NVIM_LUA_NOTRACK");
-  if (!env || !*env) {
+  if (os_env_exists("NVIM_LUA_NOTRACK", true)) {
     nlua_track_refs = true;
   }
 #endif
@@ -1283,7 +1288,7 @@ static int nlua_empty_dict_tostring(lua_State *lstate)
 /// @param  lstate  Lua interpreter state.
 static int nlua_getenv(lua_State *lstate)
 {
-  lua_pushstring(lstate, os_getenv(luaL_checkstring(lstate, 1)));
+  lua_pushstring(lstate, os_getenv_noalloc(luaL_checkstring(lstate, 1)));
   return 1;
 }
 #endif
@@ -1814,10 +1819,14 @@ bool nlua_exec_file(const char *path)
     // Read all input from stdin, unless interrupted (ctrl-c).
     while (true) {
       if (got_int) {  // User canceled.
+        file_close(&stdin_dup, false);
+        kv_destroy(sb);
         return false;
       }
       ptrdiff_t read_size = file_read(&stdin_dup, IObuff, 64);
       if (read_size < 0) {  // Error.
+        file_close(&stdin_dup, false);
+        kv_destroy(sb);
         return false;
       }
       if (read_size > 0) {

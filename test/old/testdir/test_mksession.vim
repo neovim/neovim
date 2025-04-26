@@ -1170,8 +1170,8 @@ endfunc
 
 " Test for creating views with manual folds
 func Test_mkview_manual_fold()
-  call writefile(range(1,10), 'Xfile')
-  new Xfile
+  call writefile(range(1,10), 'Xmkvfile', 'D')
+  new Xmkvfile
   " create recursive folds
   5,6fold
   4,7fold
@@ -1194,9 +1194,44 @@ func Test_mkview_manual_fold()
   source Xview
   call assert_equal([-1, -1, -1, -1, -1, -1], [foldclosed(3), foldclosed(4),
         \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
-  call delete('Xfile')
   call delete('Xview')
   bw!
+endfunc
+
+" Test for handling invalid folds within views
+func Test_mkview_ignore_invalid_folds()
+  call writefile(range(1,10), 'Xmkvfile', 'D')
+  new Xmkvfile
+  " create some folds
+  5,6fold
+  4,7fold
+  mkview Xview
+  normal zE
+  " delete lines to make folds invalid
+  call deletebufline('', 6, '$')
+  source Xview
+  call assert_equal([-1, -1, -1, -1, -1, -1], [foldclosed(3), foldclosed(4),
+        \ foldclosed(5), foldclosed(6), foldclosed(7), foldclosed(8)])
+  call delete('Xview')
+  bw!
+endfunc
+
+" Test default 'viewdir' value
+func Test_mkview_default_home()
+  throw 'Skipped: N/A'
+  if has('win32')
+    " use escape() to handle backslash path separators
+    call assert_match('^' .. escape($ORIGHOME, '\') .. '/vimfiles', &viewdir)
+  elseif has('unix')
+    call assert_match(
+          \ '^' .. $ORIGHOME .. '/.vim\|' ..
+          \ '^' .. $XDG_CONFIG_HOME .. '/vim'
+          \ , &viewdir)
+  elseif has('amiga')
+    call assert_match('^home:vimfiles', &viewdir)
+  elseif has('mac')
+    call assert_match('^' .. $VIM .. '/vimfiles', &viewdir)
+  endif
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

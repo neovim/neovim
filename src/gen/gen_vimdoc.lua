@@ -278,6 +278,7 @@ local config = {
       'inlay_hint.lua',
       'tagfunc.lua',
       'semantic_tokens.lua',
+      'document_color.lua',
       'handlers.lua',
       'util.lua',
       'log.lua',
@@ -427,6 +428,9 @@ end
 --- @param generics? table<string,string>
 --- @param default? string
 local function render_type(ty, generics, default)
+  -- TODO(lewis6991): Document LSP protocol types
+  ty = ty:gsub('vim%.lsp%.protocol%.Method.[%w.]+', 'string')
+
   if generics then
     ty = replace_generics(ty, generics)
   end
@@ -980,11 +984,13 @@ local function gen_target(cfg)
 
   --- First pass so we can collect all classes
   for _, f in vim.spairs(cfg.files) do
-    local ext = assert(f:match('%.([^.]+)$')) --[[@as 'h'|'c'|'lua']]
-    local parser = assert(parsers[ext])
-    local classes, funs, briefs = parser(f)
-    file_results[f] = { classes, funs, briefs }
-    all_classes = vim.tbl_extend('error', all_classes, classes)
+    local ext = f:match('%.([^.]+)$')
+    local parser = parsers[ext]
+    if parser then
+      local classes, funs, briefs = parser(f)
+      file_results[f] = { classes, funs, briefs }
+      all_classes = vim.tbl_extend('error', all_classes, classes)
+    end
   end
 
   for f, r in vim.spairs(file_results) do

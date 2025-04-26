@@ -656,7 +656,7 @@ end
 --- This is a thin wrapper around {client.rpc.request} with some additional
 --- checks for capabilities and handler availability.
 ---
---- @param method string LSP method name.
+--- @param method vim.lsp.protocol.Method.ClientToServer.Request LSP method name.
 --- @param params? table LSP request params.
 --- @param handler? lsp.Handler Response |lsp-handler| for this method.
 --- @param bufnr? integer (default: 0) Buffer handle, or 0 for current.
@@ -678,6 +678,12 @@ function Client:request(method, params, handler, bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
   local version = lsp.util.buf_versions[bufnr]
   log.debug(self._log_prefix, 'client.request', self.id, method, params, handler, bufnr)
+
+  -- Detect if request resolved synchronously (only possible with in-process servers).
+  local already_responded = false
+  local request_registered = false
+
+  -- NOTE: rpc.request might call an in-process (Lua) server, thus may be synchronous.
   local success, request_id = self.rpc.request(method, params, function(err, result)
     handler(err, result, {
       method = method,
@@ -688,11 +694,15 @@ function Client:request(method, params, handler, bufnr)
     })
   end, function(request_id)
     -- Called when the server sends a response to the request (including cancelled acknowledgment).
-    self:_process_request(request_id, 'complete')
+    if request_registered then
+      self:_process_request(request_id, 'complete')
+    end
+    already_responded = true
   end)
 
-  if success and request_id then
+  if success and request_id and not already_responded then
     self:_process_request(request_id, 'pending', bufnr, method)
+    request_registered = true
   end
 
   return success, request_id
@@ -721,7 +731,7 @@ end
 ---
 --- This is a wrapper around |Client:request()|
 ---
---- @param method string LSP method name.
+--- @param method vim.lsp.protocol.Method.ClientToServer.Request LSP method name.
 --- @param params table LSP request params.
 --- @param timeout_ms integer? Maximum time in milliseconds to wait for
 ---                                a result. Defaults to 1000
@@ -757,7 +767,7 @@ end
 
 --- Sends a notification to an LSP server.
 ---
---- @param method string LSP method name.
+--- @param method vim.lsp.protocol.Method.ClientToServer.Notification LSP method name.
 --- @param params table? LSP request params.
 --- @return boolean status indicating if the notification was successful.
 ---                        If it is false, then the client has shutdown.
@@ -828,7 +838,7 @@ function Client:stop(force)
 end
 
 --- Get options for a method that is registered dynamically.
---- @param method string
+--- @param method vim.lsp.protocol.Method
 function Client:_supports_registration(method)
   local capability = vim.tbl_get(self.capabilities, unpack(vim.split(method, '/')))
   return type(capability) == 'table' and capability.dynamicRegistration
@@ -901,7 +911,7 @@ function Client:_get_language_id(bufnr)
   return self.get_language_id(bufnr, vim.bo[bufnr].filetype)
 end
 
---- @param method string
+--- @param method vim.lsp.protocol.Method
 --- @param bufnr? integer
 --- @return lsp.Registration?
 function Client:_get_registration(method, bufnr)
@@ -1051,7 +1061,7 @@ end
 --- Always returns true for unknown off-spec methods.
 ---
 --- Note: Some language server capabilities can be file specific.
---- @param method string
+--- @param method vim.lsp.protocol.Method.ClientToServer
 --- @param bufnr? integer
 function Client:supports_method(method, bufnr)
   -- Deprecated form
@@ -1082,27 +1092,11 @@ function Client:supports_method(method, bufnr)
   return false
 end
 
---- Get options for a method that is registered dynamically.
---- @param method string
---- @param bufnr? integer
---- @return lsp.LSPAny?
-function Client:_get_registration_options(method, bufnr)
-  if not self:_supports_registration(method) then
-    return
-  end
-
-  local reg = self:_get_registration(method, bufnr)
-
-  if reg then
-    return reg.registerOptions
-  end
-end
-
 --- @private
 --- Handles a notification sent by an LSP server by invoking the
 --- corresponding handler.
 ---
---- @param method string LSP method name
+--- @param method vim.lsp.protocol.Method.ServerToClient.Notification LSP method name
 --- @param params table The parameters for that method.
 function Client:_notification(method, params)
   log.trace('notification', method, params)
@@ -1116,7 +1110,7 @@ end
 --- @private
 --- Handles a request from an LSP server by invoking the corresponding handler.
 ---
---- @param method (string) LSP method name
+--- @param method (vim.lsp.protocol.Method.ServerToClient) LSP method name
 --- @param params (table) The parameters for that method
 --- @return any result
 --- @return lsp.ResponseError error code and message set in case an exception happens during the request.

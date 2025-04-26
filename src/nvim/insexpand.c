@@ -164,7 +164,7 @@ struct compl_S {
                                  ///< cp_flags has CP_FREE_FNAME
   int cp_flags;                  ///< CP_ values
   int cp_number;                 ///< sequence number
-  int cp_score;                  ///< fuzzy match score
+  int cp_score;                  ///< fuzzy match score or proximity score
   bool cp_in_match_array;        ///< collected by compl_match_array
   int cp_user_abbr_hlattr;       ///< highlight attribute for abbr
   int cp_user_kind_hlattr;       ///< highlight attribute for kind
@@ -271,6 +271,9 @@ static String compl_orig_text = STRING_INIT;  ///< text as it was before
 static extmark_undo_vec_t compl_orig_extmarks;
 static int compl_cont_mode = 0;
 static expand_T compl_xp;
+
+static win_T *compl_curr_win = NULL;  ///< win where completion is active
+static buf_T *compl_curr_buf = NULL;  ///< buf where completion is active
 
 // List of flags for method of completion.
 static int compl_cont_status = 0;
@@ -813,6 +816,74 @@ static inline void free_cptext(char *const *const cptext)
   }
 }
 
+/// Returns true if matches should be sorted based on proximity to the cursor.
+static bool is_nearest_active(void)
+{
+  unsigned flags = get_cot_flags();
+  return (flags & kOptCotFlagNearest) && !(flags & kOptCotFlagFuzzy);
+}
+
+/// Repositions a match in the completion list based on its proximity score.
+/// If the match is at the head and has a higher score than the next node,
+/// or if it's in the middle/tail and has a lower score than the previous node,
+/// it is moved to the correct position while maintaining ascending order.
+static void reposition_match(compl_T *match)
+{
+  compl_T *insert_before = NULL;
+  compl_T *insert_after = NULL;
+
+  if (!match->cp_prev) {  // Node is at head and score is too big
+    if (match->cp_next && match->cp_next->cp_score > 0
+        && match->cp_next->cp_score < match->cp_score) {
+      // <c-p>: compl_first_match is at head and newly inserted node
+      compl_first_match = compl_curr_match = match->cp_next;
+      // Find the correct position in ascending order
+      insert_before = match->cp_next;
+      do {
+        insert_after = insert_before;
+        insert_before = insert_before->cp_next;
+      } while (insert_before && insert_before->cp_score > 0
+               && insert_before->cp_score < match->cp_score);
+    } else {
+      return;
+    }
+  } else {  // Node is at tail or in the middle but score is too small
+    if (match->cp_prev->cp_score > 0 && match->cp_prev->cp_score > match->cp_score) {
+      // <c-n>: compl_curr_match (and newly inserted match) is at tail
+      if (!match->cp_next) {
+        compl_curr_match = compl_curr_match->cp_prev;
+      }
+      // Find the correct position in ascending order
+      insert_after = match->cp_prev;
+      do {
+        insert_before = insert_after;
+        insert_after = insert_after->cp_prev;
+      } while (insert_after && insert_after->cp_score > 0
+               && insert_after->cp_score > match->cp_score);
+    } else {
+      return;
+    }
+  }
+
+  if (insert_after) {
+    // Remove the match from its current position
+    if (match->cp_prev) {
+      match->cp_prev->cp_next = match->cp_next;
+    } else {
+      compl_first_match = match->cp_next;
+    }
+    if (match->cp_next) {
+      match->cp_next->cp_prev = match->cp_prev;
+    }
+
+    // Insert the match at the correct position
+    match->cp_next = insert_before;
+    match->cp_prev = insert_after;
+    insert_after->cp_next = match;
+    insert_before->cp_prev = match;
+  }
+}
+
 /// Add a match to the list of matches
 ///
 /// @param[in]  str     text of the match to add
@@ -869,6 +940,10 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
       if (!match_at_original_text(match)
           && strncmp(match->cp_str.data, str, (size_t)len) == 0
           && ((int)match->cp_str.size <= len || match->cp_str.data[len] == NUL)) {
+        if (is_nearest_active() && score > 0 && score < match->cp_score) {
+          match->cp_score = score;
+          reposition_match(match);
+        }
         if (cptext_allocated) {
           free_cptext(cptext);
         }
@@ -973,6 +1048,10 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
     compl_first_match = match;
   }
   compl_curr_match = match;
+
+  if (is_nearest_active() && score > 0) {
+    reposition_match(match);
+  }
 
   // Find the longest common string if still doing that.
   if (compl_get_longest && (flags & CP_ORIGINAL_TEXT) == 0 && !cfc_has_mode()) {
@@ -1830,6 +1909,8 @@ void ins_compl_clear(void)
   compl_matches = 0;
   compl_selected_item = -1;
   compl_ins_end_col = 0;
+  compl_curr_win = NULL;
+  compl_curr_buf = NULL;
   API_CLEAR_STRING(compl_pattern);
   API_CLEAR_STRING(compl_leader);
   edit_submode_extra = NULL;
@@ -1850,7 +1931,7 @@ bool ins_compl_active(void)
 /// Return true when wp is the actual completion window
 bool ins_compl_win_active(win_T *wp)
 {
-  return ins_compl_active() && !(wp->w_p_pvw || wp->w_float_is_info);
+  return ins_compl_active() && wp == compl_curr_win && wp->w_buffer == compl_curr_buf;
 }
 
 /// Selected one of the matches.  When false the match was edited or using the
@@ -2253,9 +2334,10 @@ static bool set_ctrl_x_mode(const int c)
 static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
 {
   // Remove pre-inserted text when present.
-  if (ins_compl_preinsert_effect()) {
+  if (ins_compl_preinsert_effect() && ins_compl_win_active(curwin)) {
     ins_compl_delete(false);
   }
+
   // Get here when we have finished typing a sequence of ^N and
   // ^P or other completion characters in CTRL-X mode.  Free up
   // memory that was used, and make sure we can redo the insert.
@@ -2338,10 +2420,6 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     retval = true;
   }
 
-  if ((c == Ctrl_W || c == Ctrl_U) && ins_compl_preinsert_effect()) {
-    ins_compl_delete(false);
-  }
-
   auto_format(false, true);
 
   // Trigger the CompleteDonePre event to give scripts a chance to
@@ -2379,6 +2457,12 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   xfree(word);
 
   return retval;
+}
+
+/// Cancel completion.
+bool ins_compl_cancel(void)
+{
+  return ins_compl_stop(' ', ctrl_x_mode, true);
 }
 
 /// Prepare for Insert mode completion, or stop it.
@@ -2529,8 +2613,8 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
     while (true) {
       // Move to next window (wrap to first window if at the end)
       wp = (wp->w_next != NULL) ? wp->w_next : firstwin;
-      // Break if we're back at start or found an unscanned buffer
-      if (wp == curwin || !wp->w_buffer->b_scanned) {
+      // Break if we're back at start or found an unscanned buffer (in a focusable window)
+      if (wp == curwin || (!wp->w_buffer->b_scanned && wp->w_config.focusable)) {
         break;
       }
     }
@@ -3735,6 +3819,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
   bool in_collect = (cfc_has_mode() && compl_length > 0);
   char *leader = ins_compl_leader();
   int score = 0;
+  const bool in_curbuf = st->ins_buf == curbuf;
 
   // If 'infercase' is set, don't use 'smartcase' here
   const int save_p_scs = p_scs;
@@ -3748,7 +3833,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
   // buffers is a good idea, on the other hand, we always set
   // wrapscan for curbuf to avoid missing matches -- Acevedo,Webb
   const int save_p_ws = p_ws;
-  if (st->ins_buf != curbuf) {
+  if (!in_curbuf) {
     p_ws = false;
   } else if (*st->e_cpt == '.') {
     p_ws = true;
@@ -3811,7 +3896,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
     }
 
     // when ADDING, the text before the cursor matches, skip it
-    if (compl_status_adding() && st->ins_buf == curbuf
+    if (compl_status_adding() && in_curbuf
         && start_pos->lnum == st->cur_match_pos->lnum
         && start_pos->col == st->cur_match_pos->col) {
       continue;
@@ -3826,8 +3911,16 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
       continue;
     }
 
+    if (is_nearest_active() && in_curbuf) {
+      score = st->cur_match_pos->lnum - curwin->w_cursor.lnum;
+      if (score < 0) {
+        score = -score;
+      }
+      score++;
+    }
+
     if (ins_compl_add_infercase(ptr, len, p_ic,
-                                st->ins_buf == curbuf ? NULL : st->ins_buf->b_sfname,
+                                in_curbuf ? NULL : st->ins_buf->b_sfname,
                                 0, cont_s_ipos, score) != NOTDONE) {
       if (in_collect && score == compl_first_match->cp_next->cp_score) {
         compl_num_bests++;
@@ -5010,7 +5103,6 @@ static int ins_compl_start(void)
     line = ml_get(curwin->w_cursor.lnum);
   }
 
-  bool in_fuzzy = get_cot_flags() & kOptCotFlagFuzzy;
   if (compl_status_adding()) {
     edit_submode_pre = _(" Adding");
     if (ctrl_x_mode_line_or_eval()) {
@@ -5025,7 +5117,7 @@ static int ins_compl_start(void)
       compl_length = 0;
       compl_col = curwin->w_cursor.col;
       compl_lnum = curwin->w_cursor.lnum;
-    } else if (ctrl_x_mode_normal() && in_fuzzy) {
+    } else if (ctrl_x_mode_normal() && cfc_has_mode()) {
       compl_startpos = curwin->w_cursor;
       compl_cont_status &= CONT_S_IPOS;
     }
@@ -5158,6 +5250,8 @@ int ins_complete(int c, bool enable_pum)
     return FAIL;
   }
 
+  compl_curr_win = curwin;
+  compl_curr_buf = curwin->w_buffer;
   compl_shown_match = compl_curr_match;
   compl_shows_dir = compl_direction;
 

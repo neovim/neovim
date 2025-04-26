@@ -119,12 +119,12 @@ describe('spellfile', function()
   end)
 
   describe('default location', function()
-    it("is stdpath('data')/spell/en.utf-8.add", function()
+    it("is stdpath('data')/site/spell/en.utf-8.add", function()
       n.command('set spell')
       n.insert('abc')
       n.feed('zg')
       eq(
-        t.fix_slashes(fn.stdpath('data') .. '/spell/en.utf-8.add'),
+        t.fix_slashes(fn.stdpath('data') .. '/site/spell/en.utf-8.add'),
         t.fix_slashes(api.nvim_get_option_value('spellfile', {}))
       )
     end)

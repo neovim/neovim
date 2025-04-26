@@ -5323,7 +5323,7 @@ size_t string2float(const char *const text, float_T *const ret_value)
     *ret_value = (float_T)INFINITY;
     return 3;
   }
-  if (STRNICMP(text, "-inf", 3) == 0) {
+  if (STRNICMP(text, "-inf", 4) == 0) {
     *ret_value = (float_T)(-INFINITY);
     return 4;
   }

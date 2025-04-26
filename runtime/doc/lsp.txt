@@ -2156,6 +2156,52 @@ stop({bufnr}, {client_id})                    *vim.lsp.semantic_tokens.stop()*
 
 
 ==============================================================================
+Lua module: vim.lsp.document_color                        *lsp-document_color*
+
+enable({enable}, {bufnr}, {opts})            *vim.lsp.document_color.enable()*
+    Enables document highlighting from the given language client in the given
+    buffer.
+
+    You can enable document highlighting from a supporting client as follows: >lua
+        vim.api.nvim_create_autocmd('LspAttach', {
+          callback = function(args)
+            local client = vim.lsp.get_client_by_id(args.data.client_id)
+
+            if client:supports_method('textDocument/documentColor') then
+              vim.lsp.document_color.enable(true, args.buf)
+            end
+          end
+        })
+<
+
+    To "toggle", pass the inverse of `is_enabled()`: >lua
+        vim.lsp.document_color.enable(not vim.lsp.document_color.is_enabled())
+<
+
+    Parameters: ~
+      • {enable}  (`boolean?`) True to enable, false to disable. (default:
+                  `true`)
+      • {bufnr}   (`integer?`) Buffer handle, or 0 for current. (default: 0)
+      • {opts}    (`table?`) A table with the following fields:
+                  • {style}?
+                    (`'background'|'foreground'|'virtual'|string|fun(bufnr: integer, range: Range4, hex_code: string)`)
+                    Highlight style. It can be one of the pre-defined styles,
+                    a string to be used as virtual text, or a function that
+                    receives the buffer handle, the range (start line, start
+                    col, end line, end col) and the resolved hex color.
+                    (default: `'background'`)
+
+is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
+    Query whether document colors are enabled in the given buffer.
+
+    Parameters: ~
+      • {bufnr}  (`integer?`) Buffer handle, or 0 for current. (default: 0)
+
+    Return: ~
+        (`boolean`)
+
+
+==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
 
 *vim.lsp.util.open_floating_preview.Opts*

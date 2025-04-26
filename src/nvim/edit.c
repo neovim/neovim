@@ -381,6 +381,12 @@ static int insert_check(VimState *state)
     did_cursorhold = false;
   }
 
+  // Check if we need to cancel completion mode because the window
+  // or tab page was changed
+  if (ins_compl_active() && !ins_compl_win_active(curwin)) {
+    ins_compl_cancel();
+  }
+
   // If the cursor was moved we didn't just insert a space
   if (arrow_used) {
     s->inserted_space = false;
@@ -1632,7 +1638,7 @@ void change_indent(int type, int amount, int round, bool call_changed_bytes)
 
   // MODE_VREPLACE state needs to know what the line was like before changing
   if (State & VREPLACE_FLAG) {
-    orig_line = xstrdup(get_cursor_line_ptr());   // Deal with NULL below
+    orig_line = xstrnsave(get_cursor_line_ptr(), (size_t)get_cursor_line_len());
     orig_col = curwin->w_cursor.col;
   }
 
@@ -1782,7 +1788,7 @@ void change_indent(int type, int amount, int round, bool call_changed_bytes)
   // then put it back again the way we wanted it.
   if (State & VREPLACE_FLAG) {
     // Save new line
-    char *new_line = xstrdup(get_cursor_line_ptr());
+    char *new_line = xstrnsave(get_cursor_line_ptr(), (size_t)get_cursor_line_len());
 
     // We only put back the new line up to the cursor
     new_line[curwin->w_cursor.col] = NUL;
@@ -3244,7 +3250,7 @@ static void ins_reg(void)
 
       do_put(regname, NULL, BACKWARD, 1,
              (literally == Ctrl_P ? PUT_FIXINDENT : 0) | PUT_CURSEND);
-    } else if (insert_reg(regname, literally) == FAIL) {
+    } else if (insert_reg(regname, NULL, literally) == FAIL) {
       vim_beep(kOptBoFlagRegister);
       need_redraw = true;  // remove the '"'
     } else if (stop_insert_mode) {
@@ -3452,7 +3458,7 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
     showmode();
   } else if (p_smd && (got_int || !skip_showmode())
              && !(p_ch == 0 && !ui_has(kUIMessages))) {
-    msg("", 0);
+    unshowmode(false);
   }
   // Exit Insert mode
   return true;

@@ -2,11 +2,14 @@
 " Language:	Cucumber
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
 " Last Change:	2023 Dec 28
+" 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
 
 if exists("b:did_indent")
   finish
 endif
 let b:did_indent = 1
+let s:cpo_save = &cpo
+set cpo&vim
 
 setlocal autoindent
 setlocal indentexpr=GetCucumberIndent()
@@ -94,5 +97,8 @@ function! GetCucumberIndent(...) abort
   endif
   return prev.indent < 0 ? 0 : prev.indent
 endfunction
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
 
 " vim:set sts=2 sw=2:

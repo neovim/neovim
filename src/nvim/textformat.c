@@ -355,7 +355,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     if (State & VREPLACE_FLAG) {
       // In MODE_VREPLACE state, we will backspace over the text to be
       // wrapped, so save a copy now to put on the next line.
-      saved_text = xstrdup(get_cursor_pos_ptr());
+      saved_text = xstrnsave(get_cursor_pos_ptr(), (size_t)get_cursor_pos_len());
       curwin->w_cursor.col = orig_col;
       saved_text[startcol] = NUL;
 
@@ -547,7 +547,7 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
 
   // Get current line and next line, compare the leaders.
   // The first line has to be saved, only one line can be locked at a time.
-  char *line1 = xstrdup(ml_get(lnum));
+  char *line1 = xstrnsave(ml_get(lnum), (size_t)ml_get_len(lnum));
   for (idx1 = 0; ascii_iswhite(line1[idx1]); idx1++) {}
   char *line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; idx2++) {

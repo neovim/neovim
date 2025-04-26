@@ -66,7 +66,7 @@ EVENTS
 
 HIGHLIGHTS
 
-• |hl-DiffTextAdd| highlights added text within a changed line.
+• todo
 
 LSP
 
@@ -78,9 +78,6 @@ LUA
 
 OPTIONS
 
-• 'chistory' and 'lhistory' set size of the |quickfix-stack|.
-• 'diffopt' `inline:` configures diff highlighting for changes within a line.
-• 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'shelltemp' defaults to "false".
 
 PLUGINS
@@ -106,7 +103,9 @@ The following new features were added.
 
 API
 
-• |vim.hl.range()| now allows multiple timed highlights
+• |nvim_win_text_height()| can limit the lines checked when a certain
+  `max_height` is reached, and returns the `end_row` and `end_vcol` for which
+  `max_height` or the calculated height is reached.
 
 DEFAULTS
 
@@ -123,21 +122,34 @@ EDITOR
 
 EVENTS
 
-• todo
+• |CmdlineLeavePre| triggered before preparing to leave the command line.
+
+HIGHLIGHTS
+
+• |hl-DiffTextAdd| highlights added text within a changed line.
 
 LSP
 
 • |vim.lsp.ClientConfig| gained `workspace_required`.
+• Support for `textDocument/documentColor`: |lsp-document_color|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
+• The `textDocument/diagnostic` request now includes the previous id in its
+  parameters.
 
 LUA
 
 • Lua type annotations for `vim.uv`.
+• |vim.hl.range()| now allows multiple timed highlights.
 
 OPTIONS
 
+• 'autowriteall' writes all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
+• 'chistory' and 'lhistory' set size of the |quickfix-stack|.
 • 'completefuzzycollect' enables fuzzy collection of candidates for (some)
   |ins-completion| modes.
-• 'autowriteall' write all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
+• 'completeopt' flag "nearset" sorts completion results by distance to cursor.
+• 'diffopt' `inline:` configures diff highlighting for changes within a line.
+• 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'winborder' "bold" style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 
@@ -168,18 +180,19 @@ TUI
 UI
 
 • |:checkhealth| shows a summary in the header for every healthcheck.
+• |ui-multigrid| provides composition information and absolute coordinates.
 
 VIMSCRIPT
 
-• todo
+• |cmdcomplete_info()| gets current cmdline completion info.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• 'spellfile' location defaults to `stdpath("data").."/spell/"` instead of the
-  first writable directoy in 'runtimepath'.
+• 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of
+  the first writable directory in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
 
 ==============================================================================

@@ -1254,6 +1254,33 @@ M.funcs = {
     returns = false,
     signature = 'clearmatches([{win}])',
   },
+  cmdcomplete_info = {
+    args = 0,
+    desc = [=[
+      Returns a |Dictionary| with information about cmdline
+      completion.  See |cmdline-completion|.
+      The items are:
+         cmdline_orig	The original command-line string before
+      		completion began.
+         pum_visible	|TRUE| if popup menu is visible.
+      		See |pumvisible()|.
+         matches	List of all completion candidates. Each item
+      		is a string.
+         selected	Selected item index.  First index is zero.
+      		Index is -1 if no item is selected (showing
+      		typed text only, or the last completion after
+      		no item is selected when using the <Up> or
+      		<Down> keys)
+
+      Returns an empty |Dictionary| if no completion was attempted,
+      if there was only one candidate and it was fully completed, or
+      if an error occurred.
+    ]=],
+    name = 'cmdcomplete_info',
+    params = {},
+    returns = 'table<string,any>',
+    signature = 'cmdcomplete_info()',
+  },
   col = {
     args = { 1, 2 },
     base = 1,
@@ -3804,6 +3831,7 @@ M.funcs = {
       file		file and directory names
       file_in_path	file and directory names in |'path'|
       filetype	filetype names |'filetype'|
+      filetypecmd	|:filetype| suboptions
       function	function name
       help		help subjects
       highlight	highlight groups
@@ -8169,7 +8197,8 @@ M.funcs = {
       <      1.41
 
       You will get an overflow error |E1510|, when the field-width
-      or precision will result in a string longer than 6400 chars.
+      or precision will result in a string longer than 1 MB
+      (1024*1024 = 1048576) chars.
 
       					*E1500*
       You cannot mix positional and non-positional arguments: >vim

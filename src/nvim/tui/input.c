@@ -139,7 +139,8 @@ void tinput_init(TermInput *input, Loop *loop)
 
   input->in_fd = STDIN_FILENO;
 
-  const char *term = os_getenv("TERM");
+  const char *term = os_getenv_noalloc("TERM");
+
   if (!term) {
     term = "";  // termkey_new_abstract assumes non-null (#2745)
   }
@@ -642,24 +643,17 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
     switch (initial) {
     case '?':
       // Kitty keyboard protocol query response.
-      if (input->waiting_for_kkp_response) {
-        input->waiting_for_kkp_response = false;
-        input->key_encoding = kKeyEncodingKitty;
-        tui_set_key_encoding(input->tui_data);
-      }
-
+      input->key_encoding = kKeyEncodingKitty;
       break;
     }
     break;
   case 'c':
     switch (initial) {
     case '?':
-      // Primary Device Attributes response
-      if (input->waiting_for_kkp_response) {
-        input->waiting_for_kkp_response = false;
-
-        // Enable the fallback key encoding (if any)
-        tui_set_key_encoding(input->tui_data);
+      // Primary Device Attributes (DA1) response
+      if (input->callbacks.primary_device_attr) {
+        input->callbacks.primary_device_attr(input->tui_data);
+        input->callbacks.primary_device_attr = NULL;
       }
 
       break;

@@ -7,6 +7,7 @@ local eval = n.eval
 local api = n.api
 local source = n.source
 local command = n.command
+local feed = n.feed
 
 describe('CursorMoved', function()
   before_each(clear)
@@ -49,11 +50,34 @@ describe('CursorMoved', function()
   end)
 
   it('is not triggered by cursor movement prior to first CursorMoved instantiation', function()
+    eq({}, api.nvim_get_autocmds({ event = 'CursorMoved' }))
+    feed('ifoobar<Esc>')
     source([[
       let g:cursormoved = 0
-      autocmd! CursorMoved
       autocmd CursorMoved * let g:cursormoved += 1
     ]])
     eq(0, eval('g:cursormoved'))
+    feed('<Ignore>')
+    eq(0, eval('g:cursormoved'))
+    feed('0')
+    eq(1, eval('g:cursormoved'))
+  end)
+end)
+
+describe('CursorMovedI', function()
+  before_each(clear)
+
+  it('is not triggered by cursor movement prior to first CursorMovedI instantiation', function()
+    eq({}, api.nvim_get_autocmds({ event = 'CursorMovedI' }))
+    feed('ifoobar')
+    source([[
+      let g:cursormovedi = 0
+      autocmd CursorMovedI * let g:cursormovedi += 1
+    ]])
+    eq(0, eval('g:cursormovedi'))
+    feed('<Ignore>')
+    eq(0, eval('g:cursormovedi'))
+    feed('<Home>')
+    eq(1, eval('g:cursormovedi'))
   end)
 end)
