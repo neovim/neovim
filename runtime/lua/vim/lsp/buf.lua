@@ -826,6 +826,115 @@ function M.document_symbol(opts)
   request_with_opts(ms.textDocument_documentSymbol, params, opts)
 end
 
+--- Open loclist/quickfix based on |vim.lsp.ListOpts|
+---@param title string
+---@param items vim.quickfix.entry[]
+---@param ctx lsp.HandlerContext
+---@param config vim.lsp.ListOpts
+local function open_list(title, items, ctx, config)
+  local list = { title = title, items = items, context = ctx }
+  if config.on_list then
+    assert(vim.is_callable(config.on_list), 'on_list is not a function')
+    config.on_list(list)
+  elseif config.loclist then
+    vim.fn.setloclist(0, {}, ' ', list)
+    vim.cmd.lopen()
+  else
+    vim.fn.setqflist({}, ' ', list)
+    vim.cmd('botright copen')
+  end
+end
+
+--- Converts a lsp.documentLink to quickfix entry
+---
+---@param link lsp.DocumentLink
+---@param bufnr integer
+---@param client vim.lsp.Client
+---@param show_client_name boolean
+---@return vim.quickfix.entry?
+local function link_to_qf_entry(link, bufnr, client, show_client_name)
+  local position_encoding, name = client.offset_encoding, client.name
+  local uri, range = link.target, link.range
+  if uri and range then
+    ---@type integer?, integer?, integer?, integer?
+    local lnum, col, end_lnum, end_col
+
+    ---@type string, string
+    local filename, text
+    if vim.startswith(uri, 'file:///') then
+      filename = vim.uri_to_fname(uri)
+      text = filename
+    else
+      filename = vim.uri_to_fname(vim.uri_from_bufnr(bufnr))
+      text = uri
+      lnum = range.start.line + 1
+      col = util.character_offset(bufnr, range.start.line, range.start.character, position_encoding)
+        + 1
+      end_lnum = range['end'].line + 1
+      end_col = util.character_offset(
+        bufnr,
+        range['end'].line,
+        range['end'].character,
+        position_encoding
+      ) + 1
+    end
+
+    if show_client_name then
+      text = string.format('[%s] %s', name, text)
+    end
+
+    return {
+      filename = filename,
+      lnum = lnum or 1,
+      col = col or 1,
+      end_lnum = end_lnum or 1,
+      end_col = end_col or 1,
+      text = text,
+    }
+  end
+end
+
+--- Lists all links in the current buffer in the |location-list|.
+--- @param opts? vim.lsp.ListOpts
+function M.document_link(opts)
+  opts = vim.tbl_deep_extend('keep', opts or {}, { loclist = true })
+  local params = { textDocument = util.make_text_document_params() }
+
+  lsp.buf_request_all(0, ms.textDocument_documentLink, params, function(results, ctx)
+    local bufnr = assert(ctx.bufnr)
+    if api.nvim_get_current_buf() ~= bufnr then
+      -- Ignore result since buffer changed. This happens for slow language servers.
+      return
+    end
+
+    -- Filter errors from results
+    local results1 = {} --- @type table<integer,lsp.DocumentLink[]>
+
+    for client_id, resp in pairs(results) do
+      local err, result = resp.err, resp.result
+      if err then
+        lsp.log.error(err.code, err.message)
+      elseif result then
+        results1[client_id] = result
+      end
+    end
+
+    ---@type boolean
+    local multiple_client = #vim.tbl_keys(results1) > 1
+
+    ---@type vim.quickfix.entry[]
+    local items = {}
+    for client_id, links in pairs(results1) do
+      local client = assert(lsp.get_client_by_id(client_id))
+      for _, link in ipairs(links) do
+        items[#items + 1] = link_to_qf_entry(link, bufnr, client, multiple_client)
+      end
+    end
+
+    open_list('Document Links', items, ctx, opts)
+  end)
+end
+
 --- @param client_id integer
 --- @param method vim.lsp.protocol.Method.ClientToServer.Request
 --- @param params table

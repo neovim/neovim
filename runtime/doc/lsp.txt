@@ -1038,6 +1038,13 @@ get_log_path()                                        *vim.lsp.get_log_path()*
     Return: ~
         (`string`) path to log file
 
+includeexpr()                                          *vim.lsp.includeexpr()*
+    Provides an interface between the built-in client and 'includeexpr'.
+
+    When |gf| and related commands fails with the default first try, this will
+    invoke the "textDocument/documentLink" LSP method to find the link under
+    the cursor, falls back to `cfile`
+
 omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
     Implements 'omnifunc' compatible LSP completion.
 
@@ -1649,6 +1656,12 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
     highlight groups to be defined or you won't be able to see the actual
     highlights. |hl-LspReferenceText| |hl-LspReferenceRead|
     |hl-LspReferenceWrite|
+
+document_link({opts})                            *vim.lsp.buf.document_link()*
+    Lists all links in the current buffer in the |location-list|.
+
+    Parameters: ~
+      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
 
 document_symbol({opts})                        *vim.lsp.buf.document_symbol()*
     Lists all symbols in the current buffer in the |location-list|.
