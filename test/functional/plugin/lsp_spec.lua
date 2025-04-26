@@ -1246,8 +1246,6 @@ describe('LSP', function()
     end)
 
     it('request should not be pending for sync responses (in-process LS)', function()
-      clear()
-
       --- @type boolean
       local pending_request = exec_lua(function()
         local function server(dispatchers)
