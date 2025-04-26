@@ -1252,6 +1252,67 @@ describe('LSP', function()
       }
     end)
 
+    it('request should not be pending for sync responses (in-process LS)', function()
+      clear()
+
+      --- @type boolean
+      local pending_request = exec_lua(function()
+        local function server(dispatchers)
+          local closing = false
+          local srv = {}
+          local request_id = 0
+
+          function srv.request(method, _params, callback, notify_reply_callback)
+            if method == 'textDocument/formatting' then
+              callback(nil, {})
+            elseif method == 'initialize' then
+              callback(nil, {
+                capabilities = {
+                  textDocument = {
+                    formatting = true,
+                  },
+                },
+              })
+            elseif method == 'shutdown' then
+              callback(nil, nil)
+            end
+            request_id = request_id + 1
+            if notify_reply_callback then
+              notify_reply_callback(request_id)
+            end
+            return true, request_id
+          end
+
+          function srv.notify(method)
+            if method == 'exit' then
+              dispatchers.on_exit(0, 15)
+            end
+          end
+          function srv.is_closing()
+            return closing
+          end
+          function srv.terminate()
+            closing = true
+          end
+
+          return srv
+        end
+
+        local client_id = assert(vim.lsp.start({ cmd = server }))
+        local client = assert(vim.lsp.get_client_by_id(client_id))
+
+        local ok, request_id = client:request('textDocument/formatting', {})
+        assert(ok)
+
+        local has_pending = client.requests[request_id] ~= nil
+        vim.lsp.stop_client(client_id)
+
+        return has_pending
+      end)
+
+      eq(false, pending_request, 'expected no pending requests')
+    end)
+
     it('should trigger LspRequest autocmd when requests table changes', function()
       local expected_handlers = {
         { NIL, {}, { method = 'finish', client_id = 1 } },
