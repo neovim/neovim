@@ -123,7 +123,7 @@ end
 --- @param p vim.lpeg.Pattern Pattern directly after `**/`
 --- @return vim.lpeg.Pattern LPeg pattern for `**/p`
 local function dseg(p)
-  return m.P{ p + notslash ^ 0 * m.P '/' * m.V(1) }
+  return m.P { p + notslash ^ 0 * m.P '/' * m.V(1) }
 end
 
 --- @type (vim.lpeg.Pattern|table)
@@ -194,6 +194,7 @@ local function add_cond(a, b)
       end
       return a
     end
+    --- @diagnostic disable-next-line: missing-return
   end
 end
 
@@ -267,7 +268,7 @@ local any_utf8 = m.R('\0\127')
 --- @param ranges (string|string[])[] Character ranges
 --- @return vim.lpeg.Pattern #Character class pattern
 local function class(inv, ranges)
-  local patt = m.P(false) --[[@as vim.lpeg.Pattern]]
+  local patt = m.P(false)
   if #ranges == 0 then
     if inv == '!' then
       return m.P '[!]'
@@ -279,7 +280,7 @@ local function class(inv, ranges)
     patt = patt + (type(v) == 'table' and m.utfR(to_codepoint(v[1]), to_codepoint(v[2])) or m.P(v))
   end
   if inv == '!' then
-    patt = m.P(1) - patt
+    patt = m.P(1) - patt --[[@as vim.lpeg.Pattern]]
   end
   return patt - m.P '/'
 end
