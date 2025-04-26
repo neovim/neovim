@@ -7134,6 +7134,12 @@ describe('builtin popupmenu', function()
       end
       screen:expect(screen_replace(no_sel_screen, '{n: baz}', '{s: baz}'))
       if multigrid then
+        api.nvim_input_mouse('right', 'release', '', 6, 1, 15)
+      else
+        feed('<RightRelease><31,4>')
+      end
+      screen:expect(no_sel_screen)
+      if multigrid then
         api.nvim_input_mouse('left', 'press', '', 4, 1, 2)
         screen:expect([[
         ## grid 1
