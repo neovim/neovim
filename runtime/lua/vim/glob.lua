@@ -34,6 +34,8 @@
 ---   intervals (e.g., `a-z`) or individual characters (e.g., `w`). A range
 ---   including `/` won’t match that character.
 
+--- @diagnostic disable: missing-fields
+
 local m = vim.lpeg
 local mt = getmetatable(m.P(0))
 local re = vim.re
@@ -46,7 +48,9 @@ local letter = m.P(1) - m.S(',*?[]{}/\\') -- Any character except special glob c
 local slash = m.P '/' * m.Cc(m.P '/') -- Path separator with capture
 local notslash = m.P(1) - m.P '/' -- Any character except path separator
 local notcomma = m.P(1) - m.S(',\\') -- Any character except comma and backslash
--- Handle EOF, considering whether we're in a segment or not
+
+--- Handle EOF, considering whether we're in a segment or not
+--- @type vim.lpeg.Pattern
 local eof = -1
   * m.Cb('inseg')
   / function(flag)
@@ -57,14 +61,17 @@ local eof = -1
     end
   end
 
---- @param p table Initial segment pattern data
---- @return table Segment structure with start pattern
+---@alias pat_table { F: string?, [1]: string, [2]: vim.lpeg.Pattern }
+---@alias seg_part { [string]: any, [integer]: pat_table }
+
+--- @param p pat_table Initial segment pattern data
+--- @return seg_part Segment structure with start pattern
 local function start_seg(p)
   return { s = p[2], e = true, n = 0 }
 end
 
---- @param t table Segment structure
---- @param p any Pattern to look for
+--- @param t seg_part Segment structure
+--- @param p pat_table Pattern to look for
 --- @return table Updated segment structure
 local function lookfor(t, p)
   t.n = t.n + 1
@@ -72,7 +79,7 @@ local function lookfor(t, p)
   return t
 end
 
---- @param t table Segment structure
+--- @param t seg_part Segment structure
 --- @return table Segment structure with end pattern
 local function to_seg_end(t)
   t.e = notslash ^ 0
@@ -81,9 +88,10 @@ end
 
 --- Constructs a segment matching pattern from collected components
 ---
---- @param t table Segment structure with patterns
+--- @param t seg_part Segment structure with patterns
 --- @return vim.lpeg.Pattern Complete segment match pattern
 local function end_seg(t)
+  --- @type table<any,any>
   local seg_grammar = { 's' }
   if t.n > 0 then
     seg_grammar.s = t.s
@@ -112,19 +120,20 @@ local function end_seg(t)
   end
 end
 
----@param p vim.lpeg.Pattern Pattern directly after `**/`
----@return vim.lpeg.Pattern LPeg pattern for `**/p`
+--- @param p vim.lpeg.Pattern Pattern directly after `**/`
+--- @return vim.lpeg.Pattern LPeg pattern for `**/p`
 local function dseg(p)
-  return m.P { p + notslash ^ 0 * m.P '/' * m.V(1) }
+  return m.P{ p + notslash ^ 0 * m.P '/' * m.V(1) }
 end
 
+--- @type (vim.lpeg.Pattern|table)
 local g = nil
 
 --- Multiplies conditions for braced expansion (Cartesian product)
 ---
---- @param a string|table First part
---- @param b string|table Second part
---- @return string|table Cartesian product of values
+--- @param a string|string[] First part
+--- @param b string|string[] Second part
+--- @return string|string[] Cartesian product of values
 local function mul_cond(a, b)
   if type(a) == 'string' then
     if type(b) == 'string' then
@@ -144,6 +153,7 @@ local function mul_cond(a, b)
       end
       return a
     elseif type(b) == 'table' then
+      --- @type string[]
       local res = {}
       local idx = 0
       for i = 1, #a do
@@ -165,7 +175,7 @@ end
 ---
 --- @param a string|table First part
 --- @param b string|table Second part
---- @return table Combined alternatives
+--- @return table #Combined alternatives
 local function add_cond(a, b)
   if type(a) == 'string' then
     if type(b) == 'string' then
@@ -190,10 +200,10 @@ end
 --- Expands patterns handling segment boundaries
 --- `#` prefix is added for sub-grammar to detect in-segment flag
 ---
----@param a table Array of patterns
+---@param a (any[]|vim.lpeg.Pattern[]) Array of patterns
 ---@param b string Tail string
 ---@param inseg boolean Whether inside a path segment
----@return vim.lpeg.Pattern Expanded pattern
+---@return vim.lpeg.Pattern #Expanded pattern
 local function expand(a, b, inseg)
   for i = 1, #a do
     if inseg then
@@ -210,8 +220,8 @@ end
 
 --- Converts a UTF-8 character to its Unicode codepoint
 ---
----@param utf8_str string UTF-8 character
----@return number Codepoint value
+--- @param utf8_str string UTF-8 character
+--- @return number #Codepoint value
 local function to_codepoint(utf8_str)
   local codepoint = 0
   local byte_count = 0
@@ -245,19 +255,19 @@ local function to_codepoint(utf8_str)
   return codepoint
 end
 
--- Pattern for matching UTF-8 characters
+--- Pattern for matching UTF-8 characters
 local cont = m.R('\128\191')
 local any_utf8 = m.R('\0\127')
   + m.R('\194\223') * cont
   + m.R('\224\239') * cont * cont
   + m.R('\240\244') * cont * cont * cont
 
----@param inv string Inversion flag ('!' or '')
----@param ranges table Character ranges
----@return vim.lpeg.Pattern Character class pattern
--- Creates a character class pattern for glob ranges
+--- Creates a character class pattern for glob ranges
+--- @param inv string Inversion flag ('!' or '')
+--- @param ranges (string|string[])[] Character ranges
+--- @return vim.lpeg.Pattern #Character class pattern
 local function class(inv, ranges)
-  local patt = false
+  local patt = m.P(false) --[[@as vim.lpeg.Pattern]]
   if #ranges == 0 then
     if inv == '!' then
       return m.P '[!]'
@@ -285,6 +295,7 @@ local opt_tail = re.compile [[
 
 -- stylua: ignore start
 --- @nodoc
+--- @diagnostic disable
 --- Main grammar for glob pattern matching
 g = {
   'Glob',
@@ -347,6 +358,7 @@ g = {
                       end), 'F')
 }
 -- stylua: ignore end
+--- @diagnostic enable
 
 --- @nodoc
 g = m.P(g)
@@ -354,7 +366,7 @@ g = m.P(g)
 --- Parses a raw glob into an |lua-lpeg| pattern.
 ---
 ---@param pattern string The raw glob pattern
----@return vim.lpeg.Pattern An |lua-lpeg| representation of the pattern
+---@return vim.lpeg.Pattern #An |lua-lpeg| representation of the pattern
 function M.to_lpeg(pattern)
   local lpeg_pattern = g:match(pattern) --[[@as vim.lpeg.Pattern?]]
   assert(lpeg_pattern, 'Invalid glob')
