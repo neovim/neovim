@@ -309,6 +309,7 @@ end
 --- @param results table<integer,{err: lsp.ResponseError?, result: lsp.SignatureHelp?}>
 local function process_signature_help_results(results)
   local signatures = {} --- @type [vim.lsp.Client,lsp.SignatureInformation][]
+  local active_signature = 1
 
   -- Pre-process results
   for client_id, r in pairs(results) do
@@ -323,15 +324,19 @@ local function process_signature_help_results(results)
     else
       local result = r.result --- @type lsp.SignatureHelp
       if result and result.signatures and result.signatures[1] then
-        for _, sig in ipairs(result.signatures) do
+        for i, sig in ipairs(result.signatures) do
           sig.activeParameter = sig.activeParameter or result.activeParameter
-          signatures[#signatures + 1] = { client, sig }
+          local idx = #signatures + 1
+          if (result.activeSignature or 0) + 1 == i then
+            active_signature = idx
+          end
+          signatures[idx] = { client, sig }
         end
       end
     end
   end
 
-  return signatures
+  return signatures, active_signature
 end
 
 local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
@@ -354,7 +359,7 @@ function M.signature_help(config)
       return
     end
 
-    local signatures = process_signature_help_results(results)
+    local signatures, active_signature = process_signature_help_results(results)
 
     if not next(signatures) then
       if config.silent ~= true then
@@ -365,8 +370,8 @@ function M.signature_help(config)
 
     local ft = vim.bo[ctx.bufnr].filetype
     local total = #signatures
-    local can_cycle = total > 1 and config.focusable
-    local idx = 0
+    local can_cycle = total > 1 and config.focusable ~= false
+    local idx = active_signature - 1
 
     --- @param update_win? integer
     local function show_signature(update_win)
@@ -381,7 +386,9 @@ function M.signature_help(config)
         return
       end
 
-      local sfx = can_cycle and string.format(' (%d/%d) (<C-s> to cycle)', idx, total) or ''
+      local sfx = total > 1
+          and string.format(' (%d/%d)%s', idx, total, can_cycle and ' (<C-s> to cycle)' or '')
+        or ''
       local title = string.format('Signature Help: %s%s', client.name, sfx)
       if config.border then
         config.title = title
