@@ -373,7 +373,7 @@ function M._check(mods, plugin_names)
 
   local emptybuf = vim.fn.bufnr('$') == 1 and vim.fn.getline(1) == '' and 1 == vim.fn.line('$')
 
-  local bufnr = vim.api.nvim_create_buf(true, true)
+  local bufnr ---@type integer
   if
     vim.g.health
     and type(vim.g.health) == 'table'
@@ -381,7 +381,8 @@ function M._check(mods, plugin_names)
   then
     local max_height = math.floor(vim.o.lines * 0.8)
     local max_width = 80
-    local float_bufnr, float_winid = vim.lsp.util.open_floating_preview({}, '', {
+    local float_winid
+    bufnr, float_winid = vim.lsp.util.open_floating_preview({}, '', {
       height = max_height,
       width = max_width,
       offset_x = math.floor((vim.o.columns - max_width) / 2),
@@ -389,9 +390,10 @@ function M._check(mods, plugin_names)
       relative = 'editor',
     })
     vim.api.nvim_set_current_win(float_winid)
-    vim.bo[float_bufnr].modifiable = true
+    vim.bo[bufnr].modifiable = true
     vim.wo[float_winid].list = false
   else
+    bufnr = vim.api.nvim_create_buf(true, true)
     -- When no command modifiers are used:
     -- - If the current buffer is empty, open healthcheck directly.
     -- - If not specified otherwise open healthcheck in a tab.
