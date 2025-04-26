@@ -215,7 +215,8 @@ describe('vim.lsp.diagnostic', function()
             diagnosticProvider = {},
           },
           handlers = {
-            [vim.lsp.protocol.Methods.textDocument_diagnostic] = function()
+            [vim.lsp.protocol.Methods.textDocument_diagnostic] = function(_, params)
+              _G.params = params
               _G.requests = _G.requests + 1
             end,
           },
@@ -275,6 +276,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
 
         return vim.diagnostic.get(diagnostic_bufnr)
@@ -300,6 +302,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
         return vim.diagnostic.get(diagnostic_bufnr)
       end)
@@ -320,6 +323,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
       end)
 
@@ -358,6 +362,7 @@ describe('vim.lsp.diagnostic', function()
           },
           uri = fake_uri,
           client_id = client_id,
+          bufnr = diagnostic_bufnr,
         }, {})
       end)
 
@@ -392,6 +397,7 @@ describe('vim.lsp.diagnostic', function()
           }, {}, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             client_id = client_id,
+            bufnr = diagnostic_bufnr,
           })
 
           return _G.requests
@@ -408,6 +414,7 @@ describe('vim.lsp.diagnostic', function()
           }, {}, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             client_id = client_id,
+            bufnr = diagnostic_bufnr,
           })
 
           return _G.requests
@@ -424,9 +431,40 @@ describe('vim.lsp.diagnostic', function()
           }, {}, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             client_id = client_id,
+            bufnr = diagnostic_bufnr,
           })
 
           return _G.requests
+        end)
+      )
+    end)
+
+    it('requests with the `previousResultId`', function()
+      eq(
+        'dummy_server',
+        exec_lua(function()
+          vim.lsp.diagnostic.on_diagnostic(nil, {
+            kind = 'full',
+            resultId = 'dummy_server',
+            items = {
+              _G.make_error('Pull Diagnostic', 4, 4, 4, 4),
+            },
+          }, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            params = {
+              textDocument = { uri = fake_uri },
+            },
+            client_id = client_id,
+            bufnr = diagnostic_bufnr,
+          })
+          vim.api.nvim_exec_autocmds('LspNotify', {
+            buffer = diagnostic_bufnr,
+            data = {
+              method = vim.lsp.protocol.Methods.textDocument_didChange,
+              client_id = client_id,
+            },
+          })
+          return _G.params.previousResultId
         end)
       )
     end)
