@@ -2396,38 +2396,42 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
     } while (var_iter != NULL);
   }
 
-  // Initialize jump list
-  wms->jumps_size = shada_init_jumps(wms->jumps, &removable_bufs);
+  if (num_marked_files > 0) {  // Skip if '0 in 'shada'
+    // Initialize jump list
+    wms->jumps_size = shada_init_jumps(wms->jumps, &removable_bufs);
+  }
 
-  const bool search_highlighted = !(no_hlsearch
-                                    || find_shada_parameter('h') != NULL);
-  const bool search_last_used = search_was_last_used();
+  if (dump_one_history[HIST_SEARCH] > 0) {  // Skip if /0 in 'shada'
+    const bool search_highlighted = !(no_hlsearch
+                                      || find_shada_parameter('h') != NULL);
+    const bool search_last_used = search_was_last_used();
 
-  // Initialize search pattern
-  add_search_pattern(&wms->search_pattern, &get_search_pattern, false,
-                     search_last_used, search_highlighted);
+    // Initialize search pattern
+    add_search_pattern(&wms->search_pattern, &get_search_pattern, false,
+                       search_last_used, search_highlighted);
 
-  // Initialize substitute search pattern
-  add_search_pattern(&wms->sub_search_pattern, &get_substitute_pattern, true,
-                     search_last_used, search_highlighted);
+    // Initialize substitute search pattern
+    add_search_pattern(&wms->sub_search_pattern, &get_substitute_pattern, true,
+                       search_last_used, search_highlighted);
 
-  // Initialize substitute replacement string
-  {
+    // Initialize substitute replacement string
     SubReplacementString sub;
     sub_get_replacement(&sub);
-    wms->replacement = (PossiblyFreedShadaEntry) {
-      .can_free_entry = false,
-      .data = {
-        .type = kSDItemSubString,
-        .timestamp = sub.timestamp,
+    if (sub.sub != NULL) {  // Don't store empty replacement string
+      wms->replacement = (PossiblyFreedShadaEntry) {
+        .can_free_entry = false,
         .data = {
-          .sub_string = {
-            .sub = sub.sub,
-          }
-        },
-        .additional_data = sub.additional_data,
-      }
-    };
+          .type = kSDItemSubString,
+          .timestamp = sub.timestamp,
+          .data = {
+            .sub_string = {
+              .sub = sub.sub,
+            }
+          },
+          .additional_data = sub.additional_data,
+        }
+      };
+    }
   }
 
   // Initialize global marks
@@ -2555,9 +2559,9 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
     }
   }
 
-  // Update numbered marks: '0' should be replaced with the current position,
-  // '9' should be removed and all other marks shifted.
-  if (!ignore_buf(curbuf, &removable_bufs) && curwin->w_cursor.lnum != 0) {
+  // Update numbered marks: replace '0 mark with the current position,
+  // remove '9 and shift all other marks. Skip if f0 in 'shada'.
+  if (dump_global_marks && !ignore_buf(curbuf, &removable_bufs) && curwin->w_cursor.lnum != 0) {
     replace_numbered_mark(wms, 0, (PossiblyFreedShadaEntry) {
       .can_free_entry = false,
       .data = {

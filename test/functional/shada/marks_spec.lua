@@ -51,29 +51,115 @@ describe('ShaDa support code', function()
     eq(2, nvim_current_line())
   end)
 
-  it('does not dump global mark with `f0` in shada', function()
+  it('can dump and read back numbered marks', function()
+    local function move(cmd)
+      feed(cmd)
+      nvim_command('wshada')
+    end
+    nvim_command('edit ' .. testfilename)
+    move('l')
+    move('l')
+    move('j')
+    move('l')
+    move('l')
+    nvim_command('edit ' .. testfilename_2)
+    move('l')
+    move('l')
+    move('j')
+    move('l')
+    move('l')
+    -- we have now populated marks 0 through 9
+    nvim_command('edit ' .. testfilename)
+    feed('gg0')
+    -- during shada save on exit, mark 0 will become the current position,
+    -- 9 will be removed, and all other marks shifted
+    expect_exit(nvim_command, 'qall')
+    reset()
+    nvim_command('edit ' .. testfilename)
+    nvim_command('edit ' .. testfilename_2)
+    local marklist = fn.getmarklist()
+    for _, mark in ipairs(marklist) do
+      mark.file = fn.fnamemodify(mark.file, ':t')
+    end
+    eq({
+      {
+        file = testfilename,
+        mark = "'0",
+        pos = { 1, 1, 1, 0 },
+      },
+      {
+        file = testfilename_2,
+        mark = "'1",
+        pos = { 2, 2, 5, 0 },
+      },
+      {
+        file = testfilename_2,
+        mark = "'2",
+        pos = { 2, 2, 4, 0 },
+      },
+      {
+        file = testfilename_2,
+        mark = "'3",
+        pos = { 2, 2, 3, 0 },
+      },
+      {
+        file = testfilename_2,
+        mark = "'4",
+        pos = { 2, 1, 3, 0 },
+      },
+      {
+        file = testfilename_2,
+        mark = "'5",
+        pos = { 2, 1, 2, 0 },
+      },
+      {
+        file = testfilename,
+        mark = "'6",
+        pos = { 1, 2, 5, 0 },
+      },
+      {
+        file = testfilename,
+        mark = "'7",
+        pos = { 1, 2, 4, 0 },
+      },
+      {
+        file = testfilename,
+        mark = "'8",
+        pos = { 1, 2, 3, 0 },
+      },
+      {
+        file = testfilename,
+        mark = "'9",
+        pos = { 1, 1, 3, 0 },
+      },
+    }, marklist)
+  end)
+
+  it('does not dump global or numbered marks with `f0` in shada', function()
     nvim_command('set shada+=f0')
     nvim_command('edit ' .. testfilename)
     nvim_command('mark A')
     nvim_command('2')
-    nvim_command('kB')
     nvim_command('wshada')
     reset()
     nvim_command('language C')
     eq('Vim(normal):E20: Mark not set', exc_exec('normal! `A'))
+    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `0'))
   end)
 
-  it("does read back global mark even with `'0` and `f0` in shada", function()
+  it("restores global and numbered marks even with `'0` and `f0` in shada", function()
     nvim_command('edit ' .. testfilename)
     nvim_command('mark A')
     nvim_command('2')
-    nvim_command('kB')
     nvim_command('wshada')
     reset("set shada='0,f0")
     nvim_command('language C')
     nvim_command('normal! `A')
     eq(testfilename, fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
     eq(1, nvim_current_line())
+    nvim_command('normal! `0')
+    eq(testfilename, fn.fnamemodify(api.nvim_buf_get_name(0), ':t'))
+    eq(2, nvim_current_line())
   end)
 
   it('is able to dump and read back local mark', function()
@@ -149,6 +235,37 @@ describe('ShaDa support code', function()
     local saved = exec_capture('jumps')
     expect_exit(nvim_command, 'qall')
     reset()
+    eq(saved, exec_capture('jumps'))
+  end)
+
+  it("does not dump jumplist if `'0` in shada", function()
+    local empty_jumps = exec_capture('jumps')
+    nvim_command("set shada='0")
+    nvim_command('edit ' .. testfilename_2)
+    nvim_command('normal! G')
+    nvim_command('normal! gg')
+    nvim_command('edit ' .. testfilename)
+    nvim_command('normal! G')
+    nvim_command('normal! gg')
+    nvim_command('enew')
+    nvim_command('normal! gg')
+    expect_exit(nvim_command, 'qall')
+    reset()
+    eq(empty_jumps, exec_capture('jumps'))
+  end)
+
+  it("does read back jumplist even with `'0` in shada", function()
+    nvim_command('edit ' .. testfilename_2)
+    nvim_command('normal! G')
+    nvim_command('normal! gg')
+    nvim_command('edit ' .. testfilename)
+    nvim_command('normal! G')
+    nvim_command('normal! gg')
+    nvim_command('enew')
+    nvim_command('normal! gg')
+    local saved = exec_capture('jumps')
+    expect_exit(nvim_command, 'qall')
+    reset("set shada='0")
     eq(saved, exec_capture('jumps'))
   end)
 
