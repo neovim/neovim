@@ -77,6 +77,16 @@ listed below, if (1) the language server supports the functionality and (2)
 the options are empty or were set by the builtin runtime (ftplugin) files. The
 options are not restored when the LSP client is stopped or detached.
 
+GLOBAL DEFAULTS
+                                          *grr* *gra* *grn* *gri* *i_CTRL-S*
+These GLOBAL keymaps are created unconditionally when Nvim starts:
+- "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
+- "gra" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
+- "grr" is mapped in Normal mode to |vim.lsp.buf.references()|
+- "gri" is mapped in Normal mode to |vim.lsp.buf.implementation()|
+- "gO" is mapped in Normal mode to |vim.lsp.buf.document_symbol()|
+- CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
+
 BUFFER-LOCAL DEFAULTS
 - 'omnifunc' is set to |vim.lsp.omnifunc()|, use |i_CTRL-X_CTRL-O| to trigger
   completion.
@@ -89,20 +99,10 @@ BUFFER-LOCAL DEFAULTS
 - |K| is mapped to |vim.lsp.buf.hover()| unless |'keywordprg'| is customized or
   a custom keymap for `K` exists.
 
-GLOBAL DEFAULTS
-                                          *grr* *gra* *grn* *gri* *i_CTRL-S*
-These GLOBAL keymaps are created unconditionally when Nvim starts:
-- "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
-- "gra" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
-- "grr" is mapped in Normal mode to |vim.lsp.buf.references()|
-- "gri" is mapped in Normal mode to |vim.lsp.buf.implementation()|
-- "gO" is mapped in Normal mode to |vim.lsp.buf.document_symbol()|
-- CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
-
+DISABLING DEFAULTS                                      *lsp-defaults-disable*
 You can remove GLOBAL keymaps at any time using |vim.keymap.del()| or
 |:unmap|. See also |gr-default|.
 
-                                                        *lsp-defaults-disable*
 To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
@@ -723,37 +723,30 @@ Lua module: vim.lsp                                                 *lsp-core*
                          the buffer. Thus a `root_dir()` function can
                          dynamically decide per-buffer whether to activate (or
                          skip) LSP. See example at |vim.lsp.enable()|.
-      • {root_markers}?  (`(string|string[])[]`) Directory markers (.e.g.
-                         '.git/') where the LSP server will base its
-                         workspaceFolders, rootUri, and rootPath on
-                         initialization. Unused if `root_dir` is provided.
+      • {root_markers}?  (`(string|string[])[]`) Directory markers (".git/",
+                         "package.json", …) used to decide `root_dir`.
+                         Unused if `root_dir` is provided. The list order
+                         decides priority. To indicate "equal priority",
+                         specify names in a nested list
+                         `{ { 'a.txt', 'b.lua' }, ... }`.
 
-                         The list order decides the priority. To indicate
-                         "equal priority", specify names in a nested list
-                         (`{ { 'a', 'b' }, ... }`) Each entry in this list is
-                         a set of one or more markers. For each set, Nvim will
-                         search upwards for each marker contained in the set.
-                         If a marker is found, the directory which contains
-                         that marker is used as the root directory. If no
-                         markers from the set are found, the process is
-                         repeated with the next set in the list.
+                         For each item, Nvim will search upwards (from the
+                         buffer file) for that marker, or list of markers;
+                         search stops at the first directory containing that
+                         marker, and the directory is used as the root dir
+                         (workspace folder).
 
-                         Example: >lua
+                         Example: Find the first ancestor directory containing
+                         file or directory "stylua.toml"; if not found, find
+                         the first ancestor containing ".git": >lua
                                root_markers = { 'stylua.toml', '.git' }
 <
 
-                         Find the first parent directory containing the file
-                         `stylua.toml`. If not found, find the first parent
-                         directory containing the file or directory `.git`.
-
-                         Example: >lua
+                         Example: Find the first ancestor directory containing
+                         EITHER "stylua.toml" or ".luarc.json"; if not found,
+                         find the first ancestor containing ".git": >lua
                                root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
 <
-
-                         Find the first parent directory containing EITHER
-                         `stylua.toml` or `.luarc.json`. If not found, find
-                         the first parent directory containing the file or
-                         directory `.git`.
 
 
 buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
@@ -1359,11 +1352,12 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                command name, and the value is a function which
                                is called if any LSP action (code action, code
                                lenses, …) triggers the command.
-      • {detached}?            (`boolean`, default: true) Daemonize the server
-                               process so that it runs in a separate process
-                               group from Nvim. Nvim will shutdown the process
-                               on exit, but if Nvim fails to exit cleanly this
-                               could leave behind orphaned server processes.
+      • {detached}?            (`boolean`, default: `true`) Daemonize the
+                               server process so that it runs in a separate
+                               process group from Nvim. Nvim will shutdown the
+                               process on exit, but if Nvim fails to exit
+                               cleanly this could leave behind orphaned server
+                               processes.
       • {flags}?               (`table`) A table with flags for the client.
                                The current (experimental) flags are:
                                • {allow_incremental_sync}? (`boolean`,
@@ -1388,8 +1382,8 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                initialization request as
                                `initializationOptions`. See `initialize` in
                                the LSP spec.
-      • {name}?                (`string`) (default: client-id) Name in logs
-                               and user messages.
+      • {name}?                (`string`, default: client-id) Name in logs and
+                               user messages.
       • {offset_encoding}?     (`'utf-8'|'utf-16'|'utf-32'`) Called "position
                                encoding" in LSP spec. The encoding that the
                                LSP server expects, used for communication. Not
@@ -1439,7 +1433,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                this list. Can be `null` if the client supports
                                workspace folders but none are configured. See
                                `workspaceFolders` in LSP spec.
-      • {workspace_required}?  (`boolean`) (default false) Server requires a
+      • {workspace_required}?  (`boolean`, default: `false`) Server requires a
                                workspace (no "single file" support). Note:
                                Without a workspace, cross-file features
                                (navigation, hover) may or may not work
