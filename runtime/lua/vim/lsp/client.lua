@@ -840,7 +840,7 @@ end
 --- Get options for a method that is registered dynamically.
 --- @param method vim.lsp.protocol.Method
 function Client:_supports_registration(method)
-  local capability_path = lsp.protocol._request_name_to_client_capability[method]
+  local capability_path = lsp.protocol._request_name_to_client_capability[method] or {}
   local capability = vim.tbl_get(self.capabilities, unpack(capability_path))
   return type(capability) == 'table' and capability.dynamicRegistration
 end
