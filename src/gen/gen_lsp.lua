@@ -7,7 +7,7 @@ Generates lua-ls annotations for lsp.
 Also updates types in runtime/lua/vim/lsp/protocol.lua
 
 Usage:
-  nvim -l src/gen/gen_lsp.lua [options]
+  src/gen/gen_lsp.lua [options]
 
 Options:
   --version <version>  LSP version to use (default: 3.18)
