@@ -1382,8 +1382,8 @@ The $XDG_CONFIG_HOME, $XDG_DATA_HOME, $XDG_RUNTIME_DIR, $XDG_STATE_HOME,
 $XDG_CACHE_HOME, $XDG_CONFIG_DIRS and $XDG_DATA_DIRS environment variables
 are used if defined, else default values (listed below) are used.
 
-Throughout the help pages these defaults are used as placeholders, e.g.
-"~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
+Note: In the help these defaults are used as placeholders, e.g. "~/.config" is
+understood as "$XDG_CONFIG_HOME or ~/.config".
 
 CONFIG DIRECTORY (DEFAULT) ~
                   *$XDG_CONFIG_HOME*            Nvim: stdpath("config")
@@ -1437,12 +1437,17 @@ configuration files in `$XDG_CONFIG_HOME/foo` instead of
 `$XDG_CONFIG_HOME/nvim`. `$NVIM_APPNAME` must be a name, such as "foo", or a
 relative path, such as "foo/bar".
 
+Note: In the help wherever `$XDG_CONFIG_…/nvim` is mentioned it is understood
+as `$XDG_CONFIG_…/$NVIM_APPNAME`.
+
+						*state-isolation*
 One use-case for $NVIM_APPNAME is to "isolate" Nvim applications.
 Alternatively, for true isolation, on Linux you can use cgroups namespaces: >
     systemd-run --user -qt -p PrivateUsers=yes -p BindPaths=/home/user/profile_xy:/home/user/.config/nvim nvim
-
-Note: Throughout the help pages, wherever `$XDG_CONFIG_…/nvim` is mentioned it
-is understood to mean `$XDG_CONFIG_…/$NVIM_APPNAME`.
+<
+						*stateless*
+To run Nvim without creating any directories or data files: >
+    NVIM_LOG_FILE=/dev/null nvim -n -i NONE
 
 LOG FILE					*log* *$NVIM_LOG_FILE* *E5430*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal

@@ -1211,8 +1211,7 @@ local function on_code_action_results(results, opts)
   vim.ui.select(actions, select_opts, on_user_choice)
 end
 
---- Selects a code action available at the current
---- cursor position.
+--- Selects a code action (LSP: "textDocument/codeAction" request) available at cursor position.
 ---
 ---@param opts? vim.lsp.buf.code_action.Opts
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction

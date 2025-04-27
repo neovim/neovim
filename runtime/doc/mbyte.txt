@@ -19,12 +19,7 @@ For changing the language of messages and menus see |mlang.txt|.
 ==============================================================================
 Getting started						*mbyte-first*
 
-This is a summary of the multibyte features in Vim.  If you are lucky it works
-as described and you can start using Vim without much trouble.  If something
-doesn't work you will have to read the rest.  Don't be surprised if it takes
-quite a bit of work and experimenting to make Vim use all the multibyte
-features.  Unfortunately, every system has its own way to deal with multibyte
-languages and it is quite complicated.
+This is a summary of the multibyte features in Nvim.
 
 
 LOCALE
@@ -54,14 +49,14 @@ See |mbyte-locale| for details.
 
 ENCODING
 
-Nvim always uses UTF-8 internally. Thus 'encoding' option is always set
-to "utf-8" and cannot be changed.
+Nvim always uses UTF-8 internally. Thus 'encoding' is always set to "utf-8"
+and cannot be changed.
 
 All the text that is used inside Vim will be in UTF-8. Not only the text in
 the buffers, but also in registers, variables, etc.
 
-You can edit files in different encodings than UTF-8.  Nvim
-will convert the file when you read it and convert it back when you write it.
+You can edit files in different encodings than UTF-8.  Nvim will convert the
+file when you read it and convert it back when you write it.
 See 'fileencoding', 'fileencodings' and |++enc|.
 
 
@@ -184,9 +179,9 @@ You could make a small shell script for this.
 ==============================================================================
 Encoding				*mbyte-encoding*
 
-In Nvim UTF-8 is always used internally to encode characters.
- This applies to all the places where text is used, including buffers (files
- loaded into memory), registers and variables.
+UTF-8 is always used internally to encode characters. This applies to all the
+places where text is used, including buffers (files loaded into memory),
+registers and variables.
 
 							*charset* *codeset*
 Charset is another name for encoding.  There are subtle differences, but these
@@ -609,25 +604,25 @@ Combining forms:
 Using UTF-8				*mbyte-utf8* *UTF-8* *utf-8* *utf8*
 							*Unicode* *unicode*
 The Unicode character set was designed to include all characters from other
-character sets.  Therefore it is possible to write text in any language using
-Unicode (with a few rarely used languages excluded).  And it's mostly possible
-to mix these languages in one file, which is impossible with other encodings.
+character sets.  Therefore it is possible to write text in (almost) any
+language using Unicode.  And it's mostly possible to mix these languages in
+one file, which is impossible with other encodings.
 
 Unicode can be encoded in several ways.  The most popular one is UTF-8, which
 uses one or more bytes for each character and is backwards compatible with
-ASCII.   On MS-Windows UTF-16 is also used (previously UCS-2), which uses
-16-bit words.  Vim can support all of these encodings, but always uses UTF-8
+ASCII.  On MS-Windows UTF-16 is also used (previously UCS-2), which uses
+16-bit words.  Nvim supports all of these encodings, but always uses UTF-8
 internally.
 
-Vim has comprehensive UTF-8 support.  It works well in:
-- xterm with UTF-8 support enabled
-- MS-Windows GUI
-- several other platforms
-
-Double-width characters are supported.  Works best with 'guifontwide'.  When
+Nvim supports double-width characters; works best with 'guifontwide'.  When
 using only 'guifont' the wide characters are drawn in the normal width and
 a space to fill the gap.
 
+EMOJI							*emoji*
+
+You can list emoji characters using this script: >vim
+    :source $VIMRUNTIME/scripts/emoji_list.lua
+<
 							*bom-bytes*
 When reading a file a BOM (Byte Order Mark) can be used to recognize the
 Unicode encoding:
@@ -698,7 +693,7 @@ You need to specify a font to be used.  For double-wide characters another
 font is required, which is exactly twice as wide.  There are three ways to do
 this:
 
-1. Set 'guifont' and let Vim find a matching 'guifontwide'
+1. Set 'guifont' and let Nvim find a matching 'guifontwide'
 2. Set 'guifont' and 'guifontwide'
 
 See the documentation for each option for details.  Example: >
@@ -730,7 +725,7 @@ COMMAND ARGUMENTS					*utf-8-char-arg*
 
 Commands like |f|, |F|, |t| and |r| take an argument of one character.  For
 UTF-8 this argument may include one or two composing characters.  These need
-to be produced together with the base character, Vim doesn't wait for the next
+to be produced together with the base character, Nvim doesn't wait for the next
 character to be typed to find out if it is a composing character or not.
 Using 'keymap' or |:lmap| is a nice way to type these characters.
 
@@ -740,7 +735,6 @@ this will find matches in the text with or without composing characters.  When
 searching for a character with a composing character, this will only find
 matches with that composing character.  It was implemented this way, because
 not everybody is able to type a composing character.
-
 
 ==============================================================================
 Overview of options					*mbyte-options*
