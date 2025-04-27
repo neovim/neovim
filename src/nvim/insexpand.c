@@ -3099,7 +3099,6 @@ static int add_match_to_list(typval_T *rettv, char *str, int pos)
 /// "complete_match()" function
 void f_complete_match(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-
   tv_list_alloc_ret(rettv,   kListLenUnknown);
 
   char *ise = curbuf->b_p_ise[0] != NUL ? curbuf->b_p_ise : p_ise;
@@ -3141,17 +3140,17 @@ void f_complete_match(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     regmatch.regprog = vim_regcomp("\\k\\+$", RE_MAGIC);
     if (regmatch.regprog != NULL) {
       if (vim_regexec_nl(&regmatch, before_cursor, (colnr_T)0)) {
-        int bytepos = (int)(regmatch.startp[0] - before_cursor);
         char *trig = xstrnsave(regmatch.startp[0], (size_t)(regmatch.endp[0] - regmatch.startp[0]));
         if (trig == NULL) {
           xfree(before_cursor);
           return;
         }
 
+        int bytepos = (int)(regmatch.startp[0] - before_cursor);
         int ret = add_match_to_list(rettv, trig, bytepos);
         xfree(trig);
         if (ret == FAIL) {
-          xfree(trig);
+          xfree(before_cursor);
           vim_regfree(regmatch.regprog);
           return;
         }
