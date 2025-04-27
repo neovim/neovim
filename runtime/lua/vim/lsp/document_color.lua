@@ -15,12 +15,15 @@ local M = {}
 
 --- @class (private) vim.lsp.document_color.BufState
 --- @field enabled boolean Whether document_color is enabled for the current buffer
---- @field buf_version? integer Buffer version for which the color ranges correspond to
+--- @field processed_version table<integer, integer?> (client_id -> buffer version) Buffer version for which the color ranges correspond to
 --- @field applied_version table<integer, integer?> (client_id -> buffer version) Last buffer version for which we applied color ranges
 --- @field hl_info table<integer, vim.lsp.document_color.HighlightInfo[]?> (client_id -> color highlights) Processed highlight information
 
 --- @type table<integer, vim.lsp.document_color.BufState?>
 local bufstates = {}
+
+--- @type table<integer, integer> (client_id -> namespace ID) documentColor namespace ID for each client.
+local client_ns = {}
 
 --- @inlinedoc
 --- @class vim.lsp.document_color.enable.Opts
@@ -91,7 +94,13 @@ end
 --- @param bufnr integer
 --- @param enabled boolean
 local function reset_bufstate(bufnr, enabled)
-  bufstates[bufnr] = { enabled = enabled, applied_version = {}, hl_info = {} }
+  bufstates[bufnr] = {
+    enabled = enabled,
+    processed_version = {},
+    applied_version = {},
+    hl_info = {},
+    ns = {},
+  }
 end
 
 --- |lsp-handler| for the `textDocument/documentColor` method.
@@ -118,6 +127,10 @@ local function on_document_color(err, result, ctx)
     return
   end
 
+  if not client_ns[client_id] then
+    client_ns[client_id] = api.nvim_create_namespace('nvim.lsp.document_color.client_' .. client_id)
+  end
+
   local hl_infos = {} --- @type vim.lsp.document_color.HighlightInfo[]
   local style = document_color_opts.style
   for _, res in ipairs(result) do
@@ -136,9 +149,10 @@ local function on_document_color(err, result, ctx)
 
     table.insert(hl_infos, hl_info)
   end
-  bufstate.hl_info[client_id] = hl_infos
 
-  bufstate.buf_version = ctx.version
+  bufstate.hl_info[client_id] = hl_infos
+  bufstate.processed_version[client_id] = ctx.version
+
   api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
 end
 
@@ -147,11 +161,11 @@ local function buf_clear(bufnr)
   local bufstate = assert(bufstates[bufnr])
   local client_ids = vim.tbl_keys(bufstate.hl_info) --- @type integer[]
 
-  for _, id in ipairs(client_ids) do
-    bufstate.hl_info[id] = {}
+  for _, client_id in ipairs(client_ids) do
+    bufstate.hl_info[client_id] = {}
+    api.nvim_buf_clear_namespace(bufnr, client_ns[client_id], 0, -1)
   end
 
-  api.nvim_buf_clear_namespace(bufnr, document_color_ns, 0, -1)
   api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
 end
 
@@ -305,26 +319,20 @@ api.nvim_set_decoration_provider(document_color_ns, {
     end
     local bufstate = assert(bufstates[bufnr])
 
-    local all_applied = #bufstate.applied_version > 0
-      and vim.iter(pairs(bufstate.applied_version)):all(function(_, buf_version)
-        return buf_version == bufstate.buf_version
-      end)
-
-    if bufstate.buf_version ~= util.buf_versions[bufnr] or all_applied then
-      return
-    end
-
-    api.nvim_buf_clear_namespace(bufnr, document_color_ns, 0, -1)
-
     local style = document_color_opts.style
 
     for client_id, client_hls in pairs(bufstate.hl_info) do
-      if bufstate.applied_version[client_id] ~= bufstate.buf_version then
+      if
+        bufstate.processed_version[client_id] == util.buf_versions[bufnr]
+        and bufstate.processed_version[client_id] ~= bufstate.applied_version[client_id]
+      then
+        api.nvim_buf_clear_namespace(bufnr, client_ns[client_id], 0, -1)
+
         for _, hl in ipairs(client_hls) do
           if type(style) == 'function' then
             style(bufnr, hl.range, hl.hex_code)
           elseif style == 'foreground' or style == 'background' then
-            api.nvim_buf_set_extmark(bufnr, document_color_ns, hl.range[1], hl.range[2], {
+            api.nvim_buf_set_extmark(bufnr, client_ns[client_id], hl.range[1], hl.range[2], {
               end_row = hl.range[3],
               end_col = hl.range[4],
               hl_group = hl.hl_group,
@@ -333,14 +341,14 @@ api.nvim_set_decoration_provider(document_color_ns, {
           else
             -- Default swatch: \uf0c8
             local swatch = style == 'virtual' and ' ' or style
-            api.nvim_buf_set_extmark(bufnr, document_color_ns, hl.range[1], hl.range[2], {
+            api.nvim_buf_set_extmark(bufnr, client_ns[client_id], hl.range[1], hl.range[2], {
               virt_text = { { swatch, hl.hl_group } },
               virt_text_pos = 'inline',
             })
           end
         end
 
-        bufstate.applied_version[client_id] = bufstate.buf_version
+        bufstate.applied_version[client_id] = bufstate.processed_version[client_id]
       end
     end
   end,
