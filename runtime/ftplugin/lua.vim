@@ -81,4 +81,7 @@ function s:LuaInclude(fname) abort
   return fname
 endfunction
 
+let &cpo = s:cpo_save
+unlet s:cpo_save
+
 " vim: nowrap sw=2 sts=2 ts=8 noet:
