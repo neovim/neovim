@@ -9,17 +9,17 @@
 ==============================================================================
 Checkhealth                                              *vim.health* *health*
 
-
 vim.health is a minimal framework to help users troubleshoot configuration and
 any other environment conditions that a plugin might care about. Nvim ships
 with healthchecks for configuration, performance, python support, ruby
 support, clipboard support, and more.
 
 To run all healthchecks, use: >vim
-
-        :checkhealth
+    :checkhealth
 <
+
 Plugin authors are encouraged to write new healthchecks. |health-dev|
+
 
 COMMANDS                                                     *health-commands*
 
@@ -56,7 +56,6 @@ Local mappings in the healthcheck buffer:
 q               Closes the window.
 
 Global configuration:
-
                                                                     *g:health*
 g:health  Dictionary with the following optional keys:
           - `style` (`'float'|nil`) Set to "float" to display :checkhealth in
@@ -65,16 +64,26 @@ g:health  Dictionary with the following optional keys:
           Example: >lua
             vim.g.health = { style = 'float' }
 
+
+Local configuration:
+
+Checkhealth sets its buffer filetype to "checkhealth". You can customize the
+buffer by handling the |FileType| event. For example if you don't want emojis
+in the health report: >vim
+    autocmd FileType checkhealth :set modifiable | silent! %s/\v( ?[^\x00-\x7F])//g
+<
+
+
 --------------------------------------------------------------------------------
 Create a healthcheck                                              *health-dev*
 
 Healthchecks are functions that check the user environment, configuration, or
 any other prerequisites that a plugin cares about. Nvim ships with
 healthchecks in:
-        - $VIMRUNTIME/autoload/health/
-        - $VIMRUNTIME/lua/vim/lsp/health.lua
-        - $VIMRUNTIME/lua/vim/treesitter/health.lua
-        - and more...
+• $VIMRUNTIME/autoload/health/
+• $VIMRUNTIME/lua/vim/lsp/health.lua
+• $VIMRUNTIME/lua/vim/treesitter/health.lua
+• and more...
 
 To add a new healthcheck for your own plugin, simply create a "health.lua"
 module on 'runtimepath' that returns a table with a "check()" function. Then
@@ -82,35 +91,35 @@ module on 'runtimepath' that returns a table with a "check()" function. Then
 
 For example if your plugin is named "foo", define your healthcheck module at
 one of these locations (on 'runtimepath'):
-        - lua/foo/health/init.lua
-        - lua/foo/health.lua
+• lua/foo/health/init.lua
+• lua/foo/health.lua
 
-If your plugin also provides a submodule named "bar" for which you want
-a separate healthcheck, define the healthcheck at one of these locations:
-        - lua/foo/bar/health/init.lua
-        - lua/foo/bar/health.lua
+If your plugin also provides a submodule named "bar" for which you want a
+separate healthcheck, define the healthcheck at one of these locations:
+• lua/foo/bar/health/init.lua
+• lua/foo/bar/health.lua
 
 All such health modules must return a Lua table containing a `check()`
 function.
 
 Copy this sample code into `lua/foo/health.lua`, replacing "foo" in the path
 with your plugin name: >lua
+    local M = {}
 
-        local M = {}
+    M.check = function()
+      vim.health.start("foo report")
+      -- make sure setup function parameters are ok
+      if check_setup() then
+        vim.health.ok("Setup is correct")
+      else
+        vim.health.error("Setup is incorrect")
+      end
+      -- do some more checking
+      -- ...
+    end
 
-        M.check = function()
-          vim.health.start("foo report")
-          -- make sure setup function parameters are ok
-          if check_setup() then
-            vim.health.ok("Setup is correct")
-          else
-            vim.health.error("Setup is incorrect")
-          end
-          -- do some more checking
-          -- ...
-        end
-
-        return M
+    return M
+<
 
 
 error({msg}, {...})                                       *vim.health.error()*

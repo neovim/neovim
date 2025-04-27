@@ -343,6 +343,8 @@ PLUGINS
   • 'commentstring' values can now be specified in a Treesitter capture's
     `bo.commentstring` metadata field, providing finer grained support for
     languages like `JSX`.
+• Customize :checkhealth by handling a `FileType checkhealth` event.
+  |health-usage|
 
 STARTUP
 
@@ -437,6 +439,7 @@ UI
 • |ui-messages| content chunks now also contain the highlight group ID.
 • |:checkhealth| can display in a floating window, controlled by the
   |g:health| variable.
+• |:checkhealth| shows a summary in the header for every healthcheck.
 
 VIMSCRIPT
 
