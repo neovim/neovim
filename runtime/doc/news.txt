@@ -159,7 +159,8 @@ PERFORMANCE
 
 PLUGINS
 
-• todo
+• Customize :checkhealth by handling a `FileType checkhealth` event.
+  |health-usage|
 
 STARTUP
 
