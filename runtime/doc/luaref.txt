@@ -4150,7 +4150,7 @@ string.upper({s})                                               *string.upper()*
         locale.
 
 ------------------------------------------------------------------------------
-5.4.1  Patterns                                 *lua-patterns*
+5.4.1  Patterns                                 *lua-pattern* *lua-patterns*
 
 A character class is used to represent a set of characters. The following
 combinations are allowed in describing a character class:
@@ -4207,6 +4207,7 @@ A pattern item may be
    - a single character class followed by `+`, which matches 1 or more
       repetitions of characters in the class. These repetition items will
       always match the longest possible sequence;
+                                                               *lua-nongreedy*
    - a single character class followed by `-`, which also matches 0 or
       more repetitions of characters in the class. Unlike `*`, these
       repetition items will always match the shortest possible sequence;
@@ -4221,7 +4222,7 @@ A pattern item may be
       `y` where the count reaches 0. For instance, the item `%b()` matches
       expressions with balanced parentheses.
 
-PATTERN                                                         *lua-pattern*
+PATTERN
 
 A pattern is a sequence of pattern items. A `^` at the beginning of a pattern
 anchors the match at the beginning of the subject string. A `$` at the end of

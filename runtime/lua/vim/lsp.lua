@@ -282,15 +282,16 @@ end
 --- If not provided, then the client will attach to all filetypes.
 --- @field filetypes? string[]
 ---
---- Directory markers (.e.g. '.git/') where the LSP server will base its workspaceFolders,
---- rootUri, and rootPath on initialization. Unused if `root_dir` is provided.
+--- Directory markers (.e.g. '.git/') where the LSP server will base its workspaceFolders, rootUri,
+--- and rootPath on initialization. Unused if `root_dir` is provided.
 --- @field root_markers? string[]
 ---
---- Directory where the LSP server will base its workspaceFolders, rootUri, and
---- rootPath on initialization. If a function, it is passed the buffer number
---- and a callback argument which must be called with the value of root_dir to
---- use. The LSP server will not be started until the callback is called.
---- @field root_dir? string|fun(bufnr: integer, cb:fun(root_dir?:string))
+--- [lsp-root_dir()]() Directory where the LSP server will base its workspaceFolders, rootUri, and
+--- rootPath on initialization. The function form receives a buffer number and `on_dir` callback,
+--- which must be called to provide root_dir as a string. LSP will not be activated for the buffer
+--- unless `on_dir` is called; thus a `root_dir()` function can dynamically decide whether to
+--- activate (or skip) LSP per-buffer. See example at |vim.lsp.enable()|.
+--- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
 ---
 --- Predicate used to decide if a client should be re-used. Used on all
 --- running clients. The default implementation re-uses a client if name and
@@ -538,16 +539,27 @@ local function lsp_enable_callback(bufnr)
   end
 end
 
---- Enable an LSP server to automatically start when opening a buffer.
----
---- Uses configuration defined with `vim.lsp.config`.
+--- Auto-starts LSP when a buffer is opened, based on the |lsp-config| `filetypes`, `root_markers`,
+--- and `root_dir` fields.
 ---
 --- Examples:
 ---
 --- ```lua
----   vim.lsp.enable('clangd')
+--- vim.lsp.enable('clangd')
+--- vim.lsp.enable({'luals', 'pyright'})
+--- ```
 ---
----   vim.lsp.enable({'luals', 'pyright'})
+--- Example: To _dynamically_ decide whether LSP is activated, define a |lsp-root_dir()| function
+--- which calls `on_dir()` only when you want that config to activate:
+---
+--- ```lua
+--- vim.lsp.config('lua_ls', {
+---   root_dir = function(bufnr, on_dir)
+---     if not vim.fn.bufname(bufnr):match('%.txt$') then
+---       on_dir(vim.fn.getcwd())
+---     end
+---   end
+--- })
 --- ```
 ---
 ---@since 13

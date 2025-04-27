@@ -109,7 +109,8 @@ API
 
 DEFAULTS
 
-• todo
+• 'statusline' default is exposed as a statusline expression (previously it
+  was implemented as an internal C routine).
 
 DIAGNOSTICS
 
