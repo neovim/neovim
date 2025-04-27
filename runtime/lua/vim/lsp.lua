@@ -278,25 +278,24 @@ end
 --- See `cmd` in [vim.lsp.ClientConfig].
 --- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient
 ---
---- Filetypes the client will attach to, if activated by `vim.lsp.enable()`.
---- If not provided, then the client will attach to all filetypes.
+--- Filetypes the client will attach to, if activated by `vim.lsp.enable()`. If not provided, the
+--- client will attach to all filetypes.
 --- @field filetypes? string[]
 ---
---- Directory markers (.e.g. '.git/') where the LSP server will base its workspaceFolders, rootUri,
---- and rootPath on initialization. Unused if `root_dir` is provided.
---- @field root_markers? string[]
+--- Predicate which decides if a client should be re-used. Used on all running clients. The default
+--- implementation re-uses a client if name and root_dir matches.
+--- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
 ---
 --- [lsp-root_dir()]() Directory where the LSP server will base its workspaceFolders, rootUri, and
---- rootPath on initialization. The function form receives a buffer number and `on_dir` callback,
---- which must be called to provide root_dir as a string. LSP will not be activated for the buffer
---- unless `on_dir` is called; thus a `root_dir()` function can dynamically decide whether to
---- activate (or skip) LSP per-buffer. See example at |vim.lsp.enable()|.
+--- rootPath on initialization. The function form receives a buffer number and `on_dir` callback
+--- which it must call to provide root_dir, or LSP will not be activated for the buffer. Thus
+--- a `root_dir()` function can dynamically decide per-buffer whether to activate (or skip) LSP. See
+--- example at |vim.lsp.enable()|.
 --- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
 ---
---- Predicate used to decide if a client should be re-used. Used on all
---- running clients. The default implementation re-uses a client if name and
---- root_dir matches.
---- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+--- Directory markers (e.g. ".git/", "package.json") used to decide `root_dir`. Unused if `root_dir`
+--- is provided.
+--- @field root_markers? string[]
 
 --- Sets the default configuration for an LSP client (or _all_ clients if the special name "*" is
 --- used).

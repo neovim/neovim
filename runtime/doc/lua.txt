@@ -171,7 +171,7 @@ added. But visually, this small bit of sugar gets reasonably close to a
 
                                                                    *lua-regex*
 Lua intentionally does not support regular expressions, instead it has limited
-|lua-patterns| which avoid the performance pitfalls of extended regex. Lua
+|lua-pattern|s which avoid the performance pitfalls of extended regex. Lua
 scripts can also use Vim regex via |vim.regex()|.
 
 Examples: >lua
@@ -2024,7 +2024,7 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
     See also: ~
       • |string.gmatch()|
       • |vim.split()|
-      • |lua-patterns|
+      • |lua-pattern|s
       • https://www.lua.org/pil/20.2.html
       • http://lua-users.org/wiki/StringLibraryTutorial
 
@@ -2117,7 +2117,7 @@ vim.list_slice({list}, {start}, {finish})                   *vim.list_slice()*
         (`any[]`) Copy of table sliced from start to finish (inclusive)
 
 vim.pesc({s})                                                     *vim.pesc()*
-    Escapes magic chars in |lua-patterns|.
+    Escapes magic chars in |lua-pattern|s.
 
     Parameters: ~
       • {s}  (`string`) String to escape
@@ -2372,7 +2372,7 @@ vim.trim({s})                                                     *vim.trim()*
         (`string`) String with whitespace removed from its beginning and end
 
     See also: ~
-      • |lua-patterns|
+      • |lua-pattern|s
       • https://www.lua.org/pil/20.2.html
 
                                                               *vim.validate()*
@@ -2672,7 +2672,7 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
     Filetype mappings can be added either by extension or by filename (either
     the "tail" or the full file path). The full file path is checked first,
     followed by the file name. If a match is not found using the filename,
-    then the filename is matched against the list of |lua-patterns| (sorted by
+    then the filename is matched against the list of |lua-pattern|s (sorted by
     priority) until a match is found. Lastly, if pattern matching does not
     find a filetype, then the file extension is used.
 

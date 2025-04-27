@@ -95,7 +95,7 @@ end
 ---
 --- @see |string.gmatch()|
 --- @see |vim.split()|
---- @see |lua-patterns|
+--- @see |lua-pattern|s
 --- @see https://www.lua.org/pil/20.2.html
 --- @see http://lua-users.org/wiki/StringLibraryTutorial
 ---
@@ -784,7 +784,7 @@ end
 
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
 ---
----@see |lua-patterns|
+---@see |lua-pattern|s
 ---@see https://www.lua.org/pil/20.2.html
 ---@param s string String to trim
 ---@return string String with whitespace removed from its beginning and end
@@ -793,7 +793,7 @@ function vim.trim(s)
   return s:match('^%s*(.*%S)') or ''
 end
 
---- Escapes magic chars in |lua-patterns|.
+--- Escapes magic chars in |lua-pattern|s.
 ---
 ---@see https://github.com/rxi/lume
 ---@param s string String to escape
