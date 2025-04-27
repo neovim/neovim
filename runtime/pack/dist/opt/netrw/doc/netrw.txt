@@ -467,7 +467,7 @@ file using root-relative paths, use the full path:
 ==============================================================================
 4. Network-Oriented File Transfer			*netrw-xfer* {{{1
 
-Network-oriented file transfer under Vim is implemented by a vim script
+Network-oriented file transfer under Vim is implemented by a Vim script
 (<netrw.vim>) using plugin techniques.  It currently supports both reading and
 writing across networks using rcp, scp, ftp or ftp+<.netrc>, scp, fetch,
 dav/cadaver, rsync, or sftp.
