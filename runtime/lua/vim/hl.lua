@@ -198,4 +198,27 @@ function M.on_yank(opts)
   })
 end
 
+--- Enable automatic highlighting of the yanked text during |TextYankPost| events.
+---
+--- Equivalent to:
+---
+--- ```lua
+--- vim.api.nvim_create_autocmd("TextYankPost", {
+---   group = nvim.api.nvim_create_augroup("nvim.hl.enable_on_yank", {}),
+---   callback = function()
+---     vim.hl.on_yank(opts)
+---   end,
+--- })
+--- ```
+---
+--- @param opts table|nil See |vim.hl.on_yank|
+function M.enable_on_yank(opts)
+  vim.api.nvim_create_autocmd('TextYankPost', {
+    group = vim.api.nvim_create_augroup('nvim.hl.enable_on_yank', {}),
+    callback = function()
+      M.on_yank(opts)
+    end,
+  })
+end
+
 return M
