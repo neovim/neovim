@@ -140,6 +140,8 @@ EDITOR
 
 • |:iput| works like |:put| but adjusts indent.
 • |omnicompletion| in `help` buffer. |ft-help-omni|
+• Setting "'0" in 'shada' prevents storing the jumplist in the shada file.
+• 'shada' now correctly respects "/0" and "f0".
 
 EVENTS
 
@@ -149,14 +151,20 @@ EVENTS
 HIGHLIGHTS
 
 • |hl-DiffTextAdd| highlights added text within a changed line.
+• |hl-StderrMsg| |hl-StdoutMsg|
 
 LSP
 
 • |vim.lsp.ClientConfig| gained `workspace_required`.
+• You can control priority of |vim.lsp.Config| `root_markers`.
 • Support for `textDocument/documentColor`: |lsp-document_color|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
 • The `textDocument/diagnostic` request now includes the previous id in its
   parameters.
+• |vim.lsp.enable()| start/stops clients as necessary. And detaches
+  non-applicable LSP clients.
+• |vim.lsp.is_enabled()| checks if a LSP config is enabled (without
+  "resolving" it).
 
 LUA
 
