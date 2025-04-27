@@ -907,7 +907,7 @@ Currently up to three flags may be passed to the tag function:
 	        (mnemonic: the tag function may use the context around the
 		cursor to perform a better job of generating the tag list.)
   'i'		In Insert mode, the user was completing a tag (with
-		|i_CTRL-X_CTRL-]| or 'completeopt' contains `t`).
+		|i_CTRL-X_CTRL-]| or 'complete' contains "`t`" or "`]`").
   'r'		The first argument to tagfunc should be interpreted as a
 		|pattern| (see |tag-regexp|), such as when using: >
 		  :tag /pat
