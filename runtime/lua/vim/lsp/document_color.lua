@@ -99,7 +99,6 @@ local function reset_bufstate(bufnr, enabled)
     processed_version = {},
     applied_version = {},
     hl_info = {},
-    ns = {},
   }
 end
 
