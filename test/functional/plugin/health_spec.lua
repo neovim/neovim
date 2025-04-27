@@ -78,6 +78,15 @@ describe(':checkhealth', function()
     ]])
     )
   end)
+
+  it("vim.provider works with a misconfigured 'shell'", function()
+    clear()
+    command([[set shell=echo\ WRONG!!!]])
+    command('let g:loaded_perl_provider = 0')
+    command('let g:loaded_python3_provider = 0')
+    command('checkhealth vim.provider')
+    eq(nil, string.match(curbuf_contents(), 'WRONG!!!'))
+  end)
 end)
 
 describe('vim.health', function()
@@ -103,6 +112,33 @@ describe('vim.health', function()
       report 2 ~
       - stuff is stable
       - ❌ ERROR why no hardcopy
+        - ADVICE:
+          - :help |:hardcopy|
+          - :help |:TOhtml|
+      ]])
+    end)
+
+    it('user FileType handler can modify report', function()
+      -- Define a FileType autocmd that removes emoji chars.
+      source [[
+        autocmd FileType checkhealth :set modifiable | silent! %s/\v( ?[^\x00-\x7F])//g
+        checkhealth full_render
+      ]]
+      n.expect([[
+
+      ==============================================================================
+      test_plug.full_render:                                              1  1
+
+      report 1 ~
+      - OK life is fine
+      - WARNING no what installed
+        - ADVICE:
+          - pip what
+          - make what
+
+      report 2 ~
+      - stuff is stable
+      - ERROR why no hardcopy
         - ADVICE:
           - :help |:hardcopy|
           - :help |:TOhtml|
@@ -242,17 +278,6 @@ describe('vim.health', function()
       - ✅ OK healthy ok
       ]])
     end)
-  end)
-end)
-
-describe(':checkhealth vim.provider', function()
-  it("works correctly with a wrongly configured 'shell'", function()
-    clear()
-    command([[set shell=echo\ WRONG!!!]])
-    command('let g:loaded_perl_provider = 0')
-    command('let g:loaded_python3_provider = 0')
-    command('checkhealth vim.provider')
-    eq(nil, string.match(curbuf_contents(), 'WRONG!!!'))
   end)
 end)
 

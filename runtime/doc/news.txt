@@ -343,6 +343,8 @@ PLUGINS
   • 'commentstring' values can now be specified in a Treesitter capture's
     `bo.commentstring` metadata field, providing finer grained support for
     languages like `JSX`.
+• Customize :checkhealth by handling a `FileType checkhealth` event.
+  |health-usage|
 
 STARTUP
 
