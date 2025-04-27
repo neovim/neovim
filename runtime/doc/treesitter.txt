@@ -120,7 +120,7 @@ The following predicates are built in:
         match.
 
     `lua-match?`                              *treesitter-predicate-lua-match?*
-         Match |lua-patterns| against the text corresponding to a node,
+         Match |lua-pattern|s against the text corresponding to a node,
          similar to `match?`
 
     `any-lua-match?`                      *treesitter-predicate-any-lua-match?*

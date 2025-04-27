@@ -311,7 +311,7 @@ Nvim's filetype detection behavior matches Vim, but is implemented as part of
 |vim.filetype| (see `$VIMRUNTIME/lua/vim/filetype.lua`). The logic is encoded in
 three tables, listed in order of precedence (the first match is returned):
 1. `filename` for literal full path or basename lookup;
-2. `pattern` for matching filenames or paths against |lua-patterns|, optimized
+2. `pattern` for matching filenames or paths against |lua-pattern|s, optimized
    for fast lookup;
 3. `extension` for literal extension lookup.
 
