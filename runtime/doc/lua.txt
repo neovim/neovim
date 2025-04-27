@@ -590,6 +590,22 @@ A subset of the `vim.*` stdlib is available in threads, including:
 ==============================================================================
 VIM.HL                                                                *vim.hl*
 
+vim.hl.enable_on_yank({opts})                        *vim.hl.enable_on_yank()*
+    Enable automatic highlighting of the yanked text during |TextYankPost|
+    events.
+
+    Equivalent to: >lua
+        vim.api.nvim_create_autocmd("TextYankPost", {
+          group = nvim.api.nvim_create_augroup("nvim.hl.enable_on_yank", {}),
+          callback = function()
+            vim.hl.on_yank(opts)
+          end,
+        })
+<
+
+    Parameters: ~
+      • {opts}  (`table?`) See |vim.hl.on_yank|
+
 vim.hl.on_yank({opts})                                      *vim.hl.on_yank()*
     Highlight the yanked text during a |TextYankPost| event.
 
