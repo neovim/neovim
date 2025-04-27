@@ -95,6 +95,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.eval_statusline
 --- @field winid? integer
+--- @field default? boolean
 --- @field maxwidth? integer
 --- @field fillchar? string
 --- @field highlights? boolean

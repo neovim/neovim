@@ -667,6 +667,8 @@ nvim_eval_statusline({str}, {opts})                   *nvim_eval_statusline()*
     Parameters: ~
       • {str}   Statusline string (see 'statusline').
       • {opts}  Optional parameters.
+                • default: (boolean) Use the default statusline, winbar,
+                  tabline, or statuscol.
                 • winid: (number) |window-ID| of the window to use as context
                   for statusline.
                 • maxwidth: (number) Maximum width of statusline.

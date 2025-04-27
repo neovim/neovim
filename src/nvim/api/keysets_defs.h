@@ -145,6 +145,7 @@ typedef struct {
 typedef struct {
   OptionalKeys is_set__eval_statusline_;
   Window winid;
+  Boolean default_ DictKey(default);
   Integer maxwidth;
   String fillchar;
   Boolean highlights;

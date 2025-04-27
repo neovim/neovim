@@ -1125,6 +1125,7 @@ function vim.api.nvim_eval(expr) end
 ---
 --- @param str string Statusline string (see 'statusline').
 --- @param opts vim.api.keyset.eval_statusline Optional parameters.
+--- - default: (boolean) Use the default statusline, winbar, tabline, or statuscol.
 --- - winid: (number) `window-ID` of the window to use as context for statusline.
 --- - maxwidth: (number) Maximum width of statusline.
 --- - fillchar: (string) Character to fill blank spaces in the statusline (see

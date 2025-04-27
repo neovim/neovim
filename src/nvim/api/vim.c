@@ -1967,6 +1967,7 @@ Array nvim_get_mark(String name, Dict(empty) *opts, Arena *arena, Error *err)
 ///
 /// @param str Statusline string (see 'statusline').
 /// @param opts Optional parameters.
+///           - default: (boolean) Use the default statusline, winbar, tabline, or statuscol.
 ///           - winid: (number) |window-ID| of the window to use as context for statusline.
 ///           - maxwidth: (number) Maximum width of statusline.
 ///           - fillchar: (string) Character to fill blank spaces in the statusline (see
@@ -1996,7 +1997,25 @@ Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena,
   schar_T fillchar = 0;
   int statuscol_lnum = 0;
 
-  if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
+  if (opts->default_) {
+    VALIDATE(str.size == 0, "%s",
+             "Can only use 'default' with an empty string", {
+      return result;
+    });
+
+    int opts_index = kOptStatusline;
+
+    // Mutual exclusivity is validated below.
+    if (opts->use_tabline) {
+      opts_index = kOptTabline;
+    } else if (opts->use_winbar) {
+      opts_index = kOptWinbar;
+    } else if (opts->use_statuscol_lnum) {
+      opts_index = kOptStatuscolumn;
+    }
+
+    str = get_option_default(opts_index, OPT_GLOBAL).data.string;
+  } else if (str.size < 2 || memcmp(str.data, "%!", 2) != 0) {
     const char *const errmsg = check_stl_option(str.data);
     VALIDATE(!errmsg, "%s", errmsg, {
       return result;
