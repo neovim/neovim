@@ -264,7 +264,7 @@ D. If your filetype can only be detected by inspecting the contents of the
       item of the 'runtimepath' option.  Example for Unix: >
 	:!mkdir -p ~/.config/nvim
 <
-   2. Create a vim script file for doing this.  Example: >
+   2. Create a Vim script file for doing this.  Example: >
 	if did_filetype()	" filetype already set..
 	  finish		" ..don't do these checks
 	endif
