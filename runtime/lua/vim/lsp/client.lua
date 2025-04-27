@@ -840,7 +840,8 @@ end
 --- Get options for a method that is registered dynamically.
 --- @param method vim.lsp.protocol.Method
 function Client:_supports_registration(method)
-  local capability = vim.tbl_get(self.capabilities, unpack(vim.split(method, '/')))
+  local capability_path = lsp.protocol._request_name_to_client_capability[method]
+  local capability = vim.tbl_get(self.capabilities, unpack(capability_path))
   return type(capability) == 'table' and capability.dynamicRegistration
 end
 
@@ -1069,7 +1070,7 @@ function Client:supports_method(method, bufnr)
     --- @diagnostic disable-next-line:no-unknown
     bufnr = bufnr.bufnr
   end
-  local required_capability = lsp.protocol._request_name_to_capability[method]
+  local required_capability = lsp.protocol._request_name_to_server_capability[method]
   -- if we don't know about the method, assume that the client supports it.
   if not required_capability then
     return true
