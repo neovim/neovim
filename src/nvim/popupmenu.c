@@ -154,7 +154,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     pum_is_drawn = true;
     validate_cursor_col(curwin);
     int above_row = 0;
-    int below_row = MAX(cmdline_row, curwin->w_winrow + curwin->w_grid.rows);
+    int below_row = MAX(cmdline_row, curwin->w_winrow + curwin->w_view_height);
     if (State & MODE_CMDLINE) {
       below_row = cmdline_row;
     }
@@ -170,7 +170,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // anchor position: the start of the completed word
       pum_win_row = curwin->w_wrow;
       if (pum_rl) {
-        cursor_col = curwin->w_width_inner - curwin->w_wcol - 1;
+        cursor_col = curwin->w_view_width - curwin->w_wcol - 1;
       } else {
         cursor_col = curwin->w_wcol;
       }
@@ -236,7 +236,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
     int min_row = 0;
     int min_col = 0;
-    int max_col = MAX(Columns, curwin->w_wincol + curwin->w_grid.cols);
+    int max_col = MAX(Columns, curwin->w_wincol + curwin->w_view_width);
     if (State & MODE_CMDLINE) {
       max_col = Columns;
     }
@@ -655,7 +655,7 @@ void pum_redraw(void)
     int attr = win_hl_attr(curwin, (int)hlf);
     attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), attr);
 
-    grid_line_start(&pum_grid, row);
+    screengrid_line_start(&pum_grid, row, 0);
 
     // prepend a space if there is room
     if (extra_space) {
@@ -924,7 +924,7 @@ static void pum_adjust_info_position(win_T *wp, int width)
   // when pum_above is SW otherwise is NW
   wp->w_config.anchor = pum_above ? kFloatAnchorSouth : 0;
   linenr_T count = wp->w_buffer->b_ml.ml_line_count;
-  wp->w_width_inner = wp->w_config.width;
+  wp->w_view_width = wp->w_config.width;
   wp->w_config.height = plines_m_win(wp, wp->w_topline, count, Rows);
   wp->w_config.row = pum_above ? pum_row + wp->w_config.height : pum_row;
   wp->w_config.hide = false;
@@ -1329,11 +1329,11 @@ static void pum_position_at_mouse(int min_width)
       pum_win_row_offset = wp->w_winrow;
       pum_win_col_offset = wp->w_wincol;
 
-      if (wp->w_height_inner > 0 || wp->w_width_inner > 0) {
+      if (wp->w_view_height > 0 || wp->w_view_width > 0) {
         // When the user has requested a different grid size, let the popupmenu extend to the size
         // of it.
-        max_row = MAX(Rows - wp->w_winrow, wp->w_winrow + wp->w_grid.rows);
-        max_col = MAX(Columns - wp->w_wincol, wp->w_wincol + wp->w_grid.cols);
+        max_row = MAX(Rows - wp->w_winrow, wp->w_winrow + wp->w_view_height);
+        max_col = MAX(Columns - wp->w_wincol, wp->w_wincol + wp->w_view_width);
       }
     }
   }
@@ -1547,7 +1547,7 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
     // around there.
     mouse_row = curwin->w_grid.row_offset + curwin->w_wrow;
     mouse_col = curwin->w_grid.col_offset
-                + (curwin->w_p_rl ? curwin->w_width_inner - curwin->w_wcol - 1
+                + (curwin->w_p_rl ? curwin->w_view_width - curwin->w_wcol - 1
                                   : curwin->w_wcol);
     if (ui_has(kUIMultigrid)) {
       mouse_grid = curwin->w_grid.target->handle;
@@ -1567,13 +1567,13 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
 void pum_ui_flush(void)
 {
   if (ui_has(kUIMultigrid) && pum_is_drawn && !pum_external && pum_grid.handle != 0
-      && pum_grid.composition_updated) {
+      && pum_grid.pending_comp_index_update) {
     const char *anchor = pum_above ? "SW" : "NW";
     int row_off = pum_above ? -pum_height : 0;
     ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
                           pum_row - row_off - pum_win_row_offset, pum_left_col - pum_win_col_offset,
                           false, pum_grid.zindex, (int)pum_grid.comp_index, pum_grid.comp_row,
                           pum_grid.comp_col);
-    pum_grid.composition_updated = false;
+    pum_grid.pending_comp_index_update = false;
   }
 }

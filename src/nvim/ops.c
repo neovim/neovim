@@ -5766,7 +5766,7 @@ static void get_op_vcol(oparg_T *oap, colnr_T redo_VIsual_vcol, bool initial)
   colnr_T end;
 
   if (VIsual_mode != Ctrl_V
-      || (!initial && oap->end.col < curwin->w_width_inner)) {
+      || (!initial && oap->end.col < curwin->w_view_width)) {
     return;
   }
 

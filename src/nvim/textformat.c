@@ -734,7 +734,7 @@ void check_auto_format(bool end_insert)
 
 /// Find out textwidth to be used for formatting:
 ///      if 'textwidth' option is set, use it
-///      else if 'wrapmargin' option is set, use curwin->w_width_inner-'wrapmargin'
+///      else if 'wrapmargin' option is set, use curwin->w_view_width-'wrapmargin'
 ///      if invalid value, use 0.
 ///      Set default to window width (maximum 79) for "gq" operator.
 ///
@@ -745,7 +745,7 @@ int comp_textwidth(bool ff)
   if (textwidth == 0 && curbuf->b_p_wm) {
     // The width is the window width minus 'wrapmargin' minus all the
     // things that add to the margin.
-    textwidth = curwin->w_width_inner - (int)curbuf->b_p_wm;
+    textwidth = curwin->w_view_width - (int)curbuf->b_p_wm;
     if (curbuf == cmdwin_buf) {
       textwidth -= 1;
     }
@@ -758,7 +758,7 @@ int comp_textwidth(bool ff)
   }
   textwidth = MAX(textwidth, 0);
   if (ff && textwidth == 0) {
-    textwidth = MIN(curwin->w_width_inner - 1, 79);
+    textwidth = MIN(curwin->w_view_width - 1, 79);
   }
   return textwidth;
 }

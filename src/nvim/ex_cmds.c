@@ -263,7 +263,7 @@ void ex_align(exarg_T *eap)
       width = (int)curbuf->b_p_tw;
     }
     if (width == 0 && curbuf->b_p_wm > 0) {
-      width = curwin->w_width_inner - (int)curbuf->b_p_wm;
+      width = curwin->w_view_width - (int)curbuf->b_p_wm;
     }
     if (width <= 0) {
       width = 80;
@@ -2949,7 +2949,7 @@ void ex_z(exarg_T *eap)
   } else if (ONE_WINDOW) {
     bigness = curwin->w_p_scr * 2;
   } else {
-    bigness = curwin->w_height_inner - 3;
+    bigness = curwin->w_view_height - 3;
   }
   bigness = MAX(bigness, 1);
 

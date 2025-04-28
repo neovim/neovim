@@ -2815,12 +2815,8 @@ static void do_intro_line(int row, char *mesg, bool colon)
     col = 0;
   }
 
-  ScreenGrid *grid = &default_grid;
-  if (!colon && ui_has(kUIMultigrid)) {
-    grid = &firstwin->w_grid;
-  }
+  grid_line_start((!colon && ui_has(kUIMultigrid)) ? &firstwin->w_grid : &default_gridview, row);
 
-  grid_line_start(grid, row);
   // Split up in parts to highlight <> items differently.
   for (char *p = mesg; *p != NUL; p += l) {
     for (l = 0;

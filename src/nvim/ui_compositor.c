@@ -117,20 +117,20 @@ void ui_comp_layers_adjust(size_t layer_idx, bool raise)
     while (layer_idx < size - 1 && layer->zindex > layers.items[layer_idx + 1]->zindex) {
       layers.items[layer_idx] = layers.items[layer_idx + 1];
       layers.items[layer_idx]->comp_index = layer_idx;
-      layers.items[layer_idx]->composition_updated = true;
+      layers.items[layer_idx]->pending_comp_index_update = true;
       layer_idx++;
     }
   } else {
     while (layer_idx > 0 && layer->zindex < layers.items[layer_idx - 1]->zindex) {
       layers.items[layer_idx] = layers.items[layer_idx - 1];
       layers.items[layer_idx]->comp_index = layer_idx;
-      layers.items[layer_idx]->composition_updated = true;
+      layers.items[layer_idx]->pending_comp_index_update = true;
       layer_idx--;
     }
   }
   layers.items[layer_idx] = layer;
   layer->comp_index = layer_idx;
-  layer->composition_updated = true;
+  layer->pending_comp_index_update = true;
 }
 
 /// Places `grid` at (col,row) position with (width * height) size.
@@ -143,7 +143,7 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
                       bool on_top)
 {
   bool moved;
-  grid->composition_updated = true;
+  grid->pending_comp_index_update = true;
 
   grid->comp_height = height;
   grid->comp_width = width;
@@ -197,14 +197,14 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     for (size_t i = kv_size(layers) - 1; i > insert_at; i--) {
       kv_A(layers, i) = kv_A(layers, i - 1);
       kv_A(layers, i)->comp_index = i;
-      kv_A(layers, i)->composition_updated = true;
+      kv_A(layers, i)->pending_comp_index_update = true;
     }
     kv_A(layers, insert_at) = grid;
 
     grid->comp_row = row;
     grid->comp_col = col;
     grid->comp_index = insert_at;
-    grid->composition_updated = true;
+    grid->pending_comp_index_update = true;
   }
   if (moved && valid && ui_comp_should_draw()) {
     compose_area(grid->comp_row, grid->comp_row + grid->rows,
@@ -228,11 +228,11 @@ void ui_comp_remove_grid(ScreenGrid *grid)
   for (size_t i = grid->comp_index; i < kv_size(layers) - 1; i++) {
     kv_A(layers, i) = kv_A(layers, i + 1);
     kv_A(layers, i)->comp_index = i;
-    kv_A(layers, i)->composition_updated = true;
+    kv_A(layers, i)->pending_comp_index_update = true;
   }
   (void)kv_pop(layers);
   grid->comp_index = 0;
-  grid->composition_updated = true;
+  grid->pending_comp_index_update = true;
 
   // recompose the area under the grid
   // inefficient when being overlapped: only draw up to grid->comp_index
@@ -264,11 +264,11 @@ void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
   for (size_t i = old_index; i < new_index; i++) {
     kv_A(layers, i) = kv_A(layers, i + 1);
     kv_A(layers, i)->comp_index = i;
-    kv_A(layers, i)->composition_updated = true;
+    kv_A(layers, i)->pending_comp_index_update = true;
   }
   kv_A(layers, new_index) = grid;
   grid->comp_index = new_index;
-  grid->composition_updated = true;
+  grid->pending_comp_index_update = true;
   for (size_t i = old_index; i < new_index; i++) {
     ScreenGrid *grid2 = kv_A(layers, i);
     int startcol = MAX(grid->comp_col, grid2->comp_col);
@@ -616,7 +616,7 @@ bool ui_comp_set_screen_valid(bool valid)
 void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char,
                          Integer zindex, Integer compindex)
 {
-  msg_grid.composition_updated = true;
+  msg_grid.pending_comp_index_update = true;
   msg_grid.comp_row = (int)row;
   if (scrolled && row > 0) {
     msg_sep_row = (int)row - 1;

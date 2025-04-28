@@ -2363,7 +2363,7 @@ void showmatch(int c)
 
   bool col_visible = curwin->w_p_wrap
                      || (vcol >= curwin->w_leftcol
-                         && vcol < curwin->w_leftcol + curwin->w_width_inner);
+                         && vcol < curwin->w_leftcol + curwin->w_view_width);
   if (!col_visible) {
     return;
   }

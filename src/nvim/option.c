@@ -2807,7 +2807,7 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, cha
     }
     break;
   case kOptScroll:
-    if ((*newval <= 0 || (*newval > curwin->w_height_inner && curwin->w_height_inner > 0))
+    if ((*newval <= 0 || (*newval > curwin->w_view_height && curwin->w_view_height > 0))
         && full_screen) {
       if (*newval != 0) {
         errmsg = e_scroll;
