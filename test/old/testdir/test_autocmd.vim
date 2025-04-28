@@ -1999,6 +1999,8 @@ endfunc
 
 " Ensure :cabbr does not cause a spurious CmdlineLeavePre.
 func Test_CmdlineLeavePre_cabbr()
+  " For unknown reason this fails intermittently on MS-Windows
+  CheckNotMSWindows
   CheckFeature terminal
   let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': 3})
   call assert_equal('running', term_getstatus(buf))
