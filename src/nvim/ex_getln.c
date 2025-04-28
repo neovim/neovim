@@ -871,6 +871,11 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   state_enter(&s->state);
 
+  // Trigger CmdlineLeavePre autocommands if not already triggered.
+  if (!s->event_cmdlineleavepre_triggered) {
+    trigger_cmd_autocmd(s->cmdline_type, EVENT_CMDLINELEAVEPRE);
+  }
+
   if (has_event(EVENT_CMDLINELEAVE)) {
     save_v_event_T save_v_event;
     dict_T *dict = get_v_event(&save_v_event);
@@ -948,11 +953,6 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   // When the command line was typed, no need for a wait-return prompt.
   if (s->some_key_typed && !ERROR_SET(&err)) {
     need_wait_return = false;
-  }
-
-  // Trigger CmdlineLeavePre autocommands if not already triggered.
-  if (!s->event_cmdlineleavepre_triggered) {
-    trigger_cmd_autocmd(s->cmdline_type, EVENT_CMDLINELEAVEPRE);
   }
 
   set_option_direct(kOptInccommand, CSTR_AS_OPTVAL(s->save_p_icm), 0, SID_NONE);
