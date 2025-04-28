@@ -65,7 +65,7 @@ describe('vim.ui_attach', function()
         0,
         0,
         0,
-        1,
+        2,
       },
     }
 
@@ -407,42 +407,33 @@ describe('vim.ui_attach', function()
     ]])
     screen:expect({
       grid = s1,
+      messages = {},
+    })
+    feed('<Esc>:1messages clear<cr>:messages<CR>')
+    screen:expect({
+      grid = [[
+        ^                                                                                      |
+        {1:~                                                                                     }|*9
+      ]],
+      cmdline = { {
+        abort = false,
+      } },
       messages = {
-        {
-          content = {
-            {
-              'Error executing vim.schedule lua callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
-              9,
-              6,
-            },
-          },
-          history = true,
-          kind = 'lua_error',
-        },
-        {
-          content = {
-            {
-              'Error executing vim.schedule lua callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
-              9,
-              6,
-            },
-          },
-          history = true,
-          kind = 'lua_error',
-        },
         {
           content = { { 'Press ENTER or type command to continue', 100, 18 } },
           history = false,
           kind = 'return_prompt',
         },
       },
+      msg_history = {
+        {
+          content = {
+            { 'Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))', 9, 6 },
+          },
+          kind = 'emsg',
+        },
+      },
     })
-    feed('<Esc>:1messages clear<cr>:messages<CR>')
-    screen:expect([[
-      ^                                                                                      |
-      {1:~                                                                                     }|*8
-      {9:Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))}                    |
-    ]])
   end)
 
   it('sourcing invalid file does not crash #32166', function()
