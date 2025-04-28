@@ -1109,8 +1109,11 @@ function vim.fn.complete_check() end
 --- @return table
 function vim.fn.complete_info(what) end
 
---- Returns a List of matches found according to the 'isexpand'
---- option. Each match is represented as a List containing
+--- Searches backward from the given position and returns a List
+--- of matches according to the 'isexpand' option. When no
+--- arguments are provided, uses the current cursor position.
+---
+--- Each match is represented as a List containing
 --- [startcol, trigger_text] where:
 --- - startcol: column position where completion should start,
 ---   or -1 if no trigger position is found. For multi-character
@@ -1122,39 +1125,34 @@ function vim.fn.complete_info(what) end
 --- When 'isexpand' is empty, uses the 'iskeyword' pattern
 --- "\k\+$" to find the start of the current keyword.
 ---
---- When no arguments are provided, uses the current cursor
---- position.
----
---- Examples: >
+--- Examples: >vim
 ---   set isexpand=.,->,/,/*,abc
 ---   func CustomComplete()
----   let res = complete_match()
----   if res->len() == 0 | return | endif
----   let [col, trigger] = res[0]
----   let items = []
----   if trigger == '/*'
----     let items = ['/** */']
----   elseif trigger == '/'
----     let items = ['/*! */', '// TODO:', '// fixme:']
----   elseif trigger == '.'
----     let items = ['length()']
----   elseif trigger =~ '^\->'
----     let items = ['map()', 'reduce()']
----   elseif trigger =~ '^\abc'
----     let items = ['def', 'ghk']
----   endif
----   if items->len() > 0
----     let startcol = trigger =~ '^/' ? col : col + len(trigger)
----     call complete(startcol, items)
----   endif
+---     let res = complete_match()
+---     if res->len() == 0 | return | endif
+---     let [col, trigger] = res[0]
+---     let items = []
+---     if trigger == '/*'
+---       let items = ['/** */']
+---     elseif trigger == '/'
+---       let items = ['/*! */', '// TODO:', '// fixme:']
+---     elseif trigger == '.'
+---       let items = ['length()']
+---     elseif trigger =~ '^\->'
+---       let items = ['map()', 'reduce()']
+---     elseif trigger =~ '^\abc'
+---       let items = ['def', 'ghk']
+---     endif
+---     if items->len() > 0
+---       let startcol = trigger =~ '^/' ? col : col + len(trigger)
+---       call complete(startcol, items)
+---     endif
 ---   endfunc
 ---   inoremap <Tab> <Cmd>call CustomComplete()<CR>
 --- <
 ---
---- Return type: list<list<any>>
----
---- @param lnum? integer?
---- @param col? integer?
+--- @param lnum? integer
+--- @param col? integer
 --- @return table
 function vim.fn.complete_match(lnum, col) end
 

@@ -3439,6 +3439,13 @@ vim.bo.inf = vim.bo.infercase
 --- Note: Use "\\," to add a literal comma as trigger character, see
 --- `option-backslash`.
 ---
+--- Examples:
+---
+--- ```vim
+---     set isexpand=.,->,/*,\\,
+--- ```
+---
+---
 --- @type string
 vim.o.isexpand = ""
 vim.o.ise = vim.o.isexpand

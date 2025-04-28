@@ -4632,7 +4632,7 @@ local options = {
       abbreviation = 'ise',
       cb = 'did_set_isexpand',
       defaults = '',
-      deny_duplicates = false,
+      deny_duplicates = true,
       desc = [=[
         Defines characters and patterns for completion in insert mode. Used by
         the |complete_match()| function to determine the starting position for
@@ -4643,6 +4643,10 @@ local options = {
 
         Note: Use "\\," to add a literal comma as trigger character, see
         |option-backslash|.
+
+        Examples: >vim
+            set isexpand=.,->,/*,\\,
+        <
       ]=],
       full_name = 'isexpand',
       list = 'onecomma',

@@ -3550,6 +3550,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note: Use "\\," to add a literal comma as trigger character, see
 	|option-backslash|.
 
+	Examples: >vim
+	    set isexpand=.,->,/*,\\,
+<
+
 						*'isfname'* *'isf'*
 'isfname' 'isf'		string	(default for Windows:
                              "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],@-@,!,~,="

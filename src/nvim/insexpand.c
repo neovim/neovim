@@ -3082,24 +3082,18 @@ void f_complete_check(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// Add match item to the return list.
-/// Returns FAIL if out of memory, OK otherwise.
-static int add_match_to_list(typval_T *rettv, char *str, int pos)
+static void add_match_to_list(typval_T *rettv, char *str, int pos)
 {
-  list_T *match = tv_list_alloc(kListLenMayKnow);
-  if (match == NULL) {
-    return FAIL;
-  }
-
+  list_T *match = tv_list_alloc(2);
   tv_list_append_number(match, pos + 1);
   tv_list_append_string(match, str, -1);
   tv_list_append_list(rettv->vval.v_list, match);
-  return OK;
 }
 
 /// "complete_match()" function
 void f_complete_match(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  tv_list_alloc_ret(rettv,   kListLenUnknown);
+  tv_list_alloc_ret(rettv, kListLenUnknown);
 
   char *ise = curbuf->b_p_ise[0] != NUL ? curbuf->b_p_ise : p_ise;
 
@@ -3131,9 +3125,6 @@ void f_complete_match(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   char *before_cursor = xstrnsave(line, (size_t)col);
-  if (before_cursor == NULL) {
-    return;
-  }
 
   if (ise == NULL || *ise == NUL) {
     regmatch_T regmatch;
@@ -3141,19 +3132,9 @@ void f_complete_match(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (regmatch.regprog != NULL) {
       if (vim_regexec_nl(&regmatch, before_cursor, (colnr_T)0)) {
         char *trig = xstrnsave(regmatch.startp[0], (size_t)(regmatch.endp[0] - regmatch.startp[0]));
-        if (trig == NULL) {
-          xfree(before_cursor);
-          return;
-        }
-
         int bytepos = (int)(regmatch.startp[0] - before_cursor);
-        int ret = add_match_to_list(rettv, trig, bytepos);
+        add_match_to_list(rettv, trig, bytepos);
         xfree(trig);
-        if (ret == FAIL) {
-          xfree(before_cursor);
-          vim_regfree(regmatch.regprog);
-          return;
-        }
       }
       vim_regfree(regmatch.regprog);
     }
@@ -3166,10 +3147,7 @@ void f_complete_match(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       if (len > 0 && (int)len <= col) {
         if (strncmp(cur_end - len, part, len) == 0) {
           int bytepos = col - (int)len;
-          if (add_match_to_list(rettv, part, bytepos) == FAIL) {
-            xfree(before_cursor);
-            return;
-          }
+          add_match_to_list(rettv, part, bytepos);
         }
       }
     }
