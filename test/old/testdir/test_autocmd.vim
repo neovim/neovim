@@ -1923,49 +1923,118 @@ endfunc
 
 func Test_Cmdline_Trigger()
   autocmd CmdlineLeavePre : let g:log = "CmdlineLeavePre"
+  autocmd CmdlineLeave : let g:log2 = "CmdlineLeave"
   new
   let g:log = ''
+  let g:log2 = ''
   nnoremap <F1> <Cmd>echo "hello"<CR>
   call feedkeys("\<F1>", 'x')
   call assert_equal('', g:log)
+  call assert_equal('', g:log2)
   nunmap <F1>
+
   let g:log = ''
+  let g:log2 = ''
   nnoremap <F1> :echo "hello"<CR>
   call feedkeys("\<F1>", 'x')
   call assert_equal('CmdlineLeavePre', g:log)
+  call assert_equal('CmdlineLeave', g:log2)
   nunmap <F1>
+
   let g:log = ''
+  let g:log2 = ''
+  call feedkeys(":\<bs>", "tx")
+  call assert_equal('CmdlineLeavePre', g:log)
+  call assert_equal('CmdlineLeave', g:log2)
+
+  let g:log = ''
+  let g:log2 = ''
   split
   call assert_equal('', g:log)
   call feedkeys(":echo hello", "tx")
   call assert_equal('CmdlineLeavePre', g:log)
+  call assert_equal('CmdlineLeave', g:log2)
+
   let g:log = ''
+  let g:log2 = ''
   close
   call assert_equal('', g:log)
   call feedkeys(":echo hello", "tx")
   call assert_equal('CmdlineLeavePre', g:log)
+  call assert_equal('CmdlineLeave', g:log2)
+
   let g:log = ''
+  let g:log2 = ''
   tabnew
   call assert_equal('', g:log)
   call feedkeys(":echo hello", "tx")
   call assert_equal('CmdlineLeavePre', g:log)
+  call assert_equal('CmdlineLeave', g:log2)
+
   let g:log = ''
+  let g:log2 = ''
   split
   call assert_equal('', g:log)
   call feedkeys(":echo hello", "tx")
   call assert_equal('CmdlineLeavePre', g:log)
+  call assert_equal('CmdlineLeave', g:log2)
+
   let g:log = ''
+  let g:log2 = ''
   tabclose
   call assert_equal('', g:log)
   call feedkeys(":echo hello", "tx")
   call assert_equal('CmdlineLeavePre', g:log)
-  let g:count = 0
-  autocmd CmdlineLeavePre * let g:count += 1
-  call feedkeys(":let c = input('? ')\<cr>B\<cr>", "tx")
-  call assert_equal(2, g:count)
-  unlet! g:count
+  call assert_equal('CmdlineLeave', g:log2)
+
+  autocmd CmdlineLeavePre * let g:cmdline += [getcmdline()]
+
+  for end_keys in ["\<CR>", "\<NL>", "\<kEnter>", "\<C-C>", "\<Esc>",
+                 \ "\<C-\>\<C-N>", "\<C-\>\<C-G>"]
+    let g:cmdline = []
+    let g:log = ''
+    let g:log2 = ''
+    call assert_equal('', g:log)
+    let keys = $':echo "hello"{end_keys}'
+    let msg = keytrans(keys)
+    call feedkeys(keys, "tx")
+    call assert_equal(['echo "hello"'], g:cmdline, msg)
+    call assert_equal('CmdlineLeavePre', g:log, msg)
+    call assert_equal('CmdlineLeave', g:log2, msg)
+  endfor
+
+  let g:cmdline = []
+  call feedkeys(":let c = input('? ')\<cr>ABCDE\<cr>", "tx")
+  call assert_equal(["let c = input('? ')", 'ABCDE'], g:cmdline)
+
+  au! CmdlineLeavePre
+  unlet! g:cmdline
   unlet! g:log
+  unlet! g:log2
   bw!
+endfunc
+
+" Ensure :cabbr does not cause a spurious CmdlineLeavePre.
+func Test_CmdlineLeavePre_cabbr()
+  " For unknown reason this fails intermittently on MS-Windows
+  CheckNotMSWindows
+  CheckFeature terminal
+  let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': 3})
+  call assert_equal('running', term_getstatus(buf))
+  call term_sendkeys(buf, ":let g:a=0\<cr>")
+  call term_wait(buf, 50)
+  call term_sendkeys(buf, ":cabbr v v\<cr>")
+  call term_wait(buf, 50)
+  call term_sendkeys(buf, ":command! -nargs=* Foo echo\<cr>")
+  call term_wait(buf, 50)
+  call term_sendkeys(buf, ":au! CmdlineLeavePre * :let g:a+=1\<cr>")
+  call term_wait(buf, 50)
+  call term_sendkeys(buf, ":Foo v\<cr>")
+  call term_wait(buf, 50)
+  call term_sendkeys(buf, ":echo g:a\<cr>")
+  call term_wait(buf, 50)
+  call WaitForAssert({-> assert_match('^2.*$', term_getline(buf, 3))})
+  bwipe!
 endfunc
 
 func Test_Cmdline()

@@ -142,6 +142,8 @@ typedef struct {
   expand_T xpc;
   OptInt *b_im_ptr;
   buf_T *b_im_ptr_buf;  ///< buffer where b_im_ptr is valid
+  int cmdline_type;
+  bool event_cmdlineleavepre_triggered;
 } CommandLineState;
 
 typedef struct {
@@ -795,9 +797,10 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   setmouse();
   setcursor();
 
+  s->cmdline_type = firstc > 0 ? firstc : '-';
   Error err = ERROR_INIT;
   char firstcbuf[2];
-  firstcbuf[0] = (char)(firstc > 0 ? firstc : '-');
+  firstcbuf[0] = (char)s->cmdline_type;
   firstcbuf[1] = 0;
 
   if (has_event(EVENT_CMDLINEENTER)) {
@@ -867,6 +870,11 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   s->state.execute = command_line_execute;
 
   state_enter(&s->state);
+
+  // Trigger CmdlineLeavePre autocommands if not already triggered.
+  if (!s->event_cmdlineleavepre_triggered) {
+    trigger_cmd_autocmd(s->cmdline_type, EVENT_CMDLINELEAVEPRE);
+  }
 
   if (has_event(EVENT_CMDLINELEAVE)) {
     save_v_event_T save_v_event;
@@ -1304,9 +1312,10 @@ static int command_line_execute(VimState *state, int key)
   }
 
   // Trigger CmdlineLeavePre autocommand
-  if (s->c == '\n' || s->c == '\r' || s->c == K_KENTER
-      || s->c == ESC || s->c == Ctrl_C) {
-    trigger_cmd_autocmd(get_cmdline_type(), EVENT_CMDLINELEAVEPRE);
+  if ((KeyTyped && (s->c == '\n' || s->c == '\r' || s->c == K_KENTER || s->c == ESC))
+      || s->c == Ctrl_C) {
+    trigger_cmd_autocmd(s->cmdline_type, EVENT_CMDLINELEAVEPRE);
+    s->event_cmdlineleavepre_triggered = true;
   }
 
   // The wildmenu is cleared if the pressed key is not used for
@@ -2234,7 +2243,7 @@ end:
 static void may_trigger_cursormovedc(CommandLineState *s)
 {
   if (ccline.cmdpos != s->prev_cmdpos) {
-    trigger_cmd_autocmd(get_cmdline_type(), EVENT_CURSORMOVEDC);
+    trigger_cmd_autocmd(s->cmdline_type, EVENT_CURSORMOVEDC);
     s->prev_cmdpos = ccline.cmdpos;
     ccline.redraw_state = MAX(ccline.redraw_state, kCmdRedrawPos);
   }
