@@ -3327,7 +3327,7 @@ uint32_t excmd_get_argt(cmdidx_T idx)
 /// Skip a range specifier of the form: addr [,addr] [;addr] ..
 ///
 /// Backslashed delimiters after / or ? will be skipped, and commands will
-/// not be expanded between /'s and ?'s or after "'".
+/// not be expanded between /'s and ?'s or after "'" or "`".
 ///
 /// Also skip white space and ":" characters.
 ///
@@ -3336,14 +3336,14 @@ uint32_t excmd_get_argt(cmdidx_T idx)
 /// @return the "cmd" pointer advanced to beyond the range.
 char *skip_range(const char *cmd, int *ctx)
 {
-  while (vim_strchr(" \t0123456789.$%'/?-+,;\\", (uint8_t)(*cmd)) != NULL) {
+  while (vim_strchr(" \t0123456789.$%`'/?-+,;\\", (uint8_t)(*cmd)) != NULL) {
     if (*cmd == '\\') {
       if (cmd[1] == '?' || cmd[1] == '/' || cmd[1] == '&') {
         cmd++;
       } else {
         break;
       }
-    } else if (*cmd == '\'') {
+    } else if (*cmd == '\'' || *cmd == '`') {
       if (*++cmd == NUL && ctx != NULL) {
         *ctx = EXPAND_NOTHING;
       }
@@ -3544,7 +3544,7 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
         cmd++;
       } else {
         // Only accept a mark in another file when it is
-        // used by itself: ":'M".
+        // used by itself: ":`M".
         MarkGet flag = to_other_file && cmd[1] == NUL ? kMarkAll : kMarkBufLocal;
         fmark_T *fm = mark_get(curbuf, curwin, NULL, flag, *cmd);
         cmd++;
