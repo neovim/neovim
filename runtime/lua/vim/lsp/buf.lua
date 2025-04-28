@@ -61,11 +61,16 @@ function M.hover(config)
     local results1 = {} --- @type table<integer,lsp.Hover>
 
     for client_id, resp in pairs(results) do
+      --- @type lsp.ResponseError, lsp.Hover
       local err, result = resp.err, resp.result
       if err then
         lsp.log.error(err.code, err.message)
       elseif result then
-        results1[client_id] = result
+        -- Ensure that there is some non-empty content to display
+        local contents = result.contents
+        if type(contents) == 'string' or #vim.tbl_keys(contents) > 0 then
+          results1[client_id] = result
+        end
       end
     end
 
