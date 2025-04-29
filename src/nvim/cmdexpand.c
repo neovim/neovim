@@ -372,7 +372,7 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
 
   // Compute the popup menu starting column
   char *endpos = showtail ? showmatches_gettail(xp->xp_pattern, true) : xp->xp_pattern;
-  if (ui_has(kUICmdline)) {
+  if (ui_has(kUICmdline) && cmdline_win == NULL) {
     compl_startcol = (int)(endpos - ccline->cmdbuff);
   } else {
     compl_startcol = cmd_screencol((int)(endpos - ccline->cmdbuff));
@@ -1091,13 +1091,8 @@ int showmatches(expand_T *xp, bool wildmenu)
     showtail = cmd_showtail;
   }
 
-  bool compl_use_pum = (ui_has(kUICmdline)
-                        ? ui_has(kUIPopupmenu)
-                        : wildmenu && (wop_flags & kOptWopFlagPum))
-                       || ui_has(kUIWildmenu);
-
-  if (compl_use_pum) {
-    // cmdline completion popup menu (with wildoptions=pum)
+  if (((!ui_has(kUICmdline) || cmdline_win != NULL) && wildmenu && (wop_flags & kOptWopFlagPum))
+      || ui_has(kUIWildmenu) || (ui_has(kUICmdline) && ui_has(kUIPopupmenu))) {
     return cmdline_pum_create(ccline, xp, matches, numMatches, showtail);
   }
 
