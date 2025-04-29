@@ -55,8 +55,13 @@ describe('vim.system', function()
     describe('(' .. name .. ')', function()
       it('failure modes', function()
         t.matches(
-          'ENOENT%: no such file .*: "non%-existent%-cmd"',
+          "ENOENT%: no such file .* %(cmd%): 'non%-existent%-cmd'",
           t.pcall_err(system, { 'non-existent-cmd', 'arg1', 'arg2' }, { text = true })
+        )
+
+        t.matches(
+          "ENOENT%: no such file .* %(cwd%): 'non%-existent%-cwd'",
+          t.pcall_err(system, { 'echo', 'hello' }, { cwd = 'non-existent-cwd', text = true })
         )
       end)
 
