@@ -186,6 +186,7 @@ void ui_client_run(bool remote_ui)
 
 void ui_client_stop(void)
 {
+  ui_client_attached = false;
   if (!tui_is_stopped(tui)) {
     tui_stop(tui);
   }
