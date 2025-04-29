@@ -879,6 +879,7 @@ def CheckIncludes(filename, lines, error):
             "mpack/mpack_core.h",
             "mpack/object.h",
             "nvim/func_attr.h",
+            "nvim/strings.h",
             "termkey/termkey.h",
             "vterm/vterm.h",
             "xdiff/xdiff.h",

@@ -3773,6 +3773,8 @@ describe('API', function()
         },
         [102] = { background = Screen.colors.LightMagenta, reverse = true },
         [103] = { background = Screen.colors.LightMagenta, bold = true, reverse = true },
+        [104] = { fg_indexed = true, foreground = tonumber('0xe00000') },
+        [105] = { fg_indexed = true, foreground = tonumber('0xe0e000') },
       }
     end)
 
@@ -3886,6 +3888,24 @@ describe('API', function()
       ]],
       }
       eq('ba\024blaherrejösses!', exec_lua [[ return stream ]])
+    end)
+
+    it('parses text from the current buffer', function()
+      local b = api.nvim_create_buf(true, true)
+      api.nvim_buf_set_lines(b, 0, -1, true, { '\027[31mHello\000\027[0m', '\027[33mworld\027[0m' })
+      api.nvim_set_current_buf(b)
+      screen:expect([[
+        {18:^^[}[31mHello{18:^@^[}[0m                                                                                  |
+        {18:^[}[33mworld{18:^[}[0m                                                                                    |
+        {1:~                                                                                                   }|*32
+                                                                                                            |
+      ]])
+      api.nvim_open_term(b, {})
+      screen:expect([[
+        {104:^Hello}                                                                                               |
+        {105:world}                                                                                               |
+                                                                                                            |*33
+      ]])
     end)
   end)
 

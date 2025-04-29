@@ -8,7 +8,7 @@
 #include "auto/config.h"
 #include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
-#include "nvim/buffer_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
@@ -1204,44 +1204,7 @@ static size_t word_length(const char *str)
 /// before we finish writing.
 static void read_input(StringBuilder *buf)
 {
-  size_t written = 0;
-  size_t len = 0;
-  linenr_T lnum = curbuf->b_op_start.lnum;
-  char *lp = ml_get(lnum);
-  size_t lplen = (size_t)ml_get_len(lnum);
-
-  while (true) {
-    if (lplen == 0) {
-      len = 0;
-    } else if (lp[written] == NL) {
-      // NL -> NUL translation
-      len = 1;
-      kv_push(*buf, NUL);
-    } else {
-      char *s = vim_strchr(lp + written, NL);
-      len = s == NULL ? lplen - written : (size_t)(s - (lp + written));
-      kv_concat_len(*buf, lp + written, len);
-    }
-
-    if (len == lplen - written) {
-      // Finished a line, add a NL, unless this line should not have one.
-      if (lnum != curbuf->b_op_end.lnum
-          || (!curbuf->b_p_bin && curbuf->b_p_fixeol)
-          || (lnum != curbuf->b_no_eol_lnum
-              && (lnum != curbuf->b_ml.ml_line_count || curbuf->b_p_eol))) {
-        kv_push(*buf, NL);
-      }
-      lnum++;
-      if (lnum > curbuf->b_op_end.lnum) {
-        break;
-      }
-      lp = ml_get(lnum);
-      lplen = (size_t)ml_get_len(lnum);
-      written = 0;
-    } else if (len > 0) {
-      written += len;
-    }
-  }
+  read_buffer_into(curbuf, curbuf->b_op_start.lnum, curbuf->b_op_end.lnum, buf);
 }
 
 static size_t write_output(char *output, size_t remaining, bool eof)
