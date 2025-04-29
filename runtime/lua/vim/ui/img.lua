@@ -257,11 +257,8 @@ function M.new_position(x, y, unit)
   ---@return vim.ui.img.Position
   function position:to_cells()
     if self.unit == 'pixel' then
-      return M.new_position(
-        pixels_to_cells(self.x),
-        pixels_to_cells(self.y),
-        'cell'
-      )
+      local x, y = pixels_to_cells(self.x, self.y)
+      return M.new_position(x, y, 'cell')
     end
 
     return self
@@ -271,11 +268,8 @@ function M.new_position(x, y, unit)
   ---@return vim.ui.img.Position
   function position:to_pixels()
     if self.unit == 'cell' then
-      return M.new_position(
-        cells_to_pixels(self.x),
-        cells_to_pixels(self.y),
-        'pixel'
-      )
+      local x, y = cells_to_pixels(self.x, self.y)
+      return M.new_position(x, y, 'pixel')
     end
 
     return self
@@ -331,11 +325,8 @@ function M.new_size(width, height, unit)
   ---@return vim.ui.img.Size
   function size:to_cells()
     if self.unit == 'pixel' then
-      return M.new_size(
-        pixels_to_cells(self.width),
-        pixels_to_cells(self.height),
-        'cell'
-      )
+      local width, height = pixels_to_cells(self.width, self.height)
+      return M.new_size(width, height, 'cell')
     end
 
     return self
@@ -345,11 +336,8 @@ function M.new_size(width, height, unit)
   ---@return vim.ui.img.Size
   function size:to_pixels()
     if self.unit == 'cell' then
-      return M.new_size(
-        cells_to_pixels(self.width),
-        cells_to_pixels(self.height),
-        'pixel'
-      )
+      local width, height = cells_to_pixels(self.width, self.height)
+      return M.new_size(width, height, 'pixel')
     end
 
     return self
