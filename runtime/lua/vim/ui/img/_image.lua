@@ -73,12 +73,12 @@ end
 ---Loads data for an image from a file, replacing any existing data.
 ---If a callback provided, will load asynchronously; otherwise, is blocking.
 ---@param filename string
----@param cb fun(err:string|nil, image:vim.ui.img.Image|nil)
+---@param on_load fun(err:string|nil, image:vim.ui.img.Image|nil)
 ---@overload fun(filename:string):vim.ui.img.Image
-function M:load_from_file(filename, cb)
+function M:load_from_file(filename, on_load)
   local name = vim.fn.fnamemodify(filename, ':t:r')
 
-  if not cb then
+  if not on_load then
     local stat = vim.uv.fs_stat(filename)
     assert(stat, 'unable to stat ' .. filename)
 
@@ -98,7 +98,7 @@ function M:load_from_file(filename, cb)
   local function report_err(err)
     if err then
       vim.schedule(function()
-        cb(err)
+        on_load(err)
       end)
     end
 
@@ -134,7 +134,7 @@ function M:load_from_file(filename, cb)
         self.data = vim.base64.encode(data or '')
 
         vim.schedule(function()
-          cb(nil, self)
+          on_load(nil, self)
         end)
       end)
     end)
