@@ -62,8 +62,8 @@ function M.render(image, opts)
   }
 
   -- Specify the name of the image, which iterm2 requires to be base64 encoded
-  if image.name then
-    table.insert(args, 'name=' .. vim.base64.encode(image.name))
+  if image.filename then
+    table.insert(args, 'name=' .. vim.base64.encode(image.filename))
   end
 
   -- If a size is provided (in cells), we add it as arguments

@@ -191,9 +191,7 @@ function M:show(opts)
   -- For named protocols, grab the appropriate provider, failing
   -- if there is not a default provider for the specified protocol.
   if type(provider) == 'string' then
-    local protocol = provider
-    provider = require('vim.ui.img._provider')[protocol]
-    assert(provider, 'unsupported provider: ' .. protocol)
+    provider = require('vim.ui.img._provider').load(provider)
   end
 
   ---@cast provider vim.ui.img.Provider
@@ -202,6 +200,162 @@ function M:show(opts)
     size = opts.size,
     crop = opts.crop,
   })
+end
+
+---@alias vim.ui.img.Unit 'cell'|'pixel'
+
+---Calculates the width and height of each cell within the currently-attached
+---user interface. If no interface is found, will throw an error.
+---@return number cell_width, number cell_height
+local function cell_size()
+  ---@type {width:integer, height:integer}[]
+  local uis = vim.api.nvim_list_uis()
+  local ui = assert(uis[1], 'no attached ui found')
+
+  local width_px = ui.width
+  local height_px = ui.height
+  local columns = vim.o.columns
+  local lines = vim.o.lines
+
+  local cell_width = width_px / columns
+  local cell_height = height_px / lines
+
+  return cell_width, cell_height
+end
+
+---Convert an integer representing absolute pixels to a cell.
+---@param x integer
+---@param y integer
+---@return integer x, integer y
+local function pixels_to_cells(x, y)
+  local w, h = cell_size()
+  return math.floor(x / w), math.floor(y / h)
+end
+
+---Convert an integer representing a cell to absolute pixels.
+---@param x integer
+---@param y integer
+---@return integer x, integer y
+local function cells_to_pixels(x, y)
+  local w, h = cell_size()
+  return math.floor(x * w), math.floor(y * h)
+end
+
+---Creates a new instance of a position corresponding to an image.
+---@param x integer
+---@param y integer
+---@param unit vim.ui.img.Unit
+---@return vim.ui.img.Position
+function M.new_position(x, y, unit)
+  ---@class vim.ui.img.Position
+  ---@field x integer
+  ---@field y integer
+  ---@field unit vim.ui.img.Unit
+  local position = { x = x, y = y, unit = unit }
+
+  ---Convert unit of position to cells, returning a copy of the position.
+  ---@return vim.ui.img.Position
+  function position:to_cells()
+    if self.unit == 'pixel' then
+      return M.new_position(
+        pixels_to_cells(self.x),
+        pixels_to_cells(self.y),
+        'cell'
+      )
+    end
+
+    return self
+  end
+
+  ---Convert unit of position to pixels, returning a copy of the position.
+  ---@return vim.ui.img.Position
+  function position:to_pixels()
+    if self.unit == 'cell' then
+      return M.new_position(
+        cells_to_pixels(self.x),
+        cells_to_pixels(self.y),
+        'pixel'
+      )
+    end
+
+    return self
+  end
+
+  return position
+end
+
+---Creates a new instance of a region corresponding to an image.
+---@param pos1 vim.ui.img.Position
+---@param pos2 vim.ui.img.Position
+---@return vim.ui.img.Region
+function M.new_region(pos1, pos2)
+  ---@class vim.ui.img.Region
+  ---@field pos1 vim.ui.img.Position
+  ---@field pos2 vim.ui.img.Position
+  local region = { pos1 = pos1, pos2 = pos2 }
+
+  ---Convert unit of region to cells, returning a copy of the region.
+  ---@return vim.ui.img.Region
+  function region:to_cells()
+    return M.new_region(
+      self.pos1:to_cells(),
+      self.pos2:to_cells()
+    )
+  end
+
+  ---Convert unit of region to pixels, returning a copy of the region.
+  ---@return vim.ui.img.Region
+  function region:to_pixels()
+    return M.new_region(
+      self.pos1:to_pixels(),
+      self.pos2:to_pixels()
+    )
+  end
+
+  return region
+end
+
+---Creates a new instance of an size corresponding to an image.
+---@param width integer
+---@param height integer
+---@param unit vim.ui.img.Unit
+---@return vim.ui.img.Size
+function M.new_size(width, height, unit)
+  ---@class vim.ui.img.Size
+  ---@field width integer
+  ---@field height integer
+  ---@field unit vim.ui.img.Unit
+  local size = { width = width, height = height, unit = unit }
+
+  ---Convert unit of size to cells, returning a copy of the size.
+  ---@return vim.ui.img.Size
+  function size:to_cells()
+    if self.unit == 'pixel' then
+      return M.new_size(
+        pixels_to_cells(self.width),
+        pixels_to_cells(self.height),
+        'cell'
+      )
+    end
+
+    return self
+  end
+
+  ---Convert unit of size to pixels, returning a copy of the size.
+  ---@return vim.ui.img.Size
+  function size:to_pixels()
+    if self.unit == 'cell' then
+      return M.new_size(
+        cells_to_pixels(self.width),
+        cells_to_pixels(self.height),
+        'pixel'
+      )
+    end
+
+    return self
+  end
+
+  return size
 end
 
 return M
