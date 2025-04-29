@@ -247,8 +247,7 @@ static void parse_msgpack(Channel *channel)
   Unpacker *p = channel->rpc.unpacker;
   while (unpacker_advance(p)) {
     if (p->type == kMessageTypeRedrawEvent) {
-      // When exiting, ui_client_stop() has already been called, so don't handle UI events.
-      if (ui_client_channel_id && !exiting) {
+      if (ui_client_attached) {
         if (p->has_grid_line_event) {
           ui_client_event_raw_line(&p->grid_line_event);
           p->has_grid_line_event = false;
