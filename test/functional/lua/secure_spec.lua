@@ -55,7 +55,8 @@ describe('vim.secure', function()
       })
 
       local cwd = fn.getcwd()
-      if #cwd + 23 > 500 then
+      local msg = cwd .. pathsep .. 'Xfile is not trusted.'
+      if #msg >= screen._width then
         pending('path too long')
         return
       end
@@ -67,7 +68,7 @@ describe('vim.secure', function()
         {1:~{MATCH: +}}|*3
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. cwd .. pathsep .. [[Xfile is not trusted.}{MATCH: +}|
+        {3:]] .. msg .. [[}{MATCH: +}|
         {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('d')
@@ -89,7 +90,7 @@ describe('vim.secure', function()
         {1:~{MATCH: +}}|*3
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. cwd .. pathsep .. [[Xfile is not trusted.}{MATCH: +}|
+        {3:]] .. msg .. [[}{MATCH: +}|
         {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('a')
@@ -112,7 +113,7 @@ describe('vim.secure', function()
         {1:~{MATCH: +}}|*3
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. cwd .. pathsep .. [[Xfile is not trusted.}{MATCH: +}|
+        {3:]] .. msg .. [[}{MATCH: +}|
         {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('i')
@@ -131,7 +132,7 @@ describe('vim.secure', function()
         {1:~{MATCH: +}}|*3
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. cwd .. pathsep .. [[Xfile is not trusted.}{MATCH: +}|
+        {3:]] .. msg .. [[}{MATCH: +}|
         {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('v')
