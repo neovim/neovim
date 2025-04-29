@@ -4635,6 +4635,33 @@ local options = {
       immutable = true,
     },
     {
+      abbreviation = 'ise',
+      cb = 'did_set_isexpand',
+      defaults = '',
+      deny_duplicates = true,
+      desc = [=[
+        Defines characters and patterns for completion in insert mode. Used by
+        the |complete_match()| function to determine the starting position for
+        completion. This is a comma-separated list of triggers. Each trigger
+        can be:
+        - A single character like "." or "/"
+        - A sequence of characters like "->", "/*", or "/**"
+
+        Note: Use "\\," to add a literal comma as trigger character, see
+        |option-backslash|.
+
+        Examples: >vim
+            set isexpand=.,->,/*,\\,
+        <
+      ]=],
+      full_name = 'isexpand',
+      list = 'onecomma',
+      scope = { 'global', 'buf' },
+      short_desc = N_('Defines characters and patterns for completion in insert mode'),
+      type = 'string',
+      varname = 'p_ise',
+    },
+    {
       abbreviation = 'isf',
       cb = 'did_set_isopt',
       defaults = {
