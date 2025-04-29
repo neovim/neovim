@@ -1,5 +1,9 @@
 local M = {}
 
+--- TODO: What description to provide on this? Do we require it immediately?
+---       How do we make this lazy access (or imply as such) without the defer call?
+M.img = require('vim.ui.img')
+
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
 --- work until `on_choice`.
 ---
@@ -44,7 +48,7 @@ function M.select(items, opts, on_choice)
   local choices = { opts.prompt or 'Select one of:' }
   local format_item = opts.format_item or tostring
   for i, item in
-    ipairs(items --[[@as any[] ]])
+  ipairs(items --[[@as any[] ]])
   do
     table.insert(choices, string.format('%d: %s', i, format_item(item)))
   end
@@ -209,10 +213,10 @@ function M._get_urls()
               local url = metadata[id] and metadata[id].url
               if url and match[url] then
                 for _, n in
-                  ipairs(match[url] --[[@as TSNode[] ]])
+                ipairs(match[url] --[[@as TSNode[] ]])
                 do
                   urls[#urls + 1] =
-                    vim.treesitter.get_node_text(n, bufnr, { metadata = metadata[url] })
+                      vim.treesitter.get_node_text(n, bufnr, { metadata = metadata[url] })
                 end
               end
             end

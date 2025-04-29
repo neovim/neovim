@@ -1,4 +1,4 @@
----@class vim.img.Image
+---@class vim.ui.img.Image
 ---@field name string|nil name of the image if loaded from disk
 ---@field data string|nil base64 encoded data
 local M = {}
@@ -6,7 +6,7 @@ M.__index = M
 
 ---Creates a new image instance.
 ---@param opts? {data?:string, filename?:string}
----@return vim.img.Image
+---@return vim.ui.img.Image
 function M:new(opts)
   opts = opts or {}
 
@@ -65,16 +65,16 @@ function M:for_each_chunk(f, opts)
 end
 
 ---Displays the image within the terminal used by neovim.
----@param opts? vim.img.Opts
+---@param opts? vim.ui.img.Opts
 function M:show(opts)
-  vim.img.show(self, opts)
+  vim.ui.img.show(self, opts)
 end
 
 ---Loads data for an image from a file, replacing any existing data.
 ---If a callback provided, will load asynchronously; otherwise, is blocking.
 ---@param filename string
----@param cb fun(err:string|nil, image:vim.img.Image|nil)
----@overload fun(filename:string):vim.img.Image
+---@param cb fun(err:string|nil, image:vim.ui.img.Image|nil)
+---@overload fun(filename:string):vim.ui.img.Image
 function M:load_from_file(filename, cb)
   local name = vim.fn.fnamemodify(filename, ':t:r')
 

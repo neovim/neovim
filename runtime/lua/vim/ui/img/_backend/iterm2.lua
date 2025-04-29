@@ -1,9 +1,9 @@
----@class vim.img.Iterm2Backend: vim.img.Backend
+---@class vim.ui.img.Iterm2Backend: vim.ui.img.Backend
 local M = {}
 
 ---@param data string
 local function write_seq(data)
-  local terminal = require('vim.img._terminal')
+  local terminal = require('vim.ui.img._terminal')
 
   terminal.write(terminal.code.ESC) -- Begin sequence
   terminal.write(']1337;')
@@ -13,7 +13,7 @@ local function write_seq(data)
   terminal.write(terminal.code.BEL) -- End sequence
 end
 
----@param image vim.img.Image
+---@param image vim.ui.img.Image
 ---@param args table<string, string>
 local function write_multipart_image(image, args)
   -- Begin the transfer of the image file
@@ -28,7 +28,7 @@ local function write_multipart_image(image, args)
   write_seq('FileEnd')
 end
 
----@param image vim.img.Image
+---@param image vim.ui.img.Image
 ---@param args table<string, string>
 local function write_image(image, args)
   local data = image.data
@@ -39,10 +39,10 @@ local function write_image(image, args)
   write_seq('File=' .. table.concat(args, ';') .. ':' .. data)
 end
 
----@param image vim.img.Image
----@param opts? vim.img.Backend.RenderOpts
+---@param image vim.ui.img.Image
+---@param opts? vim.ui.img.Backend.RenderOpts
 function M.render(image, opts)
-  local terminal = require('vim.img._terminal')
+  local terminal = require('vim.ui.img._terminal')
 
   if not image:is_loaded() then
     return

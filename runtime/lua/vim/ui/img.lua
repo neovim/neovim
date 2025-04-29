@@ -1,36 +1,33 @@
-local img = vim._defer_require('vim.img', {
-  _backend = ..., --- @module 'vim.img._backend'
-  _detect = ..., --- @module 'vim.img._detect'
-  _image = ..., --- @module 'vim.img._image'
-  _terminal = ..., --- @module 'vim.img._terminal'
-})
+local M = {}
 
 ---Loads an image into memory, returning a wrapper around the image.
 ---
 ---Accepts `data` as base64-encoded bytes, or a `filename` that will be loaded.
 ---@param opts {data?:string, filename?:string}
----@return vim.img.Image
-function img.load(opts)
-  return img._image:new(opts)
+---@return vim.ui.img.Image
+function M.load(opts)
+  local Img = require('vim.ui.img._image')
+  return Img:new(opts)
 end
 
-img.protocol = (function()
-  ---@class vim.img.Protocol 'iterm2'|'kitty'|'sixel'
+M.protocol = (function()
+  ---@class vim.ui.img.Protocol 'iterm2'|'kitty'|'sixel'
 
-  ---@type vim.img.Protocol|nil
+  ---@type vim.ui.img.Protocol|nil
   local protocol = nil
 
   local loaded = false
 
   ---Determines the preferred graphics protocol to use by default.
   ---
-  ---@return vim.img.Protocol|nil
+  ---@return vim.ui.img.Protocol|nil
   return function()
     if not loaded then
-      local graphics = img._detect().graphics
+      local detect = require('vim.ui.img._detect')
+      local graphics = detect().graphics
 
       ---@diagnostic disable-next-line:cast-type-mismatch
-      ---@cast graphics vim.img.Protocol|nil
+      ---@cast graphics vim.ui.img.Protocol|nil
       protocol = graphics
 
       loaded = true
@@ -40,13 +37,13 @@ img.protocol = (function()
   end
 end)()
 
----@class vim.img.Opts: vim.img.Backend.RenderOpts
----@field backend? vim.img.Protocol|vim.img.Backend
+---@class vim.ui.img.Opts: vim.ui.img.Backend.RenderOpts
+---@field backend? vim.ui.img.Protocol|vim.ui.img.Backend
 
----Displays the image within the terminal used by neovim.
----@param image vim.img.Image
----@param opts? vim.img.Opts
-function img.show(image, opts)
+---Displays an image. Currently only supports the |TUI|.
+---@param image vim.ui.img.Image
+---@param opts? vim.ui.img.Opts
+function M.show(image, opts)
   opts = opts or {}
 
   local backend = opts.backend
@@ -55,7 +52,7 @@ function img.show(image, opts)
   -- preferred graphics. If we still cannot figure out a backend,
   -- throw an error early versus silently trying a protocol.
   if not backend then
-    backend = img.protocol()
+    backend = M.protocol()
     assert(backend, 'no graphics backend available')
   end
 
@@ -63,11 +60,11 @@ function img.show(image, opts)
   -- if there is not a default backend for the specified protocol.
   if type(backend) == 'string' then
     local protocol = backend
-    backend = img._backend[protocol]
+    backend = require('vim.ui.img._backend')[protocol]
     assert(backend, 'unsupported backend: ' .. protocol)
   end
 
-  ---@cast backend vim.img.Backend
+  ---@cast backend vim.ui.img.Backend
   backend.render(image, {
     pos = opts.pos,
     size = opts.size,
@@ -75,4 +72,4 @@ function img.show(image, opts)
   })
 end
 
-return img
+return M

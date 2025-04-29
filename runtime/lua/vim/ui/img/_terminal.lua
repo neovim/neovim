@@ -1,4 +1,4 @@
----@class vim.img.terminal
+---@class vim.ui.img.terminal
 ---@field private __tty_name string
 local M = {}
 
@@ -50,7 +50,7 @@ function M.write(...)
   handle:close()
 end
 
----@class vim.img.terminal.cursor
+---@class vim.ui.img.terminal.cursor
 M.cursor = {}
 
 ---@param x integer
