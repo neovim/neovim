@@ -2029,14 +2029,9 @@ static void refresh_terminal(Terminal *term)
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
-  // Some refresh_ functions assume the terminal buffer is current. Don't call refresh_cursor here,
-  // as we don't want a terminal that was possibly made temporarily current influencing the cursor.
-  aco_save_T aco;
-  aucmd_prepbuf(&aco, buf);
   refresh_size(term, buf);
   refresh_scrollback(term, buf);
   refresh_screen(term, buf);
-  aucmd_restbuf(&aco);
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
@@ -2168,7 +2163,6 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Terminal *term, buf_T *buf)
 {
-  assert(buf == curbuf);  // TODO(seandewar): remove this condition
   int width, height;
   vterm_get_size(term->vt, &height, &width);
 
@@ -2177,8 +2171,8 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
   int row_offset = term->sb_pending;
   while (term->sb_pending > 0 && buf->b_ml.ml_line_count < height) {
     fetch_row(term, term->sb_pending - row_offset - 1, width);
-    ml_append(0, term->textbuf, 0, false);
-    appended_lines(0, 1);
+    ml_append_buf(buf, 0, term->textbuf, 0, false);
+    appended_lines_buf(buf, 0, 1);
     term->sb_pending--;
   }
 
@@ -2190,21 +2184,21 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
     // section of the buffer
     if (((int)buf->b_ml.ml_line_count - height) >= (int)term->sb_size) {
       // scrollback full, delete lines at the top
-      ml_delete(1, false);
-      deleted_lines(1, 1);
+      ml_delete_buf(buf, 1, false);
+      deleted_lines_buf(buf, 1, 1);
     }
     fetch_row(term, -term->sb_pending - row_offset, width);
     int buf_index = (int)buf->b_ml.ml_line_count - height;
-    ml_append(buf_index, term->textbuf, 0, false);
-    appended_lines(buf_index, 1);
+    ml_append_buf(buf, buf_index, term->textbuf, 0, false);
+    appended_lines_buf(buf, buf_index, 1);
     term->sb_pending--;
   }
 
   // Remove extra lines at the bottom
   int max_line_count = (int)term->sb_current + height;
   while (buf->b_ml.ml_line_count > max_line_count) {
-    ml_delete(buf->b_ml.ml_line_count, false);
-    deleted_lines(buf->b_ml.ml_line_count, 1);
+    ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
+    deleted_lines_buf(buf, buf->b_ml.ml_line_count, 1);
   }
 
   adjust_scrollback(term, buf);
@@ -2214,7 +2208,6 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
 // focused) of a invalidated terminal
 static void refresh_screen(Terminal *term, buf_T *buf)
 {
-  assert(buf == curbuf);  // TODO(bfredl): remove this condition
   int changed = 0;
   int added = 0;
   int height;
@@ -2235,10 +2228,10 @@ static void refresh_screen(Terminal *term, buf_T *buf)
     fetch_row(term, r, width);
 
     if (linenr <= buf->b_ml.ml_line_count) {
-      ml_replace(linenr, term->textbuf, true);
+      ml_replace_buf(buf, linenr, term->textbuf, true, false);
       changed++;
     } else {
-      ml_append(linenr - 1, term->textbuf, 0, false);
+      ml_append_buf(buf, linenr - 1, term->textbuf, 0, false);
       added++;
     }
   }
