@@ -3838,9 +3838,7 @@ int vim_dialog_yesnoallcancel(int type, char *title, char *message, int dflt)
 void msg_check_for_delay(bool check_msg_scroll)
 {
   if ((emsg_on_display || (check_msg_scroll && msg_scroll))
-      && !did_wait_return
-      && emsg_silent == 0
-      && !in_assert_fails) {
+      && !did_wait_return && emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
     ui_flush();
     os_delay(1006, true);
     emsg_on_display = false;

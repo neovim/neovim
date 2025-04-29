@@ -2334,7 +2334,8 @@ func Test_thesaurusfunc_callback()
     new
     call setline(1, 'sun')
     LET g:TsrFunc1Args = []
-    call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")
+    " Nvim: message is an actual error rather than message with error highlight
+    silent! call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")
     call assert_equal('sun', getline(1))
     call assert_equal([], g:TsrFunc1Args)
     set thesaurusfunc=function('g:TsrFunc1',\ [23])
