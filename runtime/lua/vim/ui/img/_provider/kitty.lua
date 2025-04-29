@@ -1,4 +1,4 @@
----@class vim.ui.img.KittyBackend: vim.ui.img.Backend
+---@class vim.ui.img.KittyProvider: vim.ui.img.Provider
 local M = {}
 
 ---For kitty, we need to write an image in chunks
@@ -24,7 +24,7 @@ local function write_seq(data)
 end
 
 ---Builds a header table of key value pairs.
----@param opts vim.ui.img.Backend.RenderOpts
+---@param opts vim.ui.img.Provider.RenderOpts
 ---@return table<string, string>
 local function make_header(opts)
   ---@type table<string, string>
@@ -52,7 +52,7 @@ local function make_header(opts)
 end
 
 ---@param image vim.ui.img.Image
----@param opts vim.ui.img.Backend.RenderOpts
+---@param opts vim.ui.img.Provider.RenderOpts
 local function write_multipart_image(image, opts)
   image:for_each_chunk(function(chunk, pos, has_more)
     local data = {}
@@ -85,7 +85,7 @@ local function write_multipart_image(image, opts)
 end
 
 ---@param image vim.ui.img.Image
----@param opts? vim.ui.img.Backend.RenderOpts
+---@param opts? vim.ui.img.Provider.RenderOpts
 function M.render(image, opts)
   local terminal = require('vim.ui.img._terminal')
 

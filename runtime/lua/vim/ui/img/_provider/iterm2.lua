@@ -1,4 +1,4 @@
----@class vim.ui.img.Iterm2Backend: vim.ui.img.Backend
+---@class vim.ui.img.Iterm2Provider: vim.ui.img.Provider
 local M = {}
 
 ---@param data string
@@ -40,7 +40,7 @@ local function write_image(image, args)
 end
 
 ---@param image vim.ui.img.Image
----@param opts? vim.ui.img.Backend.RenderOpts
+---@param opts? vim.ui.img.Provider.RenderOpts
 function M.render(image, opts)
   local terminal = require('vim.ui.img._terminal')
 

@@ -37,8 +37,8 @@ M.protocol = (function()
   end
 end)()
 
----@class vim.ui.img.Opts: vim.ui.img.Backend.RenderOpts
----@field backend? vim.ui.img.Protocol|vim.ui.img.Backend
+---@class vim.ui.img.Opts: vim.ui.img.Provider.RenderOpts
+---@field provider? vim.ui.img.Protocol|vim.ui.img.Provider
 
 ---Displays an image. Currently only supports the |TUI|.
 ---@param image vim.ui.img.Image
@@ -46,26 +46,26 @@ end)()
 function M.show(image, opts)
   opts = opts or {}
 
-  local backend = opts.backend
+  local provider = opts.provider
 
   -- If no graphics are explicitly defined, attempt to detect the
-  -- preferred graphics. If we still cannot figure out a backend,
+  -- preferred graphics. If we still cannot figure out a provider,
   -- throw an error early versus silently trying a protocol.
-  if not backend then
-    backend = M.protocol()
-    assert(backend, 'no graphics backend available')
+  if not provider then
+    provider = M.protocol()
+    assert(provider, 'no graphics provider available')
   end
 
-  -- For named protocols, grab the appropriate backend, failing
-  -- if there is not a default backend for the specified protocol.
-  if type(backend) == 'string' then
-    local protocol = backend
-    backend = require('vim.ui.img._backend')[protocol]
-    assert(backend, 'unsupported backend: ' .. protocol)
+  -- For named protocols, grab the appropriate provider, failing
+  -- if there is not a default provider for the specified protocol.
+  if type(provider) == 'string' then
+    local protocol = provider
+    provider = require('vim.ui.img._provider')[protocol]
+    assert(provider, 'unsupported provider: ' .. protocol)
   end
 
-  ---@cast backend vim.ui.img.Backend
-  backend.render(image, {
+  ---@cast provider vim.ui.img.Provider
+  provider.render(image, {
     pos = opts.pos,
     size = opts.size,
     crop = opts.crop,

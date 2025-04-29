@@ -1,4 +1,4 @@
-local terminal = require('vim.img._terminal')
+local terminal = require('vim.ui.img._terminal')
 
 local TERM_QUERY = {
   -- Request device attributes (DA2).
