@@ -1924,7 +1924,7 @@ These commands are used to start inserting text.  You can end insert mode with
 <Esc>.  See |mode-ins-repl| for the other special characters in Insert mode.
 The effect of [count] takes place after Insert mode is exited.
 
-The following commands insert text, but stay in normal mode:
+The following |default-mappings| insert text, but stay in normal mode:
 
 							*]<Space>*
 ]<Space>		Insert an empty line below the cursor without leaving

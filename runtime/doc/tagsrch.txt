@@ -274,26 +274,38 @@ g CTRL-]		Like CTRL-], but use ":tjump" instead of ":tag".
 {Visual}g CTRL-]	Same as "g CTRL-]", but use the highlighted text as
 			the identifier.
 
-							*:tn* *:tnext* *]t*
+							*:tn* *:tnext*
 :[count]tn[ext][!]	Jump to [count] next matching tag (default 1).  See
 			|tag-!| for [!].
 
-							*:tp* *:tprevious* *[t*
+								*]t*
+]t			Mapped to |:tnext|. |default-mappings|
+
+							*:tp* *:tprevious*
 :[count]tp[revious][!]	Jump to [count] previous matching tag (default 1).
 			See |tag-!| for [!].
+
+								*[t*
+[t			Mapped to |:tprevious|. |default-mappings|
 
 							*:tN* *:tNext*
 :[count]tN[ext][!]	Same as ":tprevious".
 
-							*:tr* *:trewind* *[T*
+							*:tr* *:trewind*
 :[count]tr[ewind][!]	Jump to first matching tag.  If [count] is given, jump
 			to [count]th matching tag.  See |tag-!| for [!].
+
+								*[T*
+[T			Mapped to |:trewind|. |default-mappings|
 
 							*:tf* *:tfirst*
 :[count]tf[irst][!]	Same as ":trewind".
 
-							*:tl* *:tlast* *]T*
+							*:tl* *:tlast*
 :tl[ast][!]		Jump to last matching tag.  See |tag-!| for [!].
+
+								*]T*
+]T			Mapped to |:tlast|. |default-mappings|
 
 							*:lt* *:ltag*
 :lt[ag][!] [name]	Jump to tag [name] and add the matching tags to a new
@@ -335,11 +347,17 @@ the same as above, with a "p" prepended.
 :ptj[ump][!] [name]	Does ":tjump[!] [name]" and shows the new tag in a
 			"Preview" window.  See |:ptag| for more info.
 
-							*:ptn* *:ptnext* *]CTRL-T*
+							*:ptn* *:ptnext*
 :[count]ptn[ext][!]	":tnext" in the preview window.  See |:ptag|.
 
-							*:ptp* *:ptprevious* *[CTRL-T*
+								*]CTRL-T*
+]CTRL-T			Mapped to |:ptnext|. |default-mappings|
+
+							*:ptp* *:ptprevious*
 :[count]ptp[revious][!]	":tprevious" in the preview window.  See |:ptag|.
+
+								*[CTRL-T*
+[CTRL-T			Mapped to |:ptprevious|. |default-mappings|
 
 							*:ptN* *:ptNext*
 :[count]ptN[ext][!]	Same as ":ptprevious".
