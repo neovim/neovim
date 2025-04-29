@@ -51,7 +51,7 @@ local function make_header(opts)
   return header
 end
 
----@param image vim.ui.img.Image
+---@param image vim.ui.Image
 ---@param opts vim.ui.img.Provider.RenderOpts
 local function write_multipart_image(image, opts)
   image:for_each_chunk(function(chunk, pos, has_more)
@@ -84,7 +84,7 @@ local function write_multipart_image(image, opts)
   end)
 end
 
----@param image vim.ui.img.Image
+---@param image vim.ui.Image
 ---@param opts? vim.ui.img.Provider.RenderOpts
 function M.render(image, opts)
   local terminal = require('vim.ui.img._terminal')

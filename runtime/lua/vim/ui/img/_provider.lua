@@ -1,5 +1,5 @@
 ---@class vim.ui.img.Provider
----@field render fun(image:vim.ui.img.Image, opts?:vim.ui.img.Provider.RenderOpts)
+---@field render fun(image:vim.ui.Image, opts?:vim.ui.img.Provider.RenderOpts)
 
 ---@class vim.ui.img.Provider.RenderOpts
 ---@field crop? {x:integer, y:integer, width:integer, height:integer} units are pixels
