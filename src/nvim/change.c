@@ -461,12 +461,20 @@ void inserted_bytes(linenr_T lnum, colnr_T start_col, int old_col, int new_col)
   changed_bytes(lnum, start_col);
 }
 
+/// Appended "count" lines below line "lnum" in the given buffer.
+/// Must be called AFTER the change and after mark_adjust().
+/// Takes care of marking the buffer to be redrawn and sets the changed flag.
+void appended_lines_buf(buf_T *buf, linenr_T lnum, linenr_T count)
+{
+  changed_lines(buf, lnum + 1, 0, lnum + 1, count, true);
+}
+
 /// Appended "count" lines below line "lnum" in the current buffer.
 /// Must be called AFTER the change and after mark_adjust().
 /// Takes care of marking the buffer to be redrawn and sets the changed flag.
 void appended_lines(linenr_T lnum, linenr_T count)
 {
-  changed_lines(curbuf, lnum + 1, 0, lnum + 1, count, true);
+  appended_lines_buf(curbuf, lnum, count);
 }
 
 /// Like appended_lines(), but adjust marks first.
@@ -476,12 +484,20 @@ void appended_lines_mark(linenr_T lnum, int count)
   changed_lines(curbuf, lnum + 1, 0, lnum + 1, (linenr_T)count, true);
 }
 
+/// Deleted "count" lines at line "lnum" in the given buffer.
+/// Must be called AFTER the change and after mark_adjust().
+/// Takes care of marking the buffer to be redrawn and sets the changed flag.
+void deleted_lines_buf(buf_T *buf, linenr_T lnum, linenr_T count)
+{
+  changed_lines(buf, lnum, 0, lnum + count, -count, true);
+}
+
 /// Deleted "count" lines at line "lnum" in the current buffer.
 /// Must be called AFTER the change and after mark_adjust().
 /// Takes care of marking the buffer to be redrawn and sets the changed flag.
 void deleted_lines(linenr_T lnum, linenr_T count)
 {
-  changed_lines(curbuf, lnum, 0, lnum + count, -count, true);
+  deleted_lines_buf(curbuf, lnum, count);
 }
 
 /// Like deleted_lines(), but adjust marks first.
