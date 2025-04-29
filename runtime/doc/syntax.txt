@@ -1689,6 +1689,13 @@ line for any comments written in this way, and showing the contents of a first
 line otherwise, with >
 	:let g:java_foldtext_show_first_or_second_line = 1
 
+HTML tags in Javadoc comments can additionally be folded by following the
+instructions listed under |html-folding| and giving explicit consent with >
+	:let g:java_consent_to_html_syntax_folding = 1
+Do not default to this kind of folding unless ALL start tags and optional end
+tags are balanced in Javadoc comments; otherwise, put up with creating runaway
+folds that break syntax highlighting.
+
 Trailing whitespace characters or a run of space characters before a tab
 character can be marked as an error with >
 	:let g:java_space_errors = 1

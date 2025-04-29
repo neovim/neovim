@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2025 Mar 26
+" Last Change:		2025 Apr 28
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -387,15 +387,30 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
   " Include HTML syntax coloring for Javadoc comments.
   if s:with_html
     try
+      if exists("g:html_syntax_folding") && !exists("g:java_consent_to_html_syntax_folding")
+	let s:html_syntax_folding_copy = g:html_syntax_folding
+	unlet g:html_syntax_folding
+      endif
+
       syntax include @javaHtml syntax/html.vim
     finally
       unlet! b:current_syntax
+
+      if exists("s:html_syntax_folding_copy")
+	let g:html_syntax_folding = s:html_syntax_folding_copy
+	unlet s:html_syntax_folding_copy
+      endif
     endtry
   endif
 
   " Include Markdown syntax coloring (v7.2.437) for Javadoc comments.
   if s:with_markdown
     try
+      if exists("g:html_syntax_folding") && !exists("g:java_consent_to_html_syntax_folding")
+	let s:html_syntax_folding_copy = g:html_syntax_folding
+	unlet g:html_syntax_folding
+      endif
+
       syntax include @javaMarkdown syntax/markdown.vim
 
       try
@@ -412,6 +427,11 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
       let s:no_support = 1
     finally
       unlet! b:current_syntax
+
+      if exists("s:html_syntax_folding_copy")
+	let g:html_syntax_folding = s:html_syntax_folding_copy
+	unlet s:html_syntax_folding_copy
+      endif
 
       if exists("s:no_support")
 	unlet s:no_support
