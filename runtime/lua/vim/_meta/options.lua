@@ -1163,27 +1163,7 @@ vim.bo.cot = vim.bo.completeopt
 vim.go.completeopt = vim.o.completeopt
 vim.go.cot = vim.go.completeopt
 
-<<<<<<< HEAD
 --- 		only modifiable in MS-Windows
-=======
---- This option is used to set the completion window and info floating
---- preview window. The option is a comma-separated list of values:
---- `align`, `border`, `title`, `titlepos`, `footer`, `footerpos`.
---- see `nvim_open_win()`.
---- When the "align" value is "item" then the info floating preview window
---- is positioned close to the selected item.  Changing the selection will
---- also move the popup.  When "align" is "menu" then the floating preview
---- window is aligned with the top of the menu if the menu is below the text,
---- and the bottom of the menu otherwise.
----
---- @type string
-vim.o.completepopup = ""
-vim.o.cpp = vim.o.completepopup
-vim.go.completepopup = vim.o.completepopup
-vim.go.cpp = vim.go.completepopup
-
---- 		only for MS-Windows
->>>>>>> 57fee3d58e (feat(ui): config popupmenu by use completepopup)
 --- When this option is set it overrules 'shellslash' for completion:
 --- - When this option is set to "slash", a forward slash is used for path
 ---   completion in insert mode. This is useful when editing HTML tag, or

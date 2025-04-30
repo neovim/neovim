@@ -31,11 +31,6 @@ EXTERN struct {
   bool finish;
 } pum_want;
 
-typedef enum {
-  kInfoAlignMenu = 0,
-  kInfoAlignItem,
-} PumInfoAlign;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmenu.h.generated.h"
 #endif

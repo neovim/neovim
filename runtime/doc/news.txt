@@ -153,8 +153,6 @@ OPTIONS
 • 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'winborder' "bold" style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
-• Added new option 'completepopup' for config completion window and info
-  preview floating window.
 
 PERFORMANCE
 

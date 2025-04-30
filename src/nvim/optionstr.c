@@ -39,7 +39,6 @@
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/os.h"
-#include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
@@ -944,26 +943,6 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
 
-  return NULL;
-}
-
-const char *did_set_completepopup(optset_T *args FUNC_ATTR_UNUSED)
-{
-  WinConfig config = WIN_CONFIG_INIT;
-  bool result = parse_completepopup(&config, false);
-  if (pum_visible() && config.border && (config.title || config.footer)) {
-    pum_grid_draw_border(&config, true);
-  }
-
-  if (config.title) {
-    clear_virttext(&config.title_chunks);
-  }
-  if (config.footer) {
-    clear_virttext(&config.footer_chunks);
-  }
-  if (!result) {
-    return e_invarg;
-  }
   return NULL;
 }
 
@@ -2074,6 +2053,15 @@ const char *did_set_wildmode(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_winbar(optset_T *args)
 {
   return did_set_statustabline_rulerformat(args, false, false);
+}
+
+/// The 'winborder' option is changed.
+const char *did_set_winborder(optset_T *args)
+{
+  if (opt_strings_flags(args->os_newval.string.data, opt_winborder_values, NULL, false) != OK) {
+    return e_invarg;
+  }
+  return NULL;
 }
 
 /// The 'winhighlight' option is changed.

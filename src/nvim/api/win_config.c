@@ -902,8 +902,8 @@ void parse_bordertext(Object bordertext, BorderTextType bordertext_type, WinConf
   *is_present = true;
 }
 
-bool parse_bordertext_pos(win_T *wp, String bordertext_pos, BorderTextType bordertext_type, WinConfig *fconfig,
-                          Error *err)
+bool parse_bordertext_pos(win_T *wp, String bordertext_pos, BorderTextType bordertext_type,
+                          WinConfig *fconfig, Error *err)
 {
   AlignTextPos *align;
   switch (bordertext_type) {

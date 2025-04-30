@@ -300,22 +300,6 @@ EXTERN char *p_cia;             ///< 'completeitemalign'
 EXTERN unsigned cia_flags;      ///< order flags of 'completeitemalign'
 EXTERN char *p_cot;             ///< 'completeopt'
 EXTERN unsigned cot_flags;      ///< flags from 'completeopt'
-
-// Keep in sync with p_cot_values in optionstr.c
-#define COT_MENU        0x001
-#define COT_MENUONE     0x002
-#define COT_ANY_MENU    0x003  // combination of menu flags
-#define COT_LONGEST     0x004  // false: insert full match,
-                               // true: insert longest prefix
-#define COT_PREVIEW     0x008
-#define COT_POPUP       0x010
-#define COT_ANY_PREVIEW 0x018  // combination of preview flags
-#define COT_NOINSERT    0x020  // false: select & insert, true: noinsert
-#define COT_NOSELECT    0x040  // false: select & insert, true: noselect
-#define COT_FUZZY       0x080  // true: fuzzy match enabled
-
-EXTERN char *p_cpp;             ///< 'completepopup'
-
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char *p_csl;             ///< 'completeslash'
 #endif
