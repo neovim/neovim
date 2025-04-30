@@ -926,28 +926,30 @@ do
     end
   end
 
-  vim.api.nvim_create_autocmd('DiagnosticChanged', {
-    pattern = '*',
-    desc = 'Update buffer diagnostics in the statusline',
-    group = vim.api.nvim_create_augroup('nvim.statusline', {}),
-    callback = function()
+  -- statusline
+  do
+    local function on_diagnostics_change()
       local bufnr = vim.api.nvim_get_current_buf()
 
       local severity = vim.diagnostic.severity
 
       local result = {}
       local count = vim.diagnostic.count(bufnr)
-      if count[severity.ERROR] and count[1] > 0 then
-        table.insert(result, 'e:' .. count[severity.ERROR])
+      local errors = count[severity.ERROR] or 0
+      if errors > 0 then
+        table.insert(result, 'e:' .. errors)
       end
-      if count[severity.WARN] and count[2] > 0 then
-        table.insert(result, 'w:' .. count[severity.WARN])
+      local warnings = count[severity.WARN] or 0
+      if warnings > 0 then
+        table.insert(result, 'w:' .. warnings)
       end
-      if count[severity.INFO] and count[3] > 0 then
-        table.insert(result, 'i:' .. count[severity.INFO])
+      local infos = count[severity.INFO] or 0
+      if infos > 0 then
+        table.insert(result, 'i:' .. infos)
       end
-      if count[severity.HINT] and count[4] > 0 then
-        table.insert(result, 'h:' .. count[severity.HINT])
+      local hints = count[severity.HINT] or 0
+      if hints > 0 then
+        table.insert(result, 'h:' .. hints)
       end
 
       local result_str = table.concat(result, ' ')
@@ -955,8 +957,31 @@ do
       vim.b[bufnr].buffer_diagnostics = result_str
 
       vim.cmd.redrawstatus()
-    end,
-  })
+    end
+    local group = vim.api.nvim_create_augroup('nvim.statusline.diagnostics', {})
+    vim.api.nvim_create_autocmd('DiagnosticChanged', {
+      desc = 'Update buffer diagnostics in the statusline',
+      group = group,
+      callback = on_diagnostics_change,
+    })
+
+    vim.api.nvim_create_autocmd('OptionSet', {
+      pattern = 'statusline',
+      group = vim.api.nvim_create_augroup('nvim.statusline', {}),
+      callback = function()
+        local value = vim.o.statusline
+        vim.api.nvim_clear_autocmds({ group = group })
+        if value == nil or value == '' then
+          vim.api.nvim_create_autocmd('DiagnosticChanged', {
+            desc = 'Update buffer diagnostics in the statusline',
+            group = group,
+            callback = on_diagnostics_change,
+          })
+          on_diagnostics_change()
+        end
+      end,
+    })
+  end
 end
 
 --- Default options
