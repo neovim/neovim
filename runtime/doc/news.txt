@@ -277,6 +277,7 @@ LSP
 • The `textDocument/completion` request now includes the completion context in
   its parameters.
 • |vim.lsp.Config| gained `workspace_required`.
+• `root_markers` in |vim.lsp.Config| can now be ordered by priority.
 
 LUA
 

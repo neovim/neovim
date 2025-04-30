@@ -5,7 +5,6 @@ local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local assert_log = t.assert_log
 local buf_lines = n.buf_lines
-local clear = n.clear
 local command = n.command
 local dedent = t.dedent
 local exec_lua = n.exec_lua
@@ -290,7 +289,6 @@ describe('LSP', function()
     it(
       "should set the client's offset_encoding when positionEncoding capability is supported",
       function()
-        clear()
         exec_lua(create_server_definition)
         local result = exec_lua(function()
           local server = _G._create_server({
@@ -573,7 +571,6 @@ describe('LSP', function()
     end)
 
     it('should detach buffer on bufwipe', function()
-      clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local server = _G._create_server()
@@ -606,7 +603,6 @@ describe('LSP', function()
     end)
 
     it('should not re-attach buffer if it was deleted in on_init #28575', function()
-      clear()
       exec_lua(create_server_definition)
       exec_lua(function()
         local server = _G._create_server({
@@ -637,7 +633,6 @@ describe('LSP', function()
     end)
 
     it('should allow on_lines + nvim_buf_delete during LSP initialization #28575', function()
-      clear()
       exec_lua(create_server_definition)
       exec_lua(function()
         local initialized = false
@@ -812,7 +807,6 @@ describe('LSP', function()
     end)
 
     it('BufWritePre does not send notifications if server lacks willSave capabilities', function()
-      clear()
       exec_lua(create_server_definition)
       local messages = exec_lua(function()
         local server = _G._create_server({
@@ -837,7 +831,6 @@ describe('LSP', function()
     end)
 
     it('BufWritePre sends willSave / willSaveWaitUntil, applies textEdits', function()
-      clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local server = _G._create_server({
@@ -1253,8 +1246,6 @@ describe('LSP', function()
     end)
 
     it('request should not be pending for sync responses (in-process LS)', function()
-      clear()
-
       --- @type boolean
       local pending_request = exec_lua(function()
         local function server(dispatchers)
@@ -3871,7 +3862,6 @@ describe('LSP', function()
     end)
 
     it('opens the quickfix list with the right subtypes', function()
-      clear()
       exec_lua(create_server_definition)
       local qflist = exec_lua(function()
         local clangd_response = {
@@ -4019,7 +4009,6 @@ describe('LSP', function()
     end)
 
     it('opens the quickfix list with the right subtypes and details', function()
-      clear()
       exec_lua(create_server_definition)
       local qflist = exec_lua(function()
         local jdtls_response = {
@@ -4120,7 +4109,6 @@ describe('LSP', function()
     end)
 
     it('opens the quickfix list with the right supertypes', function()
-      clear()
       exec_lua(create_server_definition)
       local qflist = exec_lua(function()
         local clangd_response = {
@@ -4269,7 +4257,6 @@ describe('LSP', function()
     end)
 
     it('opens the quickfix list with the right supertypes and details', function()
-      clear()
       exec_lua(create_server_definition)
       local qflist = exec_lua(function()
         local jdtls_response = {
@@ -4623,7 +4610,6 @@ describe('LSP', function()
     end)
 
     it('fallback to command execution on resolve error', function()
-      clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local server = _G._create_server({
@@ -4668,7 +4654,6 @@ describe('LSP', function()
     end)
 
     it('resolves command property', function()
-      clear()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local server = _G._create_server({
@@ -4878,7 +4863,6 @@ describe('LSP', function()
         ['file:///fake/uri1'] = 'Lens1',
         ['file:///fake/uri2'] = 'Lens2',
       }
-      clear()
       exec_lua(create_server_definition)
 
       -- setup lsp
@@ -5388,7 +5372,6 @@ describe('LSP', function()
 
   describe('vim.lsp.tagfunc', function()
     before_each(function()
-      clear()
       ---@type lsp.Location[]
       local mock_locations = {
         {
@@ -5729,7 +5712,7 @@ describe('LSP', function()
     local created, changed, deleted
 
     setup(function()
-      clear()
+      n.clear()
       created = exec_lua([[return vim.lsp.protocol.FileChangeType.Created]])
       changed = exec_lua([[return vim.lsp.protocol.FileChangeType.Changed]])
       deleted = exec_lua([[return vim.lsp.protocol.FileChangeType.Deleted]])
@@ -6551,6 +6534,117 @@ describe('LSP', function()
           return { workspace_required = clients[1].config.workspace_required }
         end)
       )
+    end)
+
+    it('does not allow wildcards in config name', function()
+      local err =
+        '.../lsp.lua:0: name: expected non%-wildcard string, got foo%*%. Info: LSP config name cannot contain wildcard %("%*"%)'
+
+      matches(
+        err,
+        pcall_err(exec_lua, function()
+          local _ = vim.lsp.config['foo*']
+        end)
+      )
+
+      matches(
+        err,
+        pcall_err(exec_lua, function()
+          vim.lsp.config['foo*'] = {}
+        end)
+      )
+
+      matches(
+        err,
+        pcall_err(exec_lua, function()
+          vim.lsp.config('foo*', {})
+        end)
+      )
+
+      -- Exception for '*'
+      pcall(exec_lua, function()
+        vim.lsp.config('*', {})
+      end)
+    end)
+
+    it('correctly handles root_markers', function()
+      --- Setup directories for testing
+      -- root/
+      -- ├── dir_a/
+      -- │   ├── dir_b/
+      -- │   │   ├── target
+      -- │   │   └── marker_d
+      -- │   ├── marker_b
+      -- │   └── marker_c
+      -- └── marker_a
+
+      ---@param filepath string
+      local function touch(filepath)
+        local file = io.open(filepath, 'w')
+        if file then
+          file:close()
+        end
+      end
+
+      local tmp_root = tmpname(false)
+      local marker_a = tmp_root .. '/marker_a'
+      local dir_a = tmp_root .. '/dir_a'
+      local marker_b = dir_a .. '/marker_b'
+      local marker_c = dir_a .. '/marker_c'
+      local dir_b = dir_a .. '/dir_b'
+      local marker_d = dir_b .. '/marker_d'
+      local target = dir_b .. '/target'
+
+      mkdir(tmp_root)
+      touch(marker_a)
+      mkdir(dir_a)
+      touch(marker_b)
+      touch(marker_c)
+      mkdir(dir_b)
+      touch(marker_d)
+      touch(target)
+
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        _G._custom_server = _G._create_server()
+      end)
+
+      ---@param root_markers (string|string[])[]
+      ---@param expected_root_dir string?
+      local function markers_resolve_to(root_markers, expected_root_dir)
+        exec_lua(function()
+          vim.lsp.config['foo'] = {}
+          vim.lsp.config('foo', {
+            cmd = _G._custom_server.cmd,
+            reuse_client = function()
+              return false
+            end,
+            filetypes = { 'foo' },
+            root_markers = root_markers,
+          })
+          vim.lsp.enable('foo')
+          vim.cmd.edit(target)
+          vim.bo.filetype = 'foo'
+        end)
+        retry(nil, 1000, function()
+          eq(
+            expected_root_dir,
+            exec_lua(function()
+              local clients = vim.lsp.get_clients()
+              return clients[#clients].root_dir
+            end)
+          )
+        end)
+      end
+
+      markers_resolve_to({ 'marker_d' }, dir_b)
+      markers_resolve_to({ 'marker_b' }, dir_a)
+      markers_resolve_to({ 'marker_c' }, dir_a)
+      markers_resolve_to({ 'marker_a' }, tmp_root)
+      markers_resolve_to({ 'foo' }, nil)
+      markers_resolve_to({ { 'marker_b', 'marker_a' }, 'marker_d' }, dir_a)
+      markers_resolve_to({ 'marker_a', { 'marker_b', 'marker_d' } }, tmp_root)
+      markers_resolve_to({ 'foo', { 'bar', 'baz' }, 'marker_d' }, dir_b)
     end)
   end)
 end)
