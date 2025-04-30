@@ -125,8 +125,8 @@ describe('ui/ext_messages', function()
     feed(':%s/i/X/gc<cr>')
     screen:expect({
       grid = [[
-        l{2:^i}ne 1                   |
-        l{10:i}ne 2                   |
+        l{2:i}ne 1                   |
+        l{10:i}ne ^2                   |
         {1:~                        }|*3
       ]],
       cmdline = {
@@ -1351,7 +1351,7 @@ stack traceback:
     feed('z=')
     screen:expect({
       grid = [[
-        {100:^helllo}                   |
+        {100:helll^o}                   |
         {1:~                        }|*4
       ]],
       cmdline = {
@@ -1374,7 +1374,7 @@ stack traceback:
     feed('1')
     screen:expect({
       grid = [[
-        {100:^helllo}                   |
+        {100:helll^o}                   |
         {1:~                        }|*4
       ]],
       cmdline = {
