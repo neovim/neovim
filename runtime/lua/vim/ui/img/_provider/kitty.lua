@@ -56,7 +56,10 @@ end
 ---@param image vim.ui.Image
 ---@param opts vim.ui.img.Provider.RenderOpts
 local function write_multipart_image(image, opts)
-  image:for_each_chunk(function(chunk, pos, has_more)
+  ---@param chunk string
+  ---@param pos integer
+  ---@param has_more boolean
+  image:chunks():each(function(chunk, pos, has_more)
     local data = {}
 
     -- If at the beginning of our image, mark as a PNG to be

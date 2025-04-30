@@ -20,7 +20,8 @@ local function write_multipart_image(image, args)
   write_seq('MultipartFile=' .. table.concat(args, ';'))
 
   -- Begin sending parts as chunks
-  image:for_each_chunk(function(chunk)
+  ---@param chunk string
+  image:chunks():each(function(chunk)
     write_seq('FilePart=' .. chunk)
   end)
 

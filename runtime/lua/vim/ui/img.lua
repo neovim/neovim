@@ -68,10 +68,11 @@ function M:size()
   return string.len(self.data or '')
 end
 
----Iterates over the chunks of the image, invoking `f` per chunk.
----@param f fun(chunk:string, pos:integer, has_more:boolean)
+---Returns an iterator over the chunks of the image, returning the chunk, byte position, and
+---an indicator of whether there are more chunks available.
 ---@param opts? {size?:integer}
-function M:for_each_chunk(f, opts)
+---@return Iter
+function M:chunks(opts)
   opts = opts or {}
 
   -- Chunk size, defaulting to 4k
@@ -79,24 +80,38 @@ function M:for_each_chunk(f, opts)
 
   local data = self.data
   if not data then
-    return
+    return vim.iter(function()
+      return nil, nil, nil
+    end)
   end
 
   local pos = 1
   local len = string.len(data)
-  while pos <= len do
+
+  return vim.iter(function()
+    -- If we are past the last chunk, this iterator should terminate
+    if pos > len then
+      return nil, nil, nil
+    end
+
     -- Get our next chunk from [pos, pos + chunk_size)
     local end_pos = pos + chunk_size - 1
     local chunk = data:sub(pos, end_pos)
 
-    -- If we have a chunk available, invoke our callback
+    -- If we have a chunk available, mark as such
+    local has_more = false
     if string.len(chunk) > 0 then
-      local has_more = end_pos + 1 <= len
-      pcall(f, chunk, pos, has_more)
+      has_more = end_pos + 1 <= len
     end
 
+    -- Mark where our current chunk is positioned
+    local chunk_pos = pos
+
+    -- Update our global position
     pos = end_pos + 1
-  end
+
+    return chunk, chunk_pos, has_more
+  end)
 end
 
 ---Loads data for an image from a file, replacing any existing data.
