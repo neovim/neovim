@@ -6324,7 +6324,7 @@ describe('LSP', function()
       )
     end)
 
-    it('attaches to buffers', function()
+    it('attaches to buffers when they are opened', function()
       exec_lua(create_server_definition)
 
       local tmp1 = t.tmpname(true)
@@ -6369,6 +6369,67 @@ describe('LSP', function()
           local foos = vim.lsp.get_clients({ bufnr = assert(_G.foo_buf) })
           local bars = vim.lsp.get_clients({ bufnr = assert(_G.bar_buf) })
           return { #foos, foos[1].name, #bars, bars[1].name }
+        end)
+      )
+    end)
+
+    it('attaches/detaches preexisting buffers', function()
+      exec_lua(create_server_definition)
+
+      local tmp1 = t.tmpname(true)
+      local tmp2 = t.tmpname(true)
+
+      exec_lua(function()
+        vim.cmd.edit(tmp1)
+        vim.bo.filetype = 'foo'
+        _G.foo_buf = vim.api.nvim_get_current_buf()
+
+        vim.cmd.edit(tmp2)
+        vim.bo.filetype = 'bar'
+        _G.bar_buf = vim.api.nvim_get_current_buf()
+
+        local server = _G._create_server({
+          handlers = {
+            initialize = function(_, _, callback)
+              callback(nil, { capabilities = {} })
+            end,
+          },
+        })
+
+        vim.lsp.config('foo', {
+          cmd = server.cmd,
+          filetypes = { 'foo' },
+          root_markers = { '.foorc' },
+        })
+
+        vim.lsp.config('bar', {
+          cmd = server.cmd,
+          filetypes = { 'bar' },
+          root_markers = { '.foorc' },
+        })
+
+        vim.lsp.enable('foo')
+        vim.lsp.enable('bar')
+      end)
+
+      eq(
+        { 1, 'foo', 1, 'bar' },
+        exec_lua(function()
+          local foos = vim.lsp.get_clients({ bufnr = assert(_G.foo_buf) })
+          local bars = vim.lsp.get_clients({ bufnr = assert(_G.bar_buf) })
+          return { #foos, foos[1].name, #bars, bars[1].name }
+        end)
+      )
+
+      -- Now disable the 'foo' lsp and confirm that it's detached from the buffer it was previous
+      -- attached to.
+      exec_lua([[vim.lsp.enable('foo', false)]])
+      eq(
+        { 0, 'foo', 1, 'bar' },
+        exec_lua(function()
+          local foos = vim.lsp.get_clients({ bufnr = assert(_G.foo_buf) })
+          local bars = vim.lsp.get_clients({ bufnr = assert(_G.bar_buf) })
+          return { #foos, 'foo', #bars, bars[1].name }
         end)
       )
     end)

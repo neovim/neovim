@@ -605,21 +605,32 @@ function lsp.enable(name, enable)
   end
 
   if not next(lsp._enabled_configs) then
+    -- If there are no remaining LSPs enabled, remove the enable autocmd.
     if lsp_enable_autocmd_id then
       api.nvim_del_autocmd(lsp_enable_autocmd_id)
       lsp_enable_autocmd_id = nil
     end
-    return
+  else
+    -- Only ever create autocmd once to reuse computation of config merging.
+    lsp_enable_autocmd_id = lsp_enable_autocmd_id
+      or api.nvim_create_autocmd('FileType', {
+        group = api.nvim_create_augroup('nvim.lsp.enable', {}),
+        callback = function(args)
+          lsp_enable_callback(args.buf)
+        end,
+      })
   end
 
-  -- Only ever create autocmd once to reuse computation of config merging.
-  lsp_enable_autocmd_id = lsp_enable_autocmd_id
-    or api.nvim_create_autocmd('FileType', {
-      group = api.nvim_create_augroup('nvim.lsp.enable', {}),
-      callback = function(args)
-        lsp_enable_callback(args.buf)
-      end,
-    })
+  -- Ensure any pre-existing buffers start/stop their LSP clients.
+  if enable ~= false then
+    vim.api.nvim_command('doautoall nvim.lsp.enable FileType')
+  else
+    for _, nm in ipairs(names) do
+      for _, client in ipairs(lsp.get_clients({ name = nm })) do
+        client:stop()
+      end
+    end
+  end
 end
 
 --- @class vim.lsp.start.Opts
