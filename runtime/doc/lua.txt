@@ -3742,19 +3742,25 @@ vim.regex({re})                                                  *vim.regex()*
 Lua module: vim.secure                                            *vim.secure*
 
 vim.secure.read({path})                                    *vim.secure.read()*
-    Attempt to read the file at {path} prompting the user if the file should
-    be trusted. The user's choice is persisted in a trust database at
+    If {path} is a file: attempt to read the file, prompting the user if the
+    file should be trusted.
+
+    If {path} is a directory: return true if the directory is trusted
+    (non-recursive), prompting the user as necessary.
+
+    The user's choice is persisted in a trust database at
     $XDG_STATE_HOME/nvim/trust.
 
     Attributes: ~
         Since: 0.9.0
 
     Parameters: ~
-      • {path}  (`string`) Path to a file to read.
+      • {path}  (`string`) Path to a file or directory to read.
 
     Return: ~
-        (`string?`) The contents of the given file if it exists and is
-        trusted, or nil otherwise.
+        (`boolean|string?`) If {path} is not trusted or does not exist,
+        returns `nil`. Otherwise, returns the contents of {path} if it is a
+        file, or true if {path} is a directory.
 
     See also: ~
       • |:trust|

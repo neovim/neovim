@@ -106,6 +106,9 @@ API
 • |nvim_win_text_height()| can limit the lines checked when a certain
   `max_height` is reached, and returns the `end_row` and `end_vcol` for which
   `max_height` or the calculated height is reached.
+• |vim.secure.read()| now returns `true` for trusted directories. Previously
+  it would return `nil`, which made it impossible to tell if the directory was
+  actually trusted.
 
 DEFAULTS
 
