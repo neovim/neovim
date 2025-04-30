@@ -3,8 +3,8 @@
 local M = {}
 
 local TERM_CODE = {
-  BEL = '\x07', -- aka ^G
-  ESC = '\x1B', -- aka ^[ aka \033
+  BEL = '\007', -- aka ^G
+  ESC = '\027', -- aka ^[ aka \033
 }
 
 ---Retrieve the tty name used by the editor.
