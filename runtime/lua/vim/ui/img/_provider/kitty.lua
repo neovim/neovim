@@ -37,15 +37,17 @@ local function make_header(opts)
   local size = opts.size
 
   if crop then
-    header['x'] = tostring(crop.x)
-    header['y'] = tostring(crop.y)
-    header['w'] = tostring(crop.width)
-    header['h'] = tostring(crop.height)
+    local x, y, w, h = crop:to_pixels():to_bounds()
+    header['x'] = tostring(x)
+    header['y'] = tostring(y)
+    header['w'] = tostring(w)
+    header['h'] = tostring(h)
   end
 
   if size then
-    header['c'] = tostring(size.width)
-    header['r'] = tostring(size.height)
+    local size_cells = size:to_cells()
+    header['c'] = tostring(size_cells.width)
+    header['r'] = tostring(size_cells.height)
   end
 
   return header
@@ -95,7 +97,8 @@ function M.render(image, opts)
 
   opts = opts or {}
   if opts.pos then
-    terminal.cursor.move(opts.pos.col, opts.pos.row, true)
+    local pos_cells = opts.pos:to_cells()
+    terminal.cursor.move(pos_cells.y, pos_cells.x, true)
   end
 
   write_multipart_image(image, opts)

@@ -194,11 +194,27 @@ function M:show(opts)
     provider = require('vim.ui.img._provider').load(provider)
   end
 
+  -- Ensure that our render opts are the actual types
+  local crop = opts.crop
+  if crop then
+    crop = vim.ui.img.new_region(crop.pos1, crop.pos2)
+  end
+
+  local pos = opts.pos
+  if pos then
+    pos = vim.ui.img.new_position(pos.x, pos.y, pos.unit)
+  end
+
+  local size = opts.size
+  if size then
+    size = vim.ui.img.new_size(size.width, size.height, size.unit)
+  end
+
   ---@cast provider vim.ui.img.Provider
   provider.render(self, {
-    pos = opts.pos,
-    size = opts.size,
-    crop = opts.crop,
+    crop = crop,
+    pos = pos,
+    size = size,
   })
 end
 
@@ -304,6 +320,22 @@ function M.new_region(pos1, pos2)
       self.pos1:to_pixels(),
       self.pos2:to_pixels()
     )
+  end
+
+  ---Returns the x, y, width, height of the region.
+  ---@return integer x, integer y, integer width, integer height
+  function region:to_bounds()
+    local p1 = self.pos1
+    local p2 = self.pos2
+
+    assert(p1.unit == p2.unit, 'units of pos1 and pos2 do not match')
+
+    local x = math.min(p1.x, p2.x)
+    local y = math.min(p1.y, p2.y)
+    local width = math.abs(p1.x - p2.x)
+    local height = math.abs(p1.y - p2.y)
+
+    return x, y, width, height
   end
 
   return region

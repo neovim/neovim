@@ -50,7 +50,8 @@ function M.render(image, opts)
 
   opts = opts or {}
   if opts.pos then
-    terminal.cursor.move(opts.pos.col, opts.pos.row, true)
+    local pos = opts.pos:to_cells()
+    terminal.cursor.move(pos.x, opts.pos.y, true)
   end
 
   local args = {
