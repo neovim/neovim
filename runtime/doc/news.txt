@@ -171,6 +171,9 @@ API
     aligned text that truncates before covering up buffer text.
   • `virt_lines_overflow` field accepts value `scroll` to enable horizontal
     scrolling for virtual lines with 'nowrap'.
+• |vim.secure.read()| now returns `true` for trusted directories. Previously
+  it would return `nil`, which made it impossible to tell if the directory was
+  actually trusted.
 
 DEFAULTS
 
