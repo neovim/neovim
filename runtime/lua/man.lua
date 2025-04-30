@@ -823,6 +823,8 @@ function M.show_toc()
   fn.setloclist(0, {}, 'a', { title = 'Table of contents' })
   vim.cmd.lopen()
   vim.w.qf_toc = bufname
+  -- reload syntax file after setting qf_toc variable
+  vim.bo.filetype = 'qf'
 end
 
 return M
