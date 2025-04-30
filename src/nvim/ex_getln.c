@@ -792,7 +792,6 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   }
 
   setmouse();
-  setcursor();
 
   Error err = ERROR_INIT;
   char firstcbuf[2];
