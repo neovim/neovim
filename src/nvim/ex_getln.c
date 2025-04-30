@@ -795,7 +795,6 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   }
 
   setmouse();
-  setcursor();
 
   s->cmdline_type = firstc > 0 ? firstc : '-';
   Error err = ERROR_INIT;
