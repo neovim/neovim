@@ -6535,5 +6535,85 @@ describe('LSP', function()
         vim.lsp.config('*', {})
       end)
     end)
+
+    it('correctly handles root_markers', function()
+      --- Setup directories for testing
+      -- root/
+      -- ├── dir_a/
+      -- │   ├── dir_b/
+      -- │   │   ├── target
+      -- │   │   └── marker_d
+      -- │   ├── marker_b
+      -- │   └── marker_c
+      -- └── marker_a
+
+      ---@param filepath string
+      local function touch(filepath)
+        local file = io.open(filepath, 'w')
+        if file then
+          file:close()
+        end
+      end
+
+      local tmp_root = tmpname(false)
+      local marker_a = tmp_root .. '/marker_a'
+      local dir_a = tmp_root .. '/dir_a'
+      local marker_b = dir_a .. '/marker_b'
+      local marker_c = dir_a .. '/marker_c'
+      local dir_b = dir_a .. '/dir_b'
+      local marker_d = dir_b .. '/marker_d'
+      local target = dir_b .. '/target'
+
+      mkdir(tmp_root)
+      touch(marker_a)
+      mkdir(dir_a)
+      touch(marker_b)
+      touch(marker_c)
+      mkdir(dir_b)
+      touch(marker_d)
+      touch(target)
+
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        _G._custom_server = _G._create_server()
+      end)
+
+      ---@param root_markers (string|string[])[]
+      ---@param expected_root_dir string?
+      local function markers_resolve_to(root_markers, expected_root_dir)
+        exec_lua(function()
+          vim.lsp.config['foo'] = {}
+          vim.lsp.config('foo', {
+            cmd = _G._custom_server.cmd,
+            reuse_client = function()
+              return false
+            end,
+            filetypes = { 'foo' },
+            root_markers = root_markers,
+          })
+          vim.lsp.enable('foo')
+          vim.cmd.edit(target)
+          vim.bo.filetype = 'foo'
+        end)
+        retry(nil, 1000, function()
+          eq(
+            expected_root_dir,
+            exec_lua(function()
+              local clients = vim.lsp.get_clients()
+              return clients[#clients].root_dir
+            end)
+          )
+        end)
+      end
+
+      markers_resolve_to({ 'marker_d' }, dir_b)
+      markers_resolve_to({ 'marker_b' }, dir_a)
+      markers_resolve_to({ 'marker_c' }, dir_a)
+      markers_resolve_to({ 'marker_a' }, tmp_root)
+      markers_resolve_to({ 'foo' }, nil)
+      markers_resolve_to({ { 'marker_b', 'marker_a' }, 'marker_d' }, dir_a)
+      markers_resolve_to({ 'marker_a', { 'marker_b', 'marker_d' } }, tmp_root)
+      markers_resolve_to({ 'foo', { 'bar', 'baz' }, 'marker_d' }, dir_b)
+    end)
   end)
 end)

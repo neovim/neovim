@@ -41,7 +41,8 @@ Follow these steps to get LSP features:
         -- current buffer that contains either a ".luarc.json" or a
         -- ".luarc.jsonc" file. Files that share a root directory will reuse
         -- the connection to the same LSP server.
-        root_markers = { '.luarc.json', '.luarc.jsonc' },
+        -- Nested lists indicate equal priority, see |vim.lsp.Config|.
+        root_markers = { { '.luarc.json', '.luarc.jsonc' }, '.git' },
 
         -- Specific settings to send to the server. The schema for this is
         -- defined by the server. For example the schema for lua-language-server
@@ -722,9 +723,37 @@ Lua module: vim.lsp                                                 *lsp-core*
                          the buffer. Thus a `root_dir()` function can
                          dynamically decide per-buffer whether to activate (or
                          skip) LSP. See example at |vim.lsp.enable()|.
-      • {root_markers}?  (`string[]`) Directory markers (e.g. ".git/",
-                         "package.json") used to decide `root_dir`. Unused if
-                         `root_dir` is provided.
+      • {root_markers}?  (`(string|string[])[]`) Directory markers (.e.g.
+                         '.git/') where the LSP server will base its
+                         workspaceFolders, rootUri, and rootPath on
+                         initialization. Unused if `root_dir` is provided.
+
+                         The list order decides the priority. To indicate
+                         "equal priority", specify names in a nested list
+                         (`{ { 'a', 'b' }, ... }`) Each entry in this list is
+                         a set of one or more markers. For each set, Nvim will
+                         search upwards for each marker contained in the set.
+                         If a marker is found, the directory which contains
+                         that marker is used as the root directory. If no
+                         markers from the set are found, the process is
+                         repeated with the next set in the list.
+
+                         Example: >lua
+                               root_markers = { 'stylua.toml', '.git' }
+<
+
+                         Find the first parent directory containing the file
+                         `stylua.toml`. If not found, find the first parent
+                         directory containing the file or directory `.git`.
+
+                         Example: >lua
+                               root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
+<
+
+                         Find the first parent directory containing EITHER
+                         `stylua.toml` or `.luarc.json`. If not found, find
+                         the first parent directory containing the file or
+                         directory `.git`.
 
 
 buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
