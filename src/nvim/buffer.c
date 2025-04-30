@@ -4154,3 +4154,54 @@ void buf_set_changedtick(buf_T *const buf, const varnumber_T changedtick)
                            &old_val);
   }
 }
+
+/// Read the given buffer contents into a string.
+void read_buffer_into(buf_T *buf, linenr_T start, linenr_T end, StringBuilder *sb)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(buf);
+  assert(sb);
+
+  if (buf->b_ml.ml_flags & ML_EMPTY) {
+    return;
+  }
+
+  size_t written = 0;
+  size_t len = 0;
+  linenr_T lnum = start;
+  char *lp = ml_get_buf(buf, lnum);
+  size_t lplen = (size_t)ml_get_buf_len(buf, lnum);
+
+  while (true) {
+    if (lplen == 0) {
+      len = 0;
+    } else if (lp[written] == NL) {
+      // NL -> NUL translation
+      len = 1;
+      kv_push(*sb, NUL);
+    } else {
+      char *s = vim_strchr(lp + written, NL);
+      len = s == NULL ? lplen - written : (size_t)(s - (lp + written));
+      kv_concat_len(*sb, lp + written, len);
+    }
+
+    if (len == lplen - written) {
+      // Finished a line, add a NL, unless this line should not have one.
+      if (lnum != end
+          || (!buf->b_p_bin && buf->b_p_fixeol)
+          || (lnum != buf->b_no_eol_lnum
+              && (lnum != buf->b_ml.ml_line_count || buf->b_p_eol))) {
+        kv_push(*sb, NL);
+      }
+      lnum++;
+      if (lnum > end) {
+        break;
+      }
+      lp = ml_get_buf(buf, lnum);
+      lplen = (size_t)ml_get_buf_len(buf, lnum);
+      written = 0;
+    } else if (len > 0) {
+      written += len;
+    }
+  }
+}

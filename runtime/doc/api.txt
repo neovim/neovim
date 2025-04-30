@@ -1170,7 +1170,7 @@ nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
     By default (and currently the only option) the terminal will not be
     connected to an external process. Instead, input sent on the channel will
     be echoed directly by the terminal. This is useful to display ANSI
-    terminal sequences returned as part of a rpc message, or similar.
+    terminal sequences returned as part of an RPC message, or similar.
 
     Note: to directly initiate the terminal using the right size, display the
     buffer in a configured window before calling this. For instance, for a
@@ -1195,7 +1195,8 @@ nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
         Since: 0.5.0
 
     Parameters: ~
-      • {buffer}  the buffer to use (expected to be empty)
+      • {buffer}  Buffer to use. Buffer contents (if any) will be written to
+                  the PTY.
       • {opts}    Optional parameters.
                   • on_input: Lua callback for input sent, i e keypresses in
                     terminal mode. Note: keypresses are sent raw as they would

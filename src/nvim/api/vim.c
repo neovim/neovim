@@ -974,7 +974,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// By default (and currently the only option) the terminal will not be
 /// connected to an external process. Instead, input sent on the channel
 /// will be echoed directly by the terminal. This is useful to display
-/// ANSI terminal sequences returned as part of a rpc message, or similar.
+/// ANSI terminal sequences returned as part of an RPC message, or similar.
 ///
 /// Note: to directly initiate the terminal using the right size, display the
 /// buffer in a configured window before calling this. For instance, for a
@@ -996,7 +996,8 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// end, { desc = 'Highlights ANSI termcodes in curbuf' })
 /// ```
 ///
-/// @param buffer the buffer to use (expected to be empty)
+/// @param buffer Buffer to use. Buffer contents (if any) will be written
+///               to the PTY.
 /// @param opts   Optional parameters.
 ///          - on_input: Lua callback for input sent, i e keypresses in terminal
 ///            mode. Note: keypresses are sent raw as they would be to the pty
@@ -1041,12 +1042,26 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     .close_cb = term_close,
     .force_crlf = GET_BOOL_OR_TRUE(opts, open_term, force_crlf),
   };
+
+  // Read existing buffer contents (if any)
+  StringBuilder contents = KV_INITIAL_VALUE;
+  read_buffer_into(buf, 1, buf->b_ml.ml_line_count, &contents);
+
   channel_incref(chan);
   terminal_open(&chan->term, buf, topts);
   if (chan->term != NULL) {
     terminal_check_size(chan->term);
   }
   channel_decref(chan);
+
+  // Write buffer contents to channel. channel_send takes ownership of the
+  // buffer so we do not need to free it.
+  if (contents.size > 0) {
+    const char *error = NULL;
+    channel_send(chan->id, contents.items, contents.size, true, &error);
+    VALIDATE(!error, "%s", error, {});
+  }
+
   return (Integer)chan->id;
 }
 

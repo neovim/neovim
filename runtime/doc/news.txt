@@ -172,7 +172,8 @@ STARTUP
 
 TERMINAL
 
-• todo
+• |nvim_open_term()| can be called with a non-empty buffer. The buffer
+  contents are piped to the PTY and displayed as terminal output.
 
 TREESITTER
 

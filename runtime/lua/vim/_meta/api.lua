@@ -1653,7 +1653,7 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 --- By default (and currently the only option) the terminal will not be
 --- connected to an external process. Instead, input sent on the channel
 --- will be echoed directly by the terminal. This is useful to display
---- ANSI terminal sequences returned as part of a rpc message, or similar.
+--- ANSI terminal sequences returned as part of an RPC message, or similar.
 ---
 --- Note: to directly initiate the terminal using the right size, display the
 --- buffer in a configured window before calling this. For instance, for a
@@ -1675,7 +1675,8 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 --- end, { desc = 'Highlights ANSI termcodes in curbuf' })
 --- ```
 ---
---- @param buffer integer the buffer to use (expected to be empty)
+--- @param buffer integer Buffer to use. Buffer contents (if any) will be written
+--- to the PTY.
 --- @param opts vim.api.keyset.open_term Optional parameters.
 --- - on_input: Lua callback for input sent, i e keypresses in terminal
 ---   mode. Note: keypresses are sent raw as they would be to the pty
