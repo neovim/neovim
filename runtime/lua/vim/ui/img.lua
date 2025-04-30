@@ -70,6 +70,24 @@ end
 
 ---Returns an iterator over the chunks of the image, returning the chunk, byte position, and
 ---an indicator of whether there are more chunks available.
+---
+---Takes an optional size to indicate how big each chunk should be, defaulting to 4096.
+---
+---Examples:
+---
+---```lua
+---local img = vim.ui.img.new()
+---
+------@param chunk string
+------@param pos integer
+------@param has_more boolean
+---img:chunks():each(function(chunk, pos, has_more)
+---  vim.print("Chunk data", chunk)
+---  vim.print("Chunk starts at", pos)
+---  vim.print("Has more chunks", has_more)
+---end)
+---```
+---
 ---@param opts? {size?:integer}
 ---@return Iter
 function M:chunks(opts)
