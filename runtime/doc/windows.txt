@@ -1249,7 +1249,9 @@ list of buffers. |unlisted-buffer|
 		name also works, so long as it is unique in the list of
 		buffers.
 		Note that a buffer whose name is a number cannot be referenced
-		by that name; use the buffer number instead.
+		by that name; use the buffer number instead.  Same is true if
+		the buffer name starts with a `+`, it will be interpreted as
+		the start of a |+cmd|.
 		Insert a backslash before a space in a buffer name.
 		See |:buffer-!| for [!].
 		This will also edit a buffer that is not in the buffer list,
