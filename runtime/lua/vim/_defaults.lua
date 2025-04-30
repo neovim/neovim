@@ -932,48 +932,29 @@ do
     group = vim.api.nvim_create_augroup('nvim.statusline', {}),
     callback = function()
       local bufnr = vim.api.nvim_get_current_buf()
-      local diagnostics = vim.diagnostic.get(bufnr)
 
-      local counts = { errors = 0, warnings = 0, info = 0, hints = 0 }
       local severity = vim.diagnostic.severity
 
-      for _, d in ipairs(diagnostics) do
-        if d.severity == severity.ERROR then
-          counts.errors = counts.errors + 1
-        elseif d.severity == severity.WARN then
-          counts.warnings = counts.warnings + 1
-        elseif d.severity == severity.INFO then
-          counts.info = counts.info + 1
-        elseif d.severity == severity.HINT then
-          counts.hints = counts.hints + 1
-        end
-      end
-
       local result = {}
-      if counts.errors > 0 then
-        table.insert(result, 'e:' .. counts.errors)
+      local count = vim.diagnostic.count(bufnr)
+      if count[severity.ERROR] and count[1] > 0 then
+        table.insert(result, 'e:' .. count[severity.ERROR])
       end
-      if counts.warnings > 0 then
-        table.insert(result, 'w:' .. counts.warnings)
+      if count[severity.WARN] and count[2] > 0 then
+        table.insert(result, 'w:' .. count[severity.WARN])
       end
-      if counts.info > 0 then
-        table.insert(result, 'i:' .. counts.info)
+      if count[severity.INFO] and count[3] > 0 then
+        table.insert(result, 'i:' .. count[severity.INFO])
       end
-      if counts.hints > 0 then
-        table.insert(result, 'h:' .. counts.hints)
+      if count[severity.HINT] and count[4] > 0 then
+        table.insert(result, 'h:' .. count[severity.HINT])
       end
 
       local result_str = table.concat(result, ' ')
 
-      if #result_str > 0 then
-        result_str = result_str .. '  '
-      end
-
       vim.b[bufnr].buffer_diagnostics = result_str
 
-      vim.schedule(function()
-        vim.cmd.redrawstatus()
-      end)
+      vim.cmd.redrawstatus()
     end,
   })
 end
