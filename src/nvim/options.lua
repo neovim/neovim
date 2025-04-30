@@ -9182,7 +9182,8 @@ local options = {
       cb = 'did_set_tagfunc',
       defaults = '',
       desc = [=[
-        This option specifies a function to be used to perform tag searches.
+        This option specifies a function to be used to perform tag searches
+        (including |taglist()|).
         The function gets the tag pattern and should return a List of matching
         tags.  See |tag-function| for an explanation of how to write the
         function and an example.  The value can be the name of a function, a
