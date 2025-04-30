@@ -3026,12 +3026,12 @@ end_check:
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL && lcs_eol_todo)
             || (wlv.n_extra != 0 && (wlv.sc_extra != NUL || *wlv.p_extra != NUL))
             || (may_have_inline_virt && has_more_inline_virt(&wlv, ptr - line)))) {
+      int grid_width = wp->w_grid.target->cols;
       const bool wrap = is_wrapped                      // Wrapping enabled (not a folded line).
                         && wlv.filler_todo <= 0         // Not drawing diff filler lines.
                         && lcs_eol_todo                 // Haven't printed the lcs_eol character.
                         && wlv.row != endrow - 1        // Not the last line being displayed.
-                        && (view_width == Columns       // Window spans the width of the screen,
-                            || wp->w_grid_alloc.chars)  // or has dedicated grid.
+                        && view_width == grid_width     // Window spans the width of its grid.
                         && !wp->w_p_rl;                 // Not right-to-left.
 
       int draw_col = wlv.col - wlv.boguscols;
