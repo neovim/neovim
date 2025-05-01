@@ -8,7 +8,6 @@
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/pos_defs.h"
-#include "nvim/strings.h"
 #include "xdiff/xdiff.h"
 
 #define LN_MAX_BUFS 8

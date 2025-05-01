@@ -4,13 +4,10 @@
 #include <string.h>
 
 #include "auto/config.h"
-#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/os/os_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
-
-typedef kvec_t(char) StringBuilder;
 
 // Return the length of a string literal
 #define STRLEN_LITERAL(s) (sizeof(s) - 1)
@@ -65,3 +62,5 @@ static inline char *strappend(char *const dst, const char *const src)
 #  define STRNICMP(d, s, n) vim_strnicmp((char *)(d), (char *)(s), (size_t)(n))
 # endif
 #endif
+
+#define kv_printf(v, ...) kv_do_printf(&(v), __VA_ARGS__)
