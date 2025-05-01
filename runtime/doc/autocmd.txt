@@ -57,15 +57,15 @@ The special pattern <buffer> or <buffer=N> defines a buffer-local autocommand.
 See |autocmd-buflocal|.
 
 Note: The ":autocmd" command can only be followed by another command when the
-"|" appears where the pattern is expected.  This works: >
+"|" appears where the pattern is expected.  This works: >vim
 	:augroup mine | au! BufRead | augroup END
 But this sees "augroup" as part of the defined command: >
 	:augroup mine | au! BufRead * | augroup END
 	:augroup mine | au BufRead * set tw=70 | augroup END
-Instead you can put the group name into the command: >
+Instead you can put the group name into the command: >vim
 	:au! mine BufRead *
 	:au mine BufRead * set tw=70
-Or use `:execute`: >
+Or use `:execute`: >vim
 	:augroup mine | exe "au! BufRead *" | augroup END
 	:augroup mine | exe "au BufRead * set tw=70" | augroup END
 
@@ -74,7 +74,7 @@ Note that special characters (e.g., "%", "<cword>") in the ":autocmd"
 arguments are not expanded when the autocommand is defined.  These will be
 expanded when the Event is recognized, and the {cmd} is executed.  The only
 exception is that "<sfile>" is expanded when the autocmd is defined.  Example:
->
+>vim
 	:au BufNewFile,BufRead *.html so <sfile>:h/html.vim
 
 Here Vim expands <sfile> to the name of the file containing this line.
@@ -82,7 +82,7 @@ Here Vim expands <sfile> to the name of the file containing this line.
 `:autocmd` adds to the list of autocommands regardless of whether they are
 already present.  When your .vimrc file is sourced twice, the autocommands
 will appear twice.  To avoid this, define your autocommands in a group, so
-that you can easily clear them: >
+that you can easily clear them: >vim
 
 	augroup vimrc
 	  " Remove all vimrc autocommands
@@ -91,7 +91,7 @@ that you can easily clear them: >
 	augroup END
 
 If you don't want to remove all autocommands, you can instead use a variable
-to ensure that Vim includes the autocommands only once: >
+to ensure that Vim includes the autocommands only once: >vim
 
 	:if !exists("autocommands_loaded")
 	:  let autocommands_loaded = 1
@@ -103,7 +103,7 @@ with ":augroup"); otherwise, Vim uses the group defined with [group].  Note
 that [group] must have been defined before.  You cannot define a new group
 with ":au group ..."; use ":augroup" for that.
 
-While testing autocommands, you might find the 'verbose' option to be useful: >
+While testing autocommands, you might find the 'verbose' option to be useful: >vim
 	:set verbose=9
 This setting makes Vim echo the autocommands as it executes them.
 
@@ -788,7 +788,7 @@ ModeChanged			After changing the mode. The pattern is
 				This will be triggered on every minor mode
 				change.
 				Usage example to use relative line numbers
-				when entering visual mode: >
+				when entering visual mode: >vim
 		:au ModeChanged [vV\x16]*:* let &l:rnu = mode() =~# '^[vV\x16]'
 		:au ModeChanged *:[vV\x16]* let &l:rnu = mode() =~# '^[vV\x16]'
 		:au WinEnter,WinLeave * let &l:rnu = mode() =~# '^[vV\x16]'
@@ -1116,7 +1116,7 @@ TextYankPost			Just after a |yank| or |deleting| command, but not
 							*User*
 User				Not executed automatically.  Use |:doautocmd|
 				to trigger this, typically for "custom events"
-				in a plugin.  Example: >
+				in a plugin.  Example: >vim
 				    :autocmd User MyPlugin echom 'got MyPlugin event'
 				    :doautocmd User MyPlugin
 <							*UserGettingBored*
@@ -1129,7 +1129,7 @@ VimEnter			After doing all the startup stuff, including
 				the buffers in them.
 				Just before this event is triggered the
 				|v:vim_did_enter| variable is set, so that you
-				can do: >
+				can do: >vim
 				   if v:vim_did_enter
 				     call s:init()
 				   else
@@ -1146,7 +1146,7 @@ VimLeave			Before exiting Vim, just after writing the
 VimLeavePre			Before exiting Vim, just before writing the
 				|shada| file.  Executed only once, if the
 				pattern matches the current buffer on exit.
-				Mostly useful with a "*" pattern. >
+				Mostly useful with a "*" pattern. >vim
 				   :autocmd VimLeavePre * call CleanupStuff()
 <				Use |v:dying| to detect an abnormal exit.
 				Use |v:exiting| to get the exit code.
@@ -1239,9 +1239,9 @@ WinResized			After a window in the current tab page changed
 6. Patterns					*autocmd-pattern* *{aupat}*
 
 The {aupat} argument of `:autocmd` can be a comma-separated list.  This works as
-if the command was given with each pattern separately.  Thus this command: >
+if the command was given with each pattern separately.  Thus this command: >vim
 	:autocmd BufRead *.txt,*.info set et
-Is equivalent to: >
+Is equivalent to: >vim
 	:autocmd BufRead *.txt set et
 	:autocmd BufRead *.info set et
 
@@ -1257,37 +1257,37 @@ The special pattern <buffer> or <buffer=N> is used for buffer-local
 autocommands |autocmd-buflocal|.  This pattern is not matched against the name
 of a buffer.
 
-Examples: >
+Examples: >vim
 	:autocmd BufRead *.txt		set et
-Set the 'et' option for all text files. >
+Set the 'et' option for all text files. >vim
 
 	:autocmd BufRead /vim/src/*.c	set cindent
-Set the 'cindent' option for C files in the /vim/src directory. >
+Set the 'cindent' option for C files in the /vim/src directory. >vim
 
 	:autocmd BufRead /tmp/*.c	set ts=5
 If you have a link from "/tmp/test.c" to "/home/nobody/vim/src/test.c", and
 you start editing "/tmp/test.c", this autocommand will match.
 
 Note:  To match part of a path, but not from the root directory, use a "*" as
-the first character.  Example: >
+the first character.  Example: >vim
 	:autocmd BufRead */doc/*.txt	set tw=78
 This autocommand will for example be executed for "/tmp/doc/xx.txt" and
 "/usr/home/piet/doc/yy.txt".  The number of directories does not matter here.
 
 
 The file name that the pattern is matched against is after expanding
-wildcards.  Thus if you issue this command: >
+wildcards.  Thus if you issue this command: >vim
 	:e $ROOTDIR/main.$EXT
-The argument is first expanded to: >
+The argument is first expanded to: >vim
 	/usr/root/main.py
 Before it's matched with the pattern of the autocommand.  Careful with this
 when using events like FileReadCmd, the value of <amatch> may not be what you
 expect.
 
 
-Environment variables can be used in a pattern: >
+Environment variables can be used in a pattern: >vim
 	:autocmd BufRead $VIMRUNTIME/doc/*.txt  set expandtab
-And ~ can be used for the home directory (if $HOME is defined): >
+And ~ can be used for the home directory (if $HOME is defined): >vim
 	:autocmd BufWritePost ~/.config/nvim/init.vim   so <afile>
 	:autocmd BufRead ~archive/*      set readonly
 The environment variable is expanded when the autocommand is defined, not when
@@ -1322,7 +1322,7 @@ because of the translation done for the above.
 							*autocmd-changes*
 Matching with the pattern is done when an event is triggered.  Changing the
 buffer name in one of the autocommands, or even deleting the buffer, does not
-change which autocommands will be executed.  Example: >
+change which autocommands will be executed.  Example: >vim
 
 	au BufEnter *.foo  bdel
 	au BufEnter *.foo  set modified
@@ -1351,13 +1351,13 @@ Instead of a pattern buffer-local autocommands use one of these forms:
 	<buffer=abuf>	using <abuf> (only when executing autocommands)
 			|<abuf>|
 
-Examples: >
+Examples: >vim
     :au CursorHold <buffer>  echo 'hold'
     :au CursorHold <buffer=33>  echo 'hold'
     :au BufNewFile * au CursorHold <buffer=abuf>  echo 'hold'
 
 All the commands for autocommands also work with buffer-local autocommands,
-simply use the special string instead of the pattern.  Examples: >
+simply use the special string instead of the pattern.  Examples: >vim
     :au! * <buffer>		     " remove buffer-local autocommands for
 				     " current buffer
     :au! * <buffer=33>		     " remove buffer-local autocommands for
@@ -1373,14 +1373,14 @@ number of the current buffer.  You will see this when listing autocommands,
 for example.
 
 To test for presence of buffer-local autocommands use the |exists()| function
-as follows: >
+as follows: >vim
     :if exists("#CursorHold#<buffer=12>") | ... | endif
     :if exists("#CursorHold#<buffer>") | ... | endif    " for current buffer
 
 When a buffer is wiped out its buffer-local autocommands are also gone, of
 course.  Note that when deleting a buffer, e.g., with ":bdel", it is only
 unlisted, the autocommands are still present.  In order to see the removal of
-buffer-local autocommands: >
+buffer-local autocommands: >vim
     :set verbose=6
 
 It is not possible to define buffer-local autocommands for a non-existent
@@ -1430,7 +1430,7 @@ To enter autocommands for a specific group, use this method:
 3. Define the autocommands.
 4. Go back to the default group with "augroup END".
 
-Example: >
+Example: >vim
 	:augroup uncompress
 	:  au!
 	:  au BufEnter *.gz	%!gunzip
@@ -1465,7 +1465,7 @@ option will not cause any commands to be executed.
 			to execute autocommands for a certain event.
 			It's possible to use this inside an autocommand too,
 			so you can base the autocommands for one extension on
-			another extension.  Example: >
+			another extension.  Example: >vim
 				:au BufEnter *.cpp so ~/.config/nvim/init_cpp.vim
 				:au BufEnter *.cpp doau BufEnter x.c
 <			Be careful to avoid endless loops.  |autocmd-nested|
@@ -1491,7 +1491,7 @@ option will not cause any commands to be executed.
 			loaded buffer.  The current buffer is done last.
 
 			Note that [fname] is used to select the autocommands,
-			not the buffers to which they are applied. Example: >
+			not the buffers to which they are applied. Example: >vim
 				augroup mine
 				  autocmd!
 				  autocmd FileType * echo expand('<amatch>')
@@ -1550,7 +1550,7 @@ buffer.  This also works for buffers that don't have a name.  But it doesn't
 work for files without a buffer (e.g., with ":r file").
 
 							*gzip-example*
-Examples for reading and writing compressed files: >
+Examples for reading and writing compressed files: >vim
   :augroup gzip
   :  autocmd!
   :  autocmd BufReadPre,FileReadPre	*.gz set bin
@@ -1592,7 +1592,7 @@ instead of ":q!".
 By default, autocommands do not nest.  For example, if you use ":e" or ":w" in
 an autocommand, Vim does not execute the BufRead and BufWrite autocommands for
 those commands.  If you do want this, use the "++nested" flag for those
-commands in which you want nesting.  For example: >
+commands in which you want nesting.  For example: >vim
   :autocmd FileChangedShell *.c ++nested e!
 The nesting is limited to 10 levels to get out of recursive loops.
 
@@ -1610,14 +1610,14 @@ written again as the last line in a file AND 'binary' is set, Vim does not
 supply an <EOL>.  This makes a filter command on the just read lines write the
 same file as was read, and makes a write command on just filtered lines write
 the same file as was read from the filter.  For example, another way to write
-a compressed file: >
+a compressed file: >vim
 
   :autocmd FileWritePre *.gz   set bin|'[,']!gzip
   :autocmd FileWritePost *.gz  undo|set nobin
 <
 							*autocommand-pattern*
 You can specify multiple patterns, separated by commas.  Here are some
-examples: >
+examples: >vim
 
   :autocmd BufRead   *		set tw=79 nocin ic infercase fo=2croq
   :autocmd BufRead   .letter	set tw=72 fo=2tcrq
@@ -1627,12 +1627,12 @@ examples: >
   :autocmd BufEnter  *.c,*.h	abbr FOR for (i = 0; i < 3; ++i)<CR>{<CR>}<Esc>O
   :autocmd BufLeave  *.c,*.h	unabbr FOR
 
-For makefiles (makefile, Makefile, imakefile, makefile.unix, etc.): >
+For makefiles (makefile, Makefile, imakefile, makefile.unix, etc.): >vim
 
   :autocmd BufEnter  ?akefile*	set include=^s\=include
   :autocmd BufLeave  ?akefile*	set include&
 
-To always start editing C files at the first function: >
+To always start editing C files at the first function: >vim
 
   :autocmd BufRead   *.c,*.h	1;/^{
 
@@ -1640,13 +1640,13 @@ Without the "1;" above, the search would start from wherever the file was
 entered, rather than from the start of the file.
 
 						*skeleton* *template*
-To read a skeleton (template) file when opening a new file: >
+To read a skeleton (template) file when opening a new file: >vim
 
   :autocmd BufNewFile  *.c	0r ~/vim/skeleton.c
   :autocmd BufNewFile  *.h	0r ~/vim/skeleton.h
   :autocmd BufNewFile  *.java	0r ~/vim/skeleton.java
 
-To insert the current date and time in a "*.html" file when writing it: >
+To insert the current date and time in a "*.html" file when writing it: >vim
 
   :autocmd BufWritePre,FileWritePre *.html   ks|call LastMod()|'s
   :fun LastMod()
@@ -1732,7 +1732,7 @@ option.  This can only be used to ignore window and buffer related events.
 							*:noautocmd* *:noa*
 To disable autocommands for just one command use the ":noautocmd" command
 modifier.  This will set 'eventignore' to "all" for the duration of the
-following command.  Example: >
+following command.  Example: >vim
 
 	:noautocmd w fname.gz
 
