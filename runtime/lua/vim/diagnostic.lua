@@ -190,8 +190,10 @@ end
 --- severity |diagnostic-severity|
 --- @field severity? vim.diagnostic.SeverityFilter
 ---
---- Only show diagnostics for the current line.
---- (default `false`)
+--- Show or hide diagnostics based on the current cursor line.  If `true`, only diagnostics on the
+--- current cursor line are shown.  If `false`, all diagnostics are shown except on the current
+--- cursor line.  If `nil`, all diagnostics are shown.
+--- (default `nil`)
 --- @field current_line? boolean
 ---
 --- Include the diagnostic source in virtual text. Use `'if_many'` to only
@@ -1562,12 +1564,15 @@ M.handlers.underline = {
 --- @param diagnostics table<integer, vim.Diagnostic[]>
 --- @param opts vim.diagnostic.Opts.VirtualText
 local function render_virtual_text(namespace, bufnr, diagnostics, opts)
+  local lnum = api.nvim_win_get_cursor(0)[1] - 1
   api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
 
   for line, line_diagnostics in pairs(diagnostics) do
     local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts)
+    local skip = (opts.current_line == true and line ~= lnum)
+      or (opts.current_line == false and line == lnum)
 
-    if virt_texts then
+    if virt_texts and not skip then
       api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
         hl_mode = opts.hl_mode or 'combine',
         virt_text = virt_texts,
@@ -1621,31 +1626,17 @@ M.handlers.virtual_text = {
 
     local line_diagnostics = diagnostic_lines(diagnostics)
 
-    if opts.virtual_text.current_line == true then
+    if opts.virtual_text.current_line ~= nil then
       api.nvim_create_autocmd('CursorMoved', {
         buffer = bufnr,
         group = ns.user_data.virt_text_augroup,
         callback = function()
-          local lnum = api.nvim_win_get_cursor(0)[1] - 1
-          render_virtual_text(
-            ns.user_data.virt_text_ns,
-            bufnr,
-            { [lnum] = diagnostics_at_cursor(line_diagnostics) },
-            opts.virtual_text
-          )
+          render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, opts.virtual_text)
         end,
       })
-      -- Also show diagnostics for the current line before the first CursorMoved event.
-      local lnum = api.nvim_win_get_cursor(0)[1] - 1
-      render_virtual_text(
-        ns.user_data.virt_text_ns,
-        bufnr,
-        { [lnum] = diagnostics_at_cursor(line_diagnostics) },
-        opts.virtual_text
-      )
-    else
-      render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, opts.virtual_text)
     end
+
+    render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, opts.virtual_text)
 
     save_extmarks(ns.user_data.virt_text_ns, bufnr)
   end,
