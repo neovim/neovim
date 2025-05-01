@@ -10,6 +10,7 @@
 "		2025 Mar 21 update shell capability detection (#16939)
 "		2025 Apr 03 command substitution opening paren at EOL (#17026)
 "		2025 Apr 10 improve shell detection (#17084)
+"		2025 Apr 29 match escaped chars in test operands (#17221)
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -306,7 +307,7 @@ syn region shSubSh transparent matchgroup=shSubShRegion start="[^(]\zs(" end=")"
 "=======
 syn region shExpr	matchgroup=shRange start="\[\s\@=" skip=+\\\\\|\\$\|\[+ end="\]" contains=@shTestList,shSpecial
 syn region shTest	transparent matchgroup=shStatement start="\<test\s" skip=+\\\\\|\\$+ matchgroup=NONE end="[;&|]"me=e-1 end="$" contains=@shExprList1
-syn region shNoQuote	start='\S'	skip='\%(\\\\\)*\\.'	end='\ze\s' end="\ze['"]"	contained contains=shBracketExpr,shDerefSimple,shDeref
+syn region shNoQuote	start='\S'	skip='\%(\\\\\)*\\.'	end='\ze\s' end="\ze['"]"	contained contains=shBracketExpr,shDerefSimple,shDeref,shEscape
 syn match  shAstQuote	contained	'\*\ze"'	nextgroup=shString
 syn match  shTestOpr	contained	'[^-+/%]\zs=' skipwhite nextgroup=shTestDoubleQuote,shTestSingleQuote,shTestPattern
 syn match  shTestOpr	contained	"<=\|>=\|!=\|==\|=\~\|-.\>\|-\(nt\|ot\|ef\|eq\|ne\|lt\|le\|gt\|ge\)\>\|[!<>]"
