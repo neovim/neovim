@@ -157,7 +157,11 @@ end
 
 --- @param bufnr integer
 local function buf_clear(bufnr)
-  local bufstate = assert(bufstates[bufnr])
+  local bufstate = bufstates[bufnr]
+  if not bufstate then
+    return
+  end
+
   local client_ids = vim.tbl_keys(bufstate.hl_info) --- @type integer[]
 
   for _, client_id in ipairs(client_ids) do
