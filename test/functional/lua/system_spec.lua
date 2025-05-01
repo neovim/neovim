@@ -60,7 +60,7 @@ describe('vim.system', function()
         )
 
         t.matches(
-          "ENOENT%: no such file .* %(cwd%): 'non%-existent%-cmd'",
+          "ENOENT%: no such file .* %(cwd%): 'non%-existent%-cwd'",
           t.pcall_err(system, { 'echo', 'hello' }, { cwd = 'non-existent-cwd', text = true })
         )
       end)
