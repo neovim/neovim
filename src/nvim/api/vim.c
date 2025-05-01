@@ -80,7 +80,6 @@
 #include "nvim/state.h"
 #include "nvim/statusline.h"
 #include "nvim/statusline_defs.h"
-#include "nvim/strings.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"

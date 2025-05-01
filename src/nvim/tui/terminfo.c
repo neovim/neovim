@@ -10,7 +10,6 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
 #include "nvim/memory.h"
-#include "nvim/strings.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/terminfo_defs.h"
 

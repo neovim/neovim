@@ -8,7 +8,6 @@
 #include "nvim/gettext_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/marktree_defs.h"
-#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 
 /// Values for buflist_getfile()
