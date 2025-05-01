@@ -2950,6 +2950,22 @@ describe('extmark decorations', function()
       {1:~                                                 }|*4
                                                         |
     ]])
+    -- Correct relativenumber for line below concealed line #33694
+    feed('4Gk')
+    screen:expect([[
+      {2:  2 }for _,item in ipairs(items) do                |
+      {2:3   }    if h^l_id_cell ~= nil then                 |
+      {2:  1 }        hl_id = hl_id_cell                    |
+      {2:  3 }    for _ = 1, (count or 1) do                |
+      {2:  4 }        local cell = line[colpos]             |
+      {2:  5 }        cell.text = text                      |
+      {2:  6 }        cell.hl_id = hl_id                    |
+      {2:  7 }        colpos = colpos+1                     |
+      {2:  8 }    end                                       |
+      {2:  9 }end                                           |
+      {1:~                                                 }|*4
+                                                        |
+    ]])
     -- Also with above virtual line #32744
     command('set nornu')
     api.nvim_buf_set_extmark(0, ns, 3, 0, { virt_lines = { { { "virt_below 4" } } } })

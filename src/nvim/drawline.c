@@ -2826,7 +2826,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         curwin->w_cline_height = wlv.row - startrow;
         curwin->w_cline_folded = has_fold;
         curwin->w_valid |= (VALID_CHEIGHT|VALID_CROW);
-        conceal_cursor_used = conceal_cursor_line(curwin);
       }
 
       break;
