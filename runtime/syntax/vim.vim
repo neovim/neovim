@@ -433,8 +433,6 @@ if exists("g:vimsyn_folding") && g:vimsyn_folding =~# 'f'
  syn region	vimDefFold	start="\<def\>!\=\s*\%(<[sS][iI][dD]>\|[sg]:\)\=\%(\i\|[#.]\)\+("	                 end="\<enddef\>"	       contains=vimDef      fold keepend extend transparent
 endif
 
-syn match	vimFuncBlank contained	"\s\+"
-
 " Types: {{{2
 " =====
 
@@ -464,6 +462,7 @@ syn cluster vimType contains=vimType,vimCompoundType,vimUserType
 " =============================
 
 if s:vim9script
+
   " Methods {{{3
   syn match	vim9MethodDef		contained	"\<def\>"	skipwhite nextgroup=vim9MethodDefName,vim9ConstructorDefName
   syn match	vim9MethodDefName		contained	"\<\h\w*\>"	nextgroup=vim9MethodDefParams contains=@vim9MethodName
@@ -543,10 +542,48 @@ if s:vim9script
   VimFoldc syn region	vim9ClassBody	start="\<class\>" matchgroup=vimCommand end="\<endclass\>" contains=@vim9ClassBodyList transparent
 
   " Enums {{{3
-  syn cluster	vim9EnumBodyList		contains=vim9Comment,vim9LineComment,@vim9Continue,vim9Enum,vim9Implements,@vim9MethodDef,vim9Const,vim9Final,vim9Var
+  syn cluster	vim9EnumBodyList		contains=vim9Comment,vim9LineComment,@vim9Continue,vim9Enum,@vimExprList,@vim9MethodDef,vim9Public,vim9Static,vim9Const,vim9Final,vim9This,vim9Var
 
-  syn match	vim9Enum		contained	"\<enum\>"	skipwhite nextgroup=vim9EnumName
-  syn match	vim9EnumName		contained	"\<\u\w*\>"	skipwhite skipnl nextgroup=vim9Implements
+  syn match	vim9Enum		contained	"\<enum\>"	skipwhite           nextgroup=vim9EnumName
+
+  syn match	vim9EnumName		contained	"\<\u\w*\>"	skipwhite skipempty nextgroup=vim9EnumNameTrailing,vim9EnumNameEmpty,vim9EnumNameComment,@vim9EnumNameContinue,vim9EnumImplements
+  syn match	vim9EnumNameTrailing	contained	"\S.*"
+  syn region	vim9EnumNameComment	contained
+        \ start="#" skip="\n\s*\%(\\\|#\\ \)" end="$"
+        \ skipwhite skipempty nextgroup=vim9EnumNameComment,vim9EnumValue
+        \ contains=@vimCommentGroup,vimCommentString
+  " vim9EnumName's "skipempty" should only apply to comments and enum values and not implements clauses
+  syn match	vim9EnumNameEmpty		contained	"^"	skipwhite skipempty nextgroup=vim9EnumNameComment,vim9EnumValue
+  " allow line continuation between enum name and "implements"
+  syn match	vim9EnumNameContinue	contained
+        \ "^\s*\\"
+        \ skipwhite skipnl nextgroup=vim9EnumNameTrailing,vim9EnumNameEmpty,vim9EnumNameComment,@vim9EnumNameContinue,vim9EnumImplements
+        \ contains=vimWhitespace
+  syn match	vim9EnumNameContinueComment	contained
+        \ "^\s*#\\ .*"
+        \ skipwhite skipnl nextgroup=vim9EnumNameEmpty,vim9EnumNameComment,@vim9EnumNameContinue
+        \ contains=vimWhitespace
+  syn cluster	vim9EnumNameContinue	contains=vim9EnumNameContinue,vim9EnumNameContinueComment
+
+  " enforce enum value list location
+  syn match	vim9EnumValue		contained	"\<\a\w*\>"		  nextgroup=vim9EnumValueArgList,vim9EnumValueListComma,vim9Comment
+  syn match	vim9EnumValueListComma	contained	","	skipwhite skipempty nextgroup=vim9EnumValue,vim9EnumValueListCommaComment
+  syn region	vim9EnumValueListCommaComment	contained
+        \ start="#" skip="\n\s*\%(\\\|#\\ \)" end="$"
+        \ skipwhite skipempty nextgroup=vim9EnumValueListCommaComment,vim9EnumValue
+        \ contains=@vimCommentGroup,vimCommentString
+  syn region	vim9EnumValueArgList	contained
+        \ matchgroup=vimParenSep start="(" end=")"
+        \ nextgroup=vim9EnumValueListComma
+        \ contains=@vimExprList,vimContinueString,vim9Comment
+
+  syn keyword	vim9EnumImplements	contained	implements	skipwhite        nextgroup=vim9EnumImplementedInterface
+  syn match	vim9EnumImplementedInterface	contained	"\<\u\w*\>"	skipwhite skipnl nextgroup=vim9EnumInterfaceListComma,vim9EnumImplementedInterfaceComment,vim9EnumValue
+  syn match	vim9EnumInterfaceListComma	contained	","	skipwhite        nextgroup=vim9EnumImplementedInterface
+  syn region	vim9EnumImplementedInterfaceComment	contained
+        \ start="#" skip="\n\s*\%(\\\|#\\ \)" end="$"
+        \ skipwhite skipempty nextgroup=vim9EnumImplementedInterfaceComment,vim9EnumValue
+        \ contains=@vimCommentGroup,vimCommentString
 
   VimFolde syn region	vim9EnumBody	start="\<enum\>" matchgroup=vimCommand end="\<endenum\>" contains=@vim9EnumBodyList transparent
 
@@ -2026,6 +2063,12 @@ if !exists("skip_vim_syntax_inits")
  hi def link vim9Const	vimCommand
  hi def link vim9ContinueComment	vimContinueComment
  hi def link vim9Enum	vimCommand
+ hi def link vim9EnumImplementedInterfaceComment	vim9Comment
+ hi def link vim9EnumImplements	vim9Implements
+ hi def link vim9EnumNameComment	vim9Comment
+ hi def link vim9EnumNameContinue	vimContinue
+ hi def link vim9EnumNameContinueComment	vim9Comment
+ hi def link vim9EnumValueListCommaComment	vim9Comment
  hi def link vim9Export	vimCommand
  hi def link vim9Extends	Keyword
  hi def link vim9Final	vimCommand
