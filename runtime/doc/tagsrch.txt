@@ -510,7 +510,7 @@ directory where the tag file is.
 ==============================================================================
 5. Tags file format				*tags-file-format* *E431*
 
-						*ctags* *jtags*
+						*ctags*
 A tags file can be created with an external command, for example "ctags".  It
 will contain a tag for each function.  Some versions of "ctags" will also make
 a tag for each "#defined" macro, typedefs, enums, etc.
@@ -524,10 +524,11 @@ universal ctags		A maintained version of ctags based on exuberant
 exuberant ctags		Works for C, C++, Java, Fortran, Eiffel and others.
 			See https://ctags.sourceforge.net. No new version
 			since 2009.
-JTags			For Java, in Java.  It can be found at
-			https://www.fleiner.com/jtags/.
+|:helptags|		For Vim's |help| files
 ptags.py		For Python, in Python.  Found in your Python source
 			directory at Tools/scripts/ptags.py.
+ptags			For Perl, in Perl.  It can be found at
+			https://metacpan.org/pod/Vim::Tag
 
 
 The lines in the tags file must have one of these two formats:
