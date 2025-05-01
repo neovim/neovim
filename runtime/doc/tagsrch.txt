@@ -888,8 +888,8 @@ Common arguments for the commands above:
 7. Using 'tagfunc'						*tag-function*
 
 It is possible to provide Vim with a function which will generate a list of
-tags used for commands like |:tag|, |:tselect| and Normal mode tag commands
-like |CTRL-]|.
+tags used for commands like |:tag|, |:tselect|, Normal mode tag commands like
+|CTRL-]| and for the |taglist()| function.
 
 The function used for generating the taglist is specified by setting the
 'tagfunc' option.  The function will be called with three arguments:
@@ -943,15 +943,14 @@ It is not allowed to close a window or change window from inside 'tagfunc'.
 The following is a hypothetical example of a function used for 'tagfunc'.  It
 uses the output of |taglist()| to generate the result: a list of tags in the
 inverse order of file names.
->
-	function TagFunc(pattern, flags, info)
-	  function CompareFilenames(item1, item2)
-	    let f1 = a:item1['filename']
-	    let f2 = a:item2['filename']
-	    return f1 >=# f2 ?
-			\ -1 : f1 <=# f2 ? 1 : 0
-	  endfunction
+>vim
+	function CompareFilenames(item1, item2)
+	  let f1 = a:item1['filename']
+	  let f2 = a:item2['filename']
+	  return f1 >=# f2 ? -1 : f1 <=# f2 ? 1 : 0
+	endfunction
 
+	function TagFunc(pattern, flags, info)
 	  let result = taglist(a:pattern)
 	  call sort(result, "CompareFilenames")
 
@@ -959,5 +958,7 @@ inverse order of file names.
 	endfunc
 	set tagfunc=TagFunc
 <
+Note: When executing |taglist()| the 'tagfunc' function won't be called
+recursively.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -2345,7 +2345,7 @@ vim.bo.ft = vim.bo.filetype
 ---   lastline	'@'		'display' contains lastline/truncate
 ---   trunc		'>'		truncated text in the
 --- 				`ins-completion-menu`.
----   truncrl	'<'		same as "trunc' in 'rightleft' mode
+---   truncrl	'<'		same as "trunc" in 'rightleft' mode
 ---
 --- Any one that is omitted will fall back to the default.
 ---
@@ -3438,10 +3438,10 @@ vim.o.inf = vim.o.infercase
 vim.bo.infercase = vim.o.infercase
 vim.bo.inf = vim.bo.infercase
 
---- Defines characters and patterns for completion in insert mode. Used by
---- the `complete_match()` function to determine the starting position for
---- completion. This is a comma-separated list of triggers. Each trigger
---- can be:
+--- Defines characters and patterns for completion in insert mode.  Used
+--- by the `complete_match()` function to determine the starting position
+--- for completion.  This is a comma-separated list of triggers.  Each
+--- trigger can be:
 --- - A single character like "." or "/"
 --- - A sequence of characters like "->", "/*", or "/**"
 ---
@@ -7037,7 +7037,8 @@ vim.bo.tc = vim.bo.tagcase
 vim.go.tagcase = vim.o.tagcase
 vim.go.tc = vim.go.tagcase
 
---- This option specifies a function to be used to perform tag searches.
+--- This option specifies a function to be used to perform tag searches
+--- (including `taglist()`).
 --- The function gets the tag pattern and should return a List of matching
 --- tags.  See `tag-function` for an explanation of how to write the
 --- function and an example.  The value can be the name of a function, a
@@ -7879,8 +7880,8 @@ vim.go.wmnu = vim.go.wildmenu
 --- ```vim
 --- 	set wildmode=noselect:full
 --- ```
---- Show 'wildmenu' without completing or selecting on first press
---- Cycle full matches on second press
+--- First press: show 'wildmenu' without completing or selecting
+--- Second press: cycle full matches
 ---
 --- ```vim
 --- 	set wildmode=noselect:lastused,full
