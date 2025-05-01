@@ -471,7 +471,7 @@ describe('ui/ext_messages', function()
           kind = 'shell_out',
         },
         {
-          content = { { ('stderr%s\n'):format(t.is_os('win') and '\r' or '') } },
+          content = { { ('stderr%s\n'):format(t.is_os('win') and '\r' or ''), 9, 71 } },
           history = false,
           kind = 'shell_err',
         },
