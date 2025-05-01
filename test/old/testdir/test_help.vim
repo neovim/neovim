@@ -225,5 +225,22 @@ func Test_help_using_visual_match()
   call CheckScriptFailure(lines, 'E149:')
 endfunc
 
+func Test_helptag_navigation()
+  let helpdir = tempname()
+  let tempfile = helpdir . '/test.txt'
+  call mkdir(helpdir, 'pR')
+  call writefile(['', '*[tag*', '', '|[tag|'], tempfile)
+  exe 'helptags' helpdir
+  exe 'sp' tempfile
+  exe 'lcd' helpdir
+  setl ft=help
+  let &l:iskeyword='!-~,^*,^|,^",192-255'
+  call cursor(4, 2)
+  " Vim must not escape `[` when expanding the tag
+  exe "normal! \<C-]>"
+  call assert_equal(2, line('.'))
+  bw
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
