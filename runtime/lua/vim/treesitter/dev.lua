@@ -451,6 +451,8 @@ function M.inspect_tree(opts)
     end,
   })
 
+  api.nvim_buf_set_keymap(b, 'n', 'q', '<C-w>c', { desc = 'Close language tree window' })
+
   local group = api.nvim_create_augroup('nvim.treesitter.dev', {})
 
   api.nvim_create_autocmd('CursorMoved', {
