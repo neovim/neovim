@@ -2664,6 +2664,28 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
 
 
 ==============================================================================
+Lua module: vim._extui                                            *vim._extui*
+
+WARNING: This is an experimental interface intended to replace the message
+grid in the TUI.
+
+To enable the experimental UI (default opts shown): >lua
+    require('vim._extui').enable({
+     enable = true, -- Whether to enable or disable the UI.
+     msg = { -- Options related to the message module.
+       ---@type 'box'|'cmd' Type of window used to place messages, either in the
+       ---cmdline or in a separate message box window with ephemeral messages.
+       pos = 'cmd',
+       box = { -- Options related to the message box window.
+         timeout = 4000, -- Time a message is visible.
+       },
+     },
+    })
+<
+
+
+
+==============================================================================
 Lua module: vim.filetype                                        *vim.filetype*
 
 vim.filetype.add({filetypes})                             *vim.filetype.add()*
