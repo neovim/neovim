@@ -100,12 +100,16 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       message = diagnostic.message.value
     end
     local line = buf_lines and buf_lines[start.line + 1] or ''
+    local end_line = line
+    if _end.line > start.line then
+      end_line = buf_lines and buf_lines[_end.line + 1] or ''
+    end
     --- @type vim.Diagnostic
     return {
       lnum = start.line,
       col = vim.str_byteindex(line, position_encoding, start.character, false),
       end_lnum = _end.line,
-      end_col = vim.str_byteindex(line, position_encoding, _end.character, false),
+      end_col = vim.str_byteindex(end_line, position_encoding, _end.character, false),
       severity = severity_lsp_to_vim(diagnostic.severity),
       message = message,
       source = diagnostic.source,
