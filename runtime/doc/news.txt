@@ -209,6 +209,8 @@ These existing features changed their behavior.
   the first writable directory in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
 
+• The |shada| file no longer contains entries for 'nobuflisted' buffers.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
