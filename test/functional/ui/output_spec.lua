@@ -203,10 +203,10 @@ describe('shell command :!', function()
         {1:~                                                    }|
         {3:                                                     }|
         :!cat test/functional/fixtures/shell_data.txt        |
-        {18:^@^A^B^C^D^E^F^H}                                     |
-        {18:^N^O^P^Q^R^S^T^U^V^W^X^Y^Z^[^\^]^^^_}                 |
-        ö 한글 {18:<a5><c3>}                                      |
-        t       {18:<ff>}                                         |
+        ^@^A^B^C^D^E^F^H                                     |
+        ^N^O^P^Q^R^S^T^U^V^W^X^Y^Z^[^\^]^^^_                 |
+        ö 한글 <a5><c3>                                      |
+        t       <ff>                                         |
                                                              |
         {6:Press ENTER or type command to continue}^              |
       ]],

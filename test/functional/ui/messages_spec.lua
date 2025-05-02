@@ -229,11 +229,11 @@ describe('ui/ext_messages', function()
         {
           content = {
             { '\n@character     ' },
-            { 'xxx', 26, 156 },
+            { 'xxx', 26, 158 },
             { ' ' },
             { 'links to', 18, 5 },
             { ' Character\n@character.special ' },
-            { 'xxx', 16, 157 },
+            { 'xxx', 16, 159 },
             { ' ' },
             { 'links to', 18, 5 },
             { ' SpecialChar' },
@@ -300,7 +300,7 @@ describe('ui/ext_messages', function()
       cmdline = { { abort = false } },
       messages = {
         {
-          content = { { 'Error', 9, 6 }, { 'Message', 16, 100 } },
+          content = { { 'Error', 9, 6 }, { 'Message', 16, 102 } },
           history = true,
           kind = 'echoerr',
         },
@@ -471,7 +471,7 @@ describe('ui/ext_messages', function()
           kind = 'shell_out',
         },
         {
-          content = { { ('stderr%s\n'):format(t.is_os('win') and '\r' or ''), 9, 6 } },
+          content = { { ('stderr%s\n'):format(t.is_os('win') and '\r' or ''), 9, 71 } },
           history = false,
           kind = 'shell_err',
         },

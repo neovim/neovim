@@ -1104,7 +1104,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, int fd,
   msg_ext_set_kind(fd == STDERR_FILENO ? "shell_err" : "shell_out");
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
-      msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_E : 0);
+      msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_SE : HLF_SO);
       p++;
     } else {
       // Note: this is not 100% precise:
@@ -1120,7 +1120,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, int fd,
         goto end;
       }
 
-      msg_outtrans_len(p, i, fd == STDERR_FILENO ? HLF_E : 0, false);
+      msg_outtrans_len(p, i, fd == STDERR_FILENO ? HLF_SE : HLF_SO, false);
       p += i;
     }
   }

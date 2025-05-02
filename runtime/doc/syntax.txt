@@ -5205,6 +5205,10 @@ EndOfBuffer	Filler lines (~) after the last line in the buffer.
 TermCursor	Cursor in a focused terminal.
 							*hl-ErrorMsg*
 ErrorMsg	Error messages on the command line.
+							*hl-StderrMsg*
+StderrMsg	Messages in stderr from shell commands.
+							*hl-StdoutMsg*
+StdoutMsg	Messages in stdout from shell commands.
 							*hl-WinSeparator*
 WinSeparator	Separators between window splits.
 							*hl-Folded*
