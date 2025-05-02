@@ -387,6 +387,7 @@ function Client.create(config)
     capabilities = config.capabilities,
     workspace_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir),
     root_dir = config.root_dir,
+    _is_stopping = false,
     _before_init_cb = config.before_init,
     _on_init_cbs = vim._ensure_list(config.on_init),
     _on_exit_cbs = vim._ensure_list(config.on_exit),
@@ -804,11 +805,12 @@ end
 ---
 --- @param force? boolean
 function Client:stop(force)
-  local rpc = self.rpc
-
-  if rpc.is_closing() then
+  if self:is_stopped() then
     return
   end
+
+  self._is_stopping = true
+  local rpc = self.rpc
 
   vim.lsp._watchfiles.cancel(self.id)
 
@@ -936,7 +938,7 @@ end
 --- @return boolean # true if client is stopped or in the process of being
 --- stopped; false otherwise
 function Client:is_stopped()
-  return self.rpc.is_closing()
+  return self.rpc.is_closing() or self._is_stopping
 end
 
 --- Execute a lsp command, either via client command function (if available)

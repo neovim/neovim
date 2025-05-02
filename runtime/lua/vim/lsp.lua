@@ -148,7 +148,7 @@ end
 --- @param config vim.lsp.ClientConfig
 --- @return boolean
 local function reuse_client_default(client, config)
-  if client.name ~= config.name then
+  if client.name ~= config.name or client:is_stopped() then
     return false
   end
 
