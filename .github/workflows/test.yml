@@ -224,11 +224,13 @@ jobs:
       - uses: mlugg/setup-zig@v1
         with:
          version: 0.14.0
-      - run: sudo apt-get install -y inotify-tools
+      - run: sudo apt-get install -y inotify-tools qemu-user-static
       - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      - run: wget http://launchpadlibrarian.net/773667453/libc6_2.31-0ubuntu9.17_s390x.deb
       - run: ls /lib/ld64.so.1 || true
       - run: which qemu-s390x-static
-      - run: zig build -Dcross=true -Dtarget=s390x-linux-gnu nvim_bin
+      - run: zig build -Dcross=true -Dtarget=s390x-linux-gnu test_deps
+      - run: sudo dpkg-deb -RvD libc6_2.31-0ubuntu9.17_s390x.deb /
       - run: strace ./zig-out/bin/nvim --version
       - run: zig build -Dcross=true -Dtarget=s390x-linux-gnu functionaltest
 

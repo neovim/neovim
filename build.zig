@@ -301,7 +301,7 @@ pub fn build(b: *std.Build) !void {
 
     nvim_exe_step.dependOn(&nvim_exe_install.step);
 
-    const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, nvim_exe, funcs_data);
+    const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, nvim_exe, funcs_data, cross_compiling);
     const runtime_install = b.addInstallDirectory(.{ .source_dir = gen_runtime.getDirectory(), .install_dir = .prefix, .install_subdir = "runtime/" });
 
     const nvim = b.step("nvim", "build the editor");
