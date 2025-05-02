@@ -486,6 +486,38 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
+    child_session:request('nvim_set_keymap', 'i', '\031', '!!!', {})
+    feed_data('\031')
+    screen:expect([[
+      {6:^G^V^M}!!!^                                         |
+      {4:~                                                 }|*3
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    child_session:request('nvim_buf_delete', 0, { force = true })
+    child_session:request('nvim_set_option_value', 'laststatus', 0, {})
+    child_session:request(
+      'nvim_call_function',
+      'jobstart',
+      { { testprg('shell-test'), 'INTERACT' }, { term = true } }
+    )
+    screen:expect([[
+      interact $ ^                                       |
+                                                        |*4
+      {3:-- TERMINAL --}                                    |*2
+    ]])
+    -- mappings for C0 control codes should work in Terminal mode #33750
+    child_session:request('nvim_set_keymap', 't', '\031', '<Cmd>new<CR>', {})
+    feed_data('\031')
+    screen:expect([[
+      ^                                                  |
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      interact $                                        |
+                                                        |*2
+      {3:-- TERMINAL --}                                    |
+    ]])
   end)
 
   local function test_mouse_wheel(esc)
@@ -1198,7 +1230,6 @@ describe('TUI', function()
       pending('tty-test complains about not owning the terminal -- actions/runner#241')
     end
     screen:set_default_attr_ids({
-      [1] = { reverse = true }, -- focused cursor
       [3] = { bold = true },
       [19] = { bold = true, background = 121, foreground = 0 }, -- StatusLineTerm
     })
