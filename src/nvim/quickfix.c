@@ -3874,14 +3874,10 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
   // The current window becomes the previous window afterwards.
   win_T *const win = curwin;
 
-  if (IS_QF_STACK(qi) && cmdmod.cmod_split == 0) {
-    // Create the new quickfix window at the very bottom, except when
-    // :belowright or :aboveleft is used.
-    win_goto(lastwin);
-  }
-  // Default is to open the window below the current window
+  // Default is to open the window below the current window or at the bottom,
+  // except when :belowright or :aboveleft is used.
   if (cmdmod.cmod_split == 0) {
-    flags = WSP_BELOW;
+    flags = IS_QF_STACK(qi) ? WSP_BOT : WSP_BELOW;
   }
   flags |= WSP_NEWLOC;
   if (win_split(height, flags) == FAIL) {
