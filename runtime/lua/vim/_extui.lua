@@ -75,6 +75,7 @@ function M.enable(opts)
   -- The visibility and appearance of the cmdline and message box window is
   -- dependent on some option values. Reconfigure windows when option value
   -- has changed and after VimEnter when the user configured value is known.
+  -- TODO: Reconsider what is needed when this module is enabled by default early in startup.
   local function check_opt(name, value)
     if name == 'cmdheight' then
       -- 'cmdheight' set; (un)hide cmdline window and set its height.
@@ -89,6 +90,11 @@ function M.enable(opts)
         vim.wo[ext.wins[tab].box].winblend = value and 30 or 0
       end
     end
+  end
+
+  if vim.v.vim_did_enter == 1 then
+    check_opt('cmdheight', vim.o.cmdheight)
+    check_opt('termguicolors', vim.o.termguicolors)
   end
 
   api.nvim_create_autocmd('OptionSet', {
