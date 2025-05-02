@@ -139,6 +139,15 @@ typedef struct {
 } Dict(win_config);
 
 typedef struct {
+  OptionalKeys is_set__tabpage_get_;
+} Dict(tabpage_get);
+
+typedef struct {
+  OptionalKeys is_set__tabpage_config_;
+  Array layout;
+} Dict(tabpage_config);
+
+typedef struct {
   Boolean is_lua;
   Boolean do_source;
 } Dict(runtime);

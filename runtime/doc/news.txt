@@ -200,6 +200,8 @@ VIMSCRIPT
 
 • |cmdcomplete_info()| gets current cmdline completion info.
 
+• Added |nvim_tabpage_get()| and |nvim_tabpage_set()| to manage tabpage configuration.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
