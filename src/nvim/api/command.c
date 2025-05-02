@@ -154,10 +154,17 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char *name = (cmd != NULL ? cmd->uc_name : get_command_name(NULL, ea.cmdidx));
   PUT_KEY(result, cmd, cmd, cstr_as_string(name));
 
-  if ((ea.argt & EX_RANGE) && ea.addr_count > 0) {
+  if (ea.argt & EX_RANGE && ea.addr_count > 0) {
     Array range = arena_array(arena, 4);
     if (ea.addr_count > 1) {
       ADD_C(range, INTEGER_OBJ(ea.line1));
+    }
+    ADD_C(range, INTEGER_OBJ(ea.line2));
+
+    if (ea.addr_count == 2 &&
+        ea.col1 > 0 && ea.col2 > 0) {
+      ADD_C(range, INTEGER_OBJ(ea.col1));
+      ADD_C(range, INTEGER_OBJ(ea.col2));
     }
     ADD_C(range, INTEGER_OBJ(ea.line2));
 

@@ -4323,7 +4323,7 @@ describe('API', function()
           verbose = -1,
           vertical = false,
         },
-      }, api.nvim_parse_cmd('\'<,\'>s/math.random/math.max/', {}))
+      }, api.nvim_parse_cmd('`<,`>s/math.random/math.max/', {}))
     end)
     it('works with explicit charwise ranges', function()
       eq({
@@ -5026,7 +5026,7 @@ describe('API', function()
         cmd = 'substitute',
         addr = 'char',
         args = { '/.*/foo/' },
-        range = { 3, 5, 6, 10 } },
+        range = { 3, 5, 5, 9 } },
         {})
       expect [[
         line1
@@ -5085,18 +5085,25 @@ describe('API', function()
       eq('', api.nvim_cmd({ cmd = 'Foo', bang = false }, { output = true }))
     end)
 
-    it('works with |:!| into shell command', function()
+    it('works with |:!| and charwise selection into shell command', function()
       insert [[
         line1
         line2
-        line3you
-         expect thisline4
+        line3aaa
+        aaaaaaaaaaaaaaaaa
         line5
       ]]
       local buf = api.nvim_get_current_buf()
-      api.nvim_buf_set_mark(buf, '<', 3, 6, {})
-      api.nvim_buf_set_mark(buf, '>', 4, 12, {})
-      eq('you\n expect this', command_output([[:'<,'>!cat]]))
+      api.nvim_buf_set_mark(buf, '<', 3, 5, {})
+      api.nvim_buf_set_mark(buf, '>', 4, 11, {})
+      command('`<,`>!tr \'a\' \'b\'')
+      expect [[
+        line1
+        line2
+        line3bbb
+        bbbbbbbbbbbbbbbbb
+        line5
+      ]]
     end)
 
     it('works with modifiers', function()
