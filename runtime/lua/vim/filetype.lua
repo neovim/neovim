@@ -1390,6 +1390,7 @@ local extension = {
   yaml = 'yaml',
   eyaml = 'yaml',
   mplstyle = 'yaml',
+  grc = detect_line1('<%?xml', 'xml', 'yaml'),
   yang = 'yang',
   yuck = 'yuck',
   z8a = 'z8a',
