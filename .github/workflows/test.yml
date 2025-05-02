@@ -218,15 +218,18 @@ jobs:
   zig-build-s390x:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
-    name: build using zig build
+    name: S390X cross-compile (zig build)
     steps:
       - uses: actions/checkout@v4
       - uses: mlugg/setup-zig@v1
         with:
          version: 0.14.0
+      - run: which qemu-s390x-static || true
+      - run: ls /lib/ld64.so.1 || true
       - run: sudo apt-get install -y inotify-tools
       - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
-      - run: zig build -Dcross=true -Dtarget=s390x-linux-gnu nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build -Dcross=true -Dtarget=s390x-linux-gnu nvim_bin
+      - run: strace ./zig-out/bin/nvim --version
       - run: zig build -Dcross=true -Dtarget=s390x-linux-gnu functionaltest
 
   windows:
