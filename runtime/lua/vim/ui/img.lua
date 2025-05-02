@@ -69,7 +69,7 @@ function M:size()
 end
 
 ---Returns an iterator over the chunks of the image, returning the chunk, byte position, and
----an indicator of whether there are more chunks available.
+---an indicator of whether the current chunk is the last chunk.
 ---
 ---Takes an optional size to indicate how big each chunk should be, defaulting to 4096.
 ---
@@ -117,9 +117,9 @@ function M:chunks(opts)
     local chunk = data:sub(pos, end_pos)
 
     -- If we have a chunk available, mark as such
-    local has_more = false
+    local last = true
     if string.len(chunk) > 0 then
-      has_more = end_pos + 1 <= len
+      last = not (end_pos + 1 <= len)
     end
 
     -- Mark where our current chunk is positioned
@@ -128,7 +128,7 @@ function M:chunks(opts)
     -- Update our global position
     pos = end_pos + 1
 
-    return chunk, chunk_pos, has_more
+    return chunk, chunk_pos, last
   end)
 end
 

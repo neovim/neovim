@@ -56,10 +56,10 @@ end
 ---@param image vim.ui.Image
 ---@param opts vim.ui.img.Provider.RenderOpts
 local function write_multipart_image(image, opts)
-  ---@param chunk string
-  ---@param pos integer
-  ---@param has_more boolean
-  image:chunks():each(function(chunk, pos, has_more)
+  ---@param chunk string data of chunk
+  ---@param pos integer starting byte position of chunk
+  ---@param last boolean true if final chunk
+  image:chunks():each(function(chunk, pos, last)
     local data = {}
 
     -- If at the beginning of our image, mark as a PNG to be
@@ -72,11 +72,11 @@ local function write_multipart_image(image, opts)
       end
     end
 
-    -- If we are still sending chunks and not at the end
-    if has_more then
-      table.insert(data, 'm=1')
-    else
+    -- If we are on the final chunk, mark as such
+    if last then
       table.insert(data, 'm=0')
+    else
+      table.insert(data, 'm=1')
     end
 
     -- If we have a chunk available, write it
