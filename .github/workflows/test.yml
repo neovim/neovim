@@ -201,6 +201,20 @@ jobs:
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
 
+  zig-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    name: build using zig build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v1
+        with:
+         version: 0.14.0
+      - run: sudo apt-get install -y inotify-tools
+      - run: zig build test_nlua0
+      - run: zig build nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build functionaltest
+
   windows:
     uses: ./.github/workflows/test_windows.yml
 

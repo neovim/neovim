@@ -1,4 +1,4 @@
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(ZIG_BUILD)
 # define Boolean CFBoolean  // Avoid conflict with API's Boolean
 # define FileInfo CSFileInfo  // Avoid conflict with API's Fileinfo
 # include <CoreServices/CoreServices.h>
@@ -340,7 +340,7 @@ char *get_locales(expand_T *xp, int idx)
 
 void lang_init(void)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(ZIG_BUILD)
   if (!os_env_exists("LANG", true)) {
     char buf[50] = { 0 };
 

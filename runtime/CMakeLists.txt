@@ -12,12 +12,17 @@ get_directory_property(LUA_GEN_DEPS DIRECTORY ${PROJECT_SOURCE_DIR}/src/nvim DEF
 
 add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
   COMMAND ${LUA_GEN} ${SYN_VIM_GENERATOR} ${GENERATED_SYN_VIM} ${FUNCS_DATA}
+    ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/auevents.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/ex_cmds.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
   DEPENDS
     ${LUA_GEN_DEPS}
     ${SYN_VIM_GENERATOR}
     ${PROJECT_SOURCE_DIR}/src/nvim/ex_cmds.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/auevents.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.c
     ${FUNCS_DATA}
 )

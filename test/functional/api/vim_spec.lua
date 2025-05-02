@@ -4874,7 +4874,7 @@ describe('API', function()
       -- #20681
       eq('Invalid command: "win_getid"', pcall_err(api.nvim_cmd, { cmd = 'win_getid' }, {}))
       eq('Invalid command: "echo "hi""', pcall_err(api.nvim_cmd, { cmd = 'echo "hi"' }, {}))
-      eq('Invalid command: "win_getid"', pcall_err(exec_lua, [[return vim.cmd.win_getid{}]]))
+      matches('Invalid command: "win_getid"$', pcall_err(exec_lua, [[return vim.cmd.win_getid{}]]))
 
       -- Lua call allows empty {} for dict item.
       eq('', exec_lua([[return vim.cmd{ cmd = "set", args = {}, magic = {} }]]))
@@ -4882,16 +4882,16 @@ describe('API', function()
       eq('', api.nvim_cmd({ cmd = 'set', args = {}, magic = {} }, {}))
 
       -- Lua call does not allow non-empty list-like {} for dict item.
-      eq(
-        "Invalid 'magic': Expected Dict-like Lua table",
+      matches(
+        "Invalid 'magic': Expected Dict%-like Lua table$",
         pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { 'a' } }]])
       )
-      eq(
-        "Invalid key: 'bogus'",
+      matches(
+        "Invalid key: 'bogus'$",
         pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, magic = { bogus = true } }]])
       )
-      eq(
-        "Invalid key: 'bogus'",
+      matches(
+        "Invalid key: 'bogus'$",
         pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, mods = { bogus = true } }]])
       )
     end)
