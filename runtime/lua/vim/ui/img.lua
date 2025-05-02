@@ -256,7 +256,7 @@ end
 ---Calculates the width and height of each cell within the currently-attached
 ---user interface. If no interface is found, will throw an error.
 ---@return number cell_width, number cell_height
-local function cell_size()
+local function cell_size_in_pixels()
   ---@type {width:integer, height:integer}[]
   local uis = vim.api.nvim_list_uis()
   local ui = assert(uis[1], 'no attached ui found')
@@ -277,7 +277,7 @@ end
 ---@param y integer
 ---@return integer x, integer y
 local function pixels_to_cells(x, y)
-  local w, h = cell_size()
+  local w, h = cell_size_in_pixels()
   return math.floor(x / w), math.floor(y / h)
 end
 
@@ -286,7 +286,7 @@ end
 ---@param y integer
 ---@return integer x, integer y
 local function cells_to_pixels(x, y)
-  local w, h = cell_size()
+  local w, h = cell_size_in_pixels()
   return math.floor(x * w), math.floor(y * h)
 end
 
@@ -306,8 +306,8 @@ function M.new_position(x, y, unit)
   ---@return vim.ui.img.Position
   function position:to_cells()
     if self.unit == 'pixel' then
-      local x, y = pixels_to_cells(self.x, self.y)
-      return M.new_position(x, y, 'cell')
+      local cell_x, cell_y = pixels_to_cells(self.x, self.y)
+      return M.new_position(cell_x, cell_y, 'cell')
     end
 
     return self
@@ -317,8 +317,8 @@ function M.new_position(x, y, unit)
   ---@return vim.ui.img.Position
   function position:to_pixels()
     if self.unit == 'cell' then
-      local x, y = cells_to_pixels(self.x, self.y)
-      return M.new_position(x, y, 'pixel')
+      local px_x, px_y = cells_to_pixels(self.x, self.y)
+      return M.new_position(px_x, px_y, 'pixel')
     end
 
     return self
@@ -390,8 +390,8 @@ function M.new_size(width, height, unit)
   ---@return vim.ui.img.Size
   function size:to_cells()
     if self.unit == 'pixel' then
-      local width, height = pixels_to_cells(self.width, self.height)
-      return M.new_size(width, height, 'cell')
+      local cell_width, cell_height = pixels_to_cells(self.width, self.height)
+      return M.new_size(cell_width, cell_height, 'cell')
     end
 
     return self
@@ -401,8 +401,8 @@ function M.new_size(width, height, unit)
   ---@return vim.ui.img.Size
   function size:to_pixels()
     if self.unit == 'cell' then
-      local width, height = cells_to_pixels(self.width, self.height)
-      return M.new_size(width, height, 'pixel')
+      local px_width, px_height = cells_to_pixels(self.width, self.height)
+      return M.new_size(px_width, px_height, 'pixel')
     end
 
     return self
