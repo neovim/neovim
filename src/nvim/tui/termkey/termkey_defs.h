@@ -151,6 +151,7 @@ enum {
   TERMKEY_FLAG_CTRLC       = 1 << 6,  // Allow Ctrl-C to be read as normal, disabling SIGINT
   TERMKEY_FLAG_EINTR       = 1 << 7,  // Return ERROR on signal (EINTR) rather than retry
   TERMKEY_FLAG_NOSTART     = 1 << 8,  // Do not call termkey_start() in constructor
+  TERMKEY_FLAG_KEEPC0      = 1 << 9,  // Keep raw C0 control codes
 };
 
 enum {
