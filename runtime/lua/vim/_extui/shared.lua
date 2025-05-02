@@ -47,8 +47,8 @@ function M.tab_check_wins()
         local parser = assert(vim.treesitter.get_parser(M.bufs.cmd, 'vim', {}))
         M.cmd.highlighter = vim.treesitter.highlighter.new(parser)
       elseif type == 'more' then
-        -- Close more window with Ctrl-C.
-        vim.keymap.set('n', '<C-c>', '<C-w>c', { buffer = M.bufs.more })
+        -- Close more window with `q`, same as `checkhealth`
+        vim.keymap.set('n', 'q', '<C-w>c', { buffer = M.bufs.more })
       end
     end
 
