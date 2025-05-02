@@ -6,6 +6,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_eval_defs.h"
 #include "nvim/os/time_defs.h"
+#include "nvim/pos_defs.h"
 #include "nvim/regexp_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -35,7 +36,6 @@
 // 3. Add an entry in the index for Ex commands at ":help ex-cmd-index".
 // 4. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
 //    long name of the command.
-
 #define EX_RANGE           0x001u  // allow a linespecs
 #define EX_BANG            0x002u  // allow a ! after the command name
 #define EX_EXTRA           0x004u  // allow extra args after command name
@@ -122,6 +122,8 @@ struct exarg {
   int addr_count;               ///< the number of addresses given
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count
+  colnr_T col1;                 ///< the first column number
+  colnr_T col2;                 ///< the second column number or count
   cmd_addr_T addr_type;         ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
   char *do_ecmd_cmd;            ///< +command arg to be used in edited file
