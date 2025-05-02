@@ -1796,7 +1796,7 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
       'symbols_to_items must be called with valid position encoding',
       vim.log.levels.WARN
     )
-    position_encoding = vim.lsp.get_clients({ bufnr = 0 })[1].offset_encoding
+    position_encoding = vim.lsp.get_clients({ bufnr = bufnr })[1].offset_encoding
   end
 
   local items = {} --- @type vim.quickfix.entry[]
