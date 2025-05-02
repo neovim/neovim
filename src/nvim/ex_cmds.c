@@ -3301,7 +3301,7 @@ static int check_regexp_delim(int c)
   return OK;
 }
 
-/// Perform a substitution from line eap->line1 to line eap->line2 using the
+/// Perform a substitution inside the range defined in eap (line1,col1 -> line2,col2) using the
 /// command pointed to by eap->arg which should be of the form:
 ///
 /// /pattern/substitution/{flags}
@@ -3549,7 +3549,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
            || lnum <= curwin->w_botline);
        lnum++) {
     int nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                   0, NULL, NULL);
+                                   lnum == eap->line1 ? eap->col1 : 0,
+                                   lnum == line2 ? eap->col2 : 0,
+                                   NULL, NULL);
     if (nmatch) {
       colnr_T copycol;
       colnr_T matchcol;
