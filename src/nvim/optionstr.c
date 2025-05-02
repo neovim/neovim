@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -2099,6 +2100,19 @@ const char *did_set_wildmode(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_winbar(optset_T *args)
 {
   return did_set_statustabline_rulerformat(args, false, false);
+}
+
+/// The 'winborder' option is changed.
+const char *did_set_winborder(optset_T *args)
+{
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  Error err = ERROR_INIT;
+  if (!parse_winborder(&fconfig, &err)) {
+    api_clear_error(&err);
+    return e_invarg;
+  }
+  api_clear_error(&err);
+  return NULL;
 }
 
 /// The 'winhighlight' option is changed.
