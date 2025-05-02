@@ -331,7 +331,7 @@ function M.msg_clear() end
 ---
 ---@param content MsgContent
 function M.msg_showmode(content)
-  M.virt.last[M.virt.idx.mode] = content
+  M.virt.last[M.virt.idx.mode] = ext.cmd.level < 0 and content or {}
   M.virt.last[M.virt.idx.search] = {}
   set_virttext('last')
 end
@@ -386,7 +386,6 @@ function M.set_pos(type)
       height = height,
       row = win == ext.wins[ext.tab].box and 0 or 1,
       col = 10000,
-      zindex = type == 'more' and 299 or nil,
     })
     if type == 'box' then
       -- Ensure last line is visible and first line is at top of window.

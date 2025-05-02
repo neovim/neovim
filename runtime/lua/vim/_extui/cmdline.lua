@@ -6,6 +6,7 @@ local M = {
   indent = 0, -- Current indent for block event.
   prompt = false, -- Whether a prompt is active; messages are placed in the 'prompt' window.
   row = 0, -- Current row in the cmdline buffer, > 0 for block events.
+  level = -1, -- Current cmdline level, < 0 when inactive (otherwise unused).
 }
 
 --- Set the 'cmdheight' and cmdline window height. Reposition message windows.
@@ -20,7 +21,11 @@ local function win_config(win, hide, height)
     api.nvim_win_set_height(win, height)
   end
   if vim.o.cmdheight ~= height then
-    vim.cmd('noautocmd set cmdheight=' .. height)
+    -- Avoid moving the cursor with 'splitkeep' = "screen", and altering the user
+    -- configured value with noautocmd.
+    vim._with({ noautocmd = true, o = { splitkeep = 'screen' } }, function()
+      vim.o.cmdheight = height
+    end)
     ext.msg.set_pos()
   end
 end
@@ -47,10 +52,10 @@ end
 ---@param firstc string
 ---@param prompt string
 ---@param indent integer
---@param level integer
+---@param level integer
 ---@param hl_id integer
-function M.cmdline_show(content, pos, firstc, prompt, indent, _, hl_id)
-  M.indent, M.prompt = indent, #prompt > 0
+function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
+  M.level, M.indent, M.prompt = level, indent, #prompt > 0
   -- Only enable TS highlighter for Ex commands (not search or filter commands).
   M.highlighter.active[ext.bufs.cmd] = firstc == ':' and M.highlighter or nil
   set_text(content, ('%s%s%s'):format(firstc, prompt, (' '):rep(indent)))
@@ -127,7 +132,7 @@ function M.cmdline_hide(_, abort)
     end)
   end
 
-  M.prompt, curpos[1], curpos[2] = false, 0, 0
+  M.prompt, M.level, curpos[1], curpos[2] = false, -1, 0, 0
   win_config(ext.wins[ext.tab].cmd, true, ext.cmdheight)
 end
 

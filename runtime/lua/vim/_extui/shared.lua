@@ -29,7 +29,6 @@ local wincfg = { -- Default cfg for nvim_open_win().
   width = 10000,
   height = 1,
   noautocmd = true,
-  zindex = 300,
 }
 
 --- Ensure the various buffers and windows have not been deleted.
@@ -63,6 +62,8 @@ function M.tab_check_wins()
         hide = type ~= 'cmd' or M.cmdheight == 0 or nil,
         title = type == 'more' and 'Messages' or nil,
         border = type == 'box' and not o.termguicolors and 'single' or border or 'none',
+        -- kZIndexMessages < zindex < kZIndexCmdlinePopupMenu (grid_defs.h), 'more' below others.
+        zindex = 200 - (type == 'more' and 1 or 0),
         _cmdline_offset = type == 'cmd' and 0 or nil,
       })
       M.wins[M.tab][type] = api.nvim_open_win(M.bufs[type], false, cfg)
