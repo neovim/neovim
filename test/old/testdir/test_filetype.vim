@@ -183,7 +183,8 @@ func s:GetFilenameChecks() abort
     \ 'conaryrecipe': ['file.recipe'],
     \ 'conf': ['auto.master', 'file.conf', 'texdoc.cnf', '.x11vncrc', '.chktexrc', '.ripgreprc', 'ripgreprc', 'file.ctags'],
     \ 'config': ['configure.in', 'configure.ac', '/etc/hostname.file', 'any/etc/hostname.file'],
-    \ 'confini': ['pacman.conf', 'paru.conf', 'mpv.conf', 'any/.aws/config', 'any/.aws/credentials', 'file.nmconnection'],
+    \ 'confini': ['pacman.conf', 'paru.conf', 'mpv.conf', 'any/.aws/config', 'any/.aws/credentials', 'file.nmconnection',
+    \             'any/.gnuradio/grc.conf', 'any/gnuradio/config.conf', 'any/gnuradio/conf.d/modtool.conf'],
     \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi', 'file.mkxl', 'file.mklx'],
     \ 'cook': ['file.cook'],
     \ 'corn': ['file.corn'],
@@ -1591,6 +1592,22 @@ func Test_git_file()
   call writefile(['ref: refs/heads/master'], 'Xrepo.git/HEAD')
   split Xrepo.git/HEAD
   call assert_equal('git', &filetype)
+  bwipe!
+
+  filetype off
+endfunc
+
+func Test_grc_file()
+  filetype on
+
+  call writefile(['<?xml version="1.0"?>', '<block>', '</block>'], 'Xfile.grc')
+  split Xfile.grc
+  call assert_equal('xml', &filetype)
+  bwipe!
+
+  call writefile(['metadata:', '  file_format: 1'], 'Xfile.grc')
+  split Xfile.grc
+  call assert_equal('yaml', &filetype)
   bwipe!
 
   filetype off
