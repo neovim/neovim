@@ -201,7 +201,7 @@ Docstring format:
 - Markdown is supported.
 - Tags are written as `[tag]()`.
 - References are written as `[tag]`
-- Use ``` for code samples.
+- Use "```" for code samples.
   Code samples can be annotated as `vim` or `lua`
 
 Example: the help for |nvim_open_win()| is generated from a docstring defined
@@ -245,7 +245,7 @@ Docstring format:
 - Markdown is supported.
 - Tags are written as `[tag]()`.
 - References are written as `[tag]`
-- Use ``` for code samples.
+- Use "```" for code samples.
   Code samples can be annotated as `vim` or `lua`
 - Use `@since <api-level>` to note the |api-level| when the function became
   "stable". If `<api-level>` is greater than the current stable release (or

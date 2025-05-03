@@ -98,5 +98,4 @@ However, in general, we recommend (eventually) taking time to learn Nvim from
 its stock configuration, and incrementally setting options and adding plugins
 to your |config| as you find an explicit need to do so.
 
-==============================================================================
  vim:tw=78:ts=8:et:ft=help:norl:
