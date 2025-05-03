@@ -13239,7 +13239,7 @@ M.funcs = {
     ]=],
     name = 'winlayout',
     params = { { 'tabnr', 'integer' } },
-    returns = 'any[]',
+    returns = 'vim.fn.winlayout.ret',
     signature = 'winlayout([{tabnr}])',
   },
   winline = {
