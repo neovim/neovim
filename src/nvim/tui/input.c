@@ -21,6 +21,7 @@
 #include "nvim/tui/input_defs.h"
 #include "nvim/tui/termkey/driver-csi.h"
 #include "nvim/tui/termkey/termkey.h"
+#include "nvim/tui/termkey/termkey_defs.h"
 #include "nvim/tui/tui.h"
 #include "nvim/ui_client.h"
 
@@ -249,6 +250,13 @@ static size_t handle_termkey_modifiers(TermKeyKey *key, char *buf, size_t buflen
   return len;
 }
 
+enum {
+  KEYMOD_SUPER      = 1 << 3,
+  KEYMOD_META       = 1 << 5,
+  KEYMOD_RECOGNIZED = (TERMKEY_KEYMOD_SHIFT | TERMKEY_KEYMOD_ALT | TERMKEY_KEYMOD_CTRL
+                       | KEYMOD_SUPER | KEYMOD_META),
+};
+
 /// Handle modifiers not handled by libtermkey.
 /// Currently only Super ("D-") and Meta ("T-") are supported in Nvim.
 ///
@@ -257,10 +265,10 @@ static size_t handle_more_modifiers(TermKeyKey *key, char *buf, size_t buflen)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t len = 0;
-  if (key->modifiers & 8) {  // Super
+  if (key->modifiers & KEYMOD_SUPER) {
     len += (size_t)snprintf(buf + len, buflen - len, "D-");
   }
-  if (key->modifiers & 32) {  // Meta
+  if (key->modifiers & KEYMOD_META) {
     len += (size_t)snprintf(buf + len, buflen - len, "T-");
   }
   assert(len < buflen);
@@ -445,7 +453,7 @@ static void tk_getkeys(TermInput *input, bool force)
       continue;
     }
 
-    if (key.type == TERMKEY_TYPE_UNICODE && !key.modifiers) {
+    if (key.type == TERMKEY_TYPE_UNICODE && !(key.modifiers & KEYMOD_RECOGNIZED)) {
       forward_simple_utf8(input, &key);
     } else if (key.type == TERMKEY_TYPE_UNICODE
                || key.type == TERMKEY_TYPE_FUNCTION
