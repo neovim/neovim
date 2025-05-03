@@ -569,8 +569,10 @@ LspAttach                                                          *LspAttach*
         if not client then
           return
         end
-        -- Call your custom on_attach logic...
-        -- my_on_attach(client, vim.api.nvim_get_current_buf())
+        for bufnr, _ in pairs(client.attached_buffers) do
+          -- Call your custom on_attach logic...
+          -- my_on_attach(client, bufnr)
+        end
         return result
       end
     end)(vim.lsp.handlers['client/registerCapability'])
