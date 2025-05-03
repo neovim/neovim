@@ -1654,8 +1654,8 @@ lua_Alloc                                                            *lua_Alloc*
         `NULL` if and only if it cannot fill the request. When `nsize` is not
         zero and `osize` is zero, the allocator should behave like `malloc`.
         When `nsize` and `osize` are not zero, the allocator behaves like
-        `realloc`. Lua assumes that the allocator never fails when `osize >=
-        nsize`.
+        `realloc`. Lua assumes that the allocator never fails when
+        `osize >= nsize`.
 
         Here is a simple implementation for the allocator function. It is used
         in the auxiliary library by `luaL_newstate` (see
@@ -3567,8 +3567,8 @@ collectgarbage({opt} [, {arg}])                         *collectgarbage()*
                      `true` if the step finished a collection cycle.
         `"setpause"`   sets {arg} /100 as the new value for the `pause` of
                      the collector (see |lua-gc|).
-        `"setstepmul"` sets {arg} /100 as the new value for the `step
-                     multiplier` of the collector (see |lua-gc|).
+        `"setstepmul"` sets {arg} /100 as the new value for the
+                     `step multiplier` of the collector (see |lua-gc|).
 
 dofile({filename})                                      *dofile()*
         Opens the named file and executes its contents as a Lua chunk. When
@@ -4785,8 +4785,8 @@ debug.sethook([{thread},] {hook}, {mask} [, {count}])          *debug.sethook()*
         When called without arguments, the `debug.sethook` turns off the hook.
 
         When the hook is called, its first parameter is a string describing
-        the event that triggered its call: `"call"`, `"return"` (or `"tail
-        return"`), `"line"`, and `"count"`. For line events, the hook also
+        the event that triggered its call: `"call"`, `"return"` (or
+        `"tail return"`), `"line"`, and `"count"`. For line events, the hook also
         gets the new line number as its second parameter. Inside a hook, you
         can call `getinfo` with level 2 to get more information about the
         running function (level 0 is the `getinfo` function, and level 1 is
@@ -4885,5 +4885,4 @@ Christian Habermann's CRefVim project
 Adapted for bundled Nvim documentation; the original plugin can be found at
 https://www.vim.org/scripts/script.php?script_id=1291
 
-------------------------------------------------------------------------------
- vi:tw=78:ts=4:ft=help:norl:et
+ vim:tw=78:ts=4:ft=help:norl:et

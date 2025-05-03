@@ -189,5 +189,4 @@ evaluate Ruby expressions and pass their values to Vim script.
 The Ruby value "true", "false" and "nil" are converted to v:true, v:false and
 v:null, respectively.
 
-==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

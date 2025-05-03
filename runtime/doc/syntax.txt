@@ -1652,7 +1652,7 @@ diverge as follows:
   1. The first sentence (all characters up to the first period `.`, which is
      followed by a whitespace character or a line terminator, or up to the
      first block tag, e.g. `@param`, `@return`) is colored as
-	*SpecialComment	special comments.
+	`*SpecialComment`	special comments.
   2. The text is colored as
 	`*Comment`	comments.
   3. HTML comments are colored as
@@ -1898,9 +1898,9 @@ quoted text and URLs / email addresses).  In keeping with standard conventions,
 signatures begin in a line containing only "--" followed optionally by
 whitespaces and end with a newline.
 
-Vim treats lines beginning with ']', '}', '|', '>' or a word followed by '>'
+Vim treats lines beginning with "]", "}", "|", ">" or a word followed by ">"
 as quoted text.  However Vim highlights headers and signatures in quoted text
-only if the text is quoted with '>' (optionally followed by one space).
+only if the text is quoted with ">" (optionally followed by one space).
 
 By default mail.vim synchronises syntax to 100 lines before the first
 displayed line.  If you have a slow machine, and generally deal with emails
@@ -2064,8 +2064,8 @@ To disable highlighting of pronoun substitution patterns inside strings: >
 
 	:let moo_no_pronoun_sub = 1
 
-To disable highlighting of the regular expression operator '%|', and matching
-'%(' and '%)' inside strings: >
+To disable highlighting of the regular expression operator "%|", and matching
+"%(" and "%)" inside strings: >
 
 	:let moo_no_regexp = 1
 
@@ -2894,7 +2894,7 @@ The value is a space-separated list of keywords:
     [	       Array literal
     %	       Literal with "%" notation, e.g.: %w(STRING), %!STRING!
     /	       Regexp
-    string     String and shell command output (surrounded by ', ", `)
+    string     String and shell command output (surrounded by ', ", "`")
     :	       Symbol
     #	       Multiline comment
     <<	       Here documents

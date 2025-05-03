@@ -894,5 +894,4 @@ TUI:
   at how the terminal is sending CSI.  Nvim does not issue such a sequence and
   always uses 7-bit control sequences.
 
-==============================================================================
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

@@ -95,7 +95,7 @@ LUA
 • vim.validate(opts: table) Use form 1. See |vim.validate()|.
 
 VIMSCRIPT
-• *termopen()* Use |jobstart() with `{term: v:true}`.
+• *termopen()* Use |jobstart()| with `{term: v:true}`.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*

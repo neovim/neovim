@@ -487,7 +487,7 @@ CompleteDone			After Insert mode completion is done.  Either
 						- "accept": completion was
 						  accepted by |complete_CTRL-Y|.
 						- "cancel": completion was
-						  stopped by |complete_CTRL-E.
+						  stopped by |complete_CTRL-E|.
 						- "discard": completion was
 						  abandoned for other reason.
 

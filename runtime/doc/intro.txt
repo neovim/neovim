@@ -711,5 +711,4 @@ Arbitrary code registered via |:UpdateRemotePlugins|, that runs in a separate
 process and communicates with Nvim via the |api|.
 
 
-==============================================================================
  vim:tw=78:ts=8:et:sw=4:ft=help:norl:
