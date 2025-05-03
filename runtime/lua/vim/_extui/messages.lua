@@ -112,12 +112,11 @@ local function set_virttext(type)
       end
 
       -- Give virt_text the same highlight as the message tail.
-      local hl = api.nvim_buf_get_extmarks(ext.bufs[tar], ext.ns, { row, col }, { row, col }, {
-        details = true,
-        overlap = true,
-        type = 'highlight',
-      })
-      chunks[1][2] = hl[1] and hl[1][4].hl_group
+      local pos, opts = { row, col }, { details = true, overlap = true, type = 'highlight' }
+      local hl = api.nvim_buf_get_extmarks(ext.bufs[tar], ext.ns, pos, pos, opts)
+      for _, chunk in ipairs(hl[1] and chunks or {}) do
+        chunk[2] = hl[1][4].hl_group
+      end
     else
       local mode = #M.virt.last[M.virt.idx.mode]
       local pad = o.columns - width ---@type integer
@@ -392,6 +391,15 @@ function M.set_pos(type)
       local row = (texth.all > height and texth.end_row or 0) + 1
       api.nvim_win_set_cursor(ext.wins[ext.tab].box, { row, 0 })
     elseif type == 'more' and api.nvim_get_current_win() ~= win then
+      api.nvim_create_autocmd('WinEnter', {
+        once = true,
+        callback = function()
+          if api.nvim_win_is_valid(win) then
+            api.nvim_win_set_config(win, { hide = true })
+          end
+        end,
+        desc = 'Hide inactive more window.',
+      })
       api.nvim_set_current_win(win)
     end
   end
