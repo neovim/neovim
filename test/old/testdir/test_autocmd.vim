@@ -4314,7 +4314,8 @@ func Test_autocmd_BufWinLeave_with_vsp()
   exe "e " fname
   vsp
   augroup testing
-    exe "au BufWinLeave " .. fname .. " :e " dummy .. "| vsp " .. fname
+    exe 'au BufWinLeave' fname 'e' dummy
+          \ '| call assert_fails(''vsp' fname ''', ''E1546:'')'
   augroup END
   bw
   call CleanUpTestAuGroup()
