@@ -1834,31 +1834,33 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
 
   it('supports ruler with laststatus=0', function()
     command('set ruler laststatus=0')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                                                            |
       {1:~                                                           }|*5
                                                 0,0-1         All |
-    ]],
-    }
+    ]])
 
     command('hi MsgArea guibg=#333333')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                                                            |
       {1:~                                                           }|*5
       {101:                                          0,0-1         All }|
-    ]],
-    }
+    ]])
 
     command('set rulerformat=%15(%c%V\\ %p%%%)')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                                                            |
       {1:~                                                           }|*5
       {101:                                          0,0-1 100%        }|
-    ]],
-    }
+    ]])
+
+    -- Ruler is cleared when it is no longer drawn.
+    command('set noruler')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*5
+      {101:                                                            }|
+    ]])
   end)
 
   it('supports echo with CRLF line separators', function()
