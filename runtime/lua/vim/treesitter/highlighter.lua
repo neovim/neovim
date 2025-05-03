@@ -387,6 +387,7 @@ local function on_line_impl(self, buf, line, on_spell, on_conceal)
               api.nvim_buf_set_extmark(buf, ns, start_row, 0, {
                 end_line = end_row,
                 conceal_lines = '',
+                invalidate = true,
               })
             end
           end
