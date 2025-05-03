@@ -6600,7 +6600,7 @@ describe('LSP', function()
       end)
     end)
 
-    it('correctly handles root_markers', function()
+    it('root_markers priority', function()
       --- Setup directories for testing
       -- root/
       -- ├── dir_a/

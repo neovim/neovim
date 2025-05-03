@@ -293,35 +293,25 @@ end
 --- example at |vim.lsp.enable()|.
 --- @field root_dir? string|fun(bufnr: integer, on_dir:fun(root_dir?:string))
 ---
---- Directory markers (.e.g. '.git/') where the LSP server will base its workspaceFolders,
---- rootUri, and rootPath on initialization. Unused if `root_dir` is provided.
+--- Directory markers (".git/", "package.json", …) used to decide `root_dir`. Unused if `root_dir`
+--- is provided. The list order decides priority. To indicate "equal priority", specify names in
+--- a nested list `{ { 'a.txt', 'b.lua' }, ... }`.
 ---
---- The list order decides the priority. To indicate "equal priority", specify names in a nested list (`{ { 'a', 'b' }, ... }`)
---- Each entry in this list is a set of one or more markers. For each set, Nvim
---- will search upwards for each marker contained in the set. If a marker is
---- found, the directory which contains that marker is used as the root
---- directory. If no markers from the set are found, the process is repeated
---- with the next set in the list.
+--- For each item, Nvim will search upwards (from the buffer file) for that marker, or list of
+--- markers; search stops at the first directory containing that marker, and the directory is used
+--- as the root dir (workspace folder).
 ---
---- Example:
----
+--- Example: Find the first ancestor directory containing file or directory "stylua.toml"; if not
+--- found, find the first ancestor containing ".git":
 --- ```lua
 ---   root_markers = { 'stylua.toml', '.git' }
 --- ```
 ---
---- Find the first parent directory containing the file `stylua.toml`. If not
---- found, find the first parent directory containing the file or directory
---- `.git`.
----
---- Example:
----
+--- Example: Find the first ancestor directory containing EITHER "stylua.toml" or ".luarc.json"; if
+--- not found, find the first ancestor containing ".git":
 --- ```lua
 ---   root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
 --- ```
----
---- Find the first parent directory containing EITHER `stylua.toml` or
---- `.luarc.json`. If not found, find the first parent directory containing the
---- file or directory `.git`.
 ---
 --- @field root_markers? (string|string[])[]
 
