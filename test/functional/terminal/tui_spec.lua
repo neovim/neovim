@@ -440,19 +440,32 @@ describe('TUI', function()
     ]])
   end)
 
-  it('interprets <Esc>[27u as <Esc>', function()
+  it('interprets <Esc> encoded with kitty keyboard protocol', function()
     child_session:request(
       'nvim_exec2',
       [[
       nnoremap <M-;> <Nop>
       nnoremap <Esc> AESC<Esc>
+      nnoremap <C-Esc> ACtrlEsc<Esc>
+      nnoremap <D-Esc> ASuperEsc<Esc>
       nnoremap ; Asemicolon<Esc>
     ]],
       {}
     )
+    -- Works with no modifier
     feed_data('\027[27u;')
+    expect_child_buf_lines({ 'ESCsemicolon' })
+    -- Works with Ctrl modifier
+    feed_data('\027[27;5u')
+    expect_child_buf_lines({ 'ESCsemicolonCtrlEsc' })
+    -- Works with Super modifier
+    feed_data('\027[27;9u')
+    expect_child_buf_lines({ 'ESCsemicolonCtrlEscSuperEsc' })
+    -- Works with NumLock modifier (which should be the same as no modifier) #33799
+    feed_data('\027[27;129u')
+    expect_child_buf_lines({ 'ESCsemicolonCtrlEscSuperEscESC' })
     screen:expect([[
-      ESCsemicolo^n                                      |
+      ESCsemicolonCtrlEscSuperEscES^C                    |
       {4:~                                                 }|*3
       {5:[No Name] [+]                                     }|
                                                         |
@@ -461,6 +474,7 @@ describe('TUI', function()
     -- <Esc>; should be recognized as <M-;> when <M-;> is mapped
     feed_data('\027;')
     screen:expect_unchanged()
+    expect_child_buf_lines({ 'ESCsemicolonCtrlEscSuperEscESC' })
   end)
 
   it('interprets <Esc><Nul> as <M-C-Space> #17198', function()
