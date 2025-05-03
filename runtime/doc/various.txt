@@ -103,11 +103,11 @@ g8			Print the hex values of the bytes used in the
 							*gx*
 gx			Opens the current filepath or URL (decided by
 			|<cfile>|, 'isfname') at cursor using the system
-			default handler, by calling |vim.ui.open()|.
+			default handler. Mapped to |vim.ui.open()|.
 
 							*v_gx*
 {Visual}gx		Opens the selected text using the system default
-			handler, by calling |vim.ui.open()|.
+			handler. Mapped to |vim.ui.open()|.
 
 						*:p* *:pr* *:print* *E749*
 :[range]p[rint] [flags]
@@ -612,6 +612,8 @@ If the filetype of the buffer is associated with a language for which a
 to look up the value of 'commentstring' corresponding to the cursor position.
 (This can be different from the buffer's 'commentstring' in case of
 |treesitter-language-injections|.)
+
+The following |default-mappings| are defined:
 
 							*gc* *gc-default*
 gc{motion}		Comment or uncomment lines covered by {motion}.

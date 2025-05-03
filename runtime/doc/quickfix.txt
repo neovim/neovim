@@ -91,27 +91,39 @@ processing a quickfix or location list command, it will be aborted.
 :ll[!] [nr]		Same as ":cc", except the location list for the
 :[nr]ll[!]		current window is used instead of the quickfix list.
 
-						*:cn* *:cne* *:cnext* *E553* *]q*
+						*:cn* *:cne* *:cnext* *E553*
 :[count]cn[ext][!]	Display the [count] next error in the list that
 			includes a file name.  If there are no file names at
 			all, go to the [count] next error.  See |:cc| for
 			[!] and 'switchbuf'.
 
-							*:lne* *:lnext* *]l*
+								*]q*
+]q			Mapped to |:cnext|. |default-mappings|
+
+							*:lne* *:lnext*
 :[count]lne[xt][!]	Same as ":cnext", except the location list for the
 			current window is used instead of the quickfix list.
 
-:[count]cN[ext][!]		*:cp* *:cprevious*  *:cprev* *:cN* *:cNext* *[q*
+								*]l*
+]l			Mapped to |:lnext|. |default-mappings|
+
+:[count]cN[ext][!]		*:cp* *:cprevious*  *:cprev* *:cN* *:cNext*
 :[count]cp[revious][!]	Display the [count] previous error in the list that
 			includes a file name.  If there are no file names at
 			all, go to the [count] previous error.  See |:cc| for
 			[!] and 'switchbuf'.
 
+								*[q*
+[q			Mapped to |:cprevious|. |default-mappings|
 
-:[count]lN[ext][!]		*:lp* *:lprevious* *:lprev* *:lN* *:lNext* *[l*
+
+:[count]lN[ext][!]		*:lp* *:lprevious* *:lprev* *:lN* *:lNext*
 :[count]lp[revious][!]	Same as ":cNext" and ":cprevious", except the location
 			list for the current window is used instead of the
 			quickfix list.
+
+								*[l*
+[l			Mapped to |:lprevious|. |default-mappings|
 
 							*:cabo* *:cabove*
 :[count]cabo[ve]	Go to the [count] error above the current line in the
@@ -171,37 +183,55 @@ processing a quickfix or location list command, it will be aborted.
 :[count]laf[ter]	Same as ":cafter", except the location list for the
 			current window is used instead of the quickfix list.
 
-							*:cnf* *:cnfile* *]CTRL-Q*
+							*:cnf* *:cnfile*
 :[count]cnf[ile][!]	Display the first error in the [count] next file in
 			the list that includes a file name.  If there are no
 			file names at all or if there is no next file, go to
 			the [count] next error.  See |:cc| for [!] and
 			'switchbuf'.
 
-							*:lnf* *:lnfile* *]CTRL-L*
+							*]CTRL-Q*
+]CTRL-Q			Mapped to |:cnfile|. |default-mappings|
+
+							*:lnf* *:lnfile*
 :[count]lnf[ile][!]	Same as ":cnfile", except the location list for the
 			current window is used instead of the quickfix list.
 
-:[count]cNf[ile][!]			*:cpf* *:cpfile* *:cNf* *:cNfile* *[CTRL-Q*
+							*]CTRL-L*
+]CTRL-L			Mapped to |:lnfile|. |default-mappings|
+
+:[count]cNf[ile][!]			*:cpf* *:cpfile* *:cNf* *:cNfile*
 :[count]cpf[ile][!]	Display the last error in the [count] previous file in
 			the list that includes a file name.  If there are no
 			file names at all or if there is no next file, go to
 			the [count] previous error.  See |:cc| for [!] and
 			'switchbuf'.
 
+								*[CTRL-Q*
+[CTRL-Q			Mapped to |:cpfile|. |default-mappings|
 
-:[count]lNf[ile][!]			*:lpf* *:lpfile* *:lNf* *:lNfile* *[CTRL-L*
+
+:[count]lNf[ile][!]			*:lpf* *:lpfile* *:lNf* *:lNfile*
 :[count]lpf[ile][!]	Same as ":cNfile" and ":cpfile", except the location
 			list for the current window is used instead of the
 			quickfix list.
 
-							*:crewind* *:cr* *[Q*
+							*[CTRL-L*
+[CTRL-L			Mapped to |:lpfile|. |default-mappings|
+
+							*:crewind* *:cr*
 :cr[ewind][!] [nr]	Display error [nr].  If [nr] is omitted, the FIRST
 			error is displayed.  See |:cc|.
 
-							*:lrewind* *:lr* *[L*
+							*[Q*
+[Q			Mapped to |:crewind|. |default-mappings|
+
+							*:lrewind* *:lr*
 :lr[ewind][!] [nr]	Same as ":crewind", except the location list for the
 			current window is used instead of the quickfix list.
+
+							*[L*
+[L			Mapped to |:lrewind|. |default-mappings|
 
 							*:cfirst* *:cfir*
 :cfir[st][!] [nr]	Same as ":crewind".
@@ -209,13 +239,19 @@ processing a quickfix or location list command, it will be aborted.
 							*:lfirst* *:lfir*
 :lfir[st][!] [nr]	Same as ":lrewind".
 
-							*:clast* *:cla* *]Q*
+							*:clast* *:cla*
 :cla[st][!] [nr]	Display error [nr].  If [nr] is omitted, the LAST
 			error is displayed.  See |:cc|.
 
-							*:llast* *:lla* *]L*
+							*]Q*
+]Q			Mapped to |:clast|.
+
+							*:llast* *:lla*
 :lla[st][!] [nr]	Same as ":clast", except the location list for the
 			current window is used instead of the quickfix list.
+
+							*]L*
+]L			Mapped to |:llast|.
 
 							*:cq* *:cquit*
 :cq[uit][!]
