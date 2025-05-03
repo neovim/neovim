@@ -138,8 +138,6 @@ void tinput_init(TermInput *input, Loop *loop)
     pmap_put(int)(&kitty_key_map, kitty_key_map_entry[i].key, (ptr_t)kitty_key_map_entry[i].name);
   }
 
-  input->in_fd = STDIN_FILENO;
-
   const char *term = os_getenv_noalloc("TERM");
 
   if (!term) {
