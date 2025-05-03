@@ -506,14 +506,19 @@ local function trigger(bufnr, clients, ctx)
     local matches = {}
     local server_start_boundary --- @type integer?
     for client_id, response in pairs(responses) do
+      local client = lsp.get_client_by_id(client_id)
       if response.err then
-        vim.notify_once(response.err.message, vim.log.levels.WARN)
+        local msg = ('%s: %s %s'):format(
+          client and client.name or 'UNKNOWN',
+          response.err.code or 'NO_CODE',
+          response.err.message
+        )
+        vim.notify_once(msg, vim.log.levels.WARN)
       end
 
       local result = response.result
       if result then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
-        local client = lsp.get_client_by_id(client_id)
         local encoding = client and client.offset_encoding or 'utf-16'
         local client_matches
         client_matches, server_start_boundary = M._convert_results(
