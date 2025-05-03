@@ -12106,7 +12106,7 @@ winlayout([{tabnr}])                                               *winlayout()*
                   • {tabnr} (`integer?`)
 
                 Return: ~
-                  (`any[]`)
+                  (`vim.fn.winlayout.ret`)
 
 winline()                                                            *winline()*
 		The result is a Number, which is the screen line of the cursor
