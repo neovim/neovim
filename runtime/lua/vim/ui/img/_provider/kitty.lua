@@ -1,6 +1,3 @@
----@class vim.ui.img.KittyProvider: vim.ui.img.Provider
-local M = {}
-
 ---For kitty, we need to write an image in chunks
 ---
 ---Graphics codes are in this form:
@@ -24,7 +21,7 @@ local function write_seq(data)
 end
 
 ---Builds a header table of key value pairs.
----@param opts vim.ui.img.Provider.RenderOpts
+---@param opts vim.ui.img.Opts
 ---@return table<string, string>
 local function make_header(opts)
   ---@type table<string, string>
@@ -54,7 +51,7 @@ local function make_header(opts)
 end
 
 ---@param image vim.ui.Image
----@param opts vim.ui.img.Provider.RenderOpts
+---@param opts vim.ui.img.Opts
 local function write_multipart_image(image, opts)
   ---@param chunk string data of chunk
   ---@param pos integer starting byte position of chunk
@@ -90,13 +87,9 @@ local function write_multipart_image(image, opts)
 end
 
 ---@param image vim.ui.Image
----@param opts? vim.ui.img.Provider.RenderOpts
-function M.render(image, opts)
+---@param opts? vim.ui.img.Opts
+local function show(image, opts)
   local terminal = require('vim.ui.img._terminal')
-
-  if not image:is_loaded() then
-    return
-  end
 
   opts = opts or {}
   if opts.pos then
@@ -111,4 +104,11 @@ function M.render(image, opts)
   end
 end
 
-return M
+local function hide(id)
+  -- TODO: Implement hiding an image by its placement id
+end
+
+return require('vim.ui.img').new_provider({
+  show = show,
+  hide = hide,
+})

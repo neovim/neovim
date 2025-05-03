@@ -1,13 +1,20 @@
+---Collection of all images loaded into neovim, each with a unique id.
+---@type table<integer, vim.ui.Image>
+local IMAGES = {}
+
+---Id of the last image created.
+---@type integer
+local LAST_IMAGE_ID = 0
+
 ---@class vim.ui.Image
----@field data string|nil base64 encoded data if loaded into memory
----@field filename string|nil filename of the image if loaded from disk
+---@field id integer unique id associated with the image
+---@field data string base64 encoded data of the image loaded into memory
+---@field filename string path to the image on disk
 local M = {}
 M.__index = M
 
 ---Creates a new image instance.
----If a filename is provided without any data,
----the file will be loaded synchronously into memory.
----@param opts? {data?:string, filename?:string}
+---@param opts {data:string, filename:string}
 ---@return vim.ui.Image
 function M.new(opts)
   opts = opts or {}
@@ -15,57 +22,103 @@ function M.new(opts)
   local instance = {}
   setmetatable(instance, M)
 
+  instance.id = LAST_IMAGE_ID + 1
   instance.data = opts.data
-  if not instance.data and opts.filename then
-    instance:load_from_file(opts.filename)
-  end
+  instance.filename = opts.filename
+
+  LAST_IMAGE_ID = instance.id
 
   return instance
 end
 
-M.protocol = (function()
-  ---@class vim.ui.img.Protocol 'iterm2'|'kitty'|'sixel'
-
-  ---@type vim.ui.img.Protocol|nil
-  local protocol = nil
-
-  local loaded = false
-
-  ---Determines the preferred graphics protocol to use by default.
-  ---
-  ---@return vim.ui.img.Protocol|nil
-  return function()
-    if not loaded then
-      local detect = require('vim.ui.img._detect')
-      local graphics = detect().graphics
-
-      ---@diagnostic disable-next-line:cast-type-mismatch
-      ---@cast graphics vim.ui.img.Protocol|nil
-      protocol = graphics
-
-      loaded = true
-    end
-
-    return protocol
-  end
-end)()
-
----Returns true if the image is loaded into memory.
----@return boolean
-function M:is_loaded()
-  return self.data ~= nil
+---Retrieve an image by its id.
+---@param id integer
+---@return vim.ui.Image|nil
+function M.from_id(id)
+  return IMAGES[id]
 end
 
----Returns true if the image is from a known filename.
----@return boolean
-function M:is_from_file()
-  return self.filename ~= nil
+---Loads data for an image from a local file.
+---
+---If a callback provided, will load asynchronously; otherwise, is blocking.
+---@param filename string
+---@param on_load fun(err:string|nil, image:vim.ui.Image|nil)
+---@overload fun(filename:string):vim.ui.Image
+function M.load(filename, on_load)
+  if not on_load then
+    local stat = vim.uv.fs_stat(filename)
+    assert(stat, 'unable to stat ' .. filename)
+
+    local fd = vim.uv.fs_open(filename, 'r', 644) --[[ @type integer|nil ]]
+    assert(fd, 'unable to open ' .. filename)
+
+    local data = vim.uv.fs_read(fd, stat.size, -1) --[[ @type string|nil ]]
+    assert(data, 'unable to read ' .. filename)
+
+    return M.new({
+      data = vim.base64.encode(data),
+      filename = filename,
+    })
+  end
+
+  ---@param err string|nil
+  ---@return boolean
+  local function report_err(err)
+    if err then
+      vim.schedule(function()
+        on_load(err)
+      end)
+    end
+
+    return err ~= nil
+  end
+
+  vim.uv.fs_stat(filename, function(stat_err, stat)
+    if report_err(stat_err) then
+      return
+    end
+    if not stat then
+      report_err('missing stat')
+      return
+    end
+
+    vim.uv.fs_open(filename, 'r', 644, function(open_err, fd)
+      if report_err(open_err) then
+        return
+      end
+      if not fd then
+        report_err('missing fd')
+        return
+      end
+
+      vim.uv.fs_read(fd, stat.size, -1, function(read_err, data)
+        if report_err(read_err) then
+          return
+        end
+
+        vim.uv.fs_close(fd, function() end)
+
+        vim.schedule(function()
+          on_load(nil, M.new({
+            data = vim.base64.encode(data or ''),
+            filename = filename,
+          }))
+        end)
+      end)
+    end)
+  end)
 end
 
 ---Returns the size of the base64 encoded image.
 ---@return integer
 function M:size()
-  return string.len(self.data or '')
+  return string.len(self.data)
+end
+
+---Returns a hash (sha256) of the base64 encoded image.
+---@return string
+function M:hash()
+  return vim.fn.sha256(self.data)
 end
 
 ---Returns an iterator over the chunks of the image, returning the chunk, byte position, and
@@ -76,15 +129,16 @@ end
 ---Examples:
 ---
 ---```lua
----local img = vim.ui.img.new()
+----- Some predefined image
+---local img = vim.ui.img.new({ ... })
 ---
 ------@param chunk string
 ------@param pos integer
-------@param has_more boolean
----img:chunks():each(function(chunk, pos, has_more)
+------@param last boolean
+---img:chunks():each(function(chunk, pos, last)
 ---  vim.print("Chunk data", chunk)
 ---  vim.print("Chunk starts at", pos)
----  vim.print("Has more chunks", has_more)
+---  vim.print("Is last chunk", last)
 ---end)
 ---```
 ---
@@ -132,97 +186,25 @@ function M:chunks(opts)
   end)
 end
 
----Loads data for an image from a file, replacing any existing data.
----If a callback provided, will load asynchronously; otherwise, is blocking.
----@param filename string
----@param on_load fun(err:string|nil, image:vim.ui.Image|nil)
----@overload fun(filename:string):vim.ui.Image
-function M:load_from_file(filename, on_load)
-  local name = vim.fn.fnamemodify(filename, ':t:r')
+---@class vim.ui.img.ShowOpts: vim.ui.img.Opts
+---@field provider? vim.ui.img.Provider|string
 
-  if not on_load then
-    local stat = vim.uv.fs_stat(filename)
-    assert(stat, 'unable to stat ' .. filename)
+---@class vim.ui.img.Opts
+---@field crop? vim.ui.img.Region portion of image to display
+---@field pos? vim.ui.img.Position upper-left position of image within editor
+---@field size? vim.ui.img.Size explicit size to scale the image
 
-    local fd = vim.uv.fs_open(filename, 'r', 644) --[[ @type integer|nil ]]
-    assert(fd, 'unable to open ' .. filename)
-
-    local data = vim.uv.fs_read(fd, stat.size, -1) --[[ @type string|nil ]]
-    assert(data, 'unable to read ' .. filename)
-
-    self.data = vim.base64.encode(data)
-    self.filename = name
-    return self
-  end
-
-  ---@param err string|nil
-  ---@return boolean
-  local function report_err(err)
-    if err then
-      vim.schedule(function()
-        on_load(err)
-      end)
-    end
-
-    return err ~= nil
-  end
-
-  vim.uv.fs_stat(filename, function(stat_err, stat)
-    if report_err(stat_err) then
-      return
-    end
-    if not stat then
-      report_err('missing stat')
-      return
-    end
-
-    vim.uv.fs_open(filename, 'r', 644, function(open_err, fd)
-      if report_err(open_err) then
-        return
-      end
-      if not fd then
-        report_err('missing fd')
-        return
-      end
-
-      vim.uv.fs_read(fd, stat.size, -1, function(read_err, data)
-        if report_err(read_err) then
-          return
-        end
-
-        vim.uv.fs_close(fd, function() end)
-
-        self.data = vim.base64.encode(data or '')
-        self.filename = name
-
-        vim.schedule(function()
-          on_load(nil, self)
-        end)
-      end)
-    end)
-  end)
-end
-
----@class vim.ui.img.Opts: vim.ui.img.Provider.RenderOpts
----@field provider? vim.ui.img.Protocol|vim.ui.img.Provider
-
----Displays an image. Currently only supports the |TUI|.
----@param opts? vim.ui.img.Opts
+---Displays an image, returning a reference to the displayed instance.
+---Currently only supports the |TUI|.
+---@param opts? vim.ui.img.ShowOpts
+---@return integer #unique id reprensting a reference to the displayed image
 function M:show(opts)
   opts = opts or {}
 
-  local provider = opts.provider
+  -- TODO: Re-introduce support for detecting a provider dynamically
+  local provider = opts.provider or 'kitty'
 
-  -- If no graphics are explicitly defined, attempt to detect the
-  -- preferred graphics. If we still cannot figure out a provider,
-  -- throw an error early versus silently trying a protocol.
-  if not provider then
-    provider = M.protocol()
-    assert(provider, 'no graphics provider available')
-  end
-
-  -- For named protocols, grab the appropriate provider, failing
-  -- if there is not a default provider for the specified protocol.
+  -- If just a name of a provider is specified, grab it from our internal implementations
   if type(provider) == 'string' then
     provider = require('vim.ui.img._provider').load(provider)
   end
@@ -230,25 +212,46 @@ function M:show(opts)
   -- Ensure that our render opts are the actual types
   local crop = opts.crop
   if crop then
-    crop = vim.ui.img.new_region(crop.pos1, crop.pos2)
+    crop = M.new_region(crop.pos1, crop.pos2)
   end
 
   local pos = opts.pos
   if pos then
-    pos = vim.ui.img.new_position(pos.x, pos.y, pos.unit)
+    pos = M.new_position(pos.x, pos.y, pos.unit)
   end
 
   local size = opts.size
   if size then
-    size = vim.ui.img.new_size(size.width, size.height, size.unit)
+    size = M.new_size(size.width, size.height, size.unit)
   end
 
-  ---@cast provider vim.ui.img.Provider
-  provider.render(self, {
+  return provider.show(self, {
     crop = crop,
     pos = pos,
     size = size,
   })
+end
+
+---Hides a displayed image.
+---Currently only supports the |TUI|.
+---@param id integer|integer[] the id (or multiple ids) of the displayed image to hide
+---@param opts? {provider?:vim.ui.img.Provider|string}
+function M:hide(id, opts)
+  opts = opts or {}
+
+  -- TODO: Re-introduce support for detecting a provider dynamically
+  local provider = opts.provider or 'kitty'
+
+  -- If just a name of a provider is specified, grab it from our internal implementations
+  if type(provider) == 'string' then
+    provider = require('vim.ui.img._provider').load(provider)
+  end
+
+  if type(id) == 'number' then
+    id = { id }
+  end
+
+  return provider.hide(id)
 end
 
 ---@alias vim.ui.img.Unit 'cell'|'pixel'
@@ -296,7 +299,7 @@ end
 ---@param unit vim.ui.img.Unit
 ---@return vim.ui.img.Position
 function M.new_position(x, y, unit)
-  ---@class vim.ui.img.Position
+  ---@class (exact) vim.ui.img.Position
   ---@field x integer
   ---@field y integer
   ---@field unit vim.ui.img.Unit
@@ -332,7 +335,7 @@ end
 ---@param pos2 vim.ui.img.Position
 ---@return vim.ui.img.Region
 function M.new_region(pos1, pos2)
-  ---@class vim.ui.img.Region
+  ---@class (exact) vim.ui.img.Region
   ---@field pos1 vim.ui.img.Position
   ---@field pos2 vim.ui.img.Position
   local region = { pos1 = pos1, pos2 = pos2 }
@@ -380,7 +383,7 @@ end
 ---@param unit vim.ui.img.Unit
 ---@return vim.ui.img.Size
 function M.new_size(width, height, unit)
-  ---@class vim.ui.img.Size
+  ---@class (exact) vim.ui.img.Size
   ---@field width integer
   ---@field height integer
   ---@field unit vim.ui.img.Unit
@@ -409,6 +412,40 @@ function M.new_size(width, height, unit)
   end
 
   return size
+end
+
+---@class (exact) vim.ui.img.ProviderOpts
+---@field show fun(img:vim.ui.Image, opts?:vim.ui.img.Opts):integer
+---@field hide fun(id:integer|integer[])
+
+---Creates a new image provider, which is used to perform the actual display
+---and management of images within some attached UI.
+---@param opts vim.ui.img.ProviderOpts
+function M.new_provider(opts)
+  ---@class vim.ui.img.Provider
+  ---@field images table<integer, vim.ui.Image> mapping of displayed image id -> image
+  local provider = {
+    images = {},
+  }
+
+  local show_impl = opts.show
+  local hide_impl = opts.hide
+
+  ---Displays the image using the provider.
+  ---@param img vim.ui.Image
+  ---@param opts? vim.ui.img.Opts
+  ---@return integer id unique id representing a reference to the displayed image
+  function provider.show(img, opts)
+    return show_impl(img, opts)
+  end
+
+  ---Hides one or more displayed images using the provider.
+  ---@param id integer|integer[]
+  function provider.hide(id)
+    return hide_impl(id)
+  end
+
+  return provider
 end
 
 return M
