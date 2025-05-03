@@ -67,6 +67,9 @@ function M.enable(opts)
     end
   end)
 
+  -- Use MsgArea and hide search highlighting in the cmdline window.
+  -- TODO: Add new highlight group/namespaces for other windows? It is
+  -- clear MsgArea would be wanted in the box, more and prompt windows.
   api.nvim_set_hl(ext.ns, 'Normal', { link = 'MsgArea' })
   api.nvim_set_hl(ext.ns, 'Search', { link = 'MsgArea' })
   api.nvim_set_hl(ext.ns, 'CurSearch', { link = 'MsgArea' })

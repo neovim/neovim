@@ -67,7 +67,9 @@ function M.tab_check_wins()
         _cmdline_offset = type == 'cmd' and 0 or nil,
       })
       M.wins[M.tab][type] = api.nvim_open_win(M.bufs[type], false, cfg)
-      api.nvim_win_set_hl_ns(M.wins[M.tab][type], M.ns)
+      if type == 'cmd' then
+        api.nvim_win_set_hl_ns(M.wins[M.tab][type], M.ns)
+      end
       setopt = true
     elseif api.nvim_win_get_buf(M.wins[M.tab][type]) ~= M.bufs[type] then
       api.nvim_win_set_buf(M.wins[M.tab][type], M.bufs[type])
