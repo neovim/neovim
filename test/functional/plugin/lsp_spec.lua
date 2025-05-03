@@ -6680,4 +6680,26 @@ describe('LSP', function()
       markers_resolve_to({ 'foo', { 'bar', 'baz' }, 'marker_d' }, dir_b)
     end)
   end)
+
+  describe('vim.lsp.is_enabled()', function()
+    it('works', function()
+      exec_lua(function()
+        vim.lsp.config('foo', {
+          cmd = { 'foo' },
+          root_markers = { '.foorc' },
+        })
+      end)
+
+      -- LSP config defaults to disabled.
+      eq(false, exec_lua([[return vim.lsp.is_enabled('foo')]]))
+
+      -- Confirm we can enable it.
+      exec_lua([[vim.lsp.enable('foo')]])
+      eq(true, exec_lua([[return vim.lsp.is_enabled('foo')]]))
+
+      -- And finally, disable it again.
+      exec_lua([[vim.lsp.enable('foo', false)]])
+      eq(false, exec_lua([[return vim.lsp.is_enabled('foo')]]))
+    end)
+  end)
 end)

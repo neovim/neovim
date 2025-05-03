@@ -109,6 +109,8 @@ API
 • |vim.secure.read()| now returns `true` for trusted directories. Previously
   it would return `nil`, which made it impossible to tell if the directory was
   actually trusted.
+• Added |vim.lsp.is_enabled()| to check if a given LSP config has been enabled
+  by |vim.lsp.enable()|.
 
 BUILD
 

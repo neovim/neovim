@@ -1087,6 +1087,15 @@ get_log_path()                                        *vim.lsp.get_log_path()*
     Return: ~
         (`string`) path to log file
 
+is_enabled({name})                                      *vim.lsp.is_enabled()*
+    Checks if the given LSP config is enabled (globally, not per-buffer).
+
+    Parameters: ~
+      • {name}  (`string`) Config name
+
+    Return: ~
+        (`boolean`)
+
 omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
     Implements 'omnifunc' compatible LSP completion.
 

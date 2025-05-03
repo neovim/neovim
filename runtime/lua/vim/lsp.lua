@@ -635,6 +635,14 @@ function lsp.enable(name, enable)
   end
 end
 
+--- Checks if the given LSP config is enabled (globally, not per-buffer).
+---
+--- @param name string Config name
+--- @return boolean
+function lsp.is_enabled(name)
+  return lsp._enabled_configs[name] ~= nil
+end
+
 --- @class vim.lsp.start.Opts
 --- @inlinedoc
 ---
