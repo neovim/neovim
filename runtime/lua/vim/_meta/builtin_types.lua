@@ -304,10 +304,11 @@
 
 --- @class vim.fn.winlayout.branch
 --- @field [1] "row" | "col" Node type
---- @field [2] vim.fn.winlayout.ret[] children
+--- @field [2] (vim.fn.winlayout.leaf|vim.fn.winlayout.branch)[] children
 
 --- @class vim.fn.winlayout.empty
 
 --- @alias vim.fn.winlayout.ret
 --- | vim.fn.winlayout.leaf
 --- | vim.fn.winlayout.branch
+--- | vim.fn.winlayout.empty
