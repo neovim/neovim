@@ -3317,7 +3317,7 @@ getcharsearch()                                                *getcharsearch()*
                 Return: ~
                   (`table`)
 
-getcharstr([{expr}])                                              *getcharstr()*
+getcharstr([{expr} [, {opts}]])                                   *getcharstr()*
 		The same as |getchar()|, except that this always returns a
 		String, and "number" isn't allowed in {opts}.
 

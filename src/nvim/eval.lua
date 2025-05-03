@@ -3730,7 +3730,7 @@ M.funcs = {
     name = 'getcharstr',
     params = { { 'expr', '-1|0|1' }, { 'opts', 'table' } },
     returns = 'string',
-    signature = 'getcharstr([{expr}])',
+    signature = 'getcharstr([{expr} [, {opts}]])',
   },
   getcmdcomplpat = {
     desc = [=[
