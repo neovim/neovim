@@ -348,11 +348,22 @@ newwindow:
     } else {
       win_T *wp;
       if (Prenum) {  // go to specified window
+        win_T *last_focusable = firstwin;
         for (wp = firstwin; --Prenum > 0;) {
+          if (!wp->w_floating || (!wp->w_config.hide && wp->w_config.focusable)) {
+            last_focusable = wp;
+          }
           if (wp->w_next == NULL) {
             break;
           }
           wp = wp->w_next;
+        }
+        while (wp != NULL && wp->w_floating
+               && (wp->w_config.hide || !wp->w_config.focusable)) {
+          wp = wp->w_next;
+        }
+        if (wp == NULL) {  // went past the last focusable window
+          wp = last_focusable;
         }
       } else {
         if (nchar == 'W') {  // go to previous window

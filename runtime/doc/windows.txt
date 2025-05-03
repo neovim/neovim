@@ -439,18 +439,17 @@ CTRL-W l	Move cursor to Nth window right of current one.  Uses the
 
 CTRL-W w					*CTRL-W_w* *CTRL-W_CTRL-W*
 CTRL-W CTRL-W	Without count: move cursor to the |focusable| window
-		below/right of the current one.  If there is no (focusable)
-		window below or right, go to top-left window. With count: go
-		to Nth window (windows are numbered from top-left to
-		bottom-right).  To obtain the window number see |bufwinnr()|
-		and |winnr()|.  When N is larger than the number of windows go
-		to the last window.
+		below/right of the current one.  If none, go to the top-left
+		window.  With count: go to Nth window (numbered top-left to
+		bottom-right), skipping unfocusable windows.  To obtain the
+		window number see |bufwinnr()| and |winnr()|.  When N is
+		larger than the number of windows go to the last focusable
+		window.
 
 						*CTRL-W_W*
 CTRL-W W	Without count: move cursor to the |focusable| window
-		above/left of current one.  If there is no window above or
-		left, go to bottom-right window.  With count: go to Nth
-		window, like with CTRL-W w.
+		above/left of current one.  If none, go to the bottom-right
+		window.  With count: go to Nth window, like CTRL-W w.
 
 CTRL-W t					*CTRL-W_t* *CTRL-W_CTRL-T*
 CTRL-W CTRL-T	Move cursor to top-left window.

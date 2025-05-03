@@ -5846,6 +5846,59 @@ describe('float window', function()
                                                     |
           ]])
         end
+
+        api.nvim_open_win(
+          0,
+          false,
+          { relative = "editor", width = 1, height = 1, row = 0, col = 0 }
+        )
+        api.nvim_open_win(
+          0,
+          false,
+          { relative = "editor", width = 1, height = 1, row = 0, col = 0, focusable = false }
+        )
+        api.nvim_open_win(
+          0,
+          false,
+          { relative = "editor", width = 1, height = 1, row = 0, col = 0, focusable = false }
+        )
+        api.nvim_open_win(
+          0,
+          false,
+          { relative = "editor", width = 1, height = 1, row = 0, col = 0, focusable = true }
+        )
+        api.nvim_open_win(
+          0,
+          false,
+          { relative = "editor", width = 1, height = 1, row = 0, col = 0, focusable = false }
+        )
+        local nr_focusable = {}
+        for nr = 1, fn.winnr("$") do
+          table.insert(nr_focusable, api.nvim_win_get_config(fn.win_getid(nr)).focusable)
+        end
+        eq({true, false, true, false, false, true, false}, nr_focusable)
+
+        command("1wincmd w")
+        eq(1, fn.winnr())
+        command("2wincmd w")
+        eq(3, fn.winnr())
+        command("3wincmd w")
+        eq(3, fn.winnr())
+        command("4wincmd w")
+        eq(6, fn.winnr())
+        command("5wincmd w")
+        eq(6, fn.winnr())
+        command("6wincmd w")
+        eq(6, fn.winnr())
+        command("7wincmd w")
+        eq(6, fn.winnr())
+
+        feed("1<c-w>w")
+        eq(1, fn.winnr())
+        feed("2<c-w>w")
+        eq(3, fn.winnr())
+        feed("999<c-w>w")
+        eq(6, fn.winnr())
       end)
 
       it("W", function()
