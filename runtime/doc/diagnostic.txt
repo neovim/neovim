@@ -269,6 +269,26 @@ DiagnosticVirtualTextHint
 DiagnosticVirtualTextOk
     Used for "Ok" diagnostic virtual text.
 
+                                            *hl-DiagnosticVirtualLinesError*
+DiagnosticVirtualLinesError
+    Used for "Error" diagnostic virtual lines.
+
+                                            *hl-DiagnosticVirtualLinesWarn*
+DiagnosticVirtualLinesWarn
+    Used for "Warn" diagnostic virtual lines.
+
+                                            *hl-DiagnosticVirtualLinesInfo*
+DiagnosticVirtualLinesInfo
+    Used for "Info" diagnostic virtual lines.
+
+                                            *hl-DiagnosticVirtualLinesHint*
+DiagnosticVirtualLinesHint
+    Used for "Hint" diagnostic virtual lines.
+
+                                                *hl-DiagnosticVirtualLinesOk*
+DiagnosticVirtualLinesOk
+    Used for "Ok" diagnostic virtual lines.
+
                                                 *hl-DiagnosticUnderlineError*
 DiagnosticUnderlineError
     Used to underline "Error" diagnostics.
