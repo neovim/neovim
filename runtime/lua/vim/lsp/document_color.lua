@@ -173,16 +173,6 @@ local function buf_clear(bufnr)
 end
 
 --- @param bufnr integer
---- @param client_id? integer
-local function buf_refresh(bufnr, client_id)
-  util._refresh(ms.textDocument_documentColor, {
-    bufnr = bufnr,
-    handler = on_document_color,
-    client_id = client_id,
-  })
-end
-
---- @param bufnr integer
 local function buf_disable(bufnr)
   buf_clear(bufnr)
   reset_bufstate(bufnr, false)
@@ -196,7 +186,7 @@ local function buf_enable(bufnr)
     on_reload = function(_, buf)
       buf_clear(buf)
       if bufstates[buf].enabled then
-        buf_refresh(buf)
+        M._buf_refresh(buf)
       end
     end,
     on_detach = function(_, buf)
@@ -215,7 +205,7 @@ local function buf_enable(bufnr)
         (method == ms.textDocument_didChange or method == ms.textDocument_didOpen)
         and bufstates[args.buf].enabled
       then
-        buf_refresh(args.buf, args.data.client_id)
+        M._buf_refresh(args.buf, args.data.client_id)
       end
     end,
   })
@@ -238,7 +228,18 @@ local function buf_enable(bufnr)
     end,
   })
 
-  buf_refresh(bufnr)
+  M._buf_refresh(bufnr)
+end
+
+--- @nodoc
+--- @param bufnr integer
+--- @param client_id? integer
+function M._buf_refresh(bufnr, client_id)
+  util._refresh(ms.textDocument_documentColor, {
+    bufnr = bufnr,
+    handler = on_document_color,
+    client_id = client_id,
+  })
 end
 
 --- Query whether document colors are enabled in the given buffer.
@@ -259,15 +260,11 @@ end
 
 --- Enables document highlighting from the given language client in the given buffer.
 ---
---- You can enable document highlighting from a supporting client as follows:
+--- You can enable document highlighting when a client attaches to a buffer as follows:
 --- ```lua
 --- vim.api.nvim_create_autocmd('LspAttach', {
 ---   callback = function(args)
----     local client = vim.lsp.get_client_by_id(args.data.client_id)
----
----     if client:supports_method('textDocument/documentColor') then
----       vim.lsp.document_color.enable(true, args.buf)
----     end
+---     vim.lsp.document_color.enable(true, args.buf)
 ---   end
 --- })
 --- ```
@@ -307,7 +304,7 @@ api.nvim_create_autocmd('ColorScheme', {
     for _, bufnr in ipairs(api.nvim_list_bufs()) do
       buf_clear(bufnr)
       if api.nvim_buf_is_loaded(bufnr) and bufstates[bufnr].enabled then
-        buf_refresh(bufnr)
+        M._buf_refresh(bufnr)
       else
         reset_bufstate(bufnr, false)
       end
