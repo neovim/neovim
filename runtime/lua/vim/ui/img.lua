@@ -283,6 +283,9 @@ end
 
 ---@alias vim.ui.img.Unit 'cell'|'pixel'
 
+---@type {width:integer, height:integer}
+local SCREEN_SIZE = { width = 0, height = 0 }
+
 ---Calculates the width and height of each cell within the currently-attached
 ---user interface. If no interface is found, will throw an error.
 ---@return number cell_width, number cell_height
@@ -291,15 +294,60 @@ local function cell_size_in_pixels()
   local uis = vim.api.nvim_list_uis()
   local ui = assert(uis[1], 'no attached ui found')
 
-  -- TODO: This is NOT width/height in pixels. To get that, we'd currently
-  --       need to use ffi to invoke ioctl with TIOCGWINSZ
-  --
-  --       The above does NOT support Windows, and only works on Mac, BSD, Linux
-  --
-  --       Until this is resolved, we cannot accurately convert units between
-  --       pixels and cells, and will need to default to just using cells.
-  local width_px = ui.width
-  local height_px = ui.height
+  if SCREEN_SIZE.width == 0 or SCREEN_SIZE.height == 0 then
+    local found_size = false
+    local id = vim.api.nvim_create_autocmd('TermResponse', {
+      callback = function(args)
+        ---@type string|nil, string|nil
+        local height, width = args.data:match('\027[4;(%d+);(%d+)t')
+        local width_px = tonumber(width)
+        local height_px = tonumber(height)
+        if height_px and width_px then
+          SCREEN_SIZE.width = width_px
+          SCREEN_SIZE.height = height_px
+          found_size = true
+          return true
+        end
+      end,
+    })
+
+    -- Send xterm (CSI 14 t) to report window size in pixels
+    io.stdout:write('\027[14t')
+
+    local ok, res = vim.wait(1000, function() return found_size end)
+
+    if res == -1 then
+      -- If no response was received after 1s, print a message and keep waiting
+      vim.api.nvim_echo(
+        { { 'Waiting for CSI 14 t response from the terminal. Press Ctrl-C to interrupt...' } },
+        false,
+        {}
+      )
+      ok, res = vim.wait(9000, function() return found_size end)
+    end
+
+    if not ok then
+      vim.api.nvim_del_autocmd(id)
+
+      if res == -1 then
+        vim.notify(
+          'Timed out waiting for a screen size in pixels response from the terminal',
+          vim.log.levels.WARN
+        )
+      elseif res == -2 then
+        -- Clear message area
+        vim.api.nvim_echo({ { '' } }, false, {})
+      end
+
+      -- We are never going to get the screen size, so just make it a 1:1
+      -- with the rows/columns size of the editor
+      SCREEN_SIZE.width = vim.o.lines
+      SCREEN_SIZE.height = vim.o.columns
+    end
+  end
+
+  local width_px = SCREEN_SIZE.width
+  local height_px = SCREEN_SIZE.height
 
   local columns = vim.o.columns
   local lines = vim.o.lines
