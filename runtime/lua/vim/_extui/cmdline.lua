@@ -6,7 +6,7 @@ local M = {
   indent = 0, -- Current indent for block event.
   prompt = false, -- Whether a prompt is active; messages are placed in the 'prompt' window.
   row = 0, -- Current row in the cmdline buffer, > 0 for block events.
-  level = -1, -- Current cmdline level, < 0 when inactive (otherwise unused).
+  level = 0, -- Current cmdline level, 0 when inactive (otherwise unused).
 }
 
 --- Set the 'cmdheight' and cmdline window height. Reposition message windows.
@@ -132,7 +132,7 @@ function M.cmdline_hide(_, abort)
     end)
   end
 
-  M.prompt, M.level, curpos[1], curpos[2] = false, -1, 0, 0
+  M.prompt, M.level, curpos[1], curpos[2] = false, 0, 0, 0
   win_config(ext.wins[ext.tab].cmd, true, ext.cmdheight)
 end
 
