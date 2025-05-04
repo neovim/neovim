@@ -480,11 +480,6 @@ static bool can_unload_buffer(buf_T *buf)
   return can_unload;
 }
 
-bool buf_locked(buf_T *buf)
-{
-  return buf->b_locked || buf->b_locked_split;
-}
-
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -1300,11 +1295,17 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     return FAIL;
   }
 
-  if (action == DOBUF_GOTO
-      && buf != curbuf
-      && !check_can_set_curbuf_forceit((flags & DOBUF_FORCEIT) ? true : false)) {
-    // disallow navigating to another buffer when 'winfixbuf' is applied
-    return FAIL;
+  if (action == DOBUF_GOTO && buf != curbuf) {
+    if (!check_can_set_curbuf_forceit((flags & DOBUF_FORCEIT) != 0)) {
+      // disallow navigating to another buffer when 'winfixbuf' is applied
+      return FAIL;
+    }
+    if (buf->b_locked_split) {
+      // disallow navigating to a closing buffer, which like splitting,
+      // can result in more windows displaying it
+      emsg(_(e_cannot_switch_to_a_closing_buffer));
+      return FAIL;
+    }
   }
 
   if ((action == DOBUF_GOTO || action == DOBUF_SPLIT) && (buf->b_flags & BF_DUMMY)) {
