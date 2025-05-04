@@ -87,7 +87,7 @@ describe('vim.uv', function()
     screen:expect([[
                                                         |
       {2:                                                  }|
-      {3:Error executing callback:}                         |
+      {3:Lua callback:}                                     |
       {3:[string "<nvim>"]:5: E5560: nvim_set_var must not }|
       {3:be called in a fast event context}                 |
       {3:stack traceback:}                                  |
@@ -173,7 +173,7 @@ describe('vim.uv', function()
                                                         |
       {1:~                                                 }|*5
       {3:                                                  }|
-      {9:Error executing callback:}                         |
+      {9:Lua callback:}                                     |
       {9:[NULL]}                                            |
       {6:Press ENTER or type command to continue}^           |
     ]]
@@ -208,7 +208,7 @@ describe('vim.uv', function()
 
     screen:expect([[
       {3:                                                  }|
-      {9:Error executing callback:}                         |
+      {9:Lua callback:}                                     |
       {9:[NULL]}                                            |
       {6:Press ENTER or type command to continue}^           |
     ]])
@@ -232,7 +232,7 @@ describe('vim.uv', function()
 
     screen:expect([[
       {3:                                                  }|
-      {9:Error executing callback:}                         |
+      {9:Lua callback:}                                     |
       {9:uv_idle_t: 0x{MATCH:%w+}}{MATCH: +}|
       {6:Press ENTER or type command to continue}^           |
     ]])

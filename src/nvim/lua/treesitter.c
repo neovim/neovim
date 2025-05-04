@@ -178,7 +178,7 @@ static const TSLanguage *load_language_from_wasm(lua_State *L, const char *path,
   }
 
   if (werr.kind > 0) {
-    luaL_error(L, "Error creating wasm store: (%s) %s", wasmerr_to_str(werr.kind), werr.message);
+    luaL_error(L, "Failed to create WASM store: (%s) %s", wasmerr_to_str(werr.kind), werr.message);
   }
 
   size_t file_size = 0;
@@ -706,7 +706,7 @@ static void logger_cb(void *payload, TSLogType logtype, const char *s)
   lua_pushstring(lstate, logtype == TSLogTypeParse ? "parse" : "lex");
   lua_pushstring(lstate, s);
   if (lua_pcall(lstate, 2, 0, 0)) {
-    luaL_error(lstate, "Error executing treesitter logger callback");
+    luaL_error(lstate, "treesitter logger callback failed");
   }
 }
 

@@ -341,8 +341,7 @@ int nlua_xdl_diff(lua_State *lstate)
 
   if (xdl_diff(&ma, &mb, &params, &cfg, &ecb) == -1) {
     if (!ERROR_SET(&err)) {
-      api_set_error(&err, kErrorTypeException,
-                    "Error while performing diff operation");
+      api_set_error(&err, kErrorTypeException, "diff operation failed");
     }
   }
 

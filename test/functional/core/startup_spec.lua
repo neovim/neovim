@@ -651,7 +651,7 @@ describe('startup', function()
     screen:expect([[
       ^                                                            |
                                                                   |
-      Error detected while processing pre-vimrc command line:     |
+      Error in pre-vimrc command line:                            |
       E121: Undefined variable: g:bar                             |
       Press ENTER or type command to continue                     |
                                                                   |

@@ -1171,7 +1171,11 @@ describe('stdpath()', function()
           set_paths_via_system(env_var_name, paths)
           eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
           if not is_os('win') then
-            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+            assert_log(
+              '$TMPDIR tempdir not a directory[^\n]*TMPDIR%-should%-be%-ignored',
+              testlog,
+              100
+            )
           end
         end)
 
@@ -1179,7 +1183,11 @@ describe('stdpath()', function()
           set_paths_at_runtime(env_var_name, paths)
           eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
           if not is_os('win') then
-            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+            assert_log(
+              '$TMPDIR tempdir not a directory[^\n]*TMPDIR%-should%-be%-ignored',
+              testlog,
+              100
+            )
           end
         end)
       end)

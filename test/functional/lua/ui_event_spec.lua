@@ -427,14 +427,17 @@ describe('vim.ui_attach', function()
     os.remove(testlog)
   end)
 
-  it('error in callback is logged', function()
+  it('callback error is logged', function()
     exec_lua([[
       local ns = vim.api.nvim_create_namespace('test')
       vim.ui_attach(ns, { ext_popupmenu = true }, function() error(42) end)
     ]])
     feed('ifoo<CR>foobar<CR>fo<C-X><C-N>')
-    assert_log('Error in "popupmenu_show" UI event handler %(ns=test%):', testlog, 100)
-    assert_log('Error executing lua: .*: 42', testlog, 100)
+    assert_log(
+      'Error in "popupmenu_show" UI event handler %(ns=test%):[\r\n\t ]+Lua: .*: 42',
+      testlog,
+      100
+    )
   end)
 
   it('detaches after excessive errors', function()
@@ -464,7 +467,7 @@ describe('vim.ui_attach', function()
         {
           content = {
             {
-              'Error executing callback:\n[string "<nvim>"]:3: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:3: in function <[string "<nvim>"]:1>',
+              'Lua callback:\n[string "<nvim>"]:3: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:3: in function <[string "<nvim>"]:1>',
               9,
               6,
             },
@@ -482,11 +485,11 @@ describe('vim.ui_attach', function()
     feed('<CR>:messages<CR>')
     screen:expect([[
       {9:Error in "msg_show" UI event handler (ns=(UNKNOWN PLUGIN)):}                           |
-      {9:Error executing lua: [string "<nvim>"]:3: attempt to index global 'err' (a nil value)} |
+      {9:Lua: [string "<nvim>"]:3: attempt to index global 'err' (a nil value)}                 |
       {9:stack traceback:}                                                                      |
       {9:        [string "<nvim>"]:3: in function <[string "<nvim>"]:1>}                        |
       {9:Error in "msg_clear" UI event handler (ns=(UNKNOWN PLUGIN)):}                          |
-      {9:Error executing lua: [string "<nvim>"]:3: attempt to index global 'err' (a nil value)} |
+      {9:Lua: [string "<nvim>"]:3: attempt to index global 'err' (a nil value)}                 |
       {9:stack traceback:}                                                                      |
       {9:        [string "<nvim>"]:3: in function <[string "<nvim>"]:1>}                        |
       {9:Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))}                    |
@@ -506,7 +509,7 @@ describe('vim.ui_attach', function()
         {
           content = {
             {
-              'Error executing vim.schedule lua callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
+              'vim.schedule callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
               9,
               6,
             },
@@ -517,7 +520,7 @@ describe('vim.ui_attach', function()
         {
           content = {
             {
-              'Error executing vim.schedule lua callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
+              'vim.schedule callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
               9,
               6,
             },

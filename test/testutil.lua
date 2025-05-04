@@ -155,11 +155,13 @@ function M.matches(pat, actual)
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
 
---- Asserts that `pat` matches (or *not* if inverse=true) any line in the tail of `logfile`.
+--- Asserts that `pat` matches (or *not* if inverse=true) any text in the tail of `logfile`.
+---
+--- Matches are not restricted to a single line.
 ---
 --- Retries for 1 second in case of filesystem delay.
 ---
----@param pat (string) Lua pattern to match lines in the log file
+---@param pat (string) Lua pattern to match text in the log file
 ---@param logfile? (string) Full path to log file (default=$NVIM_LOG_FILE)
 ---@param nrlines? (number) Search up to this many log lines (default 10)
 ---@param inverse? (boolean) Assert that the pattern does NOT match.
@@ -167,28 +169,20 @@ function M.assert_log(pat, logfile, nrlines, inverse)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   luaassert(logfile ~= nil, 'no logfile')
   nrlines = nrlines or 10
-  inverse = inverse or false
 
   M.retry(nil, 1000, function()
     local lines = M.read_file_list(logfile, -nrlines) or {}
-    local msg = string.format(
-      'Pattern %q %sfound in log (last %d lines): %s:\n%s',
-      pat,
-      (inverse and '' or 'not '),
-      nrlines,
-      logfile,
-      '    ' .. table.concat(lines, '\n    ')
-    )
-    for _, line in ipairs(lines) do
-      if line:match(pat) then
-        if inverse then
-          error(msg)
-        else
-          return
-        end
-      end
-    end
-    if not inverse then
+    local text = table.concat(lines, '\n')
+    local ismatch = not not text:match(pat)
+    if (ismatch and inverse) or not (ismatch or inverse) then
+      local msg = string.format(
+        'Pattern %s %sfound in log (last %d lines): %s:\n%s',
+        vim.inspect(pat),
+        (inverse and '' or 'not '),
+        nrlines,
+        logfile,
+        vim.text.indent(4, text)
+      )
       error(msg)
     end
   end)
@@ -274,7 +268,7 @@ function M.pcall_err_withtrace(fn, ...)
   return (
     errmsg
       :gsub('^%.%.%./testnvim%.lua:0: ', '')
-      :gsub('^Error executing lua:- ', '')
+      :gsub('^Lua:- ', '')
       :gsub('^%[string "<nvim>"%]:0: ', '')
   )
 end

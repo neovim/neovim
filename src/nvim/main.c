@@ -2065,7 +2065,7 @@ static void do_exrc_initialization(void)
       nlua_exec(cstr_as_string(str), (Array)ARRAY_DICT_INIT, kRetNilBool, NULL, &err);
       xfree(str);
       if (ERROR_SET(&err)) {
-        semsg("Error detected while processing %s:", VIMRC_LUA_FILE);
+        semsg("Error in %s:", VIMRC_LUA_FILE);
         semsg_multiline("emsg", err.msg);
         api_clear_error(&err);
       }

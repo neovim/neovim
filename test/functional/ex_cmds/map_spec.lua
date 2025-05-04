@@ -193,7 +193,7 @@ describe('Screen', function()
     screen:expect([[
                                               |
       {3:                                        }|
-      {9:Error detected while processing :}       |
+      {9:Error in :}                              |
       {9:E605: Exception not caught: 42}          |
       {6:Press ENTER or type command to continue}^ |
     ]])
@@ -218,7 +218,7 @@ describe('Screen', function()
     screen:expect([[
       {3:                                        }|
       :echo "foo                              |
-      {9:Error detected while processing :}       |
+      {9:Error in :}                              |
       {9:E605: Exception not caught: 42}          |
       :echo "foo^                              |
     ]])
@@ -226,14 +226,14 @@ describe('Screen', function()
     screen:expect([[
       {3:                                        }|
       :echo "foo                              |
-      {9:Error detected while processing :}       |
+      {9:Error in :}                              |
       {9:E605: Exception not caught: 42}          |
       :echo "foo"^                             |
     ]])
     feed('\n')
     screen:expect([[
       :echo "foo                              |
-      {9:Error detected while processing :}       |
+      {9:Error in :}                              |
       {9:E605: Exception not caught: 42}          |
       foo                                     |
       {6:Press ENTER or type command to continue}^ |

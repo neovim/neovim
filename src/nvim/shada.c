@@ -550,19 +550,16 @@ static ShaDaReadResult sd_reader_skip(FileDescriptor *const sd_reader, const siz
 {
   const ptrdiff_t skip_bytes = file_skip(sd_reader, offset);
   if (skip_bytes < 0) {
-    semsg(_(SERR "System error while skipping in ShaDa file: %s"),
-          os_strerror((int)skip_bytes));
+    semsg(_(SERR "System error while skipping in ShaDa file: %s"), os_strerror((int)skip_bytes));
     return kSDReadStatusReadError;
   } else if (skip_bytes != (ptrdiff_t)offset) {
     assert(skip_bytes < (ptrdiff_t)offset);
     if (file_eof(sd_reader)) {
-      semsg(_(RCERR "Error while reading ShaDa file: "
-              "last entry specified that it occupies %" PRIu64 " bytes, "
+      semsg(_(RCERR "Reading ShaDa file: last entry specified that it occupies %" PRIu64 " bytes, "
               "but file ended earlier"),
             (uint64_t)offset);
     } else {
-      semsg(_(SERR "System error while skipping in ShaDa file: %s"),
-            _("too few bytes read"));
+      semsg(_(SERR "System error while skipping in ShaDa file: %s"), _("too few bytes read"));
     }
     return kSDReadStatusNotShaDa;
   }

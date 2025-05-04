@@ -271,23 +271,21 @@ describe('TUI', function()
       {}
     )
     feed_data(':call ManyErr()\r')
-    screen:expect {
-      grid = [[
-      {8:Error detected while processing function ManyErr:} |
+    screen:expect([[
+      {8:Error in function ManyErr:}                        |
       {11:line    2:}                                        |
       {8:FAIL 0}                                            |
       {8:FAIL 1}                                            |
       {8:FAIL 2}                                            |
       {10:-- More --}^                                        |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
 
     screen:try_resize(50, 10)
     screen:expect {
       grid = [[
       :call ManyErr()                                   |
-      {8:Error detected while processing function ManyErr:} |
+      {8:Error in function ManyErr:}                        |
       {11:line    2:}                                        |
       {8:FAIL 0}                                            |
       {8:FAIL 1}                                            |
@@ -301,7 +299,7 @@ describe('TUI', function()
     feed_data('j')
     screen:expect {
       grid = [[
-      {8:Error detected while processing function ManyErr:} |
+      {8:Error in function ManyErr:}                        |
       {11:line    2:}                                        |
       {8:FAIL 0}                                            |
       {8:FAIL 1}                                            |
@@ -342,7 +340,7 @@ describe('TUI', function()
     screen:expect {
       grid = [[
       :call ManyErr()                                   |
-      {8:Error detected while processing function ManyErr:} |
+      {8:Error in function ManyErr:}                        |
       {11:line    2:}                                        |
       {10:-- More --}^                                        |
       {3:-- TERMINAL --}                                    |
@@ -353,7 +351,7 @@ describe('TUI', function()
     screen:expect {
       grid = [[
       :call ManyErr()                                   |
-      {8:Error detected while processing function ManyErr:} |
+      {8:Error in function ManyErr:}                        |
       {11:line    2:}                                        |
       {8:FAIL 0}                                            |
       {8:FAIL 1}                                            |
@@ -1413,11 +1411,10 @@ describe('TUI', function()
     feed_data('\027[200~line 1\nline 2\n')
     screen:expect([[
       foo                                               |
-                                                        |
-      {5:                                                  }|
-      {8:paste: Error executing lua: [string "<nvim>"]:4: f}|
-      {8:ake fail}                                          |
-      {10:Press ENTER or type command to continue}^           |
+      ^                                                  |
+      {4:~                                                 }|*2
+      {5:[No Name] [+]                                     }|
+      {8:paste: Lua: [string "<nvim>"]:4: fake fail}        |
       {3:-- TERMINAL --}                                    |
     ]])
     -- Remaining chunks are discarded after vim.paste() failure.
@@ -1518,8 +1515,8 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: Vim:E21: Cannot make c}|
-      {8:hanges, 'modifiable' is off}                       |
+      {8:paste: Lua: Vim:E21: Cannot make changes, 'modifia}|
+      {8:ble' is off}                                       |
       {10:Press ENTER or type command to continue}^           |
       {3:-- TERMINAL --}                                    |
     ]])

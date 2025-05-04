@@ -593,7 +593,7 @@ static char *get_emsg_source(void)
       sname = SOURCING_NAME;
     }
 
-    const char *const p = _("Error detected while processing %s:");
+    const char *const p = _("Error in %s:");
     const size_t buf_len = strlen(sname) + strlen(p) + 1;
     char *const buf = xmalloc(buf_len);
     snprintf(buf, buf_len, p, sname);
