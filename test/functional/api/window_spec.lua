@@ -1992,10 +1992,10 @@ describe('API/win', function()
         pcall_err(api.nvim_win_close, w, true)
       )
 
-      -- OK when using window to different buffer than `win`s.
+      -- OK when using a buffer that isn't closing.
       w = api.nvim_get_current_win()
       command(
-        'only | autocmd BufHidden * ++once call nvim_open_win(0, 0, #{split: "left", win: '
+        'only | autocmd BufHidden * ++once call nvim_open_win(bufnr("#"), 0, #{split: "left", win: '
           .. w
           .. '})'
       )
