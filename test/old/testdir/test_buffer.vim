@@ -563,4 +563,39 @@ func Test_buflist_alloc_failure()
   call assert_fails('cexpr "XallocFail6:10:Line10"', 'E342:')
 endfunc
 
+func Test_closed_buffer_still_in_window()
+  %bw!
+
+  let s:w = win_getid()
+  new
+  let s:b = bufnr()
+  setl bufhidden=wipe
+
+  augroup ViewClosedBuffer
+    autocmd!
+    autocmd BufUnload * ++once call assert_fails(
+          \ 'call win_execute(s:w, "' .. s:b .. 'b")', 'E1546:')
+  augroup END
+  quit!
+  " Previously resulted in s:b being curbuf while unloaded (no memfile).
+  call assert_equal(1, bufloaded(bufnr()))
+  call assert_equal(0, bufexists(s:b))
+
+  let s:w = win_getid()
+  split
+  new
+  let s:b = bufnr()
+
+  augroup ViewClosedBuffer
+    autocmd!
+    autocmd BufWipeout * ++once call win_gotoid(s:w)
+          \| call assert_fails(s:b .. 'b', 'E1546:') | wincmd p
+  augroup END
+  bw! " Close only this buffer first; used to be a heap UAF.
+
+  unlet! s:w s:b
+  autocmd! ViewClosedBuffer
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
