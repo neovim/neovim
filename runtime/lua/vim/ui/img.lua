@@ -271,6 +271,7 @@ function M:hide(ids, opts)
 end
 
 ---Updates the displayed image using the provided options.
+---Currently only supports the |TUI|.
 ---@param id integer id of the displayed image
 ---@param opts? vim.ui.img.Opts|{provider?:vim.ui.img.Provider|string} changes to apply to the displayed image
 ---@return integer id new id representing updated, displayed image
