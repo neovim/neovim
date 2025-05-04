@@ -202,9 +202,6 @@ function M:chunks(opts)
   end)
 end
 
----@class vim.ui.img.ShowOpts: vim.ui.img.Opts
----@field provider? vim.ui.img.Provider|string
-
 ---@class vim.ui.img.Opts
 ---@field relative? 'editor'|'win'|'cursor'|'mouse'
 ---@field crop? vim.ui.img.Region portion of image to display
@@ -213,20 +210,29 @@ end
 ---@field win? integer window to use when `relative` is `win`
 ---@field z? integer z-index of the image with lower values being drawn before higher values
 
----Displays an image, returning a reference to the displayed instance.
----Currently only supports the |TUI|.
----@param opts? vim.ui.img.ShowOpts
----@return integer #unique id reprensting a reference to the displayed image
-function M:show(opts)
-  opts = opts or {}
-
+---Retrieves the provider to use to manipulate images.
+---@param opts? {provider?:vim.ui.img.Provider|string}
+---@return vim.ui.img.Provider
+local function get_provider(opts)
   -- TODO: Re-introduce support for detecting a provider dynamically
-  local provider = opts.provider or 'kitty'
+  local provider = (opts and opts.provider) or 'kitty'
 
   -- If just a name of a provider is specified, grab it from our internal implementations
   if type(provider) == 'string' then
     provider = M.providers.load(provider)
   end
+
+  return provider
+end
+
+---Displays an image, returning a reference to the displayed instance.
+---Currently only supports the |TUI|.
+---@param opts? vim.ui.img.Opts|{provider?:vim.ui.img.Provider|string}
+---@return integer #unique id reprensting a reference to the displayed image
+function M:show(opts)
+  opts = opts or {}
+
+  local provider = get_provider(opts)
 
   -- Ensure that our render opts are the actual types
   local crop = opts.crop
@@ -260,19 +266,25 @@ end
 function M:hide(ids, opts)
   opts = opts or {}
 
-  -- TODO: Re-introduce support for detecting a provider dynamically
-  local provider = opts.provider or 'kitty'
-
-  -- If just a name of a provider is specified, grab it from our internal implementations
-  if type(provider) == 'string' then
-    provider = M.providers.load(provider)
-  end
+  local provider = get_provider(opts)
 
   if type(ids) == 'number' then
     ids = { ids }
   end
 
   return provider.hide(ids)
+end
+
+---Updates the displayed image using the provided options.
+---@param id integer id of the displayed image
+---@param opts? vim.ui.img.Opts|{provider?:vim.ui.img.Provider|string} changes to apply to the displayed image
+---@return integer id new id representing updated, displayed image
+function M:update(id, opts)
+  opts = opts or {}
+
+  local provider = get_provider(opts)
+
+  return provider.update(id, opts)
 end
 
 ---@alias vim.ui.img.Unit 'cell'|'pixel'

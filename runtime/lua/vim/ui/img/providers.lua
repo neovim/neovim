@@ -8,6 +8,7 @@ local M = {}
 ---@class (exact) vim.ui.img.provider.Opts
 ---@field show fun(img:vim.ui.Image, opts?:vim.ui.img.Opts):integer
 ---@field hide fun(ids:integer[])
+---@field update? fun(id:integer, opts?:vim.ui.img.Opts):integer
 
 ---Creates a new image provider instance.
 ---@param opts vim.ui.img.provider.Opts
@@ -36,7 +37,7 @@ function M.new(opts)
   ---Hides one or more displayed images using the provider.
   ---
   ---If no id provided, will hide all displayed images.
-  ---@param ... integer|integer[]
+  ---@param ... integer|integer[] ids of the displayed images
   function provider.hide(...)
     ---@type integer[]
     local ids = {}
@@ -59,6 +60,33 @@ function M.new(opts)
     for _, id in ipairs(ids) do
       provider.displayed[id] = nil
     end
+  end
+
+  ---Updates the displayed image using the provided options.
+  ---@param id integer id of the displayed image
+  ---@param opts? vim.ui.img.Opts changes to apply to the displayed image
+  ---@return integer id new id representing updated, displayed image
+  function provider.update(id, opts)
+    local img = assert(
+      provider.displayed[id],
+      string.format('display image %s does not exist', id)
+    )
+
+    -- If we have an explicitly-defined update method, use it as this is
+    -- most likely more performant than the bruteforce approach
+    if provider._opts.update then
+      local new_id = provider._opts.update(id, opts)
+
+      provider.displayed[id] = nil
+      provider.displayed[new_id] = img
+
+      return new_id
+    end
+
+    -- Without a custom update function, we merely hide the old displayed
+    -- image and then show the image again
+    provider.hide(id)
+    return provider.show(img, opts)
   end
 
   return provider

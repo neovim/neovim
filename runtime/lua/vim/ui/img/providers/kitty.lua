@@ -141,11 +141,11 @@ end
 
 ---Display a transmitted image into the kitty terminal.
 ---@param id integer
----@param opts vim.ui.img.Opts
+---@param opts vim.ui.img.Opts|{pid?:integer}
 ---@return integer placement_id
 local function display_image(id, opts)
   -- Create a unique placement id for this new display
-  local pid = next_id()
+  local pid = opts.pid or next_id()
 
   if opts.pos or opts.relative then
     local x, y = 0, 0
@@ -268,6 +268,7 @@ local function hide(ids)
     local id = KITTY_PLACEMENT_TO_IMAGE[pid]
     if id then
       delete_image(id, pid)
+      KITTY_PLACEMENT_TO_IMAGE[pid] = nil
     end
   end
 
@@ -277,7 +278,19 @@ local function hide(ids)
   -- 2. When neovim exits?
 end
 
+---@param pid integer
+---@param opts? vim.ui.img.Opts
+---@return integer
+local function update(pid, opts)
+  local id = assert(
+    KITTY_PLACEMENT_TO_IMAGE[pid],
+    string.format('kitty(update): invalid displayed image id %s', pid)
+  )
+  return display_image(id, vim.tbl_extend('keep', { pid = pid }, opts or {}))
+end
+
 return require('vim.ui.img.providers').new({
   show = show,
   hide = hide,
+  update = update,
 })
