@@ -114,6 +114,11 @@ end
 local function transmit_image_direct(image)
   local id = next_id()
 
+  -- If the image is not loaded yet, do so before directly transmitting it
+  if image:size() == 0 then
+    image:reload()
+  end
+
   ---@param chunk string data of chunk
   ---@param pos integer starting byte position of chunk
   ---@param last boolean true if final chunk
