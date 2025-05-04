@@ -253,7 +253,7 @@ function M:show(opts)
   })
 end
 
----Hides a displayed image.
+---Hides a displayed image. If no id provided, will hide all displayed images.
 ---Currently only supports the |TUI|.
 ---@param ids integer|integer[] the ids of the displayed images to hide
 ---@param opts? {provider?:vim.ui.img.Provider|string}

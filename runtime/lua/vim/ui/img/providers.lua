@@ -34,13 +34,26 @@ function M.new(opts)
   end
 
   ---Hides one or more displayed images using the provider.
-  ---@param ids integer|integer[]
-  function provider.hide(ids)
-    if type(ids) == 'number' then
-      ids = { ids }
+  ---
+  ---If no id provided, will hide all displayed images.
+  ---@param ... integer|integer[]
+  function provider.hide(...)
+    ---@type integer[]
+    local ids = {}
+
+    for _, id in ipairs({ ... }) do
+      if type(id) == 'number' then
+        table.insert(ids, id)
+      elseif type(id) == 'table' then
+        vim.list_extend(ids, id)
+      end
     end
 
-    ---@cast ids -integer
+    -- If no ids provided, assume hiding them all
+    if #ids == 0 then
+      ids = vim.tbl_keys(provider.displayed)
+    end
+
     provider._opts.hide(ids)
 
     for _, id in ipairs(ids) do
