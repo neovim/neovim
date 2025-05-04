@@ -234,11 +234,11 @@ local function clean_img_opts(opts)
   end
 
   if opts and opts.pos then
-    opts.pos = M.new_position(opts.pos.x, opts.pos.y, opts.pos.unit)
+    opts.pos = M.new_position(opts.pos.x, opts.pos.y, opts.pos.unit or 'cell')
   end
 
   if opts and opts.size then
-    opts.size = M.new_size(opts.size.width, opts.size.height, opts.size.unit)
+    opts.size = M.new_size(opts.size.width, opts.size.height, opts.size.unit or 'cell')
   end
 
   return opts
@@ -291,8 +291,16 @@ local function cell_size_in_pixels()
   local uis = vim.api.nvim_list_uis()
   local ui = assert(uis[1], 'no attached ui found')
 
+  -- TODO: This is NOT width/height in pixels. To get that, we'd currently
+  --       need to use ffi to invoke ioctl with TIOCGWINSZ
+  --
+  --       The above does NOT support Windows, and only works on Mac, BSD, Linux
+  --
+  --       Until this is resolved, we cannot accurately convert units between
+  --       pixels and cells, and will need to default to just using cells.
   local width_px = ui.width
   local height_px = ui.height
+
   local columns = vim.o.columns
   local lines = vim.o.lines
 
@@ -420,7 +428,9 @@ function M.new_size(width, height, unit)
   ---@return vim.ui.img.Size
   function size:to_cells()
     if self.unit == 'pixel' then
+      vim.print("pixel width/height", self.width, self.height)
       local cell_width, cell_height = pixels_to_cells(self.width, self.height)
+      vim.print("cell width/height", cell_width, cell_height)
       return M.new_size(cell_width, cell_height, 'cell')
     end
 
