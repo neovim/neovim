@@ -312,15 +312,19 @@ function M.msg_show(kind, content)
     M.set_pos('prompt')
   else
     local tar = ext.cfg.msg.pos
-    M.virt.last[M.virt.idx.search][1] = tar ~= 'cmd' and M.virt.last[M.virt.idx.search][1] or nil
+    if tar == 'cmd' then
+      if ext.cmd.level > 0 then
+        return -- Do not overwrite an active cmdline.
+      end
+      -- Store the time when an error message was emitted in order to not overwrite
+      -- it with 'last' virt_text in the cmdline to give the user a chance to read it.
+      M.cmd.last_emsg = kind == 'emsg' and os.time() or M.cmd.last_emsg
+      M.virt.last[M.virt.idx.search][1] = nil
+    end
+
     M.show_msg(tar, content, replace_bufwrite, kind == 'list_cmd')
     -- Replace message for every second bufwrite message.
     replace_bufwrite = not replace_bufwrite and kind == 'bufwrite'
-    -- Store the time when an error message was emitted in order to not overwrite
-    -- it with 'last' virt_text in the cmdline to give the user a chance to read it.
-    if tar == 'cmd' and kind == 'emsg' then
-      M.cmd.last_emsg = os.time()
-    end
   end
 end
 
@@ -330,7 +334,7 @@ function M.msg_clear() end
 ---
 ---@param content MsgContent
 function M.msg_showmode(content)
-  M.virt.last[M.virt.idx.mode] = ext.cmd.level < 0 and content or {}
+  M.virt.last[M.virt.idx.mode] = ext.cmd.level > 0 and {} or content
   M.virt.last[M.virt.idx.search] = {}
   set_virttext('last')
 end
