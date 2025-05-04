@@ -187,7 +187,8 @@ end
 ---@param placement_id? integer
 local function delete_image(image_id, placement_id)
   local control = {}
-  control['a'] = 'd'          -- Delete either a transmitted image or placement
+  control['a'] = 'd'          -- Perform a deletion
+  control['d'] = 'i'          -- Delete either a transmitted image or placement
   control['i'] = image_id     -- Specify the id of the image to delete
   control['p'] = placement_id -- Specify the id of the image placement to delete
   control['q'] = 2            -- Suppress all responses
