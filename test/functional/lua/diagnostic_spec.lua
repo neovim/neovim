@@ -7,6 +7,7 @@ local exec_lua = n.exec_lua
 local eq = t.eq
 local neq = t.neq
 local matches = t.matches
+local retry = t.retry
 local api = n.api
 local pcall_err = t.pcall_err
 local fn = n.fn
@@ -1094,7 +1095,7 @@ describe('vim.diagnostic', function()
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 1, 1 })
-          vim.diagnostic.jump({ count = 1, float = false })
+          vim.diagnostic.jump({ count = 1 })
           local next = vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
           return { next.lnum, next.col }
         end)
@@ -1111,7 +1112,7 @@ describe('vim.diagnostic', function()
           })
           vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
           vim.api.nvim_win_set_cursor(0, { 1, 1 })
-          vim.diagnostic.jump({ count = 1, float = false })
+          vim.diagnostic.jump({ count = 1 })
           local next = vim.diagnostic.get_next({ namespace = _G.diagnostic_ns })
           return { next.lnum, next.col }
         end)
@@ -1411,6 +1412,23 @@ describe('vim.diagnostic', function()
           return vim.api.nvim_win_get_cursor(0)
         end)
       )
+    end)
+
+    it('supports on_jump() handler', function()
+      exec_lua(function()
+        _G.jumped = false
+
+        vim.diagnostic.jump({
+          count = 1,
+          on_jump = function()
+            _G.jumped = true
+          end,
+        })
+      end)
+
+      retry(nil, nil, function()
+        eq(true, exec_lua('return _G.jumped'))
+      end)
     end)
   end)
 

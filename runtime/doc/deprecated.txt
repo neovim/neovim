@@ -21,7 +21,7 @@ API
 
 DIAGNOSTICS
 
-• todo
+• "float" in |vim.diagnostic.JumpOpts|.	Use "on_jump" instead.
 
 HIGHLIGHTS
 

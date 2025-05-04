@@ -1075,15 +1075,25 @@ local function goto_diagnostic(diagnostic, opts)
     vim.cmd('normal! zv')
   end)
 
-  local float_opts = opts.float
-  if float_opts then
+  if opts.float then
+    vim.deprecate('opts.float', 'opts.on_jump', '0.14')
+    local float_opts = opts.float ---@type table|boolean
     float_opts = type(float_opts) == 'table' and float_opts or {}
-    vim.schedule(function()
+
+    opts.on_jump = function(_, bufnr)
       M.open_float(vim.tbl_extend('keep', float_opts, {
-        bufnr = api.nvim_win_get_buf(winid),
+        bufnr = bufnr,
         scope = 'cursor',
         focus = false,
       }))
+    end
+
+    opts.float = nil ---@diagnostic disable-line
+  end
+
+  if opts.on_jump then
+    vim.schedule(function()
+      opts.on_jump(diagnostic, api.nvim_win_get_buf(winid))
     end)
   end
 end
@@ -1287,7 +1297,9 @@ end
 function M.goto_prev(opts)
   vim.deprecate('vim.diagnostic.goto_prev()', 'vim.diagnostic.jump()', '0.13')
   opts = opts or {}
-  opts.float = if_nil(opts.float, true)
+
+  opts.float = if_nil(opts.float, true) ---@diagnostic disable-line
+
   goto_diagnostic(M.get_prev(opts), opts)
 end
 
@@ -1360,12 +1372,8 @@ end
 --- (default: `false`)
 --- @field package _highest? boolean
 ---
---- If `true`, call |vim.diagnostic.open_float()| after moving.
---- If a table, pass the table as the {opts} parameter to |vim.diagnostic.open_float()|.
---- Unless overridden, the float will show diagnostics at the new cursor
---- position (as if "cursor" were passed to the "scope" option).
---- (default: `false`)
---- @field float? boolean|vim.diagnostic.Opts.Float
+--- Optional callback invoked with the diagnostic that was jumped to.
+--- @field on_jump? fun(diagnostic:vim.Diagnostic?, bufnr:integer)
 ---
 --- Window ID
 --- (default: `0`)
@@ -1434,7 +1442,7 @@ end
 function M.goto_next(opts)
   vim.deprecate('vim.diagnostic.goto_next()', 'vim.diagnostic.jump()', '0.13')
   opts = opts or {}
-  opts.float = if_nil(opts.float, true)
+  opts.float = if_nil(opts.float, true) ---@diagnostic disable-line
   goto_diagnostic(M.get_next(opts), opts)
 end
 
