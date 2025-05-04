@@ -5,6 +5,10 @@ local MAX_DATA_CHUNK = 4096
 ---@type table<integer, integer>
 local NVIM_IMAGE_TO_KITTY_IMAGE = {}
 
+---Mapping of kitty placement id -> kitty image id.
+---@type table<integer, integer>
+local KITTY_PLACEMENT_TO_IMAGE = {}
+
 local next_id = (function()
   local bit = require('bit')
 
@@ -141,7 +145,7 @@ end
 ---@return integer placement_id
 local function display_image(id, opts)
   -- Create a unique placement id for this new display
-  local pid = 1
+  local pid = next_id()
 
   if opts.pos then
     local pos_cells = opts.pos:to_cells()
@@ -152,7 +156,7 @@ local function display_image(id, opts)
   local control = {}
   control['a'] = 'p' -- Display (put) a transmitted image
   control['i'] = id  -- Specify the id of the image to display
-  -- control['p'] = pid -- Specify the id of the distinct placement
+  control['p'] = pid -- Specify the id of the distinct placement
   control['C'] = 1   -- Don't move the cursor after the image
   control['q'] = 2   -- Suppress all responses
 
@@ -178,6 +182,19 @@ local function display_image(id, opts)
   return pid
 end
 
+---Delete a displayed image that is visible within kitty terminal.
+---@param image_id integer
+---@param placement_id? integer
+local function delete_image(image_id, placement_id)
+  local control = {}
+  control['a'] = 'd'          -- Delete either a transmitted image or placement
+  control['i'] = image_id     -- Specify the id of the image to delete
+  control['p'] = placement_id -- Specify the id of the image placement to delete
+  control['q'] = 2            -- Suppress all responses
+
+  io.stdout:write(make_seq(control))
+end
+
 ---@param image vim.ui.Image
 ---@param opts? vim.ui.img.Opts|{remote?:boolean}
 ---@return integer
@@ -197,13 +214,29 @@ local function show(image, opts)
   end
 
   local placement_id = display_image(image_id, opts)
+  KITTY_PLACEMENT_TO_IMAGE[placement_id] = image_id
 
   return placement_id
 end
 
----@param id integer|integer[]
-local function hide(id)
-  -- TODO: Implement hiding an image by its placement id
+---@param ids integer|integer[]
+local function hide(ids)
+  if type(ids) == 'number' then
+    ids = { ids }
+  end
+
+  ---@cast ids -integer
+  for _, pid in ipairs(ids) do
+    local id = KITTY_PLACEMENT_TO_IMAGE[pid]
+    if id then
+      delete_image(id, pid)
+    end
+  end
+
+  -- TODO: When do we delete the image from kitty entirely?
+  --
+  -- 1. When there are no placements?
+  -- 2. When neovim exits?
 end
 
 return require('vim.ui.img').new_provider({
