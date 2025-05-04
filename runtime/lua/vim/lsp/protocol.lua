@@ -533,7 +533,7 @@ function protocol.make_client_capabilities()
         dynamicRegistration = false,
       },
       colorProvider = {
-        dynamicRegistration = false,
+        dynamicRegistration = true,
       },
     },
     workspace = {

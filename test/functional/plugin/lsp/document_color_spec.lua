@@ -115,6 +115,49 @@ body {
     screen:expect({ grid = grid_without_colors })
   end)
 
+  it('supports dynamic registration', function()
+    local grid_with_dynamic_highlights = [[
+  body {                                               |
+    {2:color}: {2:#FFF};                                       |
+    background-color: {3:rgb(0, 255, 255)};                |
+  }                                                    |
+  ^                                                     |
+  {1:~                                                    }|*8
+                                                       |
+    ]]
+
+    exec_lua(function()
+      _G.server2 = _G._create_server({
+        colorProvider = {
+          documentSelector = nil,
+        },
+        handlers = {
+          ['textDocument/documentColor'] = function(_, _, callback)
+            callback(nil, {
+              {
+                range = {
+                  start = { line = 1, character = 2 },
+                  ['end'] = { line = 1, character = 7 },
+                },
+                color = { red = 1, green = 1, blue = 1 },
+              },
+            })
+          end,
+        },
+      })
+
+      local client_id2 = assert(vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd }))
+
+      vim.lsp.handlers['client/registerCapability'](nil, {
+        registrations = {
+          { id = 'documentColor', method = 'textDocument/documentColor' },
+        },
+      }, { client_id = client_id2, method = 'client/registerCapability' })
+    end)
+
+    screen:expect({ grid = grid_with_dynamic_highlights })
+  end)
+
   it('does not clear document colors when one of several clients detaches', function()
     local client_id2 = exec_lua(function()
       _G.server2 = _G._create_server({

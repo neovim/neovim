@@ -128,6 +128,15 @@ RSC[ms.client_registerCapability] = function(_, params, ctx)
   for bufnr in pairs(client.attached_buffers) do
     vim.lsp._set_defaults(client, bufnr)
   end
+  for _, reg in ipairs(params.registrations) do
+    if reg.method == ms.textDocument_documentColor then
+      for bufnr in pairs(client.attached_buffers) do
+        if vim.lsp.document_color.is_enabled(bufnr) then
+          vim.lsp.document_color._buf_refresh(bufnr, client.id)
+        end
+      end
+    end
+  end
   return vim.NIL
 end
 
