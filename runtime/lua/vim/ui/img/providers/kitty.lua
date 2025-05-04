@@ -219,13 +219,8 @@ local function show(image, opts)
   return placement_id
 end
 
----@param ids integer|integer[]
+---@param ids integer[]
 local function hide(ids)
-  if type(ids) == 'number' then
-    ids = { ids }
-  end
-
-  ---@cast ids -integer
   for _, pid in ipairs(ids) do
     local id = KITTY_PLACEMENT_TO_IMAGE[pid]
     if id then
@@ -239,7 +234,7 @@ local function hide(ids)
   -- 2. When neovim exits?
 end
 
-return require('vim.ui.img').new_provider({
+return require('vim.ui.img.providers').new({
   show = show,
   hide = hide,
 })

@@ -1,20 +1,24 @@
----Collection of all images loaded into neovim, each with a unique id.
----@type table<integer, vim.ui.Image>
-local IMAGES = {}
-
 ---Id of the last image created.
 ---@type integer
 local LAST_IMAGE_ID = 0
 
 ---@class vim.ui.Image
 ---@field id integer unique id associated with the image
----@field data string base64 encoded data of the image loaded into memory
+---@field data string|nil base64 encoded data of the image loaded into memory
 ---@field filename string path to the image on disk
 local M = {}
 M.__index = M
 
----Creates a new image instance.
----@param opts {data:string, filename:string}
+---Collection of all images loaded into neovim, each with a unique id.
+---@type table<integer, vim.ui.Image>
+M.images = {}
+
+---Collection of names to associated providers used to display and manipulate images.
+---@type vim.ui.img.Providers
+M.providers = require('vim.ui.img.providers')
+
+---Creates a new image instance, optionally taking pre-loaded data.
+---@param opts {data?:string, filename:string}
 ---@return vim.ui.Image
 function M.new(opts)
   opts = opts or {}
@@ -26,16 +30,12 @@ function M.new(opts)
   instance.data = opts.data
   instance.filename = opts.filename
 
+  -- Update our running copy of all created images
+  -- and bump the counter for image ids
+  M.images[instance.id] = instance
   LAST_IMAGE_ID = instance.id
 
   return instance
-end
-
----Retrieve an image by its id.
----@param id integer
----@return vim.ui.Image|nil
-function M.from_id(id)
-  return IMAGES[id]
 end
 
 ---Loads data for an image from a local file.
@@ -45,6 +45,24 @@ end
 ---@param on_load fun(err:string|nil, image:vim.ui.Image|nil)
 ---@overload fun(filename:string):vim.ui.Image
 function M.load(filename, on_load)
+  local img = M.new({ filename = filename })
+
+  if not on_load then
+    img:reload()
+    return img
+  end
+
+  img:reload(on_load)
+end
+
+---Reloads the data for an image from its filename.
+---
+---If a callback provided, will load asynchronously; otherwise, is blocking.
+---@param on_load fun(err:string|nil)
+---@overload fun()
+function M:reload(on_load)
+  local filename = self.filename
+
   if not on_load then
     local stat = vim.uv.fs_stat(filename)
     assert(stat, 'unable to stat ' .. filename)
@@ -55,10 +73,10 @@ function M.load(filename, on_load)
     local data = vim.uv.fs_read(fd, stat.size, -1) --[[ @type string|nil ]]
     assert(data, 'unable to read ' .. filename)
 
-    return M.new({
-      data = vim.base64.encode(data),
-      filename = filename,
-    })
+    self.data = vim.base64.encode(data)
+    self.filename = filename
+
+    return
   end
 
   ---@param err string|nil
@@ -98,27 +116,25 @@ function M.load(filename, on_load)
 
         vim.uv.fs_close(fd, function() end)
 
-        vim.schedule(function()
-          on_load(nil, M.new({
-            data = vim.base64.encode(data or ''),
-            filename = filename,
-          }))
-        end)
+        self.data = vim.base64.encode(data or '')
+        self.filename = filename
+
+        vim.schedule(on_load)
       end)
     end)
   end)
 end
 
----Returns the size of the base64 encoded image.
+---Returns the size of the base64 encoded image, or 0 if not loaded.
 ---@return integer
 function M:size()
-  return string.len(self.data)
+  return string.len(self.data or '')
 end
 
 ---Returns a hash (sha256) of the base64 encoded image.
 ---@return string
 function M:hash()
-  return vim.fn.sha256(self.data)
+  return vim.fn.sha256(self.data or '')
 end
 
 ---Returns an iterator over the chunks of the image, returning the chunk, byte position, and
@@ -151,7 +167,7 @@ function M:chunks(opts)
   local chunk_size = opts.size or 4096
 
   local data = self.data
-  if not data then
+  if not data or data == '' then
     return vim.iter(function()
       return nil, nil, nil
     end)
@@ -206,7 +222,7 @@ function M:show(opts)
 
   -- If just a name of a provider is specified, grab it from our internal implementations
   if type(provider) == 'string' then
-    provider = require('vim.ui.img._provider').load(provider)
+    provider = M.providers.load(provider)
   end
 
   -- Ensure that our render opts are the actual types
@@ -234,9 +250,9 @@ end
 
 ---Hides a displayed image.
 ---Currently only supports the |TUI|.
----@param id integer|integer[] the id (or multiple ids) of the displayed image to hide
+---@param ids integer|integer[] the ids of the displayed images to hide
 ---@param opts? {provider?:vim.ui.img.Provider|string}
-function M:hide(id, opts)
+function M:hide(ids, opts)
   opts = opts or {}
 
   -- TODO: Re-introduce support for detecting a provider dynamically
@@ -244,14 +260,14 @@ function M:hide(id, opts)
 
   -- If just a name of a provider is specified, grab it from our internal implementations
   if type(provider) == 'string' then
-    provider = require('vim.ui.img._provider').load(provider)
+    provider = M.providers.load(provider)
   end
 
-  if type(id) == 'number' then
-    id = { id }
+  if type(ids) == 'number' then
+    ids = { ids }
   end
 
-  return provider.hide(id)
+  return provider.hide(ids)
 end
 
 ---@alias vim.ui.img.Unit 'cell'|'pixel'
@@ -412,40 +428,6 @@ function M.new_size(width, height, unit)
   end
 
   return size
-end
-
----@class (exact) vim.ui.img.ProviderOpts
----@field show fun(img:vim.ui.Image, opts?:vim.ui.img.Opts):integer
----@field hide fun(id:integer|integer[])
-
----Creates a new image provider, which is used to perform the actual display
----and management of images within some attached UI.
----@param opts vim.ui.img.ProviderOpts
-function M.new_provider(opts)
-  ---@class vim.ui.img.Provider
-  ---@field images table<integer, vim.ui.Image> mapping of displayed image id -> image
-  local provider = {
-    images = {},
-  }
-
-  local show_impl = opts.show
-  local hide_impl = opts.hide
-
-  ---Displays the image using the provider.
-  ---@param img vim.ui.Image
-  ---@param opts? vim.ui.img.Opts
-  ---@return integer id unique id representing a reference to the displayed image
-  function provider.show(img, opts)
-    return show_impl(img, opts)
-  end
-
-  ---Hides one or more displayed images using the provider.
-  ---@param id integer|integer[]
-  function provider.hide(id)
-    return hide_impl(id)
-  end
-
-  return provider
 end
 
 return M
