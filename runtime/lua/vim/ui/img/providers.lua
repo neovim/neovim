@@ -1,3 +1,6 @@
+---@type table<string, vim.ui.img.Provider>
+local PROVIDERS = {}
+
 ---@class vim.ui.img.Providers
 ---@field [string] vim.ui.img.Provider
 local M = {}
@@ -53,7 +56,7 @@ end
 ---@param name string
 ---@return vim.ui.img.Provider
 function M.load(name)
-  local provider = M[name]
+  local provider = PROVIDERS[name]
 
   -- Provider not found in our cache, so instead see if it's one of the
   -- default available providers that may not be loaded yet
@@ -66,11 +69,16 @@ function M.load(name)
     -- If we successfully loaded the provider, register it
     if ok and type(err_or_provider) == 'table' then
       provider = err_or_provider
-      M[name] = provider
+      PROVIDERS[name] = provider
     end
   end
 
   return assert(provider, string.format('provider %s not found', name))
 end
+
+---@type vim.ui.img.Providers
+M = setmetatable(PROVIDERS, {
+  __index = M,
+})
 
 return M
