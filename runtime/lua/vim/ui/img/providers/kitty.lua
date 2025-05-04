@@ -205,17 +205,19 @@ local function display_image(id, opts)
 
   if crop then
     local x, y, w, h = crop:to_pixels():to_bounds()
-    control['x'] = tostring(x)
-    control['y'] = tostring(y)
-    control['w'] = tostring(w)
-    control['h'] = tostring(h)
+    control['x'] = x
+    control['y'] = y
+    control['w'] = w
+    control['h'] = h
   end
 
   if size then
     local size_cells = size:to_cells()
-    control['c'] = tostring(size_cells.width)
-    control['r'] = tostring(size_cells.height)
+    control['c'] = size_cells.width
+    control['r'] = size_cells.height
   end
+
+  control['z'] = opts.z
 
   io.stdout:write(make_seq(control))
 

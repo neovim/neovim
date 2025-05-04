@@ -211,6 +211,7 @@ end
 ---@field pos? vim.ui.img.Position upper-left position of image within editor
 ---@field size? vim.ui.img.Size explicit size to scale the image
 ---@field win? integer window to use when `relative` is `win`
+---@field z? integer z-index of the image with lower values being drawn before higher values
 
 ---Displays an image, returning a reference to the displayed instance.
 ---Currently only supports the |TUI|.
@@ -248,6 +249,7 @@ function M:show(opts)
     pos = pos,
     relative = opts.relative,
     size = size,
+    z = opts.z,
   })
 end
 
