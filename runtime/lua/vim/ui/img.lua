@@ -206,9 +206,11 @@ end
 ---@field provider? vim.ui.img.Provider|string
 
 ---@class vim.ui.img.Opts
+---@field relative? 'editor'|'win'|'cursor'|'mouse'
 ---@field crop? vim.ui.img.Region portion of image to display
 ---@field pos? vim.ui.img.Position upper-left position of image within editor
 ---@field size? vim.ui.img.Size explicit size to scale the image
+---@field win? integer window to use when `relative` is `win`
 
 ---Displays an image, returning a reference to the displayed instance.
 ---Currently only supports the |TUI|.
@@ -244,6 +246,7 @@ function M:show(opts)
   return provider.show(self, {
     crop = crop,
     pos = pos,
+    relative = opts.relative,
     size = size,
   })
 end
