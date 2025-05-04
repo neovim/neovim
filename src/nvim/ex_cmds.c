@@ -1470,7 +1470,7 @@ void append_redir(char *const buf, const size_t buflen, const char *const opt,
   }
 }
 
-void print_line_no_prefix(linenr_T lnum, int use_number, bool list)
+void print_line_no_prefix(linenr_T lnum, bool use_number, bool list)
 {
   char numbuf[30];
 
@@ -1483,7 +1483,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, bool list)
 }
 
 /// Print a text line.  Also in silent mode ("ex -s").
-void print_line(linenr_T lnum, int use_number, bool list)
+void print_line(linenr_T lnum, bool use_number, bool list, bool first)
 {
   bool save_silent = silent_mode;
 
@@ -1492,12 +1492,17 @@ void print_line(linenr_T lnum, int use_number, bool list)
     return;
   }
 
-  msg_start();
   silent_mode = false;
   info_message = true;  // use stdout, not stderr
+  if (first) {
+    msg_start();
+    msg_ext_set_kind("list_cmd");
+  } else if (!save_silent) {
+    msg_putchar('\n');  // don't want trailing newline with regular messaging
+  }
   print_line_no_prefix(lnum, use_number, list);
   if (save_silent) {
-    msg_putchar('\n');
+    msg_putchar('\n');  // batch mode message should always end in newline
     silent_mode = save_silent;
   }
   info_message = false;
@@ -3039,7 +3044,7 @@ void ex_z(exarg_T *eap)
       }
     }
 
-    print_line(i, eap->flags & EXFLAG_NR, eap->flags & EXFLAG_LIST);
+    print_line(i, eap->flags & EXFLAG_NR, eap->flags & EXFLAG_LIST, i == start);
 
     if (minus && i == lnum) {
       msg_putchar('\n');
@@ -4259,7 +4264,7 @@ skip:
       global_need_beginline = true;
     }
     if (subflags.do_print) {
-      print_line(curwin->w_cursor.lnum, subflags.do_number, subflags.do_list);
+      print_line(curwin->w_cursor.lnum, subflags.do_number, subflags.do_list, true);
     }
   } else if (!global_busy) {
     if (got_int) {

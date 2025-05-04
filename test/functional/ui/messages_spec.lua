@@ -522,6 +522,23 @@ describe('ui/ext_messages', function()
         },
       },
     })
+
+    feed(':1,2p<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      cmdline = { { abort = false } },
+      messages = {
+        {
+          content = { { 'line 1\nline ' } },
+          history = false,
+          kind = 'list_cmd',
+        },
+      },
+    })
   end)
 
   it(':echoerr', function()
