@@ -107,7 +107,7 @@ end
 
 ---Transmit an image directly via escape codes.
 ---
----This is the approach to take with remote clients (i.e. tmux) when the
+---This is the approach to take with remote clients (i.e. ssh) when the
 ---filesystem and shared memory are not accessible.
 ---@param image vim.ui.Image
 ---@return integer id unique id assigned to the image
