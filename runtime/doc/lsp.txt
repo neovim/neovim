@@ -706,56 +706,60 @@ Lua module: vim.lsp                                                 *lsp-core*
 
 
     Fields: ~
-      • {cmd}?           (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
-                         See `cmd` in |vim.lsp.ClientConfig|.
-      • {filetypes}?     (`string[]`) Filetypes the client will attach to, if
-                         activated by `vim.lsp.enable()`. If not provided, the
-                         client will attach to all filetypes.
-      • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
-                         Predicate which decides if a client should be
-                         re-used. Used on all running clients. The default
-                         implementation re-uses a client if name and root_dir
-                         matches.
-      • {root_dir}?      (`string|fun(bufnr: integer, on_dir:fun(root_dir?:string))`)
-                         *lsp-root_dir()* Directory where the LSP server will
-                         base its workspaceFolders, rootUri, and rootPath on
-                         initialization. The function form receives a buffer
-                         number and `on_dir` callback which it must call to
-                         provide root_dir, or LSP will not be activated for
-                         the buffer. Thus a `root_dir()` function can
-                         dynamically decide per-buffer whether to activate (or
-                         skip) LSP. See example at |vim.lsp.enable()|.
-      • {root_markers}?  (`(string|string[])[]`) Directory markers (.e.g.
-                         '.git/') where the LSP server will base its
-                         workspaceFolders, rootUri, and rootPath on
-                         initialization. Unused if `root_dir` is provided.
+      • {cmd}?             (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
+                           See `cmd` in |vim.lsp.ClientConfig|.
+      • {filetypes}?       (`string[]`) Filetypes the client will attach to,
+                           if activated by `vim.lsp.enable()`. If not
+                           provided, the client will attach to all filetypes.
+      • {reuse_client}?    (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
+                           Predicate which decides if a client should be
+                           re-used. Used on all running clients. The default
+                           implementation re-uses a client if name and
+                           root_dir matches.
+      • {root_dir}?        (`string|fun(bufnr: integer, on_dir:fun(root_dir?:string))`)
+                           *lsp-root_dir()* Directory where the LSP server
+                           will base its workspaceFolders, rootUri, and
+                           rootPath on initialization. The function form
+                           receives a buffer number and `on_dir` callback
+                           which it must call to provide root_dir, or LSP will
+                           not be activated for the buffer. Thus a
+                           `root_dir()` function can dynamically decide
+                           per-buffer whether to activate (or skip) LSP. See
+                           example at |vim.lsp.enable()|.
+      • {root_markers}?    (`(string|string[])[]`) Directory markers (.e.g.
+                           '.git/') where the LSP server will base its
+                           workspaceFolders, rootUri, and rootPath on
+                           initialization. Unused if `root_dir` is provided.
 
-                         The list order decides the priority. To indicate
-                         "equal priority", specify names in a nested list
-                         (`{ { 'a', 'b' }, ... }`) Each entry in this list is
-                         a set of one or more markers. For each set, Nvim will
-                         search upwards for each marker contained in the set.
-                         If a marker is found, the directory which contains
-                         that marker is used as the root directory. If no
-                         markers from the set are found, the process is
-                         repeated with the next set in the list.
+                           The list order decides the priority. To indicate
+                           "equal priority", specify names in a nested list
+                           (`{ { 'a', 'b' }, ... }`) Each entry in this list
+                           is a set of one or more markers. For each set, Nvim
+                           will search upwards for each marker contained in
+                           the set. If a marker is found, the directory which
+                           contains that marker is used as the root directory.
+                           If no markers from the set are found, the process
+                           is repeated with the next set in the list.
 
-                         Example: >lua
-                               root_markers = { 'stylua.toml', '.git' }
+                           Example: >lua
+                                 root_markers = { 'stylua.toml', '.git' }
 <
 
-                         Find the first parent directory containing the file
-                         `stylua.toml`. If not found, find the first parent
-                         directory containing the file or directory `.git`.
+                           Find the first parent directory containing the file
+                           `stylua.toml`. If not found, find the first parent
+                           directory containing the file or directory `.git`.
 
-                         Example: >lua
-                               root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
+                           Example: >lua
+                                 root_markers = { { 'stylua.toml', '.luarc.json' }, '.git' }
 <
 
-                         Find the first parent directory containing EITHER
-                         `stylua.toml` or `.luarc.json`. If not found, find
-                         the first parent directory containing the file or
-                         directory `.git`.
+                           Find the first parent directory containing EITHER
+                           `stylua.toml` or `.luarc.json`. If not found, find
+                           the first parent directory containing the file or
+                           directory `.git`.
+      • {merge_behavior}?  (`'error'|'keep'|'force'|fun(key:any, v:any, prev_value:any?): any`, default: `'force'`)
+                           The merging behavior used when merging
+                           configurations via |vim.tbl_deep_extend()|.
 
 
 buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*

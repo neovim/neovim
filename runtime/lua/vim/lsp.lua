@@ -324,6 +324,10 @@ end
 --- file or directory `.git`.
 ---
 --- @field root_markers? (string|string[])[]
+---
+--- The merging behavior used when merging configurations via |vim.tbl_deep_extend()|.
+--- (default: `'force'`)
+--- @field merge_behavior? ('error'|'keep'|'force'|fun(key:any, v:any, prev_value:any?): any)
 
 --- Sets the default configuration for an LSP client (or _all_ clients if the special name "*" is
 --- used).
@@ -446,8 +450,9 @@ lsp.config = setmetatable({ _configs = {} }, {
       for _, v in ipairs(api.nvim_get_runtime_file(('lsp/%s.lua'):format(name), true)) do
         local config = assert(loadfile(v))() ---@type any?
         if type(config) == 'table' then
+          rtp_config = rtp_config or {}
           --- @type vim.lsp.Config?
-          rtp_config = vim.tbl_deep_extend('force', rtp_config or {}, config)
+          rtp_config = vim.tbl_deep_extend(rtp_config.merge_behavior or 'force', rtp_config, config)
         else
           log.warn(('%s does not return a table, ignoring'):format(v))
         end
@@ -458,10 +463,11 @@ lsp.config = setmetatable({ _configs = {} }, {
         return
       end
 
+      rtp_config = rtp_config or {}
       rconfig.resolved_config = vim.tbl_deep_extend(
-        'force',
+        rtp_config.merge_behavior or 'force',
         lsp.config._configs['*'] or {},
-        rtp_config or {},
+        rtp_config,
         self._configs[name] or {}
       )
       rconfig.resolved_config.name = name
@@ -487,7 +493,7 @@ lsp.config = setmetatable({ _configs = {} }, {
     validate_config_name(name)
     validate('cfg', cfg, 'table')
     invalidate_enabled_config(name)
-    self[name] = vim.tbl_deep_extend('force', self._configs[name] or {}, cfg)
+    self[name] = vim.tbl_deep_extend(cfg.merge_behavior or 'force', self._configs[name] or {}, cfg)
   end,
 })
 
