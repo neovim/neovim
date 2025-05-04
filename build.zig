@@ -153,11 +153,12 @@ pub fn build(b: *std.Build) !void {
         config_str = b.fmt("{s} -Dcross -Dtarget={s} (host: {s})", .{ config_str, try t.linuxTriple(b.allocator), try b.graph.host.result.linuxTriple(b.allocator) });
     }
 
-    const versiondef_step = b.addConfigHeader(.{ .style = .{ .cmake = b.path("src/versiondef.h.in") } }, .{
+    const versiondef_step = b.addConfigHeader(.{ .style = .{ .cmake = b.path("cmake.config/versiondef.h.in") } }, .{
         .NVIM_VERSION_MAJOR = version.major,
         .NVIM_VERSION_MINOR = version.minor,
         .NVIM_VERSION_PATCH = version.patch,
         .NVIM_VERSION_PRERELEASE = version.prerelease,
+        .NVIM_VERSION_MEDIUM = "",
         .VERSION_STRING = "TODO", // TODO(bfredl): not sure what to put here. summary already in "config_str"
         .CONFIG = config_str,
     });
