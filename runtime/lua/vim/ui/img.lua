@@ -225,38 +225,33 @@ local function get_provider(opts)
   return provider
 end
 
+---Ensure image opts have typed fields instead of tables where appropriate.
+---@param opts vim.ui.img.Opts
+---@return vim.ui.img.Opts
+local function clean_img_opts(opts)
+  if opts and opts.crop then
+    opts.crop = M.new_region(opts.crop.pos1, opts.crop.pos2)
+  end
+
+  if opts and opts.pos then
+    opts.pos = M.new_position(opts.pos.x, opts.pos.y, opts.pos.unit)
+  end
+
+  if opts and opts.size then
+    opts.size = M.new_size(opts.size.width, opts.size.height, opts.size.unit)
+  end
+
+  return opts
+end
+
 ---Displays an image, returning a reference to the displayed instance.
 ---Currently only supports the |TUI|.
 ---@param opts? vim.ui.img.Opts|{provider?:vim.ui.img.Provider|string}
 ---@return integer #unique id reprensting a reference to the displayed image
 function M:show(opts)
-  opts = opts or {}
-
+  opts = clean_img_opts(opts or {})
   local provider = get_provider(opts)
-
-  -- Ensure that our render opts are the actual types
-  local crop = opts.crop
-  if crop then
-    crop = M.new_region(crop.pos1, crop.pos2)
-  end
-
-  local pos = opts.pos
-  if pos then
-    pos = M.new_position(pos.x, pos.y, pos.unit)
-  end
-
-  local size = opts.size
-  if size then
-    size = M.new_size(size.width, size.height, size.unit)
-  end
-
-  return provider.show(self, {
-    crop = crop,
-    pos = pos,
-    relative = opts.relative,
-    size = size,
-    z = opts.z,
-  })
+  return provider.show(self, opts)
 end
 
 ---Hides a displayed image. If no id provided, will hide all displayed images.
@@ -280,10 +275,8 @@ end
 ---@param opts? vim.ui.img.Opts|{provider?:vim.ui.img.Provider|string} changes to apply to the displayed image
 ---@return integer id new id representing updated, displayed image
 function M:update(id, opts)
-  opts = opts or {}
-
+  opts = clean_img_opts(opts or {})
   local provider = get_provider(opts)
-
   return provider.update(id, opts)
 end
 
