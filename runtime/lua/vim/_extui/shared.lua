@@ -52,7 +52,10 @@ function M.tab_check_wins()
     end
 
     local setopt = false
-    if not api.nvim_win_is_valid(M.wins[M.tab][type]) then
+    if
+      not api.nvim_win_is_valid(M.wins[M.tab][type])
+      or not api.nvim_win_get_config(M.wins[M.tab][type]).zindex -- no longer floating
+    then
       local top = { vim.opt.fcs:get().horiz or o.ambw == 'single' and '─' or '-', 'WinSeparator' }
       local border = (type == 'more' or type == 'prompt') and { '', top, '', '', '', '', '', '' }
       local cfg = vim.tbl_deep_extend('force', wincfg, {
