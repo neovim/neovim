@@ -5129,14 +5129,13 @@ static void ex_print(exarg_T *eap)
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     emsg(_(e_empty_buffer));
   } else {
-    for (; !got_int; os_breakcheck()) {
-      print_line(eap->line1,
+    for (linenr_T line = eap->line1; line <= eap->line2 && !got_int; os_breakcheck()) {
+      print_line(line,
                  (eap->cmdidx == CMD_number || eap->cmdidx == CMD_pound
                   || (eap->flags & EXFLAG_NR)),
-                 eap->cmdidx == CMD_list || (eap->flags & EXFLAG_LIST));
-      if (++eap->line1 > eap->line2) {
-        break;
-      }
+                 eap->cmdidx == CMD_list || (eap->flags & EXFLAG_LIST),
+                 line == eap->line1);
+      line++;
     }
     setpcmark();
     // put cursor at last line
@@ -6360,7 +6359,7 @@ void ex_may_print(exarg_T *eap)
 {
   if (eap->flags != 0) {
     print_line(curwin->w_cursor.lnum, (eap->flags & EXFLAG_NR),
-               (eap->flags & EXFLAG_LIST));
+               (eap->flags & EXFLAG_LIST), true);
     ex_no_reprint = true;
   }
 }
