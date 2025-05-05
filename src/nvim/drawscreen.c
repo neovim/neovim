@@ -2527,21 +2527,26 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
     return;
   }
 
-  // No lines are being moved, just draw over the entire area
-  if (row + abs(line_count) >= wp->w_view_height) {
-    return;
-  }
-
   int col = 0;
   int row_off = 0;
   ScreenGrid *grid = grid_adjust(&wp->w_grid, &row_off, &col);
 
+  // TODO(bfredl): this is due to the call in curs_columns(). We really don't want to
+  // fiddle with the screen outside of update_screen() like this.
+  int checked_width = MIN(grid->cols - col, wp->w_view_width);
+  int checked_height = MIN(grid->rows - row_off, wp->w_view_height);
+
+  // No lines are being moved, just draw over the entire area
+  if (row + abs(line_count) >= checked_height) {
+    return;
+  }
+
   if (line_count < 0) {
     grid_del_lines(grid, row + row_off, -line_count,
-                   wp->w_view_height + row_off, col, wp->w_view_width);
+                   checked_height + row_off, col, checked_width);
   } else {
     grid_ins_lines(grid, row + row_off, line_count,
-                   wp->w_view_height + row_off, col, wp->w_view_width);
+                   checked_height + row_off, col, checked_width);
   }
 }
 
