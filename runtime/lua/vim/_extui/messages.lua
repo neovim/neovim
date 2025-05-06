@@ -101,7 +101,10 @@ local function set_virttext(type)
       local offset = tar ~= 'box' and 0
         or api.nvim_win_get_position(win)[2] + (api.nvim_win_get_config(win).border and 1 or 0)
 
-      M.box.width = math.min(o.columns, scol - offset + width)
+      if vim.api.nvim_buf_line_count(ext.bufs.box) == 1 then
+        M.box.width = math.min(o.columns, scol - offset + width)
+      end
+
       if tar == 'box' and api.nvim_win_get_width(win) < M.box.width then
         api.nvim_win_set_width(win, M.box.width)
       end
