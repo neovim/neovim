@@ -102,6 +102,10 @@ local function validate_commit(commit_message)
       return [[Scope can't be empty]]
     end
 
+    if scope == 'ci' then
+      return [[Scope can't be "ci", use it as a type instead]]
+    end
+
     if vim.startswith(scope, 'nvim_') then
       return [[Scope should be "api" instead of "nvim_..."]]
     end
