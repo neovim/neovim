@@ -127,7 +127,9 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * [LuaJIT](https://github.com/LuaJIT/LuaJIT)
 * [Lua](https://www.lua.org/download.html)
 * [Luv](https://github.com/luvit/luv)
-    * When bumping, also sync [our bundled documentation](https://github.com/neovim/neovim/blob/master/runtime/doc/luvref.txt) with [the upstream documentation](https://github.com/luvit/luv/blob/master/docs.md).
+    * When bumping, also sync
+      - [our bundled meta file](https://github.com/neovim/neovim/blob/master/runtime/lua/uv/_meta.lua) with [the upstream meta file](https://github.com/luvit/luv/blob/master/meta.lua);
+      - [our bundled documentation](https://github.com/neovim/neovim/blob/master/runtime/doc/luvref.txt) with [the upstream documentation](https://github.com/luvit/luv/blob/master/docs.md).
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
 * [libuv](https://github.com/libuv/libuv)
