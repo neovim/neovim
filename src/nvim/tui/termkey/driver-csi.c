@@ -507,7 +507,7 @@ static TermKeyResult parse_csi(TermKey *tk, size_t introlen, size_t *csi_len,
       present = 0;
       argi++;
 
-      if (argi > 16) {
+      if (argi >= 16) {
         break;
       }
     } else if (c >= 0x20 && c <= 0x2f) {
