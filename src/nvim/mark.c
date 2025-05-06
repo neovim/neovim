@@ -883,6 +883,7 @@ void ex_marks(exarg_T *eap)
     arg = NULL;
   }
 
+  msg_ext_set_kind("list_cmd");
   show_one_mark('\'', arg, &curwin->w_pcmark, NULL, true);
   for (int i = 0; i < NMARKS; i++) {
     show_one_mark(i + 'a', arg, &curbuf->b_namedm[i].mark, NULL, true);
@@ -1056,6 +1057,7 @@ void ex_jumps(exarg_T *eap)
 {
   cleanup_jumplist(curwin, true);
   // Highlight title
+  msg_ext_set_kind("list_cmd");
   msg_puts_title(_("\n jump line  col file/text"));
   for (int i = 0; i < curwin->w_jumplistlen && !got_int; i++) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
@@ -1102,6 +1104,7 @@ void ex_clearjumps(exarg_T *eap)
 // print the changelist
 void ex_changes(exarg_T *eap)
 {
+  msg_ext_set_kind("list_cmd");
   // Highlight title
   msg_puts_title(_("\nchange line  col text"));
 
