@@ -1,6 +1,7 @@
 /build/
 /.deps/
 /runtime/lua/coxpcall.lua
+/runtime/lua/uv/_meta.lua
 /runtime/lua/vim/_meta
 /runtime/lua/vim/re.lua
 

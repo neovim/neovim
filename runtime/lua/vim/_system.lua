@@ -136,10 +136,10 @@ function SystemObj:is_closing()
   return handle == nil or handle:is_closing() or false
 end
 
---- @param output? uv.read_start.callback|false
+--- @param output? fun(err: string?, data: string?)|false
 --- @param text? boolean
 --- @return uv.uv_stream_t? pipe
---- @return uv.read_start.callback? handler
+--- @return fun(err: string?, data: string?)? handler
 --- @return string[]? data
 local function setup_output(output, text)
   if output == false then
@@ -147,7 +147,7 @@ local function setup_output(output, text)
   end
 
   local bucket --- @type string[]?
-  local handler --- @type uv.read_start.callback
+  local handler --- @type fun(err: string?, data: string?)
 
   if type(output) == 'function' then
     handler = output
@@ -167,7 +167,8 @@ local function setup_output(output, text)
 
   local pipe = assert(uv.new_pipe(false))
 
-  --- @type uv.read_start.callback
+  --- @param err? string
+  --- @param data? string
   local function handler_with_close(err, data)
     handler(err, data)
     if data == nil then
