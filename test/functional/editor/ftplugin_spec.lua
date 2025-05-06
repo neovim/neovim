@@ -100,7 +100,7 @@ describe("ftplugin: Lua 'includeexpr'", function()
     eq(temp_dir .. '/lua/runtime-foo/bar.lua', lua_includeexpr('runtime-foo.bar'))
   end)
 
-  it('Non-Nvim-style Lua modules', function()
+  it('non-Nvim-style Lua modules', function()
     command('cd ' .. temp_dir)
     eq(temp_dir .. '/general-foo/bar/init.lua', lua_includeexpr('general-foo.bar'))
     eq(temp_dir .. '/general-foo/bar/baz.lua', lua_includeexpr('general-foo.bar.baz'))
