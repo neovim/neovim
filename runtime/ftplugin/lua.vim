@@ -9,6 +9,7 @@
 "			Phạm Bình An <phambinhanctb2004@gmail.com>
 "			@konfekt
 " Last Change:		2025 Apr 04
+" 2025 May 06 by Vim Project update 'path' setting #17267
 
 if exists("b:did_ftplugin")
   finish
@@ -31,6 +32,7 @@ set cpo&vim
 setlocal comments=:---,:--
 setlocal commentstring=--\ %s
 setlocal formatoptions-=t formatoptions+=croql
+setlocal path-=. " Lua doesn't support importing module in path related to current file like JS
 
 let &l:define = '\<function\|\<local\%(\s\+function\)\='
 
@@ -38,7 +40,7 @@ let &l:include = '\<\%(\%(do\|load\)file\|require\)\s*('
 setlocal includeexpr=s:LuaInclude(v:fname)
 setlocal suffixesadd=.lua
 
-let b:undo_ftplugin = "setl cms< com< def< fo< inc< inex< sua<"
+let b:undo_ftplugin = "setl cms< com< def< fo< inc< inex< sua< pa<"
 
 if exists("loaded_matchit") && !exists("b:match_words")
   let b:match_ignorecase = 0
