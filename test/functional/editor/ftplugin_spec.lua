@@ -10,18 +10,18 @@ local eq = t.eq
 ---@param type string
 ---@return string
 local function stdpath(type)
-  return exec_lua([[return vim.fs.normalize(vim.fn.stdpath(...))]], type)
+  return exec_lua([[return vim.fs.abspath(vim.fn.stdpath(...))]], type)
 end
 
 ---@return string
 local function vimruntime()
-  return exec_lua [[ return vim.fs.normalize(vim.env.VIMRUNTIME) ]]
+  return exec_lua [[ return vim.fs.abspath(vim.env.VIMRUNTIME) ]]
 end
 
 ---@param module string
 ---@return string
 local function lua_includeexpr(module)
-  return exec_lua([[return require('vim._ftplugin.lua').includeexpr(...)]], module)
+  return exec_lua([[return vim.fs.abspath(require 'vim._ftplugin.lua'.includeexpr(...))]], module)
 end
 
 describe("ftplugin: Lua 'includeexpr'", function()
@@ -59,7 +59,12 @@ describe("ftplugin: Lua 'includeexpr'", function()
       write ++p
       edit %s/lua/runtime-foo/bar.lua
       write ++p
-    ]]):format(temp_dir, temp_dir))
+
+      edit %s/general-foo/bar/init.lua
+      write ++p
+      edit %s/general-foo/bar/baz.lua
+      write ++p
+    ]]):format(temp_dir, temp_dir, temp_dir, temp_dir))
   end)
 
   it('finds module in current repo', function()
@@ -93,5 +98,12 @@ describe("ftplugin: Lua 'includeexpr'", function()
     command('set rtp+=' .. temp_dir)
     eq(temp_dir .. '/lua/runtime-foo/init.lua', lua_includeexpr('runtime-foo'))
     eq(temp_dir .. '/lua/runtime-foo/bar.lua', lua_includeexpr('runtime-foo.bar'))
+  end)
+
+  it('non-Nvim-style Lua modules', function()
+    command('cd ' .. temp_dir)
+    eq(temp_dir .. '/general-foo/bar/init.lua', lua_includeexpr('general-foo.bar'))
+    eq(temp_dir .. '/general-foo/bar/baz.lua', lua_includeexpr('general-foo.bar.baz'))
+    command('cd -')
   end)
 end)
