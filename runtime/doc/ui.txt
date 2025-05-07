@@ -832,6 +832,7 @@ must handle.
 		"quickfix"	Quickfix navigation message
 		"search_cmd"	Entered search command
 		"search_count"	Search count message ("S" flag of 'shortmess')
+		"shell_cmd"	|:!cmd| executed command
 		"shell_err"	|:!cmd| shell stderr output
 		"shell_out"	|:!cmd| shell stdout output
 		"shell_ret"	|:!cmd| shell return code
