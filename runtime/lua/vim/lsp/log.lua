@@ -132,10 +132,10 @@ local function create_logger(level, levelnr)
     end
     local info = debug.getinfo(2, 'Sl')
     local header = string.format(
-      '[%s][%s] ...%s:%s',
+      '[%s][%s] %s:%s',
       level,
       os.date(log_date_format),
-      info.short_src:sub(-16),
+      info.short_src,
       info.currentline
     )
     local parts = { header }
