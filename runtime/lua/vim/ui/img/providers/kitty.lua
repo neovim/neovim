@@ -9,6 +9,10 @@ local NVIM_IMAGE_TO_KITTY_IMAGE = {}
 ---@type table<integer, integer>
 local KITTY_PLACEMENT_TO_IMAGE = {}
 
+---Indicates whether or not neovim is running within tmux.
+---@type boolean
+local IS_TMUX = false
+
 local next_id = (function()
   local bit = require('bit')
 
@@ -81,7 +85,15 @@ local function make_seq(control, payload)
   -- Finalize the graphics code sequence
   table.insert(data, '\027\\')
 
-  return table.concat(data)
+  -- Build our graphics control sequence, transforming it based on the
+  -- environment in which neovim is running
+  local seq = table.concat(data)
+
+  if IS_TMUX then
+    seq = ('\027Ptmux;' .. string.gsub(seq, '\027', '\027\027')) .. '\027\\'
+  end
+
+  return seq
 end
 
 ---Transmit an image directly via a filesystem path.
@@ -243,10 +255,23 @@ local function delete_image(image_id, placement_id)
   io.stdout:write(make_seq(control))
 end
 
+---@param _self vim.ui.img.Provider
+local function setup(_self)
+  -- Check if we are inside tmux, and if so we need to configure it to support
+  -- allowing passthrough of escape codes for kitty's graphics protocol and
+  -- flag that we need to transform escape codes sent to be compliant with tmux
+  if vim.env['TMUX'] ~= nil then
+    local res = vim.system({ "tmux", "set", "-p", "allow-passthrough", "all" }):wait()
+    assert(res.code == 0, 'failed to "set -p allow-passthrough all" for tmux')
+    IS_TMUX = true
+  end
+end
+
+---@param _self vim.ui.img.Provider
 ---@param image vim.ui.Image
 ---@param opts? vim.ui.img.Opts|{remote?:boolean}
 ---@return integer
-local function show(image, opts)
+local function show(_self, image, opts)
   opts = opts or {}
 
   -- Check if we need to transmit our image or if it is already available
@@ -267,8 +292,9 @@ local function show(image, opts)
   return placement_id
 end
 
+---@param _self vim.ui.img.Provider
 ---@param ids integer[]
-local function hide(ids)
+local function hide(_self, ids)
   for _, pid in ipairs(ids) do
     local id = KITTY_PLACEMENT_TO_IMAGE[pid]
     if id then
@@ -283,10 +309,11 @@ local function hide(ids)
   -- 2. When neovim exits?
 end
 
+---@param _self vim.ui.img.Provider
 ---@param pid integer
 ---@param opts? vim.ui.img.Opts
 ---@return integer
-local function update(pid, opts)
+local function update(_self, pid, opts)
   local id = assert(
     KITTY_PLACEMENT_TO_IMAGE[pid],
     string.format('kitty(update): invalid displayed image id %s', pid)
@@ -295,6 +322,7 @@ local function update(pid, opts)
 end
 
 return require('vim.ui.img.providers').new({
+  setup = setup,
   show = show,
   hide = hide,
   update = update,

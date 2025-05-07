@@ -6,9 +6,10 @@ local PROVIDERS = {}
 local M = {}
 
 ---@class (exact) vim.ui.img.provider.Opts
----@field show fun(img:vim.ui.Image, opts?:vim.ui.img.Opts):integer
----@field hide fun(ids:integer[])
----@field update? fun(id:integer, opts?:vim.ui.img.Opts):integer
+---@field setup? fun(self:vim.ui.img.Provider)
+---@field show fun(self:vim.ui.img.Provider, img:vim.ui.Image, opts?:vim.ui.img.Opts):integer
+---@field hide fun(self:vim.ui.img.Provider, ids:integer[])
+---@field update? fun(self:vim.ui.img.Provider, id:integer, opts?:vim.ui.img.Opts):integer
 
 ---Creates a new image provider instance.
 ---@param opts vim.ui.img.provider.Opts
@@ -27,7 +28,7 @@ function M.new(opts)
   ---@param opts? vim.ui.img.Opts
   ---@return integer id unique id representing a reference to the displayed image
   function provider.show(img, opts)
-    local id = provider._opts.show(img, opts)
+    local id = provider._opts.show(provider, img, opts)
 
     provider.displayed[id] = img
 
@@ -55,7 +56,7 @@ function M.new(opts)
       ids = vim.tbl_keys(provider.displayed)
     end
 
-    provider._opts.hide(ids)
+    provider._opts.hide(provider, ids)
 
     for _, id in ipairs(ids) do
       provider.displayed[id] = nil
@@ -75,7 +76,7 @@ function M.new(opts)
     -- If we have an explicitly-defined update method, use it as this is
     -- most likely more performant than the bruteforce approach
     if provider._opts.update then
-      local new_id = provider._opts.update(id, opts)
+      local new_id = provider._opts.update(provider, id, opts)
 
       provider.displayed[id] = nil
       provider.displayed[new_id] = img
@@ -87,6 +88,19 @@ function M.new(opts)
     -- image and then show the image again
     provider.hide(id)
     return provider.show(img, opts)
+  end
+
+  -- Invoke the setup function if it is provided
+  if type(provider._opts.setup) == 'function' then
+    ---@type boolean, string
+    local ok, err = pcall(provider._opts.setup, provider)
+
+    if not ok then
+      vim.notify(
+        string.format('setup failed for provider: %s', vim.inspect(err)),
+        vim.log.levels.WARN
+      )
+    end
   end
 
   return provider
