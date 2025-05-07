@@ -451,8 +451,8 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
       screen:expect({
         any = table.concat({
           pesc('{2:E325: ATTENTION}'),
-          'file name: .*Xswaptest',
-          'process ID: %d* %(STILL RUNNING%)',
+          '\n        process ID: %d* %(STILL RUNNING%)',
+          '\nWhile opening file "Xswaptest"',
           pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
         }, '.*'),
       })
