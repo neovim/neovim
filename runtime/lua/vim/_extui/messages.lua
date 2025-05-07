@@ -65,7 +65,7 @@ end
 ---
 ---@param type 'last'|'msg'
 local function set_virttext(type)
-  if type == 'last' and ext.cmdheight == 0 or M.virt.delayed then
+  if type == 'last' and (ext.cmdheight == 0 or M.virt.delayed) then
     return
   end
 
@@ -101,7 +101,8 @@ local function set_virttext(type)
       local offset = tar ~= 'box' and 0
         or api.nvim_win_get_position(win)[2] + (api.nvim_win_get_config(win).border and 1 or 0)
 
-      M.box.width = math.min(o.columns, scol - offset + width)
+      -- Check if adding the virt_text on this line will exceed the current 'box' width.
+      M.box.width = math.max(M.box.width, math.min(o.columns, scol - offset + width))
       if tar == 'box' and api.nvim_win_get_width(win) < M.box.width then
         api.nvim_win_set_width(win, M.box.width)
       end
@@ -122,7 +123,7 @@ local function set_virttext(type)
       local pad = o.columns - width ---@type integer
       local newlines = math.max(0, ext.cmdheight - h.all)
       row = row + newlines
-      M.cmd.last_col = newlines > 0 and o.columns or mode > 0 and 0 or o.columns - width
+      M.cmd.last_col = mode > 0 and 0 or o.columns - (newlines > 0 and 0 or width)
 
       if newlines > 0 then
         -- Add empty lines to place virt_text on the last screen row.
@@ -179,9 +180,9 @@ function M.show_msg(tar, content, replace_last, more)
         msg = msg .. chunk[2]
       end
 
-      -- Check if messages that should be sent to more prompt exceeds maximum newlines.
+      -- Check if message that should be sent to more prompt exceeds maximum newlines.
       local max = (tar == 'cmd' and ext.cmdheight or math.ceil(o.lines * 0.5))
-      if more and select(2, msg:gsub('\n', '')) > max then
+      if more and select(2, msg:gsub('\n', '')) >= max then
         M.msg_history_show({ { 'spill', content } })
         return
       end

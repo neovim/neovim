@@ -96,6 +96,7 @@ function M.enable(opts)
   end
 
   if vim.v.vim_did_enter == 1 then
+    ext.tab_check_wins()
     check_opt('cmdheight', vim.o.cmdheight)
     check_opt('termguicolors', vim.o.termguicolors)
   end
