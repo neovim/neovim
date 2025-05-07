@@ -11,6 +11,8 @@
 "		2025 Apr 03 command substitution opening paren at EOL (#17026)
 "		2025 Apr 10 improve shell detection (#17084)
 "		2025 Apr 29 match escaped chars in test operands (#17221)
+"		2025 May 06 improve single-quote string matching in parameter expansions
+"		2025 May 06 match KornShell compound arrays
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -510,13 +512,18 @@ syn match  shSetOption	"\s\zs[-+][a-zA-Z0-9]\+\>"	contained
 syn match  shVariable	"\<\h\w*\ze="			nextgroup=shVarAssign
 if exists("b:is_bash")
  " The subscript form for array values, e.g. "foo=([2]=10 [4]=100)".
- syn region shArrayValue	contained	start="\[\%(..\{-}\]=\)\@=" end="\]=\@="	contains=@shArrayValueList nextgroup=shVarAssign
+ syn region  shArrayValue	contained	start="\[\%(..\{-}\]=\)\@=" end="\]=\@="	contains=@shArrayValueList nextgroup=shVarAssign
  syn cluster shArrayValueList	contains=shArithmetic,shArithParen,shCommandSub,shDeref,shDerefSimple,shExpr,shNumber,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shSpecial,shParen,bashSpecialVariables,shParenError
+ syn region  shArrayRegion	contained matchgroup=shShellVariables start="(" skip='\\\\\|\\.' end=")" contains=@shArrayValueList,shArrayValue,shComment
+elseif exists("b:is_kornshell")
+ " The subscript form for array values, e.g. "foo=([2]=10 [4]=100)".
+ syn region  shArrayValue	contained	start="\[\%(..\{-}\]=\)\@=" end="\]=\@="	contains=@shArrayValueList nextgroup=shVarAssign
+ syn cluster shArrayValueList	contains=shArithmetic,shArithParen,shCommandSub,shDeref,shDerefSimple,shExpr,shNumber,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shSpecial,shParen,kshSpecialVariables,shParenError
+ syn region  shArrayRegion	contained matchgroup=shShellVariables start="(" skip='\\\\\|\\.' end=")" contains=@shArrayValueList,shArrayValue,shComment,shArrayRegion
 endif
 if exists("b:is_bash") || exists("b:is_kornshell")
  syn match shVariable	"\<\h\w*\%(\[..\{-}\]\)\=\ze\%([|^&*/%+-]\|[<^]<\|[>^]>\)\=="	contains=shDerefVarArray nextgroup=shVarAssign
  syn match shVarAssign	contained	"\%([|^&*/%+-]\|[<^]<\|[>^]>\)\=="	nextgroup=shArrayRegion,shPattern,shDeref,shDerefSimple,shDoubleQuote,shExDoubleQuote,shSingleQuote,shExSingleQuote,shVar
- syn region shArrayRegion	contained matchgroup=shShellVariables start="(" skip='\\\\\|\\.' end=")" contains=@shArrayValueList,shArrayValue,shComment
 else
  syn match  shVarAssign	contained	"="	nextgroup=shPattern,shDeref,shDerefSimple,shDoubleQuote,shExDoubleQuote,shSingleQuote,shExSingleQuote,shVar
 endif
@@ -649,7 +656,7 @@ if exists("b:is_bash")
  syn match  shDerefOp	contained	"[,^]\{1,2}"	nextgroup=@shDerefPatternList
  syn match  shDerefOp	contained	"@[uULQEPAKa]"
 endif
-syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!'+ end=+'+	contains=shStringSpecial
+syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!'+ end=+'+
 syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial
 syn match  shDerefString	contained	"\\["']"	nextgroup=shDerefPattern
 
