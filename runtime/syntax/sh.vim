@@ -11,6 +11,7 @@
 "		2025 Apr 03 command substitution opening paren at EOL (#17026)
 "		2025 Apr 10 improve shell detection (#17084)
 "		2025 Apr 29 match escaped chars in test operands (#17221)
+"		2025 May 06 improve single-quote string matching in parameter expansions
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -649,7 +650,7 @@ if exists("b:is_bash")
  syn match  shDerefOp	contained	"[,^]\{1,2}"	nextgroup=@shDerefPatternList
  syn match  shDerefOp	contained	"@[uULQEPAKa]"
 endif
-syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!'+ end=+'+	contains=shStringSpecial
+syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!'+ end=+'+
 syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial
 syn match  shDerefString	contained	"\\["']"	nextgroup=shDerefPattern
 
