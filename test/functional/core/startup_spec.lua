@@ -1108,6 +1108,7 @@ describe('user config init', function()
           string.format(
             [[
           vim.g.exrc_file = "%s"
+          vim.g.exrc_count = (vim.g.exrc_count or 0) + 1
         ]],
             exrc_path
           )
@@ -1118,6 +1119,7 @@ describe('user config init', function()
           string.format(
             [[
           let g:exrc_file = "%s"
+          let g:exrc_count = get(g:, 'exrc_count', 0) + 1
         ]],
             exrc_path
           )
@@ -1141,8 +1143,8 @@ describe('user config init', function()
       rmdir(xstate)
     end)
 
-    for _, filename in ipairs({ '.exrc', '.nvimrc', '.nvim.lua' }) do
-      it(filename .. ' in cwd', function()
+    for _, filename in ipairs({ '.exrc', '.nvimrc', '.nvim.lua', '../.nvim.lua', '../.nvimrc' }) do
+      it(filename .. ' from cwd', function()
         setup_exrc_file(filename)
 
         clear { args_rm = { '-u' }, env = xstateenv }
@@ -1185,6 +1187,36 @@ describe('user config init', function()
         eq(filename, eval('g:exrc_file'))
       end)
     end
+
+    it('exrc from all parent directories', function()
+      -- make sure that there are not any exrc files left from previous tests
+      for _, file in ipairs({ '.exrc', '.nvimrc', '.nvim.lua', '../.nvim.lua', '../.nvimrc' }) do
+        os.remove(file)
+      end
+      setup_exrc_file('../.exrc')
+      setup_exrc_file('.nvim.lua')
+      clear { args_rm = { '-u' }, env = xstateenv }
+      local screen = Screen.new(50, 8)
+      screen._default_attr_ids = nil
+      fn.jobstart({ nvim_prog }, {
+        term = true,
+        env = {
+          VIMRUNTIME = os.getenv('VIMRUNTIME'),
+        },
+      })
+      -- current directory exrc is found first
+      screen:expect({ any = '.nvim.lua' })
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
+      feed('ia')
+
+      -- after that the exrc in the parent directory
+      screen:expect({ any = '.exrc' })
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
+      feed('ia')
+      clear { args_rm = { '-u' }, env = xstateenv }
+      -- a total of 2 exrc files are executed
+      eq(2, eval('g:exrc_count'))
+    end)
   end)
 
   describe('with explicitly provided config', function()
