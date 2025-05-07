@@ -1394,6 +1394,30 @@ printf('Hello World!');
       {8:126 }^                                    |
                                               |
     ]])
+    feed('ggdj')
+    command('set concealcursor=n')
+    screen:expect([[
+      {8:  2 }{25:^printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:  4 }                                    |
+      {8:  6 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8:  8 }                                    |
+      {8: 10 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 12 }                                    |
+      {8: 14 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 16 }                                    |
+      {8: 18 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 20 }                                    |
+      {8: 22 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 24 }                                    |
+      {8: 26 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+      {8: 28 }                                    |
+      {8: 30 }{25:printf}{16:(}{26:'Hello World!'}{16:);}             |
+                                              |
+    ]])
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, {})
+      assert(vim.api.nvim_win_text_height(0, {}).all == 1, 'line concealed')
+    end)
   end)
 end)
 

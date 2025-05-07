@@ -109,6 +109,15 @@ function TSHighlighter.new(tree, opts)
   end
 
   tree:register_cbs({
+    on_bytes = function(buf)
+      -- Clear conceal_lines marks whenever the buffer text changes. Marks are added
+      -- back as either the _conceal_line or on_win callback comes across them.
+      local hl = TSHighlighter.active[buf]
+      if hl and next(hl._conceal_checked) then
+        api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+        hl._conceal_checked = {}
+      end
+    end,
     on_changedtree = function(...)
       self:on_changedtree(...)
     end,
@@ -313,7 +322,7 @@ end
 ---@param on_spell boolean
 ---@param on_conceal boolean
 local function on_line_impl(self, buf, line, on_spell, on_conceal)
-  self._conceal_checked[line] = true
+  self._conceal_checked[line] = self._conceal_line and true or nil
   self:for_each_highlight_state(function(state)
     local root_node = state.tstree:root()
     local root_start_row, _, root_end_row, _ = root_node:range()
@@ -388,7 +397,6 @@ local function on_line_impl(self, buf, line, on_spell, on_conceal)
               api.nvim_buf_set_extmark(buf, ns, start_row, 0, {
                 end_line = end_row,
                 conceal_lines = '',
-                invalidate = true,
               })
             end
           end
@@ -454,19 +462,6 @@ function TSHighlighter._on_conceal_line(_, _, buf, row)
 end
 
 ---@private
---- Clear conceal_lines marks whenever we redraw for a buffer change. Marks are
---- added back as either the _conceal_line or on_win callback comes across them.
-function TSHighlighter._on_buf(_, buf)
-  local self = TSHighlighter.active[buf]
-  if not self or not self._conceal_line then
-    return
-  end
-
-  api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-  self._conceal_checked = {}
-end
-
----@private
 ---@param buf integer
 ---@param topline integer
 ---@param botline integer
@@ -507,7 +502,6 @@ end
 api.nvim_set_decoration_provider(ns, {
   on_win = TSHighlighter._on_win,
   on_line = TSHighlighter._on_line,
-  on_buf = TSHighlighter._on_buf,
   _on_spell_nav = TSHighlighter._on_spell_nav,
   _on_conceal_line = TSHighlighter._on_conceal_line,
 })
