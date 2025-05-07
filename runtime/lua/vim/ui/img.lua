@@ -283,24 +283,13 @@ end
 
 ---@alias vim.ui.img.Unit 'cell'|'pixel'
 
----Calculates the width and height of each cell within the currently-attached
----user interface. If no interface is found, will throw an error.
----@return number cell_width, number cell_height
-local function cell_size_in_pixels()
-  -- TODO: Implement logic to retrieve terminal dimensions in pixels so we
-  --       can calculate the actual cell size (width & height) in pixels.
-  --
-  --       For now, we are using a reasonable default.
-  return 9, 18
-end
-
 ---Convert an integer representing absolute pixels to a cell.
 ---@param x integer
 ---@param y integer
 ---@return integer x, integer y
 local function pixels_to_cells(x, y)
-  local w, h = cell_size_in_pixels()
-  return math.floor(x / w), math.floor(y / h)
+  local size = require('vim.ui.img.screen').size()
+  return math.floor(x / size.cell_width), math.floor(y / size.cell_height)
 end
 
 ---Convert an integer representing a cell to absolute pixels.
@@ -308,8 +297,8 @@ end
 ---@param y integer
 ---@return integer x, integer y
 local function cells_to_pixels(x, y)
-  local w, h = cell_size_in_pixels()
-  return math.floor(x * w), math.floor(y * h)
+  local size = require('vim.ui.img.screen').size()
+  return math.floor(x * size.cell_width), math.floor(y * size.cell_height)
 end
 
 ---Creates a new instance of a position corresponding to an image.
