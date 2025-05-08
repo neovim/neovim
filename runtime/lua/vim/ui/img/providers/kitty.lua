@@ -1,4 +1,5 @@
 ---Kitty supports 4096 bytes per chunk when sending remote client data.
+---
 local MAX_DATA_CHUNK = 4096
 
 ---Mapping of neovim image id -> kitty image id.
@@ -134,7 +135,7 @@ local function transmit_image_direct(image)
   ---@param chunk string data of chunk
   ---@param pos integer starting byte position of chunk
   ---@param last boolean true if final chunk
-  image:chunks({ size = MAX_DATA_CHUNK }):each(function(chunk, pos, last)
+  image:chunks({ base64 = true, size = MAX_DATA_CHUNK }):each(function(chunk, pos, last)
     local control = {}
 
     -- If at the beginning of our image, supply common control info

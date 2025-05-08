@@ -4,9 +4,9 @@ local LAST_IMAGE_ID = 0
 
 ---@class vim.ui.Image
 ---@field id integer unique id associated with the image
----@field data string|nil base64 encoded data of the image loaded into memory
+---@field data string|nil data of the image loaded into memory
 ---@field filename string path to the image on disk
----@field private __header table|nil image's header information if loaded
+---@field private __header vim.ui.img.Header|nil image's header information if loaded
 local M = {}
 M.__index = M
 
@@ -74,7 +74,7 @@ function M:reload(on_load)
     local data = vim.uv.fs_read(fd, stat.size, -1) --[[ @type string|nil ]]
     assert(data, 'unable to read ' .. filename)
 
-    self.data = vim.base64.encode(data)
+    self.data = data
     self.filename = filename
 
     return
@@ -117,7 +117,7 @@ function M:reload(on_load)
 
         vim.uv.fs_close(fd, function() end)
 
-        self.data = vim.base64.encode(data or '')
+        self.data = data or ''
         self.filename = filename
 
         vim.schedule(on_load)
@@ -126,13 +126,13 @@ function M:reload(on_load)
   end)
 end
 
----Returns the byte length of the base64 encoded image, or 0 if not loaded.
+---Returns the byte length of the image's data, or 0 if not loaded.
 ---@return integer
 function M:len()
   return string.len(self.data or '')
 end
 
----Returns a hash (sha256) of the base64 encoded image.
+---Returns a hash (sha256) of the image.
 ---@return string
 function M:hash()
   return vim.fn.sha256(self.data or '')
@@ -147,81 +147,20 @@ function M:size()
 end
 
 ---@private
----Returns the decoded data of the image, if loaded.
----@return string|nil
-function M:__decoded_data()
-  return self.data and vim.base64.decode(self.data)
-end
-
----@private
----Parses the image's header bytes. If not loaded, will load the first 24 bytes.
----Header is cached within the image and reused unless `force=true`.
+---Parses the header into memory, loading it from disk if needed.
 ---@param opts? {force?:boolean}
----@return {width:integer, height:integer, [string]:any}
+---@return vim.ui.img.Header
 function M:__parse_header(opts)
   opts = opts or {}
 
-  -- Use cached header if we have one
   if self.__header and not opts.force then
     return self.__header
   end
 
-  -- Bytes 30-33 (last four bytes of header) are CRC which we can ignore
-  local HEADER_SIZE = 29 -- 8 (sig) + 4 (len) + 4 (type) + 13 (IHDR data) + 4 (CRC, unused)
-
-  -- If we have the data already loaded, grab the header from it
-  local header = self:__decoded_data()
-  header = header and string.sub(header, 1, HEADER_SIZE)
-
-  -- Otherwise, attempt to load the header bytes from the file (blocking)
-  if not header or string.len(header) < HEADER_SIZE then
-    local fd = assert(vim.uv.fs_open(self.filename, 'r', 0))
-
-    header = ''
-    while string.len(header) < HEADER_SIZE do
-      local chunk = assert(vim.uv.fs_read(fd, HEADER_SIZE - string.len(header)))
-      header = header .. chunk
-    end
-
-    assert(vim.uv.fs_close(fd))
-  end
-
-  -- Validate that this header is for a PNG and that we have the IDHR chunk
-  -- containing header information.
-  --
-  -- 1. First 8 bytes are the PNG "magic number"
-  -- 2. Next 4 bytes are IDHR chunk length, which we can skip
-  -- 3. Next 4 bytes are IDHR type marker
-  assert(string.sub(header, 1, 8) == '\137PNG\r\n\026\n', 'invalid PNG signature')
-  assert(string.sub(header, 13, 16) == 'IHDR', 'missing IHDR chunk')
-
-  ---Parses a 4-byte big-endian string as an unsigned 32-bit integer.
-  ---@param s string # A 4-byte string (must be exactly 4 bytes long)
-  ---@return integer # The parsed unsigned 32-bit integer
-  local function u32be(s)
-    local b1, b2, b3, b4 = string.byte(s, 1, 4)
-    return b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4
-  end
-
-  -- Data we care about is contained between bytes 17-29
-  local width = u32be(string.sub(header, 17, 20))
-  local height = u32be(string.sub(header, 21, 24))
-  local bit_depth = string.byte(header, 25)
-  local color_type = string.byte(header, 26)
-  local compression = string.byte(header, 27)
-  local filter = string.byte(header, 28)
-  local interlace = string.byte(header, 29)
-
-  -- Cache our header for future requests
-  self.__header = {
-    width = width,
-    height = height,
-    bit_depth = bit_depth,
-    color_type = color_type,
-    compression = compression,
-    filter = filter,
-    interlace = interlace,
-  }
+  self.__header = require('vim.ui.img.header').parse({
+    data = self.data,
+    filename = self.filename,
+  })
 
   return self.__header
 end
@@ -229,6 +168,7 @@ end
 ---Returns an iterator over the chunks of the image, returning the chunk, byte position, and
 ---an indicator of whether the current chunk is the last chunk.
 ---
+---If `base64=true`, will encode the data using base64 before iterating chunks.
 ---Takes an optional size to indicate how big each chunk should be, defaulting to 4096.
 ---
 ---Examples:
@@ -247,7 +187,7 @@ end
 ---end)
 ---```
 ---
----@param opts? {size?:integer}
+---@param opts? {base64?:boolean, size?:integer}
 ---@return Iter
 function M:chunks(opts)
   opts = opts or {}
@@ -260,6 +200,10 @@ function M:chunks(opts)
     return vim.iter(function()
       return nil, nil, nil
     end)
+  end
+
+  if opts.base64 then
+    data = vim.base64.encode(data)
   end
 
   local pos = 1
