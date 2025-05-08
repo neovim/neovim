@@ -1638,7 +1638,7 @@ stack traceback:
         },
       },
     })
-    feed(':messages<CR>g<lt>')
+    feed('g<lt>')
     screen:expect({
       grid = [[
         ^                         |
@@ -1659,6 +1659,40 @@ stack traceback:
         {
           content = { { 'bar' } },
           kind = 'echo',
+        },
+      },
+    })
+    feed('Q')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { "E354: Invalid register name: '^@'", 9, 6 } },
+          history = true,
+          kind = 'emsg',
+        },
+      },
+    })
+    feed('g<lt>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'Press ENTER or type command to continue', 6, 18 } },
+          history = false,
+          kind = 'return_prompt',
+        },
+      },
+      msg_history = {
+        {
+          content = { { "E354: Invalid register name: '^@'", 9, 6 } },
+          kind = 'emsg',
         },
       },
     })

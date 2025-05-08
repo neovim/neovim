@@ -1031,8 +1031,15 @@ static void msg_hist_add(const char *s, int len, int hl_id)
   msg_hist_add_multihl(msg, false);
 }
 
+static bool do_clear_hist_temp = true;
+
 static void msg_hist_add_multihl(HlMessage msg, bool temp)
 {
+  if (do_clear_hist_temp) {
+    msg_hist_clear_temp();
+    do_clear_hist_temp = false;
+  }
+
   if (msg_hist_off || msg_silent != 0) {
     hl_msg_free(msg);
     return;
@@ -2207,8 +2214,6 @@ static void msg_ext_emit_chunk(void)
   ADD(*msg_ext_chunks, ARRAY_OBJ(chunk));
 }
 
-static bool do_clear_hist_temp = true;
-
 /// The display part of msg_puts_len().
 /// May be called recursively to display scroll-back text.
 static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse)
@@ -2237,10 +2242,6 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     int col = (int)(maxlen < 0 ? mb_string2cells(p) : mb_string2cells_len(p, (size_t)(maxlen)));
     msg_col = (lastline ? 0 : msg_col) + col;
 
-    if (do_clear_hist_temp && !strequal(msg_ext_kind, "return_prompt")) {
-      msg_hist_clear_temp();
-      do_clear_hist_temp = false;
-    }
     return;
   }
 
@@ -2696,6 +2697,7 @@ void show_sb_text(void)
 {
   if (ui_has(kUIMessages)) {
     exarg_T ea = { .arg = "", .skip = true };
+    msg_ext_clear(true);
     ex_messages(&ea);
     return;
   }
