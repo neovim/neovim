@@ -820,8 +820,7 @@ static inline void free_cptext(char *const *const cptext)
 /// Returns true if matches should be sorted based on proximity to the cursor.
 static bool is_nearest_active(void)
 {
-  unsigned flags = get_cot_flags();
-  return (flags & kOptCotFlagNearest) && !(flags & kOptCotFlagFuzzy);
+  return (get_cot_flags() & (kOptCotFlagNearest|kOptCotFlagFuzzy)) == kOptCotFlagNearest;
 }
 
 /// Repositions a match in the completion list based on its proximity score.
