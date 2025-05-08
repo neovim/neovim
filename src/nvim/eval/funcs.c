@@ -3595,8 +3595,8 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
-  uint16_t width = 0;
-  uint16_t height = 0;
+  uint16_t width = (uint16_t)tv_dict_get_number(job_opts, "width");
+  uint16_t height = (uint16_t)tv_dict_get_number(job_opts, "height");
   char *term_name = NULL;
 
   if (term) {
@@ -3616,13 +3616,11 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     overlapped = false;
     detach = false;
     stdin_mode = kChannelStdinPipe;
-    width = (uint16_t)MAX(0, curwin->w_view_width - win_col_off(curwin));
-    height = (uint16_t)curwin->w_view_height;
+    width = width ? width : (uint16_t)MAX(0, curwin->w_view_width - win_col_off(curwin));
+    height = height ? height : (uint16_t)curwin->w_view_height;
   }
 
   if (pty) {
-    width = width ? width : (uint16_t)tv_dict_get_number(job_opts, "width");
-    height = height ? height : (uint16_t)tv_dict_get_number(job_opts, "height");
     // Deprecated TERM field is from before `env` option existed.
     term_name = term_name ? term_name : tv_dict_get_string(job_opts, "TERM", false);
     term_name = term_name ? term_name : "ansi";
