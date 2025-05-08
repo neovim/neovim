@@ -13,9 +13,9 @@
             .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
             .hash = "122084badadeb91106dd06b2055119a944c340563536caefd8e22d4064182f7cd6e6",
         },
-        .libluv = .{
-            .url = "https://github.com/luvit/luv/releases/download/1.48.0-2/luv-1.48.0-2.tar.gz",
-            .hash = "122050b45fc1b2d1e72d30d3e4f446735ab95bbb88658bc1de736e5dc71c3e3cd767",
+        .luv = .{
+            .url = "git+https://github.com/luvit/luv?ref=1.50.0-1#891ba330ea0b676eacbd943ab12bf5e8d4295119",
+            .hash = "N-V-__8AAKX9DgD3bigqB5adNqFpMGvwbNSGdaXBUpneaNDi",
         },
         .lua_compat53 = .{
             .url = "https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz",

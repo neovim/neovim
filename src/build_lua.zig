@@ -110,7 +110,7 @@ pub fn build_libluv(
     lua: *std.Build.Step.Compile,
     libuv: *std.Build.Step.Compile,
 ) !*std.Build.Step.Compile {
-    const upstream = b.dependency("libluv", .{});
+    const upstream = b.dependency("luv", .{});
     const compat53 = b.dependency("lua_compat53", .{});
     const lib = b.addStaticLibrary(.{
         .name = "luv",
