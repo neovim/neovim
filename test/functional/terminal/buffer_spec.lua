@@ -322,6 +322,27 @@ describe(':terminal buffer', function()
     eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
     command('bd!')
   end)
+
+  it('correct size when switching buffers', function()
+    local term_buf = api.nvim_get_current_buf()
+    command('file foo | enew | vsplit')
+    api.nvim_set_current_buf(term_buf)
+    screen:expect([[
+      tty ready                │                        |
+      ^rows: 5, cols: 25        │{4:~                       }|
+                               │{4:~                       }|*3
+      {17:foo [-]                   }{1:[No Name]               }|
+                                                        |
+    ]])
+
+    feed('<C-^><C-W><C-O><C-^>')
+    screen:expect([[
+      tty ready                                         |
+      ^rows: 5, cols: 25                                 |
+      rows: 6, cols: 50                                 |
+                                                        |*4
+    ]])
+  end)
 end)
 
 describe(':terminal buffer', function()

@@ -1773,6 +1773,10 @@ void enter_buffer(buf_T *buf)
   }
   curbuf->b_last_used = time(NULL);
 
+  if (curbuf->terminal != NULL) {
+    terminal_check_size(curbuf->terminal);
+  }
+
   redraw_later(curwin, UPD_NOT_VALID);
 }
 
