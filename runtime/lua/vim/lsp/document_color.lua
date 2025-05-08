@@ -303,7 +303,7 @@ api.nvim_create_autocmd('ColorScheme', {
 
     for _, bufnr in ipairs(api.nvim_list_bufs()) do
       buf_clear(bufnr)
-      if api.nvim_buf_is_loaded(bufnr) and bufstates[bufnr].enabled then
+      if api.nvim_buf_is_loaded(bufnr) and vim.tbl_get(bufstates, bufnr, 'enabled') then
         M._buf_refresh(bufnr)
       else
         reset_bufstate(bufnr, false)
