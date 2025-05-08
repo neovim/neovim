@@ -465,13 +465,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                        file or not. Similar to 'wrapscan'.
       • {severity}?    (`vim.diagnostic.SeverityFilter`) See
                        |diagnostic-severity|.
-      • {float}?       (`boolean|vim.diagnostic.Opts.Float`, default: `false`)
-                       If `true`, call |vim.diagnostic.open_float()| after
-                       moving. If a table, pass the table as the {opts}
-                       parameter to |vim.diagnostic.open_float()|. Unless
-                       overridden, the float will show diagnostics at the new
-                       cursor position (as if "cursor" were passed to the
-                       "scope" option).
+      • {on_jump}?     (`fun(diagnostic:vim.Diagnostic?, bufnr:integer)`)
+                       Optional callback invoked with the diagnostic that was
+                       jumped to.
       • {winid}?       (`integer`, default: `0`) Window ID
 
 *vim.diagnostic.NS*
