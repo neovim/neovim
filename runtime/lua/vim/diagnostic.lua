@@ -1564,8 +1564,15 @@ M.handlers.underline = {
 --- @param diagnostics table<integer, vim.Diagnostic[]>
 --- @param opts vim.diagnostic.Opts.VirtualText
 local function render_virtual_text(namespace, bufnr, diagnostics, opts)
+  -- Define the virtual text namespace if needed.
+  local ns = M.get_namespace(namespace)
+  if not ns.user_data.virt_text_ns then
+    ns.user_data.virt_text_ns =
+      api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_text', ns.name))
+  end
+
   local lnum = api.nvim_win_get_cursor(0)[1] - 1
-  api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
+  api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
 
   for line, line_diagnostics in pairs(diagnostics) do
     local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts)
@@ -1573,7 +1580,7 @@ local function render_virtual_text(namespace, bufnr, diagnostics, opts)
       or (opts.current_line == false and line == lnum)
 
     if virt_texts and not skip then
-      api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
+      api.nvim_buf_set_extmark(bufnr, ns.user_data.virt_text_ns, line, 0, {
         hl_mode = opts.hl_mode or 'combine',
         virt_text = virt_texts,
         virt_text_pos = opts.virt_text_pos,
@@ -1582,6 +1589,26 @@ local function render_virtual_text(namespace, bufnr, diagnostics, opts)
       })
     end
   end
+end
+
+--- Displays the given diagnostics as virtual text.
+---
+--- @param namespace integer Diagnostic namespace ID
+--- @param bufnr? integer Buffer handle, or 0 for current (default: 0)
+--- @param diagnostics vim.Diagnostic[] Diagnostics to display
+--- @param opts? vim.diagnostic.Opts.VirtualText
+function M.render_virtual_text(namespace, bufnr, diagnostics, opts)
+  vim.validate('namespace', namespace, 'number')
+  vim.validate('bufnr', bufnr, 'number', true)
+  vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
+  vim.validate('opts', opts, 'table', true)
+
+  render_virtual_text(
+    namespace,
+    vim._resolve_bufnr(bufnr),
+    diagnostic_lines(diagnostics),
+    opts or {}
+  )
 end
 
 M.handlers.virtual_text = {
@@ -1611,10 +1638,6 @@ M.handlers.virtual_text = {
     end
 
     local ns = M.get_namespace(namespace)
-    if not ns.user_data.virt_text_ns then
-      ns.user_data.virt_text_ns =
-        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_text', ns.name))
-    end
     if not ns.user_data.virt_text_augroup then
       ns.user_data.virt_text_augroup = api.nvim_create_augroup(
         string.format('nvim.%s.diagnostic.virt_text', ns.name),
@@ -1631,12 +1654,12 @@ M.handlers.virtual_text = {
         buffer = bufnr,
         group = ns.user_data.virt_text_augroup,
         callback = function()
-          render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, opts.virtual_text)
+          render_virtual_text(namespace, bufnr, line_diagnostics, opts.virtual_text)
         end,
       })
     end
 
-    render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, opts.virtual_text)
+    render_virtual_text(namespace, bufnr, line_diagnostics, opts.virtual_text)
 
     save_extmarks(ns.user_data.virt_text_ns, bufnr)
   end,

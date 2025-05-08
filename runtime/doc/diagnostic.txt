@@ -899,6 +899,19 @@ render_virtual_lines({namespace}, {bufnr}, {diagnostics})
       • {diagnostics}  (`vim.Diagnostic[]`) Diagnostics to display. See
                        |vim.Diagnostic|.
 
+                                        *vim.diagnostic.render_virtual_text()*
+render_virtual_text({namespace}, {bufnr}, {diagnostics}, {opts})
+    Displays the given diagnostics as virtual text.
+
+    Parameters: ~
+      • {namespace}    (`integer`) Diagnostic namespace ID
+      • {bufnr}        (`integer?`) Buffer handle, or 0 for current (default:
+                       0)
+      • {diagnostics}  (`vim.Diagnostic[]`) Diagnostics to display. See
+                       |vim.Diagnostic|.
+      • {opts}         (`vim.diagnostic.Opts.VirtualText?`) See
+                       |vim.diagnostic.Opts.VirtualText|.
+
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
     Remove all diagnostics from the given namespace.
 
