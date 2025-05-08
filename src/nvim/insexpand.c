@@ -984,9 +984,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   match->cp_user_kind_hlattr = user_hl ? user_hl[1] : -1;
 
   if (cptext != NULL) {
-    int i;
-
-    for (i = 0; i < CPT_COUNT; i++) {
+    for (int i = 0; i < CPT_COUNT; i++) {
       if (cptext[i] == NULL) {
         continue;
       }
@@ -4834,6 +4832,7 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
       }
       startcol -= head_off;
     }
+
     compl_col += ++startcol;
     compl_length = (int)curs_col - startcol;
     if (compl_length == 1) {
@@ -4972,6 +4971,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
   if (col == -2 || aborting()) {
     return FAIL;
   }
+
   // Return value -3 does the same as -2 and leaves CTRL-X mode.
   if (col == -3) {
     ctrl_x_mode = CTRL_X_NORMAL;
