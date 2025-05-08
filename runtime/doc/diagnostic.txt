@@ -888,6 +888,17 @@ open_float({opts})                               *vim.diagnostic.open_float()*
         (`integer?`) float_bufnr
         (`integer?`) winid
 
+                                       *vim.diagnostic.render_virtual_lines()*
+render_virtual_lines({namespace}, {bufnr}, {diagnostics})
+    Displays the given diagnostics as virtual lines.
+
+    Parameters: ~
+      • {namespace}    (`integer`) Diagnostic namespace ID
+      • {bufnr}        (`integer?`) Buffer handle, or 0 for current (default:
+                       0)
+      • {diagnostics}  (`vim.Diagnostic[]`) Diagnostics to display. See
+                       |vim.Diagnostic|.
+
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
     Remove all diagnostics from the given namespace.
 

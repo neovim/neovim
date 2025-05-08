@@ -1669,10 +1669,31 @@ local function distance_between_cols(bufnr, lnum, start_col, end_col)
   end)
 end
 
---- @param namespace integer
---- @param bufnr integer
---- @param diagnostics vim.Diagnostic[]
-local function render_virtual_lines(namespace, bufnr, diagnostics)
+--- Displays the given diagnostics as virtual lines.
+---
+--- @param namespace integer Diagnostic namespace ID
+--- @param bufnr? integer Buffer handle, or 0 for current (default: 0)
+--- @param diagnostics vim.Diagnostic[] Diagnostics to display
+function M.render_virtual_lines(namespace, bufnr, diagnostics)
+  vim.validate('namespace', namespace, 'number')
+  vim.validate('bufnr', bufnr, 'number', true)
+  vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
+
+  bufnr = vim._resolve_bufnr(bufnr)
+
+  -- Define the virtual lines namespace if needed.
+  local ns = M.get_namespace(namespace)
+  if not ns.user_data.virt_lines_ns then
+    ns.user_data.virt_lines_ns =
+      api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_lines', ns.name))
+  end
+
+  api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_lines_ns, 0, -1)
+
+  if not next(diagnostics) then
+    return
+  end
+
   table.sort(diagnostics, function(d1, d2)
     if d1.lnum == d2.lnum then
       return d1.col < d2.col
@@ -1680,12 +1701,6 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
       return d1.lnum < d2.lnum
     end
   end)
-
-  api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
-
-  if not next(diagnostics) then
-    return
-  end
 
   -- This loop reads each line, putting them into stacks with some extra data since
   -- rendering each line requires understanding what is beneath it.
@@ -1825,7 +1840,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
       end
     end
 
-    api.nvim_buf_set_extmark(bufnr, namespace, lnum, 0, {
+    api.nvim_buf_set_extmark(bufnr, ns.user_data.virt_lines_ns, lnum, 0, {
       virt_lines_overflow = 'scroll',
       virt_lines = virt_lines,
     })
@@ -1857,10 +1872,6 @@ M.handlers.virtual_lines = {
     end
 
     local ns = M.get_namespace(namespace)
-    if not ns.user_data.virt_lines_ns then
-      ns.user_data.virt_lines_ns =
-        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_lines', ns.name))
-    end
     if not ns.user_data.virt_lines_augroup then
       ns.user_data.virt_lines_augroup = api.nvim_create_augroup(
         string.format('nvim.%s.diagnostic.virt_lines', ns.name),
@@ -1881,21 +1892,13 @@ M.handlers.virtual_lines = {
         buffer = bufnr,
         group = ns.user_data.virt_lines_augroup,
         callback = function()
-          render_virtual_lines(
-            ns.user_data.virt_lines_ns,
-            bufnr,
-            diagnostics_at_cursor(line_diagnostics)
-          )
+          M.render_virtual_lines(namespace, bufnr, diagnostics_at_cursor(line_diagnostics))
         end,
       })
       -- Also show diagnostics for the current line before the first CursorMoved event.
-      render_virtual_lines(
-        ns.user_data.virt_lines_ns,
-        bufnr,
-        diagnostics_at_cursor(line_diagnostics)
-      )
+      M.render_virtual_lines(namespace, bufnr, diagnostics_at_cursor(line_diagnostics))
     else
-      render_virtual_lines(ns.user_data.virt_lines_ns, bufnr, diagnostics)
+      M.render_virtual_lines(namespace, bufnr, diagnostics)
     end
 
     save_extmarks(ns.user_data.virt_lines_ns, bufnr)
