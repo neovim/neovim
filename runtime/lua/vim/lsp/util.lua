@@ -2136,7 +2136,7 @@ end
 ---@param end_line integer
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.Range
-local function make_line_range_params(bufnr, start_line, end_line, position_encoding)
+function M._make_line_range_params(bufnr, start_line, end_line, position_encoding)
   local last_line = api.nvim_buf_line_count(bufnr) - 1
 
   ---@type lsp.Position
@@ -2203,6 +2203,7 @@ end
 ---@field client_id? integer Client ID to refresh (default: all clients)
 ---@field handler? lsp.Handler
 
+---@deprecated
 ---@private
 --- Request updated LSP information for a buffer.
 ---
@@ -2234,7 +2235,7 @@ function M._refresh(method, opts)
         for _, client in ipairs(clients) do
           client:request(method, {
             textDocument = textDocument,
-            range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
+            range = M._make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
           }, opts.handler, bufnr)
         end
       end
@@ -2243,7 +2244,7 @@ function M._refresh(method, opts)
     for _, client in ipairs(clients) do
       client:request(method, {
         textDocument = textDocument,
-        range = make_line_range_params(
+        range = M._make_line_range_params(
           bufnr,
           0,
           api.nvim_buf_line_count(bufnr) - 1,
