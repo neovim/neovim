@@ -820,8 +820,7 @@ static inline void free_cptext(char *const *const cptext)
 /// Returns true if matches should be sorted based on proximity to the cursor.
 static bool is_nearest_active(void)
 {
-  unsigned flags = get_cot_flags();
-  return (flags & kOptCotFlagNearest) && !(flags & kOptCotFlagFuzzy);
+  return (get_cot_flags() & (kOptCotFlagNearest|kOptCotFlagFuzzy)) == kOptCotFlagNearest;
 }
 
 /// Repositions a match in the completion list based on its proximity score.
@@ -984,9 +983,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   match->cp_user_kind_hlattr = user_hl ? user_hl[1] : -1;
 
   if (cptext != NULL) {
-    int i;
-
-    for (i = 0; i < CPT_COUNT; i++) {
+    for (int i = 0; i < CPT_COUNT; i++) {
       if (cptext[i] == NULL) {
         continue;
       }
@@ -1392,6 +1389,12 @@ static int ins_compl_build_pum(void)
     // set the cp_score for later comparisons.
     if (fuzzy_filter && compl_leader.data != NULL && compl_leader.size > 0) {
       comp->cp_score = fuzzy_match_str(comp->cp_str.data, compl_leader.data);
+    }
+
+    // Apply 'smartcase' behavior during normal mode
+    if (ctrl_x_mode_normal() && !p_inf && compl_leader.data
+        && !ignorecase(compl_leader.data) && !fuzzy_filter) {
+      comp->cp_flags &= ~CP_ICASE;
     }
 
     if (!match_at_original_text(comp)
@@ -4834,6 +4837,7 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
       }
       startcol -= head_off;
     }
+
     compl_col += ++startcol;
     compl_length = (int)curs_col - startcol;
     if (compl_length == 1) {
@@ -4972,6 +4976,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
   if (col == -2 || aborting()) {
     return FAIL;
   }
+
   // Return value -3 does the same as -2 and leaves CTRL-X mode.
   if (col == -3) {
     ctrl_x_mode = CTRL_X_NORMAL;
