@@ -2591,4 +2591,18 @@ function M.fromqflist(list)
   return diagnostics
 end
 
+function M.status()
+  local counts = M.count(0)
+  local user_signs = vim.tbl_get(M.config(), 'signs', 'text') or {}
+  local signs = vim.tbl_extend('keep', user_signs, { 'E', 'W', 'I', 'H' })
+  local result_str = vim
+    .iter(pairs(counts))
+    :map(function(severity, count)
+      return ('%s:%s'):format(signs[severity], count)
+    end)
+    :join(' ')
+
+  return result_str
+end
+
 return M

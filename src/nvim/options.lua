@@ -8553,6 +8553,7 @@ local options = {
         '%=',
         "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
         "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
+        '%{v:lua.vim.diagnostic.status()} ',
         "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
       }),
       desc = [=[
