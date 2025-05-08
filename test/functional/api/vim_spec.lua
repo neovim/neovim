@@ -1990,6 +1990,42 @@ describe('API', function()
       ]])
       eq(false, api.nvim_get_option_value('modified', {}))
     end)
+
+    it('errors if autocmds wipe the dummy buffer', function()
+      -- Wipe the dummy buffer. This will throw E813, but the buffer will still be wiped; check that
+      -- such errors from setting the filetype have priority.
+      command 'autocmd FileType * ++once bwipeout!'
+      eq(
+        'FileType Autocommands for "*": Vim(bwipeout):E813: Cannot close autocmd window',
+        pcall_err(api.nvim_get_option_value, 'formatexpr', { filetype = 'lua' })
+      )
+
+      -- Silence E813 to check that the error for wiping the dummy buffer is set.
+      command 'autocmd FileType * ++once silent! bwipeout!'
+      eq(
+        'Internal buffer was deleted',
+        pcall_err(api.nvim_get_option_value, 'formatexpr', { filetype = 'lua' })
+      )
+    end)
+
+    it('sets dummy buffer options without side-effects', function()
+      exec [[
+        let g:events = []
+        autocmd OptionSet * let g:events += [expand("<amatch>")]
+        autocmd FileType * ++once let g:bufhidden = &l:bufhidden
+                               \| let g:buftype = &l:buftype
+                               \| let g:swapfile = &l:swapfile
+                               \| let g:modeline = &l:modeline
+                               \| let g:bufloaded = bufloaded(bufnr())
+      ]]
+      api.nvim_get_option_value('formatexpr', { filetype = 'lua' })
+      eq({}, eval('g:events'))
+      eq('hide', eval('g:bufhidden'))
+      eq('nofile', eval('g:buftype'))
+      eq(0, eval('g:swapfile'))
+      eq(0, eval('g:modeline'))
+      eq(1, eval('g:bufloaded'))
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()
