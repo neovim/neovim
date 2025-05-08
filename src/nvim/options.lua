@@ -8095,9 +8095,11 @@ local options = {
         Override the 'ignorecase' option if the search pattern contains upper
         case characters.  Only used when the search pattern is typed and
         'ignorecase' option is on.  Used for the commands "/", "?", "n", "N",
-        ":g" and ":s".  Not used for "*", "#", "gd", tag search, etc.  After
-        "*" and "#" you can make 'smartcase' used by doing a "/" command,
-        recalling the search pattern from history and hitting <Enter>.
+        ":g" and ":s" and when filtering matches for the completion menu
+        |compl-states|.
+        Not used for "*", "#", "gd", tag search, etc.  After "*" and "#" you
+        can make 'smartcase' used by doing a "/" command, recalling the search
+        pattern from history and hitting <Enter>.
       ]=],
       full_name = 'smartcase',
       scope = { 'global' },

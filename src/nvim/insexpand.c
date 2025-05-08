@@ -1391,6 +1391,12 @@ static int ins_compl_build_pum(void)
       comp->cp_score = fuzzy_match_str(comp->cp_str.data, compl_leader.data);
     }
 
+    // Apply 'smartcase' behavior during normal mode
+    if (ctrl_x_mode_normal() && !p_inf && compl_leader.data
+        && !ignorecase(compl_leader.data) && !fuzzy_filter) {
+      comp->cp_flags &= ~CP_ICASE;
+    }
+
     if (!match_at_original_text(comp)
         && (compl_leader.data == NULL
             || ins_compl_equal(comp, compl_leader.data, compl_leader.size)

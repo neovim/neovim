@@ -391,7 +391,7 @@ int ignorecase(char *pat)
   return ignorecase_opt(pat, p_ic, p_scs);
 }
 
-/// As ignorecase() put pass the "ic" and "scs" flags.
+/// As ignorecase() but pass the "ic" and "scs" flags.
 int ignorecase_opt(char *pat, int ic_in, int scs)
 {
   int ic = ic_in;

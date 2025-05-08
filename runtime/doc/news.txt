@@ -211,6 +211,7 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
+• 'smartcase' applies to completion filtering.
 • 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of
   the first writable directory in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
