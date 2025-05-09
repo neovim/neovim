@@ -1995,6 +1995,46 @@ describe('API', function()
       )
     end)
 
+    it('does not crash if autocmds open dummy buffer in other windows', function()
+      exec [[
+        autocmd FileType * ++once let g:dummy_buf = bufnr() | split
+
+        " Autocommands should be blocked while Nvim attempts to wipe the buffer.
+        let g:wipe_events = []
+        autocmd WinClosed * if winbufnr(expand('<amatch>')) == g:dummy_buf
+                         \| let g:wipe_events += ['WinClosed']
+                         \| endif
+        autocmd BufWipeout * if expand('<abuf>') == g:dummy_buf
+                         \| let g:wipe_events += ['BufWipeout']
+                         \| endif
+      ]]
+      api.nvim_get_option_value('formatexpr', { filetype = 'lua' })
+      eq(0, eval('bufexists(g:dummy_buf)'))
+      eq({}, eval('win_findbuf(g:dummy_buf)'))
+      eq({}, eval('g:wipe_events'))
+
+      -- Be an ABSOLUTE nuisance and make it the only window to prevent it from wiping.
+      -- Do it this way to avoid E813 from :only trying to close the autocmd window.
+      command('autocmd FileType * ++once let g:dummy_buf = bufnr() | split | wincmd w | quit')
+      api.nvim_get_option_value('formatexpr', { filetype = 'lua' })
+      eq(1, eval('bufexists(g:dummy_buf)'))
+
+      -- Ensure the buffer does not remain as a dummy by checking that we can switch to it.
+      local old_win = api.nvim_get_current_win()
+      command('execute g:dummy_buf "sbuffer"')
+      eq(eval('g:dummy_buf'), api.nvim_get_current_buf())
+      neq(old_win, api.nvim_get_current_win())
+      eq({}, eval('g:wipe_events'))
+    end)
+
+    it('does not crash if dummy buffer wiped after autocommands', function()
+      -- Autocommands are blocked while Nvim attempts to wipe the buffer, but check something like
+      -- &bufhidden = "wipe" causing a premature wipe doesn't crash.
+      command('autocmd FileType * ++once setlocal bufhidden=wipe | split')
+      api.nvim_get_option_value('formatexpr', { filetype = 'lua' })
+      assert_alive()
+    end)
+
     it('sets dummy buffer options without side-effects', function()
       exec [[
         let g:events = []
