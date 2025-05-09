@@ -110,6 +110,12 @@ static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, bool *aco_used, E
   if (filetype == NULL) {
     return NULL;
   }
+  // Not firing nested FileType autocmds; bail early if one's running.
+  if (in_filetype_autocmd()) {
+    api_set_error(err, kErrorTypeException,
+                  "Cannot detect default while FileType autocommands are running");
+    return NULL;
+  }
 
   // Allocate a buffer without putting it in the buffer list.
   buf_T *ftbuf = buflist_new(NULL, NULL, 1, BLN_DUMMY);
@@ -187,7 +193,8 @@ static void wipe_ft_buf(buf_T *buf)
 ///                  - buf: Buffer number. Used for getting buffer local options.
 ///                         Implies {scope} is "local".
 ///                  - filetype: |filetype|. Used to get the default option for a
-///                    specific filetype. Cannot be used with any other option.
+///                    specific filetype. Cannot be used with any other option or
+///                    while |FileType| autocommands are running.
 ///                    Note: this will trigger |ftplugin| and all |FileType|
 ///                    autocommands for the corresponding filetype.
 /// @param[out] err  Error details, if any

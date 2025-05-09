@@ -1941,9 +1941,14 @@ describe('API', function()
         end
       end
 
-      command 'au FileType lua setlocal commentstring=NEW\\ %s'
-
+      command 'au FileType lua ++once setlocal commentstring=NEW\\ %s'
       eq('NEW %s', api.nvim_get_option_value('commentstring', { filetype = 'lua' }))
+
+      command 'au FileType * ++once call nvim_get_option_value("tagfunc", #{filetype: "man"})'
+      eq(
+        [[FileType Autocommands for "*": Vim(call):E5555: API call: Cannot detect default while FileType autocommands are running]],
+        pcall_err(command, 'set ft=foo')
+      )
     end)
 
     it('errors for bad FileType autocmds', function()

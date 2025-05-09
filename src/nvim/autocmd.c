@@ -109,6 +109,7 @@ static bool autocmd_nested = false;
 static bool autocmd_include_groups = false;
 
 static char *old_termresponse = NULL;
+static int ft_recursive = 0;  // number of recursively running FileType autocmds
 
 // Map of autocmd group names and ids.
 //  name -> ID
@@ -2660,10 +2661,13 @@ void do_autocmd_focusgained(bool gained)
   recursive = false;
 }
 
+bool in_filetype_autocmd(void)
+{
+  return ft_recursive > 0;
+}
+
 void do_filetype_autocmd(buf_T *buf, bool force)
 {
-  static int ft_recursive = 0;
-
   if (ft_recursive > 0 && !force) {
     return;  // disallow recursion
   }
