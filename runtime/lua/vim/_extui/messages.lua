@@ -405,17 +405,26 @@ function M.set_pos(type)
       local row = (texth.all > height and texth.end_row or 0) + 1
       api.nvim_win_set_cursor(ext.wins[ext.tab].box, { row, 0 })
     elseif type == 'more' and api.nvim_get_current_win() ~= win then
-      api.nvim_create_autocmd('WinEnter', {
-        once = true,
-        callback = function()
-          if api.nvim_win_is_valid(win) then
-            api.nvim_win_set_config(win, { hide = true })
-          end
-          append_more = 0
-        end,
-        desc = 'Hide inactive more window.',
-      })
-      api.nvim_set_current_win(win)
+      -- Cannot leave the cmdwin to enter the "more" window, so close it.
+      -- NOTE: regression w.r.t. the message grid, which allowed this. Resolving
+      -- that would require somehow bypassing textlock for the "more" window.
+      if fn.getcmdwintype() ~= '' then
+        api.nvim_command('quit')
+      end
+      -- It's actually closed one event iteration later so schedule in case it was open.
+      vim.schedule(function()
+        api.nvim_create_autocmd('WinEnter', {
+          once = true,
+          callback = function()
+            if api.nvim_win_is_valid(win) then
+              api.nvim_win_set_config(win, { hide = true })
+            end
+            append_more = 0
+          end,
+          desc = 'Hide inactive "more" window.',
+        })
+        api.nvim_set_current_win(win)
+      end)
     end
   end
 
