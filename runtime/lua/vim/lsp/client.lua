@@ -205,6 +205,8 @@ local validate = vim.validate
 --- See [vim.lsp.ClientConfig].
 --- @field workspace_folders lsp.WorkspaceFolder[]?
 ---
+--- Whether linked editing ranges are enabled for this client.
+--- @field _linked_editing_enabled boolean?
 ---
 --- Track this so that we can escalate automatically if we've already tried a
 --- graceful shutdown
