@@ -1955,9 +1955,38 @@ describe('API', function()
         end
       end
 
-      command 'au FileType lua setlocal commentstring=NEW\\ %s'
-
+      command 'au FileType lua ++once setlocal commentstring=NEW\\ %s'
       eq('NEW %s', api.nvim_get_option_value('commentstring', { filetype = 'lua' }))
+
+      -- Works from within a FileType autocommand fired from setting the &filetype.
+      exec [[
+        au FileType * ++once let g:value = nvim_get_option_value('commentstring', #{filetype: 'vim'})
+        set commentstring= ft=lua
+      ]]
+      eq('"%s', eval('g:value'))
+      -- Check it didn't somehow mess up the &commentstring from setting the &filetype.
+      eq('-- %s', eval('&commentstring'))
+
+      -- Not possible to recurse endlessly, of course.
+      exec [[
+        au FileType foobar call nvim_get_option_value('commentstring', #{filetype: 'foobar'})
+      ]]
+      matches( -- Watch out - this error is large!
+        [[E5555: API call: Vim:E218: Autocommand nesting too deep$]],
+        pcall_err(command, 'set ft=foobar')
+      )
+      command('au! FileType foobar')
+
+      eq(
+        [[Vim(call):E5555: API call: Could not execute FileType autocommands]],
+        pcall_err(command, "noautocmd call nvim_get_option_value('tagfunc', #{filetype: 'man'})")
+      )
+
+      -- No error if executed with no FileType autocommands defined.
+      -- Returning the copied global value will continue to suffice, I guess.
+      command([[filetype plugin off | setglobal commentstring=<><\ %s\ ><>]])
+      eq({}, api.nvim_get_autocmds { event = 'FileType' })
+      eq('<>< %s ><>', api.nvim_get_option_value('commentstring', { filetype = 'lua' }))
     end)
 
     it('errors for bad FileType autocmds', function()
