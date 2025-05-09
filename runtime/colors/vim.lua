@@ -133,6 +133,7 @@ hi('DiagnosticDeprecated',       { sp = 'Red', strikethrough = true,    cterm = 
 
 hi('DiagnosticUnnecessary', { link = 'Comment' })
 hi('LspInlayHint',          { link = 'NonText' })
+hi('LspLinkedEditingRange', { link = 'IncSearch' })
 hi('SnippetTabstop',        { link = 'Visual' })
 
 -- Text
