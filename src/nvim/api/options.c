@@ -19,6 +19,7 @@
 #include "nvim/option.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
+#include "nvim/window.h"
 
 #include "api/options.c.generated.h"
 
@@ -149,6 +150,27 @@ static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, bool *aco_used, E
   return ftbuf;
 }
 
+static void wipe_ft_buf(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  block_autocmds();
+
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+
+  close_windows(buf, false);
+  // Autocommands are blocked, but 'bufhidden' may have wiped it already.
+  // Also can't wipe if the buffer is somehow still in a window or current.
+  if (bufref_valid(&bufref) && buf != curbuf && buf->b_nwindows == 0) {
+    wipe_buffer(buf, false);
+  }
+  if (bufref_valid(&bufref)) {
+    buf->b_flags &= ~BF_DUMMY;  // Couldn't wipe; keep it instead.
+  }
+
+  unblock_autocmds();
+}
+
 /// Gets the value of an option. The behavior of this function matches that of
 /// |:set|: the local value of an option is returned if it exists; otherwise,
 /// the global value is returned. Local values always correspond to the current
@@ -191,10 +213,8 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
       aucmd_restbuf(&aco);
     }
     if (ftbuf != NULL) {
-      assert(curbuf != ftbuf);  // safety check
-      wipe_buffer(ftbuf, false);
+      wipe_ft_buf(ftbuf);
     }
-
     return (Object)OBJECT_INIT;
   }
 
@@ -210,8 +230,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
       // restore curwin/curbuf and a few other things
       aucmd_restbuf(&aco);
     }
-    assert(curbuf != ftbuf);  // safety check
-    wipe_buffer(ftbuf, false);
+    wipe_ft_buf(ftbuf);
   }
 
   if (ERROR_SET(err)) {
