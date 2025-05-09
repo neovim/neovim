@@ -2293,6 +2293,17 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 
 
 ==============================================================================
+Lua module: vim.lsp.linked_editing_range            *lsp-linked_editing_range*
+
+enable({enable})                       *vim.lsp.linked_editing_range.enable()*
+    Enables or disables linked editing ranges. Ranges are highlighted using
+    the |hl-LspReferenceTarget| group.
+
+    Parameters: ~
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
+
+
+==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
 
 *vim.lsp.util.open_floating_preview.Opts*
