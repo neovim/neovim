@@ -1779,6 +1779,7 @@ M.funcs = {
       position within a <Tab> or after the last character.
       Returns 0 when the position could be set, -1 otherwise.
 
+      Returns 0 when the position could be set, -1 otherwise.
     ]=],
     name = 'cursor',
     params = { { 'list', 'integer[]' } },
@@ -2795,6 +2796,7 @@ M.funcs = {
     ]=],
     name = 'finddir',
     params = { { 'name', 'string' }, { 'path', 'string' }, { 'count', 'integer' } },
+    returns = 'string|string[]',
     signature = 'finddir({name} [, {path} [, {count}]])',
   },
   findfile = {
@@ -2810,7 +2812,8 @@ M.funcs = {
 
     ]=],
     name = 'findfile',
-    params = { { 'name', 'string' }, { 'path', 'string' }, { 'count', 'any' } },
+    params = { { 'name', 'string' }, { 'path', 'string' }, { 'count', 'integer' } },
+    returns = 'string|string[]',
     signature = 'findfile({name} [, {path} [, {count}]])',
   },
   flatten = {
@@ -9872,6 +9875,7 @@ M.funcs = {
       	call cursor(4, 3)
       <positions the cursor on the first character '여'.
 
+      Returns 0 when the position could be set, -1 otherwise.
     ]=],
     name = 'setcursorcharpos',
     params = { { 'list', 'integer[]' } },
