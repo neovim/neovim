@@ -1350,8 +1350,6 @@ function vim.fn.cursor(lnum, col, off) end
 --- position within a <Tab> or after the last character.
 --- Returns 0 when the position could be set, -1 otherwise.
 ---
---- Returns 0 when the position could be set, -1 otherwise.
----
 --- @param list integer[]
 --- @return any
 function vim.fn.cursor(list) end
