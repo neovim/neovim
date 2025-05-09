@@ -493,7 +493,7 @@ bool decor_redraw_start(win_T *wp, int top_row, DecorState *state)
   return true;  // TODO(bfredl): check if available in the region
 }
 
-bool decor_redraw_line(win_T *wp, int row, DecorState *state)
+static void decor_state_pack(DecorState *state)
 {
   int count = (int)kv_size(state->ranges_i);
   int const cur_end = state->current_end;
@@ -513,6 +513,11 @@ bool decor_redraw_line(win_T *wp, int row, DecorState *state)
 
   kv_size(state->ranges_i) = (size_t)count;
   state->future_begin = fut_beg;
+}
+
+bool decor_redraw_line(win_T *wp, int row, DecorState *state)
+{
+  decor_state_pack(state);
 
   if (state->row == -1) {
     decor_redraw_start(wp, row, state);
@@ -525,7 +530,7 @@ bool decor_redraw_line(win_T *wp, int row, DecorState *state)
   state->col_until = -1;
   state->eol_col = -1;
 
-  if (cur_end != 0 || fut_beg != count) {
+  if (state->current_end != 0 || state->future_begin != (int)kv_size(state->ranges_i)) {
     return true;
   }
 
