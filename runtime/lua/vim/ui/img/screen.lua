@@ -47,6 +47,13 @@ end
 ---Determines the size of the terminal screen for Windows systems with pixel accuracy.
 ---@return vim.ui.img.screen.Size|nil
 function M.__windows_size()
+  -- For neovim spawned from within Windows Terminal, this should be set to
+  -- some GUID; so, leverage CSI escape codes to query, which are supported
+  -- by modern Windows Terminal instances
+  if vim.env.WT_SESSION then
+    return M.__csi_size()
+  end
+
   local ffi = require('ffi')
 
   if not M.__def then
@@ -99,6 +106,8 @@ function M.__windows_size()
   ---@type vim.ui.img.screen.Size|nil
   local size
 
+  ---Retrieve the screen buffer info and font size to determine the cell width and height.
+  ---NOTE: This does not work on Windows Terminal! We will fall back to CSI escape codes.
   ---@type boolean, string|nil
   local ok, err = pcall(function()
     -- Using -11 should retrieve STD_OUTPUT_HANDLE, which initially is the
@@ -132,8 +141,13 @@ function M.__windows_size()
     local cell_height = fontInfo.dwFontSize.Y
 
     -- Verify that we have valid font size information
+    -- NOTE: On Windows Terminal, this should result in the font width being 0,
+    --       so in the case that WT_SESSION was not set, we need to try it here
     if cell_width == 0 or cell_height == 0 then
-      error('font size is invalid; running in Windows Terminal or output redirected')
+      size = M.__csi_size()
+      if not size then
+        error('font size is invalid')
+      end
     end
 
     size = {
@@ -155,6 +169,19 @@ function M.__windows_size()
   end
 
   return size
+end
+
+---@private
+---Determines the size of the terminal screen using CSI escape codes.
+---@return vim.ui.img.screen.Size
+function M.__csi_size()
+  -- TODO: Introduce support for querying CSI. Neovim eats the response right now.
+  --
+  --       CSI 14 t and CSI 16 t are both supported by Windows Terminal
+  --
+  --       CSI 14 t :: tells us the pixel dimensions of the view space
+  --       CSI 16 t :: tells us the pixel dimensions of a terminal character
+  error('todo: support querying CSI 14 t and/or CSI 16 t')
 end
 
 ---@private
