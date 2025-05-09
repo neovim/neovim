@@ -1761,6 +1761,19 @@ describe('vim.diagnostic', function()
           return _G.count_extmarks(_G.diagnostic_bufnr, _G.diagnostic_ns)
         end)
       )
+
+      --`float` option defined as a function.
+      eq(
+        true,
+        exec_lua(function()
+          vim.diagnostic.config({
+            float = function(_, _)
+              return { border = 'rounded' }
+            end,
+          })
+          return type(vim.diagnostic.config().float) == 'function'
+        end)
+      )
     end)
 
     it('can use functions for config values', function()
@@ -2714,6 +2727,37 @@ describe('vim.diagnostic', function()
           local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
           vim.api.nvim_win_close(winnr, true)
           return lines
+        end)
+      )
+    end)
+
+    it('', function()
+      eq(
+        { { 'Diagnostics:', '1. syntax error' }, '╭', '┌' },
+        exec_lua(function()
+          local diagnostics = {
+            _G.make_error('syntax error', 0, 1, 0, 3),
+          }
+          vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
+          vim.diagnostic.config({
+            float = function(_, bufnr)
+              return { border = bufnr == _G.diagnostic_bufnr and 'rounded' or 'single' }
+            end,
+          })
+          local float_bufnr, winnr = vim.diagnostic.open_float()
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          local border1 = vim.api.nvim_win_get_config(winnr).border
+          vim.api.nvim_win_close(winnr, true)
+
+          local other_bufnr = vim.api.nvim_create_buf(true, true)
+          vim.api.nvim_win_set_buf(0, other_bufnr)
+          vim.diagnostic.set(_G.diagnostic_ns, other_bufnr, diagnostics)
+          local _, winnr1 = vim.diagnostic.open_float()
+          local border2 = vim.api.nvim_win_get_config(winnr1).border
+          vim.api.nvim_win_close(winnr1, true)
+
+          return { lines, border1[1], border2[1] }
         end)
       )
     end)
