@@ -6,7 +6,7 @@ local LAST_IMAGE_ID = 0
 ---@field id integer unique id associated with the image
 ---@field data string|nil data of the image loaded into memory
 ---@field filename string path to the image on disk
----@field private __header vim.ui.img.Header|nil image's header information if loaded
+---@field private __header vim.ui.img.parser.Header|nil image's header information if loaded
 local M = {}
 M.__index = M
 
@@ -149,7 +149,7 @@ end
 ---@private
 ---Parses the header into memory, loading it from disk if needed.
 ---@param opts? {force?:boolean}
----@return vim.ui.img.Header
+---@return vim.ui.img.parser.Header
 function M:__parse_header(opts)
   opts = opts or {}
 
@@ -157,9 +157,10 @@ function M:__parse_header(opts)
     return self.__header
   end
 
-  self.__header = require('vim.ui.img.header').parse({
+  self.__header = require('vim.ui.img.parser').parse({
     data = self.data,
     filename = self.filename,
+    only_header = true,
   })
 
   return self.__header
@@ -248,7 +249,7 @@ end
 ---@return vim.ui.img.Provider
 local function get_provider(opts)
   -- TODO: Re-introduce support for detecting a provider dynamically
-  local provider = (opts and opts.provider) or 'kitty'
+  local provider = (opts and opts.provider) or 'sixel' --or 'kitty'
 
   -- If just a name of a provider is specified, grab it from our internal implementations
   if type(provider) == 'string' then

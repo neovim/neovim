@@ -269,22 +269,22 @@ local function setup(_self)
 end
 
 ---@param _self vim.ui.img.Provider
----@param image vim.ui.Image
+---@param img vim.ui.Image
 ---@param opts? vim.ui.img.Opts|{remote?:boolean}
 ---@return integer
-local function show(_self, image, opts)
+local function show(_self, img, opts)
   opts = opts or {}
 
   -- Check if we need to transmit our image or if it is already available
-  local image_id = NVIM_IMAGE_TO_KITTY_IMAGE[image.id]
+  local image_id = NVIM_IMAGE_TO_KITTY_IMAGE[img.id]
   if not image_id then
     -- If remote, we have to use a direct transmit instead of file
     if opts.remote then
-      image_id = transmit_image_direct(image)
+      image_id = transmit_image_direct(img)
     else
-      image_id = transmit_image_file(image)
+      image_id = transmit_image_file(img)
     end
-    NVIM_IMAGE_TO_KITTY_IMAGE[image.id] = image_id
+    NVIM_IMAGE_TO_KITTY_IMAGE[img.id] = image_id
   end
 
   local placement_id = display_image(image_id, opts)
