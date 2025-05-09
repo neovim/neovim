@@ -82,10 +82,14 @@ function M.enable(opts)
   local function check_opt(name, value)
     if name == 'cmdheight' then
       -- 'cmdheight' set; (un)hide cmdline window and set its height.
-      ext.cmdheight = value
-      ext.cfg.msg.pos = ext.cmdheight == 0 and 'box' or ext.cfg.msg.pos
-      local cfg = { height = math.max(ext.cmdheight, 1), hide = ext.cmdheight == 0 }
+      local cfg = { height = math.max(value, 1), hide = value == 0 }
       api.nvim_win_set_config(ext.wins[ext.tab].cmd, cfg)
+      -- Change message position when 'cmdheight' was or becomes 0.
+      if value == 0 or ext.cmdheight == 0 then
+        ext.cfg.msg.pos = value == 0 and 'box' or ext.cmdheight == 0 and 'cmd'
+        ext.msg.prev_msg = ''
+      end
+      ext.cmdheight = value
     elseif name == 'termguicolors' then
       -- 'termguicolors' toggled; add or remove border and set 'winblend' for box windows.
       for _, tab in ipairs(api.nvim_list_tabpages()) do

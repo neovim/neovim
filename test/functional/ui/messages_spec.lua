@@ -463,7 +463,7 @@ describe('ui/ext_messages', function()
         {
           content = { { (':!%s\r\n[No write since last change]\n'):format(cmd) } },
           history = false,
-          kind = '',
+          kind = 'shell_cmd',
         },
         {
           content = { { ('stdout%s\n'):format(t.is_os('win') and '\r' or '') } },

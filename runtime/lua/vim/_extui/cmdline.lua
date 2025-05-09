@@ -6,7 +6,7 @@ local M = {
   indent = 0, -- Current indent for block event.
   prompt = false, -- Whether a prompt is active; messages are placed in the 'prompt' window.
   row = 0, -- Current row in the cmdline buffer, > 0 for block events.
-  level = 0, -- Current cmdline level, 0 when inactive (otherwise unused).
+  level = -1, -- Current cmdline level, 0 when inactive, -1 one loop iteration after closing.
 }
 
 --- Set the 'cmdheight' and cmdline window height. Reposition message windows.
@@ -121,16 +121,21 @@ function M.cmdline_hide(_, abort)
     api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
   end
 
-  -- Avoid clearing prompt window when it is re-entered before the next event
-  -- loop iteration. E.g. when a non-choice confirm button is pressed.
-  if M.prompt then
+  local clear = vim.schedule_wrap(function(was_prompt)
+    -- Avoid clearing prompt window when it is re-entered before the next event
+    -- loop iteration. E.g. when a non-choice confirm button is pressed.
+    if was_prompt and not M.prompt then
+      api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
+      api.nvim_win_set_config(ext.wins[ext.tab].prompt, { hide = true })
+    end
+    -- Messages emitted as a result of a typed command are treated specially:
+    -- remember if the cmdline was used this event loop iteration.
+    -- NOTE: Message event callbacks are themselves scheduled, so delay two iterations.
     vim.schedule(function()
-      if not M.prompt then
-        api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
-        api.nvim_win_set_config(ext.wins[ext.tab].prompt, { hide = true })
-      end
+      M.level = -1
     end)
-  end
+  end)
+  clear(M.prompt)
 
   M.prompt, M.level, curpos[1], curpos[2] = false, 0, 0, 0
   win_config(ext.wins[ext.tab].cmd, true, ext.cmdheight)
