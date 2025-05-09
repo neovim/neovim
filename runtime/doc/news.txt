@@ -183,6 +183,8 @@ LSP
 • The function form of `cmd` in a vim.lsp.Config or vim.lsp.ClientConfig
   receives the resolved config as the second arg: `cmd(dispatchers, config)`.
 • Support for annotated text edits.
+• Support for `textDocument/linkedEditingRange`: |lsp-linked_editing_range|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_linkedEditingRange
 
 LUA
 

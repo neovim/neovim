@@ -2293,6 +2293,29 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 
 
 ==============================================================================
+Lua module: vim.lsp.linked_editing_range            *lsp-linked_editing_range*
+
+                                       *vim.lsp.linked_editing_range.enable()*
+enable({enable}, {bufnr}, {client_id})
+    Enable or disable a linked editing session for the given buffer with the
+    given client. When enabling, the client must already be attached to the
+    buffer.
+
+    NOTE: Linked editing is automatically enabled by
+    |vim.lsp.buf_attach_client()|. To opt-out of linked editing ranges with a
+    server that supports it, you can delete the `linkedEditingRangeProvider`
+    table from the {server_capabilities} of your client in your |LspAttach|
+    callback or your configuration's `on_attach` callback: >lua
+        client.server_capabilities.linkedEditingRangeProvider = nil
+<
+
+    Parameters: ~
+      • {enable}     (`boolean`)
+      • {bufnr}      (`integer`)
+      • {client_id}  (`integer`)
+
+
+==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
 
 *vim.lsp.util.open_floating_preview.Opts*
