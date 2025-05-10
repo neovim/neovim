@@ -1,4 +1,3 @@
----@nodoc
 ---@class vim._comment.Parts
 ---@field left string Left part of comment
 ---@field right string Right part of comment

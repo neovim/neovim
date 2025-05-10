@@ -1164,7 +1164,6 @@ function LanguageTree:_edit(
   end
 end
 
----@nodoc
 ---@param bufnr integer
 ---@param changed_tick integer
 ---@param start_row integer
@@ -1236,12 +1235,10 @@ function LanguageTree:_on_bytes(
   )
 end
 
----@nodoc
 function LanguageTree:_on_reload()
   self:invalidate(true)
 end
 
----@nodoc
 function LanguageTree:_on_detach(...)
   self:invalidate(true)
   self:_do_callback('detach', ...)
