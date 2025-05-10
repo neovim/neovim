@@ -163,7 +163,7 @@ OPTIONS
 • 'completeopt' flag "nearset" sorts completion results by distance to cursor.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'pummaxwidth' sets maximum width for the completion popup menu.
-• 'winborder' "bold" style.
+• 'winborder' "bold" style and support custom border characters.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 
 PERFORMANCE

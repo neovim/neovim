@@ -7986,7 +7986,18 @@ vim.wo.winbl = vim.wo.winblend
 --- - "single": Single-line box.
 --- - "solid": Adds padding by a single whitespace cell.
 ---
---- @type ''|'double'|'single'|'shadow'|'rounded'|'solid'|'bold'|'none'
+--- Custom border characters can be specified with a comma-separated list
+--- of exactly 8 characters in the following order:
+---   topleft, top, topright, right, botright, bottom, botleft, left
+---
+--- Example:
+---
+--- ```vim
+---   set winborder=+,-,+,\`,+,-,+,\`
+--- ```
+---
+---
+--- @type string
 vim.o.winborder = ""
 vim.go.winborder = vim.o.winborder
 
