@@ -709,8 +709,9 @@ Lua module: vim.lsp                                                 *lsp-core*
       • {cmd}?           (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
                          See `cmd` in |vim.lsp.ClientConfig|.
       • {filetypes}?     (`string[]`) Filetypes the client will attach to, if
-                         activated by `vim.lsp.enable()`. If not provided, the
-                         client will attach to all filetypes.
+                         activated by `vim.lsp.enable()`. If not provided, or
+                         contains at any position "*", the client will attach
+                         to all filetypes.
       • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                          Predicate which decides if a client should be
                          re-used. Used on all running clients. The default

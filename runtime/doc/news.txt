@@ -147,6 +147,8 @@ LSP
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
 • The `textDocument/diagnostic` request now includes the previous id in its
   parameters.
+• Adding "*" to {filetypes} table in |vim.lsp.Config| causes client to attach
+  to all filetypes.
 
 LUA
 
