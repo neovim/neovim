@@ -338,10 +338,14 @@ static void handle_request(Channel *channel, Unpacker *p, Array args)
     }
   } else {
     bool is_resize = p->handler.fn == handle_nvim_ui_try_resize;
+    bool is_restart = p->handler.fn == handle_nvim_restart;
     if (is_resize) {
       Event ev = event_create_oneshot(event_create(request_event, evdata), 2);
       multiqueue_put_event(channel->events, ev);
       multiqueue_put_event(resize_events, ev);
+    } else if (is_restart) {
+      // Invoke immediately.
+      request_event((void **)&evdata);
     } else {
       multiqueue_put(channel->events, request_event, evdata);
       DLOG("RPC: scheduled %.*s", (int)p->method_name_len, p->handler.name);
