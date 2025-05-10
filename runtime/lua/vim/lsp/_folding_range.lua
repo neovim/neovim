@@ -345,7 +345,10 @@ function M.foldclose(kind, winid)
   local params = { textDocument = util.make_text_document_params(bufnr) }
   vim.lsp.buf_request_all(bufnr, ms.textDocument_foldingRange, params, function(...)
     multi_handler(...)
-    foldclose(kind, winid)
+    -- Ensure this buffer stays as the current buffer after the async request
+    if api.nvim_win_get_buf(winid) == bufnr then
+      foldclose(kind, winid)
+    end
   end)
 end
 
