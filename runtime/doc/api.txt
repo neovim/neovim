@@ -1691,6 +1691,15 @@ nvim__redraw({opts})                                          *nvim__redraw()*
     See also: ~
       • |:redraw|
 
+nvim_restart({channel_id})                                                 *nvim_restart()*
+    Restarts the embedded server without killing the UI.
+
+    Attributes: ~
+        Since: 0.12.0
+
+    Parameters: ~
+    • {channel_id}  Channel id which sent the RPC request.
+
 nvim__stats()                                                  *nvim__stats()*
     Gets internal stats.
 
