@@ -278,8 +278,8 @@ end
 --- See `cmd` in [vim.lsp.ClientConfig].
 --- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient
 ---
---- Filetypes the client will attach to, if activated by `vim.lsp.enable()`. If not provided,
---- or contains at any position "*", the client will attach to all filetypes.
+--- Filetypes the client will attach to, if activated by `vim.lsp.enable()`. If contains "*",
+--- the client will attach to all filetypes. If not provided, falls back to attaching to all.
 --- @field filetypes? string[]
 ---
 --- Predicate which decides if a client should be re-used. Used on all running clients. The default
@@ -522,14 +522,11 @@ local function can_start(bufnr, name, config)
     return false
   end
 
-  if config.filetypes then
-    if vim.tbl_contains(config.filetypes, '*') then
-      return true
-    elseif vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype) then
-      return true
-    else
-      return false
-    end
+  if vim.tbl_contains(config.filetypes or { '*' }, '*') then
+    return true
+  end
+  if not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype) then
+    return false
   end
 
   return true
