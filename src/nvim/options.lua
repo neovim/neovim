@@ -2745,9 +2745,9 @@ local options = {
       defaults = false,
       desc = [=[
         Enables project-local configuration. Nvim will execute any .nvim.lua,
-        .nvimrc, or .exrc file found in the |current-directory|, if the file is
-        in the |trust| list. Use |:trust| to manage trusted files. See also
-        |vim.secure.read()|.
+        .nvimrc, or .exrc file found in the |current-directory| and all parent
+        directories (ordered upwards), if the files are in the |trust| list.
+        Use |:trust| to manage trusted files. See also |vim.secure.read()|.
 
         Compare 'exrc' to |editorconfig|:
         - 'exrc' can execute any code; editorconfig only specifies settings.
@@ -2765,7 +2765,7 @@ local options = {
       full_name = 'exrc',
       scope = { 'global' },
       secure = true,
-      short_desc = N_('read .nvimrc and .exrc in the current directory'),
+      short_desc = N_('read project-local configuration in parent directories'),
       tags = { 'project-config', 'workspace-config' },
       type = 'boolean',
       varname = 'p_exrc',

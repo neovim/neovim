@@ -925,6 +925,29 @@ do
       end
     end
   end
+
+  vim.api.nvim_create_autocmd('VimEnter', {
+    group = vim.api.nvim_create_augroup('nvim.find_exrc', {}),
+    desc = 'Find project-local configuration',
+    callback = function()
+      if vim.o.exrc then
+        local files = vim.fs.find(
+          { '.nvim.lua', '.nvimrc', '.exrc' },
+          { type = 'file', upward = true, limit = math.huge }
+        )
+        for _, file in ipairs(files) do
+          local trusted = vim.secure.read(file) --[[@as string|nil]]
+          if trusted then
+            if vim.endswith(file, '.lua') then
+              loadstring(trusted)()
+            else
+              vim.api.nvim_exec2(trusted, {})
+            end
+          end
+        end
+      end
+    end,
+  })
 end
 
 --- Default options

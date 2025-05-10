@@ -209,6 +209,10 @@ nvim.swapfile:
   swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
   swapfile…" message.
 
+nvim.find_exrc:
+- VimEnter: Extend 'exrc' to also search for project-local configuration files
+  in all parent directories.
+
 ==============================================================================
 New Features                                                   *nvim-features*
 
