@@ -2176,9 +2176,10 @@ nvim_get_option_value({name}, {opts})                *nvim_get_option_value()*
                 • buf: Buffer number. Used for getting buffer local options.
                   Implies {scope} is "local".
                 • filetype: |filetype|. Used to get the default option for a
-                  specific filetype. Cannot be used with any other option.
-                  Note: this will trigger |ftplugin| and all |FileType|
-                  autocommands for the corresponding filetype.
+                  specific filetype. Cannot be used with any other option or
+                  while |FileType| autocommands are running. Note: this will
+                  trigger |ftplugin| and all |FileType| autocommands for the
+                  corresponding filetype.
 
     Return: ~
         Option value

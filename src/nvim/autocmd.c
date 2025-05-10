@@ -109,6 +109,7 @@ static bool autocmd_nested = false;
 static bool autocmd_include_groups = false;
 
 static char *old_termresponse = NULL;
+static int ft_recursive = 0;  // number of recursively running FileType autocmds
 
 // Map of autocmd group names and ids.
 //  name -> ID
@@ -2660,15 +2661,17 @@ void do_autocmd_focusgained(bool gained)
   recursive = false;
 }
 
+bool in_filetype_autocmd(void)
+{
+  return ft_recursive > 0;
+}
+
 void do_filetype_autocmd(buf_T *buf, bool force)
 {
-  static int ft_recursive = 0;
-
   if (ft_recursive > 0 && !force) {
     return;  // disallow recursion
   }
 
-  char **varp = &buf->b_p_ft;
   int secure_save = secure;
 
   // Reset the secure flag, since the value of 'filetype' has
@@ -2682,9 +2685,5 @@ void do_filetype_autocmd(buf_T *buf, bool force)
   apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force || ft_recursive == 1, buf);
   ft_recursive--;
 
-  // Just in case the old "buf" is now invalid
-  if (varp != &(buf->b_p_ft)) {
-    varp = NULL;
-  }
   secure = secure_save;
 }
