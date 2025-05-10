@@ -2457,7 +2457,7 @@ finddir({name} [, {path} [, {count}]])                               *finddir()*
                   • {count} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`string|string[]`)
 
 findfile({name} [, {path} [, {count}]])                             *findfile()*
 		Just like |finddir()|, but find a file instead of a directory.
@@ -2470,10 +2470,10 @@ findfile({name} [, {path} [, {count}]])                             *findfile()*
                 Parameters: ~
                   • {name} (`string`)
                   • {path} (`string?`)
-                  • {count} (`any?`)
+                  • {count} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`string|string[]`)
 
 flatten({list} [, {maxdepth}])                                       *flatten()*
 		Flatten {list} up to {maxdepth} levels.  Without {maxdepth}
@@ -8941,6 +8941,8 @@ setcursorcharpos({list})
 <		positions the cursor on the third character '세'. >vim
 			call cursor(4, 3)
 <		positions the cursor on the first character '여'.
+
+		Returns 0 when the position could be set, -1 otherwise.
 
                 Parameters: ~
                   • {list} (`integer[]`)
