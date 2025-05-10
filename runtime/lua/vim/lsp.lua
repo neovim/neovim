@@ -522,8 +522,14 @@ local function can_start(bufnr, name, config)
     return false
   end
 
-  if config.filetypes and not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype) then
-    return false
+  if config.filetypes then
+    if vim.tbl_contains(config.filetypes, '*') then
+      return true
+    elseif vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype) then
+      return true
+    else
+      return false
+    end
   end
 
   return true
