@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
@@ -17,6 +18,8 @@
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -24,12 +27,15 @@
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
+#include "nvim/log.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
+#include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/packer.h"
@@ -37,6 +43,8 @@
 #include "nvim/option.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_client.h"
+#include "nvim/winfloat.h"
 
 #define BUF_POS(ui) ((size_t)((ui)->packer.ptr - (ui)->packer.startptr))
 
@@ -237,6 +245,62 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
     return;
   }
   remote_ui_disconnect(channel_id);
+}
+
+void nvim_ui_restart(uint64_t channel_id, Error *err)
+  FUNC_API_SINCE(12) FUNC_API_REMOTE_ONLY
+{
+  Channel *chan = find_channel(channel_id);
+  if (!chan) {
+    api_set_error(err, kErrorTypeException,
+                  "UI not attached to RPC channel: %" PRId64, channel_id);
+    return;
+  }
+  DLOG("found channel");
+  if (!chan->is_rpc) {
+    api_set_error(err, kErrorTypeException,
+                  "channel is not RPC: %" PRId64, channel_id);
+    return;
+  }
+  DLOG("found channel as rpc");
+  const char *error;
+  channel_close(channel_id, kChannelPartAll, &error);
+  if (error) {
+    api_set_error(err, kErrorTypeException,
+                  "channel close: %" PRId64, channel_id);
+    return;
+  }
+  DLOG("closed channel");
+  
+  typval_T *tv = get_vim_var_tv(VV_ARGV);
+  if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
+    api_set_error(err, kErrorTypeException, "failed to get vim var tv");
+    return;
+  }
+  list_T *l = tv->vval.v_list;
+  int argc = tv_list_len(l);
+  char **argv = xmalloc(sizeof(char *)* (argc + 1));
+  listitem_T *li = tv_list_first(l);
+  for (int i = 0; i < argc && li != NULL; i++, li = li->li_next) {
+    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
+      argv[i] = TV_LIST_ITEM_TV(li)->vval.v_string;
+    } else {
+      argv[i] = "";
+    }
+  }
+  argv[argc] = NULL;
+  DLOG("got argc and argv");
+
+  uint64_t rv = ui_client_start_server(argc, argv);
+  if (!rv) {
+    api_set_error(err, kErrorTypeException,
+                  "failed to start nvim server");
+    return;
+  }
+  DLOG("started new nvim --embed server");
+  ui_client_channel_id = rv;
+  DLOG("set ui_client_channel_id");
+  ILOG("restarted server from ui client");
 }
 
 // TODO(bfredl): use me to detach a specific ui from the server
