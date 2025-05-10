@@ -3085,9 +3085,8 @@ local options = {
         Example: >vim
             set fillchars=stl:\ ,stlnc:\ ,vert:│,fold:·,diff:-
         <
-        For the "stl", "stlnc", "foldopen", "foldclose" and "foldsep" items
-        single-byte and multibyte characters are supported.  But double-width
-        characters are not supported. |E1512|
+        All items support single-byte and multibyte characters.  But
+        double-width characters are not supported. |E1512|
 
         The highlighting used for these items:
           item		highlight group ~
