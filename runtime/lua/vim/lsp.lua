@@ -522,7 +522,13 @@ local function can_start(bufnr, name, config)
     return false
   end
 
-  if config.filetypes and not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype) then
+  if config.filetypes then
+    for _, ft in ipairs(config.filetypes) do
+      local pat = vim.fn.glob2regpat(ft)
+      if vim.regex(pat):match_str(vim.bo[bufnr].filetype) then
+        return true
+      end
+    end
     return false
   end
 
