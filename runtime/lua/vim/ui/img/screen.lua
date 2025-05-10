@@ -146,7 +146,7 @@ function M.__windows_size()
     if cell_width == 0 or cell_height == 0 then
       size = M.__csi_size()
       if not size then
-        error('font size is invalid')
+        error('no valid size information available')
       end
     end
 
@@ -173,7 +173,7 @@ end
 
 ---@private
 ---Determines the size of the terminal screen using CSI escape codes.
----@return vim.ui.img.screen.Size
+---@return vim.ui.img.screen.Size|nil
 function M.__csi_size()
   -- TODO: Introduce support for querying CSI. Neovim eats the response right now.
   --
@@ -181,7 +181,11 @@ function M.__csi_size()
   --
   --       CSI 14 t :: tells us the pixel dimensions of the view space
   --       CSI 16 t :: tells us the pixel dimensions of a terminal character
-  error('todo: support querying CSI 14 t and/or CSI 16 t')
+  vim.notify(
+    'support querying CSI 14 t and/or CSI 16 t is not available',
+    vim.log.levels.WARN
+  )
+  return nil
 end
 
 ---@private
