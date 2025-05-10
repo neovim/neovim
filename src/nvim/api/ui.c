@@ -247,62 +247,6 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
   remote_ui_disconnect(channel_id);
 }
 
-void nvim_ui_restart(uint64_t channel_id, Error *err)
-  FUNC_API_SINCE(12) FUNC_API_REMOTE_ONLY
-{
-  Channel *chan = find_channel(channel_id);
-  if (!chan) {
-    api_set_error(err, kErrorTypeException,
-                  "UI not attached to RPC channel: %" PRId64, channel_id);
-    return;
-  }
-  DLOG("found channel");
-  if (!chan->is_rpc) {
-    api_set_error(err, kErrorTypeException,
-                  "channel is not RPC: %" PRId64, channel_id);
-    return;
-  }
-  DLOG("found channel as rpc");
-  const char *error;
-  channel_close(channel_id, kChannelPartAll, &error);
-  if (error) {
-    api_set_error(err, kErrorTypeException,
-                  "channel close: %" PRId64, channel_id);
-    return;
-  }
-  DLOG("closed channel");
-  
-  typval_T *tv = get_vim_var_tv(VV_ARGV);
-  if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
-    api_set_error(err, kErrorTypeException, "failed to get vim var tv");
-    return;
-  }
-  list_T *l = tv->vval.v_list;
-  int argc = tv_list_len(l);
-  char **argv = xmalloc(sizeof(char *)* (argc + 1));
-  listitem_T *li = tv_list_first(l);
-  for (int i = 0; i < argc && li != NULL; i++, li = li->li_next) {
-    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
-      argv[i] = TV_LIST_ITEM_TV(li)->vval.v_string;
-    } else {
-      argv[i] = "";
-    }
-  }
-  argv[argc] = NULL;
-  DLOG("got argc and argv");
-
-  uint64_t rv = ui_client_start_server(argc, argv);
-  if (!rv) {
-    api_set_error(err, kErrorTypeException,
-                  "failed to start nvim server");
-    return;
-  }
-  DLOG("started new nvim --embed server");
-  ui_client_channel_id = rv;
-  DLOG("set ui_client_channel_id");
-  ILOG("restarted server from ui client");
-}
-
 // TODO(bfredl): use me to detach a specific ui from the server
 void remote_ui_stop(RemoteUI *ui)
 {
