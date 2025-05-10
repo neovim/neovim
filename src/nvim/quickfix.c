@@ -5996,7 +5996,7 @@ static void wipe_dummy_buffer(buf_T *buf, char *dirname_start)
       }
     }
     if (!did_one) {
-      return;
+      goto fail;
     }
   }
 
@@ -6018,7 +6018,13 @@ static void wipe_dummy_buffer(buf_T *buf, char *dirname_start)
       // When autocommands/'autochdir' option changed directory: go back.
       restore_start_dir(dirname_start);
     }
+
+    return;
   }
+
+fail:
+  // Keeping the buffer, remove the dummy flag.
+  buf->b_flags &= ~BF_DUMMY;
 }
 
 /// Unload the dummy buffer that load_dummy_buffer() created. Restores
