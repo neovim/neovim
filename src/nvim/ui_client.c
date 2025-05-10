@@ -37,6 +37,10 @@
 #endif
 
 static TUIData *tui = NULL;
+static int tui_width = 0;
+static int tui_height = 0;
+static char *tui_term = "";
+static bool tui_rgb = false;
 static bool ui_client_is_remote = false;
 
 // uncrustify:off
@@ -164,12 +168,8 @@ void ui_client_run(bool remote_ui)
   FUNC_ATTR_NORETURN
 {
   ui_client_is_remote = remote_ui;
-  int width, height;
-  char *term;
-  bool rgb;
-  tui_start(&tui, &width, &height, &term, &rgb);
-
-  ui_client_attach(width, height, term, rgb);
+  tui_start(&tui, &tui_width, &tui_height, &tui_term, &tui_rgb);
+  ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   // TODO(justinmk): this is for log_spec. Can remove this after nvim_log #7062 is merged.
   if (os_env_exists("__NVIM_TEST_LOG", true)) {
@@ -282,6 +282,22 @@ void ui_client_event_raw_line(GridLineEvent *g)
 
   tui_raw_line(tui, grid, row, startcol, endcol, clearcol, g->cur_attr, lineflags,
                (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
+}
+
+int ui_client_get_width(void) {
+  return tui_width;
+}
+
+int ui_client_get_height(void) {
+  return tui_height;
+}
+
+char *ui_client_get_term(void) {
+  return tui_term;
+}
+
+bool ui_client_get_rgb(void) {
+  return tui_rgb;
 }
 
 #ifdef EXITFREE
