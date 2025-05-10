@@ -36,7 +36,6 @@ end
 local M = {}
 
 --- Mapping of error codes used by the client
---- @nodoc
 local client_errors = {
   INVALID_SERVER_MESSAGE = 1,
   INVALID_SERVER_JSON = 2,

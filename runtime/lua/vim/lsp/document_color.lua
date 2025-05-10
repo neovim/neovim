@@ -231,7 +231,6 @@ local function buf_enable(bufnr)
   M._buf_refresh(bufnr)
 end
 
---- @nodoc
 --- @param bufnr integer
 --- @param client_id? integer
 function M._buf_refresh(bufnr, client_id)

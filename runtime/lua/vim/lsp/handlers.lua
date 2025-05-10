@@ -476,8 +476,6 @@ RCS[ms.textDocument_documentHighlight] = function(_, result, ctx)
   util.buf_highlight_references(ctx.bufnr, result, client.offset_encoding)
 end
 
---- @private
----
 --- Displays call hierarchy in the quickfix window.
 ---
 --- @param direction 'from'|'to' `"from"` for incoming calls and `"to"` for outgoing calls

@@ -35,7 +35,6 @@ local M = {}
 --- @param fn F Function to memoize.
 --- @param weak? boolean Use a weak table (default `true`)
 --- @return F # Memoized version of {fn}
---- @nodoc
 function M._memoize(hash, fn, weak)
   -- this is wrapped in a function to lazily require the module
   return require('vim.func._memoize')(hash, fn, weak)
