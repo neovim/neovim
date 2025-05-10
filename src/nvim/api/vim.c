@@ -81,6 +81,7 @@
 #include "nvim/statusline.h"
 #include "nvim/statusline_defs.h"
 #include "nvim/terminal.h"
+#include "nvim/tui/tui_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
@@ -2397,6 +2398,10 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 void nvim_restart(uint64_t channel_id, Error *err)
   FUNC_API_SINCE(12) FUNC_API_REMOTE_ONLY
 {
+  int width = ui_client_get_width();
+  int height = ui_client_get_height();
+  char *term = ui_client_get_term();
+  bool rgb = ui_client_get_rgb();
   Channel *chan = find_channel(channel_id);
   if (!chan) {
     api_set_error(err, kErrorTypeException,
@@ -2410,13 +2415,16 @@ void nvim_restart(uint64_t channel_id, Error *err)
     return;
   }
   DLOG("found channel as rpc");
-  const char *error;
-  channel_close(channel_id, kChannelPartAll, &error);
-  if (error) {
+  Channel *ui_chan = find_channel(ui_client_channel_id);
+  if (!ui_chan) {
     api_set_error(err, kErrorTypeException,
-                  "channel close: %" PRId64, channel_id);
+                  "could not find current UI channel: %" PRId64, ui_client_channel_id);
     return;
   }
+  ui_chan->detach = true;
+  DLOG("set current ui channel to detach = true");
+
+  ui_client_detach();
   DLOG("closed channel");
   
   typval_T *tv = get_vim_var_tv(VV_ARGV);
@@ -2447,5 +2455,7 @@ void nvim_restart(uint64_t channel_id, Error *err)
   DLOG("started new nvim --embed server");
   ui_client_channel_id = rv;
   DLOG("set ui_client_channel_id");
+  ui_client_attach(width, height, term, rgb);
+  DLOG("attached to ui client channel");
   ILOG("restarted server from ui client");
 }
