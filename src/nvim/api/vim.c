@@ -81,7 +81,6 @@
 #include "nvim/statusline.h"
 #include "nvim/statusline_defs.h"
 #include "nvim/terminal.h"
-#include "nvim/tui/tui_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
@@ -2395,6 +2394,9 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 }
 
 
+/// Restarts the embedded server without killing the UI.
+///
+/// @param channel_id  channel id which sent the RPC request
 void nvim_restart(uint64_t channel_id, Error *err)
   FUNC_API_SINCE(12) FUNC_API_REMOTE_ONLY
 {
@@ -2408,13 +2410,11 @@ void nvim_restart(uint64_t channel_id, Error *err)
                   "UI not attached to RPC channel: %" PRId64, channel_id);
     return;
   }
-  DLOG("found channel");
   if (!chan->is_rpc) {
     api_set_error(err, kErrorTypeException,
                   "channel is not RPC: %" PRId64, channel_id);
     return;
   }
-  DLOG("found channel as rpc");
   Channel *ui_chan = find_channel(ui_client_channel_id);
   if (!ui_chan) {
     api_set_error(err, kErrorTypeException,
@@ -2422,14 +2422,10 @@ void nvim_restart(uint64_t channel_id, Error *err)
     return;
   }
   ui_chan->detach = true;
-  DLOG("set current ui channel to detach = true");
-
   ui_client_detach();
-  DLOG("closed channel");
-  
   typval_T *tv = get_vim_var_tv(VV_ARGV);
   if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
-    api_set_error(err, kErrorTypeException, "failed to get vim var tv");
+    ELOG("failed to get vim var tv");
     return;
   }
   list_T *l = tv->vval.v_list;
@@ -2444,18 +2440,12 @@ void nvim_restart(uint64_t channel_id, Error *err)
     }
   }
   argv[argc] = NULL;
-  DLOG("got argc and argv");
-
   uint64_t rv = ui_client_start_server(argc, argv);
   if (!rv) {
-    api_set_error(err, kErrorTypeException,
-                  "failed to start nvim server");
+    ELOG("failed to start nvim server");
     return;
   }
-  DLOG("started new nvim --embed server");
   ui_client_channel_id = rv;
-  DLOG("set ui_client_channel_id");
   ui_client_attach(width, height, term, rgb);
-  DLOG("attached to ui client channel");
   ILOG("restarted server from ui client");
 }
