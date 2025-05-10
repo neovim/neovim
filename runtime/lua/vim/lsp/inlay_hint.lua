@@ -36,8 +36,7 @@ local augroup = api.nvim_create_augroup('nvim.lsp.inlayhint', {})
 --- Store hints for a specific buffer and client
 ---@param result lsp.InlayHint[]?
 ---@param ctx lsp.HandlerContext
----@private
-function M.on_inlayhint(err, result, ctx)
+local function on_inlayhint(err, result, ctx)
   if err then
     log.error('inlayhint', err)
     return
@@ -86,7 +85,7 @@ end
 
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
 ---@param ctx lsp.HandlerContext
----@private
+---@nodoc
 function M.on_refresh(err, _, ctx)
   if err then
     return vim.NIL
@@ -96,7 +95,7 @@ function M.on_refresh(err, _, ctx)
       if api.nvim_win_get_buf(winid) == bufnr then
         if bufstates[bufnr] and bufstates[bufnr].enabled then
           bufstates[bufnr].applied = {}
-          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
+          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr, handler = on_inlayhint })
         end
       end
     end
@@ -230,12 +229,13 @@ end
 
 --- Refresh inlay hints, only if we have attached clients that support it
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@param opts? vim.lsp.util._refresh.Opts Additional options to pass to util._refresh
----@private
-local function _refresh(bufnr, opts)
-  opts = opts or {}
-  opts['bufnr'] = bufnr
-  util._refresh(ms.textDocument_inlayHint, opts)
+---@param client_id? (integer) Client ID
+local function _refresh(bufnr, client_id)
+  util._refresh(ms.textDocument_inlayHint, {
+    bufnr = bufnr,
+    handler = on_inlayhint,
+    client_id = client_id,
+  })
 end
 
 --- Enable inlay hints for a buffer
@@ -259,7 +259,7 @@ api.nvim_create_autocmd('LspNotify', {
       return
     end
     if bufstates[bufnr].enabled then
-      _refresh(bufnr, { client_id = args.data.client_id })
+      _refresh(bufnr, args.data.client_id)
     end
   end,
   group = augroup,
