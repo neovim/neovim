@@ -464,6 +464,7 @@ function protocol.make_client_capabilities()
           tagSupport = {
             valueSet = get_value_set(constants.CompletionTag),
           },
+          labelDetailsSupport = true,
         },
         completionItemKind = {
           valueSet = get_value_set(constants.CompletionItemKind),
