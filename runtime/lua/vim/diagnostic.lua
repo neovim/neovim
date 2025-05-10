@@ -2591,9 +2591,13 @@ function M.fromqflist(list)
   return diagnostics
 end
 
+--- Returns formatted string with diagnostics for the current buffer.
+--- Empty diagnostics are not included.
+---
+---@return string
 function M.status()
   local counts = M.count(0)
-  local user_signs = vim.tbl_get(M.config(), 'signs', 'text') or {}
+  local user_signs = vim.tbl_get(M.config() --[[@as vim.diagnostic.Opts]], 'signs', 'text') or {}
   local signs = vim.tbl_extend('keep', user_signs, { 'E', 'W', 'I', 'H' })
   local result_str = vim
     .iter(pairs(counts))

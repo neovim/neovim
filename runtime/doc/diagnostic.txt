@@ -937,6 +937,13 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
       • {opts}         (`vim.diagnostic.Opts?`) Display options. See
                        |vim.diagnostic.Opts|.
 
+status()                                             *vim.diagnostic.status()*
+    Returns formatted string with diagnostics for the current buffer. Empty
+    diagnostics are not included.
+
+    Return: ~
+        (`string`)
+
 toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
     Convert a list of diagnostics to a list of quickfix items that can be
     passed to |setqflist()| or |setloclist()|.
