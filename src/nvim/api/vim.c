@@ -2434,9 +2434,9 @@ void nvim_restart(uint64_t channel_id, Error *err)
   }
   list_T *l = tv->vval.v_list;
   int argc = tv_list_len(l);
-  char **argv = xmalloc(sizeof(char *)* (argc + 1));
+  char **argv = xmalloc(sizeof(char *) *(argc + 1));
   listitem_T *li = tv_list_first(l);
-  for (int i = 0; i < argc && li != NULL; i++, li = li->li_next) {
+  for (int i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
     if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
       argv[i] = TV_LIST_ITEM_TV(li)->vval.v_string;
     } else {
