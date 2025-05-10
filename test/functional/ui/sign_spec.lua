@@ -359,6 +359,7 @@ describe('Signs', function()
       ]])
     end)
 
+    -- oldtest: Test_sign_number_without_signtext()
     it('ignores signs with no icon and text when calculating the signcolumn width', function()
       feed('ia<cr>b<cr>c<cr><esc>')
       exec([[

@@ -2073,4 +2073,23 @@ func Test_sign_null_list()
   eval v:_null_list->sign_unplacelist()
 endfunc
 
+func Test_sign_number_without_signtext()
+  CheckScreendump
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      set number signcolumn=number
+      call setline(1, ['a', 'b', 'c'])
+      sign define SignA text=>> texthl=Search numhl=Error
+      sign define SignB numhl=Error
+      sign place 1 line=1 name=SignA buffer=1
+      sign place 2 line=2 name=SignB  buffer=1
+  END
+  call writefile(lines, 'XtestSigncolumnNumber', 'D')
+  let buf = RunVimInTerminal('-S XtestSigncolumnNumber', {'rows': 5})
+  call VerifyScreenDump(buf, 'Test_sign_number_without_signtext', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
