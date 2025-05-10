@@ -101,15 +101,16 @@ local tty_path
 ---NOTE: Necessary as otherwise neovim corrupts sixel data.
 ---@param ... string
 local function tty_write(...)
-  if not tty_path then
-    local handle = assert(io.popen("tty"))
-    tty_path = assert(handle:read("*l"))
-    assert(handle:close())
-  end
-
-  local tty = assert(io.open(tty_path, 'w'))
-  assert(tty:write(...))
-  assert(tty:close())
+  io.stdout:write(...)
+  -- if not tty_path then
+  --   local handle = assert(io.popen("tty"))
+  --   tty_path = assert(handle:read("*l"))
+  --   assert(handle:close())
+  -- end
+  --
+  -- local tty = assert(io.open(tty_path, 'w'))
+  -- assert(tty:write(...))
+  -- assert(tty:close())
 end
 
 ---@param visible boolean
