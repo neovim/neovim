@@ -1593,6 +1593,45 @@ describe('folded lines', function()
                                                        |
         ]])
       end
+
+      eq({ 0, 1, 2, 0, 2 }, fn.getcurpos())
+      api.nvim_input_mouse('left', 'press', '', multigrid and 2 or 0, 2, 4)
+      eq({ 0, 3, 2, 0, 2 }, fn.getcurpos())
+      feed('2k')
+      eq({ 0, 1, 2, 0, 2 }, fn.getcurpos())
+
+      api.nvim_set_option_value('foldtext', "'αβγ'", { win = 0 })
+      -- No crash or memory leak when scrolling beyond end of folded line #33931
+      fn.append('$', ('!'):rep(100))
+      feed('G$')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {8:  1 }                                         |
+          {8:  2 }                                         |
+          {8:  3 }{5:αβγ······································}|
+          {8:  5 }                                         |
+          {8:  6 }                                         |
+          {8:  7 }!!!!!!!!!!!!!!!!!!!!^!                    |
+          {1:~                                            }|
+        ## grid 3
+                                                       |
+        ]])
+      else
+        screen:expect([[
+          {8:  1 }                                         |
+          {8:  2 }                                         |
+          {8:  3 }{5:αβγ······································}|
+          {8:  5 }                                         |
+          {8:  6 }                                         |
+          {8:  7 }!!!!!!!!!!!!!!!!!!!!^!                    |
+          {1:~                                            }|
+                                                       |
+        ]])
+      end
     end)
 
     it('fold attached virtual lines are drawn and scrolled correctly #21837', function()
@@ -2624,8 +2663,6 @@ describe('folded lines', function()
       screen:try_resize(30, 7)
       insert(content1)
       command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
-      command('hi F0 guibg=Red guifg=Black')
-      command('hi F1 guifg=White')
       command([[syn match Keyword /\<sentence\>/]])
       command('hi! Keyword guibg=NONE guifg=Green')
       api.nvim_set_option_value('cursorline', true, {})
@@ -2732,6 +2769,63 @@ describe('folded lines', function()
           {15:··············.evac sih ni}{7:  +│}|
           {1:                             ~}|*2
           {11:-- VISUAL LINE --}             |
+        ]])
+      end
+
+      api.nvim_set_option_value('rightleft', false, {})
+      api.nvim_set_option_value('wrap', false, {})
+      feed('<Esc>zl')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|*6
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }his is a                  |
+          {7:-   }{12:^alid English              }|
+          {7:│+  }{21:entence}{5: composed by·······}|
+          {7:│+  }{5:n his cave.···············}|
+          {1:~                             }|*2
+        ## grid 3
+                                        |
+        ]])
+      else
+        screen:expect([[
+          {7:    }his is a                  |
+          {7:-   }{12:^alid English              }|
+          {7:│+  }{21:entence}{5: composed by·······}|
+          {7:│+  }{5:n his cave.···············}|
+          {1:~                             }|*2
+                                        |
+        ]])
+      end
+
+      fn.append(0, ('!'):rep(15))
+      feed('gg$zs')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|*6
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }{12:^!                         }|
+          {7:    }                          |
+          {7:-   }                          |
+          {7:│+  }{5:sed by····················}|
+          {7:│+  }{5:··························}|
+          {1:~                             }|
+        ## grid 3
+                                        |
+        ]])
+      else
+        screen:expect([[
+          {7:    }{12:^!                         }|
+          {7:    }                          |
+          {7:-   }                          |
+          {7:│+  }{5:sed by····················}|
+          {7:│+  }{5:··························}|
+          {1:~                             }|
+                                        |
         ]])
       end
     end)
