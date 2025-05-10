@@ -5597,13 +5597,14 @@ static void ex_detach(exarg_T *eap)
 }
 
 /// ":restart" command
+///
+/// Restarts the server by delegating the work to the UI.
 static void ex_restart(exarg_T *eap) {
   if (eap && eap->forceit) {
-    // Not supported yet.
+    emsg("bang not supported.");
     return;
   }
-  // 1. This function is called on the server. So we should somehow delegate the work to the UI.
-  // 2. RPC send event to the UI channel to a custom API function in `current_ui`?
+  // This function is called on the server. So we should delegate the work to the UI.
   if (!current_ui) {
     emsg("UI not attached.");
     return;
