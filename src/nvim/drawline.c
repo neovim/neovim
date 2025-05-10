@@ -1475,7 +1475,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
                         ? (startrow == 0 ? wp->w_skipcol : 0)
                         : wp->w_leftcol;
 
-  if (start_col > 0 && col_rows == 0) {
+  if (has_foldtext) {
+    wlv.vcol = start_col;
+  } else if (start_col > 0 && col_rows == 0) {
     char *prev_ptr = ptr;
     CharSize cs = { 0 };
 
@@ -1518,12 +1520,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     // - 'cuc' is set, or
     // - 'colorcolumn' is set, or
     // - 'virtualedit' is set, or
-    // - the visual mode is active,
+    // - the visual mode is active, or
+    // - drawing a fold
     // the end of the line may be before the start of the displayed part.
     if (wlv.vcol < start_col && (wp->w_p_cuc
                                  || wlv.color_cols
                                  || virtual_active(wp)
-                                 || (VIsual_active && wp->w_buffer == curwin->w_buffer))) {
+                                 || (VIsual_active && wp->w_buffer == curwin->w_buffer)
+                                 || has_fold)) {
       wlv.vcol = start_col;
     }
 
@@ -1935,6 +1939,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       wlv.n_extra = (int)strlen(wlv.p_extra);
 
       if (wlv.p_extra != buf_fold) {
+        assert(foldtext_free == NULL);
         foldtext_free = wlv.p_extra;
       }
       wlv.sc_extra = NUL;
