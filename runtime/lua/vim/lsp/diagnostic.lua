@@ -328,7 +328,6 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
 end
 
 --- Clear diagnostics from pull based clients
---- @private
 local function clear(bufnr)
   for _, namespace in pairs(_client_pull_namespaces) do
     vim.diagnostic.reset(namespace, bufnr)
@@ -337,7 +336,6 @@ end
 
 --- Disable pull diagnostics for a buffer
 --- @param bufnr integer
---- @private
 local function disable(bufnr)
   local bufstate = bufstates[bufnr]
   if bufstate then
@@ -350,7 +348,6 @@ end
 ---@param bufnr integer buffer number
 ---@param client_id? integer Client ID to refresh (default: all clients)
 ---@param only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
----@private
 local function _refresh(bufnr, client_id, only_visible)
   if
     only_visible

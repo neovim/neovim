@@ -923,8 +923,6 @@ function vim._expand_pat(pat, env)
 
   local final_env = env
 
-  --- @private
-  ---
   --- Allows submodules to be defined on a `vim.<module>` table without eager-loading the module.
   ---
   --- Cmdline completion (`:lua vim.lsp.c<tab>`) accesses `vim.lsp._submodules` when no other candidates.

@@ -231,7 +231,6 @@ end
 --- Refresh inlay hints, only if we have attached clients that support it
 ---@param bufnr (integer) Buffer handle, or 0 for current
 ---@param opts? vim.lsp.util._refresh.Opts Additional options to pass to util._refresh
----@private
 local function _refresh(bufnr, opts)
   opts = opts or {}
   opts['bufnr'] = bufnr

@@ -25,7 +25,6 @@ local M = {}
 
 ---@alias Range Range2|Range4|Range6
 
----@private
 ---@param a_row integer
 ---@param a_col integer
 ---@param b_row integer
@@ -166,7 +165,6 @@ function M.contains(r1, r2)
   return true
 end
 
---- @private
 --- @param source integer|string
 --- @param index integer
 --- @return integer
