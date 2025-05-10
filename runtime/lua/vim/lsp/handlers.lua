@@ -203,6 +203,9 @@ RSC[ms.workspace_configuration] = function(_, params, ctx)
         value = vim.NIL
       end
       table.insert(response, value)
+    else
+      -- If no section is provided, return settings as is
+      table.insert(response, client.settings)
     end
   end
   return response
