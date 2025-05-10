@@ -5948,7 +5948,9 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     aucmd_restbuf(&aco);
 
     if (newbuf_to_wipe.br_buf != NULL && bufref_valid(&newbuf_to_wipe)) {
-      wipe_buffer(newbuf_to_wipe.br_buf, false);
+      block_autocmds();
+      wipe_dummy_buffer(newbuf_to_wipe.br_buf, NULL);
+      unblock_autocmds();
     }
 
     // Add back the "dummy" flag, otherwise buflist_findname_file_id()
@@ -5972,11 +5974,11 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
   return newbuf;
 }
 
-// Wipe out the dummy buffer that load_dummy_buffer() created. Restores
-// directory to "dirname_start" prior to returning, if autocmds or the
-// 'autochdir' option have changed it.
+/// Wipe out the dummy buffer that load_dummy_buffer() created. Restores
+/// directory to "dirname_start" if not NULL prior to returning, if autocmds or
+/// the 'autochdir' option have changed it.
 static void wipe_dummy_buffer(buf_T *buf, char *dirname_start)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   // If any autocommand opened a window on the dummy buffer, close that
   // window.  If we can't close them all then give up.
@@ -5994,7 +5996,7 @@ static void wipe_dummy_buffer(buf_T *buf, char *dirname_start)
       }
     }
     if (!did_one) {
-      return;
+      goto fail;
     }
   }
 
@@ -6011,14 +6013,23 @@ static void wipe_dummy_buffer(buf_T *buf, char *dirname_start)
     // Restore the error/interrupt/exception state if not discarded by a
     // new aborting error, interrupt, or uncaught exception.
     leave_cleanup(&cs);
-    // When autocommands/'autochdir' option changed directory: go back.
-    restore_start_dir(dirname_start);
+
+    if (dirname_start != NULL) {
+      // When autocommands/'autochdir' option changed directory: go back.
+      restore_start_dir(dirname_start);
+    }
+
+    return;
   }
+
+fail:
+  // Keeping the buffer, remove the dummy flag.
+  buf->b_flags &= ~BF_DUMMY;
 }
 
-// Unload the dummy buffer that load_dummy_buffer() created. Restores
-// directory to "dirname_start" prior to returning, if autocmds or the
-// 'autochdir' option have changed it.
+/// Unload the dummy buffer that load_dummy_buffer() created. Restores
+/// directory to "dirname_start" prior to returning, if autocmds or the
+/// 'autochdir' option have changed it.
 static void unload_dummy_buffer(buf_T *buf, char *dirname_start)
 {
   if (curbuf == buf) {          // safety check
