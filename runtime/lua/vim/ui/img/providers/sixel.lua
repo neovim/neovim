@@ -1,0 +1,208 @@
+---Mapping of neovim image id -> sixel image data.
+---@type table<integer, string>
+local NVIM_IMAGE_TO_SIXEL_DATA = {}
+
+---Mapping of displayed image ids -> {image, options}.
+---@type table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, redraw:boolean}>
+local SIXEL_PLACEMENTS = {}
+
+local _next_id = 0
+local function next_id()
+  _next_id = _next_id + 1
+  return _next_id
+end
+
+---Move the terminal cursor to cell x, y.
+---@param x integer
+---@param y integer
+local function move_cursor(x, y)
+  io.stdout:write(string.format('\027[%s;%sH', math.floor(y), math.floor(x)))
+end
+
+---Converts a local image to sixel format using Image Magick.
+---@param filename string
+---@param opts? vim.ui.img.Opts
+---@return string
+local function convert_to_sixel(filename, opts)
+  opts = opts or {}
+
+  -- Build our command to resize, crop, and output RGBA pixel data
+  local cmd = { 'magick', 'convert', filename }
+  if opts.crop then
+    local x, y, w, h = opts.crop:to_pixels():to_bounds()
+    table.insert(cmd, '-crop')
+    table.insert(cmd, string.format('%sx%s+%s+%s', w, h, x, y))
+  end
+  if opts.size then
+    local size_px = opts.size:to_pixels()
+    table.insert(cmd, '-resize')
+    table.insert(cmd, string.format('%sx%s', size_px.width, size_px.height))
+  end
+  table.insert(cmd, 'sixel:-')
+
+  local res = vim.system(cmd):wait()
+  assert(res.code == 0, 'failed to convert image to sixel')
+  return assert(res.stdout, 'sixel output missing')
+end
+
+---@param opts vim.ui.img.Opts
+local function move_to_img_pos(opts)
+  if opts.pos or opts.relative then
+    local x, y = 0, 0
+    local xoffset, yoffset = 0, 0
+    local relative = opts.relative
+
+    if opts.pos then
+      local pos_cells = opts.pos:to_cells()
+      x, y = pos_cells.x, pos_cells.y
+    end
+
+    -- Adjust the x,y position using relative indicator
+    if relative == 'editor' then
+      xoffset = 0
+      yoffset = 0
+    elseif relative == 'win' then
+      ---@type {[1]:number, [2]:number}
+      local pos = vim.api.nvim_win_get_position(opts.win or 0)
+      xoffset = pos[2] -- pos[2] is column (zero indexed)
+      yoffset = pos[1] -- pos[1] is row (zero indexed)
+    elseif relative == 'cursor' then
+      local win = opts.win or 0
+
+      ---@type {[1]:number, [2]:number}
+      local pos = vim.api.nvim_win_get_position(opts.win or 0)
+      local px, py = pos[2], pos[1]
+
+      -- Get the screen line/column position of the cursor
+      local cx, cy = 0, 0
+      vim.api.nvim_win_call(win, function()
+        cy = vim.fn.winline()
+        cx = vim.fn.wincol()
+      end)
+
+      xoffset = px + cx
+      yoffset = py + cy
+    elseif relative == 'mouse' then
+      -- NOTE: If mousemoveevent is not enabled, this only updates on click
+      local pos = vim.fn.getmousepos()
+      xoffset = pos.screencol -- screencol is one-indexed
+      yoffset = pos.screenrow -- screenrow is one-indexed
+    end
+
+    move_cursor(x + xoffset, y + yoffset)
+  end
+end
+
+---Path to the tty used by neovim.
+---@type string|nil
+local tty_path
+
+---Writes the the raw tty used by neovim.
+---NOTE: Necessary as otherwise neovim corrupts sixel data.
+---@param ... string
+local function tty_write(...)
+  io.stdout:write(...)
+  -- if not tty_path then
+  --   local handle = assert(io.popen("tty"))
+  --   tty_path = assert(handle:read("*l"))
+  --   assert(handle:close())
+  -- end
+  --
+  -- local tty = assert(io.open(tty_path, 'w'))
+  -- assert(tty:write(...))
+  -- assert(tty:close())
+end
+
+---@param visible boolean
+local function set_cursor_visible(visible)
+  if visible then
+    tty_write('\027[?25l')
+  else
+    tty_write('\027[?25h')
+  end
+end
+
+local is_redrawing = false
+local function redraw_placements()
+  if is_redrawing then
+    return
+  end
+
+  is_redrawing = true
+
+  ---@type boolean, string|nil
+  local ok, err = pcall(function()
+    set_cursor_visible(false)
+    for _, placement in pairs(SIXEL_PLACEMENTS) do
+      if placement.redraw then
+        placement.redraw = false
+
+        local sixel = NVIM_IMAGE_TO_SIXEL_DATA[placement.img.id]
+        if sixel then
+          move_to_img_pos(placement.opts)
+          tty_write(sixel)
+        end
+      end
+    end
+    set_cursor_visible(true)
+  end)
+
+  is_redrawing = false
+
+  if not ok then
+    vim.notify(err or 'sixel redraw unknown error', vim.log.levels.WARN)
+  end
+end
+
+---@param _self vim.ui.img.Provider
+---@param img vim.ui.Image
+---@param opts? vim.ui.img.Opts|{remote?:boolean}
+---@return integer
+local function show(_self, img, opts)
+  opts = opts or {}
+
+  local sixel = NVIM_IMAGE_TO_SIXEL_DATA[img.id]
+  if not sixel then
+    sixel = convert_to_sixel(img.filename, opts)
+    NVIM_IMAGE_TO_SIXEL_DATA[img.id] = sixel
+  end
+
+  local id = next_id()
+
+  -- Register the new sixel placement and mark it for being drawn
+  SIXEL_PLACEMENTS[id] = {
+    img = img,
+    opts = opts,
+    redraw = true,
+  }
+
+  vim.schedule(redraw_placements)
+
+  return id
+end
+
+---@param _self vim.ui.img.Provider
+---@param ids integer[]
+local function hide(_self, ids)
+  -- For all specified sixel placements to be hidden, we just
+  -- remove them from our list since they'll be cleared anyway
+  for _, id in ipairs(ids) do
+    SIXEL_PLACEMENTS[id] = nil
+  end
+
+  -- For all remaining sixel placements, we need to redraw them
+  -- after the screen is cleared
+  for _, placement in pairs(SIXEL_PLACEMENTS) do
+    placement.redraw = true
+  end
+
+  -- Clear the screen of all sixel images
+  -- tty_write('\027[2J')
+  vim.cmd.mode()
+  vim.schedule(redraw_placements)
+end
+
+return require('vim.ui.img.providers').new({
+  show = show,
+  hide = hide,
+})

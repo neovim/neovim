@@ -1,5 +1,9 @@
 local M = {}
 
+--- TODO: What description to provide on this? Do we require it immediately?
+---       How do we make this lazy access (or imply as such) without the defer call?
+M.img = require('vim.ui.img')
+
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
 --- work until `on_choice`.
 ---
