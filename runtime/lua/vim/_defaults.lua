@@ -32,6 +32,11 @@ do
     nargs = 1,
     complete = 'file',
   })
+
+  vim.api.nvim_create_user_command('LspLog', function()
+    local log_path = vim.lsp.get_log_path()
+    vim.cmd(string.format('tabnew %s', log_path))
+  end, { desc = 'Open the LSP log file' })
 end
 
 --- Default mappings

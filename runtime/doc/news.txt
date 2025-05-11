@@ -147,6 +147,7 @@ LSP
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
 • The `textDocument/diagnostic` request now includes the previous id in its
   parameters.
+• The `LspLog` command was added to open the LSP log file.
 
 LUA
 
