@@ -2393,7 +2393,6 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
   p_lz = save_lz;
 }
 
-
 /// Restarts the embedded server without killing the UI.
 ///
 /// @param channel_id  channel id which sent the RPC request
@@ -2429,10 +2428,10 @@ void nvim_restart(uint64_t channel_id, Error *err)
     return;
   }
   list_T *l = tv->vval.v_list;
-  int argc = tv_list_len(l);
+  size_t argc = tv_list_len(l);
   char **argv = xmalloc(sizeof(char *) *(argc + 1));
   listitem_T *li = tv_list_first(l);
-  for (int i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
+  for (size_t i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
     if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
       argv[i] = TV_LIST_ITEM_TV(li)->vval.v_string;
     } else {

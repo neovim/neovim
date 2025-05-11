@@ -284,19 +284,23 @@ void ui_client_event_raw_line(GridLineEvent *g)
                (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
 }
 
-int ui_client_get_width(void) {
+int ui_client_get_width(void)
+{
   return tui_width;
 }
 
-int ui_client_get_height(void) {
+int ui_client_get_height(void)
+{
   return tui_height;
 }
 
-char *ui_client_get_term(void) {
+char *ui_client_get_term(void)
+{
   return tui_term;
 }
 
-bool ui_client_get_rgb(void) {
+bool ui_client_get_rgb(void)
+{
   return tui_rgb;
 }
 
