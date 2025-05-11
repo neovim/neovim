@@ -923,6 +923,11 @@ setloclist({opts})                               *vim.diagnostic.setloclist()*
                   "Diagnostics".
                 • {severity}? (`vim.diagnostic.SeverityFilter`) See
                   |diagnostic-severity|.
+                • {format}? (`fun(diagnostic:vim.Diagnostic): string?`) A
+                  function that takes a diagnostic as input and returns a
+                  string or nil. If the return value is nil, the diagnostic is
+                  not displayed in the location list. Else the output text is
+                  used to display the diagnostic.
 
 setqflist({opts})                                 *vim.diagnostic.setqflist()*
     Add all diagnostics to the quickfix list.
@@ -938,6 +943,11 @@ setqflist({opts})                                 *vim.diagnostic.setqflist()*
                   title, it's updated. If not, a new quickfix list is created.
                 • {severity}? (`vim.diagnostic.SeverityFilter`) See
                   |diagnostic-severity|.
+                • {format}? (`fun(diagnostic:vim.Diagnostic): string?`) A
+                  function that takes a diagnostic as input and returns a
+                  string or nil. If the return value is nil, the diagnostic is
+                  not displayed in the quickfix list. Else the output text is
+                  used to display the diagnostic.
 
                                                        *vim.diagnostic.show()*
 show({namespace}, {bufnr}, {diagnostics}, {opts})

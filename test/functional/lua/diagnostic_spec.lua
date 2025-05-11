@@ -3448,6 +3448,32 @@ describe('vim.diagnostic', function()
       eq(1, #loc_list)
       eq('Error here!', loc_list[1].text)
     end)
+
+    it('supports format function', function()
+      local loc_list = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error', 1, 1, 1, 1, 'foo_ls'),
+          _G.make_error('Another error', 2, 2, 2, 2, 'foo_ls'),
+        })
+
+        vim.diagnostic.setloclist({
+          format = function(diagnostic)
+            if diagnostic.lnum > 1 then
+              return nil
+            end
+
+            return string.format('%s: %s', diagnostic.source, diagnostic.message)
+          end,
+        })
+
+        return vim.fn.getloclist(0)
+      end)
+
+      eq(1, #loc_list)
+      eq('foo_ls: Error', loc_list[1].text)
+    end)
   end)
 
   describe('setqflist()', function()
@@ -3515,6 +3541,32 @@ describe('vim.diagnostic', function()
       end)
 
       neq(0, qf_winid)
+    end)
+
+    it('supports format function', function()
+      local qf_list = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error', 1, 1, 1, 1, 'foo_ls'),
+          _G.make_error('Another error', 2, 2, 2, 2, 'foo_ls'),
+        })
+
+        vim.diagnostic.setqflist({
+          format = function(diagnostic)
+            if diagnostic.lnum > 1 then
+              return nil
+            end
+
+            return string.format('%s: %s', diagnostic.source, diagnostic.message)
+          end,
+        })
+
+        return vim.fn.getqflist()
+      end)
+
+      eq(1, #qf_list)
+      eq('foo_ls: Error', qf_list[1].text)
     end)
   end)
 
