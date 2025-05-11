@@ -132,7 +132,7 @@ function M:len()
   return string.len(self.bytes or '')
 end
 
----Returns a hash (sha256) of the image.
+---Returns a hash (sha256) of the image's bytes.
 ---@return string
 function M:hash()
   return vim.fn.sha256(self.bytes or '')
@@ -142,8 +142,9 @@ end
 ---to retrieve and parse the header into memory.
 ---@return vim.ui.img.Size
 function M:size()
+  local utils = require('vim.ui.img.utils')
   local header = self:__parse_header()
-  return M.new_size(header.width, header.height, 'pixel')
+  return utils.new_size(header.width, header.height, 'pixel')
 end
 
 ---@private
@@ -236,14 +237,6 @@ function M:chunks(opts)
   end)
 end
 
----@class vim.ui.img.Opts
----@field relative? 'editor'|'win'|'cursor'|'mouse'
----@field crop? vim.ui.img.Region portion of image to display
----@field pos? vim.ui.img.Position upper-left position of image within editor
----@field size? vim.ui.img.Size explicit size to scale the image
----@field win? integer window to use when `relative` is `win`
----@field z? integer z-index of the image with lower values being drawn before higher values
-
 ---Retrieves the provider to use to manipulate images.
 ---@param opts? {provider?:vim.ui.img.Provider|string}
 ---@return vim.ui.img.Provider
@@ -259,31 +252,12 @@ local function get_provider(opts)
   return provider
 end
 
----Ensure image opts have typed fields instead of tables where appropriate.
----@param opts vim.ui.img.Opts
----@return vim.ui.img.Opts
-local function clean_img_opts(opts)
-  if opts and opts.crop then
-    opts.crop = M.new_region(opts.crop.pos1, opts.crop.pos2)
-  end
-
-  if opts and opts.pos then
-    opts.pos = M.new_position(opts.pos.x, opts.pos.y, opts.pos.unit or 'cell')
-  end
-
-  if opts and opts.size then
-    opts.size = M.new_size(opts.size.width, opts.size.height, opts.size.unit or 'cell')
-  end
-
-  return opts
-end
-
 ---Displays an image, returning a reference to the displayed instance.
 ---Currently only supports the |TUI|.
 ---@param opts? vim.ui.img.Opts|{provider?:vim.ui.img.Provider|string}
 ---@return integer #unique id reprensting a reference to the displayed image
 function M:show(opts)
-  opts = clean_img_opts(opts or {})
+  opts = require('vim.ui.img.opts').new(opts or {})
   local provider = get_provider(opts)
   return provider.show(self, opts)
 end
@@ -310,185 +284,9 @@ end
 ---@param opts? vim.ui.img.Opts|{provider?:vim.ui.img.Provider|string} changes to apply to the displayed image
 ---@return integer id new id representing updated, displayed image
 function M:update(id, opts)
-  opts = clean_img_opts(opts or {})
+  opts = require('vim.ui.img.opts').new(opts or {})
   local provider = get_provider(opts)
   return provider.update(id, opts)
-end
-
----@alias vim.ui.img.Unit 'cell'|'pixel'
-
----Convert an integer representing absolute pixels to a cell.
----@param x integer
----@param y integer
----@return integer x, integer y
-local function pixels_to_cells(x, y)
-  local size = require('vim.ui.img.screen').size()
-  return math.floor(x / size.cell_width), math.floor(y / size.cell_height)
-end
-
----Convert an integer representing a cell to absolute pixels.
----@param x integer
----@param y integer
----@return integer x, integer y
-local function cells_to_pixels(x, y)
-  local size = require('vim.ui.img.screen').size()
-  return math.floor(x * size.cell_width), math.floor(y * size.cell_height)
-end
-
----Creates a new instance of a position corresponding to an image.
----@param x integer
----@param y integer
----@param unit vim.ui.img.Unit
----@return vim.ui.img.Position
-function M.new_position(x, y, unit)
-  ---@class (exact) vim.ui.img.Position
-  ---@field x integer
-  ---@field y integer
-  ---@field unit vim.ui.img.Unit
-  local position = { x = x, y = y, unit = unit }
-
-  ---Convert unit of position to cells, returning a copy of the position.
-  ---@return vim.ui.img.Position
-  function position:to_cells()
-    if self.unit == 'pixel' then
-      local cell_x, cell_y = pixels_to_cells(self.x, self.y)
-      return M.new_position(cell_x, cell_y, 'cell')
-    end
-
-    return self
-  end
-
-  ---Convert unit of position to pixels, returning a copy of the position.
-  ---@return vim.ui.img.Position
-  function position:to_pixels()
-    if self.unit == 'cell' then
-      local px_x, px_y = cells_to_pixels(self.x, self.y)
-      return M.new_position(px_x, px_y, 'pixel')
-    end
-
-    return self
-  end
-
-  ---Returns a hash based on the position parameters.
-  ---@return string
-  function position:hash()
-    ---@type string[]
-    local items = {
-      tostring(self.x),
-      tostring(self.y),
-      tostring(self.unit),
-    }
-    return vim.fn.sha256(table.concat(items))
-  end
-
-  return position
-end
-
----Creates a new instance of a region corresponding to an image.
----@param pos1 vim.ui.img.Position
----@param pos2 vim.ui.img.Position
----@return vim.ui.img.Region
-function M.new_region(pos1, pos2)
-  ---@class (exact) vim.ui.img.Region
-  ---@field pos1 vim.ui.img.Position
-  ---@field pos2 vim.ui.img.Position
-  local region = { pos1 = pos1, pos2 = pos2 }
-
-  ---Convert unit of region to cells, returning a copy of the region.
-  ---@return vim.ui.img.Region
-  function region:to_cells()
-    return M.new_region(
-      self.pos1:to_cells(),
-      self.pos2:to_cells()
-    )
-  end
-
-  ---Convert unit of region to pixels, returning a copy of the region.
-  ---@return vim.ui.img.Region
-  function region:to_pixels()
-    return M.new_region(
-      self.pos1:to_pixels(),
-      self.pos2:to_pixels()
-    )
-  end
-
-  ---Returns the x, y, width, height of the region.
-  ---@return integer x, integer y, integer width, integer height
-  function region:to_bounds()
-    local p1 = self.pos1
-    local p2 = self.pos2
-
-    assert(p1.unit == p2.unit, 'units of pos1 and pos2 do not match')
-
-    local x = math.min(p1.x, p2.x)
-    local y = math.min(p1.y, p2.y)
-    local width = math.abs(p1.x - p2.x)
-    local height = math.abs(p1.y - p2.y)
-
-    return x, y, width, height
-  end
-
-  ---Returns a hash based on the region parameters.
-  ---@return string
-  function region:hash()
-    ---@type string[]
-    local items = {
-      self.pos1:hash(),
-      self.pos2:hash(),
-    }
-    return vim.fn.sha256(table.concat(items))
-  end
-
-  return region
-end
-
----Creates a new instance of an size corresponding to an image.
----@param width integer
----@param height integer
----@param unit vim.ui.img.Unit
----@return vim.ui.img.Size
-function M.new_size(width, height, unit)
-  ---@class (exact) vim.ui.img.Size
-  ---@field width integer
-  ---@field height integer
-  ---@field unit vim.ui.img.Unit
-  local size = { width = width, height = height, unit = unit }
-
-  ---Convert unit of size to cells, returning a copy of the size.
-  ---@return vim.ui.img.Size
-  function size:to_cells()
-    if self.unit == 'pixel' then
-      local cell_width, cell_height = pixels_to_cells(self.width, self.height)
-      return M.new_size(cell_width, cell_height, 'cell')
-    end
-
-    return self
-  end
-
-  ---Convert unit of size to pixels, returning a copy of the size.
-  ---@return vim.ui.img.Size
-  function size:to_pixels()
-    if self.unit == 'cell' then
-      local px_width, px_height = cells_to_pixels(self.width, self.height)
-      return M.new_size(px_width, px_height, 'pixel')
-    end
-
-    return self
-  end
-
-  ---Returns a hash based on the size parameters.
-  ---@return string
-  function size:hash()
-    ---@type string[]
-    local items = {
-      tostring(self.width),
-      tostring(self.height),
-      tostring(self.unit),
-    }
-    return vim.fn.sha256(table.concat(items))
-  end
-
-  return size
 end
 
 return M
