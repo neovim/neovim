@@ -4656,4 +4656,30 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
         (`string[]`)
 
 
+==============================================================================
+Lua module: vim.net                                                  *vim.net*
+
+                                                          *vim.net.download()*
+vim.net.download({url}, {download_location}, {opts}, {on_exit})
+    Downloads a file from the given URL to a specified location.
+
+    Parameters: ~
+      • {url}                (`string`) The URL to download from.
+      • {download_location}  (`string`) The file path where the content should
+                             be saved.
+      • {opts}               (`table?`) Optional parameters:
+                             • verbose (boolean|nil): Enables verbose curl
+                               output.
+                             • retry (integer|nil): Number of times to retry
+                               on transient failures (default: 3).
+      • {on_exit}            (`fun(err?: string)?`) Optional callback. If
+                             omitted, runs synchronously.
+
+    Return (multiple): ~
+        (`boolean?`) on success (sync); false/nil and error message on
+        failure.
+        (`string?`) True on success (sync); false/nil and error message on
+        failure.
+
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
