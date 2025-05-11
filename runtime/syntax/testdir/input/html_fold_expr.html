@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!--
+VIM_TEST_SETUP setlocal foldcolumn=8 foldlevel=8 foldmethod=expr
+
+
+
+-->
+<html lang="en">	<!-- 1 -->
+<HEAD>			<!-- 2 -->
+<meta charset="UTF-8">
+<title>A folding syntax test</title><style> /* 3 FIXME */
+p { font-size: 24px; } /* </style>
+<style>*/</style></head></head></head></head>
+
+<bOdY STYLE="background: #bebebe">	<!-- 2 -->
+<br><br><br><br><script><![CDATA[	// 3
+// \x3C!--
+// \x3Cscript>
+// \x3C/script>
+// -->
+]]></script>
+<h2 id="></h2>"><i>An H2 header</i></h2>
+<br><br><br><br>
+<hr>
+
+<p>Paragraph #1.	<!-- 3 -->
+</p>
+
+<p>Paragraph #2.
+
+<details>		<!-- 3 </details> -->
+<summary>		<!-- 4 </summary> -->
+</summary>
+<p>Paragraph #1.
+<ul>			<!-- 4 -->
+<li>Item a.</li><li>Item b.</li>
+<li>Item c.
+</ul>
+<p>Paragraph #2.	<!-- 4 -->
+</p>
+</details>
+
+<dl>			<!-- 3 -->
+<dt>A quick brown fox jumps over the lazy dog
+<dd>Woof!
+<dl>			<!-- 4 -->
+<dt>A quick brown fox jumps over the lazy dog
+<dd>Woof!
+</dl>
+</dl>
+
+<article>Thread #1	<!-- 3 -->
+<article>Thread #2	<!-- 4 -->
+</article>
+</article>
+
+<p>			<!-- 3 -->
+<label for="selection">Select Option</label>
+<select
+id="selection"
+name="selection">	<!-- 4 -->
+<optgroup label="Primary Group">	<!-- 5 -->
+<option value="1">Alternative
+<option value="2" selected>Default
+<option value="3">Basic
+<option value="4">Extended
+</optgroup>
+</select>
+</p>
+
+<table>			<!-- 3 -->
+<caption>Some Caption</caption>
+<colgroup><col><col><col>
+<thead>
+<tr><th>Header #1<th>Header #2<th>Header #3
+<tbody>
+<tr><td>Column #1<td>Column #2<td>Column #3
+<tr><td>Column #1<td>Column #2<td>Column #3
+<tr><td>Column #1<td>Column #2<td>Column #3
+<tr><td>Column #1<td>Column #2<td>Column #3
+</table>
+
+<div class="block">	<!-- 3 -->
+<blockquote><pre><code>	<!-- 4 -->
+&lt;div class="block"&gt;
+&lt;blockquote&gt;&lt;pre&gt;&lt;code&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/blockquote&gt;&lt;/div&gt;
+</code></pre></blockquote></div>
+
+<p>Paragraph #3.</p><p>Paragraph #4.</p><p>Paragraph #5.
+
+<p>Paragraph #6.</p><p>Paragraph #7.</p><p>Paragraph #8.</p><p>Paragraph #9.</p>
+
+<p id="></p>">Paragraph #10.	<!-- 3 -->
+</p>
+
+<p >Paragraph #11.</p><p id="p"
+class="p">Paragraph #12.</p><p
+class="p">Paragraph #13.</p><p
+>Paragraph #14.</p>
+
+<p>Paragraph #15.
+<p>Paragraph #16.
+</BoDy>
+</HTML>
