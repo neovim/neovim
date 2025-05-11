@@ -2428,16 +2428,19 @@ void nvim_restart(uint64_t channel_id, Error *err)
     return;
   }
   list_T *l = tv->vval.v_list;
-  int argc = tv_list_len(l);
-  char **argv = xmalloc(sizeof(char *) * argc);
+  int list_len = tv_list_len(l);
+  assert(list_len >= 0);
+  size_t argc = (size_t)list_len;
+  char **argv = xmalloc(sizeof(char *) * (argc + 1));
   listitem_T *li = tv_list_first(l);
-  for (int i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
+  for (size_t i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
     if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
       argv[i] = TV_LIST_ITEM_TV(li)->vval.v_string;
     } else {
       argv[i] = "";
     }
   }
+  argv[argc] = NULL;
   uint64_t rv = ui_client_start_server(argc, argv);
   if (!rv) {
     ELOG("failed to start nvim server");
@@ -2446,7 +2449,7 @@ void nvim_restart(uint64_t channel_id, Error *err)
   ui_client_channel_id = rv;
   ui_client_attach(width, height, term, rgb);
   // Cleanup memory allocated for argv
-  for (int i = 0; i < argc; i++) {
+  for (size_t i = 0; i < argc; i++) {
     xfree(argv[i]);
   }
   xfree(argv);
