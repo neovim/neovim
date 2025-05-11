@@ -2446,5 +2446,10 @@ void nvim_restart(uint64_t channel_id, Error *err)
   }
   ui_client_channel_id = rv;
   ui_client_attach(width, height, term, rgb);
+  // Cleanup memory allocated for argv
+  for (size_t i = 0; i < argc; i++) {
+    xfree(argv[i]);
+  }
+  xfree(argv);
   ILOG("restarted server from ui client");
 }
