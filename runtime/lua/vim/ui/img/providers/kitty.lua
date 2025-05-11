@@ -14,6 +14,10 @@ local KITTY_PLACEMENT_TO_IMAGE = {}
 ---@type boolean
 local IS_TMUX = false
 
+---If true, indicates provider has been loaded at least once.
+---@type boolean
+local HAS_LOADED = false
+
 local next_id = (function()
   local bit = require('bit')
 
@@ -212,6 +216,10 @@ end
 
 ---@param _self vim.ui.img.Provider
 local function load(_self)
+  if HAS_LOADED then
+    return
+  end
+
   -- Check if we are inside tmux, and if so we need to configure it to support
   -- allowing passthrough of escape codes for kitty's graphics protocol and
   -- flag that we need to transform escape codes sent to be compliant with tmux
@@ -220,6 +228,8 @@ local function load(_self)
     assert(res.code == 0, 'failed to "set -p allow-passthrough all" for tmux')
     IS_TMUX = true
   end
+
+  HAS_LOADED = true
 end
 
 ---@param _self vim.ui.img.Provider
