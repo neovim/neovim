@@ -820,7 +820,7 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   }
 
   // internal vim._treesitter... API
-  nlua_add_treesitter(lstate);
+  nlua_treesitter_init(lstate);
 
   nlua_state_add_stdlib(lstate, false);
 
@@ -938,7 +938,7 @@ void nlua_free_all_mem(void)
   lua_State *lstate = global_lstate;
   nlua_unref_global(lstate, require_ref);
   nlua_common_free_all_mem(lstate);
-  tslua_free();
+  nlua_treesitter_free();
 }
 
 static void nlua_common_free_all_mem(lua_State *lstate)
@@ -1868,55 +1868,6 @@ bool nlua_exec_file(const char *path)
   }
 
   return true;
-}
-
-int tslua_get_language_version(lua_State *L)
-{
-  lua_pushnumber(L, TREE_SITTER_LANGUAGE_VERSION);
-  return 1;
-}
-
-int tslua_get_minimum_language_version(lua_State *L)
-{
-  lua_pushnumber(L, TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION);
-  return 1;
-}
-
-static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
-{
-  tslua_init(lstate);
-
-  lua_pushcfunction(lstate, tslua_push_parser);
-  lua_setfield(lstate, -2, "_create_ts_parser");
-
-  lua_pushcfunction(lstate, tslua_push_querycursor);
-  lua_setfield(lstate, -2, "_create_ts_querycursor");
-
-  lua_pushcfunction(lstate, tslua_add_language_from_object);
-  lua_setfield(lstate, -2, "_ts_add_language_from_object");
-
-#ifdef HAVE_WASMTIME
-  lua_pushcfunction(lstate, tslua_add_language_from_wasm);
-  lua_setfield(lstate, -2, "_ts_add_language_from_wasm");
-#endif
-
-  lua_pushcfunction(lstate, tslua_has_language);
-  lua_setfield(lstate, -2, "_ts_has_language");
-
-  lua_pushcfunction(lstate, tslua_remove_lang);
-  lua_setfield(lstate, -2, "_ts_remove_language");
-
-  lua_pushcfunction(lstate, tslua_inspect_lang);
-  lua_setfield(lstate, -2, "_ts_inspect_language");
-
-  lua_pushcfunction(lstate, tslua_parse_query);
-  lua_setfield(lstate, -2, "_ts_parse_query");
-
-  lua_pushcfunction(lstate, tslua_get_language_version);
-  lua_setfield(lstate, -2, "_ts_get_language_version");
-
-  lua_pushcfunction(lstate, tslua_get_minimum_language_version);
-  lua_setfield(lstate, -2, "_ts_get_minimum_language_version");
 }
 
 static garray_T expand_result_array = GA_EMPTY_INIT_VALUE;
