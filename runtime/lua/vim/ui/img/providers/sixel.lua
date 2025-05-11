@@ -28,13 +28,6 @@ local function img_to_hash(filename, opts)
   return vim.fn.sha256(table.concat(items))
 end
 
----Move the terminal cursor to cell x, y.
----@param x integer
----@param y integer
-local function move_cursor(x, y)
-  io.stdout:write(string.format('\027[%s;%sH', math.floor(y), math.floor(x)))
-end
-
 ---Converts a local image to sixel format using Image Magick.
 ---@param filename string
 ---@param opts? vim.ui.img.Opts
@@ -63,75 +56,11 @@ end
 
 ---@param opts vim.ui.img.Opts
 local function move_to_img_pos(opts)
-  if opts.pos or opts.relative then
-    local x, y = 0, 0
-    local xoffset, yoffset = 0, 0
-    local relative = opts.relative
-
-    if opts.pos then
-      local pos_cells = opts.pos:to_cells()
-      x, y = pos_cells.x, pos_cells.y
-    end
-
-    -- Adjust the x,y position using relative indicator
-    if relative == 'editor' then
-      xoffset = 0
-      yoffset = 0
-    elseif relative == 'win' then
-      ---@type {[1]:number, [2]:number}
-      local pos = vim.api.nvim_win_get_position(opts.win or 0)
-      xoffset = pos[2] -- pos[2] is column (zero indexed)
-      yoffset = pos[1] -- pos[1] is row (zero indexed)
-    elseif relative == 'cursor' then
-      local win = opts.win or 0
-
-      ---@type {[1]:number, [2]:number}
-      local pos = vim.api.nvim_win_get_position(opts.win or 0)
-      local px, py = pos[2], pos[1]
-
-      -- Get the screen line/column position of the cursor
-      local cx, cy = 0, 0
-      vim.api.nvim_win_call(win, function()
-        cy = vim.fn.winline()
-        cx = vim.fn.wincol()
-      end)
-
-      xoffset = px + cx
-      yoffset = py + cy
-    elseif relative == 'mouse' then
-      -- NOTE: If mousemoveevent is not enabled, this only updates on click
-      local pos = vim.fn.getmousepos()
-      xoffset = pos.screencol -- screencol is one-indexed
-      yoffset = pos.screenrow -- screenrow is one-indexed
-    end
-
-    move_cursor(x + xoffset, y + yoffset)
-  end
+  local pos = opts:position():to_cells()
+  require('vim.ui.img.utils').move_cursor(pos.x, pos.y)
 end
 
----Path to the tty used by neovim.
----@type file*|nil
-local tty
-
----Writes the the raw tty used by neovim.
----NOTE: Necessary as otherwise neovim corrupts sixel data.
----@param ... string
-local function tty_write(...)
-  if vim.fn.has('win32') == 1 then
-    io.stdout:write(...)
-  else
-    if not tty then
-      local handle = assert(io.popen("tty"))
-      local tty_path = assert(handle:read("*l"))
-      assert(handle:close())
-      tty = assert(io.open(tty_path, 'w'))
-    end
-
-    assert(tty:write(...))
-    assert(tty:flush())
-    -- assert(tty:close())
-  end
-end
+local tty_write = require('vim.ui.img.utils').new_tty_writer()
 
 ---@param visible boolean
 local function set_cursor_visible(visible)
@@ -224,6 +153,6 @@ local function hide(_self, ids)
 end
 
 return require('vim.ui.img.providers').new({
-  show = show,
-  hide = hide,
+  on_show = show,
+  on_hide = hide,
 })

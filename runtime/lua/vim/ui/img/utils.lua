@@ -212,4 +212,42 @@ function M.new_size(width, height, unit)
   return size
 end
 
+---Move the terminal cursor to cell x, y.
+---NOTE: This is relative to the editor, so can be placed outside of normal region.
+---@param x integer column position in terminal
+---@param y integer row position in terminal
+function M.move_cursor(x, y)
+  io.stdout:write(string.format(
+    '\027[%s;%sH',
+    math.floor(y),
+    math.floor(x)
+  ))
+end
+
+---Creates and returns a writer to the raw TTY used by neovim.
+---In the case of Windows, this is merely a wrapper for `io.stdout:write()`.
+---@return fun(...:string)
+function M.new_tty_writer()
+  ---Path to the tty used by neovim.
+  ---@type file*|nil
+  local tty
+
+  ---@param ... string
+  return function(...)
+    if vim.fn.has('win32') == 1 then
+      io.stdout:write(...)
+    else
+      if not tty then
+        local handle = assert(io.popen("tty"))
+        local tty_path = assert(handle:read("*l"))
+        assert(handle:close())
+        tty = assert(io.open(tty_path, 'w'))
+      end
+
+      assert(tty:write(...))
+      assert(tty:flush())
+    end
+  end
+end
+
 return M

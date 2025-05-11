@@ -67,4 +67,58 @@ function M.new(opts)
   return instance
 end
 
+---Calculates and returns the position dictated by `relative` and `pos`.
+---@return vim.ui.img.utils.Position
+function M:position()
+  local utils = require('vim.ui.img.utils')
+  local x, y = 0, 0
+
+  if self.pos or self.relative then
+    local xoffset, yoffset = 0, 0
+    local relative = self.relative
+
+    if self.pos then
+      local pos_cells = self.pos:to_cells()
+      x, y = pos_cells.x, pos_cells.y
+    end
+
+    -- Adjust the x,y position using relative indicator
+    if relative == 'editor' then
+      xoffset = 0
+      yoffset = 0
+    elseif relative == 'win' then
+      ---@type {[1]:number, [2]:number}
+      local pos = vim.api.nvim_win_get_position(self.win or 0)
+      xoffset = pos[2] -- pos[2] is column (zero indexed)
+      yoffset = pos[1] -- pos[1] is row (zero indexed)
+    elseif relative == 'cursor' then
+      local win = self.win or 0
+
+      ---@type {[1]:number, [2]:number}
+      local pos = vim.api.nvim_win_get_position(self.win or 0)
+      local px, py = pos[2], pos[1]
+
+      -- Get the screen line/column position of the cursor
+      local cx, cy = 0, 0
+      vim.api.nvim_win_call(win, function()
+        cy = vim.fn.winline()
+        cx = vim.fn.wincol()
+      end)
+
+      xoffset = px + cx
+      yoffset = py + cy
+    elseif relative == 'mouse' then
+      -- NOTE: If mousemoveevent is not enabled, this only updates on click
+      local pos = vim.fn.getmousepos()
+      xoffset = pos.screencol -- screencol is one-indexed
+      yoffset = pos.screenrow -- screenrow is one-indexed
+    end
+
+    x = x + xoffset
+    y = y + yoffset
+  end
+
+  return utils.new_position(x, y, 'cell')
+end
+
 return M

@@ -40,13 +40,6 @@ local next_id = (function()
   end
 end)()
 
----Move the terminal cursor to cell x, y.
----@param x integer
----@param y integer
-local function move_cursor(x, y)
-  io.stdout:write(string.format('\027[%s;%sH', math.floor(y), math.floor(x)))
-end
-
 ---Kitty operates via graphics codes in the form:
 ---
 ---    <ESC>_G<control data>;<payload><ESC>\
@@ -162,53 +155,14 @@ end
 ---@param opts vim.ui.img.Opts|{pid?:integer}
 ---@return integer placement_id
 local function display_image(id, opts)
+  local utils = require('vim.ui.img.utils')
+
   -- Create a unique placement id for this new display
   local pid = opts.pid or next_id()
 
-  if opts.pos or opts.relative then
-    local x, y = 0, 0
-    local xoffset, yoffset = 0, 0
-    local relative = opts.relative
-
-    if opts.pos then
-      local pos_cells = opts.pos:to_cells()
-      x, y = pos_cells.x, pos_cells.y
-    end
-
-    -- Adjust the x,y position using relative indicator
-    if relative == 'editor' then
-      xoffset = 0
-      yoffset = 0
-    elseif relative == 'win' then
-      ---@type {[1]:number, [2]:number}
-      local pos = vim.api.nvim_win_get_position(opts.win or 0)
-      xoffset = pos[2] -- pos[2] is column (zero indexed)
-      yoffset = pos[1] -- pos[1] is row (zero indexed)
-    elseif relative == 'cursor' then
-      local win = opts.win or 0
-
-      ---@type {[1]:number, [2]:number}
-      local pos = vim.api.nvim_win_get_position(opts.win or 0)
-      local px, py = pos[2], pos[1]
-
-      -- Get the screen line/column position of the cursor
-      local cx, cy = 0, 0
-      vim.api.nvim_win_call(win, function()
-        cy = vim.fn.winline()
-        cx = vim.fn.wincol()
-      end)
-
-      xoffset = px + cx
-      yoffset = py + cy
-    elseif relative == 'mouse' then
-      -- NOTE: If mousemoveevent is not enabled, this only updates on click
-      local pos = vim.fn.getmousepos()
-      xoffset = pos.screencol -- screencol is one-indexed
-      yoffset = pos.screenrow -- screenrow is one-indexed
-    end
-
-    move_cursor(x + xoffset, y + yoffset)
-  end
+  -- Move cursor to position where image should be displayed
+  local pos = opts:position():to_cells()
+  utils.move_cursor(pos.x, pos.y)
 
   -- TODO: Do we use U=1 for inline placements via virtual unicode?
   local control = {}
@@ -257,7 +211,7 @@ local function delete_image(image_id, placement_id)
 end
 
 ---@param _self vim.ui.img.Provider
-local function setup(_self)
+local function load(_self)
   -- Check if we are inside tmux, and if so we need to configure it to support
   -- allowing passthrough of escape codes for kitty's graphics protocol and
   -- flag that we need to transform escape codes sent to be compliant with tmux
@@ -273,13 +227,14 @@ end
 ---@param opts? vim.ui.img.Opts|{remote?:boolean}
 ---@return integer
 local function show(_self, img, opts)
-  opts = opts or {}
+  local is_remote = opts and opts.remote
+  opts = require('vim.ui.img.opts').new(opts)
 
   -- Check if we need to transmit our image or if it is already available
   local image_id = NVIM_IMAGE_TO_KITTY_IMAGE[img.id]
   if not image_id then
     -- If remote, we have to use a direct transmit instead of file
-    if opts.remote then
+    if is_remote then
       image_id = transmit_image_direct(img)
     else
       image_id = transmit_image_file(img)
@@ -319,12 +274,18 @@ local function update(_self, pid, opts)
     KITTY_PLACEMENT_TO_IMAGE[pid],
     string.format('kitty(update): invalid displayed image id %s', pid)
   )
-  return display_image(id, vim.tbl_extend('keep', { pid = pid }, opts or {}))
+
+  opts = require('vim.ui.img.opts').new(opts)
+
+  ---@diagnostic disable-next-line:inject-field
+  opts.pid = pid
+
+  return display_image(id, opts)
 end
 
 return require('vim.ui.img.providers').new({
-  setup = setup,
-  show = show,
-  hide = hide,
-  update = update,
+  on_load = load,
+  on_show = show,
+  on_hide = hide,
+  on_update = update,
 })

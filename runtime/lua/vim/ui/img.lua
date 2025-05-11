@@ -237,39 +237,36 @@ function M:chunks(opts)
   end)
 end
 
----Retrieves the provider to use to manipulate images.
----@param opts? {provider?:vim.ui.img.Provider|string}
+---Retrieves the provider to use to manipulate images, loading it in the process.
+---@param opts? {provider?:string}
 ---@return vim.ui.img.Provider
-local function get_provider(opts)
-  -- TODO: Re-introduce support for detecting a provider dynamically
-  local provider = (opts and opts.provider) or 'sixel' --or 'kitty'
+local function load_provider(opts)
+  local name = opts and opts.provider or vim.o.imgprovider
 
-  -- If just a name of a provider is specified, grab it from our internal implementations
-  if type(provider) == 'string' then
-    provider = M.providers.load(provider)
-  end
+  local provider = assert(M.providers.get(name), string.format('provider "%s" not found', name))
+  provider.load()
 
   return provider
 end
 
 ---Displays an image, returning a reference to the displayed instance.
 ---Currently only supports the |TUI|.
----@param opts? vim.ui.img.Opts|{provider?:vim.ui.img.Provider|string}
+---@param opts? vim.ui.img.Opts|{provider?:string}
 ---@return integer #unique id reprensting a reference to the displayed image
 function M:show(opts)
-  opts = require('vim.ui.img.opts').new(opts or {})
-  local provider = get_provider(opts)
+  opts = require('vim.ui.img.opts').new(opts)
+  local provider = load_provider(opts)
   return provider.show(self, opts)
 end
 
 ---Hides a displayed image. If no id provided, will hide all displayed images.
 ---Currently only supports the |TUI|.
 ---@param ids integer|integer[] the ids of the displayed images to hide
----@param opts? {provider?:vim.ui.img.Provider|string}
+---@param opts? {provider?:string}
 function M:hide(ids, opts)
   opts = opts or {}
 
-  local provider = get_provider(opts)
+  local provider = load_provider(opts)
 
   if type(ids) == 'number' then
     ids = { ids }
@@ -281,11 +278,11 @@ end
 ---Updates the displayed image using the provided options.
 ---Currently only supports the |TUI|.
 ---@param id integer id of the displayed image
----@param opts? vim.ui.img.Opts|{provider?:vim.ui.img.Provider|string} changes to apply to the displayed image
+---@param opts? vim.ui.img.Opts|{provider?:string} changes to apply to the displayed image
 ---@return integer id new id representing updated, displayed image
 function M:update(id, opts)
-  opts = require('vim.ui.img.opts').new(opts or {})
-  local provider = get_provider(opts)
+  opts = require('vim.ui.img.opts').new(opts)
+  local provider = load_provider(opts)
   return provider.update(id, opts)
 end
 

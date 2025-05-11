@@ -6,10 +6,11 @@ local PROVIDERS = {}
 local M = {}
 
 ---@class (exact) vim.ui.img.provider.Opts
----@field setup? fun(self:vim.ui.img.Provider)
----@field show fun(self:vim.ui.img.Provider, img:vim.ui.Image, opts?:vim.ui.img.Opts):integer
----@field hide fun(self:vim.ui.img.Provider, ids:integer[])
----@field update? fun(self:vim.ui.img.Provider, id:integer, opts?:vim.ui.img.Opts):integer
+---@field on_unload? fun(self:vim.ui.img.Provider) called to cleanup this provider
+---@field on_load? fun(self:vim.ui.img.Provider) called to initialize this provider
+---@field on_show fun(self:vim.ui.img.Provider, img:vim.ui.Image, opts?:vim.ui.img.Opts):integer
+---@field on_hide fun(self:vim.ui.img.Provider, ids:integer[])
+---@field on_update? fun(self:vim.ui.img.Provider, id:integer, opts?:vim.ui.img.Opts):integer
 
 ---Creates a new image provider instance.
 ---@param opts vim.ui.img.provider.Opts
@@ -17,9 +18,11 @@ local M = {}
 function M.new(opts)
   ---@class vim.ui.img.Provider
   ---@field displayed table<integer, vim.ui.Image> mapping of displayed image id -> image
+  ---@field private _loaded boolean
   ---@field private _opts vim.ui.img.provider.Opts
   local provider = {
     displayed = {},
+    _loaded = false,
     _opts = opts,
   }
 
@@ -28,7 +31,7 @@ function M.new(opts)
   ---@param opts? vim.ui.img.Opts
   ---@return integer id unique id representing a reference to the displayed image
   function provider.show(img, opts)
-    local id = provider._opts.show(provider, img, opts)
+    local id = provider._opts.on_show(provider, img, opts)
 
     provider.displayed[id] = img
 
@@ -56,7 +59,7 @@ function M.new(opts)
       ids = vim.tbl_keys(provider.displayed)
     end
 
-    provider._opts.hide(provider, ids)
+    provider._opts.on_hide(provider, ids)
 
     for _, id in ipairs(ids) do
       provider.displayed[id] = nil
@@ -75,8 +78,8 @@ function M.new(opts)
 
     -- If we have an explicitly-defined update method, use it as this is
     -- most likely more performant than the bruteforce approach
-    if provider._opts.update then
-      local new_id = provider._opts.update(provider, id, opts)
+    if provider._opts.on_update then
+      local new_id = provider._opts.on_update(provider, id, opts)
 
       provider.displayed[id] = nil
       provider.displayed[new_id] = img
@@ -90,27 +93,59 @@ function M.new(opts)
     return provider.show(img, opts)
   end
 
-  -- Invoke the setup function if it is provided
-  if type(provider._opts.setup) == 'function' then
-    ---@type boolean, string
-    local ok, err = pcall(provider._opts.setup, provider)
+  ---Returns true if the provider is currently loaded.
+  ---@return boolean
+  function provider.is_loaded()
+    return provider._loaded
+  end
 
-    if not ok then
-      vim.notify(
-        string.format('setup failed for provider: %s', vim.inspect(err)),
-        vim.log.levels.WARN
-      )
+  ---Loads the provider by performing any setup logic needed.
+  ---This is invoked when switching to this provider.
+  function provider.load()
+    if provider._loaded then
+      return
     end
+
+    if provider._opts.on_load then
+      provider._opts.on_load(provider)
+    end
+
+    provider._loaded = true
+  end
+
+  ---Unloads the provider by performing any cleanup logic needed.
+  ---This is invoked when switching away from this provider.
+  function provider.unload()
+    if not provider._loaded then
+      return
+    end
+
+    if provider._opts.on_unload then
+      provider._opts.on_unload(provider)
+    else
+      -- Hide all images if nothing else done
+      provider.hide()
+    end
+
+    provider._loaded = false
   end
 
   return provider
 end
 
----Loads a provider from its name, searching within known providers.
----If not found, will throw an error.
+---Checks whether a provider with the given name is available.
+---Involves scanning and loading internal providers.
 ---@param name string
----@return vim.ui.img.Provider
-function M.load(name)
+---@return boolean
+function M.has(name)
+  return M.get(name) ~= nil
+end
+
+---Retrieves a provider by its name, searching within known providers.
+---@param name string
+---@return vim.ui.img.Provider|nil
+function M.get(name)
+  ---@type vim.ui.img.Provider|nil
   local provider = PROVIDERS[name]
 
   -- Provider not found in our cache, so instead see if it's one of the
@@ -128,7 +163,20 @@ function M.load(name)
     end
   end
 
-  return assert(provider, string.format('provider %s not found', name))
+  return provider
+end
+
+---@private
+---Invoked when imgprovider option changes, unloading old provider.
+---@param name string
+---@return boolean
+function M.__unload(name)
+  local ok = true
+  local provider = M.get(name)
+  if provider then
+    ok = pcall(provider.unload)
+  end
+  return ok
 end
 
 ---@type vim.ui.img.Providers

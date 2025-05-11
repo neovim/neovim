@@ -2233,7 +2233,7 @@ local options = {
         'internal',
         'indent-heuristic',
         { 'algorithm:', { 'myers', 'minimal', 'patience', 'histogram' } },
-        { 'inline:', { 'none', 'simple', 'char', 'word' } },
+        { 'inline:',    { 'none', 'simple', 'char', 'word' } },
         'linematch:',
       },
       deny_duplicates = true,
@@ -4356,6 +4356,21 @@ local options = {
       short_desc = N_('do not use the IM in any mode'),
       type = 'boolean',
       immutable = true,
+    },
+    {
+      cb = 'did_set_imgprovider',
+      defaults = 'kitty',
+      desc = [=[
+        Specifies the provider to use when displaying and managing images
+        within neovim. A single provider is used across the neovim instance
+        and handles logic to display & hide images in a way that the active
+        user interface can understand.
+      ]=],
+      full_name = 'imgprovider',
+      scope = { 'global' },
+      short_desc = N_('provider used to display & manage images'),
+      type = 'string',
+      varname = 'p_imgprovider',
     },
     {
       abbreviation = 'imi',
