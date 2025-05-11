@@ -545,8 +545,7 @@ static int parser_parse(lua_State *L)
                                        .progress_callback = on_parser_progress };
       new_tree = ts_parser_parse_with_options(p, old_tree, input, parse_options);
     } else {
-      // Tree-sitter retains parse options after use, so we must explicitly reset them here.
-      new_tree = ts_parser_parse_with_options(p, old_tree, input, (TSParseOptions) { 0 });
+      new_tree = ts_parser_parse(p, old_tree, input);
     }
 
     break;
