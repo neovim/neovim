@@ -661,6 +661,32 @@ HARE							*ft-hare*
 Since the text for this plugin is rather long it has been put in a separate
 file: |ft_hare.txt|.
 
+HTML							*ft-html-plugin*
+
+Tag folding poses a few difficulties.  Many elements, e.g. `blockquote`, are
+always delimited by start and end tags; end tags for some elements, e.g. `p`,
+can be omitted in certain contexts; void elements, e.g. `hr`, have no end tag.
+Although the rules for supporting omissible end tags are ad-hoc and involved
+[0], they apply to elements in scope.  Assuming syntactical wellformedness, an
+end tag can be associated with its nearest matching start tag discoverable in
+scope [1] and towards the beginning of a file, whereas all unbalanced tags and
+inlined tags can be disregarded.  Having syntax highlighting in effect, tag
+folding using the |fold-expr| method can be enabled with: >
+	let g:html_expr_folding = 1
+<
+By default, tag folding will be redone from scratch after each occurrence of
+a |TextChanged| or an |InsertLeave| event.  Such frequency may not be desired,
+especially for large files, and this recomputation can be disabled with: >
+	let g:html_expr_folding_without_recomputation = 1
+        doautocmd FileType
+<
+To force another recomputation, do: >
+	unlet! b:foldsmap
+	normal zx
+<
+[0] https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
+[1] https://en.wikipedia.org/wiki/Dangling_else
+
 IDRIS2							*ft-idris2-plugin*
 
 By default the following options are set: >
