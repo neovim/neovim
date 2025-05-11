@@ -1951,11 +1951,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       ptr = line + v;
     }
 
-    if (draw_folded && wlv.n_extra == 0 && wlv.col < view_width && (has_foldtext || *ptr == NUL)) {
+    // Draw 'fold' fillchar after 'foldtext', or after 'eol' listchar for transparent 'foldtext'.
+    if (draw_folded && wlv.n_extra == 0 && wlv.col < view_width
+        && (has_foldtext || (*ptr == NUL && (!wp->w_p_list || !lcs_eol_todo || lcs_eol == NUL)))) {
       // Fill rest of line with 'fold'.
       wlv.sc_extra = wp->w_p_fcs_chars.fold;
       wlv.sc_final = NUL;
       wlv.n_extra = view_width - wlv.col;
+      // Don't continue search highlighting past the first filler char.
+      search_attr = 0;
     }
 
     if (draw_folded && wlv.n_extra != 0 && wlv.col >= view_width) {
@@ -2712,7 +2716,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           // Add a blank character to highlight.
           linebuf_char[wlv.off] = schar_from_ascii(' ');
         }
-        if (area_attr == 0 && !has_foldtext) {
+        if (area_attr == 0 && !has_fold) {
           // Use attributes from match with highest priority among
           // 'search_hl' and the match list.
           get_search_match_hl(wp,
