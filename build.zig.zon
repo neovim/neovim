@@ -14,8 +14,8 @@
             .hash = "122084badadeb91106dd06b2055119a944c340563536caefd8e22d4064182f7cd6e6",
         },
         .luv = .{
-            .url = "git+https://github.com/luvit/luv?ref=1.50.0-1#891ba330ea0b676eacbd943ab12bf5e8d4295119",
-            .hash = "N-V-__8AAKX9DgD3bigqB5adNqFpMGvwbNSGdaXBUpneaNDi",
+            .url = "git+https://github.com/luvit/luv?ref=1.51.0-0#6cbf6c959a47b6e3ce0679d89ee14d8ed84788b3",
+            .hash = "N-V-__8AAFglDwBDITf14pNH9v1JzRZneQ_aV_8ytBlzhyNx",
         },
         .lua_compat53 = .{
             .url = "https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz",

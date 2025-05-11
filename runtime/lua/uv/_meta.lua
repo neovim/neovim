@@ -204,6 +204,11 @@ uv.constants.SOCK_RDM = 'rdm'
 uv.constants.TTY_MODE_NORMAL = 'normal'
 uv.constants.TTY_MODE_RAW = 'raw'
 uv.constants.TTY_MODE_IO = 'io'
+uv.constants.TTY_MODE_RAW_VT = 'raw_vt'
+
+--- # FS Modification Times
+uv.constants.FS_UTIME_NOW = 'now'
+uv.constants.FS_UTIME_OMIT = 'omit'
 
 
 --- # Error Handling
@@ -3404,33 +3409,57 @@ function uv.fs_chmod(path, mode) end
 function uv.fs_fchmod(fd, mode) end
 
 --- Equivalent to `utime(2)`.
+---
+--- See [Constants][] for supported FS Modification Time constants.
+---
+--- Passing `"now"` or `uv.constants.FS_UTIME_NOW` as the atime or mtime sets the timestamp to the
+--- current time.
+---
+--- Passing `nil`, `"omit"`, or `uv.constants.FS_UTIME_OMIT` as the atime or mtime leaves the timestamp
+--- untouched.
 --- @param path string
---- @param atime number
---- @param mtime number
+--- @param atime number|string?
+--- @param mtime number|string?
 --- @return boolean? success
 --- @return string? err
 --- @return uv.error_name? err_name
---- @overload fun(path: string, atime: number, mtime: number, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t
+--- @overload fun(path: string, atime: number|string?, mtime: number|string?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t
 function uv.fs_utime(path, atime, mtime) end
 
---- Equivalent to `futime(2)`.
+--- Equivalent to `futimes(3)`.
+---
+--- See [Constants][] for supported FS Modification Time constants.
+---
+--- Passing `"now"` or `uv.constants.FS_UTIME_NOW` as the atime or mtime sets the timestamp to the
+--- current time.
+---
+--- Passing `nil`, `"omit"`, or `uv.constants.FS_UTIME_OMIT` as the atime or mtime leaves the timestamp
+--- untouched.
 --- @param fd integer
---- @param atime number
---- @param mtime number
+--- @param atime number|string?
+--- @param mtime number|string?
 --- @return boolean? success
 --- @return string? err
 --- @return uv.error_name? err_name
---- @overload fun(fd: integer, atime: number, mtime: number, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t
+--- @overload fun(fd: integer, atime: number|string?, mtime: number|string?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t
 function uv.fs_futime(fd, atime, mtime) end
 
---- Equivalent to `lutime(2)`.
+--- Equivalent to `lutimes(3)`.
+---
+--- See [Constants][] for supported FS Modification Time constants.
+---
+--- Passing `"now"` or `uv.constants.FS_UTIME_NOW` as the atime or mtime sets the timestamp to the
+--- current time.
+---
+--- Passing `nil`, `"omit"`, or `uv.constants.FS_UTIME_OMIT` as the atime or mtime leaves the timestamp
+--- untouched.
 --- @param path string
---- @param atime number
---- @param mtime number
+--- @param atime number|string?
+--- @param mtime number|string?
 --- @return boolean? success
 --- @return string? err
 --- @return uv.error_name? err_name
---- @overload fun(path: string, atime: number, mtime: number, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t
+--- @overload fun(path: string, atime: number|string?, mtime: number|string?, callback: fun(err: string?, success: boolean?)): uv.uv_fs_t
 function uv.fs_lutime(path, atime, mtime) end
 
 --- Equivalent to `link(2)`.
