@@ -24,10 +24,10 @@ end
 ---@param x integer
 ---@param y integer
 ---@param unit vim.ui.img.Unit
----@return vim.ui.img.Position
----@overload fun(opts:{x:integer, y:integer, unit:vim.ui.img.Unit}):vim.ui.img.Position
+---@return vim.ui.img.utils.Position
+---@overload fun(opts:{x:integer, y:integer, unit:vim.ui.img.Unit}):vim.ui.img.utils.Position
 function M.new_position(x, y, unit)
-  ---@class (exact) vim.ui.img.Position
+  ---@class (exact) vim.ui.img.utils.Position
   ---@field x integer
   ---@field y integer
   ---@field unit vim.ui.img.Unit
@@ -43,7 +43,7 @@ function M.new_position(x, y, unit)
   vim.validate('position.unit', position.unit, 'string')
 
   ---Convert unit of position to cells, returning a copy of the position.
-  ---@return vim.ui.img.Position
+  ---@return vim.ui.img.utils.Position
   function position:to_cells()
     if self.unit == 'pixel' then
       local cell_x, cell_y = pixels_to_cells(self.x, self.y)
@@ -54,7 +54,7 @@ function M.new_position(x, y, unit)
   end
 
   ---Convert unit of position to pixels, returning a copy of the position.
-  ---@return vim.ui.img.Position
+  ---@return vim.ui.img.utils.Position
   function position:to_pixels()
     if self.unit == 'cell' then
       local px_x, px_y = cells_to_pixels(self.x, self.y)
@@ -80,14 +80,14 @@ function M.new_position(x, y, unit)
 end
 
 ---Creates a new instance of a region corresponding to an image.
----@param pos1 vim.ui.img.Position
----@param pos2 vim.ui.img.Position
----@return vim.ui.img.Region
----@overload fun(opts:{pos1:vim.ui.img.Position, pos2:vim.ui.img.Position}):vim.ui.img.Region
+---@param pos1 vim.ui.img.utils.Position
+---@param pos2 vim.ui.img.utils.Position
+---@return vim.ui.img.utils.Region
+---@overload fun(opts:{pos1:vim.ui.img.utils.Position, pos2:vim.ui.img.utils.Position}):vim.ui.img.utils.Region
 function M.new_region(pos1, pos2)
-  ---@class (exact) vim.ui.img.Region
-  ---@field pos1 vim.ui.img.Position
-  ---@field pos2 vim.ui.img.Position
+  ---@class (exact) vim.ui.img.utils.Region
+  ---@field pos1 vim.ui.img.utils.Position
+  ---@field pos2 vim.ui.img.utils.Position
   local region = { pos1 = pos1, pos2 = pos2 }
 
   -- For overloaded function, options table provided
@@ -108,7 +108,7 @@ function M.new_region(pos1, pos2)
   )
 
   ---Convert unit of region to cells, returning a copy of the region.
-  ---@return vim.ui.img.Region
+  ---@return vim.ui.img.utils.Region
   function region:to_cells()
     return M.new_region(
       self.pos1:to_cells(),
@@ -117,7 +117,7 @@ function M.new_region(pos1, pos2)
   end
 
   ---Convert unit of region to pixels, returning a copy of the region.
-  ---@return vim.ui.img.Region
+  ---@return vim.ui.img.utils.Region
   function region:to_pixels()
     return M.new_region(
       self.pos1:to_pixels(),
@@ -157,10 +157,10 @@ end
 ---@param width integer
 ---@param height integer
 ---@param unit vim.ui.img.Unit
----@return vim.ui.img.Size
----@overload fun(opts:{width:integer, height:integer, unit:vim.ui.img.Unit}):vim.ui.img.Size
+---@return vim.ui.img.utils.Size
+---@overload fun(opts:{width:integer, height:integer, unit:vim.ui.img.Unit}):vim.ui.img.utils.Size
 function M.new_size(width, height, unit)
-  ---@class (exact) vim.ui.img.Size
+  ---@class (exact) vim.ui.img.utils.Size
   ---@field width integer
   ---@field height integer
   ---@field unit vim.ui.img.Unit
@@ -176,7 +176,7 @@ function M.new_size(width, height, unit)
   vim.validate('size.unit', size.unit, 'string')
 
   ---Convert unit of size to cells, returning a copy of the size.
-  ---@return vim.ui.img.Size
+  ---@return vim.ui.img.utils.Size
   function size:to_cells()
     if self.unit == 'pixel' then
       local cell_width, cell_height = pixels_to_cells(self.width, self.height)
@@ -187,7 +187,7 @@ function M.new_size(width, height, unit)
   end
 
   ---Convert unit of size to pixels, returning a copy of the size.
-  ---@return vim.ui.img.Size
+  ---@return vim.ui.img.utils.Size
   function size:to_pixels()
     if self.unit == 'cell' then
       local px_width, px_height = cells_to_pixels(self.width, self.height)

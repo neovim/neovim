@@ -140,7 +140,7 @@ end
 
 ---Returns the size of the image. If it is not loaded, will load the necessary bytes
 ---to retrieve and parse the header into memory.
----@return vim.ui.img.Size
+---@return vim.ui.img.utils.Size
 function M:size()
   local utils = require('vim.ui.img.utils')
   local header = self:__parse_header()

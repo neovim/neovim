@@ -2,9 +2,9 @@
 
 ---@class vim.ui.img.Opts
 ---@field relative? vim.ui.img.opts.Relative
----@field crop? vim.ui.img.Region portion of image to display
----@field pos? vim.ui.img.Position upper-left position of image within editor
----@field size? vim.ui.img.Size explicit size to scale the image
+---@field crop? vim.ui.img.utils.Region portion of image to display
+---@field pos? vim.ui.img.utils.Position upper-left position of image within editor
+---@field size? vim.ui.img.utils.Size explicit size to scale the image
 ---@field win? integer window to use when `relative` is `win`
 ---@field z? integer z-index of the image with lower values being drawn before higher values
 local M = {}
@@ -28,21 +28,21 @@ function M.new(opts)
   local relative = opts.relative
   vim.validate('opts.relative', relative, 'string', true)
 
-  ---@type vim.ui.img.Region|nil
+  ---@type vim.ui.img.utils.Region|nil
   local crop = opts.crop
   vim.validate('opts.crop', crop, 'table', true)
   if type(crop) == 'table' then
     crop = utils.new_region(crop)
   end
 
-  ---@type vim.ui.img.Position|nil
+  ---@type vim.ui.img.utils.Position|nil
   local pos = opts.pos
   vim.validate('opts.pos', pos, 'table', true)
   if type(pos) == 'table' then
     pos = utils.new_position(pos)
   end
 
-  ---@type vim.ui.img.Size|nil
+  ---@type vim.ui.img.utils.Size|nil
   local size = opts.size
   vim.validate('opts.size', size, 'table', true)
   if type(size) == 'table' then
