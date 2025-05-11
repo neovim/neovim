@@ -1635,11 +1635,12 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   // into "buf" are ignoring the event.
   if (buf == curbuf && event_names[event].event <= 0) {
     win_ignore = event_ignored(event, curwin->w_p_eiw);
-  } else if (buf != NULL && event_names[event].event <= 0) {
-    for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
-      WinInfo *wip = kv_A(buf->b_wininfo, i);
-      if (wip->wi_win != NULL && wip->wi_win->w_buffer == buf) {
-        win_ignore = event_ignored(event, wip->wi_win->w_p_eiw);
+  } else if (buf != NULL && event_names[event].event <= 0 && buf->b_nwindows > 0) {
+    win_ignore = true;
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (wp->w_buffer == buf && !event_ignored(event, wp->w_p_eiw)) {
+        win_ignore = false;
+        break;
       }
     }
   }
