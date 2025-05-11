@@ -13,6 +13,7 @@
 "		2025 Apr 29 match escaped chars in test operands (#17221)
 "		2025 May 06 improve single-quote string matching in parameter expansions
 "		2025 May 06 match KornShell compound arrays
+"		2025 May 10 improve wildcard character class lists
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -325,7 +326,7 @@ endif
 " Character Class In Range: {{{1
 " =========================
 syn match   shCharClassOther	contained	"\[:\w\{-}:\]"
-syn match   shCharClass	contained	"\[:\(backspace\|escape\|return\|xdigit\|alnum\|alpha\|blank\|cntrl\|digit\|graph\|lower\|print\|punct\|space\|upper\|tab\):\]"
+syn match   shCharClass	contained	"\[:\%(alnum\|alpha\|blank\|cntrl\|digit\|graph\|lower\|print\|punct\|space\|upper\|xdigit\):\]"
 syn match   shCollSymb	contained	"\[\..\{-}\.\]"
 syn match   shEqClass	contained	"\[=.\{-}=\]"
 
@@ -378,7 +379,9 @@ syn region  shCaseDoubleQuote	matchgroup=shQuote start=+"+ skip=+\\\\\|\\.+ end=
 syn region  shCaseCommandSub	start=+`+ skip=+\\\\\|\\.+ end=+`+		contains=@shCommandSubList		skipwhite skipnl nextgroup=shCaseBar	contained
 call s:GenerateBracketExpressionItems({'itemGroup': 'shCaseRange', 'bracketGroup': 'shBracketExprDelim', 'extraArgs': 'skip=+\\\\+ contained'})
 if exists("b:is_bash")
- syn match   shCharClass	'\[:\%(alnum\|alpha\|ascii\|blank\|cntrl\|digit\|graph\|lower\|print\|punct\|space\|upper\|word\|or\|xdigit\):\]'			contained
+ syn match   shCharClass	"\[:\%(alnum\|alpha\|ascii\|blank\|cntrl\|digit\|graph\|lower\|print\|punct\|space\|upper\|word\|xdigit\):\]"	contained
+elseif exists("b:is_kornshell")
+ syn match   shCharClass	"\[:\%(alnum\|alpha\|blank\|cntrl\|digit\|graph\|lower\|print\|punct\|space\|upper\|word\|xdigit\):\]"	contained
 endif
 " Misc: {{{1
 "======
