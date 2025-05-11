@@ -4,12 +4,16 @@
 ---@field [string] any
 
 ---@class vim.ui.img.parser.Data
----@field rgba integer
+---@field bytes string
+
+---Generic parser for images that is able to extract header information (i.e. size) and data.
+---@class vim.ui.img.Parser
+local M = {}
 
 ---Parses an image, optionally loading from disk, to retrieve information.
----@param opts {data?:string, filename:string, only_header?:boolean}
----@return vim.ui.img.parser.Header
-local function parse(opts)
+---@param opts {bytes?:string, filename:string, only_header?:boolean}
+---@return vim.ui.img.parser.Header, vim.ui.img.parser.Data|nil
+function M.parse(opts)
   -- This is just a quick check by file extension, but obviously files
   -- can have whatever name (and extension) they want and the extension
   -- isn't even a guarantee that the file is that type.
@@ -24,6 +28,4 @@ local function parse(opts)
   error(string.format('unsupported image format: %s', ext))
 end
 
-return {
-  parse = parse,
-}
+return M

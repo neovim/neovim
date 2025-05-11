@@ -4,7 +4,7 @@ local LAST_IMAGE_ID = 0
 
 ---@class vim.ui.Image
 ---@field id integer unique id associated with the image
----@field data string|nil data of the image loaded into memory
+---@field bytes string|nil bytes of the image loaded into memory
 ---@field filename string path to the image on disk
 ---@field private __header vim.ui.img.parser.Header|nil image's header information if loaded
 local M = {}
@@ -18,8 +18,8 @@ M.images = {}
 ---@type vim.ui.img.Providers
 M.providers = require('vim.ui.img.providers')
 
----Creates a new image instance, optionally taking pre-loaded data.
----@param opts {data?:string, filename:string}
+---Creates a new image instance, optionally taking pre-loaded bytes.
+---@param opts {bytes?:string, filename:string}
 ---@return vim.ui.Image
 function M.new(opts)
   opts = opts or {}
@@ -28,7 +28,7 @@ function M.new(opts)
   setmetatable(instance, M)
 
   instance.id = LAST_IMAGE_ID + 1
-  instance.data = opts.data
+  instance.bytes = opts.bytes
   instance.filename = opts.filename
 
   -- Update our running copy of all created images
@@ -39,7 +39,7 @@ function M.new(opts)
   return instance
 end
 
----Loads data for an image from a local file.
+---Loads bytes for an image from a local file.
 ---
 ---If a callback provided, will load asynchronously; otherwise, is blocking.
 ---@param filename string
@@ -56,7 +56,7 @@ function M.load(filename, on_load)
   img:reload(on_load)
 end
 
----Reloads the data for an image from its filename.
+---Reloads the bytes for an image from its filename.
 ---
 ---If a callback provided, will load asynchronously; otherwise, is blocking.
 ---@param on_load fun(err:string|nil)
@@ -71,10 +71,10 @@ function M:reload(on_load)
     local fd = vim.uv.fs_open(filename, 'r', 644) --[[ @type integer|nil ]]
     assert(fd, 'unable to open ' .. filename)
 
-    local data = vim.uv.fs_read(fd, stat.size, -1) --[[ @type string|nil ]]
-    assert(data, 'unable to read ' .. filename)
+    local bytes = vim.uv.fs_read(fd, stat.size, -1) --[[ @type string|nil ]]
+    assert(bytes, 'unable to read ' .. filename)
 
-    self.data = data
+    self.bytes = bytes
     self.filename = filename
 
     return
@@ -110,14 +110,14 @@ function M:reload(on_load)
         return
       end
 
-      vim.uv.fs_read(fd, stat.size, -1, function(read_err, data)
+      vim.uv.fs_read(fd, stat.size, -1, function(read_err, bytes)
         if report_err(read_err) then
           return
         end
 
         vim.uv.fs_close(fd, function() end)
 
-        self.data = data or ''
+        self.bytes = bytes or ''
         self.filename = filename
 
         vim.schedule(on_load)
@@ -126,16 +126,16 @@ function M:reload(on_load)
   end)
 end
 
----Returns the byte length of the image's data, or 0 if not loaded.
+---Returns the byte length of the image's bytes, or 0 if not loaded.
 ---@return integer
 function M:len()
-  return string.len(self.data or '')
+  return string.len(self.bytes or '')
 end
 
 ---Returns a hash (sha256) of the image.
 ---@return string
 function M:hash()
-  return vim.fn.sha256(self.data or '')
+  return vim.fn.sha256(self.bytes or '')
 end
 
 ---Returns the size of the image. If it is not loaded, will load the necessary bytes
@@ -158,7 +158,7 @@ function M:__parse_header(opts)
   end
 
   self.__header = require('vim.ui.img.parser').parse({
-    data = self.data,
+    bytes = self.bytes,
     filename = self.filename,
     only_header = true,
   })
@@ -169,7 +169,7 @@ end
 ---Returns an iterator over the chunks of the image, returning the chunk, byte position, and
 ---an indicator of whether the current chunk is the last chunk.
 ---
----If `base64=true`, will encode the data using base64 before iterating chunks.
+---If `base64=true`, will encode the bytes using base64 before iterating chunks.
 ---Takes an optional size to indicate how big each chunk should be, defaulting to 4096.
 ---
 ---Examples:
@@ -182,7 +182,7 @@ end
 ------@param pos integer
 ------@param last boolean
 ---img:chunks():each(function(chunk, pos, last)
----  vim.print("Chunk data", chunk)
+---  vim.print("Chunk bytes", chunk)
 ---  vim.print("Chunk starts at", pos)
 ---  vim.print("Is last chunk", last)
 ---end)
@@ -196,19 +196,19 @@ function M:chunks(opts)
   -- Chunk size, defaulting to 4k
   local chunk_size = opts.size or 4096
 
-  local data = self.data
-  if not data or data == '' then
+  local bytes = self.bytes
+  if not bytes or bytes == '' then
     return vim.iter(function()
       return nil, nil, nil
     end)
   end
 
   if opts.base64 then
-    data = vim.base64.encode(data)
+    bytes = vim.base64.encode(bytes)
   end
 
   local pos = 1
-  local len = string.len(data)
+  local len = string.len(bytes)
 
   return vim.iter(function()
     -- If we are past the last chunk, this iterator should terminate
@@ -218,7 +218,7 @@ function M:chunks(opts)
 
     -- Get our next chunk from [pos, pos + chunk_size)
     local end_pos = pos + chunk_size - 1
-    local chunk = data:sub(pos, end_pos)
+    local chunk = bytes:sub(pos, end_pos)
 
     -- If we have a chunk available, mark as such
     local last = true

@@ -1,4 +1,4 @@
----@class vim.ui.img.parser.png.Header: vim.ui.img.parser.Header
+---@class (exact) vim.ui.img.parser.png.Header: vim.ui.img.parser.Header
 ---@field width integer
 ---@field height integer
 ---@field bit_depth integer
@@ -7,7 +7,11 @@
 ---@field filter integer
 ---@field interlace integer
 
----@class vim.ui.img.parser.png.Chunk
+---@class (exact) vim.ui.img.parser.png.Data: vim.ui.img.parser.Data
+---@field bytes string
+---@field chunks vim.ui.img.parser.png.Chunk[]
+
+---@class (exact) vim.ui.img.parser.png.Chunk
 ---@field length integer total bytes contained in chunk data (range)
 ---@field type string 4 bytes denoting the chunk type
 ---@field range {[1]:integer, [2]:integer} start and ending byte offset for data
@@ -18,10 +22,25 @@
 local PNG_SIGNATURE = '\137PNG\r\n\026\n'
 local PNG_SIGNATURE_LENGTH = string.len(PNG_SIGNATURE)
 
+---@param chunk_or_length vim.ui.img.parser.png.Chunk|integer
+---@return integer
+local function png_chunk_size(chunk_or_length)
+  ---@type integer
+  local length
+
+  if type(chunk_or_length) == 'table' then
+    length = chunk_or_length.length
+  elseif type(chunk_or_length) == 'number' then
+    length = chunk_or_length
+  end
+
+  return length + 12
+end
+
 ---Total bytes of an IHDR chunk's data section.
 ---@type integer
 local IHDR_CHUNK_DATA_LENGTH = 13
-local IHDR_CHUNK_LENGTH = IHDR_CHUNK_DATA_LENGTH + 12
+local IHDR_CHUNK_LENGTH = png_chunk_size(IHDR_CHUNK_DATA_LENGTH)
 
 ---Parses a 4-byte big-endian string as an unsigned 32-bit integer.
 ---@param s string # A 4-byte string (must be exactly 4 bytes long)
@@ -31,36 +50,36 @@ local function u32be(s)
   return b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4
 end
 
----@param data string bytes to slice
+---@param bytes string bytes to slice
 ---@param offset integer start of the slice (base index 1)
 ---@param len integer total bytes of the slice
 ---@return string
-local function slice(data, offset, len)
-  return string.sub(data, offset, offset + len - 1)
+local function slice(bytes, offset, len)
+  return string.sub(bytes, offset, offset + len - 1)
 end
 
----Parses the next PNG chunk from the data.
----@param data string the full data (bytes) of the PNG
----@param offset? integer how far past the beginning of the data to start parsing
+---Parses the next PNG chunk from the bytes.
+---@param bytes string the full bytes of the PNG
+---@param offset? integer how far past the beginning of the bytes to start parsing
 ---@return vim.ui.img.parser.png.Chunk
-local function parse_chunk(data, offset)
+local function parse_chunk(bytes, offset)
   offset = offset or 0
 
-  -- We use an offset to advance through the data instead of copying chunks around,
-  -- so we need to see how much of our full data is remaining based on the offset
-  local remaining_len = string.len(data) - offset
+  -- We use an offset to advance through the bytes instead of copying chunks around,
+  -- so we need to see how much of our full bytes is remaining based on the offset
+  local remaining_len = string.len(bytes) - offset
   assert(remaining_len > 4, 'invalid chunk len <= 4')
 
-  -- Examine the length of the chunk, and make sure we still have enough data
-  local chunk_length = u32be(slice(data, 1 + offset, 4))
-  assert(remaining_len >= chunk_length, 'data len < chunk len of ' .. tostring(chunk_length))
+  -- Examine the length of the chunk, and make sure we still have enough bytes
+  local chunk_length = u32be(slice(bytes, 1 + offset, 4))
+  assert(remaining_len >= chunk_length, 'bytes len < chunk len of ' .. tostring(chunk_length))
 
   -- Grab the chunk's type and 32-bit CRC from the chunk
-  local chunk_type = slice(data, 5 + offset, 4)
-  local chunk_crc = slice(data, chunk_length - 4 + offset, 4)
+  local chunk_type = slice(bytes, 5 + offset, 4)
+  local chunk_crc = slice(bytes, chunk_length - 4 + offset, 4)
 
   -- Instead of copying a portion of the chunk, we just return the byte range that
-  -- represents the chunk for the time being since we don't always need the data
+  -- represents the chunk for the time being since we don't always need the bytes
   local chunk_range = { 9 + offset, chunk_length - 4 + offset }
 
   return {
@@ -71,12 +90,12 @@ local function parse_chunk(data, offset)
   }
 end
 
----Parses the PNG header from the data.
----@param data string
+---Parses the PNG header from the bytes.
+---@param bytes string
 ---@param offset? integer
 ---@return vim.ui.img.parser.png.Header
-local function parse_header(data, offset)
-  local chunk = parse_chunk(data, offset)
+local function parse_header(bytes, offset)
+  local chunk = parse_chunk(bytes, offset)
   vim.print(chunk)
   assert(chunk.type == 'IHDR', 'header chunk (' .. chunk.type .. ') not IHDR type')
   assert(chunk.length == IHDR_CHUNK_DATA_LENGTH, 'invalid IHDR chunk data size')
@@ -86,30 +105,36 @@ local function parse_header(data, offset)
 
   ---@type vim.ui.img.parser.png.Header
   return {
-    width = u32be(slice(data, offset, 4)),
-    height = u32be(slice(data, offset + 4, 4)),
-    bit_depth = string.byte(data, offset + 8),
-    color_type = string.byte(data, offset + 9),
-    compression = string.byte(data, offset + 10),
-    filter = string.byte(data, offset + 11),
-    interlace = string.byte(data, offset + 12),
+    width = u32be(slice(bytes, offset, 4)),
+    height = u32be(slice(bytes, offset + 4, 4)),
+    bit_depth = string.byte(bytes, offset + 8),
+    color_type = string.byte(bytes, offset + 9),
+    compression = string.byte(bytes, offset + 10),
+    filter = string.byte(bytes, offset + 11),
+    interlace = string.byte(bytes, offset + 12),
   }
 end
 
----@class vim.ui.img.parser.PngParser
+---@class vim.ui.img.parser.png.Parser
 local M = {}
 
 ---Parses a PNG image, loading the image into memory if not provided.
----@param opts {data?:string, filename:string, only_header?:boolean}
----@return vim.ui.img.parser.png.Header
+---@param opts {bytes?:string, filename:string, only_header?:boolean}
+---@return vim.ui.img.parser.png.Header, vim.ui.img.parser.png.Data|nil
 function M.parse(opts)
-  -- If we have the data already loaded, grab the header from it
-  local bytes = opts.data
+  -- If we have the bytes already loaded, grab the header from it
+  local bytes = opts.bytes
   local offset = 0
 
   ---@param len integer
   local function advance(len)
     offset = offset + len
+  end
+
+  ---@return boolean
+  local function has_more()
+    local len = string.len(bytes or '')
+    return offset < len
   end
 
   -- Otherwise, attempt to load the header bytes from the file (blocking)
@@ -149,7 +174,25 @@ function M.parse(opts)
   local header = parse_header(bytes, offset)
   advance(IHDR_CHUNK_LENGTH)
 
-  return header
+  -- Remaining chunks should be our PNG
+  ---@type vim.ui.img.parser.png.Data|nil
+  local data
+  if not opts.only_header then
+    data = { bytes = bytes, chunks = {} }
+    while has_more() do
+      local ok = pcall(function()
+        local chunk = parse_chunk(bytes, offset)
+        advance(png_chunk_size(chunk))
+        table.insert(data.chunks, chunk)
+      end)
+
+      if not ok then
+        break
+      end
+    end
+  end
+
+  return header, data
 end
 
 return M
