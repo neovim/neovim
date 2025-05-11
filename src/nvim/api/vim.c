@@ -2397,7 +2397,7 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 ///
 /// @param channel_id  channel id which sent the RPC request
 void nvim_restart(uint64_t channel_id, Error *err)
-  FUNC_API_SINCE(12) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY
 {
   int width = ui_client_get_width();
   int height = ui_client_get_height();
