@@ -369,6 +369,18 @@ function M.new_position(x, y, unit)
     return self
   end
 
+  ---Returns a hash based on the position parameters.
+  ---@return string
+  function position:hash()
+    ---@type string[]
+    local items = {
+      tostring(self.x),
+      tostring(self.y),
+      tostring(self.unit),
+    }
+    return vim.fn.sha256(table.concat(items))
+  end
+
   return position
 end
 
@@ -416,6 +428,17 @@ function M.new_region(pos1, pos2)
     return x, y, width, height
   end
 
+  ---Returns a hash based on the region parameters.
+  ---@return string
+  function region:hash()
+    ---@type string[]
+    local items = {
+      self.pos1:hash(),
+      self.pos2:hash(),
+    }
+    return vim.fn.sha256(table.concat(items))
+  end
+
   return region
 end
 
@@ -451,6 +474,18 @@ function M.new_size(width, height, unit)
     end
 
     return self
+  end
+
+  ---Returns a hash based on the size parameters.
+  ---@return string
+  function size:hash()
+    ---@type string[]
+    local items = {
+      tostring(self.width),
+      tostring(self.height),
+      tostring(self.unit),
+    }
+    return vim.fn.sha256(table.concat(items))
   end
 
   return size
