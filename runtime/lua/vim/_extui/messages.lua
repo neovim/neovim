@@ -265,13 +265,16 @@ function M.show_msg(tar, content, replace_last, more)
       ext.cmd.cmdline_show({}, 0, ':', '', ext.cmd.indent, 0, 0)
       api.nvim__redraw({ flush = true, cursor = true, win = ext.wins[ext.tab].cmd })
     else
-      -- Place [+x] indicator for lines that spill over 'cmdheight'.
-      local h = api.nvim_win_text_height(ext.wins[ext.tab].cmd, {})
-      M.cmd.lines, M.cmd.msg_row = h.all, h.end_row
-      local spill = M.cmd.lines > ext.cmdheight and ('[+%d]'):format(M.cmd.lines - ext.cmdheight)
-      M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
       api.nvim_win_set_cursor(ext.wins[ext.tab][tar], { 1, 0 })
       ext.cmd.highlighter.active[ext.bufs.cmd] = nil
+      -- Show hint in box and place [+x] indicator for lines that spill over 'cmdheight'.
+      local h = api.nvim_win_text_height(ext.wins[ext.tab].cmd, {})
+      M.cmd.lines, M.cmd.msg_row = h.all, h.end_row
+      local spill = M.cmd.lines - ext.cmdheight
+      M.virt.msg[M.virt.idx.spill][1] = spill > 0 and { 0, ('[+%d]'):format(spill) } or nil
+      if spill > 0 then
+        M.msg_show('verbose', { { 0, ('Press g< to see %d more lines'):format(spill), 0 } })
+      end
     end
   end
 
