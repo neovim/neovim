@@ -82,45 +82,57 @@ func Test_search_stat()
     \ searchcount(#{recompute: v:true}))
   set shortmess-=S
 
+  " Nvim: max search count is 999; append more lines to surpass it.
+  " Create a new undo block so we can revert the change later.
+  " Also allow "[?/??]" in case of timeouts from the increased max, but set a
+  " larger timeout for the recomputing searchcount()s.
+  let &l:undolevels = &l:undolevels
+  call append(0, repeat(['foobar', 'foo', 'fooooobar', 'foba', 'foobar'], 99))
+
   " Many matches
   call cursor(line('$')-2, 1)
   let @/ = '.'
   let pat = escape(@/, '()*?'). '\s\+'
   let g:a = execute(':unsilent :norm! n')
-  let stat = '\[>999/>999\]'
+  let stat = '\[\%(>999/>999\|?/??\)\]'
   call assert_match(pat .. stat, g:a)
   call assert_equal(
-    \ #{current: 100, exact_match: 0, total: 100, incomplete: 2, maxcount: 999},
-    \ searchcount(#{recompute: 0}))
+    \ #{current: 1000, exact_match: 0, total: 1000, incomplete: 2, maxcount: 999},
+    "\ Nvim: must recompute if the previous search timed out.
+    \ searchcount(#{recompute: (g:a =~# pat .. '\[?/??\]'), timeout: 500}))
   call assert_equal(
-    \ #{current: 272, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 200}))
+    \ #{current: 3044, exact_match: 1, total: 3052, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 500}))
   call assert_equal(
-    \ #{current: 1, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 200}))
+    \ #{current: 1, exact_match: 1, total: 3052, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 500}))
   call cursor(line('$'), 1)
   let g:a = execute(':unsilent :norm! n')
-  let stat = 'W \[1/>999\]'
+  let stat = 'W \[\%(1/>999\|?/??\)\]'
   call assert_match(pat .. stat, g:a)
   call assert_equal(
-    \ #{current: 1, exact_match: 1, total: 100, incomplete: 2, maxcount: 999},
-    \ searchcount(#{recompute: 0}))
+    \ #{current: 1, exact_match: 1, total: 1000, incomplete: 2, maxcount: 999},
+    "\ Nvim: must recompute if the previous search timed out.
+    \ searchcount(#{recompute: (g:a =~# pat .. '\[?/??\]'), timeout: 500}))
   call assert_equal(
-    \ #{current: 1, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 200}))
+    \ #{current: 1, exact_match: 1, total: 3052, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 500}))
   call assert_equal(
-    \ #{current: 271, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 200}))
+    \ #{current: 3043, exact_match: 1, total: 3052, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 500}))
 
   " Many matches
   call cursor(1, 1)
   let g:a = execute(':unsilent :norm! n')
-  let stat = '\[2/>999\]'
+  let stat = '\[\%(2/>999\|?/??\)\]'
   call assert_match(pat .. stat, g:a)
   call cursor(1, 1)
   let g:a = execute(':unsilent :norm! N')
-  let stat = 'W \[>999/>999\]'
+  let stat = 'W \[\%(>999/>999\|?/??\)\]'
   call assert_match(pat .. stat, g:a)
+
+  " Nvim: undo the extra lines.
+  undo
 
   " right-left
   if exists("+rightleft")
