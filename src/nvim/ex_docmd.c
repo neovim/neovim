@@ -5599,7 +5599,8 @@ static void ex_detach(exarg_T *eap)
 /// ":restart" command
 ///
 /// Restarts the server by delegating the work to the UI.
-static void ex_restart(exarg_T *eap) {
+static void ex_restart(exarg_T *eap)
+{
   if (eap && eap->forceit) {
     emsg("bang not supported.");
     return;
@@ -5619,7 +5620,6 @@ static void ex_restart(exarg_T *eap) {
   }
   arena_mem_free(arena_res);
 }
-
 
 /// ":mode":
 /// If no argument given, get the screen size and redraw.
