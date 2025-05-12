@@ -2428,11 +2428,16 @@ static bool scroll_with_sms(Direction dir, int count, int *curscount)
     if (labs(curwin->w_topline - prev_topline) > (dir == BACKWARD)) {
       fixdir = dir * -1;
     }
-    while (curwin->w_skipcol > 0
-           && curwin->w_topline < curbuf->b_ml.ml_line_count) {
-      scroll_redraw(fixdir == FORWARD, 1);
-      *curscount += (fixdir == dir ? 1 : -1);
+
+    int width1 = curwin->w_view_width - win_col_off(curwin);
+    int width2 = width1 + win_col_off2(curwin);
+    count = 1 + (curwin->w_skipcol - width1) / width2;
+    if (fixdir == FORWARD) {
+      count = 2 + (linetabsize_eol(curwin, curwin->w_topline)
+                   - curwin->w_skipcol - width1) / width2;
     }
+    scroll_redraw(fixdir == FORWARD, count);
+    *curscount += count * (fixdir == dir ? 1 : -1);
   }
   curwin->w_p_sms = prev_sms;
 
