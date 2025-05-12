@@ -913,8 +913,8 @@ setloclist({opts})                               *vim.diagnostic.setloclist()*
 
     Parameters: ~
       • {opts}  (`table?`) Configuration table with the following keys:
-                • {namespace}? (`integer`) Only add diagnostics from the given
-                  namespace.
+                • {namespace}? (`integer[]|integer`) Only add diagnostics from
+                  the given namespace(s).
                 • {winnr}? (`integer`, default: `0`) Window number to set
                   location list for.
                 • {open}? (`boolean`, default: `true`) Open the location list
@@ -929,8 +929,8 @@ setqflist({opts})                                 *vim.diagnostic.setqflist()*
 
     Parameters: ~
       • {opts}  (`table?`) Configuration table with the following keys:
-                • {namespace}? (`integer`) Only add diagnostics from the given
-                  namespace.
+                • {namespace}? (`integer[]|integer`) Only add diagnostics from
+                  the given namespace(s).
                 • {open}? (`boolean`, default: `true`) Open quickfix list
                   after setting.
                 • {title}? (`string`) Title of quickfix list. Defaults to

@@ -3428,6 +3428,26 @@ describe('vim.diagnostic', function()
 
       assert(loc_list[1].lnum < loc_list[2].lnum)
     end)
+
+    it('sets diagnostics from the specified namespaces', function()
+      local loc_list = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error here!', 1, 1, 1, 1),
+        })
+        vim.diagnostic.set(_G.other_ns, _G.diagnostic_bufnr, {
+          _G.make_warning('Error there!', 2, 2, 2, 2),
+        })
+
+        vim.diagnostic.setloclist({ namespace = { _G.diagnostic_ns } })
+
+        return vim.fn.getloclist(0)
+      end)
+
+      eq(1, #loc_list)
+      eq('Error here!', loc_list[1].text)
+    end)
   end)
 
   describe('setqflist()', function()
