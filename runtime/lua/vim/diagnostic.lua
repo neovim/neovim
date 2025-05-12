@@ -2592,7 +2592,15 @@ function M.fromqflist(list)
 end
 
 --- Returns formatted string with diagnostics for the current buffer.
---- Empty diagnostics are not included.
+--- The severities with 0 diagnostics are left out.
+--- Example `E:2 W:3 I:4 H:5`
+---
+--- To customise appearance, set diagnostic signs text with
+--- ```lua
+--- vim.diagnostic.config({
+---   signs = { text = { [vim.diagnostic.severity.ERROR] = 'Error', ... } }
+--- })
+--- ```
 ---
 ---@return string
 function M.status()
@@ -2607,6 +2615,13 @@ function M.status()
     :join(' ')
 
   return result_str
+end
+
+if vim.o.statusline:find('vim.diagnostic.status') then
+  vim.api.nvim_create_autocmd('DiagnosticChanged', {
+    group = vim.api.nvim_create_augroup('nvim.diagnostic.status', {}),
+    command = 'redrawstatus',
+  })
 end
 
 return M
