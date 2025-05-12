@@ -69,7 +69,7 @@ allows you to associate names with a specific node in a pattern. A `predicate`
 adds arbitrary metadata and conditional data to a match.
 
 Queries are written in a lisp-like language documented in
-https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax
+https://tree-sitter.github.io/tree-sitter/using-parsers/queries/1-syntax.html
 Note: The predicates listed there differ from those Nvim supports. See
 |treesitter-predicates| for a complete list of predicates supported by Nvim.
 
