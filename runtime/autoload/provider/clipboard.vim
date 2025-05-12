@@ -85,8 +85,8 @@ function! s:set_wayland() abort
 endfunction
 
 function! s:set_wayclip() abort
-  let s:copy['+'] = ['waycopy', '-t', 'text/plain']
-  let s:paste['+'] = ['waypaste', '-t', 'text/plain']
+  let s:copy['+'] = ['waycopy']
+  let s:paste['+'] = ['waypaste']
   let s:copy['*'] = s:copy['+']
   let s:paste['*'] = s:paste['+']
   return 'wayclip'
