@@ -2395,7 +2395,7 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
 /// Restarts the embedded server without killing the UI.
 ///
-/// @param channel_id  channel id which sent the RPC request
+/// @param channel_id  channel id which sent the RPC request.
 void nvim_restart(uint64_t channel_id, Error *err)
   FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY
 {
@@ -2403,28 +2403,14 @@ void nvim_restart(uint64_t channel_id, Error *err)
   int height = ui_client_get_height();
   char *term = ui_client_get_term();
   bool rgb = ui_client_get_rgb();
-  Channel *chan = find_channel(channel_id);
-  if (!chan) {
-    api_set_error(err, kErrorTypeException,
-                  "UI not attached to RPC channel: %" PRId64, channel_id);
-    return;
-  }
-  if (!chan->is_rpc) {
-    api_set_error(err, kErrorTypeException,
-                  "channel is not RPC: %" PRId64, channel_id);
-    return;
-  }
-  Channel *ui_chan = find_channel(ui_client_channel_id);
-  if (!ui_chan) {
-    api_set_error(err, kErrorTypeException,
-                  "could not find current UI channel: %" PRId64, ui_client_channel_id);
-    return;
-  }
-  ui_chan->detach = true;
+
+  // 1. Client-side server detach (auto kills the `nvim --embed` server due to self-exit).
   ui_client_detach();
+
+  // 2. Get v:argv.
   typval_T *tv = get_vim_var_tv(VV_ARGV);
   if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
-    ELOG("failed to get vim var tv");
+    ELOG("failed to get vim var typval");
     return;
   }
   list_T *l = tv->vval.v_list;
@@ -2440,17 +2426,17 @@ void nvim_restart(uint64_t channel_id, Error *err)
     }
   }
   argv[argc] = NULL;
+
+  // 3. Start a new `nvim --embed` server.
   uint64_t rv = ui_client_start_server(argc, argv);
   if (!rv) {
     ELOG("failed to start nvim server");
     return;
   }
+
+  // 4. Client-side server re-attach.
   ui_client_channel_id = rv;
   ui_client_attach(width, height, term, rgb);
-  // Cleanup memory allocated for argv
-  for (int i = 0; i < argc; i++) {
-    xfree(argv[i]);
-  }
-  xfree(argv);
+
   ILOG("restarted server from ui client");
 }
