@@ -28,94 +28,112 @@ local function move_to_img_pos(opts)
 end
 
 local tty_write = require('vim.ui.img.utils').new_tty_writer()
+local redraw_sync = require('vim.ui.img.utils').with_sync_mode
 
-local is_redrawing = false
-local function redraw_placements()
-  if is_redrawing then
-    return
-  end
-
-  is_redrawing = true
+local redraw_placements = require('vim.ui.img.utils').debounce(function()
+  -- Clear the screen
+  vim.cmd.mode()
 
   ---@type boolean, string|nil
   local ok, err = pcall(function()
-    for _, placement in pairs(PLACEMENTS) do
-      if placement.redraw then
-        placement.redraw = false
+    redraw_sync(function()
+      for _, placement in pairs(PLACEMENTS) do
+        if placement.redraw then
+          placement.redraw = false
 
-        ---@param filename string
-        ---@param bytes string
-        ---@param opts vim.ui.img.Opts
-        local function redraw(filename, bytes, opts)
-          local name = vim.base64.encode(vim.fn.fnamemodify(filename, ':t:r'))
-          local contents = vim.base64.encode(bytes)
-          local args = {
-            string.format('name=%s', name),
-            string.format('size=%s', string.len(bytes)),
-            'preserveAspectRatio=0',
-            'inline=1',
-          }
+          ---@param filename string
+          ---@param bytes string
+          ---@param opts vim.ui.img.Opts
+          local function redraw(filename, bytes, opts)
+            local name = vim.base64.encode(vim.fn.fnamemodify(filename, ':t:r'))
+            local contents = vim.base64.encode(bytes)
+            local args = {
+              string.format('name=%s', name),
+              string.format('size=%s', string.len(bytes)),
+              'preserveAspectRatio=0',
+              'inline=1',
+            }
 
-          if opts.size then
-            table.insert(args, string.format(
-              'width=%s' .. (opts.size.unit == 'pixel' and 'px' or ''),
-              opts.size.width
-            ))
-            table.insert(args, string.format(
-              'height=%s' .. (opts.size.unit == 'pixel' and 'px' or ''),
-              opts.size.height
-            ))
-          end
-
-          local args = table.concat(args, ';')
-          move_to_img_pos(placement.opts)
-
-          if IS_TMUX then
-            tty_write(string.format('\027]1337;MultipartFile=%s\007', args))
-
-            local i = 1
-            while i < string.len(contents) do
-              tty_write(string.format(
-                '\027]1337;FilePart=%s\007',
-                string.sub(contents, i, i + MAX_CONTENTS_SIZE - 1)
+            if opts.size then
+              table.insert(args, string.format(
+                'width=%s' .. (opts.size.unit == 'pixel' and 'px' or ''),
+                opts.size.width
               ))
-              i = i + MAX_CONTENTS_SIZE
+              table.insert(args, string.format(
+                'height=%s' .. (opts.size.unit == 'pixel' and 'px' or ''),
+                opts.size.height
+              ))
             end
 
-            tty_write('\027]1337;FileEnd\007')
-          else
-            tty_write(string.format('\027]1337;File=%s:%s\007', args, contents))
-          end
-        end
+            local args = table.concat(args, ';')
+            move_to_img_pos(placement.opts)
 
-        local img = placement.img
-        if not img.bytes then
-          img:reload(function(err)
-            if err then
-              vim.notify('failed to render image: ' .. err, vim.log.levels.WARN)
+            if IS_TMUX then
+              tty_write(string.format('\027]1337;MultipartFile=%s\007', args))
+
+              local i = 1
+              while i < string.len(contents) do
+                tty_write(string.format(
+                  '\027]1337;FilePart=%s\007',
+                  string.sub(contents, i, i + MAX_CONTENTS_SIZE - 1)
+                ))
+                i = i + MAX_CONTENTS_SIZE
+              end
+
+              tty_write('\027]1337;FileEnd\007')
             else
-              redraw(img.filename, img.bytes, placement.opts)
+              tty_write(string.format('\027]1337;File=%s:%s\007', args, contents))
             end
-          end)
-        else
-          redraw(img.filename, img.bytes, placement.opts)
+          end
+
+          local img = placement.img
+          if not img.bytes then
+            img:reload(function(err)
+              if err then
+                vim.notify('failed to render image: ' .. err, vim.log.levels.WARN)
+              else
+                redraw(img.filename, img.bytes, placement.opts)
+              end
+            end)
+          else
+            redraw(img.filename, img.bytes, placement.opts)
+          end
         end
       end
-    end
+    end)
   end)
-
-  is_redrawing = false
 
   if not ok then
     vim.notify(err or 'iterm2 redraw unknown error', vim.log.levels.WARN)
   end
-end
+end, { ms = 5 })
 
 ---@param _self vim.ui.img.Provider
 local function load(_self)
   if vim.env['TMUX'] ~= nil then
     IS_TMUX = true
   end
+
+  -- TODO: Check if synchronous mode exists:
+  -- https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
+  --
+  -- Send ESC[?2026p
+  -- Get back ESC[?2026;2$y
+
+  -- TODO: Subscribe autocmd to
+  --
+  --       CursorMoved, CursorMovedI :: check if cursor on an image, and redraw that image
+  --       WinScrolled :: check image lines and refresh if affected
+  --       BufWritePost :: snacks.nvim calls update here. Should we??
+  vim.api.nvim_create_autocmd({ 'BufWritePost', 'WinScrolled' }, {
+    callback = function()
+      for _, placement in pairs(PLACEMENTS) do
+        placement.redraw = true
+      end
+
+      vim.schedule(redraw_placements)
+    end,
+  })
 end
 
 ---@param _self vim.ui.img.Provider
@@ -153,8 +171,6 @@ local function hide(_self, ids)
     placement.redraw = true
   end
 
-  -- Clear the screen of all iterm2 images
-  vim.cmd.mode()
   vim.schedule(redraw_placements)
 end
 

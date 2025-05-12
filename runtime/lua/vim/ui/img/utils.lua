@@ -224,6 +224,33 @@ function M.move_cursor(x, y)
   ))
 end
 
+---Enables batching of output requests, executes `f`, and then resets batching.
+---@param f fun()
+function M.with_sync_mode(f)
+  -- Turn on synchronization batching
+  io.stdout:write('\027[?2026h')
+
+  ---@type boolean, any
+  local ok, err = pcall(f)
+
+  -- Turn off synchronization batching
+  io.stdout:write('\027[?2026l')
+
+  assert(ok, err)
+end
+
+---@generic T
+---@param fn T
+---@param opts? {ms?:integer}
+---@return T
+function M.debounce(fn, opts)
+  local timer = assert(vim.uv.new_timer())
+  local ms = opts and opts.ms or 20
+  return function()
+    timer:start(ms, 0, vim.schedule_wrap(fn))
+  end
+end
+
 ---Creates and returns a writer to the raw TTY used by neovim.
 ---In the case of Windows, this is merely a wrapper for `io.stdout:write()`.
 ---@return fun(...:string)

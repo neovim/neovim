@@ -62,34 +62,45 @@ end
 
 local tty_write = require('vim.ui.img.utils').new_tty_writer()
 
-local is_redrawing = false
-local function redraw_placements()
-  if is_redrawing then
-    return
-  end
+local redraw_placements = require('vim.ui.img.utils').debounce(function()
+  local utils = require('vim.ui.img.utils')
 
-  is_redrawing = true
+  -- Clear the screen of all sixel images
+  vim.cmd.mode()
 
   ---@type boolean, string|nil
   local ok, err = pcall(function()
-    for _, placement in pairs(SIXEL_PLACEMENTS) do
-      if placement.redraw then
-        placement.redraw = false
+    utils.with_sync_mode(function()
+      for _, placement in pairs(SIXEL_PLACEMENTS) do
+        if placement.redraw then
+          placement.redraw = false
 
-        local sixel = HASH_TO_SIXEL_DATA[placement.hash]
-        if sixel then
-          move_to_img_pos(placement.opts)
-          tty_write(sixel)
+          local sixel = HASH_TO_SIXEL_DATA[placement.hash]
+          if sixel then
+            move_to_img_pos(placement.opts)
+            tty_write(sixel)
+          end
         end
       end
-    end
+    end)
   end)
-
-  is_redrawing = false
 
   if not ok then
     vim.notify(err or 'sixel redraw unknown error', vim.log.levels.WARN)
   end
+end, { ms = 5 })
+
+---@param _self vim.ui.img.Provider
+local function load(_self)
+  vim.api.nvim_create_autocmd({ 'BufWritePost', 'WinScrolled' }, {
+    callback = function()
+      for _, placement in pairs(SIXEL_PLACEMENTS) do
+        placement.redraw = true
+      end
+
+      vim.schedule(redraw_placements)
+    end,
+  })
 end
 
 ---@param _self vim.ui.img.Provider
@@ -135,13 +146,11 @@ local function hide(_self, ids)
     placement.redraw = true
   end
 
-  -- Clear the screen of all sixel images
-  -- tty_write('\027[2J')
-  vim.cmd.mode()
   vim.schedule(redraw_placements)
 end
 
 return require('vim.ui.img.providers').new({
+  on_load = load,
   on_show = show,
   on_hide = hide,
 })
