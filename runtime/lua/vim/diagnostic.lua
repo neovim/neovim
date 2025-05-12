@@ -834,9 +834,22 @@ local function get_diagnostics(bufnr, opts, clamp)
 
   ---@param b integer
   ---@param d vim.Diagnostic
+  local match_enablement = function(d, b)
+    if opts.enabled == nil then
+      return true
+    end
+
+    local enabled = M.is_enabled({ bufnr = b, ns_id = d.namespace })
+
+    return (enabled and opts.enabled) or (not enabled and not opts.enabled)
+  end
+
+  ---@param b integer
+  ---@param d vim.Diagnostic
   local function add(b, d)
     if
       match_severity(d)
+      and match_enablement(d, b)
       and (not opts.lnum or (opts.lnum >= d.lnum and opts.lnum <= (d.end_lnum or d.lnum)))
     then
       if clamp and api.nvim_buf_is_loaded(b) then
@@ -1345,6 +1358,11 @@ end
 ---
 --- See |diagnostic-severity|.
 --- @field severity? vim.diagnostic.SeverityFilter
+---
+--- Limit diagnostics to only enabled or disabled. If nil, enablement is ignored.
+--- See |vim.diagnostic.enable()|
+--- (default: `nil`)
+--- @field enabled? boolean
 
 --- Configuration table with the keys listed below. Some parameters can have their default values
 --- changed with |vim.diagnostic.config()|.
