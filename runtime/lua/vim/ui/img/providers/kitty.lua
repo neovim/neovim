@@ -224,8 +224,8 @@ local function load(_self)
   -- allowing passthrough of escape codes for kitty's graphics protocol and
   -- flag that we need to transform escape codes sent to be compliant with tmux
   if vim.env['TMUX'] ~= nil then
-    local res = vim.system({ "tmux", "set", "-p", "allow-passthrough", "all" }):wait()
-    assert(res.code == 0, 'failed to "set -p allow-passthrough all" for tmux')
+    local res = vim.system({ 'tmux', 'set', '-p', 'allow-passthrough', 'all' }):wait()
+    assert(res.code == 0, 'failed to 'set -p allow-passthrough all' for tmux')
     IS_TMUX = true
   end
 
@@ -241,6 +241,10 @@ local function show(_self, img, opts)
   opts = require('vim.ui.img.opts').new(opts)
 
   -- Check if we need to transmit our image or if it is already available
+  -- TODO: This should really query to see if the image is still loaded
+  --       otherwise re-transmit the image. This is especially apparent
+  --       when switching between providers as something happens to clear
+  --       the images (I think) and they don't show up anymore
   local image_id = NVIM_IMAGE_TO_KITTY_IMAGE[img.id]
   if not image_id then
     -- If remote, we have to use a direct transmit instead of file

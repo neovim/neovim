@@ -62,15 +62,6 @@ end
 
 local tty_write = require('vim.ui.img.utils').new_tty_writer()
 
----@param visible boolean
-local function set_cursor_visible(visible)
-  if visible then
-    tty_write('\027[?25l')
-  else
-    tty_write('\027[?25h')
-  end
-end
-
 local is_redrawing = false
 local function redraw_placements()
   if is_redrawing then
@@ -81,7 +72,6 @@ local function redraw_placements()
 
   ---@type boolean, string|nil
   local ok, err = pcall(function()
-    set_cursor_visible(false)
     for _, placement in pairs(SIXEL_PLACEMENTS) do
       if placement.redraw then
         placement.redraw = false
@@ -93,7 +83,6 @@ local function redraw_placements()
         end
       end
     end
-    set_cursor_visible(true)
   end)
 
   is_redrawing = false
