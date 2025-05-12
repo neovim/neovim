@@ -120,6 +120,8 @@ endfunction
 " Tutor Cmd: {{{1
 
 function! s:Locale()
+    " Make sure l:lang exists before returning.
+    let l:lang = 'en_US'
     if exists('v:lang') && v:lang =~ '\a\a'
         let l:lang = v:lang
     elseif $LC_ALL =~ '\a\a'
@@ -132,8 +134,6 @@ function! s:Locale()
       endif
     elseif $LANG =~ '\a\a'
         let l:lang = $LANG
-    else
-        let l:lang = 'en_US'
     endif
     return split(l:lang, '_')
 endfunction
