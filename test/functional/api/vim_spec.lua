@@ -5674,4 +5674,9 @@ describe('API', function()
 
     n.assert_alive()
   end)
+
+  it('nvim_restart', function()
+    eq('could not find current UI channel: 0', pcall_err(request, 'nvim_restart'))
+    eq('Wrong number of arguments: expecting 0 but got 1', pcall_err(request, 'nvim_restart', 0))
+  end)
 end)

@@ -160,6 +160,61 @@ describe('TUI :detach', function()
   end)
 end)
 
+describe('TUI :restart', function()
+  before_each(function()
+    os.remove(testlog)
+  end)
+  teardown(function()
+    os.remove(testlog)
+  end)
+
+  it('resets buffer to blank', function()
+    local server_super = n.clear()
+    local client_super = n.new_session(true)
+    local job_opts = {
+      env = {
+        NVIM_LOG_FILE = testlog,
+      },
+    }
+
+    finally(function()
+      server_super:close()
+      client_super:close()
+    end)
+
+    local screen = tt.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'colorscheme vim',
+      '--cmd',
+      nvim_set .. ' notermguicolors laststatus=2 background=dark',
+    }, job_opts)
+    tt.feed_data('ithis will be removed')
+    screen:expect {
+      grid = [[
+        this will be removed^                              |
+        {4:~                                                 }|*3
+        {5:[No Name] [+]                                     }|
+        {3:-- INSERT --}                                      |
+        {3:-- TERMINAL --}                                    |
+      ]],
+    }
+    tt.feed_data('\027\027:restart\013')
+    screen:expect {
+      grid = [[
+        ^                                                  |
+        {4:~                                                 }|*3
+        {5:[No Name]                                         }|
+                                                          |
+        {3:-- TERMINAL --}                                    |
+      ]],
+    }
+  end)
+end)
+
 if t.skip(is_os('win')) then
   return
 end
