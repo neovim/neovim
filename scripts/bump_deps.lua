@@ -65,6 +65,7 @@ end
 
 -- Run a command, die on failure with err_msg
 local function run_die(cmd, err_msg)
+  -- print(vim.inspect(table.concat(cmd, ' ')))
   return _run(cmd, true, err_msg)
 end
 
@@ -163,7 +164,7 @@ local function ref(name, _ref)
       'zig',
       'fetch',
       '--save=' .. symbol,
-      'git+https://github.com/' .. repo .. '?ref=' .. _ref,
+      'git+https://github.com/' .. repo .. '#' .. _ref,
     })
     run_die({ 'git', 'add', 'build.zig.zon' })
   end
