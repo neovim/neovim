@@ -216,27 +216,90 @@ end
 ---NOTE: This is relative to the editor, so can be placed outside of normal region.
 ---@param x integer column position in terminal
 ---@param y integer row position in terminal
-function M.move_cursor(x, y)
-  io.stdout:write(string.format(
+---@param write? fun(...:string) function to use to write bytes, otherwise io.stdout:write(...)
+function M.move_cursor(x, y, write)
+  write = write or function(...)
+    io.stdout:write(...)
+  end
+
+  write(string.format(
     '\027[%s;%sH',
     math.floor(y),
     math.floor(x)
   ))
 end
 
----Enables batching of output requests, executes `f`, and then resets batching.
----@param f fun()
-function M.with_sync_mode(f)
-  -- Turn on synchronization batching
-  io.stdout:write('\027[?2026h')
+---Creates a writer that will wait to send all bytes together.
+---@param opts? {use_chan_send?:boolean} use nvim_chan_send() over io.stdout:write()
+---@return vim.ui.img.utils.BatchWriter
+function M.new_batch_writer(opts)
+  opts = opts or {}
 
-  ---@type boolean, any
-  local ok, err = pcall(f)
+  ---@class vim.ui.img.utils.BatchWriter
+  ---@field private __queue string[]
+  ---@overload fun(...:string)
+  local writer = setmetatable({
+    __queue = {},
+  }, {
+    ---@param t vim.ui.img.utils.BatchWriter
+    ---@param ... string
+    __call = function(t, ...)
+      t.write(...)
+    end,
+  })
 
-  -- Turn off synchronization batching
-  io.stdout:write('\027[?2026l')
+  ---Queues up bytes to be written later.
+  ---@param ... string
+  function writer.write(...)
+    vim.list_extend(writer.__queue, { ... })
+  end
 
-  assert(ok, err)
+  ---Flushes the bytes, sending them all together.
+  function writer.flush()
+    local bytes = table.concat(writer.__queue)
+
+    ---Writes bytes to stdout using `nvim_chan_send` to ensure that larger messages
+    ---properly make use of errno to EAGAIN as mentioned in #26688.
+    if opts.use_chan_send then
+      vim.api.nvim_chan_send(2, bytes)
+    else
+      io.stdout:write(bytes)
+      io.stdout:flush()
+    end
+  end
+
+  ---@cast writer -function
+  return writer
+end
+
+---Enables or disables sync mode for terminal.
+---@param enable boolean
+---@param write? fun(...:string) function to use to write bytes, otherwise io.stdout:write(...)
+function M.enable_sync_mode(enable, write)
+  write = write or function(...)
+    io.stdout:write(...)
+  end
+
+  if enable then
+    write('\027[?2026h')
+  else
+    write('\027[?2026l')
+  end
+end
+
+---Shows or hides the cursor in the terminal.
+---@param show boolean
+---@param write? fun(...:string) function to use to write bytes, otherwise io.stdout:write(...)
+function M.show_cursor(show, write)
+  write = write or function(...)
+    io.stdout:write(...)
+  end
+
+  if show then
+    write('\027[?25h')
+  else
+    write('\027[?25l')
+  end
 end
 
 ---@generic T
@@ -248,32 +311,6 @@ function M.debounce(fn, opts)
   local ms = opts and opts.ms or 20
   return function()
     timer:start(ms, 0, vim.schedule_wrap(fn))
-  end
-end
-
----Creates and returns a writer to the raw TTY used by neovim.
----In the case of Windows, this is merely a wrapper for `io.stdout:write()`.
----@return fun(...:string)
-function M.new_tty_writer()
-  ---Path to the tty used by neovim.
-  ---@type file*|nil
-  local tty
-
-  ---@param ... string
-  return function(...)
-    if vim.fn.has('win32') == 1 then
-      io.stdout:write(...)
-    else
-      if not tty then
-        local handle = assert(io.popen("tty"))
-        local tty_path = assert(handle:read("*l"))
-        assert(handle:close())
-        tty = assert(io.open(tty_path, 'w'))
-      end
-
-      assert(tty:write(...))
-      assert(tty:flush())
-    end
   end
 end
 

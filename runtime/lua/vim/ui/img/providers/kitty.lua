@@ -225,7 +225,7 @@ local function load(_self)
   -- flag that we need to transform escape codes sent to be compliant with tmux
   if vim.env['TMUX'] ~= nil then
     local res = vim.system({ 'tmux', 'set', '-p', 'allow-passthrough', 'all' }):wait()
-    assert(res.code == 0, 'failed to 'set -p allow-passthrough all' for tmux')
+    assert(res.code == 0, 'failed to "set -p allow-passthrough all" for tmux')
     IS_TMUX = true
   end
 

@@ -166,6 +166,17 @@ function M.get(name)
   return provider
 end
 
+---Like getting a provider, but also loads it upon success.
+---@param name string
+---@return vim.ui.img.Provider|nil
+function M.load(name)
+  local provider = M.get(name)
+  if provider then
+    provider.load()
+  end
+  return provider
+end
+
 ---@private
 ---Invoked when imgprovider option changes, unloading old provider.
 ---@param name string

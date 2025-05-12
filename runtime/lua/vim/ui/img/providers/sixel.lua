@@ -6,6 +6,10 @@ local HASH_TO_SIXEL_DATA = {}
 ---@type table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, hash:string, redraw:boolean}>
 local SIXEL_PLACEMENTS = {}
 
+---Indicates whether or not neovim is running within tmux.
+---@type boolean
+local IS_TMUX = false
+
 local _next_id = 0
 local function next_id()
   _next_id = _next_id + 1
@@ -54,14 +58,6 @@ local function convert_to_sixel(filename, opts)
   return assert(res.stdout, 'sixel output missing')
 end
 
----@param opts vim.ui.img.Opts
-local function move_to_img_pos(opts)
-  local pos = opts:position():to_cells()
-  require('vim.ui.img.utils').move_cursor(pos.x, pos.y)
-end
-
-local tty_write = require('vim.ui.img.utils').new_tty_writer()
-
 local redraw_placements = require('vim.ui.img.utils').debounce(function()
   local utils = require('vim.ui.img.utils')
 
@@ -70,19 +66,26 @@ local redraw_placements = require('vim.ui.img.utils').debounce(function()
 
   ---@type boolean, string|nil
   local ok, err = pcall(function()
-    utils.with_sync_mode(function()
-      for _, placement in pairs(SIXEL_PLACEMENTS) do
-        if placement.redraw then
-          placement.redraw = false
+    local writer = utils.new_batch_writer({ use_chan_send = true })
 
-          local sixel = HASH_TO_SIXEL_DATA[placement.hash]
-          if sixel then
-            move_to_img_pos(placement.opts)
-            tty_write(sixel)
-          end
+    utils.show_cursor(false, writer.write)
+    utils.enable_sync_mode(true, writer.write)
+    for _, placement in pairs(SIXEL_PLACEMENTS) do
+      if placement.redraw then
+        placement.redraw = false
+
+        local sixel = HASH_TO_SIXEL_DATA[placement.hash]
+        if sixel then
+          local pos = placement.opts:position():to_cells()
+          utils.move_cursor(pos.x, pos.y, writer.write)
+          writer(sixel)
         end
       end
-    end)
+    end
+    utils.enable_sync_mode(false, writer.write)
+    utils.show_cursor(true, writer.write)
+
+    writer.flush()
   end)
 
   if not ok then
@@ -92,6 +95,12 @@ end, { ms = 5 })
 
 ---@param _self vim.ui.img.Provider
 local function load(_self)
+  if vim.env['TMUX'] ~= nil then
+    local res = vim.system({ 'tmux', 'set', '-p', 'allow-passthrough', 'all' }):wait()
+    assert(res.code == 0, 'failed to "set -p allow-passthrough all" for tmux')
+    IS_TMUX = true
+  end
+
   vim.api.nvim_create_autocmd({ 'BufWritePost', 'WinScrolled' }, {
     callback = function()
       for _, placement in pairs(SIXEL_PLACEMENTS) do

@@ -243,8 +243,10 @@ end
 local function load_provider(opts)
   local name = opts and opts.provider or vim.o.imgprovider
 
-  local provider = assert(M.providers.get(name), string.format('provider "%s" not found', name))
-  provider.load()
+  local provider = assert(
+    M.providers.load(name),
+    string.format('provider "%s" not found', name)
+  )
 
   return provider
 end
