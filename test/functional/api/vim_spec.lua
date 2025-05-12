@@ -3170,6 +3170,8 @@ describe('API', function()
           term_colors = 0,
           term_name = '',
           width = 20,
+          pixel_width = 0,
+          pixel_height = 0,
         },
       }
 

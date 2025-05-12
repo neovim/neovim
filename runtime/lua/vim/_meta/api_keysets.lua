@@ -274,6 +274,10 @@ error('Cannot require a meta file')
 --- @field url? string
 --- @field scoped? boolean
 
+--- @class vim.api.keyset.ui_resize
+--- @field pixel_width? integer
+--- @field pixel_height? integer
+
 --- @class vim.api.keyset.user_command
 --- @field addr? any
 --- @field bang? boolean

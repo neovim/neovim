@@ -679,8 +679,8 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
         // In-band resize event (DEC private mode 2048)
         int height_chars = args[1];
         int width_chars = args[2];
-        tui_set_size(input->tui_data, width_chars, height_chars);
-        ui_client_set_size(width_chars, height_chars);
+        tui_set_size(input->tui_data, width_chars, height_chars, 0, 0);
+        ui_client_set_size(width_chars, height_chars, 0, 0);
       }
     }
     break;

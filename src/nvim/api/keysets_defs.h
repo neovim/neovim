@@ -424,6 +424,12 @@ typedef struct {
 } Dict(ns_opts);
 
 typedef struct {
+  OptionalKeys is_set__ui_resize_;
+  Integer pixel_width;
+  Integer pixel_height;
+} Dict(ui_resize);
+
+typedef struct {
   OptionalKeys is_set___shada_search_pat_;
   Boolean magic DictKey(sm);
   Boolean smartcase DictKey(sc);

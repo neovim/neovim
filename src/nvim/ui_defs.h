@@ -39,6 +39,8 @@ typedef struct {
   int height;
   int pum_nlines;  ///< actual nr. lines shown in PUM
   bool pum_pos;  ///< UI reports back pum position?
+  int pixel_width;
+  int pixel_height;
   double pum_row;
   double pum_col;
   double pum_height;

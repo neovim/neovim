@@ -43,6 +43,10 @@
 #include "nvim/ui_client.h"
 #include "nvim/ui_defs.h"
 
+#ifdef UNIX
+#include <sys/ioctl.h>
+#endif
+
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
@@ -150,6 +154,8 @@ struct TUIData {
   int seen_error_exit;
   int width;
   int height;
+  int pixel_width;
+  int pixel_height;
   bool rgb;
   int url;  ///< Index of URL currently being printed, if any
   StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
@@ -163,7 +169,8 @@ static bool cursor_style_enabled = false;
 
 static Set(cstr_t) urls = SET_INIT;
 
-void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
+void tui_start(TUIData **tui_p, int *width, int *height, int *pixel_width, int *pixel_height,
+               char **term, bool *rgb)
   FUNC_ATTR_NONNULL_ALL
 {
   TUIData *tui = xcalloc(1, sizeof(TUIData));
@@ -195,6 +202,8 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   loop_poll_events(&main_loop, 1);
   *width = tui->width;
   *height = tui->height;
+  *pixel_width = tui->pixel_width;
+  *pixel_height = tui->pixel_height;
   *term = tui->term;
   *rgb = tui->rgb;
 }
@@ -1643,7 +1652,8 @@ static void tui_suspend_cb(TUIData *tui)
     tui_mouse_on(tui);
   }
   stream_set_blocking(tui->input.in_fd, false);  // libuv expects this
-  ui_client_attach(tui->width, tui->height, tui->term, tui->rgb);
+  ui_client_attach(tui->width, tui->height, tui->pixel_width, tui->pixel_height, tui->term,
+                   tui->rgb);
 }
 #endif
 
@@ -1816,11 +1826,13 @@ static void ensure_space_buf_size(TUIData *tui, size_t len)
   }
 }
 
-void tui_set_size(TUIData *tui, int width, int height)
+void tui_set_size(TUIData *tui, int width, int height, int pixel_width, int pixel_height)
   FUNC_ATTR_NONNULL_ALL
 {
   tui->width = width;
   tui->height = height;
+  tui->pixel_width = pixel_width;
+  tui->pixel_height = pixel_height;
   ensure_space_buf_size(tui, (size_t)tui->width);
 }
 
@@ -1832,10 +1844,19 @@ void tui_guess_size(TUIData *tui)
   int height = 0;
   char *lines = NULL;
   char *columns = NULL;
+  int pixel_width = 0;
+  int pixel_height = 0;
+
+  struct winsize winsize = { 0 };
 
   // 1 - try from a system call (ioctl/TIOCGWINSZ on unix)
   if (tui->out_isatty
       && !uv_tty_get_winsize(&tui->output_handle.tty, &width, &height)) {
+#ifdef UNIX
+    ioctl(tui->out_fd, TIOCGWINSZ, &winsize);
+    pixel_width = winsize.ws_xpixel;
+    pixel_height = winsize.ws_ypixel;
+#endif
     goto end;
   }
 
@@ -1860,10 +1881,10 @@ void tui_guess_size(TUIData *tui)
     height = DFLT_ROWS;
   }
 
-  tui_set_size(tui, width, height);
+  tui_set_size(tui, width, height, pixel_width, pixel_height);
 
   // Redraw on SIGWINCH event if size didn't change. #23411
-  ui_client_set_size(width, height);
+  ui_client_set_size(width, height, pixel_width, pixel_height);
 
   xfree(lines);
   xfree(columns);

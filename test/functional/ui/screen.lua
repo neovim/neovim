@@ -311,7 +311,7 @@ end
 function Screen:try_resize(columns, rows)
   self._width = columns
   self._height = rows
-  self.uimeths.try_resize(columns, rows)
+  self.uimeths.try_resize(columns, rows, {})
 end
 
 function Screen:try_resize_grid(grid, columns, rows)

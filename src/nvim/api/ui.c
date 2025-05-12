@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "klib/kvec.h"
+#include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
@@ -145,6 +146,8 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
   RemoteUI *ui = xcalloc(1, sizeof(RemoteUI));
   ui->width = (int)width;
   ui->height = (int)height;
+  ui->pixel_width = 0;
+  ui->pixel_height = 0;
   ui->pum_row = -1.0;
   ui->pum_col = -1.0;
   ui->rgb = true;
@@ -244,7 +247,8 @@ void remote_ui_stop(RemoteUI *ui)
 {
 }
 
-void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Error *err)
+void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Dict(ui_resize) *opts,
+                        Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (!map_has(uint64_t, &connected_uis, channel_id)) {
@@ -262,6 +266,10 @@ void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Erro
   RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
   ui->width = (int)width;
   ui->height = (int)height;
+  if (opts) {
+    ui->pixel_width = (int)opts->pixel_width;
+    ui->pixel_height = (int)opts->pixel_height;
+  }
   ui_refresh();
 }
 
@@ -285,6 +293,22 @@ static void ui_set_option(RemoteUI *ui, bool init, String name, Object value, Er
       return;
     });
     ui->override = value.data.boolean;
+    return;
+  }
+
+  if (strequal(name.data, "pixel_width")) {
+    VALIDATE_T("pixel_width", kObjectTypeInteger, value.type, {
+      return;
+    });
+    ui->pixel_width = (int)value.data.integer;
+    return;
+  }
+
+  if (strequal(name.data, "pixel_height")) {
+    VALIDATE_T("pixel_height", kObjectTypeInteger, value.type, {
+      return;
+    });
+    ui->pixel_height = (int)value.data.integer;
     return;
   }
 
@@ -400,7 +424,7 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width, I
   }
 
   if (grid == DEFAULT_GRID_HANDLE) {
-    nvim_ui_try_resize(channel_id, width, height, err);
+    nvim_ui_try_resize(channel_id, width, height, NULL, err);
   } else {
     ui_grid_resize((handle_T)grid, (int)width, (int)height, err);
   }
