@@ -1,4 +1,11 @@
-" vim: fdm=marker
+" Tutor filetype plugin
+" Language:	Tutor (the new tutor plugin)
+" Maintainer:	This runtime file is looking for a new maintainer.
+" Last Change:	2025 May 10
+" Contributors:	Phạm Bình An <phambinhanctb2004@gmail.com>
+" Original Author: Felipe Morales <hel.sheep@gmail.com>
+" Last Change:
+" 2025 May 10 set b:undo_ftplugin
 
 " Base: {{{1
 call tutor#SetupVim()
@@ -43,3 +50,10 @@ if !exists('g:tutor_debug') || g:tutor_debug == 0
     call tutor#ApplyMarks()
     autocmd! TextChanged,TextChangedI <buffer> call tutor#ApplyMarksOnChanged()
 endif
+
+let b:undo_ftplugin = 'unlet! g:tutor_debug |'
+let b:undo_ftplugin ..= 'setl concealcursor< conceallevel< |'
+let b:undo_ftplugin ..= 'setl foldmethod< foldexpr< foldlevel< |'
+let b:undo_ftplugin ..= 'setl buftype< undofile< keywordprg< iskeyword< |'
+
+" vim: fdm=marker
