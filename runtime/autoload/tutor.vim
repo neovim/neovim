@@ -220,6 +220,7 @@ function! tutor#TutorCmd(tutor_name)
 
     call tutor#SetupVim()
     exe "edit ".l:to_open
+    call tutor#EnableInteractive(v:true)
     call tutor#ApplyTransform()
 endfunction
 
@@ -227,6 +228,27 @@ function! tutor#TutorCmdComplete(lead,line,pos)
     let l:tutors = s:GlobTutorials('*')
     let l:names = uniq(sort(map(l:tutors, 'fnamemodify(v:val, ":t:r")'), 's:Sort'))
     return join(l:names, "\n")
+endfunction
+
+" Enables/disables interactive mode.
+function! tutor#EnableInteractive(enable)
+    let enable = a:enable
+    if enable
+        setlocal buftype=nofile
+        setlocal concealcursor+=inv
+        setlocal conceallevel=2
+        call tutor#ApplyMarks()
+        augroup tutor_interactive
+            autocmd! TextChanged,TextChangedI <buffer> call tutor#ApplyMarksOnChanged()
+        augroup END
+    else
+        setlocal buftype<
+        setlocal concealcursor<
+        setlocal conceallevel<
+        if exists('#tutor_interactive')
+            autocmd! tutor_interactive * <buffer>
+        endif
+    endif
 endfunction
 
 function! tutor#ApplyTransform()
