@@ -87,8 +87,8 @@ endfunction
 function! s:set_wayclip() abort
   let s:copy['+'] = ['waycopy']
   let s:paste['+'] = ['waypaste']
-  let s:copy['*'] = s:copy['+']
-  let s:paste['*'] = s:paste['+']
+  let s:copy['*'] = ['waycopy', '-p']
+  let s:paste['*'] = ['waypaste', '-p']
   return 'wayclip'
 endfunction
 
