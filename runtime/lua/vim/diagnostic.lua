@@ -2348,8 +2348,8 @@ end
 --- @class vim.diagnostic.setqflist.Opts
 --- @inlinedoc
 ---
---- Only add diagnostics from the given namespace.
---- @field namespace? integer
+--- Only add diagnostics from the given namespace(s).
+--- @field namespace? integer[]|integer
 ---
 --- Open quickfix list after setting.
 --- (default: `true`)
@@ -2373,8 +2373,8 @@ end
 --- @class vim.diagnostic.setloclist.Opts
 --- @inlinedoc
 ---
---- Only add diagnostics from the given namespace.
---- @field namespace? integer
+--- Only add diagnostics from the given namespace(s).
+--- @field namespace? integer[]|integer
 ---
 --- Window number to set location list for.
 --- (default: `0`)
