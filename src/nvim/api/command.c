@@ -166,14 +166,6 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
       ADD_C(range, INTEGER_OBJ(ea.col1));
       ADD_C(range, INTEGER_OBJ(ea.col2));
     }
-    ADD_C(range, INTEGER_OBJ(ea.line2));
-
-    if (ea.addr_count == 2 &&
-        ea.col1 > 0 && ea.col2 > 0) {
-      ADD_C(range, INTEGER_OBJ(ea.col1));
-      ADD_C(range, INTEGER_OBJ(ea.col2));
-    }
-    ADD_C(range, INTEGER_OBJ(ea.line2));
     PUT_KEY(result, cmd, range, range);
   }
 
