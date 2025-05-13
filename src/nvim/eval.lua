@@ -1198,6 +1198,8 @@ M.funcs = {
       window:
       	- If the current window has a window-local directory
       	  (|:lcd|), then changes the window local directory.
+      	- If the current buffer has a buffer-local directory
+      	  (|:bcd|), then changes the buffer local directory.
       	- Otherwise, if the current tabpage has a local
       	  directory (|:tcd|) then changes the tabpage local
       	  directory.
@@ -3989,29 +3991,41 @@ M.funcs = {
     signature = 'getcursorcharpos([{winid}])',
   },
   getcwd = {
-    args = { 0, 2 },
+    args = { 0, 3 },
     base = 1,
     desc = [=[
       With no arguments, returns the name of the effective
-      |current-directory|. With {winnr} or {tabnr} the working
-      directory of that scope is returned, and 'autochdir' is
-      ignored.
-      Tabs and windows are identified by their respective numbers,
-      0 means current tab or window. Missing tab number implies 0.
-      Thus the following are equivalent: >vim
+      |current-directory|. With {winnr} or {tabnr} or {bufnr} the
+      working directory of that scope is returned, and 'autochdir'
+      is ignored.
+
+      Tabs, windows and buffers are identified by their respective
+      numbers, 0 means current tab or window or buffer. Missing tab
+      number
+      implies 0. Thus the following are equivalent: >vim
       	getcwd(0)
       	getcwd(0, 0)
       <If {winnr} is -1 it is ignored, only the tab is resolved.
-      {winnr} can be the window number or the |window-ID|.
-      If both {winnr} and {tabnr} are -1 the global working
-      directory is returned.
-      Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
+      {winnr} can be the window number or the |window-ID|. If both
+      {winnr} and {tabnr} are -1 and {bufnr} is missing the global
+      working directory is returned.
 
+      If {bufnr} is provided, {winnr} and {tabnr} must be -1 and the
+      working directory of that buffer is returned. If {bufnr} is
+      -1, it is ignored, and the global working directory is
+      returned.
+      Examples of buffer usage: >vim
+        getcwd(-1, -1, 0)  " Get current buffer's directory
+        getcwd(-1, -1, 3)  " Get directory of buffer #3
+        getcwd(-1, -1, -1) " Get global directory
+        getcwd(-1, -1)     " Get global directory
+      >Throw error if the arguments are invalid.
+      |E5000| |E5001| |E5002| |E5006| |E5007|
     ]=],
     name = 'getcwd',
-    params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
+    params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' }, { 'bufnr', 'integer' } },
     returns = 'string',
-    signature = 'getcwd([{winnr} [, {tabnr}]])',
+    signature = 'getcwd([{winnr} [, {tabnr} [, {bufnr} ]]])',
   },
   getenv = {
     args = 1,
@@ -5253,16 +5267,18 @@ M.funcs = {
     signature = 'has_key({dict}, {key})',
   },
   haslocaldir = {
-    args = { 0, 2 },
+    args = { 0, 3 },
     base = 1,
     desc = [=[
       The result is a Number, which is 1 when the window has set a
       local path via |:lcd| or when {winnr} is -1 and the tabpage
-      has set a local path via |:tcd|, otherwise 0.
+      has set a local path via |:tcd|, or when {winnr} and {tabnr}
+      are -1 and {bufnr} has set a local path via |:bcd|, otherwise
+      0.
 
-      Tabs and windows are identified by their respective numbers,
-      0 means current tab or window. Missing argument implies 0.
-      Thus the following are equivalent: >vim
+      Tabs, windows and buffers are identified by their respective
+      numbers, 0 means current tab or window. Missing argument
+      implies 0. Thus the following are equivalent: >vim
       	echo haslocaldir()
       	echo haslocaldir(0)
       	echo haslocaldir(0, 0)
@@ -5270,13 +5286,19 @@ M.funcs = {
       With {winnr} and {tabnr} use the window in that tabpage.
       {winnr} can be the window number or the |window-ID|.
       If {winnr} is -1 it is ignored, only the tab is resolved.
-      Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
+      If {bufnr} is provided, {winnr} and {tabnr} must be -1 and
+      only the buffer is resolved.
+      Examples of buffer usage: >vim
+        haslocaldir(-1, -1, 0) " Current buf has a local directory?
+        haslocaldir(-1, -1, 3) " Buf #3 has a local directory?
+      >Throw error if the arguments are invalid.
+      |E5000| |E5001| |E5002| |E5006| |E5007|
 
     ]=],
     name = 'haslocaldir',
-    params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
+    params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' }, { 'bufnr', 'integer' } },
     returns = '0|1',
-    signature = 'haslocaldir([{winnr} [, {tabnr}]])',
+    signature = 'haslocaldir([{winnr} [, {tabnr} [, {bufnr} ]]])',
   },
   hasmapto = {
     args = { 1, 3 },
