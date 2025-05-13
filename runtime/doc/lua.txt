@@ -2514,6 +2514,167 @@ vim.loader.reset({path})                                  *vim.loader.reset()*
 
 
 ==============================================================================
+Lua module: vim.pack                                                *vim.pack*
+
+WORK IN PROGRESS built-in plugin manager! Early testing of existing features
+is appreciated, but expect breaking changes without notice.
+
+Requires present `git` executable of at least version 2.36.
+
+`vim.pack` manages plugins only in a dedicated |packages|
+*vim.pack-directory*: `$XDG_DATA_HOME/nvim/site/pack/core/opt`. Plugin's
+subdirectory name matches plugin's name in specification. It is assumed that
+all plugins in the directory are managed exclusively by `vim.pack`.
+
+Example workflows ~
+
+Basic install and management:
+• Add |vim.pack.add()| call(s) to 'init.lua': >lua
+
+    vim.pack.add({
+      -- Install as "plugin1"/"plugin2" and use greatest available version
+      'https://github.com/user/plugin1',
+      { source = 'https://github.com/user/plugin2' },
+
+      -- Specify plugin's name
+      { source = 'https://github.com/user/generic-name', name = 'plugin3' },
+
+      -- Specify version to follow during install and update
+      {
+        source = 'https://github.com/user/plugin4',
+        version = vim.version.range('1.0'), -- Greatest version matching range
+      },
+      {
+        source = 'https://github.com/user/plugin5',
+        version = 'main', -- Git branch, tag, or commit hash
+      },
+    })
+
+    -- Plugin's code can be used directly after `add()`
+    plugin1 = require('plugin1')
+<
+• Restart Nvim. Plugins that were not yet installed will be available on disk
+  in target state after `add()` call.
+• To update all plugins with new changes:
+  • Execute |vim.pack.update()|. This will download updates from source and
+    show confirmation buffer in a separate tabpage.
+  • Review changes. To confirm all updates execute |:write|. To discard
+    updates execute |:quit|.
+
+Switch plugin's version:
+• Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
+  named 'plugin1' has changed from default `vim.version.range('*')` to `main`.
+• Restartn Nvim. This has not yet changed plugin's actual state on disk.
+• Execute `vim.pack.update({ 'plugin1' }, { offline = true })`. Using
+  `offline` is optional to not download updates from source.
+• Review changes and either confirm or discard them. If discard, make sure to
+  revert changes in 'init.lua' also.
+
+Freeze plugin from being updated:
+• Update 'init.lua' for plugin to have `version = 'HEAD'`.
+• Restart Nvim.
+
+Unfreeze plugin to start receiving updates:
+• Update 'init.lua' for plugin to have `version` set to whichever version you
+  want it to be updated.
+• Restart Nvim.
+
+Available events to hook into ~
+• *PackInstallPre* - before trying to install plugin on disk.
+• *PackInstall* - after installing plugin on disk in proper state. After
+  |PackUpdatePre| and |PackUpdate|.
+• *PackUpdatePre* - before trying to update plugin's state.
+• *PackUpdate* - after plugin's state is updated.
+
+
+*vim.pack.Spec*
+
+    Fields: ~
+      • {source}    (`string`) URI from which to install and pull updates.
+      • {name}?     (`string`) Name of plugin. Will be used as directory name.
+                    Default: basename of `source`.
+      • {version}?  (`string|vim.VersionRange`) Version to use for install and
+                    updates. One of:
+                    • Output of |vim.version.range()| to install the
+                      greatest/last semver tag inside the range.
+                    • Tag name.
+                    • Branch name.
+                    • "HEAD" to freeze current state from updates.
+                    • Explicit commit hash.
+
+                    Default is `vim.version.range('*')`, i.e. install the
+                    greatest available version.
+
+
+vim.pack.add({specs}, {opts})                                 *vim.pack.add()*
+    Add plugin to current session
+    • For each specification check that plugin exists on disk in
+      |vim.pack-directory|:
+      • If exists, do nothin in this step.
+      • If doesn't exist, install it by downloading from `source` into `name`
+        subdirectory and update state to match `version`.
+    • For each plugin execute |:packadd| making them reachable by Nvim.
+
+    Notes:
+    • Installation is done in parallel, but waits for all to finish before
+      continuing next code execution.
+    • If plugin is already present on disk, there are no checks about its
+      present state. The specified `version` can be not the one actually
+      present on disk. Execute |vim.pack.update()| (possibly with
+      `{ offline = true }`) to synchronize.
+    • Adding plugin second and more times during single session does nothing:
+      only the data from the first adding is registered.
+
+    Parameters: ~
+      • {specs}  (`(string|vim.pack.Spec)[]`) List of plugin specifications.
+                 String item is treated as `source`.
+      • {opts}   (`table?`) A table with the following fields:
+                 • {bang}? (`boolean`) Whether to execute `:packadd!` instead
+                   of |:packadd|. Default `false`.
+
+vim.pack.get()                                                *vim.pack.get()*
+    Get data about all plugins managed by |vim.pack|
+
+    Return: ~
+        (`table[]`) A list of objects with the following fields:
+        • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with defaults
+          made explicit.
+        • {path} (`string`) Plugin's path on disk.
+        • {was_added} (`boolean`) Whether plugin was added via
+          |vim.pack.add()| in current session.
+
+vim.pack.update({names}, {opts})                           *vim.pack.update()*
+    Update plugins
+    • If not `offline`, download new changes from source.
+    • Infer update info (current/target state, changelog, etc.).
+    • Depending on `force`:
+      • If `false`, show confirmation buffer. It lists data about all set to
+        update plugins. Pending changes starting with `>` will be applied
+        while the ones starting with `<` will be reverted. It has special
+        in-process LSP server attached to provide more interactive features.
+        Currently supported methods:
+        • |vim.lsp.buf.document_symbol()| (`gO` via |lsp-defaults|).
+        Execute |:write| to confirm update, execute |:quit| to discard the
+        update.
+      • If `true`, make updates right away.
+
+    Notes:
+    • Every actual update is logged in "nvimpack.log" file inside "log"
+      |stdpath()|.
+
+    Parameters: ~
+      • {names}  (`string[]?`) List of plugin names to update. Must be managed
+                 by |vim.pack|, not necessarily already added in current
+                 session. Default: names of all plugins added to current
+                 session via |vim.pack.add()|.
+      • {opts}   (`table?`) A table with the following fields:
+                 • {force}? (`boolean`) Whether to skip confirmation and make
+                   updates immediately. Default `false`.
+                 • {offline}? (`boolean`) Whether to skip downloading new
+                   changes from source. Default `false`.
+
+
+==============================================================================
 Lua module: vim.uri                                                  *vim.uri*
 
 vim.uri_decode({str})                                       *vim.uri_decode()*
