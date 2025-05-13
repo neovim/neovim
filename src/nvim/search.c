@@ -54,6 +54,7 @@
 #include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/plines.h"
+#include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
@@ -678,9 +679,10 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
         }
 
         // Look for a match somewhere in line "lnum".
-        colnr_T col = at_first_line && (options & SEARCH_COL) ? pos->col : 0;
+        colnr_T startcol = at_first_line && (options & SEARCH_COL) ? pos->col : 0;
+        colnr_T stopcol = end_pos != NULL && lnum == end_pos->lnum ? end_pos->col : MAXCOL;
         nmatched = vim_regexec_multi(&regmatch, win, buf,
-                                     lnum, col, tm, timed_out);
+                                     lnum, startcol, stopcol, tm, timed_out);
         // vim_regexec_multi() may clear "regprog"
         if (regmatch.regprog == NULL) {
           break;
@@ -749,7 +751,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
               }
               if (ptr[matchcol] == NUL
                   || (nmatched = vim_regexec_multi(&regmatch, win, buf,
-                                                   lnum, matchcol, tm,
+                                                   lnum, matchcol, stopcol, tm,
                                                    timed_out)) == 0) {
                 match_ok = false;
                 break;
@@ -837,7 +839,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
               }
               if (ptr[matchcol] == NUL
                   || (nmatched = vim_regexec_multi(&regmatch, win, buf, lnum + matchpos.lnum,
-                                                   matchcol, tm, timed_out)) == 0) {
+                                                   matchcol, stopcol, tm, timed_out)) == 0) {
                 // If the search timed out, we did find a match
                 // but it might be the wrong one, so that's not
                 // OK.
@@ -2588,7 +2590,7 @@ static int is_zero_width(char *pattern, size_t patternlen, bool move, pos_T *cur
     do {
       regmatch.startpos[0].col++;
       nmatched = vim_regexec_multi(&regmatch, curwin, curbuf,
-                                   pos.lnum, regmatch.startpos[0].col,
+                                   pos.lnum, regmatch.startpos[0].col, MAXCOL,
                                    NULL, NULL);
       if (nmatched != 0) {
         break;

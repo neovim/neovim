@@ -450,7 +450,7 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
                               && cur->mit_match.regprog == cur->mit_hl.rm.regprog);
       int timed_out = false;
 
-      nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol,
+      nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol, MAXCOL,
                                    &(shl->tm), &timed_out);
       // Copy the regprog, in case it got freed and recompiled.
       if (regprog_is_copy) {

@@ -5474,7 +5474,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
     colnr_T col = 0;
     if (!(flags & VGR_FUZZY)) {
       // Regular expression match
-      while (vim_regexec_multi(regmatch, curwin, buf, lnum, col, NULL, NULL) > 0) {
+      while (vim_regexec_multi(regmatch, curwin, buf, lnum, col, MAXCOL, NULL, NULL) > 0) {
         // Pass the buffer number so that it gets used even for a
         // dummy buffer, unless duplicate_name is set, then the
         // buffer will be wiped out below.

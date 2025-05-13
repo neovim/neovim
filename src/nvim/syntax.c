@@ -745,7 +745,7 @@ static int syn_match_linecont(linenr_T lnum)
 
   regmatch.rmm_ic = syn_block->b_syn_linecont_ic;
   regmatch.regprog = syn_block->b_syn_linecont_prog;
-  int r = syn_regexec(&regmatch, lnum, 0,
+  int r = syn_regexec(&regmatch, lnum, 0, MAXCOL,
                       IF_SYN_TIME(&syn_block->b_syn_linecont_time));
   syn_block->b_syn_linecont_prog = regmatch.regprog;
 
@@ -1661,7 +1661,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
 
               regmatch.rmm_ic = spp->sp_ic;
               regmatch.regprog = spp->sp_prog;
-              int r = syn_regexec(&regmatch, current_lnum, lc_col,
+              int r = syn_regexec(&regmatch, current_lnum, lc_col, MAXCOL,
                                   IF_SYN_TIME(&spp->sp_time));
               spp->sp_prog = regmatch.regprog;
               if (!r) {
@@ -2409,7 +2409,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
 
       regmatch.rmm_ic = spp->sp_ic;
       regmatch.regprog = spp->sp_prog;
-      bool r = syn_regexec(&regmatch, startpos->lnum, lc_col,
+      bool r = syn_regexec(&regmatch, startpos->lnum, lc_col, MAXCOL,
                            IF_SYN_TIME(&spp->sp_time));
       spp->sp_prog = regmatch.regprog;
       if (r) {
@@ -2438,7 +2438,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
       }
       regmatch.rmm_ic = spp_skip->sp_ic;
       regmatch.regprog = spp_skip->sp_prog;
-      int r = syn_regexec(&regmatch, startpos->lnum, lc_col,
+      int r = syn_regexec(&regmatch, startpos->lnum, lc_col, MAXCOL,
                           IF_SYN_TIME(&spp_skip->sp_time));
       spp_skip->sp_prog = regmatch.regprog;
       if (r && regmatch.startpos[0].col <= best_regmatch.startpos[0].col) {
@@ -2661,7 +2661,7 @@ static colnr_T syn_getcurline_len(void)
 
 // Call vim_regexec() to find a match with "rmp" in "syn_buf".
 // Returns true when there is a match.
-static bool syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T *st)
+static bool syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T startcol, colnr_T stopcol, syn_time_T *st)
 {
   int timed_out = 0;
   proftime_T pt;
@@ -2679,7 +2679,7 @@ static bool syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T
   }
 
   rmp->rmm_maxcol = (colnr_T)syn_buf->b_p_smc;
-  int r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, syn_tm, &timed_out);
+  int r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, startcol, stopcol, syn_tm, &timed_out);
 
   if (l_syn_time_on) {
     pt = profile_end(pt);
