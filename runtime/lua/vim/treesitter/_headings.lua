@@ -93,12 +93,7 @@ function M.show_toc()
   end
   -- add indentation for nicer list formatting
   for _, heading in pairs(headings) do
-    if heading.level > 2 then
-      heading.text = '  ' .. heading.text
-    end
-    if heading.level > 4 then
-      heading.text = '  ' .. heading.text
-    end
+    heading.text = (' '):rep(heading.level - 1) .. heading.text
   end
   vim.fn.setloclist(0, headings, ' ')
   vim.fn.setloclist(0, {}, 'a', { title = 'Table of contents' })
