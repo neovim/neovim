@@ -31,6 +31,17 @@ function M.new(width, height, unit)
   return instance
 end
 
+---@param a vim.ui.img.utils.Size
+---@param b vim.ui.img.utils.Size
+---@return boolean
+function M.__eq(a, b)
+  if type(a) ~= 'table' or type(b) ~= 'table' then
+    return false
+  end
+
+  return a.width == b.width and a.height == b.height and a.unit == b.unit
+end
+
 ---Convert unit of position to cells, returning a copy of the position.
 ---@return vim.ui.img.utils.Size
 function M:to_cells()

@@ -323,7 +323,7 @@ end
 local function update(_self, pid, opts)
   local id = assert(
     KITTY_PLACEMENT_TO_IMAGE[pid],
-    string.format('kitty(update): invalid displayed image id %s', pid)
+    string.format('kitty(update): invalid id %s', pid)
   )
 
   opts = require('vim.ui.img.opts').new(opts)

@@ -173,6 +173,11 @@ function M.enable_sync_mode(enable, write)
     io.stdout:write(...)
   end
 
+  -- TODO: Offer ability to check if synchronous mode exists:
+  -- https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
+  --
+  -- Send ESC[?2026p
+  -- Get back ESC[?2026;2$y
   if enable then
     write('\027[?2026h')
   else

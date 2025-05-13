@@ -31,6 +31,17 @@ function M.new(x, y, unit)
   return instance
 end
 
+---@param a vim.ui.img.utils.Position
+---@param b vim.ui.img.utils.Position
+---@return boolean
+function M.__eq(a, b)
+  if type(a) ~= 'table' or type(b) ~= 'table' then
+    return false
+  end
+
+  return a.x == b.x and a.y == b.y and a.unit == b.unit
+end
+
 ---Convert unit of position to cells, returning a copy of the position.
 ---@return vim.ui.img.utils.Position
 function M:to_cells()

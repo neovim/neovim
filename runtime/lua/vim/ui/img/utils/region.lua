@@ -39,6 +39,21 @@ function M.new(x, y, width, height, unit)
   return instance
 end
 
+---@param a vim.ui.img.utils.Region
+---@param b vim.ui.img.utils.Region
+---@return boolean
+function M.__eq(a, b)
+  if type(a) ~= 'table' or type(b) ~= 'table' then
+    return false
+  end
+
+  return a.x == b.x
+      and a.y == b.y
+      and a.width == b.width
+      and a.height == b.height
+      and a.unit == b.unit
+end
+
 ---Creates a new region from two positions.
 ---@param pos1 vim.ui.img.utils.Position
 ---@param pos2 vim.ui.img.utils.Position

@@ -4,7 +4,7 @@ local HASH_TO_SIXEL_DATA = {}
 
 ---Mapping of placement id -> {image, options}.
 ---@type table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, hash:string, redraw:boolean}>
-local SIXEL_PLACEMENTS = {}
+local PLACEMENTS = {}
 
 ---Amount of time to wait between a refresh of neovim's TUI screen and redrawing
 ---all images managed by the sixel provider.
@@ -27,7 +27,7 @@ end
 
 ---@return boolean
 local function need_redraw()
-  for _, placement in pairs(SIXEL_PLACEMENTS) do
+  for _, placement in pairs(PLACEMENTS) do
     if placement.redraw then
       return true
     end
@@ -113,7 +113,7 @@ local function redraw()
     utils.save_cursor(writer.write)
 
     local did_redraw = false
-    for _, placement in pairs(SIXEL_PLACEMENTS) do
+    for _, placement in pairs(PLACEMENTS) do
       if placement.redraw then
         placement.redraw = false
 
@@ -179,7 +179,7 @@ local function load(_self, ...)
   vim.api.nvim_create_autocmd({ 'BufWritePost', 'WinScrolled' }, {
     callback = function()
       -- Mark all of our images as needing to be redrawn when scrolling happens
-      for _, placement in pairs(SIXEL_PLACEMENTS) do
+      for _, placement in pairs(PLACEMENTS) do
         placement.redraw = true
       end
 
@@ -209,7 +209,7 @@ local function show(_self, img, opts)
   end
 
   -- Register the new sixel placement and mark it for being drawn
-  SIXEL_PLACEMENTS[id] = {
+  PLACEMENTS[id] = {
     img = img,
     opts = opts,
     hash = hash,
@@ -227,12 +227,12 @@ local function hide(_self, ids)
   -- For all specified sixel placements to be hidden, we just
   -- remove them from our list since they'll be cleared anyway
   for _, id in ipairs(ids) do
-    SIXEL_PLACEMENTS[id] = nil
+    PLACEMENTS[id] = nil
   end
 
   -- For all remaining sixel placements, we need to redraw them
   -- after the screen is cleared
-  for _, placement in pairs(SIXEL_PLACEMENTS) do
+  for _, placement in pairs(PLACEMENTS) do
     placement.redraw = true
   end
 
