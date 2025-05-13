@@ -3147,7 +3147,15 @@ void f_complete_match(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     char *cur_end = before_cursor + (int)strlen(before_cursor);
 
     while (*p != NUL) {
-      size_t len = copy_option_part(&p, part, MAXPATHL, ",");
+      size_t len = 0;
+      if (*p == ',' && *(p + 1) == ' ' && (*(p + 2) == ',' || *(p + 2) == NUL)) {
+        part[0] = ' ';
+        len = 1;
+        p++;
+      } else {
+        len = copy_option_part(&p, part, MAXPATHL, ",");
+      }
+
       if (len > 0 && (int)len <= col) {
         if (strncmp(cur_end - len, part, len) == 0) {
           int bytepos = col - (int)len;
