@@ -7,6 +7,11 @@ local ITERM2_MAX_TRANSFER_SIZE = 1048576
 -- This represens the size of the contents section.
 local MAX_CONTENTS_SIZE = ITERM2_MAX_TRANSFER_SIZE - 17
 
+---Amount of time to wait between a refresh of neovim's TUI screen and redrawing
+---all images managed by the iterm2 provider.
+---@type integer
+local REDRAW_DELAY_MS = 30
+
 ---Mapping of placement id -> {image, options}.
 ---@type table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, redraw:boolean}>
 local PLACEMENTS = {}
@@ -25,8 +30,27 @@ local function next_id()
   return _next_id
 end
 
+---@return boolean
+local function need_redraw()
+  for _, placement in pairs(PLACEMENTS) do
+    if placement.redraw then
+      return true
+    end
+  end
+
+  return false
+end
+
+local is_drawing = false
+
 ---Redraws all images managed by iterm2 provider.
-local redraw = require('vim.ui.img.utils').debounce(function()
+local function redraw()
+  if is_drawing then
+    return
+  end
+
+  is_drawing = true
+
   ---@type boolean, string|nil
   local ok, err = pcall(function()
     local utils = require('vim.ui.img.utils')
@@ -42,6 +66,7 @@ local redraw = require('vim.ui.img.utils').debounce(function()
     local redraw_cnt = 0
     local function mark_redraw_done()
       redraw_cnt = redraw_cnt - 1
+
       if redraw_cnt == 0 then
         utils.restore_cursor(writer.write)
         utils.enable_sync_mode(false, writer.write)
@@ -51,7 +76,14 @@ local redraw = require('vim.ui.img.utils').debounce(function()
         vim.cmd.mode()
 
         -- Schedule the output with enough time for the screen clear to finish
-        vim.defer_fn(writer.flush, 20)
+        vim.defer_fn(function()
+          writer.flush()
+          is_drawing = false
+
+          if need_redraw() then
+            vim.schedule(redraw)
+          end
+        end, REDRAW_DELAY_MS)
       end
     end
 
@@ -126,8 +158,9 @@ local redraw = require('vim.ui.img.utils').debounce(function()
 
   if not ok then
     vim.notify(err or 'iterm2 redraw unknown error', vim.log.levels.WARN)
+    is_drawing = false
   end
-end, { ms = 5 })
+end
 
 ---@param _self vim.ui.img.Provider
 ---@param ... any

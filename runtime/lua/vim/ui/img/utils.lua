@@ -195,16 +195,4 @@ function M.show_cursor(show, write)
   end
 end
 
----@generic T
----@param fn T
----@param opts? {ms?:integer}
----@return T
-function M.debounce(fn, opts)
-  local timer = assert(vim.uv.new_timer())
-  local ms = opts and opts.ms or 20
-  return function()
-    timer:start(ms, 0, vim.schedule_wrap(fn))
-  end
-end
-
 return M

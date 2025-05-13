@@ -6,6 +6,11 @@ local HASH_TO_SIXEL_DATA = {}
 ---@type table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, hash:string, redraw:boolean}>
 local SIXEL_PLACEMENTS = {}
 
+---Amount of time to wait between a refresh of neovim's TUI screen and redrawing
+---all images managed by the sixel provider.
+---@type integer
+local REDRAW_DELAY_MS = 30
+
 ---Indicates whether or not neovim is running within tmux.
 ---@type boolean
 local IS_TMUX = false
@@ -18,6 +23,17 @@ local _next_id = 0
 local function next_id()
   _next_id = _next_id + 1
   return _next_id
+end
+
+---@return boolean
+local function need_redraw()
+  for _, placement in pairs(SIXEL_PLACEMENTS) do
+    if placement.redraw then
+      return true
+    end
+  end
+
+  return false
 end
 
 ---Creates a hash unique to an image and parameters that need to be fed to Image Magick.
@@ -68,9 +84,17 @@ local function convert_to_sixel(filename, opts)
   return assert(res.stdout, 'sixel output missing')
 end
 
+local is_drawing = false
+
 ---Redraws all images managed by sixel provider.
-local redraw = require('vim.ui.img.utils').debounce(function()
+local function redraw()
   local utils = require('vim.ui.img.utils')
+
+  if is_drawing then
+    return
+  end
+
+  is_drawing = true
 
   ---@type boolean, string|nil
   local ok, err = pcall(function()
@@ -87,6 +111,8 @@ local redraw = require('vim.ui.img.utils').debounce(function()
     utils.show_cursor(false, writer.write)
     utils.enable_sync_mode(true, writer.write)
     utils.save_cursor(writer.write)
+
+    local did_redraw = false
     for _, placement in pairs(SIXEL_PLACEMENTS) do
       if placement.redraw then
         placement.redraw = false
@@ -96,24 +122,39 @@ local redraw = require('vim.ui.img.utils').debounce(function()
           local pos = placement.opts:position():to_cells()
           utils.move_cursor(pos.x, pos.y, writer.write)
           writer(sixel)
+          did_redraw = true
         end
       end
     end
+
     utils.restore_cursor(writer.write)
     utils.enable_sync_mode(false, writer.write)
     utils.show_cursor(true, writer.write)
+
+    if not did_redraw then
+      is_drawing = false
+      return
+    end
 
     -- Clear the screen of all sixel images
     vim.cmd.mode()
 
     -- Schedule the output with enough time for the screen clear to finish
-    vim.defer_fn(writer.flush, 20)
+    vim.defer_fn(function()
+      writer.flush()
+      is_drawing = false
+
+      if need_redraw() then
+        vim.schedule(redraw)
+      end
+    end, REDRAW_DELAY_MS)
   end)
 
   if not ok then
     vim.notify(err or 'sixel redraw unknown error', vim.log.levels.WARN)
+    is_drawing = false
   end
-end, { ms = 5 })
+end
 
 ---@param _self vim.ui.img.Provider
 ---@param ... any
