@@ -152,8 +152,102 @@ describe('ui/img', function()
   end)
 
   describe('kitty provider', function()
+    ---@param esc string actual escape sequence
+    ---
+    ---@return {i:integer, j:integer, control:table<string, string>, data:string|nil}
+    local function parse_kitty_seq(esc)
+      local i, j, c, d = string.find(esc, '\027_G([^;\027]+)([^\027]*)\027\\')
+      assert(c, 'invalid kitty escape sequence: ' .. escape_ansi(esc))
+
+      ---@type table<string, string>, integer|nil
+      local control, idx = {}, 0
+      while true do
+        local k, v, _
+        idx, _, k, v = string.find(c, '(%a+)=([^,]+),?', idx + 1)
+        if idx == nil then
+          break
+        end
+        if k and v then
+          control[k] = v
+        end
+      end
+
+      -- Strip leading ; if we got data
+      ---@type string|nil
+      local data
+      if d and d ~= '' then
+        data = string.sub(d, 2)
+      end
+
+      return { i = i, j = j, control = control, data = data }
+    end
+
     it('can display an image in neovim', function()
-      error('todo: implement')
+      ---@type string, integer
+      local esc_codes, img_placement_id = exec_lua(function()
+        local data = {}
+        vim.o.imgprovider = 'kitty'
+
+        -- Eagerly load the provider so we can inject a function
+        -- to capture the output being written
+        vim.ui.img.providers.load('kitty', {
+          debug_write = function(...)
+            vim.list_extend(data, { ... })
+          end,
+        })
+
+        -- Load image including data into memory as iterm sends it all
+        local img = vim.ui.img.load(img_filename)
+
+        -- Should trigger image data to be sent
+        local img_placement_id = img:show({
+          crop = { x = 5, y = 6, width = 7, height = 8, unit = 'pixel' },
+          pos = { x = 1, y = 2, unit = 'cell' },
+          size = { width = 3, height = 4, unit = 'cell' },
+          z = 123,
+        })
+
+        -- Need to wait a bit for the image to be shown
+        vim.wait(100)
+
+        return table.concat(data), img_placement_id
+      end)
+
+      -- First, we upload an image and assign it an id
+      local seq = parse_kitty_seq(esc_codes)
+      assert(seq.i == 1, 'not starting with kitty graphics sequence: ' .. escape_ansi(esc_codes))
+      local image_id = seq.control.i
+      eq({
+        f = '100',
+        a = 't',
+        t = 'f',
+        i = image_id,
+        q = '2',
+      }, seq.control)
+      eq(base64_encode(img_filename), seq.data)
+      esc_codes = string.sub(esc_codes, seq.j + 1)
+
+      -- Second, we move the cursor to the top-left of image position
+      eq(escape_ansi('\027[2;1H'), escape_ansi(string.sub(esc_codes, 1, 6)))
+      esc_codes = string.sub(esc_codes, 7)
+
+      -- Third, we display the image using its id and a placement id
+      seq = parse_kitty_seq(esc_codes)
+      assert(seq.i == 1, 'not starting with kitty graphics sequence: ' .. escape_ansi(esc_codes))
+      eq({
+        a = 'p',
+        i = image_id,
+        p = tostring(img_placement_id),
+        C = '1',
+        q = '2',
+        x = '5',
+        y = '6',
+        w = '7',
+        h = '8',
+        c = '3',
+        r = '4',
+        z = '123',
+      }, seq.control)
     end)
 
     it('can hide an image in neovim', function()
@@ -185,11 +279,8 @@ describe('ui/img', function()
 
         -- Should trigger image data to be sent
         img:show({
-          -- X 1, Y 2, Width 2, height 1
-          crop = {
-            pos1 = { x = 1, y = 2, unit = 'pixel' },
-            pos2 = { x = 3, y = 3, unit = 'pixel' },
-          },
+          -- X = 1, Y = 2, Width = 2, Height = 1
+          crop = { x = 1, y = 2, width = 2, height = 1, unit = 'pixel' },
           pos = { x = 1, y = 2, unit = 'cell' },
           size = { width = 8, height = 8, unit = 'pixel' },
         })
@@ -200,6 +291,8 @@ describe('ui/img', function()
         return table.concat(data), img.bytes
       end)
 
+      -- https://vt100.net/docs/vt3xx-gp/chapter14.html
+      -- TODO: Disable sixel scrolling
       local expected = table.concat({
         -- Hide cursor so it doesn't move around
         '\027[?25l',

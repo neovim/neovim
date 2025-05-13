@@ -183,7 +183,7 @@ local function display_image(id, opts)
 
   -- Move cursor to position where image should be displayed
   local pos = opts:position():to_cells()
-  utils.move_cursor(pos.x, pos.y)
+  utils.move_cursor(pos.x, pos.y, write)
 
   -- TODO: Do we use U=1 for inline placements via virtual unicode?
   local control = {}
