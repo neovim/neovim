@@ -15,21 +15,26 @@ local PLACEMENTS = {}
 ---@type boolean
 local IS_TMUX = false
 
+---Used purely to debug output of kitty writing to a terminal.
+---@type nil|fun(...:string)
+local __debug_write
+
 local _next_id = 0
 local function next_id()
   _next_id = _next_id + 1
   return _next_id
 end
 
-local redraw_placements = require('vim.ui.img.utils').debounce(function()
-  -- Clear the screen
-  vim.cmd.mode()
-
+---Redraws all images managed by iterm2 provider.
+local redraw = require('vim.ui.img.utils').debounce(function()
   ---@type boolean, string|nil
   local ok, err = pcall(function()
     local utils = require('vim.ui.img.utils')
 
-    local writer = utils.new_batch_writer({ use_chan_send = true })
+    local writer = utils.new_batch_writer({
+      use_chan_send = true,
+      write = __debug_write,
+    })
     utils.show_cursor(false, writer.write)
     utils.enable_sync_mode(true, writer.write)
 
@@ -39,6 +44,10 @@ local redraw_placements = require('vim.ui.img.utils').debounce(function()
       if redraw_cnt == 0 then
         utils.enable_sync_mode(false, writer.write)
         utils.show_cursor(true, writer.write)
+
+        -- Clear the screen of all iterm2 images
+        vim.cmd.mode()
+
         writer.flush()
       end
     end
@@ -51,7 +60,7 @@ local redraw_placements = require('vim.ui.img.utils').debounce(function()
         ---@param filename string
         ---@param bytes string
         ---@param opts vim.ui.img.Opts
-        local function redraw(filename, bytes, opts)
+        local function do_draw(filename, bytes, opts)
           local name = vim.base64.encode(vim.fn.fnamemodify(filename, ':t:r'))
           local contents = vim.base64.encode(bytes)
           local args = {
@@ -102,11 +111,11 @@ local redraw_placements = require('vim.ui.img.utils').debounce(function()
             if err then
               vim.notify('failed to render image: ' .. err, vim.log.levels.WARN)
             else
-              redraw(img.filename, img.bytes, placement.opts)
+              do_draw(img.filename, img.bytes, placement.opts)
             end
           end)
         else
-          redraw(img.filename, img.bytes, placement.opts)
+          do_draw(img.filename, img.bytes, placement.opts)
         end
       end
     end
@@ -118,11 +127,23 @@ local redraw_placements = require('vim.ui.img.utils').debounce(function()
 end, { ms = 5 })
 
 ---@param _self vim.ui.img.Provider
-local function load(_self)
+---@param ... any
+local function load(_self, ...)
   if vim.env['TMUX'] ~= nil then
     local res = vim.system({ 'tmux', 'set', '-p', 'allow-passthrough', 'all' }):wait()
     assert(res.code == 0, 'failed to "set -p allow-passthrough all" for tmux')
     IS_TMUX = true
+  end
+
+  -- If debug write function provided, we set it to use globally
+  for _, arg in ipairs({ ... }) do
+    if type(arg) == 'table' then
+      ---@type function
+      local debug_write = arg.debug_write
+      if type(debug_write) == 'function' then
+        __debug_write = debug_write
+      end
+    end
   end
 
   -- TODO: Check if synchronous mode exists:
@@ -142,9 +163,14 @@ local function load(_self)
         placement.redraw = true
       end
 
-      vim.schedule(redraw_placements)
+      vim.schedule(redraw)
     end,
   })
+end
+
+---@param _self vim.ui.img.Provider
+local function unload(_self)
+  __debug_write = nil
 end
 
 ---@param _self vim.ui.img.Provider
@@ -162,7 +188,7 @@ local function show(_self, img, opts)
     redraw = true,
   }
 
-  vim.schedule(redraw_placements)
+  vim.schedule(redraw)
 
   return id
 end
@@ -182,11 +208,12 @@ local function hide(_self, ids)
     placement.redraw = true
   end
 
-  vim.schedule(redraw_placements)
+  vim.schedule(redraw)
 end
 
 return require('vim.ui.img.providers').new({
   on_load = load,
   on_show = show,
   on_hide = hide,
+  on_unload = unload,
 })

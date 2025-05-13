@@ -18,6 +18,23 @@ local IS_TMUX = false
 ---@type boolean
 local HAS_LOADED = false
 
+---Used purely to debug output of kitty writing to a terminal.
+---@type nil|fun(...:string)
+local __debug_write
+
+---Write to neovim's tty.
+---@param content string
+---@param opts? {use_chan_send?:boolean}
+local function write(content, opts)
+  if __debug_write then
+    __debug_write(content)
+  elseif opts and opts.use_chan_send then
+    vim.api.nvim_chan_send(2, content)
+  else
+    io.stdout:write(content)
+  end
+end
+
 local next_id = (function()
   local bit = require('bit')
 
@@ -110,7 +127,7 @@ local function transmit_image_file(image)
   -- Payload for a file transmit is the base64-encoded file path
   local payload = vim.base64.encode(image.filename)
 
-  io.stdout:write(make_seq(control, payload))
+  write(make_seq(control, payload))
 
   return id
 end
@@ -148,7 +165,7 @@ local function transmit_image_direct(image)
     control['m'] = last and 0 or 1
 
     -- NOTE: This may need direct tty device access to function!
-    io.stdout:write(make_seq(control, chunk))
+    write(make_seq(control, chunk))
   end)
 
   return id
@@ -195,7 +212,7 @@ local function display_image(id, opts)
 
   control['z'] = opts.z
 
-  io.stdout:write(make_seq(control))
+  write(make_seq(control))
 
   return pid
 end
@@ -211,11 +228,12 @@ local function delete_image(image_id, placement_id)
   control['p'] = placement_id -- Specify the id of the image placement to delete
   control['q'] = 2            -- Suppress all responses
 
-  io.stdout:write(make_seq(control))
+  write(make_seq(control))
 end
 
 ---@param _self vim.ui.img.Provider
-local function load(_self)
+---@param ... any
+local function load(_self, ...)
   if HAS_LOADED then
     return
   end
@@ -229,7 +247,23 @@ local function load(_self)
     IS_TMUX = true
   end
 
+  -- If debug write function provided, we set it to use globally
+  for _, arg in ipairs({ ... }) do
+    if type(arg) == 'table' then
+      ---@type function
+      local debug_write = arg.debug_write
+      if type(debug_write) == 'function' then
+        __debug_write = debug_write
+      end
+    end
+  end
+
   HAS_LOADED = true
+end
+
+---@param _self vim.ui.img.Provider
+local function unload(_self)
+  __debug_write = nil
 end
 
 ---@param _self vim.ui.img.Provider
@@ -301,5 +335,6 @@ return require('vim.ui.img.providers').new({
   on_load = load,
   on_show = show,
   on_hide = hide,
+  on_unload = unload,
   on_update = update,
 })

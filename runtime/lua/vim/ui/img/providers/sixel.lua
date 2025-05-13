@@ -10,6 +10,10 @@ local SIXEL_PLACEMENTS = {}
 ---@type boolean
 local IS_TMUX = false
 
+---Used purely to debug output of kitty writing to a terminal.
+---@type nil|fun(...:string)
+local __debug_write
+
 local _next_id = 0
 local function next_id()
   _next_id = _next_id + 1
@@ -39,7 +43,10 @@ end
 local function convert_to_sixel(filename, opts)
   opts = opts or {}
 
-  -- Build our command to resize, crop, and output RGBA pixel data
+  -- Build our command to generate sixel escape codes
+  -- 1. Perform a crop first
+  -- 2. Resize the cropped image
+  -- 3. Output as sixel
   local cmd = { 'magick', 'convert', filename }
   if opts.crop then
     local x, y, w, h = opts.crop:to_pixels():to_bounds()
@@ -58,15 +65,16 @@ local function convert_to_sixel(filename, opts)
   return assert(res.stdout, 'sixel output missing')
 end
 
-local redraw_placements = require('vim.ui.img.utils').debounce(function()
+---Redraws all images managed by sixel provider.
+local redraw = require('vim.ui.img.utils').debounce(function()
   local utils = require('vim.ui.img.utils')
-
-  -- Clear the screen of all sixel images
-  vim.cmd.mode()
 
   ---@type boolean, string|nil
   local ok, err = pcall(function()
-    local writer = utils.new_batch_writer({ use_chan_send = true })
+    local writer = utils.new_batch_writer({
+      use_chan_send = true,
+      write = __debug_write,
+    })
 
     utils.show_cursor(false, writer.write)
     utils.enable_sync_mode(true, writer.write)
@@ -85,6 +93,9 @@ local redraw_placements = require('vim.ui.img.utils').debounce(function()
     utils.enable_sync_mode(false, writer.write)
     utils.show_cursor(true, writer.write)
 
+    -- Clear the screen of all sixel images
+    vim.cmd.mode()
+
     writer.flush()
   end)
 
@@ -94,22 +105,40 @@ local redraw_placements = require('vim.ui.img.utils').debounce(function()
 end, { ms = 5 })
 
 ---@param _self vim.ui.img.Provider
-local function load(_self)
+---@param ... any
+local function load(_self, ...)
   if vim.env['TMUX'] ~= nil then
     local res = vim.system({ 'tmux', 'set', '-p', 'allow-passthrough', 'all' }):wait()
     assert(res.code == 0, 'failed to "set -p allow-passthrough all" for tmux')
     IS_TMUX = true
   end
 
+  -- If debug write function provided, we set it to use globally
+  for _, arg in ipairs({ ... }) do
+    if type(arg) == 'table' then
+      ---@type function
+      local debug_write = arg.debug_write
+      if type(debug_write) == 'function' then
+        __debug_write = debug_write
+      end
+    end
+  end
+
   vim.api.nvim_create_autocmd({ 'BufWritePost', 'WinScrolled' }, {
     callback = function()
+      -- Mark all of our images as needing to be redrawn when scrolling happens
       for _, placement in pairs(SIXEL_PLACEMENTS) do
         placement.redraw = true
       end
 
-      vim.schedule(redraw_placements)
+      vim.schedule(redraw)
     end,
   })
+end
+
+---@param _self vim.ui.img.Provider
+local function unload(_self)
+  __debug_write = nil
 end
 
 ---@param _self vim.ui.img.Provider
@@ -135,7 +164,7 @@ local function show(_self, img, opts)
     redraw = true,
   }
 
-  vim.schedule(redraw_placements)
+  vim.schedule(redraw)
 
   return id
 end
@@ -155,11 +184,12 @@ local function hide(_self, ids)
     placement.redraw = true
   end
 
-  vim.schedule(redraw_placements)
+  vim.schedule(redraw)
 end
 
 return require('vim.ui.img.providers').new({
   on_load = load,
   on_show = show,
   on_hide = hide,
+  on_unload = unload,
 })

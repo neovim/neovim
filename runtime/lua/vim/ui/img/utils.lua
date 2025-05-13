@@ -230,7 +230,7 @@ function M.move_cursor(x, y, write)
 end
 
 ---Creates a writer that will wait to send all bytes together.
----@param opts? {use_chan_send?:boolean} use nvim_chan_send() over io.stdout:write()
+---@param opts? {use_chan_send?:boolean, write?:fun(...:string)}
 ---@return vim.ui.img.utils.BatchWriter
 function M.new_batch_writer(opts)
   opts = opts or {}
@@ -258,9 +258,15 @@ function M.new_batch_writer(opts)
   function writer.flush()
     local bytes = table.concat(writer.__queue)
 
-    ---Writes bytes to stdout using `nvim_chan_send` to ensure that larger messages
-    ---properly make use of errno to EAGAIN as mentioned in #26688.
-    if opts.use_chan_send then
+    -- Depending on the configuration, will write one of three ways:
+    --
+    -- 1. Writes bytes using `opts.write()`
+    -- 2. Writes bytes to stdout using `vim.api.nvim_chan_send()` to ensure that
+    --    larger messages properly make use of errno to EAGAIN as mentioned in #26688
+    -- 3. Writes bytes using `io.stdout:write()`
+    if opts.write then
+      opts.write(bytes)
+    elseif opts.use_chan_send then
       vim.api.nvim_chan_send(2, bytes)
     else
       io.stdout:write(bytes)

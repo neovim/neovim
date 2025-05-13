@@ -7,7 +7,7 @@ local M = {}
 
 ---@class (exact) vim.ui.img.provider.Opts
 ---@field on_unload? fun(self:vim.ui.img.Provider) called to cleanup this provider
----@field on_load? fun(self:vim.ui.img.Provider) called to initialize this provider
+---@field on_load? fun(self:vim.ui.img.Provider, ...:any) called to initialize this provider
 ---@field on_show fun(self:vim.ui.img.Provider, img:vim.ui.Image, opts?:vim.ui.img.Opts):integer
 ---@field on_hide fun(self:vim.ui.img.Provider, ids:integer[])
 ---@field on_update? fun(self:vim.ui.img.Provider, id:integer, opts?:vim.ui.img.Opts):integer
@@ -101,13 +101,14 @@ function M.new(opts)
 
   ---Loads the provider by performing any setup logic needed.
   ---This is invoked when switching to this provider.
-  function provider.load()
+  ---@param ... any optional additional parameters specific to a provider
+  function provider.load(...)
     if provider._loaded then
       return
     end
 
     if provider._opts.on_load then
-      provider._opts.on_load(provider)
+      provider._opts.on_load(provider, ...)
     end
 
     provider._loaded = true
@@ -168,11 +169,12 @@ end
 
 ---Like getting a provider, but also loads it upon success.
 ---@param name string
+---@param ... any
 ---@return vim.ui.img.Provider|nil
-function M.load(name)
+function M.load(name, ...)
   local provider = M.get(name)
   if provider then
-    provider.load()
+    provider.load(...)
   end
   return provider
 end
