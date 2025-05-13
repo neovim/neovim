@@ -181,6 +181,9 @@ local function display_image(id, opts)
   -- Create a unique placement id for this new display
   local pid = opts.pid or next_id()
 
+  -- Capture old cursor position
+  utils.save_cursor(write)
+
   -- Move cursor to position where image should be displayed
   local pos = opts:position():to_cells()
   utils.move_cursor(pos.x, pos.y, write)
@@ -210,6 +213,9 @@ local function display_image(id, opts)
   control['z'] = opts.z
 
   write(make_seq(control))
+
+  -- Restore old cursor position
+  utils.restore_cursor(write)
 
   return pid
 end

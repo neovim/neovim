@@ -86,6 +86,7 @@ local redraw = require('vim.ui.img.utils').debounce(function()
 
     utils.show_cursor(false, writer.write)
     utils.enable_sync_mode(true, writer.write)
+    utils.save_cursor(writer.write)
     for _, placement in pairs(SIXEL_PLACEMENTS) do
       if placement.redraw then
         placement.redraw = false
@@ -98,6 +99,7 @@ local redraw = require('vim.ui.img.utils').debounce(function()
         end
       end
     end
+    utils.restore_cursor(writer.write)
     utils.enable_sync_mode(false, writer.write)
     utils.show_cursor(true, writer.write)
 

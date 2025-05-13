@@ -166,6 +166,8 @@ describe('ui/img', function()
         '\027[?25l',
         -- Start terminal sync mode
         '\027[?2026h',
+        -- Save cursor position so it can be restored later
+        '\0277',
         -- Move cursor to top-left of image position
         '\027[2;1H',
         -- iterm2 image file display escape sequence
@@ -178,6 +180,8 @@ describe('ui/img', function()
           ),
           base64_encode(img_bytes)
         ),
+        -- Restore original cursor position
+        '\0278',
         -- End terminal sync mode
         '\027[?2026l',
         -- Show cursor again
@@ -272,11 +276,15 @@ describe('ui/img', function()
       eq(base64_encode(img_filename), seq.data)
       esc_codes = string.sub(esc_codes, seq.j + 1)
 
-      -- Second, we move the cursor to the top-left of image position
+      -- Second, we save the current cursor position to restore it later
+      eq(escape_ansi('\0277'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor save')
+      esc_codes = string.sub(esc_codes, 3)
+
+      -- Third, we move the cursor to the top-left of image position
       eq(escape_ansi('\027[2;1H'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor movement')
       esc_codes = string.sub(esc_codes, 7)
 
-      -- Third, we display the image using its id and a placement id
+      -- Fourth, we display the image using its id and a placement id
       seq = parse_kitty_seq(esc_codes)
       assert(seq.i == 1, 'not starting with kitty graphics sequence: ' .. escape_ansi(esc_codes))
       eq({
@@ -293,6 +301,11 @@ describe('ui/img', function()
         r = '4',
         z = '123',
       }, seq.control, 'display image control data')
+      esc_codes = string.sub(esc_codes, seq.j + 1)
+
+      -- Fifth, we restore the cursor position to where it was before displaying images
+      eq(escape_ansi('\0278'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor restore')
+      esc_codes = string.sub(esc_codes, 3)
     end)
 
     it('can hide an image in neovim', function()
@@ -345,6 +358,8 @@ describe('ui/img', function()
         '\027[?25l',
         -- Start terminal sync mode
         '\027[?2026h',
+        -- Save cursor position so it can be restored later
+        '\0277',
         -- Move cursor to top-left of image position
         '\027[2;1H',
         -- sixel image file display escape sequence
@@ -362,6 +377,8 @@ describe('ui/img', function()
           '#6N#4N#5N#0N#3N#1N#2NN-', -- Image data
           '\027\\',                  -- End sixel
         }),
+        -- Restore original cursor position
+        '\0278',
         -- End terminal sync mode
         '\027[?2026l',
         -- Show cursor again

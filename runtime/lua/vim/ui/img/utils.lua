@@ -19,6 +19,26 @@ function M.move_cursor(x, y, write)
   ))
 end
 
+---Performs `ESC 7` to save the cursor position.
+---@param write? fun(...:string)
+function M.save_cursor(write)
+  write = write or function(...)
+    io.stdout:write(...)
+  end
+
+  write('\0277')
+end
+
+---Performs `ESC 8` to restore the cursor position.
+---@param write? fun(...:string)
+function M.restore_cursor(write)
+  write = write or function(...)
+    io.stdout:write(...)
+  end
+
+  write('\0278')
+end
+
 ---@param opts? {on_response?:fun(pos:vim.ui.img.utils.Position), timeout_ms?:number, no_error?:boolean, write?:fun(...:string)}
 ---@return vim.ui.img.utils.Position|nil
 function M.get_cursor_position(opts)

@@ -37,11 +37,13 @@ local redraw = require('vim.ui.img.utils').debounce(function()
     })
     utils.show_cursor(false, writer.write)
     utils.enable_sync_mode(true, writer.write)
+    utils.save_cursor(writer.write)
 
     local redraw_cnt = 0
     local function mark_redraw_done()
       redraw_cnt = redraw_cnt - 1
       if redraw_cnt == 0 then
+        utils.restore_cursor(writer.write)
         utils.enable_sync_mode(false, writer.write)
         utils.show_cursor(true, writer.write)
 
