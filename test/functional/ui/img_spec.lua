@@ -339,6 +339,8 @@ describe('ui/img', function()
       -- https://vt100.net/docs/vt3xx-gp/chapter14.html
       -- TODO: Disable sixel scrolling
       local expected = table.concat({
+        -- Disable sixel scrolling mode
+        '\027[?80l',
         -- Hide cursor so it doesn't move around
         '\027[?25l',
         -- Start terminal sync mode

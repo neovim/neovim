@@ -79,6 +79,11 @@ local redraw = require('vim.ui.img.utils').debounce(function()
       write = __debug_write,
     })
 
+    -- Disable sixel scrolling where new images push up contents
+    -- NOTE: We do this each time to ensure that it's disabled
+    --       to avoid unexpected interference
+    writer.write('\027[?80l')
+
     utils.show_cursor(false, writer.write)
     utils.enable_sync_mode(true, writer.write)
     for _, placement in pairs(SIXEL_PLACEMENTS) do
@@ -99,7 +104,8 @@ local redraw = require('vim.ui.img.utils').debounce(function()
     -- Clear the screen of all sixel images
     vim.cmd.mode()
 
-    writer.flush()
+    -- Schedule the output with enough time for the screen clear to finish
+    vim.defer_fn(writer.flush, 20)
   end)
 
   if not ok then

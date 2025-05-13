@@ -48,7 +48,8 @@ local redraw = require('vim.ui.img.utils').debounce(function()
         -- Clear the screen of all iterm2 images
         vim.cmd.mode()
 
-        writer.flush()
+        -- Schedule the output with enough time for the screen clear to finish
+        vim.defer_fn(writer.flush, 20)
       end
     end
 

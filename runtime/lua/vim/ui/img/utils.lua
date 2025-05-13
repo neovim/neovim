@@ -19,6 +19,74 @@ function M.move_cursor(x, y, write)
   ))
 end
 
+---@param opts? {on_response?:fun(pos:vim.ui.img.utils.Position), timeout_ms?:number, no_error?:boolean, write?:fun(...:string)}
+---@return vim.ui.img.utils.Position|nil
+function M.get_cursor_position(opts)
+  opts = opts or {}
+
+  local on_response = opts.on_response
+  local timeout = opts.timeout_ms or 1000
+  local position = nil
+
+  local id = vim.api.nvim_create_autocmd('TermResponse', {
+    callback = function(args)
+      local resp = args.data.sequence ---@type string
+      local row, col = string.match(resp, '\027[(%d+);(%d+)R')
+
+      local row_num = tonumber(row)
+      local col_num = tonumber(col)
+
+      if row_num and col_num then
+        local pos = require('vim.ui.img.utils.position').new({
+          x = col_num,
+          y = row_num,
+          unit = 'cell',
+        })
+
+        if on_response then
+          vim.schedule(function()
+            on_response(pos)
+          end)
+        else
+          position = pos
+        end
+
+        -- Mark that we no longer need this autocmd
+        return true
+      end
+    end
+  })
+
+  local write = opts.write or function(...)
+    io.stdout:write(...)
+  end
+
+  -- Send request to get cursor position
+  write('\027[6n')
+
+  -- Asynchronous, so we're done at this point
+  if on_response then
+    return
+  end
+
+  -- Wait for the position to be retrieved
+  vim.wait(timeout, function()
+    return position ~= nil
+  end)
+
+  -- Delete the autocmd, ignoring errors if already gone
+  pcall(vim.api.nvim_del_autocmd, id)
+
+  if opts.no_error then
+    return position
+  end
+
+  return assert(
+    position,
+    string.format('unable to retrieve a response in %sms', timeout)
+  )
+end
+
 ---Creates a writer that will wait to send all bytes together.
 ---@param opts? {use_chan_send?:boolean, write?:fun(...:string)}
 ---@return vim.ui.img.utils.BatchWriter
@@ -44,9 +112,10 @@ function M.new_batch_writer(opts)
     vim.list_extend(writer.__queue, { ... })
   end
 
-  ---Flushes the bytes, sending them all together.
-  function writer.flush()
-    local bytes = table.concat(writer.__queue)
+  ---Writes immediately skipping queue.
+  ---@param ... string
+  function writer.write_fast(...)
+    local bytes = table.concat({ ... })
 
     -- Depending on the configuration, will write one of three ways:
     --
@@ -62,6 +131,14 @@ function M.new_batch_writer(opts)
       io.stdout:write(bytes)
       io.stdout:flush()
     end
+  end
+
+  ---Flushes the bytes, sending them all together.
+  function writer.flush()
+    local queue = writer.__queue
+    writer.__queue = {}
+
+    writer.write_fast(table.concat(queue))
   end
 
   ---@cast writer -function
