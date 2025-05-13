@@ -189,7 +189,7 @@ function M.get_namespace(client_id, is_pull)
       vim.tbl_get((client or {}).server_capabilities, 'diagnosticProvider', 'identifier')
     local key = string.format('%d:%s', client_id, server_id or 'nil')
     local name = string.format(
-      'vim.lsp.%s.%d.%s',
+      'nvim.lsp.%s.%d.%s',
       client and client.name or 'unknown',
       client_id,
       server_id or 'nil'
@@ -201,7 +201,7 @@ function M.get_namespace(client_id, is_pull)
     end
     return ns
   else
-    local name = string.format('vim.lsp.%s.%d', client and client.name or 'unknown', client_id)
+    local name = string.format('nvim.lsp.%s.%d', client and client.name or 'unknown', client_id)
     local ns = _client_push_namespaces[client_id]
     if not ns then
       ns = api.nvim_create_namespace(name)
