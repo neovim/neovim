@@ -173,7 +173,7 @@ end
 ---@param replace_last boolean
 ---@param more boolean? If true, route messages that exceed the target window to more window.
 function M.show_msg(tar, content, replace_last, more)
-  local msg, restart, dupe, count = '', false, 0, 0
+  local msg, restart, cr, dupe, count = '', false, false, 0, 0
   if M[tar] then -- tar == 'box'|'cmd'
     if tar == ext.cfg.msg.pos then
       -- Save the concatenated message to identify repeated messages.
@@ -183,6 +183,7 @@ function M.show_msg(tar, content, replace_last, more)
       dupe = (msg == M.prev_msg and M.dupe + 1 or 0)
     end
 
+    cr = M[tar].count > 0 and msg:sub(1, 1) == '\r'
     restart = M[tar].count > 0 and (replace_last or dupe > 0)
     -- Reset indicators the next event loop iteration.
     if M.cmd.count == 0 and tar == 'cmd' then
@@ -201,22 +202,39 @@ function M.show_msg(tar, content, replace_last, more)
   ---@type integer Start row after last line in the target buffer, unless
   ---this is the first message, or in case of a repeated or replaced message.
   local row = M[tar] and count <= 1 and (tar == 'cmd' and ext.cmd.row or 0)
-    or api.nvim_buf_line_count(ext.bufs[tar]) - ((replace_last or dupe > 0) and 1 or 0)
-  local start_row, col, width = row, 0, 0
-  local lines, marks = {}, {} ---@type string[], [integer, integer, vim.api.keyset.set_extmark][]
+    or api.nvim_buf_line_count(ext.bufs[tar]) - ((replace_last or cr or dupe > 0) and 1 or 0)
+  local start_row, col, width = row, 0, M.box.width
+  ---@type string[] Overwrite the last line of the previous message if this one starts with CR.
+  local lines = { cr and api.nvim_buf_get_lines(ext.bufs[tar], -2, -1, false)[1] or nil }
+  local marks = {} ---@type [integer, integer, vim.api.keyset.set_extmark][]
 
   -- Accumulate to be inserted and highlighted message chunks for a non-repeated message.
-  for i, chunk in ipairs(dupe > 0 and tar == ext.cfg.msg.pos and {} or content) do
-    local srow, scol = row, col
-    -- Split at newline and concatenate first and last message chunks.
-    for str in (chunk[2] .. '\0'):gmatch('.-[\n%z]') do
-      local idx = #lines + (i > 1 and row == srow and 0 or 1)
-      -- Filter out NL, CRs and appended NUL. TODO: actually handle carriage return?
-      lines[idx] = (lines[idx] or '') .. str:gsub('[\n\r%z]', '')
-      col = #lines[#lines]
-      row = row + (str:sub(-1) == '\0' and 0 or 1)
-      width = math.max(width, api.nvim_strwidth(lines[#lines]))
+  for _, chunk in ipairs(dupe > 0 and tar == ext.cfg.msg.pos and {} or content) do
+    local idx = (#lines == 0 and 1 or #lines)
+    local srow, scol, head = row, col, lines[idx] or ''
+
+    -- Split at newline and write to start of line after carriage return.
+    for str in (chunk[2] .. '\0'):gmatch('.-[\n\r%z]') do
+      local mid = str:gsub('[\n\r%z]', '')
+      local tail = #head == 0 and lines[idx] and lines[idx]:sub(#mid + 1) or ''
+      lines[idx] = ('%s%s%s'):format(head, mid, tail)
+      width = tar == 'box' and math.max(width, api.nvim_strwidth(lines[idx])) or 0
+
+      -- Remove previous highlight from overwritten text.
+      if #head == 0 and marks[#marks] and marks[#marks][3].end_row == row then
+        if marks[#marks][1] < row then
+          marks[#marks + 1] = { row, 0, vim.deepcopy(marks[#marks][3]) }
+          marks[#marks - 1][3].end_col = 0
+        end
+        marks[#marks][2] = math.max(marks[#marks][2], #mid)
+      end
+
+      row = row + (str:sub(-1) == '\n' and 1 or 0)
+      idx = idx + (str:sub(-1) == '\n' and 1 or 0)
+      head = ''
     end
+
+    col = #lines[idx]
     if chunk[3] > 0 then
       marks[#marks + 1] = { srow, scol, { end_col = col, end_row = row, hl_group = chunk[3] } }
     end
@@ -239,7 +257,7 @@ function M.show_msg(tar, content, replace_last, more)
     api.nvim_win_set_width(ext.wins[ext.tab].box, width)
     local h = api.nvim_win_text_height(ext.wins[ext.tab].box, {})
     if h.all > (more and 1 or math.ceil(o.lines * 0.5)) then
-      api.nvim_buf_set_lines(ext.bufs.box, start_row, row, false, {})
+      api.nvim_buf_set_lines(ext.bufs.box, start_row, -1, false, {})
       api.nvim_win_set_width(ext.wins[ext.tab].box, M.box.width)
       M.msg_history_show({ { 'spill', content } }) -- show message in 'more' window
       return
@@ -257,7 +275,7 @@ function M.show_msg(tar, content, replace_last, more)
   elseif tar == 'cmd' and dupe == 0 then
     local h = api.nvim_win_text_height(ext.wins[ext.tab].cmd, {})
     if more and h.all > ext.cmdheight then
-      api.nvim_buf_set_lines(ext.bufs.cmd, start_row, row, false, {})
+      api.nvim_buf_set_lines(ext.bufs.cmd, start_row, -1, false, {})
       M.msg_history_show({ { 'spill', content } }) -- show message in 'more' window
       return
     end
@@ -366,7 +384,7 @@ end
 ---
 ---@param content MsgContent
 function M.msg_ruler(content)
-  M.virt.last[M.virt.idx.ruler] = content
+  M.virt.last[M.virt.idx.ruler] = ext.cmd.level > 0 and {} or content
   set_virttext('last')
 end
 
