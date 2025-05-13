@@ -22,7 +22,9 @@ function M.new(opts)
   local instance = vim.deepcopy(opts)
   setmetatable(instance, M)
 
-  local utils = require('vim.ui.img.utils')
+  local Position = require('vim.ui.img.utils.position')
+  local Region = require('vim.ui.img.utils.region')
+  local Size = require('vim.ui.img.utils.size')
 
   ---@type vim.ui.img.opts.Relative|nil
   local relative = opts.relative
@@ -32,21 +34,21 @@ function M.new(opts)
   local crop = opts.crop
   vim.validate('opts.crop', crop, 'table', true)
   if type(crop) == 'table' then
-    crop = utils.new_region(crop)
+    crop = Region.new(crop)
   end
 
   ---@type vim.ui.img.utils.Position|nil
   local pos = opts.pos
   vim.validate('opts.pos', pos, 'table', true)
   if type(pos) == 'table' then
-    pos = utils.new_position(pos)
+    pos = Position.new(pos)
   end
 
   ---@type vim.ui.img.utils.Size|nil
   local size = opts.size
   vim.validate('opts.size', size, 'table', true)
   if type(size) == 'table' then
-    size = utils.new_size(size)
+    size = Size.new(size)
   end
 
   ---@type integer|nil
@@ -70,7 +72,7 @@ end
 ---Calculates and returns the position dictated by `relative` and `pos`.
 ---@return vim.ui.img.utils.Position
 function M:position()
-  local utils = require('vim.ui.img.utils')
+  local Position = require('vim.ui.img.utils.position')
   local x, y = 0, 0
 
   if self.pos or self.relative then
@@ -118,7 +120,7 @@ function M:position()
     y = y + yoffset
   end
 
-  return utils.new_position(x, y, 'cell')
+  return Position.new(x, y, 'cell')
 end
 
 return M

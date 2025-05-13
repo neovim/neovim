@@ -193,21 +193,18 @@ local function display_image(id, opts)
   control['C'] = 1   -- Don't move the cursor after the image
   control['q'] = 2   -- Suppress all responses
 
-  local crop = opts.crop
-  local size = opts.size
-
-  if crop then
-    local x, y, w, h = crop:to_pixels():to_bounds()
-    control['x'] = x
-    control['y'] = y
-    control['w'] = w
-    control['h'] = h
+  if opts.crop then
+    local crop = opts.crop:to_pixels()
+    control['x'] = crop.x
+    control['y'] = crop.y
+    control['w'] = crop.width
+    control['h'] = crop.height
   end
 
-  if size then
-    local size_cells = size:to_cells()
-    control['c'] = size_cells.width
-    control['r'] = size_cells.height
+  if opts.size then
+    local size = opts.size:to_cells()
+    control['c'] = size.width
+    control['r'] = size.height
   end
 
   control['z'] = opts.z

@@ -1,4 +1,4 @@
----@class vim.ui.img.screen.Size
+---@class vim.ui.img.utils.ScreenSize
 ---@field width integer in pixels
 ---@field height integer in pixels
 ---@field columns integer
@@ -7,9 +7,9 @@
 ---@field cell_height number in pixels (may be fractional)
 ---@field scale number dpi
 
----@class vim.ui.img.Screen
+---@class vim.ui.img.utils.Screen
 ---@field private __def boolean has created necessary cdefs
----@field private __size vim.ui.img.screen.Size|nil cached screen size
+---@field private __size vim.ui.img.utils.ScreenSize|nil cached screen size
 local M = {
   __def = false,
   __size = nil,
@@ -23,8 +23,26 @@ vim.api.nvim_create_autocmd('VimResized', {
   end,
 })
 
+---Convert an integer representing absolute pixels to a cell.
+---@param x integer
+---@param y integer
+---@return integer x, integer y
+function M.pixels_to_cells(x, y)
+  local size = M.size()
+  return math.floor(x / size.cell_width), math.floor(y / size.cell_height)
+end
+
+---Convert an integer representing a cell to absolute pixels.
+---@param x integer
+---@param y integer
+---@return integer x, integer y
+function M.cells_to_pixels(x, y)
+  local size = M.size()
+  return math.floor(x * size.cell_width), math.floor(y * size.cell_height)
+end
+
 ---Determines the size of the terminal screen.
----@return vim.ui.img.screen.Size
+---@return vim.ui.img.utils.ScreenSize
 function M.size()
   local size = M.__size
 
@@ -45,7 +63,7 @@ end
 
 ---@private
 ---Determines the size of the terminal screen for Windows systems with pixel accuracy.
----@return vim.ui.img.screen.Size|nil
+---@return vim.ui.img.utils.ScreenSize|nil
 function M.__windows_size()
   -- For neovim spawned from within Windows Terminal, this should be set to
   -- some GUID; so, leverage CSI escape codes to query, which are supported
@@ -103,7 +121,7 @@ function M.__windows_size()
     M.__def = true
   end
 
-  ---@type vim.ui.img.screen.Size|nil
+  ---@type vim.ui.img.utils.ScreenSize|nil
   local size
 
   ---Retrieve the screen buffer info and font size to determine the cell width and height.
@@ -173,7 +191,7 @@ end
 
 ---@private
 ---Determines the size of the terminal screen using CSI escape codes.
----@return vim.ui.img.screen.Size|nil
+---@return vim.ui.img.utils.ScreenSize|nil
 function M.__csi_size()
   -- TODO: Introduce support for querying CSI. Neovim eats the response right now.
   --
@@ -190,9 +208,9 @@ end
 
 ---@private
 ---Determines the size of the terminal screen for POSIX systems.
----@return vim.ui.img.screen.Size|nil
+---@return vim.ui.img.utils.ScreenSize|nil
 function M.__posix_size()
-  ---@type vim.ui.img.screen.Size|nil
+  ---@type vim.ui.img.utils.ScreenSize|nil
   local size
 
   -- On Linux/Android, BSD, MacOS, and Solaris we use
@@ -256,7 +274,7 @@ function M.__posix_size()
 end
 
 ---@private
----@return vim.ui.img.screen.Size
+---@return vim.ui.img.utils.ScreenSize
 function M.__default_size()
   local cell_width = 9
   local cell_height = 18

@@ -49,9 +49,12 @@ local function convert_to_sixel(filename, opts)
   -- 3. Output as sixel
   local cmd = { 'magick', 'convert', filename }
   if opts.crop then
-    local x, y, w, h = opts.crop:to_pixels():to_bounds()
+    local region = opts.crop:to_pixels()
     table.insert(cmd, '-crop')
-    table.insert(cmd, string.format('%sx%s+%s+%s', w, h, x, y))
+    table.insert(
+      cmd,
+      string.format('%sx%s+%s+%s', region.width, region.height, region.x, region.y)
+    )
   end
   if opts.size then
     local size_px = opts.size:to_pixels()
