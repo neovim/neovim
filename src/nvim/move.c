@@ -2425,7 +2425,7 @@ static bool scroll_with_sms(Direction dir, int count, int *curscount)
       fixdir = dir * -1;
     }
 
-    int width1 = curwin->w_view_width - win_col_off(curwin);
+    int width1 = curwin->w_width_inner - win_col_off(curwin);
     int width2 = width1 + win_col_off2(curwin);
     count = 1 + (curwin->w_skipcol - width1) / width2;
     if (fixdir == FORWARD) {
