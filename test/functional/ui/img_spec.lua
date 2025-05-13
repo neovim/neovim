@@ -74,6 +74,36 @@ describe('ui/img', function()
     t.write_file(img_filename, PNG_IMG_BYTES, true, false)
   end)
 
+  it('should be able to load an image from disk', function()
+    -- Synchronous loading from disk
+    ---@type vim.ui.Image
+    local sync_img = exec_lua(function()
+      return vim.ui.img.load(img_filename)
+    end)
+
+    eq(img_filename, sync_img.filename)
+    eq(PNG_IMG_BYTES, sync_img.bytes)
+
+    -- Asynchronous loading from disk
+    ---@type vim.ui.Image
+    local async_img = exec_lua(function()
+      ---@type vim.ui.Image|nil
+      local img = nil
+      vim.ui.img.load(img_filename, function(_, image)
+        img = image
+      end)
+
+      if vim.wait(1000, function() return img ~= nil end) then
+        return img
+      else
+        error('could not load image asynchronously')
+      end
+    end)
+
+    eq(img_filename, async_img.filename)
+    eq(PNG_IMG_BYTES, async_img.bytes)
+  end)
+
   it('should unload the old provider when vim.o.imgprovider changes', function()
     ---@type boolean
     local was_unloaded = exec_lua(function()

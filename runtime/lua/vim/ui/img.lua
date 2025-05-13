@@ -53,7 +53,9 @@ function M.load(filename, on_load)
     return img
   end
 
-  img:reload(on_load)
+  img:reload(vim.schedule_wrap(function(err)
+    on_load(err, not err and img or nil)
+  end))
 end
 
 ---Reloads the bytes for an image from its filename.
