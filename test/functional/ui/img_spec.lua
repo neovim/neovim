@@ -72,18 +72,33 @@ describe('ui/img', function()
     -- Create the image on disk in a temporary location
     img_filename = t.tmpname(true)
     t.write_file(img_filename, PNG_IMG_BYTES, true, false)
+  end)
 
-    -- Set up a default provider that is a test that we can examine
-    exec_lua([[
+  it('should unload the old provider when vim.o.imgprovider changes', function()
+    ---@type boolean
+    local was_unloaded = exec_lua(function()
+      local was_unloaded = false
       vim.ui.img.providers['test'] = vim.ui.img.providers.new({
-        show = function(_self, opts)
+        on_show = function()
+          return 0
         end,
-        hide = function(_self, ids)
+        on_hide = function() end,
+        on_unload = function()
+          was_unloaded = true
         end,
       })
 
+      -- Ensure the provider is loaded, as otherwise it won't unload
+      vim.ui.img.providers.load('test')
+
+      -- Force a change away from our test provider
       vim.o.imgprovider = 'test'
-    ]])
+      vim.o.imgprovider = 'kitty'
+
+      return was_unloaded
+    end)
+
+    eq(true, was_unloaded, 'test provider unloaded')
   end)
 
   describe('iterm2 provider', function()
@@ -223,12 +238,12 @@ describe('ui/img', function()
         t = 'f',
         i = image_id,
         q = '2',
-      }, seq.control)
+      }, seq.control, 'transmit image control data')
       eq(base64_encode(img_filename), seq.data)
       esc_codes = string.sub(esc_codes, seq.j + 1)
 
       -- Second, we move the cursor to the top-left of image position
-      eq(escape_ansi('\027[2;1H'), escape_ansi(string.sub(esc_codes, 1, 6)))
+      eq(escape_ansi('\027[2;1H'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor movement')
       esc_codes = string.sub(esc_codes, 7)
 
       -- Third, we display the image using its id and a placement id
@@ -247,7 +262,7 @@ describe('ui/img', function()
         c = '3',
         r = '4',
         z = '123',
-      }, seq.control)
+      }, seq.control, 'display image control data')
     end)
 
     it('can hide an image in neovim', function()
@@ -262,7 +277,7 @@ describe('ui/img', function()
   describe('sixel provider', function()
     it('can display an image in neovim', function()
       ---@type string, string
-      local esc_codes, img_bytes = exec_lua(function()
+      local esc_codes = exec_lua(function()
         local data = {}
         vim.o.imgprovider = 'sixel'
 
@@ -288,7 +303,7 @@ describe('ui/img', function()
         -- Need to wait a bit for the image to be shown
         vim.wait(100)
 
-        return table.concat(data), img.bytes
+        return table.concat(data)
       end)
 
       -- https://vt100.net/docs/vt3xx-gp/chapter14.html

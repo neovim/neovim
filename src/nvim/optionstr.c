@@ -1334,7 +1334,7 @@ const char *did_set_imgprovider(optset_T *args)
     Error err = ERROR_INIT;
     MAXSIZE_TEMP_ARRAY(luaArgs, 1);
     ADD_C(luaArgs, CSTR_TO_OBJ(oldval));
-    Object rv = NLUA_EXEC_STATIC("vim.ui.img.providers.__unload(...)",
+    Object rv = NLUA_EXEC_STATIC("vim.ui.img.providers.unload(...)",
                                  luaArgs, kRetNilBool, NULL, &err);
     if (ERROR_SET(&err) || (rv.type == kObjectTypeBoolean && !rv.data.boolean)) {
       vim_snprintf(errbuf, sizeof(errbuf), "%s: failed to unload provider '%s'", e_invarg, oldval);

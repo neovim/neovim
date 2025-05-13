@@ -179,11 +179,11 @@ function M.load(name, ...)
   return provider
 end
 
----@private
----Invoked when imgprovider option changes, unloading old provider.
+---Unloads a loaded provider by name, returning
+---whether or not successfully unloaded.
 ---@param name string
 ---@return boolean
-function M.__unload(name)
+function M.unload(name)
   local ok = true
   local provider = M.get(name)
   if provider then
