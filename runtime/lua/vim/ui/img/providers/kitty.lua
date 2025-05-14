@@ -3,6 +3,7 @@
 local MAX_DATA_CHUNK = 4096
 
 ---@class vim.ui.img.providers.Kitty
+---@field private __autocmds integer[]
 ---@field private __debug_write? fun(...:string)
 ---@field private __has_loaded boolean loaded at least once
 ---@field private __images table<integer, integer> neovim image id -> kitty image id
@@ -10,6 +11,7 @@ local MAX_DATA_CHUNK = 4096
 ---@field private __placements table<integer, integer> kitty placement id -> kitty image id
 ---@field private __writer vim.ui.img.utils.BatchWriter
 local M = {
+  __autocmds = {},
   __has_loaded = false,
   __images = {},
   __is_tmux = false,
@@ -49,14 +51,37 @@ function M:load(...)
   local utils = require('vim.ui.img.utils')
   self.__writer = utils.new_batch_writer({
     use_chan_send = true,
+    map = function(s)
+      if self.__is_tmux then
+        s = utils.codes.escape_tmux_passthrough(s)
+      end
+      return s
+    end,
     write = debug_write
   })
+
+  -- For kitty, we want to make sure that we properly unload when exiting
+  -- neovim, especially if we're in tmux
+  table.insert(
+    self.__autocmds,
+    vim.api.nvim_create_autocmd('VimLeavePre', {
+      callback = function()
+        self:unload()
+      end,
+    })
+  )
 
   self.__has_loaded = true
 end
 
 function M:unload()
   self:__delete_all()
+
+  for _, id in ipairs(self.__autocmds) do
+    vim.api.nvim_del_autocmd(id)
+  end
+
+  self.__autocmds = {}
   self.__images = {}
   self.__is_tmux = false
   self.__placements = {}
@@ -126,12 +151,6 @@ function M:update(pid, opts)
 end
 
 ---@private
----@param content string
-function M:__write(content)
-  self.__writer.write_fast(content)
-end
-
----@private
 ---Kitty operates via graphics codes in the form:
 ---
 ---    <ESC>_G<control data>;<payload><ESC>\
@@ -171,14 +190,13 @@ function M:__make_seq(control, payload)
   -- Finalize the graphics code sequence
   table.insert(data, '\027\\')
 
-  -- Build our graphics control sequence, transforming it based on the
-  -- environment in which neovim is running
+  -- Transform our escape sequence to leverage tmux's passthrough, which requires
+  -- any ESC characters in the wrapped sequence to be doubled, and the entire
+  -- sequence to be wrapped within "ESC P tmux ; <SEQUENCE> ESC \"
   local seq = table.concat(data)
-
-  -- Tmux requires special handling to work properly with tmux
-  if self.__is_tmux then
-    seq = ('\027Ptmux;' .. string.gsub(seq, '\027', '\027\027')) .. '\027\\'
-  end
+  -- if self.__is_tmux then
+  --   seq = ('\027Ptmux;' .. string.gsub(seq, '\027', '\027\027')) .. '\027\\'
+  -- end
 
   return seq
 end
@@ -200,7 +218,7 @@ function M:__transmit_image_file(image)
   -- Payload for a file transmit is the base64-encoded file path
   local payload = vim.base64.encode(image.filename)
 
-  self:__write(self:__make_seq(control, payload))
+  self.__writer.write_fast(self:__make_seq(control, payload))
 
   return id
 end
@@ -239,7 +257,7 @@ function M:__transmit_image_direct(image)
     control['m'] = last and 0 or 1
 
     -- NOTE: This may need direct tty device access to function!
-    self:__write(self:__make_seq(control, chunk))
+    self.__writer.write_fast(self:__make_seq(control, chunk))
   end)
 
   return id
@@ -256,13 +274,17 @@ function M:__display_image(id, opts)
   -- Create a unique placement id for this new display
   local pid = opts.pid or self:__next_id()
 
-  -- Capture old cursor position
-  utils.save_cursor(self.__writer.write_fast)
+  -- Ensure the queue is empty before we start a sequence
+  self.__writer.flush()
 
-  -- Hide the cursor and move it to position where image should be displayed
+  -- Capture old cursor position, hide the cursor, and move to the
+  -- position where the image should be displayed
   local pos = opts:position():to_cells()
-  utils.show_cursor(false, self.__writer.write_fast)
-  utils.move_cursor(pos.x, pos.y, self.__writer.write_fast)
+  self.__writer.write(
+    utils.codes.CURSOR_SAVE,
+    utils.codes.CURSOR_HIDE,
+    utils.codes.move_cursor({ col = pos.x, row = pos.y })
+  )
 
   -- TODO: Do we use U=1 for inline placements via virtual unicode?
   local control = {}
@@ -288,11 +310,14 @@ function M:__display_image(id, opts)
 
   control['z'] = opts.z
 
-  self:__write(self:__make_seq(control))
+  self.__writer.write(
+    self:__make_seq(control),
+    utils.codes.CURSOR_RESTORE,
+    utils.codes.CURSOR_SHOW
+  )
 
-  -- Restore old cursor position and make it visible again
-  utils.restore_cursor(self.__writer.write_fast)
-  utils.show_cursor(true, self.__writer.write_fast)
+  -- Submit the image display request including cursor movement
+  self.__writer.flush()
 
   return pid
 end
@@ -309,7 +334,7 @@ function M:__delete_image_or_placement(image_id, placement_id)
   control['p'] = placement_id -- Specify the id of the image placement to delete
   control['q'] = 2            -- Suppress all responses
 
-  self:__write(self:__make_seq(control))
+  self.__writer.write_fast(self:__make_seq(control))
 end
 
 ---@private
@@ -320,7 +345,7 @@ function M:__delete_all()
   control['d'] = 'A' -- Delete all visible placements and images
   control['q'] = 2   -- Suppress all responses
 
-  self:__write(self:__make_seq(control))
+  self.__writer.write_fast(self:__make_seq(control))
 end
 
 ---@private

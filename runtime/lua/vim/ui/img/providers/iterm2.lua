@@ -180,6 +180,12 @@ function M:__redraw()
   local utils = require('vim.ui.img.utils')
   local writer = utils.new_batch_writer({
     use_chan_send = true,
+    map = function(s)
+      if self.__is_tmux then
+        s = utils.codes.escape_tmux_passthrough(s)
+      end
+      return s
+    end,
     write = self.__debug_write,
   })
 
@@ -189,7 +195,7 @@ function M:__redraw()
   ---@type boolean
   local old_termsync = vim.o.termsync
   local function restore_state()
-    utils.enable_sync_mode(false, writer.write_fast)
+    writer.write_fast(utils.codes.SYNC_MODE_DISABLE)
     vim.o.termsync = old_termsync
     self.__is_drawing = false
   end
@@ -198,18 +204,23 @@ function M:__redraw()
   local ok, err = pcall(function()
     -- Disable termsync and manually start sync mode
     vim.o.termsync = false
-    utils.enable_sync_mode(true, writer.write_fast)
+    writer.write_fast(utils.codes.SYNC_MODE_ENABLE)
 
-    utils.show_cursor(false, writer.write)
-    utils.save_cursor(writer.write)
+    -- Hide the cursor and save where it is to be restored
+    writer.write(
+      utils.codes.CURSOR_HIDE,
+      utils.codes.CURSOR_SAVE
+    )
 
     local need_clear = false
     local function mark_redraw_done()
       redraw_cnt = redraw_cnt - 1
 
       if redraw_cnt <= 0 then
-        utils.restore_cursor(writer.write)
-        utils.show_cursor(true, writer.write)
+        writer.write(
+          utils.codes.CURSOR_RESTORE,
+          utils.codes.CURSOR_SHOW
+        )
 
         -- Clear the screen of all iterm2 images only if needed
         if need_clear then
@@ -261,7 +272,7 @@ function M:__redraw()
 
           local args = table.concat(args, ';')
           local pos = opts:position():to_cells()
-          utils.move_cursor(pos.x, pos.y, writer.write)
+          writer.write(utils.codes.move_cursor({ col = pos.x, row = pos.y }))
 
           if self.__is_tmux then
             writer.write_format('\027]1337;MultipartFile=%s\007', args)

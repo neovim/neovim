@@ -2,41 +2,41 @@ local M = {}
 
 ---@alias vim.ui.img.utils.Unit 'cell'|'pixel'
 
----Move the terminal cursor to cell x, y.
----NOTE: This is relative to the editor, so can be placed outside of normal region.
----@param x integer column position in terminal
----@param y integer row position in terminal
----@param write? fun(...:string) function to use to write bytes, otherwise io.stdout:write(...)
-function M.move_cursor(x, y, write)
-  write = write or function(...)
-    io.stdout:write(...)
-  end
+---@class vim.ui.img.utils.Codes
+M.codes = {
+  ---Hides the cursor from being shown in terminal.
+  CURSOR_HIDE          = '\027[?25l',
+  ---Restore cursor position based on last save.
+  CURSOR_RESTORE       = '\0278',
+  ---Save cursor position to be restored later.
+  CURSOR_SAVE          = '\0277',
+  ---Shows the cursor if it was hidden in terminal.
+  CURSOR_SHOW          = '\027[?25h',
+  ---Disables scrolling mode for sixel.
+  SIXEL_SCROLL_DISABLE = '\027[?80l',
+  ---Disable synchronized output mode.
+  SYNC_MODE_DISABLE    = '\027[?2026l',
+  ---Enable synchronized output mode.
+  SYNC_MODE_ENABLE     = '\027[?2026h',
+}
 
-  write(string.format(
+---Generates the escape code to move the cursor.
+---Rounds down the column and row values.
+---@param opts {row:number, col:number}
+---@return string
+function M.codes.move_cursor(opts)
+  return string.format(
     '\027[%s;%sH',
-    math.floor(y),
-    math.floor(x)
-  ))
+    math.floor(opts.row),
+    math.floor(opts.col)
+  )
 end
 
----Performs `ESC 7` to save the cursor position.
----@param write? fun(...:string)
-function M.save_cursor(write)
-  write = write or function(...)
-    io.stdout:write(...)
-  end
-
-  write('\0277')
-end
-
----Performs `ESC 8` to restore the cursor position.
----@param write? fun(...:string)
-function M.restore_cursor(write)
-  write = write or function(...)
-    io.stdout:write(...)
-  end
-
-  write('\0278')
+---Wraps one or more escape sequences for use with tmux passthrough.
+---@param s string
+---@return string
+function M.codes.escape_tmux_passthrough(s)
+  return ('\027Ptmux;' .. string.gsub(s, '\027', '\027\027')) .. '\027\\'
 end
 
 ---@param opts? {on_response?:fun(pos:vim.ui.img.utils.Position), timeout_ms?:number, no_error?:boolean, write?:fun(...:string)}
@@ -108,7 +108,7 @@ function M.get_cursor_position(opts)
 end
 
 ---Creates a writer that will wait to send all bytes together.
----@param opts? {use_chan_send?:boolean, write?:fun(...:string)}
+---@param opts? {use_chan_send?:boolean, map?:(fun(s:string):string), multi?:boolean, write?:fun(...:string)}
 ---@return vim.ui.img.utils.BatchWriter
 function M.new_batch_writer(opts)
   opts = opts or {}
@@ -135,8 +135,47 @@ function M.new_batch_writer(opts)
   ---Writes immediately skipping queue.
   ---@param ... string
   function writer.write_fast(...)
-    local bytes = table.concat({ ... })
+    writer.__write(writer.__concat(...))
+  end
 
+  ---Flushes the bytes, sending them all together.
+  function writer.flush()
+    -- If nothing in the queue, don't write anything at all
+    if #writer.__queue == 0 then
+      return
+    end
+
+    ---@type string
+    local bytes
+
+    -- If multi specified, instead of concatentating all of the
+    -- bytes together, we instead map each individually
+    --
+    -- Otherwise, we combine all bytes together and then map
+    if opts.multi then
+      bytes = writer.__concat(unpack(writer.__queue))
+    else
+      bytes = writer.__concat(table.concat(writer.__queue))
+    end
+
+    writer.__queue = {}
+    writer.__write(bytes)
+  end
+
+  ---Transforms multiple bytes into a single sequence, mapping
+  ---each individual series of bytes if we have a map function.
+  ---@param ... string
+  ---@return string
+  function writer.__concat(...)
+    ---@param s string
+    return table.concat(vim.tbl_map(function(s)
+      return opts.map and opts.map(s) or s
+    end, { ... }))
+  end
+
+  ---@private
+  ---@param bytes string
+  function writer.__write(bytes)
     -- Depending on the configuration, will write one of three ways:
     --
     -- 1. Writes bytes using `opts.write()`
@@ -153,51 +192,8 @@ function M.new_batch_writer(opts)
     end
   end
 
-  ---Flushes the bytes, sending them all together.
-  function writer.flush()
-    local queue = writer.__queue
-    writer.__queue = {}
-
-    writer.write_fast(table.concat(queue))
-  end
-
   ---@cast writer -function
   return writer
-end
-
----Enables or disables sync mode for terminal.
----@param enable boolean
----@param write? fun(...:string) function to use to write bytes, otherwise io.stdout:write(...)
-function M.enable_sync_mode(enable, write)
-  write = write or function(...)
-    io.stdout:write(...)
-  end
-
-  -- TODO: Offer ability to check if synchronous mode exists:
-  -- https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
-  --
-  -- Send ESC[?2026p
-  -- Get back ESC[?2026;2$y
-  if enable then
-    write('\027[?2026h')
-  else
-    write('\027[?2026l')
-  end
-end
-
----Shows or hides the cursor in the terminal.
----@param show boolean
----@param write? fun(...:string) function to use to write bytes, otherwise io.stdout:write(...)
-function M.show_cursor(show, write)
-  write = write or function(...)
-    io.stdout:write(...)
-  end
-
-  if show then
-    write('\027[?25h')
-  else
-    write('\027[?25l')
-  end
 end
 
 return M
