@@ -2395,8 +2395,8 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
 /// Restarts the embedded server without killing the UI.
 ///
-/// @param channel_id  channel id which sent the RPC request.
-void nvim_restart(uint64_t channel_id, Error *err)
+/// @param[out] err Error info if any.
+void nvim_restart(Error *err)
   FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY
 {
   int width = ui_client_get_width();
@@ -2404,10 +2404,18 @@ void nvim_restart(uint64_t channel_id, Error *err)
   char *term = ui_client_get_term();
   bool rgb = ui_client_get_rgb();
 
-  // 1. Client-side server detach (auto kills the `nvim --embed` server due to self-exit).
+  // 1. Client-side server detach.
   ui_client_detach();
 
-  // 2. Get v:argv.
+  // 2. Close ui client channel (auto kills the `nvim --embed` server due to self-exit).
+  const char *error;
+  channel_close(ui_client_channel_id, kChannelPartAll, &error);
+  if (error) {
+    ELOG("%s", error);
+    return;
+  }
+
+  // 3. Get v:argv.
   typval_T *tv = get_vim_var_tv(VV_ARGV);
   if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
     ELOG("failed to get vim var typval");
@@ -2427,14 +2435,14 @@ void nvim_restart(uint64_t channel_id, Error *err)
   }
   argv[argc] = NULL;
 
-  // 3. Start a new `nvim --embed` server.
+  // 4. Start a new `nvim --embed` server.
   uint64_t rv = ui_client_start_server(argc, argv);
   if (!rv) {
     ELOG("failed to start nvim server");
     return;
   }
 
-  // 4. Client-side server re-attach.
+  // 5. Client-side server re-attach.
   ui_client_channel_id = rv;
   ui_client_attach(width, height, term, rgb);
 

@@ -5595,7 +5595,6 @@ static void ex_detach(exarg_T *eap)
 }
 
 /// ":restart" command
-///
 /// Restarts the server by delegating the work to the UI.
 static void ex_restart(exarg_T *eap)
 {
@@ -5603,19 +5602,22 @@ static void ex_restart(exarg_T *eap)
     emsg("bang not supported.");
     return;
   }
-  // This function is called on the server. So we should delegate the work to the UI.
+
   if (!current_ui) {
     emsg("UI not attached.");
     return;
   }
+
   MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
   ArenaMem arena_res = NULL;
   Error err = ERROR_INIT;
+
   rpc_send_call(current_ui, "nvim_restart", args, &arena_res, &err);
   if (ERROR_SET(&err)) {
     emsg(err.msg);
     return;
   }
+
   arena_mem_free(arena_res);
 }
 
