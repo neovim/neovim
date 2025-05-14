@@ -4482,4 +4482,29 @@ func Test_eventignorewin_non_current()
   %bw!
 endfunc
 
+func Test_reuse_curbuf_leak()
+  new bar
+  let s:bar_buf = bufnr()
+  augroup testing
+    autocmd!
+    autocmd BufDelete * ++once let s:triggered = 1 | execute s:bar_buf 'buffer'
+  augroup END
+  enew
+  let empty_buf = bufnr()
+
+  " Old curbuf should be reused, firing BufDelete. As BufDelete changes curbuf,
+  " reusing the buffer would fail and leak the ffname.
+  edit foo
+  call assert_equal(1, s:triggered)
+  " Wasn't reused because the buffer changed, but buffer "foo" is still created.
+  call assert_equal(1, bufexists(empty_buf))
+  call assert_notequal(empty_buf, bufnr())
+  call assert_equal('foo', bufname())
+  call assert_equal('bar', bufname(s:bar_buf))
+
+  unlet! s:bar_buf s:triggered
+  call CleanUpTestAuGroup()
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
