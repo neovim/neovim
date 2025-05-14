@@ -167,6 +167,8 @@ LSP
   "resolving" it).
 • Support for `workspace/diagnostic`: |vim.lsp.buf.workspace_diagnostics()|
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+• Incremental selection is now supported via `textDocument/selectionRange`.
+  `an` selects outwards and `in` selects inwards.
 
 LUA
 
