@@ -1594,12 +1594,14 @@ M.handlers.underline = {
 --- @param opts vim.diagnostic.Opts.VirtualText
 local function render_virtual_text(namespace, bufnr, diagnostics, opts)
   local lnum = api.nvim_win_get_cursor(0)[1] - 1
+  local bufferlength = api.nvim_buf_line_count(bufnr)
   api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
 
   for line, line_diagnostics in pairs(diagnostics) do
     local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts)
     local skip = (opts.current_line == true and line ~= lnum)
       or (opts.current_line == false and line == lnum)
+      or (opts.current_line == false and line >= bufferlength)
 
     if virt_texts and not skip then
       api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
