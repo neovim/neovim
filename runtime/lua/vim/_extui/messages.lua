@@ -290,13 +290,10 @@ function M.show_msg(tar, content, replace_last, more)
     else
       api.nvim_win_set_cursor(ext.wins[ext.tab][tar], { 1, 0 })
       ext.cmd.highlighter.active[ext.bufs.cmd] = nil
-      -- Show hint in box and place [+x] indicator for lines that spill over 'cmdheight'.
+      -- Place [+x] indicator for lines that spill over 'cmdheight'.
       M.cmd.lines, M.cmd.msg_row = h.all, h.end_row
-      local spill = M.cmd.lines - ext.cmdheight
-      M.virt.msg[M.virt.idx.spill][1] = spill > 0 and { 0, ('[+%d]'):format(spill) } or nil
-      if spill > 0 then
-        M.msg_show('verbose', { { 0, ('Press g< to see %d more lines'):format(spill), 0 } })
-      end
+      local spill = M.cmd.lines > ext.cmdheight and ('[+%d]'):format(M.cmd.lines - ext.cmdheight)
+      M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
     end
   end
 
