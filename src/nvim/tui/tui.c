@@ -95,7 +95,6 @@ struct TUIData {
   kvec_t(Rect) invalid_regions;
   int row, col;
   int out_fd;
-  bool scroll_region_is_full_screen;
   bool can_change_scroll_region;
   bool can_set_lr_margin;  // smglr
   bool can_set_left_right_margin;
@@ -349,7 +348,6 @@ void tui_query_bg_color(TUIData *tui)
 /// from terminfo just in case the controlling terminal has changed (#27177).
 static void terminfo_start(TUIData *tui)
 {
-  tui->scroll_region_is_full_screen = true;
   tui->bufpos = 0;
   tui->default_attr = false;
   tui->can_clear_attr = false;
@@ -1227,10 +1225,6 @@ void tui_grid_resize(TUIData *tui, Integer g, Integer width, Integer height)
     UNIBI_SET_NUM_VAR(tui->params[0], (int)height);
     UNIBI_SET_NUM_VAR(tui->params[1], (int)width);
     unibi_out_ext(tui, tui->unibi_ext.resize_screen);
-    // DECSLPP does not reset the scroll region.
-    if (tui->scroll_region_is_full_screen) {
-      reset_scroll_region(tui, tui->width == grid->width);
-    }
   } else {  // Already handled the SIGWINCH signal; avoid double-resize.
     got_winch = got_winch > 0 ? got_winch - 1 : 0;
     grid->row = -1;
@@ -1431,13 +1425,12 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
   int right = (int)endcol - 1;
 
   bool fullwidth = left == 0 && right == tui->width - 1;
-  tui->scroll_region_is_full_screen = fullwidth
-                                      && top == 0 && bot == tui->height - 1;
+  bool full_screen_scroll = fullwidth && top == 0 && bot == tui->height - 1;
 
   ugrid_scroll(grid, top, bot, left, right, (int)rows);
 
   bool can_scroll = tui->can_scroll
-                    && (tui->scroll_region_is_full_screen
+                    && (full_screen_scroll
                         || (tui->can_change_scroll_region
                             && ((left == 0 && right == tui->width - 1)
                                 || tui->can_set_lr_margin
@@ -1445,7 +1438,7 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
 
   if (can_scroll) {
     // Change terminal scroll region and move cursor to the top
-    if (!tui->scroll_region_is_full_screen) {
+    if (!full_screen_scroll) {
       set_scroll_region(tui, top, bot, left, right);
     }
     cursor_goto(tui, top, left);
@@ -1468,7 +1461,7 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
     }
 
     // Restore terminal scroll region and cursor
-    if (!tui->scroll_region_is_full_screen) {
+    if (!full_screen_scroll) {
       reset_scroll_region(tui, fullwidth);
     }
   } else {
