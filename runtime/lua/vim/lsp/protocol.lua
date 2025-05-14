@@ -535,6 +535,9 @@ function protocol.make_client_capabilities()
       colorProvider = {
         dynamicRegistration = true,
       },
+      selectionRange = {
+        dynamicRegistration = false,
+      },
     },
     workspace = {
       symbol = {
