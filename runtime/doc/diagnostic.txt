@@ -180,6 +180,28 @@ the `virtual_lines` handler with the following keymap: >lua
     end, { desc = 'Toggle diagnostic virtual_lines' })
 <
 
+                                            *diagnostic-on-jump-example*
+You can use the `on_jump` option from |vim.diagnostic.jump()| to show the
+diagnostic that was jumped to using a specific handler. For example, the
+following uses the `virtual_lines` handler when jumping to a diagnostic: >lua
+
+  local virt_lines_ns = vim.api.nvim_create_namespace 'on_diagnostic_jump'
+
+  --- @param diagnostic? vim.Diagnostic
+  --- @param bufnr integer
+  local function on_jump(diagnostic, bufnr)
+      if not diagnostic then return end
+
+      vim.diagnostic.show(
+          virt_lines_ns,
+          bufnr,
+          { diagnostic },
+          { virtual_lines = { current_line = true }, virtual_text = false }
+      )
+  end
+
+  vim.diagnostic.config({ jump = { on_jump = on_jump } })
+
                                           *diagnostic-loclist-example*
 Whenever the |location-list| is opened, the following `show` handler will show
 the most recent diagnostics: >lua
