@@ -17,7 +17,7 @@ local REDRAW_DELAY_MS = 30
 ---@field private __id_cnt integer
 ---@field private __is_drawing boolean
 ---@field private __is_tmux boolean
----@field private __placements table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, redraw:boolean}>
+---@field private __placements table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, clear:boolean, redraw:boolean}>
 ---@field private __redraw_autocmds integer[]
 ---@field private __redraw_timer? uv.uv_timer_t
 local M = {
@@ -56,12 +56,33 @@ function M:load(...)
     self:__redraw()
   end))
 
-  -- When a buffer or window changes drastically, update everything
+  -- For these autocommands, we only need to redraw the images as the images themselves
+  -- should not have moved from their position
   table.insert(
     self.__redraw_autocmds,
-    vim.api.nvim_create_autocmd({ 'BufWritePost', 'WinScrolled' }, {
+    vim.api.nvim_create_autocmd({
+      'BufEnter', 'BufWritePost',
+      'CursorMoved', 'CursorMovedI',
+      'TextChanged', 'TextChangedI',
+      'VimResized', 'VimResume',
+      'WinEnter', 'WinNew',
+    }, {
       callback = function()
         for _, placement in pairs(self.__placements) do
+          placement.redraw = true
+        end
+      end,
+    })
+  )
+
+  -- For these autocommands, we need to both clear the screen and redraw all images
+  -- as the images may have moved (visually) from their positions
+  table.insert(
+    self.__redraw_autocmds,
+    vim.api.nvim_create_autocmd({ 'WinScrolled' }, {
+      callback = function()
+        for _, placement in pairs(self.__placements) do
+          placement.clear = true
           placement.redraw = true
         end
       end,
@@ -97,6 +118,7 @@ function M:show(img, opts)
   self.__placements[id] = {
     img = img,
     opts = opts,
+    clear = false,
     redraw = true,
   }
 
@@ -114,6 +136,7 @@ function M:hide(ids)
   -- For all remaining iterm2 placements, we need to redraw them
   -- after the screen is cleared
   for _, placement in pairs(self.__placements) do
+    placement.clear = true
     placement.redraw = true
   end
 end
@@ -180,6 +203,7 @@ function M:__redraw()
     utils.show_cursor(false, writer.write)
     utils.save_cursor(writer.write)
 
+    local need_clear = false
     local function mark_redraw_done()
       redraw_cnt = redraw_cnt - 1
 
@@ -187,8 +211,10 @@ function M:__redraw()
         utils.restore_cursor(writer.write)
         utils.show_cursor(true, writer.write)
 
-        -- Clear the screen of all iterm2 images
-        vim.cmd.mode()
+        -- Clear the screen of all iterm2 images only if needed
+        if need_clear then
+          vim.cmd.mode()
+        end
 
         -- Schedule the output with enough time for the screen clear to finish
         vim.defer_fn(function()
@@ -199,6 +225,13 @@ function M:__redraw()
     end
 
     for _, placement in pairs(self.__placements) do
+      -- Check if we need to clear the screen for this placement, which
+      -- should only be the case if it's both flagged for clearing and redrawing
+      need_clear = need_clear or (placement.clear and placement.redraw)
+      placement.clear = false
+
+      -- Now handle the actual scheduling of a redraw, which may be async if
+      -- we have not loaded the image's data before now
       if placement.redraw then
         placement.redraw = false
 
