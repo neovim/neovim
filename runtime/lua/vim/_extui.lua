@@ -30,6 +30,10 @@
 ---These four windows are assigned the "cmdline", "msgbox", "msgmore" and
 ---"msgprompt" 'filetype' respectively. Use a |FileType| autocommand to configure
 ---any local options for these windows and their respective buffers.
+---
+---Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
+---not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
+---spilled lines. To see the full message, the |g<| command can be used.
 
 local api = vim.api
 local ext = require('vim._extui.shared')
