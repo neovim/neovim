@@ -2409,8 +2409,8 @@ void nvim_restart(Error *err)
 
   // 2. Close ui client channel (auto kills the `nvim --embed` server due to self-exit).
   const char *error;
-  channel_close(ui_client_channel_id, kChannelPartAll, &error);
-  if (error) {
+  bool success = channel_close(ui_client_channel_id, kChannelPartAll, &error);
+  if (!success) {
     ELOG("%s", error);
     return;
   }
