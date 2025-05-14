@@ -1531,6 +1531,29 @@ describe('vim.diagnostic', function()
         end)
       )
     end)
+
+    it('allows filtering by enablement', function()
+      eq(
+        { 3, 1, 2 },
+        exec_lua(function()
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+            _G.make_error('Error 1', 1, 1, 1, 5),
+          })
+          vim.diagnostic.set(_G.other_ns, _G.diagnostic_bufnr, {
+            _G.make_error('Error 2', 1, 1, 1, 5),
+            _G.make_error('Error 3', 3, 1, 3, 5),
+          })
+
+          vim.diagnostic.enable(false, { ns_id = _G.other_ns })
+
+          return {
+            #vim.diagnostic.get(_G.diagnostic_bufnr),
+            #vim.diagnostic.get(_G.diagnostic_bufnr, { enabled = true }),
+            #vim.diagnostic.get(_G.diagnostic_bufnr, { enabled = false }),
+          }
+        end)
+      )
+    end)
   end)
 
   describe('count', function()

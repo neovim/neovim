@@ -440,6 +440,9 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                       specified line number.
       • {severity}?   (`vim.diagnostic.SeverityFilter`) See
                       |diagnostic-severity|.
+      • {enabled}?    (`boolean`, default: `nil`) Limit diagnostics to only
+                      enabled or disabled. If nil, enablement is ignored. See
+                      |vim.diagnostic.enable()|
 
 *vim.diagnostic.JumpOpts*
     Extends: |vim.diagnostic.GetOpts|
