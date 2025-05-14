@@ -1904,17 +1904,20 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   // buffer.)
   buf = NULL;
   if ((flags & BLN_CURBUF) && curbuf_reusable()) {
+    bufref_T bufref;
+
     assert(curbuf != NULL);
     buf = curbuf;
+    set_bufref(&bufref, buf);
     // It's like this buffer is deleted.  Watch out for autocommands that
     // change curbuf!  If that happens, allocate a new buffer anyway.
     buf_freeall(buf, BFA_WIPE | BFA_DEL);
-    if (buf != curbuf) {  // autocommands deleted the buffer!
-      return NULL;
-    }
     if (aborting()) {           // autocmds may abort script processing
       xfree(ffname);
       return NULL;
+    }
+    if (!bufref_valid(&bufref)) {
+      buf = NULL;  // buf was deleted; allocate a new buffer
     }
   }
   if (buf != curbuf || curbuf == NULL) {
