@@ -18,20 +18,20 @@ local M = {}
 function M.new(opts)
   ---@class vim.ui.img.Provider
   ---@field displayed table<integer, vim.ui.Image> mapping of displayed image id -> image
-  ---@field private _loaded boolean
-  ---@field private _opts vim.ui.img.provider.Opts
+  ---@field private __loaded boolean
   local provider = {
     displayed = {},
-    _loaded = false,
-    _opts = opts,
+    __loaded = false,
   }
+
+  local __opts = opts
 
   ---Displays the image using the provider.
   ---@param img vim.ui.Image
   ---@param opts? vim.ui.img.Opts
   ---@return integer id unique id representing a reference to the displayed image
   function provider.show(img, opts)
-    local id = provider._opts.on_show(provider, img, opts)
+    local id = __opts.on_show(provider, img, opts)
 
     provider.displayed[id] = img
 
@@ -59,7 +59,7 @@ function M.new(opts)
       ids = vim.tbl_keys(provider.displayed)
     end
 
-    provider._opts.on_hide(provider, ids)
+    __opts.on_hide(provider, ids)
 
     for _, id in ipairs(ids) do
       provider.displayed[id] = nil
@@ -78,8 +78,8 @@ function M.new(opts)
 
     -- If we have an explicitly-defined update method, use it as this is
     -- most likely more performant than the bruteforce approach
-    if provider._opts.on_update then
-      local new_id = provider._opts.on_update(provider, id, opts)
+    if __opts.on_update then
+      local new_id = __opts.on_update(provider, id, opts)
 
       provider.displayed[id] = nil
       provider.displayed[new_id] = img
@@ -96,39 +96,39 @@ function M.new(opts)
   ---Returns true if the provider is currently loaded.
   ---@return boolean
   function provider.is_loaded()
-    return provider._loaded
+    return provider.__loaded
   end
 
   ---Loads the provider by performing any setup logic needed.
   ---This is invoked when switching to this provider.
   ---@param ... any optional additional parameters specific to a provider
   function provider.load(...)
-    if provider._loaded then
+    if provider.__loaded then
       return
     end
 
-    if provider._opts.on_load then
-      provider._opts.on_load(provider, ...)
+    if __opts.on_load then
+      __opts.on_load(provider, ...)
     end
 
-    provider._loaded = true
+    provider.__loaded = true
   end
 
   ---Unloads the provider by performing any cleanup logic needed.
   ---This is invoked when switching away from this provider.
   function provider.unload()
-    if not provider._loaded then
+    if not provider.__loaded then
       return
     end
 
-    if provider._opts.on_unload then
-      provider._opts.on_unload(provider)
+    if __opts.on_unload then
+      __opts.on_unload(provider)
     else
       -- Hide all images if nothing else done
       provider.hide()
     end
 
-    provider._loaded = false
+    provider.__loaded = false
   end
 
   return provider

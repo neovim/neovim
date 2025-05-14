@@ -24,17 +24,6 @@ local PNG_IMG_BYTES = string.char(unpack({
 }))
 
 ---@param s string
----@return integer[]
-local function str_to_bytes(s)
-  ---@type integer[]
-  local bytes = {}
-  for i = 1, string.len(s) do
-    bytes[i] = string.byte(s, i, i)
-  end
-  return bytes
-end
-
----@param s string
 ---@return string
 local function escape_ansi(s)
   return (string.gsub(s, '.', function(c)
@@ -162,10 +151,10 @@ describe('ui/img', function()
       end)
 
       local expected = table.concat({
-        -- Hide cursor so it doesn't move around
-        '\027[?25l',
         -- Start terminal sync mode
         '\027[?2026h',
+        -- Hide cursor so it doesn't move around
+        '\027[?25l',
         -- Save cursor position so it can be restored later
         '\0277',
         -- Move cursor to top-left of image position
@@ -182,10 +171,10 @@ describe('ui/img', function()
         ),
         -- Restore original cursor position
         '\0278',
-        -- End terminal sync mode
-        '\027[?2026l',
         -- Show cursor again
         '\027[?25h',
+        -- End terminal sync mode
+        '\027[?2026l',
       })
 
       eq(escape_ansi(expected), escape_ansi(esc_codes))
@@ -280,11 +269,15 @@ describe('ui/img', function()
       eq(escape_ansi('\0277'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor save')
       esc_codes = string.sub(esc_codes, 3)
 
-      -- Third, we move the cursor to the top-left of image position
+      -- Third, we hide the cursor so it doesn't jump around on screeen
+      eq(escape_ansi('\027[?25l'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor hide')
+      esc_codes = string.sub(esc_codes, 7)
+
+      -- Fourth, we move the cursor to the top-left of image position
       eq(escape_ansi('\027[2;1H'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor movement')
       esc_codes = string.sub(esc_codes, 7)
 
-      -- Fourth, we display the image using its id and a placement id
+      -- Fifth, we display the image using its id and a placement id
       seq = parse_kitty_seq(esc_codes)
       assert(seq.i == 1, 'not starting with kitty graphics sequence: ' .. escape_ansi(esc_codes))
       eq({
@@ -303,9 +296,13 @@ describe('ui/img', function()
       }, seq.control, 'display image control data')
       esc_codes = string.sub(esc_codes, seq.j + 1)
 
-      -- Fifth, we restore the cursor position to where it was before displaying images
+      -- Sixth, we restore the cursor position to where it was before displaying images
       eq(escape_ansi('\0278'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor restore')
       esc_codes = string.sub(esc_codes, 3)
+
+      -- Seventh, we show the cursor again
+      eq(escape_ansi('\027[?25h'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor show')
+      esc_codes = string.sub(esc_codes, 7)
     end)
 
     it('can hide an image in neovim', function()
@@ -352,12 +349,12 @@ describe('ui/img', function()
       -- https://vt100.net/docs/vt3xx-gp/chapter14.html
       -- TODO: Disable sixel scrolling
       local expected = table.concat({
+        -- Start terminal sync mode
+        '\027[?2026h',
         -- Disable sixel scrolling mode
         '\027[?80l',
         -- Hide cursor so it doesn't move around
         '\027[?25l',
-        -- Start terminal sync mode
-        '\027[?2026h',
         -- Save cursor position so it can be restored later
         '\0277',
         -- Move cursor to top-left of image position
@@ -379,10 +376,10 @@ describe('ui/img', function()
         }),
         -- Restore original cursor position
         '\0278',
-        -- End terminal sync mode
-        '\027[?2026l',
         -- Show cursor again
         '\027[?25h',
+        -- End terminal sync mode
+        '\027[?2026l',
       })
 
       eq(escape_ansi(expected), escape_ansi(esc_codes))

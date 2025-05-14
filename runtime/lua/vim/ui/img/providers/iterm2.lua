@@ -12,64 +12,179 @@ local MAX_CONTENTS_SIZE = ITERM2_MAX_TRANSFER_SIZE - 17
 ---@type integer
 local REDRAW_DELAY_MS = 30
 
----Mapping of placement id -> {image, options}.
----@type table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, redraw:boolean}>
-local PLACEMENTS = {}
+---@class vim.ui.img.providers.Iterm2
+---@field private __debug_write? fun(...:string)
+---@field private __id_cnt integer
+---@field private __is_drawing boolean
+---@field private __is_tmux boolean
+---@field private __placements table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, redraw:boolean}>
+---@field private __redraw_autocmds integer[]
+---@field private __redraw_timer? uv.uv_timer_t
+local M = {
+  __debug_write = nil,
+  __id_cnt = 0,
+  __is_drawing = false,
+  __is_tmux = false,
+  __placements = {},
+  __redraw_autocmds = {},
+  __redraw_timer = nil,
+}
 
----Indicates whether or not neovim is running within tmux.
----@type boolean
-local IS_TMUX = false
+---@param ... any
+function M:load(...)
+  -- Check if tmux exists, and if so configure it for passthrough of our images
+  if vim.env['TMUX'] ~= nil then
+    local res = vim.system({ 'tmux', 'set', '-p', 'allow-passthrough', 'all' }):wait()
+    assert(res.code == 0, 'failed to "set -p allow-passthrough all" for tmux')
+    self.__is_tmux = true
+  end
 
----Used purely to debug output of kitty writing to a terminal.
----@type nil|fun(...:string)
-local __debug_write
-
-local _next_id = 0
-local function next_id()
-  _next_id = _next_id + 1
-  return _next_id
-end
-
----@return boolean
-local function need_redraw()
-  for _, placement in pairs(PLACEMENTS) do
-    if placement.redraw then
-      return true
+  -- If debug write function provided, we set it to use globally
+  for _, arg in ipairs({ ... }) do
+    if type(arg) == 'table' then
+      ---@type function
+      local debug_write = arg.debug_write
+      if type(debug_write) == 'function' then
+        self.__debug_write = debug_write
+      end
     end
   end
 
-  return false
+  -- Start the engine that will redraw images on a schedule
+  self.__redraw_timer = assert(vim.uv.new_timer())
+  self.__redraw_timer:start(REDRAW_DELAY_MS, REDRAW_DELAY_MS, vim.schedule_wrap(function()
+    self:__redraw()
+  end))
+
+  -- When a buffer or window changes drastically, update everything
+  table.insert(
+    self.__redraw_autocmds,
+    vim.api.nvim_create_autocmd({ 'BufWritePost', 'WinScrolled' }, {
+      callback = function()
+        for _, placement in pairs(self.__placements) do
+          placement.redraw = true
+        end
+      end,
+    })
+  )
 end
 
-local is_drawing = false
+function M:unload()
+  for _, id in ipairs(self.__redraw_autocmds) do
+    vim.api.nvim_del_autocmd(id)
+  end
 
+  if self.__redraw_timer then
+    self.__redraw_timer:stop()
+  end
+
+  self.__debug_write = nil
+  self.__is_drawing = false
+  self.__is_tmux = false
+  self.__placements = {}
+  self.__redraw_autocmds = {}
+  self.__redraw_timer = nil
+end
+
+---@param img vim.ui.Image
+---@param opts? vim.ui.img.Opts|{remote?:boolean}
+---@return integer
+function M:show(img, opts)
+  opts = opts or {}
+  local id = self:__next_id()
+
+  -- Register the new iterm2 placement and mark it for being drawn
+  self.__placements[id] = {
+    img = img,
+    opts = opts,
+    redraw = true,
+  }
+
+  return id
+end
+
+---@param ids integer[]
+function M:hide(ids)
+  -- For all specified iterm2 placements to be hidden, we just
+  -- remove them from our list since they'll be cleared anyway
+  for _, id in ipairs(ids) do
+    self.__placements[id] = nil
+  end
+
+  -- For all remaining iterm2 placements, we need to redraw them
+  -- after the screen is cleared
+  for _, placement in pairs(self.__placements) do
+    placement.redraw = true
+  end
+end
+
+---@private
+---@return integer
+function M:__next_id()
+  self.__id_cnt = self.__id_cnt + 1
+  return self.__id_cnt
+end
+
+---@private
+---@return integer
+function M:__get_redraw_cnt()
+  local cnt = 0
+  for _, placement in pairs(self.__placements) do
+    if placement.redraw then
+      cnt = cnt + 1
+    end
+  end
+  return cnt
+end
+
+---@private
 ---Redraws all images managed by iterm2 provider.
-local function redraw()
-  if is_drawing then
+function M:__redraw()
+  if self.__is_drawing then
     return
   end
 
-  is_drawing = true
+  -- Get how much we need to redraw, and exit early
+  -- if there is nothing to redraw at all
+  local redraw_cnt = self:__get_redraw_cnt()
+  if redraw_cnt == 0 then
+    return
+  end
+
+  -- At this point, we can be considered drawing
+  self.__is_drawing = true
+
+  local utils = require('vim.ui.img.utils')
+  local writer = utils.new_batch_writer({
+    use_chan_send = true,
+    write = self.__debug_write,
+  })
+
+  -- Save the current state of termsync before we force it off in order
+  -- to manually leverage synchronized mode to combine neovim rendering
+  -- with our image rendering for a smooth experience
+  ---@type boolean
+  local old_termsync = vim.o.termsync
+  local function restore_state()
+    utils.enable_sync_mode(false, writer.write_fast)
+    vim.o.termsync = old_termsync
+    self.__is_drawing = false
+  end
 
   ---@type boolean, string|nil
   local ok, err = pcall(function()
-    local utils = require('vim.ui.img.utils')
+    -- Disable termsync and manually start sync mode
+    vim.o.termsync = false
+    utils.enable_sync_mode(true, writer.write_fast)
 
-    local writer = utils.new_batch_writer({
-      use_chan_send = true,
-      write = __debug_write,
-    })
     utils.show_cursor(false, writer.write)
-    utils.enable_sync_mode(true, writer.write)
     utils.save_cursor(writer.write)
 
-    local redraw_cnt = 0
     local function mark_redraw_done()
       redraw_cnt = redraw_cnt - 1
 
-      if redraw_cnt == 0 then
+      if redraw_cnt <= 0 then
         utils.restore_cursor(writer.write)
-        utils.enable_sync_mode(false, writer.write)
         utils.show_cursor(true, writer.write)
 
         -- Clear the screen of all iterm2 images
@@ -78,19 +193,14 @@ local function redraw()
         -- Schedule the output with enough time for the screen clear to finish
         vim.defer_fn(function()
           writer.flush()
-          is_drawing = false
-
-          if need_redraw() then
-            vim.schedule(redraw)
-          end
+          restore_state()
         end, REDRAW_DELAY_MS)
       end
     end
 
-    for _, placement in pairs(PLACEMENTS) do
+    for _, placement in pairs(self.__placements) do
       if placement.redraw then
         placement.redraw = false
-        redraw_cnt = redraw_cnt + 1
 
         ---@param filename string
         ---@param bytes string
@@ -120,21 +230,21 @@ local function redraw()
           local pos = opts:position():to_cells()
           utils.move_cursor(pos.x, pos.y, writer.write)
 
-          if IS_TMUX then
-            writer(string.format('\027]1337;MultipartFile=%s\007', args))
+          if self.__is_tmux then
+            writer.write_format('\027]1337;MultipartFile=%s\007', args)
 
             local i = 1
             while i < string.len(contents) do
-              writer(string.format(
+              writer.write_format(
                 '\027]1337;FilePart=%s\007',
                 string.sub(contents, i, i + MAX_CONTENTS_SIZE - 1)
-              ))
+              )
               i = i + MAX_CONTENTS_SIZE
             end
 
-            writer('\027]1337;FileEnd\007')
+            writer.write('\027]1337;FileEnd\007')
           else
-            writer(string.format('\027]1337;File=%s:%s\007', args, contents))
+            writer.write_format('\027]1337;File=%s:%s\007', args, contents)
           end
 
           mark_redraw_done()
@@ -158,98 +268,21 @@ local function redraw()
 
   if not ok then
     vim.notify(err or 'iterm2 redraw unknown error', vim.log.levels.WARN)
-    is_drawing = false
+    restore_state()
   end
-end
-
----@param _self vim.ui.img.Provider
----@param ... any
-local function load(_self, ...)
-  if vim.env['TMUX'] ~= nil then
-    local res = vim.system({ 'tmux', 'set', '-p', 'allow-passthrough', 'all' }):wait()
-    assert(res.code == 0, 'failed to "set -p allow-passthrough all" for tmux')
-    IS_TMUX = true
-  end
-
-  -- If debug write function provided, we set it to use globally
-  for _, arg in ipairs({ ... }) do
-    if type(arg) == 'table' then
-      ---@type function
-      local debug_write = arg.debug_write
-      if type(debug_write) == 'function' then
-        __debug_write = debug_write
-      end
-    end
-  end
-
-  -- TODO: Check if synchronous mode exists:
-  -- https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
-  --
-  -- Send ESC[?2026p
-  -- Get back ESC[?2026;2$y
-
-  -- TODO: Subscribe autocmd to
-  --
-  --       CursorMoved, CursorMovedI :: check if cursor on an image, and redraw that image
-  --       WinScrolled :: check image lines and refresh if affected
-  --       BufWritePost :: snacks.nvim calls update here. Should we??
-  vim.api.nvim_create_autocmd({ 'BufWritePost', 'WinScrolled' }, {
-    callback = function()
-      for _, placement in pairs(PLACEMENTS) do
-        placement.redraw = true
-      end
-
-      vim.schedule(redraw)
-    end,
-  })
-end
-
----@param _self vim.ui.img.Provider
-local function unload(_self)
-  __debug_write = nil
-end
-
----@param _self vim.ui.img.Provider
----@param img vim.ui.Image
----@param opts? vim.ui.img.Opts|{remote?:boolean}
----@return integer
-local function show(_self, img, opts)
-  opts = opts or {}
-  local id = next_id()
-
-  -- Register the new iterm2 placement and mark it for being drawn
-  PLACEMENTS[id] = {
-    img = img,
-    opts = opts,
-    redraw = true,
-  }
-
-  vim.schedule(redraw)
-
-  return id
-end
-
----@param _self vim.ui.img.Provider
----@param ids integer[]
-local function hide(_self, ids)
-  -- For all specified iterm2 placements to be hidden, we just
-  -- remove them from our list since they'll be cleared anyway
-  for _, id in ipairs(ids) do
-    PLACEMENTS[id] = nil
-  end
-
-  -- For all remaining iterm2 placements, we need to redraw them
-  -- after the screen is cleared
-  for _, placement in pairs(PLACEMENTS) do
-    placement.redraw = true
-  end
-
-  vim.schedule(redraw)
 end
 
 return require('vim.ui.img.providers').new({
-  on_load = load,
-  on_show = show,
-  on_hide = hide,
-  on_unload = unload,
+  on_load = function(_, ...)
+    return M:load(...)
+  end,
+  on_show = function(_, img, opts)
+    return M:show(img, opts)
+  end,
+  on_hide = function(_, ids)
+    return M:hide(ids)
+  end,
+  on_unload = function()
+    return M:unload()
+  end,
 })

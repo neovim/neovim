@@ -115,21 +115,21 @@ function M.new_batch_writer(opts)
 
   ---@class vim.ui.img.utils.BatchWriter
   ---@field private __queue string[]
-  ---@overload fun(...:string)
-  local writer = setmetatable({
+  local writer = {
     __queue = {},
-  }, {
-    ---@param t vim.ui.img.utils.BatchWriter
-    ---@param ... string
-    __call = function(t, ...)
-      t.write(...)
-    end,
-  })
+  }
 
   ---Queues up bytes to be written later.
   ---@param ... string
   function writer.write(...)
     vim.list_extend(writer.__queue, { ... })
+  end
+
+  ---Queues up bytes to be written later, using a format string.
+  ---@param s string|number
+  ---@param ... any
+  function writer.write_format(s, ...)
+    writer.write(string.format(s, ...))
   end
 
   ---Writes immediately skipping queue.
