@@ -389,7 +389,12 @@ function M.signature_help(config)
       end
 
       local sfx = total > 1
-          and string.format(' (%d/%d)%s', idx, total, can_cycle and ' (' .. config.cycle_next_bind .. ' to cycle)' or '')
+          and string.format(
+            ' (%d/%d)%s',
+            idx,
+            total,
+            can_cycle and ' (' .. config.cycle_next_bind .. ' to cycle)' or ''
+          )
         or ''
       local title = string.format('Signature Help: %s%s', client.name, sfx)
       if config.border then
