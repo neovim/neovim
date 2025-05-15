@@ -5598,9 +5598,44 @@ static void ex_detach(exarg_T *eap)
 /// Restarts the server by delegating the work to the UI.
 static void ex_restart(exarg_T *eap)
 {
-  if (eap && eap->forceit) {
-    emsg("bang not supported.");
+  bool forceit = eap && eap->forceit;
+
+  // Refuse to restart if text is locked (i.e in command line etc.)
+  if (text_locked()) {
+    text_locked_msg();
     return;
+  }
+
+  // Refuse to restart if buffer is locked.
+  if (curbuf_locked()) {
+    return;
+  }
+
+  win_T *wp;
+
+  if (eap->addr_count > 0) {
+    linenr_T wnr = eap->line2;
+
+    for (wp = firstwin; wp->w_next != NULL; wp = wp->w_next) {
+      if (--wnr <= 0) {
+        break;
+      }
+    }
+  } else {
+    wp = curwin;
+  }
+
+  // If any buffer is changed and not saved, we cannot restart.
+  // But if called using bang (!), we will force restart.
+  if ((!buf_hide(wp->w_buffer)
+       && check_changed(wp->w_buffer, (p_awa ? CCGD_AW : 0)
+                        | (eap->forceit ? CCGD_FORCEIT : 0)
+                        | CCGD_EXCMD))
+      || check_more(true, eap->forceit) == FAIL
+      || check_changed_any(eap->forceit, true)) {
+    if (!forceit) {
+      return;
+    }
   }
 
   if (!current_ui) {
