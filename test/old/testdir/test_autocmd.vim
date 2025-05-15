@@ -4507,4 +4507,31 @@ func Test_reuse_curbuf_leak()
   %bw!
 endfunc
 
+func Test_reuse_curbuf_switch()
+  edit asdf
+  let s:asdf_win = win_getid()
+  new
+  let other_buf = bufnr()
+  let other_win = win_getid()
+  augroup testing
+    autocmd!
+    autocmd BufUnload * ++once let s:triggered = 1
+          \| call assert_fails('split', 'E1159:')
+          \| call win_gotoid(s:asdf_win)
+  augroup END
+
+  " Check BufUnload changing curbuf does not cause buflist_new to create a new
+  " buffer while leaving "other_buf" unloaded in a window.
+  enew
+  call assert_equal(1, s:triggered)
+  call assert_equal(other_buf, bufnr())
+  call assert_equal(other_win, win_getid())
+  call assert_equal(1, win_findbuf(other_buf)->len())
+  call assert_equal(1, bufloaded(other_buf))
+
+  unlet! s:asdf_win s:triggered
+  call CleanUpTestAuGroup()
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
