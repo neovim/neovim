@@ -2427,10 +2427,10 @@ static bool scroll_with_sms(Direction dir, int count, int *curscount)
 
     int width1 = curwin->w_width_inner - win_col_off(curwin);
     int width2 = width1 + win_col_off2(curwin);
-    count = 1 + (curwin->w_skipcol - width1) / width2;
+    count = 1 + (curwin->w_skipcol - width1 - 1) / width2;
     if (fixdir == FORWARD) {
-      count = 2 + (linetabsize_eol(curwin, curwin->w_topline)
-                   - curwin->w_skipcol - width1) / width2;
+      count = 1 + (linetabsize_eol(curwin, curwin->w_topline)
+                   - curwin->w_skipcol - width1 + width2 - 1) / width2;
     }
     scroll_redraw(fixdir == FORWARD, count);
     *curscount += count * (fixdir == dir ? 1 : -1);
