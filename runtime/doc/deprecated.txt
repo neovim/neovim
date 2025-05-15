@@ -21,7 +21,8 @@ API
 
 DIAGNOSTICS
 
-• "float" in |vim.diagnostic.JumpOpts|.	Use "on_jump" instead.
+• "float" in |vim.diagnostic.JumpOpts|.		Use "on_jump" instead.
+• "float" in |vim.diagnostic.Opts.Jump|.	Use "on_jump" instead.
 
 HIGHLIGHTS
 
