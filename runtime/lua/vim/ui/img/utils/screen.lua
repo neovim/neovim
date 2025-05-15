@@ -1,6 +1,6 @@
 ---@class vim.ui.img.utils.ScreenSize
----@field width integer in pixels
----@field height integer in pixels
+---@field width number in pixels (may be fractional)
+---@field height number in pixels (may be fractional)
 ---@field columns integer
 ---@field rows integer
 ---@field cell_width number in pixels (may be fractional)
@@ -24,21 +24,23 @@ vim.api.nvim_create_autocmd('VimResized', {
 })
 
 ---Convert an integer representing absolute pixels to a cell.
+---Rounds to the nearest integer.
 ---@param x integer
 ---@param y integer
 ---@return integer x, integer y
 function M.pixels_to_cells(x, y)
   local size = M.size()
-  return math.floor(x / size.cell_width), math.floor(y / size.cell_height)
+  return math.floor((x / size.cell_width) + 0.5), math.floor((y / size.cell_height) + 0.5)
 end
 
 ---Convert an integer representing a cell to absolute pixels.
+---Rounds to the nearest integer.
 ---@param x integer
 ---@param y integer
 ---@return integer x, integer y
 function M.cells_to_pixels(x, y)
   local size = M.size()
-  return math.floor(x * size.cell_width), math.floor(y * size.cell_height)
+  return math.floor((x * size.cell_width) + 0.5), math.floor((y * size.cell_height) + 0.5)
 end
 
 ---Determines the size of the terminal screen.
@@ -51,7 +53,7 @@ function M.size()
   end
 
   if vim.fn.has('win32') == 1 then
-    size = M.__windows_size()
+    size = M.__csi_size()
   elseif vim.fn.has('unix') == 1 then
     size = M.__posix_size()
   end
@@ -59,134 +61,6 @@ function M.size()
   M.__size = size or M.__default_size()
 
   return M.__size
-end
-
----@private
----Determines the size of the terminal screen for Windows systems with pixel accuracy.
----@return vim.ui.img.utils.ScreenSize|nil
-function M.__windows_size()
-  -- For neovim spawned from within Windows Terminal, this should be set to
-  -- some GUID; so, leverage CSI escape codes to query, which are supported
-  -- by modern Windows Terminal instances
-  if vim.env.WT_SESSION then
-    return M.__csi_size()
-  end
-
-  local ffi = require('ffi')
-
-  if not M.__def then
-    ffi.cdef([[
-      typedef unsigned long DWORD;
-      typedef unsigned short WORD;
-      typedef int BOOL;
-      typedef void* HANDLE;
-      typedef short SHORT;
-
-      typedef struct _COORD {
-        SHORT X;
-        SHORT Y;
-      } COORD;
-
-      typedef struct _SMALL_RECT {
-        SHORT Left;
-        SHORT Top;
-        SHORT Right;
-        SHORT Bottom;
-      } SMALL_RECT;
-
-      typedef struct _CONSOLE_SCREEN_BUFFER_INFO {
-        COORD dwSize;
-        COORD dwCursorPosition;
-        WORD wAttributes;
-        SMALL_RECT srWindow;
-        COORD dwMaximumWindowSize;
-      } CONSOLE_SCREEN_BUFFER_INFO;
-
-      typedef struct _CONSOLE_FONT_INFO {
-        DWORD nFont;
-        COORD dwFontSize;
-      } CONSOLE_FONT_INFO;
-
-      HANDLE GetStdHandle(DWORD nStdHandle);
-      BOOL GetConsoleScreenBufferInfo(
-        HANDLE hConsoleOutput,
-        CONSOLE_SCREEN_BUFFER_INFO* lpConsoleScreenBufferInfo
-      );
-      BOOL GetCurrentConsoleFont(
-        HANDLE hConsoleOutput,
-        BOOL bMaximumWindow,
-        CONSOLE_FONT_INFO* lpConsoleFontInfo
-      );
-    ]])
-    M.__def = true
-  end
-
-  ---@type vim.ui.img.utils.ScreenSize|nil
-  local size
-
-  ---Retrieve the screen buffer info and font size to determine the cell width and height.
-  ---NOTE: This does not work on Windows Terminal! We will fall back to CSI escape codes.
-  ---@type boolean, string|nil
-  local ok, err = pcall(function()
-    -- Using -11 should retrieve STD_OUTPUT_HANDLE, which initially is the
-    -- active console screen buffer (CONOUT$)
-    ---@type ffi.cdata*
-    local hStdOut = ffi.C.GetStdHandle(-11)
-
-    -- If our handle is INVALID_HANDLE_VALUE (-1)
-    if hStdOut == ffi.cast('HANDLE', -1) then
-      error('failed to get STD_OUTPUT_HANDLE')
-    end
-
-    ---@type { srWindow: { Left:integer, Top:integer, Right:integer, Bottom:integer } }
-    local csbi = ffi.new('CONSOLE_SCREEN_BUFFER_INFO')
-    if ffi.C.GetConsoleScreenBufferInfo(hStdOut, csbi) == 0 then
-      error('failed to retrieve screen buffer info')
-    end
-
-    ---@type { nFont:integer, dwFontSize: { X:integer, Y:integer } }
-    local fontInfo = ffi.new('CONSOLE_FONT_INFO')
-    if ffi.C.GetCurrentConsoleFont(hStdOut, false, fontInfo) == 0 then
-      error('failed to retrieve current console font')
-    end
-
-    -- Use the visible window (srWindow) to figure out the rows and columns shown
-    local cols = csbi.srWindow.Right - csbi.srWindow.Left + 1
-    local rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1
-
-    -- Use our font size as an approximation of the cell size
-    local cell_width = fontInfo.dwFontSize.X
-    local cell_height = fontInfo.dwFontSize.Y
-
-    -- Verify that we have valid font size information
-    -- NOTE: On Windows Terminal, this should result in the font width being 0,
-    --       so in the case that WT_SESSION was not set, we need to try it here
-    if cell_width == 0 or cell_height == 0 then
-      size = M.__csi_size()
-      if not size then
-        error('no valid size information available')
-      end
-    end
-
-    size = {
-      width = cols * cell_width,
-      height = rows * cell_height,
-      columns = cols,
-      rows = rows,
-      cell_width = cell_width,
-      cell_height = cell_height,
-      scale = math.max(1, cell_width / 8),
-    }
-  end)
-
-  if not ok then
-    vim.notify(
-      string.format('unable to retrieve screen size (windows): %s', err or '???'),
-      vim.log.levels.WARN
-    )
-  end
-
-  return size
 end
 
 ---@private
@@ -278,6 +152,13 @@ end
 function M.__default_size()
   local cell_width = 9
   local cell_height = 18
+
+  -- Assume that for Windows the 10x20 used by Windows Terminal
+  -- is a better choice for a default
+  if vim.fn.has('win32') == 1 then
+    cell_width = 10
+    cell_height = 20
+  end
 
   return {
     width = vim.o.columns * cell_width,
