@@ -203,7 +203,7 @@ function M.show_msg(tar, content, replace_last, more)
   ---this is the first message, or in case of a repeated or replaced message.
   local row = M[tar] and count <= 1 and (tar == 'cmd' and ext.cmd.row or 0)
     or api.nvim_buf_line_count(ext.bufs[tar]) - ((replace_last or cr or dupe > 0) and 1 or 0)
-  local start_row, col, width = row, 0, M.box.width
+  local start_row, width = row, M.box.width
   ---@type string[] Overwrite the last line of the previous message if this one starts with CR.
   local lines = { cr and api.nvim_buf_get_lines(ext.bufs[tar], -2, -1, false)[1] or nil }
   local marks = {} ---@type [integer, integer, vim.api.keyset.set_extmark][]
@@ -211,7 +211,7 @@ function M.show_msg(tar, content, replace_last, more)
   -- Accumulate to be inserted and highlighted message chunks for a non-repeated message.
   for _, chunk in ipairs(dupe > 0 and tar == ext.cfg.msg.pos and {} or content) do
     local idx = (#lines == 0 and 1 or #lines)
-    local srow, scol, head = row, col, lines[idx] or ''
+    local head = lines[idx] or ''
 
     -- Split at newline and write to start of line after carriage return.
     for str in (chunk[2] .. '\0'):gmatch('.-[\n\r%z]') do
@@ -221,7 +221,7 @@ function M.show_msg(tar, content, replace_last, more)
       width = tar == 'box' and math.max(width, api.nvim_strwidth(lines[idx])) or 0
 
       -- Remove previous highlight from overwritten text.
-      if #head == 0 and marks[#marks] and marks[#marks][3].end_row == row then
+      if #head == 0 and marks[#marks] and marks[#marks][1] == row then
         if marks[#marks][1] < row then
           marks[#marks + 1] = { row, 0, vim.deepcopy(marks[#marks][3]) }
           marks[#marks - 1][3].end_col = 0
@@ -229,14 +229,13 @@ function M.show_msg(tar, content, replace_last, more)
         marks[#marks][2] = math.max(marks[#marks][2], #mid)
       end
 
-      row = row + (str:sub(-1) == '\n' and 1 or 0)
-      idx = idx + (str:sub(-1) == '\n' and 1 or 0)
+      if chunk[3] > 0 then
+        marks[#marks + 1] = { row, #head, { end_col = #head + #mid, hl_group = chunk[3] } }
+      end
+      if str:sub(-1) == '\n' then
+        row, idx = row + 1, idx + 1
+      end
       head = ''
-    end
-
-    col = #lines[idx]
-    if chunk[3] > 0 then
-      marks[#marks + 1] = { srow, scol, { end_col = col, end_row = row, hl_group = chunk[3] } }
     end
   end
 
