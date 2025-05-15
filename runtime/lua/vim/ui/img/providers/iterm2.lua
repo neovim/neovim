@@ -127,7 +127,7 @@ end
 
 function M:unload()
   for _, id in ipairs(self.__redraw_autocmds) do
-    vim.api.nvim_del_autocmd(id)
+    pcall(vim.api.nvim_del_autocmd, id)
   end
 
   if self.__redraw_timer then
@@ -304,59 +304,59 @@ function M:__redraw()
       end
     end
 
+    ---@param filename string
+    ---@param bytes string
+    ---@param opts vim.ui.img.Opts
+    local function draw_image(filename, bytes, opts)
+      local name = vim.base64.encode(vim.fn.fnamemodify(filename, ':t:r'))
+      local contents = vim.base64.encode(bytes)
+      local args = {
+        string.format('name=%s', name),
+        string.format('size=%s', string.len(bytes)),
+        'preserveAspectRatio=0',
+        'inline=1',
+      }
+
+      if opts.size then
+        table.insert(args, string.format(
+          'width=%s' .. (opts.size.unit == 'pixel' and 'px' or ''),
+          opts.size.width
+        ))
+        table.insert(args, string.format(
+          'height=%s' .. (opts.size.unit == 'pixel' and 'px' or ''),
+          opts.size.height
+        ))
+      end
+
+      local args = table.concat(args, ';')
+      local pos = opts:position():to_cells()
+      writer.write(utils.codes.move_cursor({ col = pos.x, row = pos.y }))
+
+      if self.__is_tmux then
+        writer.write_format('\027]1337;MultipartFile=%s\007', args)
+
+        local i = 1
+        while i < string.len(contents) do
+          writer.write_format(
+            '\027]1337;FilePart=%s\007',
+            string.sub(contents, i, i + MAX_CONTENTS_SIZE - 1)
+          )
+          i = i + MAX_CONTENTS_SIZE
+        end
+
+        writer.write('\027]1337;FileEnd\007')
+      else
+        writer.write_format('\027]1337;File=%s:%s\007', args, contents)
+      end
+
+      mark_redraw_done()
+    end
+
     for _, placement in pairs(self.__placements) do
       -- Now handle the actual scheduling of a redraw, which may be async if
       -- we have not loaded the image's data before now
       if placement.redraw then
         placement.redraw = false
-
-        ---@param filename string
-        ---@param bytes string
-        ---@param opts vim.ui.img.Opts
-        local function do_draw(filename, bytes, opts)
-          local name = vim.base64.encode(vim.fn.fnamemodify(filename, ':t:r'))
-          local contents = vim.base64.encode(bytes)
-          local args = {
-            string.format('name=%s', name),
-            string.format('size=%s', string.len(bytes)),
-            'preserveAspectRatio=0',
-            'inline=1',
-          }
-
-          if opts.size then
-            table.insert(args, string.format(
-              'width=%s' .. (opts.size.unit == 'pixel' and 'px' or ''),
-              opts.size.width
-            ))
-            table.insert(args, string.format(
-              'height=%s' .. (opts.size.unit == 'pixel' and 'px' or ''),
-              opts.size.height
-            ))
-          end
-
-          local args = table.concat(args, ';')
-          local pos = opts:position():to_cells()
-          writer.write(utils.codes.move_cursor({ col = pos.x, row = pos.y }))
-
-          if self.__is_tmux then
-            writer.write_format('\027]1337;MultipartFile=%s\007', args)
-
-            local i = 1
-            while i < string.len(contents) do
-              writer.write_format(
-                '\027]1337;FilePart=%s\007',
-                string.sub(contents, i, i + MAX_CONTENTS_SIZE - 1)
-              )
-              i = i + MAX_CONTENTS_SIZE
-            end
-
-            writer.write('\027]1337;FileEnd\007')
-          else
-            writer.write_format('\027]1337;File=%s:%s\007', args, contents)
-          end
-
-          mark_redraw_done()
-        end
 
         self:__load_placement_image_bytes(placement, function(err, bytes)
           if err or not bytes then
@@ -365,7 +365,7 @@ function M:__redraw()
             return
           end
 
-          do_draw(placement.img.filename, bytes, placement.opts)
+          draw_image(placement.img.filename, bytes, placement.opts)
         end)
       end
     end

@@ -46,7 +46,7 @@ end
 
 describe('ui/img', function()
   ---@type test.functional.ui.screen
-  local screen
+  --local screen
 
   ---@type string
   local img_filename
@@ -56,7 +56,7 @@ describe('ui/img', function()
 
     -- Configure a screen for all of our image-based tests
     -- screen = Screen.new(25, 5)
-    screen = tt.setup_screen()
+    --screen = tt.setup_screen()
 
     -- Create the image on disk in a temporary location
     img_filename = t.tmpname(true)
@@ -181,21 +181,188 @@ describe('ui/img', function()
     end)
 
     it('can hide an image in neovim', function()
-      error('todo: implement')
+      ---@type string
+      local esc_codes = exec_lua(function()
+        local data = {}
+        vim.o.imgprovider = 'iterm2'
+
+        -- Eagerly load the provider so we can inject a function
+        -- to capture the output being written
+        vim.ui.img.providers.load('iterm2', {
+          debug_write = function(...)
+            vim.list_extend(data, { ... })
+          end,
+        })
+
+        -- Create and show a few images so we can hide
+        -- one and verify the rest are still displayed again
+        --
+        -- Since iterm2 will use the already-loaded data
+        -- unless cropping is needed, we can provide fake
+        -- data to our images for this test
+        ---@type {[1]: vim.ui.Image, [2]:integer}[]
+        local imgs = {}
+        for i, name in ipairs({ 'a', 'b', 'c' }) do
+          local img = vim.ui.img.new({ filename = name, bytes = name })
+          local id = img:show({
+            pos = { x = i, y = i + 1, unit = 'cell' },
+            size = { width = i + 2, height = i + 3, unit = 'cell' },
+            z = i,
+          })
+          table.insert(imgs, { img, id })
+        end
+
+        -- Need to wait a bit for the images to be shown
+        vim.wait(100)
+
+        -- Clear our data since we just want to capture the hiding message
+        data = {}
+
+        -- Perform hiding of image so we can see what is sent
+        local img, id = imgs[1][1], imgs[1][2]
+        img:hide(id)
+
+        -- Need to wait a bit for the image to be hidden
+        vim.wait(100)
+
+        return table.concat(data)
+      end)
+
+      -- Hiding an image just involves clearing the screen and showing
+      -- images other than the one hidden
+      local expected = table.concat({
+        -- Start terminal sync mode
+        '\027[?2026h',
+        -- Hide cursor so it doesn't move around
+        '\027[?25l',
+        -- Save cursor position so it can be restored later
+        '\0277',
+        -- Move cursor to top-left of image position (image b)
+        '\027[3;2H',
+        -- iterm2 image file display escape sequence (image b)
+        string.format(
+          '\027]1337;File=%s:%s\007',
+          string.format(
+            'name=%s;size=%s;preserveAspectRatio=0;inline=1;width=4;height=5',
+            base64_encode('b'),
+            string.len('b')
+          ),
+          base64_encode('b')
+        ),
+        -- Move cursor to top-left of image position (image c)
+        '\027[4;3H',
+        -- iterm2 image file display escape sequence (image c)
+        string.format(
+          '\027]1337;File=%s:%s\007',
+          string.format(
+            'name=%s;size=%s;preserveAspectRatio=0;inline=1;width=5;height=6',
+            base64_encode('c'),
+            string.len('c')
+          ),
+          base64_encode('c')
+        ),
+        -- Restore original cursor position
+        '\0278',
+        -- Show cursor again
+        '\027[?25h',
+        -- End terminal sync mode
+        '\027[?2026l',
+      })
+
+      eq(escape_ansi(expected), escape_ansi(esc_codes))
     end)
 
     it('can update an image in neovim', function()
-      error('todo: implement')
+      ---@type string, string
+      local esc_codes, img_bytes = exec_lua(function()
+        local data = {}
+        vim.o.imgprovider = 'iterm2'
+
+        -- Eagerly load the provider so we can inject a function
+        -- to capture the output being written
+        vim.ui.img.providers.load('iterm2', {
+          debug_write = function(...)
+            vim.list_extend(data, { ... })
+          end,
+        })
+
+        -- Load image including data into memory as iterm sends it all
+        local img = vim.ui.img.load(img_filename)
+
+        -- Should trigger image data to be sent
+        local img_placement_id = img:show({
+          pos = { x = 1, y = 2, unit = 'cell' },
+          size = { width = 3, height = 4, unit = 'cell' },
+        })
+
+        -- Need to wait a bit for the image to be shown
+        vim.wait(100)
+
+        -- Clear our data since we just want to capture the update message
+        data = {}
+
+        -- Perform update of our image
+        local new_img_placement_id = img:update(img_placement_id, {
+          pos = { x = 5, y = 6, unit = 'cell' },
+          size = { width = 7, height = 8, unit = 'cell' },
+        })
+
+        -- New id should be different from original id since iterm2 needs
+        -- to remove and then show again the image
+        assert(new_img_placement_id ~= img_placement_id, 'iterm2 updated id same')
+
+        -- Need to wait a bit for the image to be updated
+        vim.wait(100)
+
+        return table.concat(data), img.bytes
+      end)
+
+      -- Updating is just like displaying as iterm2 has to send the full
+      -- data each time an image is displayed, and updating merely clears
+      -- the screen before re-displaying the images again
+      local expected = table.concat({
+        -- Start terminal sync mode
+        '\027[?2026h',
+        -- Hide cursor so it doesn't move around
+        '\027[?25l',
+        -- Save cursor position so it can be restored later
+        '\0277',
+        -- Move cursor to top-left of image position
+        '\027[6;5H',
+        -- iterm2 image file display escape sequence
+        string.format(
+          '\027]1337;File=%s:%s\007',
+          string.format(
+            'name=%s;size=%s;preserveAspectRatio=0;inline=1;width=7;height=8',
+            base64_encode(fn.fnamemodify(img_filename, ':t:r')),
+            string.len(img_bytes)
+          ),
+          base64_encode(img_bytes)
+        ),
+        -- Restore original cursor position
+        '\0278',
+        -- Show cursor again
+        '\027[?25h',
+        -- End terminal sync mode
+        '\027[?2026l',
+      })
+
+      eq(escape_ansi(expected), escape_ansi(esc_codes))
     end)
   end)
 
   describe('kitty provider', function()
     ---@param esc string actual escape sequence
-    ---
+    ---@param opts? {strict?:boolean}
     ---@return {i:integer, j:integer, control:table<string, string>, data:string|nil}
-    local function parse_kitty_seq(esc)
+    local function parse_kitty_seq(esc, opts)
+      opts = opts or {}
       local i, j, c, d = string.find(esc, '\027_G([^;\027]+)([^\027]*)\027\\')
       assert(c, 'invalid kitty escape sequence: ' .. escape_ansi(esc))
+
+      if opts.strict then
+        assert(i == 1, 'not starting with kitty graphics sequence: ' .. escape_ansi(esc))
+      end
 
       ---@type table<string, string>, integer|nil
       local control, idx = {}, 0
@@ -252,8 +419,7 @@ describe('ui/img', function()
       end)
 
       -- First, we upload an image and assign it an id
-      local seq = parse_kitty_seq(esc_codes)
-      assert(seq.i == 1, 'not starting with kitty graphics sequence: ' .. escape_ansi(esc_codes))
+      local seq = parse_kitty_seq(esc_codes, { strict = true })
       local image_id = seq.control.i
       eq({
         f = '100',
@@ -278,8 +444,7 @@ describe('ui/img', function()
       esc_codes = string.sub(esc_codes, 7)
 
       -- Fifth, we display the image using its id and a placement id
-      seq = parse_kitty_seq(esc_codes)
-      assert(seq.i == 1, 'not starting with kitty graphics sequence: ' .. escape_ansi(esc_codes))
+      seq = parse_kitty_seq(esc_codes, { strict = true })
       eq({
         a = 'p',
         i = image_id,
@@ -306,16 +471,142 @@ describe('ui/img', function()
     end)
 
     it('can hide an image in neovim', function()
-      error('todo: implement')
+      ---@type string, integer
+      local esc_codes, img_placement_id = exec_lua(function()
+        local data = {}
+        vim.o.imgprovider = 'kitty'
+
+        -- Eagerly load the provider so we can inject a function
+        -- to capture the output being written
+        vim.ui.img.providers.load('kitty', {
+          debug_write = function(...)
+            vim.list_extend(data, { ... })
+          end,
+        })
+
+        -- Specify an image by filename since kitty doesn't need anything more
+        local img = vim.ui.img.new({ filename = img_filename })
+
+        -- Should trigger an image being sent
+        local img_placement_id = img:show()
+
+        -- Need to wait a bit for the image to be shown
+        vim.wait(100)
+
+        -- Clear our data since we just want to capture the hiding message
+        data = {}
+
+        -- Perform hiding of image so we can see what is sent
+        img:hide(img_placement_id)
+
+        -- Need to wait a bit for the image to be hidden
+        vim.wait(100)
+
+        return table.concat(data), img_placement_id
+      end)
+
+      local seq = parse_kitty_seq(esc_codes, { strict = true })
+      eq({
+        a = 'd',                        -- Perform a deletion
+        d = 'i',                        -- Target an image or placement
+        i = seq.control.i,              -- Specific kitty image to delete
+        p = tostring(img_placement_id), -- Specific kitty placement to delete
+        q = '2',                        -- Suppress all responses
+      }, seq.control, 'delete image and placement')
     end)
 
     it('can update an image in neovim', function()
-      error('todo: implement')
+      ---@type string, integer
+      local esc_codes, img_placement_id = exec_lua(function()
+        local data = {}
+        vim.o.imgprovider = 'kitty'
+
+        -- Eagerly load the provider so we can inject a function
+        -- to capture the output being written
+        vim.ui.img.providers.load('kitty', {
+          debug_write = function(...)
+            vim.list_extend(data, { ... })
+          end,
+        })
+
+        -- Specify an image by filename since kitty doesn't need anything more
+        local img = vim.ui.img.new({ filename = img_filename })
+
+        -- Should trigger an image being sent
+        local img_placement_id = img:show()
+
+        -- Need to wait a bit for the image to be shown
+        vim.wait(100)
+
+        -- Clear our data since we just want to capture the update message
+        data = {}
+
+        -- Perform update of our image
+        local new_img_placement_id = img:update(img_placement_id, {
+          crop = { x = 1, y = 2, width = 3, height = 4, unit = 'pixel' },
+          pos = { x = 5, y = 6, unit = 'cell' },
+          size = { width = 7, height = 8, unit = 'cell' },
+          z = 9,
+        })
+
+        -- New id should be same as original id since kitty can update
+        -- images in place instead of removing and showing again
+        assert(new_img_placement_id == img_placement_id, 'kitty updated id different')
+
+        -- Need to wait a bit for the image to be updated
+        vim.wait(100)
+
+        return table.concat(data), img_placement_id
+      end)
+
+      -- First, we save the current cursor position to restore it later
+      eq(escape_ansi('\0277'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor save')
+      esc_codes = string.sub(esc_codes, 3)
+
+      -- Second, we hide the cursor so it doesn't jump around on screeen
+      eq(escape_ansi('\027[?25l'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor hide')
+      esc_codes = string.sub(esc_codes, 7)
+
+      -- Third, we move the cursor to the top-left of image position
+      eq(escape_ansi('\027[6;5H'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor movement')
+      esc_codes = string.sub(esc_codes, 7)
+
+      -- Fourth, we display the image using its id and a placement id,
+      -- which for kitty will result in a flicker-free visual update
+      local seq = parse_kitty_seq(esc_codes, { strict = true })
+      eq({
+        a = 'p',
+        i = seq.control.i,
+        p = tostring(img_placement_id),
+        C = '1',
+        q = '2',
+        x = '1',
+        y = '2',
+        w = '3',
+        h = '4',
+        c = '7',
+        r = '8',
+        z = '9',
+      }, seq.control, 'display image control data')
+      esc_codes = string.sub(esc_codes, seq.j + 1)
+
+      -- Fifth, we restore the cursor position to where it was before displaying images
+      eq(escape_ansi('\0278'), escape_ansi(string.sub(esc_codes, 1, 2)), 'cursor restore')
+      esc_codes = string.sub(esc_codes, 3)
+
+      -- Sixth, we show the cursor again
+      eq(escape_ansi('\027[?25h'), escape_ansi(string.sub(esc_codes, 1, 6)), 'cursor show')
+      esc_codes = string.sub(esc_codes, 7)
     end)
   end)
 
   describe('sixel provider', function()
     it('can display an image in neovim', function()
+      -- Can only work if ImageMagick is installed, otherwise fail clearly
+      -- with an error. The image:show() doesn't do this because it handles
+      -- image rendering async and the error isn't directly accessible
+      assert(fn.executable('magick') == 1, 'ImageMagick binary "magick" not on path')
+
       ---@type string, string
       local esc_codes = exec_lua(function()
         local data = {}
@@ -329,12 +620,11 @@ describe('ui/img', function()
           end,
         })
 
-        -- Load image including data into memory as iterm sends it all
+        -- Load image including data into memory as sixel sends it all
         local img = vim.ui.img.load(img_filename)
 
         -- Should trigger image data to be sent
         img:show({
-          -- X = 1, Y = 2, Width = 2, Height = 1
           crop = { x = 1, y = 2, width = 2, height = 1, unit = 'pixel' },
           pos = { x = 1, y = 2, unit = 'cell' },
           size = { width = 8, height = 8, unit = 'pixel' },
@@ -346,8 +636,6 @@ describe('ui/img', function()
         return table.concat(data)
       end)
 
-      -- https://vt100.net/docs/vt3xx-gp/chapter14.html
-      -- TODO: Disable sixel scrolling
       local expected = table.concat({
         -- Start terminal sync mode
         '\027[?2026h',

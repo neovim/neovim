@@ -78,7 +78,7 @@ function M:unload()
   self:__delete_all()
 
   for _, id in ipairs(self.__autocmds) do
-    vim.api.nvim_del_autocmd(id)
+    pcall(vim.api.nvim_del_autocmd, id)
   end
 
   self.__autocmds = {}
@@ -126,11 +126,6 @@ function M:hide(ids)
       self.__placements[pid] = nil
     end
   end
-
-  -- TODO: When do we delete the image from kitty entirely?
-  --
-  -- 1. When there are no placements?
-  -- 2. When neovim exits?
 end
 
 ---@param pid integer

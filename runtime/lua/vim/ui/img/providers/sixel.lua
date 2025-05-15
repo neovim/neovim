@@ -139,7 +139,7 @@ end
 
 function M:unload()
   for _, id in ipairs(self.__redraw_autocmds) do
-    vim.api.nvim_del_autocmd(id)
+    pcall(vim.api.nvim_del_autocmd, id)
   end
 
   if self.__redraw_timer then
