@@ -3,12 +3,14 @@
 ---WORK IN PROGRESS built-in plugin manager! Early testing of existing features
 ---is appreciated, but expect breaking changes without notice.
 ---
----Requires present `git` executable of at least version 2.36.
+---Manages plugins only in a dedicated |packages| [vim.pack-directory]():
+---`$XDG_DATA_HOME/nvim/site/pack/core/opt`. Plugin's subdirectory name matches
+---plugin's name in specification.
+---It is assumed that all plugins in the directory are managed exclusively by `vim.pack`.
 ---
---- `vim.pack` manages plugins only in a dedicated |packages| [vim.pack-directory]():
---- `$XDG_DATA_HOME/nvim/site/pack/core/opt`. Plugin's subdirectory name matches
---- plugin's name in specification.
---- It is assumed that all plugins in the directory are managed exclusively by `vim.pack`.
+---Uses Git to manage plugins and requires present `git` executable of at
+---least version 2.36. Target plugins should be Git repositories with versions
+---as named tags following semver convention `v<major>.<minor>.<patch>`.
 ---
 ---Example workflows ~
 ---
@@ -66,6 +68,10 @@
 ---- Update 'init.lua' for plugin to have `version` set to whichever version
 ---you want it to be updated.
 ---- Restart Nvim.
+---
+---Remove plugin from disk:
+---- Delete plugin's directory manually. Make sure its spec is not included
+---in |vim.pack.add()| call in 'init.lua' or it will be reinstalled.
 ---
 --- Available events to hook into ~
 ---
@@ -195,15 +201,19 @@ local function get_timestamp()
 end
 
 --- @class vim.pack.Spec
---- @field source string URI from which to install and pull updates.
---- @field name? string Name of plugin. Will be used as directory name. Default: basename of `source`.
+---
+--- URI from which to install and pull updates. Any format supported by `git clone` is allowed.
+--- @field source string
+---
+--- Name of plugin. Will be used as directory name. Default: basename of `source`.
+--- @field name? string
 ---
 --- Version to use for install and updates. One of:
 --- - Output of |vim.version.range()| to install the greatest/last semver tag
 ---   inside the range.
 --- - Tag name.
 --- - Branch name.
---- - "HEAD" to freeze current state from updates.
+--- - "HEAD" to freeze current state from updates for already installed plugin.
 --- - Explicit commit hash.
 ---
 --- Default is `vim.version.range('*')`, i.e. install the greatest available version.
@@ -621,7 +631,7 @@ end
 --- - For each specification check that plugin exists on disk in |vim.pack-directory|:
 ---     - If exists, do nothin in this step.
 ---     - If doesn't exist, install it by downloading from `source` into `name`
----       subdirectory and update state to match `version`.
+---       subdirectory (via `git clone`) and update state to match `version` (via `git checkout`).
 --- - For each plugin execute |:packadd| making them reachable by Nvim.
 ---
 --- Notes:
@@ -817,7 +827,11 @@ end
 ---       the ones starting with `<` will be reverted.
 ---       It has special in-process LSP server attached to provide more interactive
 ---       features. Currently supported methods:
----         - |vim.lsp.buf.document_symbol()| (`gO` via |lsp-defaults|).
+---         - 'textDocument/documentSymbol' (`gO` via |lsp-defaults|
+---           or |vim.lsp.buf.document_symbol()|) - show structure of the buffer.
+---         - 'textDocument/hover' (`K` via |lsp-defaults| or |vim.lsp.buf.hover()|) -
+---           show more information at cursor. Like details of particular pending
+---           change or newer tag.
 ---
 ---       Execute |:write| to confirm update, execute |:quit| to discard the update.
 ---     - If `true`, make updates right away.

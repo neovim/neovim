@@ -16,8 +16,13 @@ function methods.shutdown(_)
   return nil
 end
 
+local get_confirm_bufnr = function(uri)
+  return tonumber(uri:match('^nvimpack://(%d+)/confirm%-update$'))
+end
+
+--- @param params { textDocument: { uri: string } }
 methods['textDocument/documentSymbol'] = function(params)
-  local bufnr = tonumber(params.textDocument.uri:match('^nvimpack://(%d+)/confirm%-update$'))
+  local bufnr = get_confirm_bufnr(params.textDocument.uri)
   if bufnr == nil then
     return {}
   end
@@ -81,12 +86,34 @@ methods['textDocument/codeAction'] = function(_)
   return {}
 end
 
-methods['textDocument/hover'] = function(_)
-  -- TODO(echasnovski)
-  -- Suggested usages:
-  -- - Show diff when on pending commit.
-  -- - Show description and/or changelog when on newer tag.
-  return {}
+--- @param params { textDocument: { uri: string }, position: { line: integer, character: integer } }
+methods['textDocument/hover'] = function(params)
+  local bufnr = get_confirm_bufnr(params.textDocument.uri)
+  if bufnr == nil then
+    return
+  end
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local lnum = params.position.line + 1
+  local commit = lines[lnum]:match('^[<>] (%x+) │')
+  local tag = lines[lnum]:match('^• (.+)$')
+  if commit == nil and tag == nil then
+    return
+  end
+
+  local path, path_lnum = nil, lnum - 1
+  while path == nil and path_lnum >= 1 do
+    path = lines[path_lnum]:match('^Path:%s+(.+)$')
+    path_lnum = path_lnum - 1
+  end
+  if path == nil then
+    return
+  end
+
+  local cmd = { 'git', 'show', '--no-color', commit or tag }
+  local diff = vim.system(cmd, { cwd = path }):wait().stdout
+  local markdown = '```diff\n' .. diff .. '\n```'
+  return { contents = { kind = vim.lsp.protocol.MarkupKind.Markdown, value = markdown } }
 end
 
 local dispatchers = {}
