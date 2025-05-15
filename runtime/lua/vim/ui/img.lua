@@ -239,6 +239,82 @@ function M:chunks(opts)
   end)
 end
 
+---@class (exact) vim.ui.img.ConvertOpts
+---@field background? string hex string representing background color
+---@field crop? vim.ui.img.utils.Region
+---@field format? string such as 'png', 'rgb', or 'sixel' (default 'png')
+---@field size? vim.ui.img.utils.Size
+---@field timeout? integer maximum time (in milliseconds) to wait for conversion
+
+---Converts an image using ImageMagick, returning the bytes of the new image.
+---
+---If `background` is specified, will convert alpha pixels to the background color (e.g. #ABCDEF).
+---If `crop` is specified, will crop the image to the specified pixel dimensions.
+---If `format` is specified, will convert to the image format, defaulting to png.
+---If `size` is specified, will resize the image to the desired size.
+---@param opts? vim.ui.img.ConvertOpts
+---@param on_convert? fun(err:string|nil, data:string|nil)
+---@return string|nil data, string|nil err
+function M:convert(opts, on_convert)
+  ---@param out vim.SystemCompleted
+  ---@return string|nil data, string|nil err
+  local function process_result(out)
+    if out.code ~= 0 then
+      return nil, out.stderr and out.stderr or 'failed to convert image'
+    end
+
+    local data = out.stdout
+    if not data or data == '' then
+      return nil, 'converted image output missing'
+    end
+
+    return data
+  end
+  opts = opts or {}
+
+  -- Fail fast if we cannot find the binary
+  if vim.fn.executable('magick') == 0 then
+    local err = 'ImageMagick binary not found'
+    if on_convert then
+      vim.schedule(function() on_convert(err) end)
+    else
+      error(err)
+    end
+    return
+  end
+
+  local cmd = { 'magick', 'convert', self.filename }
+  if opts.background then
+    table.insert(cmd, '-background')
+    table.insert(cmd, opts.background)
+    table.insert(cmd, '-flatten')
+  end
+  if opts.crop then
+    local region = opts.crop:to_pixels()
+    table.insert(cmd, '-crop')
+    table.insert(
+      cmd,
+      string.format('%sx%s+%s+%s', region.width, region.height, region.x, region.y)
+    )
+  end
+  if opts.size then
+    local size_px = opts.size:to_pixels()
+    table.insert(cmd, '-resize')
+    table.insert(cmd, string.format('%sx%s', size_px.width, size_px.height))
+  end
+
+  local format = opts.format or 'png'
+  table.insert(cmd, format .. ':-')
+
+  local obj = vim.system(cmd, nil, on_convert and vim.schedule_wrap(function(out)
+    local data, err = process_result(out)
+    on_convert(err, data)
+  end))
+  if obj then
+    return process_result(obj:wait(opts.timeout))
+  end
+end
+
 ---Retrieves the provider to use to manipulate images, loading it in the process.
 ---@param opts? {provider?:string}
 ---@return vim.ui.img.Provider

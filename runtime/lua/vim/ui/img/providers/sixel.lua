@@ -19,56 +19,28 @@ local function img_to_hash(filename, opts)
   return vim.fn.sha256(table.concat(items))
 end
 
----Converts a local image to sixel format using Image Magick.
----@param filename string
----@param opts? vim.ui.img.Opts
----@return string
-local function convert_to_sixel(filename, opts)
-  opts = opts or {}
-
-  -- Build our command to generate sixel escape codes
-  -- 1. Perform a crop first
-  -- 2. Resize the cropped image
-  -- 3. Output as sixel
-  local cmd = { 'magick', 'convert', filename }
-  if opts.crop then
-    local region = opts.crop:to_pixels()
-    table.insert(cmd, '-crop')
-    table.insert(
-      cmd,
-      string.format('%sx%s+%s+%s', region.width, region.height, region.x, region.y)
-    )
-  end
-  if opts.size then
-    local size_px = opts.size:to_pixels()
-    table.insert(cmd, '-resize')
-    table.insert(cmd, string.format('%sx%s', size_px.width, size_px.height))
-  end
-  table.insert(cmd, 'sixel:-')
-
-  local res = vim.system(cmd):wait()
-  assert(res.code == 0, 'failed to convert image to sixel')
-  return assert(res.stdout, 'sixel output missing')
-end
-
 ---@class vim.ui.img.providers.Sixel
+---@field private __bg_color? string color to use to fake alpha transparency with sixel
 ---@field private __data table<string, string> mapping of image hash -> sixel image data
----@field private __debug_write? fun(...:string)
 ---@field private __id_cnt integer
 ---@field private __is_drawing boolean
 ---@field private __is_tmux boolean
----@field private __placements table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, hash:string, clear:boolean, redraw:boolean}>
+---@field private __placements table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, hash:string, redraw:boolean}>
 ---@field private __redraw_autocmds integer[]
+---@field private __redraw_clear boolean if true, clears screen on next redraw
 ---@field private __redraw_timer? uv.uv_timer_t
+---@field private __writer vim.ui.img.utils.BatchWriter
 local M = {
+  __bg_color = nil,
   __data = {},
-  __debug_write = nil,
   __id_cnt = 0,
   __is_drawing = false,
   __is_tmux = false,
   __placements = {},
   __redraw_autocmds = {},
+  __redraw_clear = false,
   __redraw_timer = nil,
+  __writer = nil, -- To be filled in during load()
 }
 
 ---@param ... any
@@ -81,15 +53,30 @@ function M:load(...)
   end
 
   -- If debug write function provided, we set it to use globally
+  ---@type function|nil
+  local debug_write
   for _, arg in ipairs({ ... }) do
     if type(arg) == 'table' then
       ---@type function
-      local debug_write = arg.debug_write
-      if type(debug_write) == 'function' then
-        self.__debug_write = debug_write
+      local f = arg.debug_write
+
+      if type(f) == 'function' then
+        debug_write = f
       end
     end
   end
+
+  local utils = require('vim.ui.img.utils')
+  self.__writer = utils.new_batch_writer({
+    use_chan_send = true,
+    map = function(s)
+      if self.__is_tmux then
+        s = utils.codes.escape_tmux_passthrough(s)
+      end
+      return s
+    end,
+    write = debug_write
+  })
 
   -- Start the engine that will redraw images on a schedule
   self.__redraw_timer = assert(vim.uv.new_timer())
@@ -122,10 +109,29 @@ function M:load(...)
     self.__redraw_autocmds,
     vim.api.nvim_create_autocmd({ 'WinScrolled' }, {
       callback = function()
+        self.__redraw_clear = true
         for _, placement in pairs(self.__placements) do
-          placement.clear = true
           placement.redraw = true
         end
+      end,
+    })
+  )
+
+  -- For this autocommand, we invalidate placement data and redraw to force
+  -- the alpha value to change for all of the images
+  table.insert(
+    self.__redraw_autocmds,
+    vim.api.nvim_create_autocmd({ 'ColorScheme' }, {
+      callback = function()
+        utils.query_bg_hex_str({ write = self.__writer.write_fast }, function(_, color)
+          -- In the case that we got a new color, update our
+          -- reference and invalidate sixel images since we need
+          -- to recalculate their "fake" transparency
+          if self.__bg_color ~= color then
+            self.__bg_color = color
+            self:__invalidate_sixel_data()
+          end
+        end)
       end,
     })
   )
@@ -141,35 +147,29 @@ function M:unload()
   end
 
   self.__data = {}
-  self.__debug_write = nil
   self.__is_drawing = false
   self.__is_tmux = false
   self.__placements = {}
   self.__redraw_autocmds = {}
   self.__redraw_timer = nil
+  self.__writer = nil
 end
 
 ---@param img vim.ui.Image
 ---@param opts? vim.ui.img.Opts|{remote?:boolean}
 ---@return integer
 function M:show(img, opts)
-  opts = opts or {}
+  opts = require('vim.ui.img.opts').new(opts)
   local id = self:__next_id()
   local hash = img_to_hash(img.filename, opts)
 
-  -- Load the sixel data if it is not in memory
-  local sixel = self.__data[hash]
-  if not sixel then
-    sixel = convert_to_sixel(img.filename, opts)
-    self.__data[hash] = sixel
-  end
-
-  -- Register the new sixel placement and mark it for being drawn
+  -- Register the new sixel placement and mark it for being drawn,
+  -- which will trigger the data to be loaded the first time it
+  -- is needed
   self.__placements[id] = {
     img = img,
     opts = opts,
     hash = hash,
-    clear = false,
     redraw = true,
   }
 
@@ -186,8 +186,8 @@ function M:hide(ids)
 
   -- For all remaining sixel placements, we need to redraw them
   -- after the screen is cleared
+  self.__redraw_clear = true
   for _, placement in pairs(self.__placements) do
-    placement.clear = true
     placement.redraw = true
   end
 end
@@ -197,6 +197,60 @@ end
 function M:__next_id()
   self.__id_cnt = self.__id_cnt + 1
   return self.__id_cnt
+end
+
+---@private
+---Loads sixel data for an image, optionally loading from disk.
+---@param img vim.ui.Image
+---@param opts vim.ui.img.Opts
+---@param on_load fun(err:string|nil, data:string|nil)
+function M:__load_sixel_data(img, opts, on_load)
+  local hash = img_to_hash(img.filename, opts)
+
+  -- Load the sixel data if it is not in memory
+  local sixel_data = self.__data[hash]
+  if sixel_data then
+    vim.schedule(function()
+      on_load(nil, sixel_data)
+    end)
+  else
+    self:__convert_to_sixel(img, opts, function(err, data)
+      if err then
+        on_load(err)
+        return
+      end
+
+      self.__data[hash] = data
+      on_load(nil, data)
+    end)
+  end
+end
+
+---@private
+---Converts a local image to sixel format using Image Magick.
+---@param img vim.ui.Image
+---@param opts vim.ui.img.Opts
+---@param on_convert fun(err:string|nil, data:string|nil)
+function M:__convert_to_sixel(img, opts, on_convert)
+  local function do_convert(background)
+    img:convert({
+      background = background,
+      crop = opts.crop,
+      format = 'sixel',
+      size = opts.size,
+    }, on_convert)
+  end
+
+  -- Attempt to detect the background color
+  if self.__bg_color then
+    do_convert(self.__bg_color)
+  else
+    local utils = require('vim.ui.img.utils')
+    utils.query_bg_hex_str(opts, function(err, color)
+      self.__bg_color = not err and color or nil
+      do_convert(color)
+    end)
+  end
 end
 
 ---@private
@@ -212,6 +266,28 @@ function M:__get_redraw_cnt()
 end
 
 ---@private
+---Clears the screen if needed.
+function M:__clear_screen_if_needed()
+  if self.__redraw_clear then
+    vim.cmd.mode()
+    self.__redraw_clear = false
+  end
+end
+
+---@private
+---Invalidates (deletes) the cached sixel data, but does not remove the placements.
+---This will result in the sixel data being recalculated on next redraw.
+function M:__invalidate_sixel_data()
+  -- Clear our cached sixel data
+  self.__data = {}
+
+  -- Force redraw of all sixel images
+  for _, placement in pairs(self.__placements) do
+    placement.redraw = true
+  end
+end
+
+---@private
 ---Redraws all images managed by sixel provider.
 function M:__redraw()
   if self.__is_drawing then
@@ -222,6 +298,7 @@ function M:__redraw()
   -- if there is nothing to redraw at all
   local redraw_cnt = self:__get_redraw_cnt()
   if redraw_cnt == 0 then
+    self:__clear_screen_if_needed()
     return
   end
 
@@ -229,16 +306,8 @@ function M:__redraw()
   self.__is_drawing = true
 
   local utils = require('vim.ui.img.utils')
-  local writer = utils.new_batch_writer({
-    use_chan_send = true,
-    map = function(s)
-      if self.__is_tmux then
-        s = utils.codes.escape_tmux_passthrough(s)
-      end
-      return s
-    end,
-    write = self.__debug_write,
-  })
+  local writer = self.__writer
+  writer.clear()
 
   -- Save the current state of termsync before we force it off in order
   -- to manually leverage synchronized mode to combine neovim rendering
@@ -268,60 +337,51 @@ function M:__redraw()
       utils.codes.CURSOR_SAVE
     )
 
-    -- Iterate through placements, redrawing any marked as needing it
-    -- NOTE: We keep track of if a redraw occurred to handle the situation
-    --       where the sixel data is missing while a placement still exists
-    local need_clear, did_redraw = false, false
-    for id, placement in pairs(self.__placements) do
-      -- Check if we need to clear the screen for this placement, which
-      -- should only be the case if it's both flagged for clearing and redrawing
-      need_clear = need_clear or (placement.clear and placement.redraw)
-      placement.clear = false
+    local function mark_redraw_done()
+      redraw_cnt = redraw_cnt - 1
 
-      -- Now handle the actual redraw if flagged
-      if placement.redraw then
-        placement.redraw = false
+      if redraw_cnt <= 0 then
+        writer.write(
+          utils.codes.CURSOR_RESTORE,
+          utils.codes.CURSOR_SHOW
+        )
 
-        local sixel = self.__data[placement.hash]
-        if sixel then
-          local pos = placement.opts:position():to_cells()
-          writer.write(
-            utils.codes.move_cursor({ col = pos.x, row = pos.y }),
-            sixel
-          )
-          did_redraw = true
-        else
-          vim.notify(
-            string.format('sixel placement %s missing data', id),
-            vim.log.levels.WARN
-          )
-          self.__placements[id] = nil
-        end
+        -- Clear the screen of all sixel images only if needed
+        self:__clear_screen_if_needed()
+
+        -- Schedule the output with enough time for the screen clear to finish
+        vim.defer_fn(function()
+          writer.flush()
+          restore_state()
+        end, REDRAW_DELAY_MS)
       end
     end
 
-    writer.write(
-      utils.codes.CURSOR_RESTORE,
-      utils.codes.CURSOR_SHOW
-    )
+    -- Iterate through placements, redrawing any marked as needing it
+    for _, placement in pairs(self.__placements) do
+      if placement.redraw then
+        placement.redraw = false
 
-    -- If we did not redraw, restore our state without
-    -- writing any of our queued changes
-    if not did_redraw then
-      restore_state()
-      return
+        local img = placement.img
+        local opts = placement.opts
+
+        self:__load_sixel_data(img, opts, function(err, data)
+          if err then
+            vim.notify('failed to render image: ' .. err, vim.log.levels.WARN)
+            mark_redraw_done()
+            return
+          end
+
+          local pos = placement.opts:position():to_cells()
+          writer.write(
+            utils.codes.move_cursor({ col = pos.x, row = pos.y }),
+            data
+          )
+
+          mark_redraw_done()
+        end)
+      end
     end
-
-    -- Clear the screen of all sixel images only if needed
-    if need_clear then
-      vim.cmd.mode()
-    end
-
-    -- Schedule the output with enough time for the screen clear to finish
-    vim.defer_fn(function()
-      writer.flush()
-      restore_state()
-    end, REDRAW_DELAY_MS)
   end)
 
   if not ok then
