@@ -356,7 +356,23 @@ function M.msg_show(kind, content)
   end
 end
 
-function M.msg_clear() end
+--- Clear currently visible messages.
+---
+---@param screen boolean
+function M.msg_clear(screen)
+  if not screen then
+    return
+  end
+  if M.cmd.msg_row >= 0 then
+    api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
+  end
+  if M.box.count > 0 then
+    api.nvim_buf_set_lines(ext.bufs.box, 0, -1, false, {})
+  end
+  ext.msg.prev_msg, ext.msg.dupe, ext.msg.cmd.msg_row = '', 0, -1
+  api.nvim_buf_clear_namespace(ext.bufs.cmd, ext.ns, 0, -1)
+  ext.msg.virt.msg = { {}, {} }
+end
 
 --- Place the mode text in the cmdline.
 ---
