@@ -98,7 +98,6 @@ struct TUIData {
   bool can_change_scroll_region;
   bool has_left_and_right_margin_mode;
   bool can_set_lr_margin;  // smglr
-  bool can_set_left_right_margin;
   bool can_scroll;
   bool can_erase_chars;
   bool immediate_wrap_after_last_column;
@@ -446,11 +445,7 @@ static void terminfo_start(TUIData *tui)
   tui->can_change_scroll_region =
     !!unibi_get_str(tui->ut, unibi_change_scroll_region);
   // note: also gated by tui->has_left_and_right_margin_mode
-  tui->can_set_lr_margin =
-    !!unibi_get_str(tui->ut, unibi_set_lr_margin);
-  tui->can_set_left_right_margin =
-    !!unibi_get_str(tui->ut, unibi_set_left_margin_parm)
-    && !!unibi_get_str(tui->ut, unibi_set_right_margin_parm);
+  tui->can_set_lr_margin = !!unibi_get_str(tui->ut, unibi_set_lr_margin);
   tui->can_scroll =
     !!unibi_get_str(tui->ut, unibi_delete_line)
     && !!unibi_get_str(tui->ut, unibi_parm_delete_line)
@@ -1181,16 +1176,9 @@ static void set_scroll_region(TUIData *tui, int top, int bot, int left, int righ
   unibi_out(tui, unibi_change_scroll_region);
   if (left != 0 || right != tui->width - 1) {
     tui_set_term_mode(tui, kTermModeLeftAndRightMargins, true);
-    if (tui->can_set_lr_margin) {
-      UNIBI_SET_NUM_VAR(tui->params[0], left);
-      UNIBI_SET_NUM_VAR(tui->params[1], right);
-      unibi_out(tui, unibi_set_lr_margin);
-    } else {
-      UNIBI_SET_NUM_VAR(tui->params[0], left);
-      unibi_out(tui, unibi_set_left_margin_parm);
-      UNIBI_SET_NUM_VAR(tui->params[0], right);
-      unibi_out(tui, unibi_set_right_margin_parm);
-    }
+    UNIBI_SET_NUM_VAR(tui->params[0], left);
+    UNIBI_SET_NUM_VAR(tui->params[1], right);
+    unibi_out(tui, unibi_set_lr_margin);
   }
   grid->row = -1;
 }
@@ -1207,18 +1195,9 @@ static void reset_scroll_region(TUIData *tui, bool fullwidth)
     unibi_out(tui, unibi_change_scroll_region);
   }
   if (!fullwidth) {
-    if (tui->can_set_lr_margin) {
-      UNIBI_SET_NUM_VAR(tui->params[0], 0);
-      UNIBI_SET_NUM_VAR(tui->params[1], tui->width - 1);
-      unibi_out(tui, unibi_set_lr_margin);
-    } else {
-      // TODO(bfredl): does there ever exist a terminal which can do this and
-      // not has unibi_set_lr_margin already set?
-      UNIBI_SET_NUM_VAR(tui->params[0], 0);
-      unibi_out(tui, unibi_set_left_margin_parm);
-      UNIBI_SET_NUM_VAR(tui->params[0], tui->width - 1);
-      unibi_out(tui, unibi_set_right_margin_parm);
-    }
+    UNIBI_SET_NUM_VAR(tui->params[0], 0);
+    UNIBI_SET_NUM_VAR(tui->params[1], tui->width - 1);
+    unibi_out(tui, unibi_set_lr_margin);
     tui_set_term_mode(tui, kTermModeLeftAndRightMargins, false);
   }
   grid->row = -1;
@@ -1447,8 +1426,7 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
 
   ugrid_scroll(grid, top, bot, left, right, (int)rows);
 
-  bool has_lr_margins = tui->has_left_and_right_margin_mode
-                        && (tui->can_set_lr_margin || tui->can_set_left_right_margin);
+  bool has_lr_margins = tui->has_left_and_right_margin_mode && tui->can_set_lr_margin;
 
   bool can_scroll = tui->can_scroll
                     && (full_screen_scroll
@@ -2127,12 +2105,9 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
     unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
 
-    // 2017-04 terminfo.src lacks these.  genuine Xterm has them.
-    // 2025: these are not supported by all xterm-alikes, but they are only
+    // 2025: This are not supported by all xterm-alikes, but it is only
     // used when kTermModeLeftAndRightMargins is detected
     unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
-    unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
-    unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
 
 #ifdef MSWIN
     // XXX: workaround libuv implicit LF => CRLF conversion. #10558
