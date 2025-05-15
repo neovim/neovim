@@ -658,8 +658,10 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
     case '?':
       // Primary Device Attributes (DA1) response
       if (input->callbacks.primary_device_attr) {
-        input->callbacks.primary_device_attr(input->tui_data);
+        void (*cb_save)(TUIData *) = input->callbacks.primary_device_attr;
+        // Clear the callback before invoking it, as it may set a new callback. #34031
         input->callbacks.primary_device_attr = NULL;
+        cb_save(input->tui_data);
       }
 
       break;

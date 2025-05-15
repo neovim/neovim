@@ -358,6 +358,7 @@ static void terminfo_start(TUIData *tui)
   tui->overflow = false;
   tui->set_cursor_color_as_str = false;
   tui->cursor_has_color = false;
+  tui->did_set_grapheme_cluster_mode = false;
   tui->showing_mode = SHAPE_IDX_N;
   tui->unibi_ext.enable_mouse = -1;
   tui->unibi_ext.disable_mouse = -1;
