@@ -196,6 +196,19 @@ describe('TUI :restart', function()
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
     }, job_opts)
+
+    -- Check ":restart" on an unmodified buffer.
+    tt.feed_data('\027\027:restart\013')
+    screen:expect {
+      grid = [[
+        ^                                                  |
+        {4:~                                                 }|*3
+        {5:[No Name]                                         }|
+                                                          |
+        {3:-- TERMINAL --}                                    |
+      ]],
+    }
+
     tt.feed_data('ithis will be removed')
     screen:expect {
       grid = [[
@@ -206,7 +219,23 @@ describe('TUI :restart', function()
         {3:-- TERMINAL --}                                    |
       ]],
     }
+
+    -- Check ":restart" on a modified buffer.
     tt.feed_data('\027\027:restart\013')
+    screen:expect {
+      grid = [[
+          this will be removed                              |
+          {5:                                                  }|
+          {8:E37: No write since last change}                   |
+          {8:E162: No write since last change for buffer "[No N}|
+          {8:ame]"}                                             |
+          {10:Press ENTER or type command to continue}^           |
+          {3:-- TERMINAL --}                                    |
+      ]],
+    }
+
+    -- Check ":restart!".
+    tt.feed_data('\027\027:restart!\013')
     screen:expect {
       grid = [[
         ^                                                  |
