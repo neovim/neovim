@@ -3778,6 +3778,13 @@ func Test_complete_match()
   set ise=\ ,=
   call feedkeys("Sif true  \<ESC>:let g:result=complete_match()\<CR>", 'tx')
   call assert_equal([[8, ' ']], g:result)
+  call feedkeys("Slet a = \<ESC>:let g:result=complete_match()\<CR>", 'tx')
+  call assert_equal([[7, '=']], g:result)
+  set ise={,\ ,=
+  call feedkeys("Sif true  \<ESC>:let g:result=complete_match()\<CR>", 'tx')
+  call assert_equal([[8, ' ']], g:result)
+  call feedkeys("S{ \<ESC>:let g:result=complete_match()\<CR>", 'tx')
+  call assert_equal([[1, '{']], g:result)
 
   bw!
   unlet g:result

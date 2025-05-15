@@ -3144,15 +3144,20 @@ void f_complete_match(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   } else {
     char *p = ise;
+    char *p_space = NULL;
     char *cur_end = before_cursor + (int)strlen(before_cursor);
 
     while (*p != NUL) {
       size_t len = 0;
-      if (*p == ',' && *(p + 1) == ' ' && (*(p + 2) == ',' || *(p + 2) == NUL)) {
-        part[0] = ' ';
-        len = 1;
-        p++;
+      if (p_space) {
+        len = (size_t)(p - p_space - 1);
+        memcpy(part, p_space + 1, len);
+        p_space = NULL;
       } else {
+        char *next_comma = strchr((*p == ',') ? p + 1 : p, ',');
+        if (next_comma && *(next_comma + 1) == ' ') {
+          p_space = next_comma;
+        }
         len = copy_option_part(&p, part, MAXPATHL, ",");
       }
 
