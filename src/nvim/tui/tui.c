@@ -124,9 +124,6 @@ struct TUIData {
   ModeShape showing_mode;
   Integer verbose;
   struct {
-    int enable_mouse, disable_mouse;
-    int enable_mouse_move, disable_mouse_move;
-    int enable_bracketed_paste, disable_bracketed_paste;
     int enter_strikethrough_mode;
     int enter_altfont_mode;
     int set_rgb_foreground, set_rgb_background;
@@ -372,14 +369,8 @@ static void terminfo_start(TUIData *tui)
   tui->cursor_has_color = false;
   tui->did_set_grapheme_cluster_mode = false;
   tui->showing_mode = SHAPE_IDX_N;
-  tui->unibi_ext.enable_mouse = -1;
-  tui->unibi_ext.disable_mouse = -1;
-  tui->unibi_ext.enable_mouse_move = -1;
-  tui->unibi_ext.disable_mouse_move = -1;
   tui->unibi_ext.set_cursor_color = -1;
   tui->unibi_ext.reset_cursor_color = -1;
-  tui->unibi_ext.enable_bracketed_paste = -1;
-  tui->unibi_ext.disable_bracketed_paste = -1;
   tui->unibi_ext.enter_strikethrough_mode = -1;
   tui->unibi_ext.enter_altfont_mode = -1;
   tui->unibi_ext.enable_focus_reporting = -1;
@@ -466,8 +457,10 @@ static void terminfo_start(TUIData *tui)
   unibi_out(tui, unibi_keypad_xmit);
   unibi_out(tui, unibi_clear_screen);
 
+  /// Terminals usually ignore unrecognized private modes, and there is no
+  /// known ambiguity with these. So we just set them unconditionally.
   // Enable bracketed paste
-  unibi_out_ext(tui, tui->unibi_ext.enable_bracketed_paste);
+  tui_set_term_mode(tui, kTermModeBracketedPaste, true);
 
   tui->has_left_and_right_margin_mode = false;
 
@@ -560,7 +553,7 @@ static void terminfo_disable(TUIData *tui)
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
   // Disable bracketed paste
-  unibi_out_ext(tui, tui->unibi_ext.disable_bracketed_paste);
+  tui_set_term_mode(tui, kTermModeBracketedPaste, false);
   // Disable focus reporting
   unibi_out_ext(tui, tui->unibi_ext.disable_focus_reporting);
 
@@ -1319,9 +1312,10 @@ void tui_busy_stop(TUIData *tui)
 void tui_mouse_on(TUIData *tui)
 {
   if (!tui->mouse_enabled) {
-    unibi_out_ext(tui, tui->unibi_ext.enable_mouse);
+    tui_set_term_mode(tui, kTermModeMouseButtonEvent, true);
+    tui_set_term_mode(tui, kTermModeMouseSGRExt, true);
     if (tui->mouse_move_enabled) {
-      unibi_out_ext(tui, tui->unibi_ext.enable_mouse_move);
+      tui_set_term_mode(tui, kTermModeMouseAnyEvent, true);
     }
     tui->mouse_enabled = true;
   }
@@ -1331,9 +1325,10 @@ void tui_mouse_off(TUIData *tui)
 {
   if (tui->mouse_enabled) {
     if (tui->mouse_move_enabled) {
-      unibi_out_ext(tui, tui->unibi_ext.disable_mouse_move);
+      tui_set_term_mode(tui, kTermModeMouseAnyEvent, false);
     }
-    unibi_out_ext(tui, tui->unibi_ext.disable_mouse);
+    tui_set_term_mode(tui, kTermModeMouseButtonEvent, false);
+    tui_set_term_mode(tui, kTermModeMouseSGRExt, false);
     tui->mouse_enabled = false;
   }
 }
@@ -2444,12 +2439,6 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
     tui->set_title = set_title;
   }
 
-  /// Terminals usually ignore unrecognized private modes, and there is no
-  /// known ambiguity with these. So we just set them unconditionally.
-  tui->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut, "ext.enable_bpaste",
-                                                                 "\x1b[?2004h");
-  tui->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, "ext.disable_bpaste",
-                                                                  "\x1b[?2004l");
   // For urxvt send BOTH xterm and old urxvt sequences. #8695
   tui->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, "ext.enable_focus",
                                                                  rxvt
@@ -2458,14 +2447,6 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   tui->unibi_ext.disable_focus_reporting =
     (int)unibi_add_ext_str(ut, "ext.disable_focus",
                            rxvt ? "\x1b[?1004l\x1b]777;focus;off\x7" : "\x1b[?1004l");
-  tui->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, "ext.enable_mouse",
-                                                       "\x1b[?1002h\x1b[?1006h");
-  tui->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, "ext.disable_mouse",
-                                                        "\x1b[?1002l\x1b[?1006l");
-  tui->unibi_ext.enable_mouse_move = (int)unibi_add_ext_str(ut, "ext.enable_mouse_move",
-                                                            "\x1b[?1003h");
-  tui->unibi_ext.disable_mouse_move = (int)unibi_add_ext_str(ut, "ext.disable_mouse_move",
-                                                             "\x1b[?1003l");
 
   // Extended underline.
   // terminfo will have Smulx for this (but no support for colors yet).
