@@ -149,6 +149,8 @@ pub fn build(b: *std.Build) !void {
         }
     }
 
+    const support_unittests = use_luajit;
+
     const gen_config = b.addWriteFiles();
 
     const version_lua = gen_config.add("nvim_version.lua", lua_version_info(b));
@@ -232,7 +234,7 @@ pub fn build(b: *std.Build) !void {
 
     // TODO(zig): using getEmittedIncludeTree() is ugly af. we want run_preprocessor()
     // to use the std.build.Module include_path thing
-    const include_path = &.{
+    const include_path = [_]LazyPath{
         b.path("src/"),
         gen_config.getDirectory(),
         lua.getEmittedIncludeTree(),
@@ -243,10 +245,10 @@ pub fn build(b: *std.Build) !void {
         treesitter.artifact("tree-sitter").getEmittedIncludeTree(),
     };
 
-    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, include_path, target, versiondef_git, version_lua);
+    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, &include_path, target, versiondef_git, version_lua);
 
     const test_config_step = b.addWriteFiles();
-    _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b, gen_headers.getDirectory()));
+    _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b));
 
     const test_gen_step = b.step("gen_headers", "debug: output generated headers");
     const config_install = b.addInstallDirectory(.{ .source_dir = gen_config.getDirectory(), .install_dir = .prefix, .install_subdir = "config/" });
@@ -258,6 +260,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
+    nvim_exe.rdynamic = true; // -E
 
     nvim_exe.linkLibrary(lua);
     nvim_exe.linkLibrary(libuv);
@@ -273,16 +276,31 @@ pub fn build(b: *std.Build) !void {
     nvim_exe.addIncludePath(gen_headers.getDirectory());
     build_lua.add_lua_modules(nvim_exe.root_module, lpeg, use_luajit, false);
 
-    const src_paths = try b.allocator.alloc([]u8, nvim_sources.items.len);
+    var unit_test_sources = try std.ArrayList([]u8).initCapacity(b.allocator, 10);
+    if (support_unittests) {
+        var unit_test_fixtures = try src_dir.openDir("test/unit/fixtures/", .{ .iterate = true });
+        defer unit_test_fixtures.close();
+        var it = unit_test_fixtures.iterateAssumeFirstIteration();
+        while (try it.next()) |entry| {
+            if (entry.name.len < 3) continue;
+            if (std.mem.eql(u8, ".c", entry.name[entry.name.len - 2 ..])) {
+                try unit_test_sources.append(b.fmt("test/unit/fixtures/{s}", .{entry.name}));
+            }
+        }
+    }
+
+    const src_paths = try b.allocator.alloc([]u8, nvim_sources.items.len + unit_test_sources.items.len);
     for (nvim_sources.items, 0..) |s, i| {
         src_paths[i] = b.fmt("src/nvim/{s}", .{s.name});
     }
+    @memcpy(src_paths[nvim_sources.items.len..], unit_test_sources.items);
 
     const flags = [_][]const u8{
         "-std=gnu99",
         "-DINCLUDE_GENERATED_DECLARATIONS",
         "-DZIG_BUILD",
         "-D_GNU_SOURCE",
+        if (support_unittests) "-DUNIT_TESTING" else "",
         if (use_luajit) "" else "-DNVIM_VENDOR_BIT",
     };
     nvim_exe.addCSourceFiles(.{ .files = src_paths, .flags = &flags });
@@ -339,7 +357,9 @@ pub fn build(b: *std.Build) !void {
     const parser_query = b.dependency("treesitter_query", .{ .target = target, .optimize = optimize });
     test_deps.dependOn(add_ts_parser(b, "query", parser_query.path("."), false, target, optimize));
 
-    try tests.test_steps(b, nvim_exe, test_deps, lua_dev_deps.path("."), test_config_step.getDirectory());
+    const unit_headers: ?[]const LazyPath = if (support_unittests) &(include_path ++ .{gen_headers.getDirectory()}) else null;
+
+    try tests.test_steps(b, nvim_exe, test_deps, lua_dev_deps.path("."), test_config_step.getDirectory(), unit_headers);
 }
 
 pub fn test_fixture(
@@ -401,7 +421,7 @@ pub fn lua_version_info(b: *std.Build) []u8 {
     , .{ v.major, v.minor, v.patch, v.prerelease.len > 0, v.api_level, v.api_level_compat, v.api_prerelease });
 }
 
-pub fn test_config(b: *std.Build, gen_dir: LazyPath) ![]u8 {
+pub fn test_config(b: *std.Build) ![]u8 {
     var buf: [std.fs.max_path_bytes]u8 = undefined;
     const src_path = try b.build_root.handle.realpath(".", &buf);
 
@@ -409,7 +429,6 @@ pub fn test_config(b: *std.Build, gen_dir: LazyPath) ![]u8 {
     return b.fmt(
         \\local M = {{}}
         \\
-        \\M.include_paths = {{}}
         \\M.apple_sysroot = ""
         \\M.translations_enabled = "$ENABLE_TRANSLATIONS" == "ON"
         \\M.is_asan = "$ENABLE_ASAN_UBSAN" == "ON"
@@ -419,9 +438,9 @@ pub fn test_config(b: *std.Build, gen_dir: LazyPath) ![]u8 {
         \\M.test_source_path = "{[src_path]s}"
         \\M.test_lua_prg = ""
         \\M.test_luajit_prg = ""
-        \\table.insert(M.include_paths, "{[gen_dir]}/include")
-        \\table.insert(M.include_paths, "{[gen_dir]}/src/nvim/auto")
+        \\ -- include path passed on the cmdline, see test/lua_runner.lua
+        \\M.include_paths = _G.c_include_path or {{}}
         \\
         \\return M
-    , .{ .bin_dir = b.install_path, .src_path = src_path, .gen_dir = gen_dir });
+    , .{ .bin_dir = b.install_path, .src_path = src_path });
 }
