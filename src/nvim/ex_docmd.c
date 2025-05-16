@@ -5629,10 +5629,10 @@ static void ex_restart(exarg_T *eap)
   // But if called using bang (!), we will force restart.
   if ((!buf_hide(wp->w_buffer)
        && check_changed(wp->w_buffer, (p_awa ? CCGD_AW : 0)
-                        | (eap->forceit ? CCGD_FORCEIT : 0)
+                        | (forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD))
-      || check_more(true, eap->forceit) == FAIL
-      || check_changed_any(eap->forceit, true)) {
+      || check_more(true, forceit) == FAIL
+      || check_changed_any(forceit, true)) {
     if (!forceit) {
       return;
     }

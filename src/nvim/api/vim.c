@@ -2423,7 +2423,10 @@ void nvim_restart(Error *err)
   }
   list_T *l = tv->vval.v_list;
   int argc = tv_list_len(l);
+
+  // Assert to be positive for safe conversion to size_t.
   assert(argc >= 0);
+
   char **argv = xmalloc(sizeof(char *) * ((size_t)argc + 1));
   listitem_T *li = tv_list_first(l);
   for (int i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
@@ -2446,5 +2449,5 @@ void nvim_restart(Error *err)
   ui_client_channel_id = rv;
   ui_client_attach(width, height, term, rgb);
 
-  ILOG("restarted server from ui client");
+  ILOG("restarted server id=%d", rv);
 }
