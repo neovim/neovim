@@ -96,8 +96,8 @@ struct TUIData {
   int row, col;
   int out_fd;
   bool can_change_scroll_region;
+  bool has_left_and_right_margin_mode;
   bool can_set_lr_margin;  // smglr
-  bool can_set_left_right_margin;
   bool can_scroll;
   bool can_erase_chars;
   bool immediate_wrap_after_last_column;
@@ -127,7 +127,6 @@ struct TUIData {
     int enable_mouse, disable_mouse;
     int enable_mouse_move, disable_mouse_move;
     int enable_bracketed_paste, disable_bracketed_paste;
-    int enable_lr_margin, disable_lr_margin;
     int enter_strikethrough_mode;
     int enter_altfont_mode;
     int set_rgb_foreground, set_rgb_background;
@@ -228,16 +227,20 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
   bool is_set = false;
   switch (state) {
   case kTermModeNotRecognized:
-  case kTermModePermanentlySet:
   case kTermModePermanentlyReset:
+    // TODO(bfredl): This is really ILOG but we want it in all builds.
+    // add to show_verbose_terminfo() without being too racy ????
+    WLOG("TUI: terminal mode %d unavailable, state %d", mode, state);
     // If the mode is not recognized, or if the terminal emulator does not allow it to be changed,
     // then there is nothing to do
     break;
+  case kTermModePermanentlySet:
   case kTermModeSet:
     is_set = true;
     FALLTHROUGH;
   case kTermModeReset:
     // The terminal supports changing the given mode
+    WLOG("TUI: terminal mode %d detected, state %d", mode, state);
     switch (mode) {
     case kTermModeSynchronizedOutput:
       // Ref: https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
@@ -251,11 +254,20 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
       }
       break;
     case kTermModeThemeUpdates:
-      tui_set_term_mode(tui, mode, true);
+      if (!is_set) {
+        tui_set_term_mode(tui, mode, true);
+      }
       break;
     case kTermModeResizeEvents:
       signal_watcher_stop(&tui->winch_handle);
-      tui_set_term_mode(tui, mode, true);
+      if (!is_set) {
+        tui_set_term_mode(tui, mode, true);
+      }
+      break;
+    case kTermModeLeftAndRightMargins:
+      tui->has_left_and_right_margin_mode = true;
+      break;
+    default:
       break;
     }
   }
@@ -370,8 +382,6 @@ static void terminfo_start(TUIData *tui)
   tui->unibi_ext.disable_bracketed_paste = -1;
   tui->unibi_ext.enter_strikethrough_mode = -1;
   tui->unibi_ext.enter_altfont_mode = -1;
-  tui->unibi_ext.enable_lr_margin = -1;
-  tui->unibi_ext.disable_lr_margin = -1;
   tui->unibi_ext.enable_focus_reporting = -1;
   tui->unibi_ext.disable_focus_reporting = -1;
   tui->unibi_ext.resize_screen = -1;
@@ -434,11 +444,8 @@ static void terminfo_start(TUIData *tui)
   augment_terminfo(tui, term, vtev, konsolev, weztermv, iterm_env, nsterm);
   tui->can_change_scroll_region =
     !!unibi_get_str(tui->ut, unibi_change_scroll_region);
-  tui->can_set_lr_margin =
-    !!unibi_get_str(tui->ut, unibi_set_lr_margin);
-  tui->can_set_left_right_margin =
-    !!unibi_get_str(tui->ut, unibi_set_left_margin_parm)
-    && !!unibi_get_str(tui->ut, unibi_set_right_margin_parm);
+  // note: also gated by tui->has_left_and_right_margin_mode
+  tui->can_set_lr_margin = !!unibi_get_str(tui->ut, unibi_set_lr_margin);
   tui->can_scroll =
     !!unibi_get_str(tui->ut, unibi_delete_line)
     && !!unibi_get_str(tui->ut, unibi_parm_delete_line)
@@ -462,9 +469,12 @@ static void terminfo_start(TUIData *tui)
   // Enable bracketed paste
   unibi_out_ext(tui, tui->unibi_ext.enable_bracketed_paste);
 
+  tui->has_left_and_right_margin_mode = false;
+
   // Query support for private DEC modes that Nvim can take advantage of.
   // Some terminals (such as Terminal.app) do not support DECRQM, so skip the query.
   if (!nsterm) {
+    tui_request_term_mode(tui, kTermModeLeftAndRightMargins);
     tui_request_term_mode(tui, kTermModeSynchronizedOutput);
     tui_request_term_mode(tui, kTermModeGraphemeClusters);
     tui_request_term_mode(tui, kTermModeThemeUpdates);
@@ -1165,17 +1175,10 @@ static void set_scroll_region(TUIData *tui, int top, int bot, int left, int righ
   UNIBI_SET_NUM_VAR(tui->params[1], bot);
   unibi_out(tui, unibi_change_scroll_region);
   if (left != 0 || right != tui->width - 1) {
-    unibi_out_ext(tui, tui->unibi_ext.enable_lr_margin);
-    if (tui->can_set_lr_margin) {
-      UNIBI_SET_NUM_VAR(tui->params[0], left);
-      UNIBI_SET_NUM_VAR(tui->params[1], right);
-      unibi_out(tui, unibi_set_lr_margin);
-    } else {
-      UNIBI_SET_NUM_VAR(tui->params[0], left);
-      unibi_out(tui, unibi_set_left_margin_parm);
-      UNIBI_SET_NUM_VAR(tui->params[0], right);
-      unibi_out(tui, unibi_set_right_margin_parm);
-    }
+    tui_set_term_mode(tui, kTermModeLeftAndRightMargins, true);
+    UNIBI_SET_NUM_VAR(tui->params[0], left);
+    UNIBI_SET_NUM_VAR(tui->params[1], right);
+    unibi_out(tui, unibi_set_lr_margin);
   }
   grid->row = -1;
 }
@@ -1192,17 +1195,10 @@ static void reset_scroll_region(TUIData *tui, bool fullwidth)
     unibi_out(tui, unibi_change_scroll_region);
   }
   if (!fullwidth) {
-    if (tui->can_set_lr_margin) {
-      UNIBI_SET_NUM_VAR(tui->params[0], 0);
-      UNIBI_SET_NUM_VAR(tui->params[1], tui->width - 1);
-      unibi_out(tui, unibi_set_lr_margin);
-    } else {
-      UNIBI_SET_NUM_VAR(tui->params[0], 0);
-      unibi_out(tui, unibi_set_left_margin_parm);
-      UNIBI_SET_NUM_VAR(tui->params[0], tui->width - 1);
-      unibi_out(tui, unibi_set_right_margin_parm);
-    }
-    unibi_out_ext(tui, tui->unibi_ext.disable_lr_margin);
+    UNIBI_SET_NUM_VAR(tui->params[0], 0);
+    UNIBI_SET_NUM_VAR(tui->params[1], tui->width - 1);
+    unibi_out(tui, unibi_set_lr_margin);
+    tui_set_term_mode(tui, kTermModeLeftAndRightMargins, false);
   }
   grid->row = -1;
 }
@@ -1430,12 +1426,12 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
 
   ugrid_scroll(grid, top, bot, left, right, (int)rows);
 
+  bool has_lr_margins = tui->has_left_and_right_margin_mode && tui->can_set_lr_margin;
+
   bool can_scroll = tui->can_scroll
                     && (full_screen_scroll
                         || (tui->can_change_scroll_region
-                            && ((left == 0 && right == tui->width - 1)
-                                || tui->can_set_lr_margin
-                                || tui->can_set_left_right_margin)));
+                            && ((left == 0 && right == tui->width - 1) || has_lr_margins)));
 
   if (can_scroll) {
     // Change terminal scroll region and move cursor to the top
@@ -1591,7 +1587,7 @@ static void show_verbose_terminfo(TUIData *tui)
   ADD_C(title, CSTR_AS_OBJ("\n\n--- Terminal info --- {{{\n"));
   ADD_C(title, CSTR_AS_OBJ("Title"));
   ADD_C(chunks, ARRAY_OBJ(title));
-  MAXSIZE_TEMP_ARRAY(info, 2);
+  MAXSIZE_TEMP_ARRAY(info, 1);
   String str = terminfo_info_msg(ut, tui->term);
   ADD_C(info, STRING_OBJ(str));
   ADD_C(chunks, ARRAY_OBJ(info));
@@ -2109,29 +2105,9 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
     unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
 
-    if (true_xterm) {
-      // 2017-04 terminfo.src lacks these.  genuine Xterm has them.
-      unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
-      unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
-      unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
-    } else {
-      // Fix things advertised via TERM=xterm, for non-xterm.
-      //
-      // TODO(aktau): stop patching this out for hterm when it gains support
-      // (https://crbug.com/1175065).
-      if (unibi_get_str(ut, unibi_set_lr_margin)) {
-        ILOG("Disabling smglr with TERM=xterm for non-xterm.");
-        unibi_set_str(ut, unibi_set_lr_margin, NULL);
-      }
-      if (unibi_get_str(ut, unibi_set_left_margin_parm)) {
-        ILOG("Disabling smglp with TERM=xterm for non-xterm.");
-        unibi_set_str(ut, unibi_set_left_margin_parm, NULL);
-      }
-      if (unibi_get_str(ut, unibi_set_right_margin_parm)) {
-        ILOG("Disabling smgrp with TERM=xterm for non-xterm.");
-        unibi_set_str(ut, unibi_set_right_margin_parm, NULL);
-      }
-    }
+    // 2025: This are not supported by all xterm-alikes, but it is only
+    // used when kTermModeLeftAndRightMargins is detected
+    unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
 
 #ifdef MSWIN
     // XXX: workaround libuv implicit LF => CRLF conversion. #10558
@@ -2150,19 +2126,6 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
     // per the screen manual; 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
-    // Fix an issue where smglr is inherited by TERM=screen.xterm.
-    if (unibi_get_str(ut, unibi_set_lr_margin)) {
-      ILOG("Disabling smglr with TERM=screen.xterm for screen.");
-      unibi_set_str(ut, unibi_set_lr_margin, NULL);
-    }
-    if (unibi_get_str(ut, unibi_set_left_margin_parm)) {
-      ILOG("Disabling smglp with TERM=screen.xterm for screen.");
-      unibi_set_str(ut, unibi_set_left_margin_parm, NULL);
-    }
-    if (unibi_get_str(ut, unibi_set_right_margin_parm)) {
-      ILOG("Disabling smgrp with TERM=screen.xterm for screen.");
-      unibi_set_str(ut, unibi_set_right_margin_parm, NULL);
-    }
   } else if (tmux) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
@@ -2483,10 +2446,6 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
-  tui->unibi_ext.enable_lr_margin =
-    (int)unibi_add_ext_str(ut, "ext.enable_lr_margin", "\x1b[?69h");
-  tui->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut, "ext.disable_lr_margin",
-                                                            "\x1b[?69l");
   tui->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut, "ext.enable_bpaste",
                                                                  "\x1b[?2004h");
   tui->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, "ext.disable_bpaste",

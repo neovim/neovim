@@ -3,6 +3,7 @@
 typedef struct TUIData TUIData;
 
 typedef enum {
+  kTermModeLeftAndRightMargins = 69,
   kTermModeSynchronizedOutput = 2026,
   kTermModeGraphemeClusters = 2027,
   kTermModeThemeUpdates = 2031,
