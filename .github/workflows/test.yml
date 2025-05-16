@@ -213,6 +213,7 @@ jobs:
       - run: sudo apt-get install -y inotify-tools
       - run: zig build test_nlua0
       - run: zig build nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build unittest
       - run: zig build functionaltest
 
   windows:
