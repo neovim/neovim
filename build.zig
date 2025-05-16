@@ -33,18 +33,24 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const t = target.result;
+    const os_tag = t.os.tag;
+    const is_windows = (os_tag == .windows);
+    const is_linux = (os_tag == .linux);
+    const is_darwin = os_tag.isDarwin();
+    const modern_unix = is_darwin or os_tag.isBSD() or is_linux;
+
     const cross_compiling = b.option(bool, "cross", "cross compile") orelse false;
     // TODO(bfredl): option to set nlua0 target explicitly when cross compiling?
     const target_host = if (cross_compiling) b.graph.host else target;
     const optimize_host = .ReleaseSafe;
 
-    const t = target.result;
-    const tag = t.os.tag;
-
     // puc lua 5.1 is not ReleaseSafe "safe"
     const optimize_lua = if (optimize == .Debug or optimize == .ReleaseSafe) .ReleaseSmall else optimize;
 
-    const use_luajit = b.option(bool, "luajit", "use luajit") orelse false;
+    const arch = t.cpu.arch;
+    const default_luajit = (is_linux and arch == .x86_64) or (is_darwin and arch == .aarch64);
+    const use_luajit = b.option(bool, "luajit", "use luajit") orelse default_luajit;
     const host_use_luajit = if (cross_compiling) false else use_luajit;
     const E = enum { luajit, lua51 };
 
@@ -64,7 +70,7 @@ pub fn build(b: *std.Build) !void {
 
     const lpeg = b.dependency("lpeg", .{});
 
-    const iconv_apple = if (cross_compiling and tag.isDarwin()) b.lazyDependency("iconv_apple", .{ .target = target, .optimize = optimize }) else null;
+    const iconv_apple = if (cross_compiling and is_darwin) b.lazyDependency("iconv_apple", .{ .target = target, .optimize = optimize }) else null;
 
     // this is currently not necessary, as ziglua currently doesn't use lazy dependencies
     // to circumvent ziglua.artifact() failing in a bad way.
@@ -109,7 +115,6 @@ pub fn build(b: *std.Build) !void {
     // both source headers and the {module}.h.generated.h files
     var api_headers = try std.ArrayList(std.Build.LazyPath).initCapacity(b.allocator, 10);
 
-    const is_windows = (target.result.os.tag == .windows);
     // TODO(bfredl): these should just become subdirs..
     const windows_only = [_][]const u8{ "pty_proc_win.c", "pty_proc_win.h", "pty_conpty_win.c", "pty_conpty_win.h", "os_win_console.c", "win_defs.h" };
     const unix_only = [_][]const u8{ "unix_defs.h", "pty_proc_unix.c", "pty_proc_unix.h" };
@@ -164,9 +169,6 @@ pub fn build(b: *std.Build) !void {
     });
     _ = gen_config.addCopyFile(versiondef_step.getOutput(), "auto/versiondef.h"); // run_preprocessor() workaronnd
 
-    const isLinux = tag == .linux;
-    const modernUnix = tag.isDarwin() or tag.isBSD() or isLinux;
-
     const ptrwidth = t.ptrBitWidth() / 8;
     const sysconfig_step = b.addConfigHeader(.{ .style = .{ .cmake = b.path("cmake.config/config.h.in") } }, .{
         .SIZEOF_INT = t.cTypeByteSize(.int),
@@ -177,35 +179,35 @@ pub fn build(b: *std.Build) !void {
 
         .PROJECT_NAME = "nvim",
 
-        .HAVE__NSGETENVIRON = tag.isDarwin(),
-        .HAVE_FD_CLOEXEC = modernUnix,
-        .HAVE_FSEEKO = modernUnix,
-        .HAVE_LANGINFO_H = modernUnix,
-        .HAVE_NL_LANGINFO_CODESET = modernUnix,
+        .HAVE__NSGETENVIRON = is_darwin,
+        .HAVE_FD_CLOEXEC = modern_unix,
+        .HAVE_FSEEKO = modern_unix,
+        .HAVE_LANGINFO_H = modern_unix,
+        .HAVE_NL_LANGINFO_CODESET = modern_unix,
         .HAVE_NL_MSG_CAT_CNTR = t.isGnuLibC(),
-        .HAVE_PWD_FUNCS = modernUnix,
-        .HAVE_READLINK = modernUnix,
-        .HAVE_STRNLEN = modernUnix,
-        .HAVE_STRCASECMP = modernUnix,
-        .HAVE_STRINGS_H = modernUnix,
-        .HAVE_STRNCASECMP = modernUnix,
-        .HAVE_STRPTIME = modernUnix,
-        .HAVE_XATTR = isLinux,
+        .HAVE_PWD_FUNCS = modern_unix,
+        .HAVE_READLINK = modern_unix,
+        .HAVE_STRNLEN = modern_unix,
+        .HAVE_STRCASECMP = modern_unix,
+        .HAVE_STRINGS_H = modern_unix,
+        .HAVE_STRNCASECMP = modern_unix,
+        .HAVE_STRPTIME = modern_unix,
+        .HAVE_XATTR = is_linux,
         .HAVE_SYS_SDT_H = false,
-        .HAVE_SYS_UTSNAME_H = modernUnix,
+        .HAVE_SYS_UTSNAME_H = modern_unix,
         .HAVE_SYS_WAIT_H = false, // unused
-        .HAVE_TERMIOS_H = modernUnix,
+        .HAVE_TERMIOS_H = modern_unix,
         .HAVE_WORKING_LIBINTL = t.isGnuLibC(),
-        .UNIX = modernUnix,
-        .CASE_INSENSITIVE_FILENAME = tag.isDarwin() or tag == .windows,
-        .HAVE_SYS_UIO_H = modernUnix,
-        .HAVE_READV = modernUnix,
-        .HAVE_DIRFD_AND_FLOCK = modernUnix,
-        .HAVE_FORKPTY = modernUnix and !tag.isDarwin(), // also on Darwin but we lack the headers :(
-        .HAVE_BE64TOH = modernUnix and !tag.isDarwin(),
+        .UNIX = modern_unix,
+        .CASE_INSENSITIVE_FILENAME = is_darwin or is_windows,
+        .HAVE_SYS_UIO_H = modern_unix,
+        .HAVE_READV = modern_unix,
+        .HAVE_DIRFD_AND_FLOCK = modern_unix,
+        .HAVE_FORKPTY = modern_unix and !is_darwin, // also on Darwin but we lack the headers :(
+        .HAVE_BE64TOH = modern_unix and !is_darwin,
         .ORDER_BIG_ENDIAN = t.cpu.arch.endian() == .big,
         .ENDIAN_INCLUDE_FILE = "endian.h",
-        .HAVE_EXECINFO_BACKTRACE = modernUnix and !t.isMuslLibC(),
+        .HAVE_EXECINFO_BACKTRACE = modern_unix and !t.isMuslLibC(),
         .HAVE_BUILTIN_ADD_OVERFLOW = true,
         .HAVE_WIMPLICIT_FALLTHROUGH_FLAG = true,
         .HAVE_BITSCANFORWARD64 = null,
