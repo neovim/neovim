@@ -459,4 +459,23 @@ func Test_search_stat_backwards()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_search_stat_smartcase_ignorecase()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set shm-=S ignorecase smartcase
+    call setline(1, [' MainmainmainmmmainmAin', ''])
+  END
+  call writefile(lines, 'Xsearchstat_ignorecase', '5')
+
+  let buf = RunVimInTerminal('-S Xsearchstat_ignorecase', #{rows: 10})
+  call term_sendkeys(buf, "/main\<cr>nnnn")
+  call WaitForAssert({-> assert_match('\[5\/5\]', term_getline(buf, 10))}, 1000)
+
+  call term_sendkeys(buf, "/mAin\<cr>")
+  call WaitForAssert({-> assert_match('\[1\/1\]', term_getline(buf, 10))}, 1000)
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
