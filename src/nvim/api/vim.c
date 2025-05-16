@@ -2449,5 +2449,5 @@ void nvim_restart(Error *err)
   ui_client_channel_id = rv;
   ui_client_attach(width, height, term, rgb);
 
-  ILOG("restarted server id=%d", rv);
+  ILOG("restarted server id=%lu", rv);
 }
