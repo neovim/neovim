@@ -2019,6 +2019,11 @@ void msg_prt_line(const char *s, bool list)
     } else {
       hl_id = 0;
       int c = (uint8_t)(*s++);
+      if (c >= 0x80) {  // Illegal byte
+        col += utf_char2cells(c);
+        msg_putchar(c);
+        continue;
+      }
       sc_extra = NUL;
       sc_final = NUL;
       if (list) {
