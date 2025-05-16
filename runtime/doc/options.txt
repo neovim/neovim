@@ -3034,7 +3034,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'grepformat'* *'gfm'*
 'grepformat' 'gfm'	string	(default "%f:%l:%m,%f:%l%m,%f  %l%m")
-			global
+			global or local to buffer |global-local|
 	Format to recognize for the ":grep" command output.
 	This is a scanf-like string that uses the same format as the
 	'errorformat' option: see |errorformat|.

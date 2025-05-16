@@ -167,6 +167,7 @@ OPTIONS
   |ins-completion| modes.
 • 'completeopt' flag "nearset" sorts completion results by distance to cursor.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
+• 'grepformat' is now a |global-local| option.
 • 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'winborder' "bold" style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.

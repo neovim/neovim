@@ -2822,6 +2822,8 @@ vim.go.gd = vim.go.gdefault
 --- @type string
 vim.o.grepformat = "%f:%l:%m,%f:%l%m,%f  %l%m"
 vim.o.gfm = vim.o.grepformat
+vim.bo.grepformat = vim.o.grepformat
+vim.bo.gfm = vim.bo.grepformat
 vim.go.grepformat = vim.o.grepformat
 vim.go.gfm = vim.go.grepformat
 
