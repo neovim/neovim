@@ -326,13 +326,8 @@ function M:__redraw()
     vim.o.termsync = false
     writer.write_fast(utils.codes.SYNC_MODE_ENABLE)
 
-    -- Disable sixel scrolling where new images push up contents
-    -- NOTE: We do this each time to ensure that it's disabled
-    --       to avoid unexpected interference
-    --
-    -- Also, hide the cursor and save its position for later
+    -- Hide the cursor and save its position for later
     writer.write(
-      utils.codes.SIXEL_SCROLL_DISABLE,
       utils.codes.CURSOR_HIDE,
       utils.codes.CURSOR_SAVE
     )

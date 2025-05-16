@@ -52,32 +52,13 @@ function M.size()
     return size
   end
 
-  if vim.fn.has('win32') == 1 then
-    size = M.__csi_size()
-  elseif vim.fn.has('unix') == 1 then
+  if vim.fn.has('unix') == 1 then
     size = M.__posix_size()
   end
 
   M.__size = size or M.__default_size()
 
   return M.__size
-end
-
----@private
----Determines the size of the terminal screen using CSI escape codes.
----@return vim.ui.img.utils.ScreenSize|nil
-function M.__csi_size()
-  -- TODO: Introduce support for querying CSI. Neovim eats the response right now.
-  --
-  --       CSI 14 t and CSI 16 t are both supported by Windows Terminal
-  --
-  --       CSI 14 t :: tells us the pixel dimensions of the view space
-  --       CSI 16 t :: tells us the pixel dimensions of a terminal character
-  vim.notify(
-    'support querying CSI 14 t and/or CSI 16 t is not available',
-    vim.log.levels.WARN
-  )
-  return nil
 end
 
 ---@private
@@ -150,15 +131,9 @@ end
 ---@private
 ---@return vim.ui.img.utils.ScreenSize
 function M.__default_size()
-  local cell_width = 9
-  local cell_height = 18
-
-  -- Assume that for Windows the 10x20 used by Windows Terminal
-  -- is a better choice for a default
-  if vim.fn.has('win32') == 1 then
-    cell_width = 10
-    cell_height = 20
-  end
+  -- Size of the original VT240 and VT330/340 terminals
+  local cell_width = 10
+  local cell_height = 20
 
   return {
     width = vim.o.columns * cell_width,

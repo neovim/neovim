@@ -14,8 +14,6 @@ M.codes = {
   CURSOR_SHOW            = '\027[?25h',
   ---Queries the terminal for its background color.
   QUERY_BACKGROUND_COLOR = '\027]11;?',
-  ---Disables scrolling mode for sixel.
-  SIXEL_SCROLL_DISABLE   = '\027[?80l',
   ---Disable synchronized output mode.
   SYNC_MODE_DISABLE      = '\027[?2026l',
   ---Enable synchronized output mode.
