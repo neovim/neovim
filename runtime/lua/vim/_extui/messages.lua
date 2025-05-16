@@ -311,14 +311,10 @@ local replace_bufwrite = false
 ---@alias MsgContent MsgChunk[]
 ---@param content MsgContent
 function M.msg_show(kind, content)
-  if kind == 'search_cmd' then
-    -- Set the entered search command in the cmdline.
-    api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, { content[1][2] })
-    M.virt.msg = ext.cfg.msg.pos == 'cmd' and { {}, {} } or M.virt.msg
-    M.prev_msg = ext.cfg.msg.pos == 'cmd' and '' or M.prev_msg
-  elseif kind == 'search_count' then
+  if kind == 'search_count' then
     -- Extract only the search_count, not the entered search command.
     -- Match any of search.c:cmdline_search_stat():' [(x | >x | ?)/(y | >y | ??)]'
+    content = { content[#content] }
     content[1][2] = content[1][2]:match('W? %[>?%d*%??/>?%d*%?*%]') .. '  '
     M.virt.last[M.virt.idx.search] = content
     M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
@@ -336,7 +332,8 @@ function M.msg_show(kind, content)
     M.show_msg('prompt', content, true)
     M.set_pos('prompt')
   else
-    local tar = ext.cfg.msg.pos
+    -- Set the entered search command in the cmdline.
+    local tar = kind == 'search_cmd' and 'cmd' or ext.cfg.msg.pos
     if tar == 'cmd' then
       if ext.cmd.level > 0 then
         return -- Do not overwrite an active cmdline.
@@ -352,6 +349,8 @@ function M.msg_show(kind, content)
     M.show_msg(tar, content, replace_bufwrite, more)
     -- Replace message for every second bufwrite message.
     replace_bufwrite = not replace_bufwrite and kind == 'bufwrite'
+    -- Don't remember search_cmd message as actual mesage.
+    M.prev_msg = kind == 'search_cmd' and '' or M.prev_msg
   end
 end
 
