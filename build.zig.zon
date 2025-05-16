@@ -54,8 +54,8 @@
             .hash = "N-V-__8AAMADCgDGXU8mbjxUeAaHS-U5LXULALYNNvUslu9N",
         },
         .treesitter_query = .{
-            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.6.0#20806904e7f59003e87f36548b05900c9c8a6b0a",
-            .hash = "N-V-__8AAPxWBACzNy-sLj8ryiwyfZh8_ttOe4aUPc-7sZ8M",
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.6.1#892ebd701a79be0412ff1478177030a725d0c7b7",
+            .hash = "N-V-__8AAGhSBABzxHSGplnXv-x-Ax8TRrRe6QaPo0gSplIz",
         },
     },
     .paths = .{
