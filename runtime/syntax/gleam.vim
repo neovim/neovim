@@ -3,6 +3,7 @@
 " Maintainer:  Kirill Morozov <kirill@robotix.pro>
 " Based On:    https://github.com/gleam-lang/gleam.vim
 " Last Change: 2025 Apr 20
+" 2025 May 15 Add @Spell clusters #17324
 
 if exists("b:current_syntax")
   finish
@@ -38,7 +39,7 @@ syntax match gleamNumber "\<-\=0[xX]_\?\%(\x\|\x_\x\)\+\>"
 syntax match gleamFloat "\(0*[1-9][0-9_]*\|0\)\.\(0*[1-9][0-9_]*\|0\)\(e-\=0*[1-9][0-9_]*\)\="
 
 " String
-syntax region gleamString start=/"/ end=/"/ contains=gleamSpecial
+syntax region gleamString start=/"/ end=/"/ contains=gleamSpecial,@Spell
 syntax match gleamSpecial '\\.' contained
 
 " Operators
@@ -58,19 +59,19 @@ syntax match gleamOperator "[<>]=\=\.\=\|[=!]="
 syntax match gleamOperator "\.\.\|<>\||"
 
 " Type
-syntax match gleamIdentifier "\<[A-Z][a-zA-Z0-9]*\>"
+syntax match gleamIdentifier "\<[A-Z][a-zA-Z0-9]*\>" contains=@NoSpell
 
 " Attribute
-syntax match gleamPreProc "@[a-z][a-z_]*"
+syntax match gleamPreProc "@[a-z][a-z_]*" contains=@NoSpell
 
 " Function definition
 syntax keyword gleamKeyword fn nextgroup=gleamFunction skipwhite skipempty
-syntax match gleamFunction "[a-z][a-z0-9_]*\ze\s*(" skipwhite skipnl
+syntax match gleamFunction "[a-z][a-z0-9_]*\ze\s*(" skipwhite skipnl contains=@NoSpell
 
 " Comments
-syntax region gleamComment start="//" end="$" contains=gleamTodo
-syntax region gleamSpecialComment start="///" end="$"
-syntax region gleamSpecialComment start="////" end="$"
+syntax region gleamComment start="//" end="$" contains=gleamTodo,@Spell
+syntax region gleamSpecialComment start="///" end="$" contains=@Spell
+syntax region gleamSpecialComment start="////" end="$" contains=@Spell
 syntax keyword gleamTodo contained TODO FIXME XXX NB NOTE
 
 " Highlight groups
