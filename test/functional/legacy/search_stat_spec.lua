@@ -184,4 +184,28 @@ describe('search stat', function()
       {19:search hit TOP, continuing at BOTTOM}                        |
     ]])
   end)
+
+  -- oldtest: Test_search_stat_smartcase_ignorecase()
+  it('when changing case of pattern', function()
+    exec([[
+      set shm-=S ignorecase smartcase
+      call setline(1, [' MainmainmainmmmainmAin', ''])
+    ]])
+
+    feed('/main<cr>nnnn')
+    screen:expect([[
+       {10:Mainmainmain}mm{10:main^mAin}       |
+                                    |
+      {1:~                             }|*7
+      /main                  [5/5]  |
+    ]])
+
+    feed('/mAin<cr>')
+    screen:expect([[
+       Mainmainmainmmmain{10:^mAin}       |
+                                    |
+      {1:~                             }|*7
+      /mAin                  [1/1]  |
+    ]])
+  end)
 end)
