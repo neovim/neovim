@@ -288,9 +288,8 @@ end
 
 --- @class vim.diagnostic.Opts.Jump
 ---
---- Default value of the {float} parameter of |vim.diagnostic.jump()|.
---- (default: false)
---- @field float? boolean|vim.diagnostic.Opts.Float
+--- Default value of the {on_jump} parameter of |vim.diagnostic.jump()|.
+--- @field on_jump? fun(diagnostic:vim.Diagnostic?, bufnr:integer)
 ---
 --- Default value of the {wrap} parameter of |vim.diagnostic.jump()|.
 --- (default: true)
@@ -346,9 +345,6 @@ local global_diagnostic_options = {
   update_in_insert = false,
   severity_sort = false,
   jump = {
-    -- Do not show floating window
-    float = false,
-
     -- Wrap around buffer
     wrap = true,
   },
@@ -1156,6 +1152,25 @@ function M.config(opts, namespace)
   if not opts then
     -- Return current config
     return vim.deepcopy(t, true)
+  end
+
+  if opts.jump and opts.jump.float ~= nil then ---@diagnostic disable-line
+    vim.deprecate('opts.jump.float', 'opts.jump.on_jump', '0.14')
+
+    local float_opts = opts.jump.float ---@type table|boolean
+    if float_opts then
+      float_opts = type(float_opts) == 'table' and float_opts or {}
+
+      opts.jump.on_jump = function(_, bufnr)
+        M.open_float(vim.tbl_extend('keep', float_opts, {
+          bufnr = bufnr,
+          scope = 'cursor',
+          focus = false,
+        }))
+      end
+    end
+
+    opts.jump.float = nil ---@diagnostic disable-line
   end
 
   for k, v in
