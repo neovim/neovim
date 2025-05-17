@@ -758,6 +758,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters.
 ///          - err: Treat the message like `:echoerr`. Sets `hl_group` to |hl-ErrorMsg| by default.
+///          - kind: Set the |ui-messages| kind with which this message will be emitted.
 ///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
 ///            will write the message to the "log" file instead of standard output.
 void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
@@ -768,11 +769,13 @@ void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
     goto error;
   }
 
+  char *kind = opts->kind.data;
   if (opts->verbose) {
     verbose_enter();
+  } else if (kind == NULL) {
+    kind = opts->err ? "echoerr" : history ? "echomsg" : "echo";
   }
 
-  char *kind = opts->verbose ? NULL : opts->err ? "echoerr" : history ? "echomsg" : "echo";
   msg_multihl(hl_msg, kind, history, opts->err);
 
   if (opts->verbose) {
