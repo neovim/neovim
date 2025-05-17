@@ -131,9 +131,11 @@ hi('DiagnosticSignHint',         { link = 'DiagnosticHint' })
 hi('DiagnosticSignOk',           { link = 'DiagnosticOk' })
 hi('DiagnosticDeprecated',       { sp = 'Red', strikethrough = true,    cterm = { strikethrough = true } })
 
-hi('DiagnosticUnnecessary', { link = 'Comment' })
-hi('LspInlayHint',          { link = 'NonText' })
-hi('SnippetTabstop',        { link = 'Visual' })
+hi('DiagnosticUnnecessary',     { link = 'Comment' })
+hi('LspInlayHint',              { link = 'NonText' })
+hi('LspInlineCompletion',       { link = 'NonText' })
+hi('LspInlineCompletionSuffix', { link = 'Title' })
+hi('SnippetTabstop',            { link = 'Visual' })
 
 -- Text
 hi('@markup.raw',       { link = 'Comment' })

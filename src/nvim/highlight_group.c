@@ -217,6 +217,8 @@ static const char *highlight_init_both[] = {
   "default link LspCodeLens                 NonText",
   "default link LspCodeLensSeparator        LspCodeLens",
   "default link LspInlayHint                NonText",
+  "default link LspInlineCompletion         NonText",
+  "default link LspInlineCompletionSuffix   Title",
   "default link LspReferenceRead            LspReferenceText",
   "default link LspReferenceText            Visual",
   "default link LspReferenceWrite           LspReferenceText",

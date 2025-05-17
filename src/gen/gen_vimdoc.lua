@@ -278,6 +278,7 @@ local config = {
       'completion.lua',
       'folding_range.lua',
       'inlay_hint.lua',
+      'inline_completion.lua',
       'tagfunc.lua',
       'semantic_tokens.lua',
       'document_color.lua',
