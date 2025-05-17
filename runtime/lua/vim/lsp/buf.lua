@@ -343,6 +343,7 @@ local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
 
 --- @class vim.lsp.buf.signature_help.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
+--- @field cycle_next_bind? string
 
 --- Displays signature information about the symbol under the cursor in a
 --- floating window.
@@ -352,6 +353,7 @@ function M.signature_help(config)
 
   config = config and vim.deepcopy(config) or {}
   config.focus_id = method
+  config.cycle_next_bind = config.cycle_next_bind or '<C-s>'
 
   lsp.buf_request_all(0, method, client_positional_params(), function(results, ctx)
     if api.nvim_get_current_buf() ~= ctx.bufnr then
@@ -387,7 +389,12 @@ function M.signature_help(config)
       end
 
       local sfx = total > 1
-          and string.format(' (%d/%d)%s', idx, total, can_cycle and ' (<C-s> to cycle)' or '')
+          and string.format(
+            ' (%d/%d)%s',
+            idx,
+            total,
+            can_cycle and ' (' .. config.cycle_next_bind .. ' to cycle)' or ''
+          )
         or ''
       local title = string.format('Signature Help: %s%s', client.name, sfx)
       if config.border then
@@ -420,7 +427,7 @@ function M.signature_help(config)
     local fbuf, fwin = show_signature()
 
     if can_cycle then
-      vim.keymap.set('n', '<C-s>', function()
+      vim.keymap.set('n', config.cycle_next_bind, function()
         show_signature(fwin)
       end, {
         buffer = fbuf,

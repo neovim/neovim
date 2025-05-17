@@ -1627,6 +1627,8 @@ the current buffer.
 
     Fields: ~
       • {silent}?  (`boolean`)
+      • {cycle_next_bind}?  (`string`) Defines the mapping for cycling through
+                    the provided signatures.
 
 
                                           *vim.lsp.buf.add_workspace_folder()*
