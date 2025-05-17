@@ -15,6 +15,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -121,9 +122,36 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   Array args = ARRAY_DICT_INIT;
   size_t length = strlen(ea.arg);
 
-  // For nargs = 1 or '?', pass the entire argument list as a single argument,
-  // otherwise split arguments by whitespace.
-  if (ea.argt & EX_NOSPC) {
+  // Check if this is a mapping command that needs special handling
+  bool is_mapping_cmd = is_mapping_command(ea.cmdidx);
+  if (is_mapping_cmd && *ea.arg != NUL) {
+    // For mapping commands, split differently to preserve whitespace
+    char *lhs_start = ea.arg;
+    char *lhs_end = skiptowhite(lhs_start);
+    size_t lhs_len = (size_t)(lhs_end - lhs_start);
+
+    args = arena_array(arena, 2);  // Allocate for at most 2 arguments
+
+    // Copy LHS to a buffer
+    char *lhs_buf = arena_alloc(arena, lhs_len + 1, false);
+    memcpy(lhs_buf, lhs_start, lhs_len);
+    lhs_buf[lhs_len] = NUL;
+
+    // Add the LHS (first argument)
+    ADD_C(args, STRING_OBJ(cstrn_as_string(lhs_buf, lhs_len)));
+
+    // Add the RHS (second argument) if it exists, preserving all whitespace
+    char *rhs_start = skipwhite(lhs_end);
+    if (*rhs_start != NUL) {
+      size_t rhs_len = strlen(rhs_start);
+      char *rhs_buf = arena_alloc(arena, rhs_len + 1, false);
+      memcpy(rhs_buf, rhs_start, rhs_len);
+      rhs_buf[rhs_len] = NUL;
+      ADD_C(args, STRING_OBJ(cstrn_as_string(rhs_buf, rhs_len)));
+    }
+  } else if (ea.argt & EX_NOSPC) {
+    // For nargs = 1 or '?', pass the entire argument list as a single argument,
+    // otherwise split arguments by whitespace.
     if (*ea.arg != NUL) {
       args = arena_array(arena, 1);
       ADD_C(args, STRING_OBJ(cstrn_as_string(ea.arg, length)));
