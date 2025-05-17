@@ -30,6 +30,7 @@ local function win_config(win, hide, height)
   end
 end
 
+local cmdbuff ---@type string Stored cmdline used to calculate translation offset.
 local promptlen = 0 -- Current length of the prompt, stored for use in "cmdline_pos"
 --- Concatenate content chunks and set the text for the current row in the cmdline buffer.
 ---
@@ -42,7 +43,8 @@ local function set_text(content, prompt)
   for _, chunk in ipairs(content) do
     prompt = prompt .. chunk[2]
   end
-  api.nvim_buf_set_lines(ext.bufs.cmd, M.row, -1, false, { prompt .. ' ' })
+  cmdbuff = prompt
+  api.nvim_buf_set_lines(ext.bufs.cmd, M.row, -1, false, { fn.strtrans(cmdbuff) .. ' ' })
 end
 
 --- Set the cmdline buffer text and cursor position.
@@ -93,6 +95,7 @@ local curpos = { 0, 0 } -- Last drawn cursor position.
 ---@param pos integer
 --@param level integer
 function M.cmdline_pos(pos)
+  pos = #fn.strtrans(cmdbuff:sub(1, pos + 1)) - 1
   if curpos[1] ~= M.row + 1 or curpos[2] ~= promptlen + pos then
     curpos[1], curpos[2] = M.row + 1, promptlen + pos
     -- Add matchparen highlighting to non-prompt part of cmdline.
