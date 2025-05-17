@@ -3,7 +3,7 @@ if exists('g:loaded_shada_plugin')
 endif
 let g:loaded_shada_plugin = 1
 
-augroup ShaDaCommands
+augroup nvim.shada
   autocmd!
   autocmd BufReadCmd *.shada,*.shada.tmp.[a-z]
         \ :if !empty(v:cmdarg)|throw '++opt not supported'|endif
