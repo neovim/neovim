@@ -1155,6 +1155,7 @@ if has("xim")
   call <SID>AddOption("imdisable", gettext("when set never use IM; overrules following IM options"))
   call <SID>BinOptionG("imd", &imd)
 endif
+call <SID>AddOption("imgprovider", gettext("provider used to display & manage images"))
 call <SID>AddOption("iminsert", gettext("in Insert mode: 1: use :lmap; 2: use IM; 0: neither"))
 call append("$", "\t" .. s:local_to_window)
 call <SID>OptionL("imi")

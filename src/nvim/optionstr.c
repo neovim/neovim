@@ -27,6 +27,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -1307,6 +1308,42 @@ const char *did_set_highlight(optset_T *args)
 const char *did_set_iconstring(optset_T *args)
 {
   return did_set_titleiconstring(args, STL_IN_ICON);
+}
+
+/// The 'imgprovider' option is changed.
+const char *did_set_imgprovider(optset_T *args)
+{
+  static char errbuf[ERR_BUFLEN];
+  const char *oldval = args->os_oldval.string.data;
+  const char *newval = args->os_newval.string.data;
+
+  // Check if new provider exists, and if not this is an invalid setting
+  {
+    Error err = ERROR_INIT;
+    MAXSIZE_TEMP_ARRAY(luaArgs, 1);
+    ADD_C(luaArgs, CSTR_TO_OBJ(newval));
+    Object rv = NLUA_EXEC_STATIC("return vim.ui.img.providers.has(...)",
+                                 luaArgs, kRetNilBool, NULL, &err);
+    if (ERROR_SET(&err) || (rv.type == kObjectTypeBoolean && !rv.data.boolean)) {
+      vim_snprintf(errbuf, sizeof(errbuf), "%s: cannot find provider '%s'", e_invarg, newval);
+      return errbuf;
+    }
+  }
+
+  // Unload the old provider now that we are switching away from it
+  {
+    Error err = ERROR_INIT;
+    MAXSIZE_TEMP_ARRAY(luaArgs, 1);
+    ADD_C(luaArgs, CSTR_TO_OBJ(oldval));
+    Object rv = NLUA_EXEC_STATIC("vim.ui.img.providers.unload(...)",
+                                 luaArgs, kRetNilBool, NULL, &err);
+    if (ERROR_SET(&err) || (rv.type == kObjectTypeBoolean && !rv.data.boolean)) {
+      vim_snprintf(errbuf, sizeof(errbuf), "%s: failed to unload provider '%s'", e_invarg, oldval);
+      return errbuf;
+    }
+  }
+
+  return NULL;
 }
 
 /// The 'inccommand' option is changed.
