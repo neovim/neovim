@@ -860,9 +860,12 @@ must handle.
 	history
 	    True if the message was added to the |:messages| history.
 
-["msg_clear"] ~
+["msg_clear", screen] ~
 	Clear all messages currently displayed by "msg_show". (Messages sent
 	by other "msg_" events below will not be affected).
+
+	screen
+	    True when clearing messages after clearing the screen.
 
 ["msg_showmode", content] ~
 	Shows 'showmode' and |recording| messages. `content` has the same
