@@ -2,6 +2,7 @@
 
 ---Utility class to support async and sync handling of success and failure.
 ---@class vim.ui.img.utils.Promise<T>:{context:(fun(self:vim.ui.img.utils.Promise<T>):(string|nil)),status:(fun(self:vim.ui.img.utils.Promise<T>):vim.ui.img.utils.promise.Status),ok:(fun(self:vim.ui.img.utils.Promise<T>,value:T)),fail:(fun(self:vim.ui.img.utils.Promise<T>,err:string|nil)),on_done:(fun(self:vim.ui.img.utils.Promise<T>,f:fun(err:string|nil,value:T|nil)):vim.ui.img.utils.Promise<T>),on_ok:(fun(self:vim.ui.img.utils.Promise<T>,f:fun(value:T)):vim.ui.img.utils.Promise<T>),on_fail:(fun(self:vim.ui.img.utils.Promise<T>,f:fun(err:string)):vim.ui.img.utils.Promise<T>),wait:(fun(self:vim.ui.img.utils.Promise<T>,opts?:{timeout?:integer,interval?:integer}):(T|nil,string|nil))}
+---@field private __allow_nil? boolean
 ---@field private __context? string
 ---@field private __on_done fun(err:string|nil, value:any)[]
 ---@field private __on_fail fun(err:string)[]
@@ -12,7 +13,7 @@ local M = {}
 M.__index = M
 
 ---Creates a promise of some value in the future.
----@param opts? {context?:string}
+---@param opts? {allow_nil?:boolean, context?:string}
 ---@return vim.ui.img.utils.Promise
 function M.new(opts)
   opts = opts or {}
@@ -20,6 +21,7 @@ function M.new(opts)
   local instance = {}
   setmetatable(instance, M)
 
+  instance.__allow_nil = opts.allow_nil
   instance.__context = opts.context
   instance.__on_done = {}
   instance.__on_fail = {}
@@ -46,22 +48,27 @@ end
 ---@param value any
 function M:ok(value)
   assert(self.__status == 'waiting', 'promise already complete')
+  assert(self.__allow_nil or value ~= nil, 'value cannot be nil')
   self.__value = value
   self.__status = 'ok'
 
-  for _, f in ipairs(self.__on_ok) do
-    vim.schedule(function()
-      f(value)
-    end)
-  end
+  local on_ok = self.__on_ok
   self.__on_ok = {}
 
-  for _, f in ipairs(self.__on_done) do
-    vim.schedule(function()
-      f(nil, value)
-    end)
-  end
+  vim.schedule(function()
+    for _, f in ipairs(on_ok) do
+      pcall(f, value)
+    end
+  end)
+
+  local on_done = self.__on_done
   self.__on_done = {}
+
+  vim.schedule(function()
+    for _, f in ipairs(on_done) do
+      pcall(f, nil, value)
+    end
+  end)
 end
 
 ---Completes the promise by marking it as failed.
@@ -76,19 +83,23 @@ function M:fail(err)
   self.__value = err
   self.__status = 'fail'
 
-  for _, f in ipairs(self.__on_fail) do
-    vim.schedule(function()
-      f(err)
-    end)
-  end
+  local on_fail = self.__on_fail
   self.__on_fail = {}
 
-  for _, f in ipairs(self.__on_done) do
-    vim.schedule(function()
-      f(err, nil)
-    end)
-  end
+  vim.schedule(function()
+    for _, f in ipairs(on_fail) do
+      pcall(f, err)
+    end
+  end)
+
+  local on_done = self.__on_done
   self.__on_done = {}
+
+  vim.schedule(function()
+    for _, f in ipairs(on_done) do
+      pcall(f, err, nil)
+    end
+  end)
 end
 
 ---Invokes `f` once the promise has concluded, passing in either an
