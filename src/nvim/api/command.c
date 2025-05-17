@@ -15,6 +15,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -39,6 +40,31 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/command.c.generated.h"
 #endif
+
+/// Parse arguments for :map/:abbrev commands, preserving whitespace in RHS.
+/// @param arg_str  The argument string to parse
+/// @param arena    Arena allocator
+/// @return Array with at most 2 elements: [lhs, rhs]
+static Array parse_map_cmd(const char *arg_str, Arena *arena)
+{
+  Array args = arena_array(arena, 2);
+
+  char *lhs_start = (char *)arg_str;
+  char *lhs_end = skiptowhite(lhs_start);
+  size_t lhs_len = (size_t)(lhs_end - lhs_start);
+
+  // Add the LHS (first argument)
+  ADD_C(args, STRING_OBJ(cstrn_as_string(lhs_start, lhs_len)));
+
+  // Add the RHS (second argument) if it exists, preserving all whitespace
+  char *rhs_start = skipwhite(lhs_end);
+  if (*rhs_start != NUL) {
+    size_t rhs_len = strlen(rhs_start);
+    ADD_C(args, STRING_OBJ(cstrn_as_string(rhs_start, rhs_len)));
+  }
+
+  return args;
+}
 
 /// Parse command line.
 ///
@@ -121,9 +147,15 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   Array args = ARRAY_DICT_INIT;
   size_t length = strlen(ea.arg);
 
-  // For nargs = 1 or '?', pass the entire argument list as a single argument,
-  // otherwise split arguments by whitespace.
-  if (ea.argt & EX_NOSPC) {
+  // Check if this is a mapping command that needs special handling
+  // like mapping commands need special argument parsing to preserve whitespace in RHS:
+  // "map a b  c" => { args=["a", "b  c"], ... }
+  if (is_map_cmd(ea.cmdidx) && *ea.arg != NUL) {
+    // For mapping commands, split differently to preserve whitespace
+    args = parse_map_cmd(ea.arg, arena);
+  } else if (ea.argt & EX_NOSPC) {
+    // For nargs = 1 or '?', pass the entire argument list as a single argument,
+    // otherwise split arguments by whitespace.
     if (*ea.arg != NUL) {
       args = arena_array(arena, 1);
       ADD_C(args, STRING_OBJ(cstrn_as_string(ea.arg, length)));
