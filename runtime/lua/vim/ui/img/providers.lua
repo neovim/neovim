@@ -6,11 +6,11 @@ local PROVIDERS = {}
 local M = {}
 
 ---@class (exact) vim.ui.img.provider.Opts
----@field on_unload? fun(self:vim.ui.img.Provider) called to cleanup this provider
----@field on_load? fun(self:vim.ui.img.Provider, ...:any) called to initialize this provider
----@field on_show fun(self:vim.ui.img.Provider, img:vim.ui.Image, opts?:vim.ui.img.Opts):integer
----@field on_hide fun(self:vim.ui.img.Provider, ids:integer[])
----@field on_update? fun(self:vim.ui.img.Provider, id:integer, opts?:vim.ui.img.Opts):integer
+---@field unload? fun() called to cleanup this provider
+---@field load? fun(...:any) called to initialize this provider
+---@field show fun(img:vim.ui.Image, opts:vim.ui.img.Opts, on_shown:fun(err:string|nil, id:integer|nil))
+---@field hide fun(ids:integer[], on_hidden:fun(err:string|nil, ids:integer[]|nil))
+---@field update? fun(id:integer, opts:vim.ui.img.Opts, on_updated:fun(err:string|nil, id:integer|nil))
 
 ---Creates a new image provider instance.
 ---@param opts vim.ui.img.provider.Opts
@@ -24,73 +24,128 @@ function M.new(opts)
     __loaded = false,
   }
 
-  local __opts = opts
+  local inner = opts
 
   ---Displays the image using the provider.
   ---@param img vim.ui.Image
   ---@param opts? vim.ui.img.Opts
-  ---@return integer id unique id representing a reference to the displayed image
+  ---@return vim.ui.img.utils.Promise<integer>
   function provider.show(img, opts)
-    local id = __opts.on_show(provider, img, opts)
+    local promise = require('vim.ui.img.utils.promise').new({
+      context = 'provider.show',
+    })
 
-    provider.displayed[id] = img
+    opts = require('vim.ui.img.opts').new(opts)
 
-    return id
+    ---@type boolean, string|nil
+    local ok, err = pcall(inner.show, img, opts, function(err, id)
+      if id then
+        provider.displayed[id] = img
+        promise:ok(id)
+      else
+        promise:fail(err)
+      end
+    end)
+
+    if not ok then
+      promise:fail(err)
+    end
+
+    return promise
   end
 
-  ---Hides one or more displayed images using the provider.
+  ---Hides one or more placements using the provider.
   ---
   ---If no id provided, will hide all displayed images.
-  ---@param ... integer|integer[] ids of the displayed images
-  function provider.hide(...)
-    ---@type integer[]
-    local ids = {}
+  ---@param ids integer|integer[]
+  ---@return vim.ui.img.utils.Promise<integer[]>
+  function provider.hide(ids)
+    local promise = require('vim.ui.img.utils.promise').new({
+      context = 'provider.hide',
+    })
 
-    for _, id in ipairs({ ... }) do
-      if type(id) == 'number' then
-        table.insert(ids, id)
-      elseif type(id) == 'table' then
-        vim.list_extend(ids, id)
-      end
+    if type(ids) == 'number' then
+      ids = { ids }
     end
 
     -- If no ids provided, assume hiding them all
+    ---@cast ids -integer
     if #ids == 0 then
       ids = vim.tbl_keys(provider.displayed)
     end
 
-    __opts.on_hide(provider, ids)
+    ---@type boolean, string|nil
+    local ok, err = pcall(inner.hide, ids, function(err, ids)
+      if ids then
+        for _, id in ipairs(ids) do
+          provider.displayed[id] = nil
+        end
+        promise:ok(ids)
+      else
+        promise:fail(err)
+      end
+    end)
 
-    for _, id in ipairs(ids) do
-      provider.displayed[id] = nil
+    if not ok then
+      promise:fail(err)
     end
+
+    return promise
   end
 
   ---Updates the displayed image using the provided options.
-  ---@param id integer id of the displayed image
+  ---@param id integer id of the placement
   ---@param opts? vim.ui.img.Opts changes to apply to the displayed image
-  ---@return integer id new id representing updated, displayed image
+  ---@return vim.ui.img.utils.Promise<integer>
   function provider.update(id, opts)
-    local img = assert(
-      provider.displayed[id],
-      string.format('display image %s does not exist', id)
-    )
+    local promise = require('vim.ui.img.utils.promise').new({
+      context = 'provider.update',
+    })
+
+    opts = require('vim.ui.img.opts').new(opts)
+
+    local img = provider.displayed[id]
+    if not img then
+      promise:fail(string.format('placement %s does not exist', id))
+      return promise
+    end
+
+    ---@param err string|nil
+    ---@param new_id integer|nil
+    local function on_done(err, new_id)
+      if new_id then
+        provider.displayed[id] = nil
+        provider.displayed[new_id] = img
+        promise:ok(new_id)
+      else
+        promise:fail(err)
+      end
+    end
 
     -- If we have an explicitly-defined update method, use it as this is
     -- most likely more performant than the bruteforce approach
-    if __opts.on_update then
-      local new_id = __opts.on_update(provider, id, opts)
-
-      provider.displayed[id] = nil
-      provider.displayed[new_id] = img
-
-      return new_id
+    if inner.update then
+      ---@type boolean, string|nil
+      local ok, err = pcall(inner.update, id, opts, on_done)
+      if not ok then
+        promise:fail(err)
+      end
+    else
+      -- Without a custom update function, we merely hide the old displayed
+      -- image and then show the image again
+      --
+      -- NOTE: This may introduce flicker as it waits until hide has completely
+      --       finished before starting the process of showing the image again!
+      provider.hide(id)
+          :on_ok(function()
+            provider.show(img, opts):on_done(on_done)
+          end)
+          :on_fail(function(err)
+            promise:fail(err)
+          end)
     end
 
-    -- Without a custom update function, we merely hide the old displayed
-    -- image and then show the image again
-    provider.hide(id)
-    return provider.show(img, opts)
+    return promise
   end
 
   ---Returns true if the provider is currently loaded.
@@ -107,8 +162,8 @@ function M.new(opts)
       return
     end
 
-    if __opts.on_load then
-      __opts.on_load(provider, ...)
+    if inner.load then
+      inner.load(...)
     end
 
     provider.__loaded = true
@@ -121,11 +176,8 @@ function M.new(opts)
       return
     end
 
-    if __opts.on_unload then
-      __opts.on_unload(provider)
-    else
-      -- Hide all images if nothing else done
-      provider.hide()
+    if inner.unload then
+      inner.unload()
     end
 
     provider.__loaded = false

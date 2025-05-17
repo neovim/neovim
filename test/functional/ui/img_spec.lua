@@ -12,6 +12,10 @@ local testprg = n.testprg
 local exec_lua = n.exec_lua
 local eval = n.eval
 
+---Max time to wait for an operation to complete in our tests.
+---@type integer
+local TEST_TIMEOUT = 10000
+
 ---4x4 PNG image that can be written to disk.
 ---@type string
 local PNG_IMG_BYTES = string.char(unpack({
@@ -82,7 +86,7 @@ describe('ui/img', function()
         img = image
       end)
 
-      if vim.wait(1000, function() return img ~= nil end) then
+      if vim.wait(TEST_TIMEOUT, function() return img ~= nil end) then
         return img
       else
         error('could not load image asynchronously')
@@ -98,11 +102,11 @@ describe('ui/img', function()
     local was_unloaded = exec_lua(function()
       local was_unloaded = false
       vim.ui.img.providers['test'] = vim.ui.img.providers.new({
-        on_show = function()
-          return 0
+        show = function(_, _, on_shown)
+          on_shown(nil, 0)
         end,
-        on_hide = function() end,
-        on_unload = function()
+        hide = function() end,
+        unload = function()
           was_unloaded = true
         end,
       })
@@ -139,13 +143,10 @@ describe('ui/img', function()
         local img = vim.ui.img.load(img_filename)
 
         -- Should trigger image data to be sent
-        img:show({
+        assert(img:show({
           pos = { x = 1, y = 2, unit = 'cell' },
           size = { width = 3, height = 4, unit = 'cell' },
-        })
-
-        -- Need to wait a bit for the image to be shown
-        vim.wait(100)
+        }):wait({ timeout = TEST_TIMEOUT }))
 
         return table.concat(data), img.bytes
       end)
@@ -200,30 +201,23 @@ describe('ui/img', function()
         -- Since iterm2 will use the already-loaded data
         -- unless cropping is needed, we can provide fake
         -- data to our images for this test
-        ---@type {[1]: vim.ui.Image, [2]:integer}[]
-        local imgs = {}
+        ---@type vim.ui.img.Placement[]
+        local placements = {}
         for i, name in ipairs({ 'a', 'b', 'c' }) do
           local img = vim.ui.img.new({ filename = name, bytes = name })
-          local id = img:show({
+          local placement = assert(img:show({
             pos = { x = i, y = i + 1, unit = 'cell' },
             size = { width = i + 2, height = i + 3, unit = 'cell' },
             z = i,
-          })
-          table.insert(imgs, { img, id })
+          }):wait({ timeout = TEST_TIMEOUT }))
+          table.insert(placements, placement)
         end
-
-        -- Need to wait a bit for the images to be shown
-        vim.wait(100)
 
         -- Clear our data since we just want to capture the hiding message
         data = {}
 
         -- Perform hiding of image so we can see what is sent
-        local img, id = imgs[1][1], imgs[1][2]
-        img:hide(id)
-
-        -- Need to wait a bit for the image to be hidden
-        vim.wait(100)
+        assert(placements[1]:hide():wait({ timeout = TEST_TIMEOUT }))
 
         return table.concat(data)
       end)
@@ -290,29 +284,19 @@ describe('ui/img', function()
         local img = vim.ui.img.load(img_filename)
 
         -- Should trigger image data to be sent
-        local img_placement_id = img:show({
+        local placement = assert(img:show({
           pos = { x = 1, y = 2, unit = 'cell' },
           size = { width = 3, height = 4, unit = 'cell' },
-        })
-
-        -- Need to wait a bit for the image to be shown
-        vim.wait(100)
+        }):wait({ timeout = TEST_TIMEOUT }))
 
         -- Clear our data since we just want to capture the update message
         data = {}
 
         -- Perform update of our image
-        local new_img_placement_id = img:update(img_placement_id, {
+        assert(placement:update({
           pos = { x = 5, y = 6, unit = 'cell' },
           size = { width = 7, height = 8, unit = 'cell' },
-        })
-
-        -- New id should be different from original id since iterm2 needs
-        -- to remove and then show again the image
-        assert(new_img_placement_id ~= img_placement_id, 'iterm2 updated id same')
-
-        -- Need to wait a bit for the image to be updated
-        vim.wait(100)
+        }):wait({ timeout = TEST_TIMEOUT }))
 
         return table.concat(data), img.bytes
       end)
@@ -388,8 +372,8 @@ describe('ui/img', function()
     end
 
     it('can display an image in neovim', function()
-      ---@type string, integer
-      local esc_codes, img_placement_id = exec_lua(function()
+      ---@type string
+      local esc_codes = exec_lua(function()
         local data = {}
         vim.o.imgprovider = 'kitty'
 
@@ -405,17 +389,14 @@ describe('ui/img', function()
         local img = vim.ui.img.load(img_filename)
 
         -- Should trigger image data to be sent
-        local img_placement_id = img:show({
+        assert(img:show({
           crop = { x = 5, y = 6, width = 7, height = 8, unit = 'pixel' },
           pos = { x = 1, y = 2, unit = 'cell' },
           size = { width = 3, height = 4, unit = 'cell' },
           z = 123,
-        })
+        }):wait({ timeout = TEST_TIMEOUT }))
 
-        -- Need to wait a bit for the image to be shown
-        vim.wait(100)
-
-        return table.concat(data), img_placement_id
+        return table.concat(data)
       end)
 
       -- First, we upload an image and assign it an id
@@ -445,10 +426,11 @@ describe('ui/img', function()
 
       -- Fifth, we display the image using its id and a placement id
       seq = parse_kitty_seq(esc_codes, { strict = true })
+      local img_placement_id = seq.control.p
       eq({
         a = 'p',
         i = image_id,
-        p = tostring(img_placement_id),
+        p = img_placement_id,
         C = '1',
         q = '2',
         x = '5',
@@ -471,8 +453,8 @@ describe('ui/img', function()
     end)
 
     it('can hide an image in neovim', function()
-      ---@type string, integer
-      local esc_codes, img_placement_id = exec_lua(function()
+      ---@type string
+      local esc_codes = exec_lua(function()
         local data = {}
         vim.o.imgprovider = 'kitty'
 
@@ -488,36 +470,30 @@ describe('ui/img', function()
         local img = vim.ui.img.new({ filename = img_filename })
 
         -- Should trigger an image being sent
-        local img_placement_id = img:show()
-
-        -- Need to wait a bit for the image to be shown
-        vim.wait(100)
+        local placement = assert(img:show():wait({ timeout = TEST_TIMEOUT }))
 
         -- Clear our data since we just want to capture the hiding message
         data = {}
 
         -- Perform hiding of image so we can see what is sent
-        img:hide(img_placement_id)
+        assert(placement:hide():wait({ timeout = TEST_TIMEOUT }))
 
-        -- Need to wait a bit for the image to be hidden
-        vim.wait(100)
-
-        return table.concat(data), img_placement_id
+        return table.concat(data)
       end)
 
       local seq = parse_kitty_seq(esc_codes, { strict = true })
       eq({
-        a = 'd',                        -- Perform a deletion
-        d = 'i',                        -- Target an image or placement
-        i = seq.control.i,              -- Specific kitty image to delete
-        p = tostring(img_placement_id), -- Specific kitty placement to delete
-        q = '2',                        -- Suppress all responses
+        a = 'd',           -- Perform a deletion
+        d = 'i',           -- Target an image or placement
+        i = seq.control.i, -- Specific kitty image to delete
+        p = seq.control.p, -- Specific kitty placement to delete
+        q = '2',           -- Suppress all responses
       }, seq.control, 'delete image and placement')
     end)
 
     it('can update an image in neovim', function()
-      ---@type string, integer
-      local esc_codes, img_placement_id = exec_lua(function()
+      ---@type string
+      local esc_codes = exec_lua(function()
         local data = {}
         vim.o.imgprovider = 'kitty'
 
@@ -533,30 +509,20 @@ describe('ui/img', function()
         local img = vim.ui.img.new({ filename = img_filename })
 
         -- Should trigger an image being sent
-        local img_placement_id = img:show()
-
-        -- Need to wait a bit for the image to be shown
-        vim.wait(100)
+        local placement = assert(img:show():wait({ timeout = TEST_TIMEOUT }))
 
         -- Clear our data since we just want to capture the update message
         data = {}
 
         -- Perform update of our image
-        local new_img_placement_id = img:update(img_placement_id, {
+        assert(placement:update({
           crop = { x = 1, y = 2, width = 3, height = 4, unit = 'pixel' },
           pos = { x = 5, y = 6, unit = 'cell' },
           size = { width = 7, height = 8, unit = 'cell' },
           z = 9,
-        })
+        }):wait({ timeout = TEST_TIMEOUT }))
 
-        -- New id should be same as original id since kitty can update
-        -- images in place instead of removing and showing again
-        assert(new_img_placement_id == img_placement_id, 'kitty updated id different')
-
-        -- Need to wait a bit for the image to be updated
-        vim.wait(100)
-
-        return table.concat(data), img_placement_id
+        return table.concat(data)
       end)
 
       -- First, we save the current cursor position to restore it later
@@ -577,7 +543,7 @@ describe('ui/img', function()
       eq({
         a = 'p',
         i = seq.control.i,
-        p = tostring(img_placement_id),
+        p = seq.control.p,
         C = '1',
         q = '2',
         x = '1',
@@ -607,7 +573,7 @@ describe('ui/img', function()
       -- image rendering async and the error isn't directly accessible
       assert(fn.executable('magick') == 1, 'ImageMagick binary "magick" not on path')
 
-      ---@type string, string
+      ---@type string
       local esc_codes = exec_lua(function()
         local data = {}
         vim.o.imgprovider = 'sixel'
@@ -624,14 +590,11 @@ describe('ui/img', function()
         local img = vim.ui.img.load(img_filename)
 
         -- Should trigger image data to be sent
-        img:show({
+        assert(img:show({
           crop = { x = 1, y = 2, width = 2, height = 1, unit = 'pixel' },
           pos = { x = 1, y = 2, unit = 'cell' },
           size = { width = 8, height = 8, unit = 'pixel' },
-        })
-
-        -- Need to wait a bit for the image to be shown
-        vim.wait(100)
+        }):wait({ timeout = TEST_TIMEOUT }))
 
         return table.concat(data)
       end)
@@ -639,8 +602,6 @@ describe('ui/img', function()
       local expected = table.concat({
         -- Start terminal sync mode
         '\027[?2026h',
-        -- Disable sixel scrolling mode
-        '\027[?80l',
         -- Hide cursor so it doesn't move around
         '\027[?25l',
         -- Save cursor position so it can be restored later

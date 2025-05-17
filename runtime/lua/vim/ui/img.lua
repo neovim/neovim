@@ -14,6 +14,10 @@ M.__index = M
 ---@type table<integer, vim.ui.Image>
 M.images = {}
 
+---Collection of images displayed in neovim.
+---@type table<integer, vim.ui.img.Placement>
+M.placements = {}
+
 ---Collection of names to associated providers used to display and manipulate images.
 ---@type vim.ui.img.Providers
 M.providers = require('vim.ui.img.providers')
@@ -315,55 +319,38 @@ function M:convert(opts, on_convert)
   end
 end
 
----Retrieves the provider to use to manipulate images, loading it in the process.
----@param opts? {provider?:string}
----@return vim.ui.img.Provider
-local function load_provider(opts)
-  local name = opts and opts.provider or vim.o.imgprovider
-
-  local provider = assert(
-    M.providers.load(name),
-    string.format('provider "%s" not found', name)
-  )
-
-  return provider
-end
-
----Displays an image, returning a reference to the displayed instance.
----Currently only supports the |TUI|.
+---Displays an image, returning a reference to its visual representation (placement).
+---```lua
+---local img = ...
+---
+-----Can be invoked synchronously
+---local placement = assert(img:show({ ... }):wait())
+---
+-----Can also be invoked asynchronously
+---img:show({ ... }):on_done(function(err, placement)
+---  -- Do something
+---end)
+---```
 ---@param opts? vim.ui.img.Opts|{provider?:string}
----@return integer #unique id reprensting a reference to the displayed image
+---@return vim.ui.img.utils.Promise<vim.ui.img.Placement>
 function M:show(opts)
-  opts = require('vim.ui.img.opts').new(opts)
-  local provider = load_provider(opts)
-  return provider.show(self, opts)
+  local promise = require('vim.ui.img.utils.promise').new({
+    context = 'image.show',
+  })
+
+  local placement = self:new_placement(opts)
+  placement:show(opts)
+      :on_ok(function() promise:ok(placement) end)
+      :on_fail(function(err) promise:fail(err) end)
+
+  return promise
 end
 
----Hides a displayed image. If no id provided, will hide all displayed images.
----Currently only supports the |TUI|.
----@param ids integer|integer[] the ids of the displayed images to hide
+---Creates a placement of this image that is not yet visible.
 ---@param opts? {provider?:string}
-function M:hide(ids, opts)
-  opts = opts or {}
-
-  local provider = load_provider(opts)
-
-  if type(ids) == 'number' then
-    ids = { ids }
-  end
-
-  return provider.hide(ids)
-end
-
----Updates the displayed image using the provided options.
----Currently only supports the |TUI|.
----@param id integer id of the displayed image
----@param opts? vim.ui.img.Opts|{provider?:string} changes to apply to the displayed image
----@return integer id new id representing updated, displayed image
-function M:update(id, opts)
-  opts = require('vim.ui.img.opts').new(opts)
-  local provider = load_provider(opts)
-  return provider.update(id, opts)
+---@return vim.ui.img.Placement
+function M:new_placement(opts)
+  return require('vim.ui.img.placement').new(self, opts)
 end
 
 return M

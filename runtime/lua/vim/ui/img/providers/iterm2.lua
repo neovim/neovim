@@ -35,6 +35,7 @@ end
 ---@field private __is_tmux boolean
 ---@field private __placements table<integer, {img:vim.ui.Image, opts:vim.ui.img.Opts, hash:string, redraw:boolean}>
 ---@field private __redraw_autocmds integer[]
+---@field private __redraw_callbacks fun(err:string|nil)[]
 ---@field private __redraw_clear boolean if true, clears screen on next redraw
 ---@field private __redraw_timer? uv.uv_timer_t
 ---@field private __writer vim.ui.img.utils.BatchWriter
@@ -45,6 +46,7 @@ local M = {
   __is_tmux = false,
   __placements = {},
   __redraw_autocmds = {},
+  __redraw_callbacks = {},
   __redraw_clear = false,
   __redraw_timer = nil,
   __writer = nil, -- To be filled in during load()
@@ -139,15 +141,15 @@ function M:unload()
   self.__is_tmux = false
   self.__placements = {}
   self.__redraw_autocmds = {}
+  self.__redraw_callbacks = {}
   self.__redraw_timer = nil
   self.__writer = nil
 end
 
 ---@param img vim.ui.Image
----@param opts? vim.ui.img.Opts
----@return integer
-function M:show(img, opts)
-  opts = require('vim.ui.img.opts').new(opts)
+---@param opts vim.ui.img.Opts
+---@param on_shown fun(err:string|nil, id:integer|nil)
+function M:show(img, opts, on_shown)
   local id = self:__next_id()
   local hash = img_to_hash(img.filename, opts)
 
@@ -161,11 +163,19 @@ function M:show(img, opts)
     redraw = true,
   }
 
-  return id
+  -- NOTE: We assume that the next redraw will include this image
+  self:__on_next_redraw(function(err)
+    if err then
+      on_shown(err)
+    else
+      on_shown(nil, id)
+    end
+  end)
 end
 
 ---@param ids integer[]
-function M:hide(ids)
+---@param on_hidden fun(err:string|nil, ids:integer[]|nil)
+function M:hide(ids, on_hidden)
   -- For all specified iterm2 placements to be hidden, we just
   -- remove them from our list since they'll be cleared anyway
   for _, id in ipairs(ids) do
@@ -178,6 +188,41 @@ function M:hide(ids)
   for _, placement in pairs(self.__placements) do
     placement.redraw = true
   end
+
+  -- NOTE: We assume that the next redraw will not include these images
+  self:__on_next_redraw(function(err)
+    if err then
+      on_hidden(err)
+    else
+      on_hidden(nil, ids)
+    end
+  end)
+end
+
+---@param id integer
+---@param opts vim.ui.img.Opts
+---@param on_updated fun(err:string|nil, id:integer|nil)
+function M:update(id, opts, on_updated)
+  -- To perform an update, we need to clear the screen
+  -- so that the newly-updated placement properly replaces
+  -- the old one, which also means having all existing
+  -- placements redraw themselves
+  self.__redraw_clear = true
+  for pid, placement in pairs(self.__placements) do
+    placement.redraw = true
+    if pid == id then
+      placement.opts = opts
+    end
+  end
+
+  -- NOTE: We assume that the next redraw will include this update
+  self:__on_next_redraw(function(err)
+    if err then
+      on_updated(err)
+    else
+      on_updated(nil, id)
+    end
+  end)
 end
 
 ---@private
@@ -197,6 +242,29 @@ function M:__get_redraw_cnt()
     end
   end
   return cnt
+end
+
+---@private
+---Schedules `f` to be executed the next time a redraw occurs.
+---@param f fun(err:string|nil)
+function M:__on_next_redraw(f)
+  table.insert(self.__redraw_callbacks, vim.schedule_wrap(f))
+end
+
+---@private
+---Invoke all redraw callbacks and then clear the queue.
+---@param err string|nil the error during redraw if it occurred
+function M:__trigger_redraw_callbacks(err)
+  local callbacks = self.__redraw_callbacks
+  self.__redraw_callbacks = {}
+
+  if #callbacks > 0 then
+    vim.schedule(function()
+      for _, f in ipairs(callbacks) do
+        pcall(f, err)
+      end
+    end)
+  end
 end
 
 ---@private
@@ -251,6 +319,7 @@ function M:__redraw()
   local redraw_cnt = self:__get_redraw_cnt()
   if redraw_cnt == 0 then
     self:__clear_screen_if_needed()
+    self:__trigger_redraw_callbacks()
     return
   end
 
@@ -300,6 +369,7 @@ function M:__redraw()
         vim.defer_fn(function()
           writer.flush()
           restore_state()
+          self:__trigger_redraw_callbacks()
         end, REDRAW_DELAY_MS)
       end
     end
@@ -372,22 +442,27 @@ function M:__redraw()
   end)
 
   if not ok then
-    vim.notify(err or 'iterm2 redraw unknown error', vim.log.levels.WARN)
+    err = err or 'iterm2 redraw unknown error'
+    vim.notify(err, vim.log.levels.WARN)
     restore_state()
+    self:__trigger_redraw_callbacks(err)
   end
 end
 
 return require('vim.ui.img.providers').new({
-  on_load = function(_, ...)
+  load = function(...)
     return M:load(...)
   end,
-  on_show = function(_, img, opts)
-    return M:show(img, opts)
+  show = function(img, opts, on_shown)
+    return M:show(img, opts, on_shown)
   end,
-  on_hide = function(_, ids)
-    return M:hide(ids)
+  hide = function(ids, on_hidden)
+    return M:hide(ids, on_hidden)
   end,
-  on_unload = function()
+  update = function(id, opts, on_updated)
+    return M:update(id, opts, on_updated)
+  end,
+  unload = function()
     return M:unload()
   end,
 })

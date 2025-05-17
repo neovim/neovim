@@ -89,11 +89,10 @@ function M:unload()
 end
 
 ---@param img vim.ui.Image
----@param opts? vim.ui.img.Opts|{remote?:boolean}
----@return integer
-function M:show(img, opts)
+---@param opts vim.ui.img.Opts|{remote?:boolean}
+---@param on_shown fun(err:string|nil, id:integer|nil)
+function M:show(img, opts, on_shown)
   local is_remote = opts and opts.remote
-  opts = require('vim.ui.img.opts').new(opts)
 
   -- Check if we need to transmit our image or if it is already available
   -- TODO: This should really query to see if the image is still loaded
@@ -114,11 +113,16 @@ function M:show(img, opts)
   local placement_id = self:__display_image(image_id, opts)
   self.__placements[placement_id] = image_id
 
-  return placement_id
+  -- Since we're writing the image display and ignoring the response,
+  -- we will just assume that no Lua error at this point means success
+  vim.schedule(function()
+    on_shown(nil, placement_id)
+  end)
 end
 
 ---@param ids integer[]
-function M:hide(ids)
+---@param on_hidden fun(err:string|nil, ids:integer[]|nil)
+function M:hide(ids, on_hidden)
   for _, pid in ipairs(ids) do
     local id = self.__placements[pid]
     if id then
@@ -126,23 +130,33 @@ function M:hide(ids)
       self.__placements[pid] = nil
     end
   end
+
+  -- Since we're writing the image deletion and ignoring the response,
+  -- we will just assume that no Lua error at this point means success
+  vim.schedule(function()
+    on_hidden(nil, ids)
+  end)
 end
 
 ---@param pid integer
----@param opts? vim.ui.img.Opts
----@return integer
-function M:update(pid, opts)
+---@param opts vim.ui.img.Opts
+---@param on_updated fun(err:string|nil, id:integer|nil)
+function M:update(pid, opts, on_updated)
   local id = assert(
     self.__placements[pid],
     string.format('kitty(update): invalid id %s', pid)
   )
 
-  opts = require('vim.ui.img.opts').new(opts)
-
   ---@diagnostic disable-next-line:inject-field
   opts.pid = pid
 
-  return self:__display_image(id, opts)
+  local new_id = self:__display_image(id, opts)
+
+  -- Since we're writing the image display and ignoring the response,
+  -- we will just assume that no Lua error at this point means success
+  vim.schedule(function()
+    on_updated(nil, new_id)
+  end)
 end
 
 ---@private
@@ -185,15 +199,7 @@ function M:__make_seq(control, payload)
   -- Finalize the graphics code sequence
   table.insert(data, '\027\\')
 
-  -- Transform our escape sequence to leverage tmux's passthrough, which requires
-  -- any ESC characters in the wrapped sequence to be doubled, and the entire
-  -- sequence to be wrapped within "ESC P tmux ; <SEQUENCE> ESC \"
-  local seq = table.concat(data)
-  -- if self.__is_tmux then
-  --   seq = ('\027Ptmux;' .. string.gsub(seq, '\027', '\027\027')) .. '\027\\'
-  -- end
-
-  return seq
+  return table.concat(data)
 end
 
 ---@private
@@ -371,19 +377,19 @@ M.__next_id = (function()
 end)()
 
 return require('vim.ui.img.providers').new({
-  on_load = function(_, ...)
+  load = function(...)
     return M:load(...)
   end,
-  on_show = function(_, img, opts)
-    return M:show(img, opts)
+  show = function(img, opts, on_shown)
+    return M:show(img, opts, on_shown)
   end,
-  on_hide = function(_, ids)
-    return M:hide(ids)
+  hide = function(ids, on_hidden)
+    return M:hide(ids, on_hidden)
   end,
-  on_unload = function()
+  unload = function()
     return M:unload()
   end,
-  on_update = function(_, id, opts)
-    return M:update(id, opts)
+  update = function(id, opts, on_updated)
+    return M:update(id, opts, on_updated)
   end,
 })
