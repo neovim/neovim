@@ -36,8 +36,8 @@ UTF8PROC_SHA256 6f4f1b639daa6dca9f80bc5db1233e9cbaa31a67790887106160b33ef743f136
 
 TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.23.4.tar.gz
 TREESITTER_C_SHA256 b66c5043e26d84e5f17a059af71b157bcf202221069ed220aa1696d7d1d28a7a
-TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.3.0.tar.gz
-TREESITTER_LUA_SHA256 a34cc70abfd8d2d4b0fabf01403ea05f848e1a4bc37d8a4bfea7164657b35d31
+TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.4.0.tar.gz
+TREESITTER_LUA_SHA256 b0977aced4a63bb75f26725787e047b8f5f4a092712c840ea7070765d4049559
 TREESITTER_VIM_URL https://github.com/tree-sitter-grammars/tree-sitter-vim/archive/v0.6.0.tar.gz
 TREESITTER_VIM_SHA256 b36080be8f9ec53d6413447a792985b984b6f89a223ff758f1acfd380b469a74
 TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v4.0.0.tar.gz
