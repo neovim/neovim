@@ -44,55 +44,38 @@ function M.new(opts)
 end
 
 ---Loads bytes for an image from a local file.
----
----If a callback provided, will load asynchronously; otherwise, is blocking.
 ---@param filename string
----@param on_load fun(err:string|nil, image:vim.ui.Image|nil)
----@overload fun(filename:string):vim.ui.Image
-function M.load(filename, on_load)
+---@return vim.ui.img.utils.Promise<vim.ui.Image>
+function M.load(filename)
+  local promise = require('vim.ui.img.utils.promise').new({
+    context = 'image.load',
+  })
+
   local img = M.new({ filename = filename })
+  img:reload()
+      :on_ok(function()
+        promise:ok(img)
+      end)
+      :on_fail(function(err)
+        promise:fail(err)
+      end)
 
-  if not on_load then
-    img:reload()
-    return img
-  end
-
-  img:reload(vim.schedule_wrap(function(err)
-    on_load(err, not err and img or nil)
-  end))
+  return promise
 end
 
 ---Reloads the bytes for an image from its filename.
----
----If a callback provided, will load asynchronously; otherwise, is blocking.
----@param on_load fun(err:string|nil)
----@overload fun()
-function M:reload(on_load)
+---@return vim.ui.img.utils.Promise<vim.NIL>
+function M:reload()
   local filename = self.filename
-
-  if not on_load then
-    local stat = vim.uv.fs_stat(filename)
-    assert(stat, 'unable to stat ' .. filename)
-
-    local fd = vim.uv.fs_open(filename, 'r', 644) --[[ @type integer|nil ]]
-    assert(fd, 'unable to open ' .. filename)
-
-    local bytes = vim.uv.fs_read(fd, stat.size, -1) --[[ @type string|nil ]]
-    assert(bytes, 'unable to read ' .. filename)
-
-    self.bytes = bytes
-    self.filename = filename
-
-    return
-  end
+  local promise = require('vim.ui.img.utils.promise').new({
+    context = 'image.reload',
+  })
 
   ---@param err string|nil
   ---@return boolean
   local function report_err(err)
     if err then
-      vim.schedule(function()
-        on_load(err)
-      end)
+      promise:fail(err)
     end
 
     return err ~= nil
@@ -121,15 +104,17 @@ function M:reload(on_load)
           return
         end
 
-        vim.uv.fs_close(fd, function() end)
-
         self.bytes = bytes or ''
         self.filename = filename
 
-        vim.schedule(on_load)
+        vim.uv.fs_close(fd, function()
+          promise:ok(vim.NIL)
+        end)
       end)
     end)
   end)
+
+  return promise
 end
 
 ---Returns the byte length of the image's bytes, or 0 if not loaded.
@@ -257,34 +242,18 @@ end
 ---If `format` is specified, will convert to the image format, defaulting to png.
 ---If `size` is specified, will resize the image to the desired size.
 ---@param opts? vim.ui.img.ConvertOpts
----@param on_convert? fun(err:string|nil, data:string|nil)
----@return string|nil data, string|nil err
-function M:convert(opts, on_convert)
-  ---@param out vim.SystemCompleted
-  ---@return string|nil data, string|nil err
-  local function process_result(out)
-    if out.code ~= 0 then
-      return nil, out.stderr and out.stderr or 'failed to convert image'
-    end
-
-    local data = out.stdout
-    if not data or data == '' then
-      return nil, 'converted image output missing'
-    end
-
-    return data
-  end
+---@return vim.ui.img.utils.Promise<string>
+function M:convert(opts)
   opts = opts or {}
+
+  local promise = require('vim.ui.img.utils.promise').new({
+    context = 'image.convert',
+  })
 
   -- Fail fast if we cannot find the binary
   if vim.fn.executable('magick') == 0 then
-    local err = 'ImageMagick binary not found'
-    if on_convert then
-      vim.schedule(function() on_convert(err) end)
-    else
-      error(err)
-    end
-    return
+    promise:fail('ImageMagick binary not found')
+    return promise
   end
 
   local cmd = { 'magick', 'convert', self.filename }
@@ -310,13 +279,22 @@ function M:convert(opts, on_convert)
   local format = opts.format or 'png'
   table.insert(cmd, format .. ':-')
 
-  local obj = vim.system(cmd, nil, on_convert and vim.schedule_wrap(function(out)
-    local data, err = process_result(out)
-    on_convert(err, data)
-  end))
-  if obj then
-    return process_result(obj:wait(opts.timeout))
-  end
+  vim.system(cmd, nil, function(out)
+    if out.code ~= 0 then
+      promise:fail(out.stderr and out.stderr or 'failed to convert image')
+      return
+    end
+
+    local data = out.stdout
+    if not data or data == '' then
+      promise:fail('converted image output missing')
+      return
+    end
+
+    promise:ok(data)
+  end)
+
+  return promise
 end
 
 ---Displays an image, returning a reference to its visual representation (placement).

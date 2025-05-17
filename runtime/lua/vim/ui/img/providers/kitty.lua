@@ -236,7 +236,7 @@ function M:__transmit_image_direct(image)
 
   -- If the image is not loaded yet, do so before directly transmitting it
   if image:size() == 0 then
-    image:reload()
+    assert(image:reload():wait())
   end
 
   ---@param chunk string data of chunk

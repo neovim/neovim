@@ -295,12 +295,12 @@ function M:__load_placement_image_bytes(placement, on_load)
   -- we can pass the raw image bytes without needing to invoke ImageMagick.
   local img = placement.img
   if placement.opts.crop then
-    img:convert({ crop = placement.opts.crop }, function(err, bytes)
+    img:convert({ crop = placement.opts.crop }):on_done(function(err, bytes)
       self.__data[placement.hash] = bytes
       on_load(err, bytes)
     end)
   else
-    img:reload(function(err)
+    img:reload():on_done(function(err)
       self.__data[placement.hash] = img.bytes
       on_load(err, img.bytes)
     end)

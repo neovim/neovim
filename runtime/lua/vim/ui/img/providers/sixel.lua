@@ -283,7 +283,7 @@ function M:__convert_to_sixel(img, opts, on_convert)
       crop = opts.crop,
       format = 'sixel',
       size = opts.size,
-    }, on_convert)
+    }):on_done(on_convert)
   end
 
   -- Attempt to detect the background color

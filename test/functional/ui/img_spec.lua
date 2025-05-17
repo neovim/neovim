@@ -71,30 +71,11 @@ describe('ui/img', function()
     -- Synchronous loading from disk
     ---@type vim.ui.Image
     local sync_img = exec_lua(function()
-      return vim.ui.img.load(img_filename)
+      return assert(vim.ui.img.load(img_filename):wait())
     end)
 
     eq(img_filename, sync_img.filename)
     eq(PNG_IMG_BYTES, sync_img.bytes)
-
-    -- Asynchronous loading from disk
-    ---@type vim.ui.Image
-    local async_img = exec_lua(function()
-      ---@type vim.ui.Image|nil
-      local img = nil
-      vim.ui.img.load(img_filename, function(_, image)
-        img = image
-      end)
-
-      if vim.wait(TEST_TIMEOUT, function() return img ~= nil end) then
-        return img
-      else
-        error('could not load image asynchronously')
-      end
-    end)
-
-    eq(img_filename, async_img.filename)
-    eq(PNG_IMG_BYTES, async_img.bytes)
   end)
 
   it('should unload the old provider when vim.o.imgprovider changes', function()
@@ -140,7 +121,7 @@ describe('ui/img', function()
         })
 
         -- Load image including data into memory as iterm sends it all
-        local img = vim.ui.img.load(img_filename)
+        local img = assert(vim.ui.img.load(img_filename):wait())
 
         -- Should trigger image data to be sent
         assert(img:show({
@@ -281,7 +262,7 @@ describe('ui/img', function()
         })
 
         -- Load image including data into memory as iterm sends it all
-        local img = vim.ui.img.load(img_filename)
+        local img = assert(vim.ui.img.load(img_filename):wait())
 
         -- Should trigger image data to be sent
         local placement = assert(img:show({
@@ -386,7 +367,7 @@ describe('ui/img', function()
         })
 
         -- Load image including data into memory as iterm sends it all
-        local img = vim.ui.img.load(img_filename)
+        local img = assert(vim.ui.img.load(img_filename):wait())
 
         -- Should trigger image data to be sent
         assert(img:show({
@@ -587,7 +568,7 @@ describe('ui/img', function()
         })
 
         -- Load image including data into memory as sixel sends it all
-        local img = vim.ui.img.load(img_filename)
+        local img = assert(vim.ui.img.load(img_filename):wait())
 
         -- Should trigger image data to be sent
         assert(img:show({
