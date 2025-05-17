@@ -4436,6 +4436,8 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
       return &(buf->b_p_ffu);
     case kOptErrorformat:
       return &(buf->b_p_efm);
+    case kOptGrepformat:
+      return &(buf->b_p_gefm);
     case kOptGrepprg:
       return &(buf->b_p_gp);
     case kOptMakeprg:
@@ -4563,6 +4565,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_ffu != NUL ? &(buf->b_p_ffu) : p->var;
   case kOptErrorformat:
     return *buf->b_p_efm != NUL ? &(buf->b_p_efm) : p->var;
+  case kOptGrepformat:
+    return *buf->b_p_gefm != NUL ? &(buf->b_p_gefm) : p->var;
   case kOptGrepprg:
     return *buf->b_p_gp != NUL ? &(buf->b_p_gp) : p->var;
   case kOptMakeprg:
@@ -5224,6 +5228,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
       buf->b_p_bkc = empty_string_option;
       buf->b_bkc_flags = 0;
+      buf->b_p_gefm = empty_string_option;
       buf->b_p_gp = empty_string_option;
       buf->b_p_mp = empty_string_option;
       buf->b_p_efm = empty_string_option;

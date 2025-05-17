@@ -606,6 +606,7 @@ struct file_buffer {
   char *b_p_keymap;             ///< 'keymap'
 
   // local values for options which are normally global
+  char *b_p_gefm;               ///< 'grepformat' local value
   char *b_p_gp;                 ///< 'grepprg' local value
   char *b_p_mp;                 ///< 'makeprg' local value
   char *b_p_efm;                ///< 'errorformat' local value

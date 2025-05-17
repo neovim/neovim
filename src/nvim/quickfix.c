@@ -4595,7 +4595,7 @@ void ex_make(exarg_T *eap)
   incr_quickfix_busy();
 
   char *errorformat = (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake)
-                      ? p_gefm
+                      ? *curbuf->b_p_gefm != NUL ? curbuf->b_p_gefm : p_gefm
                       : p_efm;
 
   bool newlist = eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd;
