@@ -3507,6 +3507,7 @@ names whose syntax definitions will be included in Typst files. Example: >
 
 VIM			*vim.vim*		*ft-vim-syntax*
 			*g:vimsyn_minlines*	*g:vimsyn_maxlines*
+
 There is a trade-off between more accurate syntax highlighting versus screen
 updating speed.  To improve accuracy, you may wish to increase the
 g:vimsyn_minlines variable.  The g:vimsyn_maxlines variable may be used to
@@ -3525,18 +3526,19 @@ embedded script highlighting they wish to have. >
    g:vimsyn_embed == 0      : disable (don't embed any scripts)
    g:vimsyn_embed == 'lpPr' : support embedded Lua, Perl, Python and Ruby
 <
-This option is disabled by default.
+By default, g:vimsyn_embed is unset, and embedded Lua scripts are supported.
+
 						*g:vimsyn_folding*
 Some folding is now supported with when 'foldmethod' is set to "syntax": >
 
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
    g:vimsyn_folding =~ 'a' : fold augroups
    g:vimsyn_folding =~ 'f' : fold functions
-   g:vimsyn_folding =~ 'h' : fold heredocs
-   g:vimsyn_folding =~ 'l' : fold Lua      script
-   g:vimsyn_folding =~ 'p' : fold Perl     script
-   g:vimsyn_folding =~ 'P' : fold Python   script
-   g:vimsyn_folding =~ 'r' : fold Ruby     script
+   g:vimsyn_folding =~ 'h' : fold let heredocs
+   g:vimsyn_folding =~ 'l' : fold Lua      heredocs
+   g:vimsyn_folding =~ 'p' : fold Perl     heredocs
+   g:vimsyn_folding =~ 'P' : fold Python   heredocs
+   g:vimsyn_folding =~ 'r' : fold Ruby     heredocs
 <
 
 By default, g:vimsyn_folding is unset.  Concatenate the indicated characters
