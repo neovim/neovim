@@ -854,8 +854,8 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, WinConfig *fconfig,
-                             Error *err)
+void parse_bordertext(Object bordertext, BorderTextType bordertext_type, WinConfig *fconfig,
+                      Error *err)
 {
   if (bordertext.type != kObjectTypeString && bordertext.type != kObjectTypeArray) {
     api_set_error(err, kErrorTypeValidation, "title/footer must be string or array");
@@ -902,8 +902,8 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
   *is_present = true;
 }
 
-static bool parse_bordertext_pos(win_T *wp, String bordertext_pos, BorderTextType bordertext_type,
-                                 WinConfig *fconfig, Error *err)
+bool parse_bordertext_pos(win_T *wp, String bordertext_pos, BorderTextType bordertext_type,
+                          WinConfig *fconfig, Error *err)
 {
   AlignTextPos *align;
   switch (bordertext_type) {
@@ -944,7 +944,7 @@ static bool parse_bordertext_pos(win_T *wp, String bordertext_pos, BorderTextTyp
   return true;
 }
 
-static void parse_border_style(Object style, WinConfig *fconfig, Error *err)
+void parse_border_style(Object style, WinConfig *fconfig, Error *err)
 {
   struct {
     const char *name;

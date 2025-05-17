@@ -10,12 +10,15 @@
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
@@ -29,8 +32,10 @@
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/mark.h"
@@ -147,6 +152,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
   pum_rl = State != MODE_CMDLINE && curwin->w_p_rl;
 
+  int pum_border_size = *p_winborder != NUL ? 2 : 0;
+
   do {
     // Mark the pum as visible already here,
     // to avoid that must_redraw is set when 'cursorcolumn' is on.
@@ -252,7 +259,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
     // Put the pum below "pum_win_row" if possible.
     // If there are few lines decide on where there is more room.
-    if (pum_win_row + 2 >= below_row - pum_height
+    if (pum_win_row + 2 + pum_border_size >= below_row - pum_height
         && pum_win_row - above_row > (below_row - above_row) / 2) {
       // pum above "pum_win_row"
       pum_above = true;
@@ -277,6 +284,14 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         pum_row += pum_height - (int)p_ph;
         pum_height = (int)p_ph;
       }
+
+      if (pum_border_size > 0 && pum_border_size + pum_row + pum_height >= pum_win_row) {
+        if (pum_row < 2) {
+          pum_height -= pum_border_size;
+        } else {
+          pum_row -= pum_border_size;
+        }
+      }
     } else {
       // pum below "pum_win_row"
       pum_above = false;
@@ -297,10 +312,14 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       if (p_ph > 0 && pum_height > p_ph) {
         pum_height = (int)p_ph;
       }
+
+      if (pum_row + pum_height + pum_border_size >= cmdline_row) {
+        pum_height -= pum_border_size;
+      }
     }
 
     // don't display when we only have room for one line
-    if (pum_height < 1 || (pum_height == 1 && size > 1)) {
+    if (pum_border_size == 0 && (pum_height < 1 || (pum_height == 1 && size > 1))) {
       return;
     }
 
@@ -430,6 +449,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         pum_col = max_col - max_width;
       }
       pum_width = max_width - pum_scrollbar;
+    }
+
+    if (pum_col + pum_border_size + pum_width > Columns) {
+      pum_col -= pum_border_size;
     }
 
     // Set selected item and redraw.  If the window size changed need to redo
@@ -612,18 +635,29 @@ void pum_redraw(void)
     }
   }
 
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  int pum_border_width = 0;
+  if (*p_winborder != NUL) {
+    pum_border_width = 2;
+    fconfig.border = true;
+    Error err = ERROR_INIT;
+    parse_border_style(CSTR_AS_OBJ(p_winborder), &fconfig, &err);
+    api_clear_error(&err);
+  }
   grid_assign_handle(&pum_grid);
 
   pum_left_col = pum_col - col_off;
   pum_right_col = pum_left_col + grid_width;
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_left_col,
-                                pum_height, grid_width, false, true);
+                                pum_height + pum_border_width, grid_width + pum_border_width, false,
+                                true);
   bool invalid_grid = moved || pum_invalid;
   pum_invalid = false;
   must_redraw_pum = false;
 
   if (!pum_grid.chars || pum_grid.rows != pum_height || pum_grid.cols != grid_width) {
-    grid_alloc(&pum_grid, pum_height, grid_width, !invalid_grid, false);
+    grid_alloc(&pum_grid, pum_height + pum_border_width, grid_width + pum_border_width,
+               !invalid_grid, false);
     ui_call_grid_resize(pum_grid.handle, pum_grid.cols, pum_grid.rows);
   } else if (invalid_grid) {
     grid_invalidate(&pum_grid);
@@ -638,6 +672,14 @@ void pum_redraw(void)
   }
 
   int scroll_range = pum_size - pum_height;
+
+  int mouse_menu = State != MODE_CMDLINE && pum_grid.zindex == kZIndexCmdlinePopupMenu;
+  if (!mouse_menu && fconfig.border) {
+    pum_grid_draw_border(&fconfig);
+    row++;
+    col_off++;
+  }
+
   // Never display more than we have
   pum_first = MIN(pum_first, scroll_range);
 
@@ -905,7 +947,8 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
 /// adjust floating info preview window position
 static void pum_adjust_info_position(win_T *wp, int width)
 {
-  int col = pum_col + pum_width + pum_scrollbar + 1;
+  int extra_width = *p_winborder != NUL ? 2 : 0;
+  int col = pum_col + pum_width + pum_scrollbar + 1 + extra_width;
   // TODO(glepnir): support config align border by using completepopup
   // align menu
   int right_extra = Columns - col;
@@ -1576,5 +1619,16 @@ void pum_ui_flush(void)
                           false, pum_grid.zindex, (int)pum_grid.comp_index, pum_grid.comp_row,
                           pum_grid.comp_col);
     pum_grid.pending_comp_index_update = false;
+  }
+}
+
+static void pum_grid_draw_border(WinConfig *fconfig)
+{
+  grid_draw_border(&pum_grid, *fconfig, NULL, 0, NULL);
+  if (fconfig->title) {
+    clear_virttext(&fconfig->title_chunks);
+  }
+  if (fconfig->footer) {
+    clear_virttext(&fconfig->footer_chunks);
   }
 }
