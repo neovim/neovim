@@ -163,6 +163,7 @@ local config = {
       'snippet.lua',
       'text.lua',
       'tohtml.lua',
+      'net.lua',
     },
     files = {
       'runtime/lua/vim/iter.lua',
@@ -193,6 +194,7 @@ local config = {
       'runtime/lua/vim/_meta/re.lua',
       'runtime/lua/vim/_meta/spell.lua',
       'runtime/lua/tohtml.lua',
+      'runtime/lua/vim/net.lua',
     },
     fn_xform = function(fun)
       if contains(fun.module, { 'vim.uri', 'vim.shared', 'vim._editor' }) then
