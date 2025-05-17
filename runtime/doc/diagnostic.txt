@@ -546,7 +546,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
     Fields: ~
       • {bufnr}?          (`integer`, default: current buffer) Buffer number
                           to show diagnostics from.
-      • {namespace}?      (`integer`) Limit diagnostics to the given namespace
+      • {namespace}?      (`integer|integer[]`) Limit diagnostics to the given
+                          namespace(s).
       • {scope}?          (`'line'|'buffer'|'cursor'|'c'|'l'|'b'`, default:
                           `line`) Show diagnostics from the whole buffer
                           (`buffer"`, the current cursor line (`line`), or the
