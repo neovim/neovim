@@ -120,6 +120,7 @@ void filemess(buf_T *buf, char *name, char *s)
   if (!msg_scroll) {    // wait a bit when overwriting an error msg
     msg_check_for_delay(false);
   }
+  ui_busy_start();
   msg_start();
   if (prev_msg_col != 0 && msg_col == 0) {
     msg_putchar('\r');  // overwrite any previous message.
@@ -130,6 +131,7 @@ void filemess(buf_T *buf, char *name, char *s)
   msg_outtrans(msg_may_trunc(false, IObuff), 0, false);
   msg_clr_eos();
   ui_flush();
+  ui_busy_stop();
   msg_scrolled_ign = false;
 }
 
