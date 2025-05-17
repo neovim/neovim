@@ -38,8 +38,8 @@
             .hash = "N-V-__8AAECfSADUxb_Nvy_jsHRlD1-CdzGh4dbf2KCtv7v0",
         },
         .treesitter_markdown = .{
-            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-markdown?ref=v0.4.1#413285231ce8fa8b11e7074bbe265b48aa7277f9",
-            .hash = "N-V-__8AAMgXUwC4v9_Fveeo7cvY1R3gEK58Pc4vW3gFiEaL",
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-markdown?ref=v0.5.0#afaa4138517363362f54c89330c9d79391e81168",
+            .hash = "N-V-__8AAIIZUwD3CGdyI2DiHu7Suj2jIF_EAVlM6REFGwju",
         },
         .treesitter_lua = .{
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-lua?ref=v0.4.0#4569d1c361129e71a205b94a05e158bd71b1709f",
