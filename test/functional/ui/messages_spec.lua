@@ -3058,7 +3058,7 @@ aliquip ex ea commodo consequat.]]
     }
 
     -- not processed while command is executing
-    async_meths.nvim_ui_try_resize(35, 5)
+    async_meths.nvim_ui_try_resize(35, 5, {})
 
     -- TODO(bfredl): ideally it should be processed just
     -- before the "press ENTER" prompt though

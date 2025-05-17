@@ -1887,6 +1887,8 @@ describe('TUI', function()
         term_colors = 256,
         term_name = exp_term,
         width = 50,
+        pixel_width = 0,
+        pixel_height = 0,
       },
     }
     local _, rv = child_session:request('nvim_list_uis')

@@ -59,7 +59,7 @@ describe('nvim_ui_attach()', function()
       pcall_err(api.nvim_ui_attach, 80, 24, { stdout_tty = 'foo' })
     )
 
-    eq('UI not attached to channel: 1', pcall_err(request, 'nvim_ui_try_resize', 40, 10))
+    eq('UI not attached to channel: 1', pcall_err(request, 'nvim_ui_try_resize', 40, 10, {}))
     eq('UI not attached to channel: 1', pcall_err(request, 'nvim_ui_set_option', 'rgb', true))
     eq('UI not attached to channel: 1', pcall_err(request, 'nvim_ui_detach'))
 
