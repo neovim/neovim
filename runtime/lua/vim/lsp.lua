@@ -571,6 +571,11 @@ local function lsp_enable_callback(bufnr)
           end)
         end)
       else
+        if vim.go.autochdir == true then
+          -- update directory before resolving root markers
+          -- setting value triggers autochdir callback
+          vim.go.autochdir = true
+        end
         start_config(bufnr, config)
       end
     end
