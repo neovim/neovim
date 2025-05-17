@@ -757,7 +757,7 @@ describe('ui/ext_messages', function()
     ]],
       cmdline = { { abort = false } },
       messages = {
-        { content = { { '/line      W [1/2]' } }, kind = 'search_count', history = false },
+        { content = { { '/line        W [1/2]' } }, kind = 'search_count', history = false },
       },
     }
 
@@ -769,7 +769,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|*3
     ]],
       messages = {
-        { content = { { '/line        [2/2]' } }, kind = 'search_count', history = false },
+        { content = { { '/line          [2/2]' } }, kind = 'search_count', history = false },
       },
     }
   end)
