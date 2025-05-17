@@ -65,7 +65,7 @@ EVENTS
 • |vim.ui_attach()| callbacks for |ui-messages| `msg_show` events are executed in
   |api-fast| context.
 • New/enhanced arguments in these existing UI events:
-  • `cmdline_hide`: `abort` argument indicating if the cmdline was aborted.
+  • `cmdline_hide`: Includes `level` and `abort` arguments, `abort` argument indicating if the cmdline was aborted.
   • `cmdline_show`:
     • Prompts that were previously emitted as `msg_show` events, are now routed
       through `cmdline_show`.

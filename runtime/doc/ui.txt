@@ -775,9 +775,10 @@ For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 
 	Should be hidden at next cmdline_show.
 
-["cmdline_hide", abort] ~
-	Hide the cmdline. `abort` is true if the cmdline is hidden after an
-	aborting condition (|c_Esc| or |c_CTRL-C|).
+["cmdline_hide", level, abort] ~
+	Hide the cmdline. `level` is the nesting level of the cmdline being hidden.
+	`abort` is true if the cmdline is hidden after an aborting condition
+	(|c_Esc| or |c_CTRL-C|).
 
 ["cmdline_block_show", lines] ~
 	Show a block of context to the current command line. For example if
