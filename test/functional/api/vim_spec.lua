@@ -5674,4 +5674,10 @@ describe('API', function()
 
     n.assert_alive()
   end)
+
+  it('nvim_restart', function()
+    Screen.new(10, 5)
+    api.nvim_restart()
+    assert_alive()
+  end)
 end)
