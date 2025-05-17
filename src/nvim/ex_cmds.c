@@ -2517,6 +2517,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     // If the buffer was used before, store the current contents so that
     // the reload can be undone.  Do not do this if the (empty) buffer is
     // being re-used for another file.
+    bool did_freeall = false;
     if (!(curbuf->b_flags & BF_NEVERLOADED)
         && (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur)) {
       // Sync first so that this is a separate undo-able action.
@@ -2527,14 +2528,12 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         goto theend;
       }
       u_unchanged(curbuf);
-      buf_updates_unload(curbuf, false);
-      buf_freeall(curbuf, BFA_KEEP_UNDO);
+      did_freeall = buf_freeall(curbuf, BFA_KEEP_UNDO);
 
       // Tell readfile() not to clear or reload undo info.
       readfile_flags = READ_KEEP_UNDO;
     } else {
-      buf_updates_unload(curbuf, false);
-      buf_freeall(curbuf, 0);  // Free all things for buffer.
+      did_freeall = buf_freeall(curbuf, 0);  // Free all things for buffer.
     }
     // If autocommands deleted the buffer we were going to re-edit, give
     // up and jump to the end.
@@ -2550,7 +2549,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     if (buf != curbuf) {
       goto theend;
     }
-    if (aborting()) {       // autocmds may abort script processing
+    if (!did_freeall) {
       goto theend;
     }
     buf_clear_file(curbuf);
