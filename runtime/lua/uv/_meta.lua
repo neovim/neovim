@@ -3946,6 +3946,62 @@ function luv_thread_t:getname() end
 --- @param msec integer
 function uv.sleep(msec) end
 
+--- Creates a new semaphore with the specified initial value. A semaphore is safe to
+--- share across threads. It represents an unsigned integer value that can incremented
+--- and decremented atomically but any attempt to make it negative will "wait" until
+--- the value can be decremented by another thread incrementing it.
+---
+--- The initial value must be a non-negative integer.
+--- **Note**:
+--- A semaphore must be shared between threads, any `uv.sem_wait()` on a single thread that blocks will deadlock.
+--- @param value integer?
+--- @return uv.luv_sem_t? sem
+--- @return string? err
+--- @return uv.error_name? err_name
+function uv.new_sem(value) end
+
+--- Increments (unlocks) a semaphore, if the semaphore's value consequently becomes
+--- greater than zero then another thread blocked in a sem_wait call will be woken
+--- and proceed to decrement the semaphore.
+--- @param sem uv.luv_sem_t
+function uv.sem_post(sem) end
+
+--- @class uv.luv_sem_t : userdata
+local luv_sem_t = {}
+
+--- Increments (unlocks) a semaphore, if the semaphore's value consequently becomes
+--- greater than zero then another thread blocked in a sem_wait call will be woken
+--- and proceed to decrement the semaphore.
+function luv_sem_t:post() end
+
+--- Decrements (locks) a semaphore, if the semaphore's value is greater than zero
+--- then the value is decremented and the call returns immediately. If the semaphore's
+--- value is zero then the call blocks until the semaphore's value rises above zero or
+--- the call is interrupted by a signal.
+--- @param sem uv.luv_sem_t
+function uv.sem_wait(sem) end
+
+--- Decrements (locks) a semaphore, if the semaphore's value is greater than zero
+--- then the value is decremented and the call returns immediately. If the semaphore's
+--- value is zero then the call blocks until the semaphore's value rises above zero or
+--- the call is interrupted by a signal.
+function luv_sem_t:wait() end
+
+--- The same as `uv.sem_wait()` but returns immediately if the semaphore is not available.
+---
+--- If the semaphore's value was decremented then `true` is returned, otherwise the semaphore
+--- has a value of zero and `false` is returned.
+--- @param sem uv.luv_sem_t
+--- @return boolean
+function uv.sem_trywait(sem) end
+
+--- The same as `uv.sem_wait()` but returns immediately if the semaphore is not available.
+---
+--- If the semaphore's value was decremented then `true` is returned, otherwise the semaphore
+--- has a value of zero and `false` is returned.
+--- @return boolean
+function luv_sem_t:trywait() end
+
 
 --- # Miscellaneous utilities
 
@@ -4474,4 +4530,3 @@ function uv.wtf8_to_utf16(wtf8) end
 --- @class uv.uv_work_t : uv.uv_req_t
 
 --- @class uv.uv_write_t : uv.uv_req_t
-
