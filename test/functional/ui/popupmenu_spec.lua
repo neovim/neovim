@@ -5810,6 +5810,7 @@ describe('builtin popupmenu', function()
     it("'pummaxwidth' with multibyte", function()
       screen:try_resize(60, 8)
       exec([[
+        hi StrikeFake guifg=DarkRed
         let g:change = 0
         func Omni_test(findstart, base)
           if a:findstart
@@ -5834,8 +5835,14 @@ describe('builtin popupmenu', function()
               \ #{word: "bar", menu: "fooMenu", kind: "一二三四"},
               \ #{word: "一二三四五", kind: "multi"},
               \ ]
-          else
             return [#{word: "bar", menu: "fooMenu", kind: "一二三"}]
+          elseif g:change == 3
+            return [#{word: "bar", menu: "fooMenu", kind: "一二三"}]
+          else
+            return [
+              \ #{word: "一二三四五六七八九十", abbr_hlgroup: "StrikeFake"},
+              \ #{word: "123456789_123456789_123456789_", abbr_hlgroup: "StrikeFake"},
+              \ ]
           endif
         endfunc
         set omnifunc=Omni_test
@@ -6399,6 +6406,36 @@ describe('builtin popupmenu', function()
       end
       feed('<Esc>')
       command('set norightleft')
+
+      command('let g:change=4')
+      feed('S<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*19
+          [3:--------------------------------]|
+        ## grid 2
+          一二三四五六七八九十^            |
+          {1:~                               }|*18
+        ## grid 3
+          {2:-- }{5:match 1 of 2}                 |
+        ## grid 4
+          {ds:一二三四五六七 }{s:>}|
+          {dn:123456789_12345}{n:>}|
+        ]],
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
+        })
+      else
+        screen:expect([[
+          一二三四五六七八九十^            |
+          {ds:一二三四五六七 }{s:>}{1:                }|
+          {dn:123456789_12345}{n:>}{1:                }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+      end
+      feed('<Esc>')
     end)
 
     it('does not crash when displayed in last column with rightleft #12032', function()
