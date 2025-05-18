@@ -75,9 +75,9 @@
 ---you want it to be updated.
 ---- Restart Nvim.
 ---
----Remove plugin from disk:
----- Delete plugin's directory manually. Make sure its spec is not included
----in |vim.pack.add()| call in 'init.lua' or it will be reinstalled.
+---Remove plugins from disk:
+---- Use |vim.pack.del()| with a list of plugin names to remove. Make sure their specs
+---are not included in |vim.pack.add()| call in 'init.lua' or they will be reinstalled.
 ---
 --- Available events to hook into ~
 ---
@@ -86,6 +86,8 @@
 ---After |PackUpdatePre| and |PackUpdate|.
 ---- [PackUpdatePre]() - before trying to update plugin's state.
 ---- [PackUpdate]() - after plugin's state is updated.
+---- [PackDeletePre]() - before removing plugin from disk.
+---- [PackDelete]() - after removing plugin from disk.
 
 local api = vim.api
 local uv = vim.uv
@@ -288,6 +290,26 @@ function PlugList.new(plugs)
     list[i] = { plug = p, job = job, info = { warn = '' } }
   end
   return setmetatable({ list = list }, PlugList)
+end
+
+--- @package
+--- @param names string[]?
+--- @return vim.pack.PlugList
+function PlugList.from_names(names)
+  local all_plugins, plugs = M.get(), {}
+  -- Preserve plugin order; might be important during checkout or event trigger
+  for _, p_data in ipairs(all_plugins) do
+    -- NOTE: By default include only added plugins (and not all on disk). Using
+    -- not added plugins might lead to a confusion as default `version` and
+    -- user's desired one might mismatch.
+    -- TODO(echasnovski): Consider changing this if/when there is lockfile.
+    --- @cast names string[]
+    if (names == nil and p_data.was_added) or vim.tbl_contains(names, p_data.spec.name) then
+      table.insert(plugs, { spec = p_data.spec, path = p_data.path })
+    end
+  end
+
+  return PlugList.new(plugs)
 end
 
 --- Run jobs from plugin list in parallel
@@ -569,7 +591,7 @@ end
 --- Do so as `PlugList` method to preserve order, which might be important when
 --- dealing with dependencies.
 --- @package
---- @param event_name 'PackInstallPre'|'PackInstall'|'PackUpdatePre'|'PackUpdate'
+--- @param event_name 'PackInstallPre'|'PackInstall'|'PackUpdatePre'|'PackUpdate'|'PackDeletePre'|'PackDelete'
 function PlugList:trigger_event(event_name)
   --- @param p vim.pack.PlugJob
   local function prepare(p)
@@ -595,10 +617,30 @@ function PlugList:show_notifications(action_name)
   end
 end
 
---- Keep this as map and not array for faster checks during startup.
+--- Map from plugin path to its data.
+--- Use map and not array to avoid linear lookup during startup.
 --- @type table<string, { plug: vim.pack.Plug, id: integer }>
 local added_plugins = {}
 local n_added_plugins = 0
+
+local function renumber_added_plugins()
+  --- @type table<integer,string>
+  local paths = {}
+  local max_id = 0
+  for path, p in pairs(added_plugins) do
+    paths[p.id] = path
+    max_id = math.max(max_id, p.id)
+  end
+
+  local n_total = 0
+  for i = 1, max_id do
+    if paths[i] ~= nil then
+      n_total = n_total + 1
+      added_plugins[paths[i]].id = n_total
+    end
+  end
+  n_added_plugins = n_total
+end
 
 --- @param plug vim.pack.Plug
 --- @param bang boolean
@@ -853,33 +895,12 @@ function M.update(names, opts)
   vim.validate('names', names, vim.islist, true, 'list')
   opts = vim.tbl_extend('force', { force = false, offline = false }, opts or {})
 
-  local all_plugins = M.get()
-  if names == nil then
-    names = {}
-    -- NOTE: By default include only added plugins (and not all on disk). Using
-    -- not added plugins might lead to a confusion as default `version` and
-    -- user's desired one might mismatch.
-    for _, p_data in ipairs(all_plugins) do
-      if p_data.was_added then
-        table.insert(names, p_data.spec.name)
-      end
-    end
-  end
-
-  local plugs_to_update = {}
-  for _, p_data in ipairs(all_plugins) do
-    if vim.tbl_contains(names, p_data.spec.name) then
-      table.insert(plugs_to_update, { spec = p_data.spec, path = p_data.path })
-    end
-  end
-
-  if #plugs_to_update == 0 then
+  local plug_list = PlugList.from_names(names)
+  if #plug_list.list == 0 then
     notify('Nothing to update', 'WARN')
     return
   end
-
   git_ensure_exec()
-  local plug_list = PlugList.new(plugs_to_update)
 
   -- Download data if asked
   if not opts.offline then
@@ -897,6 +918,30 @@ function M.update(names, opts)
 
   plug_list:checkout({ skip_same_sha = true })
   feedback_log(plug_list)
+end
+
+--- Remove plugins from disk
+---
+--- @param names string[] List of plugin names to remove from disk. Must be managed
+--- by |vim.pack|, not necessarily already added in current session.
+function M.del(names)
+  vim.validate('names', names, vim.islist, false, 'list')
+
+  local plug_list = PlugList.from_names(names)
+  if #plug_list.list == 0 then
+    notify('Nothing to remove', 'WARN')
+    return
+  end
+
+  plug_list:trigger_event('PackDeletePre')
+  for _, p in ipairs(plug_list.list) do
+    vim.fs.rm(p.plug.path, { recursive = true, force = true })
+    added_plugins[p.plug.path] = nil
+    notify('Removed plugin `' .. p.plug.spec.name .. '`', 'INFO')
+  end
+  plug_list:trigger_event('PackDelete')
+
+  renumber_added_plugins()
 end
 
 --- @inlinedoc

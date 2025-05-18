@@ -2587,9 +2587,10 @@ Unfreeze plugin to start receiving updates:
   want it to be updated.
 • Restart Nvim.
 
-Remove plugin from disk:
-• Delete plugin's directory manually. Make sure its spec is not included in
-  |vim.pack.add()| call in 'init.lua' or it will be reinstalled.
+Remove plugins from disk:
+• Use |vim.pack.del()| with a list of plugin names to remove. Make sure their
+  specs are not included in |vim.pack.add()| call in 'init.lua' or they will
+  be reinstalled.
 
 Available events to hook into ~
 • *PackInstallPre* - before trying to install plugin on disk.
@@ -2597,6 +2598,8 @@ Available events to hook into ~
   |PackUpdatePre| and |PackUpdate|.
 • *PackUpdatePre* - before trying to update plugin's state.
 • *PackUpdate* - after plugin's state is updated.
+• *PackDeletePre* - before removing plugin from disk.
+• *PackDelete* - after removing plugin from disk.
 
 
 *vim.pack.Spec*
@@ -2646,6 +2649,14 @@ vim.pack.add({specs}, {opts})                                 *vim.pack.add()*
       • {opts}   (`table?`) A table with the following fields:
                  • {bang}? (`boolean`) Whether to execute `:packadd!` instead
                    of |:packadd|. Default `false`.
+
+vim.pack.del({names})                                         *vim.pack.del()*
+    Remove plugins from disk
+
+    Parameters: ~
+      • {names}  (`string[]`) List of plugin names to remove from disk. Must
+                 be managed by |vim.pack|, not necessarily already added in
+                 current session.
 
 vim.pack.get()                                                *vim.pack.get()*
     Get data about all plugins managed by |vim.pack|
