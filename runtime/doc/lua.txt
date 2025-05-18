@@ -2519,7 +2519,7 @@ Lua module: vim.pack                                                *vim.pack*
 WORK IN PROGRESS built-in plugin manager! Early testing of existing features
 is appreciated, but expect breaking changes without notice.
 
-Manages plugins only in a dedicated |packages| *vim.pack-directory*:
+Manages plugins only in a dedicated *vim.pack-directory* (see |packages|):
 `$XDG_DATA_HOME/nvim/site/pack/core/opt`. Plugin's subdirectory name matches
 plugin's name in specification. It is assumed that all plugins in the
 directory are managed exclusively by `vim.pack`.
@@ -2534,21 +2534,26 @@ Basic install and management:
 • Add |vim.pack.add()| call(s) to 'init.lua': >lua
 
     vim.pack.add({
-      -- Install as "plugin1"/"plugin2" and use greatest available version
+      -- Install "plugin1" and use greatest available version
       'https://github.com/user/plugin1',
-      { source = 'https://github.com/user/plugin2' },
 
-      -- Specify plugin's name
-      { source = 'https://github.com/user/generic-name', name = 'plugin3' },
+      -- Same as above, but using a table (allows setting other options)
+      { source = 'https://github.com/user/plugin1' },
+
+      -- Specify plugin's name (here the plugin will be called "plugin3"
+      -- instead of "generic-name")
+      { source = 'https://github.com/user/generic-name', name = 'plugin2' },
 
       -- Specify version to follow during install and update
       {
-        source = 'https://github.com/user/plugin4',
-        version = vim.version.range('1.0'), -- Greatest version matching range
+        source = 'https://github.com/user/plugin3',
+        -- Version constraint, see |vim.version.range()|
+        version = vim.version.range('1.0'),
       },
       {
-        source = 'https://github.com/user/plugin5',
-        version = 'main', -- Git branch, tag, or commit hash
+        source = 'https://github.com/user/plugin4',
+        -- Git branch, tag, or commit hash
+        version = 'main',
       },
     })
 
@@ -2566,11 +2571,12 @@ Basic install and management:
 Switch plugin's version:
 • Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
   named 'plugin1' has changed from default `vim.version.range('*')` to `main`.
-• Restartn Nvim. This has not yet changed plugin's actual state on disk.
+• Restart Nvim. The plugin's actual state on disk is not yet changed.
 • Execute `vim.pack.update({ 'plugin1' }, { offline = true })`. Using
   `offline` is optional to not download updates from source.
-• Review changes and either confirm or discard them. If discard, make sure to
-  revert changes in 'init.lua' also.
+• Review changes and either confirm or discard them. If discarded, revert any
+  changes in 'init.lua' as well or you will be prompted again next time you
+  run |vim.pack.update()|.
 
 Freeze plugin from being updated:
 • Update 'init.lua' for plugin to have `version = 'HEAD'`.
