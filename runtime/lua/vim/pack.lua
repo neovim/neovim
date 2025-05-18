@@ -138,7 +138,7 @@ local git_args = {
   -- Using `rev-list -1` shows a commit of revision, while `rev-parse` shows
   -- hash of revision. Those are different for annotated tags.
   get_hash = function(rev)
-    return { 'rev-list', '-1', rev }
+    return { 'rev-list', '-1', '--abbrev-commit', rev }
   end,
   log = function(from, to)
     local pretty = '--pretty=format:%m %h │ %s%d'
@@ -150,10 +150,10 @@ local git_args = {
     return { 'branch', '--remote', '--list', '--format=%(refname:short)', '--', 'origin/**' }
   end,
   list_tags = function()
-    return { 'tag', '--list' }
+    return { 'tag', '--list', '--sort=-v:refname' }
   end,
   list_new_tags = function(from)
-    return { 'tag', '--list', '--sort=v:refname', '--contains', from }
+    return { 'tag', '--list', '--sort=-v:refname', '--contains', from }
   end,
   list_cur_tags = function(at)
     return { 'tag', '--list', '--points-at', at }
@@ -490,6 +490,10 @@ end
 
 --- @package
 function PlugList:resolve_version()
+  local function list_in_line(name, list)
+    return #list == 0 and '' or ('\n' .. name .. ': ' .. table.concat(list, ', '))
+  end
+
   --- @param p vim.pack.PlugJob
   local function prepare(p)
     if p.info.version_str ~= nil then
@@ -504,19 +508,27 @@ function PlugList:resolve_version()
     end
 
     -- Allow specifying non-version-range like version: branch or commit.
-    if not is_version_range(version) then
-      --- @cast version string
-      local branches = git_get_branches(p.plug.path)
-      p.info.version_str = version
-      p.info.version_ref = (vim.tbl_contains(branches, version) and 'origin/' or '') .. version
+    local branches, tags = git_get_branches(p.plug.path), git_get_tags(p.plug.path)
+    if type(version) == 'string' then
+      local is_branch = vim.tbl_contains(branches, version)
+      local is_tag_or_hash = pcall(cli_sync, git_cmd('get_hash', version), p.plug.path)
+      if not (is_branch or is_tag_or_hash) then
+        p.job.err = string.format('`%s` is not a branch/tag/commit. Available:', version)
+          .. list_in_line('Tags', tags)
+          .. list_in_line('Branches', branches)
+        return
+      end
+
+      p.info.version_str, p.info.version_ref = version, (is_branch and 'origin/' or '') .. version
       return
     end
     --- @cast version vim.VersionRange
 
     -- Choose the greatest/last version among all matching semver tags
-    local last_ver_tag = nil
-    for _, tag in ipairs(git_get_tags(p.plug.path)) do
+    local last_ver_tag, semver_tags = nil, {}
+    for _, tag in ipairs(tags) do
       local ver_tag = vim.version.parse(tag)
+      table.insert(semver_tags, ver_tag ~= nil and tag or nil)
       local is_in_range = ver_tag ~= nil and version:has(ver_tag)
       if is_in_range and (last_ver_tag == nil or ver_tag > last_ver_tag) then
         p.info.version_str, last_ver_tag = tag, ver_tag
@@ -524,7 +536,9 @@ function PlugList:resolve_version()
     end
 
     if p.info.version_str == nil then
-      p.job.err = 'No tags matching version range. Consider increasing it or switch to branch.'
+      p.job.err = 'No versions fit constraint. Relax it or switch to branch. Available:'
+        .. list_in_line('Versions', semver_tags)
+        .. list_in_line('Branches', branches)
     end
   end
   self:run(prepare, nil)
@@ -610,7 +624,7 @@ function PlugList:show_notifications(action_name)
     local err = p.job.err
     if err ~= '' then
       local msg = string.format('Error in `%s` during %s:\n%s', name, action_name, err)
-      notify(msg, 'ERROR')
+      error(msg)
     end
   end
 end
