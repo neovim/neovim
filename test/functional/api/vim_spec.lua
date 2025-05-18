@@ -5026,7 +5026,7 @@ describe('API', function()
         cmd = 'substitute',
         addr = 'char',
         args = { '/.*/foo/' },
-        range = { 3, 5, 5, 9 } },
+        range = { 3, 5, 5, 10 } },
         {})
       expect [[
         line1

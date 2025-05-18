@@ -7781,16 +7781,17 @@ static int bt_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T startcol, colnr
 /// @param win Window in which to search or NULL
 /// @param buf Buffer in which to search
 /// @param lnum Number of line to start looking for match
-/// @param col Column to start looking for match
+/// @param startcol Column to start looking for match
+/// @param stopcol Column to start looking for match
 /// @param tm Timeout limit or NULL
 ///
 /// @return zero if there is no match and number of lines contained in the match
 ///         otherwise.
-static int bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
-                            colnr_T maxcol, proftime_T *tm, int *timed_out)
+static int bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T startcol,
+                            colnr_T stopcol, proftime_T *tm, int *timed_out)
 {
   init_regexec_multi(rmp, win, buf, lnum);
-  return bt_regexec_both(NULL, col, maxcol, tm, timed_out);
+  return bt_regexec_both(NULL, startcol, stopcol, tm, timed_out);
 }
 
 // Compare a number with the operand of RE_LNUM, RE_COL or RE_VCOL.
@@ -14247,6 +14248,11 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       break;
     }
 
+    // stop when we pass the maxcol
+    if (rex.reg_maxcol > 0 && (rex.input - rex.line) > rex.reg_maxcol) {
+      break;
+    }
+
     // compute nextlist
     for (listidx = 0; listidx < thislist->n; listidx++) {
       // If the list gets very long there probably is something wrong.
@@ -15510,11 +15516,13 @@ theend:
 
 /// Try match of "prog" with at rex.line["col"].
 ///
+/// @param startcol   column to start the match
+/// @param stopcol    column to stop the match
 /// @param tm         timeout limit or NULL
 /// @param timed_out  flag set on timeout or NULL
 ///
 /// @return  <= 0 for failure, number of lines contained in the match otherwise.
-static int nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_out)
+static int nfa_regtry(nfa_regprog_T *prog, colnr_T startcol, colnr_T stopcol, proftime_T *tm, int *timed_out)
 {
   int i;
   regsubs_T subs, m;
@@ -15523,7 +15531,7 @@ static int nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *tim
   FILE *f;
 #endif
 
-  rex.input = rex.line + col;
+  rex.input = rex.line + startcol;
   nfa_time_limit = tm;
   nfa_timed_out = timed_out;
   nfa_time_count = 0;
@@ -15573,7 +15581,7 @@ static int nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *tim
 
     if (rex.reg_startpos[0].lnum < 0) {
       rex.reg_startpos[0].lnum = 0;
-      rex.reg_startpos[0].col = col;
+      rex.reg_startpos[0].col = startcol;
     }
     if (rex.reg_endpos[0].lnum < 0) {
       // pattern has a \ze but it didn't match, use current end
@@ -15590,7 +15598,7 @@ static int nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *tim
     }
 
     if (rex.reg_startp[0] == NULL) {
-      rex.reg_startp[0] = rex.line + col;
+      rex.reg_startp[0] = rex.line + startcol;
     }
     if (rex.reg_endp[0] == NULL) {
       rex.reg_endp[0] = rex.input;
@@ -15653,10 +15661,12 @@ static int nfa_regexec_both(uint8_t *line, colnr_T startcol, colnr_T stopcol, pr
     line = (uint8_t *)reg_getline(0);  // relative to the cursor
     rex.reg_startpos = rex.reg_mmatch->startpos;
     rex.reg_endpos = rex.reg_mmatch->endpos;
+    rex.reg_maxcol = stopcol;
   } else {
     prog = (nfa_regprog_T *)rex.reg_match->regprog;
     rex.reg_startp = (uint8_t **)rex.reg_match->startp;
     rex.reg_endp = (uint8_t **)rex.reg_match->endp;
+    rex.reg_maxcol = stopcol;
   }
 
   // Be paranoid...
@@ -15737,7 +15747,7 @@ static int nfa_regexec_both(uint8_t *line, colnr_T startcol, colnr_T stopcol, pr
     prog->state[i].lastlist[1] = 0;
   }
 
-  retval = nfa_regtry(prog, col, tm, timed_out);
+  retval = nfa_regtry(prog, col, stopcol, tm, timed_out);
 
 #ifdef REGEXP_DEBUG
   nfa_regengine.expr = NULL;
