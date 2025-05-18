@@ -3115,6 +3115,7 @@ getbufvar({buf}, {varname} [, {def}])                              *getbufvar()*
 		Examples: >vim
 			let bufmodified = getbufvar(1, "&mod")
 			echo "todo myvar = " .. getbufvar("todo", "myvar")
+<
 
                 Parameters: ~
                   • {buf} (`integer|string`)
@@ -4520,6 +4521,7 @@ getwinvar({winnr}, {varname} [, {def}])                            *getwinvar()*
 		Examples: >vim
 			let list_is_on = getwinvar(2, '&list')
 			echo "myvar = " .. getwinvar(1, 'myvar')
+<
 
                 Parameters: ~
                   • {winnr} (`integer`)
@@ -5219,6 +5221,7 @@ inputlist({textlist})                                              *inputlist()*
 		Example: >vim
 			let color = inputlist(['Select color:', '1. red',
 				\ '2. green', '3. blue'])
+<
 
                 Parameters: ~
                   • {textlist} (`string[]`)
@@ -5720,6 +5723,7 @@ libcall({libname}, {funcname}, {argument})                 *libcall()* *E364* *E
 		object code must be compiled as position-independent ('PIC').
 		Examples: >vim
 			echo libcall("libc.so", "getenv", "HOME")
+<
 
                 Parameters: ~
                   • {libname} (`string`)
@@ -9305,6 +9309,7 @@ setreg({regname}, {value} [, {options}])                              *setreg()*
 		You can also change the type of a register by appending
 		nothing: >vim
 			call setreg('a', '', 'al')
+<
 
                 Parameters: ~
                   • {regname} (`string`)
@@ -9402,6 +9407,7 @@ setwinvar({nr}, {varname}, {val})                                  *setwinvar()*
 		Examples: >vim
 			call setwinvar(1, "&list", 0)
 			call setwinvar(2, "myvar", "foobar")
+<
 
                 Parameters: ~
                   • {nr} (`integer`)
@@ -9872,6 +9878,7 @@ sign_unplace({group} [, {dict}])                                *sign_unplace()*
 
 			" Remove all the placed signs from all the buffers
 			call sign_unplace('*')
+<
 
                 Parameters: ~
                   • {group} (`string`)
@@ -10528,6 +10535,7 @@ strftime({format} [, {time}])                                       *strftime()*
 		  echo strftime("%H:%M")		   " 11:55
 		  echo strftime("%c", getftime("file.c"))
 						   " Show mod time of file.c.
+<
 
                 Parameters: ~
                   • {format} (`string`)
@@ -10870,6 +10878,7 @@ swapfilelist()                                                  *swapfilelist()*
 			let &directory = '.'
 			let swapfiles = swapfilelist()
 			let &directory = save_dir
+<
 
                 Return: ~
                   (`string[]`)

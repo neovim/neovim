@@ -211,7 +211,7 @@ following uses the `virtual_lines` handler when jumping to a diagnostic: >lua
   end
 
   vim.diagnostic.config({ jump = { on_jump = on_jump } })
-
+<
                                           *diagnostic-loclist-example*
 Whenever the |location-list| is opened, the following `show` handler will show
 the most recent diagnostics: >lua
