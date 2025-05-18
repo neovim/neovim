@@ -67,7 +67,7 @@
 ---you run |vim.pack.update()|.
 ---
 ---Freeze plugin from being updated:
----- Update 'init.lua' for plugin to have `version = 'HEAD'`.
+---- Update 'init.lua' for plugin to have `version = false`.
 ---- Restart Nvim.
 ---
 ---Unfreeze plugin to start receiving updates:
@@ -216,18 +216,16 @@ end
 --- Name of plugin. Will be used as directory name. Default: basename of `source`.
 --- @field name? string
 ---
---- Version to use for install and updates. One of:
+--- Version to use for install and updates. Can be:
+--- - String to use specific branch, tag, or commit hash.
 --- - Output of |vim.version.range()| to install the greatest/last semver tag
----   inside the range.
---- - Tag name.
---- - Branch name.
---- - "HEAD" to freeze current state from updates for already installed plugin.
---- - Explicit commit hash.
+---   inside the version constraint.
+--- - `false` to freeze current state of already installed plugin from updates.
 ---
 --- Default is `vim.version.range('*')`, i.e. install the greatest available version.
---- @field version? string|vim.VersionRange
+--- @field version? string|vim.VersionRange|false
 
---- @alias vim.pack.SpecResolved { source: string, name: string, version: string|vim.VersionRange }
+--- @alias vim.pack.SpecResolved { source: string, name: string, version: string|vim.VersionRange|false }
 
 --- @param spec string|vim.pack.Spec
 --- @return vim.pack.SpecResolved
@@ -237,9 +235,9 @@ local function normalize_spec(spec)
   vim.validate('spec.source', spec.source, 'string')
   local name = (spec.name or spec.source):match('[^/]+$')
   vim.validate('spec.name', name, 'string')
-  local version = spec.version or vim.version.range('*')
+  local version = spec.version == nil and vim.version.range('*') or spec.version
   local function is_version(x)
-    return type(x) == 'string' or is_version_range(x)
+    return type(x) == 'string' or is_version_range(x) or x == false
   end
   vim.validate('spec.version', version, is_version, false, 'string or vim.VersionRange')
   return { source = spec.source, name = name, version = version }
@@ -499,9 +497,9 @@ function PlugList:resolve_version()
     end
     local version = p.plug.spec.version
 
-    -- Allow 'HEAD' to mean 'HEAD' (freeze current state from updates)
-    if version == 'HEAD' then
-      p.info.version_str = 'HEAD'
+    -- Allow `false` to mean freeze current state from updates
+    if version == false then
+      p.info.version_str, p.info.version_ref = '', 'HEAD'
       return
     end
 
@@ -735,11 +733,13 @@ local function compute_feedback_lines_single(p)
   end
 
   local parts = { '## ' .. p.plug.spec.name .. '\n' }
+  local version_suffix = p.info.version_str == '' and ''
+    or string.format(' (%s)', p.info.version_str)
 
   if p.info.sha_head == p.info.sha_target then
     table.insert(parts, 'Path:   ' .. p.plug.path .. '\n')
     table.insert(parts, 'Source: ' .. p.plug.spec.source .. '\n')
-    table.insert(parts, 'State:  ' .. p.info.sha_target .. ' (' .. p.info.version_str .. ')')
+    table.insert(parts, 'State:  ' .. p.info.sha_target .. version_suffix)
 
     if p.info.update_details ~= '' then
       local details = p.info.update_details:gsub('\n', '\n• ')
@@ -749,7 +749,7 @@ local function compute_feedback_lines_single(p)
     table.insert(parts, 'Path:         ' .. p.plug.path .. '\n')
     table.insert(parts, 'Source:       ' .. p.plug.spec.source .. '\n')
     table.insert(parts, 'State before: ' .. p.info.sha_head .. '\n')
-    table.insert(parts, 'State after:  ' .. p.info.sha_target .. ' (' .. p.info.version_str .. ')')
+    table.insert(parts, 'State after:  ' .. p.info.sha_target .. version_suffix)
 
     table.insert(parts, '\n\nPending updates:\n' .. p.info.update_details)
   end
