@@ -823,8 +823,8 @@ Variables:
                           For example in C one usually wants section 3 or 2: >
                                :let b:man_default_sections = '3,2'
 *g:man_hardwrap*            Hard-wrap to $MANWIDTH or window width if $MANWIDTH is
-                          empty. Enabled by default. Set |FALSE| to enable soft
-                          wrapping.
+                          empty or larger than the window width. Enabled by
+                          default. Set |FALSE| to enable soft wrapping.
 
 To use Nvim as a manpager: >bash
     export MANPAGER='nvim +Man!'
