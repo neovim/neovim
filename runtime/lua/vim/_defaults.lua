@@ -930,24 +930,28 @@ do
     group = vim.api.nvim_create_augroup('nvim.find_exrc', {}),
     desc = 'Find exrc files in parent directories',
     callback = function()
-      if vim.o.exrc then
-        -- Start from parent directory, as exrc file in the current
-        -- directory is already loaded in do_exrc_initalization().
-        local files = vim.fs.find({ '.nvim.lua', '.nvimrc', '.exrc' }, {
-          type = 'file',
-          upward = true,
-          limit = math.huge,
-          path = vim.fs.dirname(vim.uv.cwd()),
-        })
-        for _, file in ipairs(files) do
-          local trusted = vim.secure.read(file) --[[@as string|nil]]
-          if trusted then
-            if vim.endswith(file, '.lua') then
-              loadstring(trusted)()
-            else
-              vim.api.nvim_exec2(trusted, {})
-            end
+      if not vim.o.exrc then
+        return
+      end
+      local files = vim.fs.find({ '.nvim.lua', '.nvimrc', '.exrc' }, {
+        type = 'file',
+        upward = true,
+        limit = math.huge,
+        -- exrc in cwd already handled from C, thus start in parent directory.
+        path = vim.fs.dirname(vim.uv.cwd()),
+      })
+      for _, file in ipairs(files) do
+        local trusted = vim.secure.read(file) --[[@as string|nil]]
+        if trusted then
+          if vim.endswith(file, '.lua') then
+            loadstring(trusted)()
+          else
+            vim.api.nvim_exec2(trusted, {})
           end
+        end
+        -- If the user unset 'exrc' in the current exrc then stop searching
+        if not vim.o.exrc then
+          return
         end
       end
     end,

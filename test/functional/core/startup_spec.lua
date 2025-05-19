@@ -1128,6 +1128,10 @@ describe('user config init', function()
     end
 
     before_each(function()
+      for _, file in ipairs({ '.exrc', '.nvimrc', '.nvim.lua' }) do
+        os.remove('../' .. file)
+        os.remove(file)
+      end
       write_file(
         init_lua_path,
         [[
@@ -1139,7 +1143,10 @@ describe('user config init', function()
     end)
 
     after_each(function()
-      os.remove(exrc_path)
+      for _, file in ipairs({ '.exrc', '.nvimrc', '.nvim.lua' }) do
+        os.remove('../' .. file)
+        os.remove(file)
+      end
       rmdir(xstate)
     end)
 
@@ -1188,13 +1195,9 @@ describe('user config init', function()
       end)
     end
 
-    it('exrc from all parent directories', function()
-      -- make sure that there are not any exrc files left from previous tests
-      for _, file in ipairs({ '.exrc', '.nvimrc', '.nvim.lua', '../.nvim.lua', '../.nvimrc' }) do
-        os.remove(file)
-      end
-      setup_exrc_file('../.exrc')
+    it('exrc from parent directories', function()
       setup_exrc_file('.nvim.lua')
+      setup_exrc_file('../.exrc')
       clear { args_rm = { '-u' }, env = xstateenv }
       local screen = Screen.new(50, 8)
       screen._default_attr_ids = nil
@@ -1206,16 +1209,16 @@ describe('user config init', function()
       })
       -- current directory exrc is found first
       screen:expect({ any = '.nvim.lua' })
-      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:'), unchanged = true })
       feed('ia')
 
       -- after that the exrc in the parent directory
       screen:expect({ any = '.exrc' })
-      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
-      feed('ia')
-      clear { args_rm = { '-u' }, env = xstateenv }
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:'), unchanged = true })
+      feed('a')
       -- a total of 2 exrc files are executed
-      eq(2, eval('g:exrc_count'))
+      feed(':echo g:exrc_count<CR>')
+      screen:expect({ any = '2' })
     end)
   end)
 

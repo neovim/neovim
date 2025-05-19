@@ -2080,6 +2080,9 @@ vim.bo.et = vim.bo.expandtab
 --- directories (ordered upwards), if the files are in the `trust` list.
 --- Use `:trust` to manage trusted files. See also `vim.secure.read()`.
 ---
+--- Unset 'exrc' to stop further searching of 'exrc' files in parent
+--- directories, similar to `editorconfig.root`.
+---
 --- Compare 'exrc' to `editorconfig`:
 --- - 'exrc' can execute any code; editorconfig only specifies settings.
 --- - 'exrc' is Nvim-specific; editorconfig works in other editors.
