@@ -928,13 +928,17 @@ do
 
   vim.api.nvim_create_autocmd('VimEnter', {
     group = vim.api.nvim_create_augroup('nvim.find_exrc', {}),
-    desc = 'Find project-local configuration',
+    desc = 'Find exrc files in parent directories',
     callback = function()
       if vim.o.exrc then
-        local files = vim.fs.find(
-          { '.nvim.lua', '.nvimrc', '.exrc' },
-          { type = 'file', upward = true, limit = math.huge }
-        )
+        -- Start from parent directory, as exrc file in the current
+        -- directory is already loaded in do_exrc_initalization().
+        local files = vim.fs.find({ '.nvim.lua', '.nvimrc', '.exrc' }, {
+          type = 'file',
+          upward = true,
+          limit = math.huge,
+          path = vim.fs.dirname(vim.uv.cwd()),
+        })
         for _, file in ipairs(files) do
           local trusted = vim.secure.read(file) --[[@as string|nil]]
           if trusted then
