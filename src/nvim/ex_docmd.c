@@ -5611,19 +5611,7 @@ static void ex_restart(exarg_T *eap)
     return;
   }
 
-  win_T *wp;
-
-  if (eap->addr_count > 0) {
-    linenr_T wnr = eap->line2;
-
-    for (wp = firstwin; wp->w_next != NULL; wp = wp->w_next) {
-      if (--wnr <= 0) {
-        break;
-      }
-    }
-  } else {
-    wp = curwin;
-  }
+  win_T *wp = curwin;
 
   // If any buffer is changed and not saved, we cannot restart.
   // But if called using bang (!), we will force restart.
