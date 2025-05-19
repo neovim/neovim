@@ -651,7 +651,9 @@ void pum_redraw(void)
 
   for (int i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
-    const hlf_T *const hlfs = (idx == pum_selected) ? hlfsSel : hlfsNorm;
+    const bool selected = idx == pum_selected;
+    const hlf_T *const hlfs = selected ? hlfsSel : hlfsNorm;
+    const int trunc_attr = win_hl_attr(curwin, selected ? HLF_PSI : HLF_PNI);
     hlf_T hlf = hlfs[0];  // start with "word" highlight
     int attr = win_hl_attr(curwin, (int)hlf);
     attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), attr);
@@ -825,6 +827,7 @@ void pum_redraw(void)
       grid_line_fill(lcol, grid_col + 1, schar_from_ascii(' '), orig_attr);
       if (need_fcs_trunc) {
         linebuf_char[lcol] = fcs_trunc != NUL ? fcs_trunc : schar_from_ascii('<');
+        linebuf_attr[lcol] = trunc_attr;
         if (pum_width > 1 && linebuf_char[lcol + 1] == NUL) {
           linebuf_char[lcol + 1] = schar_from_ascii(' ');
         }
@@ -837,6 +840,7 @@ void pum_redraw(void)
           linebuf_char[rcol - 2] = schar_from_ascii(' ');
         }
         linebuf_char[rcol - 1] = fcs_trunc != NUL ? fcs_trunc : schar_from_ascii('>');
+        linebuf_attr[rcol - 1] = trunc_attr;
       }
     }
 

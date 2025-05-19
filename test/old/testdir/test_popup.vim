@@ -2036,6 +2036,7 @@ func Test_pum_maxwidth_multibyte()
   CheckScreendump
 
   let lines =<< trim END
+    hi StrikeFake ctermfg=9
     let g:change = 0
     func Omni_test(findstart, base)
       if a:findstart
@@ -2060,8 +2061,14 @@ func Test_pum_maxwidth_multibyte()
           \ #{word: "bar", menu: "fooMenu", kind: "一二三四"},
           \ #{word: "一二三四五", kind: "multi"},
           \ ]
-      else
         return [#{word: "bar", menu: "fooMenu", kind: "一二三"}]
+      elseif g:change == 3
+        return [#{word: "bar", menu: "fooMenu", kind: "一二三"}]
+      else
+        return [
+          \ #{word: "一二三四五六七八九十", abbr_hlgroup: "StrikeFake"},
+          \ #{word: "123456789_123456789_123456789_", abbr_hlgroup: "StrikeFake"},
+          \ ]
       endif
     endfunc
     set omnifunc=Omni_test
@@ -2173,6 +2180,12 @@ func Test_pum_maxwidth_multibyte()
     call VerifyScreenDump(buf, 'Test_pum_maxwidth_22', {'rows': 8})
     call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
   endif
+
+  call term_sendkeys(buf, ":let g:change=4\<CR>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_maxwidth_23', {'rows': 8})
+  call term_sendkeys(buf, "\<ESC>")
 
   call StopVimInTerminal(buf)
 endfunc
