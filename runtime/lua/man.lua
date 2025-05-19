@@ -415,11 +415,12 @@ local function get_page(path, silent)
   -- Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   -- Soft-wrap: ftplugin/man.lua sets wrap/breakindent/….
   -- Hard-wrap: driven by `man`.
-  local manwidth --- @type integer|string
+  local manwidth --- @type integer
   if (vim.g.man_hardwrap or 1) ~= 1 then
     manwidth = 999
   elseif vim.env.MANWIDTH then
-    manwidth = vim.env.MANWIDTH --- @type string|integer
+    vim.env.MANWIDTH = tonumber(vim.env.MANWIDTH) or 0
+    manwidth = math.min(vim.env.MANWIDTH, api.nvim_win_get_width(0) - vim.o.wrapmargin)
   else
     manwidth = api.nvim_win_get_width(0) - vim.o.wrapmargin
   end
