@@ -67,7 +67,9 @@
 ---you run |vim.pack.update()|.
 ---
 ---Freeze plugin from being updated:
----- Update 'init.lua' for plugin to have `version = false`.
+---- Update 'init.lua' for plugin to have `version` set to current commit hash.
+---You can get it by running `vim.pack.update({ 'plugin-name' })` and yanking
+---the word describing current state (looks like `abc12345`).
 ---- Restart Nvim.
 ---
 ---Unfreeze plugin to start receiving updates:
@@ -229,10 +231,9 @@ end
 --- - String to use specific branch, tag, or commit hash.
 --- - Output of |vim.version.range()| to install the greatest/last semver tag
 ---   inside the version constraint.
---- - `false` to freeze current state of already installed plugin from updates.
---- @field version? string|vim.VersionRange|false
+--- @field version? string|vim.VersionRange
 
---- @alias vim.pack.SpecResolved { source: string, name: string, version: nil|string|vim.VersionRange|false }
+--- @alias vim.pack.SpecResolved { source: string, name: string, version: nil|string|vim.VersionRange }
 
 --- @param spec string|vim.pack.Spec
 --- @return vim.pack.SpecResolved
@@ -242,12 +243,11 @@ local function normalize_spec(spec)
   vim.validate('spec.source', spec.source, 'string')
   local name = (spec.name or spec.source):match('[^/]+$')
   vim.validate('spec.name', name, 'string')
-  local version = spec.version
   local function is_version(x)
-    return type(x) == 'string' or is_version_range(x) or x == false
+    return type(x) == 'string' or is_version_range(x)
   end
-  vim.validate('spec.version', version, is_version, true, 'string, vim.VersionRange, or `false`')
-  return { source = spec.source, name = name, version = version }
+  vim.validate('spec.version', spec.version, is_version, true, 'string or vim.VersionRange')
+  return { source = spec.source, name = name, version = spec.version }
 end
 
 --- @class (private) vim.pack.Plug
@@ -543,12 +543,6 @@ function PlugList:resolve_version()
     if version == nil then
       p.info.version_str = git_get_default_branch(p.plug.path)
       p.info.version_ref = 'origin/' .. p.info.version_str
-      return
-    end
-
-    -- Allow `false` to mean freeze current state from updates
-    if version == false then
-      p.info.version_str, p.info.version_ref = '', 'HEAD'
       return
     end
 

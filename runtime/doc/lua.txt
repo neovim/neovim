@@ -2579,7 +2579,9 @@ Switch plugin's version:
   run |vim.pack.update()|.
 
 Freeze plugin from being updated:
-• Update 'init.lua' for plugin to have `version = false`.
+• Update 'init.lua' for plugin to have `version` set to current commit hash.
+  You can get it by running `vim.pack.update({ 'plugin-name' })` and yanking
+  the word describing current state (looks like `abc12345`).
 • Restart Nvim.
 
 Unfreeze plugin to start receiving updates:
@@ -2609,15 +2611,13 @@ Available events to hook into ~
                     format supported by `git clone` is allowed.
       • {name}?     (`string`) Name of plugin. Will be used as directory name.
                     Default: basename of `source`.
-      • {version}?  (`string|vim.VersionRange|false`) Version to use for
-                    install and updates. Can be:
+      • {version}?  (`string|vim.VersionRange`) Version to use for install and
+                    updates. Can be:
                     • `nil` (no value, default) to use repository's default
                       branch (usually `main` or `master`).
                     • String to use specific branch, tag, or commit hash.
                     • Output of |vim.version.range()| to install the
                       greatest/last semver tag inside the version constraint.
-                    • `false` to freeze current state of already installed
-                      plugin from updates.
 
 
 vim.pack.add({specs}, {opts})                                 *vim.pack.add()*
