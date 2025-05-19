@@ -1648,6 +1648,16 @@ function vim.api.nvim_load_context(dict) end
 --- @return any
 function vim.api.nvim_notify(msg, log_level, opts) end
 
+--- Opens a new tabpage with a single window
+---
+--- @param buffer integer Buffer handle, or 0 for current buffer
+--- @param enter boolean Boolean, whether to enter the new tabpage
+--- @param opts vim.api.keyset.open_tabpage Optional parameters
+--- - after: Tabpage handle, open new tabpage after this tabpage.
+---          Defaults to opening after the current tabpage.
+--- @return integer # Handle to newly created tabpage
+function vim.api.nvim_open_tabpage(buffer, enter, opts) end
+
 --- Open a terminal instance in a buffer
 ---
 --- By default (and currently the only option) the terminal will not be
