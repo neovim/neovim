@@ -648,25 +648,6 @@ end
 local added_plugins = {}
 local n_added_plugins = 0
 
-local function renumber_added_plugins()
-  --- @type table<integer,string>
-  local paths = {}
-  local max_id = 0
-  for path, p in pairs(added_plugins) do
-    paths[p.id] = path
-    max_id = math.max(max_id, p.id)
-  end
-
-  local n_total = 0
-  for i = 1, max_id do
-    if paths[i] ~= nil then
-      n_total = n_total + 1
-      added_plugins[paths[i]].id = n_total
-    end
-  end
-  n_added_plugins = n_total
-end
-
 --- @param plug vim.pack.Plug
 --- @param bang boolean
 local function pack_add(plug, bang)
@@ -967,8 +948,6 @@ function M.del(names)
     notify('Removed plugin `' .. p.plug.spec.name .. '`', 'INFO')
   end
   plug_list:trigger_event('PackDelete')
-
-  renumber_added_plugins()
 end
 
 --- @inlinedoc
@@ -980,13 +959,23 @@ end
 --- Get data about all plugins managed by |vim.pack|
 --- @return vim.pack.PlugData[]
 function M.get()
-  --- @type vim.pack.PlugData[]
-  local res = {}
-  for _, p_data in pairs(added_plugins) do
-    local plug = p_data.plug
-    res[p_data.id] = { spec = vim.deepcopy(plug.spec), path = plug.path, was_added = true }
+  -- Process added plugins in order they are added. Take into account that
+  -- there might be "holes" after `vim.pack.del()`.
+  --- @type table<integer,vim.pack.Plug>
+  local added = {}
+  for _, p in pairs(added_plugins) do
+    added[p.id] = p.plug
   end
 
+  --- @type vim.pack.PlugData[]
+  local res = {}
+  for i = 1, n_added_plugins do
+    if added[i] ~= nil then
+      res[#res + 1] = { spec = vim.deepcopy(added[i].spec), path = added[i].path, was_added = true }
+    end
+  end
+
+  -- Process not added plugins
   local plug_dir = get_plug_dir()
   for n, t in vim.fs.dir(plug_dir, { depth = 1 }) do
     local path = vim.fs.joinpath(plug_dir, n)
@@ -996,6 +985,7 @@ function M.get()
     end
   end
 
+  -- Make default `version` explicit
   for _, p_data in ipairs(res) do
     if p_data.spec.version == nil then
       p_data.spec.version = git_get_default_branch(p_data.path)
