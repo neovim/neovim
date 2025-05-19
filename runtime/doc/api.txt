@@ -1291,6 +1291,14 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
       • replace_termcodes
       • cpoptions
 
+nvim_restart()                                                *nvim_restart()*
+    WARNING: This feature is experimental/unstable.
+
+    Restarts the embedded server without killing the UI.
+
+    Attributes: ~
+        |RPC| only
+
                                                 *nvim_select_popupmenu_item()*
 nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
     Selects an item in the completion popup menu.
@@ -1690,13 +1698,6 @@ nvim__redraw({opts})                                          *nvim__redraw()*
 
     See also: ~
       • |:redraw|
-
-nvim_restart()                                                 *nvim_restart()*
-    Restarts the embedded server without killing the UI.
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.12.0
 
 nvim__stats()                                                  *nvim__stats()*
     Gets internal stats.
