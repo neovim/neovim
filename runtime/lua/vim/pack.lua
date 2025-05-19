@@ -411,6 +411,38 @@ end
 
 --- @package
 function PlugList:install()
+  -- Get user confirmation to install plugins
+  --- @param p vim.pack.PlugJob
+  local sources = vim.tbl_map(function(p)
+    return p.plug.spec.source
+  end, self.list)
+  local confirm_msg = 'These plugins will be installed:\n\n' .. table.concat(sources, '\n') .. '\n'
+  --- @type integer
+  local confirm_res
+  if vim.v.vim_did_enter == 1 then
+    confirm_res = vim.fn.confirm(confirm_msg, 'Proceed? &Yes\n&No', 1, 'Question')
+  else
+    -- Work around confirmation message not showing during startup.
+    -- This is a semi-regression of #31525: some redraw during startup makes
+    -- confirmation message disappear.
+    -- TODO: Remove when #34088 is resolved.
+    confirm_msg = confirm_msg .. '\nProceed? [Y]es, (N)o'
+    vim.defer_fn(function()
+      vim.print(confirm_msg)
+    end, 100)
+    local ok, char = pcall(vim.fn.getcharstr)
+    confirm_res = (ok and (char == 'y' or char == 'Y' or char == '\r')) and 1 or 0
+    vim.cmd.redraw()
+  end
+
+  if confirm_res ~= 1 then
+    for _, p in ipairs(self.list) do
+      p.job.err = 'Installation was not confirmed'
+    end
+    return
+  end
+
+  -- Trigger relevant event
   self:trigger_event('PackInstallPre')
 
   -- Clone
