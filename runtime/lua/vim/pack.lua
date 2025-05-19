@@ -20,13 +20,13 @@
 ---```lua
 ---
 ---vim.pack.add({
----   -- Install "plugin1" and use greatest available version
+---   -- Install "plugin1" and use default branch (usually `main` or `master`)
 ---   'https://github.com/user/plugin1',
 ---
 ---   -- Same as above, but using a table (allows setting other options)
 ---   { source = 'https://github.com/user/plugin1' },
 ---
----   -- Specify plugin's name (here the plugin will be called "plugin3"
+---   -- Specify plugin's name (here the plugin will be called "plugin2"
 ---   -- instead of "generic-name")
 ---   { source = 'https://github.com/user/generic-name', name = 'plugin2' },
 ---
@@ -58,7 +58,7 @@
 ---
 ---Switch plugin's version:
 ---- Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
----named 'plugin1' has changed from default `vim.version.range('*')` to `main`.
+---named 'plugin1' has changed to `vim.version.range('*')`.
 ---- Restart Nvim. The plugin's actual state on disk is not yet changed.
 ---- Execute `vim.pack.update({ 'plugin1' }, { offline = true })`. Using `offline`
 ---is optional to not download updates from source.
@@ -135,6 +135,9 @@ local git_args = {
   get_origin = function()
     return { 'remote', 'get-url', 'origin' }
   end,
+  get_default_origin_branch = function()
+    return { 'rev-parse', '--abbrev-ref', 'origin/HEAD' }
+  end,
   -- Using `rev-list -1` shows a commit of revision, while `rev-parse` shows
   -- hash of revision. Those are different for annotated tags.
   get_hash = function(rev)
@@ -168,6 +171,11 @@ local function git_cmd(cmd_name, ...)
 
   -- Use '-c gc.auto=0' to disable `stderr` "Auto packing..." messages
   return { 'git', '-c', 'gc.auto=0', unpack(args) }
+end
+
+local function git_get_default_branch(cwd)
+  local res = cli_sync(git_cmd('get_default_origin_branch'), cwd)
+  return (res:gsub('^origin/', ''))
 end
 
 --- @param cwd string
@@ -217,15 +225,14 @@ end
 --- @field name? string
 ---
 --- Version to use for install and updates. Can be:
+--- - `nil` (no value, default) to use repository's default branch (usually `main` or `master`).
 --- - String to use specific branch, tag, or commit hash.
 --- - Output of |vim.version.range()| to install the greatest/last semver tag
 ---   inside the version constraint.
 --- - `false` to freeze current state of already installed plugin from updates.
----
---- Default is `vim.version.range('*')`, i.e. install the greatest available version.
 --- @field version? string|vim.VersionRange|false
 
---- @alias vim.pack.SpecResolved { source: string, name: string, version: string|vim.VersionRange|false }
+--- @alias vim.pack.SpecResolved { source: string, name: string, version: nil|string|vim.VersionRange|false }
 
 --- @param spec string|vim.pack.Spec
 --- @return vim.pack.SpecResolved
@@ -235,11 +242,11 @@ local function normalize_spec(spec)
   vim.validate('spec.source', spec.source, 'string')
   local name = (spec.name or spec.source):match('[^/]+$')
   vim.validate('spec.name', name, 'string')
-  local version = spec.version == nil and vim.version.range('*') or spec.version
+  local version = spec.version
   local function is_version(x)
     return type(x) == 'string' or is_version_range(x) or x == false
   end
-  vim.validate('spec.version', version, is_version, false, 'string or vim.VersionRange')
+  vim.validate('spec.version', version, is_version, true, 'string, vim.VersionRange, or `false`')
   return { source = spec.source, name = name, version = version }
 end
 
@@ -500,6 +507,12 @@ function PlugList:resolve_version()
       return
     end
     local version = p.plug.spec.version
+
+    if version == nil then
+      p.info.version_str = git_get_default_branch(p.plug.path)
+      p.info.version_ref = 'origin/' .. p.info.version_str
+      return
+    end
 
     -- Allow `false` to mean freeze current state from updates
     if version == false then
@@ -978,9 +991,14 @@ function M.get()
   for n, t in vim.fs.dir(plug_dir, { depth = 1 }) do
     local path = vim.fs.joinpath(plug_dir, n)
     if t == 'directory' and not added_plugins[path] then
-      local spec = { name = n, version = vim.version.range('*') }
-      spec.source = cli_sync(git_cmd('get_origin'), path)
+      local spec = { name = n, source = cli_sync(git_cmd('get_origin'), path) }
       table.insert(res, { spec = spec, path = path, was_added = false })
+    end
+  end
+
+  for _, p_data in ipairs(res) do
+    if p_data.spec.version == nil then
+      p_data.spec.version = git_get_default_branch(p_data.path)
     end
   end
 

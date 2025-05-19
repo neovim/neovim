@@ -2534,13 +2534,13 @@ Basic install and management:
 • Add |vim.pack.add()| call(s) to 'init.lua': >lua
 
     vim.pack.add({
-      -- Install "plugin1" and use greatest available version
+      -- Install "plugin1" and use default branch (usually `main` or `master`)
       'https://github.com/user/plugin1',
 
       -- Same as above, but using a table (allows setting other options)
       { source = 'https://github.com/user/plugin1' },
 
-      -- Specify plugin's name (here the plugin will be called "plugin3"
+      -- Specify plugin's name (here the plugin will be called "plugin2"
       -- instead of "generic-name")
       { source = 'https://github.com/user/generic-name', name = 'plugin2' },
 
@@ -2570,7 +2570,7 @@ Basic install and management:
 
 Switch plugin's version:
 • Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
-  named 'plugin1' has changed from default `vim.version.range('*')` to `main`.
+  named 'plugin1' has changed to `vim.version.range('*')`.
 • Restart Nvim. The plugin's actual state on disk is not yet changed.
 • Execute `vim.pack.update({ 'plugin1' }, { offline = true })`. Using
   `offline` is optional to not download updates from source.
@@ -2611,14 +2611,13 @@ Available events to hook into ~
                     Default: basename of `source`.
       • {version}?  (`string|vim.VersionRange|false`) Version to use for
                     install and updates. Can be:
+                    • `nil` (no value, default) to use repository's default
+                      branch (usually `main` or `master`).
                     • String to use specific branch, tag, or commit hash.
                     • Output of |vim.version.range()| to install the
                       greatest/last semver tag inside the version constraint.
                     • `false` to freeze current state of already installed
                       plugin from updates.
-
-                    Default is `vim.version.range('*')`, i.e. install the
-                    greatest available version.
 
 
 vim.pack.add({specs}, {opts})                                 *vim.pack.add()*
