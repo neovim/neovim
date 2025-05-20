@@ -78,7 +78,6 @@ execute_process(
     ${TEST_PATH}
   TIMEOUT $ENV{TEST_TIMEOUT}
   WORKING_DIRECTORY ${WORKING_DIR}
-  ERROR_VARIABLE err
   RESULT_VARIABLE res
   ${EXTRA_ARGS})
 
@@ -87,11 +86,6 @@ file(REMOVE_RECURSE ${RM_FILES})
 
 if(res)
   message(STATUS "Tests exited non-zero: ${res}")
-  if("${err}" STREQUAL "")
-    message(STATUS "No output to stderr.")
-  else()
-    message(STATUS "Output to stderr:\n${err}")
-  endif()
 
   # Dump the logfile on CI (if not displayed and moved already).
   if(CI_BUILD)
