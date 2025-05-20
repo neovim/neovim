@@ -1530,6 +1530,7 @@ static void init_prompt(int cmdchar_todo)
 
   if (curwin->w_cursor.lnum < curbuf->b_prompt_submitted) {
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    coladvance(curwin, MAXCOL);
   }
   char *text = get_cursor_line_ptr();
   if (curbuf->b_prompt_submitted == curbuf->b_ml.ml_line_count
@@ -1557,10 +1558,9 @@ static void init_prompt(int cmdchar_todo)
   }
 
   if (cmdchar_todo == 'A') {
-    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(curwin, MAXCOL);
   }
-  if (curbuf->b_prompt_submitted == curbuf->b_ml.ml_line_count) {
+  if (curbuf->b_prompt_submitted == curwin->w_cursor.lnum) {
     curwin->w_cursor.col = MAX(curwin->w_cursor.col, (colnr_T)strlen(prompt));
   }
   // Make sure the cursor is in a valid position.
