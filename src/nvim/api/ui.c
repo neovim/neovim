@@ -17,6 +17,7 @@
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -37,6 +38,7 @@
 #include "nvim/option.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_client.h"
 
 #define BUF_POS(ui) ((size_t)((ui)->packer.ptr - (ui)->packer.startptr))
 
@@ -237,6 +239,65 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
     return;
   }
   remote_ui_disconnect(channel_id);
+}
+
+/// Restarts the embedded server without killing the UI.
+///
+/// @param[out] err Error info if any.
+void nvim_ui_restart(Error *err)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_FAST
+{
+  int width = ui_client_get_width();
+  int height = ui_client_get_height();
+  char *term = ui_client_get_term();
+  bool rgb = ui_client_get_rgb();
+
+  // 1. Client-side server detach.
+  ui_client_detach();
+
+  // 2. Close ui client channel (auto kills the `nvim --embed` server due to self-exit).
+  const char *error;
+  bool success = channel_close(ui_client_channel_id, kChannelPartAll, &error);
+  if (!success) {
+    ELOG("%s", error);
+    return;
+  }
+
+  // 3. Get v:argv.
+  typval_T *tv = get_vim_var_tv(VV_ARGV);
+  if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
+    ELOG("failed to get vim var typval");
+    return;
+  }
+  list_T *l = tv->vval.v_list;
+  int argc = tv_list_len(l);
+
+  // Assert to be positive for safe conversion to size_t.
+  assert(argc >= 0);
+
+  char **argv = xmalloc(sizeof(char *) * ((size_t)argc + 1));
+  listitem_T *li = tv_list_first(l);
+  for (int i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
+    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
+      argv[i] = TV_LIST_ITEM_TV(li)->vval.v_string;
+    } else {
+      argv[i] = "";
+    }
+  }
+  argv[argc] = NULL;
+
+  // 4. Start a new `nvim --embed` server.
+  uint64_t rv = ui_client_start_server(argc, argv);
+  if (!rv) {
+    ELOG("failed to start nvim server");
+    return;
+  }
+
+  // 5. Client-side server re-attach.
+  ui_client_channel_id = rv;
+  ui_client_attach(width, height, term, rgb);
+
+  ILOG("restarted server id=%" PRId64, rv);
 }
 
 // TODO(bfredl): use me to detach a specific ui from the server

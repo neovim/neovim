@@ -1291,14 +1291,6 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
       • replace_termcodes
       • cpoptions
 
-nvim_restart()                                                *nvim_restart()*
-    WARNING: This feature is experimental/unstable.
-
-    Restarts the embedded server without killing the UI.
-
-    Attributes: ~
-        |RPC| only
-
                                                 *nvim_select_popupmenu_item()*
 nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
     Selects an item in the completion popup menu.
@@ -4018,6 +4010,15 @@ nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
 
     Parameters: ~
       • {height}  Popupmenu height, must be greater than zero.
+
+nvim_ui_restart()                                          *nvim_ui_restart()*
+    WARNING: This feature is experimental/unstable.
+
+    Restarts the embedded server without killing the UI.
+
+    Attributes: ~
+        |api-fast|
+        |RPC| only
 
 nvim_ui_set_focus({gained})                              *nvim_ui_set_focus()*
     Tells the nvim server if focus was gained or lost by the GUI
