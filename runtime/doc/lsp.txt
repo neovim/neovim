@@ -712,10 +712,6 @@ Lua module: vim.lsp                                                 *lsp-core*
                          activated by `vim.lsp.enable()`. If not provided, the
                          client will attach to all filetypes.
       • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
-                         Predicate which decides if a client should be
-                         re-used. Used on all running clients. The default
-                         implementation re-uses a client if name and root_dir
-                         matches.
       • {root_dir}?      (`string|fun(bufnr: integer, on_dir:fun(root_dir?:string))`)
                          *lsp-root_dir()* Directory where the LSP server will
                          base its workspaceFolders, rootUri, and rootPath on
@@ -1225,7 +1221,7 @@ tagfunc({pattern}, {flags})                                *vim.lsp.tagfunc()*
       • {flags}    (`string`) See |tag-function|
 
     Return: ~
-        (`table[]`) tags A list of matching tags
+        (`table[]|vim.NIL`) tags A list of matching tags
 
 
 ==============================================================================

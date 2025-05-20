@@ -1284,7 +1284,6 @@ local state_restore_order = { 'bo', 'wo', 'go', 'env' }
 --- @param context vim.context.mods
 --- @return vim.context.state
 local get_context_state = function(context)
-  --- @type vim.context.state.result
   local res = { bo = {}, env = {}, go = {}, wo = {} }
 
   -- Use specific order from possibly most to least intrusive
@@ -1429,7 +1428,7 @@ function vim._resolve_bufnr(bufnr)
 end
 
 --- @generic T
---- @param x elem_or_list<T>?
+--- @param x T|T[]?
 --- @return T[]
 function vim._ensure_list(x)
   if type(x) == 'table' then

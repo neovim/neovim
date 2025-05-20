@@ -628,6 +628,8 @@ function Client:_process_request(id, req_type, bufnr, method)
     method = cur_request.method
   end
 
+  -- EmmyLuaLs/emmylua-analyzer-rust#480
+  --- @diagnostic disable-next-line: unnecessary-assert
   assert(bufnr and method)
 
   local request = { type = req_type, bufnr = bufnr, method = method }
@@ -685,6 +687,8 @@ function Client:request(method, params, handler, bufnr)
       params = params,
       version = version,
     })
+    ---@diagnostic disable-next-line: redefined-local
+    --- EmmyLuaLs/emmylua-analyzer-rust#481
   end, function(request_id)
     -- Called when the server sends a response to the request (including cancelled acknowledgment).
     if request_registered then
@@ -860,7 +864,7 @@ function Client:_register(registrations)
   local unsupported = {} --- @type string[]
 
   for _, reg in ipairs(registrations) do
-    local method = reg.method
+    local method = reg.method --[[@as vim.lsp.protocol.Method]]
     if method == ms.workspace_didChangeWatchedFiles then
       vim.lsp._watchfiles.register(reg, self.id)
     elseif not self:_supports_registration(method) then
@@ -958,9 +962,11 @@ function Client:exec_cmd(command, context, handler)
     return
   end
 
-  local command_provider = self.server_capabilities.executeCommandProvider
+  local command_provider = assert(self.server_capabilities).executeCommandProvider
   local commands = type(command_provider) == 'table' and command_provider.commands or {}
 
+  ---@diagnostic disable-next-line: param-type-not-match
+  --- EmmyLuaLs/emmylua-analyzer-rust#482
   if not vim.list_contains(commands, cmdname) then
     vim.notify_once(
       string.format(

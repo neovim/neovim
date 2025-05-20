@@ -77,8 +77,7 @@ local format_line_ending = {
   ['mac'] = '\r',
 }
 
----@private
----@param bufnr (number)
+---@param bufnr integer
 ---@return string
 function lsp._buf_get_line_ending(bufnr)
   return format_line_ending[vim.bo[bufnr].fileformat] or '\n'
@@ -283,7 +282,7 @@ end
 ---
 --- Predicate which decides if a client should be re-used. Used on all running clients. The default
 --- implementation re-uses a client if name and root_dir matches.
---- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+--- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean #
 ---
 --- [lsp-root_dir()]() Directory where the LSP server will base its workspaceFolders, rootUri, and
 --- rootPath on initialization. The function form receives a buffer number and `on_dir` callback
@@ -420,6 +419,7 @@ local function validate_config_name(name)
   end, 'non-wildcard string')
 end
 
+--- @diagnostic disable-next-line: assign-type-mismatch
 --- @nodoc
 --- @class vim.lsp.config
 --- @field [string] vim.lsp.Config
@@ -823,7 +823,7 @@ local function is_empty_or_default(bufnr, option)
     return false
   end
 
-  return vim.startswith(scriptinfo[1].name, vim.fn.expand('$VIMRUNTIME'))
+  return vim.startswith(assert(scriptinfo[1]).name, vim.fn.expand('$VIMRUNTIME'))
 end
 
 ---@private

@@ -25,7 +25,9 @@ local PATTERNS = {
 ---@param hex string
 ---@return string
 local function hex_to_char(hex)
-  return schar(tonumber(hex, 16))
+  --- @diagnostic disable-next-line: param-type-not-match
+  -- EmmyLuaLs/emmylua-analyzer-rust#476
+  return schar(assert(tonumber(hex, 16)))
 end
 
 ---@param char string
@@ -64,7 +66,7 @@ function M.uri_from_fname(path)
   local is_windows = volume_path ~= nil
   if is_windows then
     assert(fname)
-    path = volume_path .. M.uri_encode(fname:gsub('\\', '/'))
+    path = volume_path .. M.uri_encode((fname:gsub('\\', '/')))
   else
     path = M.uri_encode(path)
   end

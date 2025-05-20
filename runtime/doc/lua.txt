@@ -3915,8 +3915,8 @@ vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
         Since: 0.9.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`) Version object.
-      • {v2}  (`vim.Version|number[]|string`) Version to compare with `v1`.
+      • {v1}  (`vim.Version|integer[]|string`) Version object.
+      • {v2}  (`vim.Version|integer[]|string`) Version to compare with `v1`.
 
     Return: ~
         (`integer`) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
@@ -3929,11 +3929,16 @@ vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
         Since: 0.9.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)
+
+vim.version.foo({key})                                     *vim.version.foo()*
+
+    Parameters: ~
+      • {key}  (`integer`)
 
 vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
     Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
@@ -3942,8 +3947,8 @@ vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
         Since: 0.10.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3955,8 +3960,8 @@ vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
         Since: 0.9.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3977,8 +3982,8 @@ vim.version.le({v1}, {v2})                                  *vim.version.le()*
         Since: 0.10.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)
@@ -3990,8 +3995,8 @@ vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
         Since: 0.9.0
 
     Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
+      • {v1}  (`vim.Version|integer[]|string`)
+      • {v2}  (`vim.Version|integer[]|string`)
 
     Return: ~
         (`boolean`)

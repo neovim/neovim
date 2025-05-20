@@ -161,6 +161,8 @@ function M.get_node_range(node_or_range)
     --- @cast node_or_range -TSNode LuaLS bug
     return M._range.unpack4(node_or_range)
   else
+    -- EmmyLuaLs/emmylua-analyzer-rust#474
+    ---@diagnostic disable-next-line: need-check-nil, undefined-field, missing-return-value
     return node_or_range:range(false)
   end
 end
@@ -176,6 +178,8 @@ function M.get_range(node, source, metadata)
     assert(source)
     return M._range.add_bytes(source, metadata.range)
   end
+  ---@diagnostic disable-next-line: return-type-mismatch
+  -- EmmyLuaLs/emmylua-analyzer-rust#343
   return { node:range(true) }
 end
 
@@ -240,7 +244,8 @@ function M.node_contains(node, range)
   -- allow a table so nodes can be mocked
   vim.validate('node', node, { 'userdata', 'table' })
   vim.validate('range', range, M._range.validate, 'integer list with 4 or 6 elements')
-  --- @diagnostic disable-next-line: missing-fields LuaLS bug
+  ---@diagnostic disable-next-line: missing-fields, assign-type-mismatch
+  -- EmmyLuaLs/emmylua-analyzer-rust#343
   local nrange = { node:range() } --- @type Range4
   return M._range.contains(nrange, range)
 end
@@ -392,8 +397,12 @@ function M.get_node(opts)
   end
 
   if opts.include_anonymous then
+    ---@diagnostic disable-next-line: param-type-not-match
+    -- EmmyLuaLs/emmylua-analyzer-rust#343
     return root_lang_tree:node_for_range(ts_range, opts)
   end
+  ---@diagnostic disable-next-line: param-type-not-match
+  -- EmmyLuaLs/emmylua-analyzer-rust#343
   return root_lang_tree:named_node_for_range(ts_range, opts)
 end
 
