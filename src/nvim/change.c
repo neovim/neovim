@@ -1746,7 +1746,21 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
   curbuf_splice_pending++;
   old_cursor = curwin->w_cursor;
+  char *prompt_moved = NULL;
   if (dir == BACKWARD) {
+    if (bt_prompt(curbuf)
+        && curwin->w_cursor.lnum == curbuf->b_prompt_submitted) {
+      char *prompt_line = ml_get(curwin->w_cursor.lnum);
+      char *prompt= prompt_text();
+      size_t prompt_len = strlen(prompt);
+
+      if (strncmp(prompt_line, prompt, prompt_len) == 0) {
+        STRMOVE(prompt_line, prompt_line + prompt_len);
+        ml_replace(curwin->w_cursor.lnum, prompt_line, true);
+        prompt_moved = concat_str(prompt, p_extra);
+        p_extra = prompt_moved;
+      }
+    }
     curwin->w_cursor.lnum--;
   }
   if ((State & VREPLACE_FLAG) == 0 || old_cursor.lnum >= orig_line_count) {
@@ -1936,6 +1950,7 @@ theend:
   xfree(saved_line);
   xfree(next_line);
   xfree(allocated);
+  xfree(prompt_moved);
   return retval;
 }
 
