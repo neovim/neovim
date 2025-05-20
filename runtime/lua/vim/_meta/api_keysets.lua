@@ -16,6 +16,13 @@ error('Cannot require a meta file')
 --- @field force? boolean
 --- @field unload? boolean
 
+--- @class vim.api.keyset.buf_find
+--- @field start_row? integer
+--- @field start_col? integer
+--- @field end_row? integer
+--- @field end_col? integer
+--- @field substr? string
+
 --- @class vim.api.keyset.clear_autocmds
 --- @field buffer? integer
 --- @field event? string|string[]

@@ -1905,6 +1905,186 @@ describe('api/buf', function()
     end)
   end)
 
+  describe_lua_and_rpc('nvim_buf_find', function(lua_or_rpc)
+    local nvim_buf_set_lines = lua_or_rpc.nvim_buf_set_lines
+    local nvim_buf_find = lua_or_rpc.nvim_buf_find
+
+    local lines = function(...)
+      nvim_buf_set_lines(0, 0, -1, true, { ... })
+    end
+    local f = function(str, sr, sc, er, ec)
+      local result = nvim_buf_find(0, {
+        substr = str,
+        start_row = sr,
+        start_col = sc,
+        end_row = er,
+        end_col = ec,
+      })
+
+      if result ~= vim.NIL then
+        return { result.start_row, result.start_col, result.end_row, result.end_col }
+      end
+    end
+
+    it('finds single line string', function()
+      lines('abc', 'de', 'fghihdeklmn', '', 'abcde')
+
+      eq({ 0, 0, 0, 3 }, f('abc'))
+      eq({ 1, 0, 1, 1 }, f('d'))
+      eq({ 1, 0, 1, 2 }, f('de'))
+
+      eq({ 1, 0, 1, 2 }, f('de'), 1, 0)
+      eq({ 1, 0, 1, 2 }, f('de'), 1, 0, 1, 2)
+      eq({ 1, 0, 1, 2 }, f('de'), nil, nil, 1, 2)
+
+      eq({ 2, 5, 2, 7 }, f('de', 1, 1))
+      eq(nil, f('de', nil, nil, 1, 1))
+
+      eq({ 4, 3, 4, 5 }, f('de', 2, 6))
+      eq({ 4, 3, 4, 5 }, f('de', 2, 6, 4, 5))
+      eq({ 4, 3, 4, 5 }, f('de', 2, 6, 5, 0))
+    end)
+
+    it('finds empty string', function()
+      lines('abc', '', 'abcde')
+
+      eq({ 0, 0, 0, 0 }, f(''))
+      eq({ 0, 0, 0, 0 }, f('', 0, 0))
+      eq({ 0, 0, 0, 0 }, f('', 0, 0, 0, 0))
+      eq({ 0, 0, 0, 0 }, f('', nil, nil, 0, 0))
+
+      eq({ 0, 3, 0, 3 }, f('', 0, 3))
+      eq({ 0, 3, 0, 3 }, f('', 0, 3, 0, 3))
+
+      eq({ 1, 0, 1, 0 }, f('', 1, 0))
+      eq({ 1, 0, 1, 0 }, f('', 1, 0, 1, 0))
+
+      eq({ 2, 5, 2, 5 }, f('', 2, 5))
+      eq({ 2, 5, 2, 5 }, f('', 2, 5, 2, 5))
+
+      eq({ 3, 0, 3, 0 }, f('', 3, 0))
+      eq({ 3, 0, 3, 0 }, f('', 3, 0, 3, 0))
+    end)
+
+    it('finds multiline string', function()
+      lines('abc', 'de', 'fgh', 'ij', 'abc', '123de', 'fgh', 'ij456', 'de', 'fgh', 'ij')
+
+      eq({ 1, 0, 3, 2 }, f('de\nfgh\nij'))
+      eq({ 1, 0, 3, 2 }, f('de\nfgh\nij', 1, 0))
+      eq({ 1, 0, 3, 2 }, f('de\nfgh\nij', 1, 0, 3, 2))
+      eq({ 1, 0, 3, 2 }, f('de\nfgh\nij', nil, nil, 3, 2))
+
+      eq({ 5, 3, 7, 2 }, f('de\nfgh\nij', 1, 1))
+      eq({ 8, 0, 10, 2 }, f('de\nfgh\nij', 8, 0))
+      eq({ 8, 0, 10, 2 }, f('de\nfgh\nij', 8, 0, 10, 2))
+      eq(nil, f('de\nfgh\nij', 8, 1))
+
+      eq({ 1, 0, 4, 0 }, f('de\nfgh\nij\n'))
+      eq({ 1, 0, 4, 0 }, f('de\nfgh\nij\n', 1, 0))
+      eq({ 1, 0, 4, 0 }, f('de\nfgh\nij\n', 1, 0, 4, 0))
+      eq({ 1, 0, 4, 0 }, f('de\nfgh\nij\n', nil, nil, 4, 0))
+      eq(nil, f('de\nfgh\nij\n', nil, nil, 3, 2))
+      eq({ 8, 0, 11, 0 }, f('de\nfgh\nij\n', 1, 1))
+      eq({ 8, 0, 11, 0 }, f('de\nfgh\nij\n', 1, 1, 11, 0))
+      eq(nil, f('de\nfgh\nij\n', 1, 1, 10, 2))
+
+      eq({ 0, 3, 3, 2 }, f('\nde\nfgh\nij'))
+      eq({ 0, 3, 3, 2 }, f('\nde\nfgh\nij', 0, 3))
+      eq({ 7, 5, 10, 2 }, f('\nde\nfgh\nij', 1, 0))
+      eq({ 7, 5, 10, 2 }, f('\nde\nfgh\nij', 7, 5))
+      eq(nil, f('\nde\nfgh\nij', 8, 0))
+
+      eq({ 0, 3, 4, 0 }, f('\nde\nfgh\nij\n'))
+      eq({ 7, 5, 11, 0 }, f('\nde\nfgh\nij\n', 1, 0))
+      eq(nil, f('de\nfgh\nij\n\n'))
+
+      eq({ 10, 2, 11, 0 }, f('\n', 10, 2))
+      eq(nil, f('\n', 11, 0))
+
+      lines('abc', 'de', 'fgh', 'ij', '', 'abc', '123de', 'fgh', 'ij456', 'de', 'fgh', 'ij', '')
+
+      eq({ 1, 0, 5, 0 }, f('de\nfgh\nij\n\n'))
+      eq({ 9, 0, 13, 0 }, f('de\nfgh\nij\n\n', 1, 1))
+      eq({ 9, 0, 13, 0 }, f('de\nfgh\nij\n\n', 1, 1, 13, 0))
+      eq(nil, f('de\nfgh\nij\n\n', 1, 1, 12, 0))
+
+      lines(
+        'abc',
+        'de',
+        'fgh',
+        'ij',
+        '',
+        'abc',
+        '123de',
+        'fgh',
+        '',
+        '',
+        'ij456',
+        'de',
+        'fgh',
+        'ij',
+        ''
+      )
+
+      eq({ 6, 3, 10, 2 }, f('de\nfgh\n\n\nij'))
+    end)
+
+    it('errors on invalid parameters', function()
+      lines('abc', 'de')
+      eq('Start position is after end position', pcall_err(f, 'a', 0, 1, 0, 0))
+      eq('Field "substr" is missing', pcall_err(f, nil, nil, nil, 0, nil))
+      eq('Field "start_col" is specified without "start_row"', pcall_err(f, 'a', nil, 1))
+      eq('Field "start_col" is missing', pcall_err(f, 'a', 0, nil))
+      eq('Field "end_col" is specified without "end_row"', pcall_err(f, 'a', nil, nil, nil, 1))
+      eq('Field "end_col" is missing', pcall_err(f, 'a', nil, nil, 0, nil))
+    end)
+
+    it('errors on out-of-bounds range', function()
+      lines('abc', 'de')
+
+      local msg = 'Start position is out of bounds'
+      eq(msg, pcall_err(f, 'a', -1, 0))
+      eq(msg, pcall_err(f, 'a', 0, -1))
+      eq(msg, pcall_err(f, 'a', 0, 4))
+      eq(msg, pcall_err(f, 'a', 2, -1))
+      eq(msg, pcall_err(f, 'a', 2, 1))
+      eq(msg, pcall_err(f, 'a', 3, 0))
+
+      msg = 'End position is out of bounds'
+      eq(msg, pcall_err(f, 'a', nil, nil, -1, 0))
+      eq(msg, pcall_err(f, 'a', nil, nil, 0, -1))
+      eq(msg, pcall_err(f, 'a', nil, nil, 0, 4))
+      eq(msg, pcall_err(f, 'a', nil, nil, 2, -1))
+      eq(msg, pcall_err(f, 'a', nil, nil, 2, 1))
+      eq(msg, pcall_err(f, 'a', nil, nil, 3, 0))
+    end)
+
+    it('supports different buffer', function()
+      lines('abc')
+      local prev = lua_or_rpc.nvim_get_current_buf()
+      feed(':enew<cr>')
+      lines('def')
+      local cur = lua_or_rpc.nvim_get_current_buf()
+
+      eq(
+        { start_row = 0, start_col = 1, end_row = 0, end_col = 2 },
+        nvim_buf_find(0, { substr = 'e' })
+      )
+      eq(
+        { start_row = 0, start_col = 1, end_row = 0, end_col = 2 },
+        nvim_buf_find(cur, { substr = 'e' })
+      )
+      eq(vim.NIL, nvim_buf_find(prev, { substr = 'e' }))
+
+      eq(vim.NIL, nvim_buf_find(0, { substr = 'b' }))
+      eq(vim.NIL, nvim_buf_find(cur, { substr = 'b' }))
+      eq(
+        { start_row = 0, start_col = 1, end_row = 0, end_col = 2 },
+        nvim_buf_find(prev, { substr = 'b' })
+      )
+    end)
+  end)
+
   describe('nvim_buf_get_offset', function()
     local get_offset = api.nvim_buf_get_offset
     it('works', function()

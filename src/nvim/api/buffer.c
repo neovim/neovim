@@ -1220,6 +1220,325 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   return res;
 }
 
+// Searches for a plain text substring (single-line or multi-line)
+// within the specified range of the buffer.
+//
+// Each line in the buffer is considered to end with a "\n", and the
+// position (number_of_lines, 0) is treated as valid.
+//
+// The search range is zero-based and end-exclusive. Both the start and end positions
+// are optional: If start is not specified, the default is (0, 0).
+// If end is not specified, the default is (number_of_lines, 0).
+//
+//
+// @param buffer Buffer id, or 0 for current buffer
+// @param opts Parameters map. Keys
+//             - start_row: (optional) Row index of the start position
+//             - start_col: (optional) Column (in bytes) of the start position
+//             - end_row: (optional) Row index of the end position
+//             - end_col: (optional) Column (in bytes) of the end position
+// @param[out] err   Error details, if any
+// @returns { start_row, start_col, end_row, end_col } end-exclusive range of the substring. Or vim.NIL if not found.
+Object nvim_buf_find(Buffer buffer, Dict(buf_find) *opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(14)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return NIL;
+  }
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeValidation, "Buffer is unloaded: %d", buffer);
+    return NIL;
+  }
+
+  if (!HAS_KEY(opts, buf_find, substr)) {
+    api_set_error(err, kErrorTypeValidation, "Field \"substr\" is missing");
+    return NIL;
+  }
+  String str = opts->substr;
+
+  lpos_T begin;
+  if (!HAS_KEY(opts, buf_find, start_row)) {
+    if (HAS_KEY(opts, buf_find, start_col)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Field \"start_col\" is specified without \"start_row\"");
+      return NIL;
+    }
+    begin = (lpos_T){ 0, 0 };
+  } else {
+    if (!HAS_KEY(opts, buf_find, start_col)) {
+      api_set_error(err, kErrorTypeValidation, "Field \"start_col\" is missing");
+      return NIL;
+    }
+
+    if (!pos_validate(buf, opts->start_row, opts->start_col)) {
+      api_set_error(err, kErrorTypeValidation, "Start position is out of bounds");
+      return NIL;
+    }
+
+    begin = (lpos_T){ (linenr_T)opts->start_row, (colnr_T)opts->start_col };
+  }
+
+  lpos_T end;
+  if (!HAS_KEY(opts, buf_find, end_row)) {
+    if (HAS_KEY(opts, buf_find, end_col)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Field \"end_col\" is specified without \"end_row\"");
+      return NIL;
+    }
+    end = (lpos_T){ buf->b_ml.ml_line_count, 0 };
+  } else {
+    if (!HAS_KEY(opts, buf_find, end_col)) {
+      api_set_error(err, kErrorTypeValidation, "Field \"end_col\" is missing");
+      return NIL;
+    }
+
+    if (!pos_validate(buf, opts->end_row, opts->end_col)) {
+      api_set_error(err, kErrorTypeValidation, "End position is out of bounds");
+      return NIL;
+    }
+
+    end = (lpos_T){ (linenr_T)opts->end_row, (colnr_T)opts->end_col };
+  }
+
+  if (begin.lnum > end.lnum || (begin.lnum == end.lnum && begin.col > end.col)) {
+    api_set_error(err, kErrorTypeValidation, "Start position is after end position");
+    return NIL;
+  }
+
+  SearchParams params = (SearchParams){
+    .buf = buf,
+    .begin = begin,
+    .end = end,
+    .len = str.size,
+    .str = str.data,
+  };
+
+  SearchResult result;
+
+  if (str.size == 0) {
+    result = (SearchResult){ true, begin, begin };
+  } else {
+    char *eol = memchr(str.data, '\n', str.size);
+    if (eol != NULL) {
+      result = search_multiline(params, eol);
+    } else {
+      result = search_single_line(params);
+    }
+  }
+
+  if (!result.found) {
+    return NIL;
+  }
+
+  Dict rv = arena_dict(arena, 4);
+  PUT_C(rv, "start_row", INTEGER_OBJ(result.begin.lnum));
+  PUT_C(rv, "start_col", INTEGER_OBJ(result.begin.col));
+  PUT_C(rv, "end_row", INTEGER_OBJ(result.end.lnum));
+  PUT_C(rv, "end_col", INTEGER_OBJ(result.end.col));
+  return (Object){ kObjectTypeDict, { .dict = rv } };
+}
+
+static SearchResult search_multiline(SearchParams p, char const *first_eol)
+{
+  buf_T *buf = p.buf;
+  size_t str_len = p.len;
+  char const *str = p.str;
+  char const *str_end = str + str_len;
+  lpos_T begin_pos = p.begin;
+  lpos_T end_pos = p.end;
+
+  kvec_t(StringView) str_lines = KV_INITIAL_VALUE;
+  {
+    kv_push(str_lines, ((StringView){ str, (size_t)(first_eol - str) }));
+    char const *cur = first_eol + 1;
+    while (cur < str_end) {
+      char *eol = memchr(cur, '\n', (size_t)(str_end - cur));
+      if (!eol) {
+        break;
+      }
+      kv_push(str_lines, ((StringView){ cur, (size_t)(eol - cur) }));
+      cur = eol + 1;
+    }
+    kv_push(str_lines, ((StringView){ cur, (size_t)(str_end - cur) }));
+  }
+
+  if ((size_t)(end_pos.lnum - begin_pos.lnum) + 1 < kv_size(str_lines)) {
+    kv_destroy(str_lines);
+    return (SearchResult){ false };
+  }
+  int str_line_count = (int)kv_size(str_lines);
+
+  kvec_t(colnr_T) line_lengths = KV_INITIAL_VALUE;
+  kv_resize(line_lengths, (size_t)str_line_count);
+  for (int i = 0; i < str_line_count; i++) {
+    kv_push(line_lengths, line_len(buf, begin_pos.lnum + i));
+  }
+
+  int const end_line = end_pos.lnum - (str_line_count - 1);
+
+  SearchResult result = (SearchResult){ false };
+  int cur_line = begin_pos.lnum;
+  while (true) {
+    result = multiline_search_lines(p,
+                                    cur_line,
+                                    str_line_count,
+                                    str_lines.items,
+                                    line_lengths.items);
+    if (result.found) {
+      break;
+    }
+
+    if (cur_line >= end_line) {
+      break;
+    }
+
+    memmove(line_lengths.items,
+            line_lengths.items + 1,
+            sizeof(*line_lengths.items) * (size_t)(str_line_count - 1));
+    line_lengths.items[str_line_count - 1] = line_len(buf, cur_line + str_line_count);
+    cur_line++;
+  }
+
+  kv_destroy(str_lines);
+  kv_destroy(line_lengths);
+  return result;
+}
+
+static SearchResult multiline_search_lines(SearchParams p, int cur_line, int count,
+                                           StringView const *str_lines, colnr_T const *line_lengths)
+{
+  buf_T *buf = p.buf;
+  linenr_T line_count = buf->b_ml.ml_line_count;
+
+  int last_line = cur_line + count - 1;
+  colnr_T begin_col = cur_line == p.begin.lnum ? p.begin.col : 0;
+  colnr_T end_col = last_line == p.end.lnum ? p.end.col : INT_MAX;
+
+  if ((size_t)(line_lengths[0] - begin_col) < str_lines[0].length) {
+    return (SearchResult){ false };
+  }
+  if ((size_t)MIN(line_lengths[count - 1], end_col) < str_lines[count - 1].length) {
+    return (SearchResult){ false };
+  }
+  for (int i = 1; i < count - 1; i++) {
+    if ((size_t)line_lengths[i] != str_lines[i].length) {
+      return (SearchResult){ false };
+    }
+  }
+
+  colnr_T first_str_line_col = line_lengths[0] - (int)str_lines[0].length;
+  char const *line = ml_get_buf(buf, 1 + cur_line) + first_str_line_col;
+  StringView str_line = str_lines[0];
+  if (memcmp(str_line.data, line, str_line.length) != 0) {
+    return (SearchResult){ false };
+  }
+  if (last_line < line_count) {
+    line = ml_get_buf(buf, 1 + last_line);
+    str_line = str_lines[count - 1];
+    if (memcmp(str_line.data, line, str_line.length) != 0) {
+      return (SearchResult){ false };
+    }
+  } else {
+    if (str_lines[count - 1].length != 0) {
+      return (SearchResult){ false };
+    }
+  }
+  for (int i = 1; i < count - 1; i++) {
+    line = ml_get_buf(buf, 1 + cur_line + i);
+    str_line = str_lines[i];
+    if (memcmp(str_line.data, line, str_line.length) != 0) {
+      return (SearchResult){ false };
+    }
+  }
+
+  return (SearchResult){
+    true,
+    (lpos_T){ cur_line, first_str_line_col },
+    (lpos_T){ last_line, (colnr_T)str_lines[count - 1].length },
+  };
+}
+
+static colnr_T line_len(buf_T *buf, int line)
+{
+  if (line == buf->b_ml.ml_line_count) {
+    return 0;
+  } else {
+    return ml_get_buf_len(buf, 1 + line);
+  }
+}
+
+static bool pos_validate(buf_T *buf, ptrdiff_t line, ptrdiff_t col)
+{
+  if (line < 0 || line > INT_MAX) {
+    return false;
+  }
+
+  linenr_T line_count = buf->b_ml.ml_line_count;
+  if (line > line_count) {
+    return false;
+  } else if (line == line_count) {
+    return col == 0;
+  }
+
+  if (col < 0 || col > INT_MAX) {
+    return false;
+  }
+
+  colnr_T line_len = ml_get_buf_len(buf, 1 + (linenr_T)line);
+  if ((colnr_T)col > line_len) {
+    return false;
+  }
+
+  return true;
+}
+
+static SearchResult search_single_line(SearchParams p)
+{
+  buf_T *buf = p.buf;
+  size_t str_len = p.len;
+  char const *str = p.str;
+  lpos_T begin_pos = p.begin;
+  lpos_T end_pos = p.end;
+
+  for (linenr_T cur_line = begin_pos.lnum; cur_line <= end_pos.lnum; cur_line++) {
+    colnr_T line_begin_col = cur_line == begin_pos.lnum ? begin_pos.col : 0;
+    colnr_T line_end_col = cur_line == end_pos.lnum ? end_pos.col : INT_MAX;
+    colnr_T line_column_count = line_end_col - line_begin_col;
+    // NOTE: line line_count + 1 is length 0, so this check is true for it.
+    if (line_column_count <= 0 || str_len > (size_t)line_column_count) {
+      continue;
+    }
+
+    char const *line_begin = ml_get_buf(buf, 1 + cur_line);
+    char const *cur = line_begin + (size_t)line_begin_col;
+    char const *end = line_begin + MIN(line_end_col, ml_get_buf_len(buf, 1 + cur_line));
+
+    while (cur < end) {
+      char const *pos = memchr(cur, str[0], (size_t)(end - cur));
+      if (!pos) {
+        break;
+      }
+
+      size_t rem_len = (size_t)(end - pos);
+      if (rem_len < str_len) {
+        break;
+      }
+      if (memcmp(str + 1, pos + 1, str_len - 1) == 0) {
+        return (SearchResult){
+          true,
+          (lpos_T){ cur_line, (colnr_T)(pos - line_begin) },
+          (lpos_T){ cur_line, (colnr_T)((size_t)(pos - line_begin) + str_len) },
+        };
+      }
+
+      cur = pos + 1;
+    }
+  }
+
+  return (SearchResult){ false };
+}
+
 /// @nodoc
 Dict nvim__buf_stats(Buffer buffer, Arena *arena, Error *err)
 {

@@ -2407,6 +2407,10 @@ nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
       • |nvim_buf_attach()|
       • |api-lua-detach| for detaching Lua callbacks
 
+nvim_buf_find({buffer}, {opts})                              *nvim_buf_find()*
+    WARNING: This feature is experimental/unstable.
+
+
 nvim_buf_get_changedtick({buffer})                *nvim_buf_get_changedtick()*
     Gets a changed tick of a buffer
 
