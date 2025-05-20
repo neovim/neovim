@@ -1,7 +1,7 @@
 " Vim support file to switch on loading plugins for file types
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last change:	2023 Aug 10
+" Last change:	2025 May 20
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 if exists("did_load_ftplugin")
@@ -13,12 +13,19 @@ augroup filetypeplugin
   au FileType * call s:LoadFTPlugin()
 
   func! s:LoadFTPlugin()
+    let s = expand("<amatch>")
+
+    " is old filetype present in the (possibly dot separated) new filetype
+    if exists("b:ftplugin_old_filetype") &&
+                \ s =~# '\v%(\.|^)\V' . b:ftplugin_old_filetype . '\v%(\.|$)'
+        return
+    endif
+
     if exists("b:undo_ftplugin")
       exe b:undo_ftplugin
       unlet! b:undo_ftplugin b:did_ftplugin
     endif
 
-    let s = expand("<amatch>")
     if s != ""
       if &cpo =~# "S" && exists("b:did_ftplugin")
 	" In compatible mode options are reset to the global values, need to
@@ -33,6 +40,8 @@ augroup filetypeplugin
         " TODO(clason): use nvim__get_runtime when supports globs and modeline
         " XXX: "[.]" in the first pattern makes it a wildcard on Windows
         exe $'runtime! ftplugin/{name}[.]{{vim,lua}} ftplugin/{name}_*.{{vim,lua}} ftplugin/{name}/*.{{vim,lua}}'
+        " the last `b:undo_ftplugin` is for the last filetype in the list, setting it as the old_filetype
+        let b:ftplugin_old_filetype = name
       endfor
     endif
   endfunc
