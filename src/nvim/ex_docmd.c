@@ -5632,16 +5632,11 @@ static void ex_restart(exarg_T *eap)
   }
 
   MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
-  ArenaMem arena_res = NULL;
-  Error err = ERROR_INIT;
-
-  rpc_send_call(current_ui, "nvim_restart", args, &arena_res, &err);
-  if (ERROR_SET(&err)) {
-    emsg(err.msg);
+  bool success = rpc_send_event(current_ui, "nvim_ui_restart", args);
+  if (!success) {
+    emsg("failed to send nvim_ui_restart call");
     return;
   }
-
-  arena_mem_free(arena_res);
 }
 
 /// ":mode":
