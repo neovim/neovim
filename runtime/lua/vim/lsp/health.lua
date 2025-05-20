@@ -198,7 +198,7 @@ local function check_enabled_configs()
         local v_str --- @type string?
         if k == 'name' then
           v_str = nil
-        elseif k == 'filetypes' or k == 'root_markers' then
+        elseif k == 'filetypes' or (k == 'root_markers' and type(v[1]) == 'string') then
           v_str = table.concat(v, ', ')
         elseif type(v) == 'function' then
           v_str = func_tostring(v)
