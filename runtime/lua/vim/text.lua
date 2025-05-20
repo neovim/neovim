@@ -126,8 +126,6 @@ function M.indent(size, text, opts)
     local pat = prefix:rep(old_indent)
     -- Expand tabs before replacing indentation.
     line = not tabspaces and line
-      ---@diagnostic disable-next-line: need-check-nil,undefined-field
-      --- EmmyLuaLs/emmylua-analyzer-rust#478
       or line:gsub('^[\t ]+', function(s)
         return s:gsub('\t', tabspaces)
       end)
