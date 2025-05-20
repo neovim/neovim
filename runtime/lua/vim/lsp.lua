@@ -41,7 +41,6 @@ lsp._resolve_to_request = {
 
 -- TODO improve handling of scratch buffers with LSP attached.
 
----@private
 --- Called by the client when trying to call a method that's not
 --- supported in any of the servers registered for the current buffer.
 ---@param method (vim.lsp.protocol.Method.ClientToServer) name of the method
@@ -1257,7 +1256,7 @@ api.nvim_create_autocmd('VimLeavePre', {
   end,
 })
 
----@private
+---@nodoc
 --- Sends an async request for all active clients attached to the
 --- buffer.
 ---

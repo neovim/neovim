@@ -1709,6 +1709,15 @@ local position_sort = sort_by_key(function(v)
   return { v.start.line, v.start.character }
 end)
 
+--- @class vim.lsp.quickfix.entry : vim.quickfix.entry
+--- @field filename string
+--- @field lnum integer
+--- @field end_lnum integer
+--- @field col integer
+--- @field end_col integer
+--- @field text string
+--- @field user_data any
+
 --- Returns the items with the byte position calculated correctly and in sorted
 --- order, for display in quickfix and location lists.
 ---
@@ -1721,7 +1730,7 @@ end)
 ---@param locations lsp.Location[]|lsp.LocationLink[]
 ---@param position_encoding? 'utf-8'|'utf-16'|'utf-32'
 ---                         default to first client of buffer
----@return vim.quickfix.entry[] # See |setqflist()| for the format
+---@return vim.lsp.quickfix.entry[] # See |setqflist()| for the format
 function M.locations_to_items(locations, position_encoding)
   if position_encoding == nil then
     vim.notify_once(
@@ -1731,7 +1740,7 @@ function M.locations_to_items(locations, position_encoding)
     position_encoding = vim.lsp.get_clients({ bufnr = 0 })[1].offset_encoding
   end
 
-  local items = {} --- @type vim.quickfix.entry[]
+  local items = {} --- @type vim.lsp.quickfix.entry[]
 
   ---@type table<string, {start: lsp.Position, end: lsp.Position, location: lsp.Location|lsp.LocationLink}[]>
   local grouped = {}

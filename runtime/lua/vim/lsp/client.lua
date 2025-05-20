@@ -174,7 +174,7 @@ local validate = vim.validate
 --- @field name string
 ---
 --- See [vim.lsp.ClientConfig].
---- @field offset_encoding string
+--- @field offset_encoding 'utf-8'|'utf-16'|'utf-32'
 ---
 --- A ring buffer (|vim.ringbuf()|) containing progress messages
 --- sent by the server.
