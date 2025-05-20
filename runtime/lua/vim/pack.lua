@@ -452,7 +452,7 @@ function PlugList:install()
     p.job.cwd = uv.cwd() --[[@as string]]
     p.job.cmd = git_cmd('clone', p.plug.spec.source, p.plug.path)
   end
-  local report_progress = require('vim.pack.lsp').new_progress_report('Installing plugins')
+  local report_progress = require('vim.pack._lsp').new_progress_report('Installing plugins')
   self:run(prepare, nil, report_progress)
 
   -- Checkout to target version. Do not skip checkout even if HEAD and target
@@ -523,7 +523,7 @@ function PlugList:download_updates()
   local function prepare(p)
     p.job.cmd = git_cmd('fetch')
   end
-  local report_progress = require('vim.pack.lsp').new_progress_report('Downloading updates')
+  local report_progress = require('vim.pack._lsp').new_progress_report('Downloading updates')
   self:run(prepare, nil, report_progress)
 end
 
@@ -874,7 +874,7 @@ local function show_confirm_buf(lines, opts)
   vim.bo[bufnr].buftype, vim.bo[bufnr].filetype = 'acwrite', 'nvimpack'
 
   -- Attach in-process LSP for more capabilities
-  vim.lsp.buf_attach_client(bufnr, require('vim.pack.lsp').client_id)
+  vim.lsp.buf_attach_client(bufnr, require('vim.pack._lsp').client_id)
 end
 
 --- @param plug_list vim.pack.PlugList
