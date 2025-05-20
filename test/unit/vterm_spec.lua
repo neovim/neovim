@@ -94,7 +94,7 @@ local vterm = t.cimport(
   './src/nvim/vterm/screen.h',
   './src/nvim/vterm/state.h',
   './src/nvim/vterm/vterm.h',
-  './src/nvim/vterm/vterm_internal.h',
+  './src/nvim/vterm/vterm_internal_defs.h',
   './test/unit/fixtures/vterm_test.h'
 )
 

@@ -18,7 +18,7 @@ local type_key = api_t.type_key
 local obj2lua = api_t.obj2lua
 local func_type = api_t.func_type
 
-local api = cimport('./src/nvim/api/private/t.h', './src/nvim/api/private/converter.h')
+local api = cimport('./src/nvim/api/private/helpers.h', './src/nvim/api/private/converter.h')
 
 describe('vim_to_object', function()
   local vim_to_object = function(l)
