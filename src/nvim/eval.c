@@ -8685,18 +8685,18 @@ void invoke_prompt_callback(void)
 
   char *full_text = xstrdup(text);
   for (linenr_T i = lnum_start+1; i <= lnum_last; i++) {
-    char *new_text = join_str(full_text, ml_get(i), "\n");
+    char *half_text = concat_str(full_text, "\n");
     xfree(full_text);
-    full_text = new_text;
+    full_text = concat_str(half_text, ml_get(i));
+    xfree(half_text);
   }
   argv[0].v_type = VAR_STRING;
-  argv[0].vval.v_string = xstrdup(full_text);
+  argv[0].vval.v_string = full_text;
   argv[1].v_type = VAR_UNKNOWN;
 
   callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
   tv_clear(&argv[0]);
   tv_clear(&rettv);
-  xfree(full_text);
   curbuf->b_prompt_submitted = curbuf->b_ml.ml_line_count;
 }
 
