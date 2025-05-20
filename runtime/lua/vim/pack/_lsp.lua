@@ -8,12 +8,14 @@ local capabilities = {
 --- @type table<string,function>
 local methods = {}
 
-function methods.initialize(_)
-  return { capabilities = capabilities }
+--- @param callback function
+function methods.initialize(_, callback)
+  return callback(nil, { capabilities = capabilities })
 end
 
-function methods.shutdown(_)
-  return nil
+--- @param callback function
+function methods.shutdown(_, callback)
+  return callback(nil, nil)
 end
 
 local get_confirm_bufnr = function(uri)
@@ -21,10 +23,11 @@ local get_confirm_bufnr = function(uri)
 end
 
 --- @param params { textDocument: { uri: string } }
-methods['textDocument/documentSymbol'] = function(params)
+--- @param callback function
+methods['textDocument/documentSymbol'] = function(params, callback)
   local bufnr = get_confirm_bufnr(params.textDocument.uri)
   if bufnr == nil then
-    return {}
+    return callback(nil, {})
   end
 
   --- @alias vim.pack.lsp.Position { line: integer, character: integer }
@@ -74,20 +77,22 @@ methods['textDocument/documentSymbol'] = function(params)
     group.children = parse_headers('^## (.+)$', start_line, end_line, plug_kind)
   end
 
-  return symbols
+  return callback(nil, symbols)
 end
 
-methods['textDocument/codeAction'] = function(_)
+--- @param callback function
+methods['textDocument/codeAction'] = function(_, callback)
   -- TODO(echasnovski)
   -- Suggested actions for "plugin under cursor":
   -- - Delete plugin from disk.
   -- - Update only this plugin.
   -- - Exclude this plugin from update.
-  return {}
+  return callback(_, {})
 end
 
 --- @param params { textDocument: { uri: string }, position: { line: integer, character: integer } }
-methods['textDocument/hover'] = function(params)
+--- @param callback function
+methods['textDocument/hover'] = function(params, callback)
   local bufnr = get_confirm_bufnr(params.textDocument.uri)
   if bufnr == nil then
     return
@@ -111,9 +116,13 @@ methods['textDocument/hover'] = function(params)
   end
 
   local cmd = { 'git', 'show', '--no-color', commit or tag }
-  local diff = vim.system(cmd, { cwd = path }):wait().stdout
-  local markdown = '```diff\n' .. diff .. '\n```'
-  return { contents = { kind = vim.lsp.protocol.MarkupKind.Markdown, value = markdown } }
+  --- @param sys_out vim.SystemCompleted
+  local on_exit = function(sys_out)
+    local markdown = '```diff\n' .. sys_out.stdout .. '\n```'
+    local res = { contents = { kind = vim.lsp.protocol.MarkupKind.Markdown, value = markdown } }
+    callback(nil, res)
+  end
+  vim.system(cmd, { cwd = path }, vim.schedule_wrap(on_exit))
 end
 
 local dispatchers = {}
@@ -128,7 +137,7 @@ local cmd = function(disp)
   function res.request(method, params, callback)
     local method_impl = methods[method]
     if method_impl ~= nil then
-      callback(nil, method_impl(params))
+      method_impl(params, callback)
     end
     request_id = request_id + 1
     return true, request_id
