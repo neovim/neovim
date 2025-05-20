@@ -695,6 +695,10 @@ const char *did_set_buftype(optset_T *args)
       || opt_strings_flags(buf->b_p_bt, opt_bt_values, NULL, false) != OK) {
     return e_invarg;
   }
+  // when buftype is set to prompt set the last prompt submit pos to lastline
+  if (buf->b_p_bt[0] == 'p') {
+    buf->b_prompt_submitted = buf->b_ml.ml_line_count;
+  }
   if (win->w_status_height || global_stl_height()) {
     win->w_redr_status = true;
     redraw_later(win, UPD_VALID);
