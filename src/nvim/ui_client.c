@@ -326,7 +326,7 @@ void ui_client_event_restart(Array args)
   uint64_t rv = ui_client_start_server(argc, argv);
   if (!rv) {
     ELOG("failed to start nvim server");
-    return;
+    goto cleanup;
   }
 
   // 5. Client-side server re-attach.
@@ -334,6 +334,8 @@ void ui_client_event_restart(Array args)
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   ILOG("restarted server id=%" PRId64, rv);
+cleanup:
+  xfree(argv);
 }
 
 #ifdef EXITFREE
