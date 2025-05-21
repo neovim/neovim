@@ -2997,7 +2997,7 @@ describe('vim.diagnostic', function()
 
     it('allows filtering by namespace', function()
       eq(
-        2,
+        { 'Diagnostics:', '1. Syntax error' },
         exec_lua(function()
           local ns_1_diagnostics = {
             _G.make_error('Syntax error', 0, 1, 0, 3),
@@ -3012,7 +3012,31 @@ describe('vim.diagnostic', function()
             vim.diagnostic.open_float(_G.diagnostic_bufnr, { namespace = _G.diagnostic_ns })
           local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
           vim.api.nvim_win_close(winnr, true)
-          return #lines
+          return lines
+        end)
+      )
+    end)
+
+    it('allows filtering by multiple namespaces', function()
+      eq(
+        { 'Diagnostics:', '1. Syntax error', '2. Some warning' },
+        exec_lua(function()
+          local ns_1_diagnostics = {
+            _G.make_error('Syntax error', 0, 1, 0, 3),
+          }
+          local ns_2_diagnostics = {
+            _G.make_warning('Some warning', 0, 1, 0, 3),
+          }
+          vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, ns_1_diagnostics)
+          vim.diagnostic.set(_G.other_ns, _G.diagnostic_bufnr, ns_2_diagnostics)
+          local float_bufnr, winnr = vim.diagnostic.open_float(
+            _G.diagnostic_bufnr,
+            { namespace = { _G.diagnostic_ns, _G.other_ns } }
+          )
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          return lines
         end)
       )
     end)
