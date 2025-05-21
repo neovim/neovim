@@ -86,8 +86,12 @@ local function cmp_prerel(prerel1, prerel2)
     if word1 == nil and word2 == nil then -- Done iterating.
       return 0
     end
-    word1, n1, word2, n2 =
-      word1 or '', n1 and tonumber(n1) or 0, word2 or '', n2 and tonumber(n2) or 0
+
+    word1 = word1 or ''
+    n1 = vim._tointeger(n1) or 0
+    word2 = word2 or ''
+    n2 = vim._tointeger(n2) or 0
+
     if word1 ~= word2 then
       return word1 < word2 and -1 or 1
     end
@@ -197,9 +201,9 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
     or (major and minor and patch and major ~= '' and minor ~= '' and patch ~= '')
   then
     return setmetatable({
-      major = tonumber(major),
-      minor = minor == '' and 0 or tonumber(minor),
-      patch = patch == '' and 0 or tonumber(patch),
+      major = vim._ensure_integer(major),
+      minor = minor == '' and 0 or vim._ensure_integer(minor),
+      patch = patch == '' and 0 or vim._ensure_integer(patch),
       prerelease = prerel ~= '' and prerel or nil,
       build = build ~= '' and build or nil,
     }, Version)
@@ -286,7 +290,6 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
     return setmetatable({ from = M.parse('0.0.0') }, range_mt)
   end
 
-  ---@type number?
   local hyphen = spec:find(' - ', 1, true)
   if hyphen then
     local a = spec:sub(1, hyphen - 1)
@@ -379,15 +382,15 @@ function M.intersect(r1, r2)
   end
 end
 
----@param v string|vim.Version
+---@param v string|vim.Version|number[]
 ---@return string
-local function create_err_msg(v)
+local function err_msg(v)
   if type(v) == 'string' then
-    return string.format('invalid version: "%s"', tostring(v))
+    return ('invalid version: "%s"'):format(v)
   elseif type(v) == 'table' and v.major then
-    return string.format('invalid version: %s', vim.inspect(v))
+    return ('invalid version: %s'):format(vim.inspect(v))
   end
-  return string.format('invalid version: %s (%s)', tostring(v), type(v))
+  return ('invalid version: %s (%s)'):format(tostring(v), type(v))
 end
 
 --- Parses and compares two version objects (the result of |vim.version.parse()|, or
@@ -413,8 +416,8 @@ end
 ---@param v2 vim.Version|number[]|string Version to compare with `v1`.
 ---@return integer -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 function M.cmp(v1, v2)
-  local v1_parsed = assert(M._version(v1), create_err_msg(v1))
-  local v2_parsed = assert(M._version(v2), create_err_msg(v1))
+  local v1_parsed = M._version(v1) or error(err_msg(v1))
+  local v2_parsed = M._version(v2) or error(err_msg(v2))
   if v1_parsed == v2_parsed then
     return 0
   end
@@ -492,7 +495,9 @@ end
 ---@param opts vim.version.parse.Opts? Options for parsing.
 ---@return vim.Version? # `Version` object or `nil` if input is invalid.
 function M.parse(version, opts)
-  assert(type(version) == 'string', create_err_msg(version))
+  if type(version) ~= 'string' then
+    error(err_msg(version))
+  end
   opts = opts or { strict = false }
   return M._version(version, opts.strict)
 end

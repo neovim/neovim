@@ -47,10 +47,9 @@ local function get_contrast_color(color)
   if not (r_s and g_s and b_s) then
     error('Invalid color format: ' .. color)
   end
-  local r, g, b = tonumber(r_s, 16), tonumber(g_s, 16), tonumber(b_s, 16)
-  if not (r and g and b) then
-    error('Invalid color format: ' .. color)
-  end
+  local r = vim._ensure_integer(r_s, 16)
+  local g = vim._ensure_integer(g_s, 16)
+  local b = vim._ensure_integer(b_s, 16)
 
   -- Source: https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
   -- Using power 2.2 is a close approximation to full piecewise transform

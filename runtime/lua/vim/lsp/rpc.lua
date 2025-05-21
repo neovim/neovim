@@ -56,7 +56,10 @@ local function get_content_length(header)
     elseif state == 'value' then
       if c == 13 and header:byte(i + 1) == 10 then -- must end with \r\n
         local value = buf:get()
-        return assert(digit and tonumber(value), 'value of Content-Length is not number: ' .. value)
+        if digit then
+          return vim._ensure_integer(value)
+        end
+        error('value of Content-Length is not number: ' .. value)
       else
         buf:put(string.char(c))
       end
@@ -429,7 +432,7 @@ function Client:handle_body(body)
     )
   then
     -- We sent a number, so we expect a number.
-    local result_id = assert(tonumber(decoded.id), 'response id must be a number') --[[@as integer]]
+    local result_id = vim._ensure_integer(decoded.id)
 
     -- Notify the user that a response was received for the request
     local notify_reply_callback = self.notify_reply_callbacks[result_id]

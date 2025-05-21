@@ -2857,7 +2857,7 @@ function M.match(str, pat, groups, severity_map, defaults)
     if field == 'severity' then
       diagnostic[field] = severity_map[match]
     elseif field == 'lnum' or field == 'end_lnum' or field == 'col' or field == 'end_col' then
-      diagnostic[field] = assert(tonumber(match)) - 1
+      diagnostic[field] = vim._ensure_integer(match) - 1
     elseif field then
       diagnostic[field] = match
     end

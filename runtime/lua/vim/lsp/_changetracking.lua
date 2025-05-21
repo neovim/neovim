@@ -32,8 +32,8 @@ local M = {}
 --- @field lines string[] snapshot of buffer lines from last didChange
 --- @field lines_tmp string[]
 --- @field pending_changes table[] List of debounced changes in incremental sync mode
---- @field timer uv.uv_timer_t? uv_timer
---- @field last_flush nil|number uv.hrtime of the last flush/didChange-notification
+--- @field timer? uv.uv_timer_t uv_timer
+--- @field last_flush? number uv.hrtime of the last flush/didChange-notification
 --- @field needs_flush boolean true if buffer updates haven't been sent to clients/servers yet
 --- @field refs integer how many clients are using this group
 ---
@@ -68,7 +68,7 @@ local function get_group(client)
   local change_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'change')
   local sync_kind = change_capability or protocol.TextDocumentSyncKind.None
   if not allow_inc_sync and change_capability == protocol.TextDocumentSyncKind.Incremental then
-    sync_kind = protocol.TextDocumentSyncKind.Full --[[@as integer]]
+    sync_kind = protocol.TextDocumentSyncKind.Full
   end
   return {
     sync_kind = sync_kind,

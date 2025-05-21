@@ -295,10 +295,15 @@ local function check_tmux()
   if tmux_esc_time ~= 'error' then
     if tmux_esc_time == '' then
       health.error('`escape-time` is not set', suggestions)
-    elseif tonumber(tmux_esc_time) > 300 then
-      health.error('`escape-time` (' .. tmux_esc_time .. ') is higher than 300ms', suggestions)
     else
-      health.ok('escape-time: ' .. tmux_esc_time)
+      local tmux_esc_time_ms = vim._tointeger(tmux_esc_time)
+      if not tmux_esc_time_ms then
+        health.error('`escape-time` (' .. tmux_esc_time .. ') is not an integer', suggestions)
+      elseif tmux_esc_time_ms > 300 then
+        health.error('`escape-time` (' .. tmux_esc_time .. ') is higher than 300ms', suggestions)
+      else
+        health.ok('escape-time: ' .. tmux_esc_time)
+      end
     end
   end
 
