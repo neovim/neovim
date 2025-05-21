@@ -1821,7 +1821,12 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
 
 signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
-    floating window.
+    floating window. Allows cycling through signature overloads by mapping
+    `<Plug>(LspCycleSignature)`.
+
+    Example: >lua
+        vim.keymap.set('n', '<C-s>', '<Plug>(LspCycleSignature)')
+<
 
     Parameters: ~
       • {config}  (`vim.lsp.buf.signature_help.Opts?`) See
