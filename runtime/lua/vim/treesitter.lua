@@ -173,8 +173,7 @@ end
 ---@return Range6
 function M.get_range(node, source, metadata)
   if metadata and metadata.range then
-    assert(source)
-    return M._range.add_bytes(source, metadata.range)
+    return M._range.add_bytes(assert(source), metadata.range)
   end
   return { node:range(true) }
 end

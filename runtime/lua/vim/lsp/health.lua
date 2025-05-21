@@ -104,8 +104,7 @@ local function check_watcher()
     return
   end
 
-  local watchfunc = vim.lsp._watchfiles._watchfunc
-  assert(watchfunc)
+  local watchfunc = assert(vim.lsp._watchfiles._watchfunc)
   local watchfunc_name --- @type string
   if watchfunc == vim._watch.watch then
     watchfunc_name = 'libuv-watch'

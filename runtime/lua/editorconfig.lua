@@ -115,7 +115,7 @@ function properties.indent_size(bufnr, val, opts)
     vim.bo[bufnr].shiftwidth = 0
     vim.bo[bufnr].softtabstop = 0
   else
-    local n = assert(tonumber(val), 'indent_size must be a number')
+    local n = assert(vim._tointeger(val), 'indent_size must be an integer')
     vim.bo[bufnr].shiftwidth = n
     vim.bo[bufnr].softtabstop = -1
     if not opts.tab_width then
@@ -126,17 +126,17 @@ end
 
 --- The display size of a single tab character. Sets the 'tabstop' option.
 function properties.tab_width(bufnr, val)
-  vim.bo[bufnr].tabstop = assert(tonumber(val), 'tab_width must be a number')
+  vim.bo[bufnr].tabstop = assert(vim._tointeger(val), 'tab_width must be an integer')
 end
 
 --- A number indicating the maximum length of a single
 --- line. Sets the 'textwidth' option.
 function properties.max_line_length(bufnr, val)
-  local n = tonumber(val)
+  local n = vim._tointeger(val)
   if n then
     vim.bo[bufnr].textwidth = n
   else
-    assert(val == 'off', 'max_line_length must be a number or "off"')
+    assert(val == 'off', 'max_line_length must be an integer or "off"')
     vim.bo[bufnr].textwidth = 0
   end
 end

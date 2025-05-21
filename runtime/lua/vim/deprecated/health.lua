@@ -14,7 +14,7 @@ function M.check()
 
     local version, backtraces, alternative = v[1], v[2], v[3]
     local major, minor = version:match('(%d+)%.(%d+)')
-    major, minor = tonumber(major), tonumber(minor)
+    major, minor = vim._asinteger(major), vim._asinteger(minor)
     local removal_version = string.format('nvim-%d.%d', major, minor)
     local will_be_removed = vim.fn.has(removal_version) == 1 and 'was removed' or 'will be removed'
 

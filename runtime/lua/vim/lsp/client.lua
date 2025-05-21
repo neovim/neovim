@@ -661,10 +661,8 @@ end
 --- @see |vim.lsp.buf_request_all()|
 function Client:request(method, params, handler, bufnr)
   if not handler then
-    handler = assert(
-      self:_resolve_handler(method),
-      string.format('not found: %q request handler for client %q.', method, self.name)
-    )
+    handler = self:_resolve_handler(method)
+      or error(('not found: %q request handler for client %q.'):format(method, self.name))
   end
   -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
   changetracking.flush(self, bufnr)
