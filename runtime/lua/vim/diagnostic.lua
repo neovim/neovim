@@ -1609,21 +1609,33 @@ M.handlers.underline = {
 --- @param opts vim.diagnostic.Opts.VirtualText
 local function render_virtual_text(namespace, bufnr, diagnostics, opts)
   local lnum = api.nvim_win_get_cursor(0)[1] - 1
+  local buf_len = api.nvim_buf_line_count(bufnr)
   api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
 
-  for line, line_diagnostics in pairs(diagnostics) do
-    local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts)
-    local skip = (opts.current_line == true and line ~= lnum)
+  local function should_render(line)
+    if
+      (line >= buf_len)
+      or (opts.current_line == true and line ~= lnum)
       or (opts.current_line == false and line == lnum)
+    then
+      return false
+    end
 
-    if virt_texts and not skip then
-      api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
-        hl_mode = opts.hl_mode or 'combine',
-        virt_text = virt_texts,
-        virt_text_pos = opts.virt_text_pos,
-        virt_text_hide = opts.virt_text_hide,
-        virt_text_win_col = opts.virt_text_win_col,
-      })
+    return true
+  end
+
+  for line, line_diagnostics in pairs(diagnostics) do
+    if should_render(line) then
+      local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts)
+      if virt_texts then
+        api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
+          hl_mode = opts.hl_mode or 'combine',
+          virt_text = virt_texts,
+          virt_text_pos = opts.virt_text_pos,
+          virt_text_hide = opts.virt_text_hide,
+          virt_text_win_col = opts.virt_text_win_col,
+        })
+      end
     end
   end
 end
