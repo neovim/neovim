@@ -5626,17 +5626,8 @@ static void ex_restart(exarg_T *eap)
     }
   }
 
-  if (!current_ui) {
-    emsg("UI not attached.");
-    return;
-  }
-
-  MAXSIZE_TEMP_ARRAY(args, MAX_FUNC_ARGS);
-  bool success = rpc_send_event(current_ui, "nvim_ui_restart", args);
-  if (!success) {
-    emsg("failed to send nvim_ui_restart call");
-    return;
-  }
+  // Send an ui restart event.
+  ui_call_restart();
 }
 
 /// ":mode":

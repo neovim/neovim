@@ -12,6 +12,7 @@
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/globals.h"
@@ -284,24 +285,55 @@ void ui_client_event_raw_line(GridLineEvent *g)
                (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
 }
 
-int ui_client_get_width(void)
+/// Restarts the embedded server without killing the UI.
+void ui_client_event_restart(Array args)
 {
-  return tui_width;
-}
+  // 1. Client-side server detach.
+  ui_client_detach();
 
-int ui_client_get_height(void)
-{
-  return tui_height;
-}
+  // 2. Close ui client channel (auto kills the `nvim --embed` server due to self-exit).
+  const char *error;
+  bool success = channel_close(ui_client_channel_id, kChannelPartAll, &error);
+  if (!success) {
+    ELOG("%s", error);
+    return;
+  }
 
-char *ui_client_get_term(void)
-{
-  return tui_term;
-}
+  // 3. Get v:argv.
+  typval_T *tv = get_vim_var_tv(VV_ARGV);
+  if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
+    ELOG("failed to get vim var typval");
+    return;
+  }
+  list_T *l = tv->vval.v_list;
+  int argc = tv_list_len(l);
 
-bool ui_client_get_rgb(void)
-{
-  return tui_rgb;
+  // Assert to be positive for safe conversion to size_t.
+  assert(argc >= 0);
+
+  char **argv = xmalloc(sizeof(char *) * ((size_t)argc + 1));
+  listitem_T *li = tv_list_first(l);
+  for (int i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
+    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
+      argv[i] = TV_LIST_ITEM_TV(li)->vval.v_string;
+    } else {
+      argv[i] = "";
+    }
+  }
+  argv[argc] = NULL;
+
+  // 4. Start a new `nvim --embed` server.
+  uint64_t rv = ui_client_start_server(argc, argv);
+  if (!rv) {
+    ELOG("failed to start nvim server");
+    return;
+  }
+
+  // 5. Client-side server re-attach.
+  ui_client_channel_id = rv;
+  ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
+
+  ILOG("restarted server id=%" PRId64, rv);
 }
 
 #ifdef EXITFREE

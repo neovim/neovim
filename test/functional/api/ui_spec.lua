@@ -70,17 +70,6 @@ describe('nvim_ui_attach()', function()
     )
   end)
 end)
-describe('nvim_ui_restart()', function()
-  before_each(function()
-    clear()
-  end)
-
-  it('keeps session alive after restart', function()
-    Screen.new(10, 5)
-    api.nvim_ui_restart()
-    n.assert_alive()
-  end)
-end)
 
 it('autocmds UIEnter/UILeave', function()
   clear { args_rm = { '--headless' } }
