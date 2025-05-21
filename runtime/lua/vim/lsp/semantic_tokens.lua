@@ -525,8 +525,7 @@ function STHighlighter:reset()
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
     state.current_result = {}
     if state.active_request.request_id then
-      local client = vim.lsp.get_client_by_id(client_id)
-      assert(client)
+      local client = assert(vim.lsp.get_client_by_id(client_id))
       client:cancel_request(state.active_request.request_id)
       state.active_request = {}
     end
@@ -541,8 +540,7 @@ end
 ---@package
 ---@param client_id integer
 function STHighlighter:mark_dirty(client_id)
-  local state = self.client_state[client_id]
-  assert(state)
+  local state = assert(self.client_state[client_id])
 
   -- if we clear the version from current_result, it'll cause the
   -- next request to be sent and will also pause new highlights
@@ -553,8 +551,7 @@ function STHighlighter:mark_dirty(client_id)
   end
 
   if state.active_request.request_id then
-    local client = vim.lsp.get_client_by_id(client_id)
-    assert(client)
+    local client = assert(vim.lsp.get_client_by_id(client_id))
     client:cancel_request(state.active_request.request_id)
     state.active_request = {}
   end

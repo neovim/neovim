@@ -90,11 +90,6 @@ end
 --- @type uv.uv_timer_t?
 local completion_timer = nil
 
---- @return uv.uv_timer_t
-local function new_timer()
-  return assert(vim.uv.new_timer())
-end
-
 local function reset_timer()
   if completion_timer then
     completion_timer:stop()
@@ -478,7 +473,7 @@ local function trigger(bufnr, clients, ctx)
   reset_timer()
   Context:cancel_pending()
 
-  if tonumber(vim.fn.pumvisible()) == 1 and not Context.isIncomplete then
+  if vim.fn.pumvisible() ~= 0 and not Context.isIncomplete then
     return
   end
 
@@ -544,7 +539,7 @@ end
 
 --- @param handle vim.lsp.completion.BufHandle
 local function on_insert_char_pre(handle)
-  if tonumber(vim.fn.pumvisible()) == 1 then
+  if vim.fn.pumvisible() ~= 0 then
     if Context.isIncomplete then
       reset_timer()
 
@@ -555,7 +550,7 @@ local function on_insert_char_pre(handle)
           M.get({ ctx = ctx })
         end)
       else
-        completion_timer = new_timer()
+        completion_timer = assert(vim.uv.new_timer())
         completion_timer:start(
           debounce_ms,
           0,
@@ -740,8 +735,7 @@ local function enable_completions(client_id, bufnr, opts)
   end
 
   if not buf_handle.clients[client_id] then
-    local client = lsp.get_client_by_id(client_id)
-    assert(client, 'invalid client ID')
+    local client = assert(lsp.get_client_by_id(client_id), 'invalid client ID')
 
     -- Add the new client to the buffer's clients.
     buf_handle.clients[client_id] = client
@@ -865,7 +859,6 @@ end
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function M._omnifunc(findstart, base)
   vim.lsp.log.debug('omnifunc.findstart', { findstart = findstart, base = base })
-  assert(base) -- silence luals
   local bufnr = api.nvim_get_current_buf()
   local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_completion })
   local remaining = #clients

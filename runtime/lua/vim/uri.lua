@@ -101,7 +101,7 @@ end
 ---@param uri string
 ---@return string filename or unchanged URI for non-file URIs
 function M.uri_to_fname(uri)
-  local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
+  local scheme = uri:match(URI_SCHEME_PATTERN) or error('URI must contain a scheme: ' .. uri)
   if scheme ~= 'file' then
     return uri
   end

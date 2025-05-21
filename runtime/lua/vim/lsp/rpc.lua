@@ -27,7 +27,7 @@ local function get_content_length(header)
     end
     local key, value = line:match('^%s*(%S+)%s*:%s*(%d+)%s*$')
     if key and key:lower() == 'content-length' then
-      return assert(tonumber(value))
+      return vim._asinteger(value)
     end
   end
   error('Content-Length not found in header: ' .. header)
@@ -375,7 +375,7 @@ function Client:handle_body(body)
     -- This works because we are expecting vim.NIL here
   elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
     -- We sent a number, so we expect a number.
-    local result_id = assert(tonumber(decoded.id), 'response id must be a number')
+    local result_id = vim._asinteger(decoded.id)
 
     -- Notify the user that a response was received for the request
     local notify_reply_callback = self.notify_reply_callbacks[result_id]

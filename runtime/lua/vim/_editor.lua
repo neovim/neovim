@@ -1,3 +1,5 @@
+local tointeger = vim._tointeger
+
 -- Nvim-Lua stdlib: the `vim` module (:help lua-stdlib)
 --
 -- Lua code lives in one of four places:
@@ -166,7 +168,7 @@ function vim._os_proc_info(pid)
   local ppid_string = assert(vim.system({ 'ps', '-p', pid, '-o', 'ppid=' }):wait().stdout)
   -- Remove trailing whitespace.
   name = vim.trim(name):gsub('^.*/', '')
-  local ppid = tonumber(ppid_string) or -1
+  local ppid = tointeger(ppid_string) or -1
   return {
     name = name,
     pid = pid,
@@ -187,12 +189,9 @@ function vim._os_proc_children(ppid)
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
-  local children = {}
+  local children = {} --- @type integer[]
   for s in r.stdout:gmatch('%S+') do
-    local i = tonumber(s)
-    if i ~= nil then
-      table.insert(children, i)
-    end
+    children[#children + 1] = tointeger(s)
   end
   return children
 end
@@ -570,12 +569,12 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
       local utflen = vim.str_utfindex(bufline, 'utf-32', #bufline)
       if c1 <= utflen then
-        c1 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c1)))
+        c1 = vim.str_byteindex(bufline, 'utf-32', c1)
       else
         c1 = #bufline + 1
       end
       if c2 <= utflen then
-        c2 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c2)))
+        c2 = vim.str_byteindex(bufline, 'utf-32', c2)
       else
         c2 = #bufline + 1
       end
@@ -1349,7 +1348,7 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
     -- Example: if removal `version` is 0.12 (soft-deprecated since 0.10-dev), show warnings
     -- starting at 0.11, including 0.11-dev.
     local major, minor = version:match('(%d+)%.(%d+)')
-    major, minor = tonumber(major), tonumber(minor)
+    major, minor = tointeger(major), tointeger(minor)
     local nvim_major = 0 --- Current Nvim major version.
 
     -- We can't "subtract" from a major version, so:

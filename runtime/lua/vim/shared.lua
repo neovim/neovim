@@ -1430,4 +1430,21 @@ function vim._ensure_list(x)
   return { x }
 end
 
+--- Like tonumber(), but for integer values.
+--- @param x any
+--- @return integer?
+function vim._tointeger(x)
+  local nx = tonumber(x)
+  if nx and nx == math.floor(nx) then
+    --- @cast nx integer
+    return nx
+  end
+end
+
+--- @param x any
+--- @return integer
+function vim._asinteger(x)
+  return vim._tointeger(x) or error(('Cannot convert %s to integer'):format(x))
+end
+
 return vim

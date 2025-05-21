@@ -174,9 +174,7 @@ local G = P({
 --- @param input string
 --- @return vim.snippet.Node<vim.snippet.SnippetData>
 function M.parse(input)
-  local snippet = G:match(input)
-  assert(snippet, 'snippet parsing failed')
-  return snippet --- @type vim.snippet.Node<vim.snippet.SnippetData>
+  return assert(G:match(input), 'snippet parsing failed')
 end
 
 return M

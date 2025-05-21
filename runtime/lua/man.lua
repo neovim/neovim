@@ -419,7 +419,7 @@ local function get_page(path, silent)
   if (vim.g.man_hardwrap or 1) ~= 1 then
     manwidth = 999
   elseif vim.env.MANWIDTH then
-    vim.env.MANWIDTH = tonumber(vim.env.MANWIDTH) or 0
+    vim.env.MANWIDTH = vim._tointeger(vim.env.MANWIDTH) or 0
     manwidth = math.min(vim.env.MANWIDTH, api.nvim_win_get_width(0) - vim.o.wrapmargin)
   else
     manwidth = api.nvim_win_get_width(0) - vim.o.wrapmargin

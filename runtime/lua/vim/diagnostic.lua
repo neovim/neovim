@@ -431,8 +431,11 @@ local all_namespaces = {}
 ---@return vim.diagnostic.Severity?
 local function to_severity(severity)
   if type(severity) == 'string' then
-    assert(M.severity[string.upper(severity)], string.format('Invalid severity: %s', severity))
-    return M.severity[string.upper(severity)]
+    local r = M.severity[string.upper(severity)]
+    if not r then
+      error(('Invalid severity: %s'):format(severity))
+    end
+    return r
   end
   return severity
 end
@@ -1239,10 +1242,8 @@ function M.get_namespace(namespace)
       end
     end
 
-    assert(name, 'namespace does not exist or is anonymous')
-
     all_namespaces[namespace] = {
-      name = name,
+      name = assert(name, 'namespace does not exist or is anonymous'),
       opts = {},
       user_data = {},
     }
@@ -2552,7 +2553,7 @@ function M.match(str, pat, groups, severity_map, defaults)
     if field == 'severity' then
       match = severity_map[match]
     elseif field == 'lnum' or field == 'end_lnum' or field == 'col' or field == 'end_col' then
-      match = assert(tonumber(match)) - 1
+      match = vim._asinteger(match) - 1
     end
     diagnostic[field] = match --- @type any
   end

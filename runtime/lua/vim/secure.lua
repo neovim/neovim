@@ -27,8 +27,8 @@ end
 --- If {fullpath} is a directory, then nothing is read from the filesystem, and
 --- `contents = true` and `hash = "directory"` is returned instead.
 ---
----@param fullpath (string) Path to a file or directory to read.
----@param bufnr (number?) The number of the buffer.
+---@param fullpath string Path to a file or directory to read.
+---@param bufnr integer? The number of the buffer.
 ---@return string|boolean? contents the contents of the file, or true if it's a directory
 ---@return string? hash the hash of the contents, or "directory" if it's a directory
 local function compute_hash(fullpath, bufnr)
@@ -46,17 +46,14 @@ local function compute_hash(fullpath, bufnr)
       contents = contents .. newline
     end
   else
-    do
-      local f = io.open(fullpath, 'r')
-      if not f then
-        return nil, nil
-      end
+    local f = io.open(fullpath, 'r')
+    if f then
       contents = f:read('*a')
       f:close()
     end
 
     if not contents then
-      return nil, nil
+      return
     end
   end
 
@@ -111,7 +108,7 @@ function M.read(path)
     return nil
   end
 
-  local contents, hash = compute_hash(fullpath, nil)
+  local contents, hash = compute_hash(fullpath)
   if not contents then
     return nil
   end

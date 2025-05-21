@@ -228,9 +228,8 @@ local function cterm_to_hex(colorstr)
   if colorstr:sub(1, 1) == '#' then
     return colorstr
   end
-  assert(colorstr ~= '')
-  local color = tonumber(colorstr)
-  assert(color and 0 <= color and color <= 255)
+  local color = vim._asinteger(colorstr)
+  assert(0 <= color and color <= 255)
   if cterm_color_cache[color] then
     return cterm_color_cache[color]
   end
@@ -662,12 +661,12 @@ local function styletable_conceal(state)
       for col = 1, line_len_exclusive do
         --- @type integer,string,integer
         local is_concealed, conceal, hlid = unpack(vim.fn.synconcealed(row, col) --[[@as table]])
-        if is_concealed == 0 then
-          assert(true)
-        elseif not conceals[hlid] then
-          conceals[hlid] = { col, math.min(col + 1, line_len_exclusive), conceal }
-        else
-          conceals[hlid][2] = math.min(col + 1, line_len_exclusive)
+        if is_concealed ~= 0 then
+          if not conceals[hlid] then
+            conceals[hlid] = { col, math.min(col + 1, line_len_exclusive), conceal }
+          else
+            conceals[hlid][2] = math.min(col + 1, line_len_exclusive)
+          end
         end
       end
       for _, v in pairs(conceals) do
@@ -694,12 +693,12 @@ local function styletable_match(state)
       for key, v in
         pairs(match --[[@as (table<string,integer[]>)]])
       do
-        if not key:match('^pos(%d+)$') then
-          assert(true)
-        elseif #v == 1 then
-          range(v[1], 1, v[1], #vim.fn.getline(v[1]) + 1)
-        else
-          range(v[1], v[2], v[1], v[3] + v[2])
+        if key:match('^pos(%d+)$') then
+          if #v == 1 then
+            range(v[1], 1, v[1], #vim.fn.getline(v[1]) + 1)
+          else
+            range(v[1], v[2], v[1], v[3] + v[2])
+          end
         end
       end
     else
@@ -744,7 +743,7 @@ local function styletable_statuscolumn(state)
     signcolumn = 'auto'
   end
   if signcolumn ~= 'no' then
-    local max = tonumber(signcolumn:match('^%w-:(%d)')) or 1
+    local max = vim._tointeger(signcolumn:match('^%w-:(%d)')) or 1
     if signcolumn:match('^auto') then
       --- @type table<integer,integer>
       local signcount = {}
@@ -770,7 +769,7 @@ local function styletable_statuscolumn(state)
   local foldcolumn = state.opt.foldcolumn
   if foldcolumn ~= '0' then
     if foldcolumn:match('^auto') then
-      local max = tonumber(foldcolumn:match('^%w-:(%d)')) or 1
+      local max = vim._tointeger(foldcolumn:match('^%w-:(%d)')) or 1
       local maxfold = 0
       vim._with({ buf = state.bufnr }, function()
         for row = state.start, state.end_ do
@@ -782,7 +781,7 @@ local function styletable_statuscolumn(state)
       end)
       minwidth = minwidth + math.min(maxfold, max)
     else
-      minwidth = minwidth + tonumber(foldcolumn)
+      minwidth = minwidth + vim._asinteger(foldcolumn)
     end
   end
 

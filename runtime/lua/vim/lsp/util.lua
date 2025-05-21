@@ -559,8 +559,7 @@ function M.rename(old_fname, new_fname, opts)
   local newdir = vim.fs.dirname(new_fname)
   vim.fn.mkdir(newdir, 'p')
 
-  local ok, err = os.rename(old_fname_full, new_fname)
-  assert(ok, err)
+  assert(os.rename(old_fname_full, new_fname))
 
   local old_undofile = vim.fn.undofile(old_fname_full)
   if uv.fs_stat(old_undofile) ~= nil then
@@ -1621,10 +1620,10 @@ function M.open_floating_preview(contents, syntax, opts)
   api.nvim_create_autocmd('WinClosed', {
     group = api.nvim_create_augroup('nvim.closing_floating_preview', { clear = true }),
     callback = function(args)
-      local winid = tonumber(args.match)
-      local ok, preview_bufnr = pcall(api.nvim_win_get_var, winid, 'lsp_floating_bufnr')
+      local winid = vim._tointeger(args.match)
+      local preview_bufnr = vim.w[winid].lsp_floating_bufnr
       if
-        ok
+        preview_bufnr
         and api.nvim_buf_is_valid(preview_bufnr)
         and winid == vim.b[preview_bufnr].lsp_floating_preview
       then

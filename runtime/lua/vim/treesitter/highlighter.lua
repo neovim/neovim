@@ -368,7 +368,7 @@ local function on_line_impl(self, buf, line, on_spell, on_conceal)
 
             -- The "priority" attribute can be set at the pattern level or on a particular capture
             local priority = (
-              tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
+              vim._tointeger(metadata.priority or metadata[capture] and metadata[capture].priority)
               or vim.hl.priorities.treesitter
             ) + spell_pri_offset
 

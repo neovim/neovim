@@ -47,7 +47,7 @@ local function execute_lens(lens, bufnr, client_id)
   api.nvim_buf_clear_namespace(bufnr, namespaces[client_id], line, line + 1)
 
   local client = vim.lsp.get_client_by_id(client_id)
-  assert(client, 'Client is required to execute lens, client_id=' .. client_id)
+    or error('Client is required to execute lens, client_id=' .. client_id)
   client:exec_cmd(lens.command, { bufnr = bufnr }, function(...)
     vim.lsp.handlers[ms.workspace_executeCommand](...)
     M.refresh()

@@ -26,7 +26,7 @@ local function resolve_hash(hash)
   elseif type(hash) == 'string' then
     local c = hash == 'concat' or hash:match('^concat%-(%d+)')
     if c then
-      hash = concat_hash(tonumber(c))
+      hash = concat_hash(vim._asinteger(c))
     else
       error('invalid value for hash: ' .. hash)
     end
