@@ -665,9 +665,6 @@ local function styletable_conceal(state)
       local conceals = {}
       local line_len_exclusive = #vim.fn.getline(row) + 1
       for col = 1, line_len_exclusive do
-        ---@diagnostic disable-next-line: assign-type-mismatch
-        --- EmmyLuaLs/emmylua-analyzer-rust#484
-        --- @type integer,string,integer
         local is_concealed, conceal, hlid = unpack(vim.fn.synconcealed(row, col))
         if is_concealed == 0 then
           -- pass

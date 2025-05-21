@@ -4427,7 +4427,7 @@ M.funcs = {
     ]=],
     name = 'getpos',
     params = { { 'expr', 'string' } },
-    returns = 'integer[]',
+    returns = '[integer, integer, integer, integer]',
     signature = 'getpos({expr})',
   },
   getqflist = {

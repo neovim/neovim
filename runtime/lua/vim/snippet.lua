@@ -499,7 +499,6 @@ function M.expand(input)
         value = data.name
         local tabstop_indexes = vim.tbl_keys(tabstop_data)
         ---@diagnostic disable-next-line: param-type-not-match
-        --- EmmyLuaLs/emmylua-analyzer-rust#476
         local index = #tabstop_indexes == 0 and 1 or (math.max(unpack(tabstop_indexes)) + 1)
         add_tabstop(index, value)
       end

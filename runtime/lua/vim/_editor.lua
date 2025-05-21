@@ -285,7 +285,6 @@ do
       for _, line in ipairs(lines) do
         nchars = nchars + line:len()
       end
-      --- @type integer, integer
       local row, col = unpack(vim.api.nvim_win_get_cursor(0))
       local bufline = vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1]
       local firstline = lines[1]
@@ -1036,6 +1035,7 @@ function vim._expand_pat(pat, env)
 
   -- Completion for dict accessors (special vim variables and vim.fn)
   if mt and vim.tbl_contains({ vim.g, vim.t, vim.w, vim.b, vim.v, vim.env, vim.fn }, final_env) then
+    -- EmmyLuaLs/emmylua-analyzer-rust#486
     local prefix, type = unpack(
       vim.fn == final_env and { '', 'function' }
         or vim.g == final_env and { 'g:', 'var' }

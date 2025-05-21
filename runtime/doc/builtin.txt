@@ -3951,7 +3951,7 @@ getpos({expr})                                                        *getpos()*
                   • {expr} (`string`)
 
                 Return: ~
-                  (`integer[]`)
+                  (`[integer, integer, integer, integer]`)
 
 getqflist([{what}])                                                *getqflist()*
 		Returns a |List| with all the current quickfix errors.  Each

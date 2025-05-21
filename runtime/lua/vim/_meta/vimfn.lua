@@ -3550,7 +3550,7 @@ function vim.fn.getpid() end
 --- Also see |getcharpos()|, |getcurpos()| and |setpos()|.
 ---
 --- @param expr string
---- @return integer[]
+--- @return [integer, integer, integer, integer]
 function vim.fn.getpos(expr) end
 
 --- Returns a |List| with all the current quickfix errors.  Each

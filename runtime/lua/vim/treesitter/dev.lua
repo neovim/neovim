@@ -411,7 +411,7 @@ function M.inspect_tree(opts)
   api.nvim_buf_set_keymap(b, 'n', 'a', '', {
     desc = 'Toggle anonymous nodes',
     callback = function()
-      local row, col = unpack(api.nvim_win_get_cursor(w)) ---@type integer, integer
+      local row, col = unpack(api.nvim_win_get_cursor(w))
       local curnode = treeview:get(row)
       while curnode and not curnode.node:named() do
         row = row - 1

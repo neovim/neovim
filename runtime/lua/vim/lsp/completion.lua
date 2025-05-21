@@ -483,7 +483,7 @@ local function trigger(bufnr, clients, ctx)
   end
 
   local win = api.nvim_get_current_win()
-  local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(win)) --- @type integer, integer
+  local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(win))
   local line = api.nvim_get_current_line()
   local line_to_cursor = line:sub(1, cursor_col)
   local word_boundary = vim.fn.match(line_to_cursor, '\\k*$')
@@ -599,7 +599,7 @@ local function on_complete_done()
     return
   end
 
-  local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
+  local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0))
   cursor_row = cursor_row - 1
   local completion_item = completed_item.user_data.nvim.lsp.completion_item --- @type lsp.CompletionItem
   local client_id = completed_item.user_data.nvim.lsp.client_id --- @type integer

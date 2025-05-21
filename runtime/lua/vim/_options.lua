@@ -482,8 +482,8 @@ local to_lua_value = {
 
     -- Handles unescaped commas in a list.
     if value:find(',,,') then
-      --- @type string, string
       local left, right = unpack(vim.split(value, ',,,'))
+      assert(left and right)
 
       local result = {}
       vim.list_extend(result, vim.split(left, ','))
@@ -496,8 +496,8 @@ local to_lua_value = {
     end
 
     if value:find(',^,,', 1, true) then
-      --- @type string, string
       local left, right = unpack(vim.split(value, ',^,,', { plain = true }))
+      assert(left and right)
 
       local result = {}
       vim.list_extend(result, vim.split(left, ','))
@@ -552,8 +552,8 @@ local to_lua_value = {
 
     local comma_split = vim.split(raw_value, ',')
     for _, key_value_str in ipairs(comma_split) do
-      --- @type string, string
       local key, value = unpack(vim.split(key_value_str, ':'))
+      assert(key and value)
       key = vim.trim(key)
 
       result[key] = value

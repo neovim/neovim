@@ -1075,7 +1075,7 @@ function Client:supports_method(method, bufnr)
   if not required_capability then
     return true
   end
-  if vim.tbl_get(self.server_capabilities, unpack(required_capability)) then
+  if vim.tbl_get(assert(self.server_capabilities), unpack(required_capability)) then
     return true
   end
 

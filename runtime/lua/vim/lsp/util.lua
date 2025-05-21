@@ -2024,9 +2024,7 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, position_encoding)
     --- @diagnostic disable-next-line: deprecated
     position_encoding = M._get_offset_encoding(bufnr)
   end
-  --- @type [integer, integer]
   local A = { unpack(start_pos or api.nvim_buf_get_mark(bufnr, '<')) }
-  --- @type [integer, integer]
   local B = { unpack(end_pos or api.nvim_buf_get_mark(bufnr, '>')) }
   -- convert to 0-index
   A[1] = A[1] - 1
