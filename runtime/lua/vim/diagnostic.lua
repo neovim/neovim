@@ -1588,7 +1588,6 @@ M.handlers.underline = {
   end,
 }
 
-
 --- @param namespace integer
 --- @param bufnr integer
 --- @param diagnostics table<integer, vim.Diagnostic[]>
