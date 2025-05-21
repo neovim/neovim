@@ -345,7 +345,15 @@ local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
 --- @field silent? boolean
 
 --- Displays signature information about the symbol under the cursor in a
---- floating window.
+--- floating window. Allows cycling through signature overloads with `<C-s>`,
+--- which can be remapped via `<Plug>(nvim.lsp.ctrl-s)`
+---
+--- Example:
+---
+--- ```lua
+--- vim.keymap.set('n', '<C-b>', '<Plug>(nvim.lsp.ctrl-s)')
+--- ```
+---
 --- @param config? vim.lsp.buf.signature_help.Opts
 function M.signature_help(config)
   local method = ms.textDocument_signatureHelp
@@ -420,12 +428,18 @@ function M.signature_help(config)
     local fbuf, fwin = show_signature()
 
     if can_cycle then
-      vim.keymap.set('n', '<C-s>', function()
+      vim.keymap.set('n', '<Plug>(nvim.lsp.ctrl-s)', function()
         show_signature(fwin)
       end, {
         buffer = fbuf,
         desc = 'Cycle next signature',
       })
+      if vim.fn.hasmapto('<Plug>(nvim.lsp.ctrl-s)', 'n') == 0 then
+        vim.keymap.set('n', '<C-s>', '<Plug>(nvim.lsp.ctrl-s)', {
+          buffer = fbuf,
+          desc = 'Cycle next signature',
+        })
+      end
     end
   end)
 end
