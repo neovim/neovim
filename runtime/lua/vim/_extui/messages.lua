@@ -254,7 +254,7 @@ function M.show_msg(tar, content, replace_last, more)
 
   if tar == 'box' then
     api.nvim_win_set_width(ext.wins[ext.tab].box, width)
-    local h = api.nvim_win_text_height(ext.wins[ext.tab].box, {})
+    local h = api.nvim_win_text_height(ext.wins[ext.tab].box, { start_row = start_row })
     if h.all > (more and 1 or math.ceil(o.lines * 0.5)) then
       api.nvim_buf_set_lines(ext.bufs.box, start_row, -1, false, {})
       api.nvim_win_set_width(ext.wins[ext.tab].box, M.box.width)
@@ -332,8 +332,12 @@ function M.msg_show(kind, content)
     M.show_msg('prompt', content, true)
     M.set_pos('prompt')
   else
-    -- Set the entered search command in the cmdline.
+    -- Set the entered search command in the cmdline (if available).
     local tar = kind == 'search_cmd' and 'cmd' or ext.cfg.msg.pos
+    if tar == 'cmd' and ext.cmdheight == 0 then
+      return
+    end
+
     if tar == 'cmd' then
       if ext.cmd.level > 0 then
         return -- Do not overwrite an active cmdline.
@@ -349,8 +353,10 @@ function M.msg_show(kind, content)
     M.show_msg(tar, content, replace_bufwrite, more)
     -- Replace message for every second bufwrite message.
     replace_bufwrite = not replace_bufwrite and kind == 'bufwrite'
-    -- Don't remember search_cmd message as actual mesage.
-    M.prev_msg = kind == 'search_cmd' and '' or M.prev_msg
+    -- Don't remember search_cmd message as actual message.
+    if kind == 'search_cmd' then
+      M.cmd.lines, M.cmd.count, M.prev_msg = 0, 0, ''
+    end
   end
 end
 
