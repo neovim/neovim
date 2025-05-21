@@ -309,7 +309,7 @@ void ui_client_event_restart(Array args)
   int argc = tv_list_len(l);
 
   // Assert to be positive for safe conversion to size_t.
-  assert(argc >= 0);
+  assert(argc > 0);
 
   char **argv = xmalloc(sizeof(char *) * ((size_t)argc + 1));
   listitem_T *li = tv_list_first(l);
