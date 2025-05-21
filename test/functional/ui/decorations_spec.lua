@@ -3412,7 +3412,7 @@ describe('extmark decorations', function()
         {4:^1}                                                 |
         {4:1}                                                 |*13
                                                           |
-      ]]
+      ]],
     })
     feed('<C-e>')
     -- Newly visible line should also have the highlight.
@@ -3421,7 +3421,7 @@ describe('extmark decorations', function()
         {4:^1}                                                 |
         {4:1}                                                 |*13
                                                           |
-      ]]
+      ]],
     })
   end)
 end)

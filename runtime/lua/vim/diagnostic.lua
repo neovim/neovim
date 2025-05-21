@@ -1604,9 +1604,9 @@ local function render_virtual_text(namespace, bufnr, diagnostics, opts)
       or (opts.current_line == false and line == lnum)
     then
       return false
-    else
-      return true
     end
+
+    return true
   end
 
   for line, line_diagnostics in pairs(diagnostics) do
