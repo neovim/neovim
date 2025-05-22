@@ -1505,7 +1505,6 @@ let s:interfaces = get(g:, "vimsyn_embed", "l")
 if s:interfaces =~# 'l'
   syn include @vimLuaScript syntax/lua.vim
   unlet b:current_syntax
-  syn clear luaParenError " See issue #11277
 endif
 
 syn keyword	vimLua	lua	skipwhite nextgroup=vimLuaHeredoc,vimLuaStatement
