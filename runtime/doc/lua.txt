@@ -3236,30 +3236,51 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
 ==============================================================================
 Lua module: vim.glob                                                *vim.glob*
 
+Glob-to-LPeg Converter (Peglob) This module converts glob patterns to LPeg
+patterns according to the LSP 3.17 specification:
+https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#pattern
+
+Glob grammar overview:
+• `*` to match zero or more characters in a path segment
+• `?` to match on one character in a path segment
+• `**` to match any number of path segments, including none
+• `{}` to group conditions (e.g. `*.{ts,js}` matches TypeScript and JavaScript
+  files)
+• `[]` to declare a range of characters to match in a path segment (e.g.,
+  `example.[0-9]` to match on `example.0`, `example.1`, …)
+• `[!...]` to negate a range of characters to match in a path segment (e.g.,
+  `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+
+Additional constraints:
+• A Glob pattern must match an entire path, with partial matches considered
+  failures.
+• The pattern only determines success or failure, without specifying which
+  parts correspond to which characters.
+• A path segment is the portion of a path between two adjacent path separators
+  (`/`), or between the start/end of the path and the nearest separator.
+• The `**` (globstar) pattern matches zero or more path segments, including
+  intervening separators (`/`). Within pattern strings, `**` must be delimited
+  by path separators (`/`) or pattern boundaries and cannot be adjacent to any
+  characters other than `/`. If `**` is not the final element, it must be
+  followed by `/`.
+• `{}` (braced conditions) contains valid Glob patterns as branches, separated
+  by commas. Commas are exclusively used for separating branches and cannot
+  appear within a branch for any other purpose. Nested `{}` structures are
+  allowed, but `{}` must contain at least two branches—zero or one branch is
+  not permitted.
+• In `[]` or `[!...]`, a character range consists of character intervals
+  (e.g., `a-z`) or individual characters (e.g., `w`). A range including `/`
+  won’t match that character.
+
+
 vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
     Parses a raw glob into an |lua-lpeg| pattern.
-
-    This uses glob semantics from LSP 3.17.0:
-    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#pattern
-
-    Glob patterns can have the following syntax:
-    • `*` to match one or more characters in a path segment
-    • `?` to match on one character in a path segment
-    • `**` to match any number of path segments, including none
-    • `{}` to group conditions (e.g. `*.{ts,js}` matches TypeScript and
-      JavaScript files)
-    • `[]` to declare a range of characters to match in a path segment (e.g.,
-      `example.[0-9]` to match on `example.0`, `example.1`, …)
-    • `[!...]` to negate a range of characters to match in a path segment
-      (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not
-      `example.0`)
 
     Parameters: ~
       • {pattern}  (`string`) The raw glob pattern
 
     Return: ~
-        (`vim.lpeg.Pattern`) pattern An |lua-lpeg| representation of the
-        pattern
+        (`vim.lpeg.Pattern`) An |lua-lpeg| representation of the pattern
 
 
 ==============================================================================
