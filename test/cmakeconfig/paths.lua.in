@@ -4,6 +4,7 @@ M.include_paths = {}
 for p in ("${TEST_INCLUDE_DIRS}" .. ";"):gmatch("[^;]+") do
   table.insert(M.include_paths, p)
 end
+M.apple_sysroot = "${CMAKE_OSX_SYSROOT}"
 
 M.translations_enabled = "${ENABLE_TRANSLATIONS}" == "ON"
 M.is_asan = "${ENABLE_ASAN_UBSAN}" == "ON"

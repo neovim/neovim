@@ -408,6 +408,7 @@ pub fn test_config(b: *std.Build, gen_dir: LazyPath) ![]u8 {
         \\local M = {{}}
         \\
         \\M.include_paths = {{}}
+        \\M.apple_sysroot = ""
         \\M.translations_enabled = "$ENABLE_TRANSLATIONS" == "ON"
         \\M.is_asan = "$ENABLE_ASAN_UBSAN" == "ON"
         \\M.is_zig_build = true
