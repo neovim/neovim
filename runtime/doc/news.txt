@@ -226,6 +226,7 @@ These existing features changed their behavior.
 • 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of
   the first writable directory in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
+• |vim.notify()| can colorize a message.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

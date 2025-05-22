@@ -621,6 +621,11 @@ function vim.defer_fn(fn, timeout)
   return timer
 end
 
+---@class vim.notify.Opts
+---@inlinedoc
+---
+---@field hl_group? string|number Custom highlight group.
+
 --- Displays a notification to the user.
 ---
 --- This function can be overridden by plugins to display notifications using
@@ -628,10 +633,13 @@ end
 --- writes to |:messages|.
 ---@param msg string Content of the notification to show to the user.
 ---@param level integer|nil One of the values from |vim.log.levels|.
----@param opts table|nil Optional parameters. Unused by default.
----@diagnostic disable-next-line: unused-local
-function vim.notify(msg, level, opts) -- luacheck: no unused args
-  local chunks = { { msg, level == vim.log.levels.WARN and 'WarningMsg' or nil } }
+---@param opts vim.notify.Opts? Optional parameter that can also be used by a custom provider.
+function vim.notify(msg, level, opts)
+  local hl_group = opts and opts.hl_group or nil ---@type string|number|nil
+  if level == vim.log.levels.WARN then
+    hl_group = 'WarningMsg'
+  end
+  local chunks = { { msg, hl_group } }
   vim.api.nvim_echo(chunks, true, { err = level == vim.log.levels.ERROR })
 end
 
@@ -645,7 +653,7 @@ do
   ---
   ---@param msg string Content of the notification to show to the user.
   ---@param level integer|nil One of the values from |vim.log.levels|.
-  ---@param opts table|nil Optional parameters. Unused by default.
+  ---@param opts vim.notify.Opts? Optional parameter that can also be used by a custom provider.
   ---@return boolean true if message was displayed, else false
   function vim.notify_once(msg, level, opts)
     if not notified[msg] then

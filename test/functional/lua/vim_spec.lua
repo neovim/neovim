@@ -3846,6 +3846,14 @@ stack traceback:
     }
     exec_lua [[vim.notify_once("I'll only tell you this once...")]]
     screen:expect_unchanged()
+    exec_lua [[vim.notify_once("A beautiful message", vim.log.levels.INFO, { hl_group = 'WarningMsg' })]]
+    screen:expect {
+      grid = [[
+      ^                                                            |
+      {1:~                                                           }|*3
+      {19:A beautiful message}                                         |
+    ]],
+    }
   end)
 
   describe('vim.schedule_wrap', function()
