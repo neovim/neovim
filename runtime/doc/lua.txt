@@ -1521,7 +1521,7 @@ vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
                    `fn`
 
     Return: ~
-        (`table`) timer luv timer object
+        (`uv.uv_timer_t`) timer luv timer object
 
                                                              *vim.deprecate()*
 vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
@@ -2162,12 +2162,12 @@ vim.spairs({t})                                                 *vim.spairs()*
     Enumerates key-value pairs of a table, ordered by key.
 
     Parameters: ~
-      • {t}  (`table`) Dict-like table
+      • {t}  (`table<K, V>`) Dict-like table
 
     Return (multiple): ~
         (`fun(table: table<K, V>, index?: K):K, V`) |for-in| iterator over
         sorted keys and their values
-        (`table`)
+        (`table<K, V>`)
 
     See also: ~
       • Based on

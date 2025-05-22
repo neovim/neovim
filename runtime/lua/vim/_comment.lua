@@ -22,7 +22,8 @@ local function get_commentstring(ref_position)
   -- Traverse backwards to prefer narrower captures.
   local caps = vim.treesitter.get_captures_at_pos(0, row, col)
   for i = #caps, 1, -1 do
-    local id, metadata = caps[i].id, caps[i].metadata
+    local c = assert(caps[i])
+    local id, metadata = c.id, c.metadata
     local md_cms = metadata['bo.commentstring'] or metadata[id] and metadata[id]['bo.commentstring']
 
     if md_cms then
@@ -79,6 +80,7 @@ local function get_comment_parts(ref_position)
 
   -- Structure of 'commentstring': <left part> <%s> <right part>
   local left, right = cs:match('^(.-)%%s(.-)$')
+  assert(left and right)
   return { left = left, right = right }
 end
 

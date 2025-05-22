@@ -26,6 +26,7 @@ do
   end, { desc = 'Edit treesitter query', nargs = '?' })
 
   vim.api.nvim_create_user_command('Open', function(cmd)
+    --- @diagnostic disable-next-line: param-type-not-match
     vim.ui.open(cmd.fargs[1])
   end, {
     desc = 'Open file with system default handler. See :help vim.ui.open()',
@@ -473,7 +474,7 @@ do
       vim.cmd([[anoremenu enable PopUp.Go\ to\ definition]])
     end
 
-    local lnum = vim.fn.getcurpos()[2] - 1 ---@type integer
+    local lnum = vim.fn.getcurpos()[2] - 1
     local diagnostic = false
     if next(vim.diagnostic.get(0, { lnum = lnum })) ~= nil then
       diagnostic = true
@@ -944,7 +945,8 @@ do
         local trusted = vim.secure.read(file) --[[@as string|nil]]
         if trusted then
           if vim.endswith(file, '.lua') then
-            loadstring(trusted)()
+            local chunk = assert(loadstring(trusted))
+            chunk()
           else
             vim.api.nvim_exec2(trusted, {})
           end

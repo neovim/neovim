@@ -48,6 +48,8 @@ local hrtime = vim.uv.hrtime
 -- Parse in 3ms chunks.
 local default_parse_timeout_ns = 3 * 1000000
 
+--- @diagnostic disable-next-line: assign-type-mismatch
+-- EmmyLuaLs/emmylua-analyzer-rust#343
 ---@type Range2
 local entire_document_range = { 0, math.huge }
 
@@ -133,8 +135,7 @@ function LanguageTree.new(source, lang, opts)
 
   local injections = opts.injections or {}
 
-  --- @type vim.treesitter.LanguageTree
-  local self = {
+  local init = {
     _source = source,
     _lang = lang,
     _children = {},
@@ -154,7 +155,8 @@ function LanguageTree.new(source, lang, opts)
     _callbacks_rec = {},
   }
 
-  setmetatable(self, LanguageTree)
+  --- @type vim.treesitter.LanguageTree
+  local self = setmetatable(init, LanguageTree)
 
   if vim.g.__ts_debug and type(vim.g.__ts_debug) == 'number' then
     self:_set_logger()
@@ -208,7 +210,7 @@ local function tcall(f, ...)
   local start = hrtime() --[[@as integer]]
   ---@diagnostic disable-next-line
   local r = { f(...) }
-  local duration = (hrtime() --[[@as integer]]) - start
+  local duration = hrtime() - start
   --- @diagnostic disable-next-line: redundant-return-value
   return duration, unpack(r)
 end
@@ -578,10 +580,13 @@ end
 ---     If parsing was still able to finish synchronously (within 3ms), `parse()` returns the list
 ---     of trees. Otherwise, it returns `nil`.
 --- @return table<integer, TSTree>?
+--- @overload fun(self, range: boolean|Range?): table<integer, TSTree>
+--- @overload fun(self): table<integer, TSTree>
 function LanguageTree:parse(range, on_parse)
   if on_parse then
     return self:_async_parse(range, on_parse)
   end
+  --- @diagnostic disable-next-line: await-in-sync
   local trees, _ = self:_parse(range, {})
   return trees
 end
@@ -613,7 +618,7 @@ function LanguageTree:_parse(range, thread_state)
   -- Collect some stats
   local no_regions_parsed = 0
   local query_time = 0
-  local total_parse_time = 0
+  local total_parse_time = 0.0
 
   -- At least 1 region is invalid
   if not self:is_valid(true, type(range) == 'table' and range or nil) then
@@ -734,8 +739,9 @@ local function region_tostr(region)
   if #region == 0 then
     return '[]'
   end
-  local srow, scol = region[1][1], region[1][2]
-  local erow, ecol = region[#region][4], region[#region][5]
+  local first = assert(region[1])
+  local last = assert(region[#region])
+  local srow, scol, erow, ecol = first[1], first[2], last[4], last[5]
   return string.format('[%d:%d-%d:%d]', srow, scol, erow, ecol)
 end
 
@@ -798,11 +804,14 @@ function LanguageTree:set_included_regions(new_regions)
       if type(range) == 'table' and #range == 4 then
         region[i] = Range.add_bytes(self._source, range --[[@as Range4]])
       elseif type(range) == 'userdata' then
-        --- @diagnostic disable-next-line: missing-fields LuaLS varargs bug
+        --- @diagnostic disable-next-line: assign-type-mismatch
+        -- EmmyLuaLs/emmylua-analyzer-rust#343
         region[i] = { range:range(true) }
       end
     end
   end
+
+  --- @cast new_regions Range6[][]
 
   -- included_regions is not guaranteed to be list-like, but this is still sound, i.e. if
   -- new_regions is different from included_regions, then outdated regions in included_regions are
@@ -862,6 +871,8 @@ local function get_node_ranges(node, source, metadata, include_children)
     local child = assert(node:named_child(i))
     local c_srow, c_scol, c_sbyte, c_erow, c_ecol, c_ebyte = child:range(true)
     if c_srow > srow or c_scol > scol then
+      --- @diagnostic disable-next-line: assign-type-mismatch
+      -- EmmyLuaLs/emmylua-analyzer-rust#343
       ranges[#ranges + 1] = { srow, scol, sbyte, c_srow, c_scol, c_sbyte }
     end
     srow = c_erow
@@ -870,6 +881,8 @@ local function get_node_ranges(node, source, metadata, include_children)
   end
 
   if erow > srow or ecol > scol then
+    --- @diagnostic disable-next-line: param-type-not-match
+    -- EmmyLuaLs/emmylua-analyzer-rust#343
     ranges[#ranges + 1] = Range.add_bytes(source, { srow, scol, sbyte, erow, ecol, ebyte })
   end
 
@@ -890,8 +903,8 @@ local function clip_regions(region1, region2)
   local i, j = 1, 1
 
   while i <= #region1 and j <= #region2 do
-    local r1 = region1[i]
-    local r2 = region2[j]
+    local r1 = assert(region1[i])
+    local r2 = assert(region2[j])
 
     local intersection = Range.intersection(r1, r2)
     if intersection then
@@ -996,7 +1009,7 @@ function LanguageTree:_get_injection(match, metadata)
   local combined = metadata['injection.combined'] ~= nil
   local injection_lang = metadata['injection.language'] --[[@as string?]]
   local lang = metadata['injection.self'] ~= nil and self:lang()
-    or metadata['injection.parent'] ~= nil and self._parent:lang()
+    or metadata['injection.parent'] ~= nil and assert(self._parent):lang()
     or (injection_lang and resolve_lang(injection_lang))
   local include_children = metadata['injection.include-children'] ~= nil
 
@@ -1012,7 +1025,7 @@ function LanguageTree:_get_injection(match, metadata)
         local ft = vim.filetype.match({ filename = text })
         lang = ft and resolve_lang(ft)
       elseif name == 'injection.content' then
-        ranges = get_node_ranges(node, self._source, metadata[id], include_children)
+        ranges = get_node_ranges(node, self._source, assert(metadata[id]), include_children)
       end
     end
   end
@@ -1067,6 +1080,7 @@ function LanguageTree:_get_injections(range, thread_state)
 
       -- Check the current function duration against the timeout, if it exists.
       local current_time = hrtime()
+      --- @diagnostic disable-next-line: await-in-sync
       self:_subtract_time(thread_state, current_time - start)
       start = hrtime()
     end
@@ -1244,7 +1258,7 @@ end
 function LanguageTree:_on_detach(...)
   self:invalidate(true)
   self:_do_callback('detach', ...)
-  if self._logfile then
+  if self._logfile and self._logger then
     self._logger('nvim', 'detaching')
     self._logger = nil
     self._logfile:close()
