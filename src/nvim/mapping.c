@@ -1926,7 +1926,17 @@ int put_escstr(FILE *fd, const char *strstart, int what)
       if (str[1] == KS_MODIFIER) {
         modifiers = str[2];
         str += 3;
-        c = *str;
+
+        // Modifiers can be applied too to multi-byte characters.
+        p = mb_unescape((const char **)&str);
+
+        if (p == NULL) {
+          c = *str;
+        } else {
+          // retrieve codepoint (character number) from unescaped string
+          c = utf_ptr2char(p);
+          str--;
+        }
       }
       if (c == K_SPECIAL) {
         c = TO_SPECIAL(str[1], str[2]);

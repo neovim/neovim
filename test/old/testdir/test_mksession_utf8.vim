@@ -102,4 +102,35 @@ func Test_mksession_utf8()
   set sessionoptions& splitbelow& fileencoding&
 endfunc
 
+func Test_session_multibyte_mappings()
+
+  " some characters readily available on european keyboards
+  let entries = [
+        \ ['n', '<M-ç>', '<M-ç>'],
+        \ ['n', '<M-º>', '<M-º>'],
+        \ ['n', '<M-¡>', '<M-¡>'],
+        \ ]
+  for entry in entries
+    exe entry[0] .. 'map ' .. entry[1] .. ' ' .. entry[2]
+  endfor
+
+  mkvimrc Xtestvimrc
+
+  nmapclear
+
+  for entry in entries
+    call assert_equal('', maparg(entry[1], entry[0]))
+  endfor
+
+  source Xtestvimrc
+
+  for entry in entries
+    call assert_equal(entry[2], maparg(entry[1], entry[0]))
+  endfor
+
+  nmapclear
+
+  call delete('Xtestvimrc')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
