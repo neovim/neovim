@@ -742,7 +742,7 @@ local registered_autocmds = {}
 
 local function make_augroup_key(namespace, bufnr)
   local ns = M.get_namespace(namespace)
-  return string.format('DiagnosticInsertLeave:%s:%s', bufnr, ns.name)
+  return string.format('nvim.diagnostic.insertleave.%s.%s', bufnr, ns.name)
 end
 
 --- @param namespace integer
