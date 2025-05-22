@@ -801,7 +801,9 @@ end
 ---@return string String with whitespace removed from its beginning and end
 function vim.trim(s)
   vim.validate('s', s, 'string')
-  return s:match('^%s*(.*%S)') or ''
+  -- `s:match('^%s*(.*%S)')` is slow for long whitespace strings,
+  -- so we are forced to split it into two parts to prevent this
+  return s:gsub('^%s+', ''):match('^.*%S') or ''
 end
 
 --- Escapes magic chars in |lua-pattern|s.
