@@ -618,24 +618,53 @@ describe('vim.lsp.completion: item conversion', function()
             },
           },
         },
+        {
+          label = 'insert_replace_edit',
+          kind = 9,
+          textEdit = {
+            newText = 'foobar',
+            insert = {
+              start = { line = 0, character = 7 },
+              ['end'] = { line = 0, character = 11 },
+            },
+            replace = {
+              start = { line = 0, character = 0 },
+              ['end'] = { line = 0, character = 0 },
+            },
+          },
+        },
       },
     }
     local expected = {
-      abbr = ' this_thread',
-      dup = 1,
-      empty = 1,
-      icase = 1,
-      info = '',
-      kind = 'Module',
-      menu = '',
-      abbr_hlgroup = '',
-      word = 'this_thread',
+      {
+        abbr = ' this_thread',
+        dup = 1,
+        empty = 1,
+        icase = 1,
+        info = '',
+        kind = 'Module',
+        menu = '',
+        abbr_hlgroup = '',
+        word = 'this_thread',
+      },
+      {
+        abbr = 'insert_replace_edit',
+        dup = 1,
+        empty = 1,
+        icase = 1,
+        info = '',
+        kind = 'Module',
+        menu = '',
+        abbr_hlgroup = '',
+        word = 'foobar',
+      },
     }
     local result = complete('  std::this|', completion_list)
     eq(7, result.server_start_boundary)
-    local item = result.items[1]
-    item.user_data = nil
-    eq(expected, item)
+    for _, item in ipairs(result.items) do
+      item.user_data = nil
+    end
+    eq(expected, result.items)
   end)
 
   it('should search from start boundary to cursor position', function()
