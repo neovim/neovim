@@ -3066,6 +3066,10 @@ variables in your vimrc:
 <   sh: Bourne shell >
 	let g:is_sh	   = 1
 
+Specific shell features are automatically enabled based on the shell detected
+from the shebang line ("#! ...").  For KornShell Vim detects different shell
+features for mksh, ksh88, ksh93, ksh93u, ksh93v, and ksh2020.
+
 If there's no "#! ..." line, and the user hasn't availed themself of a default
 sh.vim syntax setting as just shown, then syntax/sh.vim will assume the POSIX
 shell syntax.  No need to quote RFCs or market penetration statistics in error
