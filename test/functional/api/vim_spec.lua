@@ -5013,7 +5013,7 @@ describe('API', function()
       ]]
     end)
 
-    it('works with charwise range', function()
+    it('works with |substitute| and charwise range', function()
       insert [[
         line1
         line2
@@ -5034,6 +5034,29 @@ describe('API', function()
         line3foo
         foo
         fooline5
+        line6
+      ]]
+    end)
+
+    it('works with |global| and charwise range', function()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_cmd({
+        cmd = 'global',
+        addr = 'char',
+        args = { '/.*/delete' },
+        range = { 3, 5, 5, 10 } },
+        {})
+      expect [[
+        line1
+        line2
+        line3line5
         line6
       ]]
     end)
@@ -5086,23 +5109,42 @@ describe('API', function()
     end)
 
     it('works with |:!| and charwise selection into shell command', function()
+      -- insert [[
+      --   line1
+      --   line2
+      --   aaaaaline3aaa
+      --   aaaaaaa
+      --   aaaaaaaaaaaaaaaaa
+      --   line5
+      -- ]]
+      -- local buf = api.nvim_get_current_buf()
+      -- api.nvim_buf_set_mark(buf, '<', 3, 3, {})
+      -- api.nvim_buf_set_mark(buf, '>', 5, 11, {})
+      -- command('`<,`>!tr \'a\' \'b\'')
+      -- expect [[
+      --   line1
+      --   line2
+      --   aabbbline3bbb
+      --   bbbbbbb
+      --   bbbbbbbbbbbaaaaaa
+      --   line5
+      -- ]]
+      -- clear()
       insert [[
         line1
         line2
-        line3aaa
-        aaaaaaaaaaaaaaaaa
-        line5
+        bbbbbbbbbbbb
+        line4
       ]]
       local buf = api.nvim_get_current_buf()
       api.nvim_buf_set_mark(buf, '<', 3, 5, {})
-      api.nvim_buf_set_mark(buf, '>', 4, 11, {})
-      command('`<,`>!tr \'a\' \'b\'')
+      api.nvim_buf_set_mark(buf, '>', 3, 9, {})
+      command('`<,`>!tr \'b\' \'g\'')
       expect [[
         line1
         line2
-        line3bbb
-        bbbbbbbbbbbbbbbbb
-        line5
+        bbbbgggggbbb
+        line4
       ]]
     end)
 

@@ -1044,7 +1044,9 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
 
   // Read existing buffer contents (if any)
   StringBuilder contents = KV_INITIAL_VALUE;
-  read_buffer_into(buf, 1, buf->b_ml.ml_line_count, &contents);
+  pos_T start_pos = { 1, 0, 0 };
+  pos_T end_pos = { buf->b_ml.ml_line_count,  ml_get_len(buf->b_ml.ml_line_count), 0 };
+  read_buffer_into(buf, &start_pos, &end_pos, &contents);
 
   channel_incref(chan);
   terminal_open(&chan->term, buf, topts);
