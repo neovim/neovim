@@ -2681,7 +2681,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       if (checkforcmd(&p, "tab", 3)) {
         if (!skip_only) {
           pos_T addr = get_address(eap, &eap->cmd, ADDR_TABS, eap->skip, skip_only,
-                                       false, 1, errormsg);
+                                   false, 1, errormsg);
           int tabnr = (int)addr.lnum;
           if (eap->cmd == NULL) {
             return false;
@@ -2859,9 +2859,9 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
         case ADDR_LINES:
         case ADDR_OTHER:
           eap->line1 = 1;
-          eap->col1  = 1;
+          eap->col1 = 1;
           eap->line2 = curbuf->b_ml.ml_line_count;
-          eap->col2  = ml_get_buf_len(curbuf, curbuf->b_ml.ml_line_count);
+          eap->col2 = ml_get_buf_len(curbuf, curbuf->b_ml.ml_line_count);
           break;
         case ADDR_LOADED_BUFFERS: {
           buf_T *buf = firstbuf;
@@ -2948,8 +2948,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
     } else {
       eap->line2 = lnum;
 
-      if (cnum != MAXCOL)
-      {
+      if (cnum != MAXCOL) {
         eap->col2 = cnum;
       }
     }
@@ -3392,7 +3391,7 @@ static const char *addr_error(cmd_addr_T addr_type)
 ///
 /// @return               MAXLNUM when no Ex address was found.
 static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
-                            int to_other_file, int address_count, const char **errormsg)
+                         int to_other_file, int address_count, const char **errormsg)
   FUNC_ATTR_NONNULL_ALL
 {
   int c;
@@ -3404,7 +3403,7 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
   char *cmd = skipwhite(*ptr);
   linenr_T lnum = MAXLNUM;
   colnr_T cnum = MAXCOL;
-  pos_T addr = { lnum, cnum, 0};
+  pos_T addr = { lnum, cnum, 0 };
 
   do {
     switch (*cmd) {
@@ -3654,10 +3653,10 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
 
     while (true) {
       cmd = skipwhite(cmd);
-      if (*cmd != '-' &&
-          *cmd != '+' &&
-          *cmd != '.' &&
-          !ascii_isdigit(*cmd)) {
+      if (*cmd != '-'
+          && *cmd != '+'
+          && *cmd != '.'
+          && !ascii_isdigit(*cmd)) {
         break;
       }
 
@@ -3792,17 +3791,17 @@ static void ex_script_ni(exarg_T *eap)
 char *invalid_range(exarg_T *eap)
 {
   buf_T *buf;
-  if (eap->line1 < 0 || eap->line2 < 0 || eap->line1 > eap->line2 ||
-      eap->col1 < 0 || eap->col2 < 0 ||
-     (eap->col1 > eap->col2 && eap->line1 == eap->line2)) {
+  if (eap->line1 < 0 || eap->line2 < 0 || eap->line1 > eap->line2
+      || eap->col1 < 0 || eap->col2 < 0
+      || (eap->col1 > eap->col2 && eap->line1 == eap->line2)) {
     return _(e_invrange);
   }
 
   if (eap->argt & EX_RANGE) {
     switch (eap->addr_type) {
     case ADDR_LINES:
-      if (eap->line2 > (curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget)) ||
-          eap->col2 > ml_get_buf_len(curbuf, eap->line2)) {
+      if (eap->line2 > (curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget))
+          || eap->col2 > ml_get_buf_len(curbuf, eap->line2)) {
         return _(e_invrange);
       }
       break;

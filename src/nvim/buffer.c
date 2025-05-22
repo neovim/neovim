@@ -4170,9 +4170,9 @@ void read_buffer_into(buf_T *buf, pos_T *start_pos, pos_T *end_pos, StringBuilde
   size_t len = 0;
   linenr_T lnum = start_pos->lnum;
   char *lp = ml_get_buf(buf, lnum) + start_pos->col - 1;
-  size_t lplen = (size_t)ml_get_buf_len(buf, lnum) - start_pos->col + 1;
+  size_t lplen = (size_t)ml_get_buf_len(buf, lnum) - (size_t)start_pos->col + 1;
   if (start_pos->lnum == end_pos->lnum && end_pos->col > 0) {
-    lplen = end_pos->col - start_pos->col + 1;
+    lplen = (size_t)end_pos->col - (size_t)start_pos->col + 1;
   }
 
   while (true) {
@@ -4202,7 +4202,7 @@ void read_buffer_into(buf_T *buf, pos_T *start_pos, pos_T *end_pos, StringBuilde
       }
       if (lnum == end_pos->lnum) {
         lp = ml_get_buf(buf, lnum);
-        lplen = end_pos->col;
+        lplen = (size_t)end_pos->col;
       } else {
         lp = ml_get_buf(buf, lnum);
         lplen = (size_t)ml_get_buf_len(buf, lnum);

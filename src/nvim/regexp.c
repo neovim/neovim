@@ -147,7 +147,8 @@ struct regengine {
   /// bt_regexec_nl or nfa_regexec_nl
   int (*regexec_nl)(regmatch_T *, uint8_t *, colnr_T, colnr_T, bool);
   /// bt_regexec_mult or nfa_regexec_mult
-  int (*regexec_multi)(regmmatch_T *, win_T *, buf_T *, linenr_T, colnr_T, colnr_T, proftime_T *, int *);
+  int (*regexec_multi)(regmmatch_T *, win_T *, buf_T *, linenr_T, colnr_T, colnr_T, proftime_T *,
+                       int *);
 #ifdef REGEXP_DEBUG
   uint8_t *expr;
 #endif
@@ -7549,7 +7550,8 @@ static int regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_ou
 /// @param timed_out  flag set on timeout or NULL
 ///
 /// @return  0 for failure, or number of lines contained in the match.
-static int bt_regexec_both(uint8_t *line, colnr_T startcol, colnr_T stopcol, proftime_T *tm, int *timed_out)
+static int bt_regexec_both(uint8_t *line, colnr_T startcol, colnr_T stopcol, proftime_T *tm,
+                           int *timed_out)
 {
   bt_regprog_T *prog;
   uint8_t *s;
@@ -7756,7 +7758,8 @@ theend:
 /// @param stopcol    column to stop looking for match
 ///
 /// @return  0 for failure, number of lines contained in the match otherwise.
-static int bt_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T startcol, colnr_T stopcol, bool line_lbr)
+static int bt_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T startcol, colnr_T stopcol,
+                         bool line_lbr)
 {
   rex.reg_match = rmp;
   rex.reg_mmatch = NULL;
@@ -7787,8 +7790,8 @@ static int bt_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T startcol, colnr
 ///
 /// @return zero if there is no match and number of lines contained in the match
 ///         otherwise.
-static int bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T startcol,
-                            colnr_T stopcol, proftime_T *tm, int *timed_out)
+static int bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum,
+                            colnr_T startcol, colnr_T stopcol, proftime_T *tm, int *timed_out)
 {
   init_regexec_multi(rmp, win, buf, lnum);
   return bt_regexec_both(NULL, startcol, stopcol, tm, timed_out);
@@ -15522,7 +15525,8 @@ theend:
 /// @param timed_out  flag set on timeout or NULL
 ///
 /// @return  <= 0 for failure, number of lines contained in the match otherwise.
-static int nfa_regtry(nfa_regprog_T *prog, colnr_T startcol, colnr_T stopcol, proftime_T *tm, int *timed_out)
+static int nfa_regtry(nfa_regprog_T *prog, colnr_T startcol, colnr_T stopcol, proftime_T *tm,
+                      int *timed_out)
 {
   int i;
   regsubs_T subs, m;
@@ -15650,7 +15654,8 @@ static int nfa_regtry(nfa_regprog_T *prog, colnr_T startcol, colnr_T stopcol, pr
 ///
 /// @return <= 0 if there is no match and number of lines contained in the
 /// match otherwise.
-static int nfa_regexec_both(uint8_t *line, colnr_T startcol, colnr_T stopcol, proftime_T *tm, int *timed_out)
+static int nfa_regexec_both(uint8_t *line, colnr_T startcol, colnr_T stopcol, proftime_T *tm,
+                            int *timed_out)
 {
   nfa_regprog_T *prog;
   int retval = 0;
@@ -15900,7 +15905,8 @@ static void nfa_regfree(regprog_T *prog)
 /// @param stopcol    column to stop looking for match
 ///
 /// @return  <= 0 for failure, number of lines contained in the match otherwise.
-static int nfa_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T startcol, colnr_T stopcol, bool line_lbr)
+static int nfa_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T startcol, colnr_T stopcol,
+                          bool line_lbr)
 {
   rex.reg_match = rmp;
   rex.reg_mmatch = NULL;
@@ -15951,8 +15957,8 @@ static int nfa_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T startcol, coln
 ///
 /// @par
 /// FIXME if this behavior is not compatible.
-static int nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T startcol,
-                             colnr_T stopcol, proftime_T *tm, int *timed_out)
+static int nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum,
+                             colnr_T startcol, colnr_T stopcol, proftime_T *tm, int *timed_out)
 {
   init_regexec_multi(rmp, win, buf, lnum);
   return nfa_regexec_both(NULL, startcol, stopcol, tm, timed_out);
@@ -16117,7 +16123,8 @@ static void report_re_switch(const char *pat)
 /// @param nl
 ///
 /// @return true if there is a match, false if not.
-static bool vim_regexec_string(regmatch_T *rmp, const char *line, colnr_T startcol, colnr_T stopcol, bool nl)
+static bool vim_regexec_string(regmatch_T *rmp, const char *line, colnr_T startcol, colnr_T stopcol,
+                               bool nl)
 {
   regexec_T rex_save;
   bool rex_in_use_save = rex_in_use;
@@ -16232,7 +16239,8 @@ int vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, c
   }
   rex_in_use = true;
 
-  int result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, startcol, stopcol, tm, timed_out);
+  int result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, startcol, stopcol, tm,
+                                                   timed_out);
   rmp->regprog->re_in_use = false;
 
   // NFA engine aborted because it's very slow, use backtracking engine instead.
@@ -16260,7 +16268,8 @@ int vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, c
       vim_regfree(prev_prog);
 
       rmp->regprog->re_in_use = true;
-      result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, startcol, stopcol, tm, timed_out);
+      result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, startcol, stopcol, tm,
+                                                   timed_out);
       rmp->regprog->re_in_use = false;
     }
 

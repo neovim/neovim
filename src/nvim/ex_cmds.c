@@ -1058,8 +1058,7 @@ theend:
 /// We use output redirection if do_out is true.
 ///
 /// @param eap  for forced 'ff' and 'fenc'
-static void do_filter(exarg_T *eap, char *cmd, bool do_in,
-                      bool do_out)
+static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
 {
   char *itmp = NULL;
   char *otmp = NULL;

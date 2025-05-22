@@ -2661,7 +2661,8 @@ static colnr_T syn_getcurline_len(void)
 
 // Call vim_regexec() to find a match with "rmp" in "syn_buf".
 // Returns true when there is a match.
-static bool syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T startcol, colnr_T stopcol, syn_time_T *st)
+static bool syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T startcol, colnr_T stopcol,
+                        syn_time_T *st)
 {
   int timed_out = 0;
   proftime_T pt;
