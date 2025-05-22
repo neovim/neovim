@@ -85,8 +85,8 @@ end
 ---@nodoc
 ---@class ArrayIter : Iter
 ---@field _table table Underlying table data
----@field _head number Index to the front of a table iterator
----@field _tail number Index to the end of a table iterator (exclusive)
+---@field _head integer Index to the front of a table iterator
+---@field _tail integer Index to the end of a table iterator (exclusive)
 local ArrayIter = {}
 ArrayIter.__index = setmetatable(ArrayIter, Iter)
 ArrayIter.__call = function(self)
@@ -123,8 +123,8 @@ end
 --- Flattens a single array-like table. Errors if it attempts to flatten a
 --- dict-like table
 ---@param t table table which should be flattened
----@param max_depth number depth to which the table should be flattened
----@param depth number current iteration depth
+---@param max_depth integer depth to which the table should be flattened
+---@param depth integer current iteration depth
 ---@param result table output table that contains flattened result
 ---@return table|nil flattened table if it can be flattened, otherwise nil
 local function flatten(t, max_depth, depth, result)
@@ -229,10 +229,10 @@ end
 --- -- error: attempt to flatten a dict-like table
 --- ```
 ---
----@param depth? number Depth to which |list-iterator| should be flattened
+---@param depth? integer Depth to which |list-iterator| should be flattened
 ---                        (defaults to 1)
 ---@return Iter
----@diagnostic disable-next-line:unused-local
+---@diagnostic disable-next-line:unused
 function Iter:flatten(depth) -- luacheck: no unused args
   error('flatten() requires an array-like table')
 end
@@ -656,7 +656,7 @@ end
 ---
 ---@param f any
 ---@return any
----@diagnostic disable-next-line: unused-local
+---@diagnostic disable-next-line: unused
 function Iter:rfind(f) -- luacheck: no unused args
   error('rfind() requires an array-like table')
 end
@@ -784,7 +784,7 @@ end
 ---
 --- ```
 ---
----@param n number Number of values to skip.
+---@param n integer Number of values to skip.
 ---@return Iter
 function Iter:skip(n)
   for _ = 1, n do
@@ -815,7 +815,7 @@ end
 --- -- 3
 --- ```
 ---
----@param n number Number of values to skip.
+---@param n integer Number of values to skip.
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
 function Iter:rskip(n) -- luacheck: no unused args
@@ -852,7 +852,7 @@ end
 --- -- 3
 --- ```
 ---
----@param n number Index of the value to return. May be negative if the source is a |list-iterator|.
+---@param n integer Index of the value to return. May be negative if the source is a |list-iterator|.
 ---@return any
 function Iter:nth(n)
   if n > 0 then
@@ -866,10 +866,10 @@ end
 ---
 --- Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
 ---
----@param first number
----@param last number
+---@param first integer
+---@param last integer
 ---@return Iter
----@diagnostic disable-next-line: unused-local
+---@diagnostic disable-next-line: unused
 function Iter:slice(first, last) -- luacheck: no unused args
   error('slice() requires an array-like table')
 end
@@ -1025,8 +1025,7 @@ function Iter.new(src, ...)
         return src()
       end
 
-      setmetatable(it, Iter)
-      return it
+      return setmetatable(it, Iter)
     end
 
     local t = {}
@@ -1039,9 +1038,7 @@ function Iter.new(src, ...)
       t[#t + 1] = v -- Coerce to list-like table.
     end
     return ArrayIter.new(t)
-  end
-
-  if type(src) == 'function' then
+  elseif type(src) == 'function' then
     local s, var = ...
 
     --- Use a closure to handle var args returned from iterator
@@ -1059,11 +1056,10 @@ function Iter.new(src, ...)
       return fn(src(s, var))
     end
 
-    setmetatable(it, Iter)
-  else
-    error('src must be a table or function')
+    return setmetatable(it, Iter)
   end
-  return it
+
+  error('src must be a table or function')
 end
 
 --- Create a new ArrayIter
@@ -1073,12 +1069,11 @@ end
 ---@return Iter
 ---@private
 function ArrayIter.new(t)
-  local it = {}
-  it._table = t
-  it._head = 1
-  it._tail = #t + 1
-  setmetatable(it, ArrayIter)
-  return it
+  return setmetatable({
+    _table = t,
+    _head = 1,
+    _tail = #t + 1,
+  }, ArrayIter)
 end
 
 return setmetatable(M, {

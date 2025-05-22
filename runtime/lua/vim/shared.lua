@@ -608,10 +608,10 @@ end
 ---
 ---@see Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
----@generic T: table, K, V
----@param t T Dict-like table
+---@generic K, V
+---@param t table<K, V> Dict-like table
 ---@return fun(table: table<K, V>, index?: K):K, V # |for-in| iterator over sorted keys and their values
----@return T
+---@return table<K, V>
 function vim.spairs(t)
   vim.validate('t', t, 'table')
   --- @cast t table<any,any>

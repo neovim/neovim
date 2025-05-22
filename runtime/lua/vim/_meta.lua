@@ -45,7 +45,7 @@ vim.provider = require('vim.provider')
 function vim._str_byteindex(s, index, utf16) end
 
 --- @param s string
---- @param index integer
+--- @param index? integer
 --- @return integer? utf32_index
 --- @return integer? utf16_index
 --- @overload fun(s: string): integer, integer

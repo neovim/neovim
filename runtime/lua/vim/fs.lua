@@ -77,8 +77,7 @@ function M.dirname(file)
   elseif file == '/' or file:match('^/[^/]+$') then
     return '/'
   end
-  ---@type string
-  local dir = file:match('/$') and file:sub(1, #file - 1) or file:match('^(/?.+)/')
+  local dir = assert(file:match('/$') and file:sub(1, #file - 1) or file:match('^(/?.+)/'))
   if iswin and dir:match('^%w:$') then
     return dir .. '/'
   end
@@ -399,7 +398,9 @@ end
 --- @return string? # Directory path containing one of the given markers, or nil if no directory was
 ---                   found.
 function M.root(source, marker)
+  --- @diagnostic disable-next-line: unnecessary-assert
   assert(source, 'missing required argument: source')
+  --- @diagnostic disable-next-line: unnecessary-assert
   assert(marker, 'missing required argument: marker')
 
   local path ---@type string

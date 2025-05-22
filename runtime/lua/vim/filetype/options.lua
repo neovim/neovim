@@ -70,7 +70,7 @@ local function update_ft_option_cache(filetype)
   end
 end
 
---- @private
+--- @nodoc
 --- @param filetype string Filetype
 --- @param option string Option name
 --- @return string|integer|boolean

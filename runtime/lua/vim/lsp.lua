@@ -434,7 +434,7 @@ lsp.config = setmetatable({ _configs = {} }, {
 
     if not rconfig.resolved_config then
       if name == '*' then
-        rconfig.resolved_config = lsp.config._configs['*'] or {}
+        rconfig.resolved_config = self._configs['*'] or {}
         return rconfig.resolved_config
       end
 
@@ -458,7 +458,7 @@ lsp.config = setmetatable({ _configs = {} }, {
 
       rconfig.resolved_config = vim.tbl_deep_extend(
         'force',
-        lsp.config._configs['*'] or {},
+        self._configs['*'] or {},
         rtp_config or {},
         self._configs[name] or {}
       )
@@ -899,7 +899,8 @@ local function text_document_did_save_handler(bufnr)
       })
       util.buf_versions[bufnr] = 0
     end
-    local save_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'save')
+    local save_capability =
+      vim.tbl_get(assert(client.server_capabilities), 'textDocumentSync', 'save')
     if save_capability then
       local included_text --- @type string?
       if type(save_capability) == 'table' and save_capability.includeText then
@@ -1165,7 +1166,7 @@ end
 --- @field name? string
 ---
 --- Only return clients supporting the given method
---- @field method? string
+--- @field method? vim.lsp.protocol.Method.ClientToServer
 ---
 --- Also return uninitialized clients.
 --- @field package _uninitialized? boolean
@@ -1570,7 +1571,7 @@ end
 ---@return boolean stopped true if client is stopped, false otherwise.
 function lsp.client_is_stopped(client_id)
   vim.deprecate('vim.lsp.client_is_stopped()', 'vim.lsp.get_client_by_id()', '0.14')
-  assert(client_id, 'missing client_id param')
+  vim.validate('client_id', client_id, 'number')
   return not all_clients[client_id]
 end
 

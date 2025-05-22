@@ -228,12 +228,9 @@ function M._get_urls()
 
   if #urls == 0 then
     -- If all else fails, use the filename under the cursor
-    table.insert(
-      urls,
-      vim._with({ go = { isfname = vim.o.isfname .. ',@-@' } }, function()
-        return vim.fn.expand('<cfile>')
-      end)
-    )
+    urls[#urls + 1] = vim._with({ go = { isfname = vim.o.isfname .. ',@-@' } }, function()
+      return vim.fn.expand('<cfile>')
+    end)
   end
 
   return urls

@@ -2503,10 +2503,10 @@ local pattern = {
     ['/octave/history$'] = 'octave',
     ['%.opam%.locked$'] = 'opam',
     ['%.opam%.template$'] = 'opam',
-    ['^pacman%.log'] = starsetf(function(path, bufnr)
+    ['^pacman%.log'] = starsetf(function(path, _bufnr)
       return vim.uv.fs_stat(path) and 'pacmanlog' or nil
     end),
-    ['printcap'] = starsetf(function(path, bufnr)
+    ['printcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('print')
     end),
     ['/queries/.*%.scm$'] = 'query', -- treesitter queries (Neovim only)

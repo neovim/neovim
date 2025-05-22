@@ -286,7 +286,7 @@ do
         nchars = nchars + line:len()
       end
       local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-      local bufline = vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1]
+      local bufline = assert(vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1])
       local firstline = lines[1]
       firstline = bufline:sub(1, col) .. firstline
       lines[1] = firstline
@@ -558,7 +558,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   -- in case of block selection, columns need to be adjusted for non-ASCII characters
   -- TODO: handle double-width characters
   if regtype:byte() == 22 then
-    local bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
+    local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1])
     pos1[2] = vim.str_utfindex(bufline, 'utf-32', pos1[2])
   end
 
@@ -570,15 +570,15 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       c1 = pos1[2]
       c2 = c1 + tonumber(regtype:sub(2)) --[[@as integer]]
       -- and adjust for non-ASCII characters
-      local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
+      local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1])
       local utflen = vim.str_utfindex(bufline, 'utf-32', #bufline)
       if c1 <= utflen then
-        c2 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c2))) --[[@as integer]]
+        c2 = vim.str_byteindex(bufline, 'utf-32', c2)
       else
         c1 = #bufline + 1
       end
       if c2 <= utflen then
-        c2 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c2))) --[[@as integer]]
+        c2 = vim.str_byteindex(bufline, 'utf-32', c2)
       else
         c2 = #bufline + 1
       end
@@ -588,7 +588,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
     else
       c1 = (l == pos1[1]) and pos1[2] or 0
       if inclusive and l == pos2[1] then
-        local bufline = vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1]
+        local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1])
         pos2[2] = vim.fn.byteidx(bufline, vim.fn.charidx(bufline, pos2[2]) + 1)
       end
       c2 = (l == pos2[1]) and pos2[2] or -1
@@ -605,7 +605,7 @@ end
 --- safe to call.
 ---@param fn function Callback to call once `timeout` expires
 ---@param timeout integer Number of milliseconds to wait before calling `fn`
----@return table timer luv timer object
+---@return uv.uv_timer_t timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate('fn', fn, 'callable', true)
   local timer = assert(vim.uv.new_timer())

@@ -109,7 +109,7 @@ local key_value_options = {
 --- @field metatype 'boolean'|'string'|'number'|'map'|'array'|'set'
 
 --- Convert a vimoption_T style dictionary to the correct OptionType associated with it.
----@return string
+--- @return 'boolean'|'string'|'number'|'map'|'array'|'set'
 local function get_option_metatype(name, info)
   if info.type == 'string' then
     if info.flaglist then
@@ -692,7 +692,7 @@ local function create_option_accessor(scope)
   local option_mt
 
   local function make_option(name, value)
-    local info = assert(get_options_info(name), 'Not a valid option name: ' .. name)
+    local info = get_options_info(name)
 
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")

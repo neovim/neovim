@@ -467,7 +467,7 @@ do
     ]])
 
     local urls = require('vim.ui')._get_urls()
-    if vim.startswith(urls[1], 'http') then
+    if vim.startswith(assert(urls[1]), 'http') then
       vim.cmd([[amenu enable PopUp.Open\ in\ web\ browser]])
     elseif vim.lsp.get_clients({ bufnr = 0 })[1] then
       vim.cmd([[anoremenu enable PopUp.Go\ to\ definition]])
@@ -595,7 +595,7 @@ do
       { limit = math.abs(count) }
     )
     if #extmarks > 0 then
-      local extmark = extmarks[math.min(#extmarks, math.abs(count))]
+      local extmark = assert(extmarks[math.min(#extmarks, math.abs(count))])
       vim.api.nvim_win_set_cursor(win, { extmark[2] + 1, extmark[3] })
     end
   end
@@ -876,7 +876,7 @@ do
               end
 
               -- The returned SGR sequence should begin with 48:2
-              local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
+              local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
               if not sgr then
                 return false
               end

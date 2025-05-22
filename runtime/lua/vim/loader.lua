@@ -426,6 +426,7 @@ function M.enable(enable)
 
   if enable then
     vim.fn.mkdir(vim.fn.fnamemodify(M.path, ':p'), 'p')
+    ---@diagnostic disable-next-line: assign-type-mismatch
     _G.loadfile = loadfile_cached
     -- add Lua loader
     table.insert(loaders, 2, loader_cached)
