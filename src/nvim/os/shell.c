@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -1238,7 +1239,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
       if (curbuf->b_op_start.lnum == cur_ln_nr
           && curbuf->b_op_end.lnum == cur_ln_nr) {
         char *old_line = ml_get(cur_ln_nr);
-        int old_chars_count = (curbuf->b_op_start.col - 1);
+        size_t old_chars_count = curbuf->b_op_start.col - 1;
         char *old_txt = xcalloc(old_chars_count, sizeof(char));
         memcpy(old_txt, old_line, old_chars_count * sizeof(char));
         char *new_line = concat_str(concat_str(old_txt, output), old_line + curbuf->b_op_end.col);
