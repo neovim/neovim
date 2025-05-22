@@ -854,6 +854,35 @@ int x = INT_MAX;
     end)
   end)
 
+  it('properly clips nested injections #34098', function()
+    insert([=[
+      ```lua
+      vim.cmd([[
+      set noswapfile
+      set noswapfile
+      set noswapfile
+      ]])
+      ```
+    ]=])
+
+    local result = exec_lua(function()
+      local parser = vim.treesitter.get_parser(0, 'markdown')
+      parser:parse(true)
+
+      return parser._children.lua._children.vim:included_regions()
+    end)
+
+    local expected = {
+      {
+        { 1, 10, 17, 2, 0, 18 },
+        { 2, 0, 18, 3, 0, 33 },
+        { 3, 0, 33, 4, 0, 48 },
+        { 4, 0, 48, 5, 0, 63 },
+      },
+    }
+    eq(expected, result)
+  end)
+
   describe('when getting the language for a range', function()
     before_each(function()
       insert([[
