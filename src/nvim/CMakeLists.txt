@@ -481,11 +481,13 @@ foreach(target ${targets})
     message(STATUS "${target} props '${prop}'")
     foreach(gen_include ${prop})
       list(APPEND gen_cflags "-I${gen_include}")
+      list(APPEND TEST_INCLUDE_DIRS "${gen_include}")
     endforeach()
   endif()
 endforeach()
 
 list(REMOVE_DUPLICATES gen_cflags)
+list(REMOVE_DUPLICATES TEST_INCLUDE_DIRS)
 
 if(APPLE AND CMAKE_OSX_SYSROOT)
   list(APPEND gen_cflags "-isysroot" "${CMAKE_OSX_SYSROOT}")

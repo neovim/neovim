@@ -19,6 +19,11 @@ for _, p in ipairs(paths.include_paths) do
   Preprocess.add_to_include_path(p)
 end
 
+-- add some nonstandard header locations
+if paths.apple_sysroot ~= '' then
+  Preprocess.add_apple_sysroot(paths.apple_sysroot)
+end
+
 local child_pid = nil --- @type integer?
 --- @generic F: function
 --- @param func F

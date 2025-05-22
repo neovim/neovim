@@ -146,11 +146,18 @@ end
 
 --- @param ... string
 function Gcc:add_to_include_path(...)
+  local ef = self.preprocessor_extra_flags
   for i = 1, select('#', ...) do
     local path = select(i, ...)
-    local ef = self.preprocessor_extra_flags
     ef[#ef + 1] = '-I' .. path
   end
+end
+
+function Gcc:add_apple_sysroot(sysroot)
+  local ef = self.preprocessor_extra_flags
+
+  table.insert(ef, '-isysroot')
+  table.insert(ef, sysroot)
 end
 
 -- returns a list of the headers files upon which this file relies
@@ -276,6 +283,11 @@ end
 --- @param ... string
 function M.add_to_include_path(...)
   return cc:add_to_include_path(...)
+end
+
+--- @param ... string
+function M.add_apple_sysroot(...)
+  return cc:add_apple_sysroot(...)
 end
 
 return M
