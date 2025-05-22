@@ -960,8 +960,9 @@ Note: When the 'write' option is off, you are not able to write any file.
 			executed like with ":!{cmd}", any '!' is replaced with
 			the previous command |:!|.
 
-The default [range] for the ":w" command is the whole buffer (1,$).  If you
-write the whole buffer, it is no longer considered changed.  When you
+The default [range] for the ":w" command is the whole buffer (1,$).  The |'[|
+and |']| marks will be set to the [range] being used for the write command.
+If you write the whole buffer, it is no longer considered changed.  When you
 write it to a different file with ":w somefile" it depends on the "+" flag in
 'cpoptions'.  When included, the write command will reset the 'modified' flag,
 even though the buffer itself may still be different from its file.

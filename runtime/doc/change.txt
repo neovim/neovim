@@ -141,8 +141,8 @@ the 'joinspaces' option is on, these commands insert two spaces after a '.',
 The 'B' and 'M' flags in 'formatoptions' change the behavior for inserting
 spaces before and after a multibyte character |fo-table|.
 
-The '[ mark is set at the end of the first line that was joined, '] at the end
-of the resulting line.
+The |'[| mark is set at the end of the first line that was joined, |']| at the
+end of the resulting line.
 
 
 ==============================================================================
@@ -1144,8 +1144,8 @@ the ":put" command, Vim always inserts the text in the next line.  You can
 exchange two characters with the command sequence "xp".  You can exchange two
 lines with the command sequence "ddp".  You can exchange two words with the
 command sequence "deep" (start with the cursor in the blank space before the
-first word).  You can use the "']" or "`]" command after the put command to
-move the cursor to the end of the inserted text, or use "'[" or "`[" to move
+first word).  You can use the |']| or |`]| command after the put command to
+move the cursor to the end of the inserted text, or use |'[| or |`[| to move
 the cursor to the start.
 
 						*put-Visual-mode* *v_p* *v_P*
