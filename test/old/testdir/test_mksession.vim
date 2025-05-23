@@ -1086,10 +1086,10 @@ endfunc
 func Test_mkvimrc()
   let entries = [
         \ ['', 'nothing', '<Nop>'],
-        \ ['n', 'normal', 'NORMAL'],
-        \ ['v', 'visual', 'VISUAL'],
-        \ ['s', 'select', 'SELECT'],
-        \ ['x', 'visualonly', 'VISUALONLY'],
+        \ ['n', 'normal', 'NORMAL<Up>'],
+        \ ['v', 'visual', 'VISUAL<S-Down>'],
+        \ ['s', 'select', 'SELECT<C-Left>'],
+        \ ['x', 'visualonly', 'VISUALONLY<M-Right>'],
         \ ['o', 'operator', 'OPERATOR'],
         \ ['i', 'insert', 'INSERT'],
         \ ['l', 'lang', 'LANG'],

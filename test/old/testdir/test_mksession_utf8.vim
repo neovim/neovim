@@ -103,12 +103,19 @@ func Test_mksession_utf8()
 endfunc
 
 func Test_session_multibyte_mappings()
-
-  " some characters readily available on european keyboards
+  " some characters readily available on european keyboards,
+  " as well as characters containing 0x80 or 0x9b bytes
   let entries = [
+        \ ['n', 'ç', 'ç'],
+        \ ['n', 'º', 'º'],
+        \ ['n', '¡', '¡'],
         \ ['n', '<M-ç>', '<M-ç>'],
         \ ['n', '<M-º>', '<M-º>'],
         \ ['n', '<M-¡>', '<M-¡>'],
+        \ ['n', '…', 'ě'],
+        \ ['n', 'ě', '…'],
+        \ ['n', '<M-…>', '<M-ě>'],
+        \ ['n', '<M-ě>', '<M-…>'],
         \ ]
   for entry in entries
     exe entry[0] .. 'map ' .. entry[1] .. ' ' .. entry[2]
