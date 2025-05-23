@@ -1,5 +1,7 @@
 # Welcome to the Neovim Tutorial
 
+# Chapter 1
+
 Neovim is a very powerful editor that has many commands, too many to explain in
 a tutorial such as this. This tutorial is designed to describe enough of the
 commands that you will be able to easily use Neovim as an all-purpose editor.
@@ -977,6 +979,9 @@ want to use Lua, or "init.vim" if you want to use Vimscript. We'll use
 Run `:help nvim-quickstart`{vim} for more information on extending Nvim.
 
 # CONCLUSION
+
+This concludes Chapter 1 of the Vim Tutor.  Consider continuing with
+[Chapter 2](@tutor:vim-02-beginner).
 
 This was intended to give a brief overview of the Neovim editor, just enough to
 allow you to use it fairly easily. It is far from complete as Neovim has
