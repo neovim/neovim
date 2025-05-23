@@ -93,14 +93,14 @@ describe(':Tutor', function()
       {0:  }                                                                               |
     ]]
 
-    feed(':700<CR>zt')
+    feed(':702<CR>zt')
     screen:expect(expected)
   end)
 
   it('applies hyperlink highlighting', function()
     local expected = [[
-      {0:  }^                                                                               |
-      {0:  }{3:#}{5: CONCLUSION}                                                                   |
+      {0:  }^This concludes Chapter 1 of the Vim Tutor.  Consider continuing with           |
+      {0:  }{2:Chapter 2}.                                                                     |
       {0:  }                                                                               |
       {0:  }This was intended to give a brief overview of the Neovim editor, just enough to|
       {0:  }allow you to use it fairly easily. It is far from complete as Neovim has       |
@@ -131,7 +131,7 @@ describe(':Tutor', function()
       {0:  }University. E-mail: {2:bware@mines.colorado.edu}.                                  |
     ]]
 
-    feed(':978<CR>zt')
+    feed(':983<CR>zt')
     screen:expect(expected)
   end)
 end)
