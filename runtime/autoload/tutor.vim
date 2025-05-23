@@ -167,12 +167,14 @@ function! s:Sort(a, b)
     return retval
 endfunction
 
-function! s:GlobTutorials(name)
+" returns a list of all tutor files matching the given name
+function! tutor#GlobTutorials(name, locale)
+    let locale = a:locale
     " search for tutorials:
     " 1. non-localized
     let l:tutors = s:GlobPath(&rtp, 'tutor/'.a:name.'.tutor')
     " 2. localized for current locale
-    let l:locale_tutors = s:GlobPath(&rtp, 'tutor/'.s:Locale()[0].'/'.a:name.'.tutor')
+    let l:locale_tutors = s:GlobPath(&rtp, 'tutor/'.locale.'/'.a:name.'.tutor')
     " 3. fallback to 'en'
     if len(l:locale_tutors) == 0
         let l:locale_tutors = s:GlobPath(&rtp, 'tutor/en/'.a:name.'.tutor')
@@ -197,7 +199,7 @@ function! tutor#TutorCmd(tutor_name)
         let l:tutor_name = fnamemodify(l:tutor_name, ':r')
     endif
 
-    let l:tutors = s:GlobTutorials(l:tutor_name)
+    let l:tutors = tutor#GlobTutorials(l:tutor_name, s:Locale()[0])
 
     if len(l:tutors) == 0
         echom "No tutorial with that name found"
@@ -225,7 +227,7 @@ function! tutor#TutorCmd(tutor_name)
 endfunction
 
 function! tutor#TutorCmdComplete(lead,line,pos)
-    let l:tutors = s:GlobTutorials('*')
+    let l:tutors = tutor#GlobTutorials('*', s:Locale()[0])
     let l:names = uniq(sort(map(l:tutors, 'fnamemodify(v:val, ":t:r")'), 's:Sort'))
     return join(l:names, "\n")
 endfunction
