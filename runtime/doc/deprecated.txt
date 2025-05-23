@@ -36,7 +36,7 @@ LSP
 
 LUA
 
-• todo
+• The "skip" parameter used by |vim.fs.dir()| is deprecated in favor of "filter"
 
 VIMSCRIPT
 
