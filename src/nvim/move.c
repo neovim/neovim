@@ -1335,56 +1335,55 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
   hasFolding(wp, wp->w_topline, &wp->w_topline, NULL);
   validate_cursor(wp);            // w_wrow needs to be valid
   for (int todo = line_count; todo > 0; todo--) {
-    if (wp->w_topfill < win_get_fill(wp, wp->w_topline)
-        && wp->w_topfill < wp->w_view_height - 1) {
+    bool can_fill = wp->w_topfill < wp->w_view_height - 1
+                    && wp->w_topfill < win_get_fill(wp, wp->w_topline);
+    // break when at the very top
+    if (wp->w_topline == 1 && !can_fill && (!do_sms || wp->w_skipcol < width1)) {
+      break;
+    }
+    if (do_sms && wp->w_skipcol >= width1) {
+      // scroll a screen line down
+      if (wp->w_skipcol >= width1 + width2) {
+        wp->w_skipcol -= width2;
+      } else {
+        wp->w_skipcol -= width1;
+      }
+      redraw_later(wp, UPD_NOT_VALID);
+      done++;
+    } else if (can_fill) {
       wp->w_topfill++;
       done++;
     } else {
-      // break when at the very top
-      if (wp->w_topline == 1 && (!do_sms || wp->w_skipcol < width1)) {
-        break;
-      }
-      if (do_sms && wp->w_skipcol >= width1) {
-        // scroll a screen line down
-        if (wp->w_skipcol >= width1 + width2) {
-          wp->w_skipcol -= width2;
-        } else {
-          wp->w_skipcol -= width1;
+      // scroll a text line down
+      wp->w_topline--;
+      wp->w_skipcol = 0;
+      wp->w_topfill = 0;
+      // A sequence of folded lines only counts for one logical line
+      linenr_T first;
+      if (hasFolding(wp, wp->w_topline, &first, NULL)) {
+        done += !decor_conceal_line(wp, first - 1, false);
+        if (!byfold) {
+          todo -= wp->w_topline - first - 1;
         }
-        redraw_later(wp, UPD_NOT_VALID);
-        done++;
+        wp->w_botline -= wp->w_topline - first;
+        wp->w_topline = first;
+      } else if (decor_conceal_line(wp, wp->w_topline - 1, false)) {
+        todo++;
       } else {
-        // scroll a text line down
-        wp->w_topline--;
-        wp->w_skipcol = 0;
-        wp->w_topfill = 0;
-        // A sequence of folded lines only counts for one logical line
-        linenr_T first;
-        if (hasFolding(wp, wp->w_topline, &first, NULL)) {
-          done += !decor_conceal_line(wp, first - 1, false);
-          if (!byfold) {
-            todo -= wp->w_topline - first - 1;
+        if (do_sms) {
+          int size = linetabsize_eol(wp, wp->w_topline);
+          if (size > width1) {
+            wp->w_skipcol = width1;
+            size -= width1;
+            redraw_later(wp, UPD_NOT_VALID);
           }
-          wp->w_botline -= wp->w_topline - first;
-          wp->w_topline = first;
-        } else if (decor_conceal_line(wp, wp->w_topline - 1, false)) {
-          todo++;
+          while (size > width2) {
+            wp->w_skipcol += width2;
+            size -= width2;
+          }
+          done++;
         } else {
-          if (do_sms) {
-            int size = linetabsize_eol(wp, wp->w_topline);
-            if (size > width1) {
-              wp->w_skipcol = width1;
-              size -= width1;
-              redraw_later(wp, UPD_NOT_VALID);
-            }
-            while (size > width2) {
-              wp->w_skipcol += width2;
-              size -= width2;
-            }
-            done++;
-          } else {
-            done += plines_win_nofill(wp, wp->w_topline, true);
-          }
+          done += plines_win_nofill(wp, wp->w_topline, true);
         }
       }
     }
