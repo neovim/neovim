@@ -168,12 +168,19 @@ local function set_virttext(type)
   end
 end
 
+-- We need to keep track of the current message column to be able to
+-- append or overwrite messages for :echon or carriage returns.
+local prev_tar, col = '', 0
 ---@param tar 'box'|'cmd'|'more'|'prompt'
 ---@param content MsgContent
 ---@param replace_last boolean
+---@param append boolean
 ---@param more boolean? If true, route messages that exceed the target window to more window.
-function M.show_msg(tar, content, replace_last, more)
+function M.show_msg(tar, content, replace_last, append, more)
   local msg, restart, cr, dupe, count = '', false, false, 0, 0
+  col = tar == prev_tar and col or 0
+  prev_tar = tar
+
   if M[tar] then -- tar == 'box'|'cmd'
     if tar == ext.cfg.msg.pos then
       -- Save the concatenated message to identify repeated messages.
@@ -184,6 +191,7 @@ function M.show_msg(tar, content, replace_last, more)
     end
 
     cr = M[tar].count > 0 and msg:sub(1, 1) == '\r'
+    col = M[tar].count > 0 and append and not cr and col or 0
     restart = M[tar].count > 0 and (replace_last or dupe > 0)
     -- Reset indicators the next event loop iteration.
     if M.cmd.count == 0 and tar == 'cmd' then
@@ -199,14 +207,13 @@ function M.show_msg(tar, content, replace_last, more)
     return
   end
 
+  local line_count = api.nvim_buf_line_count(ext.bufs[tar])
   ---@type integer Start row after last line in the target buffer, unless
   ---this is the first message, or in case of a repeated or replaced message.
   local row = M[tar] and count <= 1 and (tar == 'cmd' and ext.cmd.row or 0)
-    or api.nvim_buf_line_count(ext.bufs[tar]) - ((replace_last or cr or dupe > 0) and 1 or 0)
-  local start_row, width = row, M.box.width
-  ---@type string[] Overwrite the last line of the previous message if this one starts with CR.
-  local lines = { cr and api.nvim_buf_get_lines(ext.bufs[tar], -2, -1, false)[1] or nil }
-  local marks = {} ---@type [integer, integer, vim.api.keyset.set_extmark][]
+    or line_count - ((replace_last or restart or cr or col > 0) and 1 or 0)
+  local start_row, start_col, width = row, col, M.box.width
+  local lines, marks = {}, {} ---@type string[], [integer, integer, vim.api.keyset.set_extmark][]
 
   -- Accumulate to be inserted and highlighted message chunks for a non-repeated message.
   for _, chunk in ipairs(dupe > 0 and tar == ext.cfg.msg.pos and {} or content) do
@@ -230,17 +237,25 @@ function M.show_msg(tar, content, replace_last, more)
       end
 
       if chunk[3] > 0 then
-        marks[#marks + 1] = { row, #head, { end_col = #head + #mid, hl_group = chunk[3] } }
+        marks[#marks + 1] = { row, col, { end_col = col + #mid, hl_group = chunk[3] } }
       end
       if str:sub(-1) == '\n' then
         row, idx = row + 1, idx + 1
       end
+      col = str:sub(-1) ~= '\0' and 0 or col + #mid
       head = ''
     end
   end
 
   if not M[tar] or dupe == 0 then
     -- Add highlighted message to buffer.
+    if start_row == line_count - 1 and (start_col > 0 or cr) then
+      local first_row = api.nvim_buf_get_lines(ext.bufs[tar], start_row, start_row + 1, false)[1]
+      local end_col = math.min(#first_row, start_col + #lines[1])
+      api.nvim_buf_set_text(ext.bufs[tar], start_row, start_col, -1, end_col, { lines[1] })
+      start_row = start_row + 1
+      table.remove(lines, 1)
+    end
     api.nvim_buf_set_lines(ext.bufs[tar], start_row, -1, false, lines)
     for _, mark in ipairs(marks) do
       api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, mark[1], mark[2], mark[3])
@@ -310,7 +325,10 @@ local replace_bufwrite = false
 ---@alias MsgChunk [integer, string, integer]
 ---@alias MsgContent MsgChunk[]
 ---@param content MsgContent
-function M.msg_show(kind, content)
+--@param replace_last boolean
+--@param history boolean
+---@param append boolean
+function M.msg_show(kind, content, _, _, append)
   if kind == 'search_count' then
     -- Extract only the search_count, not the entered search command.
     -- Match any of search.c:cmdline_search_stat():' [(x | >x | ?)/(y | >y | ??)]'
@@ -325,11 +343,11 @@ function M.msg_show(kind, content)
   elseif kind == 'verbose' and append_more == 0 then
     -- Verbose messages are sent too often to be meaningful in the cmdline:
     -- always route to box regardless of cfg.msg.pos.
-    M.show_msg('box', content, false)
+    M.show_msg('box', content, false, append)
   elseif ext.cmd.prompt then
     -- Route to prompt that stays open so long as the cmdline prompt is active.
     api.nvim_buf_set_lines(ext.bufs.prompt, 0, -1, false, { '' })
-    M.show_msg('prompt', content, true)
+    M.show_msg('prompt', content, true, append)
     M.set_pos('prompt')
   else
     -- Set the entered search command in the cmdline (if available).
@@ -350,7 +368,7 @@ function M.msg_show(kind, content)
 
     -- Messages sent as a result of a typed command should be routed to the more window.
     local more = ext.cmd.level >= 0 or kind == 'list_cmd'
-    M.show_msg(tar, content, replace_bufwrite, more)
+    M.show_msg(tar, content, replace_bufwrite, append, more)
     -- Replace message for every second bufwrite message.
     replace_bufwrite = not replace_bufwrite and kind == 'bufwrite'
     -- Don't remember search_cmd message as actual message.
@@ -405,7 +423,7 @@ function M.msg_history_show(entries)
   end
 
   for i, entry in ipairs(entries) do
-    M.show_msg('more', entry[2], i == 1 and append_more < 2)
+    M.show_msg('more', entry[2], i == 1 and append_more < 2, false)
   end
 
   M.set_pos('more')
