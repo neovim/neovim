@@ -264,6 +264,9 @@ void screenclear(void)
     msg_grid_invalid = false;
     clear_cmdline = true;
   }
+  if (ui_has(kUIMessages)) {
+    msg_ext_clear(true, true);
+  }
 }
 
 /// Set dimensions of the Nvim application "screen".
@@ -950,7 +953,7 @@ int showmode(void)
   int length = 0;
 
   if (ui_has(kUIMessages) && clear_cmdline) {
-    msg_ext_clear(true);
+    msg_ext_clear(true, false);
   }
 
   // Don't make non-flushed message part of the showmode.

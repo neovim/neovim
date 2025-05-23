@@ -760,7 +760,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     redrawcmdprompt();          // draw prompt or indent
     ccline.cmdspos = cmd_startcol();
     if (!msg_scroll) {
-      msg_ext_clear(false);
+      msg_ext_clear(false, false);
     }
   }
   s->xpc.xp_context = EXPAND_NOTHING;

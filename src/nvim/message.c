@@ -1420,7 +1420,7 @@ void wait_return(int redraw)
       redraw_later(curwin, UPD_VALID);
     }
     if (ui_has(kUIMessages)) {
-      msg_ext_clear(true);
+      msg_ext_clear(true, false);
     }
   }
 }
@@ -2505,7 +2505,7 @@ void msg_scroll_flush(void)
 void msg_reset_scroll(void)
 {
   if (ui_has(kUIMessages)) {
-    msg_ext_clear(true);
+    msg_ext_clear(true, false);
     return;
   }
   // TODO(bfredl): some duplicate logic with update_screen(). Later on
@@ -2702,7 +2702,7 @@ void show_sb_text(void)
 {
   if (ui_has(kUIMessages)) {
     exarg_T ea = { .arg = "", .skip = true };
-    msg_ext_clear(true);
+    msg_ext_clear(true, true);
     ex_messages(&ea);
     return;
   }
@@ -3226,10 +3226,10 @@ void msg_ext_flush_showmode(void)
   }
 }
 
-void msg_ext_clear(bool force)
+void msg_ext_clear(bool force, bool screen)
 {
   if (msg_ext_visible && (!msg_ext_keep_after_cmdline || force)) {
-    ui_call_msg_clear();
+    ui_call_msg_clear(screen);
     msg_ext_visible = 0;
     msg_ext_overwrite = false;  // nothing to overwrite
   }
@@ -3254,7 +3254,7 @@ void msg_ext_check_clear(void)
 {
   // Redraw after cmdline or prompt is expected to clear messages.
   if (msg_ext_need_clear) {
-    msg_ext_clear(true);
+    msg_ext_clear(true, false);
     msg_ext_need_clear = false;
   }
 }

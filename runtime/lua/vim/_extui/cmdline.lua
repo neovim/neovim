@@ -71,9 +71,7 @@ function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
 
   -- Clear message cmdline state; should not be shown during, and reset after cmdline.
   if ext.cfg.msg.pos == 'cmd' and ext.msg.cmd.msg_row ~= -1 then
-    ext.msg.prev_msg, ext.msg.dupe, ext.msg.cmd.msg_row = '', 0, -1
-    api.nvim_buf_clear_namespace(ext.bufs.cmd, ext.ns, 0, -1)
-    ext.msg.virt.msg = { {}, {} }
+    ext.msg.msg_clear(true)
   end
   ext.msg.virt.last = { {}, {}, {}, {} }
 end
