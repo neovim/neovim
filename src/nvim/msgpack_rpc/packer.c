@@ -1,9 +1,8 @@
 #include <assert.h>
-#include <lauxlib.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <lauxlib.h>
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -12,7 +11,6 @@
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/packer.h"
 #include "nvim/types_defs.h"
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/packer.c.generated.h"
 #endif
@@ -75,25 +73,23 @@ void mpack_float8(char **ptr, double i)
   mpack_w8(ptr, (char *)&i);
 }
 
-void mpack_str(String str, PackerBuffer *packer)
+static int msgpack_pack_string(msgpack_packer *const packer, const String str)
 {
   const size_t len = str.size;
-  if (len < 20) {
-    mpack_w(&packer->ptr, 0xa0 | len);
-  } else if (len < 0xff) {
-    mpack_w(&packer->ptr, 0xd9);
-    mpack_w(&packer->ptr, len);
-  } else if (len < 0xffff) {
-    mpack_w(&packer->ptr, 0xda);
-    mpack_w2(&packer->ptr, (uint32_t)len);
-  } else if (len < 0xffffffff) {
-    mpack_w(&packer->ptr, 0xdb);
-    mpack_w4(&packer->ptr, (uint32_t)len);
+  if (len <= 0x1F) {
+    msgpack_pack_fix_raw(packer, len);
+  } else if (len < 0x100) {
+    msgpack_pack_raw(packer, len);
+  } else if (len < 0x10000) {
+    msgpack_pack_raw16(packer, len);
   } else {
-    abort();
+    msgpack_pack_raw32(packer, len);
   }
 
-  mpack_raw(str.data, len, packer);
+  if (len > 0) {
+    return msgpack_pack_append_buffer(packer, str.data, len);
+  }
+  return 0;
 }
 
 void mpack_bin(String str, PackerBuffer *packer)
@@ -238,10 +234,12 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
     case kObjectTypeDict:
     case kObjectTypeArray: {}
       size_t current_size;
-      if (current->type == kObjectTypeArray) {
+      if (current->type == kObjectTypeArray)
+ {
         current_size = current->data.array.size;
         mpack_array(&packer->ptr, (uint32_t)current_size);
-      } else {
+      }
+ else {
         current_size = current->data.dict.size;
         mpack_map(&packer->ptr, (uint32_t)current_size);
       }
@@ -278,7 +276,8 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
       if (container_idx >= arr.size) {
         container = NULL;
       }
-    } else {
+    }
+ else {
       Dict dict = container->data.dict;
       KeyValuePair *it = &dict.items[container_idx++];
       mpack_check_buffer(packer);
