@@ -810,7 +810,7 @@ will be set to zero, but can be changed and used for the replacing cmdline or
 message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
-["msg_show", kind, content, replace_last, history] ~
+["msg_show", kind, content, replace_last, history, append] ~
 	Display a message to the user.
 
 	kind
@@ -859,6 +859,10 @@ must handle.
 
 	history
 	    True if the message was added to the |:messages| history.
+
+	append
+	    True if the message should be appeneded to the previous message,
+	    rather than started on a new line. Is set for |:echon|.
 
 ["msg_clear"] ~
 	Clear all messages currently displayed by "msg_show". (Messages sent

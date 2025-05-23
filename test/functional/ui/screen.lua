@@ -1383,12 +1383,12 @@ function Screen:_handle_wildmenu_hide()
   self.wildmenu_items, self.wildmenu_pos = nil, nil
 end
 
-function Screen:_handle_msg_show(kind, chunks, replace_last, history)
+function Screen:_handle_msg_show(kind, chunks, replace_last, history, append)
   local pos = #self.messages
   if not replace_last or pos == 0 then
     pos = pos + 1
   end
-  self.messages[pos] = { kind = kind, content = chunks, history = history }
+  self.messages[pos] = { kind = kind, content = chunks, history = history, append = append }
 end
 
 function Screen:_handle_msg_clear()
@@ -1507,7 +1507,8 @@ function Screen:_extstate_repr(attr_state)
     messages[i] = {
       kind = entry.kind,
       content = self:_chunks_repr(entry.content, attr_state),
-      history = entry.history,
+      history = entry.history or nil,
+      append = entry.append or nil,
     }
   end
 

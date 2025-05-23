@@ -221,7 +221,6 @@ describe('vim.ui_attach', function()
       messages = {
         {
           content = { { '\nSave changes?\n', 6, 10 } },
-          history = false,
           kind = 'confirm',
         },
       },
@@ -477,7 +476,6 @@ describe('vim.ui_attach', function()
         },
         {
           content = { { 'Press ENTER or type command to continue', 100, 18 } },
-          history = false,
           kind = 'return_prompt',
         },
       },
@@ -530,7 +528,6 @@ describe('vim.ui_attach', function()
         },
         {
           content = { { 'Press ENTER or type command to continue', 100, 18 } },
-          history = false,
           kind = 'return_prompt',
         },
       },
