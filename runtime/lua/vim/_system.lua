@@ -246,7 +246,13 @@ local function spawn(cmd, opts, on_exit, on_error)
   local handle, pid_or_err = uv.spawn(cmd, opts, on_exit)
   if not handle then
     on_error()
-    error(('%s: "%s"'):format(pid_or_err, cmd))
+    if opts.cwd and not uv.fs_stat(opts.cwd) then
+      error(("%s (cwd): '%s'"):format(pid_or_err, opts.cwd))
+    elseif vim.fn.executable(cmd) == 0 then
+      error(("%s (cmd): '%s'"):format(pid_or_err, cmd))
+    else
+      error(pid_or_err)
+    end
   end
   return handle, pid_or_err --[[@as integer]]
 end
