@@ -3185,7 +3185,8 @@ void msg_ext_ui_flush(void)
   msg_ext_emit_chunk();
   if (msg_ext_chunks->size > 0) {
     Array *tofree = msg_ext_init_chunks();
-    ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history);
+    ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history,
+                     msg_ext_append);
     if (msg_ext_history || strequal(msg_ext_kind, "return_prompt")) {
       api_free_array(*tofree);
     } else {
@@ -3205,6 +3206,7 @@ void msg_ext_ui_flush(void)
     }
     msg_ext_overwrite = false;
     msg_ext_history = false;
+    msg_ext_append = false;
     msg_ext_kind = NULL;
   }
 }
