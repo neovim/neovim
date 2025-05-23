@@ -60,8 +60,7 @@
 ---- Update 'init.lua' for plugin to have desired `version`. Let's say, plugin
 ---named 'plugin1' has changed to `vim.version.range('*')`.
 ---- Restart Nvim. The plugin's actual state on disk is not yet changed.
----- Execute `vim.pack.update({ 'plugin1' }, { offline = true })`. Using `offline`
----is optional to not download updates from source.
+---- Execute `vim.pack.update({ 'plugin1' })`.
 ---- Review changes and either confirm or discard them. If discarded, revert
 ---any changes in 'init.lua' as well or you will be prompted again next time
 ---you run |vim.pack.update()|.
@@ -719,7 +718,7 @@ end
 ---   continuing next code execution.
 --- - If plugin is already present on disk, there are no checks about its present state.
 ---   The specified `version` can be not the one actually present on disk.
----   Execute |vim.pack.update()| (possibly with `{ offline = true }`) to synchronize.
+---   Execute |vim.pack.update()| to synchronize.
 --- - Adding plugin second and more times during single session does nothing:
 ---   only the data from the first adding is registered.
 ---
@@ -897,11 +896,10 @@ end
 --- @class vim.pack.keyset.update
 --- @inlinedoc
 --- @field force? boolean Whether to skip confirmation and make updates immediately. Default `false`.
---- @field offline? boolean Whether to skip downloading new changes from source. Default `false`.
 
 --- Update plugins
 ---
---- - If not `offline`, download new changes from source.
+--- - Download new changes from source.
 --- - Infer update info (current/target state, changelog, etc.).
 --- - Depending on `force`:
 ---     - If `false`, show confirmation buffer. It lists data about all set to
@@ -927,7 +925,7 @@ end
 --- @param opts? vim.pack.keyset.update
 function M.update(names, opts)
   vim.validate('names', names, vim.islist, true, 'list')
-  opts = vim.tbl_extend('force', { force = false, offline = false }, opts or {})
+  opts = vim.tbl_extend('force', { force = false }, opts or {})
 
   local plug_list = PlugList.from_names(names)
   if #plug_list.list == 0 then
@@ -936,10 +934,8 @@ function M.update(names, opts)
   end
   git_ensure_exec()
 
-  -- Download data if asked
-  if not opts.offline then
-    plug_list:download_updates()
-  end
+  -- Download new changes
+  plug_list:download_updates()
 
   -- Compute change info: changelog if any, new tags if nothing to update
   plug_list:infer_update_details()
