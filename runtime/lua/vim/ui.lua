@@ -235,4 +235,6 @@ function M._get_urls()
   return urls
 end
 
+M._explorer = require('vim.ui._explorer')
+
 return M
