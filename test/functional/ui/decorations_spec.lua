@@ -6677,6 +6677,33 @@ if (h->n_buckets < new_n_buckets) { // expand
       ]],
     })
   end)
+
+  it("not revealed before skipcol scrolling up with 'smoothscroll'", function()
+    api.nvim_set_option_value('smoothscroll', true, {})
+    api.nvim_buf_set_lines(0, 0, -1, false, { ('x'):rep(screen._width * 2) })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines_above = true, virt_lines = { { { 'VIRT1' } } } } )
+    feed('<C-E>')
+    screen:expect([[
+      {1:<<<}xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx^x|
+      {1:~                                                 }|*10
+                                                        |
+    ]])
+    feed('<C-Y>')
+    screen:expect([[
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx^x|
+      {1:~                                                 }|*9
+                                                        |
+    ]])
+    feed('<C-Y>')
+    screen:expect([[
+      VIRT1                                             |
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx^x|
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+    end)
 end)
 
 describe('decorations: signs', function()
