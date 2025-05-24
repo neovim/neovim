@@ -719,10 +719,12 @@ describe('lua stdlib', function()
       { ' b  ', 'b' },
       { '\tc', 'c' },
       { 'r\n', 'r' },
+      { '', '' },
+      { ' \t \n', '' },
     }
 
     for _, q in ipairs(trims) do
-      assert(q[2], trim(q[1]))
+      eq(q[2], trim(q[1]))
     end
 
     -- Validates args.
