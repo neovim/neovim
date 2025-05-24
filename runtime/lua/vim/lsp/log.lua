@@ -171,11 +171,12 @@ log.warn = create_logger('WARN', log_levels.WARN)
 --- Sets the current log level.
 ---@param level (string|integer) One of |vim.log.levels|
 function log.set_level(level)
+  vim.validate('level', level, { 'string', 'number' })
+
   if type(level) == 'string' then
     current_log_level =
       assert(log.levels[level:upper()], string.format('Invalid log level: %q', level))
   else
-    assert(type(level) == 'number', 'level must be a number or string')
     assert(log.levels[level], string.format('Invalid log level: %d', level))
     current_log_level = level
   end
@@ -190,7 +191,10 @@ end
 --- Sets formatting function used to format logs
 ---@param handle function function to apply to logging arguments, pass vim.inspect for multi-line formatting
 function log.set_format_func(handle)
-  assert(handle == vim.inspect or type(handle) == 'function', 'handle must be a function')
+  vim.validate('handle', handle, function(h)
+    return type(h) == 'function' or h == vim.inspect
+  end, false, 'handle must be a function')
+
   format_func = handle
 end
 
@@ -198,6 +202,8 @@ end
 ---@param level integer log level
 ---@return boolean : true if would log, false if not
 function log.should_log(level)
+  vim.validate('level', level, 'number')
+
   return level >= current_log_level
 end
 
