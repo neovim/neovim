@@ -33,18 +33,24 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const t = target.result;
+    const os_tag = t.os.tag;
+    const is_windows = (os_tag == .windows);
+    const is_linux = (os_tag == .linux);
+    const is_darwin = os_tag.isDarwin();
+    const modern_unix = is_darwin or os_tag.isBSD() or is_linux;
+
     const cross_compiling = b.option(bool, "cross", "cross compile") orelse false;
     // TODO(bfredl): option to set nlua0 target explicitly when cross compiling?
     const target_host = if (cross_compiling) b.graph.host else target;
     const optimize_host = .ReleaseSafe;
 
-    const t = target.result;
-    const tag = t.os.tag;
-
     // puc lua 5.1 is not ReleaseSafe "safe"
     const optimize_lua = if (optimize == .Debug or optimize == .ReleaseSafe) .ReleaseSmall else optimize;
 
-    const use_luajit = b.option(bool, "luajit", "use luajit") orelse false;
+    const arch = t.cpu.arch;
+    const default_luajit = (is_linux and arch == .x86_64) or (is_darwin and arch == .aarch64);
+    const use_luajit = b.option(bool, "luajit", "use luajit") orelse default_luajit;
     const host_use_luajit = if (cross_compiling) false else use_luajit;
     const E = enum { luajit, lua51 };
 
@@ -64,7 +70,7 @@ pub fn build(b: *std.Build) !void {
 
     const lpeg = b.dependency("lpeg", .{});
 
-    const iconv_apple = if (cross_compiling and tag.isDarwin()) b.lazyDependency("iconv_apple", .{ .target = target, .optimize = optimize }) else null;
+    const iconv_apple = if (cross_compiling and is_darwin) b.lazyDependency("iconv_apple", .{ .target = target, .optimize = optimize }) else null;
 
     // this is currently not necessary, as ziglua currently doesn't use lazy dependencies
     // to circumvent ziglua.artifact() failing in a bad way.
@@ -109,7 +115,6 @@ pub fn build(b: *std.Build) !void {
     // both source headers and the {module}.h.generated.h files
     var api_headers = try std.ArrayList(std.Build.LazyPath).initCapacity(b.allocator, 10);
 
-    const is_windows = (target.result.os.tag == .windows);
     // TODO(bfredl): these should just become subdirs..
     const windows_only = [_][]const u8{ "pty_proc_win.c", "pty_proc_win.h", "pty_conpty_win.c", "pty_conpty_win.h", "os_win_console.c", "win_defs.h" };
     const unix_only = [_][]const u8{ "unix_defs.h", "pty_proc_unix.c", "pty_proc_unix.h" };
@@ -144,6 +149,8 @@ pub fn build(b: *std.Build) !void {
         }
     }
 
+    const support_unittests = use_luajit;
+
     const gen_config = b.addWriteFiles();
 
     const version_lua = gen_config.add("nvim_version.lua", lua_version_info(b));
@@ -164,9 +171,6 @@ pub fn build(b: *std.Build) !void {
     });
     _ = gen_config.addCopyFile(versiondef_step.getOutput(), "auto/versiondef.h"); // run_preprocessor() workaronnd
 
-    const isLinux = tag == .linux;
-    const modernUnix = tag.isDarwin() or tag.isBSD() or isLinux;
-
     const ptrwidth = t.ptrBitWidth() / 8;
     const sysconfig_step = b.addConfigHeader(.{ .style = .{ .cmake = b.path("cmake.config/config.h.in") } }, .{
         .SIZEOF_INT = t.cTypeByteSize(.int),
@@ -177,35 +181,35 @@ pub fn build(b: *std.Build) !void {
 
         .PROJECT_NAME = "nvim",
 
-        .HAVE__NSGETENVIRON = tag.isDarwin(),
-        .HAVE_FD_CLOEXEC = modernUnix,
-        .HAVE_FSEEKO = modernUnix,
-        .HAVE_LANGINFO_H = modernUnix,
-        .HAVE_NL_LANGINFO_CODESET = modernUnix,
+        .HAVE__NSGETENVIRON = is_darwin,
+        .HAVE_FD_CLOEXEC = modern_unix,
+        .HAVE_FSEEKO = modern_unix,
+        .HAVE_LANGINFO_H = modern_unix,
+        .HAVE_NL_LANGINFO_CODESET = modern_unix,
         .HAVE_NL_MSG_CAT_CNTR = t.isGnuLibC(),
-        .HAVE_PWD_FUNCS = modernUnix,
-        .HAVE_READLINK = modernUnix,
-        .HAVE_STRNLEN = modernUnix,
-        .HAVE_STRCASECMP = modernUnix,
-        .HAVE_STRINGS_H = modernUnix,
-        .HAVE_STRNCASECMP = modernUnix,
-        .HAVE_STRPTIME = modernUnix,
-        .HAVE_XATTR = isLinux,
+        .HAVE_PWD_FUNCS = modern_unix,
+        .HAVE_READLINK = modern_unix,
+        .HAVE_STRNLEN = modern_unix,
+        .HAVE_STRCASECMP = modern_unix,
+        .HAVE_STRINGS_H = modern_unix,
+        .HAVE_STRNCASECMP = modern_unix,
+        .HAVE_STRPTIME = modern_unix,
+        .HAVE_XATTR = is_linux,
         .HAVE_SYS_SDT_H = false,
-        .HAVE_SYS_UTSNAME_H = modernUnix,
+        .HAVE_SYS_UTSNAME_H = modern_unix,
         .HAVE_SYS_WAIT_H = false, // unused
-        .HAVE_TERMIOS_H = modernUnix,
+        .HAVE_TERMIOS_H = modern_unix,
         .HAVE_WORKING_LIBINTL = t.isGnuLibC(),
-        .UNIX = modernUnix,
-        .CASE_INSENSITIVE_FILENAME = tag.isDarwin() or tag == .windows,
-        .HAVE_SYS_UIO_H = modernUnix,
-        .HAVE_READV = modernUnix,
-        .HAVE_DIRFD_AND_FLOCK = modernUnix,
-        .HAVE_FORKPTY = modernUnix and !tag.isDarwin(), // also on Darwin but we lack the headers :(
-        .HAVE_BE64TOH = modernUnix and !tag.isDarwin(),
+        .UNIX = modern_unix,
+        .CASE_INSENSITIVE_FILENAME = is_darwin or is_windows,
+        .HAVE_SYS_UIO_H = modern_unix,
+        .HAVE_READV = modern_unix,
+        .HAVE_DIRFD_AND_FLOCK = modern_unix,
+        .HAVE_FORKPTY = modern_unix and !is_darwin, // also on Darwin but we lack the headers :(
+        .HAVE_BE64TOH = modern_unix and !is_darwin,
         .ORDER_BIG_ENDIAN = t.cpu.arch.endian() == .big,
         .ENDIAN_INCLUDE_FILE = "endian.h",
-        .HAVE_EXECINFO_BACKTRACE = modernUnix and !t.isMuslLibC(),
+        .HAVE_EXECINFO_BACKTRACE = modern_unix and !t.isMuslLibC(),
         .HAVE_BUILTIN_ADD_OVERFLOW = true,
         .HAVE_WIMPLICIT_FALLTHROUGH_FLAG = true,
         .HAVE_BITSCANFORWARD64 = null,
@@ -230,7 +234,7 @@ pub fn build(b: *std.Build) !void {
 
     // TODO(zig): using getEmittedIncludeTree() is ugly af. we want run_preprocessor()
     // to use the std.build.Module include_path thing
-    const include_path = &.{
+    const include_path = [_]LazyPath{
         b.path("src/"),
         gen_config.getDirectory(),
         lua.getEmittedIncludeTree(),
@@ -241,10 +245,10 @@ pub fn build(b: *std.Build) !void {
         treesitter.artifact("tree-sitter").getEmittedIncludeTree(),
     };
 
-    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, include_path, target, versiondef_git, version_lua);
+    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, &include_path, target, versiondef_git, version_lua);
 
     const test_config_step = b.addWriteFiles();
-    _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b, gen_headers.getDirectory()));
+    _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b));
 
     const test_gen_step = b.step("gen_headers", "debug: output generated headers");
     const config_install = b.addInstallDirectory(.{ .source_dir = gen_config.getDirectory(), .install_dir = .prefix, .install_subdir = "config/" });
@@ -256,6 +260,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
+    nvim_exe.rdynamic = true; // -E
 
     nvim_exe.linkLibrary(lua);
     nvim_exe.linkLibrary(libuv);
@@ -271,16 +276,31 @@ pub fn build(b: *std.Build) !void {
     nvim_exe.addIncludePath(gen_headers.getDirectory());
     build_lua.add_lua_modules(nvim_exe.root_module, lpeg, use_luajit, false);
 
-    const src_paths = try b.allocator.alloc([]u8, nvim_sources.items.len);
+    var unit_test_sources = try std.ArrayList([]u8).initCapacity(b.allocator, 10);
+    if (support_unittests) {
+        var unit_test_fixtures = try src_dir.openDir("test/unit/fixtures/", .{ .iterate = true });
+        defer unit_test_fixtures.close();
+        var it = unit_test_fixtures.iterateAssumeFirstIteration();
+        while (try it.next()) |entry| {
+            if (entry.name.len < 3) continue;
+            if (std.mem.eql(u8, ".c", entry.name[entry.name.len - 2 ..])) {
+                try unit_test_sources.append(b.fmt("test/unit/fixtures/{s}", .{entry.name}));
+            }
+        }
+    }
+
+    const src_paths = try b.allocator.alloc([]u8, nvim_sources.items.len + unit_test_sources.items.len);
     for (nvim_sources.items, 0..) |s, i| {
         src_paths[i] = b.fmt("src/nvim/{s}", .{s.name});
     }
+    @memcpy(src_paths[nvim_sources.items.len..], unit_test_sources.items);
 
     const flags = [_][]const u8{
         "-std=gnu99",
         "-DINCLUDE_GENERATED_DECLARATIONS",
         "-DZIG_BUILD",
         "-D_GNU_SOURCE",
+        if (support_unittests) "-DUNIT_TESTING" else "",
         if (use_luajit) "" else "-DNVIM_VENDOR_BIT",
     };
     nvim_exe.addCSourceFiles(.{ .files = src_paths, .flags = &flags });
@@ -337,7 +357,9 @@ pub fn build(b: *std.Build) !void {
     const parser_query = b.dependency("treesitter_query", .{ .target = target, .optimize = optimize });
     test_deps.dependOn(add_ts_parser(b, "query", parser_query.path("."), false, target, optimize));
 
-    try tests.test_steps(b, nvim_exe, test_deps, lua_dev_deps.path("."), test_config_step.getDirectory());
+    const unit_headers: ?[]const LazyPath = if (support_unittests) &(include_path ++ .{gen_headers.getDirectory()}) else null;
+
+    try tests.test_steps(b, nvim_exe, test_deps, lua_dev_deps.path("."), test_config_step.getDirectory(), unit_headers);
 }
 
 pub fn test_fixture(
@@ -399,7 +421,7 @@ pub fn lua_version_info(b: *std.Build) []u8 {
     , .{ v.major, v.minor, v.patch, v.prerelease.len > 0, v.api_level, v.api_level_compat, v.api_prerelease });
 }
 
-pub fn test_config(b: *std.Build, gen_dir: LazyPath) ![]u8 {
+pub fn test_config(b: *std.Build) ![]u8 {
     var buf: [std.fs.max_path_bytes]u8 = undefined;
     const src_path = try b.build_root.handle.realpath(".", &buf);
 
@@ -407,7 +429,6 @@ pub fn test_config(b: *std.Build, gen_dir: LazyPath) ![]u8 {
     return b.fmt(
         \\local M = {{}}
         \\
-        \\M.include_paths = {{}}
         \\M.apple_sysroot = ""
         \\M.translations_enabled = "$ENABLE_TRANSLATIONS" == "ON"
         \\M.is_asan = "$ENABLE_ASAN_UBSAN" == "ON"
@@ -417,9 +438,9 @@ pub fn test_config(b: *std.Build, gen_dir: LazyPath) ![]u8 {
         \\M.test_source_path = "{[src_path]s}"
         \\M.test_lua_prg = ""
         \\M.test_luajit_prg = ""
-        \\table.insert(M.include_paths, "{[gen_dir]}/include")
-        \\table.insert(M.include_paths, "{[gen_dir]}/src/nvim/auto")
+        \\ -- include path passed on the cmdline, see test/lua_runner.lua
+        \\M.include_paths = _G.c_include_path or {{}}
         \\
         \\return M
-    , .{ .bin_dir = b.install_path, .src_path = src_path, .gen_dir = gen_dir });
+    , .{ .bin_dir = b.install_path, .src_path = src_path });
 }
