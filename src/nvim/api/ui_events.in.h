@@ -79,6 +79,8 @@ void hl_group_set(String name, Integer id)
   FUNC_API_SINCE(6) FUNC_API_CLIENT_IGNORE;
 void grid_resize(Integer grid, Integer width, Integer height)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL FUNC_API_CLIENT_IMPL;
+void restart(void)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_CLIENT_IMPL;
 void grid_clear(Integer grid)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
 void grid_cursor_goto(Integer grid, Integer row, Integer col)

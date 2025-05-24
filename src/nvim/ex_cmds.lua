@@ -3368,6 +3368,12 @@ M.cmds = {
     addr_type = 'ADDR_LINES',
     func = 'ex_substitute',
   },
+  {
+    command = 'restart',
+    flags = bit.bor(BANG, FILES, CMDARG, ARGOPT, TRLBAR, CMDWIN, LOCK_OK),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_restart',
+  },
   -- commands that start with an uppercase letter
   {
     command = 'Next',
