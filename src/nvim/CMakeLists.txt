@@ -204,23 +204,28 @@ endif()
 # Cmake options
 #-------------------------------------------------------------------------------
 
+
+set(SANITIZER_LINK "")
+set(SANITIZER_COMPILE "")
+
 if(ENABLE_ASAN_UBSAN)
+  set(SANITIZER_LINK "-fsanitize=address" "-fsanitize=undefined")
+  set(SANITIZER_COMPILE ${SANITIZER_LINK})
   message(STATUS "Enabling address sanitizer and undefined behavior sanitizer for nvim.")
   if(NOT MSVC)
     if(CI_BUILD)
       # Try to recover from all sanitize issues so we get reports about all failures
-      target_compile_options(nvim_bin PRIVATE -fsanitize-recover=all)
+      list(APPEND SANITIZER_COMPILE "-fsanitize-recover=all")
     else()
-      target_compile_options(nvim_bin PRIVATE -fno-sanitize-recover=all)
+      list(APPEND SANITIZER_COMPILE "-fno-sanitize-recover=all")
     endif()
-    target_compile_options(nvim_bin PRIVATE
-      -fno-omit-frame-pointer
-      -fno-optimize-sibling-calls
-      -fsanitize=undefined)
+
+    list(APPEND SANITIZER_COMPILE "-fno-omit-frame-pointer" "-fno-optimize-sibling-calls")
+    target_compile_options(nvim_bin PRIVATE ${SANITIZER_COMPILE})
   endif()
 
-  target_compile_options(nvim_bin PRIVATE -fsanitize=address)
-  target_link_libraries(nvim_bin PRIVATE -fsanitize=address -fsanitize=undefined)
+  target_compile_options(nvim_bin PRIVATE ${SANITIZER_COMPILE})
+  target_link_options(nvim_bin PRIVATE ${SANITIZER_LINK})
   target_compile_definitions(nvim_bin PRIVATE ENABLE_ASAN_UBSAN)
 endif()
 
@@ -841,6 +846,25 @@ set_target_properties(
 )
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
 target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
+
+add_library(fuzzer_lib INTERFACE)
+set_target_properties(fuzzer_lib 
+  PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS MAKE_LIB
+  INTERFACE_COMPILE_OPTIONS  ${SANITIZER_COMPILE}
+  INTERFACE_LINK_LIBRARIES main_lib libuv
+  INTERFACE_LINK_OPTIONS ${SANITIZER_LINK}
+)
+
+
+add_executable(fuzzer fuzzer/fuzzer.c )
+target_compile_options(fuzzer  PRIVATE "-fsanitize=fuzzer")
+target_link_libraries(fuzzer fuzzer_lib libuv)
+target_link_options(fuzzer PRIVATE  ${SANITIZER_LINK} "-fsanitize=fuzzer")
+
+add_executable(fuzzer_test fuzzer/fuzzer_test.c fuzzer/fuzzer.c)
+target_link_libraries(fuzzer_test fuzzer_lib libuv)
+target_link_options(fuzzer_test PRIVATE  ${SANITIZER_LINK})
 
 #-------------------------------------------------------------------------------
 # Lint
