@@ -223,11 +223,11 @@ describe('ui/ext_messages', function()
         {
           content = {
             { '\n@character     ' },
-            { 'xxx', 26, 158 },
+            { 'xxx', 26, 168 },
             { ' ' },
             { 'links to', 18, 5 },
             { ' Character\n@character.special ' },
-            { 'xxx', 16, 159 },
+            { 'xxx', 16, 169 },
             { ' ' },
             { 'links to', 18, 5 },
             { ' SpecialChar' },

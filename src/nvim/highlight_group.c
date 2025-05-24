@@ -224,6 +224,16 @@ static const char *highlight_init_both[] = {
   "default link LspSignatureActiveParameter Visual",
   "default link SnippetTabstop              Visual",
 
+  // vim.pack
+  "default link PackChangeAdded   Added",
+  "default link PackChangeRemoved Removed",
+  "default link PackHint          DiagnosticHint",
+  "default link PackInfo          DiagnosticInfo",
+  "default link PackMsgBreaking   DiagnosticWarn",
+  "default link PackTitleError    DiffDelete",
+  "default link PackTitleSame     DiffText",
+  "default link PackTitleUpdate   DiffAdd",
+
   // Diagnostic
   "default link DiagnosticFloatingError    DiagnosticError",
   "default link DiagnosticFloatingWarn     DiagnosticWarn",
