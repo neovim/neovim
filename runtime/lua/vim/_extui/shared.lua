@@ -47,7 +47,7 @@ function M.tab_check_wins()
         M.cmd.highlighter = vim.treesitter.highlighter.new(parser)
       elseif type == 'more' then
         -- Close more window with `q`, same as `checkhealth`
-        api.nvim_buf_set_keymap(M.bufs.more, 'n', 'q', '<C-w>c', {})
+        api.nvim_buf_set_keymap(M.bufs.more, 'n', 'q', '<Cmd>wincmd c<CR>', {})
       end
     end
 
