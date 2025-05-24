@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tree_sitter/api.h>
 #include <uv.h>
 
 #include "nvim/os/time.h"
@@ -501,6 +500,33 @@ static bool on_parser_progress(TSParseState *state)
   return parse_time >= payload->timeout_threshold_ns;
 }
 
+TSTree *nts_parser_parse_buf(TSParser *p, TSTree *old_tree, int bufnr, uint64_t timeout_ns)
+{
+  buf_T *buf = handle_get_buffer(bufnr);
+
+  if (!buf) {
+    abort();
+  }
+
+  TSInput input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8, NULL };
+
+  if (timeout_ns == 0) {
+    return ts_parser_parse(p, old_tree, input);
+  }
+
+  TSLuaParserCallbackPayload payload = (TSLuaParserCallbackPayload){
+    .parse_start_time = os_hrtime(),
+    .timeout_threshold_ns = timeout_ns
+  };
+
+  TSParseOptions parse_options = {
+    .payload = &payload,
+    .progress_callback = on_parser_progress
+  };
+
+  return ts_parser_parse_with_options(p, old_tree, input, parse_options);
+}
+
 static int parser_parse(lua_State *L)
 {
   TSParser *p = parser_check(L, 1);
@@ -511,47 +537,30 @@ static int parser_parse(lua_State *L)
   }
 
   TSTree *new_tree = NULL;
-  size_t len;
-  const char *str;
-  handle_T bufnr;
-  buf_T *buf;
-  TSInput input;
 
   // This switch is necessary because of the behavior of lua_isstring, that
   // consider numbers as strings...
   switch (lua_type(L, 3)) {
-  case LUA_TSTRING:
-    str = lua_tolstring(L, 3, &len);
+  case LUA_TSTRING: {
+    size_t len;
+    const char *str = lua_tolstring(L, 3, &len);
     new_tree = ts_parser_parse_string(p, old_tree, str, (uint32_t)len);
     break;
-
-  case LUA_TNUMBER:
-    bufnr = (handle_T)lua_tointeger(L, 3);
-    buf = handle_get_buffer(bufnr);
+  }
+  case LUA_TNUMBER: {
+    handle_T bufnr = (handle_T)lua_tointeger(L, 3);
+    buf_T *buf = handle_get_buffer(bufnr);
 
     if (!buf) {
-#define BUFSIZE 256
-      char ebuf[BUFSIZE] = { 0 };
-      vim_snprintf(ebuf, BUFSIZE, "invalid buffer handle: %d", bufnr);
+      char ebuf[IOSIZE] = { 0 };
+      vim_snprintf(ebuf, IOSIZE, "invalid buffer handle: %d", bufnr);
       return luaL_argerror(L, 3, ebuf);
-#undef BUFSIZE
     }
 
-    input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8, NULL };
-    if (!lua_isnil(L, 5)) {
-      uint64_t timeout_ns = (uint64_t)lua_tointeger(L, 5);
-      TSLuaParserCallbackPayload payload =
-        (TSLuaParserCallbackPayload){ .parse_start_time = os_hrtime(),
-                                      .timeout_threshold_ns = timeout_ns };
-      TSParseOptions parse_options = { .payload = &payload,
-                                       .progress_callback = on_parser_progress };
-      new_tree = ts_parser_parse_with_options(p, old_tree, input, parse_options);
-    } else {
-      new_tree = ts_parser_parse(p, old_tree, input);
-    }
-
+    uint64_t timeout_ns = lua_isnil(L, 5) ? 0 : (uint64_t)lua_tointeger(L, 5);
+    new_tree = nts_parser_parse_buf(p, old_tree, bufnr, timeout_ns);
     break;
-
+  }
   default:
     return luaL_argerror(L, 3, "expected either string or buffer handle");
   }
