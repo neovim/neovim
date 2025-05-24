@@ -270,5 +270,5 @@ function vim.show_pos(bufnr, row, col, filter)
       },
     }
   end
-  vim.api.nvim_echo(chunks, false, {})
+  vim.api.nvim_echo(chunks, false, { kind = 'list_cmd' })
 end

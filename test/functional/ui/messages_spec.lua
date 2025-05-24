@@ -313,6 +313,23 @@ describe('ui/ext_messages', function()
       },
     })
 
+    feed(':call nvim_echo([["Foo"]], 1, #{ kind:"list_cmd" })<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        line^                     |
+        {1:~                        }|*3
+      ]],
+      cmdline = { { abort = false } },
+      messages = {
+        {
+          content = { { 'Foo' } },
+          history = true,
+          kind = 'list_cmd',
+        },
+      },
+    })
+
     -- kind=verbose for :verbose messages
     feed(':1verbose filter Diff[AC] hi<CR>')
     screen:expect({
