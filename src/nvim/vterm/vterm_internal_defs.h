@@ -15,7 +15,7 @@
 
 #define INTERMED_MAX 16
 
-#define CSI_ARGS_MAX 16
+#define CSI_ARGS_MAX 32
 #define CSI_LEADER_MAX 16
 
 #define BUFIDX_PRIMARY   0
