@@ -154,6 +154,8 @@ LSP
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
 • The `textDocument/diagnostic` request now includes the previous id in its
   parameters.
+• Incremental selection is now supported via `textDocument/selectionRange`.
+  `grs` selects outwards and `grS` selects inwards.
 
 LUA
 

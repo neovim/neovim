@@ -90,12 +90,15 @@ BUFFER-LOCAL DEFAULTS
   a custom keymap for `K` exists.
 
 GLOBAL DEFAULTS
-                                          *grr* *gra* *grn* *gri* *i_CTRL-S*
+                                *grr* *gra* *grn* *gri* *grs* *grS* *i_CTRL-S*
 These GLOBAL keymaps are created unconditionally when Nvim starts:
 - "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
 - "gra" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
 - "grr" is mapped in Normal mode to |vim.lsp.buf.references()|
 - "gri" is mapped in Normal mode to |vim.lsp.buf.implementation()|
+- "grs" and "grS" are mapped in Normal and Visual mode to
+  |vim.lsp.buf.selection_range()|, passing parameters "outer" and "inner",
+  respectively
 - "gO" is mapped in Normal mode to |vim.lsp.buf.document_symbol()|
 - CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
 
@@ -1818,6 +1821,14 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
                     • {name}? (`string`) Restrict clients used for rename to
                       ones where client.name matches this field.
                     • {bufnr}? (`integer`) (default: current buffer)
+
+selection_range({direction})                   *vim.lsp.buf.selection_range()*
+    Perform an incremental selection at the cursor position based on ranges
+    given by the LSP. The `direction` parameter specifies whether the
+    selection should head inward or outward.
+
+    Parameters: ~
+      • {direction}  (`'inner'|'outer'`)
 
 signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
