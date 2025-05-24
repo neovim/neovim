@@ -15,7 +15,7 @@ local function get_ftplugin_runtime(filetype)
   local r = {} ---@type string[]
   for _, f in ipairs(files) do
     -- VIMRUNTIME should be static so shouldn't need to worry about it changing
-    if not vim.startswith(f, vim.env.VIMRUNTIME) then
+    if not vim.startswith(f, assert(vim.env.VIMRUNTIME)) then
       r[#r + 1] = f
     end
   end
@@ -34,7 +34,7 @@ local ft_option_cache = {} ---@type table<string,table<string,any>>
 --- @param path string
 --- @return integer
 local function hash(path)
-  local mtime0 = vim.uv.fs_stat(path).mtime
+  local mtime0 = assert(vim.uv.fs_stat(path)).mtime
   return mtime0.sec * 1000000000 + mtime0.nsec
 end
 
@@ -70,7 +70,7 @@ local function update_ft_option_cache(filetype)
   end
 end
 
---- @private
+--- @nodoc
 --- @param filetype string Filetype
 --- @param option string Option name
 --- @return string|integer|boolean

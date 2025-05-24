@@ -118,7 +118,8 @@ local M = {}
 local s_output = {} ---@type string[]
 local check_summary = { warn = 0, error = 0 }
 
--- From a path return a list [{name}, {func}, {type}] representing a healthcheck
+--- From a path return a list [{name}, {func}, {type}] representing a healthcheck
+--- @return [string,string,'l'|'v']
 local function filepath_to_healthcheck(path)
   path = vim.fs.abspath(vim.fs.normalize(path))
   local name --- @type string
@@ -147,7 +148,7 @@ local function filepath_to_healthcheck(path)
       -- */health/init.lua
       name = vim.fs.dirname(vim.fs.dirname(subpath))
     end
-    name = assert(name:gsub('/', '.')) --- @type string
+    name = name:gsub('/', '.')
 
     func = 'require("' .. name .. '.health").check()'
     filetype = 'l'
@@ -156,9 +157,9 @@ local function filepath_to_healthcheck(path)
 end
 
 --- @param plugin_names string
---- @return table<any,string[]> { {name, func, type}, ... } representing healthchecks
+--- @return [string, string, 'l'|'v'|''][] { {name, func, type}, ... } representing healthchecks
 local function get_healthcheck_list(plugin_names)
-  local healthchecks = {} --- @type table<any,string[]>
+  local healthchecks = {} --- @type [string,string,'l'|'v'|''][]
   local plugin_names_list = vim.split(plugin_names, ' ')
   for _, p in pairs(plugin_names_list) do
     -- support vim/lsp/health{/init/}.lua as :checkhealth vim.lsp
@@ -194,10 +195,10 @@ local function get_healthcheck_list(plugin_names)
 end
 
 --- @param plugin_names string
---- @return table<string, string[]> {name: [func, type], ..} representing healthchecks
+--- @return table<string, [string, 'l'|'v'|'']> {name: [func, type], ..} representing healthchecks
 local function get_healthcheck(plugin_names)
   local health_list = get_healthcheck_list(plugin_names)
-  local healthchecks = {} --- @type table<string, string[]>
+  local healthchecks = {} --- @type table<string, [string, 'l'|'v'|'']>
   for _, c in pairs(health_list) do
     if c[1] ~= 'vim' then
       healthchecks[c[1]] = { c[2], c[3] }
@@ -379,7 +380,7 @@ end
 ---                            `:checkhealth vim.* nvim` will healthcheck `vim.lsp`, `vim.treesitter`
 ---                            and `nvim` modules.
 function M._check(mods, plugin_names)
-  local healthchecks = plugin_names == '' and get_healthcheck('*') or get_healthcheck(plugin_names)
+  local healthchecks = get_healthcheck(plugin_names == '' and '*' or plugin_names)
 
   local emptybuf = vim.fn.bufnr('$') == 1 and vim.fn.getline(1) == '' and 1 == vim.fn.line('$')
 
@@ -425,8 +426,7 @@ function M._check(mods, plugin_names)
   vim.print('Running healthchecks...')
 
   for name, value in vim.spairs(healthchecks) do
-    local func = value[1]
-    local type = value[2]
+    local func, type = unpack(value)
     s_output = {}
     check_summary = { warn = 0, error = 0 }
 
@@ -437,8 +437,9 @@ function M._check(mods, plugin_names)
       vim.fn.call(func, {})
     else
       local f = assert(loadstring(func))
-      local ok, output = pcall(f) ---@type boolean, string
+      local ok, output = pcall(f)
       if not ok then
+        --- @cast output string
         M.error(
           string.format('Failed to run healthcheck for "%s" plugin. Exception:\n%s\n', name, output)
         )

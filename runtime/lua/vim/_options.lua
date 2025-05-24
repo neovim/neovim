@@ -109,7 +109,7 @@ local key_value_options = {
 --- @field metatype 'boolean'|'string'|'number'|'map'|'array'|'set'
 
 --- Convert a vimoption_T style dictionary to the correct OptionType associated with it.
----@return string
+--- @return 'boolean'|'string'|'number'|'map'|'array'|'set'
 local function get_option_metatype(name, info)
   if info.type == 'string' then
     if info.flaglist then
@@ -482,8 +482,8 @@ local to_lua_value = {
 
     -- Handles unescaped commas in a list.
     if value:find(',,,') then
-      --- @type string, string
       local left, right = unpack(vim.split(value, ',,,'))
+      assert(left and right)
 
       local result = {}
       vim.list_extend(result, vim.split(left, ','))
@@ -496,8 +496,8 @@ local to_lua_value = {
     end
 
     if value:find(',^,,', 1, true) then
-      --- @type string, string
       local left, right = unpack(vim.split(value, ',^,,', { plain = true }))
+      assert(left and right)
 
       local result = {}
       vim.list_extend(result, vim.split(left, ','))
@@ -552,8 +552,8 @@ local to_lua_value = {
 
     local comma_split = vim.split(raw_value, ',')
     for _, key_value_str in ipairs(comma_split) do
-      --- @type string, string
       local key, value = unpack(vim.split(key_value_str, ':'))
+      assert(key and value)
       key = vim.trim(key)
 
       result[key] = value
@@ -692,7 +692,7 @@ local function create_option_accessor(scope)
   local option_mt
 
   local function make_option(name, value)
-    local info = assert(get_options_info(name), 'Not a valid option name: ' .. name)
+    local info = get_options_info(name)
 
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")

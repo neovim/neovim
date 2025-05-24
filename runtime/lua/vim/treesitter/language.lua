@@ -32,7 +32,7 @@ end
 --- returned.
 ---
 --- @param filetype string
---- @return string|nil
+--- @return string?
 function M.get_lang(filetype)
   if filetype == '' then
     return
@@ -41,7 +41,7 @@ function M.get_lang(filetype)
     return ft_to_lang[filetype]
   end
   -- for subfiletypes like html.glimmer use only "main" filetype
-  filetype = vim.split(filetype, '.', { plain = true })[1]
+  filetype = assert(vim.split(filetype, '.', { plain = true })[1])
   return ft_to_lang[filetype] or filetype
 end
 
@@ -131,7 +131,7 @@ function M.add(lang, opts)
     if #paths == 0 then
       return nil, string.format('No parser for language "%s"', lang)
     end
-    path = paths[1]
+    path = assert(paths[1])
   end
 
   local res = loadparser(path, lang, symbol_name)

@@ -174,7 +174,7 @@ local validate = vim.validate
 --- @field name string
 ---
 --- See [vim.lsp.ClientConfig].
---- @field offset_encoding string
+--- @field offset_encoding 'utf-8'|'utf-16'|'utf-32'
 ---
 --- A ring buffer (|vim.ringbuf()|) containing progress messages
 --- sent by the server.
@@ -221,13 +221,13 @@ local validate = vim.validate
 --- @field private _before_init_cb? vim.lsp.client.before_init_cb
 --- @field private _on_attach_cbs vim.lsp.client.on_attach_cb[]
 --- @field private _on_init_cbs vim.lsp.client.on_init_cb[]
---- @field private _on_exit_cbs vim.lsp.client.on_exit_cb[]
+--- @field package _on_exit_cbs vim.lsp.client.on_exit_cb[]
 --- @field private _on_error_cb? fun(code: integer, err: string)
 local Client = {}
 Client.__index = Client
 
 --- @param obj table<string,any>
---- @param cls table<string,function>
+--- @param cls table<string,function?>
 --- @param name string
 local function method_wrapper(obj, cls, name)
   local meth = assert(cls[name])
@@ -331,7 +331,7 @@ local function validate_config(config)
   )
 end
 
---- @param trace string
+--- @param trace string?
 --- @return 'off'|'messages'|'verbose'
 local function get_trace(trace)
   local valid_traces = {
@@ -438,16 +438,16 @@ function Client.create(config)
   --- @type vim.lsp.rpc.Dispatchers
   local dispatchers = {
     notification = function(...)
-      return self:_notification(...)
+      self:_notification(...)
     end,
     server_request = function(...)
       return self:_server_request(...)
     end,
     on_error = function(...)
-      return self:_on_error(...)
+      self:_on_error(...)
     end,
     on_exit = function(...)
-      return self:_on_exit(...)
+      self:_on_exit(...)
     end,
   }
 
@@ -595,7 +595,7 @@ end
 
 --- @private
 --- @param id integer
---- @param req_type 'pending'|'complete'|'cancel'|
+--- @param req_type 'pending'|'complete'|'cancel'
 --- @param bufnr? integer (only required for req_type='pending')
 --- @param method? string (only required for req_type='pending')
 function Client:_process_request(id, req_type, bufnr, method)
@@ -628,6 +628,8 @@ function Client:_process_request(id, req_type, bufnr, method)
     method = cur_request.method
   end
 
+  -- EmmyLuaLs/emmylua-analyzer-rust#480
+  --- @diagnostic disable-next-line: unnecessary-assert
   assert(bufnr and method)
 
   local request = { type = req_type, bufnr = bufnr, method = method }
@@ -685,6 +687,8 @@ function Client:request(method, params, handler, bufnr)
       params = params,
       version = version,
     })
+    ---@diagnostic disable-next-line: redefined-local
+    --- EmmyLuaLs/emmylua-analyzer-rust#481
   end, function(request_id)
     -- Called when the server sends a response to the request (including cancelled acknowledgment).
     if request_registered then
@@ -843,7 +847,7 @@ end
 --- @param registrations lsp.Registration[]
 function Client:_register_dynamic(registrations)
   -- remove duplicates
-  self:_unregister_dynamic(registrations)
+  self:_unregister_dynamic(registrations --[[@as lsp.Unregistration[] ]])
   for _, reg in ipairs(registrations) do
     local method = reg.method
     if not self.registrations[method] then
@@ -860,7 +864,7 @@ function Client:_register(registrations)
   local unsupported = {} --- @type string[]
 
   for _, reg in ipairs(registrations) do
-    local method = reg.method
+    local method = reg.method --[[@as vim.lsp.protocol.Method]]
     if method == ms.workspace_didChangeWatchedFiles then
       vim.lsp._watchfiles.register(reg, self.id)
     elseif not self:_supports_registration(method) then
@@ -958,9 +962,11 @@ function Client:exec_cmd(command, context, handler)
     return
   end
 
-  local command_provider = self.server_capabilities.executeCommandProvider
+  local command_provider = assert(self.server_capabilities).executeCommandProvider
   local commands = type(command_provider) == 'table' and command_provider.commands or {}
 
+  ---@diagnostic disable-next-line: param-type-not-match
+  --- EmmyLuaLs/emmylua-analyzer-rust#482
   if not vim.list_contains(commands, cmdname) then
     vim.notify_once(
       string.format(
@@ -1069,7 +1075,7 @@ function Client:supports_method(method, bufnr)
   if not required_capability then
     return true
   end
-  if vim.tbl_get(self.server_capabilities, unpack(required_capability)) then
+  if vim.tbl_get(assert(self.server_capabilities), unpack(required_capability)) then
     return true
   end
 

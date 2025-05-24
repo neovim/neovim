@@ -26,6 +26,7 @@ do
   end, { desc = 'Edit treesitter query', nargs = '?' })
 
   vim.api.nvim_create_user_command('Open', function(cmd)
+    --- @diagnostic disable-next-line: param-type-not-match
     vim.ui.open(cmd.fargs[1])
   end, {
     desc = 'Open file with system default handler. See :help vim.ui.open()',
@@ -275,7 +276,7 @@ do
   --- vim-unimpaired style mappings. See: https://github.com/tpope/vim-unimpaired
   do
     --- Execute a command and print errors without a stacktrace.
-    --- @param opts table Arguments to |nvim_cmd()|
+    --- @param opts vim.api.keyset.cmd Arguments to |nvim_cmd()|
     local function cmd(opts)
       local ok, err = pcall(vim.api.nvim_cmd, opts, {})
       if not ok then
@@ -467,13 +468,13 @@ do
     ]])
 
     local urls = require('vim.ui')._get_urls()
-    if vim.startswith(urls[1], 'http') then
+    if vim.startswith(assert(urls[1]), 'http') then
       vim.cmd([[amenu enable PopUp.Open\ in\ web\ browser]])
     elseif vim.lsp.get_clients({ bufnr = 0 })[1] then
       vim.cmd([[anoremenu enable PopUp.Go\ to\ definition]])
     end
 
-    local lnum = vim.fn.getcurpos()[2] - 1 ---@type integer
+    local lnum = vim.fn.getcurpos()[2] - 1
     local diagnostic = false
     if next(vim.diagnostic.get(0, { lnum = lnum })) ~= nil then
       diagnostic = true
@@ -595,7 +596,7 @@ do
       { limit = math.abs(count) }
     )
     if #extmarks > 0 then
-      local extmark = extmarks[math.min(#extmarks, math.abs(count))]
+      local extmark = assert(extmarks[math.min(#extmarks, math.abs(count))])
       vim.api.nvim_win_set_cursor(win, { extmark[2] + 1, extmark[3] })
     end
   end
@@ -733,7 +734,7 @@ do
           return nil
         end
 
-        local max = tonumber(string.rep('f', #c), 16)
+        local max = assert(tonumber(string.rep('f', #c), 16))
         return val / max
       end
 
@@ -876,7 +877,7 @@ do
               end
 
               -- The returned SGR sequence should begin with 48:2
-              local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
+              local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
               if not sgr then
                 return false
               end
@@ -944,7 +945,8 @@ do
         local trusted = vim.secure.read(file) --[[@as string|nil]]
         if trusted then
           if vim.endswith(file, '.lua') then
-            loadstring(trusted)()
+            local chunk = assert(loadstring(trusted))
+            chunk()
           else
             vim.api.nvim_exec2(trusted, {})
           end

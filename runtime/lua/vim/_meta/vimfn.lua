@@ -3174,7 +3174,7 @@ function vim.fn.getcompletion(pat, type, filtered) end
 --- |winrestview()| for restoring more state.
 ---
 --- @param winid? integer
---- @return any
+--- @return [integer, integer, integer, integer, integer]
 function vim.fn.getcurpos(winid) end
 
 --- Same as |getcurpos()| but the column number in the returned
@@ -3550,7 +3550,7 @@ function vim.fn.getpid() end
 --- Also see |getcharpos()|, |getcurpos()| and |setpos()|.
 ---
 --- @param expr string
---- @return integer[]
+--- @return [integer, integer, integer, integer]
 function vim.fn.getpos(expr) end
 
 --- Returns a |List| with all the current quickfix errors.  Each
@@ -3769,9 +3769,9 @@ function vim.fn.getreginfo(regname) end
 ---   \ getpos('v'), getpos('.'), #{ type: mode() })<CR>
 --- <
 ---
---- @param pos1 table
---- @param pos2 table
---- @param opts? table
+--- @param pos1 [integer, integer, integer, integer]
+--- @param pos2 [integer, integer, integer, integer]
+--- @param opts? {type?:string, exclusive?:boolean}
 --- @return string[]
 function vim.fn.getregion(pos1, pos2, opts) end
 
@@ -3806,10 +3806,10 @@ function vim.fn.getregion(pos1, pos2, opts) end
 ---       value of 0 is used for both positions.
 ---       (default: |FALSE|)
 ---
---- @param pos1 table
---- @param pos2 table
---- @param opts? table
---- @return integer[][][]
+--- @param pos1 [integer, integer, integer, integer]
+--- @param pos2 [integer, integer, integer, integer]
+--- @param opts? {type?:string, exclusive?:boolean, eol?:boolean}
+--- @return [[integer, integer, integer, integer], [integer, integer, integer, integer]][]
 function vim.fn.getregionpos(pos1, pos2, opts) end
 
 --- The result is a String, which is type of register {regname}.

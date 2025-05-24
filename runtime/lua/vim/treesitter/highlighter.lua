@@ -7,7 +7,7 @@ local ns = api.nvim_create_namespace('nvim.treesitter.highlighter')
 ---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch
 
 ---@class (private) vim.treesitter.highlighter.Query
----@field private _query vim.treesitter.Query?
+---@field private _query vim.treesitter.Query
 ---@field private lang string
 ---@field private hl_cache table<integer,integer>
 local TSHighlighterQuery = {}
@@ -25,7 +25,7 @@ function TSHighlighterQuery.new(lang, query_string)
   if query_string then
     self._query = query.parse(lang, query_string)
   else
-    self._query = query.get(lang, 'highlights')
+    self._query = assert(query.get(lang, 'highlights'))
   end
 
   return self
@@ -36,7 +36,7 @@ end
 ---@return integer?
 function TSHighlighterQuery:get_hl_from_capture(capture)
   if not self.hl_cache[capture] then
-    local name = self._query.captures[capture]
+    local name = assert(self._query.captures[capture])
     local id = 0
     if not vim.startswith(name, '_') then
       id = api.nvim_get_hl_id_by_name('@' .. name .. '.' .. self.lang)
@@ -146,6 +146,7 @@ function TSHighlighter.new(tree, opts)
   -- string query... if one is not provided it will be looked up by file.
   if opts.queries then
     for lang, query_string in pairs(opts.queries) do
+      ---@diagnostic disable-next-line: access-invisible
       self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
       set_conceal_lines(lang)
     end
@@ -265,11 +266,13 @@ end
 ---@return vim.treesitter.highlighter.Query
 function TSHighlighter:get_query(lang)
   if not self._queries[lang] then
+    ---@diagnostic disable-next-line: access-invisible
     local success, result = pcall(TSHighlighterQuery.new, lang)
     if not success then
       self:destroy()
       error(result)
     end
+    --- @cast result -string
     self._queries[lang] = result
   end
 
@@ -282,7 +285,7 @@ end
 --- @param metadata vim.treesitter.query.TSMetadata
 --- @return string?
 local function get_url(match, bufnr, capture, metadata)
-  ---@type string|number|nil
+  ---@type string|integer|nil
   local url = metadata[capture] and metadata[capture].url
 
   if not url or type(url) == 'string' then
@@ -297,7 +300,7 @@ local function get_url(match, bufnr, capture, metadata)
 
   -- Assume there is only one matching node. If there is more than one, take the URL
   -- from the first.
-  local other_node = captures[url][1]
+  local other_node = assert(captures[url][1])
 
   return vim.treesitter.get_node_text(other_node, bufnr, {
     metadata = metadata[url],
@@ -348,6 +351,9 @@ local function on_line_impl(self, buf, line, on_spell, on_conceal)
     while line >= state.next_row do
       local capture, node, metadata, match = state.iter(line)
 
+      --- @diagnostic disable-next-line: assign-type-mismatch
+      --- @type Range4|Range6
+      --- -- EmmyLuaLs/emmylua-analyzer-rust#343
       local outer_range = { root_end_row + 1, 0, root_end_row + 1, 0 }
       if node then
         outer_range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
@@ -362,13 +368,13 @@ local function on_line_impl(self, buf, line, on_spell, on_conceal)
           if capture then
             local hl = state.highlighter_query:get_hl_from_capture(capture)
 
-            local capture_name = captures[capture]
+            local capture_name = assert(captures[capture])
 
             local spell, spell_pri_offset = get_spell(capture_name)
 
             -- The "priority" attribute can be set at the pattern level or on a particular capture
             local priority = (
-              tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
+              tonumber(metadata.priority or metadata[capture] and metadata[capture].priority) --[[@as integer]]
               or vim.hl.priorities.treesitter
             ) + spell_pri_offset
 
@@ -455,6 +461,8 @@ function TSHighlighter._on_conceal_line(_, _, buf, row)
 
   -- Do not affect potentially populated highlight state.
   local highlight_states = self._highlight_states
+  --- @diagnostic disable-next-line: param-type-not-match
+  -- EmmyLuaLs/emmylua-analyzer-rust#343
   self.tree:parse({ row, row })
   self:prepare_highlight_states(row, row)
   on_line_impl(self, buf, row, false, true)
@@ -472,6 +480,8 @@ function TSHighlighter._on_win(_, win, buf, topline, botline)
   end
   self.parsing = self.parsing
     or nil
+      --- @diagnostic disable-next-line: param-type-not-match
+      -- EmmyLuaLs/emmylua-analyzer-rust#343
       == self.tree:parse({ topline, botline + 1 }, function(_, trees)
         if trees and self.parsing then
           self.parsing = false

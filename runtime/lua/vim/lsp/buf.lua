@@ -174,10 +174,10 @@ local function get_locations(method, opts)
   local tagname = vim.fn.expand('<cword>')
   local remaining = #clients
 
-  ---@type vim.quickfix.entry[]
+  ---@type vim.lsp.quickfix.entry[]
   local all_items = {}
 
-  ---@param result nil|lsp.Location|lsp.Location[]
+  ---@param result lsp.Location|lsp.Location[]?
   ---@param client vim.lsp.Client
   local function on_response(_, result, client)
     local locations = {}
@@ -205,7 +205,7 @@ local function get_locations(method, opts)
       end
 
       if #all_items == 1 then
-        local item = all_items[1]
+        local item = assert(all_items[1])
         local b = item.bufnr or vim.fn.bufadd(item.filename)
 
         -- Save position in jumplist
@@ -322,7 +322,7 @@ local function process_signature_help_results(results)
       )
       api.nvim_command('redraw')
     else
-      local result = r.result --- @type lsp.SignatureHelp
+      local result = r.result
       if result and result.signatures and result.signatures[1] then
         for i, sig in ipairs(result.signatures) do
           sig.activeParameter = sig.activeParameter or result.activeParameter
@@ -376,12 +376,17 @@ function M.signature_help(config)
     --- @param update_win? integer
     local function show_signature(update_win)
       idx = (idx % total) + 1
-      local client, result = signatures[idx][1], signatures[idx][2]
+      local sig = assert(signatures[idx])
+      local client, result = sig[1], sig[2]
       --- @type string[]?
-      local triggers =
-        vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
+      local triggers = vim.tbl_get(
+        assert(client.server_capabilities),
+        'signatureHelpProvider',
+        'triggerCharacters'
+      )
       local lines, hl =
         util.convert_signature_help_to_markdown_lines({ signatures = { result } }, ft, triggers)
+
       if not lines then
         return
       end
@@ -419,7 +424,7 @@ function M.signature_help(config)
 
     local fbuf, fwin = show_signature()
 
-    if can_cycle then
+    if fbuf and fwin and can_cycle then
       vim.keymap.set('n', '<C-s>', function()
         show_signature(fwin)
       end, {
@@ -660,7 +665,7 @@ function M.rename(new_name, opts)
   local cword = vim.fn.expand('<cword>')
 
   --- @param range lsp.Range
-  --- @param position_encoding string
+  --- @param position_encoding 'utf-8'|'utf-16'|'utf-32'
   local function get_text_at_range(range, position_encoding)
     return api.nvim_buf_get_text(
       bufnr,
@@ -882,7 +887,8 @@ local function hierarchy(method)
     if #results == 0 then
       vim.notify('No item resolved', vim.log.levels.WARN)
     elseif #results == 1 then
-      local client_id, item = results[1][1], results[1][2]
+      local r1 = assert(results[1])
+      local client_id, item = r1[1], r1[2]
       request_with_id(client_id, method, { item = item }, nil, bufnr)
     else
       vim.ui.select(results, {

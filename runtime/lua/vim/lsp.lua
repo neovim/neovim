@@ -41,7 +41,6 @@ lsp._resolve_to_request = {
 
 -- TODO improve handling of scratch buffers with LSP attached.
 
----@private
 --- Called by the client when trying to call a method that's not
 --- supported in any of the servers registered for the current buffer.
 ---@param method (vim.lsp.protocol.Method.ClientToServer) name of the method
@@ -54,7 +53,6 @@ function lsp._unsupported_method(method)
   return msg
 end
 
----@private
 ---@param workspace_folders string|lsp.WorkspaceFolder[]?
 ---@return lsp.WorkspaceFolder[]?
 function lsp._get_workspace_folders(workspace_folders)
@@ -78,8 +76,7 @@ local format_line_ending = {
   ['mac'] = '\r',
 }
 
----@private
----@param bufnr (number)
+---@param bufnr integer
 ---@return string
 function lsp._buf_get_line_ending(bufnr)
   return format_line_ending[vim.bo[bufnr].fileformat] or '\n'
@@ -110,10 +107,9 @@ lsp.client_errors = vim.tbl_extend(
   client_error('ON_EXIT_CALLBACK_ERROR')
 )
 
----@private
 --- Returns full text of buffer {bufnr} as a string.
 ---
----@param bufnr (number) Buffer handle, or 0 for current.
+---@param bufnr integer Buffer handle, or 0 for current.
 ---@return string # Buffer text as string.
 function lsp._buf_get_full_text(bufnr)
   local line_ending = lsp._buf_get_line_ending(bufnr)
@@ -260,10 +256,11 @@ local function create_and_init_client(config)
   if not ok then
     return nil, res --[[@as string]]
   end
+  --- @cast res -string
 
   local client = assert(res)
 
-  --- @diagnostic disable-next-line: invisible
+  --- @diagnostic disable-next-line: invisible, access-invisible
   table.insert(client._on_exit_cbs, on_client_exit)
 
   all_clients[client.id] = client
@@ -284,7 +281,7 @@ end
 ---
 --- Predicate which decides if a client should be re-used. Used on all running clients. The default
 --- implementation re-uses a client if name and root_dir matches.
---- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+--- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean #
 ---
 --- [lsp-root_dir()]() Directory where the LSP server will base its workspaceFolders, rootUri, and
 --- rootPath on initialization. The function form receives a buffer number and `on_dir` callback
@@ -421,6 +418,7 @@ local function validate_config_name(name)
   end, 'non-wildcard string')
 end
 
+--- @diagnostic disable-next-line: assign-type-mismatch
 --- @nodoc
 --- @class vim.lsp.config
 --- @field [string] vim.lsp.Config
@@ -428,7 +426,7 @@ end
 lsp.config = setmetatable({ _configs = {} }, {
   --- @param self vim.lsp.config
   --- @param name string
-  --- @return vim.lsp.Config
+  --- @return vim.lsp.Config?
   __index = function(self, name)
     validate_config_name(name)
 
@@ -436,7 +434,7 @@ lsp.config = setmetatable({ _configs = {} }, {
 
     if not rconfig.resolved_config then
       if name == '*' then
-        rconfig.resolved_config = lsp.config._configs['*'] or {}
+        rconfig.resolved_config = self._configs['*'] or {}
         return rconfig.resolved_config
       end
 
@@ -460,7 +458,7 @@ lsp.config = setmetatable({ _configs = {} }, {
 
       rconfig.resolved_config = vim.tbl_deep_extend(
         'force',
-        lsp.config._configs['*'] or {},
+        self._configs['*'] or {},
         rtp_config or {},
         self._configs[name] or {}
       )
@@ -824,7 +822,7 @@ local function is_empty_or_default(bufnr, option)
     return false
   end
 
-  return vim.startswith(scriptinfo[1].name, vim.fn.expand('$VIMRUNTIME'))
+  return vim.startswith(assert(scriptinfo[1]).name, vim.fn.expand('$VIMRUNTIME'))
 end
 
 ---@private
@@ -901,7 +899,8 @@ local function text_document_did_save_handler(bufnr)
       })
       util.buf_versions[bufnr] = 0
     end
-    local save_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'save')
+    local save_capability =
+      vim.tbl_get(assert(client.server_capabilities), 'textDocumentSync', 'save')
     if save_capability then
       local included_text --- @type string?
       if type(save_capability) == 'table' and save_capability.includeText then
@@ -1167,7 +1166,7 @@ end
 --- @field name? string
 ---
 --- Only return clients supporting the given method
---- @field method? string
+--- @field method? vim.lsp.protocol.Method.ClientToServer
 ---
 --- Also return uninitialized clients.
 --- @field package _uninitialized? boolean
@@ -1191,7 +1190,7 @@ function lsp.get_clients(filter)
     if
       client
       and (filter.id == nil or client.id == filter.id)
-      and (filter.bufnr == nil or client.attached_buffers[bufnr])
+      and (bufnr == nil or client.attached_buffers[bufnr])
       and (filter.name == nil or client.name == filter.name)
       and (filter.method == nil or client:supports_method(filter.method, filter.bufnr))
       and (filter._uninitialized or client.initialized)
@@ -1258,7 +1257,7 @@ api.nvim_create_autocmd('VimLeavePre', {
   end,
 })
 
----@private
+---@nodoc
 --- Sends an async request for all active clients attached to the
 --- buffer.
 ---
@@ -1499,7 +1498,7 @@ end
 ---@param pattern string Pattern used to find a workspace symbol
 ---@param flags string See |tag-function|
 ---
----@return table[] tags A list of matching tags
+---@return table[]|vim.NIL tags A list of matching tags
 function lsp.tagfunc(pattern, flags)
   return vim.lsp._tagfunc(pattern, flags)
 end
@@ -1572,7 +1571,7 @@ end
 ---@return boolean stopped true if client is stopped, false otherwise.
 function lsp.client_is_stopped(client_id)
   vim.deprecate('vim.lsp.client_is_stopped()', 'vim.lsp.get_client_by_id()', '0.14')
-  assert(client_id, 'missing client_id param')
+  vim.validate('client_id', client_id, 'number')
   return not all_clients[client_id]
 end
 
@@ -1612,11 +1611,7 @@ lsp.log_levels = log.levels
 ---
 ---@param level (integer|string) the case insensitive level name or number
 function lsp.set_log_level(level)
-  if type(level) == 'string' or type(level) == 'number' then
-    log.set_level(level)
-  else
-    error(string.format('Invalid log level: %q', level))
-  end
+  log.set_level(level)
 end
 
 --- Gets the path of the logfile used by the LSP client.

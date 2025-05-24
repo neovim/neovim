@@ -155,7 +155,7 @@ function vim._os_proc_info(pid)
   if pid == nil or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
   end
-  local cmd = { 'ps', '-p', pid, '-o', 'comm=' }
+  local cmd = { 'ps', '-p', tostring(pid), '-o', 'comm=' }
   local r = vim.system(cmd):wait()
   local name = assert(r.stdout)
   if r.code == 1 and vim.trim(name) == '' then
@@ -163,7 +163,7 @@ function vim._os_proc_info(pid)
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
-  local ppid_string = assert(vim.system({ 'ps', '-p', pid, '-o', 'ppid=' }):wait().stdout)
+  local ppid_string = assert(vim.system({ 'ps', '-p', tostring(pid), '-o', 'ppid=' }):wait().stdout)
   -- Remove trailing whitespace.
   name = vim.trim(name):gsub('^.*/', '')
   local ppid = tonumber(ppid_string) or -1
@@ -180,15 +180,16 @@ function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
   end
-  local cmd = { 'pgrep', '-P', ppid }
+  local cmd = { 'pgrep', '-P', tostring(ppid) }
   local r = vim.system(cmd):wait()
-  if r.code == 1 and vim.trim(r.stdout) == '' then
+  local stdout = assert(r.stdout)
+  if r.code == 1 and vim.trim(stdout) == '' then
     return {} -- Process not found.
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
   local children = {}
-  for s in r.stdout:gmatch('%S+') do
+  for s in stdout:gmatch('%S+') do
     local i = tonumber(s)
     if i ~= nil then
       table.insert(children, i)
@@ -284,9 +285,8 @@ do
       for _, line in ipairs(lines) do
         nchars = nchars + line:len()
       end
-      --- @type integer, integer
       local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-      local bufline = vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1]
+      local bufline = assert(vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1])
       local firstline = lines[1]
       firstline = bufline:sub(1, col) .. firstline
       lines[1] = firstline
@@ -440,6 +440,7 @@ local VIM_CMD_ARG_MAX = 20
 ---                            to |nvim_cmd()| where `opts` is empty.
 ---@see |ex-cmd-index|
 vim.cmd = setmetatable({}, {
+  --- @param command string|vim.api.keyset.cmd
   __call = function(_, command)
     if type(command) == 'table' then
       return vim.api.nvim_cmd(command, {})
@@ -449,6 +450,7 @@ vim.cmd = setmetatable({}, {
     end
   end,
   --- @param t table<string,function>
+  --- @param command string
   __index = function(t, command)
     t[command] = function(...)
       local opts --- @type vim.api.keyset.cmd
@@ -456,16 +458,17 @@ vim.cmd = setmetatable({}, {
         --- @type vim.api.keyset.cmd
         opts = select(1, ...)
 
+        local args = opts --[[@as string[] ]]
+
         -- Move indexed positions in opts to opt.args
-        if opts[1] and not opts.args then
+        if args[1] and not opts.args then
           opts.args = {}
           for i = 1, VIM_CMD_ARG_MAX do
-            if not opts[i] then
+            if not args[i] then
               break
             end
-            opts.args[i] = opts[i]
-            --- @diagnostic disable-next-line: no-unknown
-            opts[i] = nil
+            opts.args[i] = args[i]
+            args[i] = nil
           end
         end
       else
@@ -518,7 +521,7 @@ end
 ---@param bufnr integer Buffer number, or 0 for current buffer
 ---@param pos1 integer[]|string Start of region as a (line, column) tuple or |getpos()|-compatible string
 ---@param pos2 integer[]|string End of region as a (line, column) tuple or |getpos()|-compatible string
----@param regtype string [setreg()]-style selection type
+---@param regtype string : [setreg()]-style selection type
 ---@param inclusive boolean Controls whether the ending column is inclusive (see also 'selection').
 ---@return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
 ---whole lines are returned as `{startcol,endcol} = {0,-1}`.
@@ -555,27 +558,27 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   -- in case of block selection, columns need to be adjusted for non-ASCII characters
   -- TODO: handle double-width characters
   if regtype:byte() == 22 then
-    local bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
+    local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1])
     pos1[2] = vim.str_utfindex(bufline, 'utf-32', pos1[2])
   end
 
   local region = {}
   for l = pos1[1], pos2[1] do
-    local c1 --- @type number
-    local c2 --- @type number
+    local c1 --- @type integer
+    local c2 --- @type integer
     if regtype:byte() == 22 then -- block selection: take width from regtype
       c1 = pos1[2]
-      c2 = c1 + tonumber(regtype:sub(2))
+      c2 = c1 + tonumber(regtype:sub(2)) --[[@as integer]]
       -- and adjust for non-ASCII characters
-      local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
+      local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1])
       local utflen = vim.str_utfindex(bufline, 'utf-32', #bufline)
       if c1 <= utflen then
-        c1 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c1)))
+        c2 = vim.str_byteindex(bufline, 'utf-32', c2)
       else
         c1 = #bufline + 1
       end
       if c2 <= utflen then
-        c2 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c2)))
+        c2 = vim.str_byteindex(bufline, 'utf-32', c2)
       else
         c2 = #bufline + 1
       end
@@ -585,7 +588,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
     else
       c1 = (l == pos1[1]) and pos1[2] or 0
       if inclusive and l == pos2[1] then
-        local bufline = vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1]
+        local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1])
         pos2[2] = vim.fn.byteidx(bufline, vim.fn.charidx(bufline, pos2[2]) + 1)
       end
       c2 = (l == pos2[1]) and pos2[2] or -1
@@ -602,7 +605,7 @@ end
 --- safe to call.
 ---@param fn function Callback to call once `timeout` expires
 ---@param timeout integer Number of milliseconds to wait before calling `fn`
----@return table timer luv timer object
+---@return uv.uv_timer_t timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate('fn', fn, 'callable', true)
   local timer = assert(vim.uv.new_timer())
@@ -629,7 +632,7 @@ end
 ---@param msg string Content of the notification to show to the user.
 ---@param level integer|nil One of the values from |vim.log.levels|.
 ---@param opts table|nil Optional parameters. Unused by default.
----@diagnostic disable-next-line: unused-local
+---@diagnostic disable-next-line: unused-local, unused
 function vim.notify(msg, level, opts) -- luacheck: no unused args
   local chunks = { { msg, level == vim.log.levels.WARN and 'WarningMsg' or nil } }
   vim.api.nvim_echo(chunks, true, { err = level == vim.log.levels.ERROR })
@@ -657,7 +660,7 @@ do
   end
 end
 
-local on_key_cbs = {} --- @type table<integer,[function, table]>
+local on_key_cbs = {} --- @type table<integer,[(fun(key: string, typed: string): string?), table]>
 
 --- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
 --- yes every, input key.
@@ -766,7 +769,8 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
       'vim.str_byteindex(s, encoding, index, strict_indexing)',
       '1.0'
     )
-    local old_index = encoding
+    local old_index = encoding --[[@as integer]]
+    --- @cast index boolean
     local use_utf16 = index or false
     return vim._str_byteindex(s, old_index, use_utf16) or error('index out of range')
   end
@@ -831,8 +835,8 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
       'vim.str_utfindex(s, encoding, index, strict_indexing)',
       '1.0'
     )
-    local old_index = encoding
-    local col32, col16 = vim._str_utfindex(s, old_index) --[[@as integer,integer]]
+    local old_index = encoding --[[@as integer?]]
+    local col32, col16 = vim._str_utfindex(s, old_index)
     if not col32 or not col16 then
       error('index out of range')
     end
@@ -874,7 +878,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
     local len = #s
     return index <= len and index or (strict_indexing and error('index out of range') or len)
   end
-  local col32, col16 = vim._str_utfindex(s, index) --[[@as integer?,integer?]]
+  local col32, col16 = vim._str_utfindex(s, index)
   local col = encoding == 'utf-16' and col16 or col32
   if col then
     return col
@@ -882,7 +886,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
   if strict_indexing then
     error('index out of range')
   end
-  local max32, max16 = vim._str_utfindex(s)--[[@as integer integer]]
+  local max32, max16 = vim._str_utfindex(s)
   return encoding == 'utf-16' and max16 or max32
 end
 
@@ -893,7 +897,8 @@ end
 --- 2. Can we get it to return things from global namespace even with `print(` in front.
 ---
 --- @param pat string
---- @return any[], integer
+--- @param env? table<string,any>
+--- @return string[], integer
 function vim._expand_pat(pat, env)
   env = env or _G
 
@@ -1030,6 +1035,7 @@ function vim._expand_pat(pat, env)
 
   -- Completion for dict accessors (special vim variables and vim.fn)
   if mt and vim.tbl_contains({ vim.g, vim.t, vim.w, vim.b, vim.v, vim.env, vim.fn }, final_env) then
+    -- EmmyLuaLs/emmylua-analyzer-rust#486
     local prefix, type = unpack(
       vim.fn == final_env and { '', 'function' }
         or vim.g == final_env and { 'g:', 'var' }
@@ -1078,10 +1084,10 @@ function vim._expand_pat(pat, env)
     insert_keys(vim.iter(options):filter(filter):fold({}, _fold_to_map))
   end
 
-  keys = vim.tbl_keys(keys)
-  table.sort(keys)
+  local keys_s = vim.tbl_keys(keys)
+  table.sort(keys_s)
 
-  return keys, #prefix_match_pat
+  return keys_s, #prefix_match_pat
 end
 
 --- @param lua_string string
@@ -1348,8 +1354,8 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
     -- Show a warning only if feature is hard-deprecated (see MAINTAIN.md).
     -- Example: if removal `version` is 0.12 (soft-deprecated since 0.10-dev), show warnings
     -- starting at 0.11, including 0.11-dev.
-    local major, minor = version:match('(%d+)%.(%d+)')
-    major, minor = tonumber(major), tonumber(minor)
+    local major_s, minor_s = version:match('(%d+)%.(%d+)')
+    local major, minor = assert(tonumber(major_s)), assert(tonumber(minor_s))
     local nvim_major = 0 --- Current Nvim major version.
 
     -- We can't "subtract" from a major version, so:

@@ -83,9 +83,12 @@ local lint_query = [[;; query
 --- @return vim.treesitter.ParseError
 local function get_error_entry(err, node)
   local start_line, start_col = node:range()
-  local line_offset, col_offset, msg = err:gmatch('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')() ---@type string, string, string
-  start_line, start_col =
-    start_line + tonumber(line_offset) - 1, start_col + tonumber(col_offset) - 1
+  local line_offset_s, col_offset_s, msg = err:match('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')
+  assert(line_offset_s and col_offset_s and msg)
+  local line_offset = tonumber(line_offset_s) --[[@as integer]]
+  local col_offset = tonumber(col_offset_s) --[[@as integer]]
+  start_line = start_line + line_offset - 1
+  start_col = start_col + col_offset - 1
   local end_line, end_col = start_line, start_col
   if msg:match('^Invalid syntax') or msg:match('^Impossible') then
     -- Use the length of the underlined node
@@ -98,7 +101,8 @@ local function get_error_entry(err, node)
 
   return {
     msg = msg,
-    range = { start_line, start_col, end_line, end_col },
+    -- EmmyLuaLs/emmlua-analyzer-rust#343
+    range = { start_line, start_col, end_line, end_col } --[[@as Range4]],
   }
 end
 
@@ -138,8 +142,9 @@ local function lint_match(buf, match, query, lang_context, diagnostics)
       -- perform language-independent checks only for first lang
       if lang_context.is_first_lang and cap_id == 'error' then
         local node_text = vim.treesitter.get_node_text(node, buf):gsub('\n', ' ')
-        ---@diagnostic disable-next-line: missing-fields LuaLS varargs bug
-        local range = { node:range() } --- @type Range4
+        --- @diagnostic disable-next-line: missing-fields
+        -- EmmyLuaLs/emmlua-analyzer-rust#343
+        local range = { node:range() } --[[@as Range4]]
         add_lint_for_node(diagnostics, range, 'Syntax error: ' .. node_text)
       end
 
@@ -154,7 +159,7 @@ local function lint_match(buf, match, query, lang_context, diagnostics)
   end
 end
 
---- @private
+--- @nodoc
 --- @param buf integer Buffer to lint
 --- @param opts vim.treesitter.query.lint.Opts|QueryLinterNormalizedOpts|nil Options for linting
 function M.lint(buf, opts)
@@ -171,7 +176,7 @@ function M.lint(buf, opts)
   for i = 1, math.max(1, #opts.langs) do
     local lang = opts.langs[i]
 
-    --- @type (table|nil)
+    --- @diagnostic disable-next-line: param-type-not-match
     local parser_info = vim.F.npcall(vim.treesitter.language.inspect, lang)
     local lang_context = {
       lang = lang,
@@ -193,24 +198,28 @@ function M.lint(buf, opts)
   vim.diagnostic.set(namespace, buf, diagnostics)
 end
 
---- @private
+--- @nodoc
 --- @param buf integer
 function M.clear(buf)
   vim.diagnostic.reset(namespace, buf)
 end
 
---- @private
+--- @nodoc
 --- @param findstart 0|1
 --- @param base string
 function M.omnifunc(findstart, base)
   if findstart == 1 then
     local result =
       api.nvim_get_current_line():sub(1, api.nvim_win_get_cursor(0)[2]):find('["#%-%w]*$')
-    return result - 1
+    return assert(result) - 1
   end
 
   local buf = api.nvim_get_current_buf()
   local query_lang = guess_query_lang(buf)
+
+  if not query_lang then
+    return -2
+  end
 
   local ok, parser_info = pcall(vim.treesitter.language.inspect, query_lang)
   if not ok then

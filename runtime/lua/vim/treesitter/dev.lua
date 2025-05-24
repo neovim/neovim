@@ -15,7 +15,7 @@ local TSTreeView = {}
 ---@class (private) vim.treesitter.dev.TSTreeViewOpts
 ---@field anon boolean If true, display anonymous nodes.
 ---@field lang boolean If true, display the language alongside each node.
----@field indent number Number of spaces to indent nested lines.
+---@field indent integer Number of spaces to indent nested lines.
 
 ---@class (private) vim.treesitter.dev.Node
 ---@field node TSNode Treesitter node
@@ -103,6 +103,8 @@ function TSTreeView:new(bufnr, lang)
       for _, tree in pairs(child:trees()) do
         local r = tree:root()
         local r_range = { r:range() }
+        --- @diagnostic disable-next-line: param-type-not-match
+        -- EmmyLuaLs/emmylua-analyzer-rust#343
         if Range.contains(parent_range, r_range) then
           local node = assert(parent:named_descendant_for_range(r:range()))
           local id = node:id()
@@ -138,9 +140,8 @@ function TSTreeView:new(bufnr, lang)
     },
   }
 
-  setmetatable(t, self)
   self.__index = self
-  return t
+  return setmetatable(t, self)
 end
 
 local decor_ns = api.nvim_create_namespace('nvim.treesitter.dev')
@@ -181,7 +182,7 @@ end
 --- Updates the cursor position in the inspector to match the node under the cursor.
 ---
 --- @param treeview vim.treesitter.dev.TSTreeView
---- @param lang string
+--- @param lang? string
 --- @param source_buf integer
 --- @param inspect_buf integer
 --- @param inspect_win integer
@@ -203,7 +204,7 @@ local function set_inspector_cursor(treeview, lang, source_buf, inspect_buf, ins
   local cursor_node_id = cursor_node:id()
   for i, v in treeview:iter() do
     if v.node:id() == cursor_node_id then
-      local start = v.depth * treeview.opts.indent ---@type integer
+      local start = v.depth * treeview.opts.indent
       local end_col = start + #v.text
       api.nvim_buf_set_extmark(inspect_buf, treeview.ns, i - 1, start, {
         end_col = end_col,
@@ -290,7 +291,7 @@ end
 --- The node number is dependent on whether or not anonymous nodes are displayed.
 ---
 ---@param i integer Node number to get
----@return vim.treesitter.dev.Node
+---@return vim.treesitter.dev.Node?
 ---@package
 function TSTreeView:get(i)
   local t = self.opts.anon and self.nodes or self.named
@@ -327,7 +328,7 @@ end
 ---
 --- Title of the window. If a function, it accepts the buffer number of the
 --- source buffer as its only argument and should return a string.
---- @field title (string|fun(bufnr:integer):string|nil)
+--- @field title? (string|fun(bufnr:integer):string?)
 
 --- @private
 ---
@@ -349,6 +350,9 @@ function M.inspect_tree(opts)
   elseif not treeview then
     error(err)
   end
+
+  -- EmmyLuaLs/emmlua-analyzer-rust#483
+  --- @cast treeview -?
 
   -- Close any existing inspector window
   if vim.b[buf].dev_inspect then
@@ -397,11 +401,11 @@ function M.inspect_tree(opts)
     desc = 'Jump to the node under the cursor in the source buffer',
     callback = function()
       local row = api.nvim_win_get_cursor(w)[1]
-      local lnum, col = treeview:get(row).node:start()
+      local lnum, col = assert(treeview:get(row)).node:start()
 
       -- update source window if original was closed
       if not api.nvim_win_is_valid(win) then
-        win = vim.fn.win_findbuf(buf)[1]
+        win = assert(vim.fn.win_findbuf(buf)[1])
       end
 
       api.nvim_set_current_win(win)
@@ -411,7 +415,7 @@ function M.inspect_tree(opts)
   api.nvim_buf_set_keymap(b, 'n', 'a', '', {
     desc = 'Toggle anonymous nodes',
     callback = function()
-      local row, col = unpack(api.nvim_win_get_cursor(w)) ---@type integer, integer
+      local row, col = unpack(api.nvim_win_get_cursor(w))
       local curnode = treeview:get(row)
       while curnode and not curnode.node:named() do
         row = row - 1
@@ -466,7 +470,7 @@ function M.inspect_tree(opts)
       w = api.nvim_get_current_win()
       api.nvim_buf_clear_namespace(buf, treeview.ns, 0, -1)
       local row = api.nvim_win_get_cursor(w)[1]
-      local lnum, col, end_lnum, end_col = treeview:get(row).node:range()
+      local lnum, col, end_lnum, end_col = assert(treeview:get(row)).node:range()
       api.nvim_buf_set_extmark(buf, treeview.ns, lnum, col, {
         end_row = end_lnum,
         end_col = math.max(0, end_col),
@@ -475,7 +479,7 @@ function M.inspect_tree(opts)
 
       -- update source window if original was closed
       if not api.nvim_win_is_valid(win) then
-        win = vim.fn.win_findbuf(buf)[1]
+        win = assert(vim.fn.win_findbuf(buf)[1])
       end
 
       local topline, botline = vim.fn.line('w0', win), vim.fn.line('w$', win)
@@ -574,6 +578,8 @@ local function update_editor_highlights(query_win, base_win, lang)
   if not ok_query then
     return
   end
+  -- EmmyLuaLs/emmlua-analyzer-rust#288
+  --- @cast query vim.treesitter.Query
 
   local cursor_word = vim.fn.expand('<cword>') --[[@as string]]
   -- Only highlight captures if the cursor is on a capture name
@@ -599,7 +605,7 @@ local function update_editor_highlights(query_win, base_win, lang)
   end
 end
 
---- @private
+--- @nodoc
 --- @param lang? string language to open the query editor for.
 --- @return boolean? `true` on success, `nil` on failure
 --- @return string? error message, if applicable
@@ -616,12 +622,14 @@ function M.edit_query(lang)
   -- If the inspector is open, place the editor above it.
   local base_win = vim.b[buf].dev_base ---@type integer?
   local base_buf = base_win and api.nvim_win_get_buf(base_win)
-  local inspect_win = base_buf and vim.b[base_buf].dev_inspect
-  if base_win and base_buf and api.nvim_win_is_valid(inspect_win) then
-    vim.api.nvim_set_current_win(inspect_win)
-    buf = base_buf
-    win = base_win
-    cmd = 'new'
+  if base_buf then
+    local inspect_win = vim.b[base_buf].dev_inspect --[[@as integer]]
+    if base_win and api.nvim_win_is_valid(inspect_win) then
+      vim.api.nvim_set_current_win(inspect_win)
+      buf = base_buf
+      win = base_win
+      cmd = 'new'
+    end
   end
   vim.cmd(cmd)
 

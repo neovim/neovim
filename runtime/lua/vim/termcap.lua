@@ -46,8 +46,7 @@ function M.query(caps, cb)
 
         local seq ---@type string?
         if rest:match('^=%x+$') then
-          seq = vim.text
-            .hexdecode(rest:sub(2))
+          seq = assert(vim.text.hexdecode(rest:sub(2)))
             :gsub('\\E', '\027')
             :gsub('%%p%d', '')
             :gsub('\\(%d+)', string.char)
