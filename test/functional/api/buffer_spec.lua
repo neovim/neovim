@@ -482,6 +482,28 @@ describe('api/buf', function()
       eq({ 'xxx', 'yyy', 'zzz' }, api.nvim_buf_get_lines(0, 0, -1, true))
       eq({ '' }, api.nvim_buf_get_lines(buf, 0, -1, true))
     end)
+
+    it("sets '[ and '] marks", function()
+      local buf = api.nvim_get_current_buf()
+      api.nvim_buf_set_lines(buf, 0, -1, true, { 'line1', 'line2', 'line3' })
+      api.nvim_buf_set_lines(buf, 1, 2, true, { 'new line' })
+      local mark_start = fn.getpos("'[")
+      local mark_end = fn.getpos("']")
+
+      eq({ 2, 1, 2, 8 }, { mark_start[2], mark_start[3], mark_end[2], mark_end[3] })
+
+      api.nvim_buf_set_lines(buf, 0, 1, true, { 'first', 'second' })
+      mark_start = fn.getpos("'[")
+      mark_end = fn.getpos("']")
+
+      eq({ 1, 1, 2, 6 }, { mark_start[2], mark_start[3], mark_end[2], mark_end[3] })
+
+      api.nvim_buf_set_lines(buf, 1, 3, true, {})
+      mark_start = fn.getpos("'[")
+      mark_end = fn.getpos("']")
+
+      eq({ 2, 1, 2, 1 }, { mark_start[2], mark_start[3], mark_end[2], mark_end[3] })
+    end)
   end)
 
   describe('deprecated: {get,set,del}_line', function()
