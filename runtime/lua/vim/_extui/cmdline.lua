@@ -164,8 +164,8 @@ end
 
 --- Clear cmdline buffer and leave the cmdline.
 function M.cmdline_block_hide()
-  M.cmdline_hide(nil, true)
   M.row = 0
+  M.cmdline_hide(nil, true)
 end
 
 return M
