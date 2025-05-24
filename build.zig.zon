@@ -34,8 +34,8 @@
             .hash = "N-V-__8AAGevEQCHAkCozca5AIdN9DFc3Luf3g3r2AcbyOrm",
         },
         .treesitter_c = .{
-            .url = "https://github.com/tree-sitter/tree-sitter-c/archive/v0.23.4.tar.gz",
-            .hash = "N-V-__8AAECfSADUxb_Nvy_jsHRlD1-CdzGh4dbf2KCtv7v0",
+            .url = "git+https://github.com/tree-sitter/tree-sitter-c?ref=v0.24.1#7fa1be1b694b6e763686793d97da01f36a0e5c12",
+            .hash = "N-V-__8AANxPSABzw3WBTSH_YkwaGAfrK6PBqAMqQedkDDim",
         },
         .treesitter_markdown = .{
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-markdown?ref=v0.5.0#afaa4138517363362f54c89330c9d79391e81168",

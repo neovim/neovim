@@ -66,6 +66,7 @@ describe('treesitter language API', function()
     eq({
       abi_version = true,
       fields = true,
+      metadata = true,
       symbols = true,
       state_count = true,
       supertypes = true,
