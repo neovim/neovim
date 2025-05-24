@@ -338,6 +338,11 @@ function vim.api.nvim_buf_del_var(buffer, name) end
 --- - unload: Unloaded only (`:bunload`), do not delete.
 function vim.api.nvim_buf_delete(buffer, opts) end
 
+--- @param buffer integer
+--- @param opts vim.api.keyset.buf_find
+--- @return any
+function vim.api.nvim_buf_find(buffer, opts) end
+
 --- Gets a changed tick of a buffer
 ---
 --- @param buffer integer Buffer id, or 0 for current buffer

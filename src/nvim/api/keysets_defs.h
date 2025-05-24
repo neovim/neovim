@@ -371,6 +371,16 @@ typedef struct {
 } Dict(buf_attach);
 
 typedef struct {
+  OptionalKeys is_set__buf_find_;
+
+  Integer start_row;
+  Integer start_col;
+  Integer end_row;
+  Integer end_col;
+  String substr;
+} Dict(buf_find);
+
+typedef struct {
   OptionalKeys is_set__buf_delete_;
   Boolean force;
   Boolean unload;
