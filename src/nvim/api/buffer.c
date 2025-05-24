@@ -24,6 +24,7 @@
 #include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/globals.h"
@@ -439,6 +440,22 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
 
     changed_lines(buf, (linenr_T)start, 0, (linenr_T)end, (linenr_T)extra, true);
 
+    if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
+      // Set "'[" and "']" marks.
+      buf->b_op_start.lnum = (linenr_T)start;
+      buf->b_op_start.col = 0;
+
+      if (new_len == 0) {
+        // No lines were inserted, mark at the start position
+        buf->b_op_end = buf->b_op_start;
+      } else {
+        // For line operations, '] points to the last character of the last line
+        buf->b_op_end.lnum = (linenr_T)((size_t)start + new_len - 1);
+        colnr_T len = ml_get_len(buf->b_op_end.lnum);
+        buf->b_op_end.col = len > 0 ? len - 1 : 0;
+      }
+    }
+
     FOR_ALL_TAB_WINDOWS(tp, win) {
       if (win->w_buffer == buf) {
         fix_cursor(win, (linenr_T)start, (linenr_T)end, (linenr_T)extra);
@@ -672,6 +689,22 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
                    kExtmarkUndo);
 
     changed_lines(buf, (linenr_T)start_row, 0, (linenr_T)end_row + 1, (linenr_T)extra, true);
+
+    if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
+      // Set "'[" and "']" marks.
+      buf->b_op_start.lnum = (linenr_T)start_row;
+      buf->b_op_start.col = (colnr_T)start_col;
+
+      if (new_len == 1) {
+        // Single line replacement
+        buf->b_op_end.lnum = (linenr_T)start_row;
+        buf->b_op_end.col = (colnr_T)((size_t)start_col + last_item.size);
+      } else {
+        // Multi-line replacement
+        buf->b_op_end.lnum = (linenr_T)((size_t)start_row + new_len - 1);
+        buf->b_op_end.col = (colnr_T)last_item.size;
+      }
+    }
 
     FOR_ALL_TAB_WINDOWS(tp, win) {
       if (win->w_buffer == buf) {
