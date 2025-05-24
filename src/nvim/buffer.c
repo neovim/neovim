@@ -657,31 +657,12 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
 
   buf->b_nwindows = nwindows;
 
-  buf_freeall(buf, ((del_buf ? BFA_DEL : 0)
-                    + (wipe_buf ? BFA_WIPE : 0)
-                    + (ignore_abort ? BFA_IGNORE_ABORT : 0)));
-
-  if (!bufref_valid(&bufref)) {
-    // Autocommands may have deleted the buffer.
+  if (!buf_freeall(buf, ((del_buf ? BFA_DEL : 0)
+                         + (wipe_buf ? BFA_WIPE : 0)
+                         + (ignore_abort ? BFA_IGNORE_ABORT : 0)))) {
+    // Buffer was not freed, or was prematurely freed.
     return false;
   }
-  // autocmds may abort script processing.
-  if (!ignore_abort && aborting()) {
-    return false;
-  }
-
-  // It's possible that autocommands change curbuf to the one being deleted.
-  // This might cause the previous curbuf to be deleted unexpectedly.  But
-  // in some cases it's OK to delete the curbuf, because a new one is
-  // obtained anyway.  Therefore only return if curbuf changed to the
-  // deleted buffer.
-  if (buf == curbuf && !is_curbuf) {
-    return false;
-  }
-
-  // Disable buffer-updates for the current buffer.
-  // No need to check `unload_buf`: in that case the function returned above.
-  buf_updates_unload(buf, false);
 
   if (win != NULL  // Avoid bogus clang warning.
       && win_valid_any_tab(win)
@@ -775,7 +756,10 @@ void buf_clear(void)
 ///              BFA_WIPE          buffer is going to be wiped out
 ///              BFA_KEEP_UNDO     do not free undo information
 ///              BFA_IGNORE_ABORT  don't abort even when aborting() returns true
-void buf_freeall(buf_T *buf, int flags)
+///
+/// @return Whether this call directly performed the free (e.g: not via autocommands).
+bool buf_freeall(buf_T *buf, int flags)
+  FUNC_ATTR_NONNULL_ALL
 {
   bool is_curbuf = (buf == curbuf);
   int is_curwin = (curwin != NULL && curwin->w_buffer == buf);
@@ -793,21 +777,21 @@ void buf_freeall(buf_T *buf, int flags)
       && apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf)
       && !bufref_valid(&bufref)) {
     // Autocommands deleted the buffer.
-    return;
+    return false;
   }
   if ((flags & BFA_DEL)
       && buf->b_p_bl
       && apply_autocmds(EVENT_BUFDELETE, buf->b_fname, buf->b_fname, false, buf)
       && !bufref_valid(&bufref)) {
     // Autocommands may delete the buffer.
-    return;
+    return false;
   }
   if ((flags & BFA_WIPE)
       && apply_autocmds(EVENT_BUFWIPEOUT, buf->b_fname, buf->b_fname, false,
                         buf)
       && !bufref_valid(&bufref)) {
     // Autocommands may delete the buffer.
-    return;
+    return false;
   }
   buf->b_locked--;
   buf->b_locked_split--;
@@ -822,7 +806,7 @@ void buf_freeall(buf_T *buf, int flags)
   }
   // autocmds may abort script processing
   if ((flags & BFA_IGNORE_ABORT) == 0 && aborting()) {
-    return;
+    return false;
   }
 
   // It's possible that autocommands change curbuf to the one being deleted.
@@ -830,8 +814,13 @@ void buf_freeall(buf_T *buf, int flags)
   // it's OK to delete the curbuf, because a new one is obtained anyway.
   // Therefore only return if curbuf changed to the deleted buffer.
   if (buf == curbuf && !is_curbuf) {
-    return;
+    return false;
   }
+
+  // Freeing will definitely happen past this point. Disable buffer-updates.
+  buf_updates_unload(buf, false);
+  assert(bufref_valid(&bufref) && (buf != curbuf || is_curbuf));
+
   diff_buf_delete(buf);             // Can't use 'diff' for unloaded buffer.
   // Remove any ownsyntax, unless exiting.
   if (curwin != NULL && curwin->w_buffer == buf) {
@@ -854,6 +843,7 @@ void buf_freeall(buf_T *buf, int flags)
   }
   syntax_clear(&buf->b_s);          // reset syntax info
   buf->b_flags &= ~BF_READERR;      // a read error is no longer relevant
+  return true;
 }
 
 /// Free a buffer structure and the things it contains related to the buffer
@@ -934,8 +924,6 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   map_clear_mode(buf, MAP_ALL_MODES, true, false);  // clear local mappings
   map_clear_mode(buf, MAP_ALL_MODES, true, true);   // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);
-
-  buf_updates_unload(buf, false);
 }
 
 /// Go to another buffer.  Handles the result of the ATTENTION dialog.
@@ -1904,20 +1892,17 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   // buffer.)
   buf = NULL;
   if ((flags & BLN_CURBUF) && curbuf_reusable()) {
-    bufref_T bufref;
-
     assert(curbuf != NULL);
     buf = curbuf;
-    set_bufref(&bufref, buf);
     // It's like this buffer is deleted.  Watch out for autocommands that
     // change curbuf!  If that happens, allocate a new buffer anyway.
-    buf_freeall(buf, BFA_WIPE | BFA_DEL);
-    if (aborting()) {           // autocmds may abort script processing
-      xfree(ffname);
-      return NULL;
-    }
-    if (!bufref_valid(&bufref)) {
-      buf = NULL;  // buf was deleted; allocate a new buffer
+    if (!buf_freeall(buf, BFA_WIPE | BFA_DEL)) {
+      if (aborting()) {  // autocmds may abort script processing
+        xfree(ffname);
+        return NULL;
+      }
+      // Buffer not freed or was prematurely deleted; allocate a new buffer.
+      buf = NULL;
     }
   }
   if (buf != curbuf || curbuf == NULL) {
