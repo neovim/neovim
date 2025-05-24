@@ -33,7 +33,7 @@ add_custom_target(functionaltest
     -D TEST_TYPE=functional
     ${TEST_OPTIONS}
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-  DEPENDS printenv-test printargs-test shell-test pwsh-test streams-test tty-test
+  DEPENDS printenv-test printargs-test printio-test shell-test pwsh-test streams-test tty-test
   USES_TERMINAL)
 add_dependencies(functionaltest lua_dev_deps nvim)
 
