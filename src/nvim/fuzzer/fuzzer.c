@@ -4,8 +4,11 @@
 #include <stdlib.h>
 #include <unistd.h> 
 #include <signal.h> 
+#include "uv.h"
 
 #include "nvim/main.h"
+#include "nvim/types_defs.h"
+#include "nvim/event/loop.h"
 
 #include <sanitizer/lsan_interface.h>
 
@@ -43,7 +46,7 @@ extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
   {
   char fuzz_bin_path[1024];
-  snprintf(fuzz_bin_path, sizeof(fuzz_bin_path), "%s/fuzzer_bin",
+  snprintf(fuzz_bin_path, sizeof(fuzz_bin_path), "%s/fuzzer.input",
              test_base);
   int fd = open(fuzz_bin_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
   assert(fd != -1);
@@ -55,6 +58,17 @@ extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   snprintf(fifo_name, sizeof(fifo_name), "%s/socket",test_base);
   pthread_t id;
   pthread_create(&id,NULL, (void *(*)(void *))&thread_func,fifo_name);
+
+  // wait socket file appear
+  while(access(fifo_name,F_OK) != 0){
+    printf("%s\n",strerror(errno));
+    usleep(100);
+  }
+  // now can we assume nvim is under normal state
+  //
+  struct loop *data = uv_loop_get_data(&main_loop.uv);
+
+  data->fuzzer_test_base = test_base;
 
 
   char send_script[1024];
