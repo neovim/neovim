@@ -847,25 +847,7 @@ set_target_properties(
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
 target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
 
-add_library(fuzzer_lib INTERFACE)
-set_target_properties(fuzzer_lib 
-  PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS MAKE_LIB
-  INTERFACE_COMPILE_OPTIONS  ${SANITIZER_COMPILE}
-  INTERFACE_LINK_LIBRARIES main_lib libuv
-  INTERFACE_LINK_OPTIONS ${SANITIZER_LINK}
-)
-
-
-add_executable(fuzzer fuzzer/fuzzer.c )
-target_compile_options(fuzzer  PRIVATE "-fsanitize=fuzzer")
-target_link_libraries(fuzzer fuzzer_lib libuv)
-target_link_options(fuzzer PRIVATE  ${SANITIZER_LINK} "-fsanitize=fuzzer")
-
-add_executable(fuzzer_test fuzzer/fuzzer_test.c fuzzer/fuzzer.c)
-target_link_libraries(fuzzer_test fuzzer_lib libuv)
-target_link_options(fuzzer_test PRIVATE  ${SANITIZER_LINK})
-
+add_subdirectory(fuzzer)
 #-------------------------------------------------------------------------------
 # Lint
 #-------------------------------------------------------------------------------
