@@ -8,7 +8,7 @@ int main(int argc, char** argv){
 
 
   //int res = nvim_main(argc, argv);
-  LLVMFuzzerTestOneInput(0,0);
+  LLVMFuzzerTestOneInput((const uint8_t *)"12345678",8);
 
 
   return 0;
