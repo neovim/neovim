@@ -8,10 +8,12 @@ file(WRITE "${INIT_SCRIPT}"
 "export CMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\"\n"
 # fuzzer need to run init.sh and pass test base dir (under os /tmp/nvim_fuzzer_${pid}_${tid}) as first argument
 "export FUZZER_TEST_BASE=\"\${1}\"\n"
+"export TEST_HOME=\"\${FUZZER_TEST_BASE}\"\n"
 "export TEST_XDG_CONFIG_DIR=\"\${FUZZER_TEST_BASE}/XDG_CONFIG_DIR\"\n"
 "export TEST_XDG_DATA_HOME=\"\${FUZZER_TEST_BASE}/XDG_DATA_HOME\"\n"
 "export TEST_TMPDIR=\"\${FUZZER_TEST_BASE}/TMPDIR\"\n"
 "mkdir -p \"\${TEST_XDG_CONFIG_DIR}\" \"\${TEST_XDG_DATA_HOME}\" \"\${TEST_TMPDIR}\"\n"
+"cp -a \"\${CMAKE_INSTALL_PREFIX}/share/nvim\" \"\${TEST_XDG_DATA_HOME}/\"\n"
 "${CMAKE_CURRENT_SOURCE_DIR}/init_post.sh\n"
 )
 
