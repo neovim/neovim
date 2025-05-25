@@ -11,6 +11,30 @@ local eq = t.eq
 
 before_each(clear)
 
+local function expected_empty()
+  eq({}, api.nvim_get_vvar('errors'))
+end
+
+-- oldtest: Test_get_Visual_selection_in_curbuf_autocmd()
+it('autocmd can get Visual selection when using setbufvar() on curbuf', function()
+  n.exec([[
+    new
+    autocmd OptionSet list let b:text = getregion(getpos('.'), getpos('v'))
+    call setline(1, 'foo bar baz')
+
+    normal! gg0fbvtb
+    setlocal list
+    call assert_equal(['bar '], b:text)
+    exe "normal! \<Esc>"
+
+    normal! v0
+    call setbufvar('%', '&list', v:false)
+    call assert_equal(['foo bar '], b:text)
+    exe "normal! \<Esc>"
+  ]])
+  expected_empty()
+end)
+
 -- oldtest: Test_autocmd_invalidates_undo_on_textchanged()
 it('no E440 in quickfix window when autocommand invalidates undo', function()
   write_file(
