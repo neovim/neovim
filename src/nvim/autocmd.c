@@ -1268,9 +1268,10 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 {
   win_T *win;
   bool need_append = true;  // Append `aucmd_win` to the window list.
+  const bool same_buffer = buf == curbuf;
 
   // Find a window that is for the new buffer
-  if (buf == curbuf) {  // be quick when buf is curbuf
+  if (same_buffer) {  // be quick when buf is curbuf
     win = curwin;
   } else {
     win = NULL;
@@ -1360,9 +1361,11 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
   aco->new_curwin_handle = curwin->handle;
   set_bufref(&aco->new_curbuf, curbuf);
 
-  // disable the Visual area, the position may be invalid in another buffer
   aco->save_VIsual_active = VIsual_active;
-  VIsual_active = false;
+  if (!same_buffer) {
+    // disable the Visual area, position may be invalid in another buffer
+    VIsual_active = false;
+  }
 }
 
 /// Cleanup after executing autocommands for a (hidden) buffer.

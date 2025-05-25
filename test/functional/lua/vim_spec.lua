@@ -3955,6 +3955,17 @@ stack traceback:
       ]]
       )
     end)
+
+    it('can get Visual selection in current buffer #34162', function()
+      insert('foo bar baz')
+      feed('gg0fbvtb')
+      local text = exec_lua([[
+        return vim.api.nvim_buf_call(0, function()
+          return vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'))
+        end)
+      ]])
+      eq({ 'bar ' }, text)
+    end)
   end)
 
   describe('vim.api.nvim_win_call', function()
