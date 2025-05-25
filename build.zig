@@ -82,15 +82,20 @@ pub fn build(b: *std.Build) !void {
 
     const libuv_dep = b.dependency("libuv", .{ .target = target, .optimize = optimize });
     const libuv = libuv_dep.artifact("uv");
-
     const libluv = try build_lua.build_libluv(b, target, optimize, lua, libuv);
+
+    const libluv_host = if (cross_compiling) libluv_host: {
+        const libuv_dep_host = b.dependency("libuv", .{ .target = target_host, .optimize = optimize_host });
+        const libuv_host = libuv_dep_host.artifact("uv");
+        break :libluv_host try build_lua.build_libluv(b, target_host, optimize_host, ziglua_host.artifact("lua"), libuv_host);
+    } else libluv;
 
     const utf8proc = b.dependency("utf8proc", .{ .target = target, .optimize = optimize });
     const unibilium = b.dependency("unibilium", .{ .target = target, .optimize = optimize });
     // TODO(bfredl): fix upstream bugs with UBSAN
     const treesitter = b.dependency("treesitter", .{ .target = target, .optimize = .ReleaseFast });
 
-    const nlua0 = build_lua.build_nlua0(b, target_host, optimize_host, host_use_luajit, ziglua_host, lpeg);
+    const nlua0 = build_lua.build_nlua0(b, target_host, optimize_host, host_use_luajit, ziglua_host, lpeg, libluv_host);
 
     // usual caveat emptor: might need to force a rebuild if the only change is
     // addition of new .c files, as those are not seen by any hash
@@ -331,7 +336,7 @@ pub fn build(b: *std.Build) !void {
 
     nvim_exe_step.dependOn(&nvim_exe_install.step);
 
-    const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, nvim_exe, funcs_data);
+    const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, funcs_data);
     const runtime_install = b.addInstallDirectory(.{ .source_dir = gen_runtime.getDirectory(), .install_dir = .prefix, .install_subdir = "runtime/" });
 
     const nvim = b.step("nvim", "build the editor");

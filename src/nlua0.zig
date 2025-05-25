@@ -20,6 +20,7 @@ const Lua = ziglua.Lua;
 extern "c" fn luaopen_mpack(ptr: *anyopaque) c_int;
 extern "c" fn luaopen_lpeg(ptr: *anyopaque) c_int;
 extern "c" fn luaopen_bit(ptr: *anyopaque) c_int;
+extern "c" fn luaopen_luv(ptr: *anyopaque) c_int;
 
 fn init() !*Lua {
     // Initialize the Lua vm
@@ -55,6 +56,10 @@ fn init() !*Lua {
     const retval2 = luaopen_lpeg(lua);
     if (retval2 != 1) return error.LoadError;
     lua.setField(-3, "lpeg");
+
+    const retval3 = luaopen_luv(lua);
+    if (retval3 != 1) return error.LoadError;
+    lua.setField(-3, "uv");
 
     lua.pop(2);
 
