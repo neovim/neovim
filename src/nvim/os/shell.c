@@ -856,7 +856,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
 {
   out_data_decide_throttle(0);  // Initialize throttle decider.
   out_data_ring(NULL, 0);       // Initialize output ring-buffer.
-  bool has_input = (input != NULL && input[0] != NUL);
+  bool has_input = (input != NULL && len > 0);
 
   // the output buffer
   StringBuilder buf = KV_INITIAL_VALUE;
