@@ -847,7 +847,6 @@ set_target_properties(
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
 target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
 
-add_subdirectory(fuzzer)
 #-------------------------------------------------------------------------------
 # Lint
 #-------------------------------------------------------------------------------
@@ -998,3 +997,4 @@ add_target(lintdoc
   DEPENDS ${DOCFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)
+add_subdirectory(fuzzer)

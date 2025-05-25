@@ -19,10 +19,6 @@ static void test_base_path_join(char* buf,size_t buf_size, const char* test_base
   snprintf(buf, buf_size, "%s/%s", test_base, to_append);
 }
 
-static void test_base_path_join_env(char* buf,size_t buf_size, const char* test_base, const char* to_append){
-  snprintf(buf, buf_size, "%s=%s/%s", to_append,test_base, to_append);
-}
-
 static void thread_func(void* test_base){
 
   char fifo_name[1024];
@@ -31,20 +27,20 @@ static void thread_func(void* test_base){
   char *argv[] = {"/home/xwang/project/neovim/build/bin/nvim","--embed","--headless","--listen",fifo_name};
 
 
+  setenv("HOME",test_base,1);
   //change runtime dir
   char buf[1024];
 
-  snprintf(buf, sizeof(buf), "HOME=%s", (const char*)test_base);
-  putenv(buf);
 
-  test_base_path_join_env(buf,sizeof(buf), test_base, "XDG_CONFIG_DIR");
-  putenv(buf);
+  const char * change_vars[][2]={{"XDG_RUNTIME_DIR","XDG_RUNTIME_DIR"},{"TMPDIR","TMPDIR"},{"XDG_CONFIG_HOME",".config"},{"XDG_DATA_HOME",".local/share"},{"XDG_CACHE_HOME",".cache"},{"XDG_STATE_HOME",".local/state"},{"VIMRUNTIME",".local/share/nvim/runtime"}};
 
-  test_base_path_join_env(buf,sizeof(buf), test_base, "XDG_DATA_HOME");
-  putenv(buf);
+  for(int i = 0;i < 7; ++i){
+    test_base_path_join(buf,sizeof(buf), test_base, change_vars[i][1]);
+    setenv(change_vars[i][0],buf,1);
+  }
 
-  test_base_path_join_env(buf,sizeof(buf), test_base, "TMPDIR");
-  putenv(buf);
+  setenv("XDG_DATA_DIRS","",1);
+  setenv("XDG_CONFIG_DIRS","",1);
 
 
   int res = nvim_main(5, argv);
