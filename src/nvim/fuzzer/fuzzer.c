@@ -15,21 +15,51 @@
 extern int nvim_main(int argc, char **argv);
 
 
-void thread_func(void* fifo_name){
+static void test_base_path_join(char* buf,size_t buf_size, const char* test_base, const char* to_append){
+  snprintf(buf, buf_size, "%s/%s", test_base, to_append);
+}
 
+static void test_base_path_join_env(char* buf,size_t buf_size, const char* test_base, const char* to_append){
+  snprintf(buf, buf_size, "%s=%s/%s", to_append,test_base, to_append);
+}
+
+static void thread_func(void* test_base){
+
+  char fifo_name[1024];
+  test_base_path_join(fifo_name,sizeof(fifo_name),(const char*)test_base, "socket");
 
   char *argv[] = {"/home/xwang/project/neovim/build/bin/nvim","--embed","--headless","--listen",fifo_name};
+
+
+  //change runtime dir
+  char buf[1024];
+
+  snprintf(buf, sizeof(buf), "HOME=%s", (const char*)test_base);
+  putenv(buf);
+
+  test_base_path_join_env(buf,sizeof(buf), test_base, "XDG_CONFIG_DIR");
+  putenv(buf);
+
+  test_base_path_join_env(buf,sizeof(buf), test_base, "XDG_DATA_HOME");
+  putenv(buf);
+
+  test_base_path_join_env(buf,sizeof(buf), test_base, "TMPDIR");
+  putenv(buf);
+
+
   int res = nvim_main(5, argv);
 
   (void)res;
 }
 
-extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+
+int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
+
+int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
 
   //get tmp dir envvar 
   const char* os_tmp_dir= "/tmp";
-  assert(os_tmp_dir);
 
   char test_base[1024]; 
   snprintf(test_base, sizeof(test_base), "%s/nvim_fuzzer_%ld_%ld",
@@ -45,23 +75,23 @@ extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
 
   {
-  char fuzz_bin_path[1024];
-  snprintf(fuzz_bin_path, sizeof(fuzz_bin_path), "%s/fuzzer.input",
-             test_base);
+    char fuzz_bin_path[1024];
+    test_base_path_join(fuzz_bin_path, sizeof(fuzz_bin_path), test_base, "fuzzer.input");
   int fd = open(fuzz_bin_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
   assert(fd != -1);
   ssize_t written = write(fd, Data, Size);
   assert (written == (ssize_t)Size);
+    close(fd);
   }
 
-  char fifo_name[1024];
-  snprintf(fifo_name, sizeof(fifo_name), "%s/socket",test_base);
   pthread_t id;
-  pthread_create(&id,NULL, (void *(*)(void *))&thread_func,fifo_name);
+  pthread_create(&id,NULL, (void *(*)(void *))&thread_func,test_base);
 
   // wait socket file appear
+  //
+  char fifo_name[1024];
+  test_base_path_join(fifo_name,sizeof(fifo_name),test_base, "socket");
   while(access(fifo_name,F_OK) != 0){
-    printf("%s\n",strerror(errno));
     usleep(100);
   }
   // now can we assume nvim is under normal state
@@ -79,5 +109,14 @@ extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   assert(send_res == 0);
 
   pthread_join(id,NULL);
+
+  //cleanup
+
+  char cleanup[1024];
+
+  snprintf(cleanup, sizeof(cleanup), "rm -rf %s",test_base);
+  int res = system(cleanup);
+  assert(res == 0);
+
   return 0;
 }
