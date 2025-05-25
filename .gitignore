@@ -85,3 +85,4 @@ tags
 /contrib/result-*
 
 CMakeUserPresets.json
+install_debug
