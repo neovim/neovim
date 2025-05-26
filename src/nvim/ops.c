@@ -1391,6 +1391,7 @@ int insert_reg(int regname, yankreg_T *reg, bool literally_arg)
           // Insert a newline between lines and after last line if
           // y_type is kMTLineWise.
           if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
+            // likely the place to insert a shift+NL in prompt buffers figure out how to insert it (shadman)
             stuffcharReadbuff('\n');
           }
         }

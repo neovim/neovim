@@ -1077,7 +1077,7 @@ check_pum:
       cmdwin_result = CAR;
       return 0;
     }
-    if (mod_mask & MOD_MASK_SHIFT && bt_prompt(curbuf)) {
+    if ((mod_mask & MOD_MASK_SHIFT) == 0 && bt_prompt(curbuf)) {
       invoke_prompt_callback();
       if (!bt_prompt(curbuf)) {
         // buffer changed to a non-prompt buffer, get out of
