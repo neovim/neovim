@@ -6681,7 +6681,7 @@ if (h->n_buckets < new_n_buckets) { // expand
   it("not revealed before skipcol scrolling up with 'smoothscroll'", function()
     api.nvim_set_option_value('smoothscroll', true, {})
     api.nvim_buf_set_lines(0, 0, -1, false, { ('x'):rep(screen._width * 2) })
-    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines_above = true, virt_lines = { { { 'VIRT1' } } } } )
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines_above = true, virt_lines = { { { 'VIRT1' } } } })
     feed('<C-E>')
     screen:expect([[
       {1:<<<}xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx^x|
@@ -6703,7 +6703,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {1:~                                                 }|*8
                                                         |
     ]])
-    end)
+  end)
 end)
 
 describe('decorations: signs', function()
