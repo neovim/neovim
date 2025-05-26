@@ -85,7 +85,6 @@ if(NOT MSVC)
     -Wno-implicit-int-float-conversion
     -Wmissing-format-attribute
     -Wmissing-prototypes
-    -Werror
     -fsigned-char)
 
   # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems

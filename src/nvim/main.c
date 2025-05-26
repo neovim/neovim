@@ -694,7 +694,7 @@ void os_exit(int r)
   free_all_mem();
 #endif
 
-  longjmp(1);
+  longjmp(my_jump_buffer,1);
   exit(r);
 }
 

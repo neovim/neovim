@@ -1,4 +1,5 @@
 #!/bin/env python3
+import pdb
 import pynvim
 import string
 import os
@@ -71,15 +72,19 @@ def fuzzer_to_input(fuzzer_input:bytes):
             ret.append(0.1)
 
 
-    #return ret
-    return [":q!<CR>"]
+    return ret
+    #return [":q!<CR>"]
 
 
 def force_quite_cmd():
     return [
-        "C-c",
+        "<Esc>",
         1,
-    ] * 3 + [':q<CR>']
+        "<C-c>",
+        1,
+        ':qall!<CR>',
+        1
+    ] * 3 
 
 
 def send_commands(nvim, cmds):
@@ -103,6 +108,7 @@ if __name__ == "__main__":
 
     print("force exit")
     try:
+        #pdb.set_trace()
         send_commands(nvim, force_quite_cmd())
     except Exception as e:
         print(f"Exception: {e}")

@@ -61,6 +61,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   snprintf(test_base, sizeof(test_base), "%s/nvim_fuzzer_%ld_%ld",
              os_tmp_dir,(long)getpid(), (long)gettid());
 
+  printf("%s\n",test_base);
+
   char call_init[1024];
   snprintf(call_init, sizeof(call_init), FUZZER_INIT_SCRIPT " \"%s\"", test_base);
 
