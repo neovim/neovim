@@ -20,10 +20,10 @@ file(CHMOD "${INIT_SCRIPT}" PERMISSIONS OWNER_EXECUTE OWNER_READ OWNER_WRITE )
 
 set_target_properties(fuzzer_lib 
   PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS "MAKE_LIB;FUZZER_INIT_SCRIPT=\"${INIT_SCRIPT}\";FUZZER_SEND_SCRIPT=\"${CMAKE_CURRENT_SOURCE_DIR}/send.py\""
-  INTERFACE_COMPILE_OPTIONS  ${SANITIZER_COMPILE}
-  INTERFACE_LINK_LIBRARIES main_lib libuv
-  INTERFACE_LINK_OPTIONS ${SANITIZER_LINK}
+  INTERFACE_COMPILE_DEFINITIONS "MAKE_LIB;FUZZER_INIT_SCRIPT=\"${INIT_SCRIPT}\";FUZZER_SEND_SCRIPT=\"${CMAKE_CURRENT_SOURCE_DIR}/send.py\";LUA_SHIM_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/lua_shim.lua\""
+  # INTERFACE_COMPILE_OPTIONS  ${SANITIZER_COMPILE}
+  INTERFACE_LINK_LIBRARIES "main_lib;libuv"
+  #  INTERFACE_LINK_OPTIONS ${SANITIZER_LINK}
 )
 
 
@@ -38,3 +38,5 @@ add_executable(fuzzer_test fuzzer_test.c
 target_link_libraries(fuzzer_test fuzzer_lib libuv)
 target_link_options(fuzzer_test PRIVATE  ${SANITIZER_LINK})
 
+add_executable(fuzzer_afl fuzzer_afl.c fuzzer.c)
+target_link_libraries(fuzzer_afl fuzzer_lib libuv)

@@ -19,14 +19,9 @@ static void test_base_path_join(char* buf,size_t buf_size, const char* test_base
   snprintf(buf, buf_size, "%s/%s", test_base, to_append);
 }
 
-static void thread_func(void* test_base){
+void redirect_common_path(void* test_base);
 
-  char fifo_name[1024];
-  test_base_path_join(fifo_name,sizeof(fifo_name),(const char*)test_base, "socket");
-
-  char *argv[] = {"/home/xwang/project/neovim/build/bin/nvim","--embed","--headless","--listen",fifo_name};
-
-
+void redirect_common_path(void* test_base){
   setenv("HOME",test_base,1);
   //change runtime dir
   char buf[1024];
@@ -41,6 +36,17 @@ static void thread_func(void* test_base){
 
   setenv("XDG_DATA_DIRS","",1);
   setenv("XDG_CONFIG_DIRS","",1);
+}
+
+static void thread_func(void* test_base){
+
+  char fifo_name[1024];
+  test_base_path_join(fifo_name,sizeof(fifo_name),(const char*)test_base, "socket");
+
+  char *argv[] = {"/home/xwang/project/neovim/build/bin/nvim","--embed","--headless","--listen",fifo_name};
+
+
+  
 
 
   int res = nvim_main(5, argv);
@@ -51,17 +57,9 @@ static void thread_func(void* test_base){
 
 int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
 
-int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+void run_prepare_script(const char* test_base);
 
-
-  //get tmp dir envvar 
-  const char* os_tmp_dir= "/tmp";
-
-  char test_base[1024]; 
-  snprintf(test_base, sizeof(test_base), "%s/nvim_fuzzer_%ld_%ld",
-             os_tmp_dir,(long)getpid(), (long)gettid());
-
-  printf("%s\n",test_base);
+void run_prepare_script(const char* test_base){
 
   char call_init[1024];
   snprintf(call_init, sizeof(call_init), FUZZER_INIT_SCRIPT " \"%s\"", test_base);
@@ -69,6 +67,25 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   int init_fuzzer_env_res = system(call_init);
 
   assert(init_fuzzer_env_res == 0);
+
+}
+
+void get_test_base(char* buf,size_t size);
+void get_test_base(char* buf,size_t size){
+
+  //get tmp dir envvar 
+  const char* os_tmp_dir= "/tmp";
+
+  snprintf(buf, size, "%s/nvim_fuzzer_%ld_%ld",
+             os_tmp_dir,(long)getpid(), (long)gettid());
+}
+
+int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+
+  char test_base[1024]; 
+  get_test_base(test_base,sizeof(test_base));
+
+  run_prepare_script(test_base);
 
 
 
