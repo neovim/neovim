@@ -204,68 +204,38 @@ function M.show_msg(tar, content, replace_last, append, more)
   ---this is the first message, or in case of a repeated or replaced message.
   local row = M[tar] and count <= 1 and (tar == 'cmd' and ext.cmd.row or 0)
     or line_count - ((replace_last or restart or cr or append) and 1 or 0)
-  local start_line = append and api.nvim_buf_get_lines(ext.bufs[tar], row, row + 1, false)[1]
+  local curline = (cr or append) and api.nvim_buf_get_lines(ext.bufs[tar], row, row + 1, false)[1]
   local start_row, width = row, M.box.width
-  local lines, marks = {}, {} ---@type string[], [integer, integer, vim.api.keyset.set_extmark][]
+  col = append and not cr and math.min(col, #curline) or 0
 
   -- Accumulate to be inserted and highlighted message chunks for a non-repeated message.
-  for _, chunk in ipairs(dupe > 0 and tar == ext.cfg.msg.pos and {} or content) do
-    local idx = (#lines == 0 and 1 or #lines)
-    local head = lines[idx] or ''
-
+  for _, chunk in ipairs((M[tar] or dupe == 0) and content or {}) do
     -- Split at newline and write to start of line after carriage return.
     for str in (chunk[2] .. '\0'):gmatch('.-[\n\r%z]') do
-      local mid = str:gsub('[\n\r%z]', '')
-      -- Remove previous highlight from overwritten text.
-      if #head == 0 and marks[#marks] and marks[#marks][1] == row then
-        if marks[#marks][1] < row then
-          marks[#marks + 1] = { row, 0, vim.deepcopy(marks[#marks][3]) }
-          marks[#marks - 1][3].end_col = 0
-        end
-        marks[#marks][2] = math.max(marks[#marks][2], #mid)
-      end
+      local repl, pat = str:sub(1, -2), str:sub(-1)
+      local end_col = col + #repl
 
-      col = append and not cr and col or 0
-      local end_col = #mid + col
-      if chunk[3] > 0 then
-        marks[#marks + 1] = { row, col, { end_col = end_col, hl_group = chunk[3] } }
-      end
-
-      if row == start_row then
-        local ecol = math.min(end_col, start_line and #start_line or -1)
-        if line_count < row + 1 then
-          api.nvim_buf_set_lines(ext.bufs[tar], row, -1, false, { mid })
-          line_count = line_count + 1
-        else
-          api.nvim_buf_set_text(ext.bufs[tar], row, col, row, ecol, { mid })
-        end
-        start_line = api.nvim_buf_get_lines(ext.bufs[tar], row, row + 1, false)[1]
+      if line_count < row + 1 then
+        api.nvim_buf_set_lines(ext.bufs[tar], row, -1, false, { repl })
+        line_count = line_count + 1
       else
-        local tail = #head == 0 and lines[idx] and lines[idx]:sub(#mid + 1) or ''
-        lines[idx] = ('%s%s%s'):format(head, mid, tail)
+        local ecol = curline and math.min(end_col, #curline) or -1
+        api.nvim_buf_set_text(ext.bufs[tar], row, col, row, ecol, { repl })
       end
-      width = tar == 'box' and math.max(width, api.nvim_strwidth(lines[idx] or start_line)) or 0
+      curline = api.nvim_buf_get_lines(ext.bufs[tar], row, row + 1, false)[1]
+      width = tar == 'box' and math.max(width, api.nvim_strwidth(curline)) or 0
 
-      if str:sub(-1) == '\n' then
-        append, row, idx = false, row + 1, idx + (row > start_row and 1 or 0)
-      elseif str:sub(-1) == '\r' then
-        cr, append = true, false
+      if chunk[3] > 0 then
+        local opts = { end_col = end_col, hl_group = chunk[3] } ---@type vim.api.keyset.set_extmark
+        api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, row, col, opts)
       end
-      head, col = '', end_col
-    end
-  end
 
-  if not M[tar] or dupe == 0 then
-    -- Add highlighted message to buffer.
-    api.nvim_buf_set_lines(ext.bufs[tar], start_row + 1, -1, false, lines)
-    for _, mark in ipairs(marks) do
-      api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, mark[1], mark[2], mark[3])
+      if pat == '\n' then
+        row, col = row + 1, 0
+      else
+        col = pat == '\r' and 0 or end_col
+      end
     end
-    M.virt.msg[M.virt.idx.dupe][1] = dupe ~= 0 and M.virt.msg[M.virt.idx.dupe][1] or nil
-  else
-    -- Place (x) indicator for repeated messages. Mainly to mitigate unnecessary
-    -- resizing of the message box window, but also placed in the cmdline.
-    M.virt.msg[M.virt.idx.dupe][1] = { 0, ('(%d)'):format(dupe) }
   end
 
   if tar == 'box' then
@@ -313,8 +283,11 @@ function M.show_msg(tar, content, replace_last, append, more)
   end
 
   if M[tar] then
-    set_virttext('msg')
+    -- Place (x) indicator for repeated messages. Mainly to mitigate unnecessary
+    -- resizing of the message box window, but also placed in the cmdline.
+    M.virt.msg[M.virt.idx.dupe][1] = dupe > 0 and { 0, ('(%d)'):format(dupe) } or nil
     M.prev_msg, M.dupe, M[tar].count = msg, dupe, count
+    set_virttext('msg')
   end
 
   -- Reset message state the next event loop iteration.
