@@ -82,8 +82,10 @@ if(NOT MSVC)
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion -Wvla
     -Wdouble-promotion
     -Wmissing-noreturn
+    -Wno-implicit-int-float-conversion
     -Wmissing-format-attribute
     -Wmissing-prototypes
+    -Werror
     -fsigned-char)
 
   # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
