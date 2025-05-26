@@ -2265,7 +2265,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         }
 
         if (wp->w_buffer->terminal) {
-          wlv.char_attr = hl_combine_attr(term_attrs[wlv.vcol], wlv.char_attr);
+          wlv.char_attr = hl_combine_attr(term_attrs[MIN(wlv.vcol, TERM_ATTRS_MAX - 1)],
+                                          wlv.char_attr);
         }
 
         // we don't want linebreak to apply for lines that start with
@@ -3150,6 +3151,10 @@ static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, boo
   if (wp->w_p_rl) {
     linebuf_mirror(&startcol, &endcol, &clear_width, wp->w_view_width);
     flags |= SLF_RIGHTLEFT;
+  }
+
+  if (wp->w_buffer->terminal) {
+    flags |= SLF_TERM_ATTRS;
   }
 
   // Take care of putting "<<<" on the first line for 'smoothscroll'.

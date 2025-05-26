@@ -22,6 +22,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
+#include "nvim/drawline.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
@@ -799,13 +800,18 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
     }
   }
 
+  int max_attrs = 0;
+  if (flags & SLF_TERM_ATTRS) {
+    max_attrs = TERM_ATTRS_MAX;
+  }
+
   if ((flags & SLF_RIGHTLEFT) && start_dirty != -1 && clear_dirty_start != -1) {
     if (grid->throttled || clear_dirty_start >= start_dirty - 5) {
       // cannot draw now or too small to be worth a separate "clear" event
       start_dirty = clear_dirty_start;
     } else {
       ui_line(grid, row, invalid_row, coloff + clear_dirty_start, coloff + clear_dirty_start,
-              coloff + clear_end, bg_attr, flags & SLF_WRAP);
+              coloff + clear_end, bg_attr, max_attrs, flags & SLF_WRAP);
     }
     clear_end = end_dirty;
   } else {
@@ -822,7 +828,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   if (clear_end > start_dirty) {
     if (!grid->throttled) {
       ui_line(grid, row, invalid_row, coloff + start_dirty, coloff + end_dirty, coloff + clear_end,
-              bg_attr, flags & SLF_WRAP);
+              bg_attr, max_attrs, flags & SLF_WRAP);
     } else if (grid->dirty_col) {
       // TODO(bfredl): really get rid of the extra pseudo terminal in message.c
       // by using a linebuf_char copy for "throttled message line"
