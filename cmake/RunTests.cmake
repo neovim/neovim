@@ -7,6 +7,7 @@ set(ENV{XDG_DATA_HOME} ${BUILD_DIR}/Xtest_xdg/share)
 set(ENV{XDG_STATE_HOME} ${BUILD_DIR}/Xtest_xdg/state)
 unset(ENV{XDG_DATA_DIRS})
 unset(ENV{NVIM})  # Clear $NVIM in case tests are running from Nvim. #11009
+unset(ENV{TMUX})  # Nvim TUI shouldn't think it's running in tmux. #34173
 
 # TODO(dundargoc): The CIRRUS_CI environment variable isn't passed to here from
 # the main CMakeLists.txt, so we have to manually pass it to this script and
