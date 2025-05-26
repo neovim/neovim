@@ -213,7 +213,7 @@ function M.show_msg(tar, content, replace_last, append, more)
     -- Split at newline and write to start of line after carriage return.
     for str in (chunk[2] .. '\0'):gmatch('.-[\n\r%z]') do
       local repl, pat = str:sub(1, -2), str:sub(-1)
-      local end_col = col + #repl
+      local end_col = col + #repl ---@type integer
 
       if line_count < row + 1 then
         api.nvim_buf_set_lines(ext.bufs[tar], row, -1, false, { repl })
@@ -226,8 +226,12 @@ function M.show_msg(tar, content, replace_last, append, more)
       width = tar == 'box' and math.max(width, api.nvim_strwidth(curline)) or 0
 
       if chunk[3] > 0 then
-        local opts = { end_col = end_col, hl_group = chunk[3] } ---@type vim.api.keyset.set_extmark
-        api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, row, col, opts)
+        api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, row, col, {
+          end_col = end_col,
+          hl_group = chunk[3],
+          undo_restore = false,
+          invalidate = true,
+        })
       end
 
       if pat == '\n' then
@@ -321,10 +325,14 @@ function M.msg_show(kind, content, _, _, append)
   elseif kind == 'return_prompt' then
     -- Bypass hit enter prompt.
     vim.api.nvim_feedkeys(vim.keycode('<CR>'), 'n', false)
-  elseif kind == 'verbose' and append_more == 0 then
+  elseif kind == 'verbose' then
     -- Verbose messages are sent too often to be meaningful in the cmdline:
     -- always route to box regardless of cfg.msg.pos.
     M.show_msg('box', content, false, append)
+  elseif append_more > 0 and ext.cfg.msg.pos == 'cmd' then
+    -- Append message to already open 'more' window.
+    M.msg_history_show({ { 'spill', content } })
+    api.nvim_command('norm! G')
   elseif ext.cmd.prompt then
     -- Route to prompt that stays open so long as the cmdline prompt is active.
     api.nvim_buf_set_lines(ext.bufs.prompt, 0, -1, false, { '' })
@@ -333,12 +341,8 @@ function M.msg_show(kind, content, _, _, append)
   else
     -- Set the entered search command in the cmdline (if available).
     local tar = kind == 'search_cmd' and 'cmd' or ext.cfg.msg.pos
-    if tar == 'cmd' and ext.cmdheight == 0 then
-      return
-    end
-
     if tar == 'cmd' then
-      if ext.cmd.level > 0 and ext.cmd.row == 0 then
+      if ext.cmdheight == 0 or (ext.cmd.level > 0 and ext.cmd.row == 0) then
         return -- Do not overwrite an active cmdline unless in block mode.
       end
       -- Store the time when an error message was emitted in order to not overwrite
@@ -398,10 +402,10 @@ function M.msg_history_show(entries)
   end
 
   -- Appending messages while 'more' window is open.
-  append_more = entries[1][1] == 'spill' and append_more + 1 or 0
-  if append_more < 2 then
+  if append_more == 0 then
     api.nvim_buf_set_lines(ext.bufs.more, 0, -1, false, {})
   end
+  append_more = append_more + 1
 
   for i, entry in ipairs(entries) do
     M.show_msg('more', entry[2], i == 1 and append_more < 2, false)
