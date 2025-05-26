@@ -226,7 +226,7 @@ function M.show_msg(tar, content, replace_last, append, more)
       end
 
       col = append and not cr and col or 0
-      local end_col = #mid + col
+      local end_col = #mid + col ---@type integer
       if chunk[3] > 0 then
         marks[#marks + 1] = { row, col, { end_col = end_col, hl_group = chunk[3] } }
       end
