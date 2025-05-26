@@ -2621,7 +2621,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	one dot may appear.
 	This option is not copied to another buffer, independent of the 's' or
 	'S' flag in 'cpoptions'.
-	Only alphanumeric characters, '-' and '_' can be used.
+	Only alphanumeric characters, '-' and '_' can be used (and a '.' is
+	allowed as delimiter when combining different filetypes).
 
 						*'fillchars'* *'fcs'*
 'fillchars' 'fcs'	string	(default "")
