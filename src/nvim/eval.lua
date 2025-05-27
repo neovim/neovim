@@ -13347,7 +13347,8 @@ M.funcs = {
     desc = [=[
       The result is a Number, which is the number of the current
       window.  The top window has number 1.
-      Returns zero for a popup window.
+      Returns zero for a hidden or non |focusable| window, unless
+      it is the current window.
 
       The optional argument {arg} supports the following values:
       	$	the number of the last window (the window

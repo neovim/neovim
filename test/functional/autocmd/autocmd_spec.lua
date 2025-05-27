@@ -377,7 +377,7 @@ describe('autocmd', function()
     -- Also check with win_splitmove().
     exec_lua [[
       vim._with({buf = _G.buf}, function()
-        vim.fn.win_splitmove(vim.fn.winnr(), vim.fn.win_getid(1))
+        vim.fn.win_splitmove(vim.fn.win_getid(), vim.fn.win_getid(1))
       end)
     ]]
     screen:expect_unchanged()

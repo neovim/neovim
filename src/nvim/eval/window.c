@@ -40,6 +40,11 @@ static const char *e_invalwindow = N_("E957: Invalid window number");
 static const char e_cannot_resize_window_in_another_tab_page[]
   = N_("E1308: Cannot resize a window in another tab page");
 
+bool win_has_winnr(win_T *wp)
+{
+  return wp == curwin || (!wp->w_config.hide && wp->w_config.focusable);
+}
+
 static int win_getid(typval_T *argvars)
 {
   if (argvars[0].v_type == VAR_UNKNOWN) {
@@ -72,7 +77,7 @@ static int win_getid(typval_T *argvars)
     }
   }
   for (; wp != NULL; wp = wp->w_next) {
-    if (--winnr == 0) {
+    if ((winnr -= win_has_winnr(wp)) == 0) {
       return wp->handle;
     }
   }
@@ -120,9 +125,9 @@ static int win_id2win(typval_T *argvars)
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->handle == id) {
-      return nr;
+      return (win_has_winnr(wp) ? nr : 0);
     }
-    nr++;
+    nr += win_has_winnr(wp);
   }
   return 0;
 }
@@ -292,20 +297,24 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
       semsg(_(e_invexpr2), arg);
       nr = 0;
     }
+  } else if (!win_has_winnr(twin)) {
+    nr = 0;
   }
 
   if (nr <= 0) {
     return 0;
   }
 
-  for (win_T *wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
-       wp != twin; wp = wp->w_next) {
-    if (wp == NULL) {
-      // didn't find it in this tabpage
-      nr = 0;
+  nr = 0;
+  win_T *wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
+  for (; wp != NULL; wp = wp->w_next) {
+    nr += win_has_winnr(wp);
+    if (wp == twin) {
       break;
     }
-    nr++;
+  }
+  if (wp == NULL) {
+    nr = 0;  // didn't find it in this tabpage
   }
   return nr;
 }
@@ -415,7 +424,7 @@ void f_getwininfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tabnr++;
     int16_t winnr = 0;
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-      winnr++;
+      winnr += win_has_winnr(wp);
       if (wparg != NULL && wp != wparg) {
         continue;
       }
@@ -834,6 +843,9 @@ void f_winrestcmd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   for (int i = 0; i < 2; i++) {
     int winnr = 1;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (!win_has_winnr(wp)) {
+        continue;
+      }
       snprintf(buf, sizeof(buf), "%dresize %d|", winnr,
                wp->w_height);
       ga_concat(&ga, buf);
