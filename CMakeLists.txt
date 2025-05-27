@@ -254,6 +254,16 @@ add_glob_target(
   GLOB_DIRS ${STYLUA_DIRS}
   GLOB_PAT *.lua
   TOUCH_STRATEGY PER_DIR)
+# Special handling of some files (which are ignored in .styluaignore).
+# Workaround because stylua doesn't(?) support file-specific settings.
+add_custom_target(lintlua-stylua2
+  COMMAND ${STYLUA_PRG} --config-path "${PROJECT_SOURCE_DIR}/.stylua2.toml"
+    --color=always --check
+    "${PROJECT_SOURCE_DIR}/test/functional/ui/decorations_spec.lua"
+    "${PROJECT_SOURCE_DIR}/test/functional/ui/float_spec.lua"
+    "${PROJECT_SOURCE_DIR}/test/functional/ui/multigrid_spec.lua"
+)
+add_dependencies(lintlua-stylua lintlua-stylua2)
 
 add_custom_target(lintlua)
 add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
