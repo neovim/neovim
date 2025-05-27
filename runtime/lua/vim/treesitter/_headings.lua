@@ -93,7 +93,8 @@ function M.show_toc()
   end
   -- add indentation for nicer list formatting
   for _, heading in pairs(headings) do
-    heading.text = (' '):rep(heading.level - 1) .. heading.text
+    -- Quickfix trims whitespace, so use non-breaking space instead
+    heading.text = ('\194\160'):rep(heading.level - 1) .. heading.text
   end
   vim.fn.setloclist(0, headings, ' ')
   vim.fn.setloclist(0, {}, 'a', { title = 'Table of contents' })
