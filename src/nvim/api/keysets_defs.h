@@ -332,8 +332,10 @@ typedef struct {
 } Dict(cmd_opts);
 
 typedef struct {
+  OptionalKeys is_set__echo_opts_;
   Boolean err;
   Boolean verbose;
+  String kind;
 } Dict(echo_opts);
 
 typedef struct {
