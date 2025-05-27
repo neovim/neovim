@@ -1536,7 +1536,7 @@ local function sh(path, contents, name)
   end
 
   -- Get the name from the first line if not specified
-  name = name or contents[1]
+  name = name or contents[1] or ''
   if name:find('^csh$') or matchregex(name, [[^#!.\{-2,}\<csh\>]]) then
     -- Some .sh scripts contain #!/bin/csh.
     return M.shell(path, contents, 'csh')
