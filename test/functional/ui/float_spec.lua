@@ -3519,7 +3519,7 @@ describe('float window', function()
                                                             |
           {0:~                                                 }|*7
         ## grid 3
-          {3:-- ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)}          |
+          {3:-- ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)}        |
         ## grid 4
           {1:   }|
           {2:~  }|*2
@@ -3543,7 +3543,7 @@ describe('float window', function()
           {1:   }  {1:^   }                                          |
           {2:~  }{0:  }{2:~  }{0:                                          }|*2
           {0:~                                                 }|*5
-          {3:-- ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)}          |
+          {3:-- ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)}        |
         ]],
         }
       end

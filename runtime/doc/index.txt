@@ -146,6 +146,7 @@ commands in CTRL-X submode				*i_CTRL-X_index*
 |i_CTRL-X_CTRL-N|	CTRL-X CTRL-N	next completion
 |i_CTRL-X_CTRL-O|	CTRL-X CTRL-O	omni completion
 |i_CTRL-X_CTRL-P|	CTRL-X CTRL-P	previous completion
+|i_CTRL-X_CTRL-R|	CTRL-X CTRL-R	complete words from registers
 |i_CTRL-X_CTRL-S|	CTRL-X CTRL-S	spelling suggestions
 |i_CTRL-X_CTRL-T|	CTRL-X CTRL-T	complete identifiers from thesaurus
 |i_CTRL-X_CTRL-Y|	CTRL-X CTRL-Y	scroll down

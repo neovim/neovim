@@ -796,6 +796,10 @@ static int insert_handle_key(InsertState *s)
     break;
 
   case Ctrl_R:        // insert the contents of a register
+    if (ctrl_x_mode_register() && !ins_compl_active()) {
+      insert_do_complete(s);
+      break;
+    }
     ins_reg();
     auto_format(false, true);
     s->inserted_space = false;

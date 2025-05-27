@@ -3792,4 +3792,85 @@ func Test_complete_match()
   delfunc TestComplete
 endfunc
 
+func Test_register_completion()
+  let @a = "completion test apple application"
+  let @b = "banana behavior better best"
+  let @c = "complete completion compliment computer"
+  let g:save_reg = ''
+  func GetItems()
+    let g:result = complete_info(['pum_visible'])
+  endfunc
+
+  new
+  call setline(1, "comp")
+  call cursor(1, 4)
+  call feedkeys("a\<C-X>\<C-R>\<C-N>\<C-N>\<Esc>", 'tx')
+  call assert_equal("compliment", getline(1))
+
+  inoremap <buffer><F2> <C-R>=GetItems()<CR>
+  call feedkeys("S\<C-X>\<C-R>\<F2>\<ESC>", 'tx')
+  call assert_equal(1, g:result['pum_visible'])
+
+  call setline(1, "app")
+  call cursor(1, 3)
+  call feedkeys("a\<C-X>\<C-R>\<C-N>\<Esc>", 'tx')
+  call assert_equal("application", getline(1))
+
+  " Test completion with case differences
+  set ignorecase
+  let @e = "TestCase UPPERCASE lowercase"
+  call setline(1, "testc")
+  call cursor(1, 5)
+  call feedkeys("a\<C-X>\<C-R>\<Esc>", 'tx')
+  call assert_equal("TestCase", getline(1))
+
+  " Test clipboard registers if available
+  if has('clipboard_working')
+    let g:save_reg = getreg('*')
+    call setreg('*', "clipboard selection unique words")
+    call setline(1, "uni")
+    call cursor(1, 3)
+    call feedkeys("a\<C-X>\<C-R>\<Esc>", 'tx')
+    call assert_equal("unique", getline(1))
+    call setreg('*', g:save_reg)
+
+    let g:save_reg = getreg('+')
+    call setreg('+', "system clipboard special content")
+    call setline(1, "spe")
+    call cursor(1, 3)
+    call feedkeys("a\<C-X>\<C-R>\<Esc>", 'tx')
+    call assert_equal("special", getline(1))
+    call setreg('+', g:save_reg)
+
+    call setreg('*', g:save_reg)
+    call setreg('a', "normal register")
+    call setreg('*', "clipboard mixed content")
+    call setline(1, "mix")
+    call cursor(1, 3)
+    call feedkeys("a\<C-X>\<C-R>\<Esc>", 'tx')
+    call assert_equal("mixed", getline(1))
+    call setreg('*', g:save_reg)
+  endif
+
+  " Test black hole register should be skipped
+  let @_ = "blackhole content should not appear"
+  call setline(1, "black")
+  call cursor(1, 5)
+  call feedkeys("a\<C-X>\<C-R>\<Esc>", 'tx')
+  call assert_equal("black", getline(1))
+
+  let @1 = "recent yank zero"
+  call setline(1, "ze")
+  call cursor(1, 2)
+  call feedkeys("a\<C-X>\<C-R>\<Esc>", 'tx')
+  call assert_equal("zero", getline(1))
+
+  " Clean up
+  bwipe!
+  delfunc GetItems
+  unlet g:result
+  unlet g:save_reg
+  set ignorecase&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

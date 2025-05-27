@@ -53,6 +53,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -104,6 +105,7 @@ enum {
   CTRL_X_EVAL = 16,            ///< for builtin function complete()
   CTRL_X_CMDLINE_CTRL_X = 17,  ///< CTRL-X typed in CTRL_X_CMDLINE
   CTRL_X_BUFNAMES = 18,
+  CTRL_X_REGISTER = 19,        ///< complete words from registers
 };
 
 #define CTRL_X_MSG(i) ctrl_x_msgs[(i) & ~CTRL_X_WANT_IDENT]
@@ -111,7 +113,7 @@ enum {
 /// Message for CTRL-X mode, index is ctrl_x_mode.
 static char *ctrl_x_msgs[] = {
   N_(" Keyword completion (^N^P)"),  // CTRL_X_NORMAL, ^P/^N compl.
-  N_(" ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"),
+  N_(" ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)"),
   NULL,  // CTRL_X_SCROLL: depends on state
   N_(" Whole line completion (^L^N^P)"),
   N_(" File name completion (^F^N^P)"),
@@ -128,6 +130,8 @@ static char *ctrl_x_msgs[] = {
   N_(" Keyword Local completion (^N^P)"),
   NULL,  // CTRL_X_EVAL doesn't use msg.
   N_(" Command-line completion (^V^N^P)"),
+  NULL,
+  N_(" Register completion (^N^P)"),
 };
 
 static char *ctrl_x_mode_names[] = {
@@ -149,6 +153,8 @@ static char *ctrl_x_mode_names[] = {
   NULL,               // CTRL_X_LOCAL_MSG only used in "ctrl_x_msgs"
   "eval",
   "cmdline",
+  NULL,               // CTRL_X_BUFNAME
+  "register",
 };
 
 /// Structure used to store one match for insert completion.
@@ -423,6 +429,12 @@ bool ctrl_x_mode_line_or_eval(void)
   return ctrl_x_mode == CTRL_X_WHOLE_LINE || ctrl_x_mode == CTRL_X_EVAL;
 }
 
+bool ctrl_x_mode_register(void)
+  FUNC_ATTR_PURE
+{
+  return ctrl_x_mode == CTRL_X_REGISTER;
+}
+
 /// Whether other than default completion has been selected.
 bool ctrl_x_mode_not_default(void)
   FUNC_ATTR_PURE
@@ -514,7 +526,7 @@ bool vim_is_ctrl_x_key(int c)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Always allow ^R - let its results then be checked
-  if (c == Ctrl_R) {
+  if (c == Ctrl_R && ctrl_x_mode != CTRL_X_REGISTER) {
     return true;
   }
 
@@ -534,7 +546,7 @@ bool vim_is_ctrl_x_key(int c)
            || c == Ctrl_N || c == Ctrl_T || c == Ctrl_V
            || c == Ctrl_Q || c == Ctrl_U || c == Ctrl_O
            || c == Ctrl_S || c == Ctrl_K || c == 's'
-           || c == Ctrl_Z;
+           || c == Ctrl_Z || c == Ctrl_R;
   case CTRL_X_SCROLL:
     return c == Ctrl_Y || c == Ctrl_E;
   case CTRL_X_WHOLE_LINE:
@@ -564,6 +576,8 @@ bool vim_is_ctrl_x_key(int c)
     return (c == Ctrl_P || c == Ctrl_N);
   case CTRL_X_BUFNAMES:
     return (c == Ctrl_P || c == Ctrl_N);
+  case CTRL_X_REGISTER:
+    return (c == Ctrl_R || c == Ctrl_P || c == Ctrl_N);
   }
   internal_error("vim_is_ctrl_x_key()");
   return false;
@@ -2244,8 +2258,12 @@ static bool set_ctrl_x_mode(const int c)
     ctrl_x_mode = CTRL_X_DICTIONARY;
     break;
   case Ctrl_R:
-    // Register insertion without exiting CTRL-X mode
-    // Simply allow ^R to happen without affecting ^X mode
+    // When CTRL-R is followed by '=', don't trigger register completion
+    // This allows expressions like <C-R>=func()<CR> to work normally
+    if (vpeekc() == '=') {
+      break;
+    }
+    ctrl_x_mode = CTRL_X_REGISTER;
     break;
   case Ctrl_T:
     // complete words from a thesaurus
@@ -4027,6 +4045,63 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
   return found_new_match;
 }
 
+/// Get completion matches from register contents.
+/// Extracts words from all available registers and adds them to the completion list.
+static void get_register_completion(void)
+{
+  Direction dir = compl_direction;
+
+  for (int i = 0; i < NUM_REGISTERS; i++) {
+    int regname = get_register_name(i);
+    // Skip invalid or black hole register
+    if (!valid_yank_reg(regname, false) || regname == '_') {
+      continue;
+    }
+
+    yankreg_T *reg = copy_register(regname);
+
+    if (reg->y_array == NULL || reg->y_size == 0) {
+      free_register(reg);
+      xfree(reg);
+      continue;
+    }
+
+    for (size_t j = 0; j < reg->y_size; j++) {
+      char *str = reg->y_array[j].data;
+      if (str == NULL) {
+        continue;
+      }
+
+      char *p = str;
+      while (*p != NUL) {
+        p = find_word_start(p);
+        if (*p == NUL) {
+          break;
+        }
+
+        char *word_end = find_word_end(p);
+        int len = (int)(word_end - p);
+
+        // Add the word to the completion list
+        if (len > 0 && (!compl_orig_text.data
+                        || (p_ic ? STRNICMP(p, compl_orig_text.data,
+                                            compl_orig_text.size) == 0
+                                 : strncmp(p, compl_orig_text.data,
+                                           compl_orig_text.size) == 0))) {
+          if (ins_compl_add_infercase(p, len, p_ic, NULL,
+                                      dir, false, 0) == OK) {
+            dir = FORWARD;
+          }
+        }
+        p = word_end;
+      }
+    }
+
+    free_register(reg);
+    xfree(reg);
+  }
+}
+
 /// get the next set of completion matches for "type".
 /// @return  true if a new match is found, otherwise false.
 static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_T *ini)
@@ -4070,6 +4145,9 @@ static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_
     break;
   case CTRL_X_BUFNAMES:
     get_next_bufname_token();
+    break;
+  case CTRL_X_REGISTER:
+    get_register_completion();
     break;
 
   default:            // normal ^P/^N and ^X^L
@@ -5077,6 +5155,8 @@ static int compl_get_info(char *line, int startcol, colnr_T curs_col, bool *line
       return FAIL;
     }
     *line_invalid = true;  // "line" may have become invalid
+  } else if (ctrl_x_mode_register()) {
+    return get_normal_compl_info(line, startcol, curs_col);
   } else {
     internal_error("ins_complete()");
     return FAIL;

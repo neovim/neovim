@@ -4315,7 +4315,8 @@ local options = {
       defaults = false,
       desc = [=[
         Ignore case in search patterns, |cmdline-completion|, when
-        searching in the tags file, and |expr-==|.
+        searching in the tags file, |expr-==| and for Insert-mode completion
+        |ins-completion|.
         Also see 'smartcase' and 'tagcase'.
         Can be overruled by using "\c" or "\C" in the pattern, see
         |/ignorecase|.

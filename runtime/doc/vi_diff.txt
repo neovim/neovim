@@ -230,6 +230,7 @@ Insert-mode completion.					|ins-completion|
 	|i_CTRL-X_CTRL-D|	definitions or macros
 	|i_CTRL-X_CTRL-O|	Omni completion: clever completion
 				specifically for a file type
+	|i_CTRL-X_CTRL-R|	words from registers
 	etc.
 
 Long line support.					|'wrap'| |'linebreak'|
