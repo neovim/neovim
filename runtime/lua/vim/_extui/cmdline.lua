@@ -39,12 +39,11 @@ local promptlen = 0 -- Current length of the prompt, stored for use in "cmdline_
 ---@param content CmdContent
 ---@param prompt string
 local function set_text(content, prompt)
-  promptlen = #prompt
+  promptlen, cmdbuff = #prompt, ''
   for _, chunk in ipairs(content) do
-    prompt = prompt .. chunk[2]
+    cmdbuff = cmdbuff .. chunk[2]
   end
-  cmdbuff = prompt
-  api.nvim_buf_set_lines(ext.bufs.cmd, M.row, -1, false, { fn.strtrans(cmdbuff) .. ' ' })
+  api.nvim_buf_set_lines(ext.bufs.cmd, M.row, -1, false, { prompt .. fn.strtrans(cmdbuff) .. ' ' })
 end
 
 --- Set the cmdline buffer text and cursor position.
@@ -95,7 +94,7 @@ local curpos = { 0, 0 } -- Last drawn cursor position.
 ---@param pos integer
 --@param level integer
 function M.cmdline_pos(pos)
-  pos = #fn.strtrans(cmdbuff:sub(1, pos + 1)) - 1
+  pos = #fn.strtrans(cmdbuff:sub(1, pos))
   if curpos[1] ~= M.row + 1 or curpos[2] ~= promptlen + pos then
     curpos[1], curpos[2] = M.row + 1, promptlen + pos
     -- Add matchparen highlighting to non-prompt part of cmdline.
