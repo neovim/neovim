@@ -4089,6 +4089,7 @@ getreg([{regname} [, 1 [, {list}]]])                                  *getreg()*
 
                 Parameters: ~
                   • {regname} (`string?`)
+                  • {expr} (`any?`)
                   • {list} (`nil|false?`)
 
                 Return: ~

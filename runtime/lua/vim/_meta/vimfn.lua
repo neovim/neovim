@@ -3684,14 +3684,16 @@ function vim.fn.getqflist(what) end
 --- If {regname} is not specified, |v:register| is used.
 ---
 --- @param regname? string
+--- @param expr? any
 --- @param list? nil|false
 --- @return string
-function vim.fn.getreg(regname, list) end
+function vim.fn.getreg(regname, expr, list) end
 
 --- @param regname string
+--- @param expr any
 --- @param list true|number|string|table
---- @return string|string[]
-function vim.fn.getreg(regname, list) end
+--- @return string[]
+function vim.fn.getreg(regname, expr, list) end
 
 --- Returns detailed information about register {regname} as a
 --- Dictionary with the following entries:
