@@ -37,8 +37,6 @@
 
 local api = vim.api
 local ext = require('vim._extui.shared')
-ext.msg = require('vim._extui.messages')
-ext.cmd = require('vim._extui.cmdline')
 local M = {}
 
 local function ui_callback(event, ...)

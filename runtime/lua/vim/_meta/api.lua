@@ -2541,7 +2541,7 @@ function vim.api.nvim_win_set_width(window, width) end
 ---               to find out how many buffer lines beyond "start_row" take
 ---               up a certain number of logical lines (returned in
 ---               "end_row" and "end_vcol").
---- @return table<string,any> # Dict containing text height information, with these keys:
+--- @return vim.api.keyset.win_text_height_ret # Dict containing text height information, with these keys:
 --- - all: The total number of screen lines occupied by the range.
 --- - fill: The number of diff filler or virtual lines among them.
 --- - end_row: The row on which the returned height is reached (first row of

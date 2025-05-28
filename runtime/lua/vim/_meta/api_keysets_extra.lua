@@ -256,3 +256,9 @@ error('Cannot require a meta file')
 --- @field str string
 --- @field width integer
 --- @field highlights vim.api.keyset.eval_statusline_ret.highlight[]
+
+--- @class vim.api.keyset.win_text_height_ret
+--- @field all integer
+--- @field fill integer
+--- @field end_row integer
+--- @field end_vcol integer

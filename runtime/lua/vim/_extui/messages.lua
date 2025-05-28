@@ -29,9 +29,10 @@ local M = {
   prev_msg = '', -- Concatenated content of the previous message.
   virt = { -- Stored virt_text state.
     last = { {}, {}, {}, {} }, ---@type MsgContent[] status in last cmdline row.
-    msg = { {}, {} }, ---@type MsgContent[] [(x)] indicators in message window.
+    msg = { {}, {} }, ---@type MsgContent[] : [(x)] indicators in message window.
     idx = { mode = 1, search = 2, cmd = 3, ruler = 4, spill = 1, dupe = 2 },
-    ids = {}, ---@type { ['last'|'msg']: integer? } Table of mark IDs.
+    ids = {}, --- @type { ['last'|'msg']: integer? } Table of mark IDs.
+
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
   },
 }
@@ -54,8 +55,9 @@ function M.box:start_timer(buf, len)
       self.width = 1
       M.prev_msg = ext.cfg.msg.pos == 'box' and '' or M.prev_msg
       api.nvim_buf_clear_namespace(ext.bufs.box, -1, 0, -1)
-      if api.nvim_win_is_valid(ext.wins[ext.tab].box) then
-        api.nvim_win_set_config(ext.wins[ext.tab].box, { hide = true })
+      local wintab = assert(ext.wins[ext.tab])
+      if api.nvim_win_is_valid(wintab.box) then
+        api.nvim_win_set_config(wintab.box, { hide = true })
       end
     end
   end, ext.cfg.msg.box.timeout)
@@ -85,10 +87,11 @@ local function set_virttext(type)
     M.cmd.last_col = type == 'last' and o.columns or M.cmd.last_col
   elseif #chunks > 0 then
     local tar = type == 'msg' and ext.cfg.msg.pos or 'cmd'
-    local win = ext.wins[ext.tab][tar]
+    local wintab = assert(ext.wins[ext.tab])
+    local win = wintab[tar]
     local max = api.nvim_win_get_height(win)
     local erow = tar == 'cmd' and M.cmd.msg_row or nil
-    local srow = tar == 'box' and fn.line('w0', ext.wins[ext.tab].box) - 1 or nil
+    local srow = tar == 'box' and fn.line('w0', wintab.box) - 1 or nil
     local h = api.nvim_win_text_height(win, { start_row = srow, end_row = erow, max_height = max })
     local row = h.end_row ---@type integer
     local col = fn.virtcol2col(win, row + 1, h.end_vcol)
@@ -243,11 +246,12 @@ function M.show_msg(tar, content, replace_last, append, more)
   end
 
   if tar == 'box' then
-    api.nvim_win_set_width(ext.wins[ext.tab].box, width)
-    local h = api.nvim_win_text_height(ext.wins[ext.tab].box, { start_row = start_row })
+    local wintab = assert(ext.wins[ext.tab])
+    api.nvim_win_set_width(wintab.box, width)
+    local h = api.nvim_win_text_height(wintab.box, { start_row = start_row })
     if h.all > (more and 1 or math.ceil(o.lines * 0.5)) then
       api.nvim_buf_set_lines(ext.bufs.box, start_row, -1, false, {})
-      api.nvim_win_set_width(ext.wins[ext.tab].box, M.box.width)
+      api.nvim_win_set_width(wintab.box, M.box.width)
       M.msg_history_show({ { 'spill', content } }) -- show message in 'more' window
       return
     end
@@ -262,23 +266,24 @@ function M.show_msg(tar, content, replace_last, append, more)
       M.box.width = width
     end
   elseif tar == 'cmd' and dupe == 0 then
-    fn.clearmatches(ext.wins[ext.tab].cmd) -- Clear matchparen highlights.
+    local wintab = assert(ext.wins[ext.tab])
+    fn.clearmatches(wintab.cmd) -- Clear matchparen highlights.
     if ext.cmd.row > 0 then
       -- In block mode the cmdheight is already dynamic, so just print the full message
       -- regardless of height. Spoof cmdline_show to put cmdline below message.
       ext.cmd.row = ext.cmd.row + 1 + row - start_row
       ext.cmd.cmdline_show({}, 0, ':', '', ext.cmd.indent, 0, 0)
-      api.nvim__redraw({ flush = true, cursor = true, win = ext.wins[ext.tab].cmd })
+      api.nvim__redraw({ flush = true, cursor = true, win = wintab.cmd })
     else
-      local h = api.nvim_win_text_height(ext.wins[ext.tab].cmd, {})
+      local h = api.nvim_win_text_height(wintab.cmd, {})
       if more and h.all > ext.cmdheight then
         api.nvim_buf_set_lines(ext.bufs.cmd, start_row, -1, false, {})
         M.msg_history_show({ { 'spill', content } }) -- show message in 'more' window
         return
       end
 
-      api.nvim_win_set_cursor(ext.wins[ext.tab][tar], { 1, 0 })
-      ext.cmd.highlighter.active[ext.bufs.cmd] = nil
+      api.nvim_win_set_cursor(wintab[tar], { 1, 0 })
+      assert(ext.cmd.highlighter).active[ext.bufs.cmd] = nil
       -- Place [+x] indicator for lines that spill over 'cmdheight'.
       M.cmd.lines, M.cmd.msg_row = h.all, h.end_row
       local spill = M.cmd.lines > ext.cmdheight and ('[+%d]'):format(M.cmd.lines - ext.cmdheight)
@@ -302,23 +307,25 @@ function M.show_msg(tar, content, replace_last, append, more)
   end
 end
 
+---@alias MsgChunk [integer, string, integer?]
+---@alias MsgContent MsgChunk[]
+
 local append_more = 0
 local replace_bufwrite = false
 --- Route the message to the appropriate sink.
 ---
 ---@param kind string
----@alias MsgChunk [integer, string, integer]
----@alias MsgContent MsgChunk[]
 ---@param content MsgContent
---@param replace_last boolean
---@param history boolean
+---@param _replace_last boolean
+---@param _history boolean
 ---@param append boolean
-function M.msg_show(kind, content, _, _, append)
+function M.msg_show(kind, content, _replace_last, _history, append)
   if kind == 'search_count' then
     -- Extract only the search_count, not the entered search command.
     -- Match any of search.c:cmdline_search_stat():' [(x | >x | ?)/(y | >y | ??)]'
     content = { content[#content] }
-    content[1][2] = content[1][2]:match('W? %[>?%d*%??/>?%d*%?*%]') .. '  '
+    local content1 = assert(content[1])
+    content1[2] = content1[2]:match('W? %[>?%d*%??/>?%d*%?*%]') .. '  '
     M.virt.last[M.virt.idx.search] = content
     M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
     set_virttext('last')
@@ -348,7 +355,7 @@ function M.msg_show(kind, content, _, _, append)
       -- Store the time when an error message was emitted in order to not overwrite
       -- it with 'last' virt_text in the cmdline to give the user a chance to read it.
       M.cmd.last_emsg = kind == 'emsg' and os.time() or M.cmd.last_emsg
-      M.virt.last[M.virt.idx.search][1] = nil
+      assert(M.virt.last[M.virt.idx.search])[1] = nil
     end
 
     -- Messages sent as a result of a typed command should be routed to the more window.
@@ -379,7 +386,7 @@ end
 ---@param content MsgContent
 function M.msg_showcmd(content)
   local str = content[1] and content[1][2]:sub(-10) or ''
-  M.virt.last[M.virt.idx.cmd][1] = (content[1] or M.virt.last[M.virt.idx.search][1])
+  assert(M.virt.last[M.virt.idx.cmd])[1] = (content[1] or assert(M.virt.last[M.virt.idx.search])[1])
     and { 0, str .. (' '):rep(11 - #str) }
   set_virttext('last')
 end
@@ -421,19 +428,20 @@ function M.msg_history_clear() end
 ---@param type? 'box'|'cmd'|'more'|'prompt' Type of to be positioned window (nil for all).
 function M.set_pos(type)
   local function win_set_pos(win)
+    local wintab = assert(ext.wins[ext.tab])
     local texth = type and api.nvim_win_text_height(win, {}) or 0
     local height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
     api.nvim_win_set_config(win, {
       hide = false,
       relative = 'laststatus',
       height = height,
-      row = win == ext.wins[ext.tab].box and 0 or 1,
+      row = win == wintab.box and 0 or 1,
       col = 10000,
     })
     if type == 'box' then
       -- Ensure last line is visible and first line is at top of window.
       local row = (texth.all > height and texth.end_row or 0) + 1
-      api.nvim_win_set_cursor(ext.wins[ext.tab].box, { row, 0 })
+      api.nvim_win_set_cursor(wintab.box, { row, 0 })
     elseif type == 'more' and api.nvim_get_current_win() ~= win then
       -- Cannot leave the cmdwin to enter the "more" window, so close it.
       -- NOTE: regression w.r.t. the message grid, which allowed this. Resolving
