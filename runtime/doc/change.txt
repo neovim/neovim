@@ -644,8 +644,9 @@ original user.
 			Repeat last :substitute with same search pattern and
 			substitute string, but without the same flags.  You
 			may add [flags], see |:s_flags|.
-			Note that after `:substitute` the '&' flag can't be
-			used, it's recognized as a pattern separator.
+			Note that after `:substitute` the '&' and '#' flags
+			can't be used, they're recognized as a pattern
+			separator.
 			The space between `:substitute` and the 'c', 'g',
 			'i', 'I' and 'r' flags isn't required, but in scripts
 			it's a good idea to keep it to avoid confusion.
