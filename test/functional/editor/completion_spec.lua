@@ -124,7 +124,7 @@ describe('completion', function()
         foo                                                         |
         ^                                                            |
         {1:~                                                           }|*5
-        {5:-- ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)}                    |
+        {5:-- ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)}                  |
       ]])
       feed('<C-n>')
       screen:expect([[

@@ -815,7 +815,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*2
     ]],
-      showmode = { { '-- ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)', 5, 11 } },
+      showmode = { { '-- ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)', 5, 11 } },
     }
 
     feed('<c-p>')
