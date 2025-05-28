@@ -1084,6 +1084,7 @@ function vim.fn.complete_check() end
 ---    "omni"       Omni completion |i_CTRL-X_CTRL-O|
 ---    "spell"       Spelling suggestions |i_CTRL-X_s|
 ---    "eval"       |complete()| completion
+---    "register"       Words from registers |i_CTRL-X_CTRL-R|
 ---    "unknown"       Other internal modes
 ---
 --- If the optional {what} list argument is supplied, then only

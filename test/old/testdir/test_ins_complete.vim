@@ -3865,6 +3865,9 @@ func Test_register_completion()
   call feedkeys("a\<C-X>\<C-R>\<Esc>", 'tx')
   call assert_equal("zero", getline(1))
 
+  call feedkeys("Sze\<C-X>\<C-R>\<C-R>=string(complete_info(['mode']))\<CR>\<ESC>", "tx")
+  call assert_equal("zero{'mode': 'register'}", getline(1))
+
   " Clean up
   bwipe!
   delfunc GetItems
