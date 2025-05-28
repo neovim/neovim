@@ -40,6 +40,8 @@ local function get_commentstring(ref_position)
 
   ---@param lang_tree vim.treesitter.LanguageTree
   local function traverse(lang_tree)
+    --- EmmyLuaLs/emmylua-analyzer-rust#343
+    --- @diagnostic disable-next-line: param-type-not-match
     if not lang_tree:contains(ref_range) then
       return
     end
