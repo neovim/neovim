@@ -981,7 +981,7 @@ add_target(doc-eval
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
-    ${NVIM_RUNTIME_DIR}/doc/builtin.txt
+    ${NVIM_RUNTIME_DIR}/doc/vimfn.txt
   )
 
 add_custom_target(doc)

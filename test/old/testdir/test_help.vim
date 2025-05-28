@@ -76,7 +76,7 @@ endfunc
 
 func Test_help_expr()
   help expr-!~?
-  call assert_equal('eval.txt', expand('%:t'))
+  call assert_equal('vimeval.txt', expand('%:t'))
   close
 endfunc
 

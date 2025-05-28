@@ -1,10 +1,10 @@
-*builtin.txt*	Nvim
+*vimfn.txt*	Nvim
 
 
 		  NVIM REFERENCE MANUAL
 
 
-Builtin functions		*vimscript-functions* *builtin-functions*
+Vimscript functions	*vimscript-functions* *builtin-functions* *builtin.txt*
 
 For functions grouped by what they are used for see |function-list|.
 

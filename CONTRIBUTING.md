@@ -273,7 +273,7 @@ If you need to modify or debug the documentation flow, these are the main files:
   runtime/lua/vim/*     =>  runtime/doc/lua.txt
   runtime/lua/vim/lsp/  =>  runtime/doc/lsp.txt
   src/nvim/api/*        =>  runtime/doc/api.txt
-  src/nvim/eval.lua     =>  runtime/doc/builtin.txt
+  src/nvim/eval.lua     =>  runtime/doc/vimfn.txt
   src/nvim/options.lua  =>  runtime/doc/options.txt
   ```
 

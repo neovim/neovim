@@ -94,7 +94,7 @@ local redirects = {
 
 -- TODO: These known invalid |links| require an update to the relevant docs.
 local exclude_invalid = {
-  ["'string'"] = 'eval.txt',
+  ["'string'"] = 'vimeval.txt',
   Query = 'treesitter.txt',
   matchit = 'vim_diff.txt',
   ['set!'] = 'treesitter.txt',
