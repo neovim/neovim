@@ -25,7 +25,7 @@ local function get_regtype(reg, lines_str)
       return cb_cache.regtype
     end
   end
-  return ""
+  return ''
 end
 
 function M.copy(reg)
