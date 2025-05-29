@@ -2514,6 +2514,104 @@ vim.loader.reset({path})                                  *vim.loader.reset()*
 
 
 ==============================================================================
+Lua module: vim.pack                                                *vim.pack*
+
+*vim.pack.Opts*
+
+    Fields: ~
+      • {url_format}  (`string`, default: `https://%s.git`) Format string used
+                      to transform the package name into a git url.
+      • {clone_args}  (`string[]`, default: `{ "--depth=1", "--recurse-submodules", "--shallow-submodules", "--no-single-branch" }`)
+                      Flags passed to `git clone` during installation of a
+                      plugin (see `:Man git-clone(1)` for more)
+      • {pull_args}   (`string[]`, default: `{ "--tags", "--force", "--recurse-submodules", "--update-shallow" }`)
+                      Flags passed to `git pull` during update of a plugin
+                      (see `:Man git-pull(1)` for more)
+      • {opt}         (`boolean`, default: `false`) Controls if the packages
+                      should be loaded by deafault
+
+*vim.pack.Package*
+
+    Fields: ~
+      • {name}    (`string`)
+      • {dir}     (`string`)
+      • {status}  (`vim.pack.Status`)
+      • {hash}    (`string`)
+      • {url}     (`string`)
+      • {pin}     (`boolean?`)
+      • {branch}  (`string?`)
+      • {build}   (`string?|function?`)
+
+*vim.pack.PackageSpec*
+
+    Fields: ~
+      • {[1]}     (`string`)
+      • {build}   (`string?`)
+      • {branch}  (`string?`)
+      • {pin}     (`boolean?`)
+      • {opt}     (`boolean?`)
+      • {as}      (`string?`)
+
+
+vim.pack.clean()                                            *vim.pack.clean()*
+    Deletes all plugins installed but not registered in the pack directory.
+
+    Can also be invoked with `PackClean`.                          *PackClean*
+
+vim.pack.config({opts})                                    *vim.pack.config()*
+
+    Parameters: ~
+      • {opts}  (`vim.pack.Opts?`) When omitted or `nil`, retrieve the current
+                configuration. Otherwise, a configuration table (see
+                |vim.pack.Opts|).
+
+    Return: ~
+        (`vim.pack.Opts?`) Current pack config if {opts} is omitted. See
+        |vim.pack.Opts|.
+
+vim.pack.install()                                        *vim.pack.install()*
+    Installs not already installed registered plugins
+
+    Can also be invoked with `PackInstall`.                      *PackInstall*
+
+vim.pack.query({filter})                                    *vim.pack.query()*
+    Queries pack's packages storage with predefined filters by passing one of
+    the following strings:
+    • "installed"
+    • "to_install"
+    • "to_update"
+
+    Parameters: ~
+      • {filter}  (`string`)
+
+vim.pack.register({pkgs})                                *vim.pack.register()*
+    Register one or more plugins to be installed (see *pack.PackageSpec*)
+
+    Example: >lua
+        -- pack will update by itself
+        pack.register({
+          "neovim/nvim-lspconfig",
+          { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' },
+          -- don't load this plugin when registering. The user needs to call `packadd`.
+          { 'tpope/vim-fugitive', opt = true },
+        })
+<
+
+    Parameters: ~
+      • {pkgs}  (`vim.pack.PackageSpec[]`) See |vim.pack.PackageSpec|.
+
+vim.pack.sync()                                              *vim.pack.sync()*
+    Does a clean, install and pull at the same time in this order.
+
+    Can also be invoked with `PackSync`.                            *PackSync*
+
+vim.pack.update()                                          *vim.pack.update()*
+    Updates all registered plugins
+
+    Can also be invoked with `PackUpdate`.                        *PackUpdate*
+
+
+==============================================================================
 Lua module: vim.uri                                                  *vim.uri*
 
 vim.uri_decode({str})                                       *vim.uri_decode()*
