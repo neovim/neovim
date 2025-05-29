@@ -11,8 +11,8 @@ end
 
 function M.copy(reg)
   local clipboard = reg == '+' and 'c' or 'p'
-  return function(lines)
-    local s = table.concat(lines, '\n')
+  return function(lines, regtype)
+    local s = table.concat(lines, '\n') .. '\n' .. regtype
     -- The data to be written here can be quite long.
     -- Use nvim_chan_send() as io.stdout:write() doesn't handle EAGAIN. #26688
     vim.api.nvim_chan_send(2, osc52(clipboard, vim.base64.encode(s)))
@@ -70,7 +70,10 @@ function M.paste(reg)
     end
 
     -- If we get here, contents should be non-nil
-    return vim.split(assert(contents), '\n')
+    local contents_list = vim.split(assert(contents), '\n')
+    local lines = { table.unpack(contents_list, 1, #contents_list - 1) }
+    local regtype = contents_list[#contents_list]
+    return { lines, regtype }
   end
 end
 
