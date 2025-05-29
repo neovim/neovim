@@ -11,30 +11,19 @@ end
 
 ---@class clipboard_cache
 ---
----@field lines_str string String representation of lines passed to the copy() function
+---@field hash string sha256 of the lines passed to the copy() function
 ---@field regtype string regtype argument passed to the copy() function
 ---
 ---@type table<string, clipboard_cache>
-M.cache = {}
-
--- When OSC 52 lines are the same as our cache, return our cache regtype
-local function get_regtype(reg, lines_str)
-  local cb_cache = M.cache[reg]
-  if cb_cache then
-    if cb_cache.lines_str == lines_str then
-      return cb_cache.regtype
-    end
-  end
-  return ''
-end
+local cache = {}
 
 function M.copy(reg)
   local clipboard = reg == '+' and 'c' or 'p'
   ---@param regtype string
   return function(lines, regtype)
     local s = table.concat(lines, '\n')
-    M.cache[reg] = {
-      lines_str = s,
+    cache[reg] = {
+      hash = vim.fn.sha256(s),
       regtype = regtype,
     }
     -- The data to be written here can be quite long.
@@ -94,8 +83,17 @@ function M.paste(reg)
     end
 
     -- If we get here, contents should be non-nil
-    local regtype = get_regtype(reg, contents)
-    return { vim.split(assert(contents), '\n'), regtype }
+    assert(contents)
+
+    local regtype = ''
+    if cache[reg] then
+      local hash = vim.fn.sha256(contents)
+      if cache[reg].hash == hash then
+        regtype = cache[reg].regtype
+      end
+    end
+
+    return { vim.split(contents, '\n'), regtype }
   end
 end
 
