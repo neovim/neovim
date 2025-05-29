@@ -9,11 +9,34 @@ local function osc52(clipboard, contents)
   return string.format('\027]52;%s;%s\027\\', clipboard, contents)
 end
 
+---@class clipboard_cache
+---
+---@field lines_str string String representation of lines passed to the copy() funciton
+---@field regtype string regtype argument passed to the copy() function
+---
+---@type table<string, clipboard_cache>
+M.cache = {}
+
+-- When OSC 52 lines are the same as our cache, return our cache regtype
+local function get_regtype(reg, lines_str)
+  local cb_cache = M.cache[reg]
+  if cb_cache then
+    if cb_cache.lines_str == lines_str then
+      return cb_cache.regtype
+    end
+  end
+  return ""
+end
+
 function M.copy(reg)
   local clipboard = reg == '+' and 'c' or 'p'
   ---@param regtype string
   return function(lines, regtype)
-    local s = table.concat(lines, '\n') .. '\n' .. regtype
+    local s = table.concat(lines, '\n')
+    M.cache[reg] = {
+      lines_str = s,
+      regtype = regtype,
+    }
     -- The data to be written here can be quite long.
     -- Use nvim_chan_send() as io.stdout:write() doesn't handle EAGAIN. #26688
     vim.api.nvim_chan_send(2, osc52(clipboard, vim.base64.encode(s)))
@@ -71,10 +94,8 @@ function M.paste(reg)
     end
 
     -- If we get here, contents should be non-nil
-    local contents_list = vim.split(assert(contents), '\n')
-    local lines = { unpack(contents_list, 1, #contents_list - 1) }
-    local regtype = contents_list[#contents_list]
-    return { lines, regtype }
+    local regtype = get_regtype(reg, contents)
+    return { vim.split(assert(contents), '\n'), regtype }
   end
 end
 
