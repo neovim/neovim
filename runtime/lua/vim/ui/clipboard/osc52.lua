@@ -11,7 +11,7 @@ end
 
 ---@class clipboard_cache
 ---
----@field lines_str string String representation of lines passed to the copy() funciton
+---@field lines_str string String representation of lines passed to the copy() function
 ---@field regtype string regtype argument passed to the copy() function
 ---
 ---@type table<string, clipboard_cache>
