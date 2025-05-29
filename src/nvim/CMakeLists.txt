@@ -140,6 +140,8 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
   if(NOT APPLE)
     target_link_libraries(nvim_bin PRIVATE -Wl,--no-undefined)
   endif()
+  # workaround for LuaJIT
+  target_compile_options(main_lib INTERFACE -fno-strict-float-cast-overflow)
 endif()
 
 # Platform specific options
