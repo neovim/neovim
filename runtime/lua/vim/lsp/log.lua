@@ -207,9 +207,12 @@ function log.set_format_func(handle)
 end
 
 --- Checks whether the level is sufficient for logging.
+---@deprecated
 ---@param level integer log level
 ---@return boolean : true if would log, false if not
 function log.should_log(level)
+  vim.deprecate('vim.lsp.log.should_log', 'vim.lsp.log.set_format_func', '0.13')
+
   vim.validate('level', level, 'number')
 
   return level >= current_log_level

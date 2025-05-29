@@ -2670,15 +2670,6 @@ set_level({level})                                   *vim.lsp.log.set_level()*
     Parameters: ~
       • {level}  (`string|integer`) One of |vim.log.levels|
 
-should_log({level})                                 *vim.lsp.log.should_log()*
-    Checks whether the level is sufficient for logging.
-
-    Parameters: ~
-      • {level}  (`integer`) log level
-
-    Return: ~
-        (`boolean`) true if would log, false if not
-
 
 ==============================================================================
 Lua module: vim.lsp.rpc                                              *lsp-rpc*
