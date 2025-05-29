@@ -11,6 +11,7 @@ end
 
 function M.copy(reg)
   local clipboard = reg == '+' and 'c' or 'p'
+  ---@param regtype string
   return function(lines, regtype)
     local s = table.concat(lines, '\n') .. '\n' .. regtype
     -- The data to be written here can be quite long.
