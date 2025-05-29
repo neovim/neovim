@@ -71,7 +71,7 @@ function M.paste(reg)
 
     -- If we get here, contents should be non-nil
     local contents_list = vim.split(assert(contents), '\n')
-    local lines = { table.unpack(contents_list, 1, #contents_list - 1) }
+    local lines = { unpack(contents_list, 1, #contents_list - 1) }
     local regtype = contents_list[#contents_list]
     return { lines, regtype }
   end
