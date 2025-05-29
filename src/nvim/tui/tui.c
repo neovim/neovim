@@ -386,7 +386,7 @@ static void terminfo_start(TUIData *tui)
 
   char *term = os_getenv("TERM");
 #ifdef MSWIN
-  os_tty_guess_term(&term, tui->out_fd);
+  os_tty_guess_term((const char **)&term, tui->out_fd);
   os_setenv("TERM", term, 1);
   // Old os_getenv() pointer is invalid after os_setenv(), fetch it again.
   term = os_getenv("TERM");
