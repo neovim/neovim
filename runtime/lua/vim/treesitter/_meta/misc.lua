@@ -16,11 +16,14 @@ error('Cannot require a meta file')
 ---@field captures string[]
 ---@field patterns table<integer, (integer|string)[][]>
 ---
+---@class TSLangMetadata
+---@field major_version integer
+---@field minor_version integer
+---@field patch_version integer
+---
 ---@class TSLangInfo
 ---@field abi_version integer
----@field major_version? integer
----@field minor_version? integer
----@field patch_version? integer
+---@field metadata? TSLangMetadata  -- ABI 15 only
 ---@field state_count integer
 ---@field fields string[]
 ---@field symbols table<string,boolean>
