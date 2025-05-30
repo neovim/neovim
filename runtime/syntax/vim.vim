@@ -843,14 +843,14 @@ syn match	vimCmplxRepeat	'[^a-zA-Z_/\\()]q[0-9a-zA-Z"]\>'lc=1
 syn match	vimCmplxRepeat	'@[0-9a-z".=@:]\ze\($\|[^a-zA-Z]\>\)'
 
 " Set command and associated set-options (vimOptions) with comment {{{2
-syn match	vimSet		"\<\%(setl\%[ocal]\|setg\%[lobal]\|se\%[t]\)\>" skipwhite nextgroup=vimSetBang,vimSetArgs
+syn match	vimSet		"\<\%(setl\%[ocal]\|setg\%[lobal]\|se\%[t]\)\>" skipwhite nextgroup=vimSetBang,vimCmdSep,vimComment,vimSetArgs
 syn region	vimSetComment	contained	start=+"+ skip=+\n\s*\%(\\\||"\\ \)+ end="$" contains=@vimCommentGroup,vimCommentString extend
 syn match	vimSetCmdSep	contained	"|" skipwhite nextgroup=@vimCmdList,vimSubst1,vimFunc
 syn match	vimSetEscape	contained	"\\\%(\\[|"]\|.\)"
 syn match	vimSetBarEscape	contained	"\\|"
 syn match	vimSetQuoteEscape	contained	+\\"+
 syn region	vimSetArgs	contained
-      \ start="\S"
+      \ start="\l\|<"
       \ skip=+\n\s*\%(\\\|["#]\\ \)\|^\s*"\\ +
       \ end=+\ze\\\@1<![|"]+
       "\ assume this isn't an escaped char with backslash on the previous line
@@ -860,6 +860,8 @@ syn region	vimSetArgs	contained
       \ nextgroup=vimSetCmdSep,vimSetComment,vim9Comment
       \ contains=@vimContinue,vimErrSetting,vimOption,vimSetAll,vimSetTermcap
       \ keepend
+" TODO: restrict this to valid values?
+syn match	vimOption	contained	"<[^>]\+>"	contains=vimOption
 syn region	vimSetEqual	contained
       \ matchgroup=vimOper
       \ start="[=:]\|[-+^]="
