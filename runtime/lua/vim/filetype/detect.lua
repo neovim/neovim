@@ -1959,11 +1959,10 @@ local function match_from_hashbang(contents, path, dispatch_extension)
   -- "#!/usr/bin/bash" to make matching easier.
   -- Recognize only a few {options} that are commonly used.
   if matchregex(first_line, [[^#!\s*\S*\<env\s]]) then
-    first_line = first_line:gsub('%S+=%S+', '')
-    first_line = first_line
-      :gsub('%-%-ignore%-environment', '', 1)
-      :gsub('%-%-split%-string', '', 1)
-      :gsub('%-[iS]', '', 1)
+    first_line = fn.substitute(first_line, [[\s\zs--split-string\(\s\|=\)]], '', '')
+    first_line = fn.substitute(first_line, [[\s\zs[A-Za-z0-9_]\+=\S*\ze\s]], '', 'g')
+    first_line =
+      fn.substitute(first_line, [[\s\zs\%(-[iS]\+\|--ignore-environment\)\ze\s]], '', 'g')
     first_line = fn.substitute(first_line, [[\<env\s\+]], '', '')
   end
 

@@ -1068,10 +1068,10 @@ func s:GetScriptEnvChecks() abort
   return {
       \ 'perl': [['#!/usr/bin/env VAR=val perl']],
       \ 'scala': [['#!/usr/bin/env VAR=val VVAR=vval scala']],
-      \ 'awk': [['#!/usr/bin/env VAR=val -i awk']],
+      \ 'awk': [['#!/usr/bin/env --split-string=VAR= awk -vFS="," -f']],
       \ 'execline': [['#!/usr/bin/env execlineb']],
       \ 'scheme': [['#!/usr/bin/env VAR=val --ignore-environment scheme']],
-      \ 'python': [['#!/usr/bin/env VAR=val -S python -w -T']],
+      \ 'python': [['#!/usr/bin/env -S -i VAR=val python -B -u']],
       \ 'wml': [['#!/usr/bin/env VAR=val --split-string wml']],
       \ 'nix': [['#!/usr/bin/env nix-shell']],
       \ }
