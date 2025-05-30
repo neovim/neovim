@@ -595,6 +595,11 @@ int update_screen(void)
     curwin->w_redr_type = UPD_NOT_VALID;
   }
 
+  if (curwin->w_redr_type == UPD_INVERTED) {
+    // Update w_curswant so that the end of Visual selection is correct.
+    update_curswant();
+  }
+
   // Redraw the tab pages line if needed.
   if (redraw_tabline || type >= UPD_NOT_VALID) {
     update_window_hl(curwin, type >= UPD_NOT_VALID);
