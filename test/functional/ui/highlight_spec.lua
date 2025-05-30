@@ -423,6 +423,26 @@ describe('highlight', function()
     ]])
   end)
 
+  it('blockwise Visual highlight with virtualedit=block #34235', function()
+    local screen = Screen.new(45, 5)
+    command('set virtualedit=block')
+    insert('foobar\nfoo')
+    feed('0<C-V>k$')
+    screen:expect([[
+      {17:foobar}^                                       |
+      {17:foo    }                                      |
+      {1:~                                            }|*2
+      {5:-- VISUAL BLOCK --}                           |
+    ]])
+    feed('10l')
+    screen:expect([[
+      {17:foobar          }^                             |
+      {17:foo              }                            |
+      {1:~                                            }|*2
+      {5:-- VISUAL BLOCK --}                           |
+    ]])
+  end)
+
   it('cterm=standout gui=standout', function()
     local screen = Screen.new(20, 5)
     screen:add_extra_attr_ids {
