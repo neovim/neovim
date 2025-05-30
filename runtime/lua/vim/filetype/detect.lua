@@ -1961,9 +1961,10 @@ local function match_from_hashbang(contents, path, dispatch_extension)
   if matchregex(first_line, [[^#!\s*\S*\<env\s]]) then
     first_line = first_line:gsub('%S+=%S+', '')
     first_line = first_line
-      :gsub('%-%-ignore%-environment', '', 1)
-      :gsub('%-%-split%-string', '', 1)
-      :gsub('%-[iS]', '', 1)
+      :gsub('%s%-%-ignore%-environment%s', ' ', 1)
+      :gsub('%s%-%-split%-string%s', ' ', 1)
+      :gsub('%s%-iS?%s', ' ', 1)
+      :gsub('%s%-Si?%s', ' ', 1)
     first_line = fn.substitute(first_line, [[\<env\s\+]], '', '')
   end
 
