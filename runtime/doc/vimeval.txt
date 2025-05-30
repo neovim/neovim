@@ -1,10 +1,10 @@
-*eval.txt*	Nvim
+*vimeval.txt*	Nvim
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
 
 
-Expression evaluation		*vimscript* *expression* *expr* *E15* *eval*
+Expression evaluation	*vimscript* *expression* *expr* *E15* *eval* *eval.txt*
 
 Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
 
