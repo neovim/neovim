@@ -28,7 +28,7 @@ end
 --- `contents = true` and `hash = "directory"` is returned instead.
 ---
 ---@param fullpath (string) Path to a file or directory to read.
----@param bufnr (number?) The number of the buffer.
+---@param bufnr (integer?) The number of the buffer.
 ---@return string|boolean? contents the contents of the file, or true if it's a directory
 ---@return string? hash the hash of the contents, or "directory" if it's a directory
 local function compute_hash(fullpath, bufnr)
@@ -125,6 +125,7 @@ function M.read(path)
   if hash == 'directory' then
     dir_msg = ' DIRECTORY trust is decided only by its name, not its contents.'
   end
+  --- @cast contents string
 
   -- File either does not exist in trust database or the hash does not match
   local ok, result = pcall(
@@ -133,6 +134,9 @@ function M.read(path)
     '&ignore\n&view\n&deny\n&allow',
     1
   )
+
+  --- @type string?
+  local ret_contents = contents
 
   if not ok and result ~= 'Keyboard interrupt' then
     error(result)
@@ -146,7 +150,7 @@ function M.read(path)
   elseif result == 3 then
     -- Deny
     trust[fullpath] = '!'
-    contents = nil
+    ret_contents = nil
   elseif result == 4 then
     -- Allow
     trust[fullpath] = hash
@@ -154,7 +158,7 @@ function M.read(path)
 
   write_trust(trust)
 
-  return contents
+  return ret_contents
 end
 
 --- @class vim.trust.opts

@@ -5,7 +5,7 @@ local uv = vim.uv
 --- @field stdout? fun(err:string?, data: string?)|false
 --- @field stderr? fun(err:string?, data: string?)|false
 --- @field cwd? string
---- @field env? table<string,string|number>
+--- @field env? table<string,string>
 --- @field clear_env? boolean
 --- @field text? boolean
 --- @field timeout? integer Timeout in ms
@@ -69,7 +69,7 @@ end
 
 --- @param signal integer|string
 function SystemObj:kill(signal)
-  self._state.handle:kill(signal)
+  assert(self._state.handle):kill(signal)
 end
 
 --- @package
@@ -99,7 +99,7 @@ function SystemObj:wait(timeout)
     end, nil, true)
   end
 
-  return state.result
+  return assert(state.result)
 end
 
 --- @param data string[]|string|nil
@@ -207,9 +207,9 @@ end
 --- uv.spawn will completely overwrite the environment
 --- when we just want to modify the existing one, so
 --- make sure to prepopulate it with the current env.
---- @param env? table<string,string|number>
+--- @param env? table<string,string>
 --- @param clear_env? boolean
---- @return string[]?
+--- @return table<string,string>
 local function setup_env(env, clear_env)
   if clear_env then
     return env
@@ -282,7 +282,7 @@ local function _on_exit(state, code, signal, on_exit)
   -- #30846: Do not close stdout/stderr here, as they may still have data to
   -- read. They will be closed in uv.read_start on EOF.
 
-  local check = assert(uv.new_check())
+  local check = uv.new_check()
   check:start(function()
     for _, pipe in pairs({ state.stdin, state.stdout, state.stderr }) do
       if not pipe:is_closing() then
@@ -355,13 +355,13 @@ function M.run(cmd, opts, on_exit)
     stderr = stderr,
     stderr_data = stderr_data,
   }
+  local cmd1 = assert(cmd[1])
+  local args = vim.list_slice(cmd, 2)
 
-  --- @diagnostic disable-next-line:missing-fields
-  state.handle, state.pid = spawn(cmd[1], {
-    args = vim.list_slice(cmd, 2),
+  state.handle, state.pid = spawn(cmd1, {
+    args = args,
     stdio = { stdin, stdout, stderr },
     cwd = opts.cwd,
-    --- @diagnostic disable-next-line:assign-type-mismatch
     env = setup_env(opts.env, opts.clear_env),
     detached = opts.detach,
     hide = true,

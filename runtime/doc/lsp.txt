@@ -712,10 +712,6 @@ Lua module: vim.lsp                                                 *lsp-core*
                          activated by `vim.lsp.enable()`. If not provided, the
                          client will attach to all filetypes.
       • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
-                         Predicate which decides if a client should be
-                         re-used. Used on all running clients. The default
-                         implementation re-uses a client if name and root_dir
-                         matches.
       • {root_dir}?      (`string|fun(bufnr: integer, on_dir:fun(root_dir?:string))`)
                          *lsp-root_dir()* Directory where the LSP server will
                          base its workspaceFolders, rootUri, and rootPath on
@@ -1225,7 +1221,7 @@ tagfunc({pattern}, {flags})                                *vim.lsp.tagfunc()*
       • {flags}    (`string`) See |tag-function|
 
     Return: ~
-        (`table[]`) tags A list of matching tags
+        (`table[]|vim.NIL`) tags A list of matching tags
 
 
 ==============================================================================
@@ -1267,7 +1263,8 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {id}                    (`integer`) The id allocated to the client.
       • {initialized}           (`true?`)
       • {name}                  (`string`) See |vim.lsp.ClientConfig|.
-      • {offset_encoding}       (`string`) See |vim.lsp.ClientConfig|.
+      • {offset_encoding}       (`'utf-8'|'utf-16'|'utf-32'`) See
+                                |vim.lsp.ClientConfig|.
       • {progress}              (`vim.lsp.Client.Progress`) A ring buffer
                                 (|vim.ringbuf()|) containing progress messages
                                 sent by the server. See
@@ -2251,6 +2248,19 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 ==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
 
+*vim.lsp.quickfix.entry*
+    Extends: |vim.quickfix.entry|
+
+
+    Fields: ~
+      • {filename}   (`string`)
+      • {lnum}       (`integer`)
+      • {end_lnum}   (`integer`)
+      • {col}        (`integer`)
+      • {end_col}    (`integer`)
+      • {text}       (`string`)
+      • {user_data}  (`any`)
+
 *vim.lsp.util.open_floating_preview.Opts*
 
     Fields: ~
@@ -2430,7 +2440,8 @@ locations_to_items({locations}, {position_encoding})
                              client of buffer
 
     Return: ~
-        (`vim.quickfix.entry[]`) See |setqflist()| for the format
+        (`vim.lsp.quickfix.entry[]`) See |setqflist()| for the format. See
+        |vim.lsp.quickfix.entry|.
 
                                   *vim.lsp.util.make_floating_popup_options()*
 make_floating_popup_options({width}, {height}, {opts})

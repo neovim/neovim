@@ -452,6 +452,17 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {user_data}?  (`any`) arbitrary data plugins can add
       • {namespace}?  (`integer`)
 
+*vim.Diagnostic.Cached*
+    Extends: |vim.Diagnostic|
+
+
+    Fields: ~
+      • {severity}   (`vim.diagnostic.SeverityInt`)
+      • {end_col}    (`integer`)
+      • {end_lnum}   (`integer`)
+      • {bufnr}      (`integer`)
+      • {namespace}  (`integer`)
+
 *vim.diagnostic.GetOpts*
     A table with the following keys:
 

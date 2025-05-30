@@ -197,10 +197,14 @@ function M._get_urls()
   local highlighter = vim.treesitter.highlighter.active[bufnr]
   if highlighter then
     local range = { row, col, row, col }
+    ---@diagnostic disable-next-line: param-type-not-match
+    -- EmmyLuaLs/emmylua-analyzer-rust#343
     local ltree = highlighter.tree:language_for_range(range)
     local lang = ltree:lang()
     local query = vim.treesitter.query.get(lang, 'highlights')
     if query then
+      ---@diagnostic disable-next-line: param-type-not-match
+      -- EmmyLuaLs/emmylua-analyzer-rust#343
       local tree = assert(ltree:tree_for_range(range))
       for _, match, metadata in query:iter_matches(tree:root(), bufnr, row, row + 1) do
         for id, nodes in pairs(match) do
@@ -224,12 +228,9 @@ function M._get_urls()
 
   if #urls == 0 then
     -- If all else fails, use the filename under the cursor
-    table.insert(
-      urls,
-      vim._with({ go = { isfname = vim.o.isfname .. ',@-@' } }, function()
-        return vim.fn.expand('<cfile>')
-      end)
-    )
+    urls[#urls + 1] = vim._with({ go = { isfname = vim.o.isfname .. ',@-@' } }, function()
+      return vim.fn.expand('<cfile>')
+    end)
   end
 
   return urls

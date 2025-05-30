@@ -3970,6 +3970,7 @@ M.funcs = {
     ]=],
     name = 'getcurpos',
     params = { { 'winid', 'integer' } },
+    returns = '[integer, integer, integer, integer, integer]',
     signature = 'getcurpos([{winid}])',
   },
   getcursorcharpos = {
@@ -4428,7 +4429,7 @@ M.funcs = {
     ]=],
     name = 'getpos',
     params = { { 'expr', 'string' } },
-    returns = 'integer[]',
+    returns = '[integer, integer, integer, integer]',
     signature = 'getpos({expr})',
   },
   getqflist = {
@@ -4668,7 +4669,11 @@ M.funcs = {
       <
     ]=],
     name = 'getregion',
-    params = { { 'pos1', 'table' }, { 'pos2', 'table' }, { 'opts', 'table' } },
+    params = {
+      { 'pos1', '[integer, integer, integer, integer]' },
+      { 'pos2', '[integer, integer, integer, integer]' },
+      { 'opts', '{type?:string, exclusive?:boolean}' },
+    },
     returns = 'string[]',
     signature = 'getregion({pos1}, {pos2} [, {opts}])',
   },
@@ -4708,8 +4713,12 @@ M.funcs = {
       			(default: |FALSE|)
     ]=],
     name = 'getregionpos',
-    params = { { 'pos1', 'table' }, { 'pos2', 'table' }, { 'opts', 'table' } },
-    returns = 'integer[][][]',
+    params = {
+      { 'pos1', '[integer, integer, integer, integer]' },
+      { 'pos2', '[integer, integer, integer, integer]' },
+      { 'opts', '{type?:string, exclusive?:boolean, eol?:boolean}' },
+    },
+    returns = '[[integer, integer, integer, integer], [integer, integer, integer, integer]][]',
     signature = 'getregionpos({pos1}, {pos2} [, {opts}])',
   },
   getregtype = {

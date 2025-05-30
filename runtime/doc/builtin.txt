@@ -3537,7 +3537,7 @@ getcurpos([{winid}])                                               *getcurpos()*
                   • {winid} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`[integer, integer, integer, integer, integer]`)
 
 getcursorcharpos([{winid}])                                 *getcursorcharpos()*
 		Same as |getcurpos()| but the column number in the returned
@@ -3952,7 +3952,7 @@ getpos({expr})                                                        *getpos()*
                   • {expr} (`string`)
 
                 Return: ~
-                  (`integer[]`)
+                  (`[integer, integer, integer, integer]`)
 
 getqflist([{what}])                                                *getqflist()*
 		Returns a |List| with all the current quickfix errors.  Each
@@ -4176,9 +4176,9 @@ getregion({pos1}, {pos2} [, {opts}])                               *getregion()*
 <
 
                 Parameters: ~
-                  • {pos1} (`table`)
-                  • {pos2} (`table`)
-                  • {opts} (`table?`)
+                  • {pos1} (`[integer, integer, integer, integer]`)
+                  • {pos2} (`[integer, integer, integer, integer]`)
+                  • {opts} (`{type?:string, exclusive?:boolean}?`)
 
                 Return: ~
                   (`string[]`)
@@ -4216,12 +4216,13 @@ getregionpos({pos1}, {pos2} [, {opts}])                         *getregionpos()*
 					(default: |FALSE|)
 
                 Parameters: ~
-                  • {pos1} (`table`)
-                  • {pos2} (`table`)
-                  • {opts} (`table?`)
+                  • {pos1} (`[integer, integer, integer, integer]`)
+                  • {pos2} (`[integer, integer, integer, integer]`)
+                  • {opts}
+                    (`{type?:string, exclusive?:boolean, eol?:boolean}?`)
 
                 Return: ~
-                  (`integer[][][]`)
+                  (`[[integer, integer, integer, integer], [integer, integer, integer, integer]][]`)
 
 getregtype([{regname}])                                           *getregtype()*
 		The result is a String, which is type of register {regname}.

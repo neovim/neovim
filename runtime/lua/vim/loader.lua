@@ -45,7 +45,7 @@ local M = {}
 --- The fs_stat of the module path. Won't be returned for `modname="*"`
 --- @field stat? uv.fs_stat.result
 
---- @alias vim.loader.Stats table<string, {total:number, time:number, [string]:number?}?>
+--- @alias vim.loader.Stats table<string, {total:number, time:number, [string]:number?}>
 
 --- @private
 M.path = vim.fn.stdpath('cache') .. '/luac'
@@ -66,7 +66,7 @@ local indexed = {}
 --- @return uv.fs_stat.result?
 local function fs_stat_cached(path)
   if not fs_stat_cache then
-    return uv.fs_stat(path)
+    return (uv.fs_stat(path))
   end
 
   if not fs_stat_cache[path] then
@@ -165,15 +165,18 @@ local function read_cachefile(cname)
     return
   end
 
-  --- @type integer[]|{[0]:integer}
   local header = vim.split(data:sub(1, zero - 1), ',')
   if tonumber(header[1]) ~= VERSION then
     return
   end
 
+  --- @type vim.loader.CacheHash
   local hash = {
-    size = tonumber(header[2]),
-    mtime = { sec = tonumber(header[3]), nsec = tonumber(header[4]) },
+    size = tonumber(header[2]) --[[@as integer]],
+    mtime = {
+      sec = tonumber(header[3]) --[[@as integer]],
+      nsec = tonumber(header[4]) --[[@as integer]],
+    },
   }
 
   local chunk = data:sub(zero + 1)
@@ -270,7 +273,7 @@ local function lsmod(path)
     for name, t in fs.dir(path .. '/lua') do
       local modpath = path .. '/lua/' .. name
       -- HACK: type is not always returned due to a bug in luv
-      t = t or fs_stat_cached(modpath).type
+      t = t or assert(fs_stat_cached(modpath)).type
       --- @type string
       local topname
       local ext = name:sub(-4)
@@ -375,7 +378,7 @@ function M.find(modname, opts)
 
   if #results == 0 then
     -- module not found
-    stats.find.not_found = stats.find.not_found + 1
+    stats.find.not_found = (stats.find.not_found or 0) + 1
   end
 
   return results
@@ -423,6 +426,7 @@ function M.enable(enable)
 
   if enable then
     vim.fn.mkdir(vim.fn.fnamemodify(M.path, ':p'), 'p')
+    ---@diagnostic disable-next-line: assign-type-mismatch
     _G.loadfile = loadfile_cached
     -- add Lua loader
     table.insert(loaders, 2, loader_cached)

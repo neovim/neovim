@@ -129,8 +129,9 @@ function M.jump(opts)
     end
   elseif opts.count < 0 then
     for i = #headings, 1, -1 do
-      if headings[i].lnum < curpos and headings[i].level <= maxlevel then
-        api.nvim_win_set_cursor(winid, { headings[i].lnum, 0 })
+      local heading = assert(headings[i])
+      if heading.lnum < curpos and heading.level <= maxlevel then
+        api.nvim_win_set_cursor(winid, { heading.lnum, 0 })
         return
       end
     end

@@ -20,7 +20,7 @@ error('Cannot require a meta file')
 --- @field hl_group? string
 --- @field hl_eol? boolean
 ---
---- @field conceal? boolean
+--- @field conceal? string
 --- @field spell? boolean
 --- @field ui_watched? boolean
 --- @field url? string
@@ -246,3 +246,19 @@ error('Cannot require a meta file')
 --- @field range? integer[]
 --- @field count? integer
 --- @field reg? string
+
+--- @class vim.api.keyset.eval_statusline_ret.highlight
+--- @field start integer
+--- @field group string
+--- @field groups string[]
+
+--- @class vim.api.keyset.eval_statusline_ret
+--- @field str string
+--- @field width integer
+--- @field highlights vim.api.keyset.eval_statusline_ret.highlight[]
+
+--- @class vim.api.keyset.win_text_height_ret
+--- @field all integer
+--- @field fill integer
+--- @field end_row integer
+--- @field end_vcol integer

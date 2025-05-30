@@ -1013,7 +1013,7 @@ local function m4(contents)
       return 'm4'
     end
   end
-  if vim.env.TERM == 'amiga' and findany(contents[1]:lower(), { '^;', '^%.bra' }) then
+  if vim.env.TERM == 'amiga' and findany(assert(contents[1]):lower(), { '^;', '^%.bra' }) then
     -- AmigaDos scripts
     return 'amiga'
   end
@@ -1678,8 +1678,7 @@ end
 --- @type vim.filetype.mapfn
 function M.tex(path, bufnr)
   local matched, _, format = getline(bufnr, 1):find('^%%&%s*(%a+)')
-  if matched then
-    --- @type string
+  if matched and format then
     format = format:lower():gsub('pdf', '', 1)
   elseif path:lower():find('tex/context/.*/.*%.tex') then
     return 'context'
@@ -1958,7 +1957,7 @@ local function match_from_hashbang(contents, path, dispatch_extension)
   -- Check for a line like "#!/usr/bin/env {options} bash".  Turn it into
   -- "#!/usr/bin/bash" to make matching easier.
   -- Recognize only a few {options} that are commonly used.
-  if matchregex(first_line, [[^#!\s*\S*\<env\s]]) then
+  if first_line and matchregex(first_line, [[^#!\s*\S*\<env\s]]) then
     first_line = first_line:gsub('%S+=%S+', '')
     first_line = first_line
       :gsub('%-%-ignore%-environment', '', 1)
@@ -1986,7 +1985,8 @@ local function match_from_hashbang(contents, path, dispatch_extension)
 
   -- tcl scripts may have #!/bin/sh in the first line and "exec wish" in the
   -- third line. Suggested by Steven Atkinson.
-  if contents[3] and contents[3]:find('^exec wish') then
+  local c3 = contents[3]
+  if c3 and c3:find('^exec wish') then
     name = 'wish'
   end
 
@@ -2145,7 +2145,8 @@ local patterns_text = {
 --- @return string?
 --- @return fun(b: integer)?
 local function match_from_text(contents, path)
-  if contents[1]:find('^:$') then
+  local c1 = assert(contents[1])
+  if c1:find('^:$') then
     -- Bourne-like shell scripts: sh ksh bash bash2
     return sh(path, contents)
   elseif
@@ -2161,7 +2162,7 @@ local function match_from_text(contents, path)
   for k, v in pairs(patterns_text) do
     if type(v) == 'string' then
       -- Check the first line only
-      if contents[1]:find(k) then
+      if c1:find(k) then
         return v
       end
     elseif type(v) == 'function' then
@@ -2179,16 +2180,18 @@ local function match_from_text(contents, path)
           'ignore_case=true is ignored when start_lnum is also present, needs refactor'
         )
         for i = opts.start_lnum, opts.end_lnum do
-          if not contents[i] then
+          local ci = contents[i]
+          if not ci then
             break
-          elseif contents[i]:find(k) then
+          elseif ci:find(k) then
             return v[1]
           end
         end
       else
         local line_nr = opts.start_lnum == -1 and #contents or opts.start_lnum or 1
-        if contents[line_nr] then
-          local line = opts.ignore_case and contents[line_nr]:lower() or contents[line_nr]
+        local cln = contents[line_nr]
+        if cln then
+          local line = opts.ignore_case and cln:lower() or cln
           if opts.vim_regex and matchregex(line, k) or line:find(k) then
             return v[1]
           end
@@ -2205,7 +2208,7 @@ end
 --- @return string?
 --- @return fun(b: integer)?
 function M.match_contents(contents, path, dispatch_extension)
-  local first_line = contents[1]
+  local first_line = assert(contents[1])
   if first_line:find('^#!') then
     return match_from_hashbang(contents, path, dispatch_extension)
   else

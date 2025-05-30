@@ -1135,12 +1135,12 @@ function vim.api.nvim_eval(expr) end
 --- - use_tabline: (boolean) Evaluate tabline instead of statusline. When true, {winid}
 ---                          is ignored. Mutually exclusive with {use_winbar}.
 --- - use_statuscol_lnum: (number) Evaluate statuscolumn for this line number instead of statusline.
---- @return table<string,any> # Dict containing statusline information, with these keys:
+--- @return vim.api.keyset.eval_statusline_ret # Dict containing statusline information, with these keys:
 --- - str: (string) Characters that will be displayed on the statusline.
 --- - width: (number) Display width of the statusline.
 --- - highlights: Array containing highlight information of the statusline. Only included when
----               the "highlights" key in {opts} is true. Each element of the array is a
----               |Dict| with these keys:
+---               the "highlights" key in {opts} is true. Each element of the array is a |Dict|
+---               with these keys:
 ---     - start: (number) Byte index (0-based) of first character that uses the highlight.
 ---     - group: (string) Deprecated. Use `groups` instead.
 ---     - groups: (array) Names of stacked highlight groups (highest priority last).
@@ -2541,7 +2541,7 @@ function vim.api.nvim_win_set_width(window, width) end
 ---               to find out how many buffer lines beyond "start_row" take
 ---               up a certain number of logical lines (returned in
 ---               "end_row" and "end_vcol").
---- @return table<string,any> # Dict containing text height information, with these keys:
+--- @return vim.api.keyset.win_text_height_ret # Dict containing text height information, with these keys:
 --- - all: The total number of screen lines occupied by the range.
 --- - fill: The number of diff filler or virtual lines among them.
 --- - end_row: The row on which the returned height is reached (first row of
