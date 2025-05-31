@@ -1866,6 +1866,35 @@ describe('api/buf', function()
         }
       end)
     end)
+
+    it('should not reset changelist column to 0 #28618', function()
+      exec_lua([[
+        local function append_first_line()
+          local col = #vim.api.nvim_buf_get_lines(0, 0, 1, true)[1]
+          vim.api.nvim_buf_set_text(0, 0, col, 0, col, { 'ab' })
+        end
+        local count = 0
+        local timer = assert(vim.uv.new_timer())
+        timer:start(
+          0,
+          0,
+          vim.schedule_wrap(function()
+            count = count + 1
+            if count == 2 then
+              timer:stop()
+              timer:close()
+            end
+            if vim.api.nvim_get_mode().mode ~= 'i' then
+              append_first_line()
+            end
+          end)
+        )
+      ]])
+
+      n.poke_eventloop()
+      eq('ab', api.nvim_get_current_line())
+      eq({ { { col = 2, coladd = 0, lnum = 1 } }, 1 }, fn.getchangelist())
+    end)
   end)
 
   describe_lua_and_rpc('nvim_buf_get_text', function(lua_or_rpc)
