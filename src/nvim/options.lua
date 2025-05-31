@@ -1438,7 +1438,7 @@ local options = {
         ]	tag completion
         t	same as "]"
         f	scan the buffer names (as opposed to buffer contents)
-        f{func}	call the function {func}. Multiple "f" flags may be specified.
+        f{func}	call the function {func}.  Multiple "f" flags may be specified.
         	Refer to |complete-functions| for details on how the function
         	is invoked and what it should return.  The value can be the
         	name of a function or a |Funcref|.  For |Funcref| values,
@@ -1473,9 +1473,9 @@ local options = {
         An optional match limit can be specified for a completion source by
         appending a caret ("^") followed by a {count} to the source flag.
         For example: ".^9,w,u,t^5" limits matches from the current buffer
-        to 9 and from tags to 5. Other sources remain unlimited.
-        The match limit takes effect only during forward completion (CTRL-N)
-        and is ignored during backward completion (CTRL-P).
+        to 9 and from tags to 5.  Other sources remain unlimited.
+        Note: The match limit takes effect only during forward completion
+        (CTRL-N) and is ignored during backward completion (CTRL-P).
       ]=],
       full_name = 'complete',
       list = 'onecomma',
