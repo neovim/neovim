@@ -844,6 +844,7 @@ const char *did_set_complete(optset_T *args)
 {
   char **varp = (char **)args->os_varp;
   char buffer[LSIZE];
+  uint8_t char_before = NUL;
 
   for (char *p = *varp; *p;) {
     memset(buffer, 0, LSIZE);
@@ -867,14 +868,34 @@ const char *did_set_complete(optset_T *args)
       return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*buffer));
     }
 
-    if (!vim_strchr("ksf", (uint8_t)(*buffer)) && *(buffer + 1) != NUL) {
-      if (args->os_errbuf != NULL) {
-        vim_snprintf(args->os_errbuf, args->os_errbuflen,
-                     _(e_illegal_character_after_chr), (uint8_t)(*buffer));
-        return args->os_errbuf;
+    if (vim_strchr("ksf", (uint8_t)(*buffer)) == NULL && *(buffer + 1) != NUL
+        && *(buffer + 1) != '^') {
+      char_before = (uint8_t)(*buffer);
+    } else {
+      char *t;
+      // Test for a number after '^'
+      if ((t = vim_strchr(buffer, '^')) != NULL) {
+        *t++ = NUL;
+        if (!*t) {
+          char_before = '^';
+        } else {
+          for (; *t; t++) {
+            if (!ascii_isdigit(*t)) {
+              char_before = '^';
+              break;
+            }
+          }
+        }
       }
     }
-
+    if (char_before != NUL) {
+      if (args->os_errbuf != NULL) {
+        vim_snprintf(args->os_errbuf, args->os_errbuflen,
+                     _(e_illegal_character_after_chr), char_before);
+        return args->os_errbuf;
+      }
+      return NULL;
+    }
     // Skip comma and spaces
     while (*p == ',' || *p == ' ') {
       p++;

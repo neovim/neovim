@@ -182,6 +182,7 @@ OPTIONS
   • "f{func}"   complete using given function
   • "f"         complete using 'completefunc'
   • "o"         complete using 'omnifunc'
+• 'complete' allows limiting matches for sources using "{flag}^<limit>".
 • 'completeopt' flag "nearset" sorts completion results by distance to cursor.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'grepformat' is now a |global-local| option.

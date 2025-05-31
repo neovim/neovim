@@ -280,11 +280,20 @@ func Test_complete()
   call assert_fails('set complete=x', 'E539:')
   call assert_fails('set complete=..', 'E535:')
   set complete=.,w,b,u,k,\ s,i,d,],t,U,f,o
+  call assert_fails('set complete=i^-10', 'E535:')
+  call assert_fails('set complete=i^x', 'E535:')
+  call assert_fails('set complete=k^2,t^-1,s^', 'E535:')
+  call assert_fails('set complete=t^-1', 'E535:')
+  call assert_fails('set complete=kfoo^foo2', 'E535:')
+  call assert_fails('set complete=kfoo^', 'E535:')
+  call assert_fails('set complete=.^', 'E535:')
+  set complete=.,w,b,u,k,s,i,d,],t,U,f,o
   set complete=.
+  set complete=.^10,t^0
   set complete+=ffuncref('foo'\\,\ [10])
-  set complete=ffuncref('foo'\\,\ [10])
+  set complete=ffuncref('foo'\\,\ [10])^10
   set complete&
-  set complete+=ffunction('foo'\\,\ [10\\,\ 20])
+  set complete+=ffunction('g:foo'\\,\ [10\\,\ 20])
   set complete&
 endfun
 

@@ -1469,6 +1469,13 @@ local options = {
         As you can see, CTRL-N and CTRL-P can be used to do any 'iskeyword'-
         based expansion (e.g., dictionary |i_CTRL-X_CTRL-K|, included patterns
         |i_CTRL-X_CTRL-I|, tags |i_CTRL-X_CTRL-]| and normal expansions).
+
+        An optional match limit can be specified for a completion source by
+        appending a caret ("^") followed by a {count} to the source flag.
+        For example: ".^9,w,u,t^5" limits matches from the current buffer
+        to 9 and from tags to 5. Other sources remain unlimited.
+        The match limit takes effect only during forward completion (CTRL-N)
+        and is ignored during backward completion (CTRL-P).
       ]=],
       full_name = 'complete',
       list = 'onecomma',
