@@ -1362,6 +1362,58 @@ static void trigger_complete_changed_event(int cur)
   restore_v_event(v_event, &save_v_event);
 }
 
+/// Trim compl_match_array to enforce max_matches per completion source.
+///
+/// Note: This special-case trimming is a workaround because compl_match_array
+/// becomes inconsistent with compl_first_match (list) after former is sorted by
+/// fuzzy score. The two structures end up in different orders.
+/// Ideally, compl_first_match list should have been sorted instead.
+static void trim_compl_match_array(void)
+{
+  // Count current matches per source.
+  int *match_counts = xcalloc((size_t)cpt_sources_count, sizeof(int));
+  for (int i = 0; i < compl_match_arraysize; i++) {
+    int src_idx = compl_match_array[i].pum_cpt_source_idx;
+    if (src_idx != -1) {
+      match_counts[src_idx]++;
+    }
+  }
+
+  // Calculate size of trimmed array, respecting max_matches per source.
+  int new_size = 0;
+  for (int i = 0; i < cpt_sources_count; i++) {
+    int limit = cpt_sources_array[i].max_matches;
+    new_size += (limit > 0 && match_counts[i] > limit) ? limit : match_counts[i];
+  }
+
+  if (new_size == compl_match_arraysize) {
+    goto theend;
+  }
+
+  // Create trimmed array while enforcing per-source limits
+  pumitem_T *trimmed = xcalloc((size_t)new_size, sizeof(pumitem_T));
+  memset(match_counts, 0, sizeof(int) * (size_t)cpt_sources_count);
+  int trimmed_idx = 0;
+  for (int i = 0; i < compl_match_arraysize; i++) {
+    int src_idx = compl_match_array[i].pum_cpt_source_idx;
+    if (src_idx != -1) {
+      int limit = cpt_sources_array[src_idx].max_matches;
+      if (limit <= 0 || match_counts[src_idx] < limit) {
+        trimmed[trimmed_idx++] = compl_match_array[i];
+        match_counts[src_idx]++;
+      }
+    } else {
+      trimmed[trimmed_idx++] = compl_match_array[i];
+    }
+  }
+  xfree(compl_match_array);
+  compl_match_array = trimmed;
+  compl_match_arraysize = new_size;
+
+theend:
+  xfree(match_counts);
+}
+
 /// pumitem qsort compare func
 static int ins_compl_fuzzy_cmp(const void *a, const void *b)
 {
@@ -1398,7 +1450,7 @@ static int ins_compl_build_pum(void)
   int match_count = 0;
   int cur_source = -1;
   bool max_matches_found = false;
-  bool is_forward = compl_shows_dir_forward() && !fuzzy_filter;
+  bool is_forward = compl_shows_dir_forward();
 
   // If the current match is the original text don't find the first
   // match after it, don't highlight anything.
@@ -1433,7 +1485,7 @@ static int ins_compl_build_pum(void)
       comp->cp_flags &= ~CP_ICASE;
     }
 
-    if (is_forward && comp->cp_cpt_source_idx != -1) {
+    if (is_forward && !fuzzy_sort && comp->cp_cpt_source_idx != -1) {
       if (cur_source != comp->cp_cpt_source_idx) {
         cur_source = comp->cp_cpt_source_idx;
         match_count = 1;
@@ -1490,7 +1542,7 @@ static int ins_compl_build_pum(void)
           shown_match_ok = true;
         }
       }
-      if (is_forward && comp->cp_cpt_source_idx != -1) {
+      if (is_forward && !fuzzy_sort && comp->cp_cpt_source_idx != -1) {
         match_count++;
       }
       i++;
@@ -1534,6 +1586,7 @@ static int ins_compl_build_pum(void)
     compl_match_array[i].pum_kind = comp->cp_text[CPT_KIND];
     compl_match_array[i].pum_info = comp->cp_text[CPT_INFO];
     compl_match_array[i].pum_score = comp->cp_score;
+    compl_match_array[i].pum_cpt_source_idx = comp->cp_cpt_source_idx;
     compl_match_array[i].pum_user_abbr_hlattr = comp->cp_user_abbr_hlattr;
     compl_match_array[i].pum_user_kind_hlattr = comp->cp_user_kind_hlattr;
     compl_match_array[i++].pum_extra = comp->cp_text[CPT_MENU] != NULL
@@ -1553,6 +1606,9 @@ static int ins_compl_build_pum(void)
     shown_match_ok = true;
   }
 
+  if (is_forward && fuzzy_sort && cpt_sources_array != NULL) {
+    trim_compl_match_array();  // Truncate by max_matches in 'cpt'
+  }
   if (!shown_match_ok) {  // no displayed match at all
     cur = -1;
   }

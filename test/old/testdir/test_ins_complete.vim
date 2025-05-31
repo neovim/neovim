@@ -4159,7 +4159,7 @@ func Test_complete_multiline_marks()
 endfunc
 
 func Test_complete_match_count()
-  func PrintMenuWords()
+  func! PrintMenuWords()
     let info = complete_info(["selected", "matches"])
     call map(info.matches, {_, v -> v.word})
     return info
@@ -4279,8 +4279,50 @@ func Test_complete_match_count()
   call assert_equal(3, g:CallCount)
   bw!
 
+  " Test 'fuzzy' with max_items
+  " XXX: Cannot use complete_info() since it is broken for 'fuzzy'
+  new
+  set completeopt=menu,noselect,fuzzy
+  set complete=.
+  call setline(1, ["abcd", "abac", "abdc"])
+  execute "normal Goa\<c-n>c\<c-n>"
+  call assert_equal('abac', getline(4))
+  execute "normal Sa\<c-n>c\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>"
+  call assert_equal('abac', getline(4))
+  set complete=.^1
+  execute "normal Sa\<c-n>c\<c-n>\<c-n>\<c-n>"
+  call assert_equal('abac', getline(4))
+  set complete=.^2
+  execute "normal Sa\<c-n>c\<c-n>\<c-n>\<c-n>\<c-n>"
+  call assert_equal('abac', getline(4))
+  set complete=.^3
+  execute "normal Sa\<c-n>c\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>"
+  call assert_equal('abac', getline(4))
+  set complete=.^4
+  execute "normal Sa\<c-n>c\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>"
+  call assert_equal('abac', getline(4))
+
+  func! ComplFunc(findstart, base)
+    if a:findstart
+      return col(".")
+    endif
+    return ["abcde", "abacr"]
+  endfunc
+
+  set complete=.,FComplFunc^1
+  execute "normal Sa\<c-n>c\<c-n>\<c-n>"
+  call assert_equal('abacr', getline(4))
+  execute "normal Sa\<c-n>c\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>"
+  call assert_equal('abac', getline(4))
+  set complete=.^1,FComplFunc^1
+  execute "normal Sa\<c-n>c\<c-n>\<c-n>\<c-n>\<c-n>"
+  call assert_equal('abac', getline(4))
+  bw!
+
   set completeopt& complete&
   delfunc PrintMenuWords
+  delfunc ComplFunc
+  delfunc CompleteItemsSelect
 endfunc
 
 func Test_complete_append_selected_match_default()
@@ -4402,7 +4444,7 @@ endfunc
 " Test 'nearest' flag of 'completeopt'
 func Test_nearest_cpt_option()
 
-  func PrintMenuWords()
+  func! PrintMenuWords()
     let info = complete_info(["selected", "matches"])
     call map(info.matches, {_, v -> v.word})
     return info
