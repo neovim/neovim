@@ -377,33 +377,12 @@ also implicitly stops the block of ex-commands before it.  E.g. >
 	  echo "Example"
 	endfunction
 <
-
-To add annotation in the block, place the annotation (ex: "lua") after a
-greater than (>) character.  E.g: >lua
-	print("hello")
-<
-Note: uses lua syntax highlighting, if "lua" key is in
-|g:help_example_languages|.
-
-It's possible to add Vim syntax highlighting support to code examples.
-E.g: >vim
+To enable syntax highlighting for a block of code, place a language name
+annotation (e.g. "vim") after a greater than (>) character.  E.g. >vim
 	function Example_Func()
 	  echo "Example"
 	endfunction
 <
-						*g:help_example_languages*
-If you want to change the syntax highlighting in the block, you can
-change it like this: >
-	:let g:help_example_languages = #{ vim: 'vim', sh: 'bash' }
-The key represents the annotation marker name, and the value is the 'syntax'
-name.  By default, help files support only Vim script highlighting.
-Note: When setting "g:help_example_languages", if you do not include "vim"
-key, the Vim syntax highlighting will not be enabled. If you set it to an
-empty value, syntax highlighting for embedded languages will be disabled.
-
-Further note: including additional syntax languages into help files may not
-always work perfectly, if the included 'syntax' script does not account for
-such an import.
 						*help-notation*
 The following are highlighted differently in a Vim help file:
   - a special key name expressed either in <> notation as in <PageDown>, or
