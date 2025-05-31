@@ -864,11 +864,11 @@ const char *did_set_complete(optset_T *args)
     }
     *buf_ptr = NUL;
 
-    if (vim_strchr(".wbuksid]tUfo", (uint8_t)(*buffer)) == NULL) {
+    if (vim_strchr(".wbuksid]tUfFo", (uint8_t)(*buffer)) == NULL) {
       return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*buffer));
     }
 
-    if (vim_strchr("ksf", (uint8_t)(*buffer)) == NULL && *(buffer + 1) != NUL
+    if (vim_strchr("ksF", (uint8_t)(*buffer)) == NULL && *(buffer + 1) != NUL
         && *(buffer + 1) != '^') {
       char_before = (uint8_t)(*buffer);
     } else {

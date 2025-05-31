@@ -3548,7 +3548,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
         st->dict = st->e_cpt;
         st->dict_f = DICT_FIRST;
       }
-    } else if (*st->e_cpt == 'f' || *st->e_cpt == 'o') {
+    } else if (*st->e_cpt == 'F' || *st->e_cpt == 'o') {
       compl_type = CTRL_X_FUNCTION;
       if (*st->e_cpt == 'o') {
         st->func_cb = &curbuf->b_ofu_cb;
@@ -3563,10 +3563,8 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       compl_type = CTRL_X_PATH_PATTERNS;
     } else if (*st->e_cpt == 'd') {
       compl_type = CTRL_X_PATH_DEFINES;
-#if 0
     } else if (*st->e_cpt == 'f') {
       compl_type = CTRL_X_BUFNAMES;
-#endif
     } else if (*st->e_cpt == ']' || *st->e_cpt == 't') {
       compl_type = CTRL_X_TAGS;
       if (!shortmess(SHM_COMPLETIONSCAN)) {
@@ -5934,7 +5932,7 @@ static void cpt_compl_refresh(void)
     if (cpt_sources_array[cpt_sources_index].refresh_always) {
       if (*p == 'o') {
         cb = &curbuf->b_ofu_cb;
-      } else if (*p == 'f') {
+      } else if (*p == 'F') {
         cb = (*(p + 1) != ',' && *(p + 1) != NUL)
              ? get_cpt_func_callback(p + 1) : &curbuf->b_cfu_cb;
       }

@@ -1412,7 +1412,7 @@ local options = {
       abbreviation = 'cpt',
       cb = 'did_set_complete',
       defaults = '.,w,b,u,t',
-      values = { '.', 'w', 'b', 'u', 'k', 'kspell', 's', 'i', 'd', ']', 't', 'U', 'f', 'o' },
+      values = { '.', 'w', 'b', 'u', 'k', 'kspell', 's', 'i', 'd', ']', 't', 'U', 'f', 'F', 'o' },
       deny_duplicates = true,
       desc = [=[
         This option specifies how keyword completion |ins-completion| works
@@ -1438,7 +1438,7 @@ local options = {
         ]	tag completion
         t	same as "]"
         f	scan the buffer names (as opposed to buffer contents)
-        f{func}	call the function {func}.  Multiple "f" flags may be specified.
+        F{func}	call the function {func}.  Multiple "F" flags may be specified.
         	Refer to |complete-functions| for details on how the function
         	is invoked and what it should return.  The value can be the
         	name of a function or a |Funcref|.  For |Funcref| values,
@@ -1456,9 +1456,9 @@ local options = {
         	If generating matches is potentially slow, |complete_check()|
         	should be used to avoid blocking and preserve editor
         	responsiveness.
-        f	equivalent to using "f{func}", where the function is taken from
+        F	equivalent to using "F{func}", where the function is taken from
         	the 'completefunc' option.
-        o	equivalent to using "f{func}", where the function is taken from
+        o	equivalent to using "F{func}", where the function is taken from
         	the 'omnifunc' option.
 
         Unloaded buffers are not loaded, thus their autocmds |:autocmd| are
