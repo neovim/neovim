@@ -2656,26 +2656,19 @@ get_level()                                          *vim.lsp.log.get_level()*
         (`integer`) current log level
 
 set_format_func({handle})                      *vim.lsp.log.set_format_func()*
-    Sets formatting function used to format logs
+    Sets the formatting function used to format logs. If the formatting
+    function returns nil, the entry won't be written to the log file.
 
     Parameters: ~
-      • {handle}  (`function`) function to apply to logging arguments, pass
-                  vim.inspect for multi-line formatting
+      • {handle}  (`fun(level:string, ...): string?`) Function to apply to log
+                  entries. The default will log the level, date, source and
+                  line number of the caller, followed by the arguments.
 
 set_level({level})                                   *vim.lsp.log.set_level()*
     Sets the current log level.
 
     Parameters: ~
       • {level}  (`string|integer`) One of |vim.log.levels|
-
-should_log({level})                                 *vim.lsp.log.should_log()*
-    Checks whether the level is sufficient for logging.
-
-    Parameters: ~
-      • {level}  (`integer`) log level
-
-    Return: ~
-        (`boolean`) true if would log, false if not
 
 
 ==============================================================================

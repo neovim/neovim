@@ -71,6 +71,8 @@ HIGHLIGHTS
 LSP
 
 • `root_markers` in |vim.lsp.Config| can now be ordered by priority.
+• The function set with |vim.lsp.log.set_format_func()| is now given all
+  arguments corresponding to a log entry instead of the individual arguments.
 
 LUA
 

@@ -33,6 +33,8 @@ LSP
 • *vim.lsp.client_is_stopped()*		Use |vim.lsp.get_client_by_id()| instead.
 • *vim.lsp.util.stylize_markdown()*	Use |vim.treesitter.start()| with
 					`vim.wo.conceallevel = 2`.
+• *vim.lsp.log.should_log()*		Use |vim.lsp.log.set_format_func()| instead
+					and return `nil` to omit entries from the logfile.
 
 LUA
 
