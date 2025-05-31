@@ -25,6 +25,7 @@
 #include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
+#include "nvim/eval/executor.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
@@ -316,7 +317,7 @@ static cpt_source_T *cpt_sources_array;
 /// Total number of completion sources specified in the 'cpt' option
 static int cpt_sources_count;
 /// Index of the current completion source being expanded
-static int cpt_sources_index;
+static int cpt_sources_index = -1;
 
 // "compl_match_array" points the currently displayed list of entries in the
 // popup menu.  It is NULL when there is no popup menu.
@@ -3448,6 +3449,17 @@ static bool thesaurus_func_complete(int type)
          && (*curbuf->b_p_tsrfu != NUL || *p_tsrfu != NUL);
 }
 
+/// Check if 'cpt' list index can be advanced to the next completion source.
+static bool may_advance_cpt_index(const char *cpt)
+{
+  const char *p = cpt;
+
+  while (*p == ',' || *p == ' ') {  // Skip delimiters
+    p++;
+  }
+  return (*p != NUL);
+}
+
 /// Return value of process_next_cpt_value()
 enum {
   INS_COMPL_CPT_OK = 1,
@@ -3474,12 +3486,13 @@ enum {
 ///          the "st->e_cpt" option value and process the next matching source.
 ///          INS_COMPL_CPT_END if all the values in "st->e_cpt" are processed.
 static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_arg,
-                                  pos_T *start_match_pos, bool fuzzy_collect)
+                                  pos_T *start_match_pos, bool fuzzy_collect, bool *advance_cpt_idx)
 {
   int compl_type = -1;
   int status = INS_COMPL_CPT_OK;
 
   st->found_all = false;
+  *advance_cpt_idx = false;
 
   while (*st->e_cpt == ',' || *st->e_cpt == ' ') {
     st->e_cpt++;
@@ -3577,6 +3590,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
 
     // in any case e_cpt is advanced to the next entry
     copy_option_part(&st->e_cpt, IObuff, IOSIZE, ",");
+    *advance_cpt_idx = may_advance_cpt_index(st->e_cpt);
 
     st->found_all = true;
     if (compl_type == -1) {
@@ -4305,6 +4319,17 @@ static void strip_caret_numbers_in_place(char *str)
   *write = '\0';
 }
 
+/// Safely advance the cpt_sources_index by one.
+static int advance_cpt_sources_index_safe(void)
+{
+  if (cpt_sources_index < cpt_sources_count - 1) {
+    cpt_sources_index++;
+    return OK;
+  }
+  semsg(_(e_list_index_out_of_range_nr), cpt_sources_index + 1);
+  return FAIL;
+}
+
 /// Get the next expansion(s), using "compl_pattern".
 /// The search starts at position "ini" in curbuf and in the direction
 /// compl_direction.
@@ -4318,6 +4343,7 @@ static int ins_compl_get_exp(pos_T *ini)
   static bool st_cleared = false;
   int found_new_match;
   int type = ctrl_x_mode;
+  bool may_advance_cpt_idx = false;
 
   assert(curbuf != NULL);
 
@@ -4350,7 +4376,8 @@ static int ins_compl_get_exp(pos_T *ini)
   st.cur_match_pos = compl_dir_forward() ? &st.last_match_pos : &st.first_match_pos;
 
   // For ^N/^P loop over all the flags/windows/buffers in 'complete'
-  for (cpt_sources_index = 0;;) {
+  cpt_sources_index = 0;
+  while (true) {
     found_new_match = FAIL;
     st.set_match_pos = false;
 
@@ -4359,12 +4386,15 @@ static int ins_compl_get_exp(pos_T *ini)
     // entries from 'complete' that look in loaded buffers.
     if ((ctrl_x_mode_normal() || ctrl_x_mode_line_or_eval())
         && (!compl_started || st.found_all)) {
-      int status = process_next_cpt_value(&st, &type, ini, cfc_has_mode());
+      int status = process_next_cpt_value(&st, &type, ini,
+                                          cfc_has_mode(), &may_advance_cpt_idx);
       if (status == INS_COMPL_CPT_END) {
         break;
       }
       if (status == INS_COMPL_CPT_CONT) {
-        cpt_sources_index++;
+        if (may_advance_cpt_idx && !advance_cpt_sources_index_safe()) {
+          break;
+        }
         continue;
       }
     }
@@ -4378,8 +4408,8 @@ static int ins_compl_get_exp(pos_T *ini)
     // get the next set of completion matches
     found_new_match = get_next_completion_match(type, &st, ini);
 
-    if (type > 0) {
-      cpt_sources_index++;
+    if (may_advance_cpt_idx && !advance_cpt_sources_index_safe()) {
+      break;
     }
 
     // break the loop for specialized modes (use 'complete' just for the
@@ -5924,7 +5954,7 @@ static void cpt_compl_refresh(void)
   strip_caret_numbers_in_place(cpt);
 
   cpt_sources_index = 0;
-  for (char *p = cpt; *p; cpt_sources_index++) {
+  for (char *p = cpt; *p;) {
     while (*p == ',' || *p == ' ') {  // Skip delimiters
       p++;
     }
@@ -5942,7 +5972,10 @@ static void cpt_compl_refresh(void)
       }
     }
 
-    copy_option_part(&p, IObuff, IOSIZE, ",");  // Advance p
+    (void)copy_option_part(&p, IObuff, IOSIZE, ",");  // Advance p
+    if (may_advance_cpt_index(p)) {
+      (void)advance_cpt_sources_index_safe();
+    }
   }
   cpt_sources_index = -1;
 
