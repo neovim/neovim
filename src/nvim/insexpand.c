@@ -1394,7 +1394,7 @@ static int ins_compl_build_pum(void)
   bool fuzzy_sort = fuzzy_filter && !(cur_cot_flags & kOptCotFlagNosort);
 
   compl_T *match_head = NULL, *match_tail = NULL;
-  int match_count;
+  int match_count = 0;
   int cur_source = -1;
   bool max_matches_found = false;
   bool is_forward = compl_shows_dir_forward() && !fuzzy_filter;
