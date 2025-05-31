@@ -178,6 +178,10 @@ OPTIONS
 • 'chistory' and 'lhistory' set size of the |quickfix-stack|.
 • 'completefuzzycollect' enables fuzzy collection of candidates for (some)
   |ins-completion| modes.
+• 'complete' new flags:
+  • "f{func}"   complete using given function
+  • "f"         complete using 'completefunc'
+  • "o"         complete using 'omnifunc'
 • 'completeopt' flag "nearset" sorts completion results by distance to cursor.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'grepformat' is now a |global-local| option.

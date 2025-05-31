@@ -277,6 +277,14 @@ func Test_complete()
   call feedkeys("i\<C-N>\<Esc>", 'xt')
   bwipe!
   call assert_fails('set complete=ix', 'E535:')
+  call assert_fails('set complete=x', 'E539:')
+  call assert_fails('set complete=..', 'E535:')
+  set complete=.,w,b,u,k,\ s,i,d,],t,U,f,o
+  set complete=.
+  set complete+=ffuncref('foo'\\,\ [10])
+  set complete=ffuncref('foo'\\,\ [10])
+  set complete&
+  set complete+=ffunction('foo'\\,\ [10\\,\ 20])
   set complete&
 endfun
 

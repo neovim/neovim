@@ -1027,6 +1027,28 @@ vim.bo.cms = vim.bo.commentstring
 --- ]	tag completion
 --- t	same as "]"
 --- f	scan the buffer names (as opposed to buffer contents)
+--- f{func}	call the function {func}. Multiple "f" flags may be specified.
+--- 	Refer to `complete-functions` for details on how the function
+--- 	is invoked and what it should return.  The value can be the
+--- 	name of a function or a `Funcref`.  For `Funcref` values,
+--- 	spaces must be escaped with a backslash ('\'), and commas with
+--- 	double backslashes ('\\') (see `option-backslash`).
+--- 	If the Dict returned by the {func} includes {"refresh": "always"},
+--- 	the function will be invoked again whenever the leading text
+--- 	changes.
+--- 	Completion matches are always inserted at the keyword
+--- 	boundary, regardless of the column returned by {func} when
+--- 	a:findstart is 1.  This ensures compatibility with other
+--- 	completion sources.
+--- 	To make further modifications to the inserted text, {func}
+--- 	can make use of `CompleteDonePre`.
+--- 	If generating matches is potentially slow, `complete_check()`
+--- 	should be used to avoid blocking and preserve editor
+--- 	responsiveness.
+--- f	equivalent to using "f{func}", where the function is taken from
+--- 	the 'completefunc' option.
+--- o	equivalent to using "f{func}", where the function is taken from
+--- 	the 'omnifunc' option.
 ---
 --- Unloaded buffers are not loaded, thus their autocmds `:autocmd` are
 --- not executed, this may lead to unexpected completions from some files
