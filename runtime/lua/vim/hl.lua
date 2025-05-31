@@ -91,6 +91,10 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
     end
   end)
 
+  if not inclusive and pos1[2] == pos2[2] and pos1[3] == pos2[3] then
+    return
+  end
+
   local region = vim.fn.getregionpos(pos1, pos2, {
     type = regtype,
     exclusive = not inclusive,
