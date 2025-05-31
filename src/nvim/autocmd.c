@@ -661,15 +661,22 @@ const char *event_nr2name(event_T event)
 bool event_ignored(event_T event, char *ei)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  bool ignored = false;
   while (*ei != NUL) {
+    bool unignore = *ei == '-';
+    ei += unignore;
     if (STRNICMP(ei, "all", 3) == 0 && (ei[3] == NUL || ei[3] == ',')) {
-      return true;
+      ignored = ei == p_ei || event_names[event].event <= 0;
+      ei += 3 + (ei[3] == ',');
     } else if (event_name2nr(ei, &ei) == event) {
-      return true;
+      if (unignore) {
+        return false;
+      }
+      ignored = true;
     }
   }
 
-  return false;
+  return ignored;
 }
 
 /// Return OK when the contents of 'eventignore' or 'eventignorewin' is valid,
@@ -680,11 +687,9 @@ int check_ei(char *ei)
 
   while (*ei) {
     if (STRNICMP(ei, "all", 3) == 0 && (ei[3] == NUL || ei[3] == ',')) {
-      ei += 3;
-      if (*ei == ',') {
-        ei++;
-      }
+      ei += 3 + (ei[3] == ',');
     } else {
+      ei += (*ei == '-');
       event_T event = event_name2nr(ei, &ei);
       if (event == NUM_EVENTS || (win && event_names[event].event > 0)) {
         return FAIL;

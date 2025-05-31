@@ -2699,6 +2699,9 @@ local options = {
         Otherwise this is a comma-separated list of event names.  Example: >vim
             set ei=WinEnter,WinLeave
         <
+        To ignore all but some events, a "-" prefix can be used: >vim
+            :set ei=all,-WinLeave
+        <
       ]=],
       expand_cb = 'expand_set_eventignore',
       full_name = 'eventignore',
