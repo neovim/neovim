@@ -450,7 +450,7 @@ line, pressing <C-t> in Insert mode would indent the line by 4 spaces,
 a result impossible to get with the <Tab> key and 'tabstop' set to 8.
  To optimize space, `vi` would also silently remove packs of spaces and replace
 them with tab characters.  The following shows what happens pressing <C-t>
-a few times. 
+a few times.
   A "." stands for a space character and "------->" for a tab character.
 
 	type				result ~
@@ -466,7 +466,7 @@ with `set tabstop=8 shiftwidth=2` one has
 	<C-t><Tab><C-t><C-d>		------->
 
   A third option that one could set in `vi` was 'autoindent'.  It copies the
-indent level of the previous lines, 
+indent level of the previous lines,
 
 	type				result ~
 	<Space><Tab>hello		.------>hello
