@@ -12,28 +12,36 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+if !exists('g:help_example_languages')
+  let g:help_example_languages = #{ vim: 'vim' }
+endif
+
 syn match helpHeadline		"^[A-Z.][-A-Z0-9 .,()_']*?\=\ze\(\s\+\*\|$\)"
 syn match helpSectionDelim	"^===.*===$"
 syn match helpSectionDelim	"^---.*--$"
 
-unlet! b:current_syntax
-" sil! to prevent E403
-silent! syntax include @VimScript syntax/vim.vim
-
-" Nvim: support language annotation in codeblocks
 if has("conceal")
-  syn region helpExample	matchgroup=helpIgnore start=" >[a-z0-9]*$" start="^>[a-z0-9]*$" end="^[^ \t]"me=e-1 end="^<" concealends
-  syn region helpExampleVimScript matchgroup=helpIgnore
-        \ start=/^>vim$/ start=/ >vim$/
-        \ end=/^[^ \t]/me=e-1 end=/^</ concealends
-        \ contains=@VimScript keepend
+  syn region helpExample	matchgroup=helpIgnore
+        \ start="\%(^\| \)>[a-z0-9]*$" end="^[^ \t]"me=e-1 end="^<" concealends
 else
-  syn region helpExample	matchgroup=helpIgnore start=" >[a-z0-9]*$" start="^>[a-z0-9]*$" end="^[^ \t]"me=e-1 end="^<"
-  syn region helpExampleVimScript matchgroup=helpIgnore
-      \ start=/^>vim$/ start=/ >vim$/
-      \ end=/^[^ \t]/me=e-1 end=/^</
-      \ contains=@VimScript keepend
+   syn region helpExample	matchgroup=helpIgnore
+         \ start="\%(^\| \)>[a-z0-9]*$" end="^[^ \t]"me=e-1 end="^<"
 endif
+
+for [s:lang, s:syntax] in g:help_example_languages->items()
+  unlet! b:current_syntax
+  " silent! to prevent E403
+  execute 'silent! syn include' $'@helpExampleHighlight_{s:lang}'
+        \ $'syntax/{s:syntax}.vim'
+
+  execute $'syn region helpExampleHighlight_{s:lang} matchgroup=helpIgnore'
+        \ $'start=/\%(^\| \)>{s:lang}$/'
+        \ 'end=/^[^ \t]/me=e-1 end=/^</'
+        \ (has("conceal") ? 'concealends' : '')
+        \ $'contains=@helpExampleHighlight_{s:lang} keepend'
+endfor
+unlet! s:lang s:syntax
+
 syn match helpHyperTextJump	"\\\@<!|[#-)!+-~]\+|" contains=helpBar
 syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*\s"he=e-1 contains=helpStar
 syn match helpHyperTextEntry	"\*[#-)!+-~]\+\*$" contains=helpStar
