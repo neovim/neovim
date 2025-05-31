@@ -377,7 +377,13 @@ also implicitly stops the block of ex-commands before it.  E.g. >
 	echo "Example"
     endfunction
 <
-
+It's possible to add Vim syntax highlighting support to code examples.  This
+can be done by adding "vim" after the greater than (>) character (">vim").
+E.g: >vim
+    function Example_Func()
+	echo "Example"
+    endfunction
+<
 The following are highlighted differently in a Vim help file:
   - a special key name expressed either in <> notation as in <PageDown>, or
     as a Ctrl character as in CTRL-X
