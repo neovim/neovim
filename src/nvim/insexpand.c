@@ -5809,7 +5809,7 @@ static void get_cpt_func_completion_matches(Callback *cb)
 /// 'refresh:always' flag is set.
 static void cpt_compl_refresh(void)
 {
-  Callback *cb;
+  Callback *cb = NULL;
 
   // Make the completion list linear (non-cyclic)
   ins_compl_make_linear();
