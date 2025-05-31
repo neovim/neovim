@@ -2047,6 +2047,12 @@ vim.go.efm = vim.go.errorformat
 ---     set ei=WinEnter,WinLeave
 --- ```
 ---
+--- To ignore all but some events, a "-" prefix can be used:
+---
+--- ```vim
+---     :set ei=all,-WinLeave
+--- ```
+---
 ---
 --- @type string
 vim.o.eventignore = ""

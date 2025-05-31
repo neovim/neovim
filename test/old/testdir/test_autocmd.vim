@@ -4556,4 +4556,20 @@ func Test_reuse_curbuf_switch()
   %bw!
 endfunc
 
+func Test_eventignore_subtract()
+  set eventignore=all,-WinEnter
+  augroup testing
+    autocmd!
+    autocmd WinEnter * ++once let s:triggered = 1
+  augroup END
+
+  new
+  call assert_equal(1, s:triggered)
+
+  set eventignore&
+  unlet! s:triggered
+  call CleanUpTestAuGroup()
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

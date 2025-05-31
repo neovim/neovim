@@ -1110,12 +1110,20 @@ static bool expand_eiw = false;
 
 static char *get_eventignore_name(expand_T *xp, int idx)
 {
+  bool subtract = *xp->xp_pattern == '-';
   // 'eventignore(win)' allows special keyword "all" in addition to
   // all event names.
-  if (idx == 0) {
+  if (!subtract && idx == 0) {
     return "all";
   }
-  return get_event_name_no_group(xp, idx - 1, expand_eiw);
+
+  char *name = get_event_name_no_group(xp, idx - 1 + subtract, expand_eiw);
+  if (name == NULL) {
+    return NULL;
+  }
+
+  snprintf(IObuff, IOSIZE, "%s%s", subtract ? "-" : "", name);
+  return IObuff;
 }
 
 int expand_set_eventignore(optexpand_T *args, int *numMatches, char ***matches)

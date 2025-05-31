@@ -597,6 +597,7 @@ func Test_set_completion_string_values()
 
   " Other string options that queries the system rather than fixed enum names
   call assert_equal(['all', 'BufAdd'], getcompletion('set eventignore=', 'cmdline')[0:1])
+  call assert_equal(['-BufAdd', '-BufCreate'], getcompletion('set eventignore=all,-', 'cmdline')[0:1])
   call assert_equal(['WinLeave', 'WinResized', 'WinScrolled'], getcompletion('set eiw=', 'cmdline')[-3:-1])
   call assert_equal('latin1', getcompletion('set fileencodings=', 'cmdline')[1])
   " call assert_equal('top', getcompletion('set printoptions=', 'cmdline')[0])
