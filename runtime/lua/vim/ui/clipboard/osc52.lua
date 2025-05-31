@@ -9,17 +9,16 @@ local function osc52(clipboard, contents)
   return string.format('\027]52;%s;%s\027\\', clipboard, contents)
 end
 
----@class clipboard_cache
+---@class ClipboardCache
 ---
 ---@field hash string sha256 of the lines passed to the copy() function
 ---@field regtype string regtype argument passed to the copy() function
 ---
----@type table<string, clipboard_cache>
+---@type table<string, ClipboardCache>
 local cache = {}
 
 function M.copy(reg)
   local clipboard = reg == '+' and 'c' or 'p'
-  ---@param regtype string
   return function(lines, regtype)
     local s = table.concat(lines, '\n')
     cache[reg] = {
