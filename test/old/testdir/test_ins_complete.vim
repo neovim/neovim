@@ -473,6 +473,53 @@ func Test_completefunc_info()
   set completefunc&
 endfunc
 
+func ScrollInfoWindowUserDefinedFn(findstart, query)
+  " User defined function (i_CTRL-X_CTRL-U)
+  if a:findstart
+    return col('.')
+  endif
+  let infostr = range(20)->mapnew({_, v -> string(v)})->join("\n")
+  return [{'word': 'foo', 'info': infostr}, {'word': 'bar'}]
+endfunc
+
+func ScrollInfoWindowPageDown()
+  call win_execute(popup_findinfo(), "normal! \<PageDown>")
+  return ''
+endfunc
+
+func ScrollInfoWindowPageUp()
+  call win_execute(popup_findinfo(), "normal! \<PageUp>")
+  return ''
+endfunc
+
+func ScrollInfoWindowTest(mvmt, count, fline)
+  new
+  set completeopt=menuone,popup,noinsert,noselect
+  set completepopup=height:5
+  set completefunc=ScrollInfoWindowUserDefinedFn
+  let keyseq = "i\<C-X>\<C-U>\<C-N>"
+  for _ in range(a:count)
+    let keyseq .= (a:mvmt == "pageup" ? "\<C-R>\<C-R>=ScrollInfoWindowPageUp()\<CR>" :
+          \ "\<C-R>\<C-R>=ScrollInfoWindowPageDown()\<CR>")
+  endfor
+  let keyseq .= "\<C-R>\<C-R>=string(popup_getpos(popup_findinfo()))\<CR>\<ESC>"
+  call feedkeys(keyseq, "tx")
+  call assert_match('''firstline'': ' . a:fline, getline(1))
+  bwipe!
+  set completeopt&
+  set completepopup&
+  set completefunc&
+endfunc
+
+func Test_scroll_info_window()
+  throw 'Skipped: popup_findinfo() is N/A'
+  call ScrollInfoWindowTest("", 0, 1)
+  call ScrollInfoWindowTest("pagedown", 1, 4)
+  call ScrollInfoWindowTest("pagedown", 2, 7)
+  call ScrollInfoWindowTest("pagedown", 3, 11)
+  call ScrollInfoWindowTest("pageup", 3, 1)
+endfunc
+
 func CompleteInfoUserDefinedFn(findstart, query)
   " User defined function (i_CTRL-X_CTRL-U)
   if a:findstart
