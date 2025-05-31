@@ -409,108 +409,202 @@ the cursor is on "printf":
 ==============================================================================
 *30.5*	Tabs and spaces
 
-'tabstop' is set to eight by default.  Although you can change it, you quickly
-run into trouble later.  Other programs won't know what tabstop value you
-used.  They probably use the default value of eight, and your text suddenly
-looks very different.  Also, most printers use a fixed tabstop value of eight.
-Thus it's best to keep 'tabstop' alone.  (If you edit a file which was written
-with a different tabstop setting, see |25.3| for how to fix that.)
-   For indenting lines in a program, using a multiple of eight spaces makes
+A QUICK HISTORY OF THE RATIONALE BEHIND TABS
+
+`vi` (the ancestor of Vim) was created by Bill Joy.  At the time, he was using
+a PDP-11 with limited memory and I/O operation capabilities.  Back then, it
+was common to optimize the size of source code with the following trick.
+  The ASCII table was first designed to remotely control teleprinters.  When
+control character 9 (the Horizontal Tab, caret notation: ^I) was sent to a
+teleprinter, it would move the carriage to the next tab stop.  Assuming tab
+stops were separated by 8 columns (a typical standard), this means that a
+single control character could produce the same visual effect as up to 8 space
+characters.  For example, the following two lines will display identically >
+
+	1234^I9
+	1234    9
+
+Using the <Tab> key was also faster than typing <Space> several times; the
+same was true for <BS>.
+
+
+THE ISSUE WITH TABS AND INDENTATION
+
+In Vim, the number of columns between two (virtual) horizontal tab stops
+is controlled by 'tabstop' and is set to eight by default.  Although you can
+change it, you quickly run into trouble later.  Other programs won't know what
+tabstop value you used.  They probably use the default value of eight, and
+your text suddenly looks very different.  Also, most printers use a fixed
+tabstop value of eight.  Thus it's best to keep 'tabstop' alone; if you edit a
+file which was written with a different tabstop setting, see |25.3| for how
+to fix that.
+   For indenting lines in a program, using a multiple of eight columns makes
 you quickly run into the right border of the window.  Using a single space
 doesn't provide enough visual difference.  Many people prefer to use four
 spaces, a good compromise.
-   Since a <Tab> is eight spaces and you want to use an indent of four spaces,
-you can't use a <Tab> character to make your indent.  There are two ways to
-handle this:
+   Since a tab character at the beginning of a line is visually represented
+as eight spaces and you want to use an indent of four spaces, you can't use a
+tab character to make your indent.
+  To remedy this, `vi` had the 'shiftwidth' option.  When set to 4, on a new
+line, pressing <C-t> in Insert mode would indent the line by 4 spaces,
+a result impossible to get with the <Tab> key and 'tabstop' set to 8.
+ To optimize space, `vi` would also silently remove packs of spaces and replace
+them with tab characters.  The following shows what happens pressing <C-t>
+a few times.
+  A "." stands for a space character and "------->" for a tab character.
 
-1.  Use a mix of <Tab> and space characters.  Since a <Tab> takes the place of
-    eight spaces, you have fewer characters in your file.  Inserting a <Tab>
-    is quicker than eight spaces.  Backspacing works faster as well.
+	type				result ~
+	<C-t>				....
+	<C-t><C-t>			------->
+	<C-t><C-t><C-t>			------->....
 
-2.  Use spaces only.  This avoids the trouble with programs that use a
-    different tabstop value.
+  Similarly pressing <C-d> in Insert mode would decrease the indent.  Hence
+with `set tabstop=8 shiftwidth=2` one has
 
-Fortunately, Vim supports both methods quite well.
+	type				result ~
+	<C-t><Tab><C-t>			..----->..
+	<C-t><Tab><C-t><C-d>		------->
 
+  A third option that one could set in `vi` was 'autoindent'.  It copies the
+indent level of the previous lines,
 
-SPACES AND TABS
+	type				result ~
+	<Space><Tab>hello		.------>hello
+	<Space><Tab>hello<Enter>	.------>hello
+					------->
 
-If you are using a combination of tabs and spaces, you just edit normally.
-The Vim defaults do a fine job of handling things.
-   You can make life a little easier by setting the 'softtabstop' option.
-This option tells Vim to make the <Tab> key look and feel as if tabs were set
-at the value of 'softtabstop', but actually use a combination of tabs and
-spaces.
-   After you execute the following command, every time you press the <Tab> key
-the cursor moves to the next 4-column boundary: >
-
-	:set softtabstop=4
-
-When you start in the first column and press <Tab>, you get 4 spaces inserted
-in your text.  The second time, Vim takes out the 4 spaces and puts in a <Tab>
-(thus taking you to column 8).  Thus Vim uses as many <Tab>s as possible, and
-then fills up with spaces.
-   When backspacing it works the other way around.  A <BS> will always delete
-the amount specified with 'softtabstop'.  Then <Tab>s are used as many as
-possible and spaces to fill the gap.
-   The following shows what happens pressing <Tab> a few times, and then using
-<BS>.  A "." stands for a space and "------->" for a <Tab>.
-
-	type			  result ~
-	<Tab>			  ....
-	<Tab><Tab>		  ------->
-	<Tab><Tab><Tab>		  ------->....
-	<Tab><Tab><Tab><BS>	  ------->
-	<Tab><Tab><Tab><BS><BS>   ....
-
-An alternative is to use the 'smarttab' option.  When it's set, Vim uses
-'shiftwidth' for a <Tab> typed in the indent of a line, and a real <Tab> when
-typed after the first non-blank character.  However, <BS> doesn't work like
-with 'softtabstop'.
+but the new line is produced by optimizing the number of characters used.
 
 
 JUST SPACES
 
-If you want absolutely no tabs in your file, you can set the 'expandtab'
-option: >
+But separating tab stops with 8 columns was not universal: IBM had a standard
+at 10 columns, and today some Go developers write code with `tabstop=4`.  Every
+time text is displayed with a different 'tabstop' value, it risks misaligning
+the text, especially once the file is shared and opened on another machine.
+  In the meantime, computers got much better and the few octets saved by using
+tabs were no longer making any real difference.  It became possible to use
+only spaces and thus guarantee the same resulting text everywhere.  But using
+only spaces was impossible in `vi` without sacrificing features.  Remember that
+'autoindent' would systematically try to input a tab character when it could.
+  Vim 4.0 made working with only spaces as convenient as working only with
+tabs (or a mix of tabs and spaces), by introducing the 'expandtab' option.
+When set, Vim will replace any horizontal tab character it would normally
+insert with an equivalent number of spaces, to end up with the same visual
+effect. <BS> would continue to remove only one character at a time.
 
-	:set expandtab
-
-When this option is set, the <Tab> key inserts a series of spaces.  Thus you
-get the same amount of white space as if a <Tab> character was inserted, but
-there isn't a real <Tab> character in your file.
-   The backspace key will delete each space by itself.  Thus after typing one
-<Tab> you have to press the <BS> key up to eight times to undo it.  If you are
-in the indent, pressing CTRL-D will be a lot quicker.
+	type				result ~
+	<Tab>				........
+	<Tab><BS>			.......
 
 
 CHANGING TABS IN SPACES (AND BACK)
 
-Setting 'expandtab' does not affect any existing tabs.  In other words, any
-tabs in the document remain tabs.  If you want to convert tabs to spaces, use
-the ":retab" command.  Use these commands: >
+Setting 'expandtab' does not immediately affect existing tab characters.  In
+order to purge a file from all its horizontal tab characters, Vim 5.3
+introduced the |:retab| command.  Use these commands: >
 
 	:set expandtab
-	:%retab
-
-Now Vim will have changed all indents to use spaces instead of tabs.  However,
-all tabs that come after a non-blank character are kept.  If you want these to
-be converted as well, add a !: >
-
-	:%retab!
+	:retab
 
 This is a little bit dangerous, because it can also change tabs inside a
 string.  To check if these exist, you could use this: >
 
 	/"[^"\t]*\t[^"]*"
 
-It's recommended not to use hard tabs inside a string.  Replace them with
-"\t" to avoid trouble.
+It's recommended not to use actual tab characters inside a string.  Replace
+them with "\t" to avoid trouble.
 
-The other way around works just as well: >
+  The other way around works just as well: >
 
 	:set noexpandtab
-	:%retab!
+	:retab!
+
+
+SOFT TAB STOPS
+
+When using only spaces, or a mix of spaces and horizontal tabs, one gets the
+unpleasant feeling that the two keys <Tab> and <BS> do not act in mirror, as
+they do when using only tab characters.
+  Vim 5.4 introduced the 'softtabstop' option.  On top of the (hard) tab stops
+used to display the horizontal tab characters in the text, Vim adds extra
+soft tab stops dedicated only to the cursor.  When 'softtabstop' is set to a
+positive value, and the <Tab> key will push the cursor to the next soft tab
+stop.  Vim will insert the correct combination of tab characters and spaces to
+make the effect visually.  Likewise pressing <BS> will have the cursor try to
+reach the nearest soft tab stop.  The following example uses
+`:set softtabstop=4`
+
+	type			result ~
+	<Tab>			....
+	<Tab><Tab>a		------->a
+	<Tab><Tab>a<Tab>	------->a...
+	<Tab><Tab>a<Tab><BS>	------->a
+
+  To maintain global coherence, one can `:set softtabstop=-1` so that
+the value of 'shiftwidth' is use for the number of columns between two soft
+tab stops.
+
+  If you prefer to have different values for 'shiftwidth' and 'softtabstop',
+you can still do so and use <C-t> to indent with 'shiftwidth'.  Or you can
+use the 'smarttab' option introduced in Vim 5.6, allowing for a unified
+<Tab> key that knows what to do in the different situations.
+
+
+VARIABLE TAB STOPS
+
+As we said before, the ASCII table was designed to remotely control
+teleprinters.  A given teleprinter could be configured to have their physical
+tab stops have variable spacing.  After all, the ^I control character was
+only stipulating: go to the next tab stop wherever it is.
+  Vim 7.3 introduced 'vartabstop' to emulate the same functionality.  For
+example if Vim was compiled with `+vartabs` and `:set vartabstop=2,4` one gets
+
+	actual character	result ~
+	^I			->
+	^I^I			->--->
+	^I^I^I			->--->--->
+
+  Similarly, 'varsofttabstop' was also introduced, to have variably spaced
+soft tab stops.  With `:set varsofttabstop=2,4` one gets
+
+	type			  result ~
+	<Tab>			  ..
+	<Tab><Tab>		  ......
+	<Tab><Tab><Tab>		  ------->....
+
+
+EXAMPLES OF CONFIGURATION
+
+By default, Vim is configured to use only tabs: >
+
+	:set tabstop=8
+	:set shiftwidth=8
+	:set noexpandtab
+	:set softtabstop=0
+	:set nosmarttab
+<
+  If you want to write C code as if it were Python (only spaces, with indents
+of 4 spaces), here is what you can use: >
+
+	:set shiftwidth=4
+	:set softtabstop=-1
+	:set expandtab
+<
+  If you want the same behavior but with better control over alignment
+(e.g.  lining up parameters or comments in multiples of 2 spaces), use: >
+
+	:set shiftwidth=4
+	:set softtabstop=2
+	:set expandtab
+	:set smarttab
+<
+  If instead, you would like to write C code like Bram Moolenaar would have
+(using a mix of tabs and spaces), you can use >
+
+	:set shiftwidth=4
+	:set softtabstop=-1
+<
 
 ==============================================================================
 *30.6*	Formatting comments
