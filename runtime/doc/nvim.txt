@@ -11,15 +11,43 @@ not a clone: compatibility with Vim (especially editor and Vimscript features,
 except |Vim9script|) is maintained where possible. See |vim-differences| for
 the complete reference.
 
-If you already use Vim, see |nvim-from-vim| for a quickstart. If you just
-installed Nvim and have never used it before, watch this 10-minute
-video: https://youtu.be/TQn2hJeHQbM .
+- If you already use Vim, see |nvim-from-vim| for a quickstart.
+- If you have never used Vim or Nvim before, see below.
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+What now?                                                    *nvim-quickstart*
 
 To learn how to use Vim in 30 minutes, try the tutorial: >vim
 
     :Tutor<Enter>
 <
-                                      Type |gO| to see the table of contents.
+Or watch this 10-minute video: https://youtu.be/TQn2hJeHQbM .
+
+To customize Nvim, you will need a config file. Create your |init.lua| by
+copying the "example_init.lua" file: >vim
+
+    :exe 'edit' stdpath('config') .. '/init.lua'
+    :read $VIMRUNTIME/example_init.lua
+<
+See |lua-guide| for practical notes on using Lua to configure Nvim.
+
+"IDE" features in Nvim are provided by |LSP|.
+
+If you are just trying out Nvim for a few minutes, and want to see the
+extremes of what it can do, try one of these popular "extension packs" or
+"distributions" (Note: Nvim is not affiliated with these projects, and does
+not support them):
+
+- *lazyvim* https://www.lazyvim.org/
+- *nvchad* https://nvchad.com/
+- *kickstart* https://github.com/nvim-lua/kickstart.nvim
+  - Not recommended; use `$VIMRUNTIME/example_init.lua` instead.
+
+However, we recommend (eventually) taking time to learn Nvim from its stock
+configuration, and incrementally setting options and adding plugins to your
+|config| as you discover a need.
 
 ==============================================================================
 Transitioning from Vim                                         *nvim-from-vim*
@@ -73,29 +101,4 @@ the same Nvim configuration on all of your machines, by creating
     source ~/.config/nvim/init.vim
 
 ==============================================================================
-What next?                                                   *nvim-quickstart*
-
-If you want to use Lua to configure Nvim, you can copy an example
-configuration to your |init.lua|
->vim
-    :exe 'edit' stdpath('config') .. '/init.lua'
-    :read $VIMRUNTIME/example_init.lua
-<
-See |lua-guide| for practical notes on using Lua to configure Nvim.
-
-"IDE" features in Nvim are provided by Language Server Protocol. See |lsp|
-
-If you are just trying out Nvim for a few minutes, and want to see the
-extremes of what it can do, try one of these popular "extension packs" or
-"distributions" (Note: Nvim is not affiliated with these projects, and does
-not support them):
-
-- *kickstart* https://github.com/nvim-lua/kickstart.nvim
-- *lazyvim* https://www.lazyvim.org/
-- *nvchad* https://nvchad.com/
-
-However, in general, we recommend (eventually) taking time to learn Nvim from
-its stock configuration, and incrementally setting options and adding plugins
-to your |config| as you find an explicit need to do so.
-
  vim:tw=78:ts=8:et:ft=help:norl:
