@@ -2206,6 +2206,26 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   }
   lua_setfield(lstate, -2, "count");
 
+  char nargs[2];
+  if (cmd->uc_argt & EX_EXTRA) {
+    if (cmd->uc_argt & EX_NOSPC) {
+      if (cmd->uc_argt & EX_NEEDARG) {
+        nargs[0] = '1';
+      } else {
+        nargs[0] = '?';
+      }
+    } else if (cmd->uc_argt & EX_NEEDARG) {
+      nargs[0] = '+';
+    } else {
+      nargs[0] = '*';
+    }
+  } else {
+    nargs[0] = '0';
+  }
+  nargs[1] = NUL;
+  lua_pushstring(lstate, nargs);
+  lua_setfield(lstate, -2, "nargs");
+
   // The size of this buffer is chosen empirically to be large enough to hold
   // every possible modifier (with room to spare). If the list of possible
   // modifiers grows this may need to be updated.
