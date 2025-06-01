@@ -88,7 +88,8 @@ function M.tab_check_wins()
         api.nvim_set_option_value('smoothscroll', true, { scope = 'local' })
         local ft = type == 'cmd' and 'cmdline' or ('msg' .. type)
         api.nvim_set_option_value('filetype', ft, { scope = 'local' })
-        api.nvim_set_option_value('eventignorewin', 'all', { scope = 'local' })
+        local ignore = 'all' .. (type == 'more' and ',-WinLeave,-TextYankPost' or '')
+        api.nvim_set_option_value('eventignorewin', ignore, { scope = 'local' })
       end)
     end
   end

@@ -42,8 +42,8 @@ local M = {
 ---@param len integer Number of rows that should be removed.
 function M.box:start_timer(buf, len)
   self.timer = vim.defer_fn(function()
-    if self.count == 0 or not api.nvim_buf_is_valid(buf) then
-      return -- Messages moved to split or buffer was closed.
+    if buf ~= ext.bufs.box or not api.nvim_buf_is_valid(buf) then
+      return -- Messages moved to more or buffer was closed.
     end
     api.nvim_buf_set_lines(buf, 0, len, false, {})
     self.count = self.count - 1
@@ -168,6 +168,16 @@ local function set_virttext(type)
   end
 end
 
+---Move message buffer to more window.
+local function msg_to_more(tar)
+  api.nvim_win_set_buf(ext.wins[ext.tab].more, ext.bufs[tar])
+  api.nvim_buf_delete(ext.bufs.more, { force = true })
+  api.nvim_buf_set_name(ext.bufs[tar], 'vim._extui.more')
+  ext.bufs.more, ext.bufs[tar], M[tar].count = ext.bufs[tar], -1, 0
+  ext.tab_check_wins()
+  M.set_pos('more')
+end
+
 -- We need to keep track of the current message column to be able to
 -- append or overwrite messages for :echon or carriage returns.
 local col = 0
@@ -231,6 +241,7 @@ function M.show_msg(tar, content, replace_last, append, more)
           hl_group = chunk[3],
           undo_restore = false,
           invalidate = true,
+          priority = 1,
         })
       end
 
@@ -245,21 +256,20 @@ function M.show_msg(tar, content, replace_last, append, more)
   if tar == 'box' then
     api.nvim_win_set_width(ext.wins[ext.tab].box, width)
     local h = api.nvim_win_text_height(ext.wins[ext.tab].box, { start_row = start_row })
-    if h.all > (more and 1 or math.ceil(o.lines * 0.5)) then
-      api.nvim_buf_set_lines(ext.bufs.box, start_row, -1, false, {})
+    if more and h.all > 1 then
+      msg_to_more(tar)
       api.nvim_win_set_width(ext.wins[ext.tab].box, M.box.width)
-      M.msg_history_show({ { 'spill', content } }) -- show message in 'more' window
       return
     end
 
     M.set_pos('box')
+    M.box.width = width
     if restart then
       M.box.timer:stop()
       M.box.timer:set_repeat(4000)
       M.box.timer:again()
     else
       M.box:start_timer(ext.bufs.box, row - start_row + 1)
-      M.box.width = width
     end
   elseif tar == 'cmd' and dupe == 0 then
     fn.clearmatches(ext.wins[ext.tab].cmd) -- Clear matchparen highlights.
@@ -272,8 +282,8 @@ function M.show_msg(tar, content, replace_last, append, more)
     else
       local h = api.nvim_win_text_height(ext.wins[ext.tab].cmd, {})
       if more and h.all > ext.cmdheight then
-        api.nvim_buf_set_lines(ext.bufs.cmd, start_row, -1, false, {})
-        M.msg_history_show({ { 'spill', content } }) -- show message in 'more' window
+        ext.cmd.highlighter:destroy()
+        msg_to_more(tar)
         return
       end
 
@@ -302,7 +312,6 @@ function M.show_msg(tar, content, replace_last, append, more)
   end
 end
 
-local append_more = 0
 local replace_bufwrite = false
 --- Route the message to the appropriate sink.
 ---
@@ -329,7 +338,7 @@ function M.msg_show(kind, content, _, _, append)
     -- Verbose messages are sent too often to be meaningful in the cmdline:
     -- always route to box regardless of cfg.msg.pos.
     M.show_msg('box', content, false, append)
-  elseif append_more > 0 and ext.cfg.msg.pos == 'cmd' then
+  elseif ext.cfg.msg.pos == 'cmd' and api.nvim_get_current_win() == ext.wins[ext.tab].more then
     -- Append message to already open 'more' window.
     M.msg_history_show({ { 'spill', content } })
     api.nvim_command('norm! G')
@@ -351,8 +360,9 @@ function M.msg_show(kind, content, _, _, append)
       M.virt.last[M.virt.idx.search][1] = nil
     end
 
-    -- Messages sent as a result of a typed command should be routed to the more window.
-    local more = ext.cmd.level >= 0 or kind == 'list_cmd'
+    -- Typed "inspection" messages should be routed to the more window.
+    local typed_more = { 'echo', 'echomsg', 'lua_print' }
+    local more = kind == 'list_cmd' or (ext.cmd.level >= 0 and vim.tbl_contains(typed_more, kind))
     M.show_msg(tar, content, replace_bufwrite, append, more)
     -- Replace message for every second bufwrite message.
     replace_bufwrite = not replace_bufwrite and kind == 'bufwrite'
@@ -402,13 +412,13 @@ function M.msg_history_show(entries)
   end
 
   -- Appending messages while 'more' window is open.
-  if append_more == 0 then
+  local append_more = api.nvim_get_current_win() == ext.wins[ext.tab].more
+  if not append_more then
     api.nvim_buf_set_lines(ext.bufs.more, 0, -1, false, {})
   end
-  append_more = append_more + 1
 
   for i, entry in ipairs(entries) do
-    M.show_msg('more', entry[2], i == 1 and append_more < 2, false)
+    M.show_msg('more', entry[2], i == 1 and not append_more, false)
   end
 
   M.set_pos('more')
@@ -443,17 +453,16 @@ function M.set_pos(type)
       end
       -- It's actually closed one event iteration later so schedule in case it was open.
       vim.schedule(function()
-        api.nvim_create_autocmd('WinEnter', {
+        api.nvim_set_current_win(win)
+        api.nvim_create_autocmd('WinLeave', {
           once = true,
           callback = function()
             if api.nvim_win_is_valid(win) then
               api.nvim_win_set_config(win, { hide = true })
             end
-            append_more = 0
           end,
           desc = 'Hide inactive "more" window.',
         })
-        api.nvim_set_current_win(win)
       end)
     end
   end

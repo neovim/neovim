@@ -110,10 +110,8 @@ function M.enable(opts)
     end
   end
 
-  if vim.v.vim_did_enter == 1 then
-    ext.tab_check_wins()
-    check_opt('cmdheight', vim.o.cmdheight)
-  end
+  ext.tab_check_wins()
+  check_opt('cmdheight', vim.o.cmdheight)
 
   api.nvim_create_autocmd('OptionSet', {
     group = ext.augroup,
