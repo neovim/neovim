@@ -165,7 +165,12 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
 
   if (ea.argt & EX_COUNT) {
     Integer count = ea.addr_count > 0 ? ea.line2 : (cmd != NULL ? cmd->uc_def : 0);
-    PUT_KEY(result, cmd, count, count);
+    // For built-in commands, if count is not explicitly provided and the default value is 0,
+    // do not include the count field in the result, so the command uses its built-in default
+    // behavior.
+    if (ea.addr_count > 0 || (cmd != NULL && cmd->uc_def != 0) || count != 0) {
+      PUT_KEY(result, cmd, count, count);
+    }
   }
 
   if (ea.argt & EX_REGSTR) {
@@ -377,68 +382,102 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     ea.argt = get_cmd_argt(ea.cmdidx);
   }
 
+  // Track whether the first argument was interpreted as count to avoid conflicts
+  bool count_from_first_arg = false;
   // Parse command arguments since it's needed to get the command address type.
   if (HAS_KEY(cmd, cmd, args)) {
-    // Process all arguments. Convert non-String arguments to String and check if String arguments
-    // have non-whitespace characters.
-    args = arena_array(arena, cmd->args.size);
-    for (size_t i = 0; i < cmd->args.size; i++) {
-      Object elem = cmd->args.items[i];
-      char *data_str;
+    // Special handling: for commands that support count but not regular arguments,
+    // if a single numeric argument is provided, interpret it as count
+    if (cmd->args.size == 1 && (ea.argt & EX_COUNT) && !(ea.argt & EX_EXTRA)) {
+      Object first_arg = cmd->args.items[0];
+      bool is_numeric = false;
+      int64_t count_value = 0;
 
-      switch (elem.type) {
-      case kObjectTypeBoolean:
-        data_str = arena_alloc(arena, 2, false);
-        data_str[0] = elem.data.boolean ? '1' : '0';
-        data_str[1] = NUL;
-        ADD_C(args, CSTR_AS_OBJ(data_str));
-        break;
-      case kObjectTypeBuffer:
-      case kObjectTypeWindow:
-      case kObjectTypeTabpage:
-      case kObjectTypeInteger:
-        data_str = arena_alloc(arena, NUMBUFLEN, false);
-        snprintf(data_str, NUMBUFLEN, "%" PRId64, elem.data.integer);
-        ADD_C(args, CSTR_AS_OBJ(data_str));
-        break;
-      case kObjectTypeString:
-        VALIDATE_EXP(!string_iswhite(elem.data.string), "command arg", "non-whitespace", NULL, {
-          goto end;
-        });
-        ADD_C(args, elem);
-        break;
-      default:
-        VALIDATE_EXP(false, "command arg", "valid type", api_typename(elem.type), {
-          goto end;
-        });
-        break;
+      if (first_arg.type == kObjectTypeInteger) {
+        is_numeric = true;
+        count_value = first_arg.data.integer;
+      } else if (first_arg.type == kObjectTypeString) {
+        // Try to parse string as a number Example: vim.api.nvim_cmd({cmd = 'copen', args = {'10'}}, {})
+        char *endptr;
+        long val = strtol(first_arg.data.string.data, &endptr, 10);
+        // Check if entire string was consumed (valid number) and string is not empty
+        if (*endptr == '\0' && first_arg.data.string.size > 0) {
+          is_numeric = true;
+          count_value = val;
+        }
+      }
+
+      if (is_numeric && count_value >= 0) {
+        // Interpret the argument as count
+        count_from_first_arg = true;
+        ea.addr_count = 1;
+        ea.line1 = ea.line2 = (linenr_T)count_value;
+        args = arena_array(arena, 0);
       }
     }
 
-    bool argc_valid;
+    if (!count_from_first_arg) {
+      // Process all arguments. Convert non-String arguments to String and check if String arguments
+      // have non-whitespace characters.
+      args = arena_array(arena, cmd->args.size);
+      for (size_t i = 0; i < cmd->args.size; i++) {
+        Object elem = cmd->args.items[i];
+        char *data_str;
 
-    // Check if correct number of arguments is used.
-    switch (ea.argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
-    case EX_EXTRA | EX_NOSPC | EX_NEEDARG:
-      argc_valid = args.size == 1;
-      break;
-    case EX_EXTRA | EX_NOSPC:
-      argc_valid = args.size <= 1;
-      break;
-    case EX_EXTRA | EX_NEEDARG:
-      argc_valid = args.size >= 1;
-      break;
-    case EX_EXTRA:
-      argc_valid = true;
-      break;
-    default:
-      argc_valid = args.size == 0;
-      break;
+        switch (elem.type) {
+        case kObjectTypeBoolean:
+          data_str = arena_alloc(arena, 2, false);
+          data_str[0] = elem.data.boolean ? '1' : '0';
+          data_str[1] = NUL;
+          ADD_C(args, CSTR_AS_OBJ(data_str));
+          break;
+        case kObjectTypeBuffer:
+        case kObjectTypeWindow:
+        case kObjectTypeTabpage:
+        case kObjectTypeInteger:
+          data_str = arena_alloc(arena, NUMBUFLEN, false);
+          snprintf(data_str, NUMBUFLEN, "%" PRId64, elem.data.integer);
+          ADD_C(args, CSTR_AS_OBJ(data_str));
+          break;
+        case kObjectTypeString:
+          VALIDATE_EXP(!string_iswhite(elem.data.string), "command arg", "non-whitespace", NULL, {
+            goto end;
+          });
+          ADD_C(args, elem);
+          break;
+        default:
+          VALIDATE_EXP(false, "command arg", "valid type", api_typename(elem.type), {
+            goto end;
+          });
+          break;
+        }
+      }
+
+      bool argc_valid;
+
+      // Check if correct number of arguments is used.
+      switch (ea.argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
+      case EX_EXTRA | EX_NOSPC | EX_NEEDARG:
+        argc_valid = args.size == 1;
+        break;
+      case EX_EXTRA | EX_NOSPC:
+        argc_valid = args.size <= 1;
+        break;
+      case EX_EXTRA | EX_NEEDARG:
+        argc_valid = args.size >= 1;
+        break;
+      case EX_EXTRA:
+        argc_valid = true;
+        break;
+      default:
+        argc_valid = args.size == 0;
+        break;
+      }
+
+      VALIDATE(argc_valid, "%s", "Wrong number of arguments", {
+        goto end;
+      });
     }
-
-    VALIDATE(argc_valid, "%s", "Wrong number of arguments", {
-      goto end;
-    });
   }
 
   // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
@@ -485,6 +524,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   }
 
   if (HAS_KEY(cmd, cmd, count)) {
+    VALIDATE(!count_from_first_arg, "%s", "Cannot specify both 'count' and numeric argument", {
+      goto end;
+    });
     VALIDATE_MOD((ea.argt & EX_COUNT), "count", cmd->cmd.data);
     VALIDATE_EXP((cmd->count >= 0), "count", "non-negative Integer", NULL, {
       goto end;
