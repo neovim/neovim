@@ -566,6 +566,9 @@ function protocol.make_client_capabilities()
       inlayHint = {
         refreshSupport = true,
       },
+      workspace = {
+        refreshSupport = false,
+      },
     },
     experimental = nil,
     window = {
