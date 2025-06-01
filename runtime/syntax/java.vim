@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2025 May 30
+" Last Change:		2025 Jun 01
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -229,15 +229,15 @@ endif
 if exists("g:java_highlight_java_lang_ids")
   let g:java_highlight_all = 1
 endif
+
 if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("g:java_highlight_java_lang")
   " java.lang.*
   "
-  " The keywords of javaR_JavaLang, javaC_JavaLang, javaE_JavaLang,
-  " and javaX_JavaLang are sub-grouped according to the Java version
-  " of their introduction, and sub-group keywords (that is, class
-  " names) are arranged in alphabetical order, so that future newer
-  " keywords can be pre-sorted and appended without disturbing
-  " the current keyword placement. The below _match_es follow suit.
+  " The type names in ":syn-keyword"s (and in ":syn-match"es) of the
+  " "java[CEIRX]_JavaLang" syntax groups are sub-grouped according to
+  " the Java version of their introduction, and sub-group names are
+  " arranged in alphabetical order, so that future newer names can be
+  " pre-sorted and appended without disturbing their placement.
 
   syn keyword javaR_JavaLang ArithmeticException ArrayIndexOutOfBoundsException ArrayStoreException ClassCastException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException IndexOutOfBoundsException NegativeArraySizeException NullPointerException NumberFormatException RuntimeException SecurityException StringIndexOutOfBoundsException IllegalStateException UnsupportedOperationException EnumConstantNotPresentException TypeNotPresentException IllegalCallerException LayerInstantiationException WrongThreadException MatchException
   syn cluster javaClasses add=javaR_JavaLang
@@ -278,15 +278,35 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   syn keyword javaX_JavaLang ClassNotFoundException CloneNotSupportedException Exception IllegalAccessException InstantiationException InterruptedException NoSuchMethodException Throwable NoSuchFieldException ReflectiveOperationException
   syn cluster javaClasses add=javaX_JavaLang
   hi def link javaX_JavaLang javaX_Java
+  syn keyword javaI_JavaLang Cloneable Runnable CharSequence Appendable Deprecated Override Readable SuppressWarnings AutoCloseable SafeVarargs FunctionalInterface ProcessHandle
+  " Member interfaces:
+  exec 'syn match javaI_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<UncaughtExceptionHandler\>"'
+  exec 'syn match javaI_JavaLang "\%(\<ProcessHandle\.\)\@' . s:ff.Peek('14', '') . '<=\<Info\>"'
+  exec 'syn match javaI_JavaLang "\%(\<System\.\)\@' . s:ff.Peek('7', '') . '<=\<Logger\>"'
+  exec 'syn match javaI_JavaLang "\%(\<StackWalker\.\)\@' . s:ff.Peek('12', '') . '<=\<StackFrame\>"'
+  exec 'syn match javaI_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<Builder\>"'
+  exec 'syn match javaI_JavaLang "\%(\<Thread\.Builder\.\)\@' . s:ff.Peek('15', '') . '<=\<OfPlatform\>"'
+  exec 'syn match javaI_JavaLang "\%(\<Thread\.Builder\.\)\@' . s:ff.Peek('15', '') . '<=\<OfVirtual\>"'
 
+  if !exists("g:java_highlight_generics")
+    " The non-class parameterised names of java.lang members.
+    syn keyword javaI_JavaLang Comparable Iterable
+  endif
+
+  syn cluster javaClasses add=javaI_JavaLang
+  hi def link javaI_JavaLang javaI_Java
+
+  " Common groups for generated "javaid.vim" syntax items.
   hi def link javaR_Java javaR_
   hi def link javaC_Java javaC_
   hi def link javaE_Java javaE_
   hi def link javaX_Java javaX_
+  hi def link javaI_Java javaI_
   hi def link javaX_ javaExceptions
   hi def link javaR_ javaExceptions
   hi def link javaE_ javaExceptions
   hi def link javaC_ javaConstant
+  hi def link javaI_ javaTypedef
 
   syn keyword javaLangObject getClass notify notifyAll wait
 
