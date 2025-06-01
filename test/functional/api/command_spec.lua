@@ -227,6 +227,7 @@ describe('nvim_create_user_command', function()
         line1 = 1,
         line2 = 1,
         mods = '',
+        nargs = '*',
         smods = {
           browse = false,
           confirm = false,
@@ -267,6 +268,7 @@ describe('nvim_create_user_command', function()
         line1 = 1,
         line2 = 1,
         mods = '',
+        nargs = '*',
         smods = {
           browse = false,
           confirm = false,
@@ -307,6 +309,7 @@ describe('nvim_create_user_command', function()
         line1 = 1,
         line2 = 1,
         mods = '',
+        nargs = '*',
         smods = {
           browse = false,
           confirm = false,
@@ -347,6 +350,7 @@ describe('nvim_create_user_command', function()
         line1 = 10,
         line2 = 10,
         mods = 'confirm unsilent botright horizontal',
+        nargs = '*',
         smods = {
           browse = false,
           confirm = true,
@@ -387,6 +391,7 @@ describe('nvim_create_user_command', function()
         line1 = 1,
         line2 = 42,
         mods = '',
+        nargs = '*',
         smods = {
           browse = false,
           confirm = false,
@@ -427,6 +432,7 @@ describe('nvim_create_user_command', function()
         line1 = 1,
         line2 = 1,
         mods = '',
+        nargs = '*',
         smods = {
           browse = false,
           confirm = false,
@@ -479,6 +485,7 @@ describe('nvim_create_user_command', function()
         line1 = 1,
         line2 = 1,
         mods = '',
+        nargs = '?',
         smods = {
           browse = false,
           confirm = false,
@@ -520,6 +527,7 @@ describe('nvim_create_user_command', function()
         line1 = 1,
         line2 = 1,
         mods = '',
+        nargs = '?',
         smods = {
           browse = false,
           confirm = false,
@@ -572,6 +580,7 @@ describe('nvim_create_user_command', function()
         line1 = 1,
         line2 = 1,
         mods = '',
+        nargs = '0',
         smods = {
           browse = false,
           confirm = false,
@@ -612,6 +621,7 @@ describe('nvim_create_user_command', function()
         line1 = 1,
         line2 = 1,
         mods = '',
+        nargs = '0',
         smods = {
           browse = false,
           confirm = false,
