@@ -7468,7 +7468,7 @@ void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
         *tabnr = tnum;
         return;
       }
-      wnum++;
+      wnum += win_has_winnr(wp);
     }
     tnum++;
     wnum = 1;

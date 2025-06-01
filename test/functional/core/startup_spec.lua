@@ -761,7 +761,7 @@ describe('startup', function()
             \   'row': 3,
             \   'col': 3
             \ }
-      autocmd WinEnter * call nvim_open_win(bufnr, v:false, config)]]
+      autocmd WinEnter * let g:float_win = nvim_open_win(bufnr, v:false, config)]]
     )
     finally(function()
       os.remove('Xdiff.vim')
@@ -769,7 +769,7 @@ describe('startup', function()
     clear { args = { '-u', 'Xdiff.vim', '-d', 'Xdiff.vim', 'Xdiff.vim' } }
     eq(true, api.nvim_get_option_value('diff', { win = fn.win_getid(1) }))
     eq(true, api.nvim_get_option_value('diff', { win = fn.win_getid(2) }))
-    local float_win = fn.win_getid(3)
+    local float_win = eval('g:float_win')
     eq('editor', api.nvim_win_get_config(float_win).relative)
     eq(false, api.nvim_get_option_value('diff', { win = float_win }))
   end)

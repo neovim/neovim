@@ -68,10 +68,11 @@ The main Vim window can hold several split windows.  There are also tab pages
 If a window is focusable, it is part of the "navigation stack", that is,
 editor commands such as :windo, |CTRL-W|, etc., will consider the window as
 one that can be made the "current window". A non-focusable window will be
-skipped by such commands (though it can be explicitly focused by
-|nvim_set_current_win()|). Non-focusable windows are not listed by |:tabs|,
-or counted by the default 'tabline'. Their buffer content is not included
-in 'complete' "w" completion.
+skipped by such commands as it isn't assigned a window number. It can be
+explicitly focused by |nvim_set_current_win()|, because it is still
+assigned a |window-ID|. If it is focused, it will also have a window number.
+Non-focusable windows are not listed by |:tabs|, or counted by the default
+'tabline'. Their buffer content is not included in 'complete' "w" completion.
 
 Windows (especially floating windows) can have many other |api-win_config|
 properties such as "hide" and "fixed" which also affect behavior.
