@@ -5822,10 +5822,10 @@ vim.o.sr = vim.o.shiftround
 vim.go.shiftround = vim.o.shiftround
 vim.go.sr = vim.go.shiftround
 
---- Number of spaces to use for each step of (auto)indent.  Used for
---- `'cindent'`, `>>`, `<<`, etc.
---- When zero the 'tabstop' value will be used.  Use the `shiftwidth()`
---- function to get the effective shiftwidth value.
+--- Number of columns that make up one level of (auto)indentation.  Used
+--- by `'cindent'`, `<<`, `>>`, etc.
+--- If set to 0, Vim uses the current 'tabstop' value.  Use `shiftwidth()`
+--- to obtain the effective value in scripts.
 ---
 --- @type integer
 vim.o.shiftwidth = 8

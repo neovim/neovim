@@ -5503,10 +5503,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'shiftwidth'* *'sw'*
 'shiftwidth' 'sw'	number	(default 8)
 			local to buffer
-	Number of spaces to use for each step of (auto)indent.  Used for
-	|'cindent'|, |>>|, |<<|, etc.
-	When zero the 'tabstop' value will be used.  Use the |shiftwidth()|
-	function to get the effective shiftwidth value.
+	Number of columns that make up one level of (auto)indentation.  Used
+	by |'cindent'|, |<<|, |>>|, etc.
+	If set to 0, Vim uses the current 'tabstop' value.  Use |shiftwidth()|
+	to obtain the effective value in scripts.
 
 					*'shortmess'* *'shm'* *E1336*
 'shortmess' 'shm'	string	(default "ltToOCF")
