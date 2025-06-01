@@ -1582,13 +1582,8 @@ old way, put the following line into your Vim startup file: >
 All (exported) public types declared in `java.lang` are always automatically
 imported and available as simple names.  To highlight them, use: >
 	:let g:java_highlight_java_lang_ids = 1
-
-You can also highlight types of most standard Java packages if you download
-the javaid.vim script at https://www.fleiner.com/vim/download.html.  If you
-prefer to only highlight types of a certain package, say `java.io`, use the
-following: >
-	:let g:java_highlight_java_io = 1
-Check the javaid.vim file for a list of all the packages that are supported.
+You can also generate syntax items for other public and protected types and
+opt in to highlight some of their names see |java-package-info-url|.
 
 Headers of indented function declarations can be highlighted (along with parts
 of lambda expressions and method reference expressions), but it depends on how
@@ -1740,7 +1735,8 @@ The supported JEP numbers are to be drawn from this table:
 Note that as soon as the particular preview feature will have been integrated
 into the Java platform, its entry will be removed from the table and related
 optionality will be discontinued.
-
+						*java-package-info-url*
+https://github.com/zzzyxwvut/java-vim/blob/42cbd51/tools/javaid/src/javaid/package-info.java
 
 JSON			*json.vim* *ft-json-syntax* *g:vim_json_conceal*
 						*g:vim_json_warnings*
