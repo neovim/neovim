@@ -373,11 +373,17 @@ To quote a block of ex-commands verbatim, place a greater than (>) character
 at the end of the line before the block and a less than (<) character as the
 first non-blank on a line following the block.  Any line starting in column 1
 also implicitly stops the block of ex-commands before it.  E.g. >
-    function Example_Func()
-	echo "Example"
-    endfunction
+	function Example_Func()
+	  echo "Example"
+	endfunction
 <
-
+To enable syntax highlighting for a block of code, place a language name
+annotation (e.g. "vim") after a greater than (>) character.  E.g. >vim
+	function Example_Func()
+	  echo "Example"
+	endfunction
+<
+						*help-notation*
 The following are highlighted differently in a Vim help file:
   - a special key name expressed either in <> notation as in <PageDown>, or
     as a Ctrl character as in CTRL-X
