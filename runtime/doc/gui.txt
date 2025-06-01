@@ -64,18 +64,24 @@ Stop or detach the current UI
                 the channel to be closed, it may be (incorrectly) reported as
                 an error.
 
-                Note: Not supported on Windows, currently.
+                Note: Not supported on Windows yet.
 
 ------------------------------------------------------------------------------
-Restart the embedded Nvim server
+Restart Nvim
 
                                                 *:restart*
 :restart
-                Detaches the embedded server from the UI and then restarts
-                it. This fails when changes have been made
-                and Vim refuses to |abandon| the current buffer.
+                Restarts the Nvim server with the same startup arguments
+                |v:argv| and reattaches the current UI to the new server.
+                All other UIs will detach.
 
-                Note: This only works if the UI started the server initially.
+                This fails when changes have been made and Vim refuses to
+                |abandon| the current buffer.
+
+                Note: This only works if the UI and server are on the same
+                system.
+                Note: Not supported on Windows yet.
+
 :restart!
                 Force restarts the embedded server irrespective of unsaved
                 buffers.

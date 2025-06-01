@@ -130,9 +130,10 @@ local utfs = {
 --- @return vim.SystemObj Object with the fields:
 ---   - cmd (string[]) Command name and args
 ---   - pid (integer) Process ID
----   - wait (fun(timeout: integer|nil): SystemCompleted) Wait for the process to complete. Upon
----     timeout the process is sent the KILL signal (9) and the exit code is set to 124. Cannot
----     be called in |api-fast|.
+---   - wait (fun(timeout: integer|nil): SystemCompleted) Wait for the process to complete,
+---     including any open handles for background processes (e.g., `bash -c 'sleep 10 &'`).
+---     To avoid waiting for handles, set stdout=false and stderr=false. Upon timeout the process is
+---     sent the KILL signal (9) and the exit code is set to 124. Cannot be called in |api-fast|.
 ---     - SystemCompleted is an object with the fields:
 ---       - code: (integer)
 ---       - signal: (integer)
