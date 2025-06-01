@@ -56,6 +56,8 @@ with these (optional) keys:
 			Only from |--embed| UI on startup. |ui-startup-stdin|
 - `stdin_tty`		Tells if `stdin` is a `tty` or not.
 - `stdout_tty`		Tells if `stdout` is a `tty` or not.
+- `pixel_width`		Sets the window width in pixels (default 0).
+- `pixel_height`	Sets the window height in pixels (default 0).
 
 Specifying an unknown option is an error; UIs can check the |api-metadata|
 `ui_options` key for supported options.
