@@ -29,6 +29,11 @@ int os_open_conin_fd(void)
   return conin_fd;
 }
 
+void os_clear_hwnd(void) 
+{
+    hWnd = NULL;
+}
+
 void os_replace_stdin_to_conin(void)
 {
   close(STDIN_FILENO);
