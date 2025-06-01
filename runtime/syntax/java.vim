@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2025 Apr 28
+" Last Change:		2025 May 30
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -301,9 +301,7 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   hi def link javaLangObject javaConstant
 endif
 
-if filereadable(expand("<sfile>:p:h") . "/javaid.vim")
-  source <sfile>:p:h/javaid.vim
-endif
+runtime syntax/javaid.vim
 
 if exists("g:java_space_errors")
   if !exists("g:java_no_trail_space_error")
