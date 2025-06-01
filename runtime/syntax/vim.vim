@@ -219,7 +219,7 @@ syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=@vi
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutocmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDoautocmd,vimDebuggreedy,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFor,vimFunction,vimFuncFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimImport,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimThrow,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutocmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDoautocmd,vimDebuggreedy,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimElse,vimEnddef,vimEndfunction,vimEndif,vimExecute,vimIsCommand,vimExtCmd,vimExFilter,vimExMark,vimFor,vimFunction,vimFuncFold,vimGrep,vimGrepAdd,vimGlobal,vimHelpgrep,vimHighlight,vimImport,vimLet,vimLoadkeymap,vimLockvar,vimMake,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimProfdel,vimProfile,vimRedir,vimSet,vimSleep,vimSort,vimSyntax,vimThrow,vimUnlet,vimUnlockvar,vimUnmap,vimUserCmd,vimVimgrep,vimVimgrepadd,vimMenu,vimMenutranslate,@vim9CmdList,@vimExUserCmdList,vimLua,vimMzScheme,vimPerl,vimPython,vimPython3,vimPythonX,vimRuby,vimTcl
 syn cluster vim9CmdList	contains=vim9Abstract,vim9Class,vim9Const,vim9Enum,vim9Export,vim9Final,vim9For,vim9Interface,vim9Type,vim9Var
 syn match vimCmdSep	"\\\@1<!|"	skipwhite nextgroup=@vimCmdList,vimSubst1,vimFunc
 syn match vimCmdSep	":\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
@@ -1332,6 +1332,27 @@ syn region	vimMatchPattern	contained	matchgroup=Delimiter start="\z([!#$%&'()*+,
 syn match	vimNormal		"\<norm\%[al]\>!\=" skipwhite nextgroup=vimNormalArg contains=vimBang
 syn region	vimNormalArg	contained	start="\S" skip=+\n\s*\\\|\n\s*["#]\\ + end="$" contains=@vimContinue
 
+" Profile: {{{2
+" =======
+syn match	vimProfileBang	 contained	"\a\@1<=!"	skipwhite nextgroup=vimProfileArg
+syn keyword	vimProfileArg	 contained	start	skipwhite nextgroup=vimProfilePattern
+syn keyword	vimProfileArg	 contained	func	skipwhite nextgroup=vimProfilePattern
+syn keyword	vimProfileArg	 contained	file	skipwhite nextgroup=vimProfilePattern
+syn keyword	vimProfileArg	 contained	stop pause	skipwhite nextgroup=vimCmdSep,@vimComment
+syn keyword	vimProfileArg	 contained	continue dump	skipwhite nextgroup=vimCmdSep,@vimComment
+" TODO: match file pattern
+syn region	vimProfilePattern contained
+      \ start="\S"
+      \ skip=+\\[|"#]+
+      \ end="$" end=+\ze\s*[|"#]+
+      \ skipwhite nextgroup=vimCmdSep,vimComment,vim9Comment
+syn match	vimProfile	"\<prof\%[ile]\>"	skipwhite nextgroup=vimProfileBang,vimProfileArg
+
+syn keyword	vimProfdelArg	func	skipwhite nextgroup=vimProfilePattern
+syn keyword	vimProfdelArg	file	skipwhite nextgroup=vimProfilePattern
+syn keyword	vimProfdelArg	here	skipwhite nextgroup=vimCmdSep,@vimComment
+syn match	vimProfdel	"\<profd\%[el]\>" skipwhite nextgroup=vimProfdelArg
+
 " Redir: {{{2
 " =====
 syn match	vimRedir		"\<redir\=\>"	skipwhite nextgroup=vimRedirBang,vimRedirFileOperator,vimRedirVariableOperator,vimRedirRegister,vimRedirEnd
@@ -2154,6 +2175,11 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimPerl	vimCommand
  hi def link vimPlainMark	vimMark
  hi def link vimPlainRegister	vimRegister
+ hi def link vimProfile	vimCommand
+ hi def link vimProfileArg	vimSpecial
+ hi def link vimProfileBang	vimBang
+ hi def link vimProfdel	vimCommand
+ hi def link vimProfdelArg	vimSpecial
  hi def link vimPython	vimCommand
  hi def link vimPython3	vimCommand
  hi def link vimPythonX	vimCommand
