@@ -7760,10 +7760,10 @@ local options = {
       cb = 'did_set_shiftwidth_tabstop',
       defaults = 8,
       desc = [=[
-        Number of spaces to use for each step of (auto)indent.  Used for
-        |'cindent'|, |>>|, |<<|, etc.
-        When zero the 'tabstop' value will be used.  Use the |shiftwidth()|
-        function to get the effective shiftwidth value.
+        Number of columns that make up one level of (auto)indentation.  Used
+        by |'cindent'|, |<<|, |>>|, etc.
+        If set to 0, Vim uses the current 'tabstop' value.  Use |shiftwidth()|
+        to obtain the effective value in scripts.
       ]=],
       full_name = 'shiftwidth',
       scope = { 'buf' },
