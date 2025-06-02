@@ -80,13 +80,13 @@ end
 ---@param diagnostics lsp.Diagnostic[]
 ---@param bufnr integer
 ---@param client_id integer
----@return vim.Diagnostic[]
+---@return vim.Diagnostic.Set[]
 local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   local buf_lines = get_buf_lines(bufnr)
   local client = vim.lsp.get_client_by_id(client_id)
   local position_encoding = client and client.offset_encoding or 'utf-16'
   --- @param diagnostic lsp.Diagnostic
-  --- @return vim.Diagnostic
+  --- @return vim.Diagnostic.Set
   return vim.tbl_map(function(diagnostic)
     local start = diagnostic.range.start
     local _end = diagnostic.range['end']
@@ -104,7 +104,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
     if _end.line > start.line then
       end_line = buf_lines and buf_lines[_end.line + 1] or ''
     end
-    --- @type vim.Diagnostic
+    --- @type vim.Diagnostic.Set
     return {
       lnum = start.line,
       col = vim.str_byteindex(line, position_encoding, start.character, false),
