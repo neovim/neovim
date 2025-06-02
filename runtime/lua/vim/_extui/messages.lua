@@ -168,7 +168,7 @@ local function set_virttext(type)
   end
 end
 
----Move message buffer to more window.
+--- Move message buffer to more window.
 local function msg_to_more(tar)
   api.nvim_win_set_buf(ext.wins[ext.tab].more, ext.bufs[tar])
   api.nvim_buf_delete(ext.bufs.more, { force = true })
@@ -433,13 +433,14 @@ function M.set_pos(type)
   local function win_set_pos(win)
     local texth = type and api.nvim_win_text_height(win, {}) or 0
     local height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
-    api.nvim_win_set_config(win, {
+    local config = {
       hide = false,
       relative = 'laststatus',
       height = height,
       row = win == ext.wins[ext.tab].box and 0 or 1,
       col = 10000,
-    })
+    }
+    api.nvim_win_set_config(win, config)
     if type == 'box' then
       -- Ensure last line is visible and first line is at top of window.
       local row = (texth.all > height and texth.end_row or 0) + 1
@@ -454,11 +455,17 @@ function M.set_pos(type)
       -- It's actually closed one event iteration later so schedule in case it was open.
       vim.schedule(function()
         api.nvim_set_current_win(win)
-        api.nvim_create_autocmd('WinLeave', {
-          once = true,
-          callback = function()
-            if api.nvim_win_is_valid(win) then
-              api.nvim_win_set_config(win, { hide = true })
+        api.nvim_create_autocmd({ 'WinEnter', 'CmdwinEnter', 'CmdwinLeave' }, {
+          callback = function(ev)
+            if ev.event == 'CmdwinEnter' then
+              api.nvim_win_set_config(win, { relative = 'win', win = 0, row = 0, col = 0 })
+            elseif ev.event == 'CmdwinLeave' then
+              api.nvim_win_set_config(win, config)
+            else
+              if api.nvim_win_is_valid(win) then
+                api.nvim_win_set_config(win, { hide = true })
+              end
+              return true
             end
           end,
           desc = 'Hide inactive "more" window.',

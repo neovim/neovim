@@ -65,7 +65,7 @@ function M.tab_check_wins()
         anchor = type ~= 'cmd' and 'SE' or nil,
         hide = type ~= 'cmd' or M.cmdheight == 0 or nil,
         title = type == 'more' and 'Messages' or nil,
-        border = type == 'box' and not o.termguicolors and 'single' or border or 'none',
+        border = type == 'box' and 'single' or border or 'none',
         -- kZIndexMessages < zindex < kZIndexCmdlinePopupMenu (grid_defs.h), 'more' below others.
         zindex = 200 - (type == 'more' and 1 or 0),
         _cmdline_offset = type == 'cmd' and 0 or nil,
@@ -88,7 +88,7 @@ function M.tab_check_wins()
         api.nvim_set_option_value('smoothscroll', true, { scope = 'local' })
         local ft = type == 'cmd' and 'cmdline' or ('msg' .. type)
         api.nvim_set_option_value('filetype', ft, { scope = 'local' })
-        local ignore = 'all' .. (type == 'more' and ',-WinLeave,-TextYankPost' or '')
+        local ignore = 'all' .. (type == 'more' and ',-TextYankPost' or '')
         api.nvim_set_option_value('eventignorewin', ignore, { scope = 'local' })
       end)
     end
