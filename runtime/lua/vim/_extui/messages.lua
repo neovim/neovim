@@ -170,11 +170,10 @@ end
 
 --- Move message buffer to more window.
 local function msg_to_more(tar)
-  api.nvim_win_set_buf(ext.wins[ext.tab].more, ext.bufs[tar])
   api.nvim_buf_delete(ext.bufs.more, { force = true })
   api.nvim_buf_set_name(ext.bufs[tar], 'vim._extui.more')
   ext.bufs.more, ext.bufs[tar], M[tar].count = ext.bufs[tar], -1, 0
-  ext.tab_check_wins()
+  ext.tab_check_wins() -- Create and setup new/moved buffer.
   M.set_pos('more')
 end
 
