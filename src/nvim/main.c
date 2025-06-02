@@ -814,7 +814,7 @@ void getout(int exitval)
 
 #ifdef MSWIN
   // Restore Windows console icon before exiting.
-  os_icon_set(NULL, NULL);
+  os_icon_reset();
   os_title_reset();
 #endif
 
