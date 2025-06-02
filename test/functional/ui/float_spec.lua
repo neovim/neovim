@@ -369,6 +369,21 @@ describe('float window', function()
     )
   end)
 
+  it('no error message when reconfig relative field on closed win', function()
+    command('split')
+    local winid = api.nvim_open_win(0, false, {
+      relative = 'win',
+      width = 1,
+      height = 1,
+      col = 1,
+      row = 1,
+    })
+    eq(1001, api.nvim_win_get_config(winid).win)
+    command('close')
+    api.nvim_win_set_config(winid, { relative = 'editor', row = 1, col = 1 })
+    eq(nil, api.nvim_win_get_config(winid).win)
+  end)
+
   it('is not operated on by windo when non-focusable #15374', function()
     command([[
       let winids = []

@@ -1206,6 +1206,8 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
                     "non-float with 'win' requires at least 'split' or 'vertical'");
       goto fail;
     }
+  } else {
+    fconfig->window = 0;
   }
 
   if (HAS_KEY_X(config, external)) {
