@@ -1369,8 +1369,12 @@ static void trigger_complete_changed_event(int cur)
 /// becomes inconsistent with compl_first_match (list) after former is sorted by
 /// fuzzy score. The two structures end up in different orders.
 /// Ideally, compl_first_match list should have been sorted instead.
-static void trim_compl_match_array(void)
+///
+/// Returns recalculated index of shown match.
+static int trim_compl_match_array(int shown_match_idx)
 {
+  int remove_count = 0;
+
   // Count current matches per source.
   int *match_counts = xcalloc((size_t)cpt_sources_count, sizeof(int));
   for (int i = 0; i < compl_match_arraysize; i++) {
@@ -1402,6 +1406,8 @@ static void trim_compl_match_array(void)
       if (limit <= 0 || match_counts[src_idx] < limit) {
         trimmed[trimmed_idx++] = compl_match_array[i];
         match_counts[src_idx]++;
+      } else if (i < shown_match_idx) {
+        remove_count++;
       }
     } else {
       trimmed[trimmed_idx++] = compl_match_array[i];
@@ -1413,6 +1419,7 @@ static void trim_compl_match_array(void)
 
 theend:
   xfree(match_counts);
+  return shown_match_idx - remove_count;
 }
 
 /// pumitem qsort compare func
@@ -1607,8 +1614,8 @@ static int ins_compl_build_pum(void)
     shown_match_ok = true;
   }
 
-  if (is_forward && fuzzy_sort && cpt_sources_array != NULL) {
-    trim_compl_match_array();  // Truncate by max_matches in 'cpt'
+  if (fuzzy_sort && cpt_sources_array != NULL) {
+    cur = trim_compl_match_array(cur);  // Truncate by max_matches in 'cpt'
   }
   if (!shown_match_ok) {  // no displayed match at all
     cur = -1;

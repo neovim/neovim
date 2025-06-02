@@ -4319,7 +4319,33 @@ func Test_complete_match_count()
   call assert_equal('abac', getline(4))
   bw!
 
-  set completeopt& complete&
+  " Items with '\n' that cause menu to shift, with no leader (issue #17394)
+  func! ComplFunc(findstart, base)
+    if a:findstart == 1
+      return col('.')  - 1
+    endif
+    return ["one\ntwo\nthree", "four five six", "hello\nworld\nhere"]
+  endfunc
+  set completeopt=menuone,popup,noselect,fuzzy infercase
+  set complete=.^1,FComplFunc^5
+  new
+  call setline(1, ["foo", "bar", "baz"])
+  execute "normal Go\<c-n>\<c-n>\<c-n>"
+  call assert_equal(['one', 'two', 'three'], getline(4, 6))
+  %d
+  call setline(1, ["foo", "bar", "baz"])
+  execute "normal Go\<c-n>\<c-n>\<c-n>\<c-p>"
+  call assert_equal('foo', getline(4))
+  execute "normal S\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>"
+  call assert_equal('foo', getline(4))
+  set complete=.^1,FComplFunc^2
+  execute "normal S\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>\<c-n>"
+  call assert_equal('foo', getline(4))
+  execute "normal S\<c-n>\<c-p>\<c-p>\<c-p>\<c-n>\<c-n>"
+  call assert_equal('four five six', getline(4))
+  bw!
+
+  set completeopt& complete& infercase&
   delfunc PrintMenuWords
   delfunc ComplFunc
   delfunc CompleteItemsSelect
