@@ -75,8 +75,7 @@ Restart the embedded Nvim server
                 it. This fails when changes have been made
                 and Vim refuses to |abandon| the current buffer.
 
-                Note: This only works if the UI started the server initially.                
-                
+                Note: This only works if the UI started the server initially.
 :restart!
                 Force restarts the embedded server irrespective of unsaved
                 buffers.
