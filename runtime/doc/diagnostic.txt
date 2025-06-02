@@ -436,21 +436,39 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
     0-based rows and columns). |api-indexing|
 
     Fields: ~
-      • {bufnr}?      (`integer`) Buffer number
+      • {bufnr}       (`integer`) Buffer number
       • {lnum}        (`integer`) The starting line of the diagnostic
                       (0-indexed)
-      • {end_lnum}?   (`integer`) The final line of the diagnostic (0-indexed)
+      • {end_lnum}    (`integer`) The final line of the diagnostic (0-indexed)
       • {col}         (`integer`) The starting column of the diagnostic
                       (0-indexed)
-      • {end_col}?    (`integer`) The final column of the diagnostic
+      • {end_col}     (`integer`) The final column of the diagnostic
                       (0-indexed)
-      • {severity}?   (`vim.diagnostic.Severity`) The severity of the
+      • {severity}    (`vim.diagnostic.Severity`) The severity of the
                       diagnostic |vim.diagnostic.severity|
       • {message}     (`string`) The diagnostic text
       • {source}?     (`string`) The source of the diagnostic
       • {code}?       (`string|integer`) The diagnostic code
       • {user_data}?  (`any`) arbitrary data plugins can add
       • {namespace}?  (`integer`)
+
+*vim.Diagnostic.Set*
+    Extends: |vim.Diagnostic|
+
+
+    Fields: ~
+      • {bufnr}      (`nil`) Do not set. Will be overridden by
+                     `vim.diagnostic.set()`.
+      • {namespace}  (`nil`) Do not set. Will be overridden by
+                     `vim.diagnostic.set()`.
+      • {col}?       (`integer`, default: `0`) The starting column of the
+                     diagnostic in bytes (0-indexed)
+      • {end_lnum}?  (`integer`, default: same as `lnum`) The final line of
+                     the diagnostic (0-indexed)
+      • {end_col}?   (`integer`, default: same as `col`) The final column of
+                     the diagnostic (0-indexed)
+      • {severity}?  (`vim.diagnostic.Severity`, default: `vim.diagnostic.severity.ERROR`)
+                     The severity of the diagnostic |vim.diagnostic.severity|
 
 *vim.diagnostic.GetOpts*
     A table with the following keys:
@@ -930,7 +948,7 @@ set({namespace}, {bufnr}, {diagnostics}, {opts})        *vim.diagnostic.set()*
     Parameters: ~
       • {namespace}    (`integer`) The diagnostic namespace
       • {bufnr}        (`integer`) Buffer number
-      • {diagnostics}  (`vim.Diagnostic[]`) See |vim.Diagnostic|.
+      • {diagnostics}  (`vim.Diagnostic.Set[]`) See |vim.Diagnostic.Set|.
       • {opts}         (`vim.diagnostic.Opts?`) Display options to pass to
                        |vim.diagnostic.show()|. See |vim.diagnostic.Opts|.
 
