@@ -806,8 +806,8 @@ syn region	vimPatSepZone	oneline   contained   matchgroup=vimPatSepZ start="\\%\
 syn region	vimPatRegion	contained transparent matchgroup=vimPatSepR start="\\[z%]\=(" end="\\)"	contains=@vimSubstList oneline
 syn match	vimNotPatSep	contained	"\\\\"
 syn cluster	vimStringGroup	contains=vimEscape,vimEscapeBrace,vimPatSep,vimNotPatSep,vimPatSepErr,vimPatSepZone,@Spell
-syn region	vimString	oneline keepend	matchgroup=vimString start=+[^a-zA-Z>\\@]"+lc=1 skip=+\\\\\|\\"+ matchgroup=vimStringEnd end=+"+ nextgroup=vimSubscript contains=@vimStringGroup extend
-syn region	vimString	oneline	matchgroup=vimString start=+[^a-zA-Z>\\@]'+lc=1 end=+'+		       nextgroup=vimSubscript contains=vimQuoteEscape  extend
+syn region	vimString	oneline keepend	matchgroup=vimString start=+[^a-zA-Z\\@]"+lc=1 skip=+\\\\\|\\"+ matchgroup=vimStringEnd end=+"+ nextgroup=vimSubscript contains=@vimStringGroup extend
+syn region	vimString	oneline	matchgroup=vimString start=+[^a-zA-Z\\@]'+lc=1 end=+'+		       nextgroup=vimSubscript contains=vimQuoteEscape  extend
 "syn region	vimString	oneline	start="\s/\s*\A"lc=1 skip="\\\\\|\\+" end="/"	contains=@vimStringGroup  " see tst45.vim
 
 syn match	vimEscape	contained	"\\."
@@ -1348,9 +1348,9 @@ syn region	vimProfilePattern contained
       \ skipwhite nextgroup=vimCmdSep,vimComment,vim9Comment
 syn match	vimProfile	"\<prof\%[ile]\>"	skipwhite nextgroup=vimProfileBang,vimProfileArg
 
-syn keyword	vimProfdelArg	func	skipwhite nextgroup=vimProfilePattern
-syn keyword	vimProfdelArg	file	skipwhite nextgroup=vimProfilePattern
-syn keyword	vimProfdelArg	here	skipwhite nextgroup=vimCmdSep,@vimComment
+syn keyword	vimProfdelArg	contained	func	skipwhite nextgroup=vimProfilePattern
+syn keyword	vimProfdelArg	contained	file	skipwhite nextgroup=vimProfilePattern
+syn keyword	vimProfdelArg	contained	here	skipwhite nextgroup=vimCmdSep,@vimComment
 syn match	vimProfdel	"\<profd\%[el]\>" skipwhite nextgroup=vimProfdelArg
 
 " Redir: {{{2
