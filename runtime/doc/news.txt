@@ -305,6 +305,7 @@ LUA
 • |vim.hl.range()| now has a optional `timeout` field which allows for multiple
   timed highlights.
 • |vim.text.indent()| indents/dedents text.
+• |vim.fs.root()| can define "equal priority" via nested lists.
 
 OPTIONS
 
