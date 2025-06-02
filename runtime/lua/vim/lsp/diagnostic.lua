@@ -171,10 +171,10 @@ function M.from(diagnostics)
 end
 
 ---@type table<integer, integer>
-local _client_push_namespaces = {}
+local client_push_namespaces = {}
 
 ---@type table<string, integer>
-local _client_pull_namespaces = {}
+local client_pull_namespaces = {}
 
 --- Get the diagnostic namespace associated with an LSP client |vim.diagnostic| for diagnostics
 ---
@@ -194,18 +194,18 @@ function M.get_namespace(client_id, is_pull)
       client_id,
       server_id or 'nil'
     )
-    local ns = _client_pull_namespaces[key]
+    local ns = client_pull_namespaces[key]
     if not ns then
       ns = api.nvim_create_namespace(name)
-      _client_pull_namespaces[key] = ns
+      client_pull_namespaces[key] = ns
     end
     return ns
   else
     local name = string.format('nvim.lsp.%s.%d', client and client.name or 'unknown', client_id)
-    local ns = _client_push_namespaces[client_id]
+    local ns = client_push_namespaces[client_id]
     if not ns then
       ns = api.nvim_create_namespace(name)
-      _client_push_namespaces[client_id] = ns
+      client_push_namespaces[client_id] = ns
     end
     return ns
   end
@@ -329,7 +329,7 @@ end
 
 --- Clear diagnostics from pull based clients
 local function clear(bufnr)
-  for _, namespace in pairs(_client_pull_namespaces) do
+  for _, namespace in pairs(client_pull_namespaces) do
     vim.diagnostic.reset(namespace, bufnr)
   end
 end
@@ -348,7 +348,7 @@ end
 ---@param bufnr integer buffer number
 ---@param client_id? integer Client ID to refresh (default: all clients)
 ---@param only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
-local function _refresh(bufnr, client_id, only_visible)
+local function refresh(bufnr, client_id, only_visible)
   if
     only_visible
     and vim.iter(api.nvim_list_wins()):all(function(window)
@@ -398,7 +398,7 @@ function M._enable(bufnr)
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
           local client_id = opts.data.client_id --- @type integer?
-          _refresh(bufnr, client_id, true)
+          refresh(bufnr, client_id, true)
         end
       end,
       group = augroup,
