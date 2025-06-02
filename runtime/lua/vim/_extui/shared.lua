@@ -39,20 +39,16 @@ function M.tab_check_wins()
   end
 
   for _, type in ipairs({ 'box', 'cmd', 'more', 'prompt' }) do
-    if not api.nvim_buf_is_valid(M.bufs[type]) then
+    local setopt = not api.nvim_buf_is_valid(M.bufs[type])
+    if setopt then
       M.bufs[type] = api.nvim_create_buf(false, true)
-      api.nvim_buf_set_name(M.bufs[type], 'vim._extui.' .. type)
       if type == 'cmd' then
         -- Attach highlighter to the cmdline buffer.
         local parser = assert(vim.treesitter.get_parser(M.bufs.cmd, 'vim', {}))
         M.cmd.highlighter = vim.treesitter.highlighter.new(parser)
-      elseif type == 'more' then
-        -- Close more window with `q`, same as `checkhealth`
-        api.nvim_buf_set_keymap(M.bufs.more, 'n', 'q', '<Cmd>wincmd c<CR>', {})
       end
     end
 
-    local setopt = false
     if
       not api.nvim_win_is_valid(M.wins[M.tab][type])
       or not api.nvim_win_get_config(M.wins[M.tab][type]).zindex -- no longer floating
@@ -81,6 +77,12 @@ function M.tab_check_wins()
     end
 
     if setopt then
+      api.nvim_buf_set_name(M.bufs[type], 'vim._extui.' .. type)
+      if type == 'more' then
+        -- Close more window with `q`, same as `checkhealth`
+        api.nvim_buf_set_keymap(M.bufs.more, 'n', 'q', '<Cmd>wincmd c<CR>', {})
+      end
+
       -- Fire a FileType autocommand with window context to let the user reconfigure local options.
       api.nvim_win_call(M.wins[M.tab][type], function()
         api.nvim_set_option_value('wrap', true, { scope = 'local' })
