@@ -379,7 +379,11 @@ describe('float window', function()
       row = 1,
     })
     eq(1001, api.nvim_win_get_config(winid).win)
+    -- But unrelated config doesn't clear parent win #34286
+    api.nvim_win_set_config(winid, { title = 'foo' })
+    eq(1001, api.nvim_win_get_config(winid).win)
     command('close')
+    api.nvim_win_set_config(winid, { title = 'bar' })
     api.nvim_win_set_config(winid, { relative = 'editor', row = 1, col = 1 })
     eq(nil, api.nvim_win_get_config(winid).win)
   end)
