@@ -1178,6 +1178,9 @@ For example, the function can contain this: >
 	let matches = ... list of words ...
 	return {'words': matches, 'refresh': 'always'}
 <
+If looking for matches is time-consuming, |complete_check()| may be used to
+maintain responsiveness.
+
 						*complete-items*
 Each list item can either be a string or a Dictionary.  When it is a string it
 is used as the completion.  When it is a Dictionary it can contain these

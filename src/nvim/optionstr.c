@@ -45,6 +45,7 @@
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/strings.h"
+#include "nvim/tag.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
@@ -54,10 +55,12 @@
 # include "optionstr.c.generated.h"
 #endif
 
-static const char e_unclosed_expression_sequence[]
-  = N_("E540: Unclosed expression sequence");
+static const char e_illegal_character_after_chr[]
+  = N_("E535: Illegal character after <%c>");
 static const char e_comma_required[]
   = N_("E536: Comma required");
+static const char e_unclosed_expression_sequence[]
+  = N_("E540: Unclosed expression sequence");
 static const char e_unbalanced_groups[]
   = N_("E542: Unbalanced groups");
 static const char e_backupext_and_patchmode_are_equal[]
@@ -836,40 +839,66 @@ const char *did_set_commentstring(optset_T *args)
   return NULL;
 }
 
-/// The 'complete' option is changed.
+/// Check if value for 'complete' is valid when 'complete' option is changed.
 const char *did_set_complete(optset_T *args)
 {
   char **varp = (char **)args->os_varp;
+  char buffer[LSIZE];
+  uint8_t char_before = NUL;
 
-  // check if it is a valid value for 'complete' -- Acevedo
-  for (char *s = *varp; *s;) {
-    while (*s == ',' || *s == ' ') {
-      s++;
-    }
-    if (!*s) {
-      break;
-    }
-    if (vim_strchr(".wbuksid]tUf", (uint8_t)(*s)) == NULL) {
-      return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*s));
-    }
-    if (*++s != NUL && *s != ',' && *s != ' ') {
-      if (s[-1] == 'k' || s[-1] == 's') {
-        // skip optional filename after 'k' and 's'
-        while (*s && *s != ',' && *s != ' ') {
-          if (*s == '\\' && s[1] != NUL) {
-            s++;
-          }
-          s++;
-        }
+  for (char *p = *varp; *p;) {
+    memset(buffer, 0, LSIZE);
+    char *buf_ptr = buffer;
+    int escape = 0;
+
+    // Extract substring while handling escaped commas
+    while (*p && (*p != ',' || escape) && buf_ptr < (buffer + LSIZE - 1)) {
+      if (*p == '\\' && *(p + 1) == ',') {
+        escape = 1;  // Mark escape mode
+        p++;         // Skip '\'
       } else {
-        if (args->os_errbuf != NULL) {
-          vim_snprintf(args->os_errbuf, args->os_errbuflen,
-                       _("E535: Illegal character after <%c>"),
-                       *--s);
-          return args->os_errbuf;
-        }
-        return "";
+        escape = 0;
+        *buf_ptr++ = *p;
       }
+      p++;
+    }
+    *buf_ptr = NUL;
+
+    if (vim_strchr(".wbuksid]tUfFo", (uint8_t)(*buffer)) == NULL) {
+      return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*buffer));
+    }
+
+    if (vim_strchr("ksF", (uint8_t)(*buffer)) == NULL && *(buffer + 1) != NUL
+        && *(buffer + 1) != '^') {
+      char_before = (uint8_t)(*buffer);
+    } else {
+      char *t;
+      // Test for a number after '^'
+      if ((t = vim_strchr(buffer, '^')) != NULL) {
+        *t++ = NUL;
+        if (!*t) {
+          char_before = '^';
+        } else {
+          for (; *t; t++) {
+            if (!ascii_isdigit(*t)) {
+              char_before = '^';
+              break;
+            }
+          }
+        }
+      }
+    }
+    if (char_before != NUL) {
+      if (args->os_errbuf != NULL) {
+        vim_snprintf(args->os_errbuf, args->os_errbuflen,
+                     _(e_illegal_character_after_chr), char_before);
+        return args->os_errbuf;
+      }
+      return NULL;
+    }
+    // Skip comma and spaces
+    while (*p == ',' || *p == ' ') {
+      p++;
     }
   }
   return NULL;

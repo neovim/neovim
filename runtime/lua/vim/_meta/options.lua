@@ -1027,6 +1027,28 @@ vim.bo.cms = vim.bo.commentstring
 --- ]	tag completion
 --- t	same as "]"
 --- f	scan the buffer names (as opposed to buffer contents)
+--- F{func}	call the function {func}.  Multiple "F" flags may be specified.
+--- 	Refer to `complete-functions` for details on how the function
+--- 	is invoked and what it should return.  The value can be the
+--- 	name of a function or a `Funcref`.  For `Funcref` values,
+--- 	spaces must be escaped with a backslash ('\'), and commas with
+--- 	double backslashes ('\\') (see `option-backslash`).
+--- 	If the Dict returned by the {func} includes {"refresh": "always"},
+--- 	the function will be invoked again whenever the leading text
+--- 	changes.
+--- 	Completion matches are always inserted at the keyword
+--- 	boundary, regardless of the column returned by {func} when
+--- 	a:findstart is 1.  This ensures compatibility with other
+--- 	completion sources.
+--- 	To make further modifications to the inserted text, {func}
+--- 	can make use of `CompleteDonePre`.
+--- 	If generating matches is potentially slow, `complete_check()`
+--- 	should be used to avoid blocking and preserve editor
+--- 	responsiveness.
+--- F	equivalent to using "F{func}", where the function is taken from
+--- 	the 'completefunc' option.
+--- o	equivalent to using "F{func}", where the function is taken from
+--- 	the 'omnifunc' option.
 ---
 --- Unloaded buffers are not loaded, thus their autocmds `:autocmd` are
 --- not executed, this may lead to unexpected completions from some files
@@ -1036,6 +1058,13 @@ vim.bo.cms = vim.bo.commentstring
 --- As you can see, CTRL-N and CTRL-P can be used to do any 'iskeyword'-
 --- based expansion (e.g., dictionary `i_CTRL-X_CTRL-K`, included patterns
 --- `i_CTRL-X_CTRL-I`, tags `i_CTRL-X_CTRL-]` and normal expansions).
+---
+--- An optional match limit can be specified for a completion source by
+--- appending a caret ("^") followed by a {count} to the source flag.
+--- For example: ".^9,w,u,t^5" limits matches from the current buffer
+--- to 9 and from tags to 5.  Other sources remain unlimited.
+--- Note: The match limit takes effect only during forward completion
+--- (CTRL-N) and is ignored during backward completion (CTRL-P).
 ---
 --- @type string
 vim.o.complete = ".,w,b,u,t"
