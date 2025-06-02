@@ -67,6 +67,20 @@ Stop or detach the current UI
                 Note: Not supported on Windows, currently.
 
 ------------------------------------------------------------------------------
+Restart the embedded Nvim server
+
+                                                *:restart*
+:restart
+                Detaches the embedded server from the UI and then restarts
+                it. This fails when changes have been made
+                and Vim refuses to |abandon| the current buffer.
+
+                Note: This only works if the UI started the server initially.
+:restart!
+                Force restarts the embedded server irrespective of unsaved
+                buffers.
+
+------------------------------------------------------------------------------
 GUI commands
 
                                                 *:winp* *:winpos* *E188*

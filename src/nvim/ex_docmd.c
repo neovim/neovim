@@ -69,6 +69,7 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/normal_defs.h"
@@ -101,6 +102,7 @@
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_client.h"
 #include "nvim/undo.h"
 #include "nvim/undo_defs.h"
 #include "nvim/usercmd.h"
@@ -5590,6 +5592,42 @@ static void ex_detach(exarg_T *eap)
 
     ILOG("detach current_ui=%" PRId64, chan->id);
   }
+}
+
+/// ":restart" command
+/// Restarts the server by delegating the work to the UI.
+static void ex_restart(exarg_T *eap)
+{
+  bool forceit = eap && eap->forceit;
+
+  // Refuse to restart if text is locked (i.e in command line etc.)
+  if (text_locked()) {
+    text_locked_msg();
+    return;
+  }
+
+  // Refuse to restart if buffer is locked.
+  if (curbuf_locked()) {
+    return;
+  }
+
+  win_T *wp = curwin;
+
+  // If any buffer is changed and not saved, we cannot restart.
+  // But if called using bang (!), we will force restart.
+  if ((!buf_hide(wp->w_buffer)
+       && check_changed(wp->w_buffer, (p_awa ? CCGD_AW : 0)
+                        | (forceit ? CCGD_FORCEIT : 0)
+                        | CCGD_EXCMD))
+      || check_more(true, forceit) == FAIL
+      || check_changed_any(forceit, true)) {
+    if (!forceit) {
+      return;
+    }
+  }
+
+  // Send an ui restart event.
+  ui_call_restart();
 }
 
 /// ":mode":
