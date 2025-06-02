@@ -245,6 +245,7 @@ These existing features changed their behavior.
   the first writable directory in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
 • |searchcount()|'s maximal value is raised from 99 to 999.
+• |:helptags| generates the help tags file(s) using Treesitter.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

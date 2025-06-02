@@ -338,6 +338,7 @@ set(LUA_EDITOR_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_editor.lua)
 set(LUA_FILETYPE_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/filetype.lua)
 set(LUA_FS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/fs.lua)
 set(LUA_F_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/F.lua)
+set(LUA_HELPTAGS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_helptags.lua)
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_init_packages.lua)
 set(LUA_INSPECT_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/inspect.lua)
 set(LUA_KEYMAP_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/keymap.lua)
@@ -629,6 +630,7 @@ add_custom_command(
       ${LUA_FILETYPE_MODULE_SOURCE} "vim.filetype"
       ${LUA_FS_MODULE_SOURCE} "vim.fs"
       ${LUA_F_MODULE_SOURCE} "vim.F"
+      ${LUA_HELPTAGS_MODULE_SOURCE} "vim._helptags"
       ${LUA_KEYMAP_MODULE_SOURCE} "vim.keymap"
       ${LUA_LOADER_MODULE_SOURCE} "vim.loader"
       ${LUA_DEFAULTS_MODULE_SOURCE} "vim._defaults"
@@ -643,6 +645,7 @@ add_custom_command(
     ${LUA_FILETYPE_MODULE_SOURCE}
     ${LUA_FS_MODULE_SOURCE}
     ${LUA_F_MODULE_SOURCE}
+    ${LUA_HELPTAGS_MODULE_SOURCE}
     ${LUA_KEYMAP_MODULE_SOURCE}
     ${LUA_LOADER_MODULE_SOURCE}
     ${LUA_DEFAULTS_MODULE_SOURCE}
