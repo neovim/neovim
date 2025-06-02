@@ -2785,6 +2785,7 @@ function vim.fn.getbufoneline(buf, lnum) end
 --- Examples: >vim
 ---   let bufmodified = getbufvar(1, "&mod")
 ---   echo "todo myvar = " .. getbufvar("todo", "myvar")
+--- <
 ---
 --- @param buf integer|string
 --- @param varname string
@@ -4073,6 +4074,7 @@ function vim.fn.getwinposy() end
 --- Examples: >vim
 ---   let list_is_on = getwinvar(2, '&list')
 ---   echo "myvar = " .. getwinvar(1, 'myvar')
+--- <
 ---
 --- @param winnr integer
 --- @param varname string
@@ -4729,6 +4731,7 @@ function vim.fn.inputdialog(...) end
 --- Example: >vim
 ---   let color = inputlist(['Select color:', '1. red',
 ---     \ '2. green', '3. blue'])
+--- <
 ---
 --- @param textlist string[]
 --- @return any
@@ -5184,6 +5187,7 @@ function vim.fn.len(expr) end
 --- object code must be compiled as position-independent ('PIC').
 --- Examples: >vim
 ---   echo libcall("libc.so", "getenv", "HOME")
+--- <
 ---
 --- @param libname string
 --- @param funcname string
@@ -8483,6 +8487,7 @@ function vim.fn.setqflist(list, action, what) end
 --- You can also change the type of a register by appending
 --- nothing: >vim
 ---   call setreg('a', '', 'al')
+--- <
 ---
 --- @param regname string
 --- @param value any
@@ -8568,6 +8573,7 @@ function vim.fn.settagstack(nr, dict, action) end
 --- Examples: >vim
 ---   call setwinvar(1, "&list", 0)
 ---   call setwinvar(2, "myvar", "foobar")
+--- <
 ---
 --- @param nr integer
 --- @param varname string
@@ -9012,6 +9018,7 @@ function vim.fn.sign_undefine(list) end
 ---
 ---   " Remove all the placed signs from all the buffers
 ---   call sign_unplace('*')
+--- <
 ---
 --- @param group string
 --- @param dict? vim.fn.sign_unplace.dict
@@ -9604,6 +9611,7 @@ function vim.fn.strdisplaywidth(string, col) end
 ---   echo strftime("%H:%M")       " 11:55
 ---   echo strftime("%c", getftime("file.c"))
 ---            " Show mod time of file.c.
+--- <
 ---
 --- @param format string
 --- @param time? number
@@ -9912,6 +9920,7 @@ function vim.fn.substitute(string, pat, sub, flags) end
 ---   let &directory = '.'
 ---   let swapfiles = swapfilelist()
 ---   let &directory = save_dir
+--- <
 ---
 --- @return string[]
 function vim.fn.swapfilelist() end
