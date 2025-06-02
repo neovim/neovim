@@ -5151,9 +5151,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the end of line the line break still isn't included.
 	When "exclusive" is used, cursor position in visual mode will be
 	adjusted for inclusive motions |inclusive-motion-selection-exclusive|.
-	Note that when "exclusive" is used and selecting from the end
-	backwards, you cannot include the last character of a line, when
-	starting in Normal mode and 'virtualedit' empty.
+
+	Note:
+	- When "exclusive" is used and selecting from the end backwards, you
+	  cannot include the last character of a line, when starting in Normal
+	  mode and 'virtualedit' empty.
+	- when "exclusive" is used with a single character visual selection,
+	  Vim will behave as if the 'selection' is inclusive (in other words,
+	  you cannot visually select an empty region).
 
 						*'selectmode'* *'slm'*
 'selectmode' 'slm'	string	(default "")

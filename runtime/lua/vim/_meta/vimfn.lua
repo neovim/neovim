@@ -3763,6 +3763,10 @@ function vim.fn.getreginfo(regname) end
 --- - It is evaluated in current window context, which makes a
 ---   difference if the buffer is displayed in a window with
 ---   different 'virtualedit' or 'list' values.
+--- - When specifying an exclusive selection and {pos1} and {pos2}
+---   are equal, the returned list contains a single character as
+---   if selection is inclusive, to match the behavior of an empty
+---   exclusive selection in Visual mode.
 ---
 --- Examples: >vim
 ---   xnoremap <CR>
