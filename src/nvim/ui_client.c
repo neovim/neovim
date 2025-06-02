@@ -202,6 +202,8 @@ void ui_client_set_size(int width, int height)
     ADD_C(args, INTEGER_OBJ((int)height));
     rpc_send_event(ui_client_channel_id, "nvim_ui_try_resize", args);
   }
+  tui_width = width;
+  tui_height = height;
 }
 
 UIClientHandler ui_client_get_redraw_handler(const char *name, size_t name_len, Error *error)
