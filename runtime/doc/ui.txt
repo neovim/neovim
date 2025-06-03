@@ -226,8 +226,7 @@ the editor.
 	sent from Nvim, like for |ui-cmdline|.
 
 ["chdir", path] ~
-	The |current-directory| of the embedded Nvim process changed to
-	`path`.
+	The |current-directory| of the Nvim process changed to `path`.
 
 ["mode_change", mode, mode_idx] ~
 	Editor mode changed.  The `mode` parameter is a string representing
@@ -253,6 +252,11 @@ the editor.
 	|:suspend| command or |CTRL-Z| mapping is used. A terminal client (or
 	another client where it makes sense) could suspend itself.  Other
 	clients can safely ignore it.
+
+["restart"] ~
+	|:restart| command is used. A client that started Nvim as an embedded
+	process should restart Nvim with the same command-line arguments.
+	Other clients should ignore this event.
 
 ["update_menu"] ~
 	The menu mappings changed.
