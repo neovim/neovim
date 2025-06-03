@@ -4751,7 +4751,7 @@ func Test_register_completion()
   call feedkeys("Sze\<C-X>\<C-R>\<C-R>=string(complete_info(['mode']))\<CR>\<ESC>", "tx")
   call assert_equal("zero{'mode': 'register'}", getline(1))
 
-  " Test consecutive CTRL-X CTRL-R (adding mode)Add commentMore actions
+  " Test consecutive CTRL-X CTRL-R (adding mode)
   " First CTRL-X CTRL-R should split into words, second should use full content
   let @f = "hello world test complete"
   call setline(1, "hel")

@@ -4193,6 +4193,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
 static void get_register_completion(void)
 {
   Direction dir = compl_direction;
+  bool adding_mode = compl_status_adding();
 
   for (int i = 0; i < NUM_REGISTERS; i++) {
     int regname = get_register_name(i);
@@ -4209,13 +4210,13 @@ static void get_register_completion(void)
       continue;
     }
 
-    if (compl_status_adding()) {
-      for (size_t j = 0; j < reg->y_size; j++) {
-        char *str = reg->y_array[j].data;
-        if (str == NULL) {
-          continue;
-        }
+    for (size_t j = 0; j < reg->y_size; j++) {
+      char *str = reg->y_array[j].data;
+      if (str == NULL) {
+        continue;
+      }
 
+      if (adding_mode) {
         int str_len = (int)strlen(str);
         if (str_len == 0) {
           continue;
@@ -4230,25 +4231,30 @@ static void get_register_completion(void)
             dir = FORWARD;
           }
         }
-      }
-    } else {
-      for (size_t j = 0; j < reg->y_size; j++) {
-        char *str = reg->y_array[j].data;
-        if (str == NULL) {
-          continue;
-        }
-
+      } else {
+        // Calculate the safe end of string to avoid null byte issues
+        char *str_end = str + strlen(str);
         char *p = str;
-        while (*p != NUL) {
+
+        // Safely iterate through the string
+        while (p < str_end && *p != NUL) {
+          char *old_p = p;
           p = find_word_start(p);
-          if (*p == NUL) {
+          if (p >= str_end || *p == NUL) {
             break;
           }
 
           char *word_end = find_word_end(p);
-          int len = (int)(word_end - p);
 
-          // Add the word to the completion list
+          if (word_end <= p) {
+            word_end = p + utfc_ptr2len(p);
+          }
+
+          if (word_end > str_end) {
+            word_end = str_end;
+          }
+
+          int len = (int)(word_end - p);
           if (len > 0 && (!compl_orig_text.data
                           || (p_ic ? STRNICMP(p, compl_orig_text.data,
                                               compl_orig_text.size) == 0
@@ -4259,7 +4265,12 @@ static void get_register_completion(void)
               dir = FORWARD;
             }
           }
+
           p = word_end;
+
+          if (p <= old_p) {
+            p = old_p + utfc_ptr2len(old_p);
+          }
         }
       }
     }
