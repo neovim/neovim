@@ -161,7 +161,7 @@ if t.skip(is_os('win')) then
 end
 
 describe('TUI :restart', function()
-  it('resets buffer to blank', function()
+  it('restarts server with the same arguments', function()
     clear()
     finally(function()
       n.check_close()

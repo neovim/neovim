@@ -42,6 +42,8 @@ static int tui_width = 0;
 static int tui_height = 0;
 static char *tui_term = "";
 static bool tui_rgb = false;
+static int orig_argc = 0;
+static char **orig_argv = NULL;
 static bool ui_client_is_remote = false;
 
 // uncrustify:off
@@ -53,6 +55,10 @@ static bool ui_client_is_remote = false;
 
 uint64_t ui_client_start_server(int argc, char **argv)
 {
+  assert(argc > 0);
+  orig_argc = argc;
+  orig_argv = argv;
+
   varnumber_T exit_status;
   char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char *));
   int args_idx = 0;
@@ -290,6 +296,11 @@ void ui_client_event_raw_line(GridLineEvent *g)
 /// Restarts the embedded server without killing the UI.
 void ui_client_event_restart(Array args)
 {
+  if (ui_client_is_remote) {
+    return;
+  }
+  assert(orig_argc > 0 && orig_argv != NULL);
+
   // 1. Client-side server detach.
   ui_client_detach();
 
@@ -301,43 +312,18 @@ void ui_client_event_restart(Array args)
     return;
   }
 
-  // 3. Get v:argv.
-  typval_T *tv = get_vim_var_tv(VV_ARGV);
-  if (tv->v_type != VAR_LIST || tv->vval.v_list == NULL) {
-    ELOG("failed to get vim var typval");
-    return;
-  }
-  list_T *l = tv->vval.v_list;
-  int argc = tv_list_len(l);
-
-  // Assert to be positive for safe conversion to size_t.
-  assert(argc > 0);
-
-  char **argv = xmalloc(sizeof(char *) * ((size_t)argc + 1));
-  listitem_T *li = tv_list_first(l);
-  for (int i = 0; i < argc && li != NULL; i++, li = TV_LIST_ITEM_NEXT(l, li)) {
-    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
-      argv[i] = TV_LIST_ITEM_TV(li)->vval.v_string;
-    } else {
-      argv[i] = "";
-    }
-  }
-  argv[argc] = NULL;
-
-  // 4. Start a new `nvim --embed` server.
-  uint64_t rv = ui_client_start_server(argc, argv);
+  // 3. Start a new `nvim --embed` server.
+  uint64_t rv = ui_client_start_server(orig_argc, orig_argv);
   if (!rv) {
     ELOG("failed to start nvim server");
-    goto cleanup;
+    return;
   }
 
-  // 5. Client-side server re-attach.
+  // 4. Client-side server re-attach.
   ui_client_channel_id = rv;
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   ILOG("restarted server id=%" PRId64, rv);
-cleanup:
-  xfree(argv);
 }
 
 #ifdef EXITFREE
