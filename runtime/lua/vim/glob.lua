@@ -44,7 +44,7 @@ local bit = require('bit')
 local M = {}
 
 -- Basic patterns for matching glob components
-local letter = m.P(1) - m.S(',*?[]{}/\\') -- Any character except special glob characters
+local letter = m.P(1) - m.S('*?[]{}/\\') -- Any character except special glob characters
 local slash = m.P '/' * m.Cc(m.P '/') -- Path separator with capture
 local notslash = m.P(1) - m.P '/' -- Any character except path separator
 local notcomma = m.P(1) - m.S(',\\') -- Any character except comma and backslash
@@ -370,7 +370,7 @@ g = m.P(g)
 ---@return vim.lpeg.Pattern #An |lua-lpeg| representation of the pattern
 function M.to_lpeg(pattern)
   local lpeg_pattern = g:match(pattern) --[[@as vim.lpeg.Pattern?]]
-  assert(lpeg_pattern, 'Invalid glob')
+  assert(lpeg_pattern, string.format('Invalid glob: %s', pattern))
   return lpeg_pattern
 end
 
