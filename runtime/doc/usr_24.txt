@@ -187,7 +187,7 @@ with a certain type of item:
 	CTRL-X CTRL-D		macro definitions (also in included files)
 	CTRL-X CTRL-I		current and included files
 	CTRL-X CTRL-K		words from a dictionary
-	CTRL-X CTRL-R		words from registers
+	CTRL-X CTRL-R		contents from registers
 	CTRL-X CTRL-T		words from a thesaurus
 	CTRL-X CTRL-]		tags
 	CTRL-X CTRL-V		Vim command line

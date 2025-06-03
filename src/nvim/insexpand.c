@@ -4209,34 +4209,58 @@ static void get_register_completion(void)
       continue;
     }
 
-    for (size_t j = 0; j < reg->y_size; j++) {
-      char *str = reg->y_array[j].data;
-      if (str == NULL) {
-        continue;
-      }
-
-      char *p = str;
-      while (*p != NUL) {
-        p = find_word_start(p);
-        if (*p == NUL) {
-          break;
+    if (compl_status_adding()) {
+      for (size_t j = 0; j < reg->y_size; j++) {
+        char *str = reg->y_array[j].data;
+        if (str == NULL) {
+          continue;
         }
 
-        char *word_end = find_word_end(p);
-        int len = (int)(word_end - p);
+        int str_len = (int)strlen(str);
+        if (str_len == 0) {
+          continue;
+        }
 
-        // Add the word to the completion list
-        if (len > 0 && (!compl_orig_text.data
-                        || (p_ic ? STRNICMP(p, compl_orig_text.data,
-                                            compl_orig_text.size) == 0
-                                 : strncmp(p, compl_orig_text.data,
-                                           compl_orig_text.size) == 0))) {
-          if (ins_compl_add_infercase(p, len, p_ic, NULL,
-                                      dir, false, 0) == OK) {
+        if (!compl_orig_text.data
+            || (p_ic ? STRNICMP(str, compl_orig_text.data,
+                                compl_orig_text.size) == 0
+                     : strncmp(str, compl_orig_text.data,
+                               compl_orig_text.size) == 0)) {
+          if (ins_compl_add_infercase(str, str_len, p_ic, NULL, dir, false, 0) == OK) {
             dir = FORWARD;
           }
         }
-        p = word_end;
+      }
+    } else {
+      for (size_t j = 0; j < reg->y_size; j++) {
+        char *str = reg->y_array[j].data;
+        if (str == NULL) {
+          continue;
+        }
+
+        char *p = str;
+        while (*p != NUL) {
+          p = find_word_start(p);
+          if (*p == NUL) {
+            break;
+          }
+
+          char *word_end = find_word_end(p);
+          int len = (int)(word_end - p);
+
+          // Add the word to the completion list
+          if (len > 0 && (!compl_orig_text.data
+                          || (p_ic ? STRNICMP(p, compl_orig_text.data,
+                                              compl_orig_text.size) == 0
+                                   : strncmp(p, compl_orig_text.data,
+                                             compl_orig_text.size) == 0))) {
+            if (ins_compl_add_infercase(p, len, p_ic, NULL,
+                                        dir, false, 0) == OK) {
+              dir = FORWARD;
+            }
+          }
+          p = word_end;
+        }
       }
     }
 
@@ -5468,7 +5492,7 @@ static int get_spell_compl_info(int startcol, colnr_T curs_col)
 /// @return  OK on success.
 static int compl_get_info(char *line, int startcol, colnr_T curs_col, bool *line_invalid)
 {
-  if (ctrl_x_mode_normal()
+  if (ctrl_x_mode_normal() || ctrl_x_mode_register()
       || ((ctrl_x_mode & CTRL_X_WANT_IDENT)
           && !thesaurus_func_complete(ctrl_x_mode))) {
     return get_normal_compl_info(line, startcol, curs_col);
@@ -5489,8 +5513,6 @@ static int compl_get_info(char *line, int startcol, colnr_T curs_col, bool *line
       return FAIL;
     }
     *line_invalid = true;  // "line" may have become invalid
-  } else if (ctrl_x_mode_register()) {
-    return get_normal_compl_info(line, startcol, curs_col);
   } else {
     internal_error("ins_complete()");
     return FAIL;
@@ -5546,7 +5568,7 @@ static void ins_compl_continue_search(char *line)
     if (compl_length < 1) {
       compl_cont_status &= CONT_LOCAL;
     }
-  } else if (ctrl_x_mode_line_or_eval()) {
+  } else if (ctrl_x_mode_line_or_eval() || ctrl_x_mode_register()) {
     compl_cont_status = CONT_ADDING | CONT_N_ADDS;
   } else {
     compl_cont_status = 0;
