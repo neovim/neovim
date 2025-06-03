@@ -236,8 +236,9 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
 
   win_T *wp = NULL;
   tabpage_T *tp = curtab;
-  win_T *parent = NULL;
-  if (config->win != -1) {
+  assert(curwin != NULL);
+  win_T *parent = config->win == 0 ? curwin : NULL;
+  if (config->win > 0) {
     parent = find_window_by_handle(fconfig.window, err);
     if (!parent) {
       // find_window_by_handle has already set the error
@@ -413,8 +414,8 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
   if (!parse_win_config(win, config, &fconfig, !was_split || to_split, err)) {
     return;
   }
-  win_T *parent = NULL;
-  if (config->win != -1) {
+  win_T *parent = config->win == 0 ? curwin : NULL;
+  if (config->win > 0) {
     parent = find_window_by_handle(fconfig.window, err);
     if (!parent) {
       return;
@@ -1206,8 +1207,6 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
                     "non-float with 'win' requires at least 'split' or 'vertical'");
       goto fail;
     }
-  } else {
-    fconfig->window = 0;
   }
 
   if (HAS_KEY_X(config, external)) {
