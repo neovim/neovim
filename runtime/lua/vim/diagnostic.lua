@@ -1581,11 +1581,14 @@ M.handlers.underline = {
         end
       end
 
+      local lines =
+        vim.api.nvim_buf_get_lines(diagnostic.bufnr, diagnostic.lnum, diagnostic.lnum + 1, true)
+
       vim.hl.range(
         bufnr,
         underline_ns,
         higroup,
-        { diagnostic.lnum, diagnostic.col },
+        { diagnostic.lnum, math.min(diagnostic.col, #lines[1] - 1) },
         { diagnostic.end_lnum, diagnostic.end_col },
         { priority = get_priority(diagnostic.severity) }
       )
