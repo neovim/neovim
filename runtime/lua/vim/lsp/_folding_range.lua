@@ -70,11 +70,9 @@ local function renew(bufnr)
   bufstate.row_text = row_text
 end
 
---- Renew the cached foldinfo then force `foldexpr()` to be re-evaluated,
---- without opening folds.
+--- Force `foldexpr()` to be re-evaluated, without opening folds.
 ---@param bufnr integer
 local function foldupdate(bufnr)
-  renew(bufnr)
   for _, winid in ipairs(vim.fn.win_findbuf(bufnr)) do
     local wininfo = vim.fn.getwininfo(winid)[1]
     if wininfo and wininfo.tabnr == vim.fn.tabpagenr() then
@@ -126,6 +124,7 @@ local function multi_handler(results, ctx)
   end
   bufstate.version = ctx.version
 
+  renew(bufnr)
   if api.nvim_get_mode().mode:match('^i') then
     -- `foldUpdate()` is guarded in insert mode.
     schedule_foldupdate(bufnr)
@@ -268,6 +267,7 @@ local function setup(bufnr)
         }
       end
 
+      renew(bufnr)
       foldupdate(bufnr)
     end,
   })
