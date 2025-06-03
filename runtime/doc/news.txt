@@ -229,8 +229,7 @@ UI
 • Error messages are more concise:
   • "Error detected while processing:" changed to "Error in:".
   • "Error executing Lua:" changed to "Lua:".
-• |:restart| detaches the embedded server from the UI and then restarts
-  it.
+• |:restart| detaches the embedded server from the UI and then restarts it.
 
 VIMSCRIPT
 

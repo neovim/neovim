@@ -34,19 +34,8 @@ local assert_log = t.assert_log
 local testlog = 'Xtest-tui-log'
 
 describe('TUI :detach', function()
-  before_each(function()
-    os.remove(testlog)
-  end)
-  teardown(function()
-    os.remove(testlog)
-  end)
-
   it('does not stop server', function()
-    local job_opts = {
-      env = {
-        NVIM_LOG_FILE = testlog,
-      },
-    }
+    local job_opts = { env = {} }
 
     if is_os('win') then
       -- TODO(justinmk): on Windows,
@@ -83,11 +72,9 @@ describe('TUI :detach', function()
       return
     end
 
-    local server_super = n.clear()
-    local client_super = n.new_session(true)
+    n.clear()
     finally(function()
-      server_super:close()
-      client_super:close()
+      n.check_close()
     end)
 
     local child_server = new_pipename()
@@ -105,15 +92,13 @@ describe('TUI :detach', function()
     }, job_opts)
 
     tt.feed_data('iHello, World')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       Hello, World^                                      |
       {4:~                                                 }|*3
       {MATCH:No Name}
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
 
     local child_session = n.connect(child_server)
     finally(function()
@@ -148,15 +133,13 @@ describe('TUI :detach', function()
       child_server,
     }, job_opts)
 
-    screen_reattached:expect {
-      grid = [[
+    screen_reattached:expect([[
       We did it, pooky^.                                 |
       {4:~                                                 }|*3
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
   end)
 end)
 
@@ -165,25 +148,10 @@ if t.skip(is_os('win')) then
 end
 
 describe('TUI :restart', function()
-  before_each(function()
-    os.remove(testlog)
-  end)
-  teardown(function()
-    os.remove(testlog)
-  end)
-
   it('resets buffer to blank', function()
-    local server_super = n.clear()
-    local client_super = n.new_session(true)
-    local job_opts = {
-      env = {
-        NVIM_LOG_FILE = testlog,
-      },
-    }
-
+    clear()
     finally(function()
-      server_super:close()
-      client_super:close()
+      n.check_close()
     end)
 
     local screen = tt.setup_child_nvim({
@@ -195,56 +163,75 @@ describe('TUI :restart', function()
       'colorscheme vim',
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
-    }, job_opts)
+      '--cmd',
+      'echo getpid()',
+    })
+
+    local s0 = [[
+      ^                                                  |
+      {4:~                                                 }|*3
+      {5:[No Name]                                         }|
+      {MATCH:%d+ +}|
+      {3:-- TERMINAL --}                                    |
+    ]]
+    screen:expect(s0)
+
+    tt.feed_data(':echo\013')
+    screen:expect([[
+      ^                                                  |
+      {4:~                                                 }|*3
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
 
     -- Check ":restart" on an unmodified buffer.
-    tt.feed_data('\027\027:restart\013')
-    screen:expect {
-      grid = [[
-        ^                                                  |
-        {4:~                                                 }|*3
-        {5:[No Name]                                         }|
-                                                          |
-        {3:-- TERMINAL --}                                    |
-      ]],
-    }
+    tt.feed_data(':restart\013')
+    screen:expect(s0)
 
-    tt.feed_data('ithis will be removed')
-    screen:expect {
-      grid = [[
-        this will be removed^                              |
-        {4:~                                                 }|*3
-        {5:[No Name] [+]                                     }|
-        {3:-- INSERT --}                                      |
-        {3:-- TERMINAL --}                                    |
-      ]],
-    }
+    tt.feed_data('ithis will be removed\027')
+    screen:expect([[
+      this will be remove^d                              |
+      {4:~                                                 }|*3
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
 
     -- Check ":restart" on a modified buffer.
-    tt.feed_data('\027\027:restart\013')
-    screen:expect {
-      grid = [[
-          this will be removed                              |
-          {5:                                                  }|
-          {8:E37: No write since last change}                   |
-          {8:E162: No write since last change for buffer "[No N}|
-          {8:ame]"}                                             |
-          {10:Press ENTER or type command to continue}^           |
-          {3:-- TERMINAL --}                                    |
-      ]],
-    }
+    tt.feed_data(':restart\013')
+    screen:expect([[
+      this will be removed                              |
+      {5:                                                  }|
+      {8:E37: No write since last change}                   |
+      {8:E162: No write since last change for buffer "[No N}|
+      {8:ame]"}                                             |
+      {10:Press ENTER or type command to continue}^           |
+      {3:-- TERMINAL --}                                    |
+    ]])
 
     -- Check ":restart!".
-    tt.feed_data('\027\027:restart!\013')
-    screen:expect {
-      grid = [[
-        ^                                                  |
-        {4:~                                                 }|*3
-        {5:[No Name]                                         }|
-                                                          |
-        {3:-- TERMINAL --}                                    |
-      ]],
-    }
+    tt.feed_data(':restart!\013')
+    screen:expect(s0)
+
+    screen:try_resize(60, 6)
+    screen:expect([[
+      ^                                                            |
+      {4:~                                                           }|*2
+      {5:[No Name]                                                   }|
+                                                                  |
+      {3:-- TERMINAL --}                                              |
+    ]])
+
+    --- Check that ":restart" uses the updated size after terminal resize
+    tt.feed_data(':restart\013')
+    screen:expect([[
+      ^                                                            |
+      {4:~                                                           }|*2
+      {5:[No Name]                                                   }|
+      {MATCH:%d+ +}|
+      {3:-- TERMINAL --}                                              |
+    ]])
   end)
 end)
 
