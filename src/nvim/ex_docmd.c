@@ -69,8 +69,6 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
-#include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/normal_defs.h"
 #include "nvim/ops.h"
@@ -5599,17 +5597,6 @@ static void ex_detach(exarg_T *eap)
 static void ex_restart(exarg_T *eap)
 {
   bool forceit = eap && eap->forceit;
-
-  // Refuse to restart if text is locked (i.e in command line etc.)
-  if (text_locked()) {
-    text_locked_msg();
-    return;
-  }
-
-  // Refuse to restart if buffer is locked.
-  if (curbuf_locked()) {
-    return;
-  }
 
   win_T *wp = curwin;
 

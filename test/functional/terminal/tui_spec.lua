@@ -108,6 +108,19 @@ describe('TUI :detach', function()
     assert(status)
     eq(1, #child_uis)
 
+    eq(
+      { false, { 0, 'Vim(detach):E477: No ! allowed: detach!' } },
+      { child_session:request('nvim_command', 'detach!') }
+    )
+    eq(
+      { false, { 0, 'Vim(detach):E481: No range allowed: 1detach' } },
+      { child_session:request('nvim_command', '1detach') }
+    )
+    eq(
+      { false, { 0, 'Vim(detach):E488: Trailing characters: foo: detach foo' } },
+      { child_session:request('nvim_command', 'detach foo') }
+    )
+
     tt.feed_data('\027\027:detach\013')
     -- Note: "Process exited" message is misleading; tt.setup_child_nvim() sees the foreground
     -- process (client) exited, and doesn't know the server is still running?
@@ -176,14 +189,11 @@ describe('TUI :restart', function()
     ]]
     screen:expect(s0)
 
-    tt.feed_data(':echo\013')
-    screen:expect([[
-      ^                                                  |
-      {4:~                                                 }|*3
-      {5:[No Name]                                         }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
+    tt.feed_data(':1restart\013')
+    screen:expect({ any = vim.pesc('{8:E481: No range allowed}') })
+
+    tt.feed_data(':restart foo\013')
+    screen:expect({ any = vim.pesc('{8:E488: Trailing characters: foo}') })
 
     -- Check ":restart" on an unmodified buffer.
     tt.feed_data(':restart\013')

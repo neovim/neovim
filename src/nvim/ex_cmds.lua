@@ -734,7 +734,7 @@ M.cmds = {
   },
   {
     command = 'detach',
-    flags = bit.bor(BANG, FILES, CMDARG, ARGOPT, TRLBAR, CMDWIN, LOCK_OK),
+    flags = TRLBAR,
     addr_type = 'ADDR_NONE',
     func = 'ex_detach',
   },
@@ -2247,6 +2247,12 @@ M.cmds = {
     func = 'ex_resize',
   },
   {
+    command = 'restart',
+    flags = bit.bor(BANG, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_restart',
+  },
+  {
     command = 'retab',
     flags = bit.bor(TRLBAR, RANGE, WHOLEFOLD, DFLALL, BANG, WORD1, CMDWIN, LOCK_OK, MODIFY),
     addr_type = 'ADDR_LINES',
@@ -3367,12 +3373,6 @@ M.cmds = {
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN, LOCK_OK, MODIFY),
     addr_type = 'ADDR_LINES',
     func = 'ex_substitute',
-  },
-  {
-    command = 'restart',
-    flags = bit.bor(BANG, FILES, CMDARG, ARGOPT, TRLBAR, CMDWIN, LOCK_OK),
-    addr_type = 'ADDR_NONE',
-    func = 'ex_restart',
   },
   -- commands that start with an uppercase letter
   {
