@@ -629,7 +629,7 @@ Completion can be done for:
 11. omni completion					|i_CTRL-X_CTRL-O|
 12. Spelling suggestions				|i_CTRL-X_s|
 13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
-14. words from registers				|i_CTRL-X_CTRL-R|
+14. contents from registers				|i_CTRL-X_CTRL-R|
 
 Additionally, |i_CTRL-X_CTRL-Z| stops completion without changing the text.
 
@@ -1000,7 +1000,7 @@ CTRL-X CTRL-V		Guess what kind of item is in front of the cursor and
 			completion, for example: >
 				:imap <Tab> <C-X><C-V>
 
-Completing words from registers				*compl-register-words*
+Completing contents from registers			*compl-register-words*
 							*i_CTRL-X_CTRL-R*
 CTRL-X CTRL-R		Guess what kind of item is in front of the cursor from
 			all registers and find the first match for it.
@@ -1013,6 +1013,11 @@ CTRL-X CTRL-R		Guess what kind of item is in front of the cursor from
 
 	CTRL-P		Search backwards for previous match.  This match
 			replaces the previous one.
+
+	CTRL-X CTRL-R	Further use of CTRL-X CTRL-R will copy the line
+			following the previous expansion in other contexts
+			unless a double CTRL-X is used (e.g. this switches
+			from completing register words to register contents).
 
 User defined completion					*compl-function*
 
