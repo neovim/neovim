@@ -620,6 +620,12 @@ static int nlua_with(lua_State *L)
   int status = 0;
   int rets = 0;
 
+  if (flags & CMOD_ERRSILENT) {
+    // CMOD_ERRSILENT must imply CMOD_SILENT, otherwise apply_cmdmod() and undo_cmdmod() won't
+    // work properly.
+    flags |= CMOD_SILENT;
+  }
+
   cmdmod_T save_cmdmod = cmdmod;
   CLEAR_FIELD(cmdmod);
   cmdmod.cmod_flags = flags;
