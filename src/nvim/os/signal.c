@@ -22,6 +22,11 @@
 #endif
 
 static SignalWatcher spipe, shup, squit, sterm, susr1, swinch;
+
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
+
 #ifdef SIGPWR
 static SignalWatcher spwr;
 #endif
@@ -196,11 +201,14 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
     // Ignore
     break;
 #endif
+  case SIGHUP:
+#ifdef MSWIN
+    os_clear_hwnd();
+#endif
   case SIGTERM:
 #ifdef SIGQUIT
   case SIGQUIT:
 #endif
-  case SIGHUP:
     if (!rejecting_deadly) {
       deadly_signal(signum);
     }

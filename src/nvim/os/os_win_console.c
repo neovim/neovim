@@ -29,6 +29,11 @@ int os_open_conin_fd(void)
   return conin_fd;
 }
 
+void os_clear_hwnd(void) 
+{
+  hWnd = NULL;
+}
+
 void os_replace_stdin_to_conin(void)
 {
   close(STDIN_FILENO);
@@ -53,20 +58,17 @@ void os_replace_stdout_and_stderr_to_conout(void)
   assert(conerr_fd == STDERR_FILENO);
 }
 
-/// Sets Windows console icon, or pass NULL to restore original icon.
-void os_icon_set(HICON hIconSmall, HICON hIcon)
-{
+/// Resets Windows console icon if we got an original one on startup.
+void os_icon_reset(void) {
   if (hWnd == NULL) {
     return;
   }
-  hIconSmall = hIconSmall ? hIconSmall : hOrigIconSmall;
-  hIcon = hIcon ? hIcon : hOrigIcon;
 
-  if (hIconSmall != NULL) {
-    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hIconSmall);
+  if (hOrigIconSmall) {
+    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hOrigIconSmall);
   }
-  if (hIcon != NULL) {
-    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hIcon);
+  if (hOrigIcon) {
+    SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hOrigIcon);
   }
 }
 
@@ -78,9 +80,6 @@ void os_icon_init(void)
   if ((hWnd = GetConsoleWindow()) == NULL) {
     return;
   }
-  // Save Windows console icon to be restored later.
-  hOrigIconSmall = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_SMALL, (LPARAM)0);
-  hOrigIcon = (HICON)SendMessage(hWnd, WM_GETICON, (WPARAM)ICON_BIG, (LPARAM)0);
 
   const char *vimruntime = os_getenv("VIMRUNTIME");
   if (vimruntime != NULL) {
@@ -90,7 +89,8 @@ void os_icon_init(void)
     } else {
       HICON hVimIcon = LoadImage(NULL, NameBuff, IMAGE_ICON, 64, 64,
                                  LR_LOADFROMFILE | LR_LOADMAP3DCOLORS);
-      os_icon_set(hVimIcon, hVimIcon);
+      hOrigIconSmall = (HICON)SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hVimIcon);
+      hOrigIcon = (HICON)SendMessage(hWnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hVimIcon);
     }
   }
 }
