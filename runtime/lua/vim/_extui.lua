@@ -51,7 +51,7 @@ local function ui_callback(event, ...)
   api.nvim__redraw({
     flush = true,
     cursor = handler == ext.cmd[event] and true or nil,
-    win = handler == ext.cmd[event] and ext.wins[ext.tab].cmd or nil,
+    win = handler == ext.cmd[event] and ext.wins.cmd or nil,
   })
 end
 local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
@@ -63,10 +63,8 @@ function M.enable(opts)
 
   if ext.cfg.enable == false then
     -- Detach and cleanup windows, buffers and autocommands.
-    for _, tab in ipairs(api.nvim_list_tabpages()) do
-      for _, win in pairs(ext.wins[tab] or {}) do
-        api.nvim_win_close(win, true)
-      end
+    for _, win in pairs(ext.wins) do
+      api.nvim_win_close(win, true)
     end
     for _, buf in pairs(ext.bufs) do
       api.nvim_buf_delete(buf, {})
@@ -100,7 +98,7 @@ function M.enable(opts)
     if name == 'cmdheight' then
       -- 'cmdheight' set; (un)hide cmdline window and set its height.
       local cfg = { height = math.max(value, 1), hide = value == 0 }
-      api.nvim_win_set_config(ext.wins[ext.tab].cmd, cfg)
+      api.nvim_win_set_config(ext.wins.cmd, cfg)
       -- Change message position when 'cmdheight' was or becomes 0.
       if value == 0 or ext.cmdheight == 0 then
         ext.cfg.msg.pos = value == 0 and 'box' or ext.cmdheight == 0 and 'cmd'
@@ -124,7 +122,7 @@ function M.enable(opts)
     desc = 'Set cmdline and message window dimensions for changed option values.',
   })
 
-  api.nvim_create_autocmd({ 'VimEnter', 'VimResized' }, {
+  api.nvim_create_autocmd({ 'VimEnter', 'VimResized', 'TabEnter' }, {
     group = ext.augroup,
     callback = function(ev)
       ext.tab_check_wins()
@@ -133,13 +131,13 @@ function M.enable(opts)
       end
       ext.msg.set_pos()
     end,
-    desc = 'Set cmdline and message window dimensions after startup and shell resize.',
+    desc = 'Set extui window dimensions after startup, shell resize or tabpage change.',
   })
 
   api.nvim_create_autocmd('WinEnter', {
     callback = function()
       local win = api.nvim_get_current_win()
-      if vim.tbl_contains(ext.wins[ext.tab] or {}, win) and api.nvim_win_get_config(win).hide then
+      if vim.tbl_contains(ext.wins, win) and api.nvim_win_get_config(win).hide then
         vim.cmd.wincmd('p')
       end
     end,

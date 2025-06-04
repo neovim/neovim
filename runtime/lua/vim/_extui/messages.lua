@@ -54,8 +54,8 @@ function M.box:start_timer(buf, len)
       self.width = 1
       M.prev_msg = ext.cfg.msg.pos == 'box' and '' or M.prev_msg
       api.nvim_buf_clear_namespace(ext.bufs.box, -1, 0, -1)
-      if api.nvim_win_is_valid(ext.wins[ext.tab].box) then
-        api.nvim_win_set_config(ext.wins[ext.tab].box, { hide = true })
+      if api.nvim_win_is_valid(ext.wins.box) then
+        api.nvim_win_set_config(ext.wins.box, { hide = true })
       end
     end
   end, ext.cfg.msg.box.timeout)
@@ -85,10 +85,10 @@ local function set_virttext(type)
     M.cmd.last_col = type == 'last' and o.columns or M.cmd.last_col
   elseif #chunks > 0 then
     local tar = type == 'msg' and ext.cfg.msg.pos or 'cmd'
-    local win = ext.wins[ext.tab][tar]
+    local win = ext.wins[tar]
     local max = api.nvim_win_get_height(win)
     local erow = tar == 'cmd' and M.cmd.msg_row or nil
-    local srow = tar == 'box' and fn.line('w0', ext.wins[ext.tab].box) - 1 or nil
+    local srow = tar == 'box' and fn.line('w0', ext.wins.box) - 1 or nil
     local h = api.nvim_win_text_height(win, { start_row = srow, end_row = erow, max_height = max })
     local row = h.end_row ---@type integer
     local col = fn.virtcol2col(win, row + 1, h.end_vcol)
@@ -253,11 +253,11 @@ function M.show_msg(tar, content, replace_last, append, more)
   end
 
   if tar == 'box' then
-    api.nvim_win_set_width(ext.wins[ext.tab].box, width)
-    local h = api.nvim_win_text_height(ext.wins[ext.tab].box, { start_row = start_row })
+    api.nvim_win_set_width(ext.wins.box, width)
+    local h = api.nvim_win_text_height(ext.wins.box, { start_row = start_row })
     if more and h.all > 1 then
       msg_to_more(tar)
-      api.nvim_win_set_width(ext.wins[ext.tab].box, M.box.width)
+      api.nvim_win_set_width(ext.wins.box, M.box.width)
       return
     end
 
@@ -271,22 +271,22 @@ function M.show_msg(tar, content, replace_last, append, more)
       M.box:start_timer(ext.bufs.box, row - start_row + 1)
     end
   elseif tar == 'cmd' and dupe == 0 then
-    fn.clearmatches(ext.wins[ext.tab].cmd) -- Clear matchparen highlights.
+    fn.clearmatches(ext.wins.cmd) -- Clear matchparen highlights.
     if ext.cmd.row > 0 then
       -- In block mode the cmdheight is already dynamic, so just print the full message
       -- regardless of height. Spoof cmdline_show to put cmdline below message.
       ext.cmd.row = ext.cmd.row + 1 + row - start_row
       ext.cmd.cmdline_show({}, 0, ':', '', ext.cmd.indent, 0, 0)
-      api.nvim__redraw({ flush = true, cursor = true, win = ext.wins[ext.tab].cmd })
+      api.nvim__redraw({ flush = true, cursor = true, win = ext.wins.cmd })
     else
-      local h = api.nvim_win_text_height(ext.wins[ext.tab].cmd, {})
+      local h = api.nvim_win_text_height(ext.wins.cmd, {})
       if more and h.all > ext.cmdheight then
         ext.cmd.highlighter:destroy()
         msg_to_more(tar)
         return
       end
 
-      api.nvim_win_set_cursor(ext.wins[ext.tab][tar], { 1, 0 })
+      api.nvim_win_set_cursor(ext.wins[tar], { 1, 0 })
       ext.cmd.highlighter.active[ext.bufs.cmd] = nil
       -- Place [+x] indicator for lines that spill over 'cmdheight'.
       M.cmd.lines, M.cmd.msg_row = h.all, h.end_row
@@ -337,7 +337,7 @@ function M.msg_show(kind, content, _, _, append)
     -- Verbose messages are sent too often to be meaningful in the cmdline:
     -- always route to box regardless of cfg.msg.pos.
     M.show_msg('box', content, false, append)
-  elseif ext.cfg.msg.pos == 'cmd' and api.nvim_get_current_win() == ext.wins[ext.tab].more then
+  elseif ext.cfg.msg.pos == 'cmd' and api.nvim_get_current_win() == ext.wins.more then
     -- Append message to already open 'more' window.
     M.msg_history_show({ { 'spill', content } })
     api.nvim_command('norm! G')
@@ -411,7 +411,7 @@ function M.msg_history_show(entries)
   end
 
   -- Appending messages while 'more' window is open.
-  local append_more = api.nvim_get_current_win() == ext.wins[ext.tab].more
+  local append_more = api.nvim_get_current_win() == ext.wins.more
   if not append_more then
     api.nvim_buf_set_lines(ext.bufs.more, 0, -1, false, {})
   end
@@ -436,14 +436,14 @@ function M.set_pos(type)
       hide = false,
       relative = 'laststatus',
       height = height,
-      row = win == ext.wins[ext.tab].box and 0 or 1,
+      row = win == ext.wins.box and 0 or 1,
       col = 10000,
     }
     api.nvim_win_set_config(win, config)
     if type == 'box' then
       -- Ensure last line is visible and first line is at top of window.
       local row = (texth.all > height and texth.end_row or 0) + 1
-      api.nvim_win_set_cursor(ext.wins[ext.tab].box, { row, 0 })
+      api.nvim_win_set_cursor(ext.wins.box, { row, 0 })
     elseif type == 'more' and api.nvim_get_current_win() ~= win then
       -- Cannot leave the cmdwin to enter the "more" window, so close it.
       -- NOTE: regression w.r.t. the message grid, which allowed this. Resolving
@@ -473,7 +473,7 @@ function M.set_pos(type)
     end
   end
 
-  for t, win in pairs(ext.wins[ext.tab] or {}) do
+  for t, win in pairs(ext.wins) do
     local cfg = (t == type or (type == nil and t ~= 'cmd'))
       and api.nvim_win_is_valid(win)
       and api.nvim_win_get_config(win)

@@ -5,10 +5,8 @@ local M = {
   ns = api.nvim_create_namespace('nvim._ext_ui'),
   augroup = api.nvim_create_augroup('nvim._ext_ui', {}),
   cmdheight = -1, -- 'cmdheight' option value set by user.
-  -- Map of tabpage ID to box/cmd/more/prompt window IDs.
-  wins = {}, ---@type { ['box'|'cmd'|'more'|'prompt']: integer }[]
+  wins = { box = -1, cmd = -1, more = -1, prompt = -1 },
   bufs = { box = -1, cmd = -1, more = -1, prompt = -1 },
-  tab = 0, -- Current tabpage.
   cfg = {
     enable = true,
     msg = { -- Options related to the message module.
@@ -31,13 +29,10 @@ local wincfg = { -- Default cfg for nvim_open_win().
   noautocmd = true,
 }
 
+local tab = 0
 --- Ensure the various buffers and windows have not been deleted.
 function M.tab_check_wins()
-  M.tab = api.nvim_get_current_tabpage()
-  if not M.wins[M.tab] then
-    M.wins[M.tab] = { box = -1, cmd = -1, more = -1, prompt = -1 }
-  end
-
+  local curtab = api.nvim_get_current_tabpage()
   for _, type in ipairs({ 'box', 'cmd', 'more', 'prompt' }) do
     local setopt = not api.nvim_buf_is_valid(M.bufs[type])
     if setopt then
@@ -50,8 +45,9 @@ function M.tab_check_wins()
     end
 
     if
-      not api.nvim_win_is_valid(M.wins[M.tab][type])
-      or not api.nvim_win_get_config(M.wins[M.tab][type]).zindex -- no longer floating
+      tab ~= curtab
+      or not api.nvim_win_is_valid(M.wins[type])
+      or not api.nvim_win_get_config(M.wins[type]).zindex -- no longer floating
     then
       local top = { vim.opt.fcs:get().horiz or o.ambw == 'single' and '─' or '-', 'WinSeparator' }
       local border = (type == 'more' or type == 'prompt') and { '', top, '', '', '', '', '', '' }
@@ -66,13 +62,17 @@ function M.tab_check_wins()
         zindex = 200 - (type == 'more' and 1 or 0),
         _cmdline_offset = type == 'cmd' and 0 or nil,
       })
-      M.wins[M.tab][type] = api.nvim_open_win(M.bufs[type], false, cfg)
+      if tab ~= curtab and api.nvim_win_is_valid(M.wins[type]) then
+        cfg = api.nvim_win_get_config(M.wins[type])
+        api.nvim_win_close(M.wins[type], true)
+      end
+      M.wins[type] = api.nvim_open_win(M.bufs[type], false, cfg)
       if type == 'cmd' then
-        api.nvim_win_set_hl_ns(M.wins[M.tab][type], M.ns)
+        api.nvim_win_set_hl_ns(M.wins[type], M.ns)
       end
       setopt = true
-    elseif api.nvim_win_get_buf(M.wins[M.tab][type]) ~= M.bufs[type] then
-      api.nvim_win_set_buf(M.wins[M.tab][type], M.bufs[type])
+    elseif api.nvim_win_get_buf(M.wins[type]) ~= M.bufs[type] then
+      api.nvim_win_set_buf(M.wins[type], M.bufs[type])
       setopt = true
     end
 
@@ -84,7 +84,7 @@ function M.tab_check_wins()
       end
 
       -- Fire a FileType autocommand with window context to let the user reconfigure local options.
-      api.nvim_win_call(M.wins[M.tab][type], function()
+      api.nvim_win_call(M.wins[type], function()
         api.nvim_set_option_value('wrap', true, { scope = 'local' })
         api.nvim_set_option_value('linebreak', false, { scope = 'local' })
         api.nvim_set_option_value('smoothscroll', true, { scope = 'local' })
@@ -95,6 +95,7 @@ function M.tab_check_wins()
       end)
     end
   end
+  tab = curtab
 end
 
 return M
