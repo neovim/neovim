@@ -75,5 +75,3 @@ If your system does not have the [required glibc version](https://neovim.io/doc/
 ### Other
 
 - Install by [package manager](https://github.com/neovim/neovim/blob/master/INSTALL.md#install-from-package)
-
-## SHA256 Checksums
