@@ -78,6 +78,7 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
+#include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -8697,6 +8698,7 @@ void invoke_prompt_callback(void)
   callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
   tv_clear(&argv[0]);
   tv_clear(&rettv);
+  u_clearall(curbuf);
   curbuf->b_prompt_submitted = curbuf->b_ml.ml_line_count;
 }
 

@@ -4458,10 +4458,6 @@ static void nv_kundo(cmdarg_T *cap)
     return;
   }
 
-  if (bt_prompt(curbuf)) {
-    clearopbeep(cap->oap);
-    return;
-  }
   u_undo(cap->count1);
   curwin->w_set_curswant = true;
 }
