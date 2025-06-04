@@ -666,9 +666,8 @@ int hl_combine_attr(int char_attr, int prim_attr)
 ///
 /// If colors are unset, use builtin default colors. Never returns -1
 /// Cterm colors are unchanged.
-static HlAttrs get_colors_force(int attr)
+static HlAttrs get_colors_force(HlAttrs attrs)
 {
-  HlAttrs attrs = syn_attr2entry(attr);
   if (attrs.rgb_bg_color == -1) {
     attrs.rgb_bg_color = normal_bg;
   }
@@ -703,7 +702,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     return -1;
   }
 
-  HlAttrs fattrs = get_colors_force(front_attr);
+  HlAttrs fattrs_raw = syn_attr2entry(front_attr);
+  HlAttrs fattrs = get_colors_force(fattrs_raw);
   int ratio = fattrs.hl_blend;
   if (ratio <= 0) {
     *through = false;
@@ -719,7 +719,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     return id;
   }
 
-  HlAttrs battrs = get_colors_force(back_attr);
+  HlAttrs battrs_raw = syn_attr2entry(back_attr);
+  HlAttrs battrs = get_colors_force(battrs_raw);
   HlAttrs cattrs;
 
   if (*through) {
@@ -753,11 +754,13 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
     cattrs.rgb_ae_attr &= ~HL_BG_INDEXED;
   }
-  cattrs.rgb_bg_color = rgb_blend(ratio, battrs.rgb_bg_color,
-                                  fattrs.rgb_bg_color);
 
+  // Check if we should preserve background transparency
+  // Use the raw attributes (before forcing colors) to check original transparency
+  cattrs.rgb_bg_color = (battrs_raw.rgb_bg_color == -1) && (fattrs_raw.rgb_bg_color == -1)
+                        ? -1
+                        : rgb_blend(ratio, battrs.rgb_bg_color, fattrs.rgb_bg_color);
   cattrs.hl_blend = -1;  // blend property was consumed
-
   HlKind kind = *through ? kHlBlendThrough : kHlBlend;
   id = get_attr_entry((HlEntry){ .attr = cattrs, .kind = kind,
                                  .id1 = back_attr, .id2 = front_attr });
