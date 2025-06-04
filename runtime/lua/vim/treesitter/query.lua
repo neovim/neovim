@@ -979,8 +979,7 @@ function Query:iter_captures(node, source, start, stop, opts)
 
   start, stop = value_or_node_range(start, stop, node)
 
-  -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
-  local tree = node:tree():copy()
+  local tree = node:tree()
   local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
 
   -- For faster checks that a match is not in the cache.
@@ -1079,8 +1078,7 @@ function Query:iter_matches(node, source, start, stop, opts)
 
   start, stop = value_or_node_range(start, stop, node)
 
-  -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
-  local tree = node:tree():copy()
+  local tree = node:tree()
   local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
 
   local function iter()
