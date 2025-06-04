@@ -510,7 +510,7 @@ paragraph, no matter where the cursor currently is.  Or you can use Visual
 mode: hit "v", move to the end of the block, and type "gq".  See also |gq|.
 
 ==============================================================================
-4. 'expandtab', 'smarttab' and 'softtabstop' options	*ins-expandtab*
+4. 'expandtab', 'softtabstop' and 'smarttab' options	*ins-expandtab*
 
 If the 'expandtab' option is on, spaces will be used to fill the amount of
 whitespace of the tab.  If you want to enter a real <Tab>, type CTRL-V first
@@ -520,13 +520,6 @@ character is replaced with several spaces.  The result of this is that the
 number of characters in the line increases.  Backspacing will delete one
 space at a time.  The original character will be put back for only one space
 that you backspace over (the last one).
-
-							*ins-smarttab*
-When the 'smarttab' option is on, a <Tab> inserts 'shiftwidth' positions at
-the beginning of a line and 'tabstop' positions in other places.  This means
-that often spaces instead of a <Tab> character are inserted.  When 'smarttab'
-is off, a <Tab> always inserts 'tabstop' positions, and 'shiftwidth' is only
-used for ">>" and the like.
 
 							*ins-softtabstop*
 When the 'softtabstop' option is non-zero, a <Tab> inserts 'softtabstop'
@@ -541,6 +534,13 @@ inserted character is a space, then it will only delete the character before
 the cursor.  Otherwise you cannot always delete a single character before the
 cursor.  You will have to delete 'softtabstop' characters first, and then type
 extra spaces to get where you want to be.
+
+							*ins-smarttab*
+When the 'smarttab' option is on, the <Tab> key indents by 'shiftwidth' if the
+cursor is in leading whitespace.  The <BS> key has the opposite effect. This
+behaves as if 'softtabstop' were set to the value of 'shiftwidth'. This option
+allows the user to set 'softtabstop' to a value other than 'shiftwidth' and
+still use the <Tab> key for indentation.
 
 ==============================================================================
 5. Replace mode				*Replace* *Replace-mode* *mode-replace*

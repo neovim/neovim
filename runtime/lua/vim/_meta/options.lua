@@ -6168,16 +6168,11 @@ vim.o.si = vim.o.smartindent
 vim.bo.smartindent = vim.o.smartindent
 vim.bo.si = vim.bo.smartindent
 
---- When on, a <Tab> in front of a line inserts blanks according to
---- 'shiftwidth'.  'tabstop' or 'softtabstop' is used in other places.  A
---- <BS> will delete a 'shiftwidth' worth of space at the start of the
---- line.
---- When off, a <Tab> always inserts blanks according to 'tabstop' or
---- 'softtabstop'.  'shiftwidth' is only used for shifting text left or
---- right `shift-left-right`.
---- What gets inserted (a <Tab> or spaces) depends on the 'expandtab'
---- option.  Also see `ins-expandtab`.  When 'expandtab' is not set, the
---- number of spaces is minimized by using <Tab>s.
+--- When enabled, the <Tab> key will indent by 'shiftwidth' if the cursor
+--- is in leading whitespace.  The <BS> key has the opposite effect.
+--- This behaves as if 'softtabstop' is set to the value of 'shiftwidth'.
+--- Have a look at section `30.5` of the user guide for detailed
+--- explanations on how Vim works with tabs and spaces.
 ---
 --- @type boolean
 vim.o.smarttab = true
