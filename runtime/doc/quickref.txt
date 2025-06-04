@@ -869,7 +869,7 @@ Short explanation of each option:		*option-list*
 'signcolumn'	  'scl'	    when and how to display the sign column
 'smartcase'	  'scs'     no ignore case when pattern has uppercase
 'smartindent'	  'si'	    smart autoindenting for C programs
-'smarttab'	  'sta'     use 'shiftwidth' when inserting <Tab>
+'smarttab'	  'sta'     <Tab> in leading whitespace indents by 'shiftwidth'
 'smoothscroll'	  'sms'     scroll by screen lines when 'wrap' is set
 'softtabstop'	  'sts'     number of spaces that <Tab> uses while editing
 'spell'			    enable spell checking

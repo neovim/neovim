@@ -1322,7 +1322,7 @@ may want to add >
 <
 as the final filter on Windows or >
 
-	All Files\t(*)\t*\n"
+	All Files\t(*)\t*\n
 <
 on other platforms, so that the user can still access any desired file.
 
