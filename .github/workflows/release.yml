@@ -193,25 +193,13 @@ jobs:
            echo 'PRERELEASE=') >> $GITHUB_ENV
           gh release delete stable --yes || true
           git push origin :stable || true
-      # `sha256sum` outputs <sha> <path>, so we cd into each dir to drop the
-      # containing folder from the output.
-      - run: |
-          for i in nvim-*; do
-              (
-                  cd $i || exit
-                  sha256sum * >> $GITHUB_WORKSPACE/shasum.txt
-              )
-          done
       - name: Publish release
         env:
           NVIM_VERSION: ${{ needs.linux.outputs.version }}
           DEBUG: api
         run: |
           envsubst < "$GITHUB_WORKSPACE/.github/workflows/notes.md" > "$RUNNER_TEMP/notes.md"
-          echo '```' >> "$RUNNER_TEMP/notes.md"
-          cat shasum.txt >> "$RUNNER_TEMP/notes.md"
-          echo '```' >> "$RUNNER_TEMP/notes.md"
           if [ "$TAG_NAME" != "nightly" ]; then
-            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/* shasum.txt
+            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/*
           fi
-          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/* shasum.txt
+          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/*
