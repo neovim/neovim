@@ -36,6 +36,15 @@ local M = {
   },
 }
 
+function M.box:close()
+  self.width, M.virt.msg = 1, { {}, {} }
+  M.prev_msg = ext.cfg.msg.pos == 'box' and '' or M.prev_msg
+  api.nvim_buf_clear_namespace(ext.bufs.box, -1, 0, -1)
+  if api.nvim_win_is_valid(ext.wins.box) then
+    api.nvim_win_set_config(ext.wins.box, { hide = true })
+  end
+end
+
 --- Start a timer whose callback will remove the message from the message window.
 ---
 ---@param buf integer Buffer the message was written to.
@@ -51,12 +60,7 @@ function M.box:start_timer(buf, len)
     if self.count > 0 then
       M.set_pos('box')
     else
-      self.width = 1
-      M.prev_msg = ext.cfg.msg.pos == 'box' and '' or M.prev_msg
-      api.nvim_buf_clear_namespace(ext.bufs.box, -1, 0, -1)
-      if api.nvim_win_is_valid(ext.wins.box) then
-        api.nvim_win_set_config(ext.wins.box, { hide = true })
-      end
+      self:close()
     end
   end, ext.cfg.msg.box.timeout)
 end
@@ -257,7 +261,7 @@ function M.show_msg(tar, content, replace_last, append, more)
     local h = api.nvim_win_text_height(ext.wins.box, { start_row = start_row })
     if more and h.all > 1 then
       msg_to_more(tar)
-      api.nvim_win_set_width(ext.wins.box, M.box.width)
+      M.box:close()
       return
     end
 
@@ -337,7 +341,7 @@ function M.msg_show(kind, content, _, _, append)
     -- Verbose messages are sent too often to be meaningful in the cmdline:
     -- always route to box regardless of cfg.msg.pos.
     M.show_msg('box', content, false, append)
-  elseif ext.cfg.msg.pos == 'cmd' and api.nvim_get_current_win() == ext.wins.more then
+  elseif ext.cfg.msg.pos == 'cmd' and not api.nvim_win_get_config(ext.wins.more).hide then
     -- Append message to already open 'more' window.
     M.msg_history_show({ { 'spill', content } })
     api.nvim_command('norm! G')
@@ -411,13 +415,13 @@ function M.msg_history_show(entries)
   end
 
   -- Appending messages while 'more' window is open.
-  local append_more = api.nvim_get_current_win() == ext.wins.more
-  if not append_more then
+  local clear = entries[1][1] ~= 'spill' or api.nvim_win_get_config(ext.wins.more).hide == true
+  if clear then
     api.nvim_buf_set_lines(ext.bufs.more, 0, -1, false, {})
   end
 
   for i, entry in ipairs(entries) do
-    M.show_msg('more', entry[2], i == 1 and not append_more, false)
+    M.show_msg('more', entry[2], i == 1 and clear, false)
   end
 
   M.set_pos('more')
@@ -439,18 +443,19 @@ function M.set_pos(type)
       row = win == ext.wins.box and 0 or 1,
       col = 10000,
     }
-    api.nvim_win_set_config(win, config)
+
     if type == 'box' then
       -- Ensure last line is visible and first line is at top of window.
       local row = (texth.all > height and texth.end_row or 0) + 1
       api.nvim_win_set_cursor(ext.wins.box, { row, 0 })
-    elseif type == 'more' and api.nvim_get_current_win() ~= win then
+    elseif type == 'more' and api.nvim_win_get_config(win).hide then
       -- Cannot leave the cmdwin to enter the "more" window, so close it.
       -- NOTE: regression w.r.t. the message grid, which allowed this. Resolving
       -- that would require somehow bypassing textlock for the "more" window.
       if fn.getcmdwintype() ~= '' then
         api.nvim_command('quit')
       end
+
       -- It's actually closed one event iteration later so schedule in case it was open.
       vim.schedule(function()
         api.nvim_set_current_win(win)
@@ -471,6 +476,7 @@ function M.set_pos(type)
         })
       end)
     end
+    api.nvim_win_set_config(win, config)
   end
 
   for t, win in pairs(ext.wins) do

@@ -99,6 +99,7 @@ function M.cmdline_pos(pos)
     curpos[1], curpos[2] = M.row + 1, promptlen + pos
     -- Add matchparen highlighting to non-prompt part of cmdline.
     if pos > 0 and fn.exists('#matchparen') then
+      api.nvim_win_set_cursor(ext.wins.cmd, { curpos[1], curpos[2] - 1 })
       vim._with({ win = ext.wins.cmd, wo = { eventignorewin = '' } }, function()
         api.nvim_exec_autocmds('CursorMoved', {})
       end)
