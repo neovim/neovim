@@ -1069,7 +1069,7 @@ get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
       • {client_id}  (`integer`) client id
 
     Return: ~
-        (`vim.lsp.Client?`) client rpc object
+        (`vim.lsp.Client?`) client rpc object. See |vim.lsp.Client|.
 
 get_clients({filter})                                  *vim.lsp.get_clients()*
     Get active clients.
@@ -1279,7 +1279,8 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {id}                    (`integer`) The id allocated to the client.
       • {initialized}           (`true?`)
       • {name}                  (`string`) See |vim.lsp.ClientConfig|.
-      • {offset_encoding}       (`string`) See |vim.lsp.ClientConfig|.
+      • {offset_encoding}       (`'utf-8'|'utf-16'|'utf-32'`) See
+                                |vim.lsp.ClientConfig|.
       • {progress}              (`vim.lsp.Client.Progress`) A ring buffer
                                 (|vim.ringbuf()|) containing progress messages
                                 sent by the server. See
@@ -2546,7 +2547,7 @@ make_workspace_params({added}, {removed})
       • {removed}  (`lsp.WorkspaceFolder[]`)
 
     Return: ~
-        (`lsp.WorkspaceFoldersChangeEvent`)
+        (`lsp.DidChangeWorkspaceFoldersParams`)
 
                                         *vim.lsp.util.open_floating_preview()*
 open_floating_preview({contents}, {syntax}, {opts})

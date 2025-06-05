@@ -49,7 +49,10 @@ local hrtime = vim.uv.hrtime
 local default_parse_timeout_ns = 3 * 1000000
 
 ---@type Range2
-local entire_document_range = { 0, math.huge }
+local entire_document_range = {
+  0,
+  math.huge --[[@as integer]],
+}
 
 ---@alias TSCallbackName
 ---| 'changedtree'

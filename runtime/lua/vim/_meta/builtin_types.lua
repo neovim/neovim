@@ -39,6 +39,14 @@
 --- @field pos [integer, integer, integer, integer]
 --- @field file string
 
+--- @class vim.fn.getmatches.ret.item
+--- @field id integer
+--- @field group string
+--- @field pattern? string
+--- @field priority integer
+--- @field conceal? string
+--- @field [string] [integer, integer, integer] all strings of format 'pos%d'
+
 --- @class vim.fn.getmousepos.ret
 --- @field screenrow integer
 --- @field screencol integer

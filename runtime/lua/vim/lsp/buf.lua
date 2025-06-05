@@ -545,7 +545,7 @@ function M.format(opts)
   end
 
   local passed_multiple_ranges = (range and #range ~= 0 and type(range[1]) == 'table')
-  local method ---@type string
+  local method ---@type vim.lsp.protocol.Method.ClientToServer
   if passed_multiple_ranges then
     method = ms.textDocument_rangesFormatting
   elseif range then
@@ -579,10 +579,11 @@ function M.format(opts)
 
     local ret = params --[[@as lsp.DocumentFormattingParams|lsp.DocumentRangeFormattingParams|lsp.DocumentRangesFormattingParams]]
     if passed_multiple_ranges then
+      --- @cast range {start:[integer,integer],end:[integer, integer]}[]
       ret = params --[[@as lsp.DocumentRangesFormattingParams]]
-      --- @cast range {start:[integer,integer],end:[integer, integer]}
       ret.ranges = vim.tbl_map(to_lsp_range, range)
     elseif range then
+      --- @cast range {start:[integer,integer],end:[integer, integer]}
       ret = params --[[@as lsp.DocumentRangeFormattingParams]]
       ret.range = to_lsp_range(range)
     end
@@ -660,7 +661,7 @@ function M.rename(new_name, opts)
   local cword = vim.fn.expand('<cword>')
 
   --- @param range lsp.Range
-  --- @param position_encoding string
+  --- @param position_encoding 'utf-8'|'utf-16'|'utf-32'
   local function get_text_at_range(range, position_encoding)
     return api.nvim_buf_get_text(
       bufnr,
@@ -1199,7 +1200,7 @@ local function on_code_action_results(results, opts)
       return title
     end
 
-    local source = lsp.get_client_by_id(item.ctx.client_id).name
+    local source = assert(lsp.get_client_by_id(item.ctx.client_id)).name
     return ('%s [%s]'):format(title, source)
   end
 

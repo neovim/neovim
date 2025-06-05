@@ -1,5 +1,7 @@
 --- @meta
 
+vim.base64 = {}
+
 --- Encode {str} using Base64.
 ---
 --- @param str string String to encode

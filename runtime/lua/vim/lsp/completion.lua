@@ -38,7 +38,7 @@ local lsp = vim.lsp
 local protocol = lsp.protocol
 local ms = protocol.Methods
 
-local rtt_ms = 50
+local rtt_ms = 50.0
 local ns_to_ms = 0.000001
 
 --- @alias vim.lsp.CompletionResult lsp.CompletionList | lsp.CompletionItem[]
@@ -92,7 +92,7 @@ local completion_timer = nil
 
 --- @return uv.uv_timer_t
 local function new_timer()
-  return assert(vim.uv.new_timer())
+  return (assert(vim.uv.new_timer()))
 end
 
 local function reset_timer()
@@ -110,7 +110,7 @@ end
 local function exp_avg(window, warmup)
   local count = 0
   local sum = 0
-  local value = 0
+  local value = 0.0
 
   return function(sample)
     if count < warmup then
@@ -278,7 +278,6 @@ end
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
---- @private
 --- @param result vim.lsp.CompletionResult Result of `textDocument/completion`
 --- @param prefix string prefix to filter the completion items
 --- @param client_id integer? Client ID
@@ -365,7 +364,7 @@ end
 --- @param lnum integer 0-indexed
 --- @param line string
 --- @param items lsp.CompletionItem[]
---- @param encoding string
+--- @param encoding 'utf-8'|'utf-16'|'utf-32'
 --- @return integer?
 local function adjust_start_col(lnum, line, items, encoding)
   local min_start_char = nil
@@ -384,7 +383,6 @@ local function adjust_start_col(lnum, line, items, encoding)
   end
 end
 
---- @private
 --- @param line string line content
 --- @param lnum integer 0-indexed line number
 --- @param cursor_col integer
@@ -392,7 +390,7 @@ end
 --- @param client_start_boundary integer 0-indexed word boundary
 --- @param server_start_boundary? integer 0-indexed word boundary, based on textEdit.range.start.character
 --- @param result vim.lsp.CompletionResult
---- @param encoding string
+--- @param encoding 'utf-8'|'utf-16'|'utf-32'
 --- @return table[] matches
 --- @return integer? server_start_boundary
 function M._convert_results(
@@ -487,7 +485,7 @@ local function trigger(bufnr, clients, ctx)
   local line = api.nvim_get_current_line()
   local line_to_cursor = line:sub(1, cursor_col)
   local word_boundary = vim.fn.match(line_to_cursor, '\\k*$')
-  local start_time = vim.uv.hrtime()
+  local start_time = vim.uv.hrtime() --[[@as integer]]
   Context.last_request_time = start_time
 
   local cancel_request = request(clients, bufnr, win, ctx, function(responses)
@@ -557,7 +555,7 @@ local function on_insert_char_pre(handle)
       else
         completion_timer = new_timer()
         completion_timer:start(
-          debounce_ms,
+          math.floor(debounce_ms),
           0,
           vim.schedule_wrap(function()
             M.get({ ctx = ctx })

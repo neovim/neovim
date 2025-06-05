@@ -36,6 +36,7 @@ end
 local M = {}
 
 --- Mapping of error codes used by the client
+--- @enum vim.lsp.rpc.ClientErrors
 local client_errors = {
   INVALID_SERVER_MESSAGE = 1,
   INVALID_SERVER_JSON = 2,
@@ -150,6 +151,7 @@ local default_dispatchers = {
 
 local strbuffer = require('vim._stringbuffer')
 
+--- @async
 local function request_parser_loop()
   local buf = strbuffer.new()
   while true do
@@ -279,7 +281,7 @@ function Client:request(method, params, callback, notify_reply_callback)
 end
 
 ---@package
----@param errkind integer
+---@param errkind vim.lsp.rpc.ClientErrors
 ---@param ... any
 function Client:on_error(errkind, ...)
   assert(M.client_errors[errkind])
@@ -375,7 +377,7 @@ function Client:handle_body(body)
     -- This works because we are expecting vim.NIL here
   elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
     -- We sent a number, so we expect a number.
-    local result_id = assert(tonumber(decoded.id), 'response id must be a number')
+    local result_id = assert(tonumber(decoded.id), 'response id must be a number') --[[@as integer]]
 
     -- Notify the user that a response was received for the request
     local notify_reply_callback = self.notify_reply_callbacks[result_id]

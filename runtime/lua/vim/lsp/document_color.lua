@@ -40,7 +40,13 @@ local document_color_opts = { style = 'background' }
 --- @param color string
 local function get_contrast_color(color)
   local r_s, g_s, b_s = color:match('^#(%x%x)(%x%x)(%x%x)$')
+  if not (r_s and g_s and b_s) then
+    error('Invalid color format: ' .. color)
+  end
   local r, g, b = tonumber(r_s, 16), tonumber(g_s, 16), tonumber(b_s, 16)
+  if not (r and g and b) then
+    error('Invalid color format: ' .. color)
+  end
 
   -- Source: https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
   -- Using power 2.2 is a close approximation to full piecewise transform
@@ -185,7 +191,7 @@ local function buf_enable(bufnr)
   api.nvim_buf_attach(bufnr, false, {
     on_reload = function(_, buf)
       buf_clear(buf)
-      if bufstates[buf].enabled then
+      if assert(bufstates[buf]).enabled then
         M._buf_refresh(buf)
       end
     end,
@@ -203,7 +209,7 @@ local function buf_enable(bufnr)
 
       if
         (method == ms.textDocument_didChange or method == ms.textDocument_didOpen)
-        and bufstates[args.buf].enabled
+        and assert(bufstates[args.buf]).enabled
       then
         M._buf_refresh(args.buf, args.data.client_id)
       end
@@ -254,7 +260,7 @@ function M.is_enabled(bufnr)
     reset_bufstate(bufnr, false)
   end
 
-  return bufstates[bufnr].enabled
+  return assert(bufstates[bufnr]).enabled
 end
 
 --- Enables document highlighting from the given language client in the given buffer.

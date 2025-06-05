@@ -72,7 +72,6 @@ M.cmp_pos = {
 
 setmetatable(M.cmp_pos, { __call = cmp_pos })
 
----@private
 ---Check if a variable is a valid range object
 ---@param r any
 ---@return boolean
@@ -92,7 +91,6 @@ function M.validate(r)
   return true
 end
 
----@private
 ---@param r1 Range
 ---@param r2 Range
 ---@return boolean
@@ -113,7 +111,6 @@ function M.intercepts(r1, r2)
   return true
 end
 
----@private
 ---@param r1 Range6
 ---@param r2 Range6
 ---@return Range6?
@@ -126,7 +123,6 @@ function M.intersection(r1, r2)
   return { rs[1], rs[2], rs[3], re[4], re[5], re[6] }
 end
 
----@private
 ---@param r Range
 ---@return integer, integer, integer, integer
 function M.unpack4(r)
@@ -137,14 +133,12 @@ function M.unpack4(r)
   return r[1], r[2], r[3 + off_1], r[4 + off_1]
 end
 
----@private
 ---@param r Range6
 ---@return integer, integer, integer, integer, integer, integer
 function M.unpack6(r)
   return r[1], r[2], r[3], r[4], r[5], r[6]
 end
 
----@private
 ---@param r1 Range
 ---@param r2 Range
 ---@return boolean whether r1 contains r2
@@ -188,7 +182,6 @@ local function get_offset(source, index)
   return byte
 end
 
----@private
 ---@param source integer|string
 ---@param range Range
 ---@return Range6

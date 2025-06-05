@@ -241,7 +241,7 @@ end
 ---
 --- The returned function has an optional {config} parameter that accepts |vim.lsp.ListOpts|
 ---
----@param map_result fun(resp, bufnr: integer, position_encoding: 'utf-8'|'utf-16'|'utf-32'): table to convert the response
+---@param map_result fun(resp: any, bufnr: integer, position_encoding: 'utf-8'|'utf-16'|'utf-32'): table to convert the response
 ---@param entity string name of the resource used in a `not found` error message
 ---@param title_fn fun(ctx: lsp.HandlerContext): string Function to call to generate list title
 ---@return lsp.Handler

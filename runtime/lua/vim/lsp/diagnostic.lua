@@ -11,25 +11,28 @@ local augroup = api.nvim_create_augroup('nvim.lsp.diagnostic', {})
 ---@class (private) vim.lsp.diagnostic.BufState
 ---@field enabled boolean Whether diagnostics are enabled for this buffer
 ---@field client_result_id table<integer, string?> Latest responded `resultId`
----@type table<integer, vim.lsp.diagnostic.BufState?>
+
+---@type table<integer,vim.lsp.diagnostic.BufState>
 local bufstates = {}
 
 local DEFAULT_CLIENT_ID = -1
 
 ---@param severity lsp.DiagnosticSeverity
+---@return vim.diagnostic.Severity
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
-    severity = protocol.DiagnosticSeverity[severity] --- @type integer
+    return protocol.DiagnosticSeverity[severity] --[[@as vim.diagnostic.Severity]]
   end
   return severity
 end
 
+---@param severity vim.diagnostic.Severity|vim.diagnostic.SeverityName
 ---@return lsp.DiagnosticSeverity
 local function severity_vim_to_lsp(severity)
   if type(severity) == 'string' then
-    severity = vim.diagnostic.severity[severity] --- @type integer
+    return vim.diagnostic.severity[severity]
   end
-  return severity
+  return severity --[[@as lsp.DiagnosticSeverity]]
 end
 
 ---@param bufnr integer
@@ -186,10 +189,9 @@ function M.get_namespace(client_id, is_pull)
   local client = vim.lsp.get_client_by_id(client_id)
   if is_pull then
     local server_id =
-      vim.tbl_get((client or {}).server_capabilities, 'diagnosticProvider', 'identifier')
-    local key = string.format('%d:%s', client_id, server_id or 'nil')
-    local name = string.format(
-      'nvim.lsp.%s.%d.%s',
+      vim.tbl_get((client or {}).server_capabilities or {}, 'diagnosticProvider', 'identifier')
+    local key = ('%d:%s'):format(client_id, server_id or 'nil')
+    local name = ('nvim.lsp.%s.%d.%s'):format(
       client and client.name or 'unknown',
       client_id,
       server_id or 'nil'
@@ -200,15 +202,15 @@ function M.get_namespace(client_id, is_pull)
       _client_pull_namespaces[key] = ns
     end
     return ns
-  else
-    local name = string.format('nvim.lsp.%s.%d', client and client.name or 'unknown', client_id)
-    local ns = _client_push_namespaces[client_id]
-    if not ns then
-      ns = api.nvim_create_namespace(name)
-      _client_push_namespaces[client_id] = ns
-    end
-    return ns
   end
+
+  local ns = _client_push_namespaces[client_id]
+  if not ns then
+    local name = ('nvim.lsp.%s.%d'):format(client and client.name or 'unknown', client_id)
+    ns = api.nvim_create_namespace(name)
+    _client_push_namespaces[client_id] = ns
+  end
+  return ns
 end
 
 --- @param uri string
@@ -227,9 +229,7 @@ local function handle_diagnostics(uri, client_id, diagnostics, is_pull)
     return
   end
 
-  if client_id == nil then
-    client_id = DEFAULT_CLIENT_ID
-  end
+  client_id = client_id or DEFAULT_CLIENT_ID
 
   local namespace = M.get_namespace(client_id, is_pull)
 
@@ -380,7 +380,6 @@ end
 
 --- Enable pull diagnostics for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@private
 function M._enable(bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
 

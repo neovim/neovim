@@ -258,20 +258,22 @@ end
 ---@param result lsp.CodeLens[]
 ---@param ctx lsp.HandlerContext
 function M.on_codelens(err, result, ctx)
+  local bufnr = assert(ctx.bufnr)
+
   if err then
-    active_refreshes[assert(ctx.bufnr)] = nil
+    active_refreshes[bufnr] = nil
     log.error('codelens', err)
     return
   end
 
-  M.save(result, ctx.bufnr, ctx.client_id)
+  M.save(result, bufnr, ctx.client_id)
 
   -- Eager display for any resolved (and unresolved) lenses and refresh them
   -- once resolved.
-  M.display(result, ctx.bufnr, ctx.client_id)
-  resolve_lenses(result, ctx.bufnr, ctx.client_id, function()
-    active_refreshes[assert(ctx.bufnr)] = nil
-    M.display(result, ctx.bufnr, ctx.client_id)
+  M.display(result, bufnr, ctx.client_id)
+  resolve_lenses(result, bufnr, ctx.client_id, function()
+    active_refreshes[bufnr] = nil
+    M.display(result, bufnr, ctx.client_id)
   end)
 end
 

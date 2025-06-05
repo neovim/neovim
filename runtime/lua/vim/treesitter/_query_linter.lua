@@ -154,7 +154,6 @@ local function lint_match(buf, match, query, lang_context, diagnostics)
   end
 end
 
---- @private
 --- @param buf integer Buffer to lint
 --- @param opts vim.treesitter.query.lint.Opts|QueryLinterNormalizedOpts|nil Options for linting
 function M.lint(buf, opts)
@@ -193,13 +192,11 @@ function M.lint(buf, opts)
   vim.diagnostic.set(namespace, buf, diagnostics)
 end
 
---- @private
 --- @param buf integer
 function M.clear(buf)
   vim.diagnostic.reset(namespace, buf)
 end
 
---- @private
 --- @param findstart 0|1
 --- @param base string
 function M.omnifunc(findstart, base)

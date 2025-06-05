@@ -22,7 +22,7 @@ end
 function M.paste(reg)
   local clipboard = reg == '+' and 'c' or 'p'
   return function()
-    local contents = nil
+    local contents = nil --- @type string?
     local id = vim.api.nvim_create_autocmd('TermResponse', {
       callback = function(args)
         local resp = args.data.sequence ---@type string
