@@ -2714,6 +2714,23 @@ describe('vim.diagnostic', function()
         eq({}, result)
       end
     end)
+
+    it('always passes a table to DiagnosticChanged autocommand', function()
+      local result = exec_lua(function()
+        local changed_diags --- @type vim.Diagnostic[]?
+        vim.api.nvim_create_autocmd('DiagnosticChanged', {
+          buffer = _G.diagnostic_bufnr,
+          callback = function(args)
+            --- @type vim.Diagnostic[]
+            changed_diags = args.data.diagnostics
+          end,
+        })
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {})
+        return changed_diags
+      end)
+      eq('table', type(result))
+      eq(0, #result)
+    end)
   end)
 
   describe('open_float()', function()
