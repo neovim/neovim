@@ -645,9 +645,9 @@ static int makeopens(FILE *fd, char *dirnow)
 
   // set 'shortmess' for the following.  Add the 'A' flag if it was there
   PUTLINE_FAIL("if &shortmess =~ 'A'");
-  PUTLINE_FAIL("  set shortmess=aoOA");
+  PUTLINE_FAIL("  set shortmess+=aoOA");
   PUTLINE_FAIL("else");
-  PUTLINE_FAIL("  set shortmess=aoO");
+  PUTLINE_FAIL("  set shortmess+=aoO");
   PUTLINE_FAIL("endif");
 
   // Now save the current files, current buffer first.
