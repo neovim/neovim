@@ -1436,6 +1436,7 @@ describe('float window', function()
       local win = api.nvim_open_win(buf, false, { relative = 'editor', width = 20, height = 2, row = 3, col = 5, zindex = 60 })
       local expected = {
         anchor = 'NW',
+        border = 'none',
         col = 5,
         external = false,
         focusable = true,
@@ -1473,7 +1474,7 @@ describe('float window', function()
       if multigrid then
         api.nvim_win_set_config(win, { external = true, width = 10, height = 1 })
         eq(
-          { external = true, focusable = true, mouse = true, width = 10, height = 1, relative = '', hide = false },
+          { external = true, focusable = true, mouse = true, width = 10, height = 1, relative = '', hide = false, border = 'none' },
           api.nvim_win_get_config(win)
         )
       end
@@ -1923,7 +1924,7 @@ describe('float window', function()
       end
 
       api.nvim_win_set_config(win, { border = 'none' })
-      eq(nil, api.nvim_win_get_config(win).border)
+      eq('none', api.nvim_win_get_config(win).border)
 
       api.nvim_win_set_config(win, { border = { '', '', '', '>', '', '', '', '<' } })
       eq({ '', '', '', '>', '', '', '', '<' }, api.nvim_win_get_config(win).border)
@@ -4660,6 +4661,7 @@ describe('float window', function()
         height = 1,
         bufpos = { 1, 32 },
         anchor = 'NW',
+        border = 'none',
         hide = false,
         external = false,
         col = 0,
@@ -11443,7 +11445,7 @@ describe('float window', function()
 
       command('set winborder=none')
       winid = api.nvim_open_win(buf, true, config)
-      eq(nil, api.nvim_win_get_config(winid).border)
+      eq('none', api.nvim_win_get_config(winid).border)
       command('fclose!')
 
       -- respect config.border

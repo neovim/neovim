@@ -768,6 +768,8 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
       if (config->footer) {
         config_put_bordertext(&rv, config, kBorderTextFooter, arena);
       }
+    } else {
+      PUT_KEY_X(rv, border, STRING_OBJ(cstr_as_string("none")));
     }
   } else if (!config->external) {
     PUT_KEY_X(rv, width, wp->w_width);
