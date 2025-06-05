@@ -944,7 +944,7 @@ The ShaDa file is used to store:
 - Marks for several files.
 - File marks, pointing to locations in files.
 - Last search/substitute pattern (for 'n' and '&').
-- The buffer list.
+- The buffer list (only 'buflisted' buffers).
 - Global variables.
 
 You could also use a Session file.  The difference is that the ShaDa file
