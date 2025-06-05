@@ -26,7 +26,7 @@ do
   end, { desc = 'Edit treesitter query', nargs = '?' })
 
   vim.api.nvim_create_user_command('Open', function(cmd)
-    vim.ui.open(cmd.fargs[1])
+    vim.ui.open(assert(cmd.fargs[1]))
   end, {
     desc = 'Open file with system default handler. See :help vim.ui.open()',
     nargs = 1,
@@ -253,11 +253,11 @@ do
     end, { desc = 'Jump to the previous diagnostic in the current buffer' })
 
     vim.keymap.set('n', ']D', function()
-      vim.diagnostic.jump({ count = math.huge, wrap = false })
+      vim.diagnostic.jump({ count = vim._maxint, wrap = false })
     end, { desc = 'Jump to the last diagnostic in the current buffer' })
 
     vim.keymap.set('n', '[D', function()
-      vim.diagnostic.jump({ count = -math.huge, wrap = false })
+      vim.diagnostic.jump({ count = -vim._maxint, wrap = false })
     end, { desc = 'Jump to the first diagnostic in the current buffer' })
 
     vim.keymap.set('n', '<C-W>d', function()
@@ -466,8 +466,8 @@ do
       amenu disable PopUp.Configure\ Diagnostics
     ]])
 
-    local urls = require('vim.ui')._get_urls()
-    if vim.startswith(urls[1], 'http') then
+    local url = require('vim.ui')._get_urls()[1]
+    if url and vim.startswith(url, 'http') then
       vim.cmd([[amenu enable PopUp.Open\ in\ web\ browser]])
     elseif vim.lsp.get_clients({ bufnr = 0 })[1] then
       vim.cmd([[anoremenu enable PopUp.Go\ to\ definition]])
@@ -595,7 +595,7 @@ do
       { limit = math.abs(count) }
     )
     if #extmarks > 0 then
-      local extmark = extmarks[math.min(#extmarks, math.abs(count))]
+      local extmark = assert(extmarks[math.min(#extmarks, math.abs(count))])
       vim.api.nvim_win_set_cursor(win, { extmark[2] + 1, extmark[3] })
     end
   end
@@ -733,7 +733,7 @@ do
           return nil
         end
 
-        local max = tonumber(string.rep('f', #c), 16)
+        local max = assert(tonumber(string.rep('f', #c), 16))
         return val / max
       end
 
@@ -876,7 +876,7 @@ do
               end
 
               -- The returned SGR sequence should begin with 48:2
-              local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
+              local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
               if not sgr then
                 return false
               end
@@ -938,13 +938,13 @@ do
         upward = true,
         limit = math.huge,
         -- exrc in cwd already handled from C, thus start in parent directory.
-        path = vim.fs.dirname(vim.uv.cwd()),
+        path = vim.fs.dirname((vim.uv.cwd())),
       })
       for _, file in ipairs(files) do
         local trusted = vim.secure.read(file) --[[@as string|nil]]
         if trusted then
           if vim.endswith(file, '.lua') then
-            loadstring(trusted)()
+            assert(loadstring(trusted))()
           else
             vim.api.nvim_exec2(trusted, {})
           end

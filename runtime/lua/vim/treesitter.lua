@@ -280,18 +280,19 @@ function M.get_captures_at_pos(bufnr, row, col)
     end
 
     local q = buf_highlighter:get_query(tree:lang())
+    local query = q:query()
 
     -- Some injected languages may not have highlight queries.
-    if not q:query() then
+    if not query then
       return
     end
 
-    local iter = q:query():iter_captures(root, buf_highlighter.bufnr, row, row + 1)
+    local iter = query:iter_captures(root, buf_highlighter.bufnr, row, row + 1)
 
     for id, node, metadata, match in iter do
       if M.is_in_node_range(node, row, col) then
         ---@diagnostic disable-next-line: invisible
-        local capture = q._query.captures[id] -- name of the capture in the query
+        local capture = query.captures[id] -- name of the capture in the query
         if capture ~= nil then
           local _, pattern_id = match:info()
           table.insert(matches, {

@@ -626,10 +626,10 @@ vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
       • {bufnr}    (`integer`) Buffer number to apply highlighting to
       • {ns}       (`integer`) Namespace to add highlight to
       • {higroup}  (`string`) Highlight group to use for highlighting
-      • {start}    (`integer[]|string`) Start of region as a (line, column)
-                   tuple or string accepted by |getpos()|
-      • {finish}   (`integer[]|string`) End of region as a (line, column)
-                   tuple or string accepted by |getpos()|
+      • {start}    (`[integer,integer]|string`) Start of region as a (line,
+                   column) tuple or string accepted by |getpos()|
+      • {finish}   (`[integer,integer]|string`) End of region as a (line,
+                   column) tuple or string accepted by |getpos()|
       • {opts}     (`table?`) A table with the following fields:
                    • {regtype}? (`string`, default: `'v'` i.e. charwise) Type
                      of range. See |getregtype()|
@@ -4684,7 +4684,7 @@ vim.text.indent({size}, {text}, {opts})                    *vim.text.indent()*
     Parameters: ~
       • {size}  (`integer`) Number of spaces.
       • {text}  (`string`) Text to indent.
-      • {opts}  (`{ expandtab?: number }?`)
+      • {opts}  (`{ expandtab?: integer }?`)
 
     Return (multiple): ~
         (`string`) Indented text.

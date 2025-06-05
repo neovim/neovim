@@ -41,8 +41,8 @@ M.priorities = {
 ---@param bufnr integer Buffer number to apply highlighting to
 ---@param ns integer Namespace to add highlight to
 ---@param higroup string Highlight group to use for highlighting
----@param start integer[]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
----@param finish integer[]|string End of region as a (line, column) tuple or string accepted by |getpos()|
+---@param start [integer,integer]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
+---@param finish [integer,integer]|string End of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param opts? vim.hl.range.Opts
 --- @return uv.uv_timer_t? range_timer A timer which manages how much time the
 --- highlight has left
@@ -98,14 +98,16 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   })
   -- For non-blockwise selection, use a single extmark.
   if regtype == 'v' or regtype == 'V' then
-    region = { { region[1][1], region[#region][2] } }
+    --- @type [ [integer, integer, integer, integer], [integer, integer, integer, integer]][]
+    region = { { assert(region[1])[1], assert(region[#region])[2] } }
+    local region1 = assert(region[1])
     if
       regtype == 'V'
-      or region[1][2][2] == pos1[2] and pos1[3] == v_maxcol
-      or region[1][2][2] == pos2[2] and pos2[3] == v_maxcol
+      or region1[2][2] == pos1[2] and pos1[3] == v_maxcol
+      or region1[2][2] == pos2[2] and pos2[3] == v_maxcol
     then
-      region[1][2][2] = region[1][2][2] + 1
-      region[1][2][3] = 0
+      region1[2][2] = region1[2][2] + 1
+      region1[2][3] = 0
     end
   end
 

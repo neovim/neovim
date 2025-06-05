@@ -176,7 +176,7 @@ local validate = vim.validate
 --- @field name string
 ---
 --- See [vim.lsp.ClientConfig].
---- @field offset_encoding string
+--- @field offset_encoding 'utf-8'|'utf-16'|'utf-32'
 ---
 --- A ring buffer (|vim.ringbuf()|) containing progress messages
 --- sent by the server.
@@ -440,16 +440,16 @@ function Client.create(config)
   --- @type vim.lsp.rpc.Dispatchers
   local dispatchers = {
     notification = function(...)
-      return self:_notification(...)
+      self:_notification(...)
     end,
     server_request = function(...)
       return self:_server_request(...)
     end,
     on_error = function(...)
-      return self:_on_error(...)
+      self:_on_error(...)
     end,
     on_exit = function(...)
-      return self:_on_exit(...)
+      self:_on_exit(...)
     end,
   }
 
@@ -597,7 +597,7 @@ end
 
 --- @private
 --- @param id integer
---- @param req_type 'pending'|'complete'|'cancel'|
+--- @param req_type 'pending'|'complete'|'cancel'
 --- @param bufnr? integer (only required for req_type='pending')
 --- @param method? string (only required for req_type='pending')
 function Client:_process_request(id, req_type, bufnr, method)

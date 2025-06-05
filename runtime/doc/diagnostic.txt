@@ -430,6 +430,8 @@ Example: >lua
 Lua module: vim.diagnostic                                    *diagnostic-api*
 
 *vim.Diagnostic*
+    Extends: |vim.Diagnostic.Set|
+
                                                         *diagnostic-structure*
 
     Diagnostics use the same indexing as the rest of the Nvim API (i.e.
@@ -437,8 +439,6 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 
     Fields: ~
       • {bufnr}       (`integer`) Buffer number
-      • {lnum}        (`integer`) The starting line of the diagnostic
-                      (0-indexed)
       • {end_lnum}    (`integer`) The final line of the diagnostic (0-indexed)
       • {col}         (`integer`) The starting column of the diagnostic
                       (0-indexed)
@@ -446,29 +446,27 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                       (0-indexed)
       • {severity}    (`vim.diagnostic.Severity`) The severity of the
                       diagnostic |vim.diagnostic.severity|
+      • {namespace}?  (`integer`)
+
+*vim.Diagnostic.Set*
+    Diagnostics use the same indexing as the rest of the Nvim API (i.e.
+    0-based rows and columns). |api-indexing|
+
+    Fields: ~
+      • {lnum}        (`integer`) The starting line of the diagnostic
+                      (0-indexed)
+      • {col}?        (`integer`, default: `0`) The starting column of the
+                      diagnostic (0-indexed)
+      • {end_lnum}?   (`integer`, default: `lnum`) The final line of the
+                      diagnostic (0-indexed)
+      • {end_col}?    (`integer`, default: `col`) The final column of the
+                      diagnostic (0-indexed)
+      • {severity}?   (`vim.diagnostic.Severity`, default: `vim.diagnostic.severity.ERROR`)
+                      The severity of the diagnostic |vim.diagnostic.severity|
       • {message}     (`string`) The diagnostic text
       • {source}?     (`string`) The source of the diagnostic
       • {code}?       (`string|integer`) The diagnostic code
       • {user_data}?  (`any`) arbitrary data plugins can add
-      • {namespace}?  (`integer`)
-
-*vim.Diagnostic.Set*
-    Extends: |vim.Diagnostic|
-
-
-    Fields: ~
-      • {bufnr}      (`nil`) Do not set. Will be overridden by
-                     `vim.diagnostic.set()`.
-      • {namespace}  (`nil`) Do not set. Will be overridden by
-                     `vim.diagnostic.set()`.
-      • {col}?       (`integer`, default: `0`) The starting column of the
-                     diagnostic in bytes (0-indexed)
-      • {end_lnum}?  (`integer`, default: same as `lnum`) The final line of
-                     the diagnostic (0-indexed)
-      • {end_col}?   (`integer`, default: same as `col`) The final column of
-                     the diagnostic (0-indexed)
-      • {severity}?  (`vim.diagnostic.Severity`, default: `vim.diagnostic.severity.ERROR`)
-                     The severity of the diagnostic |vim.diagnostic.severity|
 
 *vim.diagnostic.GetOpts*
     A table with the following keys:

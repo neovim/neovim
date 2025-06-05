@@ -40,7 +40,6 @@ local function starsetf(ft, priority)
   }
 end
 
----@private
 --- Get a line range from the buffer.
 ---@param bufnr integer The buffer to get the lines from
 ---@param start_lnum integer|nil The line number of the first line (inclusive, 1-based)
@@ -55,7 +54,6 @@ function M._getlines(bufnr, start_lnum, end_lnum)
   return api.nvim_buf_get_lines(bufnr, 0, -1, false)
 end
 
----@private
 --- Get a single line from the buffer.
 ---@param bufnr integer The buffer to get the lines from
 ---@param start_lnum integer The line number of the first line (inclusive, 1-based)
@@ -65,7 +63,6 @@ function M._getline(bufnr, start_lnum)
   return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
 end
 
----@private
 --- Check whether a string matches any of the given Lua patterns.
 ---
 ---@param s string? The string to check
@@ -83,7 +80,6 @@ function M._findany(s, patterns)
   return false
 end
 
----@private
 --- Get the next non-whitespace line in the buffer.
 ---
 ---@param bufnr integer The buffer to get the line from
@@ -102,7 +98,6 @@ do
   --- @type table<string,vim.regex>
   local regex_cache = {}
 
-  ---@private
   --- Check whether the given string matches the Vim regex pattern.
   --- @param s string?
   --- @param pattern string
@@ -215,7 +210,7 @@ local extension = {
   art = 'art',
   asciidoc = 'asciidoc',
   adoc = 'asciidoc',
-  asa = function(path, bufnr)
+  asa = function(_path, _bufnr)
     if vim.g.filetype_asa then
       return vim.g.filetype_asa
     end
@@ -266,7 +261,7 @@ local extension = {
   bsd = 'bsdl',
   bsdl = 'bsdl',
   bst = 'bst',
-  btm = function(path, bufnr)
+  btm = function(_path, _bufnr)
     return (vim.g.dosbatch_syntax_for_btm and vim.g.dosbatch_syntax_for_btm ~= 0) and 'dosbatch'
       or 'btm'
   end,
@@ -319,7 +314,7 @@ local extension = {
   atg = 'coco',
   recipe = 'conaryrecipe',
   ctags = 'conf',
-  hook = function(path, bufnr)
+  hook = function(_path, bufnr)
     return M._getline(bufnr, 1) == '[Trigger]' and 'confini' or nil
   end,
   nmconnection = 'confini',
@@ -735,7 +730,7 @@ local extension = {
   at = 'm4',
   mc = detect.mc,
   quake = 'm3quake',
-  m4 = function(path, bufnr)
+  m4 = function(path, _bufnr)
     local pathl = path:lower()
     return not (pathl:find('html%.m4$') or pathl:find('fvwm2rc')) and 'm4' or nil
   end,
@@ -1783,12 +1778,12 @@ local filename = {
   ['/etc/pinforc'] = 'pinfo',
   ['/.pinforc'] = 'pinfo',
   ['.povrayrc'] = 'povini',
-  printcap = function(path, bufnr)
+  printcap = function(_path, _bufnr)
     return 'ptcap', function(b)
       vim.b[b].ptcap_type = 'print'
     end
   end,
-  termcap = function(path, bufnr)
+  termcap = function(_path, _bufnr)
     return 'ptcap', function(b)
       vim.b[b].ptcap_type = 'term'
     end
@@ -2029,7 +2024,7 @@ local pattern = {
     ['/etc/modprobe%.'] = starsetf('modconf'),
     ['/etc/modules%.conf$'] = 'modconf',
     ['/etc/modules$'] = 'modconf',
-    ['/etc/modutils/'] = starsetf(function(path, bufnr)
+    ['/etc/modutils/'] = starsetf(function(path, _bufnr)
       if fn.executable(fn.expand(path)) ~= 1 then
         return 'modconf'
       end
@@ -2508,17 +2503,17 @@ local pattern = {
     ['/octave/history$'] = 'octave',
     ['%.opam%.locked$'] = 'opam',
     ['%.opam%.template$'] = 'opam',
-    ['^pacman%.log'] = starsetf(function(path, bufnr)
+    ['^pacman%.log'] = starsetf(function(path, _bufnr)
       return vim.uv.fs_stat(path) and 'pacmanlog' or nil
     end),
-    ['printcap'] = starsetf(function(path, bufnr)
+    ['printcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('print')
     end),
     ['/queries/.*%.scm$'] = 'query', -- treesitter queries (Neovim only)
     [',v$'] = 'rcs',
     ['^svn%-commit.*%.tmp$'] = 'svn',
     ['%.swift%.gyb$'] = 'swiftgyb',
-    ['termcap'] = starsetf(function(path, bufnr)
+    ['termcap'] = starsetf(function(_path, _bufnr)
       return require('vim.filetype.detect').printcap('term')
     end),
     ['%.t%.html$'] = 'tilde',
@@ -2928,49 +2923,54 @@ function M.match(args)
     name = api.nvim_buf_get_name(bufnr)
   end
 
-  --- @type string?, fun(b: integer)?
-  local ft, on_detect
-
   if name then
     name = normalize_path(name)
 
-    -- First check for the simple case where the full path exists as a key
     local path = abspath(name)
-    ft, on_detect = dispatch(filename[path], path, bufnr)
-    if ft then
-      return ft, on_detect
+    do -- First check for the simple case where the full path exists as a key
+      local ft, on_detect = dispatch(filename[path], path, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
 
-    -- Next check against just the file name
     local tail = fn.fnamemodify(name, ':t')
-    ft, on_detect = dispatch(filename[tail], path, bufnr)
-    if ft then
-      return ft, on_detect
+
+    do -- Next check against just the file name
+      local ft, on_detect = dispatch(filename[tail], path, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
 
     -- Next, check the file path against available patterns with non-negative priority
     -- Cache match results of all parent patterns to improve performance
     local parent_matches = {}
-    ft, on_detect =
-      match_pattern_sorted(name, path, tail, pattern_sorted_pos, parent_matches, bufnr)
-    if ft then
-      return ft, on_detect
+    do
+      local ft, on_detect =
+        match_pattern_sorted(name, path, tail, pattern_sorted_pos, parent_matches, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
 
     -- Next, check file extension
     -- Don't use fnamemodify() with :e modifier here,
     -- as that's empty when there is only an extension.
-    local ext = name:match('%.([^.]-)$') or ''
-    ft, on_detect = dispatch(extension[ext], path, bufnr)
-    if ft then
-      return ft, on_detect
+    do
+      local ext = name:match('%.([^.]-)$') or ''
+      local ft, on_detect = dispatch(extension[ext], path, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
 
-    -- Next, check patterns with negative priority
-    ft, on_detect =
-      match_pattern_sorted(name, path, tail, pattern_sorted_neg, parent_matches, bufnr)
-    if ft then
-      return ft, on_detect
+    do -- Next, check patterns with negative priority
+      local ft, on_detect =
+        match_pattern_sorted(name, path, tail, pattern_sorted_neg, parent_matches, bufnr)
+      if ft then
+        return ft, on_detect
+      end
     end
   end
 
@@ -2992,8 +2992,7 @@ function M.match(args)
       -- If name is nil, catch any errors from the contents filetype detection function.
       -- If the function tries to use the filename that is nil then it will fail,
       -- but this enables checks which do not need a filename to still work.
-      local ok
-      ok, ft, on_detect = pcall(
+      local ok, ft, on_detect = pcall(
         require('vim.filetype.detect').match_contents,
         contents,
         name,

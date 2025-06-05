@@ -147,6 +147,9 @@ local function process_doc_line(line, state)
     cur_obj.fields = {}
   elseif kind == 'field' then
     --- @cast parsed nvim.luacats.Field
+    if parsed.desc == '' then
+      parsed.desc = nil
+    end
     parsed.desc = parsed.desc or state.doc_lines and table.concat(state.doc_lines, '\n') or nil
     if parsed.desc then
       parsed.desc = vim.trim(parsed.desc)

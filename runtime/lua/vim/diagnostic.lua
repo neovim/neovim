@@ -16,29 +16,28 @@ local function get_qf_id_for_title(title)
   return nil
 end
 
---- [diagnostic-structure]()
----
 --- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
 --- rows and columns). |api-indexing|
---- @class vim.Diagnostic
----
---- Buffer number
---- @field bufnr integer
+--- @class vim.Diagnostic.Set
 ---
 --- The starting line of the diagnostic (0-indexed)
 --- @field lnum integer
 ---
---- The final line of the diagnostic (0-indexed)
---- @field end_lnum integer
----
 --- The starting column of the diagnostic (0-indexed)
---- @field col integer
+--- (default: `0`)
+--- @field col? integer
+---
+--- The final line of the diagnostic (0-indexed)
+--- (default: `lnum`)
+--- @field end_lnum? integer
 ---
 --- The final column of the diagnostic (0-indexed)
---- @field end_col integer
+--- (default: `col`)
+--- @field end_col? integer
 ---
 --- The severity of the diagnostic |vim.diagnostic.severity|
---- @field severity vim.diagnostic.Severity
+--- (default: `vim.diagnostic.severity.ERROR`)
+--- @field severity? vim.diagnostic.Severity
 ---
 --- The diagnostic text
 --- @field message string
@@ -53,32 +52,18 @@ end
 ---
 --- Arbitrary data plugins or users can add
 --- @field user_data? any arbitrary data plugins can add
----
---- @field namespace? integer
 
---- @class vim.Diagnostic.Set : vim.Diagnostic
+--- [diagnostic-structure]()
 ---
---- Do not set. Will be overridden by `vim.diagnostic.set()`.
---- @field bufnr nil
----
---- Do not set. Will be overridden by `vim.diagnostic.set()`.
---- @field namespace nil
----
---- The starting column of the diagnostic in bytes (0-indexed)
---- (default: `0`)
---- @field col? integer
----
---- The final line of the diagnostic (0-indexed)
---- (default: same as `lnum`)
---- @field end_lnum? integer
----
---- The final column of the diagnostic (0-indexed)
---- (default: same as `col`)
---- @field end_col? integer
----
---- The severity of the diagnostic |vim.diagnostic.severity|
---- (default: `vim.diagnostic.severity.ERROR`)
---- @field severity? vim.diagnostic.Severity
+--- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
+--- rows and columns). |api-indexing|
+--- @class vim.Diagnostic : vim.Diagnostic.Set
+--- @field bufnr integer Buffer number
+--- @field end_lnum integer The final line of the diagnostic (0-indexed)
+--- @field col integer The starting column of the diagnostic (0-indexed)
+--- @field end_col integer The final column of the diagnostic (0-indexed)
+--- @field severity vim.diagnostic.Severity The severity of the diagnostic |vim.diagnostic.severity|
+--- @field namespace? integer
 
 --- Many of the configuration options below accept one of the following:
 --- - `false`: Disable this feature

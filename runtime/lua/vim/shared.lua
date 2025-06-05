@@ -105,7 +105,7 @@ end
 --- @return fun():string? : Iterator over the split components
 function vim.gsplit(s, sep, opts)
   local plain --- @type boolean?
-  local trimempty = false
+  local trimempty = false --- @type boolean?
   if type(opts) == 'boolean' then
     plain = opts -- For backwards compatibility.
   else
@@ -616,7 +616,7 @@ function vim.spairs(t)
   --- @cast t table<any,any>
 
   -- collect the keys
-  local keys = {}
+  local keys = {} --- @type string[]
   for k in pairs(t) do
     table.insert(keys, k)
   end
@@ -1027,7 +1027,7 @@ do
   ---
   --- @param name string Argument name
   --- @param value any Argument value
-  --- @param validator vim.validate.Validator
+  --- @param validator vim.validate.Validator :
   ---   - (`string|string[]`): Any value that can be returned from |lua-type()| in addition to
   ---     `'callable'`: `'boolean'`, `'callable'`, `'function'`, `'nil'`, `'number'`, `'string'`, `'table'`,
   ---     `'thread'`, `'userdata'`.
@@ -1194,7 +1194,6 @@ do
   end
 end
 
---- @private
 --- @generic T
 --- @param root string
 --- @param mod T
@@ -1214,7 +1213,6 @@ function vim._defer_require(root, mod)
   })
 end
 
---- @private
 --- Creates a module alias/shim that lazy-loads a target module.
 ---
 --- Unlike `vim.defaulttable()` this also:
@@ -1423,7 +1421,7 @@ function vim._resolve_bufnr(bufnr)
 end
 
 --- @generic T
---- @param x elem_or_list<T>?
+--- @param x T|T[]
 --- @return T[]
 function vim._ensure_list(x)
   if type(x) == 'table' then
@@ -1431,5 +1429,8 @@ function vim._ensure_list(x)
   end
   return { x }
 end
+
+-- Use max 32-bit signed int value to avoid overflow on 32-bit systems. #31633
+vim._maxint = 2 ^ 32 - 1
 
 return vim

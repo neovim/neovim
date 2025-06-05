@@ -15,7 +15,7 @@ local TSTreeView = {}
 ---@class (private) vim.treesitter.dev.TSTreeViewOpts
 ---@field anon boolean If true, display anonymous nodes.
 ---@field lang boolean If true, display the language alongside each node.
----@field indent number Number of spaces to indent nested lines.
+---@field indent integer Number of spaces to indent nested lines.
 
 ---@class (private) vim.treesitter.dev.Node
 ---@field node TSNode Treesitter node
@@ -290,7 +290,7 @@ end
 --- The node number is dependent on whether or not anonymous nodes are displayed.
 ---
 ---@param i integer Node number to get
----@return vim.treesitter.dev.Node
+---@return vim.treesitter.dev.Node?
 ---@package
 function TSTreeView:get(i)
   local t = self.opts.anon and self.nodes or self.named
@@ -329,8 +329,7 @@ end
 --- source buffer as its only argument and should return a string.
 --- @field title (string|fun(bufnr:integer):string|nil)
 
---- @private
----
+--- @nodoc
 --- @param opts vim.treesitter.dev.inspect_tree.Opts?
 function M.inspect_tree(opts)
   vim.validate('opts', opts, 'table', true)
@@ -401,7 +400,7 @@ function M.inspect_tree(opts)
 
       -- update source window if original was closed
       if not api.nvim_win_is_valid(win) then
-        win = vim.fn.win_findbuf(buf)[1]
+        win = assert(vim.fn.win_findbuf(buf)[1])
       end
 
       api.nvim_set_current_win(win)
@@ -475,7 +474,7 @@ function M.inspect_tree(opts)
 
       -- update source window if original was closed
       if not api.nvim_win_is_valid(win) then
-        win = vim.fn.win_findbuf(buf)[1]
+        win = assert(vim.fn.win_findbuf(buf)[1])
       end
 
       local topline, botline = vim.fn.line('w0', win), vim.fn.line('w$', win)
@@ -599,7 +598,7 @@ local function update_editor_highlights(query_win, base_win, lang)
   end
 end
 
---- @private
+--- @nodoc
 --- @param lang? string language to open the query editor for.
 --- @return boolean? `true` on success, `nil` on failure
 --- @return string? error message, if applicable

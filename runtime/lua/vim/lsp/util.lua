@@ -68,6 +68,7 @@ local function get_border_size(opts)
   end
 
   --- @param e string
+  --- @return integer
   local function border_height(e)
     return #e > 0 and 1 or 0
   end
@@ -133,9 +134,9 @@ function M.set_lines(lines, A, B, new_lines)
     error('Invalid range: ' .. vim.inspect({ A = A, B = B, #lines, new_lines }))
   end
   local prefix = ''
-  local suffix = lines[i_n]:sub(B[2] + 1)
+  local suffix = assert(lines[i_n]):sub(B[2] + 1)
   if A[2] > 0 then
-    prefix = lines[i_0]:sub(1, A[2])
+    prefix = assert(lines[i_0]):sub(1, A[2])
   end
   local n = i_n - i_0 + 1
   if n ~= #new_lines then
@@ -181,7 +182,7 @@ end
 ---
 ---@param bufnr integer bufnr to get the lines from
 ---@param rows integer[] zero-indexed line numbers
----@return table<integer, string>|string a table mapping rows to lines
+---@return table<integer, string> # a table mapping rows to lines
 local function get_lines(bufnr, rows)
   --- @type integer[]
   rows = type(rows) == 'table' and rows or { rows }
@@ -219,7 +220,7 @@ local function get_lines(bufnr, rows)
   -- get the data from the file
   local fd = uv.fs_open(filename, 'r', 438)
   if not fd then
-    return ''
+    return {}
   end
   local stat = assert(uv.fs_fstat(fd))
   local data = assert(uv.fs_read(fd, stat.size, 0))
@@ -321,6 +322,8 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding)
       text_edit.range['end'] = start
     end
   end
+
+  --- @cast text_edits  (lsp.TextEdit|{_index: integer})[]
 
   -- Sort text_edits
   ---@param a lsp.TextEdit | { _index: integer }
@@ -1298,7 +1301,6 @@ end
 ---   2. Successive empty lines are collapsed into a single empty line
 ---   3. Thematic breaks are expanded to the given width
 ---
----@private
 ---@param contents string[]
 ---@param opts? vim.lsp.util._normalize_markdown.Opts
 ---@return string[] table of lines containing normalized Markdown
@@ -1369,7 +1371,6 @@ local function close_preview_autocmd(events, winnr, bufnrs)
   end
 end
 
----@private
 --- Computes size of float needed to show contents (with optional wrapping)
 ---
 ---@param contents string[] of lines to show in window
@@ -1796,7 +1797,7 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
       'symbols_to_items must be called with valid position encoding',
       vim.log.levels.WARN
     )
-    position_encoding = vim.lsp.get_clients({ bufnr = bufnr })[1].offset_encoding
+    position_encoding = assert(vim.lsp.get_clients({ bufnr = bufnr })[1]).offset_encoding
   end
 
   local items = {} --- @type vim.quickfix.entry[]
@@ -1874,11 +1875,11 @@ end
 ---@return string filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
   vim.deprecate('vim.lsp.util.try_trim_markdown_code_blocks()', 'nil', '0.12')
-  local language_id = lines[1]:match('^```(.*)')
+  local language_id = assert(lines[1]):match('^```(.*)')
   if language_id then
     local has_inner_code_fence = false
     for i = 2, (#lines - 1) do
-      local line = lines[i]
+      local line = lines[i] --[[@as string]]
       if line:sub(1, 3) == '```' then
         has_inner_code_fence = true
         break
@@ -1937,7 +1938,7 @@ end
 --- Utility function for getting the encoding of the first LSP client on the given buffer.
 ---@deprecated
 ---@param bufnr integer buffer handle or 0 for current, defaults to current
----@return string encoding first client if there is one, nil otherwise
+---@return 'utf-8'|'utf-16'|'utf-32' encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
   validate('bufnr', bufnr, 'number', true)
 
@@ -1963,6 +1964,7 @@ function M._get_offset_encoding(bufnr)
       )
     end
   end
+  --- @cast offset_encoding -? hack - not safe
 
   return offset_encoding
 end
@@ -2056,7 +2058,7 @@ end
 --- Create the workspace params
 ---@param added lsp.WorkspaceFolder[]
 ---@param removed lsp.WorkspaceFolder[]
----@return lsp.WorkspaceFoldersChangeEvent
+---@return lsp.DidChangeWorkspaceFoldersParams
 function M.make_workspace_params(added, removed)
   return { event = { added = added, removed = removed } }
 end
@@ -2105,7 +2107,7 @@ function M.character_offset(buf, row, col, offset_encoding)
       'character_offset must be called with valid offset encoding',
       vim.log.levels.WARN
     )
-    offset_encoding = vim.lsp.get_clients({ bufnr = buf })[1].offset_encoding
+    offset_encoding = assert(vim.lsp.get_clients({ bufnr = buf })[1]).offset_encoding
   end
   return vim.str_utfindex(line, offset_encoding, col, false)
 end
@@ -2168,7 +2170,6 @@ end
 ---@field method? vim.lsp.protocol.Method.ClientToServer.Request
 ---@field type? string
 
----@private
 --- Cancel all {filter}ed requests.
 ---
 ---@param filter? vim.lsp.util._cancel_requests.Filter
@@ -2203,10 +2204,9 @@ end
 ---@field client_id? integer Client ID to refresh (default: all clients)
 ---@field handler? lsp.Handler
 
----@private
 --- Request updated LSP information for a buffer.
 ---
----@param method string LSP method to call
+---@param method vim.lsp.protocol.Method.ClientToServer.Request LSP method to call
 ---@param opts? vim.lsp.util._refresh.Opts Options table
 function M._refresh(method, opts)
   opts = opts or {}

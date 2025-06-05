@@ -48,7 +48,7 @@
 
 --- @class (private) vim.tohtml.line
 --- @field virt_lines {[integer]:[string,integer][]}
---- @field pre_text string[][]
+--- @field pre_text [string, integer?][]
 --- @field hide? boolean
 --- @field [integer] vim.tohtml.cell? (integer: (1-index, exclusive))
 
@@ -229,7 +229,7 @@ local function cterm_to_hex(colorstr)
     return colorstr
   end
   assert(colorstr ~= '')
-  local color = tonumber(colorstr)
+  local color = tonumber(colorstr) --[[@as integer]]
   assert(color and 0 <= color and color <= 255)
   if cterm_color_cache[color] then
     return cterm_color_cache[color]
@@ -398,7 +398,7 @@ end
 local function styletable_syntax(state)
   for row = state.start, state.end_ do
     local prev_id = 0
-    local prev_col = nil
+    local prev_col --- @type integer?
     for col = 1, #vim.fn.getline(row) + 1 do
       local hlid = vim.fn.synID(row, col, 1)
       hlid = hlid == 0 and 0 or assert(register_hl(state, hlid))
@@ -430,7 +430,7 @@ local function styletable_diff(state)
       break
     end
     local prev_id = 0
-    local prev_col = nil
+    local prev_col --- @type integer?
     for col = 1, #vim.fn.getline(row) do
       local hlid = vim.fn.diff_hlID(row, col)
       hlid = hlid == 0 and 0 or assert(register_hl(state, hlid))
@@ -486,7 +486,7 @@ local function styletable_treesitter(state)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
+--- @param extmark [integer, integer, integer, vim.api.keyset.extmark_details]
 --- @param namespaces table<integer,string>
 local function _styletable_extmarks_highlight(state, extmark, namespaces)
   if not extmark[4].hl_group then
@@ -548,7 +548,7 @@ local function _styletable_extmarks_virt_text(state, extmark, namespaces)
       else
         style_line_insert_virt_text(styletable[row + 1], col + 1, { i[1], hlid })
       end
-      virt_text_len = virt_text_len + len(i[1])
+      virt_text_len = virt_text_len + len(assert(i[1]))
     end
     if extmark[4].virt_text_pos == 'overlay' then
       styletable_insert_range(state, row + 1, col + 1, row + 1, col + virt_text_len + 1, HIDE_ID)
@@ -588,7 +588,7 @@ local function _styletable_extmarks_virt_lines(state, extmark)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
+--- @param extmark [integer, integer, integer, vim.api.keyset.extmark_details]
 local function _styletable_extmarks_conceal(state, extmark)
   if not extmark[4].conceal or state.opt.conceallevel == 0 then
     return
@@ -611,6 +611,8 @@ local function styletable_extmarks(state)
   --TODO(altermo) extmarks may have col/row which is outside of the buffer, which could cause an error
   local bufnr = state.bufnr
   local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, -1, 0, -1, { details = true })
+  --- @cast extmarks [integer,integer,integer,vim.api.keyset.extmark_details][]
+
   local namespaces = {} --- @type table<integer, string>
   for ns, ns_id in pairs(vim.api.nvim_get_namespaces()) do
     namespaces[ns_id] = ns
@@ -662,12 +664,12 @@ local function styletable_conceal(state)
       for col = 1, line_len_exclusive do
         --- @type integer,string,integer
         local is_concealed, conceal, hlid = unpack(vim.fn.synconcealed(row, col) --[[@as table]])
-        if is_concealed == 0 then
-          assert(true)
-        elseif not conceals[hlid] then
-          conceals[hlid] = { col, math.min(col + 1, line_len_exclusive), conceal }
-        else
-          conceals[hlid][2] = math.min(col + 1, line_len_exclusive)
+        if is_concealed ~= 0 then
+          if not conceals[hlid] then
+            conceals[hlid] = { col, math.min(col + 1, line_len_exclusive), conceal }
+          else
+            conceals[hlid][2] = math.min(col + 1, line_len_exclusive)
+          end
         end
       end
       for _, v in pairs(conceals) do
@@ -679,9 +681,7 @@ end
 
 --- @param state vim.tohtml.state
 local function styletable_match(state)
-  for _, match in
-    ipairs(vim.fn.getmatches(state.winid) --[[@as (table[])]])
-  do
+  for _, match in ipairs(vim.fn.getmatches(state.winid)) do
     local hlid = register_hl(state, match.group)
     local function range(srow, scol, erow, ecol)
       if match.group == 'Conceal' and state.opt.conceallevel ~= 0 then
@@ -692,19 +692,19 @@ local function styletable_match(state)
     end
     if match.pos1 then
       for key, v in
-        pairs(match --[[@as (table<string,integer[]>)]])
+        pairs(match --[[@as table<string,[integer,integer,integer]>]])
       do
-        if not key:match('^pos(%d+)$') then
-          assert(true)
-        elseif #v == 1 then
-          range(v[1], 1, v[1], #vim.fn.getline(v[1]) + 1)
-        else
-          range(v[1], v[2], v[1], v[3] + v[2])
+        if key:match('^pos(%d+)$') then
+          if #v == 1 then
+            range(v[1], 1, v[1], #vim.fn.getline(v[1]) + 1)
+          else
+            range(v[1], v[2], v[1], v[3] + v[2])
+          end
         end
       end
     else
       for _, v in
-        ipairs(vim.fn.matchbufline(state.bufnr, match.pattern, 1, '$') --[[@as (table[])]])
+        ipairs(vim.fn.matchbufline(state.bufnr, assert(match.pattern), 1, '$') --[[@as (table[])]])
       do
         range(v.lnum, v.byteidx + 1, v.lnum, v.byteidx + 1 + #v.text)
       end
@@ -744,13 +744,15 @@ local function styletable_statuscolumn(state)
     signcolumn = 'auto'
   end
   if signcolumn ~= 'no' then
-    local max = tonumber(signcolumn:match('^%w-:(%d)')) or 1
+    local max = tonumber(signcolumn:match('^%w-:(%d)')) --[[@as integer?]]
+      or 1
     if signcolumn:match('^auto') then
       --- @type table<integer,integer>
       local signcount = {}
       for _, extmark in
         ipairs(vim.api.nvim_buf_get_extmarks(state.bufnr, -1, 0, -1, { details = true }))
       do
+        --- @cast extmark [integer, integer, integer, vim.api.keyset.extmark_details]
         if extmark[4].sign_text then
           signcount[extmark[2]] = (signcount[extmark[2]] or 0) + 1
         end
@@ -770,7 +772,8 @@ local function styletable_statuscolumn(state)
   local foldcolumn = state.opt.foldcolumn
   if foldcolumn ~= '0' then
     if foldcolumn:match('^auto') then
-      local max = tonumber(foldcolumn:match('^%w-:(%d)')) or 1
+      local max = tonumber(foldcolumn:match('^%w-:(%d)')) --[[@as integer?]]
+        or 1
       local maxfold = 0
       vim._with({ buf = state.bufnr }, function()
         for row = state.start, state.end_ do
@@ -782,11 +785,11 @@ local function styletable_statuscolumn(state)
       end)
       minwidth = minwidth + math.min(maxfold, max)
     else
-      minwidth = minwidth + tonumber(foldcolumn)
+      minwidth = minwidth + tonumber(foldcolumn) --[[@as integer]]
     end
   end
 
-  --- @type table<integer,any>
+  --- @type table<integer,vim.api.keyset.eval_statusline_ret>
   local statuses = {}
   for row = state.start, state.end_ do
     local status = vim.api.nvim_eval_statusline(
@@ -798,15 +801,13 @@ local function styletable_statuscolumn(state)
       minwidth = width
     end
     table.insert(statuses, status)
-    --- @type string
   end
   for row, status in pairs(statuses) do
-    --- @type string
     local str = status.str
-    --- @type table[]
     local hls = status.highlights
     for k, v in ipairs(hls) do
-      local text = str:sub(v.start + 1, hls[k + 1] and hls[k + 1].start or nil)
+      local hlsk1 = hls[k + 1]
+      local text = str:sub(v.start + 1, hlsk1 and hlsk1.start or nil)
       if k == #hls then
         text = text .. (' '):rep(minwidth - len(str))
       end
@@ -852,11 +853,9 @@ local function styletable_listchars(state)
     for _, match in
       ipairs(vim.fn.matchbufline(state.bufnr, '\t', 1, '$') --[[@as (table[])]])
     do
-      --- @type integer
-      local tablen = #state.tabstop
-        - ((vim.fn.virtcol({ match.lnum, match.byteidx }, false, state.winid)) % #state.tabstop)
-      --- @type string?
-      local text
+      local vcol = vim.fn.virtcol({ match.lnum, match.byteidx }, false, state.winid) --[[@as integer]]
+      local tablen = #state.tabstop - (vcol % #state.tabstop)
+      local text --- @type string
       if len(listchars.tab) == 3 then
         if tablen == 1 then
           text = utf8_sub(listchars.tab, 3, 3)
@@ -1142,6 +1141,7 @@ local function extend_pre(out, state)
 
   local before = ''
   local after = ''
+  --- @param row integer
   local function loop(row)
     local inside = row <= state.end_ and row >= state.start
     local style_line = styletable[row]
@@ -1168,7 +1168,7 @@ local function extend_pre(out, state)
       pairs(style_line --[[@as table<string,any>]])
     do
       if type(k) == 'number' and k > true_line_len then
-        true_line_len = k
+        true_line_len = k --[[@as integer]]
       end
     end
     for col = 1, true_line_len do
@@ -1305,7 +1305,7 @@ local function opt_to_global_state(opt, title)
     -- Input: "Font,Escape\,comma, Ignore space after comma"
     -- Output: { "Font","Escape,comma","Ignore space after comma" }
     local prev = ''
-    for name in vim.gsplit(vim.o.guifont:match('^[^:]+'), ',', { trimempty = true }) do
+    for name in vim.gsplit(assert(vim.o.guifont:match('^[^:]+')), ',', { trimempty = true }) do
       if vim.endswith(name, '\\') then
         prev = prev .. vim.trim(name:sub(1, -2) .. ',')
       elseif vim.trim(name) ~= '' then

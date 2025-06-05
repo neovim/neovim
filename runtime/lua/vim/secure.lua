@@ -27,8 +27,8 @@ end
 --- If {fullpath} is a directory, then nothing is read from the filesystem, and
 --- `contents = true` and `hash = "directory"` is returned instead.
 ---
----@param fullpath (string) Path to a file or directory to read.
----@param bufnr (number?) The number of the buffer.
+---@param fullpath string Path to a file or directory to read.
+---@param bufnr integer? The number of the buffer.
 ---@return string|boolean? contents the contents of the file, or true if it's a directory
 ---@return string? hash the hash of the contents, or "directory" if it's a directory
 local function compute_hash(fullpath, bufnr)

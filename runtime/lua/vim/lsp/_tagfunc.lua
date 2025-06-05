@@ -6,7 +6,7 @@ local ms = lsp.protocol.Methods
 ---@param name string
 ---@param range lsp.Range
 ---@param uri string
----@param position_encoding string
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return {name: string, filename: string, cmd: string, kind?: string}
 local function mk_tag_item(name, range, uri, position_encoding)
   local bufnr = vim.uri_to_bufnr(uri)
@@ -32,7 +32,7 @@ local function query_definition(pattern)
 
   --- @param range lsp.Range
   --- @param uri string
-  --- @param position_encoding string
+  ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
   local add = function(range, uri, position_encoding)
     table.insert(results, mk_tag_item(pattern, range, uri, position_encoding))
   end

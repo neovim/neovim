@@ -90,6 +90,7 @@ end
 
 --- Converts a raw token list to a list of highlight ranges used by the on_win callback
 ---
+---@async
 ---@param data integer[]
 ---@param bufnr integer
 ---@param client vim.lsp.Client
@@ -326,6 +327,7 @@ end
 --- Finally, a redraw command is issued to force nvim to redraw the screen to
 --- pick up changed highlight tokens.
 ---
+---@async
 ---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
 ---@private
 function STHighlighter:process_response(response, client, version)
@@ -491,7 +493,7 @@ function STHighlighter:on_win(topline, botline)
       local is_folded, foldend
 
       for i = first, last do
-        local token = highlights[i]
+        local token = assert(highlights[i])
 
         is_folded, foldend = check_fold(token.line + 1, foldend)
 

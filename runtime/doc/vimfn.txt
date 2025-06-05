@@ -3537,7 +3537,7 @@ getcurpos([{winid}])                                               *getcurpos()*
                   • {winid} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`[integer, integer, integer, integer, integer]`)
 
 getcursorcharpos([{winid}])                                 *getcursorcharpos()*
 		Same as |getcurpos()| but the column number in the returned
@@ -3846,7 +3846,7 @@ getmatches([{win}])                                               *getmatches()*
                   • {win} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`vim.fn.getmatches.ret.item[]`)
 
 getmousepos()                                                    *getmousepos()*
 		Returns a |Dictionary| with the last known position of the
@@ -3952,7 +3952,7 @@ getpos({expr})                                                        *getpos()*
                   • {expr} (`string`)
 
                 Return: ~
-                  (`integer[]`)
+                  (`[integer, integer, integer, integer]`)
 
 getqflist([{what}])                                                *getqflist()*
 		Returns a |List| with all the current quickfix errors.  Each
@@ -4181,9 +4181,9 @@ getregion({pos1}, {pos2} [, {opts}])                               *getregion()*
 <
 
                 Parameters: ~
-                  • {pos1} (`table`)
-                  • {pos2} (`table`)
-                  • {opts} (`table?`)
+                  • {pos1} (`[integer, integer, integer, integer]`)
+                  • {pos2} (`[integer, integer, integer, integer]`)
+                  • {opts} (`{type?:string, exclusive?:boolean}?`)
 
                 Return: ~
                   (`string[]`)
@@ -4221,12 +4221,13 @@ getregionpos({pos1}, {pos2} [, {opts}])                         *getregionpos()*
 					(default: |FALSE|)
 
                 Parameters: ~
-                  • {pos1} (`table`)
-                  • {pos2} (`table`)
-                  • {opts} (`table?`)
+                  • {pos1} (`[integer, integer, integer, integer]`)
+                  • {pos2} (`[integer, integer, integer, integer]`)
+                  • {opts}
+                    (`{type?:string, exclusive?:boolean, eol?:boolean}?`)
 
                 Return: ~
-                  (`integer[][][]`)
+                  (`[ [integer, integer, integer, integer], [integer, integer, integer, integer] ][]`)
 
 getregtype([{regname}])                                           *getregtype()*
 		The result is a String, which is type of register {regname}.
@@ -7852,7 +7853,7 @@ readfile({fname} [, {type} [, {max}]])                              *readfile()*
                   • {max} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 reduce({object}, {func} [, {initial}])                           *reduce()* *E998*
 		{func} is called for every item in {object}, which can be a
@@ -9063,7 +9064,7 @@ setmatches({list} [, {win}])                                      *setmatches()*
 		window ID instead of the current window.
 
                 Parameters: ~
-                  • {list} (`any`)
+                  • {list} (`vim.fn.getmatches.ret.item[]`)
                   • {win} (`integer?`)
 
                 Return: ~
@@ -11742,7 +11743,7 @@ virtcol({expr} [, {list} [, {winid}]])                               *virtcol()*
                   • {winid} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer|[integer, integer]`)
 
 virtcol2col({winid}, {lnum}, {col})                              *virtcol2col()*
 		The result is a Number, which is the byte index of the

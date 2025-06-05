@@ -79,7 +79,7 @@ end
 ---
 --- @param size integer Number of spaces.
 --- @param text string Text to indent.
---- @param opts? { expandtab?: number }
+--- @param opts? { expandtab?: integer }
 --- @return string # Indented text.
 --- @return integer # Indent size _before_ modification.
 function M.indent(size, text, opts)
@@ -91,7 +91,7 @@ function M.indent(size, text, opts)
   local tabspaces = opts.expandtab and (' '):rep(opts.expandtab) or nil
 
   --- Minimum common indent shared by all lines.
-  local old_indent --[[@type number?]]
+  local old_indent --- @type integer?
   local prefix = tabspaces and ' ' or nil -- Indent char (space or tab).
   --- Check all non-empty lines, capturing leading whitespace (if any).
   --- @diagnostic disable-next-line: no-unknown
@@ -106,7 +106,7 @@ function M.indent(size, text, opts)
     end
     prefix = prefix and prefix or line_ws:sub(1, 1)
     local _, end_ = line_ws:find('^[' .. prefix .. ']+')
-    old_indent = math.min(old_indent or math.huge, end_ or 0)
+    old_indent = math.min(old_indent or math.huge, end_ or 0) --[[@as integer?]]
   end
   -- Default to 0 if all lines are empty.
   old_indent = old_indent or 0
