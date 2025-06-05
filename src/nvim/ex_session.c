@@ -638,17 +638,13 @@ static int makeopens(FILE *fd, char *dirnow)
     return FAIL;
   }
 
-  // save 'shortmess' if not storing options
+  // Save 'shortmess' if not storing options.
   if ((ssop_flags & kOptSsopFlagOptions) == 0) {
     PUTLINE_FAIL("let s:shortmess_save = &shortmess");
   }
 
-  // set 'shortmess' for the following.  Add the 'A' flag if it was there
-  PUTLINE_FAIL("if &shortmess =~ 'A'");
-  PUTLINE_FAIL("  set shortmess=aoOA");
-  PUTLINE_FAIL("else");
-  PUTLINE_FAIL("  set shortmess=aoO");
-  PUTLINE_FAIL("endif");
+  // Set 'shortmess' for the following.
+  PUTLINE_FAIL("set shortmess+=aoO");
 
   // Now save the current files, current buffer first.
   // Put all buffers into the buffer list.
