@@ -1104,7 +1104,7 @@ describe('vim.diagnostic', function()
 
     it('works with diagnostics before the start of the line', function()
       eq(
-        { 4, 0 },
+        { 4, -1 },
         exec_lua(function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
             _G.make_error('Diagnostic #1', 3, 9001, 3, 9001),
@@ -1428,6 +1428,77 @@ describe('vim.diagnostic', function()
 
       retry(nil, nil, function()
         eq(true, exec_lua('return _G.jumped'))
+      end)
+    end)
+
+    describe('after inserting text before diagnostic position', function()
+      before_each(function()
+        exec_lua(function()
+          vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+            _G.make_error('Diagnostic #1', 1, 4, 1, 7),
+            _G.make_error('Diagnostic #2', 3, 0, 3, 3),
+          })
+        end)
+
+        api.nvim_buf_set_text(0, 3, 0, 3, 0, { 'new line', 'new ' })
+      end)
+
+      it('finds next diagnostic at a logical location', function()
+        eq(
+          { 5, 4 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 2, 4 })
+            vim.diagnostic.jump({ count = 1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
+      end)
+
+      it('finds previous diagnostic at a logical location', function()
+        eq(
+          { 5, 4 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 6, 4 })
+            vim.diagnostic.jump({ count = -1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
+      end)
+    end)
+
+    describe('if diagnostic is set after last character in line', function()
+      before_each(function()
+        exec_lua(function()
+          vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+            _G.make_error('Diagnostic #1', 2, 3, 3, 4),
+          })
+        end)
+      end)
+
+      it('finds next diagnostic at the end of the line', function()
+        eq(
+          { 3, 2 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 3, 0 })
+            vim.diagnostic.jump({ count = 1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
+      end)
+
+      it('finds previous diagnostic at the end of the line', function()
+        eq(
+          { 3, 2 },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 4, 2 })
+            vim.diagnostic.jump({ count = -1 })
+            return vim.api.nvim_win_get_cursor(0)
+          end)
+        )
       end)
     end)
   end)
@@ -2942,7 +3013,7 @@ describe('vim.diagnostic', function()
           vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, diagnostics)
           vim.api.nvim_win_set_cursor(0, { 1, 1 })
           local float_bufnr, winnr =
-            vim.diagnostic.open_float({ header = false, scope = 'cursor', pos = { 2, 1 } })
+            vim.diagnostic.open_float({ header = false, scope = 'cursor', pos = { 2, 0 } })
           local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
           vim.api.nvim_win_close(winnr, true)
           return lines
@@ -3461,6 +3532,88 @@ describe('vim.diagnostic', function()
         end)
       )
     end)
+
+    it('shows diagnostics at their logical locations after text changes before', function()
+      exec_lua(function()
+        vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Diagnostic #1', 1, 4, 1, 7),
+          _G.make_error('Diagnostic #2', 3, 0, 3, 3),
+        })
+      end)
+
+      api.nvim_buf_set_text(0, 3, 0, 3, 0, { 'new line', 'new ' })
+
+      eq(
+        { 'Diagnostic #1' },
+        exec_lua(function()
+          vim.api.nvim_win_set_cursor(0, { 2, 4 })
+          local float_bufnr, winnr = vim.diagnostic.open_float({ header = '', scope = 'cursor' })
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          return lines
+        end)
+      )
+
+      eq(
+        { 'Diagnostic #2' },
+        exec_lua(function()
+          vim.api.nvim_win_set_cursor(0, { 5, 4 })
+          local float_bufnr, winnr = vim.diagnostic.open_float({ header = '', scope = 'cursor' })
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          return lines
+        end)
+      )
+    end)
+
+    it('shows diagnostics at their logical locations after text changes inside', function()
+      exec_lua(function()
+        vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Diagnostic #1', 1, 0, 1, 7),
+        })
+      end)
+
+      api.nvim_buf_set_text(0, 1, 4, 1, 4, { 'new ' })
+
+      eq(
+        { 'Diagnostic #1' },
+        exec_lua(function()
+          vim.api.nvim_win_set_cursor(0, { 2, 10 })
+          local float_bufnr, winnr = vim.diagnostic.open_float({ header = '', scope = 'cursor' })
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          vim.api.nvim_win_close(winnr, true)
+          return lines
+        end)
+      )
+    end)
+
+    it(
+      'shows diagnostics at the end of the line if diagnostic is set after last character in line',
+      function()
+        exec_lua(function()
+          vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+            _G.make_error('Diagnostic #1', 2, 3, 3, 4),
+          })
+        end)
+
+        eq(
+          { 'Diagnostic #1' },
+          exec_lua(function()
+            vim.api.nvim_win_set_cursor(0, { 3, 2 })
+            local float_bufnr, winnr = vim.diagnostic.open_float({ header = '', scope = 'cursor' })
+            local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+            vim.api.nvim_win_close(winnr, true)
+            return lines
+          end)
+        )
+      end
+    )
   end)
 
   describe('setloclist()', function()
@@ -3740,6 +3893,7 @@ describe('vim.diagnostic', function()
         -- Remove namespace since it isn't present in the return value of
         -- fromlist()
         for _, v in ipairs(diagnostics) do
+          v._extmark_id = nil
           v.namespace = nil
         end
 
