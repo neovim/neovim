@@ -418,7 +418,7 @@ local bufnr_and_namespace_cacher_mt = {
 }
 
 -- bufnr -> ns -> Diagnostic[]
-local diagnostic_cache = {} --- @type table<integer,table<integer,vim.Diagnostic[]>>
+local diagnostic_cache = {} --- @type table<integer,table<integer,vim.Diagnostic[]?>>
 do
   local group = api.nvim_create_augroup('nvim.diagnostic.buf_wipeout', {})
   setmetatable(diagnostic_cache, {
@@ -708,16 +708,6 @@ local function norm_diag(bufnr, namespace, d)
   d1.end_col = d.end_col or d.col or 0
   d1.namespace = namespace
   d1.bufnr = bufnr
-end
-
---- @param namespace integer
---- @param bufnr integer
---- @param diagnostics vim.Diagnostic.Set[]
-local function set_diagnostic_cache(namespace, bufnr, diagnostics)
-  for _, diagnostic in ipairs(diagnostics) do
-    norm_diag(bufnr, namespace, diagnostic)
-  end
-  diagnostic_cache[bufnr][namespace] = diagnostics
 end
 
 --- @param bufnr integer
@@ -1260,10 +1250,16 @@ function M.set(namespace, bufnr, diagnostics, opts)
 
   bufnr = vim._resolve_bufnr(bufnr)
 
+  for _, diagnostic in ipairs(diagnostics) do
+    norm_diag(bufnr, namespace, diagnostic)
+  end
+
+  --- @cast diagnostics vim.Diagnostic[]
+
   if vim.tbl_isempty(diagnostics) then
     diagnostic_cache[bufnr][namespace] = nil
   else
-    set_diagnostic_cache(namespace, bufnr, diagnostics)
+    diagnostic_cache[bufnr][namespace] = diagnostics
   end
 
   M.show(namespace, bufnr, nil, opts)
@@ -1272,7 +1268,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
     modeline = false,
     buffer = bufnr,
     -- TODO(lewis6991): should this be deepcopy()'d like they are in vim.diagnostic.get()
-    data = { diagnostics = diagnostic_cache[bufnr][namespace] },
+    data = { diagnostics = diagnostics },
   })
 end
 
