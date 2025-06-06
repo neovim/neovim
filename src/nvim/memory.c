@@ -42,7 +42,6 @@
 #include "nvim/ui_client.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/usercmd.h"
-#include "nvim/vim_defs.h"
 
 #ifdef UNIT_TESTING
 # define malloc(size) mem_malloc(size)
@@ -65,7 +64,7 @@ bool entered_free_all_mem = false;
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
-void try_to_free_memory(void)
+static void try_to_free_memory(void)
 {
   static bool trying_to_free = false;
   // avoid recursive calls
@@ -82,6 +81,24 @@ void try_to_free_memory(void)
   arena_free_reuse_blks();
 
   trying_to_free = false;
+}
+
+/// Avoid repeating the error message many times (they take 1 second each).
+/// `did_outofmem_msg` is reset when a character is read.
+static void do_outofmem_msg(size_t size)
+{
+  if (did_outofmem_msg) {
+    return;
+  }
+
+  // Don't hide this message
+  emsg_silent = 0;
+
+  // Must come first to avoid coming back here when printing the error
+  // message fails, e.g. when setting v:errmsg.
+  did_outofmem_msg = true;
+
+  semsg(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), (uint64_t)size);
 }
 
 /// malloc() wrapper
@@ -538,24 +555,6 @@ bool strnequal(const char *a, const char *b, size_t n)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (a == NULL && b == NULL) || (a && b && strncmp(a, b, n) == 0);
-}
-
-// Avoid repeating the error message many times (they take 1 second each).
-// Did_outofmem_msg is reset when a character is read.
-void do_outofmem_msg(size_t size)
-{
-  if (did_outofmem_msg) {
-    return;
-  }
-
-  // Don't hide this message
-  emsg_silent = 0;
-
-  // Must come first to avoid coming back here when printing the error
-  // message fails, e.g. when setting v:errmsg.
-  did_outofmem_msg = true;
-
-  semsg(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), (uint64_t)size);
 }
 
 /// Writes time_t to "buf[8]".
