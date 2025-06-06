@@ -234,6 +234,11 @@ typedef struct {
 } Dict(win_text_height);
 
 typedef struct {
+  OptionalKeys is_set__win_del_fold_;
+  Boolean recursive;
+} Dict(win_del_fold);
+
+typedef struct {
   OptionalKeys is_set__clear_autocmds_;
   Buffer buffer;
   Union(String, ArrayOf(String)) event;
