@@ -523,7 +523,9 @@ local function lsp_enable_callback(bufnr)
   -- Stop any clients that no longer apply to this buffer.
   local clients = lsp.get_clients({ bufnr = bufnr, _uninitialized = true })
   for _, client in ipairs(clients) do
-    if lsp.config[client.name] and not can_start(bufnr, client.name, lsp.config[client.name]) then
+    if
+      lsp.is_enabled(client.name) and not can_start(bufnr, client.name, lsp.config[client.name])
+    then
       lsp.buf_detach_client(bufnr, client.id)
     end
   end
