@@ -21,10 +21,6 @@ typedef void *(*MemCalloc)(size_t, size_t);
 /// `realloc()` function signature
 typedef void *(*MemRealloc)(void *, size_t);
 
-typedef void *(*MergeSortGetFunc)(void *);
-typedef void (*MergeSortSetFunc)(void *, void *);
-typedef int (*MergeSortCompareFunc)(const void *, const void *);
-
 #ifdef UNIT_TESTING
 /// When unit testing: pointer to the `malloc()` function, may be altered
 extern MemMalloc mem_malloc;
@@ -43,6 +39,10 @@ extern MemRealloc mem_realloc;
 /// Indicates that free_all_mem function was or is running
 extern bool entered_free_all_mem;
 #endif
+
+typedef void *(*MergeSortGetFunc)(void *);
+typedef void (*MergeSortSetFunc)(void *, void *);
+typedef int (*MergeSortCompareFunc)(const void *, const void *);
 
 EXTERN size_t arena_alloc_count INIT( = 0);
 
