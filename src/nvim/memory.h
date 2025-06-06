@@ -21,6 +21,10 @@ typedef void *(*MemCalloc)(size_t, size_t);
 /// `realloc()` function signature
 typedef void *(*MemRealloc)(void *, size_t);
 
+typedef void *(*MergeSortGetFunc)(void *);
+typedef void (*MergeSortSetFunc)(void *, void *);
+typedef int (*MergeSortCompareFunc)(const void *, const void *);
+
 #ifdef UNIT_TESTING
 /// When unit testing: pointer to the `malloc()` function, may be altered
 extern MemMalloc mem_malloc;
