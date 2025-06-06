@@ -205,4 +205,27 @@ describe('treesitter node API', function()
     eq('b', lua_eval('vim.treesitter.get_node_text(children_by_field[2], 0)'))
     eq('c', lua_eval('vim.treesitter.get_node_text(children_by_field[3], 0)'))
   end)
+
+  it('node access after tree edit', function()
+    insert([[
+      function x()
+        return true
+      end
+    ]])
+    exec_lua(function()
+      local tree = vim.treesitter.get_parser(0, 'lua'):parse()[1]
+
+      -- ensure treesitter does not try to edit the tree inplace
+      tree:copy()
+
+      local node = tree:root():child(0)
+      vim.api.nvim_buf_set_lines(0, 1, 2, false, {})
+      vim.schedule(function()
+        collectgarbage()
+        local a, b, c, d = node:range()
+        _G.range = { a, b, c, d }
+      end)
+    end)
+    eq({ 0, 0, 2, 3 }, lua_eval('range'))
+  end)
 end)
