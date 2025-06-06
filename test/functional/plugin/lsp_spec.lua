@@ -6779,4 +6779,68 @@ describe('LSP', function()
       eq(false, exec_lua([[return vim.lsp.is_enabled('foo')]]))
     end)
   end)
+
+  describe('vim.lsp.buf.workspace_diagnostics()', function()
+    local fake_uri = 'file:///fake/uri'
+
+    before_each(function()
+      exec_lua(function()
+        _G.make_diagnostic = function(msg, pos)
+          return {
+            range = {
+              start = { line = pos, character = pos },
+              ['end'] = { line = pos, character = pos },
+            },
+            message = msg,
+            severity = 1,
+          }
+        end
+      end)
+
+      exec_lua(create_server_definition)
+    end)
+
+    it('updates diagnostics obtained with vim.diagnostic.get()', function()
+      exec_lua(function()
+        _G.server = _G._create_server({
+          capabilities = {
+            diagnosticProvider = {
+              workspaceDiagnostics = true,
+            },
+          },
+          handlers = {
+            ['workspace/diagnostic'] = function(_, _, callback)
+              callback(nil, {
+                items = {
+                  {
+                    kind = 'full',
+                    uri = fake_uri,
+                    items = { _G.make_diagnostic('Error here!', 1) },
+                  },
+                },
+              })
+            end,
+          },
+        })
+        vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+        vim.lsp.buf.workspace_diagnostics()
+      end)
+
+      retry(nil, nil, function()
+        eq(
+          1,
+          exec_lua(function()
+            return #vim.diagnostic.get()
+          end)
+        )
+      end)
+
+      eq(
+        'Error here!',
+        exec_lua(function()
+          return vim.diagnostic.get()[1].message
+        end)
+      )
+    end)
+  end)
 end)

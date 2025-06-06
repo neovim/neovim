@@ -1311,4 +1311,19 @@ function M.execute_command(command_params)
   lsp.buf_request(0, ms.workspace_executeCommand, command_params)
 end
 
+--- @class vim.lsp.WorkspaceDiagnosticsOpts
+--- @inlinedoc
+---
+--- Only request diagnostics from the indicated client. If nil, the request is sent to all clients.
+--- @field client_id? integer
+
+--- Request workspace-wide diagnostics.
+--- @param opts? vim.lsp.WorkspaceDiagnosticsOpts
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+function M.workspace_diagnostics(opts)
+  vim.validate('opts', opts, 'table', true)
+
+  lsp.diagnostic._workspace_diagnostics(opts or {})
+end
+
 return M
