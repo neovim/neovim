@@ -49,7 +49,7 @@ local function ui_callback(event, ...)
   ext.tab_check_wins()
   handler(...)
   api.nvim__redraw({
-    flush = true,
+    flush = handler ~= ext.cmd.cmdline_hide or nil,
     cursor = handler == ext.cmd[event] and true or nil,
     win = handler == ext.cmd[event] and ext.wins.cmd or nil,
   })
