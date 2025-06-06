@@ -14,8 +14,6 @@ typedef struct {
   char *pum_kind;       ///< extra kind text (may be truncated)
   char *pum_extra;      ///< extra menu text (may be truncated)
   char *pum_info;       ///< extra info
-  int pum_score;        ///< fuzzy match score
-  int pum_idx;          ///< index of item before sorting by score
   int pum_cpt_source_idx;    ///< index of completion source in 'cpt'
   int pum_user_abbr_hlattr;  ///< highlight attribute for abbr
   int pum_user_kind_hlattr;  ///< highlight attribute for kind
