@@ -1722,6 +1722,32 @@ stack traceback:
       },
     })
   end)
+
+  it('can capture execute("messages"))', function()
+    feed('Q')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { "E354: Invalid register name: '^@'", 9, 6 } },
+          history = true,
+          kind = 'emsg',
+        },
+      },
+    })
+    feed(':let msg = execute("messages")<CR>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      cmdline = { { abort = false } },
+    })
+    eq("E354: Invalid register name: '^@'", eval('msg'):gsub('\n', ''))
+  end)
 end)
 
 describe('ui/builtin messages', function()
