@@ -1648,9 +1648,8 @@ static void create_windows(mparm_T *parmp)
     if (parmp->window_layout == WIN_TABS) {
       parmp->window_count = make_tabpages(parmp->window_count);
       TIME_MSG("making tab pages");
-    } else if (firstwin->w_next == NULL) {
-      parmp->window_count = make_windows(parmp->window_count,
-                                         parmp->window_layout == WIN_VER);
+    } else if (firstwin->w_next == NULL || firstwin->w_next->w_floating) {
+      parmp->window_count = make_windows(parmp->window_count, parmp->window_layout == WIN_VER);
       TIME_MSG("making windows");
     } else {
       parmp->window_count = win_count();
