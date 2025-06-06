@@ -2925,7 +2925,7 @@ static void diff_find_change_inline_diff(diff_T *dp)
   const int save_diff_algorithm = diff_algorithm;
 
   diffio_T dio = { 0 };
-  ga_init(&dio.dio_diff.dout_ga, sizeof(char *), 1000);
+  ga_init(&dio.dio_diff.dout_ga, sizeof(diffhunk_T), 1000);
 
   // inline diff only supports internal algo
   dio.dio_internal = true;

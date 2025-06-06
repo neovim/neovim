@@ -2800,3 +2800,39 @@ it('diff mode inline highlighting with 3 buffers', function()
   command('diffthis')
   screen:expect(s6)
 end)
+
+it('diff mode algorithm:histogram and inline:char with long lines #34329', function()
+  local screen = Screen.new(55, 20)
+  exec([[
+    set diffopt=internal,filler,closeoff,algorithm:histogram,inline:char
+    cd test/functional/fixtures/diff/
+    args inline_char_file1 inline_char_file2
+    vert all | windo diffthis | 1wincmd w
+  ]])
+  screen:expect([[
+    {7:  }{27:^aaaa,aaaaaaaa,aaaaaaaaaa,}│{7:  }{27:bbbb,bbbbbbbb,bbbbbbbbbb,}|
+    {7:  }{27:aaaaaaa-aaaaaaaaa-aaaaaa-}│{7:  }{27:bbbbbbb-bbbbbbbbb-bbbbbb-}|*11
+    {1:~                          }│{1:~                          }|*6
+    {3:inline_char_file1           }{2:inline_char_file2          }|
+                                                           |
+  ]])
+  n.assert_alive()
+  feed('G$')
+  screen:expect([[
+    {7:  }{4:                         }│{7:  }{4:                         }|
+    {7:  }{27:aa,aa,aa,aa,aa,a,a}{4:"      }│{7:  }{27:,bb,bb,bb,bb,bb,b,b}{4:"     }|
+    {7:  }{27:,aa,aa,aa,aa,aa,a}{4:"       }│{7:  }{27:b,bb,bb,bb,bb,bb,bb,b}{4:"   }|
+    {7:  }{27:,aa,aa,aa,aa,aa}{4:"         }│{7:  }{27:bb,bb,bb,bb,bb,bb,bb,bb}{4:" }|
+    {7:  }{27:a,aa,aa,aa,aa}{4:"           }│{7:  }{27:,bb,b,bb,bb,bb}{4:"          }|
+    {7:  }{27:aa,aa,aa,aa,aa}{4:"          }│{7:  }{27:,bb,bb}{4:"                  }|
+    {7:  }{27:a,a,a}{4:"                   }│{7:  }{27:b,b,b,b,b}{4:"               }|
+    {7:  }{27:a,a,a,a,a}{4:"               }│{7:  }{27:,b,b,b,b,b}{4:"              }|
+    {7:  }{27:aa,a,a,a,a,a,a}{4:"          }│{7:  }{27:b,b,b,b,b,b}{4:"             }|
+    {7:  }{27:,aa,aa,a,a,a,a,a}{4:"        }│{7:  }{27:bb,b,b,b,b,b}{4:"            }|
+    {7:  }{27:aa,aa,aa,aa,a,a,a,a}{4:"     }│{7:  }{27:bb,bb,bb,b,b,b,b}{4:"        }|
+    {7:  }{27:,aa,aa,a,a,a}{4:^"            }│{7:  }{27:bb,bb,bb,bb,b,b,b}{4:"       }|
+    {1:~                          }│{1:~                          }|*6
+    {3:inline_char_file1           }{2:inline_char_file2          }|
+                                                           |
+  ]])
+end)
