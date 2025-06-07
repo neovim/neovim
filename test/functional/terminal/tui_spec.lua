@@ -168,11 +168,14 @@ describe('TUI :restart', function()
       n.check_close()
     end)
 
+    local server_pipe = new_pipename()
     local screen = tt.setup_child_nvim({
       '-u',
       'NONE',
       '-i',
       'NONE',
+      '--listen',
+      server_pipe,
       '--cmd',
       'colorscheme vim',
       '--cmd',
@@ -189,6 +192,16 @@ describe('TUI :restart', function()
       {3:-- TERMINAL --}                                    |
     ]]
     screen:expect(s0)
+    local server_session = n.connect(server_pipe)
+    local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
+
+    local function restart_pid_check()
+      server_session:close()
+      server_session = n.connect(server_pipe)
+      local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
+      t.neq(server_pid, new_pid)
+      server_pid = new_pid
+    end
 
     tt.feed_data(':1restart\013')
     screen:expect({ any = vim.pesc('{8:E481: No range allowed}') })
@@ -199,6 +212,7 @@ describe('TUI :restart', function()
     -- Check ":restart" on an unmodified buffer.
     tt.feed_data(':restart\013')
     screen:expect(s0)
+    restart_pid_check()
 
     tt.feed_data('ithis will be removed\027')
     screen:expect([[
@@ -224,6 +238,21 @@ describe('TUI :restart', function()
     -- Check ":restart!".
     tt.feed_data(':restart!\013')
     screen:expect(s0)
+    restart_pid_check()
+
+    tt.feed_data(':echo\n')
+    screen:expect([[
+      ^                                                  |
+      {4:~                                                 }|*3
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    -- No --listen conflict when server exit is delayed.
+    feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd.restart()\n')
+    screen:expect(s0)
+    restart_pid_check()
 
     screen:try_resize(60, 6)
     screen:expect([[
@@ -234,7 +263,7 @@ describe('TUI :restart', function()
       {3:-- TERMINAL --}                                              |
     ]])
 
-    --- Check that ":restart" uses the updated size after terminal resize
+    --- Check that ":restart" uses the updated size after terminal resize.
     tt.feed_data(':restart\013')
     screen:expect([[
       ^                                                            |
@@ -243,6 +272,7 @@ describe('TUI :restart', function()
       {MATCH:%d+ +}|
       {3:-- TERMINAL --}                                              |
     ]])
+    restart_pid_check()
   end)
 end)
 
@@ -3641,25 +3671,22 @@ describe('TUI client', function()
     })
 
     feed_data('iHello, World')
-    screen_server:expect {
-      grid = [[
+    screen_server:expect([[
       Hello, World^                                      |
       {4:~                                                 }|*3
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
     feed_data('\027')
-    screen_server:expect {
-      grid = [[
+    local s0 = [[
       Hello, Worl^d                                      |
       {4:~                                                 }|*3
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]]
+    screen_server:expect(s0)
 
     set_session(client_super)
     local screen_client = tt.setup_child_nvim({
@@ -3667,28 +3694,31 @@ describe('TUI client', function()
       '--server',
       server_pipe,
     })
-
-    screen_client:expect {
-      grid = [[
-      Hello, Worl^d                                      |
-      {4:~                                                 }|*3
-      {5:[No Name] [+]                                     }|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    screen_client:expect(s0)
 
     -- grid smaller than containing terminal window is cleared properly
     feed_data(":call setline(1,['a'->repeat(&columns)]->repeat(&lines))\n")
     feed_data('0:set lines=3\n')
-    screen_server:expect {
-      grid = [[
+    local s1 = [[
       ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {5:[No Name] [+]                                     }|
                                                         |*4
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]]
+    screen_client:expect(s1)
+    screen_server:expect(s1)
+
+    -- Run :restart! on the remote client.
+    -- The remote client should start a new server while the original one should exit.
+    feed_data(':restart!\n')
+    screen_client:expect([[
+      ^                                                  |
+      {4:~                                                 }|*3
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    screen_server:expect({ any = vim.pesc('[Process exited 0]') })
 
     feed_data(':q!\n')
 
@@ -3712,32 +3742,52 @@ describe('TUI client', function()
       server_pipe,
     })
 
-    screen_client:expect {
-      grid = [[
+    screen_client:expect([[
       Halloj^!                                           |
       {4:~                                                 }|*4
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
 
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen_client:expect {
-      grid = [[
+    screen_client:expect([[
       Nvim: Caught deadly signal 'SIGTERM'              |
                                                         |
       [Process exited 1]^                                |
                                                         |*3
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
 
     eq(0, api.nvim_get_vvar('shell_error'))
     -- exits on input eof #22244
     fn.system({ nvim_prog, '--remote-ui', '--server', server_pipe })
     eq(1, api.nvim_get_vvar('shell_error'))
+
+    command('bwipe!')
+    fn.jobstart({ nvim_prog, '--remote-ui', '--server', server_pipe }, { term = true })
+    command('startinsert')
+    screen_client:expect([[
+      {4:<<<}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|*3
+      aaaaaa^                                            |
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    -- Run :restart! on the client.
+    -- The client should start a new server while the original server should exit.
+    feed_data('\027:restart!\n')
+    screen_client:expect([[
+      ^                                                  |
+      {4:~                                                 }|*4
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    retry(nil, nil, function()
+      eq(nil, vim.uv.fs_stat(server_pipe))
+    end)
 
     client_super:close()
     server:close()
