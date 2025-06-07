@@ -9,10 +9,22 @@ local function osc52(clipboard, contents)
   return string.format('\027]52;%s;%s\027\\', clipboard, contents)
 end
 
+---@class ClipboardCache
+---
+---@field hash string sha256 of the lines passed to the copy() function
+---@field regtype string regtype argument passed to the copy() function
+---
+---@type table<string, ClipboardCache>
+local cache = {}
+
 function M.copy(reg)
   local clipboard = reg == '+' and 'c' or 'p'
-  return function(lines)
+  return function(lines, regtype)
     local s = table.concat(lines, '\n')
+    cache[reg] = {
+      hash = vim.fn.sha256(s),
+      regtype = regtype,
+    }
     -- The data to be written here can be quite long.
     -- Use nvim_chan_send() as io.stdout:write() doesn't handle EAGAIN. #26688
     vim.api.nvim_chan_send(2, osc52(clipboard, vim.base64.encode(s)))
@@ -70,7 +82,17 @@ function M.paste(reg)
     end
 
     -- If we get here, contents should be non-nil
-    return vim.split(assert(contents), '\n')
+    assert(contents)
+
+    local regtype = ''
+    if cache[reg] then
+      local hash = vim.fn.sha256(contents)
+      if cache[reg].hash == hash then
+        regtype = cache[reg].regtype
+      end
+    end
+
+    return { vim.split(contents, '\n'), regtype }
   end
 end
 
