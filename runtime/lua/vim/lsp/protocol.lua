@@ -459,6 +459,7 @@ function protocol.make_client_capabilities()
             properties = {
               'additionalTextEdits',
               'command',
+              'documentation',
             },
           },
           tagSupport = {
