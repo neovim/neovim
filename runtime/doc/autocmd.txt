@@ -760,6 +760,14 @@ LspNotify			See |LspNotify|
 LspProgress			See |LspProgress|
 LspRequest			See |LspRequest|
 LspTokenUpdate			See |LspTokenUpdate|
+							*MarkSet*
+MarkSet				Just after a |mark| is set. The |event-data|
+				is a table with the following fields:
+
+				- mark: the character of the set mark. (ex:
+				  'a')
+				- line: the line the mark was set at.
+				- col: the column the mark was set at.
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
 				right mouse button).  Useful for adjusting the
