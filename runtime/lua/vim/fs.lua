@@ -248,7 +248,7 @@ end
 --- ```
 ---
 ---@since 10
----@param names (string|string[]|fun(name: string, path: string): boolean) Names of the items to find.
+---@param names (string|string[]|vim.lpeg.Pattern|vim.lpeg.Pattern[]|fun(name: string, path: string): boolean) Names of the items to find.
 ---             Must be base names, paths and globs are not supported when {names} is a string or a table.
 ---             If {names} is a function, it is called for each traversed item with args:
 ---             - name: base name of the current item
@@ -260,7 +260,11 @@ end
 ---@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
   opts = opts or {}
-  vim.validate('names', names, { 'string', 'table', 'function' })
+  if type(names) == 'userdata' then
+    vim.validate('names', names, vim.lpeg.type)
+  else
+    vim.validate('names', names, { 'string', 'table', 'function' })
+  end
   vim.validate('path', opts.path, 'string', true)
   vim.validate('upward', opts.upward, 'boolean', true)
   vim.validate('stop', opts.stop, 'string', true)
@@ -268,9 +272,21 @@ function M.find(names, opts)
   vim.validate('limit', opts.limit, 'number', true)
   vim.validate('follow', opts.follow, 'boolean', true)
 
-  if type(names) == 'string' then
+  -- TODO: fix warning
+  if type(names) == 'string' or vim.lpeg.type(names) == 'pattern' then
     names = { names }
   end
+
+  if type(names) == 'table' and vim.lpeg.type(names[1]) == 'pattern' then
+    local patterns = names --- @type vim.lpeg.Pattern[]
+    names = function(name, _)
+      for _, pattern in ipairs(patterns) do
+        return pattern:match(name) ~= nil
+      end
+    end
+  end
+
+  -- TODO: fix typing, lua_ls still thinks names is also vim.lpeg.Pattern and vim.lpeg.Pattern[]
 
   local path = opts.path or assert(uv.cwd())
   local stop = opts.stop
@@ -301,6 +317,7 @@ function M.find(names, opts)
     else
       test = function(p)
         local t = {} --- @type string[]
+        -- TODO: fix warning
         for _, name in ipairs(names) do
           local f = M.joinpath(p, name)
           local stat = uv.fs_stat(f)
