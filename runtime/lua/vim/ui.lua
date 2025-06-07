@@ -1,5 +1,21 @@
 local M = {}
 
+---@class vim.ui.select.Opts
+---@inlinedoc
+---
+--- Text of the prompt. Defaults to `Select one of:`
+---@field prompt? string
+---
+--- Function to format an
+--- individual item from `items`. Defaults to `tostring`.
+---@field format_item? fun(item: any):string
+---
+--- Arbitrary hint string indicating the item shape.
+--- Plugins reimplementing `vim.ui.select` may wish to
+--- use this to infer the structure or semantics of
+--- `items`, or the context in which select() was called.
+---@field kind? string
+
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
 --- work until `on_choice`.
 ---
@@ -22,17 +38,7 @@ local M = {}
 ---
 ---@generic T
 ---@param items T[] Arbitrary items
----@param opts table Additional options
----     - prompt (string|nil)
----               Text of the prompt. Defaults to `Select one of:`
----     - format_item (function item -> text)
----               Function to format an
----               individual item from `items`. Defaults to `tostring`.
----     - kind (string|nil)
----               Arbitrary hint string indicating the item shape.
----               Plugins reimplementing `vim.ui.select` may wish to
----               use this to infer the structure or semantics of
----               `items`, or the context in which select() was called.
+---@param opts vim.ui.select.Opts Additional options
 ---@param on_choice fun(item: T|nil, idx: integer|nil)
 ---               Called once the user made a choice.
 ---               `idx` is the 1-based index of `item` within `items`.
@@ -56,6 +62,26 @@ function M.select(items, opts, on_choice)
   end
 end
 
+---@class vim.ui.input.Opts
+---@inlinedoc
+---
+---Text of the prompt
+---@field prompt? string
+---
+---Default reply to the input
+---@field default? string
+---
+---Specifies type of completion supported
+---for input. Supported types are the same
+---that can be supplied to a user-defined
+---command using the "-complete=" argument.
+---See |:command-completion|
+---@field completion? string
+---
+---Function that will be used for highlighting
+---user inputs.
+---@field highlight? function
+
 --- Prompts the user for input, allowing arbitrary (potentially asynchronous) work until
 --- `on_confirm`.
 ---
@@ -67,21 +93,8 @@ end
 --- end)
 --- ```
 ---
----@param opts table? Additional options. See |input()|
----     - prompt (string|nil)
----               Text of the prompt
----     - default (string|nil)
----               Default reply to the input
----     - completion (string|nil)
----               Specifies type of completion supported
----               for input. Supported types are the same
----               that can be supplied to a user-defined
----               command using the "-complete=" argument.
----               See |:command-completion|
----     - highlight (function)
----               Function that will be used for highlighting
----               user inputs.
----@param on_confirm function ((input|nil) -> ())
+---@param opts? vim.ui.input.Opts Additional options. See |input()|
+---@param on_confirm fun(input?: string)
 ---               Called once the user confirms or abort the input.
 ---               `input` is what the user typed (it might be
 ---               an empty string if nothing was entered), or
@@ -104,6 +117,12 @@ function M.input(opts, on_confirm)
     on_confirm(input)
   end
 end
+
+---@class vim.ui.open.Opts
+---@inlinedoc
+---
+--- Command used to open the path or URL.
+---@field cmd? string[]
 
 --- Opens `path` with the system default handler (macOS `open`, Windows `explorer.exe`, Linux
 --- `xdg-open`, …), or returns (but does not show) an error message on failure.
@@ -128,8 +147,7 @@ end
 --- ```
 ---
 ---@param path string Path or URL to open
----@param opt? { cmd?: string[] } Options
----     - cmd string[]|nil Command used to open the path or URL.
+---@param opt? vim.ui.open.Opts Options
 ---
 ---@return vim.SystemObj|nil # Command object, or nil if not found.
 ---@return nil|string # Error message on failure, or nil on success.
