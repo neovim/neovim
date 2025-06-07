@@ -334,7 +334,8 @@ int main(int argc, char **argv)
 
   if (use_builtin_ui && !remote_ui) {
     ui_client_forward_stdin = !stdin_isatty;
-    uint64_t rv = ui_client_start_server(params.argc, params.argv);
+    uint64_t rv = ui_client_start_server(get_vim_var_str(VV_PROGPATH),
+                                         (size_t)params.argc, params.argv);
     if (!rv) {
       fprintf(stderr, "Failed to start Nvim server!\n");
       os_exit(1);

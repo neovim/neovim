@@ -4828,16 +4828,23 @@ int before_quit_all(exarg_T *eap)
 }
 
 /// ":qall": try to quit all windows
-static void ex_quit_all(exarg_T *eap)
+/// ":restart": restart the Nvim server
+static void ex_quitall_or_restart(exarg_T *eap)
 {
   if (before_quit_all(eap) == FAIL) {
     return;
   }
   exiting = true;
-  if (eap->forceit || !check_changed_any(false, false)) {
+  Error err = ERROR_INIT;
+  if ((eap->forceit || !check_changed_any(false, false))
+      && (eap->cmdidx != CMD_restart || remote_ui_restart(current_ui, &err))) {
     getout(0);
   }
   not_exiting();
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);  // UI disappeared already?
+    api_clear_error(&err);
+  }
 }
 
 /// ":close": close current window, unless it is the last one
@@ -5590,31 +5597,6 @@ static void ex_detach(exarg_T *eap)
 
     ILOG("detach current_ui=%" PRId64, chan->id);
   }
-}
-
-/// ":restart" command
-/// Restarts the server by delegating the work to the UI.
-static void ex_restart(exarg_T *eap)
-{
-  bool forceit = eap && eap->forceit;
-
-  win_T *wp = curwin;
-
-  // If any buffer is changed and not saved, we cannot restart.
-  // But if called using bang (!), we will force restart.
-  if ((!buf_hide(wp->w_buffer)
-       && check_changed(wp->w_buffer, (p_awa ? CCGD_AW : 0)
-                        | (forceit ? CCGD_FORCEIT : 0)
-                        | CCGD_EXCMD))
-      || check_more(true, forceit) == FAIL
-      || check_changed_any(forceit, true)) {
-    if (!forceit) {
-      return;
-    }
-  }
-
-  // Send an ui restart event.
-  ui_call_restart();
 }
 
 /// ":mode":
