@@ -29,6 +29,8 @@ void visual_bell(void)
   FUNC_API_SINCE(3);
 void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
+void restart(void)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_CLIENT_IMPL;
 void suspend(void)
   FUNC_API_SINCE(3);
 void set_title(String title)
@@ -177,5 +179,3 @@ void msg_history_clear(void)
 
 void error_exit(Integer status)
   FUNC_API_SINCE(12);
-void restart(void)
-  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_CLIENT_IMPL;

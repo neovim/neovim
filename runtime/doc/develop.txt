@@ -666,6 +666,7 @@ External UIs are expected to implement these common features:
   the user).
 - Support the text decorations/attributes given by |ui-event-hl_attr_define|.
   The "url" attr should be presented as a clickable hyperlink.
+- Handle the "restart" UI event so that |:restart| works.
 
 
  vim:tw=78:ts=8:sw=4:et:ft=help:norl:

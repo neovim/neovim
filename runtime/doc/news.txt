@@ -222,6 +222,7 @@ TUI
 
 UI
 
+• |:restart| restarts Nvim and reattaches the current UI.
 • |:checkhealth| shows a summary in the header for every healthcheck.
 • |ui-multigrid| provides composition information and absolute coordinates.
 • `vim._extui` provides an experimental commandline and message UI intended to
@@ -229,7 +230,6 @@ UI
 • Error messages are more concise:
   • "Error detected while processing:" changed to "Error in:".
   • "Error executing Lua:" changed to "Lua:".
-• |:restart| detaches the embedded server from the UI and then restarts it.
 
 VIMSCRIPT
 
