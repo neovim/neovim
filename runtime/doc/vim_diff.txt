@@ -490,6 +490,7 @@ These Nvim features were later integrated into Vim.
 - |:sign-define| "numhl" argument
 - |:source| works with anonymous (no file) scripts
 - 'statusline' supports unlimited alignment sections
+- |vim-tutor-mode|
 
 ==============================================================================
 Other changes                                            *nvim-changed*
