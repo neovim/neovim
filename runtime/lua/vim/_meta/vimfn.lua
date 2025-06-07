@@ -2008,7 +2008,7 @@ function vim.fn.expandcmd(string, options) end
 ---
 --- @param expr1 table
 --- @param expr2 table
---- @param expr3? table
+--- @param expr3? integer|'keep'|'force'|'error'
 --- @return any
 function vim.fn.extend(expr1, expr2, expr3) end
 
@@ -2018,7 +2018,7 @@ function vim.fn.extend(expr1, expr2, expr3) end
 ---
 --- @param expr1 table
 --- @param expr2 table
---- @param expr3? table
+--- @param expr3? integer|'keep'|'force'|'error'
 --- @return any
 function vim.fn.extendnew(expr1, expr2, expr3) end
 
