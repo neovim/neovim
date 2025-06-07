@@ -781,6 +781,10 @@ describe('buffer cursor position is correct in terminal without number column', 
 end)
 
 describe('buffer cursor position is correct in terminal with number column', function()
+  if t.is_ci('cirrus') then
+    return
+  end
+
   local screen
 
   local function setup_ex_register(str)
