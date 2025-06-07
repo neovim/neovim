@@ -81,7 +81,7 @@ local function compute_folds_levels(bufnr, info, srow, erow, callback)
     -- resulting in both a broken highlighter and foldexpr.
     or api.nvim_buf_line_count(bufnr) == 1
       and api.nvim_buf_call(bufnr, function()
-        return vim.fn.line2byte(1) <= 0
+        return vim.fn.line2byte(2) == -1
       end)
   then
     return

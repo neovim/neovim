@@ -3957,6 +3957,15 @@ int ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int *offp, bool no_ff)
     if (no_ff && buf->b_ml.ml_mfp && (lnum == 1 || lnum == 2)) {
       return lnum - 1;
     }
+
+    // Make sure line2byte(1) and byte2line(1) always return 1, even if the
+    // memline is empty.
+    if (lnum == 1) {
+      return 0;  // line2byte(1)
+    } else if (lnum == 0 && offp != NULL && *offp == 0) {
+      return 1;  // byte2line(1)
+    }
+
     return -1;
   }
 
