@@ -41,8 +41,6 @@ int ask_yesno(const char *const str)
   const int save_State = State;
 
   no_wait_return++;
-  State = MODE_CONFIRM;  // Mouse behaves like with :confirm.
-  setmouse();  // Disable mouse in xterm.
   snprintf(IObuff, IOSIZE, _("%s (y/n)?"), str);
   char *prompt = xstrdup(IObuff);
 

@@ -1106,7 +1106,7 @@ describe('cmdline redraw', function()
     }
   end)
 
-  it('silent prompt', function()
+  it('prompt with silent mapping and screen update', function()
     command([[nmap <silent> T :call confirm("Save changes?", "&Yes\n&No\n&Cancel")<CR>]])
     feed('T')
     screen:expect([[
@@ -1116,6 +1116,31 @@ describe('cmdline redraw', function()
       {6:Save changes?}            |
       {6:[Y]es, (N)o, (C)ancel: }^  |
     ]])
+    command('call setline(1, "foo") | redraw')
+    screen:expect([[
+      foo                      |
+      {3:                         }|
+                               |
+      {6:Save changes?}            |
+      {6:[Y]es, (N)o, (C)ancel: }^  |
+    ]])
+    feed('Y')
+    screen:expect([[
+      ^foo                      |
+      {1:~                        }|*3
+                               |
+    ]])
+    screen:try_resize(75, screen._height)
+    feed(':call inputlist(["foo", "bar"])<CR>')
+    screen:expect([[
+      foo                                                                        |
+      {3:                                                                           }|
+      foo                                                                        |
+      bar                                                                        |
+      Type number and <Enter> or click with the mouse (q or empty cancels): ^     |
+    ]])
+    command('redraw')
+    screen:expect_unchanged()
   end)
 
   it('substitute confirm prompt does not scroll', function()

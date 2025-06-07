@@ -2197,7 +2197,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       && !(p_paste && (State & (MODE_INSERT | MODE_CMDLINE)))
       && !(State == MODE_HITRETURN && (tb_c1 == CAR || tb_c1 == ' '))
       && State != MODE_ASKMORE
-      && State != MODE_CONFIRM
       && !at_ins_compl_key()) {
     int mlen;
     int nolmaplen;

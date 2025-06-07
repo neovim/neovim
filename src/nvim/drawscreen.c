@@ -266,12 +266,19 @@ void screenclear(void)
   }
 }
 
+/// Unlike cmdline "one_key" prompts, the message part of the prompt is not stored
+/// to be re-emitted: avoid clearing the prompt from the message grid.
+static bool cmdline_number_prompt(void)
+{
+  return !ui_has(kUIMessages) && State == MODE_CMDLINE && get_cmdline_info()->mouse_used != NULL;
+}
+
 /// Set dimensions of the Nvim application "screen".
 void screen_resize(int width, int height)
 {
   // Avoid recursiveness, can happen when setting the window size causes
   // another window-changed signal.
-  if (updating_screen || resizing_screen) {
+  if (updating_screen || resizing_screen || cmdline_number_prompt()) {
     return;
   }
 
@@ -348,7 +355,7 @@ void screen_resize(int width, int height)
   resizing_autocmd = false;
   redraw_all_later(UPD_CLEAR);
 
-  if (State != MODE_ASKMORE && State != MODE_EXTERNCMD && State != MODE_CONFIRM) {
+  if (State != MODE_ASKMORE && State != MODE_EXTERNCMD) {
     screenclear();
   }
 
@@ -364,8 +371,11 @@ void screen_resize(int width, int height)
     // - While editing the command line, only redraw that. TODO: lies
     // - in Ex mode, don't redraw anything.
     // - Otherwise, redraw right now, and position the cursor.
-    if (State == MODE_ASKMORE || State == MODE_EXTERNCMD || State == MODE_CONFIRM
-        || exmode_active) {
+    if (State == MODE_ASKMORE || State == MODE_EXTERNCMD || exmode_active
+        || (State == MODE_CMDLINE && get_cmdline_info()->one_key)) {
+      if (State == MODE_CMDLINE) {
+        update_screen();
+      }
       if (msg_grid.chars) {
         msg_grid_validate();
       }
@@ -451,7 +461,7 @@ int update_screen(void)
 
   // Postpone the redrawing when it's not needed and when being called
   // recursively.
-  if (!redrawing() || updating_screen) {
+  if (!redrawing() || updating_screen || cmdline_number_prompt()) {
     return FAIL;
   }
 
@@ -490,7 +500,7 @@ int update_screen(void)
   }
 
   // if the screen was scrolled up when displaying a message, scroll it down
-  if (msg_scrolled || msg_grid_invalid) {
+  if ((msg_scrolled || msg_grid_invalid) && !cmdline_number_prompt()) {
     clear_cmdline = true;
     int valid = MAX(Rows - msg_scrollsize(), 0);
     if (msg_grid.chars) {
@@ -697,6 +707,7 @@ int update_screen(void)
   if (still_may_intro) {
     intro_message(false);
   }
+  repeat_message();
 
   decor_providers_invoke_end();
 
