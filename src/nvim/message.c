@@ -2497,7 +2497,7 @@ void msg_scroll_flush(void)
       int row = i - msg_grid_pos;
       assert(row >= 0);
       ui_line(&msg_grid, row, false, 0, msg_grid.dirty_col[row], msg_grid.cols,
-              HL_ATTR(HLF_MSG), false);
+              HL_ATTR(HLF_MSG), 0, false);
       msg_grid.dirty_col[row] = 0;
     }
   }

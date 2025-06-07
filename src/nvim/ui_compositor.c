@@ -482,7 +482,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
     }
   }
   ui_composed_call_raw_line(1, row, startcol + skipstart,
-                            endcol - skipend, endcol - skipend, 0, flags,
+                            endcol - skipend, endcol - skipend, 0, 0, flags,
                             (const schar_T *)linebuf + skipstart,
                             (const sattr_T *)attrbuf + skipstart);
 }
@@ -503,7 +503,7 @@ static void compose_debug(Integer startrow, Integer endrow, Integer startcol, In
   }
 
   for (int row = (int)startrow; row < endrow; row++) {
-    ui_composed_call_raw_line(1, row, startcol, startcol, endcol, attr, false,
+    ui_composed_call_raw_line(1, row, startcol, startcol, endcol, attr, false, 0,
                               (const schar_T *)linebuf,
                               (const sattr_T *)attrbuf);
   }
@@ -547,7 +547,7 @@ void ui_comp_compose_grid(ScreenGrid *grid)
 }
 
 void ui_comp_raw_line(Integer grid, Integer row, Integer startcol, Integer endcol, Integer clearcol,
-                      Integer clearattr, LineFlags flags, const schar_T *chunk,
+                      Integer clearattr, Integer max_attrs, LineFlags flags, const schar_T *chunk,
                       const sattr_T *attrs)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid)) {
@@ -591,11 +591,15 @@ void ui_comp_raw_line(Integer grid, Integer row, Integer startcol, Integer endco
     compose_debug(row, row + 1, startcol, endcol, dbghl_normal, endcol >= clearcol);
     compose_debug(row, row + 1, endcol, clearcol, dbghl_clear, true);
 #ifndef NDEBUG
-    for (int i = 0; i < endcol - startcol; i++) {
+    Integer cols = endcol - startcol;
+    if (max_attrs != 0) {
+      cols = MIN(cols, max_attrs - 1);
+    }
+    for (int i = 0; i < cols; i++) {
       assert(attrs[i] >= 0);
     }
 #endif
-    ui_composed_call_raw_line(1, row, startcol, endcol, clearcol, clearattr,
+    ui_composed_call_raw_line(1, row, startcol, endcol, clearcol, clearattr, 0,
                               flags, chunk, attrs);
   }
 }

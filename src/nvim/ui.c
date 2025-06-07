@@ -462,7 +462,7 @@ void ui_set_ext_option(RemoteUI *ui, UIExtension ext, bool active)
 }
 
 void ui_line(ScreenGrid *grid, int row, bool invalid_row, int startcol, int endcol, int clearcol,
-             int clearattr, bool wrap)
+             int clearattr, int max_attrs, bool wrap)
 {
   assert(0 <= row && row < grid->rows);
   LineFlags flags = wrap ? kLineFlagWrap : 0;
@@ -475,7 +475,7 @@ void ui_line(ScreenGrid *grid, int row, bool invalid_row, int startcol, int endc
 
   size_t off = grid->line_offset[row] + (size_t)startcol;
 
-  ui_call_raw_line(grid->handle, row, startcol, endcol, clearcol, clearattr,
+  ui_call_raw_line(grid->handle, row, startcol, endcol, clearcol, clearattr, max_attrs,
                    flags, (const schar_T *)grid->chars + off,
                    (const sattr_T *)grid->attrs + off);
 
