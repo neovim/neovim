@@ -102,6 +102,7 @@ describe('TUI :detach', function()
 
     local child_session = n.connect(child_server)
     finally(function()
+      -- Avoid a dangling process after :detach.
       child_session:request('nvim_command', 'qall!')
     end)
     local status, child_uis = child_session:request('nvim_list_uis')
@@ -3456,6 +3457,11 @@ describe('TUI', function()
 
     -- Attach another (non-TUI) UI to the child instance
     local alt = Screen.new(nil, nil, nil, child_session)
+    finally(function()
+      alt:detach()
+      -- Avoid a dangling process after :detach.
+      child_session:request('nvim_command', 'qall!')
+    end)
 
     -- Detach the first (primary) client so only the second UI is attached
     feed_data(':detach\n')
@@ -3464,8 +3470,6 @@ describe('TUI', function()
 
     -- osc52 should be cleared from termfeatures
     eq({ true, {} }, { child_session:request('nvim_eval', 'g:termfeatures') })
-
-    alt:detach()
   end)
 
   it('does not query the terminal for OSC 52 support when disabled', function()
