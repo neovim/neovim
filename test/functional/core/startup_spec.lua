@@ -761,7 +761,8 @@ describe('startup', function()
             \   'row': 3,
             \   'col': 3
             \ }
-      autocmd WinEnter * let g:float_win = nvim_open_win(bufnr, v:false, config)]]
+      autocmd WinEnter * let g:float_win = nvim_open_win(bufnr, v:false, config)
+    ]]
     )
     finally(function()
       os.remove('Xdiff.vim')
@@ -772,6 +773,45 @@ describe('startup', function()
     local float_win = eval('g:float_win')
     eq('editor', api.nvim_win_get_config(float_win).relative)
     eq(false, api.nvim_get_option_value('diff', { win = float_win }))
+  end)
+
+  it('still opens arglist windows if init only opens floating windows', function()
+    write_file(
+      'Xfloat.vim',
+      [[
+      let config = {
+            \   'relative': 'editor',
+            \   'focusable': v:false,
+            \   'width': 1,
+            \   'height': 1,
+            \   'row': 1,
+            \   'col': 1
+            \ }
+      call nvim_open_win(0, v:false, config)
+    ]]
+    )
+    finally(function()
+      os.remove('Xfloat.vim')
+    end)
+    clear { args = { '-u', 'Xfloat.vim', '-d', 'Xfloat.vim', 'foo' } }
+    local screen = Screen.new(40, 5)
+    screen:add_extra_attr_ids({
+      [101] = {
+        bold = true,
+        background = Screen.colors.LightBlue,
+        foreground = Screen.colors.Brown,
+      },
+      [102] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.LightBlue },
+      [103] = { foreground = Screen.colors.Magenta, background = Screen.colors.LightBlue },
+      [104] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.LightBlue },
+    })
+    screen:expect([[
+      {7:  }{101:^let}{22: config }{101:=}{22: }{102:{}{22:                      }│{23:-}|
+      {7: }{101:l}{22:      }{102:\}{22:   }{103:'relative'}{22:: }{103:'editor'}{22:,     }│{23:-}|
+      {7:  }{22:      }{102:\}{22:   }{103:'focusable'}{22:: }{104:v:}{22:false,     }│ |
+      {3:Xfloat.vim                             }{2:<}|
+                                              |
+    ]])
   end)
 
   it('does not crash if --embed is given twice', function()
@@ -788,20 +828,12 @@ describe('startup', function()
   it("sets 'shortmess' when loading other tabs", function()
     clear({ args = { '-p', 'a', 'b', 'c' } })
     local screen = Screen.new(25, 4)
-    screen:expect({
-      grid = [[
-        {1: a }{2: b  c }{3:               }{2:X}|
-        ^                         |
-        {4:~                        }|
-                                 |
-          ]],
-      attr_ids = {
-        [1] = { bold = true },
-        [2] = { background = Screen.colors.LightGrey, underline = true },
-        [3] = { reverse = true },
-        [4] = { bold = true, foreground = Screen.colors.Blue1 },
-      },
-    })
+    screen:expect([[
+      {5: a }{24: b  c }{2:               }{24:X}|
+      ^                         |
+      {1:~                        }|
+                               |
+    ]])
   end)
 end)
 
@@ -1476,20 +1508,18 @@ describe('inccommand on ex mode', function()
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
     fn.chansend(id, '%s/N')
-    screen:expect {
-      grid = [[
-      {1:^                                                            }|
-      {1:                                                            }|*6
-      {1:Entering Ex mode.  Type "visual" to go to Normal mode.      }|
-      {1::%s/N                                                       }|
-                                                                  |
-    ]],
-      attr_ids = {
-        [1] = {
-          background = Screen.colors.NvimDarkGrey2,
-          foreground = Screen.colors.NvimLightGrey2,
-        },
+    screen:add_extra_attr_ids({
+      [101] = {
+        background = Screen.colors.NvimDarkGrey2,
+        foreground = Screen.colors.NvimLightGrey2,
       },
-    }
+    })
+    screen:expect([[
+      {101:^                                                            }|
+      {101:                                                            }|*6
+      {101:Entering Ex mode.  Type "visual" to go to Normal mode.      }|
+      {101::%s/N                                                       }|
+                                                                  |
+    ]])
   end)
 end)
