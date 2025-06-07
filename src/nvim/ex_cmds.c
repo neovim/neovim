@@ -921,8 +921,6 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   FUNC_ATTR_NONNULL_ALL
 {
   char *arg = eap->arg;             // command
-  linenr_T line1 = eap->line1;        // start of range
-  linenr_T line2 = eap->line2;        // end of range
   char *newcmd = NULL;              // the new command
   bool free_newcmd = false;           // need to free() newcmd
   int scroll_save = msg_scroll;
@@ -1036,7 +1034,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   } else {                            // :range!
     // Careful: This may recursively call do_bang() again! (because of
     // autocommands)
-    do_filter(line1, line2, eap, newcmd, do_in, do_out);
+    do_filter(eap, newcmd, do_in, do_out);
     apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, false, curbuf);
   }
 
@@ -1061,13 +1059,16 @@ theend:
 /// We use output redirection if do_out is true.
 ///
 /// @param eap  for forced 'ff' and 'fenc'
-static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, bool do_in,
-                      bool do_out)
+static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
 {
   char *itmp = NULL;
   char *otmp = NULL;
   buf_T *old_curbuf = curbuf;
   int shell_flags = 0;
+  linenr_T line1 = eap->line1;
+  linenr_T line2 = eap->line2;
+  colnr_T col1 = eap->col1;
+  colnr_T col2 = eap->col2;
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
   const int stmp = p_stmp;
@@ -1084,7 +1085,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   pos_T cursor_save = curwin->w_cursor;
   linenr_T linecount = line2 - line1 + 1;
   curwin->w_cursor.lnum = line1;
-  curwin->w_cursor.col = 0;
+  curwin->w_cursor.col = col1;
   changed_line_abv_curs();
   invalidate_botline(curwin);
 
@@ -1111,14 +1112,19 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
     // Use a pipe to write stdin of the command, do not use a temp file.
     shell_flags |= kShellOptWrite;
     curbuf->b_op_start.lnum = line1;
+    curbuf->b_op_start.col = col1;
     curbuf->b_op_end.lnum = line2;
+    curbuf->b_op_end.col = col2;
   } else if (do_in && do_out && !stmp) {
     // Use a pipe to write stdin and fetch stdout of the command, do not
     // use a temp file.
     shell_flags |= kShellOptRead | kShellOptWrite;
     curbuf->b_op_start.lnum = line1;
+    curbuf->b_op_start.col = col1;
     curbuf->b_op_end.lnum = line2;
+    curbuf->b_op_end.col = col2;
     curwin->w_cursor.lnum = line2;
+    curwin->w_cursor.col = col2;
   } else if ((do_in && (itmp = vim_tempname()) == NULL)
              || (do_out && (otmp = vim_tempname()) == NULL)) {
     emsg(_(e_notmp));
@@ -3305,7 +3311,7 @@ static int check_regexp_delim(int c)
   return OK;
 }
 
-/// Perform a substitution from line eap->line1 to line eap->line2 using the
+/// Perform a substitution inside the range defined in eap (line1,col1 -> line2,col2) using the
 /// command pointed to by eap->arg which should be of the form:
 ///
 /// /pattern/substitution/{flags}
@@ -3553,7 +3559,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
            || lnum <= curwin->w_botline);
        lnum++) {
     int nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                   0, NULL, NULL);
+                                   lnum == eap->line1 ? eap->col1 : 0,
+                                   lnum == line2 ? eap->col2 : 0,
+                                   NULL, NULL);
     if (nmatch) {
       colnr_T copycol;
       colnr_T matchcol;
@@ -4101,7 +4109,7 @@ skip:
             || nmatch_tl > 0
             || (nmatch = vim_regexec_multi(&regmatch, curwin,
                                            curbuf, sub_firstlnum,
-                                           matchcol, NULL, NULL)) == 0
+                                           matchcol, MAXCOL, NULL, NULL)) == 0
             || regmatch.startpos[0].lnum > 0) {
           if (new_start != NULL) {
             // Copy the rest of the line, that didn't match.
@@ -4162,7 +4170,7 @@ skip:
           }
           if (nmatch == -1 && !lastone) {
             nmatch = vim_regexec_multi(&regmatch, curwin, curbuf,
-                                       sub_firstlnum, matchcol, NULL, NULL);
+                                       sub_firstlnum, matchcol, MAXCOL, NULL, NULL);
           }
 
           // 5. break if there isn't another match in this line
@@ -4459,7 +4467,7 @@ void ex_global(exarg_T *eap)
 
   if (global_busy) {
     lnum = curwin->w_cursor.lnum;
-    int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
+    int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, MAXCOL, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
       global_exe_one(cmd, lnum);
     }
@@ -4468,7 +4476,7 @@ void ex_global(exarg_T *eap)
     // pass 1: set marks for each (not) matching line
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
-      int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
+      int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, MAXCOL, NULL, NULL);
       if (regmatch.regprog == NULL) {
         break;  // re-compiling regprog failed
       }
