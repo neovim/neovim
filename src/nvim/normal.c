@@ -4458,10 +4458,6 @@ static void nv_kundo(cmdarg_T *cap)
     return;
   }
 
-  if (bt_prompt(curbuf)) {
-    clearopbeep(cap->oap);
-    return;
-  }
   u_undo(cap->count1);
   curwin->w_set_curswant = true;
 }
@@ -6617,7 +6613,7 @@ static void nv_open(cmdarg_T *cap)
   } else if (VIsual_active) {
     // switch start and end of visual/
     v_swap_corners(cap->cmdchar);
-  } else if (bt_prompt(curbuf)) {
+  } else if (bt_prompt(curbuf) && curwin->w_cursor.lnum < curbuf->b_prompt_submitted) {
     clearopbeep(cap->oap);
   } else {
     n_opencmd(cap);
