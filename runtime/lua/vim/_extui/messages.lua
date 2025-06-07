@@ -341,7 +341,12 @@ function M.msg_show(kind, content, _, _, append)
     -- Verbose messages are sent too often to be meaningful in the cmdline:
     -- always route to box regardless of cfg.msg.pos.
     M.show_msg('box', content, false, append)
-  elseif ext.cfg.msg.pos == 'cmd' and not api.nvim_win_get_config(ext.wins.more).hide then
+  elseif
+    ext.cfg.msg.pos == 'cmd'
+    and not api.nvim_win_get_config(ext.wins.more).hide
+    and kind ~= 'search_cmd'
+    and (kind ~= 'emsg' or content[1][2]:sub(1, 4) ~= 'E486')
+  then
     -- Append message to already open 'more' window.
     M.msg_history_show({ { 'spill', content } })
     api.nvim_command('norm! G')
