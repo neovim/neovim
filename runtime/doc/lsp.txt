@@ -81,7 +81,7 @@ the options are empty or were set by the builtin runtime (ftplugin) files. The
 options are not restored when the LSP client is stopped or detached.
 
 GLOBAL DEFAULTS
-                                          *grr* *gra* *grn* *gri* *i_CTRL-S*
+                                *grr* *gra* *grn* *gri* *i_CTRL-S* *an* *in*
 These GLOBAL keymaps are created unconditionally when Nvim starts:
 - "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
 - "gra" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
@@ -89,6 +89,8 @@ These GLOBAL keymaps are created unconditionally when Nvim starts:
 - "gri" is mapped in Normal mode to |vim.lsp.buf.implementation()|
 - "gO" is mapped in Normal mode to |vim.lsp.buf.document_symbol()|
 - CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
+- "an" and "in" are mapped in Visual mode to outer and inner incremental
+  selections, respectively, using |vim.lsp.buf.selection_range()|
 
 BUFFER-LOCAL DEFAULTS
 - 'omnifunc' is set to |vim.lsp.omnifunc()|, use |i_CTRL-X_CTRL-O| to trigger
@@ -1832,6 +1834,14 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
                     • {name}? (`string`) Restrict clients used for rename to
                       ones where client.name matches this field.
                     • {bufnr}? (`integer`) (default: current buffer)
+
+selection_range({direction})                   *vim.lsp.buf.selection_range()*
+    Perform an incremental selection at the cursor position based on ranges
+    given by the LSP. The `direction` parameter specifies whether the
+    selection should head inward or outward.
+
+    Parameters: ~
+      • {direction}  (`'inner'|'outer'`)
 
 signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
