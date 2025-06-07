@@ -8205,3 +8205,16 @@ uint32_t get_cmd_argt(cmdidx_T cmdidx)
 {
   return cmdnames[(int)cmdidx].cmd_argt;
 }
+
+// Check if command name ends with "map"
+bool is_mapping_command(cmdidx_T cmdidx)
+{
+  if (IS_USER_CMDIDX(cmdidx)) {
+    return false;
+  }
+
+  const char *name = cmdnames[cmdidx].cmd_name;
+  size_t len = strlen(name);
+
+  return (len >= 3 && strcmp(name + len - 3, "map") == 0);
+}
