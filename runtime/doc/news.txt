@@ -214,7 +214,8 @@ TERMINAL
 
 TREESITTER
 
-• todo
+• |treesitter-language-injections| now support multiple `@injection.content`
+  captures per pattern, which will still all be parsed as one tree.
 
 TUI
 

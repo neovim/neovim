@@ -573,7 +573,10 @@ parent tree. The language injection query allows you to specify these
 “injections” using the following captures:
 
     • `@injection.content` - indicates that the captured node should have its
-      contents re-parsed using another language.
+      contents re-parsed using another language. If there are multiple
+      `@injection.content` captures in one pattern, all ranges will be
+      collected and parsed as one tree. This allows query authors to create
+      "scoped" injections with injection query quantifiers.
     • `@injection.language` - indicates that the captured node’s text may
       contain the name of a language that should be used to re-parse the
       `@injection.content`.
