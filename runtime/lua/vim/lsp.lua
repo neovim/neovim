@@ -726,13 +726,7 @@ function lsp.start(config, opts)
     validate('root_markers', opts._root_markers, 'table')
     config = vim.deepcopy(config)
 
-    for _, marker in ipairs(opts._root_markers) do
-      local root = vim.fs.root(bufnr, marker)
-      if root ~= nil then
-        config.root_dir = root
-        break
-      end
-    end
+    config.root_dir = vim.fs.root(bufnr, opts._root_markers)
   end
 
   if
