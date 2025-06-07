@@ -171,6 +171,7 @@ LUA
 • Lua type annotations for `vim.uv`.
 • |vim.hl.range()| now allows multiple timed highlights.
 • |vim.tbl_extend()| and |vim.tbl_deep_extend()| now accept a function behavior argument.
+• Built-in plugin manager |vim.pack|
 
 OPTIONS
 
