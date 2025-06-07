@@ -499,8 +499,13 @@ static void rpc_close_event(void **argv)
     if (!is_ui_client) {
       // Avoid hanging when there are no other UIs and a prompt is triggered on exit.
       remote_ui_disconnect(channel->id);
+    } else {
+      ui_client_may_restart_server();
+      if (ui_client_channel_id != channel->id) {
+        // A new server has been started. Don't exit.
+        return;
+      }
     }
-
     if (!channel->detach) {
       exit_on_closed_chan(channel->exit_status == -1 ? 0 : channel->exit_status);
     }

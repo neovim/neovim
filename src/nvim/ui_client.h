@@ -20,9 +20,6 @@ EXTERN uint64_t ui_client_channel_id INIT( = 0);
 // exit status from embedded nvim process
 EXTERN int ui_client_exit_status INIT( = 0);
 
-// TODO(bfredl): the current structure for how tui and ui_client.c communicate is a bit awkward.
-// This will be restructured as part of The UI Devirtualization Project.
-
 /// Whether ui client has sent nvim_ui_attach yet
 EXTERN bool ui_client_attached INIT( = false);
 
