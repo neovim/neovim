@@ -699,8 +699,9 @@ static HlAttrs get_colors_force(int attr)
 /// @return the resulting attributes.
 int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 {
+  // Cannot blend uninitialized cells, use front_attr for uninitialized background cells.
   if (front_attr < 0 || back_attr < 0) {
-    return -1;
+    return front_attr;
   }
 
   HlAttrs fattrs = get_colors_force(front_attr);
