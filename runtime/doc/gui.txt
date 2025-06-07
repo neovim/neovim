@@ -78,13 +78,13 @@ Restart Nvim
                 This fails when changes have been made and Vim refuses to
                 |abandon| the current buffer.
 
-                Note: This only works if the UI and server are on the same
-                system.
+                Note: If the current UI hasn't implemented the "restart" UI
+                event, this command is equivalent to `:qall`.
+                Note: Only works if the UI and server are on the same system.
                 Note: Not supported on Windows yet.
 
 :restart!
-                Force restarts the embedded server irrespective of unsaved
-                buffers.
+                Force restarts the Nvim server, abandoning unsaved buffers.
 
 ------------------------------------------------------------------------------
 GUI commands
