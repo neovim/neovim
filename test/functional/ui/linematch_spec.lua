@@ -303,19 +303,8 @@ something
       feed('2<c-w>w')
       feed(':4,17diffget<cr>')
       screen:expect([[
-      {7:  }{8:  1 }                                           │{7:  }{8:  1 }^                                            |
-      {7:  }{8:  2 }common line                                │{7:  }{8:  2 }common line                                 |
-      {7:  }{8:  3 }common line                                │{7:  }{8:  3 }common line                                 |
-      {7:  }{8:  4 }                                           │{7:  }{8:  4 }                                            |
-      {7:  }{8:  5 }ABCabc                                     │{7:  }{8:  5 }ABCabc                                      |
-      {7:  }{8:  6 }ABCabc                                     │{7:  }{8:  6 }ABCabc                                      |
-      {7:  }{8:  7 }ABCabc                                     │{7:  }{8:  7 }ABCabc                                      |
-      {7:  }{8:  8 }ABCabc                                     │{7:  }{8:  8 }ABCabc                                      |
-      {7:  }{8:  9 }common line                                │{7:  }{8:  9 }common line                                 |
-      {7:  }{8: 10 }common line                                │{7:  }{8: 10 }common line                                 |
-      {7:  }{8: 11 }common line                                │{7:  }{8: 11 }common line                                 |
-      {7:  }{8: 12 }something                                  │{7:  }{8: 12 }something                                   |
-      {1:~                                                }│{1:~                                                 }|*6
+      {7:+ }{8:  1 }{13:+-- 12 lines: common line··················}│{7:+ }{8:  1 }{13:^+-- 12 lines: common line···················}|
+      {1:~                                                }│{1:~                                                 }|*17
       {2:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1 [+]                }|
       :4,17diffget                                                                                        |
       ]])
@@ -324,24 +313,8 @@ something
       feed('1<c-w>w')
       feed(':4,12diffget<cr>')
       screen:expect([[
-      {7:  }{8:  1 }^                                           │{7:  }{8:  1 }                                            |
-      {7:  }{8:  2 }common line                                │{7:  }{8:  2 }common line                                 |
-      {7:  }{8:  3 }common line                                │{7:  }{8:  3 }common line                                 |
-      {7:  }{8:  4 }                                           │{7:  }{8:  4 }                                            |
-      {7:  }{8:  5 }DEFabc                                     │{7:  }{8:  5 }DEFabc                                      |
-      {7:  }{8:  6 }xyz                                        │{7:  }{8:  6 }xyz                                         |
-      {7:  }{8:  7 }xyz                                        │{7:  }{8:  7 }xyz                                         |
-      {7:  }{8:  8 }xyz                                        │{7:  }{8:  8 }xyz                                         |
-      {7:  }{8:  9 }DEFabc                                     │{7:  }{8:  9 }DEFabc                                      |
-      {7:  }{8: 10 }DEFabc                                     │{7:  }{8: 10 }DEFabc                                      |
-      {7:  }{8: 11 }DEFabc                                     │{7:  }{8: 11 }DEFabc                                      |
-      {7:  }{8: 12 }common line                                │{7:  }{8: 12 }common line                                 |
-      {7:  }{8: 13 }common line                                │{7:  }{8: 13 }common line                                 |
-      {7:  }{8: 14 }DEF                                        │{7:  }{8: 14 }DEF                                         |
-      {7:  }{8: 15 }common line                                │{7:  }{8: 15 }common line                                 |
-      {7:  }{8: 16 }DEF                                        │{7:  }{8: 16 }DEF                                         |
-      {7:  }{8: 17 }something                                  │{7:  }{8: 17 }something                                   |
-      {1:~                                                }│{1:~                                                 }|
+      {7:+ }{8:  1 }{13:^+-- 17 lines: common line··················}│{7:+ }{8:  1 }{13:+-- 17 lines: common line···················}|
+      {1:~                                                }│{1:~                                                 }|*17
       {3:Xtest-functional-diff-screen-1.2 [+]              }{2:Xtest-functional-diff-screen-1                    }|
       :4,12diffget                                                                                        |
       ]])
@@ -968,24 +941,8 @@ something
       feed('2<c-w>w')
       feed(':1,12diffget<cr>')
       screen:expect([[
-      {7:  }{8:  1 }common line                                │{7:  }{8:  1 }^common line                                 |
-      {7:  }{8:  2 }DEF                                        │{7:  }{8:  2 }DEF                                         |
-      {7:  }{8:  3 }GHI                                        │{7:  }{8:  3 }GHI                                         |
-      {7:  }{8:  4 }something                                  │{7:  }{8:  4 }something                                   |
-      {7:  }{8:  5 }                                           │{7:  }{8:  5 }                                            |
-      {7:  }{8:  6 }aDEFabc                                    │{7:  }{8:  6 }aDEFabc                                     |
-      {7:  }{8:  7 }xyz                                        │{7:  }{8:  7 }xyz                                         |
-      {7:  }{8:  8 }xyz                                        │{7:  }{8:  8 }xyz                                         |
-      {7:  }{8:  9 }xyz                                        │{7:  }{8:  9 }xyz                                         |
-      {7:  }{8: 10 }aDEFabc                                    │{7:  }{8: 10 }aDEFabc                                     |
-      {7:  }{8: 11 }aDEFabc                                    │{7:  }{8: 11 }aDEFabc                                     |
-      {7:  }{8: 12 }aDEFabc                                    │{7:  }{8: 12 }aDEFabc                                     |
-      {7:  }{8: 13 }common line                                │{7:  }{8: 13 }common line                                 |
-      {7:  }{8: 14 }DEF                                        │{7:  }{8: 14 }DEF                                         |
-      {7:  }{8: 15 }GHI                                        │{7:  }{8: 15 }GHI                                         |
-      {7:  }{8: 16 }something else                             │{7:  }{8: 16 }something else                              |
-      {7:  }{8: 17 }common line                                │{7:  }{8: 17 }common line                                 |
-      {7:  }{8: 18 }something                                  │{7:  }{8: 18 }something                                   |
+      {7:+ }{8:  1 }{13:+-- 18 lines: common line··················}│{7:+ }{8:  1 }{13:^+-- 18 lines: common line···················}|
+      {1:~                                                }│{1:~                                                 }|*17
       {2:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1 [+]                }|
       :1,12diffget                                                                                        |
       ]])
@@ -994,18 +951,8 @@ something
       feed('1<c-w>w')
       feed(':1,19diffget<cr>')
       screen:expect([[
-      {7:  }{8:  1 }^common line                                │{7:  }{8:  1 }common line                                 |
-      {7:  }{8:  2 }HIL                                        │{7:  }{8:  2 }HIL                                         |
-      {7:  }{8:  3 }                                           │{7:  }{8:  3 }                                            |
-      {7:  }{8:  4 }aABCabc                                    │{7:  }{8:  4 }aABCabc                                     |
-      {7:  }{8:  5 }aABCabc                                    │{7:  }{8:  5 }aABCabc                                     |
-      {7:  }{8:  6 }aABCabc                                    │{7:  }{8:  6 }aABCabc                                     |
-      {7:  }{8:  7 }aABCabc                                    │{7:  }{8:  7 }aABCabc                                     |
-      {7:  }{8:  8 }common line                                │{7:  }{8:  8 }common line                                 |
-      {7:  }{8:  9 }HIL                                        │{7:  }{8:  9 }HIL                                         |
-      {7:  }{8: 10 }common line                                │{7:  }{8: 10 }common line                                 |
-      {7:  }{8: 11 }something                                  │{7:  }{8: 11 }something                                   |
-      {1:~                                                }│{1:~                                                 }|*7
+      {7:+ }{8:  1 }{13:^+-- 11 lines: common line··················}│{7:+ }{8:  1 }{13:+-- 11 lines: common line···················}|
+      {1:~                                                }│{1:~                                                 }|*17
       {3:Xtest-functional-diff-screen-1.2 [+]              }{2:Xtest-functional-diff-screen-1                    }|
       :1,19diffget                                                                                        |
       ]])
