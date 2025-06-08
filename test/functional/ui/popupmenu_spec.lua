@@ -1229,9 +1229,7 @@ describe('builtin popupmenu', function()
           {n:gg             }{s: }|
           {n:hh             }{s: }|
         ]],
-          float_pos = {
-            [5] = { -1, 'NW', 2, 2, 0, false, 100, 1, 11, 0 },
-          },
+          float_pos = { [5] = { -1, 'NW', 2, 2, 0, false, 100, 1, 11, 0 } },
         }
       else
         screen:expect([[
@@ -1287,9 +1285,7 @@ describe('builtin popupmenu', function()
           {n:gg             }{s: }|
           {n:hh             }{s: }|
         ]],
-          float_pos = {
-            [5] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 },
-          },
+          float_pos = { [5] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
         }
       else
         screen:expect([[
@@ -1363,9 +1359,7 @@ describe('builtin popupmenu', function()
           {n:ll             }{s: }|
           {n:mm             }{s: }|
         ]],
-          float_pos = {
-            [5] = { -1, 'SW', 2, 12, 0, false, 100, 1, 4, 0 },
-          },
+          float_pos = { [5] = { -1, 'SW', 2, 12, 0, false, 100, 1, 4, 0 } },
         }
       else
         screen:expect([[
@@ -1439,9 +1433,7 @@ describe('builtin popupmenu', function()
           {n:hh             }{c: }|
           {n:ii             }{s: }|
         ]],
-          float_pos = {
-            [5] = { -1, 'SW', 2, 8, 0, false, 100, 1, 8, 0 },
-          },
+          float_pos = { [5] = { -1, 'SW', 2, 8, 0, false, 100, 1, 8, 0 } },
         }
       else
         screen:expect([[
@@ -1514,9 +1506,7 @@ describe('builtin popupmenu', function()
           {n:gg             }{s: }|
           {n:hh             }{s: }|
         ]],
-          float_pos = {
-            [5] = { -1, 'SW', 2, 8, 0, false, 100, 1, 0, 0 },
-          },
+          float_pos = { [5] = { -1, 'SW', 2, 8, 0, false, 100, 1, 0, 0 } },
         }
       else
         screen:expect([[
@@ -1599,9 +1589,7 @@ describe('builtin popupmenu', function()
               {n:ab5            }{s: }|
               {n:ab6            }{s: }|
             ]],
-            float_pos = {
-              [5] = { -1, 'SW', 2, 6, 0, false, 100, 1, 9, 0 },
-            },
+            float_pos = { [5] = { -1, 'SW', 2, 6, 0, false, 100, 1, 9, 0 } },
           })
         else
           screen:expect([[
@@ -1677,9 +1665,7 @@ describe('builtin popupmenu', function()
               {n:ab4            }{s: }|
               {n:ab5            }{s: }|
             ]],
-            float_pos = {
-              [5] = { -1, 'SW', 2, 5, 0, false, 100, 1, 9, 0 },
-            },
+            float_pos = { [5] = { -1, 'SW', 2, 5, 0, false, 100, 1, 9, 0 } },
           })
         else
           screen:expect([[
@@ -1736,9 +1722,7 @@ describe('builtin popupmenu', function()
             {n:two            }|
             {n:three          }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
         })
       else
         screen:expect([[
@@ -1773,9 +1757,7 @@ describe('builtin popupmenu', function()
             1info                           |
             {1:~                               }|*2
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 5, 0 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 5, 0 } },
         })
       else
         screen:expect([[
@@ -1831,9 +1813,7 @@ describe('builtin popupmenu', function()
             {n:aa6bb          }{s: }|
             {n:aa7bb          }{s: }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
         })
       else
         screen:expect([[
@@ -1965,15 +1945,7 @@ describe('builtin popupmenu', function()
               {n:two                }|
               {n:looooooooooooooong }|
             ]],
-            win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 40,
-                win = 1000,
-              },
-            },
+            win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
               [4] = { 1001, 'NW', 1, 1, 19, false, 50, 1, 1, 19 },
@@ -1999,20 +1971,8 @@ describe('builtin popupmenu', function()
               },
             },
             win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [4] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
+              [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+              [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
             },
           })
         else
@@ -2045,15 +2005,7 @@ describe('builtin popupmenu', function()
             ## grid 5
               {s:one            }|
             ]],
-            win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 40,
-                win = 1000,
-              },
-            },
+            win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
               [4] = { 1001, 'NW', 1, 1, 15, false, 50, 1, 1, 15 },
@@ -2079,20 +2031,8 @@ describe('builtin popupmenu', function()
               },
             },
             win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [4] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
+              [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+              [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
             },
           })
         else
@@ -2122,18 +2062,8 @@ describe('builtin popupmenu', function()
             ## grid 5
               {n:one            }|
             ]],
-            win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 40,
-                win = 1000,
-              },
-            },
-            float_pos = {
-              [5] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 },
-            },
+            win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
+            float_pos = { [5] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
             win_viewport = {
               [2] = {
                 win = 1000,
@@ -2155,20 +2085,8 @@ describe('builtin popupmenu', function()
               },
             },
             win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [4] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
+              [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+              [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
             },
           })
         else
@@ -2202,15 +2120,7 @@ describe('builtin popupmenu', function()
               {n:two                }|
               {s:looooooooooooooong }|
             ]],
-            win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 40,
-                win = 1000,
-              },
-            },
+            win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
               [4] = { 1001, 'NW', 1, 1, 19, false, 50, 1, 1, 19 },
@@ -2236,20 +2146,8 @@ describe('builtin popupmenu', function()
               },
             },
             win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [4] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
+              [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+              [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
             },
           })
         else
@@ -2286,15 +2184,7 @@ describe('builtin popupmenu', function()
               {n: two                }|
               {n: looooooooooooooong }|
             ]],
-            win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 40,
-                win = 1000,
-              },
-            },
+            win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 18, false, 100, 2, 1, 18 },
               [4] = { 1001, 'NW', 1, 1, 13, false, 50, 1, 1, 13 },
@@ -2320,20 +2210,8 @@ describe('builtin popupmenu', function()
               },
             },
             win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [4] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
+              [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+              [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
             },
           })
         else
@@ -2374,15 +2252,7 @@ describe('builtin popupmenu', function()
               {n:two                }|
               {n:looooooooooooooong }|
             ]],
-            win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 40,
-                win = 1000,
-              },
-            },
+            win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
               [4] = { 1001, 'NW', 1, 1, 19, false, 50, 1, 1, 19 },
@@ -2408,20 +2278,8 @@ describe('builtin popupmenu', function()
               },
             },
             win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [4] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
+              [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+              [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
             },
           })
         else
@@ -2466,15 +2324,7 @@ describe('builtin popupmenu', function()
               {n:end                 }|
               {n:```                 }|
             ]],
-            win_pos = {
-              [2] = {
-                height = 10,
-                startcol = 0,
-                startrow = 0,
-                width = 40,
-                win = 1000,
-              },
-            },
+            win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
               [5] = { 1001, 'NW', 1, 1, 19, false, 50, 1, 1, 19 },
               [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
@@ -2500,20 +2350,8 @@ describe('builtin popupmenu', function()
               },
             },
             win_viewport_margins = {
-              [2] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1000,
-              },
-              [5] = {
-                bottom = 0,
-                left = 0,
-                right = 0,
-                top = 0,
-                win = 1001,
-              },
+              [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+              [5] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
             },
           })
         else
@@ -2599,9 +2437,7 @@ describe('builtin popupmenu', function()
           {n: aab            }|
           {n: aac            }|
         ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 2, 3, false, 100, 1, 2, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 2, 3, false, 100, 1, 2, 3 } },
         }
       else
         screen:expect([[
@@ -2641,9 +2477,7 @@ describe('builtin popupmenu', function()
           {n: aab            }|
           {n: aac            }|
         ]],
-          float_pos = {
-            [5] = { -1, 'NW', 2, 3, 1, false, 100, 1, 3, 13 },
-          },
+          float_pos = { [5] = { -1, 'NW', 2, 3, 1, false, 100, 1, 3, 13 } },
         }
       else
         screen:expect([[
@@ -2685,9 +2519,7 @@ describe('builtin popupmenu', function()
           {n: aac     }|
           {n: aaabcdef}|
         ]],
-          float_pos = {
-            [5] = { -1, 'NW', 2, 3, 11, false, 100, 1, 3, 23 },
-          },
+          float_pos = { [5] = { -1, 'NW', 2, 3, 11, false, 100, 1, 3, 23 } },
         }
       else
         screen:expect([[
@@ -2730,9 +2562,7 @@ describe('builtin popupmenu', function()
           {n: aab            }{s: }|
           {n: aac            }{s: }|
         ]],
-          float_pos = {
-            [5] = { -1, 'NW', 2, 4, -1, false, 100, 1, 4, 11 },
-          },
+          float_pos = { [5] = { -1, 'NW', 2, 4, -1, false, 100, 1, 4, 11 } },
         }
       else
         screen:expect([[
@@ -2852,9 +2682,7 @@ describe('builtin popupmenu', function()
             {n: laborum        }{c: }|
             {s: Est            }{c: }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
         })
       else
         screen:expect([[
@@ -2914,9 +2742,7 @@ describe('builtin popupmenu', function()
             {n: laborum        }{c: }|
             {s: Est            }{c: }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
         })
       else
         api.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
@@ -2975,9 +2801,7 @@ describe('builtin popupmenu', function()
             {n: eu             }|
             {s: est            }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
         })
       else
         screen:expect([[
@@ -3035,9 +2859,7 @@ describe('builtin popupmenu', function()
             {n: eu             }|
             {s: est            }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
         })
       else
         api.nvim_input_mouse('wheel', 'up', '', 0, 9, 40)
@@ -3088,9 +2910,7 @@ describe('builtin popupmenu', function()
             {n: esse           }|
             {s: est            }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
         })
       else
         screen:expect([[
@@ -3140,9 +2960,7 @@ describe('builtin popupmenu', function()
             {n: esse           }|
             {s: est            }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
         })
       else
         api.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
@@ -3201,9 +3019,7 @@ describe('builtin popupmenu', function()
             {n: eu             }|
             {s: est            }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
         })
       else
         screen:expect([[
@@ -3261,9 +3077,7 @@ describe('builtin popupmenu', function()
             {s: eu             }|
             {n: est            }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
         })
       else
         screen:expect([[
@@ -3321,9 +3135,7 @@ describe('builtin popupmenu', function()
             {s: eu             }|
             {n: est            }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 3, false, 100, 1, 1, 3 } },
         })
       else
         api.nvim_input_mouse('wheel', 'down', '', 0, 9, 40)
@@ -3381,9 +3193,7 @@ describe('builtin popupmenu', function()
             {n: eä                 }|
             {n: eö                 }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 2, false, 100, 1, 1, 2 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 2, false, 100, 1, 1, 2 } },
         })
       else
         screen:expect([[
@@ -3440,9 +3250,7 @@ describe('builtin popupmenu', function()
             {n: eä             }|
             {n: eö             }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 2, false, 100, 1, 1, 2 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 2, false, 100, 1, 1, 2 } },
         })
       else
         screen:expect([[
@@ -3499,9 +3307,7 @@ describe('builtin popupmenu', function()
             {n: eä             }|
             {n: eö             }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 2, false, 100, 1, 1, 2 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 2, false, 100, 1, 1, 2 } },
         })
       else
         screen:expect([[
@@ -3551,9 +3357,7 @@ describe('builtin popupmenu', function()
             {s: foo            }|
             {n: bar            }|
           ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, 4, false, 100, 1, 1, 4 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, 4, false, 100, 1, 1, 4 } },
         })
       else
         screen:expect([[
@@ -3643,9 +3447,7 @@ describe('builtin popupmenu', function()
             {n: text  }|
             {n: thing }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
         })
       else
         screen:expect([[
@@ -3678,9 +3480,7 @@ describe('builtin popupmenu', function()
             {n:text           }|
             {s:thing          }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
         })
       else
         screen:expect([[
@@ -3714,9 +3514,7 @@ describe('builtin popupmenu', function()
             {s: text  }|
             {n: thing }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
         })
       else
         screen:expect([[
@@ -3749,9 +3547,7 @@ describe('builtin popupmenu', function()
             {s:text           }|
             {n:thing          }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 2, 0, false, 100, 1, 2, 0 } },
         })
       else
         screen:expect([[
@@ -3784,9 +3580,7 @@ describe('builtin popupmenu', function()
             {s: text           }|
             {n: thing          }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 27, false, 100, 1, 1, 27 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 27, false, 100, 1, 1, 27 } },
         })
       else
         screen:expect([[
@@ -3819,9 +3613,7 @@ describe('builtin popupmenu', function()
             {s: text           }|
             {n: thing          }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 } },
         })
       else
         screen:expect([[
@@ -3856,9 +3648,7 @@ describe('builtin popupmenu', function()
             {s: text           }|
             {n: thing          }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 } },
         })
       else
         screen:expect([[
@@ -3888,9 +3678,7 @@ describe('builtin popupmenu', function()
             {s: text           }|
             {n: thing          }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 2, 3, false, 100, 1, 2, 3 } },
         })
       else
         screen:expect([[
@@ -3919,9 +3707,7 @@ describe('builtin popupmenu', function()
             {s: text    }|
             {n: thing   }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 2, 10, false, 100, 1, 2, 10 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 2, 10, false, 100, 1, 2, 10 } },
         })
       else
         screen:expect([[
@@ -3960,9 +3746,7 @@ describe('builtin popupmenu', function()
             {n: text  }|
             {n: thing }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
         })
       else
         screen:expect([[
@@ -3996,9 +3780,7 @@ describe('builtin popupmenu', function()
             {n: text        }|
             {n: thing       }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 3, 3, false, 100, 1, 3, 3 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 3, 3, false, 100, 1, 3, 3 } },
         })
       else
         screen:expect([[
@@ -4058,9 +3840,7 @@ describe('builtin popupmenu', function()
             {n:           txet }|
             {n:          gniht }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 2, false, 100, 1, 1, 2 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 2, false, 100, 1, 1, 2 } },
         })
       else
         screen:expect([[
@@ -4092,9 +3872,7 @@ describe('builtin popupmenu', function()
             {n:           txet }|
             {n:          gniht }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 2, false, 100, 1, 1, 2 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 2, false, 100, 1, 1, 2 } },
         })
       else
         screen:expect([[
@@ -4176,9 +3954,7 @@ describe('builtin popupmenu', function()
             {n: undefine       }|
             {n: unplace        }|
           ]],
-          float_pos = {
-            [4] = { -1, 'SW', 1, 19, 5, false, 250, 2, 13, 5 },
-          },
+          float_pos = { [4] = { -1, 'SW', 1, 19, 5, false, 250, 2, 13, 5 } },
         })
       else
         screen:expect {
@@ -4224,9 +4000,7 @@ describe('builtin popupmenu', function()
           {c: }{n:           drow }|
           {s: }{n:         eciohc }|
         ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 1, -11, false, 100, 1, 1, 9 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 1, -11, false, 100, 1, 1, 9 } },
         }
       else
         screen:expect([[
@@ -4261,9 +4035,7 @@ describe('builtin popupmenu', function()
           {c: }{n:           drow}|
           {s: }{n:         eciohc}|
         ]],
-          float_pos = {
-            [5] = { -1, 'NW', 4, 2, 4, false, 100, 1, 2, 24 },
-          },
+          float_pos = { [5] = { -1, 'NW', 4, 2, 4, false, 100, 1, 2, 24 } },
         }
       else
         screen:expect([[
@@ -4328,9 +4100,7 @@ describe('builtin popupmenu', function()
           {s:define         }{c: }|
           {n:jump           }{s: }|
         ]],
-          float_pos = {
-            [5] = { -1, 'SW', 1, 5, 0, false, 250, 2, 3, 0 },
-          },
+          float_pos = { [5] = { -1, 'SW', 1, 5, 0, false, 250, 2, 3, 0 } },
         }
       else
         screen:expect([[
@@ -5207,9 +4977,7 @@ describe('builtin popupmenu', function()
             {n: undefine       }|
             {n: unplace        }|
           ]],
-          float_pos = {
-            [4] = { -1, 'SW', 1, 9, 5, false, 250, 2, 3, 5 },
-          },
+          float_pos = { [4] = { -1, 'SW', 1, 9, 5, false, 250, 2, 3, 5 } },
         })
       else
         screen:expect {
@@ -5569,9 +5337,7 @@ describe('builtin popupmenu', function()
           {n: word  }{c: }|
           {n: choice}{s: }|
         ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 24, false, 100, 1, 1, 24 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 24, false, 100, 1, 1, 24 } },
         }
       else
         screen:expect([[
@@ -5608,9 +5374,7 @@ describe('builtin popupmenu', function()
           {n: text  }|
           {n: thing }|
         ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 25, false, 100, 1, 1, 25 } },
         }
       else
         screen:expect([[
@@ -7709,9 +7473,7 @@ describe('builtin popupmenu', function()
             {n: Select Block    }|
             {n: Select All      }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 33, false, 250, 2, 1, 33 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 33, false, 250, 2, 1, 33 } },
         })
       else
         api.nvim_input_mouse('right', 'press', '', 0, 0, 45 - 1)
@@ -7758,9 +7520,7 @@ describe('builtin popupmenu', function()
             {n:    kcolB tceleS }|
             {n:      llA tceleS }|
           ]],
-          float_pos = {
-            [4] = { -1, 'NW', 2, 1, 0, false, 250, 2, 1, 0 },
-          },
+          float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 250, 2, 1, 0 } },
         })
       else
         api.nvim_input_mouse('right', 'press', '', 0, 0, 50 - 45)

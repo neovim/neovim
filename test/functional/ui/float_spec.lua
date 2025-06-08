@@ -132,12 +132,7 @@ describe('float window', function()
           new_curwin = vim.api.nvim_get_current_win()
         end
       })
-      local opts = {
-        relative = "win",
-        row = 0, col = 0,
-        width = 1, height = 1,
-        noautocmd = false,
-      }
+      local opts = { relative = "win", row = 0, col = 0, width = 1, height = 1, noautocmd = false }
       local win = vim.api.nvim_open_win(buf, true, opts)
       return {new_triggered_before_enter, new_curwin, win}
     ]]))
@@ -149,21 +144,10 @@ describe('float window', function()
     local height = exec_lua([[
       vim.go.winheight = 20
       local bufnr = vim.api.nvim_create_buf(false, true)
-
-      local opts = {
-        height = 10,
-        col = 5,
-        row = 1,
-        relative = 'editor',
-        style = 'minimal',
-        width = 15
-      }
-
+      local opts = { height = 10, col = 5, row = 1, relative = 'editor', style = 'minimal', width = 15 }
       local win_id = vim.api.nvim_open_win(bufnr, true, opts)
-
       return vim.api.nvim_win_get_height(win_id)
     ]])
-
     eq(10, height)
   end)
 
@@ -171,169 +155,69 @@ describe('float window', function()
     local width = exec_lua([[
       vim.go.winwidth = 20
       local bufnr = vim.api.nvim_create_buf(false, true)
-
-      local opts = {
-        height = 10,
-        col = 5,
-        row = 1,
-        relative = 'editor',
-        style = 'minimal',
-        width = 10
-      }
-
+      local opts = { height = 10, col = 5, row = 1, relative = 'editor', style = 'minimal', width = 10 }
       local win_id = vim.api.nvim_open_win(bufnr, true, opts)
-
       return vim.api.nvim_win_get_width(win_id)
     ]])
-
     eq(10, width)
   end)
 
   it('opened with correct position', function()
     local pos = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-
-      local opts = {
-        width = 10,
-        height = 10,
-        col = 7,
-        row = 9,
-        relative = 'editor',
-        style = 'minimal'
-      }
-
+      local opts = { width = 10, height = 10, col = 7, row = 9, relative = 'editor', style = 'minimal' }
       local win_id = vim.api.nvim_open_win(bufnr, false, opts)
-
       return vim.api.nvim_win_get_position(win_id)
     ]])
-
-    eq(9, pos[1])
-    eq(7, pos[2])
+    eq({ 9, 7 }, { pos[1], pos[2] })
   end)
 
   it('opened with correct position relative to the mouse', function()
     api.nvim_input_mouse('left', 'press', '', 0, 10, 10)
     local pos = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-
-      local opts = {
-        width = 10,
-        height = 10,
-        col = 1,
-        row = 2,
-        relative = 'mouse',
-        style = 'minimal'
-      }
-
+      local opts = { width = 10, height = 10, col = 1, row = 2, relative = 'mouse', style = 'minimal' }
       local win_id = vim.api.nvim_open_win(bufnr, false, opts)
-
       return vim.api.nvim_win_get_position(win_id)
     ]])
-
-    eq(12, pos[1])
-    eq(11, pos[2])
+    eq({ 12, 11 }, { pos[1], pos[2] })
   end)
 
   it('opened with correct position relative to the cursor', function()
     local pos = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-
-      local opts = {
-        width = 10,
-        height = 10,
-        col = 7,
-        row = 9,
-        relative = 'cursor',
-        style = 'minimal'
-      }
-
+      local opts = { width = 10, height = 10, col = 7, row = 9, relative = 'cursor', style = 'minimal' }
       local win_id = vim.api.nvim_open_win(bufnr, false, opts)
-
       return vim.api.nvim_win_get_position(win_id)
     ]])
-
-    eq(9, pos[1])
-    eq(7, pos[2])
+    eq({ 9, 7 }, { pos[1], pos[2] })
   end)
 
   it('opened with correct position relative to another window', function()
     local pos = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-
-      local par_opts = {
-        width = 50,
-        height = 50,
-        col = 7,
-        row = 9,
-        relative = 'editor',
-        style = 'minimal'
-      }
-
+      local par_opts = { width = 50, height = 50, col = 7, row = 9, relative = 'editor', style = 'minimal' }
       local par_win_id = vim.api.nvim_open_win(bufnr, false, par_opts)
-
-      local opts = {
-        width = 10,
-        height = 10,
-        col = 7,
-        row = 9,
-        relative = 'win',
-        style = 'minimal',
-        win = par_win_id
-      }
-
+      local opts = { width = 10, height = 10, col = 7, row = 9, relative = 'win', style = 'minimal', win = par_win_id }
       local win_id = vim.api.nvim_open_win(bufnr, false, opts)
-
       return vim.api.nvim_win_get_position(win_id)
     ]])
-
-    eq(18, pos[1])
-    eq(14, pos[2])
+    eq({ 18, 14 }, { pos[1], pos[2] })
   end)
 
   it('opened with correct position relative to another relative window', function()
     local pos = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-
-      local root_opts = {
-        width = 50,
-        height = 50,
-        col = 7,
-        row = 9,
-        relative = 'editor',
-        style = 'minimal'
-      }
-
+      local root_opts = { width = 50, height = 50, col = 7, row = 9, relative = 'editor', style = 'minimal' }
       local root_win_id = vim.api.nvim_open_win(bufnr, false, root_opts)
-
-      local par_opts = {
-        width = 20,
-        height = 20,
-        col = 2,
-        row = 3,
-        relative = 'win',
-        win = root_win_id,
-        style = 'minimal'
-      }
-
+      local par_opts = { width = 20, height = 20, col = 2, row = 3, relative = 'win', win = root_win_id, style = 'minimal' }
       local par_win_id = vim.api.nvim_open_win(bufnr, false, par_opts)
-
-      local opts = {
-        width = 10,
-        height = 10,
-        col = 3,
-        row = 2,
-        relative = 'win',
-        win = par_win_id,
-        style = 'minimal'
-      }
-
+      local opts = { width = 10, height = 10, col = 3, row = 2, relative = 'win', win = par_win_id, style = 'minimal' }
       local win_id = vim.api.nvim_open_win(bufnr, false, opts)
-
       return vim.api.nvim_win_get_position(win_id)
     ]])
 
-    eq(14, pos[1])
-    eq(12, pos[2])
+    eq({ 14, 12 }, { pos[1], pos[2] })
   end)
 
   it('error message when invalid field specified for split', function()
@@ -349,35 +233,17 @@ describe('float window', function()
 
   it('error message when reconfig missing relative field', function()
     local bufnr = api.nvim_create_buf(false, true)
-    local opts = {
-      width = 10,
-      height = 10,
-      col = 5,
-      row = 5,
-      relative = 'editor',
-      style = 'minimal',
-    }
+    local opts = { width = 10, height = 10, col = 5, row = 5, relative = 'editor', style = 'minimal' }
     local winid = api.nvim_open_win(bufnr, true, opts)
     eq(
       "Missing 'relative' field when reconfiguring floating window 1001",
-      pcall_err(api.nvim_win_set_config, winid, {
-        width = 3,
-        height = 3,
-        row = 10,
-        col = 10,
-      })
+      pcall_err(api.nvim_win_set_config, winid, { width = 3, height = 3, row = 10, col = 10 })
     )
   end)
 
   it('no error message when reconfig relative field on closed win', function()
     command('split')
-    local winid = api.nvim_open_win(0, false, {
-      relative = 'win',
-      width = 1,
-      height = 1,
-      col = 1,
-      row = 1,
-    })
+    local winid = api.nvim_open_win(0, false, { relative = 'win', width = 1, height = 1, col = 1, row = 1 })
     eq(1001, api.nvim_win_get_config(winid).win)
     -- But unrelated config doesn't clear parent win #34286
     api.nvim_win_set_config(winid, { title = 'foo' })
@@ -396,14 +262,7 @@ describe('float window', function()
     local windo_count_before = eval('len(winids)')
     local winid = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-      local opts = {
-        relative = 'editor',
-        focusable = false,
-        height = 5,
-        width = 5,
-        col = 5,
-        row = 5,
-      }
+      local opts = { relative = 'editor', focusable = false, height = 5, width = 5, col = 5, row = 5 }
       return vim.api.nvim_open_win(bufnr, false, opts)
     ]])
     command([[
@@ -423,14 +282,7 @@ describe('float window', function()
     local windo_count_before = eval('len(winids)')
     local winid = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-      local opts = {
-        relative = 'editor',
-        focusable = true,
-        height = 5,
-        width = 5,
-        col = 5,
-        row = 5,
-      }
+      local opts = { relative = 'editor', focusable = true, height = 5, width = 5, col = 5, row = 5 }
       return vim.api.nvim_open_win(bufnr, false, opts)
     ]])
     command([[
@@ -445,14 +297,7 @@ describe('float window', function()
   it('is not active after windo when non-focusable #15374', function()
     local winid = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-      local opts = {
-        relative = 'editor',
-        focusable = false,
-        height = 5,
-        width = 5,
-        col = 5,
-        row = 5,
-      }
+      local opts = { relative = 'editor', focusable = false, height = 5, width = 5, col = 5, row = 5 }
       return vim.api.nvim_open_win(bufnr, false, opts)
     ]])
     command('windo echo')
@@ -462,14 +307,7 @@ describe('float window', function()
   it('is active after windo when focusable', function()
     local winid = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-      local opts = {
-        relative = 'editor',
-        focusable = true,
-        height = 5,
-        width = 5,
-        col = 5,
-        row = 5,
-      }
+      local opts = { relative = 'editor', focusable = true, height = 5, width = 5, col = 5, row = 5 }
       return vim.api.nvim_open_win(bufnr, false, opts)
     ]])
     command('windo echo')
@@ -480,14 +318,7 @@ describe('float window', function()
     command('copen')
     local winid = exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
-      local opts = {
-        relative = 'editor',
-        focusable = false,
-        height = 5,
-        width = 5,
-        col = 5,
-        row = 5,
-      }
+      local opts = { relative = 'editor', focusable = false, height = 5, width = 5, col = 5, row = 5 }
       return vim.api.nvim_open_win(bufnr, false, opts)
     ]])
     command('wincmd t')
@@ -499,14 +330,7 @@ describe('float window', function()
     local winids = exec_lua([[
       local result = {vim.api.nvim_get_current_win()}
       local bufnr = vim.api.nvim_create_buf(false, true)
-      local opts = {
-        relative = 'editor',
-        focusable = false,
-        height = 5,
-        width = 5,
-        col = 5,
-        row = 5,
-      }
+      local opts = { relative = 'editor', focusable = false, height = 5, width = 5, col = 5, row = 5 }
       vim.api.nvim_open_win(bufnr, false, opts)
       opts.focusable = true
       table.insert(result, vim.api.nvim_open_win(bufnr, false, opts))
@@ -539,13 +363,7 @@ describe('float window', function()
         end
       })
       local win_id
-      local fconfig = {
-        relative = 'editor',
-        row = 10,
-        col = 10,
-        width = 10,
-        height = 10,
-      }
+      local fconfig = { relative = 'editor', row = 10, col = 10, width = 10, height = 10 }
       --enter is false doesn't trigger
       win_id = vim.api.nvim_open_win(buf, false, fconfig)
       vim.api.nvim_win_close(win_id, true)
@@ -674,14 +492,7 @@ describe('float window', function()
       botright vsplit
       %bdelete
     ]])
-    api.nvim_open_win(0, false, {
-      relative = 'win',
-      win = 0,
-      row = 0,
-      col = 5,
-      width = 5,
-      height = 5,
-    })
+    api.nvim_open_win(0, false, { relative = 'win', win = 0, row = 0, col = 5, width = 5, height = 5 })
     assert_alive()
   end)
 
@@ -1022,23 +833,8 @@ describe('float window', function()
     local screen = Screen.new(20, 10)
     screen:add_extra_attr_ids({ [100] = { bold = true, foreground = Screen.colors.Magenta } })
     command('set showtabline=1 laststatus=1')
-    api.nvim_open_win(0, false, {
-      relative = 'laststatus',
-      border = 'single',
-      anchor = 'SE',
-      width = 5,
-      height = 1,
-      row = 0,
-      col = 1000,
-    })
-    local tabwin = api.nvim_open_win(0, false, {
-      relative = 'tabline',
-      border = 'single',
-      width = 5,
-      height = 1,
-      row = 0,
-      col = 1000,
-    })
+    api.nvim_open_win(0, false, { relative = 'laststatus', border = 'single', anchor = 'SE', width = 5, height = 1, row = 0, col = 1000 })
+    local tabwin = api.nvim_open_win(0, false, { relative = 'tabline', border = 'single', width = 5, height = 1, row = 0, col = 1000 })
     screen:expect([[
       ^             {2:┌─────┐}|
       {1:~            }{2:│}{4:     }{2:│}|
@@ -1075,14 +871,7 @@ describe('float window', function()
                           |
     ]])
     command('quit')
-    api.nvim_win_set_config(tabwin, {
-      relative = 'tabline',
-      border = 'single',
-      width = 5,
-      height = 1,
-      row = 1,
-      col = 0,
-    })
+    api.nvim_win_set_config(tabwin, { relative = 'tabline', border = 'single', width = 5, height = 1, row = 1, col = 0 })
     screen:expect([[
       {5: }{100:3}{5:  Name] }{24: No Name]X}|
       ^                    |
@@ -1135,12 +924,7 @@ describe('float window', function()
         [7] = { foreground = Screen.colors.White, background = Screen.colors.Red },
         [8] = { bold = true, foreground = Screen.colors.SeaGreen4 },
         [9] = { background = Screen.colors.LightGrey, underline = true },
-        [10] = {
-          background = Screen.colors.LightGrey,
-          underline = true,
-          bold = true,
-          foreground = Screen.colors.Magenta,
-        },
+        [10] = { background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta },
         [11] = { bold = true, foreground = Screen.colors.Magenta },
         [12] = { background = Screen.colors.Red, bold = true, foreground = Screen.colors.Blue1 },
         [13] = { background = Screen.colors.WebGray },
@@ -1168,9 +952,7 @@ describe('float window', function()
     it('can be created and reconfigured', function()
       local buf = api.nvim_create_buf(false, false)
       local win = api.nvim_open_win(buf, false, { relative = 'editor', width = 20, height = 2, row = 2, col = 5 })
-      local expected_pos = {
-        [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-      }
+      local expected_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } }
 
       if multigrid then
         screen:expect {
@@ -1284,9 +1066,7 @@ describe('float window', function()
           {1:               }|
           {2:~              }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 4, 2, 10, true, 50, 1, 2, 30 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 4, 2, 10, true, 50, 1, 2, 30 } },
         }
       else
         screen:expect([[
@@ -1321,9 +1101,7 @@ describe('float window', function()
           {1:               }|
           {2:~              }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 4, 2, 10, true, 50, 1, 2, 25 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 4, 2, 10, true, 50, 1, 2, 25 } },
         }
       else
         screen:expect([[
@@ -1347,9 +1125,7 @@ describe('float window', function()
       command('set wd=1')
       local buf = api.nvim_create_buf(false, false)
       local win = api.nvim_open_win(buf, false, { relative = 'editor', width = 20, height = 2, row = 2, col = 5 })
-      local expected_pos = {
-        [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-      }
+      local expected_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } }
 
       if multigrid then
         screen:expect {
@@ -1573,9 +1349,7 @@ describe('float window', function()
             {22:y           }|
             {22:            }|
           ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 2, 3, 3, true, 50, 1, 3, 3 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 2, 3, 3, true, 50, 1, 3, 3 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 4, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
             [5] = { win = 1002, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -1900,9 +1674,7 @@ describe('float window', function()
           {17:n̈̊}{1: BORDAA  }{17:n̈̊}|
           {5:\}{7:ååååååååå}{5:x}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -1942,9 +1714,7 @@ describe('float window', function()
           {5:<}{1: halloj! }{5:>}|
           {5:<}{1: BORDAA  }{5:>}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -1986,9 +1756,7 @@ describe('float window', function()
           {1: BORDAA  }|
           {5:---------}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2041,9 +1809,7 @@ describe('float window', function()
           {1: BORDAA  }{26: }|
           {25: }{26:         }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 6, curline = 5, curcol = 0, linecount = 6, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2173,9 +1939,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2227,9 +1991,7 @@ describe('float window', function()
             {1:Hello    }|
             {2:~        }|
           ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -2278,9 +2040,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2318,9 +2078,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2358,9 +2116,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2398,9 +2154,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2439,28 +2193,14 @@ describe('float window', function()
             {5:║}{1: BORDAA  }{5:║}|
             {5:╚═════════╝}|
           ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
           },
           win_viewport_margins = {
-            [2] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1000,
-            },
-            [4] = {
-              bottom = 1,
-              left = 1,
-              right = 1,
-              top = 1,
-              win = 1001,
-            },
+            [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+            [4] = { bottom = 1, left = 1, right = 1, top = 1, win = 1001 },
           },
         })
       else
@@ -2507,9 +2247,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚}{11:Left}{5:═════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2547,9 +2285,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═}{11:Center}{5:══╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2587,9 +2323,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚════}{11:Right}{5:╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2627,9 +2361,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════}{11:🦄BB}{5:╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2668,28 +2400,14 @@ describe('float window', function()
             {5:║}{1: BORDAA  }{5:║}|
             {5:╚══════}{11:new}{5:╝}|
           ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
           },
           win_viewport_margins = {
-            [2] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1000,
-            },
-            [4] = {
-              bottom = 1,
-              left = 1,
-              right = 1,
-              top = 1,
-              win = 1001,
-            },
+            [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+            [4] = { bottom = 1, left = 1, right = 1, top = 1, win = 1001 },
           },
         })
       else
@@ -2738,9 +2456,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚════}{11:Right}{5:╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2778,9 +2494,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═}{11:Center}{5:══╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2818,9 +2532,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚}{11:Left}{5:═════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2866,9 +2578,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════}{11:🦄}{7:BB}{5:╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2913,9 +2623,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚}🦄{7:BB}{5:═════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -2994,9 +2702,7 @@ describe('float window', function()
           {5:│}{2:~                                       }{5:│}|*6
           {5:└────────────────────────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 0, true, 201, 2, 0, 0 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 0, true, 201, 2, 0, 0 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -3043,9 +2749,7 @@ describe('float window', function()
           {5:║}{1:^         }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 2, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -3134,9 +2838,7 @@ describe('float window', function()
           {5:║}{1:ac^c      }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 2, curcol = 2, linecount = 3, sum_scroll_delta = 0 },
@@ -3232,18 +2934,8 @@ describe('float window', function()
             {5:║}{2:~        }{5:║}|*2
             {5:╚═════════╝}|
           ]],
-          win_pos = {
-            [2] = {
-              height = 9,
-              startcol = 0,
-              startrow = 0,
-              width = 40,
-              win = 1000,
-            },
-          },
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          win_pos = { [2] = { height = 9, startcol = 0, startrow = 0, width = 40, win = 1000 } },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -3282,18 +2974,8 @@ describe('float window', function()
             {5:║}{1:abb acc  }{5:║}|
             {5:╚═════════╝}|
           ]],
-          win_pos = {
-            [2] = {
-              height = 9,
-              startcol = 0,
-              startrow = 0,
-              width = 40,
-              win = 1000,
-            },
-          },
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          win_pos = { [2] = { height = 9, startcol = 0, startrow = 0, width = 40, win = 1000 } },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -3342,12 +3024,8 @@ describe('float window', function()
             {1:line     }|
             {1:abb acc  }|
           ]],
-          win_pos = {
-            [2] = { height = 9, startcol = 0, startrow = 0, width = 40, win = 1000 },
-          },
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          win_pos = { [2] = { height = 9, startcol = 0, startrow = 0, width = 40, win = 1000 } },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -3396,9 +3074,7 @@ describe('float window', function()
           {1:abb acc  }|
           {2:~        }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -3433,9 +3109,7 @@ describe('float window', function()
           {1:abb acc  }|
           {2:~        }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 4, linecount = 2, sum_scroll_delta = 0 },
@@ -3472,9 +3146,7 @@ describe('float window', function()
           {1:^         }|
           {2:~        }|*2
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -3598,9 +3270,7 @@ describe('float window', function()
         ## grid 4
           {1:x}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 0, 4, false, 50, 1, 0, 4 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 0, 4, false, 50, 1, 0, 4 } },
         }
       else
         screen:expect([[
@@ -3625,9 +3295,7 @@ describe('float window', function()
         ## grid 4
           {1:x}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 0, 15, false, 50, 1, 0, 15 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 0, 15, false, 50, 1, 0, 15 } },
         }
       else
         screen:expect([[
@@ -3925,9 +3593,7 @@ describe('float window', function()
           {1:                    }|
           {2:~                   }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 4, 0, 10, true, 50, 1, 4, 10 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 4, 0, 10, true, 50, 1, 4, 10 } },
         }
       else
         screen:expect([[
@@ -3967,9 +3633,7 @@ describe('float window', function()
           {1:                    }|
           {2:~                   }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 4, 1, 1, true, 50, 1, 5, 1 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 4, 1, 1, true, 50, 1, 5, 1 } },
         }
       else
         screen:expect([[
@@ -4009,9 +3673,7 @@ describe('float window', function()
           {1:                    }|
           {2:~                   }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'SW', 4, 0, 3, true, 50, 1, 2, 3 },
-          },
+          float_pos = { [5] = { 1002, 'SW', 4, 0, 3, true, 50, 1, 2, 3 } },
         }
       else
         screen:expect([[
@@ -4051,9 +3713,7 @@ describe('float window', function()
           {1:                    }|
           {2:~                   }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 2, 1, 10, true, 50, 1, 1, 10 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 2, 1, 10, true, 50, 1, 1, 10 } },
         }
       else
         screen:expect([[
@@ -4093,9 +3753,7 @@ describe('float window', function()
           {1:                    }|
           {2:~                   }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'SE', 2, 3, 39, true, 50, 1, 1, 19 },
-          },
+          float_pos = { [5] = { 1002, 'SE', 2, 3, 39, true, 50, 1, 1, 19 } },
         }
       else
         screen:expect([[
@@ -4135,37 +3793,11 @@ describe('float window', function()
           {1:                    }|
           {2:~                   }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NE', 4, 0, 50, true, 50, 1, 4, 20 },
-          },
+          float_pos = { [5] = { 1002, 'NE', 4, 0, 50, true, 50, 1, 4, 20 } },
           win_viewport = {
-            [2] = {
-              topline = 0,
-              botline = 3,
-              curline = 0,
-              curcol = 3,
-              linecount = 2,
-              sum_scroll_delta = 0,
-              win = 1000,
-            },
-            [4] = {
-              topline = 0,
-              botline = 3,
-              curline = 0,
-              curcol = 3,
-              linecount = 2,
-              sum_scroll_delta = 0,
-              win = 1001,
-            },
-            [5] = {
-              topline = 0,
-              botline = 2,
-              curline = 0,
-              curcol = 0,
-              linecount = 1,
-              sum_scroll_delta = 0,
-              win = 1002,
-            },
+            [2] = { topline = 0, botline = 3, curline = 0, curcol = 3, linecount = 2, sum_scroll_delta = 0, win = 1000 },
+            [4] = { topline = 0, botline = 3, curline = 0, curcol = 3, linecount = 2, sum_scroll_delta = 0, win = 1001 },
+            [5] = { topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0, win = 1002 },
           },
         }
       else
@@ -4250,9 +3882,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 4, 1, 14, true, 50, 1, 7, 14 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 4, 1, 14, true, 50, 1, 7, 14 } },
         }
       else
         screen:expect([[
@@ -4296,9 +3926,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NE', 4, 0, 14, true, 50, 1, 6, 3 },
-          },
+          float_pos = { [5] = { 1002, 'NE', 4, 0, 14, true, 50, 1, 6, 3 } },
         }
       else
         screen:expect([[
@@ -4342,9 +3970,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [5] = { 1002, 'SE', 4, 1, 14, true, 50, 1, 3, 3 },
-          },
+          float_pos = { [5] = { 1002, 'SE', 4, 1, 14, true, 50, 1, 3, 3 } },
         }
       else
         screen:expect([[
@@ -4388,9 +4014,7 @@ describe('float window', function()
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
         ]],
-          float_pos = {
-            [5] = { 1002, 'SW', 4, 0, 14, true, 50, 1, 2, 14 },
-          },
+          float_pos = { [5] = { 1002, 'SW', 4, 0, 14, true, 50, 1, 2, 14 } },
         }
       else
         screen:expect([[
@@ -4639,9 +4263,7 @@ describe('float window', function()
         ## grid 4
           {1:some info!  }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 3, 2, true, 50, 1, 3, 2 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 3, 2, true, 50, 1, 3, 2 } },
         }
       else
         screen:expect {
@@ -4686,9 +4308,7 @@ describe('float window', function()
         ## grid 4
           {1:some info!  }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 2, 2, true, 50, 1, 2, 2 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 2, 2, true, 50, 1, 2, 2 } },
         }
       else
         screen:expect {
@@ -4717,9 +4337,7 @@ describe('float window', function()
         ## grid 4
           {1:some info!  }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 1, 32, true, 50, 1, 1, 32 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 1, 32, true, 50, 1, 1, 32 } },
         }
       else
         -- note: appears misaligned due to cursor
@@ -4752,9 +4370,7 @@ describe('float window', function()
         ## grid 4
           {1:some info!  }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 2, 7, true, 50, 1, 2, 7 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 2, 7, true, 50, 1, 2, 7 } },
         }
       else
         screen:expect {
@@ -4788,9 +4404,7 @@ describe('float window', function()
         ## grid 4
           {1:some info!  }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'SW', 2, 1, 7, true, 50, 1, 0, 7 },
-          },
+          float_pos = { [4] = { 1001, 'SW', 2, 1, 7, true, 50, 1, 0, 7 } },
         }
       else
         screen:expect {
@@ -4871,9 +4485,7 @@ describe('float window', function()
         ## grid 4
           {1:some info!  }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 2, 5, true, 50, 1, 2, 5 } },
         }
       else
         screen:expect {
@@ -4907,9 +4519,7 @@ describe('float window', function()
         ## grid 4
           {1:some info!  }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 3, 7, true, 50, 1, 3, 7 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 3, 7, true, 50, 1, 3, 7 } },
         }
       else
         screen:expect {
@@ -4940,9 +4550,7 @@ describe('float window', function()
         ## grid 4
           {1:some info!  }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 2, 0, true, 50, 1, 2, 0 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 2, 0, true, 50, 1, 2, 0 } },
         }
       else
         screen:expect {
@@ -4997,9 +4605,7 @@ describe('float window', function()
         ## grid 4
           {1:some floaty text    }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 3, 1, true, 50, 1, 3, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 3, 1, true, 50, 1, 3, 1 } },
         }
       else
         screen:expect([[
@@ -5020,9 +4626,7 @@ describe('float window', function()
         screen2:set_default_attr_ids(attrs)
         local buf = api.nvim_create_buf(false, false)
         api.nvim_open_win(buf, true, { relative = 'editor', width = 20, height = 2, row = 2, col = 5 })
-        local expected_pos = {
-          [2] = { 1001, 'NW', 1, 2, 5 },
-        }
+        local expected_pos = { [2] = { 1001, 'NW', 1, 2, 5 } }
         screen:expect {
           grid = [[
         ## grid 1
@@ -5067,9 +4671,7 @@ describe('float window', function()
           {1:float          }|
           {2:~              }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 } },
         }
       else
         screen:expect([[
@@ -5101,9 +4703,7 @@ describe('float window', function()
           {1:float          }|
           {2:~              }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 10 } },
         }
       else
         screen:expect([[
@@ -5133,9 +4733,7 @@ describe('float window', function()
           {1:float          }|
           {2:~              }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 10 } },
         }
       else
         screen:expect([[
@@ -5164,9 +4762,7 @@ describe('float window', function()
           {1:float          }|
           {2:~              }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 10 } },
         }
       else
         screen:expect([[
@@ -5193,9 +4789,7 @@ describe('float window', function()
           {1:^float          }|
           {2:~              }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 10 } },
         }
       else
         screen:expect([[
@@ -5223,9 +4817,7 @@ describe('float window', function()
           {1:^float          }|
           {2:~              }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 } },
         }
       else
         screen:expect([[
@@ -5257,9 +4849,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 } },
         }
       else
         screen:expect([[
@@ -5290,9 +4880,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 } },
         }
       else
         screen:expect([[
@@ -5323,9 +4911,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 } },
         }
       else
         screen:expect([[
@@ -5356,9 +4942,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 9 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 9 } },
         }
       else
         screen:expect([[
@@ -5389,9 +4973,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 1 } },
         }
       else
         screen:expect([[
@@ -5422,9 +5004,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 0 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 0 } },
         }
       else
         screen:expect([[
@@ -5455,9 +5035,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 0 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 0 } },
         }
       else
         screen:expect([[
@@ -5488,9 +5066,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 0 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 0 } },
         }
       else
         screen:expect([[
@@ -5521,9 +5097,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 0 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 0, 0 } },
         }
       else
         screen:expect([[
@@ -5549,9 +5123,7 @@ describe('float window', function()
           {1:very           }|
           {1:float          }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 10, true, 50, 1, 2, 10 } },
         }
       else
         screen:expect([[
@@ -5567,16 +5139,11 @@ describe('float window', function()
     end)
 
     it('does not crash with inccommand #9379', function()
-      local expected_pos = {
-        [4] = { 1001, 'NW', 1, 2, 0, true, 50, 1, 2, 0 },
-      }
-
+      local expected_pos = { [4] = { 1001, 'NW', 1, 2, 0, true, 50, 1, 2, 0 } }
       command('set inccommand=split')
       command('set laststatus=2')
-
       local buf = api.nvim_create_buf(false, false)
       api.nvim_open_win(buf, true, { relative = 'editor', width = 30, height = 3, row = 2, col = 0 })
-
       insert([[
       foo
       bar
@@ -5614,7 +5181,6 @@ describe('float window', function()
       end
 
       feed(':%s/.')
-
       if multigrid then
         screen:expect {
           grid = [[
@@ -5706,9 +5272,7 @@ describe('float window', function()
             {7:^            }|
             {12:~           }|*3
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           }
         else
           screen:expect([[
@@ -5776,9 +5340,7 @@ describe('float window', function()
             {7:x a^a        }|
             {12:~           }|*3
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           }
         else
           screen:expect([[
@@ -5843,9 +5405,7 @@ describe('float window', function()
             {7:x aa        }|
             {12:~           }|*3
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           }
         else
           screen:expect([[
@@ -5919,14 +5479,8 @@ describe('float window', function()
             {7:x aa^        }|
             {12:~           }|*3
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-            },
-            popupmenu = {
-              anchor = { 4, 0, 2 },
-              items = items,
-              pos = 0,
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
+            popupmenu = { anchor = { 4, 0, 2 }, items = items, pos = 0 },
           }
         else
           screen:expect {
@@ -5937,11 +5491,7 @@ describe('float window', function()
             {0:~    }{12:~           }{0:                       }|*3
             {3:-- INSERT --}                            |
           ]],
-            popupmenu = {
-              anchor = { 1, 2, 7 },
-              items = items,
-              pos = 0,
-            },
+            popupmenu = { anchor = { 1, 2, 7 }, items = items, pos = 0 },
           }
         end
 
@@ -5961,9 +5511,7 @@ describe('float window', function()
             {7:x a^a        }|
             {12:~           }|*3
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           }
         else
           screen:expect([[
@@ -5993,14 +5541,8 @@ describe('float window', function()
             {7:x aa        }|
             {12:~           }|*3
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-            },
-            popupmenu = {
-              anchor = { 2, 0, 0 },
-              items = items,
-              pos = 0,
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
+            popupmenu = { anchor = { 2, 0, 0 }, items = items, pos = 0 },
           }
         else
           screen:expect {
@@ -6011,11 +5553,7 @@ describe('float window', function()
             {0:~    }{12:~           }{0:                       }|*3
             {3:-- INSERT --}                            |
           ]],
-            popupmenu = {
-              anchor = { 1, 0, 0 },
-              items = items,
-              pos = 0,
-            },
+            popupmenu = { anchor = { 1, 0, 0 }, items = items, pos = 0 },
           }
         end
 
@@ -6035,9 +5573,7 @@ describe('float window', function()
             {7:x aa        }|
             {12:~           }|*3
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           }
         else
           screen:expect([[
@@ -6073,9 +5609,7 @@ describe('float window', function()
             {1:word           }|
             {1:longtext       }|
           ]],
-            float_pos = {
-              [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 },
-            },
+            float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
           }
         else
           screen:expect([[
@@ -6144,9 +5678,7 @@ describe('float window', function()
             {15:some info   }|
             {15:about item  }|
           ]],
-            float_pos = {
-              [5] = { 1001, 'NW', 2, 1, 12, true, 50, 1, 1, 12 },
-            },
+            float_pos = { [5] = { 1001, 'NW', 2, 1, 12, true, 50, 1, 1, 12 } },
           }
         else
           screen:expect([[
@@ -6197,9 +5729,7 @@ describe('float window', function()
             {1:word           }|
             {1:longtext       }|
           ]],
-            float_pos = {
-              [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 },
-            },
+            float_pos = { [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 } },
           }
         else
           screen:expect([[
@@ -6255,9 +5785,7 @@ describe('float window', function()
           here                |
           float               |
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
@@ -6288,9 +5816,7 @@ describe('float window', function()
         local buf = api.nvim_create_buf(false, false)
         win = api.nvim_open_win(buf, false, { relative = 'editor', width = 20, height = 2, row = 2, col = 5 })
         api.nvim_buf_set_lines(buf, 0, -1, true, { 'y' })
-        expected_pos = {
-          [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-        }
+        expected_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } }
         if multigrid then
           screen:expect {
             grid = [[
@@ -6902,9 +6428,7 @@ describe('float window', function()
             {1:^y                   }|
             {2:~                   }|*5
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 0, 5 },
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 0, 5 } },
           }
         else
           screen:expect([[
@@ -7048,9 +6572,7 @@ describe('float window', function()
             {1:^y                                       }|
             {2:~                                       }|
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 0 },
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 0 } },
           }
         else
           screen:expect([[
@@ -7582,9 +7104,7 @@ describe('float window', function()
             {1:^y                   }|
             {2:~                   }|
           ]],
-            float_pos = {
-              [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-            },
+            float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           }
         else
           screen:expect([[
@@ -8309,9 +7829,7 @@ describe('float window', function()
           {1:bar                 }|
           {1:baz                 }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -8334,9 +7852,7 @@ describe('float window', function()
           {1:bar                 }|
           {1:baz                 }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -8359,9 +7875,7 @@ describe('float window', function()
           {27:ba}{1:^r                 }|
           {1:baz                 }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 1, curcol = 2, linecount = 3, sum_scroll_delta = 0 },
@@ -8430,9 +7944,7 @@ describe('float window', function()
           {5:│}{1:baz                 }{5:│}|
           {5:└────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -8457,9 +7969,7 @@ describe('float window', function()
           {5:│}{1:baz                 }{5:│}|
           {5:└────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -8484,9 +7994,7 @@ describe('float window', function()
           {5:│}{1:baz                 }{5:│}|
           {5:└────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 1, curcol = 2, linecount = 3, sum_scroll_delta = 0 },
@@ -8555,9 +8063,7 @@ describe('float window', function()
           {1:bar                 }|
           {1:baz                 }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 5, true, 50, 1, 1, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 5, true, 50, 1, 1, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -8581,9 +8087,7 @@ describe('float window', function()
           {1:bar                 }|
           {1:baz                 }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 5, true, 50, 1, 1, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 5, true, 50, 1, 1, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -8607,9 +8111,7 @@ describe('float window', function()
           {27:ba}{1:^r                 }|
           {1:baz                 }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 5, true, 50, 1, 1, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 5, true, 50, 1, 1, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 1, curcol = 2, linecount = 3, sum_scroll_delta = 0 },
@@ -8766,9 +8268,7 @@ describe('float window', function()
           {5:│}{1:                    }{5:│}|*3
           {5:└────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -8827,9 +8327,7 @@ describe('float window', function()
           {5:│}{2:~                   }{5:│}|
           {5:└────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 4, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -8868,9 +8366,7 @@ describe('float window', function()
           {5:│}{19:│}{1:                   }{5:│}|
           {5:└────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 5, true, 50, 1, 0, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3, sum_scroll_delta = 0 },
@@ -9383,9 +8879,7 @@ describe('float window', function()
           {5:  x x  x   x}|
           {5:            }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 1, 0, 11, true, 50, 1, 0, 11 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 1, 0, 11, true, 50, 1, 0, 11 } },
         }
       else
         screen:expect([[
@@ -9415,9 +8909,7 @@ describe('float window', function()
           {5:  x x  x   x}|
           {5:            }|
         ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 1, 0, 12, true, 50, 1, 0, 12 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 1, 0, 12, true, 50, 1, 0, 12 } },
         }
       else
         screen:expect([[
@@ -9577,9 +9069,7 @@ describe('float window', function()
           {7:                    }|
           {7:~                   }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -9677,15 +9167,7 @@ describe('float window', function()
             {17:            }|
             {17:~           }|
           ]],
-          win_pos = {
-            [2] = {
-              height = 6,
-              startcol = 0,
-              startrow = 0,
-              width = 40,
-              win = 1000,
-            },
-          },
+          win_pos = { [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 } },
           float_pos = {
             [4] = { 1001, 'NW', 1, 2, 5, true, 50, 3, 2, 5 },
             [5] = { 1002, 'NW', 1, 3, 8, true, 50, 1, 3, 8 },
@@ -9731,9 +9213,7 @@ describe('float window', function()
           {7:                    }|
           {7:~                   }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -9831,15 +9311,7 @@ describe('float window', function()
             {1:                }|
             {1:~               }|
           ]],
-          win_pos = {
-            [2] = {
-              height = 6,
-              startcol = 0,
-              startrow = 0,
-              width = 40,
-              win = 1000,
-            },
-          },
+          win_pos = { [2] = { height = 6, startcol = 0, startrow = 0, width = 40, win = 1000 } },
           float_pos = {
             [4] = { 1001, 'NW', 1, 2, 5, true, 50, 3, 2, 5 },
             [5] = { 1002, 'NW', 1, 4, 10, true, 50, 2, 4, 10 },
@@ -10024,27 +9496,9 @@ describe('float window', function()
             [6] = { win = 1003, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
           },
           win_viewport_margins = {
-            [2] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1000,
-            },
-            [4] = {
-              bottom = 1,
-              left = 1,
-              right = 1,
-              top = 1,
-              win = 1001,
-            },
-            [6] = {
-              bottom = 1,
-              left = 1,
-              right = 1,
-              top = 1,
-              win = 1003,
-            },
+            [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+            [4] = { bottom = 1, left = 1, right = 1, top = 1, win = 1001 },
+            [6] = { bottom = 1, left = 1, right = 1, top = 1, win = 1003 },
           },
         })
       else
@@ -10080,9 +9534,7 @@ describe('float window', function()
           {1:               }|
           {2:~              }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 5, true, 50, 1, 1, 5 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 5, true, 50, 1, 1, 5 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -10122,9 +9574,7 @@ describe('float window', function()
           {5:│}{2:~              }{5:│}|*2
           {5:└───────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 0, 4, true, 50, 1, 0, 4 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 0, 4, true, 50, 1, 0, 4 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -10178,9 +9628,7 @@ describe('float window', function()
           {5:│}{1:                                        }{5:│}|*4
           {5:└────────────────────────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'SW', 1, 9, 0, true, 50, 1, 3, 0 },
-          },
+          float_pos = { [4] = { 1001, 'SW', 1, 9, 0, true, 50, 1, 3, 0 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -10221,9 +9669,7 @@ describe('float window', function()
           {5:│}{1:                                        }{5:│}|*2
           {5:└────────────────────────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'SW', 1, 9, 0, true, 50, 1, 5, 0 },
-          },
+          float_pos = { [4] = { 1001, 'SW', 1, 9, 0, true, 50, 1, 5, 0 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -10297,9 +9743,7 @@ describe('float window', function()
           {5:│}{1:                                        }{5:│}|*4
           {5:└────────────────────────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'SW', 1, 8, 0, true, 50, 1, 2, 0 },
-          },
+          float_pos = { [4] = { 1001, 'SW', 1, 8, 0, true, 50, 1, 2, 0 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -10347,9 +9791,7 @@ describe('float window', function()
           {5:│}{1:                                        }{5:│}|*4
           {5:└────────────────────────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'SW', 1, 8, 0, true, 50, 1, 4, 0 },
-          },
+          float_pos = { [4] = { 1001, 'SW', 1, 8, 0, true, 50, 1, 4, 0 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -10386,9 +9828,7 @@ describe('float window', function()
           {5:│}{1:                                        }{5:│}|*2
           {5:└────────────────────────────────────────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'SW', 1, 8, 0, true, 50, 1, 4, 0 },
-          },
+          float_pos = { [4] = { 1001, 'SW', 1, 8, 0, true, 50, 1, 4, 0 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -10484,9 +9924,7 @@ describe('float window', function()
           {1:cd  }|
           {2:~   }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 1, curcol = 1, linecount = 2, sum_scroll_delta = 0 },
@@ -10522,9 +9960,7 @@ describe('float window', function()
           {1:c^d  }|
           {2:~   }|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 1, curcol = 1, linecount = 2, sum_scroll_delta = 0 },
@@ -10565,9 +10001,7 @@ describe('float window', function()
           {5:│}{2:~   }{5:│}|
           {5:└────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 1, curcol = 1, linecount = 2, sum_scroll_delta = 0 },
@@ -10606,9 +10040,7 @@ describe('float window', function()
           {5:│}{2:~   }{5:│}|
           {5:└────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 1, curcol = 1, linecount = 2, sum_scroll_delta = 0 },
@@ -10650,9 +10082,7 @@ describe('float window', function()
           {5:│}{1:cd  }{5:│}|
           {5:└────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 1, curcol = 1, linecount = 2, sum_scroll_delta = 0 },
@@ -10691,9 +10121,7 @@ describe('float window', function()
           {5:│}{1:c^d  }{5:│}|
           {5:└────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 1, curcol = 1, linecount = 2, sum_scroll_delta = 0 },
@@ -10739,9 +10167,7 @@ describe('float window', function()
           {5:│}{2:    ~}{5:│}|
           {5:└─────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 3, curline = 1, curcol = 2, linecount = 2, sum_scroll_delta = 0 },
@@ -10878,20 +10304,8 @@ describe('float window', function()
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
           },
           win_viewport_margins = {
-            [2] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1000,
-            },
-            [4] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1001,
-            },
+            [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+            [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
           },
         })
       else
@@ -10926,20 +10340,8 @@ describe('float window', function()
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
           },
           win_viewport_margins = {
-            [2] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1000,
-            },
-            [4] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1001,
-            },
+            [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+            [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
           },
         })
       else
@@ -10975,20 +10377,8 @@ describe('float window', function()
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
           },
           win_viewport_margins = {
-            [2] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1000,
-            },
-            [4] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1001,
-            },
+            [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+            [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
           },
         })
       else
@@ -11021,36 +10411,16 @@ describe('float window', function()
           {1:^    }|
           {2:~   }|*3
         ]],
-          float_pos = {
-            [5] = { 1002, 'NW', 1, 1, 2, true, 50, 1, 1, 2 },
-          },
+          float_pos = { [5] = { 1002, 'NW', 1, 1, 2, true, 50, 1, 1, 2 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [5] = { win = 1002, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
           },
           win_viewport_margins = {
-            [2] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1000,
-            },
-            [4] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1001,
-            },
-            [5] = {
-              bottom = 0,
-              left = 0,
-              right = 0,
-              top = 0,
-              win = 1002,
-            },
+            [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+            [4] = { bottom = 0, left = 0, right = 0, top = 0, win = 1001 },
+            [5] = { bottom = 0, left = 0, right = 0, top = 0, win = 1002 },
           },
         })
       else
@@ -11275,9 +10645,7 @@ describe('float window', function()
             {5:│}{1:^     }{5:│}|
             {5:└─────┘}|
           ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 100, 1, true, 50, 1, 1, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 100, 1, true, 50, 1, 1, 1 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -11314,9 +10682,7 @@ describe('float window', function()
           {5:│}{1:^     }{5:│}|
           {5:└─────┘}|
         ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 1, 100, 1, true, 300, 2, 4, 1 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 1, 100, 1, true, 300, 2, 4, 1 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
@@ -11379,9 +10745,7 @@ describe('float window', function()
             {1:     }|
             {2:~    }|
           ]],
-          float_pos = {
-            [4] = { 1001, 'NW', 2, 0, 0, true, 50, 1, 0, 0 },
-          },
+          float_pos = { [4] = { 1001, 'NW', 2, 0, 0, true, 50, 1, 0, 0 } },
           win_viewport = {
             [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
             [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
