@@ -838,6 +838,38 @@ int x = INT_MAX;
           { 5, 17, 5, 17 }, -- VALUE2 123
         }, get_ranges())
       end)
+      it('should apply offsets to quantified captures', function()
+        local function get_ltree_ranges()
+          return exec_lua(function()
+            local result = {}
+            _G.parser:for_each_tree(function(_, ltree)
+              table.insert(result, ltree:included_regions())
+            end)
+            return result
+          end)
+        end
+
+        exec_lua(function()
+          _G.parser = vim.treesitter.get_parser(0, 'c', {
+            injections = {
+              c = '((preproc_def (preproc_arg) @injection.content)+ (#set! injection.language "c") (#offset! @injection.content 0 1 0 -1))',
+            },
+          })
+          _G.parser:parse(true)
+        end)
+
+        eq('table', exec_lua('return type(parser:children().c)'))
+        eq({
+          { {} }, -- root tree
+          {
+            {
+              { 3, 15, 163, 3, 16, 164 }, -- VALUE 123
+              { 4, 16, 182, 4, 17, 183 }, -- VALUE1 123
+              { 5, 16, 201, 5, 17, 202 }, -- VALUE2 123
+            },
+          },
+        }, get_ltree_ranges())
+      end)
       it('should list all directives', function()
         local res_list = exec_lua(function()
           local query = vim.treesitter.query
