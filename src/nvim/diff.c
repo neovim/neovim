@@ -3552,6 +3552,15 @@ theend:
   check_cursor(curwin);
   changed_line_abv_curs();
 
+  // If all diffs are gone, update folds in all diff windows.
+  if (curtab->tp_first_diff == NULL) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_p_diff && wp->w_p_fdm[0] == 'd' && wp->w_p_fen) {
+        foldUpdateAll(wp);
+      }
+    }
+  }
+
   if (diff_need_update) {
     // redraw already done by ex_diffupdate()
     diff_need_update = false;
