@@ -77,7 +77,7 @@ function M.tab_check_wins()
     end
 
     if setopt then
-      api.nvim_buf_set_name(M.bufs[type], 'vim._extui.' .. type)
+      api.nvim_buf_set_name(M.bufs[type], 'nvim.' .. type)
       if type == 'more' then
         -- Close more window with `q`, same as `checkhealth`
         api.nvim_buf_set_keymap(M.bufs.more, 'n', 'q', '<Cmd>wincmd c<CR>', {})
