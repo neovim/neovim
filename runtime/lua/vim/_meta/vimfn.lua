@@ -1123,8 +1123,8 @@ function vim.fn.complete_info(what) end
 ---   or empty string if no match was found or when using the
 ---   default 'iskeyword' pattern.
 ---
---- When 'isexpand' is empty, uses the 'iskeyword' pattern
---- "\k\+$" to find the start of the current keyword.
+--- When 'isexpand' is empty, uses the 'iskeyword' pattern "\k\+$"
+--- to find the start of the current keyword.
 ---
 --- Examples: >vim
 ---   set isexpand=.,->,/,/*,abc

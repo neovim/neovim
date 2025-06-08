@@ -9088,8 +9088,8 @@ local options = {
       defaults = 8,
       desc = [=[
         Defines the column multiple used to display the Horizontal Tab
-        character (ASCII 9); a Horizontal Tab always advances to the next
-        tab stop.
+        character (ASCII 9); a Horizontal Tab always advances to the next tab
+        stop.
         The value must be at least 1 and at most 9999.
         If |'vartabstop'| is set, this option is ignored.
         Leave it at 8 unless you have a strong reason (see usr |30.5|).
