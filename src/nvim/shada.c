@@ -2027,7 +2027,7 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
 static inline bool ignore_buf(const buf_T *const buf, Set(ptr_t) *const removable_bufs)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
-  return (buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
+  return (buf == NULL || buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
           || bt_terminal(buf) || set_has(ptr_t, removable_bufs, (ptr_t)buf));
 }
 
@@ -2489,8 +2489,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
         fname = fm.fname;
       } else {
         const buf_T *const buf = buflist_findnr(fm.fmark.fnum);
-        if (buf == NULL || buf->b_ffname == NULL
-            || set_has(ptr_t, &removable_bufs, (ptr_t)buf)) {
+        if (ignore_buf(buf, &removable_bufs)) {
           continue;
         }
         fname = buf->b_ffname;
@@ -2526,7 +2525,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
   // Initialize buffers
   if (num_marked_files > 0) {
     FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ffname == NULL || set_has(ptr_t, &removable_bufs, buf)) {
+      if (ignore_buf(buf, &removable_bufs)) {
         continue;
       }
       const void *local_marks_iter = NULL;
