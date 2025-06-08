@@ -482,7 +482,9 @@ function TSHighlighter._on_win(_, win, buf, topline, botline)
       == self.tree:parse({ topline, botline + 1 }, function(_, trees)
         if trees and self.parsing[win] then
           self.parsing[win] = false
-          api.nvim__redraw({ win = win, valid = false, flush = false })
+          if api.nvim_win_is_valid(win) then
+            api.nvim__redraw({ win = win, valid = false, flush = false })
+          end
         end
       end)
   if not self.parsing[win] then
