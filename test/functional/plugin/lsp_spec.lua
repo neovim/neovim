@@ -5727,6 +5727,28 @@ describe('LSP', function()
       eq({ method = 'textDocument/rangeFormatting', supported = true, fname = tmpfile }, result[4])
       eq({ method = 'textDocument/completion', supported = false }, result[5])
     end)
+
+    it('supports static registration', function()
+      exec_lua(create_server_definition)
+
+      local client_id = exec_lua(function()
+        local server = _G._create_server({
+          capabilities = {
+            colorProvider = { id = 'color-registration' },
+          },
+        })
+
+        return assert(vim.lsp.start({ name = 'dynamic-test', cmd = server.cmd }))
+      end)
+
+      eq(
+        true,
+        exec_lua(function()
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          return client.dynamic_capabilities:get('textDocument/documentColor') ~= nil
+        end)
+      )
+    end)
   end)
 
   describe('vim.lsp._watchfiles', function()
