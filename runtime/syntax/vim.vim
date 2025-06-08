@@ -660,7 +660,12 @@ endif
 
 " Blocks: {{{2
 " ======
-Vim9 syn region	vim9Block	matchgroup=vimSep start="{" end="^\s*\zs}" contains=@vimDefBodyList
+Vim9 syn region	vim9Block
+      \ matchgroup=vimSep
+      \ start="{\ze\s*\%($\|[#|]\)"
+      \ end="^\s*\zs}"
+      \ skipwhite nextgroup=vim9Comment,vimCmdSep
+      \ contains=@vimDefBodyList
 
 " Keymaps: {{{2
 " =======
