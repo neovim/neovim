@@ -2,7 +2,7 @@
 " Language:     LambdaProlog (Teyjus)
 " Maintainer:   Markus Mottl  <markus.mottl@gmail.com>
 " URL:          http://www.ocaml.info/vim/ftplugin/lprolog.vim
-" Last Change:  2025 Apr 16
+" Last Change:  2025 Jun 08 - set 'comments', 'commentstring'
 "               2025 Apr 16 - set 'cpoptions' for line continuation
 "               2023 Aug 28 - added undo_ftplugin (Vim Project)
 "               2006 Feb 05
@@ -26,7 +26,9 @@ setlocal efm=%+A./%f:%l.%c:\ %m
 " Formatting of comments
 setlocal formatprg=fmt\ -w75\ -p\\%
 
-let b:undo_ftplugin = "setlocal efm< fp<"
+setlocal comments=s1:/*,mb:*,ex:*/,:% commentstring=%\ %s
+
+let b:undo_ftplugin = "setlocal efm< fp< com< cms<"
 
 " Add mappings, unless the user didn't want this.
 if !exists("no_plugin_maps") && !exists("no_lprolog_maps")
