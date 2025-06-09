@@ -400,22 +400,23 @@ local VIM_CMD_ARG_MAX = 20
 
 --- Executes Vimscript (|Ex-commands|).
 ---
---- Note that `vim.cmd` can be indexed with a command name to return a callable function to the
---- command.
+--- Can be indexed with a command name to get a function, thus you can write `vim.cmd.echo(…)`
+--- instead of `vim.cmd{cmd='echo',…}`.
 ---
---- Example:
+--- Examples:
 ---
 --- ```lua
+--- -- Single command:
 --- vim.cmd('echo 42')
+--- -- Multiline script:
 --- vim.cmd([[
----   augroup My_group
+---   augroup my.group
 ---     autocmd!
 ---     autocmd FileType c setlocal cindent
 ---   augroup END
 --- ]])
 ---
---- -- Ex command :echo "foo"
---- -- Note string literals need to be double quoted.
+--- -- Ex command :echo "foo". Note: string literals must be double-quoted.
 --- vim.cmd('echo "foo"')
 --- vim.cmd { cmd = 'echo', args = { '"foo"' } }
 --- vim.cmd.echo({ args = { '"foo"' } })
@@ -423,22 +424,19 @@ local VIM_CMD_ARG_MAX = 20
 ---
 --- -- Ex command :write! myfile.txt
 --- vim.cmd('write! myfile.txt')
---- vim.cmd { cmd = 'write', args = { "myfile.txt" }, bang = true }
---- vim.cmd.write { args = { "myfile.txt" }, bang = true }
---- vim.cmd.write { "myfile.txt", bang = true }
+--- vim.cmd { cmd = 'write', args = { 'myfile.txt' }, bang = true }
+--- vim.cmd.write { args = { 'myfile.txt' }, bang = true }
+--- vim.cmd.write { 'myfile.txt', bang = true }
 ---
---- -- Ex command :colorscheme blue
---- vim.cmd('colorscheme blue')
---- vim.cmd.colorscheme('blue')
+--- -- Ex command :vertical resize +2
+--- vim.cmd.resize({ '+2', mods = { vertical = true } })
 --- ```
 ---
 ---@diagnostic disable-next-line: undefined-doc-param
 ---@param command string|table Command(s) to execute.
----                            If a string, executes multiple lines of Vimscript at once. In this
----                            case, it is an alias to |nvim_exec2()|, where `opts.output` is set
----                            to false. Thus it works identical to |:source|.
----                            If a table, executes a single command. In this case, it is an alias
----                            to |nvim_cmd()| where `opts` is empty.
+---       - The string form supports multiline Vimscript (alias to |nvim_exec2()|, behaves
+---         like |:source|).
+---       - The table form executes a single command (alias to |nvim_cmd()|).
 ---@see |ex-cmd-index|
 vim.cmd = setmetatable({}, {
   __call = function(_, command)
