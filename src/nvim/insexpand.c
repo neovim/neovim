@@ -1339,10 +1339,8 @@ static int cp_compare_nearest(const void *a, const void *b)
 /// Set fuzzy score.
 static void set_fuzzy_score(void)
 {
-  compl_T *comp = compl_first_match->cp_prev;
-
   if (compl_leader.data != NULL && compl_leader.size > 0) {
-    comp = compl_first_match;
+    compl_T *comp = compl_first_match;
     do {
       comp->cp_score = fuzzy_match_str(comp->cp_str.data, compl_leader.data);
       comp = comp->cp_next;
