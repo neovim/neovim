@@ -52,32 +52,26 @@ endfunc
 
 " Test for diff folding redraw after last diff is resolved
 func Test_diff_fold_redraw()
-  " Set up two files with the minimal case
+  " Set up two files with a minimal case.
   call writefile(['Paragraph 1', '', 'Paragraph 2', '', 'Paragraph 3'], 'Xfile1')
   call writefile(['Paragraph 1', '', 'Paragraph 3'], 'Xfile2')
 
-  " Open in diff mode
-  exe 'edit Xfile1'
-  exe 'vert diffsplit Xfile2'
+  " Open in diff mode.
+  edit Xfile1
+  vert diffsplit Xfile2
 
-  " Ensure both windows are in diff mode and folds are enabled
-  set foldmethod=diff
-  set foldenable
+  " Go to the diff and apply :diffput to copy Paragraph 2 to Xfile2.
+  wincmd l
+  3
+  diffput
 
-  " Go to the diff and apply dp to copy Paragraph 2 to Xfile2
-  normal! ]c
-  normal! dp
+  " Check that the folds in both windows are closed and extend from the first
+  " line of the buffer to the last line of the buffer.
+  call assert_equal(1, foldclosed(line("$")))
+  wincmd h
+  call assert_equal(1, foldclosed(line("$")))
 
-  " Redraw and check folds
-  redraw!
-  let win1_fold = foldclosed(1)
-  let win2_fold = foldclosed(1)
-
-  " Both windows should be fully folded (foldclosed returns 1 for top fold)
-  call assert_equal(1, win1_fold)
-  call assert_equal(1, win2_fold)
-
-  " Clean up
+  " Clean up.
   bwipe!
   bwipe!
   call delete('Xfile1')
