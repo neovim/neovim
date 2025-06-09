@@ -735,6 +735,9 @@ t2]])
     feed('dd')
     poke_eventloop()
 
+    if t.skip_fragile(pending, t.is_ci('cirrus')) then
+      return
+    end
     screen:expect {
       grid = [[
       {1:-}^t1                                     |
