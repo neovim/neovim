@@ -1748,6 +1748,31 @@ stack traceback:
     })
     eq("E354: Invalid register name: '^@'", eval('msg'):gsub('\n', ''))
   end)
+
+  it('single event for multi-expr :echo', function()
+    command('echo 1 2 | echon 1 2')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { '1 2' } },
+          kind = 'echo',
+        },
+        {
+          append = true,
+          content = { { '12' } },
+          kind = 'echo',
+        },
+        {
+          content = { { 'Press ENTER or type command to continue', 6, 18 } },
+          kind = 'return_prompt',
+        },
+      },
+    })
+  end)
 end)
 
 describe('ui/builtin messages', function()
