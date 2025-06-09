@@ -4783,6 +4783,14 @@ describe('API', function()
       )
       eq('', eval('v:errmsg'))
     end)
+    it('does not include count field when no count provided for builtin commands', function()
+      local result = api.nvim_parse_cmd('copen', {})
+      eq(nil, result.count)
+      api.nvim_cmd(result, {})
+      eq(10, api.nvim_win_get_height(0))
+      result = api.nvim_parse_cmd('copen 5', {})
+      eq(5, result.count)
+    end)
   end)
 
   describe('nvim_cmd', function()
@@ -5395,6 +5403,57 @@ describe('API', function()
       matches("Invalid argument : '%+%+bad=foo'$", result)
       -- Clean up
       os.remove('Xfile')
+    end)
+    it('interprets numeric args as count for count-only commands', function()
+      api.nvim_cmd({ cmd = 'copen', args = { 8 } }, {})
+      local height1 = api.nvim_win_get_height(0)
+      command('cclose')
+      api.nvim_cmd({ cmd = 'copen', count = 8 }, {})
+      local height2 = api.nvim_win_get_height(0)
+      command('cclose')
+      eq(height1, height2)
+
+      exec_lua 'vim.cmd.copen(5)'
+      height2 = api.nvim_win_get_height(0)
+      command('cclose')
+      eq(5, height2)
+
+      -- should reject both count and numeric arg
+      eq(
+        "Cannot specify both 'count' and numeric argument",
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { 5 }, count = 10 }, {})
+      )
+    end)
+    it('handles string numeric arguments correctly', function()
+      -- Valid string numbers should work
+      api.nvim_cmd({ cmd = 'copen', args = { '6' } }, {})
+      eq(6, api.nvim_win_get_height(0))
+      command('cclose')
+      -- Invalid strings should be rejected
+      eq(
+        'Wrong number of arguments',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { 'abc' } }, {})
+      )
+      -- Partial numbers should be rejected
+      eq(
+        'Wrong number of arguments',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { '8abc' } }, {})
+      )
+      -- Empty string should be rejected
+      eq(
+        'Invalid command arg: expected non-whitespace',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { '' } }, {})
+      )
+      -- Negative string numbers should be rejected
+      eq(
+        'Wrong number of arguments',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { '-5' } }, {})
+      )
+      -- Leading/trailing spaces should be rejected
+      eq(
+        'Wrong number of arguments',
+        pcall_err(api.nvim_cmd, { cmd = 'copen', args = { ' 5 ' } }, {})
+      )
     end)
   end)
 
