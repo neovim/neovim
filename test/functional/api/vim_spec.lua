@@ -2170,6 +2170,11 @@ describe('API', function()
       feed('<F2>')
       eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
     end)
+
+    it('returns "c" during number prompt', function()
+      feed('ifoo<Esc>z=')
+      eq({ mode = 'c', blocking = false }, api.nvim_get_mode())
+    end)
   end)
 
   describe('RPC (K_EVENT)', function()
