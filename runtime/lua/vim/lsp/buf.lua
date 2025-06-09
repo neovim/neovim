@@ -1015,6 +1015,21 @@ function M.workspace_symbol(query, opts)
   request_with_opts(ms.workspace_symbol, params, opts)
 end
 
+--- @class vim.lsp.WorkspaceDiagnosticsOpts
+--- @inlinedoc
+---
+--- Only request diagnostics from the indicated client. If nil, the request is sent to all clients.
+--- @field client_id? integer
+
+--- Request workspace-wide diagnostics.
+--- @param opts? vim.lsp.WorkspaceDiagnosticsOpts
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+function M.workspace_diagnostics(opts)
+  vim.validate('opts', opts, 'table', true)
+
+  lsp.diagnostic._workspace_diagnostics(opts or {})
+end
+
 --- Send request to the server to resolve document highlights for the current
 --- text document position. This request can be triggered by a  key mapping or
 --- by events such as `CursorHold`, e.g.:

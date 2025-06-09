@@ -1855,6 +1855,18 @@ typehierarchy({kind})                            *vim.lsp.buf.typehierarchy()*
     Parameters: ~
       • {kind}  (`"subtypes"|"supertypes"`)
 
+workspace_diagnostics({opts})            *vim.lsp.buf.workspace_diagnostics()*
+    Request workspace-wide diagnostics.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {client_id}? (`integer`) Only request diagnostics from the
+                  indicated client. If nil, the request is sent to all
+                  clients.
+
+    See also: ~
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+
 workspace_symbol({query}, {opts})             *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.
 

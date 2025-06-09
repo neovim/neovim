@@ -6801,4 +6801,128 @@ describe('LSP', function()
       eq(false, exec_lua([[return vim.lsp.is_enabled('foo')]]))
     end)
   end)
+
+  describe('vim.lsp.buf.workspace_diagnostics()', function()
+    local fake_uri = 'file:///fake/uri'
+
+    --- @param kind lsp.DocumentDiagnosticReportKind
+    --- @param msg string
+    --- @param pos integer
+    --- @return lsp.WorkspaceDocumentDiagnosticReport
+    local function make_report(kind, msg, pos)
+      return {
+        kind = kind,
+        uri = fake_uri,
+        items = {
+          {
+            range = {
+              start = { line = pos, character = pos },
+              ['end'] = { line = pos, character = pos },
+            },
+            message = msg,
+            severity = 1,
+          },
+        },
+      }
+    end
+
+    --- @param items lsp.WorkspaceDocumentDiagnosticReport[]
+    --- @return integer
+    local function setup_server(items)
+      exec_lua(create_server_definition)
+      return exec_lua(function()
+        _G.server = _G._create_server({
+          capabilities = {
+            diagnosticProvider = { workspaceDiagnostics = true },
+          },
+          handlers = {
+            ['workspace/diagnostic'] = function(_, _, callback)
+              callback(nil, { items = items })
+            end,
+          },
+        })
+        local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd }))
+        vim.lsp.buf.workspace_diagnostics()
+        return client_id
+      end, { items })
+    end
+
+    it('updates diagnostics obtained with vim.diagnostic.get()', function()
+      setup_server({ make_report('full', 'Error here', 1) })
+
+      retry(nil, nil, function()
+        eq(
+          1,
+          exec_lua(function()
+            return #vim.diagnostic.get()
+          end)
+        )
+      end)
+
+      eq(
+        'Error here',
+        exec_lua(function()
+          return vim.diagnostic.get()[1].message
+        end)
+      )
+    end)
+
+    it('ignores unchanged diagnostic reports', function()
+      setup_server({ make_report('unchanged', '', 1) })
+
+      eq(
+        0,
+        exec_lua(function()
+          -- Wait for diagnostics to be processed.
+          vim.uv.sleep(50)
+
+          return #vim.diagnostic.get()
+        end)
+      )
+    end)
+
+    it('favors document diagnostics over workspace diagnostics', function()
+      local client_id = setup_server({ make_report('full', 'Workspace error', 1) })
+      local diagnostic_bufnr = exec_lua(function()
+        return vim.uri_to_bufnr(fake_uri)
+      end)
+
+      exec_lua(function()
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          items = {
+            {
+              range = {
+                start = { line = 2, character = 2 },
+                ['end'] = { line = 2, character = 2 },
+              },
+              message = 'Document error',
+              severity = 1,
+            },
+          },
+        }, {
+          method = 'textDocument/diagnostic',
+          params = {
+            textDocument = { uri = fake_uri },
+          },
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        })
+      end)
+
+      eq(
+        1,
+        exec_lua(function()
+          return #vim.diagnostic.get(diagnostic_bufnr)
+        end)
+      )
+
+      eq(
+        'Document error',
+        exec_lua(function()
+          return vim.diagnostic.get(vim.uri_to_bufnr(fake_uri))[1].message
+        end)
+      )
+    end)
+  end)
 end)
