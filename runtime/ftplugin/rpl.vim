@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:     RPL/2
 " Maintainer:   Joël BERTRAND <rpl2@free.fr>
-" Last Change:	2012 Mar 07
+" Last Change:	2025 Jun 08
 " Version: 		0.1
 
 " Only do this when not done yet for this buffer
@@ -18,5 +18,6 @@ setlocal fo-=t fo+=croql
 
 " Set 'comments' to format dashed lists in comments.
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
+setlocal commentstring=//\ %s
 
-let b:undo_ftplugin = "setlocal fo< comments<"
+let b:undo_ftplugin = "setlocal fo< comments< commentstring<"
