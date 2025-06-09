@@ -2202,7 +2202,7 @@ uv.pipe_bind2({pipe}, {name}, {flags})                         *uv.pipe_bind2()*
 
                 Returns: `0` or `fail`
 
-                *Note*:
+                Note:
                 1. Paths on Unix get truncated to sizeof(sockaddr_un.sun_path)
                    bytes, typically between 92 and 108 bytes.
                 2. New in version 1.46.0.
@@ -2235,7 +2235,7 @@ uv.pipe_connect2(pipe, name, [flags], [callback])           *uv.pipe_connect2()*
 
                 Returns: `uv_connect_t userdata` or `fail`
 
-                *Note*:
+                Note:
                 1. Paths on Unix get truncated to sizeof(sockaddr_un.sun_path)
                    bytes, typically between 92 and 108 bytes.
                 2. New in version 1.46.0.
