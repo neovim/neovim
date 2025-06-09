@@ -2476,6 +2476,7 @@ local pattern = {
       end
     end,
     ['^hg%-editor%-.*%.txt$'] = 'hgcommit',
+    ['^sl%-editor%-.*%.txt$'] = 'hgcommit',
     ['%.html%.m4$'] = 'htmlm4',
     ['^JAM.*%.'] = starsetf('jam'),
     ['^Prl.*%.'] = starsetf('jam'),
