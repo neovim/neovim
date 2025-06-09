@@ -8439,6 +8439,13 @@ describe('float window', function()
         [23] = { blend = 100, bold = true, foreground = Screen.colors.Magenta },
         [24] = { foreground = tonumber('0x7f007f'), bold = true, background = Screen.colors.White },
         [25] = { foreground = tonumber('0x7f007f'), bold = true, background = Screen.colors.Grey90 },
+        [26] = { foreground = Screen.colors.Black },
+        [27] = { bold = true, foreground = tonumber('0x7f007f') },
+        [28] = { foreground = tonumber('0x990000') },
+        [29] = { foreground = Screen.colors.Gray20 },
+        [30] = { bold = true, foreground = tonumber('0x00007f') },
+        [31] = { foreground = Screen.colors.Red, blend = 80 },
+        [32] = { foreground = Screen.colors.Blue1, blend = 100, bold = true },
       })
       insert([[
         Lorem ipsum dolor sit amet, consectetur
@@ -8752,41 +8759,52 @@ describe('float window', function()
       api.nvim_win_set_config(win, { border = 'single', title = 'Title', footer = 'Footer' })
       api.nvim_set_option_value('winblend', 100, { win = win })
       api.nvim_set_option_value('cursorline', true, { win = 0 })
-      command('hi clear VertSplit')
+      -- 'winblend' with transparent background. #18576
+      command('hi clear VertSplit | hi Normal guibg=NONE ctermbg=NONE')
+      api.nvim_win_set_option(win, 'winhighlight', 'Normal:Normal')
       feed('k0')
       if multigrid then
-        screen:expect {
+        screen:expect({
           grid = [[
-        ## grid 1
-          [2:--------------------------------------------------]|*8
-          [3:--------------------------------------------------]|
-        ## grid 2
-          Ut enim ad minim veniam, quis nostrud             |
-          exercitation ullamco laboris nisi ut aliquip ex   |
-          ea commodo consequat. Duis aute irure dolor in    |
-          reprehenderit in voluptate velit esse cillum      |
-          dolore eu fugiat nulla pariatur. Excepteur sint   |
-          occaecat cupidatat non proident, sunt in culpa    |
-          {16:^qui officia deserunt mollit anim id est           }|
-          laborum.                                          |
-        ## grid 3
-                                                            |
-        ## grid 4
-          {17:┌}{23:Title}{17:──────────┐}|
-          {17:│}{11:popup    text}{18:  }{17:│}|
-          {17:│}{19:~              }{17:│}|*2
-          {17:└}{23:Footer}{17:─────────┘}|
-        ]],
+          ## grid 1
+            [2:--------------------------------------------------]|*8
+            [3:--------------------------------------------------]|
+          ## grid 2
+            Ut enim ad minim veniam, quis nostrud             |
+            exercitation ullamco laboris nisi ut aliquip ex   |
+            ea commodo consequat. Duis aute irure dolor in    |
+            reprehenderit in voluptate velit esse cillum      |
+            dolore eu fugiat nulla pariatur. Excepteur sint   |
+            occaecat cupidatat non proident, sunt in culpa    |
+            {16:^qui officia deserunt mollit anim id est           }|
+            laborum.                                          |
+          ## grid 3
+                                                              |
+          ## grid 4
+            {17:┌}{23:Title}{17:──────────┐}|
+            {17:│}{31:popup    text}{17:  │}|
+            {17:│}{32:~              }{17:│}|*2
+            {17:└}{23:Footer}{17:─────────┘}|
+          ]],
+          win_pos = { [2] = { height = 8, startcol = 0, startrow = 0, width = 50, win = 1000 } },
           float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
-        }
+          win_viewport = {
+            [2] = { win = 1000, topline = 3, botline = 11, curline = 9, curcol = 0, linecount = 11, sum_scroll_delta = 3 },
+            [4] = { win = 1001, topline = 2, botline = 4, curline = 2, curcol = 7, linecount = 3, sum_scroll_delta = 2 },
+          },
+          win_viewport_margins = {
+            [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+            [4] = { bottom = 1, left = 1, right = 1, top = 1, win = 1001 },
+          },
+        })
       else
         screen:expect([[
           Ut enim ad minim veniam, quis nostrud             |
           exercitation ullamco laboris nisi ut aliquip ex   |
-          ea co{20:┌}{24:Title}{20:──────────┐}Duis aute irure dolor in    |
-          repre{20:│}{5:popup}{6:it i}{5:text}{20:lu│}tate velit esse cillum      |
-          dolor{20:│}{21:~}{20:eu fugiat null│} pariatur. Excepteur sint   |
-          occae{20:│}{21:~}{20:t cupidatat no│} proident, sunt in culpa    |
+          ea co{26:┌}{27:Title}{26:──────────┐}Duis aute irure dolor in    |
+          repre{26:│}{28:popup}{29:it i}{28:text}{26:lu│}tate velit esse cillum      |
+          dolor{26:│}{30:~}{26:eu fugiat null│} pariatur. Excepteur sint   |
+          occae{26:│}{30:~}{26:t cupidatat no│} proident, sunt in culpa    |
           {16:^qui o}{22:└}{25:Footer}{22:─────────┘}{16:ollit anim id est           }|
           laborum.                                          |
                                                             |
