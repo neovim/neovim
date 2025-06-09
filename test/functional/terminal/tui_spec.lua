@@ -2521,6 +2521,29 @@ describe('TUI', function()
     }
   end)
 
+  it("float is still highlighted with 'winblend' over uninitialized cells #34360", function()
+    write_file(
+      'Xblend.lua',
+      [[
+        local win = vim.api.nvim_open_win(0, false, { relative = 'editor', width = 3, height = 1, row = 1000, col = 0, zindex = 400 })
+        vim.api.nvim_set_option_value('winblend', 30, { win = win })
+        vim.fn.setline(1, "foo")
+        vim.api.nvim_buf_set_extmark(0, vim.api.nvim_create_namespace(''), 0, 0, { end_col = 3, hl_group = 'Title' })
+    ]]
+    )
+    finally(function()
+      os.remove('Xblend.lua')
+    end)
+    local screen = tt.setup_child_nvim({ '--clean', '-u', 'Xblend.lua' })
+    screen:expect([[
+      {3:^foo}                                               |
+      ~                                                 |*3
+      [No Name] [+]                   1,1            All|
+      {3:foo}                                               |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('with non-tty (pipe) stdout/stderr', function()
     finally(function()
       os.remove('testF')
