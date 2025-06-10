@@ -129,7 +129,7 @@ func Test_matchfuzzypos()
   call assert_equal([[], [], []], matchfuzzypos([], 'abc'))
 
   " match in a long string
-  call assert_equal([[repeat('x', 300) .. 'abc'], [[300, 301, 302]], [-60]],
+  call assert_equal([[repeat('x', 300) .. 'abc'], [[300, 301, 302]], [155]],
         \ matchfuzzypos([repeat('x', 300) .. 'abc'], 'abc'))
 
   " preference for camel case match
@@ -265,7 +265,7 @@ func Test_matchfuzzypos_mbyte()
   call assert_equal([[], [], []], ['세 마리의 작은 돼지', '마리의', '마리의 작은', '작은 돼지']->matchfuzzypos('파란 하늘'))
 
   " match in a long string
-  call assert_equal([[repeat('ぶ', 300) .. 'ẼẼẼ'], [[300, 301, 302]], [-110]],
+  call assert_equal([[repeat('ぶ', 300) .. 'ẼẼẼ'], [[300, 301, 302]], [105]],
         \ matchfuzzypos([repeat('ぶ', 300) .. 'ẼẼẼ'], 'ẼẼẼ'))
   " preference for camel case match
   call assert_equal([['xѳѵҁxxѳѴҁ'], [[6, 7, 8]], [219]], matchfuzzypos(['xѳѵҁxxѳѴҁ'], 'ѳѵҁ'))
