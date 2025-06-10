@@ -8184,8 +8184,10 @@ local options = {
       desc = [=[
         When enabled, the <Tab> key will indent by 'shiftwidth' if the cursor
         is in leading whitespace.  The <BS> key has the opposite effect.
-        This behaves as if 'softtabstop' is set to the value of 'shiftwidth'.
-        Have a look at section |30.5| of the user guide for detailed
+        In leading whitespace, this has the same effect as setting
+        'softtabstop' to the value of 'shiftwidth'.
+        NOTE: in most cases, using 'softtabstop' is a better option.  Have a
+        look at section |30.5| of the user guide for detailed
         explanations on how Vim works with tabs and spaces.
       ]=],
       full_name = 'smarttab',

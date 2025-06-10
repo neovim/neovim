@@ -215,27 +215,28 @@ An alternative is to filter the text through an external program.  Example: >
 *25.3*	Indents and tabs
 
 Indents can be used to make text stand out from the rest.  The example texts
-in this manual, for example, are indented by eight spaces or a tab.  You would
-normally enter this by typing a tab at the start of each line.  Take this
+in this manual, for example, are indented by eight columns.  You would
+normally enter this by typing <Tab> at the start of each line.  Take this
 text:
 	the first line ~
 	the second line ~
 
-This is entered by typing a tab, some text, <Enter>, tab and more text.
+This is entered by typing <Tab>, some text, <Enter>, <Tab> and more text.
    The 'autoindent' option inserts indents automatically: >
 
 	:set autoindent
 
 When a new line is started it gets the same indent as the previous line.  In
-the above example, the tab after the <Enter> is not needed anymore.
+the above example, pressing the <Tab> key after <Enter> is not needed anymore.
 
 
 INCREASING INDENT
 
-To increase the amount of indent in a line, use the ">" operator.  Often this
-is used as ">>", which adds indent to the current line.
+To increase the amount of indent in a line, use the ">" operator, in Normal
+mode.  Often this is used as ">>", which adds indent to the current line.
+In Insert mode, use <C-t>.
    The amount of indent added is specified with the 'shiftwidth' option.  The
-default value is 8.  To make ">>" insert four spaces worth of indent, for
+default value is 8.  To make ">>" insert four columns worth of indent, for
 example, type this: >
 
 	:set shiftwidth=4
@@ -248,45 +249,26 @@ When used on the second line of the example text, this is what you get:
 "4>>" will increase the indent of four lines.
 
 
-TABSTOP
+SOFT TAB STOPS
 
 If you want to make indents a multiple of 4, you set 'shiftwidth' to 4.  But
-when pressing a <Tab> you still get 8 spaces worth of indent.  To change this,
-set the 'softtabstop' option: >
+when pressing a <Tab> you still get 8 columns worth of indent.  To change
+this, set the 'softtabstop' option: >
 
 	:set softtabstop=4
 
-This will make the <Tab> key insert 4 spaces worth of indent.  If there are
-already four spaces, a <Tab> character is used (saving seven characters in the
-file).  (If you always want spaces and no tab characters, set the 'expandtab'
-option.)
+Vim now creates invisible tab stops for your cursor every 4 columns; hitting
+<Tab> jumps to the next stop and inserts the exact mix of spaces or tabs
+needed.
 
 	Note:
 	You could set the 'tabstop' option to 4.  However, if you edit the
 	file another time, with 'tabstop' set to the default value of 8, it
 	will look wrong.  In other programs and when printing the indent will
 	also be wrong.  Therefore it is recommended to keep 'tabstop' at eight
-	all the time.  That's the standard value everywhere.
+	all the time.  That's the standard value everywhere on UNIX-like
+	systems.
 
-
-CHANGING TABS
-
-You edit a file which was written with a tabstop of 3.  In Vim it looks ugly,
-because it uses the normal tabstop value of 8.  You can fix this by setting
-'tabstop' to 3.  But you have to do this every time you edit this file.
-   Vim can change the use of tabstops in your file.  First, set 'tabstop' to
-make the indents look good, then use the ":retab" command: >
-
-	:set tabstop=3
-	:retab 8
-
-The ":retab" command will change 'tabstop' to 8, while changing the text such
-that it looks the same.  It changes spans of white space into tabs and spaces
-for this.  You can now write the file.  Next time you edit it the indents will
-be right without setting an option.
-   Warning: When using ":retab" on a program, it may change white space inside
-a string constant.  Therefore it's a good habit to use "\t" instead of a
-real tab.
 
 ==============================================================================
 *25.4*	Dealing with long lines
@@ -576,6 +558,32 @@ The "gR" command uses Virtual Replace mode.  This preserves the layout:
 		V
 
 	inp	0.786	0.534	0.693 ~
+
+
+REFORMATTING TABS IN TABLES
+
+You edit a file that contains tabular data and the original author of the file
+decided to align the tabular data using tab characters (instead of spaces).
+Alas, they were using tab stops separated by 4 columns and Vim's default
+is 8 columns; the table looks wrong!  What can be done?
+  To fix the appearance without modifying the file, adjust the setting
+temporarily: >
+
+	:set tabstop=4
+
+This updates the visual layout, but the file itself remains unchanged.
+  Another possibility is to permanently reformat the file.  For this Vim
+provides the |:retab| command.  First, set 'tabstop' to match original layout
+(as above), then run: >
+
+	:retab 8
+
+The ":retab" command will change 'tabstop' to 8, while changing the text such
+that it looks the same.  It changes spans of white space into tabs and spaces
+for this.  You can now write the file.
+   Warning: When using ":retab" on a program, it may change white space inside
+a string constant.  Therefore it's a good habit to use "\t" instead of a
+real tab.
 
 ==============================================================================
 

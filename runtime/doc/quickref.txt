@@ -893,7 +893,7 @@ Short explanation of each option:		*option-list*
 'tabclose'	  'tcl'     which tab page to focus when closing a tab
 'tabline'	  'tal'     custom format for the console tab pages line
 'tabpagemax'	  'tpm'     maximum number of tab pages for |-p| and "tab all"
-'tabstop'	  'ts'	    number of spaces that <Tab> in file uses
+'tabstop'	  'ts'	    number of columns between two tab stops
 'tagbsearch'	  'tbs'     use binary searching in tags files
 'tagcase'	  'tc'      how to handle case when searching in tags files
 'tagfunc'	  'tfu'	    function to get list of tag matches
