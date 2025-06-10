@@ -284,6 +284,16 @@ void ui_client_event_raw_line(GridLineEvent *g)
                (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
 }
 
+void ui_client_event_error_exit(Array args)
+{
+  if (args.size < 1
+      || args.items[0].type != kObjectTypeInteger) {
+    ELOG("Error handling ui event 'error_exit'");
+    return;
+  }
+  ui_client_error_exit = (int)args.items[0].data.integer;
+}
+
 #ifdef EXITFREE
 void ui_client_free_all_mem(void)
 {

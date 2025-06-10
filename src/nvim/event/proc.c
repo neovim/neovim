@@ -5,6 +5,7 @@
 #include <uv.h>
 
 #include "klib/kvec.h"
+#include "nvim/channel.h"
 #include "nvim/event/libuv_proc.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -437,16 +438,20 @@ static void on_proc_exit(Proc *proc)
   Loop *loop = proc->loop;
   ILOG("child exited: pid=%d status=%d" PRIu64, proc->pid, proc->status);
 
-#ifdef MSWIN
-  // XXX: This assumes the TUI never spawns any other processes...?
-  // TODO(justinmk): figure out why rpc_close sometimes(??) isn't called, then remove this jank.
+  // TODO(justinmk): figure out why rpc_close sometimes(??) isn't called.
   // Theories:
   // - EOF not received in receive_msgpack, then doesn't call chan_close_on_err().
   // - proc_close_handles not tickled by ui_client.c's LOOP_PROCESS_EVENTS?
   if (ui_client_channel_id) {
-    exit_on_closed_chan(proc->status);
+    uint64_t server_chan_id = ui_client_channel_id;
+    Channel *server_chan = find_channel(server_chan_id);
+    if (server_chan != NULL && server_chan->streamtype == kChannelStreamProc
+        && proc == &server_chan->stream.proc) {
+      // If the current embedded server has exited,
+      // the client should exit with the same status.
+      exit_on_closed_chan(proc->status);
+    }
   }
-#endif
 
   // Process has terminated, but there could still be data to be read from the
   // OS. We are still in the libuv loop, so we cannot call code that polls for
