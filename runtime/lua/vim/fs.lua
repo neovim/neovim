@@ -388,14 +388,29 @@ end
 --- vim.fs.root(0, function(name, path)
 ---   return name:match('%.csproj$') ~= nil
 --- end)
+---
+--- -- Find the first ancestor directory containing EITHER "stylua.toml" or ".luarc.json"; if
+--- -- not found, find the first ancestor containing ".git":
+--- vim.fs.root(0, { { 'stylua.toml', '.luarc.json' }, '.git' })
 --- ```
 ---
 --- @since 12
 --- @param source integer|string Buffer number (0 for current buffer) or file path (absolute or
 ---               relative to the |current-directory|) to begin the search from.
---- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
----               of markers, to search for. If a function, the function is called for each
----               evaluated item and should return true if {name} and {path} are a match.
+--- @param marker (string|string[]|fun(name: string, path: string): boolean)[]|string|fun(name: string, path: string): boolean A marker or a list of markers.
+---               A marker has one of three types: string, a list of strings or a function. The
+---               parameter also accepts a list of markers, each of which is any of those three
+---               types. If a marker is a function, it is called for each evaluated item and
+---               should return true if {name} and {path} are a match. If a list of markers is
+---               passed, each marker in the list is evaluated in order and the first marker
+---               which is matched returns the parent directory that it found. This allows
+---               listing markers with priority. E.g. - in the following list, a parent directory
+---               containing either 'a' or 'b' is searched for. If neither is found, then 'c' is
+---               searched for. So, 'c' has lower priority than 'a' and 'b' which have equal
+---               priority.
+---               ```lua
+---                   marker = { { 'a', 'b' }, 'c' }
+---               ```
 --- @return string? # Directory path containing one of the given markers, or nil if no directory was
 ---                   found.
 function M.root(source, marker)
@@ -415,16 +430,19 @@ function M.root(source, marker)
     error('invalid type for argument "source": expected string or buffer number')
   end
 
-  local paths = M.find(marker, {
-    upward = true,
-    path = vim.fn.fnamemodify(path, ':p:h'),
-  })
+  local markers = type(marker) == 'table' and marker or { marker }
+  for _, mark in ipairs(markers) do
+    local paths = M.find(mark, {
+      upward = true,
+      path = vim.fn.fnamemodify(path, ':p:h'),
+    })
 
-  if #paths == 0 then
-    return nil
+    if #paths ~= 0 then
+      return vim.fs.dirname(paths[1])
+    end
   end
 
-  return vim.fs.dirname(paths[1])
+  return nil
 end
 
 --- Split a Windows path into a prefix and a body, such that the body can be processed like a POSIX
