@@ -890,8 +890,22 @@ static TermKeyResult peekkey_ctrlstring(TermKey *tk, TermKeyCsi *csi, size_t int
   strncpy(csi->saved_string, (char *)tk->buffer + tk->buffstart + introlen, len);  // NOLINT(runtime/printf)
   csi->saved_string[len] = 0;
 
-  key->type = (CHARAT(introlen - 1) & 0x1f) == 0x10
-              ? TERMKEY_TYPE_DCS : TERMKEY_TYPE_OSC;
+  char type = CHARAT(introlen - 1) & 0x1f;
+  switch (type) {
+  case 0x10:
+    key->type = TERMKEY_TYPE_DCS;
+    break;
+  case 0x1d:
+    key->type = TERMKEY_TYPE_OSC;
+    break;
+  case 0x1f:
+    key->type = TERMKEY_TYPE_APC;
+    break;
+  default:
+    // Unreachable
+    abort();
+  }
+
   key->code.number = csi->saved_string_id;
   key->modifiers = 0;
 
@@ -918,6 +932,7 @@ TermKeyResult peekkey_csi(TermKey *tk, void *info, TermKeyKey *key, int force, s
 
     case 0x50:  // ESC-prefixed DCS
     case 0x5d:  // ESC-prefixed OSC
+    case 0x5f:  // ESC-prefixed APC
       return peekkey_ctrlstring(tk, csi, 2, key, force, nbytep);
 
     case 0x5b:  // ESC-prefixed CSI

@@ -221,7 +221,7 @@ TREESITTER
 
 TUI
 
-• todo
+• |TermResponse| now supports APC query responses.
 
 UI
 
