@@ -283,31 +283,22 @@ static int parse_osc8(VTermStringFragment frag, int *attr)
     }
   }
 
-  // Move past the semicolon
-  i++;
-
-  if (i >= frag.len) {
+  if (frag.str[i] != ';') {
     // Invalid OSC sequence
     return 0;
   }
 
-  // Find the terminator
-  const size_t start = i;
-  for (; i < frag.len; i++) {
-    if (frag.str[i] == '\a' || frag.str[i] == '\x1b') {
-      break;
-    }
-  }
+  // Move past the semicolon
+  i++;
 
-  const size_t len = i - start;
-  if (len == 0) {
+  if (i >= frag.len) {
     // Empty OSC 8, no URL
     *attr = 0;
     return 1;
   }
 
-  char *url = xmemdupz(&frag.str[start], len + 1);
-  url[len] = 0;
+  char *url = xmemdupz(&frag.str[i], frag.len - i + 1);
+  url[frag.len - i] = 0;
   *attr = hl_add_url(0, url);
   xfree(url);
 

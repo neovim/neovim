@@ -398,12 +398,13 @@ describe(':terminal', function()
       [100] = { url = 'https://example.com' },
     }
     local chan = api.nvim_open_term(0, {})
-    api.nvim_chan_send(chan, '\027]8;;https://example.com\027\\Example\027]8;;\027\\')
-    screen:expect({
-      grid = [[
-        {100:^Example}                                           |
-                                                          |*6
-      ]],
-    })
+    api.nvim_chan_send(
+      chan,
+      'This is an \027]8;;https://example.com\027\\example\027]8;;\027\\ of a link'
+    )
+    screen:expect([[
+      ^This is an {100:example} of a link                      |
+                                                        |*6
+    ]])
   end)
 end)
