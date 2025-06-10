@@ -301,4 +301,129 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
   end)
+
+  it('undo works for current prompt', function()
+    source_script()
+    -- text editiing alowed in current prompt
+    feed('tests-initial<esc>')
+    feed('bimiddle-<esc>')
+    screen:expect([[
+      cmd: tests-middle^-initial|
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+                               |
+    ]])
+
+    feed('Fdx')
+    screen:expect([[
+      cmd: tests-mid^le-initial |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+                               |
+    ]])
+
+
+    -- can undo edits until prompt has been submitted
+    feed('u')
+    screen:expect([[
+      cmd: tests-mid^dle-initial|
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      1 change; ...seconds ago |
+    ]])
+
+    feed('u')
+    screen:expect([[
+      cmd: tests-^initial       |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      1 change; ...seconds ago |
+    ]])
+
+    feed('i<cr><esc>')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      Result: "tests-initial"  |
+      cmd:^                     |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+                               |
+    ]])
+
+    -- after submit undo does nothing
+    feed('u')
+    screen:expect([[
+      cmd: tests-initial       |
+      Command: "tests-initial" |
+      cmd:^                     |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      1 line les...seconds ago |
+    ]])
+  end)
+
+  it('o/O can create new lines', function()
+    source_script()
+    feed('line 1<s-cr>line 2<s-cr>line 3')
+    screen:expect([[
+      cmd: line 1              |
+      line 2                   |
+      line 3^                   |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<esc>koafter')
+
+    screen:expect([[
+      cmd: line 1              |
+      line 2                   |
+      after^                    |
+      line 3                   |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<esc>kObefore')
+
+    screen:expect([[
+      cmd: line 1              |
+      before^                   |
+      line 2                   |
+      after                    |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<cr>')
+    screen:expect([[
+      line 2                   |
+      after                    |
+      line 3"                  |
+      cmd: ^                    |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+  end)
 end)
