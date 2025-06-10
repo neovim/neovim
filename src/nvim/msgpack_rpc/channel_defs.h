@@ -5,6 +5,7 @@
 
 #include "nvim/api/private/dispatch.h"
 #include "nvim/map_defs.h"
+#include "nvim/ui_defs.h"
 
 typedef struct Channel Channel;
 typedef struct Unpacker Unpacker;
@@ -38,6 +39,7 @@ typedef struct {
 typedef struct {
   bool closed;
   Unpacker *unpacker;
+  RemoteUI *ui;
   uint32_t next_request_id;
   kvec_t(ChannelCallFrame *) call_stack;
   Dict info;
