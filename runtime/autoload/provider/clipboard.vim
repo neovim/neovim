@@ -268,13 +268,11 @@ function! provider#clipboard#Executable() abort
 endfunction
 
 function! s:clipboard.get(reg) abort
-  if type(s:paste[a:reg]) == v:t_func
-    return s:paste[a:reg]()
-  elseif s:selections[a:reg].owner > 0
+  if s:selections[a:reg].owner > 0
     return s:selections[a:reg].data
   end
 
-  let clipboard_data = s:try_cmd(s:paste[a:reg])
+  let clipboard_data = type(s:paste[a:reg]) == v:t_func ? s:paste[a:reg]() : s:try_cmd(s:paste[a:reg])
   if match(&clipboard, '\v(unnamed|unnamedplus)') >= 0
         \ && type(clipboard_data) == v:t_list
         \ && get(s:selections[a:reg].data, 0, []) ==# clipboard_data
@@ -294,13 +292,12 @@ function! s:clipboard.set(lines, regtype, reg) abort
     return 0
   end
 
-  if type(s:copy[a:reg]) == v:t_func
-    call s:copy[a:reg](a:lines, a:regtype)
-    return 0
-  end
-
-  if s:cache_enabled == 0
-    call s:try_cmd(s:copy[a:reg], a:lines)
+  if s:cache_enabled == 0 || type(s:copy[a:reg]) == v:t_func
+    if type(s:copy[a:reg]) == v:t_func
+      call s:copy[a:reg](a:lines, a:regtype)
+    else
+      call s:try_cmd(s:copy[a:reg], a:lines)
+    endif
     "Cache it anyway we can compare it later to get regtype of the yank
     let s:selections[a:reg] = copy(s:selection)
     let s:selections[a:reg].data = [a:lines, a:regtype]
