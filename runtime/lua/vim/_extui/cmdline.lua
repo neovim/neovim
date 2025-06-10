@@ -4,7 +4,7 @@ local api, fn = vim.api, vim.fn
 local M = {
   highlighter = nil, ---@type vim.treesitter.highlighter?
   indent = 0, -- Current indent for block event.
-  prompt = false, -- Whether a prompt is active; messages are placed in the 'prompt' window.
+  prompt = false, -- Whether a prompt is active; messages are placed in the 'dialog' window.
   row = 0, -- Current row in the cmdline buffer, > 0 for block events.
   level = -1, -- Current cmdline level, 0 when inactive, -1 one loop iteration after closing.
 }
@@ -69,7 +69,7 @@ function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   M.cmdline_pos(pos)
 
   -- Clear message cmdline state; should not be shown during, and reset after cmdline.
-  if ext.cfg.msg.pos == 'cmd' and ext.msg.cmd.msg_row ~= -1 then
+  if ext.cfg.msg.target == 'cmd' and ext.msg.cmd.msg_row ~= -1 then
     ext.msg.prev_msg, ext.msg.dupe, ext.msg.cmd.msg_row = '', 0, -1
     api.nvim_buf_clear_namespace(ext.bufs.cmd, ext.ns, 0, -1)
     ext.msg.virt.msg = { {}, {} }
@@ -129,7 +129,8 @@ function M.cmdline_hide(_, abort)
     -- loop iteration. E.g. when a non-choice confirm button is pressed.
     if was_prompt and not M.prompt then
       api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
-      api.nvim_win_set_config(ext.wins.prompt, { hide = true })
+      api.nvim_buf_set_lines(ext.bufs.dialog, 0, -1, false, {})
+      api.nvim_win_set_config(ext.wins.dialog, { hide = true })
     end
     -- Messages emitted as a result of a typed command are treated specially:
     -- remember if the cmdline was used this event loop iteration.

@@ -2683,12 +2683,10 @@ To enable the experimental UI (default opts shown): >lua
     require('vim._extui').enable({
      enable = true, -- Whether to enable or disable the UI.
      msg = { -- Options related to the message module.
-       ---@type 'box'|'cmd' Type of window used to place messages, either in the
-       ---cmdline or in a separate message box window with ephemeral messages.
-       pos = 'cmd',
-       box = { -- Options related to the message box window.
-         timeout = 4000, -- Time a message is visible.
-       },
+       ---@type 'cmd'|'msg' Where to place regular messages, either in the
+       ---cmdline or in a separate ephemeral message window.
+       target = 'cmd',
+       timeout = 4000, -- Time a message is visible in the message window.
      },
     })
 <
@@ -2696,15 +2694,15 @@ To enable the experimental UI (default opts shown): >lua
 There are four separate window types used by this interface:
 • "cmd": The cmdline window; also used for 'showcmd', 'showmode', 'ruler', and
   messages if 'cmdheight' > 0.
-• "box": The message box window; used for messages when 'cmdheight' == 0.
-• "more": The more-prompt window; used for |:messages| and certain messages
-  that should be shown in full.
-• "prompt": The cmdline prompt window; used for prompt messages that expect
-  user input.
+• "msg": The message window; used for messages when 'cmdheight' == 0.
+• "pager": The pager window; used for |:messages| and certain messages that
+  should be shown in full.
+• "dialog": The dialog window; used for prompt messages that expect user
+  input.
 
-These four windows are assigned the "cmdline", "msgbox", "msgmore" and
-"msgprompt" 'filetype' respectively. Use a |FileType| autocommand to configure
-any local options for these windows and their respective buffers.
+These four windows are assigned the "cmd", "msg", "pager" and "dialog"
+'filetype' respectively. Use a |FileType| autocommand to configure any local
+options for these windows and their respective buffers.
 
 Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
 not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
