@@ -1223,6 +1223,11 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
       ONE_ADJUST(&(buf->b_last_cursor.mark.lnum));
     }
 
+    // on prompt buffer adjust the last prompt start location mark
+    if (bt_prompt(curbuf)) {
+      ONE_ADJUST(&(buf->b_prompt_submitted.mark.lnum));
+    }
+
     // list of change positions
     for (int i = 0; i < buf->b_changelistlen; i++) {
       ONE_ADJUST_NODEL(&(buf->b_changelist[i].mark.lnum));

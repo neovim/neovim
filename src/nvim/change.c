@@ -1749,7 +1749,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   char *prompt_moved = NULL;
   if (dir == BACKWARD) {
     if (bt_prompt(curbuf)
-        && curwin->w_cursor.lnum == curbuf->b_prompt_submitted) {
+        && curwin->w_cursor.lnum == curbuf->b_prompt_submitted.mark.lnum) {
       char *prompt_line = ml_get(curwin->w_cursor.lnum);
       char *prompt= prompt_text();
       size_t prompt_len = strlen(prompt);

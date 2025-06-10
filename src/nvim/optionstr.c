@@ -28,6 +28,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -697,7 +698,8 @@ const char *did_set_buftype(optset_T *args)
   }
   // when buftype is set to prompt set the last prompt submit pos to lastline
   if (buf->b_p_bt[0] == 'p') {
-    buf->b_prompt_submitted = buf->b_ml.ml_line_count;
+     pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
+     RESET_FMARK(&buf->b_prompt_submitted, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
   }
   if (win->w_status_height || global_stl_height()) {
     win->w_redr_status = true;
