@@ -421,7 +421,6 @@ theend:
 // May do 'incsearch' highlighting if desired.
 static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state_T *s)
 {
-  pos_T end_pos;
   int skiplen, patlen;
   int search_delim;
 
@@ -429,8 +428,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
-  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen,
-                                 &patlen)) {
+  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen, &patlen)) {
     restore_last_search_pattern();
     finish_incsearch_highlighting(false, s, true);
     return;
@@ -444,6 +442,16 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
   }
   s->incsearch_postponed = false;
 
+  // Use the previous pattern for ":s//".
+  char next_char = ccline.cmdbuff[skiplen + patlen];
+  bool use_last_pat = patlen == 0 && skiplen > 0
+                      && ccline.cmdbuff[skiplen - 1] == next_char;
+
+  if (patlen != 0 || use_last_pat) {
+    ui_busy_start();
+    ui_flush();
+  }
+
   if (search_first_line == 0) {
     // start at the original cursor position
     curwin->w_cursor = s->search_start;
@@ -456,40 +464,27 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     curwin->w_cursor.lnum = search_first_line;
     curwin->w_cursor.col = 0;
   }
-  int found;  // do_search() result
 
-  // Use the previous pattern for ":s//".
-  char next_char = ccline.cmdbuff[skiplen + patlen];
-  bool use_last_pat = patlen == 0 && skiplen > 0
-                      && ccline.cmdbuff[skiplen - 1] == next_char;
+  int found = 0;  // do_search() result
 
-  // If there is no pattern, don't do anything.
-  if (patlen == 0 && !use_last_pat) {
-    found = 0;
-    set_no_hlsearch(true);  // turn off previous highlight
-    redraw_all_later(UPD_SOME_VALID);
-  } else {
+  if (patlen != 0 || use_last_pat) {
     int search_flags = SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK;
-    ui_busy_start();
-    ui_flush();
-    emsg_off++;            // So it doesn't beep if bad expr
-    // Set the time limit to half a second.
-    proftime_T tm = profile_setlimit(500);
     if (!p_hls) {
       search_flags += SEARCH_KEEP;
     }
     if (search_first_line != 0) {
       search_flags += SEARCH_START;
     }
+    // Set the time limit to half a second.
+    proftime_T tm = profile_setlimit(500);
+    searchit_arg_T sia = { .sa_tm = &tm };
     ccline.cmdbuff[skiplen + patlen] = NUL;
-    searchit_arg_T sia = {
-      .sa_tm = &tm,
-    };
+    emsg_off++;            // So it doesn't beep if bad expr
     found = do_search(NULL, firstc == ':' ? '/' : firstc, search_delim,
                       ccline.cmdbuff + skiplen, (size_t)patlen, count,
                       search_flags, &sia);
-    ccline.cmdbuff[skiplen + patlen] = next_char;
     emsg_off--;
+    ccline.cmdbuff[skiplen + patlen] = next_char;
     if (curwin->w_cursor.lnum < search_first_line
         || curwin->w_cursor.lnum > search_last_line) {
       // match outside of address range
@@ -507,13 +502,12 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
       s->incsearch_postponed = true;
     }
     ui_busy_stop();
+  } else {
+    set_no_hlsearch(true);  // turn off previous highlight
+    redraw_all_later(UPD_SOME_VALID);
   }
 
-  if (found != 0) {
-    highlight_match = true;   // highlight position
-  } else {
-    highlight_match = false;  // remove highlight
-  }
+  highlight_match = found != 0;  // add or remove search match position
 
   // first restore the old curwin values, so the screen is
   // positioned in the same way as the actual search command
@@ -521,17 +515,14 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
   changed_cline_bef_curs(curwin);
   update_topline(curwin);
 
+  pos_T end_pos = curwin->w_cursor;
   if (found != 0) {
-    pos_T save_pos = curwin->w_cursor;
-
     s->match_start = curwin->w_cursor;
     set_search_match(&curwin->w_cursor);
     validate_cursor(curwin);
-    end_pos = curwin->w_cursor;
-    s->match_end = end_pos;
-    curwin->w_cursor = save_pos;
-  } else {
-    end_pos = curwin->w_cursor;         // shutup gcc 4
+    s->match_end = curwin->w_cursor;
+    curwin->w_cursor = end_pos;
+    end_pos = s->match_end;
   }
 
   // Disable 'hlsearch' highlighting if the pattern matches
