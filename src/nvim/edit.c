@@ -1552,7 +1552,8 @@ static void init_prompt(int cmdchar_todo)
 
   // Insert always starts after the prompt, allow editing text after it.
   if (curbuf->b_prompt_submitted.mark.lnum == curbuf->b_ml.ml_line_count
-      && (Insstart_orig.lnum != curwin->w_cursor.lnum || Insstart_orig.col != (colnr_T)strlen(prompt))) {
+      && (Insstart_orig.lnum != curwin->w_cursor.lnum
+          || Insstart_orig.col != (colnr_T)strlen(prompt))) {
     Insstart.lnum = curwin->w_cursor.lnum;
     Insstart.col = (colnr_T)strlen(prompt);
     Insstart_orig = Insstart;

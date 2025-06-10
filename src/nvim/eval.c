@@ -8675,8 +8675,8 @@ void invoke_prompt_callback(void)
   curwin->w_cursor.col = 0;
 
   if (curbuf->b_prompt_callback.type == kCallbackNone) {
-   pos_T next_prompt = { .lnum = curbuf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
-   RESET_FMARK(&curbuf->b_prompt_submitted, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
+    pos_T next_prompt = { .lnum = curbuf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
+    RESET_FMARK(&curbuf->b_prompt_submitted, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
     return;
   }
   char *text = ml_get(lnum_start);
@@ -8686,7 +8686,7 @@ void invoke_prompt_callback(void)
   }
 
   char *full_text = xstrdup(text);
-  for (linenr_T i = lnum_start+1; i <= lnum_last; i++) {
+  for (linenr_T i = lnum_start + 1; i <= lnum_last; i++) {
     char *half_text = concat_str(full_text, "\n");
     xfree(full_text);
     full_text = concat_str(half_text, ml_get(i));
