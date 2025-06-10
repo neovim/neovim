@@ -285,7 +285,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         // for cmdline pum, no need for context lines unless target_win is set
         context_lines = 0;
       } else {
-        // Leave two lines of context if possible
+        // Leave three lines of context if possible
         validate_cheight(target_win);
         int cline_visible_offset = target_win->w_cline_row +
                                    target_win->w_cline_height - target_win->w_wrow;
