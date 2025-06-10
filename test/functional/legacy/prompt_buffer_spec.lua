@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local feed = n.feed
+local fn = n.call
 local source = n.source
 local clear = n.clear
 local command = n.command
@@ -31,7 +32,7 @@ describe('prompt buffer', function()
           close
         else
           " Add the output above the current prompt.
-          call append(line("$") - 1, 'Command: "' . a:text . '"')
+          call append(line("$") - 1, split('Command: "' . a:text . '"', '\n'))
           " Reset &modified to allow the buffer to be closed.
           set nomodified
           call timer_start(20, {id -> TimerFunc(a:text)})
@@ -40,7 +41,7 @@ describe('prompt buffer', function()
 
       func TimerFunc(text)
         " Add the output above the current prompt.
-        call append(line("$") - 1, 'Result: "' . a:text .'"')
+        call append(line("$") - 1, split('Result: "' . a:text .'"', '\n'))
         " Reset &modified to allow the buffer to be closed.
         set nomodified
       endfunc
@@ -244,5 +245,60 @@ describe('prompt buffer', function()
       Enter
       Leave
       Close]])
+  end)
+
+  it('can insert mutli line text', function()
+    source_script()
+    feed('line 1<s-cr>line 2<s-cr>line 3')
+    screen:expect([[
+      cmd: line 1              |
+      line 2                   |
+      line 3^                   |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<cr>')
+    -- submiting multi line text works
+    screen:expect([[
+      Result: "line 1          |
+      line 2                   |
+      line 3"                  |
+      cmd: ^                    |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+  end)
+
+  it('can paste multiline text', function()
+    source_script()
+    fn('setreg', 'a', 'line 1\nline 2\nline 3')
+    feed(' <esc>"ap')
+    screen:expect([[
+      cmd:  ^line 1             |
+      line 2                   |
+      line 3                   |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+                               |
+    ]])
+    feed('i<cr>')
+    screen:expect([[
+      Result: " line 1         |
+      line 2                   |
+      line 3"                  |
+      cmd: ^                    |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
   end)
 end)
