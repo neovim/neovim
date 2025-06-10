@@ -166,6 +166,8 @@ func Test_prompt_buffer_edit()
   normal! i
   call assert_beeps('normal! dd')
   call assert_beeps('normal! ~')
+  call assert_beeps('normal! p')
+  call assert_beeps('normal! P')
   call assert_beeps('normal! ra')
   call assert_beeps('normal! s')
   call assert_beeps('normal! S')
