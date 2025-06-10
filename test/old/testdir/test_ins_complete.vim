@@ -4835,4 +4835,29 @@ func Test_complete_unloaded_buf_refresh_always()
   delfunc TestComplete
 endfunc
 
+func Test_complete_fuzzy_omnifunc_backspace()
+  let g:do_complete = v:false
+  func Omni_test(findstart, base)
+    if a:findstart
+      let g:do_complete = !g:do_complete
+    endif
+    if g:do_complete
+      return a:findstart ? 0 : [#{word: a:base .. 'def'}, #{word: a:base .. 'ghi'}]
+    endif
+    return a:findstart ? -3 : {}
+  endfunc
+
+  new
+  redraw  " need this to prevent NULL dereference in Nvim
+  setlocal omnifunc=Omni_test
+  setlocal completeopt=menuone,fuzzy,noinsert
+  call setline(1, 'abc')
+  call feedkeys("A\<C-X>\<C-O>\<BS>\<Esc>0", 'tx!')
+  call assert_equal('ab', getline(1))
+
+  bwipe!
+  delfunc Omni_test
+  unlet g:do_complete
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

@@ -1339,13 +1339,15 @@ static int cp_compare_nearest(const void *a, const void *b)
 /// Set fuzzy score.
 static void set_fuzzy_score(void)
 {
-  if (compl_leader.data != NULL && compl_leader.size > 0) {
-    compl_T *comp = compl_first_match;
-    do {
-      comp->cp_score = fuzzy_match_str(comp->cp_str.data, compl_leader.data);
-      comp = comp->cp_next;
-    } while (comp != NULL && !is_first_match(comp));
+  if (!compl_first_match || compl_leader.data == NULL || compl_leader.size == 0) {
+    return;
   }
+
+  compl_T *comp = compl_first_match;
+  do {
+    comp->cp_score = fuzzy_match_str(comp->cp_str.data, compl_leader.data);
+    comp = comp->cp_next;
+  } while (comp != NULL && !is_first_match(comp));
 }
 
 /// Sort completion matches, excluding the node that contains the leader.
