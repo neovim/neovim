@@ -326,7 +326,6 @@ describe('prompt buffer', function()
                                |
     ]])
 
-
     -- can undo edits until prompt has been submitted
     feed('u')
     screen:expect([[

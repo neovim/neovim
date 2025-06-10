@@ -8705,7 +8705,6 @@ void invoke_prompt_callback(void)
   // clear undo history on submit
   u_clearallandblockfree(curbuf);
 
-
   pos_T next_prompt = { .lnum = curbuf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
   RESET_FMARK(&curbuf->b_prompt_submitted, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
 }
