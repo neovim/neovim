@@ -81,7 +81,6 @@ Restart Nvim
                 Note: If the current UI hasn't implemented the "restart" UI
                 event, this command is equivalent to `:qall`.
                 Note: Only works if the UI and server are on the same system.
-                Note: Not supported on Windows yet.
 
 :restart!
                 Force restarts the Nvim server, abandoning unsaved buffers.
