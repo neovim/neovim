@@ -8674,6 +8674,9 @@ void invoke_prompt_callback(void)
   curwin->w_cursor.lnum = lnum_last + 1;
   curwin->w_cursor.col = 0;
 
+  // clear undo history on submit
+  u_clearallandblockfree(curbuf);
+
   if (curbuf->b_prompt_callback.type == kCallbackNone) {
     pos_T next_prompt = { .lnum = curbuf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
     RESET_FMARK(&curbuf->b_prompt_submitted, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
@@ -8699,7 +8702,7 @@ void invoke_prompt_callback(void)
   callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
   tv_clear(&argv[0]);
   tv_clear(&rettv);
-  u_clearall(curbuf);
+
   pos_T next_prompt = { .lnum = curbuf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
   RESET_FMARK(&curbuf->b_prompt_submitted, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
 }
