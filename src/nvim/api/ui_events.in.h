@@ -177,5 +177,13 @@ void msg_history_show(Array entries)
 void msg_history_clear(void)
   FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
 
+// This UI event is currently undocumented.
+// - When the server needs to intentionally exit with an exit code, and there is no
+//   message in server stderr for the user, this event is sent with positive `status`
+//   argument, to indicate that the UI should exit normally with `status`.
+// - When the server has crashed or there is a message in server stderr for the user,
+//   this event is not sent, and the UI should make server stderr visible.
+// - When :detach is used on the server, this event is sent with a zero `status`
+//   argument, to indicate that the UI shouldn't wait for server exit.
 void error_exit(Integer status)
-  FUNC_API_SINCE(12);
+  FUNC_API_SINCE(12) FUNC_API_CLIENT_IMPL;

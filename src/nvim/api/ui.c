@@ -73,11 +73,25 @@ static void remote_ui_destroy(RemoteUI *ui)
   xfree(ui);
 }
 
-void remote_ui_disconnect(uint64_t channel_id)
+/// Removes the client on the given channel from the list of UIs.
+///
+/// @param err  if non-NULL and there is no UI on the channel, set an error
+/// @param send_error_exit  send an "error_exit" event with 0 status first
+void remote_ui_disconnect(uint64_t channel_id, Error *err, bool send_error_exit)
 {
   RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
   if (!ui) {
+    if (err != NULL) {
+      api_set_error(err, kErrorTypeException,
+                    "UI not attached to channel: %" PRId64, channel_id);
+    }
     return;
+  }
+  if (send_error_exit) {
+    MAXSIZE_TEMP_ARRAY(args, 1);
+    ADD_C(args, INTEGER_OBJ(0));
+    push_call(ui, "error_exit", args);
+    ui_flush_buf(ui);
   }
   pmap_del(uint64_t)(&connected_uis, channel_id, NULL);
   ui_detach_impl(ui, channel_id);
@@ -233,12 +247,7 @@ void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
 void nvim_ui_detach(uint64_t channel_id, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
-  if (!map_has(uint64_t, &connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException,
-                  "UI not attached to channel: %" PRId64, channel_id);
-    return;
-  }
-  remote_ui_disconnect(channel_id);
+  remote_ui_disconnect(channel_id, err, false);
 }
 
 /// Sends a "restart" UI event to the UI on the given channel.

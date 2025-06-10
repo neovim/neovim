@@ -5560,8 +5560,8 @@ static void ex_detach(exarg_T *eap)
   if (eap && eap->forceit) {
     emsg("bang (!) not supported yet");
   } else {
-    // 1. (TODO) Send "detach" UI-event (notification only).
-    // 2. Perform server-side `nvim_ui_detach`.
+    // 1. Send "error_exit" UI-event (notification only).
+    // 2. Perform server-side UI detach.
     // 3. Close server-side channel without self-exit.
 
     if (!current_ui) {
@@ -5578,7 +5578,7 @@ static void ex_detach(exarg_T *eap)
 
     // Server-side UI detach. Doesn't close the channel.
     Error err2 = ERROR_INIT;
-    nvim_ui_detach(chan->id, &err2);
+    remote_ui_disconnect(chan->id, &err2, true);
     if (ERROR_SET(&err2)) {
       emsg(err2.msg);  // UI disappeared already?
       api_clear_error(&err2);

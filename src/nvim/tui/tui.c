@@ -142,7 +142,6 @@ struct TUIData {
   char *space_buf;
   size_t space_buf_len;
   bool stopped;
-  int seen_error_exit;
   int width;
   int height;
   bool rgb;
@@ -165,7 +164,6 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   tui->is_starting = true;
   tui->screenshot = NULL;
   tui->stopped = false;
-  tui->seen_error_exit = 0;
   tui->loop = &main_loop;
   tui->url = -1;
 
@@ -568,14 +566,16 @@ static void terminfo_disable(TUIData *tui)
 /// Disable the alternate screen and prepare for the TUI to close.
 static void terminfo_stop(TUIData *tui)
 {
-  if (ui_client_exit_status == 0) {
-    ui_client_exit_status = tui->seen_error_exit;
+  if (ui_client_exit_status == 0 && ui_client_error_exit > 0) {
+    ui_client_exit_status = ui_client_error_exit;
   }
 
-  // if nvim exited with nonzero status, without indicated this was an
+  // If Nvim exited with nonzero status, without indicating this was an
   // intentional exit (like `:1cquit`), it likely was an internal failure.
-  // Don't clobber the stderr error message in this case.
-  if (ui_client_exit_status == tui->seen_error_exit) {
+  // Don't clobber the stderr error message in this case. #21608
+  if (ui_client_exit_status == MAX(ui_client_error_exit, 0)) {
+    // Position the cursor on the last screen line, below all the text
+    cursor_goto(tui, tui->height - 1, 0);
     // Exit alternate screen.
     unibi_out(tui, unibi_exit_ca_mode);
   }
@@ -612,12 +612,6 @@ static void tui_terminal_after_startup(TUIData *tui)
   // 2.3 bug(?) which caused slow drawing during startup.  #7649
   unibi_out_ext(tui, tui->unibi_ext.enable_focus_reporting);
   flush_buf(tui);
-}
-
-void tui_error_exit(TUIData *tui, Integer status)
-  FUNC_ATTR_NONNULL_ALL
-{
-  tui->seen_error_exit = (int)status;
 }
 
 void tui_stop(TUIData *tui)
@@ -660,8 +654,6 @@ static void tui_terminal_stop(TUIData *tui)
   FUNC_ATTR_NONNULL_ALL
 {
   tinput_stop(&tui->input);
-  // Position the cursor on the last screen line, below all the text
-  cursor_goto(tui, tui->height - 1, 0);
   terminfo_stop(tui);
 }
 

@@ -33,6 +33,28 @@ local assert_log = t.assert_log
 
 local testlog = 'Xtest-tui-log'
 
+describe('TUI', function()
+  it('exit status 1 and error message with server --listen error #34365', function()
+    clear()
+    local addr_in_use = api.nvim_get_vvar('servername')
+    local screen = tt.setup_child_nvim(
+      { '--listen', addr_in_use, '-u', 'NONE', '-i', 'NONE' },
+      { extra_rows = 10, cols = 60 }
+    )
+    -- When the address is very long, the error message may be only partly visible.
+    if #addr_in_use <= 600 then
+      screen:expect({
+        any = vim.pesc(
+          ('%s: Failed to --listen: address already in use:'):format(
+            is_os('win') and 'nvim.exe' or 'nvim'
+          )
+        ),
+      })
+    end
+    screen:expect({ any = vim.pesc('[Process exited 1]') })
+  end)
+end)
+
 describe('TUI :detach', function()
   it('does not stop server', function()
     local job_opts = { env = {} }
@@ -157,10 +179,6 @@ describe('TUI :detach', function()
   end)
 end)
 
-if t.skip(is_os('win')) then
-  return
-end
-
 describe('TUI :restart', function()
   it('resets buffer to blank', function()
     clear()
@@ -184,6 +202,19 @@ describe('TUI :restart', function()
       'echo getpid()',
     })
 
+    --- FIXME: On Windows spaces at the end of a screen line may have wrong attrs.
+    --- Remove this function when that's fixed.
+    ---
+    --- @param s string
+    local function screen_expect(s)
+      if is_os('win') then
+        s = s:gsub(' +%}%|\n', '{MATCH: *}}{MATCH: *}|\n')
+        s = s:gsub(' *%} +%|\n', '{MATCH: *}}{MATCH: *}|\n')
+        s = s:gsub('%}%^ +%|\n', '{MATCH:[ ^]*}}{MATCH:[ ^]*}|\n')
+      end
+      screen:expect(s)
+    end
+
     local s0 = [[
       ^                                                  |
       {4:~                                                 }|*3
@@ -191,11 +222,20 @@ describe('TUI :restart', function()
       {MATCH:%d+ +}|
       {3:-- TERMINAL --}                                    |
     ]]
-    screen:expect(s0)
-    local server_session = n.connect(server_pipe)
-    local _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
+    screen_expect(s0)
+
+    local server_session --[[@type test.Session]]
+    local server_pid --[[@type any]]
+    -- FIXME: On Windows connect() hangs.
+    if not is_os('win') then
+      server_session = n.connect(server_pipe)
+      _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
+    end
 
     local function restart_pid_check()
+      if is_os('win') then
+        return
+      end
       server_session:close()
       server_session = n.connect(server_pipe)
       local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
@@ -211,11 +251,11 @@ describe('TUI :restart', function()
 
     -- Check ":restart" on an unmodified buffer.
     tt.feed_data(':restart\013')
-    screen:expect(s0)
+    screen_expect(s0)
     restart_pid_check()
 
     tt.feed_data('ithis will be removed\027')
-    screen:expect([[
+    screen_expect([[
       this will be remove^d                              |
       {4:~                                                 }|*3
       {5:[No Name] [+]                                     }|
@@ -225,7 +265,7 @@ describe('TUI :restart', function()
 
     -- Check ":restart" on a modified buffer.
     tt.feed_data(':restart\013')
-    screen:expect([[
+    screen_expect([[
       this will be removed                              |
       {5:                                                  }|
       {8:E37: No write since last change}                   |
@@ -237,11 +277,11 @@ describe('TUI :restart', function()
 
     -- Check ":restart!".
     tt.feed_data(':restart!\013')
-    screen:expect(s0)
+    screen_expect(s0)
     restart_pid_check()
 
     tt.feed_data(':echo\n')
-    screen:expect([[
+    screen_expect([[
       ^                                                  |
       {4:~                                                 }|*3
       {5:[No Name]                                         }|
@@ -251,11 +291,11 @@ describe('TUI :restart', function()
 
     -- No --listen conflict when server exit is delayed.
     feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd.restart()\n')
-    screen:expect(s0)
+    screen_expect(s0)
     restart_pid_check()
 
     screen:try_resize(60, 6)
-    screen:expect([[
+    screen_expect([[
       ^                                                            |
       {4:~                                                           }|*2
       {5:[No Name]                                                   }|
@@ -265,7 +305,7 @@ describe('TUI :restart', function()
 
     --- Check that ":restart" uses the updated size after terminal resize.
     tt.feed_data(':restart\013')
-    screen:expect([[
+    screen_expect([[
       ^                                                            |
       {4:~                                                           }|*2
       {5:[No Name]                                                   }|
@@ -275,6 +315,10 @@ describe('TUI :restart', function()
     restart_pid_check()
   end)
 end)
+
+if t.skip(is_os('win')) then
+  return
+end
 
 describe('TUI', function()
   local screen --[[@type test.functional.ui.screen]]
@@ -2227,15 +2271,20 @@ describe('TUI', function()
 
   it('no assert failure on deadly signal #21896', function()
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen:expect {
-      grid = [[
+    screen:expect([[
       Nvim: Caught deadly signal 'SIGTERM'              |
                                                         |
       [Process exited 1]^                                |
                                                         |*3
       {3:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
+  end)
+
+  it('exit status 1 and error message with deadly signal sent to server', function()
+    local _, server_pid = child_session:request('nvim_call_function', 'getpid', {})
+    exec_lua([[vim.uv.kill(..., 'sigterm')]], server_pid)
+    screen:expect({ any = vim.pesc([[Nvim: Caught deadly signal 'SIGTERM']]) })
+    screen:expect({ any = vim.pesc('[Process exited 1]') })
   end)
 
   it('no stack-use-after-scope with cursor color #22432', function()
