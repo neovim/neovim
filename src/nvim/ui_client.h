@@ -17,11 +17,12 @@ EXTERN sattr_T *grid_line_buf_attr INIT( = NULL);
 // Client-side UI channel. Zero during early startup or if not a (--remote-ui) UI client.
 EXTERN uint64_t ui_client_channel_id INIT( = 0);
 
-// exit status from embedded nvim process
-EXTERN int ui_client_exit_status INIT( = 0);
+/// `status` argument of the last "error_exit" UI event, or -1 if none has been seen.
+/// NOTE: This assumes "error_exit" never has a negative `status` argument.
+EXTERN int ui_client_error_exit INIT( = -1);
 
-// TODO(bfredl): the current structure for how tui and ui_client.c communicate is a bit awkward.
-// This will be restructured as part of The UI Devirtualization Project.
+/// Server exit code.
+EXTERN int ui_client_exit_status INIT( = 0);
 
 /// Whether ui client has sent nvim_ui_attach yet
 EXTERN bool ui_client_attached INIT( = false);
