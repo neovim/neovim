@@ -255,7 +255,7 @@ void screenclear(void)
   compute_cmdrow();
   msg_row = cmdline_row;  // put cursor on last line for messages
   msg_col = 0;
-  msg_scrolled = 0;  // can't scroll back
+  msg_reset_scroll();     // can't scroll back
   msg_didany = false;
   msg_didout = false;
   if (HL_ATTR(HLF_MSG) > 0 && msg_use_grid() && msg_grid.chars) {
@@ -500,7 +500,7 @@ int update_screen(void)
   }
 
   // if the screen was scrolled up when displaying a message, scroll it down
-  if ((msg_scrolled || msg_grid_invalid) && !cmdline_number_prompt()) {
+  if (msg_scrolled || msg_grid_invalid) {
     clear_cmdline = true;
     int valid = MAX(Rows - msg_scrollsize(), 0);
     if (msg_grid.chars) {
