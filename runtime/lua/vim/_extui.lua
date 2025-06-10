@@ -8,12 +8,10 @@
 ---require('vim._extui').enable({
 ---  enable = true, -- Whether to enable or disable the UI.
 ---  msg = { -- Options related to the message module.
----    ---@type 'box'|'cmd' Type of window used to place messages, either in the
----    ---cmdline or in a separate message box window with ephemeral messages.
----    pos = 'cmd',
----    box = { -- Options related to the message box window.
----      timeout = 4000, -- Time a message is visible.
----    },
+---    ---@type 'cmd'|'msg' Where to place regular messages, either in the
+---    ---cmdline or in a separate ephemeral message window.
+---    target = 'cmd',
+---    timeout = 4000, -- Time a message is visible in the message window.
 ---  },
 ---})
 ---```
@@ -21,15 +19,14 @@
 ---There are four separate window types used by this interface:
 ---- "cmd": The cmdline window; also used for 'showcmd', 'showmode', 'ruler', and
 ---  messages if 'cmdheight' > 0.
----- "box": The message box window; used for messages when 'cmdheight' == 0.
----- "more": The more-prompt window; used for |:messages| and certain messages
+---- "msg": The message window; used for messages when 'cmdheight' == 0.
+---- "pager": The pager window; used for |:messages| and certain messages
 ---   that should be shown in full.
----- "prompt": The cmdline prompt window; used for prompt messages that expect
----   user input.
+---- "dialog": The dialog window; used for prompt messages that expect user input.
 ---
----These four windows are assigned the "cmdline", "msgbox", "msgmore" and
----"msgprompt" 'filetype' respectively. Use a |FileType| autocommand to configure
----any local options for these windows and their respective buffers.
+---These four windows are assigned the "cmd", "msg", "pager" and "dialog"
+---'filetype' respectively. Use a |FileType| autocommand to configure any local
+---options for these windows and their respective buffers.
 ---
 ---Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
 ---not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
@@ -59,6 +56,10 @@ local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
 ---@nodoc
 function M.enable(opts)
   vim.validate('opts', opts, 'table', true)
+  if opts.msg then
+    vim.validate('opts.msg.pos', opts.msg.pos, 'nil', true, 'nil: "pos" moved to opts.target')
+    vim.validate('opts.msg.box', opts.msg.box, 'nil', true, 'nil: "timeout" moved to opts.msg')
+  end
   ext.cfg = vim.tbl_deep_extend('keep', opts, ext.cfg)
 
   if ext.cfg.enable == false then
@@ -84,13 +85,13 @@ function M.enable(opts)
 
   -- Use MsgArea and hide search highlighting in the cmdline window.
   -- TODO: Add new highlight group/namespaces for other windows? It is
-  -- not clear if MsgArea is wanted in the box, more and prompt windows.
+  -- not clear if MsgArea is wanted in the msg, pager and dialog windows.
   api.nvim_set_hl(ext.ns, 'Normal', { link = 'MsgArea' })
   api.nvim_set_hl(ext.ns, 'Search', { link = 'MsgArea' })
   api.nvim_set_hl(ext.ns, 'CurSearch', { link = 'MsgArea' })
   api.nvim_set_hl(ext.ns, 'IncSearch', { link = 'MsgArea' })
 
-  -- The visibility and appearance of the cmdline and message box window is
+  -- The visibility and appearance of the cmdline and message window is
   -- dependent on some option values. Reconfigure windows when option value
   -- has changed and after VimEnter when the user configured value is known.
   -- TODO: Reconsider what is needed when this module is enabled by default early in startup.
@@ -101,7 +102,7 @@ function M.enable(opts)
       api.nvim_win_set_config(ext.wins.cmd, cfg)
       -- Change message position when 'cmdheight' was or becomes 0.
       if value == 0 or ext.cmdheight == 0 then
-        ext.cfg.msg.pos = value == 0 and 'box' or ext.cmdheight == 0 and 'cmd'
+        ext.cfg.msg.target = value == 0 and 'msg' or 'cmd'
         ext.msg.prev_msg = ''
       end
       ext.cmdheight = value
