@@ -92,7 +92,7 @@ describe('shada support code', function()
     eq(testfilename, fn.bufname(2))
   end)
 
-  it("does not add 'nobuflisted' buffers to 'v:oldfiles'", function()
+  it("does not add 'nobuflisted' buffers to v:oldfiles", function()
     reset("set shada='100")
     nvim_command('edit ' .. testfilename)
     nvim_command('setlocal nobuflisted')
