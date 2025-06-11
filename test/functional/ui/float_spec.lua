@@ -909,6 +909,20 @@ describe('float window', function()
     eq({ 3, 3 }, { fn.winnr(), fn.win_id2win(win) })
   end)
 
+  it('no crash for unallocated relative window grid', function()
+    local win = api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, height = 1, width = 1 })
+    exec_lua(function()
+      vim.api.nvim_create_autocmd('CmdwinEnter', {
+        callback = function()
+          vim.api.nvim_win_set_config(win, { relative = 'win', win = 0, row = 0, col = 0 })
+          vim.api.nvim__redraw({ flush = true })
+        end,
+      })
+    end)
+    feed('q:')
+    assert_alive()
+  end)
+
   local function with_ext_multigrid(multigrid)
     local screen, attrs
     before_each(function()
