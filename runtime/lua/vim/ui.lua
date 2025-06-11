@@ -235,4 +235,147 @@ function M._get_urls()
   return urls
 end
 
+M._progress = {
+  ns = {},
+}
+
+M._progress.on_new = function(ns_id, token, kind, task)
+  vim.notify(
+    string.format('START %s%s', task.title, (task.message and ' | ' .. task.message or ''))
+  )
+end
+
+M._progress.on_update = function(ns_id, token, kind, task)
+  vim.notify(
+    string.format(
+      '(%d/%d) %s%s',
+      task.done,
+      task.total,
+      task.title,
+      (task.message and ' | ' .. task.message or '')
+    )
+  )
+end
+
+M._progress.on_finish = function(ns_id, token, kind, task)
+  vim.notify(string.format('DONE %s%s', task.title, (task.message and ' | ' .. task.message or '')))
+end
+
+M._progress.on_fail = function(ns_id, token, kind, task)
+  vim.notify(string.format('FAIL %s%s', task.title, (task.message and ' | ' .. task.message or '')))
+end
+
+--- @param ns_id integer Namespace for progress source. Implementations can
+---   use to display information about the source (like name of LSP server)
+---   based on namespace's name.
+--- @param token integer|string Token to identify specific progress report
+---   within namespace.
+--- @param kind 'start'|'report'|'finish'|'fail' Stage of progress.
+--- @param opts? { title: string?, cancellable: boolean?, message: string?, total: integer?, done?: integer }
+---   Notes:
+---   - `title` is required for `'begin'` kind.
+---   - `message` can be used to show more detailed `#done / #total` progress,
+---     as is currently done by LSP servers.
+function M._progress.call(self, ns_id, token, kind, opts)
+  vim.validate('ns_id', ns_id, 'number', false)
+  vim.validate('token', token, { 'number', 'string' }, false)
+  vim.validate('kind', kind, 'string', false)
+  vim.validate('opts', opts, function(v)
+    vim.validate('opts', v, 'table', true)
+    vim.validate('opts.title', v.title, 'string', true)
+    vim.validate('opts.cancellable', v.cancellable, 'boolean', true)
+    vim.validate('opts.message', v.message, 'string', true)
+    vim.validate('opts.total', v.total, 'number', true)
+    vim.validate('opts.done', v.done, 'number', true)
+    return true
+  end, true)
+  --[[@cast opts { title: string?, cancellable: boolean?, message: string?, total: integer?, done?: integer }]]
+
+  if not self.ns[ns_id] then
+    self.ns[ns_id] = {}
+  end
+
+  if not self.ns[ns_id][token] then
+    if kind ~= 'start' then
+      error('new progress token without start: ' .. token)
+    end
+    self.ns[ns_id][token] = {}
+  elseif kind == 'start' then
+    error('progress token already started: ' .. token)
+  end
+
+  local task = self.ns[ns_id][token]
+
+  if opts.title then
+    if kind ~= 'start' then
+      error('progress title can not be set after start: ' .. token)
+    end
+    task.title = opts.title
+  end
+  if not opts.title and kind == 'start' then
+    error('progress title is required for start: ' .. token)
+  end
+
+  if opts.cancellable then
+    if kind ~= 'start' then
+      error('progress can not be set to cancellable after start: ' .. token)
+    end
+    task.cancellable = opts.cancellable
+  else
+    task.cancellable = task.cancellable or true
+  end
+
+  task.message = task.message or opts.message
+
+  if (opts.total or opts.done) and kind ~= 'report' then
+    error(
+      'can not update task progress with progress kind "'
+        .. kind
+        .. '"; use report instead: '
+        .. token
+    )
+  end
+  if opts.total and task.total and opts.total < task.total then
+    error('total can not be less than current total: ' .. token)
+  end
+  if opts.done and task.done and opts.done < task.done then
+    error('done can not be less than current done: ' .. token)
+  end
+  local done = opts.done or task.done
+  local total = opts.total or task.total or done
+  if opts.done and total and opts.done > total then
+    error('done can not be greater than total: ' .. token)
+  end
+  task.total = total
+  task.done = done
+
+  if kind == 'start' then
+    vim.schedule(function()
+      self.on_new(ns_id, token, kind, task)
+    end)
+    return
+  end
+  if kind == 'report' then
+    vim.schedule(function()
+      self.on_update(ns_id, token, kind, task)
+    end)
+    return
+  end
+
+  self.ns[ns_id][token] = nil
+  if kind == 'finish' then
+    vim.schedule(function()
+      self.on_finish(ns_id, token, kind, task)
+    end)
+  elseif kind == 'fail' then
+    vim.schedule(function()
+      self.on_fail(ns_id, token, kind, task)
+    end)
+  end
+end
+
+M.progress = setmetatable(M._progress, {
+  __call = M._progress.call,
+})
+
 return M
