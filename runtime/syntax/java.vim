@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2025 Jun 01
+" Last Change:		2025 Jun 10
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -202,30 +202,6 @@ if fnamemodify(bufname("%"), ":t") =~ '^module-info\>\%(\.class\>\)\@!'
   endif
 endif
 
-" Fancy parameterised types (JLS-17, §4.5).
-"
-" Note that false positives may elsewhere occur whenever an identifier
-" is butted against a less-than operator.  Cf. (X<Y) and (X < Y).
-if exists("g:java_highlight_generics")
-  syn keyword javaWildcardBound contained extends super
-
-  " Parameterised types are delegated to javaGenerics (s:ctx.gsg) and
-  " are not matched with javaTypeArgument.
-  exec 'syn match javaTypeArgument contained "' . s:ff.Engine('\%#=2', '') . '?\|\%(\<\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\)\[\]\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\)\%(\[\]\)*"'
-
-  for s:ctx in [{'dsg': 'javaDimExpr', 'gsg': 'javaGenerics', 'ghg': 'javaGenericsC1', 'csg': 'javaGenericsX', 'c': ''},
-      \ {'dsg': 'javaDimExprX', 'gsg': 'javaGenericsX', 'ghg': 'javaGenericsC2', 'csg': 'javaGenerics', 'c': ' contained'}]
-    " Consider array creation expressions of reifiable types.
-    exec 'syn region ' . s:ctx.dsg . ' contained transparent matchgroup=' . s:ctx.ghg . ' start="\[" end="\]" nextgroup=' . s:ctx.dsg . ' skipwhite skipnl'
-    exec 'syn region ' . s:ctx.gsg . s:ctx.c . ' transparent matchgroup=' . s:ctx.ghg . ' start=/' . s:ff.Engine('\%#=2', '') . '\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\><\%([[:space:]\n]*\%([?@]\|\<\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\)\[\]\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\)\)\@=/ end=/>/ contains=' . s:ctx.csg . ',javaAnnotation,javaTypeArgument,javaWildcardBound,javaType,@javaClasses nextgroup=' . s:ctx.dsg . ' skipwhite skipnl'
-  endfor
-
-  unlet s:ctx
-  hi def link javaWildcardBound	Question
-  hi def link javaGenericsC1	Function
-  hi def link javaGenericsC2	Type
-endif
-
 if exists("g:java_highlight_java_lang_ids")
   let g:java_highlight_all = 1
 endif
@@ -242,12 +218,15 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   syn keyword javaR_JavaLang ArithmeticException ArrayIndexOutOfBoundsException ArrayStoreException ClassCastException IllegalArgumentException IllegalMonitorStateException IllegalThreadStateException IndexOutOfBoundsException NegativeArraySizeException NullPointerException NumberFormatException RuntimeException SecurityException StringIndexOutOfBoundsException IllegalStateException UnsupportedOperationException EnumConstantNotPresentException TypeNotPresentException IllegalCallerException LayerInstantiationException WrongThreadException MatchException
   syn cluster javaClasses add=javaR_JavaLang
   hi def link javaR_JavaLang javaR_Java
-  " Member enumerations:
-  exec 'syn match javaC_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<State\>"'
-  exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<UnicodeScript\>"'
-  exec 'syn match javaC_JavaLang "\%(\<ProcessBuilder\.Redirect\.\)\@' . s:ff.Peek('24', '') . '<=\<Type\>"'
-  exec 'syn match javaC_JavaLang "\%(\<StackWalker\.\)\@' . s:ff.Peek('12', '') . '<=\<Option\>"'
-  exec 'syn match javaC_JavaLang "\%(\<System\.Logger\.\)\@' . s:ff.Peek('14', '') . '<=\<Level\>"'
+  syn keyword javaC_JavaLang Boolean Character ClassLoader Compiler Double Float Integer Long Math Number Object Process Runtime SecurityManager String StringBuffer Thread ThreadGroup Byte Short Void Package RuntimePermission StrictMath StackTraceElement ProcessBuilder StringBuilder Module ModuleLayer StackWalker Record
+  syn match   javaC_JavaLang "\<System\>"	" See javaDebug.
+  " Generic non-interfaces:
+  syn match   javaC_JavaLang "\<Class\>"
+  syn match   javaC_JavaLang "\<InheritableThreadLocal\>"
+  syn match   javaC_JavaLang "\<ThreadLocal\>"
+  syn match   javaC_JavaLang "\<Enum\>"
+  syn match   javaC_JavaLang "\<ClassValue\>"
+  exec 'syn match javaC_JavaLang "\%(\<Enum\.\)\@' . s:ff.Peek('5', '') . '<=\<EnumDesc\>"'
   " Member classes:
   exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<Subset\>"'
   exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<UnicodeBlock\>"'
@@ -255,21 +234,12 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   exec 'syn match javaC_JavaLang "\%(\<ModuleLayer\.\)\@' . s:ff.Peek('12', '') . '<=\<Controller\>"'
   exec 'syn match javaC_JavaLang "\%(\<Runtime\.\)\@' . s:ff.Peek('8', '') . '<=\<Version\>"'
   exec 'syn match javaC_JavaLang "\%(\<System\.\)\@' . s:ff.Peek('7', '') . '<=\<LoggerFinder\>"'
-  syn keyword javaC_JavaLang Boolean Character ClassLoader Compiler Double Float Integer Long Math Number Object Process Runtime SecurityManager String StringBuffer Thread ThreadGroup Byte Short Void Package RuntimePermission StrictMath StackTraceElement ProcessBuilder StringBuilder Module ModuleLayer StackWalker Record
-  syn match   javaC_JavaLang "\<System\>"	" See javaDebug.
-
-  if !exists("g:java_highlight_generics")
-    " The non-interface parameterised names of java.lang members.
-    exec 'syn match javaC_JavaLang "\%(\<Enum\.\)\@' . s:ff.Peek('5', '') . '<=\<EnumDesc\>"'
-    syn keyword javaC_JavaLang Class InheritableThreadLocal ThreadLocal Enum ClassValue
-  endif
-
-  " As of JDK 24, SecurityManager is rendered non-functional
-  "	(JDK-8338625).
-  "	(Note that SecurityException and RuntimePermission are still
-  "	not deprecated.)
-  " As of JDK 21, Compiler is no more (JDK-8205129).
-  syn keyword javaLangDeprecated Compiler SecurityManager
+  " Member enumerations:
+  exec 'syn match javaC_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<State\>"'
+  exec 'syn match javaC_JavaLang "\%(\<Character\.\)\@' . s:ff.Peek('10', '') . '<=\<UnicodeScript\>"'
+  exec 'syn match javaC_JavaLang "\%(\<ProcessBuilder\.Redirect\.\)\@' . s:ff.Peek('24', '') . '<=\<Type\>"'
+  exec 'syn match javaC_JavaLang "\%(\<StackWalker\.\)\@' . s:ff.Peek('12', '') . '<=\<Option\>"'
+  exec 'syn match javaC_JavaLang "\%(\<System\.Logger\.\)\@' . s:ff.Peek('14', '') . '<=\<Level\>"'
   syn cluster javaClasses add=javaC_JavaLang
   hi def link javaC_JavaLang javaC_Java
   syn keyword javaE_JavaLang AbstractMethodError ClassCircularityError ClassFormatError Error IllegalAccessError IncompatibleClassChangeError InstantiationError InternalError LinkageError NoClassDefFoundError NoSuchFieldError NoSuchMethodError OutOfMemoryError StackOverflowError ThreadDeath UnknownError UnsatisfiedLinkError VerifyError VirtualMachineError ExceptionInInitializerError UnsupportedClassVersionError AssertionError BootstrapMethodError
@@ -279,6 +249,9 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   syn cluster javaClasses add=javaX_JavaLang
   hi def link javaX_JavaLang javaX_Java
   syn keyword javaI_JavaLang Cloneable Runnable CharSequence Appendable Deprecated Override Readable SuppressWarnings AutoCloseable SafeVarargs FunctionalInterface ProcessHandle
+  " Generic non-classes:
+  syn match   javaI_JavaLang "\<Comparable\>"
+  syn match   javaI_JavaLang "\<Iterable\>"
   " Member interfaces:
   exec 'syn match javaI_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<UncaughtExceptionHandler\>"'
   exec 'syn match javaI_JavaLang "\%(\<ProcessHandle\.\)\@' . s:ff.Peek('14', '') . '<=\<Info\>"'
@@ -287,16 +260,10 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   exec 'syn match javaI_JavaLang "\%(\<Thread\.\)\@' . s:ff.Peek('7', '') . '<=\<Builder\>"'
   exec 'syn match javaI_JavaLang "\%(\<Thread\.Builder\.\)\@' . s:ff.Peek('15', '') . '<=\<OfPlatform\>"'
   exec 'syn match javaI_JavaLang "\%(\<Thread\.Builder\.\)\@' . s:ff.Peek('15', '') . '<=\<OfVirtual\>"'
-
-  if !exists("g:java_highlight_generics")
-    " The non-class parameterised names of java.lang members.
-    syn keyword javaI_JavaLang Comparable Iterable
-  endif
-
   syn cluster javaClasses add=javaI_JavaLang
   hi def link javaI_JavaLang javaI_Java
 
-  " Common groups for generated "javaid.vim" syntax items.
+  " Common groups for generated "javaid.vim" syntax items:
   hi def link javaR_Java javaR_
   hi def link javaC_Java javaC_
   hi def link javaE_Java javaE_
@@ -319,9 +286,35 @@ if exists("g:java_highlight_all") || exists("g:java_highlight_java") || exists("
   syn match javaLangObject "\<hashCode\>"
   syn match javaLangObject "\<toString\>"
   hi def link javaLangObject javaConstant
+
+  " As of JDK 24, SecurityManager is rendered non-functional
+  "	(JDK-8338625).
+  "	(Note that SecurityException and RuntimePermission are still
+  "	not deprecated.)
+  " As of JDK 21, Compiler is no more (JDK-8205129).
+  syn keyword javaLangDeprecated Compiler SecurityManager
 endif
 
 runtime syntax/javaid.vim
+
+" Type parameter sections of generic and parameterised types (JLS-17,
+" §4.5).
+"
+" Note that false positives may elsewhere occur whenever an identifier
+" is butted against a less-than operator.  Cf. (X<Y) and (X < Y).
+if exists("g:java_highlight_generics")
+  syn keyword javaWildcardBound contained extends super
+
+  for s:ctx in [{'gsg': 'javaGenerics', 'ghg': 'javaGenericsC1', 'csg': 'javaGenericsX', 'c': ''},
+      \ {'gsg': 'javaGenericsX', 'ghg': 'javaGenericsC2', 'csg': 'javaGenerics', 'c': ' contained'}]
+    exec 'syn region ' . s:ctx.gsg . s:ctx.c . ' transparent matchgroup=' . s:ctx.ghg . ' start=/' . s:ff.Engine('\%#=2', '') . '\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\><\%([[:space:]\n]*\%([?@]\|\<\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\)\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\)\)\@=/ end=/>/ contains=' . s:ctx.csg . ',javaAnnotation,javaWildcardBound,javaType,@javaClasses'
+  endfor
+
+  unlet s:ctx
+  hi def link javaWildcardBound	Question
+  hi def link javaGenericsC1	Function
+  hi def link javaGenericsC2	Type
+endif
 
 if exists("g:java_space_errors")
   if !exists("g:java_no_trail_space_error")
