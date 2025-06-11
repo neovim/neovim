@@ -1141,20 +1141,26 @@ local function on_code_action_results(results, opts)
   ---@param a lsp.Command|lsp.CodeAction
   local function action_filter(a)
     -- filter by specified action kind
-    if opts and opts.context and opts.context.only then
-      if not a.kind then
-        return false
-      end
-      local found = false
-      for _, o in ipairs(opts.context.only) do
-        -- action kinds are hierarchical with . as a separator: when requesting only 'type-annotate'
-        -- this filter allows both 'type-annotate' and 'type-annotate.foo', for example
-        if a.kind == o or vim.startswith(a.kind, o .. '.') then
-          found = true
-          break
+    if opts and opts.context then
+      if opts.context.only then
+        if not a.kind then
+          return false
+        end
+        local found = false
+        for _, o in ipairs(opts.context.only) do
+          -- action kinds are hierarchical with . as a separator: when requesting only 'type-annotate'
+          -- this filter allows both 'type-annotate' and 'type-annotate.foo', for example
+          if a.kind == o or vim.startswith(a.kind, o .. '.') then
+            found = true
+            break
+          end
+        end
+        if not found then
+          return false
         end
       end
-      if not found then
+      -- Only show disabled code actions when the trigger kind is "Invoked".
+      if a.disabled and opts.context.triggerKind ~= lsp.protocol.CodeActionTriggerKind.Invoked then
         return false
       end
     end
@@ -1223,6 +1229,11 @@ local function on_code_action_results(results, opts)
       return
     end
 
+    if action.disabled then
+      vim.notify(action.disabled.reason, vim.log.levels.ERROR)
+      return
+    end
+
     if not (action.edit and action.command) and client:supports_method(ms.codeAction_resolve) then
       client:request(ms.codeAction_resolve, action, function(err, resolved_action)
         if err then
@@ -1252,6 +1263,10 @@ local function on_code_action_results(results, opts)
   local function format_item(item)
     local clients = lsp.get_clients({ bufnr = item.ctx.bufnr })
     local title = item.action.title:gsub('\r\n', '\\r\\n'):gsub('\n', '\\n')
+
+    if item.action.disabled then
+      title = title .. ' (disabled)'
+    end
 
     if #clients == 1 then
       return title
