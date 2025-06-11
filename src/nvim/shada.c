@@ -1906,7 +1906,11 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
       }
       const char *const fname = entry.data.filemark.fname;
       cstr_t *key = NULL;
-      ptr_t *val = pmap_put_ref(cstr_t)(&wms->file_marks, fname, &key, NULL);
+      bool new_item = false;
+      ptr_t *val = pmap_put_ref(cstr_t)(&wms->file_marks, fname, &key, &new_item);
+      if (new_item) {
+        *key = xstrdup(fname);
+      }
       if (*val == NULL) {
         *val = xcalloc(1, sizeof(FileMarks));
       }
@@ -2530,7 +2534,12 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
       }
       const void *local_marks_iter = NULL;
       const char *const fname = buf->b_ffname;
-      ptr_t *val = pmap_put_ref(cstr_t)(&wms->file_marks, fname, NULL, NULL);
+      cstr_t *map_key = NULL;
+      bool new_item = false;
+      ptr_t *val = pmap_put_ref(cstr_t)(&wms->file_marks, fname, &map_key, &new_item);
+      if (new_item) {
+        *map_key = xstrdup(fname);
+      }
       if (*val == NULL) {
         *val = xcalloc(1, sizeof(FileMarks));
       }
@@ -2711,7 +2720,9 @@ shada_write_exit:
       hms_dealloc(&wms->hms[i]);
     }
   }
-  map_foreach_value(&wms->file_marks, val, {
+  const char *stored_key = NULL;
+  map_foreach(&wms->file_marks, stored_key, val, {
+    xfree((char *)stored_key);
     xfree(val);
   })
   map_destroy(cstr_t, &wms->file_marks);
