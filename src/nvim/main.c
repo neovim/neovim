@@ -654,9 +654,9 @@ int main(int argc, char **argv)
   ILOG("starting main loop");
 
 
-  if(setjmp(my_jump_buffer)==0){
+  //if(setjmp(my_jump_buffer)==0){
     normal_enter(false, false);
-  }
+  //}
 #if defined(MSWIN) && !defined(MAKE_LIB)
   xfree(argv);
 #endif
@@ -694,7 +694,7 @@ void os_exit(int r)
   free_all_mem();
 #endif
 
-  longjmp(my_jump_buffer,1);
+  //longjmp(my_jump_buffer,1);
   exit(r);
 }
 

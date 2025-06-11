@@ -40,7 +40,8 @@ target_link_libraries(main_lib INTERFACE
   lpeg
   treesitter
   unibilium
-  utf8proc)
+  utf8proc
+)
 target_link_libraries(nlua0 PUBLIC lpeg)
 
 if(ENABLE_LIBINTL)
@@ -73,6 +74,9 @@ else()
   endif()
 endif()
 
+target_link_libraries(main_lib INTERFACE
+  ${LIBUV_LIBRARY}
+)
 #-------------------------------------------------------------------------------
 # Compiler and linker options
 #-------------------------------------------------------------------------------

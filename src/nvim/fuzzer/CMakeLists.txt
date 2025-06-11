@@ -1,4 +1,4 @@
-
+#return()
 add_library(fuzzer_lib INTERFACE)
 
 set(INIT_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/init.sh")
@@ -40,3 +40,4 @@ target_link_options(fuzzer_test PRIVATE  ${SANITIZER_LINK})
 
 add_executable(fuzzer_afl fuzzer_afl.c fuzzer.c)
 target_link_libraries(fuzzer_afl fuzzer_lib libuv)
+target_link_libraries(fuzzer_afl "${PROJECT_SOURCE_DIR}/.deps/usr/lib/libuv.a")

@@ -15,7 +15,7 @@
 extern int nvim_main(int argc, char **argv);
 
 
-static void test_base_path_join(char* buf,size_t buf_size, const char* test_base, const char* to_append){
+void test_base_path_join(char* buf,size_t buf_size, const char* test_base, const char* to_append){
   snprintf(buf, buf_size, "%s/%s", test_base, to_append);
 }
 
