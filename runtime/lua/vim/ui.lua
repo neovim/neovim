@@ -235,6 +235,20 @@ function M._get_urls()
   return urls
 end
 
+---@alias vim.ui.progress.Token integer|string
+---@class vim.ui.progress.Task
+---@field title string
+---@field message? string
+---@field cancellable boolean
+---@field total? integer
+---@field done? integer
+
+---@class vim.ui.progress.Progress
+---@field ns table<integer, table<vim.ui.progress.Token, vim.ui.progress.Task>>
+---@field on_new fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil
+---@field on_update fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil
+---@field on_finish fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil
+---@field on_fail fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil
 M._progress = {
   ns = {},
 }
@@ -268,7 +282,7 @@ end
 --- @param ns_id integer Namespace for progress source. Implementations can
 ---   use to display information about the source (like name of LSP server)
 ---   based on namespace's name.
---- @param token integer|string Token to identify specific progress report
+--- @param token vim.ui.progress.Token Token to identify specific progress report
 ---   within namespace.
 --- @param kind 'start'|'report'|'finish'|'fail' Stage of progress.
 --- @param opts? { title: string?, cancellable: boolean?, message: string?, total: integer?, done?: integer }
@@ -289,7 +303,7 @@ function M._progress.call(self, ns_id, token, kind, opts)
     vim.validate('opts.done', v.done, 'number', true)
     return true
   end, true)
-  --[[@cast opts { title: string?, cancellable: boolean?, message: string?, total: integer?, done?: integer }]]
+  --[[@cast opts -nil]]
 
   if not self.ns[ns_id] then
     self.ns[ns_id] = {}
@@ -299,6 +313,7 @@ function M._progress.call(self, ns_id, token, kind, opts)
     if kind ~= 'start' then
       error('new progress token without start: ' .. token)
     end
+    ---@diagnostic disable-next-line: missing-fields
     self.ns[ns_id][token] = {}
   elseif kind == 'start' then
     error('progress token already started: ' .. token)
