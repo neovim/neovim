@@ -586,6 +586,7 @@ function Screen:expect(expected, attr_ids, ...)
             after = after:sub(e + 1)
           end
         end
+        pat = pat and '^' .. pat .. '$'
         if row ~= actual_rows[i] and (not pat or not actual_rows[i]:match(pat)) then
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
           if i <= #actual_rows then

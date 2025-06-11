@@ -113,11 +113,13 @@ describe('TUI :detach', function()
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
     }, job_opts)
 
+    --- FIXME: On Windows spaces at the end of a screen line may have wrong attrs.
+    --- Remove the {MATCH:} when that's fixed.
     tt.feed_data('iHello, World')
     screen:expect([[
       Hello, World^                                      |
       {4:~                                                 }|*3
-      {MATCH:No Name}
+      {5:[No Name] [+]{MATCH: *}}{MATCH: *}|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
