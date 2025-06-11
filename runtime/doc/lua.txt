@@ -2578,6 +2578,25 @@ vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
 ==============================================================================
 Lua module: vim.ui                                                    *vim.ui*
 
+*vim.ui.progress.Progress*
+
+    Fields: ~
+      • {ns}         (`table<integer, table<vim.ui.progress.Token, vim.ui.progress.Task>>`)
+      • {on_new}     (`fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil`)
+      • {on_update}  (`fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil`)
+      • {on_finish}  (`fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil`)
+      • {on_fail}    (`fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil`)
+
+*vim.ui.progress.Task*
+
+    Fields: ~
+      • {title}        (`string`)
+      • {message}?     (`string`)
+      • {cancellable}  (`boolean`)
+      • {total}?       (`integer`)
+      • {done}?        (`integer`)
+
+
 vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
     Prompts the user for input, allowing arbitrary (potentially asynchronous)
     work until `on_confirm`.
