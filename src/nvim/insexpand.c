@@ -2106,6 +2106,7 @@ static bool ins_compl_need_restart(void)
 /// May also search for matches again if the previous search was interrupted.
 static void ins_compl_new_leader(void)
 {
+  unsigned cur_cot_flags = get_cot_flags();
   ins_compl_del_pum();
   ins_compl_delete(true);
   ins_compl_insert_bytes(compl_leader.data + get_compl_len(), -1);
@@ -2127,19 +2128,18 @@ static void ins_compl_new_leader(void)
     compl_restarting = false;
   }
 
-  // When 'cot' contains "fuzzy" set the cp_score
-  if (get_cot_flags() & kOptCotFlagFuzzy) {
+  // When 'cot' contains "fuzzy" set the cp_score and maybe sort
+  if (cur_cot_flags & kOptCotFlagFuzzy) {
     set_fuzzy_score();
-  }
-  // Sort the matches linked list based on fuzzy score
-  unsigned cur_cot_flags = get_cot_flags();
-  if ((cur_cot_flags & kOptCotFlagFuzzy) && !(cur_cot_flags & kOptCotFlagNosort)) {
-    sort_compl_match_list(cp_compare_fuzzy);
-    if ((cur_cot_flags & kOptCotFlagNoinsert) && !(cur_cot_flags & kOptCotFlagNoselect)
-        && compl_first_match) {
-      compl_shown_match = compl_first_match;
-      if (compl_shows_dir_forward()) {
-        compl_shown_match = compl_first_match->cp_next;
+    // Sort the matches linked list based on fuzzy score
+    if (!(cur_cot_flags & kOptCotFlagNosort)) {
+      sort_compl_match_list(cp_compare_fuzzy);
+      if ((cur_cot_flags & (kOptCotFlagNoinsert|kOptCotFlagNoselect)) == kOptCotFlagNoinsert
+          && compl_first_match) {
+        compl_shown_match = compl_first_match;
+        if (compl_shows_dir_forward()) {
+          compl_shown_match = compl_first_match->cp_next;
+        }
       }
     }
   }
