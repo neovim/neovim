@@ -403,8 +403,7 @@ function protocol.make_client_capabilities()
         },
 
         overlappingTokenSupport = true,
-        -- TODO(jdrouhard): Add support for this
-        multilineTokenSupport = false,
+        multilineTokenSupport = true,
         serverCancelSupport = false,
         augmentsSyntaxTokens = true,
       },
