@@ -125,4 +125,32 @@ describe(':terminal', function()
     eq(2, eval('winnr()'))
     eq('t', eval('mode(1)'))
   end)
+
+  it("non-terminal opened in Terminal mode applies 'scrolloff' #34447", function()
+    api.nvim_set_option_value('scrolloff', 5, {})
+    api.nvim_set_option_value('showtabline', 0, {})
+    screen:try_resize(78, 10)
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    n.exec_lua([[
+      vim.api.nvim_create_autocmd({ 'BufEnter' }, {
+        callback = function()
+          vim.schedule(function() vim.fn.line('w0') end)
+        end,
+      })
+    ]])
+    n.add_builddir_to_rtp()
+    n.exec('tab help api-types')
+    screen:expect([[
+                                                                                    |
+      ==============================================================================|
+      API Definitions                                         *api-definitions*     |
+                                                                                    |
+                                                              ^*api-types*           |
+      The Nvim C API defines custom types for all function parameters. Some are just|
+      typedefs around C99 standard types, others are Nvim-defined data structures.  |
+                                                                                    |
+      Basic types ~                                                                 |
+                                                                                    |
+    ]])
+  end)
 end)
