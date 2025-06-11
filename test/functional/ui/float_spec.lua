@@ -6225,6 +6225,19 @@ describe('float window', function()
         test_float_mouse_no_focus()
       end)
 
+      it(':help (focusable=false, hide=true)', function()
+        n.add_builddir_to_rtp()
+        command('help')
+        local unfocusable_win =
+          api.nvim_open_win(0, false, { focusable = false, relative = 'editor', width = 1, height = 1, row = 0, col = 0 })
+        local hide_win = api.nvim_open_win(0, false, { hide = true, relative = 'editor', width = 1, height = 1, row = 0, col = 0 })
+        command('helpclose')
+        command('help')
+        local cwin = curwin()
+        neq(unfocusable_win, cwin)
+        neq(hide_win, cwin)
+      end)
+
       it('j', function()
         feed('<c-w>ji') -- INSERT to trigger screen change
         if multigrid then
