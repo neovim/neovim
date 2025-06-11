@@ -463,7 +463,8 @@ static void tk_getkeys(TermInput *input, bool force)
       handle_modereport(input, &key);
     } else if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
       handle_unknown_csi(input, &key);
-    } else if (key.type == TERMKEY_TYPE_OSC || key.type == TERMKEY_TYPE_DCS) {
+    } else if (key.type == TERMKEY_TYPE_OSC || key.type == TERMKEY_TYPE_DCS
+               || key.type == TERMKEY_TYPE_APC) {
       handle_term_response(input, &key);
     }
   }
@@ -599,6 +600,9 @@ static void handle_term_response(TermInput *input, const TermKeyKey *key)
       break;
     case TERMKEY_TYPE_DCS:
       kv_printf(response, "\x1bP%s", str);
+      break;
+    case TERMKEY_TYPE_APC:
+      kv_printf(response, "\x1b_%s", str);
       break;
     default:
       // Key type already checked for OSC/DCS in termkey_interpret_string

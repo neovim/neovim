@@ -182,6 +182,9 @@ static void print_key(TermKey *tk, TermKeyKey *key)
   case TERMKEY_TYPE_OSC:
     fprintf(stderr, "Operating System Control");
     break;
+  case TERMKEY_TYPE_APC:
+    fprintf(stderr, "Application Program Command");
+    break;
   case TERMKEY_TYPE_UNKNOWN_CSI:
     fprintf(stderr, "unknown CSI\n");
     break;
@@ -231,7 +234,8 @@ TermKeyResult termkey_interpret_string(TermKey *tk, const TermKeyKey *key, const
   }
 
   if (key->type != TERMKEY_TYPE_DCS
-      && key->type != TERMKEY_TYPE_OSC) {
+      && key->type != TERMKEY_TYPE_OSC
+      && key->type != TERMKEY_TYPE_APC) {
     return TERMKEY_RES_NONE;
   }
 
@@ -1269,6 +1273,9 @@ size_t termkey_strfkey(TermKey *tk, char *buffer, size_t len, TermKeyKey *key, T
     break;
   case TERMKEY_TYPE_OSC:
     l = (size_t)snprintf(buffer + pos, len - pos, "OSC");
+    break;
+  case TERMKEY_TYPE_APC:
+    l = (size_t)snprintf(buffer + pos, len - pos, "APC");
     break;
   case TERMKEY_TYPE_UNKNOWN_CSI:
     l = (size_t)snprintf(buffer + pos, len - pos, "CSI %c", key->code.number & 0xff);

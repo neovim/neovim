@@ -1045,7 +1045,7 @@ TermRequest			When a |:terminal| child process emits an OSC,
 				autocommand defined without |autocmd-nested|.
 
 							*TermResponse*
-TermResponse			When Nvim receives an OSC or DCS response from
+TermResponse			When Nvim receives an OSC, DCS, or APC response from
 				the host terminal. Sets |v:termresponse|. The
 				|event-data| is a table with the following fields:
 

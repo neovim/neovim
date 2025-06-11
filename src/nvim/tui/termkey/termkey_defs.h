@@ -111,6 +111,7 @@ typedef enum {
   TERMKEY_TYPE_MODEREPORT,
   TERMKEY_TYPE_DCS,
   TERMKEY_TYPE_OSC,
+  TERMKEY_TYPE_APC,
   // add other recognised types here
 
   TERMKEY_TYPE_UNKNOWN_CSI = -1,
