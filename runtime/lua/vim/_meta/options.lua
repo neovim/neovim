@@ -1184,6 +1184,9 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    completion in the preview window.  Only works in
 --- 	    combination with "menu" or "menuone".
 ---
+--- This option does not apply to `cmdline-completion`. See 'wildoptions'
+--- for that.
+---
 --- @type string
 vim.o.completeopt = "menu,popup"
 vim.o.cot = vim.o.completeopt
@@ -7924,6 +7927,9 @@ vim.go.wim = vim.go.wildmode
 --- 		is displayed per line.  Often used tag kinds are:
 --- 			d	#define
 --- 			f	function
+---
+--- This option does not apply to `ins-completion`. See 'completeopt' for
+--- that.
 ---
 --- @type string
 vim.o.wildoptions = "pum,tagfile"
