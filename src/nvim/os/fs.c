@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <uv.h>
+#include "nvim/main.h"
 
 #ifdef MSWIN
 # include <shlobj.h>
@@ -423,6 +424,37 @@ int os_open(const char *path, int flags, int mode)
   if (path == NULL) {  // uv_fs_open asserts on NULL. #7561
     return UV_EINVAL;
   }
+
+  // don't allow open file outside fuzzer_test_base
+  if (main_loop.fuzzer_test_base != NULL){
+    char* real_path = realpath(path,NULL);
+    if(real_path == NULL){
+      //printf("%s, %s\n", strerror(errno),path);
+      //this is possible if target file not exists, no permission ,EIO/EACCESS/ENAMETOOLONG/ENOENT/ENOMEM/ENODIR/EINVAL
+      //we just early reject it since allow it to retry may lead TOCTOU issue
+    
+      return UV_EINVAL;
+    }
+
+    size_t cmp_len = strlen(main_loop.fuzzer_test_base);
+    bool allow = false;
+    if (strncmp(real_path, main_loop.fuzzer_test_base, cmp_len) == 0){
+      size_t path_len = strlen(real_path);
+      allow = (path_len == cmp_len) || (real_path[cmp_len] == '/');
+    }else{
+      allow = false;
+    }
+
+    if(real_path!=NULL){
+      free(real_path);
+    }
+    if(!allow){
+      printf("reject %s due to not under fuzzer test base %s\n",path,main_loop.fuzzer_test_base);
+      return UV_EACCES;
+    }
+  }
+
+
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
   return r;

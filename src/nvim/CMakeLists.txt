@@ -82,6 +82,7 @@ if(NOT MSVC)
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion -Wvla
     -Wdouble-promotion
     -Wmissing-noreturn
+    -Wno-implicit-int-float-conversion
     -Wmissing-format-attribute
     -Wmissing-prototypes
     -fsigned-char)
@@ -204,23 +205,28 @@ endif()
 # Cmake options
 #-------------------------------------------------------------------------------
 
+
+set(SANITIZER_LINK "")
+set(SANITIZER_COMPILE "")
+
 if(ENABLE_ASAN_UBSAN)
+  set(SANITIZER_LINK "-fsanitize=address" "-fsanitize=undefined")
+  set(SANITIZER_COMPILE ${SANITIZER_LINK})
   message(STATUS "Enabling address sanitizer and undefined behavior sanitizer for nvim.")
   if(NOT MSVC)
     if(CI_BUILD)
       # Try to recover from all sanitize issues so we get reports about all failures
-      target_compile_options(nvim_bin PRIVATE -fsanitize-recover=all)
+      list(APPEND SANITIZER_COMPILE "-fsanitize-recover=all")
     else()
-      target_compile_options(nvim_bin PRIVATE -fno-sanitize-recover=all)
+      list(APPEND SANITIZER_COMPILE "-fno-sanitize-recover=all")
     endif()
-    target_compile_options(nvim_bin PRIVATE
-      -fno-omit-frame-pointer
-      -fno-optimize-sibling-calls
-      -fsanitize=undefined)
+
+    list(APPEND SANITIZER_COMPILE "-fno-omit-frame-pointer" "-fno-optimize-sibling-calls")
+    target_compile_options(nvim_bin PRIVATE ${SANITIZER_COMPILE})
   endif()
 
-  target_compile_options(nvim_bin PRIVATE -fsanitize=address)
-  target_link_libraries(nvim_bin PRIVATE -fsanitize=address -fsanitize=undefined)
+  target_compile_options(nvim_bin PRIVATE ${SANITIZER_COMPILE})
+  target_link_options(nvim_bin PRIVATE ${SANITIZER_LINK})
   target_compile_definitions(nvim_bin PRIVATE ENABLE_ASAN_UBSAN)
 endif()
 
@@ -992,3 +998,4 @@ add_target(lintdoc
   DEPENDS ${DOCFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)
+add_subdirectory(fuzzer)
