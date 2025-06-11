@@ -2720,12 +2720,10 @@ shada_write_exit:
       hms_dealloc(&wms->hms[i]);
     }
   }
-  map_foreach_value(&wms->file_marks, val, {
-    xfree(val);
-  })
   const char *stored_key = NULL;
-  map_foreach_key(&wms->file_marks, stored_key, {
+  map_foreach(&wms->file_marks, stored_key, val, {
     xfree((char *)stored_key);
+    xfree(val);
   })
   map_destroy(cstr_t, &wms->file_marks);
   set_destroy(ptr_t, &removable_bufs);
