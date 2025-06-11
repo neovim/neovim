@@ -1536,8 +1536,9 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
 ///     versions of Nvim, thus unknown keys are ignored. Clients
 ///     must only use keys defined in this or later versions of
 ///     Nvim):
-///     - "async"  if true, send as a notification. If false or unspecified,
-///                use a blocking request
+///     - "async" Indicates the preffered invocation mode. If true, send as 
+///               an async notification. If false or unspecified, use a 
+///               blocking request.
 ///     - "nargs" Number of arguments. Could be a single integer or an array
 ///                of two integers, minimum and maximum inclusive.
 ///
