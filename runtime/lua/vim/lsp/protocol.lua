@@ -344,6 +344,7 @@ function protocol.make_client_capabilities()
         tagSupport = {
           valueSet = get_value_set(constants.DiagnosticTag),
         },
+        dataSupport = true,
       },
       inlayHint = {
         dynamicRegistration = true,
@@ -527,7 +528,6 @@ function protocol.make_client_capabilities()
         prepareSupport = true,
       },
       publishDiagnostics = {
-        relatedInformation = true,
         tagSupport = {
           valueSet = get_value_set(constants.DiagnosticTag),
         },
