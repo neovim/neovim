@@ -239,13 +239,13 @@ M._progress = {
   ns = {},
 }
 
-M._progress.on_new = function(ns_id, token, kind, task)
+M._progress.on_new = function(_, _, task)
   vim.notify(
     string.format('START %s%s', task.title, (task.message and ' | ' .. task.message or ''))
   )
 end
 
-M._progress.on_update = function(ns_id, token, kind, task)
+M._progress.on_update = function(_, _, task)
   vim.notify(
     string.format(
       '(%d/%d) %s%s',
@@ -257,11 +257,11 @@ M._progress.on_update = function(ns_id, token, kind, task)
   )
 end
 
-M._progress.on_finish = function(ns_id, token, kind, task)
+M._progress.on_finish = function(_, _, task)
   vim.notify(string.format('DONE %s%s', task.title, (task.message and ' | ' .. task.message or '')))
 end
 
-M._progress.on_fail = function(ns_id, token, kind, task)
+M._progress.on_fail = function(_, _, task)
   vim.notify(string.format('FAIL %s%s', task.title, (task.message and ' | ' .. task.message or '')))
 end
 
@@ -351,13 +351,13 @@ function M._progress.call(self, ns_id, token, kind, opts)
 
   if kind == 'start' then
     vim.schedule(function()
-      self.on_new(ns_id, token, kind, task)
+      self.on_new(ns_id, token, task)
     end)
     return
   end
   if kind == 'report' then
     vim.schedule(function()
-      self.on_update(ns_id, token, kind, task)
+      self.on_update(ns_id, token, task)
     end)
     return
   end
@@ -365,11 +365,11 @@ function M._progress.call(self, ns_id, token, kind, opts)
   self.ns[ns_id][token] = nil
   if kind == 'finish' then
     vim.schedule(function()
-      self.on_finish(ns_id, token, kind, task)
+      self.on_finish(ns_id, token, task)
     end)
   elseif kind == 'fail' then
     vim.schedule(function()
-      self.on_fail(ns_id, token, kind, task)
+      self.on_fail(ns_id, token, task)
     end)
   end
 end
