@@ -1724,7 +1724,14 @@ int do_ucmd(exarg_T *eap, bool preview)
     save_current_sctx = current_sctx;
     current_sctx.sc_sid = cmd->uc_script_ctx.sc_sid;
   }
-  do_cmdline(buf, eap->ea_getline, eap->cookie,
+  exarg_T ea = {
+    .cmd = buf,
+    .line1 = 1,
+    .line2 = 1,
+    .ea_getline = eap->ea_getline,
+    .cookie = eap->cookie
+  };
+  do_cmdline(&ea,
              DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
 
   // Careful: Do not use "cmd" here, it may have become invalid if a user

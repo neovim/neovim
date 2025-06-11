@@ -1,6 +1,7 @@
 // autocmd.c: Autocommand related functions
 
 #include <assert.h>
+#include <locale.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -1864,8 +1865,15 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     const int save_did_emsg = did_emsg;
     const bool save_ex_pressedreturn = get_pressedreturn();
 
+    exarg_T ea = {
+      .cmd = NULL,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = getnextac,
+      .cookie = &patcmd
+    };
     // Execute the autocmd. The `getnextac` callback handles iteration.
-    do_cmdline(NULL, getnextac, &patcmd, DOCMD_NOWAIT | DOCMD_VERBOSE | DOCMD_REPEAT);
+    do_cmdline(&ea, DOCMD_NOWAIT | DOCMD_VERBOSE | DOCMD_REPEAT);
 
     did_emsg += save_did_emsg;
     set_pressedreturn(save_ex_pressedreturn);

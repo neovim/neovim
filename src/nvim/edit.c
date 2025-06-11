@@ -709,6 +709,7 @@ static int insert_execute(VimState *state, int key)
 
 static int insert_handle_key(InsertState *s)
 {
+  exarg_T ea;
   // The big switch to handle a character in insert mode.
   // TODO(tarruda): This could look better if a lookup table is used.
   // (similar to normal mode `nv_cmds[]`)
@@ -925,7 +926,14 @@ static int insert_handle_key(InsertState *s)
     goto check_pum;
 
   case K_COMMAND:     // <Cmd>command<CR>
-    do_cmdline(NULL, getcmdkeycmd, NULL, 0);
+    ea = (exarg_T) {
+      .cmd = NULL,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = getcmdkeycmd,
+      .cookie = NULL
+    };
+    do_cmdline(&ea, 0);
     goto check_pum;
 
   case K_LUA:

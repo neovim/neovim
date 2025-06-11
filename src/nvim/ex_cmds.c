@@ -5,6 +5,7 @@
 #include <float.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <locale.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -2714,7 +2715,14 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   curbuf->b_last_used = time(NULL);
 
   if (command != NULL) {
-    do_cmdline(command, NULL, NULL, DOCMD_VERBOSE);
+    exarg_T ea = {
+      .cmd = command,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = NULL,
+      .cookie = NULL
+    };
+    do_cmdline(&ea, DOCMD_VERBOSE);
   }
 
   if (curbuf->b_kmap_state & KEYMAP_INIT) {
@@ -4364,11 +4372,21 @@ bool do_sub_msg(bool count_only)
 static void global_exe_one(char *const cmd, const linenr_T lnum, colnr_T col1, colnr_T col2)
 {
   curwin->w_cursor.lnum = lnum;
-  curwin->w_cursor.col = 0;
+  curwin->w_cursor.col = col1;
+  exarg_T ea = {
+    .line1 = lnum,
+    .line2 = lnum,
+    .col1 = col1,
+    .col2 = col2,
+    .addr_count = 2,
+    .addr_type = ADDR_LINES
+  };
   if (*cmd == NUL || *cmd == '\n') {
-    do_cmdline("p", NULL, NULL, DOCMD_NOWAIT);
+    ea.cmd = "p";
+    do_cmdline(&ea, DOCMD_NOWAIT);
   } else {
-    do_cmdline(cmd, NULL, NULL, DOCMD_NOWAIT);
+    ea.cmd = cmd;
+    do_cmdline(&ea, DOCMD_NOWAIT);
   }
 }
 
@@ -4460,7 +4478,7 @@ void ex_global(exarg_T *eap)
     colnr_T col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : MAXCOL;
     int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
-      global_exe_one(cmd, lnum);
+      global_exe_one(cmd, lnum, col1, col2);
     }
   } else {
     int ndone = 0;
@@ -4490,7 +4508,7 @@ void ex_global(exarg_T *eap)
         smsg(0, _("Pattern not found: %s"), used_pat);
       }
     } else {
-      global_exe(cmd);
+      global_exe(cmd, eap);
     }
     ml_clearmarked();         // clear rest of the marks
   }
@@ -4498,12 +4516,11 @@ void ex_global(exarg_T *eap)
 }
 
 /// Execute `cmd` on lines marked with ml_setmarked().
-void global_exe(char *cmd, colnr_T col1, colnr_T col2)
+void global_exe(char *cmd, exarg_T *eap)
 {
   linenr_T old_lcount;      // b_ml.ml_line_count before the command
   buf_T *old_buf = curbuf;  // remember what buffer we started in
   linenr_T lnum;            // line number according to old situation
-
   // Set current position only once for a global command.
   // If global_busy is set, setpcmark() will not do anything.
   // If there is an error, global_busy will be incremented.
@@ -4519,6 +4536,10 @@ void global_exe(char *cmd, colnr_T col1, colnr_T col2)
   old_lcount = curbuf->b_ml.ml_line_count;
 
   while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
+    colnr_T col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+    colnr_T col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf,
+                                                                                      lnum) + 1;
+
     global_exe_one(cmd, lnum, col1, col2);
     os_breakcheck();
   }

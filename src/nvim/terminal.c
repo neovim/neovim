@@ -857,6 +857,7 @@ static int terminal_execute(VimState *state, int key)
   // unmerged key and modifiers to the terminal.
   int tmp_mod_mask = mod_mask;
   int mod_key = merge_modifiers(key, &tmp_mod_mask);
+  exarg_T ea;
 
   switch (mod_key) {
   case K_LEFTMOUSE:
@@ -900,7 +901,14 @@ static int terminal_execute(VimState *state, int key)
     break;
 
   case K_COMMAND:
-    do_cmdline(NULL, getcmdkeycmd, NULL, 0);
+    ea = (exarg_T) {
+      .cmd = NULL,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = getcmdkeycmd,
+      .cookie = NULL
+    };
+    do_cmdline(&ea, 0);
     break;
 
   case K_LUA:

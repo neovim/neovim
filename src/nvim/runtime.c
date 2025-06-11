@@ -2282,7 +2282,14 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
       firstline = (uint8_t *)p;
     }
     // Call do_cmdline, which will call getsourceline() to get the lines.
-    do_cmdline((char *)firstline, getsourceline, (void *)&cookie,
+    exarg_T ea = {
+      .cmd = (char *)firstline,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = getsourceline,
+      .cookie = (void *)&cookie
+    };
+    do_cmdline(&ea,
                DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
   }
   retval = OK;

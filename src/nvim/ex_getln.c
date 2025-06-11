@@ -1212,7 +1212,14 @@ static int command_line_execute(VimState *state, int key)
     if (s->c == K_EVENT) {
       state_handle_k_event();
     } else if (s->c == K_COMMAND) {
-      do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
+      exarg_T ea = {
+        .cmd = NULL,
+        .line1 = 1,
+        .line2 = 1,
+        .ea_getline = getcmdkeycmd,
+        .cookie = NULL
+      };
+      do_cmdline(&ea, DOCMD_NOWAIT);
     } else {
       map_execute_lua(false);
     }

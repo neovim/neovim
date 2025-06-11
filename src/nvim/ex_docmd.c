@@ -284,7 +284,14 @@ void do_exmode(void)
     int prev_msg_row = msg_row;
     linenr_T prev_line = curwin->w_cursor.lnum;
     cmdline_row = msg_row;
-    do_cmdline(NULL, getexline, NULL, 0);
+    exarg_T ea = {
+      .cmd = NULL,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = getexline,
+      .cookie = NULL
+    };
+    do_cmdline(&ea, 0);
     lines_left = Rows - 1;
 
     if ((prev_line != curwin->w_cursor.lnum
@@ -375,7 +382,14 @@ static void do_cmdline_end(void)
 /// Execute a simple command line.  Used for translated commands like "*".
 int do_cmdline_cmd(const char *cmd)
 {
-  return do_cmdline((char *)cmd, NULL, NULL, DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
+  exarg_T ea = {
+    .cmd = (char *)cmd,
+    .line1 = 1,
+    .line2 = 1,
+    .ea_getline = NULL,
+    .cookie = NULL
+  };
+  return do_cmdline(&ea, DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
 }
 
 /// do_cmdline(): execute one Ex command line
@@ -397,7 +411,7 @@ int do_cmdline_cmd(const char *cmd)
 /// @param cookie  argument for fgetline()
 ///
 /// @return FAIL if cmdline could not be executed, OK otherwise
-int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
+int do_cmdline(exarg_T *ea, int flags)
 {
   char *next_cmdline;                   // next cmd to execute
   char *cmdline_copy = NULL;            // copy of cmd line
@@ -419,6 +433,9 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   int *dbg_tick = NULL;                 // ptr to dbg_tick field in cookie
   struct dbg_stuff debug_saved;         // saved things for debug mode
   msglist_T *private_msg_list;
+  LineGetter fgetline = ea->ea_getline;
+  void *cookie = ea->cookie;
+  char *cmdline = ea->cmd;
 
   // "fgetline" and "cookie" passed to do_one_cmd()
   char *(*cmd_getline)(int, void *, int, bool);
@@ -672,7 +689,21 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     //    do_one_cmd() will return NULL if there is no trailing '|'.
     //    "cmdline_copy" can change, e.g. for '%' and '#' expansion.
     recursive++;
-    next_cmdline = do_one_cmd(&cmdline_copy, flags, &cstack, cmd_getline, cmd_cookie);
+    exarg_T sub_ea = {
+      .cmd = cmdline_copy,
+      .cmdlinep = &cmdline_copy,
+      .line1 = ea->line1,
+      .line2 = ea->line2,
+      .col1 = ea->col1,
+      .col2 = ea->col2,
+      .addr_count = ea->addr_count,
+      .addr_type = ea->addr_type,
+      .ea_getline = cmd_getline,
+      .cookie = cmd_cookie,
+      .cstack = &cstack,
+    };
+
+    next_cmdline = do_one_cmd(&sub_ea, flags);
     recursive--;
 
     if (cmd_cookie == (void *)&cmd_loop_cookie) {
@@ -1980,25 +2011,22 @@ static bool skip_cmd(const exarg_T *eap)
 /// This function may be called recursively!
 ///
 /// @param cookie  argument for fgetline()
-static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter fgetline,
-                        void *cookie)
+static char *do_one_cmd(exarg_T *eap, int flags)
 {
   const char *errormsg = NULL;  // error message
   const int save_reg_executing = reg_executing;
   const bool save_pending_end_reg_executing = pending_end_reg_executing;
 
-  exarg_T ea = {
-    .line1 = 1,
-    .line2 = 1,
-  };
+  exarg_T ea = *eap;
+
   ex_nesting_level++;
 
   // When the last file has not been edited :q has to be typed twice.
   if (quitmore
       // avoid that a function call in 'statusline' does this
-      && !getline_equal(fgetline, cookie, get_func_line)
+      && !getline_equal(ea.ea_getline, ea.cookie, get_func_line)
       // avoid that an autocommand, e.g. QuitPre, does this
-      && !getline_equal(fgetline, cookie, getnextac)) {
+      && !getline_equal(ea.ea_getline, ea.cookie, getnextac)) {
     quitmore--;
   }
 
@@ -2007,7 +2035,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   cmdmod_T save_cmdmod = cmdmod;
 
   // "#!anything" is handled like a comment.
-  if ((*cmdlinep)[0] == '#' && (*cmdlinep)[1] == '!') {
+  if ((*(ea.cmdlinep))[0] == '#' && (*(ea.cmdlinep))[1] == '!') {
     goto doend;
   }
 
@@ -2015,12 +2043,6 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // 2. Handle command modifiers.
 
   // The "ea" structure holds the arguments that can be used.
-  ea.cmd = *cmdlinep;
-  ea.cmdlinep = cmdlinep;
-  ea.ea_getline = fgetline;
-  ea.cookie = cookie;
-  ea.cstack = cstack;
-
   if (parse_command_modifiers(&ea, &errormsg, &cmdmod, false) == FAIL) {
     goto doend;
   }
@@ -2031,8 +2053,8 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   ea.skip = (did_emsg
              || got_int
              || did_throw
-             || (cstack->cs_idx >= 0
-                 && !(cstack->cs_flags[cstack->cs_idx] & CSF_ACTIVE)));
+             || (ea.cstack->cs_idx >= 0
+                 && !(ea.cstack->cs_flags[ea.cstack->cs_idx] & CSF_ACTIVE)));
 
   // 3. Skip over the range to find the command. Let "p" point to after it.
   //
@@ -2044,7 +2066,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   }
   char *p = find_ex_command(&ea, NULL);
 
-  profile_cmd(&ea, cstack, fgetline, cookie);
+  profile_cmd(&ea, ea.cstack, ea.ea_getline, ea.cookie);
 
   if (!exiting) {
     // May go to debug mode.  If this happens and the ">quit" debug command is
@@ -2053,7 +2075,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   }
   if (!ea.skip && got_int) {
     ea.skip = true;
-    do_intthrow(cstack);
+    do_intthrow(ea.cstack);
   }
 
   // 4. Parse a range specifier of the form: addr [,addr] [;addr] ..
@@ -2128,7 +2150,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
       // If the modifier was parsed OK the error must be in the following
       // command
-      char *cmdname = after_modifier ? after_modifier : *cmdlinep;
+      char *cmdname = after_modifier ? after_modifier : (*ea.cmdlinep);
       if (!(flags & DOCMD_VERBOSE)) {
         append_command(cmdname);
       }
@@ -2250,7 +2272,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   // For the ":make" and ":grep" commands we insert the 'makeprg'/'grepprg'
   // option here, so things like % get expanded.
-  p = replace_makeprg(&ea, p, cmdlinep);
+  p = replace_makeprg(&ea, p, ea.cmdlinep);
   if (p == NULL) {
     goto doend;
   }
@@ -2381,11 +2403,11 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // exception, or reanimate a returned function or finished script file and
   // return or finish it again.
   if (need_rethrow) {
-    do_throw(cstack);
+    do_throw(ea.cstack);
   } else if (check_cstack) {
-    if (source_finished(fgetline, cookie)) {
+    if (source_finished(ea.ea_getline, ea.cookie)) {
       do_finish(&ea, true);
-    } else if (getline_equal(fgetline, cookie, get_func_line)
+    } else if (getline_equal(ea.ea_getline, ea.cookie, get_func_line)
                && current_func_returned()) {
       do_return(&ea, true, false, NULL);
     }
@@ -2409,7 +2431,7 @@ doend:
     }
     emsg(errormsg);
   }
-  do_errthrow(cstack,
+  do_errthrow(ea.cstack,
               (ea.cmdidx != CMD_SIZE
                && !IS_USER_CMDIDX(ea.cmdidx)) ? cmdnames[(int)ea.cmdidx].cmd_name : NULL);
 
@@ -2836,6 +2858,15 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   pos_T addr;
   bool need_check_cursor = false;
   int ret = FAIL;
+
+  if (eap->line1 > 0
+      && eap->line2 > 0
+      && eap->addr_count == 2
+      && eap->addr_type == ADDR_LINES) {
+    need_check_cursor = true;
+    ret = OK;
+    goto theend;
+  }
 
   // Repeat for all ',' or ';' separated addresses.
   while (true) {
@@ -3801,7 +3832,7 @@ char *invalid_range(exarg_T *eap)
     switch (eap->addr_type) {
     case ADDR_LINES:
       if (eap->line2 > (curbuf->b_ml.ml_line_count + (eap->cmdidx == CMD_diffget))
-          || eap->col2 > ml_get_buf_len(curbuf, eap->line2)) {
+          || eap->col2 > (ml_get_buf_len(curbuf, eap->line2) + 1)) {
         return _(e_invrange);
       }
       break;
@@ -6328,9 +6359,20 @@ static void ex_operators(exarg_T *eap)
   clear_oparg(&oa);
   oa.regname = eap->regname;
   oa.start.lnum = eap->line1;
+  oa.start.col = eap->col1;
   oa.end.lnum = eap->line2;
+  oa.end.col = eap->col2;
   oa.line_count = eap->line2 - eap->line1 + 1;
-  oa.motion_type = kMTLineWise;
+
+  if (eap->line1 > 0
+      && eap->line2 > 0
+      && eap->addr_count == 2
+      && eap->addr_type == ADDR_LINES) {
+    oa.motion_type = kMTCharWise;
+  } else {
+    oa.motion_type = kMTLineWise;
+  }
+
   virtual_op = kFalse;
   if (eap->cmdidx != CMD_yank) {  // position cursor for undo
     setpcmark();
@@ -6507,7 +6549,14 @@ static void ex_at(exarg_T *eap)
   // Continue until the stuff buffer is empty and all added characters
   // have been consumed.
   while (!stuff_empty() || typebuf.tb_len > prev_len) {
-    do_cmdline(NULL, getexline, NULL, DOCMD_NOWAIT|DOCMD_VERBOSE);
+    exarg_T ea = {
+      .cmd = NULL,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = getexline,
+      .cookie = NULL
+    };
+    do_cmdline(&ea, DOCMD_NOWAIT|DOCMD_VERBOSE);
   }
 
   exec_from_reg = save_efr;
@@ -7834,7 +7883,7 @@ static void ex_folddo(exarg_T *eap)
     }
   }
 
-  global_exe(eap->arg);  // Execute the command on the marked lines.
+  global_exe(eap->arg, eap);  // Execute the command on the marked lines.
   ml_clearmarked();      // clear rest of the marks
 }
 

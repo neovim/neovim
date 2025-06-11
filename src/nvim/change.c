@@ -881,12 +881,29 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 {
   linenr_T lnum = curwin->w_cursor.lnum;
   colnr_T col = curwin->w_cursor.col;
+  return del_bytes_pos(lnum, col, count, fixpos_arg, use_delcombine);
+}
+
+/// Delete "count" bytes under the cursor.
+/// If "fixpos" is true, don't leave the cursor on the NUL after the line.
+/// Caller must have prepared for undo.
+///
+/// @param  lnum            line where to delete
+/// @param  startcol        column number where to start
+/// @param  count           number of bytes to be deleted
+/// @param  fixpos_arg      leave the cursor on the NUL after the line
+/// @param  use_delcombine  'delcombine' option applies
+///
+/// @return FAIL for failure, OK otherwise
+int del_bytes_pos(linenr_T lnum, colnr_T startcol, colnr_T count, bool fixpos_arg,
+                  bool use_delcombine)
+{
   bool fixpos = fixpos_arg;
   char *oldp = ml_get(lnum);
   colnr_T oldlen = ml_get_len(lnum);
 
   // Can't do anything when the cursor is on the NUL after the line.
-  if (col >= oldlen) {
+  if (startcol >= oldlen) {
     return FAIL;
   }
   // If "count" is zero there is nothing to do.
@@ -901,34 +918,34 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 
   // If 'delcombine' is set and deleting (less than) one character, only
   // delete the last combining character.
-  if (p_deco && use_delcombine && utfc_ptr2len(oldp + col) >= count) {
-    char *p0 = oldp + col;
+  if (p_deco && use_delcombine && utfc_ptr2len(oldp + startcol) >= count) {
+    char *p0 = oldp + startcol;
     GraphemeState state = GRAPHEME_STATE_INIT;
     if (utf_composinglike(p0, p0 + utf_ptr2len(p0), &state)) {
       // Find the last composing char, there can be several.
-      int n = col;
+      int n = startcol;
       do {
-        col = n;
+        startcol = n;
         count = utf_ptr2len(oldp + n);
         n += count;
-      } while (utf_composinglike(oldp + col, oldp + n, &state));
+      } while (utf_composinglike(oldp + startcol, oldp + n, &state));
       fixpos = false;
     }
   }
 
   // When count is too big, reduce it.
-  int movelen = oldlen - col - count + 1;  // includes trailing NUL
+  int movelen = oldlen - startcol - count + 1;  // includes trailing NUL
   if (movelen <= 1) {
     // If we just took off the last character of a non-blank line, and
     // fixpos is true, we don't want to end up positioned at the NUL,
     // unless "restart_edit" is set or 'virtualedit' contains "onemore".
-    if (col > 0 && fixpos && restart_edit == 0
+    if (startcol > 0 && fixpos && restart_edit == 0
         && (get_ve_flags(curwin) & kOptVeFlagOnemore) == 0) {
       curwin->w_cursor.col--;
       curwin->w_cursor.coladd = 0;
       curwin->w_cursor.col -= utf_head_off(oldp, oldp + curwin->w_cursor.col);
     }
-    count = oldlen - col;
+    count = oldlen - startcol;
     movelen = 1;
   }
   colnr_T newlen = oldlen - count;
@@ -942,9 +959,9 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
     newp = oldp;                            // use same allocated memory
   } else {                                  // need to allocate a new line
     newp = xmalloc((size_t)newlen + 1);
-    memmove(newp, oldp, (size_t)col);
+    memmove(newp, oldp, (size_t)startcol);
   }
-  memmove(newp + col, oldp + col + count, (size_t)movelen);
+  memmove(newp + startcol, oldp + startcol + count, (size_t)movelen);
   if (alloc_newp) {
     ml_replace(lnum, newp, false);
   } else {
@@ -952,7 +969,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   }
 
   // mark the buffer as changed and prepare for displaying
-  inserted_bytes(lnum, col, count, 0);
+  inserted_bytes(lnum, startcol, count, 0);
 
   return OK;
 }
