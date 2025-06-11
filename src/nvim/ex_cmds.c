@@ -4361,7 +4361,7 @@ bool do_sub_msg(bool count_only)
   return false;
 }
 
-static void global_exe_one(char *const cmd, const linenr_T lnum)
+static void global_exe_one(char *const cmd, const linenr_T lnum, colnr_T col1, colnr_T col2)
 {
   curwin->w_cursor.lnum = lnum;
   curwin->w_cursor.col = 0;
@@ -4456,7 +4456,9 @@ void ex_global(exarg_T *eap)
 
   if (global_busy) {
     lnum = curwin->w_cursor.lnum;
-    int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, MAXCOL, NULL, NULL);
+    colnr_T col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+    colnr_T col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : MAXCOL;
+    int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
       global_exe_one(cmd, lnum);
     }
@@ -4465,7 +4467,9 @@ void ex_global(exarg_T *eap)
     // pass 1: set marks for each (not) matching line
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
-      int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, MAXCOL, NULL, NULL);
+      colnr_T col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+      colnr_T col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : MAXCOL;
+      int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
       if (regmatch.regprog == NULL) {
         break;  // re-compiling regprog failed
       }
@@ -4494,7 +4498,7 @@ void ex_global(exarg_T *eap)
 }
 
 /// Execute `cmd` on lines marked with ml_setmarked().
-void global_exe(char *cmd)
+void global_exe(char *cmd, colnr_T col1, colnr_T col2)
 {
   linenr_T old_lcount;      // b_ml.ml_line_count before the command
   buf_T *old_buf = curbuf;  // remember what buffer we started in
@@ -4515,7 +4519,7 @@ void global_exe(char *cmd)
   old_lcount = curbuf->b_ml.ml_line_count;
 
   while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
-    global_exe_one(cmd, lnum);
+    global_exe_one(cmd, lnum, col1, col2);
     os_breakcheck();
   }
 
