@@ -639,6 +639,9 @@ and one of the CTRL-X commands.  You exit CTRL-X mode by typing a key that is
 not a valid CTRL-X mode command.  Valid keys are the CTRL-X command itself,
 CTRL-N (next), and CTRL-P (previous).
 
+By default, the possible completions are showed in a menu and the first
+completion is inserted into the text. This can be adjusted with 'completeopt'.
+
 To get the current completion information, |complete_info()| can be used.
 Also see the 'infercase' option if you want to adjust the case of the match.
 

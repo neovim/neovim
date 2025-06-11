@@ -1640,6 +1640,9 @@ local options = {
            preview  Show extra information about the currently selected
         	    completion in the preview window.  Only works in
         	    combination with "menu" or "menuone".
+
+        This option does not apply to |cmdline-completion|. See 'wildoptions'
+        for that.
       ]=],
       full_name = 'completeopt',
       list = 'onecomma',
@@ -10290,6 +10293,9 @@ local options = {
         		is displayed per line.  Often used tag kinds are:
         			d	#define
         			f	function
+
+        This option does not apply to |ins-completion|. See 'completeopt' for
+        that.
       ]=],
       full_name = 'wildoptions',
       list = 'onecomma',
