@@ -6202,6 +6202,131 @@ describe('builtin popupmenu', function()
       feed('<Esc>')
     end)
 
+    -- oldtest: Test_pum_position_when_wrap()
+    it('with cursor on a wrapped line', function()
+      exec([[
+        func Omni_test(findstart, base)
+          if a:findstart
+            return col(".")
+          endif
+          return ['foo', 'bar', 'foobar']
+        endfunc
+        set omnifunc=Omni_test
+        set wrap
+        set cot+=noinsert
+      ]])
+      screen:try_resize(25, 15)
+
+      insert(('abcde '):rep(20))
+
+      feed('5|')
+      feed('a<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          float_pos = { [4] = { -1, 'NW', 2, 3, 4, false, 100, 1, 3, 4 } },
+        })
+      else
+        screen:expect([[
+          abcde^ abcde abcde abcde a|
+          bcde abcde abcde abcde ab|
+          cde abcde abcde abcde abc|
+          de a{s: foo            } abcd|
+          e ab{n: bar            }     |
+          {1:~   }{n: foobar         }{1:     }|
+          {1:~                        }|*8
+          {2:-- }{5:match 1 of 3}          |
+        ]])
+      end
+      feed('<Esc>')
+
+      feed('30|')
+      feed('a<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          float_pos = { [4] = { -1, 'NW', 2, 4, 4, false, 100, 1, 4, 4 } },
+        })
+      else
+        screen:expect([[
+          abcde abcde abcde abcde a|
+          bcde ^abcde abcde abcde ab|
+          cde abcde abcde abcde abc|
+          de abcde abcde abcde abcd|
+          e ab{s: foo            }     |
+          {1:~   }{n: bar            }{1:     }|
+          {1:~   }{n: foobar         }{1:     }|
+          {1:~                        }|*7
+          {2:-- }{5:match 1 of 3}          |
+        ]])
+      end
+      feed('<Esc>')
+
+      feed('55|')
+      feed('a<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          float_pos = { [4] = { -1, 'NW', 2, 5, 4, false, 100, 1, 5, 4 } },
+        })
+      else
+        screen:expect([[
+          abcde abcde abcde abcde a|
+          bcde abcde abcde abcde ab|
+          cde a^bcde abcde abcde abc|
+          de abcde abcde abcde abcd|
+          e abcde abcde abcde      |
+          {1:~   }{s: foo            }{1:     }|
+          {1:~   }{n: bar            }{1:     }|
+          {1:~   }{n: foobar         }{1:     }|
+          {1:~                        }|*6
+          {2:-- }{5:match 1 of 3}          |
+        ]])
+      end
+      feed('<Esc>')
+
+      feed('85|')
+      feed('a<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          float_pos = { [4] = { -1, 'NW', 2, 5, 9, false, 100, 1, 5, 9 } },
+        })
+      else
+        screen:expect([[
+          abcde abcde abcde abcde a|
+          bcde abcde abcde abcde ab|
+          cde abcde abcde abcde abc|
+          de abcde a^bcde abcde abcd|
+          e abcde abcde abcde      |
+          {1:~        }{s: foo            }|
+          {1:~        }{n: bar            }|
+          {1:~        }{n: foobar         }|
+          {1:~                        }|*6
+          {2:-- }{5:match 1 of 3}          |
+        ]])
+      end
+      feed('<C-E><Esc>')
+
+      feed('108|')
+      feed('a<C-X><C-O>')
+      if multigrid then
+        screen:expect({
+          float_pos = { [4] = { -1, 'NW', 2, 5, 7, false, 100, 1, 5, 7 } },
+        })
+      else
+        screen:expect([[
+          abcde abcde abcde abcde a|
+          bcde abcde abcde abcde ab|
+          cde abcde abcde abcde abc|
+          de abcde abcde abcde abcd|
+          e abcde ^abcde abcde      |
+          {1:~      }{s: foo            }{1:  }|
+          {1:~      }{n: bar            }{1:  }|
+          {1:~      }{n: foobar         }{1:  }|
+          {1:~                        }|*6
+          {2:-- }{5:match 1 of 3}          |
+        ]])
+      end
+      feed('<C-E><Esc>')
+    end)
+
     it('does not crash when displayed in last column with rightleft #12032', function()
       local col = 30
       local items = { 'word', 'choice', 'text', 'thing' }

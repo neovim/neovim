@@ -2221,5 +2221,70 @@ func Test_pum_clear_when_switch_tab_or_win()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_position_when_wrap()
+  CheckScreendump
+  let lines =<< trim END
+    func Omni_test(findstart, base)
+      if a:findstart
+        return col(".")
+      endif
+      return ['foo', 'bar', 'foobar']
+    endfunc
+    set omnifunc=Omni_test
+    set wrap
+    set cot+=noinsert
+  END
+  call writefile(lines, 'Xtest', 'D')
+  let buf = RunVimInTerminal('-S Xtest', #{rows: 15, cols: 25})
+
+  let long_text = repeat('abcde ', 20)
+  call term_sendkeys(buf, "i" .. long_text)
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<ESC>")
+  call TermWait(buf, 50)
+
+  call term_sendkeys(buf, "5|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line1', {})
+  call term_sendkeys(buf, "\<ESC>")
+  call TermWait(buf, 50)
+
+  call term_sendkeys(buf, "30|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line2', {})
+  call term_sendkeys(buf, "\<ESC>")
+  call TermWait(buf, 50)
+
+  call term_sendkeys(buf, "55|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line3', {})
+  call term_sendkeys(buf, "\<C-E>\<ESC>")
+  call TermWait(buf, 50)
+
+  call term_sendkeys(buf, "85|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line4', {})
+  call term_sendkeys(buf, "\<C-E>\<ESC>")
+  call TermWait(buf, 100)
+
+  call term_sendkeys(buf, "108|")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "a\<C-X>\<C-O>")
+  call TermWait(buf, 100)
+  call VerifyScreenDump(buf, 'Test_pum_wrap_line5', {})
+  call term_sendkeys(buf, "\<C-E>\<ESC>")
+  call TermWait(buf, 100)
+
+  call StopVimInTerminal(buf)
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
