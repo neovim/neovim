@@ -240,8 +240,7 @@ end
 ---@field title string
 ---@field message? string
 ---@field cancellable boolean
----@field total? integer
----@field done? integer
+---@field percentage? number
 
 ---@class vim.ui.progress.Progress
 ---@field ns table<integer, table<vim.ui.progress.Token, vim.ui.progress.Task>>
@@ -262,9 +261,8 @@ end
 M._progress.on_update = function(_, _, task)
   vim.notify(
     string.format(
-      '(%d/%d) %s%s',
-      task.done,
-      task.total,
+      '(%d) %s%s',
+      task.percentage*100,
       task.title,
       (task.message and ' | ' .. task.message or '')
     )
@@ -285,7 +283,7 @@ end
 --- @param token vim.ui.progress.Token Token to identify specific progress report
 ---   within namespace.
 --- @param kind 'start'|'report'|'finish'|'fail' Stage of progress.
---- @param opts? { title: string?, cancellable: boolean?, message: string?, total: integer?, done?: integer }
+--- @param opts? { title: string?, cancellable: boolean?, message: string?, percentage: number? }
 ---   Notes:
 ---   - `title` is required for `'begin'` kind.
 ---   - `message` can be used to show more detailed `#done / #total` progress,
@@ -299,8 +297,12 @@ function M._progress.call(self, ns_id, token, kind, opts)
     vim.validate('opts.title', v.title, 'string', true)
     vim.validate('opts.cancellable', v.cancellable, 'boolean', true)
     vim.validate('opts.message', v.message, 'string', true)
-    vim.validate('opts.total', v.total, 'number', true)
-    vim.validate('opts.done', v.done, 'number', true)
+    vim.validate('opts.percentage', v.percentage, function(percentage)
+      if type(percentage) ~= 'number' or percentage > 1 or percentage < 0 then
+        return false
+      end
+      return true
+    end, true, 'number between 0 and 1')
     return true
   end, true)
   --[[@cast opts -nil]]
@@ -342,7 +344,7 @@ function M._progress.call(self, ns_id, token, kind, opts)
 
   task.message = task.message or opts.message
 
-  if (opts.total or opts.done) and kind ~= 'report' then
+  if opts.percentage and kind ~= 'report' then
     error(
       'can not update task progress with progress kind "'
         .. kind
@@ -350,29 +352,18 @@ function M._progress.call(self, ns_id, token, kind, opts)
         .. token
     )
   end
-  if opts.total and task.total and opts.total < task.total then
-    error('total can not be less than current total: ' .. token)
-  end
-  if opts.done and task.done and opts.done < task.done then
-    error('done can not be less than current done: ' .. token)
-  end
-  local done = opts.done or task.done
-  local total = opts.total or task.total or done
-  if opts.done and total and opts.done > total then
-    error('done can not be greater than total: ' .. token)
-  end
-  task.total = total
-  task.done = done
+  task.percentage = opts.percentage or task.percentage
 
+  local _task = vim.deepcopy(task)
   if kind == 'start' then
     vim.schedule(function()
-      self.on_new(ns_id, token, task)
+      self.on_new(ns_id, token, _task)
     end)
     return
   end
   if kind == 'report' then
     vim.schedule(function()
-      self.on_update(ns_id, token, task)
+      self.on_update(ns_id, token, _task)
     end)
     return
   end
@@ -380,11 +371,11 @@ function M._progress.call(self, ns_id, token, kind, opts)
   self.ns[ns_id][token] = nil
   if kind == 'finish' then
     vim.schedule(function()
-      self.on_finish(ns_id, token, task)
+      self.on_finish(ns_id, token, _task)
     end)
   elseif kind == 'fail' then
     vim.schedule(function()
-      self.on_fail(ns_id, token, task)
+      self.on_fail(ns_id, token, _task)
     end)
   end
 end

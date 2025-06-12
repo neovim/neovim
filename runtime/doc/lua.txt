@@ -2593,8 +2593,7 @@ Lua module: vim.ui                                                    *vim.ui*
       • {title}        (`string`)
       • {message}?     (`string`)
       • {cancellable}  (`boolean`)
-      • {total}?       (`integer`)
-      • {done}?        (`integer`)
+      • {percentage}?  (`number`)
 
 
 vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
