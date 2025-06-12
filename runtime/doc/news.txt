@@ -192,6 +192,11 @@ LSP
 • The function form of `cmd` in a vim.lsp.Config or vim.lsp.ClientConfig
   receives the resolved config as the second arg: `cmd(dispatchers, config)`.
 • Support for annotated text edits.
+• LSP `DiagnosticRelatedInformation` is now shown in
+  |vim.diagnostic.open_float()|. They are read from the private field
+  `_related_information` of |vim.Diagnostic.Set|, which is populated when
+  diagnostics are received from an LSP client. This is similar to
+  `DiagnosticTag`s and the `_tags` field.
 
 LUA
 
