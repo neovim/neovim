@@ -1,3 +1,7 @@
+---@brief This module provides functionality for requesting LSP diagnostics for a document/workspace
+---and populating them using |vim.Diagnostic|s. `DiagnosticRelatedInformation` is supported: it is
+---included in the window shown by |vim.diagnostic.open_float()|.
+
 local lsp = vim.lsp
 local protocol = lsp.protocol
 local ms = protocol.Methods

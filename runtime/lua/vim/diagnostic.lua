@@ -2354,8 +2354,9 @@ function M.open_float(opts, ...)
     end
     local hiname = floating_highlight_map[diagnostic.severity]
     local message_lines = vim.split(diagnostic.message, '\n')
+    local default_pre = string.rep(' ', #prefix)
     for j = 1, #message_lines do
-      local pre = j == 1 and prefix or string.rep(' ', #prefix)
+      local pre = j == 1 and prefix or default_pre
       local suf = j == #message_lines and suffix or ''
       lines[#lines + 1] = pre .. message_lines[j] .. suf
       highlights[#highlights + 1] = {
@@ -2365,8 +2366,38 @@ function M.open_float(opts, ...)
           hlname = prefix_hl_group,
         },
         suffix = {
-          length = j == #message_lines and #suffix or 0,
+          length = #suf,
           hlname = suffix_hl_group,
+        },
+      }
+    end
+
+    ---@type lsp.DiagnosticRelatedInformation[]
+    local related_info = vim.tbl_get(diagnostic, 'user_data', 'lsp', 'relatedInformation') or {}
+
+    -- Below the diagnostic, show its LSP related information (if any) in the form of file name and
+    -- range, plus description.
+    for _, info in ipairs(related_info) do
+      -- TODO: Somehow allow users to open the location when their cursor is over it?
+      local file_name = vim.fs.basename(vim.uri_to_fname(info.location.uri))
+      local info_suffix = ': ' .. info.message
+      lines[#lines + 1] = string.format(
+        '%s%s:%s:%s%s',
+        default_pre,
+        file_name,
+        info.location.range.start.line,
+        info.location.range.start.character,
+        info_suffix
+      )
+      highlights[#highlights + 1] = {
+        hlname = '@string.special.path',
+        prefix = {
+          length = #default_pre,
+          hlname = prefix_hl_group,
+        },
+        suffix = {
+          length = #info_suffix,
+          hlname = 'NormalFloat',
         },
       }
     end
