@@ -64,6 +64,8 @@ vim.uv = ...
 
 vim.F = require('vim.F')
 vim._watch = require('vim._watch')
+---@diagnostic disable-next-line: no-unknown
+vim.async = require('vim.async')
 vim.diagnostic = require('vim.diagnostic')
 vim.filetype = require('vim.filetype')
 vim.fs = require('vim.fs')
