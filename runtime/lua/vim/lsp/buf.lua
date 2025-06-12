@@ -1327,4 +1327,121 @@ function M.execute_command(command_params)
   lsp.buf_request(0, ms.workspace_executeCommand, command_params)
 end
 
+---@type { index: integer, ranges: lsp.Range[] }?
+local selection_ranges = nil
+
+---@param range lsp.Range
+local function select_range(range)
+  local start_line = range.start.line + 1
+  local end_line = range['end'].line + 1
+
+  local start_col = range.start.character
+  local end_col = range['end'].character
+
+  -- If the selection ends at column 0, adjust the position to the end of the previous line.
+  if end_col == 0 then
+    end_line = end_line - 1
+    local end_line_text = api.nvim_buf_get_lines(0, end_line - 1, end_line, true)[1]
+    end_col = #end_line_text
+  end
+
+  vim.fn.setpos("'<", { 0, start_line, start_col + 1, 0 })
+  vim.fn.setpos("'>", { 0, end_line, end_col, 0 })
+  vim.cmd.normal({ 'gv', bang = true })
+end
+
+---@param range lsp.Range
+local function is_empty(range)
+  return range.start.line == range['end'].line and range.start.character == range['end'].character
+end
+
+--- Perform an incremental selection at the cursor position based on ranges given by the LSP. The
+--- `direction` parameter specifies whether the selection should head inward or outward.
+---
+--- @param direction 'inner' | 'outer'
+function M.selection_range(direction)
+  if selection_ranges then
+    local offset = direction == 'outer' and 1 or -1
+    local new_index = selection_ranges.index + offset
+    if new_index <= #selection_ranges.ranges and new_index >= 1 then
+      selection_ranges.index = new_index
+    end
+
+    select_range(selection_ranges.ranges[selection_ranges.index])
+    return
+  end
+
+  local method = ms.textDocument_selectionRange
+  local client = lsp.get_clients({ method = method, bufnr = 0 })[1]
+  if not client then
+    vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
+    return
+  end
+
+  local position_params = util.make_position_params(0, client.offset_encoding)
+
+  ---@type lsp.SelectionRangeParams
+  local params = {
+    textDocument = position_params.textDocument,
+    positions = { position_params.position },
+  }
+
+  lsp.buf_request(
+    0,
+    ms.textDocument_selectionRange,
+    params,
+    ---@param response lsp.SelectionRange[]?
+    function(err, response)
+      if err then
+        lsp.log.error(err.code, err.message)
+        return
+      end
+      if not response then
+        return
+      end
+      -- We only requested one range, thus we get the first and only reponse here.
+      response = response[1]
+      local ranges = {} ---@type lsp.Range[]
+      local lines = api.nvim_buf_get_lines(0, 0, -1, false)
+
+      -- Populate the list of ranges from the given request.
+      while response do
+        local range = response.range
+        if not is_empty(range) then
+          local start_line = range.start.line
+          local end_line = range['end'].line
+          range.start.character = vim.str_byteindex(
+            lines[start_line + 1] or '',
+            client.offset_encoding,
+            range.start.character,
+            false
+          )
+          range['end'].character = vim.str_byteindex(
+            lines[end_line + 1] or '',
+            client.offset_encoding,
+            range['end'].character,
+            false
+          )
+          ranges[#ranges + 1] = range
+        end
+        response = response.parent
+      end
+
+      -- Clear selection ranges when leaving visual mode.
+      api.nvim_create_autocmd('ModeChanged', {
+        once = true,
+        pattern = 'v*:*',
+        callback = function()
+          selection_ranges = nil
+        end,
+      })
+
+      if #ranges > 0 then
+        selection_ranges = { index = 1, ranges = ranges }
+        select_range(ranges[1])
+      end
+    end
+  )
+end
+
 return M
