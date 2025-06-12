@@ -313,6 +313,24 @@ local config = {
       return fmt('lsp-%s', name:lower())
     end,
   },
+  async = {
+    filename = 'lua-async.txt',
+    section_order = {
+      'async.lua',
+    },
+    files = { 'runtime/lua/vim/async.lua' },
+    section_fmt = function()
+      return 'Lua module: vim.async'
+    end,
+    helptag_fmt = function()
+      return 'lua-async'
+    end,
+    fn_xform = function(fun)
+      if fun.classvar == 'M' then
+        fun.classvar = nil
+      end
+    end,
+  },
   diagnostic = {
     filename = 'diagnostic.txt',
     section_order = {
