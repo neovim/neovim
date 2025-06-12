@@ -1537,7 +1537,7 @@ static void init_prompt(int cmdchar_todo)
     coladvance(curwin, MAXCOL);
   }
   char *text = get_cursor_line_ptr();
-  if (curbuf->b_prompt_submitted.mark.lnum == curbuf->b_ml.ml_line_count
+  if (curbuf->b_prompt_submitted.mark.lnum == curwin->w_cursor.lnum
       && strncmp(text, prompt, strlen(prompt)) != 0) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
@@ -1551,10 +1551,9 @@ static void init_prompt(int cmdchar_todo)
   }
 
   // Insert always starts after the prompt, allow editing text after it.
-  if (curbuf->b_prompt_submitted.mark.lnum == curbuf->b_ml.ml_line_count
-      && (Insstart_orig.lnum != curwin->w_cursor.lnum
-          || Insstart_orig.col != (colnr_T)strlen(prompt))) {
-    Insstart.lnum = curwin->w_cursor.lnum;
+  if (Insstart_orig.lnum != curbuf->b_prompt_submitted.mark.lnum
+      || Insstart_orig.col != (colnr_T)strlen(prompt)) {
+    Insstart.lnum = curbuf->b_prompt_submitted.mark.lnum;
     Insstart.col = (colnr_T)strlen(prompt);
     Insstart_orig = Insstart;
     Insstart_textlen = Insstart.col;
@@ -3670,15 +3669,12 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   // can't backup past starting point unless 'backspace' > 1
   // can backup to a previous line if 'backspace' == 0
   if (buf_is_empty(curbuf)
-      || (bt_prompt(curbuf)
-          && (curwin->w_cursor.lnum < curbuf->b_prompt_submitted.mark.lnum
-              || (curwin->w_cursor.lnum == curbuf->b_prompt_submitted.mark.lnum
-                  && curwin->w_cursor.col <= (int)strlen(prompt_text()))))
       || (!revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
               || (!can_bs(BS_START)
-                  && (arrow_used || (curwin->w_cursor.lnum == Insstart_orig.lnum
-                                     && curwin->w_cursor.col <= Insstart_orig.col)))
+                  && ((arrow_used && !bt_prompt(curbuf))
+                      || (curwin->w_cursor.lnum == Insstart_orig.lnum
+                          && curwin->w_cursor.col <= Insstart_orig.col)))
               || (!can_bs(BS_INDENT) && !arrow_used && ai_col > 0
                   && curwin->w_cursor.col <= ai_col)
               || (!can_bs(BS_EOL) && curwin->w_cursor.col == 0)))) {
