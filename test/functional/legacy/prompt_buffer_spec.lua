@@ -425,7 +425,6 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
 
-
     feed('line 4<s-cr>line 5')
 
     feed('<esc>k0oafter prompt')
@@ -439,7 +438,6 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
-
 
     feed('<esc>k0Oat prompt')
     screen:expect([[

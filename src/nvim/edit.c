@@ -3670,15 +3670,15 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   // can't backup past starting point unless 'backspace' > 1
   // can backup to a previous line if 'backspace' == 0
   if (buf_is_empty(curbuf)
-      || (bt_prompt(curbuf) &&
-            (curwin->w_cursor.lnum < curbuf->b_prompt_submitted.mark.lnum
-             || (curwin->w_cursor.lnum == curbuf->b_prompt_submitted.mark.lnum
-                 && curwin->w_cursor.col <= (int)strlen(prompt_text()))))
+      || (bt_prompt(curbuf)
+          && (curwin->w_cursor.lnum < curbuf->b_prompt_submitted.mark.lnum
+              || (curwin->w_cursor.lnum == curbuf->b_prompt_submitted.mark.lnum
+                  && curwin->w_cursor.col <= (int)strlen(prompt_text()))))
       || (!revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
               || (!can_bs(BS_START)
                   && (arrow_used || (curwin->w_cursor.lnum == Insstart_orig.lnum
-                              && curwin->w_cursor.col <= Insstart_orig.col)))
+                                     && curwin->w_cursor.col <= Insstart_orig.col)))
               || (!can_bs(BS_INDENT) && !arrow_used && ai_col > 0
                   && curwin->w_cursor.col <= ai_col)
               || (!can_bs(BS_EOL) && curwin->w_cursor.col == 0)))) {
