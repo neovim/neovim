@@ -2663,8 +2663,8 @@ vim.pack.get()                                                *vim.pack.get()*
         • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with defaults
           made explicit.
         • {path} (`string`) Plugin's path on disk.
-        • {was_added} (`boolean`) Whether plugin was added via
-          |vim.pack.add()| in current session.
+        • {added} (`boolean`) Whether plugin was added via |vim.pack.add()| in
+          current session.
 
 vim.pack.update({names}, {opts})                           *vim.pack.update()*
     Update plugins
