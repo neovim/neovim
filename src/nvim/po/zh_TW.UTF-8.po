@@ -3977,12 +3977,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: 注意"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"找到暫存檔 \""
+msgid "Found a swap file by the name \""
+msgstr "找到暫存檔 \""
 
 #: ../memline.c:3226
 msgid "While opening file \""

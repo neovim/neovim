@@ -4741,12 +4741,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: 注意"
 
 #: ../memline.c:3073
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"发现交换文件 \""
+msgid "Found a swap file by the name \""
+msgstr "发现交换文件 \""
 
 #: ../memline.c:3077
 msgid "While opening file \""
