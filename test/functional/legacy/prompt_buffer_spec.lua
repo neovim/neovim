@@ -424,5 +424,45 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
+
+
+    feed('line 4<s-cr>line 5')
+
+    feed('<esc>k0oafter prompt')
+    screen:expect([[
+      after                    |
+      line 3"                  |
+      cmd: line 4              |
+      after prompt^             |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+
+    feed('<esc>k0Oat prompt')
+    screen:expect([[
+      after                    |
+      line 3"                  |
+      cmd: at prompt^           |
+      line 4                   |
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<cr>')
+    screen:expect([[
+      line 4                   |
+      after prompt             |
+      line 5"                  |
+      cmd: ^                    |
+      {3:[Prompt]                 }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
   end)
 end)
