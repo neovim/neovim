@@ -278,9 +278,9 @@ describe('prompt buffer', function()
   it('can paste multiline text', function()
     source_script()
     fn('setreg', 'a', 'line 1\nline 2\nline 3')
-    feed(' <esc>"ap')
+    feed('<esc>"ap')
     screen:expect([[
-      cmd:  ^line 1             |
+      cmd: ^line 1              |
       line 2                   |
       line 3                   |
       {1:~                        }|
@@ -291,7 +291,7 @@ describe('prompt buffer', function()
     ]])
     feed('i<cr>')
     screen:expect([[
-      Result: " line 1         |
+      Result: "line 1          |
       line 2                   |
       line 3"                  |
       cmd: ^                    |

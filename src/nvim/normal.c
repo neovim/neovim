@@ -6481,8 +6481,15 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
   }
 
   if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
-    clearopbeep(cap->oap);
-    return;
+    if (curwin->w_cursor.lnum == curbuf->b_prompt_submitted.mark.lnum) {
+      curwin->w_cursor.col = (int)strlen(prompt_text());
+     // Since we've shifted the cursor to the first editable char. We want to
+     // paste before that.
+      cap->cmdchar = 'P';
+    } else {
+      clearopbeep(cap->oap);
+      return;
+    }
   }
 
   if (fix_indent) {
