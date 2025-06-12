@@ -1845,7 +1845,12 @@ selection_range({direction})                   *vim.lsp.buf.selection_range()*
 
 signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
-    floating window.
+    floating window. Allows cycling through signature overloads with `<C-s>`,
+    which can be remapped via `<Plug>(nvim.lsp.ctrl-s)`
+
+    Example: >lua
+        vim.keymap.set('n', '<C-b>', '<Plug>(nvim.lsp.ctrl-s)')
+<
 
     Parameters: ~
       • {config}  (`vim.lsp.buf.signature_help.Opts?`) See
