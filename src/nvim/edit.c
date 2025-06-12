@@ -3677,8 +3677,8 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       || (!revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
               || (!can_bs(BS_START)
-                  && ((curwin->w_cursor.lnum == Insstart_orig.lnum
-                        && curwin->w_cursor.col <= Insstart_orig.col)))
+                  && (arrow_used || (curwin->w_cursor.lnum == Insstart_orig.lnum
+                              && curwin->w_cursor.col <= Insstart_orig.col)))
               || (!can_bs(BS_INDENT) && !arrow_used && ai_col > 0
                   && curwin->w_cursor.col <= ai_col)
               || (!can_bs(BS_EOL) && curwin->w_cursor.col == 0)))) {
