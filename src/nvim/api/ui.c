@@ -47,6 +47,7 @@
 # include "ui_events_remote.generated.h"  // IWYU pragma: export
 #endif
 
+// TODO(bfredl): just make UI:s owned by their channels instead
 static PMap(uint64_t) connected_uis = MAP_INIT;
 
 static char *mpack_array_dyn16(char **buf)
@@ -91,10 +92,15 @@ void remote_ui_disconnect(uint64_t channel_id, Error *err, bool send_error_exit)
     MAXSIZE_TEMP_ARRAY(args, 1);
     ADD_C(args, INTEGER_OBJ(0));
     push_call(ui, "error_exit", args);
-    ui_flush_buf(ui);
+    ui_flush_buf(ui, false);
   }
   pmap_del(uint64_t)(&connected_uis, channel_id, NULL);
   ui_detach_impl(ui, channel_id);
+  Channel *chan = find_channel(channel_id);
+  if (chan && chan->rpc.ui == ui) {
+    chan->rpc.ui = NULL;
+  }
+
   remote_ui_destroy(ui);
 }
 
@@ -192,6 +198,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
   ui->nevents_pos = NULL;
   ui->nevents = 0;
   ui->flushed_events = false;
+  ui->incomplete_event = false;
   ui->ncalls_pos = NULL;
   ui->ncalls = 0;
   ui->ncells_pending = 0;
@@ -207,6 +214,11 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict opt
   pmap_put(uint64_t)(&connected_uis, channel_id, ui);
   current_ui = channel_id;
   ui_attach_impl(ui, channel_id);
+
+  Channel *chan = find_channel(channel_id);
+  if (chan) {
+    chan->rpc.ui = ui;
+  }
 
   may_trigger_vim_suspend_resume(false);
 }
@@ -588,7 +600,7 @@ static void prepare_call(RemoteUI *ui, const char *name)
 {
   if (ui->packer.startptr
       && (BUF_POS(ui) > UI_BUF_SIZE - EVENT_BUF_SIZE || ui->ncells_pending >= 500)) {
-    ui_flush_buf(ui);
+    ui_flush_buf(ui, false);
   }
 
   if (ui->packer.startptr == NULL) {
@@ -630,7 +642,7 @@ static void push_call(RemoteUI *ui, const char *name, Array args)
 static void ui_flush_callback(PackerBuffer *packer)
 {
   RemoteUI *ui = packer->anydata;
-  ui_flush_buf(ui);
+  ui_flush_buf(ui, true);
   ui_alloc_buf(ui);
 }
 
@@ -856,7 +868,7 @@ void remote_ui_raw_line(RemoteUI *ui, Integer grid, Integer row, Integer startco
           mpack_w2(&lenpos, nelem);
           // We only ever set the wrap field on the final "grid_line" event for the line.
           mpack_bool(buf, false);
-          ui_flush_buf(ui);
+          ui_flush_buf(ui, false);
 
           prepare_call(ui, "grid_line");
           mpack_array(buf, 5);
@@ -929,11 +941,12 @@ void remote_ui_raw_line(RemoteUI *ui, Integer grid, Integer row, Integer startco
 ///
 /// This might happen multiple times before the actual ui_flush, if the
 /// total redraw size is large!
-static void ui_flush_buf(RemoteUI *ui)
+static void ui_flush_buf(RemoteUI *ui, bool incomplete_event)
 {
   if (!ui->packer.startptr || !BUF_POS(ui)) {
     return;
   }
+  ui->incomplete_event = incomplete_event;
 
   flush_event(ui);
   if (ui->nevents_pos != NULL) {
@@ -964,9 +977,14 @@ void remote_ui_flush(RemoteUI *ui)
       remote_ui_cursor_goto(ui, ui->cursor_row, ui->cursor_col);
     }
     push_call(ui, "flush", (Array)ARRAY_DICT_INIT);
-    ui_flush_buf(ui);
+    ui_flush_buf(ui, false);
     ui->flushed_events = false;
   }
+}
+
+void remote_ui_flush_pending_data(RemoteUI *ui)
+{
+  ui_flush_buf(ui, false);
 }
 
 static Array translate_contents(RemoteUI *ui, Array contents, Arena *arena)
