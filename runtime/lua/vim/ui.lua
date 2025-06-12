@@ -247,6 +247,7 @@ end
 ---@field ns_id integer
 ---@field token vim.ui.progress.Token
 ---@field task vim.ui.progress.Task
+---@field kind 'start'|'report'|'done'|'fail'
 
 ---@type table<integer, table<vim.ui.progress.Token, vim.ui.progress.Task>>
 M._progress_ns = {}
@@ -256,7 +257,7 @@ M._progress_ns = {}
 ---   based on namespace's name.
 --- @param token vim.ui.progress.Token Token to identify specific progress report
 ---   within namespace.
---- @param kind 'start'|'report'|'finish'|'fail' Stage of progress.
+--- @param kind 'start'|'report'|'done'|'fail' Stage of progress.
 --- @param opts? { title: string?, cancellable: boolean?, message: string?, percentage: number? }
 ---   Notes:
 ---   - `title` is required for `'begin'` kind.
@@ -325,52 +326,20 @@ function M.progress(ns_id, token, kind, opts)
   task.percentage = opts.percentage or task.percentage
 
   local _task = vim.deepcopy(task)
-  if kind == 'start' then
-    vim.schedule(function()
-      vim.api.nvim_exec_autocmds('ProgressStart', {
-        data = {
-          ns_id = ns_id,
-          token = token,
-          task = _task,
-        },
-      })
-    end)
-    return
-  end
-  if kind == 'report' then
-    vim.schedule(function()
-      vim.api.nvim_exec_autocmds('ProgressChanged', {
-        data = {
-          ns_id = ns_id,
-          token = token,
-          task = _task,
-        },
-      })
-    end)
-    return
-  end
 
-  M._progress_ns[ns_id][token] = nil
-  if kind == 'finish' then
-    vim.schedule(function()
-      vim.api.nvim_exec_autocmds('ProgressDone', {
-        data = {
-          ns_id = ns_id,
-          token = token,
-          task = _task,
-        },
-      })
-    end)
-  elseif kind == 'fail' then
-    vim.schedule(function()
-      vim.api.nvim_exec_autocmds('ProgressError', {
-        data = {
-          ns_id = ns_id,
-          token = token,
-          task = _task,
-        },
-      })
-    end)
+  vim.schedule(function()
+    vim.api.nvim_exec_autocmds('Progress', {
+      data = {
+        ns_id = ns_id,
+        token = token,
+        task = _task,
+        kind = kind,
+      },
+    })
+  end)
+
+  if kind == 'done' or kind == 'fail' then
+    M._progress_ns[ns_id][token] = nil
   end
 end
 
