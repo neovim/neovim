@@ -1537,8 +1537,9 @@ static void init_prompt(int cmdchar_todo)
     coladvance(curwin, MAXCOL);
   }
   char *text = get_cursor_line_ptr();
-  if (curbuf->b_prompt_submitted.mark.lnum == curwin->w_cursor.lnum
-      && strncmp(text, prompt, strlen(prompt)) != 0) {
+  if ((curbuf->b_prompt_submitted.mark.lnum == curwin->w_cursor.lnum
+       && strncmp(text, prompt, strlen(prompt)) != 0)
+      || curbuf->b_prompt_submitted.mark.lnum > curwin->w_cursor.lnum) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
       ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
