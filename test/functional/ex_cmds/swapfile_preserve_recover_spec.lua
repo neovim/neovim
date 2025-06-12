@@ -185,6 +185,8 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
         foreground = Screen.colors.NvimDarkGrey3,
         background = Screen.colors.NvimLightGrey3,
       },
+      [107] = { foreground = Screen.colors.NvimLightGrey2, bold = true },
+      [108] = { foreground = Screen.colors.NvimLightBlue },
     })
     exec(init)
     command('autocmd! nvim.swapfile') -- Delete the default handler (which skips the dialog).
@@ -321,11 +323,6 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     command('preserve') -- Make sure the swap file exists.
 
     local screen = Screen.new(75, 18)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-    })
-
     local nvim1 = n.new_session(true)
     set_session(nvim1)
     screen:attach()
@@ -334,13 +331,18 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     feed(':split Xfile1\n')
     -- The default SwapExists handler does _not_ skip this prompt.
     screen:expect({
-      any = pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
+      any = pesc('{6:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
     })
     feed('q')
+    screen:expect([[
+      ^                                                                           |
+      {1:~                                                                          }|*16
+                                                                                 |
+    ]])
     feed(':<CR>')
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|*16
+      {1:~                                                                          }|*16
       :                                                                          |
     ]])
     nvim1:close()
@@ -353,16 +355,16 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     command('set more')
     command('au bufadd * let foo_w = wincol()')
     feed(':e Xfile1<CR>')
-    screen:expect({ any = pesc('{1:-- More --}^') })
+    screen:expect({ any = pesc('{6:-- More --}^') })
     feed('<Space>')
     screen:expect({
-      any = pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
+      any = pesc('{6:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
     })
     feed('q')
     command([[echo 'hello']])
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|*16
+      {1:~                                                                          }|*16
       hello                                                                      |
     ]])
     nvim2:close()
@@ -372,11 +374,6 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
   --- @param on_swapfile_running fun(screen: any) Called after swapfile ("STILL RUNNING") prompt.
   local function test_swapfile_after_reboot(swapexists, on_swapfile_running)
     local screen = Screen.new(75, 30)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-      [2] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
-    })
 
     exec(init)
     if not swapexists then
@@ -436,8 +433,8 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     feed(':edit Xswaptest<CR>')
     screen:expect({
       any = table.concat({
-        pesc('{2:E325: ATTENTION}'),
-        pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort: }^'),
+        '{9:E325: ATTENTION}',
+        pesc('{6:[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort: }^'),
       }, '.*'),
     })
 
@@ -449,10 +446,10 @@ pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
     test_swapfile_after_reboot(false, function(screen)
       screen:expect({
         any = table.concat({
-          pesc('{2:E325: ATTENTION}'),
-          '\n        process ID: %d* %(STILL RUNNING%)',
-          '\nWhile opening file "Xswaptest"',
-          pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
+          '{9:E325: ATTENTION}',
+          '{6:        process ID: %d* %(STILL RUNNING%)}',
+          '{6:While opening file "Xswaptest"}',
+          pesc('{6:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
         }, '.*'),
       })
     end)

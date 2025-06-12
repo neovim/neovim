@@ -1402,7 +1402,10 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
           msg_puts(".    ");
           msg_puts(path_tail(files[i]));
           msg_putchar('\n');
-          swapfile_info(files[i]);
+          StringBuilder msg = KV_INITIAL_VALUE;
+          swapfile_info(files[i], &msg);
+          msg_outtrans(msg.items, 0, false);
+          kv_destroy(msg);
         }
       } else {
         msg_puts(_("      -- none --\n"));
@@ -1500,7 +1503,7 @@ void swapfile_dict(const char *fname, dict_T *d)
 /// Loads info from swapfile `fname`, and displays it to the user.
 ///
 /// @return  timestamp (0 when unknown).
-static time_t swapfile_info(char *fname)
+static time_t swapfile_info(char *fname, StringBuilder *msg)
 {
   assert(fname != NULL);
   ZeroBlock b0;
@@ -1515,18 +1518,17 @@ static time_t swapfile_info(char *fname)
 #ifdef UNIX
     // print name of owner of the file
     if (os_get_uname((uv_uid_t)file_info.stat.st_uid, uname, B0_UNAME_SIZE) == OK) {
-      msg_puts(_("          owned by: "));
-      msg_outtrans(uname, 0, false);
-      msg_puts(_("   dated: "));
+      kv_printf(*msg, "%s%s", _("          owned by: "), uname);
+      kv_printf(*msg, _("   dated: "));
     } else {
-      msg_puts(_("             dated: "));
+      kv_printf(*msg, _("             dated: "));
     }
 #else
     msg_puts(_("             dated: "));
 #endif
     x = file_info.stat.st_mtim.tv_sec;
     char ctime_buf[100];  // hopefully enough for every language
-    msg_puts(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf), true));
+    kv_printf(*msg, "%s", os_ctime_r(&x, ctime_buf, sizeof(ctime_buf), true));
   }
 
   // print the original file name
@@ -1534,56 +1536,56 @@ static time_t swapfile_info(char *fname)
   if (fd >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
       if (strncmp(b0.b0_version, "VIM 3.0", 7) == 0) {
-        msg_puts(_("         [from Vim version 3.0]"));
+        kv_printf(*msg, _("         [from Vim version 3.0]"));
       } else if (ml_check_b0_id(&b0) == FAIL) {
-        msg_puts(_("         [does not look like a Nvim swap file]"));
+        kv_printf(*msg, _("         [does not look like a Nvim swap file]"));
       } else if (!ml_check_b0_strings(&b0)) {
-        msg_puts(_("         [garbled strings (not nul terminated)]"));
+        kv_printf(*msg, _("         [garbled strings (not nul terminated)]"));
       } else {
-        msg_puts(_("         file name: "));
+        kv_printf(*msg, _("         file name: "));
         if (b0.b0_fname[0] == NUL) {
-          msg_puts(_("[No Name]"));
+          kv_printf(*msg, _("[No Name]"));
         } else {
-          msg_outtrans(b0.b0_fname, 0, false);
+          kv_printf(*msg, "%s", b0.b0_fname);
         }
 
-        msg_puts(_("\n          modified: "));
-        msg_puts(b0.b0_dirty ? _("YES") : _("no"));
+        kv_printf(*msg, _("\n          modified: "));
+        kv_printf(*msg, b0.b0_dirty ? _("YES") : _("no"));
 
         if (*(b0.b0_uname) != NUL) {
-          msg_puts(_("\n         user name: "));
-          msg_outtrans(b0.b0_uname, 0, false);
+          kv_printf(*msg, _("\n         user name: "));
+          kv_printf(*msg, "%s", b0.b0_uname);
         }
 
         if (*(b0.b0_hname) != NUL) {
           if (*(b0.b0_uname) != NUL) {
-            msg_puts(_("   host name: "));
+            kv_printf(*msg, _("   host name: "));
           } else {
-            msg_puts(_("\n         host name: "));
+            kv_printf(*msg, _("\n         host name: "));
           }
-          msg_outtrans(b0.b0_hname, 0, false);
+          kv_printf(*msg, "%s", b0.b0_hname);
         }
 
         if (char_to_long(b0.b0_pid) != 0) {
-          msg_puts(_("\n        process ID: "));
-          msg_outnum((int)char_to_long(b0.b0_pid));
+          kv_printf(*msg, _("\n        process ID: "));
+          kv_printf(*msg, "%d", (int)char_to_long(b0.b0_pid));
           if ((proc_running = swapfile_proc_running(&b0, fname))) {
-            msg_puts(_(" (STILL RUNNING)"));
+            kv_printf(*msg, _(" (STILL RUNNING)"));
           }
         }
 
         if (b0_magic_wrong(&b0)) {
-          msg_puts(_("\n         [not usable on this computer]"));
+          kv_printf(*msg, _("\n         [not usable on this computer]"));
         }
       }
     } else {
-      msg_puts(_("         [cannot be read]"));
+      kv_printf(*msg, _("         [cannot be read]"));
     }
     close(fd);
   } else {
-    msg_puts(_("         [cannot be opened]"));
+    kv_printf(*msg, _("         [cannot be opened]"));
   }
-  msg_putchar('\n');
+  kv_printf(*msg, "\n");
 
   return x;
 }
@@ -3245,50 +3247,47 @@ char *get_file_in_dir(char *fname, char *dname)
   return retval;
 }
 
-/// Print the ATTENTION message: info about an existing swapfile.
+/// Build the ATTENTION message: info about an existing swapfile.
 ///
 /// @param buf  buffer being edited
 /// @param fname  swapfile name
-static void attention_message(buf_T *buf, char *fname)
+/// @param fhname  swapfile name, home replaced
+/// @param msg  string buffer, emitted as either a regular or confirm message
+static void attention_message(buf_T *buf, char *fname, char *fhname, StringBuilder *msg)
 {
   assert(buf->b_fname != NULL);
 
-  no_wait_return++;
   emsg(_("E325: ATTENTION"));
-  msg_puts(_("\nFound a swap file by the name \""));
-  msg_home_replace(fname);
-  msg_puts("\"\n");
-  const time_t swap_mtime = swapfile_info(fname);
-  msg_puts(_("While opening file \""));
-  msg_outtrans(buf->b_fname, 0, false);
-  msg_puts("\"\n");
+  kv_printf(*msg, _("Found a swap file by the name \""));
+  kv_printf(*msg, "%s\"\n", fhname);
+  const time_t swap_mtime = swapfile_info(fname, msg);
+  kv_printf(*msg, (_("While opening file \"")));
+  kv_printf(*msg, "%s\"\n", buf->b_fname);
   FileInfo file_info;
   if (!os_fileinfo(buf->b_fname, &file_info)) {
-    msg_puts(_("      CANNOT BE FOUND"));
+    kv_printf(*msg, _("      CANNOT BE FOUND"));
   } else {
-    msg_puts(_("             dated: "));
+    kv_printf(*msg, _("             dated: "));
     time_t x = file_info.stat.st_mtim.tv_sec;
     char ctime_buf[50];
-    msg_puts(os_ctime_r(&x, ctime_buf, sizeof(ctime_buf), true));
+    kv_printf(*msg, "%s", os_ctime_r(&x, ctime_buf, sizeof(ctime_buf), true));
     if (swap_mtime != 0 && x > swap_mtime) {
-      msg_puts(_("      NEWER than swap file!\n"));
+      kv_printf(*msg, _("      NEWER than swap file!\n"));
     }
   }
   // Some of these messages are long to allow translation to
   // other languages.
-  msg_puts(_("\n(1) Another program may be editing the same file.  If this is"
-             " the case,\n    be careful not to end up with two different"
-             " instances of the same\n    file when making changes."
-             "  Quit, or continue with caution.\n"));
-  msg_puts(_("(2) An edit session for this file crashed.\n"));
-  msg_puts(_("    If this is the case, use \":recover\" or \"nvim -r "));
-  msg_outtrans(buf->b_fname, 0, false);
-  msg_puts(_("\"\n    to recover the changes (see \":help recovery\").\n"));
-  msg_puts(_("    If you did this already, delete the swap file \""));
-  msg_outtrans(fname, 0, false);
-  msg_puts(_("\"\n    to avoid this message.\n"));
-  cmdline_row = msg_row;
-  no_wait_return--;
+  kv_printf(*msg, _("\n(1) Another program may be editing the same file.  If this is"
+                    " the case,\n    be careful not to end up with two different"
+                    " instances of the same\n    file when making changes."
+                    "  Quit, or continue with caution.\n"));
+  kv_printf(*msg, _("(2) An edit session for this file crashed.\n"));
+  kv_printf(*msg, _("    If this is the case, use \":recover\" or \"nvim -r "));
+  kv_printf(*msg, "%s", buf->b_fname);
+  kv_printf(*msg, (_("\"\n    to recover the changes (see \":help recovery\").\n")));
+  kv_printf(*msg, _("    If you did this already, delete the swap file \""));
+  kv_printf(*msg, "%s", fname);
+  kv_printf(*msg, _("\"\n    to avoid this message.\n"));
 }
 
 /// Trigger the SwapExists autocommands.
@@ -3462,8 +3461,11 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
           proc_running = 0;  // Set by attention_message..swapfile_info.
           if (choice == SEA_CHOICE_NONE) {
+            no_wait_return++;
             // Show info about the existing swapfile.
-            attention_message(buf, fname);
+            StringBuilder msg = KV_INITIAL_VALUE;
+            char *fhname = home_replace_save(NULL, fname);
+            attention_message(buf, fname, fhname, &msg);
 
             // We don't want a 'q' typed at the more-prompt
             // interrupt loading a file.
@@ -3472,40 +3474,26 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             // If vimrc has "simalt ~x" we don't want it to
             // interfere with the prompt here.
             flush_buffers(FLUSH_TYPEAHEAD);
-          }
 
-          if (swap_exists_action != SEA_NONE && choice == SEA_CHOICE_NONE) {
-            const char *const sw_msg_1 = _("Swap file \"");
-            const char *const sw_msg_2 = _("\" already exists!");
+            if (swap_exists_action != SEA_NONE) {
+              kv_printf(msg, _("Swap file \""));
+              kv_printf(msg, "%s", fhname);
+              kv_printf(msg, _("\" already exists!"));
+              char *run_but = _("&Open Read-Only\n&Edit anyway\n&Recover\n&Quit\n&Abort");
+              char *but = _("&Open Read-Only\n&Edit anyway\n&Recover\n&Delete it\n&Quit\n&Abort");
+              choice = (sea_choice_T)do_dialog(VIM_WARNING, _("VIM - ATTENTION"), msg.items,
+                                               proc_running ? run_but : but, 1, NULL, false);
 
-            const size_t fname_len = strlen(fname);
-            const size_t sw_msg_1_len = strlen(sw_msg_1);
-            const size_t sw_msg_2_len = strlen(sw_msg_2);
-
-            const size_t name_len = sw_msg_1_len + fname_len + sw_msg_2_len + 5;
-
-            char *const name = xmalloc(name_len);
-            memcpy(name, sw_msg_1, sw_msg_1_len + 1);
-            home_replace(NULL, fname, name + sw_msg_1_len, fname_len, true);
-            xstrlcat(name, sw_msg_2, name_len);
-            int dialog_result
-              = do_dialog(VIM_WARNING,
-                          _("VIM - ATTENTION"),
-                          name,
-                          proc_running
-                          ? _("&Open Read-Only\n&Edit anyway\n&Recover\n&Quit\n&Abort")
-                          : _("&Open Read-Only\n&Edit anyway\n&Recover\n&Delete it\n&Quit\n&Abort"),
-                          1, NULL, false);
-
-            if (proc_running && dialog_result >= 4) {
               // compensate for missing "Delete it" button
-              dialog_result++;
+              choice += proc_running && choice >= 4;
+              // pretend screen didn't scroll, need redraw anyway
+              msg_reset_scroll();
+            } else {
+              msg_outtrans(msg.items, 0, false);
             }
-            choice = (sea_choice_T)dialog_result;
-            xfree(name);
-
-            // pretend screen didn't scroll, need redraw anyway
-            msg_reset_scroll();
+            no_wait_return--;
+            kv_destroy(msg);
+            xfree(fhname);
           }
 
           switch (choice) {

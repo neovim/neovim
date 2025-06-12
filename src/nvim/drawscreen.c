@@ -257,7 +257,7 @@ void screenclear(void)
   compute_cmdrow();
   msg_row = cmdline_row;  // put cursor on last line for messages
   msg_col = 0;
-  msg_scrolled = 0;  // can't scroll back
+  msg_reset_scroll();     // can't scroll back
   msg_didany = false;
   msg_didout = false;
   if (HL_ATTR(HLF_MSG) > 0 && msg_use_grid() && msg_grid.chars) {
