@@ -463,4 +463,47 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
   end)
+
+  it('deleting prompt adds it back on insert', function()
+    source_script()
+    feed('asdf')
+    screen:expect([[
+      cmd: asdf^                |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<esc>ddi')
+    screen:expect([[
+      cmd: ^                    |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('asdf')
+    screen:expect([[
+      cmd: asdf^                |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('<esc>cc')
+    screen:expect([[
+      cmd: ^                    |
+      {1:~                        }|*3
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+  end)
 end)
