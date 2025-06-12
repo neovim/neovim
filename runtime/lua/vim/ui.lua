@@ -235,63 +235,21 @@ function M._get_urls()
   return urls
 end
 
----@alias vim.ui.progress.Token integer|string
 ---@class vim.ui.progress.Task
 ---@field title string
 ---@field message? string
 ---@field cancellable boolean
 ---@field percentage? number
 
----@class vim.ui.progress.Progress
----@field ns table<integer, table<vim.ui.progress.Token, vim.ui.progress.Task>>
----@field on_new fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil
----@field on_update fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil
----@field on_finish fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil
----@field on_fail fun(ns_id: integer, token: vim.ui.progress.Token, task: vim.ui.progress.Task): nil
-M._progress = {
-  ns = {},
-}
+---@alias vim.ui.progress.Token integer|string
 
-M._progress.on_new = function(_, _, task)
-  vim.api.nvim_echo({
-    {
-      string.format('START %s%s', task.title, (task.message and ' | ' .. task.message or '')),
-      'MsgArea',
-    },
-  }, false, {})
-end
+---@class vim.ui.progress.Data
+---@field ns_id integer
+---@field token vim.ui.progress.Token
+---@field task vim.ui.progress.Task
 
-M._progress.on_update = function(_, _, task)
-  vim.api.nvim_echo({
-    {
-      string.format(
-        '(%d) %s%s',
-        task.percentage * 100,
-        task.title,
-        (task.message and ' | ' .. task.message or '')
-      ),
-      'MsgArea',
-    },
-  }, false, {})
-end
-
-M._progress.on_finish = function(_, _, task)
-  vim.api.nvim_echo({
-    {
-      string.format('DONE %s%s', task.title, (task.message and ' | ' .. task.message or '')),
-      'MsgArea',
-    },
-  }, false, {})
-end
-
-M._progress.on_fail = function(_, _, task)
-  vim.api.nvim_echo({
-    {
-      string.format('FAIL %s%s', task.title, (task.message and ' | ' .. task.message or '')),
-      'ErrorMsg',
-    },
-  }, false, {})
-end
+---@type table<integer, table<vim.ui.progress.Token, vim.ui.progress.Task>>
+M._progress_ns = {}
 
 --- @param ns_id integer Namespace for progress source. Implementations can
 ---   use to display information about the source (like name of LSP server)
@@ -304,7 +262,7 @@ end
 ---   - `title` is required for `'begin'` kind.
 ---   - `message` can be used to show more detailed `#done / #total` progress,
 ---     as is currently done by LSP servers.
-function M._progress.call(self, ns_id, token, kind, opts)
+function M.progress(ns_id, token, kind, opts)
   vim.validate('ns_id', ns_id, 'number', false)
   vim.validate('token', token, { 'number', 'string' }, false)
   vim.validate('kind', kind, 'string', false)
@@ -323,21 +281,21 @@ function M._progress.call(self, ns_id, token, kind, opts)
   end, true)
   --[[@cast opts -nil]]
 
-  if not self.ns[ns_id] then
-    self.ns[ns_id] = {}
+  if not M._progress_ns[ns_id] then
+    M._progress_ns[ns_id] = {}
   end
 
-  if not self.ns[ns_id][token] then
+  if not M._progress_ns[ns_id][token] then
     if kind ~= 'start' then
       error('new progress token without start: ' .. token)
     end
     ---@diagnostic disable-next-line: missing-fields
-    self.ns[ns_id][token] = {}
+    M._progress_ns[ns_id][token] = {}
   elseif kind == 'start' then
     error('progress token already started: ' .. token)
   end
 
-  local task = self.ns[ns_id][token]
+  local task = M._progress_ns[ns_id][token]
 
   if opts.title then
     if kind ~= 'start' then
@@ -369,31 +327,51 @@ function M._progress.call(self, ns_id, token, kind, opts)
   local _task = vim.deepcopy(task)
   if kind == 'start' then
     vim.schedule(function()
-      self.on_new(ns_id, token, _task)
+      vim.api.nvim_exec_autocmds('ProgressStart', {
+        data = {
+          ns_id = ns_id,
+          token = token,
+          task = _task,
+        },
+      })
     end)
     return
   end
   if kind == 'report' then
     vim.schedule(function()
-      self.on_update(ns_id, token, _task)
+      vim.api.nvim_exec_autocmds('ProgressChanged', {
+        data = {
+          ns_id = ns_id,
+          token = token,
+          task = _task,
+        },
+      })
     end)
     return
   end
 
-  self.ns[ns_id][token] = nil
+  M._progress_ns[ns_id][token] = nil
   if kind == 'finish' then
     vim.schedule(function()
-      self.on_finish(ns_id, token, _task)
+      vim.api.nvim_exec_autocmds('ProgressDone', {
+        data = {
+          ns_id = ns_id,
+          token = token,
+          task = _task,
+        },
+      })
     end)
   elseif kind == 'fail' then
     vim.schedule(function()
-      self.on_fail(ns_id, token, _task)
+      vim.api.nvim_exec_autocmds('ProgressError', {
+        data = {
+          ns_id = ns_id,
+          token = token,
+          task = _task,
+        },
+      })
     end)
   end
 end
-
-M.progress = setmetatable(M._progress, {
-  __call = M._progress.call,
-})
 
 return M
