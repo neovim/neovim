@@ -333,16 +333,12 @@ function M._progress.call(self, ns_id, token, kind, opts)
     error('progress title is required for start: ' .. token)
   end
 
-  if opts.cancellable then
-    if kind ~= 'start' then
-      error('progress can not be set to cancellable after start: ' .. token)
-    end
-    task.cancellable = opts.cancellable
-  else
-    task.cancellable = task.cancellable or true
+  if opts.cancellable and kind ~= 'start' then
+    error('progress can not be set to cancellable after start: ' .. token)
   end
+  task.cancellable = opts.cancellable or task.cancellable or true
 
-  task.message = task.message or opts.message
+  task.message = opts.message or task.message
 
   if opts.percentage and kind ~= 'report' then
     error(
