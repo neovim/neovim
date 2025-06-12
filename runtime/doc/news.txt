@@ -76,6 +76,7 @@ LSP
 
 LUA
 
+• |vim.net.download()| allows downloading files.
 • todo
 
 OPTIONS
