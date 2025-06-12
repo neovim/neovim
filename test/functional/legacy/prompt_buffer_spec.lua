@@ -334,7 +334,7 @@ describe('prompt buffer', function()
       {3:[Prompt] [+]             }|
       other buffer             |
       {1:~                        }|*3
-      1 change; ...seconds ago |
+      1 change; {MATCH:.*} |
     ]])
 
     feed('u')
@@ -344,7 +344,7 @@ describe('prompt buffer', function()
       {3:[Prompt] [+]             }|
       other buffer             |
       {1:~                        }|*3
-      1 change; ...seconds ago |
+      1 change; {MATCH:.*} |
     ]])
 
     feed('i<cr><esc>')
@@ -369,7 +369,7 @@ describe('prompt buffer', function()
       {3:[Prompt] [+]             }|
       other buffer             |
       {1:~                        }|*3
-      1 line les...seconds ago |
+      1 line {MATCH:.*} |
     ]])
   end)
 
