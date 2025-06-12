@@ -253,28 +253,44 @@ M._progress = {
 }
 
 M._progress.on_new = function(_, _, task)
-  vim.notify(
-    string.format('START %s%s', task.title, (task.message and ' | ' .. task.message or ''))
-  )
+  vim.api.nvim_echo({
+    {
+      string.format('START %s%s', task.title, (task.message and ' | ' .. task.message or '')),
+      'MsgArea',
+    },
+  }, false, {})
 end
 
 M._progress.on_update = function(_, _, task)
-  vim.notify(
-    string.format(
-      '(%d) %s%s',
-      task.percentage*100,
-      task.title,
-      (task.message and ' | ' .. task.message or '')
-    )
-  )
+  vim.api.nvim_echo({
+    {
+      string.format(
+        '(%d) %s%s',
+        task.percentage * 100,
+        task.title,
+        (task.message and ' | ' .. task.message or '')
+      ),
+      'MsgArea',
+    },
+  }, false, {})
 end
 
 M._progress.on_finish = function(_, _, task)
-  vim.notify(string.format('DONE %s%s', task.title, (task.message and ' | ' .. task.message or '')))
+  vim.api.nvim_echo({
+    {
+      string.format('DONE %s%s', task.title, (task.message and ' | ' .. task.message or '')),
+      'MsgArea',
+    },
+  }, false, {})
 end
 
 M._progress.on_fail = function(_, _, task)
-  vim.notify(string.format('FAIL %s%s', task.title, (task.message and ' | ' .. task.message or '')))
+  vim.api.nvim_echo({
+    {
+      string.format('FAIL %s%s', task.title, (task.message and ' | ' .. task.message or '')),
+      'ErrorMsg',
+    },
+  }, false, {})
 end
 
 --- @param ns_id integer Namespace for progress source. Implementations can
