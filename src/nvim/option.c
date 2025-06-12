@@ -6089,10 +6089,6 @@ static void didset_options_sctx(int opt_flags, int *buf)
 /// @param  what  BS_INDENT, BS_EOL, BS_START, or BS_NOSTOP
 bool can_bs(int what)
 {
-  if (what == BS_START && bt_prompt(curbuf)) {
-    return false;
-  }
-
   // support for number values was removed but we keep '2' since it is used in
   // legacy tests
   if (*p_bs == '2') {

@@ -1746,6 +1746,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
   curbuf_splice_pending++;
   old_cursor = curwin->w_cursor;
+  int old_cmod_flags = cmdmod.cmod_flags;
   char *prompt_moved = NULL;
   if (dir == BACKWARD) {
     if (bt_prompt(curbuf)
@@ -1756,12 +1757,8 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
       if (strncmp(prompt_line, prompt, prompt_len) == 0) {
         STRMOVE(prompt_line, prompt_line + prompt_len);
-        bool lock_makrs = cmdmod.cmod_flags & CMOD_LOCKMARKS;
         cmdmod.cmod_flags = cmdmod.cmod_flags | CMOD_LOCKMARKS;
         ml_replace(curwin->w_cursor.lnum, prompt_line, true);
-        if (lock_makrs != 0) {
-          cmdmod.cmod_flags = cmdmod.cmod_flags ^ CMOD_LOCKMARKS;
-        }
         prompt_moved = concat_str(prompt, p_extra);
         p_extra = prompt_moved;
       }
@@ -1956,6 +1953,7 @@ theend:
   xfree(next_line);
   xfree(allocated);
   xfree(prompt_moved);
+  cmdmod.cmod_flags = old_cmod_flags;
   return retval;
 }
 
