@@ -96,7 +96,7 @@
 --- To run a Task without waiting for the result while still raising
 --- any errors, use [async.Task:raise_on_error()].
 ---
---- @class async
+--- @class vim.async
 local M = {}
 
 --- @param ... any
