@@ -4718,6 +4718,70 @@ describe('LSP', function()
       eq('workspace/executeCommand', result[5].method)
       eq('command:1', result[5].params.command)
     end)
+
+    it('supports disabled actions', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server({
+          capabilities = {
+            executeCommandProvider = {
+              commands = { 'command:1' },
+            },
+            codeActionProvider = {
+              resolveProvider = true,
+            },
+          },
+          handlers = {
+            ['textDocument/codeAction'] = function(_, _, callback)
+              callback(nil, {
+                {
+                  title = 'Code Action 1',
+                  disabled = {
+                    reason = 'This action is disabled',
+                  },
+                },
+              })
+            end,
+            ['codeAction/resolve'] = function(_, _, callback)
+              callback(nil, {
+                title = 'Code Action 1',
+                command = {
+                  title = 'Command 1',
+                  command = 'command:1',
+                },
+              })
+            end,
+          },
+        })
+
+        local client_id = assert(vim.lsp.start({
+          name = 'dummy',
+          cmd = server.cmd,
+        }))
+
+        --- @diagnostic disable-next-line:duplicate-set-field
+        vim.notify = function(message, code)
+          server.messages[#server.messages + 1] = {
+            params = {
+              message = message,
+              code = code,
+            },
+          }
+        end
+
+        vim.lsp.buf.code_action({ apply = true })
+        vim.lsp.stop_client(client_id)
+        return server.messages
+      end)
+      eq(
+        exec_lua(function()
+          return { message = 'This action is disabled', code = vim.log.levels.ERROR }
+        end),
+        result[4].params
+      )
+      -- No command is resolved/applied after selecting a disabled code action
+      eq('shutdown', result[5].method)
+    end)
   end)
 
   describe('vim.lsp.commands', function()
