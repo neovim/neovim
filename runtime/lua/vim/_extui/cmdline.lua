@@ -110,11 +110,11 @@ end
 
 --- Leaving the cmdline, restore 'cmdheight' and 'ruler'.
 ---
---@param level integer
+---@param level integer
 ---@param abort boolean
-function M.cmdline_hide(_, abort)
-  if M.row > 0 then
-    return -- No need to hide when still in cmdline_block.
+function M.cmdline_hide(level, abort)
+  if M.row > 0 or level > 1 then
+    return -- No need to hide when still in nested cmdline or cmdline_block.
   end
 
   fn.clearmatches(ext.wins.cmd) -- Clear matchparen highlights.
@@ -166,7 +166,7 @@ end
 --- Clear cmdline buffer and leave the cmdline.
 function M.cmdline_block_hide()
   M.row = 0
-  M.cmdline_hide(nil, true)
+  M.cmdline_hide(M.level, true)
 end
 
 return M
