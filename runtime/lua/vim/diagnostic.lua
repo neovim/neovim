@@ -1535,6 +1535,10 @@ M.handlers.signs = {
       return
     end
 
+    if not opts.signs then
+      return
+    end
+
     -- 10 is the default sign priority when none is explicitly specified
     local priority = opts.signs and opts.signs.priority or 10
     local get_priority = severity_to_extmark_priority(priority, opts)
