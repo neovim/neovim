@@ -2578,6 +2578,24 @@ vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
 ==============================================================================
 Lua module: vim.ui                                                    *vim.ui*
 
+vim.ui.img                                                        *vim.ui.img*
+    The on_* methods can be called multiple times and each callback will be
+    invoked when finished.
+
+    You can also still choose to wait in a synchronous fashion using `:wait()`
+    which supports supplying a specific timeout in milliseconds. >lua
+        img:show({ ... })
+           :on_ok(function()
+               -- Use the image once it has been confirmed as shown
+           end)
+           :on_fail(function(err)
+               -- Do something with the error that occurred
+           end)
+           :on_done(function(err)
+               -- When either ok or fail happens
+           end)
+<
+
 vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
     Prompts the user for input, allowing arbitrary (potentially asynchronous)
     work until `on_confirm`.
