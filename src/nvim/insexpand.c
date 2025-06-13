@@ -339,7 +339,7 @@ void ins_ctrl_x(void)
     ctrl_x_mode = CTRL_X_NOT_DEFINED_YET;
     edit_submode = _(CTRL_X_MSG(ctrl_x_mode));
     edit_submode_pre = NULL;
-    showmode();
+    redraw_mode = true;
   } else {
     // CTRL-X in CTRL-X CTRL-V mode behaves differently to make CTRL-X
     // CTRL-V look like CTRL-N
@@ -2290,7 +2290,7 @@ static bool set_ctrl_x_mode(const int c)
       edit_submode = _(" (replace) Scroll (^E/^Y)");
     }
     edit_submode_pre = NULL;
-    showmode();
+    redraw_mode = true;
     break;
   case Ctrl_L:
     // complete whole line
@@ -2354,7 +2354,7 @@ static bool set_ctrl_x_mode(const int c)
     // stop completion
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
-    showmode();
+    redraw_mode = true;
     retval = true;
     break;
   case Ctrl_P:
@@ -2392,7 +2392,7 @@ static bool set_ctrl_x_mode(const int c)
     }
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
-    showmode();
+    redraw_mode = true;
     break;
   }
 
@@ -2507,7 +2507,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   compl_enter_selects = false;
   if (edit_submode != NULL) {
     edit_submode = NULL;
-    showmode();
+    redraw_mode = true;
   }
 
   if (c == Ctrl_C && cmdwin_type != 0) {
@@ -2595,14 +2595,14 @@ bool ins_compl_prep(int c)
       ctrl_x_mode = ctrl_x_mode_scroll() ? CTRL_X_NORMAL : CTRL_X_FINISHED;
       edit_submode = NULL;
     }
-    showmode();
+    redraw_mode = true;
   }
 
   if (compl_started || ctrl_x_mode == CTRL_X_FINISHED) {
     // Show error message from attempted keyword completion (probably
     // 'Pattern not found') until another key is hit, then go back to
     // showing what mode we are in.
-    showmode();
+    redraw_mode = true;
     if ((ctrl_x_mode_normal()
          && c != Ctrl_N
          && c != Ctrl_P
@@ -5652,7 +5652,7 @@ static void ins_compl_show_statusmsg(void)
   }
 
   // Show a message about what (completion) mode we're in.
-  showmode();
+  redraw_mode = true;
   if (!shortmess(SHM_COMPLETIONMENU)) {
     if (edit_submode_extra != NULL) {
       if (!p_smd) {
