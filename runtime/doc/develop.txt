@@ -441,6 +441,7 @@ Use existing common {verb} names (actions) if possible:
     - get:          Gets things. Two variants (overloads):
                     1. `get<T>(id: int): T` returns one item.
                     2. `get<T>(filter: dict): T[]` returns a list.
+    - has:          Checks for the presence of an item, feature, etc.
     - inspect:      Presents a high-level, often interactive, view
     - is_enabled:   Checks if functionality is enabled.
     - open:         Opens something (a buffer, window, …)
@@ -452,6 +453,7 @@ Use existing common {verb} names (actions) if possible:
     - try_{verb}:   Best-effort operation, failure returns null or error obj
 
 Do NOT use these deprecated verbs:
+    - contains:     Prefer "has".
     - disable:      Prefer `enable(enable: boolean)`.
     - exit:         Prefer "cancel" (or "stop" if appropriate).
     - is_disabled:  Prefer `is_enabled()`.

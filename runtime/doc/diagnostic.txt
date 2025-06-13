@@ -38,19 +38,6 @@ optionally supplied).  A good rule of thumb is that if a method is meant to
 modify the diagnostics for a buffer (e.g. |vim.diagnostic.set()|) then it
 requires a namespace.
 
-==============================================================================
-DEFAULTS                                              *diagnostic-defaults*
-
-These diagnostic keymaps are created unconditionally when Nvim starts:
-- |]d| is mapped in Normal mode to jump the next diagnostic in the current
-  buffer
-- |[d| is mapped in Normal and Visual mode to jump to the previous diagnostic
-  in th current buffer
-- |]D| is mapped in Normal mode to jump to the last diagnostic in the current buffer
-- |[D| is mapped in Normal mode to jump to the first diagnostic in the current
-  buffer
-- <C-w>d is mapped in normal mode to show diagnostic under cursor.
-
                                 *vim.diagnostic.severity* *diagnostic-severity*
 The "severity" key in a diagnostic is one of the values defined in
 `vim.diagnostic.severity`:
@@ -81,6 +68,16 @@ Functions that take a severity as an optional parameter (e.g.
     } })
 <
     This form allows users to filter for specific severities
+
+==============================================================================
+DEFAULTS                                              *diagnostic-defaults*
+
+These diagnostic keymaps are created unconditionally when Nvim starts:
+- `]d` jumps to the next diagnostic in the buffer. |]d-default|
+- `[d` jumps to the previous diagnostic in the buffer. |[d-default|
+- `]D` jumps to the last diagnostic in the buffer. |]D-default|
+- `[D` jumps to the first diagnostic in the buffer. |[D-default|
+- `<C-w>d` shows diagnostic at cursor in a floating window. |CTRL-W_d-default|
 
 ==============================================================================
 HANDLERS                                                *diagnostic-handlers*
