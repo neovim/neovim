@@ -25,6 +25,8 @@ local log = {}
 
 local log_levels = vim.log.levels
 
+local protocol = require('vim.lsp.protocol')
+
 --- Log level dictionary with reverse lookup as well.
 ---
 --- Can be used to lookup the number from the name or the name from the number.
@@ -216,6 +218,21 @@ function log.should_log(level)
   vim.validate('level', level, 'number')
 
   return level >= current_log_level
+end
+
+--- Convert LSP MessageType to vim.log.levels
+---
+---@param message_type lsp.MessageType
+function log._from_lsp_level(message_type)
+  if message_type == protocol.MessageType.Error then
+    return vim.log.levels.ERROR
+  elseif message_type == protocol.MessageType.Warning then
+    return vim.log.levels.WARN
+  elseif message_type == protocol.MessageType.Info or message_type == protocol.MessageType.Log then
+    return vim.log.levels.INFO
+  else
+    return vim.log.levels.DEBUG
+  end
 end
 
 return log
