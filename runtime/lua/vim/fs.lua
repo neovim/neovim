@@ -375,7 +375,7 @@ end
 --- If the buffer is unnamed (has no backing file) or has a non-empty 'buftype' then the search
 --- begins from Nvim's |current-directory|.
 ---
---- Example:
+--- Examples:
 ---
 --- ```lua
 --- -- Find the root of a Python project, starting from file 'main.py'
@@ -397,20 +397,12 @@ end
 --- @since 12
 --- @param source integer|string Buffer number (0 for current buffer) or file path (absolute or
 ---               relative to the |current-directory|) to begin the search from.
---- @param marker (string|string[]|fun(name: string, path: string): boolean)[]|string|fun(name: string, path: string): boolean A marker or a list of markers.
----               A marker has one of three types: string, a list of strings or a function. The
----               parameter also accepts a list of markers, each of which is any of those three
----               types. If a marker is a function, it is called for each evaluated item and
----               should return true if {name} and {path} are a match. If a list of markers is
----               passed, each marker in the list is evaluated in order and the first marker
----               which is matched returns the parent directory that it found. This allows
----               listing markers with priority. E.g. - in the following list, a parent directory
----               containing either 'a' or 'b' is searched for. If neither is found, then 'c' is
----               searched for. So, 'c' has lower priority than 'a' and 'b' which have equal
----               priority.
----               ```lua
----                   marker = { { 'a', 'b' }, 'c' }
----               ```
+--- @param marker (string|string[]|fun(name: string, path: string): boolean)[]|string|fun(name: string, path: string): boolean
+---               Filename, function, or list thereof, that decides how to find the root. To
+---               indicate "equal priority", specify items in a nested list `{ { 'a.txt', 'b.lua' }, … }`.
+---               A function item must return true if `name` and `path` are a match. Each item
+---               (which may itself be a nested list) is evaluated in-order against all ancestors,
+---               until a match is found.
 --- @return string? # Directory path containing one of the given markers, or nil if no directory was
 ---                   found.
 function M.root(source, marker)
