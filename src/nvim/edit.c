@@ -2854,6 +2854,8 @@ static void ins_reg(void)
     vim_beep(kOptBoFlagRegister);
     need_redraw = true;  // remove the '"'
   } else {
+    yankreg_T *reg = get_yank_register(regname, YREG_PASTE);
+
     if (literally == Ctrl_O || literally == Ctrl_P) {
       // Append the command to the redo buffer.
       AppendCharToRedobuff(Ctrl_R);
@@ -2862,7 +2864,11 @@ static void ins_reg(void)
 
       do_put(regname, NULL, BACKWARD, 1,
              (literally == Ctrl_P ? PUT_FIXINDENT : 0) | PUT_CURSEND);
-    } else if (insert_reg(regname, NULL, literally) == FAIL) {
+    } else if (reg->y_size > 1 && is_literal_register(regname)) {
+      AppendCharToRedobuff(Ctrl_R);
+      AppendCharToRedobuff(regname);
+      do_put(regname, NULL, BACKWARD, 1, PUT_CURSEND);
+    } else if (insert_reg(regname, NULL, !!literally || is_literal_register(regname)) == FAIL) {
       vim_beep(kOptBoFlagRegister);
       need_redraw = true;  // remove the '"'
     } else if (stop_insert_mode) {

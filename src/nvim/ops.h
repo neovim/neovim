@@ -152,7 +152,7 @@ static inline int op_reg_index(const int regname)
 static inline bool is_literal_register(const int regname)
   FUNC_ATTR_CONST
 {
-  return regname == '*' || regname == '+';
+  return regname == '*' || regname == '+' || ASCII_ISALNUM(regname);
 }
 
 EXTERN LuaRef repeat_luaref INIT( = LUA_NOREF);  ///< LuaRef for "."
