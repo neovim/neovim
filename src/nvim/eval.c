@@ -8675,11 +8675,7 @@ void invoke_prompt_callback(void)
   curwin->w_cursor.col = 0;
 
   if (curbuf->b_prompt_callback.type == kCallbackNone) {
-    pos_T next_prompt = { .lnum = curbuf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
-    RESET_FMARK(&curbuf->b_prompt_submitted, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
-    // clear undo history on submit
-    u_clearallandblockfree(curbuf);
-    return;
+    goto theend;
   }
   char *text = ml_get(lnum_start);
   char *prompt = prompt_text();
@@ -8702,6 +8698,7 @@ void invoke_prompt_callback(void)
   tv_clear(&argv[0]);
   tv_clear(&rettv);
 
+theend:
   // clear undo history on submit
   u_clearallandblockfree(curbuf);
 
