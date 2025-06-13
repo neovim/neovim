@@ -1403,6 +1403,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
           msg_puts(path_tail(files[i]));
           msg_putchar('\n');
           StringBuilder msg = KV_INITIAL_VALUE;
+          kv_resize(msg, IOSIZE);
           swapfile_info(files[i], &msg);
           msg_outtrans(msg.items, 0, false);
           kv_destroy(msg);
@@ -3464,6 +3465,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             no_wait_return++;
             // Show info about the existing swapfile.
             StringBuilder msg = KV_INITIAL_VALUE;
+            kv_resize(msg, IOSIZE);
             char *fhname = home_replace_save(NULL, fname);
             attention_message(buf, fname, fhname, &msg);
 
