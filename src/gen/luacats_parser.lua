@@ -22,6 +22,7 @@ local luacats_grammar = require('gen.luacats_grammar')
 --- @class nvim.luacats.parser.fun
 --- @field name string
 --- @field params nvim.luacats.parser.param[]
+--- @field overloads string[]
 --- @field returns nvim.luacats.parser.return[]
 --- @field desc string
 --- @field access? 'private'|'package'|'protected'
@@ -30,6 +31,7 @@ local luacats_grammar = require('gen.luacats_grammar')
 --- @field modvar? string
 --- @field classvar? string
 --- @field deprecated? true
+--- @field async? true
 --- @field since? string
 --- @field attrs? string[]
 --- @field nodoc? true
@@ -224,6 +226,11 @@ local function process_doc_line(line, state)
   elseif kind == 'enum' then
     -- TODO
     state.doc_lines = nil
+  elseif kind == 'async' then
+    cur_obj.async = true
+  elseif kind == 'overload' then
+    cur_obj.overloads = cur_obj.overloads or {}
+    table.insert(cur_obj.overloads, parsed.type)
   elseif
     vim.tbl_contains({
       'diagnostic',
@@ -263,11 +270,13 @@ local function fun2field(fun)
   end
 
   return {
+    kind = 'field',
     name = fun.name,
     type = table.concat(parts, ''),
     access = fun.access,
     desc = fun.desc,
     nodoc = fun.nodoc,
+    classvar = fun.classvar,
   }
 end
 
@@ -325,10 +334,7 @@ local function process_lua_line(line, state, classes, classvars, has_indent)
         end
 
         -- Add method as the field to the class
-        local cls = classes[class]
-        local field = fun2field(cur_obj)
-        field.classvar = cur_obj.classvar
-        table.insert(cls.fields, field)
+        table.insert(classes[class].fields, fun2field(cur_obj))
         return
       end
 
