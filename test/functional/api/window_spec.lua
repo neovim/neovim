@@ -730,6 +730,32 @@ describe('API/win', function()
       eq(prevwin, api.nvim_tabpage_get_win(tab))
       assert_alive()
     end)
+
+    it('closing a float does not enter unfocusable or hidden prevwin', function()
+      local firstwin = api.nvim_get_current_win()
+      local wins = {} ---@type integer[]
+      for _ = 1, 4 do
+        wins[#wins + 1] = api.nvim_open_win(0, true, {
+          relative = 'editor',
+          row = 10,
+          col = 10,
+          width = 50,
+          height = 10,
+        })
+      end
+      api.nvim_win_set_config(wins[3], { hide = true })
+      api.nvim_win_close(0, false)
+      eq(firstwin, api.nvim_get_current_win())
+      api.nvim_set_current_win(wins[2])
+      api.nvim_set_current_win(wins[3])
+      api.nvim_win_set_config(wins[2], { focusable = false })
+      api.nvim_win_close(0, false)
+      eq(firstwin, api.nvim_get_current_win())
+      api.nvim_set_current_win(wins[1])
+      api.nvim_set_current_win(wins[2])
+      api.nvim_win_close(0, false)
+      eq(wins[1], api.nvim_get_current_win())
+    end)
   end)
 
   describe('hide', function()
