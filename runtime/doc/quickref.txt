@@ -871,7 +871,7 @@ Short explanation of each option:		*option-list*
 'smartindent'	  'si'	    smart autoindenting for C programs
 'smarttab'	  'sta'     <Tab> in leading whitespace indents by 'shiftwidth'
 'smoothscroll'	  'sms'     scroll by screen lines when 'wrap' is set
-'softtabstop'	  'sts'     number of spaces that <Tab> uses while editing
+'softtabstop'	  'sts'     number of columns between two soft tab stops
 'spell'			    enable spell checking
 'spellcapcheck'   'spc'     pattern to locate end of a sentence
 'spellfile'	  'spf'     files where |zg| and |zw| store words
@@ -923,8 +923,8 @@ Short explanation of each option:		*option-list*
 'undoreload'	  'ur'	    max nr of lines to save for undo on a buffer reload
 'updatecount'	  'uc'	    after this many characters flush swap file
 'updatetime'	  'ut'	    after this many milliseconds flush swap file
-'varsofttabstop'  'vsts'    a list of number of spaces when typing <Tab>
-'vartabstop'	  'vts'	    a list of number of spaces for <Tab>s
+'varsofttabstop'  'vsts'    a list of number of columns between soft tab stops
+'vartabstop'	  'vts'	    a list of number of columns between tab stops
 'verbose'	  'vbs'     give informative messages
 'verbosefile'	  'vfile'   file to write messages in
 'viewdir'	  'vdir'    directory where to store files with :mkview

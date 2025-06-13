@@ -8222,18 +8222,24 @@ local options = {
       abbreviation = 'sts',
       defaults = 0,
       desc = [=[
-        Number of spaces that a <Tab> counts for while performing editing
-        operations, like inserting a <Tab> or using <BS>.  It "feels" like
-        <Tab>s are being inserted, while in fact a mix of spaces and <Tab>s is
-        used.  This is useful to keep the 'ts' setting at its standard value
-        of 8, while being able to edit like it is set to 'sts'.  However,
-        commands like "x" still work on the actual characters.
-        When 'sts' is zero, this feature is off.
-        When 'sts' is negative, the value of 'shiftwidth' is used.
-        See also |ins-expandtab|.  When 'expandtab' is not set, the number of
-        spaces is minimized by using <Tab>s.
-        The 'L' flag in 'cpoptions' changes how tabs are used when 'list' is
-        set.
+        Create soft tab stops, separated by 'softtabstop' number of columns.
+        In Insert mode, pressing the <Tab> key will move the cursor to the
+        next soft tab stop, instead of inserting a literal tab.  <BS> behaves
+        similarly in reverse.  Vim inserts a minimal mix of tab and space
+        characters to produce the visual effect.
+
+        This setting does not affect the display of existing tab characters.
+
+        A value of 0 disables this behaviour.  A negative value makes Vim use
+        'shiftwidth'.  If you plan to use 'sts' and 'shiftwidth' with
+        different values, you might consider setting 'smarttab'.
+
+        'softtabstop' is temporarily set to 0 when 'paste' is on and reset
+        when it is turned off.  It is also reset when 'compatible' is set.
+
+        The 'L' flag in 'cpoptions' alters tab behavior when 'list' is
+        enabled.  See also |ins-expandtab| ans user manual section |30.5| for
+        in-depth explanations.
 
         The value of 'softtabstop' will be ignored if |'varsofttabstop'| is set
         to anything other than an empty string.
@@ -9787,21 +9793,20 @@ local options = {
       cb = 'did_set_varsofttabstop',
       defaults = '',
       desc = [=[
-        A list of the number of spaces that a <Tab> counts for while editing,
-        such as inserting a <Tab> or using <BS>.  It "feels" like variable-
-        width <Tab>s are being inserted, while in fact a mixture of spaces
-        and <Tab>s is used.  Tab widths are separated with commas, with the
-        final value applying to all subsequent tabs.
+        Defines variable-width soft tab stops.  The value is a comma-separated
+        list of widths in columns.  Each width defines the number of columns
+        before the next soft tab stop.  The last value repeats indefinitely.
 
         For example, when editing assembly language files where statements
         start in the 9th column and comments in the 41st, it may be useful
         to use the following: >vim
         	set varsofttabstop=8,32,8
-        <	This will set soft tabstops with 8 and 8 + 32 spaces, and 8 more
-        for every column thereafter.
+        <	This sets soft tab stops at column 8, then at column 40 (8 + 32), and
+        every 8 columns thereafter.
 
-        Note that the value of |'softtabstop'| will be ignored while
-        'varsofttabstop' is set.
+        Note: this setting overrides 'softtabstop'.
+        See section |30.5| of the user manual for detailed explanations on how
+        Vim works with tabs and spaces.
       ]=],
       full_name = 'varsofttabstop',
       list = 'comma',
@@ -9815,15 +9820,20 @@ local options = {
       cb = 'did_set_vartabstop',
       defaults = '',
       desc = [=[
-        A list of the number of spaces that a <Tab> in the file counts for,
-        separated by commas.  Each value corresponds to one tab, with the
-        final value applying to all subsequent tabs. For example: >vim
-        	set vartabstop=4,20,10,8
-        <	This will make the first tab 4 spaces wide, the second 20 spaces,
-        the third 10 spaces, and all following tabs 8 spaces.
+        Defines variable-width tab stops. The value is a comma-separated list
+        of widths in columns.  Each width defines the number of columns
+        before the next tab stop; the last value repeats indefinitely.
 
-        Note that the value of |'tabstop'| will be ignored while 'vartabstop'
-        is set.
+        For example: >
+        	:set vartabstop=4,8
+        <	This places the first tab stop 4 columns from the start of the line
+        and each subsequent tab stop 8 columns apart.
+
+        Note: this setting overrides 'tabstop'.
+        On UNIX, it is recommended to keep the default tabstop value of 8.
+        Consider setting 'varsofttabstop' instead.
+        See section |30.5| of the user manual for detailed explanations on how
+        Vim works with tabs and spaces.
       ]=],
       full_name = 'vartabstop',
       list = 'comma',
