@@ -1,12 +1,97 @@
+
 ==============================================================================
 Lua module: vim.async                                              *lua-async*
 
-*async.Closable*
+This module implements an asynchronous programming library for Neovim,
+enabling developers to write non-blocking, coroutine-based code. Below is a
+summary of its key features and components:
+1. Async Contexts:
+   • Functions can run asynchronously using Lua coroutines.
+   • Async functions are annotated with `@async` and must run within an async
+     context.
+2. Task Management:
+   • Create tasks with `vim.async.run()`.
+   • Tasks be awaited, canceled, or waited synchronously.
+3. Awaiting:
+   • |vim.async.await()|: Allows blocking on asynchronous operations, such as
+     tasks or callback-based functions.
+   • Supports overloads for tasks, and callback functions.
+4. Task Wrapping:
+   • |vim.async.wrap()|: Converts any callback-based functions into async
+     functions.
+5. Concurrency Utilities:
+   • |vim.async.iter()|: Iterates over multiple tasks, yielding their results
+     as they complete.
+   • |vim.async.join()|: Waits for all tasks to complete and collects their
+     results.
+   • |vim.async.joinany()|: Waits for the first task to complete and returns
+     its result.
+6. Synchronization Primitives:
+   • |vim.async.event()|: Implements an event signaling mechanism for tasks to
+     wait and notify.
+   • |vim.async.queue()|: A thread-safe FIFO queue for producer-consumer
+     patterns.
+   • |vim.async.semaphore()|: Limits concurrent access to shared resources.
+7. Error Handling:
+   • Errors in async tasks are propagated and can be raised or handled
+     explicitly.
+   • Provides methods like |vim.async.Task:traceback()| for debugging.
+
+Examples: >lua
+
+      local sleep = vim.async.wrap(2, function(duration, callback)
+        local timer = assert(vim.uv.new_timer())
+        timer:start(duration, 0, callback)
+        return timer -- timer has a close method
+      end
+
+      -- Create an async version of vim.system
+      local system = vim.async.wrap(3, vim.system)
+
+      -- Create an async-context using run
+      vim.async.run(function())
+        local obj_ls = system({'ls'})
+        sleep(200)
+        local obj_cat = system({'cat file'})
+      end)
+<
+
+                                                              *async-function*
+Async functions are functions that must run in an |async-context| because they
+contain at least one call that interacts with the event loop.
+
+These functions can be executed directly using `async.run()` which runs the
+function in an async context.
+
+Use the `@async` annotation to designate a function as an async function.
+
+                                                               *async-context*
+An async-context is an executation context managed by `vim.async` and is
+implemented via |lua-coroutine|s. Many of the functions and methods in
+`vim.async` can only run when within this context.
+
+                                                        *async-error-handling*
+Errors are handled differently depending on whether a function is called in a
+blocking or non-blocking manner.
+
+If a function is waited in a blocking call (via |async.await()| or
+|async.Task:wait()|), errors are raised immediately.
+
+If a function is waited in a non-blocking way (via |async.Task:wait()|),
+errors are passed as part of the result in the form of `(err?, ...)`, where
+`err` is the error message and `...` are the results of the function when
+there is no error.
+
+To run a Task without waiting for the result while still raising any errors,
+use |async.Task:raise_on_error()|.
+
+
+*vim.async.Closable*
 
     Fields: ~
       • {close}  (`fun(self, callback?: fun())`)
 
-*async.Event*
+*vim.async.Event*
     An event can be used to notify multiple tasks that some event has
     happened. An Event object manages an internal flag that can be set to true
     with the `set()` method and reset to `false` with the `clear()` method.
@@ -14,38 +99,24 @@ Lua module: vim.async                                              *lua-async*
     set to `false` initially.
 
     Fields: ~
-      • {set}    (`fun(self: async.Event, max_woken: integer?)`) See
+      • {set}    (`fun(self: vim.async.Event, max_woken: integer?)`) See
                  |Event:set()|.
-      • {wait}   (`fun(self: async.Event)`) See |Event:wait()|.
-      • {clear}  (`fun(self: async.Event)`) See |Event:clear()|.
+      • {wait}   (`fun(self: vim.async.Event)`) See |Event:wait()|.
+      • {clear}  (`fun(self: vim.async.Event)`) See |Event:clear()|.
 
-*async.Future*
-    Future objects are used to bridge low-level callback-based code with
-    high-level async/await code.
+*vim.async.Queue*
 
     Fields: ~
-      • {completed}  (`fun(self: async.Future): boolean`) See
-                     |Future:completed()|.
-      • {result}     (`fun(self: async.Future): boolean, any`) See
-                     |Future:result()|.
-      • {wait}       (`fun(self: async.Future, callback: fun(err?: any, ...: any))`)
-                     See |Future:wait()|.
-      • {complete}   (`fun(self: async.Future, err: string?, ...: any)`) See
-                     |Future:complete()|.
-
-*async.Queue*
-
-    Fields: ~
-      • {size}        (`fun(self: async.Queue)`) See |Queue:size()|.
-      • {max_size}    (`fun(self: async.Queue)`) See |Queue:max_size()|.
-      • {put}         (`fun(self: async.Queue, value: any)`) See
+      • {size}        (`fun(self: vim.async.Queue)`) See |Queue:size()|.
+      • {max_size}    (`fun(self: vim.async.Queue)`) See |Queue:max_size()|.
+      • {put}         (`fun(self: vim.async.Queue, value: any)`) See
                       |Queue:put()|.
-      • {get}         (`fun(self: async.Queue)`) See |Queue:get()|.
-      • {get_nowait}  (`fun(self: async.Queue)`) See |Queue:get_nowait()|.
-      • {put_nowait}  (`fun(self: async.Queue, value: any)`) See
+      • {get}         (`fun(self: vim.async.Queue)`) See |Queue:get()|.
+      • {get_nowait}  (`fun(self: vim.async.Queue)`) See |Queue:get_nowait()|.
+      • {put_nowait}  (`fun(self: vim.async.Queue, value: any)`) See
                       |Queue:put_nowait()|.
 
-*async.Semaphore*
+*vim.async.Semaphore*
     A semaphore manages an internal counter which is decremented by each
     `acquire()` call and incremented by each `release()` call. The counter can
     never go below zero; when `acquire()` finds that it is zero, it blocks,
@@ -55,17 +126,19 @@ Lua module: vim.async                                              *lua-async*
     automatically acquires and releases the semaphore around a function call.
 
     Fields: ~
-      • {with}     (`fun(self: async.Semaphore, fn: async): R`) See
-                   |Semaphore:with()|.
-      • {acquire}  (`fun(self: async.Semaphore)`) See |Semaphore:acquire()|.
-      • {release}  (`fun(self: async.Semaphore)`) See |Semaphore:release()|.
+      • {with}     (`fun(self: vim.async.Semaphore, fn: async fun(): R...): R...`)
+                   See |Semaphore:with()|.
+      • {acquire}  (`fun(self: vim.async.Semaphore)`) See
+                   |Semaphore:acquire()|.
+      • {release}  (`fun(self: vim.async.Semaphore)`) See
+                   |Semaphore:release()|.
 
-*async.Task*
+*vim.async.Task*
     Tasks are used to run coroutines in event loops. If a coroutine needs to
     wait on the event loop, the Task suspends the execution of the coroutine
     and waits for event loop to restart it.
 
-    Use the |async.run()| to create Tasks.
+    Use the |vim.async.run()| to create Tasks.
 
     To cancel a running Task use the `close()` method. Calling it will cause
     the Task to throw a "Task is closing or closed" error into the wrapped
@@ -77,212 +150,89 @@ Lua module: vim.async                                              *lua-async*
     the Future -- object will be cancelled.
 
     Fields: ~
-      • {wait}            (`fun(self: async.Task, callback_or_timeout: integer|fun)`)
+      • {wait}            (`fun(self: vim.async.Task, callback_or_timeout: integer|fun(err?: any, ...: R...)?)`)
                           See |Task:wait()|.
-      • {traceback}       (`fun(self: async.Task, msg: string?): string`) See
-                          |Task:traceback()|.
-      • {raise_on_error}  (`fun(self: async.Task): async.Task`) See
+      • {traceback}       (`fun(self: vim.async.Task, msg: string?): string`)
+                          See |Task:traceback()|.
+      • {raise_on_error}  (`fun(self: vim.async.Task): vim.async.Task`) See
                           |Task:raise_on_error()|.
-      • {close}           (`fun(self: async.Task, callback: fun(closed: boolean)?)`)
+      • {close}           (`fun(self: vim.async.Task, callback: fun(closed: boolean)?)`)
                           See |Task:close()|.
-      • {status}          (`fun(self: async.Task): 'running'|'suspended'|'normal'|'dead'?`)
+      • {status}          (`fun(self: vim.async.Task): 'running'|'suspended'|'normal'|'dead'?`)
                           See |Task:status()|.
 
-*vim.async*
-    This modules implements an asynchronous programming library for Neovim,
-    enabling developers to write non-blocking, coroutine-based code. Below is
-    a summary of its key features and components:
-    1. Async Contexts:
-       • Functions can run asynchronously using Lua coroutines.
-       • Async functions are annotated with `@async` and must run within an
-         async context.
-    2. Task Management:
-       • Create be `async.run()`.
-       • Can be awaited, canceled, or waited synchronously.
-    3. Awaiting:
-       • |async.await()|: Allows blocking on asynchronous operations, such as
-         tasks or callback-based functions.
-       • Supports overloads for tasks, and callback functions.
-    4. Task Wrapping:
-       • |async.wrap()|: Converts any callback-based functions into async
-         functions.
-    5. Concurrency Utilities:
-       • |async.iter()|: Iterates over multiple tasks, yielding their results
-         as they complete.
-       • |async.join()|: Waits for all tasks to complete and collects their
-         results.
-       • |async.joinany()|: Waits for the first task to complete and returns
-         its result.
-    6. Synchronization Primitives:
-       • |async.event()|: Implements an event signaling mechanism for tasks to
-         wait and notify.
-       • |async.queue()|: A thread-safe FIFO queue for producer-consumer
-         patterns.
-       • |async.semaphore()|: Limits concurrent access to shared resources.
-    7. Error Handling:
-       • Errors in async tasks are propagated and can be raised or handled
-         explicitly.
-       • Provides methods like |async.Task:traceback()| for debugging.
-
-    Examples: >lua
-          -- Create an async version of vim.system
-          local system = vim.async.wrap(3, function(cmd, opts, cb)
-            local obj = vim.system(cmd, opts, cb)
-            obj.close = function(_, callback)
-              if not obj:is_closing() then
-                obj:wait(0)
-                callback()
-              end
-            end
-            return obj
-          end)
-
-          local sleep = vim.async.wrap(2, function(duration, callback)
-            local timer = assert(vim.uv.new_timer())
-            timer:start(duration, 0, callback)
-            return timer -- timer has a close method
-          end
-
-          -- Create an async-context using run
-          vim.async.run(function())
-            local obj_ls = system({'ls'})
-            sleep(200)
-            local obj_cat = system({'cat file'})
-          end)
-<
-
-                                                              *async-function*
-    Async functions are functions that must run in an |async-context| because
-    they contain at least one call that interacts with the event loop.
-
-    These functions can be executed directly using `async.run()` which funs
-    the function in an async context.
-
-    Use the `@async` annotation to designate a function as an async function.
-
-                                                               *async-context*
-    An async-context is an executation context managed by `vim.async` and is
-    implemented via |lua-coroutine|s. Many of the functions and methods in
-    `vim.async` can only run when within this context.
-
-                                                        *async-error-handling*
-    Errors are handled differently depending on whether a function is called
-    in a blocking or non-blocking manner.
-
-    If a function is waited in a blocking call (via |async.await()| or
-    |async.Task:wait()|), errors are raised immediately.
-
-    If a function is waited in a non-blocking way (via |async.Task:wait()|),
-    errors are passed as part of the result in the form of `(err?, ...)`,
-    where `err` is the error message and `...` are the results of the function
-    when there is no error.
-
-    To run a Task without waiting for the result while still raising any
-    errors, use |async.Task:raise_on_error()|.
+*vim.vim.async.Future*
+    Future objects are used to bridge low-level callback-based code with
+    high-level async/await code.
 
     Fields: ~
-      • {run}        (`fun(func: async, ...: T): async.Task<R>`) See
-                     |M:run()|.
-      • {await}      (`fun(...: any)`) See |M:await()|.
-      • {wrap}       (`fun(argc: integer, func: fun(...: T, callback: fun(...: R)): async.Closable?): async`)
-                     See |M:wrap()|.
-      • {iter}       (`fun(tasks: async.Task<any>[]): async`) See |M:iter()|.
-      • {join}       (`fun(tasks: async.Task<any>[]): table`) See |M:join()|.
-      • {joinany}    (`fun(tasks: async.Task<any>[]): integer?, any?, any`)
-                     See |M:joinany()|.
-      • {sleep}      (`fun(duration: integer)`) See |M:sleep()|.
-      • {timeout}    (`fun(task: async.Task<R>)`) See |M:timeout()|.
-      • {future}     (`fun(): async.Future`) See |M:future()|.
-      • {event}      (`fun(): async.Event`) See |M:event()|.
-      • {queue}      (`fun(max_size: integer?): async.Queue`) See |M:queue()|.
-      • {semaphore}  (`fun(permits: integer): async.Semaphore`) See
-                     |M:semaphore()|.
+      • {completed}  (`fun(self: vim.vim.async.Future): boolean`) See
+                     |Future:completed()|.
+      • {result}     (`fun(self: vim.vim.async.Future): boolean, any`) See
+                     |Future:result()|.
+      • {wait}       (`fun(self: vim.vim.async.Future, callback: fun(err?: any, ...: any))`)
+                     See |Future:wait()|.
+      • {complete}   (`fun(self: vim.vim.async.Future, err: string?, ...: any)`)
+                     See |Future:complete()|.
 
 
-acquire()                                                *vim.async.acquire()*
-    Acquire a semaphore.
-
-    If the internal counter is greater than zero, decrement it by `1` and
-    return immediately. If it is `0`, wait until a `release()` is called.
-    @async
 
 await({...})                                               *vim.async.await()*
     Asynchronous blocking wait
 
     Example: >lua
-        local task = async.run(function()
+        local task = vim.async.run(function()
            return 1, 'a'
         end)
 
-        local task_fun = async.async(function(arg)
+        local task_fun = vim.async.async(function(arg)
            return 2, 'b', arg
         end)
 
-        async.run(function()
+        vim.async.run(function()
           do -- await a callback function
-            async.await(1, vim.schedule)
+            vim.async.await(1, vim.schedule)
           end
 
           do -- await a callback function (if function only has a callback argument)
-            async.await(vim.schedule)
+            vim.async.await(vim.schedule)
           end
 
           do -- await a task (new async context)
-            local n, s = async.await(task)
+            local n, s = vim.async.await(task)
             assert(n == 1 and s == 'a')
           end
 
         end)
 <
 
-    @async
-
     Parameters: ~
       • {...}  (`any`) see overloads
 
-clear()                                                    *vim.async.clear()*
-    Clear (unset) the event.
+    Overloads: ~
+      • `fun(func: (fun(callback: fun(...:R...)): vim.async.Closable?)): R...`
+      • `fun(argc: integer, func: (fun(...:T..., callback: fun(...:R...)): vim.async.Closable?), ...:T...): R...`
+      • `fun(task: vim.async.Task<R>): R...`
 
-    Tasks awaiting on wait() will now block until the set() method is called
-    again.
-
-close({callback})                                          *vim.async.close()*
-    Close the task and all of its children. If callback is provided it will
-    run asynchronously, else it will run synchronously.
-
-    Parameters: ~
-      • {callback}  (`fun(closed: boolean)?`)
-
-complete({err}, {...})                                  *vim.async.complete()*
-
-    Parameters: ~
-      • {err}  (`string?`)
-      • {...}  (`any`) result
-
-completed()                                            *vim.async.completed()*
-    Return `true` if the Future is completed.
-
-    Return: ~
-        (`boolean`)
 
 event()                                                    *vim.async.event()*
     Create a new event
 
     An event can signal to multiple listeners to resume execution The event
     can be set from a non-async context. >lua
-         local event = async.event()
+         local event = vim.async.event()
 
-         local worker = async.run(function()
+         local worker = vim.async.run(function()
            sleep(1000)
            event.set()
          end)
 
          local listeners = {
-           async.run(function()
+           vim.async.run(function()
              event.wait()
              print("First listener notified")
            end),
-           async.run(function()
+           vim.async.run(function()
              event.wait()
              print("Second listener notified")
            end),
@@ -290,20 +240,72 @@ event()                                                    *vim.async.event()*
 <
 
     Return: ~
-        (`async.Event`)
+        (`vim.async.Event`) See |vim.async.Event|.
+
+Event:clear()                                                  *Event:clear()*
+    Clear (unset) the event.
+
+    Tasks awaiting on wait() will now block until the set() method is called
+    again.
+
+Event:set({max_woken})                                           *Event:set()*
+    Set the event.
+
+    All tasks waiting for event to be set will be immediately awakened.
+
+    Parameters: ~
+      • {max_woken}  (`integer?`)
+
+Event:wait()                                                    *Event:wait()*
+    Wait until the event is set.
+
+    If the event is set, return `true` immediately. Otherwise block until
+    another task calls set().
 
 future()                                                  *vim.async.future()*
     Create a new future
 
     Return: ~
-        (`async.Future`)
+        (`vim.async.Future`)
 
-get()                                                        *vim.async.get()*
-    Get a value from the queue, blocking if the queue is empty @async
+Future:complete({err}, {...})                              *Future:complete()*
 
-get_nowait()                                          *vim.async.get_nowait()*
-    Get a value from the queue, erroring if queue is empty. If the queue is
-    empty, raise "Queue is empty" error.
+    Parameters: ~
+      • {err}  (`string?`)
+      • {...}  (`any`) result
+
+Future:completed()                                        *Future:completed()*
+    Return `true` if the Future is completed.
+
+    Return: ~
+        (`boolean`)
+
+Future:result()                                              *Future:result()*
+    Return the result of the Future.
+
+    If the Future is done and has a result set by the `complete()` method, the
+    result is returned.
+
+    If the Future’s result isn’t yet available, this method raises a
+    "Future has not completed" error.
+
+    Return (multiple): ~
+        (`boolean`) stat
+        (`any`) ... error or result
+
+Future:wait({callback})                                        *Future:wait()*
+    Add a callback to be run when the Future is done.
+
+    The callback is called with the arguments:
+    • (`err: string`) - if the Future completed with an error.
+    • (`nil`, `...:any`) - the results of the Future if it completed
+      successfully.
+
+    If the Future is already done when this method is called, the callback is
+    called immediately with the results.
+
+    Parameters: ~
+      • {callback}  (`fun(err?: any, ...: any)`)
 
 iter({tasks})                                               *vim.async.iter()*
     Waits for multiple tasks to finish and iterates over their results.
@@ -318,20 +320,20 @@ iter({tasks})                                               *vim.async.iter()*
     values.
 
     Example: >lua
-        local task1 = async.run(function()
+        local task1 = vim.async.run(function()
           return 1, 'a'
         end)
 
-        local task2 = async.run(function()
+        local task2 = vim.async.run(function()
           return 2, 'b'
         end)
 
-        local task3 = async.run(function()
+        local task3 = vim.async.run(function()
           error('task3 error')
         end)
 
-        async.run(function()
-          for i, err, r1, r2 in async.iter({task1, task2, task3}) do
+        vim.async.run(function()
+          for i, err, r1, r2 in vim.async.iter({task1, task2, task3}) do
             print(i, err, r1, r2)
           end
         end)
@@ -343,33 +345,32 @@ iter({tasks})                                               *vim.async.iter()*
         3 'task3 error' nil nil
 <
 
-    @async
-
     Parameters: ~
-      • {tasks}  (`async.Task<any>[]`) A list of tasks to wait for and iterate
-                 over.
+      • {tasks}  (`vim.async.Task<any>[]`) A list of tasks to wait for and
+                 iterate over.
 
     Return: ~
-        (`async`) fun
+        (`async fun()`) (integer?, any?, ...any) iterator that yields the
+        index, error, and results of each task.
 
 join({tasks})                                               *vim.async.join()*
     Wait for all tasks to finish and return their results.
 
     Example: >lua
-        local task1 = async.run(function()
+        local task1 = vim.async.run(function()
           return 1, 'a'
         end)
 
-        local task2 = async.run(function()
+        local task2 = vim.async.run(function()
           return 1, 'a'
         end)
 
-        local task3 = async.run(function()
+        local task3 = vim.async.run(function()
           error('task3 error')
         end)
 
-        async.run(function()
-          local results = async.join({task1, task2, task3})
+        vim.async.run(function()
+          local results = vim.async.join({task1, task2, task3})
           print(vim.inspect(results))
         end)
 <
@@ -382,46 +383,27 @@ join({tasks})                                               *vim.async.join()*
         }
 <
 
-    @async
-
     Parameters: ~
-      • {tasks}  (`async.Task<any>[]`)
+      • {tasks}  (`vim.async.Task<any>[]`)
 
     Return: ~
         (`table`)
 
 joinany({tasks})                                         *vim.async.joinany()*
-    @async
 
     Parameters: ~
-      • {tasks}  (`async.Task<any>[]`)
+      • {tasks}  (`vim.async.Task<any>[]`)
 
     Return (multiple): ~
         (`integer?`) index
         (`any?`) err
         (`any`) ... results
 
-max_size()                                              *vim.async.max_size()*
-    Returns the maximum number of items in the queue
-
-put({value})                                                 *vim.async.put()*
-    Put a value into the queue @async
-
-    Parameters: ~
-      • {value}  (`any`)
-
-put_nowait({value})                                   *vim.async.put_nowait()*
-    Put an item into the queue without blocking. If no free slot is
-    immediately available, raise "Queue is full" error.
-
-    Parameters: ~
-      • {value}  (`any`)
-
 queue({max_size})                                          *vim.async.queue()*
     Create a new FIFO queue with async support. >lua
-         local queue = async.queue()
+         local queue = vim.async.queue()
 
-         local producer = async.run(function()
+         local producer = vim.async.run(function()
            for i = 1, 10 do
              sleep(100)
              queue:put(i)
@@ -444,43 +426,44 @@ queue({max_size})                                          *vim.async.queue()*
                     defaults to no limit
 
     Return: ~
-        (`async.Queue`)
+        (`vim.async.Queue`) See |vim.async.Queue|.
 
-raise_on_error()                                  *vim.async.raise_on_error()*
-    If a task completes with an error, raise the error
+Queue:get()                                                      *Queue:get()*
+    Get a value from the queue, blocking if the queue is empty
 
-    Return: ~
-        (`async.Task`) self
+Queue:get_nowait()                                        *Queue:get_nowait()*
+    Get a value from the queue, erroring if queue is empty. If the queue is
+    empty, raise "Queue is empty" error.
 
-release()                                                *vim.async.release()*
-    Release a semaphore.
+Queue:max_size()                                            *Queue:max_size()*
+    Returns the maximum number of items in the queue
 
-    Increments the internal counter by `1`. Can wake up a task waiting to
-    acquire the semaphore.
+Queue:put({value})                                               *Queue:put()*
+    Put a value into the queue
 
-result()                                                  *vim.async.result()*
-    Return the result of the Future.
+    Parameters: ~
+      • {value}  (`any`)
 
-    If the Future is done and has a result set by the `complete()` method, the
-    result is returned.
+Queue:put_nowait({value})                                 *Queue:put_nowait()*
+    Put an item into the queue without blocking. If no free slot is
+    immediately available, raise "Queue is full" error.
 
-    If the Future’s result isn’t yet available, this method raises a
-    "Future has not completed" error.
+    Parameters: ~
+      • {value}  (`any`)
 
-    Return (multiple): ~
-        (`boolean`) stat
-        (`any`) ... error or result
+Queue:size()                                                    *Queue:size()*
+    Returns the number of items in the queue
 
 run({func}, {...})                                           *vim.async.run()*
     Run a function in an async context, asynchronously.
 
-    Returns an |async.Task| object which can be used to wait or await the
+    Returns an |vim.async.Task| object which can be used to wait or await the
     result of the function.
 
     Examples: >lua
         -- Run a uv function and wait for it
-        local stat = async.run(function()
-            return async.await(2, vim.uv.fs_stat, 'foo.txt')
+        local stat = vim.async.run(function()
+            return vim.async.await(2, vim.uv.fs_stat, 'foo.txt')
         end):wait()
 
         -- Since uv functions have sync versions, this is the same as:
@@ -488,24 +471,24 @@ run({func}, {...})                                           *vim.async.run()*
 <
 
     Parameters: ~
-      • {func}  (`async`) fun(...:T...): R... Function to run in an async
+      • {func}  (`async fun(...:T...): R...`) Function to run in an async
                 context
-      • {...}   (`any`)
+      • {...}   (`T...`) Arguments to pass to the function
 
     Return: ~
-        (`async.Task<R>`)
+        (`vim.async.Task<R>`)
 
 semaphore({permits})                                   *vim.async.semaphore()*
     Create an async semaphore that allows up to a given number of
     acquisitions. >lua
-        async.run(function()
-          local semaphore = async.semaphore(2)
+        vim.async.run(function()
+          local semaphore = vim.async.semaphore(2)
 
           local tasks = {}
 
           local value = 0
           for i = 1, 10 do
-            tasks[i] = async.run(function()
+            tasks[i] = vim.async.run(function()
               semaphore:with(function()
                 value = value + 1
                 sleep(10)
@@ -515,7 +498,7 @@ semaphore({permits})                                   *vim.async.semaphore()*
             end)
           end
 
-          async.join(tasks)
+          vim.async.join(tasks)
           assert(value <= 2)
         end)
 <
@@ -524,41 +507,61 @@ semaphore({permits})                                   *vim.async.semaphore()*
       • {permits}  (`integer`)
 
     Return: ~
-        (`async.Semaphore`)
+        (`vim.async.Semaphore`) See |vim.async.Semaphore|.
 
-set({max_woken})                                             *vim.async.set()*
-    Set the event.
+Semaphore:acquire()                                      *Semaphore:acquire()*
+    Acquire a semaphore.
 
-    All tasks waiting for event to be set will be immediately awakened.
+    If the internal counter is greater than zero, decrement it by `1` and
+    return immediately. If it is `0`, wait until a `release()` is called.
+
+Semaphore:release()                                      *Semaphore:release()*
+    Release a semaphore.
+
+    Increments the internal counter by `1`. Can wake up a task waiting to
+    acquire the semaphore.
+
+Semaphore:with({fn})                                        *Semaphore:with()*
+    Executes the given function within the semaphore's context, ensuring that
+    the semaphore's constraints are respected.
 
     Parameters: ~
-      • {max_woken}  (`integer?`)
+      • {fn}  (`async fun(): R...`) Function to execute within the semaphore's
+              context.
 
-size()                                                      *vim.async.size()*
-    Returns the number of items in the queue
+    Return: ~
+        (`R...`) Result(s) of the executed function.
 
 sleep({duration})                                          *vim.async.sleep()*
-    @async
 
     Parameters: ~
       • {duration}  (`integer`) ms
 
-status()                                                  *vim.async.status()*
+Task:close({callback})                                          *Task:close()*
+    Close the task and all of its children. If callback is provided it will
+    run asynchronously, else it will run synchronously.
+
+    Parameters: ~
+      • {callback}  (`fun(closed: boolean)?`)
+
+    Overloads: ~
+      • `fun(): boolean`
+      • `fun(callback: fun(closed: boolean))`
+
+
+Task:raise_on_error()                                  *Task:raise_on_error()*
+    If a task completes with an error, raise the error
+
+    Return: ~
+        (`vim.async.Task`) self See |vim.async.Task|.
+
+Task:status()                                                  *Task:status()*
     Returns the status of tasks thread. See |coroutine.status()|.
 
     Return: ~
         (`'running'|'suspended'|'normal'|'dead'?`)
 
-timeout({task})                                          *vim.async.timeout()*
-    Run a task with a timeout.
-
-    If the task does not complete within the specified duration, it is
-    cancelled and an error is thrown. @async
-
-    Parameters: ~
-      • {task}  (`async.Task<R>`)
-
-traceback({msg})                                       *vim.async.traceback()*
+Task:traceback({msg})                                       *Task:traceback()*
     Get the traceback of a task when it is not active. Will also get the
     traceback of nested tasks.
 
@@ -568,13 +571,7 @@ traceback({msg})                                       *vim.async.traceback()*
     Return: ~
         (`string`) traceback
 
-wait()                                                      *vim.async.wait()*
-    Wait until the event is set.
-
-    If the event is set, return `true` immediately. Otherwise block until
-    another task calls set(). @async
-
-wait({callback_or_timeout})                                 *vim.async.wait()*
+Task:wait({callback_or_timeout})                                 *Task:wait()*
     Add a callback to be run when the Task has completed.
     • If a timeout or `nil` is provided, the Task will synchronously wait for
       the task to complete for the given time in milliseconds. >lua
@@ -592,32 +589,20 @@ wait({callback_or_timeout})                                 *vim.async.wait()*
     called immediately with the results.
 
     Parameters: ~
-      • {callback_or_timeout}  (`integer|fun`)
+      • {callback_or_timeout}  (`integer|fun(err?: any, ...: R...)?`)
 
-wait({callback})                                            *vim.async.wait()*
-    Add a callback to be run when the Future is done.
+    Overloads: ~
+      • `fun(timeout?: integer): R...`
 
-    The callback is called with the arguments:
-    • (`err: string`) - if the Future completed with an error.
-    • (`nil`, `...:any`) - the results of the Future if it completed
-      successfully.
 
-    If the Future is already done when this method is called, the callback is
-    called immediately with the results.
+timeout({task})                                          *vim.async.timeout()*
+    Run a task with a timeout.
 
-    Parameters: ~
-      • {callback}  (`fun(err?: any, ...: any)`)
-
-with({fn})                                                  *vim.async.with()*
-    Executes the given function within the semaphore's context, ensuring that
-    the semaphore's constraints are respected. @async
+    If the task does not complete within the specified duration, it is
+    cancelled and an error is thrown.
 
     Parameters: ~
-      • {fn}  (`async`) fun(): R... # Function to execute within the
-              semaphore's context.
-
-    Return: ~
-        (`any`)
+      • {task}  (`vim.async.Task<R>`)
 
 wrap({argc}, {func})                                        *vim.async.wrap()*
     Creates an async function with a callback style function.
@@ -629,7 +614,7 @@ wrap({argc}, {func})                                        *vim.async.wrap()*
     Example: >lua
         --- Note the callback argument is not present in the return function
         --- @type async fun(timeout: integer)
-        local sleep = async.wrap(2, function(timeout, callback)
+        local sleep = vim.async.wrap(2, function(timeout, callback)
           local timer = vim.uv.new_timer()
           timer:start(timeout * 1000, 0, callback)
           -- uv_timer_t provides a close method so timer will be
@@ -637,7 +622,7 @@ wrap({argc}, {func})                                        *vim.async.wrap()*
           return timer
         end)
 
-        async.run(function()
+        vim.async.run(function()
           print('hello')
           sleep(2)
           print('world')
@@ -646,10 +631,10 @@ wrap({argc}, {func})                                        *vim.async.wrap()*
 
     Parameters: ~
       • {argc}  (`integer`)
-      • {func}  (`fun(...: T, callback: fun(...: R)): async.Closable?`)
+      • {func}  (`fun(...: T, callback: fun(...: R)): vim.async.Closable?`)
 
     Return: ~
-        (`async`) fun
+        (`async fun(...:T): R`)
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

@@ -740,6 +740,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {virt_text_hide}?     (`boolean`) See |nvim_buf_set_extmark()|.
 
 
+
 config({opts}, {namespace})                          *vim.diagnostic.config()*
     Configure diagnostic options globally or for a specific diagnostic
     namespace.
