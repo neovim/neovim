@@ -1543,6 +1543,9 @@ vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
 vim.inspect()                                                  *vim.inspect()*
     Gets a human-readable representation of the given object.
 
+    Overloads: ~
+      • `fun(x: any, opts?: vim.inspect.Opts): string`
+
     Return: ~
         (`string`)
 
@@ -2458,6 +2461,10 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
       • {optional}   (`boolean?`) Argument is optional (may be omitted)
       • {message}    (`string?`) message when validation fails
 
+    Overloads: ~
+      • `fun(name: string, val: any, validator: vim.validate.Validator, message: string)`
+      • `fun(spec: table<string,[any, vim.validate.Validator, boolean|string]>)`
+
 
 ==============================================================================
 Lua module: vim.loader                                            *vim.loader*
@@ -2708,8 +2715,6 @@ options for these windows and their respective buffers.
 Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
 not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
 spilled lines. To see the full message, the |g<| command can be used.
-
-
 
 ==============================================================================
 Lua module: vim.filetype                                        *vim.filetype*

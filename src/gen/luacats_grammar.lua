@@ -145,7 +145,10 @@ local typedef = P({
 
   type = v.ty * rep_array_opt_postfix * rep(Pf('|') * v.ty * rep_array_opt_postfix),
   ty = v.composite + paren(v.typedef),
-  composite = (v.types * array_postfix) + (v.types * opt_postfix) + v.types,
+  composite = (v.types * array_postfix)
+    + (v.types * opt_postfix)
+    + (P(ty_ident) * P('...')) -- Generic vararg
+    + v.types,
   types = v.generics + v.kv_table + v.tuple + v.dict + v.table_literal + v.fun + ty_prims,
 
   tuple = Pf('[') * comma1(v.type) * Plf(']'),
@@ -154,11 +157,11 @@ local typedef = P({
   table_literal = Pf('{') * comma1(opt_ident * Pf(':') * v.type) * Plf('}'),
   fun_param = (opt_ident + ellipsis) * opt(colon * v.type),
   fun_ret = v.type + (ellipsis * opt(colon * v.type)),
-  fun = Pf('fun') * paren(comma(v.fun_param)) * opt(Pf(':') * comma1(v.fun_ret)),
+  fun = opt(Pf('async')) * Pf('fun') * paren(comma(v.fun_param)) * opt(Pf(':') * comma1(v.fun_ret)),
   generics = P(ty_ident) * Pf('<') * comma1(v.type) * Plf('>'),
 }) / function(match)
-  return vim.trim(match):gsub('^%((.*)%)$', '%1'):gsub('%?+', '?')
-end
+    return vim.trim(match):gsub('^%((.*)%)$', '%1'):gsub('%?+', '?')
+  end
 
 local access = P('private') + P('protected') + P('package')
 local caccess = Cg(access, 'access')
@@ -184,6 +187,7 @@ local grammar = P {
     + annot('operator', ty_name * opt(paren(Cg(v.ctype, 'argtype'))) * colon * v.ctype)
     + annot(access)
     + annot('deprecated')
+    + annot('async')
     + annot('alias', ty_name * opt(ws * v.ctype))
     + annot('enum', ty_name)
     + annot('overload', v.ctype)

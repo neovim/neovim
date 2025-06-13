@@ -875,6 +875,9 @@ TSNode:range({include_bytes})                                 *TSNode:range()*
     Parameters: ~
       • {include_bytes}  (`false?`)
 
+    Overloads: ~
+      • `fun(self: TSNode, include_bytes: true): integer, integer, integer, integer, integer, integer`
+
     Return (multiple): ~
         (`integer`)
         (`integer`)
