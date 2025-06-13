@@ -40,9 +40,6 @@ local M = {}
 
 local function ui_callback(event, ...)
   local handler = ext.msg[event] or ext.cmd[event]
-  if not handler then
-    return
-  end
   ext.tab_check_wins()
   handler(...)
   api.nvim__redraw({
@@ -76,11 +73,15 @@ function M.enable(opts)
   end
 
   vim.ui_attach(ext.ns, { ext_messages = true, set_cmdheight = false }, function(event, ...)
+    if not (ext.msg[event] or ext.cmd[event]) then
+      return
+    end
     if vim.in_fast_event() then
       scheduled_ui_callback(event, ...)
     else
       ui_callback(event, ...)
     end
+    return true
   end)
 
   -- Use MsgArea and hide search highlighting in the cmdline window.

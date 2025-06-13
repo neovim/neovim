@@ -90,10 +90,12 @@ local function set_virttext(type)
   elseif #chunks > 0 then
     local tar = type == 'msg' and ext.cfg.msg.target or 'cmd'
     local win = ext.wins[tar]
-    local max = api.nvim_win_get_height(win)
-    local erow = tar == 'cmd' and M.cmd.msg_row or nil
-    local srow = tar == 'msg' and fn.line('w0', ext.wins.msg) - 1 or nil
-    local h = api.nvim_win_text_height(win, { start_row = srow, end_row = erow, max_height = max })
+    local erow = tar == 'cmd' and math.min(M.cmd.msg_row, api.nvim_buf_line_count(ext.bufs.cmd) - 1)
+    local h = api.nvim_win_text_height(win, {
+      max_height = api.nvim_win_get_height(win),
+      start_row = tar == 'msg' and fn.line('w0', ext.wins.msg) - 1 or nil,
+      end_row = erow or nil,
+    })
     local row = h.end_row ---@type integer
     local col = fn.virtcol2col(win, row + 1, h.end_vcol)
     local scol = fn.screenpos(win, row + 1, col).col ---@type integer
@@ -223,6 +225,11 @@ function M.show_msg(tar, content, replace_last, append, pager)
     cr = M[tar].count > 0 and msg:sub(1, 1) == '\r'
     restart = M[tar].count > 0 and (replace_last or dupe > 0)
     count = M[tar].count + ((restart or msg == '\n') and 0 or 1)
+
+    -- Ensure cmdline is clear when writing the first message.
+    if tar == 'cmd' and not will_pager and dupe == 0 and M.cmd.count == 0 then
+      api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
+    end
   end
 
   -- Filter out empty newline messages. TODO: don't emit them.
@@ -367,9 +374,8 @@ function M.msg_show(kind, content, _, _, append)
       -- Store the time when an error message was emitted in order to not overwrite
       -- it with 'last' virt_text in the cmdline to give the user a chance to read it.
       M.cmd.last_emsg = kind == 'emsg' and os.time() or M.cmd.last_emsg
-      -- Should clear the search count now, which also affects the showcmd position.
+      -- Should clear the search count now, mark itself is cleared by invalidate.
       M.virt.last[M.virt.idx.search][1] = nil
-      M.msg_showcmd({})
     end
 
     -- Typed "inspection" messages should be routed to the pager.
