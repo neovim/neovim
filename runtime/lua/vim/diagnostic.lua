@@ -52,6 +52,9 @@ end
 ---
 --- Arbitrary data plugins or users can add
 --- @field user_data? any arbitrary data plugins can add
+---
+--- An array of related diagnostic information
+--- @field related_information? lsp.DiagnosticRelatedInformation[]
 
 --- [diagnostic-structure]()
 ---
@@ -2340,6 +2343,9 @@ function M.open_float(opts, ...)
     end
   end
 
+  ---@type Range2[]
+  local fold_ranges = {}
+
   for i, diagnostic in ipairs(diagnostics) do
     if type(prefix_opt) == 'function' then
       --- @cast prefix_opt fun(...): string?, string?
@@ -2353,8 +2359,9 @@ function M.open_float(opts, ...)
     end
     local hiname = floating_highlight_map[diagnostic.severity]
     local message_lines = vim.split(diagnostic.message, '\n')
+    local default_pre = string.rep(' ', #prefix)
     for j = 1, #message_lines do
-      local pre = j == 1 and prefix or string.rep(' ', #prefix)
+      local pre = j == 1 and prefix or default_pre
       local suf = j == #message_lines and suffix or ''
       lines[#lines + 1] = pre .. message_lines[j] .. suf
       highlights[#highlights + 1] = {
@@ -2364,8 +2371,42 @@ function M.open_float(opts, ...)
           hlname = prefix_hl_group,
         },
         suffix = {
-          length = j == #message_lines and #suffix or 0,
+          length = #suf,
           hlname = suffix_hl_group,
+        },
+      }
+    end
+
+    local related_info = diagnostic.related_information or {}
+    local n_related_info = #related_info
+
+    -- Fold additional related info objects so they don't take up too much space.
+    if n_related_info > 3 then
+      local n_lines = #lines
+      fold_ranges[#fold_ranges + 1] = { n_lines + 3, n_lines + n_related_info }
+    end
+
+    for _, info in ipairs(related_info) do
+      -- TODO: Somehow allow users to open the location when their cursor is over it?
+      local file_name = vim.fs.basename(vim.uri_to_fname(info.location.uri))
+      local info_suffix = ': ' .. info.message
+      lines[#lines + 1] = string.format(
+        '%s%s:%s:%s%s',
+        default_pre,
+        file_name,
+        info.location.range.start.line,
+        info.location.range.start.character,
+        info_suffix
+      )
+      highlights[#highlights + 1] = {
+        hlname = '@string.special.path',
+        prefix = {
+          length = #default_pre,
+          hlname = prefix_hl_group,
+        },
+        suffix = {
+          length = #info_suffix,
+          hlname = 'NormalFloat',
         },
       }
     end
@@ -2379,6 +2420,16 @@ function M.open_float(opts, ...)
   --- @diagnostic disable-next-line: param-type-mismatch
   local float_bufnr, winnr = vim.lsp.util.open_floating_preview(lines, 'plaintext', opts)
   vim.bo[float_bufnr].path = vim.bo[bufnr].path
+  vim.wo[winnr].foldmethod = 'manual'
+  vim.wo[winnr].foldtext = ''
+  vim.wo[winnr].foldlevel = 1
+  vim.wo[winnr].foldenable = true
+
+  vim._with({ win = winnr }, function()
+    for _, fold in ipairs(fold_ranges) do
+      vim.cmd.fold({ range = fold })
+    end
+  end)
 
   --- @diagnostic disable-next-line: deprecated
   local add_highlight = api.nvim_buf_add_highlight
