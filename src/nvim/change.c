@@ -1749,14 +1749,18 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   int old_cmod_flags = cmdmod.cmod_flags;
   char *prompt_moved = NULL;
   if (dir == BACKWARD) {
-    if (bt_prompt(curbuf)
-        && curwin->w_cursor.lnum == curbuf->b_prompt_submitted.mark.lnum) {
+    // In case of prompt buffer, when we are applying 'normal O' operation on line of prompt,
+    // we can't add a new line before the prompt. In this case, we move the prompt text one
+    // line below and create a new prompt line as current line.
+    if (bt_prompt(curbuf) && curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum) {
       char *prompt_line = ml_get(curwin->w_cursor.lnum);
       char *prompt = prompt_text();
       size_t prompt_len = strlen(prompt);
 
       if (strncmp(prompt_line, prompt, prompt_len) == 0) {
         STRMOVE(prompt_line, prompt_line + prompt_len);
+        // We are moving the lines but the b_prompt_start mark needs to stay in
+        // place so freezing marks before making the move.
         cmdmod.cmod_flags = cmdmod.cmod_flags | CMOD_LOCKMARKS;
         ml_replace(curwin->w_cursor.lnum, prompt_line, true);
         prompt_moved = concat_str(prompt, p_extra);

@@ -262,7 +262,7 @@ describe('prompt buffer', function()
     ]])
 
     feed('<cr>')
-    -- submiting multi line text works
+    -- submiting multiline text works
     screen:expect([[
       Result: "line 1          |
       line 2                   |

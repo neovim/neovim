@@ -8664,7 +8664,7 @@ void invoke_prompt_callback(void)
 {
   typval_T rettv;
   typval_T argv[2];
-  linenr_T lnum_start = curbuf->b_prompt_submitted.mark.lnum;
+  linenr_T lnum_start = curbuf->b_prompt_start.mark.lnum;
   linenr_T lnum_last = curbuf->b_ml.ml_line_count;
 
   // Add a new line for the prompt before invoking the callback, so that
@@ -8703,7 +8703,7 @@ theend:
   u_clearallandblockfree(curbuf);
 
   pos_T next_prompt = { .lnum = curbuf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
-  RESET_FMARK(&curbuf->b_prompt_submitted, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
+  RESET_FMARK(&curbuf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
 }
 
 /// @return  true when the interrupt callback was invoked.

@@ -6481,7 +6481,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
   }
 
   if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
-    if (curwin->w_cursor.lnum == curbuf->b_prompt_submitted.mark.lnum) {
+    if (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum) {
       curwin->w_cursor.col = (int)strlen(prompt_text());
       // Since we've shifted the cursor to the first editable char. We want to
       // paste before that.
@@ -6620,7 +6620,7 @@ static void nv_open(cmdarg_T *cap)
   } else if (VIsual_active) {
     // switch start and end of visual/
     v_swap_corners(cap->cmdchar);
-  } else if (bt_prompt(curbuf) && curwin->w_cursor.lnum < curbuf->b_prompt_submitted.mark.lnum) {
+  } else if (bt_prompt(curbuf) && curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum) {
     clearopbeep(cap->oap);
   } else {
     n_opencmd(cap);

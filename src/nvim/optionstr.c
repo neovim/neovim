@@ -696,10 +696,10 @@ const char *did_set_buftype(optset_T *args)
       || opt_strings_flags(buf->b_p_bt, opt_bt_values, NULL, false) != OK) {
     return e_invarg;
   }
-  // when buftype is set to prompt set the last prompt submit pos to lastline
+  // buftype=prompt: set the prompt start position to lastline.
   if (buf->b_p_bt[0] == 'p') {
     pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
-    RESET_FMARK(&buf->b_prompt_submitted, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
+    RESET_FMARK(&buf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
   }
   if (win->w_status_height || global_stl_height()) {
     win->w_redr_status = true;

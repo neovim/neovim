@@ -1532,14 +1532,14 @@ static void init_prompt(int cmdchar_todo)
 {
   char *prompt = prompt_text();
 
-  if (curwin->w_cursor.lnum < curbuf->b_prompt_submitted.mark.lnum) {
+  if (curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum) {
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(curwin, MAXCOL);
   }
   char *text = get_cursor_line_ptr();
-  if ((curbuf->b_prompt_submitted.mark.lnum == curwin->w_cursor.lnum
+  if ((curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum
        && strncmp(text, prompt, strlen(prompt)) != 0)
-      || curbuf->b_prompt_submitted.mark.lnum > curwin->w_cursor.lnum) {
+      || curbuf->b_prompt_start.mark.lnum > curwin->w_cursor.lnum) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
       ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
@@ -1552,9 +1552,9 @@ static void init_prompt(int cmdchar_todo)
   }
 
   // Insert always starts after the prompt, allow editing text after it.
-  if (Insstart_orig.lnum != curbuf->b_prompt_submitted.mark.lnum
+  if (Insstart_orig.lnum != curbuf->b_prompt_start.mark.lnum
       || Insstart_orig.col != (colnr_T)strlen(prompt)) {
-    Insstart.lnum = curbuf->b_prompt_submitted.mark.lnum;
+    Insstart.lnum = curbuf->b_prompt_start.mark.lnum;
     Insstart.col = (colnr_T)strlen(prompt);
     Insstart_orig = Insstart;
     Insstart_textlen = Insstart.col;
@@ -1565,7 +1565,7 @@ static void init_prompt(int cmdchar_todo)
   if (cmdchar_todo == 'A') {
     coladvance(curwin, MAXCOL);
   }
-  if (curbuf->b_prompt_submitted.mark.lnum == curwin->w_cursor.lnum) {
+  if (curbuf->b_prompt_start.mark.lnum == curwin->w_cursor.lnum) {
     curwin->w_cursor.col = MAX(curwin->w_cursor.col, (colnr_T)strlen(prompt));
   }
   // Make sure the cursor is in a valid position.
@@ -1576,8 +1576,8 @@ static void init_prompt(int cmdchar_todo)
 bool prompt_curpos_editable(void)
   FUNC_ATTR_PURE
 {
-  return curwin->w_cursor.lnum > curbuf->b_prompt_submitted.mark.lnum
-         || (curwin->w_cursor.lnum == curbuf->b_prompt_submitted.mark.lnum
+  return curwin->w_cursor.lnum > curbuf->b_prompt_start.mark.lnum
+         || (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum
              && curwin->w_cursor.col >= (int)strlen(prompt_text()));
 }
 
