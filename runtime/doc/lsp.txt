@@ -465,6 +465,11 @@ LspSignatureActiveParameter
     Used to highlight the active parameter in the signature help. See
     |vim.lsp.handlers.signature_help()|.
 
+                                                    *hl-LspLinkedEditingRange*
+LspLinkedEditingRange
+    Used to highlight the active linked editing ranges (see
+    |lsp-linked_editing_range|). Defaults to |hl-IncSearch|.
+
 ------------------------------------------------------------------------------
 LSP SEMANTIC HIGHLIGHTS                               *lsp-semantic-highlight*
 
@@ -2289,6 +2294,17 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 
     Return: ~
         (`boolean`)
+
+
+==============================================================================
+Lua module: vim.lsp.linked_editing_range            *lsp-linked_editing_range*
+
+enable({enable})                       *vim.lsp.linked_editing_range.enable()*
+    Enables or disables linked editing ranges. Ranges are highlighted using
+    the |hl-LspLinkedEditingRange| group.
+
+    Parameters: ~
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
 
 
 ==============================================================================
