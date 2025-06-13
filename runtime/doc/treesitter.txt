@@ -219,7 +219,9 @@ The following directives are built in:
         Takes the range of the captured node and applies an offset. This will
         set a new range in the form of a list like { {start_row}, {start_col},
         {end_row}, {end_col} } for the captured node with `capture_id` as
-        `metadata[capture_id].range`. Useful for |treesitter-language-injections|.
+        `metadata[capture_id].offset`. This offset will be applied to the
+        range returned in |vim.treesitter.get_range()|. Useful for
+        |treesitter-language-injections|.
 
         Parameters: ~
             {capture_id}
