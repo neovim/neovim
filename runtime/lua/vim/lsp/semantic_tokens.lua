@@ -2,11 +2,13 @@ local api = vim.api
 local bit = require('bit')
 local ms = require('vim.lsp.protocol').Methods
 local util = require('vim.lsp.util')
+local Range = require('vim.treesitter._range')
 local uv = vim.uv
 
 --- @class (private) STTokenRange
 --- @field line integer line number 0-based
 --- @field start_col integer start column 0-based
+--- @field end_line integer end line number 0-based
 --- @field end_col integer end column 0-based
 --- @field type string token type as string
 --- @field modifiers table<string,boolean> token modifiers as a set. E.g., { static = true, readonly = true }
@@ -44,7 +46,7 @@ local STHighlighter = { active = {} }
 local function lower_bound(tokens, line, lo, hi)
   while lo < hi do
     local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
-    if tokens[mid].line < line then
+    if tokens[mid].end_line < line then
       lo = mid + 1
     else
       hi = mid
@@ -102,6 +104,8 @@ local function tokens_to_ranges(data, bufnr, client, request)
   local token_modifiers = legend.tokenModifiers
   local encoding = client.offset_encoding
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  -- For all encodings, \r\n takes up two code points, and \n (or \r) takes up one.
+  local eol_offset = vim.bo.fileformat[bufnr] == 'dos' and 2 or 1
   local ranges = {} ---@type STTokenRange[]
 
   local start = uv.hrtime()
@@ -141,11 +145,23 @@ local function tokens_to_ranges(data, bufnr, client, request)
     if token_type then
       local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
       local end_char = start_char + data[i + 2] --- @type integer LuaLS bug
-      local buf_line = lines and lines[line + 1] or ''
+      local buf_line = lines[line + 1] or ''
+      local end_line = line ---@type integer
       local start_col = vim.str_byteindex(buf_line, encoding, start_char, false)
       local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
+
+      end_char = end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
+      -- While end_char goes past the given line, extend the token range to the next line
+      while end_char > 0 do
+        end_line = end_line + 1
+        buf_line = lines[end_line + 1] or ''
+        end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
+        end_char = end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
+      end
+
       ranges[#ranges + 1] = {
         line = line,
+        end_line = end_line,
         start_col = start_col,
         end_col = end_col,
         type = token_type,
@@ -398,6 +414,7 @@ end
 local function set_mark(bufnr, ns, token, hl_group, priority)
   vim.api.nvim_buf_set_extmark(bufnr, ns, token.line, token.start_col, {
     hl_group = hl_group,
+    end_line = token.end_line,
     end_col = token.end_col,
     priority = priority,
     strict = false,
@@ -692,6 +709,7 @@ end
 ---        the following fields:
 ---        - line (integer) line number, 0-based
 ---        - start_col (integer) start column, 0-based
+---        - end_line (integer) end line number, 0-based
 ---        - end_col (integer) end column, 0-based
 ---        - type (string) token type as string, e.g. "variable"
 ---        - modifiers (table) token modifiers as a set. E.g., { static = true, readonly = true }
@@ -709,6 +727,8 @@ function M.get_at_pos(bufnr, row, col)
     row, col = cursor[1] - 1, cursor[2]
   end
 
+  local position = { row, col, row, col }
+
   local tokens = {} --- @type STTokenRangeInspect[]
   for client_id, client in pairs(highlighter.client_state) do
     local highlights = client.current_result.highlights
@@ -722,7 +742,9 @@ function M.get_at_pos(bufnr, row, col)
           break
         end
 
-        if token.start_col <= col and token.end_col > col then
+        if
+          Range.contains({ token.line, token.start_col, token.end_line, token.end_col }, position)
+        then
           token.client_id = client_id
           tokens[#tokens + 1] = token
         end

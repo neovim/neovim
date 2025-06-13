@@ -2187,6 +2187,7 @@ get_at_pos({bufnr}, {row}, {col})
         fields:
         • line (integer) line number, 0-based
         • start_col (integer) start column, 0-based
+        • end_line (integer) end line number, 0-based
         • end_col (integer) end column, 0-based
         • type (string) token type as string, e.g. "variable"
         • modifiers (table) token modifiers as a set. E.g., { static = true,

@@ -173,6 +173,7 @@ LSP
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
 • Incremental selection is now supported via `textDocument/selectionRange`.
   `an` selects outwards and `in` selects inwards.
+• Support for multiline semantic tokens.
 
 LUA
 
