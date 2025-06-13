@@ -1547,15 +1547,15 @@ M.handlers.signs = {
 
     local text = {} ---@type table<vim.diagnostic.Severity|string, string>
     for k in pairs(M.severity) do
-      if opts.signs.text and opts.signs.text[k] then
+      if opts.signs and opts.signs.text and opts.signs.text[k] then
         text[k] = opts.signs.text[k]
       elseif type(k) == 'string' and not text[k] then
         text[k] = k:sub(1, 1):upper()
       end
     end
 
-    local numhl = opts.signs.numhl or {}
-    local linehl = opts.signs.linehl or {}
+    local numhl = opts.signs and opts.signs.numhl or {}
+    local linehl = opts.signs and opts.signs.linehl or {}
 
     local line_count = api.nvim_buf_line_count(bufnr)
 
