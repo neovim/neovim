@@ -1084,6 +1084,9 @@ end
 --- Table must contain `start` and `end` keys with {row,col} tuples
 --- using mark-like indexing. See |api-indexing|
 --- @field range? {start: integer[], end: integer[]}
+---
+--- Time (in milliseconds) to wait for all providers to respond (default: `2000`).
+--- @field timeout? integer
 
 --- This is not public because the main extension point is
 --- vim.ui.select which can be overridden independently.
@@ -1260,16 +1263,7 @@ function M.code_action(opts)
   ---@type table<integer, vim.lsp.CodeActionResultEntry>
   local results = {}
 
-  ---@param err? lsp.ResponseError
-  ---@param result? (lsp.Command|lsp.CodeAction)[]
-  ---@param ctx lsp.HandlerContext
-  local function on_result(err, result, ctx)
-    results[ctx.client_id] = { error = err, result = result, ctx = ctx }
-    remaining = remaining - 1
-    if remaining == 0 then
-      on_code_action_results(results, opts)
-    end
-  end
+  local client_timeout = (opts.timeout or 2000) / #clients
 
   for _, client in ipairs(clients) do
     ---@type lsp.CodeActionParams
@@ -1307,8 +1301,13 @@ function M.code_action(opts)
       })
     end
 
-    client:request(ms.textDocument_codeAction, params, on_result, bufnr)
+    ---@type vim.lsp.CodeActionResultEntry
+    local res = client:request_sync(ms.textDocument_codeAction, params, client_timeout, bufnr) or {}
+    res.ctx = { client_id = client.id, bufnr = bufnr, method = ms.textDocument_codeAction }
+    results[client.id] = res
   end
+
+  on_code_action_results(results, opts)
 end
 
 --- @deprecated

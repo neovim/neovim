@@ -1681,6 +1681,8 @@ code_action({opts})                                *vim.lsp.buf.code_action()*
                   this defaults to the active selection. Table must contain
                   `start` and `end` keys with {row,col} tuples using mark-like
                   indexing. See |api-indexing|
+                • {timeout}? (`integer`) Time (in milliseconds) to wait for
+                  all providers to respond (default: `2000`).
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
