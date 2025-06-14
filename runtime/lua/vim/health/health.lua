@@ -406,6 +406,56 @@ local function check_external_tools()
   else
     health.warn('ripgrep not available')
   end
+  if vim.fn.executable('curl') == 1 then
+    local curl_path = vim.fn.exepath('curl')
+    local curl_out = vim.fn.system({ curl_path, '--version' })
+    local curl_version = vim.fn.matchstr(curl_out, [[^curl[^\n]*]])
+
+    if vim.v.shell_error == 0 then
+      local lines = {}
+      table.insert(lines, string.format('%s (%s)', curl_version, curl_path))
+
+      for line in vim.gsplit(curl_out, '\n', { plain = true }) do
+        if line ~= '' and not line:match('^curl') then
+          table.insert(lines, line)
+        end
+      end
+
+      -- Add subtitle only if any env var is present
+      local added_env_header = false
+      for _, var in ipairs({
+        'curl_ca_bundle',
+        'curl_home',
+        'curl_ssl_backend',
+        'ssl_cert_dir',
+        'ssl_cert_file',
+        'https_proxy',
+        'http_proxy',
+        'all_proxy',
+        'no_proxy',
+      }) do
+        ---@type string?
+        local val = vim.env[var] or vim.env[var:upper()]
+        if val then
+          if not added_env_header then
+            table.insert(lines, 'curl-related environment variables:')
+            added_env_header = true
+          end
+          local shown_var = vim.env[var] and var or var:upper()
+          table.insert(lines, string.format('  %s=%s', shown_var, val))
+        end
+      end
+
+      health.ok(table.concat(lines, '\n'))
+    else
+      health.warn('curl is installed but failed to run `curl --version`', { curl_out })
+    end
+  else
+    health.error('curl not found', {
+      'Required for vim.net.download() to function.',
+      'Install curl using your package manager.',
+    })
+  end
 end
 
 function M.check()
