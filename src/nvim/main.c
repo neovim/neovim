@@ -654,11 +654,11 @@ int main(int argc, char **argv)
   ILOG("starting main loop");
 
 
-  //if(setjmp(my_jump_buffer)==0){
+  if(setjmp(my_jump_buffer)==0){
     normal_enter(false, false);
-  //}
+  }
 #if defined(MSWIN) && !defined(MAKE_LIB)
-  xfree(argv);
+  //xfree(argv);
 #endif
   return 0;
 }

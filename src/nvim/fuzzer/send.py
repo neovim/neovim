@@ -7,14 +7,13 @@ import sys
 import time
 
 
-def prepare(test_base, fuzz_bin):
-    fuzzer_bin = os.path.join(test_base, "fuzzer.input")
+def prepare(test_base, fuzzer_bin):
     assert os.path.exists(fuzzer_bin), f"{fuzzer_bin} don't exists"
     socket_path = os.path.join(test_base, "socket")
     print(f"use nvim --remote {socket_path} for debugging")
     nvim = pynvim.attach("socket", path=socket_path)
 
-    fuzzer_input = open(fuzz_input, "rb").read()
+    fuzzer_input = open(fuzzer_bin, "rb").read()
     return nvim, fuzzer_input
 
 

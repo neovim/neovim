@@ -1028,15 +1028,16 @@ file(CHMOD "${INIT_SCRIPT}" PERMISSIONS OWNER_EXECUTE OWNER_READ OWNER_WRITE )
 
 set_target_properties(fuzzer_lib 
   PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS "MAKE_LIB;FUZZER_INIT_SCRIPT=\"${INIT_SCRIPT}\";FUZZER_SEND_SCRIPT=\"${CMAKE_CURRENT_SOURCE_DIR}/send.py\";LUA_SHIM_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/lua_shim.lua\""
+  INTERFACE_COMPILE_DEFINITIONS "MAKE_LIB;FUZZER_INIT_SCRIPT=\"${INIT_SCRIPT}\";FUZZER_SEND_SCRIPT=\"${CMAKE_CURRENT_SOURCE_DIR}/fuzzer/send.py\";LUA_SHIM_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/fuzzer/lua_shim.lua\""
+  INTERFACE_LINK_LIBRARIES main_lib
   # INTERFACE_COMPILE_OPTIONS  ${SANITIZER_COMPILE}
   #  INTERFACE_LINK_OPTIONS ${SANITIZER_LINK}
 )
 
 
-add_executable(fuzzer fuzzer/fuzzer.c )
+#add_executable(fuzzer fuzzer/fuzzer.c )
 #target_compile_options(fuzzer  PRIVATE "-fsanitize=fuzzer")
-target_link_libraries(fuzzer PRIVATE fuzzer_lib libuv)
+#target_link_libraries(fuzzer PRIVATE fuzzer_lib libuv)
 #target_link_options(fuzzer PRIVATE  ${SANITIZER_LINK} "-fsanitize=fuzzer")
 
 #add_executable(fuzzer_test fuzzer_test.c
@@ -1046,4 +1047,4 @@ target_link_libraries(fuzzer PRIVATE fuzzer_lib libuv)
 #target_link_options(fuzzer_test PRIVATE  ${SANITIZER_LINK})
 
 add_executable(fuzzer_afl fuzzer/fuzzer_afl.c fuzzer/fuzzer.c)
-target_link_libraries(fuzzer_afl PRIVATE fuzzer_lib main_lib libuv "${PROJECT_SOURCE_DIR}/.deps/usr/lib/libuv.a")
+target_link_libraries(fuzzer_afl PRIVATE fuzzer_lib libuv "${PROJECT_SOURCE_DIR}/.deps/usr/lib/libuv.a")

@@ -13,10 +13,10 @@ extern int nvim_main(int argc, char** argv);
 
 void test_base_path_join(char* buf, size_t buf_size, const char* test_base, const char* to_append);
 
-static void run_fuzz(const char* last_arg)
+char* last_arg;
+
+static void run_fuzz(const char* test_base)
 {
-  char test_base[1024];
-  get_test_base(test_base, sizeof(test_base));
 
   char fifo_name[1024];
   test_base_path_join(fifo_name, sizeof(fifo_name), test_base, "socket");
@@ -53,8 +53,9 @@ int main(int argc, char** argv)
   char fifo_name[1024];
   test_base_path_join(fifo_name, sizeof(fifo_name), test_base, "socket");
 
+  last_arg = argv[argc-1];
   pthread_t id;
-  pthread_create(&id, NULL, (void* (*)(void*)) & run_fuzz, argv[argc - 1]);
+  pthread_create(&id, NULL, (void* (*)(void*)) & run_fuzz, test_base);
 
   char* nvim_argv[] = { "fake_bin", "--embed", "--headless", "--listen", fifo_name };
 
