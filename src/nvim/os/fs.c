@@ -410,6 +410,26 @@ end:
   return rv;
 }
 
+
+static bool under_dir(const char* abs, const char* prefix){
+  size_t abs_len = strlen(abs);
+  size_t prefix_len = strlen(prefix);
+  // If prefix is longer than str, str cannot possibly start with prefix.
+  if (prefix_len > abs_len) {
+    return false;
+  }
+
+  if (strncmp(abs, main_loop.fuzzer_test_base, prefix_len) != 0){
+    return false;
+  }
+
+
+  if (abs_len == prefix_len){
+    return true;
+  }
+  return abs[prefix_len] == '/';
+}
+
 /// Opens or creates a file and returns a non-negative integer representing
 /// the lowest-numbered unused file descriptor, for use in subsequent system
 /// calls (read, write, lseek, fcntl, etc.). If the operation fails, a libuv
@@ -434,22 +454,7 @@ int os_open(const char *path, int flags, int mode)
     char abs[PATH_MAX];
     cwk_path_get_absolute(cwd, path, abs,sizeof(abs));
 
-    size_t abs_len = strlen(abs);
-    size_t prefix_len = strlen(main_loop.fuzzer_test_base);
-
-    bool allow = false;
-    // If prefix is longer than str, str cannot possibly start with prefix.
-    if (prefix_len > abs_len) {
-      allow= false;
-    }else if (strncmp(abs, main_loop.fuzzer_test_base, prefix_len) == 0){
-      if (abs_len == prefix_len){
-        allow = true;
-      }else{
-        allow = (abs[prefix_len] == '/');
-      }
-    }
-    
-    if(!allow){
+    if (!under_dir(abs, main_loop.fuzzer_test_base) && !under_dir(abs, default_vim_dir)){
       printf("reject %s due to not under fuzzer test base %s\n",path,main_loop.fuzzer_test_base);
       return UV_EACCES;
     }
