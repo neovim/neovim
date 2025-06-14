@@ -821,8 +821,8 @@ void remote_ui_put(RemoteUI *ui, const char *cell)
 }
 
 void remote_ui_raw_line(RemoteUI *ui, Integer grid, Integer row, Integer startcol, Integer endcol,
-                        Integer clearcol, Integer clearattr, LineFlags flags, const schar_T *chunk,
-                        const sattr_T *attrs)
+                        Integer clearcol, Integer clearattr, Integer max_attrs, LineFlags flags,
+                        const schar_T *chunk, const sattr_T *attrs)
 {
   // If MAX_SCHAR_SIZE is made larger, we need to refactor implementation below
   // to not only use FIXSTR (only up to 0x20 bytes)
