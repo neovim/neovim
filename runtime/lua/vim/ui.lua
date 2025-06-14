@@ -235,4 +235,112 @@ function M._get_urls()
   return urls
 end
 
+---@class vim.ui.progress.Task
+---@field title string
+---@field message? string
+---@field cancellable boolean
+---@field percentage? number
+
+---@alias vim.ui.progress.Token integer|string
+
+---@class vim.ui.progress.Data
+---@field ns_id integer
+---@field token vim.ui.progress.Token
+---@field task vim.ui.progress.Task
+---@field kind 'start'|'report'|'done'|'fail'
+
+---@type table<integer, table<vim.ui.progress.Token, vim.ui.progress.Task>>
+M._progress_ns = {}
+
+--- @param ns_id integer Namespace for progress source. Implementations can
+---   use to display information about the source (like name of LSP server)
+---   based on namespace's name.
+--- @param token vim.ui.progress.Token Token to identify specific progress report
+---   within namespace.
+--- @param kind 'start'|'report'|'done'|'fail' Stage of progress.
+--- @param opts? { title: string?, cancellable: boolean?, message: string?, percentage: number? }
+---   Notes:
+---   - `title` is required for `'begin'` kind.
+---   - `message` can be used to show more detailed `#done / #total` progress,
+---     as is currently done by LSP servers.
+function M.progress(ns_id, token, kind, opts)
+  vim.validate('ns_id', ns_id, 'number', false)
+  vim.validate('token', token, { 'number', 'string' }, false)
+  vim.validate('kind', kind, 'string', false)
+  vim.validate('opts', opts, function(v)
+    vim.validate('opts', v, 'table', true)
+    vim.validate('opts.title', v.title, 'string', true)
+    vim.validate('opts.cancellable', v.cancellable, 'boolean', true)
+    vim.validate('opts.message', v.message, 'string', true)
+    vim.validate('opts.percentage', v.percentage, function(percentage)
+      if type(percentage) ~= 'number' or percentage > 1 or percentage < 0 then
+        return false
+      end
+      return true
+    end, true, 'number between 0 and 1')
+    return true
+  end, true)
+  --[[@cast opts -nil]]
+
+  if not M._progress_ns[ns_id] then
+    M._progress_ns[ns_id] = {}
+  end
+
+  if not M._progress_ns[ns_id][token] then
+    if kind ~= 'start' then
+      error('new progress token without start: ' .. token)
+    end
+    ---@diagnostic disable-next-line: missing-fields
+    M._progress_ns[ns_id][token] = {}
+  elseif kind == 'start' then
+    error('progress token already started: ' .. token)
+  end
+
+  local task = M._progress_ns[ns_id][token]
+
+  if opts.title then
+    if kind ~= 'start' then
+      error('progress title can not be set after start: ' .. token)
+    end
+    task.title = opts.title
+  end
+  if not opts.title and kind == 'start' then
+    error('progress title is required for start: ' .. token)
+  end
+
+  if opts.cancellable and kind ~= 'start' then
+    error('progress can not be set to cancellable after start: ' .. token)
+  end
+  task.cancellable = opts.cancellable or task.cancellable or true
+
+  task.message = opts.message or task.message
+
+  if opts.percentage and kind ~= 'report' then
+    error(
+      'can not update task progress with progress kind "'
+        .. kind
+        .. '"; use report instead: '
+        .. token
+    )
+  end
+  task.percentage = opts.percentage or task.percentage
+
+  local _task = vim.deepcopy(task)
+
+  vim.schedule(function()
+    vim.api.nvim_exec_autocmds('Progress', {
+      data = {
+        ns_id = ns_id,
+        token = token,
+        task = _task,
+        kind = kind,
+      },
+    })
+  end)
+
+  if kind == 'done' or kind == 'fail' then
+    M._progress_ns[ns_id][token] = nil
+  end
+end
+
 return M
