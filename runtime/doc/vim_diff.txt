@@ -301,7 +301,7 @@ Commands:
 - |:Man| is available by default, with many improvements such as completion
 - |:match| can be invoked before highlight group is defined
 - |:source| works with Lua
-  User commands can support |:command-preview| to show results as you type
+- User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
 
 Events (autocommands):
@@ -662,6 +662,7 @@ These legacy Vim features are not yet implemented:
 - *'guitabtooltip'* *'gtt'*
 - *'mouseshape'* *'mouses'*
 - *'previewpopup'*
+- *popupwin*. You can use |api-floatwin| instead.
 
 ==============================================================================
 Removed legacy features                                  *nvim-removed*
@@ -707,6 +708,7 @@ Commands:
 Compile-time features:
 - Emacs tags support
 - X11 integration (see |x11-selection|)
+- *textprop*. Use |extmark| instead.
 
 Cscope:
                                                                       *cscope*
@@ -844,6 +846,7 @@ Plugins:
 - tools/check_colors.vim
 - macros/{justify,matchit,shellmenu,swapmous}.vim: use `packadd! justify` etc.
   directly
+- package-helptoc. Use |gO| instead.
 
 Providers:
 
