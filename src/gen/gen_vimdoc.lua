@@ -796,6 +796,13 @@ local function render_fun(fun, classes, cfg)
     end
   end
 
+  if fun.overloads then
+    table.insert(ret, '\n    Overloads: ~\n')
+    for _, p in ipairs(fun.overloads) do
+      table.insert(ret, ('      • `%s`\n'):format(p))
+    end
+  end
+
   if fun.returns then
     local txt = render_returns(fun.returns, fun.generics, classes, cfg.exclude_types)
     if not txt:match('^%s*$') then
@@ -887,14 +894,16 @@ end
 --- @field title string
 --- @field help_tag string
 --- @field funs_txt string
---- @field doc? string[]
+--- @field classes_txt string
+--- @field briefs string[]
 
 --- @param filename string
 --- @param cfg nvim.gen_vimdoc.Config
---- @param section_docs table<string,nvim.gen_vimdoc.Section>
+--- @param briefs string[]
 --- @param funs_txt string
+--- @param classes_txt string
 --- @return nvim.gen_vimdoc.Section?
-local function make_section(filename, cfg, section_docs, funs_txt)
+local function make_section(filename, cfg, briefs, funs_txt, classes_txt)
   -- filename: e.g., 'autocmd.c'
   -- name: e.g. 'autocmd'
   local name = filename:match('(.*)%.[a-z]+')
@@ -910,7 +919,7 @@ local function make_section(filename, cfg, section_docs, funs_txt)
   end
   local help_tags = '*' .. help_labels .. '*'
 
-  if funs_txt == '' and #section_docs == 0 then
+  if funs_txt == '' and classes_txt == '' and #briefs == 0 then
     return
   end
 
@@ -919,7 +928,8 @@ local function make_section(filename, cfg, section_docs, funs_txt)
     title = cfg.section_fmt(sectname),
     help_tag = help_tags,
     funs_txt = funs_txt,
-    doc = section_docs,
+    classes_txt = classes_txt,
+    briefs = briefs,
   }
 end
 
@@ -937,12 +947,24 @@ local function render_section(section, add_header)
     })
   end
 
-  local sdoc = '\n\n' .. table.concat(section.doc or {}, '\n')
-  if sdoc:find('[^%s]') then
-    doc[#doc + 1] = sdoc
+  if next(section.briefs) then
+    local briefs_txt = {} --- @type string[]
+    for _, b in ipairs(section.briefs) do
+      briefs_txt[#briefs_txt + 1] = md_to_vimdoc(b, 0, 0, TEXT_WIDTH)
+    end
+
+    local sdoc = '\n\n' .. table.concat(briefs_txt, '\n')
+    if sdoc:find('[^%s]') then
+      doc[#doc + 1] = sdoc
+    end
   end
 
-  if section.funs_txt then
+  if section.classes_txt ~= '' then
+    table.insert(doc, '\n\n')
+    table.insert(doc, (section.classes_txt:gsub('\n+$', '\n')))
+  end
+
+  if section.funs_txt ~= '' then
     table.insert(doc, '\n\n')
     table.insert(doc, section.funs_txt)
   end
@@ -966,6 +988,17 @@ local function expand_files(files)
           table.insert(files, vim.fs.joinpath(f, path))
         end
       end
+    end
+  end
+end
+
+--- @param classes table<string,nvim.luacats.parser.class>
+--- @return string?
+local function find_module_class(classes, modvar)
+  for nm, cls in pairs(classes) do
+    local _, field = next(cls.fields or {})
+    if cls.desc and field and field.classvar == modvar then
+      return nm
     end
   end
 end
@@ -998,21 +1031,26 @@ local function gen_target(cfg)
   for f, r in vim.spairs(file_results) do
     local classes, funs, briefs = r[1], r[2], r[3]
 
-    local briefs_txt = {} --- @type string[]
-    for _, b in ipairs(briefs) do
-      briefs_txt[#briefs_txt + 1] = md_to_vimdoc(b, 0, 0, TEXT_WIDTH)
+    local mod_cls_nm = find_module_class(classes, 'M')
+    if mod_cls_nm then
+      local mod_cls = classes[mod_cls_nm]
+      classes[mod_cls_nm] = nil
+      -- If the module documentation is present, add it to the briefs
+      -- so it appears at the top of the section.
+      briefs[#briefs + 1] = mod_cls.desc
     end
+
     print('    Processing file:', f)
-    local funs_txt = render_funs(funs, all_classes, cfg)
-    if next(classes) then
-      local classes_txt = render_classes(classes, cfg)
-      if vim.trim(classes_txt) ~= '' then
-        funs_txt = classes_txt .. '\n' .. funs_txt
-      end
-    end
+
     -- FIXME: Using f_base will confuse `_meta/protocol.lua` with `protocol.lua`
     local f_base = vim.fs.basename(f)
-    sections[f_base] = make_section(f_base, cfg, briefs_txt, funs_txt)
+    sections[f_base] = make_section(
+      f_base,
+      cfg,
+      briefs,
+      render_funs(funs, all_classes, cfg),
+      render_classes(classes, cfg)
+    )
   end
 
   local first_section_tag = sections[cfg.section_order[1]].help_tag
