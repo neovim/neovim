@@ -372,7 +372,13 @@ static void unintersect_node(MarkTree *b, MTNode *x, uint64_t id, bool strict)
     }
   }
   if (strict) {
+#ifndef RELDEBUG
+    // TODO(bfredl): This assert has been seen to fail for end users
+    // using RelWithDebInfo builds. While indicating an invalid state for
+    // the marktree, this error doesn't need to be fatal. The assert still
+    // needs to present in Debug builds to be able to detect regressions in tests.
     assert(seen);
+#endif
   }
 
   if (seen) {
