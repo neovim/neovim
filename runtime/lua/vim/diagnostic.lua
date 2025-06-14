@@ -1535,6 +1535,10 @@ M.handlers.signs = {
       return
     end
 
+    if not opts.signs then
+      return
+    end
+
     -- 10 is the default sign priority when none is explicitly specified
     local priority = opts.signs and opts.signs.priority or 10
     local get_priority = severity_to_extmark_priority(priority, opts)
@@ -1547,15 +1551,15 @@ M.handlers.signs = {
 
     local text = {} ---@type table<vim.diagnostic.Severity|string, string>
     for k in pairs(M.severity) do
-      if opts.signs.text and opts.signs.text[k] then
+      if opts.signs and opts.signs.text and opts.signs.text[k] then
         text[k] = opts.signs.text[k]
       elseif type(k) == 'string' and not text[k] then
         text[k] = k:sub(1, 1):upper()
       end
     end
 
-    local numhl = opts.signs.numhl or {}
-    local linehl = opts.signs.linehl or {}
+    local numhl = opts.signs and opts.signs.numhl or {}
+    local linehl = opts.signs and opts.signs.linehl or {}
 
     local line_count = api.nvim_buf_line_count(bufnr)
 
