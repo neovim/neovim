@@ -4641,6 +4641,45 @@ describe('API', function()
         },
       }, api.nvim_parse_cmd('argadd a.txt | argadd b.txt', {}))
     end)
+    it('parses :map commands with space in RHS', function()
+      eq({
+        addr = 'none',
+        args = { 'a', 'b  c' },
+        bang = false,
+        cmd = 'map',
+        magic = {
+          bar = true,
+          file = false,
+        },
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            force = false,
+            pattern = '',
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+        nargs = '*',
+        nextcmd = '',
+      }, api.nvim_parse_cmd('map a b  c', {}))
+    end)
     it('works for nargs=1', function()
       command('command -nargs=1 MyCommand echo <q-args>')
       eq({
