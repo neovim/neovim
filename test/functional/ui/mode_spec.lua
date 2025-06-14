@@ -313,4 +313,12 @@ describe('ui mode_change event', function()
       mode = 'normal',
     }
   end)
+
+  it(':append', function()
+    screen:expect({ mode = 'normal' })
+    feed(':append<cr>')
+    screen:expect({ mode = 'cmdline_normal' })
+    feed('<esc>')
+    screen:expect({ mode = 'normal' })
+  end)
 end)
