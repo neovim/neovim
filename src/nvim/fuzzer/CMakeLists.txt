@@ -28,15 +28,15 @@ set_target_properties(fuzzer_lib
 
 
 add_executable(fuzzer fuzzer.c )
-target_compile_options(fuzzer  PRIVATE "-fsanitize=fuzzer")
-target_link_libraries(fuzzer fuzzer_lib libuv)
-target_link_options(fuzzer PRIVATE  ${SANITIZER_LINK} "-fsanitize=fuzzer")
+#target_compile_options(fuzzer  PRIVATE "-fsanitize=fuzzer")
+target_link_libraries(fuzzer PRIVATE fuzzer_lib libuv)
+#target_link_options(fuzzer PRIVATE  ${SANITIZER_LINK} "-fsanitize=fuzzer")
 
 add_executable(fuzzer_test fuzzer_test.c
   fuzzer.c
 )
 target_link_libraries(fuzzer_test fuzzer_lib libuv)
-target_link_options(fuzzer_test PRIVATE  ${SANITIZER_LINK})
+#target_link_options(fuzzer_test PRIVATE  ${SANITIZER_LINK})
 
 add_executable(fuzzer_afl fuzzer_afl.c fuzzer.c)
 target_link_libraries(fuzzer_afl fuzzer_lib libuv)

@@ -527,7 +527,7 @@ add_custom_command(
     "${NVIM_VERSION_DEF_H}"
   DEPENDS "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h")
 
-set(LUA_GEN ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0> ${PROJECT_BINARY_DIR})
+set(LUA_GEN ${CMAKE_COMMAND} -E env LD_PRELOAD=/home/xwang/project/neovim/build/lib/libnlua0.so ${LUA_GEN_PRG} ${GENERATOR_PRELOAD} ${PROJECT_SOURCE_DIR} $<TARGET_FILE:nlua0> ${PROJECT_BINARY_DIR})
 set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
 
 # Like LUA_GEN but includes also vim.fn, vim.api, vim.uv, etc
@@ -583,9 +583,8 @@ foreach(sfile ${NVIM_SOURCES}
   endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" ${gf_h_h_out}
-    COMMAND true
-    #COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags}
-    #COMMAND ${LUA_GEN} "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}" "${gf_basename}"
+    COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags}
+    COMMAND ${LUA_GEN} "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}" "${gf_basename}"
     DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
   if (NOT ${sfile} IN_LIST NVIM_HEADERS)
@@ -602,17 +601,16 @@ configure_file(${GENERATOR_DIR}/nvim_version.lua.in ${NVIM_VERSION_LUA})
 add_custom_command(
   OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_API_METADATA}
   ${FUNCS_METADATA} ${LUA_API_C_BINDINGS} ${GENERATED_KEYSETS_DEFS}
-  COMMAND true
-  #       COMMAND ${LUA_GEN} ${API_DISPATCH_GENERATOR}
-  #                       ${GENERATED_API_DISPATCH}
-  #                       ${GENERATED_API_METADATA} ${FUNCS_METADATA}
-  #                       ${LUA_API_C_BINDINGS}
-  #                       ${GENERATED_KEYSETS_DEFS}
-  #                       ${UI_METADATA}
-  #                       ${NVIM_VERSION_GIT_H} ${NVIM_VERSION_LUA}
-  #                       ${GENERATOR_DIR}/dump_bin_array.lua
-  #                       ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
-  #                       ${API_HEADERS}
+         COMMAND ${LUA_GEN} ${API_DISPATCH_GENERATOR}
+                         ${GENERATED_API_DISPATCH}
+                         ${GENERATED_API_METADATA} ${FUNCS_METADATA}
+                         ${LUA_API_C_BINDINGS}
+                         ${GENERATED_KEYSETS_DEFS}
+                         ${UI_METADATA}
+                         ${NVIM_VERSION_GIT_H} ${NVIM_VERSION_LUA}
+                         ${GENERATOR_DIR}/dump_bin_array.lua
+                         ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
+                         ${API_HEADERS}
 
   DEPENDS
     ${LUA_GEN_DEPS}
@@ -669,13 +667,12 @@ add_custom_command(
          ${GENERATED_UI_EVENTS_REMOTE}
          ${UI_METADATA}
          ${GENERATED_UI_EVENTS_CLIENT}
-  COMMAND true
-         #COMMAND ${LUA_GEN} ${API_UI_EVENTS_GENERATOR}
-         #                   ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
-         #                   ${GENERATED_UI_EVENTS_CALL}
-         #                   ${GENERATED_UI_EVENTS_REMOTE}
-         #                   ${UI_METADATA}
-         #                   ${GENERATED_UI_EVENTS_CLIENT}
+  COMMAND ${LUA_GEN} ${API_UI_EVENTS_GENERATOR}
+                     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
+                     ${GENERATED_UI_EVENTS_CALL}
+                     ${GENERATED_UI_EVENTS_REMOTE}
+                     ${UI_METADATA}
+                     ${GENERATED_UI_EVENTS_CLIENT}
   DEPENDS
     ${LUA_GEN_DEPS}
     ${API_UI_EVENTS_GENERATOR}
@@ -685,32 +682,27 @@ add_custom_command(
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
-  #COMMAND ${LUA_GEN} ${EX_CMDS_GENERATOR} ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
-  COMMAND true
+  COMMAND ${LUA_GEN} ${EX_CMDS_GENERATOR} ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
   DEPENDS ${LUA_GEN_DEPS} ${EX_CMDS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
 )
 
 add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
-  #COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_FUNCS} ${FUNCS_METADATA} ${FUNCS_DATA} ${CMAKE_CURRENT_LIST_DIR}/eval.lua
-  COMMAND true
+  COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_FUNCS} ${FUNCS_METADATA} ${FUNCS_DATA} ${CMAKE_CURRENT_LIST_DIR}/eval.lua
   DEPENDS ${LUA_GEN_DEPS} ${FUNCS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${FUNCS_METADATA}
 )
 
 add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
-  COMMAND true
-  #COMMAND ${LUA_GEN} ${EVENTS_GENERATOR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
+  COMMAND ${LUA_GEN} ${EVENTS_GENERATOR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
   DEPENDS ${LUA_GEN_DEPS} ${EVENTS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
 )
 
 add_custom_command(OUTPUT ${GENERATED_KEYCODE_NAMES}
-  COMMAND true
-  #COMMAND ${LUA_GEN} ${KEYCODES_GENERATOR} ${GENERATED_KEYCODE_NAMES} ${CMAKE_CURRENT_LIST_DIR}/keycodes.lua
+  COMMAND ${LUA_GEN} ${KEYCODES_GENERATOR} ${GENERATED_KEYCODE_NAMES} ${CMAKE_CURRENT_LIST_DIR}/keycodes.lua
   DEPENDS ${LUA_GEN_DEPS} ${KEYCODES_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/keycodes.lua
 )
 
 add_custom_command(OUTPUT ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS}
-  COMMAND true
-  #COMMAND ${LUA_GEN} ${OPTIONS_GENERATOR} ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS} ${CMAKE_CURRENT_LIST_DIR}/options.lua
+  COMMAND ${LUA_GEN} ${OPTIONS_GENERATOR} ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS} ${CMAKE_CURRENT_LIST_DIR}/options.lua
   DEPENDS ${LUA_GEN_DEPS} ${OPTIONS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/options.lua
 )
 
@@ -750,13 +742,6 @@ else()
   target_compile_definitions(nvim_bin PRIVATE UNIT_TESTING)
 endif()
 
-target_sources(main_lib INTERFACE
-  ${NVIM_GENERATED_FOR_SOURCES}
-  ${NVIM_GENERATED_FOR_HEADERS}
-  ${NVIM_SOURCES}
-  ${NVIM_HEADERS}
-  ${EXTERNAL_SOURCES}
-  ${EXTERNAL_HEADERS})
 
 if(WIN32)
   # add windows resource file pointing to the neovim icon
@@ -965,6 +950,15 @@ add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_FOR_SOURCES}
 )
+target_sources(main_lib INTERFACE
+  ${NVIM_GENERATED_FOR_SOURCES}
+  ${NVIM_GENERATED_FOR_HEADERS}
+  ${NVIM_SOURCES}
+  ${NVIM_HEADERS}
+  ${EXTERNAL_SOURCES}
+  ${EXTERNAL_HEADERS})
+
+add_dependencies(main_lib generated-sources)
 
 file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
 
@@ -1010,4 +1004,46 @@ add_target(lintdoc
   DEPENDS ${DOCFILES}
   CUSTOM_COMMAND_ARGS USES_TERMINAL)
 add_dependencies(lintdoc nvim)
-add_subdirectory(fuzzer)
+
+
+
+add_library(fuzzer_lib INTERFACE)
+
+set(INIT_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/init.sh")
+file(WRITE "${INIT_SCRIPT}"
+  "#!/bin/bash\n"
+"set -e\n"
+"export CMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\"\n"
+# fuzzer need to run init.sh and pass test base dir (under os /tmp/nvim_fuzzer_${pid}_${tid}) as first argument
+"export FUZZER_TEST_BASE=\"\${1}\"\n"
+"mkdir -p \"\${FUZZER_TEST_BASE}\"\n"
+"cd \"\${FUZZER_TEST_BASE}\"\n"
+"mkdir -p XDG_RUNTIME_DIR TMPDIR .config .local/share .cache .local/state \n"
+# here we skip create VIMRUNTIME, it will be part of install copy
+"cp -a \"\${CMAKE_INSTALL_PREFIX}/share/nvim\" .local/share/\n"
+"${CMAKE_CURRENT_SOURCE_DIR}/fuzzer/init_post.sh\n"
+)
+
+file(CHMOD "${INIT_SCRIPT}" PERMISSIONS OWNER_EXECUTE OWNER_READ OWNER_WRITE )
+
+set_target_properties(fuzzer_lib 
+  PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS "MAKE_LIB;FUZZER_INIT_SCRIPT=\"${INIT_SCRIPT}\";FUZZER_SEND_SCRIPT=\"${CMAKE_CURRENT_SOURCE_DIR}/send.py\";LUA_SHIM_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/lua_shim.lua\""
+  # INTERFACE_COMPILE_OPTIONS  ${SANITIZER_COMPILE}
+  #  INTERFACE_LINK_OPTIONS ${SANITIZER_LINK}
+)
+
+
+add_executable(fuzzer fuzzer/fuzzer.c )
+#target_compile_options(fuzzer  PRIVATE "-fsanitize=fuzzer")
+target_link_libraries(fuzzer PRIVATE fuzzer_lib libuv)
+#target_link_options(fuzzer PRIVATE  ${SANITIZER_LINK} "-fsanitize=fuzzer")
+
+#add_executable(fuzzer_test fuzzer_test.c
+#  fuzzer.c
+#)
+#target_link_libraries(fuzzer_test fuzzer_lib libuv)
+#target_link_options(fuzzer_test PRIVATE  ${SANITIZER_LINK})
+
+add_executable(fuzzer_afl fuzzer/fuzzer_afl.c fuzzer/fuzzer.c)
+target_link_libraries(fuzzer_afl PRIVATE fuzzer_lib main_lib libuv "${PROJECT_SOURCE_DIR}/.deps/usr/lib/libuv.a")
