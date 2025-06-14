@@ -89,6 +89,7 @@ if __name__ == "__main__":
     print(f"fuzzer input is '{fuzzer_input.hex()}'")
     test_cmds = fuzzer_to_input(fuzzer_input)
 
+    print(f"test_cmds: {test_cmds}")
     try:
         send_commands(nvim, test_cmds)
     except Exception as e:

@@ -59,13 +59,21 @@ int main(int argc, char** argv)
 
   char* nvim_argv[] = { "fake_bin", "--embed", "--headless", "--listen", fifo_name };
 
+  // drop into test_base tmp dir
+  char tmp_dir[1024];
+  test_base_path_join(tmp_dir,sizeof(tmp_dir), test_base, "TMPDIR");
+  int res = chdir(tmp_dir);
+  assert (res == 0);
   nvim_main(5, nvim_argv);
 
   pthread_join(id, NULL);
 
-  char cleanup[1024];
 
-  snprintf(cleanup, sizeof(cleanup), "rm -rf %s", test_base);
-  int res = system(cleanup);
-  assert(res == 0);
+  if (getenv("SKIP_CLEANUP") == NULL){
+    char cleanup[1024];
+    snprintf(cleanup, sizeof(cleanup), "rm -rf %s", test_base);
+    res = system(cleanup);
+    assert(res == 0);
+  }
+
 }

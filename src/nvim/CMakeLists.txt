@@ -1013,7 +1013,6 @@ set(INIT_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/init.sh")
 file(WRITE "${INIT_SCRIPT}"
   "#!/bin/bash\n"
 "set -e\n"
-"export CMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\"\n"
 # fuzzer need to run init.sh and pass test base dir (under os /tmp/nvim_fuzzer_${pid}_${tid}) as first argument
 "export FUZZER_TEST_BASE=\"\${1}\"\n"
 "mkdir -p \"\${FUZZER_TEST_BASE}\"\n"
