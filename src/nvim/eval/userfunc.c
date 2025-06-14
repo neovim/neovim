@@ -1258,7 +1258,14 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     ex_nesting_level--;
   } else {
     // call do_cmdline() to execute the lines
-    do_cmdline(NULL, get_func_line, (void *)fc,
+    exarg_T ea = {
+      .cmd = NULL,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = get_func_line,
+      .cookie = (void *)fc
+    };
+    do_cmdline(&ea,
                DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT);
   }
 

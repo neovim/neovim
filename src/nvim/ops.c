@@ -1804,6 +1804,7 @@ int op_delete(oparg_T *oap)
         }
       }
 
+      curwin->w_cursor.col = oap->start.col;
       del_bytes((colnr_T)n, !virtual_op,
                 oap->op_type == OP_DELETE && !oap->is_VIsual);
     } else {
