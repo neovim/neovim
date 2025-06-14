@@ -2513,6 +2513,19 @@ nvim_buf_get_offset({buffer}, {index})                 *nvim_buf_get_offset()*
     Return: ~
         Integer byte offset, or -1 for unloaded buffer.
 
+nvim_buf_get_prompt_text({buffer}, {opts})        *nvim_buf_get_prompt_text()*
+    WARNING: This feature is experimental/unstable.
+
+    Gets current user input to prompt without invoking prompt_callback
+
+    Parameters: ~
+      • {buffer}  Buffer id, or 0 for current buffer
+      • {opts}    Optional parameters (reserved for future updates)
+
+    Return: ~
+        string of current prompt, or empty string for unloaded buffer / non
+        pormpt buffer.
+
                                                          *nvim_buf_get_text()*
 nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                   {opts})

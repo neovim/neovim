@@ -494,6 +494,14 @@ function vim.api.nvim_buf_get_offset(buffer, index) end
 --- @return any
 function vim.api.nvim_buf_get_option(buffer, name) end
 
+--- Gets current user input to prompt without invoking prompt_callback
+---
+--- @param buffer integer Buffer id, or 0 for current buffer
+--- @param opts vim.api.keyset.option Optional parameters
+--- (reserved for future updates)
+--- @return string # string of current prompt, or empty string for unloaded buffer / non pormpt buffer.
+function vim.api.nvim_buf_get_prompt_text(buffer, opts) end
+
 --- Gets a range from the buffer (may be partial lines, unlike `nvim_buf_get_lines()`).
 ---
 --- Indexing is zero-based. Row indices are end-inclusive, and column indices
