@@ -20,6 +20,7 @@
 #include "auto/config.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/os/cwalk.h"
 
 #if defined(HAVE_ACL)
 # ifdef HAVE_SYS_ACL_H
@@ -427,27 +428,27 @@ int os_open(const char *path, int flags, int mode)
 
   // don't allow open file outside fuzzer_test_base
   if (main_loop.fuzzer_test_base != NULL){
-    char* real_path = realpath(path,NULL);
-    if(real_path == NULL){
-      //printf("%s, %s\n", strerror(errno),path);
-      //this is possible if target file not exists, no permission ,EIO/EACCESS/ENAMETOOLONG/ENOENT/ENOMEM/ENODIR/EINVAL
-      //we just early reject it since allow it to retry may lead TOCTOU issue
-    
-      return UV_EINVAL;
-    }
+    char cwd[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
 
-    size_t cmp_len = strlen(main_loop.fuzzer_test_base);
+    char abs[PATH_MAX];
+    cwk_path_get_absolute(cwd, path, abs,sizeof(abs));
+
+    size_t abs_len = strlen(abs);
+    size_t prefix_len = strlen(main_loop.fuzzer_test_base);
+
     bool allow = false;
-    if (strncmp(real_path, main_loop.fuzzer_test_base, cmp_len) == 0){
-      size_t path_len = strlen(real_path);
-      allow = (path_len == cmp_len) || (real_path[cmp_len] == '/');
-    }else{
-      allow = false;
+    // If prefix is longer than str, str cannot possibly start with prefix.
+    if (prefix_len > abs_len) {
+      allow= false;
+    }else if (strncmp(abs, main_loop.fuzzer_test_base, prefix_len) == 0){
+      if (abs_len == prefix_len){
+        allow = true;
+      }else{
+        allow = (abs[prefix_len] == '/');
+      }
     }
-
-    if(real_path!=NULL){
-      free(real_path);
-    }
+    
     if(!allow){
       printf("reject %s due to not under fuzzer test base %s\n",path,main_loop.fuzzer_test_base);
       return UV_EACCES;
