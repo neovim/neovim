@@ -18,6 +18,10 @@ BREAKING CHANGES IN HEAD OR EXPERIMENTAL                    *news-breaking-dev*
 The following changes to UNRELEASED features were made during the development
 cycle (Nvim HEAD, the "master" branch).
 
+EVENTS
+
+• Renamed "nvim.find_exrc" |default-autocmds| group to "nvim.exrc".
+
 EXPERIMENTS
 
 • todo

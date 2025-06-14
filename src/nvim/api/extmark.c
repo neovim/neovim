@@ -407,7 +407,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                          EOL of a line, continue the highlight for the rest
 ///                          of the screen line (just like for diff and
 ///                          cursorline highlight).
-///               - virt_text : virtual text to link to this mark.
+///               - virt_text : [](virtual-text) to link to this mark.
 ///                   A list of `[text, highlight]` tuples, each representing a
 ///                   text chunk with specified highlight. `highlight` element
 ///                   can either be a single highlight group, or an array of

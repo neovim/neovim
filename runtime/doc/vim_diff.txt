@@ -210,7 +210,7 @@ nvim.swapfile:
   swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
   swapfile…" message.
 
-nvim.find_exrc:
+nvim.exrc:
 - VimEnter: Extend 'exrc' to also search for project-local configuration files
   in all parent directories.
 
@@ -303,6 +303,10 @@ Commands:
 - |:source| works with Lua
   User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
+
+Editor:
+- |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
+  commands.
 
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
@@ -471,12 +475,6 @@ Variables:
 - |v:option_oldlocal|, |v:option_oldglobal| have the type of the option
   instead of always being strings. |v:option_old| is now the old global value
   for all global-local options, instead of just string global-local options.
-
-Prompt-Buffer:
-- supports multiline inputs.
-- supports multiline paste.
-- supports undo/redo on current prompt.
-- supports normal o/O operations.
 
 Vimscript:
 - |:redir| nested in |execute()| works.
