@@ -1076,8 +1076,10 @@ vim.ui_attach({ns}, {opts}, {callback})                      *vim.ui_attach()*
                       enable events for the respective UI element.
                     • {set_cmdheight}? (`boolean`) If false, avoid setting
                       'cmdheight' to 0 when `ext_messages` is enabled.
-      • {callback}  (`fun(event: string, ...)`) Function called for each UI
-                    event
+      • {callback}  (`fun(event: string, ...): any`) Function called for each
+                    UI event. A truthy return value signals to Nvim that the
+                    event is handled, in which case it is not propagated to
+                    remote UIs.
 
 vim.ui_detach({ns})                                          *vim.ui_detach()*
     Detach a callback previously attached with |vim.ui_attach()| for the given
