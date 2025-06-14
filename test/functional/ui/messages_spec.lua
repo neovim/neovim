@@ -1604,14 +1604,21 @@ stack traceback:
   end)
 
   it('g< mapping shows recent messages', function()
-    command('echo "foo" | echo "bar"')
+    feed(':echo "foo" | echo "bar" | echon "baz"<CR>')
     screen:expect({
       grid = [[
         ^                         |
         {1:~                        }|*4
       ]],
+      cmdline = { { abort = false } },
       messages = {
+        { content = { { 'foo' } }, kind = 'echo' },
         { content = { { 'bar' } }, kind = 'echo' },
+        { content = { { 'baz' } }, kind = 'echo', append = true },
+        {
+          content = { { 'Press ENTER or type command to continue', 6, 18 } },
+          kind = 'return_prompt',
+        },
       },
     })
     feed('g<lt>')
@@ -1627,14 +1634,9 @@ stack traceback:
         },
       },
       msg_history = {
-        {
-          content = { { 'foo' } },
-          kind = 'echo',
-        },
-        {
-          content = { { 'bar' } },
-          kind = 'echo',
-        },
+        { content = { { 'foo' } }, kind = 'echo' },
+        { content = { { 'bar' } }, kind = 'echo' },
+        { content = { { 'baz' } }, kind = 'echo', append = true },
       },
     })
     feed('Q')

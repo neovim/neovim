@@ -414,7 +414,7 @@ function M.msg_ruler(content)
   set_virttext('last')
 end
 
----@alias MsgHistory [string, MsgContent]
+---@alias MsgHistory [string, MsgContent, boolean]
 --- Open the message history in the pager.
 ---
 ---@param entries MsgHistory[]
@@ -425,7 +425,7 @@ function M.msg_history_show(entries)
 
   api.nvim_buf_set_lines(ext.bufs.pager, 0, -1, false, {})
   for i, entry in ipairs(entries) do
-    M.show_msg('pager', entry[2], i == 1, false)
+    M.show_msg('pager', entry[2], i == 1, entry[3])
   end
 
   M.set_pos('pager')
