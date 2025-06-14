@@ -7548,6 +7548,19 @@ printf({fmt}, {expr1} ...)                                            *printf()*
                 Return: ~
                   (`string`)
 
+prompt_getinput({buf})                                       *prompt_getinput()*
+		Gets the current user-input in |prompt-buffer| {buf} without invoking
+		prompt_callback. {buf} can be a buffer name or number.
+
+		If the buffer doesn't exist or isn't a prompt buffer, an empty
+		string is returned.
+
+                Parameters: ~
+                  • {buf} (`integer|string`)
+
+                Return: ~
+                  (`any`)
+
 prompt_getprompt({buf})                                     *prompt_getprompt()*
 		Returns the effective prompt text for buffer {buf}.  {buf} can
 		be a buffer name or number.  See |prompt-buffer|.

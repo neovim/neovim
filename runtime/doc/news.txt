@@ -151,6 +151,8 @@ EDITOR
 • |omnicompletion| in `help` buffer. |ft-help-omni|
 • Setting "'0" in 'shada' prevents storing the jumplist in the shada file.
 • 'shada' now correctly respects "/0" and "f0".
+• |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
+  commands.
 
 EVENTS
 
@@ -253,6 +255,7 @@ UI
 VIMSCRIPT
 
 • |cmdcomplete_info()| gets current cmdline completion info.
+• |prompt_getinput()| gets current user-input in prompt-buffer.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

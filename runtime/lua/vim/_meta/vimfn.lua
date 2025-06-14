@@ -6867,6 +6867,16 @@ function vim.fn.prevnonblank(lnum) end
 --- @return string
 function vim.fn.printf(fmt, expr1) end
 
+--- Gets the current user-input in |prompt-buffer| {buf} without invoking
+--- prompt_callback. {buf} can be a buffer name or number.
+---
+--- If the buffer doesn't exist or isn't a prompt buffer, an empty
+--- string is returned.
+---
+--- @param buf integer|string
+--- @return any
+function vim.fn.prompt_getinput(buf) end
+
 --- Returns the effective prompt text for buffer {buf}.  {buf} can
 --- be a buffer name or number.  See |prompt-buffer|.
 ---
