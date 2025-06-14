@@ -764,6 +764,7 @@ Lua module: vim.lsp                                                 *lsp-core*
 <
 
 
+
 buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
     Implements the `textDocument/did…` notifications required to track a
     buffer for any language server.
@@ -1476,6 +1477,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                server doesn't require a workspace.
 
 
+
 Client:cancel_request({id})                          *Client:cancel_request()*
     Cancels a request with a given request id.
 
@@ -1645,6 +1647,7 @@ the current buffer.
 
     Fields: ~
       • {silent}?  (`boolean`)
+
 
 
                                           *vim.lsp.buf.add_workspace_folder()*
@@ -2333,6 +2336,7 @@ Lua module: vim.lsp.util                                            *lsp-util*
                            window height.
 
 
+
                                      *vim.lsp.util.apply_text_document_edit()*
 apply_text_document_edit({text_document_edit}, {index}, {position_encoding})
     Applies a `TextDocumentEdit`, which is a list of changes to a single
@@ -2728,6 +2732,7 @@ Lua module: vim.lsp.rpc                                              *lsp-rpc*
                       |vim.lsp.rpc.notify()|
       • {is_closing}  (`fun(): boolean`) Indicates if the RPC is closing.
       • {terminate}   (`fun()`) Terminates the RPC client.
+
 
 
 connect({host_or_path}, {port})                        *vim.lsp.rpc.connect()*
