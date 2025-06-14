@@ -583,8 +583,9 @@ foreach(sfile ${NVIM_SOURCES}
   endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" ${gf_h_h_out}
-    COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags}
-    COMMAND ${LUA_GEN} "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}" "${gf_basename}"
+    COMMAND true
+    #COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags}
+    #COMMAND ${LUA_GEN} "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}" "${gf_basename}"
     DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
   if (NOT ${sfile} IN_LIST NVIM_HEADERS)
@@ -601,16 +602,17 @@ configure_file(${GENERATOR_DIR}/nvim_version.lua.in ${NVIM_VERSION_LUA})
 add_custom_command(
   OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_API_METADATA}
   ${FUNCS_METADATA} ${LUA_API_C_BINDINGS} ${GENERATED_KEYSETS_DEFS}
-         COMMAND ${LUA_GEN} ${API_DISPATCH_GENERATOR}
-                         ${GENERATED_API_DISPATCH}
-                         ${GENERATED_API_METADATA} ${FUNCS_METADATA}
-                         ${LUA_API_C_BINDINGS}
-                         ${GENERATED_KEYSETS_DEFS}
-                         ${UI_METADATA}
-                         ${NVIM_VERSION_GIT_H} ${NVIM_VERSION_LUA}
-                         ${GENERATOR_DIR}/dump_bin_array.lua
-                         ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
-                         ${API_HEADERS}
+  COMMAND true
+  #       COMMAND ${LUA_GEN} ${API_DISPATCH_GENERATOR}
+  #                       ${GENERATED_API_DISPATCH}
+  #                       ${GENERATED_API_METADATA} ${FUNCS_METADATA}
+  #                       ${LUA_API_C_BINDINGS}
+  #                       ${GENERATED_KEYSETS_DEFS}
+  #                       ${UI_METADATA}
+  #                       ${NVIM_VERSION_GIT_H} ${NVIM_VERSION_LUA}
+  #                       ${GENERATOR_DIR}/dump_bin_array.lua
+  #                       ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
+  #                       ${API_HEADERS}
 
   DEPENDS
     ${LUA_GEN_DEPS}
@@ -667,12 +669,13 @@ add_custom_command(
          ${GENERATED_UI_EVENTS_REMOTE}
          ${UI_METADATA}
          ${GENERATED_UI_EVENTS_CLIENT}
-  COMMAND ${LUA_GEN} ${API_UI_EVENTS_GENERATOR}
-                     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
-                     ${GENERATED_UI_EVENTS_CALL}
-                     ${GENERATED_UI_EVENTS_REMOTE}
-                     ${UI_METADATA}
-                     ${GENERATED_UI_EVENTS_CLIENT}
+  COMMAND true
+         #COMMAND ${LUA_GEN} ${API_UI_EVENTS_GENERATOR}
+         #                   ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
+         #                   ${GENERATED_UI_EVENTS_CALL}
+         #                   ${GENERATED_UI_EVENTS_REMOTE}
+         #                   ${UI_METADATA}
+         #                   ${GENERATED_UI_EVENTS_CLIENT}
   DEPENDS
     ${LUA_GEN_DEPS}
     ${API_UI_EVENTS_GENERATOR}
@@ -682,27 +685,32 @@ add_custom_command(
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
-  COMMAND ${LUA_GEN} ${EX_CMDS_GENERATOR} ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
+  #COMMAND ${LUA_GEN} ${EX_CMDS_GENERATOR} ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
+  COMMAND true
   DEPENDS ${LUA_GEN_DEPS} ${EX_CMDS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
 )
 
 add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
-  COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_FUNCS} ${FUNCS_METADATA} ${FUNCS_DATA} ${CMAKE_CURRENT_LIST_DIR}/eval.lua
+  #COMMAND ${LUA_GEN} ${FUNCS_GENERATOR} ${GENERATED_FUNCS} ${FUNCS_METADATA} ${FUNCS_DATA} ${CMAKE_CURRENT_LIST_DIR}/eval.lua
+  COMMAND true
   DEPENDS ${LUA_GEN_DEPS} ${FUNCS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${FUNCS_METADATA}
 )
 
 add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
-  COMMAND ${LUA_GEN} ${EVENTS_GENERATOR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
+  COMMAND true
+  #COMMAND ${LUA_GEN} ${EVENTS_GENERATOR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
   DEPENDS ${LUA_GEN_DEPS} ${EVENTS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
 )
 
 add_custom_command(OUTPUT ${GENERATED_KEYCODE_NAMES}
-  COMMAND ${LUA_GEN} ${KEYCODES_GENERATOR} ${GENERATED_KEYCODE_NAMES} ${CMAKE_CURRENT_LIST_DIR}/keycodes.lua
+  COMMAND true
+  #COMMAND ${LUA_GEN} ${KEYCODES_GENERATOR} ${GENERATED_KEYCODE_NAMES} ${CMAKE_CURRENT_LIST_DIR}/keycodes.lua
   DEPENDS ${LUA_GEN_DEPS} ${KEYCODES_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/keycodes.lua
 )
 
 add_custom_command(OUTPUT ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS}
-  COMMAND ${LUA_GEN} ${OPTIONS_GENERATOR} ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS} ${CMAKE_CURRENT_LIST_DIR}/options.lua
+  COMMAND true
+  #COMMAND ${LUA_GEN} ${OPTIONS_GENERATOR} ${GENERATED_OPTIONS} ${GENERATED_OPTIONS_ENUM} ${GENERATED_OPTIONS_MAP} ${GENERATED_OPTION_VARS} ${CMAKE_CURRENT_LIST_DIR}/options.lua
   DEPENDS ${LUA_GEN_DEPS} ${OPTIONS_GENERATOR} ${GENERATOR_HASHY} ${CMAKE_CURRENT_LIST_DIR}/options.lua
 )
 
