@@ -472,6 +472,12 @@ Variables:
   instead of always being strings. |v:option_old| is now the old global value
   for all global-local options, instead of just string global-local options.
 
+Prompt-Buffer:
+- supports multiline inputs.
+- supports multiline paste.
+- supports undo/redo on current prompt.
+- supports normal o/O operations.
+
 Vimscript:
 - |:redir| nested in |execute()| works.
 
