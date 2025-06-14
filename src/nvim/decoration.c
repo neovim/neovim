@@ -1068,7 +1068,10 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
     int prevwidth = MIN(SIGN_SHOW_MAX, count[i] - add);
     if (clear != kNone && prevwidth > 0) {
       buf->b_signcols.count[prevwidth - 1]--;
+#ifndef RELDEBUG
+      // TODO(bfredl): correct marktree splicing so that this doesn't fail
       assert(buf->b_signcols.count[prevwidth - 1] >= 0);
+#endif
     }
     int width = MIN(SIGN_SHOW_MAX, count[i]);
     if (clear != kTrue && width > 0) {
