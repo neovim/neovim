@@ -6,7 +6,7 @@
     .dependencies = .{
         .libiconv = .{
             .url = "git+https://github.com/apple-oss-distributions/libiconv?ref=libiconv-107#a3f3b2c76dbf8ba11881debc6bcb4e309958d252",
-            .hash = "12202adcca76e9822f506b5acd2f0a3e285c152e2f48683341fd719d9f1df3a1296b",
+            .hash = "N-V-__8AAKce8wQq3Mp26YIvUGtazS8KPihcFS4vSGgzQf1x",
         },
     },
 }
