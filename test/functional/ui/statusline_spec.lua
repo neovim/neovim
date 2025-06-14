@@ -786,12 +786,38 @@ describe('default statusline', function()
     eq('asdf', eval('&statusline'))
 
     local default_statusline =
-      "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
+      "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &busy ? '<busy> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
 
     exec_lua("vim.o.statusline = ''")
 
     eq(default_statusline, eval('&statusline'))
 
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
+  end)
+
+  it('shows busy status when buffer is set to be busy', function()
+    exec_lua("vim.o.statusline = ''")
+
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                                 0,0-1          All}|
+                                                                  |
+    ]])
+    exec_lua('vim.o.busy = true')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*13
+      {3:[No Name]                          <busy> 0,0-1          All}|
+                                                                  |
+    ]])
+
+    exec_lua('vim.o.busy = false')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13

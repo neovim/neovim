@@ -355,8 +355,7 @@ describe('au OptionSet', function()
 
     it('with string global-local (to window) option', function()
       local oldval = eval('&statusline')
-      local default_statusline =
-        "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}"
+      local default_statusline = api.nvim_get_option_info2('statusline', {}).default
 
       command('set statusline=foo')
       expected_combination({

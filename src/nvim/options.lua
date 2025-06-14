@@ -311,6 +311,20 @@ local options = {
       varname = 'p_awa',
     },
     {
+      defaults = false,
+      desc = [=[
+        This value specifies status if buffer. When it's set to true it marks
+        the buffer as busy.
+      ]=],
+      full_name = 'busy',
+      redraw = { 'statuslines' },
+      noglob = true,
+      scope = { 'buf' },
+      short_desc = N_('buffer is busy'),
+      type = 'boolean',
+      varname = 'p_busy',
+    },
+    {
       abbreviation = 'bg',
       cb = 'did_set_background',
       defaults = 'dark',
@@ -8634,6 +8648,7 @@ local options = {
         '%=',
         "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
         "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
+        "%{% &busy ? '<busy> ' : '' %}",
         "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
       }),
       desc = [=[
