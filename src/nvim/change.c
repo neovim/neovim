@@ -1746,7 +1746,27 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
   curbuf_splice_pending++;
   old_cursor = curwin->w_cursor;
+  int old_cmod_flags = cmdmod.cmod_flags;
+  char *prompt_moved = NULL;
   if (dir == BACKWARD) {
+    // In case of prompt buffer, when we are applying 'normal O' operation on line of prompt,
+    // we can't add a new line before the prompt. In this case, we move the prompt text one
+    // line below and create a new prompt line as current line.
+    if (bt_prompt(curbuf) && curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum) {
+      char *prompt_line = ml_get(curwin->w_cursor.lnum);
+      char *prompt = prompt_text();
+      size_t prompt_len = strlen(prompt);
+
+      if (strncmp(prompt_line, prompt, prompt_len) == 0) {
+        STRMOVE(prompt_line, prompt_line + prompt_len);
+        // We are moving the lines but the b_prompt_start mark needs to stay in
+        // place so freezing marks before making the move.
+        cmdmod.cmod_flags = cmdmod.cmod_flags | CMOD_LOCKMARKS;
+        ml_replace(curwin->w_cursor.lnum, prompt_line, true);
+        prompt_moved = concat_str(prompt, p_extra);
+        p_extra = prompt_moved;
+      }
+    }
     curwin->w_cursor.lnum--;
   }
   if ((State & VREPLACE_FLAG) == 0 || old_cursor.lnum >= orig_line_count) {
@@ -1936,6 +1956,8 @@ theend:
   xfree(saved_line);
   xfree(next_line);
   xfree(allocated);
+  xfree(prompt_moved);
+  cmdmod.cmod_flags = old_cmod_flags;
   return retval;
 }
 
