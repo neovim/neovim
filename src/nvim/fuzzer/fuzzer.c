@@ -20,6 +20,7 @@ void test_base_path_join(char* buf,size_t buf_size, const char* test_base, const
 }
 
 void redirect_common_path(void* test_base);
+extern char *default_vim_dir ;
 
 void redirect_common_path(void* test_base){
   setenv("HOME",test_base,1);
@@ -36,6 +37,7 @@ void redirect_common_path(void* test_base){
 
   setenv("XDG_DATA_DIRS","",1);
   setenv("XDG_CONFIG_DIRS","",1);
+  setenv("VIMRUNTIME",default_vim_dir,1);
 }
 
 static void thread_func(void* test_base){
@@ -129,9 +131,13 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
   char cleanup[1024];
 
-  snprintf(cleanup, sizeof(cleanup), "rm -rf %s",test_base);
-  int res = system(cleanup);
-  assert(res == 0);
+  if(getenv("SKIP_CLEANUP")==NULL){
+    snprintf(cleanup, sizeof(cleanup), "rm -rf %s",test_base);
+    int res = system(cleanup);
+    assert(res == 0);
+  }
+
+
 
   return 0;
 }

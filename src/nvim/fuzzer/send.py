@@ -10,7 +10,7 @@ import time
 def prepare(test_base, fuzzer_bin):
     assert os.path.exists(fuzzer_bin), f"{fuzzer_bin} don't exists"
     socket_path = os.path.join(test_base, "socket")
-    print(f"use nvim --remote {socket_path} for debugging")
+    print(f"use nvim --remote-ui --server {socket_path} for debugging")
     nvim = pynvim.attach("socket", path=socket_path)
 
     fuzzer_input = open(fuzzer_bin, "rb").read()
@@ -94,9 +94,10 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Exception: {e}")
 
-    print("force exit")
-    try:
-        # pdb.set_trace()
-        send_commands(nvim, force_quite_cmd())
-    except Exception as e:
-        print(f"Exception: {e}")
+    if os.getenv("SKIP_CLEANUP") is None:
+        print("force exit")
+        try:
+            # pdb.set_trace()
+            send_commands(nvim, force_quite_cmd())
+        except Exception as e:
+            print(f"Exception: {e}")

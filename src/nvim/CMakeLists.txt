@@ -1020,7 +1020,6 @@ file(WRITE "${INIT_SCRIPT}"
 "cd \"\${FUZZER_TEST_BASE}\"\n"
 "mkdir -p XDG_RUNTIME_DIR TMPDIR .config .local/share .cache .local/state \n"
 # here we skip create VIMRUNTIME, it will be part of install copy
-"cp -a \"\${CMAKE_INSTALL_PREFIX}/share/nvim\" .local/share/\n"
 "${CMAKE_CURRENT_SOURCE_DIR}/fuzzer/init_post.sh\n"
 )
 
