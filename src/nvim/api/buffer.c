@@ -1437,7 +1437,7 @@ void buf_collect_lines(buf_T *buf, size_t n, linenr_T start, int start_idx, bool
 /// @param[out] err         Error details, if any
 /// @return string of current prompt, or empty string for unloaded buffer / non pormpt buffer.
 String nvim_buf_get_prompt_text(Buffer buffer, Dict(option) *opts, Error *err)
-  FUNC_API_SINCE(14)
+  FUNC_API_SINCE(14) FUNC_API_RET_ALLOC
 {
   String rv = STRING_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
