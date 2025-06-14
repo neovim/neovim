@@ -21,6 +21,21 @@ local RSC = {}
 --- @type table<vim.lsp.protocol.Method.ServerToClient, lsp.Handler>
 local NSC = {}
 
+--- Convert LSP MessageType to vim.log.levels
+---
+---@param message_type lsp.MessageType
+local function to_log_level(message_type)
+  if message_type == protocol.MessageType.Error then
+    return vim.log.levels.ERROR
+  elseif message_type == protocol.MessageType.Warning then
+    return vim.log.levels.WARN
+  elseif message_type == protocol.MessageType.Info or message_type == protocol.MessageType.Log then
+    return vim.log.levels.INFO
+  else
+    return vim.log.levels.DEBUG
+  end
+end
+
 --- Writes to error buffer.
 ---@param ... string Will be concatenated before being written
 local function err_message(...)
@@ -588,12 +603,8 @@ NSC['window/showMessage'] = function(_, params, ctx)
   if not client then
     err_message('LSP[', client_name, '] client has shut down after sending ', message)
   end
-  if message_type == protocol.MessageType.Error then
-    err_message('LSP[', client_name, '] ', message)
-  else
-    message = ('LSP[%s][%s] %s\n'):format(client_name, protocol.MessageType[message_type], message)
-    api.nvim_echo({ { message } }, true, {})
-  end
+  message = ('LSP[%s] %s'):format(client_name, message)
+  vim.notify(message, to_log_level(message_type))
   return params
 end
 
