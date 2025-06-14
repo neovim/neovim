@@ -384,7 +384,7 @@ static void terminfo_start(TUIData *tui)
   tui->out_isatty = os_isatty(tui->out_fd);
   tui->input.tui_data = tui;
 
-  char *term = os_getenv("TERM");
+  const char *term = os_getenv("TERM");
 #ifdef MSWIN
   os_tty_guess_term(&term, tui->out_fd);
   os_setenv("TERM", term, 1);
