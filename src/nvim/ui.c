@@ -759,9 +759,6 @@ void ui_call_event(char *name, bool fast, Array args)
     uint32_t ns_id = ui_event_ns_id;
     Object res = nlua_call_ref_ctx(fast, event_cb->cb, name, args, kRetNilBool, NULL, &err);
     ui_event_ns_id = 0;
-    // TODO(bfredl/luukvbaal): should this be documented or reconsidered?
-    // Why does truthy return from Lua callback mean remote UI should not receive
-    // the event.
     if (LUARET_TRUTHY(res)) {
       handled = true;
     }
