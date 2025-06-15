@@ -140,6 +140,7 @@ enum {
 # include "main.c.generated.h"
 #endif
 
+bool use_jmp = false;
 jmp_buf my_jump_buffer;
 
 Loop main_loop;
@@ -659,6 +660,7 @@ int main(int argc, char **argv)
   ILOG("starting main loop");
 
 
+  use_jmp = true;
   if(setjmp(my_jump_buffer)==0){
     normal_enter(false, false);
   }
@@ -700,7 +702,9 @@ void os_exit(int r)
   free_all_mem();
 #endif
 
-  longjmp(my_jump_buffer,1);
+  if(use_jmp) {
+    longjmp(my_jump_buffer,1);
+  }
   exit(r);
 }
 
