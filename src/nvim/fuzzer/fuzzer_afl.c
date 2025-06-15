@@ -39,6 +39,7 @@ static void run_fuzz(const char* test_base)
 // last argument as fuzzer input file
 int main(int argc, char** argv)
 {
+  fprintf(stderr,"start\n");
   // nvim call os exit to quite,
   // and nvim_man not reentrant
   // which conflicit with libfuzzer/ afl fast in process mode
@@ -65,10 +66,14 @@ int main(int argc, char** argv)
   test_base_path_join(tmp_dir,sizeof(tmp_dir), test_base, "TMPDIR");
   int res = chdir(tmp_dir);
   assert (res == 0);
+
+  fprintf(stderr,"before nvim\n");
   nvim_main(5, nvim_argv);
 
+  fprintf(stderr,"nvim exit\n");
   pthread_join(id, NULL);
 
+  fprintf(stderr,"joined\n");
 
   if (getenv("SKIP_CLEANUP") == NULL){
     char cleanup[1024];

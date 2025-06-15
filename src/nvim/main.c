@@ -255,6 +255,7 @@ int main(int argc, char **argv)
 {
   argv0 = argv[0];
 
+  fprintf(stderr,"=======1\n");
   if (!appname_is_valid()) {
     fprintf(stderr, "$NVIM_APPNAME must be a name or relative path.\n");
     exit(1);
@@ -490,6 +491,7 @@ int main(int argc, char **argv)
     p_uc = 0;
   }
 
+  fprintf(stderr,"=======2\n");
   // XXX: Minimize 'updatetime' for -es/-Es. #7679
   if (silent_mode) {
     p_ut = 1;
@@ -556,6 +558,7 @@ int main(int argc, char **argv)
   TIME_MSG("BufEnter autocommands");
   setpcmark();
 
+  fprintf(stderr,"=======3\n");
   // When started with "-q errorfile" jump to first error now.
   if (params.edit_type == EDIT_QF) {
     qf_jump(NULL, 0, 0, false);
@@ -657,6 +660,7 @@ int main(int argc, char **argv)
   if(setjmp(my_jump_buffer)==0){
     normal_enter(false, false);
   }
+
 #if defined(MSWIN) && !defined(MAKE_LIB)
   //xfree(argv);
 #endif
