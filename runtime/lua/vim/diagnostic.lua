@@ -2690,4 +2690,37 @@ function M.fromqflist(list)
   return diagnostics
 end
 
+--- Returns formatted string with diagnostics for the current buffer.
+--- The severities with 0 diagnostics are left out.
+--- Example `E:2 W:3 I:4 H:5`
+---
+--- To customise appearance, set diagnostic signs text with
+--- ```lua
+--- vim.diagnostic.config({
+---   signs = { text = { [vim.diagnostic.severity.ERROR] = 'Error', ... } }
+--- })
+--- ```
+---
+---@return string
+function M.status()
+  local counts = M.count(0)
+  local user_signs = vim.tbl_get(M.config() --[[@as vim.diagnostic.Opts]], 'signs', 'text') or {}
+  local signs = vim.tbl_extend('keep', user_signs, { 'E', 'W', 'I', 'H' })
+  local result_str = vim
+    .iter(pairs(counts))
+    :map(function(severity, count)
+      return ('%s:%s'):format(signs[severity], count)
+    end)
+    :join(' ')
+
+  return result_str
+end
+
+if vim.o.statusline:find('vim.diagnostic.status') then
+  vim.api.nvim_create_autocmd('DiagnosticChanged', {
+    group = vim.api.nvim_create_augroup('nvim.diagnostic.status', {}),
+    command = 'redrawstatus',
+  })
+end
+
 return M
