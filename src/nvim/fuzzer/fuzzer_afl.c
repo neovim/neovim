@@ -13,7 +13,7 @@ extern int nvim_main(int argc, char** argv);
 
 void test_base_path_join(char* buf, size_t buf_size, const char* test_base, const char* to_append);
 
-char* last_arg;
+char last_arg_realpath[];
 
 static void run_fuzz(const char* test_base)
 {
@@ -30,7 +30,7 @@ static void run_fuzz(const char* test_base)
 
   char send_script[1024];
   snprintf(send_script, sizeof(send_script), FUZZER_SEND_SCRIPT " \"%s\" \"%s\"", test_base,
-           last_arg);
+           last_arg_realpath);
 
   int send_res = system(send_script);
   assert(send_res == 0);
@@ -53,7 +53,8 @@ int main(int argc, char** argv)
   char fifo_name[1024];
   test_base_path_join(fifo_name, sizeof(fifo_name), test_base, "socket");
 
-  last_arg = argv[argc-1];
+  char* p = realpath(argv[-1], last_arg_realpath);
+  assert (p!= NULL);
   pthread_t id;
   pthread_create(&id, NULL, (void* (*)(void*)) & run_fuzz, test_base);
 
