@@ -182,6 +182,7 @@ LSP
 • Support for the `disabled` field on code actions.
 • The function form of `cmd` in a vim.lsp.Config or vim.lsp.ClientConfig
   receives the resolved config as the second arg: `cmd(dispatchers, config)`.
+• Support for annotated text edits.
 
 LUA
 
