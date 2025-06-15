@@ -287,14 +287,16 @@ local function get_line_byte_from_position(bufnr, position, position_encoding)
 end
 
 --- Applies a list of text edits to a buffer.
----@param text_edits lsp.TextEdit[]
+---@param text_edits (lsp.TextEdit|lsp.AnnotatedTextEdit)[]
 ---@param bufnr integer Buffer id
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
+---@param change_annotations? table<string, lsp.ChangeAnnotation>
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
-function M.apply_text_edits(text_edits, bufnr, position_encoding)
+function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotations)
   validate('text_edits', text_edits, 'table', false)
   validate('bufnr', bufnr, 'number', false)
   validate('position_encoding', position_encoding, 'string', false)
+  validate('change_annotations', change_annotations, 'table', true)
 
   if not next(text_edits) then
     return
@@ -323,11 +325,12 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding)
     end
   end
 
-  --- @cast text_edits  (lsp.TextEdit|{_index: integer})[]
+  --- @alias TextEdit lsp.TextEdit|lsp.AnnotatedTextEdit|{_index: integer}
+  --- @cast text_edits TextEdit[]
 
   -- Sort text_edits
-  ---@param a lsp.TextEdit | { _index: integer }
-  ---@param b lsp.TextEdit | { _index: integer }
+  ---@param a TextEdit
+  ---@param b TextEdit
   ---@return boolean
   table.sort(text_edits, function(a, b)
     if a.range.start.line ~= b.range.start.line then
@@ -347,9 +350,10 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding)
     end
   end
 
-  -- Apply text edits.
   local has_eol_text_edit = false
-  for _, text_edit in ipairs(text_edits) do
+
+  --- @param text_edit TextEdit
+  local function apply_text_edit(text_edit)
     -- Normalize line ending
     text_edit.newText, _ = string.gsub(text_edit.newText, '\r\n?', '\n')
 
@@ -396,6 +400,35 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding)
     end
   end
 
+  -- Apply text edits.
+  for _, text_edit in ipairs(text_edits) do
+    if text_edit.annotationId then
+      assert(
+        change_annotations ~= nil,
+        'change_annotations must be provided for annotated text edits'
+      )
+
+      local annotation = assert(
+        change_annotations[text_edit.annotationId],
+        string.format('No change annotation found for id: %s', text_edit.annotationId)
+      )
+
+      if annotation.needsConfirmation then
+        vim.ui.select(
+          { 'Yes', 'No' },
+          { prompt = string.format('Apply "%s"? ', annotation.label) },
+          function(input)
+            if input == 'Yes' then
+              apply_text_edit(text_edit)
+            end
+          end
+        )
+      end
+    else
+      apply_text_edit(text_edit)
+    end
+  end
+
   local max = api.nvim_buf_line_count(bufnr)
 
   -- no need to restore marks that still exist
@@ -427,8 +460,14 @@ end
 ---@param text_document_edit lsp.TextDocumentEdit
 ---@param index? integer: Optional index of the edit, if from a list of edits (or nil, if not from a list)
 ---@param position_encoding? 'utf-8'|'utf-16'|'utf-32'
+---@param change_annotations? table<string, lsp.ChangeAnnotation>
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
-function M.apply_text_document_edit(text_document_edit, index, position_encoding)
+function M.apply_text_document_edit(
+  text_document_edit,
+  index,
+  position_encoding,
+  change_annotations
+)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
   if position_encoding == nil then
@@ -455,7 +494,7 @@ function M.apply_text_document_edit(text_document_edit, index, position_encoding
     return
   end
 
-  M.apply_text_edits(text_document_edit.edits, bufnr, position_encoding)
+  M.apply_text_edits(text_document_edit.edits, bufnr, position_encoding, change_annotations)
 end
 
 local function path_components(path)
@@ -637,7 +676,7 @@ function M.apply_workspace_edit(workspace_edit, position_encoding)
       elseif change.kind then --- @diagnostic disable-line:undefined-field
         error(string.format('Unsupported change: %q', vim.inspect(change)))
       else
-        M.apply_text_document_edit(change, idx, position_encoding)
+        M.apply_text_document_edit(change, idx, position_encoding, workspace_edit.changeAnnotations)
       end
     end
     return
@@ -650,7 +689,7 @@ function M.apply_workspace_edit(workspace_edit, position_encoding)
 
   for uri, changes in pairs(all_changes) do
     local bufnr = vim.uri_to_bufnr(uri)
-    M.apply_text_edits(changes, bufnr, position_encoding)
+    M.apply_text_edits(changes, bufnr, position_encoding, workspace_edit.changeAnnotations)
   end
 end
 

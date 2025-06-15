@@ -558,6 +558,7 @@ function protocol.make_client_capabilities()
       workspaceEdit = {
         resourceOperations = { 'rename', 'create', 'delete' },
         normalizesLineEndings = true,
+        changeAnnotationSupport = { groupsOnLabel = false },
       },
       semanticTokens = {
         refreshSupport = true,
