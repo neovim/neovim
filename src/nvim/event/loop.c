@@ -79,8 +79,11 @@ static bool loop_uv_run(Loop *loop, int64_t ms)
 /// @return  true if `ms` > 0 and was reached
 bool loop_poll_events(Loop *loop, int64_t ms)
 {
+  fprintf(stderr,"=======11.f.1\n");
   bool timeout_expired = loop_uv_run(loop, ms);
+  fprintf(stderr,"=======11.f.2\n");
   multiqueue_process_events(loop->fast_events);
+  fprintf(stderr,"=======11.f.3\n");
   return timeout_expired;
 }
 

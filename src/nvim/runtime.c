@@ -442,6 +442,7 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
       verbose_leave();
     }
 
+    fprintf(stderr,"=======8\n");
     bool do_all = (flags & DIP_ALL) != 0;
 
     // Loop over all entries in 'runtimepath'.
@@ -449,9 +450,11 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
     while (*rtp != NUL && (do_all || !did_one)) {
       // Copy the path from 'runtimepath' to buf[].
       //
+      fprintf(stderr,"=======9\n");
       copy_option_part(&rtp, buf, MAXPATHL, ",");
       size_t buflen = strlen(buf);
 
+      fprintf(stderr,"=======10\n");
       // Skip after or non-after directories.
       if (flags & (DIP_NOAFTER | DIP_AFTER)) {
         bool is_after = path_is_after(buf, buflen);
@@ -464,20 +467,26 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
 
       if (name == NULL) {
 
+        fprintf(stderr,"=======11.a\n");
         (*callback)(1, &buf, do_all, cookie);
+        fprintf(stderr,"=======11.a.1\n");
         did_one = true;
       } else if (buflen + 2 + strlen(prefix) + strlen(name) < MAXPATHL) {
 
+        fprintf(stderr,"=======11.b\n");
         add_pathsep(buf);
 
+        fprintf(stderr,"=======11.b.1\n");
         strcat(buf, prefix);
         tail = buf + strlen(buf);
 
+        fprintf(stderr,"=======11.b.2\n");
         // Loop over all patterns in "name"
         char *np = name;
         while (*np != NUL && (do_all || !did_one)) {
           // Append the pattern from "name" to buf[].
           assert(MAXPATHL >= (tail - buf));
+          fprintf(stderr,"=======11.b.3\n");
           copy_option_part(&np, tail, (size_t)(MAXPATHL - (tail - buf)), "\t ");
 
           if (p_verbose > 10) {
@@ -489,14 +498,17 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
           int ew_flags = ((flags & DIP_DIR) ? EW_DIR : EW_FILE)
                          | ((flags & DIP_DIRFILE) ? (EW_DIR|EW_FILE) : 0);
 
+          fprintf(stderr,"=======11.b.4\n");
           did_one |= gen_expand_wildcards_and_cb(1, &buf, ew_flags, do_all, callback,
                                                  cookie) == OK;
 
+          fprintf(stderr,"=======11.b.5\n");
         }
       }
     }
   }
 
+  fprintf(stderr,"=======12\n");
   xfree(buf);
   xfree(rtp_copy);
   if (!did_one && name != NULL) {
@@ -727,6 +739,7 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
 {
   int done = FAIL;
 
+    fprintf(stderr,"=======7\n");
   if ((flags & DIP_NORTP) == 0) {
     done |= do_in_path(path, "", (name && !*name) ? NULL : name, flags, callback,
                        cookie);
@@ -980,10 +993,12 @@ static int gen_expand_wildcards_and_cb(int num_pat, char **pats, int flags, bool
   int num_files;
   char **files;
 
+  fprintf(stderr,"=======11.c.1\n");
   if (gen_expand_wildcards(num_pat, pats, &num_files, &files, flags) != OK) {
     return FAIL;
   }
 
+  fprintf(stderr,"=======11.c.2\n");
   (*callback)(num_files, files, all, cookie);
 
   FreeWild(num_files, files);
@@ -1309,6 +1324,7 @@ void load_plugins(void)
       add_pack_start_dirs();
     }
 
+    fprintf(stderr,"=======6\n");
     // Don't use source_runtime_vim_lua() yet so we can check for :packloadall below.
     // NB: after calling this "rtp_copy" may have been freed if it wasn't copied.
     source_in_path_vim_lua(rtp_copy, plugin_pattern, DIP_ALL | DIP_NOAFTER);
