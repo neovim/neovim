@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-echo "init post"
+#echo "init post"
