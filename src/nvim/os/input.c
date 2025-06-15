@@ -200,12 +200,12 @@ bool os_char_avail(void)
 /// available)
 void os_breakcheck(void)
 {
-  fprintf(stderr,"=======11.ee.2\n");
   if (got_int) {
     return;
   }
 
   loop_poll_events(&main_loop, 0);
+
 }
 
 #define BREAKCHECK_SKIP 1000

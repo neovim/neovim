@@ -256,7 +256,6 @@ int main(int argc, char **argv)
 {
   argv0 = argv[0];
 
-  fprintf(stderr,"=======1\n");
   if (!appname_is_valid()) {
     fprintf(stderr, "$NVIM_APPNAME must be a name or relative path.\n");
     exit(1);
@@ -436,7 +435,6 @@ int main(int argc, char **argv)
     }
   }
 
-  fprintf(stderr,"=======2\n");
   nlua_init_defaults();
 
   TIME_MSG("init default mappings & autocommands");
@@ -451,7 +449,6 @@ int main(int argc, char **argv)
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
-  fprintf(stderr,"=======3\n");
   if (!vimrc_none || params.clean) {
     // Sources ftplugin.vim and indent.vim. We do this *before* the user startup scripts to ensure
     // ftplugins run before FileType autocommands defined in the init file (which allows those
@@ -462,7 +459,6 @@ int main(int argc, char **argv)
   // Source startup scripts.
   source_startup_scripts(&params);
 
-  fprintf(stderr,"=======4\n");
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
   if (!vimrc_none || params.clean) {
     // Sources filetype.lua unless the user explicitly disabled it with :filetype off.
@@ -472,7 +468,6 @@ int main(int argc, char **argv)
     syn_maybe_enable();
   }
 
-  fprintf(stderr,"=======5\n");
   // Read all the plugin files.
   load_plugins();
 

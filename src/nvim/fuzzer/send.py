@@ -24,7 +24,7 @@ def prepare(test_base, fuzzer_bin):
         time.sleep(0.1)
 
     assert os.path.exists(socket_path)
-    print(f"use nvim --remote-ui --server {socket_path} for debugging")
+    print(f"use nvim --remote-ui --server {socket_path} for debugging", file = sys.stderr)
     nvim = pynvim.attach("socket", path=socket_path)
 
     fuzzer_input = open(fuzzer_bin, "rb").read()
@@ -77,7 +77,6 @@ def fuzzer_to_input(fuzzer_input: bytes):
             # fail into other mapping
             printable_in_range = [x for x in printable if x <= b]
             other_mapping_idx = b - len(printable_in_range)
-            print(f"{other_mapping_idx}, {len(other_mapping)}",flush=True)
             idx = other_mapping_idx % len(other_mapping)
             ret.append(other_mapping[idx])
             ret.append((other_mapping_idx - idx) * 0.01)
@@ -102,19 +101,19 @@ if __name__ == "__main__":
     test_base, fuzz_bin = sys.argv[-2], sys.argv[-1]
 
     nvim, fuzzer_input = prepare(test_base, fuzz_bin)
-    print(f"fuzzer input is '{fuzzer_input.hex()}'")
+    print(f"fuzzer input is '{fuzzer_input.hex()}'", file = sys.stderr)
     test_cmds = fuzzer_to_input(fuzzer_input)
 
-    print(f"test_cmds: {test_cmds}")
+    print(f"test_cmds: {test_cmds}", file = sys.stderr)
     try:
         send_commands(nvim, test_cmds)
     except Exception as e:
-        print(f"Exception: {e}")
+        print(f"Exception: {e}", file = sys.stderr)
 
     if os.getenv("SKIP_CLEANUP") is None:
-        print("force exit")
+        print("force exit", file = sys.stderr)
         try:
             # pdb.set_trace()
             send_commands(nvim, force_quite_cmd())
         except Exception as e:
-            print(f"Exception: {e}")
+            print(f"Exception: {e}", file = sys.stderr)
