@@ -13,7 +13,7 @@ extern int nvim_main(int argc, char** argv);
 
 void test_base_path_join(char* buf, size_t buf_size, const char* test_base, const char* to_append);
 
-char last_arg_realpath[];
+char last_arg_realpath[PATH_MAX];
 
 static void run_fuzz(const char* test_base)
 {
