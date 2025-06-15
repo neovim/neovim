@@ -24,7 +24,7 @@ describe('messages2', function()
         {1:~                                                    }|*12
         foo[+1]                                              |
       ]])
-      command('set ruler')
+      command('set ruler showcmd noshowmode')
       feed('g<lt>')
       screen:expect([[
                                                              |
@@ -67,6 +67,19 @@ describe('messages2', function()
         {4:                                                     }|
         {4:  1 %a   "[No Name]"                    line 1       }|
                                             1,1           All|
+      ]])
+      -- edit_unputchar() does not clear already updated screen #34515.
+      feed('qix<Esc>dwi<C-r>')
+      screen:expect([[
+        {18:^"}                                                    |
+        {1:~                                                    }|*12
+                                 ^R         1,1           All|
+      ]])
+      feed('-')
+      screen:expect([[
+        x^                                                    |
+        {1:~                                                    }|*12
+                                            1,2           All|
       ]])
     end)
   end)
