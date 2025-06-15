@@ -46,9 +46,14 @@ local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 --- })
 --- ```
 --- @param config? vim.lsp.buf.hover.Opts
-function M.hover(config)
+--- @param callback? fun(err: lsp.ResponseError[]) Function called after the request is completed.
+--- Any errors are passed as the first argument.
+function M.hover(config, callback)
   config = config or {}
+  callback = callback or function() end
   config.focus_id = ms.textDocument_hover
+
+  local errors = {} --- @type lsp.ResponseError[]
 
   lsp.buf_request_all(0, ms.textDocument_hover, client_positional_params(), function(results, ctx)
     local bufnr = assert(ctx.bufnr)
@@ -64,6 +69,7 @@ function M.hover(config)
       local err, result = resp.err, resp.result
       if err then
         lsp.log.error(err.code, err.message)
+        errors[#errors + 1] = err
       elseif result then
         results1[client_id] = result
       end
@@ -73,6 +79,7 @@ function M.hover(config)
       if config.silent ~= true then
         vim.notify('No information available')
       end
+      callback(errors)
       return
     end
 
@@ -130,6 +137,7 @@ function M.hover(config)
       if config.silent ~= true then
         vim.notify('No information available')
       end
+      callback(errors)
       return
     end
 
@@ -144,6 +152,8 @@ function M.hover(config)
       end,
     })
   end)
+
+  callback(errors)
 end
 
 local function request_with_opts(name, params, opts)
@@ -160,12 +170,17 @@ end
 
 ---@param method vim.lsp.protocol.Method.ClientToServer.Request
 ---@param opts? vim.lsp.LocationOpts
-local function get_locations(method, opts)
+---@param callback? fun(err?: string)
+local function get_locations(method, opts, callback)
   opts = opts or {}
+  callback = callback or function() end
+
   local bufnr = api.nvim_get_current_buf()
   local clients = lsp.get_clients({ method = method, bufnr = bufnr })
   if not next(clients) then
-    vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
+    local msg = lsp._unsupported_method(method)
+    vim.notify(msg, vim.log.levels.WARN)
+    callback(msg)
     return
   end
   local win = api.nvim_get_current_win()
@@ -245,6 +260,8 @@ local function get_locations(method, opts)
       on_response(_, result, client)
     end)
   end
+
+  callback(nil)
 end
 
 --- @class vim.lsp.ListOpts
@@ -283,27 +300,31 @@ end
 --- Jumps to the declaration of the symbol under the cursor.
 --- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
 --- @param opts? vim.lsp.LocationOpts
-function M.declaration(opts)
-  get_locations(ms.textDocument_declaration, opts)
+--- @param callback? fun(err?: string) Function called after the request is completed.
+function M.declaration(opts, callback)
+  get_locations(ms.textDocument_declaration, opts, callback)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
 --- @param opts? vim.lsp.LocationOpts
-function M.definition(opts)
-  get_locations(ms.textDocument_definition, opts)
+--- @param callback? fun(err?: string) Function called after the request is completed.
+function M.definition(opts, callback)
+  get_locations(ms.textDocument_definition, opts, callback)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
 --- @param opts? vim.lsp.LocationOpts
-function M.type_definition(opts)
-  get_locations(ms.textDocument_typeDefinition, opts)
+--- @param callback? fun(err?: string) Function called after the request is completed.
+function M.type_definition(opts, callback)
+  get_locations(ms.textDocument_typeDefinition, opts, callback)
 end
 
 --- Lists all the implementations for the symbol under the cursor in the
 --- quickfix window.
 --- @param opts? vim.lsp.LocationOpts
-function M.implementation(opts)
-  get_locations(ms.textDocument_implementation, opts)
+--- @param callback? fun(err?: string) Function called after the request is completed.
+function M.implementation(opts, callback)
+  get_locations(ms.textDocument_implementation, opts, callback)
 end
 
 --- @param results table<integer,{err: lsp.ResponseError?, result: lsp.SignatureHelp?}>
