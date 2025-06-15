@@ -47,6 +47,8 @@ local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 --- ```
 --- @param config? vim.lsp.buf.hover.Opts
 function M.hover(config)
+  validate('config', config, 'table', true)
+
   config = config or {}
   config.focus_id = ms.textDocument_hover
 
@@ -284,18 +286,21 @@ end
 --- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
 --- @param opts? vim.lsp.LocationOpts
 function M.declaration(opts)
+  validate('opts', opts, 'table', true)
   get_locations(ms.textDocument_declaration, opts)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
 --- @param opts? vim.lsp.LocationOpts
 function M.definition(opts)
+  validate('opts', opts, 'table', true)
   get_locations(ms.textDocument_definition, opts)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
 --- @param opts? vim.lsp.LocationOpts
 function M.type_definition(opts)
+  validate('opts', opts, 'table', true)
   get_locations(ms.textDocument_typeDefinition, opts)
 end
 
@@ -303,6 +308,7 @@ end
 --- quickfix window.
 --- @param opts? vim.lsp.LocationOpts
 function M.implementation(opts)
+  validate('opts', opts, 'table', true)
   get_locations(ms.textDocument_implementation, opts)
 end
 
@@ -356,6 +362,8 @@ local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
 ---
 --- @param config? vim.lsp.buf.signature_help.Opts
 function M.signature_help(config)
+  validate('config', config, 'table', true)
+
   local method = ms.textDocument_signatureHelp
 
   config = config and vim.deepcopy(config) or {}
@@ -454,6 +462,7 @@ end
 ---
 ---@see vim.lsp.protocol.CompletionTriggerKind
 function M.completion(context)
+  validate('context', context, 'table', true)
   vim.deprecate('vim.lsp.buf.completion', 'vim.lsp.completion.trigger', '0.12')
   return lsp.buf_request(
     0,
@@ -549,6 +558,8 @@ end
 ---
 --- @param opts? vim.lsp.buf.format.Opts
 function M.format(opts)
+  validate('opts', opts, 'table', true)
+
   opts = opts or {}
   local bufnr = vim._resolve_bufnr(opts.bufnr)
   local mode = api.nvim_get_mode().mode
@@ -653,6 +664,9 @@ end
 ---                name using |vim.ui.input()|.
 ---@param opts? vim.lsp.buf.rename.Opts Additional options:
 function M.rename(new_name, opts)
+  validate('new_name', new_name, 'string', true)
+  validate('opts', opts, 'table', true)
+
   opts = opts or {}
   local bufnr = vim._resolve_bufnr(opts.bufnr)
   local clients = lsp.get_clients({
@@ -778,6 +792,8 @@ end
 ---@param opts? vim.lsp.ListOpts
 function M.references(context, opts)
   validate('context', context, 'table', true)
+  validate('opts', opts, 'table', true)
+
   local bufnr = api.nvim_get_current_buf()
   local clients = lsp.get_clients({ method = ms.textDocument_references, bufnr = bufnr })
   if not next(clients) then
@@ -836,6 +852,7 @@ end
 --- Lists all symbols in the current buffer in the |location-list|.
 --- @param opts? vim.lsp.ListOpts
 function M.document_symbol(opts)
+  validate('opts', opts, 'table', true)
   opts = vim.tbl_deep_extend('keep', opts or {}, { loclist = true })
   local params = { textDocument = util.make_text_document_params() }
   request_with_opts(ms.textDocument_documentSymbol, params, opts)
@@ -958,6 +975,10 @@ end
 --- multiple items, the user can pick one using |vim.ui.select()|.
 ---@param kind "subtypes"|"supertypes"
 function M.typehierarchy(kind)
+  validate('kind', kind, function(v)
+    return v == 'subtypes' or v == 'supertypes'
+  end)
+
   local method = kind == 'subtypes' and ms.typeHierarchy_subtypes or ms.typeHierarchy_supertypes
   hierarchy(method)
 end
@@ -978,6 +999,8 @@ end
 --- not provided, the user will be prompted for a path using |input()|.
 --- @param workspace_folder? string
 function M.add_workspace_folder(workspace_folder)
+  validate('workspace_folder', workspace_folder, 'string', true)
+
   workspace_folder = workspace_folder
     or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'), 'dir')
   api.nvim_command('redraw')
@@ -999,6 +1022,8 @@ end
 --- a path using |input()|.
 --- @param workspace_folder? string
 function M.remove_workspace_folder(workspace_folder)
+  validate('workspace_folder', workspace_folder, 'string', true)
+
   workspace_folder = workspace_folder
     or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'))
   api.nvim_command('redraw')
@@ -1021,6 +1046,9 @@ end
 --- @param query string? optional
 --- @param opts? vim.lsp.ListOpts
 function M.workspace_symbol(query, opts)
+  validate('query', query, 'string', true)
+  validate('opts', opts, 'table', true)
+
   query = query or npcall(vim.fn.input, 'Query: ')
   if query == nil then
     return
@@ -1374,6 +1402,10 @@ end
 ---
 --- @param direction 'inner' | 'outer'
 function M.selection_range(direction)
+  validate('direction', direction, function(v)
+    return v == 'inner' or v == 'outer'
+  end)
+
   if selection_ranges then
     local offset = direction == 'outer' and 1 or -1
     local new_index = selection_ranges.index + offset
