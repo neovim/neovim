@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/arglist_defs.h"
 #include "nvim/grid_defs.h"
 #include "nvim/mapping_defs.h"
@@ -522,6 +523,7 @@ struct file_buffer {
   int b_p_bomb;                 ///< 'bomb'
   char *b_p_bh;                 ///< 'bufhidden'
   char *b_p_bt;                 ///< 'buftype'
+  int b_p_busy;                  ///< 'bufbusy'
   int b_has_qf_entry;           ///< quickfix exists for buffer
   int b_p_bl;                   ///< 'buflisted'
   OptInt b_p_channel;           ///< 'channel'
