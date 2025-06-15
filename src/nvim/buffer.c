@@ -878,6 +878,7 @@ static void free_buffer(buf_T *buf)
   clear_fmark(&buf->b_last_cursor, 0);
   clear_fmark(&buf->b_last_insert, 0);
   clear_fmark(&buf->b_last_change, 0);
+  clear_fmark(&buf->b_prompt_start, 0);
   for (size_t i = 0; i < NMARKS; i++) {
     free_fmark(buf->b_namedm[i]);
   }
@@ -2024,6 +2025,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   buf->b_prompt_callback.type = kCallbackNone;
   buf->b_prompt_interrupt.type = kCallbackNone;
   buf->b_prompt_text = NULL;
+  clear_fmark(&buf->b_prompt_start, 0);
 
   return buf;
 }

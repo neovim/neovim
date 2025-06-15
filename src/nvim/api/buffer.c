@@ -23,6 +23,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
+#include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
@@ -1426,4 +1427,31 @@ void buf_collect_lines(buf_T *buf, size_t n, linenr_T start, int start_idx, bool
     size_t bufstrlen = (size_t)ml_get_buf_len(buf, lnum);
     push_linestr(lstate, l, bufstr, bufstrlen, start_idx + (int)i, replace_nl, arena);
   }
+}
+
+/// Gets current user input to prompt without invoking prompt_callback
+///
+/// @param buffer           Buffer id, or 0 for current buffer
+/// @param opts      Optional parameters
+///                  (reserved for future updates)
+/// @param[out] err         Error details, if any
+/// @return string of current prompt, or empty string for unloaded buffer / non pormpt buffer.
+String nvim_buf_get_prompt_text(Buffer buffer, Dict(option) *opts, Error *err)
+  FUNC_API_SINCE(14) FUNC_API_RET_ALLOC
+{
+  String rv = STRING_INIT;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  // return sentinel value if the buffer isn't loaded
+  if (!buf || buf->b_ml.ml_mfp == NULL) {
+    return rv;
+  }
+
+  // check if the given buffer is prompt buffer
+  VALIDATE(bt_prompt(buf), "%s", "Not a prompt buffer", {
+    return rv;
+  });
+
+  char *current_prompt = get_current_prompt(buf);
+  return cstr_as_string(current_prompt);
 }
