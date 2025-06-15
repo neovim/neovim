@@ -63,8 +63,10 @@ def fuzzer_to_input(fuzzer_input: bytes):
             # fail into other mapping
             printable_in_range = [x for x in printable if x <= b]
             other_mapping_idx = b - len(printable_in_range)
-            ret.append(other_mapping[other_mapping_idx])
-            ret.append(0.1)
+            print(f"{other_mapping_idx}, {len(other_mapping)}",flush=True)
+            idx = other_mapping_idx % len(other_mapping)
+            ret.append(other_mapping[idx])
+            ret.append((other_mapping_idx - idx) * 0.01)
 
     return ret
     # return [":q!<CR>"]
