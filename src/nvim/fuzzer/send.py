@@ -1,10 +1,19 @@
 #!/bin/env python3
-import pdb
 import pynvim
 import string
 import os
 import sys
 import time
+
+import psutil
+def monitor_ppid():
+    while True:
+        ppid = os.getppid()
+        if not psutil.pid_exists(ppid):
+            os._exit(0)
+        time.sleep(0.1)
+
+
 
 
 def prepare(test_base, fuzzer_bin):
