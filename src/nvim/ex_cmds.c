@@ -2889,6 +2889,7 @@ void ex_append(exarg_T *eap)
     }
   }
   State = MODE_NORMAL;
+  ui_cursor_shape();
 
   if (eap->forceit) {
     curbuf->b_p_ai = !curbuf->b_p_ai;
