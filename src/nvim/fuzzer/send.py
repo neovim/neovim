@@ -10,6 +10,10 @@ import time
 def prepare(test_base, fuzzer_bin):
     assert os.path.exists(fuzzer_bin), f"{fuzzer_bin} don't exists"
     socket_path = os.path.join(test_base, "socket")
+
+    while not os.path.exists(socket_path):
+        time.sleep(0.1)
+
     assert os.path.exists(socket_path)
     print(f"use nvim --remote-ui --server {socket_path} for debugging")
     nvim = pynvim.attach("socket", path=socket_path)
