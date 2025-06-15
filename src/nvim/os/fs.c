@@ -419,7 +419,7 @@ static bool under_dir(const char* abs, const char* prefix){
     return false;
   }
 
-  if (strncmp(abs, main_loop.fuzzer_test_base, prefix_len) != 0){
+  if (strncmp(abs, prefix, prefix_len) != 0){
     return false;
   }
 
