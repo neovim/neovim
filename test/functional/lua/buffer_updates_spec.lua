@@ -420,6 +420,35 @@ describe('lua buffer event callbacks: on_lines', function()
     feed('i<Tab>')
     eq({ '\ta' }, exec_lua('return _G.res[#_G.res]'))
   end)
+
+  it('quickfix buffer send change', function()
+    command('copen')
+    exec_lua(function()
+      vim.api.nvim_buf_attach(vim.api.nvim_get_current_buf(), false, {
+        on_lines = function(...)
+          vim.g.qf_on_lines = { ... }
+        end,
+        on_bytes = function(...)
+          vim.g.qf_on_bytes = { ... }
+        end,
+      })
+    end)
+    command('caddexpr "foo"')
+    eq({ 'bytes', 2, 2, 0, 0, 0, 0, 0, 0, 0, 6, 6 }, api.nvim_get_var('qf_on_bytes'))
+    eq({ 'lines', 2, 3, 0, 1, 1, 1 }, api.nvim_get_var('qf_on_lines'))
+
+    command('caddexpr "bar"')
+    eq({ 'bytes', 2, 3, 0, 6, 6, 0, 0, 0, 1, 6, 6 }, api.nvim_get_var('qf_on_bytes'))
+    eq({ 'lines', 2, 4, 1, 2, 4, 0 }, api.nvim_get_var('qf_on_lines'))
+
+    command('caddexpr ["line1", "line2", "line3"]')
+    eq({ 'bytes', 2, 4, 1, 6, 13, 0, 0, 0, 3, 8, 26 }, api.nvim_get_var('qf_on_bytes'))
+    eq({ 'lines', 2, 5, 2, 5, 9, 0 }, api.nvim_get_var('qf_on_lines'))
+
+    command('cexpr "replace"')
+    eq({ 'bytes', 2, 5, 0, 0, 0, 4, 0, 40, 0, 10, 10 }, api.nvim_get_var('qf_on_bytes'))
+    eq({ 'lines', 2, 6, 0, 5, 1, 42 }, api.nvim_get_var('qf_on_lines'))
+  end)
 end)
 
 describe('lua: nvim_buf_attach on_bytes', function()
