@@ -18,4 +18,6 @@ typedef struct msg_hist {
   HlMessage msg;          ///< Highlighted message.
   const char *kind;       ///< Message kind (for msg_ext)
   bool temp;              ///< Temporary message since last command ("g<")
+  bool append;            ///< Message should be appended to previous entry, as opposed
+                          ///< to on a new line (|ui-messages|->msg_show->append).
 } MessageHistoryEntry;

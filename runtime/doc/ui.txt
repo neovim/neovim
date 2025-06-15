@@ -892,7 +892,7 @@ must handle.
 
 ["msg_history_show", entries] ~
 	Sent when |:messages| command is invoked. History is sent as a list of
-	entries, where each entry is a `[kind, content]` tuple.
+	entries, where each entry is a `[kind, content, append]` tuple.
 
 ["msg_history_clear"] ~
 	Clear the |:messages| history.
