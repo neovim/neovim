@@ -705,6 +705,7 @@ void os_exit(int r)
   if(use_jmp) {
     longjmp(my_jump_buffer,1);
   }
+  assert(false);
   exit(r);
 }
 
