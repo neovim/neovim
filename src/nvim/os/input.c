@@ -200,6 +200,7 @@ bool os_char_avail(void)
 /// available)
 void os_breakcheck(void)
 {
+  fprintf(stderr,"=======11.ee.2\n");
   if (got_int) {
     return;
   }
