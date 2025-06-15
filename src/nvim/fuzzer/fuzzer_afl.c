@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   char fifo_name[1024];
   test_base_path_join(fifo_name, sizeof(fifo_name), test_base, "socket");
 
-  char* p = realpath(argv[-1], last_arg_realpath);
+  char* p = realpath(argv[argc-1], last_arg_realpath);
   assert (p!= NULL);
   pthread_t id;
   pthread_create(&id, NULL, (void* (*)(void*)) & run_fuzz, test_base);
