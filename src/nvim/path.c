@@ -612,18 +612,22 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
                              bool didstar)
   FUNC_ATTR_NONNULL_ALL
 {
+
   int start_len = gap->ga_len;
   bool starstar = false;
   static int stardepth = 0;  // depth for "**" expansion
 
+  fprintf(stderr,"=======11.e.1\n");
   // Expanding "**" may take a long time, check for CTRL-C.
   if (stardepth > 0 && !(flags & EW_NOBREAK)) {
+    fprintf(stderr,"=======11.ee.1\n");
     os_breakcheck();
     if (got_int) {
       return 0;
     }
   }
 
+  fprintf(stderr,"=======11.e.2\n");
   // Make room for file name (a bit too much to stay on the safe side).
   const size_t buflen = strlen(path) + MAXPATHL;
   char *buf = xmalloc(buflen);
@@ -663,6 +667,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
   e = p;
   *e = NUL;
 
+  fprintf(stderr,"=======11.e.3\n");
   // Now we have one wildcard component between "s" and "e".
   // Remove backslashes between "wildoff" and the start of the wildcard
   // component.
@@ -1241,10 +1246,12 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
   char *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
 
   // expand_env() is called to expand things like "~user".  If this fails,
+  fprintf(stderr,"=======11.d.1\n");
   // it calls ExpandOne(), which brings us back here.  In this case, always
   // call the machine specific expansion function, if possible.  Otherwise,
   // return FAIL.
   if (recursive) {
+    fprintf(stderr,"=======11.d.2\n");
 #ifdef SPECIAL_WILDCHAR
     return os_expand_wildcards(num_pat, pat, num_file, file, flags);
 #else
@@ -1252,6 +1259,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
 #endif
   }
 
+  fprintf(stderr,"=======11.d.3\n");
 #ifdef SPECIAL_WILDCHAR
   // If there are any special wildcard characters which we cannot handle
   // here, call machine specific function for all the expansion.  This
@@ -1265,16 +1273,21 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
   }
 #endif
 
+  fprintf(stderr,"=======11.d.4\n");
   recursive = true;
 
   // The matching file names are stored in a growarray.  Init it empty.
   ga_init(&ga, (int)sizeof(char *), 30);
 
+  fprintf(stderr,"=======11.d.5\n");
   for (int i = 0; i < num_pat && !got_int; i++) {
     add_pat = -1;
     p = pat[i];
 
+    fprintf(stderr,"=======11.e.1\n");
     if (vim_backtick(p)) {
+
+      fprintf(stderr,"=======11.e.2\n");
       add_pat = expand_backtick(&ga, p, flags);
       if (add_pat == -1) {
         recursive = false;
@@ -1284,6 +1297,8 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
         return FAIL;
       }
     } else {
+
+      fprintf(stderr,"=======11.e.3\n");
       // First expand environment variables, "~/" and "~user/".
       if ((has_env_var(p) && !(flags & EW_NOTENV)) || *p == '~') {
         p = expand_env_save_opt(p, true);
@@ -1291,6 +1306,8 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
           p = pat[i];
         } else {
 #ifdef UNIX
+
+          fprintf(stderr,"=======11.e.4\n");
           // On Unix, if expand_env() can't expand an environment
           // variable, use the shell to do that.  Discard previously
           // found file names and start all over again.
@@ -1306,18 +1323,22 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
         }
       }
 
+      fprintf(stderr,"=======11.e.5\n");
       // If there are wildcards or case-insensitive expansion is
       // required: Expand file names and add each match to the list.  If
       // there is no match, and EW_NOTFOUND is given, add the pattern.
       // Otherwise: Add the file name if it exists or when EW_NOTFOUND is
       // given.
       if (path_has_exp_wildcard(p) || (flags & EW_ICASE)) {
+        fprintf(stderr,"=======11.d.1\n");
         if ((flags & (EW_PATH | EW_CDPATH))
             && !path_is_absolute(p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
                      || (p[1] == '.'
                          && vim_ispathsep(p[2]))))) {
+
+          fprintf(stderr,"=======11.d.2\n");
           // :find completion where 'path' is used.
           // Recursiveness is OK here.
           recursive = false;
@@ -1325,10 +1346,13 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
           recursive = true;
           did_expand_in_path = true;
         } else {
+          fprintf(stderr,"=======11.d.3\n");
           // Recursive gen_expand_wildcards() can only happen here when called from an
           // event handler in os_breakcheck(), in which case it should be allowed.
           recursive = false;
           size_t tmp_add_pat = path_expand(&ga, p, flags);
+
+          fprintf(stderr,"=======11.d.4\n");
           recursive = true;
           assert(tmp_add_pat <= INT_MAX);
           add_pat = (int)tmp_add_pat;
@@ -1336,6 +1360,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       }
     }
 
+    fprintf(stderr,"=======11.e.7\n");
     if (add_pat == -1 || (add_pat == 0 && (flags & EW_NOTFOUND))) {
       char *t = backslash_halve_save(p);
 
@@ -1352,6 +1377,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       }
     }
 
+    fprintf(stderr,"=======11.e.8\n");
     if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & (EW_PATH | EW_CDPATH))) {
       // Recursive gen_expand_wildcards() can only happen here when called from an
       // event handler in os_breakcheck(), in which case it should be allowed.
@@ -1364,6 +1390,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     }
   }
 
+  fprintf(stderr,"=======11.d.6\n");
   *num_file = ga.ga_len;
   *file = (ga.ga_data != NULL) ? ga.ga_data : NULL;
 

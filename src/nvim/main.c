@@ -435,6 +435,7 @@ int main(int argc, char **argv)
     }
   }
 
+  fprintf(stderr,"=======2\n");
   nlua_init_defaults();
 
   TIME_MSG("init default mappings & autocommands");
@@ -449,6 +450,7 @@ int main(int argc, char **argv)
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
+  fprintf(stderr,"=======3\n");
   if (!vimrc_none || params.clean) {
     // Sources ftplugin.vim and indent.vim. We do this *before* the user startup scripts to ensure
     // ftplugins run before FileType autocommands defined in the init file (which allows those
@@ -459,6 +461,7 @@ int main(int argc, char **argv)
   // Source startup scripts.
   source_startup_scripts(&params);
 
+  fprintf(stderr,"=======4\n");
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
   if (!vimrc_none || params.clean) {
     // Sources filetype.lua unless the user explicitly disabled it with :filetype off.
@@ -468,6 +471,7 @@ int main(int argc, char **argv)
     syn_maybe_enable();
   }
 
+  fprintf(stderr,"=======5\n");
   // Read all the plugin files.
   load_plugins();
 
@@ -491,7 +495,6 @@ int main(int argc, char **argv)
     p_uc = 0;
   }
 
-  fprintf(stderr,"=======2\n");
   // XXX: Minimize 'updatetime' for -es/-Es. #7679
   if (silent_mode) {
     p_ut = 1;
@@ -558,7 +561,6 @@ int main(int argc, char **argv)
   TIME_MSG("BufEnter autocommands");
   setpcmark();
 
-  fprintf(stderr,"=======3\n");
   // When started with "-q errorfile" jump to first error now.
   if (params.edit_type == EDIT_QF) {
     qf_jump(NULL, 0, 0, false);
