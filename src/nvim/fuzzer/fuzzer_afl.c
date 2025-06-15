@@ -64,7 +64,7 @@ int main(int argc, char** argv)
   pthread_t id;
   pthread_create(&id, NULL, (void* (*)(void*)) & run_fuzz, test_base);
 
-  char* nvim_argv[] = { "fake_bin", "--embed", "--headless", "--listen", fifo_name };
+  char* nvim_argv[] = { "fake_bin",  "--headless", "--listen", fifo_name };
 
   // drop into test_base tmp dir
   char tmp_dir[1024];
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   assert (res == 0);
 
   fprintf(stderr,"before nvim\n");
-  nvim_main(5, nvim_argv);
+  nvim_main(4, nvim_argv);
 
   fprintf(stderr,"nvim exit\n");
   pthread_join(id, NULL);
