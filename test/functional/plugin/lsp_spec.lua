@@ -2069,13 +2069,16 @@ describe('LSP', function()
   end)
 
   describe('apply_text_edits', function()
+    local buffer_text = {
+      'First line of text',
+      'Second line of text',
+      'Third line of text',
+      'Fourth line of text',
+      'å å ɧ 汉语 ↥ 🤦 🦄',
+    }
+
     before_each(function()
-      insert(dedent([[
-        First line of text
-        Second line of text
-        Third line of text
-        Fourth line of text
-        å å ɧ 汉语 ↥ 🤦 🦄]]))
+      insert(dedent(table.concat(buffer_text, '\n')))
     end)
 
     it('applies simple edits', function()
@@ -2224,6 +2227,38 @@ describe('LSP', function()
         'foobaro',
       }, buf_lines(1))
       eq({ 2, 1 }, api.nvim_buf_get_mark(1, 'a'))
+    end)
+
+    it('applies edit based on confirmation response', function()
+      --- @type lsp.AnnotatedTextEdit
+      local edit = make_edit(0, 0, 5, 0, 'foo')
+      edit.annotationId = 'annotation-id'
+
+      local function test(response)
+        exec_lua(function()
+          ---@diagnostic disable-next-line: duplicate-set-field
+          vim.fn.inputlist = function(choices)
+            for i, choice in ipairs(choices) do
+              if choice:find(response) then
+                return i - 1 -- -1 because the prompt is the first item.
+              end
+            end
+          end
+
+          vim.lsp.util.apply_text_edits(
+            { edit },
+            1,
+            'utf-16',
+            { ['annotation-id'] = { label = 'Insert "foo"', needsConfirmation = true } }
+          )
+        end, { response })
+      end
+
+      test('No')
+      eq(buffer_text, buf_lines(1))
+
+      test('Yes')
+      eq({ 'foo' }, buf_lines(1))
     end)
 
     describe('cursor position', function()

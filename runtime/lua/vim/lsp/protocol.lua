@@ -431,6 +431,7 @@ function protocol.make_client_capabilities()
           properties = { 'edit', 'command' },
         },
         disabledSupport = true,
+        honorsChangeAnnotations = true,
       },
       codeLens = {
         dynamicRegistration = false,
@@ -529,6 +530,7 @@ function protocol.make_client_capabilities()
       rename = {
         dynamicRegistration = true,
         prepareSupport = true,
+        honorsChangeAnnotations = true,
       },
       publishDiagnostics = {
         tagSupport = {
@@ -562,6 +564,7 @@ function protocol.make_client_capabilities()
       workspaceEdit = {
         resourceOperations = { 'rename', 'create', 'delete' },
         normalizesLineEndings = true,
+        changeAnnotationSupport = { groupsOnLabel = true },
       },
       semanticTokens = {
         refreshSupport = true,
