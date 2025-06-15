@@ -875,6 +875,10 @@ TSNode:range({include_bytes})                                 *TSNode:range()*
     Parameters: ~
       • {include_bytes}  (`false?`)
 
+    Overloads: ~
+      • `fun(self: TSNode, include_bytes: true): integer, integer, integer, integer, integer, integer`
+
+
     Return (multiple): ~
         (`integer`)
         (`integer`)
@@ -1271,6 +1275,7 @@ them to parse text. See |vim.treesitter.query.parse()| for a working example.
                                    See |Query:iter_matches()|.
 
 
+
                                         *vim.treesitter.query.add_directive()*
 add_directive({name}, {handler}, {opts})
     Adds a new directive to be used in queries
@@ -1569,6 +1574,7 @@ set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
                            |TSQuery:disable_capture()|.
       • {disable_pattern}  (`fun(self: TSQuery, pattern_index: integer)`) See
                            |TSQuery:disable_pattern()|.
+
 
 
 TSQuery:disable_capture({capture_name})            *TSQuery:disable_capture()*
