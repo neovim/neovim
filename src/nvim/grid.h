@@ -30,9 +30,12 @@ EXTERN char *linebuf_scratch INIT( = NULL);
 
 /// flags for grid_put_linebuf()
 enum {
-  SLF_RIGHTLEFT = 1,
-  SLF_WRAP      = 2,
-  SLF_INC_VCOL  = 4,
+  SLF_RIGHTLEFT   = 1,
+  SLF_WRAP        = 2,
+  SLF_INC_VCOL    = 4,
+  SLF_TERM_ATTRS  = 8,  // On if this line is associated with a terminal buffer. If so then we need
+                        // to ensure we don't go past index `TERM_ATTRS_MAX` in the highlight
+                        // attributes.
 };
 
 /// Put a ASCII character in a screen cell.

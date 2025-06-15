@@ -97,7 +97,8 @@ void grid_destroy(Integer grid)
 // in internal code, such as compositor and TUI. The remote_ui module will
 // translate this in to the public grid_line format.
 void raw_line(Integer grid, Integer row, Integer startcol, Integer endcol, Integer clearcol,
-              Integer clearattr, LineFlags flags, const schar_T *chunk, const sattr_T *attrs)
+              Integer clearattr, Integer max_attrs, LineFlags flags, const schar_T *chunk,
+              const sattr_T *attrs)
   FUNC_API_NOEXPORT FUNC_API_COMPOSITOR_IMPL;
 
 void win_pos(Integer grid, Window win, Integer startrow, Integer startcol, Integer width,
