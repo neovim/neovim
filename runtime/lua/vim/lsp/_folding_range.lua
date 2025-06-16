@@ -3,6 +3,13 @@ local log = require('vim.lsp.log')
 local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 
+---@type table<lsp.FoldingRangeKind, true>
+local supported_fold_kinds = {
+  ['comment'] = true,
+  ['imports'] = true,
+  ['region'] = true,
+}
+
 local M = {}
 
 ---@class (private) vim.lsp.folding_range.BufState
@@ -49,9 +56,14 @@ local function renew(bufnr)
 
         local kind = range.kind
         if kind then
-          local kinds = row_kinds[start_row] or {}
-          kinds[kind] = true
-          row_kinds[start_row] = kinds
+          -- Ignore unsupported fold kinds.
+          if supported_fold_kinds[kind] then
+            local kinds = row_kinds[start_row] or {}
+            kinds[kind] = true
+            row_kinds[start_row] = kinds
+          else
+            log.info(('Received unsupported fold kind: "%s"'):format(kind))
+          end
         end
 
         for row = start_row, end_row do
