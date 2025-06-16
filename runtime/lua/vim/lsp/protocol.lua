@@ -430,6 +430,7 @@ function protocol.make_client_capabilities()
         resolveSupport = {
           properties = { 'edit', 'command' },
         },
+        disabledSupport = true,
       },
       codeLens = {
         dynamicRegistration = false,
