@@ -367,11 +367,11 @@ local function norm_text(x, special)
     x = x:gsub([=[%|?(nvim_[^.()| ]+)%(?%)?%|?]=], 'vim.api.%1')
     -- TODO: Remove backticks when LuaLS resolves: https://github.com/LuaLS/lua-language-server/issues/2889
     -- "|foo|" => "`:help foo`"
-    x = x:gsub([=[|([^ ]+)|]=], '`:help %1`')
+    x = x:gsub([=[|([^%s|]+)|]=], '`:help %1`')
   end
 
   return (
-    x:gsub('|([^ ]+)|', '`%1`')
+    x:gsub('|([^%s|]+)|', '`%1`')
       :gsub('\n*>lua', '\n\n```lua')
       :gsub('\n*>vim', '\n\n```vim')
       :gsub('\n+<$', '\n```')
