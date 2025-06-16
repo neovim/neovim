@@ -758,7 +758,7 @@ local function render_fun(fun, classes, cfg)
     else
       local v = assert(util.version_level[since], 'invalid @since on ' .. fun.name)
       fun.attrs = fun.attrs or {}
-      table.insert(fun.attrs, ('Since: %s'):format(v))
+      table.insert(fun.attrs, fmt('Since: %s', v))
     end
   end
 
@@ -799,7 +799,7 @@ local function render_fun(fun, classes, cfg)
   if fun.overloads then
     table.insert(ret, '\n    Overloads: ~\n')
     for _, p in ipairs(fun.overloads) do
-      table.insert(ret, ('      • `%s`\n'):format(p))
+      table.insert(ret, fmt('      • `%s`\n', p))
     end
   end
 
