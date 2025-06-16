@@ -5157,10 +5157,6 @@ static void nv_suspend(cmdarg_T *cap)
 ///       exchange previous and current Visual area.
 static void nv_gv_cmd(cmdarg_T *cap)
 {
-  if (checkclearop(cap->oap)) {
-    return;
-  }
-
   if (curbuf->b_visual.vi_start.lnum == 0
       || curbuf->b_visual.vi_start.lnum > curbuf->b_ml.ml_line_count
       || curbuf->b_visual.vi_end.lnum == 0) {
