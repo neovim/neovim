@@ -1,7 +1,32 @@
 local M = {}
 
 local ts = vim.treesitter
+local async = vim._async
 local query = ts.query.parse('vimdoc', '(tag (word) @tagname)')
+
+local function read_file_uv(path, callback)
+  vim.uv.fs_open(path, 'r', 438, function(err_open, fd)
+    if err_open then return callback(nil, err_open) end
+
+    vim.uv.fs_fstat(fd, function(err_stat, stat)
+      if err_stat then
+        vim.uv.fs_close(fd)
+        return callback(nil, err_stat)
+      end
+
+      vim.uv.fs_read(fd, stat.size, 0, function(err_read, data)
+        vim.uv.fs_close(fd)
+        if err_read then
+          return callback(nil, err_read)
+        end
+        callback(data, nil)
+      end)
+    end)
+  end)
+end
+
+local async_read = async.wrap(2, read_file_uv)
+
 
 --- @alias TagLocation { [1]: string, [2]: string, [3]: string}[] tuple of tag, file, and search command
 
@@ -10,13 +35,13 @@ local query = ts.query.parse('vimdoc', '(tag (word) @tagname)')
 --- @param filename string helpfile with tags
 --- @return TagLocation[] # empty if file is not readable
 local function extract_file_tags(filename)
-  local f, err = io.open(filename, 'r')
-  if f == nil or err then
-    vim.notify(('E153: Unable to open %s for reading'):format(filename), vim.log.levels.ERROR)
+  local source, err = async_read(filename)
+  if source == nil or err then
+    vim.schedule(function()
+      vim.notify(('E153: Unable to open %s for reading'):format(filename), vim.log.levels.ERROR)
+    end)
     return {}
   end
-  local source = f:read('*a')
-  f:close()
   local fn = vim.fs.basename(filename)
 
   local tags = {}
@@ -48,10 +73,12 @@ local function duplicate_tags(tags)
     if curtag == prevtag then
       found = true
       local other_fn = prevfn ~= curfn and (' and ' .. prevfn) or ''
-      vim.notify(
-        ('E154: Duplicate tag "%s" in %s%s'):format(curtag, curfn, other_fn),
-        vim.log.levels.WARN
-      )
+      vim.schedule(function()
+        vim.notify(
+          ('E154: Duplicate tag "%s" in %s%s'):format(curtag, curfn, other_fn),
+          vim.log.levels.WARN
+        )
+      end)
     end
     prevtag = curtag
     prevfn = curfn
@@ -65,58 +92,43 @@ end
 --- @param tagsfile string the filename of the 'tags' file
 --- @param include_helptags_tag boolean true if the 'tags' tag should be included
 local function create_tags_from_files(helpfiles, tagsfile, include_helptags_tag)
-  ---@type TagLocation
-  local tags = {}
-  local i = 1
-  local function process_helpfile(co)
-    if i > #helpfiles then
-      coroutine.resume(co, true)
-      return
-    end
-
-    local filename = helpfiles[i]
-    i = i + 1
-
-    vim.schedule(function()
-      local filetags = extract_file_tags(filename)
-      vim.list_extend(tags, filetags)
-      process_helpfile(co)
-    end)
+  local tasks = {}
+  for i, file in ipairs(helpfiles) do
+    tasks[i] = async.run(extract_file_tags, file)
   end
 
-  coroutine.wrap(function()
-    process_helpfile(coroutine.running())
-    coroutine.yield()
+  ---@type TagLocation[]
+  local results = async.join(tasks)
 
-    if include_helptags_tag then
-      table.insert(tags, { 'help-tags', 'tags', '1' })
-    end
+  local tags = {}
+  for _, res in ipairs(results) do
+    vim.list_extend(tags, res[2])
+  end
 
-    table.sort(tags, function(a, b)
-      return a[1] < b[1]
-    end)
+  if include_helptags_tag then
+    table.insert(tags, { 'help-tags', 'tags', '1' })
+  end
 
-    if vim.tbl_isempty(tags) or not duplicate_tags(tags) then
-      return
-    end
+  table.sort(tags, function(a, b)
+    return a[1] < b[1]
+  end)
 
-    local f, err = io.open(tagsfile, 'w')
-    if f == nil or err then
-      vim.notify(('E152: Cannot open %s for writing'):format(tagsfile), vim.log.levels.ERROR)
-      return
-    end
+  if vim.tbl_isempty(tags) or not duplicate_tags(tags) then
+    return
+  end
 
-    local lines = vim
-      .iter(tags)
-      :map(function(v)
-        return table.concat(v, '\t')
-      end)
-      :join('\n')
+  local f, err = io.open(tagsfile, 'w')
+  if f == nil or err then
+    vim.notify(('E152: Cannot open %s for writing'):format(tagsfile), vim.log.levels.ERROR)
+    return
+  end
 
-    f:write(lines, '\n')
+  local lines = vim.iter(tags):map(function(v)
+    return table.concat(v, '\t')
+  end):join('\n')
 
-    f:close()
-  end)()
+  f:write(lines, '\n')
+  f:close()
 end
 
 --- Generate a tags file for all help files in given directory and its subdirectories.
@@ -132,14 +144,16 @@ function M.generate(dir, include_helptags_tag)
   local vimruntime = vim.fs.normalize(vim.env.VIMRUNTIME)
   include_helptags_tag = include_helptags_tag or dir == vimruntime
 
-  local dirs = dir == 'ALL' and vim.api.nvim_get_runtime_file('doc/*.txt', true) or { dir }
+  local dirs = dir == 'ALL' and vim.api.nvim_get_runtime_file('doc', true) or { dir }
 
   for _, directory in ipairs(dirs) do
     local files = vim.fs.find(function(name, _)
       return vim.endswith(name, '.txt')
     end, { path = directory, type = 'file', limit = math.huge })
 
-    create_tags_from_files(files, vim.fs.joinpath(directory, 'tags'), include_helptags_tag)
+    async.run(function()
+      create_tags_from_files(files, vim.fs.joinpath(directory, 'tags'), include_helptags_tag)
+    end):wait()
 
     local translated = vim.fs.find(function(name, _)
       -- files ending in `.??x` where `?` is any character a-z
@@ -156,7 +170,9 @@ function M.generate(dir, include_helptags_tag)
 
     for lang, langfiles in pairs(per_lang) do
       local tagsfile = vim.fs.joinpath(directory, 'tags-' .. lang)
-      create_tags_from_files(langfiles, tagsfile, include_helptags_tag)
+      async.run(function()
+        create_tags_from_files(langfiles, tagsfile, include_helptags_tag)
+      end):wait()
     end
   end
 end
