@@ -3270,12 +3270,13 @@ static void ins_reg(void)
     ins_need_undo = true;
   }
   u_sync_once = 0;
-  clear_showcmd();
 
-  // If the inserted register is empty, we need to remove the '"'
+  // If the inserted register is empty, we need to remove the '"'. Do this before
+  // clearing showcmd, which emits an event that can also update the screen.
   if (need_redraw || stuff_empty()) {
     edit_unputchar();
   }
+  clear_showcmd();
 
   // Disallow starting Visual mode here, would get a weird mode.
   if (!vis_active && VIsual_active) {
