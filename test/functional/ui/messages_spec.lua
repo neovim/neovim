@@ -534,6 +534,42 @@ describe('ui/ext_messages', function()
         },
       },
     })
+
+    command('command Foo Bar')
+    feed(':command<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      cmdline = { { abort = false } },
+      messages = {
+        {
+          content = {
+            { '\n    Name              Args Address Complete    Definition', 101, 23 },
+            { '\n    ' },
+            { 'Foo', 18, 5 },
+            { '               0                        Bar' },
+          },
+          kind = 'list_cmd',
+        },
+      },
+    })
+
+    feed(':version<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      cmdline = { { abort = false } },
+      condition = function()
+        eq('list_cmd', screen.messages[1].kind)
+        screen.messages = {}
+      end,
+    })
   end)
 
   it(':echoerr', function()

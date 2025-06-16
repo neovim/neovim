@@ -2557,7 +2557,9 @@ void ex_version(exarg_T *eap)
 {
   // Ignore a ":version 9.99" command.
   if (*eap->arg == NUL) {
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');
+    }
     list_version();
   }
 }
@@ -2671,19 +2673,23 @@ void list_lua_version(void)
                                 (Array)ARRAY_DICT_INIT, kRetObject, NULL, &err);
   assert(!ERROR_SET(&err));
   assert(ret.type == kObjectTypeString);
-  msg(ret.data.string.data, 0);
+  msg_puts(ret.data.string.data);
   api_free_object(ret);
 }
 
 void list_version(void)
 {
-  msg(longVersion, 0);
-  msg(version_buildtype, 0);
+  msg_ext_set_kind("list_cmd");
+  msg_puts(longVersion);
+  msg_putchar('\n');
+  msg_puts(version_buildtype);
+  msg_putchar('\n');
   list_lua_version();
 
   if (p_verbose > 0) {
 #ifndef NDEBUG
-    msg(version_cflags, 0);
+    msg_putchar('\n');
+    msg_puts(version_cflags);
 #endif
     version_msg("\n\n");
 
