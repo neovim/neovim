@@ -2752,6 +2752,11 @@ local options = {
         Similar to 'eventignore' but applies to a particular window and its
         buffers, for which window and buffer related autocommands can be
         ignored indefinitely without affecting the global 'eventignore'.
+
+        Note: The following events are considered to happen outside of a
+        window context and thus cannot be ignored by 'eventignorewin':
+
+        	<PLACEHOLDER>
       ]=],
       expand_cb = 'expand_set_eventignore',
       full_name = 'eventignorewin',
