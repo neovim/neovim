@@ -8419,6 +8419,21 @@ M.funcs = {
     params = { { 'buf', 'integer|string' }, { 'text', 'string' } },
     signature = 'prompt_setprompt({buf}, {text})',
   },
+  prompt_gettext = {
+    args = 1,
+    base = 1,
+    desc = [=[
+      Returns the current user input to prompt for buffer {buf} without invoking
+      prompt_callback. {buf} can be a buffer name or number.  See |prompt-buffer|.
+
+      If the buffer doesn't exist or isn't a prompt buffer, an empty
+      string is returned.
+
+    ]=],
+    name = 'prompt_gettext',
+    params = { { 'buf', 'integer|string' } },
+    signature = 'prompt_gettext({buf})',
+  },
   pum_getpos = {
     desc = [=[
       If the popup menu (see |ins-completion-menu|) is not visible,

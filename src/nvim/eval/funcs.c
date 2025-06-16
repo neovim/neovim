@@ -5364,6 +5364,26 @@ static void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData 
   buf->b_prompt_text = xstrdup(text);
 }
 
+/// "prompt_gettext({buffer})" function
+static void f_prompt_gettext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // return an empty string by default, e.g. it's not a prompt buffer
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL) {
+    return;
+  }
+
+  if (!bt_prompt(buf)) {
+    return;
+  }
+
+  rettv->vval.v_string = get_current_prompt(buf);
+}
+
 /// "pum_getpos()" function
 static void f_pum_getpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

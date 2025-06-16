@@ -7561,6 +7561,19 @@ prompt_getprompt({buf})                                     *prompt_getprompt()*
                 Return: ~
                   (`any`)
 
+prompt_gettext({buf})                                         *prompt_gettext()*
+		Returns the current user input to prompt for buffer {buf} without invoking
+		prompt_callback. {buf} can be a buffer name or number.  See |prompt-buffer|.
+
+		If the buffer doesn't exist or isn't a prompt buffer, an empty
+		string is returned.
+
+                Parameters: ~
+                  • {buf} (`integer|string`)
+
+                Return: ~
+                  (`any`)
+
 prompt_setcallback({buf}, {expr})                         *prompt_setcallback()*
 		Set prompt callback for buffer {buf} to {expr}.  When {expr}
 		is an empty string the callback is removed.  This has only

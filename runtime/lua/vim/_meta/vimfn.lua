@@ -6877,6 +6877,16 @@ function vim.fn.printf(fmt, expr1) end
 --- @return any
 function vim.fn.prompt_getprompt(buf) end
 
+--- Returns the current user input to prompt for buffer {buf} without invoking
+--- prompt_callback. {buf} can be a buffer name or number.  See |prompt-buffer|.
+---
+--- If the buffer doesn't exist or isn't a prompt buffer, an empty
+--- string is returned.
+---
+--- @param buf integer|string
+--- @return any
+function vim.fn.prompt_gettext(buf) end
+
 --- Set prompt callback for buffer {buf} to {expr}.  When {expr}
 --- is an empty string the callback is removed.  This has only
 --- effect if {buf} has 'buftype' set to "prompt".
