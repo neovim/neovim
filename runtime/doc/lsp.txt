@@ -1839,11 +1839,11 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
 
 selection_range({direction})                   *vim.lsp.buf.selection_range()*
     Perform an incremental selection at the cursor position based on ranges
-    given by the LSP. The `direction` parameter specifies whether the
-    selection should head inward or outward.
+    given by the LSP. The `direction` parameter specifies the number of times
+    to expand the selection. Negative values will shrink the selection.
 
     Parameters: ~
-      • {direction}  (`'inner'|'outer'`)
+      • {direction}  (`integer`)
 
 signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a

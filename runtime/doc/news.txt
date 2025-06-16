@@ -24,7 +24,8 @@ EXPERIMENTS
 
 LSP
 
-• todo
+• |vim.lsp.buf.selection_range()| now accepts an integer which specifies its
+  direction, rather than a string `'outer'` or `'inner'`.
 
 OPTIONS
 
