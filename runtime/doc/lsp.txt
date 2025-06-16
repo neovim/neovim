@@ -1688,7 +1688,7 @@ code_action({opts})                                *vim.lsp.buf.code_action()*
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
       • vim.lsp.protocol.CodeActionTriggerKind
 
-declaration({opts})                                *vim.lsp.buf.declaration()*
+declaration({opts}, {callback})                    *vim.lsp.buf.declaration()*
     Jumps to the declaration of the symbol under the cursor.
 
     Note: ~
@@ -1696,13 +1696,17 @@ declaration({opts})                                *vim.lsp.buf.declaration()*
         |vim.lsp.buf.definition()| instead.
 
     Parameters: ~
-      • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {opts}      (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {callback}  (`fun(err?: string)?`) Function called after the request
+                    is completed.
 
-definition({opts})                                  *vim.lsp.buf.definition()*
+definition({opts}, {callback})                      *vim.lsp.buf.definition()*
     Jumps to the definition of the symbol under the cursor.
 
     Parameters: ~
-      • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {opts}      (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {callback}  (`fun(err?: string)?`) Function called after the request
+                    is completed.
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
@@ -1764,7 +1768,7 @@ format({opts})                                          *vim.lsp.buf.format()*
                   contain `start` and `end` keys as described above, in which
                   case `textDocument/rangesFormatting` support is required.
 
-hover({config})                                          *vim.lsp.buf.hover()*
+hover({config}, {callback})                              *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating
     window. The window will be dismissed on cursor move. Calling the function
     twice will jump into the floating window (thus by default, "KK" will open
@@ -1781,14 +1785,19 @@ hover({config})                                          *vim.lsp.buf.hover()*
 <
 
     Parameters: ~
-      • {config}  (`vim.lsp.buf.hover.Opts?`) See |vim.lsp.buf.hover.Opts|.
+      • {config}    (`vim.lsp.buf.hover.Opts?`) See |vim.lsp.buf.hover.Opts|.
+      • {callback}  (`fun(err: lsp.ResponseError[])?`) Function called after
+                    the request is completed. Any errors are passed as the
+                    first argument.
 
-implementation({opts})                          *vim.lsp.buf.implementation()*
+implementation({opts}, {callback})              *vim.lsp.buf.implementation()*
     Lists all the implementations for the symbol under the cursor in the
     quickfix window.
 
     Parameters: ~
-      • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {opts}      (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {callback}  (`fun(err?: string)?`) Function called after the request
+                    is completed.
 
 incoming_calls()                                *vim.lsp.buf.incoming_calls()*
     Lists all the call sites of the symbol under the cursor in the |quickfix|
@@ -1858,11 +1867,13 @@ signature_help({config})                        *vim.lsp.buf.signature_help()*
       • {config}  (`vim.lsp.buf.signature_help.Opts?`) See
                   |vim.lsp.buf.signature_help.Opts|.
 
-type_definition({opts})                        *vim.lsp.buf.type_definition()*
+type_definition({opts}, {callback})            *vim.lsp.buf.type_definition()*
     Jumps to the definition of the type of the symbol under the cursor.
 
     Parameters: ~
-      • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {opts}      (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
+      • {callback}  (`fun(err?: string)?`) Function called after the request
+                    is completed.
 
 typehierarchy({kind})                            *vim.lsp.buf.typehierarchy()*
     Lists all the subtypes or supertypes of the symbol under the cursor in the
