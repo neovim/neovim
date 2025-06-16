@@ -6,6 +6,7 @@ local util = require('gen.util')
 local fmt = string.format
 
 local DEP_API_METADATA = arg[1]
+local TAGS_FILE = arg[2]
 local TEXT_WIDTH = 78
 
 --- @class vim.api.metadata
@@ -797,6 +798,23 @@ local function get_option_meta()
       end
       local r = vim.deepcopy(o) --[[@as vim.option_meta]]
       r.desc = o.desc:gsub('^        ', ''):gsub('\n        ', '\n')
+      if o.full_name == 'eventignorewin' then
+        local events = require('nvim.auevents').events
+        local tags_file = assert(io.open(TAGS_FILE))
+        local tags_text = tags_file:read('*a')
+        tags_file:close()
+        local map_fn = function(k, v)
+          if v then
+            return nil
+          end
+          local tag_pat = ('\n%s\t([^\t]+)\t'):format(k)
+          local link_text = ('|%s|'):format(k)
+          local tags_match = tags_text:match(tag_pat) --- @type string?
+          return tags_match and tags_match ~= 'deprecated.txt' and link_text or nil
+        end
+        local extra_desc = vim.iter(vim.spairs(events)):map(map_fn):join(',\n\t')
+        r.desc = r.desc:gsub('<PLACEHOLDER>', extra_desc)
+      end
       r.defaults = r.defaults or {}
       if r.defaults.meta == nil then
         r.defaults.meta = optinfo[o.full_name].default
