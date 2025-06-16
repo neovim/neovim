@@ -180,7 +180,7 @@ local function api_type(t)
     local a = api_type(as[1])
     local count = tonumber(as[2])
     if count then
-      return ('[%s]'):format(a:rep(count, ', '))
+      return fmt('[%s]', a:rep(count, ', '))
     else
       return a .. '[]'
     end
@@ -220,7 +220,7 @@ local function api_type(t)
       as1[#as1 + 1] = nm .. ': ' .. api_type(a1[1])
     end
 
-    return ('fun(%s)%s'):format(table.concat(as1, ', '), r and ': ' .. api_type(r) or '')
+    return fmt('fun(%s)%s', table.concat(as1, ', '), r and ': ' .. api_type(r) or '')
   end
 
   return API_TYPES[t] or t
@@ -617,7 +617,7 @@ local function render_eval_doc(f, fun, write)
 
   if fun.returns ~= false then
     write(util.md_to_vimdoc('Return: ~', 16, 16, TEXT_WIDTH))
-    local ret = ('(`%s`)'):format((fun.returns or 'any'))
+    local ret = fmt('(`%s`)', (fun.returns or 'any'))
     ret = ret .. (fun.returns_desc and ' ' .. fun.returns_desc or '')
     ret = util.md_to_vimdoc(ret, 18, 18, TEXT_WIDTH)
     write(ret)
@@ -803,12 +803,12 @@ local function get_option_meta()
         local tags_file = assert(io.open(TAGS_FILE))
         local tags_text = tags_file:read('*a')
         tags_file:close()
-        local map_fn = function(k, v)
-          if v then
-            return nil
+        local map_fn = function(event_name, is_window_local)
+          if is_window_local then
+            return nil -- Don't include in the list of events outside window context.
           end
-          local tag_pat = ('\n%s\t([^\t]+)\t'):format(k)
-          local link_text = ('|%s|'):format(k)
+          local tag_pat = fmt('\n%s\t([^\t]+)\t', event_name)
+          local link_text = fmt('|%s|', event_name)
           local tags_match = tags_text:match(tag_pat) --- @type string?
           return tags_match and tags_match ~= 'deprecated.txt' and link_text or nil
         end
