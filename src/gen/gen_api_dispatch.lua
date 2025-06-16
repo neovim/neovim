@@ -10,6 +10,7 @@
 local mpack = vim.mpack
 
 local hashy = require 'gen.hashy'
+local c_grammar = require('gen.c_grammar')
 
 -- output h file with generated dispatch functions (dispatch_wrappers.generated.h)
 local dispatch_outputf = arg[1]
@@ -27,6 +28,27 @@ local dispatch_deprecated_inputf = arg[10]
 local pre_args = 10
 assert(#arg >= pre_args)
 
+local function real_type(type)
+  local ptype = c_grammar.typed_container:match(type)
+  if ptype then
+    local container = ptype[1]
+    if container == 'Union' then
+      return 'Object'
+    elseif container == 'Tuple' or container == 'ArrayOf' then
+      return 'Array'
+    elseif container == 'DictOf' or container == 'DictAs' then
+      return 'Dict'
+    elseif container == 'LuaRefOf' then
+      return 'LuaRef'
+    elseif container == 'Enum' then
+      return 'String'
+    elseif container == 'Dict' then
+      return 'KeyDict_' .. ptype[2]
+    end
+  end
+  return type
+end
+
 local functions = {}
 
 -- names of all headers relative to the source root (for inclusion in the
@@ -35,8 +57,6 @@ local headers = {}
 
 -- set of function names, used to detect duplicates
 local function_names = {}
-
-local c_grammar = require('gen.c_grammar')
 
 local startswith = vim.startswith
 
@@ -358,15 +378,10 @@ for _, k in ipairs(keysets) do
       return 'kObjectTypeInteger'
     elseif not type or vim.startswith(type, 'Union') then
       return 'kObjectTypeNil'
-    elseif vim.startswith(type, 'LuaRefOf') then
-      return 'kObjectTypeLuaRef'
     elseif type == 'StringArray' then
       return 'kUnpackTypeStringArray'
-    elseif vim.startswith(type, 'ArrayOf') then
-      return 'kObjectTypeArray'
-    else
-      return 'kObjectType' .. type
     end
+    return 'kObjectType' .. real_type(type)
   end
 
   output:write('KeySetLink ' .. k.name .. '_table[] = {\n')
@@ -408,21 +423,6 @@ KeySetLink *KeyDict_]] .. k.name .. [[_get_field(const char *str, size_t len)
 }
 
 ]])
-end
-
-local function real_type(type)
-  local rv = type
-  local rmatch = string.match(type, 'Dict%(([_%w]+)%)')
-  if rmatch then
-    return 'KeyDict_' .. rmatch
-  elseif c_grammar.typed_container:match(rv) then
-    if rv:match('Array') then
-      rv = 'Array'
-    else
-      rv = 'Dict'
-    end
-  end
-  return rv
 end
 
 local function attr_name(rt)
@@ -798,7 +798,7 @@ local function process_function(fn)
     local param_type = real_type(param[1])
     local extra = param_type == 'Dict' and 'false, ' or ''
     local arg_free_code = ''
-    if param[1] == 'Object' then
+    if param_type == 'Object' then
       extra = 'true, '
       arg_free_code = '  api_luarefs_free_object(' .. cparam .. ');'
     elseif param[1] == 'DictOf(LuaRef)' then
@@ -895,11 +895,7 @@ exit_0:
 ]]
   local return_type
   if fn.return_type ~= 'void' then
-    if fn.return_type:match('^ArrayOf') then
-      return_type = 'Array'
-    else
-      return_type = fn.return_type
-    end
+    return_type = real_type(fn.return_type)
     local free_retval = ''
     if fn.ret_alloc then
       free_retval = '  api_free_' .. return_type:lower() .. '(ret);'

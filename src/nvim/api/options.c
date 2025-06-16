@@ -308,7 +308,8 @@ Dict nvim_get_all_options_info(Arena *arena, Error *err)
 ///                         Implies {scope} is "local".
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dict nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena, Error *err)
+DictAs(get_option_info) nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena,
+                                              Error *err)
   FUNC_API_SINCE(11)
 {
   OptIndex opt_idx = 0;

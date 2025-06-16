@@ -75,7 +75,7 @@ Integer nvim_create_namespace(String name)
 /// Gets existing, non-anonymous |namespace|s.
 ///
 /// @return dict that maps from names to namespace ids.
-Dict nvim_get_namespaces(Arena *arena)
+DictOf(Integer) nvim_get_namespaces(Arena *arena)
   FUNC_API_SINCE(5)
 {
   Dict retval = arena_dict(arena, map_size(&namespace_ids));
@@ -201,9 +201,9 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 /// @param[out] err   Error details, if any
 /// @return 0-indexed (row, col) tuple or empty list () if extmark id was
 /// absent
-ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
-                                            Integer id, Dict(get_extmark) *opts,
-                                            Arena *arena, Error *err)
+Tuple(Integer, Integer, *DictAs(extmark_details))
+nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id, Dict(get_extmark) * opts,
+                           Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -287,8 +287,10 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///          - type: Filter marks by type: "highlight", "sign", "virt_text" and "virt_lines"
 /// @param[out] err   Error details, if any
 /// @return List of `[extmark_id, row, col]` tuples in "traversal order".
-Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object end,
-                            Dict(get_extmarks) *opts, Arena *arena, Error *err)
+ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
+                                                        Object end,
+                                                        Dict(get_extmarks) *opts, Arena *arena,
+                                                        Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;

@@ -24,15 +24,15 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.cmd
 --- @field cmd? string
---- @field range? any[]
+--- @field range? integer[]
 --- @field count? integer
 --- @field reg? string
 --- @field bang? boolean
 --- @field args? string[]
---- @field magic? table<string,any>
---- @field mods? table<string,any>
---- @field nargs? integer|string
---- @field addr? string
+--- @field magic? vim.api.keyset.cmd.magic
+--- @field mods? vim.api.keyset.cmd.mods
+--- @field nargs? integer|"?"|"+"|"*"
+--- @field addr? "line"|"arg"|"buf"|"load"|"win"|"tab"|"qf"|"none"|"?"
 --- @field nextcmd? string
 
 --- @class vim.api.keyset.cmd_magic
@@ -79,7 +79,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.create_autocmd
 --- @field buffer? integer
---- @field callback? string|(fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?)
+--- @field callback? string|fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?
 --- @field command? string
 --- @field desc? string
 --- @field group? integer|string
@@ -294,9 +294,9 @@ error('Cannot require a meta file')
 --- @field col? number
 --- @field width? integer
 --- @field height? integer
---- @field anchor? 'NW'|'NE'|'SW'|'SE'
---- @field relative? 'cursor'|'editor'|'laststatus'|'mouse'|'tabline'|'win'
---- @field split? 'left'|'right'|'above'|'below'
+--- @field anchor? "NW"|"NE"|"SW"|"SE"
+--- @field relative? "cursor"|"editor"|"laststatus"|"mouse"|"tabline"|"win"
+--- @field split? "left"|"right"|"above"|"below"
 --- @field win? integer
 --- @field bufpos? integer[]
 --- @field external? boolean
@@ -304,12 +304,12 @@ error('Cannot require a meta file')
 --- @field mouse? boolean
 --- @field vertical? boolean
 --- @field zindex? integer
---- @field border? 'none'|'single'|'double'|'rounded'|'solid'|'shadow'|string[]
+--- @field border? string[]|"none"|"single"|"double"|"rounded"|"solid"|"shadow"
 --- @field title? any
---- @field title_pos? 'center'|'left'|'right'
+--- @field title_pos? "center"|"left"|"right"
 --- @field footer? any
---- @field footer_pos? 'center'|'left'|'right'
---- @field style? 'minimal'
+--- @field footer_pos? "center"|"left"|"right"
+--- @field style? "minimal"
 --- @field noautocmd? boolean
 --- @field fixed? boolean
 --- @field hide? boolean
