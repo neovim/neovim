@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
@@ -15,7 +14,6 @@
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/errors.h"
-#include "nvim/eval/executor.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
