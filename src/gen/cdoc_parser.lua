@@ -1,5 +1,6 @@
 local cdoc_grammar = require('gen.cdoc_grammar')
 local c_grammar = require('gen.c_grammar')
+local api_type = require('gen.api_types')
 
 --- @class nvim.cdoc.parser.param
 --- @field name string
@@ -140,7 +141,7 @@ local function process_proto(item, state)
   cur_obj.params = cur_obj.params or {}
 
   for _, p in ipairs(item.parameters) do
-    local param = { name = p[2], type = p[1] }
+    local param = { name = p[2], type = api_type(p[1]) }
     local added = false
     for _, cp in ipairs(cur_obj.params) do
       if cp.name == param.name then
@@ -156,7 +157,7 @@ local function process_proto(item, state)
   end
 
   cur_obj.returns = cur_obj.returns or { {} }
-  cur_obj.returns[1].type = item.return_type
+  cur_obj.returns[1].type = api_type(item.return_type)
 
   for _, a in ipairs({
     'fast',

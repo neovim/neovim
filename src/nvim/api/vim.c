@@ -115,7 +115,7 @@ Integer nvim_get_hl_id_by_name(String name)
 /// @param[out] err Error details, if any.
 /// @return Highlight groups as a map from group name to a highlight definition map as in |nvim_set_hl()|,
 ///                   or only a single highlight definition map if requested by name or id.
-Dict nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, Error *err)
+DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(11)
 {
   return ns_get_hl_defs((NS)ns_id, opts, arena, err);
@@ -607,7 +607,8 @@ String nvim__get_lib_dir(void)
 /// @param all whether to return all matches or only the first
 /// @param opts is_lua: only search Lua subdirs
 /// @return list of absolute paths to the found files
-ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, Arena *arena,
+ArrayOf(String) nvim__get_runtime(ArrayOf(String) pat, Boolean all, Dict(runtime) *opts,
+                                  Arena *arena,
                                   Error *err)
   FUNC_API_SINCE(8)
   FUNC_API_FAST
@@ -761,7 +762,8 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///          - kind: Set the |ui-messages| kind with which this message will be emitted.
 ///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
 ///            will write the message to the "log" file instead of standard output.
-void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
+void nvim_echo(ArrayOf(Tuple(String, HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
+               Error *err)
   FUNC_API_SINCE(7)
 {
   HlMessage hl_msg = parse_hl_msg(chunks, opts->err, err);
@@ -1320,10 +1322,10 @@ Integer nvim_get_color_by_name(String name)
 /// (e.g. 65535).
 ///
 /// @return Map of color names and RGB values.
-Dict nvim_get_color_map(Arena *arena)
+DictOf(Integer) nvim_get_color_map(Arena *arena)
   FUNC_API_SINCE(1)
 {
-  Dict colors = arena_dict(arena, ARRAY_SIZE(color_name_table));
+  DictOf(Integer) colors = arena_dict(arena, ARRAY_SIZE(color_name_table));
 
   for (int i = 0; color_name_table[i].name != NULL; i++) {
     PUT_C(colors, color_name_table[i].name, INTEGER_OBJ(color_name_table[i].color));
@@ -1406,7 +1408,7 @@ Object nvim_load_context(Dict dict, Error *err)
 /// "blocking" is true if Nvim is waiting for input.
 ///
 /// @returns Dict { "mode": String, "blocking": Boolean }
-Dict nvim_get_mode(Arena *arena)
+DictAs(get_mode) nvim_get_mode(Arena *arena)
   FUNC_API_SINCE(2) FUNC_API_FAST
 {
   Dict rv = arena_dict(arena, 2);
@@ -1425,7 +1427,7 @@ Dict nvim_get_mode(Arena *arena)
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key is always zero.
-ArrayOf(Dict) nvim_get_keymap(String mode, Arena *arena)
+ArrayOf(DictAs(get_keymap)) nvim_get_keymap(String mode, Arena *arena)
   FUNC_API_SINCE(3)
 {
   return keymap_array(mode, NULL, arena);
@@ -1487,7 +1489,7 @@ void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Error *err)
 /// 1 is the |api-metadata| map (Dict).
 ///
 /// @returns 2-tuple `[{channel-id}, {api-metadata}]`
-Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
+ArrayOf(Object, 2) nvim_get_api_info(uint64_t channel_id, Arena *arena)
   FUNC_API_SINCE(1) FUNC_API_FAST FUNC_API_REMOTE_ONLY
 {
   Array rv = arena_array(arena, 2);
@@ -1624,7 +1626,7 @@ Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *
 ///
 /// @returns Array of Dictionaries, each describing a channel with
 ///          the format specified at |nvim_get_chan_info()|.
-Array nvim_list_chans(Arena *arena)
+ArrayOf(Dict) nvim_list_chans(Arena *arena)
   FUNC_API_SINCE(4)
 {
   return channel_all_info(arena);
@@ -1715,7 +1717,7 @@ Dict nvim__stats(Arena *arena)
 ///   - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
 ///   - "ext_..." Requested UI extensions, see |ui-option|
 ///   - "chan"    |channel-id| of remote UI
-Array nvim_list_uis(Arena *arena)
+ArrayOf(Dict) nvim_list_uis(Arena *arena)
   FUNC_API_SINCE(4)
 {
   return ui_array(arena);
@@ -1916,7 +1918,8 @@ Boolean nvim_del_mark(String name, Error *err)
 /// not set.
 /// @see |nvim_buf_set_mark()|
 /// @see |nvim_del_mark()|
-Array nvim_get_mark(String name, Dict(empty) *opts, Arena *arena, Error *err)
+Tuple(Integer, Integer, Buffer, String) nvim_get_mark(String name, Dict(empty) *opts, Arena *arena,
+                                                      Error *err)
   FUNC_API_SINCE(8)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -2001,7 +2004,8 @@ Array nvim_get_mark(String name, Dict(empty) *opts, Arena *arena, Error *err)
 ///           - start: (number) Byte index (0-based) of first character that uses the highlight.
 ///           - group: (string) Deprecated. Use `groups` instead.
 ///           - groups: (array) Names of stacked highlight groups (highest priority last).
-Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena, Error *err)
+DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statusline) *opts,
+                                                 Arena *arena, Error *err)
   FUNC_API_SINCE(8) FUNC_API_FAST
 {
   Dict result = ARRAY_DICT_INIT;
@@ -2188,7 +2192,7 @@ void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
 /// @return Dict containing these keys:
 ///       - winid: (number) floating window id
 ///       - bufnr: (number) buffer id in floating window
-Dict nvim__complete_set(Integer index, Dict(complete_set) *opts, Arena *arena, Error *err)
+DictOf(Float) nvim__complete_set(Integer index, Dict(complete_set) *opts, Arena *arena, Error *err)
 {
   Dict rv = arena_dict(arena, 2);
   if ((get_cot_flags() & kOptCotFlagPopup) == 0) {
