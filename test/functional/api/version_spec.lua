@@ -63,12 +63,14 @@ describe('api metadata', function()
     -- Dictionary was renamed to Dict. That doesn't break back-compat because clients don't actually
     -- use the `return_type` field (evidence: "ArrayOf(…)" didn't break clients).
     f.return_type = f.return_type:gsub('Dictionary', 'Dict')
+    f.return_type = f.return_type:gsub('^ArrayOf%(.*', 'Array')
 
     f.deprecated_since = nil
     for idx, _ in ipairs(f.parameters) do
       -- Dictionary was renamed to Dict. Doesn't break back-compat because clients don't actually
       -- use the `parameters` field of API metadata (evidence: "ArrayOf(…)" didn't break clients).
       f.parameters[idx][1] = f.parameters[idx][1]:gsub('Dictionary', 'Dict')
+      f.parameters[idx][1] = f.parameters[idx][1]:gsub('ArrayOf%(.*', 'Array')
 
       f.parameters[idx][2] = '' -- Remove parameter name.
     end

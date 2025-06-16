@@ -500,7 +500,8 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
 ///            height is reached. 0 if "end_row" is a closed fold.
 ///
 /// @see |virtcol()| for text width.
-Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *arena, Error *err)
+DictAs(win_text_height_ret) nvim_win_text_height(Window window, Dict(win_text_height) *opts,
+                                                 Arena *arena, Error *err)
   FUNC_API_SINCE(12)
 {
   Dict rv = arena_dict(arena, 2);

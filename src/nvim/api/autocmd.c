@@ -90,7 +90,8 @@ static int64_t next_autocmd_id = 1;
 ///             - once: (boolean) whether the autocommand is only run once.
 ///             - pattern: (string) the autocommand pattern.
 ///               If the autocommand is buffer local |autocmd-buffer-local|:
-Array nvim_get_autocmds(Dict(get_autocmds) *opts, Arena *arena, Error *err)
+ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, Arena *arena,
+                                                     Error *err)
   FUNC_API_SINCE(9)
 {
   ArrayBuilder autocmd_list = KV_INITIAL_VALUE;

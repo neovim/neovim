@@ -927,6 +927,8 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   }
 }
 
+// uncrustify:off
+
 /// Creates a global |user-commands| command.
 ///
 /// For Lua usage see |lua-guide-commands-create|.
@@ -968,12 +970,17 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                   - force: (boolean, default true) Override any previous definition.
 ///                   - preview: (function) Preview callback for 'inccommand' |:command-preview|
 /// @param[out] err Error details, if any.
-void nvim_create_user_command(uint64_t channel_id, String name, Object command,
-                              Dict(user_command) *opts, Error *err)
+void nvim_create_user_command(uint64_t channel_id,
+                              String name,
+                              Union(String, LuaRefOf((DictAs(create_user_command__command_args) args))) command,
+                              Dict(user_command) *opts,
+                              Error *err)
   FUNC_API_SINCE(9)
 {
   create_user_command(channel_id, name, command, opts, 0, err);
 }
+
+// uncrustify:on
 
 /// Delete a user-defined command.
 ///
@@ -1045,8 +1052,8 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
   api_set_error(err, kErrorTypeException, "Invalid command (not found): %s", name.data);
 }
 
-void create_user_command(uint64_t channel_id, String name, Object command, Dict(user_command) *opts,
-                         int flags, Error *err)
+void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef) command,
+                         Dict(user_command) *opts, int flags, Error *err)
 {
   uint32_t argt = 0;
   int64_t def = -1;
@@ -1260,7 +1267,7 @@ err:
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dict nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
+DictOf(DictAs(command_info)) nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   return nvim_buf_get_commands(-1, opts, arena, err);
@@ -1273,7 +1280,8 @@ Dict nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dict nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Arena *arena, Error *err)
+DictAs(command_info) nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Arena *arena,
+                                           Error *err)
   FUNC_API_SINCE(4)
 {
   bool global = (buffer == -1);

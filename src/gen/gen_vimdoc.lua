@@ -38,8 +38,6 @@ local INDENTATION = 4
 --- List of files/directories for doxygen to read, relative to `base_dir`.
 --- @field files string[]
 ---
---- @field exclude_types? true
----
 --- Section name overrides. Key: filename (e.g., vim.c)
 --- @field section_name? table<string,string>
 ---
@@ -119,7 +117,6 @@ local config = {
       'autocmd.c',
       'ui.c',
     },
-    exclude_types = true,
     fn_name_pat = 'nvim_.*',
     files = { 'src/nvim/api' },
     section_name = {
@@ -550,9 +547,8 @@ end
 --- @param xs (nvim.luacats.parser.param|nvim.luacats.parser.field)[]
 --- @param generics? table<string,string>
 --- @param classes? table<string,nvim.luacats.parser.class>
---- @param exclude_types? true
 --- @param cfg nvim.gen_vimdoc.Config
-local function render_fields_or_params(xs, generics, classes, exclude_types, cfg)
+local function render_fields_or_params(xs, generics, classes, cfg)
   local ret = {} --- @type string[]
 
   xs = vim.tbl_filter(should_render_field_or_param, xs)
@@ -561,9 +557,6 @@ local function render_fields_or_params(xs, generics, classes, exclude_types, cfg
   for _, p in ipairs(xs) do
     if p.type or p.desc then
       indent = math.max(indent, #p.name + 3)
-    end
-    if exclude_types then
-      p.type = nil
     end
   end
 
@@ -627,7 +620,7 @@ local function render_class(class, classes, cfg)
     table.insert(ret, md_to_vimdoc(class.desc, INDENTATION, INDENTATION, TEXT_WIDTH))
   end
 
-  local fields_txt = render_fields_or_params(class.fields, nil, classes, nil, cfg)
+  local fields_txt = render_fields_or_params(class.fields, nil, classes, cfg)
   if not fields_txt:match('^%s*$') then
     table.insert(ret, '\n    Fields: ~\n')
     table.insert(ret, fields_txt)
@@ -692,15 +685,12 @@ end
 --- @param returns nvim.luacats.parser.return[]
 --- @param generics? table<string,string>
 --- @param classes? table<string,nvim.luacats.parser.class>
---- @param exclude_types boolean
-local function render_returns(returns, generics, classes, exclude_types)
+--- @return string?
+local function render_returns(returns, generics, classes)
   local ret = {} --- @type string[]
 
-  returns = vim.deepcopy(returns)
-  if exclude_types then
-    for _, r in ipairs(returns) do
-      r.type = nil
-    end
+  if #returns == 1 and returns[1].type == 'nil' then
+    return
   end
 
   if #returns > 1 then
@@ -720,7 +710,7 @@ local function render_returns(returns, generics, classes, exclude_types)
     blk[#blk + 1] = rnm
     blk[#blk + 1] = desc
 
-    table.insert(ret, md_to_vimdoc(table.concat(blk, ' '), 8, 8, TEXT_WIDTH, true))
+    ret[#ret + 1] = md_to_vimdoc(table.concat(blk, ' '), 8, 8, TEXT_WIDTH, true)
   end
 
   return table.concat(ret)
@@ -788,8 +778,7 @@ local function render_fun(fun, classes, cfg)
   end
 
   if fun.params and #fun.params > 0 then
-    local param_txt =
-      render_fields_or_params(fun.params, fun.generics, classes, cfg.exclude_types, cfg)
+    local param_txt = render_fields_or_params(fun.params, fun.generics, classes, cfg)
     if not param_txt:match('^%s*$') then
       table.insert(ret, '\n    Parameters: ~\n')
       ret[#ret + 1] = param_txt
@@ -804,8 +793,8 @@ local function render_fun(fun, classes, cfg)
   end
 
   if fun.returns then
-    local txt = render_returns(fun.returns, fun.generics, classes, cfg.exclude_types)
-    if not txt:match('^%s*$') then
+    local txt = render_returns(fun.returns, fun.generics, classes)
+    if txt and not txt:match('^%s*$') then
       table.insert(ret, '\n')
       ret[#ret + 1] = txt
     end
