@@ -1796,7 +1796,7 @@ static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr, c
 
   tv_list_append_number(lpos, bufnr);
   tv_list_append_number(lpos, pos->lnum);
-  tv_list_append_number(lpos, pos->col + 1);
+  tv_list_append_number(lpos, pos->col < MAXCOL ? pos->col + 1 : MAXCOL);
   tv_list_append_number(lpos, pos->coladd);
 
   if (tv_dict_add_str(d, S_LEN("mark"), mname) == FAIL
