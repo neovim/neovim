@@ -655,8 +655,8 @@ vim.bo.bl = vim.bo.buflisted
 --- "acwrite" implies that the buffer name is not related to a file, like
 --- "nofile", but it will be written.  Thus, in contrast to "nofile" and
 --- "nowrite", ":w" does work and a modified buffer can't be abandoned
---- without saving.  For writing there must be matching `BufWriteCmd|,
---- |FileWriteCmd` or `FileAppendCmd` autocommands.
+--- without saving.  For writing there must be matching `BufWriteCmd`,
+--- `FileWriteCmd` or `FileAppendCmd` autocommands.
 ---
 --- @type ''|'acwrite'|'help'|'nofile'|'nowrite'|'quickfix'|'terminal'|'prompt'
 vim.o.buftype = ""
@@ -3160,8 +3160,8 @@ vim.o.ims = vim.o.imsearch
 vim.bo.imsearch = vim.o.imsearch
 vim.bo.ims = vim.bo.imsearch
 
---- When nonempty, shows the effects of `:substitute`, `:smagic|,
---- |:snomagic` and user commands with the `:command-preview` flag as you
+--- When nonempty, shows the effects of `:substitute`, `:smagic`,
+--- `:snomagic` and user commands with the `:command-preview` flag as you
 --- type.
 ---
 --- Possible values:
@@ -3500,8 +3500,8 @@ vim.go.js = vim.go.joinspaces
 --- 		when navigating backwards in the jumplist and then
 --- 		jumping to a location.  `jumplist-stack`
 ---
----   view          When moving through the jumplist, `changelist|,
---- 		|alternate-file` or using `mark-motions` try to
+---   view          When moving through the jumplist, `changelist`,
+--- 		`alternate-file` or using `mark-motions` try to
 --- 		restore the `mark-view` in which the action occurred.
 ---
 ---   clean         Remove unloaded buffers from the jumplist.
@@ -5641,8 +5641,8 @@ vim.go.ssl = vim.go.shellslash
 --- and the 'shell' command does not need to support redirection.
 --- The advantage of using a temp file is that the file type and encoding
 --- can be detected.
---- The `FilterReadPre`, `FilterReadPost` and `FilterWritePre|,
---- |FilterWritePost` autocommands event are not triggered when
+--- The `FilterReadPre`, `FilterReadPost` and `FilterWritePre`,
+--- `FilterWritePost` autocommands event are not triggered when
 --- 'shelltemp' is off.
 --- `system()` does not respect this option, it always uses pipes.
 ---
@@ -6212,8 +6212,8 @@ vim.bo.spo = vim.bo.spelloptions
 ---
 --- expr:{expr}	Evaluate expression {expr}.  Use a function to avoid
 --- 		trouble with spaces.  Best is to call a function
---- 		without arguments, see `expr-option-function|.
---- 		|v:val` holds the badly spelled word.  The expression
+--- 		without arguments, see `expr-option-function`.
+--- 		`v:val` holds the badly spelled word.  The expression
 --- 		must evaluate to a List of Lists, each with a
 --- 		suggestion and a score.
 --- 		Example:
