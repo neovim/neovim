@@ -54,12 +54,6 @@ error('Cannot require a meta file')
 --- @field [3] integer col
 --- @field [4] vim.api.keyset.extmark_details?
 
---- @class vim.api.keyset.get_mark
---- @field [1] integer row
---- @field [2] integer col
---- @field [3] integer buffer
---- @field [4] string buffername
-
 --- @class vim.api.keyset.get_autocmds.ret
 --- @field id? integer
 --- @field group? integer
@@ -212,7 +206,7 @@ error('Cannot require a meta file')
 --- @field default string|boolean|integer
 --- @field allows_duplicates boolean
 
---- @class vim.api.keyset.parse_cmd.mods
+--- @class vim.api.keyset.cmd.mods
 --- @field filter { force: boolean, pattern: string }
 --- @field silent boolean
 --- @field emsg_silent boolean
@@ -234,18 +228,9 @@ error('Cannot require a meta file')
 --- @field horizontal boolean
 --- @field split ''|'botright'|'topleft'|'belowright'|'aboveleft'
 
---- @class vim.api.keyset.parse_cmd
---- @field addr 'line'|'arg'|'buf'|'load'|'win'|'tab'|'qf'|'none'|'?'
---- @field args string[]
---- @field bang boolean
---- @field cmd string
---- @field magic {bar: boolean, file: boolean}
---- @field mods vim.api.keyset.parse_cmd.mods
---- @field nargs '0'|'1'|'?'|'+'|'*'
---- @field nextcmd string
---- @field range? integer[]
---- @field count? integer
---- @field reg? string
+--- @class vim.api.keyset.cmd.magic
+--- @field bar boolean
+--- @field file boolean
 
 --- @class vim.api.keyset.eval_statusline_ret.highlight
 --- @field start integer

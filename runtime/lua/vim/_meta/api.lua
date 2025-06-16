@@ -27,7 +27,7 @@ function vim.api.nvim__buf_stats(buffer) end
 --- @param index integer Completion candidate index
 --- @param opts vim.api.keyset.complete_set Optional parameters.
 --- - info: (string) info text.
---- @return table<string,any> # Dict containing these keys:
+--- @return table<string,number> # Dict containing these keys:
 --- - winid: (number) floating window id
 --- - bufnr: (number) buffer id in floating window
 function vim.api.nvim__complete_set(index, opts) end
@@ -37,7 +37,7 @@ function vim.api.nvim__get_lib_dir() end
 
 --- Find files in runtime directories
 ---
---- @param pat any[] pattern of files to search for
+--- @param pat string[] pattern of files to search for
 --- @param all boolean whether to return all matches or only the first
 --- @param opts vim.api.keyset.runtime is_lua: only search Lua subdirs
 --- @return string[] # list of absolute paths to the found files
@@ -348,7 +348,7 @@ function vim.api.nvim_buf_get_changedtick(buffer) end
 ---
 --- @param buffer integer Buffer id, or 0 for current buffer
 --- @param opts vim.api.keyset.get_commands Optional parameters. Currently not used.
---- @return table<string,any> # Map of maps describing commands.
+--- @return vim.api.keyset.command_info # Map of maps describing commands.
 function vim.api.nvim_buf_get_commands(buffer, opts) end
 
 --- Gets the position (0-indexed) of an `extmark`.
@@ -359,7 +359,7 @@ function vim.api.nvim_buf_get_commands(buffer, opts) end
 --- @param opts vim.api.keyset.get_extmark Optional parameters. Keys:
 --- - details: Whether to include the details dict
 --- - hl_name: Whether to include highlight group name instead of id, true if omitted
---- @return vim.api.keyset.get_extmark_item_by_id # 0-indexed (row, col) tuple or empty list () if extmark id was
+--- @return [integer, integer, vim.api.keyset.extmark_details?] # 0-indexed (row, col) tuple or empty list () if extmark id was
 --- absent
 function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 
@@ -1096,7 +1096,7 @@ function vim.api.nvim_del_var(name) end
 --- vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true, {})
 --- ```
 ---
---- @param chunks any[] List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
+--- @param chunks [string, integer|string][] List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
 --- the (optional) name or ID `hl_group`.
 --- @param history boolean if true, add to `message-history`.
 --- @param opts vim.api.keyset.echo_opts Optional parameters.
@@ -1327,7 +1327,7 @@ function vim.api.nvim_get_color_map() end
 --- @see vim.api.nvim_get_all_options_info
 --- @param opts vim.api.keyset.get_commands Optional parameters. Currently only supports
 --- {"builtin":false}
---- @return table<string,any> # Map of maps describing commands.
+--- @return table<string,vim.api.keyset.command_info> # Map of maps describing commands.
 function vim.api.nvim_get_commands(opts) end
 
 --- Gets a map of the current editor state.
@@ -1427,7 +1427,7 @@ function vim.api.nvim_get_keymap(mode) end
 --- @see vim.api.nvim_del_mark
 --- @param name string Mark name
 --- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
---- @return vim.api.keyset.get_mark # 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
+--- @return [integer, integer, integer, string] # 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
 --- not set.
 function vim.api.nvim_get_mark(name, opts) end
 
@@ -1599,7 +1599,7 @@ function vim.api.nvim_list_bufs() end
 
 --- Get information about all open channels.
 ---
---- @return any[] # Array of Dictionaries, each describing a channel with
+--- @return table<string,any>[] # Array of Dictionaries, each describing a channel with
 --- the format specified at |nvim_get_chan_info()|.
 function vim.api.nvim_list_chans() end
 
@@ -1623,7 +1623,7 @@ function vim.api.nvim_list_tabpages() end
 --- vim.print(vim.api.nvim_get_chan_info(vim.api.nvim_list_uis()[1].chan).client.name)
 --- ```
 ---
---- @return any[] # Array of UI dictionaries, each with these keys:
+--- @return table<string,any>[] # Array of UI dictionaries, each with these keys:
 --- - "height"  Requested height of the UI
 --- - "width"   Requested width of the UI
 --- - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
@@ -1865,7 +1865,7 @@ function vim.api.nvim_out_write(str) end
 ---
 --- @param str string Command line string to parse. Cannot contain "\n".
 --- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
---- @return vim.api.keyset.parse_cmd # Dict containing command information, with these keys:
+--- @return vim.api.keyset.cmd # Dict containing command information, with these keys:
 --- - cmd: (string) Command name.
 --- - range: (array) (optional) Command range ([<line1>] [<line2>]).
 ---                  Omitted if command doesn't accept a range.

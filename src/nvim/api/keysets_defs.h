@@ -116,9 +116,9 @@ typedef struct {
   Float col;
   Integer width;
   Integer height;
-  String anchor;
-  String relative;
-  String split;
+  Enum("NW", "NE", "SW", "SE") anchor;
+  Enum("cursor", "editor", "laststatus", "mouse", "tabline", "win") relative;
+  Enum("left", "right", "above", "below") split;
   Window win;
   ArrayOf(Integer) bufpos;
   Boolean external;
@@ -126,12 +126,12 @@ typedef struct {
   Boolean mouse;
   Boolean vertical;
   Integer zindex;
-  Object border;
+  Union(ArrayOf(String), Enum("none", "single", "double", "rounded", "solid", "shadow")) border;
   Object title;
-  String title_pos;
+  Enum("center", "left", "right") title_pos;
   Object footer;
-  String footer_pos;
-  String style;
+  Enum("center", "left", "right") footer_pos;
+  Enum("minimal") style;
   Boolean noautocmd;
   Boolean fixed;
   Boolean hide;
@@ -244,7 +244,7 @@ typedef struct {
 typedef struct {
   OptionalKeys is_set__create_autocmd_;
   Buffer buffer;
-  Object callback;
+  Union(String, LuaRefOf((DictAs(create_autocmd__callback_args) args), *Boolean)) callback;
   String command;
   String desc;
   Union(Integer, String) group;
@@ -279,15 +279,15 @@ typedef struct {
 typedef struct {
   OptionalKeys is_set__cmd_;
   String cmd;
-  Array range;
+  ArrayOf(Integer) range;
   Integer count;
   String reg;
   Boolean bang;
   ArrayOf(String) args;
-  Dict magic;
-  Dict mods;
-  Union(Integer, String) nargs;
-  String addr;
+  DictAs(cmd__magic) magic;
+  DictAs(cmd__mods) mods;
+  Union(Integer, Enum("?", "+", "*")) nargs;
+  Enum("line", "arg", "buf", "load", "win", "tab", "qf", "none", "?") addr;
   String nextcmd;
 } Dict(cmd);
 

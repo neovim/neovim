@@ -2,20 +2,50 @@
 -- ignores comments and preprocessor commands and parses a very small subset
 -- of C prototypes with a limited set of types
 
+---@diagnostic disable: missing-fields
+
 --- @class nvim.c_grammar.Proto
 --- @field [1] 'proto'
 --- @field pos integer
 --- @field endpos integer
---- @field fast boolean
 --- @field name string
 --- @field return_type string
 --- @field parameters [string, string][]
+---
+--- Decl modifiers
+---
 --- @field static true?
 --- @field inline true?
+---
+--- Attributes
+---
+--- @field since integer?
+--- @field deprecated_since integer?
+--- @field fast true?
+--- @field ret_alloc true?
+--- @field noexport true?
+--- @field remote_only true?
+--- @field lua_only true?
+--- @field textlock_allow_cmdwin true?
+--- @field textlock true?
+--- @field remote_impl true?
+--- @field compositor_impl true?
+--- @field client_impl true?
+--- @field client_ignore true?
 
 --- @class nvim.c_grammar.Preproc
 --- @field [1] 'preproc'
 --- @field content string
+
+--- @class nvim.c_grammar.Keyset.Field
+--- @field type string
+--- @field name string
+--- @field dict_key? string
+
+--- @class nvim.c_grammar.Keyset
+--- @field [1] 'typedef'
+--- @field keyset_name string
+--- @field fields nvim.c_grammar.Keyset.Field[]
 
 --- @class nvim.c_grammar.Empty
 --- @field [1] 'empty'
@@ -24,6 +54,7 @@
 --- | nvim.c_grammar.Proto
 --- | nvim.c_grammar.Preproc
 --- | nvim.c_grammar.Empty
+--- | nvim.c_grammar.Keyset
 
 --- @class nvim.c_grammar
 --- @field match fun(self, input: string): nvim.c_grammar.result[]
@@ -95,19 +126,44 @@ local braces = P({
   S = P('{') * rep(V('A')) * rep(V('S') + V('A')) * P('}'),
 })
 
+--- @alias nvim.c_grammar.Container.Union ['Union', string[]]
+--- @alias nvim.c_grammar.Container.Tuple ['Tuple', string[]]
+--- @alias nvim.c_grammar.Container.Enum ['Enum', string[]]
+--- @alias nvim.c_grammar.Container.ArrayOf ['ArrayOf', string, integer?]
+--- @alias nvim.c_grammar.Container.DictOf ['DictOf', string]
+--- @alias nvim.c_grammar.Container.LuaRefOf ['LuaRefOf', [string, string][], string]
+--- @alias nvim.c_grammar.Container.Dict ['Dict', string]
+--- @alias nvim.c_grammar.Container.DictAs ['DictAs', string]
+
+--- @alias nvim.c_grammar.Container
+--- | nvim.c_grammar.Container.Union
+--- | nvim.c_grammar.Container.Tuple
+--- | nvim.c_grammar.Container.Enum
+--- | nvim.c_grammar.Container.ArrayOf
+--- | nvim.c_grammar.Container.DictOf
+--- | nvim.c_grammar.Container.LuaRefOf
+--- | nvim.c_grammar.Container.Dict
+
 -- stylua: ignore start
 local typed_container = P({
   'S',
-  S = (
-    (P('Union') * paren(comma1(V('ID'))))
-    + (P('ArrayOf') * paren(id * opt(P(',') * fill * rep1(num))))
-    + (P('DictOf') * paren(id))
-    + (P('LuaRefOf') * paren(
-      paren(comma1((V('ID') + str) * rep1(ws) * opt(P('*')) * id))
-      * opt(P(',') * fill * opt(P('*')) * V('ID'))
-    ))
-    + (P('Dict') * paren(id))),
-  ID = V('S') + id,
+  S = Ct(
+    Cg(opt(P('*')) * P('Union')) * paren(Ct(comma1(V('TY'))))
+    + Cg(opt(P('*')) * P('Enum')) * paren(Ct(comma1(Cg(str))))
+    + Cg(opt(P('*')) * P('Tuple')) * paren(Ct(comma1(V('TY'))))
+    + Cg(opt(P('*')) * P('ArrayOf')) * paren(V('TY') * opt(P(',') * fill * C(rep1(num))))
+    + Cg(opt(P('*')) * P('DictOf')) * paren(V('TY'))
+    + Cg(opt(P('*')) * P('LuaRefOf'))
+      * paren(
+          Ct(paren(comma1(Ct((V('TY') + C(str)) * rep1(ws) * Cg(V('ID'))))))
+          * opt(P(',') * fill * V('TY'))
+        )
+    + Cg(opt(P('*')) * P('Dict')) * paren(C(id))
+    + Cg(opt(P('*')) * P('DictAs')) * paren(C(id))
+  ),
+  -- Remove captures here (with / 0 ) as api_types will recursively run parse the type.
+  TY = Cg(V('S') / 0 + V('ID')),
+  ID = opt(P('*')) * id,
 })
 -- stylua: ignore end
 
@@ -156,7 +212,7 @@ local api_param_type = (
 local ctype = C(
   opt(word('const'))
     * (
-      typed_container
+      typed_container / 0
       -- 'unsigned' is a type modifier, and a type itself
       + (word('unsigned char') + word('unsigned'))
       + (word('struct') * fill * id)
