@@ -76,7 +76,7 @@ LSP
 
 LUA
 
-• todo
+• |vim.fs.find()| accepts a `filter` predicate.
 
 OPTIONS
 
