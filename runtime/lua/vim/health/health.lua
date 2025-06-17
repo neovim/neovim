@@ -406,6 +406,17 @@ local function check_external_tools()
   else
     health.warn('ripgrep not available')
   end
+
+  local fd_cmd = vim.fn.executable('fdfind') == 1 and 'fdfind'
+    or vim.fn.executable('fd') == 1 and 'fd'
+    or nil
+  if fd_cmd then
+    local fd = vim.fn.exepath(fd_cmd)
+    local result = vim.system({ fd_cmd, '-V' }, { text = true }):wait()
+    health.ok(('%s (%s)'):format(vim.trim(result.stdout), fd))
+  else
+    health.warn('fd not available')
+  end
 end
 
 function M.check()

@@ -974,4 +974,31 @@ do
     vim.o.grepprg = 'rg --vimgrep -uu '
     vim.o.grepformat = '%f:%l:%c:%m'
   end
+
+  --- Default 'findfunc' to fd if available.
+  -- `fdfind` on Ubuntu (https://github.com/sharkdp/fd#on-ubuntu)
+  local fd_cmd = vim.fn.executable('fdfind') == 1 and 'fdfind'
+    or vim.fn.executable('fd') == 1 and 'fd'
+  if fd_cmd then
+    function _G.findfunc(name)
+      -- convert special 'path' values
+      local paths = vim
+        .iter(vim.opt.path:get())
+        :map(function(v)
+          if v == '.' then -- relative to current file
+            return './' .. vim.fn.expand('%:h')
+          elseif v == '' or v == '**' then -- relative to 'current-directory'
+            return '.'
+          end
+          return v
+        end)
+        :totable()
+
+      local cmd = vim.list_extend({ fd_cmd, '-HIp', name or '.' }, paths)
+      local result = vim.system(cmd, { text = true }):wait()
+      return vim.split(result.stdout, '\n', { trimempty = true })
+    end
+
+    vim.o.findfunc = 'v:lua.findfunc'
+  end
 end

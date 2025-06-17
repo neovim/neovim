@@ -3171,7 +3171,8 @@ local options = {
       desc = [=[
         Function that is called to obtain the filename(s) for the |:find|
         command.  When this option is empty, the internal |file-searching|
-        mechanism is used.
+        mechanism is used. Defaults to `fd` if it is available (See "External
+        Tools" in |:checkhealth|).
 
         The value can be the name of a function, a |lambda| or a |Funcref|.
         See |option-value-function| for more information.
