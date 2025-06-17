@@ -601,7 +601,7 @@ vim.hl.on_yank({opts})                                      *vim.hl.on_yank()*
       • {opts}  (`table?`) Optional parameters
                 • higroup highlight group for yanked region (default
                   "IncSearch")
-                • timeout time in ms before highlight is cleared (default 150)
+                • timeout time in ms before highlight is cleared (default 300)
                 • on_macro highlight when executing macro (default false)
                 • on_visual highlight when yanking visual selection (default
                   true)
