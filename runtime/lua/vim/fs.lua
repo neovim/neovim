@@ -124,6 +124,23 @@ function M.joinpath(...)
   return (path:gsub('//+', '/'))
 end
 
+--- @class vim.fs.dir.Opts
+--- @inlinedoc
+---
+--- How deep the traverse.
+--- (default: `1`)
+--- @field depth? integer
+---
+--- Predicate to control traversal.
+--- Return false to stop searching the current directory.
+--- Only useful when depth > 1
+--- Return an iterator over the items located in {path}
+--- @field skip? (fun(dir_name: string): boolean)
+---
+--- Follow symbolic links.
+--- (default: `false`)
+--- @field follow? boolean
+
 ---@alias Iterator fun(): string?, string?
 
 --- Return an iterator over the items located in {path}
@@ -131,13 +148,7 @@ end
 ---@since 10
 ---@param path (string) An absolute or relative path to the directory to iterate
 ---            over. The path is first normalized |vim.fs.normalize()|.
---- @param opts table|nil Optional keyword arguments:
----             - depth: integer|nil How deep the traverse (default 1)
----             - skip: (fun(dir_name: string): boolean)|nil Predicate
----               to control traversal. Return false to stop searching the current directory.
----               Only useful when depth > 1
----             - follow: boolean|nil Follow symbolic links. (default: false)
----
+---@param opts? vim.fs.dir.Opts Optional keyword arguments:
 ---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
 ---        "name" is the basename of the item relative to {path}.
 ---        "type" is one of the following:
@@ -256,7 +267,7 @@ end
 ---
 ---             The function should return `true` if the given item is considered a match.
 ---
----@param opts vim.fs.find.Opts Optional keyword arguments:
+---@param opts? vim.fs.find.Opts Optional keyword arguments:
 ---@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
   opts = opts or {}

@@ -2939,11 +2939,13 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                 iterate over. The path is first normalized
                 |vim.fs.normalize()|.
       • {opts}  (`table?`) Optional keyword arguments:
-                • depth: integer|nil How deep the traverse (default 1)
-                • skip: (fun(dir_name: string): boolean)|nil Predicate to
+                • {depth}? (`integer`, default: `1`) How deep the traverse.
+                • {skip}? (`fun(dir_name: string): boolean`) Predicate to
                   control traversal. Return false to stop searching the
-                  current directory. Only useful when depth > 1
-                • follow: boolean|nil Follow symbolic links. (default: false)
+                  current directory. Only useful when depth > 1 Return an
+                  iterator over the items located in {path}
+                • {follow}? (`boolean`, default: `false`) Follow symbolic
+                  links.
 
     Return: ~
         (`Iterator`) over items in {path}. Each iteration yields two values:
@@ -3005,7 +3007,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 
                  The function should return `true` if the given item is
                  considered a match.
-      • {opts}   (`table`) Optional keyword arguments:
+      • {opts}   (`table?`) Optional keyword arguments:
                  • {path}? (`string`) Path to begin searching from. If
                    omitted, the |current-directory| is used.
                  • {upward}? (`boolean`, default: `false`) Search upward
