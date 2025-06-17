@@ -4616,11 +4616,11 @@ two different ways:
 	  that list. >
 
    " In perl.vim:
-   :syntax include @Pod <sfile>:p:h/pod.vim
+   :syntax include @Pod <script>:p:h/pod.vim
    :syntax region perlPOD start="^=head" end="^=cut" contains=@Pod
 <
 	  When {file-name} is an absolute path (starts with "/", "c:", "$VAR"
-	  or "<sfile>") that file is sourced.  When it is a relative path
+	  or "<script>") that file is sourced.  When it is a relative path
 	  (e.g., "syntax/pod.vim") the file is searched for in 'runtimepath'.
 	  All matching files are loaded.  Using a relative path is
 	  recommended, because it allows a user to replace the included file

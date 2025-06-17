@@ -2556,7 +2556,7 @@ The following example shows how it's done: >
 		map <F19> :call BufNetWrite('something')<CR>
 
 		let s:did_load = 1
-		exe 'au FuncUndefined BufNet* source ' .. expand('<sfile>')
+		exe 'au FuncUndefined BufNet* source ' .. expand('<script>')
 		finish
 	endif
 
@@ -2592,7 +2592,7 @@ startup.  This is the sequence of events that happens:
    event.  Since the pattern "BufNet*" matches the invoked function, the
    command "source fname" will be executed.  "fname" will be equal to the name
    of the script, no matter where it is located, because it comes from
-   expanding "<sfile>" (see |expand()|).
+   expanding "<script>" (see |expand()|).
 
 4. The script is sourced again, the "s:did_load" variable exists and the
    functions are defined.

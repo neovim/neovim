@@ -2413,7 +2413,7 @@ M.funcs = {
       	<abuf>		autocmd buffer number (as a String!)
       	<amatch>	autocmd matched name
       	<cexpr>		C expression under the cursor
-      	<sfile>		sourced script file or function name
+      	<sfile>		deprecated, use <script> or <stack>
       	<slnum>		sourced script line number or function
       			line number
       	<sflnum>	script file line number, also when in

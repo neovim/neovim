@@ -937,14 +937,6 @@ Note: these are typed literally, they are not special keys!
 		   events).
 		   When the match is with a file name, it is expanded to the
 		   full path.
-							*:<sfile>* *<sfile>*
-	<sfile>    When executing a `:source` command, is replaced with the
-		   file name of the sourced file.  *E498*
-		   When executing a function, is replaced with the call stack,
-		   as with <stack> (this is for backwards compatibility, using
-		   <stack> or <script> is preferred).
-		   Note that filename-modifiers are useless when <sfile> is
-		   not used inside a script.
 							*:<stack>* *<stack>*
 	<stack>	   is replaced with the call stack, using
 		   "function {function-name}[{lnum}]" for a function line
@@ -952,7 +944,7 @@ Note: these are typed literally, they are not special keys!
 		   ".." in between items.  E.g.:
 		   "function {function-name1}[{lnum}]..{function-name2}[{lnum}]"
 		   If there is no call stack you get error *E489* .
-							*:<script>* *<script>*
+							*:<script>* *<script>* *E498*
 	<script>   When executing a `:source` command, is replaced with the file
 		   name of the sourced file.  When executing a function, is
 		   replaced with the file name of the script where it is
@@ -971,7 +963,7 @@ Note: these are typed literally, they are not special keys!
 							 *filename-modifiers*
 *:_%:* *::8* *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs* *::S*
      *%:8* *%:p* *%:.* *%:~* *%:h* *%:t* *%:r* *%:e* *%:s* *%:gs* *%:S*
-The file name modifiers can be used after "%", "#", "#n", "<cfile>", "<sfile>",
+The file name modifiers can be used after "%", "#", "#n", "<cfile>", "<script>",
 "<afile>" or "<abuf>".  They are also used with the |fnamemodify()| function.
 These modifiers can be given, in this order:
 	:p	Make file name a full path.  Must be the first modifier.  Also
