@@ -124,6 +124,8 @@ OPTIONS
 PLUGINS
 
 • Removed "shellmenu" plugin, an old menu-based quasi-snippet plugin for shell scripts.
+• |tohtml| is now an "opt-in" plugin. Use |:packadd| to activate it: >
+  :packadd nvim.tohtml
 
 TREESITTER
 

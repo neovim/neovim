@@ -186,6 +186,7 @@ describe(':TOhtml', function()
   local screen
   before_each(function()
     clear({ args = { '--clean' } })
+    n.command('packadd nvim.tohtml')
     screen = Screen.new(80, 80, { term_name = 'xterm' })
     exec('colorscheme default')
   end)
