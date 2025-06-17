@@ -39,9 +39,9 @@ M.nvim_argv = {
   M.runtime_set,
   '--cmd',
   M.nvim_set,
-  -- Remove default user commands and mappings.
+  -- Remove default user commands, mappings, autocommands
   '--cmd',
-  'comclear | mapclear | mapclear!',
+  'comclear | mapclear | mapclear! | autocmd! nvim.yank TextYankPost',
   -- Make screentest work after changing to the new default color scheme
   -- Source 'vim' color scheme without side effects
   -- TODO: rewrite tests

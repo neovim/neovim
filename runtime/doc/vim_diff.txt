@@ -214,6 +214,9 @@ nvim.find_exrc:
 - VimEnter: Extend 'exrc' to also search for project-local configuration files
   in all parent directories.
 
+nvim.yank:
+- TextYankPost: Highlight yanked text. |vim.hl.on_yank()|
+
 ==============================================================================
 New Features                                                   *nvim-features*
 

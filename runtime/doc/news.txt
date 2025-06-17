@@ -132,6 +132,7 @@ DEFAULTS
   was implemented as an internal C routine).
 • Project-local configuration ('exrc') is also loaded from parent directories.
   Unset 'exrc' to stop further search.
+• |default-autocmds|: set up |vim.hl.on_yank()|. To disable this, delete the "nvim.yank" event group: `:autocmd! nvim.yank`
 
 DIAGNOSTICS
 
