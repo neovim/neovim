@@ -800,7 +800,8 @@ m:			Special mark for prompt buffers. It always shows the
 			line where current prompt starts. Text from this line
 			and below will be submitted when user submits.
 			Note: This mark is readonly. You can not modify it's
-			location.
+			location. Also this mark is unique to prompt buffers as
+			a result not available in regular buffers.
 
 						*:ma* *:mark* *E191*
 :[range]ma[rk] {a-zA-Z'}
