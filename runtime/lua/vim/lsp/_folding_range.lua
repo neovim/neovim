@@ -46,7 +46,7 @@ local function renew(bufnr)
   ---@type table<integer, string?>
   local row_text = {}
 
-  for _, ranges in pairs(bufstate.client_ranges) do
+  for client_id, ranges in pairs(bufstate.client_ranges) do
     for _, range in ipairs(ranges) do
       local start_row = range.startLine
       local end_row = range.endLine
@@ -62,7 +62,7 @@ local function renew(bufnr)
             kinds[kind] = true
             row_kinds[start_row] = kinds
           else
-            log.info(('Received unsupported fold kind: "%s"'):format(kind))
+            log.info(('Unknown fold kind "%s" from client %d'):format(kind, client_id))
           end
         end
 
