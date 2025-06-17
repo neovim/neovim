@@ -81,7 +81,7 @@ end
 ---     - highlight (function)
 ---               Function that will be used for highlighting
 ---               user inputs.
----@param on_confirm function ((input|nil) -> ())
+---@param on_confirm fun(input:string|nil)
 ---               Called once the user confirms or abort the input.
 ---               `input` is what the user typed (it might be
 ---               an empty string if nothing was entered), or
