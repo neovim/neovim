@@ -148,8 +148,8 @@ local function test_generates_html(guifont, expect_font)
     [[
     local guifont, outfile = ...
     local html = (guifont
-      and require('tohtml').tohtml(0,{title="title"})
-      or require('tohtml').tohtml(0,{title="title",font={ "dumyfont","anotherfont" }}))
+      and require('nvim.tohtml').tohtml(0,{title="title"})
+      or require('nvim.tohtml').tohtml(0,{title="title",font={ "dumyfont","anotherfont" }}))
     vim.fn.writefile(html, outfile)
     vim.cmd.split(outfile)
   ]],
@@ -410,7 +410,7 @@ describe(':TOhtml', function()
       run_tohtml_and_assert(screen, function()
         exec_lua(function()
           local outfile = vim.fn.tempname() .. '.html'
-          local html = require('tohtml').tohtml(0, { number_lines = true })
+          local html = require('nvim.tohtml').tohtml(0, { number_lines = true })
           vim.fn.writefile(html, outfile)
           vim.cmd.split(outfile)
         end)

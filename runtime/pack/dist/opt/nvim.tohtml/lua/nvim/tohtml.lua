@@ -6,14 +6,13 @@
 ---given, a temporary file (created by |tempname()|) is used.
 ---</pre>
 
--- The HTML conversion script is different from Vim's one. If you want to use
--- Vim's TOhtml converter, download it from the vim GitHub repo.
--- Here are the Vim files related to this functionality:
+-- This HTML conversion script is different from Vim's. If you want to use Vim's TOhtml converter,
+-- download the related files from the Vim repo:
 -- - https://github.com/vim/vim/blob/master/runtime/syntax/2html.vim
 -- - https://github.com/vim/vim/blob/master/runtime/autoload/tohtml.vim
 -- - https://github.com/vim/vim/blob/master/runtime/plugin/tohtml.vim
 --
--- Main differences between this and the vim version:
+-- Main differences between this and the Vim version:
 -- - No "ignore some visual thing" settings (just set the right Vim option)
 -- - No support for legacy web engines
 -- - No support for legacy encoding (supports only UTF-8)
