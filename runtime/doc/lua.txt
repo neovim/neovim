@@ -2994,7 +2994,7 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
       • {path}  (`string`) An absolute or relative path to the directory to
                 iterate over. The path is first normalized
                 |vim.fs.normalize()|.
-      • {opts}  (`table`) Optional keyword arguments:
+      • {opts}  (`table?`) Optional keyword arguments:
                 • {depth}? (`integer`, default: `1`) How deep the traverse.
                 • {skip}? (`fun(dir_name: string): boolean`) Predicate to
                   control traversal. Return false to stop searching the
@@ -3063,7 +3063,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 
                  The function should return `true` if the given item is
                  considered a match.
-      • {opts}   (`table`) Optional keyword arguments:
+      • {opts}   (`table?`) Optional keyword arguments:
                  • {path}? (`string`) Path to begin searching from. If
                    omitted, the |current-directory| is used.
                  • {upward}? (`boolean`, default: `false`) Search upward

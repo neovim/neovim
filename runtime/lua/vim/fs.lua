@@ -148,7 +148,7 @@ end
 ---@since 10
 ---@param path (string) An absolute or relative path to the directory to iterate
 ---            over. The path is first normalized |vim.fs.normalize()|.
----@param opts vim.fs.dir.Opts Optional keyword arguments:
+---@param opts? vim.fs.dir.Opts Optional keyword arguments:
 ---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
 ---        "name" is the basename of the item relative to {path}.
 ---        "type" is one of the following:
@@ -267,7 +267,7 @@ end
 ---
 ---             The function should return `true` if the given item is considered a match.
 ---
----@param opts vim.fs.find.Opts Optional keyword arguments:
+---@param opts? vim.fs.find.Opts Optional keyword arguments:
 ---@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
   opts = opts or {}
