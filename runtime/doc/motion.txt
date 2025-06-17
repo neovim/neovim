@@ -795,6 +795,14 @@ m<  or  m>		Set the |'<| or |'>| mark.  Useful to change what the
 			Note that the Visual mode cannot be set, only the
 			start and end position.
 
+						*m:*
+m:			Special mark for prompt buffers. It always shows the
+			line where current prompt starts. Text from this line
+			and below will be submitted when user submits.
+			Note: This mark is readonly. You can not modify it's
+			location. Also this mark is unique to prompt buffers as
+			a result not available in regular buffers.
+
 						*:ma* *:mark* *E191*
 :[range]ma[rk] {a-zA-Z'}
 			Set mark {a-zA-Z'} at last line number in [range],

@@ -699,6 +699,7 @@ struct file_buffer {
   Callback b_prompt_interrupt;  // set by prompt_setinterrupt()
   int b_prompt_insert;          // value for restart_edit when entering
                                 // a prompt buffer window.
+  fmark_T b_prompt_start;       // Start of the editable area of a prompt buffer.
 
   synblock_T b_s;               // Info related to syntax highlighting.  w_s
                                 // normally points to this, but some windows
