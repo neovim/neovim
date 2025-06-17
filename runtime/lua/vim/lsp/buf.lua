@@ -1413,20 +1413,16 @@ local function is_empty(range)
 end
 
 --- Perform an incremental selection at the cursor position based on ranges given by the LSP. The
---- `direction` parameter specifies whether the selection should head inward or outward.
+--- `direction` parameter specifies the number of times to expand the selection. Negative values
+--- will shrink the selection.
 ---
---- @param direction 'inner' | 'outer'
+--- @param direction integer
 function M.selection_range(direction)
-  validate('direction', direction, function(v)
-    return v == 'inner' or v == 'outer'
-  end)
+  validate('direction', direction, 'number')
 
   if selection_ranges then
-    local offset = direction == 'outer' and 1 or -1
-    local new_index = selection_ranges.index + offset
-    if new_index <= #selection_ranges.ranges and new_index >= 1 then
-      selection_ranges.index = new_index
-    end
+    local new_index = selection_ranges.index + direction
+    selection_ranges.index = math.min(#selection_ranges.ranges, math.max(1, new_index))
 
     select_range(selection_ranges.ranges[selection_ranges.index])
     return
@@ -1498,8 +1494,9 @@ function M.selection_range(direction)
       })
 
       if #ranges > 0 then
-        selection_ranges = { index = 1, ranges = ranges }
-        select_range(ranges[1])
+        local index = math.min(#ranges, math.max(1, direction))
+        selection_ranges = { index = index, ranges = ranges }
+        select_range(ranges[index])
       end
     end
   )

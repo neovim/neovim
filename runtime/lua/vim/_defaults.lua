@@ -210,12 +210,12 @@ do
     end, { desc = 'vim.lsp.buf.implementation()' })
 
     vim.keymap.set('x', 'an', function()
-      vim.lsp.buf.selection_range('outer')
-    end, { desc = "vim.lsp.buf.selection_range('outer')" })
+      vim.lsp.buf.selection_range(vim.v.count1)
+    end, { desc = 'vim.lsp.buf.selection_range(vim.v.count1)' })
 
     vim.keymap.set('x', 'in', function()
-      vim.lsp.buf.selection_range('inner')
-    end, { desc = "vim.lsp.buf.selection_range('inner')" })
+      vim.lsp.buf.selection_range(-vim.v.count1)
+    end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1)' })
 
     vim.keymap.set('n', 'gO', function()
       vim.lsp.buf.document_symbol()
