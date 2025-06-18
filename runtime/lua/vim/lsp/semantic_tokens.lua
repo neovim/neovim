@@ -152,16 +152,18 @@ local function tokens_to_ranges(data, bufnr, client, request)
       local buf_line = lines[line + 1] or ''
       local end_line = line ---@type integer
       local start_col = vim.str_byteindex(buf_line, encoding, start_char, false)
-      local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
 
-      end_char = end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
+      ---@type integer LuaLS bug, type must be marked explicitly here
+      local new_end_char = end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
       -- While end_char goes past the given line, extend the token range to the next line
-      while end_char > 0 do
+      while new_end_char > 0 do
+        end_char = new_end_char
         end_line = end_line + 1
         buf_line = lines[end_line + 1] or ''
-        end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
-        end_char = end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
+        new_end_char = new_end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
       end
+
+      local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
 
       ranges[#ranges + 1] = {
         line = line,
