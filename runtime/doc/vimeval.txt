@@ -1813,7 +1813,7 @@ functions.  Scripts can also define |user-function|s.
 See |function-list| to browse functions by topic.
 
 The alphabetic list of all builtin functions and details are in a separate
-help file: |builtin-functions|.
+help file: |vimscript-functions|.
 
 ==============================================================================
 5. Defining functions					*user-function*

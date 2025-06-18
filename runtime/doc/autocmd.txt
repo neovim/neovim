@@ -73,7 +73,8 @@ Or use `:execute`: >
 Note that special characters (e.g., "%", "<cword>") in the ":autocmd"
 arguments are not expanded when the autocommand is defined.  These will be
 expanded when the Event is recognized, and the {cmd} is executed.  The only
-exception is that "<sfile>" is expanded when the autocmd is defined.  Example:
+exception is that "<sfile>" (unlike "<script>") is expanded when the autocmd
+is defined.  Example:
 >
 	:au BufNewFile,BufRead *.html so <sfile>:h/html.vim
 
@@ -261,7 +262,7 @@ BufLeave			Before leaving to another buffer.  Also when
 				Not used for ":qa" or ":q" when exiting Vim.
 							*BufModifiedSet*
 BufModifiedSet			After the `'modified'` value of a buffer has
-				been changed.
+				been changed. Special-case of |OptionSet|.
 							*BufNew*
 BufNew				After creating a new buffer (except during
 				startup, see |VimEnter|) or renaming an
@@ -497,22 +498,11 @@ CompleteDone			After Insert mode completion is done.  Either
 						  abandoned for other reason.
 
 							*CursorHold*
-CursorHold			When the user doesn't press a key for the time
-				specified with 'updatetime'.  Not triggered
-				until the user has pressed a key (i.e. doesn't
-				fire every 'updatetime' ms if you leave Vim to
-				make some coffee. :)  See |CursorHold-example|
-				for previewing tags.
-				This event is only triggered in Normal mode.
-				It is not triggered when waiting for a command
-				argument to be typed, or a movement after an
-				operator.
-				While recording the CursorHold event is not
-				triggered. |q|
-							*<CursorHold>*
-				Internally the autocommand is triggered by the
-				<CursorHold> key. In an expression mapping
-				|getchar()| may see this character.
+CursorHold			When there is no user input for 'updatetime'
+				duration, in Normal-mode. Not triggered while
+				waiting for a command argument or movement
+				after an operator, nor while |recording|
+				a macro. See |CursorHold-example|.
 
 				Note: Interactive commands cannot be used for
 				this event.  There is no hit-enter prompt,
@@ -836,6 +826,10 @@ OptionSet			After setting an option (except during
 				autocommand, that may break plugins. You can
 				always use |:noautocmd| to prevent triggering
 				OptionSet.
+
+				Note: Not triggered by the 'modified' option;
+				the |BufModifiedSet| event may be used to
+				handle that.
 
 				Non-recursive: |:set| in the autocommand does
 				not trigger OptionSet again.

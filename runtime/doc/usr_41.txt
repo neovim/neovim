@@ -588,7 +588,7 @@ after the substitute() call.
 FUNCTIONS						*function-list*
 
 There are many functions.  We will mention them here, grouped by what they are
-used for.  You can find an alphabetical list here: |builtin-function-details|.
+used for.  You can find an alphabetical list here: |vimscript-functions|.
 Use CTRL-] on the function name to jump to detailed help on it.
 
 String manipulation:					*string-functions*

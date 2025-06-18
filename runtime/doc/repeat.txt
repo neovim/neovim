@@ -265,24 +265,24 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			about each searched file.
 
 							*:pa* *:packadd* *E919*
-:pa[ckadd][!] {name}	Search for an optional plugin directory in 'packpath'
-			and source any plugin files found.  The directory must
-			match:
-				pack/*/opt/{name} ~
-			The directory is added to 'runtimepath' if it wasn't
-			there yet.
-			If the directory pack/*/opt/{name}/after exists it is
+:pa[ckadd][!] {name}	|pack-add| Search for an optional plugin directory in
+			'packpath', source any plugin files found, and add it
+			to 'runtimepath'.  The directory must match: >
+				pack/*/opt/{name}
+<			If the directory pack/*/opt/{name}/after exists it is
 			added at the end of 'runtimepath'.
 
-			If loading packages from "pack/*/start" was skipped,
-			then this directory is searched first:
-				pack/*/start/{name} ~
+			Note: Use |vim.pack.add()) to install from a URL.
 
+			If loading packages from "pack/*/start" was skipped,
+			then this directory is searched first: >
+				pack/*/start/{name}
+<
 			Note that {name} is the directory name, not the name
-			of the .vim file.  All files matching the patterns
-				pack/*/opt/{name}/plugin/**/*.vim ~
-				pack/*/opt/{name}/plugin/**/*.lua ~
-			will be sourced.  This allows for using subdirectories
+			of the .vim file.  All files matching the patterns >
+				pack/*/opt/{name}/plugin/**/*.vim
+				pack/*/opt/{name}/plugin/**/*.lua
+<			will be sourced.  This allows for using subdirectories
 			below "plugin", just like with plugins in
 			'runtimepath'.
 
@@ -293,17 +293,14 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			"pack/*/opt/{name}", this command will also look
 			for "{name}/ftdetect/*.vim" files.
 
-			When the optional ! is added no plugin files or
-			ftdetect scripts are loaded, only the matching
+			When the optional "!" is given, no plugin/ files or
+			ftdetect/ scripts are loaded, only the matching
 			directories are added to 'runtimepath'.  This is
 			useful in your |init.vim|.  The plugins will then be
-			loaded during |initialization|, see |load-plugins| (note
-			that the loading order will be reversed, because each
-			directory is inserted before others). In this case, the
-			ftdetect scripts will be loaded during |initialization|,
-			before the |load-plugins| step.
-
-			Also see |pack-add|.
+			loaded during the |load-plugins| |initialization| step
+			(note that the loading order will be reversed because
+			each directory is inserted before others), after
+			loading the ftdetect scripts.
 
 						*:packl* *:packloadall*
 :packl[oadall][!]	Load all packages in the "start" directory under each

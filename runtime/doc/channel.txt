@@ -177,85 +177,85 @@ Put this in `uppercase.vim` and run:  >bash
 ==============================================================================
 5. Using a prompt buffer				*prompt-buffer*
 
-If you want to type input for the job in a Vim window you have a few options:
-- Use a normal buffer and handle all possible commands yourself.
-  This will be complicated, since there are so many possible commands.
-- Use a terminal window.  This works well if what you type goes directly to
-  the job and the job output is directly displayed in the window.
-  See |terminal|.
-- Use a window with a prompt buffer. This works well when entering lines for
-  the job in Vim while displaying (possibly filtered) output from the job.
+Prompt buffers provide a "prompt" interface: they are like regular buffers,
+except only the last section of the buffer is editable, and the user can
+"submit" the prompt by hitting Enter. Useful for implementing:
+
+- chat UI
+- REPL or shell plugins
+- advanced "picker" plugins
 
 A prompt buffer is created by setting 'buftype' to "prompt". You would
-normally only do that in a newly created buffer.
+normally only do that in a newly created buffer: >vim
 
-The user can edit and enter text at the very last line of the buffer. Pressing
-Enter in the prompt line invokes the |prompt_setcallback()| callback. Use
-Shift+Enter to add a new line without submitting the prompt, or paste
-multiline text using any |put| or |paste| command. The callback is typically
-expected to process the prompt and show results by appending to the buffer,
-below the prompt (and above the next prompt).
+    :set buftype=prompt
 
-Only the text after the last prompt (starting from the |':| mark), is
-user-editable. The rest of the buffer is not modifiable with Normal mode
-commands.  It can be modified by functions such as |append()|.  Using other
-commands may mess up the buffer.
+The user can edit and enter text at the end of the buffer. Pressing Enter in
+the prompt section invokes the |prompt_setcallback()| callback, which is
+typically expected to process the prompt and show results by appending to the
+buffer. To input multiline text, use Shift+Enter to add a new line without
+submitting the prompt, or just |put| or |paste| multiline text.
 
-After setting 'buftype' to "prompt" Vim does not automatically start Insert
-mode, use `:startinsert` if you want to enter Insert mode, so that the user
-can start typing a line.
+Only the "prompt" part of the buffer user-editable, given by the |':| mark.
+The rest of the buffer is not modifiable with Normal mode commands, though it
+can be modified by functions such as |append()|.  Using other commands may
+mess up the buffer.
 
-The text of the prompt can be set with the |prompt_setprompt()| function. If
-no prompt is set with |prompt_setprompt()|, "% " is used. You can get the
-effective prompt text for a buffer, with |prompt_getprompt()|.
+After setting `buftype=prompt`:
+- Nvim unsets the 'comments' option.
+- Nvim does not automatically start Insert mode (use `:startinsert` if you
+  want to enter Insert mode)
+
+The prompt prefix defaults to "% ", but can be set with |prompt_setprompt()|.
+You can get the effective prompt prefix for with |prompt_getprompt()|.
 
 The user can go to Normal mode and navigate through the buffer.  This can be
 useful to see older output or copy text.
 
-The CTRL-W key can be used to start a window command, such as CTRL-W w to
-switch to the next window.  This also works in Insert mode (use Shift-CTRL-W
-to delete a word). When leaving the window Insert mode will be stopped.  When
-coming back to the prompt window Insert mode will be restored.
+By default during prompt insert-mode, the CTRL-W key can be used to start
+a window command, such as CTRL-W w to switch to the next window. (Use
+Shift-CTRL-W to delete a word). When leaving the window Insert mode will be
+stopped. When coming back to the prompt window Insert mode will be restored.
 
 Any command that starts Insert mode, such as "a", "i", "A" and "I", will move
 the cursor to the last line.  "A" will move to the end of the line, "I" to the
 start of the line.
 
-Here is an example for Unix.  It starts a shell in the background and prompts
-for the next shell command.  Output from the shell is displayed above the
-prompt. >vim
+Example: start a shell in the background and prompt for the next shell
+command, displaying shell output above the prompt: >vim
 
-	" Function handling a line of text that has been typed.
-	func TextEntered(text)
-	  " Send the text to a shell with Enter appended.
-	  call chansend(g:shell_job, [a:text, ''])
-	endfunc
+    " Handles a line of user input.
+    func OnSubmit(text)
+      " Send the text to a shell with Enter appended.
+      call chansend(g:shell_job, [a:text, ''])
+    endfunc
 
-	" Function handling output from the shell: Add it above the prompt.
-	func GotOutput(channel, msg, name)
-	  call append(line("$") - 1, a:msg)
-	endfunc
+    " Handles output from the shell.
+    func OnOutput(channel, msg, name)
+      " Add shell output above the prompt.
+      call append(line('$') - 1, a:msg)
+    endfunc
 
-	" Function handling the shell exits: close the window.
-	func JobExit(job, status, event)
-	  quit!
-	endfunc
+    " Handles the shell exit.
+    func JobExit(job, status, event)
+      quit!
+    endfunc
 
-	" Start a shell in the background.
-	let shell_job = jobstart(["/bin/sh"], #{
-		\ on_stdout: function('GotOutput'),
-		\ on_stderr: function('GotOutput'),
-		\ on_exit: function('JobExit'),
-		\ })
+    " Start a shell in the background.
+    let shell_job = jobstart(['/bin/sh'], #{
+        \ on_stdout: function('OnOutput'),
+        \ on_stderr: function('OnOutput'),
+        \ on_exit: function('JobExit'),
+        \ })
 
-	new
-	set buftype=prompt
-	let buf = bufnr('')
-	call prompt_setcallback(buf, function("TextEntered"))
-	call prompt_setprompt(buf, "shell command: ")
+    new
+    set buftype=prompt
+    let buf = bufnr('')
+    call prompt_setcallback(buf, function('OnSubmit'))
+    call prompt_setprompt(buf, 'shell command: ')
 
-	" start accepting shell commands
-	startinsert
+    " Start accepting shell commands.
+    startinsert
 <
 
- vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:et:sw=4:ft=help:norl:

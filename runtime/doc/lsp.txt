@@ -859,16 +859,13 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
         describing the failure reason, and `result` is nil.
 
 commands                                                    *vim.lsp.commands*
-    Registry (a table) for client-side handlers, for custom server-commands
-    that are not in the LSP specification.
+    Map of client-defined handlers implementing custom (off-spec) commands
+    which a server may invoke. Each key is a unique command name; each value
+    is a function which is called when an LSP action (code action, code
+    lenses, …) requests it by name.
 
-    If an LSP response contains a command which is not found in
-    `vim.lsp.commands`, the command will be executed via the LSP server using
-    `workspace/executeCommand`.
-
-    Each key in the table is a unique command name, and each value is a
-    function which is called when an LSP action (code action, code lenses,
-    …) triggers the command.
+    If an LSP response requests a command not defined client-side, Nvim will
+    forward it to the server as `workspace/executeCommand`.
     • Argument 1 is the `Command`: >
       Command
       title: String
@@ -1381,13 +1378,8 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                    { PORT = 8080; HOST = '0.0.0.0'; }
 <
       • {commands}?            (`table<string,fun(command: lsp.Command, ctx: table)>`)
-                               Client commands. Map of command names to
-                               user-defined functions. Commands passed to
-                               `start()` take precedence over the global
-                               command registry. Each key must be a unique
-                               command name, and the value is a function which
-                               is called if any LSP action (code action, code
-                               lenses, …) triggers the command.
+                               Map of client-defined commands overriding the
+                               global |vim.lsp.commands|.
       • {detached}?            (`boolean`, default: `true`) Daemonize the
                                server process so that it runs in a separate
                                process group from Nvim. Nvim will shutdown the

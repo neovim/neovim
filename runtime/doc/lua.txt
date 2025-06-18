@@ -3177,12 +3177,12 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
 
     Examples: >lua
         -- Map "x" to a Lua function:
-        vim.keymap.set('n', 'x', function() print("real lua function") end)
+        vim.keymap.set('n', 'x', function() print('real lua function') end)
         -- Map "<leader>x" to multiple modes for the current buffer:
         vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buffer = true })
         -- Map <Tab> to an expression (|:map-<expr>|):
         vim.keymap.set('i', '<Tab>', function()
-          return vim.fn.pumvisible() == 1 and "<C-n>" or "<Tab>"
+          return vim.fn.pumvisible() == 1 and '<C-n>' or '<Tab>'
         end, { expr = true })
         -- Map "[%%" to a <Plug> mapping:
         vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')

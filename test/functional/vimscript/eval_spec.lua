@@ -5,7 +5,7 @@
 --    null_spec.lua
 --    operators_spec.lua
 --
--- Tests for the Vimscript |builtin-functions| library should live in:
+-- Tests for the Vimscript |vimscript-functions| library should live in:
 --    test/functional/vimscript/<funcname>_spec.lua
 --    test/functional/vimscript/functions_spec.lua
 
