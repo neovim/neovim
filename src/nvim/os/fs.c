@@ -267,16 +267,16 @@ static bool is_executable(const char *name, char **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   int32_t mode = os_getperm(name);
+#ifdef MSWIN
+  // Windows does not have exec bit; just check if the file exists and is not
+  // a directory.
+  const bool ok = mode < 0 ? mode == UV_EACCES : S_ISREG(mode);
+#else
 
   if (mode < 0) {
     return false;
   }
 
-#ifdef MSWIN
-  // Windows does not have exec bit; just check if the file exists and is not
-  // a directory.
-  const bool ok = S_ISREG(mode);
-#else
   int r = -1;
   if (S_ISREG(mode)) {
     RUN_UV_FS_FUNC(r, uv_fs_access, name, X_OK, NULL);
