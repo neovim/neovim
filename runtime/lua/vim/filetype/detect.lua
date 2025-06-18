@@ -908,9 +908,13 @@ function M.ll(_, bufnr)
   local first_line = getline(bufnr, 1)
   if matchregex(first_line, [[;\|\<source_filename\>\|\<target\>]]) then
     return 'llvm'
-  else
-    return 'lifelines'
   end
+  for _, line in ipairs(getlines(bufnr, 1, 100)) do
+    if line:find('^%s*%%') then
+      return 'lex'
+    end
+  end
+  return 'lifelines'
 end
 
 --- @type vim.filetype.mapfn
