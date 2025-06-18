@@ -2600,6 +2600,12 @@ func Test_ll_file()
   call assert_equal('llvm', &filetype)
   bwipe!
 
+  " lex (C++)
+  call writefile(['%{', '#include <iostream>', '%}'], 'Xfile.ll', 'D')
+  split Xfile.ll
+  call assert_equal('lex', &filetype)
+  bwipe!
+
   " lifelines
   call writefile(['proc main() {}'], 'Xfile.ll', 'D')
   split Xfile.ll
