@@ -619,10 +619,10 @@ vim.bo.bl = vim.bo.buflisted
 ---   help		help buffer (do not set this manually)
 ---   nofile	buffer is not related to a file, will not be written
 ---   nowrite	buffer will not be written
+---   prompt	buffer where only the last section can be edited, for
+--- 		use by plugins. `prompt-buffer`
 ---   quickfix	list of errors `:cwindow` or locations `:lwindow`
 ---   terminal	`terminal-emulator` buffer
----   prompt	buffer where only the last line can be edited, meant
---- 		to be used by a plugin, see `prompt-buffer`
 ---
 --- This option is used together with 'bufhidden' and 'swapfile' to
 --- specify special kinds of buffers.   See `special-buffers`.

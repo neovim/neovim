@@ -17,6 +17,8 @@ TUI and GUI (assuming the UI supports the given feature). See |TUI| for notes
 specific to the terminal UI. Help tags with the "gui-" prefix refer to UI
 features, whereas help tags with the "ui-" prefix refer to the |ui-protocol|.
 
+                                      Type |gO| to see the table of contents.
+
 ==============================================================================
 Third-party GUIs                                *third-party-guis* *vscode*
 
@@ -33,8 +35,6 @@ a Nvim GUI.
 - Neovim-Qt (Qt5) https://github.com/equalsraf/neovim-qt
 - VimR (macOS) https://github.com/qvacua/vimr
 - Others https://github.com/neovim/neovim/wiki/Related-projects#gui
-
-                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Starting the GUI                                *gui-config* *gui-start*

@@ -73,7 +73,8 @@ Or use `:execute`: >
 Note that special characters (e.g., "%", "<cword>") in the ":autocmd"
 arguments are not expanded when the autocommand is defined.  These will be
 expanded when the Event is recognized, and the {cmd} is executed.  The only
-exception is that "<sfile>" is expanded when the autocmd is defined.  Example:
+exception is that "<sfile>" (unlike "<script>") is expanded when the autocmd
+is defined.  Example:
 >
 	:au BufNewFile,BufRead *.html so <sfile>:h/html.vim
 
