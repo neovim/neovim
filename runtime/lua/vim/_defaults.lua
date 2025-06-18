@@ -935,7 +935,7 @@ do
   end
 
   vim.api.nvim_create_autocmd('VimEnter', {
-    group = vim.api.nvim_create_augroup('nvim.find_exrc', {}),
+    group = vim.api.nvim_create_augroup('nvim.exrc', {}),
     desc = 'Find exrc files in parent directories',
     callback = function()
       if not vim.o.exrc then

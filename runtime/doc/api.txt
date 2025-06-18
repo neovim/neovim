@@ -2222,7 +2222,7 @@ whether a buffer is loaded.
 
 
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
-    Activates buffer-update events on a channel, or as Lua callbacks.
+    Activates |api-buffer-updates| events on a channel, or as Lua callbacks.
 
     Example (Lua): capture buffer updates in a global `events` variable (use
     "vim.print(events)" to see its contents): >lua
@@ -2875,7 +2875,7 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                   • hl_eol : when true, for a multiline highlight covering the
                     EOL of a line, continue the highlight for the rest of the
                     screen line (just like for diff and cursorline highlight).
-                  • virt_text : virtual text to link to this mark. A list of
+                  • virt_text : *virtual-text* to link to this mark. A list of
                     `[text, highlight]` tuples, each representing a text chunk
                     with specified highlight. `highlight` element can either
                     be a single highlight group, or an array of multiple

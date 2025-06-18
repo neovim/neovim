@@ -78,6 +78,9 @@ exception is that "<sfile>" is expanded when the autocmd is defined.  Example:
 	:au BufNewFile,BufRead *.html so <sfile>:h/html.vim
 
 Here Vim expands <sfile> to the name of the file containing this line.
+Use <script> instead to avoid that: >
+
+	:au BufNewFile,BufRead *.html so <script>:h/html.vim
 
 `:autocmd` adds to the list of autocommands regardless of whether they are
 already present.  When your .vimrc file is sourced twice, the autocommands
@@ -87,7 +90,7 @@ that you can easily clear them: >
 	augroup vimrc
 	  " Remove all vimrc autocommands
 	  autocmd!
-	  au BufNewFile,BufRead *.html so <sfile>:h/html.vim
+	  au BufNewFile,BufRead *.html so <script>:h/html.vim
 	augroup END
 
 If you don't want to remove all autocommands, you can instead use a variable

@@ -1112,10 +1112,10 @@ Context-sensitive completion on the command-line:
 			   expected) (see |WORD|)
 |:<cfile>|  <cfile>	file name under the cursor (only where a file name is
 			   expected)
-|:<sfile>|  <sfile>	file name of a ":source"d file, within that file (only
+|:<script>| <script>	file name of a ":source"d file, within that file (only
 			   where a file name is expected)
 
-		After "%", "#", "<cfile>", "<sfile>" or "<afile>"
+		After "%", "#", "<cfile>", "<script>" or "<afile>"
 		|::p|	    :p		full path
 		|::h|	    :h		head (file name removed)
 		|::t|	    :t		tail (file name only)
