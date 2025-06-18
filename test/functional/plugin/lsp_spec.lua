@@ -6579,7 +6579,7 @@ describe('LSP', function()
       )
     end)
 
-    it('supports async function for root_dir', function()
+    it('async root_dir, cmd(…,config) gets resolved config', function()
       exec_lua(create_server_definition)
 
       local tmp1 = t.tmpname(true)
@@ -6593,7 +6593,10 @@ describe('LSP', function()
         })
 
         vim.lsp.config('foo', {
-          cmd = server.cmd,
+          cmd = function(dispatchers, config)
+            _G.test_resolved_root = config.root_dir --[[@type string]]
+            return server.cmd(dispatchers, config)
+          end,
           filetypes = { 'foo' },
           root_dir = function(bufnr, cb)
             assert(tmp1 == vim.api.nvim_buf_get_name(bufnr))
@@ -6616,6 +6619,12 @@ describe('LSP', function()
           end)
         )
       end)
+      eq(
+        'some_dir',
+        exec_lua(function()
+          return _G.test_resolved_root
+        end)
+      )
     end)
 
     it('starts correct LSP and stops incorrect LSP when filetype changes', function()
@@ -6842,10 +6851,8 @@ describe('LSP', function()
       markers_resolve_to({ 'marker_a', { 'marker_b', 'marker_d' } }, tmp_root)
       markers_resolve_to({ 'foo', { 'bar', 'baz' }, 'marker_d' }, dir_b)
     end)
-  end)
 
-  describe('vim.lsp.is_enabled()', function()
-    it('works', function()
+    it('vim.lsp.is_enabled()', function()
       exec_lua(function()
         vim.lsp.config('foo', {
           cmd = { 'foo' },

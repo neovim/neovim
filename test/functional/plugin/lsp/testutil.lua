@@ -54,7 +54,7 @@ M.create_server_definition = function()
     local server = {}
     server.messages = {}
 
-    function server.cmd(dispatchers)
+    function server.cmd(dispatchers, _config)
       local closing = false
       local handlers = opts.handlers or {}
       local srv = {}

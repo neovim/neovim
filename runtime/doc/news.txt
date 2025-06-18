@@ -180,6 +180,8 @@ LSP
   `an` selects outwards and `in` selects inwards.
 • Support for multiline semantic tokens.
 • Support for the `disabled` field on code actions.
+• The function form of `cmd` in a vim.lsp.Config or vim.lsp.ClientConfig
+  receives the resolved config as the second arg: `cmd(dispatchers, config)`.
 
 LUA
 
