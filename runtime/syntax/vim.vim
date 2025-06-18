@@ -78,7 +78,7 @@ syn keyword vimErrSetting contained invakm invaltkeymap invanti invantialias inv
 syn case ignore
 
 syn keyword	vimAutoEvent	contained	User	skipwhite nextgroup=vimUserAutoEvent
-syn match	vimUserAutoEvent	contained	"\<\h\w*\>"	skipwhite nextgroup=vimAutoEventSep,@vimAutocmdPattern
+syn match	vimUserAutoEvent	contained	"\<\h\w*\>"	skipwhite nextgroup=vimUserAutoEventSep,vimAutocmdMod,vimAutocmdBlock
 
 " Highlight commonly used Groupnames {{{2
 syn keyword vimGroup contained	Comment Constant String Character Number Boolean Float Identifier Function Statement Conditional Repeat Label Operator Keyword Exception PreProc Include Define Macro PreCondit Type StorageClass Structure Typedef Special SpecialChar Tag Delimiter SpecialComment Debug Underlined Ignore Error Todo
@@ -1193,6 +1193,7 @@ syn match	vimAutocmdMod	contained	"++once\>"	skipwhite nextgroup=vimAutocmdMod,v
 " higher priority than vimAutocmdGroup, assume no group is so named
 syn match	vimAutoEventGlob	contained	"*"	skipwhite nextgroup=@vimAutocmdPattern
 syn match	vimAutoEventSep	contained	"\a\@1<=,"	nextgroup=vimAutoEvent,nvimAutoEvent
+syn match	vimUserAutoEventSep contained	"\a\@1<=,"	nextgroup=vimUserAutoEvent
 
 syn match	vimAutocmd		"\<au\%[tocmd]\>"	skipwhite nextgroup=vimAutocmdBang,vimAutocmdGroup,vimAutoEvent,nvimAutoEvent,vimAutoEventGlob
 
