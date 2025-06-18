@@ -283,6 +283,8 @@ LSP
   its parameters.
 • |vim.lsp.Config| gained `workspace_required`.
 • `root_markers` in |vim.lsp.Config| can now be ordered by priority.
+• The function form of `cmd` in a vim.lsp.Config or vim.lsp.ClientConfig
+  receives the resolved config as the second arg: `cmd(dispatchers, config)`.
 
 LUA
 
