@@ -45,9 +45,8 @@ local validate = vim.validate
 ---
 --- Command `string[]` that launches the language server (treated as in |jobstart()|, must be
 --- absolute or on `$PATH`, shell constructs like "~" are not expanded), or function that creates an
---- RPC client. Function receives a `dispatchers` table and the resolved `config`,
---- and must return a table with member functions
---- `request`, `notify`, `is_closing` and `terminate`.
+--- RPC client. Function receives a `dispatchers` table and the resolved `config`, and must return
+--- a table with member functions `request`, `notify`, `is_closing` and `terminate`.
 --- See |vim.lsp.rpc.request()|, |vim.lsp.rpc.notify()|.
 --- For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
 --- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient
