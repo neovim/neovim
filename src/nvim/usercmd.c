@@ -448,6 +448,7 @@ static void uc_list(char *name, size_t name_len)
 {
   bool found = false;
 
+  msg_ext_set_kind("list_cmd");
   // In cmdwin, the alternative buffer should be used.
   const garray_T *gap = &prevwin_curwin()->w_buffer->b_ucmds;
   while (true) {
