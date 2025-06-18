@@ -1,5 +1,95 @@
 local M = {}
 
+---Endpoint for the nvim image API.
+---
+---The API follows a simplistic, object-oriented design similar to `vim.system()`.
+---You specify an image, optionally eagerly loading its data, and then display it
+---within nvim. The information about where and how it is displayed is provided
+---through a single table.
+---
+---The image API makes use of an internal `Promise<T>` class in order to support
+---both synchronous and asynchronous operation, meaning that images can be loaded,
+---shown, hidden, and updated asynchronously in order to be efficient, but also can
+---manually be waited upon at any stage.
+---
+---Examples in action
+---
+---```lua
+----- Supports loading PNG images into memory
+---local img = assert(vim.ui.img.load("/path/to/img.png"):wait())
+---
+----- Supports lazy-loading image for a provider to request later if needed
+---local img = vim.ui.img.new("/path/to/img.png")
+---
+----- Supports specifying an image and explicitly providing the data
+---local img = vim.ui.img.new({ bytes = "...", filename = "/path/to/img.png" })
+---```
+---
+---Displaying an image involves calling a singular function `show`:
+---
+---```lua
+---local img = vim.ui.img.new("/path/to/img.png")
+---img:show():wait() -- Places in top-left of editor with default size
+---img:show({ col = 4, row = 8 }):wait()
+---img:show({ relative = 'cursor' }):wait()
+---```
+---
+---Hiding a displayed image is a call to `hide`:
+---
+---```lua
+---assert(img:is_visible(), 'image is not visible')
+---assert(img:hide():wait())
+---```
+---
+---Once an image is displayed, it can be updated to change a limited
+---set of fields using `update`:
+---
+---```lua
+---local img = vim.ui.img.new("/path/to/img.png")
+---assert(img:show({ col = 1, row = 2 }):wait())
+---
+----- Supports updating a displayed image with a new position
+---img:update({ col = 5, row = 6 }):wait()
+---
+----- Supports resizing a displayed image
+---img:update({ width = 10, height = 5 }):wait()
+---
+----- Of course, you can do all of this at the same time
+---img:update({
+---    col = 5,
+---    row = 6,
+---    width = 10,
+---    height = 5,
+---}):wait()
+---```
+---
+---Backed by promises
+---
+---Each Promise<T> supports chaining callbacks for individual
+---conditions of success or failure as well as combining the two
+---together.
+--
+---The on_* methods can be called multiple times and each
+---callback will be invoked when finished.
+---
+---You can also still choose to wait in a synchronous fashion
+---using `:wait()` which supports supplying a specific timeout
+---in milliseconds.
+---
+---```lua
+---img:show({ ... })
+---    :on_ok(function()
+---        -- Use the image once it has been confirmed as shown
+---    end)
+---    :on_fail(function(err)
+---        -- Do something with the error that occurred
+---    end)
+---    :on_done(function(err)
+---        -- When either ok or fail happens
+---    end)
+---```
+M.img = require('vim.ui.img')
+
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
 --- work until `on_choice`.
 ---

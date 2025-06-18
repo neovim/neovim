@@ -341,6 +341,7 @@ pub fn build(b: *std.Build) !void {
     test_deps.dependOn(test_fixture(b, "pwsh-test", null, target, optimize));
     test_deps.dependOn(test_fixture(b, "printargs-test", null, target, optimize));
     test_deps.dependOn(test_fixture(b, "printenv-test", null, target, optimize));
+    test_deps.dependOn(test_fixture(b, "printio-test", null, target, optimize));
     test_deps.dependOn(test_fixture(b, "streams-test", libuv, target, optimize));
 
     const parser_c = b.dependency("treesitter_c", .{ .target = target, .optimize = optimize });
