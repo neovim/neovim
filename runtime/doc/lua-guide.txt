@@ -164,7 +164,7 @@ the cache manually first:
 <
 ------------------------------------------------------------------------------
 See also:
-• |lua-module-load|
+• |lua-module-load|: how `require()` finds modules
 • |pcall()|
 
 ==============================================================================
@@ -235,7 +235,6 @@ See also:
 • |builtin-functions|: alphabetic list of all Vimscript functions
 • |function-list|:     list of all Vimscript functions grouped by topic
 • |:runtime|:          run all Lua scripts matching a pattern in |'runtimepath'|
-• |package.path|:      list of all paths searched by `require()`
 
 ==============================================================================
 Variables                                                  *lua-guide-variables*
