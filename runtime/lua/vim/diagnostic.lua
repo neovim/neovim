@@ -1527,6 +1527,7 @@ M.handlers.signs = {
     vim.validate('bufnr', bufnr, 'number')
     vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
     vim.validate('opts', opts, 'table', true)
+    vim.validate('opts.signs', (opts and opts or {}).signs, 'table', true)
 
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
