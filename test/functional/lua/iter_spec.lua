@@ -160,6 +160,30 @@ describe('vim.iter', function()
     end
 
     do
+      local function wrong()
+        return false
+      end
+
+      local function correct()
+        return true
+      end
+
+      local q = { 4, 3, 2, 1 }
+
+      eq({ 4, 3, 2, 1 }, vim.iter(q):skip(wrong):totable())
+      eq(
+        { 2, 1 },
+        vim
+          .iter(q)
+          :skip(function(x)
+            return x > 2
+          end)
+          :totable()
+      )
+      eq({}, vim.iter(q):skip(correct):totable())
+    end
+
+    do
       local function skip(n)
         return vim.iter(vim.gsplit('a|b|c|d', '|')):skip(n):totable()
       end
@@ -241,6 +265,14 @@ describe('vim.iter', function()
   end)
 
   it('take()', function()
+    local function correct()
+      return true
+    end
+
+    local function wrong()
+      return false
+    end
+
     do
       local q = { 4, 3, 2, 1 }
       eq({}, vim.iter(q):take(0):totable())
@@ -249,6 +281,22 @@ describe('vim.iter', function()
       eq({ 4, 3, 2 }, vim.iter(q):take(3):totable())
       eq({ 4, 3, 2, 1 }, vim.iter(q):take(4):totable())
       eq({ 4, 3, 2, 1 }, vim.iter(q):take(5):totable())
+    end
+
+    do
+      local q = { 4, 3, 2, 1 }
+
+      eq({}, vim.iter(q):take(wrong):totable())
+      eq(
+        { 4, 3 },
+        vim
+          .iter(q)
+          :take(function(x)
+            return x > 2
+          end)
+          :totable()
+      )
+      eq({ 4, 3, 2, 1 }, vim.iter(q):take(correct):totable())
     end
 
     do
@@ -270,6 +318,24 @@ describe('vim.iter', function()
       eq({ 'a', 'b' }, it:take(2):totable())
       -- non-array iterators are consumed by take()
       eq({}, it:take(2):totable())
+    end
+
+    do
+      eq({ 'a', 'b', 'c', 'd' }, vim.iter(vim.gsplit('a|b|c|d', '|')):take(correct):totable())
+      eq(
+        { 'a', 'b', 'c' },
+        vim
+          .iter(vim.gsplit('a|b|c|d', '|'))
+          :enumerate()
+          :take(function(i, x)
+            return i < 3 or x == 'c'
+          end)
+          :map(function(_, x)
+            return x
+          end)
+          :totable()
+      )
+      eq({}, vim.iter(vim.gsplit('a|b|c|d', '|')):take(wrong):totable())
     end
   end)
 

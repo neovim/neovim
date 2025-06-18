@@ -681,7 +681,8 @@ function ArrayIter:rfind(f)
   self._head = self._tail
 end
 
---- Transforms an iterator to yield only the first n values.
+--- Transforms an iterator to yield only the first n values, or all values
+--- satisfying a predicate.
 ---
 --- Example:
 ---
@@ -693,24 +694,56 @@ end
 --- -- 2
 --- it:next()
 --- -- nil
+---
+--- local function pred(x) return x < 2 end
+--- local it2 = vim.iter({ 1, 2, 3, 4 }):take(pred)
+--- it2:next()
+--- -- 1
+--- it2:next()
+--- -- nil
 --- ```
 ---
----@param n integer
+---@param n integer|fun(...):boolean Number of values to take or a predicate.
 ---@return Iter
 function Iter:take(n)
-  local next = self.next
   local i = 0
-  self.next = function()
-    if i < n then
-      i = i + 1
-      return next(self)
+  local f = n
+  if type(n) ~= 'function' then
+    f = function()
+      return i < n
     end
+  end
+
+  local stop = false
+  local function fn(...)
+    if not stop and select(1, ...) ~= nil and f(...) then
+      i = i + 1
+      return ...
+    else
+      stop = true
+    end
+  end
+
+  local next = self.next
+  self.next = function()
+    return fn(next(self))
   end
   return self
 end
 
 ---@private
 function ArrayIter:take(n)
+  if type(n) == 'function' then
+    local inc = self._head < self._tail and 1 or -1
+    for i = self._head, self._tail, inc do
+      if not n(unpack(self._table[i])) then
+        self._tail = i
+        break
+      end
+    end
+    return self
+  end
+
   local inc = self._head < self._tail and n or -n
   local cmp = self._head < self._tail and math.min or math.max
   self._tail = cmp(self._tail, self._head + inc)
@@ -772,7 +805,8 @@ function ArrayIter:rpeek()
   end
 end
 
---- Skips `n` values of an iterator pipeline.
+--- Skips `n` values of an iterator pipeline, or all values satisfying a
+--- predicate of a |list-iterator|.
 ---
 --- Example:
 ---
@@ -782,11 +816,20 @@ end
 --- it:next()
 --- -- 9
 ---
+--- local function pred(x) return x < 10 end
+--- local it2 = vim.iter({ 3, 6, 9, 12 }):skip(pred)
+--- it2:next()
+--- -- 12
 --- ```
 ---
----@param n number Number of values to skip.
+---@param n integer|fun(...):boolean Number of values to skip or a predicate.
 ---@return Iter
 function Iter:skip(n)
+  if type(n) == 'function' then
+    -- We would need to evaluate the perdicate without advancing iterator
+    error('skip() with predicate requires an array-like table')
+  end
+
   for _ = 1, n do
     local _ = self:next()
   end
@@ -795,6 +838,16 @@ end
 
 ---@private
 function ArrayIter:skip(n)
+  if type(n) == 'function' then
+    local inc = self._head < self._tail and 1 or -1
+    local i = self._head
+    while n(unpack(self:peek())) and i ~= self._tail do
+      self:next()
+      i = i + inc
+    end
+    return self
+  end
+
   local inc = self._head < self._tail and n or -n
   self._head = self._head + inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
