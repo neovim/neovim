@@ -413,12 +413,12 @@ make a top-down hierarchy of script files.  The ':source' command can be
 nested as deep as the number of files that can be opened at one time (about
 15).  The ':source!' command can be nested up to 15 levels deep.
 
-You can use the "<sfile>" string (literally, this is not a special key) inside
+You can use the "<script>" string (literally, this is not a special key) inside
 of the sourced file, in places where a file name is expected.  It will be
 replaced by the file name of the sourced file.  For example, if you have a
 "other.vimrc" file in the same directory as your |init.vim| file, you can
 source it from your |init.vim| file with this command: >
-	:source <sfile>:h/other.vimrc
+	:source <script>:h/other.vimrc
 
 In script files terminal-dependent key codes are represented by
 terminal-independent two character codes.  This means that they can be used

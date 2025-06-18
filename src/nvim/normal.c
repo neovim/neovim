@@ -4458,10 +4458,6 @@ static void nv_kundo(cmdarg_T *cap)
     return;
   }
 
-  if (bt_prompt(curbuf)) {
-    clearopbeep(cap->oap);
-    return;
-  }
   u_undo(cap->count1);
   curwin->w_set_curswant = true;
 }
@@ -5157,10 +5153,6 @@ static void nv_suspend(cmdarg_T *cap)
 ///       exchange previous and current Visual area.
 static void nv_gv_cmd(cmdarg_T *cap)
 {
-  if (checkclearop(cap->oap)) {
-    return;
-  }
-
   if (curbuf->b_visual.vi_start.lnum == 0
       || curbuf->b_visual.vi_start.lnum > curbuf->b_ml.ml_line_count
       || curbuf->b_visual.vi_end.lnum == 0) {
@@ -6485,8 +6477,15 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
   }
 
   if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
-    clearopbeep(cap->oap);
-    return;
+    if (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum) {
+      curwin->w_cursor.col = (int)strlen(prompt_text());
+      // Since we've shifted the cursor to the first editable char. We want to
+      // paste before that.
+      cap->cmdchar = 'P';
+    } else {
+      clearopbeep(cap->oap);
+      return;
+    }
   }
 
   if (fix_indent) {
@@ -6617,7 +6616,7 @@ static void nv_open(cmdarg_T *cap)
   } else if (VIsual_active) {
     // switch start and end of visual/
     v_swap_corners(cap->cmdchar);
-  } else if (bt_prompt(curbuf)) {
+  } else if (bt_prompt(curbuf) && curwin->w_cursor.lnum < curbuf->b_prompt_start.mark.lnum) {
     clearopbeep(cap->oap);
   } else {
     n_opencmd(cap);

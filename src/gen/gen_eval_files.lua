@@ -6,6 +6,7 @@ local util = require('gen.util')
 local fmt = string.format
 
 local DEP_API_METADATA = arg[1]
+local TAGS_FILE = arg[2]
 local TEXT_WIDTH = 78
 
 --- @class vim.api.metadata
@@ -179,7 +180,7 @@ local function api_type(t)
     local a = api_type(as[1])
     local count = tonumber(as[2])
     if count then
-      return ('[%s]'):format(a:rep(count, ', '))
+      return fmt('[%s]', a:rep(count, ', '))
     else
       return a .. '[]'
     end
@@ -219,7 +220,7 @@ local function api_type(t)
       as1[#as1 + 1] = nm .. ': ' .. api_type(a1[1])
     end
 
-    return ('fun(%s)%s'):format(table.concat(as1, ', '), r and ': ' .. api_type(r) or '')
+    return fmt('fun(%s)%s', table.concat(as1, ', '), r and ': ' .. api_type(r) or '')
   end
 
   return API_TYPES[t] or t
@@ -367,11 +368,11 @@ local function norm_text(x, special)
     x = x:gsub([=[%|?(nvim_[^.()| ]+)%(?%)?%|?]=], 'vim.api.%1')
     -- TODO: Remove backticks when LuaLS resolves: https://github.com/LuaLS/lua-language-server/issues/2889
     -- "|foo|" => "`:help foo`"
-    x = x:gsub([=[|([^ ]+)|]=], '`:help %1`')
+    x = x:gsub([=[|([^%s|]+)|]=], '`:help %1`')
   end
 
   return (
-    x:gsub('|([^ ]+)|', '`%1`')
+    x:gsub('|([^%s|]+)|', '`%1`')
       :gsub('\n*>lua', '\n\n```lua')
       :gsub('\n*>vim', '\n\n```vim')
       :gsub('\n+<$', '\n```')
@@ -616,7 +617,7 @@ local function render_eval_doc(f, fun, write)
 
   if fun.returns ~= false then
     write(util.md_to_vimdoc('Return: ~', 16, 16, TEXT_WIDTH))
-    local ret = ('(`%s`)'):format((fun.returns or 'any'))
+    local ret = fmt('(`%s`)', (fun.returns or 'any'))
     ret = ret .. (fun.returns_desc and ' ' .. fun.returns_desc or '')
     ret = util.md_to_vimdoc(ret, 18, 18, TEXT_WIDTH)
     write(ret)
@@ -797,6 +798,23 @@ local function get_option_meta()
       end
       local r = vim.deepcopy(o) --[[@as vim.option_meta]]
       r.desc = o.desc:gsub('^        ', ''):gsub('\n        ', '\n')
+      if o.full_name == 'eventignorewin' then
+        local events = require('nvim.auevents').events
+        local tags_file = assert(io.open(TAGS_FILE))
+        local tags_text = tags_file:read('*a')
+        tags_file:close()
+        local map_fn = function(event_name, is_window_local)
+          if is_window_local then
+            return nil -- Don't include in the list of events outside window context.
+          end
+          local tag_pat = fmt('\n%s\t([^\t]+)\t', event_name)
+          local link_text = fmt('|%s|', event_name)
+          local tags_match = tags_text:match(tag_pat) --- @type string?
+          return tags_match and tags_match ~= 'deprecated.txt' and link_text or nil
+        end
+        local extra_desc = vim.iter(vim.spairs(events)):map(map_fn):join(',\n\t')
+        r.desc = r.desc:gsub('<PLACEHOLDER>', extra_desc)
+      end
       r.defaults = r.defaults or {}
       if r.defaults.meta == nil then
         r.defaults.meta = optinfo[o.full_name].default

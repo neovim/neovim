@@ -15,6 +15,7 @@
 "		2025 May 06 match KornShell compound arrays
 "		2025 May 10 improve wildcard character class lists
 "		2025 May 21 improve supported KornShell features
+"		2025 Jun 16 change how sh_fold_enabled is reset (#17557)
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -147,8 +148,8 @@ endif
 if !exists("g:sh_fold_enabled")
  let g:sh_fold_enabled= 0
 elseif g:sh_fold_enabled != 0 && !has("folding")
- let g:sh_fold_enabled= 0
  echomsg "Ignoring g:sh_fold_enabled=".g:sh_fold_enabled."; need to re-compile vim for +fold support"
+ let g:sh_fold_enabled= 0
 endif
 let s:sh_fold_functions= and(g:sh_fold_enabled,1)
 let s:sh_fold_heredoc  = and(g:sh_fold_enabled,2)

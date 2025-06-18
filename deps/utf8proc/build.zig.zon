@@ -6,7 +6,7 @@
     .dependencies = .{
         .utf8proc = .{
             .url = "git+https://github.com/JuliaStrings/utf8proc?ref=v2.10.0#a1b99daa2a3393884220264c927a48ba1251a9c6",
-            .hash = "1220d80ce0bde71b8acae76b9686fa785aa0cdf165f0d6e93a853d57bfbed129a5e7",
+            .hash = "N-V-__8AAPJfKADYDOC95xuKyudrlob6eFqgzfFl8NbpOoU9",
         },
     },
 }

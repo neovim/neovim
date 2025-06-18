@@ -78,6 +78,7 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
+#include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -8663,30 +8664,46 @@ void invoke_prompt_callback(void)
 {
   typval_T rettv;
   typval_T argv[2];
-  linenr_T lnum = curbuf->b_ml.ml_line_count;
+  linenr_T lnum_start = curbuf->b_prompt_start.mark.lnum;
+  linenr_T lnum_last = curbuf->b_ml.ml_line_count;
 
   // Add a new line for the prompt before invoking the callback, so that
   // text can always be inserted above the last line.
-  ml_append(lnum, "", 0, false);
-  appended_lines_mark(lnum, 1);
-  curwin->w_cursor.lnum = lnum + 1;
+  ml_append(lnum_last, "", 0, false);
+  appended_lines_mark(lnum_last, 1);
+  curwin->w_cursor.lnum = lnum_last + 1;
   curwin->w_cursor.col = 0;
 
   if (curbuf->b_prompt_callback.type == kCallbackNone) {
-    return;
+    goto theend;
   }
-  char *text = ml_get(lnum);
+  char *text = ml_get(lnum_start);
   char *prompt = prompt_text();
   if (strlen(text) >= strlen(prompt)) {
     text += strlen(prompt);
   }
+
+  char *full_text = xstrdup(text);
+  for (linenr_T i = lnum_start + 1; i <= lnum_last; i++) {
+    char *half_text = concat_str(full_text, "\n");
+    xfree(full_text);
+    full_text = concat_str(half_text, ml_get(i));
+    xfree(half_text);
+  }
   argv[0].v_type = VAR_STRING;
-  argv[0].vval.v_string = xstrdup(text);
+  argv[0].vval.v_string = full_text;
   argv[1].v_type = VAR_UNKNOWN;
 
   callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
   tv_clear(&argv[0]);
   tv_clear(&rettv);
+
+theend:
+  // clear undo history on submit
+  u_clearallandblockfree(curbuf);
+
+  pos_T next_prompt = { .lnum = curbuf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
+  RESET_FMARK(&curbuf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
 }
 
 /// @return  true when the interrupt callback was invoked.

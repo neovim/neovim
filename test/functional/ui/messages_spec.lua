@@ -534,6 +534,42 @@ describe('ui/ext_messages', function()
         },
       },
     })
+
+    command('command Foo Bar')
+    feed(':command<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      cmdline = { { abort = false } },
+      messages = {
+        {
+          content = {
+            { '\n    Name              Args Address Complete    Definition', 101, 23 },
+            { '\n    ' },
+            { 'Foo', 18, 5 },
+            { '               0                        Bar' },
+          },
+          kind = 'list_cmd',
+        },
+      },
+    })
+
+    feed(':version<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      cmdline = { { abort = false } },
+      condition = function()
+        eq('list_cmd', screen.messages[1].kind)
+        screen.messages = {}
+      end,
+    })
   end)
 
   it(':echoerr', function()
@@ -1604,14 +1640,21 @@ stack traceback:
   end)
 
   it('g< mapping shows recent messages', function()
-    command('echo "foo" | echo "bar"')
+    feed(':echo "foo" | echo "bar" | echon "baz"<CR>')
     screen:expect({
       grid = [[
         ^                         |
         {1:~                        }|*4
       ]],
+      cmdline = { { abort = false } },
       messages = {
+        { content = { { 'foo' } }, kind = 'echo' },
         { content = { { 'bar' } }, kind = 'echo' },
+        { content = { { 'baz' } }, kind = 'echo', append = true },
+        {
+          content = { { 'Press ENTER or type command to continue', 6, 18 } },
+          kind = 'return_prompt',
+        },
       },
     })
     feed('g<lt>')
@@ -1627,14 +1670,9 @@ stack traceback:
         },
       },
       msg_history = {
-        {
-          content = { { 'foo' } },
-          kind = 'echo',
-        },
-        {
-          content = { { 'bar' } },
-          kind = 'echo',
-        },
+        { content = { { 'foo' } }, kind = 'echo' },
+        { content = { { 'bar' } }, kind = 'echo' },
+        { content = { { 'baz' } }, kind = 'echo', append = true },
       },
     })
     feed('Q')

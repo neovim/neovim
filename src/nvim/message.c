@@ -1053,6 +1053,11 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp)
   entry->kind = msg_ext_kind;
   entry->prev = msg_hist_last;
   entry->next = NULL;
+  // NOTE: this does not encode if the message was actually appended to the
+  // previous entry in the message history. However append is currently only
+  // true for :echon, which is stored in the history as a temporary entry for
+  // "g<" where it is guaranteed to be after the entry it was appended to.
+  entry->append = msg_ext_append;
 
   if (msg_hist_first == NULL) {
     msg_hist_first = entry;
@@ -1206,6 +1211,7 @@ void ex_messages(exarg_T *eap)
         ADD(content, ARRAY_OBJ(content_entry));
       }
       ADD(entry, ARRAY_OBJ(content));
+      ADD(entry, BOOLEAN_OBJ(p->append));
       ADD(entries, ARRAY_OBJ(entry));
     }
     if (redirecting() || !ui_has(kUIMessages)) {

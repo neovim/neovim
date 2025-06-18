@@ -942,6 +942,11 @@ was made yet in the current file.
 			the position will be on the last character.
 			To jump to older changes use |g;|.
 
+							*':* *`:*
+':			In a prompt buffer, the start of the current prompt.
+			Text from this line until end of buffer will be
+			submitted when the user submits the prompt.
+
 							*'(* *`(*
 '(  `(			To the start of the current sentence, like the |(|
 			command.

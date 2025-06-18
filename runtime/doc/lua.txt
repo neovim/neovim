@@ -1076,8 +1076,10 @@ vim.ui_attach({ns}, {opts}, {callback})                      *vim.ui_attach()*
                       enable events for the respective UI element.
                     • {set_cmdheight}? (`boolean`) If false, avoid setting
                       'cmdheight' to 0 when `ext_messages` is enabled.
-      • {callback}  (`fun(event: string, ...)`) Function called for each UI
-                    event
+      • {callback}  (`fun(event: string, ...): any`) Function called for each
+                    UI event. A truthy return value signals to Nvim that the
+                    event is handled, in which case it is not propagated to
+                    remote UIs.
 
 vim.ui_detach({ns})                                          *vim.ui_detach()*
     Detach a callback previously attached with |vim.ui_attach()| for the given
@@ -1468,20 +1470,21 @@ Lua module: vim                                                      *lua-vim*
 vim.cmd({command})                                                 *vim.cmd()*
     Executes Vimscript (|Ex-commands|).
 
-    Note that `vim.cmd` can be indexed with a command name to return a
-    callable function to the command.
+    Can be indexed with a command name to get a function, thus you can write
+    `vim.cmd.echo(…)` instead of `vim.cmd{cmd='echo',…}`.
 
-    Example: >lua
+    Examples: >lua
+        -- Single command:
         vim.cmd('echo 42')
+        -- Multiline script:
         vim.cmd([[
-          augroup My_group
+          augroup my.group
             autocmd!
             autocmd FileType c setlocal cindent
           augroup END
         ]])
 
-        -- Ex command :echo "foo"
-        -- Note string literals need to be double quoted.
+        -- Ex command :echo "foo". Note: string literals must be double-quoted.
         vim.cmd('echo "foo"')
         vim.cmd { cmd = 'echo', args = { '"foo"' } }
         vim.cmd.echo({ args = { '"foo"' } })
@@ -1489,22 +1492,20 @@ vim.cmd({command})                                                 *vim.cmd()*
 
         -- Ex command :write! myfile.txt
         vim.cmd('write! myfile.txt')
-        vim.cmd { cmd = 'write', args = { "myfile.txt" }, bang = true }
-        vim.cmd.write { args = { "myfile.txt" }, bang = true }
-        vim.cmd.write { "myfile.txt", bang = true }
+        vim.cmd { cmd = 'write', args = { 'myfile.txt' }, bang = true }
+        vim.cmd.write { args = { 'myfile.txt' }, bang = true }
+        vim.cmd.write { 'myfile.txt', bang = true }
 
-        -- Ex command :colorscheme blue
-        vim.cmd('colorscheme blue')
-        vim.cmd.colorscheme('blue')
+        -- Ex command :vertical resize +2
+        vim.cmd.resize({ '+2', mods = { vertical = true } })
 <
 
     Parameters: ~
-      • {command}  (`string|table`) Command(s) to execute. If a string,
-                   executes multiple lines of Vimscript at once. In this case,
-                   it is an alias to |nvim_exec2()|, where `opts.output` is
-                   set to false. Thus it works identical to |:source|. If a
-                   table, executes a single command. In this case, it is an
-                   alias to |nvim_cmd()| where `opts` is empty.
+      • {command}  (`string|table`) Command(s) to execute.
+                   • The string form supports multiline Vimscript (alias to
+                     |nvim_exec2()|, behaves like |:source|).
+                   • The table form executes a single command (alias to
+                     |nvim_cmd()|).
 
     See also: ~
       • |ex-cmd-index|
@@ -1541,6 +1542,9 @@ vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
 
 vim.inspect()                                                  *vim.inspect()*
     Gets a human-readable representation of the given object.
+
+    Overloads: ~
+      • `fun(x: any, opts?: vim.inspect.Opts): string`
 
     Return: ~
         (`string`)
@@ -2457,6 +2461,10 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
       • {optional}   (`boolean?`) Argument is optional (may be omitted)
       • {message}    (`string?`) message when validation fails
 
+    Overloads: ~
+      • `fun(name: string, val: any, validator: vim.validate.Validator, message: string)`
+      • `fun(spec: table<string,[any, vim.validate.Validator, boolean|string]>)`
+
 
 ==============================================================================
 Lua module: vim.loader                                            *vim.loader*
@@ -2590,18 +2598,18 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
 
     Parameters: ~
       • {opts}        (`table?`) Additional options. See |input()|
-                      • prompt (string|nil) Text of the prompt
-                      • default (string|nil) Default reply to the input
-                      • completion (string|nil) Specifies type of completion
+                      • {prompt}? (`string`) Text of the prompt
+                      • {default}? (`string`) Default reply to the input
+                      • {completion}? (`string`) Specifies type of completion
                         supported for input. Supported types are the same that
                         can be supplied to a user-defined command using the
                         "-complete=" argument. See |:command-completion|
-                      • highlight (function) Function that will be used for
-                        highlighting user inputs.
-      • {on_confirm}  (`function`) ((input|nil) -> ()) Called once the user
-                      confirms or abort the input. `input` is what the user
-                      typed (it might be an empty string if nothing was
-                      entered), or `nil` if the user aborted the dialog.
+                      • {highlight}? (`function`) Function that will be used
+                        for highlighting user inputs.
+      • {on_confirm}  (`fun(input?: string)`) Called once the user confirms or
+                      abort the input. `input` is what the user typed (it
+                      might be an empty string if nothing was entered), or
+                      `nil` if the user aborted the dialog.
 
 vim.ui.open({path}, {opt})                                     *vim.ui.open()*
     Opens `path` with the system default handler (macOS `open`, Windows
@@ -2627,8 +2635,8 @@ vim.ui.open({path}, {opt})                                     *vim.ui.open()*
 
     Parameters: ~
       • {path}  (`string`) Path or URL to open
-      • {opt}   (`{ cmd?: string[] }?`) Options
-                • cmd string[]|nil Command used to open the path or URL.
+      • {opt}   (`table?`) Options
+                • {cmd}? (`string[]`) Command used to open the path or URL.
 
     Return (multiple): ~
         (`vim.SystemObj?`) Command object, or nil if not found.
@@ -2659,12 +2667,12 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
     Parameters: ~
       • {items}      (`any[]`) Arbitrary items
       • {opts}       (`table`) Additional options
-                     • prompt (string|nil) Text of the prompt. Defaults to
+                     • {prompt}? (`string`) Text of the prompt. Defaults to
                        `Select one of:`
-                     • format_item (function item -> text) Function to format
-                       an individual item from `items`. Defaults to
+                     • {format_item}? (`fun(item: any):string`) Function to
+                       format an individual item from `items`. Defaults to
                        `tostring`.
-                     • kind (string|nil) Arbitrary hint string indicating the
+                     • {kind}? (`string`) Arbitrary hint string indicating the
                        item shape. Plugins reimplementing `vim.ui.select` may
                        wish to use this to infer the structure or semantics of
                        `items`, or the context in which select() was called.
@@ -2683,12 +2691,10 @@ To enable the experimental UI (default opts shown): >lua
     require('vim._extui').enable({
      enable = true, -- Whether to enable or disable the UI.
      msg = { -- Options related to the message module.
-       ---@type 'box'|'cmd' Type of window used to place messages, either in the
-       ---cmdline or in a separate message box window with ephemeral messages.
-       pos = 'cmd',
-       box = { -- Options related to the message box window.
-         timeout = 4000, -- Time a message is visible.
-       },
+       ---@type 'cmd'|'msg' Where to place regular messages, either in the
+       ---cmdline or in a separate ephemeral message window.
+       target = 'cmd',
+       timeout = 4000, -- Time a message is visible in the message window.
      },
     })
 <
@@ -2696,21 +2702,19 @@ To enable the experimental UI (default opts shown): >lua
 There are four separate window types used by this interface:
 • "cmd": The cmdline window; also used for 'showcmd', 'showmode', 'ruler', and
   messages if 'cmdheight' > 0.
-• "box": The message box window; used for messages when 'cmdheight' == 0.
-• "more": The more-prompt window; used for |:messages| and certain messages
-  that should be shown in full.
-• "prompt": The cmdline prompt window; used for prompt messages that expect
-  user input.
+• "msg": The message window; used for messages when 'cmdheight' == 0.
+• "pager": The pager window; used for |:messages| and certain messages that
+  should be shown in full.
+• "dialog": The dialog window; used for prompt messages that expect user
+  input.
 
-These four windows are assigned the "cmdline", "msgbox", "msgmore" and
-"msgprompt" 'filetype' respectively. Use a |FileType| autocommand to configure
-any local options for these windows and their respective buffers.
+These four windows are assigned the "cmd", "msg", "pager" and "dialog"
+'filetype' respectively. Use a |FileType| autocommand to configure any local
+options for these windows and their respective buffers.
 
 Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
 not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
 spilled lines. To see the full message, the |g<| command can be used.
-
-
 
 ==============================================================================
 Lua module: vim.filetype                                        *vim.filetype*
@@ -2991,11 +2995,13 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                 iterate over. The path is first normalized
                 |vim.fs.normalize()|.
       • {opts}  (`table?`) Optional keyword arguments:
-                • depth: integer|nil How deep the traverse (default 1)
-                • skip: (fun(dir_name: string): boolean)|nil Predicate to
+                • {depth}? (`integer`, default: `1`) How deep the traverse.
+                • {skip}? (`fun(dir_name: string): boolean`) Predicate to
                   control traversal. Return false to stop searching the
-                  current directory. Only useful when depth > 1
-                • follow: boolean|nil Follow symbolic links. (default: false)
+                  current directory. Only useful when depth > 1 Return an
+                  iterator over the items located in {path}
+                • {follow}? (`boolean`, default: `false`) Follow symbolic
+                  links.
 
     Return: ~
         (`Iterator`) over items in {path}. Each iteration yields two values:
@@ -3057,7 +3063,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 
                  The function should return `true` if the given item is
                  considered a match.
-      • {opts}   (`table`) Optional keyword arguments:
+      • {opts}   (`table?`) Optional keyword arguments:
                  • {path}? (`string`) Path to begin searching from. If
                    omitted, the |current-directory| is used.
                  • {upward}? (`boolean`, default: `false`) Search upward
@@ -3205,7 +3211,7 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
     If the buffer is unnamed (has no backing file) or has a non-empty
     'buftype' then the search begins from Nvim's |current-directory|.
 
-    Example: >lua
+    Examples: >lua
         -- Find the root of a Python project, starting from file 'main.py'
         vim.fs.root(vim.fs.joinpath(vim.env.PWD, 'main.py'), {'pyproject.toml', 'setup.py' })
 
@@ -3230,21 +3236,12 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
                   file path (absolute or relative to the |current-directory|)
                   to begin the search from.
       • {marker}  (`(string|string[]|fun(name: string, path: string): boolean)[]|string|fun(name: string, path: string): boolean`)
-                  A marker or a list of markers. A marker has one of three
-                  types: string, a list of strings or a function. The
-                  parameter also accepts a list of markers, each of which is
-                  any of those three types. If a marker is a function, it is
-                  called for each evaluated item and should return true if
-                  {name} and {path} are a match. If a list of markers is
-                  passed, each marker in the list is evaluated in order and
-                  the first marker which is matched returns the parent
-                  directory that it found. This allows listing markers with
-                  priority. E.g. - in the following list, a parent directory
-                  containing either 'a' or 'b' is searched for. If neither is
-                  found, then 'c' is searched for. So, 'c' has lower priority
-                  than 'a' and 'b' which have equal priority. >lua
-                          marker = { { 'a', 'b' }, 'c' }
-<
+                  Filename, function, or list thereof, that decides how to
+                  find the root. To indicate "equal priority", specify items
+                  in a nested list `{ { 'a.txt', 'b.lua' }, … }`. A function
+                  item must return true if `name` and `path` are a match. Each
+                  item (which may itself be a nested list) is evaluated
+                  in-order against all ancestors, until a match is found.
 
     Return: ~
         (`string?`) Directory path containing one of the given markers, or nil

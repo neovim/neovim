@@ -43,6 +43,11 @@ describe('ui mode_change event', function()
     ]],
       mode = 'normal',
     }
+
+    n.feed(':append<cr>')
+    screen:expect({ mode = 'cmdline_normal' })
+    n.feed('<esc>')
+    screen:expect({ mode = 'normal' })
   end)
 
   -- oldtest: Test_mouse_shape_after_failed_change()

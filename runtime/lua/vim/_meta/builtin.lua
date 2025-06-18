@@ -266,7 +266,9 @@ function vim.wait(time, callback, interval, fast_only) end
 ---               enable events for the respective UI element.
 ---             - {set_cmdheight}? (`boolean`) If false, avoid setting
 ---               'cmdheight' to 0 when `ext_messages` is enabled.
---- @param callback fun(event: string, ...) Function called for each UI event
+--- @param callback fun(event: string, ...): any Function called for each UI event.
+---                 A truthy return value signals to Nvim that the event is handled,
+---                 in which case it is not propagated to remote UIs.
 function vim.ui_attach(ns, opts, callback) end
 
 --- Detach a callback previously attached with |vim.ui_attach()| for the

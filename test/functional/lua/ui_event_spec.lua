@@ -136,9 +136,9 @@ describe('vim.ui_attach', function()
       {
         'msg_history_show',
         {
-          { 'echomsg', { { 0, 'message1', 0 } } },
-          { 'lua_print', { { 0, 'message2', 0 } } },
-          { 'echomsg', { { 0, 'message3', 0 } } },
+          { 'echomsg', { { 0, 'message1', 0 } }, false },
+          { 'lua_print', { { 0, 'message2', 0 } }, false },
+          { 'echomsg', { { 0, 'message3', 0 } }, false },
         },
       },
     }, actual, vim.inspect(actual))

@@ -330,13 +330,12 @@ UI EXTENSIONS
 • *term_background*	Unused. The terminal background color is now detected
 			by the Nvim core directly instead of the TUI.
 
-VARIABLES
+VIMSCRIPT
+• *<sfile>*		Use |<script>| or |<stack>| instead.
 • *b:terminal_job_pid*	Use `jobpid(&channel)` instead.
 • *b:terminal_job_id*	Use `&channel` instead. To access in non-current buffer:
 			• Lua: `vim.bo[bufnr].channel`
 			• Vimscript: `getbufvar(bufnr, '&channel')`
-
-VIMSCRIPT
 • *buffer_exists()*	Obsolete name for |bufexists()|.
 • *buffer_name()*	Obsolete name for |bufname()|.
 • *buffer_number()*	Obsolete name for |bufnr()|.

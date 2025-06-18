@@ -183,22 +183,23 @@ If you want to type input for the job in a Vim window you have a few options:
 - Use a terminal window.  This works well if what you type goes directly to
   the job and the job output is directly displayed in the window.
   See |terminal|.
-- Use a window with a prompt buffer. This works well when entering a line for
+- Use a window with a prompt buffer. This works well when entering lines for
   the job in Vim while displaying (possibly filtered) output from the job.
 
 A prompt buffer is created by setting 'buftype' to "prompt". You would
 normally only do that in a newly created buffer.
 
-The user can edit and enter one line of text at the very last line of the
-buffer.  When pressing Enter in the prompt line the callback set with
-|prompt_setcallback()| is invoked.  It would normally send the line to a job.
-Another callback would receive the output from the job and display it in the
-buffer, below the prompt (and above the next prompt).
+The user can edit and enter text at the very last line of the buffer. Pressing
+Enter in the prompt line invokes the |prompt_setcallback()| callback. Use
+Shift+Enter to add a new line without submitting the prompt, or paste
+multiline text using any |put| or |paste| command. The callback is typically
+expected to process the prompt and show results by appending to the buffer,
+below the prompt (and above the next prompt).
 
-Only the text in the last line, after the prompt, is editable. The rest of the
-buffer is not modifiable with Normal mode commands.  It can be modified by
-calling functions, such as |append()|.  Using other commands may mess up the
-buffer.
+Only the text after the last prompt (starting from the |':| mark), is
+user-editable. The rest of the buffer is not modifiable with Normal mode
+commands.  It can be modified by functions such as |append()|.  Using other
+commands may mess up the buffer.
 
 After setting 'buftype' to "prompt" Vim does not automatically start Insert
 mode, use `:startinsert` if you want to enter Insert mode, so that the user

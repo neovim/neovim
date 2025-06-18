@@ -4,6 +4,7 @@
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
 " Last Change: 2024 Mar 26
+"              2025 Jun 13 by Vim Project (add hurd-amd64 arch #17525)
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/debcontrol.vim
 
 " Standard syntax initialization
@@ -34,7 +35,7 @@ let s:archs = [
       \, 'sh3', 'sh4eb', 'sh4', 'sh', 'sparc64', 'sparc', 'x32'
       \ ]
 let s:pairs = [
-      \ 'hurd-i386', 'kfreebsd-i386', 'kfreebsd-amd64', 'knetbsd-i386'
+      \ 'hurd-i386', 'hurd-amd64', 'kfreebsd-i386', 'kfreebsd-amd64', 'knetbsd-i386'
       \, 'kopensolaris-i386', 'netbsd-alpha', 'netbsd-i386'
       \ ]
 

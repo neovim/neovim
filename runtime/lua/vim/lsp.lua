@@ -272,6 +272,7 @@ end
 --- @class vim.lsp.Config : vim.lsp.ClientConfig
 ---
 --- See `cmd` in [vim.lsp.ClientConfig].
+--- See also `reuse_client` to dynamically decide (per-buffer) when `cmd` should be re-invoked.
 --- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient
 ---
 --- Filetypes the client will attach to, if activated by `vim.lsp.enable()`. If not provided, the

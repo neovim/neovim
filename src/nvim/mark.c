@@ -469,6 +469,9 @@ fmark_T *mark_get_local(buf_T *buf, win_T *win, int name)
     // to where last change was made
   } else if (name == '.') {
     mark = &buf->b_last_change;
+    // prompt start location
+  } else if (name == ':' && bt_prompt(buf)) {
+    mark = &(buf->b_prompt_start);
     // Mark that are actually not marks but motions, e.g {, }, (, ), ...
   } else {
     mark = mark_get_motion(buf, win, name);
@@ -908,6 +911,9 @@ void ex_marks(exarg_T *eap)
   show_one_mark(']', arg, &curbuf->b_op_end, NULL, true);
   show_one_mark('^', arg, &curbuf->b_last_insert.mark, NULL, true);
   show_one_mark('.', arg, &curbuf->b_last_change.mark, NULL, true);
+  if (bt_prompt(curbuf)) {
+    show_one_mark(':', arg, &curbuf->b_prompt_start.mark, NULL, true);
+  }
 
   // Show the marks as where they will jump to.
   pos_T *startp = &curbuf->b_visual.vi_start;
@@ -1029,6 +1035,9 @@ void ex_delmarks(exarg_T *eap)
           break;
         case '^':
           clear_fmark(&curbuf->b_last_insert, timestamp);
+          break;
+        case ':':
+          // Readonly mark. No deletion allowed.
           break;
         case '.':
           clear_fmark(&curbuf->b_last_change, timestamp);
@@ -1221,6 +1230,11 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
     // last cursor position, if it was set
     if (!equalpos(buf->b_last_cursor.mark, initpos)) {
       ONE_ADJUST(&(buf->b_last_cursor.mark.lnum));
+    }
+
+    // on prompt buffer adjust the last prompt start location mark
+    if (bt_prompt(curbuf)) {
+      ONE_ADJUST_NODEL(&(buf->b_prompt_start.mark.lnum));
     }
 
     // list of change positions
@@ -1712,6 +1726,9 @@ bool mark_set_local(const char name, buf_T *const buf, const fmark_T fm, const b
     fm_tgt = &(buf->b_last_cursor);
   } else if (name == '^') {
     fm_tgt = &(buf->b_last_insert);
+  } else if (name == ':') {
+    // Readonly mark for prompt buffer. Can't be edited on user side.
+    return false;
   } else if (name == '.') {
     fm_tgt = &(buf->b_last_change);
   } else {
@@ -1799,7 +1816,7 @@ static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr, c
 
   tv_list_append_number(lpos, bufnr);
   tv_list_append_number(lpos, pos->lnum);
-  tv_list_append_number(lpos, pos->col + 1);
+  tv_list_append_number(lpos, pos->col < MAXCOL ? pos->col + 1 : MAXCOL);
   tv_list_append_number(lpos, pos->coladd);
 
   if (tv_dict_add_str(d, S_LEN("mark"), mname) == FAIL

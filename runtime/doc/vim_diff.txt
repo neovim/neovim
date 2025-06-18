@@ -210,7 +210,7 @@ nvim.swapfile:
   swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
   swapfile…" message.
 
-nvim.find_exrc:
+nvim.exrc:
 - VimEnter: Extend 'exrc' to also search for project-local configuration files
   in all parent directories.
 
@@ -301,8 +301,12 @@ Commands:
 - |:Man| is available by default, with many improvements such as completion
 - |:match| can be invoked before highlight group is defined
 - |:source| works with Lua
-  User commands can support |:command-preview| to show results as you type
+- User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
+
+Editor:
+- |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
+  commands.
 
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
@@ -490,6 +494,9 @@ These Nvim features were later integrated into Vim.
 - |:sign-define| "numhl" argument
 - |:source| works with anonymous (no file) scripts
 - 'statusline' supports unlimited alignment sections
+- |vim-tutor-mode|
+- Lua: `require()` also searches for modules in 'runtimepath'.
+- Lua: vim.g, vim.w, vim.b, vim.t, vim.v, vim.fn, vim.call()
 
 ==============================================================================
 Other changes                                            *nvim-changed*
@@ -561,7 +568,6 @@ coerced to strings. See |id()| for more details, currently it uses
 |CursorMoved| triggers when moving between windows.
 
 Lua interface (|lua.txt|):
-
 - `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim
   that prints `a` and `b` on separate lines, exactly like
   `:lua print("a\nb")` .
@@ -569,8 +575,6 @@ Lua interface (|lua.txt|):
   E5108: Lua: [string "<Vimscript compiled string>"]:1: TEST
 <  whereas Vim emits only "TEST".
 - Lua has direct access to Nvim |API| via `vim.api`.
-- Lua package.path and package.cpath are automatically updated according to
-  'runtimepath'. |lua-module-load|
 
 Commands:
 - |:doautocmd| does not warn about "No matching autocommands".
@@ -648,6 +652,10 @@ Options:
   the default behaviour. The implementation is equivalent to setting
   'titlestring' to `%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim`.
 
+|packages|:
+- "start" packages are not explicitly reported in 'runtimepath' (though they
+  are still searched for runtime files). See |runtime-search-path|
+
 ==============================================================================
 Missing features                                         *nvim-missing*
 
@@ -708,10 +716,11 @@ Compile-time features:
 - Emacs tags support
 - X11 integration (see |x11-selection|)
 
-Cscope:
-                                                                      *cscope*
-- Cscope support was removed in favour of plugin-based solutions such as:
+Editor:
+- *cscope* support was removed in favour of plugin-based solutions such as:
   https://github.com/dhananjaylatkar/cscope_maps.nvim
+- *popup-window* : Use |floating-windows| instead.
+- *textprop* : Use |extmarks| instead.
 
 Eval:
 - *Vim9script* (the Vim 9+ flavor of Vimscript) is not supported.
@@ -836,7 +845,6 @@ Options:
 - weirdinvert
 
 Plugins:
-
 - logiPat
 - rrhelper
 - *vimball*
@@ -844,9 +852,9 @@ Plugins:
 - tools/check_colors.vim
 - macros/{justify,matchit,shellmenu,swapmous}.vim: use `packadd! justify` etc.
   directly
+- HelpToc: Use |gO| instead.
 
 Providers:
-
 - *if_lua* : Nvim |Lua| API is not compatible with Vim's "if_lua".
 - *if_mzscheme*
 - |if_pyth|: *python-bindeval* *python-Function* are not supported.

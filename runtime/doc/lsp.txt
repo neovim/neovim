@@ -717,7 +717,9 @@ Lua module: vim.lsp                                                 *lsp-core*
 
     Fields: ~
       • {cmd}?           (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
-                         See `cmd` in |vim.lsp.ClientConfig|.
+                         See `cmd` in |vim.lsp.ClientConfig|. See also
+                         `reuse_client` to dynamically decide (per-buffer)
+                         when `cmd` should be re-invoked.
       • {filetypes}?     (`string[]`) Filetypes the client will attach to, if
                          activated by `vim.lsp.enable()`. If not provided, the
                          client will attach to all filetypes.
@@ -1357,16 +1359,16 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                • Note: To send an empty dictionary use
                                  |vim.empty_dict()|, else it will be encoded
                                  as an array.
-      • {cmd}                  (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
-                               command string[] that launches the language
+      • {cmd}                  (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient`)
+                               Command `string[]` that launches the language
                                server (treated as in |jobstart()|, must be
                                absolute or on `$PATH`, shell constructs like
                                "~" are not expanded), or function that creates
                                an RPC client. Function receives a
-                               `dispatchers` table and returns a table with
-                               member functions `request`, `notify`,
-                               `is_closing` and `terminate`. See
-                               |vim.lsp.rpc.request()|,
+                               `dispatchers` table and the resolved `config`,
+                               and must return a table with member functions
+                               `request`, `notify`, `is_closing` and
+                               `terminate`. See |vim.lsp.rpc.request()|,
                                |vim.lsp.rpc.notify()|. For TCP there is a
                                builtin RPC client factory:
                                |vim.lsp.rpc.connect()|
@@ -1837,11 +1839,11 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
 
 selection_range({direction})                   *vim.lsp.buf.selection_range()*
     Perform an incremental selection at the cursor position based on ranges
-    given by the LSP. The `direction` parameter specifies whether the
-    selection should head inward or outward.
+    given by the LSP. The `direction` parameter specifies the number of times
+    to expand the selection. Negative values will shrink the selection.
 
     Parameters: ~
-      • {direction}  (`'inner'|'outer'`)
+      • {direction}  (`integer`)
 
 signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
@@ -2185,6 +2187,7 @@ get_at_pos({bufnr}, {row}, {col})
         fields:
         • line (integer) line number, 0-based
         • start_col (integer) start column, 0-based
+        • end_line (integer) end line number, 0-based
         • end_col (integer) end column, 0-based
         • type (string) token type as string, e.g. "variable"
         • modifiers (table) token modifiers as a set. E.g., { static = true,

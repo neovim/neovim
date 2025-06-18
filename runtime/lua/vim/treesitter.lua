@@ -165,6 +165,31 @@ function M.get_node_range(node_or_range)
   end
 end
 
+---@param node TSNode
+---@param source integer|string Buffer or string from which the {node} is extracted
+---@param offset Range4
+---@return Range6
+local function apply_range_offset(node, source, offset)
+  ---@diagnostic disable-next-line: missing-fields LuaLS varargs bug
+  local range = { node:range() } ---@type Range4
+  local start_row_offset = offset[1]
+  local start_col_offset = offset[2]
+  local end_row_offset = offset[3]
+  local end_col_offset = offset[4]
+
+  range[1] = range[1] + start_row_offset
+  range[2] = range[2] + start_col_offset
+  range[3] = range[3] + end_row_offset
+  range[4] = range[4] + end_col_offset
+
+  if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
+    return M._range.add_bytes(source, range)
+  end
+
+  -- If this produces an invalid range, we just skip it.
+  return { node:range(true) }
+end
+
 ---Get the range of a |TSNode|. Can also supply {source} and {metadata}
 ---to get the range with directives applied.
 ---@param node TSNode
@@ -172,9 +197,12 @@ end
 ---@param metadata vim.treesitter.query.TSMetadata|nil
 ---@return Range6
 function M.get_range(node, source, metadata)
-  if metadata and metadata.range then
-    assert(source)
-    return M._range.add_bytes(source, metadata.range)
+  if metadata then
+    if metadata.range then
+      return M._range.add_bytes(assert(source), metadata.range)
+    elseif metadata.offset then
+      return apply_range_offset(node, assert(source), metadata.offset)
+    end
   end
   return { node:range(true) }
 end
@@ -402,7 +430,7 @@ end
 --- Can be used in an ftplugin or FileType autocommand.
 ---
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
---- In this case, add `vim.bo.syntax = 'on'` after the call to `start`.
+--- In this case, add `vim.bo.syntax = 'ON'` after the call to `start`.
 ---
 --- Note: By default, the highlighter parses code asynchronously, using a segment time of 3ms.
 ---
@@ -412,7 +440,7 @@ end
 --- vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
 ---     callback = function(args)
 ---         vim.treesitter.start(args.buf, 'latex')
----         vim.bo[args.buf].syntax = 'on'  -- only if additional legacy syntax is needed
+---         vim.bo[args.buf].syntax = 'ON'  -- only if additional legacy syntax is needed
 ---     end
 --- })
 --- ```
