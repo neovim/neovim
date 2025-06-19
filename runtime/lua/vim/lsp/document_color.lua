@@ -182,11 +182,19 @@ end
 local function buf_disable(bufnr)
   buf_clear(bufnr)
   reset_bufstate(bufnr, false)
+  api.nvim_clear_autocmds({
+    buffer = bufnr,
+    group = document_color_augroup,
+  })
 end
 
 --- @param bufnr integer
 local function buf_enable(bufnr)
   reset_bufstate(bufnr, true)
+  api.nvim_clear_autocmds({
+    buffer = bufnr,
+    group = document_color_augroup,
+  })
 
   api.nvim_buf_attach(bufnr, false, {
     on_reload = function(_, buf)
