@@ -572,6 +572,9 @@ function protocol.make_client_capabilities()
       linkedEditingRange = {
         dynamicRegistration = false,
       },
+      onTypeFormatting = {
+        dynamicRegistration = false,
+      },
     },
     workspace = {
       symbol = {
