@@ -157,13 +157,6 @@ static sattr_T msg_ext_last_attr = -1;
 static int msg_ext_last_hl_id;
 
 static bool msg_ext_history = false;  ///< message was added to history
-static bool msg_ext_overwrite = false;  ///< will overwrite last message
-static int msg_ext_visible = 0;  ///< number of messages currently visible
-
-static bool msg_ext_history_visible = false;
-
-/// Shouldn't clear message after leaving cmdline
-static bool msg_ext_keep_after_cmdline = false;
 
 static int msg_grid_pos_at_flush = 0;
 
@@ -1223,8 +1216,6 @@ void ex_messages(exarg_T *eap)
   if (kv_size(entries) > 0) {
     ui_call_msg_history_show(entries);
     api_free_array(entries);
-    msg_ext_history_visible = true;
-    wait_return(false);
   }
 }
 
@@ -1232,7 +1223,6 @@ void ex_messages(exarg_T *eap)
 /// and a delay.
 void msg_end_prompt(void)
 {
-  msg_ext_clear_later();
   need_wait_return = false;
   emsg_on_display = false;
   cmdline_row = msg_row;
@@ -1254,6 +1244,11 @@ void wait_return(int redraw)
 
   if (redraw == true) {
     redraw_all_later(UPD_NOT_VALID);
+  }
+
+  if (ui_has(kUIMessages)) {
+    prompt_for_input("Press any key to continue", HLF_M, true, NULL);
+    return;
   }
 
   // If using ":silent cmd", don't wait for a return.  Also don't set
@@ -1404,7 +1399,6 @@ void wait_return(int redraw)
     }
     skip_redraw = true;  // skip redraw once
     do_redraw = false;
-    msg_ext_keep_after_cmdline = true;
   }
 
   // If the screen size changed screen_resize() will redraw the screen.
@@ -1430,9 +1424,6 @@ void wait_return(int redraw)
     if (redraw == true || (msg_scrolled != 0 && redraw != -1)) {
       redraw_later(curwin, UPD_VALID);
     }
-    if (ui_has(kUIMessages)) {
-      msg_ext_clear(true);
-    }
   }
 }
 
@@ -1450,8 +1441,6 @@ static void hit_return_msg(bool newline_sb)
     msg_putchar('\n');
   }
   p_more = false;       // don't want to see this message when scrolling back
-  msg_ext_skip_flush = false;
-  msg_ext_set_kind("return_prompt");
   if (got_int) {
     msg_puts(_("Interrupt: "));
   }
@@ -1466,6 +1455,11 @@ static void hit_return_msg(bool newline_sb)
 /// Set "keep_msg" to "s".  Free the old value and check for NULL pointer.
 void set_keep_msg(const char *s, int hl_id)
 {
+  // Kept message is not cleared and re-emitted with ext_messages: #20416.
+  if (ui_has(kUIMessages)) {
+    return;
+  }
+
   xfree(keep_msg);
   if (s != NULL && msg_silent == 0) {
     keep_msg = xstrdup(s);
@@ -1577,10 +1571,6 @@ void msg_start(void)
 
   if (ui_has(kUIMessages)) {
     msg_ext_ui_flush();
-    if (!msg_scroll && msg_ext_visible) {
-      // Will overwrite last message.
-      msg_ext_overwrite = true;
-    }
   }
 
   // When redirecting, may need to start a new line.
@@ -2177,16 +2167,7 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   // need_wait_return after some prompt, and then outputting something
   // without scrolling
   // Not needed when only using CR to move the cursor.
-  bool overflow = false;
-  if (ui_has(kUIMessages)) {
-    int count = msg_ext_visible + (msg_ext_overwrite ? 0 : 1);
-    // TODO(bfredl): possible extension point, let external UI control this
-    if (count > 1) {
-      overflow = true;
-    }
-  } else {
-    overflow = msg_scrolled > (p_ch == 0 ? 1 : 0);
-  }
+  bool overflow = !ui_has(kUIMessages) && msg_scrolled > (p_ch == 0 ? 1 : 0);
 
   if (overflow && !msg_scrolled_ign && strcmp(str, "\r") != 0) {
     need_wait_return = true;
@@ -2516,7 +2497,6 @@ void msg_scroll_flush(void)
 void msg_reset_scroll(void)
 {
   if (ui_has(kUIMessages)) {
-    msg_ext_clear(true);
     return;
   }
   // TODO(bfredl): some duplicate logic with update_screen(). Later on
@@ -2713,7 +2693,6 @@ void show_sb_text(void)
 {
   if (ui_has(kUIMessages)) {
     exarg_T ea = { .arg = "", .skip = true };
-    msg_ext_clear(true);
     ex_messages(&ea);
     return;
   }
@@ -3202,7 +3181,7 @@ void msg_ext_ui_flush(void)
     Array *tofree = msg_ext_init_chunks();
     ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history,
                      msg_ext_append);
-    if (msg_ext_history || strequal(msg_ext_kind, "return_prompt")) {
+    if (msg_ext_history) {
       api_free_array(*tofree);
     } else {
       // Add to history as temporary message for "g<".
@@ -3216,9 +3195,6 @@ void msg_ext_ui_flush(void)
       msg_hist_add_multihl(msg, true);
     }
     xfree(tofree);
-    if (!msg_ext_overwrite) {
-      msg_ext_visible++;
-    }
     msg_ext_overwrite = false;
     msg_ext_history = false;
     msg_ext_append = false;
@@ -3241,44 +3217,6 @@ void msg_ext_flush_showmode(void)
     api_free_array(*tofree);
     xfree(tofree);
   }
-}
-
-void msg_ext_clear(bool force)
-{
-  if (msg_ext_visible && (!msg_ext_keep_after_cmdline || force)) {
-    ui_call_msg_clear();
-    msg_ext_visible = 0;
-    msg_ext_overwrite = false;  // nothing to overwrite
-  }
-  if (msg_ext_history_visible) {
-    ui_call_msg_history_clear();
-    msg_ext_history_visible = false;
-  }
-
-  // Only keep once.
-  msg_ext_keep_after_cmdline = false;
-}
-
-void msg_ext_clear_later(void)
-{
-  if (msg_ext_is_visible()) {
-    msg_ext_need_clear = true;
-    set_must_redraw(UPD_VALID);
-  }
-}
-
-void msg_ext_check_clear(void)
-{
-  // Redraw after cmdline or prompt is expected to clear messages.
-  if (msg_ext_need_clear) {
-    msg_ext_clear(true);
-    msg_ext_need_clear = false;
-  }
-}
-
-bool msg_ext_is_visible(void)
-{
-  return ui_has(kUIMessages) && msg_ext_visible > 0;
 }
 
 /// If the written message runs into the shown command or ruler, we have to

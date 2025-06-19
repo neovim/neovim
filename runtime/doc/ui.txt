@@ -836,7 +836,6 @@ must handle.
 		"lua_error"	Error in |:lua| code
 		"lua_print"	|print()| from |:lua| code
 		"rpc_error"	Error response from |rpcrequest()|
-		"return_prompt"	|press-enter| prompt after a multiple messages
 		"quickfix"	Quickfix navigation message
 		"search_cmd"	Entered search command
 		"search_count"	Search count message ("S" flag of 'shortmess')
@@ -893,8 +892,5 @@ must handle.
 ["msg_history_show", entries] ~
 	Sent when |:messages| command is invoked. History is sent as a list of
 	entries, where each entry is a `[kind, content, append]` tuple.
-
-["msg_history_clear"] ~
-	Clear the |:messages| history.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

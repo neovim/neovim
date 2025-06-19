@@ -67,7 +67,8 @@ EDITOR
 
 EVENTS
 
-• todo
+• |ui-messages| no longer emits the `msg_show.return_prompt`, `msg_clear` and
+  `msg_history_clear` events.
 
 HIGHLIGHTS
 
