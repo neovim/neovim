@@ -546,6 +546,9 @@ function protocol.make_client_capabilities()
       selectionRange = {
         dynamicRegistration = false,
       },
+      onTypeFormatting = {
+        dynamicRegistration = false,
+      },
     },
     workspace = {
       symbol = {

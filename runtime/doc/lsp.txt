@@ -2251,6 +2251,27 @@ stop({bufnr}, {client_id})                    *vim.lsp.semantic_tokens.stop()*
 
 
 ==============================================================================
+Lua module: vim.lsp.on_type_formatting                *lsp-on_type_formatting*
+
+enable({enable}, {filter})               *vim.lsp.on_type_formatting.enable()*
+    Enables/disables on-type formatting globally or for the given language
+    client. The following is a practical usage example: >lua
+        vim.lsp.start({
+          name = 'ts_ls',
+          cmd = '…',
+          on_attach = function(client)
+            vim.lsp.on_type_formatting.enable(true, { client_id = client.id })
+          end,
+        })
+<
+
+    Parameters: ~
+      • {enable}  (`boolean`) True to enable, false to disable.
+      • {filter}  (`table?`) Optional filters |kwargs|:
+                  • {client_id} (`integer?`) Client ID, or `nil` for all.
+
+
+==============================================================================
 Lua module: vim.lsp.document_color                        *lsp-document_color*
 
 enable({enable}, {bufnr}, {opts})            *vim.lsp.document_color.enable()*
