@@ -723,7 +723,8 @@ static void emit_codepoint(TermKey *tk, int codepoint, TermKeyKey *key)
     key->type = TERMKEY_TYPE_KEYSYM;
     key->code.sym = TERMKEY_SYM_SPACE;
     key->modifiers = TERMKEY_KEYMOD_CTRL;
-  } else if (codepoint < 0x20 && !(tk->flags & TERMKEY_FLAG_KEEPC0)) {
+  } else if (codepoint < 0x20 && (!(tk->flags & TERMKEY_FLAG_KEEPC0)
+                                  || (key->modifiers & TERMKEY_KEYMOD_CTRL))) {
     // C0 range
     key->code.codepoint = 0;
     key->modifiers = 0;
