@@ -2153,7 +2153,7 @@ static void ins_compl_new_leader(void)
   if (compl_match_array == NULL) {
     compl_enter_selects = false;
   } else if (ins_compl_has_preinsert() && compl_leader.size > 0) {
-    ins_compl_insert(false, true);
+    ins_compl_insert(true);
   }
   // Don't let Enter select when use user function and refresh_always is set
   if (ins_compl_refresh_always()) {
@@ -4522,6 +4522,14 @@ static int ins_compl_get_exp(pos_T *ini)
 
       compl_started = false;
     }
+
+    // For `^P` completion, reset `compl_curr_match` to the head to avoid
+    // mixing matches from different sources.
+    if (!compl_dir_forward()) {
+      while (compl_curr_match->cp_prev) {
+        compl_curr_match = compl_curr_match->cp_prev;
+      }
+    }
   }
   cpt_sources_index = -1;
   compl_started = true;
@@ -4686,10 +4694,9 @@ static void ins_compl_expand_multiple(char *str)
 }
 
 /// Insert the new text being completed.
-/// "in_compl_func" is true when called from complete_check().
 /// "move_cursor" is used when 'completeopt' includes "preinsert" and when true
 /// cursor needs to move back from the inserted text to the compl_leader.
-void ins_compl_insert(bool in_compl_func, bool move_cursor)
+void ins_compl_insert(bool move_cursor)
 {
   int compl_len = get_compl_len();
   bool preinsert = ins_compl_has_preinsert();
@@ -4714,9 +4721,6 @@ void ins_compl_insert(bool in_compl_func, bool move_cursor)
 
   dict_T *dict = ins_compl_dict_alloc(compl_shown_match);
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
-  if (!in_compl_func) {
-    compl_curr_match = compl_shown_match;
-  }
 }
 
 /// show the file name for the completion match (if any).  Truncate the file
@@ -4885,9 +4889,7 @@ static int find_next_completion_match(bool allow_get_expansion, int todo, bool a
 ///
 /// @param count          Repeat completion this many times; should be at least 1
 /// @param insert_match   Insert the newly selected match
-/// @param in_compl_func  Called from complete_check()
-static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match,
-                          bool in_compl_func)
+static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match)
 {
   int num_matches = -1;
   int todo = count;
@@ -4947,12 +4949,12 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
     restore_orig_extmarks();
   } else if (insert_match) {
     if (!compl_get_longest || compl_used_match) {
-      ins_compl_insert(in_compl_func, true);
+      ins_compl_insert(true);
     } else {
       assert(compl_leader.data != NULL);
       ins_compl_insert_bytes(compl_leader.data + get_compl_len(), -1);
     }
-    if (strequal(compl_curr_match->cp_str.data, compl_orig_text.data)) {
+    if (strequal(compl_shown_match->cp_str.data, compl_orig_text.data)) {
       restore_orig_extmarks();
     }
   } else {
@@ -5019,8 +5021,7 @@ void ins_compl_check_keys(int frequency, bool in_compl_func)
     if (vim_is_ctrl_x_key(c) && c != Ctrl_X && c != Ctrl_R) {
       c = safe_vgetc();         // Eat the character
       compl_shows_dir = ins_compl_key2dir(c);
-      ins_compl_next(false, ins_compl_key2count(c),
-                     c != K_UP && c != K_DOWN, in_compl_func);
+      ins_compl_next(false, ins_compl_key2count(c), c != K_UP && c != K_DOWN);
     } else {
       // Need to get the character to have KeyTyped set.  We'll put it
       // back with vungetc() below.  But skip K_IGNORE.
@@ -5040,7 +5041,7 @@ void ins_compl_check_keys(int frequency, bool in_compl_func)
     int todo = compl_pending > 0 ? compl_pending : -compl_pending;
 
     compl_pending = 0;
-    ins_compl_next(false, todo, true, in_compl_func);
+    ins_compl_next(false, todo, true);
   }
 }
 
@@ -5692,7 +5693,7 @@ int ins_complete(int c, bool enable_pum)
   // Find next match (and following matches).
   int save_w_wrow = curwin->w_wrow;
   int save_w_leftcol = curwin->w_leftcol;
-  int n = ins_compl_next(true, ins_compl_key2count(c), insert_match, false);
+  int n = ins_compl_next(true, ins_compl_key2count(c), insert_match);
 
   if (n > 1) {          // all matches have been found
     compl_matches = n;
