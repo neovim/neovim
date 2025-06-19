@@ -236,6 +236,8 @@ LSP
 • |vim.lsp.buf.signature_help()| supports "noActiveParameterSupport".
 • Support for `textDocument/inlineCompletion` |lsp-inline_completion|
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_inlineCompletion
+• Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
 
 LUA
 
