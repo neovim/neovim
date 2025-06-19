@@ -2,6 +2,8 @@ local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
+--- @diagnostic disable:duplicate-doc-field
+
 --- @param title string
 --- @return integer?
 local function get_qf_id_for_title(title)
@@ -1659,9 +1661,6 @@ M.handlers.underline = {
 
 --- Returns the text to show for the given diagnostics, grouped by columns.
 ---
---- If `opts.as_inlay` is false or nil (default) then all diagnostics are
---- grouped on the 0-th column, as was previously done.
----
 --- @param line_diagnostics vim.Diagnostic[]
 --- @param opts vim.diagnostic.Opts.VirtualText
 --- @return table<integer, string[]> chunks_per_column
@@ -1672,12 +1671,8 @@ local function get_virtual_text_chunks_per_column(line_diagnostics, opts)
     --- Gather diagnostics per-column:
     for _, diag in ipairs(line_diagnostics) do
       local col = diag.end_col or diag.col
-      local col_diags = group_diags[col]
-      if col_diags == nil then
-        col_diags = {}
-        group_diags[col] = col_diags
-      end
-      table.insert(col_diags, diag)
+      group_diags[col] = group_diags[col] or {}
+      table.insert(group_diags[col], diag)
     end
   else
     group_diags = { [0] = line_diagnostics }
