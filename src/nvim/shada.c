@@ -1314,8 +1314,9 @@ static char *shada_filename(const char *file)
       //     because various expansions must have already be done by the shell.
       //     If shell is not performing them then they should be done in main.c
       //     where arguments are parsed, *not here*.
-      expand_env((char *)file, &(NameBuff[0]), MAXPATHL);
+      size_t len = expand_env((char *)file, &(NameBuff[0]), MAXPATHL);
       file = &(NameBuff[0]);
+      return xmemdupz(file, len);
     }
   }
   return xstrdup(file);

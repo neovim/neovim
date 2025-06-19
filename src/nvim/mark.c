@@ -722,10 +722,8 @@ static void fname2fnum(xfmark_T *fm)
 #else
   if (fm->fname[0] == '~' && (fm->fname[1] == '/')) {
 #endif
-
-    expand_env("~/", NameBuff, MAXPATHL);
-    int len = (int)strlen(NameBuff);
-    xstrlcpy(NameBuff + len, fm->fname + 2, (size_t)(MAXPATHL - len));
+    size_t len = expand_env("~/", NameBuff, MAXPATHL);
+    xstrlcpy(NameBuff + len, fm->fname + 2, MAXPATHL - len);
   } else {
     xstrlcpy(NameBuff, fm->fname, MAXPATHL);
   }

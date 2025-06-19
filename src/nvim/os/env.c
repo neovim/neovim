@@ -577,9 +577,9 @@ char *expand_env_save_opt(char *src, bool one)
 /// @param src        Input string e.g. "$HOME/vim.hlp"
 /// @param dst[out]   Where to put the result
 /// @param dstlen     Maximum length of the result
-void expand_env(char *src, char *dst, int dstlen)
+size_t expand_env(char *src, char *dst, int dstlen)
 {
-  expand_env_esc(src, dst, dstlen, false, false, NULL);
+  return expand_env_esc(src, dst, dstlen, false, false, NULL);
 }
 
 /// Expand environment variable with path name and escaping.
@@ -591,8 +591,8 @@ void expand_env(char *src, char *dst, int dstlen)
 /// @param esc        Escape spaces in expanded variables
 /// @param one        `srcp` is a single filename
 /// @param prefix     Start again after this (can be NULL)
-void expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, bool esc, bool one,
-                    char *prefix)
+size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, bool esc, bool one,
+                      char *prefix)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   char *tail;
@@ -600,6 +600,7 @@ void expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, b
   bool copy_char;
   bool mustfree;  // var was allocated, need to free it later
   bool at_start = true;  // at start of a name
+  char *const dst_start = dst;
 
   int prefix_len = (prefix == NULL) ? 0 : (int)strlen(prefix);
 
@@ -731,23 +732,24 @@ void expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, b
         mustfree = true;
       }
 
-      if (var != NULL && *var != NUL
-          && (strlen(var) + strlen(tail) + 1 < (unsigned)dstlen)) {
-        STRCPY(dst, var);
-        dstlen -= (int)strlen(var);
+      if (var != NULL && *var != NUL) {
         int c = (int)strlen(var);
-        // if var[] ends in a path separator and tail[] starts
-        // with it, skip a character
-        if (after_pathsep(dst, dst + c)
+        if ((size_t)c + strlen(tail) + 1 < (unsigned)dstlen) {
+          STRCPY(dst, var);
+          dstlen -= c;
+          // if var[] ends in a path separator and tail[] starts
+          // with it, skip a character
+          if (after_pathsep(dst, dst + c)
 #if defined(BACKSLASH_IN_FILENAME)
-            && dst[c - 1] != ':'
+              && dst[c - 1] != ':'
 #endif
-            && vim_ispathsep(*tail)) {
-          tail++;
+              && vim_ispathsep(*tail)) {
+            tail++;
+          }
+          dst += c;
+          src = tail;
+          copy_char = false;
         }
-        dst += c;
-        src = tail;
-        copy_char = false;
       }
       if (mustfree) {
         xfree(var);
@@ -778,6 +780,8 @@ void expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, b
     }
   }
   *dst = NUL;
+
+  return (size_t)(dst - dst_start);
 }
 
 /// Check if the directory "vimdir/<version>" or "vimdir/runtime" exists.
