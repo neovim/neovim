@@ -281,6 +281,7 @@ local config = {
       'inlay_hint.lua',
       'linked_editing_range.lua',
       'log.lua',
+      'on_type_formatting.lua',
       'rpc.lua',
       'semantic_tokens.lua',
       'tagfunc.lua',
