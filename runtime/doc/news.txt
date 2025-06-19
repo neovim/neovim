@@ -67,7 +67,10 @@ EDITOR
 
 EVENTS
 
-• todo
+• |ui-messages| no longer emits the `msg_show.return_prompt`, `msg_clear` and
+  `msg_history_clear` events. These events arbitrarily assume a message UI
+  mimicking the legacy message grid. Benefit: reduced UI event traffic and
+  more flexibility for UIs.
 
 HIGHLIGHTS
 

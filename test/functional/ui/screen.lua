@@ -700,6 +700,7 @@ screen:redraw_debug() to show all intermediate screen states.]]
     self.cmdline[self.cmdline_hide_level] = nil
     self.cmdline_hide_level = nil
   end
+  self.messages, self.msg_history = {}, {}
 end
 
 function Screen:expect_unchanged(intermediate, waittime_ms)
@@ -1410,10 +1411,6 @@ end
 
 function Screen:_handle_msg_history_show(entries)
   self.msg_history = entries
-end
-
-function Screen:_handle_msg_history_clear()
-  self.msg_history = {}
 end
 
 function Screen:_clear_block(grid, top, bot, left, right)
