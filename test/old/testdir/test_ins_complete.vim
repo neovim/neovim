@@ -4835,6 +4835,73 @@ func Test_complete_unloaded_buf_refresh_always()
   delfunc TestComplete
 endfunc
 
+" Verify that the order of matches from each source is consistent
+" during both ^N and ^P completions (Issue #17425).
+func Test_complete_with_multiple_function_sources()
+  func F1(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['one', 'two', 'three']
+  endfunc
+
+  func F2(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['four', 'five', 'six']
+  endfunc
+
+  func F3(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['seven', 'eight', 'nine']
+  endfunc
+
+  new
+  setlocal complete=.,FF1,FF2,FF3
+  inoremap <buffer> <F2> <Cmd>let b:matches = complete_info(["matches"]).matches<CR>
+  call setline(1, ['xxx', 'yyy', 'zzz', ''])
+
+  call feedkeys("GS\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal([
+        \ 'xxx', 'yyy', 'zzz',
+        \ 'one', 'two', 'three',
+        \ 'four', 'five', 'six',
+        \ 'seven', 'eight', 'nine',
+        \ ], b:matches->mapnew('v:val.word'))
+
+  call feedkeys("GS\<C-P>\<F2>\<Esc>0", 'tx!')
+  call assert_equal([
+        \ 'seven', 'eight', 'nine',
+        \ 'four', 'five', 'six',
+        \ 'one', 'two', 'three',
+        \ 'xxx', 'yyy', 'zzz',
+        \ ], b:matches->mapnew('v:val.word'))
+
+  %delete
+
+  call feedkeys("GS\<C-N>\<F2>\<Esc>0", 'tx!')
+  call assert_equal([
+        \ 'one', 'two', 'three',
+        \ 'four', 'five', 'six',
+        \ 'seven', 'eight', 'nine',
+        \ ], b:matches->mapnew('v:val.word'))
+
+  call feedkeys("GS\<C-P>\<F2>\<Esc>0", 'tx!')
+  call assert_equal([
+        \ 'seven', 'eight', 'nine',
+        \ 'four', 'five', 'six',
+        \ 'one', 'two', 'three',
+        \ ], b:matches->mapnew('v:val.word'))
+
+  bwipe!
+  delfunc F1
+  delfunc F2
+  delfunc F3
+endfunc
+
 func Test_complete_fuzzy_omnifunc_backspace()
   let g:do_complete = v:false
   func Omni_test(findstart, base)
