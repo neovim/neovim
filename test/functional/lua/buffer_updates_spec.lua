@@ -14,6 +14,8 @@ local feed = n.feed
 local expect_events = t.expect_events
 local write_file = t.write_file
 local dedent = t.dedent
+local matches = t.matches
+local pcall_err = t.pcall_err
 
 local origlines = {
   'original line 1',
@@ -321,6 +323,99 @@ describe('lua buffer event callbacks: on_lines', function()
       vim.cmd.bdelete()
     ]])
     eq(true, exec_lua('return _G.did_detach'))
+  end)
+
+  it('on_detach called just before freeing buffer', function()
+    exec_lua([[
+      vim.api.nvim_create_autocmd({"BufUnload", "BufDelete", "BufWipeout"}, {
+        callback = function(args)
+          table.insert(_G.events, ("%s: %d %s"):format(
+            args.event, args.buf, tostring(vim.api.nvim_buf_is_loaded(args.buf))))
+        end,
+      })
+      function _G.on_detach(_, b)
+        table.insert(_G.events, ("on_detach: %d %s"):format(
+          b, tostring(vim.api.nvim_buf_is_loaded(b))))
+      end
+
+      _G.events = {}
+      vim.cmd "new"
+      vim.bo.bufhidden = "wipe"
+      vim.api.nvim_buf_attach(0, false, { on_detach = _G.on_detach })
+      vim.cmd "quit!"
+    ]])
+
+    eq(
+      { 'BufUnload: 2 true', 'BufDelete: 2 true', 'BufWipeout: 2 true', 'on_detach: 2 true' },
+      exec_lua('return _G.events')
+    )
+    eq(false, api.nvim_buf_is_valid(2))
+
+    exec_lua([[
+      _G.events = {}
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_attach(buf, false, { on_detach = _G.on_detach })
+      vim.api.nvim_buf_delete(buf, { force = true })
+    ]])
+
+    -- Was unlisted, so no BufDelete.
+    eq(
+      { 'BufUnload: 3 true', 'BufWipeout: 3 true', 'on_detach: 3 true' },
+      exec_lua('return _G.events')
+    )
+    eq(false, api.nvim_buf_is_valid(3))
+
+    exec_lua([[
+      _G.events = {}
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_create_autocmd("BufWipeout", { once = true, command = "call interrupt()" })
+      vim.api.nvim_buf_attach(buf, false, { on_detach = _G.on_detach })
+      vim.api.nvim_buf_delete(buf, { force = true })
+    ]])
+
+    -- Script processing was aborted by the interrupt; buffer remains.
+    -- Was unlisted, so no BufDelete. No on_detach as buffer remains.
+    eq({ 'BufUnload: 4 true', 'BufWipeout: 4 true' }, exec_lua('return _G.events'))
+    eq(true, api.nvim_buf_is_valid(4))
+
+    exec_lua([[
+      vim.cmd "edit asdf" -- Reuses buffer 1.
+      _G.events = {}
+      vim.api.nvim_create_autocmd("BufUnload", { once = true, command = "call interrupt()" })
+      vim.api.nvim_buf_attach(0, false, { on_detach = _G.on_detach })
+    ]])
+
+    -- Script processing was aborted by the interrupt; buffer remains.
+    eq('Keyboard interrupt', pcall_err(command, 'edit'))
+    -- No on_detach as buffer remains.
+    eq({ 'BufUnload: 1 true' }, exec_lua('return _G.events'))
+    eq(true, api.nvim_buf_is_valid(1))
+
+    exec_lua([[
+      _G.events = {}
+      vim.cmd "edit"
+    ]])
+
+    -- Re-edit buffer without aborting; on_detach is called.
+    eq({ 'BufUnload: 1 true', 'on_detach: 1 true' }, exec_lua('return _G.events'))
+    eq(true, api.nvim_buf_is_valid(1))
+  end)
+
+  it('on_detach disallows splitting', function()
+    command('new | setlocal bufhidden=wipe')
+    local buf = api.nvim_get_current_buf()
+    exec_lua [[
+      vim.api.nvim_buf_attach(0, false, {
+        on_detach = function()
+          -- Used to allow opening more views into a closing buffer, resulting in open windows to an
+          -- unloaded buffer.
+          vim.cmd [=[execute "normal! \<C-W>s"]=]
+        end,
+      })
+    ]]
+    matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit!'))
+    eq({}, fn.win_findbuf(buf))
+    eq(false, api.nvim_buf_is_valid(buf))
   end)
 
   it('#12718 lnume', function()
