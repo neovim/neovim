@@ -2552,26 +2552,28 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
 
   // for ":set path=" and ":set tags=" halve backslashes for escaped space
   if (xp->xp_backslash != XP_BS_NONE) {
+    size_t pat_len = strlen(pat);
     free_pat = true;
-    pat = xstrdup(pat);
+    pat = xmemdupz(pat, pat_len);
+    char *pat_e = pat + pat_len;
     for (int i = 0; pat[i]; i++) {
       if (pat[i] == '\\') {
         if (xp->xp_backslash & XP_BS_THREE
             && pat[i + 1] == '\\'
             && pat[i + 2] == '\\'
             && pat[i + 3] == ' ') {
-          STRMOVE(pat + i, pat + i + 3);
+          memmove(pat + i, pat + i + 3, (size_t)(pat_e - (pat + i + 3) + 1));
         } else if (xp->xp_backslash & XP_BS_ONE
                    && pat[i + 1] == ' ') {
-          STRMOVE(pat + i, pat + i + 1);
+          memmove(pat + i, pat + i + 1, (size_t)(pat_e - (pat + i + 1) + 1));
         } else if ((xp->xp_backslash & XP_BS_COMMA)
                    && pat[i + 1] == '\\'
                    && pat[i + 2] == ',') {
-          STRMOVE(pat + i, pat + i + 2);
+          memmove(pat + i, pat + i + 2, (size_t)(pat_e - (pat + i + 2) + 1));
 #ifdef BACKSLASH_IN_FILENAME
         } else if ((xp->xp_backslash & XP_BS_COMMA)
                    && pat[i + 1] == ',') {
-          STRMOVE(pat + i, pat + i + 1);
+          memmove(pat + i, pat + i + 1, (size_t)(pat_e - (pat + i + 1) + 1));
 #endif
         }
       }
@@ -3114,10 +3116,12 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
   bool did_curdir = false;
 
   // for ":set path=" and ":set tags=" halve backslashes for escaped space
-  char *pat = xstrdup(filepat);
+  size_t filepat_len = strlen(filepat);
+  char *pat = xmemdupz(filepat, filepat_len);
+  char *pat_e = pat + filepat_len;
   for (int i = 0; pat[i]; i++) {
     if (pat[i] == '\\' && pat[i + 1] == ' ') {
-      STRMOVE(pat + i, pat + i + 1);
+      memmove(pat + i, pat + i + 1, (size_t)(pat_e - (pat + i + 1) + 1));
     }
   }
 
