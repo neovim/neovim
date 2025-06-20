@@ -5,7 +5,7 @@ local clear, command, exec_lua, feed = n.clear, n.command, n.exec_lua, n.feed
 
 describe('messages2', function()
   local screen
-  describe('target=msg', function()
+  describe('target=cmd', function()
     before_each(function()
       clear()
       screen = Screen.new()
@@ -81,6 +81,19 @@ describe('messages2', function()
         {1:~                                                    }|*12
                                             1,2           All|
       ]])
+    end)
+
+    it('new buffer, window and options after closing a buffer', function()
+      command('set nomodifiable | echom "foo" | messages')
+      screen:expect([[
+                                                             |
+        {1:~                                                    }|*10
+        ─{100:Pager}───────────────────────────────────────────────|
+        {4:fo^o                                                  }|
+        foo                                                  |
+      ]])
+      command('bdelete | messages')
+      screen:expect_unchanged()
     end)
   end)
 end)

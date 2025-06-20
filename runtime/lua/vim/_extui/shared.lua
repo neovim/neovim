@@ -77,6 +77,8 @@ function M.tab_check_wins()
     if setopt then
       local name = { cmd = 'Cmd', dialog = 'Dialog', msg = 'Msg', pager = 'Pager' }
       api.nvim_buf_set_name(M.bufs[type], ('[%s]'):format(name[type]))
+      api.nvim_set_option_value('swapfile', false, { buf = M.bufs[type] })
+      api.nvim_set_option_value('modifiable', true, { buf = M.bufs[type] })
       if type == 'pager' then
         -- Close pager with `q`, same as `checkhealth`
         api.nvim_buf_set_keymap(M.bufs.pager, 'n', 'q', '<Cmd>wincmd c<CR>', {})
