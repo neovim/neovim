@@ -313,8 +313,8 @@ local options = {
     {
       defaults = false,
       desc = [=[
-        This value specifies status if buffer. When it's set to true it marks
-        the buffer as busy.
+        Sets a buffer "busy" status. Indicated in the default statusline.
+        The semantics of "busy" are arbitrary, typically decided by the plugin that owns the buffer
       ]=],
       full_name = 'busy',
       redraw = { 'statuslines' },
@@ -8648,7 +8648,7 @@ local options = {
         '%=',
         "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
         "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
-        "%{% &busy ? '<busy> ' : '' %}",
+        "%{% &busy ? '◐ ' : '' %}",
         "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
       }),
       desc = [=[
