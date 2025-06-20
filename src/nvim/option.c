@@ -4681,6 +4681,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(buf->b_p_bt);
   case kOptBuflisted:
     return &(buf->b_p_bl);
+  case kOptBusy:
+    return &(buf->b_p_busy);
   case kOptChannel:
     return &(buf->b_p_channel);
   case kOptCopyindent:
