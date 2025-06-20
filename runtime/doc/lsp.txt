@@ -2334,7 +2334,8 @@ Lua module: vim.lsp.util                                            *lsp-util*
 
 
                                      *vim.lsp.util.apply_text_document_edit()*
-apply_text_document_edit({text_document_edit}, {index}, {position_encoding})
+apply_text_document_edit({text_document_edit}, {index}, {position_encoding},
+                         {change_annotations})
     Applies a `TextDocumentEdit`, which is a list of changes to a single
     document.
 
@@ -2343,18 +2344,21 @@ apply_text_document_edit({text_document_edit}, {index}, {position_encoding})
       • {index}               (`integer?`) Optional index of the edit, if from
                               a list of edits (or nil, if not from a list)
       • {position_encoding}   (`'utf-8'|'utf-16'|'utf-32'?`)
+      • {change_annotations}  (`table<string, lsp.ChangeAnnotation>?`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 
                                              *vim.lsp.util.apply_text_edits()*
-apply_text_edits({text_edits}, {bufnr}, {position_encoding})
+apply_text_edits({text_edits}, {bufnr}, {position_encoding},
+                 {change_annotations})
     Applies a list of text edits to a buffer.
 
     Parameters: ~
-      • {text_edits}         (`lsp.TextEdit[]`)
-      • {bufnr}              (`integer`) Buffer id
-      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
+      • {text_edits}          (`(lsp.TextEdit|lsp.AnnotatedTextEdit)[]`)
+      • {bufnr}               (`integer`) Buffer id
+      • {position_encoding}   (`'utf-8'|'utf-16'|'utf-32'`)
+      • {change_annotations}  (`table<string, lsp.ChangeAnnotation>?`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
