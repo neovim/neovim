@@ -696,8 +696,11 @@ const char *did_set_buftype(optset_T *args)
       || opt_strings_flags(buf->b_p_bt, opt_bt_values, NULL, false) != OK) {
     return e_invarg;
   }
-  // buftype=prompt: set the prompt start position to lastline.
+  // buftype=prompt:
   if (buf->b_p_bt[0] == 'p') {
+    // Set default value for 'comments'
+    set_option_direct(kOptComments, STATIC_CSTR_AS_OPTVAL(""), OPT_LOCAL, SID_NONE);
+    // set the prompt start position to lastline.
     pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
     RESET_FMARK(&buf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
   }
