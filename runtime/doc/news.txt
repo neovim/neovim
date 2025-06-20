@@ -89,7 +89,9 @@ OPTIONS
 
 PLUGINS
 
-• todo
+• The |tohtml| plugin moved from the top-level of the Lua module search-path
+  into the "nvim" namespace. Any scripts that load it must use
+  `require('nvim.tohtml')` instead of `require('tohtml')`.
 
 TREESITTER
 
