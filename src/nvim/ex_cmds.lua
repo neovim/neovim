@@ -583,6 +583,12 @@ M.cmds = {
     func = 'ex_menu',
   },
   {
+    command = 'connect',
+    flags = bit.bor(BANG, WORD1, NOTRLCOM, NEEDARG),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_connect',
+  },
+  {
     command = 'copy',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, CMDWIN, LOCK_OK, MODIFY),
     addr_type = 'ADDR_LINES',
