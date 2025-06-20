@@ -8660,8 +8660,13 @@ void eval_fmt_source_name_line(char *buf, size_t bufsize)
   }
 }
 
-char *get_current_prompt(buf_T *buf)
+/// Returns the current user input to the prompt in prompt buffer 'buf'
+///         if 'buf' is not a prompt buffer then returns NULL.
+char *prompt_current_input(buf_T *buf)
 {
+  if (!bt_prompt(buf)) {
+    return NULL;
+  }
   linenr_T lnum_start = buf->b_prompt_start.mark.lnum;
   linenr_T lnum_last = buf->b_ml.ml_line_count;
 
@@ -8687,7 +8692,11 @@ void invoke_prompt_callback(void)
   typval_T argv[2];
   linenr_T lnum = curbuf->b_ml.ml_line_count;
 
-  char *current_prompt_text = get_current_prompt(curbuf);
+  char *current_prompt_text = prompt_current_input(curbuf);
+
+  if (!current_prompt_text) {
+    return;
+  }
 
   // Add a new line for the prompt before invoking the callback, so that
   // text can always be inserted above the last line.

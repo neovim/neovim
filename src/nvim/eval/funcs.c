@@ -5381,7 +5381,7 @@ static void f_prompt_gettext(typval_T *argvars, typval_T *rettv, EvalFuncData fp
     return;
   }
 
-  rettv->vval.v_string = get_current_prompt(buf);
+  rettv->vval.v_string = prompt_current_input(buf);
 }
 
 /// "pum_getpos()" function
