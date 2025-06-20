@@ -3728,8 +3728,9 @@ char *invalid_range(exarg_T *eap)
   if (eap->argt & EX_RANGE) {
     switch (eap->addr_type) {
     case ADDR_LINES:
-      if (eap->line2 > (curbuf->b_ml.ml_line_count
-                        + (eap->cmdidx == CMD_diffget))) {
+      if (eap->line2 >
+          (curbuf->b_ml.ml_line_count
+           + (eap->cmdidx == CMD_diffget || eap->cmdidx == CMD_diffput))) {
         return _(e_invrange);
       }
       break;

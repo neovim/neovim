@@ -288,6 +288,63 @@ func Test_diffget_diffput_range()
   %bw!
 endfunc
 
+" Test :diffget/:diffput handling of added/deleted lines
+func Test_diffget_diffput_deleted_lines()
+  call setline(1, ['2','4','6'])
+  diffthis
+  new
+  call setline(1, range(1,7))
+  diffthis
+  wincmd w
+
+  3,3diffget " get nothing
+  call assert_equal(['2', '4', '6'], getline(1, '$'))
+  3,4diffget " get the last insertion past the end of file
+  call assert_equal(['2', '4', '6', '7'], getline(1, '$'))
+  0,1diffget " get the first insertion above first line
+  call assert_equal(['1', '2', '4', '6', '7'], getline(1, '$'))
+
+  " When using non-range diffget on the last line, it should get the
+  " change above or at the line as usual, but if the only change is below the
+  " last line, diffget should get that instead.
+  1,$delete
+  call setline(1, ['2','4','6'])
+  diffupdate
+  norm Gdo
+  call assert_equal(['2', '4', '5', '6'], getline(1, '$'))
+  norm Gdo
+  call assert_equal(['2', '4', '5', '6', '7'], getline(1, '$'))
+
+  " Test non-range diffput on last line with the same logic
+  1,$delete
+  call setline(1, ['2','4','6'])
+  diffupdate
+  norm Gdp
+  wincmd w
+  call assert_equal(['1', '2', '3', '4', '6', '7'], getline(1, '$'))
+  wincmd w
+  norm Gdp
+  wincmd w
+  call assert_equal(['1', '2', '3', '4', '6'], getline(1, '$'))
+  call setline(1, range(1,7))
+  diffupdate
+  wincmd w
+
+  " Test that 0,$+1 will get/put all changes from/to the other buffer
+  1,$delete
+  call setline(1, ['2','4','6'])
+  diffupdate
+  0,$+1diffget
+  call assert_equal(['1', '2', '3', '4', '5', '6', '7'], getline(1, '$'))
+  1,$delete
+  call setline(1, ['2','4','6'])
+  diffupdate
+  0,$+1diffput
+  wincmd w
+  call assert_equal(['2', '4', '6'], getline(1, '$'))
+  %bw!
+endfunc
+
 " Test for :diffget/:diffput with an empty buffer and a non-empty buffer
 func Test_diffget_diffput_empty_buffer()
   %d _

@@ -3492,10 +3492,13 @@ void ex_diffgetput(exarg_T *eap)
   if (eap->addr_count == 0) {
     // Make it possible that ":diffget" on the last line gets line below
     // the cursor line when there is no difference above the cursor.
-    if ((eap->cmdidx == CMD_diffget)
-        && (eap->line1 == curbuf->b_ml.ml_line_count)
-        && (diff_check(curwin, eap->line1) == 0)
-        && ((eap->line1 == 1) || (diff_check(curwin, eap->line1 - 1) == 0))) {
+    int linestatus = 0;
+    if (eap->line1 == curbuf->b_ml.ml_line_count
+        && (diff_check_with_linestatus(curwin, eap->line1, &linestatus) == 0
+            && linestatus == 0)
+        && (eap->line1 == 1
+            || (diff_check_with_linestatus(curwin, eap->line1 - 1, &linestatus) >= 0
+                && linestatus == 0))) {
       eap->line2++;
     } else if (eap->line1 > 0) {
       eap->line1--;
