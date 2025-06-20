@@ -147,9 +147,6 @@ bool os_env_exists(const char *name, bool nonempty)
 /// Sets an environment variable.
 ///
 /// Windows (Vim-compat): Empty string (:let $FOO="") undefines the env var.
-///
-/// @warning Existing pointers to the result of os_getenv("foo") are
-///          INVALID after os_setenv("foo", …).
 int os_setenv(const char *name, const char *value, int overwrite)
   FUNC_ATTR_NONNULL_ALL
 {
