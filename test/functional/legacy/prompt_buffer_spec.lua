@@ -302,6 +302,21 @@ describe('prompt buffer', function()
     ]])
   end)
 
+  it('can put multiline text with nvim_paste', function()
+    source_script()
+    api.nvim_paste('line 1\nline 2\nline 3', false, -1)
+    screen:expect([[
+      cmd: line 1              |
+      line 2                   |
+      line 3^                   |
+      {1:~                        }|
+      {3:[Prompt] [+]             }|
+      other buffer             |
+      {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+  end)
+
   it('can undo current prompt', function()
     source_script()
     -- text editiing alowed in current prompt
