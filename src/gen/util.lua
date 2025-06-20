@@ -235,6 +235,8 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
 
   if ntype == 'text' then
     parts[#parts + 1] = node.text
+  elseif ntype == 'atx_heading' then
+    parts[#parts + 1] = ('*%s*'):format(node.heading_content.text)
   elseif ntype == 'html_tag' then
     error('html_tag: ' .. node.text)
   elseif ntype == 'inline_link' then
