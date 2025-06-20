@@ -384,11 +384,12 @@ static void terminfo_start(TUIData *tui)
   tui->out_isatty = os_isatty(tui->out_fd);
   tui->input.tui_data = tui;
 
-  char *term = os_getenv("TERM");
 #ifdef MSWIN
-  os_tty_guess_term((const char **)&term, tui->out_fd);
-  os_setenv("TERM", term, 1);
+  const char* guessed_term = NULL;
+  os_tty_guess_term(&guessed_term, tui->out_fd);
+  os_setenv("TERM", guessed_term, 1);
 #endif
+  char *term = os_getenv("TERM");
 
   // Set up unibilium/terminfo.
   if (term) {
