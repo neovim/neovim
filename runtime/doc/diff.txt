@@ -292,18 +292,20 @@ that the buffers will be equal within the specified range.
 
 
 When no [range] is given, the diff at the cursor position or just above it is
-affected.  When [range] is used, Vim tries to only put or get the specified
-lines.  When there are deleted lines, this may not always be possible.
+affected.  There can be deleted lines below the last line of the buffer.  When
+the cursor is on the last line in the buffer and there is no diff above this
+line, and no [range] is given, the diff below the cursor position will be used
+instead.
 
-There can be deleted lines below the last line of the buffer.  When the cursor
-is on the last line in the buffer and there is no diff above this line, the
-":diffget" and "do" commands will obtain lines from the other buffer.
+When [range] is used, Vim tries to only put or get the specified lines.  When
+there are deleted lines, they will be used if they are between the lines
+specified by [range].
 
-To be able to get those lines from another buffer in a [range] it's allowed to
-use the last line number plus one.  This command gets all diffs from the other
-buffer: >
+To be able to put or get those lines to/from another buffer in a [range] it's
+allowed to use 0 and the last line number plus one.  This command gets all
+diffs from the other buffer: >
 
-	:1,$+1diffget
+	:0,$+1diffget
 
 Note that deleted lines are displayed, but not counted as text lines.  You
 can't move the cursor into them.  To fill the deleted lines with the lines
