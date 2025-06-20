@@ -752,7 +752,7 @@ M.cmds = {
   },
   {
     command = 'diffget',
-    flags = bit.bor(RANGE, EXTRA, TRLBAR, MODIFY),
+    flags = bit.bor(RANGE, ZEROR, EXTRA, TRLBAR, MODIFY),
     addr_type = 'ADDR_LINES',
     func = 'ex_diffgetput',
   },
@@ -770,7 +770,7 @@ M.cmds = {
   },
   {
     command = 'diffput',
-    flags = bit.bor(RANGE, EXTRA, TRLBAR),
+    flags = bit.bor(RANGE, ZEROR, EXTRA, TRLBAR),
     addr_type = 'ADDR_LINES',
     func = 'ex_diffgetput',
   },
