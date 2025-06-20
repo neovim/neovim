@@ -5364,8 +5364,8 @@ static void f_prompt_setprompt(typval_T *argvars, typval_T *rettv, EvalFuncData 
   buf->b_prompt_text = xstrdup(text);
 }
 
-/// "prompt_gettext({buffer})" function
-static void f_prompt_gettext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+/// "prompt_getinput({buffer})" function
+static void f_prompt_getinput(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   FUNC_ATTR_NONNULL_ALL
 {
   // return an empty string by default, e.g. it's not a prompt buffer

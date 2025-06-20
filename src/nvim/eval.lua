@@ -8419,7 +8419,7 @@ M.funcs = {
     params = { { 'buf', 'integer|string' }, { 'text', 'string' } },
     signature = 'prompt_setprompt({buf}, {text})',
   },
-  prompt_gettext = {
+  prompt_getinput = {
     args = 1,
     base = 1,
     desc = [=[
@@ -8430,9 +8430,9 @@ M.funcs = {
       string is returned.
 
     ]=],
-    name = 'prompt_gettext',
+    name = 'prompt_getinput',
     params = { { 'buf', 'integer|string' } },
-    signature = 'prompt_gettext({buf})',
+    signature = 'prompt_getinput({buf})',
   },
   pum_getpos = {
     desc = [=[
