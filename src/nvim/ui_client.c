@@ -283,6 +283,38 @@ void ui_client_event_raw_line(GridLineEvent *g)
                (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
 }
 
+void ui_client_event_connect(Array args)
+{
+  if (args.size < 1 || args.items[0].type != kObjectTypeString) {
+    ELOG("Error handling UI event 'connect'");
+    return;
+  }
+
+  char *server_address = args.items[0].data.string.data;
+  multiqueue_put(main_loop.fast_events, channel_connect_event, server_address);
+}
+
+static void channel_connect_event(void **argv)
+{
+  char *server_address = argv[0];
+
+  const char *error = "";
+  bool is_tcp = strrchr(server_address, ':') ? true : false;
+  CallbackReader on_data = CALLBACK_READER_INIT;
+  uint64_t chan = channel_connect(is_tcp, server_address, true, on_data, 50, &error);
+
+  if (!strequal(error, "")) {
+    ELOG("Error handling UI event 'connect': %s", error);
+    return;
+  }
+
+  ui_client_channel_id = chan;
+  ui_client_is_remote = true;
+  ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
+
+  ELOG("Connected to channel: %" PRId64, chan);
+}
+
 /// When a "restart" UI event is received, its arguments are saved here when
 /// waiting for the server to exit.
 static Array restart_args = ARRAY_DICT_INIT;
