@@ -146,7 +146,7 @@ void stream_close_handle(Stream *stream, bool rstream)
 static void rstream_close_cb(uv_handle_t *handle)
 {
   RStream *stream = handle->data;
-  if (stream->buffer) {
+  if (stream && stream->buffer) {
     free_block(stream->buffer);
   }
   close_cb(handle);
@@ -155,10 +155,10 @@ static void rstream_close_cb(uv_handle_t *handle)
 static void close_cb(uv_handle_t *handle)
 {
   Stream *stream = handle->data;
-  if (stream->close_cb) {
+  if (stream && stream->close_cb) {
     stream->close_cb(stream, stream->close_cb_data);
   }
-  if (stream->internal_close_cb) {
+  if (stream && stream->internal_close_cb) {
     stream->internal_close_cb(stream, stream->internal_data);
   }
 }
