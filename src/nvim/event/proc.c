@@ -449,8 +449,9 @@ static void on_proc_exit(Proc *proc)
         && proc == &server_chan->stream.proc) {
       // Need to call ui_client_may_restart_server() here as well, as sometimes
       // rpc_close_event() hasn't been called yet (also see comments above).
+      bool connected = ui_client_may_connect();
       ui_client_may_restart_server();
-      if (ui_client_channel_id == server_chan_id) {
+      if (ui_client_channel_id == server_chan_id && !connected) {
         // If the current embedded server has exited and no new server is started,
         // the client should exit with the same status.
         exit_on_closed_chan(proc->status);
