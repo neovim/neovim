@@ -583,6 +583,12 @@ M.cmds = {
     func = 'ex_menu',
   },
   {
+    command = 'connect',
+    flags = bit.bor(EXTRA, NOSPC, NEEDARG),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_quitall_or_restart_or_connect',
+  },
+  {
     command = 'copy',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, CMDWIN, LOCK_OK, MODIFY),
     addr_type = 'ADDR_LINES',
@@ -2184,13 +2190,13 @@ M.cmds = {
     command = 'quitall',
     flags = bit.bor(BANG, TRLBAR),
     addr_type = 'ADDR_NONE',
-    func = 'ex_quitall_or_restart',
+    func = 'ex_quitall_or_restart_or_connect',
   },
   {
     command = 'qall',
     flags = bit.bor(BANG, TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
-    func = 'ex_quitall_or_restart',
+    func = 'ex_quitall_or_restart_or_connect',
   },
   {
     command = 'read',
@@ -2250,7 +2256,7 @@ M.cmds = {
     command = 'restart',
     flags = bit.bor(BANG, TRLBAR),
     addr_type = 'ADDR_NONE',
-    func = 'ex_quitall_or_restart',
+    func = 'ex_quitall_or_restart_or_connect',
   },
   {
     command = 'retab',

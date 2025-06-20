@@ -86,6 +86,17 @@ Restart Nvim
                 Force restarts the Nvim server, abandoning unsaved buffers.
 
 ------------------------------------------------------------------------------
+Connect UI to a different server
+
+                                                *:connect*
+
+:connect {address}
+                Connects the currently running UI to the server with the
+                given address.
+                Note: If the current UI hasn't implemented the "restart" UI
+                event, this command is equivalent to `:qall`.
+
+------------------------------------------------------------------------------
 GUI commands
 
                                                 *:winp* *:winpos* *E188*

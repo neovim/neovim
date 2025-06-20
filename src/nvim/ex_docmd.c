@@ -4829,7 +4829,8 @@ int before_quit_all(exarg_T *eap)
 
 /// ":qall": try to quit all windows
 /// ":restart": restart the Nvim server
-static void ex_quitall_or_restart(exarg_T *eap)
+/// ":connect <address>" Connect the currently running TUI to the given address
+static void ex_quitall_or_restart_or_connect(exarg_T *eap)
 {
   if (before_quit_all(eap) == FAIL) {
     return;
@@ -4837,7 +4838,8 @@ static void ex_quitall_or_restart(exarg_T *eap)
   exiting = true;
   Error err = ERROR_INIT;
   if ((eap->forceit || !check_changed_any(false, false))
-      && (eap->cmdidx != CMD_restart || remote_ui_restart(current_ui, &err))) {
+      && (eap->cmdidx != CMD_restart || remote_ui_restart(current_ui, &err))
+      && (eap->cmdidx != CMD_connect || remote_ui_connect(current_ui, eap->arg, &err))) {
     getout(0);
   }
   not_exiting();
