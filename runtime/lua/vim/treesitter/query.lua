@@ -1056,9 +1056,9 @@ end
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
 ---   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
---- - all (boolean) When `false` (default `true`), the returned table maps capture IDs to a single
----   (last) node instead of the full list of matching nodes. This option is only for backward
----   compatibility and will be removed in a future release.
+---   - all (boolean) When `false` (default `true`), the returned table maps capture IDs to a single
+---     (last) node instead of the full list of matching nodes. This option is only for backward
+---     compatibility and will be removed in a future release.
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree): pattern id, match, metadata, tree
 function Query:iter_matches(node, source, start, stop, opts)
