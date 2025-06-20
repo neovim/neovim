@@ -311,20 +311,6 @@ local options = {
       varname = 'p_awa',
     },
     {
-      defaults = false,
-      desc = [=[
-        Sets a buffer "busy" status. Indicated in the default statusline.
-        The semantics of "busy" are arbitrary, typically decided by the plugin that owns the buffer
-      ]=],
-      full_name = 'busy',
-      redraw = { 'statuslines' },
-      noglob = true,
-      scope = { 'buf' },
-      short_desc = N_('buffer is busy'),
-      type = 'boolean',
-      varname = 'p_busy',
-    },
-    {
       abbreviation = 'bg',
       cb = 'did_set_background',
       defaults = 'dark',
@@ -963,6 +949,20 @@ local options = {
       short_desc = N_('special type of buffer'),
       type = 'string',
       varname = 'p_bt',
+    },
+    {
+      defaults = false,
+      desc = [=[
+        Sets a buffer "busy" status. Indicated in the default statusline.
+        The semantics of "busy" are arbitrary, typically decided by the plugin that owns the buffer
+      ]=],
+      full_name = 'busy',
+      redraw = { 'statuslines' },
+      noglob = true,
+      scope = { 'buf' },
+      short_desc = N_('buffer is busy'),
+      type = 'boolean',
+      varname = 'p_busy',
     },
     {
       abbreviation = 'cmp',
