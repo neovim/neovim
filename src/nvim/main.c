@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef ENABLE_ASAN_UBSAN
@@ -138,6 +139,9 @@ enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "main.c.generated.h"
 #endif
+
+bool use_jmp = false;
+jmp_buf my_jump_buffer;
 
 Loop main_loop;
 
@@ -651,11 +655,14 @@ int main(int argc, char **argv)
   TIME_MSG("before starting main loop");
   ILOG("starting main loop");
 
-  // Main loop: never returns.
-  normal_enter(false, false);
+
+  use_jmp = true;
+  if(setjmp(my_jump_buffer)==0){
+    normal_enter(false, false);
+  }
 
 #if defined(MSWIN) && !defined(MAKE_LIB)
-  xfree(argv);
+  //xfree(argv);
 #endif
   return 0;
 }
@@ -691,6 +698,10 @@ void os_exit(int r)
   free_all_mem();
 #endif
 
+  if(use_jmp) {
+    longjmp(my_jump_buffer,1);
+  }
+  assert(false);
   exit(r);
 }
 
