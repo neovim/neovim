@@ -1696,9 +1696,10 @@ M.handlers.virtual_text = {
     end
 
     if opts.virtual_text then
-      if opts.virtual_text.format then
-        diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
+      local default_format = function(diagnostic)
+        return diagnostic.message:gsub('%s+', ' ')
       end
+      diagnostics = reformat_diagnostics(opts.virtual_text.format or default_format, diagnostics)
       if
         opts.virtual_text.source
         and (opts.virtual_text.source ~= 'if_many' or count_sources(bufnr) > 1)
