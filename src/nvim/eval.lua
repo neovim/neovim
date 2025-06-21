@@ -8332,6 +8332,21 @@ M.funcs = {
     signature = 'printf({fmt}, {expr1} ...)',
     returns = 'string',
   },
+  prompt_getinput = {
+    args = 1,
+    base = 1,
+    desc = [=[
+      Returns the current user input to prompt for buffer {buf} without invoking
+      prompt_callback. {buf} can be a buffer name or number.  See |prompt-buffer|.
+
+      If the buffer doesn't exist or isn't a prompt buffer, an empty
+      string is returned.
+
+    ]=],
+    name = 'prompt_getinput',
+    params = { { 'buf', 'integer|string' } },
+    signature = 'prompt_getinput({buf})',
+  },
   prompt_getprompt = {
     args = 1,
     base = 1,
@@ -8418,21 +8433,6 @@ M.funcs = {
     name = 'prompt_setprompt',
     params = { { 'buf', 'integer|string' }, { 'text', 'string' } },
     signature = 'prompt_setprompt({buf}, {text})',
-  },
-  prompt_getinput = {
-    args = 1,
-    base = 1,
-    desc = [=[
-      Returns the current user input to prompt for buffer {buf} without invoking
-      prompt_callback. {buf} can be a buffer name or number.  See |prompt-buffer|.
-
-      If the buffer doesn't exist or isn't a prompt buffer, an empty
-      string is returned.
-
-    ]=],
-    name = 'prompt_getinput',
-    params = { { 'buf', 'integer|string' } },
-    signature = 'prompt_getinput({buf})',
   },
   pum_getpos = {
     desc = [=[
