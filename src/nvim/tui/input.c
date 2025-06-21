@@ -251,8 +251,15 @@ static size_t handle_termkey_modifiers(TermKeyKey *key, char *buf, size_t buflen
 enum {
   KEYMOD_SUPER      = 1 << 3,
   KEYMOD_META       = 1 << 5,
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable : 5287)
+#endif
   KEYMOD_RECOGNIZED = (TERMKEY_KEYMOD_SHIFT | TERMKEY_KEYMOD_ALT | TERMKEY_KEYMOD_CTRL
                        | KEYMOD_SUPER | KEYMOD_META),
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
 };
 
 /// Handle modifiers not handled by libtermkey.
