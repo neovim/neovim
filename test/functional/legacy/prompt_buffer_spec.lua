@@ -536,4 +536,20 @@ describe('prompt buffer', function()
     source('set buftype=')
     eq("Invalid mark name: ':'", t.pcall_err(api.nvim_buf_get_mark, 0, ':'))
   end)
+
+  it('% prompt is not repeated with fomratoption+=r', function()
+    source([[
+      set formatoptions+=r
+      set buftype=prompt
+    ]])
+
+    feed('iline1<s-cr>line2')
+
+    screen:expect([[
+      % line1                  |
+      line2^                    |
+      {1:~                        }|*7
+      {5:-- INSERT --}             |
+    ]])
+  end)
 end)
