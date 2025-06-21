@@ -1653,12 +1653,16 @@ void tui_set_icon(TUIData *tui, String icon)
 
 void tui_screenshot(TUIData *tui, String path)
 {
+  FILE *f = fopen(path.data, "w");
+  if (f == NULL) {
+    return;
+  }
+
   UGrid *grid = &tui->grid;
   flush_buf(tui);
   grid->row = 0;
   grid->col = 0;
 
-  FILE *f = fopen(path.data, "w");
   tui->screenshot = f;
   fprintf(f, "%d,%d\n", grid->height, grid->width);
   unibi_out(tui, unibi_clear_screen);
