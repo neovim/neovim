@@ -30,6 +30,7 @@
 #include "nvim/map_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
@@ -1657,6 +1658,10 @@ void tui_screenshot(TUIData *tui, String path)
   grid->col = 0;
 
   FILE *f = fopen(path.data, "w");
+  if (f == NULL) {
+    semsg("Failed to open file at path '%s'.", path.data);
+    return;
+  }
   tui->screenshot = f;
   fprintf(f, "%d,%d\n", grid->height, grid->width);
   unibi_out(tui, unibi_clear_screen);
