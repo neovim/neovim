@@ -303,6 +303,22 @@ bool remote_ui_restart(uint64_t channel_id, Error *err)
   return true;
 }
 
+bool remote_ui_connect(uint64_t channel_id, char *server_address, Error *err)
+{
+  RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
+  if (!ui) {
+    api_set_error(err, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
+    return false;
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  ADD_C(args, CSTR_AS_OBJ(server_address));
+
+  push_call(ui, "connect", args);
+  return true;
+}
+
 // TODO(bfredl): use me to detach a specific ui from the server
 void remote_ui_stop(RemoteUI *ui)
 {
