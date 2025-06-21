@@ -7379,6 +7379,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- "single": Single-line box.
 	- "solid": Adds padding by a single whitespace cell.
 
+	Custom border characters can be specified with a comma-separated list
+	of exactly 8 characters in the following order:
+	  topleft, top, topright, right, botright, bottom, botleft, left
+
+	Example: >lua
+	  vim.o.winborder="+,-,+,|,+,-,+,|"
+<
+
 							*'window'* *'wi'*
 'window' 'wi'		number	(default screen height - 1)
 			global
