@@ -84,6 +84,7 @@ return {
     MenuPopup = false, -- just before popup menu is displayed
     ModeChanged = false, -- after changing the mode
     OptionSet = false, -- after setting any option
+    Progress = false, -- after task progress has changed
     QuickFixCmdPost = false, -- after :make, :grep etc.
     QuickFixCmdPre = false, -- before :make, :grep etc.
     QuitPre = false, -- before :quit
