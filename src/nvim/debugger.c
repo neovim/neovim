@@ -288,7 +288,14 @@ void do_debug(char *cmd)
       // don't debug this command
       n = debug_break_level;
       debug_break_level = -1;
-      do_cmdline(cmdline, getexline, NULL, DOCMD_VERBOSE|DOCMD_EXCRESET);
+      exarg_T ea = {
+        .cmd = cmdline,
+        .line1 = 1,
+        .line2 = 1,
+        .ea_getline = getexline,
+        .cookie = NULL,
+      };
+      do_cmdline(&ea, DOCMD_VERBOSE|DOCMD_EXCRESET);
       debug_break_level = n;
     }
     lines_left = Rows - 1;

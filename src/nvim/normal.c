@@ -3188,7 +3188,14 @@ static void nv_colon(cmdarg_T *cap)
     cmd_result = map_execute_lua(true);
   } else {
     // get a command line and execute it
-    cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
+    exarg_T ea = {
+      .cmd = NULL,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = is_cmdkey ? getcmdkeycmd : getexline,
+      .cookie = NULL
+    };
+    cmd_result = do_cmdline(&ea,
                             cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
   }
 
