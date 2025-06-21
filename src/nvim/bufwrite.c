@@ -1763,7 +1763,6 @@ restore_backup:
     if (msg_add_fileformat(fileformat)) {
       insert_space = true;
     }
-    msg_ext_set_kind("bufwrite");
     msg_add_lines(insert_space, lnum, nchars);       // add line/char count
     if (!shortmess(SHM_WRITE)) {
       if (append) {
@@ -1773,6 +1772,8 @@ restore_backup:
       }
     }
 
+    msg_ext_set_kind("bufwrite");
+    msg_ext_overwrite = true;
     set_keep_msg(msg_trunc(IObuff, false, 0), 0);
   }
 

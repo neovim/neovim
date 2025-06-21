@@ -748,12 +748,6 @@ void ui_call_event(char *name, bool fast, Array args)
   bool handled = false;
   UIEventCallback *event_cb;
 
-  // Return prompt is still a non-fast event, other prompt messages are
-  // followed by a "cmdline_show" event.
-  if (strcmp(name, "msg_show") == 0) {
-    fast = !strequal(args.items[0].data.string.data, "return_prompt");
-  }
-
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
     uint32_t ns_id = ui_event_ns_id;

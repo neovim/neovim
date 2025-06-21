@@ -31,10 +31,12 @@ enum {
 extern MessageHistoryEntry *msg_hist_last;
 
 EXTERN bool msg_ext_need_clear INIT( = false);
-// Set to true to force grouping a set of message chunks into a single `cmdline_show` event.
+/// Set to true to force grouping a set of message chunks into a single `cmdline_show` event.
 EXTERN bool msg_ext_skip_flush INIT( = false);
-// Set to true when message should be appended to previous message line.
+/// Set to true when message should be appended to previous message line.
 EXTERN bool msg_ext_append INIT( = false);
+/// Set to true when previous message should be overwritten.
+EXTERN bool msg_ext_overwrite INIT( = false);
 
 /// allocated grid for messages. Used unless ext_messages is active.
 /// See also the description at msg_scroll_flush()

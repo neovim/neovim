@@ -174,8 +174,6 @@ void msg_ruler(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_history_show(Array entries)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void msg_history_clear(void)
-  FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
 
 // This UI event is currently undocumented.
 // - When the server needs to intentionally exit with an exit code, and there is no
