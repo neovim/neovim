@@ -4573,6 +4573,22 @@ func Test_nearest_cpt_option()
   exe "normal! of\<c-n>\<c-r>=PrintMenuWords()\<cr>"
   call assert_equal('f{''matches'': [''foo1'', ''foo3'', ''foo2''], ''selected'': -1}', getline(2))
 
+  " Multiple sources
+  func F1(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['foo4', 'foo5']
+  endfunc
+  %d
+  set complete+=FF1
+  call setline(1, ["foo1", "foo2", "bar1", "foo3"])
+  exe "normal! 2jof\<c-n>\<c-r>=PrintMenuWords()\<cr>"
+  call assert_equal('f{''matches'': [''foo3'', ''foo2'', ''foo1'', ''foo4'', ''foo5''],
+        \ ''selected'': -1}', getline(4))
+  set complete-=FF1
+  delfunc F1
+
   set completeopt=menu,longest,nearest
   %d
   call setline(1, ["fo", "foo", "foobar", "foobarbaz"])

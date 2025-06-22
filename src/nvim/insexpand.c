@@ -1330,7 +1330,7 @@ static int cp_compare_nearest(const void *a, const void *b)
 {
   int score_a = ((compl_T *)a)->cp_score;
   int score_b = ((compl_T *)b)->cp_score;
-  if (score_a < 0 || score_b < 0) {
+  if (score_a == 0 || score_b == 0) {
     return 0;
   }
   return (score_a > score_b) ? 1 : (score_a < score_b) ? -1 : 0;
