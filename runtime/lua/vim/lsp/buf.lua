@@ -165,88 +165,84 @@ end
 local function get_locations(method, opts)
   opts = opts or {}
   local bufnr = api.nvim_get_current_buf()
+  local win = api.nvim_get_current_win()
+
   local clients = lsp.get_clients({ method = method, bufnr = bufnr })
   if not next(clients) then
     vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
     return
   end
-  local win = api.nvim_get_current_win()
+
   local from = vim.fn.getpos('.')
   from[1] = bufnr
   local tagname = vim.fn.expand('<cword>')
-  local remaining = #clients
 
-  ---@type vim.quickfix.entry[]
-  local all_items = {}
+  lsp.buf_request_all(bufnr, method, function(client)
+    return util.make_position_params(win, client.offset_encoding)
+  end, function(results)
+    ---@type vim.quickfix.entry[]
+    local all_items = {}
 
-  ---@param result nil|lsp.Location|lsp.Location[]
-  ---@param client vim.lsp.Client
-  local function on_response(_, result, client)
-    local locations = {}
-    if result then
-      locations = vim.islist(result) and result or { result }
+    for client_id, res in pairs(results) do
+      local client = assert(lsp.get_client_by_id(client_id))
+      local locations = {}
+      if res then
+        locations = vim.islist(res.result) and res.result or { res.result }
+      end
+      local items = util.locations_to_items(locations, client.offset_encoding)
+      vim.list_extend(all_items, items)
     end
-    local items = util.locations_to_items(locations, client.offset_encoding)
-    vim.list_extend(all_items, items)
-    remaining = remaining - 1
-    if remaining == 0 then
-      if vim.tbl_isempty(all_items) then
-        vim.notify('No locations found', vim.log.levels.INFO)
-        return
-      end
 
-      local title = 'LSP locations'
-      if opts.on_list then
-        assert(vim.is_callable(opts.on_list), 'on_list is not a function')
-        opts.on_list({
-          title = title,
-          items = all_items,
-          context = { bufnr = bufnr, method = method },
-        })
-        return
-      end
+    if vim.tbl_isempty(all_items) then
+      vim.notify('No locations found', vim.log.levels.INFO)
+      return
+    end
 
-      if #all_items == 1 then
-        local item = all_items[1]
-        local b = item.bufnr or vim.fn.bufadd(item.filename)
+    local title = 'LSP locations'
+    if opts.on_list then
+      assert(vim.is_callable(opts.on_list), 'on_list is not a function')
+      opts.on_list({
+        title = title,
+        items = all_items,
+        context = { bufnr = bufnr, method = method },
+      })
+      return
+    end
 
-        -- Save position in jumplist
-        vim.cmd("normal! m'")
-        -- Push a new item into tagstack
-        local tagstack = { { tagname = tagname, from = from } }
-        vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+    if #all_items == 1 then
+      local item = all_items[1]
+      local b = item.bufnr or vim.fn.bufadd(item.filename)
 
-        vim.bo[b].buflisted = true
-        local w = win
-        if opts.reuse_win then
-          w = vim.fn.win_findbuf(b)[1] or w
-          if w ~= win then
-            api.nvim_set_current_win(w)
-          end
+      -- Save position in jumplist
+      vim.cmd("normal! m'")
+      -- Push a new item into tagstack
+      local tagstack = { { tagname = tagname, from = from } }
+      vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+
+      vim.bo[b].buflisted = true
+      local w = win
+      if opts.reuse_win then
+        w = vim.fn.win_findbuf(b)[1] or w
+        if w ~= win then
+          api.nvim_set_current_win(w)
         end
-        api.nvim_win_set_buf(w, b)
-        api.nvim_win_set_cursor(w, { item.lnum, item.col - 1 })
-        vim._with({ win = w }, function()
-          -- Open folds under the cursor
-          vim.cmd('normal! zv')
-        end)
-        return
       end
-      if opts.loclist then
-        vim.fn.setloclist(0, {}, ' ', { title = title, items = all_items })
-        vim.cmd.lopen()
-      else
-        vim.fn.setqflist({}, ' ', { title = title, items = all_items })
-        vim.cmd('botright copen')
-      end
+      api.nvim_win_set_buf(w, b)
+      api.nvim_win_set_cursor(w, { item.lnum, item.col - 1 })
+      vim._with({ win = w }, function()
+        -- Open folds under the cursor
+        vim.cmd('normal! zv')
+      end)
+      return
     end
-  end
-  for _, client in ipairs(clients) do
-    local params = util.make_position_params(win, client.offset_encoding)
-    client:request(method, params, function(_, result)
-      on_response(_, result, client)
-    end)
-  end
+    if opts.loclist then
+      vim.fn.setloclist(0, {}, ' ', { title = title, items = all_items })
+      vim.cmd.lopen()
+    else
+      vim.fn.setqflist({}, ' ', { title = title, items = all_items })
+      vim.cmd('botright copen')
+    end
+  end)
 end
 
 --- @class vim.lsp.ListOpts
@@ -795,17 +791,24 @@ function M.references(context, opts)
   validate('opts', opts, 'table', true)
 
   local bufnr = api.nvim_get_current_buf()
-  local clients = lsp.get_clients({ method = ms.textDocument_references, bufnr = bufnr })
-  if not next(clients) then
-    return
-  end
   local win = api.nvim_get_current_win()
   opts = opts or {}
 
-  local all_items = {}
-  local title = 'References'
+  lsp.buf_request_all(bufnr, ms.textDocument_references, function(client)
+    local params = util.make_position_params(win, client.offset_encoding)
+    ---@diagnostic disable-next-line: inject-field
+    params.context = context or { includeDeclaration = true }
+    return params
+  end, function(results)
+    local all_items = {}
+    local title = 'References'
 
-  local function on_done()
+    for client_id, res in pairs(results) do
+      local client = assert(lsp.get_client_by_id(client_id))
+      local items = util.locations_to_items(res.result, client.offset_encoding)
+      vim.list_extend(all_items, items)
+    end
+
     if not next(all_items) then
       vim.notify('No references found')
     else
@@ -828,25 +831,7 @@ function M.references(context, opts)
         vim.cmd('botright copen')
       end
     end
-  end
-
-  local remaining = #clients
-  for _, client in ipairs(clients) do
-    local params = util.make_position_params(win, client.offset_encoding)
-
-    ---@diagnostic disable-next-line: inject-field
-    params.context = context or {
-      includeDeclaration = true,
-    }
-    client:request(ms.textDocument_references, params, function(_, result)
-      local items = util.locations_to_items(result or {}, client.offset_encoding)
-      vim.list_extend(all_items, items)
-      remaining = remaining - 1
-      if remaining == 0 then
-        on_done()
-      end
-    end)
-  end
+  end)
 end
 
 --- Lists all symbols in the current buffer in the |location-list|.
@@ -909,8 +894,21 @@ local function hierarchy(method)
 
   local win = api.nvim_get_current_win()
 
-  --- @param results [integer, lsp.TypeHierarchyItem|lsp.CallHierarchyItem][]
-  local function on_response(results)
+  lsp.buf_request_all(bufnr, prepare_method, function(client)
+    return util.make_position_params(win, client.offset_encoding)
+  end, function(req_results)
+    local results = {} --- @type [integer, lsp.TypeHierarchyItem|lsp.CallHierarchyItem][]
+    for client_id, res in pairs(req_results) do
+      if res.err then
+        vim.notify(res.err.message, vim.log.levels.WARN)
+      elseif res.result then
+        local result = res.result --- @type lsp.TypeHierarchyItem[]|lsp.CallHierarchyItem[]
+        for _, item in ipairs(result) do
+          results[#results + 1] = { client_id, item }
+        end
+      end
+    end
+
     if #results == 0 then
       vim.notify('No item resolved', vim.log.levels.WARN)
     elseif #results == 1 then
@@ -930,30 +928,7 @@ local function hierarchy(method)
         end
       end)
     end
-  end
-
-  local results = {} --- @type [integer, lsp.TypeHierarchyItem|lsp.CallHierarchyItem][]
-
-  local remaining = #clients
-
-  for _, client in ipairs(clients) do
-    local params = util.make_position_params(win, client.offset_encoding)
-    --- @param result lsp.CallHierarchyItem[]|lsp.TypeHierarchyItem[]?
-    client:request(prepare_method, params, function(err, result, ctx)
-      if err then
-        vim.notify(err.message, vim.log.levels.WARN)
-      elseif result then
-        for _, item in ipairs(result) do
-          results[#results + 1] = { ctx.client_id, item }
-        end
-      end
-
-      remaining = remaining - 1
-      if remaining == 0 then
-        on_response(results)
-      end
-    end, bufnr)
-  end
+  end)
 end
 
 --- Lists all the call sites of the symbol under the cursor in the
@@ -1098,7 +1073,7 @@ end
 
 ---@nodoc
 ---@class vim.lsp.CodeActionResultEntry
----@field error? lsp.ResponseError
+---@field err? lsp.ResponseError
 ---@field result? (lsp.Command|lsp.CodeAction)[]
 ---@field ctx lsp.HandlerContext
 
@@ -1306,29 +1281,14 @@ function M.code_action(opts)
   local bufnr = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
   local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_codeAction })
-  local remaining = #clients
-  if remaining == 0 then
+  if not next(clients) then
     if next(lsp.get_clients({ bufnr = bufnr })) then
       vim.notify(lsp._unsupported_method(ms.textDocument_codeAction), vim.log.levels.WARN)
     end
     return
   end
 
-  ---@type table<integer, vim.lsp.CodeActionResultEntry>
-  local results = {}
-
-  ---@param err? lsp.ResponseError
-  ---@param result? (lsp.Command|lsp.CodeAction)[]
-  ---@param ctx lsp.HandlerContext
-  local function on_result(err, result, ctx)
-    results[ctx.client_id] = { error = err, result = result, ctx = ctx }
-    remaining = remaining - 1
-    if remaining == 0 then
-      on_code_action_results(results, opts)
-    end
-  end
-
-  for _, client in ipairs(clients) do
+  lsp.buf_request_all(bufnr, ms.textDocument_codeAction, function(client)
     ---@type lsp.CodeActionParams
     local params
 
@@ -1364,8 +1324,15 @@ function M.code_action(opts)
       })
     end
 
-    client:request(ms.textDocument_codeAction, params, on_result, bufnr)
-  end
+    return params
+  end, function(results, ctx)
+    for _, result in pairs(results) do
+      ---@cast result vim.lsp.CodeActionResultEntry
+      result.ctx = ctx
+    end
+
+    on_code_action_results(results, opts)
+  end)
 end
 
 --- @deprecated
