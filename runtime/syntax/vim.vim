@@ -324,7 +324,7 @@ if s:vim9script
             \\|
           \\%(^\s*#.*\)\@<=$
             \\|
-          \\n\s*\\\|\n\s*#\\
+          \\n\s*\%(\\\|#\\ \)
         \+
         \ matchgroup=vimCommand
         \ end="\s\+\zsas\ze\s\+\h"
@@ -336,7 +336,7 @@ if s:vim9script
 else
   syn region	vimImportFilename contained
         \ start="\S"
-        \ skip=+\n\s*\\\|\n\s*"\\ +
+        \ skip=+\n\s*\%(\\\|"\\ \)+
         \ matchgroup=vimCommand
         \ end="\s\+\zsas\ze\s\+\h"
         \ matchgroup=NONE
@@ -937,18 +937,17 @@ syn match	vimMarkArgError	contained	"["^.(){}0-9]"
 syn cluster	vimMarkArg	contains=vimMarkArg,vimMarkArgError
 
 " Marks, Registers, Addresses, Filters: {{{2
+syn match	vimMark	"'[a-zA-Z0-9]\ze\s*$"
+syn match	vimMark	"'[[\]{}()<>'`"^.]\ze\s*$"
 syn match	vimMark	"'[a-zA-Z0-9]\ze[-+,!]"	nextgroup=vimFilter,vimMarkNumber,vimSubst1
-syn match	vimMark	"'[[\]{}()<>]\ze[-+,!]"	nextgroup=vimFilter,vimMarkNumber,vimSubst1
-syn match	vimMark	",\zs'[[\]{}()<>]\ze"	nextgroup=vimFilter,vimMarkNumber,vimSubst1
+syn match	vimMark	"'[[\]{}()<>'`"^.]\ze[-+,!]"	nextgroup=vimFilter,vimMarkNumber,vimSubst1
+syn match	vimMark	",\zs'[[\]{}()<>'`"^.]"	nextgroup=vimFilter,vimMarkNumber,vimSubst1
 syn match	vimMark	"[!,:]\zs'[a-zA-Z0-9]"	nextgroup=vimFilter,vimMarkNumber,vimSubst1
-syn match	vimMark	"\<norm\%[al]\s\zs'[a-zA-Z0-9]"	nextgroup=vimFilter,vimMarkNumber,vimSubst1
 syn match	vimMarkNumber	"[-+]\d\+"		contained contains=vimOper nextgroup=vimSubst1
 syn match	vimPlainMark contained	"'[a-zA-Z0-9]"
 syn match	vimRange	"[`'][a-zA-Z0-9],[`'][a-zA-Z0-9]"	contains=vimMark	skipwhite nextgroup=vimFilter
 
 syn match	vimRegister	'[^,;[{: \t]\zs"[a-zA-Z0-9.%#:_\-/]\ze[^a-zA-Z_":0-9]'
-syn match	vimRegister	'\<norm\s\+\zs"[a-zA-Z0-9]'
-syn match	vimRegister	'\<normal\s\+\zs"[a-zA-Z0-9]'
 syn match	vimRegister	'@"'
 syn match	vimPlainRegister contained	'"[a-zA-Z0-9\-:.%#*+=]'
 syn match	vimLetRegister	contained	'@["0-9\-a-zA-Z:.%#=*+~_/]'
