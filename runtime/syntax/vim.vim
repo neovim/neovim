@@ -324,7 +324,7 @@ if s:vim9script
             \\|
           \\%(^\s*#.*\)\@<=$
             \\|
-          \\n\s*\\\|\n\s*#\\
+          \\n\s*\%(\\\|#\\ \)
         \+
         \ matchgroup=vimCommand
         \ end="\s\+\zsas\ze\s\+\h"
@@ -336,7 +336,7 @@ if s:vim9script
 else
   syn region	vimImportFilename contained
         \ start="\S"
-        \ skip=+\n\s*\\\|\n\s*"\\ +
+        \ skip=+\n\s*\%(\\\|"\\ \)+
         \ matchgroup=vimCommand
         \ end="\s\+\zsas\ze\s\+\h"
         \ matchgroup=NONE
