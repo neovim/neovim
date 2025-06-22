@@ -2586,6 +2586,33 @@ vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
 ==============================================================================
 Lua module: vim.ui                                                    *vim.ui*
 
+*vim.ui.Spinner*
+
+    Fields: ~
+      • {steps}    (`vim.ui.SpinnerStep[]`) Array of spinner steps. See
+                   |vim.ui.SpinnerStep|.
+      • {on_step}  (`fun(char: string, char_id: integer)`) Callback to be
+                   executed.
+      • {reverse}  (`boolean`) Whether to reverse from last to first before
+                   repeating a cycle.
+      • {start}    (`fun(self: vim.ui.Spinner)`) See |Spinner:start()|.
+      • {stop}     (`fun(self: vim.ui.Spinner)`) See |Spinner:stop()|.
+
+*vim.ui.SpinnerStep*
+    before showing next step).
+
+    Fields: ~
+      • {char}   (`string`) Character to be displayed as snipper step.
+      • {delay}  (`integer`) Amount of milliseconds to show this step (i.e.
+                 wait
+
+
+Spinner:start()                                              *Spinner:start()*
+    Starts the spinner.
+
+Spinner:stop()                                                *Spinner:stop()*
+    Stops the spinner.
+
 vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
     Prompts the user for input, allowing arbitrary (potentially asynchronous)
     work until `on_confirm`.
@@ -2679,6 +2706,21 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
       • {on_choice}  (`fun(item: T?, idx: integer?)`) Called once the user
                      made a choice. `idx` is the 1-based index of `item`
                      within `items`. `nil` if the user aborted the dialog.
+
+vim.ui.spinner({steps}, {on_step}, {opts})                  *vim.ui.spinner()*
+    todo
+
+    Parameters: ~
+      • {steps}    (`vim.ui.SpinnerStep[]?`) See |vim.ui.SpinnerStep|.
+      • {on_step}  (`fun(char: string, char_id: integer)?`) Callback to be
+                   executed on every step update. Can include forcing
+                   `vim.cmd.redrawstatus()`, etc.
+      • {opts}     (`table?`) Additional options.
+                   • {reverse} (`boolean`) Whether to reverse from last to
+                     first before repeating a cycle.
+
+    Return: ~
+        (`vim.ui.Spinner`) See |vim.ui.Spinner|.
 
 
 ==============================================================================

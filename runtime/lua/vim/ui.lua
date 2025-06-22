@@ -253,4 +253,91 @@ function M._get_urls()
   return urls
 end
 
+--- @class vim.ui.SpinnerStep
+--- @field char string Character to be displayed as snipper step.
+--- @field delay integer Amount of milliseconds to show this step (i.e. wait
+---   before showing next step).
+
+--- @class vim.ui.spinner.Opts
+--- @inlinedoc
+--- @field reverse boolean Whether to reverse from last to first before repeating a cycle.
+
+--- @class vim.ui.Spinner
+--- @field steps vim.ui.SpinnerStep[] Array of spinner steps.
+--- @field on_step fun(char: string, char_id: integer) Callback to be executed.
+--- @field reverse boolean Whether to reverse from last to first before repeating a cycle.
+--- @field private timer uv.uv_timer_t? Timer used to control the spinner steps.
+--- @field private curr_char_id integer Current character ID in the spinner steps.
+local Spinner = {}
+Spinner.__index = Spinner
+
+--- todo
+--- @param steps vim.ui.SpinnerStep[] | nil
+--- @param on_step? fun(char: string, char_id: integer) Callback to be executed
+---   on every step update. Can include forcing `vim.cmd.redrawstatus()`, etc.
+--- @param opts? vim.ui.spinner.Opts Additional options.
+--- @return vim.ui.Spinner
+function M.spinner(steps, on_step, opts)
+  steps = steps
+    or {
+      { char = '⠋', delay = 100 },
+      { char = '⠙', delay = 100 },
+      { char = '⠹', delay = 100 },
+      { char = '⠸', delay = 100 },
+      { char = '⠼', delay = 100 },
+      { char = '⠴', delay = 100 },
+      { char = '⠦', delay = 100 },
+      { char = '⠧', delay = 100 },
+      { char = '⠇', delay = 100 },
+      { char = '⠏', delay = 100 },
+    }
+
+  opts = opts or {}
+  return setmetatable({
+    steps = steps,
+    on_step = on_step,
+    reverse = opts.reverse or false,
+    curr_char_id = 1,
+    timer = nil,
+  }, Spinner)
+end
+
+--- Starts the spinner.
+function Spinner:start()
+  if self.timer then
+    return
+  end
+
+  self.timer = vim.uv.new_timer()
+
+  local function step()
+    self.on_step(self.steps[self.curr_char_id].char, self.curr_char_id)
+
+    if self.reverse then
+      if self.curr_char_id == 1 then
+        self.curr_char_id = #self.steps
+      else
+        self.curr_char_id = self.curr_char_id - 1
+      end
+    else
+      self.curr_char_id = (self.curr_char_id % #self.steps) + 1
+    end
+  end
+
+  step()
+  self.timer:start(0, self.steps[self.curr_char_id].delay, step)
+end
+
+--- Stops the spinner.
+function Spinner:stop()
+  if not self.timer then
+    return
+  end
+
+  self.timer:stop()
+  self.timer:close()
+  self.timer = nil
+  self.curr_char_id = 1
+end
+
 return M
