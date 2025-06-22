@@ -85,7 +85,7 @@ end
 --- Force `foldexpr()` to be re-evaluated, without opening folds.
 ---@param bufnr integer
 local function foldupdate(bufnr)
-  if not api.nvim_buf_is_loaded(bufnr) then
+  if not api.nvim_buf_is_loaded(bufnr) or not vim.b[bufnr]._lsp_folding_range_enabled then
     return
   end
   for _, winid in ipairs(vim.fn.win_findbuf(bufnr)) do
@@ -157,6 +157,10 @@ end
 --- `foldupdate()` is scheduled once after the request is completed.
 ---@param client? vim.lsp.Client The client whose server supports `foldingRange`.
 function State:request(client)
+  if not vim.b._lsp_folding_range_enabled then
+    return
+  end
+
   ---@type lsp.FoldingRangeParams
   local params = { textDocument = util.make_text_document_params(self.bufnr) }
 
@@ -256,6 +260,15 @@ function State.new(bufnr)
       end
     end,
   })
+  api.nvim_create_autocmd('OptionSet', {
+    group = self.augroup,
+    pattern = 'foldexpr',
+    callback = function()
+      if vim.v.option_type == 'global' or vim.api.nvim_get_current_buf() == bufnr then
+        vim.b[bufnr]._lsp_folding_range_enabled = nil
+      end
+    end,
+  })
 
   return self
 end
@@ -349,10 +362,16 @@ end
 function M.foldexpr(lnum)
   local bufnr = api.nvim_get_current_buf()
   local state = State.active[bufnr]
+  if not vim.b[bufnr]._lsp_folding_range_enabled then
+    vim.b[bufnr]._lsp_folding_range_enabled = true
+    if state then
+      state:request()
+    end
+  end
+
   if not state then
     return '0'
   end
-
   local row = (lnum or vim.v.lnum) - 1
   local level = state.row_level[row]
   return level and (level[2] or '') .. (level[1] or '0') or '0'
