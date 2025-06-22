@@ -568,14 +568,13 @@ that combination.  Thus CTRL-K dP also works.  Since there is no digraph for
 	using.  Always use ":digraphs" to find out which digraphs are currently
 	available.
 
-You can define your own digraphs.  Example: >
+You can define your own digraphs by specifying the target character with a
+decimal number.  Example: >
 
-	:digraph a" ä
+	:digraph a\" 228
 
-This defines that CTRL-K a" inserts an ä character.  You can also specify the
-character with a decimal number.  This defines the same digraph: >
-
-	:digraph a" 228
+This defines that CTRL-K a" inserts an ä character.  Note: we had to escape
+the " character since otherwise it would act as a comment character.
 
 More information about digraphs here: |digraphs|
    Another way to insert special characters is with a keymap.  More about that
