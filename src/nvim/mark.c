@@ -851,6 +851,7 @@ char *fm_getname(fmark_T *fmark, int lead_len)
 /// Return the line at mark "mp".  Truncate to fit in window.
 /// The returned string has been allocated.
 static char *mark_line(pos_T *mp, int lead_len)
+  FUNC_ATTR_NONNULL_RET
 {
   char *p;
 
