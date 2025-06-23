@@ -1213,8 +1213,12 @@ syn region	vimEcho
       \ start="\<echoc\%[onsole]\>"
       \ start="\<echon\>"
       \ start="\<echow\%[indow]\>"
-      \ skip=+\\|\|\n\s*\\\|\n\s*"\\ +
-      \ matchgroup=vimCmdSep end="|" excludenl end="$" contains=@vimContinue,@vimExprList transparent
+      \ skip=+\\|\|||\|\n\s*\%(\\\|["#]\\ \)+
+      \ end="\ze|"
+      \ excludenl end="$"
+      \ nextgroup=vimCmdSep
+      \ contains=@vimContinue,@vimExprList
+      \ transparent
 
 syn match	vimEchohl	"\<echohl\=\>"	skipwhite nextgroup=vimGroup,vimHLGroup,vimEchohlNone,vimOnlyHLGroup,nvimHLGroup
 syn case ignore
@@ -1223,7 +1227,15 @@ syn case match
 
 syn cluster	vimEcho	contains=vimEcho,vimEchohl
 
-syn region	vimExecute	matchgroup=vimCommand start="\<exe\%[cute]\>" skip=+\\|\|\n\s*\\\|\n\s*"\\ + matchgroup=vimCmdSep end="|" excludenl end="$" contains=@vimContinue,@vimExprList transparent
+syn region	vimExecute
+      \ matchgroup=vimCommand
+      \ start="\<exe\%[cute]\>"
+      \ skip=+\\|\|||\|\n\s*\%(\\\|["#]\\ \)+
+      \ end="\ze|"
+      \ excludenl end="$"
+      \ nextgroup=vimCmdSep
+      \ contains=@vimContinue,@vimExprList
+      \ transparent
 
 " Filter: {{{2
 " ======
