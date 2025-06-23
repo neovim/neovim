@@ -329,7 +329,6 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     ccline->cmdlen += difflen;
     ccline->cmdpos += difflen;
   }
-  xfree(p2);
 
   redrawcmd();
   cursorcmd();
@@ -347,6 +346,8 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
   }
 
+  xfree(p2);
+
   return OK;
 }
 
@@ -357,8 +358,8 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
 {
   assert(numMatches >= 0);
   // Add all the completion matches
+  compl_match_array = xmalloc(sizeof(pumitem_T) * (size_t)numMatches);
   compl_match_arraysize = numMatches;
-  compl_match_array = xmalloc(sizeof(pumitem_T) * (size_t)compl_match_arraysize);
   for (int i = 0; i < numMatches; i++) {
     compl_match_array[i] = (pumitem_T){
       .pum_text = SHOW_MATCH(i),
