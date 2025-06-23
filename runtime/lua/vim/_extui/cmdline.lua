@@ -56,9 +56,14 @@ end
 ---@param level integer
 ---@param hl_id integer
 function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
-  M.level, M.indent, M.prompt = level, indent, #prompt > 0
+  M.level, M.indent, M.prompt = level, indent, M.prompt or #prompt > 0
   -- Only enable TS highlighter for Ex commands (not search or filter commands).
   M.highlighter.active[ext.bufs.cmd] = firstc == ':' and M.highlighter or nil
+  if ext.msg.cmd.msg_row ~= -1 then
+    ext.msg.msg_clear()
+  end
+  ext.msg.virt.last = { {}, {}, {}, {} }
+
   set_text(content, ('%s%s%s'):format(firstc, prompt, (' '):rep(indent)))
   if promptlen > 0 and hl_id > 0 then
     api.nvim_buf_set_extmark(ext.bufs.cmd, ext.ns, 0, 0, { hl_group = hl_id, end_col = promptlen })
@@ -67,14 +72,6 @@ function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   local height = math.max(ext.cmdheight, api.nvim_win_text_height(ext.wins.cmd, {}).all)
   win_config(ext.wins.cmd, false, height)
   M.cmdline_pos(pos)
-
-  -- Clear message cmdline state; should not be shown during, and reset after cmdline.
-  if ext.cfg.msg.target == 'cmd' and ext.msg.cmd.msg_row ~= -1 then
-    ext.msg.prev_msg, ext.msg.dupe, ext.msg.cmd.msg_row = '', 0, -1
-    api.nvim_buf_clear_namespace(ext.bufs.cmd, ext.ns, 0, -1)
-    ext.msg.virt.msg = { {}, {} }
-  end
-  ext.msg.virt.last = { {}, {}, {}, {} }
 end
 
 --- Insert special character at cursor position.

@@ -334,18 +334,22 @@ function M.show_msg(tar, content, replace_last, append, pager)
   end
 end
 
-local replace_bufwrite = false
 --- Route the message to the appropriate sink.
 ---
 ---@param kind string
 ---@alias MsgChunk [integer, string, integer]
 ---@alias MsgContent MsgChunk[]
 ---@param content MsgContent
---@param replace_last boolean
+---@param replace_last boolean
 --@param history boolean
 ---@param append boolean
-function M.msg_show(kind, content, _, _, append)
-  if kind == 'search_count' then
+function M.msg_show(kind, content, replace_last, _, append)
+  if kind == 'empty' then
+    -- A sole empty message clears the cmdline.
+    if ext.cfg.msg.target == 'cmd' and M.cmd.count == 0 then
+      M.msg_clear()
+    end
+  elseif kind == 'search_count' then
     -- Extract only the search_count, not the entered search command.
     -- Match any of search.c:cmdline_search_stat():' [(x | >x | ?)/(y | >y | ??)]'
     content = { content[#content] }
@@ -353,16 +357,18 @@ function M.msg_show(kind, content, _, _, append)
     M.virt.last[M.virt.idx.search] = content
     M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
     set_virttext('last')
-  elseif kind == 'return_prompt' then
-    -- Bypass hit enter prompt.
-    vim.api.nvim_feedkeys(vim.keycode('<CR>'), 'n', false)
   elseif kind == 'verbose' then
-    -- Verbose messages are sent too often to be meaningful in the cmdline:
+    -- Verbose messages are sent too often to be meaningful in the cmdline.
     -- always route to message window regardless of cfg.msg.target.
     M.show_msg('msg', content, false, append)
-  elseif ext.cmd.prompt then
+  elseif ext.cmd.prompt or kind == 'wildlist' then
     -- Route to dialog that stays open so long as the cmdline prompt is active.
-    M.show_msg('dialog', content, api.nvim_win_get_config(ext.wins.dialog).hide, append)
+    replace_last = api.nvim_win_get_config(ext.wins.dialog).hide or kind == 'wildlist'
+    if kind == 'wildlist' then
+      api.nvim_buf_set_lines(ext.bufs.dialog, 0, -1, false, {})
+      ext.cmd.prompt = true -- Ensure dialog is closed when cmdline is hidden.
+    end
+    M.show_msg('dialog', content, replace_last, append)
     M.set_pos('dialog')
   else
     -- Set the entered search command in the cmdline (if available).
@@ -381,9 +387,7 @@ function M.msg_show(kind, content, _, _, append)
     -- Typed "inspection" messages should be routed to the pager.
     local inspect = { 'echo', 'echomsg', 'lua_print' }
     local pager = kind == 'list_cmd' or (ext.cmd.level >= 0 and vim.tbl_contains(inspect, kind))
-    M.show_msg(tar, content, replace_bufwrite, append, pager)
-    -- Replace message for every second bufwrite message.
-    replace_bufwrite = not replace_bufwrite and kind == 'bufwrite'
+    M.show_msg(tar, content, replace_last, append, pager)
     -- Don't remember search_cmd message as actual message.
     if kind == 'search_cmd' then
       M.cmd.lines, M.cmd.count, M.prev_msg = 0, 0, ''
@@ -391,7 +395,14 @@ function M.msg_show(kind, content, _, _, append)
   end
 end
 
-function M.msg_clear() end
+---Clear currently visible messages.
+function M.msg_clear()
+  api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
+  api.nvim_buf_set_lines(ext.bufs.msg, 0, -1, false, {})
+  api.nvim_win_set_config(ext.wins.msg, { hide = true })
+  M.dupe, M[ext.cfg.msg.target].count, M.cmd.msg_row, M.cmd.lines, M.msg.width = 0, 0, -1, 1, 1
+  M.prev_msg, M.virt.msg = '', { {}, {} }
+end
 
 --- Place the mode text in the cmdline.
 ---
@@ -436,8 +447,6 @@ function M.msg_history_show(entries)
 
   M.set_pos('pager')
 end
-
-function M.msg_history_clear() end
 
 --- Adjust dimensions of the message windows after certain events.
 ---

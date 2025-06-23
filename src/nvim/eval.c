@@ -7863,10 +7863,8 @@ void ex_echo(exarg_T *eap)
         msg_puts_hl(" ", echo_hl_id, false);
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
-      if (*tofree != NUL) {
-        msg_ext_append = eap->cmdidx == CMD_echon;
-        msg_multiline(cstr_as_string(tofree), echo_hl_id, true, false, &need_clear);
-      }
+      msg_ext_append = eap->cmdidx == CMD_echon;
+      msg_multiline(cstr_as_string(tofree), echo_hl_id, true, false, &need_clear);
       xfree(tofree);
     }
     tv_clear(&rettv);

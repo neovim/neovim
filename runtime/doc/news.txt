@@ -67,10 +67,12 @@ EDITOR
 
 EVENTS
 
-• |ui-messages| no longer emits the `msg_show.return_prompt`, `msg_clear` and
-  `msg_history_clear` events. These events arbitrarily assume a message UI
-  mimicking the legacy message grid. Benefit: reduced UI event traffic and
-  more flexibility for UIs.
+• |ui-messages| no longer emits the `msg_show.return_prompt`, and
+  `msg_history_clear` events. The `msg_clear` event was repurposed and is now
+  emitted after the screen is cleared. These events arbitrarily assumed a
+  message UI that mimicks the legacy message grid. Benefit: reduced UI event
+  traffic and more flexibility for UIs.
+• A new `empty` message kind is emitted for an empty (e.g. `:echo ""`) message.
 
 HIGHLIGHTS
 
