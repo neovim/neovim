@@ -276,7 +276,7 @@ describe('prompt buffer', function()
 
     -- % prompt is not repeated with formatoptions+=r
     source([[
-      bdelete
+      bwipeout!
       set formatoptions+=r
       set buftype=prompt
       call prompt_setprompt(bufnr(), "% ")
