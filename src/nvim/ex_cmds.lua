@@ -1052,7 +1052,7 @@ M.cmds = {
   },
   {
     command = 'fclose',
-    flags = bit.bor(BANG, RANGE),
+    flags = bit.bor(BANG, RANGE, TRLBAR),
     addr_type = 'ADDR_OTHER',
     func = 'ex_fclose',
   },

@@ -10654,6 +10654,8 @@ describe('float window', function()
                                                   |
         ]])
       end
+      -- allow use with trailing bar
+      eq('hello', n.exec_capture('fclose | echo "hello"'))
     end)
 
     it('correctly placed in or above message area', function()
