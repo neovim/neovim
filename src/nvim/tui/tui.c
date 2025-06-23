@@ -388,7 +388,8 @@ static void terminfo_start(TUIData *tui)
 #ifdef MSWIN
   const char *guessed_term = NULL;
   os_tty_guess_term(&guessed_term, tui->out_fd);
-  if (term == NULL) {
+  if (term == NULL && guessed_term != NULL) {
+    term = xstrdup(guessed_term);
     os_setenv("TERM", guessed_term, 1);
   }
 #endif
