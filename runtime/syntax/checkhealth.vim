@@ -15,7 +15,7 @@ syn keyword DiagnosticWarn WARNING[:]
 syn keyword DiagnosticOk OK[:]
 " Note: hs=e starts higlighting on the title line (instead of the "===" line).
 syn match healthSectionDelim /^======*\n.*$/hs=e
-hi def healthSectionDelim gui=reverse cterm=reverse
+highlight default healthSectionDelim gui=reverse cterm=reverse
 syn match healthHeadingChar "=" conceal cchar= contained containedin=healthSectionDelim
 
 let b:current_syntax = "checkhealth"
