@@ -791,7 +791,7 @@ describe('default statusline', function()
       '%=',
       "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
       "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
-      "%{% &busy ? '◐ ' : '' %}",
+      "%{% &busy > 0 ? '◐ ' : '' %}",
       "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
     })
 
@@ -816,7 +816,7 @@ describe('default statusline', function()
       {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
-    exec_lua('vim.o.busy = true')
+    exec_lua('vim.o.busy = 1')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13
@@ -824,7 +824,7 @@ describe('default statusline', function()
                                                                   |
     ]])
 
-    exec_lua('vim.o.busy = false')
+    exec_lua('vim.o.busy = 0')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13
