@@ -4190,20 +4190,20 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 
   linenr_T new_line_count = buf->b_ml.ml_line_count;
   colnr_T new_endcol = ml_get_buf_len(buf, new_line_count);
-  bcount_t new_byte_count;
-
+  bcount_t new_byte_count = 0;
   linenr_T delta = new_line_count - old_line_count;
+
   if (old_last == NULL) {
     new_byte_count = get_region_bytecount(buf, 1, new_line_count, 0, new_endcol);
     extmark_splice(buf, 0, 0, old_line_count - 1, 0, old_bytecount, new_line_count - 1, new_endcol,
                    new_byte_count, kExtmarkNoUndo);
     changed_lines(buf, 1, 0, old_line_count > 0 ? old_line_count + 1 : 1, delta, true);
-  } else {
+  } else if (delta > 0) {
     linenr_T start_lnum = old_line_count + 1;
     new_byte_count = get_region_bytecount(buf, start_lnum, new_line_count, 0, new_endcol);
     extmark_splice(buf, old_line_count - 1, old_endcol, 0, 0, 0, delta, new_endcol, new_byte_count,
                    kExtmarkNoUndo);
-    changed_lines(buf, start_lnum, 0, new_line_count + 1, delta + 1, true);
+    changed_lines(buf, start_lnum, 0, start_lnum, delta, true);
   }
   buf->b_changed = false;
 
