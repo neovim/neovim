@@ -135,21 +135,6 @@ describe('prompt buffer', function()
       {1:~                        }|*8
                                |
     ]])
-
-    -- % prompt is not repeated with fomratoption+=r
-    source([[
-      bdelete
-      set formatoptions+=r
-      set buftype=prompt
-      call prompt_setprompt(bufnr(), "% ")
-    ]])
-    feed('iline1<s-cr>line2')
-    screen:expect([[
-      % line1                  |
-      line2^                    |
-      {1:~                        }|*7
-      {5:-- INSERT --}             |
-    ]])
   end)
 
   -- oldtest: Test_prompt_switch_windows()
@@ -286,6 +271,22 @@ describe('prompt buffer', function()
       {3:[Prompt]                 }|
       other buffer             |
       {1:~                        }|*3
+      {5:-- INSERT --}             |
+    ]])
+
+    -- % prompt is not repeated with formatoptions+=r
+    source([[
+      bdelete
+      set formatoptions+=r
+      set buftype=prompt
+      call prompt_setprompt(bufnr(), "% ")
+    ]])
+    feed('iline1<s-cr>line2')
+    screen:expect([[
+      other buffer             |
+      % line1                  |
+      line2^                    |
+      {1:~                        }|*6
       {5:-- INSERT --}             |
     ]])
   end)

@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
-#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
