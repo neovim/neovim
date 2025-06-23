@@ -387,10 +387,12 @@ static void terminfo_start(TUIData *tui)
 
   const char *term = os_getenv("TERM");
 #ifdef MSWIN
-  os_tty_guess_term(&term, tui->out_fd);
-  os_setenv("TERM", term, 1);
-  // Old os_getenv() pointer is invalid after os_setenv(), fetch it again.
-  term = os_getenv("TERM");
+  const char *guessed_term = NULL;
+  os_tty_guess_term(&guessed_term, tui->out_fd);
+  if (term == NULL && guessed_term != NULL) {
+    term = xstrdup(guessed_term);
+    os_setenv("TERM", guessed_term, 1);
+  }
 #endif
 
   // Set up unibilium/terminfo.
