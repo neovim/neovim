@@ -41,6 +41,7 @@ for k, v in pairs({
   snippet = true,
   pack = true,
   _watch = true,
+  net = true,
 }) do
   vim._submodules[k] = v
 end
