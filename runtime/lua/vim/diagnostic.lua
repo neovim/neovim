@@ -1652,15 +1652,25 @@ M.handlers.underline = {
 
 --- Returns the text to show for the given diagnostics, grouped by columns.
 ---
+--- @param bufnr integer
+--- @param line integer
 --- @param line_diagnostics vim.Diagnostic[]
 --- @param opts vim.diagnostic.Opts.VirtualText
 --- @return table<integer, string[]> chunks_per_column
-local function get_virtual_text_chunks_per_column(line_diagnostics, opts)
+local function get_virtual_text_chunks_per_column(bufnr, line, line_diagnostics, opts)
   local group_diags = {} --- @type table<integer, vim.Diagnostic[]>
+
+  -- Make sure our column always ends up being valid:
+  local line_length = 0
+  local line_buf_contents = api.nvim_buf_get_lines(bufnr, line, line+1, false)
+  if #line_buf_contents == 1 then
+    line_length = #line_buf_contents[1]
+  end
 
   --- Gather diagnostics per-column:
   for _, diag in ipairs(line_diagnostics) do
     local col = diag.end_col or diag.col
+    col = col > line_length and line_length or col
     group_diags[col] = group_diags[col] or {}
     table.insert(group_diags[col], diag)
   end
@@ -1698,7 +1708,7 @@ local function render_virtual_text(namespace, bufnr, diagnostics, opts)
 
   for line, line_diagnostics in pairs(diagnostics) do
     if should_render(line) then
-      local virt_texts = get_virtual_text_chunks_per_column(line_diagnostics, opts)
+      local virt_texts = get_virtual_text_chunks_per_column(bufnr, line, line_diagnostics, opts)
       if not vim.tbl_isempty(virt_texts) then
         for column, text_chunks in pairs(virt_texts) do
           api.nvim_buf_set_extmark(bufnr, namespace, line, column, {
