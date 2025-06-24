@@ -273,6 +273,22 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
+
+    -- % prompt is not repeated with formatoptions+=r
+    source([[
+      bwipeout!
+      set formatoptions+=r
+      set buftype=prompt
+      call prompt_setprompt(bufnr(), "% ")
+    ]])
+    feed('iline1<s-cr>line2')
+    screen:expect([[
+      other buffer             |
+      % line1                  |
+      line2^                    |
+      {1:~                        }|*6
+      {5:-- INSERT --}             |
+    ]])
   end)
 
   it('can put (p) multiline text', function()
