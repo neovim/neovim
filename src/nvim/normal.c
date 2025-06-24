@@ -3853,7 +3853,7 @@ static void nv_down(cmdarg_T *cap)
     } else if (bt_prompt(curbuf) && cap->cmdchar == CAR
                && curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
       // In a prompt buffer a <CR> in the last line invokes the callback.
-      invoke_prompt_callback();
+      prompt_invoke_callback();
       if (restart_edit == 0) {
         restart_edit = 'a';
       }

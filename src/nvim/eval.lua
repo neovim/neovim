@@ -8332,6 +8332,21 @@ M.funcs = {
     signature = 'printf({fmt}, {expr1} ...)',
     returns = 'string',
   },
+  prompt_getinput = {
+    args = 1,
+    base = 1,
+    desc = [=[
+      Gets the current user-input in |prompt-buffer| {buf} without invoking
+      prompt_callback. {buf} can be a buffer name or number.
+
+      If the buffer doesn't exist or isn't a prompt buffer, an empty
+      string is returned.
+
+    ]=],
+    name = 'prompt_getinput',
+    params = { { 'buf', 'integer|string' } },
+    signature = 'prompt_getinput({buf})',
+  },
   prompt_getprompt = {
     args = 1,
     base = 1,

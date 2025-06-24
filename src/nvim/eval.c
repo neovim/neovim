@@ -8660,24 +8660,16 @@ void eval_fmt_source_name_line(char *buf, size_t bufsize)
   }
 }
 
-void invoke_prompt_callback(void)
+/// Gets the current user-input in prompt buffer `buf`, or NULL if buffer is not a prompt buffer.
+char *prompt_get_input(buf_T *buf)
 {
-  typval_T rettv;
-  typval_T argv[2];
-  linenr_T lnum_start = curbuf->b_prompt_start.mark.lnum;
-  linenr_T lnum_last = curbuf->b_ml.ml_line_count;
-
-  // Add a new line for the prompt before invoking the callback, so that
-  // text can always be inserted above the last line.
-  ml_append(lnum_last, "", 0, false);
-  appended_lines_mark(lnum_last, 1);
-  curwin->w_cursor.lnum = lnum_last + 1;
-  curwin->w_cursor.col = 0;
-
-  if (curbuf->b_prompt_callback.type == kCallbackNone) {
-    goto theend;
+  if (!bt_prompt(buf)) {
+    return NULL;
   }
-  char *text = ml_get(lnum_start);
+  linenr_T lnum_start = buf->b_prompt_start.mark.lnum;
+  linenr_T lnum_last = buf->b_ml.ml_line_count;
+
+  char *text = ml_get_buf(buf, lnum_start);
   char *prompt = prompt_text();
   if (strlen(text) >= strlen(prompt)) {
     text += strlen(prompt);
@@ -8687,11 +8679,39 @@ void invoke_prompt_callback(void)
   for (linenr_T i = lnum_start + 1; i <= lnum_last; i++) {
     char *half_text = concat_str(full_text, "\n");
     xfree(full_text);
-    full_text = concat_str(half_text, ml_get(i));
+    full_text = concat_str(half_text, ml_get_buf(buf, i));
     xfree(half_text);
   }
+  return full_text;
+}
+
+/// Invokes the user-defined callback defined for the current prompt-buffer.
+void prompt_invoke_callback(void)
+{
+  typval_T rettv;
+  typval_T argv[2];
+  linenr_T lnum = curbuf->b_ml.ml_line_count;
+
+  char *user_input = prompt_get_input(curbuf);
+
+  if (!user_input) {
+    return;
+  }
+
+  // Add a new line for the prompt before invoking the callback, so that
+  // text can always be inserted above the last line.
+  ml_append(lnum, "", 0, false);
+  appended_lines_mark(lnum, 1);
+  curwin->w_cursor.lnum = lnum + 1;
+  curwin->w_cursor.col = 0;
+
+  if (curbuf->b_prompt_callback.type == kCallbackNone) {
+    xfree(user_input);
+    goto theend;
+  }
+
   argv[0].v_type = VAR_STRING;
-  argv[0].vval.v_string = full_text;
+  argv[0].vval.v_string = user_input;
   argv[1].v_type = VAR_UNKNOWN;
 
   callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);

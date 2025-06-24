@@ -249,6 +249,8 @@ describe('prompt buffer', function()
 
   it('can insert multiline text', function()
     source_script()
+    local buf = api.nvim_get_current_buf()
+
     feed('line 1<s-cr>line 2<s-cr>line 3')
     screen:expect([[
       cmd: line 1              |
@@ -260,6 +262,9 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
+
+    -- prompt_getinput works with multiline input
+    eq('line 1\nline 2\nline 3', fn('prompt_getinput', buf))
 
     feed('<cr>')
     -- submiting multiline text works
@@ -273,6 +278,8 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
+
+    eq('', fn('prompt_getinput', buf))
 
     -- % prompt is not repeated with formatoptions+=r
     source([[
@@ -293,6 +300,8 @@ describe('prompt buffer', function()
 
   it('can put (p) multiline text', function()
     source_script()
+    local buf = api.nvim_get_current_buf()
+
     fn('setreg', 'a', 'line 1\nline 2\nline 3')
     feed('<esc>"ap')
     screen:expect([[
@@ -305,6 +314,10 @@ describe('prompt buffer', function()
       {1:~                        }|*3
                                |
     ]])
+
+    -- prompt_getinput works with pasted input
+    eq('line 1\nline 2\nline 3', fn('prompt_getinput', buf))
+
     feed('i<cr>')
     screen:expect([[
       Result: "line 1          |
@@ -335,6 +348,8 @@ describe('prompt buffer', function()
 
   it('can undo current prompt', function()
     source_script()
+    local buf = api.nvim_get_current_buf()
+
     -- text editiing alowed in current prompt
     feed('tests-initial<esc>')
     feed('bimiddle-<esc>')
@@ -367,6 +382,9 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       1 change; {MATCH:.*} |
     ]])
+
+    -- undo is reflected in prompt_getinput
+    eq('tests-middle-initial', fn('prompt_getinput', buf))
 
     feed('u')
     screen:expect([[
@@ -406,6 +424,8 @@ describe('prompt buffer', function()
 
   it('o/O can create new lines', function()
     source_script()
+    local buf = api.nvim_get_current_buf()
+
     feed('line 1<s-cr>line 2<s-cr>line 3')
     screen:expect([[
       cmd: line 1              |
@@ -419,7 +439,6 @@ describe('prompt buffer', function()
     ]])
 
     feed('<esc>koafter')
-
     screen:expect([[
       cmd: line 1              |
       line 2                   |
@@ -430,6 +449,9 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
+
+    -- newline created with o is reflected in prompt_getinput
+    eq('line 1\nline 2\nafter\nline 3', fn('prompt_getinput', buf))
 
     feed('<esc>kObefore')
 
@@ -443,6 +465,9 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
+
+    -- newline created with O is reflected in prompt_getinput
+    eq('line 1\nbefore\nline 2\nafter\nline 3', fn('prompt_getinput', buf))
 
     feed('<cr>')
     screen:expect([[
@@ -551,5 +576,24 @@ describe('prompt buffer', function()
     -- ': mark is only available in prompt buffer.
     source('set buftype=')
     eq("Invalid mark name: ':'", t.pcall_err(api.nvim_buf_get_mark, 0, ':'))
+  end)
+
+  describe('prompt_getinput', function()
+    it('returns current prompts text', function()
+      command('new')
+      local bufnr = fn('bufnr')
+      api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+      eq('', fn('prompt_getinput', bufnr))
+      feed('iasdf')
+      eq('asdf', fn('prompt_getinput', bufnr))
+      feed('<esc>dd')
+      eq('', fn('prompt_getinput', bufnr))
+      feed('iasdf2')
+      eq('asdf2', fn('prompt_getinput', bufnr))
+
+      -- returns empty string when called from non prompt buffer
+      api.nvim_set_option_value('buftype', '', { buf = 0 })
+      eq('', fn('prompt_getinput', bufnr))
+    end)
   end)
 end)
