@@ -1,3 +1,5 @@
+-- Tests for (protocol-driven) ui2, intended to replace the legacy message grid UI.
+
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
