@@ -763,14 +763,8 @@ void ex_uniq(exarg_T *eap)
     }
   }
 
-  // Make an array with all line numbers.  This avoids having to copy all
-  // the lines into allocated memory.
-  // When remove deplicating on strings "start_col_nr" is the offset in the
-  // line, for numbers remove deplicating it's the number to uniq on.  This
-  // means the pattern matching only has to be done once per line.
-  // Also get the longest line length for allocating "sortbuf".
+  // Find the length of the longest line.
   for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
-    // char *s = ml_get(lnum);
     int len = ml_get_len(lnum);
     if (maxlen < len) {
       maxlen = len;
