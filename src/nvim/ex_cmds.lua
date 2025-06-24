@@ -3018,6 +3018,12 @@ M.cmds = {
     func = 'ex_buffer_all',
   },
   {
+    command = 'uniq',
+    flags = bit.bor(RANGE, DFLALL, WHOLEFOLD, BANG, EXTRA, NOTRLCOM, MODIFY),
+    addr_type = 'ADDR_LINES',
+    func = 'ex_uniq',
+  },
+  {
     command = 'unlet',
     flags = bit.bor(BANG, EXTRA, NEEDARG, SBOXOK, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
