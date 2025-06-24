@@ -43,4 +43,15 @@ describe('cmdline2', function()
     ]])
     n.assert_alive()
   end)
+
+  it("redraw does not clear 'incsearch' highlight with conceal", function()
+    exec('call setline(1, ["foo", "foobar"]) | set conceallevel=1 concealcursor=c')
+    feed('/foo')
+    screen:expect([[
+      {10:foo}                                                  |
+      {2:foo}bar                                               |
+      {1:~                                                    }|*11
+      /foo^                                                 |
+    ]])
+  end)
 end)
