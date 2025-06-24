@@ -2,8 +2,6 @@ local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
---- @diagnostic disable:duplicate-doc-field
-
 --- @param title string
 --- @return integer?
 local function get_qf_id_for_title(title)
@@ -206,13 +204,6 @@ end
 --- cursor line.  If `nil`, all diagnostics are shown.
 --- (default `nil`)
 --- @field current_line? boolean
----
---- Show diagnostics at the location they report, as an inlay hint. If enabled, this means all
---- diagnostics that span multiple lines will be reported at the end of their region. If `false` or
---- `nil` (the default), diagnostics will be reported per-line, and follow your prefered position based
---- on the `virt_text_pos` option.
---- (default `nil`)
---- @field as_inlay? boolean
 ---
 --- Include the diagnostic source in virtual text. Use `'if_many'` to only
 --- show sources if there is more than one diagnostic source in the buffer.
@@ -1667,15 +1658,11 @@ M.handlers.underline = {
 local function get_virtual_text_chunks_per_column(line_diagnostics, opts)
   local group_diags = {} --- @type table<integer, vim.Diagnostic[]>
 
-  if opts.as_inlay then
-    --- Gather diagnostics per-column:
-    for _, diag in ipairs(line_diagnostics) do
-      local col = diag.end_col or diag.col
-      group_diags[col] = group_diags[col] or {}
-      table.insert(group_diags[col], diag)
-    end
-  else
-    group_diags = { [0] = line_diagnostics }
+  --- Gather diagnostics per-column:
+  for _, diag in ipairs(line_diagnostics) do
+    local col = diag.end_col or diag.col
+    group_diags[col] = group_diags[col] or {}
+    table.insert(group_diags[col], diag)
   end
 
   local chunks = {} ---@type table<integer, string[]>
@@ -1767,7 +1754,8 @@ M.handlers.virtual_text = {
 
     api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
 
-    local line_diagnostics = diagnostic_lines(diagnostics, opts.virtual_text.as_inlay)
+    -- Here, we want the last line to be used for the diagnostic if possible.
+    local line_diagnostics = diagnostic_lines(diagnostics, true)
 
     if opts.virtual_text.current_line ~= nil then
       api.nvim_create_autocmd('CursorMoved', {
