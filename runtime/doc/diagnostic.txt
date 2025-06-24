@@ -698,14 +698,6 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                               shown. If `false`, all diagnostics are shown
                               except on the current cursor line. If `nil`, all
                               diagnostics are shown. (default `nil`)
-      • {as_inlay}?           (`boolean`) Show diagnostics at the location
-                              they report, as an inlay hint. If enabled, this
-                              means all diagnostics that span multiple lines
-                              will be reported at the end of their region. If
-                              `false` or `nil` (the default), diagnostics will
-                              be reported per-line, and follow your prefered
-                              position based on the `virt_text_pos` option.
-                              (default `nil`)
       • {source}?             (`boolean|"if_many"`) Include the diagnostic
                               source in virtual text. Use `'if_many'` to only
                               show sources if there is more than one

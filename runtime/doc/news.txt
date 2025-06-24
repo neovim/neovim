@@ -144,8 +144,6 @@ DIAGNOSTICS
   location/quickfix list.
 • |vim.diagnostic.get()| now accepts an `enabled` filter to only return
   enabled or disabled diagnostics.
-• |vim.diagnostic.Opts.VirtualText| now accepts an `as_inlay` option to place
-  the text of a diagnostic at the column where it appears in a line.
 
 EDITOR
 
