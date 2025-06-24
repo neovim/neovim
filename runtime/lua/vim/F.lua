@@ -18,6 +18,7 @@ local F = {}
 ---@param ... T
 ---@return T
 function F.if_nil(...)
+  vim.deprecate('vim.F.if_nil', '(a or b or …)', '0.13')
   local nargs = select('#', ...)
   for i = 1, nargs do
     local v = select(i, ...)
@@ -28,8 +29,9 @@ function F.if_nil(...)
   return nil
 end
 
--- Use in combination with pcall
+---@deprecated
 function F.ok_or_nil(status, ...)
+  vim.deprecate('vim.F.ok_or_nil', 'actual error handling', '0.13')
   if not status then
     return
   end
@@ -45,8 +47,9 @@ function F.npcall(fn, ...)
   return F.ok_or_nil(pcall(fn, ...))
 end
 
---- Wrap a function to return nil if it fails, otherwise the value
+---@deprecated
 function F.nil_wrap(fn)
+  vim.deprecate('vim.F.nil_wrap', 'actual error handling', '0.13')
   return function(...)
     return F.npcall(fn, ...)
   end
