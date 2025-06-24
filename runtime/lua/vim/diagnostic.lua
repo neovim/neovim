@@ -1662,7 +1662,7 @@ local function get_virtual_text_chunks_per_column(bufnr, line, line_diagnostics,
 
   -- Make sure our column always ends up being valid:
   local line_length = 0
-  local line_buf_contents = api.nvim_buf_get_lines(bufnr, line, line+1, false)
+  local line_buf_contents = api.nvim_buf_get_lines(bufnr, line, line + 1, false)
   if #line_buf_contents == 1 then
     line_length = #line_buf_contents[1]
   end
