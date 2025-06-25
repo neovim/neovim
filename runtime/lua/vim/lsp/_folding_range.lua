@@ -364,4 +364,6 @@ function M.foldexpr(lnum)
   return level and (level[2] or '') .. (level[1] or '0') or '0'
 end
 
+M.__FoldEvaluator = State
+
 return M
