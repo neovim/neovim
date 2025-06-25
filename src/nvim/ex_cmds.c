@@ -801,7 +801,7 @@ void ex_uniq(exarg_T *eap)
     } else if (regmatch.regprog != NULL) {
       end_col = 0;
     }
-    char save_c;  // temporary character storage
+    char save_c = NUL;  // temporary character storage
     if (end_col > 0) {
       save_c = s[end_col];
       s[end_col] = NUL;
