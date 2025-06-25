@@ -12,11 +12,11 @@ local supported_fold_kinds = {
 
 local M = {}
 
----@class (private) vim.lsp.folding_range.State
+local Capability = require('vim.lsp._capability')
+
+---@class (private) vim.lsp.folding_range.State : vim.lsp.Capability
 ---
 ---@field active table<integer, vim.lsp.folding_range.State?>
----@field bufnr integer
----@field augroup integer
 ---
 --- `TextDocument` version this `state` corresponds to.
 ---@field version? integer
@@ -25,7 +25,7 @@ local M = {}
 --- then use on demand via `row_*` fields.
 ---
 --- Index In the form of client_id -> ranges
----@field client_ranges table<integer, lsp.FoldingRange[]?>
+---@field client_state table<integer, lsp.FoldingRange[]?>
 ---
 --- Index in the form of row -> [foldlevel, mark]
 ---@field row_level table<integer, [integer, ">" | "<"?]?>
@@ -35,7 +35,9 @@ local M = {}
 ---
 --- Index in the form of start_row -> collapsed_text
 ---@field row_text table<integer, string?>
-local State = { active = {} }
+local State = { name = 'Folding Range', active = {} }
+State.__index = State
+setmetatable(State, Capability)
 
 --- Renew the cached foldinfo in the buffer.
 function State:renew()
@@ -46,7 +48,7 @@ function State:renew()
   ---@type table<integer, string?>
   local row_text = {}
 
-  for client_id, ranges in pairs(self.client_ranges) do
+  for client_id, ranges in pairs(self.client_state) do
     for _, range in ipairs(ranges) do
       local start_row = range.startLine
       local end_row = range.endLine
@@ -132,7 +134,7 @@ function State:multi_handler(results, ctx)
     if result.err then
       log.error(result.err)
     else
-      self.client_ranges[client_id] = result.result
+      self.client_state[client_id] = result.result
     end
   end
   self.version = ctx.version
@@ -183,7 +185,6 @@ function State:request(client)
 end
 
 function State:reset()
-  self.client_ranges = {}
   self.row_level = {}
   self.row_kinds = {}
   self.row_text = {}
@@ -192,13 +193,9 @@ end
 --- Initialize `state` and event hooks, then request folding ranges.
 ---@param bufnr integer
 ---@return vim.lsp.folding_range.State
-function State.new(bufnr)
-  local self = setmetatable({}, { __index = State })
-  self.bufnr = bufnr
-  self.augroup = api.nvim_create_augroup('nvim.lsp.folding_range:' .. bufnr, { clear = true })
+function State:new(bufnr)
+  self = Capability.new(self, bufnr)
   self:reset()
-
-  State.active[bufnr] = self
 
   api.nvim_buf_attach(bufnr, false, {
     -- Reset `bufstate` and request folding ranges.
@@ -231,16 +228,6 @@ function State.new(bufnr)
         end
       elseif row < 0 then
         vim._list_remove(row_level, start_row, start_row + math.abs(row) - 1)
-      end
-    end,
-  })
-  api.nvim_create_autocmd('LspDetach', {
-    group = self.augroup,
-    buffer = bufnr,
-    callback = function(args)
-      self:on_detach(args.data.client_id)
-      if next(self.client_ranges) == nil then
-        self:destroy()
       end
     end,
   })
@@ -280,7 +267,7 @@ end
 
 ---@params client_id integer
 function State:on_detach(client_id)
-  self.client_ranges[client_id] = nil
+  self.client_state[client_id] = nil
   self:renew()
   foldupdate(self.bufnr)
 end
@@ -290,7 +277,7 @@ end
 function M._setup(bufnr, client_id)
   local state = State.active[bufnr]
   if not state then
-    state = State.new(bufnr)
+    state = State:new(bufnr)
   end
 
   state:request(client_id and vim.lsp.get_client_by_id(client_id))
