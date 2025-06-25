@@ -168,6 +168,7 @@ local constants = {
     RequestCancelled = -32800,
     ContentModified = -32801,
     ServerCancelled = -32802,
+    RequestFailed = -32803,
   },
 
   -- Describes the content type that a client supports in various
