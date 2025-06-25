@@ -1512,17 +1512,20 @@ int typval_exec_lua_callable(LuaRef lua_cb, int argcount, typval_T *argvars, typ
 /// Used for nvim_exec_lua() and internally to execute a lua string.
 ///
 /// @param[in]  str  String to execute.
+/// @param[in]  chunkname Chunkname, defaults to "<nvim>".
 /// @param[in]  args array of ... args
 /// @param[in]  mode Whether and how the the return value should be converted to Object
 /// @param[in] arena  can be NULL, then nested allocations are used
 /// @param[out]  err  Location where error will be saved.
 ///
 /// @return Return value of the execution.
-Object nlua_exec(const String str, const Array args, LuaRetMode mode, Arena *arena, Error *err)
+Object nlua_exec(const String str, const char *chunkname, const Array args, LuaRetMode mode,
+                 Arena *arena, Error *err)
 {
   lua_State *const lstate = global_lstate;
 
-  if (luaL_loadbuffer(lstate, str.data, str.size, "<nvim>")) {
+  const char *name = (chunkname && chunkname[0]) ? chunkname : "<nvim>";
+  if (luaL_loadbuffer(lstate, str.data, str.size, name)) {
     size_t len;
     const char *errstr = lua_tolstring(lstate, -1, &len);
     api_set_error(err, kErrorTypeValidation, "Lua: %.*s", (int)len, errstr);

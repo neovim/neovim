@@ -2792,6 +2792,8 @@ local options = {
         Unset 'exrc' to stop further searching of 'exrc' files in parent
         directories, similar to |editorconfig.root|.
 
+        To get its own location, Lua exrc files can use |debug.getinfo()|.
+
         Compare 'exrc' to |editorconfig|:
         - 'exrc' can execute any code; editorconfig only specifies settings.
         - 'exrc' is Nvim-specific; editorconfig works in other editors.

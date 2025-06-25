@@ -62,7 +62,7 @@ Object nvim_execute_lua(String code, Array args, Arena *arena, Error *err)
   FUNC_API_DEPRECATED_SINCE(7)
   FUNC_API_REMOTE_ONLY
 {
-  return nlua_exec(code, args, kRetObject, arena, err);
+  return nlua_exec(code, NULL, args, kRetObject, arena, err);
 }
 
 /// Gets the buffer number

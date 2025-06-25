@@ -956,7 +956,7 @@ do
         local trusted = vim.secure.read(file) --[[@as string|nil]]
         if trusted then
           if vim.endswith(file, '.lua') then
-            assert(loadstring(trusted))()
+            assert(loadstring(trusted, '@' .. file))()
           else
             vim.api.nvim_exec2(trusted, {})
           end
