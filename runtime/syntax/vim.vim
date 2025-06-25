@@ -949,8 +949,7 @@ syn match	vimRange	"[`'][a-zA-Z0-9],[`'][a-zA-Z0-9]"	contains=vimMark	skipwhite 
 
 syn match	vimRegister	'[^,;[{: \t]\zs"[a-zA-Z0-9.%#:_\-/]\ze[^a-zA-Z_":0-9]'
 syn match	vimRegister	'@"'
-syn match	vimPlainRegister contained	'"[a-zA-Z0-9\-:.%#*+=]'
-syn match	vimLetRegister	contained	'@["0-9\-a-zA-Z:.%#=*+~_/]'
+syn match	vimLetRegister	contained	'@["@0-9\-a-zA-Z:.%#=*+~_/]'
 
 syn match	vimAddress	",\zs[.$]"	skipwhite nextgroup=vimSubst1
 syn match	vimAddress	"%\ze\a"	skipwhite nextgroup=vimString,vimSubst1
@@ -2297,7 +2296,6 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimPattern	Type
  hi def link vimPerl	vimCommand
  hi def link vimPlainMark	vimMark
- hi def link vimPlainRegister	vimRegister
  hi def link vimProfile	vimCommand
  hi def link vimProfileArg	vimSpecial
  hi def link vimProfileBang	vimBang
