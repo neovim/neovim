@@ -43,6 +43,10 @@ function M:new(bufnr)
 end
 
 function M:destroy()
+  for client_id, _ in pairs(self.client_state) do
+    self:on_detach(client_id)
+  end
+
   api.nvim_del_augroup_by_id(self.augroup)
   self.active[self.bufnr] = nil
 end
