@@ -1377,9 +1377,8 @@ static void normal_redraw(NormalState *s)
 
   curbuf->b_last_used = time(NULL);
 
-  // Display message after redraw. If an external message is still visible,
-  // it contains the kept message already.
-  if (keep_msg != NULL && !msg_ext_is_visible()) {
+  // Display message after redraw.
+  if (keep_msg != NULL) {
     char *const p = xstrdup(keep_msg);
 
     // msg_start() will set keep_msg to NULL, make a copy

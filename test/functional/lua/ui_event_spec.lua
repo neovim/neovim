@@ -203,6 +203,10 @@ describe('vim.ui_attach', function()
         {1:~                                       }|*4
       ]],
       cmdline = { { abort = false } },
+      condition = function()
+        eq('list_cmd', screen.messages[1].kind)
+        screen.messages = {} -- Ignore the build dependent :version content
+      end,
     })
     feed([[:call confirm("Save changes?", "&Yes\n&No\n&Cancel")<CR>]])
     screen:expect({
@@ -440,104 +444,57 @@ describe('vim.ui_attach', function()
   end)
 
   it('detaches after excessive errors', function()
-    local screen = Screen.new(86, 10)
+    local screen = Screen.new(66, 10)
     screen:add_extra_attr_ids({ [100] = { bold = true, foreground = Screen.colors.SeaGreen } })
     exec_lua([[
       vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(ev)
-        if ev:find('msg') then
+        if ev == 'msg_show' then
           vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] })
         end
       end)
     ]])
-    local s1 = [[
-      ^                                                                                      |
-      {1:~                                                                                     }|*9
-    ]]
-    screen:expect(s1)
-    feed('Q<CR>')
+    feed('Q')
     screen:expect({
-      grid = s1,
-      messages = {
-        {
-          content = { { "E354: Invalid register name: '^@'", 9, 6 } },
-          history = true,
-          kind = 'emsg',
-        },
-        {
-          content = {
-            {
-              'Lua callback:\n[string "<nvim>"]:3: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:3: in function <[string "<nvim>"]:1>',
-              9,
-              6,
-            },
-          },
-          history = true,
-          kind = 'lua_error',
-        },
-        {
-          content = { { 'Press ENTER or type command to continue', 100, 18 } },
-          kind = 'return_prompt',
-        },
-      },
+      grid = [[
+                                                                          |
+        {1:~                                                                 }|*5
+        {3:                                                                  }|
+        {9:Error in "msg_show" UI event handler (ns=(UNKNOWN PLUGIN)):}       |
+        {9:fast context failure}                                              |
+        {100:Press ENTER or type command to continue}^                           |
+      ]],
+      condition = function()
+        screen.messages = {}
+      end,
     })
-    feed('<CR>:messages<CR>')
+    feed('<Esc>')
     screen:expect([[
-      {9:Error in "msg_show" UI event handler (ns=(UNKNOWN PLUGIN)):}                           |
-      {9:Lua: [string "<nvim>"]:3: attempt to index global 'err' (a nil value)}                 |
-      {9:stack traceback:}                                                                      |
-      {9:        [string "<nvim>"]:3: in function <[string "<nvim>"]:1>}                        |
-      {9:Error in "msg_clear" UI event handler (ns=(UNKNOWN PLUGIN)):}                          |
-      {9:Lua: [string "<nvim>"]:3: attempt to index global 'err' (a nil value)}                 |
-      {9:stack traceback:}                                                                      |
-      {9:        [string "<nvim>"]:3: in function <[string "<nvim>"]:1>}                        |
-      {9:Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))}                    |
-      {100:Press ENTER or type command to continue}^                                               |
+      ^                                                                  |
+      {1:~                                                                 }|*8
+                                                                        |
     ]])
-    feed('<CR>')
 
     -- Also when scheduled
     exec_lua([[
-      vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function()
-        vim.schedule(function() vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] }) end)
+      vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function(ev)
+        if ev == 'msg_show' then
+          vim.schedule(function() vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] }) end)
+        end
       end)
     ]])
+    feed('Q')
     screen:expect({
-      grid = s1,
-      messages = {
-        {
-          content = {
-            {
-              'vim.schedule callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
-              9,
-              6,
-            },
-          },
-          history = true,
-          kind = 'lua_error',
-        },
-        {
-          content = {
-            {
-              'vim.schedule callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
-              9,
-              6,
-            },
-          },
-          history = true,
-          kind = 'lua_error',
-        },
-        {
-          content = { { 'Press ENTER or type command to continue', 100, 18 } },
-          kind = 'return_prompt',
-        },
-      },
+      grid = [[
+                                                                          |
+        {1:~                                                                 }|*6
+        {3:                                                                  }|
+        {9:Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))}|
+        {100:Press ENTER or type command to continue}^                           |
+      ]],
+      condition = function()
+        screen.messages = {}
+      end,
     })
-    feed('<Esc>:1messages clear<cr>:messages<CR>')
-    screen:expect([[
-      ^                                                                                      |
-      {1:~                                                                                     }|*8
-      {9:Excessive errors in vim.ui_attach() callback (ns=(UNKNOWN PLUGIN))}                    |
-    ]])
   end)
 
   it('sourcing invalid file does not crash #32166', function()
