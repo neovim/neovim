@@ -50,6 +50,16 @@
 // TODO(bfredl): just make UI:s owned by their channels instead
 static PMap(uint64_t) connected_uis = MAP_INIT;
 
+/// Gets the UI attached to the given channel, or sets an error message on `err`.
+static RemoteUI *get_ui_or_err(uint64_t chan_id, Error *err)
+{
+  RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, chan_id);
+  if (ui == NULL && err != NULL) {
+    api_set_error(err, kErrorTypeException, "UI not attached to channel: %" PRId64, chan_id);
+  }
+  return ui;
+}
+
 static char *mpack_array_dyn16(char **buf)
 {
   mpack_w(buf, 0xdc);
@@ -80,12 +90,8 @@ static void remote_ui_destroy(RemoteUI *ui)
 /// @param send_error_exit  send an "error_exit" event with 0 status first
 void remote_ui_disconnect(uint64_t channel_id, Error *err, bool send_error_exit)
 {
-  RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
+  RemoteUI *ui = get_ui_or_err(channel_id, err);
   if (!ui) {
-    if (err != NULL) {
-      api_set_error(err, kErrorTypeException,
-                    "UI not attached to channel: %" PRId64, channel_id);
-    }
     return;
   }
   if (send_error_exit) {
@@ -236,9 +242,7 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height, Boolean enabl
 void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
   FUNC_API_SINCE(11) FUNC_API_REMOTE_ONLY
 {
-  if (!map_has(uint64_t, &connected_uis, channel_id)) {
-    api_set_error(error, kErrorTypeException,
-                  "UI not attached to channel: %" PRId64, channel_id);
+  if (!get_ui_or_err(channel_id, error)) {
     return;
   }
 
@@ -267,10 +271,8 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
 /// @return  false if there is no UI on the channel, otherwise true
 bool remote_ui_restart(uint64_t channel_id, Error *err)
 {
-  RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
+  RemoteUI *ui = get_ui_or_err(channel_id, err);
   if (!ui) {
-    api_set_error(err, kErrorTypeException,
-                  "UI not attached to channel: %" PRId64, channel_id);
     return false;
   }
 
@@ -311,19 +313,16 @@ void remote_ui_stop(RemoteUI *ui)
 void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
-  if (!map_has(uint64_t, &connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException,
-                  "UI not attached to channel: %" PRId64, channel_id);
+  RemoteUI *ui = get_ui_or_err(channel_id, err);
+  if (!ui) {
     return;
   }
 
   if (width <= 0 || height <= 0) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Expected width > 0 and height > 0");
+    api_set_error(err, kErrorTypeValidation, "Expected width > 0 and height > 0");
     return;
   }
 
-  RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
   ui->width = (int)width;
   ui->height = (int)height;
   ui_refresh();
@@ -332,12 +331,10 @@ void nvim_ui_try_resize(uint64_t channel_id, Integer width, Integer height, Erro
 void nvim_ui_set_option(uint64_t channel_id, String name, Object value, Error *error)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
-  if (!map_has(uint64_t, &connected_uis, channel_id)) {
-    api_set_error(error, kErrorTypeException,
-                  "UI not attached to channel: %" PRId64, channel_id);
+  RemoteUI *ui = get_ui_or_err(channel_id, error);
+  if (!ui) {
     return;
   }
-  RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
 
   ui_set_option(ui, false, name, value, error);
 }
@@ -457,9 +454,7 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width, I
                              Error *err)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
-  if (!map_has(uint64_t, &connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException,
-                  "UI not attached to channel: %" PRId64, channel_id);
+  if (!get_ui_or_err(channel_id, err)) {
     return;
   }
 
@@ -479,9 +474,8 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width, I
 void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
-  if (!map_has(uint64_t, &connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException,
-                  "UI not attached to channel: %" PRId64, channel_id);
+  RemoteUI *ui = get_ui_or_err(channel_id, err);
+  if (!ui) {
     return;
   }
 
@@ -490,7 +484,6 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
     return;
   }
 
-  RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
   if (!ui->ui_ext[kUIPopupmenu]) {
     api_set_error(err, kErrorTypeValidation,
                   "It must support the ext_popupmenu option");
@@ -520,13 +513,11 @@ void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height, Floa
                             Error *err)
   FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY
 {
-  if (!map_has(uint64_t, &connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException,
-                  "UI not attached to channel: %" PRId64, channel_id);
+  RemoteUI *ui = get_ui_or_err(channel_id, err);
+  if (!ui) {
     return;
   }
 
-  RemoteUI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
   if (!ui->ui_ext[kUIPopupmenu]) {
     api_set_error(err, kErrorTypeValidation,
                   "UI must support the ext_popupmenu option");
