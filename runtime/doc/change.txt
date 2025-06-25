@@ -1952,12 +1952,20 @@ Also see |:sort-uniq|.
 			With [r] comparison is done on the text that matches
 			/{pattern}/ instead of the full line.
 
+			With [u] only keep lines that do not repeat (i.e., are
+			not immediately followed by the same line).
+
+			With [!] only keep lines that are immediately followed
+			by a duplicate.
+
+			If both [!] and [u] are given, [u] is ignored and [!]
+			takes effect.
+
 			When /{pattern}/ is specified and [r] is not used, the
 			text matched with {pattern} is skipped and comparison
 			is done on what comes after the match.
 			'ignorecase' applies to the pattern, but 'smartcase'
 			is not used.
-
 			Instead of the slash any non-letter can be used.
 
 			For example, to remove adjacent duplicate lines based
@@ -1969,17 +1977,8 @@ Also see |:sort-uniq|.
 <			If {pattern} is empty (e.g. // is used), the last
 			search pattern is used.
 
-			With [u] only keep lines that do not repeat (i.e., are
-			not immediately followed by the same line).
-
-			With [!] only keep lines that are immediately followed
-			by a duplicate.
-
-			If both [!] and [u] are given, [u] is ignored and [!]
-			takes effect.
-
-			Note that leading and trailing white space, and lines
-			that are not adjacent, are not considered duplicates.
+			Note that leading and trailing white space may cause
+			lines to be considered different.
 			To remove all duplicates regardless of position, use
 			|:sort-u| or external tools.
 
