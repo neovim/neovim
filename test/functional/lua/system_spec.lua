@@ -73,6 +73,26 @@ describe('vim.system', function()
         eq('hellocat', system({ 'cat' }, { stdin = 'hellocat', text = true }).stdout)
       end)
 
+      it('can set environment', function()
+        eq(
+          'TESTVAL',
+          system(
+            { n.testprg('printenv-test'), 'TEST' },
+            { env = { TEST = 'TESTVAL' }, text = true }
+          ).stdout
+        )
+      end)
+
+      it('can set environment with clear_env = true', function()
+        eq(
+          'TESTVAL',
+          system(
+            { n.testprg('printenv-test'), 'TEST' },
+            { clear_env = true, env = { TEST = 'TESTVAL' }, text = true }
+          ).stdout
+        )
+      end)
+
       it('supports timeout', function()
         eq({
           code = 124,
