@@ -3563,8 +3563,8 @@ M.funcs = {
       	Return zero otherwise.
       If {expr} is 1, only check if a character is available, it is
       	not consumed.  Return zero if no character available.
-      If you prefer always getting a string use |getcharstr()|, or
-      specify |FALSE| as "number" in {opts}.
+      To always gete a string, specify "number" as |FALSE| in
+      {opts}.
 
       Without {expr} and when {expr} is 0 a whole character or
       special key is returned.  If it is a single character, the
@@ -3725,6 +3725,7 @@ M.funcs = {
     signature = 'getcharsearch()',
   },
   getcharstr = {
+    deprecated = true,
     args = { 0, 2 },
     desc = [=[
       The same as |getchar()|, except that this always returns a

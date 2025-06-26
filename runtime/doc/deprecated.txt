@@ -42,7 +42,7 @@ LUA
 
 VIMSCRIPT
 
-• todo
+• *getcharstr()*		Use `getchar(…, {number=false})` instead.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.11					*deprecated-0.11*

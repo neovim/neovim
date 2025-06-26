@@ -2827,8 +2827,8 @@ function vim.fn.getchangelist(buf) end
 ---   Return zero otherwise.
 --- If {expr} is 1, only check if a character is available, it is
 ---   not consumed.  Return zero if no character available.
---- If you prefer always getting a string use |getcharstr()|, or
---- specify |FALSE| as "number" in {opts}.
+--- To always gete a string, specify "number" as |FALSE| in
+--- {opts}.
 ---
 --- Without {expr} and when {expr} is 0 a whole character or
 --- special key is returned.  If it is a single character, the
@@ -2975,6 +2975,7 @@ function vim.fn.getcharpos(expr) end
 --- @return table
 function vim.fn.getcharsearch() end
 
+--- @deprecated
 --- The same as |getchar()|, except that this always returns a
 --- String, and "number" isn't allowed in {opts}.
 ---

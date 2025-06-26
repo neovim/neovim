@@ -125,7 +125,7 @@ do
   vim.keymap.set(
     'x',
     '@',
-    "mode() ==# 'V' ? ':normal! @'.getcharstr().'<CR>' : '@'",
+    "mode() ==# 'V' ? ':normal! @'.getchar(-1, #{number=v:false}).'<CR>' : '@'",
     { silent = true, expr = true, desc = ':help v_@-default' }
   )
 
