@@ -222,6 +222,8 @@ LSP
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_linkedEditingRange
 • Support for related documents in pull diagnostics:
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
+• High-level LSP features such as inlay hints, semantic tokens, etc. can now
+  be enabled/disabled from the client setup. See |vim.lsp.Client.Features|.
 
 LUA
 
