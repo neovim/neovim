@@ -154,6 +154,7 @@ you never want any default mappings, call |:mapclear| early in your config.
   - |grr|
   - |gra|
   - |gri|
+  - |grt|
   - |gO|
 - <C-S> |i_CTRL-S|
 - ]d |]d-default|

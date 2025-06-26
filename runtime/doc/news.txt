@@ -139,6 +139,8 @@ DEFAULTS
   was implemented as an internal C routine).
 • Project-local configuration ('exrc') is also loaded from parent directories.
   Unset 'exrc' to stop further search.
+• Mappings:
+  • |grt| in Normal mode maps to |vim.lsp.buf.type_definition()|
 
 DIAGNOSTICS
 

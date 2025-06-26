@@ -191,7 +191,7 @@ do
   --- client is attached. If no client is attached, or if a server does not support a capability, an
   --- error message is displayed rather than exhibiting different behavior.
   ---
-  --- See |grr|, |grn|, |gra|, |gri|, |gO|, |i_CTRL-S|.
+  --- See |grr|, |grn|, |gra|, |gri|, |grt| |gO|, |i_CTRL-S|.
   do
     vim.keymap.set('n', 'grn', function()
       vim.lsp.buf.rename()
@@ -208,6 +208,10 @@ do
     vim.keymap.set('n', 'gri', function()
       vim.lsp.buf.implementation()
     end, { desc = 'vim.lsp.buf.implementation()' })
+
+    vim.keymap.set('n', 'grt', function()
+      vim.lsp.buf.type_definition()
+    end, { desc = 'vim.lsp.buf.type_definition()' })
 
     vim.keymap.set('x', 'an', function()
       vim.lsp.buf.selection_range(vim.v.count1)
