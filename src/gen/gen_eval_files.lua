@@ -629,23 +629,10 @@ local function scope_to_doc(s)
   return 'global or ' .. m[s[2]] .. (s[2] ~= 'tab' and ' |global-local|' or '')
 end
 
--- @param o vim.option_meta
--- @return string
+--- @param o vim.option_meta
+--- @return string
 local function scope_more_doc(o)
-  if
-    vim.list_contains({
-      'bufhidden',
-      'buftype',
-      'filetype',
-      'modified',
-      'previewwindow',
-      'readonly',
-      'scroll',
-      'syntax',
-      'winfixheight',
-      'winfixwidth',
-    }, o.full_name)
-  then
+  if o.local_noglobal then
     return '  |local-noglobal|'
   end
 
