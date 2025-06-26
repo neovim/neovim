@@ -1331,7 +1331,7 @@ end
 --- a `client_id:result` map.
 ---@return function cancel Function that cancels all requests.
 function lsp.buf_request_all(bufnr, method, params, handler)
-  local results = {} --- @type table<integer,{err: lsp.ResponseError?, result: any}>
+  local results = {} --- @type table<integer,{err: lsp.ResponseError?, result: any, context: lsp.HandlerContext}>
   local remaining --- @type integer?
 
   local _, cancel = lsp.buf_request(bufnr, method, params, function(err, result, ctx, config)
@@ -1341,7 +1341,7 @@ function lsp.buf_request_all(bufnr, method, params, handler)
     end
 
     -- The error key is deprecated and will be removed in 0.13
-    results[ctx.client_id] = { err = err, error = err, result = result }
+    results[ctx.client_id] = { err = err, error = err, result = result, context = ctx }
     remaining = remaining - 1
 
     if remaining == 0 then

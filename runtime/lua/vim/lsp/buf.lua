@@ -1075,7 +1075,7 @@ end
 ---@class vim.lsp.CodeActionResultEntry
 ---@field err? lsp.ResponseError
 ---@field result? (lsp.Command|lsp.CodeAction)[]
----@field ctx lsp.HandlerContext
+---@field context lsp.HandlerContext
 
 --- @class vim.lsp.buf.code_action.Opts
 --- @inlinedoc
@@ -1152,7 +1152,7 @@ local function on_code_action_results(results, opts)
   for _, result in pairs(results) do
     for _, action in pairs(result.result or {}) do
       if action_filter(action) then
-        table.insert(actions, { action = action, ctx = result.ctx })
+        table.insert(actions, { action = action, ctx = result.context })
       end
     end
   end
@@ -1325,12 +1325,7 @@ function M.code_action(opts)
     end
 
     return params
-  end, function(results, ctx)
-    for _, result in pairs(results) do
-      ---@cast result vim.lsp.CodeActionResultEntry
-      result.ctx = ctx
-    end
-
+  end, function(results)
     on_code_action_results(results, opts)
   end)
 end
