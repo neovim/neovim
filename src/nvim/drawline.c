@@ -1716,6 +1716,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             break;
           }
           wlv.filler_todo--;
+          virt_line_index = -1;
           if (wlv.filler_todo == 0 && (wp->w_botfill || !draw_text)) {
             break;
           }
