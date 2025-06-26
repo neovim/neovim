@@ -1970,7 +1970,7 @@ Also see |:sort-uniq|.
 
 			For example, to remove adjacent duplicate lines based
 			on the second comma-separated field: >
-				:uniq r /[^,]*,/
+				:uniq /[^,]*,/
 <			Or to keep only unique lines ignoring the first 5
 			characters: >
 				:uniq u /.\{5}/
