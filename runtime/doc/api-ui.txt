@@ -6,6 +6,9 @@
 
 Nvim UI protocol					*UI* *ui*
 
+This document describes the UI protocol. See |gui| and |tui| for user-facing
+UI components and features.
+
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
