@@ -264,6 +264,9 @@ void screenclear(void)
     msg_grid_invalid = false;
     clear_cmdline = true;
   }
+  if (ui_has(kUIMessages)) {
+    ui_call_msg_clear();
+  }
 }
 
 /// Unlike cmdline "one_key" prompts, the message part of the prompt is not stored

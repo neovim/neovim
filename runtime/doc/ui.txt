@@ -824,6 +824,9 @@ must handle.
 	kind
 	    Name indicating the message kind:
 		"" (empty)	Unknown (consider a |feature-request|)
+		"empty"		Empty message (`:echo ""`), with empty `content`.
+				Should clear messages sharing the 'cmdheight'
+				area if it is the only message in a batch.
 		"bufwrite"	|:write| message
 		"confirm"	Message preceding a prompt (|:confirm|,
 				|confirm()|, |inputlist()|, |z=|, …)
@@ -872,8 +875,9 @@ must handle.
 	    rather than started on a new line. Is set for |:echon|.
 
 ["msg_clear"] ~
-	Clear all messages currently displayed by "msg_show". (Messages sent
-	by other "msg_" events below will not be affected).
+	Clear all messages currently displayed by "msg_show", emitted after
+	clearing the screen (messages sent by other "msg_" events below should
+	not be affected).
 
 ["msg_showmode", content] ~
 	Shows 'showmode' and |recording| messages. `content` has the same

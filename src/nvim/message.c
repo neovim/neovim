@@ -283,9 +283,7 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
   }
 
   // Print the rest of the message
-  if (*chunk != NUL) {
-    msg_outtrans_len(chunk, (int)(str.size - (size_t)(chunk - str.data)), hl_id, hist);
-  }
+  msg_outtrans_len(chunk, (int)(str.size - (size_t)(chunk - str.data)), hl_id, hist);
 }
 
 // Avoid starting a new message for each chunk and adding message to history in msg_keep().
@@ -1632,7 +1630,7 @@ static void msg_home_replace_hl(const char *fname, int hl_id)
 /// @return  the number of characters it takes on the screen.
 int msg_outtrans(const char *str, int hl_id, bool hist)
 {
-  return msg_outtrans_len(str, (int)strlen(str), hl_id, hist);
+  return *str == NUL ? 0 : msg_outtrans_len(str, (int)strlen(str), hl_id, hist);
 }
 
 /// Output one character at "p".
@@ -1714,8 +1712,8 @@ int msg_outtrans_len(const char *msgstr, int len, int hl_id, bool hist)
     }
   }
 
-  if (str > plain_start && !got_int) {
-    // Print the printable chars at the end.
+  if ((str > plain_start || plain_start == msgstr) && !got_int) {
+    // Print the printable chars at the end (or emit empty string).
     msg_puts_len(plain_start, str - plain_start, hl_id, hist);
   }
 
@@ -2155,6 +2153,9 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
 
   // Don't print anything when using ":silent cmd" or empty message.
   if (msg_silent != 0 || *str == NUL) {
+    if (*str == NUL && ui_has(kUIMessages)) {
+      ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false);
+    }
     return;
   }
 

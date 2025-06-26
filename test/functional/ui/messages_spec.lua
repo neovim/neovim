@@ -547,6 +547,22 @@ describe('ui/ext_messages', function()
         screen.messages = {}
       end,
     })
+
+    -- Empty messages
+    feed(':echo "foo" | echo "" | lua print()<CR>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        ^line                     |
+        {1:~                        }|*3
+      ]],
+      cmdline = { { abort = false } },
+      messages = {
+        { content = { { 'foo' } }, kind = 'echo' },
+        { content = {}, kind = 'empty' },
+        { content = {}, kind = 'empty' },
+      },
+    })
   end)
 
   it(':echoerr', function()
@@ -735,17 +751,19 @@ describe('ui/ext_messages', function()
   it("doesn't crash with column adjustment #10069", function()
     feed(':let [x,y] = [1,2]<cr>')
     feed(':let x y<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
       ^                         |
       {1:~                        }|*4
     ]],
       cmdline = { { abort = false } },
       messages = {
-        { content = { { 'x                     #1' } }, kind = 'list_cmd' },
-        { content = { { 'y                     #2' } }, kind = 'list_cmd' },
+        {
+          content = { { 'x                     #1\ny                     #2' } },
+          kind = 'list_cmd',
+        },
       },
-    }
+    })
   end)
 
   it('&showmode', function()

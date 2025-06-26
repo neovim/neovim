@@ -196,7 +196,7 @@ describe('vim.ui_attach', function()
         pos = 0,
       } },
     })
-    feed('version<CR><CR>v<Esc>')
+    feed('version<CR>')
     screen:expect({
       grid = [[
         ^2                                       |
@@ -208,7 +208,7 @@ describe('vim.ui_attach', function()
         screen.messages = {} -- Ignore the build dependent :version content
       end,
     })
-    feed([[:call confirm("Save changes?", "&Yes\n&No\n&Cancel")<CR>]])
+    feed([[v<Esc>:call confirm("Save changes?", "&Yes\n&No\n&Cancel")<CR>]])
     screen:expect({
       grid = [[
         ^4                                       |
