@@ -26,6 +26,7 @@ function TSTree:root() end
 ---@param end_col_old integer
 ---@param end_row_new integer
 ---@param end_col_new integer
+---@return TSTree
 ---@nodoc
 function TSTree:edit(start_byte, end_byte_old, end_byte_new, start_row, start_col, end_row_old, end_col_old, end_row_new, end_col_new) end
 
