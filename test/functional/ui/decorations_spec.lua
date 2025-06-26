@@ -5458,7 +5458,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     insert(example_text2)
     feed 'gg'
     command 'set number signcolumn=yes'
-    screen:expect{grid=[[
+    screen:expect([[
       {7:  }{8:  1 }^if (h->n_buckets < new_n_buckets) { // expan|
       {7:  }{8:    }d                                           |
       {7:  }{8:  2 }  khkey_t *new_keys = (khkey_t *)krealloc((v|
@@ -5471,16 +5471,16 @@ if (h->n_buckets < new_n_buckets) { // expand
       {7:  }{8:  6 }    h->vals_buf = new_vals;                 |
       {7:  }{8:  7 }  }                                         |
                                                         |
-    ]]}
+    ]])
 
     local markid = api.nvim_buf_set_extmark(0, ns, 2, 0, {
-      virt_lines={
-        {{"Some special", "Special"}};
-        {{"remark about codes", "Comment"}};
-      };
+      virt_lines = {
+        { { 'Some special', 'Special' } },
+        { { 'remark about codes', 'Comment' } },
+      },
     })
 
-    screen:expect{grid=[[
+    screen:expect([[
       {7:  }{8:  1 }^if (h->n_buckets < new_n_buckets) { // expan|
       {7:  }{8:    }d                                           |
       {7:  }{8:  2 }  khkey_t *new_keys = (khkey_t *)krealloc((v|
@@ -5493,17 +5493,17 @@ if (h->n_buckets < new_n_buckets) { // expand
       {7:  }{8:  5 }    char *new_vals = krealloc( h->vals_buf, |
       {7:  }{8:    }new_n_buckets * val_size);                  |
                                                         |
-    ]]}
+    ]])
 
     api.nvim_buf_set_extmark(0, ns, 2, 0, {
-      virt_lines={
-        {{"Some special", "Special"}};
-        {{"remark about codes", "Comment"}};
-      };
-      virt_lines_leftcol=true;
-      id=markid;
+      virt_lines = {
+        { { 'Some special', 'Special' } },
+        { { 'remark about codes', 'Comment' } },
+      },
+      virt_lines_leftcol = true,
+      id = markid,
     })
-    screen:expect{grid=[[
+    screen:expect([[
       {7:  }{8:  1 }^if (h->n_buckets < new_n_buckets) { // expan|
       {7:  }{8:    }d                                           |
       {7:  }{8:  2 }  khkey_t *new_keys = (khkey_t *)krealloc((v|
@@ -5516,7 +5516,40 @@ if (h->n_buckets < new_n_buckets) { // expand
       {7:  }{8:  5 }    char *new_vals = krealloc( h->vals_buf, |
       {7:  }{8:    }new_n_buckets * val_size);                  |
                                                         |
-    ]]}
+    ]])
+
+    command('set nonumber relativenumber')
+    screen:expect([[
+      {7:  }{8:  0 }^if (h->n_buckets < new_n_buckets) { // expan|
+      {7:  }{8:    }d                                           |
+      {7:  }{8:  1 }  khkey_t *new_keys = (khkey_t *)krealloc((v|
+      {7:  }{8:    }oid *)h->keys, new_n_buckets * sizeof(khkey_|
+      {7:  }{8:    }t));                                        |
+      {7:  }{8:  2 }  h->keys = new_keys;                       |
+      {16:Some special}                                      |
+      {18:remark about codes}                                |
+      {7:  }{8:  3 }  if (kh_is_map && val_size) {              |
+      {7:  }{8:  4 }    char *new_vals = krealloc( h->vals_buf, |
+      {7:  }{8:    }new_n_buckets * val_size);                  |
+                                                        |
+    ]])
+
+    -- 'relativenumber' is redrawn with virt_lines_leftcol #34649
+    feed('j')
+    screen:expect([[
+      {7:  }{8:  1 }if (h->n_buckets < new_n_buckets) { // expan|
+      {7:  }{8:    }d                                           |
+      {7:  }{8:  0 }^  khkey_t *new_keys = (khkey_t *)krealloc((v|
+      {7:  }{8:    }oid *)h->keys, new_n_buckets * sizeof(khkey_|
+      {7:  }{8:    }t));                                        |
+      {7:  }{8:  1 }  h->keys = new_keys;                       |
+      {16:Some special}                                      |
+      {18:remark about codes}                                |
+      {7:  }{8:  2 }  if (kh_is_map && val_size) {              |
+      {7:  }{8:  3 }    char *new_vals = krealloc( h->vals_buf, |
+      {7:  }{8:    }new_n_buckets * val_size);                  |
+                                                        |
+    ]])
   end)
 
   it('works with hard TABs', function()
