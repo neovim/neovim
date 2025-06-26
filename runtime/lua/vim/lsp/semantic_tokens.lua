@@ -586,6 +586,12 @@ function M._start(bufnr, client_id, debounce)
   highlighter:on_attach(client_id)
 end
 
+--- @inlinedoc
+--- @class vim.lsp.semantic_tokens.start.Opts
+--- (default: 200): Debounce token requests
+--- to the server by the given number in milliseconds
+--- @field debounce? integer
+
 --- Start the semantic token highlighting engine for the given buffer with the
 --- given client. The client must already be attached to the buffer.
 ---
@@ -602,9 +608,7 @@ end
 ---@deprecated
 ---@param bufnr (integer) Buffer number, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
----@param opts? (table) Optional keyword arguments
----  - debounce (integer, default: 200): Debounce token requests
----        to the server by the given number in milliseconds
+---@param opts? (vim.lsp.semantic_tokens.start.Opts) Optional keyword arguments
 function M.start(bufnr, client_id, opts)
   vim.deprecate('vim.lsp.semantic_tokens.start', 'vim.lsp.semantic_tokens.enable(true)', '0.13.0')
   vim.validate('bufnr', bufnr, 'number')

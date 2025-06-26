@@ -15,6 +15,48 @@ local all_clients = {}
 --- @alias vim.lsp.client.on_exit_cb fun(code: integer, signal: integer, client_id: integer)
 --- @alias vim.lsp.client.before_init_cb fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
 
+--- A table representing which features to enable for a client. A `true` value will enable the
+--- feature with the default configuration. A configuration table can be passed to enable the
+--- feature with customizations. A `false` value means the feature will be disabled.
+---
+--- Example:
+---
+--- ```lua
+--- vim.lsp.config('lua_ls', {
+---   features = {
+---     semantic_tokens = false,
+---     completion = true,
+---   }
+--- })
+--- ```
+--- @class vim.lsp.ClientConfig.Features
+---
+--- Whether to enable |lsp-autocompletion|. Disabled by default. Opts are passed
+--- to |vim.lsp.completion.enable()|.
+--- @field completion? boolean|vim.lsp.completion.BufferOpts
+---
+--- Whether to enable |lsp-semantic_tokens|. Enabled by default. Opts are passed
+--- to |vim.lsp.semantic_tokens.start()|.
+--- @field semantic_tokens? boolean|vim.lsp.semantic_tokens.start.Opts
+---
+--- Whether to enable |lsp-inlay_hint|. Disabled by default.
+--- @field inlay_hints? boolean
+---
+--- Whether to enable |lsp-document_color|. Enabled by default. Opts are passed
+--- to |vim.lsp.document_color.enable()|.
+--- @field document_color? boolean|vim.lsp.document_color.enable.Opts
+---
+--- Whether to enable |lsp-diagnostic|. Enabled by default.
+--- @field diagnostics? boolean
+---
+--- Whether to enable LSP folding ranges. Enabled by default.
+---
+--- NOTE: This does NOT set the |'foldexpr'| to |vim.lsp.foldexpr()|.
+--- @field folding? boolean
+---
+--- Whether to enable |lsp-linked_editing_range|. Disabled by default.
+--- @field linked_editing? boolean
+
 --- @class vim.lsp.Client.Flags
 --- @inlinedoc
 ---
@@ -138,6 +180,10 @@ local all_clients = {}
 --- language server, even if the server doesn't require a workspace.
 --- (default: `false`)
 --- @field workspace_required? boolean
+---
+--- An optional table to enable certain features for the client, such as completion, inlay hints,
+--- etc. See |vim.lsp.Client.Features| for more information.
+--- @field features? vim.lsp.ClientConfig.Features
 
 --- @class vim.lsp.Client.Progress: vim.Ringbuf<{token: integer|string, value: any}>
 --- @field pending table<lsp.ProgressToken,lsp.LSPAny>
@@ -364,6 +410,104 @@ local function get_name(id, config)
   return tostring(id)
 end
 
+--- Enable certain features for the client; see |vim.lsp.Client.Features|.
+---
+--- @param bufnr integer
+--- @param client vim.lsp.Client
+local function enable_features(bufnr, client)
+  local features = client.config.features or {}
+
+  -- TODO: Some of these features can only be enabled for ALL clients in the buffer. They should be more granular
+  -- (per-client basis).
+
+  -- NOTE: We need to type cast a lot here due to an annoying lua_ls bug.
+  if features.completion and client:supports_method(ms.textDocument_completion) then
+    ---@type vim.lsp.completion.BufferOpts?
+    local opts = type(features.completion) == 'table' and features.completion --[[@as vim.lsp.completion.BufferOpts]]
+      or nil
+    lsp.completion.enable(true, client.id, bufnr, opts)
+  end
+  if features.inlay_hints and client:supports_method(ms.textDocument_inlayHint) then
+    lsp.inlay_hint.enable(true, { bufnr = bufnr })
+  end
+  if features.linked_editing and client:supports_method(ms.textDocument_linkedEditingRange) then
+    lsp.linked_editing_range.enable(true, { client_id = client.id })
+  end
+  -- TODO: Support formating on save and type
+
+  -- The following features are enabled by default.
+  if
+    features.semantic_tokens ~= false
+    and vim.tbl_get(client.server_capabilities, 'semanticTokensProvider', 'full')
+  then
+    ---@type vim.lsp.semantic_tokens.start.Opts
+    local opts = type(features.semantic_tokens) == 'table' and features.semantic_tokens --[[@as vim.lsp.semantic_tokens.start.Opts]]
+      or {}
+    lsp.semantic_tokens._start(bufnr, client.id, opts.debounce)
+  end
+  if features.document_color ~= false and client:supports_method(ms.textDocument_documentColor) then
+    ---@type vim.lsp.document_color.enable.Opts?
+    local opts = type(features.document_color) == 'table' and features.document_color --[[@as vim.lsp.document_color.enable.Opts]]
+      or nil
+    lsp.document_color.enable(true, bufnr, opts)
+  end
+  if features.diagnostics ~= false and client:supports_method(ms.textDocument_diagnostic) then
+    lsp.diagnostic._enable(bufnr)
+  end
+  -- if features.folding ~= false and client:supports_method(ms.textDocument_foldingRange) then
+  --   vim.o.foldexpr = 'v:lua.vim.lsp.foldexpr()'
+  --   vim.o.foldmethod = 'expr'
+  --   local Capability = lsp._capability.all['folding_range']
+  --   local capability = Capability.active[bufnr] or Capability:new(bufnr)
+  --   capability:on_attach(client.id)
+  -- end
+end
+
+--- Remove certain client capabilities so that they are not advertised to the server if the user
+--- has explicitly disabled them.
+---
+--- @param capabilities lsp.ClientCapabilities
+--- @param features vim.lsp.ClientConfig.Features
+local function disable_capabilities(capabilities, features)
+  local text_document = capabilities.textDocument or {}
+  local workspace = capabilities.workspace or {}
+
+  -- Enabled by default.
+  if features.semantic_tokens == false then
+    text_document.semanticTokens = nil
+    workspace.semanticTokens = nil
+  end
+
+  if features.diagnostics == false then
+    text_document.publishDiagnostics = nil
+    text_document.diagnostic = nil
+    workspace.diagnostics = nil
+  end
+
+  if features.document_color == false then
+    text_document.colorProvider = nil
+  end
+
+  if features.folding == false then
+    text_document.foldingRange = nil
+    workspace.foldingRange = nil
+  end
+
+  -- Disabled by default.
+  if not features.completion then
+    text_document.completion = nil
+  end
+
+  if not features.linked_editing then
+    text_document.linkedEditingRange = nil
+  end
+
+  if not features.inlay_hints then
+    text_document.inlayHint = nil
+    workspace.inlayHint = nil
+  end
+end
+
 --- @nodoc
 --- @param config vim.lsp.ClientConfig
 --- @return vim.lsp.Client?
@@ -415,6 +559,8 @@ function Client.create(config)
 
   self.capabilities =
     vim.tbl_deep_extend('force', lsp.protocol.make_client_capabilities(), self.capabilities or {})
+
+  disable_capabilities(self.capabilities, config.features or {})
 
   --- @class lsp.DynamicCapabilities
   --- @nodoc
@@ -1099,26 +1245,8 @@ function Client:on_attach(bufnr)
   })
 
   self:_run_callbacks(self._on_attach_cbs, lsp.client_errors.ON_ATTACH_ERROR, self, bufnr)
-  -- schedule the initialization of capabilities to give the above
-  -- on_attach and LspAttach callbacks the ability to schedule wrap the
-  -- opt-out (deleting the semanticTokensProvider from capabilities)
-  vim.schedule(function()
-    if not vim.api.nvim_buf_is_valid(bufnr) then
-      return
-    end
-    for _, Capability in pairs(lsp._capability.all) do
-      if
-        self:supports_method(Capability.method)
-        and lsp._capability.is_enabled(Capability.name, {
-          bufnr = bufnr,
-          client_id = self.id,
-        })
-      then
-        local capability = Capability.active[bufnr] or Capability:new(bufnr)
-        capability:on_attach(self.id)
-      end
-    end
-  end)
+
+  enable_features(bufnr, self)
 
   self.attached_buffers[bufnr] = true
 end

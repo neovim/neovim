@@ -6521,9 +6521,13 @@ describe('LSP', function()
           name = 'foo',
           cmd = { 'foo' },
           root_markers = { '.git' },
+          features = { semantic_tokens = false, linked_editing = true },
         },
         exec_lua(function()
-          vim.lsp.config('*', { root_markers = { '.git' } })
+          vim.lsp.config('*', {
+            root_markers = { '.git' },
+            features = { semantic_tokens = false, linked_editing = true },
+          })
           vim.lsp.config('foo', { cmd = { 'foo' } })
 
           return vim.lsp.config['foo']
@@ -7176,6 +7180,93 @@ describe('LSP', function()
       end)
 
       eq('', n.exec_capture('lua vim.lsp.buf.hover()'))
+    end)
+  end)
+
+  describe('ClientConfig.Features', function()
+    before_each(function()
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        _G.server = _G._create_server({
+          capabilities = {
+            linkedEditingRangeProvider = true,
+            semanticTokensProvider = {
+              full = { delta = true },
+            },
+            colorProvider = true,
+          },
+          handlers = {
+            ['textDocument/linkedEditingRange'] = function(_, _, callback)
+              _G.called_linked_editing = true
+              ---@type lsp.LinkedEditingRanges
+              local res = {
+                ranges = {},
+              }
+              callback(nil, res)
+            end,
+            ['textDocument/semanticTokens/full'] = function(_, _, callback)
+              _G.called_semantic_tokens = true
+              callback(nil, nil)
+            end,
+            ['textDocument/documentColor'] = function(_, _, callback)
+              _G.called_doc_color = true
+              callback(nil, {})
+            end,
+          },
+        })
+      end)
+    end)
+
+    it('can start a server with certain features', function()
+      exec_lua(function()
+        vim.lsp.start({
+          name = 'dummy',
+          cmd = _G.server.cmd,
+          features = { linked_editing = true },
+        })
+      end)
+
+      eq(
+        true,
+        exec_lua(function()
+          return _G.called_linked_editing
+        end)
+      )
+      eq(
+        true,
+        exec_lua(function()
+          return _G.called_doc_color
+        end)
+      )
+      eq(
+        true,
+        exec_lua(function()
+          return _G.called_semantic_tokens
+        end)
+      )
+    end)
+
+    it('can start a server without certain features', function()
+      exec_lua(function()
+        vim.lsp.start({
+          name = 'dummy',
+          cmd = _G.server.cmd,
+          features = { semantic_tokens = false },
+        })
+      end)
+
+      eq(
+        nil,
+        exec_lua(function()
+          return _G.called_semantic_tokens
+        end)
+      )
+      eq(
+        nil,
+        exec_lua(function()
+          return _G.called_linked_editing
+        end)
+      )
     end)
   end)
 end)

@@ -533,6 +533,7 @@ end
 --- clients as needed)
 function lsp.enable(name, enable)
   validate('name', name, { 'string', 'table' })
+  validate('enable', enable, 'boolean', true)
 
   local names = vim._ensure_list(name) --[[@as string[] ]]
   for _, nm in ipairs(names) do
@@ -781,9 +782,6 @@ function lsp._set_defaults(client, bufnr)
       end, { buffer = bufnr, desc = 'vim.lsp.buf.hover()' })
     end
   end)
-  if client:supports_method(ms.textDocument_diagnostic) then
-    lsp.diagnostic._enable(bufnr)
-  end
 end
 
 --- @deprecated
