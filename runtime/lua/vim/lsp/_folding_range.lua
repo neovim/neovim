@@ -14,9 +14,9 @@ local M = {}
 
 local Capability = require('vim.lsp._capability')
 
----@class (private) vim.lsp.folding_range.State : vim.lsp.Capability
+---@class (private) vim.lsp.folding_range.FoldEvaluator : vim.lsp.Capability
 ---
----@field active table<integer, vim.lsp.folding_range.State?>
+---@field active table<integer, vim.lsp.folding_range.FoldEvaluator?>
 ---
 --- `TextDocument` version this `state` corresponds to.
 ---@field version? integer
@@ -35,12 +35,12 @@ local Capability = require('vim.lsp._capability')
 ---
 --- Index in the form of start_row -> collapsed_text
 ---@field row_text table<integer, string?>
-local State = { name = 'Folding Range', active = {} }
-State.__index = State
-setmetatable(State, Capability)
+local FoldEvaluator = { name = 'Folding Range', active = {} }
+FoldEvaluator.__index = FoldEvaluator
+setmetatable(FoldEvaluator, Capability)
 
---- Renew the cached foldinfo in the buffer.
-function State:renew()
+--- Re-evaluate the cached foldinfo in the buffer.
+function FoldEvaluator:evaluate()
   ---@type table<integer, [integer, ">" | "<"?]?>
   local row_level = {}
   ---@type table<integer, table<lsp.FoldingRangeKind, true?>?>>
@@ -124,7 +124,7 @@ end
 
 ---@param results table<integer,{err: lsp.ResponseError?, result: lsp.FoldingRange[]?}>
 ---@param ctx lsp.HandlerContext
-function State:multi_handler(results, ctx)
+function FoldEvaluator:multi_handler(results, ctx)
   -- Handling responses from outdated buffer only causes performance overhead.
   if util.buf_versions[self.bufnr] ~= ctx.version then
     return
@@ -139,7 +139,7 @@ function State:multi_handler(results, ctx)
   end
   self.version = ctx.version
 
-  self:renew()
+  self:evaluate()
   if api.nvim_get_mode().mode:match('^i') then
     -- `foldUpdate()` is guarded in insert mode.
     schedule_foldupdate(self.bufnr)
@@ -151,14 +151,14 @@ end
 ---@param err lsp.ResponseError?
 ---@param result lsp.FoldingRange[]?
 ---@param ctx lsp.HandlerContext, config?: table
-function State:handler(err, result, ctx)
+function FoldEvaluator:handler(err, result, ctx)
   self:multi_handler({ [ctx.client_id] = { err = err, result = result } }, ctx)
 end
 
 --- Request `textDocument/foldingRange` from the server.
 --- `foldupdate()` is scheduled once after the request is completed.
 ---@param client? vim.lsp.Client The client whose server supports `foldingRange`.
-function State:request(client)
+function FoldEvaluator:request(client)
   if not vim.b.__lsp_folding_range_enabled then
     return
   end
@@ -184,7 +184,7 @@ function State:request(client)
   end)
 end
 
-function State:reset()
+function FoldEvaluator:reset()
   self.row_level = {}
   self.row_kinds = {}
   self.row_text = {}
@@ -192,15 +192,15 @@ end
 
 --- Initialize `state` and event hooks, then request folding ranges.
 ---@param bufnr integer
----@return vim.lsp.folding_range.State
-function State:new(bufnr)
+---@return vim.lsp.folding_range.FoldEvaluator
+function FoldEvaluator:new(bufnr)
   self = Capability.new(self, bufnr)
   self:reset()
 
   api.nvim_buf_attach(bufnr, false, {
     -- Reset `bufstate` and request folding ranges.
     on_reload = function()
-      local state = State.active[bufnr]
+      local state = FoldEvaluator.active[bufnr]
       if state then
         state:reset()
         state:request()
@@ -208,7 +208,7 @@ function State:new(bufnr)
     end,
     --- Sync changed rows with their previous foldlevels before applying new ones.
     on_bytes = function(_, _, _, start_row, _, _, old_row, _, _, new_row, _, _)
-      local state = State.active[bufnr]
+      local state = FoldEvaluator.active[bufnr]
       if state == nil then
         return true
       end
@@ -260,24 +260,24 @@ function State:new(bufnr)
   return self
 end
 
-function State:destroy()
+function FoldEvaluator:destroy()
   api.nvim_del_augroup_by_id(self.augroup)
-  State.active[self.bufnr] = nil
+  FoldEvaluator.active[self.bufnr] = nil
 end
 
 ---@params client_id integer
-function State:on_detach(client_id)
+function FoldEvaluator:on_detach(client_id)
   self.client_state[client_id] = nil
-  self:renew()
+  self:evaluate()
   foldupdate(self.bufnr)
 end
 
 ---@param bufnr integer
 ---@param client_id? integer
 function M._setup(bufnr, client_id)
-  local state = State.active[bufnr]
+  local state = FoldEvaluator.active[bufnr]
   if not state then
-    state = State:new(bufnr)
+    state = FoldEvaluator:new(bufnr)
   end
 
   state:request(client_id and vim.lsp.get_client_by_id(client_id))
@@ -285,10 +285,10 @@ end
 
 ---@param kind lsp.FoldingRangeKind
 ---@param winid integer
-function State:foldclose(kind, winid)
+function FoldEvaluator:foldclose(kind, winid)
   vim._with({ win = winid }, function()
     local bufnr = api.nvim_win_get_buf(winid)
-    local row_kinds = State.active[bufnr].row_kinds
+    local row_kinds = FoldEvaluator.active[bufnr].row_kinds
     -- Reverse traverse to ensure that the smallest ranges are closed first.
     for row = api.nvim_buf_line_count(bufnr) - 1, 0, -1 do
       local kinds = row_kinds[row]
@@ -307,7 +307,7 @@ function M.foldclose(kind, winid)
 
   winid = winid or api.nvim_get_current_win()
   local bufnr = api.nvim_win_get_buf(winid)
-  local state = State.active[bufnr]
+  local state = FoldEvaluator.active[bufnr]
   if not state then
     return
   end
@@ -337,7 +337,7 @@ function M.foldtext()
   local bufnr = api.nvim_get_current_buf()
   local lnum = vim.v.foldstart
   local row = lnum - 1
-  local state = State.active[bufnr]
+  local state = FoldEvaluator.active[bufnr]
   if state and state.row_text[row] then
     return state.row_text[row]
   end
@@ -348,7 +348,7 @@ end
 ---@return string level
 function M.foldexpr(lnum)
   local bufnr = api.nvim_get_current_buf()
-  local state = State.active[bufnr]
+  local state = FoldEvaluator.active[bufnr]
   if not vim.b[bufnr].__lsp_folding_range_enabled then
     vim.b[bufnr].__lsp_folding_range_enabled = true
     if state then
