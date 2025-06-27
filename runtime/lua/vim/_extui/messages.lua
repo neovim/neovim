@@ -310,7 +310,9 @@ function M.show_msg(tar, content, replace_last, append, pager)
       end
 
       api.nvim_win_set_cursor(ext.wins[tar], { 1, 0 })
-      ext.cmd.highlighter.active[ext.bufs.cmd] = nil
+      if ext.cmd.highlighter then
+        ext.cmd.highlighter.active[ext.bufs.cmd] = nil
+      end
       -- Place [+x] indicator for lines that spill over 'cmdheight'.
       M.cmd.lines, M.cmd.msg_row = h.all, h.end_row
       local spill = M.cmd.lines > ext.cmdheight and ('[+%d]'):format(M.cmd.lines - ext.cmdheight)
@@ -455,9 +457,12 @@ function M.set_pos(type)
   local function win_set_pos(win)
     local texth = type and api.nvim_win_text_height(win, {}) or 0
     local height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
+    local top = { vim.opt.fcs:get().horiz or o.ambw == 'single' and '─' or '-', 'WinSeparator' }
+    local border = (type == 'pager' or type == 'dialog') and { '', top, '', '', '', '', '', '' }
     local config = {
       hide = false,
       relative = 'laststatus',
+      border = border or nil,
       height = height,
       row = win == ext.wins.msg and 0 or 1,
       col = 10000,

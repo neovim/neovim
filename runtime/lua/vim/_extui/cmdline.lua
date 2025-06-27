@@ -30,7 +30,7 @@ local function win_config(win, hide, height)
   end
 end
 
-local cmdbuff ---@type string Stored cmdline used to calculate translation offset.
+local cmdbuff = '' ---@type string Stored cmdline used to calculate translation offset.
 local promptlen = 0 -- Current length of the prompt, stored for use in "cmdline_pos"
 --- Concatenate content chunks and set the text for the current row in the cmdline buffer.
 ---
@@ -57,6 +57,10 @@ end
 ---@param hl_id integer
 function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   M.level, M.indent, M.prompt = level, indent, M.prompt or #prompt > 0
+  if M.highlighter == nil then
+    local parser = assert(vim.treesitter.get_parser(ext.bufs.cmd, 'vim', {}))
+    M.highlighter = vim.treesitter.highlighter.new(parser)
+  end
   -- Only enable TS highlighter for Ex commands (not search or filter commands).
   M.highlighter.active[ext.bufs.cmd] = firstc == ':' and M.highlighter or nil
   if ext.msg.cmd.msg_row ~= -1 then

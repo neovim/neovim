@@ -40,7 +40,7 @@ local M = {}
 
 local function ui_callback(event, ...)
   local handler = ext.msg[event] or ext.cmd[event]
-  ext.tab_check_wins()
+  ext.check_targets()
   handler(...)
   api.nvim__redraw({
     flush = handler ~= ext.cmd.cmdline_hide or nil,
@@ -99,44 +99,37 @@ function M.enable(opts)
   -- dependent on some option values. Reconfigure windows when option value
   -- has changed and after VimEnter when the user configured value is known.
   -- TODO: Reconsider what is needed when this module is enabled by default early in startup.
-  local function check_opt(name, value)
-    if name == 'cmdheight' then
-      -- 'cmdheight' set; (un)hide cmdline window and set its height.
-      local cfg = { height = math.max(value, 1), hide = value == 0 }
-      api.nvim_win_set_config(ext.wins.cmd, cfg)
-      -- Change message position when 'cmdheight' was or becomes 0.
-      if value == 0 or ext.cmdheight == 0 then
-        ext.cfg.msg.target = value == 0 and 'msg' or 'cmd'
-        ext.msg.prev_msg = ''
-      end
-      ext.cmdheight = value
+  local function check_cmdheight(value)
+    ext.check_targets()
+    -- 'cmdheight' set; (un)hide cmdline window and set its height.
+    local cfg = { height = math.max(value, 1), hide = value == 0 }
+    api.nvim_win_set_config(ext.wins.cmd, cfg)
+    -- Change message position when 'cmdheight' was or becomes 0.
+    if value == 0 or ext.cmdheight == 0 then
+      ext.cfg.msg.target = value == 0 and 'msg' or 'cmd'
+      ext.msg.prev_msg = ''
     end
+    ext.cmdheight = value
   end
 
-  ext.tab_check_wins()
-  check_opt('cmdheight', vim.o.cmdheight)
+  vim.schedule(function()
+    check_cmdheight(vim.o.cmdheight)
+  end)
 
   api.nvim_create_autocmd('OptionSet', {
     group = ext.augroup,
     pattern = { 'cmdheight' },
-    callback = function(ev)
-      ext.tab_check_wins()
-      check_opt(ev.match, vim.v.option_new)
+    callback = function()
+      check_cmdheight(vim.v.option_new)
       ext.msg.set_pos()
     end,
     desc = 'Set cmdline and message window dimensions for changed option values.',
   })
 
-  api.nvim_create_autocmd({ 'VimEnter', 'VimResized', 'TabEnter' }, {
+  api.nvim_create_autocmd({ 'VimResized', 'TabEnter' }, {
     group = ext.augroup,
-    callback = function(ev)
-      ext.tab_check_wins()
-      if ev.event == 'VimEnter' then
-        check_opt('cmdheight', vim.o.cmdheight)
-      end
-      ext.msg.set_pos()
-    end,
-    desc = 'Set extui window dimensions after startup, shell resize or tabpage change.',
+    callback = ext.msg.set_pos,
+    desc = 'Set cmdline and message window dimensions after shell resize or tabpage change.',
   })
 
   api.nvim_create_autocmd('WinEnter', {
