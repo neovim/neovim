@@ -70,15 +70,15 @@ describe('log', function()
       __NVIM_TEST_LOG = '1',
     })
     -- Example:
-    --    ERR 2024-09-11T16:41:17.539 ui/c/T2.47826.0 ui_client_run:165: test log message
-    local tid = _G._nvim_test_id
-    assert_log(' ui/c/' .. tid .. '%.%d+%.%d +ui_client_run:%d+: test log message', testlog, 100)
+    --    ERR 2024-09-11T16:41:17.539 ui/c/S2.47826.0 ui_client_run:165: test log message
+    local sid = _G._nvim_session_id
+    assert_log(' ui/c/' .. sid .. '%.%d+%.%d +ui_client_run:%d+: test log message', testlog, 100)
   end)
 
   it('formats messages with session name or test id', function()
     -- Examples:
-    --    ERR 2024-09-11T16:44:33.794 T3.49429.0 server_init:58: test log message
-    --    ERR 2024-09-11T16:44:33.823 c/T3.49429.0 server_init:58: test log message
+    --    ERR 2024-09-11T16:44:33.794 S3.49429.0 server_init:58: test log message
+    --    ERR 2024-09-11T16:44:33.823 c/S3.49429.0 server_init:58: test log message
 
     clear({
       env = {
@@ -88,8 +88,8 @@ describe('log', function()
       },
     })
 
-    local tid = _G._nvim_test_id
-    assert_log(tid .. '%.%d+%.%d +server_init:%d+: test log message', testlog, 100)
+    local sid = _G._nvim_session_id
+    assert_log(sid .. '%.%d+%.%d +server_init:%d+: test log message', testlog, 100)
 
     exec_lua([[
       local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1', '+foochild', '+qa!' }, vim.empty_dict())
@@ -97,6 +97,6 @@ describe('log', function()
     ]])
 
     -- Child Nvim spawned by jobstart() prepends "c/" to parent name.
-    assert_log('c/' .. tid .. '%.%d+%.%d +server_init:%d+: test log message', testlog, 100)
+    assert_log('c/' .. sid .. '%.%d+%.%d +server_init:%d+: test log message', testlog, 100)
   end)
 end)
