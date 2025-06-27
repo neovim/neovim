@@ -45,38 +45,36 @@ describe('messages2', function()
       {4:bar                                                  }|
       {9:E354: Invalid register name: '^@'}   1,3           All|
     ]])
-    -- Multiple messages in same event loop iteration are appended.
+    -- Multiple messages in same event loop iteration are appended and shown in full.
     feed([[q:echo "foo\nbar" | echo "baz"<CR>]])
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*8
+      {1:~                                                    }|*9
       ─────────────────────────────────────────────────────|
-      {4:foo                                                  }|
-      {4:bar                                                  }|
-      {4:baz                                                  }|
-                                          0,0-1         All|
+      foo                                                  |
+      bar                                                  |
+      baz                                                  |
     ]])
-    -- Any key press closes the routed pager.
+    -- Any key press resizes the cmdline and adds the spill indicator.
     feed('j')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-                                          0,0-1         All|
+      foo[+2]                             0,0-1         All|
     ]])
     -- No error for ruler virt_text msg_row exceeding buffer length.
     command([[map Q <cmd>echo "foo\nbar" <bar> ls<CR>]])
     feed('Q')
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*7
+      {1:~                                                    }|*8
       ─────────────────────────────────────────────────────|
-      {4:foo                                                  }|
-      {4:bar                                                  }|
-      {4:                                                     }|
-      {4:  1 %a   "[No Name]"                    line 1       }|
-                                          0,0-1         All|
+      foo                                                  |
+      bar                                                  |
+                                                           |
+        1 %a   "[No Name]"                    line 1       |
     ]])
-    feed('<Esc>')
+    feed('<C-L>')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
