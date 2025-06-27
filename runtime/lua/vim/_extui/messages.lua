@@ -227,7 +227,7 @@ function M.show_msg(tar, content, replace_last, append, pager)
     count = M[tar].count + ((restart or msg == '\n') and 0 or 1)
 
     -- Ensure cmdline is clear when writing the first message.
-    if tar == 'cmd' and not will_pager and dupe == 0 and M.cmd.count == 0 then
+    if tar == 'cmd' and not will_pager and dupe == 0 and M.cmd.count == 0 and ext.cmd.row == 0 then
       api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
     end
   end
@@ -450,6 +450,7 @@ function M.msg_history_show(entries)
   M.set_pos('pager')
 end
 
+local routed = false
 --- Adjust dimensions of the message windows after certain events.
 ---
 ---@param type? 'cmd'|'dialog'|'msg'|'pager' Type of to be positioned window (nil for all).
@@ -472,16 +473,37 @@ function M.set_pos(type)
       -- Ensure last line is visible and first line is at top of window.
       local row = (texth.all > height and texth.end_row or 0) + 1
       api.nvim_win_set_cursor(ext.wins.msg, { row, 0 })
-    elseif type == 'pager' and api.nvim_win_get_config(win).hide then
-      -- Cannot leave the cmdwin to enter the pager, so close it.
-      -- NOTE: regression w.r.t. the message grid, which allowed this. Resolving
-      -- that would require somehow bypassing textlock for the pager.
+    elseif type == 'pager' then
       if fn.getcmdwintype() ~= '' then
-        api.nvim_command('quit')
+        if will_pager then
+          config.relative, config.win, config.row, config.col = 'win', 0, 0, 0
+        else
+          -- Cannot leave the cmdwin to enter the pager, so close it.
+          -- NOTE: regression w.r.t. the message grid, which allowed this.
+          -- Resolving that would require somehow bypassing textlock for the pager.
+          api.nvim_command('quit')
+        end
       end
 
+      routed = will_pager
       -- It's actually closed one event iteration later so schedule in case it was open.
       vim.schedule(function()
+        -- For a routed message, hide pager on user input (unless that input focused the pager).
+        if routed then
+          vim.on_key(function(_, typed)
+            if typed then
+              vim.schedule(function()
+                if routed and api.nvim_win_is_valid(win) and api.nvim_get_current_win() ~= win then
+                  api.nvim_win_set_config(win, { hide = true })
+                end
+              end)
+            end
+            vim.on_key(nil, ext.ns)
+          end, ext.ns)
+          return
+        end
+
+        -- When explicitly opened, enter and hide when window other than the cmdwin is entered.
         api.nvim_set_current_win(win)
         api.nvim_create_autocmd({ 'WinEnter', 'CmdwinEnter', 'CmdwinLeave' }, {
           callback = function(ev)
@@ -492,7 +514,6 @@ function M.set_pos(type)
             if api.nvim_win_is_valid(win) then
               api.nvim_win_set_config(win, config)
             end
-            -- Delete autocmd when a window other than the cmdwin is entered.
             return ev.event == 'WinEnter'
           end,
           desc = 'Hide inactive pager window.',
