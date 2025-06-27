@@ -443,16 +443,16 @@ end
 --- Returns the result IDs from the reports provided by the given client.
 --- @return lsp.PreviousResultId[]
 local function previous_result_ids(client_id)
-  local results = {}
+  local results = {} ---@type lsp.PreviousResultId[]
 
   for bufnr, state in pairs(bufstates) do
     if state.pull_kind ~= 'disabled' then
       for buf_client_id, result_id in pairs(state.client_result_id) do
         if buf_client_id == client_id then
-          table.insert(results, {
-            textDocument = util.make_text_document_params(bufnr),
-            previousResultId = result_id,
-          })
+          results[#results + 1] = {
+            uri = vim.uri_from_bufnr(bufnr),
+            value = result_id,
+          }
           break
         end
       end
