@@ -2,7 +2,7 @@
 " Language:	Diff (context or unified)
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
 "		Translations by Jakson Alves de Aquino.
-" Last Change:	2023 Aug 10
+" Last Change:	2025 Jun 26
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -16,7 +16,7 @@ syn match diffIdentical	"^Files .* and .* are identical$"
 syn match diffDiffer	"^Files .* and .* differ$"
 syn match diffBDiffer	"^Binary files .* and .* differ$"
 syn match diffIsA	"^File .* is a .* while file .* is a .*"
-syn match diffNoEOL	"^\\ No newline at end of file .*"
+syn match diffNoEOL	"^\\ No newline at end of file.*"
 syn match diffCommon	"^Common subdirectories: .*"
 
 " Disable the translations by setting diff_translations to zero.
