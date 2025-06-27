@@ -119,63 +119,15 @@ char *illegal_char(char *errbuf, size_t errbuflen, int c)
 /// Check string options in a buffer for NULL value.
 void check_buf_options(buf_T *buf)
 {
-  check_string_option(&buf->b_p_bh);
-  check_string_option(&buf->b_p_bt);
-  check_string_option(&buf->b_p_fenc);
-  check_string_option(&buf->b_p_ff);
-  check_string_option(&buf->b_p_def);
-  check_string_option(&buf->b_p_inc);
-  check_string_option(&buf->b_p_inex);
-  check_string_option(&buf->b_p_inde);
-  check_string_option(&buf->b_p_indk);
-  check_string_option(&buf->b_p_fp);
-  check_string_option(&buf->b_p_fex);
-  check_string_option(&buf->b_p_kp);
-  check_string_option(&buf->b_p_mps);
-  check_string_option(&buf->b_p_fo);
-  check_string_option(&buf->b_p_flp);
-  check_string_option(&buf->b_p_isk);
-  check_string_option(&buf->b_p_com);
-  check_string_option(&buf->b_p_cms);
-  check_string_option(&buf->b_p_nf);
-  check_string_option(&buf->b_p_qe);
-  check_string_option(&buf->b_p_syn);
-  check_string_option(&buf->b_s.b_syn_isk);
-  check_string_option(&buf->b_s.b_p_spc);
-  check_string_option(&buf->b_s.b_p_spf);
-  check_string_option(&buf->b_s.b_p_spl);
-  check_string_option(&buf->b_s.b_p_spo);
-  check_string_option(&buf->b_p_sua);
-  check_string_option(&buf->b_p_cink);
-  check_string_option(&buf->b_p_cino);
+  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
+    if (option_has_scope(opt_idx, kOptScopeBuf)
+        && !is_option_hidden(opt_idx)  // skip immutable options
+        && option_has_type(opt_idx, kOptValTypeString)) {
+      check_string_option(get_varp_local(opt_idx, buf, NULL, true));
+    }
+  }
+
   parse_cino(buf);
-  check_string_option(&buf->b_p_lop);
-  check_string_option(&buf->b_p_ft);
-  check_string_option(&buf->b_p_cinw);
-  check_string_option(&buf->b_p_cinsd);
-  check_string_option(&buf->b_p_cot);
-  check_string_option(&buf->b_p_cpt);
-  check_string_option(&buf->b_p_cfu);
-  check_string_option(&buf->b_p_ofu);
-  check_string_option(&buf->b_p_keymap);
-  check_string_option(&buf->b_p_gefm);
-  check_string_option(&buf->b_p_gp);
-  check_string_option(&buf->b_p_mp);
-  check_string_option(&buf->b_p_efm);
-  check_string_option(&buf->b_p_ep);
-  check_string_option(&buf->b_p_path);
-  check_string_option(&buf->b_p_tags);
-  check_string_option(&buf->b_p_ffu);
-  check_string_option(&buf->b_p_tfu);
-  check_string_option(&buf->b_p_tc);
-  check_string_option(&buf->b_p_dict);
-  check_string_option(&buf->b_p_tsr);
-  check_string_option(&buf->b_p_tsrfu);
-  check_string_option(&buf->b_p_lw);
-  check_string_option(&buf->b_p_bkc);
-  check_string_option(&buf->b_p_menc);
-  check_string_option(&buf->b_p_vsts);
-  check_string_option(&buf->b_p_vts);
 }
 
 /// Free the string allocated for an option.
@@ -1460,19 +1412,19 @@ const char *did_set_keymap(optset_T *args)
   args->os_value_checked = true;
 
   if (errmsg == NULL) {
-    if (*buf->b_p_keymap != NUL) {
+    if (*buf->b_p_kmp != NUL) {
       // Installed a new keymap, switch on using it.
-      buf->b_p_iminsert = B_IMODE_LMAP;
-      if (buf->b_p_imsearch != B_IMODE_USE_INSERT) {
-        buf->b_p_imsearch = B_IMODE_LMAP;
+      buf->b_p_imi = B_IMODE_LMAP;
+      if (buf->b_p_ims != B_IMODE_USE_INSERT) {
+        buf->b_p_ims = B_IMODE_LMAP;
       }
     } else {
       // Cleared the keymap, may reset 'iminsert' and 'imsearch'.
-      if (buf->b_p_iminsert == B_IMODE_LMAP) {
-        buf->b_p_iminsert = B_IMODE_NONE;
+      if (buf->b_p_imi == B_IMODE_LMAP) {
+        buf->b_p_imi = B_IMODE_NONE;
       }
-      if (buf->b_p_imsearch == B_IMODE_LMAP) {
-        buf->b_p_imsearch = B_IMODE_USE_INSERT;
+      if (buf->b_p_ims == B_IMODE_LMAP) {
+        buf->b_p_ims = B_IMODE_USE_INSERT;
       }
     }
     if ((opt_flags & OPT_LOCAL) == 0) {

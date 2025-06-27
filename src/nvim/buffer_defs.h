@@ -95,9 +95,9 @@ typedef struct {
 #define w_p_briopt w_onebuf_opt.wo_briopt  // 'breakindentopt'
   int wo_diff;
 #define w_p_diff w_onebuf_opt.wo_diff  // 'diff'
-  char *wo_fdc;
-#define w_p_eiw w_onebuf_opt.wo_eiw  // 'eventignorewin'
   char *wo_eiw;
+#define w_p_eiw w_onebuf_opt.wo_eiw  // 'eventignorewin'
+  char *wo_fdc;
 #define w_p_fdc w_onebuf_opt.wo_fdc    // 'foldcolumn'
   char *wo_fdc_save;
 #define w_p_fdc_save w_onebuf_opt.wo_fdc_save  // 'fdc' saved for diff mode
@@ -179,8 +179,8 @@ typedef struct {
 #define w_p_wbr w_onebuf_opt.wo_wbr   // 'winbar'
   int wo_scb;
 #define w_p_scb w_onebuf_opt.wo_scb    // 'scrollbind'
-  int wo_diff_saved;           // options were saved for starting diff mode
-#define w_p_diff_saved w_onebuf_opt.wo_diff_saved
+  int wo_diff_save;           // options were saved for starting diff mode
+#define w_p_diff_save w_onebuf_opt.wo_diff_save
   int wo_scb_save;              // 'scrollbind' saved for diff mode
 #define w_p_scb_save w_onebuf_opt.wo_scb_save
   int wo_wrap;
@@ -321,7 +321,7 @@ typedef struct {
   unsigned b_p_spo_flags;      // 'spelloptions' flags
   int b_cjk;                  // all CJK letters as OK
   uint8_t b_syn_chartab[32];  // syntax iskeyword option
-  char *b_syn_isk;            // iskeyword option
+  char *b_p_isk;              // iskeyword option
 } synblock_T;
 
 /// Type used for changedtick_di member in buf_T
@@ -494,8 +494,8 @@ struct file_buffer {
   bool b_scanned;               // ^N/^P have scanned this buffer
 
   // flags for use of ":lmap" and IM control
-  OptInt b_p_iminsert;          // input mode for insert
-  OptInt b_p_imsearch;          // input mode for search
+  OptInt b_p_imi;                // input mode for insert
+  OptInt b_p_ims;                // input mode for search
 #define B_IMODE_USE_INSERT (-1)  //  Use b_p_iminsert value for search
 #define B_IMODE_NONE 0          //  Input via none
 #define B_IMODE_LMAP 1          //  Input via langmap
@@ -603,17 +603,17 @@ struct file_buffer {
   char *b_p_vsts_nopaste;       ///< b_p_vsts saved for paste mode
   char *b_p_vts;                ///< 'vartabstop'
   colnr_T *b_p_vts_array;       ///< 'vartabstop' in internal format
-  char *b_p_keymap;             ///< 'keymap'
+  char *b_p_kmp;             ///< 'keymap'
 
   // local values for options which are normally global
-  char *b_p_gefm;               ///< 'grepformat' local value
+  char *b_p_gfm;               ///< 'grepformat' local value
   char *b_p_gp;                 ///< 'grepprg' local value
   char *b_p_mp;                 ///< 'makeprg' local value
   char *b_p_efm;                ///< 'errorformat' local value
   char *b_p_ep;                 ///< 'equalprg' local value
-  char *b_p_path;               ///< 'path' local value
+  char *b_p_pa;                 ///< 'path' local value
   int b_p_ar;                   ///< 'autoread' local value
-  char *b_p_tags;               ///< 'tags' local value
+  char *b_p_tag;                ///< 'tags' local value
   char *b_p_tc;                 ///< 'tagcase' local value
   unsigned b_tc_flags;          ///< flags for 'tagcase'
   char *b_p_dict;               ///< 'dictionary' local value

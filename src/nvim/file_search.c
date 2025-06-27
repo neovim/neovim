@@ -1380,9 +1380,9 @@ char *find_file_in_path(char *ptr, size_t len, int options, int first, char *rel
                         char **file_to_find, char **search_ctx)
 {
   return find_file_in_path_option(ptr, len, options, first,
-                                  (*curbuf->b_p_path == NUL
+                                  (*curbuf->b_p_pa == NUL
                                    ? p_path
-                                   : curbuf->b_p_path),
+                                   : curbuf->b_p_pa),
                                   FINDFILE_BOTH, rel_fname, curbuf->b_p_sua,
                                   file_to_find, search_ctx);
 }

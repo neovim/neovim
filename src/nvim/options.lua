@@ -7,6 +7,7 @@
 --- @field alias? string|string[]
 --- @field short_desc? string|fun(): string
 --- @field varname? string
+--- @field varname_local? string
 --- @field flags_varname? string
 --- @field type vim.option_type
 --- @field immutable? boolean
@@ -35,6 +36,11 @@
 --- @field no_mkrc? true
 --- @field alloced? true
 --- @field redraw? vim.option_redraw[]
+--- @field has_saved_winopt? true
+---
+--- Syntax option which is buffer local but also stored in the window,
+--- stored in a `synblock_T` (see `:ownsyntax`).
+--- @field bufwin_local? true
 ---
 --- If not provided and `values` is present, then is set to 'did_set_str_generic'
 --- @field cb? string
@@ -2036,6 +2042,7 @@ local options = {
         taken into account.
       ]=],
       full_name = 'cursorbind',
+      has_saved_winopt = true,
       scope = { 'win' },
       short_desc = N_('move cursor in window as it moves in other windows'),
       type = 'boolean',
@@ -2226,6 +2233,7 @@ local options = {
         between files.  See |diff-mode|.
       ]=],
       full_name = 'diff',
+      has_saved_winopt = true,
       noglob = true,
       redraw = { 'current_window' },
       scope = { 'win' },
@@ -3305,6 +3313,7 @@ local options = {
         See |folding|.
       ]=],
       full_name = 'foldcolumn',
+      has_saved_winopt = true,
       redraw = { 'current_window' },
       scope = { 'win' },
       short_desc = N_('width of the column used to indicate folds'),
@@ -3323,6 +3332,7 @@ local options = {
         See |folding|.
       ]=],
       full_name = 'foldenable',
+      has_saved_winopt = true,
       redraw = { 'current_window' },
       scope = { 'win' },
       short_desc = N_('set to display all folds open'),
@@ -3381,6 +3391,7 @@ local options = {
         See |fold-foldlevel|.
       ]=],
       full_name = 'foldlevel',
+      has_saved_winopt = true,
       redraw = { 'current_window' },
       scope = { 'win' },
       short_desc = N_('close folds with a level higher than this'),
@@ -3441,6 +3452,7 @@ local options = {
         |fold-diff|	diff	    Fold text that is not changed.
       ]=],
       full_name = 'foldmethod',
+      has_saved_winopt = true,
       redraw = { 'current_window' },
       scope = { 'win' },
       short_desc = N_('folding type'),
@@ -4829,6 +4841,7 @@ local options = {
         uses |:syn-iskeyword|.
       ]=],
       full_name = 'iskeyword',
+      bufwin_local = true,
       list = 'comma',
       scope = { 'buf' },
       short_desc = N_('characters included in keywords'),
@@ -5840,6 +5853,7 @@ local options = {
       short_desc = N_('buffer has been modified'),
       type = 'boolean',
       varname = 'p_mod',
+      varname_local = 'b_changed',
     },
     {
       defaults = true,
@@ -7106,6 +7120,7 @@ local options = {
         with scroll-binding, but ":split file" does not.
       ]=],
       full_name = 'scrollbind',
+      has_saved_winopt = true,
       scope = { 'win' },
       short_desc = N_('scroll in window as other windows scroll'),
       type = 'boolean',
@@ -8296,6 +8311,7 @@ local options = {
         |set-spc-auto|.
       ]=],
       full_name = 'spellcapcheck',
+      bufwin_local = true,
       redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buf' },
       short_desc = N_('pattern to locate end of a sentence'),
@@ -8331,6 +8347,7 @@ local options = {
       ]=],
       expand = true,
       full_name = 'spellfile',
+      bufwin_local = true,
       list = 'onecomma',
       scope = { 'buf' },
       secure = true,
@@ -8383,6 +8400,7 @@ local options = {
       ]=],
       expand = true,
       full_name = 'spelllang',
+      bufwin_local = true,
       list = 'onecomma',
       redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buf' },
@@ -8412,6 +8430,7 @@ local options = {
       list = 'onecomma',
       redraw = { 'current_buffer', 'highlight_only' },
       scope = { 'buf' },
+      bufwin_local = true,
       secure = true,
       type = 'string',
       varname = 'p_spo',
@@ -10642,6 +10661,7 @@ local options = {
         on.
       ]=],
       full_name = 'wrap',
+      has_saved_winopt = true,
       redraw = { 'current_window' },
       scope = { 'win' },
       short_desc = N_('lines wrap and continue on the next line'),
