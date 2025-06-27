@@ -726,11 +726,10 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
   if (*through) {
     cattrs = battrs;
-    cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color,
-                                    fattrs.rgb_bg_color);
-    if (cattrs.rgb_ae_attr & (HL_UNDERLINE_MASK)) {
-      cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color,
-                                      fattrs.rgb_bg_color);
+    cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color, fattrs.rgb_bg_color);
+    // Only apply special colors when the foreground attribute has an underline or undercurl.
+    if (fattrs_raw.rgb_ae_attr & (HL_UNDERLINE | HL_UNDERCURL)) {
+      cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color, fattrs.rgb_bg_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }
@@ -744,11 +743,9 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     if (ratio >= 50) {
       cattrs.rgb_ae_attr = hl_combine_ae(battrs.rgb_ae_attr, cattrs.rgb_ae_attr);
     }
-    cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
-                                    fattrs.rgb_fg_color);
+    cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color, fattrs.rgb_fg_color);
     if (cattrs.rgb_ae_attr & (HL_UNDERLINE_MASK)) {
-      cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color,
-                                      fattrs.rgb_sp_color);
+      cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color, fattrs.rgb_sp_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }

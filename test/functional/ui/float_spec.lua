@@ -8460,6 +8460,8 @@ describe('float window', function()
         [30] = { bold = true, foreground = tonumber('0x00007f') },
         [31] = { foreground = Screen.colors.Red, blend = 80 },
         [32] = { foreground = Screen.colors.Blue1, blend = 100, bold = true },
+        [33] = { foreground = Screen.colors.Gray0, underline = true },
+        [34] = { underline = true },
       })
       insert([[
         Lorem ipsum dolor sit amet, consectetur
@@ -8473,6 +8475,7 @@ describe('float window', function()
         occaecat cupidatat non proident, sunt in culpa
         qui officia deserunt mollit anim id est
         laborum.]])
+      local curbufnr = api.nvim_get_current_buf()
       local buf = api.nvim_create_buf(false, false)
       local test_data = { 'test', '', 'popup    text' }
       api.nvim_buf_set_lines(buf, 0, -1, true, test_data)
@@ -8820,6 +8823,57 @@ describe('float window', function()
           dolor{26:│}{30:~}{26:eu fugiat null│} pariatur. Excepteur sint   |
           occae{26:│}{30:~}{26:t cupidatat no│} proident, sunt in culpa    |
           {16:^qui o}{22:└}{25:Footer}{22:─────────┘}{16:ollit anim id est           }|
+          laborum.                                          |
+                                                            |
+        ]])
+      end
+
+      -- winblend highlight with underline (but without guisp) in a floatwin. #14453
+      command('fclose | hi TestUnderLine gui=underline')
+      api.nvim_buf_add_highlight(curbufnr, -1, 'TestUnderLine', 3, 0, -1)
+      api.nvim_buf_add_highlight(curbufnr, -1, 'TestUnderLine', 4, 0, -1)
+      api.nvim_buf_set_lines(buf, 0, -1, false, {})
+      api.nvim_open_win(buf, false, { relative = 'win', row = 0, col = 0, width = 50, height = 1 })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:--------------------------------------------------]|*8
+            [3:--------------------------------------------------]|
+          ## grid 2
+            {34:Ut enim ad minim veniam, quis nostrud}             |
+            {34:exercitation ullamco laboris nisi ut aliquip ex}   |
+            ea commodo consequat. Duis aute irure dolor in    |
+            reprehenderit in voluptate velit esse cillum      |
+            dolore eu fugiat nulla pariatur. Excepteur sint   |
+            occaecat cupidatat non proident, sunt in culpa    |
+            {16:^qui officia deserunt mollit anim id est           }|
+            laborum.                                          |
+          ## grid 3
+                                                              |
+          ## grid 5
+            {17:                                                  }|
+          ]],
+          win_pos = { [2] = { height = 8, startcol = 0, startrow = 0, width = 50, win = 1000 } },
+          float_pos = { [5] = { 1002, 'NW', 2, 0, 0, true, 50, 1, 0, 0 } },
+          win_viewport = {
+            [2] = { win = 1000, topline = 3, botline = 11, curline = 9, curcol = 0, linecount = 11, sum_scroll_delta = 3 },
+            [5] = { win = 1002, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
+          },
+          win_viewport_margins = {
+            [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+            [5] = { bottom = 0, left = 0, right = 0, top = 0, win = 1002 },
+          },
+        })
+      else
+        screen:expect([[
+          {33:Ut enim ad minim veniam, quis nostrud}{26:             }|
+          {34:exercitation ullamco laboris nisi ut aliquip ex}   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          {16:^qui officia deserunt mollit anim id est           }|
           laborum.                                          |
                                                             |
         ]])
