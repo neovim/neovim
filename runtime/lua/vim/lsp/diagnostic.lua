@@ -450,8 +450,8 @@ local function previous_result_ids(client_id)
       for buf_client_id, result_id in pairs(state.client_result_id) do
         if buf_client_id == client_id then
           table.insert(results, {
-            textDocument = util.make_text_document_params(bufnr),
-            previousResultId = result_id,
+            uri = vim.uri_from_bufnr(bufnr),
+            value = result_id,
           })
           break
         end
