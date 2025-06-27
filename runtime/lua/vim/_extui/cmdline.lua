@@ -114,7 +114,7 @@ end
 ---@param level integer
 ---@param abort boolean
 function M.cmdline_hide(level, abort)
-  if M.row > 0 or level > 1 then
+  if M.row > 0 or level > (fn.getcmdwintype() == '' and 1 or 2) then
     return -- No need to hide when still in nested cmdline or cmdline_block.
   end
 
