@@ -598,7 +598,7 @@ describe('prompt buffer', function()
     end)
   end)
 
-  it("text-edit with api handled correctly", function()
+  it('programmatic (non-user) edits', function()
     api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
 
     -- with nvim_buf_set_lines
@@ -620,16 +620,16 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
 
-    feed('set_lines3(mutli-1)<s-cr>set_lines3(mutli-2)<cr>')
+    feed('set_lines3(multi-1)<s-cr>set_lines3(multi-2)<cr>')
     screen:expect([[
       % set_lines              |
       set_lines                |
       % set_lines2             |
       set_lines2               |
-      % set_lines3(mutli-1)    |
-      set_lines3(mutli-2)      |
-      set_lines3(mutli-1)      |
-      set_lines3(mutli-2)      |
+      % set_lines3(multi-1)    |
+      set_lines3(multi-2)      |
+      set_lines3(multi-1)      |
+      set_lines3(multi-2)      |
       % ^                       |
       {5:-- INSERT --}             |
     ]])
@@ -658,16 +658,16 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
 
-    feed('set_text3(mutli-1)<s-cr>set_text3(mutli-2)<cr>')
+    feed('set_text3(multi-1)<s-cr>set_text3(multi-2)<cr>')
     screen:expect([[
       % set_text               |
       set_text                 |
       % set_text2              |
       set_text2                |
-      % set_text3(mutli-1)     |
-      set_text3(mutli-2)       |
-      set_text3(mutli-1)       |
-      set_text3(mutli-2)       |
+      % set_text3(multi-1)     |
+      set_text3(multi-2)       |
+      set_text3(multi-1)       |
+      set_text3(multi-2)       |
       % ^                       |
       {5:-- INSERT --}             |
     ]])
