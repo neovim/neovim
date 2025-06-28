@@ -391,7 +391,7 @@ want only part of the line to be replaced you will have to make a mapping for
 it.  In a future release ":" may work on partial lines.
 
 Here is an example, to replace the selected text with the output of "date": >
-	:vmap _a <Esc>`>a<CR><Esc>`<i<CR><Esc>!!date<CR>kJJ
+	:vmap _a <Esc>`>a<CR><Esc>`<i<CR><Esc>!!date<CR>kgJgJ
 
 (In the <> notation |<>|, when typing it you should type it literally; you
 need to remove the 'B' flag from 'cpoptions')
