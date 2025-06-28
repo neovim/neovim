@@ -1,5 +1,9 @@
 " Test for the new-tutor plugin
 
+source screendump.vim
+source check.vim
+source script_util.vim
+
 func SetUp()
   set nocompatible
   runtime plugin/tutor.vim
@@ -31,4 +35,21 @@ func Test_tutor_link()
       call assert_true(tutor#GlobTutorials(link, lang)->len() > 0)
     endfor
   endfor
+endfunc
+
+func Test_mark()
+  CheckScreendump
+  call writefile([
+  \ 'set nocompatible',
+  \ 'runtime plugin/tutor.vim',
+  \ 'Tutor tutor',
+  \ 'set statusline=',
+  \ ], 'Xtest_plugin_tutor_mark', 'D')
+  let buf = RunVimInTerminal('-S Xtest_plugin_tutor_mark', {'rows': 20, 'cols': 78})
+  call term_sendkeys(buf, ":240\<CR>")
+  call WaitForAssert({-> assert_match('Bot$', term_getline(buf, 20))})
+  call VerifyScreenDump(buf, 'Test_plugin_tutor_mark_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
