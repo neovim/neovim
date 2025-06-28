@@ -170,14 +170,18 @@ endfunction
 " returns a list of all tutor files matching the given name
 function! tutor#GlobTutorials(name, locale)
     let locale = a:locale
+    " pack/*/start/* are not reported in &rtp
+    let rtp = nvim_list_runtime_paths()
+        \ ->map({_, v -> escape(v:lua.vim.fs.normalize(v), ',')})
+        \ ->join(',')
     " search for tutorials:
     " 1. non-localized
-    let l:tutors = s:GlobPath(&rtp, 'tutor/'.a:name.'.tutor')
+    let l:tutors = s:GlobPath(rtp, 'tutor/'.a:name.'.tutor')
     " 2. localized for current locale
-    let l:locale_tutors = s:GlobPath(&rtp, 'tutor/'.locale.'/'.a:name.'.tutor')
+    let l:locale_tutors = s:GlobPath(rtp, 'tutor/'.locale.'/'.a:name.'.tutor')
     " 3. fallback to 'en'
     if len(l:locale_tutors) == 0
-        let l:locale_tutors = s:GlobPath(&rtp, 'tutor/en/'.a:name.'.tutor')
+        let l:locale_tutors = s:GlobPath(rtp, 'tutor/en/'.a:name.'.tutor')
     endif
     call extend(l:tutors, l:locale_tutors)
     return uniq(sort(l:tutors, 's:Sort'), 's:Sort')
