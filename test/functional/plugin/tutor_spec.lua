@@ -135,3 +135,61 @@ describe(':Tutor', function()
     screen:expect(expected)
   end)
 end)
+
+describe(':Tutor tutor', function()
+  local screen --- @type test.functional.ui.screen
+
+  before_each(function()
+    clear({ args = { '--clean' } })
+    command('set cmdheight=0')
+    command('Tutor tutor')
+    screen = Screen.new(81, 30)
+    screen:set_default_attr_ids({
+      [0] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray },
+      [1] = { bold = true },
+      [2] = { underline = true, foreground = tonumber('0x0088ff') },
+      [3] = { foreground = Screen.colors.SlateBlue },
+      [4] = { bold = true, foreground = Screen.colors.Brown },
+      [5] = { bold = true, foreground = Screen.colors.Magenta1 },
+      [6] = { italic = true },
+      [7] = { foreground = tonumber('0x00ff88'), bold = true, background = Screen.colors.Grey },
+      [8] = { bold = true, foreground = Screen.colors.Blue1 },
+    })
+  end)
+
+  it('applies interactive marks', function()
+    feed(':216<CR>zt')
+    screen:expect([[
+  {0:  }{3:^###}{5: expect }                                                                    |
+  {0:  }                                                                               |
+  {0:  }"expect" lines check that the contents of the line are identical to some preset|
+  {0:  } text                                                                          |
+  {0:  }(like in the exercises above).                                                 |
+  {0:  }                                                                               |
+  {0:  }These elements are specified in separate JSON files like this                  |
+  {0:  }                                                                               |
+  {0:  }{3:~~~ json}                                                                       |
+  {0:  }{                                                                              |
+  {0:  }  "expect": {                                                                  |
+  {0:  }    "1": "This is how this line should look.",                                 |
+  {0:  }    "2": "This is how this line should look.",                                 |
+  {0:  }    "3": -1                                                                    |
+  {0:  }  }                                                                            |
+  {0:  }}                                                                              |
+  {0:  }{3:~~~}                                                                            |
+  {0:  }                                                                               |
+  {0:  }These files contain an "expect" dictionary, for which the keys are line numbers|
+  {0:  } and                                                                           |
+  {0:  }the values are the expected text. A value of -1 means that the condition for th|
+  {0:  }e line                                                                         |
+  {0:  }will always be satisfied, no matter what (this is useful for letting the user p|
+  {0:  }lay a bit).                                                                    |
+  {0:  }                                                                               |
+  {7:✓ }{3:This is an "expect" line that is always satisfied. Try changing it.}            |
+  {0:  }                                                                               |
+  {0:  }These files conventionally have the same name as the tutorial document with the|
+  {0:  } .json                                                                         |
+  {0:  }extension appended (for a full example, see the file that corresponds to thi{8:@@@}|
+]])
+  end)
+end)
