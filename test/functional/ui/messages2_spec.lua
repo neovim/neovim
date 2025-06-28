@@ -160,5 +160,14 @@ describe('messages2', function()
     ]])
     command('echo ""')
     screen:expect_unchanged()
+    -- Or a screen resize
+    screen:try_resize(screen._width, screen._height - 1)
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*9
+      {1:~                                               }┌───┐|
+      {1:~                                               }│{4:foo}│|
+      {1:~                                               }└───┘|
+    ]])
   end)
 end)

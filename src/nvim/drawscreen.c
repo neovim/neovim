@@ -264,9 +264,6 @@ void screenclear(void)
     msg_grid_invalid = false;
     clear_cmdline = true;
   }
-  if (ui_has(kUIMessages)) {
-    ui_call_msg_clear();
-  }
 }
 
 /// Unlike cmdline "one_key" prompts, the message part of the prompt is not stored
@@ -570,6 +567,9 @@ int update_screen(void)
     screenclear();  // will reset clear_cmdline
                     // and set UPD_NOT_VALID for each window
     cmdline_screen_cleared();   // clear external cmdline state
+    if (ui_has(kUIMessages)) {
+      ui_call_msg_clear();
+    }
     type = UPD_NOT_VALID;
     // must_redraw may be set indirectly, avoid another redraw later
     must_redraw = 0;
