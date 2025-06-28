@@ -144,6 +144,7 @@ describe(':Tutor tutor', function()
     command('set cmdheight=0')
     command('Tutor tutor')
     screen = Screen.new(81, 30)
+    screen:attach()
     screen:set_default_attr_ids({
       [0] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray },
       [1] = { bold = true },
