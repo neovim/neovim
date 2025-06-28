@@ -228,4 +228,17 @@ describe('treesitter node API', function()
     end)
     eq({ 0, 0, 2, 3 }, lua_eval('range'))
   end)
+
+  it('tree:root() is idempotent', function()
+    insert([[
+      function x()
+        return true
+      end
+    ]])
+    exec_lua(function()
+      local tree = vim.treesitter.get_parser(0, 'lua'):parse()[1]
+      assert(tree:root() == tree:root())
+      assert(tree:root() == tree:root():tree():root())
+    end)
+  end)
 end)
