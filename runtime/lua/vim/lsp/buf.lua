@@ -23,6 +23,13 @@ local function client_positional_params(params)
   end
 end
 
+--- @param callback? function
+local function invoke_callback(callback, ...)
+  if callback then
+    callback(...)
+  end
+end
+
 local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 
 --- @class vim.lsp.buf.hover.Opts : vim.lsp.util.open_floating_preview.Opts
@@ -46,8 +53,11 @@ local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 --- })
 --- ```
 --- @param config? vim.lsp.buf.hover.Opts
-function M.hover(config)
+--- @param callback? fun(errors: lsp.ResponseError[]) Function called after the request is completed.
+--- Any errors are passed as the first argument.
+function M.hover(config, callback)
   validate('config', config, 'table', true)
+  validate('callback', callback, 'function', true)
 
   config = config or {}
   config.focus_id = ms.textDocument_hover
@@ -56,20 +66,25 @@ function M.hover(config)
     local bufnr = assert(ctx.bufnr)
     if api.nvim_get_current_buf() ~= bufnr then
       -- Ignore result since buffer changed. This happens for slow language servers.
+      invoke_callback(callback, {})
       return
     end
 
     -- Filter errors from results
+    local errors = {} --- @type lsp.ResponseError[]
     local results1 = {} --- @type table<integer,lsp.Hover>
 
     for client_id, resp in pairs(results) do
       local err, result = resp.err, resp.result
       if err then
         lsp.log.error(err.code, err.message)
+        errors[#errors + 1] = err
       elseif result then
         results1[client_id] = result
       end
     end
+
+    invoke_callback(callback, errors)
 
     if vim.tbl_isempty(results1) then
       if config.silent ~= true then
@@ -162,14 +177,20 @@ end
 
 ---@param method vim.lsp.protocol.Method.ClientToServer.Request
 ---@param opts? vim.lsp.LocationOpts
-local function get_locations(method, opts)
+---@param callback? fun(errors?: lsp.ResponseError[])
+local function get_locations(method, opts, callback)
   opts = opts or {}
+
   local bufnr = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
 
   local clients = lsp.get_clients({ method = method, bufnr = bufnr })
   if not next(clients) then
-    vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
+    local msg = lsp._unsupported_method(method)
+    vim.notify(msg, vim.log.levels.WARN)
+    ---@type lsp.ResponseError
+    local error = { code = lsp.protocol.ErrorCodes.RequestCancelled, message = msg }
+    invoke_callback(callback, { error })
     return
   end
 
@@ -182,16 +203,22 @@ local function get_locations(method, opts)
   end, function(results)
     ---@type vim.quickfix.entry[]
     local all_items = {}
+    local errors = {} ---@type lsp.ResponseError[]
 
     for client_id, res in pairs(results) do
       local client = assert(lsp.get_client_by_id(client_id))
       local locations = {}
       if res then
         locations = vim.islist(res.result) and res.result or { res.result }
+        if res.err then
+          errors[#errors + 1] = res.err
+        end
       end
       local items = util.locations_to_items(locations, client.offset_encoding)
       vim.list_extend(all_items, items)
     end
+
+    invoke_callback(callback, errors)
 
     if vim.tbl_isempty(all_items) then
       vim.notify('No locations found', vim.log.levels.INFO)
@@ -281,64 +308,39 @@ end
 --- Jumps to the declaration of the symbol under the cursor.
 --- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
 --- @param opts? vim.lsp.LocationOpts
-function M.declaration(opts)
+--- @param callback? fun(errors?: lsp.ResponseError[]) Function called after the request is completed.
+function M.declaration(opts, callback)
   validate('opts', opts, 'table', true)
-  get_locations(ms.textDocument_declaration, opts)
+  validate('callback', callback, 'function', true)
+  get_locations(ms.textDocument_declaration, opts, callback)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
 --- @param opts? vim.lsp.LocationOpts
-function M.definition(opts)
+--- @param callback? fun(errors?: lsp.ResponseError[]) Function called after the request is completed.
+function M.definition(opts, callback)
   validate('opts', opts, 'table', true)
-  get_locations(ms.textDocument_definition, opts)
+  validate('callback', callback, 'function', true)
+  get_locations(ms.textDocument_definition, opts, callback)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
 --- @param opts? vim.lsp.LocationOpts
-function M.type_definition(opts)
+--- @param callback? fun(errors?: lsp.ResponseError[]) Function called after the request is completed.
+function M.type_definition(opts, callback)
   validate('opts', opts, 'table', true)
-  get_locations(ms.textDocument_typeDefinition, opts)
+  validate('callback', callback, 'function', true)
+  get_locations(ms.textDocument_typeDefinition, opts, callback)
 end
 
 --- Lists all the implementations for the symbol under the cursor in the
 --- quickfix window.
 --- @param opts? vim.lsp.LocationOpts
-function M.implementation(opts)
+--- @param callback? fun(errors?: lsp.ResponseError[]) Function called after the request is completed.
+function M.implementation(opts, callback)
   validate('opts', opts, 'table', true)
-  get_locations(ms.textDocument_implementation, opts)
-end
-
---- @param results table<integer,{err: lsp.ResponseError?, result: lsp.SignatureHelp?}>
-local function process_signature_help_results(results)
-  local signatures = {} --- @type [vim.lsp.Client,lsp.SignatureInformation][]
-  local active_signature = 1
-
-  -- Pre-process results
-  for client_id, r in pairs(results) do
-    local err = r.err
-    local client = assert(lsp.get_client_by_id(client_id))
-    if err then
-      vim.notify(
-        client.name .. ': ' .. tostring(err.code) .. ': ' .. err.message,
-        vim.log.levels.ERROR
-      )
-      api.nvim_command('redraw')
-    else
-      local result = r.result --- @type lsp.SignatureHelp
-      if result and result.signatures and result.signatures[1] then
-        for i, sig in ipairs(result.signatures) do
-          sig.activeParameter = sig.activeParameter or result.activeParameter
-          local idx = #signatures + 1
-          if (result.activeSignature or 0) + 1 == i then
-            active_signature = idx
-          end
-          signatures[idx] = { client, sig }
-        end
-      end
-    end
-  end
-
-  return signatures, active_signature
+  validate('callback', callback, 'function', true)
+  get_locations(ms.textDocument_implementation, opts, callback)
 end
 
 local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
@@ -357,8 +359,10 @@ local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
 --- ```
 ---
 --- @param config? vim.lsp.buf.signature_help.Opts
-function M.signature_help(config)
+--- @param callback? fun(errors: lsp.ResponseError[]) Function called after the request is completed.
+function M.signature_help(config, callback)
   validate('config', config, 'table', true)
+  validate('callback', callback, 'function', true)
 
   local method = ms.textDocument_signatureHelp
 
@@ -368,10 +372,41 @@ function M.signature_help(config)
   lsp.buf_request_all(0, method, client_positional_params(), function(results, ctx)
     if api.nvim_get_current_buf() ~= ctx.bufnr then
       -- Ignore result since buffer changed. This happens for slow language servers.
+      invoke_callback(callback, {})
       return
     end
 
-    local signatures, active_signature = process_signature_help_results(results)
+    local signatures = {} --- @type [vim.lsp.Client,lsp.SignatureInformation][]
+    local active_signature = 1
+    local errors = {} --- @type lsp.ResponseError[]
+
+    -- Pre-process results
+    for client_id, r in pairs(results) do
+      local err = r.err
+      local client = assert(lsp.get_client_by_id(client_id))
+      if err then
+        errors[#errors + 1] = err
+        vim.notify(
+          client.name .. ': ' .. tostring(err.code) .. ': ' .. err.message,
+          vim.log.levels.ERROR
+        )
+        api.nvim_command('redraw')
+      else
+        local result = r.result --- @type lsp.SignatureHelp
+        if result and result.signatures and result.signatures[1] then
+          for i, sig in ipairs(result.signatures) do
+            sig.activeParameter = sig.activeParameter or result.activeParameter
+            local idx = #signatures + 1
+            if (result.activeSignature or 0) + 1 == i then
+              active_signature = idx
+            end
+            signatures[idx] = { client, sig }
+          end
+        end
+      end
+    end
+
+    invoke_callback(callback, errors)
 
     if not next(signatures) then
       if config.silent ~= true then
@@ -553,8 +588,10 @@ end
 --- server clients.
 ---
 --- @param opts? vim.lsp.buf.format.Opts
-function M.format(opts)
+--- @param callback? fun(errors: lsp.ResponseError[]) Function called after the request is completed.
+function M.format(opts, callback)
   validate('opts', opts, 'table', true)
+  validate('callback', callback, 'function', true)
 
   opts = opts or {}
   local bufnr = vim._resolve_bufnr(opts.bufnr)
@@ -611,6 +648,8 @@ function M.format(opts)
     return ret
   end
 
+  local errors = {} --- @type lsp.ResponseError[]
+
   if opts.async then
     --- @param idx? integer
     --- @param client? vim.lsp.Client
@@ -619,9 +658,12 @@ function M.format(opts)
         return
       end
       local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      client:request(method, params, function(...)
+      client:request(method, params, function(err, ...)
+        if err then
+          errors[#errors + 1] = err
+        end
         local handler = client.handlers[method] or lsp.handlers[method]
-        handler(...)
+        handler(err, ...)
         do_format(next(clients, idx))
       end, bufnr)
     end
@@ -631,13 +673,20 @@ function M.format(opts)
     for _, client in pairs(clients) do
       local params = set_range(client, util.make_formatting_params(opts.formatting_options))
       local result, err = client:request_sync(method, params, timeout_ms, bufnr)
-      if result and result.result then
-        util.apply_text_edits(result.result, bufnr, client.offset_encoding)
+      if result then
+        if result.err then
+          errors[#errors + 1] = result.err
+        end
+        if result.result then
+          util.apply_text_edits(result.result, bufnr, client.offset_encoding)
+        end
       elseif err then
         vim.notify(string.format('[LSP][%s] %s', client.name, err), vim.log.levels.WARN)
       end
     end
   end
+
+  invoke_callback(callback, errors)
 end
 
 --- @class vim.lsp.buf.rename.Opts
@@ -659,9 +708,11 @@ end
 ---@param new_name string|nil If not provided, the user will be prompted for a new
 ---                name using |vim.ui.input()|.
 ---@param opts? vim.lsp.buf.rename.Opts Additional options:
-function M.rename(new_name, opts)
+---@param callback? fun(errors: lsp.ResponseError[]) Function called after the request is completed.
+function M.rename(new_name, opts, callback)
   validate('new_name', new_name, 'string', true)
   validate('opts', opts, 'table', true)
+  validate('callback', callback, 'function', true)
 
   opts = opts or {}
   local bufnr = vim._resolve_bufnr(opts.bufnr)
@@ -697,6 +748,8 @@ function M.rename(new_name, opts)
     )[1]
   end
 
+  local errors = {} --- @type lsp.ResponseError[]
+
   --- @param idx? integer
   --- @param client? vim.lsp.Client
   local function try_use_client(idx, client)
@@ -710,8 +763,11 @@ function M.rename(new_name, opts)
       params.newName = name
       local handler = client.handlers[ms.textDocument_rename]
         or lsp.handlers[ms.textDocument_rename]
-      client:request(ms.textDocument_rename, params, function(...)
-        handler(...)
+      client:request(ms.textDocument_rename, params, function(err, ...)
+        if err then
+          errors[#errors + 1] = err
+        end
+        handler(err, ...)
         try_use_client(next(clients, idx))
       end, bufnr)
     end
@@ -719,6 +775,9 @@ function M.rename(new_name, opts)
     if client:supports_method(ms.textDocument_prepareRename) then
       local params = util.make_position_params(win, client.offset_encoding)
       client:request(ms.textDocument_prepareRename, params, function(err, result)
+        if err then
+          errors[#errors + 1] = err
+        end
         if err or result == nil then
           if next(clients, idx) then
             try_use_client(next(clients, idx))
@@ -779,6 +838,7 @@ function M.rename(new_name, opts)
   end
 
   try_use_client(next(clients))
+  invoke_callback(callback, errors)
 end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
@@ -786,9 +846,11 @@ end
 ---@param context lsp.ReferenceContext? Context for the request
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 ---@param opts? vim.lsp.ListOpts
-function M.references(context, opts)
+---@param callback? fun(errors: lsp.ResponseError[]) Function called after the request is completed.
+function M.references(context, opts, callback)
   validate('context', context, 'table', true)
   validate('opts', opts, 'table', true)
+  validate('callback', callback, 'function', true)
 
   local bufnr = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
@@ -803,11 +865,17 @@ function M.references(context, opts)
     local all_items = {}
     local title = 'References'
 
+    local errors = {} --- @type lsp.ResponseError[]
     for client_id, res in pairs(results) do
+      if res.err then
+        errors[#errors + 1] = res.err
+      end
       local client = assert(lsp.get_client_by_id(client_id))
       local items = util.locations_to_items(res.result, client.offset_encoding)
       vim.list_extend(all_items, items)
     end
+
+    invoke_callback(callback, errors)
 
     if not next(all_items) then
       vim.notify('No references found')
