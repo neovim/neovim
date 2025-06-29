@@ -320,6 +320,241 @@ describe('TUI :restart', function()
   end)
 end)
 
+describe('TUI :connect', function()
+  it('connects to a different server', function()
+    if is_os('win') then
+      -- FIXME: :connect relies on :detach which currently doesn't work on windows
+      return
+    end
+
+    n.clear()
+    finally(function()
+      n.check_close()
+    end)
+
+    local server1 = new_pipename()
+    local screen = tt.setup_child_nvim({
+      '--listen',
+      server1,
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'colorscheme vim',
+      '--cmd',
+      nvim_set .. ' notermguicolors laststatus=2 background=dark',
+    })
+    tt.feed_data(':connect\013')
+    screen:expect([[
+      ^                                                  |
+      {4:~                                                 }|*3
+      {5:[No Name]                                         }|
+      {8:E471: Argument required}                           |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    screen:detach()
+
+    local server1_session = n.connect(server1)
+    local status = server1_session:request('nvim_input', 'ddiTesting connect.<Esc><Esc>')
+    assert(status)
+
+    local server2 = new_pipename()
+
+    local screen_reattached = tt.setup_child_nvim({
+      '--listen',
+      server2,
+    })
+    tt.feed_data(':connect ' .. server1 .. '\013')
+    screen_reattached:expect([[
+      Testing connect^.                                  |
+      {4:~                                                 }|*3
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    screen_reattached:detach()
+
+    local server2_session = n.connect(server2)
+    status = server2_session:request('nvim_input', 'ddiThis server is still running.<Esc><Esc>')
+    assert(status)
+
+    local screen2 = tt.setup_child_nvim({
+      '--remote-ui',
+      '--server',
+      server2,
+    })
+    screen2:expect([[
+      This server is still running^.                     |
+      ~                                                 |*3
+      {1:[No Name] [+]                   1,29           All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    server1_session:request('nvim_command', 'qall!')
+    server2_session:request('nvim_command', 'qall!')
+  end)
+  it('stops a server if only one UI is attached to it', function()
+    if is_os('win') then
+      return
+    end
+
+    n.clear()
+    finally(function()
+      n.check_close()
+    end)
+
+    local server1 = new_pipename()
+    local screen1 = tt.setup_child_nvim({
+      '--listen',
+      server1,
+    })
+    tt.feed_data('iThis is server 1.\027')
+    screen1:detach()
+
+    local server2 = new_pipename()
+    local screen2 = tt.setup_child_nvim({
+      '--listen',
+      server2,
+    })
+    tt.feed_data(':connect! ' .. server1 .. '\013')
+
+    screen2:expect([[
+      This is server 1.^                                 |
+      ~                                                 |*3
+      [No Name] [+]                   1,18           All|
+      -- INSERT --                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    screen2:detach()
+
+    local screen3 = tt.setup_child_nvim({
+      '--remote-ui',
+      '--server',
+      server2,
+    })
+
+    screen3:expect([[
+      Remote ui failed to start: connection refused     |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {3:-- TERMINAL --}                                    |
+    ]])
+    screen3:detach()
+
+    local server1_session = n.connect(server1)
+    server1_session:request('nvim_command', 'qall!')
+  end)
+  it('leaves a server running if another UI is attached to it', function()
+    if is_os('win') then
+      return
+    end
+
+    n.clear()
+    finally(function()
+      n.check_close()
+    end)
+
+    local server1 = new_pipename()
+    local screen1 = tt.setup_child_nvim({
+      '--listen',
+      server1,
+    })
+
+    tt.feed_data('iThis is server 1.\027')
+    screen1:detach()
+
+    local server2 = new_pipename()
+    local screen2 = tt.setup_child_nvim({
+      '--listen',
+      server2,
+    })
+
+    tt.feed_data('iThis is server 2.\027')
+    screen2:detach()
+
+    local screen3 = tt.setup_child_nvim({
+      '--remote-ui',
+      '--server',
+      server1,
+    })
+    screen3:expect([[
+      This is server 1.^                                 |
+      ~                                                 |*3
+      [No Name] [+]                   1,18           All|
+      -- INSERT --                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    tt.feed_data('\027:connect! ' .. server2 .. '\013')
+
+    screen3:expect([[
+      This is server 2.^                                 |
+      ~                                                 |*3
+      [No Name] [+]                   1,18           All|
+      -- INSERT --                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    screen3:detach()
+
+    local screen_reattached = tt.setup_child_nvim({
+      '--remote-ui',
+      '--server',
+      server1,
+    })
+
+    screen_reattached:expect([[
+      This is server 1^.                                 |
+      ~                                                 |*3
+      [No Name] [+]                   1,17           All|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    local server1_session = n.connect(server1)
+    server1_session:request('nvim_command', 'qall!')
+
+    local server2_session = n.connect(server2)
+    server2_session:request('nvim_command', 'qall!')
+  end)
+  it('connects to servers which have special characters in the name', function()
+    if is_os('win') then
+      return
+    end
+
+    n.clear()
+    finally(function()
+      n.check_close()
+    end)
+
+    local child_server = new_pipename() .. '#%'
+    local screen = tt.setup_child_nvim({
+      '--listen',
+      child_server,
+    })
+    tt.feed_data('iThis is a server with a special name.\027')
+    screen:detach()
+
+    local screen_reattached = tt.setup_child_nvim()
+    tt.feed_data(':connect ' .. child_server .. '\013')
+    screen_reattached:expect([[
+      This is a server with a special name.^             |
+      ~                                                 |*3
+      [No Name] [+]                   1,38           All|
+      -- INSERT --                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    screen_reattached:detach()
+
+    local child_session = n.connect(child_server)
+    child_session:request('nvim_command', 'qall!')
+  end)
+end)
+
 if t.skip(is_os('win')) then
   return
 end
