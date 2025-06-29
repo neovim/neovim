@@ -26,7 +26,7 @@ typedef struct {
 } nlua_ref_state_t;
 
 #define NLUA_EXEC_STATIC(cstr, arg, mode, arena, err) \
-  nlua_exec(STATIC_CSTR_AS_STRING(cstr), arg, mode, arena, err)
+  nlua_exec(STATIC_CSTR_AS_STRING(cstr), NULL, arg, mode, arena, err)
 
 #define NLUA_CLEAR_REF(x) \
   do { \
