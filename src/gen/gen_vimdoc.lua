@@ -271,6 +271,7 @@ local config = {
       'client.lua',
       'buf.lua',
       'diagnostic.lua',
+      'document_highlight.lua',
       'codelens.lua',
       'completion.lua',
       'folding_range.lua',
