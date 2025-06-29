@@ -643,18 +643,25 @@ local floating_highlight_map = make_highlight_map('Floating')
 local sign_highlight_map = make_highlight_map('Sign')
 
 --- @param diagnostics vim.Diagnostic[]
+--- @param use_end_lnum? boolean
 --- @return table<integer,vim.Diagnostic[]>
-local function diagnostic_lines(diagnostics)
+local function diagnostic_lines(diagnostics, use_end_lnum)
   if not diagnostics then
     return {}
   end
 
   local diagnostics_by_line = {} --- @type table<integer,vim.Diagnostic[]>
   for _, diagnostic in ipairs(diagnostics) do
-    local line_diagnostics = diagnostics_by_line[diagnostic.lnum]
+    local line = diagnostic.lnum
+
+    if use_end_lnum and diagnostic.end_lnum ~= nil then
+      line = diagnostic.end_lnum
+    end
+
+    local line_diagnostics = diagnostics_by_line[line]
     if not line_diagnostics then
       line_diagnostics = {}
-      diagnostics_by_line[diagnostic.lnum] = line_diagnostics
+      diagnostics_by_line[line] = line_diagnostics
     end
     table.insert(line_diagnostics, diagnostic)
   end
@@ -1644,6 +1651,41 @@ M.handlers.underline = {
   end,
 }
 
+--- Returns the text to show for the given diagnostics, grouped by columns.
+---
+--- @param bufnr integer
+--- @param line integer
+--- @param line_diagnostics vim.Diagnostic[]
+--- @param opts vim.diagnostic.Opts.VirtualText
+--- @return table<integer, string[]> chunks_per_column
+local function get_virtual_text_chunks_per_column(bufnr, line, line_diagnostics, opts)
+  local group_diags = {} --- @type table<integer, vim.Diagnostic[]>
+
+  -- Make sure our column always ends up being valid:
+  local line_length = 0
+  local line_buf_contents = api.nvim_buf_get_lines(bufnr, line, line + 1, false)
+  if #line_buf_contents == 1 then
+    line_length = #line_buf_contents[1]
+  end
+
+  --- Gather diagnostics per-column:
+  for _, diag in ipairs(line_diagnostics) do
+    local col = diag.end_col or diag.col
+    col = col > line_length and line_length or col
+    group_diags[col] = group_diags[col] or {}
+    table.insert(group_diags[col], diag)
+  end
+
+  local chunks = {} ---@type table<integer, string[]>
+
+  --- Convert them to chunks:
+  for col, diags in pairs(group_diags) do
+    chunks[col] = M._get_virt_text_chunks(diags, opts)
+  end
+
+  return chunks
+end
+
 --- @param namespace integer
 --- @param bufnr integer
 --- @param diagnostics table<integer, vim.Diagnostic[]>
@@ -1667,15 +1709,17 @@ local function render_virtual_text(namespace, bufnr, diagnostics, opts)
 
   for line, line_diagnostics in pairs(diagnostics) do
     if should_render(line) then
-      local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts)
-      if virt_texts then
-        api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
-          hl_mode = opts.hl_mode or 'combine',
-          virt_text = virt_texts,
-          virt_text_pos = opts.virt_text_pos,
-          virt_text_hide = opts.virt_text_hide,
-          virt_text_win_col = opts.virt_text_win_col,
-        })
+      local virt_texts = get_virtual_text_chunks_per_column(bufnr, line, line_diagnostics, opts)
+      if not vim.tbl_isempty(virt_texts) then
+        for column, text_chunks in pairs(virt_texts) do
+          api.nvim_buf_set_extmark(bufnr, namespace, line, column, {
+            hl_mode = opts.hl_mode or 'combine',
+            virt_text = text_chunks,
+            virt_text_pos = opts.virt_text_pos,
+            virt_text_hide = opts.virt_text_hide,
+            virt_text_win_col = opts.virt_text_win_col,
+          })
+        end
       end
     end
   end
@@ -1721,7 +1765,8 @@ M.handlers.virtual_text = {
 
     api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
 
-    local line_diagnostics = diagnostic_lines(diagnostics)
+    -- Here, we want the last line to be used for the diagnostic if possible.
+    local line_diagnostics = diagnostic_lines(diagnostics, true)
 
     if opts.virtual_text.current_line ~= nil then
       api.nvim_create_autocmd('CursorMoved', {
