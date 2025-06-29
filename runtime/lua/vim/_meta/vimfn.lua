@@ -10612,6 +10612,7 @@ function vim.fn.undotree(buf) end
 ---   let newlist = uniq(copy(mylist))
 --- <The default compare function uses the string representation of
 --- each item.  For the use of {func} and {dict} see |sort()|.
+--- For deduplicating text in the current buffer see |:uniq|.
 ---
 --- Returns zero if {list} is not a |List|.
 ---
