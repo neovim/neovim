@@ -270,7 +270,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
 /// @param rgb Export RGB colors
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
-/// @see nvim_get_hl_by_name
+/// @see nvim_get_hl
 Dict nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
   FUNC_API_DEPRECATED_SINCE(9)
@@ -291,7 +291,7 @@ Dict nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *err)
 /// @param rgb Export RGB colors
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
-/// @see nvim_get_hl_by_id
+/// @see nvim_get_hl
 Dict nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
   FUNC_API_DEPRECATED_SINCE(9)
