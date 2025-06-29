@@ -4739,4 +4739,36 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
         (`string[]`)
 
 
+==============================================================================
+Lua module: vim.net                                                  *vim.net*
+
+vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
+    Makes an HTTP GET request to the given URL.
+
+    This function operates in two modes:
+    • Synchronous (blocking): If `on_response` is omitted, it waits for the
+      request to complete and returns the result.
+    • Asynchronous (non-blocking): If `on_response` is provided, it returns
+      immediately and invokes the callback with the result later.
+
+    Parameters: ~
+      • {url}          (`string`) The URL for the request.
+      • {opts}         (`table?`) Optional parameters:
+                       • `verbose` (boolean|nil): Enables curl verbose output.
+                       • `retry` (integer|nil): Number of retries on transient
+                         failures (default: 3).
+                       • `output` (string|nil): A file path to save the
+                         response body to. If set, the success value will be
+                         `true` instead of the response body.
+      • {on_response}  (`fun(err?: string, content?: string|boolean)?`)
+                       Optional callback for async execution. It is invoked
+                       with `(err, nil)` on failure or `(nil, content)` on
+                       success.
+
+    Return (multiple): ~
+        (`string|boolean?`) In sync mode, returns the response body or `true`
+        on success; otherwise `nil`
+        (`string?`) In sync mode, returns an error message on failure.
+
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
