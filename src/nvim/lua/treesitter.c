@@ -51,7 +51,8 @@ typedef struct {
 } TSLuaLoggerOpts;
 
 typedef struct {
-  TSTree *tree;
+  // We derive TSNode's, TSQueryCursor's, etc., from the TSTree, so it must not be mutated.
+  const TSTree *tree;
 } TSLuaTree;
 
 typedef struct {
@@ -504,7 +505,7 @@ static bool on_parser_progress(TSParseState *state)
 static int parser_parse(lua_State *L)
 {
   TSParser *p = parser_check(L, 1);
-  TSTree *old_tree = NULL;
+  const TSTree *old_tree = NULL;
   if (!lua_isnil(L, 2)) {
     TSLuaTree *ud = luaL_checkudata(L, 2, TS_META_TREE);
     old_tree = ud ? ud->tree : NULL;
@@ -768,8 +769,8 @@ static struct luaL_Reg tree_meta[] = {
 /// Push tree interface on to the lua stack.
 ///
 /// The tree is not copied. Ownership of the tree is transferred from C to
-/// Lua. If needed use ts_tree_copy() in the caller
-static void push_tree(lua_State *L, TSTree *tree)
+/// Lua. If needed use ts_tree_copy() in the caller.
+static void push_tree(lua_State *L, const TSTree *tree)
 {
   if (tree == NULL) {
     lua_pushnil(L);
@@ -810,9 +811,12 @@ static int tree_edit(lua_State *L)
   TSInputEdit edit = { start_byte, old_end_byte, new_end_byte,
                        start_point, old_end_point, new_end_point };
 
-  ts_tree_edit(ud->tree, &edit);
+  TSTree *new_tree = ts_tree_copy(ud->tree);
+  ts_tree_edit(new_tree, &edit);
 
-  return 0;
+  push_tree(L, new_tree);  // [tree]
+
+  return 1;
 }
 
 static int tree_get_ranges(lua_State *L)
@@ -833,7 +837,12 @@ static int tree_get_ranges(lua_State *L)
 static int tree_gc(lua_State *L)
 {
   TSLuaTree *ud = luaL_checkudata(L, 1, TS_META_TREE);
-  ts_tree_delete(ud->tree);
+
+  // SAFETY: we can cast the const away because the tree is only garbage collected after all of its
+  // TSNode's, TSQuerCurors, etc., are unreachable (each contains a reference to the TSLuaTree)
+  TSTree *tree = (TSTree *)ud->tree;
+
+  ts_tree_delete(tree);
   return 0;
 }
 
@@ -847,11 +856,7 @@ static int tree_root(lua_State *L)
 {
   TSLuaTree *ud = luaL_checkudata(L, 1, TS_META_TREE);
 
-  // The tree may be mutate by tree_edit, but node needs that its tree is not
-  // mutated while the node is alive. So we make a copy of tree here.
-  TSTree *tree_copy = ts_tree_copy(ud->tree);
-
-  TSNode root = ts_tree_root_node(tree_copy);
+  TSNode root = ts_tree_root_node(ud->tree);
 
   TSNode *node_ud = lua_newuserdata(L, sizeof(TSNode));  // [node]
   *node_ud = root;
@@ -863,7 +868,7 @@ static int tree_root(lua_State *L)
   // Note: environments (fenvs) associated with userdata have no meaning in Lua
   // and are only used to associate a table.
   lua_createtable(L, 1, 0);  // [node, reftable]
-  push_tree(L, tree_copy);  // [node, reftable, tree]
+  lua_pushvalue(L, 1);  // [node, reftable, tree]
   lua_rawseti(L, -2, 1);  // [node, reftable]
   lua_setfenv(L, -2);  // [node]
 
@@ -1315,13 +1320,13 @@ static int node_root(lua_State *L)
 
 static int node_tree(lua_State *L)
 {
-  TSNode node = node_check(L, 1);
+  node_check(L, 1);
 
-  // The node's tree must not be mutated, but `tree_edit` may violate that. So
-  // we make a copy of the tree before pushing it to the LUA stack.
-  TSTree *tree = ts_tree_copy(node.tree);
+  // Get the tree from the node fenv. We cannot use `push_tree(node.tree)` here because that would
+  // cause a double free.
+  lua_getfenv(L, 1);  // [node, reftable]
+  lua_rawgeti(L, 2, 1);  // [node, reftable, tree]
 
-  push_tree(L, tree);
   return 1;
 }
 

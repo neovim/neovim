@@ -1107,8 +1107,8 @@ function LanguageTree:_edit(
   end_row_new,
   end_col_new
 )
-  for _, tree in pairs(self._trees) do
-    tree:edit(
+  for i, tree in pairs(self._trees) do
+    self._trees[i] = tree:edit(
       start_byte,
       end_byte_old,
       end_byte_new,
