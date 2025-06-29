@@ -772,10 +772,10 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   if (s->firstc == '/' || s->firstc == '?' || s->firstc == '@') {
     // Use ":lmap" mappings for search pattern and input().
-    if (curbuf->b_p_imsearch == B_IMODE_USE_INSERT) {
-      s->b_im_ptr = &curbuf->b_p_iminsert;
+    if (curbuf->b_p_ims == B_IMODE_USE_INSERT) {
+      s->b_im_ptr = &curbuf->b_p_imi;
     } else {
-      s->b_im_ptr = &curbuf->b_p_imsearch;
+      s->b_im_ptr = &curbuf->b_p_ims;
     }
     s->b_im_ptr_buf = curbuf;
     if (*s->b_im_ptr == B_IMODE_LMAP) {
@@ -1625,7 +1625,7 @@ static void command_line_toggle_langmap(CommandLineState *s)
   }
 
   if (b_im_ptr != NULL) {
-    if (b_im_ptr == &curbuf->b_p_iminsert) {
+    if (b_im_ptr == &curbuf->b_p_imi) {
       set_iminsert_global(curbuf);
     } else {
       set_imsearch_global(curbuf);

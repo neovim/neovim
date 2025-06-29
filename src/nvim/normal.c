@@ -758,7 +758,7 @@ static void normal_get_additional_char(NormalState *s)
       State = MODE_REPLACE;                // pretend Replace mode
       ui_cursor_shape_no_check_conceal();  // show different cursor shape
     }
-    if (lang && curbuf->b_p_iminsert == B_IMODE_LMAP) {
+    if (lang && curbuf->b_p_imi == B_IMODE_LMAP) {
       // Allow mappings defined with ":lmap".
       no_mapping--;
       allow_keys--;

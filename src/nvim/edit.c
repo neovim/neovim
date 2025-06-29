@@ -251,7 +251,7 @@ static void insert_enter(InsertState *s)
   // Note that IME may enabled/disabled without us noticing here, thus the
   // 'iminsert' value may not reflect what is actually used.  It is updated
   // when hitting <Esc>.
-  if (curbuf->b_p_iminsert == B_IMODE_LMAP) {
+  if (curbuf->b_p_imi == B_IMODE_LMAP) {
     State |= MODE_LANGMAP;
   }
 
@@ -3355,10 +3355,10 @@ static void ins_ctrl_hat(void)
   if (map_to_exists_mode("", MODE_LANGMAP, false)) {
     // ":lmap" mappings exists, Toggle use of ":lmap" mappings.
     if (State & MODE_LANGMAP) {
-      curbuf->b_p_iminsert = B_IMODE_NONE;
+      curbuf->b_p_imi = B_IMODE_NONE;
       State &= ~MODE_LANGMAP;
     } else {
-      curbuf->b_p_iminsert = B_IMODE_LMAP;
+      curbuf->b_p_imi = B_IMODE_LMAP;
       State |= MODE_LANGMAP;
     }
   }

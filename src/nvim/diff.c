@@ -1421,7 +1421,7 @@ void diff_win_options(win_T *wp, bool addbuf)
   }
 
   if (!wp->w_p_diff) {
-    if (wp->w_p_diff_saved) {
+    if (wp->w_p_diff_save) {
       free_string_option(wp->w_p_fdm_save);
     }
     wp->w_p_fdm_save = xstrdup(wp->w_p_fdm);
@@ -1433,7 +1433,7 @@ void diff_win_options(win_T *wp, bool addbuf)
     wp->w_p_fen_save = wp->w_p_fen;
     wp->w_p_fdl_save = wp->w_p_fdl;
 
-    if (wp->w_p_diff_saved) {
+    if (wp->w_p_diff_save) {
       free_string_option(wp->w_p_fdc_save);
     }
     wp->w_p_fdc_save = xstrdup(wp->w_p_fdc);
@@ -1453,7 +1453,7 @@ void diff_win_options(win_T *wp, bool addbuf)
   }
 
   // Save the current values, to be restored in ex_diffoff().
-  wp->w_p_diff_saved = true;
+  wp->w_p_diff_save = true;
 
   set_diff_option(wp, true);
 
@@ -1478,7 +1478,7 @@ void ex_diffoff(exarg_T *eap)
       // been left over from diff mode.
       set_diff_option(wp, false);
 
-      if (wp->w_p_diff_saved) {
+      if (wp->w_p_diff_save) {
         if (wp->w_p_scb) {
           wp->w_p_scb = wp->w_p_scb_save;
         }

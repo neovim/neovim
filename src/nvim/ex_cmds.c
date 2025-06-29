@@ -2798,7 +2798,7 @@ void ex_append(exarg_T *eap)
   }
 
   State = MODE_INSERT;                   // behave like in Insert mode
-  if (curbuf->b_p_iminsert == B_IMODE_LMAP) {
+  if (curbuf->b_p_imi == B_IMODE_LMAP) {
     State |= MODE_LANGMAP;
   }
 

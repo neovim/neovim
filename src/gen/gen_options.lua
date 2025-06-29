@@ -519,6 +519,98 @@ local function gen_options(output_file)
 
   write('};')
 
+  do -- gen winopt_has_saved()
+    write([[
+static bool winopt_has_saved(OptIndex opt_idx)
+{
+  switch (opt_idx) {]])
+
+    for _, o in ipairs(options_meta) do
+      if o.has_saved_winopt then
+        local opt_name = 'kOpt' .. lowercase_to_titlecase(o.full_name)
+        write(('  case %s:'):format(opt_name))
+      end
+    end
+
+    write([[
+    return true;
+  default:
+    return false;
+  }
+}]])
+  end
+
+  do -- gen get_varp_winopt()
+    write([[
+
+static void *get_varp_winopt(OptIndex opt_idx, winopt_T *wop, bool saved)
+{
+  switch (opt_idx) {]])
+
+    for _, o in ipairs(options_meta) do
+      if vim.tbl_contains(o.scope, 'win') then
+        local opt_name = 'kOpt' .. lowercase_to_titlecase(o.full_name)
+        local var = o.abbreviation or o.full_name
+        write(('  case %s:'):format(opt_name))
+        if o.has_saved_winopt then
+          write(('    return saved ? &wop->wo_%s_save : &wop->wo_%s;'):format(var, var))
+        else
+          write(('    return &wop->wo_%s;'):format(var))
+        end
+      end
+    end
+
+    write([[
+    default: abort();
+  }
+}]])
+  end
+
+  do -- gen get_varp_local()
+    write([[
+/// @param buflocal If an option is both buffer-local and window-local
+///                 (see :ownsyntax), this then returns the buffer-local
+///                 value if true, otherwise returns the window-local value.
+static void *get_varp_local_gen(OptIndex opt_idx, buf_T *buf, win_T *win, bool buflocal)
+{
+  switch (opt_idx) {]])
+
+    for _, o in ipairs(options_meta) do
+      if vim.tbl_contains(o.scope, 'buf') or vim.tbl_contains(o.scope, 'win') then
+        local opt_name = 'kOpt' .. lowercase_to_titlecase(o.full_name)
+        if o.enable_if then
+          write(('#ifdef %s'):format(o.enable_if))
+        end
+        write(('  case %s:'):format(opt_name))
+        if o.bufwin_local then
+          local var = o.abbreviation or o.full_name
+          if o.full_name == 'iskeyword' then -- why is this extra-special?
+            write(('    return buflocal ? &buf->b_s.b_p_%s : &buf->b_p_%s;'):format(var, var))
+          else
+            write(('    return buflocal ? &buf->b_s.b_p_%s : &win->w_s->b_p_%s;'):format(var, var))
+          end
+        elseif vim.tbl_contains(o.scope, 'buf') then
+          local var = o.varname_local or ('b_p_' .. (o.abbreviation or o.full_name))
+          write(('    return &buf->%s;'):format(var))
+        else
+          local var = o.varname_local or ('w_p_' .. (o.abbreviation or o.full_name))
+          write(('    return &win->%s;'):format(var))
+        end
+        if o.enable_if then
+          write('#endif')
+        end
+      end
+    end
+
+    write([[
+  default:
+    iemsg(_("E356: get_varp ERROR"));
+    // always return a valid pointer to avoid a crash!
+    return &(buf->b_p_wm);
+  }
+}]])
+  end
+
   fd:close()
 end
 

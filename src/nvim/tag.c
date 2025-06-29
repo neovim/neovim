@@ -2518,7 +2518,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
   if (first) {
     // Init.  We make a copy of 'tags', because autocommands may change
     // the value without notifying us.
-    tnp->tn_tags = xstrdup((*curbuf->b_p_tags != NUL) ? curbuf->b_p_tags : p_tags);
+    tnp->tn_tags = xstrdup((*curbuf->b_p_tag != NUL) ? curbuf->b_p_tag : p_tags);
     tnp->tn_np = tnp->tn_tags;
   }
 
