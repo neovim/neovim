@@ -399,10 +399,13 @@ local function check_external_tools()
   health.start('External Tools')
 
   if vim.fn.executable('rg') == 1 then
-    local rg = vim.fn.exepath('rg')
-    local cmd = 'rg -V'
-    local out = vim.fn.system(vim.fn.split(cmd))
-    health.ok(('%s (%s)'):format(vim.trim(out), rg))
+    local rg_path = vim.fn.exepath('rg')
+    local rg_job = vim.system({ rg_path, '-V' }):wait()
+    if rg_job.code == 0 then
+      health.ok(('%s (%s)'):format(vim.trim(rg_job.stdout), rg_path))
+    else
+      health.warn('found `rg` but failed to run `rg -V`', { rg_job.stderr })
+    end
   else
     health.warn('ripgrep not available')
   end
