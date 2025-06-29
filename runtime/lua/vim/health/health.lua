@@ -171,6 +171,7 @@ local function check_performance()
   local slow_cmd_time = 1.5
   local start_time = vim.fn.reltime()
   vim.fn.system('echo')
+  vim.system({'echo'}):wait()
   local elapsed_time = vim.fn.reltimefloat(vim.fn.reltime(start_time))
   if elapsed_time > slow_cmd_time then
     health.warn(
