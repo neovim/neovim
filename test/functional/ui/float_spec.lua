@@ -10938,7 +10938,16 @@ describe('float window', function()
       winid = api.nvim_open_win(buf, false, config)
       eq('┏', api.nvim_win_get_config(winid).border[1])
 
-      -- it is currently not supported.
+      command([[set winborder=+,-,+,\|,+,-,+,\|]])
+      winid = api.nvim_open_win(buf, false, config)
+      eq('+', api.nvim_win_get_config(winid).border[1])
+
+      command([[set winborder=●,○,●,○,●,○,●,○]])
+      winid = api.nvim_open_win(buf, false, config)
+      eq('●', api.nvim_win_get_config(winid).border[1])
+
+      eq('Vim(set):E474: Invalid argument: winborder=,,', pcall_err(command, 'set winborder=,,'))
+      eq('Vim(set):E474: Invalid argument: winborder=+,-,+,|,+,-,+,', pcall_err(command, [[set winborder=+,-,+,\|,+,-,+,]]))
       eq('Vim(set):E474: Invalid argument: winborder=custom', pcall_err(command, 'set winborder=custom'))
     end)
   end
