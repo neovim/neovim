@@ -122,6 +122,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       user_data = {
         lsp = diagnostic,
       },
+      _related_information = diagnostic.relatedInformation,
     }
   end, diagnostics)
 end
@@ -170,6 +171,7 @@ function M.from(diagnostics)
       source = diagnostic.source,
       code = diagnostic.code,
       tags = tags_vim_to_lsp(diagnostic),
+      relatedInformation = diagnostic._related_information,
     }
   end, diagnostics)
 end
