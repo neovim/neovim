@@ -1377,14 +1377,14 @@ function vim.api.nvim_get_current_win() end
 function vim.api.nvim_get_hl(ns_id, opts) end
 
 --- @deprecated
---- @see vim.api.nvim_get_hl_by_name
+--- @see vim.api.nvim_get_hl
 --- @param hl_id integer
 --- @param rgb boolean
 --- @return table<string,any>
 function vim.api.nvim_get_hl_by_id(hl_id, rgb) end
 
 --- @deprecated
---- @see vim.api.nvim_get_hl_by_id
+--- @see vim.api.nvim_get_hl
 --- @param name string
 --- @param rgb boolean
 --- @return table<string,any>
