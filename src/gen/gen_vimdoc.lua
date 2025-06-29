@@ -159,7 +159,6 @@ local config = {
       'iter.lua',
       'snippet.lua',
       'text.lua',
-      'tohtml.lua',
     },
     files = {
       'runtime/lua/vim/iter.lua',
@@ -189,7 +188,6 @@ local config = {
       'runtime/lua/vim/_meta/lpeg.lua',
       'runtime/lua/vim/_meta/re.lua',
       'runtime/lua/vim/_meta/spell.lua',
-      'runtime/lua/tohtml.lua',
     },
     fn_xform = function(fun)
       if contains(fun.module, { 'vim.uri', 'vim.shared', 'vim._editor' }) then
@@ -233,9 +231,6 @@ local config = {
       then
         return 'VIM.' .. name:upper()
       end
-      if name == 'tohtml' then
-        return 'Lua module: tohtml'
-      end
       return 'Lua module: vim.' .. name
     end,
     helptag_fmt = function(name)
@@ -243,8 +238,6 @@ local config = {
         return 'lua-vim'
       elseif name == '_options' then
         return 'lua-vimscript'
-      elseif name == 'tohtml' then
-        return 'tohtml'
       end
       return 'vim.' .. name:lower()
     end,
@@ -305,6 +298,21 @@ local config = {
         return 'lsp-core'
       end
       return fmt('lsp-%s', name:lower())
+    end,
+  },
+  runtime_plugins = {
+    filename = 'runtime-plugins.txt',
+    files = {
+      'runtime/lua/nvim/tohtml.lua',
+    },
+    section_order = {
+      'tohtml.lua',
+    },
+    section_fmt = function(name)
+      return 'Lua plugin: ' .. name:lower()
+    end,
+    helptag_fmt = function(name)
+      return name:lower()
     end,
   },
   diagnostic = {
@@ -728,6 +736,10 @@ local function render_fun(fun, classes, cfg)
     return
   end
 
+  if not fun.name then
+    error(('fun.name is nil, check fn_xform(). fun: %s'):format(vim.inspect(fun)))
+  end
+
   if vim.startswith(fun.name, '_') or fun.name:find('[:.]_') then
     return
   end
@@ -926,6 +938,10 @@ end
 --- @param add_header? boolean
 local function render_section(section, add_header)
   local doc = {} --- @type string[]
+
+  if not section.title then
+    error(('section.title is nil, check section_fmt(). section: %s'):format(vim.inspect(section)))
+  end
 
   if add_header ~= false then
     vim.list_extend(doc, {
