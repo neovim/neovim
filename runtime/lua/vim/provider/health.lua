@@ -4,8 +4,13 @@ local iswin = vim.fn.has('win32') == 1
 local M = {}
 
 local function cmd_ok(cmd)
-  local out = vim.fn.system(cmd)
-  return vim.v.shell_error == 0, out
+  local result = vim.system(cmd, { text = true }):wait()
+  return result.code == 0, result.stdout
+end
+
+local function cli_version(cmd)
+  local ok, out = cmd_ok(cmd)
+  return ok, vim.version.parse(out, { strict = false })
 end
 
 -- Attempts to construct a shell command from an args list.
@@ -127,9 +132,9 @@ local function clipboard()
     os.getenv('TMUX')
     and vim.fn.executable('tmux') == 1
     and vim.fn.executable('pbpaste') == 1
-    and not cmd_ok('pbpaste')
+    and not cmd_ok({ 'pbpaste' })
   then
-    local tmux_version = string.match(vim.fn.system('tmux -V'), '%d+%.%d+')
+    local tmux_version = tostring(cli_version({ 'tmux', '-V' })[2])
     local advice = {
       'Install tmux 2.6+.  https://superuser.com/q/231130',
       'or use tmux with reattach-to-user-namespace.  https://superuser.com/a/413233',
@@ -178,9 +183,8 @@ local function node()
     return
   end
 
-  -- local node_v = vim.fn.split(system({'node', '-v'}), "\n")[1] or ''
-  local ok, node_v = cmd_ok({ 'node', '-v' })
-  health.info('Node.js: ' .. node_v)
+  local ok, node_v = cli_version({ 'node', '-v' })
+  health.info('Node.js: ' .. tostring(node_v))
   if not ok or vim.version.lt(node_v, '6.0.0') then
     health.warn('Nvim node.js host does not support Node ' .. node_v)
     -- Skip further checks, they are nonsense if nodejs is too old.
@@ -213,13 +217,14 @@ local function node()
   end
 
   local latest_npm_cmd = (
-    iswin and 'cmd /c ' .. manager .. ' info neovim --json' or manager .. ' info neovim --json'
+    iswin and { 'cmd', '/c', manager, 'info', 'neovim', '--json' }
+    or { manager, 'info', 'neovim', '--json' }
   )
   local latest_npm
-  ok, latest_npm = cmd_ok(vim.split(latest_npm_cmd, ' '))
+  ok, latest_npm = cmd_ok(latest_npm_cmd)
   if not ok or latest_npm:find('^%s$') then
     health.error(
-      'Failed to run: ' .. latest_npm_cmd,
+      'Failed to run: ' .. table.concat(latest_npm_cmd, ' '),
       { "Make sure you're connected to the internet.", 'Are you behind a firewall or proxy?' }
     )
     return
@@ -426,7 +431,7 @@ end
 --- @param url string
 local function download(url)
   local has_curl = vim.fn.executable('curl') == 1
-  if has_curl and vim.fn.system({ 'curl', '-V' }):find('Protocols:.*https') then
+  if has_curl and cmd_ok({ 'curl', '-V' })[2]:find('Protocols:.*https') then
     local out, rc = system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
     if rc ~= 0 then
       return 'curl error with ' .. url .. ': ' .. rc
@@ -872,7 +877,8 @@ local function ruby()
     )
     return
   end
-  health.info('Ruby: ' .. system({ 'ruby', '-v' }))
+  local _, ruby_v = cli_version({ 'ruby', '-v' })
+  health.info('Ruby: ' .. tostring(ruby_v))
 
   local host, _ = vim.provider.ruby.detect()
   if (not host) or host:find('^%s*$') then
@@ -887,11 +893,14 @@ local function ruby()
   end
   health.info('Host: ' .. host)
 
-  local latest_gem_cmd = (iswin and 'cmd /c gem list -ra "^^neovim$"' or 'gem list -ra ^neovim$')
-  local ok, latest_gem = cmd_ok(vim.split(latest_gem_cmd, ' '))
+  local latest_gem_cmd = (
+    iswin and { 'cmd', '/c', 'gem', 'list', '-ra', '"^^neovim$"' }
+    or { 'gem', 'list', '-ra', '^neovim$' }
+  )
+  local ok, latest_gem = cmd_ok(latest_gem_cmd)
   if not ok or latest_gem:find('^%s*$') then
     health.error(
-      'Failed to run: ' .. latest_gem_cmd,
+      'Failed to run: ' .. table.concat(latest_gem_cmd, ' '),
       { "Make sure you're connected to the internet.", 'Are you behind a firewall or proxy?' }
     )
     return
