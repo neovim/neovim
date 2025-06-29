@@ -41,7 +41,7 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 all: nvim
 
-CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
+CMAKE_FLAGS := -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_C_COMPILER=/home/xwang/.local/aflpp/bin/afl-clang-fast -DCMAKE_LINKER=/home/xwang/.local/aflpp/bin/afl-clang-fast
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS ?=
 NVIM_PRG := $(MAKEFILE_DIR)/build/bin/nvim
@@ -73,7 +73,7 @@ ifneq (1,$(words [$(DEPS_BUILD_DIR)]))
   $(error DEPS_BUILD_DIR must not contain whitespace)
 endif
 
-DEPS_CMAKE_FLAGS ?=
+DEPS_CMAKE_FLAGS ?= "-DCMAKE_BUILD_TYPE=Debug"
 USE_BUNDLED ?=
 
 ifneq (,$(USE_BUNDLED))
@@ -112,7 +112,8 @@ ifeq ($(call filter-true,$(USE_BUNDLED)),)
 $(DEPS_BUILD_DIR):
 	$(MKDIR) $@
 build/.ran-deps-cmake:: $(DEPS_BUILD_DIR)
-	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G $(CMAKE_GENERATOR) $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) $(DEPS_CMAKE_FLAGS)
+	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G $(CMAKE_GENERATOR) $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) $(DEPS_CMAKE_FLAGS) 
+	#-DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address,undefined"
 endif
 build/.ran-deps-cmake::
 	$(MKDIR) build
