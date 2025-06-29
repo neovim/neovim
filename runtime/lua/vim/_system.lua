@@ -16,6 +16,7 @@ local uv = vim.uv
 --- @field signal integer
 --- @field stdout? string
 --- @field stderr? string
+--- @field cmd string[]
 
 --- @class vim.SystemState
 --- @field cmd string[]
@@ -305,6 +306,7 @@ local function _on_exit(state, code, signal, on_exit)
       signal = signal,
       stdout = stdout_data and table.concat(stdout_data) or nil,
       stderr = stderr_data and table.concat(stderr_data) or nil,
+      cmd = state.cmd,
     }
 
     if on_exit then
