@@ -489,24 +489,33 @@ end
 
 --- Request workspace-wide diagnostics.
 --- @param opts vim.lsp.WorkspaceDiagnosticsOpts
-function M._workspace_diagnostics(opts)
+--- @param callback? fun(errors: table<integer, lsp.ResponseError[]>) Function called after the request is completed.
+function M._workspace_diagnostics(opts, callback)
   local clients = lsp.get_clients({ method = ms.workspace_diagnostic, id = opts.client_id })
+  local remaining = #clients
+  local errors = {} --- @type table<integer, lsp.ResponseError[]>
 
   --- @param error lsp.ResponseError?
   --- @param result lsp.WorkspaceDiagnosticReport
   --- @param ctx lsp.HandlerContext
   local function handler(error, result, ctx)
-    -- Check for retrigger requests on cancellation errors.
-    -- Unless `retriggerRequest` is explicitly disabled, try again.
-    if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
-      if error.data == nil or error.data.retriggerRequest ~= false then
-        local client = assert(lsp.get_client_by_id(ctx.client_id))
-        client:request(ms.workspace_diagnostic, ctx.params, handler)
+    if error then
+      errors[ctx.client_id] = errors[ctx.client_id] or {}
+      table.insert(errors[ctx.client_id], error)
+
+      -- Check for retrigger requests on cancellation errors.
+      -- Unless `retriggerRequest` is explicitly disabled, try again.
+      if error.code == protocol.ErrorCodes.ServerCancelled then
+        if error.data == nil or error.data.retriggerRequest ~= false then
+          local client = assert(lsp.get_client_by_id(ctx.client_id))
+          client:request(ms.workspace_diagnostic, ctx.params, handler)
+        end
       end
+
       return
     end
 
-    if error == nil and result ~= nil then
+    if result ~= nil then
       for _, report in ipairs(result.items) do
         local bufnr = vim.uri_to_bufnr(report.uri)
 
@@ -522,6 +531,10 @@ function M._workspace_diagnostics(opts)
           bufstates[bufnr].client_result_id[ctx.client_id] = report.resultId
         end
       end
+    end
+
+    if callback and remaining == 0 then
+      callback(errors)
     end
   end
 
