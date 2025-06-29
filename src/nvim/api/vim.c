@@ -513,7 +513,7 @@ Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
   FUNC_API_REMOTE_ONLY
 {
   // TODO(bfredl): convert directly from msgpack to lua and then back again
-  return nlua_exec(code, args, kRetObject, arena, err);
+  return nlua_exec(code, NULL, args, kRetObject, arena, err);
 }
 
 /// Calculates the number of display cells occupied by `text`.

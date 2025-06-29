@@ -1871,7 +1871,8 @@ function vim.fn.exp(expr) end
 ---   <SID>    "<SNR>123_"  where "123" is the
 ---       current script ID  |<SID>|
 ---   <script>  sourced script file, or script file
----       where the current function was defined
+---       where the current function was defined.
+---       Use |debug.getinfo()| in Lua scripts.
 ---   <stack>    call stack
 ---   <cword>    word under the cursor
 ---   <cWORD>    WORD under the cursor
