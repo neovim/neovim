@@ -165,6 +165,8 @@ describe('vim.ui', function()
           vim.ui.open('foo', { cmd = { 'non-existent-tool' } })
         end)
       )
+      local url = 'https://example.com'
+      local test_cmd = { n.testprg('printargs-test'), 'arg1', url }
 
       eq(
         {
@@ -172,12 +174,13 @@ describe('vim.ui', function()
           signal = 0,
           stderr = '',
           stdout = 'arg1=arg1;arg2=https://example.com;',
+          cmd = test_cmd,
         },
-        exec_lua(function(cmd_)
-          local cmd, err = vim.ui.open('https://example.com', { cmd = cmd_ })
-          assert(cmd and not err)
-          return cmd:wait()
-        end, { n.testprg('printargs-test'), 'arg1' })
+        exec_lua(function(base_cmd, u)
+          local job, err = vim.ui.open(u, { cmd = base_cmd })
+          assert(job and not err)
+          return job:wait()
+        end, { test_cmd[1], test_cmd[2] }, url)
       )
     end)
   end)

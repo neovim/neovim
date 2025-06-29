@@ -73,6 +73,11 @@ describe('vim.system', function()
         eq('hellocat', system({ 'cat' }, { stdin = 'hellocat', text = true }).stdout)
       end)
 
+      it('exposes the original command via result.cmd', function()
+        local cmd = { 'echo', 'hello' }
+        eq(cmd, system(cmd, { text = true }).cmd)
+      end)
+
       it('can set environment', function()
         eq(
           'TESTVAL',
@@ -94,12 +99,14 @@ describe('vim.system', function()
       end)
 
       it('supports timeout', function()
+        local cmd = { 'sleep', '10' }
         eq({
           code = 124,
           signal = 15,
           stdout = '',
           stderr = '',
-        }, system({ 'sleep', '10' }, { timeout = 1000 }))
+          cmd = cmd,
+        }, system(cmd, { timeout = 1000 }))
       end)
     end)
   end
