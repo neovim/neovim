@@ -27,8 +27,9 @@ local function run(cmd, or_die)
   if _trace then
     p('run: ' .. vim.inspect(cmd))
   end
-  local rv = vim.trim(vim.fn.system(cmd)) or ''
-  if vim.v.shell_error ~= 0 then
+  local res = vim.system(cmd):wait()
+  local rv = vim.trim(res.stdout)
+  if res.code ~= 0 then
     if or_die then
       p(rv)
       os.exit(1)

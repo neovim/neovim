@@ -25,14 +25,12 @@ function M.detect()
   end
 
   -- if perl is available, make sure we have 5.22+
-  vim.fn.system({ prog, '-e', 'use v5.22' })
-  if vim.v.shell_error ~= 0 then
+  if vim.system({ prog, '-e', 'use v5.22' }):wait().code ~= 0 then
     return nil, 'Perl version is too old, 5.22+ required'
   end
 
   -- if perl is available, make sure the required module is available
-  vim.fn.system({ prog, '-W', '-MNeovim::Ext', '-e', '' })
-  if vim.v.shell_error ~= 0 then
+  if vim.system({ prog, '-W', '-MNeovim::Ext', '-e', '' }):wait().code ~= 0 then
     return nil, '"Neovim::Ext" cpan module is not installed'
   end
   return prog, nil
