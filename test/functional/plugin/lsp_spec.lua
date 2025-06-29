@@ -7139,5 +7139,33 @@ describe('LSP', function()
 
       eq('Empty hover response', n.exec_capture('lua vim.lsp.buf.hover()'))
     end)
+
+    it('invokes callback', function()
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        local server = _G._create_server({
+          capabilities = { hoverProvider = true },
+          handlers = {
+            ['textDocument/hover'] = function(_, _, callback)
+              callback(nil, {})
+            end,
+          },
+        })
+        vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+      end)
+
+      eq(
+        true,
+        exec_lua(function()
+          _G.callback_called = false
+
+          vim.lsp.buf.hover(nil, function()
+            _G.callback_called = true
+          end)
+
+          return _G.callback_called
+        end)
+      )
+    end)
   end)
 end)

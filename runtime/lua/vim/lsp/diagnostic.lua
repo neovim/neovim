@@ -489,21 +489,28 @@ end
 
 --- Request workspace-wide diagnostics.
 --- @param opts vim.lsp.WorkspaceDiagnosticsOpts
-function M._workspace_diagnostics(opts)
+--- @param callback? fun(errors: lsp.ResponseError[]) Function called after the request is completed.
+function M._workspace_diagnostics(opts, callback)
   local clients = lsp.get_clients({ method = ms.workspace_diagnostic, id = opts.client_id })
+  local remaining = #clients
+  local errors = {} --- @type lsp.ResponseError[]
 
   --- @param error lsp.ResponseError?
   --- @param result lsp.WorkspaceDiagnosticReport
   --- @param ctx lsp.HandlerContext
   local function handler(error, result, ctx)
-    -- Check for retrigger requests on cancellation errors.
-    -- Unless `retriggerRequest` is explicitly disabled, try again.
-    if error ~= nil and error.code == lsp.protocol.ErrorCodes.ServerCancelled then
-      if error.data == nil or error.data.retriggerRequest ~= false then
-        local client = assert(lsp.get_client_by_id(ctx.client_id))
-        client:request(ms.workspace_diagnostic, ctx.params, handler)
+    if error then
+      errors[#errors + 1] = error
+
+      -- Check for retrigger requests on cancellation errors.
+      -- Unless `retriggerRequest` is explicitly disabled, try again.
+      if error.code == lsp.protocol.ErrorCodes.ServerCancelled then
+        if error.data == nil or error.data.retriggerRequest ~= false then
+          local client = assert(lsp.get_client_by_id(ctx.client_id))
+          client:request(ms.workspace_diagnostic, ctx.params, handler)
+        end
+        return
       end
-      return
     end
 
     if error == nil and result ~= nil then
@@ -522,6 +529,10 @@ function M._workspace_diagnostics(opts)
           bufstates[bufnr].client_result_id[ctx.client_id] = report.resultId
         end
       end
+    end
+
+    if callback and remaining == 0 then
+      callback(errors)
     end
   end
 

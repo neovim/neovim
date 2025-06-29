@@ -229,6 +229,7 @@ LSP
 • Support for related documents in pull diagnostics:
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
 • |vim.lsp.buf.signature_help()| supports "noActiveParameterSupport".
+• All `vim.lsp.buf.*` functions now take a `callback` argument that's invoked when the request is completed.
 
 LUA
 
