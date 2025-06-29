@@ -1545,6 +1545,7 @@ static void init_prompt(int cmdchar_todo)
       ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
     } else {
       ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
+      curbuf->b_prompt_start.mark.lnum += 1;
     }
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(curwin, MAXCOL);
