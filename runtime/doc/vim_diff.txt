@@ -404,6 +404,7 @@ Options:
 - 'ttimeout', 'ttimeoutlen' behavior was simplified
 - 'winblend'    pseudo-transparency in floating windows |api-floatwin|
 - 'winhighlight' window-local highlights
+- 'busy' busy status for buffers
 
 Performance:
 - Signs are implemented using Nvim's internal "marktree" (btree) structure.
