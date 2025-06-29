@@ -1,8 +1,17 @@
 local M = {}
 local health = require('vim.health')
 
-local shell_error = function()
-  return vim.v.shell_error ~= 0
+---Run a system command and return without error and its stdout.
+---@param cmd string|string[]
+---@return boolean
+---@return string
+local function system(cmd)
+  if type(cmd) == 'string' then
+    cmd = vim.split(cmd, ' ')
+  end
+  local result = vim.system(cmd, { text = true }):wait()
+  -- NOTE: `or ''` to please the type checker
+  return result.code == 0, vim.trim(result.stdout or '')
 end
 
 local suggest_faq = 'https://github.com/neovim/neovim/blob/master/BUILD.md#building'
@@ -253,16 +262,16 @@ local function check_tmux()
   ---@param option string
   local get_tmux_option = function(option)
     local cmd = 'tmux show-option -qvg ' .. option -- try global scope
-    local out = vim.fn.system(vim.fn.split(cmd))
+    local ok, out = system(cmd)
     local val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
-    if shell_error() then
+    if not ok then
       health.error('command failed: ' .. cmd .. '\n' .. out)
       return 'error'
     elseif val == '' then
       cmd = 'tmux show-option -qvgs ' .. option -- try session scope
-      out = vim.fn.system(vim.fn.split(cmd))
+      ok, out = system(cmd)
       val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
-      if shell_error() then
+      if not ok then
         health.error('command failed: ' .. cmd .. '\n' .. out)
         return 'error'
       end
@@ -302,15 +311,15 @@ local function check_tmux()
   -- check default-terminal and $TERM
   health.info('$TERM: ' .. vim.env.TERM)
   local cmd = 'tmux show-option -qvg default-terminal'
-  local out = vim.fn.system(vim.fn.split(cmd))
+  local ok, out = system(cmd)
   local tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
   if tmux_default_term == '' then
     cmd = 'tmux show-option -qvgs default-terminal'
-    out = vim.fn.system(vim.fn.split(cmd))
+    ok, out = system(cmd)
     tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
   end
 
-  if shell_error() then
+  if not ok then
     health.error('command failed: ' .. cmd .. '\n' .. out)
   elseif tmux_default_term ~= vim.env.TERM then
     health.info('default-terminal: ' .. tmux_default_term)
@@ -329,7 +338,7 @@ local function check_tmux()
   end
 
   -- check for RGB capabilities
-  local info = vim.fn.system({ 'tmux', 'show-messages', '-T' })
+  local _, info = system({ 'tmux', 'show-messages', '-T' })
   local has_setrgbb = vim.fn.stridx(info, ' setrgbb: (string)') ~= -1
   local has_setrgbf = vim.fn.stridx(info, ' setrgbf: (string)') ~= -1
   if not has_setrgbb or not has_setrgbf then
@@ -350,12 +359,12 @@ local function check_terminal()
 
   health.start('terminal')
   local cmd = 'infocmp -L'
-  local out = vim.fn.system(vim.fn.split(cmd))
+  local ok, out = system(cmd)
   local kbs_entry = vim.fn.matchstr(out, 'key_backspace=[^,[:space:]]*')
   local kdch1_entry = vim.fn.matchstr(out, 'key_dc=[^,[:space:]]*')
 
   if
-    shell_error()
+    not ok
     and (
       vim.fn.has('win32') == 0
       or vim.fn.matchstr(
@@ -400,11 +409,11 @@ local function check_external_tools()
 
   if vim.fn.executable('rg') == 1 then
     local rg_path = vim.fn.exepath('rg')
-    local rg_job = vim.system({ rg_path, '-V' }):wait()
-    if rg_job.code == 0 then
-      health.ok(('%s (%s)'):format(vim.trim(rg_job.stdout), rg_path))
+    local ok, out = system({ rg_path, '-V' })
+    if ok then
+      health.ok(('%s (%s)'):format(out, rg_path))
     else
-      health.warn('found `rg` but failed to run `rg -V`', { rg_job.stderr })
+      health.warn('found `rg` but failed to run `rg -V`')
     end
   else
     health.warn('ripgrep not available')
