@@ -266,13 +266,23 @@ function VersionRange:has(version)
   return version >= self.from and (self.to == nil or version < self.to)
 end
 
+local range_mt = {
+  __index = VersionRange,
+  __tostring = function(self)
+    if not self.to then
+      return '>=' .. tostring(self.from)
+    end
+    return ('%s - %s'):format(tostring(self.from), tostring(self.to))
+  end,
+}
+
 --- Parses a semver |version-range| "spec" and returns |vim.VersionRange| object:
 --- @since 11
 --- @param spec string Version range "spec"
 --- @return vim.VersionRange?
 function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
   if spec == '*' or spec == '' then
-    return setmetatable({ from = M.parse('0.0.0') }, { __index = VersionRange })
+    return setmetatable({ from = M.parse('0.0.0') }, range_mt)
   end
 
   ---@type number?
@@ -286,7 +296,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
     return setmetatable({
       from = ra and ra.from,
       to = rb and (#parts == 3 and rb.from or rb.to),
-    }, { __index = VersionRange })
+    }, range_mt)
   end
   ---@type string, string
   local mods, version = spec:lower():match('^([%^=<>~]*)(.*)$')
@@ -332,7 +342,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
       end
     end
     ---@diagnostic enable: need-check-nil
-    return setmetatable({ from = from, to = to }, { __index = VersionRange })
+    return setmetatable({ from = from, to = to }, range_mt)
   end
 end
 

@@ -89,6 +89,11 @@ describe('version', function()
         eq(output, range)
       end)
 
+      it('tostring() ' .. input, function()
+        eq(type(tostring(range)), 'string')
+        eq(vim.version.range(tostring(range)), range)
+      end)
+
       it('[from] in range ' .. input, function()
         assert(range:has(output.from))
       end)
@@ -119,6 +124,9 @@ describe('version', function()
       assert(not vim.version.range('1.2.3-alpha'):has('1.2.3-beta'))
       assert(vim.version.range('>0.10'):has('0.12.0-dev'))
       assert(not vim.version.range('>=0.12'):has('0.12.0-dev'))
+
+      local range_alpha = vim.version.range('1.2.3-alpha')
+      eq(vim.version.range(tostring(range_alpha)), range_alpha)
     end)
 
     it('returns nil with empty version', function()
