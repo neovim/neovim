@@ -4044,15 +4044,14 @@ vim.version.parse({version}, {opts})                     *vim.version.parse()*
 
     Parameters: ~
       • {version}  (`string`) Version string to parse.
-      • {opts}     (`table?`) Optional keyword arguments:
-                   • strict (boolean): Default false. If `true`, no coercion
-                     is attempted on input not conforming to semver v2.0.0. If
-                     `false`, `parse()` attempts to coerce input such as
-                     "1.0", "0-x", "tmux 3.2a" into valid versions.
+      • {opts}     (`table?`) Options for parsing.
+                   • {strict}? (`boolean`, default: `false`) If `true`, no
+                     coercion is attempted on input not conforming to semver
+                     v2.0.0. If `false`, `parse()` attempts to coerce input
+                     such as "1.0", "0-x", "tmux 3.2a" into valid versions.
 
     Return: ~
-        (`vim.Version?`) parsed_version Version object or `nil` if input is
-        invalid.
+        (`vim.Version?`) `Version` object or `nil` if input is invalid.
 
     See also: ~
       • https://semver.org/spec/v2.0.0.html

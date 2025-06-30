@@ -435,6 +435,15 @@ function M.gt(v1, v2)
   return M.cmp(v1, v2) == 1
 end
 
+---@class vim.version.parse.Opts
+---@inlinedoc
+---
+--- If `true`, no coercion is attempted on input not conforming to semver v2.0.0.
+--- If `false`, `parse()` attempts to coerce input such as "1.0", "0-x", "tmux 3.2a" into valid
+--- versions.
+--- (default: `false`)
+---@field strict? boolean
+
 --- Parses a semantic version string and returns a version object which can be used with other
 --- `vim.version` functions. For example "1.0.1-rc1+build.2" returns:
 ---
@@ -446,11 +455,8 @@ end
 ---@since 11
 ---
 ---@param version string Version string to parse.
----@param opts table|nil Optional keyword arguments:
----                      - strict (boolean):  Default false. If `true`, no coercion is attempted on
----                      input not conforming to semver v2.0.0. If `false`, `parse()` attempts to
----                      coerce input such as "1.0", "0-x", "tmux 3.2a" into valid versions.
----@return vim.Version? parsed_version Version object or `nil` if input is invalid.
+---@param opts vim.version.parse.Opts? Options for parsing.
+---@return vim.Version? # `Version` object or `nil` if input is invalid.
 function M.parse(version, opts)
   assert(type(version) == 'string', create_err_msg(version))
   opts = opts or { strict = false }
