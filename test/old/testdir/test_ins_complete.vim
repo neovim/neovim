@@ -568,8 +568,8 @@ func Test_cpt_func_cursorcol()
       call assert_equal(8, col('.'))
       return col('.')
     endif
-    call assert_equal("foo bar", getline(1))
-    call assert_equal(8, col('.'))
+    call assert_equal("foo ", getline(1))
+    call assert_equal(5, col('.'))
     " return v:none
   endfunc
 

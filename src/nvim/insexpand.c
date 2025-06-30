@@ -4237,17 +4237,6 @@ static Callback *get_callback_if_cpt_func(char *p)
   return NULL;
 }
 
-/// Retrieve new completion matches by invoking callback "cb".
-static void expand_cpt_function(Callback *cb)
-{
-  // Re-insert the text removed by ins_compl_delete().
-  ins_compl_insert_bytes(compl_orig_text.data + get_compl_len(), -1);
-  // Get matches
-  get_cpt_func_completion_matches(cb);
-  // Undo insertion
-  ins_compl_delete(false);
-}
-
 /// get the next set of completion matches for "type".
 /// @return  true if a new match is found, otherwise false.
 static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_T *ini)
@@ -4283,7 +4272,7 @@ static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_
 
   case CTRL_X_FUNCTION:
     if (ctrl_x_mode_normal()) {  // Invoked by a func in 'cpt' option
-      expand_cpt_function(st->func_cb);
+      get_cpt_func_completion_matches(st->func_cb, true);
     } else {
       expand_by_function(type, compl_pattern.data, NULL);
     }
@@ -5982,7 +5971,7 @@ static compl_T *remove_old_matches(void)
 
 /// Retrieve completion matches using the callback function "cb" and store the
 /// 'refresh:always' flag.
-static void get_cpt_func_completion_matches(Callback *cb)
+static void get_cpt_func_completion_matches(Callback *cb, bool restore_leader)
 {
   int startcol = cpt_sources_array[cpt_sources_index].cs_startcol;
 
@@ -5992,7 +5981,14 @@ static void get_cpt_func_completion_matches(Callback *cb)
     return;
   }
 
+  if (restore_leader) {  // Re-insert the text removed by ins_compl_delete()
+    ins_compl_insert_bytes(compl_orig_text.data + get_compl_len(), -1);
+  }
   set_compl_globals(startcol, curwin->w_cursor.col, true);
+  if (restore_leader) {
+    ins_compl_delete(false);  // Undo insertion
+  }
+
   expand_by_function(0, cpt_compl_pattern.data, cb);
   cpt_sources_array[cpt_sources_index].cs_refresh_always = compl_opt_refresh_always;
   compl_opt_refresh_always = false;
@@ -6029,7 +6025,7 @@ static void cpt_compl_refresh(void)
         }
         cpt_sources_array[cpt_sources_index].cs_startcol = startcol;
         if (ret == OK) {
-          get_cpt_func_completion_matches(cb);
+          get_cpt_func_completion_matches(cb, false);
         }
       }
     }
