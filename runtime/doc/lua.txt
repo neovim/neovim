@@ -4035,6 +4035,21 @@ vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
     Return: ~
         (`boolean`)
 
+vim.version.intersect({r1}, {r2})                    *vim.version.intersect()*
+    WARNING: This feature is experimental/unstable.
+
+    Computes the common range shared by the given ranges.
+
+    Parameters: ~
+      • {r1}  (`vim.VersionRange`) First range to intersect. See
+              |vim.VersionRange|.
+      • {r2}  (`vim.VersionRange`) Second range to intersect. See
+              |vim.VersionRange|.
+
+    Return: ~
+        (`vim.VersionRange?`) Maximal range that is present inside both `r1`
+        and `r2`. `nil` if such range does not exist. See |vim.VersionRange|.
+
 vim.version.last({versions})                              *vim.version.last()*
     TODO: generalize this, move to func.lua
 
