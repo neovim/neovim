@@ -2266,7 +2266,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         }
 
         if (wp->w_buffer->terminal) {
-          wlv.char_attr = hl_combine_attr(term_attrs[wlv.vcol], wlv.char_attr);
+          wlv.char_attr = hl_combine_attr(wlv.vcol < TERM_ATTRS_MAX ? term_attrs[wlv.vcol] : 0,
+                                          wlv.char_attr);
         }
 
         // we don't want linebreak to apply for lines that start with
