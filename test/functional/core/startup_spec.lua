@@ -1139,7 +1139,10 @@ describe('user config init', function()
           exrc_path,
           string.format(
             [[
+          function fullpath(x) return vim.fs.normalize(vim.fs.abspath(x)) end
           vim.g.exrc_file = "%s"
+          local path = debug.getinfo(1, 'S').source:sub(2)
+          vim.g.exrc_knows_path = fullpath(vim.g.exrc_file) == fullpath(path)
           vim.g.exrc_count = (vim.g.exrc_count or 0) + 1
         ]],
             exrc_path
@@ -1151,6 +1154,7 @@ describe('user config init', function()
           string.format(
             [[
           let g:exrc_file = "%s"
+          let g:exrc_knows_path = v:true " ignored for vimscript files
           let g:exrc_count = get(g:, 'exrc_count', 0) + 1
         ]],
             exrc_path
@@ -1223,6 +1227,7 @@ describe('user config init', function()
 
         clear { args_rm = { '-u' }, env = xstateenv }
         -- The 'exrc' file is now trusted.
+        assert(eval('g:exrc_knows_path'))
         eq(filename, eval('g:exrc_file'))
       end)
     end
