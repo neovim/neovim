@@ -12,6 +12,7 @@ local poke_eventloop = n.poke_eventloop
 local api = n.api
 local eq = t.eq
 local neq = t.neq
+local exec_lua = n.exec_lua
 
 describe('prompt buffer', function()
   local screen
@@ -595,5 +596,80 @@ describe('prompt buffer', function()
       api.nvim_set_option_value('buftype', '', { buf = 0 })
       eq('', fn('prompt_getinput', bufnr))
     end)
+  end)
+
+  it('programmatic (non-user) edits', function()
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+
+    -- with nvim_buf_set_lines
+    exec_lua([[
+      local buf = vim.api.nvim_get_current_buf()
+      vim.fn.prompt_setcallback(buf, function(text)
+        vim.api.nvim_buf_set_lines(buf, -2, -2, true, vim.split(text, '\n'))
+      end)
+    ]])
+    feed('iset_lines<cr>')
+    feed('set_lines2<cr>')
+    screen:expect([[
+      % set_lines              |
+      set_lines                |
+      % set_lines2             |
+      set_lines2               |
+      % ^                       |
+      {1:~                        }|*4
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('set_lines3(multi-1)<s-cr>set_lines3(multi-2)<cr>')
+    screen:expect([[
+      % set_lines              |
+      set_lines                |
+      % set_lines2             |
+      set_lines2               |
+      % set_lines3(multi-1)    |
+      set_lines3(multi-2)      |
+      set_lines3(multi-1)      |
+      set_lines3(multi-2)      |
+      % ^                       |
+      {5:-- INSERT --}             |
+    ]])
+    -- with nvim_buf_set_text
+    source('bwipeout!')
+    api.nvim_set_option_value('buftype', 'prompt', { buf = 0 })
+    exec_lua([[
+      local buf = vim.api.nvim_get_current_buf()
+      vim.fn.prompt_setcallback(buf, function(text)
+        local lines = vim.split(text, '\n')
+        if lines[#lines] ~= '' then
+          table.insert(lines, '')
+        end
+        vim.api.nvim_buf_set_text(buf, -1, 0, -1, 0, lines)
+      end)
+    ]])
+    feed('set_text<cr>')
+    feed('set_text2<cr>')
+    screen:expect([[
+      % set_text               |
+      set_text                 |
+      % set_text2              |
+      set_text2                |
+      % ^                       |
+      {1:~                        }|*4
+      {5:-- INSERT --}             |
+    ]])
+
+    feed('set_text3(multi-1)<s-cr>set_text3(multi-2)<cr>')
+    screen:expect([[
+      % set_text               |
+      set_text                 |
+      % set_text2              |
+      set_text2                |
+      % set_text3(multi-1)     |
+      set_text3(multi-2)       |
+      set_text3(multi-1)       |
+      set_text3(multi-2)       |
+      % ^                       |
+      {5:-- INSERT --}             |
+    ]])
   end)
 end)

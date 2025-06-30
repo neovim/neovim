@@ -8702,6 +8702,7 @@ void prompt_invoke_callback(void)
   appended_lines_mark(lnum, 1);
   curwin->w_cursor.lnum = lnum + 1;
   curwin->w_cursor.col = 0;
+  curbuf->b_prompt_start.mark.lnum = lnum + 1;
 
   if (curbuf->b_prompt_callback.type == kCallbackNone) {
     xfree(user_input);
@@ -8720,8 +8721,7 @@ theend:
   // clear undo history on submit
   u_clearallandblockfree(curbuf);
 
-  pos_T next_prompt = { .lnum = curbuf->b_ml.ml_line_count, .col = 1, .coladd = 0 };
-  RESET_FMARK(&curbuf->b_prompt_start, next_prompt, 0, ((fmarkv_T)INIT_FMARKV));
+  curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
 }
 
 /// @return  true when the interrupt callback was invoked.
