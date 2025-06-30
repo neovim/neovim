@@ -191,13 +191,6 @@ if exists("g:vimsyntax_noerror")
  let g:vimsyn_noerror= g:vimsyntax_noerror
 endif
 
-" Variable options {{{2
-if exists("g:vim_maxlines")
- let s:vimsyn_maxlines= g:vim_maxlines
-else
- let s:vimsyn_maxlines= 60
-endif
-
 " Nulls {{{2
 " =====
 Vim9 syn keyword  vim9Null	null null_blob null_channel null_class null_dict null_function null_job null_list null_object null_partial null_string
@@ -2088,10 +2081,10 @@ endif
 
 " Synchronize (speed) {{{2
 "============
-if exists("g:vimsyn_minlines")
- exe "syn sync minlines=".g:vimsyn_minlines
-endif
-exe "syn sync maxlines=".s:vimsyn_maxlines
+
+exe "syn sync minlines=" .. get(g:, "vimsyn_minlines", 100)
+exe "syn sync maxlines=" .. get(g:, "vimsyn_maxlines", 200)
+
 syn sync linecont	"^\s\+\\"
 syn sync linebreaks=2
 syn sync match vimAugroupSyncA	groupthere NONE	"\<aug\%[roup]\>\s\+[eE][nN][dD]"
