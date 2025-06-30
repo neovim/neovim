@@ -28,6 +28,7 @@
 --- >1.2.3            greater than 1.2.3
 --- <1.2.3            before 1.2.3
 --- >=1.2.3           at least 1.2.3
+--- <=1.2.3           at most 1.2.3
 --- ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
 --- ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
 --- ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
@@ -42,7 +43,7 @@
 --- *                 any version
 --- x                 same
 ---
---- 1.2.3 - 2.3.4     is >=1.2.3 <=2.3.4
+--- 1.2.3 - 2.3.4     is >=1.2.3 <2.3.4
 ---
 --- Partial right: missing pieces treated as x (2.3 => 2.3.x).
 --- 1.2.3 - 2.3       is >=1.2.3 <2.4.0
@@ -315,9 +316,23 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
       from = M._version({})
     elseif mods == '<=' then
       from = M._version({})
-      to.patch = to.patch + 1
+      -- HACK: construct the smallest reasonable version bigger than `to`
+      -- to simulate `<=` while using exclusive right hand side
+      if to.prerelease then
+        to.prerelease = to.prerelease .. '.0'
+      else
+        to.patch = to.patch + 1
+        to.prerelease = '0'
+      end
     elseif mods == '>' then
-      from.patch = from.patch + 1
+      -- HACK: construct the smallest reasonable version bigger than `from`
+      -- to simulate `>` while using inclusive left hand side
+      if from.prerelease then
+        from.prerelease = from.prerelease .. '.0'
+      else
+        from.patch = from.patch + 1
+        from.prerelease = '0'
+      end
       to = nil
     elseif mods == '>=' then
       to = nil

@@ -58,10 +58,10 @@ describe('version', function()
       ['1.2.3'] = { from = { 1, 2, 3 }, to = { 1, 2, 3 } },
       ['1.2'] = { from = { 1, 2, 0 }, to = { 1, 3, 0 } },
       ['=1.2.3'] = { from = { 1, 2, 3 }, to = { 1, 2, 3 } },
-      ['>1.2.3'] = { from = { 1, 2, 4 } },
+      ['>1.2.3'] = { from = '1.2.4-0' },
       ['>=1.2.3'] = { from = { 1, 2, 3 } },
       ['<1.2.3'] = { from = { 0, 0, 0 }, to = { 1, 2, 3 } },
-      ['<=1.2.3'] = { from = { 0, 0, 0 }, to = { 1, 2, 4 } },
+      ['<=1.2.3'] = { from = { 0, 0, 0 }, to = '1.2.4-0' },
       ['~1.2.3'] = { from = { 1, 2, 3 }, to = { 1, 3, 0 } },
       ['^1.2.3'] = { from = { 1, 2, 3 }, to = { 2, 0, 0 } },
       ['^0.2.3'] = { from = { 0, 2, 3 }, to = { 0, 3, 0 } },
@@ -124,6 +124,17 @@ describe('version', function()
       assert(not vim.version.range('1.2.3-alpha'):has('1.2.3-beta'))
       assert(vim.version.range('>0.10'):has('0.12.0-dev'))
       assert(not vim.version.range('>=0.12'):has('0.12.0-dev'))
+
+      assert(not vim.version.range('<=1.2.3'):has('1.2.4-alpha'))
+      assert(not vim.version.range('<=1.2.3-0'):has('1.2.3'))
+      assert(not vim.version.range('<=1.2.3-alpha'):has('1.2.3'))
+      assert(not vim.version.range('<=1.2.3-1'):has('1.2.4-0'))
+      assert(vim.version.range('<=1.2.3-0'):has('1.2.3-0'))
+      assert(vim.version.range('<=1.2.3-alpha'):has('1.2.3-alpha'))
+
+      assert(vim.version.range('>1.2.3'):has('1.2.4-0'))
+      assert(vim.version.range('>1.2.3'):has('1.2.4-alpha'))
+      assert(vim.version.range('>1.2.3-0'):has('1.2.3-1'))
 
       local range_alpha = vim.version.range('1.2.3-alpha')
       eq(vim.version.range(tostring(range_alpha)), range_alpha)
