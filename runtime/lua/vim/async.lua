@@ -176,11 +176,6 @@ function Task._new(func)
   return self
 end
 
--- Use max 32-bit signed int value to avoid overflow on 32-bit systems.
--- Do not use `math.huge` as it is not interpreted as a positive integer on all
--- platforms.
-local MAX_TIMEOUT = 2 ^ 31 - 1
-
 --- @return_cast obj function
 local function is_callable(obj)
   return vim.is_callable(obj)
@@ -218,7 +213,7 @@ function Task:wait(callback_or_timeout)
   end
 
   if
-    not vim.wait(callback_or_timeout or MAX_TIMEOUT, function()
+    not vim.wait(callback_or_timeout or vim._maxint, function()
       return self._future:completed()
     end)
   then
