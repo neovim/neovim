@@ -382,4 +382,31 @@ stack traceback:
 
     check_task_err(run(Async.timeout, 10, eternity), 'timeout')
   end)
+
+  it_exec('does not allow coroutine.yield', function()
+    local task = run(function()
+      coroutine.yield('This will cause an error.')
+    end)
+    local ok, res = pcall(task.wait, task, 10)
+    assert(not ok, 'Expected error, got: ' .. tostring(res))
+    assert(res == 'Unexpected coroutine.yield')
+  end)
+
+  it_exec('does not need new stack frame for non-deferred continuations', function()
+    --- @async
+    local function deep(n)
+      if n == 0 then
+        return 'done'
+      end
+      await(function(cb)
+        cb()
+      end)
+      return deep(n - 1)
+    end
+
+    local res = run(function()
+      return deep(10000)
+    end):wait()
+    assert(res == 'done')
+  end)
 end)

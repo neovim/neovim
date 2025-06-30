@@ -154,11 +154,11 @@ end
 --- Tasks can await other async functions (task of callback functions)
 --- when we are waiting on a child, we store the handle to it here so we can
 --- cancel it.
---- @field private _current_child? vim.async.Task|vim.async.Closable
+--- @field private _child? vim.async.Task|vim.async.Closable
 local Task = {}
 Task.__index = Task
 
---- @private
+--- @package
 --- @param func function
 --- @return vim.async.Task
 function Task._new(func)
@@ -170,7 +170,7 @@ function Task._new(func)
     _future = M.future(),
   }, Task)
 
-  ---@diagnostic disable-next-line: assign-type-mismatch
+  --- @diagnostic disable-next-line: assign-type-mismatch
   threads[thread] = self
 
   return self
@@ -243,7 +243,7 @@ function Task:_traceback(msg, _lvl)
 
   local thread = ('[%s] '):format(self._thread)
 
-  local child = self._current_child
+  local child = self._child
   if getmetatable(child) == Task then
     --- @cast child vim.async.Task
     msg = child:_traceback(msg, _lvl + 1)
@@ -287,7 +287,11 @@ end
 --- @param err? any
 --- @param result? {[integer]: any, n: integer}
 function Task:_finish(err, result)
-  self._current_child = nil
+  -- Keep hold of the child tasks so we can use `task:traceback()`
+  -- `task:traceback()`
+  if not err or getmetatable(self._child) ~= Task then
+    self._child = nil
+  end
   threads[self._thread] = nil
   self._future:complete(err, unpack_len(result))
 end
@@ -307,9 +311,9 @@ function Task:close(callback)
 
     self._closing = true
 
-    if self._current_child then
+    if self._child then
       M.await(1, function(on_child_close)
-        self._current_child:close(on_child_close)
+        self._child:close(on_child_close)
       end)
     end
     self:_finish('closed')
@@ -325,38 +329,60 @@ local function is_closable(obj)
   return (ty == 'table' or ty == 'userdata') and vim.is_callable(obj.close)
 end
 
+--- Internal marker used to identify that a yielded value is an asynchronous yielding.
+local yield_marker = {}
+
+--- @package
 --- @param ... any
 function Task:_resume(...)
-  --- @diagnostic disable-next-line: assign-type-mismatch
-  --- @type [boolean, string|fun(...:R...): vim.async.Closable?]
-  local ret = pack_len(coroutine.resume(self._thread, ...))
-  local stat = ret[1]
+  local args = pack_len(...)
 
-  if not stat then
-    -- Coroutine had error
-    self:_finish(ret[2])
-  elseif coroutine.status(self._thread) == 'dead' then
-    -- Coroutine finished
-    local result = pack_len(unpack_len(ret, 2))
-    self:_finish(nil, result)
-  else
-    local fn = ret[2]
-    --- @cast fn -string
+  while true do
+    --- @diagnostic disable-next-line: assign-type-mismatch
+    --- @type [boolean, string|{}, fun(...:R...): vim.async.Closable?]
+    local ret = pack_len(coroutine.resume(self._thread, unpack_len(args)))
+
+    local stat = ret[1]
+
+    if not stat then
+      -- Coroutine had error
+      return self:_finish(ret[2])
+    elseif coroutine.status(self._thread) == 'dead' then
+      -- Coroutine finished
+      local result = pack_len(unpack_len(ret, 2))
+      return self:_finish(nil, result)
+    end
+
+    local marker, fn = ret[2], ret[3]
+
+    if marker ~= yield_marker or not is_callable(fn) then
+      return self:_finish('Unexpected coroutine.yield')
+    end
 
     local ok, r
+    local settled = false
+    local is_continuation_deferred = true
     ok, r = pcall(fn, function(...)
-      if is_closable(r) then
+      if settled then
+        -- error here?
+        return
+      end
+      settled = true
+
+      if ok == nil then
+        is_continuation_deferred = false
+        args = pack_len(...)
+      elseif is_closable(r) then
         -- We must close the closable child before we resume to ensure
         -- all resources are collected.
-        local args = pack_len(...)
+        local cargs = pack_len(...)
 
         local close_ok, close_err = pcall(r.close, r, function()
-          self:_resume(unpack_len(args))
+          self:_resume(unpack_len(cargs))
         end)
 
         if not close_ok then
           self:_finish(close_err)
-          return
         end
       else
         self:_resume(...)
@@ -366,14 +392,18 @@ function Task:_resume(...)
     if not ok then
       self:_finish(r)
     elseif is_closable(r) then
-      self._current_child = r
+      self._child = r
+    end
+
+    if is_continuation_deferred then
+      break
     end
   end
 end
 
 --- @package
 function Task:_log(...)
-  print(self._thread, ...)
+  print(tostring(self._thread), ...)
 end
 
 --- Returns the status of tasks thread. See [coroutine.status()].
@@ -413,7 +443,7 @@ end
 --- @return R...
 local function yield(fun)
   assert(type(fun) == 'function', 'Expected function')
-  return coroutine.yield(fun)
+  return coroutine.yield(yield_marker, fun)
 end
 
 --- @async
@@ -1023,8 +1053,8 @@ do --- queue()
   ---  end
   ---  print("Done")
   --- ```
-  ---@param max_size? integer The maximum number of items in the queue, defaults to no limit
-  ---@return vim.async.Queue
+  --- @param max_size? integer The maximum number of items in the queue, defaults to no limit
+  --- @return vim.async.Queue
   function M.queue(max_size)
     local self = setmetatable({
       _items = {},
