@@ -222,40 +222,11 @@ function M.last(versions)
 end
 
 ---@class vim.VersionRange
----@inlinedoc
 ---@field from vim.Version
 ---@field to? vim.Version
 local VersionRange = {}
 
----@nodoc
----@param version string|vim.Version
-function VersionRange:has(version)
-  if type(version) == 'string' then
-    ---@diagnostic disable-next-line: cast-local-type
-    version = M.parse(version)
-  elseif getmetatable(version) ~= Version then
-    -- Need metatable to compare versions.
-    version = setmetatable(vim.deepcopy(version, true), Version)
-  end
-  if version then
-    if self.from == self.to then
-      return version == self.from
-    end
-    return version >= self.from and (self.to == nil or version < self.to)
-  end
-end
-
---- Parses a semver |version-range| "spec" and returns a range object:
----
---- ```
---- {
----   from: Version
----   to: Version
----   has(v: string|Version)
---- }
---- ```
----
---- `:has()` checks if a version is in the range (inclusive `from`, exclusive `to`).
+--- Check if a version is in the range (inclusive `from`, exclusive `to`).
 ---
 --- Example:
 ---
@@ -276,7 +247,27 @@ end
 ---
 --- @see # https://github.com/npm/node-semver#ranges
 --- @since 11
----
+--- @param version string|vim.Version
+--- @return boolean
+function VersionRange:has(version)
+  if type(version) == 'string' then
+    ---@diagnostic disable-next-line: cast-local-type
+    version = M.parse(version)
+  elseif getmetatable(version) ~= Version then
+    -- Need metatable to compare versions.
+    version = setmetatable(vim.deepcopy(version, true), Version)
+  end
+  if not version then
+    return false
+  end
+  if self.from == self.to then
+    return version == self.from
+  end
+  return version >= self.from and (self.to == nil or version < self.to)
+end
+
+--- Parses a semver |version-range| "spec" and returns |vim.VersionRange| object:
+--- @since 11
 --- @param spec string Version range "spec"
 --- @return vim.VersionRange?
 function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
