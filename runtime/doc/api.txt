@@ -651,7 +651,7 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
         Since: 0.5.0
 
     Parameters: ~
-      • {chunks}   (`[string, integer|string][]`) List of `[text, hl_group]`
+      • {chunks}   (`[string, integer|string?][]`) List of `[text, hl_group]`
                    pairs, where each is a `text` string highlighted by the
                    (optional) name or ID `hl_group`.
       • {history}  (`boolean`) if true, add to |message-history|.
