@@ -1140,6 +1140,7 @@ describe('user config init', function()
           string.format(
             [[
           vim.g.exrc_file = "%s"
+          vim.g.exrc_path = debug.getinfo(1, 'S').source:sub(2)
           vim.g.exrc_count = (vim.g.exrc_count or 0) + 1
         ]],
             exrc_path
@@ -1151,6 +1152,7 @@ describe('user config init', function()
           string.format(
             [[
           let g:exrc_file = "%s"
+          " let g:exrc_path = ??
           let g:exrc_count = get(g:, 'exrc_count', 0) + 1
         ]],
             exrc_path
@@ -1222,6 +1224,12 @@ describe('user config init', function()
         ))
 
         clear { args_rm = { '-u' }, env = xstateenv }
+        if string.find(exrc_path, '%.lua$') then
+          eq(
+            vim.fs.normalize(vim.fs.abspath(filename)),
+            vim.fs.normalize(vim.fs.abspath(eval('g:exrc_path')))
+          )
+        end
         -- The 'exrc' file is now trusted.
         eq(filename, eval('g:exrc_file'))
       end)
