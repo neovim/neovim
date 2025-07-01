@@ -770,14 +770,14 @@ char *api_typename(ObjectType t)
   UNREACHABLE;
 }
 
-HlMessage parse_hl_msg(Array chunks, bool is_err, Error *err)
+HlMessage parse_hl_msg(ArrayOf(Tuple(String, *HLGroupID)) chunks, bool is_err, Error *err)
 {
   HlMessage hl_msg = KV_INITIAL_VALUE;
   for (size_t i = 0; i < chunks.size; i++) {
     VALIDATE_T("chunk", kObjectTypeArray, chunks.items[i].type, {
       goto free_exit;
     });
-    Array chunk = chunks.items[i].data.array;
+    Tuple(String, *HLGroupID) chunk = chunks.items[i].data.array;
     VALIDATE((chunk.size > 0 && chunk.size <= 2 && chunk.items[0].type == kObjectTypeString),
              "%s", "Invalid chunk: expected Array with 1 or 2 Strings", {
       goto free_exit;
@@ -785,10 +785,10 @@ HlMessage parse_hl_msg(Array chunks, bool is_err, Error *err)
 
     String str = copy_string(chunk.items[0].data.string, NULL);
 
-    int hl_id = is_err ? HLF_E : 0;
-    if (chunk.size == 2) {
-      hl_id = object_to_hl_id(chunk.items[1], "text highlight", err);
-    }
+    int hl_id =
+      chunk.size == 2 ? object_to_hl_id(chunk.items[1], "text highlight", err)
+                      : is_err ? HLF_E
+                               : 0;
     kv_push(hl_msg, ((HlMessageChunk){ .text = str, .hl_id = hl_id }));
   }
 

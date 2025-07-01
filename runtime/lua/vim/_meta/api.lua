@@ -1096,7 +1096,7 @@ function vim.api.nvim_del_var(name) end
 --- vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true, {})
 --- ```
 ---
---- @param chunks [string, integer|string][] List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
+--- @param chunks [string, integer|string?][] List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
 --- the (optional) name or ID `hl_group`.
 --- @param history boolean if true, add to `message-history`.
 --- @param opts vim.api.keyset.echo_opts Optional parameters.
