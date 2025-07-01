@@ -3902,6 +3902,7 @@ versions (1.2.3-rc1) are not matched. >
     >1.2.3            greater than 1.2.3
     <1.2.3            before 1.2.3
     >=1.2.3           at least 1.2.3
+    <=1.2.3           at most 1.2.3
     ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
     ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
     ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
@@ -3916,7 +3917,7 @@ versions (1.2.3-rc1) are not matched. >
     *                 any version
     x                 same
 
-    1.2.3 - 2.3.4     is >=1.2.3 <=2.3.4
+    1.2.3 - 2.3.4     is >=1.2.3 <2.3.4
 
     Partial right: missing pieces treated as x (2.3 => 2.3.x).
     1.2.3 - 2.3       is >=1.2.3 <2.4.0
@@ -3926,6 +3927,43 @@ versions (1.2.3-rc1) are not matched. >
     1.2 - 2.3.0       is 1.2.0 - 2.3.0
 <
 
+
+*vim.VersionRange*
+
+    Fields: ~
+      • {from}  (`vim.Version`)
+      • {to}?   (`vim.Version`)
+      • {has}   (`fun(self: vim.VersionRange, version: string|vim.Version): boolean`)
+                See |VersionRange:has()|.
+
+
+VersionRange:has({version})                               *VersionRange:has()*
+    Check if a version is in the range (inclusive `from`, exclusive `to`).
+
+    Example: >lua
+        local r = vim.version.range('1.0.0 - 2.0.0')
+        print(r:has('1.9.9'))       -- true
+        print(r:has('2.0.0'))       -- false
+        print(r:has(vim.version())) -- check against current Nvim version
+<
+
+    Or use cmp(), le(), lt(), ge(), gt(), and/or eq() to compare a version
+    against `.to` and `.from` directly: >lua
+        local r = vim.version.range('1.0.0 - 2.0.0') -- >=1.0, <2.0
+        print(vim.version.ge({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
+<
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {version}  (`string|vim.Version`)
+
+    Return: ~
+        (`boolean`)
+
+    See also: ~
+      • https://github.com/npm/node-semver#ranges
 
 vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
     Parses and compares two version objects (the result of
@@ -3997,6 +4035,21 @@ vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
     Return: ~
         (`boolean`)
 
+vim.version.intersect({r1}, {r2})                    *vim.version.intersect()*
+    WARNING: This feature is experimental/unstable.
+
+    Computes the common range shared by the given ranges.
+
+    Parameters: ~
+      • {r1}  (`vim.VersionRange`) First range to intersect. See
+              |vim.VersionRange|.
+      • {r2}  (`vim.VersionRange`) Second range to intersect. See
+              |vim.VersionRange|.
+
+    Return: ~
+        (`vim.VersionRange?`) Maximal range that is present inside both `r1`
+        and `r2`. `nil` if such range does not exist. See |vim.VersionRange|.
+
 vim.version.last({versions})                              *vim.version.last()*
     TODO: generalize this, move to func.lua
 
@@ -4057,29 +4110,8 @@ vim.version.parse({version}, {opts})                     *vim.version.parse()*
       • https://semver.org/spec/v2.0.0.html
 
 vim.version.range({spec})                                *vim.version.range()*
-    Parses a semver |version-range| "spec" and returns a range object: >
-        {
-          from: Version
-          to: Version
-          has(v: string|Version)
-        }
-<
-
-    `:has()` checks if a version is in the range (inclusive `from`, exclusive
-    `to`).
-
-    Example: >lua
-        local r = vim.version.range('1.0.0 - 2.0.0')
-        print(r:has('1.9.9'))       -- true
-        print(r:has('2.0.0'))       -- false
-        print(r:has(vim.version())) -- check against current Nvim version
-<
-
-    Or use cmp(), le(), lt(), ge(), gt(), and/or eq() to compare a version
-    against `.to` and `.from` directly: >lua
-        local r = vim.version.range('1.0.0 - 2.0.0') -- >=1.0, <2.0
-        print(vim.version.ge({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
-<
+    Parses a semver |version-range| "spec" and returns |vim.VersionRange|
+    object:
 
     Attributes: ~
         Since: 0.9.0
@@ -4088,13 +4120,7 @@ vim.version.range({spec})                                *vim.version.range()*
       • {spec}  (`string`) Version range "spec"
 
     Return: ~
-        (`table?`) A table with the following fields:
-        • {from} (`vim.Version`)
-        • {to}? (`vim.Version`)
-        • {has} (`fun(self: vim.VersionRange, version: string|vim.Version)`)
-
-    See also: ~
-      • https://github.com/npm/node-semver#ranges
+        (`vim.VersionRange?`) See |vim.VersionRange|.
 
 
 ==============================================================================

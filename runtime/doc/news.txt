@@ -199,6 +199,8 @@ LUA
 • |vim.hl.range()| now allows multiple timed highlights.
 • |vim.tbl_extend()| and |vim.tbl_deep_extend()| now accept a function behavior argument.
 • |vim.fs.root()| can define "equal priority" via nested lists.
+• |vim.version.range()| output can be converted to human-readable string with |tostring()|.
+• |vim.version.intersect()| computes intersection of two version ranges.
 
 OPTIONS
 
