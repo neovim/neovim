@@ -13,92 +13,40 @@ local function cli_version(cmd)
   return ok, vim.version.parse(out, { strict = false })
 end
 
--- Attempts to construct a shell command from an args list.
--- Only for display, to help users debug a failed command.
---- @param cmd string|string[]
-local function shellify(cmd)
-  if type(cmd) ~= 'table' then
-    return cmd
-  end
-  local escaped = {} --- @type string[]
-  for i, v in ipairs(cmd) do
-    escaped[i] = v:match('[^A-Za-z_/.-]') and vim.fn.shellescape(v) or v
-  end
-  return table.concat(escaped, ' ')
-end
-
--- Handler for s:system() function.
---- @param self {output: string, stderr: string, add_stderr_to_output: boolean}
-local function system_handler(self, _, data, event)
-  if event == 'stderr' then
-    if self.add_stderr_to_output then
-      self.output = self.output .. table.concat(data, '')
-    else
-      self.stderr = self.stderr .. table.concat(data, '')
-    end
-  elseif event == 'stdout' then
-    self.output = self.output .. table.concat(data, '')
-  end
-end
-
---- @param cmd string|string[] List of command arguments to execute
---- @param args? table Optional arguments:
----                   - stdin (string): Data to write to the job's stdin
----                   - stderr (boolean): Append stderr to stdout
----                   - ignore_error (boolean): If true, ignore error output
----                   - timeout (number): Number of seconds to wait before timing out (default 30)
 local function system(cmd, args)
   args = args or {}
-  local stdin = args.stdin or ''
-  local stderr = args.stderr or false
   local ignore_error = args.ignore_error or false
-
-  local shell_error_code = 0
+  --[[@type vim.SystemOpts]]
   local opts = {
-    add_stderr_to_output = stderr,
-    output = '',
-    stderr = '',
-    on_stdout = system_handler,
-    on_stderr = system_handler,
-    on_exit = function(_, data)
-      shell_error_code = data
-    end,
+    text = true,
+    stdin = args.stdin,
+    timeout = args.timeout or (30 * 1000),
   }
-  local jobid = vim.fn.jobstart(cmd, opts)
 
-  if jobid < 1 then
-    local message =
-      string.format('Command error (job=%d): %s (in %s)', jobid, shellify(cmd), vim.uv.cwd())
-    error(message)
-    return opts.output, 1
-  end
+  local result = vim.system(cmd, opts):wait()
+  local output = result.stdout or ''
 
-  if stdin:find('^%s$') then
-    vim.fn.chansend(jobid, stdin)
-  end
-
-  local res = vim.fn.jobwait({ jobid }, vim.F.if_nil(args.timeout, 30) * 1000)
-  if res[1] == -1 then
-    error('Command timed out: ' .. shellify(cmd))
-    vim.fn.jobstop(jobid)
-  elseif shell_error_code ~= 0 and not ignore_error then
+  if result.code ~= 0 and not ignore_error then
     local emsg = string.format(
-      'Command error (job=%d, exit code %d): %s (in %s)',
-      jobid,
-      shell_error_code,
-      shellify(cmd),
+      'Command error (exit code %d): %s (in %s)',
+      result.code,
+      table.concat(cmd, ' '),
       vim.uv.cwd()
     )
-    if opts.output:find('%S') then
-      emsg = string.format('%s\noutput: %s', emsg, opts.output)
+    if output:find('%S') then
+      emsg = string.format('%s\noutput: %s', emsg, output)
     end
-    if opts.stderr:find('%S') then
-      emsg = string.format('%s\nstderr: %s', emsg, opts.stderr)
+    if result.stderr:find('%S') then
+      emsg = string.format('%s\nstderr: %s', emsg, result.stderr)
     end
     error(emsg)
   end
 
-  return vim.trim(vim.fn.system(cmd)), shell_error_code
+  if args.stderr then
+    output = output .. result.stderr
+  end
+
+  return vim.trim(output), result.code
 end
 
 ---@param provider string
@@ -430,7 +378,8 @@ end
 --- @param url string
 local function download(url)
   local has_curl = vim.fn.executable('curl') == 1
-  if has_curl and cmd_ok({ 'curl', '-V' })[2]:find('Protocols:.*https') then
+  local _, output = cmd_ok({ 'curl', '-V' })
+  if has_curl and output:find('Protocols:.*https') then
     local out, rc = system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
     if rc ~= 0 then
       return 'curl error with ' .. url .. ': ' .. rc
@@ -508,7 +457,7 @@ local function version_info(python)
   local python_version, rc = system({
     python,
     '-c',
-    'import sys; print(".".join(str(x) for x in sys.version_info[:3]))',
+    [[import sys; print(".".join(str(x) for x in sys.version_info[:3]))]],
   })
 
   if rc ~= 0 or python_version == '' then
@@ -852,10 +801,11 @@ local function python()
     health.warn(table.concat(msgs), vim.tbl_keys(hints))
   else
     health.info(msg)
-    health.info(
-      'Python version: '
-        .. system('python -c "import platform, sys; sys.stdout.write(platform.python_version())"')
-    )
+    health.info('Python version: ' .. system({
+      'python',
+      '-c',
+      [[import platform, sys; sys.stdout.write(platform.python_version())]],
+    }))
     health.ok('$VIRTUAL_ENV provides :!python.')
   end
 end
