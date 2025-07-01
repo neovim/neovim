@@ -28,6 +28,22 @@ local function err_message(...)
   api.nvim_command('redraw')
 end
 
+--- @param params lsp.ShowMessageParams|lsp.ShowMessageRequestParams
+--- @param ctx lsp.HandlerContext
+local function show_message_notification(params, ctx)
+  local message_type = params.type
+  local message = params.message
+  local client_id = ctx.client_id
+  local client = vim.lsp.get_client_by_id(client_id)
+  local client_name = client and client.name or string.format('id=%d', client_id)
+  if not client then
+    err_message('LSP[', client_name, '] client has shut down after sending ', message)
+  end
+  message = ('LSP[%s] %s'):format(client_name, message)
+  vim.notify(message, log._from_lsp_level(message_type))
+  return params
+end
+
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 RCS[ms.workspace_executeCommand] = function(_, _, _)
   -- Error handling is done implicitly by wrapping all handlers; see end of this file
@@ -85,38 +101,43 @@ end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
 ---@param params lsp.ShowMessageRequestParams
-RSC[ms.window_showMessageRequest] = function(_, params)
-  local actions = params.actions or {}
-  local co, is_main = coroutine.running()
-  if co and not is_main then
-    local opts = {
-      kind = 'lsp_message',
-      prompt = params.message .. ': ',
-      format_item = function(action)
-        return (action.title:gsub('\r\n', '\\r\\n')):gsub('\n', '\\n')
-      end,
-    }
-    vim.ui.select(actions, opts, function(choice)
-      -- schedule to ensure resume doesn't happen _before_ yield with
-      -- default synchronous vim.ui.select
-      vim.schedule(function()
-        coroutine.resume(co, choice or vim.NIL)
+RSC[ms.window_showMessageRequest] = function(_, params, ctx)
+  if next(params.actions or {}) then
+    local co, is_main = coroutine.running()
+    if co and not is_main then
+      local opts = {
+        kind = 'lsp_message',
+        prompt = params.message .. ': ',
+        format_item = function(action)
+          return (action.title:gsub('\r\n', '\\r\\n')):gsub('\n', '\\n')
+        end,
+      }
+      vim.ui.select(params.actions, opts, function(choice)
+        -- schedule to ensure resume doesn't happen _before_ yield with
+        -- default synchronous vim.ui.select
+        vim.schedule(function()
+          coroutine.resume(co, choice or vim.NIL)
+        end)
       end)
-    end)
-    return coroutine.yield()
-  else
-    local option_strings = { params.message, '\nRequest Actions:' }
-    for i, action in ipairs(actions) do
-      local title = action.title:gsub('\r\n', '\\r\\n')
-      title = title:gsub('\n', '\\n')
-      table.insert(option_strings, string.format('%d. %s', i, title))
-    end
-    local choice = vim.fn.inputlist(option_strings)
-    if choice < 1 or choice > #actions then
-      return vim.NIL
+      return coroutine.yield()
     else
-      return actions[choice]
+      local option_strings = { params.message, '\nRequest Actions:' }
+      for i, action in ipairs(params.actions) do
+        local title = action.title:gsub('\r\n', '\\r\\n')
+        title = title:gsub('\n', '\\n')
+        table.insert(option_strings, string.format('%d. %s', i, title))
+      end
+      local choice = vim.fn.inputlist(option_strings)
+      if choice < 1 or choice > #params.actions then
+        return vim.NIL
+      else
+        return params.actions[choice]
+      end
     end
+  else
+    -- No actions, just show the message.
+    show_message_notification(params, ctx)
+    return vim.NIL
   end
 end
 
@@ -580,17 +601,7 @@ end
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessage
 --- @param params lsp.ShowMessageParams
 NSC['window/showMessage'] = function(_, params, ctx)
-  local message_type = params.type
-  local message = params.message
-  local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
-  local client_name = client and client.name or string.format('id=%d', client_id)
-  if not client then
-    err_message('LSP[', client_name, '] client has shut down after sending ', message)
-  end
-  message = ('LSP[%s] %s'):format(client_name, message)
-  vim.notify(message, log._from_lsp_level(message_type))
-  return params
+  return show_message_notification(params, ctx)
 end
 
 --- @private
