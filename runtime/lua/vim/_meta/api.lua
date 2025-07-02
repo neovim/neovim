@@ -719,6 +719,13 @@ function vim.api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts) end
 --- @param end_ integer Last line index, exclusive
 --- @param strict_indexing boolean Whether out-of-bounds should be an error.
 --- @param replacement string[] Array of lines to use as replacement
+--- @return table<string,any> # Dictionary containing:
+--- - region: Array with modified region information:
+---     - start_line: First modified line (zero-indexed)
+---     - end_line: Last modified line after modification
+---     - end_col: Ending column (length of last modified line)
+---     - lines_added: Number of lines added (negative if deleted)
+---     - deleted_bytes: Number of bytes deleted
 function vim.api.nvim_buf_set_lines(buffer, start, end_, strict_indexing, replacement) end
 
 --- Sets a named mark in the given buffer, all marks are allowed
