@@ -557,6 +557,7 @@ local extension = {
   persistentmodels = 'haskellpersistent',
   ht = 'haste',
   htpp = 'hastepreproc',
+  hx = 'haxe',
   hcl = 'hcl',
   hb = 'hb',
   h = detect.header,
