@@ -313,22 +313,25 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
-void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integer end,
+/// @return Array with [start_line, end_line] of the modified region (0-indexed, end-exclusive),
+///         or empty array if modification failed
+ArrayOf(Integer, 2) nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integer end,
                         Boolean strict_indexing, ArrayOf(String) replacement, Arena *arena,
                         Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
+  Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return;
+    return rv;
   }
 
   // Load buffer if necessary. #22670
   if (!buf_ensure_loaded(buf)) {
     api_set_error(err, kErrorTypeException, "Failed to load buffer");
-    return;
+    return rv;
   }
 
   bool oob = false;
@@ -336,15 +339,15 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   end = normalize_index(buf, end, true, &oob);
 
   VALIDATE((!strict_indexing || !oob), "%s", "Index out of bounds", {
-    return;
+    return rv;
   });
   VALIDATE((start <= end), "%s", "'start' is higher than 'end'", {
-    return;
+    return rv;
   });
 
   bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
   if (!check_string_array(replacement, "replacement string", disallow_nl, err)) {
-    return;
+    return rv;
   }
 
   size_t new_len = replacement.size;
@@ -444,8 +447,16 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
         fix_cursor(win, (linenr_T)start, (linenr_T)end, (linenr_T)extra);
       }
     }
+
+    // Return the modified region 0-based
+    rv = arena_array(arena, 2);
+    ADD_C(rv, INTEGER_OBJ(start - 1));
+    ADD_C(rv, INTEGER_OBJ(end + extra - 1));
+
     end:;
   });
+
+  return rv;
 }
 
 /// Sets (replaces) a range in the buffer
