@@ -106,7 +106,7 @@ local utfs = {
 ---   - env: table<string,string> Set environment variables for the new process. Inherits the
 ---     current environment with `NVIM` set to |v:servername|.
 ---   - clear_env: (boolean) `env` defines the job environment exactly, instead of merging current
----     environment.
+---     environment. Note: if `env` is `nil`, the current environment is used but without `NVIM` set.
 ---   - stdin: (string|string[]|boolean) If `true`, then a pipe to stdin is opened and can be written
 ---     to via the `write()` method to SystemObj. If string or string[] then will be written to stdin
 ---     and closed. Defaults to `false`.

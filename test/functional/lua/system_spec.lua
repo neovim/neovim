@@ -93,6 +93,27 @@ describe('vim.system', function()
         )
       end)
 
+      it('can set environment with clear_env = true and env = nil', function()
+        exec_lua(function()
+          vim.env.TEST = 'TESTVAL'
+        end)
+
+        -- Not passing env with clear_env should not clear the environment
+        eq(
+          'TESTVAL',
+          system({ n.testprg('printenv-test'), 'TEST' }, { clear_env = true, text = true }).stdout
+        )
+
+        -- Passing env = {} with clear_env should clear the environment
+        eq(
+          '',
+          system(
+            { n.testprg('printenv-test'), 'TEST' },
+            { env = {}, clear_env = true, text = true }
+          ).stdout
+        )
+      end)
+
       it('supports timeout', function()
         eq({
           code = 124,
