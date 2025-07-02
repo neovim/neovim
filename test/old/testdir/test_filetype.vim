@@ -348,6 +348,7 @@ func s:GetFilenameChecks() abort
     \ 'haskellpersistent': ['file.persistentmodels'],
     \ 'haste': ['file.ht'],
     \ 'hastepreproc': ['file.htpp'],
+    \ 'haxe': ['file.hx'],
     \ 'hb': ['file.hb'],
     \ 'hcl': ['file.hcl'],
     \ 'heex': ['file.heex'],
