@@ -261,7 +261,7 @@ cmake --build build
 
 ### How to build static binary (on Linux)
 
-1. Use a linux distribution which uses musl C. We will use Alpine Linux but any distro with musl should work. (glibc does not support dynamic linking)
+1. Use a linux distribution which uses musl C. We will use Alpine Linux but any distro with musl should work. (glibc does not support static linking)
 2. Run make passing the `STATIC_BUILD` variable: `make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"`
 
 In case you are not using Alpine Linux you can use a container to do the build the binary:
