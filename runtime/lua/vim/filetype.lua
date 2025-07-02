@@ -464,6 +464,7 @@ local extension = {
   ['4gh'] = 'fgl',
   fir = 'firrtl',
   fish = 'fish',
+  flix = 'flix',
   focexec = 'focexec',
   fex = 'focexec',
   ft = 'forth',
