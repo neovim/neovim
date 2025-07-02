@@ -639,6 +639,7 @@ func s:GetFilenameChecks() abort
     \ 'qmldir': ['qmldir'],
     \ 'quake': ['anybaseq2/file.cfg', 'anyid1/file.cfg', 'quake3/file.cfg', 'baseq2/file.cfg', 'id1/file.cfg', 'quake1/file.cfg', 'some-baseq2/file.cfg', 'some-id1/file.cfg', 'some-quake1/file.cfg'],
     \ 'quarto': ['file.qmd'],
+    \ 'quickbms': ['file.bms'],
     \ 'r': ['file.r', '.Rhistory', '.Rprofile', 'Rprofile', 'Rprofile.site'],
     \ 'racket': ['file.rkt', 'file.rktd', 'file.rktl'],
     \ 'radiance': ['file.rad', 'file.mat'],
