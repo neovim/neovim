@@ -871,6 +871,7 @@ local extension = {
   nsh = 'nsis',
   nt = 'ntriples',
   nu = 'nu',
+  nbt = 'numbat',
   obj = 'obj',
   objdump = 'objdump',
   cppobjdump = 'objdump',
