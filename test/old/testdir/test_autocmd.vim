@@ -859,7 +859,7 @@ func Test_BufReadCmdNofile()
             \ 'quickfix',
             \ 'help',
             "\ 'terminal',
-            \ 'prompt',
+            "\ 'prompt',
             "\ 'popup',
             \ ]
     new somefile
@@ -977,7 +977,7 @@ func Test_BufEnter()
             \ 'quickfix',
             \ 'help',
             "\ 'terminal',
-            \ 'prompt',
+            "\ 'prompt',
             "\ 'popup',
             \ ]
     new somefile
