@@ -1007,6 +1007,7 @@ local extension = {
   qml = 'qml',
   qbs = 'qml',
   qmd = 'quarto',
+  bms = 'quickbms',
   R = detect.r,
   rkt = 'racket',
   rktd = 'racket',
