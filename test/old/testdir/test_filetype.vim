@@ -564,6 +564,7 @@ func s:GetFilenameChecks() abort
     \ 'nsis': ['file.nsi', 'file.nsh'],
     \ 'ntriples': ['file.nt'],
     \ 'nu': ['file.nu'],
+    \ 'numbat': ['file.nbt'],
     \ 'obj': ['file.obj'],
     \ 'objdump': ['file.objdump', 'file.cppobjdump'],
     \ 'obse': ['file.obl', 'file.obse', 'file.oblivion', 'file.obscript'],
