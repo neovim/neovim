@@ -337,10 +337,8 @@ NETRW VARIABLES AND SETTINGS				*netrw-variables* {{{2
     )
 
 Netrw provides a lot of variables which allow you to customize netrw to your
-preferences.  One way to look at them is via the command :NetrwSettings (see
-|netrw-settings|) which will display your current netrw settings.  Most such
-settings are described below, in |netrw-browser-options|, and in
-|netrw-externapp|:
+preferences.  Most such settings are described below, in
+|netrw-browser-options|, and in |netrw-externapp|:
 
  *b:netrw_lastfile*	last file Network-read/written retained on a
 			per-buffer basis (supports plain :Nw )
@@ -772,9 +770,6 @@ below, a {netfile} is a URL to a remote file.
 		strings (ie. "").
 		(related: |netrw-userpass|)
 
-:NetrwSettings  This command is described in |netrw-settings| -- used to
-		display netrw settings and change netrw behavior.
-
 
 ==============================================================================
 8. Variables and Options		*netrw-var* *netrw-settings* {{{1
@@ -1132,7 +1127,6 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 				*netrw-quickcom* *netrw-quickcoms*
 QUICK REFERENCE: COMMANDS	*netrw-explore-cmds* *netrw-browse-cmds* {{{2
      :NetrwClean[!]............................................|netrw-clean|
-     :NetrwSettings............................................|netrw-settings|
      :Ntree....................................................|netrw-ntree|
      :Explore[!]  [dir] Explore directory of current file......|netrw-explore|
      :Hexplore[!] [dir] Horizontal Split & Explore.............|netrw-explore|
@@ -2977,17 +2971,6 @@ is problematic.  Autochdir sets the current directory to that containing the
 file you edit; this apparently also applies to directories.  In other words,
 autochdir sets the current directory to that containing the "file" (even if
 that "file" is itself a directory).
-
-NETRW SETTINGS WINDOW				*netrw-settings-window* {{{2
-
-With the NetrwSettings.vim plugin, >
-	:NetrwSettings
-will bring up a window with the many variables that netrw uses for its
-settings.  You may change any of their values; when you save the file, the
-settings therein will be used.  One may also press "?" on any of the lines for
-help on what each of the variables do.
-
-(also see: |netrw-browser-var| |netrw-protocol| |netrw-variables|)
 
 
 ==============================================================================
