@@ -608,6 +608,16 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
         stuffcharReadbuff(*c);
         *c = '\\';
       }
+      // add any composing characters
+      if (utf_char2len(*c) != utfc_ptr2len(get_cursor_pos_ptr())) {
+        const int save_c = *c;
+        while (utf_char2len(*c) != utfc_ptr2len(get_cursor_pos_ptr())) {
+          curwin->w_cursor.col += utf_char2len(*c);
+          *c = gchar_cursor();
+          stuffcharReadbuff(*c);
+        }
+        *c = save_c;
+      }
       return FAIL;
     }
   }
