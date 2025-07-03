@@ -192,6 +192,8 @@ LSP
 • The function form of `cmd` in a vim.lsp.Config or vim.lsp.ClientConfig
   receives the resolved config as the second arg: `cmd(dispatchers, config)`.
 • Support for annotated text edits.
+• Support for `textDocument/inlineCompletion |lsp-inline_completion|
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_inlineCompletion
 
 LUA
 

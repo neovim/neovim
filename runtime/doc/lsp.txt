@@ -310,6 +310,7 @@ They are also listed below.
 - `'textDocument/formatting'`
 - `'textDocument/hover'`
 - `'textDocument/inlayHint'`
+- `'textDocument/inlineCompletion'`
 - `'textDocument/publishDiagnostics'`
 - `'textDocument/rangeFormatting'`
 - `'textDocument/rename'`
@@ -443,6 +444,11 @@ LspReferenceTarget        used for highlighting reference targets (e.g. in a
                           hover range)
                                                              *hl-LspInlayHint*
 LspInlayHint              used for highlighting inlay hints
+
+                                              lsp-highlight-inline-completion
+LspInlineCompletion       used for highlighting inline completions
+
+LspInlineCompletionSuffix used for highlighting inline completions suffix
 
 
                                                       *lsp-highlight-codelens*
@@ -2158,6 +2164,39 @@ is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
 
     Return: ~
         (`boolean`)
+
+
+==============================================================================
+Lua module: vim.lsp.inline_completion                  *lsp-inline_completion*
+
+*vim.lsp.inline_completion.BufState*
+
+    Fields: ~
+      • {items}    (`lsp.InlineCompletionItem[]`)
+      • {active}   (`integer`) index of currently active completion item
+      • {extmark}  (`integer`) id of the currently visible extmark
+      • {autocmd}  (`integer`) id of the autocmd
+
+
+enable({enable}, {bufnr})                 *vim.lsp.inline_completion.enable()*
+    (default: true)
+
+    Parameters: ~
+      • {enable}  (`boolean?`, default: current)
+      • {bufnr}   (`integer?`)
+
+jump({opts})                                *vim.lsp.inline_completion.jump()*
+
+    Parameters: ~
+      • {opts}  (`table`) A table with the following fields:
+                • {bufnr}? (`integer`) (default: current)
+                • {count}? (`integer`) (default: 1)
+                • {wrap}? (`boolean`) (default: true)
+
+trigger({bufnr})                         *vim.lsp.inline_completion.trigger()*
+
+    Parameters: ~
+      • {bufnr}  (`integer?`)
 
 
 ==============================================================================
