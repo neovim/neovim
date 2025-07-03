@@ -2323,6 +2323,72 @@ function M._refresh(method, opts)
   end
 end
 
+---@class (private) vim.lsp.util.enable.Filter
+---@field bufnr? integer
+---@field client_id? integer
+
+---@param feature string
+---@param filter? vim.lsp.util.enable.Filter
+function M._is_enabled(feature, filter)
+  vim.validate('filter', filter, 'table', true)
+
+  filter = filter or {}
+  local bufnr = filter.bufnr
+  local client_id = filter.client_id
+
+  local var = ('__lsp_%s_enabled'):format(feature)
+  local client_var = ('__lsp_%s_client_%d_enabled'):format(feature, client_id or 0)
+  return vim.F.if_nil(client_id and vim.g[client_var], vim.g[var])
+    and vim.F.if_nil(bufnr and vim.b[bufnr][var], vim.g[var])
+end
+
+---@param feature string
+---@param enable? boolean
+---@param filter? vim.lsp.util.enable.Filter
+function M._enable(feature, enable, filter)
+  vim.validate('enable', enable, 'boolean', true)
+  vim.validate('filter', filter, 'table', true)
+
+  enable = enable == nil or enable
+  filter = filter or {}
+  local bufnr = filter.bufnr
+  local client_id = filter.client_id
+  assert(
+    not (bufnr and client_id),
+    'Only one of `bufnr` or `client_id` filters can be specified at a time.'
+  )
+
+  local var = ('__lsp_%s_enabled'):format(feature)
+  local client_var = ('__lsp_%s_client_%d_enabled'):format(feature, client_id or 0)
+
+  if client_id then
+    if enable == vim.g[var] then
+      vim.g[client_var] = nil
+    else
+      vim.g[client_var] = enable
+    end
+  elseif bufnr then
+    if enable == vim.g[var] then
+      vim.b[bufnr][var] = nil
+    else
+      vim.b[bufnr][var] = enable
+    end
+  else
+    vim.g[var] = enable
+    for _, it_bufnr in ipairs(api.nvim_list_bufs()) do
+      if api.nvim_buf_is_loaded(it_bufnr) and vim.b[it_bufnr][var] == enable then
+        vim.b[it_bufnr][var] = nil
+      end
+    end
+    for _, it_client in ipairs(vim.lsp.get_clients()) do
+      local it_client_var = ('__lsp_%s_client_%d_enabled'):format(feature, it_client.id)
+      if vim.g[it_client_var] and vim.g[it_client_var] == enable then
+        vim.g[it_client_var] = nil
+      end
+    end
+  end
+end
+
 M._get_line_byte_from_position = get_line_byte_from_position
 
 ---@nodoc
