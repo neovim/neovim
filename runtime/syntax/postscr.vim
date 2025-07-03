@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:     PostScript - all Levels, selectable
-" Maintainer:   Mike Williams <mrw@eandem.co.uk>
+" Maintainer:   Mike Williams <mrmrdubya@gmail.com>
 " Filenames:    *.ps,*.eps
-" Last Change:  31st October 2007
+" Last Change:  2nd July 2025
 " URL:          http://www.eandem.co.uk/mrw/vim
 "
 " Options Flags:
@@ -601,15 +601,15 @@ if postscr_level == 3
     syn keyword postscrConstant contained BookmanCE-Light BookmanCE-LightItalic BookmanCE-Demi BookmanCE-DemiItalic
     syn keyword postscrConstant contained Carta Chicago ChicagoCE Clarendon Clarendon-Light Clarendon-Bold
     syn keyword postscrConstant contained ClarendonCE ClarendonCE-Light ClarendonCE-Bold CooperBlack CooperBlack-Italic
-    syn keyword postscrConstant contained Copperplate-ThirtyTwoBC CopperPlate-ThirtyThreeBC Coronet-Regular CoronetCE-Regular
+    syn keyword postscrConstant contained Copperplate-ThirtyTwoBC Copperplate-ThirtyThreeBC Coronet-Regular CoronetCE-Regular
     syn keyword postscrConstant contained CourierCE CourierCE-Oblique CourierCE-Bold CourierCE-BoldOblique
     syn keyword postscrConstant contained Eurostile Eurostile-Bold Eurostile-ExtendedTwo Eurostile-BoldExtendedTwo
     syn keyword postscrConstant contained Eurostile EurostileCE-Bold EurostileCE-ExtendedTwo EurostileCE-BoldExtendedTwo
-    syn keyword postscrConstant contained Geneva GenevaCE GillSans GillSans-Italic GillSans-Bold GillSans-BoldItalic GillSans-BoldCondensed
+    syn keyword postscrConstant contained Geneva GenevaCE GillSans GillSans-Italic GillSans-Bold GillSans-BoldItalic GillSans-Condensed GillSans-BoldCondensed
     syn keyword postscrConstant contained GillSans-Light GillSans-LightItalic GillSans-ExtraBold
-    syn keyword postscrConstant contained GillSansCE-Roman GillSansCE-Italic GillSansCE-Bold GillSansCE-BoldItalic GillSansCE-BoldCondensed
+    syn keyword postscrConstant contained GillSansCE-Roman GillSansCE-Italic GillSansCE-Bold GillSansCE-BoldItalic GillSansCE-Condensed GillSansCE-BoldCondensed
     syn keyword postscrConstant contained GillSansCE-Light GillSansCE-LightItalic GillSansCE-ExtraBold
-    syn keyword postscrConstant contained Goudy Goudy-Italic Goudy-Bold Goudy-BoldItalic Goudy-ExtraBould
+    syn keyword postscrConstant contained Goudy Goudy-Italic Goudy-Bold Goudy-BoldItalic Goudy-ExtraBold
     syn keyword postscrConstant contained HelveticaCE HelveticaCE-Oblique HelveticaCE-Bold HelveticaCE-BoldOblique
     syn keyword postscrConstant contained Helvetica-Condensed Helvetica-Condensed-Oblique Helvetica-Condensed-Bold Helvetica-Condensed-BoldObl
     syn keyword postscrConstant contained HelveticaCE-Condensed HelveticaCE-Condensed-Oblique HelveticaCE-Condensed-Bold
@@ -625,7 +625,7 @@ if postscr_level == 3
     syn keyword postscrConstant contained LubalinGraph-Book LubalinGraph-BookOblique LubalinGraph-Demi LubalinGraph-DemiOblique
     syn keyword postscrConstant contained LubalinGraphCE-Book LubalinGraphCE-BookOblique LubalinGraphCE-Demi LubalinGraphCE-DemiOblique
     syn keyword postscrConstant contained Marigold Monaco MonacoCE MonaLisa-Recut Oxford Symbol Tekton
-    syn keyword postscrConstant contained NewCennturySchlbk-Roman NewCenturySchlbk-Italic NewCenturySchlbk-Bold NewCenturySchlbk-BoldItalic
+    syn keyword postscrConstant contained NewCenturySchlbk-Roman NewCenturySchlbk-Italic NewCenturySchlbk-Bold NewCenturySchlbk-BoldItalic
     syn keyword postscrConstant contained NewCenturySchlbkCE-Roman NewCenturySchlbkCE-Italic NewCenturySchlbkCE-Bold
     syn keyword postscrConstant contained NewCenturySchlbkCE-BoldItalic NewYork NewYorkCE
     syn keyword postscrConstant contained Optima Optima-Italic Optima-Bold Optima-BoldItalic
@@ -644,7 +644,7 @@ if postscr_level == 3
     syn keyword postscrConstant contained UniversCE-Condensed UniversCE-CondensedOblique UniversCE-CondensedBold UniversCE-CondensedBoldOblique
     syn keyword postscrConstant contained Univers-Extended Univers-ExtendedObl Univers-BoldExt Univers-BoldExtObl
     syn keyword postscrConstant contained UniversCE-Extended UniversCE-ExtendedObl UniversCE-BoldExt UniversCE-BoldExtObl
-    syn keyword postscrConstant contained Wingdings-Regular ZapfChancery-MediumItalic ZapfChanceryCE-MediumItalic ZapfDingBats
+    syn keyword postscrConstant contained Wingdings-Regular ZapfChancery-MediumItalic ZapfChanceryCE-MediumItalic ZapfDingbats
   endif " Font names
 
 endif " PS LL3 highlighting
