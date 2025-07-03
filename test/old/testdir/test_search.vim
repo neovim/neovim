@@ -4,14 +4,12 @@ source shared.vim
 source screendump.vim
 source check.vim
 
-" See test/functional/legacy/search_spec.lua
 func Test_search_cmdline()
-  CheckFunction test_override
   CheckOption incsearch
 
   " need to disable char_avail,
   " so that expansion of commandline works
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   new
   call setline(1, ['  1', '  2 these', '  3 the', '  4 their', '  5 there', '  6 their', '  7 the', '  8 them', '  9 these', ' 10 foobar'])
   " Test 1
@@ -198,18 +196,16 @@ func Test_search_cmdline()
   call assert_equal('  3 the', getline('.'))
 
   " clean up
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   bw!
 endfunc
 
-" See test/functional/legacy/search_spec.lua
 func Test_search_cmdline2()
-  CheckFunction test_override
   CheckOption incsearch
 
   " need to disable char_avail,
   " so that expansion of commandline works
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   new
   call setline(1, ['  1', '  2 these', '  3 the theother'])
   " Test 1
@@ -275,7 +271,7 @@ func Test_search_cmdline2()
 
   " clean up
   set noincsearch
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   bw!
 endfunc
 
@@ -434,19 +430,17 @@ func Test_searchc()
 endfunc
 
 func Cmdline3_prep()
-  CheckFunction test_override
   " need to disable char_avail,
   " so that expansion of commandline works
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   new
   call setline(1, ['  1', '  2 the~e', '  3 the theother'])
   set incsearch
 endfunc
 
 func Incsearch_cleanup()
-  CheckFunction test_override
   set noincsearch
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   bw!
 endfunc
 
@@ -525,14 +519,12 @@ func Test_search_cmdline3v()
   call Incsearch_cleanup()
 endfunc
 
-" See test/functional/legacy/search_spec.lua
 func Test_search_cmdline4()
-  CheckFunction test_override
   CheckOption incsearch
 
   " need to disable char_avail,
   " so that expansion of commandline works
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   new
   call setline(1, ['  1 the first', '  2 the second', '  3 the third'])
   set incsearch
@@ -556,7 +548,7 @@ func Test_search_cmdline4()
   call assert_equal('  2 the second', getline('.'))
   " clean up
   set noincsearch
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   bw!
 endfunc
 
@@ -582,12 +574,11 @@ endfunc
 func Test_search_cmdline6()
   " Test that consecutive matches
   " are caught by <c-g>/<c-t>
-  CheckFunction test_override
   CheckOption incsearch
 
   " need to disable char_avail,
   " so that expansion of commandline works
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   new
   call setline(1, [' bbvimb', ''])
   set incsearch
@@ -615,12 +606,11 @@ func Test_search_cmdline6()
   " clean up
   set wrapscan&vim
   set noincsearch
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   bw!
 endfunc
 
 func Test_search_cmdline7()
-  CheckFunction test_override
   " Test that pressing <c-g> in an empty command line
   " does not move the cursor
   if !exists('+incsearch')
@@ -628,7 +618,7 @@ func Test_search_cmdline7()
   endif
   " need to disable char_avail,
   " so that expansion of commandline works
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   new
   let @/ = 'b'
   call setline(1, [' bbvimb', ''])
@@ -654,7 +644,7 @@ func Test_search_cmdline7()
   call assert_equal(4, col('.'))
 
   set noincsearch
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   bw!
 endfunc
 
@@ -765,13 +755,12 @@ func Test_search_regexp()
 endfunc
 
 func Test_search_cmdline_incsearch_highlight()
-  CheckFunction test_override
   CheckOption incsearch
 
   set incsearch hlsearch
   " need to disable char_avail,
   " so that expansion of commandline works
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   new
   call setline(1, ['aaa  1 the first', '  2 the second', '  3 the third'])
 
@@ -794,7 +783,7 @@ func Test_search_cmdline_incsearch_highlight()
 
   " clean up
   set noincsearch nohlsearch
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   bw!
 endfunc
 
@@ -884,10 +873,9 @@ func Test_search_cmdline_incsearch_highlight_attr()
 endfunc
 
 func Test_incsearch_cmdline_modifier()
-  CheckFunction test_override
   CheckOption incsearch
 
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   new
   call setline(1, ['foo'])
   set incsearch
@@ -1011,10 +999,9 @@ func Test_hlsearch_block_visual_match()
 endfunc
 
 func Test_incsearch_substitute()
-  CheckFunction test_override
   CheckOption incsearch
 
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   new
   set incsearch
   for n in range(1, 10)
@@ -1032,9 +1019,8 @@ func Test_incsearch_substitute()
 endfunc
 
 func Test_incsearch_substitute_long_line()
-  CheckFunction test_override
   new
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   set incsearch
 
   call repeat('x', 100000)->setline(1)
@@ -1313,13 +1299,12 @@ func Test_incsearch_vimgrep_dump()
 endfunc
 
 func Test_keep_last_search_pattern()
-  CheckFunction test_override
   CheckOption incsearch
 
   new
   call setline(1, ['foo', 'foo', 'foo'])
   set incsearch
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   let @/ = 'bar'
   call feedkeys(":/foo/s//\<Esc>", 'ntx')
   call assert_equal('bar', @/)
@@ -1329,18 +1314,17 @@ func Test_keep_last_search_pattern()
   call assert_equal('bar', @/)
 
   bwipe!
-  call test_override("ALL", 0)
+  call Ntest_override("ALL", 0)
   set noincsearch
 endfunc
 
 func Test_word_under_cursor_after_match()
-  CheckFunction test_override
   CheckOption incsearch
 
   new
   call setline(1, 'foo bar')
   set incsearch
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   try
     call feedkeys("/foo\<C-R>\<C-W>\<CR>", 'ntx')
   catch /E486:/
@@ -1348,24 +1332,23 @@ func Test_word_under_cursor_after_match()
   call assert_equal('foobar', @/)
 
   bwipe!
-  call test_override("ALL", 0)
+  call Ntest_override("ALL", 0)
   set noincsearch
 endfunc
 
 func Test_subst_word_under_cursor()
-  CheckFunction test_override
   CheckOption incsearch
 
   new
   call setline(1, ['int SomeLongName;', 'for (xxx = 1; xxx < len; ++xxx)'])
   set incsearch
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   call feedkeys("/LongName\<CR>", 'ntx')
   call feedkeys(":%s/xxx/\<C-R>\<C-W>/g\<CR>", 'ntx')
   call assert_equal('for (SomeLongName = 1; SomeLongName < len; ++SomeLongName)', getline(2))
 
   bwipe!
-  call test_override("ALL", 0)
+  call Ntest_override("ALL", 0)
   set noincsearch
 endfunc
 
@@ -1517,17 +1500,16 @@ func Test_one_error_msg()
 endfunc
 
 func Test_incsearch_add_char_under_cursor()
-  CheckFunction test_override
   CheckOption incsearch
 
   set incsearch
   new
   call setline(1, ['find match', 'anything'])
   1
-  call test_override('char_avail', 1)
+  call Ntest_override('char_avail', 1)
   call feedkeys("fc/m\<C-L>\<C-L>\<C-L>\<C-L>\<C-L>\<CR>", 'tx')
   call assert_equal('match', @/)
-  call test_override('char_avail', 0)
+  call Ntest_override('char_avail', 0)
 
   set incsearch&
   bwipe!

@@ -1004,7 +1004,6 @@ func Test_popup_complete_backwards_ctrl_p()
 endfunc
 
 func Test_complete_o_tab()
-  CheckFunction test_override
   let s:o_char_pressed = 0
 
   fun! s:act_on_text_changed()
@@ -1022,12 +1021,12 @@ func Test_complete_o_tab()
   call setline(1,  ['hoard', 'hoax', 'hoarse', ''])
   let l:expected = ['hoard', 'hoax', 'hoarse', 'hoax', 'hoax']
   call cursor(4,1)
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   call feedkeys("Ahoa\<tab>\<tab>\<c-y>\<esc>", 'tx')
   call feedkeys("oho\<tab>\<tab>\<c-y>\<esc>", 'tx')
   call assert_equal(l:expected, getline(1,'$'))
 
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   bwipe!
   set completeopt&
   delfunc s:act_on_text_changed

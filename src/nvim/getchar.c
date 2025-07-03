@@ -1866,6 +1866,9 @@ int vpeekc_any(void)
 /// @return  true if a character is available, false otherwise.
 bool char_avail(void)
 {
+  if (disable_char_avail_for_testing) {
+    return false;
+  }
   no_mapping++;
   int retval = vpeekc();
   no_mapping--;
