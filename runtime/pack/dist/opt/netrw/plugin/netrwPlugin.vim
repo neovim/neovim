@@ -71,12 +71,6 @@ command! -nargs=* -bar -bang Nexplore call netrw#Explore(-1, 0, 0, <q-args>)
 command! -nargs=* -bar -bang Pexplore call netrw#Explore(-2, 0, 0, <q-args>)
 
 " }}}
-" Commands: NetrwSettings {{{
-
-command! -nargs=0 NetrwSettings call netrwSettings#NetrwSettings()
-command! -bang NetrwClean call netrw#Clean(<bang>0)
-
-" }}}
 " Maps: {{{
 
 if exists("g:netrw_usetab") && g:netrw_usetab
