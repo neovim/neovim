@@ -128,8 +128,7 @@ if has('timers')
   endfunc
 
   func Test_OptionSet_modeline()
-    CheckFunction test_override
-    call test_override('starting', 1)
+    call Ntest_override('starting', 1)
     au! OptionSet
     augroup set_tabstop
       au OptionSet tabstop call timer_start(1, {-> execute("echo 'Handler called'", "")})
@@ -146,7 +145,7 @@ if has('timers')
     augroup END
     bwipe!
     set ts&
-    call test_override('starting', 0)
+    call Ntest_override('starting', 0)
   endfunc
 
 endif "has('timers')
@@ -1103,7 +1102,8 @@ func s:AutoCommandOptionSet(match)
 endfunc
 
 func Test_OptionSet()
-  CheckFunction test_override
+  " Use test/functional/legacy/autocmd_option_spec.lua
+  throw 'Skipped: Nvim changed types of OptionSet v: variables'
   CheckOption autochdir
 
   call test_override('starting', 1)
@@ -1705,8 +1705,7 @@ func Test_OptionSet()
 endfunc
 
 func Test_OptionSet_diffmode()
-  CheckFunction test_override
-  call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   " 18: Changing an option when entering diff mode
   new
   au OptionSet diff :let &l:cul = v:option_new
@@ -1735,12 +1734,11 @@ func Test_OptionSet_diffmode()
 
   " Cleanup
   au! OptionSet
-  call test_override('starting', 0)
+  call Ntest_override('starting', 0)
 endfunc
 
 func Test_OptionSet_diffmode_close()
-  CheckFunction test_override
-  call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   " 19: Try to close the current window when entering diff mode
   " should not segfault
   new
@@ -1760,7 +1758,7 @@ func Test_OptionSet_diffmode_close()
 
   " Cleanup
   au! OptionSet
-  call test_override('starting', 0)
+  call Ntest_override('starting', 0)
   "delfunc! AutoCommandOptionSet
 endfunc
 
@@ -3599,8 +3597,7 @@ func Test_Visual_doautoall_redraw()
 endfunc
 
 func Test_get_Visual_selection_in_curbuf_autocmd()
-  throw 'Skipped: use test/functional/legacy/autocmd_spec.lua'
-  call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   new
   autocmd OptionSet list let b:text = getregion(getpos('.'), getpos('v'))
   call setline(1, 'foo bar baz')
@@ -3617,7 +3614,7 @@ func Test_get_Visual_selection_in_curbuf_autocmd()
 
   autocmd! OptionSet list
   bwipe!
-  call test_override('starting', 0)
+  call Ntest_override('starting', 0)
 endfunc
 
 " This was using freed memory.

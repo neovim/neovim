@@ -3284,7 +3284,7 @@ endfunc
 func Test_cclose_in_autocmd()
   " Problem is only triggered if "starting" is zero, so that the OptionSet
   " event will be triggered.
-  " call test_override('starting', 1)
+  call Ntest_override('starting', 1)
   augroup QF_Test
     au!
     au FileType qf :call assert_fails(':cclose', 'E788')
@@ -3294,7 +3294,7 @@ func Test_cclose_in_autocmd()
     au!
   augroup END
   augroup! QF_Test
-  " call test_override('starting', 0)
+  call Ntest_override('starting', 0)
 endfunc
 
 " Check that ":file" without an argument is possible even when "curbuf->b_ro_locked"
