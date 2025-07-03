@@ -4545,17 +4545,24 @@ Iter:rskip({n})                                                 *Iter:rskip()*
         (`Iter`)
 
 Iter:skip({n})                                                   *Iter:skip()*
-    Skips `n` values of an iterator pipeline.
+    Skips `n` values of an iterator pipeline, or all values satisfying a
+    predicate of a |list-iterator|.
 
     Example: >lua
 
         local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
         it:next()
         -- 9
+
+        local function pred(x) return x < 10 end
+        local it2 = vim.iter({ 3, 6, 9, 12 }):skip(pred)
+        it2:next()
+        -- 12
 <
 
     Parameters: ~
-      • {n}  (`number`) Number of values to skip.
+      • {n}  (`integer|fun(...):boolean`) Number of values to skip or a
+             predicate.
 
     Return: ~
         (`Iter`)
@@ -4573,7 +4580,8 @@ Iter:slice({first}, {last})                                     *Iter:slice()*
         (`Iter`)
 
 Iter:take({n})                                                   *Iter:take()*
-    Transforms an iterator to yield only the first n values.
+    Transforms an iterator to yield only the first n values, or all values
+    satisfying a predicate.
 
     Example: >lua
         local it = vim.iter({ 1, 2, 3, 4 }):take(2)
@@ -4583,10 +4591,18 @@ Iter:take({n})                                                   *Iter:take()*
         -- 2
         it:next()
         -- nil
+
+        local function pred(x) return x < 2 end
+        local it2 = vim.iter({ 1, 2, 3, 4 }):take(pred)
+        it2:next()
+        -- 1
+        it2:next()
+        -- nil
 <
 
     Parameters: ~
-      • {n}  (`integer`)
+      • {n}  (`integer|fun(...):boolean`) Number of values to take or a
+             predicate.
 
     Return: ~
         (`Iter`)

@@ -201,6 +201,7 @@ LUA
 • |vim.fs.root()| can define "equal priority" via nested lists.
 • |vim.version.range()| output can be converted to human-readable string with |tostring()|.
 • |vim.version.intersect()| computes intersection of two version ranges.
+• |Iter:take()| and |Iter:skip()| now optionally accept predicates.
 
 OPTIONS
 
