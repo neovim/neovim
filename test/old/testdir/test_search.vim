@@ -794,6 +794,7 @@ func Test_search_cmdline_incsearch_highlight()
 
   " clean up
   set noincsearch nohlsearch
+  call test_override("char_avail", 0)
   bw!
 endfunc
 
