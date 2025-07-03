@@ -2659,10 +2659,9 @@ endfunc
 
 " Test TextChangedI and TextChangedP
 func Test_ChangedP()
-  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
   new
   call setline(1, ['foo', 'bar', 'foobar'])
-  call test_override("char_avail", 1)
+  call Ntest_override("char_avail", 1)
   set complete=. completeopt=menuone
 
   func! TextChangedAutocmd(char)
@@ -2703,7 +2702,7 @@ func Test_ChangedP()
   " TODO: how should it handle completeopt=noinsert,noselect?
 
   " CleanUp
-  call test_override("char_avail", 0)
+  call Ntest_override("char_avail", 0)
   au! TextChanged
   au! TextChangedI
   au! TextChangedP
@@ -2723,9 +2722,8 @@ func SetLineOne()
 endfunc
 
 func Test_TextChangedI_with_setline()
-  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
   new
-  call test_override('char_avail', 1)
+  call Ntest_override('char_avail', 1)
   autocmd TextChangedI <buffer> call SetLineOne()
   call feedkeys("i(\<CR>\<Esc>", 'tx')
   call assert_equal('(', getline(1))
@@ -2734,7 +2732,7 @@ func Test_TextChangedI_with_setline()
   call assert_equal('', getline(1))
   call assert_equal('', getline(2))
 
-  call test_override('char_avail', 0)
+  call Ntest_override('char_avail', 0)
   bwipe!
 endfunc
 
