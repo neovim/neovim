@@ -179,9 +179,17 @@ void buf_updates_unload(buf_T *buf, bool can_reload)
       // the first argument is always the buffer handle
       ADD_C(args, BUFFER_OBJ(buf->handle));
 
+      buf->b_locked++;
+      if (!can_reload) {
+        buf->b_locked_split++;
+      }
       TEXTLOCK_WRAP({
         nlua_call_ref(thecb, keep ? "reload" : "detach", args, false, NULL, NULL);
       });
+      buf->b_locked--;
+      if (!can_reload) {
+        buf->b_locked_split--;
+      }
     }
 
     if (keep) {
