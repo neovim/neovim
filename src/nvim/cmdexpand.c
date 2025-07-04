@@ -3988,14 +3988,8 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
 
     if (compl_started) {
       // If we've looped back to an earlier match, stop
-      if ((dir == FORWARD
-           && (cur_match_pos.lnum < prev_match_pos.lnum
-               || (cur_match_pos.lnum == prev_match_pos.lnum
-                   && cur_match_pos.col <= prev_match_pos.col)))
-          || (dir == BACKWARD
-              && (cur_match_pos.lnum > prev_match_pos.lnum
-                  || (cur_match_pos.lnum == prev_match_pos.lnum
-                      && cur_match_pos.col >= prev_match_pos.col)))) {
+      if ((dir == FORWARD && ltoreq(cur_match_pos, prev_match_pos))
+          || (dir == BACKWARD && ltoreq(prev_match_pos, cur_match_pos))) {
         if (looped_around) {
           break;
         } else {
