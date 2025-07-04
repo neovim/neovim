@@ -4841,7 +4841,7 @@ static void ex_quitall_or_restart(exarg_T *eap)
   if ((eap->forceit || !check_changed_any(false, false))
       && (eap->cmdidx != CMD_restart || remote_ui_restart(current_ui, &err))) {
     if (eap->cmdidx == CMD_restart) {
-      char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+      char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : (eap->forceit) ? "qall!" : "qall";
       nvim_command(cstr_as_string(quit_cmd), &err);
       if (ERROR_SET(&err)) {
         emsg(err.msg);  // Could not exit

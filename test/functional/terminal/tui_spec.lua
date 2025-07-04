@@ -3810,7 +3810,7 @@ describe('TUI client', function()
     feed_data(':restart!\n')
     screen_client:expect([[
       ^                                                  |
-      {100:~                                                 }|*4
+      {3:~}                                                 |*4
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
