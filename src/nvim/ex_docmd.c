@@ -6016,7 +6016,7 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   }
 
   last_chdir_reason = NULL;
-  shorten_fnames(true);
+  shorten_fnames(vim_strchr(p_cpo, CPO_NOSYMLINKS) == NULL);
 
   if (trigger_dirchanged) {
     do_autocmd_dirchanged(cwd, scope, kCdCauseManual, false);
