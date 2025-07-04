@@ -3234,6 +3234,89 @@ describe('LSP', function()
           end)
         )
       end)
+
+      it('handles deprecated items', function()
+        local expected = {
+          {
+            col = 1,
+            end_col = 1,
+            end_lnum = 2,
+            filename = '',
+            kind = 'File',
+            lnum = 2,
+            text = '[File] TestA (deprecated)',
+          },
+          {
+            col = 1,
+            end_col = 1,
+            end_lnum = 6,
+            filename = '',
+            kind = 'Namespace',
+            lnum = 6,
+            text = '[Namespace] TestC (deprecated)',
+          },
+        }
+        eq(
+          expected,
+          exec_lua(function()
+            local doc_syms = {
+              {
+                deprecated = true,
+                detail = 'A',
+                kind = 1,
+                name = 'TestA',
+                range = {
+                  start = {
+                    character = 0,
+                    line = 1,
+                  },
+                  ['end'] = {
+                    character = 0,
+                    line = 2,
+                  },
+                },
+                selectionRange = {
+                  start = {
+                    character = 0,
+                    line = 1,
+                  },
+                  ['end'] = {
+                    character = 4,
+                    line = 1,
+                  },
+                },
+              },
+              {
+                detail = 'C',
+                kind = 3,
+                name = 'TestC',
+                range = {
+                  start = {
+                    character = 0,
+                    line = 5,
+                  },
+                  ['end'] = {
+                    character = 0,
+                    line = 6,
+                  },
+                },
+                selectionRange = {
+                  start = {
+                    character = 0,
+                    line = 5,
+                  },
+                  ['end'] = {
+                    character = 4,
+                    line = 5,
+                  },
+                },
+                tags = { 1 }, -- deprecated
+              },
+            }
+            return vim.lsp.util.symbols_to_items(doc_syms, nil, 'utf-16')
+          end)
+        )
+      end)
     end)
 
     it('convert SymbolInformation[] to items', function()

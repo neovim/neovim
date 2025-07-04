@@ -144,6 +144,11 @@ local constants = {
     TypeParameter = 26,
   },
 
+  -- Extra annotations that tweak the rendering of a symbol.
+  SymbolTag = {
+    Deprecated = 1,
+  },
+
   -- Represents reasons why a text document is saved.
   TextDocumentSaveReason = {
     -- Manually triggered, e.g. by the user pressing save, by starting debugging,
@@ -525,6 +530,9 @@ function protocol.make_client_capabilities()
           valueSet = get_value_set(constants.SymbolKind),
         },
         hierarchicalDocumentSymbolSupport = true,
+        tagSupport = {
+          valueSet = get_value_set(constants.SymbolTag),
+        },
       },
       rename = {
         dynamicRegistration = true,
