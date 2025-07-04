@@ -2699,7 +2699,7 @@ end
 --- To customise appearance, set diagnostic signs text with
 --- ```lua
 --- vim.diagnostic.config({
----   signs = { text = { [vim.diagnostic.severity.ERROR] = 'Error', ... } }
+---   signs = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
 --- })
 --- ```
 ---
