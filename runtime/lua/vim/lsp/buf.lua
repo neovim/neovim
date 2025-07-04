@@ -128,13 +128,6 @@ function M.hover(config)
     -- Remove last linebreak ('---')
     contents[#contents] = nil
 
-    if vim.tbl_isempty(contents) then
-      if config.silent ~= true then
-        vim.notify('No information available')
-      end
-      return
-    end
-
     local _, winid = lsp.util.open_floating_preview(contents, format, config)
 
     api.nvim_create_autocmd('WinClosed', {
@@ -879,7 +872,7 @@ local hierarchy_methods = {
 local function hierarchy(method)
   local kind = hierarchy_methods[method]
   if not kind then
-    error('unsupported method ' .. method)
+    vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
   end
 
   local prepare_method = kind == 'type' and ms.textDocument_prepareTypeHierarchy
@@ -1282,9 +1275,7 @@ function M.code_action(opts)
   local win = api.nvim_get_current_win()
   local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_codeAction })
   if not next(clients) then
-    if next(lsp.get_clients({ bufnr = bufnr })) then
-      vim.notify(lsp._unsupported_method(ms.textDocument_codeAction), vim.log.levels.WARN)
-    end
+    vim.notify(lsp._unsupported_method(ms.textDocument_codeAction), vim.log.levels.WARN)
     return
   end
 
