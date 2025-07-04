@@ -242,7 +242,7 @@ static void ExpandEscape(expand_T *xp, char *str, int numfiles, char **files, in
 int nextwild(expand_T *xp, int type, int options, bool escape)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
-  char *p2;
+  char *p;
 
   if (xp->xp_numfiles == -1) {
     if (ccline->input_fn && ccline->xp_context == EXPAND_COMMANDS) {
@@ -281,14 +281,14 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
       || type == WILD_PAGEUP || type == WILD_PAGEDOWN
       || type == WILD_PUM_WANT) {
     // Get next/previous match for a previous expanded pattern.
-    p2 = ExpandOne(xp, NULL, NULL, 0, type);
+    p = ExpandOne(xp, NULL, NULL, 0, type);
   } else {
-    char *p1;
+    char *tmp;
     if (cmdline_fuzzy_completion_supported(xp)) {
       // If fuzzy matching, don't modify the search string
-      p1 = xstrnsave(xp->xp_pattern, xp->xp_pattern_len);
+      tmp = xstrnsave(xp->xp_pattern, xp->xp_pattern_len);
     } else {
-      p1 = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
+      tmp = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
     }
     // Translate string into pattern and expand it.
     const int use_options = ((options & ~WILD_KEEP_SOLE_ITEM)
@@ -297,26 +297,27 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
                              | WILD_SILENT
                              | (escape ? WILD_ESCAPE : 0)
                              | (p_wic ? WILD_ICASE : 0));
-    p2 = ExpandOne(xp, p1, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
-                   use_options, type);
-    xfree(p1);
+    p = ExpandOne(xp, tmp, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
+                  use_options, type);
+    xfree(tmp);
     // Longest match: make sure it is not shorter, happens with :help.
-    if (p2 != NULL && type == WILD_LONGEST) {
+    if (p != NULL && type == WILD_LONGEST) {
       int j;
       for (j = 0; (size_t)j < xp->xp_pattern_len; j++) {
-        if (ccline->cmdbuff[i + j] == '*'
-            || ccline->cmdbuff[i + j] == '?') {
+        char c = ccline->cmdbuff[i + j];
+        if (c == '*' || c == '?') {
           break;
         }
       }
-      if ((int)strlen(p2) < j) {
-        XFREE_CLEAR(p2);
+      if ((int)strlen(p) < j) {
+        XFREE_CLEAR(p);
       }
     }
   }
 
-  if (p2 != NULL && !got_int) {
-    int difflen = (int)strlen(p2) - (int)(xp->xp_pattern_len);
+  if (p != NULL && !got_int) {
+    size_t plen = strlen(p);
+    int difflen = (int)plen - (int)(xp->xp_pattern_len);
     if (ccline->cmdlen + difflen + 4 > ccline->cmdbufflen) {
       realloc_cmdbuff(ccline->cmdlen + difflen + 4);
       xp->xp_pattern = ccline->cmdbuff + i;
@@ -325,7 +326,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     memmove(&ccline->cmdbuff[ccline->cmdpos + difflen],
             &ccline->cmdbuff[ccline->cmdpos],
             (size_t)ccline->cmdlen - (size_t)ccline->cmdpos + 1);
-    memmove(&ccline->cmdbuff[i], p2, strlen(p2));
+    memmove(&ccline->cmdbuff[i], p, plen);
     ccline->cmdlen += difflen;
     ccline->cmdpos += difflen;
   }
@@ -335,18 +336,18 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   // When expanding a ":map" command and no matches are found, assume that
   // the key is supposed to be inserted literally
-  if (xp->xp_context == EXPAND_MAPPINGS && p2 == NULL) {
+  if (xp->xp_context == EXPAND_MAPPINGS && p == NULL) {
     return FAIL;
   }
 
-  if (xp->xp_numfiles <= 0 && p2 == NULL) {
+  if (xp->xp_numfiles <= 0 && p == NULL) {
     beep_flush();
   } else if (xp->xp_numfiles == 1 && !(options & WILD_KEEP_SOLE_ITEM)) {
     // free expanded pattern
     ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
   }
 
-  xfree(p2);
+  xfree(p);
 
   return OK;
 }
@@ -922,33 +923,36 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   // Concatenate all matching names.  Unless interrupted, this can be slow
   // and the result probably won't be used.
   if (mode == WILD_ALL && xp->xp_numfiles > 0 && !got_int) {
-    size_t len = 0;
-    for (int i = 0; i < xp->xp_numfiles; i++) {
-      if (i > 0) {
-        if (xp->xp_prefix == XP_PREFIX_NO) {
-          len += 2;   // prefix "no"
-        } else if (xp->xp_prefix == XP_PREFIX_INV) {
-          len += 3;   // prefix "inv"
-        }
-      }
-      len += strlen(xp->xp_files[i]) + 1;
+    size_t ss_size = 0;
+    char *prefix = "";
+    char *suffix = (options & WILD_USE_NL) ? "\n" : " ";
+    const int n = xp->xp_numfiles - 1;
+
+    if (xp->xp_prefix == XP_PREFIX_NO) {
+      prefix = "no";
+      ss_size = STRLEN_LITERAL("no") * (size_t)n;
+    } else if (xp->xp_prefix == XP_PREFIX_INV) {
+      prefix = "inv";
+      ss_size = STRLEN_LITERAL("inv") * (size_t)n;
     }
-    ss = xmalloc(len);
+
+    for (int i = 0; i < xp->xp_numfiles; i++) {
+      ss_size += strlen(xp->xp_files[i]) + 1;  // +1 for the suffix
+    }
+    ss_size++;  // +1 for the NUL
+
+    ss = xmalloc(ss_size);
     *ss = NUL;
     char *ssp = ss;
     for (int i = 0; i < xp->xp_numfiles; i++) {
       if (i > 0) {
-        if (xp->xp_prefix == XP_PREFIX_NO) {
-          ssp = xstpcpy(ssp, "no");
-        } else if (xp->xp_prefix == XP_PREFIX_INV) {
-          ssp = xstpcpy(ssp, "inv");
-        }
+        ssp = xstpcpy(ssp, prefix);
       }
       ssp = xstpcpy(ssp, xp->xp_files[i]);
-
-      if (i != xp->xp_numfiles - 1) {
-        ssp = xstpcpy(ssp, (options & WILD_USE_NL) ? "\n" : " ");
+      if (i < n) {
+        ssp = xstpcpy(ssp, suffix);
       }
+      assert(ssp < ss + ss_size);
     }
   }
 
@@ -2554,25 +2558,37 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
   // for ":set path=" and ":set tags=" halve backslashes for escaped space
   if (xp->xp_backslash != XP_BS_NONE) {
     free_pat = true;
-    pat = xstrdup(pat);
-    for (int i = 0; pat[i]; i++) {
-      if (pat[i] == '\\') {
-        if (xp->xp_backslash & XP_BS_THREE
-            && pat[i + 1] == '\\'
-            && pat[i + 2] == '\\'
-            && pat[i + 3] == ' ') {
-          STRMOVE(pat + i, pat + i + 3);
-        } else if (xp->xp_backslash & XP_BS_ONE
-                   && pat[i + 1] == ' ') {
-          STRMOVE(pat + i, pat + i + 1);
-        } else if ((xp->xp_backslash & XP_BS_COMMA)
-                   && pat[i + 1] == '\\'
-                   && pat[i + 2] == ',') {
-          STRMOVE(pat + i, pat + i + 2);
+    size_t pat_len = strlen(pat);
+    pat = xstrnsave(pat, pat_len);
+
+    char *pat_end = pat + pat_len;
+    for (char *p = pat; *p != NUL; p++) {
+      if (*p != '\\') {
+        continue;
+      }
+
+      if (xp->xp_backslash & XP_BS_THREE
+          && *(p + 1) == '\\'
+          && *(p + 2) == '\\'
+          && *(p + 3) == ' ') {
+        char *from = p + 3;
+        memmove(p, from, (size_t)(pat_end - from) + 1);  // +1 for NUL
+        pat_end -= 3;
+      } else if (xp->xp_backslash & XP_BS_ONE
+                 && *(p + 1) == ' ') {
+        char *from = p + 1;
+        memmove(p, from, (size_t)(pat_end - from) + 1);  // +1 for NUL
+        pat_end--;
+      } else if (xp->xp_backslash & XP_BS_COMMA) {
+        if (*(p + 1) == '\\' && *(p + 2) == ',') {
+          char *from = p + 2;
+          memmove(p, from, (size_t)(pat_end - from) + 1);  // +1 for NUL
+          pat_end -= 2;
 #ifdef BACKSLASH_IN_FILENAME
-        } else if ((xp->xp_backslash & XP_BS_COMMA)
-                   && pat[i + 1] == ',') {
-          STRMOVE(pat + i, pat + i + 1);
+        } else if (*(p + 1) == ',') {
+          char *from = p + 1;
+          memmove(p, from, (size_t)(pat_end - from) + 1);  // +1 for NUL
+          pat_end--;
 #endif
         }
       }
@@ -2623,21 +2639,24 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
 /// ":filetype {plugin,indent}" command.
 static char *get_filetypecmd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 {
-  char *opts_all[] = { "indent", "plugin", "on", "off" };
-  char *opts_plugin[] = { "plugin", "on", "off" };
-  char *opts_indent[] = { "indent", "on", "off" };
-  char *opts_onoff[] = { "on", "off" };
+  if (idx < 0) {
+    return NULL;
+  }
 
   if (filetype_expand_what == EXP_FILETYPECMD_ALL && idx < 4) {
+    char *opts_all[] = { "indent", "plugin", "on", "off" };
     return opts_all[idx];
   }
   if (filetype_expand_what == EXP_FILETYPECMD_PLUGIN && idx < 3) {
+    char *opts_plugin[] = { "plugin", "on", "off" };
     return opts_plugin[idx];
   }
   if (filetype_expand_what == EXP_FILETYPECMD_INDENT && idx < 3) {
+    char *opts_indent[] = { "indent", "on", "off" };
     return opts_indent[idx];
   }
   if (filetype_expand_what == EXP_FILETYPECMD_ONOFF && idx < 2) {
+    char *opts_onoff[] = { "on", "off" };
     return opts_onoff[idx];
   }
   return NULL;
@@ -2648,9 +2667,9 @@ static char *get_filetypecmd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 /// ":breakdel {func, file, here}" command.
 static char *get_breakadd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 {
-  char *opts[] = { "expr", "file", "func", "here" };
-
   if (idx >= 0 && idx <= 3) {
+    char *opts[] = { "expr", "file", "func", "here" };
+
     // breakadd {expr, file, func, here}
     if (breakpt_expand_what == EXP_BREAKPT_ADD) {
       return opts[idx];
@@ -3368,19 +3387,24 @@ static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
 void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dirs)
   FUNC_ATTR_NONNULL_ALL
 {
+  char *buf = xmalloc(MAXPATHL);
+
   expand_T xpc;
   ExpandInit(&xpc);
   xpc.xp_context = dirs ? EXPAND_DIRECTORIES : EXPAND_FILES;
 
-  char *buf = xmalloc(MAXPATHL);
+  size_t filelen = strlen(file);
 
   // Loop over all entries in {path}.
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
-    copy_option_part(&path, buf, MAXPATHL, ",");
-    if (strlen(buf) + strlen(file) + 2 < MAXPATHL) {
-      add_pathsep(buf);
-      strcat(buf, file);
+    size_t buflen = copy_option_part(&path, buf, MAXPATHL, ",");
+    if (buflen + filelen + 2 < MAXPATHL) {
+      if (*buf != NUL && !after_pathsep(buf, buf + buflen)) {
+        STRCPY(buf + buflen, PATHSEPSTR);
+        buflen += STRLEN_LITERAL(PATHSEPSTR);
+      }
+      STRCPY(buf + buflen, file);
 
       char **p;
       int num_p = 0;
