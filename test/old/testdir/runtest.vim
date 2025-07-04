@@ -171,7 +171,7 @@ if s:has_ffi
   lua << trim EOF
     require('ffi').cdef([[
       int starting;
-      bool disable_char_avail_for_testing;
+      bool test_disable_char_avail;
     ]])
   EOF
 endif
@@ -200,7 +200,7 @@ func Ntest_override(name, val)
   endif
 
   if a:name ==# 'char_avail' || a:name ==# 'ALL'
-    exe 'lua require("ffi").C.disable_char_avail_for_testing =' a:val
+    exe 'lua require("ffi").C.test_disable_char_avail =' a:val
   endif
 endfunc
 
