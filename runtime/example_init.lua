@@ -86,3 +86,8 @@ end, { desc = 'Print the git blame for the current line' })
 -- For example, to add the "nohlsearch" package to automatically turn off search highlighting after
 -- 'updatetime' and when going to insert mode
 vim.cmd('packadd! nohlsearch')
+
+-- [[ Install plugins ]]
+-- Nvim functionality can be extended by installing external plugins.
+-- One way to do it is with a built-in plugin manager. See `:h vim.pack`.
+vim.pack.add({ 'https://github.com/neovim/nvim-lspconfig' })
