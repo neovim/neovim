@@ -2600,16 +2600,17 @@ function M.match(str, pat, groups, severity_map, defaults)
     return
   end
 
-  local diagnostic = {}
+  local diagnostic = {} --- @type table<string,any>
 
   for i, match in ipairs(matches) do
     local field = groups[i]
     if field == 'severity' then
-      match = severity_map[match]
+      diagnostic[field] = severity_map[match]
     elseif field == 'lnum' or field == 'end_lnum' or field == 'col' or field == 'end_col' then
-      match = assert(tonumber(match)) - 1
+      diagnostic[field] = assert(tonumber(match)) - 1
+    elseif field then
+      diagnostic[field] = match
     end
-    diagnostic[field] = match --- @type any
   end
 
   diagnostic = vim.tbl_extend('keep', diagnostic, defaults or {}) --- @type vim.Diagnostic
