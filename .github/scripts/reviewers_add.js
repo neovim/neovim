@@ -90,6 +90,7 @@ module.exports = async ({ github, context }) => {
     reviewers.add("clason");
     reviewers.add("lewis6991");
     reviewers.add("wookayin");
+    reviewers.add("ribru17");
   }
 
   if (labels.includes("tui")) {
