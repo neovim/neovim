@@ -2137,6 +2137,8 @@ vim.go.ei = vim.go.eventignore
 --- 	`MenuPopup`,
 --- 	`ModeChanged`,
 --- 	`OptionSet`,
+--- 	`PackChanged`,
+--- 	`PackChangedPre`,
 --- 	`QuickFixCmdPost`,
 --- 	`QuickFixCmdPre`,
 --- 	`QuitPre`,
