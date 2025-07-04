@@ -15,6 +15,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
+#include "nvim/api/vimscript.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -4839,7 +4840,17 @@ static void ex_quitall_or_restart(exarg_T *eap)
   Error err = ERROR_INIT;
   if ((eap->forceit || !check_changed_any(false, false))
       && (eap->cmdidx != CMD_restart || remote_ui_restart(current_ui, &err))) {
-    getout(0);
+    if (eap->cmdidx == CMD_restart) {
+      char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+      nvim_command(cstr_as_string(quit_cmd), &err);
+      if (ERROR_SET(&err)) {
+        emsg(err.msg);  // Could not exit
+        api_clear_error(&err);
+        not_exiting();
+      }
+    } else {
+      getout(0);
+    }
   }
   not_exiting();
   if (ERROR_SET(&err)) {
