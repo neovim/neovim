@@ -122,16 +122,12 @@ describe('ui/ext_messages', function()
     })
 
     -- kind=wmsg ('wrapscan' after search reaches EOF)
-    feed('uG$/i<CR>G$')
+    command('silent undo')
+    feed('G$/i<CR>G$')
     screen:expect {
       grid = s1,
       cmdline = { { abort = false } },
       messages = {
-        {
-          content = { { '1 change; before #2  0 seconds ago' } },
-          history = true,
-          kind = 'undo',
-        },
         { content = { { '/i ' } }, kind = 'search_cmd' },
         {
           content = { { 'search hit BOTTOM, continuing at TOP', 19, 26 } },
