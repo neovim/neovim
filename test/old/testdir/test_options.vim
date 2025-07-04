@@ -2265,7 +2265,7 @@ func Test_VIM_POSIX()
     qall
   [CODE]
   if RunVim([], after, '')
-    call assert_equal(['aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\.;',
+    call assert_equal(['aAbBcCdDeEfFgHiIjJkKlLmMnoOpPqrRsStuvwWxXyZ$!%*-+<>#{|&/\.;~',
           \            'AS'], readfile('X_VIM_POSIX'))
   endif
 
@@ -2527,8 +2527,8 @@ func Test_string_option_revert_on_failure()
         \ ['completeopt', 'preview', 'a123'],
         "\ ['completepopup', 'width:20', 'border'],
         \ ['concealcursor', 'v', 'xyz'],
-        "\ ['cpoptions', 'HJ', '~'],
-        \ ['cpoptions', 'J', '~'],
+        "\ ['cpoptions', 'HJ', 'Q'],
+        \ ['cpoptions', 'J', 'Q'],
         "\ ['cryptmethod', 'zip', 'a123'],
         \ ['cursorlineopt', 'screenline', 'a123'],
         \ ['debug', 'throw', 'a123'],
