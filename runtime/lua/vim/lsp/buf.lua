@@ -128,13 +128,6 @@ function M.hover(config)
     -- Remove last linebreak ('---')
     contents[#contents] = nil
 
-    if vim.tbl_isempty(contents) then
-      if config.silent ~= true then
-        vim.notify('No information available')
-      end
-      return
-    end
-
     local _, winid = lsp.util.open_floating_preview(contents, format, config)
 
     api.nvim_create_autocmd('WinClosed', {
