@@ -166,6 +166,57 @@ endif
 " Prepare for calling test_garbagecollect_now().
 let v:testing = 1
 
+let s:has_ffi = luaeval('pcall(require, "ffi")')
+if s:has_ffi
+  lua << trim EOF
+    require('ffi').cdef([[
+      int starting;
+      bool disable_char_avail_for_testing;
+    ]])
+  EOF
+endif
+
+" This can emulate test_override('starting') and test_override('char_avail')
+" if LuaJIT FFI is enabled.
+" Other flags are not supported.
+func Ntest_override(name, val)
+  if a:name !=# 'starting' && a:name != 'char_avail' && a:name !=# 'ALL'
+    throw 'Unexpected use of Ntest_override()'
+  endif
+  if !s:has_ffi
+    throw 'Skipped: missing LuaJIT FFI'
+  endif
+
+  if a:name ==# 'starting' || a:name ==# 'ALL'
+    if a:val
+      if !exists('s:save_starting')
+        let s:save_starting = luaeval('require("ffi").C.starting')
+      endif
+      lua require("ffi").C.starting = 0
+    elseif exists('s:save_starting')
+      exe 'lua require("ffi").C.starting =' s:save_starting
+      unlet s:save_starting
+    endif
+  endif
+
+  if a:name ==# 'char_avail' || a:name ==# 'ALL'
+    exe 'lua require("ffi").C.disable_char_avail_for_testing =' a:val
+  endif
+endfunc
+
+" roughly equivalent to test_setmouse() in Vim
+func Ntest_setmouse(row, col)
+  call nvim_input_mouse('move', '', '', 0, a:row - 1, a:col - 1)
+  if state('m') == ''
+    call getchar(0)
+  endif
+endfunc
+
+" roughly equivalent to term_wait() in Vim
+func Nterm_wait(buf, time = 10)
+  execute $'sleep {a:time}m'
+endfunc
+
 " Support function: get the alloc ID by name.
 func GetAllocId(name)
   exe 'split ' . s:srcdir . '/alloc.h'
@@ -277,6 +328,10 @@ func RunTheTest(test)
       call add(s:skipped, 'SKIPPED ' . a:test . ': ' . g:skipped_reason)
       let skipped = v:true
     endif
+  elseif !s:has_ffi && execute('func ' .. a:test[:-3])->match("\n[ 0-9]*call Ntest_override(") >= 0
+    call add(s:messages, '    Skipped')
+    call add(s:skipped, 'SKIPPED ' . a:test . ': missing LuaJIT FFI' . )
+    let skipped = v:true
   else
     try
       exe 'call ' . a:test

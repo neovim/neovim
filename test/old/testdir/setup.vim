@@ -72,44 +72,6 @@ autocmd! nvim.popupmenu
 " Undo the 'grepprg' and 'grepformat' setting in _defaults.lua.
 set grepprg& grepformat&
 
-let s:has_ffi = luaeval('pcall(require, "ffi")')
-if s:has_ffi
-  lua require("ffi").cdef("int starting;")
-endif
-
-" This can emulate test_override('starting', val) if LuaJIT FFI is enabled.
-" Other flags are not supported.
-func Ntest_override(name, val)
-  if a:name !=# 'starting'
-    throw "Do not use Ntest_override() for this"
-  endif
-  if !s:has_ffi
-    throw 'Skipped: missing LuaJIT FFI'
-  endif
-  if a:val
-    if !exists('s:save_starting')
-      let s:save_starting = luaeval('require("ffi").C.starting')
-    endif
-    lua require("ffi").C.starting = 0
-  else
-    exe 'lua require("ffi").C.starting =' s:save_starting
-    unlet s:save_starting
-  endif
-endfunc
-
-" roughly equivalent to test_setmouse() in Vim
-func Ntest_setmouse(row, col)
-  call nvim_input_mouse('move', '', '', 0, a:row - 1, a:col - 1)
-  if state('m') == ''
-    call getchar(0)
-  endif
-endfunc
-
-" roughly equivalent to term_wait() in Vim
-func Nterm_wait(buf, time = 10)
-  execute $'sleep {a:time}m'
-endfunc
-
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 
