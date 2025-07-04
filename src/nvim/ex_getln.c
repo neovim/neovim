@@ -282,38 +282,25 @@ static void set_search_match(pos_T *t)
   }
 }
 
-// Return true when 'incsearch' highlighting is to be done.
-// Sets search_first_line and search_last_line to the address range.
-static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_state_T *s,
-                                      int *skiplen, int *patlen)
+/// Parses the :[range]s/foo like commands and returns details needed for
+/// incsearch and wildmenu completion.
+/// Returns true if pattern is valid.
+/// Sets skiplen, patlen, search_first_line, and search_last_line.
+bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *skiplen, int *patlen)
   FUNC_ATTR_NONNULL_ALL
 {
   char *p;
   bool delim_optional = false;
   const char *dummy;
-  bool retval = false;
   magic_T magic = 0;
 
   *skiplen = 0;
   *patlen = ccline.cmdlen;
 
-  if (!p_is || cmd_silent) {
-    return false;
-  }
-
-  // by default search all lines
+  // Default range
   search_first_line = 0;
   search_last_line = MAXLNUM;
 
-  if (firstc == '/' || firstc == '?') {
-    *search_delim = firstc;
-    return true;
-  }
-  if (firstc != ':') {
-    return false;
-  }
-
-  emsg_off++;
   exarg_T ea = {
     .line1 = 1,
     .line2 = 1,
@@ -322,17 +309,19 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   };
 
   cmdmod_T dummy_cmdmod;
+  // Skip over command modifiers
   parse_command_modifiers(&ea, &dummy, &dummy_cmdmod, true);
 
+  // Skip over the range to find the command.
   char *cmd = skip_range(ea.cmd, NULL);
   if (vim_strchr("sgvl", (uint8_t)(*cmd)) == NULL) {
-    goto theend;
+    return false;
   }
 
-  // Skip over "substitute" to find the pattern separator.
+  // Skip over command name to find pattern separator
   for (p = cmd; ASCII_ISALPHA(*p); p++) {}
   if (*skipwhite(p) == NUL) {
-    goto theend;
+    return false;
   }
 
   if (strncmp(cmd, "substitute", (size_t)(p - cmd)) == 0
@@ -354,70 +343,105 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
       p++;
     }
     if (*p == NUL) {
-      goto theend;
+      return false;
     }
   } else if (strncmp(cmd, "vimgrep", (size_t)MAX(p - cmd, 3)) == 0
              || strncmp(cmd, "vimgrepadd", (size_t)MAX(p - cmd, 8)) == 0
              || strncmp(cmd, "lvimgrep", (size_t)MAX(p - cmd, 2)) == 0
              || strncmp(cmd, "lvimgrepadd", (size_t)MAX(p - cmd, 9)) == 0
              || strncmp(cmd, "global", (size_t)(p - cmd)) == 0) {
-    // skip over "!/".
+    // skip optional "!"
     if (*p == '!') {
       p++;
       if (*skipwhite(p) == NUL) {
-        goto theend;
+        return false;
       }
     }
     if (*cmd != 'g') {
       delim_optional = true;
     }
   } else {
-    goto theend;
+    return false;
   }
 
   p = skipwhite(p);
   int delim = (delim_optional && vim_isIDc((uint8_t)(*p))) ? ' ' : *p++;
   *search_delim = delim;
-  char *end = skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic);
 
+  char *end = skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic);
   bool use_last_pat = end == p && *end == delim;
+
   if (end == p && !use_last_pat) {
-    goto theend;
+    return false;
   }
 
-  // Don't do 'hlsearch' highlighting if the pattern matches everything.
+  // Skip if the pattern matches everything (e.g., for 'hlsearch')
   if (!use_last_pat) {
     char c = *end;
     *end = NUL;
     bool empty = empty_pattern_magic(p, (size_t)(end - p), magic);
     *end = c;
     if (empty) {
-      goto theend;
+      return false;
     }
   }
 
-  // found a non-empty pattern or //
+  // Found a non-empty pattern or //
   *skiplen = (int)(p - ccline.cmdbuff);
   *patlen = (int)(end - p);
 
-  // parse the address range
+  // Parse the address range
   pos_T save_cursor = curwin->w_cursor;
-  curwin->w_cursor = s->search_start;
+  curwin->w_cursor = *incsearch_start;
+
   parse_cmd_address(&ea, &dummy, true);
+
   if (ea.addr_count > 0) {
     // Allow for reverse match.
     search_first_line = MIN(ea.line2, ea.line1);
     search_last_line = MAX(ea.line2, ea.line1);
   } else if (cmd[0] == 's' && cmd[1] != 'o') {
     // :s defaults to the current line
-    search_first_line = curwin->w_cursor.lnum;
-    search_last_line = curwin->w_cursor.lnum;
+    search_first_line = search_last_line = curwin->w_cursor.lnum;
   }
 
   curwin->w_cursor = save_cursor;
-  retval = true;
-theend:
+  return true;
+}
+
+/// Return true when 'incsearch' highlighting is to be done.
+/// Sets search_first_line and search_last_line to the address range.
+/// May change the last search pattern.
+static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_state_T *is_state,
+                                      int *skiplen, int *patlen)
+{
+  bool retval = false;
+
+  *skiplen = 0;
+  *patlen = ccline.cmdlen;
+
+  if (!p_is || cmd_silent) {
+    return false;
+  }
+
+  // By default search all lines
+  search_first_line = 0;
+  search_last_line = MAXLNUM;
+
+  if (firstc == '/' || firstc == '?') {
+    *search_delim = firstc;
+    return true;
+  }
+
+  if (firstc != ':') {
+    return false;
+  }
+
+  emsg_off++;
+  retval = parse_pattern_and_range(&is_state->search_start, search_delim,
+                                   skiplen, patlen);
   emsg_off--;
+
   return retval;
 }
 
@@ -1114,6 +1138,10 @@ static int command_line_wildchar_complete(CommandLineState *s)
       res = OK;                 // don't insert 'wildchar' now
     }
   } else {                    // typed p_wc first time
+    if (s->c == p_wc || s->c == p_wcm) {
+      options |= WILD_MAY_EXPAND_PATTERN;
+      s->xpc.xp_pre_incsearch_pos = s->is_state.search_start;
+    }
     s->wim_index = 0;
     int j = ccline.cmdpos;
 
@@ -1320,6 +1348,9 @@ static int command_line_execute(VimState *state, int key)
       || s->c == Ctrl_C) {
     trigger_cmd_autocmd(s->cmdline_type, EVENT_CMDLINELEAVEPRE);
     s->event_cmdlineleavepre_triggered = true;
+    if ((s->c == ESC || s->c == Ctrl_C) && (wim_flags[0] & kOptWimFlagList)) {
+      set_no_hlsearch(true);
+    }
   }
 
   // The wildmenu is cleared if the pressed key is not used for
@@ -1435,6 +1466,15 @@ static int command_line_execute(VimState *state, int key)
   // If already used to cancel/accept wildmenu, don't process the key further.
   if (wild_type == WILD_CANCEL || wild_type == WILD_APPLY) {
     return command_line_not_changed(s);
+    // Apply search highlighting
+    if (wild_type == WILD_APPLY) {
+      if (s->is_state.winid != curwin->handle) {
+        init_incsearch_state(&s->is_state);
+      }
+      if (KeyTyped || vpeekc() == NUL) {
+        may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
+      }
+    }
   }
 
   return command_line_handle_key(s);

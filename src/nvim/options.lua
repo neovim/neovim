@@ -10101,7 +10101,9 @@ local options = {
         	:set wc=X
         	:set wc=^I
         	set wc=<Tab>
-        <
+        <	'wildchar' also enables completion in search pattern contexts such as
+        |/|, |?|, |:s|, |:g|, |:v|, and |:vim|.  To insert a literal <Tab>
+        instead of triggering completion, type <C-V><Tab> or "\t".
       ]=],
       full_name = 'wildchar',
       scope = { 'global' },

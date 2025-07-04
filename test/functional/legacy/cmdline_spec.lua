@@ -357,6 +357,96 @@ describe('cmdline', function()
                             10,20         30% |
     ]])
   end)
+
+  -- oldtest: Test_search_wildmenu_screendump()
+  it('wildmenu for search completion', function()
+    local screen = Screen.new(60, 10)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Yellow, foreground = Screen.colors.Black },
+    })
+    exec([[
+      set wildmenu wildcharm=<f5> wildoptions-=pum
+      call setline(1, ['the', 'these', 'the', 'foobar', 'thethe', 'thethere'])
+    ]])
+
+    -- Pattern has newline at EOF
+    feed('gg2j/e\\n<f5>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*2
+      {100:e\nfoobar}{3:  e\nthethere  e\nthese  e\nthe                    }|
+      /e\nfoobar^                                                  |
+    ]])
+
+    -- longest:full
+    feed('<esc>')
+    command('set wim=longest,full')
+    feed('gg/t<f5>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*3
+      /the^                                                        |
+    ]])
+
+    -- list:full
+    feed('<esc>')
+    command('set wim=list,full')
+    feed('gg/t<f5>')
+    screen:expect([[
+      {10:t}he                                                         |
+      {10:t}hese                                                       |
+      {10:t}he                                                         |
+      foobar                                                      |
+      {10:t}he{10:t}he                                                      |
+      {10:t}he{10:t}here                                                    |
+      {3:                                                            }|
+      /t                                                          |
+      these     the       thethe    thethere  there               |
+      /t^                                                          |
+    ]])
+
+    -- noselect:full
+    feed('<esc>')
+    command('set wim=noselect,full')
+    feed('gg/t<f5>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*2
+      {3:these  the  thethe  thethere  there                         }|
+      /t^                                                          |
+    ]])
+
+    -- Multiline
+    feed('<esc>gg/t.*\\n.*\\n.<tab>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*2
+      {3:t.*\n.*\n.oobar  t.*\n.*\n.hethe  t.*\n.*\n.he              }|
+      /t.*\n.*\n.^                                                 |
+    ]])
+
+    feed('<esc>')
+  end)
 end)
 
 describe('cmdwin', function()
