@@ -2664,7 +2664,12 @@ describe('plugin/shada.vim', function()
     }, nvim_eval('getline(1, "$")'))
     eq(false, api.nvim_get_option_value('modified', {}))
     eq('shada', api.nvim_get_option_value('filetype', {}))
-    eq('++opt not supported', exc_exec('edit ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('edit ++enc=latin1 ' .. fname)
+      end)
+    )
     neq({
       'History entry with timestamp ' .. epoch .. ':',
       '  @ Description_  Value',
@@ -2707,7 +2712,12 @@ describe('plugin/shada.vim', function()
     eq(true, api.nvim_get_option_value('modified', {}))
     neq('shada', api.nvim_get_option_value('filetype', {}))
     api.nvim_set_option_value('modified', false, {})
-    eq('++opt not supported', exc_exec('$read ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('$read ++enc=latin1 ' .. fname)
+      end)
+    )
     eq({
       '',
       'History entry with timestamp ' .. epoch .. ':',
@@ -2744,7 +2754,12 @@ describe('plugin/shada.vim', function()
     nvim_command('w ' .. fname .. '.tst')
     nvim_command('w ' .. fname)
     nvim_command('w ' .. fname_tmp)
-    eq('++opt not supported', exc_exec('w! ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('w! ++enc=latin1 ' .. fname)
+      end)
+    )
     eq(table.concat({
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
@@ -2805,7 +2820,12 @@ describe('plugin/shada.vim', function()
     nvim_command('1,3w ' .. fname .. '.tst')
     nvim_command('1,3w ' .. fname)
     nvim_command('1,3w ' .. fname_tmp)
-    eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('1,3w! ++enc=latin1 ' .. fname)
+      end)
+    )
     eq(table.concat({
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
@@ -2855,7 +2875,12 @@ describe('plugin/shada.vim', function()
     nvim_command('w >> ' .. fname .. '.tst')
     nvim_command('w >> ' .. fname)
     nvim_command('w >> ' .. fname_tmp)
-    eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 >> ' .. fname))
+    t.matches(
+      '++opt not supported',
+      t.pcall_err(function()
+        nvim_command('1,3w! ++enc=latin1 >> ' .. fname)
+      end)
+    )
     eq(table.concat({
       'Jump with timestamp ' .. epoch .. ':',
       '  % Key________  Description  Value',
