@@ -156,8 +156,8 @@ void changed_internal(buf_T *buf)
 {
   if (!bt_prompt(buf)) {
     buf->b_changed = true;
-    buf->b_changed_invalid = true;
   }
+  buf->b_changed_invalid = true;
   ml_setflags(buf);
   redraw_buf_status_later(buf);
   redraw_tabline = true;
