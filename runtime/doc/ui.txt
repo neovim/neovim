@@ -893,8 +893,11 @@ must handle.
 	statusline. `content` has the same format as in "msg_show". This event is
 	sent with empty `content` to hide the last message.
 
-["msg_history_show", entries] ~
-	Sent when |:messages| command is invoked. History is sent as a list of
-	entries, where each entry is a `[kind, content, append]` tuple.
+["msg_history_show", entries, prev_cmd] ~
+	Sent when |:messages| or |g<| command is invoked. History is sent as a
+	list of entries, where each entry is a `[kind, content, append]` tuple.
+
+	prev_cmd
+	    True when sent with |g<| command, false with |:messages|.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

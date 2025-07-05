@@ -1409,8 +1409,8 @@ function Screen:_handle_msg_ruler(msg)
   self.ruler = msg
 end
 
-function Screen:_handle_msg_history_show(entries)
-  self.msg_history = entries
+function Screen:_handle_msg_history_show(entries, prev_cmd)
+  self.msg_history = { entries, prev_cmd }
 end
 
 function Screen:_clear_block(grid, top, bot, left, right)
@@ -1510,8 +1510,8 @@ function Screen:_extstate_repr(attr_state)
     }
   end
 
-  local msg_history = {}
-  for i, entry in ipairs(self.msg_history) do
+  local msg_history = { prev_cmd = self.msg_history[2] or nil }
+  for i, entry in ipairs(self.msg_history[1] or {}) do
     msg_history[i] = {
       kind = entry[1],
       content = self:_chunks_repr(entry[2], attr_state),

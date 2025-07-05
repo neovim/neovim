@@ -705,12 +705,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|*4
     ]],
       cmdline = { { abort = false } },
-      msg_history = {
-        {
-          content = { { 'bork\nfail', 9, 6 } },
-          kind = 'echoerr',
-        },
-      },
+      msg_history = { { content = { { 'bork\nfail', 9, 6 } }, kind = 'echoerr' } },
     }
   end)
 
@@ -861,10 +856,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|*2
     ]],
       cmdline = { { abort = false } },
-      msg_history = { {
-        content = { { 'stuff' } },
-        kind = 'echomsg',
-      } },
+      msg_history = { { content = { { 'stuff' } }, kind = 'echomsg' } },
     }
   end)
 
@@ -1571,6 +1563,7 @@ stack traceback:
         {1:~                        }|*4
       ]],
       msg_history = {
+        prev_cmd = true,
         { content = { { 'foo' } }, kind = 'echo' },
         { content = { { 'bar' } }, kind = 'echo' },
         { content = { { 'baz' } }, kind = 'echo', append = true },
@@ -1597,10 +1590,8 @@ stack traceback:
         {1:~                        }|*4
       ]],
       msg_history = {
-        {
-          content = { { "E354: Invalid register name: '^@'", 9, 6 } },
-          kind = 'emsg',
-        },
+        prev_cmd = true,
+        { content = { { "E354: Invalid register name: '^@'", 9, 6 } }, kind = 'emsg' },
       },
     })
   end)

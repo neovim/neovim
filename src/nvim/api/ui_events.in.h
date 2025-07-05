@@ -172,7 +172,7 @@ void msg_showmode(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_ruler(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void msg_history_show(Array entries)
+void msg_history_show(Array entries, Boolean prev_cmd)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 
 // This UI event is currently undocumented.
