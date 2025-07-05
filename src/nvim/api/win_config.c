@@ -1064,6 +1064,52 @@ static void generate_api_error(win_T *wp, const char *attribute, Error *err)
   }
 }
 
+/// Parses a border style name or custom (comma-separated) style.
+bool parse_winborder(WinConfig *fconfig, Error *err)
+{
+  if (!fconfig) {
+    return false;
+  }
+  Object style = OBJECT_INIT;
+
+  if (strchr(p_winborder, ',')) {
+    Array border_chars = ARRAY_DICT_INIT;
+    char *p = p_winborder;
+    char part[MAX_SCHAR_SIZE] = { 0 };
+    int count = 0;
+
+    while (*p != NUL) {
+      if (count >= 8) {
+        api_free_array(border_chars);
+        return false;
+      }
+
+      size_t part_len = copy_option_part(&p, part, sizeof(part), ",");
+      if (part_len == 0 || part[0] == NUL) {
+        api_free_array(border_chars);
+        return false;
+      }
+
+      String str = cstr_to_string(part);
+      ADD(border_chars, STRING_OBJ(str));
+      count++;
+    }
+
+    if (count != 8) {
+      api_free_array(border_chars);
+      return false;
+    }
+
+    style = ARRAY_OBJ(border_chars);
+  } else {
+    style = CSTR_TO_OBJ(p_winborder);
+  }
+
+  parse_border_style(style, fconfig, err);
+  api_free_object(style);
+  return !ERROR_SET(err);
+}
+
 static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fconfig, bool reconf,
                              Error *err)
 {
@@ -1297,14 +1343,15 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
       goto fail;
     }
     border_style = config->border;
-  } else if (*p_winborder != NUL && (wp == NULL || !wp->w_floating)) {
-    border_style = CSTR_AS_OBJ(p_winborder);
-  }
-  if (border_style.type != kObjectTypeNil) {
-    parse_border_style(border_style, fconfig, err);
-    if (ERROR_SET(err)) {
-      goto fail;
+    if (border_style.type != kObjectTypeNil) {
+      parse_border_style(border_style, fconfig, err);
+      if (ERROR_SET(err)) {
+        goto fail;
+      }
     }
+  } else if (*p_winborder != NUL && (wp == NULL || !wp->w_floating)
+             && !parse_winborder(fconfig, err)) {
+    goto fail;
   }
 
   if (HAS_KEY_X(config, style)) {
