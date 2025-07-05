@@ -33,6 +33,7 @@ set(BUILDCMD_UNIX ${MAKE_PRG} -j CFLAGS=-fPIC
                               ${NO_STACK_CHECK}
                               ${AMD64_ABI}
                               CCDEBUG+=-g
+                              BUILD_MODE=static
                               Q=)
 
 # Setting MACOSX_DEPLOYMENT_TARGET is mandatory for LuaJIT; use version set by
