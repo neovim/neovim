@@ -12,6 +12,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
@@ -2099,6 +2100,15 @@ const char *did_set_wildmode(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_winbar(optset_T *args)
 {
   return did_set_statustabline_rulerformat(args, false, false);
+}
+
+/// The 'winborder' option is changed.
+const char *did_set_winborder(optset_T *args)
+{
+  if (opt_strings_flags(args->os_newval.string.data, opt_winborder_values, NULL, false) != OK) {
+    return e_invarg;
+  }
+  return NULL;
 }
 
 /// The 'winhighlight' option is changed.
