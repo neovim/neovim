@@ -4,6 +4,11 @@ describe('vim.pack', function()
       -- TODO
     end)
 
+    pending('reports errors after loading', function()
+      -- TODO
+      -- Should handle (not let it terminate the function) and report errors from pack_add()
+    end)
+
     pending('respects after/', function()
       -- TODO
       -- Should source 'after/plugin/' directory (even nested files) after
