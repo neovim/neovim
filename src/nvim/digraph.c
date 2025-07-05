@@ -2040,7 +2040,7 @@ char *keymap_init(void)
 {
   curbuf->b_kmap_state &= ~KEYMAP_INIT;
 
-  if (*curbuf->b_p_keymap == NUL) {
+  if (*curbuf->b_p_kmp == NUL) {
     // Stop any active keymap and clear the table.  Also remove
     // b:keymap_name, as no keymap is active now.
     keymap_unload();
@@ -2048,17 +2048,17 @@ char *keymap_init(void)
   } else {
     // Source the keymap file.  It will contain a ":loadkeymap" command
     // which will call ex_loadkeymap() below.
-    size_t buflen = strlen(curbuf->b_p_keymap) + strlen(p_enc) + 14;
+    size_t buflen = strlen(curbuf->b_p_kmp) + strlen(p_enc) + 14;
     char *buf = xmalloc(buflen);
 
     // try finding "keymap/'keymap'_'encoding'.vim"  in 'runtimepath'
     vim_snprintf(buf, buflen, "keymap/%s_%s.vim",
-                 curbuf->b_p_keymap, p_enc);
+                 curbuf->b_p_kmp, p_enc);
 
     if (source_runtime(buf, 0) == FAIL) {
       // try finding "keymap/'keymap'.vim" in 'runtimepath'
       vim_snprintf(buf, buflen, "keymap/%s.vim",
-                   curbuf->b_p_keymap);
+                   curbuf->b_p_kmp);
 
       if (source_runtime(buf, 0) == FAIL) {
         xfree(buf);
@@ -2188,7 +2188,7 @@ int get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
 {
   char *p;
 
-  if (wp->w_buffer->b_p_iminsert != B_IMODE_LMAP) {
+  if (wp->w_buffer->b_p_imi != B_IMODE_LMAP) {
     return 0;
   }
 
@@ -2205,7 +2205,7 @@ int get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
   curwin = old_curwin;
   if (p == NULL || *p == NUL) {
     if (wp->w_buffer->b_kmap_state & KEYMAP_LOADED) {
-      p = wp->w_buffer->b_p_keymap;
+      p = wp->w_buffer->b_p_kmp;
     } else {
       p = "lang";
     }

@@ -716,7 +716,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
 
 static void save_chartab(char *chartab)
 {
-  if (syn_block->b_syn_isk == empty_string_option) {
+  if (syn_block->b_p_isk == empty_string_option) {
     return;
   }
 
@@ -726,7 +726,7 @@ static void save_chartab(char *chartab)
 
 static void restore_chartab(char *chartab)
 {
-  if (syn_win->w_s->b_syn_isk != empty_string_option) {
+  if (syn_win->w_s->b_p_isk != empty_string_option) {
     memmove(syn_buf->b_chartab, chartab, (size_t)32);
   }
 }
@@ -2925,16 +2925,16 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
   arg = skipwhite(arg);
   if (*arg == NUL) {
     msg_puts("\n");
-    if (curwin->w_s->b_syn_isk != empty_string_option) {
+    if (curwin->w_s->b_p_isk != empty_string_option) {
       msg_puts("syntax iskeyword ");
-      msg_outtrans(curwin->w_s->b_syn_isk, 0, false);
+      msg_outtrans(curwin->w_s->b_p_isk, 0, false);
     } else {
       msg_outtrans(_("syntax iskeyword not set"), 0, false);
     }
   } else {
     if (STRNICMP(arg, "clear", 5) == 0) {
       memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
-      clear_string_option(&curwin->w_s->b_syn_isk);
+      clear_string_option(&curwin->w_s->b_p_isk);
     } else {
       memmove(save_chartab, curbuf->b_chartab, (size_t)32);
       save_isk = curbuf->b_p_isk;
@@ -2943,8 +2943,8 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
       buf_init_chartab(curbuf, false);
       memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
       memmove(curbuf->b_chartab, save_chartab, (size_t)32);
-      clear_string_option(&curwin->w_s->b_syn_isk);
-      curwin->w_s->b_syn_isk = curbuf->b_p_isk;
+      clear_string_option(&curwin->w_s->b_p_isk);
+      curwin->w_s->b_p_isk = curbuf->b_p_isk;
       curbuf->b_p_isk = save_isk;
     }
   }
@@ -2989,7 +2989,7 @@ void syntax_clear(synblock_T *block)
   block->b_syn_linecont_prog = NULL;
   XFREE_CLEAR(block->b_syn_linecont_pat);
   block->b_syn_folditems = 0;
-  clear_string_option(&block->b_syn_isk);
+  clear_string_option(&block->b_p_isk);
 
   // free the stored states
   syn_stack_free_all(block);
@@ -3027,7 +3027,7 @@ static void syntax_sync_clear(void)
   vim_regfree(curwin->w_s->b_syn_linecont_prog);
   curwin->w_s->b_syn_linecont_prog = NULL;
   XFREE_CLEAR(curwin->w_s->b_syn_linecont_pat);
-  clear_string_option(&curwin->w_s->b_syn_isk);
+  clear_string_option(&curwin->w_s->b_p_isk);
 
   syn_stack_free_all(curwin->w_s);              // Need to recompute all syntax.
 }
@@ -5265,7 +5265,7 @@ void ex_ownsyntax(exarg_T *eap)
     clear_string_option(&curwin->w_s->b_p_spf);
     clear_string_option(&curwin->w_s->b_p_spl);
     clear_string_option(&curwin->w_s->b_p_spo);
-    clear_string_option(&curwin->w_s->b_syn_isk);
+    clear_string_option(&curwin->w_s->b_p_isk);
   }
 
   // Save value of b:current_syntax.

@@ -1131,7 +1131,7 @@ static int expand_in_path(garray_T *const gap, char *const pattern, const int fl
   FUNC_ATTR_NONNULL_ALL
 {
   garray_T path_ga;
-  char *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
+  char *path_option = *curbuf->b_p_pa == NUL ? p_path : curbuf->b_p_pa;
 
   char *const curdir = xmalloc(MAXPATHL);
   os_dirname(curdir, MAXPATHL);
@@ -1238,7 +1238,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
   static bool recursive = false;
   int add_pat;
   bool did_expand_in_path = false;
-  char *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
+  char *path_option = *curbuf->b_p_pa == NUL ? p_path : curbuf->b_p_pa;
 
   // expand_env() is called to expand things like "~user".  If this fails,
   // it calls ExpandOne(), which brings us back here.  In this case, always
