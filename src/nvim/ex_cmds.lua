@@ -2248,7 +2248,7 @@ M.cmds = {
   },
   {
     command = 'restart',
-    flags = bit.bor(BANG, TRLBAR),
+    flags = bit.bor(BANG, CMDARG, TRLBAR),
     addr_type = 'ADDR_NONE',
     func = 'ex_quitall_or_restart',
   },
