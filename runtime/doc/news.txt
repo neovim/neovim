@@ -161,6 +161,7 @@ EDITOR
 • 'shada' now correctly respects "/0" and "f0".
 • |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
   commands.
+• |:Cfilter| and |:Lfilter| support |:command-preview|.
 
 EVENTS
 

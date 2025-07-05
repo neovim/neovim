@@ -304,6 +304,7 @@ Commands:
 - |:source| works with Lua
 - User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
+- |:Cfilter| and |:Lfilter| support |:command-preview|
 
 Editor:
 - |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
