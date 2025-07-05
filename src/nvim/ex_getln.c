@@ -344,7 +344,8 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
     } else if (*cmd == 's' && cmd[1] == 'n') {
       magic_overruled = OPTION_MAGIC_OFF;
     }
-  } else if (strncmp(cmd, "sort", (size_t)MAX(p - cmd, 3)) == 0) {
+  } else if (strncmp(cmd, "sort", (size_t)MAX(p - cmd, 3)) == 0
+             || strncmp(cmd, "uniq", (size_t)MAX(p - cmd, 3)) == 0) {
     // skip over ! and flags
     if (*p == '!') {
       p = skipwhite(p + 1);

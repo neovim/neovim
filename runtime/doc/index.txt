@@ -1666,6 +1666,7 @@ tag		command		action ~
 |:unabbreviate|	:una[bbreviate]	remove abbreviation
 |:unhide|	:unh[ide]	open a window for each loaded file in the
 				buffer list
+|:uniq|		:uni[q]		uniq lines
 |:unlet|	:unl[et]	delete variable
 |:unlockvar|	:unlo[ckvar]	unlock variables
 |:unmap|	:unm[ap]	remove mapping

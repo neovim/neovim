@@ -1835,6 +1835,7 @@ And a few warnings:
 
 Vim has a sorting function and a sorting command.  The sorting function can be
 found here: |sort()|, |uniq()|.
+Also see |:uniq|.
 
 							*:sor* *:sort*
 :[range]sor[t][!] [b][f][i][l][n][o][r][u][x] [/{pattern}/]
@@ -1844,7 +1845,7 @@ found here: |sort()|, |uniq()|.
 			With [!] the order is reversed.
 
 			With [i] case is ignored.
-
+							*:sort-l*
 			With [l] sort uses the current collation locale.
 			Implementation details: strcoll() is used to compare
 			strings. See |:language| to check or set the collation
@@ -1876,13 +1877,14 @@ found here: |sort()|, |uniq()|.
 
 			With [b] sorting is done on the first binary number in
 			the line (after or inside a {pattern} match).
-
+							*:sort-u* *:sort-uniq*
 			With [u] (u stands for unique) only keep the first of
 			a sequence of identical lines (ignoring case when [i]
 			is used).  Without this flag, a sequence of identical
 			lines will be kept in their original order.
 			Note that leading and trailing white space may cause
 			lines to be different.
+			When you just want to make things unique, use |:uniq|.
 
 			When /{pattern}/ is specified and there is no [r] flag
 			the text matched with {pattern} is skipped, so that
@@ -1928,5 +1930,56 @@ Vim does do a "stable" sort.
 The sorting can be interrupted, but if you interrupt it too late in the
 process you may end up with duplicated lines.  This also depends on the system
 library function used.
+
+==============================================================================
+8. Deduplicating text				*deduplicating* *unique*
+
+Vim has a deduplicating function and a deduplicating command.  The
+deduplicating function can be found here: |uniq()|.
+Also see |:sort-uniq|.
+
+							*:uni* *:uniq*
+:[range]uni[q][!] [i][l][r][u] [/{pattern}/]
+			Remove duplicate lines that are adjacent to each other
+			in [range].  When no range is given, all lines are
+			processed.
+
+			With [i] case is ignored when comparing lines.
+
+			With [l] comparison uses the current collation locale.
+			See |:sort-l| for more details.
+
+			With [r] comparison is done on the text that matches
+			/{pattern}/ instead of the full line.
+
+			With [u] only keep lines that do not repeat (i.e., are
+			not immediately followed by the same line).
+
+			With [!] only keep lines that are immediately followed
+			by a duplicate.
+
+			If both [!] and [u] are given, [u] is ignored and [!]
+			takes effect.
+
+			When /{pattern}/ is specified and [r] is not used, the
+			text matched with {pattern} is skipped and comparison
+			is done on what comes after the match.
+			'ignorecase' applies to the pattern, but 'smartcase'
+			is not used.
+			Instead of the slash any non-letter can be used.
+
+			For example, to remove adjacent duplicate lines based
+			on the second comma-separated field: >
+				:uniq /[^,]*,/
+<			Or to keep only unique lines ignoring the first 5
+			characters: >
+				:uniq u /.\{5}/
+<			If {pattern} is empty (e.g. // is used), the last
+			search pattern is used.
+
+			Note that leading and trailing white space may cause
+			lines to be considered different.
+			To remove all duplicates regardless of position, use
+			|:sort-u| or external tools.
 
  vim:tw=78:ts=8:noet:ft=help:norl:
