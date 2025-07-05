@@ -801,7 +801,7 @@ syn region	vimUserCmdBlock	    contained
       \ matchgroup=vimSep
       \ start="{"
       \ end="^\s*\zs}"
-      \ contains=@vimDefBodyList
+      \ contains=@vimDefBodyList,@vimUserCmdList
 
 syn match	vimDelcommand		"\<delc\%[ommand]\>"	skipwhite nextgroup=vimDelcommandAttr,vimDelcommandName
 syn match	vimDelcommandAttr	contained	"-buffer\>"		skipwhite nextgroup=vimDelcommandName
@@ -1391,7 +1391,7 @@ syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd2-4]-\)\{0,4}scro
 syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%(sid\|nop\|nul\|lt\|drop\)>"				contains=vimBracket
 syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%(snr\|plug\|cursorhold\|ignore\|cmd\|scriptcmd\|focus\%(gained\|lost\)\)>"	contains=vimBracket
 " syn match	vimNotation	contained	'\%(\\\|<lt>\)\=<C-R>[0-9a-z"%#:.\-=]'he=e-1				contains=vimBracket
-syn match	vimNotation	contained	'\%#=1\%(\\\|<lt>\)\=<\%(q-\)\=\%(line[12]\|count\|bang\|reg\|args\|mods\|f-args\|f-mods\|lt\)>'	contains=vimBracket
+syn match	vimNotation	contained	'\%#=1\%(\\\|<lt>\)\=<\%([fq]-\)\=\%(line[12]\|count\|bang\|reg\|args\|mods\|lt\)>'		contains=vimBracket skipwhite nextgroup=vimSubst1
 syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([cas]file\|abuf\|amatch\|cexpr\|cword\|cWORD\|client\|stack\|script\|sf\=lnum\)>"	contains=vimBracket
 syn match	vimNotation	contained	"\%#=1\%(\\\|<lt>\)\=<\%([scamd]-\)\{0,4}char-\%(\d\+\|0\o\+\|0x\x\+\)>"		contains=vimBracket
 
