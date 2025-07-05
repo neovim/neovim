@@ -5,6 +5,8 @@ local util = require('vim.lsp.util')
 local Range = require('vim.treesitter._range')
 local uv = vim.uv
 
+local Capability = require('vim.lsp._capability')
+
 --- @class (private) STTokenRange
 --- @field line integer line number 0-based
 --- @field start_col integer start column 0-based
@@ -30,14 +32,16 @@ local uv = vim.uv
 --- @field active_request STActiveRequest
 --- @field current_result STCurrentResult
 
----@class (private) STHighlighter
+---@class (private) STHighlighter : vim.lsp.Capability
 ---@field active table<integer, STHighlighter>
 ---@field bufnr integer
 ---@field augroup integer augroup for buffer events
 ---@field debounce integer milliseconds to debounce requests for new tokens
 ---@field timer table uv_timer for debouncing requests for new tokens
 ---@field client_state table<integer, STClientState>
-local STHighlighter = { active = {} }
+local STHighlighter = { name = 'Semantic Tokens', active = {} }
+STHighlighter.__index = STHighlighter
+setmetatable(STHighlighter, Capability)
 
 --- Do a binary search of the tokens in the half-open range [lo, hi).
 ---
@@ -179,14 +183,8 @@ end
 ---@private
 ---@param bufnr integer
 ---@return STHighlighter
-function STHighlighter.new(bufnr)
-  local self = setmetatable({}, { __index = STHighlighter })
-
-  self.bufnr = bufnr
-  self.augroup = api.nvim_create_augroup('nvim.lsp.semantic_tokens:' .. bufnr, { clear = true })
-  self.client_state = {}
-
-  STHighlighter.active[bufnr] = self
+function STHighlighter:new(bufnr)
+  self = Capability.new(self, bufnr)
 
   api.nvim_buf_attach(bufnr, false, {
     on_lines = function(_, buf)
@@ -213,32 +211,11 @@ function STHighlighter.new(bufnr)
     end,
   })
 
-  api.nvim_create_autocmd('LspDetach', {
-    buffer = self.bufnr,
-    group = self.augroup,
-    callback = function(args)
-      self:detach(args.data.client_id)
-      if vim.tbl_isempty(self.client_state) then
-        self:destroy()
-      end
-    end,
-  })
-
   return self
 end
 
 ---@package
-function STHighlighter:destroy()
-  for client_id, _ in pairs(self.client_state) do
-    self:detach(client_id)
-  end
-
-  api.nvim_del_augroup_by_id(self.augroup)
-  STHighlighter.active[self.bufnr] = nil
-end
-
----@package
-function STHighlighter:attach(client_id)
+function STHighlighter:on_attach(client_id)
   local state = self.client_state[client_id]
   if not state then
     state = {
@@ -251,7 +228,7 @@ function STHighlighter:attach(client_id)
 end
 
 ---@package
-function STHighlighter:detach(client_id)
+function STHighlighter:on_detach(client_id)
   local state = self.client_state[client_id]
   if state then
     --TODO: delete namespace if/when that becomes possible
@@ -657,13 +634,13 @@ function M.start(bufnr, client_id, opts)
   local highlighter = STHighlighter.active[bufnr]
 
   if not highlighter then
-    highlighter = STHighlighter.new(bufnr)
+    highlighter = STHighlighter:new(bufnr)
     highlighter.debounce = opts.debounce or 200
   else
     highlighter.debounce = math.max(highlighter.debounce, opts.debounce or 200)
   end
 
-  highlighter:attach(client_id)
+  highlighter:on_attach(client_id)
   highlighter:send_request()
 end
 
@@ -687,7 +664,7 @@ function M.stop(bufnr, client_id)
     return
   end
 
-  highlighter:detach(client_id)
+  highlighter:on_detach(client_id)
 
   if vim.tbl_isempty(highlighter.client_state) then
     highlighter:destroy()
