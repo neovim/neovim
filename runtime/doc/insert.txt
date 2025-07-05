@@ -628,7 +628,7 @@ Completion can be done for:
 10. User defined completion				|i_CTRL-X_CTRL-U|
 11. omni completion					|i_CTRL-X_CTRL-O|
 12. Spelling suggestions				|i_CTRL-X_s|
-13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
+13. completions from 'complete'				|i_CTRL-N| |i_CTRL-P|
 14. contents from registers				|i_CTRL-X_CTRL-R|
 
 Additionally, |i_CTRL-X_CTRL-Z| stops completion without changing the text.
@@ -1082,25 +1082,23 @@ CTRL-X s		Locate the word in front of the cursor and find the
 			previous one.
 
 
-Completing keywords from different sources		*compl-generic*
+Completing from different sources			*compl-generic*
 
 							*i_CTRL-N*
-CTRL-N			Find next match for words that start with the
-			keyword in front of the cursor, looking in places
-			specified with the 'complete' option.  The found
-			keyword is inserted in front of the cursor.
+CTRL-N			Find the next match for a word ending at the cursor,
+			using the sources specified in the 'complete' option.
+			All sources complete from keywords, except functions,
+			which may complete from non-keyword.  The matched
+			text is inserted before the cursor.
 
 							*i_CTRL-P*
-CTRL-P			Find previous match for words that start with the
-			keyword in front of the cursor, looking in places
-			specified with the 'complete' option.  The found
-			keyword is inserted in front of the cursor.
+CTRL-P			Same as CTRL-N, but find the previous match.
 
-	CTRL-N		Search forward for next matching keyword.  This
-			keyword replaces the previous matching keyword.
+	CTRL-N		Search forward through the matches and insert the
+			next one.
 
-	CTRL-P		Search backwards for next matching keyword.  This
-			keyword replaces the previous matching keyword.
+	CTRL-P		Search backward through the matches and insert the
+			previous one.
 
 	CTRL-X CTRL-N or
 	CTRL-X CTRL-P	Further use of CTRL-X CTRL-N or CTRL-X CTRL-P will
