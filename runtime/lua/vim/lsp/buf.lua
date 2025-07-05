@@ -861,6 +861,13 @@ local function format_hierarchy_item(item)
   return string.format('%s %s', item.name, item.detail)
 end
 
+--- @alias vim.lsp.buf.HierarchyMethod
+--- | 'typeHierarchy/subtypes'
+--- | 'typeHierarchy/supertypes'
+--- | 'callHierarchy/incomingCalls'
+--- | 'callHierarchy/outgoingCalls'
+
+--- @type table<vim.lsp.buf.HierarchyMethod, 'type' | 'call'>
 local hierarchy_methods = {
   [ms.typeHierarchy_subtypes] = 'type',
   [ms.typeHierarchy_supertypes] = 'type',
@@ -868,12 +875,9 @@ local hierarchy_methods = {
   [ms.callHierarchy_outgoingCalls] = 'call',
 }
 
---- @param method vim.lsp.protocol.Method.ClientToServer.Request
+--- @param method vim.lsp.buf.HierarchyMethod
 local function hierarchy(method)
   local kind = hierarchy_methods[method]
-  if not kind then
-    vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
-  end
 
   local prepare_method = kind == 'type' and ms.textDocument_prepareTypeHierarchy
     or ms.textDocument_prepareCallHierarchy
