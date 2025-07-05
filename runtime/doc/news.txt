@@ -86,7 +86,7 @@ LSP
 
 LUA
 
-• todo
+• |vim.net.request()| adds a minimal HTTP GET API using curl.
 
 OPTIONS
 
