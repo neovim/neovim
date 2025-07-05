@@ -3875,15 +3875,13 @@ static int copy_substring_from_pos(pos_T *start, pos_T *end, char **match, pos_T
       || (start->lnum == end->lnum && start->col >= end->col)) {
     return FAIL;  // invalid range
   }
-  // Get line pointers
-  char *start_line = ml_get(start->lnum);
-  char *end_line = ml_get(end->lnum);
 
   // Use a growable string (ga)
   garray_T ga;
   ga_init(&ga, 1, 128);
 
   // Append start line from start->col to end
+  char *start_line = ml_get(start->lnum);
   char *start_ptr = start_line + start->col;
   bool is_single_line = start->lnum == end->lnum;
 
@@ -3906,6 +3904,7 @@ static int copy_substring_from_pos(pos_T *start, pos_T *end, char **match, pos_T
   }
 
   // Append partial end line (up to word end)
+  char *end_line = ml_get(end->lnum);
   char *word_end = find_word_end(end_line + end->col);
   segment_len = (int)(word_end - end_line);
   ga_grow(&ga, segment_len);

@@ -4503,6 +4503,7 @@ func Test_search_wildmenu_screendump()
   CheckScreendump
 
   let lines =<< trim [SCRIPT]
+    call test_override('alloc_lines', 1)
     set wildmenu wildcharm=<f5>
     call setline(1, ['the', 'these', 'the', 'foobar', 'thethe', 'thethere'])
   [SCRIPT]
