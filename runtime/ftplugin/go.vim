@@ -7,6 +7,7 @@
 " 2025 Mar 18 by Vim Project (use :term for 'keywordprg' #16911)
 " 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
 " 2025 Jul 02 by Vim Project (add section movement mappings #17641)
+" 2025 Jul 05 by Vim Project (update b:undo_ftplugin #17664)
 
 if exists('b:did_ftplugin')
   finish
@@ -56,10 +57,10 @@ if !exists("no_plugin_maps") && !exists("no_go_maps")
   noremap <silent> <buffer> [[ <Cmd>call <SID>GoFindSection('prev_start', v:count1)<CR>
   noremap <silent> <buffer> [] <Cmd>call <SID>GoFindSection('prev_end', v:count1)<CR>
   let b:undo_ftplugin .= ''
-                      \ . '| unmap <buffer> ]]'
-                      \ . '| unmap <buffer> ]['
-                      \ . '| unmap <buffer> [['
-                      \ . '| unmap <buffer> []'
+                      \ . "| silent! exe 'unmap <buffer> ]]'"
+                      \ . "| silent! exe 'unmap <buffer> ]['"
+                      \ . "| silent! exe 'unmap <buffer> [['"
+                      \ . "| silent! exe 'unmap <buffer> []'"
 endif
 
 function! <SID>GoFindSection(dir, count)
