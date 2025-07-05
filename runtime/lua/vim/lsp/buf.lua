@@ -870,10 +870,11 @@ local hierarchy_methods = {
 
 --- @param method vim.lsp.protocol.Method.ClientToServer.Request
 local function hierarchy(method)
+  validate('method', method, function(m)
+    return hierarchy_methods[m] ~= nil
+  end)
+
   local kind = hierarchy_methods[method]
-  if not kind then
-    vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
-  end
 
   local prepare_method = kind == 'type' and ms.textDocument_prepareTypeHierarchy
     or ms.textDocument_prepareCallHierarchy
