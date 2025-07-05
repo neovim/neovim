@@ -1892,6 +1892,11 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
       local end_lnum = range['end'].line + 1
       local end_col = get_line_byte_from_position(bufnr, range['end'], position_encoding) + 1
 
+      local is_deprecated = symbol.deprecated
+        or (symbol.tags and vim.tbl_contains(symbol.tags, protocol.SymbolTag.Deprecated))
+      local text =
+        string.format('[%s] %s%s', kind, symbol.name, is_deprecated and ' (deprecated)' or '')
+
       items[#items + 1] = {
         filename = filename,
         lnum = lnum,
@@ -1899,7 +1904,7 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
         end_lnum = end_lnum,
         end_col = end_col,
         kind = kind,
-        text = '[' .. kind .. '] ' .. symbol.name,
+        text = text,
       }
     end
 
