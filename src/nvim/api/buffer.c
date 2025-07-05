@@ -313,22 +313,30 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
-void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integer end,
+/// @return Dictionary containing:
+///         - region: Array with modified region information:
+///             - start_line: First modified line (zero-indexed)
+///             - end_line: Last modified line after modification
+///             - end_col: Ending column (length of last modified line)
+///             - lines_added: Number of lines added (negative if deleted)
+///             - deleted_bytes: Number of bytes deleted
+Dict nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integer end,
                         Boolean strict_indexing, ArrayOf(String) replacement, Arena *arena,
                         Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
+  Dict rv = arena_dict(arena, 1);
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return;
+    return rv;
   }
 
   // Load buffer if necessary. #22670
   if (!buf_ensure_loaded(buf)) {
     api_set_error(err, kErrorTypeException, "Failed to load buffer");
-    return;
+    return rv;
   }
 
   bool oob = false;
@@ -336,15 +344,15 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   end = normalize_index(buf, end, true, &oob);
 
   VALIDATE((!strict_indexing || !oob), "%s", "Index out of bounds", {
-    return;
+    return rv;
   });
   VALIDATE((start <= end), "%s", "'start' is higher than 'end'", {
-    return;
+    return rv;
   });
 
   bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
   if (!check_string_array(replacement, "replacement string", disallow_nl, err)) {
-    return;
+    return rv;
   }
 
   size_t new_len = replacement.size;
@@ -444,8 +452,23 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
         fix_cursor(win, (linenr_T)start, (linenr_T)end, (linenr_T)extra);
       }
     }
+
+    Integer end_col = 0;
+    if (end + extra > 0 && end + extra <= buf->b_ml.ml_line_count) {
+      end_col = (Integer)ml_get_buf_len(buf, (linenr_T)(end + extra - 1));
+    }
+    Array data = arena_array(arena, 7);
+    ADD_C(data, INTEGER_OBJ(start - 1));
+    ADD_C(data, INTEGER_OBJ(end + extra - 1));
+    ADD_C(data, INTEGER_OBJ(end_col));
+    ADD_C(data, INTEGER_OBJ(extra));
+    ADD_C(data, INTEGER_OBJ(deleted_bytes));
+
+    PUT_C(rv, "region", ARRAY_OBJ(data));
     end:;
   });
+
+  return rv;
 }
 
 /// Sets (replaces) a range in the buffer
