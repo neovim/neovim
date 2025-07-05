@@ -716,12 +716,9 @@ func Test_edit_CTRL_K()
   %d
   call setline(1, 'A')
   call cursor(1, 1)
-  let v:testing = 1
   try
     call feedkeys("A\<c-x>\<c-k>\<esc>", 'tnix')
   catch
-    " error sleeps 2 seconds, when v:testing is not set
-    let v:testing = 0
   endtry
 
   call Ntest_override("char_avail", 1)
@@ -970,12 +967,9 @@ func Test_edit_CTRL_T()
   %d
   call setline(1, 'mad')
   call cursor(1, 1)
-  let v:testing = 1
   try
     call feedkeys("A\<c-x>\<c-t>\<esc>", 'tnix')
   catch
-    " error sleeps 2 seconds, when v:testing is not set
-    let v:testing = 0
   endtry
   call assert_equal(['mad'], getline(1, '$'))
   bw!
