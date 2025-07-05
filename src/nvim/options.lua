@@ -1444,15 +1444,12 @@ local options = {
         	name of a function or a |Funcref|.  For |Funcref| values,
         	spaces must be escaped with a backslash ('\'), and commas with
         	double backslashes ('\\') (see |option-backslash|).
+        	Unlike other sources, functions can provide completions starting
+        	from a non-keyword character before the cursor, and their
+        	start position for replacing text may differ from other sources.
         	If the Dict returned by the {func} includes {"refresh": "always"},
         	the function will be invoked again whenever the leading text
         	changes.
-        	Completion matches are always inserted at the keyword
-        	boundary, regardless of the column returned by {func} when
-        	a:findstart is 1.  This ensures compatibility with other
-        	completion sources.
-        	To make further modifications to the inserted text, {func}
-        	can make use of |CompleteDonePre|.
         	If generating matches is potentially slow, |complete_check()|
         	should be used to avoid blocking and preserve editor
         	responsiveness.

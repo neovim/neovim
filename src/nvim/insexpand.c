@@ -313,6 +313,7 @@ typedef struct cpt_source_T {
   int cs_max_matches;      ///< Max items to display from this source
 } cpt_source_T;
 
+#define STARTCOL_NONE   -9
 /// Pointer to the array of completion sources
 static cpt_source_T *cpt_sources_array;
 /// Total number of completion sources specified in the 'cpt' option
@@ -1336,6 +1337,62 @@ static int cp_compare_nearest(const void *a, const void *b)
   return (score_a > score_b) ? 1 : (score_a < score_b) ? -1 : 0;
 }
 
+/// Constructs a new string by prepending text from the current line (from
+/// startcol to compl_col) to the given source string. Stores the result in
+/// dest.
+static void prepend_startcol_text(String *dest, String *src, int startcol)
+{
+  int prepend_len = compl_col - startcol;
+  int new_length = prepend_len + (int)src->size;
+
+  dest->size = (size_t)new_length;
+  dest->data = xmalloc((size_t)new_length + 1);  // +1 for NUL
+
+  char *line = ml_get(curwin->w_cursor.lnum);
+
+  memmove(dest->data, line + startcol, (size_t)prepend_len);
+  memmove(dest->data + prepend_len, src->data, src->size);
+  dest->data[new_length] = NUL;
+}
+
+/// Returns the completion leader string adjusted for a specific source's
+/// startcol. If the source's startcol is before compl_col, prepends text from
+/// the buffer line to the original compl_leader.
+static String *get_leader_for_startcol(compl_T *match, bool cached)
+{
+  static String adjusted_leader = STRING_INIT;
+
+  if (match == NULL) {
+    API_CLEAR_STRING(adjusted_leader);
+    return NULL;
+  }
+
+  if (cpt_sources_array == NULL || compl_leader.data == NULL) {
+    goto theend;
+  }
+
+  int cpt_idx = match->cp_cpt_source_idx;
+  if (cpt_idx < 0 || compl_col <= 0) {
+    goto theend;
+  }
+  int startcol = cpt_sources_array[cpt_idx].cs_startcol;
+
+  if (startcol >= 0 && startcol < compl_col) {
+    int prepend_len = compl_col - startcol;
+    int new_length = prepend_len + (int)compl_leader.size;
+    if (cached && (size_t)new_length == adjusted_leader.size
+        && adjusted_leader.data != NULL) {
+      return &adjusted_leader;
+    }
+
+    API_CLEAR_STRING(adjusted_leader);
+    prepend_startcol_text(&adjusted_leader, &compl_leader, startcol);
+    return &adjusted_leader;
+  }
+theend:
+  return &compl_leader;
+}
+
 /// Set fuzzy score.
 static void set_fuzzy_score(void)
 {
@@ -1343,9 +1400,12 @@ static void set_fuzzy_score(void)
     return;
   }
 
+  (void)get_leader_for_startcol(NULL, true);  // Clear the cache
+
   compl_T *comp = compl_first_match;
   do {
-    comp->cp_score = fuzzy_match_str(comp->cp_str.data, compl_leader.data);
+    comp->cp_score = fuzzy_match_str(comp->cp_str.data,
+                                     get_leader_for_startcol(comp, true)->data);
     comp = comp->cp_next;
   } while (comp != NULL && !is_first_match(comp));
 }
@@ -1422,6 +1482,8 @@ static int ins_compl_build_pum(void)
     match_count = xcalloc((size_t)cpt_sources_count, sizeof(int));
   }
 
+  (void)get_leader_for_startcol(NULL, true);  // Clear the cache
+
   comp = compl_first_match;
   do {
     comp->cp_in_match_array = false;
@@ -1432,9 +1494,11 @@ static int ins_compl_build_pum(void)
       comp->cp_flags &= ~CP_ICASE;
     }
 
+    String *leader = get_leader_for_startcol(comp, true);
+
     if (!match_at_original_text(comp)
-        && (compl_leader.data == NULL
-            || ins_compl_equal(comp, compl_leader.data, compl_leader.size)
+        && (leader->data == NULL
+            || ins_compl_equal(comp, leader->data, leader->size)
             || (fuzzy_filter && comp->cp_score > 0))) {
       // Limit number of items from each source if max_items is set.
       bool match_limit_exceeded = false;
@@ -2107,6 +2171,7 @@ static bool ins_compl_need_restart(void)
 static void ins_compl_new_leader(void)
 {
   unsigned cur_cot_flags = get_cot_flags();
+
   ins_compl_del_pum();
   ins_compl_delete(true);
   ins_compl_insert_bytes(compl_leader.data + get_compl_len(), -1);
@@ -4272,7 +4337,7 @@ static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_
 
   case CTRL_X_FUNCTION:
     if (ctrl_x_mode_normal()) {  // Invoked by a func in 'cpt' option
-      get_cpt_func_completion_matches(st->func_cb, true);
+      get_cpt_func_completion_matches(st->func_cb);
     } else {
       expand_by_function(type, compl_pattern.data, NULL);
     }
@@ -4365,6 +4430,10 @@ static void prepare_cpt_compl_funcs(void)
     while (*p == ',' || *p == ' ') {  // Skip delimiters
       p++;
     }
+    if (*p == NUL) {
+      break;
+    }
+
     Callback *cb = get_callback_if_cpt_func(p);
     if (cb) {
       int startcol;
@@ -4376,7 +4445,10 @@ static void prepare_cpt_compl_funcs(void)
         }
       }
       cpt_sources_array[idx].cs_startcol = startcol;
+    } else {
+      cpt_sources_array[idx].cs_startcol = STARTCOL_NONE;
     }
+
     (void)copy_option_part(&p, IObuff, IOSIZE, ",");  // Advance p
     idx++;
   }
@@ -4562,23 +4634,27 @@ static int ins_compl_get_exp(pos_T *ini)
 /// "compl_leader" is used to omit some of the matches.
 static void ins_compl_update_shown_match(void)
 {
-  while (!ins_compl_equal(compl_shown_match,
-                          compl_leader.data, compl_leader.size)
+  (void)get_leader_for_startcol(NULL, true);  // Clear the cache
+  String *leader = get_leader_for_startcol(compl_shown_match, true);
+
+  while (!ins_compl_equal(compl_shown_match, leader->data, leader->size)
          && compl_shown_match->cp_next != NULL
          && !is_first_match(compl_shown_match->cp_next)) {
     compl_shown_match = compl_shown_match->cp_next;
+    leader = get_leader_for_startcol(compl_shown_match, true);
   }
 
   // If we didn't find it searching forward, and compl_shows_dir is
   // backward, find the last match.
   if (compl_shows_dir_backward()
-      && !ins_compl_equal(compl_shown_match, compl_leader.data, compl_leader.size)
+      && !ins_compl_equal(compl_shown_match, leader->data, leader->size)
       && (compl_shown_match->cp_next == NULL
           || is_first_match(compl_shown_match->cp_next))) {
-    while (!ins_compl_equal(compl_shown_match, compl_leader.data, compl_leader.size)
+    while (!ins_compl_equal(compl_shown_match, leader->data, leader->size)
            && compl_shown_match->cp_prev != NULL
            && !is_first_match(compl_shown_match->cp_prev)) {
       compl_shown_match = compl_shown_match->cp_prev;
+      leader = get_leader_for_startcol(compl_shown_match, true);
     }
   }
 }
@@ -4693,6 +4769,23 @@ void ins_compl_insert(bool move_cursor)
   size_t cp_str_len = compl_shown_match->cp_str.size;
   size_t leader_len = ins_compl_leader_len();
   char *has_multiple = strchr(cp_str, '\n');
+
+  // Since completion sources may provide matches with varying start
+  // positions, insert only the portion of the match that corresponds to the
+  // intended replacement range.
+  if (cpt_sources_array != NULL) {
+    int cpt_idx = compl_shown_match->cp_cpt_source_idx;
+    if (cpt_idx >= 0 && compl_col >= 0) {
+      int startcol = cpt_sources_array[cpt_idx].cs_startcol;
+      if (startcol >= 0 && startcol < (int)compl_col) {
+        int skip = (int)compl_col - startcol;
+        if ((size_t)skip <= cp_str_len) {
+          cp_str_len -= (size_t)skip;
+          cp_str += skip;
+        }
+      }
+    }
+  }
 
   // Make sure we don't go over the end of the string, this can happen with
   // illegal bytes.
@@ -4837,10 +4930,12 @@ static int find_next_completion_match(bool allow_get_expansion, int todo, bool a
       }
       found_end = false;
     }
+
+    String *leader = get_leader_for_startcol(compl_shown_match, false);
+
     if (!match_at_original_text(compl_shown_match)
-        && compl_leader.data != NULL
-        && !ins_compl_equal(compl_shown_match,
-                            compl_leader.data, compl_leader.size)
+        && leader->data != NULL
+        && !ins_compl_equal(compl_shown_match, leader->data, leader->size)
         && !(compl_fuzzy_match && compl_shown_match->cp_score > 0)) {
       todo++;
     } else {
@@ -5006,7 +5101,7 @@ void ins_compl_check_keys(int frequency, bool in_compl_func)
   // Check for a typed key.  Do use mappings, otherwise vim_is_ctrl_x_key()
   // can't do its work correctly.
   int c = vpeekc_any();
-  if (c != NUL) {
+  if (c != NUL && !test_disable_char_avail) {
     if (vim_is_ctrl_x_key(c) && c != Ctrl_X && c != Ctrl_R) {
       c = safe_vgetc();         // Eat the character
       compl_shows_dir = ins_compl_key2dir(c);
@@ -5255,18 +5350,24 @@ static int get_cmdline_compl_info(char *line, colnr_T curs_col)
 /// compl_col, compl_length, compl_pattern, and cpt_compl_pattern.
 static void set_compl_globals(int startcol, colnr_T curs_col, bool is_cpt_compl)
 {
-  if (startcol < 0 || startcol > curs_col) {
-    startcol = curs_col;
-  }
-  int len = curs_col - startcol;
+  if (is_cpt_compl) {
+    API_CLEAR_STRING(cpt_compl_pattern);
+    if (startcol < compl_col) {
+      prepend_startcol_text(&cpt_compl_pattern, &compl_orig_text, startcol);
+      return;
+    } else {
+      cpt_compl_pattern = copy_string(compl_orig_text, NULL);
+    }
+  } else {
+    if (startcol < 0 || startcol > curs_col) {
+      startcol = curs_col;
+    }
 
-  // Re-obtain line in case it has changed
-  char *line = ml_get(curwin->w_cursor.lnum);
+    // Re-obtain line in case it has changed
+    char *line = ml_get(curwin->w_cursor.lnum);
+    int len = curs_col - startcol;
 
-  String *pattern = is_cpt_compl ? &cpt_compl_pattern : &compl_pattern;
-  pattern->data = xstrnsave(line + startcol, (size_t)len);
-  pattern->size = (size_t)len;
-  if (!is_cpt_compl) {
+    compl_pattern = cbuf_to_string(line + startcol, (size_t)len);
     compl_col = startcol;
     compl_length = len;
   }
@@ -5390,7 +5491,10 @@ static int compl_get_info(char *line, int startcol, colnr_T curs_col, bool *line
   if (ctrl_x_mode_normal() || ctrl_x_mode_register()
       || ((ctrl_x_mode & CTRL_X_WANT_IDENT)
           && !thesaurus_func_complete(ctrl_x_mode))) {
-    return get_normal_compl_info(line, startcol, curs_col);
+    if (get_normal_compl_info(line, startcol, curs_col) != OK) {
+      return FAIL;
+    }
+    *line_invalid = true;  // 'cpt' func may have invalidated "line"
   } else if (ctrl_x_mode_line_or_eval()) {
     return get_wholeline_compl_info(line, curs_col);
   } else if (ctrl_x_mode_files()) {
@@ -5971,24 +6075,15 @@ static compl_T *remove_old_matches(void)
 
 /// Retrieve completion matches using the callback function "cb" and store the
 /// 'refresh:always' flag.
-static void get_cpt_func_completion_matches(Callback *cb, bool restore_leader)
+static void get_cpt_func_completion_matches(Callback *cb)
 {
   int startcol = cpt_sources_array[cpt_sources_index].cs_startcol;
-
-  API_CLEAR_STRING(cpt_compl_pattern);
 
   if (startcol == -2 || startcol == -3) {
     return;
   }
 
-  if (restore_leader) {  // Re-insert the text removed by ins_compl_delete()
-    ins_compl_insert_bytes(compl_orig_text.data + get_compl_len(), -1);
-  }
   set_compl_globals(startcol, curwin->w_cursor.col, true);
-  if (restore_leader) {
-    ins_compl_delete(false);  // Undo insertion
-  }
-
   expand_by_function(0, cpt_compl_pattern.data, cb);
   cpt_sources_array[cpt_sources_index].cs_refresh_always = compl_opt_refresh_always;
   compl_opt_refresh_always = false;
@@ -6009,6 +6104,9 @@ static void cpt_compl_refresh(void)
     while (*p == ',' || *p == ' ') {  // Skip delimiters
       p++;
     }
+    if (*p == NUL) {
+      break;
+    }
 
     if (cpt_sources_array[cpt_sources_index].cs_refresh_always) {
       Callback *cb = get_callback_if_cpt_func(p);
@@ -6025,8 +6123,10 @@ static void cpt_compl_refresh(void)
         }
         cpt_sources_array[cpt_sources_index].cs_startcol = startcol;
         if (ret == OK) {
-          get_cpt_func_completion_matches(cb, false);
+          get_cpt_func_completion_matches(cb);
         }
+      } else {
+        cpt_sources_array[cpt_sources_index].cs_startcol = STARTCOL_NONE;
       }
     }
 
