@@ -496,6 +496,9 @@ function protocol.make_client_capabilities()
       implementation = {
         linkSupport = true,
       },
+      inlineCompletion = {
+        dynamicRegistration = false,
+      },
       typeDefinition = {
         linkSupport = true,
       },

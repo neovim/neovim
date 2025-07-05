@@ -15,6 +15,7 @@ local lsp = vim._defer_require('vim.lsp', {
   document_color = ..., --- @module 'vim.lsp.document_color'
   handlers = ..., --- @module 'vim.lsp.handlers'
   inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
+  inline_completion = ..., --- @module 'vim.lsp.inline_completion'
   log = ..., --- @module 'vim.lsp.log'
   protocol = ..., --- @module 'vim.lsp.protocol'
   rpc = ..., --- @module 'vim.lsp.rpc'
