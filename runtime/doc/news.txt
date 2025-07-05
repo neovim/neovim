@@ -161,6 +161,8 @@ EDITOR
 • 'shada' now correctly respects "/0" and "f0".
 • |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
   commands.
+• 'wildchar' now enables completion in search contexts using |/|, |?|, |:g|, |:v|
+   and |:vimgrep| commands.
 
 EVENTS
 

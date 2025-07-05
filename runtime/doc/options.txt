@@ -7166,7 +7166,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:set wc=X
 		:set wc=^I
 		set wc=<Tab>
-<
+<	'wildchar' also enables completion in search pattern contexts such as
+	|/|, |?|, |:s|, |:g|, |:v|, and |:vim|.  To insert a literal <Tab>
+	instead of triggering completion, type <C-V><Tab> or "\t".
 
 						*'wildcharm'* *'wcm'*
 'wildcharm' 'wcm'	number	(default 0)

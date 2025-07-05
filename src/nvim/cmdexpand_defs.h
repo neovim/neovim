@@ -4,6 +4,8 @@
 #include <stddef.h>
 
 #include "nvim/eval/typval_defs.h"
+#include "nvim/pos_defs.h"
+#include "nvim/vim_defs.h"
 
 typedef enum {
   XP_PREFIX_NONE,  ///< prefix not used
@@ -35,6 +37,8 @@ typedef struct {
   char **xp_files;              ///< list of files
   char *xp_line;                ///< text being completed
   char xp_buf[EXPAND_BUF_LEN];  ///< buffer for returned match
+  Direction xp_search_dir;      ///< Direction of search
+  pos_T xp_pre_incsearch_pos;   ///< Cursor position before incsearch
 } expand_T;
 
 /// values for xp_backslash
@@ -109,6 +113,7 @@ enum {
   EXPAND_SHELLCMDLINE,
   EXPAND_FINDFUNC,
   EXPAND_FILETYPECMD,
+  EXPAND_PATTERN_IN_BUF,
   EXPAND_CHECKHEALTH,
   EXPAND_LUA,
 };
