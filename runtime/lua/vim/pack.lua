@@ -625,7 +625,7 @@ local function pack_add(plug, load)
     local after_paths = vim.fn.glob(plug.path .. '/after/plugin/**/*.{vim,lua}', false, true)
     --- @param path string
     vim.tbl_map(function(path)
-      pcall(vim.cmd.source, vim.fn.fnameescape(path))
+      vim.cmd.source(vim.fn.fnameescape(path))
     end, after_paths)
   end
 end
@@ -674,23 +674,24 @@ function M.add(specs, opts)
     install_list(plugs_to_install)
   end
 
-  -- Register and `:packadd` those actually on disk
-  for _, p in ipairs(plugs) do
-    if p.info.installed then
-      pack_add(p, opts.load)
-    end
-  end
-
+  -- Register and load those actually on disk while collecting errors
   -- Delay showing all errors to have "good" plugins added first
   local errors = {} --- @type string[]
-  for _, p in ipairs(plugs_to_install) do
+  for _, p in ipairs(plugs) do
+    if p.info.installed then
+      local ok, err = pcall(pack_add, p, opts.load) --[[@as string]]
+      if not ok then
+        p.info.err = err
+      end
+    end
     if p.info.err ~= '' then
       errors[#errors + 1] = ('`%s`:\n%s'):format(p.spec.name, p.info.err)
     end
   end
+
   if #errors > 0 then
     local error_str = table.concat(errors, '\n\n')
-    error(('Errors during installation:\n\n%s'):format(error_str))
+    error(('vim.pack:\n\n%s'):format(error_str))
   end
 end
 
