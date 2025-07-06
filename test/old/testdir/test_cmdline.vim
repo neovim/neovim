@@ -4558,6 +4558,16 @@ func Test_search_wildmenu_screendump()
   call term_sendkeys(buf, "\<esc>gg/t.*\\n.*\\n.\<tab>")
   call VerifyScreenDump(buf, 'Test_search_wildmenu_5', {})
 
+  " 'incsearch' is redrawn after accepting completion
+  call term_sendkeys(buf, "\<esc>:set wim=full\<cr>")
+  call term_sendkeys(buf, ":set incsearch hlsearch\<cr>")
+  call term_sendkeys(buf, "/th")
+  call VerifyScreenDump(buf, 'Test_search_wildmenu_6', {})
+  call term_sendkeys(buf, "\<f5>")
+  call VerifyScreenDump(buf, 'Test_search_wildmenu_7', {})
+  call term_sendkeys(buf, "\<c-n>\<c-y>")
+  call VerifyScreenDump(buf, 'Test_search_wildmenu_8', {})
+
   call term_sendkeys(buf, "\<esc>")
   call StopVimInTerminal(buf)
 endfunc

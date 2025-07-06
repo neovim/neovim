@@ -445,6 +445,45 @@ describe('cmdline', function()
       /t.*\n.*\n.^                                                 |
     ]])
 
+    -- 'incsearch' is redrawn after accepting completion
+    feed('<esc>')
+    command('set wim=full')
+    command('set incsearch hlsearch')
+    feed('/th')
+    screen:expect([[
+      {10:th}e                                                         |
+      {2:th}ese                                                       |
+      {10:th}e                                                         |
+      foobar                                                      |
+      {10:th}e{10:th}e                                                      |
+      {10:th}e{10:th}ere                                                    |
+      {1:~                                                           }|*3
+      /th^                                                         |
+    ]])
+    feed('<f5>')
+    screen:expect([[
+      {10:th}e                                                         |
+      {2:th}ese                                                       |
+      {10:th}e                                                         |
+      foobar                                                      |
+      {10:th}e{10:th}e                                                      |
+      {10:th}e{10:th}ere                                                    |
+      {1:~                                                           }|*2
+      {100:these}{3:  the  thethe  thethere  there                         }|
+      /these^                                                      |
+    ]])
+    feed('<c-n><c-y>')
+    screen:expect([[
+      {10:the}                                                         |
+      {2:the}se                                                       |
+      {10:the}                                                         |
+      foobar                                                      |
+      {10:thethe}                                                      |
+      {10:thethe}re                                                    |
+      {1:~                                                           }|*3
+      /the^                                                        |
+    ]])
+
     feed('<esc>')
   end)
 end)
