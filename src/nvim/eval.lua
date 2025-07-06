@@ -3751,22 +3751,22 @@ M.funcs = {
     signature = 'getcmdcomplpat()',
   },
   getcmdcompltype = {
-    args = { 0, 1 },
-    base = 1,
     desc = [=[
-      Return the type of command-line completion using {pat}.
-      If {pat} is omited, only works when the command line is being
-      edited, thus requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
-
+      Return the type of the current command-line completion.
+      Only works when the command line is being edited, thus
+      requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
       See |:command-completion| for the return string.
       Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
       |getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
       Returns an empty string when completion is not defined.
+
+      To get the type of the command-line completion for the
+      specified string, use |getcompletiontype()|.
     ]=],
     name = 'getcmdcompltype',
-    params = { { 'pat', 'string' } },
+    params = {},
     returns = 'string',
-    signature = 'getcmdcompltype([{pat}])',
+    signature = 'getcmdcompltype()',
   },
   getcmdline = {
     desc = [=[
@@ -3942,6 +3942,21 @@ M.funcs = {
     params = { { 'pat', 'string' }, { 'type', 'string' }, { 'filtered', 'boolean' } },
     returns = 'string[]',
     signature = 'getcompletion({pat}, {type} [, {filtered}])',
+  },
+  getcompletiontype = {
+    args = 1,
+    base = 1,
+    desc = [=[
+      Return the type of the command-line completion using {pat}.
+      When no corresponding completion type is found, an empty
+      string is returned.
+      To get the current command-line completion type, use
+      |getcmdcompltype()|.
+    ]=],
+    name = 'getcompletiontype',
+    params = { { 'pat', 'string' } },
+    returns = 'string',
+    signature = 'getcompletiontype({pat})',
   },
   getcurpos = {
     args = { 0, 1 },

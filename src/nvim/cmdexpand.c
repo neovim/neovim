@@ -3838,6 +3838,30 @@ theend:
   ExpandCleanup(&xpc);
 }
 
+/// "getcompletiontype()" function
+void f_getcompletiontype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  if (tv_check_for_string_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
+  const char *pat = tv_get_string(&argvars[0]);
+  expand_T xpc;
+  ExpandInit(&xpc);
+
+  int cmdline_len = (int)strlen(pat);
+  set_cmd_context(&xpc, (char *)pat, cmdline_len, cmdline_len, false);
+  xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+  xpc.xp_col = cmdline_len;
+
+  rettv->vval.v_string = get_cmdline_completion(&xpc);
+
+  ExpandCleanup(&xpc);
+}
+
 /// "cmdcomplete_info()" function
 void f_cmdcomplete_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

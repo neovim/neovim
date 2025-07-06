@@ -737,6 +737,31 @@ func Test_getcompletion()
   call assert_fails('call getcompletion("abc", [])', 'E1174:')
 endfunc
 
+func Test_getcompletiontype()
+  call assert_fails('call getcompletiontype()', 'E119:')
+  call assert_fails('call getcompletiontype({})', 'E1174:')
+  call assert_equal(getcompletiontype(''), 'command')
+  call assert_equal(getcompletiontype('dummy '), '')
+  call assert_equal(getcompletiontype('cd '), 'dir_in_path')
+  call assert_equal(getcompletiontype('let v:n'), 'var')
+  call assert_equal(getcompletiontype('call tag'), 'function')
+  call assert_equal(getcompletiontype('help '), 'help')
+endfunc
+
+func Test_multibyte_expression()
+  " Get a dialog in the GUI
+  CheckNotGui
+
+  " This was using uninitialized memory.
+  let lines =<< trim END
+      set verbose=6
+      norm @=ٷ
+      qall!
+  END
+  call writefile(lines, 'XmultiScript', 'D')
+  call RunVim('', '', '-u NONE -n -e -s -S XmultiScript')
+endfunc
+
 " Test for getcompletion() with "fuzzy" in 'wildoptions'
 func Test_getcompletion_wildoptions()
   let save_wildoptions = &wildoptions
@@ -4599,16 +4624,6 @@ func Test_range_complete()
   delfunc GetComplInfo
   unlet! g:compl_info
   set wildcharm=0
-endfunc
-
-func Test_getcmdcompltype_with_pat()
-  call assert_fails('call getcmdcompltype({})', 'E1174:')
-  call assert_equal(getcmdcompltype(''), 'command')
-  call assert_equal(getcmdcompltype('dummy '), '')
-  call assert_equal(getcmdcompltype('cd '), 'dir_in_path')
-  call assert_equal(getcmdcompltype('let v:n'), 'var')
-  call assert_equal(getcmdcompltype('call tag'), 'function')
-  call assert_equal(getcmdcompltype('help '), 'help')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
