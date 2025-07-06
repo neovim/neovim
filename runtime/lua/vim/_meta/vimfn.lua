@@ -3002,6 +3002,9 @@ function vim.fn.getcmdcomplpat() end
 --- |getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
 --- Returns an empty string when completion is not defined.
 ---
+--- To get the type of the command-line completion for the
+--- specified string, use |getcompletiontype()|.
+---
 --- @return string
 function vim.fn.getcmdcompltype() end
 
@@ -3151,6 +3154,16 @@ function vim.fn.getcmdwintype() end
 --- @param filtered? boolean
 --- @return string[]
 function vim.fn.getcompletion(pat, type, filtered) end
+
+--- Return the type of the command-line completion using {pat}.
+--- When no corresponding completion type is found, an empty
+--- string is returned.
+--- To get the current command-line completion type, use
+--- |getcmdcompltype()|.
+---
+--- @param pat string
+--- @return string
+function vim.fn.getcompletiontype(pat) end
 
 --- Get the position of the cursor.  This is like getpos('.'), but
 --- includes an extra "curswant" item in the list:

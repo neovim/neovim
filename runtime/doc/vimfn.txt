@@ -3351,6 +3351,9 @@ getcmdcompltype()                                            *getcmdcompltype()*
 		|getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
 		Returns an empty string when completion is not defined.
 
+		To get the type of the command-line completion for the
+		specified string, use |getcompletiontype()|.
+
                 Return: ~
                   (`string`)
 
@@ -3509,6 +3512,19 @@ getcompletion({pat}, {type} [, {filtered}])                    *getcompletion()*
 
                 Return: ~
                   (`string[]`)
+
+getcompletiontype({pat})                                   *getcompletiontype()*
+		Return the type of the command-line completion using {pat}.
+		When no corresponding completion type is found, an empty
+		string is returned.
+		To get the current command-line completion type, use
+		|getcmdcompltype()|.
+
+                Parameters: ~
+                  • {pat} (`string`)
+
+                Return: ~
+                  (`string`)
 
 getcurpos([{winid}])                                               *getcurpos()*
 		Get the position of the cursor.  This is like getpos('.'), but

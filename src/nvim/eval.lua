@@ -3759,6 +3759,9 @@ M.funcs = {
       Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
       |getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
       Returns an empty string when completion is not defined.
+
+      To get the type of the command-line completion for the
+      specified string, use |getcompletiontype()|.
     ]=],
     name = 'getcmdcompltype',
     params = {},
@@ -3939,6 +3942,21 @@ M.funcs = {
     params = { { 'pat', 'string' }, { 'type', 'string' }, { 'filtered', 'boolean' } },
     returns = 'string[]',
     signature = 'getcompletion({pat}, {type} [, {filtered}])',
+  },
+  getcompletiontype = {
+    args = 1,
+    base = 1,
+    desc = [=[
+      Return the type of the command-line completion using {pat}.
+      When no corresponding completion type is found, an empty
+      string is returned.
+      To get the current command-line completion type, use
+      |getcmdcompltype()|.
+    ]=],
+    name = 'getcompletiontype',
+    params = { { 'pat', 'string' } },
+    returns = 'string',
+    signature = 'getcompletiontype({pat})',
   },
   getcurpos = {
     args = { 0, 1 },

@@ -920,6 +920,8 @@ Command line:					*command-line-functions*
 	getcmdtype()		return the current command-line type
 	getcmdwintype()		return the current command-line window type
 	getcompletion()		list of command-line completion matches
+	getcompletiontype()	get the type of the command-line completion
+				for specified string
 	fullcommand()		get full command name
 	cmdcomplete_info()	get command-line completion information
 
