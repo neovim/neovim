@@ -6,8 +6,12 @@ vim.api.nvim_create_autocmd('UIEnter', {
   group = id,
   desc = 'Enable OSC 52 feature flag if a supporting TUI is attached',
   callback = function()
-    -- If OSC 52 is explicitly disabled by the user then don't do anything
-    if vim.g.termfeatures ~= nil and vim.g.termfeatures.osc52 == false then
+    -- If OSC 52 is explicitly disabled by the user or running under
+    -- ConEmu with ConEmuHooks enabled then don't do anything
+    if
+      (vim.g.termfeatures ~= nil and vim.g.termfeatures.osc52 == false)
+      or os.getenv('ConEmuHooks') == 'Enabled'
+    then
       return
     end
 
