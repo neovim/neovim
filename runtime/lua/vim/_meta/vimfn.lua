@@ -2994,16 +2994,18 @@ function vim.fn.getcharstr(expr, opts) end
 --- @return string
 function vim.fn.getcmdcomplpat() end
 
---- Return the type of the current command-line completion.
---- Only works when the command line is being edited, thus
---- requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+--- Return the type of command-line completion using {pat}.
+--- If {pat} is omited, only works when the command line is being
+--- edited, thus requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+---
 --- See |:command-completion| for the return string.
 --- Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
 --- |getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
 --- Returns an empty string when completion is not defined.
 ---
+--- @param pat? string
 --- @return string
-function vim.fn.getcmdcompltype() end
+function vim.fn.getcmdcompltype(pat) end
 
 --- Return the current command-line input.  Only works when the
 --- command line is being edited, thus requires use of

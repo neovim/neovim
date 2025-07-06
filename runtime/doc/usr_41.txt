@@ -908,8 +908,7 @@ Buffers, windows and the argument list:
 Command line:					*command-line-functions*
 	getcmdcomplpat()	get completion pattern of the current command
 				line
-	getcmdcompltype()	get the type of the current command line
-				completion
+	getcmdcompltype()	get the type of the command line completion
 	getcmdline()		get the current command line input
 	getcmdprompt()		get the current command line prompt
 	getcmdpos()		get position of the cursor in the command line

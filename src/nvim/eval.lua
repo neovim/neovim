@@ -3751,19 +3751,22 @@ M.funcs = {
     signature = 'getcmdcomplpat()',
   },
   getcmdcompltype = {
+    args = { 0, 1 },
+    base = 1,
     desc = [=[
-      Return the type of the current command-line completion.
-      Only works when the command line is being edited, thus
-      requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+      Return the type of command-line completion using {pat}.
+      If {pat} is omited, only works when the command line is being
+      edited, thus requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+
       See |:command-completion| for the return string.
       Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
       |getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
       Returns an empty string when completion is not defined.
     ]=],
     name = 'getcmdcompltype',
-    params = {},
+    params = { { 'pat', 'string' } },
     returns = 'string',
-    signature = 'getcmdcompltype()',
+    signature = 'getcmdcompltype([{pat}])',
   },
   getcmdline = {
     desc = [=[

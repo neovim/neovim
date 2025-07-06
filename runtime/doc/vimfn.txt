@@ -3342,14 +3342,18 @@ getcmdcomplpat()                                              *getcmdcomplpat()*
                 Return: ~
                   (`string`)
 
-getcmdcompltype()                                            *getcmdcompltype()*
-		Return the type of the current command-line completion.
-		Only works when the command line is being edited, thus
-		requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+getcmdcompltype([{pat}])                                     *getcmdcompltype()*
+		Return the type of command-line completion using {pat}.
+		If {pat} is omited, only works when the command line is being
+		edited, thus requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+
 		See |:command-completion| for the return string.
 		Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
 		|getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
 		Returns an empty string when completion is not defined.
+
+                Parameters: ~
+                  • {pat} (`string?`)
 
                 Return: ~
                   (`string`)

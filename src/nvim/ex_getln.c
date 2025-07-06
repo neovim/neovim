@@ -4198,22 +4198,13 @@ static char *get_cmdline_completion_pattern(void)
 }
 
 /// Get the current command-line completion type.
-static char *get_cmdline_completion(void)
+static char *get_cmdline_completion(expand_T *xpc)
 {
-  if (cmdline_star > 0) {
-    return NULL;
-  }
-
-  CmdlineInfo *p = get_ccline_ptr();
-  if (p == NULL || p->xpc == NULL) {
-    return NULL;
-  }
-
-  int xp_context = p->xpc->xp_context;
+  int xp_context = xpc->xp_context;
   if (xp_context == EXPAND_NOTHING) {
-    set_expand_context(p->xpc);
-    xp_context = p->xpc->xp_context;
-    p->xpc->xp_context = EXPAND_NOTHING;
+    set_expand_context(xpc);
+    xp_context = xpc->xp_context;
+    xpc->xp_context = EXPAND_NOTHING;
   }
   if (xp_context == EXPAND_UNSUCCESSFUL) {
     return NULL;
@@ -4225,9 +4216,9 @@ static char *get_cmdline_completion(void)
   }
 
   if (xp_context == EXPAND_USER_LIST || xp_context == EXPAND_USER_DEFINED) {
-    size_t buflen = strlen(cmd_compl) + strlen(p->xpc->xp_arg) + 2;
+    size_t buflen = strlen(cmd_compl) + strlen(xpc->xp_arg) + 2;
     char *buffer = xmalloc(buflen);
-    snprintf(buffer, buflen, "%s,%s", cmd_compl, p->xpc->xp_arg);
+    snprintf(buffer, buflen, "%s,%s", cmd_compl, xpc->xp_arg);
     return buffer;
   }
 
@@ -4244,8 +4235,34 @@ void f_getcmdcomplpat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "getcmdcompltype()" function
 void f_getcmdcompltype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  if (tv_check_for_opt_string_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = get_cmdline_completion();
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    char *pat = (char *)tv_get_string(&argvars[0]);
+    expand_T xpc;
+    ExpandInit(&xpc);
+
+    int cmdline_len = (int)strlen(pat);
+    set_cmd_context(&xpc, pat, cmdline_len, cmdline_len, false);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+    xpc.xp_col = cmdline_len;
+
+    rettv->v_type = VAR_STRING;
+    rettv->vval.v_string = get_cmdline_completion(&xpc);
+
+    ExpandCleanup(&xpc);
+  } else {
+    CmdlineInfo *p = get_ccline_ptr();
+    if (cmdline_star > 0 || p == NULL || p->xpc == NULL) {
+      return;
+    }
+
+    rettv->vval.v_string = get_cmdline_completion(p->xpc);
+  }
 }
 
 /// "getcmdline()" function
