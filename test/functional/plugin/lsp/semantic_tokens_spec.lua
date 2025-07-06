@@ -8,7 +8,6 @@ local dedent = t.dedent
 local eq = t.eq
 local exec_lua = n.exec_lua
 local feed = n.feed
-local feed_command = n.feed_command
 local insert = n.insert
 local matches = t.matches
 local api = n.api
@@ -475,8 +474,8 @@ describe('semantic token highlighting', function()
                                                 |
       ]],
       }
-      feed_command('%s/int x/int x()/')
-      feed_command('noh')
+      feed(':%s/int x/int x()/<CR>')
+      feed(':noh<CR>')
       screen:expect {
         grid = [[
         #include <iostream>                     |
@@ -720,8 +719,8 @@ describe('semantic token highlighting', function()
                                                 |
       ]],
       }
-      feed_command('%s/int x/int x()/')
-      feed_command('noh')
+      feed(':%s/int x/int x()/<CR>')
+      feed(':noh<CR>')
 
       -- the highlights don't change because our fake server sent the exact
       -- same result for the same method (the full request). "x" would have
