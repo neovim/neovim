@@ -1,5 +1,7 @@
 # 欢迎来到 Neovim 教程
 
+# 第 1 章
+
 Neovim 是一个功能非常强大的编辑器，它的命令多到无法在这篇教程里一一讲解。本教程
 旨在介绍足够多的基本命令，让你能轻松地将 Neovim 作为通用编辑器来使用。
 
@@ -285,7 +287,7 @@ This ABC DE line FGHI JK LMN OP of words is Q RS TUV cleaned up.
 
  3. 现在移动到第 4 行。
 
- 4. 输入 `2dd`{normal} 来删除两行，然后按两次 `u`{normal} 来撤销这三次删除。
+ 4. 输入 `2dd`{normal} 来删除两行，然后按两次 `u`{normal} 来恢复这三行。
 
 1)  Roses are red,
 2)  Mud is fun,
@@ -884,7 +886,7 @@ NOTE: 补全功能对许多命令都有效。它对 `:help`{vim} 命令尤其有
 
 # 第 7.3 课：配置 NVIM
 
-Neovim 是一个高度可配置的编辑器。你可以按你喜欢的方式定制它。要开始使用更多功能，
+Neovim 是一个高度可配置的编辑器。你可以根据自己的需求进行定制。要开始使用更多功能，
 可以创建一个 vimrc 文件，如果你想用 Lua，文件名可以是 "init.lua"，如果你想用
 Vimscript，文件名可以是 "init.vim"。在本课中，我们将使用 "init.lua"。
 
