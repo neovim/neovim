@@ -170,6 +170,16 @@ found", for Vi compatibility.
 For the |:s| command the "e" flag can be used to avoid the error message
 |:s_flags|.
 
+					*search-options*
+The following options affect how a search is performed in Vim:
+    'hlsearch'		highlight matches
+    'ignorecase'	ignore case when searching
+    'imsearch'		use IME when entering the search pattern
+    'incsearch'		show matches incrementally as the pattern is typed
+    'shortmess'		suppress messages |shm-s|; show search count |shm-S|
+    'smartcase'		override 'ignorecase' if pattern contains uppercase
+    'wrapscan'		continue searching from the start of the file
+
 					*search-offset* *{offset}*
 These commands search for the specified pattern.  With "/" and "?" an
 additional offset may be given.  There are two types of offsets: line offsets
