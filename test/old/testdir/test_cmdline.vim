@@ -740,12 +740,13 @@ endfunc
 func Test_getcompletiontype()
   call assert_fails('call getcompletiontype()', 'E119:')
   call assert_fails('call getcompletiontype({})', 'E1174:')
-  call assert_equal(getcompletiontype(''), 'command')
-  call assert_equal(getcompletiontype('dummy '), '')
-  call assert_equal(getcompletiontype('cd '), 'dir_in_path')
-  call assert_equal(getcompletiontype('let v:n'), 'var')
-  call assert_equal(getcompletiontype('call tag'), 'function')
-  call assert_equal(getcompletiontype('help '), 'help')
+  call assert_equal('command', getcompletiontype(''))
+  call assert_equal('', getcompletiontype('dummy '))
+  call assert_equal('', getcompletiontype('ls '))
+  call assert_equal('dir_in_path', getcompletiontype('cd '))
+  call assert_equal('var', getcompletiontype('let v:n'))
+  call assert_equal('function', getcompletiontype('call tag'))
+  call assert_equal('help', getcompletiontype('help '))
 endfunc
 
 func Test_multibyte_expression()
@@ -4251,6 +4252,8 @@ func Test_custom_completion()
 
   call feedkeys(":Test1 \<C-R>=Check_custom_completion()\<CR>\<Esc>", "xt")
   call feedkeys(":Test2 \<C-R>=Check_customlist_completion()\<CR>\<Esc>", "xt")
+  call assert_equal('custom,CustomComplete1', getcompletiontype('Test1 '))
+  call assert_equal('customlist,CustomComplete2', getcompletiontype('Test2 '))
 
   call assert_fails("call getcompletion('', 'custom')", 'E475:')
   call assert_fails("call getcompletion('', 'customlist')", 'E475:')

@@ -403,7 +403,7 @@ char *get_user_cmd_nargs(expand_T *xp, int idx)
 
 static char *get_command_complete(int arg)
 {
-  if (arg >= (int)(ARRAY_SIZE(command_complete))) {
+  if (arg < 0 || arg >= (int)(ARRAY_SIZE(command_complete))) {
     return NULL;
   }
   return (char *)command_complete[arg];
@@ -420,6 +420,26 @@ char *get_user_cmd_complete(expand_T *xp, int idx)
     return "";
   }
   return cmd_compl;
+}
+
+/// Get the name of completion type "expand" as an allocated string.
+/// "compl_arg" is the function name for "custom" and "customlist" types.
+/// Returns NULL if no completion is available.
+char *cmdcomplete_type_to_str(int expand, const char *compl_arg)
+{
+  char *cmd_compl = get_command_complete(expand);
+  if (cmd_compl == NULL || expand == EXPAND_USER_LUA) {
+    return NULL;
+  }
+
+  if (expand == EXPAND_USER_LIST || expand == EXPAND_USER_DEFINED) {
+    size_t buflen = strlen(cmd_compl) + strlen(compl_arg) + 2;
+    char *buffer = xmalloc(buflen);
+    snprintf(buffer, buflen, "%s,%s", cmd_compl, compl_arg);
+    return buffer;
+  }
+
+  return xstrdup(cmd_compl);
 }
 
 int cmdcomplete_str_to_type(const char *complete_str)
