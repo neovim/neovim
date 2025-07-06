@@ -194,7 +194,7 @@ void f_filewritable(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
 {
   char *fresult = NULL;
-  char *path = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
+  char *path = *curbuf->b_p_pa == NUL ? p_path : curbuf->b_p_pa;
   int count = 1;
   bool first = true;
   bool error = false;

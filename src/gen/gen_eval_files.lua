@@ -629,29 +629,6 @@ local function scope_to_doc(s)
   return 'global or ' .. m[s[2]] .. (s[2] ~= 'tab' and ' |global-local|' or '')
 end
 
--- @param o vim.option_meta
--- @return string
-local function scope_more_doc(o)
-  if
-    vim.list_contains({
-      'bufhidden',
-      'buftype',
-      'filetype',
-      'modified',
-      'previewwindow',
-      'readonly',
-      'scroll',
-      'syntax',
-      'winfixheight',
-      'winfixwidth',
-    }, o.full_name)
-  then
-    return '  |local-noglobal|'
-  end
-
-  return ''
-end
-
 --- @param x string
 local function dedent(x)
   return (vim.text.indent(0, (x:gsub('\n%s-([\n]?)$', '\n%1'))))
@@ -770,7 +747,8 @@ local function render_option_doc(_f, opt, write)
     write(fmt('%s\t%s', name_str, otype))
   end
 
-  write('\t\t\t' .. scope_to_doc(opt.scope) .. scope_more_doc(opt))
+  local local_noglobal = opt.local_noglobal and '  |local-noglobal|' or ''
+  write('\t\t\t' .. scope_to_doc(opt.scope) .. local_noglobal)
   for _, l in ipairs(split(opt.desc)) do
     if l == '<' or l:match('^<%s') then
       write(l)
