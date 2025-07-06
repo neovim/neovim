@@ -3002,8 +3002,8 @@ function vim.fn.getcmdcomplpat() end
 --- |getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
 --- Returns an empty string when completion is not defined.
 ---
---- To get the type of the command-line completion for the
---- specified string, use |getcompletiontype()|.
+--- To get the type of the command-line completion for a specified
+--- string, use |getcompletiontype()|.
 ---
 --- @return string
 function vim.fn.getcmdcompltype() end

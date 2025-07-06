@@ -4198,31 +4198,28 @@ static char *get_cmdline_completion_pattern(void)
 }
 
 /// Get the command-line completion type.
-char *get_cmdline_completion(expand_T *xpc)
+static char *get_cmdline_completion(void)
 {
-  int xp_context = xpc->xp_context;
+  if (cmdline_star > 0) {
+    return NULL;
+  }
+
+  CmdlineInfo *p = get_ccline_ptr();
+  if (p == NULL || p->xpc == NULL) {
+    return NULL;
+  }
+
+  int xp_context = p->xpc->xp_context;
   if (xp_context == EXPAND_NOTHING) {
-    set_expand_context(xpc);
-    xp_context = xpc->xp_context;
-    xpc->xp_context = EXPAND_NOTHING;
+    set_expand_context(p->xpc);
+    xp_context = p->xpc->xp_context;
+    p->xpc->xp_context = EXPAND_NOTHING;
   }
   if (xp_context == EXPAND_UNSUCCESSFUL) {
     return NULL;
   }
 
-  char *cmd_compl = get_user_cmd_complete(NULL, xp_context);
-  if (cmd_compl == NULL) {
-    return NULL;
-  }
-
-  if (xp_context == EXPAND_USER_LIST || xp_context == EXPAND_USER_DEFINED) {
-    size_t buflen = strlen(cmd_compl) + strlen(xpc->xp_arg) + 2;
-    char *buffer = xmalloc(buflen);
-    snprintf(buffer, buflen, "%s,%s", cmd_compl, xpc->xp_arg);
-    return buffer;
-  }
-
-  return xstrdup(cmd_compl);
+  return cmdcomplete_type_to_str(xp_context, p->xpc->xp_arg);
 }
 
 /// "getcmdcomplpat()" function
@@ -4236,14 +4233,7 @@ void f_getcmdcomplpat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_getcmdcompltype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  CmdlineInfo *p = get_ccline_ptr();
-  if (cmdline_star > 0 || p == NULL || p->xpc == NULL) {
-    return;
-  }
-
-  rettv->vval.v_string = get_cmdline_completion(p->xpc);
+  rettv->vval.v_string = get_cmdline_completion();
 }
 
 /// "getcmdline()" function
