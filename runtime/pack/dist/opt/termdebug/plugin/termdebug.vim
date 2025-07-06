@@ -1688,7 +1688,9 @@ func s:CreateBreakpoint(id, subid, enabled)
       let hiName = "debugBreakpoint"
     endif
     let label = ''
-    if exists('g:termdebug_config') && has_key(g:termdebug_config, 'sign')
+    if exists('g:termdebug_config') && has_key(g:termdebug_config, 'signs')
+      let label = get(g:termdebug_config.signs, a:id - 1, get(g:termdebug_config, 'sign', ''))
+    elseif exists('g:termdebug_config') && has_key(g:termdebug_config, 'sign')
       let label = g:termdebug_config['sign']
     elseif exists('g:termdebug_config') && has_key(g:termdebug_config, 'sign_decimal')
       let label = printf('%02d', a:id)
