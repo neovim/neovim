@@ -11,8 +11,16 @@ typedef struct {
 
 typedef kvec_t(HlMessageChunk) HlMessage;
 
+typedef enum msg_status {
+  REPORT,
+  SUCCESS,
+  FAILED,
+  CANCEL,
+} MessageStatus;
+
 /// Message history for `:messages`
 typedef struct msg_hist {
+  int message_id;         ///< Indentifier of the message
   struct msg_hist *next;  ///< Next message.
   struct msg_hist *prev;  ///< Previous message.
   HlMessage msg;          ///< Highlighted message.
@@ -20,4 +28,7 @@ typedef struct msg_hist {
   bool temp;              ///< Temporary message since last command ("g<")
   bool append;            ///< Message should be appended to previous entry, as opposed
                           ///< to on a new line (|ui-messages|->msg_show->append).
+  String title;           ///< Title for progress message
+  int parcentage;         ///< Progress percentage
+  MessageStatus status;   ///< Status for progress message
 } MessageHistoryEntry;

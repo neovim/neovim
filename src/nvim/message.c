@@ -50,6 +50,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/message_defs.h"
 #include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -1042,6 +1043,9 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp)
   entry->kind = msg_ext_kind;
   entry->prev = msg_hist_last;
   entry->next = NULL;
+  entry->status = SUCCESS;
+  entry->title = cstr_to_string("");
+  entry->parcentage = 100;
   // NOTE: this does not encode if the message was actually appended to the
   // previous entry in the message history. However append is currently only
   // true for :echon, which is stored in the history as a temporary entry for
@@ -1080,6 +1084,7 @@ static void msg_hist_free_msg(MessageHistoryEntry *entry)
     msg_hist_temp = entry->next;
   }
   hl_msg_free(entry->msg);
+  api_free_string(entry->title);
   xfree(entry);
 }
 
