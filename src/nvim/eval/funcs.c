@@ -6724,12 +6724,42 @@ static void f_serverlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   size_t n;
   char **addrs = server_address_list(&n);
 
+  Arena arena = ARENA_EMPTY;
+  // Passed to vim._core.server.serverlist() to avoid duplicates
+  Array addrs_arr = arena_array(&arena, n);
+
   // Copy addrs into a linked list.
   list_T *const l = tv_list_alloc_ret(rettv, (ptrdiff_t)n);
   for (size_t i = 0; i < n; i++) {
     tv_list_append_allocated_string(l, addrs[i]);
+    ADD_C(addrs_arr, CSTR_AS_OBJ(addrs[i]));
   }
+
+  if (!(argvars[0].v_type == VAR_DICT && tv_dict_get_bool(argvars[0].vval.v_dict, "peer", false))) {
+    goto cleanup;
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  ADD_C(args, ARRAY_OBJ(addrs_arr));
+
+  Error err = ERROR_INIT;
+  Object rv = NLUA_EXEC_STATIC("return require('vim._core.server').serverlist(...)",
+                               args, kRetObject,
+                               &arena, &err);
+
+  if (ERROR_SET(&err)) {
+    ELOG("vim._core.serverlist failed: %s", err.msg);
+    goto cleanup;
+  }
+
+  for (size_t i = 0; i < rv.data.array.size; i++) {
+    char *curr_server = rv.data.array.items[i].data.string.data;
+    tv_list_append_string(l, curr_server, -1);
+  }
+
+cleanup:
   xfree(addrs);
+  arena_mem_free(arena_finish(&arena));
 }
 
 /// "serverstart()" function
