@@ -12,6 +12,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/os/fs_defs.h"
 #include "nvim/statusline_defs.h"
+#include "nvim/types_defs.h"
 #include "nvim/undo_defs.h"
 
 /// Reference to a buffer that stores the value of buf_free_count.
@@ -522,6 +523,7 @@ struct file_buffer {
   int b_p_bomb;                 ///< 'bomb'
   char *b_p_bh;                 ///< 'bufhidden'
   char *b_p_bt;                 ///< 'buftype'
+  OptInt b_p_busy;              ///< 'busy'
   int b_has_qf_entry;           ///< quickfix exists for buffer
   int b_p_bl;                   ///< 'buflisted'
   OptInt b_p_channel;           ///< 'channel'

@@ -1217,6 +1217,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	without saving.  For writing there must be matching |BufWriteCmd|,
 	|FileWriteCmd| or |FileAppendCmd| autocommands.
 
+							*'busy'*
+'busy'			number	(default 0)
+			local to buffer
+	Sets a buffer "busy" status. Indicated in the default statusline.
+	When busy status is larger then 0 busy flag is shown in statusline.
+	The semantics of "busy" are arbitrary, typically decided by the plugin that owns the buffer.
+
 						*'casemap'* *'cmp'*
 'casemap' 'cmp'		string	(default "internal,keepascii")
 			global
@@ -6184,7 +6191,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	an expensive expression can negatively affect render performance.
 
 					*'statusline'* *'stl'* *E540* *E542*
-'statusline' 'stl'	string	(default "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}")
+'statusline' 'stl'	string	(default "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &busy > 0 ? '◐ ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}")
 			global or local to window |global-local|
 	Sets the |status-line|.
 

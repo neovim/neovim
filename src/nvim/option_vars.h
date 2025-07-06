@@ -280,6 +280,7 @@ EXTERN char *p_bsk;             ///< 'backupskip'
 EXTERN char *p_breakat;         ///< 'breakat'
 EXTERN char *p_bh;              ///< 'bufhidden'
 EXTERN char *p_bt;              ///< 'buftype'
+EXTERN OptInt p_busy;           ///< 'busy'
 EXTERN char *p_cmp;             ///< 'casemap'
 EXTERN unsigned cmp_flags;
 EXTERN char *p_enc;             ///< 'encoding'
