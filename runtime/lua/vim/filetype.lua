@@ -1969,6 +1969,7 @@ local detect_xkb = starsetf('xkb')
 local pattern = {
   -- BEGIN PATTERN
   ['/debian/'] = {
+    ['/debian/tests/control$'] = 'autopkgtest',
     ['/debian/changelog$'] = 'debchangelog',
     ['/debian/control$'] = 'debcontrol',
     ['/debian/copyright$'] = 'debcopyright',

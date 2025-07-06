@@ -264,6 +264,8 @@ function M.control(_, bufnr)
   local line1 = getline(bufnr, 1)
   if line1 and findany(line1, { '^Source:', '^Package:' }) then
     return 'debcontrol'
+  elseif line1 and findany(line1, { '^Tests:', '^Test%-Command:' }) then
+    return 'autopkgtest'
   end
 end
 
