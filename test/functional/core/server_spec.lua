@@ -179,9 +179,9 @@ describe('server', function()
 
     -- Exactly #servs servers should be added.
     eq(_n + #servs, #new_servs)
-    -- The new servers should be at the end of the list.
+    -- servers started by `serverstart` will be listed after the current sever and before the other ones
     for i = 1, #servs do
-      eq(servs[i], new_servs[i + _n])
+      eq(servs[i], new_servs[i + 1])
       eq(1, eval("serverstop('" .. servs[i] .. "')"))
     end
     -- After serverstop() the servers should NOT be in the list.

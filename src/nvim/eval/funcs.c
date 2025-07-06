@@ -6824,13 +6824,34 @@ static void f_serverlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   size_t n;
   char **addrs = server_address_list(&n);
+  dict_T *addrs_dict = tv_dict_alloc();
 
   // Copy addrs into a linked list.
   list_T *const l = tv_list_alloc_ret(rettv, (ptrdiff_t)n);
   for (size_t i = 0; i < n; i++) {
     tv_list_append_allocated_string(l, addrs[i]);
+    tv_dict_add_bool(addrs_dict, addrs[i], strlen(addrs[i]), true);
   }
+
+  Error err = ERROR_INIT;
+  Object rv = NLUA_EXEC_STATIC("return vim.fs.serverlist(...)", (Array)ARRAY_DICT_INIT, kRetObject,
+                               NULL, &err);
+
+  if (ERROR_SET(&err)) {
+    ELOG("Error in function 'serverlist': %s", err.msg);
+    return;
+  }
+
+  for (size_t i = 0; i < rv.data.array.size; i++) {
+    char *curr_server = rv.data.array.items[i].data.string.data;
+    // Ensure that servers aren't listed twice
+    if (tv_dict_find(addrs_dict, curr_server, -1) == NULL) {
+      tv_list_append_allocated_string(l, curr_server);
+    }
+  }
+
   xfree(addrs);
+  tv_dict_free(addrs_dict);
 }
 
 /// "serverstart()" function
