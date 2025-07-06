@@ -73,7 +73,7 @@ function M.hover(config)
 
     if vim.tbl_isempty(results1) then
       if config.silent ~= true then
-        vim.notify('No information available')
+        vim.notify('No information available', vim.log.levels.INFO)
       end
       return
     end
@@ -368,7 +368,7 @@ function M.signature_help(config)
 
     if not next(signatures) then
       if config.silent ~= true then
-        print('No signature help available')
+        vim.notify('No signature help available', vim.log.levels.INFO)
       end
       return
     end
@@ -976,7 +976,7 @@ function M.add_workspace_folder(workspace_folder)
     return
   end
   if vim.fn.isdirectory(workspace_folder) == 0 then
-    print(workspace_folder, ' is not a valid directory')
+    vim.notify(workspace_folder .. ' is not a valid directory')
     return
   end
   local bufnr = api.nvim_get_current_buf()
@@ -1002,7 +1002,7 @@ function M.remove_workspace_folder(workspace_folder)
   for _, client in pairs(lsp.get_clients({ bufnr = bufnr })) do
     client:_remove_workspace_folder(workspace_folder)
   end
-  print(workspace_folder, 'is not currently part of the workspace')
+  vim.notify(workspace_folder .. 'is not currently part of the workspace')
 end
 
 --- Lists all symbols in the current workspace in the quickfix window.
