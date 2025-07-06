@@ -550,24 +550,13 @@ describe('treesitter highlighting (C)', function()
     screen:expect([=[
       {18:-- }{25:print}{16:(}{26:[[}                                                      |
       {18:--}{26: some}                                                          |
-      {18:-- random}                                                        |
-      {18:-- text}                                                          |
-      {18:-- here]])}                                                       |
+      {18:--}{26: random}                                                        |
+      {18:--}{26: text}                                                          |
+      {18:--}{26: here]]}{16:)}                                                       |
       ^                                                                 |
       {1:~                                                                }|*11
                                                                        |
     ]=])
-    -- NOTE: Once #31777 is fixed, this test case should be updated to the following:
-    -- screen:expect([=[
-    --   {18:-- }{25:print}{16:(}{26:[[}                                                      |
-    --   {18:--}{26: some}                                                          |
-    --   {18:--}{26: random}                                                        |
-    --   {18:--}{26: text}                                                          |
-    --   {18:--}{26: here]]}{16:)}                                                       |
-    --   ^                                                                   |
-    --   {1:~                                                                }|*11
-    --                                                                    |
-    -- ]=])
   end)
 
   it('supports complicated combined injections', function()
