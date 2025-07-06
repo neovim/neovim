@@ -7,7 +7,8 @@
 
 In chapter 3 a few simple search patterns were mentioned |03.9|.  Vim can do
 much more complex searches.  This chapter explains the most often used ones.
-A detailed specification can be found here: |pattern|
+A detailed specification can be found here: |pattern|  Options affecting how
+search is done can be found here: |search-options|
 
 |27.1|	Ignoring case
 |27.2|	Wrapping around the file end
