@@ -3,8 +3,7 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2024 Mar 26
-"              2025 Jun 13 by Vim Project (add hurd-amd64 arch #17525)
+" Last Change: 2025 Jul 05
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/debcontrol.vim
 
 " Standard syntax initialization
@@ -27,26 +26,13 @@ syn match debcontrolElse "^.*$"
 syn match debControlComma ",[ \t]*"
 syn match debControlSpace "[ \t]"
 
-let s:kernels = ['linux', 'hurd', 'kfreebsd', 'knetbsd', 'kopensolaris', 'netbsd']
-let s:archs = [
-      \ 'alpha', 'amd64', 'armeb', 'armel', 'armhf', 'arm64', 'avr32', 'hppa'
-      \, 'i386', 'ia64', 'loong64', 'lpia', 'm32r', 'm68k', 'mipsel', 'mips64el', 'mips'
-      \, 'powerpcspe', 'powerpc', 'ppc64el', 'ppc64', 'riscv64', 's390x', 's390', 'sh3eb'
-      \, 'sh3', 'sh4eb', 'sh4', 'sh', 'sparc64', 'sparc', 'x32'
-      \ ]
-let s:pairs = [
-      \ 'hurd-i386', 'hurd-amd64', 'kfreebsd-i386', 'kfreebsd-amd64', 'knetbsd-i386'
-      \, 'kopensolaris-i386', 'netbsd-alpha', 'netbsd-i386'
-      \ ]
+runtime! syntax/shared/debarchitectures.vim
 
 " Define some common expressions we can use later on
 syn keyword debcontrolArchitecture contained all any
-exe 'syn keyword debcontrolArchitecture contained '. join(map(copy(s:kernels), {k,v -> v .'-any'}))
-exe 'syn keyword debcontrolArchitecture contained '. join(map(copy(s:archs), {k,v -> 'any-'.v}))
-exe 'syn keyword debcontrolArchitecture contained '. join(s:archs)
-exe 'syn keyword debcontrolArchitecture contained '. join(s:pairs)
-
-unlet s:kernels s:archs s:pairs
+exe 'syn keyword debcontrolArchitecture contained '. join(g:debArchitectureKernelAnyArch)
+exe 'syn keyword debcontrolArchitecture contained '. join(g:debArchitectureAnyKernelArch)
+exe 'syn keyword debcontrolArchitecture contained '. join(g:debArchitectureArchs)
 
 " Keep in sync with https://metadata.ftp-master.org/sections.822
 " curl -q https://metadata.ftp-master.debian.org/sections.822 2>/dev/null| grep-dctrl -n --not -FSection -sSection  / -
