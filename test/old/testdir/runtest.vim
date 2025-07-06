@@ -164,7 +164,7 @@ endif
 
 
 " Prepare for calling test_garbagecollect_now().
-" Also avois some delays in Insert mode completion.
+" Also avoids some delays in Insert mode completion.
 let v:testing = 1
 
 let s:has_ffi = luaeval('pcall(require, "ffi")')
