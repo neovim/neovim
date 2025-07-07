@@ -138,12 +138,13 @@ local function on_document_color(err, result, ctx)
 
   local hl_infos = {} --- @type vim.lsp.document_color.HighlightInfo[]
   local style = document_color_opts.style
+  local position_encoding = assert(lsp.get_client_by_id(client_id)).offset_encoding
   for _, res in ipairs(result) do
     local range = {
       res.range.start.line,
-      res.range.start.character,
+      util._get_line_byte_from_position(bufnr, res.range.start, position_encoding),
       res.range['end'].line,
-      res.range['end'].character,
+      util._get_line_byte_from_position(bufnr, res.range['end'], position_encoding),
     }
     local hex_code = get_hex_code(res.color)
     local hl_info = { range = range, hex_code = hex_code }
