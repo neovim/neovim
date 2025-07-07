@@ -2341,6 +2341,8 @@ function M.open_float(opts, ...)
     end
   end
 
+  ---@type table<integer, lsp.Location>
+  local related_info_locations = {}
   for i, diagnostic in ipairs(diagnostics) do
     if type(prefix_opt) == 'function' then
       --- @cast prefix_opt fun(...): string?, string?
@@ -2378,15 +2380,16 @@ function M.open_float(opts, ...)
     -- Below the diagnostic, show its LSP related information (if any) in the form of file name and
     -- range, plus description.
     for _, info in ipairs(related_info) do
-      -- TODO: Somehow allow users to open the location when their cursor is over it?
-      local file_name = vim.fs.basename(vim.uri_to_fname(info.location.uri))
+      local location = info.location
+      local file_name = vim.fs.basename(vim.uri_to_fname(location.uri))
       local info_suffix = ': ' .. info.message
+      related_info_locations[#lines + 1] = info.location
       lines[#lines + 1] = string.format(
         '%s%s:%s:%s%s',
         default_pre,
         file_name,
-        info.location.range.start.line,
-        info.location.range.start.character,
+        location.range.start.line,
+        location.range.start.character,
         info_suffix
       )
       highlights[#highlights + 1] = {
@@ -2411,6 +2414,19 @@ function M.open_float(opts, ...)
   --- @diagnostic disable-next-line: param-type-mismatch
   local float_bufnr, winnr = vim.lsp.util.open_floating_preview(lines, 'plaintext', opts)
   vim.bo[float_bufnr].path = vim.bo[bufnr].path
+
+  -- TODO: Handle this generally (like vim.ui.open()), rather than overriding gf.
+  vim.keymap.set('n', 'gf', function()
+    local cursor_row = api.nvim_win_get_cursor(0)[1]
+    local location = related_info_locations[cursor_row]
+    if location then
+      -- Split the window before calling `show_document` so the window doesn't disappear.
+      vim.cmd.split()
+      vim.lsp.util.show_document(location, 'utf-16', { focus = true })
+    else
+      vim.cmd.normal({ 'gf', bang = true })
+    end
+  end, { buffer = float_bufnr, remap = false })
 
   --- @diagnostic disable-next-line: deprecated
   local add_highlight = api.nvim_buf_add_highlight
