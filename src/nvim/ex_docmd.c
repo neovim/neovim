@@ -4830,33 +4830,48 @@ int before_quit_all(exarg_T *eap)
 }
 
 /// ":qall": try to quit all windows
-/// ":restart": restart the Nvim server
-static void ex_quitall_or_restart(exarg_T *eap)
+static void ex_quitall(exarg_T *eap)
 {
   if (before_quit_all(eap) == FAIL) {
     return;
   }
   exiting = true;
+  if (eap->forceit || !check_changed_any(false, false)) {
+    not_exiting();
+    return;
+  }
+  getout(0);
+}
+
+/// ":restart": restart the Nvim server (using ":qall").
+/// ":restart +cmd": restart the Nvim server using ":cmd".
+static void ex_restart(exarg_T *eap)
+{
+  if (eap->forceit) {
+    emsg("bang (!) not supported");
+    return;
+  }
   Error err = ERROR_INIT;
-  if ((eap->forceit || !check_changed_any(false, false))
-      && (eap->cmdidx != CMD_restart || remote_ui_restart(current_ui, &err))) {
-    if (eap->cmdidx == CMD_restart) {
-      char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : (eap->forceit) ? "qall!" : "qall";
-      nvim_command(cstr_as_string(quit_cmd), &err);
-      if (ERROR_SET(&err)) {
-        emsg(err.msg);  // Could not exit
-        api_clear_error(&err);
-        not_exiting();
-      }
-    } else {
-      getout(0);
+  if (check_changed_any(false, false) || !remote_ui_restart(current_ui, &err)) {
+    if (ERROR_SET(&err)) {
+      emsg(err.msg);  // UI disappeared already?
+      api_clear_error(&err);
     }
+    return;
   }
-  not_exiting();
+  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+  nvim_command(cstr_as_string(quit_cmd), &err);
   if (ERROR_SET(&err)) {
-    emsg(err.msg);  // UI disappeared already?
+    emsg(err.msg);  // Could not exit
     api_clear_error(&err);
+    return;
   }
+  // XXX: Cannot do this as `exiting` isn't set to `true` early enough by commands that actually
+  // quit the server and it would still call `getout(0)`.
+  // if (!exiting) {
+  //   ELOG("':%s' did not quit the server, quitting manually", quit_cmd);
+  //   getout(0);
+  // }
 }
 
 /// ":close": close current window, unless it is the last one

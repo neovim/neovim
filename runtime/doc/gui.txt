@@ -82,9 +82,6 @@ Restart Nvim
                 event, this command is equivalent to `:qall`.
                 Note: Only works if the UI and server are on the same system.
 
-:restart!
-                Force restarts the Nvim server, abandoning unsaved buffers.
-
 ------------------------------------------------------------------------------
 GUI commands
 
