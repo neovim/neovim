@@ -4287,4 +4287,35 @@ func Test_cd_bslash_completion_windows()
   let &shellslash = save_shellslash
 endfunc
 
+" With 'noselect' in 'wildmode', ensure that the popup menu (pum) does not retain
+" its scroll position after reopening. The menu should open showing the top items,
+" regardless of previous scrolling.
+func Test_pum_scroll_noselect()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    command! -nargs=* -complete=customlist,TestFn TestCmd echo
+    func TestFn(a, b, c)
+      return map(range(1, 50), 'printf("a%d", v:val)')
+    endfunc
+    set wildmode=noselect,full
+    set wildoptions=pum
+    set wildmenu
+    set noruler
+  [SCRIPT]
+  call writefile(lines, 'XTest_pum_scroll', 'D')
+  let buf = RunVimInTerminal('-S XTest_pum_scroll', {'rows': 10})
+
+  call term_sendkeys(buf, ":TestCmd \<tab>" . repeat("\<c-n>", 20))
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_scroll_noselect_1', {})
+
+  call term_sendkeys(buf, "\<esc>:TestCmd \<tab>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_scroll_noselect_2', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
