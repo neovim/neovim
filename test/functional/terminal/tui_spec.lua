@@ -270,11 +270,9 @@ describe('TUI :restart', function()
     restart_pid_check()
     gui_running_check()
 
-    -- Check ":restart +echo" still restarts the server.
+    -- Check ":restart +echo" cannot restart server.
     tt.feed_data(':restart +echo\013')
-    screen_expect(s0)
-    restart_pid_check()
-    gui_running_check()
+    screen:expect({ any = "':cmd' does not quit the server" })
 
     tt.feed_data('ithis will be removed\027')
     screen_expect([[
