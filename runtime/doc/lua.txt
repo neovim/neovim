@@ -2074,7 +2074,7 @@ vim.islist({t})                                                 *vim.islist()*
     |rpcrequest()| or |vim.fn|.
 
     Parameters: ~
-      • {t}  (`table?`)
+      • {t}  (`any?`)
 
     Return: ~
         (`boolean`) `true` if list-like table, else `false`.

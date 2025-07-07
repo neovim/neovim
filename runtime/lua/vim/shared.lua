@@ -688,7 +688,7 @@ end
 ---
 ---@see |vim.isarray()|
 ---
----@param t? table
+---@param t? any
 ---@return boolean `true` if list-like table, else `false`.
 function vim.islist(t)
   if type(t) ~= 'table' then

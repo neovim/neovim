@@ -32,12 +32,12 @@ typedef struct {
   Integer end_col;
   Object hl_group;
   Array virt_text;
-  String virt_text_pos;
+  Enum("eol", "eol_right_align", "overlay", "right_align", "inline") virt_text_pos;
   Integer virt_text_win_col;
   Boolean virt_text_hide;
   Boolean virt_text_repeat_linebreak;
   Boolean hl_eol;
-  String hl_mode;
+  Enum("replace", "combine", "blend") hl_mode;
   Boolean invalidate;
   Boolean ephemeral;
   Integer priority;
@@ -46,7 +46,7 @@ typedef struct {
   Array virt_lines;
   Boolean virt_lines_above;
   Boolean virt_lines_leftcol;
-  String virt_lines_overflow;
+  Enum("trunc", "scroll") virt_lines_overflow;
   Boolean strict;
   String sign_text;
   HLGroupID sign_hl_group;

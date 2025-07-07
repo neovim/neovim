@@ -246,12 +246,12 @@ error('Cannot require a meta file')
 --- @field end_col? integer
 --- @field hl_group? any
 --- @field virt_text? any[]
---- @field virt_text_pos? string
+--- @field virt_text_pos? "eol"|"eol_right_align"|"overlay"|"right_align"|"inline"
 --- @field virt_text_win_col? integer
 --- @field virt_text_hide? boolean
 --- @field virt_text_repeat_linebreak? boolean
 --- @field hl_eol? boolean
---- @field hl_mode? string
+--- @field hl_mode? "replace"|"combine"|"blend"
 --- @field invalidate? boolean
 --- @field ephemeral? boolean
 --- @field priority? integer
@@ -260,7 +260,7 @@ error('Cannot require a meta file')
 --- @field virt_lines? any[]
 --- @field virt_lines_above? boolean
 --- @field virt_lines_leftcol? boolean
---- @field virt_lines_overflow? string
+--- @field virt_lines_overflow? "trunc"|"scroll"
 --- @field strict? boolean
 --- @field sign_text? string
 --- @field sign_hl_group? integer|string
