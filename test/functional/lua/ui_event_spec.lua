@@ -191,11 +191,7 @@ describe('vim.ui_attach', function()
         ^1                                       |
         {1:~                                       }|*4
       ]],
-      cmdline = { {
-        content = { { '' } },
-        firstc = ':',
-        pos = 0,
-      } },
+      cmdline = { { content = { { '' } }, firstc = ':', pos = 0 } },
     })
     feed('version<CR>')
     screen:expect({
@@ -203,7 +199,6 @@ describe('vim.ui_attach', function()
         ^2                                       |
         {1:~                                       }|*4
       ]],
-      cmdline = { { abort = false } },
       condition = function()
         eq('list_cmd', screen.messages[1].kind)
         screen.messages = {} -- Ignore the build dependent :version content
@@ -216,28 +211,12 @@ describe('vim.ui_attach', function()
         {1:~                                       }|*4
       ]],
       cmdline = {
-        {
-          content = { { '' } },
-          hl_id = 10,
-          pos = 0,
-          prompt = '[Y]es, (N)o, (C)ancel: ',
-        },
+        { content = { { '' } }, hl = 'MoreMsg', pos = 0, prompt = '[Y]es, (N)o, (C)ancel: ' },
       },
-      messages = {
-        {
-          content = { { '\nSave changes?\n', 6, 10 } },
-          kind = 'confirm',
-        },
-      },
+      messages = { { content = { { '\nSave changes?\n', 6, 'MoreMsg' } }, kind = 'confirm' } },
     })
     feed('n')
-    screen:expect({
-      grid = [[
-        ^4                                       |
-        {1:~                                       }|*4
-      ]],
-      cmdline = { { abort = false } },
-    })
+    screen:expect_unchanged()
   end)
 
   it("preserved 'incsearch/command' screen state after :redraw from ext_cmdline", function()
@@ -257,37 +236,31 @@ describe('vim.ui_attach', function()
     ]])
     -- Updates a cmdline window
     feed(':cmdline')
-    screen:expect({
-      grid = [[
-        cmdline                                 |
-        {2:cmdline [+]                             }|
-        fooba^r                                  |
-        {3:[No Name] [+]                           }|
-                                                |
-      ]],
-    })
+    screen:expect([[
+      cmdline                                 |
+      {2:cmdline [+]                             }|
+      fooba^r                                  |
+      {3:[No Name] [+]                           }|
+                                              |
+    ]])
     -- Does not clear 'incsearch' highlighting
     feed('<Esc>/foo')
-    screen:expect({
-      grid = [[
-        foo                                     |
-        {2:cmdline [+]                             }|
-        {2:foo}ba^r                                  |
-        {3:[No Name] [+]                           }|
-                                                |
-      ]],
-    })
+    screen:expect([[
+      foo                                     |
+      {2:cmdline [+]                             }|
+      {2:foo}ba^r                                  |
+      {3:[No Name] [+]                           }|
+                                              |
+    ]])
     -- Shows new cmdline state during 'inccommand'
     feed('<Esc>:%s/bar/baz')
-    screen:expect({
-      grid = [[
-        %s/bar/baz                              |
-        {2:cmdline [+]                             }|
-        foo{10:ba^z}                                  |
-        {3:[No Name] [+]                           }|
-                                                |
-      ]],
-    })
+    screen:expect([[
+      %s/bar/baz                              |
+      {2:cmdline [+]                             }|
+      foo{10:ba^z}                                  |
+      {3:[No Name] [+]                           }|
+                                              |
+    ]])
   end)
 
   it('msg_show in fast context', function()
@@ -314,10 +287,9 @@ describe('vim.ui_attach', function()
         lled in a fast event context            |
         {1:~                                       }|
       ]],
-      cmdline = { { abort = false } },
       messages = {
         {
-          content = { { 'E122: Function Foo already exists, add ! to replace it', 9, 6 } },
+          content = { { 'E122: Function Foo already exists, add ! to replace it', 9, 'ErrorMsg' } },
           history = true,
           kind = 'emsg',
         },

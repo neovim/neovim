@@ -3503,26 +3503,29 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
     }
     char *buf = arena_alloc(&arena, len, false);
     memset(buf, '*', len);
-    Array item = arena_array(&arena, 2);
+    Array item = arena_array(&arena, 3);
     ADD_C(item, INTEGER_OBJ(0));
     ADD_C(item, STRING_OBJ(cbuf_as_string(buf, len)));
+    ADD_C(item, INTEGER_OBJ(0));
     ADD_C(content, ARRAY_OBJ(item));
   } else if (kv_size(line->last_colors.colors)) {
     content = arena_array(&arena, kv_size(line->last_colors.colors));
     for (size_t i = 0; i < kv_size(line->last_colors.colors); i++) {
       CmdlineColorChunk chunk = kv_A(line->last_colors.colors, i);
-      Array item = arena_array(&arena, 2);
+      Array item = arena_array(&arena, 3);
       ADD_C(item, INTEGER_OBJ(chunk.hl_id == 0 ? 0 : syn_id2attr(chunk.hl_id)));
 
       assert(chunk.end >= chunk.start);
       ADD_C(item, STRING_OBJ(cbuf_as_string(line->cmdbuff + chunk.start,
                                             (size_t)(chunk.end - chunk.start))));
+      ADD_C(item, INTEGER_OBJ(chunk.hl_id));
       ADD_C(content, ARRAY_OBJ(item));
     }
   } else {
-    Array item = arena_array(&arena, 2);
+    Array item = arena_array(&arena, 3);
     ADD_C(item, INTEGER_OBJ(0));
     ADD_C(item, CSTR_AS_OBJ(line->cmdbuff));
+    ADD_C(item, INTEGER_OBJ(0));
     content = arena_array(&arena, 1);
     ADD_C(content, ARRAY_OBJ(item));
   }
@@ -3549,6 +3552,7 @@ void ui_ext_cmdline_block_append(size_t indent, const char *line)
   Array item = ARRAY_DICT_INIT;
   ADD(item, INTEGER_OBJ(0));
   ADD(item, CSTR_AS_OBJ(buf));
+  ADD(item, INTEGER_OBJ(0));
   Array content = ARRAY_DICT_INIT;
   ADD(content, ARRAY_OBJ(item));
   ADD(cmdline_block, ARRAY_OBJ(content));
