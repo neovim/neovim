@@ -4836,7 +4836,7 @@ static void ex_quitall(exarg_T *eap)
     return;
   }
   exiting = true;
-  if (eap->forceit || !check_changed_any(false, false)) {
+  if (!eap->forceit && check_changed_any(false, false)) {
     not_exiting();
     return;
   }
@@ -4866,12 +4866,10 @@ static void ex_restart(exarg_T *eap)
     api_clear_error(&err);
     return;
   }
-  // XXX: Cannot do this as `exiting` isn't set to `true` early enough by commands that actually
-  // quit the server and it would still call `getout(0)`.
-  // if (!exiting) {
-  //   ELOG("':%s' did not quit the server, quitting manually", quit_cmd);
-  //   getout(0);
-  // }
+  if (!exiting) {
+    ELOG("':%s' did not quit the server, quitting manually", quit_cmd);
+    getout(0);
+  }
 }
 
 /// ":close": close current window, unless it is the last one
