@@ -2894,7 +2894,10 @@ ArrayOf(Dict) keymap_array(String mode, buf_T *buf, Arena *arena)
       }
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
-        kvi_push(mappings, DICT_OBJ(mapblock_fill_dict(current_maphash, NULL, buffer_value,
+        kvi_push(mappings, DICT_OBJ(mapblock_fill_dict(current_maphash,
+                                                       current_maphash->m_alt
+                                                       ? current_maphash->m_alt->m_keys : NULL,
+                                                       buffer_value,
                                                        is_abbrev, false, arena)));
       }
     }
