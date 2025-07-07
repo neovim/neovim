@@ -390,6 +390,7 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
   // no default selection
   compl_selected = -1;
 
+  pum_clear();
   cmdline_pum_display(true);
 
   return EXPAND_OK;
