@@ -1085,6 +1085,9 @@ function Client:on_attach(bufnr)
     if vim.tbl_get(self.server_capabilities, 'foldingRangeProvider') then
       lsp._folding_range._setup(bufnr)
     end
+    if vim.tbl_get(self.server_capabilities, 'inlineCompletionProvider') then
+      lsp.inline_completion._start(bufnr)
+    end
   end)
 
   self.attached_buffers[bufnr] = true
