@@ -1900,6 +1900,12 @@ workspace_symbol({query}, {opts})             *vim.lsp.buf.workspace_symbol()*
 ==============================================================================
 Lua module: vim.lsp.diagnostic                                *lsp-diagnostic*
 
+This module provides functionality for requesting LSP diagnostics for a
+document/workspace and populating them using |vim.Diagnostic|s.
+`DiagnosticRelatedInformation` is supported: it is included in the window
+shown by |vim.diagnostic.open_float()|.
+
+
 from({diagnostics})                                *vim.lsp.diagnostic.from()*
     Converts the input `vim.Diagnostic`s to LSP diagnostics.
 

@@ -196,6 +196,9 @@ LSP
   receives the resolved config as the second arg: `cmd(dispatchers, config)`.
 • Support for annotated text edits.
 • `:checkhealth vim.lsp` is now available to check which buffers the active LSP features are attached to.
+• LSP `DiagnosticRelatedInformation` is now shown in
+  |vim.diagnostic.open_float()|. It is read from the LSP diagnostic object
+  stored in the `user_data` field.
 
 LUA
 
