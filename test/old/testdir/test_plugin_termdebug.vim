@@ -188,13 +188,16 @@ func Test_termdebug_decimal_breakpoints()
   let g:termdebug_config['sign_decimal'] = 1
 
   exe "Termdebug " .. bin_name
-  call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
+  " Nvim: g:termdebug_is_running is not ported yet
+  " call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   let gdb_buf = winbufnr(1)
   wincmd b
   Break 9
   call Nterm_wait(gdb_buf)
   redraw!
+  Run
+  call Nterm_wait(gdb_buf, 400)
 
   let i = 2
   while i <= 258
