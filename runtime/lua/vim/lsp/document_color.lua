@@ -2,6 +2,7 @@ local api = vim.api
 local lsp = vim.lsp
 local util = lsp.util
 local ms = lsp.protocol.Methods
+local Range = vim.treesitter._range
 
 local document_color_ns = api.nvim_create_namespace('nvim.lsp.document_color')
 local document_color_augroup = api.nvim_create_augroup('nvim.lsp.document_color', {})
@@ -9,6 +10,7 @@ local document_color_augroup = api.nvim_create_augroup('nvim.lsp.document_color'
 local M = {}
 
 --- @class (private) vim.lsp.document_color.HighlightInfo
+--- @field lsp_info lsp.ColorInformation Unprocessed LSP color information
 --- @field hex_code string Resolved HEX color
 --- @field range Range4 Range of the highlight
 --- @field hl_group? string Highlight group name. Won't be present if the style is a custom function.
@@ -147,7 +149,8 @@ local function on_document_color(err, result, ctx)
       util._get_line_byte_from_position(bufnr, res.range['end'], position_encoding),
     }
     local hex_code = get_hex_code(res.color)
-    local hl_info = { range = range, hex_code = hex_code }
+    --- @type vim.lsp.document_color.HighlightInfo
+    local hl_info = { range = range, hex_code = hex_code, lsp_info = res }
 
     if type(style) == 'string' then
       hl_info.hl_group = get_hl_group(hex_code, style)
@@ -367,5 +370,89 @@ api.nvim_set_decoration_provider(document_color_ns, {
     end
   end,
 })
+
+--- @param bufstate vim.lsp.document_color.BufState
+--- @return vim.lsp.document_color.HighlightInfo?, integer?
+local function get_hl_info_under_cursor(bufstate)
+  local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
+  cursor_row = cursor_row - 1 -- Convert to 0-based index
+  local cursor_range = { cursor_row, cursor_col, cursor_row, cursor_col } --- @type Range4
+
+  for client_id, hls in pairs(bufstate.hl_info) do
+    for _, hl in ipairs(hls) do
+      if Range.contains(hl.range, cursor_range) then
+        return hl, client_id
+      end
+    end
+  end
+end
+
+--- Select from a list of presentations for the color under the cursor.
+function M.color_presentation()
+  local bufnr = api.nvim_get_current_buf()
+  local bufstate = bufstates[bufnr]
+  if not bufstate then
+    vim.notify('documentColor is not enabled for this buffer.', vim.log.levels.WARN)
+    return
+  end
+
+  local hl_info, client_id = get_hl_info_under_cursor(bufstate)
+  if not hl_info or not client_id then
+    vim.notify('No color information under cursor.', vim.log.levels.WARN)
+    return
+  end
+
+  local uri = vim.uri_from_bufnr(bufnr)
+  local client = assert(lsp.get_client_by_id(client_id))
+
+  --- @type lsp.ColorPresentationParams
+  local params = {
+    textDocument = { uri = uri },
+    color = hl_info.lsp_info.color,
+    range = {
+      start = { line = hl_info.range[1], character = hl_info.range[2] },
+      ['end'] = { line = hl_info.range[3], character = hl_info.range[4] },
+    },
+  }
+
+  --- @param result lsp.ColorPresentation[]
+  client:request(ms.textDocument_colorPresentation, params, function(err, result, ctx)
+    if err then
+      lsp.log.error('color_presentation', err)
+      return
+    end
+
+    if
+      util.buf_versions[bufnr] ~= ctx.version
+      or not next(result)
+      or not api.nvim_buf_is_loaded(bufnr)
+      or not bufstate.enabled
+    then
+      return
+    end
+
+    vim.ui.select(result, {
+      kind = 'color_presentation',
+      format_item = function(item)
+        return item.label
+      end,
+    }, function(choice)
+      if not choice then
+        return
+      end
+
+      local text_edits = {} --- @type lsp.TextEdit[]
+      if choice.textEdit then
+        text_edits[#text_edits + 1] = choice.textEdit
+      else
+        -- If there's no textEdit, we should insert the label.
+        text_edits[#text_edits + 1] = { range = params.range, newText = choice.label }
+      end
+      vim.list_extend(text_edits, choice.additionalTextEdits or {})
+
+      lsp.util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
+    end)
+  end)
+end
 
 return M
