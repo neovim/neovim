@@ -2162,11 +2162,25 @@ is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
 ==============================================================================
 Lua module: vim.lsp.semantic_tokens                      *lsp-semantic_tokens*
 
+enable({enable}, {filter})                  *vim.lsp.semantic_tokens.enable()*
+    Enables or disables semantic tokens for the {filter}ed scope.
+
+    To "toggle", pass the inverse of `is_enabled()`: >lua
+        vim.lsp.semantic_tokens.enable(not vim.lsp.semantic_tokens.is_enabled())
+<
+
+    Parameters: ~
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
+      • {filter}  (`table?`) A table with the following fields:
+                  • {bufnr}? (`integer`) Buffer number, or 0 for current
+                    buffer, or nil for all.
+                  • {client_id}? (`integer`) Client ID, or nil for all
+
 force_refresh({bufnr})               *vim.lsp.semantic_tokens.force_refresh()*
     Force a refresh of all semantic tokens
 
     Only has an effect if the buffer is currently active for semantic token
-    highlighting (|vim.lsp.semantic_tokens.start()| has been called for it)
+    highlighting (|vim.lsp.semantic_tokens.enable()| has been called for it)
 
     Parameters: ~
       • {bufnr}  (`integer?`) filter by buffer. All buffers if nil, current
@@ -2215,38 +2229,14 @@ highlight_token({token}, {bufnr}, {client_id}, {hl_group}, {opts})
                        `vim.hl.priorities.semantic_tokens + 3`) Priority for
                        the applied extmark.
 
-start({bufnr}, {client_id}, {opts})          *vim.lsp.semantic_tokens.start()*
-    Start the semantic token highlighting engine for the given buffer with the
-    given client. The client must already be attached to the buffer.
-
-    NOTE: This is currently called automatically by
-    |vim.lsp.buf_attach_client()|. To opt-out of semantic highlighting with a
-    server that supports it, you can delete the semanticTokensProvider table
-    from the {server_capabilities} of your client in your |LspAttach| callback
-    or your configuration's `on_attach` callback: >lua
-        client.server_capabilities.semanticTokensProvider = nil
-<
+is_enabled({filter})                    *vim.lsp.semantic_tokens.is_enabled()*
+    Query whether semantic tokens is enabled in the {filter}ed scope
 
     Parameters: ~
-      • {bufnr}      (`integer`) Buffer number, or `0` for current buffer
-      • {client_id}  (`integer`) The ID of the |vim.lsp.Client|
-      • {opts}       (`table?`) Optional keyword arguments
-                     • debounce (integer, default: 200): Debounce token
-                       requests to the server by the given number in
-                       milliseconds
-
-stop({bufnr}, {client_id})                    *vim.lsp.semantic_tokens.stop()*
-    Stop the semantic token highlighting engine for the given buffer with the
-    given client.
-
-    NOTE: This is automatically called by a |LspDetach| autocmd that is set up
-    as part of `start()`, so you should only need this function to manually
-    disengage the semantic token engine without fully detaching the LSP client
-    from the buffer.
-
-    Parameters: ~
-      • {bufnr}      (`integer`) Buffer number, or `0` for current buffer
-      • {client_id}  (`integer`) The ID of the |vim.lsp.Client|
+      • {filter}  (`table?`) A table with the following fields:
+                  • {bufnr}? (`integer`) Buffer number, or 0 for current
+                    buffer, or nil for all.
+                  • {client_id}? (`integer`) Client ID, or nil for all
 
 
 ==============================================================================

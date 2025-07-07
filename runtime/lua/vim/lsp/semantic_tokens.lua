@@ -7,6 +7,8 @@ local uv = vim.uv
 
 local Capability = require('vim.lsp._capability')
 
+local M = {}
+
 --- @class (private) STTokenRange
 --- @field line integer line number 0-based
 --- @field start_col integer start column 0-based
@@ -194,11 +196,13 @@ function STHighlighter:new(bufnr)
       if not highlighter then
         return true
       end
-      highlighter:on_change()
+      if M.is_enabled({ bufnr = buf }) then
+        highlighter:on_change()
+      end
     end,
     on_reload = function(_, buf)
       local highlighter = STHighlighter.active[buf]
-      if highlighter then
+      if highlighter and M.is_enabled({ bufnr = bufnr }) then
         highlighter:reset()
         highlighter:send_request()
       end
@@ -209,7 +213,9 @@ function STHighlighter:new(bufnr)
     buffer = self.bufnr,
     group = self.augroup,
     callback = function()
-      self:send_request()
+      if M.is_enabled({ bufnr = bufnr }) then
+        self:send_request()
+      end
     end,
   })
 
@@ -582,7 +588,25 @@ function STHighlighter:reset_timer()
   end
 end
 
-local M = {}
+---@param bufnr (integer) Buffer number, or `0` for current buffer
+---@param client_id (integer) The ID of the |vim.lsp.Client|
+---@param debounce? (integer) (default: 200): Debounce token requests
+---        to the server by the given number in milliseconds
+function M._start(bufnr, client_id, debounce)
+  local highlighter = STHighlighter.active[bufnr]
+
+  if not highlighter then
+    highlighter = STHighlighter:new(bufnr)
+    highlighter.debounce = debounce or 200
+  else
+    highlighter.debounce = debounce or highlighter.debounce
+  end
+
+  highlighter:on_attach(client_id)
+  if M.is_enabled({ bufnr = bufnr }) then
+    highlighter:send_request()
+  end
+end
 
 --- Start the semantic token highlighting engine for the given buffer with the
 --- given client. The client must already be attached to the buffer.
@@ -597,12 +621,14 @@ local M = {}
 --- client.server_capabilities.semanticTokensProvider = nil
 --- ```
 ---
+---@deprecated
 ---@param bufnr (integer) Buffer number, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
 ---@param opts? (table) Optional keyword arguments
 ---  - debounce (integer, default: 200): Debounce token requests
 ---        to the server by the given number in milliseconds
 function M.start(bufnr, client_id, opts)
+  vim.deprecate('vim.lsp.semantic_tokens.start', 'vim.lsp.semantic_tokens.enable(true)', '0.13.0')
   vim.validate('bufnr', bufnr, 'number')
   vim.validate('client_id', client_id, 'number')
 
@@ -633,17 +659,7 @@ function M.start(bufnr, client_id, opts)
     return
   end
 
-  local highlighter = STHighlighter.active[bufnr]
-
-  if not highlighter then
-    highlighter = STHighlighter:new(bufnr)
-    highlighter.debounce = opts.debounce or 200
-  else
-    highlighter.debounce = math.max(highlighter.debounce, opts.debounce or 200)
-  end
-
-  highlighter:on_attach(client_id)
-  highlighter:send_request()
+  M._start(bufnr, client_id, opts.debounce)
 end
 
 --- Stop the semantic token highlighting engine for the given buffer with the
@@ -653,9 +669,11 @@ end
 --- of `start()`, so you should only need this function to manually disengage the semantic
 --- token engine without fully detaching the LSP client from the buffer.
 ---
+---@deprecated
 ---@param bufnr (integer) Buffer number, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
 function M.stop(bufnr, client_id)
+  vim.deprecate('vim.lsp.semantic_tokens.stop', 'vim.lsp.semantic_tokens.enable(false)', '0.13.0')
   vim.validate('bufnr', bufnr, 'number')
   vim.validate('client_id', client_id, 'number')
 
@@ -670,6 +688,37 @@ function M.stop(bufnr, client_id)
 
   if vim.tbl_isempty(highlighter.client_state) then
     highlighter:destroy()
+  end
+end
+
+--- Query whether semantic tokens is enabled in the {filter}ed scope
+---@param filter? vim.lsp.enable.Filter
+function M.is_enabled(filter)
+  return util._is_enabled('semantic_tokens', filter)
+end
+
+--- Enables or disables semantic tokens for the {filter}ed scope.
+---
+--- To "toggle", pass the inverse of `is_enabled()`:
+---
+--- ```lua
+--- vim.lsp.semantic_tokens.enable(not vim.lsp.semantic_tokens.is_enabled())
+--- ```
+---
+---@param enable? boolean true/nil to enable, false to disable
+---@param filter? vim.lsp.enable.Filter
+function M.enable(enable, filter)
+  util._enable('semantic_tokens', enable, filter)
+
+  for _, bufnr in ipairs(api.nvim_list_bufs()) do
+    local highlighter = STHighlighter.active[bufnr]
+    if highlighter then
+      if M.is_enabled({ bufnr = bufnr }) then
+        highlighter:send_request()
+      else
+        highlighter:reset()
+      end
+    end
   end
 end
 
@@ -736,7 +785,7 @@ end
 --- Force a refresh of all semantic tokens
 ---
 --- Only has an effect if the buffer is currently active for semantic token
---- highlighting (|vim.lsp.semantic_tokens.start()| has been called for it)
+--- highlighting (|vim.lsp.semantic_tokens.enable()| has been called for it)
 ---
 ---@param bufnr (integer|nil) filter by buffer. All buffers if nil, current
 ---       buffer if 0
@@ -748,7 +797,7 @@ function M.force_refresh(bufnr)
 
   for _, buffer in ipairs(buffers) do
     local highlighter = STHighlighter.active[buffer]
-    if highlighter then
+    if highlighter and M.is_enabled({ bufnr = bufnr }) then
       highlighter:reset()
       highlighter:send_request()
     end
@@ -830,5 +879,8 @@ api.nvim_set_decoration_provider(namespace, {
 ---
 ---@private
 M.__STHighlighter = STHighlighter
+
+-- Semantic tokens is enabled by default
+util._enable('semantic_tokens', true)
 
 return M
