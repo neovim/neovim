@@ -5262,6 +5262,49 @@ describe('builtin popupmenu', function()
         ]])
       end)
 
+      -- oldtest: Test_pum_scroll_noselect()
+      it('cmdline pum does not retain scroll position with "noselect"', function()
+        screen:try_resize(32, 10)
+        exec([[
+          command! -nargs=* -complete=customlist,TestFn TestCmd echo
+          func TestFn(a, b, c)
+            return map(range(1, 50), 'printf("a%d", v:val)')
+          endfunc
+          set wildmode=noselect,full
+          set wildoptions=pum
+          set wildmenu
+          set noruler
+        ]])
+
+        feed(':TestCmd <tab>' .. ('<c-n>'):rep(20))
+        screen:expect([[
+                  {n: a15            }{s: }       |
+          {1:~       }{n: a16            }{s: }{1:       }|
+          {1:~       }{n: a17            }{s: }{1:       }|
+          {1:~       }{n: a18            }{c: }{1:       }|
+          {1:~       }{n: a19            }{s: }{1:       }|
+          {1:~       }{s: a20             }{1:       }|
+          {1:~       }{n: a21            }{s: }{1:       }|
+          {1:~       }{n: a22            }{s: }{1:       }|
+          {1:~       }{n: a23            }{s: }{1:       }|
+          :TestCmd a20^                    |
+        ]])
+
+        feed('<esc>:TestCmd <tab>')
+        screen:expect([[
+                  {n: a1             }{c: }       |
+          {1:~       }{n: a2             }{s: }{1:       }|
+          {1:~       }{n: a3             }{s: }{1:       }|
+          {1:~       }{n: a4             }{s: }{1:       }|
+          {1:~       }{n: a5             }{s: }{1:       }|
+          {1:~       }{n: a6             }{s: }{1:       }|
+          {1:~       }{n: a7             }{s: }{1:       }|
+          {1:~       }{n: a8             }{s: }{1:       }|
+          {1:~       }{n: a9             }{s: }{1:       }|
+          :TestCmd ^                       |
+        ]])
+      end)
+
       it(
         'cascading highlights for matched text (PmenuMatch, PmenuMatchSel) in cmdline pum',
         function()
