@@ -1232,7 +1232,7 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
     }
 
     // on prompt buffer adjust the last prompt start location mark
-    if (bt_prompt(curbuf)) {
+    if (bt_prompt(buf)) {
       ONE_ADJUST_NODEL(&(buf->b_prompt_start.mark.lnum));
     }
 
