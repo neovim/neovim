@@ -1082,6 +1082,9 @@ function Client:on_attach(bufnr)
     if vim.tbl_get(self.server_capabilities, 'semanticTokensProvider', 'full') then
       lsp.semantic_tokens.start(bufnr, self.id)
     end
+    if vim.tbl_get(self.server_capabilities, 'foldingRangeProvider') then
+      lsp._folding_range._setup(bufnr)
+    end
   end)
 
   self.attached_buffers[bufnr] = true

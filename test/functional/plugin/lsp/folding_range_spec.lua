@@ -4,7 +4,6 @@ local Screen = require('test.functional.ui.screen')
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local eq = t.eq
-local tempname = t.tmpname
 
 local clear_notrace = t_lsp.clear_notrace
 local create_server_definition = t_lsp.create_server_definition
@@ -121,52 +120,6 @@ static int foldLevel(linenr_T lnum)
     api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
   end)
 
-  describe('setup()', function()
-    ---@type integer
-    local bufnr_set_expr
-    ---@type integer
-    local bufnr_never_set_expr
-
-    local function buf_autocmd_num(bufnr_to_check)
-      return exec_lua(function()
-        return #vim.api.nvim_get_autocmds({ buffer = bufnr_to_check, event = 'LspNotify' })
-      end)
-    end
-
-    before_each(function()
-      command([[setlocal foldexpr=v:lua.vim.lsp.foldexpr()]])
-      exec_lua(function()
-        bufnr_set_expr = vim.api.nvim_create_buf(true, false)
-        vim.api.nvim_set_current_buf(bufnr_set_expr)
-      end)
-      insert(text)
-      command('write ' .. tempname(false))
-      command([[setlocal foldexpr=v:lua.vim.lsp.foldexpr()]])
-      exec_lua(function()
-        bufnr_never_set_expr = vim.api.nvim_create_buf(true, false)
-        vim.api.nvim_set_current_buf(bufnr_never_set_expr)
-      end)
-      insert(text)
-      api.nvim_win_set_buf(0, bufnr_set_expr)
-    end)
-
-    it('only create event hooks where foldexpr has been set', function()
-      eq(1, buf_autocmd_num(bufnr))
-      eq(1, buf_autocmd_num(bufnr_set_expr))
-      eq(0, buf_autocmd_num(bufnr_never_set_expr))
-    end)
-
-    it('does not create duplicate event hooks after reloaded', function()
-      command('edit')
-      eq(1, buf_autocmd_num(bufnr_set_expr))
-    end)
-
-    it('cleans up event hooks when buffer is unloaded', function()
-      command('bdelete')
-      eq(0, buf_autocmd_num(bufnr_set_expr))
-    end)
-  end)
-
   describe('expr()', function()
     --- @type test.functional.ui.screen
     local screen
@@ -180,6 +133,29 @@ static int foldLevel(linenr_T lnum)
       })
       command([[set foldexpr=v:lua.vim.lsp.foldexpr()]])
       command([[split]])
+    end)
+
+    it('controls the value of `b:_lsp_folding_range_enabled`', function()
+      eq(
+        true,
+        exec_lua(function()
+          return vim.b._lsp_folding_range_enabled
+        end)
+      )
+      command [[setlocal foldexpr=]]
+      eq(
+        nil,
+        exec_lua(function()
+          return vim.b._lsp_folding_range_enabled
+        end)
+      )
+      command([[set foldexpr=v:lua.vim.lsp.foldexpr()]])
+      eq(
+        true,
+        exec_lua(function()
+          return vim.b._lsp_folding_range_enabled
+        end)
+      )
     end)
 
     it('can compute fold levels', function()
