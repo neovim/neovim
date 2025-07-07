@@ -3944,6 +3944,57 @@ static int copy_substring_from_pos(pos_T *start, pos_T *end, char **match, pos_T
   return OK;
 }
 
+/// Returns true if the given string `str` matches the regex pattern `pat`.
+/// Honors the 'ignorecase' (p_ic) and 'smartcase' (p_scs) settings to determine
+/// case sensitivity.
+static bool is_regex_match(char *pat, char *str)
+{
+  regmatch_T regmatch;
+  regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+  if (regmatch.regprog == NULL) {
+    return false;
+  }
+  regmatch.rm_ic = p_ic;
+  if (p_ic && p_scs) {
+    regmatch.rm_ic = !pat_has_uppercase(pat);
+  }
+
+  bool result = vim_regexec_nl(&regmatch, str, (colnr_T)0);
+
+  vim_regfree(regmatch.regprog);
+  return result;
+}
+
+/// Constructs a new match string by appending text from the buffer (starting at
+/// end_match_pos) to the given pattern `pat`. The result is a concatenation of
+/// `pat` and the word following end_match_pos.
+/// If 'lowercase' is true, the appended text is converted to lowercase before
+/// being combined. Returns the newly allocated match string, or NULL on failure.
+static char *concat_pattern_with_buffer_match(char *pat, int pat_len, pos_T *end_match_pos,
+                                              bool lowercase)
+  FUNC_ATTR_NONNULL_RET
+{
+  char *line = ml_get(end_match_pos->lnum);
+  char *word_end = find_word_end(line + end_match_pos->col);
+  int match_len = (int)(word_end - (line + end_match_pos->col));
+  char *match = xmalloc((size_t)match_len + (size_t)pat_len + 1);  // +1 for NUL
+
+  memmove(match, pat, (size_t)pat_len);
+  if (match_len > 0) {
+    if (lowercase) {
+      char *mword = xstrnsave(line + end_match_pos->col, (size_t)match_len);
+      char *lower = strcase_save(mword, false);
+      xfree(mword);
+      memmove(match + pat_len, lower, (size_t)match_len);
+      xfree(lower);
+    } else {
+      memmove(match + pat_len, line + end_match_pos->col, (size_t)match_len);
+    }
+  }
+  match[pat_len + match_len] = NUL;
+  return match;
+}
+
 /// Search for strings matching "pat" in the specified range and return them.
 /// Returns OK on success, FAIL otherwise.
 ///
@@ -3973,20 +4024,13 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
   int search_flags = SEARCH_OPT | SEARCH_NOOF | SEARCH_PEEK | SEARCH_NFMSG
                      | (has_range ? SEARCH_START : 0);
 
-  regmatch_T regmatch;
-  regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
-  if (regmatch.regprog == NULL) {
-    return FAIL;
-  }
-  regmatch.rm_ic = p_ic;
-
   garray_T ga;
   ga_init(&ga, sizeof(char *), 10);  // Use growable array of char *
 
   pos_T end_match_pos, word_end_pos;
   bool looped_around = false;
   bool compl_started = false;
-  char *match;
+  char *match, *full_match;
 
   while (true) {
     emsg_off++;
@@ -4041,29 +4085,27 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
     }
 
     // Extract the matching text prepended to completed word
-    if (!copy_substring_from_pos(&cur_match_pos, &end_match_pos, &match,
+    if (!copy_substring_from_pos(&cur_match_pos, &end_match_pos, &full_match,
                                  &word_end_pos)) {
       break;
     }
 
-    // Verify that the constructed match actually matches the pattern with
-    // correct case sensitivity
-    if (!vim_regexec_nl(&regmatch, match, (colnr_T)0)) {
-      xfree(match);
-      continue;
-    }
-    xfree(match);
-
     // Construct a new match from completed word appended to pattern itself
-    char *line = ml_get(end_match_pos.lnum);
-    char *word_end = find_word_end(line + end_match_pos.col);  // col starts from 0
-    int match_len = (int)(word_end - (line + end_match_pos.col));
-    match = xmalloc((size_t)match_len + (size_t)pat_len + 1);  // +1 for NUL
-    memmove(match, pat, (size_t)pat_len);
-    if (match_len > 0) {
-      memmove(match + (size_t)pat_len, line + end_match_pos.col, (size_t)match_len);
+    match = concat_pattern_with_buffer_match(pat, pat_len, &end_match_pos, false);
+
+    // The regex pattern may include '\C' or '\c'. First, try matching the
+    // buffer word as-is. If it doesn't match, try again with the lowercase
+    // version of the word to handle smartcase behavior.
+    if (!is_regex_match(match, full_match)) {
+      xfree(match);
+      match = concat_pattern_with_buffer_match(pat, pat_len, &end_match_pos, true);
+      if (!is_regex_match(match, full_match)) {
+        xfree(match);
+        xfree(full_match);
+        continue;
+      }
     }
-    match[pat_len + match_len] = NUL;
+    xfree(full_match);
 
     // Include this match if it is not a duplicate
     for (int i = 0; i < ga.ga_len; i++) {
@@ -4084,14 +4126,11 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
     }
   }
 
-  vim_regfree(regmatch.regprog);
-
   *matches = (char **)ga.ga_data;
   *numMatches = ga.ga_len;
   return OK;
 
 cleanup:
-  vim_regfree(regmatch.regprog);
   ga_clear_strings(&ga);
   return FAIL;
 }
