@@ -75,8 +75,8 @@ Restart Nvim
                 |v:argv| and reattaches the current UI to the new server.
                 All other UIs will detach.
 
-                This fails when changes have been made and Vim refuses to
-                |abandon| the current buffer.
+                This fails when changes have been made.
+                Use `:confirm restart` to override.
 
                 Note: If the current UI hasn't implemented the "restart" UI
                 event, this command is equivalent to `:qall`.
