@@ -4847,10 +4847,6 @@ static void ex_quitall(exarg_T *eap)
 /// ":restart +cmd": restart the Nvim server using ":cmd".
 static void ex_restart(exarg_T *eap)
 {
-  if (eap->forceit) {
-    emsg("bang (!) not supported");
-    return;
-  }
   Error err = ERROR_INIT;
   if (check_changed_any(false, false) || !remote_ui_restart(current_ui, &err)) {
     if (ERROR_SET(&err)) {
