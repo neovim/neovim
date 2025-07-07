@@ -4847,7 +4847,7 @@ static void ex_quitall(exarg_T *eap)
 
 static bool cmd_will_quit_server(char *cmd)
 {
-  for (size_t i = 0; i < ARRAY_SIZE(quit_commands); ++i) {
+  for (size_t i = 0; i < ARRAY_SIZE(quit_commands); i++) {
     if (strequal(cmd, quit_commands[i])) {
       return true;
     }
