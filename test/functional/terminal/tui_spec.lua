@@ -264,6 +264,18 @@ describe('TUI :restart', function()
     restart_pid_check()
     gui_running_check()
 
+    -- Check ":restart +qall" on an unmodified buffer.
+    tt.feed_data(':restart +qall\013')
+    screen_expect(s0)
+    restart_pid_check()
+    gui_running_check()
+
+    -- Check ":restart +echo" still restarts the server.
+    tt.feed_data(':restart +echo\013')
+    screen_expect(s0)
+    restart_pid_check()
+    gui_running_check()
+
     tt.feed_data('ithis will be removed\027')
     screen_expect([[
       this will be remove^d                              |
@@ -285,8 +297,11 @@ describe('TUI :restart', function()
       {5:-- TERMINAL --}                                    |
     ]])
 
-    -- Check ":restart!".
-    tt.feed_data(':restart!\013')
+    -- Check ":confirm restart".
+    tt.feed_data(':confirm restart\013')
+    screen:expect({ any = vim.pesc('{10:Save changes to "Untitled"?}') })
+
+    tt.feed_data('N\013')
     screen_expect(s0)
     restart_pid_check()
     gui_running_check()
