@@ -89,7 +89,7 @@ To uninstall Nvim:
   - Scoop (Windows): `scoop uninstall neovim`
 
 ==============================================================================
-Sponsor Vim/Nvim development                            *sponsor* *register*
+Sponsor Vim/Nvim development                            *sponsor*
 
 Fixing bugs and adding new features takes a lot of time and effort.  To show
 your appreciation for the work and motivate developers to continue working on

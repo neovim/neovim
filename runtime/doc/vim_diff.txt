@@ -225,6 +225,7 @@ MAJOR COMPONENTS
 - LSP framework                   |lsp|
 - Lua scripting                   |lua|
 - Parsing engine                  |treesitter|
+- Plugin manager                  |vim.pack|
 - Providers
   - Clipboard                     |provider-clipboard|
   - Node.js plugins               |provider-nodejs|
@@ -298,10 +299,15 @@ Command-line:
 
 Commands:
 - |:checkhealth|
+- |:detach|
 - |:drop| is always available
+- |:Inspect|
+- |:InspectTree|
 - |:Man| is available by default, with many improvements such as completion
 - |:match| can be invoked before highlight group is defined
+- |:restart|
 - |:source| works with Lua
+- |:trust|
 - User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
 
