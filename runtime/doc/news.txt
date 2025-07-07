@@ -196,6 +196,8 @@ LSP
   receives the resolved config as the second arg: `cmd(dispatchers, config)`.
 • Support for annotated text edits.
 • `:checkhealth vim.lsp` is now available to check which buffers the active LSP features are attached to.
+• Support for `textDocument/inlineCompletion |lsp-inline_completion|
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_inlineCompletion
 
 LUA
 

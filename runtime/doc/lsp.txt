@@ -310,6 +310,7 @@ They are also listed below.
 - `'textDocument/formatting'`
 - `'textDocument/hover'`
 - `'textDocument/inlayHint'`
+- `'textDocument/inlineCompletion'`
 - `'textDocument/publishDiagnostics'`
 - `'textDocument/rangeFormatting'`
 - `'textDocument/rename'`
@@ -443,6 +444,11 @@ LspReferenceTarget        used for highlighting reference targets (e.g. in a
                           hover range)
                                                              *hl-LspInlayHint*
 LspInlayHint              used for highlighting inlay hints
+
+                                              lsp-highlight-inline-completion
+LspInlineCompletion       used for highlighting inline completions
+
+LspInlineCompletionSuffix used for highlighting inline completions suffix
 
 
                                                       *lsp-highlight-codelens*
@@ -2158,6 +2164,30 @@ is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
 
     Return: ~
         (`boolean`)
+
+
+==============================================================================
+Lua module: vim.lsp.inline_completion                  *lsp-inline_completion*
+
+accept({bufnr})                           *vim.lsp.inline_completion.accept()*
+    Accepts the currently presented inline completion candidate, or requests a
+    new inline completion.
+
+    Parameters: ~
+      • {bufnr}  (`integer?`)
+
+jump({opts})                                *vim.lsp.inline_completion.jump()*
+    Jumps to another inline completion candidate.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {bufnr}? (`integer`) (default: current buffer)
+                • {count}? (`integer`, default: v:count1) The number of
+                  candidates to move by. A positive integer moves forward by
+                  {count} candidates, while a negative integer moves backward
+                  by {count} candidates.
+                • {wrap}? (`boolean`, default: `true`) Whether to loop around
+                  file or not. Similar to 'wrapscan'.
 
 
 ==============================================================================
