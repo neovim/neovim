@@ -179,6 +179,8 @@ struct dbg_stuff {
 
 static char dollar_command[2] = { '$', 0 };
 
+static char *quit_commands[6] = { "qall",  "qa", "q", "q!", "qa!", "qall!" };
+
 static void save_dbg_stuff(struct dbg_stuff *dsp)
 {
   dsp->trylevel = trylevel;
@@ -4843,19 +4845,35 @@ static void ex_quitall(exarg_T *eap)
   getout(0);
 }
 
+static bool cmd_will_quit_server(char *cmd)
+{
+  for (size_t i = 0; i < ARRAY_SIZE(quit_commands); ++i) {
+    if (strequal(cmd, quit_commands[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// ":restart": restart the Nvim server (using ":qall").
 /// ":restart +cmd": restart the Nvim server using ":cmd".
 static void ex_restart(exarg_T *eap)
 {
+  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+  if (!cmd_will_quit_server(quit_cmd)) {
+    emsg("':cmd' does not quit the server, abandoning restart");
+    return;
+  }
   Error err = ERROR_INIT;
-  if (check_changed_any(false, false) || !remote_ui_restart(current_ui, &err)) {
+  if ((quit_cmd[vim_strsize(quit_cmd) - 1] != '!' && check_changed_any(false,
+                                                                       false))
+      || !remote_ui_restart(current_ui, &err)) {
     if (ERROR_SET(&err)) {
       emsg(err.msg);  // UI disappeared already?
       api_clear_error(&err);
     }
     return;
   }
-  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   nvim_command(cstr_as_string(quit_cmd), &err);
   if (ERROR_SET(&err)) {
     emsg(err.msg);  // Could not exit
