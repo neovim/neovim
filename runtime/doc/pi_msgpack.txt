@@ -6,7 +6,7 @@ Copyright: (c) 2015 by Nikolay Pavlov
 The Apache license applies to the files in this package, including
 runtime/autoload/msgpack.vim, runtime/doc/pi_msgpack.txt and
 test/functional/plugin/msgpack_spec.lua.  Like anything else that's free,
-msgpack.vim and its associated files are provided as is and comes with no
+msgpack.vim and its associated files are provided as is and come with no
 warranty of any kind, either expressed or implied.  No guarantees of
 merchantability.  No guarantees of suitability for any purpose.  By using this
 plugin, you agree that in no event will the copyright holder be liable for any
@@ -43,7 +43,7 @@ This plugin contains utility functions to be used in conjunction with
 
 FUNCTION ARGUMENTS				*msgpack.vim-arguments*
 
-Disambiguation of arguments described below.  Note: if e.g. function is listed
+Disambiguation of arguments described below.  Note: if e.g. a function is listed
 as accepting |{msgpack-integer}| (or anything else) it means that function
 does not check whether argument matches its description.
 
@@ -70,7 +70,7 @@ msgpack#strftime({format}, {msgpack-integer})		*msgpack#strftime()*
 msgpack#strptime({format}, {time})			*msgpack#strptime()*
 	Reverse of |msgpack#strftime()|: for any time and format
 	|msgpack#equal|( |msgpack#strptime|(format, |msgpack#strftime|(format,
-	time)), time) be true.  Requires ||Python|, without it only supports
+	time)), time) will be true.  Requires ||Python|, without it only supports
 	non-|msgpack-special-dict| nonnegative times and format equal to
 	`%Y-%m-%dT%H:%M:%S`.
 
@@ -99,7 +99,7 @@ msgpack#deepcopy({msgpack-value})			*msgpack#deepcopy()*
 msgpack#string({msgpack-value})				*msgpack#string()*
 	Like |string()|, but saves information about msgpack types.  Values
 	dumped by msgpack#string may be read back by |msgpack#eval()|.
-	Returns is the following:
+	Returns the following:
 
 	- Dictionaries are dumped as "{key1: value1, key2: value2}". Note:
 	  msgpack allows any values in keys, so with some
@@ -111,7 +111,7 @@ msgpack#string({msgpack-value})				*msgpack#string()*
 	  2. `="abc"`: string.
 	  3. `+(10)"ext"`: extension strings (10 may be replaced with any
 	     8-bit signed integer).
-	  Inside strings the following escape sequences may be present: "\0"
+	  Inside strings, the following escape sequences may be present: "\0"
 	  (represents NUL byte), "\n" (represents line feed) and "\""
 	  (represents double quote).
 	- Floating-point and integer values are dumped using |string()| or

@@ -1012,7 +1012,8 @@ nvim_get_runtime_file({name}, {all})                 *nvim_get_runtime_file()*
     scheme files. Always use forward slashes (/) in the search pattern for
     subdirectories regardless of platform.
 
-    It is not an error to not find any files. An empty array is returned then.
+    If no files are found, an empty array is returned (this is not considered
+    an error).
 
     Attributes: ~
         |api-fast|
@@ -3098,7 +3099,7 @@ nvim_get_namespaces()                                  *nvim_get_namespaces()*
 
                                               *nvim_set_decoration_provider()*
 nvim_set_decoration_provider({ns_id}, {opts})
-    Set or change decoration provider for a |namespace|
+    Set or change decoration provider for a |namespace|.
 
     This is a very general purpose interface for having Lua callbacks being
     triggered during the redraw code.
@@ -4149,10 +4150,13 @@ nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
 
                                                    *nvim_ui_try_resize_grid()*
 nvim_ui_try_resize_grid({grid}, {width}, {height})
-    Tell Nvim to resize a grid. Triggers a grid_resize event with the
-    requested grid size or the maximum size if it exceeds size limits.
+ 
+    Instructs Nvim to resize a grid. This triggers a grid_resize event with
+    the requested grid size or the maximum allowable size if the request
+    exeeds the limits.
 
-    On invalid grid handle, fails with error.
+    If the grid handle is invalid, this function fails with an error.
+    
 
     Attributes: ~
         |RPC| only

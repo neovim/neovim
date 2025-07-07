@@ -7,9 +7,9 @@ This is a filetype plugin to work with rpm spec files.
 Currently, this Vim plugin allows you to easily update the %changelog
 section in RPM spec files.  It will even create a section for you if it
 doesn't exist yet.  If you've already inserted an entry today, it will
-give you the opportunity to just add a new item in today's entry.  If you
+give you the opportunity to just add a new item to today's entry.  If you
 don't provide a format string (|spec_chglog_format|), it'll ask you an
-email address and build a format string by itself.
+email address and build a format string for the edit session by itself.
 
 1. How to use it	|spec-how-to-use-it|
 2. Customizing		|spec-customizing|
@@ -26,8 +26,7 @@ your maplocalleader key (default is '\') plus 'c'.  If you do not have
 |spec_chglog_format| set, the plugin will ask you for an email address
 to use in this edit session.
 
-Every time you run the plugin, it will check to see if the last entry in the
-changelog has been written today and by you.  If the entry matches, it will
+Every time you run the plugin, it will check whether the last changelog entry was written today and by you. If the entry matches, it will
 just insert a new changelog item, otherwise it will create a new changelog
 entry.  If you are running with |spec_chglog_release_info| enabled, it will
 also check if the name, version and release matches.  The plugin is smart
@@ -75,8 +74,8 @@ function man page.
 ------------------------------------------------------------------------------
 Where to insert new items			*spec_chglog_prepend*
 
-The plugin will usually insert new %changelog entry items (note that it's
-not the entry itself) after the existing ones.  If you set the
+The plugin will usually insert new %changelog entry items (note: this affects
+only the items within the changelog entry, not the entry itself) after the existing ones.  If you set the
 spec_chglog_prepend variable >
 
 	let spec_chglog_prepend = 1
