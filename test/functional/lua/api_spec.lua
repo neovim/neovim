@@ -25,7 +25,10 @@ describe('luaeval(vim.api.…)', function()
     describe('nvim_buf_set_lines', function()
       it('works', function()
         fn.setline(1, { 'abc', 'def', 'a\nb', 'ttt' })
-        eq(NIL, fn.luaeval('vim.api.nvim_buf_set_lines(1, 1, 2, false, {"b\\0a"})'))
+        eq(
+          { region = { 1, 2, 3, 0, 4 } },
+          fn.luaeval('vim.api.nvim_buf_set_lines(1, 1, 2, false, {"b\\0a"})')
+        )
         eq(
           { 'abc', 'b\000a', 'a\000b', 'ttt' },
           fn.luaeval('vim.api.nvim_buf_get_lines(1, 0, 4, false)')

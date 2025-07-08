@@ -151,7 +151,31 @@ describe('api metadata', function()
             )
           end
         else
-          eq(normalize_func_metadata(f), normalize_func_metadata(funcs_new[f.name]))
+          -- Check function compatibility
+          local old_normalized = normalize_func_metadata(f)
+          local new_normalized = normalize_func_metadata(funcs_new[f.name])
+          -- Allow void => non-void return type changes (backwards compatible)
+          if old_normalized.return_type == 'void' and new_normalized.return_type ~= 'void' then
+            -- Check that all fields except return_type match
+            local old_copy = vim.deepcopy(old_normalized)
+            local new_copy = vim.deepcopy(new_normalized)
+            old_copy.return_type = new_copy.return_type -- Temporarily make return types match
+            eq(
+              old_copy,
+              new_copy,
+              string.format(
+                'Function %s metadata mismatch (ignoring void=>non-void change)',
+                f.name
+              )
+            )
+          else
+            -- For all other cases, metadata must match exactly
+            eq(
+              old_normalized,
+              new_normalized,
+              string.format('Function %s metadata mismatch', f.name)
+            )
+          end
         end
       end
       funcs_compat[level] = name_table(old_api[level].functions)
