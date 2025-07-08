@@ -763,7 +763,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
 ///            will write the message to the "log" file instead of standard output.
 Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
-               Error *err)
+                  Error *err)
   FUNC_API_SINCE(7)
 {
   HlMessage hl_msg = parse_hl_msg(chunks, opts->err, err);
@@ -778,18 +778,18 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
     kind = opts->err ? "echoerr" : history ? "echomsg" : "echo";
   }
 
-  MsgID id = opts->id || 0;
   String status = opts->status;
-  if ((strcmp(status.data, "success") != 0
-      && strcmp(status.data, "failed") != 0
-      && strcmp(status.data, "running") != 0
-      && strcmp(status.data, "cancel") != 0
-      )) {
-        api_set_error(err, kErrorTypeValidation, "invalid message status");
-        return 0;
-      }
+  if (strcmp(kind, "progress") == 0
+      && ((status.data == NULL)
+          || (strcmp(status.data, "success") != 0
+              && strcmp(status.data, "failed") != 0
+              && strcmp(status.data, "running") != 0
+              && strcmp(status.data, "cancel") != 0))) {
+    api_set_error(err, kErrorTypeValidation, "invalid message status");
+    return 0;
+  }
 
-  id = msg_multihl(id, hl_msg, kind, history, opts->err, status.data, opts->percentage);
+  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, status.data, opts->percentage);
 
   if (opts->verbose) {
     verbose_leave();

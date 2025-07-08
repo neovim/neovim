@@ -296,7 +296,8 @@ static bool is_multihl = false;
 /// @param kind Message kind (can be NULL to avoid setting kind)
 /// @param history Whether to add message to history
 /// @param err Whether to print message as an error
-int msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err, char *status, int percentage)
+MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
+                  char *status, int percentage)
 {
   no_wait_return++;
   msg_start();
@@ -1028,7 +1029,8 @@ static void msg_hist_add(const char *s, int len, int hl_id)
 static bool do_clear_hist_temp = true;
 
 /// returns message history item based on it's id or NULL if not found
-static MessageHistoryEntry* msg_find_by_id(MsgID id) {
+static MessageHistoryEntry *msg_find_by_id(MsgID id)
+{
   if (id == 0) {
     return NULL;
   }
@@ -1039,7 +1041,8 @@ static MessageHistoryEntry* msg_find_by_id(MsgID id) {
   return entry;
 }
 
-static int msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *status, int percentage)
+static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *status,
+                                  int percentage)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -1076,6 +1079,7 @@ static int msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *st
   if (entry == NULL) {
     entry = xmalloc(sizeof(MessageHistoryEntry));
     entry->message_id = msg_id_next++;
+    entry->status = NULL;
   }
   entry->msg = msg;
   entry->temp = temp;
@@ -1083,9 +1087,9 @@ static int msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *st
   entry->prev = msg_hist_last;
   entry->next = NULL;
   if (status != NULL) {
-    if (progress_message_found) {
-      xfree(entry->status);
-    }
+    // if (progress_message_found && entry->status != NULL) {
+    //   xfree(entry->status);
+    // }
     entry->status = status;
   }
   entry->parcentage = percentage;
