@@ -4499,6 +4499,7 @@ func Test_search_complete()
   " Match case correctly
   %d
   call setline(1, ["foobar", "Foobar", "fooBAr", "FooBARR"])
+
   call feedkeys("gg/f\<tab>\<f9>", 'tx')
   call assert_equal(['fooBAr', 'foobar'], g:compl_info.matches)
   call feedkeys("gg/Fo\<tab>\<f9>", 'tx')
@@ -4507,6 +4508,7 @@ func Test_search_complete()
   call assert_equal({},  g:compl_info)
   call feedkeys("gg/\\cFo\<tab>\<f9>", 'tx')
   call assert_equal(['\cFoobar', '\cFooBAr', '\cFooBARR'], g:compl_info.matches)
+
   set ignorecase
   call feedkeys("gg/f\<tab>\<f9>", 'tx')
   call assert_equal(['foobar', 'fooBAr', 'fooBARR'], g:compl_info.matches)
@@ -4516,6 +4518,7 @@ func Test_search_complete()
   call assert_equal(['FOobar', 'FOoBAr', 'FOoBARR'], g:compl_info.matches)
   call feedkeys("gg/\\Cfo\<tab>\<f9>", 'tx')
   call assert_equal(['\CfooBAr', '\Cfoobar'], g:compl_info.matches)
+
   set smartcase
   call feedkeys("gg/f\<tab>\<f9>", 'tx')
   call assert_equal(['foobar', 'fooBAr', 'foobarr'], g:compl_info.matches)
@@ -4523,16 +4526,42 @@ func Test_search_complete()
   call assert_equal(['Foobar', 'FooBARR'], g:compl_info.matches)
   call feedkeys("gg/FO\<tab>\<f9>", 'tx')
   call assert_equal({},  g:compl_info)
+  call feedkeys("gg/foob\<tab>\<f9>", 'tx')
+  call assert_equal(['foobar', 'foobarr'], g:compl_info.matches)
   call feedkeys("gg/\\Cfo\<tab>\<f9>", 'tx')
   call assert_equal(['\CfooBAr', '\Cfoobar'], g:compl_info.matches)
   call feedkeys("gg/\\cFo\<tab>\<f9>", 'tx')
   call assert_equal(['\cFoobar', '\cFooBAr', '\cFooBARR'], g:compl_info.matches)
 
+  set wildoptions+=exacttext ignorecase& smartcase&
+  call feedkeys("gg/F\<tab>\<f9>", 'tx')
+  call assert_equal(['Foobar', 'FooBARR'], g:compl_info.matches)
+  call feedkeys("gg/foob\<tab>\<f9>", 'tx')
+  call assert_equal([], g:compl_info.matches)
+  call feedkeys("gg/r\\n.\<tab>\<f9>", 'tx')
+  call assert_equal(['r\nFoobar', 'r\nfooBAr', 'r\nFooBARR'], g:compl_info.matches)
+
+  set ignorecase
+  call feedkeys("gg/F\<tab>\<f9>", 'tx')
+  call assert_equal(['Foobar', 'fooBAr', 'FooBARR', 'foobar'], g:compl_info.matches)
+  call feedkeys("gg/R\\n.\<tab>\<f9>", 'tx')
+  call assert_equal(['r\nFoobar', 'r\nfooBAr', 'r\nFooBARR'], g:compl_info.matches)
+
+  set smartcase
+  call feedkeys("gg/f\<tab>\<f9>", 'tx')
+  call assert_equal(['Foobar', 'fooBAr', 'FooBARR', 'foobar'], g:compl_info.matches)
+  call feedkeys("gg/foob\<tab>\<f9>", 'tx')
+  call assert_equal(['Foobar', 'fooBAr', 'FooBARR', 'foobar'], g:compl_info.matches)
+  call feedkeys("gg/R\\n.\<tab>\<f9>", 'tx')
+  call assert_equal({}, g:compl_info)
+  call feedkeys("gg/r\\n.*\\n\<tab>\<f9>", 'tx')
+  call assert_equal(['r\nFoobar\nfooBAr', 'r\nfooBAr\nFooBARR'], g:compl_info.matches)
+
   bw!
   call Ntest_override("char_avail", 0)
   delfunc GetComplInfo
   unlet! g:compl_info
-  set wildcharm=0 incsearch& ignorecase& smartcase&
+  set wildcharm=0 incsearch& ignorecase& smartcase& wildoptions&
 endfunc
 
 func Test_search_wildmenu_screendump()
