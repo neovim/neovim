@@ -1163,7 +1163,7 @@ end
 
 --- Opens a live editor to query the buffer you started from.
 ---
---- Can also be shown with [:EditQuery]().
+--- Can also be shown with `:EditQuery`. [:EditQuery]()
 ---
 --- If you move the cursor to a capture name ("@foo"), text matching the capture is highlighted in
 --- the source buffer. The query editor is a scratch buffer, use `:write` to save it. You can find

@@ -1321,7 +1321,7 @@ add_predicate({name}, {handler}, {opts})
 edit({lang})                                     *vim.treesitter.query.edit()*
     Opens a live editor to query the buffer you started from.
 
-    Can also be shown with *:EditQuery*.
+    Can also be shown with `:EditQuery`.                          *:EditQuery*
 
     If you move the cursor to a capture name ("@foo"), text matching the
     capture is highlighted in the source buffer. The query editor is a scratch
