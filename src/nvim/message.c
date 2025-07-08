@@ -159,6 +159,8 @@ static bool msg_ext_history = false;  ///< message was added to history
 
 static int msg_grid_pos_at_flush = 0;
 
+static MsgID msg_id_next = 1;           ///< message id to be allocated to next message
+
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
   char buf[MAX_SCHAR_SIZE];
@@ -294,7 +296,7 @@ static bool is_multihl = false;
 /// @param kind Message kind (can be NULL to avoid setting kind)
 /// @param history Whether to add message to history
 /// @param err Whether to print message as an error
-void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
+int msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err, char *status, int percentage)
 {
   no_wait_return++;
   msg_start();
@@ -316,12 +318,13 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
   if (history && kv_size(hl_msg)) {
-    msg_hist_add_multihl(hl_msg, false);
+    id = msg_hist_add_multihl(id, hl_msg, false, status, percentage);
   }
   msg_ext_skip_flush = false;
   is_multihl = false;
   no_wait_return--;
   msg_end();
+  return id;
 }
 
 /// @param keep set keep_msg if it doesn't scroll
@@ -1019,12 +1022,24 @@ static void msg_hist_add(const char *s, int len, int hl_id)
 
   HlMessage msg = KV_INITIAL_VALUE;
   kv_push(msg, ((HlMessageChunk){ text, hl_id }));
-  msg_hist_add_multihl(msg, false);
+  msg_hist_add_multihl(0, msg, false, NULL, 100);
 }
 
 static bool do_clear_hist_temp = true;
 
-static void msg_hist_add_multihl(HlMessage msg, bool temp)
+/// returns message history item based on it's id or NULL if not found
+static MessageHistoryEntry* msg_find_by_id(MsgID id) {
+  if (id == 0) {
+    return NULL;
+  }
+  MessageHistoryEntry *entry = msg_hist_last;
+  while (entry != NULL && entry->message_id != id) {
+    entry = entry->prev;
+  }
+  return entry;
+}
+
+static int msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *status, int percentage)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -1033,19 +1048,47 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp)
 
   if (msg_hist_off || msg_silent != 0) {
     hl_msg_free(msg);
-    return;
+    return 0;
+  }
+
+  bool progress_message_found = false;
+
+  MessageHistoryEntry *entry = NULL;
+  if (msg_id != 0 && strcmp(msg_ext_kind, MSG_KIND_PROGRESS) == 0) {
+    entry = msg_find_by_id(msg_id);
+    if (entry) {
+      progress_message_found = true;
+      // detach the node if found
+      if (entry->prev) {
+        entry->prev->next = entry->next;
+      } else {
+        msg_hist_first = entry->next;
+      }
+      if (entry->next) {
+        entry->next->prev = entry->prev;
+      } else {
+        msg_hist_last = entry->prev;
+      }
+    }
   }
 
   // Allocate an entry and add the message at the end of the history.
-  MessageHistoryEntry *entry = xmalloc(sizeof(MessageHistoryEntry));
+  if (entry == NULL) {
+    entry = xmalloc(sizeof(MessageHistoryEntry));
+    entry->message_id = msg_id_next++;
+  }
   entry->msg = msg;
   entry->temp = temp;
   entry->kind = msg_ext_kind;
   entry->prev = msg_hist_last;
   entry->next = NULL;
-  entry->status = SUCCESS;
-  entry->title = cstr_to_string("");
-  entry->parcentage = 100;
+  if (status != NULL) {
+    if (progress_message_found) {
+      xfree(entry->status);
+    }
+    entry->status = status;
+  }
+  entry->parcentage = percentage;
   // NOTE: this does not encode if the message was actually appended to the
   // previous entry in the message history. However append is currently only
   // true for :echon, which is stored in the history as a temporary entry for
@@ -1062,10 +1105,11 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp)
     msg_hist_temp = entry;
   }
 
-  msg_hist_len += !temp;
+  msg_hist_len += !temp && !progress_message_found;
   msg_hist_last = entry;
   msg_ext_history = true;
   msg_hist_clear(msg_hist_max);
+  return entry->message_id;
 }
 
 static void msg_hist_free_msg(MessageHistoryEntry *entry)
@@ -1084,7 +1128,7 @@ static void msg_hist_free_msg(MessageHistoryEntry *entry)
     msg_hist_temp = entry->next;
   }
   hl_msg_free(entry->msg);
-  api_free_string(entry->title);
+  xfree(entry->status);
   xfree(entry);
 }
 
@@ -1210,7 +1254,7 @@ void ex_messages(exarg_T *eap)
     }
     if (redirecting() || !ui_has(kUIMessages)) {
       msg_silent += ui_has(kUIMessages);
-      msg_multihl(p->msg, p->kind, false, false);
+      msg_multihl(p->message_id, p->msg, p->kind, false, false, p->status, p->parcentage);
       msg_silent -= ui_has(kUIMessages);
     }
   }
@@ -3196,7 +3240,7 @@ void msg_ext_ui_flush(void)
         xfree(chunk);
       }
       xfree(tofree->items);
-      msg_hist_add_multihl(msg, true);
+      msg_hist_add_multihl(0, msg, true, NULL, 100);
     }
     xfree(tofree);
     msg_ext_overwrite = false;

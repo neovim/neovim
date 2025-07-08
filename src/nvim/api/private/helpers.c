@@ -28,6 +28,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/message_defs.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/pos_defs.h"
 #include "nvim/runtime.h"
