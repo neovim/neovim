@@ -323,7 +323,7 @@ end
 --- @package
 --- @param body string
 function Client:handle_body(body)
-  local ok, decoded = pcall(vim.json.decode, body, { luanil = { object = true } })
+  local ok, decoded = pcall(vim.json.decode, body)
   if not ok then
     self:on_error(M.client_errors.INVALID_SERVER_JSON, decoded)
     return
