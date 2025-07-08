@@ -153,7 +153,7 @@
 --- list number in the quickfix stack; zero
 --- means the current quickfix list and "$" means
 --- the last quickfix list.
---- @field nr? integer
+--- @field nr? integer|'$'
 ---
 --- function to get the text to display in the
 --- quickfix window. The value can be the name of
