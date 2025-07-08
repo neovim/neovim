@@ -11,7 +11,7 @@ typedef struct {
 } HlMessageChunk;
 
 typedef kvec_t(HlMessageChunk) HlMessage;
-typedef uint64_t MsgID;
+typedef int64_t MsgID;
 
 #define MSG_KIND_PROGRESS "progress"
 /// Message history for `:messages`
