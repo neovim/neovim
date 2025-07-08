@@ -785,12 +785,14 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
               && strcmp(status.data, "failed") != 0
               && strcmp(status.data, "running") != 0
               && strcmp(status.data, "cancel") != 0)
-          )) {
+          )
+      ) {
     api_set_error(err, kErrorTypeValidation, "invalid message status");
     return 0;
   }
 
-  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, status.data, (int)opts->percentage);
+  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, status.data,
+                         (int)opts->percentage);
 
   if (opts->verbose) {
     verbose_leave();
