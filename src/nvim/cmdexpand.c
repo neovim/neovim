@@ -249,13 +249,14 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   char *p;
 
   if (xp->xp_numfiles == -1) {
-    may_expand_pattern = options & WILD_MAY_EXPAND_PATTERN;
     pre_incsearch_pos = xp->xp_pre_incsearch_pos;
     if (ccline->input_fn && ccline->xp_context == EXPAND_COMMANDS) {
       // Expand commands typed in input() function
       set_cmd_context(xp, ccline->cmdbuff, ccline->cmdlen, ccline->cmdpos, false);
     } else {
+      may_expand_pattern = options & WILD_MAY_EXPAND_PATTERN;
       set_expand_context(xp);
+      may_expand_pattern = false;
     }
     if (xp->xp_context == EXPAND_LUA) {
       nlua_expand_pat(xp);
