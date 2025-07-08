@@ -1422,10 +1422,17 @@ local function close_preview_autocmd(events, winnr, bufnrs)
 
   -- close the preview window when entered a buffer that is not
   -- the floating window buffer or the buffer that spawned it
-  api.nvim_create_autocmd('BufEnter', {
+  api.nvim_create_autocmd('BufLeave', {
     group = augroup,
+    buffer = bufnrs[1],
     callback = function()
-      close_preview_window(winnr, bufnrs)
+      vim.schedule(function()
+        -- When jumping to the quickfix window from the preview window,
+        -- do not close the preview window.
+        if api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf' then
+          close_preview_window(winnr, bufnrs)
+        end
+      end)
     end,
   })
 
