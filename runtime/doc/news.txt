@@ -72,6 +72,7 @@ EVENTS
   emitted after the screen is cleared. These events arbitrarily assumed a
   message UI that mimicks the legacy message grid. Benefit: reduced UI event
   traffic and more flexibility for UIs.
+  The `msg_history_show` event has an additional "prev_cmd" argument.
 • A new `empty` message kind is emitted for an empty (e.g. `:echo ""`) message.
 
 HIGHLIGHTS

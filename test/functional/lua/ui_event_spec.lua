@@ -140,6 +140,7 @@ describe('vim.ui_attach', function()
           { 'lua_print', { { 0, 'message2', 0 } }, false },
           { 'echomsg', { { 0, 'message3', 0 } }, false },
         },
+        false,
       },
     }, actual, vim.inspect(actual))
   end)

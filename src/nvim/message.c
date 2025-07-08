@@ -1212,7 +1212,7 @@ void ex_messages(exarg_T *eap)
     }
   }
   if (kv_size(entries) > 0) {
-    ui_call_msg_history_show(entries);
+    ui_call_msg_history_show(entries, eap->skip != 0);
     api_free_array(entries);
   }
 }
