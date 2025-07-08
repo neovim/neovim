@@ -4856,8 +4856,8 @@ static void ex_restart(exarg_T *eap)
 {
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   Error err = ERROR_INIT;
-  if (quit_cmd[vim_strsize(quit_cmd) - 1] != '!' && check_changed_any(false,
-                                                                      false)) {
+  if (quit_cmd[strlen(quit_cmd) - 1] != '!' && check_changed_any(false,
+                                                                 false)) {
     return;
   }
   restarting = true;

@@ -295,11 +295,8 @@ describe('TUI :restart', function()
       {5:-- TERMINAL --}                                    |
     ]])
 
-    -- Check ":confirm restart".
-    tt.feed_data(':confirm restart\013')
-    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
-
-    tt.feed_data('N\013')
+    -- Check ":restart +qall!".
+    tt.feed_data(':restart +qall!\013')
     screen_expect(s0)
     restart_pid_check()
     gui_running_check()
@@ -3741,12 +3738,9 @@ describe('TUI client', function()
     screen_client:expect(s1)
     screen_server:expect(s1)
 
-    -- Run :confirm restart on the remote client.
+    -- Run :restart +qall! on the remote client.
     -- The remote client should start a new server while the original one should exit.
-    feed_data(':confirm restart\n')
-    screen_client:expect({ any = vim.pesc('Save changes to "Untitled"?') })
-
-    tt.feed_data('N\013')
+    feed_data(':restart +qall!\n')
     screen_client:expect([[
       ^                                                  |
       {100:~                                                 }|*3
@@ -3821,12 +3815,9 @@ describe('TUI client', function()
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
     screen_client:expect({ any = 'GUI Running: 1' })
 
-    -- Run :confirm restart on the client.
+    -- Run :restart +qall! on the client.
     -- The client should start a new server while the original server should exit.
-    feed_data(':confirm restart\n')
-    screen_client:expect({ any = vim.pesc('Save changes to "Untitled"?') })
-
-    tt.feed_data('N\013')
+    feed_data(':restart +qall!\n')
     screen_client:expect([[
       ^                                                  |
       {4:~                                                 }|*4
