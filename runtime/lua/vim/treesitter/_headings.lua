@@ -103,7 +103,7 @@ function M.show_toc(qf_height)
   end
   vim.fn.setloclist(0, headings, ' ')
   vim.fn.setloclist(0, {}, 'a', { title = 'Table of contents' })
-  vim.cmd.lopen(qf_height)
+  vim.cmd.lopen({ count = qf_height })
   vim.w.qf_toc = bufname
   -- reload syntax file after setting qf_toc variable
   vim.bo.filetype = 'qf'
