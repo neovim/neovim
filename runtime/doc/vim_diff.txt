@@ -301,6 +301,7 @@ Commands:
 - |:checkhealth|
 - |:detach|
 - |:drop| is always available
+- |:EditQuery|
 - |:Inspect|
 - |:InspectTree|
 - |:Man| is available by default, with many improvements such as completion
