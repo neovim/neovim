@@ -779,12 +779,13 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
   }
 
   String status = opts->status;
-  if (strcmp(kind, "progress") == 0
+  if ((kind != NULL && strcmp(kind, "progress") == 0)
       && ((status.data == NULL)
           || (strcmp(status.data, "success") != 0
               && strcmp(status.data, "failed") != 0
               && strcmp(status.data, "running") != 0
-              && strcmp(status.data, "cancel") != 0))) {
+              && strcmp(status.data, "cancel") != 0)
+          )) {
     api_set_error(err, kErrorTypeValidation, "invalid message status");
     return 0;
   }
