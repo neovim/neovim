@@ -95,15 +95,46 @@ func Test_termdebug_basic()
   Continue
   call Nterm_wait(gdb_buf)
 
+  let g:termdebug_config = {}
+  let g:termdebug_config['signs'] = ['>1', '>2', '>3']
+  let g:termdebug_config['sign'] = '>>'
+  let g:termdebug_config['sign_decimal'] = 1
+
   let i = 2
   while i <= 258
     Break
     call Nterm_wait(gdb_buf)
     if i == 2
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint2.0')[0].text, '02')})
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint2.0')[0].text, '>2')})
+    endif
+    if i == 3
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint3.0')[0].text, '>3')})
+    endif
+    if i == 4
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint4.0')[0].text, '>>')})
+    endif
+    if i == 5
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint5.0')[0].text, '>>')})
+      unlet g:termdebug_config['sign']
+    endif
+    if i == 6
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint6.0')[0].text, '06')})
     endif
     if i == 10
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint10.0')[0].text, '0A')})
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint10.0')[0].text, '10')})
+    endif
+    if i == 99
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint99.0')[0].text, '99')})
+    endif
+    if i == 100
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint100.0')[0].text, '9+')})
+    endif
+    if i == 110
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint110.0')[0].text, '9+')})
+      unlet g:termdebug_config
+    endif
+    if i == 128
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint128.0')[0].text, '80')})
     endif
     if i == 168
       call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint168.0')[0].text, 'A8')})
@@ -175,65 +206,6 @@ func Test_termdebug_basic()
 
   call s:cleanup_files(bin_name)
   %bw!
-endfunc
-
-func Test_termdebug_decimal_breakpoints()
-  let bin_name = 'XTD_decimal'
-  let src_name = bin_name .. '.c'
-  call s:generate_files(bin_name)
-
-  exe "edit " .. src_name
-
-  let g:termdebug_config = {}
-  let g:termdebug_config['sign_decimal'] = 1
-
-  exe "Termdebug " .. bin_name
-  " Nvim: g:termdebug_is_running is not ported yet
-  " call WaitForAssert({-> assert_true(get(g:, "termdebug_is_running", v:false))})
-  call WaitForAssert({-> assert_equal(3, winnr('$'))})
-  let gdb_buf = winbufnr(1)
-  wincmd b
-  Break 9
-  call Nterm_wait(gdb_buf)
-  redraw!
-  Run
-  call Nterm_wait(gdb_buf, 400)
-
-  let i = 2
-  while i <= 258
-    Break
-    call Nterm_wait(gdb_buf)
-    if i == 2
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint2.0')[0].text, '02')})
-    endif
-    if i == 10
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint10.0')[0].text, '10')})
-    endif
-    if i == 168
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint168.0')[0].text, '9+')})
-    endif
-    if i == 255
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint255.0')[0].text, '9+')})
-    endif
-    if i == 256
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint256.0')[0].text, '9+')})
-    endif
-    if i == 258
-      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint258.0')[0].text, '9+')})
-    endif
-    let i += 1
-  endwhile
-
-  wincmd t
-  quit!
-  redraw!
-  call WaitForAssert({-> assert_equal(1, winnr('$'))})
-  call assert_equal([], sign_getplaced('', #{group: 'TermDebug'})[0].signs)
-
-  call s:cleanup_files(bin_name)
-  %bw!
-
-  unlet g:termdebug_config
 endfunc
 
 func Test_termdebug_tbreak()

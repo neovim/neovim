@@ -657,6 +657,9 @@ than 99 will be displayed as "9+".
 
 If you want to customize the breakpoint signs to show `>>` in the signcolumn: >vim
 	let g:termdebug_config['sign'] = '>>'
+You can also specify individual signs for the first several breakpoints: >vim
+	let g:termdebug_config['signs'] = ['>1', '>2', '>3', '>4', '>5', '>6', '>7', '>8', '>9']
+	let g:termdebug_config['sign'] = '>>'
 If you would like to use decimal (base 10) breakpoint signs: >vim
 	let g:termdebug_config['sign_decimal'] = 1
 If the variable g:termdebug_config does not yet exist, you can use: >vim
