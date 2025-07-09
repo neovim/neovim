@@ -207,6 +207,8 @@ LSP
 • When inside the float created by |vim.diagnostic.open_float()| and the
   cursor is on a line with `DiagnosticRelatedInformation`, |gf| can be used to
   jump to the problematic location.
+• Support for related documents in pull diagnostics:
+  https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
 
 LUA
 
