@@ -104,7 +104,8 @@ local function set_virttext(type)
       -- of the last visible message line, overlapping the message text if necessary,
       -- but not overlapping the 'last' virt_text.
       local offset = tar ~= 'msg' and 0
-        or api.nvim_win_get_position(win)[2] + (api.nvim_win_get_config(win).border and 1 or 0)
+        or api.nvim_win_get_position(win)[2]
+          + (api.nvim_win_get_config(win).border ~= 'none' and 1 or 0)
 
       -- Check if adding the virt_text on this line will exceed the current window width.
       local maxwidth = math.max(M.msg.width, math.min(o.columns, scol - offset + width))
@@ -465,14 +466,14 @@ function M.set_pos(type)
     local texth = type and api.nvim_win_text_height(win, {}) or {}
     local height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
     local top = { vim.opt.fcs:get().horiz or o.ambw == 'single' and '─' or '-', 'WinSeparator' }
-    local border = type ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
+    local border = win ~= ext.wins.msg and { '', top, '', '', '', '', '', '' } or nil
     local save_config = type == 'cmd' and api.nvim_win_get_config(win) or {}
     local config = {
       hide = false,
       relative = 'laststatus',
       border = border,
       height = height,
-      row = type == 'msg' and 0 or 1,
+      row = win == ext.wins.msg and 0 or 1,
       col = 10000,
       focusable = type == 'cmd' or nil, -- Allow entering the cmdline window.
     }
