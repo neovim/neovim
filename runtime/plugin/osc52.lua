@@ -19,33 +19,77 @@ vim.api.nvim_create_autocmd('UIEnter', {
       end
     end
 
-    -- Do not query when any of the following is true:
-    --   * No TUI is attached
-    --   * Using a badly behaved terminal
-    if not tty or vim.env.TERM_PROGRAM == 'Apple_Terminal' then
-      local termfeatures = vim.g.termfeatures or {} ---@type TermFeatures
-      termfeatures.osc52 = nil
-      vim.g.termfeatures = termfeatures
+    -- Do not query when no TUI is attached
+    if not tty then
       return
     end
 
-    require('vim.termcap').query('Ms', function(cap, found, seq)
-      if not found then
-        return
-      end
-
-      assert(cap == 'Ms')
-
-      -- If the terminal reports a sequence other than OSC 52 for the Ms capability
-      -- then ignore it. We only support OSC 52 (for now)
-      if not seq or not seq:match('^\027%]52') then
-        return
-      end
-
+    -- Clear existing OSC 52 value, since this is a new UI we might be attached to a different
+    -- terminal
+    do
       local termfeatures = vim.g.termfeatures or {} ---@type TermFeatures
-      termfeatures.osc52 = true
+      termfeatures.osc52 = nil
       vim.g.termfeatures = termfeatures
-    end)
+    end
+
+    -- Check DA1 first
+    vim.api.nvim_create_autocmd('TermResponse', {
+      group = id,
+      nested = true,
+      callback = function(args)
+        local resp = args.data.sequence ---@type string
+        local params = resp:match('^\027%[%?([%d;]+)c$')
+        if params then
+          -- Check termfeatures again, it may have changed between the query and response.
+          if vim.g.termfeatures ~= nil and vim.g.termfeatures.osc52 ~= nil then
+            return true
+          end
+
+          for param in string.gmatch(params, '%d+') do
+            if param == '52' then
+              local termfeatures = vim.g.termfeatures or {} ---@type TermFeatures
+              termfeatures.osc52 = true
+              vim.g.termfeatures = termfeatures
+              return true
+            end
+          end
+
+          -- Do not use XTGETTCAP on terminals that echo unknown sequences
+          if vim.env.TERM_PROGRAM == 'Apple_Terminal' then
+            return true
+          end
+
+          -- Fallback to XTGETTCAP
+          require('vim.termcap').query('Ms', function(cap, found, seq)
+            if not found then
+              return
+            end
+
+            -- Check termfeatures again, it may have changed between the query and response.
+            if vim.g.termfeatures ~= nil and vim.g.termfeatures.osc52 ~= nil then
+              return
+            end
+
+            assert(cap == 'Ms')
+
+            -- If the terminal reports a sequence other than OSC 52 for the Ms capability
+            -- then ignore it. We only support OSC 52 (for now)
+            if not seq or not seq:match('^\027%]52') then
+              return
+            end
+
+            local termfeatures = vim.g.termfeatures or {} ---@type TermFeatures
+            termfeatures.osc52 = true
+            vim.g.termfeatures = termfeatures
+          end)
+
+          return true
+        end
+      end,
+    })
+
+    -- Write DA1 request
+    io.stdout:write('\027[c')
   end,
 })
 

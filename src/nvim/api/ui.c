@@ -543,7 +543,7 @@ void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height, Floa
 ///
 /// The following terminal events are supported:
 ///
-///   - "termresponse": The terminal sent an OSC, DCS, or APC response sequence to
+///   - "termresponse": The terminal sent a DA1, OSC, DCS, or APC response sequence to
 ///                     Nvim. The payload is the received response. Sets
 ///                     |v:termresponse| and fires |TermResponse|.
 ///
