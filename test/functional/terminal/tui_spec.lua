@@ -3539,7 +3539,7 @@ describe('TUI', function()
         extern char vterm_primary_device_attr[]
       ]]
 
-      ffi.copy(ffi.C.vterm_primary_device_attr, '1;2')
+      ffi.copy(ffi.C.vterm_primary_device_attr, '61;22')
     end)
 
     exec_lua([[
