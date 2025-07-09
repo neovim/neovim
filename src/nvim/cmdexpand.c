@@ -249,13 +249,14 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   char *p;
 
   if (xp->xp_numfiles == -1) {
-    may_expand_pattern = options & WILD_MAY_EXPAND_PATTERN;
     pre_incsearch_pos = xp->xp_pre_incsearch_pos;
     if (ccline->input_fn && ccline->xp_context == EXPAND_COMMANDS) {
       // Expand commands typed in input() function
       set_cmd_context(xp, ccline->cmdbuff, ccline->cmdlen, ccline->cmdpos, false);
     } else {
+      may_expand_pattern = options & WILD_MAY_EXPAND_PATTERN;
       set_expand_context(xp);
+      may_expand_pattern = false;
     }
     if (xp->xp_context == EXPAND_LUA) {
       nlua_expand_pat(xp);
@@ -3893,6 +3894,8 @@ void f_cmdcomplete_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// matched text is returned in '*match_end'.
 static int copy_substring_from_pos(pos_T *start, pos_T *end, char **match, pos_T *match_end)
 {
+  bool exacttext = wop_flags & kOptWopFlagExacttext;
+
   if (start->lnum > end->lnum
       || (start->lnum == end->lnum && start->col >= end->col)) {
     return FAIL;  // invalid range
@@ -3909,19 +3912,27 @@ static int copy_substring_from_pos(pos_T *start, pos_T *end, char **match, pos_T
 
   int segment_len = is_single_line ? (int)(end->col - start->col)
                                    : (int)strlen(start_ptr);
-  ga_grow(&ga, segment_len + 1);
+  ga_grow(&ga, segment_len + 2);
   ga_concat_len(&ga, start_ptr, (size_t)segment_len);
   if (!is_single_line) {
-    ga_append(&ga, '\n');
+    if (exacttext) {
+      ga_concat_len(&ga, "\\n", 2);
+    } else {
+      ga_append(&ga, '\n');
+    }
   }
 
   // Append full lines between start and end
   if (!is_single_line) {
     for (linenr_T lnum = start->lnum + 1; lnum < end->lnum; lnum++) {
       char *line = ml_get(lnum);
-      ga_grow(&ga, ml_get_len(lnum) + 1);
+      ga_grow(&ga, ml_get_len(lnum) + 2);
       ga_concat(&ga, line);
-      ga_append(&ga, '\n');
+      if (exacttext) {
+        ga_concat_len(&ga, "\\n", 2);
+      } else {
+        ga_append(&ga, '\n');
+      }
     }
   }
 
@@ -4004,6 +4015,7 @@ static char *concat_pattern_with_buffer_match(char *pat, int pat_len, pos_T *end
 /// @param[out] numMatches number of matches
 static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int *numMatches)
 {
+  bool exacttext = wop_flags & kOptWopFlagExacttext;
   bool has_range = search_first_line != 0;
 
   *matches = NULL;
@@ -4090,22 +4102,26 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
       break;
     }
 
-    // Construct a new match from completed word appended to pattern itself
-    match = concat_pattern_with_buffer_match(pat, pat_len, &end_match_pos, false);
+    if (exacttext) {
+      match = full_match;
+    } else {
+      // Construct a new match from completed word appended to pattern itself
+      match = concat_pattern_with_buffer_match(pat, pat_len, &end_match_pos, false);
 
-    // The regex pattern may include '\C' or '\c'. First, try matching the
-    // buffer word as-is. If it doesn't match, try again with the lowercase
-    // version of the word to handle smartcase behavior.
-    if (!is_regex_match(match, full_match)) {
-      xfree(match);
-      match = concat_pattern_with_buffer_match(pat, pat_len, &end_match_pos, true);
+      // The regex pattern may include '\C' or '\c'. First, try matching the
+      // buffer word as-is. If it doesn't match, try again with the lowercase
+      // version of the word to handle smartcase behavior.
       if (!is_regex_match(match, full_match)) {
         xfree(match);
-        xfree(full_match);
-        continue;
+        match = concat_pattern_with_buffer_match(pat, pat_len, &end_match_pos, true);
+        if (!is_regex_match(match, full_match)) {
+          xfree(match);
+          xfree(full_match);
+          continue;
+        }
       }
+      xfree(full_match);
     }
-    xfree(full_match);
 
     // Include this match if it is not a duplicate
     for (int i = 0; i < ga.ga_len; i++) {

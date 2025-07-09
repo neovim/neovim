@@ -4499,14 +4499,16 @@ func Test_search_complete()
   " Match case correctly
   %d
   call setline(1, ["foobar", "Foobar", "fooBAr", "FooBARR"])
+
   call feedkeys("gg/f\<tab>\<f9>", 'tx')
   call assert_equal(['fooBAr', 'foobar'], g:compl_info.matches)
   call feedkeys("gg/Fo\<tab>\<f9>", 'tx')
   call assert_equal(['Foobar', 'FooBARR'], g:compl_info.matches)
   call feedkeys("gg/FO\<tab>\<f9>", 'tx')
-  call assert_equal({},  g:compl_info)
+  call assert_equal({}, g:compl_info)
   call feedkeys("gg/\\cFo\<tab>\<f9>", 'tx')
   call assert_equal(['\cFoobar', '\cFooBAr', '\cFooBARR'], g:compl_info.matches)
+
   set ignorecase
   call feedkeys("gg/f\<tab>\<f9>", 'tx')
   call assert_equal(['foobar', 'fooBAr', 'fooBARR'], g:compl_info.matches)
@@ -4516,23 +4518,55 @@ func Test_search_complete()
   call assert_equal(['FOobar', 'FOoBAr', 'FOoBARR'], g:compl_info.matches)
   call feedkeys("gg/\\Cfo\<tab>\<f9>", 'tx')
   call assert_equal(['\CfooBAr', '\Cfoobar'], g:compl_info.matches)
+
   set smartcase
   call feedkeys("gg/f\<tab>\<f9>", 'tx')
   call assert_equal(['foobar', 'fooBAr', 'foobarr'], g:compl_info.matches)
   call feedkeys("gg/Fo\<tab>\<f9>", 'tx')
   call assert_equal(['Foobar', 'FooBARR'], g:compl_info.matches)
   call feedkeys("gg/FO\<tab>\<f9>", 'tx')
-  call assert_equal({},  g:compl_info)
+  call assert_equal({}, g:compl_info)
+
+  " Issue #17680 (getcompletion() does not support search completion)
+  let result = getcompletion('%s/', 'cmdline')
+  call assert_equal([], result)
+
+  call feedkeys("gg/foob\<tab>\<f9>", 'tx')
+  call assert_equal(['foobar', 'foobarr'], g:compl_info.matches)
   call feedkeys("gg/\\Cfo\<tab>\<f9>", 'tx')
   call assert_equal(['\CfooBAr', '\Cfoobar'], g:compl_info.matches)
   call feedkeys("gg/\\cFo\<tab>\<f9>", 'tx')
   call assert_equal(['\cFoobar', '\cFooBAr', '\cFooBARR'], g:compl_info.matches)
 
+  set wildoptions+=exacttext ignorecase& smartcase&
+  call feedkeys("gg/F\<tab>\<f9>", 'tx')
+  call assert_equal(['Foobar', 'FooBARR'], g:compl_info.matches)
+  call feedkeys("gg/foob\<tab>\<f9>", 'tx')
+  call assert_equal([], g:compl_info.matches)
+  call feedkeys("gg/r\\n.\<tab>\<f9>", 'tx')
+  call assert_equal(['r\nFoobar', 'r\nfooBAr', 'r\nFooBARR'], g:compl_info.matches)
+
+  set ignorecase
+  call feedkeys("gg/F\<tab>\<f9>", 'tx')
+  call assert_equal(['Foobar', 'fooBAr', 'FooBARR', 'foobar'], g:compl_info.matches)
+  call feedkeys("gg/R\\n.\<tab>\<f9>", 'tx')
+  call assert_equal(['r\nFoobar', 'r\nfooBAr', 'r\nFooBARR'], g:compl_info.matches)
+
+  set smartcase
+  call feedkeys("gg/f\<tab>\<f9>", 'tx')
+  call assert_equal(['Foobar', 'fooBAr', 'FooBARR', 'foobar'], g:compl_info.matches)
+  call feedkeys("gg/foob\<tab>\<f9>", 'tx')
+  call assert_equal(['Foobar', 'fooBAr', 'FooBARR', 'foobar'], g:compl_info.matches)
+  call feedkeys("gg/R\\n.\<tab>\<f9>", 'tx')
+  call assert_equal({}, g:compl_info)
+  call feedkeys("gg/r\\n.*\\n\<tab>\<f9>", 'tx')
+  call assert_equal(['r\nFoobar\nfooBAr', 'r\nfooBAr\nFooBARR'], g:compl_info.matches)
+
   bw!
   call Ntest_override("char_avail", 0)
   delfunc GetComplInfo
   unlet! g:compl_info
-  set wildcharm=0 incsearch& ignorecase& smartcase&
+  set wildcharm=0 incsearch& ignorecase& smartcase& wildoptions&
 endfunc
 
 func Test_search_wildmenu_screendump()
@@ -4601,44 +4635,44 @@ func Test_range_complete()
 
   for trig in ["\<tab>", "\<c-z>"]
     call feedkeys($":%s/a{trig}\<f9>", 'xt')
-    call assert_equal(['ab', 'a', 'af'],  g:compl_info.matches)
+    call assert_equal(['ab', 'a', 'af'], g:compl_info.matches)
     " call feedkeys($":vim9cmd :%s/a{trig}\<f9>", 'xt')
     call feedkeys($":verbose :%s/a{trig}\<f9>", 'xt')
-    call assert_equal(['ab', 'a', 'af'],  g:compl_info.matches)
+    call assert_equal(['ab', 'a', 'af'], g:compl_info.matches)
   endfor
 
   call feedkeys(":%s/\<c-z>\<f9>", 'xt')
-  call assert_equal({},  g:compl_info)
+  call assert_equal({}, g:compl_info)
 
   for cmd in ['s', 'g']
-    call feedkeys(":1,2" . cmd . "/a\<c-z>\<f9>", 'xt')
-    call assert_equal(['ab', 'a'],  g:compl_info.matches)
+    call feedkeys($":1,2{cmd}/a\<c-z>\<f9>", 'xt')
+    call assert_equal(['ab', 'a'], g:compl_info.matches)
   endfor
 
   1
   call feedkeys(":.,+2s/a\<c-z>\<f9>", 'xt')
-  call assert_equal(['ab', 'a'],  g:compl_info.matches)
+  call assert_equal(['ab', 'a'], g:compl_info.matches)
 
   /f
   call feedkeys(":1,s/b\<c-z>\<f9>", 'xt')
-  call assert_equal(['b', 'ba'],  g:compl_info.matches)
+  call assert_equal(['b', 'ba'], g:compl_info.matches)
 
   /c
   call feedkeys(":\\?,4s/a\<c-z>\<f9>", 'xt')
-  call assert_equal(['a', 'af'],  g:compl_info.matches)
+  call assert_equal(['a', 'af'], g:compl_info.matches)
 
   %s/c/c/
   call feedkeys(":1,\\&s/a\<c-z>\<f9>", 'xt')
-  call assert_equal(['ab', 'a'],  g:compl_info.matches)
+  call assert_equal(['ab', 'a'], g:compl_info.matches)
 
   3
   normal! ma
   call feedkeys(":'a,$s/a\<c-z>\<f9>", 'xt')
-  call assert_equal(['a', 'af'],  g:compl_info.matches)
+  call assert_equal(['a', 'af'], g:compl_info.matches)
 
   " Line number followed by a search pattern ([start]/pattern/[command])
   call feedkeys("3/a\<c-z>\<f9>", 'xt')
-  call assert_equal(['a', 'af', 'ab'],  g:compl_info.matches)
+  call assert_equal(['a', 'af', 'ab'], g:compl_info.matches)
 
   bw!
   call Ntest_override("char_avail", 0)

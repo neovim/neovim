@@ -10117,6 +10117,7 @@ local options = {
         <	'wildchar' also enables completion in search pattern contexts such as
         |/|, |?|, |:s|, |:g|, |:v|, and |:vim|.  To insert a literal <Tab>
         instead of triggering completion, type <C-V><Tab> or "\t".
+        See also |'wildoptions'|.
       ]=],
       full_name = 'wildchar',
       scope = { 'global' },
@@ -10311,12 +10312,26 @@ local options = {
     {
       abbreviation = 'wop',
       defaults = 'pum,tagfile',
-      values = { 'fuzzy', 'tagfile', 'pum' },
+      values = { 'fuzzy', 'tagfile', 'pum', 'exacttext' },
       flags = true,
       deny_duplicates = true,
       desc = [=[
         A list of words that change how |cmdline-completion| is done.
         The following values are supported:
+          exacttext	When this flag is present, search pattern completion
+        		(e.g., in |/|, |?|, |:s|, |:g|, |:v|, and |:vim|)
+        		shows exact buffer text as menu items, without
+        		preserving regex artifacts like position
+        		anchors (e.g., |/\\<|).  This provides more intuitive
+        		menu items that match the actual buffer text.
+        		However, searches may be less accurate since the
+        		pattern is not preserved exactly.
+        		By default, Vim preserves the typed pattern (with
+        		anchors) and appends the matched word.  This preserves
+        		search correctness, especially when using regular
+        		expressions or with 'smartcase' enabled.  However, the
+        		case of the appended matched word may not exactly
+        		match the case of the word in the buffer.
           fuzzy		Use |fuzzy-matching| to find completion matches. When
         		this value is specified, wildcard expansion will not
         		be used for completion.  The matches will be sorted by
