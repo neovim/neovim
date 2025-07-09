@@ -3630,12 +3630,8 @@ static inline size_t shada_init_jumps(PossiblyFreedShadaEntry *jumps,
              curwin->w_jumplistlen);
       continue;
     }
-    const buf_T *const buf = (fm.fmark.fnum == 0
-                              ? NULL
-                              : buflist_findnr(fm.fmark.fnum));
-    if (buf != NULL
-        ? set_has(ptr_t, removable_bufs, (ptr_t)buf)
-        : fm.fmark.fnum != 0) {
+    const buf_T *const buf = (fm.fmark.fnum == 0 ? NULL : buflist_findnr(fm.fmark.fnum));
+    if (buf != NULL ? ignore_buf(buf, removable_bufs) : fm.fmark.fnum != 0) {
       continue;
     }
     const char *const fname =
