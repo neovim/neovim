@@ -202,6 +202,7 @@ LSP
 • LSP `DiagnosticRelatedInformation` is now shown in
   |vim.diagnostic.open_float()|. It is read from the LSP diagnostic object
   stored in the `user_data` field.
+• `vim.lsp.util._enable/_is_enabled` for unifying enable/is_enabled logic
 
 LUA
 
