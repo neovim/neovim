@@ -1031,7 +1031,7 @@ static bool do_clear_hist_temp = true;
 /// returns message history item based on it's id or NULL if not found
 static MessageHistoryEntry *msg_find_by_id(MsgID id)
 {
-  if (id == 0) {
+  if (id <= 0) {
     return NULL;
   }
   MessageHistoryEntry *entry = msg_hist_last;
@@ -1056,30 +1056,24 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
 
   bool progress_message_found = false;
 
-  MessageHistoryEntry *entry = NULL;
-  if (msg_id != 0 && strcmp(msg_ext_kind, MSG_KIND_PROGRESS) == 0) {
-    entry = msg_find_by_id(msg_id);
-    if (entry) {
-      progress_message_found = true;
-      // detach the node if found
-      if (entry->prev) {
-        entry->prev->next = entry->next;
-      } else {
-        msg_hist_first = entry->next;
-      }
-      if (entry->next) {
-        entry->next->prev = entry->prev;
-      } else {
-        msg_hist_last = entry->prev;
-      }
+  MessageHistoryEntry *entry = msg_find_by_id(msg_id);
+  if (entry) {
+    progress_message_found = true;
+    // detach the node if found
+    if (entry->prev) {
+      entry->prev->next = entry->next;
+    } else {
+      msg_hist_first = entry->next;
     }
-  }
-
-  // Allocate an entry and add the message at the end of the history.
-  if (entry == NULL) {
+    if (entry->next) {
+      entry->next->prev = entry->prev;
+    } else {
+      msg_hist_last = entry->prev;
+    }
+  } else {
+    // Allocate an entry and add the message at the end of the history.
     entry = xmalloc(sizeof(MessageHistoryEntry));
     entry->message_id = msg_id_next++;
-    entry->status = NULL;
   }
   entry->msg = msg;
   entry->temp = temp;
@@ -1087,18 +1081,20 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
   entry->prev = msg_hist_last;
   entry->next = NULL;
   if (status != NULL) {
-    // if (progress_message_found && entry->status != NULL) {
-    //   xfree(entry->status);
-    // }
-    entry->status = status;
+    if (progress_message_found && entry->status != NULL) {
+      xfree(entry->status);
+    }
+    entry->status = xstrdup(status);
   }
   if (title != NULL) {
-    // if (progress_message_found && entry->status != NULL) {
-    //   xfree(entry->status);
-    // }
-    entry->title = title;
+    if (progress_message_found && entry->title != NULL) {
+      xfree(entry->title);
+    }
+    entry->title = xstrdup(title);
   }
-  entry->percent = percent;
+  if (entry->percent == 0 || percent > 0 ) {
+    entry->percent = percent;
+  }
   // NOTE: this does not encode if the message was actually appended to the
   // previous entry in the message history. However append is currently only
   // true for :echon, which is stored in the history as a temporary entry for
