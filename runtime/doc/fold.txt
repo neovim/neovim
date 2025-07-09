@@ -632,13 +632,16 @@ what you type!
 When using an operator, a closed fold is included as a whole.  Thus "dl"
 deletes the whole closed fold under the cursor.
 
-For Ex commands that work on buffer lines the range is adjusted to always
+For Ex commands that operate on buffer lines, the range is adjusted to always
 start at the first line of a closed fold and end at the last line of a closed
-fold.  Thus this command: >
+fold.  Thus, this command: >
 	:s/foo/bar/g
 when used with the cursor on a closed fold, will replace "foo" with "bar" in
 all lines of the fold.
 This does not happen for |:folddoopen| and |:folddoclosed|.
+
+Note that for some Ex commands like |:source| the range is only adjusted when
+using a two-address [range].
 
 When editing a buffer that has been edited before, the last used folding
 settings are used again.  For manual folding the defined folds are restored.

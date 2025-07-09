@@ -207,6 +207,11 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			sourced more than once, then the functions in the
 			buffer are defined again.
 
+			Implementation detail: When sourcing a [range] of
+			lines that falls inside a folded region, the range
+			will be adjusted to the start and end of the fold,
+			but only if a two-address range was used.
+
 							*:source!*
 :so[urce]! {file}
 			Runs |Normal-mode| commands from {file}. When used
