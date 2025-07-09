@@ -231,15 +231,20 @@ As Nvim evolves the API may change in compliance with this CONTRACT:
 
 - New functions and events may be added.
   - Any such extensions are OPTIONAL: old clients may ignore them.
-- Function signatures will NOT CHANGE (after release).
+- Function signatures will NOT CHANGE (after release), except as follows:
   - Functions introduced in the development (unreleased) version MAY CHANGE.
     (Clients can dynamically check `api_prerelease`, etc. |api-metadata|)
+  - New items may be ADDED to map/list parameters/results of functions and
+    events.
+    - Any such new items are OPTIONAL: old clients may ignore them.
+    - Existing items will not be removed (after release).
+  - Return type may change from void to non-void. Old clients MAY ignore the
+    new return value.
+  - An `opts` parameter may be added, which is not required in the request.
+    - Unlimited optional parameters may be added following an `opts`
+      parameter.
 - Event parameters will not be removed or reordered (after release).
 - Events may be EXTENDED: new parameters may be added.
-- New items may be ADDED to map/list parameters/results of functions and
-  events.
-  - Any such new items are OPTIONAL: old clients may ignore them.
-  - Existing items will not be removed (after release).
 - Deprecated functions will not be removed until Nvim version 2.0
 
 "Private" interfaces are NOT covered by this contract:

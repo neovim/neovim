@@ -58,7 +58,8 @@ describe('api metadata', function()
     return by_name
   end
 
-  -- Remove or patch metadata that is not essential to backwards-compatibility.
+  --- Remove or patch metadata that is not essential to backwards-compatibility.
+  --- @param f gen_api_dispatch.Function.Exported
   local function normalize_func_metadata(f)
     -- Dictionary was renamed to Dict. That doesn't break back-compat because clients don't actually
     -- use the `return_type` field (evidence: "ArrayOf(…)" didn't break clients).
@@ -81,6 +82,19 @@ describe('api metadata', function()
     return f
   end
 
+  --- Checks that the current signature of a function is backwards-compatible with the previous
+  --- version, per ":help api-contract".
+  --- @param old_fn gen_api_dispatch.Function.Exported
+  --- @param new_fn gen_api_dispatch.Function.Exported
+  local function assert_func_backcompat(old_fn, new_fn)
+    old_fn = normalize_func_metadata(old_fn)
+    new_fn = normalize_func_metadata(new_fn)
+    if old_fn.return_type == 'void' then
+      old_fn.return_type = new_fn.return_type
+    end
+    eq(old_fn, new_fn)
+  end
+
   local function check_ui_event_compatible(old_e, new_e)
     -- check types of existing params are the same
     -- adding parameters is ok, but removing params is not (gives nil error)
@@ -90,8 +104,10 @@ describe('api metadata', function()
     end
   end
 
-  -- Level 0 represents methods from 0.1.5 and earlier, when 'since' was not
-  -- yet defined, and metadata was not filtered of internal keys like 'async'.
+  --- Level 0 represents methods from 0.1.5 and earlier, when 'since' was not
+  --- yet defined, and metadata was not filtered of internal keys like 'async'.
+  ---
+  --- @param metadata { functions: gen_api_dispatch.Function[] }
   local function clean_level_0(metadata)
     for _, f in ipairs(metadata.functions) do
       f.can_fail = nil
@@ -105,10 +121,10 @@ describe('api metadata', function()
   local compat --[[@type integer]]
   local stable --[[@type integer]]
   local api_level --[[@type integer]]
-  local old_api = {}
+  local old_api = {} ---@type { functions: gen_api_dispatch.Function[] }[]
   setup(function()
     clear() -- Ensure a session before requesting api_info.
-    --[[@type { version: {api_compatible: integer, api_level: integer, api_prerelease: boolean} }]]
+    --[[@type {  functions: gen_api_dispatch.Function[], version: {api_compatible: integer, api_level: integer, api_prerelease: boolean} }]]
     api_info = api.nvim_get_api_info()[2]
     compat = api_info.version.api_compatible
     api_level = api_info.version.api_level
@@ -116,7 +132,7 @@ describe('api metadata', function()
 
     for level = compat, stable do
       local path = ('test/functional/fixtures/api_level_' .. tostring(level) .. '.mpack')
-      old_api[level] = read_mpack_file(path) --[[@type table]]
+      old_api[level] = read_mpack_file(path)
       if old_api[level] == nil then
         local errstr = 'missing metadata fixture for stable level ' .. level .. '. '
         if level == api_level and not api_info.version.api_prerelease then
@@ -142,16 +158,12 @@ describe('api metadata', function()
       for _, f in ipairs(old_api[level].functions) do
         if funcs_new[f.name] == nil then
           if f.since >= compat then
-            error(
-              'function '
-                .. f.name
-                .. ' was removed but exists in level '
-                .. f.since
-                .. ' which nvim should be compatible with'
-            )
+            local msg =
+              'function "%s" was removed but exists in level %s which Nvim claims to be compatible with'
+            error((msg):format(f.name, f.since))
           end
         else
-          eq(normalize_func_metadata(f), normalize_func_metadata(funcs_new[f.name]))
+          assert_func_backcompat(f --[[@as any]], funcs_new[f.name])
         end
       end
       funcs_compat[level] = name_table(old_api[level].functions)
@@ -162,13 +174,9 @@ describe('api metadata', function()
         local f_old = funcs_compat[f.since][f.name]
         if f_old == nil then
           if string.sub(f.name, 1, 4) == 'nvim' then
-            local errstr = (
-              'function '
-              .. f.name
-              .. ' has too low since value. '
-              .. 'For new functions set it to '
-              .. (stable + 1)
-              .. '.'
+            local errstr = ('function "%s" has too low `since` value. For new functions set it to "%s".'):format(
+              f.name,
+              (stable + 1)
             )
             if not api_info.version.api_prerelease then
               errstr = (
