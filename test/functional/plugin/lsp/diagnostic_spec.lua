@@ -470,6 +470,7 @@ describe('vim.lsp.diagnostic', function()
     end)
 
     it('requests with the `previousResultId`', function()
+      -- Full reports
       eq(
         'dummy_server',
         exec_lua(function()
@@ -479,6 +480,32 @@ describe('vim.lsp.diagnostic', function()
             items = {
               _G.make_error('Pull Diagnostic', 4, 4, 4, 4),
             },
+          }, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            params = {
+              textDocument = { uri = fake_uri },
+            },
+            client_id = client_id,
+            bufnr = diagnostic_bufnr,
+          })
+          vim.api.nvim_exec_autocmds('LspNotify', {
+            buffer = diagnostic_bufnr,
+            data = {
+              method = vim.lsp.protocol.Methods.textDocument_didChange,
+              client_id = client_id,
+            },
+          })
+          return _G.params.previousResultId
+        end)
+      )
+
+      -- Unchanged reports
+      eq(
+        'squidward',
+        exec_lua(function()
+          vim.lsp.diagnostic.on_diagnostic(nil, {
+            kind = 'unchanged',
+            resultId = 'squidward',
           }, {
             method = vim.lsp.protocol.Methods.textDocument_diagnostic,
             params = {
