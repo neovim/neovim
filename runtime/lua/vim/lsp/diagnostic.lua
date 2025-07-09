@@ -269,16 +269,20 @@ function M.on_diagnostic(error, result, ctx)
     return
   end
 
-  if result == nil or result.kind == 'unchanged' then
+  if result == nil then
     return
   end
 
   local client_id = ctx.client_id
-  handle_diagnostics(ctx.params.textDocument.uri, client_id, result.items, true)
-
   local bufnr = assert(ctx.bufnr)
   local bufstate = bufstates[bufnr]
   bufstate.client_result_id[client_id] = result.resultId
+
+  if result.kind == 'unchanged' then
+    return
+  end
+
+  handle_diagnostics(ctx.params.textDocument.uri, client_id, result.items, true)
 end
 
 --- Clear push diagnostics and diagnostic cache.
