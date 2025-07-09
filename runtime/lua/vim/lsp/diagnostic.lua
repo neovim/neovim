@@ -283,6 +283,22 @@ function M.on_diagnostic(error, result, ctx)
   end
 
   handle_diagnostics(ctx.params.textDocument.uri, client_id, result.items, true)
+
+  for uri, related_result in pairs(result.relatedDocuments or {}) do
+    if related_result.kind == 'full' then
+      handle_diagnostics(uri, client_id, related_result.items, true)
+    end
+
+    local related_bufnr = vim.uri_to_bufnr(uri)
+    local related_bufstate = bufstates[related_bufnr]
+      -- Create a new bufstate if it doesn't exist for the related document. This will not enable
+      -- diagnostic pulling by itself, but will allow previous result IDs to be passed correctly the
+      -- next time this buffer's diagnostics are pulled.
+      or { pull_kind = 'document', client_result_id = {} }
+    bufstates[related_bufnr] = related_bufstate
+
+    related_bufstate.client_result_id[client_id] = related_result.resultId
+  end
 end
 
 --- Clear push diagnostics and diagnostic cache.
