@@ -350,6 +350,7 @@ function protocol.make_client_capabilities()
         },
         dataSupport = true,
         relatedInformation = true,
+        relatedDocumentSupport = true,
       },
       inlayHint = {
         dynamicRegistration = true,
