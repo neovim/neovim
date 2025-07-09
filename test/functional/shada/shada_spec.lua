@@ -213,6 +213,20 @@ describe('ShaDa support code', function()
     eq({}, find_file(fname))
   end)
 
+  it("does not store 'nobuflisted' buffer", function()
+    nvim_command('set shellslash')
+    local fname = fn.getcwd() .. '/file'
+    api.nvim_set_var('__fname', fname)
+    nvim_command('edit `=__fname`')
+    api.nvim_set_option_value('buflisted', false, {})
+    nvim_command('wshada! ' .. shada_fname)
+    eq({}, find_file(fname))
+    -- Set 'buflisted', then check again.
+    api.nvim_set_option_value('buflisted', true, {})
+    nvim_command('wshada! ' .. shada_fname)
+    eq({ [7] = 1, [8] = 1, [10] = 1 }, find_file(fname))
+  end)
+
   it('is able to set &shada after &viminfo', function()
     api.nvim_set_option_value('viminfo', "'10", {})
     eq("'10", api.nvim_get_option_value('viminfo', {}))
