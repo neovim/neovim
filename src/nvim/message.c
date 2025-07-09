@@ -296,8 +296,8 @@ static bool is_multihl = false;
 /// @param kind Message kind (can be NULL to avoid setting kind)
 /// @param history Whether to add message to history
 /// @param err Whether to print message as an error
-MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
-                  char *title, char *status, int percent)
+MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err, char *title,
+                  char *status, int percent)
 {
   no_wait_return++;
   msg_start();
@@ -1041,8 +1041,8 @@ static MessageHistoryEntry *msg_find_by_id(MsgID id)
   return entry;
 }
 
-static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *title,
-                                  char *status, int percent)
+static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *title, char *status,
+                                  int percent)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -1092,7 +1092,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
     }
     entry->title = xstrdup(title);
   }
-  if (entry->percent == 0 || percent > 0 ) {
+  if (entry->percent == 0 || percent > 0) {
     entry->percent = percent;
   }
   // NOTE: this does not encode if the message was actually appended to the

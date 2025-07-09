@@ -339,7 +339,7 @@ typedef struct {
   Integer id;
   String title;
   String status;
-  Integer percentage;
+  Integer percent;
 } Dict(echo_opts);
 
 typedef struct {

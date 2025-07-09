@@ -26,5 +26,5 @@ typedef struct msg_hist {
                           ///< to on a new line (|ui-messages|->msg_show->append).
   int percent;            ///< Progress percentage
   char *status;           ///< Status for progress message
-  char *title;            ///< Status for progress message
+  char *title;            ///< Title for progress message
 } MessageHistoryEntry;
