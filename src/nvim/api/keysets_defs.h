@@ -337,6 +337,7 @@ typedef struct {
   Boolean verbose;
   String kind;
   Integer id;
+  String title;
   String status;
   Integer percentage;
 } Dict(echo_opts);

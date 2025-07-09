@@ -16,7 +16,7 @@ typedef int64_t MsgID;
 #define MSG_KIND_PROGRESS "progress"
 /// Message history for `:messages`
 typedef struct msg_hist {
-  MsgID message_id;         ///< Indentifier of the message
+  MsgID message_id;       ///< Indentifier of the message
   struct msg_hist *next;  ///< Next message.
   struct msg_hist *prev;  ///< Previous message.
   HlMessage msg;          ///< Highlighted message.
@@ -24,6 +24,7 @@ typedef struct msg_hist {
   bool temp;              ///< Temporary message since last command ("g<")
   bool append;            ///< Message should be appended to previous entry, as opposed
                           ///< to on a new line (|ui-messages|->msg_show->append).
-  int parcentage;         ///< Progress percentage
-  char *status;     ///< Status for progress message
+  int percent;            ///< Progress percentage
+  char *status;           ///< Status for progress message
+  char *title;            ///< Status for progress message
 } MessageHistoryEntry;

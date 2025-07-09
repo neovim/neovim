@@ -297,7 +297,7 @@ static bool is_multihl = false;
 /// @param history Whether to add message to history
 /// @param err Whether to print message as an error
 MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
-                  char *status, int percentage)
+                  char *title, char *status, int percent)
 {
   no_wait_return++;
   msg_start();
@@ -319,7 +319,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
   if (history && kv_size(hl_msg)) {
-    id = msg_hist_add_multihl(id, hl_msg, false, status, percentage);
+    id = msg_hist_add_multihl(id, hl_msg, false, title, status, percent);
   }
   msg_ext_skip_flush = false;
   is_multihl = false;
@@ -1023,7 +1023,7 @@ static void msg_hist_add(const char *s, int len, int hl_id)
 
   HlMessage msg = KV_INITIAL_VALUE;
   kv_push(msg, ((HlMessageChunk){ text, hl_id }));
-  msg_hist_add_multihl(0, msg, false, NULL, 100);
+  msg_hist_add_multihl(0, msg, false, NULL, NULL, 100);
 }
 
 static bool do_clear_hist_temp = true;
@@ -1041,8 +1041,8 @@ static MessageHistoryEntry *msg_find_by_id(MsgID id)
   return entry;
 }
 
-static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *status,
-                                  int percentage)
+static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *title,
+                                  char *status, int percent)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -1092,7 +1092,13 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
     // }
     entry->status = status;
   }
-  entry->parcentage = percentage;
+  if (title != NULL) {
+    // if (progress_message_found && entry->status != NULL) {
+    //   xfree(entry->status);
+    // }
+    entry->title = title;
+  }
+  entry->percent = percent;
   // NOTE: this does not encode if the message was actually appended to the
   // previous entry in the message history. However append is currently only
   // true for :echon, which is stored in the history as a temporary entry for
@@ -1133,6 +1139,7 @@ static void msg_hist_free_msg(MessageHistoryEntry *entry)
   }
   hl_msg_free(entry->msg);
   xfree(entry->status);
+  xfree(entry->title);
   xfree(entry);
 }
 
@@ -1258,7 +1265,7 @@ void ex_messages(exarg_T *eap)
     }
     if (redirecting() || !ui_has(kUIMessages)) {
       msg_silent += ui_has(kUIMessages);
-      msg_multihl(p->message_id, p->msg, p->kind, false, false, p->status, p->parcentage);
+      msg_multihl(p->message_id, p->msg, p->kind, false, false, p->title,  p->status, p->percent);
       msg_silent -= ui_has(kUIMessages);
     }
   }
@@ -3244,7 +3251,7 @@ void msg_ext_ui_flush(void)
         xfree(chunk);
       }
       xfree(tofree->items);
-      msg_hist_add_multihl(0, msg, true, NULL, 100);
+      msg_hist_add_multihl(0, msg, true, NULL, NULL, 100);
     }
     xfree(tofree);
     msg_ext_overwrite = false;

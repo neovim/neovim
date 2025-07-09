@@ -791,8 +791,8 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
     return 0;
   }
 
-  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, status.data,
-                         (int)opts->percentage);
+  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err,
+                         opts->title.data, status.data, (int)opts->percentage);
 
   if (opts->verbose) {
     verbose_leave();
