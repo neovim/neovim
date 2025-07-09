@@ -749,8 +749,8 @@ This UI extension delegates presentation of the |cmdline| (except 'wildmenu').
 For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 
 ["cmdline_show", content, pos, firstc, prompt, indent, level, hl_id] ~
-        content: List of [attrs, string]
-	         [[{}, "t"], [attrs, "est"], ...]
+        content: List of [attrs, string, hl_id]
+	         [[{}, "t", hl_id], [attrs, "est", hl_id], ...]
 
 	Triggered when the cmdline is displayed or changed.
 	The `content` is the full content that should be displayed in the
