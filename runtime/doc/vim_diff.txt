@@ -69,6 +69,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
+- 'maxsearchcount' defaults t0 999
 - 'mouse' defaults to "nvi", see |default-mouse| for details
 - 'mousemodel' defaults to "popup_setpos"
 - 'nrformats' defaults to "bin,hex"
@@ -340,7 +341,6 @@ Functions:
 - |matchadd()| can be called before highlight group is defined
 - |tempname()| tries to recover if the Nvim |tempdir| disappears.
 - |writefile()| with "p" flag creates parent directories.
-- |searchcount()|'s maximal value is raised from 99 to 999.
 - |prompt_getinput()|
 
 Highlight groups:

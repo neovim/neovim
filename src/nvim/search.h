@@ -63,8 +63,9 @@ enum {
 
 // Values for searchcount()
 enum { SEARCH_STAT_DEF_TIMEOUT = 40, };
-enum { SEARCH_STAT_DEF_MAX_COUNT = 999, };
-enum { SEARCH_STAT_BUF_LEN = 14, };
+// 'W ':  2 +
+// '[>9999/>9999]': 13 + 1 (NUL)
+enum { SEARCH_STAT_BUF_LEN = 16, };
 
 enum {
   /// Maximum number of characters that can be fuzzy matched

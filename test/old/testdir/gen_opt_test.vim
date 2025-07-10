@@ -308,6 +308,7 @@ let test_values = {
       "\ 'renderoptions': [[''], ['xxx']],
       \ 'rightleftcmd': [['search'], ['xxx']],
       \ 'rulerformat': [['', 'xxx'], ['%-', '%(', '%15(%%']],
+      \ 'maxsearchcount': [[1, 10, 100, 1000], [0, -1, 10000]],
       \ 'selection': [['old', 'inclusive', 'exclusive'], ['', 'xxx']],
       \ 'selectmode': [['', 'mouse', 'key', 'cmd', 'key,cmd'], ['xxx']],
       \ 'sessionoptions': [['', 'blank', 'curdir', 'sesdir',
