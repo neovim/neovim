@@ -959,6 +959,7 @@ describe('float window', function()
         [28] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
         [29] = { background = Screen.colors.Yellow1, foreground = Screen.colors.Blue4 },
         [30] = { background = Screen.colors.Grey, foreground = Screen.colors.Blue4, bold = true },
+        [31] = { foreground = Screen.colors.Grey0 },
       }
       screen:set_default_attr_ids(attrs)
     end)
@@ -1839,9 +1840,9 @@ describe('float window', function()
           grid = [[
           neeed some dummy                        |
           background text                         |
-          to sh{1: halloj! }{23:f}ect                      |
+          to sh{1: halloj! }{31:f}ect                      |
           of co{1: BORDAA  }{24:i}ng                       |
-          of bo{23:r}{24:der shado}w                        |
+          of bo{31:r}{24:der shado}w                        |
           ^                                        |
                                                   |
         ]],

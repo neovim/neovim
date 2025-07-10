@@ -754,10 +754,16 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
   }
 
   // Check if we should preserve background transparency
-  // Use the raw attributes (before forcing colors) to check original transparency
-  cattrs.rgb_bg_color = (battrs_raw.rgb_bg_color == -1) && (fattrs_raw.rgb_bg_color == -1)
-                        ? -1
-                        : rgb_blend(ratio, battrs.rgb_bg_color, fattrs.rgb_bg_color);
+  // Special case for blend=100: preserve back layer background exactly (including bg=NONE)
+  if (ratio == 100 && battrs_raw.rgb_bg_color == -1) {
+    // For 100% blend with transparent background, preserve the transparency
+    cattrs.rgb_bg_color = -1;
+  } else {
+    // Use the raw attributes (before forcing colors) to check original transparency
+    cattrs.rgb_bg_color = (battrs_raw.rgb_bg_color == -1) && (fattrs_raw.rgb_bg_color == -1)
+                          ? -1
+                          : rgb_blend(ratio, battrs.rgb_bg_color, fattrs.rgb_bg_color);
+  }
   cattrs.hl_blend = -1;  // blend property was consumed
   HlKind kind = *through ? kHlBlendThrough : kHlBlend;
   id = get_attr_entry((HlEntry){ .attr = cattrs, .kind = kind,
