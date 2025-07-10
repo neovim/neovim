@@ -556,6 +556,9 @@ function protocol.make_client_capabilities()
       selectionRange = {
         dynamicRegistration = false,
       },
+      linkedEditingRange = {
+        dynamicRegistration = false,
+      },
     },
     workspace = {
       symbol = {
