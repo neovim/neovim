@@ -31,8 +31,8 @@ describe('messages2', function()
                                                            |
       {1:~                                                    }|*9
       ─────────────────────────────────────────────────────|
-      {4:fo^o                                                  }|
-      {4:bar                                                  }|
+      fo^o                                                  |
+      bar                                                  |
                                           1,3           All|
     ]])
     -- New message clears spill indicator.
@@ -41,8 +41,8 @@ describe('messages2', function()
                                                            |
       {1:~                                                    }|*9
       ─────────────────────────────────────────────────────|
-      {4:fo^o                                                  }|
-      {4:bar                                                  }|
+      fo^o                                                  |
+      bar                                                  |
       {9:E354: Invalid register name: '^@'}   1,3           All|
     ]])
     -- Multiple messages in same event loop iteration are appended and shown in full.
@@ -105,7 +105,7 @@ describe('messages2', function()
                                                            |
       {1:~                                                    }|*10
       ─────────────────────────────────────────────────────|
-      {4:fo^o                                                  }|
+      fo^o                                                  |
       foo                                                  |
     ]])
     command('bdelete | messages')
@@ -142,9 +142,9 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*10
-      {1:~                                               }┌───┐|
-      {1:~                                               }│{4:foo}│|
-      {1:~                                               }└───┘|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                 }{4:foo}|
     ]])
     command('mode')
     screen:expect([[
@@ -156,9 +156,9 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*10
-      {1:~                                               }┌───┐|
-      {1:~                                               }│{4:foo}│|
-      {1:~                                               }└───┘|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                 }{4:foo}|
     ]])
     command('echo ""')
     screen:expect_unchanged()
@@ -167,9 +167,29 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*9
-      {1:~                                               }┌───┐|
-      {1:~                                               }│{4:foo}│|
-      {1:~                                               }└───┘|
+      {1:~                                                    }|
+      {1:~                                                    }|
+      {1:~                                                 }{4:foo}|
     ]])
+    -- Moved up when opening cmdline
+    feed(':')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {1:~                                                 }{4:foo}|
+      {16::}^                                                    |
+    ]])
+  end)
+
+  it("deleting buffer restores 'buftype'", function()
+    command('%bdelete')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      5 buffers deleted                                    |
+    ]])
+    -- Would trigger changed dialog if 'buftype' was not restored.
+    command('%bdelete')
+    screen:expect_unchanged()
   end)
 end)

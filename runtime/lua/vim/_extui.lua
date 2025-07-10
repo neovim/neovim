@@ -87,14 +87,6 @@ function M.enable(opts)
     return true
   end)
 
-  -- Use MsgArea and hide search highlighting in the cmdline window.
-  -- TODO: Add new highlight group/namespaces for other windows? It is
-  -- not clear if MsgArea is wanted in the msg, pager and dialog windows.
-  api.nvim_set_hl(ext.ns, 'Normal', { link = 'MsgArea' })
-  api.nvim_set_hl(ext.ns, 'Search', { link = 'MsgArea' })
-  api.nvim_set_hl(ext.ns, 'CurSearch', { link = 'MsgArea' })
-  api.nvim_set_hl(ext.ns, 'IncSearch', { link = 'MsgArea' })
-
   -- The visibility and appearance of the cmdline and message window is
   -- dependent on some option values. Reconfigure windows when option value
   -- has changed and after VimEnter when the user configured value is known.

@@ -34,7 +34,7 @@ function M.check_targets()
   for _, type in ipairs({ 'cmd', 'dialog', 'msg', 'pager' }) do
     local setopt = not api.nvim_buf_is_valid(M.bufs[type])
     if setopt then
-      M.bufs[type] = api.nvim_create_buf(false, true)
+      M.bufs[type] = api.nvim_create_buf(false, false)
     end
 
     if
@@ -47,7 +47,7 @@ function M.check_targets()
         mouse = type ~= 'cmd' and true or nil,
         anchor = type ~= 'cmd' and 'SE' or nil,
         hide = type ~= 'cmd' or M.cmdheight == 0 or nil,
-        border = type == 'msg' and 'single' or 'none',
+        border = type ~= 'msg' and 'none' or nil,
         -- kZIndexMessages < zindex < kZIndexCmdlinePopupMenu (grid_defs.h), pager below others.
         zindex = 200 - (type == 'pager' and 1 or 0),
         _cmdline_offset = type == 'cmd' and 0 or nil,
@@ -57,9 +57,6 @@ function M.check_targets()
         api.nvim_win_close(M.wins[type], true)
       end
       M.wins[type] = api.nvim_open_win(M.bufs[type], false, cfg)
-      if type == 'cmd' then
-        api.nvim_win_set_hl_ns(M.wins[type], M.ns)
-      end
       setopt = true
     elseif api.nvim_win_get_buf(M.wins[type]) ~= M.bufs[type] then
       api.nvim_win_set_buf(M.wins[type], M.bufs[type])
@@ -71,9 +68,13 @@ function M.check_targets()
       api.nvim_buf_set_name(M.bufs[type], ('[%s]'):format(name[type]))
       api.nvim_set_option_value('swapfile', false, { buf = M.bufs[type] })
       api.nvim_set_option_value('modifiable', true, { buf = M.bufs[type] })
+      api.nvim_set_option_value('bufhidden', 'hide', { buf = M.bufs[type] })
+      api.nvim_set_option_value('buftype', 'nofile', { buf = M.bufs[type] })
       if type == 'pager' then
         -- Close pager with `q`, same as `checkhealth`
         api.nvim_buf_set_keymap(M.bufs.pager, 'n', 'q', '<Cmd>wincmd c<CR>', {})
+      elseif type == M.cfg.msg.target then
+        M.msg.prev_msg = '' -- Will no longer be visible.
       end
 
       -- Fire a FileType autocommand with window context to let the user reconfigure local options.
@@ -85,6 +86,12 @@ function M.check_targets()
         api.nvim_set_option_value('filetype', ft, { scope = 'local' })
         local ignore = 'all' .. (type == 'pager' and ',-TextYankPost' or '')
         api.nvim_set_option_value('eventignorewin', ignore, { scope = 'local' })
+        if type ~= 'msg' then
+          -- Use MsgArea and hide search highlighting in the cmdline window.
+          local hl = 'Normal:MsgArea'
+          hl = hl .. (type == 'cmd' and ',Search:MsgArea,CurSearch:MsgArea,IncSearch:MsgArea' or '')
+          api.nvim_set_option_value('winhighlight', hl, { scope = 'local' })
+        end
       end)
     end
   end
