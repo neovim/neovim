@@ -84,6 +84,8 @@ LSP
 • `root_markers` in |vim.lsp.Config| can now be ordered by priority.
 • The function set with |vim.lsp.log.set_format_func()| is now given all
   arguments corresponding to a log entry instead of the individual arguments.
+• `vim.lsp.semantic_tokens.start/stop` now renamed to
+  `vim.lsp.semantic_tokens.enable`
 
 LUA
 
@@ -204,6 +206,7 @@ LSP
 • LSP `DiagnosticRelatedInformation` is now shown in
   |vim.diagnostic.open_float()|. It is read from the LSP diagnostic object
   stored in the `user_data` field.
+• `vim.lsp.util._enable/_is_enabled` for unifying enable/is_enabled logic
 
 LUA
 
