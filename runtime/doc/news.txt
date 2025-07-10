@@ -204,6 +204,9 @@ LSP
 • LSP `DiagnosticRelatedInformation` is now shown in
   |vim.diagnostic.open_float()|. It is read from the LSP diagnostic object
   stored in the `user_data` field.
+• When inside the float created by |vim.diagnostic.open_float()| and the
+  cursor is on a line with `DiagnosticRelatedInformation`, |gf| can be used to
+  jump to the problematic location.
 
 LUA
 

@@ -3383,6 +3383,92 @@ describe('vim.diagnostic', function()
       )
     end)
 
+    it('can add LSP related information to a diagnostic', function()
+      local related_info_uri = 'file:///fake/uri'
+
+      -- Populate the related info buffer.
+      exec_lua(function()
+        local fake_bufnr = vim.uri_to_bufnr(related_info_uri)
+        vim.fn.bufload(fake_bufnr)
+        vim.api.nvim_buf_set_lines(fake_bufnr, 0, 1, false, {
+          'O, the Pelican,',
+          'so smoothly doth he crest.',
+          'a wind god!',
+        })
+        vim.api.nvim_win_set_buf(0, fake_bufnr)
+      end)
+
+      -- Displays related info.
+      eq(
+        {
+          '1. Some warning',
+          '   uri:1:0: Some extra info',
+          '   uri:2:3: Some more extra info',
+        },
+        exec_lua(function()
+          ---@type vim.Diagnostic
+          local diagnostic = _G.make_warning('Some warning', 1, 1, 1, 3)
+          diagnostic.user_data = {
+            -- Related information comes from LSP user_data
+            lsp = {
+              relatedInformation = {
+                {
+                  message = 'Some extra info',
+                  location = {
+                    uri = related_info_uri,
+                    range = {
+                      start = {
+                        line = 1,
+                        character = 0,
+                      },
+                      ['end'] = {
+                        line = 1,
+                        character = 1,
+                      },
+                    },
+                  },
+                },
+                {
+                  message = 'Some more extra info',
+                  location = {
+                    uri = related_info_uri,
+                    range = {
+                      start = {
+                        line = 2,
+                        character = 3,
+                      },
+                      ['end'] = {
+                        line = 4,
+                        character = 5,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }
+          vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, { diagnostic })
+          local float_bufnr, winnr = vim.diagnostic.open_float({ header = false, scope = 'buffer' })
+          local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+          -- Put the cursor on a line with related info
+          vim.api.nvim_tabpage_set_win(0, winnr)
+          vim.api.nvim_win_set_cursor(0, { 2, 0 })
+          return lines
+        end)
+      )
+
+      -- Jumps to related info.
+      eq(
+        'so smoothly doth he crest.',
+        exec_lua(function()
+          vim.cmd.norm('gf')
+          vim.wait(20, function() end)
+          return vim.api.nvim_get_current_line()
+        end)
+      )
+    end)
+
     it('works with the old signature', function()
       eq(
         { '1. Syntax error' },
