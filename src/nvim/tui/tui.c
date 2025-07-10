@@ -377,6 +377,7 @@ static void terminfo_start(TUIData *tui)
   tui->unibi_ext.reset_scroll_region = -1;
   tui->unibi_ext.set_cursor_style = -1;
   tui->unibi_ext.reset_cursor_style = -1;
+  tui->unibi_ext.set_title = -1;
   tui->unibi_ext.set_underline_style = -1;
   tui->unibi_ext.set_underline_color = -1;
   tui->unibi_ext.sync = -1;
@@ -1628,7 +1629,7 @@ static void tui_suspend_cb(TUIData *tui)
 
 void tui_set_title(TUIData *tui, String title)
 {
-  if (!unibi_get_ext_str(tui->ut, (unsigned)tui->unibi_ext.set_title)) {
+  if (tui->unibi_ext.set_title == -1) {
     return;
   }
   if (title.size > 0) {
