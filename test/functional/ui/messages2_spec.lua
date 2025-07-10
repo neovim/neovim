@@ -30,27 +30,17 @@ describe('messages2', function()
     screen:expect([[
                                                            |
       {1:~                                                    }|*9
-      ─────────────────────────────────────────────────────|
+      {3:─────────────────────────────────────────────────────}|
       fo^o                                                  |
       bar                                                  |
                                           1,3           All|
-    ]])
-    -- New message clears spill indicator.
-    feed('Q')
-    screen:expect([[
-                                                           |
-      {1:~                                                    }|*9
-      ─────────────────────────────────────────────────────|
-      fo^o                                                  |
-      bar                                                  |
-      {9:E354: Invalid register name: '^@'}   1,3           All|
     ]])
     -- Multiple messages in same event loop iteration are appended and shown in full.
     feed([[q:echo "foo" | echo "bar\nbaz\n"->repeat(&lines)<CR>]])
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*5
-      ─────────────────────────────────────────────────────|
+      {3:─────────────────────────────────────────────────────}|
       foo                                                  |
       bar                                                  |
       baz                                                  |
@@ -66,13 +56,20 @@ describe('messages2', function()
       {1:~                                                    }|*12
       foo[+29]                            0,0-1         All|
     ]])
+    command('echo "foo"')
+    -- New message clears spill indicator.
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      foo                                 0,0-1         All|
+    ]])
     -- No error for ruler virt_text msg_row exceeding buffer length.
     command([[map Q <cmd>echo "foo\nbar" <bar> ls<CR>]])
     feed('Q')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*8
-      ─────────────────────────────────────────────────────|
+      {3:─────────────────────────────────────────────────────}|
       foo                                                  |
       bar                                                  |
                                                            |
@@ -104,7 +101,7 @@ describe('messages2', function()
     screen:expect([[
                                                            |
       {1:~                                                    }|*10
-      ─────────────────────────────────────────────────────|
+      {3:─────────────────────────────────────────────────────}|
       fo^o                                                  |
       foo                                                  |
     ]])
@@ -182,7 +179,7 @@ describe('messages2', function()
   end)
 
   it("deleting buffer restores 'buftype'", function()
-    command('%bdelete')
+    feed(':%bdelete<CR>')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12

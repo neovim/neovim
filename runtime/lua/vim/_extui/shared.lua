@@ -4,7 +4,7 @@ local M = {
   cmd = nil, ---@type vim._extui.cmdline
   ns = api.nvim_create_namespace('nvim._ext_ui'),
   augroup = api.nvim_create_augroup('nvim._ext_ui', {}),
-  cmdheight = 1, -- 'cmdheight' option value set by user.
+  cmdheight = vim.o.cmdheight, -- 'cmdheight' option value set by user.
   wins = { cmd = -1, dialog = -1, msg = -1, pager = -1 },
   bufs = { cmd = -1, dialog = -1, msg = -1, pager = -1 },
   cfg = {

@@ -104,9 +104,11 @@ function M.enable(opts)
     ext.cmdheight = value
   end
 
-  vim.schedule(function()
-    check_cmdheight(vim.o.cmdheight)
-  end)
+  if vim.v.vim_did_enter == 0 then
+    vim.schedule(function()
+      check_cmdheight(vim.o.cmdheight)
+    end)
+  end
 
   api.nvim_create_autocmd('OptionSet', {
     group = ext.augroup,
