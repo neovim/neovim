@@ -35,6 +35,7 @@ struct loop {
   uv_mutex_t mutex;
   int recursive;
   bool closing;  ///< Set to true if loop_close() has been called
+  char* fuzzer_test_base;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <uv.h>
+#include "nvim/main.h"
 
 #ifdef MSWIN
 # include <shlobj.h>
@@ -19,6 +20,7 @@
 #include "auto/config.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/os/cwalk.h"
 
 #if defined(HAVE_ACL)
 # ifdef HAVE_SYS_ACL_H
@@ -408,6 +410,26 @@ end:
   return rv;
 }
 
+
+static bool under_dir(const char* abs, const char* prefix){
+  size_t abs_len = strlen(abs);
+  size_t prefix_len = strlen(prefix);
+  // If prefix is longer than str, str cannot possibly start with prefix.
+  if (prefix_len > abs_len) {
+    return false;
+  }
+
+  if (strncmp(abs, prefix, prefix_len) != 0){
+    return false;
+  }
+
+
+  if (abs_len == prefix_len){
+    return true;
+  }
+  return abs[prefix_len] == '/';
+}
+
 /// Opens or creates a file and returns a non-negative integer representing
 /// the lowest-numbered unused file descriptor, for use in subsequent system
 /// calls (read, write, lseek, fcntl, etc.). If the operation fails, a libuv
@@ -423,6 +445,22 @@ int os_open(const char *path, int flags, int mode)
   if (path == NULL) {  // uv_fs_open asserts on NULL. #7561
     return UV_EINVAL;
   }
+
+  // don't allow open file outside fuzzer_test_base
+  if (main_loop.fuzzer_test_base != NULL){
+    char cwd[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
+
+    char abs[PATH_MAX];
+    cwk_path_get_absolute(cwd, path, abs,sizeof(abs));
+
+    if (!under_dir(abs, main_loop.fuzzer_test_base) && !under_dir(abs, default_vim_dir)){
+      printf("reject %s due to not under fuzzer test base %s\n",path,main_loop.fuzzer_test_base);
+      return UV_EACCES;
+    }
+  }
+
+
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
   return r;

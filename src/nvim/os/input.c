@@ -205,6 +205,7 @@ void os_breakcheck(void)
   }
 
   loop_poll_events(&main_loop, 0);
+
 }
 
 #define BREAKCHECK_SKIP 1000

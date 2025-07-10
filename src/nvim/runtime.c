@@ -448,6 +448,7 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
     char *rtp = rtp_copy;
     while (*rtp != NUL && (do_all || !did_one)) {
       // Copy the path from 'runtimepath' to buf[].
+      //
       copy_option_part(&rtp, buf, MAXPATHL, ",");
       size_t buflen = strlen(buf);
 
@@ -462,10 +463,13 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
       }
 
       if (name == NULL) {
+
         (*callback)(1, &buf, do_all, cookie);
         did_one = true;
       } else if (buflen + 2 + strlen(prefix) + strlen(name) < MAXPATHL) {
+
         add_pathsep(buf);
+
         strcat(buf, prefix);
         tail = buf + strlen(buf);
 
@@ -487,10 +491,12 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
 
           did_one |= gen_expand_wildcards_and_cb(1, &buf, ew_flags, do_all, callback,
                                                  cookie) == OK;
+
         }
       }
     }
   }
+
   xfree(buf);
   xfree(rtp_copy);
   if (!did_one && name != NULL) {

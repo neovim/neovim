@@ -612,6 +612,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
                              bool didstar)
   FUNC_ATTR_NONNULL_ALL
 {
+
   int start_len = gap->ga_len;
   bool starstar = false;
   static int stardepth = 0;  // depth for "**" expansion
@@ -1260,6 +1261,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
   for (int i = 0; i < num_pat; i++) {
     if (has_special_wildchar(pat[i], flags)
         && !(vim_backtick(pat[i]) && pat[i][1] == '=')) {
+
       return os_expand_wildcards(num_pat, pat, num_file, file, flags);
     }
   }
@@ -1275,6 +1277,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     p = pat[i];
 
     if (vim_backtick(p)) {
+
       add_pat = expand_backtick(&ga, p, flags);
       if (add_pat == -1) {
         recursive = false;
@@ -1284,6 +1287,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
         return FAIL;
       }
     } else {
+
       // First expand environment variables, "~/" and "~user/".
       if ((has_env_var(p) && !(flags & EW_NOTENV)) || *p == '~') {
         p = expand_env_save_opt(p, true);
@@ -1291,6 +1295,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
           p = pat[i];
         } else {
 #ifdef UNIX
+
           // On Unix, if expand_env() can't expand an environment
           // variable, use the shell to do that.  Discard previously
           // found file names and start all over again.
@@ -1318,6 +1323,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
                  && (vim_ispathsep(p[1])
                      || (p[1] == '.'
                          && vim_ispathsep(p[2]))))) {
+
           // :find completion where 'path' is used.
           // Recursiveness is OK here.
           recursive = false;
@@ -1329,6 +1335,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
           // event handler in os_breakcheck(), in which case it should be allowed.
           recursive = false;
           size_t tmp_add_pat = path_expand(&ga, p, flags);
+
           recursive = true;
           assert(tmp_add_pat <= INT_MAX);
           add_pat = (int)tmp_add_pat;
