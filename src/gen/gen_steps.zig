@@ -75,6 +75,7 @@ pub fn nvim_gen_sources(
             "_init_packages",
             "inspect",
             "_editor",
+            "_system",
             "filetype",
             "fs",
             "F",

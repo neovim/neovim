@@ -96,4 +96,5 @@ end
 -- only on main thread: functions for interacting with editor state
 if vim.api and not vim.is_thread() then
   require('vim._editor')
+  require('vim._system')
 end
