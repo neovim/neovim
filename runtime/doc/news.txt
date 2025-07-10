@@ -87,7 +87,7 @@ LSP
 
 LUA
 
-• todo
+• Renamed `vim.diff` to `vim.text.diff`.
 
 OPTIONS
 
