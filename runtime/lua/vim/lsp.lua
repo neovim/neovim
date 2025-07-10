@@ -17,6 +17,7 @@ local lsp = vim._defer_require('vim.lsp', {
   handlers = ..., --- @module 'vim.lsp.handlers'
   inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
   log = ..., --- @module 'vim.lsp.log'
+  on_type_formatting = ..., --- @module 'vim.lsp.on_type_formatting'
   protocol = ..., --- @module 'vim.lsp.protocol'
   rpc = ..., --- @module 'vim.lsp.rpc'
   semantic_tokens = ..., --- @module 'vim.lsp.semantic_tokens'
