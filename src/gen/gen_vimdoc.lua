@@ -141,6 +141,7 @@ local config = {
       'builtin.lua',
       '_options.lua',
       '_editor.lua',
+      '_system.lua',
       '_inspector.lua',
       'shared.lua',
       'loader.lua',
@@ -172,6 +173,7 @@ local config = {
       'runtime/lua/vim/uri.lua',
       'runtime/lua/vim/ui.lua',
       'runtime/lua/vim/_extui.lua',
+      'runtime/lua/vim/_system.lua',
       'runtime/lua/vim/filetype.lua',
       'runtime/lua/vim/keymap.lua',
       'runtime/lua/vim/fs.lua',
@@ -215,6 +217,8 @@ local config = {
       name = name:lower()
       if name == '_editor' then
         return 'Lua module: vim'
+      elseif name == '_system' then
+        return 'Lua module: vim.system'
       elseif name == '_options' then
         return 'LUA-VIMSCRIPT BRIDGE'
       elseif name == 'builtin' then
@@ -243,6 +247,8 @@ local config = {
     helptag_fmt = function(name)
       if name == '_editor' then
         return 'lua-vim'
+      elseif name == '_system' then
+        return 'lua-vim-system'
       elseif name == '_options' then
         return 'lua-vimscript'
       elseif name == 'tohtml' then

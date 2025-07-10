@@ -335,6 +335,7 @@ set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 # NVIM_RUNTIME_DIR
 set(LUA_DEFAULTS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_defaults.lua)
 set(LUA_EDITOR_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_editor.lua)
+set(LUA_SYSTEM_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_system.lua)
 set(LUA_FILETYPE_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/filetype.lua)
 set(LUA_FS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/fs.lua)
 set(LUA_F_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/F.lua)
@@ -626,6 +627,7 @@ add_custom_command(
       ${LUA_INIT_PACKAGES_MODULE_SOURCE} "vim._init_packages"
       ${LUA_INSPECT_MODULE_SOURCE} "vim.inspect"
       ${LUA_EDITOR_MODULE_SOURCE} "vim._editor"
+      ${LUA_SYSTEM_MODULE_SOURCE} "vim._system"
       ${LUA_FILETYPE_MODULE_SOURCE} "vim.filetype"
       ${LUA_FS_MODULE_SOURCE} "vim.fs"
       ${LUA_F_MODULE_SOURCE} "vim.F"
@@ -640,6 +642,7 @@ add_custom_command(
     ${LUA_INIT_PACKAGES_MODULE_SOURCE}
     ${LUA_INSPECT_MODULE_SOURCE}
     ${LUA_EDITOR_MODULE_SOURCE}
+    ${LUA_SYSTEM_MODULE_SOURCE}
     ${LUA_FILETYPE_MODULE_SOURCE}
     ${LUA_FS_MODULE_SOURCE}
     ${LUA_F_MODULE_SOURCE}
