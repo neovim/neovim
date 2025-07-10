@@ -133,7 +133,6 @@ local config = {
     filename = 'lua.txt',
     section_order = {
       'hl.lua',
-      'diff.lua',
       'mpack.lua',
       'json.lua',
       'base64.lua',
@@ -185,7 +184,6 @@ local config = {
       'runtime/lua/vim/text.lua',
       'runtime/lua/vim/glob.lua',
       'runtime/lua/vim/_meta/builtin.lua',
-      'runtime/lua/vim/_meta/diff.lua',
       'runtime/lua/vim/_meta/mpack.lua',
       'runtime/lua/vim/_meta/json.lua',
       'runtime/lua/vim/_meta/base64.lua',
@@ -230,7 +228,6 @@ local config = {
           'mpack',
           'json',
           'base64',
-          'diff',
           'spell',
           'regex',
           'lpeg',

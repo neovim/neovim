@@ -140,7 +140,7 @@ The following new APIs or features were added.
 
 • 'diffopt' now includes a `linematch` option to enable a second-stage diff on
   individual hunks to provide much more accurate diffs. This option is also
-  available to |vim.diff()|
+  available to |vim.text.diff()|
 
   See https://github.com/neovim/neovim/pull/14537.
 

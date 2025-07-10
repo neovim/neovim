@@ -38,7 +38,7 @@ LSP
 
 LUA
 
-• todo
+• *vim.diff()*				Renamed to |vim.text.diff()|
 
 VIMSCRIPT
 
