@@ -39,6 +39,11 @@ local function get_border_size(opts)
     border = 'none'
   end
 
+  -- Convert winborder string option with custom characters into a table
+  if type(border) == 'string' and border:find(',') then
+    border = vim.split(border, ',')
+  end
+
   if type(border) == 'string' then
     if not border_size[border] then
       border_error(border)
