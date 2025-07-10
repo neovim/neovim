@@ -202,7 +202,7 @@ describe('eval-API', function()
     screen:expect([[
       {15:call} {25:bufnr}{16:(}{26:'%'}{16:)}                         |
       {15:call} {25:nvim_input}{16:(}{26:'typing...'}{16:)}            |
-      {15:call} not_a_function{16:(}{26:42}{16:^)}                 |
+      {15:call} {9:not_a_function}{16:(}{26:42}{16:^)}                 |
       {1:~                                       }|*4
                                               |
     ]])
