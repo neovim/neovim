@@ -2259,6 +2259,9 @@ stop({bufnr}, {client_id})                    *vim.lsp.semantic_tokens.stop()*
 ==============================================================================
 Lua module: vim.lsp.document_color                        *lsp-document_color*
 
+color_presentation()             *vim.lsp.document_color.color_presentation()*
+    Select from a list of presentations for the color under the cursor.
+
 enable({enable}, {bufnr}, {opts})            *vim.lsp.document_color.enable()*
     Enables document highlighting from the given language client in the given
     buffer.

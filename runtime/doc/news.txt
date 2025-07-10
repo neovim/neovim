@@ -183,6 +183,8 @@ LSP
 • You can control priority of |vim.lsp.Config| `root_markers`.
 • Support for `textDocument/documentColor`: |lsp-document_color|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_documentColor
+• Support for `textDocument/colorPresentation |lsp-document_color|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_colorPresentation
 • The `textDocument/diagnostic` request now includes the previous id in its
   parameters.
 • |vim.lsp.enable()| start/stops clients as necessary. And detaches
