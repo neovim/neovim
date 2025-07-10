@@ -229,7 +229,7 @@ OPTIONS
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'grepformat' is now a |global-local| option.
 • 'pummaxwidth' sets maximum width for the completion popup menu.
-• 'winborder' "bold" style.
+• 'winborder' "bold" style, custom border style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 • 'busy' sets a buffer "busy" status. Indicated in the default statusline.
 

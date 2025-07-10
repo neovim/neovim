@@ -7410,6 +7410,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- "shadow": Drop shadow effect, by blending with the background.
 	- "single": Single-line box.
 	- "solid": Adds padding by a single whitespace cell.
+	- custom: comma-separated list of exactly 8 characters in clockwise
+	  order starting from topleft. Example: >lua
+	     vim.o.winborder='+,-,+,|,+,-,+,|'
+<
 
 							*'window'* *'wi'*
 'window' 'wi'		number	(default screen height - 1)

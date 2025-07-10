@@ -10431,6 +10431,9 @@ local options = {
       type = 'number',
     },
     {
+      full_name = 'winborder',
+      scope = { 'global' },
+      cb = 'did_set_winborder',
       defaults = { if_true = '' },
       values = { '', 'double', 'single', 'shadow', 'rounded', 'solid', 'bold', 'none' },
       desc = [=[
@@ -10443,11 +10446,14 @@ local options = {
         - "shadow": Drop shadow effect, by blending with the background.
         - "single": Single-line box.
         - "solid": Adds padding by a single whitespace cell.
+        - custom: comma-separated list of exactly 8 characters in clockwise
+          order starting from topleft. Example: >lua
+             vim.o.winborder='+,-,+,|,+,-,+,|'
+        <
       ]=],
-      full_name = 'winborder',
-      scope = { 'global' },
       short_desc = N_('border of floating window'),
       type = 'string',
+      list = 'onecomma',
       varname = 'p_winborder',
     },
     {

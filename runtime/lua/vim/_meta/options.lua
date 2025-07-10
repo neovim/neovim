@@ -8117,8 +8117,15 @@ vim.wo.winbl = vim.wo.winblend
 --- - "shadow": Drop shadow effect, by blending with the background.
 --- - "single": Single-line box.
 --- - "solid": Adds padding by a single whitespace cell.
+--- - custom: comma-separated list of exactly 8 characters in clockwise
+---   order starting from topleft. Example:
 ---
---- @type ''|'double'|'single'|'shadow'|'rounded'|'solid'|'bold'|'none'
+--- ```lua
+---      vim.o.winborder='+,-,+,`,+,-,+,`'
+--- ```
+---
+---
+--- @type string
 vim.o.winborder = ""
 vim.go.winborder = vim.o.winborder
 
