@@ -465,7 +465,7 @@ function M.set_pos(type)
   local function win_set_pos(win)
     local texth = type and api.nvim_win_text_height(win, {}) or {}
     local height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
-    local top = { vim.opt.fcs:get().horiz or o.ambw == 'single' and '─' or '-', 'WinSeparator' }
+    local top = { vim.opt.fcs:get().horiz or o.ambw == 'single' and '─' or '-', 'MsgSeparator' }
     local border = win ~= ext.wins.msg and { '', top, '', '', '', '', '', '' } or nil
     local save_config = type == 'cmd' and api.nvim_win_get_config(win) or {}
     local config = {
