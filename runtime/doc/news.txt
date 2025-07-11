@@ -300,6 +300,7 @@ These existing features changed their behavior.
 • 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of
   the first writable directory in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
+• 'scrollback' maximum value increased from 100000 to 1000000
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

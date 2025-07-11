@@ -7102,7 +7102,7 @@ local options = {
       desc = [=[
         Maximum number of lines kept beyond the visible screen. Lines at the
         top are deleted if new lines exceed this limit.
-        Minimum is 1, maximum is 100000.
+        Minimum is 1, maximum is 1000000.
         Only in |terminal| buffers.
 
         Note: Lines that are not visible and kept in scrollback are not
