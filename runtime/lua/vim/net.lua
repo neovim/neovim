@@ -40,17 +40,11 @@ function M.request(url, opts, on_response)
   table.insert(args, url)
 
   local function on_exit(res)
-    local err_msg = nil
-    local response = nil
-
-    if res.code ~= 0 then
-      err_msg = (res.stderr ~= '' and res.stderr)
-        or string.format('Request failed with exit code %d', res.code)
-    else
-      response = {
-        body = opts.outpath and true or res.stdout,
-      }
-    end
+    local s = 'Request failed with exit code %d'
+    local err_msg = res.code ~= 0
+        and ((res.stderr ~= '' and res.stderr) or string.format(s, res.code))
+      or nil
+    local response = res.code == 0 and { body = opts.outpath and true or res.stdout } or nil
 
     if on_response then
       on_response(err_msg, response)

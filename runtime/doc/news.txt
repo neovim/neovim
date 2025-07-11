@@ -273,7 +273,7 @@ TERMINAL
 
 TREESITTER
 
-• todo
+• |:EditQuery| command gained tab-completion, works with injected languages.
 
 TUI
 

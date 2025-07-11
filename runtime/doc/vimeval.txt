@@ -3774,7 +3774,7 @@ This is not allowed when the textlock is active:
 	- etc.
 
 ==============================================================================
-Vim script library					*vim-script-library*
+Vim script library					*vimscript-library*
 
 Vim comes bundled with a Vim script library, that can be used by runtime,
 script authors.  Currently, it only includes very few functions, but it may
