@@ -33,8 +33,6 @@ struct block_def {
   colnr_T start_char_vcols;  ///< number of vcols of pre-block char
 };
 
-typedef int (*Indenter)(void);
-
 /// flags for do_put()
 enum {
   PUT_FIXINDENT    = 1,   ///< make indent look nice
