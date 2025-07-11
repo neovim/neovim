@@ -1,4 +1,4 @@
--- Tests for misc Vimscript |builtin-functions|.
+-- Tests for misc Vimscript |vimscript-functions|.
 --
 -- If a function is non-trivial, consider moving its spec to:
 --    test/functional/vimscript/<funcname>_spec.lua

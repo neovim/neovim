@@ -5252,6 +5252,7 @@ void ex_syntax(exarg_T *eap)
   }
 }
 
+/// @deprecated
 void ex_ownsyntax(exarg_T *eap)
 {
   if (curwin->w_s == &curwin->w_buffer->b_s) {

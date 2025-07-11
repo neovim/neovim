@@ -63,10 +63,7 @@ local validate = vim.validate
 --- ```
 --- @field cmd_env? table
 ---
---- Client commands. Map of command names to user-defined functions. Commands passed to `start()`
---- take precedence over the global command registry. Each key must be a unique command name, and
---- the value is a function which is called if any LSP action (code action, code lenses, …) triggers
---- the command.
+--- Map of client-defined commands overriding the global |vim.lsp.commands|.
 --- @field commands? table<string,fun(command: lsp.Command, ctx: table)>
 ---
 --- Daemonize the server process so that it runs in a separate process group from Nvim.

@@ -26,7 +26,7 @@ DIAGNOSTICS
 
 HIGHLIGHTS
 
-• todo
+• *:ownsyntax* *w:current_syntax*	Use 'winhighlight' instead.
 
 LSP
 

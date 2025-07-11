@@ -30,16 +30,17 @@ The purpose of this guide is to introduce the different ways of interacting
 with Nvim through Lua (the "API"). This API consists of three different
 layers:
 
-1. The "Vim API" inherited from Vim: |Ex-commands| and |builtin-functions| as
-well as |user-function|s in Vimscript. These are accessed through |vim.cmd()|
-and |vim.fn| respectively, which are discussed under |lua-guide-vimscript|
-below.
+1. The "Vim API" inherited from Vim: |Ex-commands| and |vimscript-functions|
+   as well as |user-function|s in Vimscript. These are accessed through
+   |vim.cmd()| and |vim.fn| respectively, which are discussed under
+   |lua-guide-vimscript| below.
 
 2. The "Nvim API" written in C for use in remote plugins and GUIs; see |api|.
-These functions are accessed through |vim.api|.
+   These functions are accessed through |vim.api|.
 
 3. The "Lua API" written in and specifically for Lua. These are any other
-functions accessible through `vim.*` not mentioned already; see |lua-stdlib|.
+   functions accessible through `vim.*` not mentioned already; see
+   |lua-stdlib|.
 
 This distinction is important, as API functions inherit behavior from their
 original layer: For example, Nvim API functions always need all arguments to
@@ -223,7 +224,7 @@ Vimscript are automatically converted:
 
     vim.fn.jobstart('ls', { on_stdout = print_stdout })
 <
-This works for both |builtin-functions| and |user-function|s.
+This works for both |vimscript-functions| and |user-function|s.
 
 Note that hashes (`#`) are not valid characters for identifiers in Lua, so,
 e.g., |autoload| functions have to be called with this syntax:
@@ -232,9 +233,9 @@ e.g., |autoload| functions have to be called with this syntax:
 <
 ------------------------------------------------------------------------------
 See also:
-• |builtin-functions|: alphabetic list of all Vimscript functions
-• |function-list|:     list of all Vimscript functions grouped by topic
-• |:runtime|:          run all Lua scripts matching a pattern in |'runtimepath'|
+• |vimscript-functions|: descriptions of all Vimscript functions
+• |function-list|: Vimscript functions grouped by topic
+• |:runtime|: run all Lua scripts matching a pattern in |'runtimepath'|
 
 ==============================================================================
 Variables                                                  *lua-guide-variables*

@@ -157,8 +157,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   target_link_libraries(nvim_bin PRIVATE "-framework CoreServices")
 
   # Actually export symbols - symbols may not be visible even though
-  # ENABLE_EXPORTS is set to true. See
-  # https://github.com/neovim/neovim/issues/25295
+  # ENABLE_EXPORTS is set. https://github.com/neovim/neovim/issues/25295
   target_link_options(nvim_bin PRIVATE "-Wl,-export_dynamic")
 elseif(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   target_link_libraries(main_lib INTERFACE pthread c++abi)

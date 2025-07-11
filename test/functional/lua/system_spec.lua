@@ -74,23 +74,12 @@ describe('vim.system', function()
       end)
 
       it('can set environment', function()
-        eq(
-          'TESTVAL',
-          system(
-            { n.testprg('printenv-test'), 'TEST' },
-            { env = { TEST = 'TESTVAL' }, text = true }
-          ).stdout
-        )
-      end)
+        local function test_env(opt)
+          eq('TESTVAL', system({ n.testprg('printenv-test'), 'TEST' }, opt).stdout)
+        end
 
-      it('can set environment with clear_env = true', function()
-        eq(
-          'TESTVAL',
-          system(
-            { n.testprg('printenv-test'), 'TEST' },
-            { clear_env = true, env = { TEST = 'TESTVAL' }, text = true }
-          ).stdout
-        )
+        test_env({ env = { TEST = 'TESTVAL' }, text = true })
+        test_env({ clear_env = true, env = { TEST = 'TESTVAL' }, text = true })
       end)
 
       it('can set environment with clear_env = true and env = nil', function()

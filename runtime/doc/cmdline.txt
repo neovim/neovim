@@ -568,7 +568,6 @@ that see the '"' as part of their argument:
     :menu (and the like)
     :mkspell
     :normal
-    :ownsyntax
     :popup
     :registers
     :return

@@ -1473,7 +1473,6 @@ tag		command		action ~
 |:options|	:opt[ions]	open the options-window
 |:ounmap|	:ou[nmap]	like ":unmap" but for Operator-pending mode
 |:ounmenu|	:ounme[nu]	remove menu for Operator-pending mode
-|:ownsyntax|	:ow[nsyntax]	set new local syntax highlight for this window
 |:packadd|	:pa[ckadd]	add a plugin from 'packpath'
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
 |:pbuffer|	:pb[uffer]	edit buffer in the preview window
