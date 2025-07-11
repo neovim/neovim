@@ -248,10 +248,15 @@ gx			Opens the current filepath or URL (decided by
 :sh[ell]		Removed. |vim-differences|
 
 						  *:terminal* *:te*
-:te[rminal][!] [{cmd}]	Run {cmd} in a non-interactive 'shell' in a new
-			|terminal-emulator| buffer. Without {cmd}, start an
+:te[rminal][!] [cmd]	Run [cmd] in a non-interactive 'shell' in a new
+			|terminal-emulator| buffer. Without [cmd], start an
 			interactive 'shell'.
 
+			By default the current window is used. To open in
+			a split window, use |:horizontal| or |:vertical|: >
+				:hor te
+				:vert te
+<
 			Type |i| to enter |Terminal-mode|, then keys are sent to
 			the job running in the terminal. Type <C-\><C-N> to
 			leave Terminal-mode. |CTRL-\_CTRL-N|. Type <C-\><C-O>
@@ -260,7 +265,7 @@ gx			Opens the current filepath or URL (decided by
 			Fails if changes have been made to the current buffer,
 			unless 'hidden' is set.
 
-			If {cmd} is omitted, and the 'shell' job exits with no
+			If [cmd] is omitted, and the 'shell' job exits with no
 			error, the buffer is closed automatically
 			|default-autocmds|.
 

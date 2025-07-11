@@ -63,10 +63,7 @@ DIAGNOSTICS
 
 EDITOR
 
-• |vim.secure.read()| now removes the choice "(a)llow" from the prompt reply for
-  files unlisted in the user's trust database, and thus requires the user to
-  choose (v)iew then run `:trust`. Previously the user would be able to press
-  the single key 'a' to execute the arbitrary execution immediately.
+• todo
 
 EVENTS
 
@@ -174,6 +171,8 @@ EDITOR
   commands.
 • 'wildchar' now enables completion in search contexts using |/|, |?|, |:g|, |:v|
    and |:vimgrep| commands.
+• For security, 'exrc' no longer shows an "(a)llow" choice. Instead you must
+  "(v)iew" then run `:trust`.
 
 EVENTS
 
@@ -277,7 +276,7 @@ TERMINAL
 
 TREESITTER
 
-• todo
+• |:EditQuery| command gained tab-completion, works with injected languages.
 
 TUI
 

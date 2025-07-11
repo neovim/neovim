@@ -466,12 +466,14 @@ error:
 /// Replaces terminal codes and |keycodes| ([<CR>], [<Esc>], ...) in a string with
 /// the internal representation.
 ///
+/// @note Lua can use |vim.keycode()| instead.
+/// @see replace_termcodes
+/// @see cpoptions
+///
 /// @param str        String to be converted.
 /// @param from_part  Legacy Vim parameter. Usually true.
 /// @param do_lt      Also translate [<lt>]. Ignored if `special` is false.
 /// @param special    Replace |keycodes|, e.g. [<CR>] becomes a "\r" char.
-/// @see replace_termcodes
-/// @see cpoptions
 String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Boolean special)
   FUNC_API_SINCE(1) FUNC_API_RET_ALLOC
 {

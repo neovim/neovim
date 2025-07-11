@@ -1104,7 +1104,7 @@ do
         err_msg = is_valid(name, value, validator, msg, false)
       end
     elseif type(name) == 'table' then -- Form 2
-      vim.deprecate('vim.validate', 'vim.validate(name, value, validator, optional_or_msg)', '1.0')
+      vim.deprecate('vim.validate{<table>}', 'vim.validate(<params>)', '1.0')
       err_msg = validate_spec(name)
     else
       error('invalid arguments')

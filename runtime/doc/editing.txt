@@ -1242,10 +1242,10 @@ MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 							*:confirm* *:conf*
 :conf[irm] {command}	Execute {command}, and use a dialog when an
 			operation has to be confirmed.  Can be used on the
-			|:edit|, |:q|, |:qa| and |:w| commands (the latter to
-			override a read-only setting), and any commands that
-			can fail because of unsaved changes, such as |:only|,
-			|:buffer|, |:bdelete|, etc.
+			|:edit|, |:restart|, |:q|, |:qa| and |:w| commands
+			(the latter to override a read-only setting), and any
+			commands that can fail because of unsaved changes,
+			such as |:only|, |:buffer|, |:bdelete|, etc.
 
 Examples: >
   :confirm w foo

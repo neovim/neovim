@@ -2239,7 +2239,8 @@ vim.bo.et = vim.bo.expandtab
 --- Unset 'exrc' to stop further searching of 'exrc' files in parent
 --- directories, similar to `editorconfig.root`.
 ---
---- To get its own location, Lua exrc files can use `debug.getinfo()`.
+--- To get its own location, a Lua exrc file can use `debug.getinfo()`.
+--- See `lua-script-location`.
 ---
 --- Compare 'exrc' to `editorconfig`:
 --- - 'exrc' can execute any code; editorconfig only specifies settings.
@@ -2251,7 +2252,7 @@ vim.bo.et = vim.bo.expandtab
 --- 3. Create ".nvim.lua" in your project root directory with this line:
 ---
 --- ```lua
----      vim.cmd[[set runtimepath+=.nvim]]
+---     vim.cmd[[set runtimepath+=.nvim]]
 --- ```
 ---
 --- This option cannot be set from a `modeline` or in the `sandbox`, for

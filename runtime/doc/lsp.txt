@@ -28,26 +28,19 @@ Follow these steps to get LSP features:
    upstream installation instructions. You can find language servers here:
    https://microsoft.github.io/language-server-protocol/implementors/servers/
 
-2. Use |vim.lsp.config()| to define a configuration for an LSP client
-   (see https://github.com/neovim/nvim-lspconfig for examples).
+2. Define a new config |lsp-new-config| (or install https://github.com/neovim/nvim-lspconfig).
    Example: >lua
      vim.lsp.config['luals'] = {
        -- Command and arguments to start the server.
        cmd = { 'lua-language-server' },
-
        -- Filetypes to automatically attach to.
        filetypes = { 'lua' },
-
-       -- Sets the "root directory" to the parent directory of the file in the
-       -- current buffer that contains either a ".luarc.json" or a
-       -- ".luarc.jsonc" file. Files that share a root directory will reuse
-       -- the connection to the same LSP server.
+       -- Sets the "workspace" to the directory where any of these files is found.
+       -- Files that share a root directory will reuse the LSP server connection.
        -- Nested lists indicate equal priority, see |vim.lsp.Config|.
        root_markers = { { '.luarc.json', '.luarc.jsonc' }, '.git' },
-
-       -- Specific settings to send to the server. The schema for this is
-       -- defined by the server. For example the schema for lua-language-server
-       -- can be found here https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json
+       -- Specific settings to send to the server. The schema is server-defined.
+       -- Example: https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json
        settings = {
          Lua = {
            runtime = {
@@ -57,7 +50,7 @@ Follow these steps to get LSP features:
        }
      }
 
-3. Use |vim.lsp.enable()| to enable a configuration.
+3. Use |vim.lsp.enable()| to enable the config.
    Example: >lua
      vim.lsp.enable('luals')
 <
@@ -130,20 +123,45 @@ CONFIG                                                  *lsp-config*
 You can configure LSP behavior statically via vim.lsp.config(), and
 dynamically via |lsp-attach| or |Client:on_attach()|.
 
-Use |vim.lsp.config()| to define, and selectively enable, LSP configurations.
-This is basically a wrapper around |vim.lsp.start()| which allows you to share
-and merge configs (which may be provided by Nvim or third-party plugins).
+Use |vim.lsp.config()| to define or modify LSP configurations, and
+|vim.lsp.enable()| to auto-activate them. This is basically a wrapper around
+|vim.lsp.start()| which allows you to share and merge configs (provided by
+Nvim, plugins, and your local config).
 
-When an LSP client starts, it resolves its configuration by merging from the
-following (in increasing priority):
+                                                        *lsp-new-config*
+To create a new config you can either use `vim.lsp.config()` or create
+a `lsp/<config-name>.lua` file.
+
+EXAMPLE: DEFINE A CONFIG AS CODE ~
+
+1. Run `:lua vim.lsp.config('foo', {cmd={'true'}})`
+2. Run `:lua vim.lsp.enable('foo')`
+3. Run `:checkhealth vim.lsp`, check "Enabled Configurations". 😎
+
+EXAMPLE: DEFINE A CONFIG AS A FILE ~
+
+1. Create a file `lsp/foo.lua` somewhere on your 'runtimepath'. >
+   :exe 'edit' stdpath('config') .. '/lsp/foo.lua'
+2. Add this code to the file (or copy an example from
+   https://github.com/neovim/nvim-lspconfig): >
+   return {
+     cmd = { 'true' },
+   }
+3. Save the file (with `++p` to ensure its parent directory is created). >
+   :write ++p
+4. Enable the config. >
+   :lua vim.lsp.enable('foo')
+5. Run `:checkhealth vim.lsp`, check "Enabled Configurations". 🌈
+
+                                                        *lsp-config-merge*
+When an LSP client starts, it resolves its configuration by merging the
+following sources (merge semantics defined by |vim.tbl_deep_extend()|), in
+order of increasing priority:
 
 1. Configuration defined for the `'*'` name.
 2. Configuration from the result of merging all tables returned by
    `lsp/<name>.lua` files in 'runtimepath' for a server of name `name`.
 3. Configurations defined anywhere else.
-
-Note: The merge semantics of configurations follow the behaviour of
-|vim.tbl_deep_extend()|.
 
 Example: given the following configs... >lua
   -- Defined in init.lua
