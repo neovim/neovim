@@ -830,7 +830,7 @@ function vim.api.nvim_chan_send(chan, data) end
 --- Clears all autocommands selected by {opts}. To delete autocmds see `nvim_del_autocmd()`.
 ---
 --- @param opts vim.api.keyset.clear_autocmds Parameters
---- - event: (string|table)
+--- - event: (vim.api.keyset.events|vim.api.keyset.events[])
 ---      Examples:
 ---      - event: "pat1"
 ---      - event: { "pat1" }
@@ -939,7 +939,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 ---
 --- @see `:help autocommand`
 --- @see vim.api.nvim_del_autocmd
---- @param event any (string|array) Event(s) that will trigger the handler (`callback` or `command`).
+--- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) that will trigger the handler (`callback` or `command`).
 --- @param opts vim.api.keyset.create_autocmd Options dict:
 --- - group (string|integer) optional: autocommand group name or id to match against.
 --- - pattern (string|array) optional: pattern(s) to match literally `autocmd-pattern`.
@@ -951,7 +951,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- value (not `false` or `nil`) to delete the autocommand, and receives one argument, a
 --- table with these keys: [event-args]()
 ---     - id: (number) autocommand id
----     - event: (string) name of the triggered event `autocmd-events`
+---     - event: (vim.api.keyset.events) name of the triggered event `autocmd-events`
 ---     - group: (number|nil) autocommand group id, if any
 ---     - file: (string) [<afile>] (not expanded to a full path)
 ---     - match: (string) [<amatch>] (expanded to a full path)
@@ -1176,7 +1176,7 @@ function vim.api.nvim_exec2(src, opts) end
 --- Execute all autocommands for {event} that match the corresponding
 ---  {opts} `autocmd-execute`.
 --- @see `:help :doautocmd`
---- @param event any (String|Array) The event or events to execute
+--- @param event vim.api.keyset.events|vim.api.keyset.events[] The event or events to execute
 --- @param opts vim.api.keyset.exec_autocmds Dict of autocommand options:
 --- - group (string|integer) optional: the autocommand group name or
 --- id to match against. `autocmd-groups`.
@@ -1249,7 +1249,8 @@ function vim.api.nvim_get_all_options_info() end
 --- @param opts vim.api.keyset.get_autocmds Dict with at least one of the following:
 --- - buffer: (integer) Buffer number or list of buffer numbers for buffer local autocommands
 --- `autocmd-buflocal`. Cannot be used with {pattern}
---- - event: (string|table) event or events to match against `autocmd-events`.
+--- - event: (vim.api.keyset.events|vim.api.keyset.events[])
+---   event or events to match against `autocmd-events`.
 --- - id: (integer) Autocommand ID to match.
 --- - group: (string|table) the autocommand group name or id to match against.
 --- - pattern: (string|table) pattern or patterns to match against `autocmd-pattern`.
@@ -1262,7 +1263,7 @@ function vim.api.nvim_get_all_options_info() end
 --- - callback: (function|string|nil): Lua function or name of a Vim script function
 ---   which is executed when this autocommand is triggered.
 --- - desc: (string) the autocommand description.
---- - event: (string) the autocommand event.
+--- - event: (vim.api.keyset.events) the autocommand event.
 --- - id: (integer) the autocommand id (only when defined with the API).
 --- - group: (integer) the autocommand group id.
 --- - group_name: (string) the autocommand group name.
