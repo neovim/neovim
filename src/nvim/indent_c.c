@@ -9,6 +9,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
+#include "nvim/eval/typval.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
@@ -3930,5 +3931,19 @@ void do_c_expr_indent(void)
     fixthisline(get_expr_indent);
   } else {
     fixthisline(get_c_indent);
+  }
+}
+
+/// "cindent(lnum)" function
+void f_cindent(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  pos_T pos = curwin->w_cursor;
+  linenr_T lnum = tv_get_lnum(argvars);
+  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
+    curwin->w_cursor.lnum = lnum;
+    rettv->vval.v_number = get_c_indent();
+    curwin->w_cursor = pos;
+  } else {
+    rettv->vval.v_number = -1;
   }
 }
