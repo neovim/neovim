@@ -1054,11 +1054,12 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
     return 0;
   }
 
-  bool progress_message_found = false;
+  bool is_kind_progress = msg_ext_kind != NULL && strcmp(msg_ext_kind, MSG_KIND_PROGRESS) == 0;
+  bool old_message_found = false;
 
   MessageHistoryEntry *entry = msg_find_by_id(msg_id);
   if (entry) {
-    progress_message_found = true;
+    old_message_found = true;
     // detach the node if found
     if (entry->prev) {
       entry->prev->next = entry->next;
@@ -1083,20 +1084,22 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
   entry->kind = msg_ext_kind;
   entry->prev = msg_hist_last;
   entry->next = NULL;
-  if (status != NULL) {
-    if (progress_message_found && entry->status != NULL) {
-      xfree(entry->status);
+  if (is_kind_progress) {
+    if (status != NULL) {
+      if (old_message_found && entry->status != NULL) {
+        xfree(entry->status);
+      }
+      entry->status = xstrdup(status);
     }
-    entry->status = xstrdup(status);
-  }
-  if (title != NULL) {
-    if (progress_message_found && entry->title != NULL) {
-      xfree(entry->title);
+    if (title != NULL) {
+      if (old_message_found && entry->title != NULL) {
+        xfree(entry->title);
+      }
+      entry->title = xstrdup(title);
     }
-    entry->title = xstrdup(title);
-  }
-  if (entry->percent == -1 || percent > 0) {
-    entry->percent = percent;
+    if (entry->percent == -1 || percent > 0) {
+      entry->percent = percent;
+    }
   }
   // NOTE: this does not encode if the message was actually appended to the
   // previous entry in the message history. However append is currently only
@@ -1114,7 +1117,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
     msg_hist_temp = entry;
   }
 
-  msg_hist_len += !temp && !progress_message_found;
+  msg_hist_len += !temp && !old_message_found;
   msg_hist_last = entry;
   msg_ext_history = true;
   msg_hist_clear(msg_hist_max);
