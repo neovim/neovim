@@ -199,7 +199,11 @@ local function msg_to_full(src)
         hlopts.end_col, hlopts.hl_group = mark[4].end_col, mark[4].hl_group
         api.nvim_buf_set_extmark(ext.bufs[tar], ext.ns, srow + mark[2], mark[3], hlopts)
       end
-      api.nvim_command('norm! G')
+      if tar == 'cmd' and ext.cmd.highlighter then
+        ext.cmd.highlighter.active[ext.bufs.cmd] = nil
+      elseif tar == 'pager' then
+        api.nvim_command('norm! G')
+      end
       M.virt.msg[M.virt.idx.spill][1] = nil
     else
       for _, id in pairs(M.virt.ids) do
