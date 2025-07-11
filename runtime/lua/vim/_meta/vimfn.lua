@@ -7698,11 +7698,12 @@ function vim.fn.search(pattern, flags, stopline, timeout, skip) end
 ---
 --- To get the last search count when |n| or |N| was pressed, call
 --- this function with `recompute: 0` . This sometimes returns
---- wrong information because |n| and |N|'s maximum count is 999.
---- If it exceeded 999 the result must be max count + 1 (1000). If
---- you want to get correct information, specify `recompute: 1`: >vim
+--- wrong information because of 'maxsearchcount'.
+--- If the count exceeded 'maxsearchcount', the result must be
+--- 'maxsearchcount' + 1. If you want to get correct information,
+--- specify `recompute: 1`: >vim
 ---
----   " result == maxcount + 1 (1000) when many matches
+---   " result == 'maxsearchcount' + 1 when many matches
 ---   let result = searchcount(#{recompute: 0})
 ---
 ---   " Below returns correct result (recompute defaults
@@ -7789,7 +7790,7 @@ function vim.fn.search(pattern, flags, stopline, timeout, skip) end
 ---         result.  if search exceeded
 ---         total count, "total" value
 ---         becomes `maxcount + 1`
----         (default: 0)
+---         (default: 'maxsearchcount')
 ---   pos    |List|    `[lnum, col, off]` value
 ---         when recomputing the result.
 ---         this changes "current" result
