@@ -724,8 +724,8 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
 
   if (wp->w_floating) {
     if (width != wp->w_width || height != wp->w_height) {
-      wp->w_config.width = width;
-      wp->w_config.height = height;
+      wp->w_config.width = MAX(width, 1);
+      wp->w_config.height = MAX(height, 1);
       win_config_float(wp, wp->w_config);
     }
   } else {

@@ -923,6 +923,13 @@ describe('float window', function()
     assert_alive()
   end)
 
+  it("no error for zero height with 'winminheight'", function()
+    local win = api.nvim_open_win(0, false, { relative = 'editor', row = 0, col = 0, height = 1, width = 1 })
+    api.nvim_set_option_value('winminheight', 0, {})
+    api.nvim_win_set_height(win, 0)
+    api.nvim_win_set_config(win, api.nvim_win_get_config(win))
+  end)
+
   local function with_ext_multigrid(multigrid)
     local screen, attrs
     before_each(function()

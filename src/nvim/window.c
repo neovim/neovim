@@ -5854,7 +5854,7 @@ void win_setheight_win(int height, win_T *win)
   height = MAX(height, (int)(win == curwin ? MAX(p_wmh, 1) : p_wmh) + win->w_winbar_height);
 
   if (win->w_floating) {
-    win->w_config.height = height;
+    win->w_config.height = MAX(height, 1);
     win_config_float(win, win->w_config);
     redraw_later(win, UPD_VALID);
   } else {
