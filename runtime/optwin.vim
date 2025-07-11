@@ -261,7 +261,7 @@ call <SID>AddOption("ignorecase", gettext("ignore case when using a search patte
 call <SID>BinOptionG("ic", &ic)
 call <SID>AddOption("smartcase", gettext("override 'ignorecase' when pattern has upper case characters"))
 call <SID>BinOptionG("scs", &scs)
-call <SID>AddOption("maxsearchcount", gettext("Maximum number for the search count feature"))
+call <SID>AddOption("maxsearchcount", gettext("maximum number for the search count feature"))
 call <SID>OptionG("msc", &msc)
 call <SID>AddOption("casemap", gettext("what method to use for changing case of letters"))
 call <SID>OptionG("cmp", &cmp)
