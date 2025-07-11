@@ -517,8 +517,8 @@ describe("'scrollback' option", function()
   it('error if set to invalid value', function()
     eq('Vim(set):E474: Invalid argument: scrollback=-2', pcall_err(command, 'set scrollback=-2'))
     eq(
-      'Vim(set):E474: Invalid argument: scrollback=100001',
-      pcall_err(command, 'set scrollback=100001')
+      'Vim(set):E474: Invalid argument: scrollback=1000001',
+      pcall_err(command, 'set scrollback=1000001')
     )
   end)
 
@@ -538,14 +538,14 @@ describe("'scrollback' option", function()
     -- _Local_ scrollback=-1 in :terminal forces the _maximum_.
     command('setlocal scrollback=-1')
     retry(nil, nil, function() -- Fixup happens on refresh, not immediately.
-      eq(100000, api.nvim_get_option_value('scrollback', {}))
+      eq(1000000, api.nvim_get_option_value('scrollback', {}))
     end)
 
     -- _Local_ scrollback=-1 during TermOpen forces the maximum. #9605
     command('setglobal scrollback=-1')
     command('autocmd TermOpen * setlocal scrollback=-1')
     command('terminal')
-    eq(100000, api.nvim_get_option_value('scrollback', {}))
+    eq(1000000, api.nvim_get_option_value('scrollback', {}))
   end)
 
   it(':setlocal in a normal buffer', function()

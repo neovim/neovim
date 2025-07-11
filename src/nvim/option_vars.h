@@ -592,7 +592,7 @@ EXTERN int p_cdh;               ///< 'cdhome'
 
 #define ERR_BUFLEN 80
 
-#define SB_MAX 100000  // Maximum 'scrollback' value.
+#define SB_MAX 1000000  // Maximum 'scrollback' value.
 
 #define MAX_NUMBERWIDTH 20      // used for 'numberwidth'
 
