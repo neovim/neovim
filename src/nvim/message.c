@@ -1074,6 +1074,9 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
     // Allocate an entry and add the message at the end of the history.
     entry = xmalloc(sizeof(MessageHistoryEntry));
     entry->message_id = msg_id_next++;
+    entry->title = NULL;
+    entry->status = NULL;
+    entry->percent = -1;
   }
   entry->msg = msg;
   entry->temp = temp;
@@ -1092,7 +1095,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
     }
     entry->title = xstrdup(title);
   }
-  if (entry->percent == 0 || percent > 0) {
+  if (entry->percent == -1 || percent > 0) {
     entry->percent = percent;
   }
   // NOTE: this does not encode if the message was actually appended to the
