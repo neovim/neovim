@@ -670,13 +670,11 @@ the main help file is normally "$VIMRUNTIME/doc/help.txt".
 Nvim will try to get the value for $VIMRUNTIME in this order:
 
 1. Environment variable $VIMRUNTIME, if it is set.
-2. Directory path "$VIM/vim{version}", if it exists, where {version} is the
-   Vim version number without '-' or '.'.  For example: "$VIM/vim82".
-3. Directory path "$VIM/runtime", if it exists.
-4. Value of $VIM environment variable.  This is for backwards compatibility
+2. Directory path "$VIM/runtime", if it exists.
+3. Value of $VIM environment variable.  This is for backwards compatibility
    with older Vim versions.
-5. If "../share/nvim/runtime" exists relative to |v:progpath|, it is used.
-6. Path derived from the 'helpfile' option (if it doesn't contain '$') with
+4. If "../share/nvim/runtime" exists relative to |v:progpath|, it is used.
+5. Path derived from the 'helpfile' option (if it doesn't contain '$') with
    "doc/help.txt" removed from the end.
 
 After doing this once, Nvim sets the $VIMRUNTIME environment variable.
