@@ -65,10 +65,14 @@ function M.enable(opts)
   if ext.cfg.enable == false then
     -- Detach and cleanup windows, buffers and autocommands.
     for _, win in pairs(ext.wins) do
-      api.nvim_win_close(win, true)
+      if api.nvim_win_is_valid(win) then
+        api.nvim_win_close(win, true)
+      end
     end
     for _, buf in pairs(ext.bufs) do
-      api.nvim_buf_delete(buf, {})
+      if api.nvim_buf_is_valid(buf) then
+        api.nvim_buf_delete(buf, {})
+      end
     end
     api.nvim_clear_autocmds({ group = ext.augroup })
     vim.ui_detach(ext.ns)
