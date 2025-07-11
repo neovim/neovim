@@ -25,6 +25,6 @@ typedef struct msg_hist {
   bool append;            ///< Message should be appended to previous entry, as opposed
                           ///< to on a new line (|ui-messages|->msg_show->append).
   int percent;            ///< Progress percentage
-  char *status;           ///< Status for progress message
   char *title;            ///< Title for progress message
+  char *status;           ///< Status for progress message
 } MessageHistoryEntry;
