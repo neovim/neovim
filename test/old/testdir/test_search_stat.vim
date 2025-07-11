@@ -16,27 +16,27 @@ func Test_search_stat()
   " but setting @/ should also work (even 'n' nor 'N' was executed)
   " recompute the count when the last position is different.
   call assert_equal(
-    \ #{current: 1, exact_match: 1, total: 40, incomplete: 0, maxcount: 999},
+    \ #{current: 1, exact_match: 1, total: 40, incomplete: 0, maxcount: 99},
     \ searchcount(#{pattern: 'foo'}))
   call assert_equal(
-    \ #{current: 0, exact_match: 0, total: 10, incomplete: 0, maxcount: 999},
+    \ #{current: 0, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
     \ searchcount(#{pattern: 'fooooobar'}))
   call assert_equal(
-    \ #{current: 0, exact_match: 0, total: 10, incomplete: 0, maxcount: 999},
+    \ #{current: 0, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
     \ searchcount(#{pattern: 'fooooobar', pos: [2, 1, 0]}))
   call assert_equal(
-    \ #{current: 1, exact_match: 1, total: 10, incomplete: 0, maxcount: 999},
+    \ #{current: 1, exact_match: 1, total: 10, incomplete: 0, maxcount: 99},
     \ searchcount(#{pattern: 'fooooobar', pos: [3, 1, 0]}))
   " on last char of match
   call assert_equal(
-    \ #{current: 1, exact_match: 1, total: 10, incomplete: 0, maxcount: 999},
+    \ #{current: 1, exact_match: 1, total: 10, incomplete: 0, maxcount: 99},
     \ searchcount(#{pattern: 'fooooobar', pos: [3, 9, 0]}))
   " on char after match
   call assert_equal(
-    \ #{current: 1, exact_match: 0, total: 10, incomplete: 0, maxcount: 999},
+    \ #{current: 1, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
     \ searchcount(#{pattern: 'fooooobar', pos: [3, 10, 0]}))
   call assert_equal(
-    \ #{current: 1, exact_match: 0, total: 10, incomplete: 0, maxcount: 999},
+    \ #{current: 1, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
     \ searchcount(#{pattern: 'fooooobar', pos: [4, 1, 0]}))
   call assert_equal(
     \ #{current: 1, exact_match: 0, total: 2, incomplete: 2, maxcount: 1},
@@ -53,7 +53,7 @@ func Test_search_stat()
   let pat = escape(@/, '()*?'). '\s\+'
   call assert_match(pat .. stat, g:a)
   call assert_equal(
-    \ #{current: 2, exact_match: 1, total: 50, incomplete: 0, maxcount: 999},
+    \ #{current: 2, exact_match: 1, total: 50, incomplete: 0, maxcount: 99},
     \ searchcount(#{recompute: 0}))
   " didn't get added to message history
   call assert_equal(messages_before, execute('messages'))
@@ -64,7 +64,7 @@ func Test_search_stat()
   let stat = '\[50/50\]'
   call assert_match(pat .. stat, g:a)
   call assert_equal(
-    \ #{current: 50, exact_match: 1, total: 50, incomplete: 0, maxcount: 999},
+    \ #{current: 50, exact_match: 1, total: 50, incomplete: 0, maxcount: 99},
     \ searchcount(#{recompute: 0}))
 
   " No search stat
@@ -75,64 +75,52 @@ func Test_search_stat()
   call assert_notmatch(pat .. stat, g:a)
   " n does not update search stat
   call assert_equal(
-    \ #{current: 50, exact_match: 1, total: 50, incomplete: 0, maxcount: 999},
+    \ #{current: 50, exact_match: 1, total: 50, incomplete: 0, maxcount: 99},
     \ searchcount(#{recompute: 0}))
   call assert_equal(
-    \ #{current: 2, exact_match: 1, total: 50, incomplete: 0, maxcount: 999},
+    \ #{current: 2, exact_match: 1, total: 50, incomplete: 0, maxcount: 99},
     \ searchcount(#{recompute: v:true}))
   set shortmess-=S
-
-  " Nvim: max search count is 999; append more lines to surpass it.
-  " Create a new undo block so we can revert the change later.
-  " Also allow "[?/??]" in case of timeouts from the increased max, but set a
-  " larger timeout for the recomputing searchcount()s.
-  let &l:undolevels = &l:undolevels
-  call append(0, repeat(['foobar', 'foo', 'fooooobar', 'foba', 'foobar'], 99))
 
   " Many matches
   call cursor(line('$')-2, 1)
   let @/ = '.'
   let pat = escape(@/, '()*?'). '\s\+'
   let g:a = execute(':unsilent :norm! n')
-  let stat = '\[\%(>999/>999\|?/??\)\]'
+  let stat = '\[>99/>99\]'
   call assert_match(pat .. stat, g:a)
   call assert_equal(
-    \ #{current: 1000, exact_match: 0, total: 1000, incomplete: 2, maxcount: 999},
-    "\ Nvim: must recompute if the previous search timed out.
-    \ searchcount(#{recompute: (g:a =~# pat .. '\[?/??\]'), timeout: 500}))
+    \ #{current: 100, exact_match: 0, total: 100, incomplete: 2, maxcount: 99},
+    \ searchcount(#{recompute: 0}))
   call assert_equal(
-    \ #{current: 3044, exact_match: 1, total: 3052, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 500}))
+    \ #{current: 272, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 200}))
   call assert_equal(
-    \ #{current: 1, exact_match: 1, total: 3052, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 500}))
+    \ #{current: 1, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 200}))
   call cursor(line('$'), 1)
   let g:a = execute(':unsilent :norm! n')
-  let stat = 'W \[\%(1/>999\|?/??\)\]'
+  let stat = 'W \[1/>99\]'
   call assert_match(pat .. stat, g:a)
   call assert_equal(
-    \ #{current: 1, exact_match: 1, total: 1000, incomplete: 2, maxcount: 999},
-    "\ Nvim: must recompute if the previous search timed out.
-    \ searchcount(#{recompute: (g:a =~# pat .. '\[?/??\]'), timeout: 500}))
+    \ #{current: 1, exact_match: 1, total: 100, incomplete: 2, maxcount: 99},
+    \ searchcount(#{recompute: 0}))
   call assert_equal(
-    \ #{current: 1, exact_match: 1, total: 3052, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 500}))
+    \ #{current: 1, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 200}))
   call assert_equal(
-    \ #{current: 3043, exact_match: 1, total: 3052, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 500}))
+    \ #{current: 271, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 200}))
 
   " Many matches
   call cursor(1, 1)
   let g:a = execute(':unsilent :norm! n')
-  let stat = '\[\%(2/>999\|?/??\)\]'
+  let stat = '\[2/>99\]'
   call assert_match(pat .. stat, g:a)
   call cursor(1, 1)
   let g:a = execute(':unsilent :norm! N')
-  let stat = 'W \[\%(>999/>999\|?/??\)\]'
+  let stat = 'W \[>99/>99\]'
   call assert_match(pat .. stat, g:a)
-
-  " Nvim: undo the extra lines.
-  undo
 
   " right-left
   if exists("+rightleft")
@@ -488,6 +476,168 @@ func Test_search_stat_smartcase_ignorecase()
   call WaitForAssert({-> assert_match('\[1\/1\]', term_getline(buf, 10))}, 1000)
 
   call StopVimInTerminal(buf)
+endfunc
+
+func Test_search_stat_option_values()
+  call assert_fails(':set maxsearchcount=0', 'E487:')
+  call assert_fails(':set maxsearchcount=10000', 'E474:')
+  set maxsearchcount=9999
+  call assert_equal(9999, &msc)
+  set maxsearchcount=1
+  call assert_equal(1, &msc)
+  set maxsearchcount=999
+  call assert_equal(999, &msc)
+  set maxsearchcount&vim
+endfunc
+
+func Test_search_stat_option()
+  " Asan causes wrong results, because the search times out
+  CheckNotAsan
+  enew
+  set shortmess-=S
+  set maxsearchcount=999
+  " Append 1000 lines with text to search for, "foobar" appears 20 times
+  call append(0, repeat(['foobar', 'foo', 'fooooobar', 'foba', 'foobar'], 1000))
+
+  call cursor(1, 1)
+  call assert_equal(
+    \ #{exact_match: 1, current: 1, incomplete: 2, maxcount: 999, total: 1000},
+    \ searchcount(#{pattern: 'fooooobar', pos: [3, 1, 0]}))
+  " on last char of match
+  call assert_equal(
+    \ #{exact_match: 1, current: 1, incomplete: 2, maxcount: 999, total: 1000},
+    \ searchcount(#{pattern: 'fooooobar', pos: [3, 9, 0]}))
+  " on char after match
+  call assert_equal(
+    \ #{exact_match: 0, current: 1, incomplete: 2, maxcount: 999, total: 1000},
+    \ searchcount(#{pattern: 'fooooobar', pos: [3, 10, 0]}))
+
+  " match at second line
+  let messages_before = execute('messages')
+  let @/ = 'fo*\(bar\?\)\?'
+  let g:a = execute(':unsilent :norm! n')
+  let stat = '\[2/>999\]'
+  let pat = escape(@/, '()*?'). '\s\+'
+  call assert_match(pat .. stat, g:a)
+  call assert_equal(
+    \ #{exact_match: 1, current: 2, incomplete: 2, maxcount: 999, total: 1000},
+    \ searchcount(#{recompute: 0}))
+  " didn't get added to message history
+  call assert_equal(messages_before, execute('messages'))
+
+  " Many matches
+  call cursor(line('$')-2, 1)
+  let @/ = '.'
+  let pat = escape(@/, '()*?'). '\s\+'
+  let g:a = execute(':unsilent :norm! n')
+  let stat = '\[>999/>999\]'
+  call assert_match(pat .. stat, g:a)
+  call assert_equal(
+    \ #{exact_match: 0, current: 1000, incomplete: 2, maxcount: 999, total: 1000},
+    \ searchcount(#{recompute: 0}))
+  call assert_equal(
+    \ #{exact_match: 1, current: 27992, incomplete: 0, maxcount:0, total: 28000},
+    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 200}))
+  call assert_equal(
+    \ #{exact_match: 1, current: 1, incomplete: 0, maxcount: 0, total: 28000},
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 200}))
+  call cursor(line('$'), 1)
+  let g:a = execute(':unsilent :norm! n')
+  let stat = 'W \[1/>999\]'
+  call assert_match(pat .. stat, g:a)
+  call assert_equal(
+    \ #{current: 1, exact_match: 1, total: 1000, incomplete: 2, maxcount: 999},
+    \ searchcount(#{recompute: 0}))
+  call assert_equal(
+    \ #{current: 1, exact_match: 1, total: 28000, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 200}))
+  call assert_equal(
+    \ #{current: 27991, exact_match: 1, total: 28000, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 200}))
+
+  " Many matches
+  call cursor(1, 1)
+  let g:a = execute(':unsilent :norm! n')
+  let stat = '\[2/>999\]'
+  call assert_match(pat .. stat, g:a)
+  call cursor(1, 1)
+  let g:a = execute(':unsilent :norm! N')
+  let stat = '\[>999/>999\]'
+  call assert_match(pat .. stat, g:a)
+  set maxsearchcount=500
+  call cursor(1, 1)
+  let g:a = execute(':unsilent :norm! n')
+  let stat = '\[2/>500\]'
+  call assert_match(pat .. stat, g:a)
+  call cursor(1, 1)
+  let g:a = execute(':unsilent :norm! N')
+  let stat = '\[>500/>500\]'
+  call assert_match(pat .. stat, g:a)
+  set maxsearchcount=20
+  call cursor(1, 1)
+  let g:a = execute(':unsilent :norm! n')
+  let stat = '\[2/>20\]'
+  call assert_match(pat .. stat, g:a)
+  call cursor(1, 1)
+  let g:a = execute(':unsilent :norm! N')
+  let stat = '\[>20/>20\]'
+  call assert_match(pat .. stat, g:a)
+  set maxsearchcount=999
+
+  " right-left
+  if exists("+rightleft")
+    set rl
+    call cursor(1,1)
+    let @/ = 'foobar'
+    let pat = 'raboof/\s\+'
+    let g:a = execute(':unsilent :norm! n')
+    let stat = '\[>999/2\]'
+    call assert_match(pat .. stat, g:a)
+
+    " right-left bottom
+    call cursor('$',1)
+    let pat = 'raboof?\s\+'
+    let g:a = execute(':unsilent :norm! N')
+    let stat = '\[>999/>999\]'
+    call assert_match(pat .. stat, g:a)
+
+    " right-left back at top
+    call cursor('$',1)
+    let pat = 'raboof/\s\+'
+    let g:a = execute(':unsilent :norm! n')
+    let stat = 'W \[>999/1\]'
+    call assert_match(pat .. stat, g:a)
+    set norl
+  endif
+
+  " normal, back at bottom
+  call cursor(1,1)
+  let @/ = 'foobar'
+  let pat = '?foobar\s\+'
+  let g:a = execute(':unsilent :norm! N')
+  let stat = 'W \[>999/>999\]'
+  call assert_match(pat .. stat, g:a)
+  call assert_match('W \[>999/>999\]', Screenline(&lines))
+
+  " normal, no match
+  call cursor(1,1)
+  let @/ = 'zzzzzz'
+  let g:a = ''
+  try
+    let g:a = execute(':unsilent :norm! n')
+  catch /^Vim\%((\a\+)\)\=:E486/
+    let stat = ''
+    " error message is not redir'ed to g:a, it is empty
+    call assert_true(empty(g:a))
+  catch
+    call assert_false(1)
+  endtry
+
+  " Clean up
+  set shortmess+=S
+  set maxsearchcount&vim
+  " close the window
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

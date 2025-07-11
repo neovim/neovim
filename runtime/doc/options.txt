@@ -4286,6 +4286,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Vim may run out of memory before hitting the 'maxmempattern' limit, in
 	which case you get an "Out of memory" error instead.
 
+					*'maxsearchcount'* *'msc'*
+'maxsearchcount' 'msc'	number	(default 999)
+			global
+	Maximum number of matches shown for the search count status |shm-S|
+	When the number of matches exceeds this value, Vim shows ">" instead
+	of the exact count to keep searching fast.
+	Note: larger values may impact performance.
+	The value must be between 1 and 9999.
+
 						*'menuitems'* *'mis'*
 'menuitems' 'mis'	number	(default 25)
 			global
@@ -5681,7 +5690,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		is shown), the "search hit BOTTOM, continuing at TOP" and
 		"search hit TOP, continuing at BOTTOM" messages are only
 		indicated by a "W" (Mnemonic: Wrapped) letter before the
-		search count statistics.
+		search count statistics.  The maximum limit can be set with
+		the 'maxsearchcount' option.
 
 	This gives you the opportunity to avoid that a change between buffers
 	requires you to hit <Enter>, but still gives as useful a message as

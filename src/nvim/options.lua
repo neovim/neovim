@@ -5656,6 +5656,22 @@ local options = {
       varname = 'p_mmp',
     },
     {
+      abbreviation = 'msc',
+      defaults = 999,
+      desc = [=[
+        Maximum number of matches shown for the search count status |shm-S|
+        When the number of matches exceeds this value, Vim shows ">" instead
+        of the exact count to keep searching fast.
+        Note: larger values may impact performance.
+        The value must be between 1 and 9999.
+      ]=],
+      full_name = 'maxsearchcount',
+      scope = { 'global' },
+      short_desc = N_('maximum number for the search count feature'),
+      type = 'number',
+      varname = 'p_msc',
+    },
+    {
       abbreviation = 'mis',
       defaults = 25,
       desc = [=[
@@ -7884,7 +7900,8 @@ local options = {
         	is shown), the "search hit BOTTOM, continuing at TOP" and
         	"search hit TOP, continuing at BOTTOM" messages are only
         	indicated by a "W" (Mnemonic: Wrapped) letter before the
-        	search count statistics.
+        	search count statistics.  The maximum limit can be set with
+        	the 'maxsearchcount' option.
 
         This gives you the opportunity to avoid that a change between buffers
         requires you to hit <Enter>, but still gives as useful a message as

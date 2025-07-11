@@ -2840,6 +2840,9 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
     return e_invarg;
   }
 
+  // if you increase this, also increase SEARCH_STAT_BUF_LEN in search.c
+  enum { MAX_SEARCH_COUNT = 9999, };
+
   switch (opt_idx) {
   case kOptHelpheight:
   case kOptTitlelen:
@@ -2970,6 +2973,13 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
       return e_cannot_have_negative_or_zero_number_of_quickfix;
     } else if (value > 100) {
       return e_cannot_have_more_than_hundred_quickfix;
+    }
+    break;
+  case kOptMaxsearchcount:
+    if (value <= 0) {
+      return e_positive;
+    } else if (value > MAX_SEARCH_COUNT) {
+      return e_invarg;
     }
     break;
   default:

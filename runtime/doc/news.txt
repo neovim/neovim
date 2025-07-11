@@ -233,6 +233,7 @@ OPTIONS
 • 'completeopt' flag "nearset" sorts completion results by distance to cursor.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'grepformat' is now a |global-local| option.
+• 'maxsearchcount' sets maximum value for |searchcount()| and defaults to 999.
 • 'pummaxwidth' sets maximum width for the completion popup menu.
 • 'winborder' "bold" style, custom border style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
@@ -296,7 +297,6 @@ These existing features changed their behavior.
 • 'spellfile' location defaults to `stdpath("data").."/site/spell/"` instead of
   the first writable directory in 'runtimepath'.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
-• |searchcount()|'s maximal value is raised from 99 to 999.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

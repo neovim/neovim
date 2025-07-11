@@ -10,24 +10,25 @@ if exists('s:did_load')
   set formatoptions=tcq
   set fsync
   set include=^\\s*#\\s*include
-  set laststatus=1
-  set listchars=eol:$
   set joinspaces
   set jumpoptions=
+  set laststatus=1
+  set listchars=eol:$
+  set maxsearchcount=99
   set mousemodel=extend
   set nohidden nosmarttab noautoindent noautoread noruler noshowcmd
   set nohlsearch noincsearch
   set nrformats=bin,octal,hex
-  set shortmess=filnxtToOS
+  set sessionoptions+=options
   set shelltemp
+  set shortmess=filnxtToOS
   set sidescroll=0
+  set startofline
+  set switchbuf=
   set tags=./tags,tags
   set undodir^=.
-  set wildoptions=
-  set startofline
-  set sessionoptions+=options
   set viewoptions+=options
-  set switchbuf=
+  set wildoptions=
   if has('win32')
     set isfname+=:
   endif

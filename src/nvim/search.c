@@ -1427,7 +1427,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
                            || (!(fdo_flags & kOptFdoFlagSearch)
                                && hasFolding(curwin, curwin->w_cursor.lnum, NULL,
                                              NULL))),
-                          SEARCH_STAT_DEF_MAX_COUNT,
+                          (int)p_msc,
                           SEARCH_STAT_DEF_TIMEOUT);
     }
 
@@ -2704,7 +2704,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
   static int cnt = 0;
   static bool exact_match = false;
   static int incomplete = 0;
-  static int last_maxcount = SEARCH_STAT_DEF_MAX_COUNT;
+  static int last_maxcount = 0;
   static int chgtick = 0;
   static char *lastpat = NULL;
   static size_t lastpatlen = 0;
@@ -2717,7 +2717,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
     stat->cnt = cnt;
     stat->exact_match = exact_match;
     stat->incomplete = incomplete;
-    stat->last_maxcount = last_maxcount;
+    stat->last_maxcount = (int)p_msc;
     return;
   }
   last_maxcount = maxcount;
@@ -2801,7 +2801,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   pos_T pos = curwin->w_cursor;
   char *pattern = NULL;
-  int maxcount = SEARCH_STAT_DEF_MAX_COUNT;
+  int maxcount = (int)p_msc;
   int timeout = SEARCH_STAT_DEF_TIMEOUT;
   bool recompute = true;
   searchstat_T stat;
