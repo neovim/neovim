@@ -217,7 +217,7 @@ describe('thread', function()
     it('diff', function()
       exec_lua [[
         local entry = function(async)
-          async:send(vim.text.diff('Hello\n', 'Helli\n'))
+          async:send(vim._diff('Hello\n', 'Helli\n'))
         end
         local on_async = function(ret)
           vim.rpcnotify(1, 'result', ret)
@@ -372,7 +372,7 @@ describe('threadpool', function()
     it('work', function()
       exec_lua [[
         local work_fn = function()
-          return vim.text.diff('Hello\n', 'Helli\n')
+          return vim._diff('Hello\n', 'Helli\n')
         end
         local after_work_fn = function(ret)
           vim.rpcnotify(1, 'result', ret)
