@@ -42,7 +42,7 @@ if(APPLE)
 endif()
 
 if(UNIX)
-  BuildLuaJit(INSTALL_COMMAND ${BUILDCMD_UNIX}
+  BuildLuajit(INSTALL_COMMAND ${BUILDCMD_UNIX}
     CC=${DEPS_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR}
     ${DEPLOYMENT_TARGET} install)
 
@@ -53,7 +53,7 @@ elseif(MINGW)
   else()
     set(LUAJIT_MAKE_PRG ${CMAKE_MAKE_PROGRAM})
   endif()
-  BuildLuaJit(BUILD_COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER}
+  BuildLuajit(BUILD_COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
                                 CFLAGS+=-DLUA_USE_APICHECK
                                 CFLAGS+=-funwind-tables
@@ -75,7 +75,7 @@ elseif(MINGW)
 	    )
 elseif(MSVC)
 
-  BuildLuaJit(
+  BuildLuajit(
     BUILD_COMMAND ${CMAKE_COMMAND} -E chdir ${DEPS_BUILD_DIR}/src/luajit/src ${DEPS_BUILD_DIR}/src/luajit/src/msvcbuild.bat
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
       COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_BIN_DIR}
