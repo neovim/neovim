@@ -87,9 +87,9 @@ local function check_config()
     health.error(
       'Locale does not support UTF-8. Unicode characters may not display correctly.'
         .. ('\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s'):format(
-          vim.env.LANG,
-          vim.env.LC_ALL,
-          vim.env.LC_CTYPE
+          vim.env.LANG or '',
+          vim.env.LC_ALL or '',
+          vim.env.LC_CTYPE or ''
         ),
       {
         'If using tmux, try the -u option.',
