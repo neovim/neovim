@@ -514,6 +514,7 @@ function protocol.make_client_capabilities()
         signatureInformation = {
           activeParameterSupport = true,
           documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
+          noActiveParameterSupport = false,
           parameterInformation = {
             labelOffsetSupport = true,
           },

@@ -320,10 +320,24 @@ local function process_signature_help_results(results)
       local result = r.result --- @type lsp.SignatureHelp
       if result and result.signatures and result.signatures[1] then
         for i, sig in ipairs(result.signatures) do
-          sig.activeParameter = sig.activeParameter or result.activeParameter
           local idx = #signatures + 1
           if (result.activeSignature or 0) + 1 == i then
             active_signature = idx
+            -- TODO(skewb1k): since 3.18 `activeParameter` can be `null`
+            -- Check for it explicitly and set `sig.activeParameter = nil`
+            local active_param = result.activeParameter or sig.activeParameter
+
+            if not active_param then
+              sig.activeParameter = 0
+            elseif sig.activeParameter >= 0 and sig.activeParameter < #sig.parameters then
+              sig.activeParameter = active_param
+            else
+              if sig.activeParameter then
+                sig.activeParameter = nil
+              else
+                sig.activeParameter = 0
+              end
+            end
           end
           signatures[idx] = { client, sig }
         end
@@ -377,6 +391,7 @@ function M.signature_help(config)
     local total = #signatures
     local can_cycle = total > 1 and config.focusable ~= false
     local idx = active_signature - 1
+    local nresults = vim.tbl_count(results)
 
     --- @param update_win? integer
     local function show_signature(update_win)
@@ -391,17 +406,20 @@ function M.signature_help(config)
         return
       end
 
-      local sfx = total > 1
-          and string.format(' (%d/%d)%s', idx, total, can_cycle and ' (<C-s> to cycle)' or '')
-        or ''
-      local title = string.format('Signature Help: %s%s', client.name, sfx)
-      if config.border then
-        config.title = title
-      else
-        table.insert(lines, 1, '# ' .. title)
-        if hl then
-          hl[1] = hl[1] + 1
-          hl[3] = hl[3] + 1
+      -- Show client name if there are multiple clients or multiple signatures
+      if total > 1 or nresults > 1 then
+        local sfx = total > 1
+            and string.format(' (%d/%d)%s', idx, total, can_cycle and ' (<C-s> to cycle)' or '')
+          or ''
+        local title = string.format('Signature Help: %s%s', client.name, sfx)
+        if config.border then
+          config.title = title
+        else
+          table.insert(lines, 1, '# ' .. title)
+          if hl then
+            hl[1] = hl[1] + 1
+            hl[3] = hl[3] + 1
+          end
         end
       end
 
