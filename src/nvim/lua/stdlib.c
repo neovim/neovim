@@ -761,9 +761,9 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   lua_setfield(lstate, -2, "lpeg");
   lua_pop(lstate, 4);
 
-  // vim.diff
+  // vim.text.diff
   lua_pushcfunction(lstate, &nlua_xdl_diff);
-  lua_setfield(lstate, -2, "diff");
+  lua_setfield(lstate, -2, "_diff");
 
   // vim.json
   lua_cjson_new(lstate);
