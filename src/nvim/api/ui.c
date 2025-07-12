@@ -305,6 +305,20 @@ bool remote_ui_restart(uint64_t channel_id, Error *err)
   return true;
 }
 
+// Returns true if the 'connect' event was successfully sent to the UI
+void remote_ui_connect(uint64_t channel_id, char *server_address, Error *err)
+{
+  RemoteUI *ui = get_ui_or_err(channel_id, err);
+  if (!ui) {
+    return;
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  ADD_C(args, CSTR_AS_OBJ(server_address));
+
+  push_call(ui, "connect", args);
+}
+
 // TODO(bfredl): use me to detach a specific ui from the server
 void remote_ui_stop(RemoteUI *ui)
 {
