@@ -326,8 +326,8 @@ Events (autocommands):
 - |TabNewEntered|
 - |TermClose|
 - |TermOpen|
-- |TermResponse| is fired for any OSC sequence received from the terminal,
-  instead of the Primary Device Attributes response. |v:termresponse|
+- |TermResponse| is fired for DCS, OSC, and APC sequences received from the terminal,
+  in addition to the Primary Device Attributes response. |v:termresponse|
 - |UIEnter|
 - |UILeave|
 
