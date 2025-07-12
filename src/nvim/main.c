@@ -664,6 +664,16 @@ void os_exit(int r)
   FUNC_ATTR_NORETURN
 {
   exiting = true;
+  if (restarting) {
+    Error err = ERROR_INIT;
+    if (!remote_ui_restart(current_ui, &err)) {
+      if (ERROR_SET(&err)) {
+        ELOG("%s", err.msg);  // UI disappeared already?
+        api_clear_error(&err);
+      }
+    }
+    restarting = false;
+  }
 
   if (ui_client_channel_id) {
     ui_client_stop();
