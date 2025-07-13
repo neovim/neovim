@@ -304,7 +304,7 @@ it would be easier to simply type two d's to delete a line.
 
  3. Now move to the fourth line.
 
- 4. Type `2dd`{normal} to delete two lines, then press `u`{normal} twice to undo all three lines.
+ 4. Type `2dd`{normal} to delete two lines.
 
 1)  Roses are red,
 2)  Mud is fun,
