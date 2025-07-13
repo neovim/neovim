@@ -5059,4 +5059,25 @@ func Test_nonkeyword_trigger()
   unlet g:CallCount
 endfunc
 
+" Test that option shortmess=c turns off completion messages
+func Test_shortmess()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['hello', 'hullo', 'heee'])
+  END
+
+  call writefile(lines, 'Xpumscript', 'D')
+  let buf = RunVimInTerminal('-S Xpumscript', #{rows: 12})
+  call term_sendkeys(buf, "Goh\<C-N>")
+  call TermWait(buf, 200)
+  call VerifyScreenDump(buf, 'Test_shortmess_complmsg_1', {})
+  call term_sendkeys(buf, "\<ESC>:set shm+=c\<CR>")
+  call term_sendkeys(buf, "Sh\<C-N>")
+  call TermWait(buf, 200)
+  call VerifyScreenDump(buf, 'Test_shortmess_complmsg_2', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
