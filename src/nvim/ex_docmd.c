@@ -4850,14 +4850,13 @@ static void ex_quitall(exarg_T *eap)
   getout(0);
 }
 
-/// ":restart": restart the Nvim server (using ":qall").
+/// ":restart": restart the Nvim server (using ":qall!").
 /// ":restart +cmd": restart the Nvim server using ":cmd".
 static void ex_restart(exarg_T *eap)
 {
-  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall!";
   Error err = ERROR_INIT;
-  if (quit_cmd[strlen(quit_cmd) - 1] != '!' && check_changed_any(false,
-                                                                 false)) {
+  if ((cmdmod.cmod_flags & CMOD_CONFIRM) && check_changed_any(false, false)) {
     return;
   }
   restarting = true;
