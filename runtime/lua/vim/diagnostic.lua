@@ -64,6 +64,7 @@ end
 --- @field end_col integer The final column of the diagnostic (0-indexed)
 --- @field severity vim.diagnostic.Severity The severity of the diagnostic |vim.diagnostic.severity|
 --- @field namespace? integer
+--- @field _extmark_id? integer
 
 --- Many of the configuration options below accept one of the following:
 --- - `false`: Disable this feature
@@ -642,6 +643,23 @@ local underline_highlight_map = make_highlight_map('Underline')
 local floating_highlight_map = make_highlight_map('Floating')
 local sign_highlight_map = make_highlight_map('Sign')
 
+--- @param diagnostic vim.Diagnostic
+--- @return integer lnum
+--- @return integer col
+--- @return integer end_lnum
+--- @return integer end_col
+local function get_logical_pos(diagnostic)
+  local ns = M.get_namespace(diagnostic.namespace)
+  local extmark = api.nvim_buf_get_extmark_by_id(
+    diagnostic.bufnr,
+    ns.user_data.location_ns,
+    diagnostic._extmark_id,
+    { details = true }
+  )
+
+  return extmark[1], extmark[2], extmark[3].end_row, extmark[3].end_col
+end
+
 --- @param diagnostics vim.Diagnostic[]
 --- @return table<integer,vim.Diagnostic[]>
 local function diagnostic_lines(diagnostics)
@@ -651,10 +669,11 @@ local function diagnostic_lines(diagnostics)
 
   local diagnostics_by_line = {} --- @type table<integer,vim.Diagnostic[]>
   for _, diagnostic in ipairs(diagnostics) do
-    local line_diagnostics = diagnostics_by_line[diagnostic.lnum]
+    local lnum = get_logical_pos(diagnostic)
+    local line_diagnostics = diagnostics_by_line[lnum]
     if not line_diagnostics then
       line_diagnostics = {}
-      diagnostics_by_line[diagnostic.lnum] = line_diagnostics
+      diagnostics_by_line[lnum] = line_diagnostics
     end
     table.insert(line_diagnostics, diagnostic)
   end
@@ -1038,6 +1057,12 @@ local function next_diagnostic(search_forward, opts)
 
   local line_diagnostics = diagnostic_lines(diagnostics)
 
+  --- @param diagnostic vim.Diagnostic
+  --- @return integer
+  local function col(diagnostic)
+    return select(2, get_logical_pos(diagnostic))
+  end
+
   local line_count = api.nvim_buf_line_count(bufnr)
   for i = 0, line_count do
     local offset = i * (search_forward and 1 or -1)
@@ -1054,17 +1079,17 @@ local function next_diagnostic(search_forward, opts)
       local sort_diagnostics, is_next
       if search_forward then
         sort_diagnostics = function(a, b)
-          return a.col < b.col
+          return col(a) < col(b)
         end
         is_next = function(d)
-          return math.min(d.col, math.max(line_length - 1, 0)) > position[2]
+          return math.min(col(d), math.max(line_length - 1, 0)) > position[2]
         end
       else
         sort_diagnostics = function(a, b)
-          return a.col > b.col
+          return col(a) > col(b)
         end
         is_next = function(d)
-          return math.min(d.col, math.max(line_length - 1, 0)) < position[2]
+          return math.min(col(d), math.max(line_length - 1, 0)) < position[2]
         end
       end
       table.sort(line_diagnostics[lnum], sort_diagnostics)
@@ -1105,10 +1130,12 @@ local function goto_diagnostic(diagnostic, opts)
 
   local winid = opts.winid or api.nvim_get_current_win()
 
+  local lnum, col = get_logical_pos(diagnostic)
+
   vim._with({ win = winid }, function()
     -- Save position in the window's jumplist
     vim.cmd("normal! m'")
-    api.nvim_win_set_cursor(winid, { diagnostic.lnum + 1, diagnostic.col })
+    api.nvim_win_set_cursor(winid, { lnum + 1, col })
     -- Open folds under the cursor
     vim.cmd('normal! zv')
   end)
@@ -1221,6 +1248,24 @@ function M.config(opts, namespace)
   end
 end
 
+--- Execute a given function now if the given buffer is already loaded or once it is loaded later.
+---
+---@param bufnr integer Buffer number
+---@param fn fun()
+local function once_buf_loaded(bufnr, fn)
+  if api.nvim_buf_is_loaded(bufnr) then
+    fn()
+  else
+    api.nvim_create_autocmd('BufRead', {
+      buffer = bufnr,
+      once = true,
+      callback = function()
+        fn()
+      end,
+    })
+  end
+end
+
 --- Set diagnostics for the given namespace and buffer.
 ---
 ---@param namespace integer The diagnostic namespace
@@ -1246,6 +1291,50 @@ function M.set(namespace, bufnr, diagnostics, opts)
   else
     diagnostic_cache[bufnr][namespace] = diagnostics
   end
+
+  -- Compute positions, set them as extmarks, and store in diagnostic._extmark_id
+  -- (used by get_logical_pos to adjust positions).
+  once_buf_loaded(bufnr, function()
+    local ns = M.get_namespace(namespace)
+
+    if not ns.user_data.location_ns then
+      ns.user_data.location_ns =
+        api.nvim_create_namespace(string.format('nvim.%s.diagnostic', ns.name))
+    end
+
+    api.nvim_buf_clear_namespace(bufnr, ns.user_data.location_ns, 0, -1)
+
+    local lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
+    -- set extmarks at diagnostic locations to preserve logical positions despite text changes
+    for _, diagnostic in ipairs(diagnostics) do
+      local last_row = #lines - 1
+      local row = math.max(0, math.min(diagnostic.lnum, last_row))
+      local row_len = #lines[row + 1]
+      local col = math.max(0, math.min(diagnostic.col, row_len - 1))
+
+      local end_row = math.max(0, math.min(diagnostic.end_lnum or row, last_row))
+      local end_row_len = #lines[end_row + 1]
+      local end_col = math.max(0, math.min(diagnostic.end_col or col, end_row_len))
+
+      if end_row == row then
+        -- avoid starting an extmark beyond end of the line
+        if end_col == col then
+          end_col = math.min(end_col + 1, end_row_len)
+        end
+      else
+        -- avoid ending an extmark before start of the line
+        if end_col == 0 then
+          end_row = end_row - 1
+          end_col = #lines[end_row + 1]
+        end
+      end
+
+      diagnostic._extmark_id = api.nvim_buf_set_extmark(bufnr, ns.user_data.location_ns, row, col, {
+        end_row = end_row,
+        end_col = end_col,
+      })
+    end
+  end)
 
   M.show(namespace, bufnr, nil, opts)
 
@@ -2242,19 +2331,23 @@ function M.open_float(opts, ...)
   if scope == 'line' then
     --- @param d vim.Diagnostic
     diagnostics = vim.tbl_filter(function(d)
-      return lnum >= d.lnum
-        and lnum <= d.end_lnum
-        and (d.lnum == d.end_lnum or lnum ~= d.end_lnum or d.end_col ~= 0)
+      local d_lnum, _, d_end_lnum, d_end_col = get_logical_pos(d)
+
+      return lnum >= d_lnum
+        and lnum <= d_end_lnum
+        and (d_lnum == d_end_lnum or lnum ~= d_end_lnum or d_end_col ~= 0)
     end, diagnostics)
   elseif scope == 'cursor' then
     -- If `col` is past the end of the line, show if the cursor is on the last char in the line
     local line_length = #api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
     --- @param d vim.Diagnostic
     diagnostics = vim.tbl_filter(function(d)
-      return lnum >= d.lnum
-        and lnum <= d.end_lnum
-        and (lnum ~= d.lnum or col >= math.min(d.col, line_length - 1))
-        and ((d.lnum == d.end_lnum and d.col == d.end_col) or lnum ~= d.end_lnum or col < d.end_col)
+      local d_lnum, d_col, d_end_lnum, d_end_col = get_logical_pos(d)
+
+      return lnum >= d_lnum
+        and lnum <= d_end_lnum
+        and (lnum ~= d_lnum or col >= math.min(d_col, line_length - 1))
+        and ((d_lnum == d_end_lnum and d_col == d_end_col) or lnum ~= d_end_lnum or col < d_end_col)
     end, diagnostics)
   end
 
