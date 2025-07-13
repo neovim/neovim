@@ -20,7 +20,6 @@ const Lua = ziglua.Lua;
 extern "c" fn luaopen_mpack(ptr: *anyopaque) c_int;
 extern "c" fn luaopen_lpeg(ptr: *anyopaque) c_int;
 extern "c" fn luaopen_bit(ptr: *anyopaque) c_int;
-extern "c" fn nlua_xdl_diff(ptr: ?*luajit_all.struct_lua_State) c_int;
 
 fn init() !*Lua {
     // Initialize the Lua vm
@@ -56,10 +55,6 @@ fn init() !*Lua {
     const retval2 = luaopen_lpeg(lua);
     if (retval2 != 1) return error.LoadError;
     lua.setField(-3, "lpeg");
-
-    // vim.text.diff
-    lua.pushFunction(nlua_xdl_diff);
-    lua.setField(-2, "_diff");
 
     lua.pop(2);
 
