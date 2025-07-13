@@ -1317,9 +1317,6 @@ require('vim._options')
 --- Remove at Nvim 1.0
 ---@deprecated
 vim.loop = vim.uv
---- Renamed to `vim.text.diff`, remove at Nvim 1.0
----@deprecated
-vim.diff = vim._diff ---@type fun(a: string, b: string, opts?: vim.text.diff.Opts): string|integer[][]?
 
 -- Deprecated. Remove at Nvim 2.0
 vim.highlight = vim._defer_deprecated_module('vim.highlight', 'vim.hl')
