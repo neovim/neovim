@@ -73,7 +73,8 @@ local M = {}
 ---@param opts? vim.text.diff.Opts
 ---@return string|integer[][]? # See {opts.result_type}. `nil` if {opts.on_hunk} is given.
 function M.diff(...)
-  return vim._diff(...)
+  ---@diagnostic disable-next-line: deprecated
+  return vim.diff(...)
 end
 
 local alphabet = '0123456789ABCDEF'
