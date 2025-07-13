@@ -2224,7 +2224,7 @@ end
 ---@param end_line integer
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.Range
-local function make_line_range_params(bufnr, start_line, end_line, position_encoding)
+function M._make_line_range_params(bufnr, start_line, end_line, position_encoding)
   local last_line = api.nvim_buf_line_count(bufnr) - 1
 
   ---@type lsp.Position
@@ -2280,62 +2280,6 @@ function M._cancel_requests(filter)
       then
         client:cancel_request(id)
       end
-    end
-  end
-end
-
----@class (private) vim.lsp.util._refresh.Opts
----@field bufnr integer? Buffer to refresh (default: 0)
----@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
----@field client_id? integer Client ID to refresh (default: all clients)
----@field handler? lsp.Handler
-
---- Request updated LSP information for a buffer.
----
----@param method vim.lsp.protocol.Method.ClientToServer.Request LSP method to call
----@param opts? vim.lsp.util._refresh.Opts Options table
-function M._refresh(method, opts)
-  opts = opts or {}
-  local bufnr = vim._resolve_bufnr(opts.bufnr)
-
-  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = method, id = opts.client_id })
-
-  if #clients == 0 then
-    return
-  end
-
-  local textDocument = M.make_text_document_params(bufnr)
-
-  if opts.only_visible then
-    for _, window in ipairs(api.nvim_list_wins()) do
-      if api.nvim_win_get_buf(window) == bufnr then
-        local first = vim.fn.line('w0', window)
-        local last = vim.fn.line('w$', window)
-        M._cancel_requests({
-          bufnr = bufnr,
-          clients = clients,
-          method = method,
-          type = 'pending',
-        })
-        for _, client in ipairs(clients) do
-          client:request(method, {
-            textDocument = textDocument,
-            range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
-          }, opts.handler, bufnr)
-        end
-      end
-    end
-  else
-    for _, client in ipairs(clients) do
-      client:request(method, {
-        textDocument = textDocument,
-        range = make_line_range_params(
-          bufnr,
-          0,
-          api.nvim_buf_line_count(bufnr) - 1,
-          client.offset_encoding
-        ),
-      }, opts.handler, bufnr)
     end
   end
 end
