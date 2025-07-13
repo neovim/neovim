@@ -5632,7 +5632,9 @@ static int ins_compl_start(void)
   }
 
   if (compl_status_adding()) {
-    edit_submode_pre = _(" Adding");
+    if (!shortmess(SHM_COMPLETIONMENU)) {
+      edit_submode_pre = _(" Adding");
+    }
     if (ctrl_x_mode_line_or_eval()) {
       // Insert a new line, keep indentation but ignore 'comments'.
       char *old = curbuf->b_p_com;
@@ -5654,10 +5656,12 @@ static int ins_compl_start(void)
     compl_startpos.col = compl_col;
   }
 
-  if (compl_cont_status & CONT_LOCAL) {
-    edit_submode = _(ctrl_x_msgs[CTRL_X_LOCAL_MSG]);
-  } else {
-    edit_submode = _(CTRL_X_MSG(ctrl_x_mode));
+  if (!shortmess(SHM_COMPLETIONMENU)) {
+    if (compl_cont_status & CONT_LOCAL) {
+      edit_submode = _(ctrl_x_msgs[CTRL_X_LOCAL_MSG]);
+    } else {
+      edit_submode = _(CTRL_X_MSG(ctrl_x_mode));
+    }
   }
 
   // If any of the original typed text has been changed we need to fix
@@ -5685,11 +5689,13 @@ static int ins_compl_start(void)
   // showmode might reset the internal line pointers, so it must
   // be called before line = ml_get(), or when this address is no
   // longer needed.  -- Acevedo.
-  edit_submode_extra = _("-- Searching...");
-  edit_submode_highl = HLF_COUNT;
-  showmode();
-  edit_submode_extra = NULL;
-  ui_flush();
+  if (!shortmess(SHM_COMPLETIONMENU)) {
+    edit_submode_extra = _("-- Searching...");
+    edit_submode_highl = HLF_COUNT;
+    showmode();
+    edit_submode_extra = NULL;
+    ui_flush();
+  }
 
   return OK;
 }
@@ -5822,7 +5828,9 @@ int ins_complete(int c, bool enable_pum)
     compl_cont_status &= ~CONT_S_IPOS;
   }
 
-  ins_compl_show_statusmsg();
+  if (!shortmess(SHM_COMPLETIONMENU)) {
+    ins_compl_show_statusmsg();
+  }
 
   // Show the popup menu, unless we got interrupted.
   if (enable_pum && !compl_interrupted) {
