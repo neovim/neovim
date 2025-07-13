@@ -521,6 +521,10 @@ Number; !must be defined to function properly):
   `NVIM_TEST_CORE_GLOB_DIRECTORY` is defined and this variable is not) cores
   are checked for after each test.
 
+- `NVIM_TEST_INTEG` (F) (D): enables integration tests that makes real network
+  calls. By default these tests are skipped. When set to `1`, tests requiring external
+  HTTP requests (e.g `vim.net.request()`) will be run.
+
 - `NVIM_TEST_RUN_TESTTEST` (U) (1): allows running
   `test/unit/testtest_spec.lua` used to check how testing infrastructure works.
 

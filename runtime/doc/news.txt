@@ -90,6 +90,7 @@ LSP
 LUA
 
 • Renamed `vim.diff` to `vim.text.diff`.
+• |vim.net.request()| adds a minimal HTTP GET API using curl.
 
 OPTIONS
 
