@@ -565,7 +565,8 @@ local edit_ns = api.nvim_create_namespace('nvim.treesitter.dev_edit')
 local function update_editor_highlights(query_win, base_win, lang)
   local base_buf = api.nvim_win_get_buf(base_win)
   local query_buf = api.nvim_win_get_buf(query_win)
-  local parser = assert(vim.treesitter.get_parser(base_buf, lang, { error = false }))
+  local root_lang = vim.treesitter.language.get_lang(vim.bo[base_buf].filetype)
+  local parser = assert(vim.treesitter.get_parser(base_buf, root_lang, { error = false }))
   api.nvim_buf_clear_namespace(base_buf, edit_ns, 0, -1)
   local query_content = table.concat(api.nvim_buf_get_lines(query_buf, 0, -1, false), '\n')
 
@@ -581,21 +582,30 @@ local function update_editor_highlights(query_win, base_win, lang)
   end
   -- Remove the '@' from the cursor word
   cursor_word = cursor_word:sub(2)
-  local topline, botline = vim.fn.line('w0', base_win), vim.fn.line('w$', base_win)
-  for id, node in query:iter_captures(parser:trees()[1]:root(), base_buf, topline - 1, botline) do
-    local capture_name = query.captures[id]
-    if capture_name == cursor_word then
-      local lnum, col, end_lnum, end_col = node:range()
-      api.nvim_buf_set_extmark(base_buf, edit_ns, lnum, col, {
-        end_row = end_lnum,
-        end_col = end_col,
-        hl_group = 'Visual',
-        virt_text = {
-          { capture_name, 'Title' },
-        },
-      })
+  -- Parse buffer including injected languages.
+  parser:parse(true)
+  -- Query on the trees of the language requested to highlight captures.
+  parser:for_each_tree(function(tree, ltree)
+    if ltree:lang() ~= lang then
+      return
     end
-  end
+    local root = tree:root()
+    local topline, botline = vim.fn.line('w0', base_win), vim.fn.line('w$', base_win)
+    for id, node in query:iter_captures(root, base_buf, topline - 1, botline) do
+      local capture_name = query.captures[id]
+      if capture_name == cursor_word then
+        local lnum, col, end_lnum, end_col = node:range()
+        api.nvim_buf_set_extmark(base_buf, edit_ns, lnum, col, {
+          end_row = end_lnum,
+          end_col = end_col,
+          hl_group = 'Visual',
+          virt_text = {
+            { capture_name, 'Title' },
+          },
+        })
+      end
+    end
+  end)
 end
 
 --- @nodoc
