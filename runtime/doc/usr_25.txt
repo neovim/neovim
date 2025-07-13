@@ -200,7 +200,7 @@ command: >vim
 
 Or put this line in your |vimrc|: >vim
 
-	packadd! justify
+	:packadd! justify
 
 This Vim script file defines a new visual command "_j".  To justify a block of
 text, highlight the text in Visual mode and then execute "_j".

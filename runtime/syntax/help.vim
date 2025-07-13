@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:	Vim help file
-" Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2024 Dec 15
+" Language:		Vim help file
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Last Change:		2025 Jul 12
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -11,6 +11,8 @@ endif
 
 let s:cpo_save = &cpo
 set cpo&vim
+
+syn iskeyword @,48-57,_,192-255
 
 if !exists('g:help_example_languages')
   let g:help_example_languages = #{ vim: 'vim' }
@@ -73,24 +75,32 @@ if has("conceal")
 else
   syn match helpIgnore		"." contained
 endif
-syn keyword helpNote		note Note NOTE note: Note: NOTE: Notes Notes:
-syn match helpNote		"\c(note\(:\|\>\)"ms=s+1
-syn keyword helpWarning		WARNING WARNING: Warning:
-syn keyword helpDeprecated	DEPRECATED DEPRECATED: Deprecated:
-syn match helpSpecial		"\<N\>"
-syn match helpSpecial		"\<N\.$"me=e-1
-syn match helpSpecial		"\<N\.\s"me=e-2
-syn match helpSpecial		"(N\>"ms=s+1
 
+" match 'iskeyword' word boundaries, '!-~,^*,^|,^",192-255'
+let s:iskeyword =  '!#-)+-{}~\d192-\d255'
+let s:start_word = $'\%(^\|[^{s:iskeyword}]\)\@1<='
+let s:end_word =      $'\%([^{s:iskeyword}]\|$\)\@='
+
+exec $'syn match helpNote	"{s:start_word}\%(note\|Note\|NOTE\|Notes\):\={s:end_word}"'
+exec $'syn match helpNote       "\c[[(]note\%(:\|{s:end_word}\)"ms=s+1'
+exec $'syn match helpWarning	"{s:start_word}\%(WARNING:\=\|Warning:\){s:end_word}"'
+exec $'syn match helpDeprecated	"{s:start_word}\%(DEPRECATED:\=\|Deprecated:\){s:end_word}"'
+exec $'syn match helpSpecial	"{s:start_word}N{s:end_word}"'
+exec $'syn match helpSpecial	"{s:start_word}N\.$"me=e-1'
+exec $'syn match helpSpecial	"{s:start_word}N\.\s"me=e-2'
+exec $'syn match helpSpecial	"(N{s:end_word}"ms=s+1'
 syn match helpSpecial		"\[N]"
 " avoid highlighting N  N in quickref.txt
 syn match helpSpecial		"N  N"he=s+1
 syn match helpSpecial		"Nth"me=e-2
 syn match helpSpecial		"N-1"me=e-2
 " highlighting N for :resize in windows.txt
-syn match helpSpecial		"] -N\>"ms=s+3
-syn match helpSpecial		"+N\>"ms=s+1
-syn match helpSpecial		"\[+-]N\>"ms=s+4
+exec $'syn match helpSpecial	"] -N{s:end_word}"ms=s+3'
+exec $'syn match helpSpecial	"+N{s:end_word}"ms=s+1'
+exec $'syn match helpSpecial	"\[+-]N{s:end_word}"ms=s+4'
+
+unlet s:iskeyword s:start_word s:end_word
+
 " highlighting N of cinoptions-values in indent.txt
 syn match helpSpecial		"^\t-\?\zsNs\?\s"me=s+1
 " highlighting N of cinoptions-values in indent.txt
@@ -177,6 +187,7 @@ let s:i = match(expand("%"), '\.\a\ax$')
 if s:i > 0
   exe "runtime syntax/help_" . strpart(expand("%"), s:i + 1, 2) . ".vim"
 endif
+unlet s:i
 
 syn sync minlines=40
 
