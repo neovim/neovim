@@ -160,7 +160,8 @@ syn match   pythonEscape	"\\\o\{1,3}" contained
 syn match   pythonEscape	"\\x\x\{2}" contained
 syn match   pythonEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
 " Python allows case-insensitive Unicode IDs: http://www.unicode.org/charts/
-syn match   pythonEscape	"\\N{\a\+\%(\s\a\+\)*}" contained
+" The specification: https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-4/#G135165
+syn match   pythonEscape	"\\N{\a\+\%(\%(\s\a\+[[:alnum:]]*\)\|\%(-[[:alnum:]]\+\)\)*}" contained
 syn match   pythonEscape	"\\$"
 
 " It is very important to understand all details before changing the
