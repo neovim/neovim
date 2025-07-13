@@ -22,7 +22,7 @@
             .hash = "N-V-__8AADi-AwDnVoXwDCQvv2wcYOmN0bJLqZ44J3lwoQY2",
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.25.7#5ed2c77b59cdab5e414c543fce121644d0ef11b4",
+            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.25.8#854f527f6ef9fdf563efb13d016e52df3ee6c45c",
             .hash = "tree_sitter-0.26.0-Tw2sR8u8CwBPBvzDbE0Ggokap5sll_qol0WSVuwjdOfC",
         },
         .libuv = .{ .path = "./deps/libuv" },
