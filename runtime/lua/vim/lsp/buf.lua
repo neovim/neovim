@@ -66,8 +66,14 @@ function M.hover(config)
       local err, result = resp.err, resp.result
       if err then
         lsp.log.error(err.code, err.message)
-      elseif result then
-        results1[client_id] = result
+      elseif result and result.contents then
+        -- make sure MarkedString | MarkedString[] | MarkupContent has valid value
+        if
+          (type(result.contents) == 'table' and #(vim.tbl_get(result.contents, 'value') or '') > 0)
+          or type(result.contents == 'string') and #result.contents > 0
+        then
+          results1[client_id] = result
+        end
       end
     end
 
