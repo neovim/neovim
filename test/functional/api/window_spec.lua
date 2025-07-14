@@ -2153,6 +2153,17 @@ describe('API/win', function()
         })
       )
     end)
+
+    it('no crash when creating float in WinLeave during tab close #31236', function()
+      exec([[
+        autocmd WinLeave * call nvim_open_win(0, v:false,{'win': 0, 'relative': 'win', 'row': 2, 'col': 2, 'width': 2, 'height': 2})
+      ]])
+      command('tab split')
+      matches(
+        'Cannot close window, only floating window would remain',
+        pcall_err(n.exec_capture, 'quit')
+      )
+    end)
   end)
 
   describe('set_config', function()

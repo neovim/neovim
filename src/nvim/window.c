@@ -2640,6 +2640,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   if (old_curbuf != curbuf) {
     apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
   }
+
   return true;
 }
 
@@ -2977,6 +2978,12 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   if (win_locked(win)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return;  // window is already being closed
+  }
+
+  // Check if closing this window would leave only floating windows.
+  if (tp->tp_firstwin == win && win->w_next && win->w_next->w_floating) {
+    emsg(e_floatonly);
+    return;
   }
 
   // Fire WinClosed just before starting to free window-related resources.
