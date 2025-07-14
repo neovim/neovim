@@ -4877,7 +4877,7 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
            else
              return '<Tab>'
            end
-         end, { descr = '...', expr = true, silent = true })
+         end, { desc = '...', expr = true, silent = true })
 <
 
     Parameters: ~
