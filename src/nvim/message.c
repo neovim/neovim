@@ -15,6 +15,8 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
@@ -1120,6 +1122,19 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, char *
   msg_hist_len += !temp && !old_message_found;
   msg_hist_last = entry;
   msg_ext_history = true;
+
+
+  MAXSIZE_TEMP_DICT(data, 5);
+  // PUT_C(data, "message", ARRAY_OBJ(entry->msg));
+  PUT_C(data, "id", INTEGER_OBJ(entry->message_id));
+  PUT_C(data, "kind", STRING_OBJ(entry->kind));
+  PUT_C(data, "percent", INTEGER_OBJ(entry->percent));
+  PUT_C(data, "status", STRING_OBJ(entry->status));
+  PUT_C(data, "title", STRING_OBJ(entry->title));
+
+  apply_autocmds_group(EVENT_MESSAGE, NULL, NULL, true, AUGROUP_ALL, NULL, NULL,
+                       &DICT_OBJ(data));
+
   msg_hist_clear(msg_hist_max);
   return entry->message_id;
 }
