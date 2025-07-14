@@ -2116,7 +2116,6 @@ text...
 				#	Number
 				*	Funcref
 
-
 :unl[et][!] {name} ...				*:unlet* *:unl* *E108* *E795*
 			Remove the internal variable {name}.  Several variable
 			names can be given, they are all removed.  The name
