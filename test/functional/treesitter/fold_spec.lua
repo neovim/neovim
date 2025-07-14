@@ -728,9 +728,8 @@ t2]])
     ]],
     }
 
-    feed('<Esc>u')
     -- TODO(tomtomjhj): `u` spuriously opens the fold (#26499).
-    feed('zMggzo')
+    feed('<Esc>uzMggzo')
 
     feed('dd')
     poke_eventloop()
