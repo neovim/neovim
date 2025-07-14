@@ -3113,6 +3113,7 @@ function vim.fn.getcmdwintype() end
 --- messages  |:messages| suboptions
 --- option    options
 --- packadd    optional package |pack-add| names
+--- retab    |:retab| suboptions
 --- runtime    |:runtime| completion
 --- scriptnames  sourced script names |:scriptnames|
 --- shellcmd  Shell command

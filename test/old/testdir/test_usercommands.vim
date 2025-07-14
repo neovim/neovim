@@ -395,6 +395,10 @@ func Test_CmdCompletion()
   " call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"DoCmd mswin xterm', @:)
 
+  com! -nargs=1 -complete=retab DoCmd :
+  call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"DoCmd -indentonly', @:)
+
   " Test for file name completion
   com! -nargs=1 -complete=file DoCmd :
   call feedkeys(":DoCmd READM\<Tab>\<C-B>\"\<CR>", 'tx')

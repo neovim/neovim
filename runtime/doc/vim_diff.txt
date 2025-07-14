@@ -69,7 +69,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
-- 'maxsearchcount' defaults t0 999
+- 'maxsearchcount' defaults to 999
 - 'mouse' defaults to "nvi", see |default-mouse| for details
 - 'mousemodel' defaults to "popup_setpos"
 - 'nrformats' defaults to "bin,hex"

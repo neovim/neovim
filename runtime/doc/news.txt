@@ -161,6 +161,8 @@ DIAGNOSTICS
 EDITOR
 
 • |:iput| works like |:put| but adjusts indent.
+• |:retab| accepts new optional parameter -indentonly to only change leading
+  whitespace in indented lines.
 • |:uniq| deduplicates text in the current buffer.
 • |omnicompletion| in `help` buffer. |ft-help-omni|
 • Setting "'0" in 'shada' prevents storing the jumplist in the shada file.

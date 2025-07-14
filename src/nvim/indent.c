@@ -1006,16 +1006,23 @@ void ex_retab(exarg_T *eap)
 
   linenr_T first_line = 0;              // first changed line
   linenr_T last_line = 0;               // last changed line
+  bool is_indent_only = false;
 
   int save_list = curwin->w_p_list;
   curwin->w_p_list = 0;             // don't want list mode here
 
-  new_ts_str = eap->arg;
-  if (!tabstop_set(eap->arg, &new_vts_array)) {
+  char *ptr = eap->arg;
+  if (strncmp(ptr, "-indentonly", 11) == 0 && ascii_iswhite_or_nul(ptr[11])) {
+    is_indent_only = true;
+    ptr = skipwhite(ptr + 11);
+  }
+
+  new_ts_str = ptr;
+  if (!tabstop_set(ptr, &new_vts_array)) {
     return;
   }
-  while (ascii_isdigit(*(eap->arg)) || *(eap->arg) == ',') {
-    eap->arg++;
+  while (ascii_isdigit(*ptr) || *ptr == ',') {
+    ptr++;
   }
 
   // This ensures that either new_vts_array and new_ts_str are freshly
@@ -1025,10 +1032,10 @@ void ex_retab(exarg_T *eap)
     new_vts_array = curbuf->b_p_vts_array;
     new_ts_str = NULL;
   } else {
-    new_ts_str = xmemdupz(new_ts_str, (size_t)(eap->arg - new_ts_str));
+    new_ts_str = xmemdupz(new_ts_str, (size_t)(ptr - new_ts_str));
   }
   for (linenr_T lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
-    char *ptr = ml_get(lnum);
+    ptr = ml_get(lnum);
     int old_len = ml_get_len(lnum);
     int col = 0;
     int64_t vcol = 0;
@@ -1106,6 +1113,10 @@ void ex_retab(exarg_T *eap)
         }
         got_tab = false;
         num_spaces = 0;
+
+        if (is_indent_only) {
+          break;
+        }
       }
       if (ptr[col] == NUL) {
         break;
