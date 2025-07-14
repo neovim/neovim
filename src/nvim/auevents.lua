@@ -82,6 +82,7 @@ return {
     LspRequest = false, -- after an LSP request is started, canceled, or completed
     LspTokenUpdate = false, -- after a visible LSP token is updated
     MenuPopup = false, -- just before popup menu is displayed
+    Message = false,  -- after writting e message
     ModeChanged = false, -- after changing the mode
     OptionSet = false, -- after setting any option
     QuickFixCmdPost = false, -- after :make, :grep etc.
@@ -160,6 +161,7 @@ return {
     LspProgress = true,
     LspRequest = true,
     LspTokenUpdate = true,
+    Message = true,
     PackChangedPre = true,
     PackChanged = true,
     RecordingEnter = true,
