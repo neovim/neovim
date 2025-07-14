@@ -2528,6 +2528,12 @@ bool has_nvim_version(const char *const version_str)
                       && patch <= NVIM_VERSION_PATCH))));
 }
 
+int highest_patch(void)
+{
+  // this relies on the highest patch number to be the first entry
+  return included_patches[0];
+}
+
 /// Checks whether a Vim patch has been included.
 ///
 /// @param n Patch number.

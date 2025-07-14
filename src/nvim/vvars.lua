@@ -878,6 +878,21 @@ M.vars = {
       <
     ]=],
   },
+  versionlong = {
+    type = 'integer',
+    desc = [=[
+      Like v:version, but also including the patchlevel in the last
+      four digits.  Version 8.1 with patch 123 has value 8010123.
+      This can be used like this: >
+        if v:versionlong >= 8010123
+      <
+      However, if there are gaps in the list of patches included
+      this will not work well.  This can happen if a recent patch
+      was included into an older version, e.g. for a security fix.
+      Use the has() function to make sure the patch is actually
+      included.
+    ]=],
+  },
   vim_did_enter = {
     type = 'integer',
     desc = [=[
