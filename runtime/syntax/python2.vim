@@ -3,6 +3,7 @@
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
 " Last Change:	2016 Oct 29
 " 2025 Jul 14 by Vim project: highlight unicode strings
+" 2025 Jul 15 by Vim project: highlight b-strings
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -143,16 +144,16 @@ syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
 
 " Triple-quoted strings can contain doctests.
 syn region  pythonString matchgroup=pythonQuotes
-      \ start=+\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
+      \ start=+[bB]\=\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=pythonEscape,@Spell
 syn region  pythonString matchgroup=pythonTripleQuotes
-      \ start=+\z('''\|"""\)+ end="\z1" keepend
+      \ start=+[bB]\=\z('''\|"""\)+ end="\z1" keepend
       \ contains=pythonEscape,pythonSpaceError,pythonDoctest,@Spell
 syn region  pythonRawString matchgroup=pythonQuotes
-      \ start=+[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
+      \ start=+[bB]\=[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=@Spell
 syn region  pythonRawString matchgroup=pythonTripleQuotes
-      \ start=+[rR]\z('''\|"""\)+ end="\z1" keepend
+      \ start=+[bB]\=[rR]\z('''\|"""\)+ end="\z1" keepend
       \ contains=pythonSpaceError,pythonDoctest,@Spell
 
 " Unicode strings
