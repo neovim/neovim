@@ -111,6 +111,18 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 
 ==============================================================================
 4. History							*zip-history* {{{1
+   unreleased:
+       Jul 12, 2025 * drop ../ on write to prevent path traversal attacks
+       Mar 11, 2025 * handle filenames with leading '-' correctly
+       Aug 21, 2024 * simplify condition to detect MS-Windows
+       Aug 18, 2024 * correctly handle special globbing chars
+       Aug 05, 2024 * clean-up and make it work with shellslash on Windows
+       Aug 05, 2024 * workaround for the FreeBSD's unzip
+       Aug 04, 2024 * escape '[' in name of file to be extracted
+       Jul 30, 2024 * fix opening remote zipfile
+       Jul 24, 2024 * use delete() function
+       Jul 23, 2024 * fix 'x' command
+       Jun 16, 2024 * handle whitespace on Windows properly (#14998)
    v33 Dec 07, 2021 * `*.xlam` mentioned twice in zipPlugin
    v32 Oct 22, 2021 * to avoid an issue with a vim 8.2 patch, zipfile: has
 		      been changed to zipfile:// . This often shows up
