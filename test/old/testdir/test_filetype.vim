@@ -602,6 +602,7 @@ func s:GetFilenameChecks() abort
     \ 'pilrc': ['file.rcp'],
     \ 'pine': ['.pinerc', 'pinerc', '.pinercex', 'pinercex'],
     \ 'pinfo': ['/etc/pinforc', '/.pinforc', 'any/.pinforc', 'any/etc/pinforc'],
+    \ 'pkl': ['file.pkl'],
     \ 'pli': ['file.pli', 'file.pl1'],
     \ 'plm': ['file.plm', 'file.p36', 'file.pac'],
     \ 'plp': ['file.plp'],
