@@ -285,6 +285,7 @@ func s:GetFilenameChecks() abort
     \ 'faust': ['file.dsp', 'file.lib'],
     \ 'fennel': ['file.fnl', '.fennelrc', 'fennelrc'],
     \ 'fetchmail': ['.fetchmailrc'],
+    \ 'fga': ['file.fga'],
     \ 'fgl': ['file.4gl', 'file.4gh', 'file.m4gl'],
     \ 'firrtl': ['file.fir'],
     \ 'fish': ['file.fish'],

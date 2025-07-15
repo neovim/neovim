@@ -459,6 +459,7 @@ local extension = {
   fwt = 'fan',
   lib = 'faust',
   fnl = 'fennel',
+  fga = 'fga',
   m4gl = 'fgl',
   ['4gl'] = 'fgl',
   ['4gh'] = 'fgl',
