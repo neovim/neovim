@@ -2520,7 +2520,10 @@ void close_windows(buf_T *buf, bool keep_curwin)
       for (win_T *wp = tp->tp_lastwin; wp != NULL; wp = wp->w_prev) {
         if (wp->w_buffer == buf
             && !(win_locked(wp) || wp->w_buffer->b_locked > 0)) {
-          win_close_othertab(wp, false, tp);
+          if (!win_close_othertab(wp, false, tp, false)) {
+            // If closing the window fails give up, to avoid looping forever.
+            break;
+          }
 
           // Start all over, the tab page may be closed and
           // autocommands may change the window layout.
@@ -2550,14 +2553,15 @@ bool one_window(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   return firstwin == win && (win->w_next == NULL || win->w_next->w_floating);
 }
 
-/// Check if floating windows in the current tab can be closed.
+/// Check if floating windows in tabpage `tp` can be closed.
 /// Do not call this when the autocommand window is in use!
 ///
+/// @param tp tabpage to check. Must be NULL for the current tabpage.
 /// @return true if all floating windows can be closed
-static bool can_close_floating_windows(void)
+static bool can_close_floating_windows(tabpage_T *tp)
 {
-  assert(!is_aucmd_win(lastwin));
-  for (win_T *wp = lastwin; wp->w_floating; wp = wp->w_prev) {
+  assert(tp != curtab && (tp || !is_aucmd_win(lastwin)));
+  for (win_T *wp = tp ? tp->tp_lastwin : lastwin; wp->w_floating; wp = wp->w_prev) {
     buf_T *buf = wp->w_buffer;
     int need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
 
@@ -2618,10 +2622,10 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   // case they have already been triggered.
   goto_tabpage_tp(alt_tabpage(), false, win->w_buffer != NULL);
 
-  // Safety check: Autocommands may have closed the window when jumping
-  // to the other tab page.
-  if (valid_tabpage(prev_curtab) && prev_curtab->tp_firstwin == win) {
-    win_close_othertab(win, free_buf, prev_curtab);
+  // Safety check: Autocommands may have switched back to the old tab page
+  // or closed the window when jumping to the other tab page.
+  if (curtab != prev_curtab && valid_tabpage(prev_curtab) && prev_curtab->tp_firstwin == win) {
+    win_close_othertab(win, free_buf, prev_curtab, false);
   }
   entering_window(curwin);
 
@@ -2702,7 +2706,7 @@ int win_close(win_T *win, bool free_buf, bool force)
       emsg(_("E814: Cannot close window, only autocmd window would remain"));
       return FAIL;
     }
-    if (force || can_close_floating_windows()) {
+    if (force || can_close_floating_windows(NULL)) {
       // close the last window until the there are no floating windows
       while (lastwin->w_floating) {
         // `force` flag isn't actually used when closing a floating window.
@@ -2808,7 +2812,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   if (curtab != prev_curtab && win_valid_any_tab(win)
       && win->w_buffer == NULL) {
     // Need to close the window anyway, since the buffer is NULL.
-    win_close_othertab(win, false, prev_curtab);
+    win_close_othertab(win, false, prev_curtab, force);
     return FAIL;
   }
 
@@ -2974,14 +2978,38 @@ static void do_autocmd_winclosed(win_T *win)
 // thus "tp" may become invalid!
 // Caller must check if buffer is hidden and whether the tabline needs to be
 // updated.
-void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
+// @return false when the window was not closed as a direct result of this call
+//         (e.g: not via autocmds).
+bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
   FUNC_ATTR_NONNULL_ALL
 {
+  assert(tp != curtab);
+
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.
   if (win_locked(win)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
-    return;  // window is already being closed
+    return false;  // window is already being closed
+  }
+
+  // Check if closing this window would leave only floating windows.
+  if (tp->tp_firstwin == win && win->w_next && win->w_next->w_floating) {
+    if (force || can_close_floating_windows(tp)) {
+      // close the last window until the there are no floating windows
+      while (tp->tp_lastwin->w_floating) {
+        // `force` flag isn't actually used when closing a floating window.
+        if (!win_close_othertab(tp->tp_lastwin, free_buf, tp, true)) {
+          // If closing the window fails give up, to avoid looping forever.
+          goto leave_open;
+        }
+      }
+      if (!win_valid_any_tab(win)) {
+        return false;  // window already closed by autocommands
+      }
+    } else {
+      emsg(e_floatonly);
+      goto leave_open;
+    }
   }
 
   // Fire WinClosed just before starting to free window-related resources.
@@ -2991,7 +3019,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
     do_autocmd_winclosed(win);
     // autocmd may have freed the window already.
     if (!win_valid_any_tab(win)) {
-      return;
+      return false;
     }
   }
 
@@ -3000,34 +3028,21 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
     close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, false, true);
   }
 
-  tabpage_T *ptp = NULL;
-
   // Careful: Autocommands may have closed the tab page or made it the
   // current tab page.
-  for (ptp = first_tabpage; ptp != NULL && ptp != tp; ptp = ptp->tp_next) {}
-  if (ptp == NULL || tp == curtab) {
-    // If the buffer was removed from the window we have to give it any
-    // buffer.
-    if (win_valid_any_tab(win) && win->w_buffer == NULL) {
-      win->w_buffer = firstbuf;
-      firstbuf->b_nwindows++;
-      win_init_empty(win);
-    }
-    return;
+  if (!valid_tabpage(tp) || tp == curtab) {
+    goto leave_open;
   }
-
-  // Autocommands may have closed the window already.
-  {
-    bool found_window = false;
-    FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-      if (wp == win) {
-        found_window = true;
-        break;
-      }
-    }
-    if (!found_window) {
-      return;
-    }
+  // Autocommands may have closed the window already, or nvim_win_set_config
+  // moved it to a different tab page.
+  if (!tabpage_win_valid(tp, win)) {
+    goto leave_open;
+  }
+  // Autocommands may again cause closing this window to leave only floats.
+  // Check again; we'll not bother closing floating windows this time.
+  if (tp->tp_firstwin == win && win->w_next && win->w_next->w_floating) {
+    emsg(e_floatonly);
+    goto leave_open;
   }
 
   bool free_tp = false;
@@ -3044,13 +3059,14 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
     if (tp == first_tabpage) {
       first_tabpage = tp->tp_next;
     } else {
+      tabpage_T *ptp;
       for (ptp = first_tabpage; ptp != NULL && ptp->tp_next != tp;
            ptp = ptp->tp_next) {
         // loop
       }
       if (ptp == NULL) {
         internal_error("win_close_othertab()");
-        return;
+        return false;
       }
       ptp->tp_next = tp->tp_next;
     }
@@ -3072,6 +3088,16 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   if (free_tp) {
     free_tabpage(tp);
   }
+  return true;
+
+leave_open:
+  // If the buffer was removed from the window we have to give it any buffer.
+  if (win_valid_any_tab(win) && win->w_buffer == NULL) {
+    win->w_buffer = firstbuf;
+    firstbuf->b_nwindows++;
+    win_init_empty(win);
+  }
+  return false;
 }
 
 /// Free the memory used for a window.

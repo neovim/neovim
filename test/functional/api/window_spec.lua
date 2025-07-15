@@ -1931,6 +1931,63 @@ describe('API/win', function()
       )
     end)
 
+    it('no crash when closing the only non-float in other tabpage #31236', function()
+      local tp = api.nvim_get_current_tabpage()
+      local split_win = api.nvim_get_current_win()
+      local float_win = api.nvim_open_win(
+        0,
+        false,
+        { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+      )
+      command('tabnew')
+
+      api.nvim_win_close(split_win, false)
+      eq(false, api.nvim_win_is_valid(split_win))
+      eq(false, api.nvim_win_is_valid(float_win))
+      eq(false, api.nvim_tabpage_is_valid(tp))
+
+      tp = api.nvim_get_current_tabpage()
+      split_win = api.nvim_get_current_win()
+      local float_buf = api.nvim_create_buf(true, false)
+      float_win = api.nvim_open_win(
+        float_buf,
+        false,
+        { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+      )
+      -- Set these options to prevent the float from being automatically closed.
+      api.nvim_set_option_value('modified', true, { buf = float_buf })
+      api.nvim_set_option_value('bufhidden', 'wipe', { buf = float_buf })
+      command('tabnew')
+
+      matches(
+        'E5601: Cannot close window, only floating window would remain$',
+        pcall_err(api.nvim_win_close, split_win, false)
+      )
+      eq(true, api.nvim_win_is_valid(split_win))
+      eq(true, api.nvim_win_is_valid(float_win))
+      eq(true, api.nvim_tabpage_is_valid(tp))
+
+      api.nvim_set_current_win(float_win)
+      api.nvim_win_close(split_win, true) -- Force it this time.
+      eq(false, api.nvim_win_is_valid(split_win))
+      eq(false, api.nvim_win_is_valid(float_win))
+      eq(false, api.nvim_tabpage_is_valid(tp))
+
+      -- Ensure opening a float after the initial check (like in WinClosed) doesn't crash...
+      exec([[
+        tabnew
+        let g:tp = nvim_get_current_tabpage()
+        let g:win = win_getid()
+        tabprevious
+        autocmd! WinClosed * ++once call nvim_open_win(0, 0, #{win: g:win, relative: 'win', width: 5, height: 5, row: 5, col: 5})
+      ]])
+      matches(
+        'E5601: Cannot close window, only floating window would remain$',
+        pcall_err(command, 'call nvim_win_close(g:win, 0)')
+      )
+      eq(true, eval 'nvim_tabpage_is_valid(g:tp)')
+    end)
+
     it('respects requested size for large splits', function()
       command('vsplit')
       local win = api.nvim_open_win(0, false, { win = -1, split = 'right', width = 38 })
