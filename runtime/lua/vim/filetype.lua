@@ -949,6 +949,7 @@ local extension = {
   pike = 'pike',
   pmod = 'pike',
   rcp = 'pilrc',
+  pkl = 'pkl',
   PL = detect.pl,
   pli = 'pli',
   pl1 = 'pli',
