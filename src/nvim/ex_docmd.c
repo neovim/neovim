@@ -4919,7 +4919,7 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
   if (tp == NULL) {
     win_close(win, !need_hide && !buf_hide(buf), forceit);
   } else {
-    win_close_othertab(win, !need_hide && !buf_hide(buf), tp);
+    win_close_othertab(win, !need_hide && !buf_hide(buf), tp, forceit);
   }
 }
 

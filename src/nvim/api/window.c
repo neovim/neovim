@@ -374,7 +374,7 @@ void nvim_win_hide(Window window, Error *err)
     } else if (tabpage == curtab) {
       win_close(win, false, false);
     } else {
-      win_close_othertab(win, false, tabpage);
+      win_close_othertab(win, false, tabpage, false);
     }
   });
 }
