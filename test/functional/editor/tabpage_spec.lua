@@ -142,4 +142,13 @@ describe('tabpage', function()
     command('tabs')
     assert_alive()
   end)
+
+  it('no crash if autocmd remains in tabpage of closing last window', function()
+    exec([[
+      tabnew
+      let s:win = win_getid()
+      autocmd TabLeave * ++once tablast | tabonly
+      quit
+    ]])
+  end)
 end)
