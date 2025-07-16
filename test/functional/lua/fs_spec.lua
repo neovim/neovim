@@ -347,6 +347,89 @@ describe('vim.fs', function()
         )
       )
     end)
+
+    it('check a real target from symlink', function()
+      local testdir = 'testf' ---@type string
+      local testdir2 = testdir .. '/subdir' ---@type string
+      local testdir2_sym = testdir .. '/symdir' ---@type string
+      mkdir(testdir)
+      mkdir(testdir2)
+      vim.uv.fs_symlink(vim.uv.fs_realpath(testdir2), testdir2_sym, { junction = true, dir = true})
+
+      local testf = testdir .. '/f1' ---@type string
+      local symlink1 = testdir .. '/s1' ---@type string
+      local symlink2 = testdir2 .. '/s2' ---@type string
+      local symlink3 = testdir2_sym .. '/s3' ---@type string
+
+      io.open(testf, 'w'):close()
+      vim.uv.fs_symlink(vim.uv.fs_realpath(testf), symlink1, { junction = false, dir = false })
+      vim.uv.fs_symlink(vim.uv.fs_realpath(symlink1), symlink2, { junction = false, dir = false })
+      vim.uv.fs_symlink(vim.uv.fs_realpath(symlink2), symlink3, { junction = false, dir = false })
+
+      finally(function()
+        vim.uv.fs_unlink(symlink1)
+        vim.uv.fs_unlink(symlink2)
+        vim.uv.fs_unlink(symlink3)
+        vim.uv.fs_unlink(testdir2_sym)
+        rmdir(testdir)
+        rmdir(testdir2)
+      end)
+
+      eq(
+        { vim.fs.normalize(testf) },
+        vim.fs.find('f1', {
+          path = testdir,
+          type = 'file',
+          limit = 3,
+        })
+      )
+      eq(
+        { vim.fs.normalize(symlink1) },
+        vim.fs.find(function(name, path)
+          return name == 's1'
+          end, {
+          path = testdir,
+          type = 'file',
+          limit = math.huge,
+        })
+      )
+      eq(
+        { vim.fs.normalize(symlink2) },
+        vim.fs.find('s2', {
+          path = testdir,
+          type = 'file',
+          limit = math.huge,
+        })
+      )
+      eq(
+        { testdir2 .. '/s3', vim.fs.normalize(symlink3) },
+        vim.fs.find('s3', {
+          path = testdir,
+          type = 'file',
+          limit = math.huge,
+          follow = true,
+        })
+      )
+      eq(
+        { testdir2 .. '/s3' },
+        vim.fs.find('s3', {
+          path = testdir,
+          type = 'file',
+          limit = math.huge,
+          follow = false,
+        })
+      )
+
+      eq(
+        { vim.fs.normalize(symlink1) },
+        vim.fs.find('s1', {
+          upward = true,
+          path = testdir2,
+          type = 'file',
+          limit = math.huge,
+        })
+      )
+    end)
   end)
 
   describe('root()', function()

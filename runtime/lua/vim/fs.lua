@@ -303,8 +303,12 @@ function M.find(names, opts)
       test = function(p)
         local t = {}
         for name, type in M.dir(p) do
-          if (not opts.type or opts.type == type) and names(name, p) then
-            table.insert(t, M.joinpath(p, name))
+          local f = M.joinpath(p, name)
+          if
+            (not opts.type or opts.type == type or (type == 'link' and (vim.uv.fs_stat(f) or {}).type == opts.type))
+            and names(name, p)
+          then
+            table.insert(t, f)
           end
         end
         return t
@@ -352,14 +356,20 @@ function M.find(names, opts)
       for other, type_ in M.dir(dir) do
         local f = M.joinpath(dir, other)
         if type(names) == 'function' then
-          if (not opts.type or opts.type == type_) and names(other, dir) then
+          if
+            (not opts.type or opts.type == type_ or (type_ == 'link' and (vim.uv.fs_stat(f) or {}).type == opts.type))
+            and names(other, dir)
+          then
             if add(f) then
               return matches
             end
           end
         else
           for _, name in ipairs(names) do
-            if name == other and (not opts.type or opts.type == type_) then
+            if
+              name == other
+              and (not opts.type or opts.type == type_ or (type_ == 'link' and (vim.uv.fs_stat(f) or {}).type == opts.type))
+            then
               if add(f) then
                 return matches
               end
