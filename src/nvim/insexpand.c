@@ -4422,9 +4422,6 @@ static void prepare_cpt_compl_funcs(void)
   char *cpt = xstrdup(curbuf->b_p_cpt);
   strip_caret_numbers_in_place(cpt);
 
-  // Re-insert the text removed by ins_compl_delete().
-  ins_compl_insert_bytes(compl_orig_text.data + get_compl_len(), -1);
-
   int idx = 0;
   for (char *p = cpt; *p;) {
     while (*p == ',' || *p == ' ') {  // Skip delimiters
@@ -4453,20 +4450,17 @@ static void prepare_cpt_compl_funcs(void)
     idx++;
   }
 
-  // Undo insertion
-  ins_compl_delete(false);
-
   xfree(cpt);
 }
 
 /// Safely advance the cpt_sources_index by one.
 static int advance_cpt_sources_index_safe(void)
 {
-  if (cpt_sources_index < cpt_sources_count - 1) {
+  if (cpt_sources_index >= 0 && cpt_sources_index < cpt_sources_count - 1) {
     cpt_sources_index++;
     return OK;
   }
-  semsg(_(e_list_index_out_of_range_nr), cpt_sources_index + 1);
+  semsg(_(e_list_index_out_of_range_nr), cpt_sources_index);
   return FAIL;
 }
 
@@ -4511,13 +4505,8 @@ static int ins_compl_get_exp(pos_T *ini)
   compl_old_match = compl_curr_match;   // remember the last current match
   st.cur_match_pos = compl_dir_forward() ? &st.last_match_pos : &st.first_match_pos;
 
-  if (ctrl_x_mode_normal() && !ctrl_x_mode_line_or_eval()
+  if (cpt_sources_array != NULL && ctrl_x_mode_normal() && !ctrl_x_mode_line_or_eval()
       && !(compl_cont_status & CONT_LOCAL)) {
-    // ^N completion, not ^X^L or complete() or ^X^N
-    if (!compl_started) {  // Before showing menu the first time
-      setup_cpt_sources();
-    }
-    prepare_cpt_compl_funcs();
     cpt_sources_index = 0;
   }
 
@@ -5273,6 +5262,13 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
     }
   }
 
+  // Call functions in 'complete' with 'findstart=1'
+  if (ctrl_x_mode_normal() && !(compl_cont_status & CONT_LOCAL)) {
+    // ^N completion, not complete() or ^X^N
+    setup_cpt_sources();
+    prepare_cpt_compl_funcs();
+  }
+
   return OK;
 }
 
@@ -5953,8 +5949,11 @@ static void setup_cpt_sources(void)
 {
   char buf[LSIZE];
 
+  // Make a copy of 'cpt' in case the buffer gets wiped out
+  char *cpt = xstrdup(curbuf->b_p_cpt);
+
   int count = 0;
-  for (char *p = curbuf->b_p_cpt; *p;) {
+  for (char *p = cpt; *p;) {
     while (*p == ',' || *p == ' ') {  // Skip delimiters
       p++;
     }
@@ -5964,7 +5963,7 @@ static void setup_cpt_sources(void)
     }
   }
   if (count == 0) {
-    return;
+    goto theend;
   }
 
   cpt_sources_clear();
@@ -5972,7 +5971,7 @@ static void setup_cpt_sources(void)
   cpt_sources_array = xcalloc((size_t)count, sizeof(cpt_source_T));
 
   int idx = 0;
-  for (char *p = curbuf->b_p_cpt; *p;) {
+  for (char *p = cpt; *p;) {
     while (*p == ',' || *p == ' ') {  // Skip delimiters
       p++;
     }
@@ -5986,6 +5985,9 @@ static void setup_cpt_sources(void)
       idx++;
     }
   }
+
+theend:
+  xfree(cpt);
 }
 
 /// Return true if any of the completion sources have 'refresh' set to 'always'.
