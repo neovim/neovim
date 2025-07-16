@@ -2209,6 +2209,23 @@ describe('API/win', function()
         pcall_err(command, 'call nvim_win_close(g:win, 0)')
       )
       eq(true, eval 'nvim_tabpage_is_valid(g:tp)')
+
+      exec([[
+        tabnew
+        let g:tp = nvim_get_current_tabpage()
+        let g:win = win_getid()
+        let g:buf = bufnr()
+        tabprevious
+        let s:buf2 = nvim_create_buf(0, 0)
+        call setbufvar(s:buf2, '&modified', 1)
+        call setbufvar(s:buf2, '&bufhidden', 'wipe')
+        autocmd! WinClosed * ++once call nvim_open_win(s:buf2, 0, #{win: g:win, relative: 'win', width: 5, height: 5, row: 5, col: 5})
+      ]])
+      matches(
+        'E5601: Cannot close window, only floating window would remain$',
+        pcall_err(command, 'call nvim_buf_delete(g:buf, #{force: 1})')
+      )
+      eq(true, eval 'nvim_tabpage_is_valid(g:tp)')
     end)
   end)
 
