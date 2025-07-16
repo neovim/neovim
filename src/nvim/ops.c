@@ -1804,8 +1804,7 @@ int op_delete(oparg_T *oap)
         }
       }
 
-      curwin->w_cursor.col = oap->start.col;
-      del_bytes((colnr_T)n, !virtual_op,
+      del_bytes_pos(oap->start.lnum, oap->start.col, (colnr_T)n, !virtual_op,
                 oap->op_type == OP_DELETE && !oap->is_VIsual);
     } else {
       // delete characters between lines
@@ -1832,8 +1831,8 @@ int op_delete(oparg_T *oap)
       // delete from start of line until op_end
       int n = (oap->end.col + 1 - !oap->inclusive);
       curwin->w_cursor.col = 0;
-      del_bytes((colnr_T)n, !virtual_op,
-                oap->op_type == OP_DELETE && !oap->is_VIsual);
+      del_bytes_pos(curwin->w_cursor.lnum, curwin->w_cursor.col, (colnr_T)n, !virtual_op,
+                    oap->op_type == OP_DELETE && !oap->is_VIsual);
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       do_join(2, false, false, false, false);
       curbuf_splice_pending--;
