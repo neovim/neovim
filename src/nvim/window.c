@@ -2979,6 +2979,7 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(tp != curtab);
+  bool did_decrement = false;
 
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.
@@ -3018,9 +3019,12 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
     }
   }
 
+  bufref_T bufref;
+  set_bufref(&bufref, win->w_buffer);
+
   if (win->w_buffer != NULL) {
     // Close the link to the buffer.
-    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, false, true);
+    did_decrement = close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, false, true);
   }
 
   // Careful: Autocommands may have closed the tab page or made it the
@@ -3084,11 +3088,17 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
   return true;
 
 leave_open:
-  // If the buffer was removed from the window we have to give it any buffer.
-  if (win_valid_any_tab(win) && win->w_buffer == NULL) {
-    win->w_buffer = firstbuf;
-    firstbuf->b_nwindows++;
-    win_init_empty(win);
+  if (win_valid_any_tab(win)) {
+    if (win->w_buffer == NULL) {
+      // If the buffer was removed from the window we have to give it any buffer.
+      win->w_buffer = firstbuf;
+      firstbuf->b_nwindows++;
+      win_init_empty(win);
+    } else if (did_decrement && win->w_buffer == bufref.br_buf && bufref_valid(&bufref)) {
+      // close_buffer decremented the window count, but we're keeping the window.
+      // As the window is still viewing the buffer, increment the count.
+      win->w_buffer->b_nwindows++;
+    }
   }
   return false;
 }
