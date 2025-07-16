@@ -753,15 +753,17 @@ static void cmd_with_count(char *cmd, char *bufp, size_t bufsize, int64_t Prenum
 void win_set_buf(win_T *win, buf_T *buf, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
+  const handle_T win_handle = win->handle;
   tabpage_T *tab = win_find_tabpage(win);
 
   // no redrawing and don't set the window title
   RedrawingDisabled++;
 
   switchwin_T switchwin;
+  int win_result;
 
   TRY_WRAP(err, {
-    int win_result = switch_win_noblock(&switchwin, win, tab, true);
+    win_result = switch_win_noblock(&switchwin, win, tab, true);
     if (win_result != FAIL) {
       const int save_acd = p_acd;
       if (!switchwin.sw_same_win) {
@@ -776,6 +778,9 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
       }
     }
   });
+  if (win_result == FAIL && !ERROR_SET(err)) {
+    api_set_error(err, kErrorTypeException, "Failed to switch to window %d", win_handle);
+  }
 
   // If window is not current, state logic will not validate its cursor. So do it now.
   // Still needed if do_buffer returns FAIL (e.g: autocmds abort script after buffer was set).
