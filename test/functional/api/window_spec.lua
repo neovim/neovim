@@ -2026,6 +2026,38 @@ describe('API/win', function()
           .. '})'
       )
       command('new | quit')
+
+      -- Apply to opening floats too, as that can similarly create new views into a closing buffer.
+      -- For example, the following would open a float into an unloaded buffer:
+      exec([[
+        only
+        new
+        let g:buf = bufnr()
+        autocmd BufUnload * ++once let g:win = nvim_open_win(g:buf, 0, #{relative: "editor", width: 5, height: 5, row: 1, col: 1})
+        setlocal bufhidden=unload
+      ]])
+      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      eq(false, eval('nvim_buf_is_loaded(g:buf)'))
+      eq(0, eval('win_findbuf(g:buf)->len()'))
+
+      -- Only checking b_locked_split for the target buffer is insufficient, as naughty autocommands
+      -- can cause win_set_buf to remain in a closing curbuf:
+      exec([[
+        only
+        new
+        let g:buf = bufnr()
+        autocmd BufWipeout * ++once ++nested let g:buf2 = nvim_create_buf(1, 0)
+              \| execute 'autocmd BufLeave * ++once call nvim_buf_delete(g:buf2, #{force: 1})'
+              \| setlocal bufhidden=
+              \| call nvim_open_win(g:buf2, 1, #{relative: 'editor', width: 5, height: 5, col: 5, row: 5})
+        setlocal bufhidden=wipe
+      ]])
+      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      eq(false, eval('nvim_buf_is_loaded(g:buf)'))
+      eq(0, eval('win_findbuf(g:buf)->len()'))
+      -- BufLeave shouldn't run here (buf2 isn't deleted and remains hidden)
+      eq(true, eval('nvim_buf_is_loaded(g:buf2)'))
+      eq(0, eval('win_findbuf(g:buf2)->len()'))
     end)
 
     it('restores last known cursor position if BufWinEnter did not move it', function()

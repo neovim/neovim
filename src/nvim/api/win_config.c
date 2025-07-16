@@ -281,6 +281,9 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       wp->w_config = fconfig;
     }
   } else {
+    if (!check_split_disallowed_err(curwin, err)) {
+      goto cleanup;  // error already set
+    }
     wp = win_new_float(NULL, false, fconfig, err);
   }
   if (!wp) {
