@@ -4,6 +4,8 @@ local n = require('test.functional.testnvim')()
 local clear, eq = n.clear, t.eq
 local api = n.api
 local command = n.command
+local eval = n.eval
+local exec = n.exec
 
 describe('TabClosed', function()
   before_each(clear)
@@ -47,6 +49,36 @@ describe('TabClosed', function()
         eq({ 2, 3 }, api.nvim_eval('[tabpagenr(), tabpagenr("$")]'))
         eq('tabclosed:2:2:2', api.nvim_exec('bdelete Xtestfile2', true))
         eq('Xtestfile1', api.nvim_eval('bufname("")'))
+      end)
+
+      it('triggers after tab page is properly freed', function()
+        exec([[
+          let s:tp = nvim_get_current_tabpage()
+          let g:buf = bufnr()
+
+          setlocal bufhidden=wipe
+          tabnew
+          au TabClosed * ++once let g:tp_valid = nvim_tabpage_is_valid(s:tp)
+                             \| let g:abuf = expand('<abuf>')
+
+          call nvim_buf_delete(g:buf, #{force: 1})
+        ]])
+        eq(false, eval('g:tp_valid'))
+        eq(false, eval('nvim_buf_is_valid(g:buf)'))
+        eq('', eval('g:abuf'))
+
+        exec([[
+          tabnew
+          let g:buf = bufnr()
+          let s:win = win_getid()
+
+          tabfirst
+          au TabClosed * ++once let g:abuf = expand('<abuf>')
+
+          call nvim_win_close(s:win, 1)
+        ]])
+        eq(true, eval('nvim_buf_is_valid(g:buf)'))
+        eq(eval('g:buf'), tonumber(eval('g:abuf')))
       end)
     end)
 
