@@ -3040,15 +3040,11 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
     goto leave_open;
   }
 
-  bool free_tp = false;
+  int free_tp_idx = 0;
 
   // When closing the last window in a tab page remove the tab page.
   if (tp->tp_firstwin == tp->tp_lastwin) {
-    char prev_idx[NUMBUFLEN];
-    if (has_event(EVENT_TABCLOSED)) {
-      vim_snprintf(prev_idx, NUMBUFLEN, "%i", tabpage_index(tp));
-    }
-
+    free_tp_idx = tabpage_index(tp);
     int h = tabline_height();
 
     if (tp == first_tabpage) {
@@ -3065,23 +3061,25 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
       }
       ptp->tp_next = tp->tp_next;
     }
-    free_tp = true;
     redraw_tabline = true;
     if (h != tabline_height()) {
       win_new_screen_rows();
     }
-
-    if (has_event(EVENT_TABCLOSED)) {
-      apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
-    }
   }
 
   // Free the memory used for the window.
+  buf_T *buf = win->w_buffer;
   int dir;
   win_free_mem(win, &dir, tp);
 
-  if (free_tp) {
+  if (free_tp_idx > 0) {
     free_tabpage(tp);
+
+    if (has_event(EVENT_TABCLOSED)) {
+      char prev_idx[NUMBUFLEN];
+      vim_snprintf(prev_idx, NUMBUFLEN, "%i", free_tp_idx);
+      apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, buf);
+    }
   }
   return true;
 
