@@ -2285,5 +2285,18 @@ func Test_pum_position_when_wrap()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test that Vim does not crash when completion inside cmdwin opens a 'info'
+" preview window.
+func Test_popup_complete_cmdwin_preview()
+  func! CompleteWithPreview(findstart, base)
+    if a:findstart
+      return getline('.')->strpart(0, col('.') - 1)
+    endif
+    return [#{word: 'echo', info: 'bar'}, #{word: 'echomsg', info: 'baz'}]
+  endfunc
+  set omnifunc=CompleteWithPreview
+  call feedkeys("q:if\<C-X>\<C-O>\<C-N>\<ESC>\<CR>", 'tx!')
+  set omnifunc&
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
