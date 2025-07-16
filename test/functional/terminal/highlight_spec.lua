@@ -194,13 +194,7 @@ end)
 it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', function()
   clear()
   local screen = Screen.new(50, 7)
-  screen:set_default_attr_ids({
-    [1] = { background = Screen.colors.Grey90 }, -- CursorLine, CursorColumn
-    [2] = { reverse = true },
-    [3] = { bold = true }, -- ModeMsg
-    [4] = { background = Screen.colors.Grey90, reverse = true },
-    [5] = { background = Screen.colors.Red },
-  })
+  screen:add_extra_attr_ids({ [100] = { background = Screen.colors.Gray90, reverse = true } })
   command(("enew | call jobstart(['%s'], {'term':v:true})"):format(testprg('tty-test')))
   screen:expect([[
     ^tty ready                                         |
@@ -219,12 +213,12 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
   command('set cursorline cursorcolumn')
   feed('j10w')
   screen:expect([[
-    tty ready     {1: }                                   |
-     foobar foobar{1: }foobar foobar foobar foobar foobar |
-    {1:foobar foobar ^foobar foobar foobar foobar foobar f}|
-    oobar foobar f{1:o}obar foobar foobar foobar foobar fo|
-    obar foobar fo{1:o}bar foobar foobar foobar foobar foo|
-    bar foobar    {1: }                                   |
+    tty ready     {21: }                                   |
+     foobar foobar{21: }foobar foobar foobar foobar foobar |
+    {21:foobar foobar ^foobar foobar foobar foobar foobar f}|
+    oobar foobar f{21:o}obar foobar foobar foobar foobar fo|
+    obar foobar fo{21:o}bar foobar foobar foobar foobar foo|
+    bar foobar    {21: }                                   |
                                                       |
   ]])
   -- Entering terminal mode disables 'cursorline' and 'cursorcolumn'.
@@ -236,17 +230,17 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
     oobar foobar foobar foobar foobar foobar foobar fo|
     obar foobar foobar foobar foobar foobar foobar foo|
     bar foobar^                                        |
-    {3:-- TERMINAL --}                                    |
+    {5:-- TERMINAL --}                                    |
   ]])
   -- Leaving terminal mode restores old values.
   feed([[<C-\><C-N>]])
   screen:expect([[
-    tty ready{1: }                                        |
-     foobar f{1:o}obar foobar foobar foobar foobar foobar |
-    foobar fo{1:o}bar foobar foobar foobar foobar foobar f|
-    oobar foo{1:b}ar foobar foobar foobar foobar foobar fo|
-    obar foob{1:a}r foobar foobar foobar foobar foobar foo|
-    {1:bar fooba^r                                        }|
+    tty ready{21: }                                        |
+     foobar f{21:o}obar foobar foobar foobar foobar foobar |
+    foobar fo{21:o}bar foobar foobar foobar foobar foobar f|
+    oobar foo{21:b}ar foobar foobar foobar foobar foobar fo|
+    obar foob{21:a}r foobar foobar foobar foobar foobar foo|
+    {21:bar fooba^r                                        }|
                                                       |
   ]])
 
@@ -260,22 +254,22 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
   tt.feed_data(' foobar')
   tt.clear_attrs()
   screen:expect([[
-    tty ready{1: }                                        |
-     foobar f{1:o}obar foobar foobar foobar foobar foobar |
-    foobar fo{1:o}bar foobar foobar foobar foobar foobar f|
-    oobar foo{1:b}ar foobar foobar foobar foobar foobar fo|
-    obar foob{1:a}r foobar foobar foobar foobar foobar foo|
-    {1:bar fooba^r}{4: foobar}{1:                                 }|
+    tty ready{21: }                                        |
+     foobar f{21:o}obar foobar foobar foobar foobar foobar |
+    foobar fo{21:o}bar foobar foobar foobar foobar foobar f|
+    oobar foo{21:b}ar foobar foobar foobar foobar foobar fo|
+    obar foob{21:a}r foobar foobar foobar foobar foobar foo|
+    {21:bar fooba^r}{100: foobar}{21:                                 }|
                                                       |
   ]])
   feed('2gg15|')
   screen:expect([[
-    tty ready     {1: }                                   |
-    {1: foobar foobar^ foobar foobar foobar foobar foobar }|
-    foobar foobar {1:f}oobar foobar foobar foobar foobar f|
-    oobar foobar f{1:o}obar foobar foobar foobar foobar fo|
-    obar foobar fo{1:o}bar foobar foobar foobar foobar foo|
-    bar foobar{2: foo}{4:b}{2:ar}                                 |
+    tty ready     {21: }                                   |
+    {21: foobar foobar^ foobar foobar foobar foobar foobar }|
+    foobar foobar {21:f}oobar foobar foobar foobar foobar f|
+    oobar foobar f{21:o}obar foobar foobar foobar foobar fo|
+    obar foobar fo{21:o}bar foobar foobar foobar foobar foo|
+    bar foobar{2: foo}{100:b}{2:ar}                                 |
                                                       |
   ]])
 
@@ -287,22 +281,22 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
 
   -- Terminal color has higher precedence
   screen:expect([[
-    tty ready          {1: }                              |
-    {1: foobar foobar foob^ar foobar foobar foobar foobar }|
-    foobar foobar fooba{1:r} foobar foobar foobar foobar f|
-    oobar foobar foobar{1: }foobar foobar foobar foobar fo|
-    obar foobar foobar {1:f}oobar foobar foobar foobar foo|
-    bar foobar{2: foobar}{5: foobar}                          |
+    tty ready          {21: }                              |
+    {21: foobar foobar foob^ar foobar foobar foobar foobar }|
+    foobar foobar fooba{21:r} foobar foobar foobar foobar f|
+    oobar foobar foobar{21: }foobar foobar foobar foobar fo|
+    obar foobar foobar {21:f}oobar foobar foobar foobar foo|
+    bar foobar{2: foobar}{30: foobar}                          |
                                                       |
   ]])
   feed('G$')
   screen:expect([[
-    tty ready              {1: }                          |
-     foobar foobar foobar f{1:o}obar foobar foobar foobar |
-    foobar foobar foobar fo{1:o}bar foobar foobar foobar f|
-    oobar foobar foobar foo{1:b}ar foobar foobar foobar fo|
-    obar foobar foobar foob{1:a}r foobar foobar foobar foo|
-    {1:bar foobar}{4: foobar}{5: fooba^r}{1:                          }|
+    tty ready              {21: }                          |
+     foobar foobar foobar f{21:o}obar foobar foobar foobar |
+    foobar foobar foobar fo{21:o}bar foobar foobar foobar f|
+    oobar foobar foobar foo{21:b}ar foobar foobar foobar fo|
+    obar foobar foobar foob{21:a}r foobar foobar foobar foo|
+    {21:bar foobar}{100: foobar}{30: fooba^r}{21:                          }|
                                                       |
   ]])
 end)
@@ -337,14 +331,12 @@ describe(':terminal highlight forwarding', function()
     tt.feed_data('color')
     tt.clear_attrs()
     tt.feed_data('text')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       tty ready                                         |
       {2:text}{3:color}text^                                     |
                                                         |*4
       {1:-- TERMINAL --}                                    |
-    ]],
-    }
+    ]])
   end)
 end)
 
@@ -354,16 +346,6 @@ describe(':terminal highlight with custom palette', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 7, { rgb = true })
-    screen:set_default_attr_ids({
-      [1] = { foreground = tonumber('0x123456') }, -- no fg_indexed when overridden
-      [2] = { foreground = 12 },
-      [3] = { bold = true, reverse = true },
-      [5] = { background = 11 },
-      [6] = { foreground = 130 },
-      [7] = { reverse = true },
-      [8] = { background = 11 },
-      [9] = { bold = true },
-    })
     api.nvim_set_var('terminal_color_3', '#123456')
     command(("enew | call jobstart(['%s'], {'term':v:true})"):format(testprg('tty-test')))
     feed('i')
@@ -371,7 +353,7 @@ describe(':terminal highlight with custom palette', function()
       tty ready                                         |
       ^                                                  |
                                                         |*4
-      {9:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
   end)
 
@@ -381,11 +363,12 @@ describe(':terminal highlight with custom palette', function()
     tt.feed_data('text')
     tt.clear_attrs()
     tt.feed_data('text')
+    screen:add_extra_attr_ids({ [100] = { foreground = tonumber('0x123456') } })
     screen:expect([[
       tty ready                                         |
-      {1:text}text^                                          |
+      {100:text}text^                                          |
                                                         |*4
-      {9:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
   end)
 end)
@@ -395,9 +378,7 @@ describe(':terminal', function()
 
   it('can display URLs', function()
     local screen = Screen.new(50, 7)
-    screen:add_extra_attr_ids {
-      [100] = { url = 'https://example.com' },
-    }
+    screen:add_extra_attr_ids({ [100] = { url = 'https://example.com' } })
     local chan = api.nvim_open_term(0, {})
     api.nvim_chan_send(
       chan,
