@@ -359,6 +359,7 @@ function M.signature_help(config)
   config.focus_id = method
 
   lsp.buf_request_all(0, method, client_positional_params(), function(results, ctx)
+    assert(ctx.bufnr)
     if api.nvim_get_current_buf() ~= ctx.bufnr then
       -- Ignore result since buffer changed. This happens for slow language servers.
       return
@@ -381,6 +382,7 @@ function M.signature_help(config)
     --- @param update_win? integer
     local function show_signature(update_win)
       idx = (idx % total) + 1
+      assert(signatures[idx])
       local client, result = signatures[idx][1], signatures[idx][2]
       --- @type string[]?
       local triggers =

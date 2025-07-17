@@ -147,7 +147,7 @@ local function filepath_to_healthcheck(path)
       -- */health/init.lua
       name = vim.fs.dirname(vim.fs.dirname(subpath))
     end
-    name = assert(name:gsub('/', '.')) --- @type string
+    name = name:gsub('/', '.') --- @type string
 
     func = 'require("' .. name .. '.health").check()'
     filetype = 'l'
@@ -194,10 +194,10 @@ local function get_healthcheck_list(plugin_names)
 end
 
 --- @param plugin_names string
---- @return table<string, string[]> {name: [func, type], ..} representing healthchecks
+--- @return table<string,[string,string]> {name: [func, type], ..} representing healthchecks
 local function get_healthcheck(plugin_names)
   local health_list = get_healthcheck_list(plugin_names)
-  local healthchecks = {} --- @type table<string, string[]>
+  local healthchecks = {} --- @type table<string,[string,string]>
   for _, c in pairs(health_list) do
     if c[1] ~= 'vim' then
       healthchecks[c[1]] = { c[2], c[3] }
@@ -434,8 +434,7 @@ function M._check(mods, plugin_names)
 
     if func == '' then
       M.error('No healthcheck found for "' .. name .. '" plugin.')
-    end
-    if type == 'v' then
+    elseif type == 'v' then
       vim.fn.call(func, {})
     else
       local f = assert(loadstring(func))

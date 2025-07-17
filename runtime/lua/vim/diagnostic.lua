@@ -1475,7 +1475,7 @@ function M.jump(opts)
     return opts.diagnostic
   end
 
-  local count = opts.count
+  local count = assert(opts.count)
   if count == 0 then
     return nil
   end

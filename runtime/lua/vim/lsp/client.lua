@@ -263,7 +263,7 @@ local valid_encodings = {
 
 --- Normalizes {encoding} to valid LSP encoding names.
 --- @param encoding string? Encoding to normalize
---- @return string # normalized encoding name
+--- @return 'utf-8'|'utf-16'|'utf-32' # normalized encoding name
 local function validate_encoding(encoding)
   validate('encoding', encoding, 'string', true)
   if not encoding then
@@ -271,10 +271,7 @@ local function validate_encoding(encoding)
   end
   return valid_encodings[encoding:lower()]
     or error(
-      string.format(
-        "Invalid position encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'",
-        encoding
-      )
+      ("Invalid position encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'"):format(encoding)
     )
 end
 

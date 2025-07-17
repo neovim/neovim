@@ -26,8 +26,8 @@ local M = {
   dupe = 0, -- Number of times message is repeated.
   prev_msg = '', -- Concatenated content of the previous message.
   virt = { -- Stored virt_text state.
-    last = { {}, {}, {}, {} }, ---@type MsgContent[] status in last cmdline row.
-    msg = { {}, {} }, ---@type MsgContent[] [(x)] indicators in message window.
+    last = { {}, {}, {}, {} }, ---@type [MsgContent,MsgContent,MsgContent,MsgContent] status in last cmdline row.
+    msg = { {}, {} }, ---@type [MsgContent,MsgContent] : [(x)] indicators in message window.
     idx = { mode = 1, search = 2, cmd = 3, ruler = 4, spill = 1, dupe = 2 },
     ids = {}, ---@type { ['last'|'msg']: integer? } Table of mark IDs.
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
@@ -348,11 +348,12 @@ function M.show_msg(tar, content, replace_last, append, full)
   end
 end
 
+---@alias MsgChunk [integer, string, integer]
+---@alias MsgContent MsgChunk[]
+
 --- Route the message to the appropriate sink.
 ---
 ---@param kind string
----@alias MsgChunk [integer, string, integer]
----@alias MsgContent MsgChunk[]
 ---@param content MsgContent
 ---@param replace_last boolean
 --@param history boolean

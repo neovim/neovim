@@ -70,7 +70,7 @@ function M.await(argc, fun, ...)
 
   --- @param callback fun(...:any)
   return coroutine.yield(function(callback)
-    args[argc] = assert(callback)
+    args[argc] = callback
     fun(unpack(args, 1, math.max(argc, args.n)))
   end)
 end

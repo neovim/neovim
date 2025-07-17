@@ -1491,7 +1491,7 @@ function M._make_floating_popup_size(contents, opts)
   local title_length = 0
   local chunks = type(opts.title) == 'string' and { { opts.title } } or opts.title or {}
   for _, chunk in
-    ipairs(chunks --[=[@as [string, string][]]=])
+    ipairs(chunks --[[@as [string, string][] ]])
   do
     title_length = title_length + vim.fn.strdisplaywidth(chunk[1])
   end
