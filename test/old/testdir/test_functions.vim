@@ -3980,6 +3980,10 @@ func Test_blob2str()
     call assert_equal(["🁰🁳"], blob2str(0zF09F81B0.F09F81B3))
     call assert_equal(['«»'], blob2str(0zABBB, {'encoding': 'latin1'}))
     call assert_equal(['«»'], blob2str(0zC2ABC2BB, {'encoding': 'utf8'}))
+    call assert_equal(['«»'], blob2str(0zC2ABC2BB, {'encoding': 'utf-8'}))
+
+    call assert_equal(['a'], blob2str(0z61, v:_null_dict))
+    call assert_equal(['a'], blob2str(0z61, {'encoding': v:_null_string}))
 
     #" Invalid encoding
     call assert_fails("call blob2str(0z80)", "E1515: Unable to convert from 'utf-8' encoding")
