@@ -629,10 +629,13 @@ M.funcs = {
       items:
           encoding	Decode the bytes in {blob} using this
       		encoding.  The value is a |String|.  See
-      		|encoding-names| for the supported values.
+      		|encoding-names| for the supported values
+      		(plus the special value "none").
       					*E1515*
-      An error is given and an empty List is returned if
-      an invalid byte sequence is encountered in {blob},
+      An error is given and an empty List is returned if an invalid
+      byte sequence is encountered in {blob}.  To suppress this
+      validation and get potentially invalid string, set "encoding"
+      in {options} to "none".
 
       Returns an empty List if blob is empty.
 
@@ -11460,7 +11463,8 @@ M.funcs = {
 
       The argument {options} is a |Dict| and supports the following
       items:
-          encoding	Encode the characters using this encoding.
+          encoding	Convert the characters using this encoding
+      		before making the Blob.
       		The value is a |String|.  See |encoding-names|
       		for the supported values.
 

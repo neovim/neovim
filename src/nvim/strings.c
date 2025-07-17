@@ -2629,6 +2629,13 @@ void f_blob2str(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
+  bool validate_utf8 = true;
+  if (from_encoding != NULL && strcmp(from_encoding, "none") == 0) {
+    validate_utf8 = false;
+    xfree(from_encoding);
+    from_encoding = NULL;
+  }
+
   int idx = 0;
   while (idx < blen) {
     char *str = string_from_blob(blob, &idx);
@@ -2643,7 +2650,7 @@ void f_blob2str(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
     }
 
-    if (!utf_valid_string(converted_str, NULL)) {
+    if (validate_utf8 && !utf_valid_string(converted_str, NULL)) {
       semsg(_(e_str_encoding_failed), "from", p_enc);
       xfree(converted_str);
       goto done;
