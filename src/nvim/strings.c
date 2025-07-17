@@ -2645,13 +2645,13 @@ void f_blob2str(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       converted_str = convert_string(str, from_encoding, p_enc);
       xfree(str);
       if (converted_str == NULL) {
-        semsg(_(e_str_encoding_failed), "from", from_encoding);
+        semsg(_(e_str_encoding_from_failed), from_encoding);
         goto done;
       }
     }
 
     if (validate_utf8 && !utf_valid_string(converted_str, NULL)) {
-      semsg(_(e_str_encoding_failed), "from", p_enc);
+      semsg(_(e_str_encoding_from_failed), p_enc);
       xfree(converted_str);
       goto done;
     }
@@ -2706,7 +2706,7 @@ void f_str2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (to_encoding != NULL) {
       str = convert_string(str, p_enc, to_encoding);
       if (str == NULL) {
-        semsg(_(e_str_encoding_failed), "to", to_encoding);
+        semsg(_(e_str_encoding_to_failed), to_encoding);
         goto done;
       }
     }

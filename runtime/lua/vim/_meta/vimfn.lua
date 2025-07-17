@@ -450,7 +450,7 @@ function vim.fn.blob2list(blob) end
 ---     encoding.  The value is a |String|.  See
 ---     |encoding-names| for the supported values
 ---     (plus the special value "none").
----           *E1515*
+---           *E1515* *E1516*
 --- An error is given and an empty List is returned if an invalid
 --- byte sequence is encountered in {blob}.  To suppress this
 --- validation and get potentially invalid string, set "encoding"

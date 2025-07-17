@@ -3956,10 +3956,10 @@ func Test_str2blob()
 
     call assert_fails("call str2blob(['abc'], [])", 'E1206: Dictionary required for argument 2')
     call assert_fails("call str2blob(['abc'], {'encoding': []})", 'E730: Using a List as a String')
-    call assert_fails("call str2blob(['abc'], {'encoding': 'ab12xy'})", 'E1515: Unable to convert to ''ab12xy'' encoding')
-    call assert_fails("call str2blob(['ŝş'], {'encoding': 'latin1'})", 'E1515: Unable to convert to ''latin1'' encoding')
-    call assert_fails("call str2blob(['அஇ'], {'encoding': 'latin1'})", 'E1515: Unable to convert to ''latin1'' encoding')
-    call assert_fails("call str2blob(['🁰🁳'], {'encoding': 'latin1'})", 'E1515: Unable to convert to ''latin1'' encoding')
+    call assert_fails("call str2blob(['abc'], {'encoding': 'ab12xy'})", 'E1516: Unable to convert to ''ab12xy'' encoding')
+    call assert_fails("call str2blob(['ŝş'], {'encoding': 'latin1'})", 'E1516: Unable to convert to ''latin1'' encoding')
+    call assert_fails("call str2blob(['அஇ'], {'encoding': 'latin1'})", 'E1516: Unable to convert to ''latin1'' encoding')
+    call assert_fails("call str2blob(['🁰🁳'], {'encoding': 'latin1'})", 'E1516: Unable to convert to ''latin1'' encoding')
   END
   call CheckLegacyAndVim9Success(lines)
 endfunc
