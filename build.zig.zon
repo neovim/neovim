@@ -31,11 +31,9 @@
         },
         .utf8proc = .{ .path = "./deps/utf8proc/" },
         .unibilium = .{ .path = "./deps/unibilium/" },
-        // TODO: https://github.com/allyourcodebase/libiconv might work for all??
-        .iconv_apple = .{ .path = "./deps/iconv_apple/", .lazy = true },
-        .win_iconv = .{
-            .url = "git+https://github.com/allyourcodebase/win-iconv#497c381e41437856527b7a00b66e75af3f1f7dcc",
-            .hash = "win_iconv-0.0.10--19NP7MRAAD3CC0z2Jp2YTy649Q724cYYaR9uL7v7NCh",
+        .libiconv = .{
+            .url = "git+https://github.com/allyourcodebase/libiconv#9def4c8a1743380e85bcedb80f2c15b455e236f3",
+            .hash = "libiconv-1.18.0-p9sJwWnqAACzVYeWgXB5r5lOQ74XwTPlptixV0JPRO28",
             .lazy = true,
         },
         .lua_dev_deps = .{
