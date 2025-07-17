@@ -516,7 +516,7 @@ tag		command		   action in op-pending and Visual mode	~
 tag		command		   action in Normal mode	~
 ------------------------------------------------------------------------------ ~
 |CTRL-W_CTRL-B|	CTRL-W CTRL-B	   same as "CTRL-W b"
-|CTRL-W_CTRL-C|	CTRL-W CTRL-C	   same as "CTRL-W c"
+|CTRL-W_CTRL-C|	CTRL-W CTRL-C	   no-op |CTRL-W_CTRL-C|
 |CTRL-W_CTRL-D|	CTRL-W CTRL-D	   same as "CTRL-W d"
 |CTRL-W_CTRL-F|	CTRL-W CTRL-F	   same as "CTRL-W f"
 		CTRL-W CTRL-G	   same as "CTRL-W g .."
