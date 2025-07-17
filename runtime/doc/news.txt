@@ -270,7 +270,7 @@ TREESITTER
 
 TUI
 
-• |TermResponse| now supports APC query responses.
+• |TermResponse| now supports DA1 and APC query responses.
 
 UI
 

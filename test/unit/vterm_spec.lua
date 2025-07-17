@@ -2659,7 +2659,7 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     -- DA
     reset(state, nil)
     push('\x1b[c', vt)
-    expect_output('\x1b[?1;2c')
+    expect_output('\x1b[?61;22;52c')
 
     -- XTVERSION
     reset(state, nil)
