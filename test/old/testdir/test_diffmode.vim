@@ -2607,7 +2607,14 @@ func Test_linematch_diff()
       \ ['!',
       \ 'abc d!',
       \ 'd!'])
+  call term_sendkeys(buf, ":\<CR>") " clear cmdline
   call VerifyScreenDump(buf, 'Test_linematch_diff1', {})
+
+  " test that filler is always implicitly set by linematch
+  call term_sendkeys(buf, ":set diffopt-=filler\<CR>")
+  call term_sendkeys(buf, ":\<CR>") " clear cmdline
+  call VerifyScreenDump(buf, 'Test_linematch_diff1', {})
+
   " clean up
   call StopVimInTerminal(buf)
 endfunc
@@ -2820,4 +2827,440 @@ func Test_linematch_3diffs_sanity_check()
   " clean up
   call StopVimInTerminal(buf)
 endfunc
+
+func Test_diffanchors()
+  CheckScreendump
+  call WriteDiffFiles3(0,
+      \ ["anchorA1", "1", "2", "3",
+      \  "100", "101", "102", "anchorB", "103", "104", "105"],
+      \ ["100", "101", "102", "anchorB", "103", "104", "105",
+      \  "anchorA2", "1", "2", "3"],
+      \ ["100", "anchorB", "103",
+      \  "anchorA3", "1", "2", "3"])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2 Xdifile3', {})
+
+  " Simple diff without any anchors
+  call VerifyInternal(buf, "Test_diff_anchors_00", "")
+
+  " Setting diffopt+=anchor or diffanchors without the other won't do anything
+  call VerifyInternal(buf, "Test_diff_anchors_00", " diffopt+=anchor")
+  call VerifyInternal(buf, "Test_diff_anchors_00", " dia=1/anchorA/")
+
+  " Use a single anchor by specifying a pattern. Test both internal and
+  " external diff to make sure both paths work.
+  call VerifyBoth(buf, "Test_diff_anchors_01", " dia=1/anchorA/ diffopt+=anchor")
+
+  " Use 2 anchors. They should be sorted by line number, so in file 2/3
+  " anchorB is used before anchorA.
+  call VerifyBoth(buf, "Test_diff_anchors_02", " dia=1/anchorA/,1/anchorB/ diffopt+=anchor")
+
+  " Set marks and specify addresses using marks and repeat the test
+  call term_sendkeys(buf, ":2wincmd w\<CR>:1/anchorA/mark a\<CR>")
+  call term_sendkeys(buf, ":1/anchorB/mark b\<CR>")
+  call term_sendkeys(buf, ":3wincmd w\<CR>:1/anchorA/mark a\<CR>")
+  call term_sendkeys(buf, ":1/anchorB/mark b\<CR>")
+  call term_sendkeys(buf, ":1wincmd w\<CR>:1/anchorA/mark a\<CR>")
+  call term_sendkeys(buf, ":1/anchorB/mark b\<CR>")
+
+  call VerifyInternal(buf, "Test_diff_anchors_01", " dia='a diffopt+=anchor")
+  call VerifyInternal(buf, "Test_diff_anchors_02", " dia='a,'b diffopt+=anchor")
+
+  " Update marks to point somewhere else. When we first set the mark the diff
+  " won't be updated until we manually invoke :diffupdate.
+  call VerifyInternal(buf, "Test_diff_anchors_01", " dia='a diffopt+=anchor")
+  call term_sendkeys(buf, ":1wincmd w\<CR>:1/anchorB/mark a\<CR>:")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, "Test_diff_anchors_01", {})
+  call term_sendkeys(buf, ":diffupdate\<CR>:")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, "Test_diff_anchors_03", {})
+
+  " Use local diff anchors with line numbers, and repeat the same test
+  call term_sendkeys(buf, ":2wincmd w\<CR>:setlocal dia=8\<CR>")
+  call term_sendkeys(buf, ":3wincmd w\<CR>:setlocal dia=4\<CR>")
+  call term_sendkeys(buf, ":1wincmd w\<CR>:setlocal dia=1\<CR>")
+  call VerifyInternal(buf, "Test_diff_anchors_01", " diffopt+=anchor")
+  call term_sendkeys(buf, ":2wincmd w\<CR>:setlocal dia=8,4\<CR>")
+  call term_sendkeys(buf, ":3wincmd w\<CR>:setlocal dia=4,2\<CR>")
+  call term_sendkeys(buf, ":1wincmd w\<CR>:setlocal dia=1,8\<CR>")
+  call VerifyInternal(buf, "Test_diff_anchors_02", " diffopt+=anchor")
+
+  " Test multiple diff anchors on the same line in file 1.
+  call term_sendkeys(buf, ":1wincmd w\<CR>:setlocal dia=1,1\<CR>")
+  call VerifyInternal(buf, "Test_diff_anchors_04", " diffopt+=anchor")
+
+  " Test that if one file has fewer diff anchors than others. Vim should only
+  " use the minimum in this case.
+  call term_sendkeys(buf, ":1wincmd w\<CR>:setlocal dia=8\<CR>")
+  call VerifyInternal(buf, "Test_diff_anchors_05", " diffopt+=anchor")
+
+  " $+1 should anchor everything past the last line
+  call term_sendkeys(buf, ":1wincmd w\<CR>:setlocal dia=$+1\<CR>")
+  call VerifyInternal(buf, "Test_diff_anchors_06", " diffopt+=anchor")
+
+  " Sorting of diff anchors should work with multiple anchors
+  call term_sendkeys(buf, ":1wincmd w\<CR>:setlocal dia=1,10,8,2\<CR>")
+  call term_sendkeys(buf, ":2wincmd w\<CR>:setlocal dia=1,2,3,4\<CR>")
+  call term_sendkeys(buf, ":3wincmd w\<CR>:setlocal dia=4,3,2,1\<CR>")
+  call VerifyInternal(buf, "Test_diff_anchors_07", " diffopt+=anchor")
+
+  " Intentionally set an invalid anchor with wrong line number. Should fall
+  " back to treat it as if no anchors are used at all.
+  call term_sendkeys(buf, ":1wincmd w\<CR>:setlocal dia=1,10,8,2,1000 | silent! diffupdate\<CR>:")
+  call VerifyScreenDump(buf, "Test_diff_anchors_00", {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test that scrollbind and topline calculations work correctly, even when diff
+" anchors create adjacent diff blocks which complicates the calculations.
+func Test_diffanchors_scrollbind_topline()
+  CheckScreendump
+
+  " Simple overlapped line anchored to be adjacent to each other
+  call WriteDiffFiles(0,
+      \ ["anchor1", "diff1a", "anchor2"],
+      \ ["anchor1", "diff2a", "anchor2"])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2', {})
+
+  call term_sendkeys(buf, ":1wincmd w\<CR>:setlocal dia=2\<CR>")
+  call term_sendkeys(buf, ":2wincmd w\<CR>:setlocal dia=3\<CR>")
+
+  call VerifyInternal(buf, "Test_diff_anchors_scrollbind_topline_01", " diffopt+=anchor")
+  call term_sendkeys(buf, "\<Esc>\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_02", {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_03", {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_04", {})
+
+  " Also test no-filler
+  call term_sendkeys(buf, "gg")
+  call VerifyInternal(buf, "Test_diff_anchors_scrollbind_topline_05", " diffopt+=anchor diffopt-=filler")
+  call term_sendkeys(buf, "\<Esc>\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_06", {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_07", {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_diffanchors_scrollbind_topline2()
+  CheckScreendump
+
+  " More-complicated case with 3 files and multiple overlapping diff blocks
+  call WriteDiffFiles3(0,
+      \ ["anchor1"],
+      \ ["diff2a", "diff2b", "diff2c", "diff2d", "anchor2"],
+      \ ["diff3a", "diff3c", "diff3d", "anchor3", "diff3e"])
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2 Xdifile3', {})
+
+  call term_sendkeys(buf, ":1wincmd w\<CR>:setlocal dia=1,1,2\<CR>")
+  call term_sendkeys(buf, ":2wincmd w\<CR>:setlocal dia=3,5,6\<CR>")
+  call term_sendkeys(buf, ":3wincmd w\<CR>:setlocal dia=2,4,5\<CR>")
+
+  call VerifyInternal(buf, "Test_diff_anchors_scrollbind_topline_08", " diffopt+=anchor")
+  call term_sendkeys(buf, ":1wincmd w\<CR>")
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_09", {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_10", {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_11", {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_12", {})
+
+  " Also test no-filler
+  call term_sendkeys(buf, ":3wincmd w\<CR>gg")
+  call VerifyInternal(buf, "Test_diff_anchors_scrollbind_topline_13", " diffopt+=anchor diffopt-=filler")
+  call term_sendkeys(buf, "\<Esc>\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_14", {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_15", {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_16", {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, "Test_diff_anchors_scrollbind_topline_17", {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test that setting 'diffanchors' will update the diff.
+func Test_diffanchors_option_set_update()
+  set diffanchors='a diffopt=internal,filler,anchor
+
+  " Set up 3 tabs that share some buffers, and set up marks on each of them.
+  " We want to make sure only relevant tabs are updated if buffer-local diff
+  " anchors are updated, but all tabs should refresh if global diff anchors
+  " are updated (see diffanchors_changed() in code).
+
+  " Tab 1. A buffer here will be reused.
+  call setline(1, range(1, 10))
+  3mark a
+  4mark b
+  diffthis
+  new
+  call setline(1, range(21, 25))
+  let buf = bufnr()
+  1mark a
+  2mark b
+  diffthis
+  call assert_equal(2, diff_filler(1))
+  call assert_equal(0, diff_filler(2))
+
+  " Tab 2. "buf" is here but intentionally not participating in diff.
+  tabnew
+  exec 'buf ' .. buf
+  diffoff
+  new
+  call setline(1, range(31, 40))
+  8mark a
+  9mark b
+  diffthis
+  new
+  call setline(1, range(41, 50))
+  5mark a
+  6mark b
+  diffthis
+
+  call assert_equal(3, diff_filler(5))
+  call assert_equal(0, diff_filler(6))
+  call assert_equal(0, diff_filler(7))
+
+  " Update mark a location, and check that the diff has *not* updated. When
+  " updating marks diff's won't automatically update.
+  7mark a
+  call assert_equal(3, diff_filler(5))
+  call assert_equal(0, diff_filler(6))
+  call assert_equal(0, diff_filler(7))
+
+  " Tab 3. "buf" is used here and also in a diff.
+  tabnew
+  call setline(1, range(51, 65))
+  10mark a
+  11mark b
+  diffthis
+  exec 'sbuffer ' .. buf
+  diffthis
+
+  " Change local diff anchor of "buf" to mark b
+  setlocal diffanchors='b
+
+  " Tab 1 should immediately update the diff to use mark b because the buf
+  " local diff anchor has been changed in "buf".
+  1tabnext
+  call assert_equal(0, diff_filler(1))
+  call assert_equal(1, diff_filler(2))
+
+  " Tab 2 should not immediately update because "buf" is not a diff buffer
+  " here.
+  2tabnext
+  call assert_equal(3, diff_filler(5))
+  call assert_equal(0, diff_filler(6))
+  call assert_equal(0, diff_filler(7))
+
+  " Manual diff update would refresh the diff since we previously changed mark
+  " a's location above.
+  diffupdate
+  call assert_equal(0, diff_filler(5))
+  call assert_equal(0, diff_filler(6))
+  call assert_equal(1, diff_filler(7))
+
+  " Go back to tab 1. Reset diff anchor to global value and make sure it uses
+  " mark a again.
+  1tabnext
+  set diffanchors<
+  call assert_equal(2, diff_filler(1))
+  call assert_equal(0, diff_filler(2))
+
+  " Now, change the global diff anchor to mark b. This should affect all tabs
+  " including tab 2 which should update automatically.
+  set diffanchors='b
+  call assert_equal(0, diff_filler(1))
+  call assert_equal(2, diff_filler(2))
+
+  2tabnext
+  call assert_equal(0, diff_filler(5))
+  call assert_equal(3, diff_filler(6))
+  call assert_equal(0, diff_filler(7))
+
+  %bw!
+  set diffopt&
+  set diffanchors&
+endfunc
+
+" Test that using diff anchors with window/buffer-local addresses will work as
+" expected and use the relevant window/buffer instead of curbuf/curwin.
+func Test_diffanchors_buf_win_local_addresses()
+  " Win 1-3 point to buffer 1. Set up different window-specific jump history
+  " Win 2 is the one we activate diff mode on.
+  call setline(1, range(1, 15))
+  norm 2gg
+  norm 3gg
+
+  split
+  norm 4gg
+  norm 5gg
+
+  split
+  norm 11gg
+  norm 12gg
+  call setline(10, 'new text 1') " update the '. mark to line 10
+
+  " Win 4 points to buffer 2
+  botright vert new
+  call setline(1, range(101, 110))
+  norm 8gg
+  norm 9gg
+  call setline(3, 'new text 2') " update the '. mark to line 3
+
+  2wincmd w
+  diffthis
+  4wincmd w
+  diffthis
+
+  " Test buffer-local marks using '. Should be anchored to lines 10 / 3.
+  set diffopt=internal,filler,anchor
+  set diffanchors='.
+  4wincmd w
+  call assert_equal(7, diff_filler(3))
+
+  " Test window-local marks using '' Should be anchored to lines 4 / 8.
+  " Note that windows 1 & 3 point to the buffer being diff'ed but are not used
+  " for diffing themselves and therefore should not be used. Windows 2 & 4
+  " should be used.
+  set diffanchors=''
+  2wincmd w
+  call assert_equal(4, diff_filler(4))
+
+  " Also test "." for the current cursor position, which is also
+  " window-specific. Make sure the cursor position at the longer file doesn't
+  " result in the other file using out of bounds line number.
+  4wincmd w
+  norm G
+  2wincmd w
+  norm G
+  set diffanchors=.
+  diffupdate
+  4wincmd w
+  call assert_equal(5, diff_filler(10))
+
+  %bw!
+  set diffopt&
+  set diffanchors&
+endfunc
+
+" Test diff anchors error handling for anchors that fail to resolve to a line.
+" These are not handled during option parsing because they depend on the
+" specifics of the buffer at diff time.
+func Test_diffanchors_invalid()
+  call setline(1, range(1, 5))
+  new
+  call setline(1, range(11, 20))
+  set diffopt=internal,filler,anchor
+  windo diffthis
+  1wincmd w
+
+  " Line numbers that are out of bounds should be an error
+  set diffanchors=0
+  call assert_fails('diffupdate', 'E16:')
+  set diffanchors=1
+  diffupdate
+  set diffanchors=$
+  diffupdate
+  set diffanchors=$+1
+  diffupdate
+  set diffanchors=$+2
+  call assert_fails('diffupdate', 'E16:')
+
+  " Test that non-existent marks in any one buffer will be detected
+  set diffanchors='a
+  call assert_fails('diffupdate', 'E20:')
+  2mark a
+  call assert_fails('diffupdate', 'E20:')
+
+  set diffanchors=1
+  setlocal diffanchors='a
+  diffupdate
+
+  set diffanchors<
+  windo 2mark a
+  set diffanchors='b
+  call assert_fails('diffupdate', 'E20:')
+  set diffanchors='a
+  diffupdate
+
+  " File marks are ok to use for anchors only if it is in the same file
+  1wincmd w
+  3mark C
+  setlocal diffanchors='C
+  diffupdate
+  set diffanchors='C
+  call assert_fails('diffupdate', 'E20:')
+
+  " Buffer-local marks also can only be used in buffers that have them.
+  set diffanchors=1
+  exec "norm 1ggVj\<Esc>"
+  setlocal diffanchors='<
+  diffupdate
+  set diffanchors='<
+  call assert_fails('diffupdate', 'E20:')
+
+  " Pattern search that failed will be an error too
+  let @/='orig_search_pat'
+  set diffanchors=1/5/
+  diffupdate
+  call assert_equal('orig_search_pat', @/) " also check we don't pollute the search register
+  set diffanchors=1/does_not_exist/
+  call assert_fails('diffupdate', 'E1550:')
+  call assert_equal('orig_search_pat', @/)
+
+  %bw!
+  set diffopt&
+  set diffanchors&
+endfunc
+
+" Test diffget/diffput behaviors when using diff anchors which could create
+" adjacent diff blocks.
+func Test_diffget_diffput_diffanchors()
+  set diffanchors=1/anchor/
+  set diffopt=internal,filler,anchor
+
+  call setline(1, ['1', 'anchor1', '4'])
+  diffthis
+  new
+  call setline(1, ['2', '3', 'anchor2', '4', '5'])
+  diffthis
+  wincmd w
+
+  " Test using no-range diffget. It should grab the closest diff block only,
+  " even if there are multiple adjacent blocks.
+  2
+  diffget
+  call assert_equal(['1', 'anchor2', '4'], getline(1, '$'))
+  diffget
+  call assert_equal(['2', '3', 'anchor2', '4'], getline(1, '$'))
+
+  " Test using a range to get/put all the adjacent diff blocks.
+  1,$delete
+  call setline(1, ['anchor1', '4'])
+  0,1 diffget
+  call assert_equal(['2', '3', 'anchor2', '4'], getline(1, '$'))
+
+  1,$delete
+  call setline(1, ['anchor1', '4'])
+  0,$+1 diffget
+  call assert_equal(['2', '3', 'anchor2', '4', '5'], getline(1, '$'))
+
+  1,$delete
+  call setline(1, ['anchor1', '4'])
+  0,1 diffput
+  wincmd w
+  call assert_equal(['anchor1', '4', '5'], getline(1,'$'))
+
+  %bw!
+  set diffopt&
+  set diffanchors&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

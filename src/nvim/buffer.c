@@ -2113,6 +2113,7 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_ffu);
   callback_free(&buf->b_ffu_cb);
   clear_string_option(&buf->b_p_dict);
+  clear_string_option(&buf->b_p_dia);
   clear_string_option(&buf->b_p_tsr);
   clear_string_option(&buf->b_p_qe);
   buf->b_p_ar = -1;

@@ -732,7 +732,7 @@ int win_get_fill(win_T *wp, linenr_T lnum)
 
   // be quick when there are no filler lines
   if (diffopt_filler()) {
-    int n = diff_check(wp, lnum);
+    int n = diff_check_fill(wp, lnum);
 
     if (n > 0) {
       return virt_lines + n;
@@ -943,7 +943,7 @@ int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
   if (diffopt_filler()) {
     for (int lnum = first; lnum <= last; lnum++) {
       // Note: this also considers folds.
-      int n = diff_check(wp, lnum);
+      int n = diff_check_fill(wp, lnum);
       count += MAX(n, 0);
     }
   }

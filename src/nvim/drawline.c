@@ -1276,8 +1276,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   wlv.filler_lines = diff_check_with_linestatus(wp, lnum, &linestatus);
   diffline_T line_changes = { 0 };
   int change_index = -1;
-  if (wlv.filler_lines < 0 || linestatus < 0) {
-    if (wlv.filler_lines == -1 || linestatus == -1) {
+  if (linestatus < 0) {
+    if (linestatus == -1) {
       if (diff_find_change(wp, lnum, &line_changes)) {
         wlv.diff_hlf = HLF_ADD;      // added line
       } else if (line_changes.num_changes > 0) {
@@ -1299,9 +1299,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
     } else {
       wlv.diff_hlf = HLF_ADD;               // added line
-    }
-    if (linestatus == 0) {
-      wlv.filler_lines = 0;
     }
     area_highlighting = true;
   }
