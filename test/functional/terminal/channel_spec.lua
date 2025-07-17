@@ -144,80 +144,63 @@ describe('no crash when TermOpen autocommand', function()
     api.nvim_set_option_value('shell', testprg('shell-test'), {})
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
     screen = Screen.new(60, 4)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-    })
   end)
 
   it('processes job exit event when using jobstart(…,{term=true})', function()
     command([[autocmd TermOpen * call input('')]])
     async_meths.nvim_command('terminal foobar')
-    screen:expect {
-      grid = [[
+    screen:expect([[
                                                                   |
-      {0:~                                                           }|*2
+      {1:~                                                           }|*2
       ^                                                            |
-    ]],
-    }
+    ]])
     feed('<CR>')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^ready $ foobar                                              |
                                                                   |
       [Process exited 0]                                          |
                                                                   |
-    ]],
-    }
+    ]])
     feed('i<CR>')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                                                            |
-      {0:~                                                           }|*2
+      {1:~                                                           }|*2
                                                                   |
-    ]],
-    }
+    ]])
     assert_alive()
   end)
 
   it('wipes buffer and processes events when using jobstart(…,{term=true})', function()
     command([[autocmd TermOpen * bwipe! | call input('')]])
     async_meths.nvim_command('terminal foobar')
-    screen:expect {
-      grid = [[
+    screen:expect([[
                                                                   |
-      {0:~                                                           }|*2
+      {1:~                                                           }|*2
       ^                                                            |
-    ]],
-    }
+    ]])
     feed('<CR>')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                                                            |
-      {0:~                                                           }|*2
+      {1:~                                                           }|*2
                                                                   |
-    ]],
-    }
+    ]])
     assert_alive()
   end)
 
   it('wipes buffer and processes events when using nvim_open_term()', function()
     command([[autocmd TermOpen * bwipe! | call input('')]])
     async_meths.nvim_open_term(0, {})
-    screen:expect {
-      grid = [[
+    screen:expect([[
                                                                   |
-      {0:~                                                           }|*2
+      {1:~                                                           }|*2
       ^                                                            |
-    ]],
-    }
+    ]])
     feed('<CR>')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                                                            |
-      {0:~                                                           }|*2
+      {1:~                                                           }|*2
                                                                   |
-    ]],
-    }
+    ]])
     assert_alive()
   end)
 end)
@@ -236,8 +219,7 @@ describe('nvim_open_term', function()
     local term = api.nvim_open_term(buf, { force_crlf = true })
     api.nvim_win_set_buf(win, buf)
     api.nvim_chan_send(term, 'here\nthere\nfoo\r\nbar\n\ntest')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^here        |
       there       |
       foo         |
@@ -245,11 +227,9 @@ describe('nvim_open_term', function()
                   |
       test        |
                   |*4
-    ]],
-    }
+    ]])
     api.nvim_chan_send(term, '\nfirst')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^here        |
       there       |
       foo         |
@@ -258,8 +238,7 @@ describe('nvim_open_term', function()
       test        |
       first       |
                   |*3
-    ]],
-    }
+    ]])
   end)
 
   it('with force_crlf=false does not convert newlines', function()
@@ -268,10 +247,10 @@ describe('nvim_open_term', function()
     local term = api.nvim_open_term(buf, { force_crlf = false })
     api.nvim_win_set_buf(win, buf)
     api.nvim_chan_send(term, 'here\nthere')
-    screen:expect { grid = [[
+    screen:expect([[
       ^here        |
           there   |
                   |*8
-    ]] }
+    ]])
   end)
 end)

@@ -961,16 +961,14 @@ describe('jobs', function()
       ]],
         timeout = 100,
       }
-      screen:expect {
-        grid = [[
+      screen:expect([[
                                                           |
         {3:                                                  }|
         aaa                                               |
         bbb                                               |
         ccc                                               |
         {6:Press ENTER or type command to continue}^           |
-      ]],
-      }
+      ]])
       feed('<CR>')
       fn.jobstop(api.nvim_get_var('id'))
     end)
@@ -993,16 +991,14 @@ describe('jobs', function()
         endfunc
       ]])
       feed_command('call PrintAndPoll()')
-      screen:expect {
-        grid = [[
+      screen:expect([[
                                                           |
         {3:                                                  }|
         aaa                                               |
         bbb                                               |
         ccc                                               |
         {6:Press ENTER or type command to continue}^           |
-      ]],
-      }
+      ]])
       feed('<CR>')
       fn.jobstop(api.nvim_get_var('id'))
       eq(0, busy)
@@ -1260,9 +1256,9 @@ describe('jobs', function()
     screen:expect([[
       ^                                                  |
       ~                                                 |*3
-      {1:[No Name]                       0,0-1          All}|
+      {2:[No Name]                       0,0-1          All}|
                                                         |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
 
     feed(':q<CR>')
@@ -1273,7 +1269,7 @@ describe('jobs', function()
                                                           |
         [Process exited 0]^                                |
                                                           |*4
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end
   end)

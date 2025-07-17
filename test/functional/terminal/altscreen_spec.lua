@@ -36,13 +36,13 @@ describe(':terminal altscreen', function()
       line7                                             |
       line8                                             |
       ^                                                  |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
     enter_altscreen()
     screen:expect([[
                                                         |*5
       ^                                                  |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
     eq(10, api.nvim_buf_line_count(0))
   end)
@@ -69,7 +69,7 @@ describe(':terminal altscreen', function()
         line7                                             |
         line8                                             |
         ^                                                  |
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
       feed('<c-\\><c-n>gg')
       screen:expect([[
@@ -104,7 +104,7 @@ describe(':terminal altscreen', function()
         line15                                            |
         line16                                            |
         ^                                                  |
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end)
 
@@ -133,7 +133,7 @@ describe(':terminal altscreen', function()
                                                           |*2
         rows: 4, cols: 50                                 |
         ^                                                  |
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end
 
@@ -161,7 +161,7 @@ describe(':terminal altscreen', function()
           line6                                             |
           line7                                             |
           ^line8                                             |
-          {3:-- TERMINAL --}                                    |
+          {5:-- TERMINAL --}                                    |
         ]])
       end)
     end)
