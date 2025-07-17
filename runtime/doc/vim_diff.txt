@@ -321,6 +321,7 @@ Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
 - |RecordingEnter|
 - |RecordingLeave|
+- |SearchPost|
 - |SearchWrapped|
 - |Signal|
 - |TabNewEntered|
