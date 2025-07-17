@@ -78,8 +78,8 @@ pub fn build(b: *std.Build) !void {
     const lua = lazyArtifact(ziglua, "lua") orelse return;
     // const lua = ziglua.artifact("lua");
 
-    const libuv_dep = if (is_windows) b.lazyDependency("libuv_win", .{ .target = target, .optimize = optimize }) else b.dependency("libuv", .{ .target = target, .optimize = optimize });
-    const libuv = (libuv_dep orelse return).artifact("uv");
+    const libuv_dep = b.dependency("libuv", .{ .target = target, .optimize = optimize });
+    const libuv = libuv_dep.artifact("uv");
 
     const libluv = try build_lua.build_libluv(b, target, optimize, lua, libuv);
 
