@@ -2700,7 +2700,7 @@ void f_str2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     char *str = TV_LIST_ITEM_TV(li)->vval.v_string;
 
     if (str == NULL) {
-      continue;
+      str = "";
     }
 
     if (to_encoding != NULL) {
