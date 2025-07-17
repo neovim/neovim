@@ -3951,6 +3951,9 @@ func Test_str2blob()
     call assert_equal(0zABBB0AABBB, str2blob(['«»', '«»'], {'encoding': 'latin1'}))
     call assert_equal(0zC2ABC2BB, str2blob(['«»'], {'encoding': 'utf8'}))
 
+    call assert_equal(0z62, str2blob(["b"], v:_null_dict))
+    call assert_equal(0z63, str2blob(["c"], {'encoding': v:_null_string}))
+
     call assert_fails("call str2blob(['abc'], [])", 'E1206: Dictionary required for argument 2')
     call assert_fails("call str2blob(['abc'], {'encoding': []})", 'E730: Using a List as a String')
     call assert_fails("call str2blob(['abc'], {'encoding': 'ab12xy'})", 'E1515: Unable to convert to ''ab12xy'' encoding')
