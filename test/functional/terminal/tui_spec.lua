@@ -264,6 +264,16 @@ describe('TUI :restart', function()
     restart_pid_check()
     gui_running_check()
 
+    -- Check ":restart +qall" on an unmodified buffer.
+    tt.feed_data(':restart +qall\013')
+    screen_expect(s0)
+    restart_pid_check()
+    gui_running_check()
+
+    -- Check ":restart +echo" cannot restart server.
+    tt.feed_data(':restart +echo\013')
+    screen:expect({ any = "':cmd' did not quit the server" })
+
     tt.feed_data('ithis will be removed\027')
     screen_expect([[
       this will be remove^d                              |
@@ -273,20 +283,15 @@ describe('TUI :restart', function()
       {3:-- TERMINAL --}                                    |
     ]])
 
-    -- Check ":restart" on a modified buffer.
-    tt.feed_data(':restart\013')
-    screen_expect([[
-      this will be removed                              |
-      {5:                                                  }|
-      {8:E37: No write since last change}                   |
-      {8:E162: No write since last change for buffer "[No N}|
-      {8:ame]"}                                             |
-      {10:Press ENTER or type command to continue}^           |
-      {3:-- TERMINAL --}                                    |
-    ]])
+    -- Check ":confirm restart" on a modified buffer.
+    tt.feed_data(':confirm restart\013')
+    screen:expect({ any = 'Save changes to "Untitled"?' })
 
-    -- Check ":restart!".
-    tt.feed_data(':restart!\013')
+    -- Cancel the operation (abandons restart).
+    tt.feed_data('C\013')
+
+    -- Check ":restart" on the modified buffer.
+    tt.feed_data(':restart\013')
     screen_expect(s0)
     restart_pid_check()
     gui_running_check()
@@ -3791,9 +3796,9 @@ describe('TUI client', function()
     screen_client:expect(s1)
     screen_server:expect(s1)
 
-    -- Run :restart! on the remote client.
+    -- Run :restart on the remote client.
     -- The remote client should start a new server while the original one should exit.
-    feed_data(':restart!\n')
+    feed_data(':restart\n')
     screen_client:expect([[
       ^                                                  |
       {4:~                                                 }|*3
@@ -3868,9 +3873,9 @@ describe('TUI client', function()
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
     screen_client:expect({ any = 'GUI Running: 1' })
 
-    -- Run :restart! on the client.
+    -- Run :restart on the client.
     -- The client should start a new server while the original server should exit.
-    feed_data(':restart!\n')
+    feed_data(':restart\n')
     screen_client:expect([[
       ^                                                  |
       {4:~                                                 }|*4
