@@ -17,6 +17,7 @@
 "   2025 Apr 16 by Vim Project: decouple from netrw by adding s:WinPath()
 "   2025 May 19 by Vim Project: restore working directory after read/write
 "   2025 Jul 13 by Vim Project: warn with path traversal attacks
+"   2025 Jul 16 by Vim Project: update minimum vim version
 "
 "	Contains many ideas from Michael Toren's <tar.vim>
 "
@@ -35,9 +36,9 @@ if &cp || exists("g:loaded_tar")
  finish
 endif
 let g:loaded_tar= "v32b"
-if !has('nvim-0.12') && v:version < 900
+if !has('nvim-0.12') && v:versionlong < 9011024
  echohl WarningMsg
- echo "***warning*** this version of tar needs vim 9.0"
+ echo "***warning*** this version of tar needs vim 9.1.1024"
  echohl Normal
  finish
 endif
@@ -732,22 +733,21 @@ endfun
 " s:FileHeader: {{{2
 fun! s:Header(fname)
   let header= readblob(a:fname, 0, 6)
-  " Nvim: see https://github.com/neovim/neovim/pull/34968
-  if header[0:2] == 0z425A68 " bzip2 header
+  if header[0:2] == str2blob(['BZh']) " bzip2 header
     return "bzip2"
-  elseif header[0:2] == 0z425A33 " bzip3 header
+  elseif header[0:2] == str2blob(['BZ3']) " bzip3 header
     return "bzip3"
-  elseif header == 0zFD377A58.5A00 " xz header
+  elseif header == str2blob(["\3757zXZ\n"]) " xz header
     return "xz"
-  elseif header[0:3] == 0z28B52FFD " zstd header
+  elseif header[0:3] == str2blob(["\x28\xB5\x2F\xFD"]) " zstd header
     return "zstd"
-  elseif header[0:3] == 0z04224D18 " lz4 header
+  elseif header[0:3] == str2blob(["\004\"M\030"]) " lz4 header
     return "lz4"
-  elseif (header[0:1] == 0z1F9D ||
-       \  header[0:1] == 0z1F8B ||
-       \  header[0:1] == 0z1F9E ||
-       \  header[0:1] == 0z1FA0 ||
-       \  header[0:1] == 0z1F1E)
+  elseif (header[0:1] == str2blob(["\037\235"]) ||
+       \  header[0:1] == str2blob(["\037\213"]) ||
+       \  header[0:1] == str2blob(["\037\236"]) ||
+       \  header[0:1] == str2blob(["\037\240"]) ||
+       \  header[0:1] == str2blob(["\037\036"]))
     return "gzip"
   endif
   return "unknown"
