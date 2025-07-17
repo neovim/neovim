@@ -209,7 +209,7 @@ jobs:
   zig-build:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
-    name: build using zig build
+    name: build using zig build (linux)
     steps:
       - uses: actions/checkout@v4
       - uses: mlugg/setup-zig@v2

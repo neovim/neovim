@@ -25,10 +25,17 @@
             .url = "git+https://github.com/tree-sitter/tree-sitter#d87921bb9c39b0b06c811f2082f9a9991cdca027",
             .hash = "tree_sitter-0.26.0-Tw2sRxO7CwC0NyDrSygSi7UXRHMNUFEF8GRq6dK81lRF",
         },
-        .libuv = .{ .path = "./deps/libuv" },
+        .libuv = .{
+            .url = "git+https://github.com/allyourcodebase/libuv#a2dfd385bd2a00d6d290fda85a40a55a9d6cffc5",
+            .hash = "libuv-1.51.0-htqqv6liAADxBLIBCZT-qUh_3nRRwtNYsOFQOUmrd_sx",
+        },
         .utf8proc = .{ .path = "./deps/utf8proc/" },
         .unibilium = .{ .path = "./deps/unibilium/" },
-        .iconv_apple = .{ .path = "./deps/iconv_apple/", .lazy = true },
+        .libiconv = .{
+            .url = "git+https://github.com/allyourcodebase/libiconv#9def4c8a1743380e85bcedb80f2c15b455e236f3",
+            .hash = "libiconv-1.18.0-p9sJwWnqAACzVYeWgXB5r5lOQ74XwTPlptixV0JPRO28",
+            .lazy = true,
+        },
         .lua_dev_deps = .{
             .url = "https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz",
             .hash = "N-V-__8AAGevEQCHAkCozca5AIdN9DFc3Luf3g3r2AcbyOrm",
