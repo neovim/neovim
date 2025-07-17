@@ -274,10 +274,6 @@ function Screen:add_extra_attr_ids(extra_attr_ids)
   self._default_attr_ids = attr_ids
 end
 
-function Screen:get_default_attr_ids()
-  return deepcopy(self._default_attr_ids)
-end
-
 function Screen:set_rgb_cterm(val)
   self._rgb_cterm = val
 end
