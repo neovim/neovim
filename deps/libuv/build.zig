@@ -83,6 +83,32 @@ pub fn build(b: *std.Build) !void {
             "src/unix/tty.c",
             "src/unix/udp.c",
         } });
+    } else { // windows
+        lib.addCSourceFiles(.{ .root = root, .files = &.{
+            "src/win/async.c",
+            "src/win/core.c",
+            "src/win/detect-wakeup.c",
+            "src/win/dl.c",
+            "src/win/error.c",
+            "src/win/fs.c",
+            "src/win/fs-event.c",
+            "src/win/getaddrinfo.c",
+            "src/win/getnameinfo.c",
+            "src/win/handle.c",
+            "src/win/pipe.c",
+            "src/win/poll.c",
+            "src/win/process.c",
+            "src/win/process-stdio.c",
+            "src/win/signal.c",
+            "src/win/stream.c",
+            "src/win/tcp.c",
+            "src/win/thread.c",
+            "src/win/tty.c",
+            "src/win/udp.c",
+            "src/win/util.c",
+            "src/win/winapi.c",
+            "src/win/winsock.c",
+        } });
     }
 
     if (target.result.os.tag == .linux or target.result.os.tag.isDarwin()) {

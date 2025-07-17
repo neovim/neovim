@@ -71,14 +71,15 @@ pub fn build(b: *std.Build) !void {
     const lpeg = b.dependency("lpeg", .{});
 
     const iconv_apple = if (cross_compiling and is_darwin) b.lazyDependency("iconv_apple", .{ .target = target, .optimize = optimize }) else null;
+    const iconv_win = if (is_windows) b.lazyDependency("win_iconv", .{ .target = target, .optimize = optimize }) else null;
 
     // this is currently not necessary, as ziglua currently doesn't use lazy dependencies
     // to circumvent ziglua.artifact() failing in a bad way.
     // const lua = lazyArtifact(ziglua, "lua") orelse return;
     const lua = ziglua.artifact("lua");
 
-    const libuv_dep = b.dependency("libuv", .{ .target = target, .optimize = optimize });
-    const libuv = libuv_dep.artifact("uv");
+    const libuv_dep = if (is_windows) b.lazyDependency("libuv_win", .{ .target = target, .optimize = optimize }) else b.dependency("libuv", .{ .target = target, .optimize = optimize });
+    const libuv = (libuv_dep orelse return).artifact("uv");
 
     const libluv = try build_lua.build_libluv(b, target, optimize, lua, libuv);
 
@@ -243,9 +244,14 @@ pub fn build(b: *std.Build) !void {
         utf8proc.artifact("utf8proc").getEmittedIncludeTree(),
         unibilium.artifact("unibilium").getEmittedIncludeTree(),
         treesitter.artifact("tree-sitter").getEmittedIncludeTree(),
+        // TODO: yaaaank
+        if (iconv_win) |iconv| iconv.artifact("iconv").getEmittedIncludeTree() else b.path("INVALID_PATH/"),
     };
 
-    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, &include_path, target, versiondef_git, version_lua);
+    const common = [_][]const u8{ "_GNU_SOURCE", "ZIG_BUILD" };
+    const gen_c_macros = if (is_windows) @as([]const []const u8, &(common ++ .{ "MSWIN", "WIN32_LEAN_AND_MEAN" })) else &common;
+
+    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, &include_path, gen_c_macros, target, versiondef_git, version_lua);
 
     const test_config_step = b.addWriteFiles();
     _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b));
@@ -268,9 +274,15 @@ pub fn build(b: *std.Build) !void {
     if (iconv_apple) |iconv| {
         nvim_exe.linkLibrary(iconv.artifact("iconv"));
     }
+    if (iconv_win) |iconv| {
+        nvim_exe.linkLibrary(iconv.artifact("iconv"));
+    }
     nvim_exe.linkLibrary(utf8proc.artifact("utf8proc"));
     nvim_exe.linkLibrary(unibilium.artifact("unibilium"));
     nvim_exe.linkLibrary(treesitter.artifact("tree-sitter"));
+    if (is_windows) {
+        nvim_exe.linkSystemLibrary("netapi32");
+    }
     nvim_exe.addIncludePath(b.path("src"));
     nvim_exe.addIncludePath(gen_config.getDirectory());
     nvim_exe.addIncludePath(gen_headers.getDirectory());
@@ -302,6 +314,9 @@ pub fn build(b: *std.Build) !void {
         "-D_GNU_SOURCE",
         if (support_unittests) "-DUNIT_TESTING" else "",
         if (use_luajit) "" else "-DNVIM_VENDOR_BIT",
+        if (is_windows) "-DMSWIN" else "",
+        if (is_windows) "-DWIN32_LEAN_AND_MEAN" else "",
+        if (is_windows) "-DUTF8PROC_STATIC" else "",
     };
     nvim_exe.addCSourceFiles(.{ .files = src_paths, .flags = &flags });
 
