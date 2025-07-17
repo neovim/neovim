@@ -1044,11 +1044,13 @@ static bool pum_set_selected(int n, int repeat)
     // 'completeopt' contains "preview".
     // Skip this when tried twice already.
     // Skip this also when there is not much room.
+    // Skip this for command-window when 'completeopt' contains "preview".
     // NOTE: Be very careful not to sync undo!
     if ((pum_array[pum_selected].pum_info != NULL)
         && (Rows > 10)
         && (repeat <= 1)
-        && (cur_cot_flags & (kOptCotFlagPreview | kOptCotFlagPopup))) {
+        && (cur_cot_flags & (kOptCotFlagPreview | kOptCotFlagPopup))
+        && !((cur_cot_flags & kOptCotFlagPreview) && cmdwin_type != 0)) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
 

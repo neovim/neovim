@@ -1,7 +1,10 @@
 if exists('s:did_load')
   " Align Nvim defaults to Vim.
   set commentstring=/*\ %s\ */
-  set complete=.,w,b,u,t,i
+  if g:testname !~ 'test_ins_complete_no_halt\.vim$'
+    set complete=.,w,b,u,t,i
+    set completeopt=menu,preview
+  endif
   set define=^\\s*#\\s*define
   set diffopt=internal,filler,closeoff,inline:simple
   set directory^=.
@@ -32,7 +35,7 @@ if exists('s:did_load')
   if has('win32')
     set isfname+=:
   endif
-  if g:testname !~ 'test_mapping.vim$'
+  if g:testname !~ 'test_mapping\.vim$'
     " Make "Q" switch to Ex mode.
     " This does not work for all tests as Nvim only supports Vim Ex mode.
     nnoremap Q gQ<Cmd>call<SID>ExStart()<CR>
