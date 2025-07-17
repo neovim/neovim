@@ -642,9 +642,11 @@ M.funcs = {
       See also |str2blob()|
 
       Examples: >vim
-      	blob2str(0z6162)	" returns ["ab"]
-      	blob2str(0zC2ABC2BB)	" returns ["«»"]
-      	blob2str(0zABBB, {'encoding': 'latin1'})  " returns ["«»"]
+          blob2str(0z6162)		" returns ['ab']
+          blob2str(0zC2ABC2BB)	" returns ['«»']
+          blob2str(0z610A62)		" returns ['a', 'b']
+          blob2str(0z610062)		" returns ['a\nb']
+          blob2str(0zABBB, {'encoding': 'latin1'}) " returns ['«»']
       <
     ]=],
     name = 'blob2str',
@@ -11476,11 +11478,12 @@ M.funcs = {
       See also |blob2str()|
 
       Examples: >vim
-          str2blob(["ab"])	" returns 0z6162
-          str2blob(["«»"])	" returns 0zC2ABC2BB
-          str2blob(["a\nb"])	" returns 0z610A62
-          str2blob(readfile('myfile.txt'))
+          str2blob(["ab"])		" returns 0z6162
+          str2blob(["«»"])		" returns 0zC2ABC2BB
+          str2blob(["a\nb"])		" returns 0z610062
+          str2blob(["a","b"])		" returns 0z610A62
           str2blob(["«»"], {'encoding': 'latin1'}) " returns 0zABBB
+          str2blob(readfile('myfile.txt'))
       <
     ]=],
     name = 'str2blob',
