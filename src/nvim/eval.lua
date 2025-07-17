@@ -611,6 +611,40 @@ M.funcs = {
     returns = 'any[]',
     signature = 'blob2list({blob})',
   },
+  blob2str = {
+    args = { 1, 2 },
+    base = 1,
+    desc = [=[
+      Return a String in UTF-8 by converting the bytes in {blob}
+      into characters.
+
+      If {options} is not supplied, UTF-8 is used to decode the
+      bytes in {blob}.
+
+      The argument {options} is a |Dict| and supports the following
+      items:
+          encoding	Decode the bytes in {blob} using this
+      		encoding.  The value is a |String|.  See
+      		|encoding-names| for the supported values.
+      					*E1515*
+      An error is given and an empty string is returned if
+      an invalid byte sequence is encountered in {blob},
+
+      Returns an empty String if blob is empty.
+
+      See also |str2blob()|
+
+      Examples: >vim
+      	blob2str(0z6162)	" returns "ab"
+      	blob2str(0zC2ABC2BB)	" returns "«»"
+      	blob2str(0zABBB, {'encoding': 'latin1'})  " returns "«»"
+      <
+    ]=],
+    name = 'blob2str',
+    params = { { 'blob', 'string' }, { 'options', 'table' } },
+    returns = 'string',
+    signature = 'blob2str({blob} [, {options}])',
+  },
   browse = {
     args = 4,
     desc = [=[
@@ -11405,6 +11439,40 @@ M.funcs = {
     name = 'stdpath',
     params = { { 'what', "'config_dirs'|'data_dirs'" } },
     returns = 'string[]',
+  },
+  str2blob = {
+    args = { 1, 2 },
+    base = 1,
+    desc = [=[
+      Return a Blob by converting the characters in {string} into
+      bytes.
+
+      If {options} is not supplied, UTF-8 is used to convert the
+      characters in {string} into bytes.
+
+      The argument {options} is a |Dict| and supports the following
+      items:
+          encoding	Encode the characters in {string} using this
+      		encoding.  The value is a |String|.  See
+      		|encoding-names| for the supported values.
+
+      An error is given and an empty blob is returned if the
+      character encoding fails.
+
+      Returns an empty Blob if {string} is empty.
+
+      See also |blob2str()|
+
+      Examples: >vim
+      	str2blob("ab")		" returns 0z6162
+      	str2blob("«»")		" returns 0zC2ABC2BB
+      	str2blob("«»", {'encoding': 'latin1'})	" returns 0zABBB
+      <
+    ]=],
+    name = 'str2blob',
+    params = { { 'string', 'string' }, { 'options', 'table' } },
+    returns = 'string',
+    signature = 'str2blob({string} [, {options}])',
   },
   str2float = {
     args = 1,

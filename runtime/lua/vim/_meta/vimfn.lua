@@ -434,6 +434,36 @@ function vim.fn.atan2(expr1, expr2) end
 --- @return any[]
 function vim.fn.blob2list(blob) end
 
+--- Return a String in UTF-8 by converting the bytes in {blob}
+--- into characters.
+---
+--- If {options} is not supplied, UTF-8 is used to decode the
+--- bytes in {blob}.
+---
+--- The argument {options} is a |Dict| and supports the following
+--- items:
+---     encoding  Decode the bytes in {blob} using this
+---     encoding.  The value is a |String|.  See
+---     |encoding-names| for the supported values.
+---           *E1515*
+--- An error is given and an empty string is returned if
+--- an invalid byte sequence is encountered in {blob},
+---
+--- Returns an empty String if blob is empty.
+---
+--- See also |str2blob()|
+---
+--- Examples: >vim
+---   blob2str(0z6162)  " returns "ab"
+---   blob2str(0zC2ABC2BB)  " returns "«»"
+---   blob2str(0zABBB, {'encoding': 'latin1'})  " returns "«»"
+--- <
+---
+--- @param blob string
+--- @param options? table
+--- @return string
+function vim.fn.blob2str(blob, options) end
+
 --- Put up a file requester.  This only works when "has("browse")"
 --- returns |TRUE| (only in some GUI versions).
 --- The input fields are:
@@ -9477,6 +9507,36 @@ function vim.fn.stdpath(what) end
 --- @param what 'config_dirs'|'data_dirs'
 --- @return string[]
 function vim.fn.stdpath(what) end
+
+--- Return a Blob by converting the characters in {string} into
+--- bytes.
+---
+--- If {options} is not supplied, UTF-8 is used to convert the
+--- characters in {string} into bytes.
+---
+--- The argument {options} is a |Dict| and supports the following
+--- items:
+---     encoding  Encode the characters in {string} using this
+---     encoding.  The value is a |String|.  See
+---     |encoding-names| for the supported values.
+---
+--- An error is given and an empty blob is returned if the
+--- character encoding fails.
+---
+--- Returns an empty Blob if {string} is empty.
+---
+--- See also |blob2str()|
+---
+--- Examples: >vim
+---   str2blob("ab")    " returns 0z6162
+---   str2blob("«»")    " returns 0zC2ABC2BB
+---   str2blob("«»", {'encoding': 'latin1'})  " returns 0zABBB
+--- <
+---
+--- @param string string
+--- @param options? table
+--- @return string
+function vim.fn.str2blob(string, options) end
 
 --- Convert String {string} to a Float.  This mostly works the
 --- same as when using a floating point number in an expression,
