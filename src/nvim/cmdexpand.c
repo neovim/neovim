@@ -105,32 +105,39 @@ static char *cmdline_orig = NULL;
 static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  return (wop_flags & kOptWopFlagFuzzy)
-         && xp->xp_context != EXPAND_BOOL_SETTINGS
-         && xp->xp_context != EXPAND_COLORS
-         && xp->xp_context != EXPAND_COMPILER
-         && xp->xp_context != EXPAND_DIRECTORIES
-         && xp->xp_context != EXPAND_DIRS_IN_CDPATH
-         && xp->xp_context != EXPAND_FILES
-         && xp->xp_context != EXPAND_FILES_IN_PATH
-         && xp->xp_context != EXPAND_FILETYPE
-         && xp->xp_context != EXPAND_FILETYPECMD
-         && xp->xp_context != EXPAND_FINDFUNC
-         && xp->xp_context != EXPAND_HELP
-         && xp->xp_context != EXPAND_KEYMAP
-         && xp->xp_context != EXPAND_LUA
-         && xp->xp_context != EXPAND_OLD_SETTING
-         && xp->xp_context != EXPAND_STRING_SETTING
-         && xp->xp_context != EXPAND_SETTING_SUBTRACT
-         && xp->xp_context != EXPAND_OWNSYNTAX
-         && xp->xp_context != EXPAND_PACKADD
-         && xp->xp_context != EXPAND_RUNTIME
-         && xp->xp_context != EXPAND_SHELLCMD
-         && xp->xp_context != EXPAND_SHELLCMDLINE
-         && xp->xp_context != EXPAND_TAGS
-         && xp->xp_context != EXPAND_TAGS_LISTFILES
-         && xp->xp_context != EXPAND_USER_LIST
-         && xp->xp_context != EXPAND_USER_LUA;
+  switch (xp->xp_context) {
+  case EXPAND_BOOL_SETTINGS:
+  case EXPAND_COLORS:
+  case EXPAND_COMPILER:
+  case EXPAND_DIRECTORIES:
+  case EXPAND_DIRS_IN_CDPATH:
+  case EXPAND_FILES:
+  case EXPAND_FILES_IN_PATH:
+  case EXPAND_FILETYPE:
+  case EXPAND_FILETYPECMD:
+  case EXPAND_FINDFUNC:
+  case EXPAND_HELP:
+  case EXPAND_KEYMAP:
+  case EXPAND_LUA:
+  case EXPAND_OLD_SETTING:
+  case EXPAND_STRING_SETTING:
+  case EXPAND_SETTING_SUBTRACT:
+  case EXPAND_OWNSYNTAX:
+  case EXPAND_PACKADD:
+  case EXPAND_RUNTIME:
+  case EXPAND_SHELLCMD:
+  case EXPAND_SHELLCMDLINE:
+  case EXPAND_TAGS:
+  case EXPAND_TAGS_LISTFILES:
+  case EXPAND_USER_LIST:
+  case EXPAND_USER_LUA:
+    return false;
+
+  default:
+    break;
+  }
+
+  return wop_flags & kOptWopFlagFuzzy;
 }
 
 /// Returns true if fuzzy completion for cmdline completion is enabled and
@@ -3142,17 +3149,13 @@ void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regmatch, ch
 }
 
 /// Expand shell command matches in one directory of $PATH.
-static void expand_shellcmd_onedir(char *buf, char *s, size_t l, char *pat, char ***matches,
-                                   int *numMatches, int flags, hashtab_T *ht, garray_T *gap)
+///
+/// @param pathlen  length of the path portion of pat.
+static void expand_shellcmd_onedir(char *pat, size_t pathlen, char ***matches, int *numMatches,
+                                   int flags, hashtab_T *ht, garray_T *gap)
 {
-  xmemcpyz(buf, s, l);
-  add_pathsep(buf);
-  l = strlen(buf);
-  xstrlcpy(buf + l, pat, MAXPATHL - l);
-
   // Expand matches in one directory of $PATH.
-  int ret = expand_wildcards(1, &buf, numMatches, matches, flags);
-  if (ret != OK) {
+  if (expand_wildcards(1, &pat, numMatches, matches, flags) != OK) {
     return;
   }
 
@@ -3160,15 +3163,15 @@ static void expand_shellcmd_onedir(char *buf, char *s, size_t l, char *pat, char
 
   for (int i = 0; i < *numMatches; i++) {
     char *name = (*matches)[i];
+    size_t namelen = strlen(name);
 
-    if (strlen(name) > l) {
+    if (namelen > pathlen) {
       // Check if this name was already found.
-      hash_T hash = hash_hash(name + l);
-      hashitem_T *hi =
-        hash_lookup(ht, name + l, strlen(name + l), hash);
+      hash_T hash = hash_hash(name + pathlen);
+      hashitem_T *hi = hash_lookup(ht, name + pathlen, namelen - pathlen, hash);
       if (HASHITEM_EMPTY(hi)) {
         // Remove the path that was prepended.
-        STRMOVE(name, name + l);
+        memmove(name, name + pathlen, namelen - pathlen + 1);  // +1 for NUL
         ((char **)gap->ga_data)[gap->ga_len++] = name;
         hash_add_item(ht, hi, name, hash);
         name = NULL;
@@ -3197,12 +3200,21 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
   bool did_curdir = false;
 
   // for ":set path=" and ":set tags=" halve backslashes for escaped space
-  char *pat = xstrdup(filepat);
-  for (int i = 0; pat[i]; i++) {
-    if (pat[i] == '\\' && pat[i + 1] == ' ') {
-      STRMOVE(pat + i, pat + i + 1);
+  size_t patlen = strlen(filepat);
+  char *pat = xmemdupz(filepat, patlen);
+  // Replace "\ " with " ".
+  char *e = pat + patlen;
+  for (char *s = pat; *s != NUL; s++) {
+    if (*s != '\\') {
+      continue;
+    }
+    char *p = s + 1;
+    if (*p == ' ') {
+      memmove(s, p, (size_t)(e - p) + 1);  // +1 for NUL
+      e--;
     }
   }
+  patlen = (size_t)(e - pat);
 
   flags |= EW_FILE | EW_EXEC | EW_SHELLCMD;
 
@@ -3228,33 +3240,53 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
   ga_init(&ga, (int)sizeof(char *), 10);
   hashtab_T found_ht;
   hash_init(&found_ht);
-  for (char *s = path, *e;; s = e) {
-    e = vim_strchr(s, ENV_SEPCHAR);
-    if (e == NULL) {
-      e = s + strlen(s);
-    }
+  for (char *s = path;; s = e) {
+    size_t pathlen;  // length of the path portion of buf (including trailing slash).
+    size_t seplen;
 
     if (*s == NUL) {
       if (did_curdir) {
         break;
       }
+
       // Find directories in the current directory, path is empty.
       did_curdir = true;
       flags |= EW_DIR;
-    } else if (strncmp(s, ".", (size_t)(e - s)) == 0) {
-      did_curdir = true;
-      flags |= EW_DIR;
+
+      e = s;
+      pathlen = 0;
+      seplen = 0;
     } else {
-      // Do not match directories inside a $PATH item.
-      flags &= ~EW_DIR;
+      e = vim_strchr(s, ENV_SEPCHAR);
+      if (e == NULL) {
+        e = s + strlen(s);
+      }
+
+      pathlen = (size_t)(e - s);
+      if (strncmp(s, ".", pathlen) == 0) {
+        did_curdir = true;
+        flags |= EW_DIR;
+      } else {
+        // Do not match directories inside a $PATH item.
+        flags &= ~EW_DIR;
+      }
+
+      seplen = !after_pathsep(s, e) ? STRLEN_LITERAL(PATHSEPSTR) : 0;
     }
 
-    size_t l = (size_t)(e - s);
-    if (l > MAXPATHL - 5) {
-      break;
+    if (pathlen + seplen + patlen + 1 <= MAXPATHL) {
+      if (pathlen > 0) {
+        xmemcpyz(buf, s, pathlen);
+        if (seplen > 0) {
+          xmemcpyz(buf + pathlen, S_LEN(PATHSEPSTR));
+          pathlen += seplen;
+        }
+      }
+      xmemcpyz(buf + pathlen, pat, patlen);
+
+      expand_shellcmd_onedir(buf, pathlen, matches, numMatches, flags, &found_ht, &ga);
     }
-    assert(l <= strlen(s));
-    expand_shellcmd_onedir(buf, s, l, pat, matches, numMatches, flags, &found_ht, &ga);
+
     if (*e != NUL) {
       e++;
     }
@@ -3458,16 +3490,29 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 
   size_t filelen = strlen(file);
 
+#if defined(MSWIN)
+  // Using the platform's path separator (\) makes vim incorrectly
+  // treat it as an escape character, use '/' instead.
+# define TMP_PATHSEPSTR "/"
+#else
+# define TMP_PATHSEPSTR PATHSEPSTR
+#endif
+
   // Loop over all entries in {path}.
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
-    size_t buflen = copy_option_part(&path, buf, MAXPATHL, ",");
-    if (buflen + filelen + 2 < MAXPATHL) {
-      if (*buf != NUL && !after_pathsep(buf, buf + buflen)) {
-        STRCPY(buf + buflen, PATHSEPSTR);
-        buflen += STRLEN_LITERAL(PATHSEPSTR);
+
+    // length of the path portion of buf (including trailing slash).
+    size_t pathlen = copy_option_part(&path, buf, MAXPATHL, ",");
+    size_t seplen = (*buf != NUL && !after_pathsep(buf, buf + pathlen))
+                    ? STRLEN_LITERAL(TMP_PATHSEPSTR) : 0;
+
+    if (pathlen + seplen + filelen + 1 <= MAXPATHL) {
+      if (seplen > 0) {
+        xmemcpyz(buf + pathlen, S_LEN(TMP_PATHSEPSTR));
+        pathlen += seplen;
       }
-      STRCPY(buf + buflen, file);
+      xmemcpyz(buf + pathlen, file, filelen);
 
       char **p;
       int num_p = 0;
@@ -3489,6 +3534,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 
   xfree(buf);
 }
+#undef TMP_PATHSEPSTR
 
 /// Translate some keys pressed when 'wildmenu' is used.
 int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, bool did_wild_list)
@@ -3754,11 +3800,13 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     emsg(_(e_invarg));
     return;
   }
-  const char *pattern = tv_get_string(&argvars[0]);
+  const char *const pattern = tv_get_string(&argvars[0]);
+  const char *pattern_start = pattern;
 
   if (strcmp(type, "cmdline") == 0) {
     const int cmdline_len = (int)strlen(pattern);
     set_cmd_context(&xpc, (char *)pattern, cmdline_len, cmdline_len, false);
+    pattern_start = xpc.xp_pattern;
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
     xpc.xp_col = cmdline_len;
     goto theend;
@@ -3770,12 +3818,12 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   xpc.xp_line = (char *)pattern;
 
   xpc.xp_context = cmdcomplete_str_to_type(type);
-  if (xpc.xp_context == EXPAND_NOTHING) {
+  switch (xpc.xp_context) {
+  case EXPAND_NOTHING:
     semsg(_(e_invarg2), type);
     return;
-  }
 
-  if (xpc.xp_context == EXPAND_USER_DEFINED) {
+  case EXPAND_USER_DEFINED:
     // Must be "custom,funcname" pattern
     if (strncmp(type, "custom,", 7) != 0) {
       semsg(_(e_invarg2), type);
@@ -3783,9 +3831,9 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     xpc.xp_arg = (char *)(type + 7);
-  }
+    break;
 
-  if (xpc.xp_context == EXPAND_USER_LIST) {
+  case EXPAND_USER_LIST:
     // Must be "customlist,funcname" pattern
     if (strncmp(type, "customlist,", 11) != 0) {
       semsg(_(e_invarg2), type);
@@ -3793,39 +3841,48 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     xpc.xp_arg = (char *)(type + 11);
-  }
+    break;
 
-  if (xpc.xp_context == EXPAND_MENUS) {
+  case EXPAND_MENUS:
     set_context_in_menu_cmd(&xpc, "menu", xpc.xp_pattern, false);
-    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
-  }
-  if (xpc.xp_context == EXPAND_SIGN) {
+    xpc.xp_pattern_len -= (size_t)(xpc.xp_pattern - pattern_start);
+    break;
+
+  case EXPAND_SIGN:
     set_context_in_sign_cmd(&xpc, xpc.xp_pattern);
-    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
-  }
-  if (xpc.xp_context == EXPAND_RUNTIME) {
+    xpc.xp_pattern_len -= (size_t)(xpc.xp_pattern - pattern_start);
+    break;
+
+  case EXPAND_RUNTIME:
     set_context_in_runtime_cmd(&xpc, xpc.xp_pattern);
-    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
-  }
-  if (xpc.xp_context == EXPAND_SHELLCMDLINE) {
+    xpc.xp_pattern_len -= (size_t)(xpc.xp_pattern - pattern_start);
+    break;
+
+  case EXPAND_SHELLCMDLINE: {
     int context = EXPAND_SHELLCMDLINE;
     set_context_for_wildcard_arg(NULL, xpc.xp_pattern, false, &xpc, &context);
-    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+    xpc.xp_pattern_len -= (size_t)(xpc.xp_pattern - pattern_start);
+    break;
   }
-  if (xpc.xp_context == EXPAND_FILETYPECMD) {
+
+  case EXPAND_FILETYPECMD:
     filetype_expand_what = EXP_FILETYPECMD_ALL;
+    break;
+
+  default:
+    break;
   }
 
 theend:
   if (xpc.xp_context == EXPAND_LUA) {
     xpc.xp_col = (int)strlen(xpc.xp_line);
     nlua_expand_pat(&xpc);
-    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+    xpc.xp_pattern_len -= (size_t)(xpc.xp_pattern - pattern_start);
   }
   char *pat;
   if (cmdline_fuzzy_completion_supported(&xpc)) {
     // when fuzzy matching, don't modify the search string
-    pat = xstrdup(xpc.xp_pattern);
+    pat = xmemdupz(xpc.xp_pattern, xpc.xp_pattern_len);
   } else {
     pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
   }
@@ -3911,7 +3968,7 @@ static int copy_substring_from_pos(pos_T *start, pos_T *end, char **match, pos_T
   bool is_single_line = start->lnum == end->lnum;
 
   int segment_len = is_single_line ? (int)(end->col - start->col)
-                                   : (int)strlen(start_ptr);
+                                   : (int)(ml_get_len(start->lnum) - start->col);
   ga_grow(&ga, segment_len + 2);
   ga_concat_len(&ga, start_ptr, (size_t)segment_len);
   if (!is_single_line) {
