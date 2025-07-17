@@ -70,8 +70,8 @@ pub fn build(b: *std.Build) !void {
 
     const lpeg = b.dependency("lpeg", .{});
 
-    const iconv_apple = if (cross_compiling and is_darwin) b.lazyDependency("iconv_apple", .{ .target = target, .optimize = optimize }) else null;
-    const iconv_win = if (is_windows) b.lazyDependency("win_iconv", .{ .target = target, .optimize = optimize }) else null;
+    // TODO: or rather exclusive, "if host uses glibc, othergoodlibc, skip"
+    const iconv = if (is_windows or is_darwin) b.lazyDependency("libiconv", .{ .target = target, .optimize = optimize }) else null;
 
     // this is currently not necessary, as ziglua currently doesn't use lazy dependencies
     // to circumvent ziglua.artifact() failing in a bad way.
@@ -245,7 +245,7 @@ pub fn build(b: *std.Build) !void {
         unibilium.artifact("unibilium").getEmittedIncludeTree(),
         treesitter.artifact("tree-sitter").getEmittedIncludeTree(),
         // TODO: yaaaank
-        if (iconv_win) |iconv| iconv.artifact("iconv").getEmittedIncludeTree() else b.path("INVALID_PATH/"),
+        if (iconv) |dep| dep.artifact("iconv").getEmittedIncludeTree() else b.path("INVALID_PATH/"),
     };
 
     const common = [_][]const u8{ "_GNU_SOURCE", "ZIG_BUILD" };
@@ -271,12 +271,7 @@ pub fn build(b: *std.Build) !void {
     nvim_exe.linkLibrary(lua);
     nvim_exe.linkLibrary(libuv);
     nvim_exe.linkLibrary(libluv);
-    if (iconv_apple) |iconv| {
-        nvim_exe.linkLibrary(iconv.artifact("iconv"));
-    }
-    if (iconv_win) |iconv| {
-        nvim_exe.linkLibrary(iconv.artifact("iconv"));
-    }
+    if (iconv) |dep| nvim_exe.linkLibrary(dep.artifact("iconv"));
     nvim_exe.linkLibrary(utf8proc.artifact("utf8proc"));
     nvim_exe.linkLibrary(unibilium.artifact("unibilium"));
     nvim_exe.linkLibrary(treesitter.artifact("tree-sitter"));
