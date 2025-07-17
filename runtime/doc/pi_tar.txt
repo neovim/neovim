@@ -57,6 +57,15 @@ Copyright 2005-2017:					*tar-copyright*
 	let g:loaded_tarPlugin= 1
 	let g:loaded_tar      = 1
 <
+							*tar-mappings*
+   MAPPINGS~
+
+   The following (buffer-local) mappings are available in a tar buffer:
+
+	<CR>		Open selected file for editing, any changes will be
+			written back to the archive.
+	<LeftMouse>	same as <CR>
+	x		Extract selected file.
 
 ==============================================================================
 3. Options						*tar-options*
