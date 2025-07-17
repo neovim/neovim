@@ -615,8 +615,12 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      Return a String in UTF-8 by converting the bytes in {blob}
-      into characters.
+      Return a List of Strings in UTF-8 by converting the bytes in
+      {blob} into characters.
+
+      Each <NL> byte in the blob is interpreted as the end of a
+      string and a new list item is added.  Each <NUL> byte in the
+      blob is converted into a <NL> character.
 
       If {options} is not supplied, UTF-8 is used to decode the
       bytes in {blob}.
@@ -627,22 +631,22 @@ M.funcs = {
       		encoding.  The value is a |String|.  See
       		|encoding-names| for the supported values.
       					*E1515*
-      An error is given and an empty string is returned if
+      An error is given and an empty List is returned if
       an invalid byte sequence is encountered in {blob},
 
-      Returns an empty String if blob is empty.
+      Returns an empty List if blob is empty.
 
       See also |str2blob()|
 
       Examples: >vim
-      	blob2str(0z6162)	" returns "ab"
-      	blob2str(0zC2ABC2BB)	" returns "«»"
-      	blob2str(0zABBB, {'encoding': 'latin1'})  " returns "«»"
+      	blob2str(0z6162)	" returns ["ab"]
+      	blob2str(0zC2ABC2BB)	" returns ["«»"]
+      	blob2str(0zABBB, {'encoding': 'latin1'})  " returns ["«»"]
       <
     ]=],
     name = 'blob2str',
     params = { { 'blob', 'string' }, { 'options', 'table' } },
-    returns = 'string',
+    returns = 'string[]',
     signature = 'blob2str({blob} [, {options}])',
   },
   browse = {
@@ -11444,33 +11448,39 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      Return a Blob by converting the characters in {string} into
-      bytes.
+      Return a Blob by converting the characters in the List of
+      strings in {list} into bytes.
+
+      A <NL> byte is added to the blob after each list item.  A
+      newline character in the string is translated into a <NUL>
+      byte in the blob.
 
       If {options} is not supplied, UTF-8 is used to convert the
-      characters in {string} into bytes.
+      characters into bytes.
 
       The argument {options} is a |Dict| and supports the following
       items:
-          encoding	Encode the characters in {string} using this
-      		encoding.  The value is a |String|.  See
-      		|encoding-names| for the supported values.
+          encoding	Encode the characters using this encoding.
+      		The value is a |String|.  See |encoding-names|
+      		for the supported values.
 
       An error is given and an empty blob is returned if the
       character encoding fails.
 
-      Returns an empty Blob if {string} is empty.
+      Returns an empty Blob if {list} is empty.
 
       See also |blob2str()|
 
       Examples: >vim
-      	str2blob("ab")		" returns 0z6162
-      	str2blob("«»")		" returns 0zC2ABC2BB
-      	str2blob("«»", {'encoding': 'latin1'})	" returns 0zABBB
+          str2blob(["ab"])	" returns 0z6162
+          str2blob(["«»"])	" returns 0zC2ABC2BB
+          str2blob(["a\nb"])	" returns 0z610A62
+          str2blob(readfile('myfile.txt'))
+          str2blob(["«»"], {'encoding': 'latin1'}) " returns 0zABBB
       <
     ]=],
     name = 'str2blob',
-    params = { { 'string', 'string' }, { 'options', 'table' } },
+    params = { { 'list', 'string[]' }, { 'options', 'table' } },
     returns = 'string',
     signature = 'str2blob({string} [, {options}])',
   },
