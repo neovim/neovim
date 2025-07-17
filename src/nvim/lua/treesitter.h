@@ -2,6 +2,7 @@
 
 #include <lua.h>  // IWYU pragma: keep
 #include <stdint.h>
+#include <tree_sitter/api.h>
 
 #include "nvim/macros_defs.h"
 
