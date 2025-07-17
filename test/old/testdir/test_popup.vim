@@ -220,7 +220,6 @@ func Test_popup_complete()
   set completeopt&
 endfunc
 
-
 func Test_popup_completion_insertmode()
   new
   inoremap <F5> <C-R>=ListMonths()<CR>

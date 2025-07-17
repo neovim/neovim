@@ -1376,6 +1376,7 @@ describe('completion', function()
 
   -- oldtest: Test_shortmess()
   it('shortmess+=c turns off completion messages', function()
+    command('set ruler')
     command([[call setline(1, ['hello', 'hullo', 'heee'])]])
     feed('Goh<C-N>')
     screen:expect([[
@@ -1399,7 +1400,7 @@ describe('completion', function()
       {12:hello          }{1:                                             }|
       {4:hullo          }{1:                                             }|
       {4:heee           }{1:                                             }|
-      {5:-- INSERT --}                                                |
-   ]])
+      {5:-- INSERT --}                              4,6           All |
+    ]])
   end)
 end)
