@@ -271,7 +271,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 <			If the directory pack/*/opt/{name}/after exists it is
 			added at the end of 'runtimepath'.
 
-			Note: Use |vim.pack.add()) to install from a URL.
+			Note: Use |vim.pack.add()| to install from a URL.
 
 			If loading packages from "pack/*/start" was skipped,
 			then this directory is searched first: >
