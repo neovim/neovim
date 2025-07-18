@@ -21,13 +21,20 @@ local function check_line(line)
   if vim.b.tutor_metadata and vim.b.tutor_metadata.expect and vim.b.tutor_extmarks then
     local ctext = vim.fn.getline(line)
 
-    local extmarks = vim.api.nvim_buf_get_extmarks(
-      0,
-      tutor_mark_ns,
-      { line - 1, 0 },
-      { line - 1, -1 }, -- the extmark can move to col > 0 if users insert text there
-      {}
-    )
+    ---@type vim.api.keyset.get_extmark_item[]
+    local extmarks = vim
+      .iter(vim.api.nvim_buf_get_extmarks(
+        0,
+        tutor_mark_ns,
+        { line - 1, 0 },
+        { line - 1, -1 }, -- the extmark can move to col > 0 if users insert text there
+        { details = true }
+      ))
+      :filter(function(extmark)
+        return not extmark[4].invalid
+      end)
+      :totable()
+
     for _, extmark in ipairs(extmarks) do
       local mark_id = extmark[1]
       local expct = vim.b.tutor_extmarks[tostring(mark_id)]
@@ -38,9 +45,7 @@ local function check_line(line)
         id = mark_id,
         sign_text = is_correct and sign_text_correct or sign_text_incorrect,
         sign_hl_group = is_correct and 'tutorOK' or 'tutorX',
-        -- This may be a hack. By default, all extmarks only move forward, so a line cannot contain
-        -- any extmarks that were originally created for later lines.
-        priority = tonumber(expct),
+        invalidate = true,
       })
     end
   end
@@ -55,6 +60,7 @@ function M.apply_marks()
       local lnum = tonumber(expct) ---@type integer
       vim.api.nvim_buf_set_extmark(0, tutor_hl_ns, lnum - 1, 0, {
         line_hl_group = 'tutorExpect',
+        invalidate = true,
       })
 
       local mark_id = vim.api.nvim_buf_set_extmark(0, tutor_mark_ns, lnum - 1, 0, {})
