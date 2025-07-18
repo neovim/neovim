@@ -1791,7 +1791,7 @@ void digraph_getlist_common(bool list_all, typval_T *rettv)
   }
 }
 
-struct dg_header_entry {
+static struct dg_header_entry {
   int dg_start;
   const char *dg_header;
 } header_table[] = {

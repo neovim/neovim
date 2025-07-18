@@ -1683,7 +1683,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
 /// Enter a new current buffer.
 /// Old curbuf must have been abandoned already!  This also means "curbuf" may
 /// be pointing to freed memory.
-void enter_buffer(buf_T *buf)
+static void enter_buffer(buf_T *buf)
 {
   // when closing the current buffer stop Visual mode
   if (VIsual_active
@@ -2207,7 +2207,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 }
 
 /// Go to the last known line number for the current buffer.
-void buflist_getfpos(void)
+static void buflist_getfpos(void)
 {
   pos_T *fpos = &buflist_findfmark(curbuf)->mark;
 

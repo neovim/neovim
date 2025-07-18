@@ -2144,7 +2144,7 @@ void do_wqall(exarg_T *eap)
 /// Check the 'write' option.
 ///
 /// @return  true and give a message when it's not st.
-bool not_writing(void)
+static bool not_writing(void)
 {
   if (p_write) {
     return false;

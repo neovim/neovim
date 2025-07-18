@@ -355,7 +355,7 @@ static bool cin_islabel_skip(const char **s)
 
 // Recognize a label: "label:".
 // Note: curwin->w_cursor must be where we are looking for the label.
-bool cin_islabel(void)  // XXX
+static bool cin_islabel(void)  // XXX
 {
   const char *s = cin_skipcomment(get_cursor_line_ptr());
 
@@ -454,7 +454,7 @@ static int cin_isinit(void)
 /// Recognize a switch label: "case .*:" or "default:".
 ///
 /// @param strict  Allow relaxed check of case statement for JS
-bool cin_iscase(const char *s, bool strict)
+static bool cin_iscase(const char *s, bool strict)
 {
   s = cin_skipcomment(s);
   if (cin_starts_with(s, "case")) {
@@ -500,7 +500,7 @@ static int cin_isdefault(const char *s)
 }
 
 /// Recognize a scope declaration label set in 'cinscopedecls'.
-bool cin_isscopedecl(const char *p)
+static bool cin_isscopedecl(const char *p)
 {
   const char *s = cin_skipcomment(p);
 
