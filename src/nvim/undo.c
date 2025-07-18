@@ -2991,7 +2991,7 @@ void u_clearallandblockfree(buf_T *buf)
 }
 
 /// Save the line "lnum" for the "U" command.
-void u_saveline(buf_T *buf, linenr_T lnum)
+static void u_saveline(buf_T *buf, linenr_T lnum)
 {
   if (lnum == buf->b_u_line_lnum) {      // line is already saved
     return;

@@ -4916,7 +4916,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
 }
 
 /// Check string options in a window for a NULL value.
-void check_win_options(win_T *win)
+static void check_win_options(win_T *win)
 {
   check_winopt(&win->w_onebuf_opt);
   check_winopt(&win->w_allbuf_opt);

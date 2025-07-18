@@ -171,7 +171,7 @@ proftime_T profile_self(proftime_T self, proftime_T total, proftime_T children)
 /// Gets the current waittime.
 ///
 /// @return the current waittime
-proftime_T profile_get_wait(void) FUNC_ATTR_PURE
+static proftime_T profile_get_wait(void) FUNC_ATTR_PURE
 {
   return prof_wait_time;
 }
@@ -194,7 +194,7 @@ proftime_T profile_sub_wait(proftime_T tm, proftime_T tma) FUNC_ATTR_PURE
 /// Checks if time `tm1` is equal to `tm2`.
 ///
 /// @return true if `tm1` == `tm2`
-bool profile_equal(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
+static bool profile_equal(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 {
   return tm1 == tm2;
 }
