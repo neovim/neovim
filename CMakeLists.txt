@@ -346,7 +346,7 @@ else()
   add_custom_target(lua_dev_deps)
 endif()
 
-if (CMAKE_SYSTEM_PROCESSOR MATCHES arm64)
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch")
   set(LUALS_ARCH arm64)
 else()
   set(LUALS_ARCH x64)

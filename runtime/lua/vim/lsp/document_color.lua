@@ -252,11 +252,17 @@ end
 --- @param bufnr integer
 --- @param client_id? integer
 function M._buf_refresh(bufnr, client_id)
-  util._refresh(ms.textDocument_documentColor, {
-    bufnr = bufnr,
-    handler = on_document_color,
-    client_id = client_id,
-  })
+  for _, client in
+    ipairs(lsp.get_clients({
+      bufnr = bufnr,
+      id = client_id,
+      method = ms.textDocument_documentColor,
+    }))
+  do
+    ---@type lsp.DocumentColorParams
+    local params = { textDocument = util.make_text_document_params(bufnr) }
+    client:request(ms.textDocument_documentColor, params, on_document_color)
+  end
 end
 
 --- Query whether document colors are enabled in the given buffer.

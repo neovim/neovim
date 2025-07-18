@@ -35,10 +35,12 @@ LSP
 					`vim.wo.conceallevel = 2`.
 • *vim.lsp.log.should_log()*		Use |vim.lsp.log.set_format_func()| instead
 					and return `nil` to omit entries from the logfile.
+• *vim.lsp.semantic_tokens.start()*	Use `vim.lsp.semantic_tokens.enable(true)` instead
+• *vim.lsp.semantic_tokens.stop()*	Use `vim.lsp.semantic_tokens.enable(false)` instead
 
 LUA
 
-• todo
+• *vim.diff()*				Renamed to |vim.text.diff()|
 
 VIMSCRIPT
 

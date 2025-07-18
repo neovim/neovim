@@ -31,14 +31,12 @@ describe('api', function()
   end)
 
   it('qa! RPC request during insert-mode', function()
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ^                                                  |
-      {4:~                                                 }|*4
+      {100:~                                                 }|*4
                                                         |
-      {3:-- TERMINAL --}                                    |
-    ]],
-    }
+      {5:-- TERMINAL --}                                    |
+    ]])
 
     -- Start the socket from the child nvim.
     tt.feed_data(":echo serverstart('" .. socket_name .. "')\n")
@@ -46,9 +44,9 @@ describe('api', function()
     -- Wait for socket creation.
     screen:expect([[
       ^                                                  |
-      {4:~                                                 }|*4
+      {100:~                                                 }|*4
       ]] .. socket_name .. [[                       |
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
 
     local socket_session1 = n.connect(socket_name)
@@ -58,9 +56,9 @@ describe('api', function()
     -- Wait for stdin to be processed.
     screen:expect([[
       [tui] insert-mode^                                 |
-      {4:~                                                 }|*4
-      {3:-- INSERT --}                                      |
-      {3:-- TERMINAL --}                                    |
+      {100:~                                                 }|*4
+      {5:-- INSERT --}                                      |
+      {5:-- TERMINAL --}                                    |
     ]])
 
     ok((socket_session1:request('nvim_ui_attach', 42, 6, { rgb = true })))
@@ -74,9 +72,9 @@ describe('api', function()
       [socket 1] this is more t                         |
       han 25 columns                                    |
       [socket 2] input^                                  |
-      {4:~                        }                         |
-      {3:-- INSERT --}                                      |
-      {3:-- TERMINAL --}                                    |
+      {100:~                        }                         |
+      {5:-- INSERT --}                                      |
+      {5:-- TERMINAL --}                                    |
     ]])
 
     socket_session1:request('nvim_command', 'qa!')

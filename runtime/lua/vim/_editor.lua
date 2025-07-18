@@ -41,6 +41,7 @@ for k, v in pairs({
   snippet = true,
   pack = true,
   _watch = true,
+  net = true,
 }) do
   vim._submodules[k] = v
 end
@@ -1314,7 +1315,7 @@ end
 
 require('vim._options')
 
--- Remove at Nvim 1.0
+--- Remove at Nvim 1.0
 ---@deprecated
 vim.loop = vim.uv
 

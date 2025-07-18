@@ -54,7 +54,7 @@ If your system does not have the required glibc version, try the (unsupported) [
 2. Extract: `tar xzvf nvim-linux-x86_64.tar.gz`
 3. Run `./nvim-linux-x86_64/bin/nvim`
 
-### Linux (arm64) - Untested
+### Linux (arm64)
 
 #### AppImage
 

@@ -8,9 +8,7 @@ local dedent = t.dedent
 local eq = t.eq
 local exec_lua = n.exec_lua
 local feed = n.feed
-local feed_command = n.feed_command
 local insert = n.insert
-local matches = t.matches
 local api = n.api
 
 local clear_notrace = t_lsp.clear_notrace
@@ -255,10 +253,10 @@ describe('semantic token highlighting', function()
     end)
 
     it(
-      'buffer is highlighted and unhighlighted when semantic token highlighting is started and stopped',
+      'buffer is highlighted and unhighlighted when semantic token highlighting is enabled and disabled',
       function()
         local bufnr = n.api.nvim_get_current_buf()
-        local client_id = exec_lua(function()
+        exec_lua(function()
           vim.api.nvim_win_set_buf(0, bufnr)
           return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
         end)
@@ -268,7 +266,7 @@ describe('semantic token highlighting', function()
         exec_lua(function()
           --- @diagnostic disable-next-line:duplicate-set-field
           vim.notify = function() end
-          vim.lsp.semantic_tokens.stop(bufnr, client_id)
+          vim.lsp.semantic_tokens.enable(false)
         end)
 
         screen:expect {
@@ -291,7 +289,7 @@ describe('semantic token highlighting', function()
         }
 
         exec_lua(function()
-          vim.lsp.semantic_tokens.start(bufnr, client_id)
+          vim.lsp.semantic_tokens.enable(true)
         end)
 
         screen:expect {
@@ -316,7 +314,7 @@ describe('semantic token highlighting', function()
     )
 
     it('highlights start and stop when using "0" for current buffer', function()
-      local client_id = exec_lua(function()
+      exec_lua(function()
         return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
       end)
 
@@ -325,7 +323,7 @@ describe('semantic token highlighting', function()
       exec_lua(function()
         --- @diagnostic disable-next-line:duplicate-set-field
         vim.notify = function() end
-        vim.lsp.semantic_tokens.stop(0, client_id)
+        vim.lsp.semantic_tokens.enable(false, { bufnr = 0 })
       end)
 
       screen:expect {
@@ -348,7 +346,7 @@ describe('semantic token highlighting', function()
       }
 
       exec_lua(function()
-        vim.lsp.semantic_tokens.start(0, client_id)
+        vim.lsp.semantic_tokens.enable(true, { bufnr = 0 })
       end)
 
       screen:expect {
@@ -475,8 +473,8 @@ describe('semantic token highlighting', function()
                                                 |
       ]],
       }
-      feed_command('%s/int x/int x()/')
-      feed_command('noh')
+      feed(':%s/int x/int x()/<CR>')
+      feed(':noh<CR>')
       screen:expect {
         grid = [[
         #include <iostream>                     |
@@ -494,36 +492,6 @@ describe('semantic token highlighting', function()
         :noh                                    |
       ]],
       }
-    end)
-
-    it('prevents starting semantic token highlighting with invalid conditions', function()
-      local client_id = exec_lua(function()
-        _G.notifications = {}
-        --- @diagnostic disable-next-line:duplicate-set-field
-        vim.notify = function(...)
-          table.insert(_G.notifications, 1, { ... })
-        end
-        return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd }, { attach = false })
-      end)
-      eq(false, exec_lua('return vim.lsp.buf_is_attached(0, ...)', client_id))
-
-      insert(text)
-
-      matches(
-        '%[LSP%] Client with id %d not attached to buffer %d',
-        exec_lua(function()
-          vim.lsp.semantic_tokens.start(0, client_id)
-          return _G.notifications[1][1]
-        end)
-      )
-
-      matches(
-        '%[LSP%] No client with id %d',
-        exec_lua(function()
-          vim.lsp.semantic_tokens.start(0, client_id + 1)
-          return _G.notifications[1][1]
-        end)
-      )
     end)
 
     it(
@@ -561,19 +529,6 @@ describe('semantic token highlighting', function()
                                                   |
         ]],
         }
-
-        eq(
-          '[LSP] Server does not support semantic tokens',
-          exec_lua(function()
-            local notifications = {}
-            --- @diagnostic disable-next-line:duplicate-set-field
-            vim.notify = function(...)
-              table.insert(notifications, 1, { ... })
-            end
-            vim.lsp.semantic_tokens.start(0, client_id)
-            return notifications[1][1]
-          end)
-        )
 
         screen:expect {
           grid = [[
@@ -720,8 +675,8 @@ describe('semantic token highlighting', function()
                                                 |
       ]],
       }
-      feed_command('%s/int x/int x()/')
-      feed_command('noh')
+      feed(':%s/int x/int x()/<CR>')
+      feed(':noh<CR>')
 
       -- the highlights don't change because our fake server sent the exact
       -- same result for the same method (the full request). "x" would have
@@ -1599,8 +1554,7 @@ int main()
 
           -- speed up vim.api.nvim_buf_set_lines calls by changing debounce to 10 for these tests
           vim.schedule(function()
-            vim.lsp.semantic_tokens.stop(bufnr, client_id)
-            vim.lsp.semantic_tokens.start(bufnr, client_id, { debounce = 10 })
+            vim.lsp.semantic_tokens._start(bufnr, client_id, 10)
           end)
           return client_id
         end, test.legend, test.response1, test.response2)

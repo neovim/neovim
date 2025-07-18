@@ -581,7 +581,7 @@ A subset of the `vim.*` stdlib is available in threads, including:
 - `vim.mpack` and `vim.json` (useful for serializing messages between threads)
 - `require` in threads can use Lua packages from the global |package.path|
 - `print()` and `vim.inspect`
-- `vim.diff`
+- `vim.text.diff`
 - Most utility functions in `vim.*` that work with pure Lua values, like
   `vim.split`, `vim.tbl_*`, `vim.list_*`, etc.
 - `vim.is_thread()` returns true from a non-main thread.
@@ -645,74 +645,6 @@ vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
         highlight has left
         (`fun()?`) range_clear A function which allows clearing the highlight
         manually. nil is returned if timeout is not specified
-
-
-==============================================================================
-VIM.DIFF                                                            *vim.diff*
-
-vim.diff({a}, {b}, {opts})                                        *vim.diff()*
-    Run diff on strings {a} and {b}. Any indices returned by this function,
-    either directly or via callback arguments, are 1-based.
-
-    Examples: >lua
-        vim.diff('a\n', 'b\nc\n')
-        -- =>
-        -- @@ -1 +1,2 @@
-        -- -a
-        -- +b
-        -- +c
-
-        vim.diff('a\n', 'b\nc\n', {result_type = 'indices'})
-        -- =>
-        -- {
-        --   {1, 1, 1, 2}
-        -- }
-<
-
-    Parameters: ~
-      • {a}     (`string`) First string to compare
-      • {b}     (`string`) Second string to compare
-      • {opts}  (`table?`) Optional parameters:
-                • {on_hunk}?
-                  (`fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer?`)
-                  Invoked for each hunk in the diff. Return a negative number
-                  to cancel the callback for any remaining hunks. Arguments:
-                  • `start_a` (`integer`): Start line of hunk in {a}.
-                  • `count_a` (`integer`): Hunk size in {a}.
-                  • `start_b` (`integer`): Start line of hunk in {b}.
-                  • `count_b` (`integer`): Hunk size in {b}.
-                • {result_type}? (`'unified'|'indices'`, default: `'unified'`)
-                  Form of the returned diff:
-                  • `unified`: String in unified format.
-                  • `indices`: Array of hunk locations. Note: This option is
-                    ignored if `on_hunk` is used.
-                • {linematch}? (`boolean|integer`) Run linematch on the
-                  resulting hunks from xdiff. When integer, only hunks upto
-                  this size in lines are run through linematch. Requires
-                  `result_type = indices`, ignored otherwise.
-                • {algorithm}? (`'myers'|'minimal'|'patience'|'histogram'`,
-                  default: `'myers'`) Diff algorithm to use. Values:
-                  • `myers`: the default algorithm
-                  • `minimal`: spend extra time to generate the smallest
-                    possible diff
-                  • `patience`: patience diff algorithm
-                  • `histogram`: histogram diff algorithm
-                • {ctxlen}? (`integer`) Context length
-                • {interhunkctxlen}? (`integer`) Inter hunk context length
-                • {ignore_whitespace}? (`boolean`) Ignore whitespace
-                • {ignore_whitespace_change}? (`boolean`) Ignore whitespace
-                  change
-                • {ignore_whitespace_change_at_eol}? (`boolean`) Ignore
-                  whitespace change at end-of-line.
-                • {ignore_cr_at_eol}? (`boolean`) Ignore carriage return at
-                  end-of-line
-                • {ignore_blank_lines}? (`boolean`) Ignore blank lines
-                • {indent_heuristic}? (`boolean`) Use the indent heuristic for
-                  the internal diff library.
-
-    Return: ~
-        (`string|integer[][]?`) See {opts.result_type}. `nil` if
-        {opts.on_hunk} is given.
 
 
 ==============================================================================
@@ -4959,6 +4891,70 @@ vim.snippet.stop()                                        *vim.snippet.stop()*
 ==============================================================================
 Lua module: vim.text                                                *vim.text*
 
+vim.text.diff({a}, {b}, {opts})                              *vim.text.diff()*
+    Run diff on strings {a} and {b}. Any indices returned by this function,
+    either directly or via callback arguments, are 1-based.
+
+    Examples: >lua
+        vim.text.diff('a\n', 'b\nc\n')
+        -- =>
+        -- @@ -1 +1,2 @@
+        -- -a
+        -- +b
+        -- +c
+
+        vim.text.diff('a\n', 'b\nc\n', {result_type = 'indices'})
+        -- =>
+        -- {
+        --   {1, 1, 1, 2}
+        -- }
+<
+
+    Parameters: ~
+      • {a}     (`string`) First string to compare
+      • {b}     (`string`) Second string to compare
+      • {opts}  (`table?`) Optional parameters:
+                • {on_hunk}?
+                  (`fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer?`)
+                  Invoked for each hunk in the diff. Return a negative number
+                  to cancel the callback for any remaining hunks. Arguments:
+                  • `start_a` (`integer`): Start line of hunk in {a}.
+                  • `count_a` (`integer`): Hunk size in {a}.
+                  • `start_b` (`integer`): Start line of hunk in {b}.
+                  • `count_b` (`integer`): Hunk size in {b}.
+                • {result_type}? (`'unified'|'indices'`, default: `'unified'`)
+                  Form of the returned diff:
+                  • `unified`: String in unified format.
+                  • `indices`: Array of hunk locations. Note: This option is
+                    ignored if `on_hunk` is used.
+                • {linematch}? (`boolean|integer`) Run linematch on the
+                  resulting hunks from xdiff. When integer, only hunks upto
+                  this size in lines are run through linematch. Requires
+                  `result_type = indices`, ignored otherwise.
+                • {algorithm}? (`'myers'|'minimal'|'patience'|'histogram'`,
+                  default: `'myers'`) Diff algorithm to use. Values:
+                  • `myers`: the default algorithm
+                  • `minimal`: spend extra time to generate the smallest
+                    possible diff
+                  • `patience`: patience diff algorithm
+                  • `histogram`: histogram diff algorithm
+                • {ctxlen}? (`integer`) Context length
+                • {interhunkctxlen}? (`integer`) Inter hunk context length
+                • {ignore_whitespace}? (`boolean`) Ignore whitespace
+                • {ignore_whitespace_change}? (`boolean`) Ignore whitespace
+                  change
+                • {ignore_whitespace_change_at_eol}? (`boolean`) Ignore
+                  whitespace change at end-of-line.
+                • {ignore_cr_at_eol}? (`boolean`) Ignore carriage return at
+                  end-of-line
+                • {ignore_blank_lines}? (`boolean`) Ignore blank lines
+                • {indent_heuristic}? (`boolean`) Use the indent heuristic for
+                  the internal diff library.
+
+    Return: ~
+        (`string|integer[][]?`) See {opts.result_type}. `nil` if
+        {opts.on_hunk} is given.
+
 vim.text.hexdecode({enc})                               *vim.text.hexdecode()*
     Hex decode a string.
 
@@ -5045,6 +5041,34 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
 
     Return: ~
         (`string[]`)
+
+
+==============================================================================
+Lua module: vim.net                                                  *vim.net*
+
+vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
+    Makes an HTTP GET request to the given URL (asynchronous).
+
+    This function operates in one mode:
+    • Asynchronous (non-blocking): Returns immediately and passes the response
+      object to the provided `on_response` handler on completetion.
+
+    Parameters: ~
+      • {url}          (`string`) The URL for the request.
+      • {opts}         (`table?`) Optional parameters:
+                       • `verbose` (boolean|nil): Enables verbose output.
+                       • `retry` (integer|nil): Number of retries on transient
+                         failures (default: 3).
+                       • `outpath` (string|nil): File path to save the
+                         response body to. If set, the `body` value in the
+                         Response Object will be `true` instead of the
+                         response body.
+      • {on_response}  (`fun(err?: string, response?: { body: string|boolean })`)
+                       Callback invoked on request completetion. The `body`
+                       field in the response object contains the raw response
+                       data (text or binary). Called with (err, nil) on
+                       failure, or (nil, { body = string|boolean }) on
+                       success.
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

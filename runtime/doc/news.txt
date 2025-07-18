@@ -84,10 +84,13 @@ LSP
 • `root_markers` in |vim.lsp.Config| can now be ordered by priority.
 • The function set with |vim.lsp.log.set_format_func()| is now given all
   arguments corresponding to a log entry instead of the individual arguments.
+• `vim.lsp.semantic_tokens.start/stop` now renamed to
+  `vim.lsp.semantic_tokens.enable`
 
 LUA
 
-• todo
+• Renamed `vim.diff` to `vim.text.diff`.
+• |vim.net.request()| adds a minimal HTTP GET API using curl.
 
 OPTIONS
 
@@ -158,6 +161,8 @@ DIAGNOSTICS
 EDITOR
 
 • |:iput| works like |:put| but adjusts indent.
+• |:retab| accepts new optional parameter -indentonly to only change leading
+  whitespace in indented lines.
 • |:uniq| deduplicates text in the current buffer.
 • |omnicompletion| in `help` buffer. |ft-help-omni|
 • Setting "'0" in 'shada' prevents storing the jumplist in the shada file.
@@ -231,6 +236,7 @@ OPTIONS
   • "o"         complete using 'omnifunc'
 • 'complete' allows limiting matches for sources using "{flag}^<limit>".
 • 'completeopt' flag "nearset" sorts completion results by distance to cursor.
+• 'diffanchors' specifies addresses to anchor a diff.
 • 'diffopt' `inline:` configures diff highlighting for changes within a line.
 • 'grepformat' is now a |global-local| option.
 • 'maxsearchcount' sets maximum value for |searchcount()| and defaults to 999.
@@ -267,7 +273,7 @@ TREESITTER
 
 TUI
 
-• |TermResponse| now supports APC query responses.
+• |TermResponse| now supports DA1 and APC query responses.
 
 UI
 
@@ -299,6 +305,7 @@ These existing features changed their behavior.
 • |vim.version.range()| doesn't exclude `to` if it is equal to `from`.
 • |$VIM| and |$VIMRUNTIME| no longer check for Vim version-specific runtime
   directory `vim{number}` (e.g. `vim82`).
+• 'scrollback' maximum value increased from 100000 to 1000000
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

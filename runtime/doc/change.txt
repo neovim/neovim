@@ -949,22 +949,26 @@ This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 
 4.3 Changing tabs					*change-tabs*
 							*:ret* *:retab* *:retab!*
-:[range]ret[ab][!] [new_tabstop]
+:[range]ret[ab][!] [-indentonly] [{new-tabstop}]
 			Replace all sequences of white-space containing a
-			<Tab> with new strings of white-space using the new
-			tabstop value given.  If you do not specify a new
-			tabstop size or it is zero, Vim uses the current value
-			of 'tabstop'.
+			<Tab> with new strings of white-space using
+			{new-tabstop}.  If you do not specify {new-tabstop} or
+			it is zero, Vim uses the current value of 'tabstop'.
 			The current value of 'tabstop' is always used to
 			compute the width of existing tabs.
 			With !, Vim also replaces strings of only normal
 			spaces with tabs where appropriate.
 			With 'expandtab' on, Vim replaces all tabs with the
 			appropriate number of spaces.
-			This command sets 'tabstop' to the new value given,
-			and if performed on the whole file, which is default,
-			should not make any visible change.
-			Careful: This command modifies any <Tab> characters
+			This command sets 'tabstop' to {new-tabstop} and if
+			performed on the whole file, which is default, should
+			not make any visible change.
+
+			When [-indentonly] is specified, only the leading
+			white-space will be targeted.  Any other consecutive
+			white-space will not be changed.
+
+			Warning: This command modifies any <Tab> characters
 			inside of strings in a C program.  Use "\t" to avoid
 			this (that's a good habit anyway).
 			`:retab!` may also change a sequence of spaces by

@@ -1091,15 +1091,47 @@ ERLANG						*erlang.vim* *ft-erlang-syntax*
 Erlang is a functional programming language developed by Ericsson.  Files with
 the following extensions are recognized as Erlang files: erl, hrl, yaws.
 
-The BIFs (built-in functions) are highlighted by default. To disable this,
-put the following line in your vimrc: >
+Vim highlights triple-quoted docstrings as comments by default.
 
-      :let g:erlang_highlight_bifs = 0
+If you want triple-quoted docstrings highlighted as Markdown, add the
+following line to your |vimrc|: >
 
-To enable highlighting some special atoms, put this in your vimrc: >
+	:let g:erlang_use_markdown_for_docs = 1
 
-      :let g:erlang_highlight_special_atoms = 1
+The plain text inside the docstrings (that is, the characters that are not
+highlighted by the Markdown syntax) is still highlighted as a comment.
 
+If you want to highlight the plain text inside the docstrings using a
+different highlight group, add the following line to your |vimrc| (the
+example highlights plain text using the String highlight group): >
+
+	:let g:erlang_docstring_default_highlight = 'String'
+
+If you don't enable Markdown, this line highlights the full docstrings
+according to the specified highlight group.
+
+Use the following line to disable highlighting for the plain text: >
+
+	:let g:erlang_docstring_default_highlight = ''
+
+Configuration examples: >
+
+	" Highlight docstrings as Markdown.
+	:let g:erlang_use_markdown_for_docs = 1
+
+	" 1. Highlight Markdown elements in docstrings as Markdown.
+	" 2. Highlight the plain text in docstrings as String.
+	:let g:erlang_use_markdown_for_docs = 1
+	:let g:erlang_docstring_default_highlight = 'String'
+
+	" Highlight docstrings as strings (no Markdown).
+	:let g:erlang_docstring_default_highlight = 'String'
+
+	" 1. Highlight Markdown elements in docstrings as Markdown.
+	" 2. Don't highlight the plain text in docstrings.
+	:let g:erlang_use_markdown_for_docs = 1
+	:let g:erlang_docstring_default_highlight = ''
+<
 
 ELIXIR						*elixir.vim* *ft-elixir-syntax*
 

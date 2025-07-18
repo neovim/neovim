@@ -4,8 +4,7 @@
 		       | Tar File Interface |
 		       +====================+
 
-Author:  Charles E. Campbell  <NcampObell@SdrPchip.AorgM-NOSPAM>
-	  (remove NOSPAM from Campbell's email first)
+Original Author:  Charles E. Campbell
 Copyright 2005-2017:					*tar-copyright*
 	The VIM LICENSE (see |copyright|) applies to the files in this
 	package, including tarPlugin.vim, tar.vim, and pi_tar.txt.  Like
@@ -57,6 +56,15 @@ Copyright 2005-2017:					*tar-copyright*
 	let g:loaded_tarPlugin= 1
 	let g:loaded_tar      = 1
 <
+							*tar-mappings*
+   MAPPINGS~
+
+   The following (buffer-local) mappings are available in a tar buffer:
+
+	<CR>		Open selected file for editing, any changes will be
+			written back to the archive.
+	<LeftMouse>	same as <CR>
+	x		Extract selected file.
 
 ==============================================================================
 3. Options						*tar-options*
@@ -69,24 +77,25 @@ Copyright 2005-2017:					*tar-copyright*
    *g:tar_readoptions*	  "OPxf"  used to extract a file from a tarball
    *g:tar_cmd*		  "tar"   the name of the tar program
    *g:tar_nomax*	    0	  if true, file window will not be maximized
-   *g:tar_secure*	  undef   if exists:
-					"--"s will be used to prevent unwanted
-					option expansion in tar commands.
-					Please be sure that your tar command
-					accepts "--"; Posix compliant tar
-					utilities do accept them.
-				  if not exists:
-					The tar plugin will reject any tar
-					files or member files that begin with
-					"-"
-				  Not all tar's support the "--" which is why
-				  it isn't default.
    *g:tar_writeoptions*	  "uf"    used to update/replace a file
 
 
 ==============================================================================
 4. History						*tar-history*
 
+	unreleased:
+		Jul 13, 2025	* drop leading /
+		May 19, 2025	* restore working directory after read/write
+		Apr 16, 2025	* decouple from netrw by adding s:WinPath()
+				instead of shelling out to file(1)
+		Mar 02, 2025	* determine the compression using readblob()
+		Mar 02, 2025	* escape the filename before using :read
+		Mar 01, 2025	* fix syntax error in tar#Read()
+		Feb 28, 2025	* add support for bzip3 (#16755)
+		Feb 06, 2025	* add support for lz4 (#16591)
+		Nov 11, 2024	* support permissions (#7379)
+		Feb 19, 2024	* announce adoption
+		Jan 08, 2024	* fix a few problems (#138331, #12637, #8109)
 	v31	Apr 02, 2017	* (klartext) reported that browsing encrypted
 				  files in a zip archive created unencrypted
 				  swap files.  I am applying a similar fix

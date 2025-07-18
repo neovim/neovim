@@ -537,10 +537,10 @@ func Test_search_stat_option()
     \ searchcount(#{recompute: 0}))
   call assert_equal(
     \ #{exact_match: 1, current: 27992, incomplete: 0, maxcount:0, total: 28000},
-    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 200}))
+    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 500}))
   call assert_equal(
     \ #{exact_match: 1, current: 1, incomplete: 0, maxcount: 0, total: 28000},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 200}))
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 500}))
   call cursor(line('$'), 1)
   let g:a = execute(':unsilent :norm! n')
   let stat = 'W \[1/>999\]'
@@ -550,10 +550,10 @@ func Test_search_stat_option()
     \ searchcount(#{recompute: 0}))
   call assert_equal(
     \ #{current: 1, exact_match: 1, total: 28000, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 200}))
+    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 500}))
   call assert_equal(
     \ #{current: 27991, exact_match: 1, total: 28000, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 200}))
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 500}))
 
   " Many matches
   call cursor(1, 1)

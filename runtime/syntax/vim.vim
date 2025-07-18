@@ -225,7 +225,7 @@ syn cluster vim9CmdList	contains=vim9Abstract,vim9Class,vim9Const,vim9Enum,vim9E
 syn match vimCmdSep	"\\\@1<!|"	skipwhite nextgroup=@vimCmdList,vimSubst1,@vimFunc
 syn match vimCmdSep	":\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
 syn match vimCount	contained	"\d\+"
-syn match vimIsCommand	"\<\%(\h\w*\|[23]mat\%[ch]\)\>"	 nextgroup=vimBang contains=vimCommand
+syn match vimIsCommand	"\<\h\w*\>"	nextgroup=vimBang contains=vimCommand
 syn match vimBang	      contained	"!"
 syn match vimWhitespace contained	"\s\+"
 
@@ -281,7 +281,7 @@ syn keyword vimBehaveModel	contained	mswin	xterm
 
 " Call {{{2
 " ====
-syn match vimCall	"\<call\=\>"	skipwhite nextgroup=@vimFunc
+syn match vimCall	"\<call\=\>"	skipwhite nextgroup=vimVar,@vimFunc
 
 " Debuggreedy {{{2
 " ===========
@@ -778,7 +778,7 @@ syn case ignore
 syn keyword	vimUserCmdAttrKey   contained	a[ddr] ban[g] bar bu[ffer] com[plete] cou[nt] k[eepscript] n[args] ra[nge] re[gister]
 
 " GEN_SYN_VIM: vimUserCmdAttrComplete, START_STR='syn keyword vimUserCmdAttrComplete contained', END_STR=''
-syn keyword vimUserCmdAttrComplete contained arglist augroup behave breakpoint buffer color command compiler cscope diff_buffer dir dir_in_path environment event expression file file_in_path filetype filetypecmd function help highlight history keymap locale mapclear mapping menu messages option packadd runtime scriptnames shellcmd shellcmdline sign syntax syntime tag tag_listfiles user var
+syn keyword vimUserCmdAttrComplete contained arglist augroup behave breakpoint buffer color command compiler cscope diff_buffer dir dir_in_path environment event expression file file_in_path filetype filetypecmd function help highlight history keymap locale mapclear mapping menu messages option packadd retab runtime scriptnames shellcmd shellcmdline sign syntax syntime tag tag_listfiles user var
 syn keyword vimUserCmdAttrComplete contained arglist augroup behave breakpoint buffer color command compiler cscope diff_buffer dir dir_in_path environment event expression file file_in_path filetype function help highlight history keymap locale mapclear mapping menu messages option packadd runtime scriptnames shellcmd shellcmdline sign syntax syntime tag tag_listfiles user var
 syn keyword	vimUserCmdAttrComplete	contained	custom customlist nextgroup=vimUserCmdAttrCompleteFunc,vimUserCmdError
 syn match	vimUserCmdAttrCompleteFunc	contained	",\%([bwglstav]:\|<[sS][iI][dD]>\)\=\h\w*\%([.#]\h\w*\)*"hs=s+1 nextgroup=vimUserCmdError contains=vimVarScope,vimFunctionSID
@@ -1437,12 +1437,18 @@ endif
 
 " Match: {{{2
 " =====
-syn match	vimMatch		"\<[23]\=mat\%[ch]\>" skipwhite nextgroup=vimMatchGroup,vimMatchNone
-syn match	vimMatchGroup	contained	"[[:alnum:]._-]\+"    skipwhite nextgroup=vimMatchPattern
+syn match	vimMatch		"\<\%([1-3]\s*\)\=mat\%[ch]\>"	skipwhite nextgroup=vimMatchGroup,vimMatchNone contains=vimCount
+syn match	vimMatchGroup	contained	"[[:alnum:]._-]\+"	skipwhite nextgroup=vimMatchPattern
 syn case ignore
 syn keyword	vimMatchNone	contained	none
 syn case match
-syn region	vimMatchPattern	contained	matchgroup=Delimiter start="\z([!#$%&'()*+,-./:;<=>?@[\]^_`{}~]\)" skip="\\\\\|\\\z1" end="\z1" contains=@vimSubstList oneline
+syn region	vimMatchPattern	contained
+      \ matchgroup=Delimiter
+      \ start="\z([!#$%&'()*+,-./:;<=>?@[\]^_`{}~]\)"
+      \ skip="\\\\\|\\\z1"
+      \ end="\z1"
+      \ contains=@vimSubstList
+      \ oneline
 
 " Normal: {{{2
 " ======
@@ -2060,6 +2066,7 @@ unlet s:interfaces
 " (following Gautam Iyer's suggestion)
 " ==========================
 syn match	vimFunc	contained	"\<\l\w*\ze\s*("				skipwhite nextgroup=vimOperParen contains=vimFuncName
+syn match	vimUserFunc	contained	"\.\@1<=\l\w*\ze\s*("			skipwhite nextgroup=vimOperParen contains=vimFuncName
 syn match	vimUserFunc	contained	"\<\%([[:upper:]_]\|\%(\h\w*\.\)\+\h\)\w*\ze\s*("		skipwhite nextgroup=vimOperParen contains=vim9MethodName,vim9Super,vim9This
 syn match	vimUserFunc	contained	"\<\%(g:\)\=\%(\h\w*#\)\+\h\w*\ze\s*("		skipwhite nextgroup=vimOperParen contains=vimVarScope
 syn match	vimUserFunc	contained	"\%(\<[sgbwtlav]:\|<[sS][iI][dD]>\)\%(\h\w*\.\)*\h\w*\ze\s*("	skipwhite nextgroup=vimOperParen contains=vimVarScope,vimNotation

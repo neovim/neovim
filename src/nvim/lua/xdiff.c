@@ -164,9 +164,7 @@ static int call_on_hunk_cb(int start_a, int count_a, int start_b, int count_b, v
   lua_pushinteger(lstate, count_b);
 
   if (lua_pcall(lstate, 4, 1, 0) != 0) {
-    api_set_error(err, kErrorTypeException,
-                  "error running function on_hunk: %s",
-                  lua_tostring(lstate, -1));
+    api_set_error(err, kErrorTypeException, "on_hunk: %s", lua_tostring(lstate, -1));
     return -1;
   }
 

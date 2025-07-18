@@ -1,5 +1,8 @@
 " Tests for user defined commands
 
+source check.vim
+source screendump.vim
+
 " Test for <mods> in user defined commands
 function Test_cmdmods()
   let g:mods = ''
@@ -362,6 +365,14 @@ func Test_CmdCompletion()
   call feedkeys(":com MyCmd chist\<Tab>\<C-B>\"\<CR>", 'tx')
   call assert_equal("\"com MyCmd chistory", @:)
 
+  " delete the Check commands to avoid them showing up
+  call feedkeys(":com Check\<C-A>\<C-B>\"\<CR>", 'tx')
+  let cmds = substitute(@:, '"com ', '', '')->split()
+  for cmd in cmds
+    exe 'delcommand ' .. cmd
+  endfor
+  delcommand MissingFeature
+
   command! DoCmd1 :
   command! DoCmd2 :
   call feedkeys(":com \<C-A>\<C-B>\"\<CR>", 'tx')
@@ -394,6 +405,10 @@ func Test_CmdCompletion()
   " com! -nargs=1 -complete=behave DoCmd :
   " call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"DoCmd mswin xterm', @:)
+
+  com! -nargs=1 -complete=retab DoCmd :
+  call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"DoCmd -indentonly', @:)
 
   " Test for file name completion
   com! -nargs=1 -complete=file DoCmd :
@@ -715,7 +730,7 @@ func Test_recursive_define()
   call DefCmd('Command')
 
   let name = 'Command'
-  while len(name) < 30
+  while len(name) <= 30
     exe 'delcommand ' .. name
     let name ..= 'x'
   endwhile

@@ -133,7 +133,6 @@ local config = {
     filename = 'lua.txt',
     section_order = {
       'hl.lua',
-      'diff.lua',
       'mpack.lua',
       'json.lua',
       'base64.lua',
@@ -162,6 +161,7 @@ local config = {
       'snippet.lua',
       'text.lua',
       'tohtml.lua',
+      'net.lua',
     },
     files = {
       'runtime/lua/vim/iter.lua',
@@ -185,7 +185,6 @@ local config = {
       'runtime/lua/vim/text.lua',
       'runtime/lua/vim/glob.lua',
       'runtime/lua/vim/_meta/builtin.lua',
-      'runtime/lua/vim/_meta/diff.lua',
       'runtime/lua/vim/_meta/mpack.lua',
       'runtime/lua/vim/_meta/json.lua',
       'runtime/lua/vim/_meta/base64.lua',
@@ -194,6 +193,7 @@ local config = {
       'runtime/lua/vim/_meta/re.lua',
       'runtime/lua/vim/_meta/spell.lua',
       'runtime/lua/tohtml.lua',
+      'runtime/lua/vim/net.lua',
     },
     fn_xform = function(fun)
       if contains(fun.module, { 'vim.uri', 'vim.shared', 'vim._editor' }) then
@@ -230,7 +230,6 @@ local config = {
           'mpack',
           'json',
           'base64',
-          'diff',
           'spell',
           'regex',
           'lpeg',

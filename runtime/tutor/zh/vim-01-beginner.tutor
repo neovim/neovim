@@ -287,7 +287,7 @@ This ABC DE line FGHI JK LMN OP of words is Q RS TUV cleaned up.
 
  3. 现在移动到第 4 行。
 
- 4. 输入 `2dd`{normal} 来删除两行，然后按两次 `u`{normal} 来恢复这三行。
+ 4. 输入 `2dd`{normal} 来删除两行。
 
 1)  Roses are red,
 2)  Mud is fun,

@@ -69,7 +69,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
-- 'maxsearchcount' defaults t0 999
+- 'maxsearchcount' defaults to 999
 - 'mouse' defaults to "nvi", see |default-mouse| for details
 - 'mousemodel' defaults to "popup_setpos"
 - 'nrformats' defaults to "bin,hex"
@@ -326,8 +326,8 @@ Events (autocommands):
 - |TabNewEntered|
 - |TermClose|
 - |TermOpen|
-- |TermResponse| is fired for any OSC sequence received from the terminal,
-  instead of the Primary Device Attributes response. |v:termresponse|
+- |TermResponse| is fired for DCS, OSC, and APC sequences received from the terminal,
+  in addition to the Primary Device Attributes response. |v:termresponse|
 - |UIEnter|
 - |UILeave|
 

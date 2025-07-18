@@ -22,8 +22,8 @@
             .hash = "N-V-__8AADi-AwDnVoXwDCQvv2wcYOmN0bJLqZ44J3lwoQY2",
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.25.6#50622f71f87fa97f1ec463f83447d524d5156286",
-            .hash = "tree_sitter-0.26.0-Tw2sR965CwDPmv5Xf5TZ9MiqGP_CasCBRJE5252Vs_tA",
+            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.25.8#854f527f6ef9fdf563efb13d016e52df3ee6c45c",
+            .hash = "tree_sitter-0.26.0-Tw2sR8u8CwBPBvzDbE0Ggokap5sll_qol0WSVuwjdOfC",
         },
         .libuv = .{ .path = "./deps/libuv" },
         .utf8proc = .{ .path = "./deps/utf8proc/" },
@@ -46,8 +46,8 @@
             .hash = "N-V-__8AAEF5CABqSL9zqc03aQsT6Nni54ZCcL98pnuDL2D3",
         },
         .treesitter_vim = .{
-            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-vim?ref=v0.6.0#2f9e2be0a3af4999f615d69a6261efc699e5985c",
-            .hash = "N-V-__8AAHIQUwAO7lkXegMUhQxMCiIltH69Kgcpo17B0K6z",
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-vim?ref=v0.7.0#3dd4747082d1b717b8978211c06ef7b6cd16125b",
+            .hash = "N-V-__8AAMArVAB4uo2wg2XRs8HBviQ4Pq366cC_iRolX4Vc",
         },
         .treesitter_vimdoc = .{
             .url = "git+https://github.com/neovim/tree-sitter-vimdoc?ref=v4.0.0#9f6191a98702edc1084245abd5523279d4b681fb",

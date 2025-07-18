@@ -18,12 +18,6 @@ syn match	qfText		".*"	 contained
 syn match	qfError		"error"	 contained
 syn cluster	qfType	contains=qfError
 
-" Hide file name and line number for help outline (TOC).
-if has_key(w:, 'qf_toc') || get(w:, 'quickfix_title') =~# '\<TOC$\|\<Table of contents\>'
-  setlocal conceallevel=3 concealcursor=nc
-  syn match	Ignore		"^[^|]*|[^|]*| " conceal
-endif
-
 " The default highlighting.
 hi def link qfFileName		Directory
 hi def link qfLineNr		LineNr

@@ -49,7 +49,7 @@ describe('log', function()
         ^                                                  |
         ~                                                 |*4
                                                           |
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end
 

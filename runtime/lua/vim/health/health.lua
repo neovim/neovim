@@ -87,9 +87,9 @@ local function check_config()
     health.error(
       'Locale does not support UTF-8. Unicode characters may not display correctly.'
         .. ('\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s'):format(
-          vim.env.LANG,
-          vim.env.LC_ALL,
-          vim.env.LC_CTYPE
+          vim.env.LANG or '',
+          vim.env.LC_ALL or '',
+          vim.env.LC_CTYPE or ''
         ),
       {
         'If using tmux, try the -u option.',
@@ -427,6 +427,72 @@ local function check_external_tools()
     end
   else
     health.warn('git not available (required by `vim.pack`)')
+  end
+
+  if vim.fn.executable('curl') == 1 then
+    local curl_path = vim.fn.exepath('curl')
+    local curl_job = vim.system({ curl_path, '--version' }):wait()
+
+    if curl_job.code == 0 then
+      local curl_out = curl_job.stdout
+      if not curl_out or curl_out == '' then
+        health.warn(
+          string.format('`%s --version` produced no output', curl_path),
+          { curl_job.stderr }
+        )
+        return
+      end
+      local curl_version = vim.version.parse(curl_out)
+      if not curl_version then
+        health.warn('Unable to parse curl version from `curl --version`')
+        return
+      end
+      if vim.version.le(curl_version, { 7, 12, 3 }) then
+        health.warn('curl version %s not compatible', curl_version)
+        return
+      end
+      local lines = { string.format('curl %s (%s)', curl_version, curl_path) }
+
+      for line in vim.gsplit(curl_out, '\n', { plain = true }) do
+        if line ~= '' and not line:match('^curl') then
+          table.insert(lines, line)
+        end
+      end
+
+      -- Add subtitle only if any env var is present
+      local added_env_header = false
+      for _, var in ipairs({
+        'curl_ca_bundle',
+        'curl_home',
+        'curl_ssl_backend',
+        'ssl_cert_dir',
+        'ssl_cert_file',
+        'https_proxy',
+        'http_proxy',
+        'all_proxy',
+        'no_proxy',
+      }) do
+        ---@type string?
+        local val = vim.env[var] or vim.env[var:upper()]
+        if val then
+          if not added_env_header then
+            table.insert(lines, 'curl-related environment variables:')
+            added_env_header = true
+          end
+          local shown_var = vim.env[var] and var or var:upper()
+          table.insert(lines, string.format('  %s=%s', shown_var, val))
+        end
+      end
+
+      health.ok(table.concat(lines, '\n'))
+    else
+      health.warn('curl is installed but failed to run `curl --version`', { curl_job.stderr })
+    end
+  else
+    health.error('curl not found', {
+      'Required for vim.net.request() to function.',
+      'Install curl using your package manager.',
+    })
   end
 end
 

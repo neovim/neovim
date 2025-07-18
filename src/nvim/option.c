@@ -4478,6 +4478,8 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
       return &(buf->b_p_ise);
     case kOptDictionary:
       return &(buf->b_p_dict);
+    case kOptDiffanchors:
+      return &(buf->b_p_dia);
     case kOptThesaurus:
       return &(buf->b_p_tsr);
     case kOptThesaurusfunc:
@@ -4565,6 +4567,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_ise != NUL ? &(buf->b_p_ise) : p->var;
   case kOptDictionary:
     return *buf->b_p_dict != NUL ? &(buf->b_p_dict) : p->var;
+  case kOptDiffanchors:
+    return *buf->b_p_dia != NUL ? &(buf->b_p_dia) : p->var;
   case kOptThesaurus:
     return *buf->b_p_tsr != NUL ? &(buf->b_p_tsr) : p->var;
   case kOptThesaurusfunc:
@@ -5258,6 +5262,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_cot = empty_string_option;
       buf->b_cot_flags = 0;
       buf->b_p_dict = empty_string_option;
+      buf->b_p_dia = empty_string_option;
       buf->b_p_tsr = empty_string_option;
       buf->b_p_ise = empty_string_option;
       buf->b_p_tsrfu = empty_string_option;

@@ -17,6 +17,11 @@
 
 #define strneq(a, b, n) (strncmp(a, b, n) == 0)
 
+// Primary Device Attributes (DA1) response.
+// We make this a global (extern) variable so that we can override it with FFI
+// in tests.
+char vterm_primary_device_attr[] = "61;22;52";
+
 // Some convenient wrappers to make callback functions easier
 
 static void putglyph(VTermState *state, const schar_T schar, int width, VTermPos pos)
@@ -1385,7 +1390,7 @@ static int on_csi(const char *leader, const long args[], int argcount, const cha
     val = CSI_ARG_OR(args[0], 0);
     if (val == 0) {
       // DEC VT100 response
-      vterm_push_output_sprintf_ctrl(state->vt, C1_CSI, "?1;2c");
+      vterm_push_output_sprintf_ctrl(state->vt, C1_CSI, "?%sc", vterm_primary_device_attr);
     }
     break;
 

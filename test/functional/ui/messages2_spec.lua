@@ -176,6 +176,16 @@ describe('messages2', function()
       {1:~                                                 }{4:foo}|
       {16::}^                                                    |
     ]])
+    -- Highlighter disabled when message is moved to cmdline #34884
+    feed('ls<CR>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*8
+      {3:─────────────────────────────────────────────────────}|
+      foo                                                  |
+                                                           |
+        1 %a   "[No Name]"                    line 1       |
+    ]])
   end)
 
   it("deleting buffer restores 'buftype'", function()

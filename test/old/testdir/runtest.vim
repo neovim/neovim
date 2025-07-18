@@ -99,6 +99,9 @@ source setup.vim
 " Needed for RunningWithValgrind().
 source shared.vim
 
+" Needed for the various Check commands
+source check.vim
+
 " For consistency run all tests with 'nocompatible' set.
 " This also enables use of line continuation.
 set nocp viminfo+=nviminfo

@@ -15,6 +15,7 @@
 " 2024 Aug 18 by Vim Project: correctly handle special globbing chars
 " 2024 Aug 21 by Vim Project: simplify condition to detect MS-Windows
 " 2025 Mar 11 by Vim Project: handle filenames with leading '-' correctly
+" 2025 Jul 12 by Vim Project: drop ../ on write to prevent path traversal attacks
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -71,8 +72,9 @@ fun! s:Mess(group, msg)
   echohl Normal
 endfun
 
-if v:version < 702
- call s:Mess('WarningMsg', "***warning*** this version of zip needs vim 7.2 or later")
+if !has('nvim-0.10') && v:version < 901
+ " required for defer
+ call s:Mess('WarningMsg', "***warning*** this version of zip needs vim 9.1 or later")
  finish
 endif
 " sanity checks
@@ -235,59 +237,62 @@ endfun
 " zip#Write: {{{2
 fun! zip#Write(fname)
   let dict = s:SetSaneOpts()
+  let need_rename = 0
   defer s:RestoreOpts(dict)
 
   " sanity checks
   if !executable(substitute(g:zip_zipcmd,'\s\+.*$','',''))
-   call s:Mess('Error', "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program")
-   return
-  endif
-  if !exists("*mkdir")
-   call s:Mess('Error', "***error*** (zip#Write) sorry, mkdir() doesn't work on your system")
-   return
+    call s:Mess('Error', "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program")
+    return
   endif
 
   let curdir= getcwd()
   let tmpdir= tempname()
   if tmpdir =~ '\.'
-   let tmpdir= substitute(tmpdir,'\.[^.]*$','','e')
+    let tmpdir= substitute(tmpdir,'\.[^.]*$','','e')
   endif
   call mkdir(tmpdir,"p")
 
   " attempt to change to the indicated directory
   if s:ChgDir(tmpdir,s:ERROR,"(zip#Write) cannot cd to temporary directory")
-   return
+    return
   endif
 
   " place temporary files under .../_ZIPVIM_/
   if isdirectory("_ZIPVIM_")
-   call delete("_ZIPVIM_", "rf")
+    call delete("_ZIPVIM_", "rf")
   endif
   call mkdir("_ZIPVIM_")
   cd _ZIPVIM_
 
   if has("unix")
-   let zipfile = substitute(a:fname,'zipfile://\(.\{-}\)::[^\\].*$','\1','')
-   let fname   = substitute(a:fname,'zipfile://.\{-}::\([^\\].*\)$','\1','')
+    let zipfile = substitute(a:fname,'zipfile://\(.\{-}\)::[^\\].*$','\1','')
+    let fname   = substitute(a:fname,'zipfile://.\{-}::\([^\\].*\)$','\1','')
   else
-   let zipfile = substitute(a:fname,'^.\{-}zipfile://\(.\{-}\)::[^\\].*$','\1','')
-   let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
+    let zipfile = substitute(a:fname,'^.\{-}zipfile://\(.\{-}\)::[^\\].*$','\1','')
+    let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
+  endif
+  if fname =~ '^[.]\{1,2}/'
+    call system(g:zip_zipcmd." -d ".s:Escape(fnamemodify(zipfile,":p"),0)." ".s:Escape(fname,0))
+    let fname = fname->substitute('^\([.]\{1,2}/\)\+', '', 'g')
+    let need_rename = 1
   endif
 
   if fname =~ '/'
-   let dirpath = substitute(fname,'/[^/]\+$','','e')
-   if has("win32unix") && executable("cygpath")
+    let dirpath = substitute(fname,'/[^/]\+$','','e')
+    if has("win32unix") && executable("cygpath")
     let dirpath = substitute(system("cygpath ".s:Escape(dirpath,0)),'\n','','e')
-   endif
-   call mkdir(dirpath,"p")
+    endif
+    call mkdir(dirpath,"p")
   endif
   if zipfile !~ '/'
-   let zipfile= curdir.'/'.zipfile
+    let zipfile= curdir.'/'.zipfile
   endif
 
-  exe "w! ".fnameescape(fname)
+  " don't overwrite files forcefully
+  exe "w ".fnameescape(fname)
   if has("win32unix") && executable("cygpath")
-   let zipfile = substitute(system("cygpath ".s:Escape(zipfile,0)),'\n','','e')
+    let zipfile = substitute(system("cygpath ".s:Escape(zipfile,0)),'\n','','e')
   endif
 
   if (has("win32") || has("win95") || has("win64") || has("win16")) && &shell !~? 'sh$'
@@ -296,21 +301,24 @@ fun! zip#Write(fname)
 
   call system(g:zip_zipcmd." -u ".s:Escape(fnamemodify(zipfile,":p"),0)." ".s:Escape(fname,0))
   if v:shell_error != 0
-   call s:Mess('Error', "***error*** (zip#Write) sorry, unable to update ".zipfile." with ".fname)
+    call s:Mess('Error', "***error*** (zip#Write) sorry, unable to update ".zipfile." with ".fname)
 
   elseif s:zipfile_{winnr()} =~ '^\a\+://'
-   " support writing zipfiles across a network
-   let netzipfile= s:zipfile_{winnr()}
-   1split|enew
-   let binkeep= &binary
-   let eikeep = &ei
-   set binary ei=all
-   exe "noswapfile e! ".fnameescape(zipfile)
-   call netrw#NetWrite(netzipfile)
-   let &ei     = eikeep
-   let &binary = binkeep
-   q!
-   unlet s:zipfile_{winnr()}
+    " support writing zipfiles across a network
+    let netzipfile= s:zipfile_{winnr()}
+    1split|enew
+    let binkeep= &binary
+    let eikeep = &ei
+    set binary ei=all
+    exe "noswapfile e! ".fnameescape(zipfile)
+    call netrw#NetWrite(netzipfile)
+    let &ei     = eikeep
+    let &binary = binkeep
+    q!
+    unlet s:zipfile_{winnr()}
+  elseif need_rename
+    exe $"sil keepalt file {fnameescape($"zipfile://{zipfile}::{fname}")}"
+    call s:Mess('Warning', "***error*** (zip#Browse) Path Traversal Attack detected, dropping relative path")
   endif
 
   " cleanup and restore current directory
@@ -319,7 +327,6 @@ fun! zip#Write(fname)
   call s:ChgDir(curdir,s:WARNING,"(zip#Write) unable to return to ".curdir."!")
   call delete(tmpdir, "rf")
   setlocal nomod
-
 endfun
 
 " ---------------------------------------------------------------------
@@ -332,15 +339,18 @@ fun! zip#Extract()
 
   " sanity check
   if fname =~ '^"'
-   return
+    return
   endif
   if fname =~ '/$'
-   call s:Mess('Error', "***error*** (zip#Extract) Please specify a file, not a directory")
-   return
+    call s:Mess('Error', "***error*** (zip#Extract) Please specify a file, not a directory")
+    return
+  elseif fname =~ '^[.]\?[.]/'
+    call s:Mess('Error', "***error*** (zip#Browse) Path Traversal Attack detected, not extracting!")
+    return
   endif
   if filereadable(fname)
-   call s:Mess('Error', "***error*** (zip#Extract) <" .. fname .."> already exists in directory, not overwriting!")
-   return
+    call s:Mess('Error', "***error*** (zip#Extract) <" .. fname .."> already exists in directory, not overwriting!")
+    return
   endif
   let target = fname->substitute('\[', '[[]', 'g')
   " unzip 6.0 does not support -- to denote end-of-arguments
@@ -362,13 +372,12 @@ fun! zip#Extract()
   " extract the file mentioned under the cursor
   call system($"{g:zip_extractcmd} -o {shellescape(b:zipfile)} {target}")
   if v:shell_error != 0
-   call s:Mess('Error', "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!")
+    call s:Mess('Error', "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!")
   elseif !filereadable(fname)
-   call s:Mess('Error', "***error*** attempted to extract ".fname." but it doesn't appear to be present!")
+    call s:Mess('Error', "***error*** attempted to extract ".fname." but it doesn't appear to be present!")
   else
-   echomsg "***note*** successfully extracted ".fname
+    echomsg "***note*** successfully extracted ".fname
   endif
-
 endfun
 
 " ---------------------------------------------------------------------

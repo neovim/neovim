@@ -1418,9 +1418,10 @@ end
 ---
 ---@param events table list of events
 ---@param winnr integer window id of preview window
----@param bufnrs table list of buffers where the preview window will remain visible
+---@param floating_bufnr integer floating preview buffer
+---@param bufnr integer buffer that opened the floating preview buffer
 ---@see autocmd-events
-local function close_preview_autocmd(events, winnr, bufnrs)
+local function close_preview_autocmd(events, winnr, floating_bufnr, bufnr)
   local augroup = api.nvim_create_augroup('nvim.preview_window_' .. winnr, {
     clear = true,
   })
@@ -1429,13 +1430,13 @@ local function close_preview_autocmd(events, winnr, bufnrs)
   -- the floating window buffer or the buffer that spawned it
   api.nvim_create_autocmd('BufLeave', {
     group = augroup,
-    buffer = bufnrs[1],
+    buffer = bufnr,
     callback = function()
       vim.schedule(function()
         -- When jumping to the quickfix window from the preview window,
         -- do not close the preview window.
         if api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf' then
-          close_preview_window(winnr, bufnrs)
+          close_preview_window(winnr, { floating_bufnr, bufnr })
         end
       end)
     end,
@@ -1444,7 +1445,7 @@ local function close_preview_autocmd(events, winnr, bufnrs)
   if #events > 0 then
     api.nvim_create_autocmd(events, {
       group = augroup,
-      buffer = bufnrs[2],
+      buffer = bufnr,
       callback = function()
         close_preview_window(winnr)
       end,
@@ -1690,7 +1691,7 @@ function M.open_floating_preview(contents, syntax, opts)
       '<cmd>bdelete<cr>',
       { silent = true, noremap = true, nowait = true }
     )
-    close_preview_autocmd(opts.close_events, floating_winnr, { floating_bufnr, bufnr })
+    close_preview_autocmd(opts.close_events, floating_winnr, floating_bufnr, bufnr)
 
     -- save focus_id
     if opts.focus_id then
@@ -2224,7 +2225,7 @@ end
 ---@param end_line integer
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.Range
-local function make_line_range_params(bufnr, start_line, end_line, position_encoding)
+function M._make_line_range_params(bufnr, start_line, end_line, position_encoding)
   local last_line = api.nvim_buf_line_count(bufnr) - 1
 
   ---@type lsp.Position
@@ -2284,58 +2285,81 @@ function M._cancel_requests(filter)
   end
 end
 
----@class (private) vim.lsp.util._refresh.Opts
----@field bufnr integer? Buffer to refresh (default: 0)
----@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
----@field client_id? integer Client ID to refresh (default: all clients)
----@field handler? lsp.Handler
+---@param feature string
+---@param client_id? integer
+local function make_enable_var(feature, client_id)
+  return ('_lsp_enabled_%s%s'):format(feature, client_id and ('_client_%d'):format(client_id) or '')
+end
 
---- Request updated LSP information for a buffer.
+---@class vim.lsp.enable.Filter
+---@inlinedoc
 ---
----@param method vim.lsp.protocol.Method.ClientToServer.Request LSP method to call
----@param opts? vim.lsp.util._refresh.Opts Options table
-function M._refresh(method, opts)
-  opts = opts or {}
-  local bufnr = vim._resolve_bufnr(opts.bufnr)
+--- Buffer number, or 0 for current buffer, or nil for all.
+---@field bufnr? integer
+---
+--- Client ID, or nil for all
+---@field client_id? integer
 
-  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = method, id = opts.client_id })
+---@param feature string
+---@param filter? vim.lsp.enable.Filter
+function M._is_enabled(feature, filter)
+  vim.validate('feature', feature, 'string')
+  vim.validate('filter', filter, 'table', true)
 
-  if #clients == 0 then
-    return
-  end
+  filter = filter or {}
+  local bufnr = filter.bufnr
+  local client_id = filter.client_id
 
-  local textDocument = M.make_text_document_params(bufnr)
+  local var = make_enable_var(feature)
+  local client_var = make_enable_var(feature, client_id)
+  return vim.F.if_nil(client_id and vim.g[client_var], vim.g[var])
+    and vim.F.if_nil(bufnr and vim.b[bufnr][var], vim.g[var])
+end
 
-  if opts.only_visible then
-    for _, window in ipairs(api.nvim_list_wins()) do
-      if api.nvim_win_get_buf(window) == bufnr then
-        local first = vim.fn.line('w0', window)
-        local last = vim.fn.line('w$', window)
-        M._cancel_requests({
-          bufnr = bufnr,
-          clients = clients,
-          method = method,
-          type = 'pending',
-        })
-        for _, client in ipairs(clients) do
-          client:request(method, {
-            textDocument = textDocument,
-            range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
-          }, opts.handler, bufnr)
-        end
-      end
+---@param feature 'semantic_tokens'
+---@param enable? boolean
+---@param filter? vim.lsp.enable.Filter
+function M._enable(feature, enable, filter)
+  vim.validate('feature', feature, 'string')
+  vim.validate('enable', enable, 'boolean', true)
+  vim.validate('filter', filter, 'table', true)
+
+  enable = enable == nil or enable
+  filter = filter or {}
+  local bufnr = filter.bufnr
+  local client_id = filter.client_id
+  assert(
+    not (bufnr and client_id),
+    'Only one of `bufnr` or `client_id` filters can be specified at a time.'
+  )
+
+  local var = make_enable_var(feature)
+  local client_var = make_enable_var(feature, client_id)
+
+  if client_id then
+    if enable == vim.g[var] then
+      vim.g[client_var] = nil
+    else
+      vim.g[client_var] = enable
+    end
+  elseif bufnr then
+    if enable == vim.g[var] then
+      vim.b[bufnr][var] = nil
+    else
+      vim.b[bufnr][var] = enable
     end
   else
-    for _, client in ipairs(clients) do
-      client:request(method, {
-        textDocument = textDocument,
-        range = make_line_range_params(
-          bufnr,
-          0,
-          api.nvim_buf_line_count(bufnr) - 1,
-          client.offset_encoding
-        ),
-      }, opts.handler, bufnr)
+    vim.g[var] = enable
+    for _, it_bufnr in ipairs(api.nvim_list_bufs()) do
+      if api.nvim_buf_is_loaded(it_bufnr) and vim.b[it_bufnr][var] == enable then
+        vim.b[it_bufnr][var] = nil
+      end
+    end
+    for _, it_client in ipairs(vim.lsp.get_clients()) do
+      local it_client_var = make_enable_var(feature, it_client.id)
+      if vim.g[it_client_var] and vim.g[it_client_var] == enable then
+        vim.g[it_client_var] = nil
+      end
     end
   end
 end

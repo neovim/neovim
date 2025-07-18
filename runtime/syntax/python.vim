@@ -1,9 +1,10 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2023 Feb 28
+" Last Change:	2025 Jul 17
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
+"		Rob B
 "
 "		This version is a major rewrite by Zvezdan Petkovic.
 "
@@ -144,23 +145,75 @@ syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
 " Triple-quoted strings can contain doctests.
 syn region  pythonString matchgroup=pythonQuotes
       \ start=+[uU]\=\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
-      \ contains=pythonEscape,@Spell
+      \ contains=pythonEscape,pythonUnicodeEscape,@Spell
 syn region  pythonString matchgroup=pythonTripleQuotes
       \ start=+[uU]\=\z('''\|"""\)+ skip=+\\["']+ end="\z1" keepend
-      \ contains=pythonEscape,pythonSpaceError,pythonDoctest,@Spell
+      \ contains=pythonEscape,pythonUnicodeEscape,pythonSpaceError,pythonDoctest,@Spell
 syn region  pythonRawString matchgroup=pythonQuotes
-      \ start=+[uU]\=[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
+      \ start=+[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=@Spell
 syn region  pythonRawString matchgroup=pythonTripleQuotes
-      \ start=+[uU]\=[rR]\z('''\|"""\)+ end="\z1" keepend
+      \ start=+[rR]\z('''\|"""\)+ end="\z1" keepend
       \ contains=pythonSpaceError,pythonDoctest,@Spell
+
+" Formatted string literals (f-strings)
+" https://docs.python.org/3/reference/lexical_analysis.html#f-strings
+syn region  pythonFString
+      \ matchgroup=pythonQuotes
+      \ start=+\cF\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+      \ contains=pythonEscape,pythonUnicodeEscape,@Spell
+syn region  pythonFString
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\cF\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+      \ contains=pythonEscape,pythonUnicodeEscape,pythonSpaceError,pythonDoctest,@Spell
+syn region  pythonRawFString
+      \ matchgroup=pythonQuotes
+      \ start=+\c\%(FR\|RF\)\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+      \ contains=@Spell
+syn region  pythonRawFString
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\c\%(FR\|RF\)\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+      \ contains=pythonSpaceError,pythonDoctest,@Spell
+
+" Bytes
+syn region  pythonBytes
+      \ matchgroup=pythonQuotes
+      \ start=+\cB\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+      \ contains=pythonEscape
+syn region  pythonBytes
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\cB\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+      \ contains=pythonEscape
+syn region  pythonRawBytes
+      \ matchgroup=pythonQuotes
+      \ start=+\c\%(BR\|RB\)\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+syn region  pythonRawBytes
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\c\%(BR\|RB\)\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
 
 syn match   pythonEscape	+\\[abfnrtv'"\\]+ contained
 syn match   pythonEscape	"\\\o\{1,3}" contained
 syn match   pythonEscape	"\\x\x\{2}" contained
-syn match   pythonEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
+syn match   pythonUnicodeEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
 " Python allows case-insensitive Unicode IDs: http://www.unicode.org/charts/
-syn match   pythonEscape	"\\N{\a\+\%(\s\a\+\)*}" contained
+" The specification: https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-4/#G135165
+syn match   pythonUnicodeEscape	"\\N{\a\+\%(\%(\s\a\+[[:alnum:]]*\)\|\%(-[[:alnum:]]\+\)\)*}" contained
 syn match   pythonEscape	"\\$"
 
 " It is very important to understand all details before changing the
@@ -312,9 +365,14 @@ hi def link pythonComment		Comment
 hi def link pythonTodo			Todo
 hi def link pythonString		String
 hi def link pythonRawString		String
+hi def link pythonFString		String
+hi def link pythonRawFString		String
+hi def link pythonBytes 		String
+hi def link pythonRawBytes 		String
 hi def link pythonQuotes		String
 hi def link pythonTripleQuotes		pythonQuotes
 hi def link pythonEscape		Special
+hi def link pythonUnicodeEscape		pythonEscape
 if !exists("python_no_number_highlight")
   hi def link pythonNumber		Number
 endif

@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Jul 10
+" Last Change:	2025 Jul 16
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " If there already is an option window, jump to that one.
@@ -261,7 +261,7 @@ call <SID>AddOption("ignorecase", gettext("ignore case when using a search patte
 call <SID>BinOptionG("ic", &ic)
 call <SID>AddOption("smartcase", gettext("override 'ignorecase' when pattern has upper case characters"))
 call <SID>BinOptionG("scs", &scs)
-call <SID>AddOption("maxsearchcount", gettext("Maximum number for the search count feature"))
+call <SID>AddOption("maxsearchcount", gettext("maximum number for the search count feature"))
 call <SID>OptionG("msc", &msc)
 call <SID>AddOption("casemap", gettext("what method to use for changing case of letters"))
 call <SID>OptionG("cmp", &cmp)
@@ -913,6 +913,9 @@ if has("diff")
   call <SID>OptionG("dip", &dip)
   call <SID>AddOption("diffexpr", gettext("expression used to obtain a diff file"))
   call <SID>OptionG("dex", &dex)
+  call <SID>AddOption("diffanchors", gettext("list of addresses for anchoring a diff"))
+  call append("$", "\t" .. s:global_or_local)
+  call <SID>OptionG("dia", &dia)
   call <SID>AddOption("patchexpr", gettext("expression used to patch a file"))
   call <SID>OptionG("pex", &pex)
 endif

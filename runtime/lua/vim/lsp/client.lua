@@ -1077,7 +1077,7 @@ function Client:on_attach(bufnr)
   -- opt-out (deleting the semanticTokensProvider from capabilities)
   vim.schedule(function()
     if vim.tbl_get(self.server_capabilities, 'semanticTokensProvider', 'full') then
-      lsp.semantic_tokens.start(bufnr, self.id)
+      lsp.semantic_tokens._start(bufnr, self.id)
     end
     if vim.tbl_get(self.server_capabilities, 'foldingRangeProvider') then
       lsp._folding_range._setup(bufnr)

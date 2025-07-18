@@ -682,6 +682,7 @@ Short explanation of each option:		*option-list*
 'delcombine'	  'deco'    delete combining characters on their own
 'dictionary'	  'dict'    list of file names used for keyword completion
 'diff'			    use diff mode for the current window
+'diffanchors'	  'dia'     list of {address} to force anchoring of a diff
 'diffexpr'	  'dex'     expression used to obtain a diff file
 'diffopt'	  'dip'     options for using diff mode
 'digraph'	  'dg'	    enable the entering of digraphs in Insert mode

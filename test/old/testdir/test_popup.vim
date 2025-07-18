@@ -216,8 +216,9 @@ func Test_popup_complete()
   call feedkeys("aM\<f5>\<enter>\<esc>", 'tx')
   call assert_equal(["March", "M", "March"], getline(1,4))
   %d
-endfunc
 
+  set completeopt&
+endfunc
 
 func Test_popup_completion_insertmode()
   new
@@ -1081,6 +1082,7 @@ func Test_popup_complete_info_01()
   setlocal thesaurus=Xdummy.txt
   setlocal omnifunc=syntaxcomplete#Complete
   setlocal completefunc=syntaxcomplete#Complete
+  setlocal completeopt+=noinsert
   setlocal spell
   for [keys, mode_name] in [
         \ ["", ''],
@@ -2285,5 +2287,18 @@ func Test_pum_position_when_wrap()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test that Vim does not crash when completion inside cmdwin opens a 'info'
+" preview window.
+func Test_popup_complete_cmdwin_preview()
+  func! CompleteWithPreview(findstart, base)
+    if a:findstart
+      return getline('.')->strpart(0, col('.') - 1)
+    endif
+    return [#{word: 'echo', info: 'bar'}, #{word: 'echomsg', info: 'baz'}]
+  endfunc
+  set omnifunc=CompleteWithPreview
+  call feedkeys("q:if\<C-X>\<C-O>\<C-N>\<ESC>\<CR>", 'tx!')
+  set omnifunc&
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
