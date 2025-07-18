@@ -144,7 +144,6 @@ local config = {
       '_inspector.lua',
       'shared.lua',
       'loader.lua',
-      'pack.lua',
       'uri.lua',
       'ui.lua',
       '_extui.lua',
@@ -169,7 +168,6 @@ local config = {
       'runtime/lua/vim/_options.lua',
       'runtime/lua/vim/shared.lua',
       'runtime/lua/vim/loader.lua',
-      'runtime/lua/vim/pack.lua',
       'runtime/lua/vim/uri.lua',
       'runtime/lua/vim/ui.lua',
       'runtime/lua/vim/_extui.lua',
@@ -401,6 +399,17 @@ local config = {
     end,
     helptag_fmt = function()
       return { 'vim.health', 'health' }
+    end,
+  },
+  pack = {
+    filename = 'pack.txt',
+    files = { 'runtime/lua/vim/pack.lua' },
+    section_order = { 'pack.lua' },
+    section_fmt = function(_name)
+      return 'Plugin manager'
+    end,
+    helptag_fmt = function()
+      return { 'vim.pack' }
     end,
   },
 }
