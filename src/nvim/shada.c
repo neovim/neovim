@@ -3772,3 +3772,51 @@ void shada_read_string(String string, const int flags)
   shada_read(&sd_reader, flags);
   close_file(&sd_reader);
 }
+
+/// Find the parameter represented by the given character (eg ', :, ", or /),
+/// and return its associated value in the 'shada' string.
+/// Only works for number parameters, not for 'r' or 'n'.
+/// If the parameter is not specified in the string or there is no following
+/// number, return -1.
+int get_shada_parameter(int type)
+{
+  char *p = find_shada_parameter(type);
+  if (p != NULL && ascii_isdigit(*p)) {
+    return atoi(p);
+  }
+  return -1;
+}
+
+/// Find the parameter represented by the given character (eg ''', ':', '"', or
+/// '/') in the 'shada' option and return a pointer to the string after it.
+/// Return NULL if the parameter is not specified in the string.
+char *find_shada_parameter(int type)
+{
+  for (char *p = p_shada; *p; p++) {
+    if (*p == type) {
+      return p + 1;
+    }
+    if (*p == 'n') {                // 'n' is always the last one
+      break;
+    }
+    p = vim_strchr(p, ',');         // skip until next ','
+    if (p == NULL) {                // hit the end without finding parameter
+      break;
+    }
+  }
+  return NULL;
+}
+
+/// Read marks for the current buffer from the ShaDa file, when we support
+/// buffer marks and the buffer has a name.
+void check_marks_read(void)
+{
+  if (!curbuf->b_marks_read && get_shada_parameter('\'') > 0
+      && curbuf->b_ffname != NULL) {
+    shada_read_marks();
+  }
+
+  // Always set b_marks_read; needed when 'shada' is changed to include
+  // the ' parameter after opening a buffer.
+  curbuf->b_marks_read = true;
+}
