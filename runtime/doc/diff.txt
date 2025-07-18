@@ -324,7 +324,129 @@ name or a part of a buffer name.  Examples:
 				diff mode (e.g., "file.c.v2")
 
 ==============================================================================
-5. Diff options						*diff-options*
+5. Diff anchors						*diff-anchors*
+
+Diff anchors allow you to control where the diff algorithm aligns and
+synchronize text across files.  Each anchor matches each other in each file,
+allowing you to control the output of a diff.
+
+This is useful when a change involves complicated edits.  For example, if a
+function was moved to another location and further edited.  By default, the
+algorithm aims to create the smallest diff, which results in that entire
+function being considered to be deleted and added on the other side, making it
+hard to see what the actual edit on it was.  You can use diff anchors to pin
+that function so the diff algorithm will align based on it.
+
+To use it, set anchors using 'diffanchors' which is a comma-separated list of
+{address} in each file, and then add "anchor" to 'diffopt'.  Internaly, Vim
+splits each file up into sections split by the anchors.  It performs the diff
+on each pair of sections separately before merging the results back.
+
+Setting 'diffanchors' will update the diff immediately.  If an anchor is tied
+to a mark, and you change what the mark is pointed to, you need to manually
+call |:diffupdate| afterwards to get the updated diff results.
+
+Example:
+
+Let's say we have the following files, side-by-side.  We are interested in the
+change that happened to the function `foo()`, which was both edited and moved.
+
+File A: >
+	int foo() {
+	    int n = 1;
+	    return n;
+	}
+
+	int g = 1;
+
+	int bar(int a) {
+	    a *= 2;
+	    a += 3;
+	    return a;
+	}
+<File B: >
+	int bar(int a) {
+	    a *= 2;
+	    a += 3;
+	    return a;
+	}
+
+	int foo() {
+	    int n = 999;
+	    return n;
+	}
+
+	int g = 1;
+<
+A normal diff will usually align the diff result as such: >
+
+	int foo() {     |----------------
+	    int n = 1;  |----------------
+	    return n;   |----------------
+	}               |----------------
+	                |----------------
+	int g = 1;      |----------------
+	                |----------------
+	int bar(int a) {|int bar(int a) {
+	    a *= 2;     |    a *= 2;
+	    a += 3;     |    a += 3;
+	    return a;   |    return a;
+	}               |}
+	----------------|
+	----------------|int foo() {
+	----------------|    int n = 999;
+	----------------|    return n;
+	----------------|}
+	----------------|
+	----------------|int g = 1;
+<
+What we want is to instead ask the diff to align on `foo()`: >
+
+	----------------|int bar(int a) {
+	----------------|    a *= 2;
+	----------------|    a += 3;
+	----------------|    return a;
+	----------------|}
+	----------------|
+	int foo() {     |int foo() {
+	    int n = 1;  |    int n = 999;
+	    return n;   |    return n;
+	}               |}
+	                |
+	int g = 1;      |int g = 1;
+	                |----------------
+	int bar(int a) {|----------------
+	    a *= 2;     |----------------
+	    a += 3;     |----------------
+	    return a;   |----------------
+	}               |----------------
+<
+
+Below are some ways of setting diff anchors to get the above result.  In each
+example, 'diffopt' needs to have `anchor` set for this to take effect.
+
+Marks: Set the |'a| mark on the `int foo()` lines in each file first before
+setting the anchors: >
+	set diffanchors='a
+
+Pattern: Specify the anchor using a |pattern| (see |:/|).  Here, we make sure
+to always start search from line 1 for consistency: >
+	set diffanchors=1/int\ foo(/
+<
+Selection: Use visual mode to select the entire `foo()` function body in each
+file.  Here, we use two anchors.  This does a better job of making sure only
+the function bodies are anchored against each other but not the lines after
+it.  Note the `'>+1` below.  The "+1" is necessary as we want the split to
+happen below the last line of the function, not above: >
+	set diffanchors='<,'>+1
+<
+Manually set two anchors using line numbers via buffer-local options: >
+	setlocal diffanchors=1,5
+	wincmd w
+	setlocal diffanchors=7,11
+<
+==============================================================================
+6. Diff options						*diff-options*
 
 Also see |'diffopt'| and the "diff" item of |'fillchars'|.
 

@@ -1708,6 +1708,32 @@ vim.go.dict = vim.go.dictionary
 vim.o.diff = false
 vim.wo.diff = vim.o.diff
 
+--- List of {address} in each buffer, separated by commas, that are
+--- considered anchors when used for diffing.  It's valid to specify "$+1"
+--- for 1 past the last line.  "%" cannot be used for this option.  There
+--- can be at most 20 anchors set for each buffer.
+---
+--- Each anchor line splits the buffer (the split happens above the
+--- anchor), with each part being diff'ed separately before the final
+--- result is joined.  When more than one {address} are provided, the
+--- anchors will be sorted interally by line number.  If using buffer
+--- local options, each buffer should have the same number of anchors
+--- (extra anchors will be ignored).  This option is only used when
+--- 'diffopt' has "anchor" set.  See `diff-anchors` for more details and
+--- examples.
+--- 							*E1550*
+--- If some of the {address} do not resolve to a line in each buffer (e.g.
+--- a pattern search that does not match anything), none of the anchors
+--- will be used.
+---
+--- @type string
+vim.o.diffanchors = ""
+vim.o.dia = vim.o.diffanchors
+vim.bo.diffanchors = vim.o.diffanchors
+vim.bo.dia = vim.bo.diffanchors
+vim.go.diffanchors = vim.o.diffanchors
+vim.go.dia = vim.go.diffanchors
+
 --- Expression which is evaluated to obtain a diff file (either ed-style
 --- or unified-style) from two versions of a file.  See `diff-diffexpr`.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
@@ -1730,6 +1756,10 @@ vim.go.dex = vim.go.diffexpr
 --- 				   smallest possible diff
 --- 			patience   patience diff algorithm
 --- 			histogram  histogram diff algorithm
+---
+--- 	anchor		Anchor specific lines in each buffer to be
+--- 			aligned with each other if 'diffanchors' is
+--- 			set.  See `diff-anchors`.
 ---
 --- 	closeoff	When a window is closed where 'diff' is set
 --- 			and there is only one window remaining in the
@@ -1833,6 +1863,7 @@ vim.go.dex = vim.go.diffexpr
 --- 			"linematch:60", as this will enable alignment
 --- 			for a 2 buffer diff hunk of 30 lines each,
 --- 			or a 3 buffer diff hunk of 20 lines each.
+--- 			Implicitly sets "filler" when this is set.
 ---
 --- 	vertical	Start diff mode with vertical splits (unless
 --- 			explicitly specified otherwise).

@@ -314,6 +314,7 @@ EXTERN char *p_cpo;             ///< 'cpoptions'
 EXTERN char *p_debug;           ///< 'debug'
 EXTERN char *p_def;             ///< 'define'
 EXTERN char *p_inc;
+EXTERN char *p_dia;             ///< 'diffanchors'
 EXTERN char *p_dip;             ///< 'diffopt'
 EXTERN char *p_dex;             ///< 'diffexpr'
 EXTERN char *p_dict;            ///< 'dictionary'

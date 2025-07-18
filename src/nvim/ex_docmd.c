@@ -3368,9 +3368,9 @@ static const char *addr_error(cmd_addr_T addr_type)
 /// @param errormsg       Error message, if any
 ///
 /// @return               MAXLNUM when no Ex address was found.
-static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
-                            int to_other_file, int address_count, const char **errormsg)
-  FUNC_ATTR_NONNULL_ALL
+linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, bool silent,
+                     int to_other_file, int address_count, const char **errormsg)
+  FUNC_ATTR_NONNULL_ARG(2, 8)
 {
   int c;
   int i;
@@ -3535,7 +3535,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
         // next/previous line.
         curwin->w_cursor.col = (c == '/' && curwin->w_cursor.lnum > 0) ? MAXCOL : 0;
         searchcmdlen = 0;
-        flags = silent ? 0 : SEARCH_HIS | SEARCH_MSG;
+        flags = silent ? SEARCH_KEEP : SEARCH_HIS | SEARCH_MSG;
         if (!do_search(NULL, c, c, cmd, strlen(cmd), 1, flags, NULL)) {
           curwin->w_cursor = pos;
           cmd = NULL;
