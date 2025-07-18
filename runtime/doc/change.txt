@@ -965,7 +965,7 @@ This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 			not make any visible change.
 
 			When [-indentonly] is specified, only the leading
-			white-space will be targeted. Any other consecutive
+			white-space will be targeted.  Any other consecutive
 			white-space will not be changed.
 
 			Warning: This command modifies any <Tab> characters

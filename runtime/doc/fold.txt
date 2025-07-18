@@ -641,7 +641,7 @@ all lines of the fold.
 This does not happen for |:folddoopen| and |:folddoclosed|.
 
 Note that for some Ex commands like |:source| the range is only adjusted when
-using a two-address [range].
+using a two line specifiers [range].
 
 When editing a buffer that has been edited before, the last used folding
 settings are used again.  For manual folding the defined folds are restored.
