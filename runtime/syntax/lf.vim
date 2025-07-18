@@ -3,10 +3,10 @@
 " Maintainer: Andis Sprinkis <andis@sprinkis.com>
 " Former Maintainer: Cameron Wright
 " URL: https://github.com/andis-sprinkis/lf-vim
-" Last Change: 10 May 2025
+" Last Change: 16 July 2025
 "
 " The shell syntax highlighting is configurable. See $VIMRUNTIME/doc/syntax.txt
-" lf version: 34
+" lf version: 36
 
 if exists("b:current_syntax") | finish | endif
 
@@ -25,11 +25,12 @@ syn match lfString '".*"' contains=lfSpecial
 "}}}
 
 "{{{ Keywords
-syn keyword lfKeyword set setlocal cmd map cmap skipwhite
+syn keyword lfKeyword set setlocal cmd map cmap nmap vmap skipwhite
 "}}}
 
 "{{{ Options Keywords
 syn keyword lfOptions
+  \ addcustominfo
   \ anchorfind
   \ autoquit
   \ borderfmt
@@ -118,7 +119,6 @@ syn keyword lfOptions
   \ infotimefmtnew
   \ infotimefmtold
   \ invert
-  \ invert-below
   \ jump-next
   \ jump-prev
   \ load
@@ -130,12 +130,14 @@ syn keyword lfOptions
   \ mark-save
   \ middle
   \ mouse
+  \ nmaps
   \ number
   \ numberfmt
   \ on-cd
   \ on-focus-gained
   \ on-focus-lost
   \ on-init
+  \ on-load
   \ on-quit
   \ on-redraw
   \ on-select
@@ -195,9 +197,17 @@ syn keyword lfOptions
   \ top
   \ truncatechar
   \ truncatepct
+  \ tty-write
   \ unselect
   \ up
   \ updir
+  \ visual
+  \ visual-accept
+  \ visual-change
+  \ visual-discard
+  \ visual-unselect
+  \ visualfmt
+  \ vmaps
   \ waitmsg
   \ watch
   \ wrapscan
