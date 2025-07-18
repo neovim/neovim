@@ -90,6 +90,7 @@ static const char *command_complete[] = {
   [EXPAND_SYNTIME] = "syntime",
   [EXPAND_SETTINGS] = "option",
   [EXPAND_PACKADD] = "packadd",
+  [EXPAND_RETAB] = "retab",
   [EXPAND_RUNTIME] = "runtime",
   [EXPAND_SHELLCMD] = "shellcmd",
   [EXPAND_SHELLCMDLINE] = "shellcmdline",

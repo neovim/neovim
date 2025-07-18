@@ -1410,6 +1410,7 @@ completion can be enabled:
 	-complete=messages	|:messages| suboptions
 	-complete=option	options
 	-complete=packadd	optional package |pack-add| names
+	-complete=retab		|:retab| suboptions
 	-complete=runtime	file and directory names in |'runtimepath'|
 	-complete=scriptnames	sourced script names
 	-complete=shellcmd	Shell command

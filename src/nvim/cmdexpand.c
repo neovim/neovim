@@ -2290,6 +2290,11 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_pattern = (char *)arg;
     break;
 
+  case CMD_retab:
+    xp->xp_context = EXPAND_RETAB;
+    xp->xp_pattern = (char *)arg;
+    break;
+
   case CMD_messages:
     xp->xp_context = EXPAND_MESSAGES;
     xp->xp_pattern = (char *)arg;
@@ -2769,6 +2774,16 @@ static char *get_scriptnames_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 }
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
+/// ":retab {-indentonly}" option.
+static char *get_retab_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (idx == 0) {
+    return "-indentonly";
+  }
+  return NULL;
+}
+
+/// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":messages {clear}" command.
 static char *get_messages_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 {
@@ -2853,6 +2868,7 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_ARGLIST, get_arglist_name, true, false },
     { EXPAND_BREAKPOINT, get_breakadd_arg, true, true },
     { EXPAND_SCRIPTNAMES, get_scriptnames_arg, true, false },
+    { EXPAND_RETAB, get_retab_arg, true, true },
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
   };
   int ret = FAIL;
