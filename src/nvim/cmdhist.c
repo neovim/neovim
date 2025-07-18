@@ -661,13 +661,8 @@ void ex_history(exarg_T *eap)
             && hist[i].hisnum >= j && hist[i].hisnum <= k
             && !message_filtered(hist[i].hisstr)) {
           msg_putchar('\n');
-          int len = snprintf(IObuff, IOSIZE,
-                             "%c%6d  ", i == idx ? '>' : ' ', hist[i].hisnum);
-          if (vim_strsize(hist[i].hisstr) > Columns - 10) {
-            trunc_string(hist[i].hisstr, IObuff + len, Columns - 10, IOSIZE - len);
-          } else {
-            xstrlcpy(IObuff + len, hist[i].hisstr, (size_t)(IOSIZE - len));
-          }
+          snprintf(IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ', hist[i].hisnum);
+          xstrlcat(IObuff, hist[i].hisstr, IOSIZE);
           msg_outtrans(IObuff, 0, false);
         }
         if (i == idx) {

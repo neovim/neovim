@@ -40,7 +40,6 @@ int ask_yesno(const char *const str)
 {
   const int save_State = State;
 
-  no_wait_return++;
   snprintf(IObuff, IOSIZE, _("%s (y/n)?"), str);
   char *prompt = xstrdup(IObuff);
 
@@ -56,8 +55,6 @@ int ask_yesno(const char *const str)
     }
   }
 
-  need_wait_return = msg_scrolled;
-  no_wait_return--;
   State = save_State;
   setmouse();
   xfree(prompt);
@@ -152,9 +149,6 @@ int get_keystroke(MultiQueue *events)
 /// @param mouse_used When not NULL, allow using the mouse to press a number.
 int prompt_for_input(char *prompt, int hl_id, bool one_key, bool *mouse_used)
 {
-  int ret = one_key ? ESC : 0;
-  char *kmsg = keep_msg ? xstrdup(keep_msg) : NULL;
-
   if (prompt == NULL) {
     if (mouse_used != NULL) {
       prompt = _("Type number and <Enter> or click with the mouse (q or empty cancels): ");
@@ -163,24 +157,18 @@ int prompt_for_input(char *prompt, int hl_id, bool one_key, bool *mouse_used)
     }
   }
 
-  cmdline_row = msg_row;
   ui_flush();
 
   no_mapping++;  // don't map prompt input
   allow_keys++;  // allow special keys
-  char *resp = getcmdline_prompt(-1, prompt, hl_id, EXPAND_NOTHING, NULL,
-                                 CALLBACK_NONE, one_key, mouse_used);
+  char *resp = getcmdline_prompt(-1, prompt, hl_id, EXPAND_NOTHING, NULL, one_key, mouse_used);
   allow_keys--;
   no_mapping--;
 
+  int ret = one_key ? ESC : 0;
   if (resp) {
     ret = one_key ? (int)(*resp) : atoi(resp);
     xfree(resp);
-  }
-
-  if (kmsg != NULL) {
-    set_keep_msg(kmsg, keep_msg_hl_id);
-    xfree(kmsg);
   }
 
   return ret;

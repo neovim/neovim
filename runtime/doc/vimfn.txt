@@ -10325,7 +10325,6 @@ state([{what}])                                                        *state()*
 		    S	not triggering SafeState, e.g. after |f| or a count
 		    c	callback invoked, including timer (repeats for
 			recursiveness up to "ccc")
-		    s	screen has scrolled for messages
 
                 Parameters: ~
                   • {what} (`string?`)

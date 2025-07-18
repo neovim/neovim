@@ -536,11 +536,8 @@ void ml_open_file(buf_T *buf)
   }
 
   if (*p_dir != NUL && mfp->mf_fname == NULL) {
-    need_wait_return = true;  // call wait_return() later
-    no_wait_return++;
     semsg(_("E303: Unable to open swap file for \"%s\", recovery impossible"),
           buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname);
-    no_wait_return--;
   }
 
   // don't try to open a swapfile again
@@ -1194,10 +1191,8 @@ void ml_recover(bool checkext)
   if (got_int) {
     emsg(_("E311: Recovery Interrupted"));
   } else if (error) {
-    no_wait_return++;
     msg(">>>>>>>>>>>>>", 0);
     emsg(_("E312: Errors detected while recovering; look for lines starting with ???"));
-    no_wait_return--;
     msg(_("See \":help E312\" for more information."), 0);
     msg(">>>>>>>>>>>>>", 0);
   } else {
@@ -1216,7 +1211,6 @@ void ml_recover(bool checkext)
       msg_outnum((int)char_to_long(b0p->b0_pid));
     }
     msg_puts("\n\n");
-    cmdline_row = msg_row;
   }
   redraw_curbuf_later(UPD_NOT_VALID);
 
@@ -2552,7 +2546,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   // If the file becomes empty the last line is replaced by an empty line.
   if (buf->b_ml.ml_line_count == 1) {       // file becomes empty
     if (message) {
-      set_keep_msg(_(no_lines_msg), 0);
+      msg(_(no_lines_msg), 0);
     }
 
     int i = ml_replace_buf(buf, 1, "", true, false);
@@ -3462,7 +3456,6 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
           proc_running = 0;  // Set by attention_message..swapfile_info.
           if (choice == SEA_CHOICE_NONE) {
-            no_wait_return++;
             // Show info about the existing swapfile.
             StringBuilder msg = KV_INITIAL_VALUE;
             kv_resize(msg, IOSIZE);
@@ -3488,12 +3481,9 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
               // compensate for missing "Delete it" button
               choice += proc_running && choice >= 4;
-              // pretend screen didn't scroll, need redraw anyway
-              msg_reset_scroll();
             } else {
               msg_outtrans(msg.items, 0, false);
             }
-            no_wait_return--;
             kv_destroy(msg);
             xfree(fhname);
           }
@@ -3519,10 +3509,6 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             break;
           case SEA_CHOICE_NONE:
             msg_puts("\n");
-            if (msg_silent == 0) {
-              // call wait_return() later
-              need_wait_return = true;
-            }
             break;
           }
 

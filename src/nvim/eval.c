@@ -5897,10 +5897,10 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
 
   if (p_verbose > 3) {
     char *cmdstr = shell_argv_to_str(argv);
-    verbose_enter_scroll();
+    verbose_enter();
     smsg(0, _("Executing command: \"%s\""), cmdstr);
     msg_puts("\n\n");
-    verbose_leave_scroll();
+    verbose_leave();
     xfree(cmdstr);
   }
 
@@ -7815,7 +7815,6 @@ void ex_echo(exarg_T *eap)
   char *arg = eap->arg;
   typval_T rettv;
   bool atstart = true;
-  bool need_clear = true;
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
   evalarg_T evalarg;
@@ -7826,10 +7825,6 @@ void ex_echo(exarg_T *eap)
     emsg_skip++;
   }
   while (*arg != NUL && *arg != '|' && *arg != '\n' && !got_int) {
-    // If eval1() causes an error message the text from the command may
-    // still need to be cleared. E.g., "echo 22,44".
-    need_clr_eos = true;
-
     {
       char *p = arg;
       if (eval1(&arg, &rettv, &evalarg) == FAIL) {
@@ -7840,10 +7835,8 @@ void ex_echo(exarg_T *eap)
             && called_emsg == called_emsg_before) {
           semsg(_(e_invexpr2), p);
         }
-        need_clr_eos = false;
         break;
       }
-      need_clr_eos = false;
     }
 
     if (!eap->skip) {
@@ -7853,12 +7846,6 @@ void ex_echo(exarg_T *eap)
         // Call msg_start() after eval1(), evaluating the expression
         // may cause a message to appear.
         if (eap->cmdidx == CMD_echo) {
-          if (!msg_didout) {
-            // Mark the saved text as finishing the line, so that what
-            // follows is displayed on a new line when scrolling back
-            // at the more prompt.
-            msg_sb_eol();
-          }
           msg_start();
         }
       } else if (eap->cmdidx == CMD_echo) {
@@ -7866,7 +7853,7 @@ void ex_echo(exarg_T *eap)
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
       msg_ext_append = eap->cmdidx == CMD_echon;
-      msg_multiline(cstr_as_string(tofree), echo_hl_id, true, false, &need_clear);
+      msg_multiline(cstr_as_string(tofree), echo_hl_id, true, false);
       xfree(tofree);
     }
     tv_clear(&rettv);
@@ -7877,14 +7864,8 @@ void ex_echo(exarg_T *eap)
 
   if (eap->skip) {
     emsg_skip--;
-  } else {
-    // remove text that may still be there from the command
-    if (need_clear) {
-      msg_clr_eos();
-    }
-    if (eap->cmdidx == CMD_echo) {
-      msg_end();
-    }
+  } else if (eap->cmdidx == CMD_echo) {
+    msg_end();
   }
 }
 
@@ -7957,7 +7938,7 @@ void ex_execute(exarg_T *eap)
         did_emsg = save_did_emsg;
       }
     } else if (eap->cmdidx == CMD_execute) {
-      do_cmdline(ga.ga_data, eap->ea_getline, eap->cookie, DOCMD_NOWAIT|DOCMD_VERBOSE);
+      do_cmdline(ga.ga_data, eap->ea_getline, eap->cookie, DOCMD_VERBOSE);
     }
   }
 

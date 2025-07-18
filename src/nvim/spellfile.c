@@ -3118,10 +3118,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
                      _("line %6d, word %6d - %s"),
                      lnum, spin->si_foldwcount + spin->si_keepwcount, w);
         msg_start();
-        msg_outtrans_long(message, 0);
-        msg_clr_eos();
-        msg_didout = false;
-        msg_col = 0;
+        msg_outtrans(message, 0, false);
         ui_flush();
       }
     }
@@ -4003,9 +4000,6 @@ static int tree_add_word(spellinfo_T *spin, const char *word, wordnode_T *root, 
     if (spin->si_verbose) {
       msg_start();
       msg_puts(_(msg_compressing));
-      msg_clr_eos();
-      msg_didout = false;
-      msg_col = 0;
       ui_flush();
     }
 

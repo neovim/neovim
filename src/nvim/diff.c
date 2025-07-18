@@ -3679,7 +3679,7 @@ void ex_diffgetput(exarg_T *eap)
   // FileChangedRO autocommand, which may do nasty things and mess
   // everything up.
   if (!curbuf->b_changed) {
-    change_warning(curbuf, 0);
+    change_warning(curbuf);
     if (diff_buf_idx(curbuf, curtab) != idx_to) {
       emsg(_("E787: Buffer changed unexpectedly"));
       goto theend;

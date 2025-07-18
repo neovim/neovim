@@ -733,16 +733,10 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         if (ic) {
           xstrlcat(IObuff, _("  Using tag with different case!"), IOSIZE);
         }
-        if ((num_matches > prev_num_matches || new_tag)
-            && num_matches > 1) {
+        if ((num_matches > prev_num_matches || new_tag) && num_matches > 1) {
           msg(IObuff, ic ? HLF_W : 0);
-          msg_scroll = true;  // Don't overwrite this message.
         } else {
           give_warning(IObuff, ic);
-        }
-        if (ic && !msg_scrolled && msg_silent == 0 && !ui_has(kUIMessages)) {
-          ui_flush();
-          os_delay(1007, true);
         }
       }
 
@@ -811,12 +805,11 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
     taglen = MAXCOL;
   }
   if (msg_col == 0) {
-    msg_didout = false;     // overwrite previous message
+    msg_ext_overwrite = true;     // overwrite previous message
   }
   msg_ext_set_kind("confirm");
   msg_start();
   msg_puts_hl(_("  # pri kind tag"), HLF_T, false);
-  msg_clr_eos();
   taglen_advance(taglen);
   msg_puts_hl(_("file\n"), HLF_T, false);
 
@@ -2966,10 +2959,6 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
           // is set and match found while ignoring case.
           if (found == 2 || !save_p_ic) {
             msg(_("E435: Couldn't find tag, just guessing!"), 0);
-            if (!msg_scrolled && msg_silent == 0 && !ui_has(kUIMessages)) {
-              ui_flush();
-              os_delay(1010, true);
-            }
           }
           retval = OK;
         }
@@ -2993,11 +2982,6 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
       do_cmdline_cmd(pbuf);
       retval = OK;
 
-      // When the command has done something that is not allowed make sure
-      // the error message can be seen.
-      if (secure == 2) {
-        wait_return(true);
-      }
       secure = save_secure;
       sandbox--;
     }

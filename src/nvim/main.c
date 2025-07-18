@@ -376,13 +376,9 @@ int main(int argc, char **argv)
 
   assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
   cmdline_row = Rows - (int)p_ch;
-  msg_row = cmdline_row;
   default_grid_alloc();  // allocate screen buffers
   set_init_2(headless_mode);
   TIME_MSG("inits 2");
-
-  msg_scroll = true;
-  no_wait_return = true;
 
   init_highlight(true, false);  // Default highlight groups.
   ui_comp_syn_init();
@@ -514,10 +510,6 @@ int main(int argc, char **argv)
   // Clear screen now, so file message will not be cleared.
   //
   starting = NO_BUFFERS;
-  no_wait_return = false;
-  if (!exmode_active) {
-    msg_scroll = false;
-  }
 
   // Read file (text, not commands) from stdin if:
   //    - stdin is not a tty
@@ -534,8 +526,6 @@ int main(int argc, char **argv)
   setmouse();  // may start using the mouse
 
   redraw_later(curwin, UPD_VALID);
-
-  no_wait_return = true;
 
   // Create the requested number of windows and edit buffers in them.
   // Also does recovery if "recoverymode" set.
@@ -590,7 +580,6 @@ int main(int argc, char **argv)
 
   RedrawingDisabled = 0;
   redraw_all_later(UPD_NOT_VALID);
-  no_wait_return = false;
 
   // 'autochdir' has been postponed.
   do_autochdir();
@@ -637,13 +626,11 @@ int main(int argc, char **argv)
 
   if (params.luaf != NULL) {
     // Like "--cmd", "+", "-c" and "-S", don't truncate messages.
-    msg_scroll = true;
     DLOG("executing Lua -l script");
     bool lua_ok = nlua_exec_file(params.luaf);
     TIME_MSG("executing Lua -l script");
-    if (msg_didout) {
+    if (msg_col > 0) {
       msg_putchar('\n');
-      msg_didout = false;
     }
     getout(lua_ok ? 0 : 1);
   }
@@ -796,13 +783,6 @@ void getout(int exitval)
   }
 
   profile_dump();
-
-  if (did_emsg) {
-    // give the user a chance to read the (error) message
-    no_wait_return = false;
-    // TODO(justinmk): this may call getout(0), clobbering exitval...
-    wait_return(false);
-  }
 
   // Apply 'titleold'.
   if (p_title && *p_titleold != NUL) {
@@ -1623,8 +1603,6 @@ static void read_stdin(void)
 {
   // When getting the ATTENTION prompt here, use a dialog.
   swap_exists_action = SEA_DIALOG;
-  no_wait_return = true;
-  bool save_msg_didany = msg_didany;
   set_buflisted(true);
   // Create memfile and read from stdin.
   open_buffer(true, NULL, 0);
@@ -1634,8 +1612,6 @@ static void read_stdin(void)
     // Delete the empty stdin buffer.
     do_cmdline_cmd("bwipeout 1");
   }
-  no_wait_return = false;
-  msg_didany = save_msg_didany;
   TIME_MSG("reading stdin");
   check_swap_exists_action();
 }
@@ -1671,7 +1647,6 @@ static void create_windows(mparm_T *parmp)
   }
 
   if (recoverymode) {                   // do recover
-    msg_scroll = true;                  // scroll message up
     ml_recover(true);
     if (curbuf->b_ml.ml_mfp == NULL) {   // failed
       getout(1);
@@ -1900,7 +1875,6 @@ static void exe_commands(mparm_T *parmp)
   // We start commands on line 0, make "vim +/pat file" match a
   // pattern on line 1.  But don't move the cursor when an autocommand
   // with g`" was used.
-  msg_scroll = true;
   if (parmp->tagname == NULL && curwin->w_cursor.lnum <= 1) {
     curwin->w_cursor.lnum = 0;
   }
@@ -1917,10 +1891,6 @@ static void exe_commands(mparm_T *parmp)
   current_sctx.sc_sid = 0;
   if (curwin->w_cursor.lnum == 0) {
     curwin->w_cursor.lnum = 1;
-  }
-
-  if (!exmode_active) {
-    msg_scroll = false;
   }
 
   // When started with "-q errorfile" jump to first error again.
@@ -2185,7 +2155,6 @@ static void version(void)
   info_message = true;  // use stdout, not stderr
   list_version();
   msg_putchar('\n');
-  msg_didout = false;
 }
 
 /// Prints help message for "nvim -h" or "nvim --help".

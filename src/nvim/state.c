@@ -67,10 +67,9 @@ getkey:
       key = K_EVENT;
     } else {
       // Ensure the screen is fully updated before blocking for input. Because of the duality of
-      // redraw_later, this can't be done in command-line or when waiting for "Press ENTER".
-      // In many of those cases the redraw is expected AFTER the key press, while normally it should
-      // update the screen immediately.
-      if (must_redraw != 0 && !need_wait_return && (State & MODE_CMDLINE) == 0) {
+      // redraw_later, this can't be done in command-line. In many of those cases the redraw is
+      // expected AFTER the key press, while normally it should update the screen immediately.
+      if (must_redraw != 0 && (State & MODE_CMDLINE) == 0) {
         update_screen();
         setcursor();  // put cursor back where it belongs
       }

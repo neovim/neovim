@@ -346,14 +346,12 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
 {
   if (buf->b_mtime_read != 0
       && time_differs(file_info, buf->b_mtime_read, buf->b_mtime_read_ns)) {
-    msg_scroll = true;  // Don't overwrite messages here.
     msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
     msg(_("WARNING: The file has been changed since reading it!!!"), HLF_E);
     if (ask_yesno(_("Do you really want to write to it")) == 'n') {
       return FAIL;
     }
-    msg_scroll = false;  // Always overwrite the file message now.
   }
   return OK;
 }
@@ -388,7 +386,6 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
                                  const pos_T orig_start, const pos_T orig_end)
 {
   linenr_T old_line_count = buf->b_ml.ml_line_count;
-  int msg_save = msg_scroll;
 
   aco_save_T aco;
   bool did_cmd = false;
@@ -474,8 +471,6 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
       buf->b_op_end = orig_end;
     }
 
-    no_wait_return--;
-    msg_scroll = msg_save;
     if (nofile_err) {
       semsg(_(e_no_matching_autocommands_for_buftype_str_buffer), curbuf->b_p_bt);
     }
@@ -525,8 +520,6 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
     } else {                                                    // less lines
       *endp -= old_line_count - buf->b_ml.ml_line_count;
       if (*endp < start) {
-        no_wait_return--;
-        msg_scroll = msg_save;
         emsg(_("E204: Autocommand changed number of lines in unexpected way"));
         return FAIL;
       }
@@ -1041,7 +1034,6 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
               bool append, bool forceit, bool reset_changed, bool filtering)
 {
   int retval = OK;
-  int msg_save = msg_scroll;
   bool prev_got_int = got_int;
   // writing everything
   bool whole = (start == 1 && end == buf->b_ml.ml_line_count);
@@ -1117,8 +1109,6 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   // true if writing over original
   bool overwriting = buf->b_ffname != NULL && path_fnamecmp(ffname, buf->b_ffname) == 0;
 
-  no_wait_return++;                 // don't wait for return yet
-
   const pos_T orig_start = buf->b_op_start;
   const pos_T orig_end = buf->b_op_end;
 
@@ -1141,12 +1131,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     buf->b_op_end = orig_end;
   }
 
-  if (shortmess(SHM_OVER) && !exiting) {
-    msg_scroll = false;             // overwrite previous file message
-  } else {
-    msg_scroll = true;              // don't overwrite previous file message
-  }
   if (!filtering) {
+    msg_ext_overwrite = shortmess(SHM_OVER) && !exiting;
     msg_ext_set_kind("bufwrite");
     // show that we are busy
 #ifndef UNIX
@@ -1155,7 +1141,6 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     filemess(buf, fname, "");
 #endif
   }
-  msg_scroll = false;               // always overwrite the file message now
 
   char *buffer = verbose_try_malloc(WRITEBUFSIZE);
   int bufsize;
@@ -1185,7 +1170,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
   if (get_fileinfo(buf, fname, overwriting, forceit, &file_info_old, &perm, &device, &newfile,
                    &file_readonly, &err) == FAIL) {
-    goto fail;
+    goto exit;
   }
 
   // For systems that support ACL: get the ACL from the original file.
@@ -1220,7 +1205,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     if (buf_write_make_backup(fname, append, &file_info_old, acl, perm, bkc, file_readonly, forceit,
                               &backup_copy, &backup, &err) == FAIL) {
       retval = FAIL;
-      goto fail;
+      goto exit;
     }
   }
 
@@ -1456,7 +1441,7 @@ restore_backup:
         if (wfname != fname) {
           xfree(wfname);
         }
-        goto fail;
+        goto exit;
       }
       write_info.bw_fd = fd;
     }
@@ -1722,11 +1707,10 @@ restore_backup:
         }
       }
     }
-    goto fail;
+    goto exit;
   }
 
   lnum -= start;            // compute number of written lines
-  no_wait_return--;         // may wait for return now
 
 #if !defined(UNIX)
   fname = sfname;           // use shortname now, for the messages
@@ -1774,7 +1758,6 @@ restore_backup:
 
     msg_ext_set_kind("bufwrite");
     msg_ext_overwrite = true;
-    set_keep_msg(msg_trunc(IObuff, false, 0), 0);
   }
 
   // When written everything correctly: reset 'modified'.  Unless not
@@ -1850,12 +1833,8 @@ restore_backup:
     emsg(_("E207: Can't delete backup file"));
   }
 
-  goto nofail;
-
   // Finish up.  We get here either after failure or success.
-fail:
-  no_wait_return--;             // may wait for return now
-nofail:
+exit:
 
   // Done saving, we accept changed buffer warnings again
   buf->b_saving = false;
@@ -1896,7 +1875,6 @@ nofail:
       }
     }
   }
-  msg_scroll = msg_save;
 
   // When writing the whole file and 'undofile' is set, also write the undo
   // file.
