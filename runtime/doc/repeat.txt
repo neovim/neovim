@@ -210,11 +210,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Implementation detail: When sourcing a [range] of
 			lines that falls inside a folded region, the range
 			will be adjusted to the start and end of the fold,
-			but only if a two-address range was used.
+			but only if a two line specifiers range was used.
 
 							*:source!*
-:so[urce]! {file}
-			Runs |Normal-mode| commands from {file}. When used
+:so[urce]! {file}	Runs |Normal-mode| commands from {file}. When used
 			after |:global|, |:argdo|, |:windo|, |:bufdo|, in
 			a loop or when another command follows the display
 			won't be updated while executing the commands.
