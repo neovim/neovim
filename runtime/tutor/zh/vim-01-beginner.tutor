@@ -352,7 +352,7 @@ Fix the errors on this line and replace them with undo.
 
 ** 输入 `p`{normal} 可以将之前删除的文本粘贴到光标之后。 **
 
- 1. 将光标移动到下面第一个标有 ✓ 的行。
+ 1. 将光标移动到下面第一个标有 `--->` 的行。
 
  2. 输入 `dd`{normal} 来删除该行，并将其存入 Neovim 的一个寄存器中。
 
@@ -362,10 +362,10 @@ Fix the errors on this line and replace them with undo.
 
  5. 重复第 2 到 4 步，将所有行按正确的顺序（abcd）排列。
 
-d) Can you learn too?
-b) Violets are blue,
-c) Intelligence is learned,
-a) Roses are red,
+---> d) Can you learn too?
+---> b) Violets are blue,
+---> c) Intelligence is learned,
+---> a) Roses are red,
 
 NOTE: 你也可以用 `P`{normal}（大写 P）将文本粘贴到光标之前。
 
