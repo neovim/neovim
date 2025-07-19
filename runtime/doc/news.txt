@@ -212,6 +212,9 @@ LSP
 • When inside the float created by |vim.diagnostic.open_float()| and the
   cursor is on a line with `DiagnosticRelatedInformation`, |gf| can be used to
   jump to the problematic location.
+• Re-implemented support for `textDocument/documentHighlight
+  |lsp-document_highlight|
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentHighlight
 
 LUA
 

@@ -483,20 +483,6 @@ end
 --- @diagnostic disable-next-line:deprecated
 RCS[ms.textDocument_signatureHelp] = M.signature_help
 
---- @deprecated remove in 0.13
---- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
-RCS[ms.textDocument_documentHighlight] = function(_, result, ctx)
-  if not result then
-    return
-  end
-  local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
-  if not client then
-    return
-  end
-  util.buf_highlight_references(ctx.bufnr, result, client.offset_encoding)
-end
-
 --- Displays call hierarchy in the quickfix window.
 ---
 --- @param direction 'from'|'to' `"from"` for incoming calls and `"to"` for outgoing calls
