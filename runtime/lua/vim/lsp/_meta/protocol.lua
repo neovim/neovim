@@ -11,7 +11,7 @@ nvim -l src/gen/gen_lsp.lua --version 3.18
 ---@meta
 error('Cannot require a meta file')
 
----@alias lsp.null nil
+---@alias lsp.null vim.NIL
 ---@alias uinteger integer
 ---@alias decimal number
 ---@alias lsp.DocumentUri string
