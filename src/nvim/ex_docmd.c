@@ -1585,7 +1585,9 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
   // Check for '|' to separate commands and '"' to start comments.
   // Don't do this for ":read !cmd" and ":write !cmd".
   if ((eap->argt & EX_TRLBAR)) {
-    separate_nextcmd(eap);
+    if (!separate_nextcmd(eap)) {
+      goto end;
+    }
   }
   // Fail if command doesn't support bang but is used with a bang
   if (!(eap->argt & EX_BANG) && eap->forceit) {
@@ -4092,7 +4094,7 @@ static char *repl_cmdline(exarg_T *eap, char *src, size_t srclen, char *repl, ch
 }
 
 /// Check for '|' to separate commands and '"' to start comments.
-void separate_nextcmd(exarg_T *eap)
+bool separate_nextcmd(exarg_T *eap)
 {
   char *p = skip_grep_pat(eap);
 
@@ -4110,7 +4112,9 @@ void separate_nextcmd(exarg_T *eap)
     } else if (p[0] == '`' && p[1] == '=' && (eap->argt & EX_XFILE)) {
       // Skip over `=expr` when wildcards are expanded.
       p += 2;
-      skip_expr(&p, NULL);
+      if (skip_expr(&p, NULL) == FAIL) {
+        return false;
+      }
       if (*p == NUL) {  // stop at NUL after CTRL-V
         break;
       }
@@ -4145,6 +4149,8 @@ void separate_nextcmd(exarg_T *eap)
   if (!(eap->argt & EX_NOTRLCOM)) {  // remove trailing spaces
     del_trailing_spaces(eap->arg);
   }
+
+  return true;
 }
 
 /// get + command from ex argument
