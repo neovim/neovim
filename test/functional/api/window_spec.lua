@@ -2026,6 +2026,38 @@ describe('API/win', function()
           .. '})'
       )
       command('new | quit')
+
+      -- Apply to opening floats too, as that can similarly create new views into a closing buffer.
+      -- For example, the following would open a float into an unloaded buffer:
+      exec([[
+        only
+        new
+        let g:buf = bufnr()
+        autocmd BufUnload * ++once let g:win = nvim_open_win(g:buf, 0, #{relative: "editor", width: 5, height: 5, row: 1, col: 1})
+        setlocal bufhidden=unload
+      ]])
+      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      eq(false, eval('nvim_buf_is_loaded(g:buf)'))
+      eq(0, eval('win_findbuf(g:buf)->len()'))
+
+      -- Only checking b_locked_split for the target buffer is insufficient, as naughty autocommands
+      -- can cause win_set_buf to remain in a closing curbuf:
+      exec([[
+        only
+        new
+        let g:buf = bufnr()
+        autocmd BufWipeout * ++once ++nested let g:buf2 = nvim_create_buf(1, 0)
+              \| execute 'autocmd BufLeave * ++once call nvim_buf_delete(g:buf2, #{force: 1})'
+              \| setlocal bufhidden=
+              \| call nvim_open_win(g:buf2, 1, #{relative: 'editor', width: 5, height: 5, col: 5, row: 5})
+        setlocal bufhidden=wipe
+      ]])
+      matches('E1159: Cannot split a window when closing the buffer$', pcall_err(command, 'quit'))
+      eq(false, eval('nvim_buf_is_loaded(g:buf)'))
+      eq(0, eval('win_findbuf(g:buf)->len()'))
+      -- BufLeave shouldn't run here (buf2 isn't deleted and remains hidden)
+      eq(true, eval('nvim_buf_is_loaded(g:buf2)'))
+      eq(0, eval('win_findbuf(g:buf2)->len()'))
     end)
 
     it('restores last known cursor position if BufWinEnter did not move it', function()
@@ -2152,6 +2184,80 @@ describe('API/win', function()
           footer = { { 'FOOTER' } },
         })
       )
+    end)
+
+    it('no crash when closing the only non-float in other tabpage #31236', function()
+      local tp = api.nvim_get_current_tabpage()
+      local split_win = api.nvim_get_current_win()
+      local float_win = api.nvim_open_win(
+        0,
+        false,
+        { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+      )
+      command('tabnew')
+
+      api.nvim_win_close(split_win, false)
+      eq(false, api.nvim_win_is_valid(split_win))
+      eq(false, api.nvim_win_is_valid(float_win))
+      eq(false, api.nvim_tabpage_is_valid(tp))
+
+      tp = api.nvim_get_current_tabpage()
+      split_win = api.nvim_get_current_win()
+      local float_buf = api.nvim_create_buf(true, false)
+      float_win = api.nvim_open_win(
+        float_buf,
+        false,
+        { relative = 'editor', width = 5, height = 5, row = 1, col = 1 }
+      )
+      -- Set these options to prevent the float from being automatically closed.
+      api.nvim_set_option_value('modified', true, { buf = float_buf })
+      api.nvim_set_option_value('bufhidden', 'wipe', { buf = float_buf })
+      command('tabnew')
+
+      matches(
+        'E5601: Cannot close window, only floating window would remain$',
+        pcall_err(api.nvim_win_close, split_win, false)
+      )
+      eq(true, api.nvim_win_is_valid(split_win))
+      eq(true, api.nvim_win_is_valid(float_win))
+      eq(true, api.nvim_tabpage_is_valid(tp))
+
+      api.nvim_set_current_win(float_win)
+      api.nvim_win_close(split_win, true) -- Force it this time.
+      eq(false, api.nvim_win_is_valid(split_win))
+      eq(false, api.nvim_win_is_valid(float_win))
+      eq(false, api.nvim_tabpage_is_valid(tp))
+
+      -- Ensure opening a float after the initial check (like in WinClosed) doesn't crash...
+      exec([[
+        tabnew
+        let g:tp = nvim_get_current_tabpage()
+        let g:win = win_getid()
+        tabprevious
+        autocmd! WinClosed * ++once call nvim_open_win(0, 0, #{win: g:win, relative: 'win', width: 5, height: 5, row: 5, col: 5})
+      ]])
+      matches(
+        'E5601: Cannot close window, only floating window would remain$',
+        pcall_err(command, 'call nvim_win_close(g:win, 0)')
+      )
+      eq(true, eval 'nvim_tabpage_is_valid(g:tp)')
+
+      exec([[
+        tabnew
+        let g:tp = nvim_get_current_tabpage()
+        let g:win = win_getid()
+        let g:buf = bufnr()
+        tabprevious
+        let s:buf2 = nvim_create_buf(0, 0)
+        call setbufvar(s:buf2, '&modified', 1)
+        call setbufvar(s:buf2, '&bufhidden', 'wipe')
+        autocmd! WinClosed * ++once call nvim_open_win(s:buf2, 0, #{win: g:win, relative: 'win', width: 5, height: 5, row: 5, col: 5})
+      ]])
+      matches(
+        'E5601: Cannot close window, only floating window would remain$',
+        pcall_err(command, 'call nvim_buf_delete(g:buf, #{force: 1})')
+      )
+      eq(true, eval 'nvim_tabpage_is_valid(g:tp)')
     end)
   end)
 
