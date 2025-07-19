@@ -52,6 +52,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "optionstr.c.generated.h"
@@ -2547,4 +2548,42 @@ const char *check_chars_options(void)
     }
   }
   return NULL;
+}
+
+const char *did_set_previewpopup(optset_T *args)
+{
+  win_T *wp = win_float_find_preview(true);
+  WinConfig fconfig = wp ? wp->w_config : WIN_CONFIG_INIT;
+  if (!win_float_parse_option(&fconfig)) {
+    return e_invarg;
+  }
+
+  if (wp) {
+    win_config_float(wp, fconfig);
+  }
+  return NULL;
+}
+
+int expand_set_popupoption(optexpand_T *args, int *numMatches, char ***matches)
+{
+  expand_T *xp = args->oe_xp;
+
+  if (xp->xp_pattern > args->oe_set_arg && *(xp->xp_pattern - 1) == ':') {
+    int arg_len = (int)(xp->xp_pattern - args->oe_set_arg);
+
+    // match border:
+    if (arg_len >= 7 && strncmp(xp->xp_pattern - 7, "border:", 7) == 0) {
+      return expand_set_opt_string(args, opt_winborder_values,
+                                   ARRAY_SIZE(opt_winborder_values) - 1, numMatches,
+                                   matches);
+    }
+
+    return FAIL;
+  }
+
+  return expand_set_opt_string(args,
+                               opt_winborder_values,
+                               ARRAY_SIZE(opt_winborder_values) - 1,
+                               numMatches,
+                               matches);
 }
