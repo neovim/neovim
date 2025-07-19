@@ -8,6 +8,7 @@ local M = {}
 --- @param env? table<string,string|number>
 --- @return string
 local function system(cmd, silent, env)
+  assert(cmd[1])
   if vim.fn.executable(cmd[1]) == 0 then
     error(string.format('executable not found: "%s"', cmd[1]), 0)
   end
@@ -156,7 +157,8 @@ local function render_line(line, row, hls)
           -- Match against SGR parameters, which may be separated by ';'
           --- @type string?, string?
           match, sgr = sgr:match('^(%d*);?(.*)')
-          add_attr_hl(match + 0) -- coerce to number
+          local matchi = assert(tonumber(match)) --[[@as integer]]
+          add_attr_hl(matchi)
         end
         escape = false
       elseif prev_char == ']8;' then
@@ -171,7 +173,7 @@ local function render_line(line, row, hls)
       prev_char = ''
     elseif char == '\b' then
       overstrike = true
-      prev_char = chars[#chars]
+      prev_char = assert(chars[#chars])
       byte = byte - #prev_char
       chars[#chars] = nil
     else
@@ -216,6 +218,7 @@ end
 
 --- @param name? string
 --- @param sect? string
+--- @return string?
 local function get_path(name, sect)
   name = name or ''
   sect = sect or ''
@@ -274,7 +277,7 @@ local function get_path(name, sect)
     end, namematches)
   end
 
-  return (sectmatches[1] or namematches[1] or results[1]):gsub('\n+$', '')
+  return ((sectmatches[1] or namematches[1] or results[1]):gsub('\n+$', ''))
 end
 
 --- Attempt to extract the name and sect out of 'name(sect)'
@@ -291,7 +294,7 @@ local function parse_ref(ref)
   -- match "<name>(<sect>)"
   -- note: name can contain spaces
   local name, sect = ref:match('([^()]+)%(([^()]+)%)')
-  if name then
+  if name and sect then
     -- see ':Man 3X curses' on why tolower.
     -- TODO(nhooyr) Not sure if this is portable across OSs
     -- but I have not seen a single uppercase section.
@@ -445,6 +448,7 @@ end
 
 --- @param path string
 --- @param psect string
+--- @return string
 local function format_candidate(path, psect)
   if vim.endswith(path, '.pdf') or vim.endswith(path, '.in') then
     -- invalid extensions
@@ -576,9 +580,10 @@ end
 
 --- @param arg_lead string
 --- @param cmd_line string
+--- @return string[]?
 function M.man_complete(arg_lead, cmd_line)
   local sect, psect, name = parse_cmdline(arg_lead, cmd_line)
-  if not (sect and psect and name) then
+  if not sect or not psect or not name then
     return {}
   end
 
@@ -586,6 +591,7 @@ function M.man_complete(arg_lead, cmd_line)
   if not ok then
     return nil
   end
+  --- @cast pages -string
 
   -- We check for duplicates in case the same manpage in different languages
   -- was found.
@@ -674,7 +680,9 @@ end
 local function ref_from_args(args)
   if #args <= 1 then
     return args[1]
-  elseif args[1]:match('^%d$') or args[1]:match('^%d%a') or args[1]:match('^%a$') then
+  end
+  assert(args[1])
+  if args[1] and args[1]:match('^%d$') or args[1]:match('^%d%a') or args[1]:match('^%a$') then
     -- NB: Valid sections are not only digits, but also:
     --  - <digit><word> (see POSIX mans),
     --  - and even <letter> and <word> (see, for example, by tcl/tk)

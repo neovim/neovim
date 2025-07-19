@@ -42,7 +42,7 @@
 ---
 --- The following properties are supported by default:
 
---- @type table<string,fun(bufnr: integer, val: string, opts?: table)>
+--- @type table<string,fun(bufnr: integer, val: string, opts: table)>
 local properties = {}
 
 --- Modified version of the builtin assert that does not include error position information
@@ -132,7 +132,7 @@ end
 --- A number indicating the maximum length of a single
 --- line. Sets the 'textwidth' option.
 function properties.max_line_length(bufnr, val)
-  local n = tonumber(val)
+  local n = tonumber(val) --[[@as integer?]]
   if n then
     vim.bo[bufnr].textwidth = n
   else
@@ -255,10 +255,10 @@ end
 --- Parse options from an `.editorconfig` file
 --- @param filepath string File path of the file to apply EditorConfig settings to
 --- @param dir string Current directory
---- @return table<string,string|boolean> Table of options to apply to the given file
+--- @return table<string,string> Table of options to apply to the given file
 local function parse(filepath, dir)
   local pat --- @type vim.regex?
-  local opts = {} --- @type table<string,string|boolean>
+  local opts = {} --- @type table<string,string>
   local f = io.open(dir .. '/.editorconfig')
   if f then
     for line in f:lines() do
@@ -275,7 +275,7 @@ local function parse(filepath, dir)
       elseif key ~= nil and val ~= nil then
         if key == 'root' then
           assert(val == 'true' or val == 'false', 'root must be either "true" or "false"')
-          opts.root = val == 'true'
+          opts.root = val
         elseif pat and pat:match_str(filepath) then
           opts[key] = val
         end
@@ -305,7 +305,7 @@ function M.config(bufnr)
     return
   end
 
-  local opts = {} --- @type table<string,string|boolean>
+  local opts = {} --- @type table<string,string>
   for parent in vim.fs.parents(path) do
     for k, v in pairs(parse(path, parent)) do
       if opts[k] == nil then
@@ -313,12 +313,12 @@ function M.config(bufnr)
       end
     end
 
-    if opts.root then
+    if opts.root == 'true' then
       break
     end
   end
 
-  local applied = {} --- @type table<string,string|boolean>
+  local applied = {} --- @type table<string,string>
   for opt, val in pairs(opts) do
     if val ~= 'unset' then
       local func = M.properties[opt]
