@@ -1127,7 +1127,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   MAXSIZE_TEMP_DICT(data, 6);
   ArrayOf(String) messages = ARRAY_DICT_INIT;
   for (size_t i = 0; i < entry->msg.size; i++) {
-    kv_push(messages, STRING_OBJ(entry->msg.items[i].text));
+    ADD(messages, STRING_OBJ(entry->msg.items[i].text));
   }
 
   PUT_C(data, "message", ARRAY_OBJ(messages));
@@ -1140,6 +1140,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   apply_autocmds_group(EVENT_MESSAGE, (char *)entry->kind, NULL, true, AUGROUP_ALL, NULL, NULL,
                        &DICT_OBJ(data));
 
+  api_free_array(messages);
   msg_hist_clear(msg_hist_max);
   return entry->message_id;
 }
