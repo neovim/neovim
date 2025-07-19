@@ -1140,7 +1140,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   apply_autocmds_group(EVENT_MESSAGE, (char *)entry->kind, NULL, true, AUGROUP_ALL, NULL, NULL,
                        &DICT_OBJ(data));
 
-  api_free_array(messages);
+  kv_destroy(messages);
   msg_hist_clear(msg_hist_max);
   return entry->message_id;
 }
