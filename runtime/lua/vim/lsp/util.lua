@@ -2316,7 +2316,7 @@ function M._is_enabled(feature, filter)
     and vim.F.if_nil(bufnr and vim.b[bufnr][var], vim.g[var])
 end
 
----@param feature 'semantic_tokens'
+---@param feature 'semantic_tokens' | 'inline_completion'
 ---@param enable? boolean
 ---@param filter? vim.lsp.enable.Filter
 function M._enable(feature, enable, filter)
