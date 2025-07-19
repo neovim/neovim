@@ -116,6 +116,91 @@ describe('api/tabpage', function()
     end)
   end)
 
+  describe('open_tabpage', function()
+    it('works', function()
+      local tabs = api.nvim_list_tabpages()
+      eq(1, #tabs)
+      local curtab = api.nvim_get_current_tabpage()
+      local tab = api.nvim_open_tabpage(0, false, {})
+      local newtabs = api.nvim_list_tabpages()
+      eq(2, #newtabs)
+      eq(tab, newtabs[2])
+      eq(curtab, api.nvim_get_current_tabpage())
+
+      local tab2 = api.nvim_open_tabpage(0, true, {})
+      local newtabs2 = api.nvim_list_tabpages()
+      eq(3, #newtabs2)
+      eq({
+        tabs[1],
+        tab2, -- new tabs open after the current tab
+        tab,
+      }, newtabs2)
+      eq(tab2, newtabs2[2])
+      eq(tab, newtabs2[3])
+      eq(tab2, api.nvim_get_current_tabpage())
+    end)
+
+    it('respects the `after` option', function()
+      local tab1 = api.nvim_get_current_tabpage()
+      command('tabnew')
+      local tab2 = api.nvim_get_current_tabpage()
+      command('tabnew')
+      local tab3 = api.nvim_get_current_tabpage()
+
+      local new_tab = api.nvim_open_tabpage(0, false, {
+        after = tab2,
+      })
+
+      local newtabs = api.nvim_list_tabpages()
+      eq(4, #newtabs)
+      eq(newtabs, {
+        tab1,
+        tab2,
+        new_tab,
+        tab3,
+      })
+      eq(api.nvim_get_current_tabpage(), tab3)
+    end)
+
+    it('respects the `enter` argument', function()
+      eq(1, #api.nvim_list_tabpages())
+      local tab1 = api.nvim_get_current_tabpage()
+
+      local new_tab = api.nvim_open_tabpage(0, false, {})
+
+      local newtabs = api.nvim_list_tabpages()
+      eq(2, #newtabs)
+      eq(newtabs, {
+        tab1,
+        new_tab,
+      })
+      eq(api.nvim_get_current_tabpage(), tab1)
+
+      local new_tab2 = api.nvim_open_tabpage(0, true, {})
+      local newtabs2 = api.nvim_list_tabpages()
+      eq(3, #newtabs2)
+      eq(newtabs2, {
+        tab1,
+        new_tab2,
+        new_tab,
+      })
+
+      eq(api.nvim_get_current_tabpage(), new_tab2)
+    end)
+
+    it('applies `enter` autocmds in the context of the new tabpage', function()
+      api.nvim_create_autocmd('TabEnter', {
+        command = 'let g:entered_tab = nvim_get_current_tabpage()',
+      })
+
+      local new_tab = api.nvim_open_tabpage(0, true, {})
+
+      local entered_tab = assert(tonumber(api.nvim_get_var('entered_tab')))
+
+      eq(new_tab, entered_tab)
+    end)
+  end)
+
   describe('{get,set,del}_var', function()
     it('works', function()
       api.nvim_tabpage_set_var(0, 'lua', { 1, 2, { ['3'] = 1 } })
