@@ -368,7 +368,7 @@ Fiix the errors oon thhis line and reeplace them witth undo.
 
 ** Type `p`{normal} to put previously deleted text after the cursor. **
 
- 1. Move the cursor to the first ✓ line below.
+ 1. Move the cursor to the first `--->` line below.
 
  2. Type `dd`{normal} to delete the line and store it in a Neovim register.
 
@@ -378,10 +378,10 @@ Fiix the errors oon thhis line and reeplace them witth undo.
 
  5. Repeat steps 2 through 4 to put all the lines in correct order.
 
-d) Can you learn too?
-b) Violets are blue,
-c) Intelligence is learned,
-a) Roses are red,
+---> d) Can you learn too?
+---> b) Violets are blue,
+---> c) Intelligence is learned,
+---> a) Roses are red,
 
 NOTE: You can also put the text before the cursor with `P`{normal} (capital P).
 
