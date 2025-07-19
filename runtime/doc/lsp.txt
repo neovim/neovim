@@ -2286,6 +2286,38 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 
 
 ==============================================================================
+Lua module: vim.lsp.linked_editing_range            *lsp-linked_editing_range*
+
+The `vim.lsp.linked_editing_range` module enables "linked editing" via a
+language server's `textDocument/linkedEditingRange` request. Linked editing
+ranges are synchronized text regions, meaning changes in one range are
+mirrored in all the others. This is helpful in HTML files for example, where
+the language server can update the text of a closing tag if its opening tag
+was changed.
+
+LSP spec:
+https://microsoft.github.io/language-server-protocol/specification/#textDocument_linkedEditingRange
+
+
+enable({enable}, {filter})             *vim.lsp.linked_editing_range.enable()*
+    Enable or disable a linked editing session globally or for a specific
+    client. The following is a practical usage example: >lua
+        vim.lsp.start({
+          name = 'html',
+          cmd = '…',
+          on_attach = function(client)
+            vim.lsp.linked_editing_range.enable(true, { client_id = client.id })
+          end,
+        })
+<
+
+    Parameters: ~
+      • {enable}  (`boolean?`) `true` or `nil` to enable, `false` to disable.
+      • {filter}  (`table?`) Optional filters |kwargs|:
+                  • {client_id} (`integer?`) Client ID, or `nil` for all.
+
+
+==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
 
 *vim.lsp.util.open_floating_preview.Opts*

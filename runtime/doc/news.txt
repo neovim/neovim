@@ -212,6 +212,8 @@ LSP
 • When inside the float created by |vim.diagnostic.open_float()| and the
   cursor is on a line with `DiagnosticRelatedInformation`, |gf| can be used to
   jump to the problematic location.
+• Support for `textDocument/linkedEditingRange`: |lsp-linked_editing_range|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_linkedEditingRange
 
 LUA
 

@@ -283,6 +283,7 @@ local config = {
       'tagfunc.lua',
       'semantic_tokens.lua',
       'document_color.lua',
+      'linked_editing_range.lua',
       'handlers.lua',
       'util.lua',
       'log.lua',
