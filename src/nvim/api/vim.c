@@ -779,7 +779,9 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
   }
 
   String status = opts->status;
-  if ((kind != NULL && strcmp(kind, "progress") == 0)
+  bool is_kind_progress = kind != NULL && strcmp(kind, "progress") == 0;
+
+  if (is_kind_progress
       && ((status.data == NULL)
           || (strcmp(status.data, "success") != 0
               && strcmp(status.data, "failed") != 0
@@ -791,8 +793,14 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
     return 0;
   }
 
-  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err,
-                         opts->title.data, status.data, (int)opts->percent);
+  if (is_kind_progress && !history) {
+    api_set_error(err, kErrorTypeValidation, "progress messages must be on history");
+    return 0;
+  }
+
+  MessageExtData ext_data = { .title = opts->title, .status = status, .percent = opts->percent };
+
+  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &ext_data);
 
   if (opts->verbose) {
     verbose_leave();
