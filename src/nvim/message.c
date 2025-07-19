@@ -1052,7 +1052,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
 
   if (msg_hist_off || msg_silent != 0) {
     hl_msg_free(msg);
-    return 0;
+    return -1;
   }
 
   bool is_kind_progress = msg_ext_kind != NULL && strcmp(msg_ext_kind, MSG_KIND_PROGRESS) == 0;
