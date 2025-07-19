@@ -96,9 +96,6 @@ describe('profiling related functions', function()
   local function profile_cmp(t1, t2)
     return prof.profile_cmp(t1, t2)
   end
-  local function profile_equal(t1, t2)
-    return prof.profile_equal(t1, t2)
-  end
   local function profile_msg(q)
     return ffi.string(prof.profile_msg(q))
   end
@@ -109,20 +106,6 @@ describe('profiling related functions', function()
     local s, us = spl[1], spl[2]
     return tonumber(s) + tonumber(us) / 1000000
   end
-
-  describe('profile_equal', function()
-    itp('times are equal to themselves', function()
-      local start = profile_start()
-      assert.is_true(profile_equal(start, start))
-
-      local e = profile_end(start)
-      assert.is_true(profile_equal(e, e))
-    end)
-
-    itp('times are unequal to others', function()
-      assert.is_false(profile_equal(profile_start(), profile_start()))
-    end)
-  end)
 
   -- this is quite difficult to test, as it would rely on other functions in
   -- the profiling package. Those functions in turn will probably be tested
@@ -169,7 +152,6 @@ describe('profiling related functions', function()
   describe('profile_zero', function()
     itp('returns the same value on each call', function()
       eq(0, profile_zero())
-      assert.is_true(profile_equal(profile_zero(), profile_zero()))
     end)
   end)
 
@@ -203,7 +185,7 @@ describe('profiling related functions', function()
 
   describe('profile_setlimit', function()
     itp('sets no limit when 0 is passed', function()
-      eq(true, profile_equal(profile_setlimit(0), profile_zero()))
+      eq(profile_setlimit(0), profile_zero())
     end)
 
     itp('sets a limit in the future otherwise', function()

@@ -1282,7 +1282,7 @@ void may_sync_undo(void)
 }
 
 /// Make "typebuf" empty and allocate new buffers.
-void alloc_typebuf(void)
+static void alloc_typebuf(void)
 {
   typebuf.tb_buf = xmalloc(TYPELEN_INIT);
   typebuf.tb_noremap = xmalloc(TYPELEN_INIT);
@@ -1298,7 +1298,7 @@ void alloc_typebuf(void)
 }
 
 /// Free the buffers of "typebuf".
-void free_typebuf(void)
+static void free_typebuf(void)
 {
   if (typebuf.tb_buf == typebuf_init) {
     internal_error("Free typebuf 1");
