@@ -154,6 +154,10 @@ void changed(buf_T *buf)
 /// Also used for recovery.
 void changed_internal(buf_T *buf)
 {
+  if (bt_prompt(buf)) {
+    // modified is not set for prompt buffer
+    return;
+  }
   buf->b_changed = true;
   buf->b_changed_invalid = true;
   ml_setflags(buf);
