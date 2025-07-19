@@ -15,6 +15,8 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
@@ -50,6 +52,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/message_defs.h"
 #include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -159,6 +162,8 @@ static int msg_ext_last_hl_id;
 static bool msg_ext_history = false;  ///< message was added to history
 
 static int msg_grid_pos_at_flush = 0;
+
+static MsgID msg_id_next = 1;           ///< message id to be allocated to next message
 
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
@@ -295,7 +300,8 @@ static bool is_multihl = false;
 /// @param kind Message kind (can be NULL to avoid setting kind)
 /// @param history Whether to add message to history
 /// @param err Whether to print message as an error
-void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
+MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
+                  MessageExtData *ext_data)
 {
   no_wait_return++;
   msg_start();
@@ -317,12 +323,13 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
   if (history && kv_size(hl_msg)) {
-    msg_hist_add_multihl(hl_msg, false);
+    id = msg_hist_add_multihl(id, hl_msg, false, ext_data);
   }
   msg_ext_skip_flush = false;
   is_multihl = false;
   no_wait_return--;
   msg_end();
+  return id;
 }
 
 /// @param keep set keep_msg if it doesn't scroll
@@ -1020,12 +1027,25 @@ static void msg_hist_add(const char *s, int len, int hl_id)
 
   HlMessage msg = KV_INITIAL_VALUE;
   kv_push(msg, ((HlMessageChunk){ text, hl_id }));
-  msg_hist_add_multihl(msg, false);
+  msg_hist_add_multihl(0, msg, false, NULL);
 }
 
 static bool do_clear_hist_temp = true;
 
-static void msg_hist_add_multihl(HlMessage msg, bool temp)
+/// returns message history item based on it's id or NULL if not found
+static MessageHistoryEntry *msg_find_by_id(MsgID id)
+{
+  if (id <= 0) {
+    return NULL;
+  }
+  MessageHistoryEntry *entry = msg_hist_last;
+  while (entry != NULL && entry->message_id != id) {
+    entry = entry->prev;
+  }
+  return entry;
+}
+
+static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageExtData *ext_data)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -1034,16 +1054,58 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp)
 
   if (msg_hist_off || msg_silent != 0) {
     hl_msg_free(msg);
-    return;
+    return -1;
   }
 
-  // Allocate an entry and add the message at the end of the history.
-  MessageHistoryEntry *entry = xmalloc(sizeof(MessageHistoryEntry));
+  bool is_kind_progress = msg_ext_kind != NULL && strcmp(msg_ext_kind, MSG_KIND_PROGRESS) == 0;
+  bool old_message_found = false;
+
+  MessageHistoryEntry *entry = msg_find_by_id(msg_id);
+  if (entry) {
+    old_message_found = true;
+    // detach the node if found
+    if (entry->prev) {
+      entry->prev->next = entry->next;
+    } else {
+      msg_hist_first = entry->next;
+    }
+    if (entry->next) {
+      entry->next->prev = entry->prev;
+    } else {
+      msg_hist_last = entry->prev;
+    }
+  } else {
+    // Allocate an entry and add the message at the end of the history.
+    entry = xmalloc(sizeof(MessageHistoryEntry));
+    entry->message_id = msg_id_next++;
+    entry->ext_data.title.data = NULL;
+    entry->ext_data.title.size = 0;
+    entry->ext_data.status.data = NULL;
+    entry->ext_data.status.size = 0;
+    entry->ext_data.percent = -1;
+  }
   entry->msg = msg;
   entry->temp = temp;
   entry->kind = msg_ext_kind;
   entry->prev = msg_hist_last;
   entry->next = NULL;
+  if (is_kind_progress && ext_data != NULL) {
+    if (ext_data->status.size != 0) {
+      if (old_message_found && entry->ext_data.status.size != 0) {
+        api_free_string(entry->ext_data.status);
+      }
+      entry->ext_data.status = copy_string(ext_data->status, NULL);
+    }
+    if (ext_data->title.size != 0) {
+      if (old_message_found && entry->ext_data.title.size != 0) {
+        api_free_string(entry->ext_data.title);
+      }
+      entry->ext_data.title = copy_string(ext_data->title, NULL);
+    }
+    if (entry->ext_data.percent == -1 || ext_data->percent > 0) {
+      entry->ext_data.percent = ext_data->percent;
+    }
+  }
   // NOTE: this does not encode if the message was actually appended to the
   // previous entry in the message history. However append is currently only
   // true for :echon, which is stored in the history as a temporary entry for
@@ -1060,10 +1122,29 @@ static void msg_hist_add_multihl(HlMessage msg, bool temp)
     msg_hist_temp = entry;
   }
 
-  msg_hist_len += !temp;
+  msg_hist_len += !temp && !old_message_found;
   msg_hist_last = entry;
   msg_ext_history = true;
+
+  MAXSIZE_TEMP_DICT(data, 6);
+  ArrayOf(String) messages = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < entry->msg.size; i++) {
+    ADD(messages, STRING_OBJ(entry->msg.items[i].text));
+  }
+
+  PUT_C(data, "message", ARRAY_OBJ(messages));
+  PUT_C(data, "id", INTEGER_OBJ(entry->message_id));
+  PUT_C(data, "kind", CSTR_AS_OBJ(entry->kind));
+  PUT_C(data, "percent", INTEGER_OBJ(entry->ext_data.percent));
+  PUT_C(data, "status", STRING_OBJ(entry->ext_data.status));
+  PUT_C(data, "title", STRING_OBJ(entry->ext_data.title));
+
+  apply_autocmds_group(EVENT_MESSAGE, (char *)entry->kind, NULL, true, AUGROUP_ALL, NULL, NULL,
+                       &DICT_OBJ(data));
+
+  kv_destroy(messages);
   msg_hist_clear(msg_hist_max);
+  return entry->message_id;
 }
 
 static void msg_hist_free_msg(MessageHistoryEntry *entry)
@@ -1082,6 +1163,8 @@ static void msg_hist_free_msg(MessageHistoryEntry *entry)
     msg_hist_temp = entry->next;
   }
   hl_msg_free(entry->msg);
+  api_free_string(entry->ext_data.status);
+  api_free_string(entry->ext_data.title);
   xfree(entry);
 }
 
@@ -1207,7 +1290,7 @@ void ex_messages(exarg_T *eap)
     }
     if (redirecting() || !ui_has(kUIMessages)) {
       msg_silent += ui_has(kUIMessages);
-      msg_multihl(p->msg, p->kind, false, false);
+      msg_multihl(p->message_id, p->msg, p->kind, false, false, &(p->ext_data));
       msg_silent -= ui_has(kUIMessages);
     }
   }
@@ -3193,7 +3276,7 @@ void msg_ext_ui_flush(void)
         xfree(chunk);
       }
       xfree(tofree->items);
-      msg_hist_add_multihl(msg, true);
+      msg_hist_add_multihl(0, msg, true, NULL);
     }
     xfree(tofree);
     msg_ext_overwrite = false;

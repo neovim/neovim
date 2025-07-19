@@ -762,8 +762,8 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///          - kind: Set the |ui-messages| kind with which this message will be emitted.
 ///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
 ///            will write the message to the "log" file instead of standard output.
-void nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
-               Error *err)
+Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
+                  Error *err)
   FUNC_API_SINCE(7)
 {
   HlMessage hl_msg = parse_hl_msg(chunks, opts->err, err);
@@ -778,7 +778,35 @@ void nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(
     kind = opts->err ? "echoerr" : history ? "echomsg" : "echo";
   }
 
-  msg_multihl(hl_msg, kind, history, opts->err);
+  bool is_kind_progress = kind != NULL && strcmp(kind, "progress") == 0;
+
+  if (!is_kind_progress && (opts->status.size != 0 || opts->title.size != 0 || opts->percent > 0)) {
+    api_set_error(err, kErrorTypeValidation,
+                  "title, status and percents fields can only be used with progress messages");
+    return -1;
+  }
+
+  if (is_kind_progress
+      && ((opts->status.data == NULL)
+          || (strcmp(opts->status.data, "success") != 0
+              && strcmp(opts->status.data, "failed") != 0
+              && strcmp(opts->status.data, "running") != 0
+              && strcmp(opts->status.data, "cancel") != 0)
+          )
+      ) {
+    api_set_error(err, kErrorTypeValidation, "invalid message status");
+    return -1;
+  }
+
+  if (is_kind_progress && !history) {
+    api_set_error(err, kErrorTypeValidation, "progress messages must be on history");
+    return -1;
+  }
+
+  MessageExtData ext_data = { .title = opts->title, .status = opts->status,
+                              .percent = opts->percent };
+
+  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &ext_data);
 
   if (opts->verbose) {
     verbose_leave();
@@ -787,11 +815,12 @@ void nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(
 
   if (history) {
     // history takes ownership
-    return;
+    return id;
   }
 
 error:
   hl_msg_free(hl_msg);
+  return -1;
 }
 
 /// Gets the current list of buffers.
