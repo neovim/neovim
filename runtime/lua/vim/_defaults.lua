@@ -23,7 +23,13 @@ do
 
   vim.api.nvim_create_user_command('EditQuery', function(cmd)
     vim.treesitter.query.edit(cmd.fargs[1])
-  end, { desc = 'Edit treesitter query', nargs = '?' })
+  end, {
+    desc = 'Edit treesitter query',
+    nargs = '?',
+    complete = function()
+      return vim.treesitter.language._complete()
+    end,
+  })
 
   vim.api.nvim_create_user_command('Open', function(cmd)
     vim.ui.open(assert(cmd.fargs[1]))

@@ -186,4 +186,15 @@ function M.inspect(lang)
   return vim._ts_inspect_language(lang)
 end
 
+--- Returns available treesitter languages.
+function M._complete()
+  local parsers = vim.api.nvim_get_runtime_file('parser/*', true)
+  local parser_names_set = {} ---@type table<string, boolean>
+  for _, parser in ipairs(parsers) do
+    local parser_name = vim.fn.fnamemodify(parser, ':t:r')
+    parser_names_set[parser_name] = true
+  end
+  return vim.tbl_keys(parser_names_set)
+end
+
 return M
