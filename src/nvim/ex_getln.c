@@ -1021,7 +1021,9 @@ theend:
 static int command_line_check(VimState *state)
 {
   CommandLineState *s = (CommandLineState *)state;
+
   s->prev_cmdpos = ccline.cmdpos;
+  XFREE_CLEAR(s->prev_cmdbuff);
 
   redir_off = true;        // Don't redirect the typed command.
   // Repeated, because a ":redir" inside
@@ -2309,7 +2311,6 @@ static int command_line_not_changed(CommandLineState *s)
   // changed in the past.
   // Enter command_line_changed() when the command line did change.
   if (!s->is_state.incsearch_postponed) {
-    XFREE_CLEAR(s->prev_cmdbuff);
     return 1;
   }
   return command_line_changed(s);
@@ -2786,8 +2787,6 @@ static int command_line_changed(CommandLineState *s)
     // Trigger CmdlineChanged autocommands.
     do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
   }
-
-  XFREE_CLEAR(s->prev_cmdbuff);
 
   may_trigger_cursormovedc(s);
 
