@@ -61,19 +61,32 @@ function M.hover(config)
 
     -- Filter errors from results
     local results1 = {} --- @type table<integer,lsp.Hover>
+    local empty_response = false
 
     for client_id, resp in pairs(results) do
       local err, result = resp.err, resp.result
       if err then
         lsp.log.error(err.code, err.message)
-      elseif result then
-        results1[client_id] = result
+      elseif result and result.contents then
+        -- Make sure the response is not empty
+        if
+          (type(result.contents) == 'table' and #(vim.tbl_get(result.contents, 'value') or '') > 0)
+          or type(result.contents == 'string') and #result.contents > 0
+        then
+          results1[client_id] = result
+        else
+          empty_response = true
+        end
       end
     end
 
     if vim.tbl_isempty(results1) then
       if config.silent ~= true then
-        vim.notify('No information available', vim.log.levels.INFO)
+        if empty_response then
+          vim.notify('Empty hover response', vim.log.levels.INFO)
+        else
+          vim.notify('No information available', vim.log.levels.INFO)
+        end
       end
       return
     end
