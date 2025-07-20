@@ -7687,6 +7687,9 @@ local options = {
         Don't forget to precede the space with a backslash: ":set sp=\ ".
         In the future pipes may be used for filtering and this option will
         become obsolete (at least for Unix).
+        Note: When using a pipe like "| tee", you'll lose the exit code of the
+        shell command.  This might be configurable by your shell, look for
+        the pipefail option (for bash and zsh, use ":set -o pipefail").
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
