@@ -134,16 +134,6 @@ static char opchars[][3] = {
   { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
 };
 
-yankreg_T *get_y_previous(void)
-{
-  return y_previous;
-}
-
-void set_y_previous(yankreg_T *yreg)
-{
-  y_previous = yreg;
-}
-
 /// Translate a command name into an operator type.
 /// Must only be called with a valid operator name!
 int get_op_type(int char1, int char2)
