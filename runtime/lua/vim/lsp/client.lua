@@ -6,6 +6,10 @@ local ms = lsp.protocol.Methods
 local changetracking = lsp._changetracking
 local validate = vim.validate
 
+--- Tracks all clients initialized.
+---@type table<integer,vim.lsp.Client>
+local all_clients = {}
+
 --- @alias vim.lsp.client.on_init_cb fun(client: vim.lsp.Client, init_result: lsp.InitializeResult)
 --- @alias vim.lsp.client.on_attach_cb fun(client: vim.lsp.Client, bufnr: integer)
 --- @alias vim.lsp.client.on_exit_cb fun(code: integer, signal: integer, client_id: integer)
@@ -493,6 +497,9 @@ end
 
 --- @nodoc
 function Client:initialize()
+  -- Register all initialized clients.
+  all_clients[self.id] = self
+
   local config = self.config
 
   local root_uri --- @type string?
@@ -1292,5 +1299,8 @@ function Client:_remove_workspace_folder(dir)
     end
   end
 end
+
+-- Export for internal use only.
+Client._all = all_clients
 
 return Client

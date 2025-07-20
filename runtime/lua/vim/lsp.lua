@@ -84,9 +84,6 @@ function lsp._buf_get_line_ending(bufnr)
   return format_line_ending[vim.bo[bufnr].fileformat] or '\n'
 end
 
--- Tracks all clients created via lsp.start_client
-local all_clients = {} --- @type table<integer,vim.lsp.Client>
-
 local client_errors_base = table.maxn(lsp.rpc.client_errors)
 local client_errors_offset = 0
 
@@ -179,14 +176,14 @@ end
 --- @param signal integer
 --- @param client_id integer
 local function on_client_exit(code, signal, client_id)
-  local client = all_clients[client_id]
+  local client = lsp.get_client_by_id(client_id)
 
-  local name = client.name or 'unknown'
+  local name = client and client.name or 'unknown'
 
   -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
   -- autocommands
   vim.schedule(function()
-    all_clients[client_id] = nil
+    lsp.client._all[client_id] = nil
 
     -- Client can be absent if executable starts, but initialize fails
     -- init/attach won't have happened
@@ -222,8 +219,6 @@ local function create_and_init_client(config)
 
   --- @diagnostic disable-next-line: invisible
   table.insert(client._on_exit_cbs, on_client_exit)
-
-  all_clients[client.id] = client
 
   client:initialize()
 
@@ -702,7 +697,7 @@ function lsp.start(config, opts)
     return
   end
 
-  for _, client in pairs(all_clients) do
+  for _, client in pairs(lsp.client._all) do
     if reuse_client(client, config) then
       if opts.attach == false then
         return client.id
@@ -1012,7 +1007,7 @@ function lsp.buf_detach_client(bufnr, client_id)
   validate('client_id', client_id, 'number')
   bufnr = vim._resolve_bufnr(bufnr)
 
-  local client = all_clients[client_id]
+  local client = lsp.get_client_by_id(client_id)
   if not client or not client.attached_buffers[bufnr] then
     vim.notify(
       string.format(
@@ -1042,7 +1037,7 @@ end
 ---
 ---@return vim.lsp.Client? client rpc object
 function lsp.get_client_by_id(client_id)
-  return all_clients[client_id]
+  return lsp.client._all[client_id]
 end
 
 --- Returns list of buffers attached to client_id.
@@ -1050,7 +1045,7 @@ end
 ---@param client_id integer client id
 ---@return integer[] buffers list of buffer ids
 function lsp.get_buffers_by_client_id(client_id)
-  local client = all_clients[client_id]
+  local client = lsp.get_client_by_id(client_id)
   return client and vim.tbl_keys(client.attached_buffers) or {}
 end
 
@@ -1078,7 +1073,7 @@ function lsp.stop_client(client_id, force)
       end
     else
       --- @cast id -vim.lsp.Client
-      local client = all_clients[id]
+      local client = lsp.get_client_by_id(id)
       if client then
         client:stop(force)
       end
@@ -1120,7 +1115,7 @@ function lsp.get_clients(filter)
 
   local bufnr = filter.bufnr and vim._resolve_bufnr(filter.bufnr)
 
-  for _, client in pairs(all_clients) do
+  for _, client in pairs(lsp.client._all) do
     if
       client
       and (filter.id == nil or client.id == filter.id)
@@ -1146,7 +1141,7 @@ api.nvim_create_autocmd('VimLeavePre', {
   callback = function()
     local active_clients = lsp.get_clients()
     log.info('exit_handler', active_clients)
-    for _, client in pairs(all_clients) do
+    for _, client in pairs(lsp.client._all) do
       client:stop()
     end
 
@@ -1244,8 +1239,8 @@ function lsp.buf_request(bufnr, method, params, handler, on_unsupported)
 
   local function _cancel_all_requests()
     for client_id, request_id in pairs(client_request_ids) do
-      local client = all_clients[client_id]
-      if client.requests[request_id] then
+      local client = lsp.get_client_by_id(client_id)
+      if client and client.requests[request_id] then
         client:cancel_request(request_id)
       end
     end
@@ -1507,7 +1502,7 @@ end
 function lsp.client_is_stopped(client_id)
   vim.deprecate('vim.lsp.client_is_stopped()', 'vim.lsp.get_client_by_id()', '0.14')
   assert(client_id, 'missing client_id param')
-  return not all_clients[client_id]
+  return not lsp.get_client_by_id(client_id)
 end
 
 --- Gets a map of client_id:client pairs for the given buffer, where each value
