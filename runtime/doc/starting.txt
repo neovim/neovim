@@ -193,6 +193,11 @@ argument.
 		disables most prompts and messages. Unrelated to |-s|.
 		See also |-S| to run script files.
 
+		Sets exit code as follows:
+		• 0 on success
+		• 1 on config error (including -u/-c/--cmd)
+		• 2 on -l script error
+
 		-es reads/executes stdin as Ex commands. >
 			printf "put ='foo'\n%%print\n" | nvim -es
 
@@ -217,8 +222,14 @@ argument.
 -l {script} [args]
 		Executes Lua {script} non-interactively (no UI) with optional
 		[args] after processing any preceding Nvim |cli-arguments|,
-		then exits. Exits 1 on Lua error. See |-S| to run multiple Lua
-		scripts without args, with a UI.
+		then exits. See |-S| to run multiple Lua scripts without args,
+		with a UI.
+
+		Sets exit code as follows:
+		• 0 on success
+		• 1 on config error (including -u/-c/--cmd)
+		• 2 on -l script error
+
 								    *lua-args*
 		All [args] are treated as {script} arguments and stored in the
 		Lua `_G.arg` global table, thus "-l" ends processing of Nvim
