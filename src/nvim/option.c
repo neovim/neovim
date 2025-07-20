@@ -1593,13 +1593,13 @@ static char *option_expand(OptIndex opt_idx, const char *val)
   }
 
   // Expanding this with NameBuff, expand_env() must not be passed IObuff.
-  // Escape spaces when expanding 'tags', they are used to separate file
-  // names.
+  // Escape spaces when expanding 'tags' or 'path', they are used to separate
+  // file names.
   // For 'spellsuggest' expand after "file:".
-  expand_env_esc(val, NameBuff, MAXPATHL,
-                 (char **)options[opt_idx].var == &p_tags, false,
-                 (char **)options[opt_idx].var == &p_sps ? "file:"
-                                                         : NULL);
+  char **var = (char **)options[opt_idx].var;
+  bool esc = var == &p_tags || var == &p_path;
+  expand_env_esc(val, NameBuff, MAXPATHL, esc, false,
+                 (char **)options[opt_idx].var == &p_sps ? "file:" : NULL);
   if (strcmp(NameBuff, val) == 0) {   // they are the same
     return NULL;
   }
