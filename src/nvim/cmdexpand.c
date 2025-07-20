@@ -3166,12 +3166,13 @@ void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regmatch, ch
 
 /// Expand shell command matches in one directory of $PATH.
 ///
-/// @param pathlen  length of the path portion of pat.
-static void expand_shellcmd_onedir(char *pat, size_t pathlen, char ***matches, int *numMatches,
-                                   int flags, hashtab_T *ht, garray_T *gap)
+/// @param pathed_pattern  fully pathed pattern
+/// @param pathlen         length of the path portion of pathed_pattern (0 if no path)
+static void expand_shellcmd_onedir(char *pathed_pattern, size_t pathlen, char ***matches,
+                                   int *numMatches, int flags, hashtab_T *ht, garray_T *gap)
 {
   // Expand matches in one directory of $PATH.
-  if (expand_wildcards(1, &pat, numMatches, matches, flags) != OK) {
+  if (expand_wildcards(1, &pathed_pattern, numMatches, matches, flags) != OK) {
     return;
   }
 
@@ -3290,6 +3291,9 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
       seplen = !after_pathsep(s, e) ? STRLEN_LITERAL(PATHSEPSTR) : 0;
     }
 
+    // Make sure that the pathed pattern (ie the path and pattern concatenated
+    // together) will fit inside the buffer. If not skip it and move on to the
+    // next path.
     if (pathlen + seplen + patlen + 1 <= MAXPATHL) {
       if (pathlen > 0) {
         xmemcpyz(buf, s, pathlen);
