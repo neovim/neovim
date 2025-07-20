@@ -2460,7 +2460,7 @@ text...
 			line and not see the "|" that separates the commands.
 
 							*:ec* *:echo*
-:ec[ho] {expr1} ..	Echoes each {expr1}, with a space in between.  The
+:ec[ho] {expr1} ...	Echoes each {expr1}, with a space in between.  The
 			first {expr1} starts on a new line.
 			Also see |:comment|.
 			Use "\n" to start a new line.  Use "\r" to move the
@@ -2493,7 +2493,7 @@ text...
 			level.
 
 							*:echon*
-:echon {expr1} ..	Echoes each {expr1}, without anything added.  Also see
+:echon {expr1} ...	Echoes each {expr1}, without anything added.  Also see
 			|:comment|.
 			Uses the highlighting set by the `:echohl` command.
 			Cannot be followed by a comment.
@@ -2524,7 +2524,7 @@ text...
 			otherwise all following echo's will be highlighted.
 
 							*:echom* *:echomsg*
-:echom[sg] {expr1} ..	Echo the expression(s) as a true message, saving the
+:echom[sg] {expr1} ...	Echo the expression(s) as a true message, saving the
 			message in the |message-history|.
 			Spaces are placed between the arguments as with the
 			`:echo` command.  But unprintable characters are
@@ -2539,8 +2539,9 @@ text...
 		:echomsg "It's a Zizzer Zazzer Zuzz, as you can plainly see."
 <			See |:echo-redraw| to avoid the message disappearing
 			when the screen is redrawn.
+
 							*:echoe* *:echoerr*
-:echoe[rr] {expr1} ..	Echo the expression(s) as an error message, saving the
+:echoe[rr] {expr1} ...	Echo the expression(s) as an error message, saving the
 			message in the |message-history|.  When used in a
 			script or function the line number will be added.
 			Spaces are placed between the arguments as with the
@@ -2572,7 +2573,7 @@ text...
 
 
 							*:exe* *:execute*
-:exe[cute] {expr1} ..	Executes the string that results from the evaluation
+:exe[cute] {expr1} ...	Executes the string that results from the evaluation
 			of {expr1} as an Ex command.
 			Multiple arguments are concatenated, with a space in
 			between.  To avoid the extra space use the ".."
