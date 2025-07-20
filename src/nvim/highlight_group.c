@@ -153,6 +153,9 @@ static const char *highlight_init_both[] = {
   "TabLineSel        guifg=fg      guibg=bg                gui=bold cterm=nocombine",
   "TermCursor        gui=reverse   cterm=reverse",
   "Underlined        gui=underline cterm=underline",
+  "Bold              gui=bold        cterm=bold",
+  "Italic            gui=italic      cterm=italic",
+  "BoldItalic        gui=bold,italic cterm=bold,italic",
   "lCursor           guifg=bg      guibg=fg                cterm=reverse",
 
   // UI
