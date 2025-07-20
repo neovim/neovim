@@ -28,9 +28,9 @@ commands, |:windo|, |:all| and |:ball| (when not using the |:tab| modifier).
 The commands that are aware of other tab pages than the current one are
 mentioned below.
 
-Tabs are also a nice way to edit a buffer temporarily without changing the
-current window layout.  Open a new tab page, do whatever you want to do and
-close the tab page.
+Tab pages are also a nice way to edit a buffer temporarily without changing
+the current window layout.  Open a new tab page, do whatever you want to do
+and close the tab page.
 
 							*tab-ID* *tabid* *tabpageid*
 Each tab page has a unique identifier called the tab ID.  This identifier will
@@ -146,7 +146,7 @@ something else.
 		    :tabclose $	    " close the last tab page
 		    :tabclose #     " close the last accessed tab page
 
-When a tab is closed the next tab page will become the current one. This
+When a tab page is closed the next tab page will become the current one. This
 behaviour can be customized using the 'tabclose' option.
 
 							*:tabo* *:tabonly*
@@ -250,7 +250,7 @@ REORDERING TAB PAGES:
 :[N]tabm[ove]
 		Move the current tab page to after tab page N.  Use zero to
 		make the current tab page the first one.  N is counted before
-		the move, thus if the second tab is the current one,
+		the move, thus if the second tab page is the current one,
 		`:tabmove 1` and `:tabmove 2` have no effect.
 		Without N the tab page is made the last one. >
 		    :.tabmove	" do nothing
@@ -274,9 +274,9 @@ REORDERING TAB PAGES:
 		    :tabmove +1	" as above
 
 
-Note that although it is possible to move a tab behind the N-th one by using
-:Ntabmove. And move it by N places by using :+Ntabmove. For clarification what
-+N means in this context see |[range]|.
+Note that although it is possible to move a tab page behind the N-th one by
+using :Ntabmove. And move it by N places by using :+Ntabmove. For
+clarification what +N means in this context see |[range]|.
 
 
 LOOPING OVER TAB PAGES:
@@ -396,7 +396,7 @@ pages and define labels for them.  Then get the label for each tab page. >
 	    let s ..= ' %{MyTabLabel(' .. (i + 1) .. ')} '
 	  endfor
 
-	  " after the last tab fill with TabLineFill and reset tab page nr
+	  " after the last tab page fill with TabLineFill and reset tab page nr
 	  let s ..= '%#TabLineFill#%T'
 
 	  " right-align the label to close the current tab page
