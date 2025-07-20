@@ -134,6 +134,7 @@ typedef struct {
   int save_msg_scroll;
   int save_State;                       // remember State when called
   int prev_cmdpos;
+  char *prev_cmdbuff;
   char *save_p_icm;
   bool some_key_typed;                  // one of the keys was typed
   // mouse drag and release events are ignored, unless they are
@@ -1013,12 +1014,16 @@ theend:
     ccline.cmdbuff = NULL;
   }
 
+  xfree(s->prev_cmdbuff);
   return (uint8_t *)p;
 }
 
 static int command_line_check(VimState *state)
 {
   CommandLineState *s = (CommandLineState *)state;
+
+  s->prev_cmdpos = ccline.cmdpos;
+  XFREE_CLEAR(s->prev_cmdbuff);
 
   redir_off = true;        // Don't redirect the typed command.
   // Repeated, because a ":redir" inside
@@ -1028,6 +1033,10 @@ static int command_line_check(VimState *state)
   did_emsg = false;        // There can't really be a reason why an error
                            // that occurs while typing a command should
                            // cause the command not to be executed.
+
+  if (ccline.cmdbuff != NULL) {
+    s->prev_cmdbuff = xmemdupz(ccline.cmdbuff, (size_t)ccline.cmdpos);
+  }
 
   // Trigger SafeState if nothing is pending.
   may_trigger_safestate(s->xpc.xp_numfiles <= 0);
@@ -2288,7 +2297,6 @@ static void may_trigger_cursormovedc(CommandLineState *s)
 {
   if (ccline.cmdpos != s->prev_cmdpos) {
     trigger_cmd_autocmd(s->cmdline_type, EVENT_CURSORMOVEDC);
-    s->prev_cmdpos = ccline.cmdpos;
     ccline.redraw_state = MAX(ccline.redraw_state, kCmdRedrawPos);
   }
 }
@@ -2296,6 +2304,7 @@ static void may_trigger_cursormovedc(CommandLineState *s)
 static int command_line_not_changed(CommandLineState *s)
 {
   may_trigger_cursormovedc(s);
+  s->prev_cmdpos = ccline.cmdpos;
   // Incremental searches for "/" and "?":
   // Enter command_line_not_changed() when a character has been read but the
   // command line did not change. Then we only search and redraw if something
@@ -2772,8 +2781,12 @@ static void do_autocmd_cmdlinechanged(int firstc)
 
 static int command_line_changed(CommandLineState *s)
 {
-  // Trigger CmdlineChanged autocommands.
-  do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
+  if (ccline.cmdpos != s->prev_cmdpos
+      || (s->prev_cmdbuff != NULL
+          && strncmp(s->prev_cmdbuff, ccline.cmdbuff, (size_t)s->prev_cmdpos) != 0)) {
+    // Trigger CmdlineChanged autocommands.
+    do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
+  }
 
   may_trigger_cursormovedc(s);
 
