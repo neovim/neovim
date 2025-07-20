@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		Vim help file
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2025 Jul 12
+" Last Change:		2025 Jul 20
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -173,6 +173,9 @@ syn match helpDelimiter		"\t[* ]Delimiter\t\+[a-z].*"
 syn match helpSpecialComment	"\t[* ]SpecialComment\t\+[a-z].*"
 syn match helpDebug		"\t[* ]Debug\t\+[a-z].*"
 syn match helpUnderlined	"\t[* ]Underlined\t\+[a-z].*"
+syn match helpBold		"\t[* ]Bold\t\+[a-z].*"
+syn match helpItalic		"\t[* ]Italic\t\+[a-z].*"
+syn match helpBoldItalic	"\t[* ]BoldItalic\t\+[a-z].*"
 syn match helpError		"\t[* ]Error\t\+[a-z].*"
 syn match helpTodo		"\t[* ]Todo\t\+[a-z].*"
 
@@ -243,6 +246,9 @@ hi def link helpDelimiter	Delimiter
 hi def link helpSpecialComment	SpecialComment
 hi def link helpDebug		Debug
 hi def link helpUnderlined	Underlined
+hi def link helpBold		Bold
+hi def link helpItalic		Italic
+hi def link helpBoldItalic	BoldItalic
 hi def link helpError		Error
 hi def link helpTodo		Todo
 hi def link helpURL		String
