@@ -3092,6 +3092,11 @@ static void diff_find_change_inline_diff(diff_T *dp)
   diff_T *orig_diff = curtab->tp_first_diff;
   curtab->tp_first_diff = NULL;
 
+  // diff_read() also uses curtab->tp_diffbuf to determine what's an active
+  // buffer
+  buf_T *(orig_diffbuf[DB_COUNT]);
+  memcpy(orig_diffbuf, curtab->tp_diffbuf, sizeof(orig_diffbuf));
+
   garray_T linemap[DB_COUNT];
   garray_T file1_str;
   garray_T file2_str;
@@ -3118,8 +3123,12 @@ static void diff_find_change_inline_diff(diff_T *dp)
       continue;  // skip buffer that isn't loaded
     }
     if (dp->df_count[i] == 0) {
-      continue;  // skip buffer that don't have any texts in this block
+      // skip buffers that don't have any texts in this block so we don't
+      // end up marking the entire block as modified in multi-buffer diff
+      curtab->tp_diffbuf[i] = NULL;
+      continue;
     }
+
     if (file1_idx == -1) {
       file1_idx = i;
     }
@@ -3297,7 +3306,7 @@ static void diff_find_change_inline_diff(diff_T *dp)
   for (; new_diff != NULL; new_diff = new_diff->df_next) {
     diffline_change_T change = { 0 };
     for (int i = 0; i < DB_COUNT; i++) {
-      if (new_diff->df_lnum[i] == 0) {
+      if (new_diff->df_lnum[i] <= 0) {  // should never be < 0. Checking just for safety
         continue;
       }
       linenr_T diff_lnum = new_diff->df_lnum[i] - 1;  // use zero-index
@@ -3334,6 +3343,7 @@ done:
 
   diff_clear(curtab);
   curtab->tp_first_diff = orig_diff;
+  memcpy(curtab->tp_diffbuf, orig_diffbuf, sizeof(orig_diffbuf));
 
   ga_clear(&file1_str);
   ga_clear(&file2_str);

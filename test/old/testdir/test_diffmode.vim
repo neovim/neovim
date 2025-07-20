@@ -2384,6 +2384,22 @@ func Test_diff_inline_multibuffer()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test that when using multi-buffer diff, an empty block would be correctly
+" skipped in the result, without resulting in invalid states or crashes.
+func Test_diff_inline_multibuffer_empty_block()
+  CheckScreendump
+
+  call writefile(['anchor1', '1234567890abcde', 'anchor2'], 'Xdifile1')
+  call writefile(['anchor1', '1234567--0abc-e', 'anchor2'], 'Xdifile2')
+  call writefile(['anchor1', 'anchor2'], 'Xdifile3')
+  call writefile(['anchor1', '1???????90abcd?', 'anchor2'], 'Xdifile4')
+
+  let buf = RunVimInTerminal('-d Xdifile1 Xdifile2 Xdifile3 Xdifile4', {})
+  call VerifyInternal(buf, "Test_diff_inline_multibuffer_empty_block_01", " diffopt+=inline:char")
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_diffget_diffput_linematch()
   CheckScreendump
   call delete('.Xdifile1.swp')
