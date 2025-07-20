@@ -1186,12 +1186,65 @@ function Client:_on_error(code, err)
   end
 end
 
+---@param bufnr integer resolved buffer
+function Client:_on_detach(bufnr)
+  if self.attached_buffers[bufnr] and api.nvim_buf_is_valid(bufnr) then
+    api.nvim_exec_autocmds('LspDetach', {
+      buffer = bufnr,
+      modeline = false,
+      data = { client_id = self.id },
+    })
+  end
+
+  changetracking.reset_buf(self, bufnr)
+
+  if self:supports_method(ms.textDocument_didClose) then
+    local uri = vim.uri_from_bufnr(bufnr)
+    local params = { textDocument = { uri = uri } }
+    self:notify(ms.textDocument_didClose, params)
+  end
+
+  self.attached_buffers[bufnr] = nil
+
+  local namespace = lsp.diagnostic.get_namespace(self.id)
+  vim.diagnostic.reset(namespace, bufnr)
+end
+
+--- Reset defaults set by `set_defaults`.
+--- Must only be called if the last client attached to a buffer exits.
+local function reset_defaults(bufnr)
+  if vim.bo[bufnr].tagfunc == 'v:lua.vim.lsp.tagfunc' then
+    vim.bo[bufnr].tagfunc = nil
+  end
+  if vim.bo[bufnr].omnifunc == 'v:lua.vim.lsp.omnifunc' then
+    vim.bo[bufnr].omnifunc = nil
+  end
+  if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then
+    vim.bo[bufnr].formatexpr = nil
+  end
+  vim._with({ buf = bufnr }, function()
+    local keymap = vim.fn.maparg('K', 'n', false, true)
+    if keymap and keymap.callback == vim.lsp.buf.hover and keymap.buffer == 1 then
+      vim.keymap.del('n', 'K', { buffer = bufnr })
+    end
+  end)
+end
+
 --- @private
 --- Invoked on client exit.
 ---
 --- @param code integer) exit code of the process
 --- @param signal integer the signal used to terminate (if any)
 function Client:_on_exit(code, signal)
+  vim.schedule(function()
+    for bufnr in pairs(self.attached_buffers) do
+      self:_on_detach(bufnr)
+      if #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0 then
+        reset_defaults(bufnr)
+      end
+    end
+  end)
+
   self:_run_callbacks(
     self._on_exit_cbs,
     lsp.client_errors.ON_EXIT_CALLBACK_ERROR,
