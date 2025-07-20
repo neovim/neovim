@@ -2801,6 +2801,32 @@ it('diff mode inline highlighting with 3 buffers', function()
   screen:expect(s6)
 end)
 
+-- oldtest: Test_diff_inline_multibuffer_empty_block()
+it('diff mode inline highlighting with multi-buffer and empty block', function()
+  write_file('Xdifile1', 'anchor1\n1234567890abcde\nanchor2')
+  write_file('Xdifile2', 'anchor1\n1234567--0abc-e\nanchor2')
+  write_file('Xdifile3', 'anchor1\nanchor2')
+  write_file('Xdifile4', 'anchor1\n1???????90abcd?\nanchor2')
+  finally(function()
+    os.remove('Xdifile1')
+    os.remove('Xdifile2')
+    os.remove('Xdifile3')
+    os.remove('Xdifile4')
+  end)
+  local screen = Screen.new(83, 20)
+  command('args Xdifile1 Xdifile2 Xdifile3 Xdifile4 | vert all | windo diffthis')
+  command('1wincmd w | set diffopt=filler,internal,inline:char')
+  screen:expect([[
+    {7:  }^anchor1           │{7:  }anchor1           │{7:  }anchor1           │{7:  }anchor1           |
+    {7:  }{4:1}{27:23456789}{4:0abc}{27:de}{4:   }│{7:  }{4:1}{27:234567--}{4:0abc}{27:-e}{4:   }│{7:  }{23:------------------}│{7:  }{4:1}{27:???????9}{4:0abc}{27:d?}{4:   }|
+    {7:  }anchor2           │{7:  }anchor2           │{7:  }anchor2           │{7:  }anchor2           |
+    {1:~                   }│{1:~                   }│{1:~                   }│{1:~                   }|*15
+    {3:Xdifile1             }{2:Xdifile2             Xdifile3             Xdifile4            }|
+                                                                                       |
+  ]])
+  n.assert_alive()
+end)
+
 it('diff mode algorithm:histogram and inline:char with long lines #34329', function()
   local screen = Screen.new(55, 20)
   exec([[
