@@ -172,37 +172,6 @@ local function reuse_client_default(client, config)
   return true
 end
 
---- @param code integer
---- @param signal integer
---- @param client_id integer
-local function on_client_exit(code, signal, client_id)
-  local client = lsp.get_client_by_id(client_id)
-
-  local name = client and client.name or 'unknown'
-
-  -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
-  -- autocommands
-  vim.schedule(function()
-    lsp.client._all[client_id] = nil
-
-    -- Client can be absent if executable starts, but initialize fails
-    -- init/attach won't have happened
-    if client then
-      changetracking.reset(client)
-    end
-    if code ~= 0 or (signal ~= 0 and signal ~= 15) then
-      local msg = string.format(
-        'Client %s quit with exit code %s and signal %s. Check log for errors: %s',
-        name,
-        code,
-        signal,
-        lsp.get_log_path()
-      )
-      vim.notify(msg, vim.log.levels.WARN)
-    end
-  end)
-end
-
 --- Creates and initializes a client with the given configuration.
 --- @param config vim.lsp.ClientConfig Configuration for the server.
 --- @return integer? client_id |vim.lsp.get_client_by_id()| Note: client may not be
@@ -216,9 +185,6 @@ local function create_and_init_client(config)
   end
 
   local client = assert(res)
-
-  --- @diagnostic disable-next-line: invisible
-  table.insert(client._on_exit_cbs, on_client_exit)
 
   client:initialize()
 
