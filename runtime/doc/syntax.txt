@@ -3825,13 +3825,13 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 
 DEFINING KEYWORDS					*:syn-keyword*
 
-:sy[ntax] keyword {group-name} [{options}] {keyword} .. [{options}]
+:sy[ntax] keyword {group-name} [{options}] {keyword} ... [{options}]
 
 	This defines a number of keywords.
 
 	{group-name}	Is a syntax group name such as "Comment".
 	[{options}]	See |:syn-arguments| below.
-	{keyword} ..	Is a list of keywords which are part of this group.
+	{keyword} ...	Is a list of keywords which are part of this group.
 
 	Example: >
   :syntax keyword   Type   int long char
