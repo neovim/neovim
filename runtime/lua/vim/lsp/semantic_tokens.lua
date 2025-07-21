@@ -41,9 +41,14 @@ local M = {}
 ---@field debounce integer milliseconds to debounce requests for new tokens
 ---@field timer table uv_timer for debouncing requests for new tokens
 ---@field client_state table<integer, STClientState>
-local STHighlighter = { name = 'semantic_tokens', active = {} }
+local STHighlighter = {
+  name = 'semantic_tokens',
+  method = ms.textDocument_semanticTokens_full,
+  active = {},
+}
 STHighlighter.__index = STHighlighter
 setmetatable(STHighlighter, Capability)
+Capability.all[STHighlighter.name] = STHighlighter
 
 --- Extracts modifier strings from the encoded number in the token array
 ---
@@ -156,6 +161,7 @@ end
 ---@param bufnr integer
 ---@return STHighlighter
 function STHighlighter:new(bufnr)
+  self.debounce = 200
   self = Capability.new(self, bufnr)
 
   api.nvim_buf_attach(bufnr, false, {
@@ -164,13 +170,11 @@ function STHighlighter:new(bufnr)
       if not highlighter then
         return true
       end
-      if M.is_enabled({ bufnr = buf }) then
-        highlighter:on_change()
-      end
+      highlighter:on_change()
     end,
     on_reload = function(_, buf)
       local highlighter = STHighlighter.active[buf]
-      if highlighter and M.is_enabled({ bufnr = bufnr }) then
+      if highlighter then
         highlighter:reset()
         highlighter:send_request()
       end
@@ -181,9 +185,7 @@ function STHighlighter:new(bufnr)
     buffer = self.bufnr,
     group = self.augroup,
     callback = function()
-      if M.is_enabled({ bufnr = bufnr }) then
-        self:send_request()
-      end
+      self:send_request()
     end,
   })
 
@@ -201,9 +203,7 @@ function STHighlighter:on_attach(client_id)
     }
     self.client_state[client_id] = state
   end
-  if M.is_enabled({ bufnr = self.bufnr }) then
-    self:send_request()
-  end
+  self:send_request()
 end
 
 ---@package
@@ -687,17 +687,6 @@ end
 ---@param filter? vim.lsp.capability.enable.Filter
 function M.enable(enable, filter)
   vim.lsp._capability.enable('semantic_tokens', enable, filter)
-
-  for _, bufnr in ipairs(api.nvim_list_bufs()) do
-    local highlighter = STHighlighter.active[bufnr]
-    if highlighter then
-      if M.is_enabled({ bufnr = bufnr }) then
-        highlighter:send_request()
-      else
-        highlighter:reset()
-      end
-    end
-  end
 end
 
 --- @nodoc
@@ -779,7 +768,7 @@ function M.force_refresh(bufnr)
 
   for _, buffer in ipairs(buffers) do
     local highlighter = STHighlighter.active[buffer]
-    if highlighter and M.is_enabled({ bufnr = bufnr }) then
+    if highlighter then
       highlighter:reset()
       highlighter:send_request()
     end

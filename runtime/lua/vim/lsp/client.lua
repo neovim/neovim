@@ -511,6 +511,10 @@ function Client:initialize()
     root_path = vim.uri_to_fname(root_uri)
   end
 
+  -- HACK: Capability modules must be loaded
+  require('vim.lsp.semantic_tokens')
+  require('vim.lsp._folding_range')
+
   local init_params = {
     -- The process Id of the parent process that started the server. Is null if
     -- the process has not been started by another process.  If the parent
@@ -1086,16 +1090,21 @@ function Client:on_attach(bufnr)
   })
 
   self:_run_callbacks(self._on_attach_cbs, lsp.client_errors.ON_ATTACH_ERROR, self, bufnr)
-
-  -- schedule the initialization of semantic tokens to give the above
+  -- schedule the initialization of capabilities to give the above
   -- on_attach and LspAttach callbacks the ability to schedule wrap the
   -- opt-out (deleting the semanticTokensProvider from capabilities)
   vim.schedule(function()
-    if self:supports_method(ms.textDocument_semanticTokens_full) then
-      lsp.semantic_tokens._start(bufnr, self.id)
-    end
-    if self:supports_method(ms.textDocument_foldingRange) then
-      lsp._folding_range._setup(bufnr, self.id)
+    for _, Capability in pairs(vim.lsp._capability.all) do
+      if
+        self:supports_method(Capability.method)
+        and vim.lsp._capability.is_enabled(Capability.name, {
+          bufnr = bufnr,
+          client_id = self.id,
+        })
+      then
+        local capability = Capability.active[bufnr] or Capability:new(bufnr)
+        capability:on_attach(self.id)
+      end
     end
   end)
 
