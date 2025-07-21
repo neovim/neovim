@@ -1480,6 +1480,33 @@ bool is_cmd_ni(cmdidx_T cmdidx)
                                      || cmdnames[cmdidx].cmd_func == ex_script_ni);
 }
 
+// Find the command name after skipping range specifiers.
+static char *find_excmd_after_range(exarg_T *eap)
+{
+  // Save location after command modifiers.
+  char *cmd = eap->cmd;
+  eap->cmd = skip_range(eap->cmd, NULL);
+  if (*eap->cmd == '*') {
+    eap->cmd = skipwhite(eap->cmd + 1);
+  }
+  char *p = find_ex_command(eap, NULL);
+  eap->cmd = cmd;  // Restore original position for address parsing
+  return p;
+}
+
+// Set the forceit flag based on the presence of '!' after the command.
+static bool parse_bang(const exarg_T *eap, char **p)
+{
+  if (**p == '!'
+      && eap->cmdidx != CMD_substitute
+      && eap->cmdidx != CMD_smagic
+      && eap->cmdidx != CMD_snomagic) {
+    (*p)++;
+    return true;
+  }
+  return false;
+}
+
 /// Parse command line and return information about the first command.
 /// If parsing is done successfully, need to free cmod_filter_pat and cmod_filter_regmatch.regprog
 /// after calling, usually done using undo_cmdmod() or execute_cmd().
@@ -1520,14 +1547,8 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
   }
   after_modifier = eap->cmd;
 
-  // Save location after command modifiers
-  char *cmd = eap->cmd;
-  // Skip ranges to find command name since we need the command to know what kind of range it uses
-  eap->cmd = skip_range(eap->cmd, NULL);
-  if (*eap->cmd == '*') {
-    eap->cmd = skipwhite(eap->cmd + 1);
-  }
-  char *p = find_ex_command(eap, NULL);
+  // We need the command name to know what kind of range it uses.
+  char *p = find_excmd_after_range(eap);
   if (p == NULL) {
     *errormsg = _(e_ambiguous_use_of_user_defined_command);
     goto end;
@@ -1535,7 +1556,6 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
 
   // Set command address type and parse command range
   set_cmd_addr_type(eap, p);
-  eap->cmd = cmd;
   if (parse_cmd_address(eap, errormsg, true) == FAIL) {
     goto end;
   }
@@ -1557,13 +1577,7 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
   }
 
   // Correctly set 'forceit' for commands
-  if (*p == '!' && eap->cmdidx != CMD_substitute
-      && eap->cmdidx != CMD_smagic && eap->cmdidx != CMD_snomagic) {
-    p++;
-    eap->forceit = true;
-  } else {
-    eap->forceit = false;
-  }
+  eap->forceit = parse_bang(eap, &p);
 
   // Parse arguments.
   if (!IS_USER_CMDIDX(eap->cmdidx)) {
@@ -1571,17 +1585,11 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
   }
   // Skip to start of argument.
   // Don't do this for the ":!" command, because ":!! -l" needs the space.
-  if (eap->cmdidx == CMD_bang) {
-    eap->arg = p;
-  } else {
-    eap->arg = skipwhite(p);
-  }
+  eap->arg = eap->cmdidx == CMD_bang ? p : skipwhite(p);
 
   // Don't treat ":r! filter" like a bang
-  if (eap->cmdidx == CMD_read) {
-    if (eap->forceit) {
-      eap->forceit = false;                     // :r! filter
-    }
+  if (eap->cmdidx == CMD_read && eap->forceit) {
+    eap->forceit = false;  // :r! filter
   }
 
   // Check for '|' to separate commands and '"' to start comments.
@@ -2033,13 +2041,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // 3. Skip over the range to find the command. Let "p" point to after it.
   //
   // We need the command to know what kind of range it uses.
-  char *cmd = ea.cmd;
-  ea.cmd = skip_range(ea.cmd, NULL);
-  if (*ea.cmd == '*') {
-    ea.cmd = skipwhite(ea.cmd + 1);
-  }
-  char *p = find_ex_command(&ea, NULL);
-
+  char *p = find_excmd_after_range(&ea);
   profile_cmd(&ea, cstack, fgetline, cookie);
 
   if (!exiting) {
@@ -2068,7 +2070,6 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // is equal to the lower.
   set_cmd_addr_type(&ea, p);
 
-  ea.cmd = cmd;
   if (parse_cmd_address(&ea, &errormsg, false) == FAIL) {
     goto doend;
   }
@@ -2099,13 +2100,13 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   if (p != NULL && ea.cmdidx == CMD_SIZE && !ea.skip
       && ASCII_ISUPPER(*ea.cmd)
       && has_event(EVENT_CMDUNDEFINED)) {
-    p = ea.cmd;
-    while (ASCII_ISALNUM(*p)) {
-      p++;
+    char *cmdname = ea.cmd;
+    while (ASCII_ISALNUM(*cmdname)) {
+      cmdname++;
     }
-    p = xmemdupz(ea.cmd, (size_t)(p - ea.cmd));
-    int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, true, NULL);
-    xfree(p);
+    cmdname = xmemdupz(ea.cmd, (size_t)(cmdname - ea.cmd));
+    int ret = apply_autocmds(EVENT_CMDUNDEFINED, cmdname, cmdname, true, NULL);
+    xfree(cmdname);
     // If the autocommands did something and didn't cause an error, try
     // finding the command again.
     p = (ret && !aborting()) ? find_ex_command(&ea, NULL) : ea.cmd;
@@ -2138,14 +2139,8 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // set when Not Implemented
   const int ni = is_cmd_ni(ea.cmdidx);
 
-  // Forced commands.
-  ea.forceit = *p == '!'
-               && ea.cmdidx != CMD_substitute
-               && ea.cmdidx != CMD_smagic
-               && ea.cmdidx != CMD_snomagic;
-  if (ea.forceit) {
-    p++;
-  }
+  // Determine if command has forceit flag ('!')
+  ea.forceit = parse_bang(&ea, &p);
 
   // 6. Parse arguments.  Then check for errors.
   if (!IS_USER_CMDIDX(ea.cmdidx)) {
