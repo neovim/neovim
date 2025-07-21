@@ -41,7 +41,7 @@ local M = {}
 ---@field debounce integer milliseconds to debounce requests for new tokens
 ---@field timer table uv_timer for debouncing requests for new tokens
 ---@field client_state table<integer, STClientState>
-local STHighlighter = { name = 'Semantic Tokens', active = {} }
+local STHighlighter = { name = 'semantic_tokens', active = {} }
 STHighlighter.__index = STHighlighter
 setmetatable(STHighlighter, Capability)
 

@@ -35,7 +35,7 @@ local Capability = require('vim.lsp._capability')
 ---
 --- Index in the form of start_row -> collapsed_text
 ---@field row_text table<integer, string?>
-local State = { name = 'Folding Range', active = {} }
+local State = { name = 'folding_range', active = {} }
 State.__index = State
 setmetatable(State, Capability)
 
