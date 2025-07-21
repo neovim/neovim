@@ -60,17 +60,6 @@ function M:new(bufnr)
   })
   self.client_state = {}
 
-  api.nvim_create_autocmd('LspDetach', {
-    group = self.augroup,
-    buffer = bufnr,
-    callback = function(args)
-      self:on_detach(args.data.client_id)
-      if next(self.client_state) == nil then
-        self:destroy()
-      end
-    end,
-  })
-
   Class.active[bufnr] = self
   return self
 end
