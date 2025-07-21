@@ -201,6 +201,9 @@ function STHighlighter:on_attach(client_id)
     }
     self.client_state[client_id] = state
   end
+  if M.is_enabled({ bufnr = self.bufnr }) then
+    self:send_request()
+  end
 end
 
 ---@package
@@ -581,9 +584,6 @@ function M._start(bufnr, client_id, debounce)
   end
 
   highlighter:on_attach(client_id)
-  if M.is_enabled({ bufnr = bufnr }) then
-    highlighter:send_request()
-  end
 end
 
 --- Start the semantic token highlighting engine for the given buffer with the
