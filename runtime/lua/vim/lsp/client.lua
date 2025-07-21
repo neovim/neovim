@@ -1209,6 +1209,24 @@ function Client:_on_detach(bufnr)
     })
   end
 
+  for _, Capability in pairs(vim.lsp._capability.all) do
+    if
+      self:supports_method(Capability.method)
+      and vim.lsp._capability.is_enabled(Capability.name, {
+        bufnr = bufnr,
+        client_id = self.id,
+      })
+    then
+      local capability = Capability.active[bufnr]
+      if capability then
+        capability:on_detach(self.id)
+        if next(capability.client_state) == nil then
+          capability:destroy()
+        end
+      end
+    end
+  end
+
   changetracking.reset_buf(self, bufnr)
 
   if self:supports_method(ms.textDocument_didClose) then
