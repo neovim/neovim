@@ -19,6 +19,9 @@ local all_capabilities = {}
 --- Static field as the identifier of the LSP capability it supports.
 ---@field name vim.lsp.capability.Name
 ---
+--- Static field records the method this capability requires.
+---@field method vim.lsp.protocol.Method.ClientToServer
+---
 --- Static field for retrieving the instance associated with a specific `bufnr`.
 ---
 --- Index in the form of `bufnr` -> `capability`
@@ -122,6 +125,38 @@ function M.enable(name, enable, filter)
 
   local var = make_enable_var(name)
   local client = client_id and vim.lsp.get_client_by_id(client_id)
+
+  -- Attach or detach the client and its capability
+  -- based on the user’s latest marker value.
+  for _, it_client in ipairs(client and { client } or vim.lsp.get_clients()) do
+    for _, it_bufnr in
+      ipairs(
+        bufnr and { it_client.attached_buffers[bufnr] and bufnr }
+          or vim.lsp.get_buffers_by_client_id(it_client.id)
+      )
+    do
+      if enable ~= M.is_enabled(name, { bufnr = it_bufnr, client_id = it_client.id }) then
+        local Capability = all_capabilities[name]
+
+        if enable then
+          if it_client:supports_method(Capability.method) then
+            local capability = Capability.active[bufnr] or Capability:new(it_bufnr)
+            if not capability.client_state[it_client.id] then
+              capability:on_attach(it_client.id)
+            end
+          end
+        else
+          local capability = Capability.active[it_bufnr]
+          if capability then
+            capability:on_detach(it_client.id)
+            if not next(capability.client_state) then
+              capability:destroy()
+            end
+          end
+        end
+      end
+    end
+  end
 
   -- Updates the marker value.
   -- If local marker matches the global marker, set it to nil
