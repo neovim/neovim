@@ -1089,11 +1089,11 @@ function Client:on_attach(bufnr)
   -- on_attach and LspAttach callbacks the ability to schedule wrap the
   -- opt-out (deleting the semanticTokensProvider from capabilities)
   vim.schedule(function()
-    if vim.tbl_get(self.server_capabilities, 'semanticTokensProvider', 'full') then
+    if self:supports_method(ms.textDocument_semanticTokens_full) then
       lsp.semantic_tokens._start(bufnr, self.id)
     end
-    if vim.tbl_get(self.server_capabilities, 'foldingRangeProvider') then
-      lsp._folding_range._setup(bufnr)
+    if self:supports_method(ms.textDocument_foldingRange) then
+      lsp._folding_range._setup(bufnr, self.id)
     end
   end)
 
