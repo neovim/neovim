@@ -30,15 +30,10 @@ end
 
 local function check_active_features()
   vim.health.start('vim.lsp: Active Features')
-  ---@type vim.lsp.Capability[]
-  local features = {
-    require('vim.lsp.semantic_tokens').__STHighlighter,
-    require('vim.lsp._folding_range').__FoldEvaluator,
-  }
-  for _, feature in ipairs(features) do
+  for _, Capability in pairs(vim.lsp._capability.all) do
     ---@type string[]
     local buf_infos = {}
-    for bufnr, instance in pairs(feature.active) do
+    for bufnr, instance in pairs(Capability.active) do
       local client_info = vim
         .iter(pairs(instance.client_state))
         :map(function(client_id)
@@ -58,7 +53,7 @@ local function check_active_features()
     end
 
     report_info(table.concat({
-      feature.name,
+      Capability.name,
       '- Active buffers:',
       string.format(table.concat(buf_infos, '\n')),
     }, '\n'))
