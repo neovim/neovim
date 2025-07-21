@@ -265,6 +265,11 @@ function State:destroy()
   State.active[self.bufnr] = nil
 end
 
+---@param client_id integer
+function State:on_attach(client_id)
+  self:refresh(vim.lsp.get_client_by_id(client_id))
+end
+
 ---@params client_id integer
 function State:on_detach(client_id)
   self.client_state[client_id] = nil
@@ -273,14 +278,13 @@ function State:on_detach(client_id)
 end
 
 ---@param bufnr integer
----@param client_id? integer
+---@param client_id integer
 function M._setup(bufnr, client_id)
   local state = State.active[bufnr]
   if not state then
     state = State:new(bufnr)
   end
-
-  state:refresh(client_id and vim.lsp.get_client_by_id(client_id))
+  state:on_attach(client_id)
 end
 
 ---@param kind lsp.FoldingRangeKind

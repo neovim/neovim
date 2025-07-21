@@ -69,6 +69,16 @@ function M:destroy()
   self.active[self.bufnr] = nil
 end
 
+--- Callback invoked when an LSP client attaches.
+--- Use it to initialize per-client state (empty table, new namespaces, etc.),
+--- or issue requests as needed.
+---@param client_id integer
+function M:on_attach(client_id)
+  self.client_state[client_id] = {}
+end
+
+--- Callback invoked when an LSP client detaches.
+--- Use it to clear per-client state (cached data, extmarks, etc.).
 ---@param client_id integer
 function M:on_detach(client_id)
   self.client_state[client_id] = nil
