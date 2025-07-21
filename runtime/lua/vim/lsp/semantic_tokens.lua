@@ -670,9 +670,9 @@ function M.stop(bufnr, client_id)
 end
 
 --- Query whether semantic tokens is enabled in the {filter}ed scope
----@param filter? vim.lsp.enable.Filter
+---@param filter? vim.lsp.capability.enable.Filter
 function M.is_enabled(filter)
-  return util._is_enabled('semantic_tokens', filter)
+  return vim.lsp._capability.is_enabled('semantic_tokens', filter)
 end
 
 --- Enables or disables semantic tokens for the {filter}ed scope.
@@ -684,9 +684,9 @@ end
 --- ```
 ---
 ---@param enable? boolean true/nil to enable, false to disable
----@param filter? vim.lsp.enable.Filter
+---@param filter? vim.lsp.capability.enable.Filter
 function M.enable(enable, filter)
-  util._enable('semantic_tokens', enable, filter)
+  vim.lsp._capability.enable('semantic_tokens', enable, filter)
 
   for _, bufnr in ipairs(api.nvim_list_bufs()) do
     local highlighter = STHighlighter.active[bufnr]
@@ -863,6 +863,6 @@ api.nvim_set_decoration_provider(namespace, {
 M.__STHighlighter = STHighlighter
 
 -- Semantic tokens is enabled by default
-util._enable('semantic_tokens', true)
+vim.lsp._capability.enable('semantic_tokens', true)
 
 return M
