@@ -9,9 +9,11 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
+#include "nvim/eval/typval.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark_defs.h"
 #include "nvim/math.h"
@@ -232,6 +234,13 @@ bool cin_is_cinword(const char *line)
   return retval;
 }
 
+/// Check that C-indenting is on.
+bool cindent_on(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return !p_paste && (curbuf->b_p_cin || *curbuf->b_p_inde != NUL);
+}
+
 // Skip over white space and C comments within the line.
 // Also skip over Perl/shell comments if desired.
 static const char *cin_skipcomment(const char *s)
@@ -346,7 +355,7 @@ static bool cin_islabel_skip(const char **s)
 
 // Recognize a label: "label:".
 // Note: curwin->w_cursor must be where we are looking for the label.
-bool cin_islabel(void)  // XXX
+static bool cin_islabel(void)  // XXX
 {
   const char *s = cin_skipcomment(get_cursor_line_ptr());
 
@@ -445,7 +454,7 @@ static int cin_isinit(void)
 /// Recognize a switch label: "case .*:" or "default:".
 ///
 /// @param strict  Allow relaxed check of case statement for JS
-bool cin_iscase(const char *s, bool strict)
+static bool cin_iscase(const char *s, bool strict)
 {
   s = cin_skipcomment(s);
   if (cin_starts_with(s, "case")) {
@@ -491,7 +500,7 @@ static int cin_isdefault(const char *s)
 }
 
 /// Recognize a scope declaration label set in 'cinscopedecls'.
-bool cin_isscopedecl(const char *p)
+static bool cin_isscopedecl(const char *p)
 {
   const char *s = cin_skipcomment(p);
 
@@ -3695,6 +3704,226 @@ static int find_match(int lookfor, linenr_T ourscope)
   return FAIL;
 }
 
+/// Check that "cinkeys" contains the key "keytyped",
+/// when == '*': Only if key is preceded with '*' (indent before insert)
+/// when == '!': Only if key is preceded with '!' (don't insert)
+/// when == ' ': Only if key is not preceded with '*' or '!' (indent afterwards)
+///
+/// "keytyped" can have a few special values:
+/// KEY_OPEN_FORW :
+/// KEY_OPEN_BACK :
+/// KEY_COMPLETE  : Just finished completion.
+///
+/// @param  keytyped       key that was typed
+/// @param  when           condition on when to perform the check
+/// @param  line_is_empty  when true, accept keys with '0' before them.
+bool in_cinkeys(int keytyped, int when, bool line_is_empty)
+{
+  char *look;
+  bool try_match;
+  bool try_match_word;
+  char *p;
+  bool icase;
+
+  if (keytyped == NUL) {
+    // Can happen with CTRL-Y and CTRL-E on a short line.
+    return false;
+  }
+
+  if (*curbuf->b_p_inde != NUL) {
+    look = curbuf->b_p_indk;            // 'indentexpr' set: use 'indentkeys'
+  } else {
+    look = curbuf->b_p_cink;            // 'indentexpr' empty: use 'cinkeys'
+  }
+  while (*look) {
+    // Find out if we want to try a match with this key, depending on
+    // 'when' and a '*' or '!' before the key.
+    switch (when) {
+    case '*':
+      try_match = (*look == '*'); break;
+    case '!':
+      try_match = (*look == '!'); break;
+    default:
+      try_match = (*look != '*') && (*look != '!'); break;
+    }
+    if (*look == '*' || *look == '!') {
+      look++;
+    }
+
+    // If there is a '0', only accept a match if the line is empty.
+    // But may still match when typing last char of a word.
+    if (*look == '0') {
+      try_match_word = try_match;
+      if (!line_is_empty) {
+        try_match = false;
+      }
+      look++;
+    } else {
+      try_match_word = false;
+    }
+
+    // Does it look like a control character?
+    if (*look == '^' && look[1] >= '?' && look[1] <= '_') {
+      if (try_match && keytyped == CTRL_CHR(look[1])) {
+        return true;
+      }
+      look += 2;
+
+      // 'o' means "o" command, open forward.
+      // 'O' means "O" command, open backward.
+    } else if (*look == 'o') {
+      if (try_match && keytyped == KEY_OPEN_FORW) {
+        return true;
+      }
+      look++;
+    } else if (*look == 'O') {
+      if (try_match && keytyped == KEY_OPEN_BACK) {
+        return true;
+      }
+      look++;
+
+      // 'e' means to check for "else" at start of line and just before the
+      // cursor.
+    } else if (*look == 'e') {
+      if (try_match && keytyped == 'e' && curwin->w_cursor.col >= 4) {
+        p = get_cursor_line_ptr();
+        if (skipwhite(p) == p + curwin->w_cursor.col - 4
+            && strncmp(p + curwin->w_cursor.col - 4, "else", 4) == 0) {
+          return true;
+        }
+      }
+      look++;
+
+      // ':' only causes an indent if it is at the end of a label or case
+      // statement, or when it was before typing the ':' (to fix
+      // class::method for C++).
+    } else if (*look == ':') {
+      if (try_match && keytyped == ':') {
+        p = get_cursor_line_ptr();
+        if (cin_iscase(p, false) || cin_isscopedecl(p) || cin_islabel()) {
+          return true;
+        }
+        // Need to get the line again after cin_islabel().
+        p = get_cursor_line_ptr();
+        if (curwin->w_cursor.col > 2
+            && p[curwin->w_cursor.col - 1] == ':'
+            && p[curwin->w_cursor.col - 2] == ':') {
+          p[curwin->w_cursor.col - 1] = ' ';
+          const bool i = cin_iscase(p, false)
+                         || cin_isscopedecl(p)
+                         || cin_islabel();
+          p = get_cursor_line_ptr();
+          p[curwin->w_cursor.col - 1] = ':';
+          if (i) {
+            return true;
+          }
+        }
+      }
+      look++;
+
+      // Is it a key in <>, maybe?
+    } else if (*look == '<') {
+      if (try_match) {
+        // make up some named keys <o>, <O>, <e>, <0>, <>>, <<>, <*>,
+        // <:> and <!> so that people can re-indent on o, O, e, 0, <,
+        // >, *, : and ! keys if they really really want to.
+        if (vim_strchr("<>!*oOe0:", (uint8_t)look[1]) != NULL
+            && keytyped == look[1]) {
+          return true;
+        }
+
+        if (keytyped == get_special_key_code(look + 1)) {
+          return true;
+        }
+      }
+      while (*look && *look != '>') {
+        look++;
+      }
+      while (*look == '>') {
+        look++;
+      }
+      // Is it a word: "=word"?
+    } else if (*look == '=' && look[1] != ',' && look[1] != NUL) {
+      look++;
+      if (*look == '~') {
+        icase = true;
+        look++;
+      } else {
+        icase = false;
+      }
+      p = vim_strchr(look, ',');
+      if (p == NULL) {
+        p = look + strlen(look);
+      }
+      if ((try_match || try_match_word)
+          && curwin->w_cursor.col >= (colnr_T)(p - look)) {
+        bool match = false;
+
+        if (keytyped == KEY_COMPLETE) {
+          char *n, *s;
+
+          // Just completed a word, check if it starts with "look".
+          // search back for the start of a word.
+          char *line = get_cursor_line_ptr();
+          for (s = line + curwin->w_cursor.col; s > line; s = n) {
+            n = mb_prevptr(line, s);
+            if (!vim_iswordp(n)) {
+              break;
+            }
+          }
+          assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
+          if (s + (p - look) <= line + curwin->w_cursor.col
+              && (icase
+                  ? mb_strnicmp(s, look, (size_t)(p - look))
+                  : strncmp(s, look, (size_t)(p - look))) == 0) {
+            match = true;
+          }
+        } else {
+          // TODO(@brammool): multi-byte
+          if (keytyped == (int)(uint8_t)p[-1]
+              || (icase && keytyped < 256 && keytyped >= 0
+                  && TOLOWER_LOC(keytyped) == TOLOWER_LOC((uint8_t)p[-1]))) {
+            char *line = get_cursor_pos_ptr();
+            assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
+            if ((curwin->w_cursor.col == (colnr_T)(p - look)
+                 || !vim_iswordc((uint8_t)line[-(p - look) - 1]))
+                && (icase
+                    ? mb_strnicmp(line - (p - look), look, (size_t)(p - look))
+                    : strncmp(line - (p - look), look, (size_t)(p - look))) == 0) {
+              match = true;
+            }
+          }
+        }
+        if (match && try_match_word && !try_match) {
+          // "0=word": Check if there are only blanks before the
+          // word.
+          if (getwhitecols_curline() !=
+              (int)(curwin->w_cursor.col - (p - look))) {
+            match = false;
+          }
+        }
+        if (match) {
+          return true;
+        }
+      }
+      look = p;
+
+      // Ok, it's a boring generic character.
+    } else {
+      if (try_match && (uint8_t)(*look) == keytyped) {
+        return true;
+      }
+      if (*look != NUL) {
+        look++;
+      }
+    }
+
+    // Skip over ", ".
+    look = skip_to_option_part(look);
+  }
+  return false;
+}
+
 // Do C or expression indenting on the current line.
 void do_c_expr_indent(void)
 {
@@ -3702,5 +3931,19 @@ void do_c_expr_indent(void)
     fixthisline(get_expr_indent);
   } else {
     fixthisline(get_c_indent);
+  }
+}
+
+/// "cindent(lnum)" function
+void f_cindent(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  pos_T pos = curwin->w_cursor;
+  linenr_T lnum = tv_get_lnum(argvars);
+  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
+    curwin->w_cursor.lnum = lnum;
+    rettv->vval.v_number = get_c_indent();
+    curwin->w_cursor = pos;
+  } else {
+    rettv->vval.v_number = -1;
   }
 }

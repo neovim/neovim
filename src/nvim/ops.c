@@ -134,16 +134,6 @@ static char opchars[][3] = {
   { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
 };
 
-yankreg_T *get_y_previous(void)
-{
-  return y_previous;
-}
-
-void set_y_previous(yankreg_T *yreg)
-{
-  y_previous = yreg;
-}
-
 /// Translate a command name into an operator type.
 /// Must only be called with a valid operator name!
 int get_op_type(int char1, int char2)
@@ -721,84 +711,6 @@ static void block_insert(oparg_T *oap, const char *s, size_t slen, bool b_insert
   State = oldstate;
 
   changed_lines(curbuf, oap->start.lnum + 1, 0, oap->end.lnum + 1, 0, true);
-}
-
-/// Handle reindenting a block of lines.
-void op_reindent(oparg_T *oap, Indenter how)
-{
-  int i = 0;
-  linenr_T first_changed = 0;
-  linenr_T last_changed = 0;
-  linenr_T start_lnum = curwin->w_cursor.lnum;
-
-  // Don't even try when 'modifiable' is off.
-  if (!MODIFIABLE(curbuf)) {
-    emsg(_(e_modifiable));
-    return;
-  }
-
-  // Save for undo.  Do this once for all lines, much faster than doing this
-  // for each line separately, especially when undoing.
-  if (u_savecommon(curbuf, start_lnum - 1, start_lnum + oap->line_count,
-                   start_lnum + oap->line_count, false) == OK) {
-    int amount;
-    for (i = oap->line_count - 1; i >= 0 && !got_int; i--) {
-      // it's a slow thing to do, so give feedback so there's no worry
-      // that the computer's just hung.
-
-      if (i > 1
-          && (i % 50 == 0 || i == oap->line_count - 1)
-          && oap->line_count > p_report) {
-        smsg(0, _("%" PRId64 " lines to indent... "), (int64_t)i);
-      }
-
-      // Be vi-compatible: For lisp indenting the first line is not
-      // indented, unless there is only one line.
-      if (i != oap->line_count - 1 || oap->line_count == 1
-          || how != get_lisp_indent) {
-        char *l = skipwhite(get_cursor_line_ptr());
-        if (*l == NUL) {                      // empty or blank line
-          amount = 0;
-        } else {
-          amount = how();                     // get the indent for this line
-        }
-        if (amount >= 0 && set_indent(amount, 0)) {
-          // did change the indent, call changed_lines() later
-          if (first_changed == 0) {
-            first_changed = curwin->w_cursor.lnum;
-          }
-          last_changed = curwin->w_cursor.lnum;
-        }
-      }
-      curwin->w_cursor.lnum++;
-      curwin->w_cursor.col = 0;      // make sure it's valid
-    }
-  }
-
-  // put cursor on first non-blank of indented line
-  curwin->w_cursor.lnum = start_lnum;
-  beginline(BL_SOL | BL_FIX);
-
-  // Mark changed lines so that they will be redrawn.  When Visual
-  // highlighting was present, need to continue until the last line.  When
-  // there is no change still need to remove the Visual highlighting.
-  if (last_changed != 0) {
-    changed_lines(curbuf, first_changed, 0,
-                  oap->is_VIsual ? start_lnum + oap->line_count
-                                 : last_changed + 1, 0, true);
-  } else if (oap->is_VIsual) {
-    redraw_curbuf_later(UPD_INVERTED);
-  }
-
-  if (oap->line_count > p_report) {
-    i = oap->line_count - (i + 1);
-    smsg(0, NGETTEXT("%" PRId64 " line indented ", "%" PRId64 " lines indented ", i), (int64_t)i);
-  }
-  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
-    // set '[ and '] marks
-    curbuf->b_op_start = oap->start;
-    curbuf->b_op_end = oap->end;
-  }
 }
 
 // Keep the last expression line here, for repeating.
@@ -3736,14 +3648,6 @@ void adjust_cursor_eol(void)
     getvcol(curwin, &curwin->w_cursor, &scol, NULL, &ecol);
     curwin->w_cursor.coladd = ecol - scol + 1;
   }
-}
-
-/// @return  true if lines starting with '#' should be left aligned.
-bool preprocs_left(void)
-{
-  return ((curbuf->b_p_si && !curbuf->b_p_cin)
-          || (curbuf->b_p_cin && in_cinkeys('#', ' ', true)
-              && curbuf->b_ind_hash_comment == 0));
 }
 
 /// @return  the character name of the register with the given number

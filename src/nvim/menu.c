@@ -1090,7 +1090,7 @@ char *get_menu_names(expand_T *xp, int idx)
 ///
 /// @param name may be modified.
 /// @return start of the next element
-char *menu_name_skip(char *const name)
+static char *menu_name_skip(char *const name)
 {
   char *p;
 

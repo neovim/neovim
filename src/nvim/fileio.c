@@ -2049,20 +2049,6 @@ static char *readfile_charconvert(char *fname, char *fenc, int *fdp)
   return tmpname;
 }
 
-/// Read marks for the current buffer from the ShaDa file, when we support
-/// buffer marks and the buffer has a name.
-static void check_marks_read(void)
-{
-  if (!curbuf->b_marks_read && get_shada_parameter('\'') > 0
-      && curbuf->b_ffname != NULL) {
-    shada_read_marks();
-  }
-
-  // Always set b_marks_read; needed when 'shada' is changed to include
-  // the ' parameter after opening a buffer.
-  curbuf->b_marks_read = true;
-}
-
 /// Set the name of the current buffer.  Use when the buffer doesn't have a
 /// name and a ":r" or ":w" command with a file name is used.
 int set_rw_fname(char *fname, char *sfname)

@@ -190,7 +190,7 @@ void tv_list_watch_remove(list_T *const l, listwatch_T *const lwrem)
 ///
 /// @param[out]  l  List from which item is removed.
 /// @param[in]  item  List item being removed.
-void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
+static void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
   for (listwatch_T *lw = l->lv_watch; lw != NULL; lw = lw->lw_next) {
