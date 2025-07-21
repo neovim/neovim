@@ -11,7 +11,7 @@ nvim -l src/gen/gen_lsp.lua --version 3.18
 ---@meta
 error('Cannot require a meta file')
 
----@alias lsp.null nil
+---@alias lsp.null vim.NIL
 ---@alias uinteger integer
 ---@alias decimal number
 ---@alias lsp.DocumentUri string
@@ -3297,7 +3297,7 @@ error('Cannot require a meta file')
 ---@class lsp.FileOperationPattern
 ---
 ---The glob pattern to match. Glob patterns can have the following syntax:
----- `*` to match one or more characters in a path segment
+---- `*` to match zero or more characters in a path segment
 ---- `?` to match on one character in a path segment
 ---- `**` to match any number of path segments, including none
 ---- `{}` to group sub patterns into an OR expression. (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)
@@ -5699,7 +5699,7 @@ error('Cannot require a meta file')
 ---its resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.
 ---
 ---Glob patterns can have the following syntax:
----- `*` to match one or more characters in a path segment
+---- `*` to match zero or more characters in a path segment
 ---- `?` to match on one character in a path segment
 ---- `**` to match any number of path segments, including none
 ---- `{}` to group sub patterns into an OR expression. (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)
@@ -5720,7 +5720,7 @@ error('Cannot require a meta file')
 ---@alias lsp.NotebookDocumentFilter lsp.NotebookDocumentFilterNotebookType|lsp.NotebookDocumentFilterScheme|lsp.NotebookDocumentFilterPattern
 
 ---The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:
----- `*` to match one or more characters in a path segment
+---- `*` to match zero or more characters in a path segment
 ---- `?` to match on one character in a path segment
 ---- `**` to match any number of path segments, including none
 ---- `{}` to group conditions (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)
