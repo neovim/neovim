@@ -497,14 +497,31 @@ function M.parse(version, opts)
   return M._version(version, opts.strict)
 end
 
+M.nvim_version = setmetatable({}, Version)
+for _, p in ipairs(require('vim._nvim_version')) do
+  M.nvim_version[p[1]] = p[2]
+end
+M.nvim_version.prerelease = M.nvim_version.prerelease and 'dev' or nil
+
+  --- Check whether current Nvim version includes version
+  --- behaves similar to has("nvim-{major}.{minor}.{patch}")
+  ---@return true if actual version is less than or equal to major.minor.patch
+function M.has(major, minor, patch)
+  local v = M.nvim_version
+  if major ~= v.major then
+    return major < v.major
+  end
+  if minor ~= v.minor then
+    return minor < v.minor
+  end
+  return (patch or 0) <= v.patch
+end
+
 setmetatable(M, {
   --- Returns the current Nvim version.
   ---@return vim.Version
   __call = function()
-    local version = vim.fn.api_info().version ---@type vim.Version
-    -- Workaround: vim.fn.api_info().version reports "prerelease" as a boolean.
-    version.prerelease = version.prerelease and 'dev' or nil
-    return setmetatable(version, Version)
+    return M.nvim_version
   end,
 })
 
