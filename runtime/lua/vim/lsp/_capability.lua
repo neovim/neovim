@@ -54,10 +54,9 @@ function M:new(bufnr)
   ---@type vim.lsp.Capability
   self = setmetatable({}, Class)
   self.bufnr = bufnr
-  self.augroup = api.nvim_create_augroup(
-    string.format('nvim.lsp.%s:%s', self.name:gsub('%s+', '_'):lower(), bufnr),
-    { clear = true }
-  )
+  self.augroup = api.nvim_create_augroup(string.format('nvim.lsp.%s:%s', self.name, bufnr), {
+    clear = true,
+  })
   self.client_state = {}
 
   api.nvim_create_autocmd('LspDetach', {
