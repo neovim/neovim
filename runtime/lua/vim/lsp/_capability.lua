@@ -1,17 +1,27 @@
 local api = vim.api
 
---- `vim.lsp.Capability` is expected to be created one-to-one with a buffer
---- when there is at least one supported client attached to that buffer,
---- and will be destroyed when all supporting clients are detached.
+---@alias vim.lsp.capability.Name
+---| 'semantic_tokens'
+---| 'folding_range'
+
+--- Tracks all supported capabilities, all of which derive from `vim.lsp.Capability`.
+--- Returns capability *prototypes*, not their instances.
+---@type table<vim.lsp.capability.Name, vim.lsp.Capability>
+local all_capabilities = {}
+
+-- Abstract base class (not instantiable directly).
+-- For each buffer that has at least one supported client attached,
+-- exactly one instance of each concrete subclass is created.
+-- That instance is destroyed once all supporting clients detach from the buffer.
 ---@class vim.lsp.Capability
+---
+--- Static field as the identifier of the LSP capability it supports.
+---@field name vim.lsp.capability.Name
 ---
 --- Static field for retrieving the instance associated with a specific `bufnr`.
 ---
---- Index inthe form of `bufnr` -> `capability`
+--- Index in the form of `bufnr` -> `capability`
 ---@field active table<integer, vim.lsp.Capability?>
----
---- The LSP feature it supports.
----@field name string
 ---
 --- Buffer number it associated with.
 ---@field bufnr integer
@@ -33,7 +43,13 @@ function M:new(bufnr)
   -- `Class` may be a subtype of `Capability`, as it supports inheritance.
   ---@type vim.lsp.Capability
   local Class = self
-  assert(Class.name and Class.active, 'Do not instantiate the abstract class')
+  if M == Class then
+    error('Do not instantiate the abstract class')
+  elseif all_capabilities[Class.name] and all_capabilities[Class.name] ~= Class then
+    error('Duplicated capability name')
+  else
+    all_capabilities[Class.name] = Class
+  end
 
   ---@type vim.lsp.Capability
   self = setmetatable({}, Class)
@@ -83,5 +99,7 @@ end
 function M:on_detach(client_id)
   self.client_state[client_id] = nil
 end
+
+M.all = all_capabilities
 
 return M
