@@ -623,7 +623,7 @@ function Client:_process_static_registrations()
         id = self.server_capabilities[capability].id,
         method = method,
         registerOptions = {
-          documentSelector = self.server_capabilities[capability].documentSelector, ---@type lsp.DocumentSelector?
+          documentSelector = self.server_capabilities[capability].documentSelector, ---@type lsp.DocumentSelector|lsp.null
         },
       }
     end
@@ -963,15 +963,19 @@ end
 function Client:_get_registration(method, bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
   for _, reg in ipairs(self.registrations[method] or {}) do
-    local regoptions = reg.registerOptions --[[@as {documentSelector:lsp.TextDocumentFilter[]}]]
-    if not regoptions or not regoptions.documentSelector then
+    local regoptions = reg.registerOptions --[[@as {documentSelector:lsp.DocumentSelector|lsp.null}]]
+    if
+      not regoptions
+      or regoptions == vim.NIL
+      or not regoptions.documentSelector
+      or regoptions.documentSelector == vim.NIL
+    then
       return reg
     end
-    local documentSelector = regoptions.documentSelector
     local language = self:_get_language_id(bufnr)
     local uri = vim.uri_from_bufnr(bufnr)
     local fname = vim.uri_to_fname(uri)
-    for _, filter in ipairs(documentSelector) do
+    for _, filter in ipairs(regoptions.documentSelector) do
       local flang, fscheme, fpat = filter.language, filter.scheme, filter.pattern
       if
         not (flang and language ~= flang)
@@ -1162,7 +1166,7 @@ end
 --- @param method (vim.lsp.protocol.Method.ServerToClient) LSP method name
 --- @param params (table) The parameters for that method
 --- @return any result
---- @return lsp.ResponseError error code and message set in case an exception happens during the request.
+--- @return lsp.ResponseError? error code and message set in case an exception happens during the request.
 function Client:_server_request(method, params)
   log.trace('server_request', method, params)
   local handler = self:_resolve_handler(method)

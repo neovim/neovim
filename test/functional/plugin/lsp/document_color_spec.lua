@@ -129,7 +129,7 @@ body {
     exec_lua(function()
       _G.server2 = _G._create_server({
         colorProvider = {
-          documentSelector = nil,
+          documentSelector = vim.NIL,
         },
         handlers = {
           ['textDocument/documentColor'] = function(_, _, callback)
