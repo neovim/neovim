@@ -209,8 +209,7 @@ local all_clients = {}
 --- See [vim.lsp.ClientConfig].
 --- @field workspace_folders lsp.WorkspaceFolder[]?
 ---
---- Whether linked editing ranges are enabled for this client.
---- @field _linked_editing_enabled boolean?
+--- @field _enabled_capabilities table<vim.lsp.capability.Name, boolean?>
 ---
 --- Track this so that we can escalate automatically if we've already tried a
 --- graceful shutdown
@@ -435,6 +434,9 @@ function Client.create(config)
       return self:_get_registration(method, opts and opts.bufnr) ~= nil
     end,
   }
+
+  ---@type table <vim.lsp.capability.Name, boolean?>
+  self._enabled_capabilities = {}
 
   --- @type table<string|integer, string> title of unfinished progress sequences by token
   self.progress.pending = {}

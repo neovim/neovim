@@ -2431,10 +2431,11 @@ enable({enable}, {filter})                  *vim.lsp.semantic_tokens.enable()*
 
     Parameters: ~
       • {enable}  (`boolean?`) true/nil to enable, false to disable
-      • {filter}  (`table?`) A table with the following fields:
-                  • {bufnr}? (`integer`) Buffer number, or 0 for current
-                    buffer, or nil for all.
-                  • {client_id}? (`integer`) Client ID, or nil for all
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
 
 force_refresh({bufnr})               *vim.lsp.semantic_tokens.force_refresh()*
     Force a refresh of all semantic tokens
@@ -2493,10 +2494,11 @@ is_enabled({filter})                    *vim.lsp.semantic_tokens.is_enabled()*
     Query whether semantic tokens is enabled in the {filter}ed scope
 
     Parameters: ~
-      • {filter}  (`table?`) A table with the following fields:
-                  • {bufnr}? (`integer`) Buffer number, or 0 for current
-                    buffer, or nil for all.
-                  • {client_id}? (`integer`) Client ID, or nil for all
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
 
 
 ==============================================================================
