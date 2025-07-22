@@ -4868,7 +4868,7 @@ static void ex_restart(exarg_T *eap)
     return;
   }
   if (!exiting) {
-    emsg("restart failed: +cmd did not quit the server, abandoning restart");
+    emsg("restart failed: +cmd did not quit the server");
     not_restarting();
   }
 }
