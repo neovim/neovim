@@ -214,6 +214,8 @@ LSP
   jump to the problematic location.
 • Support for `textDocument/linkedEditingRange`: |lsp-linked_editing_range|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_linkedEditingRange
+• Support for related documents in pull diagnostics:
+  https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
 
 LUA
 
