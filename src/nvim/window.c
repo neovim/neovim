@@ -2997,6 +2997,10 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return false;  // window is already being closed
   }
+  if (is_aucmd_win(win)) {
+    emsg(_(e_autocmd_close));
+    return false;
+  }
 
   // Check if closing this window would leave only floating windows.
   if (tp->tp_firstwin == win && win->w_next && win->w_next->w_floating) {
