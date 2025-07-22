@@ -215,10 +215,15 @@ enum key_extra {
   // KE_FOCUSGAINED = 98,   // focus gained
   // KE_FOCUSLOST = 99,     // focus lost
   KE_MOUSEMOVE = 100,       // mouse moved with no button down
-  // KE_CANCEL = 101,       // return from vgetc()
+  // KE_MOUSEMOVE_XY = 101,
+  // KE_CANCEL = 102,       // return from vgetc()
   KE_EVENT = 102,           // event
   KE_LUA = 103,             // Lua special key
   KE_COMMAND = 104,         // <Cmd> special key
+  // KE_S_BS = 105,
+  // KE_SID = 106,
+  // KE_ESC = 107,
+  KE_WILD = 108,            // triggers wildmode completion
 };
 
 // the three byte codes are replaced with the following int when using vgetc()
@@ -450,6 +455,8 @@ enum key_extra {
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_COMMAND       TERMCAP2KEY(KS_EXTRA, KE_COMMAND)
 #define K_LUA           TERMCAP2KEY(KS_EXTRA, KE_LUA)
+
+#define K_WILD          TERMCAP2KEY(KS_EXTRA, KE_WILD)
 
 // Bits for modifier mask
 // 0x01 cannot be used, because the modifier must be 0x02 or higher

@@ -10173,7 +10173,7 @@ local options = {
         <	'wildchar' also enables completion in search pattern contexts such as
         |/|, |?|, |:s|, |:g|, |:v|, and |:vim|.  To insert a literal <Tab>
         instead of triggering completion, type <C-V><Tab> or "\t".
-        See also |'wildoptions'|.
+        See also 'wildoptions' and |wildtrigger()|.
       ]=],
       full_name = 'wildchar',
       scope = { 'global' },

@@ -1036,6 +1036,7 @@ Mappings and Menus:			    *mapping-functions*
 	mapset()		restore a mapping
 	menu_info()		get information about a menu item
 	wildmenumode()		check if the wildmode is active
+	wildtrigger()		start wildcard expansion
 
 Signs:						*sign-functions*
 	sign_define()		define or update a sign

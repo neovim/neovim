@@ -7212,7 +7212,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	'wildchar' also enables completion in search pattern contexts such as
 	|/|, |?|, |:s|, |:g|, |:v|, and |:vim|.  To insert a literal <Tab>
 	instead of triggering completion, type <C-V><Tab> or "\t".
-	See also |'wildoptions'|.
+	See also 'wildoptions' and |wildtrigger()|.
 
 						*'wildcharm'* *'wcm'*
 'wildcharm' 'wcm'	number	(default 0)
