@@ -254,6 +254,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
   char *p;
+  bool from_wildtrigger_func = options & WILD_FUNC_TRIGGER;
 
   if (xp->xp_numfiles == -1) {
     pre_incsearch_pos = xp->xp_pre_incsearch_pos;
@@ -280,16 +281,23 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     return FAIL;
   }
 
-  // If cmd_silent is set then don't show the dots, because redrawcmd() below
-  // won't remove them.
-  if (!cmd_silent && !(ui_has(kUICmdline) || ui_has(kUIWildmenu))) {
-    msg_puts("...");  // show that we are busy
-    ui_flush();
-  }
-
   int i = (int)(xp->xp_pattern - ccline->cmdbuff);
   assert(ccline->cmdpos >= i);
   xp->xp_pattern_len = (size_t)ccline->cmdpos - (size_t)i;
+
+  // Skip showing matches if prefix is invalid during wildtrigger()
+  if (from_wildtrigger_func && xp->xp_context == EXPAND_COMMANDS
+      && xp->xp_pattern_len == 0) {
+    return FAIL;
+  }
+
+  // If cmd_silent is set then don't show the dots, because redrawcmd() below
+  // won't remove them.
+  if (!cmd_silent && !from_wildtrigger_func
+      && !(ui_has(kUICmdline) || ui_has(kUIWildmenu))) {
+    msg_puts("...");  // show that we are busy
+    ui_flush();
+  }
 
   if (type == WILD_NEXT || type == WILD_PREV
       || type == WILD_PAGEUP || type == WILD_PAGEDOWN

@@ -10813,6 +10813,32 @@ function vim.fn.wait(timeout, condition, interval) end
 --- @return any
 function vim.fn.wildmenumode() end
 
+--- Start wildcard expansion in the command-line, using the
+--- behavior defined by the 'wildmode' and 'wildoptions' settings.
+--- See |cmdline-completion|.
+---
+--- This function also enables completion in search patterns such
+--- as |/|, |?|, |:s|, |:g|, |:v| and |:vimgrep|.
+---
+--- Unlike pressing 'wildchar' manually, this function does not
+--- produce a beep when no matches are found and generally
+--- operates more quietly.  This makes it suitable for triggering
+--- completion automatically, such as from an |:autocmd|.
+---           *cmdline-autocompletion*
+--- Example: To make the completion menu pop up automatically as
+--- you type on the command line, use: >vim
+---   autocmd CmdlineChanged [:/?] call wildtrigger()
+---   set wildmode=noselect:lastused,full wildoptions=pum
+--- <
+--- To retain normal history navigation (up/down keys): >vim
+---   cnoremap <Up>   <C-U><Up>
+---   cnoremap <Down> <C-U><Down>
+--- <
+--- Return value is always 0.
+---
+--- @return number
+function vim.fn.wildtrigger() end
+
 --- Like `execute()` but in the context of window {id}.
 --- The window will temporarily be made the current window,
 --- without triggering autocommands or changing directory.  When

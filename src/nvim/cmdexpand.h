@@ -42,6 +42,7 @@ enum {
   BUF_DIFF_FILTER           = 0x2000,
   WILD_KEEP_SOLE_ITEM       = 0x4000,
   WILD_MAY_EXPAND_PATTERN   = 0x8000,
+  WILD_FUNC_TRIGGER         = 0x10000,  ///< called from wildtrigger()
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

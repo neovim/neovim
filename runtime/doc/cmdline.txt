@@ -451,6 +451,8 @@ When repeating 'wildchar' or CTRL-N you cycle through the matches, eventually
 ending up back to what was typed.  If the first match is not what you wanted,
 you can use <S-Tab> or CTRL-P to go straight back to what you typed.
 
+See also |wildtrigger()|.
+
 The 'wildmenu' option can be set to show the matches just above the command
 line.
 
