@@ -67,7 +67,8 @@ local cmd_on_key = nil
 --- Place or delete a virtual text mark in the cmdline or message window.
 ---
 ---@param type 'last'|'msg'
-local function set_virttext(type)
+---@param tar? 'cmd'|'msg'
+local function set_virttext(type, tar)
   if (type == 'last' and (ext.cmdheight == 0 or M.virt.delayed)) or cmd_on_key then
     return -- Don't show virtual text while cmdline, error or full message in cmdline is shown.
   end
@@ -87,7 +88,7 @@ local function set_virttext(type)
     M.virt.ids[type] = nil
     M.cmd.last_col = type == 'last' and o.columns or M.cmd.last_col
   elseif #chunks > 0 then
-    local tar = type == 'msg' and ext.cfg.msg.target or 'cmd'
+    tar = tar or type == 'msg' and ext.cfg.msg.target or 'cmd'
     local win = ext.wins[tar]
     local erow = tar == 'cmd' and math.min(M.cmd.msg_row, api.nvim_buf_line_count(ext.bufs.cmd) - 1)
     local texth = api.nvim_win_text_height(win, {
@@ -220,8 +221,7 @@ end
 ---@param content MsgContent
 ---@param replace_last boolean
 ---@param append boolean
----@param full boolean? If true, show messages that exceed target window in full.
-function M.show_msg(tar, content, replace_last, append, full)
+function M.show_msg(tar, content, replace_last, append)
   local msg, restart, cr, dupe, count = '', false, false, 0, 0
   append = append and col > 0
 
@@ -291,7 +291,7 @@ function M.show_msg(tar, content, replace_last, append, full)
   if tar == 'msg' then
     api.nvim_win_set_width(ext.wins.msg, width)
     local texth = api.nvim_win_text_height(ext.wins.msg, { start_row = start_row })
-    if full and texth.all > 1 then
+    if texth.all > math.ceil(o.lines * 0.5) then
       msg_to_full(tar)
       return
     end
@@ -320,12 +320,11 @@ function M.show_msg(tar, content, replace_last, append, full)
       end
       -- Place [+x] indicator for lines that spill over 'cmdheight'.
       local texth = api.nvim_win_text_height(ext.wins.cmd, {})
-      local spill = texth.all > ext.cmdheight and ('[+%d]'):format(texth.all - ext.cmdheight)
+      local spill = texth.all > ext.cmdheight and (' [+%d]'):format(texth.all - ext.cmdheight)
       M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
       M.cmd.msg_row = texth.end_row
 
-      local want_full = full or will_full or not api.nvim_win_get_config(ext.wins.pager).hide
-      if want_full and texth.all > ext.cmdheight then
+      if texth.all > ext.cmdheight then
         msg_to_full(tar)
         return
       end
@@ -387,17 +386,14 @@ function M.msg_show(kind, content, replace_last, _, append)
       if ext.cmdheight == 0 or (ext.cmd.level > 0 and ext.cmd.row == 0) then
         return -- Do not overwrite an active cmdline unless in block mode.
       end
-      -- Store the time when an error message was emitted in order to not overwrite
-      -- it with 'last' virt_text in the cmdline to give the user a chance to read it.
-      M.cmd.last_emsg = kind == 'emsg' and os.time() or M.cmd.last_emsg
+      -- Store the time when an important message was emitted in order to not overwrite
+      -- it with 'last' virt_text in the cmdline so that the user has a chance to read it.
+      M.cmd.last_emsg = kind == 'emsg' or kind == 'wmsg' and os.time() or M.cmd.last_emsg
       -- Should clear the search count now, mark itself is cleared by invalidate.
       M.virt.last[M.virt.idx.search][1] = nil
     end
 
-    -- Typed "inspection" messages should be shown in full.
-    local inspect = { 'echo', 'echomsg', 'lua_print' }
-    local full = kind == 'list_cmd' or (ext.cmd.level >= 0 and vim.tbl_contains(inspect, kind))
-    M.show_msg(tar, content, replace_last, append, full)
+    M.show_msg(tar, content, replace_last, append)
     -- Don't remember search_cmd message as actual message.
     if kind == 'search_cmd' then
       M.cmd.count, M.prev_msg = 0, ''
@@ -486,9 +482,9 @@ function M.set_pos(type)
     if type == 'cmd' then
       -- Temporarily showing a full message in the cmdline, until next key press.
       local save_spill = M.virt.msg[M.virt.idx.spill][1]
-      local spill = texth.all > height and ('[+%d]'):format(texth.all - height)
+      local spill = texth.all > height and (' [+%d]'):format(texth.all - height)
       M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
-      set_virttext('msg')
+      set_virttext('msg', 'cmd')
       M.virt.msg[M.virt.idx.spill][1] = save_spill
       cmd_on_key = vim.on_key(function(_, typed)
         if not typed or fn.keytrans(typed) == '<MouseMove>' then
