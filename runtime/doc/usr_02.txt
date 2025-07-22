@@ -590,7 +590,7 @@ Summary:					*help-summary*  >
 <    for how the '|' is handled in mappings.
 
 15) Command definitions are talked about :h command-topic, so use >
-	:help command-bar
+	:help command-bang
 <    to find out about the '!' argument for custom commands.
 
 16) Window management commands always start with CTRL-W, so you find the

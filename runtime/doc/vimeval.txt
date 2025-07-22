@@ -2099,7 +2099,7 @@ text...
 				CODE
 <
 								*E121*
-:let {var-name}	..	List the value of variable {var-name}.  Multiple
+:let {var-name}	...	List the value of variable {var-name}.  Multiple
 			variable names may be given.  Special names recognized
 			here:				*E738*
 			  g:	global variables

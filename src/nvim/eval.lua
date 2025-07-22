@@ -13082,7 +13082,7 @@ M.funcs = {
       produce a beep when no matches are found and generally
       operates more quietly.  This makes it suitable for triggering
       completion automatically, such as from an |:autocmd|.
-      					*cmdline-autocompletion*
+      				*cmdline-autocompletion*
       Example: To make the completion menu pop up automatically as
       you type on the command line, use: >vim
       	autocmd CmdlineChanged [:/?] call wildtrigger()
