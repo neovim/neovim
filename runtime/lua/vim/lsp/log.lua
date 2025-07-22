@@ -25,6 +25,8 @@ local M = {}
 
 local log_levels = vim.log.levels
 local protocol = require('vim.lsp.protocol')
+-- Tracks messages that we don't want to redundantly log.
+local logged = {}
 
 --- Log level dictionary with reverse lookup as well.
 ---

@@ -419,7 +419,7 @@ end
 
 --- @param config vim.lsp.Config
 local function validate_config(config)
-  validate('cmd', config.cmd, validate_cmd, 'expected function or table with executable command')
+  validate('cmd', config.cmd, validate_cmd, 'function or table with executable command')
   validate('reuse_client', config.reuse_client, 'function', true)
   validate('filetypes', config.filetypes, 'table', true)
 end
