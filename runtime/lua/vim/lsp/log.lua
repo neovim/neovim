@@ -21,10 +21,9 @@
 --- - "ERROR" messages containing "stderr" only indicate that the log was sent to stderr. Many
 ---   servers send harmless messages via stderr.
 
-local log = {}
+local M = {}
 
 local log_levels = vim.log.levels
-
 local protocol = require('vim.lsp.protocol')
 
 --- Log level dictionary with reverse lookup as well.
@@ -34,7 +33,7 @@ local protocol = require('vim.lsp.protocol')
 --- Level numbers begin with "TRACE" at 0
 --- @type table<string,integer> | table<integer, string>
 --- @nodoc
-log.levels = vim.deepcopy(log_levels)
+M.levels = vim.deepcopy(log_levels)
 
 -- Default log level is warn.
 local current_log_level = log_levels.WARN
@@ -84,12 +83,12 @@ vim.fn.mkdir(vim.fn.stdpath('log') --[[@as string]], 'p')
 
 --- Returns the log filename.
 ---@return string log filename
-function log.get_filename()
+function M.get_filename()
   return logfilename
 end
 
 --- @param s string
-function log._set_filename(s)
+function M._set_filename(s)
   logfilename = s
 end
 
@@ -131,10 +130,10 @@ end
 for level, levelnr in pairs(log_levels) do
   -- Also export the log level on the root object.
   ---@diagnostic disable-next-line: no-unknown
-  log[level] = levelnr
+  M[level] = levelnr
 
   -- Add a reverse lookup.
-  log.levels[levelnr] = level
+  M.levels[levelnr] = level
 end
 
 --- @param level string
@@ -162,37 +161,37 @@ end
 -- log at that level (if applicable, it is checked either way).
 
 --- @nodoc
-log.debug = create_logger('DEBUG')
+M.debug = create_logger('DEBUG')
 
 --- @nodoc
-log.error = create_logger('ERROR')
+M.error = create_logger('ERROR')
 
 --- @nodoc
-log.info = create_logger('INFO')
+M.info = create_logger('INFO')
 
 --- @nodoc
-log.trace = create_logger('TRACE')
+M.trace = create_logger('TRACE')
 
 --- @nodoc
-log.warn = create_logger('WARN')
+M.warn = create_logger('WARN')
 
 --- Sets the current log level.
 ---@param level (string|integer) One of |vim.log.levels|
-function log.set_level(level)
+function M.set_level(level)
   vim.validate('level', level, { 'string', 'number' })
 
   if type(level) == 'string' then
     current_log_level =
-      assert(log.levels[level:upper()], string.format('Invalid log level: %q', level))
+      assert(M.levels[level:upper()], string.format('Invalid log level: %q', level))
   else
-    assert(log.levels[level], string.format('Invalid log level: %d', level))
+    assert(M.levels[level], string.format('Invalid log level: %d', level))
     current_log_level = level
   end
 end
 
 --- Gets the current log level.
 ---@return integer current log level
-function log.get_level()
+function M.get_level()
   return current_log_level
 end
 
@@ -200,7 +199,7 @@ end
 --- be written to the log file.
 ---@param handle fun(level:string, ...): string? Function to apply to log entries. The default will log the level,
 ---date, source and line number of the caller, followed by the arguments.
-function log.set_format_func(handle)
+function M.set_format_func(handle)
   vim.validate('handle', handle, function(h)
     return type(h) == 'function' or h == vim.inspect
   end, false, 'handle must be a function')
@@ -212,7 +211,7 @@ end
 ---@deprecated
 ---@param level integer log level
 ---@return boolean : true if would log, false if not
-function log.should_log(level)
+function M.should_log(level)
   vim.deprecate('vim.lsp.log.should_log', 'vim.lsp.log.set_format_func', '0.13')
 
   vim.validate('level', level, 'number')
@@ -223,7 +222,7 @@ end
 --- Convert LSP MessageType to vim.log.levels
 ---
 ---@param message_type lsp.MessageType
-function log._from_lsp_level(message_type)
+function M._from_lsp_level(message_type)
   if message_type == protocol.MessageType.Error then
     return vim.log.levels.ERROR
   elseif message_type == protocol.MessageType.Warning then
@@ -235,4 +234,4 @@ function log._from_lsp_level(message_type)
   end
 end
 
-return log
+return M
