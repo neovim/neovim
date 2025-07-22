@@ -1324,5 +1324,27 @@ func Test_rename_buffer_on_startup()
   call delete('Xresult')
 endfunc
 
+" Test that -cq works as expected
+func Test_cq_zero_exmode()
+  CheckFeature channel
+
+  let logfile = 'Xcq_log.txt'
+  let out = system(GetVimCommand() .. ' --clean --log ' .. logfile .. ' -es -X -c "argdelete foobar" -c"7cq"')
+  call assert_equal(8, v:shell_error)
+  let log = filter(readfile(logfile), {idx, val -> val =~ "E480"})
+  call assert_match('E480: No match: foobar', log[0])
+  call delete(logfile)
+
+  " wrap-around on Unix
+  let out = system(GetVimCommand() .. ' --clean --log ' .. logfile .. ' -es -X -c "argdelete foobar" -c"255cq"')
+  if !has('win32')
+    call assert_equal(0, v:shell_error)
+  else
+    call assert_equal(256, v:shell_error)
+  endif
+  let log = filter(readfile(logfile), {idx, val -> val =~ "E480"})
+  call assert_match('E480: No match: foobar', log[0])
+  call delete('Xcq_log.txt')
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
