@@ -1295,6 +1295,23 @@ describe('CursorLine and CursorLineNr highlights', function()
                                                         |
     ]])
   end)
+
+  it('CursorLine works with highlight groups linked to Normal', function()
+    local screen = Screen.new(50, 12)
+    screen:add_extra_attr_ids({
+      [101] = { background = Screen.colors.Grey90, foreground = Screen.colors.Gray100 },
+    })
+    command('hi Normal guibg=black guifg=white')
+    command('hi def link Test Normal')
+    feed('ifoo bar<ESC>')
+    feed(':call matchadd("Test", "bar")<cr>')
+    command('set cursorline')
+    screen:expect([[
+      {21:foo }{101:ba^r}{21:                                           }|
+      {1:~                                                 }|*10
+      :call matchadd("Test", "bar")                     |
+    ]])
+  end)
 end)
 
 describe('CursorColumn highlight', function()

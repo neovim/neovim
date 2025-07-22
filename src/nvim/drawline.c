@@ -2911,7 +2911,22 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
     if (wlv.filler_todo <= 0) {
       // Apply lowest-priority line attr now, so everything can override it.
-      wlv.char_attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.char_attr);
+      // Special handling for low-priority CursorLine with normal_bg from linked groups.
+      if (wlv.line_attr_lowprio != 0) {
+        HlAttrs line_ae = syn_attr2entry(wlv.line_attr_lowprio);
+        HlAttrs char_ae = syn_attr2entry(wlv.char_attr);
+
+        // When low-priority CursorLine has background and char has normal_bg,
+        // reverse the combination order to let CursorLine override normal_bg.
+        bool cursorline_has_bg = (line_ae.rgb_bg_color >= 0 || line_ae.cterm_bg_color > 0);
+        bool char_has_normal_bg = (char_ae.rgb_bg_color == normal_bg);
+        if (cursorline_has_bg && char_has_normal_bg) {
+          // Reverse order: char_attr overrides line_attr_lowprio
+          wlv.char_attr = hl_combine_attr(wlv.char_attr, wlv.line_attr_lowprio);
+        } else {
+          wlv.char_attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.char_attr);
+        }
+      }
     }
 
     if (wlv.filler_todo <= 0) {
