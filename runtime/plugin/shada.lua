@@ -52,8 +52,8 @@ end)
 
 def_autocmd('BufWriteCmd', {}, function(ev)
   local buflines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  local err = vim.fn.writefile(shada_get_binstrings(buflines), ev.file, 'b')
-  if not err then
+  local ret = vim.fn.writefile(shada_get_binstrings(buflines), ev.file, 'b')
+  if ret == 0 then
     vim.bo[ev.buf].modified = false
   end
 end)
