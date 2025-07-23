@@ -1010,6 +1010,9 @@ end
 
 ---@private
 function ArrayIter:last()
+  if self._head >= self._tail then
+    return nil
+  end
   local inc = self._head < self._tail and 1 or -1
   local v = self._table[self._tail - inc]
   self._head = self._tail

@@ -405,6 +405,15 @@ describe('vim.iter', function()
     local s = 'abcdefghijklmnopqrstuvwxyz'
     eq('z', vim.iter(vim.split(s, '')):last())
     eq('z', vim.iter(vim.gsplit(s, '')):last())
+    eq(
+      nil,
+      vim
+        .iter({ 1, 2, 3, 4, 5 })
+        :filter(function()
+          return false
+        end)
+        :last()
+    )
   end)
 
   it('enumerate()', function()
