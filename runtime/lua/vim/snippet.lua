@@ -257,10 +257,21 @@ local M = { session = nil }
 local function display_choices(tabstop)
   assert(tabstop.choices, 'Tabstop has no choices')
 
+  local text = tabstop:get_text()
+  local found_text = false
+
   local start_col = tabstop:get_range()[2] + 1
   local matches = {} --- @type table[]
   for _, choice in ipairs(tabstop.choices) do
-    matches[#matches + 1] = { word = choice }
+    if choice ~= text then
+      matches[#matches + 1] = { word = choice }
+    else
+      found_text = true
+    end
+  end
+
+  if found_text then
+      table.insert(matches, 1, text)
   end
 
   vim.defer_fn(function()
@@ -298,6 +309,7 @@ local function select_tabstop(tabstop)
       vim.cmd.startinsert({ bang = range[4] >= #vim.api.nvim_get_current_line() })
     end
     if tabstop.choices then
+      vim.fn.cursor(range[3] + 1, range[4] + 1)
       display_choices(tabstop)
     end
   else
