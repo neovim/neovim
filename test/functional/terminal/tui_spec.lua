@@ -272,7 +272,7 @@ describe('TUI :restart', function()
 
     -- Check ":restart +echo" cannot restart server.
     tt.feed_data(':restart +echo\013')
-    screen:expect({ any = '+cmd did not quit the server' })
+    screen:expect({ any = vim.pesc('+cmd did not quit the server') })
 
     tt.feed_data('ithis will be removed\027')
     screen_expect([[
