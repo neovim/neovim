@@ -537,7 +537,7 @@ describe('clipboard (with fake clipboard.vim)', function()
       eq('textstar', api.nvim_get_current_line())
     end)
 
-    it('Block paste works correctly', function()
+    it('block paste works correctly', function()
       insert([[
         aabbcc
         ddeeff
@@ -549,6 +549,20 @@ describe('clipboard (with fake clipboard.vim)', function()
         aabbaabbcc
         ddeeddeeff
       ]])
+    end)
+
+    it('block paste computes block width correctly #35034', function()
+      insert('あいうえお')
+      feed('0<C-V>ly')
+      feed('P')
+      expect('あいあいうえお')
+      feed('A\nxxx\nxx<Esc>')
+      feed('0<C-V>kkly')
+      feed('P')
+      expect([[
+        あいあいあいうえお
+        xxx xxx
+        xx  xx]])
     end)
   end)
 
