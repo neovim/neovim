@@ -6519,10 +6519,17 @@ void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
     }
   }
 
+  update_yankreg_width(reg);
+}
+
+/// Updates the "y_width" of a blockwise register based on its contents.
+/// Do nothing on a non-blockwise register.
+static void update_yankreg_width(yankreg_T *reg)
+{
   if (reg->y_type == kMTBlockWise) {
     size_t maxlen = 0;
     for (size_t i = 0; i < reg->y_size; i++) {
-      size_t rowlen = reg->y_array[i].size;
+      size_t rowlen = mb_string2cells_len(reg->y_array[i].data, reg->y_array[i].size);
       maxlen = MAX(maxlen, rowlen);
     }
     assert(maxlen <= INT_MAX);
@@ -6624,15 +6631,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     }
   }
 
-  if (reg->y_type == kMTBlockWise) {
-    size_t maxlen = 0;
-    for (size_t i = 0; i < reg->y_size; i++) {
-      size_t rowlen = reg->y_array[i].size;
-      maxlen = MAX(maxlen, rowlen);
-    }
-    assert(maxlen <= INT_MAX);
-    reg->y_width = (int)maxlen - 1;
-  }
+  update_yankreg_width(reg);
 
   *target = reg;
   return true;
