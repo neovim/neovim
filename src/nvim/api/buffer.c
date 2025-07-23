@@ -288,6 +288,22 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   return rv;
 }
 
+static buf_T *require_loaded_buffer(Buffer buffer, Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return NULL;
+  }
+
+  // Load buffer if necessary
+  if (buf->b_ml.ml_mfp == NULL && !buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return NULL;
+  }
+
+  return buf;
+}
+
 /// Sets (replaces) a line-range in the buffer.
 ///
 /// Indexing is zero-based, end-exclusive. Negative indices are interpreted
@@ -315,15 +331,9 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   FUNC_API_SINCE(1)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = require_loaded_buffer(buffer, err);
 
   if (!buf) {
-    return;
-  }
-
-  // Load buffer if necessary. #22670
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return;
   }
 
@@ -480,14 +490,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     replacement = scratch;
   }
 
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = require_loaded_buffer(buffer, err);
   if (!buf) {
-    return;
-  }
-
-  // Load buffer if necessary. #22670
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return;
   }
 
@@ -1112,7 +1116,7 @@ Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col,
   FUNC_API_SINCE(8)
 {
   bool res = false;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = require_loaded_buffer(buffer, err);
 
   if (!buf) {
     return res;
