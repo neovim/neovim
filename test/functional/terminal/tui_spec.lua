@@ -285,7 +285,7 @@ describe('TUI :restart', function()
 
     -- Check ":confirm restart" on a modified buffer.
     tt.feed_data(':confirm restart\013')
-    screen:expect({ any = 'Save changes to "Untitled"?' })
+    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
 
     -- Cancel the operation (abandons restart).
     tt.feed_data('C\013')
