@@ -99,36 +99,51 @@ void ui_refresh(void)
     eq(0, q(100))
   end)
 
-  it('cache is cleared upon runtimepath changes, or setting query manually', function()
-    ---@return number
-    exec_lua(function()
-      _G.query_parse_count = _G.query_parse_count or 0
-      local parse = vim.treesitter.query.parse
-      vim.treesitter.query.parse = function(...)
-        _G.query_parse_count = _G.query_parse_count + 1
-        return parse(...)
-      end
-    end)
-
-    local function q(_n)
-      return exec_lua(function()
-        for _ = 1, _n, 1 do
-          vim.treesitter.query.get('c', 'highlights')
+  it(
+    'cache is cleared upon runtimepath changes, manual clear, or setting query manually',
+    function()
+      ---@return number
+      exec_lua(function()
+        _G.query_parse_count = _G.query_parse_count or 0
+        local parse = vim.treesitter.query.parse
+        vim.treesitter.query.parse = function(...)
+          _G.query_parse_count = _G.query_parse_count + 1
+          return parse(...)
         end
-        return _G.query_parse_count
       end)
-    end
 
-    eq(1, q(10))
-    exec_lua(function()
-      vim.opt.rtp:prepend('/another/dir')
-    end)
-    eq(2, q(100))
-    exec_lua(function()
-      vim.treesitter.query.set('c', 'highlights', [[; test]])
-    end)
-    eq(3, q(100))
-  end)
+      local function q(_n)
+        return exec_lua(function()
+          for _ = 1, _n, 1 do
+            vim.treesitter.query.get('c', 'highlights')
+          end
+          return _G.query_parse_count
+        end)
+      end
+
+      eq(1, q(10))
+
+      exec_lua(function()
+        vim.opt.rtp:prepend('/another/dir')
+      end)
+      eq(2, q(100))
+
+      exec_lua(function()
+        vim.treesitter.query.set('c', 'highlights', [[; test]])
+      end)
+      eq(3, q(100))
+
+      exec_lua(function()
+        vim.treesitter.query.clear_cache('c', 'highlights')
+      end)
+      eq(4, q(100))
+
+      exec_lua(function()
+        vim.treesitter.query.clear_cache()
+      end)
+      eq(5, q(100))
+    end
+  )
 
   it('supports query and iter by capture (iter_captures)', function()
     insert(test_text)
