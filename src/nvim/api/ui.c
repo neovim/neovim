@@ -295,7 +295,7 @@ bool remote_ui_restart(uint64_t channel_id, Error *err)
       skipping_minc = false;
     }
     bool startswith_min = strlen(arg) > 0 && arg[0] == '-';
-    bool startswith_minmin = strlen(arg) > 1 && strequal("--", string_slice(arg, 0, 1, false));
+    bool startswith_minmin = strlen(arg) > 1 && arg[0] == '-' && arg[1] == '-';
     if (skipping_minc && (startswith_min || startswith_minmin)) {
       skipping_minc = false;
     }
