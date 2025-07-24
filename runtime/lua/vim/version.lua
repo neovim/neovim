@@ -6,7 +6,7 @@
 --- Example:
 ---
 --- ```lua
---- local v = vim.version.parse(vim.fn.system({'tmux', '-V'}), {strict=false})
+--- local v = vim.version.parse(vim.system({'tmux', '-V'}):wait().stdout, {strict=false})
 --- if vim.version.gt(v, {3, 2, 0}) then
 ---   -- ...
 --- end

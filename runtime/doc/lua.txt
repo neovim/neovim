@@ -3895,7 +3895,7 @@ conforming to the https://semver.org spec. Plugins, and plugin managers, can
 use this to check available tools and dependencies on the current system.
 
 Example: >lua
-    local v = vim.version.parse(vim.fn.system({'tmux', '-V'}), {strict=false})
+    local v = vim.version.parse(vim.system({'tmux', '-V'}):wait().stdout, {strict=false})
     if vim.version.gt(v, {3, 2, 0}) then
       -- ...
     end
