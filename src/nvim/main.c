@@ -809,6 +809,17 @@ void getout(int exitval)
     ui_call_set_title(cstr_as_string(p_titleold));
   }
 
+  if (restarting) {
+    Error err = ERROR_INIT;
+    if (!remote_ui_restart(current_ui, &err)) {
+      if (ERROR_SET(&err)) {
+        ELOG("%s", err.msg);  // UI disappeared already?
+        api_clear_error(&err);
+      }
+    }
+    restarting = false;
+  }
+
   if (garbage_collect_at_exit) {
     garbage_collect(false);
   }

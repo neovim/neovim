@@ -423,6 +423,8 @@ EXTERN int sc_col;              // column for shown command
 EXTERN int starting INIT( = NO_SCREEN);
 // true when planning to exit. Might keep running if there is a changed buffer.
 EXTERN bool exiting INIT( = false);
+// true when planning to restart.
+EXTERN bool restarting INIT( = false);
 // internal value of v:dying
 EXTERN int v_dying INIT( = 0);
 // is stdin a terminal?

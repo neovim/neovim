@@ -2184,13 +2184,13 @@ M.cmds = {
     command = 'quitall',
     flags = bit.bor(BANG, TRLBAR),
     addr_type = 'ADDR_NONE',
-    func = 'ex_quitall_or_restart',
+    func = 'ex_quitall',
   },
   {
     command = 'qall',
     flags = bit.bor(BANG, TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
-    func = 'ex_quitall_or_restart',
+    func = 'ex_quitall',
   },
   {
     command = 'read',
@@ -2248,9 +2248,9 @@ M.cmds = {
   },
   {
     command = 'restart',
-    flags = bit.bor(BANG, TRLBAR),
+    flags = bit.bor(CMDARG, TRLBAR),
     addr_type = 'ADDR_NONE',
-    func = 'ex_quitall_or_restart',
+    func = 'ex_restart',
   },
   {
     command = 'retab',
