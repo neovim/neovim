@@ -255,8 +255,29 @@ describe('TUI :restart', function()
     tt.feed_data(':1restart\013')
     screen:expect({ any = vim.pesc('{101:E481: No range allowed}') })
 
-    tt.feed_data(':restart foo\013')
-    screen:expect({ any = vim.pesc('{101:E488: Trailing characters: foo}') })
+    local s1 = [[
+                                                        |
+                                                        |
+      {2:                                                  }|
+      {MATCH:%d+ +}|
+      Hello                                             |
+      {102:Press ENTER or type command to continue}^           |
+      {5:-- TERMINAL --}                                    |
+    ]]
+
+    -- Check trailing characters are considered in -c
+    tt.feed_data(':restart echo "Hello"\013')
+    screen_expect(s1)
+    tt.feed_data('\013')
+    restart_pid_check()
+    gui_running_check()
+
+    -- Check trailing characters after +cmd are considered in -c
+    tt.feed_data(':restart +qall echo "Hello"\013')
+    screen_expect(s1)
+    tt.feed_data('\013')
+    restart_pid_check()
+    gui_running_check()
 
     -- Check ":restart" on an unmodified buffer.
     tt.feed_data(':restart\013')
