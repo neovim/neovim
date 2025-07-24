@@ -311,6 +311,17 @@ describe('TUI :restart', function()
     -- Cancel the operation (abandons restart).
     tt.feed_data('C\013')
 
+    -- Check ":confirm restart <cmd>" on a modified buffer.
+    tt.feed_data(':confirm restart echo "Hello"\013')
+    screen:expect({ any = vim.pesc('Save changes to "Untitled"?'), unchanged = true })
+    tt.feed_data('N\013')
+
+    -- Check if the -c <cmd> runs after restart.
+    screen_expect(s1)
+    tt.feed_data('\013')
+    restart_pid_check()
+    gui_running_check()
+
     -- Check ":restart" on the modified buffer.
     tt.feed_data(':restart\013')
     screen_expect(s0)
