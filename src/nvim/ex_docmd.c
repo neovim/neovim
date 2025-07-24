@@ -1369,8 +1369,6 @@ void set_cmd_dflall_range(exarg_T *eap)
   switch (eap->addr_type) {
   case ADDR_LINES:
     eap->line2 = curbuf->b_ml.ml_line_count;
-    eap->col1 = 0;
-    eap->col2 = ml_get_buf_len(curbuf, curbuf->b_ml.ml_line_count);
     break;
   case ADDR_OTHER:
     eap->line2 = curbuf->b_ml.ml_line_count;
@@ -2861,6 +2859,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
 
   if (eap->line1 > 0
       && eap->line2 > 0
+      && (eap->col1 > 0 && eap->col2 > 0)
       && eap->addr_count == 2
       && eap->addr_type == ADDR_LINES) {
     need_check_cursor = true;
@@ -2890,9 +2889,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
         case ADDR_LINES:
         case ADDR_OTHER:
           eap->line1 = 1;
-          eap->col1 = 0;
           eap->line2 = curbuf->b_ml.ml_line_count;
-          eap->col2 = ml_get_buf_len(curbuf, curbuf->b_ml.ml_line_count);
           break;
         case ADDR_LOADED_BUFFERS: {
           buf_T *buf = firstbuf;
@@ -3481,7 +3478,6 @@ static pos_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool sk
       case ADDR_LINES:
       case ADDR_OTHER:
         lnum = curbuf->b_ml.ml_line_count;
-        cnum = curbuf->b_ml.ml_line_len;
         break;
       case ADDR_WINDOWS:
         lnum = LAST_WIN_NR;
@@ -6366,6 +6362,7 @@ static void ex_operators(exarg_T *eap)
 
   if (eap->line1 > 0
       && eap->line2 > 0
+      && (eap->col1 > 0 && eap->col2 > 0)
       && eap->addr_count == 2
       && eap->addr_type == ADDR_LINES) {
     oa.motion_type = kMTCharWise;

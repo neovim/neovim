@@ -1817,13 +1817,14 @@ int op_delete(oparg_T *oap)
       }
 
       curbuf_splice_pending++;
-      pos_T startpos = curwin->w_cursor;  // start position for delete
-      bcount_t deleted_bytes = get_region_bytecount(curbuf, startpos.lnum, oap->end.lnum,
-                                                    startpos.col,
+      curpos = curwin->w_cursor;  // remember curwin->w_cursor
+      curwin->w_cursor = oap->start; // set the cursor where the deletion starts
+      bcount_t deleted_bytes = get_region_bytecount(curbuf,
+                                                    oap->start.lnum,
+                                                    oap->end.lnum,
+                                                    oap->start.col,
                                                     oap->end.col) + oap->inclusive;
       truncate_line(true);        // delete from cursor to end of line
-
-      curpos = curwin->w_cursor;  // remember curwin->w_cursor
       curwin->w_cursor.lnum++;
 
       del_lines(oap->line_count - 2, false);
@@ -1836,7 +1837,7 @@ int op_delete(oparg_T *oap)
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       do_join(2, false, false, false, false);
       curbuf_splice_pending--;
-      extmark_splice(curbuf, (int)startpos.lnum - 1, startpos.col,
+      extmark_splice(curbuf, (int)oap->start.lnum - 1, oap->start.col,
                      (int)oap->line_count - 1, n, deleted_bytes,
                      0, 0, 0, kExtmarkUndo);
     }

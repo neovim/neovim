@@ -4365,6 +4365,47 @@ describe('API', function()
         },
       }, api.nvim_parse_cmd('4.5,6.9s/math.random/math.max/', {}))
     end)
+    it('works with explicit charwise ranges', function()
+      eq({
+        cmd = 'delete',
+        args = {},
+        bang = false,
+        range = { 4, 8, 5, 9 },
+        addr = 'char',
+        magic = {
+          file = false,
+          bar = true,
+        },
+        nargs = '0',
+        nextcmd = '',
+        reg = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            pattern = '',
+            force = false,
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+      }, api.nvim_parse_cmd('4.5,8.9delete', {}))
+    end)
     it('works with count', function()
       eq({
         cmd = 'buffer',
@@ -5056,9 +5097,47 @@ describe('API', function()
       expect [[
         line1
         line2
-        line3
+        line3line5
+        line6
+      ]]
+    end)
 
-        line5
+    it('works with |delete| and charwise range', function()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_cmd({
+        cmd = 'delete',
+        addr = 'char',
+        range = { 3, 5, 5, 10 },
+      }, {})
+      expect [[
+        line1
+        line2
+        line3line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |delete| command', function()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_input([[:3.5,5.10delete<CR>]])
+      expect [[
+        line1
+        line2
+        line3line5
         line6
       ]]
     end)

@@ -4378,7 +4378,7 @@ static void global_exe_one(char *const cmd, const linenr_T lnum, colnr_T col1, c
     .line2 = lnum,
     .col1 = col1,
     .col2 = col2,
-    .addr_count = 2,
+    .addr_count = 2,  // TODO(616b2f): check if this makes sense
     .addr_type = ADDR_LINES
   };
   if (*cmd == NUL || *cmd == '\n') {
@@ -4476,8 +4476,11 @@ void ex_global(exarg_T *eap)
     lnum = curwin->w_cursor.lnum;
     colnr_T col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
     colnr_T col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : MAXCOL;
+
     int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, col1, col2, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
+      col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+      col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf, lnum) + 1;
       global_exe_one(cmd, lnum, col1, col2);
     }
   } else {
@@ -4536,9 +4539,16 @@ void global_exe(char *cmd, exarg_T *eap)
   old_lcount = curbuf->b_ml.ml_line_count;
 
   while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
-    colnr_T col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
-    colnr_T col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : ml_get_buf_len(curbuf,
-                                                                                      lnum) + 1;
+    colnr_T col1 = 0;
+    colnr_T col2 = 0;
+    if ((eap->col1 > 0 || eap->col2 > 0) &&
+        eap->addr_count == 2) {
+      col1 = (lnum == eap->line1 && eap->col1 > 0) ? eap->col1 : 0;
+      // col2 = (lnum == eap->line2 && eap->col2 > 0) ? eap->col2 : 0;
+      col2 = lnum == eap->line2 && eap->col2 > 0
+             ? eap->col2
+             : ml_get_buf_len(curbuf, lnum) + 1;
+    }
 
     global_exe_one(cmd, lnum, col1, col2);
     os_breakcheck();
