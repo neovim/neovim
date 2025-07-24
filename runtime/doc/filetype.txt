@@ -905,6 +905,15 @@ Linting of treesitter queries for installed parsers using
 To disable linting completely, set >lua
 
 	vim.g.query_lint_on = {}
+
+Automatic reload of treesitter queries for installed parsers is enabled by
+default on `BufWritePost`. To change the events that trigger autoreload, use >lua
+
+	vim.g.query_autoreload_on = { 'InsertLeave', 'TextChanged' }
+<
+To disable autoreload completely, set >lua
+
+	vim.g.query_autoreload_on = {}
 <
 
 QF QUICKFIX					    *qf.vim* *ft-qf-plugin*
