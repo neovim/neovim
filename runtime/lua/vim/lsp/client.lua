@@ -1162,7 +1162,7 @@ end
 --- @param method (vim.lsp.protocol.Method.ServerToClient) LSP method name
 --- @param params (table) The parameters for that method
 --- @return any result
---- @return lsp.ResponseError error code and message set in case an exception happens during the request.
+--- @return lsp.ResponseError? error code and message set in case an exception happens during the request.
 function Client:_server_request(method, params)
   log.trace('server_request', method, params)
   local handler = self:_resolve_handler(method)
