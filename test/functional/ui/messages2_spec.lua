@@ -202,13 +202,19 @@ describe('messages2', function()
     screen:expect_unchanged()
   end)
 
-  it("'readonly' warning can be read", function()
+  it('showmode does not overwrite important messages', function()
     command('set readonly')
     feed('i')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
       {19:W10: Warning: Changing a readonly file}               |
+    ]])
+    feed('<Esc>Qi')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {9:E354: Invalid register name: '^@'}                    |
     ]])
   end)
 end)

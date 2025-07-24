@@ -388,7 +388,7 @@ function M.msg_show(kind, content, replace_last, _, append)
       end
       -- Store the time when an important message was emitted in order to not overwrite
       -- it with 'last' virt_text in the cmdline so that the user has a chance to read it.
-      M.cmd.last_emsg = kind == 'emsg' or kind == 'wmsg' and os.time() or M.cmd.last_emsg
+      M.cmd.last_emsg = (kind == 'emsg' or kind == 'wmsg') and os.time() or M.cmd.last_emsg
       -- Should clear the search count now, mark itself is cleared by invalidate.
       M.virt.last[M.virt.idx.search][1] = nil
     end
