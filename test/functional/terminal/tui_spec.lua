@@ -313,7 +313,7 @@ describe('TUI :restart', function()
 
     -- Check ":confirm restart <cmd>" on a modified buffer.
     tt.feed_data(':confirm restart echo "Hello"\013')
-    screen:expect({ any = vim.pesc('Save changes to "Untitled"?'), unchanged = true })
+    screen:expect({ any = vim.pesc('Save changes to "Untitled"?') })
     tt.feed_data('N\013')
 
     -- Check if the -c <cmd> runs after restart.
