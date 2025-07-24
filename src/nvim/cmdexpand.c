@@ -1285,6 +1285,8 @@ char *addstar(char *fname, size_t len, int context)
         || context == EXPAND_FILETYPE
         || context == EXPAND_KEYMAP
         || context == EXPAND_PACKADD
+        || context == EXPAND_PACKUPDATE
+        || context == EXPAND_PACKDELETE
         || context == EXPAND_RUNTIME
         || ((context == EXPAND_TAGS_LISTFILES || context == EXPAND_TAGS)
             && fname[0] == '/')
@@ -2283,6 +2285,16 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_pattern = (char *)arg;
     break;
 
+  case CMD_packupdate:
+    xp->xp_context = EXPAND_PACKUPDATE;
+    xp->xp_pattern = (char *)arg;
+    break;
+
+  case CMD_packdelete:
+    xp->xp_context = EXPAND_PACKDELETE;
+    xp->xp_pattern = (char *)arg;
+    break;
+
   case CMD_runtime:
     set_context_in_runtime_cmd(xp, arg);
     break;
@@ -2836,6 +2848,34 @@ static char *get_healthcheck_names(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   return NULL;
 }
 
+/// Completion for |:packupdate| and |:packdelete| command.
+///
+/// Given to ExpandGeneric() to obtain all available package names managed by vim.pack.
+/// @param[in] idx  Index of the item.
+/// @param[in] xp  Not used.
+static char *get_managed_pack_names(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  static Object names = OBJECT_INIT;
+  static unsigned last_gen = 0;
+
+  if (last_gen != get_cmdline_last_prompt_id() || last_gen == 0) {
+    Array a = ARRAY_DICT_INIT;
+    Error err = ERROR_INIT;
+    Object res = NLUA_EXEC_STATIC("return vim.pack._get_managed_pack_names()", a, kRetObject, NULL,
+                                  &err);
+    api_clear_error(&err);
+    api_free_object(names);
+    names = res;
+    last_gen = get_cmdline_last_prompt_id();
+  }
+
+  if (names.type == kObjectTypeArray && idx < (int)names.data.array.size
+      && names.data.array.items[idx].type == kObjectTypeString) {
+    return names.data.array.items[idx].data.string.data;
+  }
+  return NULL;
+}
+
 /// Do the expansion based on xp->xp_context and "rmp".
 static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches, int *numMatches)
 {
@@ -2878,6 +2918,8 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_SCRIPTNAMES, get_scriptnames_arg, true, false },
     { EXPAND_RETAB, get_retab_arg, true, true },
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
+    { EXPAND_PACKUPDATE, get_managed_pack_names, false, false },
+    { EXPAND_PACKDELETE, get_managed_pack_names, false, false },
   };
   int ret = FAIL;
 

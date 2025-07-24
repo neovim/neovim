@@ -1346,6 +1346,31 @@ void ex_packadd(exarg_T *eap)
   xfree(pat);
 }
 
+// ":packupdate[!] {name}"
+void ex_packupdate(exarg_T *eap)
+{
+  Error err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 2);
+
+  ADD_C(args, CSTR_AS_OBJ(eap->arg));
+  ADD_C(args, BOOLEAN_OBJ(eap->forceit));
+
+  NLUA_EXEC_STATIC("vim.pack._ex_packupdate(...)", args, kRetNilBool, NULL, &err);
+  api_clear_error(&err);
+}
+
+// ":packdelete {name}"
+void ex_packdelete(exarg_T *eap)
+{
+  Error err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 1);
+
+  ADD_C(args, CSTR_AS_OBJ(eap->arg));
+
+  NLUA_EXEC_STATIC("vim.pack._ex_packdelete(...)", args, kRetNilBool, NULL, &err);
+  api_clear_error(&err);
+}
+
 static void ExpandRTDir_int(char *pat, size_t pat_len, int flags, bool keep_ext, garray_T *gap,
                             char *dirnames[])
 {

@@ -171,6 +171,7 @@ EDITOR
   commands.
 • 'wildchar' now enables completion in search contexts using |/|, |?|, |:g|, |:v|
    and |:vimgrep| commands.
+• |:packupdate| and |:packdelete|
 
 EVENTS
 
