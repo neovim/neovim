@@ -67,6 +67,14 @@ describe(':checkhealth', function()
     assert_alive()
   end)
 
+  it('cmdline completion works with multiple args #35054', function()
+    clear()
+    n.feed(':checkhealth vim.ls<Tab>')
+    eq('checkhealth vim.lsp', fn.getcmdline())
+    n.feed(' vim.prov<Tab>')
+    eq('checkhealth vim.lsp vim.provider', fn.getcmdline())
+  end)
+
   it('vim.g.health', function()
     clear {
       args_rm = { '-u' },
