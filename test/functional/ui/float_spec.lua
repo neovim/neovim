@@ -1855,6 +1855,11 @@ describe('float window', function()
         ]],
         }
       end
+
+      api.nvim_win_set_config(win, { border = '+,-,+,|,+,-,+,|' })
+      eq({ '+', '-', '+', '|', '+', '-', '+', '|' }, api.nvim_win_get_config(win).border)
+      eq('invalid number of border chars', pcall_err(api.nvim_win_set_config, win, { border = '+,-,+,|,+,-,+,|,|' }))
+      eq('invalid border char', pcall_err(api.nvim_win_set_config, win, { border = '+,-,+,|,+,,+,|,' }))
     end)
 
     it('validates title title_pos', function()

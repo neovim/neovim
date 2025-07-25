@@ -950,6 +950,46 @@ static bool parse_bordertext_pos(win_T *wp, String bordertext_pos, BorderTextTyp
   return true;
 }
 
+static bool parse_comma_separated_border(const char *border_str, Object *style_out, Error *err)
+{
+  if (!strchr(border_str, ',')) {
+    return false;
+  }
+
+  Array border_chars = ARRAY_DICT_INIT;
+  char *p = (char *)border_str;
+  char part[MAX_SCHAR_SIZE] = { 0 };
+  int count = 0;
+
+  while (*p != NUL) {
+    if (count >= 8) {
+      api_free_array(border_chars);
+      api_set_error(err, kErrorTypeValidation, "invalid number of border chars");
+      return false;
+    }
+
+    size_t part_len = copy_option_part(&p, part, sizeof(part), ",");
+    if (part_len == 0 || part[0] == NUL) {
+      api_free_array(border_chars);
+      api_set_error(err, kErrorTypeValidation, "invalid border char");
+      return false;
+    }
+
+    String str = cstr_to_string(part);
+    ADD(border_chars, STRING_OBJ(str));
+    count++;
+  }
+
+  if (count != 8) {
+    api_free_array(border_chars);
+    api_set_error(err, kErrorTypeValidation, "invalid number of border chars");
+    return false;
+  }
+
+  *style_out = ARRAY_OBJ(border_chars);
+  return true;
+}
+
 static void parse_border_style(Object style, WinConfig *fconfig, Error *err)
 {
   struct {
@@ -1035,7 +1075,15 @@ static void parse_border_style(Object style, WinConfig *fconfig, Error *err)
       fconfig->title = false;
       fconfig->footer = false;
       return;
+    } else if (strchr(str.data, ',')) {
+      Object comma_style;
+      if (parse_comma_separated_border(str.data, &comma_style, err)) {
+        parse_border_style(comma_style, fconfig, err);
+        api_free_object(comma_style);
+      }
+      return;
     }
+
     for (size_t i = 0; defaults[i].name; i++) {
       if (strequal(str.data, defaults[i].name)) {
         memcpy(chars, defaults[i].chars, sizeof(defaults[i].chars));
@@ -1073,37 +1121,12 @@ bool parse_winborder(WinConfig *fconfig, Error *err)
   if (!fconfig) {
     return false;
   }
+
   Object style = OBJECT_INIT;
-
   if (strchr(p_winborder, ',')) {
-    Array border_chars = ARRAY_DICT_INIT;
-    char *p = p_winborder;
-    char part[MAX_SCHAR_SIZE] = { 0 };
-    int count = 0;
-
-    while (*p != NUL) {
-      if (count >= 8) {
-        api_free_array(border_chars);
-        return false;
-      }
-
-      size_t part_len = copy_option_part(&p, part, sizeof(part), ",");
-      if (part_len == 0 || part[0] == NUL) {
-        api_free_array(border_chars);
-        return false;
-      }
-
-      String str = cstr_to_string(part);
-      ADD(border_chars, STRING_OBJ(str));
-      count++;
-    }
-
-    if (count != 8) {
-      api_free_array(border_chars);
+    if (!parse_comma_separated_border(p_winborder, &style, err)) {
       return false;
     }
-
-    style = ARRAY_OBJ(border_chars);
   } else {
     style = CSTR_TO_OBJ(p_winborder);
   }
