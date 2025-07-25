@@ -55,7 +55,9 @@ describe('vim.secure', function()
       })
 
       local cwd = fn.getcwd()
-      local msg = cwd .. pathsep .. 'Xfile is not trusted.'
+      local msg = cwd
+        .. pathsep
+        .. 'Xfile is not trusted. To enable this exrc file, (v)iew it and run `:trust`.'
       if #msg >= screen._width then
         pending('path too long')
         return
@@ -69,7 +71,7 @@ describe('vim.secure', function()
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
         {3:]] .. msg .. [[}{MATCH: +}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+        {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('d')
       screen:expect([[
@@ -91,14 +93,21 @@ describe('vim.secure', function()
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
         {3:]] .. msg .. [[}{MATCH: +}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+        {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
-      feed('a')
+      feed('v')
+      feed(':trust<CR>')
       screen:expect([[
-        ^{MATCH: +}|
-        {1:~{MATCH: +}}|*6
+        ^let g:foobar = 42{MATCH: +}|
+        {1:~{MATCH: +}}|*2
+        {2:]] .. fn.fnamemodify(cwd, ':~') .. pathsep .. [[Xfile [RO]{MATCH: +}}|
         {MATCH: +}|
+        {1:~{MATCH: +}}|
+        {4:[No Name]{MATCH: +}}|
+        Allowed "]] .. cwd .. pathsep .. [[Xfile" in trust database.{MATCH: +}|
       ]])
+      -- close the split for the next test below.
+      feed(':q<CR>')
 
       local hash = fn.sha256(assert(read_file('Xfile')))
       trust = assert(read_file(stdpath('state') .. pathsep .. 'trust'))
@@ -114,7 +123,7 @@ describe('vim.secure', function()
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
         {3:]] .. msg .. [[}{MATCH: +}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+        {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('i')
       screen:expect([[
@@ -133,7 +142,7 @@ describe('vim.secure', function()
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
         {3:]] .. msg .. [[}{MATCH: +}|
-        {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
+        {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('v')
       screen:expect([[
