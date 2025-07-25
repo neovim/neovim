@@ -130,9 +130,9 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
+
     -- :edit doesn't apply on prompt buffer
-    local can_edit, _ = pcall(api.nvim_command, 'edit')
-    eq(can_edit, false, ':edit command in prompt buffer throws error')
+    eq('Vim(edit):cannot :edit a prompt buffer', t.pcall_err(api.nvim_command, 'edit'))
 
     feed('<C-U>exit\n')
     screen:expect([[
