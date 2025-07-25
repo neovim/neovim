@@ -10628,6 +10628,8 @@ function vim.fn.undofile(name) end
 --- @return vim.fn.undotree.ret
 function vim.fn.undotree(buf) end
 
+--- Note: Prefer |vim.list.unique()| in Lua.
+---
 --- Remove second and succeeding copies of repeated adjacent
 --- {list} items in-place.  Returns {list}.  If you want a list
 --- to remain unmodified make a copy first: >vim
