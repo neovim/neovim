@@ -28,7 +28,7 @@ M.__index = M
 ---@param self T
 ---@param bufnr integer
 ---@return T
-function M:new(bufnr)
+function M.new(self, bufnr)
   -- `self` in the `new()` function refers to the concrete type (i.e., the metatable).
   -- `Class` may be a subtype of `Capability`, as it supports inheritance.
   ---@type vim.lsp.Capability

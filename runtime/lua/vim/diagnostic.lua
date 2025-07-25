@@ -2428,19 +2428,19 @@ function M.open_float(opts, ...)
     end
   end, { buffer = float_bufnr, remap = false })
 
-  --- @diagnostic disable-next-line: deprecated
-  local add_highlight = api.nvim_buf_add_highlight
-
   for i, hl in ipairs(highlights) do
     local line = lines[i]
     local prefix_len = hl.prefix and hl.prefix.length or 0
     local suffix_len = hl.suffix and hl.suffix.length or 0
     if prefix_len > 0 then
-      add_highlight(float_bufnr, -1, hl.prefix.hlname, i - 1, 0, prefix_len)
+      --- @diagnostic disable-next-line: deprecated
+      api.nvim_buf_add_highlight(float_bufnr, -1, hl.prefix.hlname, i - 1, 0, prefix_len)
     end
-    add_highlight(float_bufnr, -1, hl.hlname, i - 1, prefix_len, #line - suffix_len)
+    --- @diagnostic disable-next-line: deprecated
+    api.nvim_buf_add_highlight(float_bufnr, -1, hl.hlname, i - 1, prefix_len, #line - suffix_len)
     if suffix_len > 0 then
-      add_highlight(float_bufnr, -1, hl.suffix.hlname, i - 1, #line - suffix_len, -1)
+      --- @diagnostic disable-next-line: deprecated
+      api.nvim_buf_add_highlight(float_bufnr, -1, hl.suffix.hlname, i - 1, #line - suffix_len, -1)
     end
   end
 

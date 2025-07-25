@@ -263,7 +263,7 @@ local valid_encodings = {
 
 --- Normalizes {encoding} to valid LSP encoding names.
 --- @param encoding string? Encoding to normalize
---- @return 'utf-8'|'utf-16'|'utf-32' # normalized encoding name
+--- @return lsp.PositionEncodingKind # normalized encoding name
 local function validate_encoding(encoding)
   validate('encoding', encoding, 'string', true)
   if not encoding then

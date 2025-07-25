@@ -81,7 +81,7 @@ local query = vim.treesitter.query.parse(
     (#set! @code lang @_lang))
 ]]
 )
-local root = parser:parse()[1]:root()
+local root = assert(assert(parser:parse())[1]):root()
 
 for _, match, metadata in query:iter_matches(root, 0, 0, -1) do
   for id, nodes in pairs(match) do
