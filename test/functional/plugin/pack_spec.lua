@@ -151,8 +151,12 @@ describe('vim.pack', function()
 
       eq('basic feat-branch', out)
 
-      local rtp = n.api.nvim_list_runtime_paths()
-      eq(true, vim.tbl_contains(rtp, pack_get_plug_path('basic')))
+      local rtp = vim.tbl_map(t.fix_slashes, n.api.nvim_list_runtime_paths())
+      local plug_path = pack_get_plug_path('basic')
+      local after_dir = vim.fs.joinpath(plug_path, 'after')
+      eq(true, vim.tbl_contains(rtp, plug_path))
+      -- No 'after/' directory in runtimepath because it is not present in plugin
+      eq(false, vim.tbl_contains(rtp, after_dir))
     end)
 
     it('respects plugin/ and after/plugin/ scripts', function()
@@ -173,7 +177,7 @@ describe('vim.pack', function()
         eq(ref, out)
 
         -- Should add necessary directories to runtimepath regardless of `opts.load`
-        local rtp = n.api.nvim_list_runtime_paths()
+        local rtp = vim.tbl_map(t.fix_slashes, n.api.nvim_list_runtime_paths())
         local plug_path = pack_get_plug_path('plugindirs')
         local after_dir = vim.fs.joinpath(plug_path, 'after')
         eq(true, vim.tbl_contains(rtp, plug_path))
