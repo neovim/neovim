@@ -106,11 +106,16 @@ local function setup_repo_basic()
   git_add_commit('Add important feature', 'basic')
 end
 
-local function setup_repo_dummy()
-  init_test_repo('dummy')
+local function setup_repo_plugindirs()
+  init_test_repo('plugindirs')
 
-  repo_write_file('dummy', 'README', '# Dummy plugin')
-  git_add_commit('Initial commit for "dummy"', 'dummy')
+  repo_write_file('plugindirs', 'plugin/dirs.lua', 'vim.g._plugin = true')
+  repo_write_file('plugindirs', 'plugin/dirs.vim', 'let g:_plugin_vim=v:true')
+  repo_write_file('plugindirs', 'plugin/sub/dirs.lua', 'vim.g._plugin_sub = true')
+  repo_write_file('plugindirs', 'after/plugin/dirs.lua', 'vim.g._after_plugin = true')
+  repo_write_file('plugindirs', 'after/plugin/dirs.vim', 'let g:_after_plugin_vim=v:true')
+  repo_write_file('plugindirs', 'after/plugin/sub/dirs.lua', 'vim.g._after_plugin_sub = true')
+  git_add_commit('Initial commit for "plugindirs"', 'plugindirs')
 end
 
 -- Tests ======================================================================
@@ -119,7 +124,7 @@ describe('vim.pack', function()
   setup(function()
     n.clear()
     setup_repo_basic()
-    setup_repo_dummy()
+    setup_repo_plugindirs()
   end)
 
   before_each(function()
@@ -135,26 +140,55 @@ describe('vim.pack', function()
   end)
 
   describe('add()', function()
-    it('makes plugin available immediately', function()
+    it('installs at proper version', function()
       local out = exec_lua(function()
-        vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' } })
+        vim.pack.add({
+          { src = repos_src.basic, version = 'feat-branch' },
+        })
+        -- Should have plugin available immediately after
         return require('basic').get()
       end)
 
       eq('basic feat-branch', out)
+
+      local rtp = n.api.nvim_list_runtime_paths()
+      eq(true, vim.tbl_contains(rtp, pack_get_plug_path('basic')))
+    end)
+
+    it('respects plugin/ and after/plugin/ scripts', function()
+      local function validate(load, ref)
+        local opts = { load = load }
+        local out = exec_lua(function()
+          vim.pack.add({ repos_src.plugindirs }, opts)
+          return {
+            vim.g._plugin,
+            vim.g._plugin_vim,
+            vim.g._plugin_sub,
+            vim.g._after_plugin,
+            vim.g._after_plugin_vim,
+            vim.g._after_plugin_sub,
+          }
+        end)
+
+        eq(ref, out)
+
+        -- Should add necessary directories to runtimepath regardless of `opts.load`
+        local rtp = n.api.nvim_list_runtime_paths()
+        local plug_path = pack_get_plug_path('plugindirs')
+        local after_dir = vim.fs.joinpath(plug_path, 'after')
+        eq(true, vim.tbl_contains(rtp, plug_path))
+        eq(true, vim.tbl_contains(rtp, after_dir))
+      end
+
+      validate(nil, { true, true, true, true, true, true })
+
+      n.clear()
+      validate(false, {})
     end)
 
     pending('reports errors after loading', function()
       -- TODO
       -- Should handle (not let it terminate the function) and report errors from pack_add()
-    end)
-
-    pending('respects after/', function()
-      -- TODO
-      -- Should source 'after/plugin/' directory (even nested files) after
-      -- all 'plugin/' files are sourced in all plugins from input.
-      --
-      -- Should add 'after/' directory (if present) to 'runtimepath'
     end)
 
     pending('normalizes each spec', function()
@@ -168,13 +202,6 @@ describe('vim.pack', function()
       -- TODO
       -- Should silently ignore full duplicates (same `src`+`version`)
       -- and error on conflicts.
-    end)
-
-    pending('installs', function()
-      -- TODO
-
-      -- TODO: Should block code flow until all plugins are available on disk
-      -- and `:packadd` all of them (even just now installed) as a result.
     end)
   end)
 
@@ -197,7 +224,7 @@ describe('vim.pack', function()
     before_each(function()
       -- Ensure tested plugins were installed in previous session
       exec_lua(function()
-        vim.pack.add({ repos_src.dummy, repos_src.basic })
+        vim.pack.add({ repos_src.plugindirs, repos_src.basic })
       end)
       n.clear()
     end)
@@ -209,10 +236,11 @@ describe('vim.pack', function()
 
       -- Should first return active plugins followed by non-active
       local plug_basic_spec = { name = 'basic', src = repos_src.basic, version = 'feat-branch' }
-      local plug_dummy_spec = { name = 'dummy', src = repos_src.dummy, version = 'main' }
+      local plug_plugindirs_spec =
+        { name = 'plugindirs', src = repos_src.plugindirs, version = 'main' }
       local expected = {
         { active = true, path = pack_get_plug_path('basic'), spec = plug_basic_spec },
-        { active = false, path = pack_get_plug_path('dummy'), spec = plug_dummy_spec },
+        { active = false, path = pack_get_plug_path('plugindirs'), spec = plug_plugindirs_spec },
       }
       local actual = exec_lua(function()
         return vim.pack.get()
