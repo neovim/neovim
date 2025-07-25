@@ -11664,6 +11664,8 @@ undotree([{buf}])                                                   *undotree()*
                   (`vim.fn.undotree.ret`)
 
 uniq({list} [, {func} [, {dict}]])                                 *uniq()* *E882*
+		Note: Prefer |vim.list.unique()| in Lua.
+
 		Remove second and succeeding copies of repeated adjacent
 		{list} items in-place.  Returns {list}.  If you want a list
 		to remain unmodified make a copy first: >vim

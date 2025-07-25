@@ -2092,6 +2092,35 @@ vim.islist({t})                                                 *vim.islist()*
     See also: ~
       • |vim.isarray()|
 
+vim.list.unique({t}, {key})                                *vim.list.unique()*
+    Removes duplicate values from a list-like table in-place.
+
+    Only the first occurrence of each value is kept. The operation is
+    performed in-place and the input table is modified.
+
+    Accepts an optional `hash` argument that if provided is called for each
+    value in the list to compute a hash key for uniqueness comparison. This is
+    useful for deduplicating table values or complex objects.
+
+    Example: >lua
+
+        local t = {1, 2, 2, 3, 1}
+        vim.list.unique(t)
+        -- t is now {1, 2, 3}
+
+        local t = { {id=1}, {id=2}, {id=1} }
+        vim.list.unique(t, function(x) return x.id end)
+        -- t is now { {id=1}, {id=2} }
+<
+
+    Parameters: ~
+      • {t}    (`any[]`)
+      • {key}  (`fun(x: T): any??`) Optional hash function to determine
+               uniqueness of values
+
+    Return: ~
+        (`any[]`) The deduplicated list
+
 vim.list_contains({t}, {value})                          *vim.list_contains()*
     Checks if a list-like table (integer keys without gaps) contains `value`.
 
