@@ -2620,7 +2620,9 @@ function M.toqflist(diagnostics)
       end_lnum = v.end_lnum and (v.end_lnum + 1) or nil,
       end_col = v.end_col and (v.end_col + 1) or nil,
       text = v.message,
+      nr = tonumber(v.code),
       type = errlist_type_map[v.severity] or 'E',
+      valid = 1,
     }
     table.insert(list, item)
   end
@@ -2652,7 +2654,8 @@ function M.fromqflist(list)
       local col = math.max(0, item.col - 1)
       local end_lnum = item.end_lnum > 0 and (item.end_lnum - 1) or lnum
       local end_col = item.end_col > 0 and (item.end_col - 1) or col
-      local severity = item.type ~= '' and M.severity[item.type] or M.severity.ERROR
+      local code = item.nr > 0 and item.nr or nil
+      local severity = item.type ~= '' and M.severity[item.type:upper()] or M.severity.ERROR
       diagnostics[#diagnostics + 1] = {
         bufnr = item.bufnr,
         lnum = lnum,
@@ -2661,6 +2664,7 @@ function M.fromqflist(list)
         end_col = end_col,
         severity = severity,
         message = item.text,
+        code = code,
       }
     end
   end
