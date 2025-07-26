@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "nvim/api/keysets_defs.h"
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
@@ -15,6 +16,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/fold.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
@@ -582,5 +584,116 @@ DictAs(win_text_height_ret) nvim_win_text_height(Window window, Dict(win_text_he
   PUT_C(rv, "fill", INTEGER_OBJ(fill));
   PUT_C(rv, "end_row", INTEGER_OBJ(end_lnum - 1));
   PUT_C(rv, "end_vcol", INTEGER_OBJ(end_vcol));
+  return rv;
+}
+
+/// Add a fold to the window from {start} to {end}.
+///
+/// All row arguments are 0-indexed, inclusive.
+///
+/// Only supported for |fold-manual| and |fold-marker|.
+///
+/// @param window  Window handle, or 0 for current window.
+/// @param start   Start row of fold.
+/// @param end     End row of fold.
+/// @param opts    Optional parameters. Reserved for future use.
+void nvim_win_add_fold(Window window, Integer start, Integer end, Dict(empty) *opts, Error *err)
+  FUNC_API_SINCE(11)
+{
+  if (!foldManualAllowed(true)) {
+    return;
+  }
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return;
+  }
+
+  curwin->w_p_fen = true;
+  // Rows are zero-indexed.
+  pos_T start_pos = { start + 1, 1, 0 };
+  pos_T end_pos = { end + 1, 1, 0 };
+
+  foldCreate(win, start_pos, end_pos);
+}
+
+/// Delete a fold from the window from {start} to {end}.
+///
+/// All row arguments are 0-indexed, inclusive.
+///
+/// Only supported for |fold-manual| and |fold-marker|.
+///
+/// @param window  Window handle, or 0 for current window.
+/// @param start   Start row of fold.
+/// @param end     End row of fold.
+/// @param opts    Optional parameters:
+///                - recursive: Delete folds recursively
+void nvim_win_del_fold(Window window, Integer start, Integer end, Dict(win_del_fold) *opts, Error *err)
+  FUNC_API_SINCE(11)
+{
+  if (!foldManualAllowed(false)) {
+    return;
+  }
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return;
+  }
+
+  // Rows are zero-indexed.
+  deleteFold(win, start + 1, end + 1, opts->recursive, false);
+}
+
+/// Get fold information from the window.
+///
+/// All row arguments are 0-indexed, inclusive.
+///
+/// @param window  Window handle, or 0 for current window.
+/// @param opts    Optional parameters:
+///                - start_row: get folds from this row
+///                - end_row: get folds up to this row
+Array nvim_win_get_folds(Window window, Dict(empty) *opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(11)
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    goto cleanup;
+  }
+
+  garray_T *gap = &win->w_folds;
+
+  return folds_to_fold_dict(gap, arena, win, 0);
+
+cleanup:
+  return (Array)ARRAY_DICT_INIT;
+}
+
+static Array folds_to_fold_dict(garray_T *folds, Arena *arena, win_T *wp, int parent_start) {
+  fold_T *fp = (fold_T *)folds->ga_data;
+  int fold_count = folds->ga_len;
+  Array rv = arena_array(arena, fold_count);
+  for (int i = 0; i < fold_count; i++) {
+    fold_T fold = fp[i];
+    // Nested fold positions are relative to the parent
+    int top = fold.fd_top + parent_start;
+    Dict fold_dict = arena_dict(arena, 4);
+    char *state;
+    switch (fold.fd_flags) {
+      case FD_CLOSED:
+        state = "closed";
+        break;
+      case FD_OPEN:
+        state = "open";
+        break;
+      case FD_LEVEL:
+        // BUG: Still does not update for e.g. open nested folds after "zM"
+        state = foldLevelWin(wp, top) >= wp->w_p_fdl ? "closed" : "open";
+        break;
+    }
+    PUT_C(fold_dict, "state", CSTR_TO_ARENA_OBJ(arena, state));
+    PUT_C(fold_dict, "start_row", INTEGER_OBJ(top - 1));
+    PUT_C(fold_dict, "end_row", INTEGER_OBJ(top + fold.fd_len - 2));
+    Array inner_folds = folds_to_fold_dict(&fold.fd_nested, arena, wp, top);
+    PUT_C(fold_dict, "children", ARRAY_OBJ(inner_folds));
+    ADD_C(rv, DICT_OBJ(fold_dict));
+  }
   return rv;
 }
