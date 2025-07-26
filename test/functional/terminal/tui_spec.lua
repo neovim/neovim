@@ -325,6 +325,128 @@ describe('TUI :restart', function()
   end)
 end)
 
+describe('TUI :connect', function()
+  if is_os('win') then
+    -- :connect relies on :detach which currently doesn't work on windows
+    return
+  end
+
+  it('requires an argument', function()
+    n.clear()
+    finally(function()
+      n.check_close()
+    end)
+
+    local server1 = new_pipename()
+    local screen = tt.setup_child_nvim({
+      '--listen',
+      server1,
+      '-u',
+      'NONE',
+    })
+    tt.feed_data(':connect\013')
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*3
+      [No Name]                       0,0-1          All|
+      E471: Argument required                           |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    screen:detach()
+  end)
+  it('leaves the current server running', function()
+    n.clear()
+    finally(function()
+      n.check_close()
+    end)
+
+    local server1 = new_pipename()
+    local screen = tt.setup_child_nvim({
+      '--listen',
+      server1,
+      '-u',
+      'NONE',
+    })
+    screen:detach()
+
+    local server2 = new_pipename()
+    local screen2 = tt.setup_child_nvim({
+      '--listen',
+      server2,
+      '-u',
+      'NONE',
+    })
+    tt.feed_data('iThis is server 2.\027')
+    tt.feed_data(':connect ' .. server1 .. '\013')
+
+    screen2:expect({
+      any = [[Process exited]],
+    })
+
+    screen2:detach()
+
+    local screen3 = tt.setup_child_nvim({
+      '--remote-ui',
+      '--server',
+      server2,
+    })
+    screen3:expect([[
+      This is server 2^.                                 |
+      ~                                                 |*3
+      {2:[No Name] [+]                   1,17           All}|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    screen3:detach()
+  end)
+  it('connect! connects to a different server and stops the current one', function()
+    n.clear()
+    finally(function()
+      n.check_close()
+    end)
+
+    local server1 = new_pipename()
+    local screen1 = tt.setup_child_nvim({
+      '--listen',
+      server1,
+    })
+    tt.feed_data('iThis is server 1')
+
+    screen1:detach()
+
+    local server2 = new_pipename()
+    local screen2 = tt.setup_child_nvim({
+      '--listen',
+      server2,
+    })
+    tt.feed_data('\027:connect! ' .. server1 .. '\013')
+    screen2:expect([[
+      This is server 1^                                  |
+      ~                                                 |*3
+      [No Name] [+]                   1,17           All|
+      -- INSERT --                                      |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    screen2:detach()
+
+    local screen3 = tt.setup_child_nvim({
+      '--remote-ui',
+      '--server',
+      server2,
+    })
+    screen3:expect([[
+      Remote ui failed to start: connection refused     |
+                                                        |
+      [Process exited 1]^                                |
+                                                        |*3
+      {5:-- TERMINAL --}                                    |
+    ]])
+    screen3:detach()
+  end)
+end)
+
 if t.skip(is_os('win')) then
   return
 end
