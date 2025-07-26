@@ -305,12 +305,32 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   msg_start();
   msg_clr_eos();
   bool need_clear = false;
+  bool is_kind_progress = strcmp(kind, MSG_KIND_PROGRESS) == 0;
+  MessageHistoryEntry *hist_msg = NULL;
   msg_ext_history = history;
   if (kind != NULL) {
     msg_ext_set_kind(kind);
   }
   is_multihl = true;
   msg_ext_skip_flush = true;
+
+  if (history && (is_kind_progress || kv_size(hl_msg))) {
+    id = msg_hist_add_multihl(id, hl_msg, false, ext_data);
+  }
+
+  if (is_kind_progress) {
+    hist_msg = msg_find_by_id(id);
+  }
+  if (is_kind_progress && hist_msg && hist_msg->ext_data.title.size != 0) {
+    // progress message are special displayed as "title: msg...percent%"
+    // this block draws the "title:" before the progress-message
+    String title = cstr_as_string(concat_str(hist_msg->ext_data.title.data, ": "));
+    msg_multiline(title, 0, true, false, &need_clear);
+    api_free_string(title);
+    if (hl_msg.size == 0) {
+      hl_msg = hist_msg->msg;
+    }
+  }
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     if (err) {
@@ -320,8 +340,11 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     }
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
-  if (history && kv_size(hl_msg)) {
-    id = msg_hist_add_multihl(id, hl_msg, false, ext_data);
+  if (is_kind_progress && hist_msg && hist_msg->ext_data.percent >= 0) {
+    // this block draws the "...percent%" before the progress-message
+    char buf[10];
+    sprintf(buf, "...%ld%%", (long)hist_msg->ext_data.percent);
+    msg_multiline(cstr_as_string(buf), 0, true, false, &need_clear);
   }
   msg_ext_skip_flush = false;
   is_multihl = false;
@@ -1106,7 +1129,9 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     entry->ext_data.status.size = 0;
     entry->ext_data.percent = -1;
   }
-  entry->msg = msg;
+  if (entry->msg.size == 0 || msg.size != 0) {
+    entry->msg = msg;
+  }
   entry->temp = temp;
   entry->kind = msg_ext_kind;
   entry->prev = msg_hist_last;
@@ -1124,7 +1149,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
       }
       entry->ext_data.title = copy_string(ext_data->title, NULL);
     }
-    if (entry->ext_data.percent == -1 || ext_data->percent > 0) {
+    if (entry->ext_data.percent == -1 || ext_data->percent >= 0) {
       entry->ext_data.percent = ext_data->percent;
     }
   }
