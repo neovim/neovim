@@ -407,11 +407,9 @@ function M.signature_help(config)
       local sfx = total > 1
           and string.format(' (%d/%d)%s', idx, total, can_cycle and ' (<C-s> to cycle)' or '')
         or ''
-      local title = string.format('Signature Help: %s%s', client.name, sfx)
-      if config.border then
-        config.title = title
-      else
-        table.insert(lines, 1, '# ' .. title)
+      config.title = config.title or string.format('Signature Help: %s%s', client.name, sfx)
+      if not config.border then
+        table.insert(lines, 1, '# ' .. config.title)
         if hl then
           hl[1] = hl[1] + 1
           hl[3] = hl[3] + 1
