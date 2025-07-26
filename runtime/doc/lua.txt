@@ -191,7 +191,7 @@ IMPORTING LUA MODULES                                        *lua-module-load*
 Modules are searched for under the directories specified in 'runtimepath' and
 |packages-runtimepath|, in the order they appear in the output of this command
 >vim
-	:echo nvim_list_runtime_paths()
+    :echo nvim_list_runtime_paths()
 <
 Any "." in the module name is treated as a directory separator when searching.
 For a module `foo.bar`, each directory is searched for `lua/foo/bar.lua`, then
@@ -229,6 +229,11 @@ Note:
   |package.path| and |package.cpath|. Given that there are some badly written
   plugins using shell, which will not work with paths containing semicolons,
   it is better to not have them in 'runtimepath' at all.
+
+                                                         *lua-script-location*
+To get its own location, Lua scripts/modules can use |debug.getinfo()|: >
+    debug.getinfo(1, 'S').source:sub(2)
+<
 
 ==============================================================================
 COMMANDS                                                        *lua-commands*
@@ -1783,6 +1788,10 @@ SystemObj:write({data})                                    *SystemObj:write()*
 
 vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
     Runs a system command or throws an error if {cmd} cannot be run.
+
+    The command runs directly (not in 'shell') so shell builtins such as
+    "echo" in cmd.exe, cmdlets in powershell, or "help" in bash, will not work
+    unless you actually invoke a shell: `vim.system({'bash', '-c', 'help'})`.
 
     Examples: >lua
         local on_exit = function(obj)

@@ -882,6 +882,12 @@ must handle.
 	clearing the screen (messages sent by other "msg_" events below should
 	not be affected).
 
+	Guidance: The "clear messages" behavior is UI-specific. If the UI
+	presents messages in a new window, it may choose to clear messages
+	after a few seconds. If the UI presents messages in a persistent area
+	(e.g. cmdline), it should clear messages at the start of the next
+	batch (typically, the next event-loop cycle).
+
 ["msg_showmode", content] ~
 	Shows 'showmode' and |recording| messages. `content` has the same
 	format as in "msg_show". This event is sent with empty `content` to
