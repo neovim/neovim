@@ -1665,6 +1665,12 @@ M.cmds = {
     func = 'buflist_list',
   },
   {
+    command = 'lsp',
+    flags = bit.bor(NEEDARG, EXTRA, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_lsp',
+  },
+  {
     command = 'move',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, CMDWIN, LOCK_OK, MODIFY),
     addr_type = 'ADDR_LINES',

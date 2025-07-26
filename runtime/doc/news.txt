@@ -216,6 +216,7 @@ LSP
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_linkedEditingRange
 • Support for related documents in pull diagnostics:
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
+• |:lsp| command to restart/stop LSP servers.
 
 LUA
 
