@@ -34,6 +34,7 @@ local function check_active_features()
   local features = {
     require('vim.lsp.semantic_tokens').__STHighlighter,
     require('vim.lsp._folding_range').__FoldEvaluator,
+    require('vim.lsp.document_highlight').__DocumentHighlighter,
   }
   for _, feature in ipairs(features) do
     ---@type string[]
