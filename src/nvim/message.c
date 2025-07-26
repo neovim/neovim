@@ -292,6 +292,7 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
 // Avoid starting a new message for each chunk and adding message to history in msg_keep().
 static bool is_multihl = false;
 
+
 /// Print message chunks, each with their own highlight ID.
 ///
 /// @param hl_msg Message chunks
@@ -306,7 +307,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   msg_clr_eos();
   bool need_clear = false;
   bool is_kind_progress = strcmp(kind, MSG_KIND_PROGRESS) == 0;
-  MessageHistoryEntry *hist_msg = NULL;
   msg_ext_history = history;
   if (kind != NULL) {
     msg_ext_set_kind(kind);
@@ -314,38 +314,26 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   is_multihl = true;
   msg_ext_skip_flush = true;
 
+  if (!is_kind_progress) {
+    for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
+      HlMessageChunk chunk = kv_A(hl_msg, i);
+      if (err) {
+        emsg_multiline(chunk.text.data, kind, chunk.hl_id, true);
+      } else {
+        msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
+      }
+      assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
+    }
+  }
+
   if (history && (is_kind_progress || kv_size(hl_msg))) {
     id = msg_hist_add_multihl(id, hl_msg, false, ext_data);
   }
 
   if (is_kind_progress) {
-    hist_msg = msg_find_by_id(id);
+    draw_progress_message(id);
   }
-  if (is_kind_progress && hist_msg && hist_msg->ext_data.title.size != 0) {
-    // progress message are special displayed as "title: msg...percent%"
-    // this block draws the "title:" before the progress-message
-    String title = cstr_as_string(concat_str(hist_msg->ext_data.title.data, ": "));
-    msg_multiline(title, 0, true, false, &need_clear);
-    api_free_string(title);
-    if (hl_msg.size == 0) {
-      hl_msg = hist_msg->msg;
-    }
-  }
-  for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
-    HlMessageChunk chunk = kv_A(hl_msg, i);
-    if (err) {
-      emsg_multiline(chunk.text.data, kind, chunk.hl_id, true);
-    } else {
-      msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
-    }
-    assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
-  }
-  if (is_kind_progress && hist_msg && hist_msg->ext_data.percent >= 0) {
-    // this block draws the "...percent%" before the progress-message
-    char buf[10];
-    sprintf(buf, "...%ld%%", (long)hist_msg->ext_data.percent);
-    msg_multiline(cstr_as_string(buf), 0, true, false, &need_clear);
-  }
+
   msg_ext_skip_flush = false;
   is_multihl = false;
   no_wait_return--;
@@ -1089,6 +1077,35 @@ static void emit_progress_event(MessageHistoryEntry *msg)
                        NULL, &DICT_OBJ(data));
   kv_destroy(messages);
 }
+
+static void draw_progress_message(MsgID msg_id) {
+  MessageHistoryEntry *hist_msg = NULL;
+  bool need_clear = false;
+
+  hist_msg = msg_find_by_id(msg_id);
+  if (!hist_msg) {
+    return;
+  }
+  // progress message are special displayed as "title: msg...percent%"
+  if (hist_msg->ext_data.title.size != 0) {
+    // this block draws the "title:" before the progress-message
+    String title = cstr_as_string(concat_str(hist_msg->ext_data.title.data, ": "));
+    msg_multiline(title, 0, true, false, &need_clear);
+    api_free_string(title);
+  }
+  for (uint32_t i = 0; i < kv_size(hist_msg->msg); i++) {
+    HlMessageChunk chunk = kv_A(hist_msg->msg, i);
+    msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
+  }
+  if (hist_msg && hist_msg->ext_data.percent >= 0) {
+    // this block draws the "...percent%" before the progress-message
+    char buf[10];
+    sprintf(buf, "...%ld%%", (long)hist_msg->ext_data.percent);
+    msg_multiline(cstr_as_string(buf), 0, true, false, &need_clear);
+  }
+}
+
+
 
 static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageExtData *ext_data)
 {
