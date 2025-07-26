@@ -292,7 +292,6 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
 // Avoid starting a new message for each chunk and adding message to history in msg_keep().
 static bool is_multihl = false;
 
-
 /// Print message chunks, each with their own highlight ID.
 ///
 /// @param hl_msg Message chunks
@@ -326,7 +325,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     }
   }
 
-  if (history && (is_kind_progress || kv_size(hl_msg))) {
+  if (is_kind_progress || (history && kv_size(hl_msg))) {
     id = msg_hist_add_multihl(id, hl_msg, false, ext_data);
   }
 
@@ -1078,7 +1077,8 @@ static void emit_progress_event(MessageHistoryEntry *msg)
   kv_destroy(messages);
 }
 
-static void draw_progress_message(MsgID msg_id) {
+static void draw_progress_message(MsgID msg_id)
+{
   MessageHistoryEntry *hist_msg = NULL;
   bool need_clear = false;
 
@@ -1104,8 +1104,6 @@ static void draw_progress_message(MsgID msg_id) {
     msg_multiline(cstr_as_string(buf), 0, true, false, &need_clear);
   }
 }
-
-
 
 static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageExtData *ext_data)
 {
@@ -1140,6 +1138,8 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     // Allocate an entry and add the message at the end of the history.
     entry = xmalloc(sizeof(MessageHistoryEntry));
     entry->message_id = msg_id_next++;
+    entry->msg.items = NULL;
+    entry->msg.size = 0;
     entry->ext_data.title.data = NULL;
     entry->ext_data.title.size = 0;
     entry->ext_data.status.data = NULL;
