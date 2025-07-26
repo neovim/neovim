@@ -122,6 +122,17 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
       end,
     })
 <
+
+COMMANDS                                                    *:lsp*
+
+:lsp restart {names}                                      *:lsp-restart*
+    Restarts the given language servers. If no names are given, all active
+    servers are restarted.
+
+:lsp stop {names}                                         *:lsp-stop*
+    Stops the given language servers. If no names are given, all servers
+    on the current buffer are stopped.
+
 ==============================================================================
 CONFIG                                                  *lsp-config*
 
@@ -956,12 +967,6 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
     Examples: >lua
         vim.lsp.enable('clangd')
         vim.lsp.enable({'luals', 'pyright'})
-<
-
-    Example: *lsp-restart* Passing `false` stops and detaches the client(s).
-    Thus you can "restart" LSP by disabling and re-enabling a given config: >lua
-        vim.lsp.enable('clangd', false)
-        vim.lsp.enable('clangd', true)
 <
 
     Example: To dynamically decide whether LSP is activated, define a

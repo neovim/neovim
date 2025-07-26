@@ -7911,6 +7911,19 @@ static void ex_terminal(exarg_T *eap)
   do_cmdline_cmd(ex_cmd);
 }
 
+/// ":lsp {subcmd} {clients}"
+static void ex_lsp(exarg_T *eap)
+{
+  Error err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 2);
+
+  ADD_C(args, CSTR_AS_OBJ(eap->arg));
+  ADD_C(args, BOOLEAN_OBJ(eap->forceit));
+
+  NLUA_EXEC_STATIC("require'vim.lsp._cmd'._ex_lsp(...)", args, kRetNilBool, NULL, &err);
+  api_clear_error(&err);
+}
+
 /// ":fclose"
 static void ex_fclose(exarg_T *eap)
 {

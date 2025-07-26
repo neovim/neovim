@@ -1282,7 +1282,7 @@ func Test_cmdline_complete_various()
 
   " completion for a command with a trailing command
   call feedkeys(":ls | ls\<C-A>\<C-B>\"\<CR>", 'xt')
-  call assert_equal("\"ls | ls", @:)
+  call assert_equal("\"ls | ls lsp", @:)
 
   " completion for a command with an CTRL-V escaped argument
   call feedkeys(":ls \<C-V>\<C-V>a\<C-A>\<C-B>\"\<CR>", 'xt')
