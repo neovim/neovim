@@ -12848,6 +12848,8 @@ M.funcs = {
     base = 1,
     tags = { 'E882' },
     desc = [=[
+      Note: Prefer |vim.list.unique()| in Lua.
+
       Remove second and succeeding copies of repeated adjacent
       {list} items in-place.  Returns {list}.  If you want a list
       to remain unmodified make a copy first: >vim

@@ -227,6 +227,7 @@ LUA
 • |vim.version.intersect()| computes intersection of two version ranges.
 • |Iter:take()| and |Iter:skip()| now optionally accept predicates.
 • Built-in plugin manager |vim.pack|
+• |vim.list.unique()| to deduplicate lists.
 
 OPTIONS
 

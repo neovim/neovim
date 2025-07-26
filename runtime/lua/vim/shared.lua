@@ -348,6 +348,62 @@ function vim.list_contains(t, value)
   return false
 end
 
+vim.list = {}
+
+--- Removes duplicate values from a list-like table in-place.
+---
+--- Only the first occurrence of each value is kept.
+--- The operation is performed in-place and the input table is modified.
+---
+--- Accepts an optional `hash` argument that if provided is called for each
+--- value in the list to compute a hash key for uniqueness comparison.
+--- This is useful for deduplicating table values or complex objects.
+---
+--- Example:
+--- ```lua
+---
+--- local t = {1, 2, 2, 3, 1}
+--- vim.list.unique(t)
+--- -- t is now {1, 2, 3}
+---
+--- local t = { {id=1}, {id=2}, {id=1} }
+--- vim.list.unique(t, function(x) return x.id end)
+--- -- t is now { {id=1}, {id=2} }
+--- ```
+---
+--- @generic T
+--- @param t T[]
+--- @param key? fun(x: T): any? Optional hash function to determine uniqueness of values
+--- @return T[] : The deduplicated list
+function vim.list.unique(t, key)
+  vim.validate('t', t, 'table')
+  local seen = {} --- @type table<any,boolean>
+
+  local finish = #t
+  key = key or function(a)
+    return a
+  end
+
+  local j = 1
+  for i = 1, finish do
+    local v = t[i]
+    local vh = key(v)
+    if not seen[vh] then
+      t[j] = v
+      if vh ~= nil then
+        seen[vh] = true
+      end
+      j = j + 1
+    end
+  end
+
+  for i = j, finish do
+    t[i] = nil
+  end
+
+  return t
+end
+
 --- Checks if a table is empty.
 ---
 ---@see https://github.com/premake/premake-core/blob/master/src/base/table.lua
