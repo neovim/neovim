@@ -4846,6 +4846,12 @@ describe('API', function()
       result = api.nvim_parse_cmd('copen 5', {})
       eq(5, result.count)
     end)
+    it('catches invalid expression error #24373', function()
+      eq(
+        'Parsing command-line: E15: Invalid expression: "`"',
+        pcall_err(api.nvim_parse_cmd, 'edit `=`', {})
+      )
+    end)
   end)
 
   describe('nvim_cmd', function()
