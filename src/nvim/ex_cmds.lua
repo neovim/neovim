@@ -2,7 +2,7 @@ local bit = require 'bit'
 
 local M = {}
 
--- Description of the values below is contained in ex_cmds_defs.h file.
+-- Description of the values below is contained in ./ex_cmds_defs.h file.
 -- "EX_" prefix is omitted.
 local RANGE = 0x001
 local BANG = 0x002
@@ -1953,10 +1953,22 @@ M.cmds = {
     func = 'ex_packadd',
   },
   {
+    command = 'packdelete',
+    flags = bit.bor(BANG, NEEDARG, EXTRA, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_packdelete',
+  },
+  {
     command = 'packloadall',
     flags = bit.bor(BANG, TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
     func = 'ex_packloadall',
+  },
+  {
+    command = 'packupdate',
+    flags = bit.bor(BANG, EXTRA, TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_packupdate',
   },
   {
     command = 'pbuffer',

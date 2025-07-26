@@ -1475,6 +1475,8 @@ tag		command		action ~
 |:ounmenu|	:ounme[nu]	remove menu for Operator-pending mode
 |:packadd|	:pa[ckadd]	add a plugin from 'packpath'
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
+|:packdelete|	:packdelete     delete a package managed by |vim.pack|
+|:packupdate|	:packupdate     update packages managed by |vim.pack|
 |:pbuffer|	:pb[uffer]	edit buffer in the preview window
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window
