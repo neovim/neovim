@@ -10,6 +10,7 @@ pub fn nvim_gen_sources(
     nvim_headers: *std.ArrayList([]u8),
     api_headers: *std.ArrayList(LazyPath),
     include_path: []const LazyPath,
+    c_macros: []const []const u8,
     target: std.Build.ResolvedTarget,
     versiondef_git: LazyPath,
     version_lua: LazyPath,
@@ -19,12 +20,12 @@ pub fn nvim_gen_sources(
     for (nvim_sources.items) |s| {
         const api_export = if (s.api_export) api_headers else null;
         const input_file = b.path(b.fmt("src/nvim/{s}", .{s.name}));
-        _ = try generate_header_for(b, s.name, input_file, api_export, nlua0, include_path, target, gen_headers, false);
+        _ = try generate_header_for(b, s.name, input_file, api_export, nlua0, include_path, c_macros, target, gen_headers, false);
     }
 
     for (nvim_headers.items) |s| {
         const input_file = b.path(b.fmt("src/nvim/{s}", .{s}));
-        _ = try generate_header_for(b, s, input_file, null, nlua0, include_path, target, gen_headers, true);
+        _ = try generate_header_for(b, s, input_file, null, nlua0, include_path, c_macros, target, gen_headers, true);
     }
 
     {
@@ -95,17 +96,17 @@ pub fn nvim_gen_sources(
         const gen_step = b.addRunArtifact(nlua0);
         gen_step.addFileArg(b.path("src/gen/gen_api_ui_events.lua"));
         gen_step.addFileArg(b.path("src/nvim/api/ui_events.in.h"));
-        _ = try gen_header_with_header(b, gen_step, "ui_events_call.generated.h", nlua0, include_path, target, gen_headers);
-        _ = try gen_header_with_header(b, gen_step, "ui_events_remote.generated.h", nlua0, include_path, target, gen_headers);
+        _ = try gen_header_with_header(b, gen_step, "ui_events_call.generated.h", nlua0, include_path, c_macros, target, gen_headers);
+        _ = try gen_header_with_header(b, gen_step, "ui_events_remote.generated.h", nlua0, include_path, c_macros, target, gen_headers);
         const ui_metadata = gen_step.addOutputFileArg("ui_metadata.mpack");
-        _ = try gen_header_with_header(b, gen_step, "ui_events_client.generated.h", nlua0, include_path, target, gen_headers);
+        _ = try gen_header_with_header(b, gen_step, "ui_events_client.generated.h", nlua0, include_path, c_macros, target, gen_headers);
         break :ui_step ui_metadata;
     };
 
     const funcs_metadata = api_step: {
         const gen_step = b.addRunArtifact(nlua0);
         gen_step.addFileArg(b.path("src/gen/gen_api_dispatch.lua"));
-        _ = try gen_header_with_header(b, gen_step, "api/private/dispatch_wrappers.generated.h", nlua0, include_path, target, gen_headers);
+        _ = try gen_header_with_header(b, gen_step, "api/private/dispatch_wrappers.generated.h", nlua0, include_path, c_macros, target, gen_headers);
         _ = gen_header(b, gen_step, "api/private/api_metadata.generated.h", gen_headers);
         const funcs_metadata = gen_step.addOutputFileArg("funcs_metadata.mpack");
         _ = gen_header(b, gen_step, "lua_api_c_bindings.generated.h", gen_headers);
@@ -154,12 +155,13 @@ fn gen_header_with_header(
     name: []const u8,
     nlua0: *std.Build.Step.Compile,
     include_path: []const LazyPath,
+    c_macros: []const []const u8,
     target: ?std.Build.ResolvedTarget,
     gen_headers: *std.Build.Step.WriteFile,
 ) !std.Build.LazyPath {
     if (name.len < 12 or !std.mem.eql(u8, ".generated.h", name[name.len - 12 ..])) return error.InvalidBaseName;
     const h = gen_header(b, gen_step, name, gen_headers);
-    _ = try generate_header_for(b, b.fmt("{s}.h", .{name[0 .. name.len - 12]}), h, null, nlua0, include_path, target, gen_headers, false);
+    _ = try generate_header_for(b, b.fmt("{s}.h", .{name[0 .. name.len - 12]}), h, null, nlua0, include_path, c_macros, target, gen_headers, false);
     return h;
 }
 
@@ -207,6 +209,7 @@ fn generate_header_for(
     api_export: ?*std.ArrayList(LazyPath),
     nlua0: *std.Build.Step.Compile,
     include_path: []const LazyPath,
+    c_macros: []const []const u8,
     target: ?std.Build.ResolvedTarget,
     gen_headers: *std.Build.Step.WriteFile,
     nvim_header: bool,
@@ -215,7 +218,7 @@ fn generate_header_for(
     const basename = name[0 .. name.len - 2];
     const i_file = try run_preprocessor(b, input_file, b.fmt("{s}.i", .{basename}), .{
         .include_dirs = include_path,
-        .c_macros = &.{ "_GNU_SOURCE", "ZIG_BUILD" },
+        .c_macros = c_macros,
         .target = target,
     });
     const run_step = b.addRunArtifact(nlua0);
