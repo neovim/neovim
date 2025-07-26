@@ -119,7 +119,7 @@ local Tabstop = {}
 function Tabstop.new(index, bufnr, range, choices)
   local extmark_id = vim.api.nvim_buf_set_extmark(bufnr, snippet_ns, range[1], range[2], {
     right_gravity = true,
-    end_right_gravity = true,
+    end_right_gravity = false,
     end_line = range[3],
     end_col = range[4],
     hl_group = hl_group,
@@ -170,7 +170,7 @@ function Tabstop:set_right_gravity(right_gravity)
   local range = self:get_range()
   self.extmark_id = vim.api.nvim_buf_set_extmark(self.bufnr, snippet_ns, range[1], range[2], {
     right_gravity = right_gravity,
-    end_right_gravity = true,
+    end_right_gravity = not right_gravity,
     end_line = range[3],
     end_col = range[4],
     hl_group = hl_group,
