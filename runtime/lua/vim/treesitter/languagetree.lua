@@ -580,7 +580,7 @@ end
 ---
 ---     If parsing was still able to finish synchronously (within 3ms), `parse()` returns the list
 ---     of trees. Otherwise, it returns `nil`.
---- @return table<integer, TSTree>?
+--- @return table<integer, TSTree?>?
 function LanguageTree:parse(range, on_parse)
   if on_parse then
     return self:_async_parse(range, on_parse)

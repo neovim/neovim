@@ -291,7 +291,7 @@ end
 
 --- @param style_line vim.tohtml.line
 --- @param col integer (1-index)
---- @param field integer
+--- @param field 1|2|3|4
 --- @param val any
 local function _style_line_insert(style_line, col, field, val)
   if style_line[col] == nil then

@@ -500,7 +500,7 @@ function M._inspect(opts)
     local function ms(nsec)
       return math.floor(nsec / 1e6 * 1000 + 0.5) / 1000 .. 'ms'
     end
-    local chunks = {} --- @type string[][]
+    local chunks = {} --- @type [string,string|integer?][]
     for _, stat in vim.spairs(stats) do
       vim.list_extend(chunks, {
         { '\n' .. stat .. '\n', 'Title' },
