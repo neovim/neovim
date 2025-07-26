@@ -1465,6 +1465,11 @@ end_do_search:
   xfree(strcopy);
   xfree(msgbuf);
 
+  // fire EVENT_SEARCHPOST when search is complete
+  if (!(options & SEARCH_PEEK)) {
+    apply_autocmds(EVENT_SEARCHPOST, NULL, NULL, false, curbuf);
+  }
+
   return retval;
 }
 

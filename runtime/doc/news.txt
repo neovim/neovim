@@ -176,6 +176,7 @@ EVENTS
 
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
 • New `append` paremeter for |ui-messages| `msg_show` event.
+• Added |SearchPost| event.
 
 HIGHLIGHTS
 
