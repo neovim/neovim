@@ -1170,6 +1170,7 @@ void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef)
       goto err;
     });
 
+    argt |= EX_RANGE;
     if (addr_type_arg != ADDR_LINES) {
       argt |= EX_ZEROR;
     }
