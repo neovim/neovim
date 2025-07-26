@@ -1044,7 +1044,8 @@ static MessageHistoryEntry *msg_find_by_id(MsgID id)
   return entry;
 }
 
-static void emit_progress_event(MessageHistoryEntry *msg) {
+static void emit_progress_event(MessageHistoryEntry *msg)
+{
   if (msg == NULL) {
     return;
   }
@@ -1061,10 +1062,9 @@ static void emit_progress_event(MessageHistoryEntry *msg) {
   PUT_C(data, "status", STRING_OBJ(msg->ext_data.status));
   PUT_C(data, "title", STRING_OBJ(msg->ext_data.title));
 
-  apply_autocmds_group(EVENT_PROGRESS, msg->ext_data.title.data, NULL, true, AUGROUP_ALL, NULL, NULL,
-                       &DICT_OBJ(data));
+  apply_autocmds_group(EVENT_PROGRESS, msg->ext_data.title.data, NULL, true, AUGROUP_ALL, NULL,
+                       NULL, &DICT_OBJ(data));
   kv_destroy(messages);
-
 }
 
 static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageExtData *ext_data)
