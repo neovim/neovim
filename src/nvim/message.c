@@ -1133,9 +1133,11 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   PUT_C(data, "message", ARRAY_OBJ(messages));
   PUT_C(data, "id", INTEGER_OBJ(entry->message_id));
   PUT_C(data, "kind", CSTR_AS_OBJ(entry->kind));
-  PUT_C(data, "percent", INTEGER_OBJ(entry->ext_data.percent));
-  PUT_C(data, "status", STRING_OBJ(entry->ext_data.status));
-  PUT_C(data, "title", STRING_OBJ(entry->ext_data.title));
+  if (is_kind_progress) {
+    PUT_C(data, "percent", INTEGER_OBJ(entry->ext_data.percent));
+    PUT_C(data, "status", STRING_OBJ(entry->ext_data.status));
+    PUT_C(data, "title", STRING_OBJ(entry->ext_data.title));
+  }
 
   apply_autocmds_group(EVENT_MESSAGE, (char *)entry->kind, NULL, true, AUGROUP_ALL, NULL, NULL,
                        &DICT_OBJ(data));
