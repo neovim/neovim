@@ -2320,10 +2320,26 @@ vim.tbl_filter({func}, {t})                                 *vim.tbl_filter()*
 
     Parameters: ~
       • {func}  (`function`) Function
-      • {t}     (`table`) Table
+      • {t}     (`table`) Table (must be a list-like table)
 
     Return: ~
         (`any[]`) Table of filtered values
+
+    Examples: >lua
+        vim.tbl_filter(function(s) return s == 'x' end, {'x', 'y', 'x'})
+        -- returns { 'x', 'x' }
+        vim.tbl_filter(
+            function(m) return m.noremap == 0 end,
+            vim.api.nvim_get_keymap('n'))
+        -- Returns a list of normal mode keymap entries with 'noremap = 0' 
+<
+
+    Note: ~
+        The input table must be list-like (numerically indexed). Each element
+        is passed to the predicate function. If the elements are tables
+        (e.g. keymap entries), the predicate should expect a table. If the
+        elements are strings or numbers, the predicate should expect those
+        types.
 
 vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
     Index into a table (first argument) via string keys passed as subsequent
