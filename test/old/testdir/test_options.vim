@@ -2690,7 +2690,7 @@ func GetGlobalLocalWindowOptions()
   " Filter for global or local to window
   v/^'.*'.*\n.*global or local to window |global-local/d
   " get option value and type
-  sil %s/^'\([^']*\)'.*'\s\+\(\w\+\)\s\+(default \%(\(".*"\|\d\+\|empty\)\).*/\1 \2 \3/g
+  sil %s/^'\([^']*\)'.*'\s\+\(\w\+\)\s\+(default \%(\(".*"\|\d\+\|empty\|is very long\)\).*/\1 \2 \3/g
   " sil %s/empty/""/g
   " split the result
   " let result=getline(1,'$')->map({_, val -> split(val, ' ')})
@@ -2705,6 +2705,10 @@ func Test_set_option_window_global_local_all()
   let optionlist = GetGlobalLocalWindowOptions()
   for [opt, type, default] in optionlist
     let _old = eval('&g:' .. opt)
+    if opt == 'statusline'
+      " parsed default value is "is very long" as it is a doc string, not actual value
+      let default = "\"" . _old . "\""
+    endif
     if type == 'string'
       if opt == 'fillchars'
         exe 'setl ' .. opt .. '=vert:+'
