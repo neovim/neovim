@@ -1007,7 +1007,7 @@ void hl_msg_free(HlMessage hl_msg)
 /// Add the message at the end of the history
 ///
 /// @param[in]  len  Length of s or -1.
-static void msg_hist_add(const char *s, int len, int hl_id)
+static MsgID msg_hist_add(const char *s, int len, int hl_id)
 {
   String text = { .size = len < 0 ? strlen(s) : (size_t)len };
   // Remove leading and trailing newlines.
@@ -1019,13 +1019,14 @@ static void msg_hist_add(const char *s, int len, int hl_id)
     text.size--;
   }
   if (text.size == 0) {
-    return;
+    return -1;
   }
   text.data = xmemdupz(s, text.size);
 
   HlMessage msg = KV_INITIAL_VALUE;
   kv_push(msg, ((HlMessageChunk){ text, hl_id }));
-  msg_hist_add_multihl(0, msg, false, NULL);
+  MsgID id = msg_hist_add_multihl(0, msg, false, NULL);
+  return id;
 }
 
 static bool do_clear_hist_temp = true;
@@ -1041,6 +1042,29 @@ static MessageHistoryEntry *msg_find_by_id(MsgID id)
     entry = entry->prev;
   }
   return entry;
+}
+
+static void emit_progress_event(MessageHistoryEntry *msg) {
+  if (msg == NULL) {
+    return;
+  }
+
+  MAXSIZE_TEMP_DICT(data, 6);
+  ArrayOf(String) messages = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < msg->msg.size; i++) {
+    ADD(messages, STRING_OBJ(msg->msg.items[i].text));
+  }
+
+  PUT_C(data, "id", INTEGER_OBJ(msg->message_id));
+  PUT_C(data, "message", ARRAY_OBJ(messages));
+  PUT_C(data, "percent", INTEGER_OBJ(msg->ext_data.percent));
+  PUT_C(data, "status", STRING_OBJ(msg->ext_data.status));
+  PUT_C(data, "title", STRING_OBJ(msg->ext_data.title));
+
+  apply_autocmds_group(EVENT_PROGRESS, msg->ext_data.title.data, NULL, true, AUGROUP_ALL, NULL, NULL,
+                       &DICT_OBJ(data));
+  kv_destroy(messages);
+
 }
 
 static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageExtData *ext_data)
@@ -1124,25 +1148,9 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   msg_hist_last = entry;
   msg_ext_history = true;
 
-  MAXSIZE_TEMP_DICT(data, 6);
-  ArrayOf(String) messages = ARRAY_DICT_INIT;
-  for (size_t i = 0; i < entry->msg.size; i++) {
-    ADD(messages, STRING_OBJ(entry->msg.items[i].text));
-  }
-
-  PUT_C(data, "message", ARRAY_OBJ(messages));
-  PUT_C(data, "id", INTEGER_OBJ(entry->message_id));
-  PUT_C(data, "kind", CSTR_AS_OBJ(entry->kind));
   if (is_kind_progress) {
-    PUT_C(data, "percent", INTEGER_OBJ(entry->ext_data.percent));
-    PUT_C(data, "status", STRING_OBJ(entry->ext_data.status));
-    PUT_C(data, "title", STRING_OBJ(entry->ext_data.title));
+    emit_progress_event(entry);
   }
-
-  apply_autocmds_group(EVENT_MESSAGE, (char *)entry->kind, NULL, true, AUGROUP_ALL, NULL, NULL,
-                       &DICT_OBJ(data));
-
-  kv_destroy(messages);
   msg_hist_clear(msg_hist_max);
   return entry->message_id;
 }
