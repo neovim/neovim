@@ -144,16 +144,19 @@ static const char e_missing_argument_str[]
 // they still work when the runtime files can't be found.
 
 static const char *highlight_init_both[] = {
-  "Cursor            guifg=bg      guibg=fg",
-  "CursorLineNr      gui=bold      cterm=bold",
-  "PmenuMatch        gui=bold      cterm=bold",
-  "PmenuMatchSel     gui=bold      cterm=bold",
-  "PmenuSel          gui=reverse   cterm=reverse,underline blend=0",
-  "RedrawDebugNormal gui=reverse   cterm=reverse",
-  "TabLineSel        gui=bold      cterm=NONE",
-  "TermCursor        gui=reverse   cterm=reverse",
-  "Underlined        gui=underline cterm=underline",
-  "lCursor           guifg=bg      guibg=fg",
+  "Cursor            guifg=bg        guibg=fg",
+  "CursorLineNr      gui=bold        cterm=bold",
+  "PmenuMatch        gui=bold        cterm=bold",
+  "PmenuMatchSel     gui=bold        cterm=bold",
+  "PmenuSel          gui=reverse     cterm=reverse,underline blend=0",
+  "RedrawDebugNormal gui=reverse     cterm=reverse",
+  "TabLineSel        gui=bold        cterm=NONE",
+  "TermCursor        gui=reverse     cterm=reverse",
+  "Underlined        gui=underline   cterm=underline",
+  "Bold              gui=bold        cterm=bold",
+  "Italic            gui=italic      cterm=italic",
+  "BoldItalic        gui=bold,italic cterm=bold,italic",
+  "lCursor           guifg=bg        guibg=fg",
 
   // UI
   "default link CursorIM         Cursor",
