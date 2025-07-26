@@ -291,6 +291,7 @@ LSP
 • Support for `workspace/diagnostic/refresh`:
   https://microsoft.github.io/language-server-protocol/specification/#diagnostic_refresh
 - Support for dynamic registration for `textDocument/diagnostic`
+• |:lsp| command to restart/stop LSP servers.
 
 LUA
 
