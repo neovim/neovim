@@ -522,6 +522,14 @@ character will be used: >query
     ; identifiers will be concealed with 'f'.
     ((identifier) @conceal (#set! conceal "foo"))
 <
+To remove a conceal highlight, you can use the `@noconceal` capture to
+override any existing conceal highlight set for the range. >query
+
+    ((identifier) @noconceal)
+<
+
+You can also do this by setting the `conceal` metadata to "\f" (form feed)
+with |vim.treesitter.query.add_directive()|.
 
                                                *treesitter-highlight-priority*
 Treesitter uses |nvim_buf_set_extmark()| to set highlights with a default

@@ -476,7 +476,8 @@ local function styletable_treesitter(state)
       local c = q._query.captures[capture]
       if c ~= nil then
         local hlid = register_hl(state, '@' .. c .. '.' .. tree:lang())
-        if metadata.conceal and state.opt.conceallevel ~= 0 then
+        -- Form feed (\f) is used to clear conceal, so skip it
+        if metadata.conceal and metadata.conceal ~= '\f' and state.opt.conceallevel ~= 0 then
           styletable_insert_conceal(state, srow + 1, scol + 1, erow + 1, ecol + 1, metadata.conceal)
         end
         styletable_insert_range(state, srow + 1, scol + 1, erow + 1, ecol + 1, hlid)
