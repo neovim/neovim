@@ -249,7 +249,11 @@ describe('vim.snippet', function()
     feed('<Tab>')
     poke_eventloop()
     feed(',2')
-    eq({ 'for i=1,10,2 do', '\t', 'end' }, buf_lines(0))
+    -- Make sure changes on previous tabstops does not change following ones
+    feed('<S-Tab>')
+    poke_eventloop()
+    feed('20')
+    eq({ 'for i=1,20,2 do', '\t', 'end' }, buf_lines(0))
   end)
 
   it('updates snippet state when built-in completion menu is visible', function()
