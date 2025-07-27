@@ -273,7 +273,8 @@ TERMINAL
 
 TREESITTER
 
-• todo
+• |treesitter-highlight-conceal| can be removed by adding a `@noconceal`
+  capture.
 
 TUI
 

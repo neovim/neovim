@@ -503,11 +503,14 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buffer, Integer n
 ///               - cursorline_hl_group: highlight group used for the sign
 ///                   column text when the cursor is on the same line as the
 ///                   mark and 'cursorline' is enabled.
-///               - conceal: string which should be either empty or a single
-///                   character. Enable concealing similar to |:syn-conceal|.
-///                   When a character is supplied it is used as |:syn-cchar|.
-///                   "hl_group" is used as highlight for the cchar if provided,
-///                   otherwise it defaults to |hl-Conceal|.
+///               - conceal: either a boolean or a string.
+///                   - when a string is given, it should be either empty or a single
+///                     character. Enable concealing similar to |:syn-conceal|.
+///                     When a character is supplied it is used as |:syn-cchar|.
+///                     "hl_group" is used as highlight for the cchar if provided,
+///                     otherwise it defaults to |hl-Conceal|.
+///                   - when a boolean is given, true is equivalent to "" and false
+///                     overrides any existing conceal to remove it.
 ///               - conceal_lines: string which should be empty. When
 ///                   provided, lines in the range are not drawn at all
 ///                   (according to 'conceallevel'); the next unconcealed line
@@ -625,14 +628,24 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (HAS_KEY(opts, set_extmark, conceal)) {
-    hl.flags |= kSHConceal;
     has_hl = true;
-    if (opts->conceal.size > 0) {
-      int ch;
-      hl.conceal_char = utfc_ptr2schar(opts->conceal.data, &ch);
-      VALIDATE(hl.conceal_char && vim_isprintc(ch), "%s", "conceal char has to be printable", {
-        goto error;
-      });
+    if (opts->conceal.type == kObjectTypeBoolean) {
+      Boolean is_concealed = opts->conceal.data.boolean;
+      if (is_concealed) {
+        hl.flags |= kSHConceal;
+      } else {
+        hl.flags |= kSHConcealOff;
+      }
+    } else if (opts->conceal.type == kObjectTypeString) {
+      String conceal_str = opts->conceal.data.string;
+      hl.flags |= kSHConceal;
+      if (conceal_str.size > 0) {
+        int ch;
+        hl.conceal_char = utfc_ptr2schar(conceal_str.data, &ch);
+        VALIDATE(hl.conceal_char && vim_isprintc(ch), "%s", "conceal char has to be printable", {
+          goto error;
+        });
+      }
     }
   }
 
