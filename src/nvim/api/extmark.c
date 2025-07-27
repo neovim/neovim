@@ -646,6 +646,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
           goto error;
         });
       }
+    } else {
+      api_set_error(err, kErrorTypeValidation, "'conceal' must be a string or boolean");
+      goto error;
     }
   }
 
