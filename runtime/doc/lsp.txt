@@ -119,6 +119,8 @@ To remove or override BUFFER-LOCAL defaults, define a |LspAttach| handler: >lua
         vim.bo[args.buf].omnifunc = nil
         -- Unmap K
         vim.keymap.del('n', 'K', { buffer = args.buf })
+        -- Disable document colors
+        vim.lsp.buf.document_color.enable(false, args.buf)
       end,
     })
 <
@@ -2241,6 +2243,10 @@ is_enabled({filter})                    *vim.lsp.semantic_tokens.is_enabled()*
 
 ==============================================================================
 Lua module: vim.lsp.document_color                        *lsp-document_color*
+
+This module provides LSP support for highlighting color references in a
+document. Highlighting is enabled by default.
+
 
 color_presentation()             *vim.lsp.document_color.color_presentation()*
     Select from a list of presentations for the color under the cursor.
