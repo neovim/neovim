@@ -191,6 +191,8 @@ TERMINAL
 TREESITTER
 
 • |v_]N| |v_[N| expand selection to sibling treesitter node.
+• |treesitter-highlight-conceal| can be removed by adding a `@noconceal`
+  capture.
 
 TUI
 

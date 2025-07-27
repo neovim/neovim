@@ -55,7 +55,7 @@ typedef struct {
   HLGroupID number_hl_group;
   HLGroupID line_hl_group;
   HLGroupID cursorline_hl_group;
-  String conceal;
+  Union(String, Boolean) conceal;
   String conceal_lines;
   Boolean spell;
   Boolean ui_watched;

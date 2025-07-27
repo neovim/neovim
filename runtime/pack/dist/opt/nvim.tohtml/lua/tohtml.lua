@@ -480,7 +480,8 @@ local function styletable_treesitter(state)
       if c ~= nil then
         local hlid = register_hl(state, '@' .. c .. '.' .. tree:lang())
         if metadata.conceal and state.opt.conceallevel ~= 0 then
-          styletable_insert_conceal(state, srow + 1, scol + 1, erow + 1, ecol + 1, metadata.conceal)
+          local conceal = metadata.conceal == true and '' or metadata.conceal --[[@as string]]
+          styletable_insert_conceal(state, srow + 1, scol + 1, erow + 1, ecol + 1, conceal)
         end
         styletable_insert_range(state, srow + 1, scol + 1, erow + 1, ecol + 1, hlid)
       end
