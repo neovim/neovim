@@ -2245,8 +2245,7 @@ is_enabled({filter})                    *vim.lsp.semantic_tokens.is_enabled()*
 Lua module: vim.lsp.document_color                        *lsp-document_color*
 
 This module provides LSP support for highlighting color references in a
-document, like what https://github.com/chrisbra/Colorizer provides.
-Highlighting is enabled by default.
+document. Highlighting is enabled by default.
 
 
 color_presentation()             *vim.lsp.document_color.color_presentation()*
