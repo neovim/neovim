@@ -1200,9 +1200,11 @@ describe('user config init', function()
             VIMRUNTIME = os.getenv('VIMRUNTIME'),
           },
         })
-        screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
-        -- `i` to enter Terminal mode, `a` to allow
-        feed('ia')
+        screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny:') })
+        -- `i` to enter Terminal mode, `v` to view then `:trust`
+        feed('iv')
+        feed(':trust<CR>')
+        feed(':q<CR>')
         screen:expect([[
           ^                                                  |
           ~                                                 |*4
@@ -1219,8 +1221,8 @@ describe('user config init', function()
           %s%s|
           -- TERMINAL --                                    |
         ]],
-          filename,
-          string.rep(' ', 50 - #filename)
+          '---',
+          string.rep(' ', 50 - #'---')
         ))
 
         clear { args_rm = { '-u' }, env = xstateenv }
@@ -1239,7 +1241,8 @@ describe('user config init', function()
       setup_exrc_file('.nvim.lua')
       setup_exrc_file('../.exrc')
       clear { args_rm = { '-u' }, env = xstateenv }
-      local screen = Screen.new(50, 8)
+      -- use a screen wide width to avoid wrapping the word `.exrc`, `.nvim.lua` below.
+      local screen = Screen.new(500, 8)
       screen._default_attr_ids = nil
       fn.jobstart({ nvim_prog }, {
         term = true,
@@ -1249,13 +1252,36 @@ describe('user config init', function()
       })
       -- current directory exrc is found first
       screen:expect({ any = '.nvim.lua' })
-      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:'), unchanged = true })
-      feed('ia')
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny:'), unchanged = true })
+      feed('iv')
 
       -- after that the exrc in the parent directory
-      screen:expect({ any = '.exrc' })
-      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:'), unchanged = true })
-      feed('a')
+      screen:expect({ any = '.exrc', unchanged = true })
+      screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny:'), unchanged = true })
+      feed('v')
+
+      -- trust .exrc
+      feed(':trust<CR>')
+      screen:expect({ any = 'Allowed ".*' .. pathsep .. '%.exrc" in trust database.' })
+      feed(':q<CR>')
+      -- trust .nvim.lua
+      feed(':trust<CR>')
+      screen:expect({ any = 'Allowed ".*' .. pathsep .. '%.nvim%.lua" in trust database.' })
+      feed(':q<CR>')
+      -- no exrc file is executed
+      feed(':echo g:exrc_count<CR>')
+      screen:expect({ any = 'E121: Undefined variable: g:exrc_count' })
+
+      -- restart nvim
+      feed(':restart<CR>')
+      screen:expect([[
+        ^{MATCH: +}|
+        ~{MATCH: +}|*4
+        [No Name]{MATCH: +}0,0-1{MATCH: +}All|
+        {MATCH: +}|
+        -- TERMINAL --{MATCH: +}|
+      ]])
+
       -- a total of 2 exrc files are executed
       feed(':echo g:exrc_count<CR>')
       screen:expect({ any = '2' })
