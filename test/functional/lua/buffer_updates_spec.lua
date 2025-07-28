@@ -449,6 +449,19 @@ describe('lua buffer event callbacks: on_lines', function()
     eq({ 'bytes', 2, 5, 0, 0, 0, 4, 0, 40, 0, 10, 10 }, api.nvim_get_var('qf_on_bytes'))
     eq({ 'lines', 2, 6, 0, 5, 1, 42 }, api.nvim_get_var('qf_on_lines'))
   end)
+
+  it('single-line visual block insert should not trigger extra on_lines #22009', function()
+    exec_lua(function()
+      _G.res = {}
+      vim.api.nvim_buf_attach(0, false, {
+        on_lines = function(_, bufnr, _, first, last, last_updated, _, _, _)
+          _G.res = { bufnr, first, last, last_updated }
+        end,
+      })
+    end)
+    feed('<C-v>I <ESC>')
+    eq({ api.nvim_get_current_buf(), 0, 1, 1 }, exec_lua('return _G.res'))
+  end)
 end)
 
 describe('lua: nvim_buf_attach on_bytes', function()
