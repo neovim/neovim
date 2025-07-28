@@ -648,6 +648,7 @@ local sign_highlight_map = make_highlight_map('Sign')
 --- @return integer col
 --- @return integer end_lnum
 --- @return integer end_col
+--- @return boolean valid
 local function get_logical_pos(diagnostic)
   local ns = M.get_namespace(diagnostic.namespace)
   local extmark = api.nvim_buf_get_extmark_by_id(
@@ -657,7 +658,7 @@ local function get_logical_pos(diagnostic)
     { details = true }
   )
 
-  return extmark[1], extmark[2], extmark[3].end_row, extmark[3].end_col
+  return extmark[1], extmark[2], extmark[3].end_row, extmark[3].end_col, not extmark[3].invalid
 end
 
 --- @param diagnostics vim.Diagnostic[]
@@ -669,13 +670,15 @@ local function diagnostic_lines(diagnostics)
 
   local diagnostics_by_line = {} --- @type table<integer,vim.Diagnostic[]>
   for _, diagnostic in ipairs(diagnostics) do
-    local lnum = get_logical_pos(diagnostic)
-    local line_diagnostics = diagnostics_by_line[lnum]
-    if not line_diagnostics then
-      line_diagnostics = {}
-      diagnostics_by_line[lnum] = line_diagnostics
+    local lnum, _, _, _, valid = get_logical_pos(diagnostic)
+    if valid then
+      local line_diagnostics = diagnostics_by_line[lnum]
+      if not line_diagnostics then
+        line_diagnostics = {}
+        diagnostics_by_line[lnum] = line_diagnostics
+      end
+      table.insert(line_diagnostics, diagnostic)
     end
-    table.insert(line_diagnostics, diagnostic)
   end
   return diagnostics_by_line
 end
@@ -1332,6 +1335,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
       diagnostic._extmark_id = api.nvim_buf_set_extmark(bufnr, ns.user_data.location_ns, row, col, {
         end_row = end_row,
         end_col = end_col,
+        invalidate = true,
       })
     end
   end)
