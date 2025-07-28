@@ -55,22 +55,18 @@ describe('vim.secure', function()
       })
 
       local cwd = fn.getcwd()
-      local msg = cwd
-        .. pathsep
-        .. 'Xfile is not trusted. To enable it, choose (v)iew then run `:trust`.'
-      if #msg >= screen._width then
-        pending('path too long')
-        return
-      end
+      local msg = 'exrc: Found untrusted code. To enable it, choose (v)iew then run `:trust`:'
+      local path = ('%s%sXfile'):format(cwd, pathsep)
 
       -- Need to use feed_command instead of exec_lua because of the confirmation prompt
       feed_command([[lua vim.secure.read('Xfile')]])
       screen:expect([[
         {MATCH: +}|
-        {1:~{MATCH: +}}|*3
+        {1:~{MATCH: +}}|*2
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: +}|
+        {3:]] .. msg .. [[}{MATCH: *}|
+        {3:]] .. path .. [[}{MATCH: *}|
         {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('d')
@@ -89,10 +85,11 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xfile')]])
       screen:expect([[
         {MATCH: +}|
-        {1:~{MATCH: +}}|*3
+        {1:~{MATCH: +}}|*2
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: +}|
+        {3:]] .. msg .. [[}{MATCH: *}|
+        {3:]] .. path .. [[}{MATCH: *}|
         {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('v')
@@ -104,7 +101,7 @@ describe('vim.secure', function()
         {MATCH: +}|
         {1:~{MATCH: +}}|
         {4:[No Name]{MATCH: +}}|
-        Allowed "]] .. cwd .. pathsep .. [[Xfile" in trust database.{MATCH: +}|
+        Allowed in trust database: "]] .. cwd .. pathsep .. [[Xfile"{MATCH: +}|
       ]])
       -- close the split for the next test below.
       feed(':q<CR>')
@@ -119,10 +116,11 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xfile')]])
       screen:expect([[
         {MATCH: +}|
-        {1:~{MATCH: +}}|*3
+        {1:~{MATCH: +}}|*2
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
-        {3:]] .. msg .. [[}{MATCH: +}|
+        {3:]] .. msg .. [[}{MATCH: *}|
+        {3:]] .. path .. [[}{MATCH: *}|
         {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('i')
@@ -138,10 +136,11 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xfile')]])
       screen:expect([[
         {MATCH: +}|
-        {1:~{MATCH: +}}|*3
+        {1:~{MATCH: +}}|*2
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xfile'){MATCH: +}|
         {3:]] .. msg .. [[}{MATCH: +}|
+        {3:]] .. path .. [[}{MATCH: *}|
         {3:[i]gnore, (v)iew, (d)eny: }^{MATCH: +}|
       ]])
       feed('v')
@@ -172,22 +171,19 @@ describe('vim.secure', function()
       })
 
       local cwd = fn.getcwd()
-      local msg = cwd
-        .. pathsep
-        .. 'Xdir is not trusted. DIRECTORY trust is decided only by its name, not its contents.'
-      if #msg >= screen._width then
-        pending('path too long')
-        return
-      end
+      local msg =
+        'exrc: Found untrusted code. DIRECTORY trust is decided only by name, not contents:'
+      local path = ('%s%sXdir'):format(cwd, pathsep)
 
       -- Need to use feed_command instead of exec_lua because of the confirmation prompt
       feed_command([[lua vim.secure.read('Xdir')]])
       screen:expect([[
         {MATCH: +}|
-        {1:~{MATCH: +}}|*3
+        {1:~{MATCH: +}}|*2
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xdir'){MATCH: +}|
         {3:]] .. msg .. [[}{MATCH: +}|
+        {3:]] .. path .. [[}{MATCH: +}|
         {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('d')
@@ -206,10 +202,11 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xdir')]])
       screen:expect([[
         {MATCH: +}|
-        {1:~{MATCH: +}}|*3
+        {1:~{MATCH: +}}|*2
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xdir'){MATCH: +}|
         {3:]] .. msg .. [[}{MATCH: +}|
+        {3:]] .. path .. [[}{MATCH: +}|
         {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('a')
@@ -231,10 +228,11 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xdir')]])
       screen:expect([[
         {MATCH: +}|
-        {1:~{MATCH: +}}|*3
+        {1:~{MATCH: +}}|*2
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xdir'){MATCH: +}|
         {3:]] .. msg .. [[}{MATCH: +}|
+        {3:]] .. path .. [[}{MATCH: +}|
         {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('i')
@@ -250,10 +248,11 @@ describe('vim.secure', function()
       feed_command([[lua vim.secure.read('Xdir')]])
       screen:expect([[
         {MATCH: +}|
-        {1:~{MATCH: +}}|*3
+        {1:~{MATCH: +}}|*2
         {2:{MATCH: +}}|
         :lua vim.secure.read('Xdir'){MATCH: +}|
         {3:]] .. msg .. [[}{MATCH: +}|
+        {3:]] .. path .. [[}{MATCH: +}|
         {3:[i]gnore, (v)iew, (d)eny, (a)llow: }^{MATCH: +}|
       ]])
       feed('v')

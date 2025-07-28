@@ -192,10 +192,8 @@ describe('server', function()
       return
     end
     local peer_addr = n.new_pipename()
-    local client = n.new_session(
-      true,
-      { args = { '--clean', '--listen', peer_addr, '--embed' }, merge = false }
-    )
+    local client =
+      n.new_session(true, { args = { '--clean', '--listen', peer_addr, '--embed' }, merge = false })
     n.set_session(client)
     eq(peer_addr, fn.serverlist()[1])
 
