@@ -273,8 +273,16 @@ describe('TUI :restart', function()
     gui_running_check()
 
     -- Check trailing characters after +cmd are considered in -c
-    tt.feed_data(':restart +qall echo "Hello"\013')
-    screen_expect(s1)
+    tt.feed_data(':restart +qall echo "Hello" | echo "World"\013')
+    screen_expect([[
+                                                        |
+      {2:                                                  }|
+      {MATCH:%d+ +}|
+      Hello                                             |
+      World                                             |
+      {102:Press ENTER or type command to continue}^           |
+      {5:-- TERMINAL --}                                    |
+    ]])
     tt.feed_data('\013')
     restart_pid_check()
     gui_running_check()
