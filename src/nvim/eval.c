@@ -7803,7 +7803,7 @@ int var_item_copy(const vimconv_T *const conv, typval_T *const from, typval_T *c
     }
     break;
   case VAR_UNKNOWN:
-    internal_error("var_item_copy(UNKNOWN)");
+    internal_error_no_abort("var_item_copy(UNKNOWN)");
     ret = FAIL;
   }
   recurse--;

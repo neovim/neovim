@@ -379,7 +379,7 @@ endfunc
 
 func Test_set_register()
   call assert_fails("call setreg('#', 200)", 'E86:')
-  " call assert_fails("call setreg('a', test_unknown())", 'E908:')
+  call assert_fails("call setreg('a', test_unknown())", 'E908:')
 
   edit Xfile_alt_1
   let b1 = bufnr('')
