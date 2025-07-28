@@ -20,7 +20,7 @@ error('Cannot require a meta file')
 --- @field hl_group? string
 --- @field hl_eol? boolean
 ---
---- @field conceal? string
+--- @field conceal? string|false
 --- @field spell? boolean
 --- @field ui_watched? boolean
 --- @field url? string
