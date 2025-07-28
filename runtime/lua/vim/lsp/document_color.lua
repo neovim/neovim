@@ -1,3 +1,6 @@
+--- @brief This module provides LSP support for highlighting color references in a document.
+--- Highlighting is enabled by default.
+
 local api = vim.api
 local lsp = vim.lsp
 local util = lsp.util
