@@ -412,8 +412,10 @@ local function on_line_impl(self, win, buf, line, on_spell, on_conceal)
 
             local is_noconceal = capture_name == 'noconceal'
             -- The "conceal" attribute can be set at the pattern level or on a particular capture
-            local conceal_attr = metadata.conceal ~= nil and metadata.conceal
-              or metadata[capture] and metadata[capture].conceal
+            local conceal_attr = metadata.conceal
+            if conceal_attr == nil then
+              conceal_attr = metadata[capture] and metadata[capture].conceal
+            end
             local conceal ---@type boolean|string?
             if is_noconceal then
               conceal = false
@@ -423,6 +425,7 @@ local function on_line_impl(self, win, buf, line, on_spell, on_conceal)
                 is_noconceal = true
               end
             end
+            -- Give noconceal a higher priority so it always overrides conceal captures.
             local conceal_pri_offset = is_noconceal and 1 or 0
 
             -- The "priority" attribute can be set at the pattern level or on a particular capture
