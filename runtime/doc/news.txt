@@ -63,7 +63,10 @@ DIAGNOSTICS
 
 EDITOR
 
-• todo
+• |vim.secure.read()| now removes the choice "(a)llow" from the prompt reply for
+  files unlisted in the user's trust database, and thus requires the user to
+  choose (v)iew then run `:trust`. Previously the user would be able to press
+  the single key 'a' to execute the arbitrary execution immediately.
 
 EVENTS
 

@@ -57,7 +57,7 @@ describe('vim.secure', function()
       local cwd = fn.getcwd()
       local msg = cwd
         .. pathsep
-        .. 'Xfile is not trusted. To enable this exrc file, (v)iew it and run `:trust`.'
+        .. 'Xfile is not trusted. To enable it, choose (v)iew then run `:trust`.'
       if #msg >= screen._width then
         pending('path too long')
         return

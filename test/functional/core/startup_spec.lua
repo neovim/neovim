@@ -1241,7 +1241,8 @@ describe('user config init', function()
       setup_exrc_file('.nvim.lua')
       setup_exrc_file('../.exrc')
       clear { args_rm = { '-u' }, env = xstateenv }
-      local screen = Screen.new(50, 8)
+      -- use a screen wide width to avoid wrapping the word `.exrc`, `.nvim.lua` below.
+      local screen = Screen.new(500, 8)
       screen._default_attr_ids = nil
       fn.jobstart({ nvim_prog }, {
         term = true,
@@ -1261,26 +1262,24 @@ describe('user config init', function()
 
       -- trust .exrc
       feed(':trust<CR>')
-      screen:expect({ any = 'Allowed' })
-      screen:expect({ any = '.exrc', unchanged = true })
+      screen:expect({ any = 'Allowed ".*' .. pathsep .. '%.exrc" in trust database.' })
       feed(':q<CR>')
       -- trust .nvim.lua
       feed(':trust<CR>')
-      screen:expect({ any = 'Allowed', unchanged = true })
-      screen:expect({ any = '.nvim.lua', unchanged = true })
+      screen:expect({ any = 'Allowed ".*' .. pathsep .. '%.nvim%.lua" in trust database.' })
       feed(':q<CR>')
-      -- no exrc file is exeecuted
+      -- no exrc file is executed
       feed(':echo g:exrc_count<CR>')
       screen:expect({ any = 'E121: Undefined variable: g:exrc_count' })
 
       -- restart nvim
       feed(':restart<CR>')
       screen:expect([[
-        ^                                                  |
-        ~                                                 |*4
-        [No Name]                       0,0-1          All|
-                                                          |
-        -- TERMINAL --                                    |
+        ^{MATCH: +}|
+        ~{MATCH: +}|*4
+        [No Name]{MATCH: +}0,0-1{MATCH: +}All|
+        {MATCH: +}|
+        -- TERMINAL --{MATCH: +}|
       ]])
 
       -- a total of 2 exrc files are executed

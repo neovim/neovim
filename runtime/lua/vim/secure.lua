@@ -121,7 +121,7 @@ function M.read(path)
     return contents
   end
 
-  local dir_msg = ' To enable this exrc file, (v)iew it and run `:trust`.'
+  local dir_msg = ' To enable it, choose (v)iew then run `:trust`.'
   local choices = '&ignore\n&view\n&deny'
   if hash == 'directory' then
     dir_msg = ' DIRECTORY trust is decided only by its name, not its contents.'
