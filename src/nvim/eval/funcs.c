@@ -1328,7 +1328,7 @@ static void f_empty(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     n = (tv_blob_len(argvars[0].vval.v_blob) == 0);
     break;
   case VAR_UNKNOWN:
-    internal_error("f_empty(UNKNOWN)");
+    internal_error_no_abort("f_empty(UNKNOWN)");
     break;
   }
 
@@ -8125,7 +8125,7 @@ static void f_type(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   case VAR_BLOB:
     n = VAR_TYPE_BLOB; break;
   case VAR_UNKNOWN:
-    internal_error("f_type(UNKNOWN)");
+    internal_error_no_abort("f_type(UNKNOWN)");
     break;
   }
   rettv->vval.v_number = n;

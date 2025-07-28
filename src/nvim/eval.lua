@@ -12527,6 +12527,10 @@ M.funcs = {
     signature = 'test_refcount({expr})',
     lua = false,
   },
+  test_unknown = {
+    args = 0,
+    lua = false,
+  },
   test_write_list_log = {
     args = 1,
     params = { { 'fname', 'string' } },

@@ -3782,7 +3782,7 @@ void tv_copy(const typval_T *const from, typval_T *const to)
     }
     break;
   case VAR_UNKNOWN:
-    semsg(_(e_intern2), "tv_copy(UNKNOWN)");
+    internal_error_no_abort("tv_copy(UNKNOWN)");
     break;
   }
 }
@@ -4250,7 +4250,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   case VAR_SPECIAL:
     return 0;
   case VAR_UNKNOWN:
-    semsg(_(e_intern2), "tv_get_number(UNKNOWN)");
+    internal_error_no_abort("tv_get_number(UNKNOWN)");
     break;
   }
   if (ret_error != NULL) {
@@ -4355,7 +4355,7 @@ float_T tv_get_float(const typval_T *const tv)
     emsg(_("E975: Using a Blob as a Float"));
     break;
   case VAR_UNKNOWN:
-    semsg(_(e_intern2), "tv_get_float(UNKNOWN)");
+    internal_error_no_abort("tv_get_float(UNKNOWN)");
     break;
   }
   return 0;

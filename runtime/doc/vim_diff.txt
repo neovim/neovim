@@ -898,7 +898,6 @@ Test functions:
 - test_setmouse()
 - test_settime()
 - test_srand_seed()
-- test_unknown()
 - test_void()
 
 TUI:
