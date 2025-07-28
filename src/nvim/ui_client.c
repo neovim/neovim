@@ -8,6 +8,7 @@
 #include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vimscript.h"
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
 #include "nvim/eval/typval_defs.h"
@@ -285,13 +286,28 @@ void ui_client_event_raw_line(GridLineEvent *g)
 
 void ui_client_event_connect(Array args)
 {
-  if (args.size < 1 || args.items[0].type != kObjectTypeString) {
+  if (args.size < 2 || args.items[0].type != kObjectTypeString || args.items[1].type != kObjectTypeBoolean) {
     ELOG("Error handling UI event 'connect'");
     return;
   }
 
   char *server_addr = args.items[0].data.string.data;
+  bool stop_server = args.items[1].data.boolean;
+
   multiqueue_put(main_loop.fast_events, channel_connect_event, server_addr);
+
+  Error err = ERROR_INIT;
+  nvim_command(cstr_as_string("detach"), &err);
+
+  if (ERROR_SET(&err)) {
+    ELOG("Error running command `detach`: %s", err.msg);
+    return;
+  }
+
+  if (stop_server) {
+    nvim_command(cstr_as_string("qall!"), &err);
+    ELOG("Error exiting neovim: %s", err.msg);
+  }
 }
 
 static void channel_connect_event(void **argv)

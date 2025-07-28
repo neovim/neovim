@@ -5636,18 +5636,19 @@ static void ex_connect(exarg_T *eap)
   bool stop_server = eap->forceit ? (ui_active() == 1) : false;
 
   Error err = ERROR_INIT;
-  remote_ui_connect(current_ui, eap->arg, &err);
+
+  Channel *chan = find_channel(current_ui);
+  if (!chan) {
+    emsg(e_invchan);
+    return;
+  }
+  chan->detach = true;
+  remote_ui_connect(chan->id, eap->arg, stop_server, &err);
 
   if (ERROR_SET(&err)) {
     emsg(err.msg);
     api_clear_error(&err);
     return;
-  }
-
-  ex_detach(NULL);
-  if (stop_server) {
-    exiting = true;
-    getout(0);
   }
 }
 

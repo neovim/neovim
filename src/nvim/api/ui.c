@@ -306,15 +306,16 @@ bool remote_ui_restart(uint64_t channel_id, Error *err)
 }
 
 // Send a connect UI event to the UI on the given channel
-void remote_ui_connect(uint64_t channel_id, char *server_addr, Error *err)
+void remote_ui_connect(uint64_t channel_id, char *server_addr, bool stop_server, Error *err)
 {
   RemoteUI *ui = get_ui_or_err(channel_id, err);
   if (!ui) {
     return;
   }
 
-  MAXSIZE_TEMP_ARRAY(args, 1);
+  MAXSIZE_TEMP_ARRAY(args, 2);
   ADD_C(args, CSTR_AS_OBJ(server_addr));
+  ADD_C(args, BOOLEAN_OBJ(stop_server));
 
   push_call(ui, "connect", args);
 }
