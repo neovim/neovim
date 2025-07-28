@@ -162,7 +162,7 @@ describe('server', function()
   end)
 
   it('serverlist() returns the list of servers', function()
-    clear()
+    local current_server = clear()
     -- There should already be at least one server.
     local _n = eval('len(serverlist())')
 
@@ -186,6 +186,24 @@ describe('server', function()
     end
     -- After serverstop() the servers should NOT be in the list.
     eq(_n, eval('len(serverlist())'))
+
+    -- serverlist({ peer = true }) returns servers from other Nvim sessions.
+    if t.is_os('win') then
+      return
+    end
+    local client_address = n.new_pipename()
+    local client = n.new_session(
+      true,
+      { args = { '-u', 'NONE', '--listen', client_address, '--embed' }, merge = false }
+    )
+    n.set_session(client)
+    eq(client_address, fn.serverlist()[1])
+
+    n.set_session(current_server)
+
+    new_servs = fn.serverlist({ peer = true })
+    eq(true, vim.list_contains(new_servs, client_address))
+    client:close()
   end)
 end)
 

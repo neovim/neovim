@@ -9655,17 +9655,25 @@ M.funcs = {
     signature = 'searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])',
   },
   serverlist = {
+    args = { 0, 1 },
     desc = [=[
       Returns a list of server addresses, or empty if all servers
       were stopped. |serverstart()| |serverstop()|
+
+      The optional argument {opts} is a Dict and supports the following items:
+
+        peer  : If |TRUE|, servers not started by |serverstart()| 
+                will also be returned. (default: |FALSE|)
+                Not supported on Windows yet.
+
       Example: >vim
       	echo serverlist()
       <
     ]=],
     name = 'serverlist',
-    params = {},
+    params = { { 'opts', 'table' } },
     returns = 'string[]',
-    signature = 'serverlist()',
+    signature = 'serverlist([{opts}])',
   },
   serverstart = {
     args = { 0, 1 },
