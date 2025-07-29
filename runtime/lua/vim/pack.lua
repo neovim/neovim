@@ -209,7 +209,11 @@ end
 --- @param x string|vim.VersionRange
 --- @return boolean
 local function is_version(x)
-  return type(x) == 'string' or (pcall(x.has, x, '1'))
+  return type(x) == 'string' or (type(x) == 'table' and pcall(x.has, x, '1'))
+end
+
+local function is_nonempty_string(x)
+  return type(x) == 'string' and x ~= ''
 end
 
 --- @return string
@@ -239,9 +243,10 @@ end
 local function normalize_spec(spec)
   spec = type(spec) == 'string' and { src = spec } or spec
   vim.validate('spec', spec, 'table')
-  vim.validate('spec.src', spec.src, 'string')
-  local name = (spec.name or spec.src:gsub('%.git$', '')):match('[^/]+$')
-  vim.validate('spec.name', name, 'string')
+  vim.validate('spec.src', spec.src, is_nonempty_string, false, 'non-empty string')
+  local name = spec.name or spec.src:gsub('%.git$', '')
+  name = (type(name) == 'string' and name or ''):match('[^/]+$') or ''
+  vim.validate('spec.name', name, is_nonempty_string, true, 'non-empty string')
   vim.validate('spec.version', spec.version, is_version, true, 'string or vim.VersionRange')
   return { src = spec.src, name = name, version = spec.version }
 end
