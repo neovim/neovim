@@ -217,4 +217,21 @@ describe('messages2', function()
       {9:E354: Invalid register name: '^@'}                    |
     ]])
   end)
+
+  it('hit-enter prompt does not error for invalid window #35095', function()
+    command('echo "foo\nbar"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*10
+      {3:─────────────────────────────────────────────────────}|
+      foo                                                  |
+      bar                                                  |
+    ]])
+    feed('<C-w>o')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      foo [+1]                                             |
+    ]])
+  end)
 end)
