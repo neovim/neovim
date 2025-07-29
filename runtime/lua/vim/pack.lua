@@ -374,6 +374,7 @@ local function new_progress_report(title)
 end
 
 local n_threads = 2 * #(uv.cpu_info() or { {} })
+local copcall = package.loaded.jit and pcall or require('coxpcall').pcall
 
 --- Execute function in parallel for each non-errored plugin in the list
 --- @param plug_list vim.pack.Plug[]
@@ -390,7 +391,7 @@ local function run_list(plug_list, f, progress_title)
     if p.info.err == '' then
       --- @async
       funs[#funs + 1] = function()
-        local ok, err = pcall(f, p) --[[@as string]]
+        local ok, err = copcall(f, p) --[[@as string]]
         if not ok then
           p.info.err = err --- @as string
         end
@@ -458,7 +459,7 @@ local function resolve_version(p)
   local tags = git_get_tags(p.path)
   if type(version) == 'string' then
     local is_branch = vim.tbl_contains(branches, version)
-    local is_tag_or_hash = pcall(git_get_hash, version, p.path)
+    local is_tag_or_hash = copcall(git_get_hash, version, p.path)
     if not (is_branch or is_tag_or_hash) then
       local err = ('`%s` is not a branch/tag/commit. Available:'):format(version)
         .. list_in_line('Tags', tags)
@@ -529,7 +530,7 @@ local function checkout(p, timestamp, skip_same_sha)
   -- directory or if it is empty.
   local doc_dir = vim.fs.joinpath(p.path, 'doc')
   vim.fn.delete(vim.fs.joinpath(doc_dir, 'tags'))
-  pcall(vim.cmd.helptags, vim.fn.fnameescape(doc_dir))
+  copcall(vim.cmd.helptags, vim.fn.fnameescape(doc_dir))
 end
 
 --- @param plug_list vim.pack.Plug[]

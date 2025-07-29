@@ -1,6 +1,7 @@
 local M = {}
 
 local max_timeout = 30000
+local copcall = package.loaded.jit and pcall or require('coxpcall').pcall
 
 --- @param thread thread
 --- @param on_finish fun(err: string?, ...:any)
@@ -21,7 +22,7 @@ local function resume(thread, on_finish, ...)
     --- @cast fn -string
 
     --- @type boolean, string?
-    local ok, err = pcall(fn, function(...)
+    local ok, err = copcall(fn, function(...)
       resume(thread, on_finish, ...)
     end)
 
