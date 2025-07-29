@@ -324,6 +324,7 @@ end
 local function plug_list_from_names(names)
   local all_plugins = M.get()
   local plugs = {} --- @type vim.pack.Plug[]
+  local used_names = {} --- @type table<string,boolean>
   -- Preserve plugin order; might be important during checkout or event trigger
   for _, p_data in ipairs(all_plugins) do
     -- NOTE: By default include only active plugins (and not all on disk). Using
@@ -333,7 +334,16 @@ local function plug_list_from_names(names)
     --- @cast names string[]
     if (not names and p_data.active) or vim.tbl_contains(names or {}, p_data.spec.name) then
       plugs[#plugs + 1] = new_plug(p_data.spec)
+      used_names[p_data.spec.name] = true
     end
+  end
+
+  if vim.islist(names) and #plugs ~= #names then
+    --- @param n string
+    local unused = vim.tbl_filter(function(n)
+      return not used_names[n]
+    end, names)
+    error('The following plugins are not installed: ' .. table.concat(unused, ', '))
   end
 
   return plugs
@@ -878,11 +888,6 @@ function M.update(names, opts)
   --- @async
   --- @param p vim.pack.Plug
   local function do_update(p)
-    if not p.info.installed then
-      notify(('Cannot update %s - not found'):format(p.spec.name), 'WARN')
-      return
-    end
-
     -- Fetch
     -- Using '--tags --force' means conflicting tags will be synced with remote
     git_cmd(
@@ -945,17 +950,13 @@ function M.del(names)
   end
 
   for _, p in ipairs(plug_list) do
-    if not p.info.installed then
-      notify(("Plugin '%s' is not installed"):format(p.spec.name), 'WARN')
-    else
-      trigger_event(p, 'PackChangedPre', 'delete')
+    trigger_event(p, 'PackChangedPre', 'delete')
 
-      vim.fs.rm(p.path, { recursive = true, force = true })
-      active_plugins[p.path] = nil
-      notify(("Removed plugin '%s'"):format(p.spec.name), 'INFO')
+    vim.fs.rm(p.path, { recursive = true, force = true })
+    active_plugins[p.path] = nil
+    notify(("Removed plugin '%s'"):format(p.spec.name), 'INFO')
 
-      trigger_event(p, 'PackChanged', 'delete')
-    end
+    trigger_event(p, 'PackChanged', 'delete')
   end
 end
 
