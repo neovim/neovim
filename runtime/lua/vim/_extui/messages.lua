@@ -491,9 +491,12 @@ function M.set_pos(type)
           return
         end
         vim.schedule(function()
-          api.nvim_win_set_config(win, save_config)
+          if api.nvim_win_is_valid(win) then
+            api.nvim_win_set_config(win, save_config)
+          end
           cmd_on_key = nil
           local entered = api.nvim_get_current_win() == win
+          ext.check_targets()
           -- Show or clear the message depending on if the pager was opened.
           if entered or not api.nvim_win_get_config(ext.wins.pager).hide then
             M.virt.msg[M.virt.idx.spill][1] = nil
@@ -502,6 +505,7 @@ function M.set_pos(type)
               api.nvim_command('norm! g<') -- User entered the cmdline window: open the pager.
             end
           elseif ext.cfg.msg.target == 'cmd' and ext.cmd.level <= 0 then
+            ext.check_targets()
             set_virttext('msg')
           end
           api.nvim__redraw({ flush = true }) -- NOTE: redundant unless cmdline was opened.
