@@ -112,7 +112,6 @@ API (EXTENSIBILITY/SCRIPTING/PLUGINS)
 |channel|		Nvim asynchronous IO
 |vimscript|		Vimscript reference
 |vimscript-functions|	Vimscript functions
-|testing.txt|		Vimscript testing functions
 |remote-plugin|		Nvim remote plugins
 |health|		Health checking
 

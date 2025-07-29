@@ -31,7 +31,7 @@ script.  There are a lot of them, thus this is a long chapter.
 Table of contents: |usr_toc.txt|
 
 ==============================================================================
-*41.1*	Introduction				*vim-script-intro* *script*
+*41.1*	Introduction				*vimscript-intro*
 
 Your first experience with Vim scripts is the vimrc file.  Vim reads it when
 it starts up and executes the commands.  You can set options to values you

@@ -8,7 +8,7 @@
                                        Type |gO| to see the table of contents.
 
 ==============================================================================
-Using Vim packages					*packages*
+Using Vim packages                                      *packages*
 
 A Vim "package" is a directory that contains |plugin|s.  Compared to normal
 plugins, a package can...
@@ -20,34 +20,34 @@ plugins, a package can...
   located in "pack/*/start/*") and ones that are only loaded when needed with
   |:packadd| ("opt" packages, located in "pack/*/opt/*").
 
-							*runtime-search-path*
+                                                        *runtime-search-path*
 Nvim searches for |:runtime| files in:
-	1. all paths in 'runtimepath'
-	2. all "pack/*/start/*" dirs
+- 1. all paths in 'runtimepath'
+- 2. all "pack/*/start/*" dirs
 
 Note that the "pack/*/start/*" paths are not explicitly included in
 'runtimepath', so they will not be reported by ":set rtp" or "echo &rtp".
 Scripts can use |nvim_list_runtime_paths()| to list all used directories, and
 |nvim_get_runtime_file()| to query for specific files or sub-folders within
 the runtime path. Example: >
-	" List all runtime dirs and packages with Lua paths.
-	:echo nvim_get_runtime_file("lua/", v:true)
+    " List all runtime dirs and packages with Lua paths.
+    :echo nvim_get_runtime_file("lua/", v:true)
 
 Using a package and loading automatically ~
 
 Let's assume your Nvim files are in "~/.local/share/nvim/site" and you want to
 add a package from a zip archive "/tmp/foopack.zip": >
-	% mkdir -p ~/.local/share/nvim/site/pack/foo
-	% cd ~/.local/share/nvim/site/pack/foo
-	% unzip /tmp/foopack.zip
+    % mkdir -p ~/.local/share/nvim/site/pack/foo
+    % cd ~/.local/share/nvim/site/pack/foo
+    % unzip /tmp/foopack.zip
 
 The directory name "foo" is arbitrary, you can pick anything you like.
 
-You would now have these files under ~/.local/share/nvim/site:
-	pack/foo/README.txt
-	pack/foo/start/foobar/plugin/foo.vim
-	pack/foo/start/foobar/syntax/some.vim
-	pack/foo/opt/foodebug/plugin/debugger.vim
+You would now have these files under ~/.local/share/nvim/site: >
+    pack/foo/README.txt
+    pack/foo/start/foobar/plugin/foo.vim
+    pack/foo/start/foobar/syntax/some.vim
+    pack/foo/opt/foodebug/plugin/debugger.vim
 
 On startup after processing your |config|, Nvim scans all directories in
 'packpath' for plugins in "pack/*/start/*", then loads the plugins.
@@ -74,7 +74,7 @@ Loading packages automatically will not happen if loading plugins is disabled,
 see |load-plugins|.
 
 To load packages earlier, so that plugin/ files are sourced:
-	:packloadall
+    :packloadall
 This also works when loading plugins is disabled.  The automatic loading will
 only happen once.
 
@@ -86,21 +86,21 @@ Using a single plugin and loading it automatically ~
 
 If you don't have a package but a single plugin, you need to create the extra
 directory level: >
-	% mkdir -p ~/.local/share/nvim/site/pack/foo/start/foobar
-	% cd ~/.local/share/nvim/site/pack/foo/start/foobar
-	% unzip /tmp/someplugin.zip
+    % mkdir -p ~/.local/share/nvim/site/pack/foo/start/foobar
+    % cd ~/.local/share/nvim/site/pack/foo/start/foobar
+    % unzip /tmp/someplugin.zip
 
-You would now have these files:
-	pack/foo/start/foobar/plugin/foo.vim
-	pack/foo/start/foobar/syntax/some.vim
+You would now have these files: >
+    pack/foo/start/foobar/plugin/foo.vim
+    pack/foo/start/foobar/syntax/some.vim
 
 From here it works like above.
 
 
 Optional plugins ~
-							*pack-add*
+                                                        *pack-add*
 To load an optional plugin from a pack use the `:packadd` command: >
-	:packadd foodebug
+    :packadd foodebug
 This searches for "pack/*/opt/foodebug" in 'packpath' and will find
 ~/.local/share/nvim/site/pack/foo/opt/foodebug/plugin/debugger.vim and source
 it.
@@ -110,7 +110,7 @@ whether Nvim supports a feature or a dependency is missing.
 
 You can also load an optional plugin at startup, by putting this command in
 your |config|: >
-	:packadd! foodebug
+    :packadd! foodebug
 The extra "!" is so that the plugin isn't loaded if Nvim was started with
 |--noplugin|.
 
@@ -129,17 +129,17 @@ Filetype plugins should go under "pack/*/start", so that they are always
 found.  Unless you have more than one plugin for a file type and want to
 select which one to load with `:packadd`.  E.g. depending on the compiler
 version: >
-	if foo_compiler_version > 34
-	  packadd foo_new
-	else
-	  packadd foo_old
-	endif
+    if foo_compiler_version > 34
+      packadd foo_new
+    else
+      packadd foo_old
+    endif
 
 The "after" directory is most likely not useful in a package.  It's not
 disallowed though.
 
 ==============================================================================
-Creating Vim packages					*package-create*
+Creating Vim packages                                   *package-create*
 
 This assumes you write one or more plugins that you distribute as a package.
 
@@ -154,28 +154,28 @@ bit harder to update to a new version.  A repository can usually be kept
 up-to-date easily, but it requires a program like "git" to be available.
 You can do both, github can automatically create an archive for a release.
 
-Your directory layout would be like this:
-   start/foobar/plugin/foo.vim		" always loaded, defines commands
-   start/foobar/plugin/bar.vim		" always loaded, defines commands
-   start/foobar/autoload/foo.vim	" loaded when foo command used
-   start/foobar/doc/foo.txt		" help for foo.vim
-   start/foobar/doc/tags		" help tags
-   opt/fooextra/plugin/extra.vim	" optional plugin, defines commands
-   opt/fooextra/autoload/extra.vim	" loaded when extra command used
-   opt/fooextra/doc/extra.txt		" help for extra.vim
-   opt/fooextra/doc/tags		" help tags
-
+Your directory layout would be like this: >
+   start/foobar/plugin/foo.vim          " always loaded, defines commands
+   start/foobar/plugin/bar.vim          " always loaded, defines commands
+   start/foobar/autoload/foo.vim        " loaded when foo command used
+   start/foobar/doc/foo.txt             " help for foo.vim
+   start/foobar/doc/tags                " help tags
+   opt/fooextra/plugin/extra.vim        " optional plugin, defines commands
+   opt/fooextra/autoload/extra.vim      " loaded when extra command used
+   opt/fooextra/doc/extra.txt           " help for extra.vim
+   opt/fooextra/doc/tags                " help tags
+<
 This allows for the user to do: >
-	mkdir ~/.local/share/nvim/site/pack
-	cd ~/.local/share/nvim/site/pack
-	git clone https://github.com/you/foobar.git myfoobar
+    mkdir ~/.local/share/nvim/site/pack
+    cd ~/.local/share/nvim/site/pack
+    git clone https://github.com/you/foobar.git myfoobar
 
 Here "myfoobar" is a name that the user can choose, the only condition is that
 it differs from other packages.
 
 In your documentation you explain what the plugins do, and tell the user how
 to load the optional plugin: >
-	:packadd! fooextra
+    :packadd! fooextra
 
 You could add this packadd command in one of your plugins, to be executed when
 the optional plugin is needed.
@@ -184,22 +184,22 @@ Run the `:helptags` command to generate the doc/tags file.  Including this
 generated file in the package means that the user can drop the package in the
 pack directory and the help command works right away.  Don't forget to re-run
 the command after changing the plugin help: >
-	:helptags path/start/foobar/doc
-	:helptags path/opt/fooextra/doc
+    :helptags path/start/foobar/doc
+    :helptags path/opt/fooextra/doc
 
 
 Dependencies between plugins ~
-							*packload-two-steps*
+                                                        *packload-two-steps*
 Suppose you have two plugins that depend on the same functionality. You can
 put the common functionality in an autoload directory, so that it will be
 found automatically.  Your package would have these files:
 
-	pack/foo/start/one/plugin/one.vim  >
-		call foolib#getit()
-<	pack/foo/start/two/plugin/two.vim >
-		call foolib#getit()
-<	pack/foo/start/lib/autoload/foolib.vim >
-		func foolib#getit()
+pack/foo/start/one/plugin/one.vim  >
+    call foolib#getit()
+pack/foo/start/two/plugin/two.vim >
+    call foolib#getit()
+pack/foo/start/lib/autoload/foolib.vim >
+    func foolib#getit()
 
 This works, because start packages will be searched for autoload files, when
 sourcing the plugins.

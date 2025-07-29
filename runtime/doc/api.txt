@@ -1311,6 +1311,9 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
     Replaces terminal codes and |keycodes| (<CR>, <Esc>, ...) in a string with
     the internal representation.
 
+    Note: ~
+      • Lua can use |vim.keycode()| instead.
+
     Attributes: ~
         Since: 0.1.0
 

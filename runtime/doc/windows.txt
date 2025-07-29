@@ -257,8 +257,8 @@ and 'winminwidth' are relevant.
 
 						*:hor* *:horizontal*
 :hor[izontal] {cmd}
-		Execute {cmd}.  Currently only makes a difference for
-		the following commands:
+		Execute {cmd} in a horizontal split window. Supports these
+		commands:
 		- `:wincmd =`: equalize windows only horizontally.
 		- |:terminal|: open a |terminal| buffer in a split window.
 		- |:checkhealth|: open a healthcheck buffer in a split window.

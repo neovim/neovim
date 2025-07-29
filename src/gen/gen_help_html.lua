@@ -79,6 +79,7 @@ local new_layout = {
   ['news-0.10.txt'] = true,
   ['news-0.11.txt'] = true,
   ['nvim.txt'] = true,
+  ['pack.txt'] = true,
   ['provider.txt'] = true,
   ['tui.txt'] = true,
   ['ui.txt'] = true,

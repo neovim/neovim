@@ -2045,6 +2045,10 @@ function vim.api.nvim_put(lines, type, after, follow) end
 --- Replaces terminal codes and `keycodes` ([<CR>], [<Esc>], ...) in a string with
 --- the internal representation.
 ---
+---
+--- Note:
+--- Lua can use |vim.keycode()| instead.
+---
 --- @see replace_termcodes
 --- @see cpoptions
 --- @param str string String to be converted.
