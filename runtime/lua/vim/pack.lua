@@ -626,8 +626,7 @@ local function pack_add(plug, load)
   -- automatically), as `:packadd` only sources plain 'plugin/' files.
   -- See https://github.com/vim/vim/issues/15584
   -- Deliberately do so after executing all currently known 'plugin/' files.
-  local should_load_after_dir = vim.v.vim_did_enter == 1 and load and vim.o.loadplugins
-  if should_load_after_dir then
+  if vim.v.vim_did_enter == 1 and load then
     local after_paths = vim.fn.glob(plug.path .. '/after/plugin/**/*.{vim,lua}', false, true)
     --- @param path string
     vim.tbl_map(function(path)
