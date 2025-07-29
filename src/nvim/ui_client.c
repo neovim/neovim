@@ -294,33 +294,40 @@ void ui_client_event_connect(Array args)
   char *server_addr = args.items[0].data.string.data;
   bool stop_server = args.items[1].data.boolean;
 
-  multiqueue_put(main_loop.fast_events, channel_connect_event, server_addr);
-
-  Error err = ERROR_INIT;
-  nvim_command(cstr_as_string("detach"), &err);
-
-  if (ERROR_SET(&err)) {
-    ELOG("Error running command `detach`: %s", err.msg);
-    return;
-  }
-
-  if (stop_server) {
-    nvim_command(cstr_as_string("qall!"), &err);
-    ELOG("Error exiting neovim: %s", err.msg);
-  }
+  ELOG("stop_server: %d", stop_server);
+  multiqueue_put(main_loop.fast_events, channel_connect_event, server_addr, (void *) stop_server);
 }
 
 static void channel_connect_event(void **argv)
 {
   char *server_addr = argv[0];
+  bool stop_server = (bool) argv[1];
 
-  const char *err = "";
+
+  Error err = ERROR_INIT;
+  nvim_command(cstr_as_string("detach"), &err);
+
+  if (ERROR_SET(&err)) {
+    ELOG("Error executing command `detach`: %s", err.msg);
+  }
+
+  if (stop_server) {
+  ELOG("ui_client_channel_id: %lu", ui_client_channel_id);
+    nvim_command(cstr_as_string("qall!"), &err);
+
+    if (ERROR_SET(&err)) {
+      ELOG("Error exiting neovim: %s", err.msg);
+      return;
+    }
+  }
+
+  const char *err2 = "";
   bool is_tcp = !!strrchr(server_addr, ':');
   CallbackReader on_data = CALLBACK_READER_INIT;
-  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &err);
+  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &err2);
 
-  if (!strequal(err, "")) {
-    ELOG("Error handling UI event 'connect': %s", err);
+  if (!strequal(err2, "")) {
+    ELOG("Error handling UI event 'connect': %s", err2);
     return;
   }
 
