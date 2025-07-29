@@ -710,7 +710,11 @@ static void block_insert(oparg_T *oap, const char *s, size_t slen, bool b_insert
 
   State = oldstate;
 
-  changed_lines(curbuf, oap->start.lnum + 1, 0, oap->end.lnum + 1, 0, true);
+  // Only call changed_lines if we actually modified additional lines beyond the first
+  // This matches the condition for the for loop above: start + 1 <= end
+  if (oap->start.lnum < oap->end.lnum) {
+    changed_lines(curbuf, oap->start.lnum + 1, 0, oap->end.lnum + 1, 0, true);
+  }
 }
 
 // Keep the last expression line here, for repeating.
