@@ -601,6 +601,7 @@ local static_registration_capabilities = {
   [ms.textDocument_foldingRange] = 'foldingRangeProvider',
   [ms.textDocument_implementation] = 'implementationProvider',
   [ms.textDocument_inlayHint] = 'inlayHintProvider',
+  [ms.textDocument_inlineCompletion] = 'inlineCompletionProvider',
   [ms.textDocument_inlineValue] = 'inlineValueProvider',
   [ms.textDocument_linkedEditingRange] = 'linkedEditingRangeProvider',
   [ms.textDocument_moniker] = 'monikerProvider',
@@ -1090,6 +1091,9 @@ function Client:on_attach(bufnr)
     end
     if vim.tbl_get(self.server_capabilities, 'foldingRangeProvider') then
       lsp._folding_range._setup(bufnr)
+    end
+    if vim.tbl_get(self.server_capabilities, 'inlineCompletionProvider') then
+      lsp.inline_completion._start(bufnr)
     end
   end)
 
