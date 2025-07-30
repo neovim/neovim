@@ -23,6 +23,7 @@ static void CALLBACK pty_proc_terminate_cb(void *context, BOOLEAN unused)
   Proc *proc = (Proc *)ptyproc;
 
   os_conpty_free(ptyproc->conpty);
+  ptyproc->conpty = NULL;
   // NB: pty_proc_terminate_cb() is called on a separate thread,
   // but finishing up the process needs to be done on the main thread.
   loop_schedule_fast(proc->loop, event_create(pty_proc_finish_when_eof, ptyproc));
