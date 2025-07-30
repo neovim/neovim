@@ -12,13 +12,6 @@
 # define PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE 0x00020016
 #endif
 
-#ifndef VALIDPOINTERSIZE
-# define VALIDPOINTERSIZE 100
-#endif
-
-static HPCON validFilePointers[VALIDPOINTERSIZE];
-static int pointerCount = 0;
-
 HRESULT(WINAPI *pCreatePseudoConsole)(COORD, HANDLE, HANDLE, DWORD, HPCON *);
 HRESULT(WINAPI *pResizePseudoConsole)(HPCON, COORD);
 void(WINAPI *pClosePseudoConsole)(HPCON);
@@ -109,10 +102,6 @@ conpty_t *os_conpty_init(char **in_name, char **out_name, uint16_t width, uint16
     emsg = "create pseudo console failed";
     goto failed;
   }
-  if (pointerCount < VALIDPOINTERSIZE) {
-    validFilePointers[pointerCount] = conpty_object->pty;
-  }
-  pointerCount++;
 
   conpty_object->si_ex.StartupInfo.cb = sizeof(conpty_object->si_ex);
   size_t bytes_required;
@@ -179,20 +168,6 @@ void os_conpty_set_size(conpty_t *conpty_object, uint16_t width, uint16_t height
   assert(width <= SHRT_MAX);
   assert(height <= SHRT_MAX);
   COORD size = { (int16_t)width, (int16_t)height };
-  // is this pointer a valid pointer that was allocated from pCreatePseudoConsole
-  bool isValid = true;
-  if (pointerCount <= VALIDPOINTERSIZE) {
-    isValid = false;
-    for (int i = 0; i < pointerCount; i++) {
-      if (conpty_object->pty == validFilePointers[i]) {
-        isValid = true;
-        break;
-      }
-    }
-  }
-  if (isValid == false) {
-    return;
-  }
   if (pResizePseudoConsole(conpty_object->pty, size) != S_OK) {
     ELOG("ResizePseudoConsoel failed: error code: %d",
          os_translate_sys_error((int)GetLastError()));
