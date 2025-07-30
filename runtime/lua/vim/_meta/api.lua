@@ -2340,6 +2340,18 @@ function vim.api.nvim_tabpage_set_var(tabpage, name, value) end
 --- @param win integer `window-ID`, must already belong to {tabpage}
 function vim.api.nvim_tabpage_set_win(tabpage, win) end
 
+--- Add a fold to the window from {start} to {end}.
+---
+--- All row arguments are 0-indexed, inclusive.
+---
+--- Only supported for `fold-manual` and `fold-marker`.
+---
+--- @param window integer Window handle, or 0 for current window.
+--- @param start integer Start row of fold.
+--- @param end_ integer End row of fold.
+--- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
+function vim.api.nvim_win_add_fold(window, start, end_, opts) end
+
 --- Calls a function with window as temporary current window.
 ---
 ---
@@ -2358,6 +2370,19 @@ function vim.api.nvim_win_call(window, fun) end
 --- unwritten changes can be closed. The buffer will become
 --- hidden, even if 'hidden' is not set.
 function vim.api.nvim_win_close(window, force) end
+
+--- Delete a fold from the window from {start} to {end}.
+---
+--- All row arguments are 0-indexed, inclusive.
+---
+--- Only supported for `fold-manual` and `fold-marker`.
+---
+--- @param window integer Window handle, or 0 for current window.
+--- @param start integer Start row of fold.
+--- @param end_ integer End row of fold.
+--- @param opts vim.api.keyset.win_del_fold Optional parameters:
+--- - recursive: Delete folds recursively
+function vim.api.nvim_win_del_fold(window, start, end_, opts) end
 
 --- Removes a window-scoped (w:) variable
 ---
@@ -2390,6 +2415,17 @@ function vim.api.nvim_win_get_config(window) end
 --- @param window integer `window-ID`, or 0 for current window
 --- @return [integer, integer] # (row, col) tuple
 function vim.api.nvim_win_get_cursor(window) end
+
+--- Get fold information from the window.
+---
+--- All row arguments are 0-indexed, inclusive.
+---
+--- @param window integer Window handle, or 0 for current window.
+--- @param opts vim.api.keyset.empty Optional parameters:
+--- - start_row: get folds from this row
+--- - end_row: get folds up to this row
+--- @return any[]
+function vim.api.nvim_win_get_folds(window, opts) end
 
 --- Gets the window height
 ---

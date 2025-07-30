@@ -457,6 +457,9 @@ error('Cannot require a meta file')
 --- @field hide? boolean
 --- @field _cmdline_offset? integer
 
+--- @class vim.api.keyset.win_del_fold
+--- @field recursive? boolean
+
 --- @class vim.api.keyset.win_text_height
 --- @field start_row? integer
 --- @field end_row? integer

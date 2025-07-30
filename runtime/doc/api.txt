@@ -3185,6 +3185,20 @@ nvim__ns_set({ns_id}, {opts})                                 *nvim__ns_set()*
 ==============================================================================
 Window Functions                                                  *api-window*
 
+                                                         *nvim_win_add_fold()*
+nvim_win_add_fold({window}, {start}, {end}, {opts})
+    Add a fold to the window from {start} to {end}.
+
+    All row arguments are 0-indexed, inclusive.
+
+    Only supported for |fold-manual| and |fold-marker|.
+
+    Parameters: ~
+      • {window}  Window handle, or 0 for current window.
+      • {start}   Start row of fold.
+      • {end}     End row of fold.
+      • {opts}    Optional parameters. Reserved for future use.
+
 nvim_win_call({window}, {fun})                               *nvim_win_call()*
     Calls a function with window as temporary current window.
 
@@ -3216,6 +3230,21 @@ nvim_win_close({window}, {force})                           *nvim_win_close()*
       • {force}   (`boolean`) Behave like `:close!` The last window of a
                   buffer with unwritten changes can be closed. The buffer will
                   become hidden, even if 'hidden' is not set.
+
+                                                         *nvim_win_del_fold()*
+nvim_win_del_fold({window}, {start}, {end}, {opts})
+    Delete a fold from the window from {start} to {end}.
+
+    All row arguments are 0-indexed, inclusive.
+
+    Only supported for |fold-manual| and |fold-marker|.
+
+    Parameters: ~
+      • {window}  Window handle, or 0 for current window.
+      • {start}   Start row of fold.
+      • {end}     End row of fold.
+      • {opts}    Optional parameters:
+                  • recursive: Delete folds recursively
 
 nvim_win_del_var({window}, {name})                        *nvim_win_del_var()*
     Removes a window-scoped (w:) variable
@@ -3255,6 +3284,17 @@ nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
 
     See also: ~
       • |getcurpos()|
+
+nvim_win_get_folds({window}, {opts})                    *nvim_win_get_folds()*
+    Get fold information from the window.
+
+    All row arguments are 0-indexed, inclusive.
+
+    Parameters: ~
+      • {window}  Window handle, or 0 for current window.
+      • {opts}    Optional parameters:
+                  • start_row: get folds from this row
+                  • end_row: get folds up to this row
 
 nvim_win_get_height({window})                          *nvim_win_get_height()*
     Gets the window height
