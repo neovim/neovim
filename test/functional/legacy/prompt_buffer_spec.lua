@@ -130,6 +130,10 @@ describe('prompt buffer', function()
       {1:~                        }|*3
       {5:-- INSERT --}             |
     ]])
+
+    -- :edit doesn't apply on prompt buffer
+    eq('Vim(edit):cannot :edit a prompt buffer', t.pcall_err(api.nvim_command, 'edit'))
+
     feed('<C-U>exit\n')
     screen:expect([[
       ^other buffer             |
@@ -296,6 +300,47 @@ describe('prompt buffer', function()
       line2^                    |
       {1:~                        }|*6
       {5:-- INSERT --}             |
+    ]])
+
+    -- ensure cursor gets adjusted to end of user-text to prompt when insert mode
+    -- is entered from readonly region of prompt buffer
+    local prompt_pos = api.nvim_buf_get_mark(0, ':')
+    feed('<esc>')
+    -- works before prompt
+    api.nvim_win_set_cursor(0, { prompt_pos[1] - 1, 0 })
+    screen:expect([[
+      ^other buffer             |
+      % line1                  |
+      line2                    |
+      {1:~                        }|*6
+                               |
+    ]])
+    feed('a')
+    feed('<esc>')
+    screen:expect([[
+      other buffer             |
+      % line1                  |
+      line^2                    |
+      {1:~                        }|*6
+                               |
+    ]])
+    -- works on prompt
+    api.nvim_win_set_cursor(0, { prompt_pos[1], 0 })
+    screen:expect([[
+      other buffer             |
+      ^% line1                  |
+      line2                    |
+      {1:~                        }|*6
+                               |
+    ]])
+    feed('a')
+    feed('<esc>')
+    screen:expect([[
+      other buffer             |
+      % line1                  |
+      line^2                    |
+      {1:~                        }|*6
+                               |
     ]])
   end)
 

@@ -5718,6 +5718,12 @@ static void ex_edit(exarg_T *eap)
     return;
   }
 
+  // prevent use of :edit on prompt-buffers
+  if (bt_prompt(curbuf) && eap->cmdidx == CMD_edit && *eap->arg == NUL) {
+    emsg("cannot :edit a prompt buffer");
+    return;
+  }
+
   do_exedit(eap, NULL);
 }
 
