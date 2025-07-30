@@ -4869,22 +4869,8 @@ static void ex_restart(exarg_T *eap)
       if (!added_startup_arg) {
         tv_list_append_string(argv_cpy, "-c", 2);
         size_t cmd_size = strlen(eap->arg);
-        // Handle command after TRLBAR ("|").
-        if (eap->nextcmd != NULL) {
-          size_t next_cmd_size = strlen(eap->nextcmd);
-          assert(cmd_size + next_cmd_size + 3 <= SIZE_MAX);  // Include size of " | " as well.
-          cmd_size += next_cmd_size + 3;
-        }
         assert(cmd_size <= (size_t)SSIZE_MAX);
-        char *cmd;
-        if (eap->nextcmd != NULL) {
-          cmd = xmalloc(sizeof(char) * (cmd_size + 1));
-          snprintf(cmd, cmd_size + 1, "%s | %s", eap->arg, eap->nextcmd);
-        } else {
-          cmd = xstrdup(eap->arg);
-        }
-        tv_list_append_string(argv_cpy, cmd, (ssize_t)cmd_size);
-        xfree(cmd);
+        tv_list_append_string(argv_cpy, eap->arg, (ssize_t)cmd_size);
         added_startup_arg = true;
       }
     });
