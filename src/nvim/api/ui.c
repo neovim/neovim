@@ -308,6 +308,7 @@ bool remote_ui_restart(uint64_t channel_id, Error *err)
     }
     // Exclude --embed/--headless/-c <cmd> from `argv`, as the client may start the server in a
     // different way than how the server was originally started.
+    // Eg: 'nvim -c foo -c bar --embed --headless -- example.txt' would be parsed as { 'nvim', '-c', 'foo', '--', 'example.txt' }.
     if (argv.size == 0 || had_minmin
         || (!strequal(arg, "--embed") && !strequal(arg, "--headless") && !skipping_minc)) {
       ADD_C(argv, CSTR_AS_OBJ(arg));

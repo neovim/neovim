@@ -70,7 +70,7 @@ Stop or detach the current UI
 Restart Nvim
 
                                                 *:restart*
-:restart [+cmd] {command}
+:restart [+cmd] [command]
                 Restarts the Nvim server with the same startup arguments
                 |v:argv| and reattaches the current UI to the new server.
                 All other UIs will detach.
@@ -80,10 +80,9 @@ Restart Nvim
                 Example: `:restart +qall!` stops the server using `:qall!`.
                 Example: `:restart +qall! lua vim.pack.update()` stops the
                 server using `:qall!` and starts the new server with the
-                argument `-c lua vim.pack.update()`. See also `-c`.
+                argument `-c lua vim.pack.update()`. See also |-c|.
 
                 Note: |+cmd| defaults to `qall!` if not specified.
-                Note: {command} is omitted if not specified.
                 Note: If the current UI hasn't implemented the "restart" UI
                 event, this command is equivalent to `:qall`.
                 Note: Only works if the UI and server are on the same system.
