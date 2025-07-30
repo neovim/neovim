@@ -145,6 +145,7 @@ DEFAULTS
 
 • 'statusline' default is exposed as a statusline expression (previously it
   was implemented as an internal C routine).
+• 'statusline' includes |vim.diagnostic.status()|
 • Project-local configuration ('exrc') is also loaded from parent directories.
   Unset 'exrc' to stop further search.
 • Mappings:
@@ -157,6 +158,8 @@ DIAGNOSTICS
   location/quickfix list.
 • |vim.diagnostic.get()| now accepts an `enabled` filter to only return
   enabled or disabled diagnostics.
+• |vim.diagnostic.status()| returns a formatted string with current buffer
+  diagnostics
 
 EDITOR
 

@@ -8706,15 +8706,19 @@ local options = {
     {
       abbreviation = 'stl',
       cb = 'did_set_statusline',
-      defaults = table.concat({
-        '%<',
-        '%f %h%w%m%r ',
-        '%=',
-        "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
-        "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
-        "%{% &busy > 0 ? '◐ ' : '' %}",
-        "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
-      }),
+      defaults = {
+        if_true = table.concat({
+          '%<',
+          '%f %h%w%m%r ',
+          '%=',
+          "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
+          "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
+          "%{% &busy > 0 ? '◐ ' : '' %}",
+          "%(%{luaeval('(pcall(require, ''vim.diagnostic'') and vim.diagnostic.status()) or '''' ')} %)",
+          "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+        }),
+        doc = 'is very long',
+      },
       desc = [=[
         Sets the |status-line|.
 

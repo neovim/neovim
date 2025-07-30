@@ -4022,6 +4022,72 @@ describe('vim.diagnostic', function()
     end)
   end)
 
+  describe('status()', function()
+    it('returns empty string if no diagnostics', function()
+      local result = exec_lua(function()
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {})
+        return vim.diagnostic.status()
+      end)
+
+      eq('', result)
+    end)
+
+    it('returns count for each diagnostic kind', function()
+      local result = exec_lua(function()
+        vim.diagnostic.set(_G.diagnostic_ns, 0, {
+          _G.make_error('Error 1', 0, 1, 0, 1),
+
+          _G.make_warning('Warning 1', 2, 2, 2, 2),
+          _G.make_warning('Warning 2', 2, 2, 2, 2),
+
+          _G.make_info('Info 1', 3, 3, 3, 3),
+          _G.make_info('Info 2', 3, 3, 3, 3),
+          _G.make_info('Info 3', 3, 3, 3, 3),
+
+          _G.make_hint('Hint 1', 4, 4, 4, 4),
+          _G.make_hint('Hint 2', 4, 4, 4, 4),
+          _G.make_hint('Hint 3', 4, 4, 4, 4),
+          _G.make_hint('Hint 4', 4, 4, 4, 4),
+        })
+        return vim.diagnostic.status()
+      end)
+
+      eq('E:1 W:2 I:3 H:4', result)
+
+      exec_lua('vim.cmd.enew()')
+
+      -- Empty diagnostics for a buffer without diagnostics
+      eq(
+        '',
+        exec_lua(function()
+          return vim.diagnostic.status()
+        end)
+      )
+    end)
+
+    it('uses text from diagnostic.config().signs.text[severity]', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({
+          signs = {
+            text = {
+              [vim.diagnostic.severity.ERROR] = '⨯',
+              [vim.diagnostic.severity.WARN] = '⚠︎',
+            },
+          },
+        })
+
+        vim.diagnostic.set(_G.diagnostic_ns, 0, {
+          _G.make_error('Error 1', 0, 1, 0, 1),
+          _G.make_warning('Warning 1', 2, 2, 2, 2),
+        })
+
+        return vim.diagnostic.status()
+      end)
+
+      eq('⨯:1 ⚠︎:1', result)
+    end)
+  end)
+
   describe('handlers', function()
     it('checks that a new handler is a table', function()
       matches(

@@ -1019,6 +1019,23 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
       • {opts}         (`vim.diagnostic.Opts?`) Display options. See
                        |vim.diagnostic.Opts|.
 
+status({bufnr})                                      *vim.diagnostic.status()*
+    Returns formatted string with diagnostics for the current buffer. The
+    severities with 0 diagnostics are left out. Example `E:2 W:3 I:4 H:5`
+
+    To customise appearance, set diagnostic signs text with >lua
+        vim.diagnostic.config({
+          signs = { text = { [vim.diagnostic.severity.ERROR] = 'e', ... } }
+        })
+<
+
+    Parameters: ~
+      • {bufnr}  (`integer?`) Buffer number to get diagnostics from. Defaults
+                 to 0 for the current buffer
+
+    Return: ~
+        (`string`)
+
 toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
     Convert a list of diagnostics to a list of quickfix items that can be
     passed to |setqflist()| or |setloclist()|.

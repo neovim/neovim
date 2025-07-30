@@ -6231,7 +6231,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	an expensive expression can negatively affect render performance.
 
 					*'statusline'* *'stl'* *E540* *E542*
-'statusline' 'stl'	string	(default "%<%f %h%w%m%r %=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &busy > 0 ? '◐ ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}")
+'statusline' 'stl'	string	(default is very long)
 			global or local to window |global-local|
 	Sets the |status-line|.
 
