@@ -350,12 +350,21 @@ end
 
 vim.list = {}
 
+---TODO(ofseed): memoize, string value support, type alias.
+---@generic T
+---@param v T
+---@param key? fun(v: T): any
+---@return any
+local function key_fn(v, key)
+  return key and key(v) or v
+end
+
 --- Removes duplicate values from a list-like table in-place.
 ---
 --- Only the first occurrence of each value is kept.
 --- The operation is performed in-place and the input table is modified.
 ---
---- Accepts an optional `hash` argument that if provided is called for each
+--- Accepts an optional `key` argument that if provided is called for each
 --- value in the list to compute a hash key for uniqueness comparison.
 --- This is useful for deduplicating table values or complex objects.
 ---
@@ -373,21 +382,18 @@ vim.list = {}
 ---
 --- @generic T
 --- @param t T[]
---- @param key? fun(x: T): any? Optional hash function to determine uniqueness of values
+--- @param key? fun(x: T): any Optional hash function to determine uniqueness of values
 --- @return T[] : The deduplicated list
 function vim.list.unique(t, key)
   vim.validate('t', t, 'table')
   local seen = {} --- @type table<any,boolean>
 
   local finish = #t
-  key = key or function(a)
-    return a
-  end
 
   local j = 1
   for i = 1, finish do
     local v = t[i]
-    local vh = key(v)
+    local vh = key_fn(v, key)
     if not seen[vh] then
       t[j] = v
       if vh ~= nil then
@@ -402,6 +408,127 @@ function vim.list.unique(t, key)
   end
 
   return t
+end
+
+---@class vim.list.bisect.Opts
+---@inlinedoc
+---
+--- Start index of the list.
+--- (default: `1`)
+---@field lo? integer
+---
+--- End index of the list, exclusive.
+--- (default: `#t + 1`)
+---@field hi? integer
+---
+--- Optional, compare the return value instead of the {val} itself if provided.
+---@field key? fun(val: any): any
+---
+--- Specifies the search variant.
+---   - "lower": returns the first position
+---     where inserting {val} keeps the list sorted.
+---   - "upper": returns the last position
+---     where inserting {val} keeps the list sorted..
+--- (default: `'lower'`)
+---@field bound? 'lower' | 'upper'
+
+---@generic T
+---@param t T[]
+---@param val T
+---@param key? fun(val: any): any
+---@param lo integer
+---@param hi integer
+---@return integer i in range such that `t[j]` < {val} for all j < i,
+---                and `t[j]` >= {val} for all j >= i,
+---                or return {hi} if no such index is found.
+local function lower_bound(t, val, lo, hi, key)
+  local bit = require('bit') -- Load bitop on demand
+  local val_key = key_fn(val, key)
+  while lo < hi do
+    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2)
+    if key_fn(t[mid], key) < val_key then
+      lo = mid + 1
+    else
+      hi = mid
+    end
+  end
+  return lo
+end
+
+---@generic T
+---@param t T[]
+---@param val T
+---@param key? fun(val: any): any
+---@param lo integer
+---@param hi integer
+---@return integer i in range such that `t[j]` <= {val} for all j < i,
+---                and `t[j]` > {val} for all j >= i,
+---                or return {hi} if no such index is found.
+local function upper_bound(t, val, lo, hi, key)
+  local bit = require('bit') -- Load bitop on demand
+  local val_key = key_fn(val, key)
+  while lo < hi do
+    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2)
+    if val_key < key_fn(t[mid], key) then
+      hi = mid
+    else
+      lo = mid + 1
+    end
+  end
+  return lo
+end
+
+--- Search for a position in a sorted list {t}
+--- where {val} can be inserted while keeping the list sorted.
+---
+--- Use {bound} to determine whether to return the first or the last position,
+--- defaults to "lower", i.e., the first position.
+---
+--- NOTE: Behavior is undefined on unsorted lists!
+---
+--- Example:
+--- ```lua
+---
+--- local t = { 1, 2, 2, 3, 3, 3 }
+--- local first = vim.list.bisect(t, 3)
+--- -- `first` is `val`'s first index if found,
+--- -- useful for existence checks.
+--- print(t[first]) -- 3
+---
+--- local last = vim.list.bisect(t, 3, { bound = 'upper' })
+--- -- Note that `last` is 7, not 6,
+--- -- this is suitable for insertion.
+---
+--- table.insert(t, last, 4)
+--- -- t is now { 1, 2, 2, 3, 3, 3, 4 }
+---
+--- -- You can use lower bound and upper bound together
+--- -- to obtain the range of occurrences of `val`.
+---
+--- -- 3 is in [first, last)
+--- for i = first, last - 1 do
+---   print(t[i]) -- { 3, 3, 3 }
+--- end
+--- ```
+---@generic T
+---@param t T[] A comparable list.
+---@param val T The value to search.
+---@param opts? vim.list.bisect.Opts
+---@return integer index serves as either the lower bound or the upper bound position.
+function vim.list.bisect(t, val, opts)
+  vim.validate('t', t, 'table')
+  vim.validate('opts', opts, 'table', true)
+
+  opts = opts or {}
+  local lo = opts.lo or 1
+  local hi = opts.hi or #t + 1
+  local key = opts.key
+
+  if opts.bound == 'upper' then
+    return upper_bound(t, val, lo, hi, key)
+  else
+    return lower_bound(t, val, lo, hi, key)
+  end
 end
 
 --- Checks if a table is empty.
