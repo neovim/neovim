@@ -2873,7 +2873,9 @@ end
 vim.api.nvim_create_autocmd('DiagnosticChanged', {
   group = vim.api.nvim_create_augroup('nvim.diagnostic.status', {}),
   callback = function(ev)
-    vim.api.nvim__redraw({ buf = ev.buf, statusline = true })
+    if vim.api.nvim_buf_is_valid(ev.buf) then
+      vim.api.nvim__redraw({ buf = ev.buf, statusline = true })
+    end
   end,
   desc = 'diagnostics component for the statusline',
 })
