@@ -367,6 +367,20 @@ local function on_line_impl(self, win, buf, line, on_spell, on_conceal)
         local url = get_url(match, buf, capture, metadata)
 
         if hl and end_row >= line and not on_conceal and (not on_spell or spell ~= nil) then
+
+        -- Clamp end_row and end_col to valid values to prevent
+        -- "Invalid 'end_col': out of range" error reported in issue #29550
+        local total_lines = vim.api.nvim_buf_line_count(buf)
+        if end_row >= total_lines then
+          end_row = total_lines - 1
+        end
+
+        local line_text = vim.api.nvim_buf_get_lines(buf, end_row, end_row + 1, true)[1] or ""
+        local max_col = #line_text
+        if end_col > max_col then
+          end_col = max_col
+        end
+
           api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
             end_line = end_row,
             end_col = end_col,
