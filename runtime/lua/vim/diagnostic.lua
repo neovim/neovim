@@ -2873,7 +2873,7 @@ end
 vim.api.nvim_create_autocmd('DiagnosticChanged', {
   group = vim.api.nvim_create_augroup('nvim.diagnostic.status', {}),
   callback = function(ev)
-    if vim.api.nvim_buf_is_valid(ev.buf) then
+    if vim.api.nvim_buf_is_loaded(ev.buf) then
       vim.api.nvim__redraw({ buf = ev.buf, statusline = true })
     end
   end,
