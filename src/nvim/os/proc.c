@@ -41,6 +41,9 @@
 
 #ifdef MSWIN
 # include "nvim/api/private/helpers.h"
+#else
+// TODO: bs, put os_proc_tree_kill_rec in a os-specific c file
+# define HANDLE int
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

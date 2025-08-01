@@ -6083,11 +6083,13 @@ bool changedir_func(char *new_dir, CdScope scope)
 
   // For UNIX ":cd" means: go to home directory.
   // On other systems too if 'cdhome' is set.
+  bool p_cdh_cringe = p_cdh;
 #if defined(UNIX)
-  if (*new_dir == NUL) {
-#else
-  if (*new_dir == NUL && p_cdh) {
+  // TODO(bfredl): this platform difference is CRINGE.
+  // either the option is always used, or it should be delenda est
+  p_cdh_cringe = true;
 #endif
+  if (*new_dir == NUL && p_cdh_cringe) {
     // Use NameBuff for home directory name.
     expand_env("$HOME", NameBuff, MAXPATHL);
     new_dir = NameBuff;

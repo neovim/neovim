@@ -56,8 +56,8 @@ int forkpty(int *, char *, const struct termios *, const struct winsize *);
 // inclusion of the header even though it gets include out of order.
 # include <sys/stropts.h>
 
-static int openpty(int *amaster, int *aslave, char *name, struct termios *termp,
-                   struct winsize *winp)
+static int vim_openpty(int *amaster, int *aslave, char *name, struct termios *termp,
+                       struct winsize *winp)
 {
   int slave = -1;
   int master = open("/dev/ptmx", O_RDWR);
@@ -134,10 +134,10 @@ static int login_tty(int fd)
   return 0;
 }
 
-static pid_t forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
+pid_t vim_forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
 {
   int master, slave;
-  if (openpty(&master, &slave, name, termp, winp) == -1) {
+  if (vim_openpty(&master, &slave, name, termp, winp) == -1) {
     return -1;
   }
 
@@ -157,7 +157,7 @@ static pid_t forkpty(int *amaster, char *name, struct termios *termp, struct win
     return pid;
   }
 }
-
+# define forkpty vim_forkpty
 #endif
 
 /// @returns zero on success, or negative error code
