@@ -84,6 +84,7 @@ if(NOT MSVC)
     -Wmissing-noreturn
     -Wmissing-format-attribute
     -Wmissing-prototypes
+    -Wno-unused-function # because #35129
     -fsigned-char)
 
   # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
@@ -465,36 +466,18 @@ endif()
 # Header generation
 #-------------------------------------------------------------------------------
 
-get_target_property(prop main_lib INTERFACE_COMPILE_DEFINITIONS)
-if(NOT "${prop}" STREQUAL "prop-NOTFOUND")
-  foreach(gen_cdef ${prop})
-    if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
-      list(APPEND gen_cflags "-D${gen_cdef}")
-    endif()
-  endforeach()
-endif()
-
 get_directory_property(targets BUILDSYSTEM_TARGETS)
 foreach(target ${targets})
   get_target_property(prop ${target} INTERFACE_INCLUDE_DIRECTORIES)
   if(NOT "${prop}" STREQUAL "prop-NOTFOUND")
     message(STATUS "${target} props '${prop}'")
     foreach(gen_include ${prop})
-      list(APPEND gen_cflags "-I${gen_include}")
       list(APPEND TEST_INCLUDE_DIRS "${gen_include}")
     endforeach()
   endif()
 endforeach()
 
-list(REMOVE_DUPLICATES gen_cflags)
 list(REMOVE_DUPLICATES TEST_INCLUDE_DIRS)
-
-if(APPLE AND CMAKE_OSX_SYSROOT)
-  list(APPEND gen_cflags "-isysroot" "${CMAKE_OSX_SYSROOT}")
-endif()
-if(MSVC)
-  list(APPEND gen_cflags -wd4003)
-endif()
 
 set(NVIM_VERSION_GIT_H ${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef_git.h)
 add_custom_target(update_version_stamp
@@ -558,13 +541,6 @@ foreach(sfile ${NVIM_SOURCES}
     set(gf_h_h "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
     set(gf_h_h_out "${gf_h_h}")
   endif()
-  set(gf_i "${GENERATED_DIR}/${f}.i")
-
-  if(MSVC)
-    set(PREPROC_OUTPUT /P /Fi${gf_i} /nologo)
-  else()
-    set(PREPROC_OUTPUT -w -E -o ${gf_i})
-  endif()
 
   set(depends "${HEADER_GENERATOR}" "${sfile}" "${LUA_GEN_DEPS}" "${GENERATOR_C_GRAMMAR}")
   if("${f}" STREQUAL "version.c")
@@ -573,8 +549,7 @@ foreach(sfile ${NVIM_SOURCES}
   endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" ${gf_h_h_out}
-    COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags}
-    COMMAND ${LUA_GEN} "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}" "${gf_basename}"
+    COMMAND ${LUA_GEN} "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_basename}"
     DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
   if (NOT ${sfile} IN_LIST NVIM_HEADERS)

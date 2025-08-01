@@ -717,11 +717,7 @@ static void fname2fnum(xfmark_T *fm)
 
   // First expand "~/" in the file name to the home directory.
   // Don't expand the whole name, it may contain other '~' chars.
-#ifdef BACKSLASH_IN_FILENAME
-  if (fm->fname[0] == '~' && (fm->fname[1] == '/' || fm->fname[1] == '\\')) {
-#else
-  if (fm->fname[0] == '~' && (fm->fname[1] == '/')) {
-#endif
+  if (fm->fname[0] == '~' && vim_ispathsep_nocolon(fm->fname[1])) {
     size_t len = expand_env("~/", NameBuff, MAXPATHL);
     xstrlcpy(NameBuff + len, fm->fname + 2, MAXPATHL - len);
   } else {

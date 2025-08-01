@@ -1174,7 +1174,7 @@ bool utf_printable(int c)
 
 // Return true if "c" is in "table".
 static bool intable(const struct interval *table, size_t n_items, int c)
-  FUNC_ATTR_PURE
+  FUNC_ATTR_CONST
 {
   assert(n_items > 0);
   // first quick check for Latin1 etc. characters
@@ -1202,11 +1202,11 @@ static bool intable(const struct interval *table, size_t n_items, int c)
 // Return true for characters that can be displayed in a normal way.
 // Only for characters of 0x100 and above!
 bool utf_printable(int c)
-  FUNC_ATTR_PURE
+  FUNC_ATTR_CONST
 {
   // Sorted list of non-overlapping intervals.
   // 0xd800-0xdfff is reserved for UTF-16, actually illegal.
-  static struct interval nonprint[] = {
+  static const struct interval nonprint[] = {
     { 0x070f, 0x070f }, { 0x180b, 0x180e }, { 0x200b, 0x200f }, { 0x202a, 0x202e },
     { 0x2060, 0x206f }, { 0xd800, 0xdfff }, { 0xfeff, 0xfeff }, { 0xfff9, 0xfffb },
     { 0xfffe, 0xffff }

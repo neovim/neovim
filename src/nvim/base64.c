@@ -31,7 +31,7 @@ static const uint8_t char_to_index[256] = {
 };
 
 #ifndef HAVE_BE64TOH
-static inline uint64_t htobe64(uint64_t host_64bits)
+static inline uint64_t vim_htobe64(uint64_t host_64bits)
 {
 # ifdef ORDER_BIG_ENDIAN
   return host_64bits;
@@ -45,7 +45,7 @@ static inline uint64_t htobe64(uint64_t host_64bits)
 # endif
 }
 
-static inline uint32_t htobe32(uint32_t host_32bits)
+static inline uint32_t vim_htobe32(uint32_t host_32bits)
 {
 # ifdef ORDER_BIG_ENDIAN
   return host_32bits;
@@ -58,6 +58,8 @@ static inline uint32_t htobe32(uint32_t host_32bits)
   return ret;
 # endif
 }
+# define htobe64 vim_htobe64
+# define htobe32 vim_htobe32
 #endif
 
 /// Encode a string using Base64.

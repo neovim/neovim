@@ -245,14 +245,12 @@ bool os_can_exe(const char *name, char **abspath, bool use_path)
 {
   if (!use_path || gettail_dir(name) != name) {
 #ifdef MSWIN
-    if (is_executable_ext(name, abspath)) {
+    return is_executable_ext(name, abspath);
 #else
     // Must have path separator, cannot execute files in the current directory.
-    if ((use_path || gettail_dir(name) != name)
-        && is_executable(name, abspath)) {
+    return ((use_path || gettail_dir(name) != name)
+            && is_executable(name, abspath));
 #endif
-      return true;
-    }
     return false;
   }
 
@@ -339,6 +337,8 @@ static bool is_executable_ext(const char *name, char **abspath)
   }
   return false;
 }
+#else
+# define is_executable_ext is_executable
 #endif
 
 /// Checks if a file is in `$PATH` and is executable.
@@ -384,11 +384,7 @@ static bool is_executable_in_path(const char *name, char **abspath)
     xmemcpyz(buf, p, (size_t)(e - p));
     (void)append_path(buf, name, bufsize);
 
-#ifdef MSWIN
     if (is_executable_ext(buf, abspath)) {
-#else
-    if (is_executable(buf, abspath)) {
-#endif
       rv = true;
       goto end;
     }

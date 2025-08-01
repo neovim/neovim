@@ -3003,7 +3003,7 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
 }
 
 #ifndef HAVE_BE64TOH
-static inline uint64_t be64toh(uint64_t big_endian_64_bits)
+static inline uint64_t vim_be64toh(uint64_t big_endian_64_bits)
 {
 # ifdef ORDER_BIG_ENDIAN
   return big_endian_64_bits;
@@ -3019,6 +3019,7 @@ static inline uint64_t be64toh(uint64_t big_endian_64_bits)
   return ret;
 # endif
 }
+# define be64toh vim_be64toh
 #endif
 
 /// Read given number of bytes into given buffer, display error if needed
