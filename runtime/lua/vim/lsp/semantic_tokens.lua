@@ -45,38 +45,6 @@ local STHighlighter = { name = 'Semantic Tokens', active = {} }
 STHighlighter.__index = STHighlighter
 setmetatable(STHighlighter, Capability)
 
---- Do a binary search of the tokens in the half-open range [lo, hi).
----
---- Return the index i in range such that tokens[j].line < line for all j < i, and
---- tokens[j].line >= line for all j >= i, or return hi if no such index is found.
-local function lower_bound(tokens, line, lo, hi)
-  while lo < hi do
-    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
-    if tokens[mid].end_line < line then
-      lo = mid + 1
-    else
-      hi = mid
-    end
-  end
-  return lo
-end
-
---- Do a binary search of the tokens in the half-open range [lo, hi).
----
---- Return the index i in range such that tokens[j].line <= line for all j < i, and
---- tokens[j].line > line for all j >= i, or return hi if no such index is found.
-local function upper_bound(tokens, line, lo, hi)
-  while lo < hi do
-    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
-    if line < tokens[mid].line then
-      hi = mid
-    else
-      lo = mid + 1
-    end
-  end
-  return lo
-end
-
 --- Extracts modifier strings from the encoded number in the token array
 ---
 ---@param x integer
@@ -488,8 +456,18 @@ function STHighlighter:on_win(topline, botline)
 
       local ft = vim.bo[self.bufnr].filetype
       local highlights = assert(current_result.highlights)
-      local first = lower_bound(highlights, topline, 1, #highlights + 1)
-      local last = upper_bound(highlights, botline, first, #highlights + 1) - 1
+      local first = vim.list.bisect(highlights, { end_line = topline }, {
+        key = function(highlight)
+          return highlight.end_line
+        end,
+      })
+      local last = vim.list.bisect(highlights, { line = botline }, {
+        lo = first,
+        bound = 'upper',
+        key = function(highlight)
+          return highlight.line
+        end,
+      }) - 1
 
       --- @type boolean?, integer?
       local is_folded, foldend
@@ -761,7 +739,11 @@ function M.get_at_pos(bufnr, row, col)
   for client_id, client in pairs(highlighter.client_state) do
     local highlights = client.current_result.highlights
     if highlights then
-      local idx = lower_bound(highlights, row, 1, #highlights + 1)
+      local idx = vim.list.bisect(highlights, { end_line = row }, {
+        key = function(highlight)
+          return highlight.end_line
+        end,
+      })
       for i = idx, #highlights do
         local token = highlights[i]
         --- @cast token STTokenRangeInspect
