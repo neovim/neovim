@@ -88,7 +88,7 @@
 --- Each event populates the following |event-data| fields:
 --- - `kind` - one of "install" (install on disk), "update" (update existing
 --- plugin), "delete" (delete from disk).
---- - `spec` - plugin's specification.
+--- - `spec` - plugin's specification with defaults made explicit.
 --- - `path` - full path to plugin's directory.
 
 local api = vim.api
@@ -568,6 +568,9 @@ local function install_list(plug_list)
 
     git_clone(p.spec.src, p.path)
     p.info.installed = true
+
+    -- Infer default branch for fuller `event-data`
+    p.spec.version = p.spec.version or git_get_default_branch(p.path)
 
     -- Do not skip checkout even if HEAD and target have same commit hash to
     -- have new repo in expected detached HEAD state and generated help files.

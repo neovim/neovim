@@ -291,7 +291,7 @@ Available events to hook into ~
 Each event populates the following |event-data| fields:
 • `kind` - one of "install" (install on disk), "update" (update existing
   plugin), "delete" (delete from disk).
-• `spec` - plugin's specification.
+• `spec` - plugin's specification with defaults made explicit.
 • `path` - full path to plugin's directory.
 
 
