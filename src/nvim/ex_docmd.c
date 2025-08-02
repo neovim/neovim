@@ -4852,8 +4852,30 @@ static void ex_quitall(exarg_T *eap)
 
 /// ":restart": restart the Nvim server (using ":qall!").
 /// ":restart +cmd": restart the Nvim server using ":cmd".
+/// ":restart +cmd <command>": restart the Nvim server using ":cmd" and add -c <command> to the new server.
 static void ex_restart(exarg_T *eap)
 {
+  // Patch v:argv to include "-c <arg>" when it restarts.
+  if (eap->arg != NULL) {
+    const list_T *l = get_vim_var_list(VV_ARGV);
+    int argc = tv_list_len(l);
+    list_T *argv_cpy = tv_list_alloc(argc + 2);
+    bool added_startup_arg = false;
+    TV_LIST_ITER_CONST(l, li, {
+      const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
+      size_t arg_size = strlen(arg);
+      assert(arg_size <= (size_t)SSIZE_MAX);
+      tv_list_append_string(argv_cpy, arg, (ssize_t)arg_size);
+      if (!added_startup_arg) {
+        tv_list_append_string(argv_cpy, "-c", 2);
+        size_t cmd_size = strlen(eap->arg);
+        assert(cmd_size <= (size_t)SSIZE_MAX);
+        tv_list_append_string(argv_cpy, eap->arg, (ssize_t)cmd_size);
+        added_startup_arg = true;
+      }
+    });
+    set_vim_var_list(VV_ARGV, argv_cpy);
+  }
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall!";
   Error err = ERROR_INIT;
   if ((cmdmod.cmod_flags & CMOD_CONFIRM) && check_changed_any(false, false)) {
