@@ -260,7 +260,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
     local function display_line_countdown()
       num_resolved_line_lenses = num_resolved_line_lenses + 1
       if num_resolved_line_lenses == #line_lenses then
-        if line <= api.nvim_buf_line_count(bufnr) then
+        if api.nvim_buf_is_valid(bufnr) and line <= api.nvim_buf_line_count(bufnr) then
           display_line_lenses(bufnr, ns, line, line_lenses)
         end
         countdown(#line_lenses)
