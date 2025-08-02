@@ -1365,9 +1365,20 @@ syn match	vimMapLhs	contained	"\%(.\|\S\)\+"		contains=vimCtrlChar,vimNotation,
 syn match	vimMapLhs	contained	"\%(.\|\S\)\+\ze\s*$"	contains=vimCtrlChar,vimNotation,vimMapLeader skipwhite skipnl nextgroup=vimMapRhsContinue
 syn match	vimMapBang	contained	"\a\@1<=!"		skipwhite nextgroup=vimMapMod,vimMapLhs
 syn match	vimMapMod	contained	"\%#=1<\%(buffer\|expr\|nowait\|script\|silent\|special\|unique\)\+>" contains=vimMapModKey,vimMapModErr skipwhite nextgroup=vimMapMod,vimMapLhs
-syn region	vimMapRhs	contained	start="\S" 	        skip=+\\|\|\@1<=|\|\n\s*\\\|\n\s*"\\ + end="|" end="$" contains=@vimContinue,vimCtrlChar,vimNotation,vimMapLeader skipnl nextgroup=vimMapRhsContinue
-" assume a continuation comment introduces the RHS
-syn region	vimMapRhsContinue	contained	start=+^\s*\%(\\\|"\\ \)+ skip=+\\|\|\@1<=|\|\n\s*\\\|\n\s*"\\ + end="|" end="$" contains=@vimContinue,vimCtrlChar,vimNotation,vimMapLeader
+syn region	vimMapRhs	contained
+      \ start="\S"
+      \ skip=+\\|\|\@1<=|\|\n\s*\%(\\\|["#]\\ \)+
+      \ end="\ze|"
+      \ end="$"
+      \ nextgroup=vimCmdSep
+      \ contains=@vimContinue,vimCtrlChar,vimNotation,vimMapLeader
+syn region	vimMapRhsContinue	contained
+      \ start=+^\s*\%(\\\|["#]\\ \)+
+      \ skip=+\\|\|\@1<=|\|\n\s*\%(\\\|["#]\\ \)+
+      \ end="\ze|"
+      \ end="$"
+      \ nextgroup=vimCmdSep
+      \ contains=@vimContinue,vimCtrlChar,vimNotation,vimMapLeader
 syn match	vimMapLeader	contained	"\%#=1\c<\%(local\)\=leader>"	contains=vimMapLeaderKey
 syn keyword	vimMapModKey	contained	buffer expr nowait script silent special unique
 syn case ignore
