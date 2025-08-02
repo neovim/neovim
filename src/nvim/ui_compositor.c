@@ -48,11 +48,6 @@ static int chk_width = 0, chk_height = 0;
 static ScreenGrid *curgrid;
 
 static bool valid_screen = true;
-static int msg_current_row = INT_MAX;
-static bool msg_was_scrolled = false;
-
-static int msg_sep_row = -1;
-static schar_T msg_sep_char = schar_from_ascii(' ');
 
 static int dbghl_normal, dbghl_clear, dbghl_composed, dbghl_recompose;
 
@@ -400,27 +395,13 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
     assert(until > col);
     assert(until <= default_grid.cols);
     size_t n = (size_t)(until - col);
-
-    if (row == msg_sep_row && grid->comp_index <= msg_grid.comp_index) {
-      // TODO(bfredl): when we implement borders around floating windows, then
-      // msgsep can just be a border "around" the message grid.
-      grid = &msg_grid;
-      sattr_T msg_sep_attr = (sattr_T)HL_ATTR(HLF_MSGSEP);
-      for (int i = col; i < until; i++) {
-        linebuf[i - startcol] = msg_sep_char;
-        attrbuf[i - startcol] = msg_sep_attr;
-      }
-    } else {
-      size_t off = grid->line_offset[row - grid->comp_row]
-                   + (size_t)(col - grid->comp_col);
-      memcpy(linebuf + (col - startcol), grid->chars + off, n * sizeof(*linebuf));
-      memcpy(attrbuf + (col - startcol), grid->attrs + off, n * sizeof(*attrbuf));
-      if (grid->comp_col + grid->cols > until
-          && grid->chars[off + n] == NUL) {
-        linebuf[until - 1 - startcol] = schar_from_ascii(' ');
-        if (col == startcol && n == 1) {
-          skipstart = 0;
-        }
+    size_t off = grid->line_offset[row - grid->comp_row] + (size_t)(col - grid->comp_col);
+    memcpy(linebuf + (col - startcol), grid->chars + off, n * sizeof(*linebuf));
+    memcpy(attrbuf + (col - startcol), grid->attrs + off, n * sizeof(*attrbuf));
+    if (grid->comp_col + grid->cols > until && grid->chars[off + n] == NUL) {
+      linebuf[until - 1 - startcol] = schar_from_ascii(' ');
+      if (col == startcol && n == 1) {
+        skipstart = 0;
       }
     }
 
@@ -607,56 +588,13 @@ bool ui_comp_set_screen_valid(bool valid)
 {
   bool old_val = valid_screen;
   valid_screen = valid;
-  if (!valid) {
-    msg_sep_row = -1;
-  }
   return old_val;
 }
 
-void ui_comp_msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char,
-                         Integer zindex, Integer compindex)
-{
-  msg_grid.pending_comp_index_update = true;
-  msg_grid.comp_row = (int)row;
-  if (scrolled && row > 0) {
-    msg_sep_row = (int)row - 1;
-    if (sep_char.data) {
-      msg_sep_char = schar_from_buf(sep_char.data, sep_char.size);
-    }
-  } else {
-    msg_sep_row = -1;
-  }
-
-  if (row > msg_current_row && ui_comp_should_draw()) {
-    compose_area(MAX(msg_current_row - 1, 0), row, 0, default_grid.cols);
-  } else if (row < msg_current_row && ui_comp_should_draw()
-             && (msg_current_row < Rows || (scrolled && !msg_was_scrolled))) {
-    int delta = msg_current_row - (int)row;
-    if (msg_grid.blending) {
-      int first_row = MAX((int)row - (scrolled ? 1 : 0), 0);
-      compose_area(first_row, Rows - delta, 0, Columns);
-    } else {
-      // scroll separator together with message text
-      int first_row = MAX((int)row - (msg_was_scrolled ? 1 : 0), 0);
-      ui_composed_call_grid_scroll(1, first_row, Rows, 0, Columns, delta, 0);
-      if (scrolled && !msg_was_scrolled && row > 0) {
-        compose_area(row - 1, row, 0, Columns);
-      }
-    }
-  }
-
-  msg_current_row = (int)row;
-  msg_was_scrolled = scrolled;
-}
-
 /// check if curgrid is covered on row or above
-///
-/// TODO(bfredl): currently this only handles message row
 static bool curgrid_covered_above(int row)
 {
-  bool above_msg = (kv_A(layers, kv_size(layers) - 1) == &msg_grid
-                    && row < msg_current_row - (msg_was_scrolled ? 1 : 0));
-  return kv_size(layers) - (above_msg ? 1 : 0) > curgrid->comp_index + 1;
+  return kv_size(layers) > curgrid->comp_index + 1;
 }
 
 void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, Integer right,

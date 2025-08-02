@@ -453,7 +453,7 @@ describe('ui/ext_messages', function()
             { '\n--- Autocommands ---', 101, 'Title' },
             { '\n' },
             { 'ChanInfo', 101, 'Title' },
-            { '\n*foo' },
+            { '\n    *         foo' },
           },
           kind = 'list_cmd',
         },
@@ -1154,7 +1154,6 @@ stack traceback:
   end)
 
   it('wildmode=list', function()
-    screen:try_resize(25, 7)
     screen:set_option('ext_popupmenu', false)
 
     command('set wildmenu wildmode=list')
@@ -1575,7 +1574,6 @@ describe('ui/builtin messages', function()
   end)
 
   it(':hi Group output', function()
-    screen:try_resize(70, 7)
     feed(':hi ErrorMsg<cr>')
     screen:expect([[
                                                                             |
@@ -1587,7 +1585,6 @@ describe('ui/builtin messages', function()
     ]])
 
     feed('<cr>')
-    screen:try_resize(30, 7)
     feed(':hi ErrorMsg<cr>')
     screen:expect([[
       :hi ErrorMsg                  |
@@ -1612,7 +1609,6 @@ describe('ui/builtin messages', function()
       syn match	vimComment	+\<else\s\+".*$+lc=4	contains=@vimCommentGroup,vimCommentString
       hi link vimComment Comment
     ]])
-    screen:try_resize(110, 7)
     feed(':syntax list vimComment<cr>')
     screen:expect([[
       {102:--- Syntax items ---}                                                                                          |
@@ -1625,7 +1621,6 @@ describe('ui/builtin messages', function()
     ]])
 
     feed('<cr>')
-    screen:try_resize(55, 7)
     feed(':syntax list vimComment<cr>')
     screen:expect([[
                                                              |
@@ -1992,7 +1987,6 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
 
   it('using nvim_echo in VimResized does not cause hit-enter prompt #26139', function()
     command([[au VimResized * lua vim.api.nvim_echo({ { '123456' } }, true, {})]])
-    screen:try_resize(60, 5)
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*3
@@ -2390,30 +2384,14 @@ describe('pager', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(35, 8)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [3] = {
-        foreground = Screen.colors.Grey100,
-        background = Screen.colors.Red,
-        special = Screen.colors.Yellow,
-      },
-      [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-      [5] = { special = Screen.colors.Yellow },
-      [6] = { special = Screen.colors.Yellow, bold = true, foreground = Screen.colors.SeaGreen4 },
-      [7] = { foreground = Screen.colors.Grey0, background = Screen.colors.Grey100 },
-      [8] = { foreground = Screen.colors.Gray90, background = Screen.colors.Grey100 },
-      [9] = { foreground = tonumber('0x00000c'), background = Screen.colors.Grey100 },
-      [10] = { background = Screen.colors.Grey100, bold = true, foreground = tonumber('0xe5e5ff') },
-      [11] = { background = Screen.colors.Grey100, bold = true, foreground = tonumber('0x2b8452') },
-      [12] = { bold = true, reverse = true },
-      [13] = { foreground = Screen.colors.Grey0 },
-      [14] = { foreground = Screen.colors.Grey90 },
-      [15] = { foreground = tonumber('0x00000c') },
-      [16] = { bold = true, foreground = tonumber('0xe5e5ff') },
-      [17] = { bold = true, foreground = tonumber('0x2b8452') },
+    screen = Screen.new()
+    screen:add_extra_attr_ids({
+      [100] = { special = Screen.colors.Yellow, background = Screen.colors.Red, foreground
+    = Screen.colors.Gray100 },
+      [101] = { special = Screen.colors.Yellow },
+      [102] = { special = Screen.colors.Yellow1, foreground = Screen.colors.Blue, bold = true },
     })
+
     command('set more')
 
     exec_lua(
@@ -2429,152 +2407,194 @@ aliquip ex ea commodo consequat.]]
   end)
 
   it('can be quit with echon', function()
-    screen:try_resize(25, 5)
     feed(':echon join(map(range(0, &lines*10), "v:val"), "\\n")<cr>')
     screen:expect([[
-      0                        |
-      1                        |
-      2                        |
-      3                        |
-      {4:-- More --}^               |
+      ^                                                     |
+      {1:~                                                    }|*5
+      {3:─────────────────────────────────────────────────────}|
+      0                                                    |
+      1                                                    |
+      2                                                    |
+      3                                                    |
+      4                                                    |
+      5                                                    |
+      6 [+134]                                             |
     ]])
-    feed('q')
+    feed('<Esc>')
     screen:expect([[
-      ^                         |
-      {1:~                        }|*3
-                               |
+      ^                                                     |
+      {1:~                                                    }|*12
+      0 [+140]                                             |
     ]])
   end)
 
   it('can be quit with Lua #11224 #16537', function()
-    screen:try_resize(40, 5)
     feed(':lua for i=0,10 do print(i) end<cr>')
     screen:expect([[
-      0                                       |
-      1                                       |
-      2                                       |
-      3                                       |
-      {4:-- More --}^                              |
+      ^                                                     |
+      {1:~                                                    }|*5
+      {3:─────────────────────────────────────────────────────}|
+      0                                                    |
+      1                                                    |
+      2                                                    |
+      3                                                    |
+      4                                                    |
+      5                                                    |
+      6 [+4]                                               |
     ]])
-    feed('q')
+    feed('<Esc>')
     screen:expect([[
-      ^                                        |
-      {1:~                                       }|*3
-                                              |
+      ^                                                     |
+      {1:~                                                    }|*12
+      0 [+10]                                              |
     ]])
     feed(':mess<cr>')
     screen:expect([[
-      0                                       |
-      1                                       |
-      2                                       |
-      3                                       |
-      {4:-- More --}^                              |
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      ^0                                                    |
+      1                                                    |
+      2                                                    |
+      3                                                    |
+      4                                                    |
+      5                                                    |
+      6                                                    |
+      {16::}{15:mess}                                                |
     ]])
     feed('G')
     screen:expect([[
-      7                                       |
-      8                                       |
-      9                                       |
-      10                                      |
-      {4:Press ENTER or type command to continue}^ |
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      4                                                    |
+      5                                                    |
+      6                                                    |
+      7                                                    |
+      8                                                    |
+      9                                                    |
+      ^10                                                   |
+      {16::}{15:mess}                                                |
     ]])
-    feed('<cr>')
   end)
 
   it('handles wrapped lines with line scroll', function()
     feed(':lua error(_G.x)<cr>')
     screen:expect([[
-      {2:E5108: Lua: [string ":lua"]:1: Lore}|
-      {2:m ipsum dolor sit amet, consectetur}|
-                                         |
-      {2:adipisicing elit, sed do eiusmod te}|
-      {2:mpor}                               |
-      {2:incididunt ut labore et dolore magn}|
-      {2:a aliqua.}                          |
-      {4:-- More --}^                         |
+      ^                                                     |
+      {1:~                                                    }|*5
+      {3:─────────────────────────────────────────────────────}|
+      {9:E5108: Lua: [string ":lua"]:1: Lorem ipsum dolor sit }|
+      {9:amet, consectetur}                                    |
+      {9:adipisicing elit, sed do eiusmod tempor}              |
+      {9:incididunt ut labore et dolore magna aliqua.}         |
+      {9:Ut enim ad minim veniam, quis nostrud xercitation}    |
+      {9:ullamco laboris nisi ut}                              |
+      {9:aliquip ex ea commodo consequat. [+3]}                |
     ]])
 
-    feed('j')
+    feed('g<lt>')
     screen:expect([[
-      {2:m ipsum dolor sit amet, consectetur}|
-                                         |
-      {2:adipisicing elit, sed do eiusmod te}|
-      {2:mpor}                               |
-      {2:incididunt ut labore et dolore magn}|
-      {2:a aliqua.}                          |
-      {2:Ut enim ad minim veniam, quis nostr}|
-      {4:-- More --}^                         |
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      {9:E5108: Lua: [string ":lua"]:1: Lorem ipsum dolor sit }|
+      {9:amet, consectetu^r}                                    |
+      {9:adipisicing elit, sed do eiusmod tempor}              |
+      {9:incididunt ut labore et dolore magna aliqua.}         |
+      {9:Ut enim ad minim veniam, quis nostrud xercitation}    |
+      {9:ullamco laboris nisi ut}                              |
+      {9:aliquip ex ea commodo consequat.}                     |
+                                                           |
     ]])
 
-    feed('k')
+    feed('G')
     screen:expect([[
-      {2:E5108: Lua: [string ":lua"]:1: Lore}|
-      {2:m ipsum dolor sit amet, consectetur}|
-                                         |
-      {2:adipisicing elit, sed do eiusmod te}|
-      {2:mpor}                               |
-      {2:incididunt ut labore et dolore magn}|
-      {2:a aliqua.}                          |
-      {4:-- More --}^                         |
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      {9:incididunt ut labore et dolore magna aliqua.}         |
+      {9:Ut enim ad minim veniam, quis nostrud xercitation}    |
+      {9:ullamco laboris nisi ut}                              |
+      {9:aliquip ex ea commodo consequat.}                     |
+      {9:stack traceback:}                                     |
+      {9:        [C]: in function 'error'}                     |
+      {9:        ^[string ":lua"]:1: in main chunk}             |
+                                                           |
     ]])
 
-    feed('j')
+    feed('7k0')
     screen:expect([[
-      {2:m ipsum dolor sit amet, consectetur}|
-                                         |
-      {2:adipisicing elit, sed do eiusmod te}|
-      {2:mpor}                               |
-      {2:incididunt ut labore et dolore magn}|
-      {2:a aliqua.}                          |
-      {2:Ut enim ad minim veniam, quis nostr}|
-      {4:-- More --}^                         |
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      {9:^adipisicing elit, sed do eiusmod tempor}              |
+      {9:incididunt ut labore et dolore magna aliqua.}         |
+      {9:Ut enim ad minim veniam, quis nostrud xercitation}    |
+      {9:ullamco laboris nisi ut}                              |
+      {9:aliquip ex ea commodo consequat.}                     |
+      {9:stack traceback:}                                     |
+      {9:        [C]: in function 'error'}                     |
+                                                           |
     ]])
   end)
 
   it('handles wrapped lines with page scroll', function()
     feed(':lua error(_G.x)<cr>')
     screen:expect([[
-      {2:E5108: Lua: [string ":lua"]:1: Lore}|
-      {2:m ipsum dolor sit amet, consectetur}|
-                                         |
-      {2:adipisicing elit, sed do eiusmod te}|
-      {2:mpor}                               |
-      {2:incididunt ut labore et dolore magn}|
-      {2:a aliqua.}                          |
-      {4:-- More --}^                         |
+      ^                                                     |
+      {1:~                                                    }|*5
+      {3:─────────────────────────────────────────────────────}|
+      {9:E5108: Lua: [string ":lua"]:1: Lorem ipsum dolor sit }|
+      {9:amet, consectetur}                                    |
+      {9:adipisicing elit, sed do eiusmod tempor}              |
+      {9:incididunt ut labore et dolore magna aliqua.}         |
+      {9:Ut enim ad minim veniam, quis nostrud xercitation}    |
+      {9:ullamco laboris nisi ut}                              |
+      {9:aliquip ex ea commodo consequat. [+3]}                |
     ]])
-    feed('d')
+    feed('g<lt>')
     screen:expect([[
-      {2:mpor}                               |
-      {2:incididunt ut labore et dolore magn}|
-      {2:a aliqua.}                          |
-      {2:Ut enim ad minim veniam, quis nostr}|
-      {2:ud xercitation}                     |
-      {2:ullamco laboris nisi ut}            |
-      {2:aliquip ex ea commodo consequat.}   |
-      {4:-- More --}^                         |
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      {9:E5108: Lua: [string ":lua"]:1: Lorem ipsum dolor sit }|
+      {9:amet, consectetu^r}                                    |
+      {9:adipisicing elit, sed do eiusmod tempor}              |
+      {9:incididunt ut labore et dolore magna aliqua.}         |
+      {9:Ut enim ad minim veniam, quis nostrud xercitation}    |
+      {9:ullamco laboris nisi ut}                              |
+      {9:aliquip ex ea commodo consequat.}                     |
+                                                           |
     ]])
-    feed('u')
+    feed('<c-d>')
     screen:expect([[
-      {2:E5108: Lua: [string ":lua"]:1: Lore}|
-      {2:m ipsum dolor sit amet, consectetur}|
-                                         |
-      {2:adipisicing elit, sed do eiusmod te}|
-      {2:mpor}                               |
-      {2:incididunt ut labore et dolore magn}|
-      {2:a aliqua.}                          |
-      {4:-- More --}^                         |
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      {9:incididunt ut labore et dolore magna aliqua.}         |
+      {9:^Ut enim ad minim veniam, quis nostrud xercitation}    |
+      {9:ullamco laboris nisi ut}                              |
+      {9:aliquip ex ea commodo consequat.}                     |
+      {9:stack traceback:}                                     |
+      {9:        [C]: in function 'error'}                     |
+      {9:        [string ":lua"]:1: in main chunk}             |
+                                                           |
     ]])
-    feed('d')
+
+    feed('<c-u>')
     screen:expect([[
-      {2:mpor}                               |
-      {2:incididunt ut labore et dolore magn}|
-      {2:a aliqua.}                          |
-      {2:Ut enim ad minim veniam, quis nostr}|
-      {2:ud xercitation}                     |
-      {2:ullamco laboris nisi ut}            |
-      {2:aliquip ex ea commodo consequat.}   |
-      {4:-- More --}^                         |
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      {9:E5108: Lua: [string ":lua"]:1: Lorem ipsum dolor sit }|
+      {9:^amet, consectetur}                                    |
+      {9:adipisicing elit, sed do eiusmod tempor}              |
+      {9:incididunt ut labore et dolore magna aliqua.}         |
+      {9:Ut enim ad minim veniam, quis nostrud xercitation}    |
+      {9:ullamco laboris nisi ut}                              |
+      {9:aliquip ex ea commodo consequat.}                     |
+                                                           |
     ]])
   end)
 
@@ -2583,103 +2603,50 @@ aliquip ex ea commodo consequat.]]
 
     feed(':lua error(_G.x)<cr>')
     screen:expect([[
-      {3:E5108: Lua: [string ":lua"]:1: Lore}|
-      {3:m ipsum dolor sit amet, consectetur}|
-      {5:                                   }|
-      {3:adipisicing elit, sed do eiusmod te}|
-      {3:mpor}{5:                               }|
-      {3:incididunt ut labore et dolore magn}|
-      {3:a aliqua.}{5:                          }|
-      {6:-- More --}{5:^                         }|
+      ^                                                     |
+      {1:~                                                    }|*5
+      {3:─────────────────────────────────────────────────────}|
+      {100:E5108: Lua: [string ":lua"]:1: Lorem ipsum dolor sit }|
+      {100:amet, consectetur}{101:                                    }|
+      {100:adipisicing elit, sed do eiusmod tempor}{101:              }|
+      {100:incididunt ut labore et dolore magna aliqua.}{101:         }|
+      {100:Ut enim ad minim veniam, quis nostrud xercitation}{101:    }|
+      {100:ullamco laboris nisi ut}{101:                              }|
+      {100:aliquip ex ea commodo consequat. [+3]}{101:                }|
     ]])
 
-    feed('j')
+    feed('g<lt>')
     screen:expect([[
-      {3:m ipsum dolor sit amet, consectetur}|
-      {5:                                   }|
-      {3:adipisicing elit, sed do eiusmod te}|
-      {3:mpor}{5:                               }|
-      {3:incididunt ut labore et dolore magn}|
-      {3:a aliqua.}{5:                          }|
-      {3:Ut enim ad minim veniam, quis nostr}|
-      {6:-- More --}{5:^                         }|
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      {100:E5108: Lua: [string ":lua"]:1: Lorem ipsum dolor sit }|
+      {100:amet, consectetu^r}{101:                                    }|
+      {100:adipisicing elit, sed do eiusmod tempor}{101:              }|
+      {100:incididunt ut labore et dolore magna aliqua.}{101:         }|
+      {100:Ut enim ad minim veniam, quis nostrud xercitation}{101:    }|
+      {100:ullamco laboris nisi ut}{101:                              }|
+      {100:aliquip ex ea commodo consequat.}{101:                     }|
+      {101:                                                     }|
     ]])
 
-    feed('k')
+    feed('Lj')
     screen:expect([[
-      {3:E5108: Lua: [string ":lua"]:1: Lore}|
-      {3:m ipsum dolor sit amet, consectetur}|
-      {5:                                   }|
-      {3:adipisicing elit, sed do eiusmod te}|
-      {3:mpor}{5:                               }|
-      {3:incididunt ut labore et dolore magn}|
-      {3:a aliqua.}{5:                          }|
-      {6:-- More --}{5:^                         }|
-    ]])
-
-    feed('j')
-    screen:expect([[
-      {3:m ipsum dolor sit amet, consectetur}|
-      {5:                                   }|
-      {3:adipisicing elit, sed do eiusmod te}|
-      {3:mpor}{5:                               }|
-      {3:incididunt ut labore et dolore magn}|
-      {3:a aliqua.}{5:                          }|
-      {3:Ut enim ad minim veniam, quis nostr}|
-      {6:-- More --}{5:^                         }|
-    ]])
-  end)
-
-  it('handles wrapped lines with page scroll and MsgArea highlight', function()
-    command('hi MsgArea guisp=Yellow')
-    feed(':lua error(_G.x)<cr>')
-    screen:expect([[
-      {3:E5108: Lua: [string ":lua"]:1: Lore}|
-      {3:m ipsum dolor sit amet, consectetur}|
-      {5:                                   }|
-      {3:adipisicing elit, sed do eiusmod te}|
-      {3:mpor}{5:                               }|
-      {3:incididunt ut labore et dolore magn}|
-      {3:a aliqua.}{5:                          }|
-      {6:-- More --}{5:^                         }|
-    ]])
-    feed('d')
-    screen:expect([[
-      {3:mpor}{5:                               }|
-      {3:incididunt ut labore et dolore magn}|
-      {3:a aliqua.}{5:                          }|
-      {3:Ut enim ad minim veniam, quis nostr}|
-      {3:ud xercitation}{5:                     }|
-      {3:ullamco laboris nisi ut}{5:            }|
-      {3:aliquip ex ea commodo consequat.}{5:   }|
-      {6:-- More --}{5:^                         }|
-    ]])
-    feed('u')
-    screen:expect([[
-      {3:E5108: Lua: [string ":lua"]:1: Lore}|
-      {3:m ipsum dolor sit amet, consectetur}|
-      {5:                                   }|
-      {3:adipisicing elit, sed do eiusmod te}|
-      {3:mpor}{5:                               }|
-      {3:incididunt ut labore et dolore magn}|
-      {3:a aliqua.}{5:                          }|
-      {6:-- More --}{5:^                         }|
-    ]])
-    feed('d')
-    screen:expect([[
-      {3:mpor}{5:                               }|
-      {3:incididunt ut labore et dolore magn}|
-      {3:a aliqua.}{5:                          }|
-      {3:Ut enim ad minim veniam, quis nostr}|
-      {3:ud xercitation}{5:                     }|
-      {3:ullamco laboris nisi ut}{5:            }|
-      {3:aliquip ex ea commodo consequat.}{5:   }|
-      {6:-- More --}{5:^                         }|
+                                                           |
+      {1:~                                                    }|*4
+      {3:─────────────────────────────────────────────────────}|
+      {102:<<<}{100:t, consectetur}{101:                                    }|
+      {100:adipisicing elit, sed do eiusmod tempor}{101:              }|
+      {100:incididunt ut labore et dolore magna aliqua.}{101:         }|
+      {100:Ut enim ad minim veniam, quis nostrud xercitation}{101:    }|
+      {100:ullamco laboris nisi ut}{101:                              }|
+      {100:aliquip ex ea commodo consequat.}{101:                     }|
+      {100:^stack traceback:}{101:                                     }|
+      {101:                                                     }|
     ]])
   end)
 
   it('preserves MsgArea highlighting after more prompt', function()
-    screen:try_resize(70, 6)
     command('hi MsgArea guisp=Yellow')
     command('map x Lorem ipsum labore et dolore magna aliqua')
     command('map y adipisicing elit')
@@ -2923,7 +2890,6 @@ aliquip ex ea commodo consequat.]]
   end)
 
   it('g< shows blank line from :echo properly', function()
-    screen:try_resize(60, 8)
     feed([[:echo 1 | echo "\n" | echo 2<CR>]])
     screen:expect([[
                                                                   |
@@ -2963,7 +2929,6 @@ aliquip ex ea commodo consequat.]]
   end)
 
   it('scrolling works properly when :echo output ends with newline', function()
-    screen:try_resize(60, 6)
     feed([[:echo range(100)->join("\n") .. "\n"<CR>]])
     screen:expect([[
       0                                                           |
@@ -3032,7 +2997,6 @@ aliquip ex ea commodo consequat.]]
   end)
 
   it('scrolling works properly when :!cmd output ends with newline #27902', function()
-    screen:try_resize(60, 6)
     api.nvim_set_option_value('shell', testprg('shell-test'), {})
     api.nvim_set_option_value('shellcmdflag', 'REP 100', {})
     api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
@@ -3110,31 +3074,31 @@ it('pager works in headless mode with UI attached', function()
 
   child_session:notify('nvim_command', [[echo range(100)->join("\n")]])
   child_screen:expect([[
+    ^                                        |
+    ~                                       |
+    ────────────────────────────────────────|
     0                                       |
     1                                       |
-    2                                       |
-    3                                       |
-    4                                       |
-    -- More --^                              |
+    2 [+97]                                 |
   ]])
 
-  child_session:request('nvim_input', 'G')
+  child_session:request('nvim_feedkeys', 'g<', 'n', false)
   child_screen:expect([[
-    95                                      |
-    96                                      |
+                                            |
+    ────────────────────────────────────────|
+    ^0                                       |
+    1                                       |
+    2                                       |
+                           1,1           Top|
+  ]])
+
+  child_session:request('nvim_feedkeys', 'G', 'n', false)
+  child_screen:expect([[
+                                            |
+    ────────────────────────────────────────|
     97                                      |
     98                                      |
-    99                                      |
-    Press ENTER or type command to continue^ |
-  ]])
-
-  child_session:request('nvim_input', 'g')
-  child_screen:expect([[
-    0                                       |
-    1                                       |
-    2                                       |
-    3                                       |
-    4                                       |
-    -- More --^                              |
+    ^99                                      |
+                           100,1         Bot|
   ]])
 end)

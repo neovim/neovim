@@ -186,7 +186,6 @@ typedef struct {
   int cmod_did_sandbox;  ///< set when "sandbox" was incremented
   OptInt cmod_verbose_save;  ///< if 'verbose' was set: value of p_verbose plus one
   int cmod_save_msg_silent;  ///< if non-zero: saved value of msg_silent + 1
-  int cmod_save_msg_scroll;  ///< for restoring msg_scroll
   int cmod_did_esilent;  ///< incremented when emsg_silent is
 } cmdmod_T;
 

@@ -37,24 +37,8 @@ EXTERN bool msg_ext_skip_flush INIT( = false);
 EXTERN bool msg_ext_append INIT( = false);
 /// Set to true when previous message should be overwritten.
 EXTERN bool msg_ext_overwrite INIT( = false);
-
-/// allocated grid for messages. Used unless ext_messages is active.
-/// See also the description at msg_scroll_flush()
-EXTERN ScreenGrid msg_grid INIT( = SCREEN_GRID_INIT);
-EXTERN int msg_grid_pos INIT( = 0);
-
-/// "adjusted" message grid. This grid accepts positions relative to
-/// default_grid. Internally it will be translated to a position on msg_grid
-/// relative to the start of the message area, or directly mapped to default_grid
-/// for legacy (display-=msgsep) message scroll behavior.
-/// TODO(bfredl): refactor "internal" message logic, msg_row etc
-/// to use the correct positions already.
-EXTERN GridView msg_grid_adj INIT( = { 0 });
-
-/// value of msg_scrolled at latest msg_scroll_flush.
-EXTERN int msg_scrolled_at_flush INIT( = 0);
-
-EXTERN int msg_grid_scroll_discount INIT( = 0);
+/// Set to true when output of previous command should be cleared.
+EXTERN bool msg_may_clear_temp INIT( = true);
 
 EXTERN int msg_listdo_overwrite INIT( = 0);
 

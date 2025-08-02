@@ -1899,7 +1899,7 @@ bool syn_list_header(const bool did_header, const int outlen, const int id, bool
     }
     msg_col = name_col = msg_outtrans(hl_table[id - 1].sg_name, 0, false);
     endcol = 15;
-  } else if ((ui_has(kUIMessages) || msg_silent) && !force_newline) {
+  } else if (msg_silent && !force_newline) {
     msg_putchar(' ');
     adjust = false;
   } else if (msg_col + outlen + 1 >= Columns || force_newline) {
@@ -2281,11 +2281,8 @@ void highlight_changed(void)
     if (highlight_attr[hlf] != highlight_attr_last[hlf]) {
       if (hlf == HLF_MSG) {
         clear_cmdline = true;
-        HlAttrs attrs = syn_attr2entry(highlight_attr[hlf]);
-        msg_grid.blending = attrs.hl_blend > -1;
       }
-      ui_call_hl_group_set(cstr_as_string(hlf_names[hlf]),
-                           highlight_attr[hlf]);
+      ui_call_hl_group_set(cstr_as_string(hlf_names[hlf]), highlight_attr[hlf]);
       highlight_attr_last[hlf] = highlight_attr[hlf];
     }
   }
@@ -2383,7 +2380,6 @@ static void highlight_list(void)
 static void highlight_list_two(int cnt, int id)
 {
   msg_puts_hl(&("N \bI \b!  \b"[cnt / 11]), id, false);
-  msg_clr_eos();
   ui_flush();
   os_delay(cnt == 99 ? 40 : (uint64_t)cnt * 50, false);
 }

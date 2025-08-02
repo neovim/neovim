@@ -962,7 +962,7 @@ M.cmds = {
   },
   {
     command = 'file',
-    flags = bit.bor(RANGE, ZEROR, BANG, FILE1, TRLBAR),
+    flags = bit.bor(RANGE, ZEROR, FILE1, TRLBAR),
     addr_type = 'ADDR_OTHER',
     func = 'ex_file',
   },

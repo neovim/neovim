@@ -365,7 +365,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
     // FileChangedRO event can replace the buffer with a read-write version
     // (e.g., obtained from a source control system).
     if (buf == curbuf) {
-      change_warning(buf, 0);
+      change_warning(buf);
     }
 
     if (bot > buf->b_ml.ml_line_count + 1) {
@@ -1866,7 +1866,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
     // needed.  This may cause the file to be reloaded, that must happen
     // before we do anything, because it may change curbuf->b_u_curhead
     // and more.
-    change_warning(curbuf, 0);
+    change_warning(curbuf);
 
     if (undo_undoes) {
       if (curbuf->b_u_curhead == NULL) {  // first undo
@@ -2135,7 +2135,7 @@ target_zero:
     // First go up the tree as much as needed.
     while (!got_int) {
       // Do the change warning now, for the same reason as above.
-      change_warning(curbuf, 0);
+      change_warning(curbuf);
 
       uhp = curbuf->b_u_curhead;
       if (uhp == NULL) {
@@ -2160,7 +2160,7 @@ target_zero:
       // And now go down the tree (redo), branching off where needed.
       while (!got_int) {
         // Do the change warning now, for the same reason as above.
-        change_warning(curbuf, 0);
+        change_warning(curbuf);
 
         uhp = curbuf->b_u_curhead;
         if (uhp == NULL) {
@@ -2593,12 +2593,12 @@ static void u_undo_end(bool did_undo, bool absolute, bool quiet)
     check_pos(curbuf, &VIsual);
   }
 
-  smsg_keep(0, _("%" PRId64 " %s; %s #%" PRId64 "  %s"),
-            u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,
-            _(msgstr),
-            did_undo ? _("before") : _("after"),
-            uhp == NULL ? 0 : (int64_t)uhp->uh_seq,
-            msgbuf);
+  smsg(0, _("%" PRId64 " %s; %s #%" PRId64 "  %s"),
+       u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,
+       _(msgstr),
+       did_undo ? _("before") : _("after"),
+       uhp == NULL ? 0 : (int64_t)uhp->uh_seq,
+       msgbuf);
 }
 
 /// Put the timestamp of an undo header in "buf[buflen]" in a nice format.

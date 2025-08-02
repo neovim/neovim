@@ -656,21 +656,6 @@ tabs.
 ["win_close", grid] ~
 	Close the window.
 
-["msg_set_pos", grid, row, scrolled, sep_char, zindex, compindex] ~
-	Display messages on `grid`.  The grid will be displayed at `row` on
-	the default grid (grid=1), covering the full column width. `scrolled`
-	indicates whether the message area has been scrolled to cover other
-	grids. It can be useful to draw a separator then |msgsep|. The Builtin
-	TUI draws a full line filled with `sep_char` ('fillchars' msgsep
-	field) and |hl-MsgSeparator| highlight.
-
-	When |ui-messages| is active, no message grid is used, and this event
-	will not be sent.
-
-	`zindex` and `compindex` have the same meaning as for `win_float_pos`.
-	The `zindex` always has a fixed value of 200 and included for
-	completeness.
-
 ["win_viewport", grid, win, topline, botline, curline, curcol, line_count, scroll_delta] ~
 	Indicates the range of buffer text displayed in the window, as well
 	as the cursor position in the buffer. All positions are zero-based.

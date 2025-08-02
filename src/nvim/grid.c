@@ -908,8 +908,6 @@ void grid_free(ScreenGrid *grid)
 void grid_free_all_mem(void)
 {
   grid_free(&default_grid);
-  grid_free(&msg_grid);
-  XFREE_CLEAR(msg_grid.dirty_col);
   xfree(linebuf_char);
   xfree(linebuf_attr);
   xfree(linebuf_vcol);

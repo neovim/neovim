@@ -537,7 +537,6 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   trylevel = 0;
   suppress_errthrow = true;
   in_assert_fails = true;
-  no_wait_return++;
 
   const char *const cmd = tv_get_string_chk(&argvars[0]);
   do_cmdline_cmd(cmd);
@@ -648,12 +647,7 @@ theend:
   in_assert_fails = false;
   did_emsg = false;
   got_int = false;
-  msg_col = 0;
-  no_wait_return--;
-  need_wait_return = false;
   emsg_on_display = false;
-  msg_reset_scroll();
-  lines_left = Rows;
   XFREE_CLEAR(emsg_assert_fails_msg);
   xfree(tofree);
   set_vim_var_string(VV_ERRMSG, NULL, 0);
