@@ -154,6 +154,7 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 static const char *msg_ext_kind = NULL;
 static MsgID msg_ext_id = 0;
 static DictOf(Object) msg_ext_extra_info = ARRAY_DICT_INIT;
+static bool msg_ext_skip = false;  // don't send the message to ext-ui
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
@@ -164,6 +165,14 @@ static bool msg_ext_history = false;  ///< message was added to history
 static int msg_grid_pos_at_flush = 0;
 
 static MsgID msg_id_next = 1;           ///< message id to be allocated to next message
+
+// code inside doesn't emit ext-message
+#define NO_EXT_MSG(code) \
+  do { \
+    msg_ext_skip = true; \
+    code; \
+    msg_ext_skip = false; \
+  } while (0)
 
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
@@ -1092,7 +1101,9 @@ static void draw_progress_message(MsgID msg_id)
   if (hist_msg->ext_data.title.size != 0) {
     // this block draws the "title:" before the progress-message
     String title = cstr_as_string(concat_str(hist_msg->ext_data.title.data, ": "));
-    msg_multiline(title, 0, true, false, &need_clear);
+    NO_EXT_MSG({
+      msg_multiline(title, 0, true, false, &need_clear);
+    });
     api_free_string(title);
   }
   for (uint32_t i = 0; i < kv_size(hist_msg->msg); i++) {
@@ -1103,7 +1114,9 @@ static void draw_progress_message(MsgID msg_id)
     // this block draws the "...percent%" before the progress-message
     char percent_buf[10];
     vim_snprintf(percent_buf, sizeof(percent_buf), "...%ld%%", (long)hist_msg->ext_data.percent);
-    msg_multiline(cstr_as_string(percent_buf), 0, true, false, &need_clear);
+    NO_EXT_MSG({
+      msg_multiline(cstr_as_string(percent_buf), 0, true, false, &need_clear);
+    });
   }
 }
 
@@ -2374,6 +2387,9 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
   did_wait_return = false;
 
   if (ui_has(kUIMessages)) {
+    if (msg_ext_skip) {
+      return;
+    }
     if (attr != msg_ext_last_attr) {
       msg_ext_emit_chunk();
       msg_ext_last_attr = attr;
