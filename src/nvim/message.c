@@ -1193,18 +1193,16 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   msg_ext_history = true;
 
   msg_ext_id = msg_id;
-  if (ui_has(kUIMessages)) {
+  if (is_kind_progress && ui_has(kUIMessages)) {
     kv_resize(msg_ext_extra_info, 3);
-    if (is_kind_progress) {
-      if (entry->ext_data.title.size != 0) {
-        PUT_C(msg_ext_extra_info, "title", STRING_OBJ(entry->ext_data.title));
-      }
-      if (entry->ext_data.status.size != 0) {
-        PUT_C(msg_ext_extra_info, "status", STRING_OBJ(entry->ext_data.status));
-      }
-      if (entry->ext_data.percent >= 0) {
-        PUT_C(msg_ext_extra_info, "percent", INTEGER_OBJ(entry->ext_data.percent));
-      }
+    if (entry->ext_data.title.size != 0) {
+      PUT_C(msg_ext_extra_info, "title", STRING_OBJ(entry->ext_data.title));
+    }
+    if (entry->ext_data.status.size != 0) {
+      PUT_C(msg_ext_extra_info, "status", STRING_OBJ(entry->ext_data.status));
+    }
+    if (entry->ext_data.percent >= 0) {
+      PUT_C(msg_ext_extra_info, "percent", INTEGER_OBJ(entry->ext_data.percent));
     }
   }
 
@@ -3336,8 +3334,6 @@ void msg_ext_ui_flush(void)
     ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history,
                      msg_ext_append, msg_ext_id, msg_ext_extra_info);
     // clear info after emiting message.
-    msg_ext_id = 0;
-    kv_destroy(msg_ext_extra_info);
     if (msg_ext_history) {
       api_free_array(*tofree);
     } else {
@@ -3356,6 +3352,8 @@ void msg_ext_ui_flush(void)
     msg_ext_history = false;
     msg_ext_append = false;
     msg_ext_kind = NULL;
+    msg_ext_id = 0;
+    kv_destroy(msg_ext_extra_info);
   }
 }
 
