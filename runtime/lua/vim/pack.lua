@@ -202,7 +202,7 @@ end
 --- @param level ('DEBUG'|'TRACE'|'INFO'|'WARN'|'ERROR')?
 local function notify(msg, level)
   msg = type(msg) == 'table' and table.concat(msg, '\n') or msg
-  vim.notify('(vim.pack) ' .. msg, vim.log.levels[level or 'INFO'])
+  vim.notify('vim.pack: ' .. msg, vim.log.levels[level or 'INFO'])
   vim.cmd.redraw()
 end
 
@@ -382,8 +382,8 @@ local function new_progress_report(title)
 
   return vim.schedule_wrap(function(kind, percent, fmt, ...)
     local progress = kind == 'end' and 'done' or ('%3d%%'):format(percent)
-    local details = (': %s %s'):format(title, fmt:format(...))
-    local chunks = { { '(vim.pack)', 'ModeMsg' }, { ' ' }, { progress, 'WarningMsg' }, { details } }
+    local details = (' %s %s'):format(title, fmt:format(...))
+    local chunks = { { 'vim.pack', 'ModeMsg' }, { ': ' }, { progress, 'WarningMsg' }, { details } }
     vim.api.nvim_echo(chunks, true, { kind = 'progress' })
     -- Force redraw to show installation progress during startup
     vim.cmd.redraw({ bang = true })
@@ -535,7 +535,7 @@ local function checkout(p, timestamp, skip_same_sha)
 
   trigger_event(p, 'PackChangedPre', 'update')
 
-  local msg = ('(vim.pack) %s Stash before checkout'):format(timestamp)
+  local msg = ('vim.pack: %s Stash before checkout'):format(timestamp)
   git_cmd({ 'stash', '--quiet', '--message', msg }, p.path)
 
   git_cmd({ 'checkout', '--quiet', p.info.sha_target }, p.path)
