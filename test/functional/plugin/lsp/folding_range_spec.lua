@@ -135,25 +135,25 @@ static int foldLevel(linenr_T lnum)
       command([[split]])
     end)
 
-    it('controls the value of `b:_lsp_enable_folding_range`', function()
+    it('controls whether folding range is enabled', function()
       eq(
         true,
         exec_lua(function()
-          return vim.b._lsp_enable_folding_range
+          return vim.lsp._capability.is_enabled('folding_range', { bufnr = 0 })
         end)
       )
       command [[setlocal foldexpr=]]
       eq(
-        nil,
+        false,
         exec_lua(function()
-          return vim.b._lsp_enable_folding_range
+          return vim.lsp._capability.is_enabled('folding_range', { bufnr = 0 })
         end)
       )
       command([[set foldexpr=v:lua.vim.lsp.foldexpr()]])
       eq(
         true,
         exec_lua(function()
-          return vim.b._lsp_enable_folding_range
+          return vim.lsp._capability.is_enabled('folding_range', { bufnr = 0 })
         end)
       )
     end)
