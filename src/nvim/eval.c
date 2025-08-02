@@ -277,6 +277,7 @@ static struct vimvar {
   VV(VV_STDERR,           "stderr",           VAR_NUMBER, VV_RO),
   VV(VV_MSGPACK_TYPES,    "msgpack_types",    VAR_DICT, VV_RO),
   VV(VV__NULL_STRING,     "_null_string",     VAR_STRING, VV_RO),
+  VV(VV__NULL_FUNC,       "_null_function",   VAR_FUNC, VV_RO),
   VV(VV__NULL_LIST,       "_null_list",       VAR_LIST, VV_RO),
   VV(VV__NULL_DICT,       "_null_dict",       VAR_DICT, VV_RO),
   VV(VV__NULL_BLOB,       "_null_blob",       VAR_BLOB, VV_RO),
@@ -7800,7 +7801,7 @@ int var_item_copy(const vimconv_T *const conv, typval_T *const from, typval_T *c
     }
     break;
   case VAR_UNKNOWN:
-    internal_error("var_item_copy(UNKNOWN)");
+    internal_error_no_abort("var_item_copy(UNKNOWN)");
     ret = FAIL;
   }
   recurse--;
