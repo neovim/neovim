@@ -1077,7 +1077,7 @@ static void emit_progress_event(MessageHistoryEntry *msg)
     ADD(messages, STRING_OBJ(msg->msg.items[i].text));
   }
 
-  PUT_C(data, "id", INTEGER_OBJ(msg->message_id));
+  PUT_C(data, "msg_id", INTEGER_OBJ(msg->message_id));
   PUT_C(data, "message", ARRAY_OBJ(messages));
   PUT_C(data, "percent", INTEGER_OBJ(msg->ext_data.percent));
   PUT_C(data, "status", STRING_OBJ(msg->ext_data.status));

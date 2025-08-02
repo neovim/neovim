@@ -792,7 +792,7 @@ Progress						*Progress*
 				`nvim_echo`. The pattern is matched against
 				title of the message. The data item in autocmd
 				callback contains following
-					id: id of the message
+					msg_id: id of the message
 					message: text of the message
 					title: title of the progress message
 					status: status of the progress message
