@@ -152,6 +152,8 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
+static MsgID msg_ext_id = 0;
+static DictOf(Object) msg_ext_extra_info = ARRAY_DICT_INIT;
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
@@ -1189,6 +1191,22 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   msg_hist_len += !temp && !old_message_found;
   msg_hist_last = entry;
   msg_ext_history = true;
+
+  msg_ext_id = msg_id;
+  if (ui_has(kUIMessages)) {
+    kv_resize(msg_ext_extra_info, 3);
+    if (is_kind_progress) {
+      if (entry->ext_data.title.size != 0) {
+        PUT_C(msg_ext_extra_info, "title", STRING_OBJ(entry->ext_data.title));
+      }
+      if (entry->ext_data.status.size != 0) {
+        PUT_C(msg_ext_extra_info, "status", STRING_OBJ(entry->ext_data.status));
+      }
+      if (entry->ext_data.percent >= 0) {
+        PUT_C(msg_ext_extra_info, "percent", INTEGER_OBJ(entry->ext_data.percent));
+      }
+    }
+  }
 
   if (is_kind_progress) {
     emit_progress_event(entry);
@@ -2287,7 +2305,8 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   // Don't print anything when using ":silent cmd" or empty message.
   if (msg_silent != 0 || *str == NUL) {
     if (*str == NUL && ui_has(kUIMessages)) {
-      ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false);
+      ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false, -1,
+                       (Dict)ARRAY_DICT_INIT);
     }
     return;
   }
@@ -3313,8 +3332,12 @@ void msg_ext_ui_flush(void)
   msg_ext_emit_chunk();
   if (msg_ext_chunks->size > 0) {
     Array *tofree = msg_ext_init_chunks();
+
     ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history,
-                     msg_ext_append);
+                     msg_ext_append, msg_ext_id, msg_ext_extra_info);
+    // clear info after emiting message.
+    msg_ext_id = 0;
+    kv_destroy(msg_ext_extra_info);
     if (msg_ext_history) {
       api_free_array(*tofree);
     } else {

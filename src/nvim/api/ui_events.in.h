@@ -164,7 +164,8 @@ void wildmenu_select(Integer selected)
 void wildmenu_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
-void msg_show(String kind, Array content, Boolean replace_last, Boolean history, Boolean append)
+void msg_show(String kind, Array content, Boolean replace_last, Boolean history, Boolean append,
+              Integer id, Dict extra_info)
   FUNC_API_SINCE(6) FUNC_API_FAST FUNC_API_REMOTE_ONLY;
 void msg_clear(void)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
