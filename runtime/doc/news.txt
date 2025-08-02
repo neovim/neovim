@@ -139,9 +139,10 @@ API
   actually trusted.
 • Added |vim.lsp.is_enabled()| to check if a given LSP config has been enabled
   by |vim.lsp.enable()|.
-• |nvim_echo()| can set the |ui-messages| kind with which to emit the message.
 • |nvim_ui_send()| writes arbitrary data to a UI's stdout. Use this to write
   escape sequences to the terminal when Nvim is running in the |TUI|.
+• |nvim_echo()| can set the |ui-messages| kind with which to emit the message.
+• |nvim_echo()| can create |Progress| messages
 
 BUILD
 
@@ -189,6 +190,8 @@ EVENTS
 
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
 • New `append` paremeter for |ui-messages| `msg_show` event.
+• |Progress| event is triggered upon receiving a progress message
+
 
 HIGHLIGHTS
 
