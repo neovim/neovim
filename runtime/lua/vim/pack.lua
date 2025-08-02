@@ -178,16 +178,9 @@ end
 
 --- @async
 --- @param cwd string
---- @param opts? { contains?: string, points_at?: string }
 --- @return string[]
-local function git_get_tags(cwd, opts)
+local function git_get_tags(cwd)
   local cmd = { 'tag', '--list', '--sort=-v:refname' }
-  if opts and opts.contains then
-    vim.list_extend(cmd, { '--contains', opts.contains })
-  end
-  if opts and opts.points_at then
-    vim.list_extend(cmd, { '--points-at', opts.points_at })
-  end
   return vim.split(git_cmd(cmd, cwd), '\n')
 end
 
@@ -210,6 +203,12 @@ end
 --- @return boolean
 local function is_version(x)
   return type(x) == 'string' or (type(x) == 'table' and pcall(x.has, x, '1'))
+end
+
+--- @param x string
+--- @return boolean
+local function is_semver(x)
+  return vim.version.parse(x) ~= nil
 end
 
 local function is_nonempty_string(x)
@@ -451,6 +450,21 @@ local function confirm_install(plug_list)
   return res
 end
 
+--- @param tags string[]
+--- @param version_range vim.VersionRange
+local function get_last_semver_tag(tags, version_range)
+  local last_tag, last_ver_tag --- @type string, vim.Version
+  for _, tag in ipairs(tags) do
+    local ver_tag = vim.version.parse(tag)
+    if ver_tag then
+      if version_range:has(ver_tag) and (not last_ver_tag or ver_tag > last_ver_tag) then
+        last_tag, last_ver_tag = tag, ver_tag
+      end
+    end
+  end
+  return last_tag
+end
+
 --- @async
 --- @param p vim.pack.Plug
 local function resolve_version(p)
@@ -491,19 +505,10 @@ local function resolve_version(p)
   --- @cast version vim.VersionRange
 
   -- Choose the greatest/last version among all matching semver tags
-  local last_ver_tag --- @type vim.Version
-  local semver_tags = {} --- @type string[]
-  for _, tag in ipairs(tags) do
-    local ver_tag = vim.version.parse(tag)
-    if ver_tag then
-      semver_tags[#semver_tags + 1] = tag
-      if version:has(ver_tag) and (not last_ver_tag or ver_tag > last_ver_tag) then
-        p.info.version_str, last_ver_tag = tag, ver_tag
-      end
-    end
-  end
-
+  p.info.version_str = get_last_semver_tag(tags, version)
   if p.info.version_str == nil then
+    local semver_tags = vim.tbl_filter(is_semver, tags)
+    table.sort(semver_tags, vim.version.gt)
     local err = 'No versions fit constraint. Relax it or switch to branch. Available:'
       .. list_in_line('Versions', semver_tags)
       .. list_in_line('Branches', branches)
@@ -590,6 +595,7 @@ local function infer_update_details(p)
   local sha_head = assert(p.info.sha_head)
   local sha_target = assert(p.info.sha_target)
 
+  -- Try showing log of changes (if any)
   if sha_head ~= sha_target then
     -- `--topo-order` makes showing divergent branches nicer
     -- `--decorate-refs` shows only tags near commits (not `origin/main`, etc.)
@@ -600,21 +606,29 @@ local function infer_update_details(p)
       '--decorate-refs=refs/tags',
       sha_head .. '...' .. sha_target,
     }, p.path)
-  else
-    p.info.update_details = table.concat(git_get_tags(p.path, { contains = sha_target }), '\n')
-  end
-
-  if p.info.sha_head ~= p.info.sha_target or p.info.update_details == '' then
     return
   end
 
-  -- Remove tags pointing at target (there might be several)
-  local cur_tags = git_get_tags(p.path, { points_at = sha_target })
-  local new_tags_arr = vim.split(p.info.update_details, '\n')
-  local function is_not_cur_tag(s)
-    return not vim.tbl_contains(cur_tags, s)
+  -- Suggest newer semver tags (i.e. greater than greatest past semver tag)
+  local all_semver_tags = vim.tbl_filter(is_semver, git_get_tags(p.path))
+  if #all_semver_tags == 0 then
+    return
   end
-  p.info.update_details = table.concat(vim.tbl_filter(is_not_cur_tag, new_tags_arr), '\n')
+
+  local older_tags = git_cmd({ 'tag', '--list', '--no-contains', sha_head }, p.path)
+  local cur_tags = git_cmd({ 'tag', '--list', '--points-at', sha_head }, p.path)
+  local past_tags = vim.split(older_tags, '\n')
+  vim.list_extend(past_tags, vim.split(cur_tags, '\n'))
+
+  local any_version = vim.version.range('*') --[[@as vim.VersionRange]]
+  local last_version = get_last_semver_tag(past_tags, any_version)
+
+  local newer_semver_tags = vim.tbl_filter(function(x) --- @param x string
+    return vim.version.gt(x, last_version)
+  end, all_semver_tags)
+
+  table.sort(newer_semver_tags, vim.version.gt)
+  p.info.update_details = table.concat(newer_semver_tags, '\n')
 end
 
 --- Map from plugin path to its data.
@@ -735,7 +749,7 @@ local function compute_feedback_lines_single(p)
 
     if p.info.update_details ~= '' then
       local details = p.info.update_details:gsub('\n', '\n• ')
-      parts[#parts + 1] = '\n\nAvailable newer tags:\n• ' .. details
+      parts[#parts + 1] = '\n\nAvailable newer versions:\n• ' .. details
     end
   else
     parts[#parts + 1] = table.concat({
