@@ -132,6 +132,7 @@ jobs:
     timeout-minutes: 45
     env:
       CC: ${{ matrix.build.cc }}
+      NVIM_TEST_INTEG: ${{ matrix.build.flavor == 'release' && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
