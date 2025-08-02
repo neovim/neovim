@@ -5625,6 +5625,33 @@ static void ex_detach(exarg_T *eap)
   }
 }
 
+/// ":connect"
+///
+/// Connects the current UI to a different server
+///
+/// ":connect <address>" detaches the current UI and connects to the given server.
+/// ":connect! <address>" stops the current server if no other UIs are attached, then connects to the given server.
+static void ex_connect(exarg_T *eap)
+{
+  bool stop_server = eap->forceit ? (ui_active() == 1) : false;
+
+  Error err = ERROR_INIT;
+
+  Channel *chan = find_channel(current_ui);
+  if (!chan) {
+    emsg(e_invchan);
+    return;
+  }
+  chan->detach = true;
+  remote_ui_connect(chan->id, eap->arg, stop_server, &err);
+
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
+    return;
+  }
+}
+
 /// ":mode":
 /// If no argument given, get the screen size and redraw.
 static void ex_mode(exarg_T *eap)

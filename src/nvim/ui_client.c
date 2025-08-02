@@ -8,6 +8,7 @@
 #include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vimscript.h"
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
 #include "nvim/eval/typval_defs.h"
@@ -281,6 +282,60 @@ void ui_client_event_raw_line(GridLineEvent *g)
 
   tui_raw_line(tui, grid, row, startcol, endcol, clearcol, g->cur_attr, lineflags,
                (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
+}
+
+void ui_client_event_connect(Array args)
+{
+  if (args.size < 2 || args.items[0].type != kObjectTypeString || args.items[1].type != kObjectTypeBoolean) {
+    ELOG("Error handling UI event 'connect'");
+    return;
+  }
+
+  char *server_addr = args.items[0].data.string.data;
+  bool stop_server = args.items[1].data.boolean;
+
+  ELOG("stop_server: %d", stop_server);
+  multiqueue_put(main_loop.fast_events, channel_connect_event, server_addr, (void *) stop_server);
+}
+
+static void channel_connect_event(void **argv)
+{
+  char *server_addr = argv[0];
+  bool stop_server = (bool) argv[1];
+
+
+  Error err = ERROR_INIT;
+  nvim_command(cstr_as_string("detach"), &err);
+
+  if (ERROR_SET(&err)) {
+    ELOG("Error executing command `detach`: %s", err.msg);
+  }
+
+  if (stop_server) {
+  ELOG("ui_client_channel_id: %lu", ui_client_channel_id);
+    nvim_command(cstr_as_string("qall!"), &err);
+
+    if (ERROR_SET(&err)) {
+      ELOG("Error exiting neovim: %s", err.msg);
+      return;
+    }
+  }
+
+  const char *err2 = "";
+  bool is_tcp = !!strrchr(server_addr, ':');
+  CallbackReader on_data = CALLBACK_READER_INIT;
+  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &err2);
+
+  if (!strequal(err2, "")) {
+    ELOG("Error handling UI event 'connect': %s", err2);
+    return;
+  }
+
+  ui_client_channel_id = chan;
+  ui_client_is_remote = true;
+  ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
+
+  ELOG("Connected to channel: %" PRId64, chan);
 }
 
 /// When a "restart" UI event is received, its arguments are saved here when
