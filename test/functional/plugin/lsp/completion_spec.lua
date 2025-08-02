@@ -1309,7 +1309,7 @@ describe('vim.lsp.completion: integration', function()
     end)
     feed('<C-n><C-y>')
     eq(
-      { true, { 'if true then', '\t', 'end' } },
+      { false, { 'if true then', '\t', 'end' } },
       exec_lua(function()
         return {
           vim.snippet.active({ direction = 1 }),

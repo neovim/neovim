@@ -585,6 +585,12 @@ function M.jump(direction)
   M._session.current_tabstop = dest
   select_tabstop(dest)
 
+  -- The cursor is not on a tabstop so exit the session.
+  if dest.index == 0 then
+    M.stop()
+    return
+  end
+
   -- Activate expansion of the destination tabstop.
   M._session:set_group_gravity(dest.index, false)
 
