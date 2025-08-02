@@ -165,6 +165,9 @@ bool os_conpty_spawn(conpty_t *conpty_object, HANDLE *proc_handle, wchar_t *name
 
 void os_conpty_set_size(conpty_t *conpty_object, uint16_t width, uint16_t height)
 {
+  if (!conpty_object) {
+    return;
+  }
   assert(width <= SHRT_MAX);
   assert(height <= SHRT_MAX);
   COORD size = { (int16_t)width, (int16_t)height };
@@ -176,14 +179,16 @@ void os_conpty_set_size(conpty_t *conpty_object, uint16_t width, uint16_t height
 
 void os_conpty_free(conpty_t *conpty_object)
 {
-  if (conpty_object != NULL) {
-    if (conpty_object->si_ex.lpAttributeList != NULL) {
-      DeleteProcThreadAttributeList(conpty_object->si_ex.lpAttributeList);
-      xfree(conpty_object->si_ex.lpAttributeList);
-    }
-    if (conpty_object->pty != NULL) {
-      pClosePseudoConsole(conpty_object->pty);
-    }
+  if (conpty_object == NULL) {
+    return;
   }
-  xfree(conpty_object);
+  if (conpty_object->si_ex.lpAttributeList != NULL) {
+    DeleteProcThreadAttributeList(conpty_object->si_ex.lpAttributeList);
+    XFREE_CLEAR(conpty_object->si_ex.lpAttributeList);
+  }
+  if (conpty_object->pty != NULL) {
+    pClosePseudoConsole(conpty_object->pty);
+    XFREE_CLEAR(conpty_object->pty);
+  }
+  XFREE_CLEAR(conpty_object);
 }
