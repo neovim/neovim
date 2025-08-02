@@ -212,6 +212,9 @@ local all_clients = {}
 --- Whether linked editing ranges are enabled for this client.
 --- @field _linked_editing_enabled boolean?
 ---
+--- Whether on-type formatting is enabled for this client.
+--- @field _otf_enabled boolean?
+---
 --- Track this so that we can escalate automatically if we've already tried a
 --- graceful shutdown
 --- @field private _graceful_shutdown_failed true?
