@@ -591,21 +591,23 @@ end
 --- @async
 --- @param p vim.pack.Plug
 local function infer_update_details(p)
+  p.info.update_details = ''
   infer_states(p)
   local sha_head = assert(p.info.sha_head)
   local sha_target = assert(p.info.sha_target)
 
   -- Try showing log of changes (if any)
   if sha_head ~= sha_target then
-    -- `--topo-order` makes showing divergent branches nicer
-    -- `--decorate-refs` shows only tags near commits (not `origin/main`, etc.)
-    p.info.update_details = git_cmd({
-      'log',
-      '--pretty=format:%m %h │ %s%d',
-      '--topo-order',
-      '--decorate-refs=refs/tags',
-      sha_head .. '...' .. sha_target,
-    }, p.path)
+    local range = sha_head .. '...' .. sha_target
+    local format = '--pretty=format:%m %h │ %s%d'
+    -- Show only tags near commits (not `origin/main`, etc.)
+    local decorate = '--decorate-refs=refs/tags'
+    -- `--topo-order` makes showing divergent branches nicer, but by itself
+    -- doesn't ensure that reverted ("left", shown with `<`) and added
+    -- ("right", shown with `>`) commits have fixed order.
+    local l = git_cmd({ 'log', format, '--topo-order', '--left-only', decorate, range }, p.path)
+    local r = git_cmd({ 'log', format, '--topo-order', '--right-only', decorate, range }, p.path)
+    p.info.update_details = l == '' and r or (r == '' and l or (l .. '\n' .. r))
     return
   end
 
