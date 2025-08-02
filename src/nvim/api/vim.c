@@ -760,12 +760,29 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///               the (optional) name or ID `hl_group`.
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters.
+///          - id: message-id for updating existing message.
 ///          - err: Treat the message like `:echoerr`. Sets `hl_group` to |hl-ErrorMsg| by default.
 ///          - kind: Set the |ui-messages| kind with which this message will be emitted.
 ///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
 ///            will write the message to the "log" file instead of standard output.
-void nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
-               Error *err)
+///          - title: The title for progress message.
+///          - status: Current status of the progress message. Can be
+///            one of the following values
+///            - success: The progress item completed successfully
+///            - running: The progress is ongoing
+///            - failed: The progress item failed
+///            - cancel: The progressing process should be canceled.
+///                      note: Cancel needs to be handled by progress
+///                      initiator by listening for the `Progress` event
+///          - percent: How much progress is done on the progress
+///            message
+/// @return The message-id of the message.
+///         valid message-id is always greater or equal to 1
+///         -1 means nvim_echo didn't show a message
+///          0 means nvim_echo didn't allocate a message id for the message. happens
+///            for temp messages not stored in message history.
+Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
+                  Error *err)
   FUNC_API_SINCE(7)
 {
   HlMessage hl_msg = parse_hl_msg(chunks, opts->err, err);
@@ -780,7 +797,35 @@ void nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(
     kind = opts->err ? "echoerr" : history ? "echomsg" : "echo";
   }
 
-  msg_multihl(hl_msg, kind, history, opts->err);
+  bool is_kind_progress = kind != NULL && strcmp(kind, "progress") == 0;
+
+  if (!is_kind_progress && (opts->status.size != 0 || opts->title.size != 0 || opts->percent > 0)) {
+    api_set_error(err, kErrorTypeValidation,
+                  "title, status and percents fields can only be used with progress messages");
+    return -1;
+  }
+
+  if (is_kind_progress
+      && ((opts->status.data == NULL)
+          || (strcmp(opts->status.data, "success") != 0
+              && strcmp(opts->status.data, "failed") != 0
+              && strcmp(opts->status.data, "running") != 0
+              && strcmp(opts->status.data, "cancel") != 0)
+          )
+      ) {
+    api_set_error(err, kErrorTypeValidation, "invalid message status");
+    return -1;
+  }
+
+  if (is_kind_progress && !history) {
+    api_set_error(err, kErrorTypeValidation, "progress messages must be on history");
+    return -1;
+  }
+
+  MessageExtData ext_data = { .title = opts->title, .status = opts->status,
+                              .percent = opts->percent };
+
+  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &ext_data);
 
   if (opts->verbose) {
     verbose_leave();
@@ -789,11 +834,12 @@ void nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(
 
   if (history) {
     // history takes ownership
-    return;
+    return id;
   }
 
 error:
   hl_msg_free(hl_msg);
+  return -1;
 }
 
 /// Gets the current list of buffers.
