@@ -84,6 +84,7 @@ if(NOT MSVC)
     -Wmissing-noreturn
     -Wmissing-format-attribute
     -Wmissing-prototypes
+    -Wno-unused-function # because #35129
     -fsigned-char)
 
   # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
