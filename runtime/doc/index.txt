@@ -1419,6 +1419,7 @@ tag		command		action ~
 |:lpfile|	:lpf[ile]	go to last location in previous file
 |:lrewind|	:lr[ewind]	go to the specified location, default first one
 |:ls|		:ls		list all buffers
+|:lsp|		:lsp		language server protocol
 |:ltag|		:lt[ag]		jump to tag and add matching tags to the
 				location list
 |:lunmap|	:lu[nmap]	like ":unmap!" but includes Lang-Arg mode
