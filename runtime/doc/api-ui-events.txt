@@ -825,7 +825,7 @@ will be set to zero, but can be changed and used for the replacing cmdline or
 message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
-["msg_show", kind, content, replace_last, history, append] ~
+["msg_show", kind, content, replace_last, history, append, msg_id, extra_info] ~
 	Display a message to the user.
 
 	kind
@@ -881,6 +881,24 @@ must handle.
 	append
 	    True if the message should be appeneded to the previous message,
 	    rather than started on a new line. Is set for |:echon|.
+
+	msg_id
+	    Unique identifier for the message in history. Is greater or equal
+	    to 1. 0 indicates msg_id was not assigned. When message of same id
+	    appears it should replace the older message.
+
+	extra_info
+	    Placeholder for special items for special messages. Currently, used
+	    for progress-messages. Can contain following for progress-message
+	       • title: Title string of the progress message.
+	       • status: Status of the progress message. Can contain one of
+	         the following values
+	            • success: The progress item completed successfully
+	            • running: The progress is ongoing
+	            • failed: The progress item failed
+	            • cancel: The progressing process should be canceled.
+	       • percent: How much progress is done on the progress
+                     message
 
 ["msg_clear"] ~
 	Clear all messages currently displayed by "msg_show", emitted after

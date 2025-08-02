@@ -1100,11 +1100,27 @@ function vim.api.nvim_del_var(name) end
 --- the (optional) name or ID `hl_group`.
 --- @param history boolean if true, add to `message-history`.
 --- @param opts vim.api.keyset.echo_opts Optional parameters.
+--- - id: message-id for updating existing message.
 --- - err: Treat the message like `:echoerr`. Sets `hl_group` to `hl-ErrorMsg` by default.
 --- - kind: Set the `ui-messages` kind with which this message will be emitted.
 --- - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
 ---   will write the message to the "log" file instead of standard output.
---- @return integer
+--- - title: The title for progress message.
+--- - status: Current status of the progress message. Can be
+---   one of the following values
+---   - success: The progress item completed successfully
+---   - running: The progress is ongoing
+---   - failed: The progress item failed
+---   - cancel: The progressing process should be canceled.
+---             note: Cancel needs to be handled by progress
+---             initiator by listening for the `Progress` event
+--- - percent: How much progress is done on the progress
+---   message
+--- @return integer # The message-id of the message.
+--- valid message-id is always greater or equal to 1
+--- -1 means nvim_echo didn't show a message
+---  0 means nvim_echo didn't allocate a message id for the message. happens
+---    for temp messages not stored in message history.
 function vim.api.nvim_echo(chunks, history, opts) end
 
 --- @deprecated

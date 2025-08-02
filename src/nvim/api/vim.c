@@ -758,10 +758,27 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///               the (optional) name or ID `hl_group`.
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters.
+///          - id: message-id for updating existing message.
 ///          - err: Treat the message like `:echoerr`. Sets `hl_group` to |hl-ErrorMsg| by default.
 ///          - kind: Set the |ui-messages| kind with which this message will be emitted.
 ///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
 ///            will write the message to the "log" file instead of standard output.
+///          - title: The title for progress message.
+///          - status: Current status of the progress message. Can be
+///            one of the following values
+///            - success: The progress item completed successfully
+///            - running: The progress is ongoing
+///            - failed: The progress item failed
+///            - cancel: The progressing process should be canceled.
+///                      note: Cancel needs to be handled by progress
+///                      initiator by listening for the `Progress` event
+///          - percent: How much progress is done on the progress
+///            message
+/// @return The message-id of the message.
+///         valid message-id is always greater or equal to 1
+///         -1 means nvim_echo didn't show a message
+///          0 means nvim_echo didn't allocate a message id for the message. happens
+///            for temp messages not stored in message history.
 Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
                   Error *err)
   FUNC_API_SINCE(7)

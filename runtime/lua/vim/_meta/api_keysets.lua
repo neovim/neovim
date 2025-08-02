@@ -165,6 +165,7 @@ error('Cannot require a meta file')
 --- |'OptionSet'
 --- |'PackChanged'
 --- |'PackChangedPre'
+--- |'Progress'
 --- |'QuickFixCmdPost'
 --- |'QuickFixCmdPre'
 --- |'QuitPre'
