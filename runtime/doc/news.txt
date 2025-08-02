@@ -134,6 +134,7 @@ API
 • Added |vim.lsp.is_enabled()| to check if a given LSP config has been enabled
   by |vim.lsp.enable()|.
 • |nvim_echo()| can set the |ui-messages| kind with which to emit the message.
+• |nvim_echo()| can create |Progress| messages
 
 BUILD
 
@@ -181,6 +182,8 @@ EVENTS
 
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
 • New `append` paremeter for |ui-messages| `msg_show` event.
+• |Progress| event is triggered upon receiving a progress message
+
 
 HIGHLIGHTS
 
