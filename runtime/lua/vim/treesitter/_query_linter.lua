@@ -8,6 +8,10 @@ local M = {}
 --- @field langs string[]
 --- @field clear boolean
 
+--- @class QueryLinterLanguageGuess
+--- @field lang string
+--- @field query string
+
 --- @alias vim.treesitter.ParseError {msg: string, range: Range4}
 
 --- Contains language dependent context for the query linter
@@ -36,12 +40,21 @@ end
 
 --- Determines the target language of a query file by its path: <lang>/<query_type>.scm
 --- @param buf integer
---- @return string?
-local function guess_query_lang(buf)
+--- @return QueryLinterLanguageGuess?
+function M.guess_query_lang(buf)
   local filename = api.nvim_buf_get_name(buf)
   if filename ~= '' then
-    local resolved_filename = vim.F.npcall(vim.fn.fnamemodify, filename, ':p:h:t')
-    return resolved_filename and vim.treesitter.language.get_lang(resolved_filename)
+    local filepath = vim.F.npcall(vim.fn.fnamemodify, filename, ':p')
+    if not filepath then
+      return nil
+    end
+
+    local lang = vim.F.npcall(vim.fn.fnamemodify, filepath, ':h:t')
+    local query_type = vim.F.npcall(vim.fn.fnamemodify, filepath, ':t:r')
+    if lang and query_type and vim.treesitter.language.get_lang(lang) then
+      return { lang = lang, query_type = query_type }
+    end
+    return nil
   end
 end
 
@@ -51,7 +64,8 @@ end
 local function normalize_opts(buf, opts)
   opts = opts or {}
   if not opts.langs then
-    opts.langs = guess_query_lang(buf)
+    local guess = M.guess_query_lang(buf)
+    opts.langs = guess and guess.lang
   end
 
   if type(opts.langs) ~= 'table' then
@@ -207,7 +221,8 @@ function M.omnifunc(findstart, base)
   end
 
   local buf = api.nvim_get_current_buf()
-  local query_lang = guess_query_lang(buf)
+  local guess = M.guess_query_lang(buf)
+  local query_lang = guess and guess.lang
 
   local ok, parser_info = pcall(vim.treesitter.language.inspect, query_lang)
   if not ok then
