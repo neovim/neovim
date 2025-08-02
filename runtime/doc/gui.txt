@@ -85,6 +85,22 @@ Restart Nvim
                 Note: Only works if the UI and server are on the same system.
 
 ------------------------------------------------------------------------------
+Connect UI to a different server
+
+                                                *:connect*
+
+:connect {address}
+                Detaches the UI from the server it is currently attached to
+                and attaches it to the server at {address} instead.
+
+                Note: If the current UI hasn't implemented the "connect" UI
+                event, this command is equivalent to |:detach|.
+
+:connect! {address}
+                Same as |:connect| but it also stops the detached server if
+                no other UI is currently attached to it.
+
+------------------------------------------------------------------------------
 GUI commands
 
                                                 *:winp* *:winpos* *E188*
