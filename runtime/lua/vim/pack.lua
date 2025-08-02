@@ -547,7 +547,7 @@ local function checkout(p, timestamp, skip_same_sha)
   -- directory or if it is empty.
   local doc_dir = vim.fs.joinpath(p.path, 'doc')
   vim.fn.delete(vim.fs.joinpath(doc_dir, 'tags'))
-  copcall(vim.cmd.helptags, vim.fn.fnameescape(doc_dir))
+  copcall(vim.cmd.helptags, { doc_dir, magic = { file = false } })
 end
 
 --- @param plug_list vim.pack.Plug[]
@@ -635,7 +635,8 @@ local function pack_add(plug, load)
   n_active_plugins = n_active_plugins + 1
   active_plugins[plug.path] = { plug = plug, id = n_active_plugins }
 
-  vim.cmd.packadd({ plug.spec.name, bang = not load })
+  -- NOTE: The `:packadd` specifically seems to not handle spaces in dir name
+  vim.cmd.packadd({ vim.fn.escape(plug.spec.name, ' '), bang = not load, magic = { file = false } })
 
   -- Execute 'after/' scripts if not during startup (when they will be sourced
   -- automatically), as `:packadd` only sources plain 'plugin/' files.
@@ -645,7 +646,7 @@ local function pack_add(plug, load)
     local after_paths = vim.fn.glob(plug.path .. '/after/plugin/**/*.{vim,lua}', false, true)
     --- @param path string
     vim.tbl_map(function(path)
-      vim.cmd.source(vim.fn.fnameescape(path))
+      vim.cmd.source({ path, magic = { file = false } })
     end, after_paths)
   end
 end
