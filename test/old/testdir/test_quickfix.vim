@@ -2463,8 +2463,7 @@ func Xproperty_tests(cchar)
   if has('job')
     call g:Xsetlist([], 'a', {'context' : test_null_job()})
   endif
-  " Nvim doesn't have null functions
-  " call g:Xsetlist([], 'a', {'context' : test_null_function()})
+  call g:Xsetlist([], 'a', {'context' : v:_null_function})
   " Nvim doesn't have null partials
   " call g:Xsetlist([], 'a', {'context' : test_null_partial()})
   call g:Xsetlist([], 'a', {'context' : ''})

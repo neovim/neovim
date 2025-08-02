@@ -2833,8 +2833,7 @@ func Test_call()
   call assert_fails('call foo', 'E107:')
 
   " These once caused a crash.
-  " Nvim doesn't have null functions
-  " call call(test_null_function(), [])
+  call call(v:_null_function, [])
   " Nvim doesn't have null partials
   " call call(test_null_partial(), [])
   " Nvim doesn't have null functions
