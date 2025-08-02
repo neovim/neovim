@@ -233,6 +233,7 @@ LUA
 • |Iter:take()| and |Iter:skip()| now optionally accept predicates.
 • Built-in plugin manager |vim.pack|
 • |vim.list.unique()| to deduplicate lists.
+• Experimental `vim.pos` and `vim.range` for Position/Range abstraction.
 
 OPTIONS
 
