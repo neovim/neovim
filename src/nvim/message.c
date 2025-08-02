@@ -1099,9 +1099,9 @@ static void draw_progress_message(MsgID msg_id)
   }
   if (hist_msg && hist_msg->ext_data.percent >= 0) {
     // this block draws the "...percent%" before the progress-message
-    char buf[10];
-    sprintf(buf, "...%ld%%", (long)hist_msg->ext_data.percent);
-    msg_multiline(cstr_as_string(buf), 0, true, false, &need_clear);
+    char percent_buf[10];
+    vim_snprintf(percent_buf, sizeof(percent_buf), "...%ld%%", (long)hist_msg->ext_data.percent);
+    msg_multiline(cstr_as_string(percent_buf), 0, true, false, &need_clear);
   }
 }
 
