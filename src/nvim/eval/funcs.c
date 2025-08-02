@@ -2031,6 +2031,10 @@ static void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
     s = (char *)tv_get_string(&argvars[0]);
     use_string = true;
   }
+  if (s == NULL) {
+    semsg(_(e_invarg2), "NULL");
+    return;
+  }
 
   if ((use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL) || is_funcref) {
     name = s;

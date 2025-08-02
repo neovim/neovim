@@ -7206,7 +7206,7 @@ func Test_refcount()
       call assert_equal(-1, test_refcount(test_null_job()))
       call assert_equal(-1, test_refcount(test_null_channel()))
     endif
-    " call assert_equal(-1, test_refcount(test_null_function()))
+    call assert_equal(-1, test_refcount(v:_null_function))
     " call assert_equal(-1, test_refcount(test_null_partial()))
     call assert_equal(-1, test_refcount(v:_null_blob))
     call assert_equal(-1, test_refcount(v:_null_list))
