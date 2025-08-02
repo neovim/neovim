@@ -215,10 +215,9 @@ static void showmap(mapblock_T *mp, bool local)
     return;
   }
 
-  // When ext_messages is active, msg_didout is never set.
-  if (msg_didout || msg_silent != 0 || ui_has(kUIMessages)) {
+  if (msg_silent != 0 || msg_col > 0) {
     msg_putchar('\n');
-    if (got_int) {          // 'q' typed at MORE prompt
+    if (got_int) {
       return;
     }
   }
@@ -272,7 +271,6 @@ static void showmap(mapblock_T *mp, bool local)
   if (p_verbose > 0) {
     last_set_msg(mp->m_script_ctx);
   }
-  msg_clr_eos();
 }
 
 /// Replace termcodes in the given LHS and RHS and store the results into the
@@ -1644,8 +1642,6 @@ char *eval_map_expr(mapblock_T *mp, int c)
   expr_map_lock++;
   set_vim_var_char(c);    // set v:char to the typed character
   const pos_T save_cursor = curwin->w_cursor;
-  const int save_msg_col = msg_col;
-  const int save_msg_row = msg_row;
   if (mp->m_luaref != LUA_NOREF) {
     Error err = ERROR_INIT;
     Array args = ARRAY_DICT_INIT;
@@ -1664,8 +1660,6 @@ char *eval_map_expr(mapblock_T *mp, int c)
   }
   expr_map_lock--;
   curwin->w_cursor = save_cursor;
-  msg_col = save_msg_col;
-  msg_row = save_msg_row;
 
   if (p == NULL) {
     return NULL;

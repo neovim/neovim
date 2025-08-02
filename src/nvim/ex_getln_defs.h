@@ -5,30 +5,6 @@
 #include "klib/kvec.h"
 #include "nvim/cmdexpand_defs.h"
 
-/// Command-line colors: one chunk
-///
-/// Defines a region which has the same highlighting.
-typedef struct {
-  int start;  ///< Colored chunk start.
-  int end;    ///< Colored chunk end (exclusive, > start).
-  int hl_id;  ///< Highlight id.
-} CmdlineColorChunk;
-
-/// Command-line colors
-///
-/// Holds data about all colors.
-typedef kvec_t(CmdlineColorChunk) CmdlineColors;
-
-/// Command-line coloring
-///
-/// Holds both what are the colors and what have been colored. Latter is used to
-/// suppress unnecessary calls to coloring callbacks.
-typedef struct {
-  unsigned prompt_id;  ///< ID of the prompt which was colored last.
-  char *cmdbuff;  ///< What exactly was colored last time or NULL.
-  CmdlineColors colors;  ///< Last colors.
-} ColoredCmdline;
-
 /// Keeps track how much state must be sent to external ui.
 typedef enum {
   kCmdRedrawNone,
@@ -58,8 +34,6 @@ struct cmdline_info {
   char *xp_arg;                 ///< user-defined expansion arg
   int input_fn;                 ///< when true Invoked for input() function
   unsigned prompt_id;           ///< Prompt number, used to disable coloring on errors.
-  Callback highlight_callback;  ///< Callback used for coloring user input.
-  ColoredCmdline last_colors;   ///< Last cmdline colors
   int level;                    ///< current cmdline level
   CmdlineInfo *prev_ccline;     ///< pointer to saved cmdline state
   char special_char;            ///< last putcmdline char (used for redraws)

@@ -1232,27 +1232,10 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
         plen = searchstrlen;
       }
 
-      size_t msgbufsize;
+      // Reserve enough space for the search pattern + offset + search stat.
+      size_t msgbufsize = plen + off_len + 3;
       if (!shortmess(SHM_SEARCHCOUNT) || cmd_silent) {
-        // Reserve enough space for the search pattern + offset +
-        // search stat.  Use all the space available, so that the
-        // search state is right aligned.  If there is not enough space
-        // msg_strtrunc() will shorten in the middle.
-        if (ui_has(kUIMessages)) {
-          msgbufsize = 0;  // adjusted below
-        } else if (msg_scrolled != 0 && !cmd_silent) {
-          // Use all the columns.
-          msgbufsize = (size_t)((Rows - msg_row) * Columns - 1);
-        } else {
-          // Use up to 'showcmd' column.
-          msgbufsize = (size_t)((Rows - msg_row - 1) * Columns + sc_col - 1);
-        }
-        if (msgbufsize < plen + off_len + SEARCH_STAT_BUF_LEN + 3) {
-          msgbufsize = plen + off_len + SEARCH_STAT_BUF_LEN + 3;
-        }
-      } else {
-        // Reserve enough space for the search pattern + offset.
-        msgbufsize = plen + off_len + 3;
+        msgbufsize += SEARCH_STAT_BUF_LEN;
       }
 
       xfree(msgbuf);
@@ -1277,19 +1260,12 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
           memmove(msgbuf + plen + 1, off_buf, off_len);
         }
 
-        char *trunc = msg_strtrunc(msgbuf, true);
-        if (trunc != NULL) {
-          xfree(msgbuf);
-          msgbuf = trunc;
-          msgbuflen = strlen(msgbuf);
-        }
-
         // The search pattern could be shown on the right in rightleft
         // mode, but the 'ruler' and 'showcmd' area use it too, thus
         // it would be blanked out again very soon.  Show it on the
         // left, but do reverse the text.
         if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
-          char *r = reverse_text(trunc != NULL ? trunc : msgbuf);
+          char *r = reverse_text(msgbuf);
           xfree(msgbuf);
           msgbuf = r;
           // move reversed text to beginning of buffer
@@ -1306,13 +1282,9 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
           }
         }
         msg_outtrans(msgbuf, 0, false);
-        msg_clr_eos();
-        msg_check();
 
-        gotocmdline(false);
         ui_flush();
         ui_busy_stop();
-        msg_nowait = true;  // don't wait for this message
       }
 
       if (!shortmess(SHM_SEARCHCOUNT)) {
@@ -3977,7 +3949,6 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
         if (did_show) {
           msg_putchar('\n');  // cursor below last one
         } else {
-          gotocmdline(true);  // cursor at status line
           msg_puts_title(_("--- Included files "));
           if (action != ACTION_SHOW_ALL) {
             msg_puts_title(_("not found "));
@@ -4083,11 +4054,8 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           files[depth].lnum = 0;
           files[depth].matched = false;
           if (action == ACTION_EXPAND) {
-            msg_hist_off = true;                // reset in msg_trunc()
-            vim_snprintf(IObuff, IOSIZE,
-                         _("Scanning included file: %s"),
-                         new_fname);
-            msg_trunc(IObuff, true, HLF_R);
+            vim_snprintf(IObuff, IOSIZE, _("Scanning included file: %s"), new_fname);
+            msg(IObuff, HLF_R);
           } else if (p_verbose >= 5) {
             verbose_enter();
             smsg(0, _("Searching included file %s"), new_fname);
@@ -4252,9 +4220,6 @@ search_line:
         }
       } else if (action == ACTION_SHOW_ALL) {
         found = true;
-        if (!did_show) {
-          gotocmdline(true);                    // cursor at status line
-        }
         if (curr_fname != prev_fname) {
           if (did_show) {
             msg_putchar('\n');                  // cursor below last one
@@ -4438,10 +4403,8 @@ static void show_pat_in_path(char *line, int type, bool did_show, int action, FI
 {
   if (did_show) {
     msg_putchar('\n');          // cursor below last one
-  } else if (!msg_silent) {
-    gotocmdline(true);          // cursor at status line
   }
-  if (got_int) {                // 'q' typed at "--more--" message
+  if (got_int) {
     return;
   }
   size_t linelen = strlen(line);

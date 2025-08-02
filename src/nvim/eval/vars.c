@@ -1443,10 +1443,7 @@ static void list_one_var_a(const char *prefix, const char *name, const ptrdiff_t
   if (type == VAR_FUNC || type == VAR_PARTIAL) {
     msg_puts("()");
   }
-  if (*first) {
-    msg_clr_eos();
-    *first = false;
-  }
+  *first = false;
 }
 
 /// Additional handling for setting a v: variable.

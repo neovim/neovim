@@ -100,8 +100,6 @@ static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buf
 
 void filemess(buf_T *buf, char *name, char *s)
 {
-  int prev_msg_col = msg_col;
-
   if (msg_silent != 0) {
     return;
   }
@@ -112,26 +110,12 @@ void filemess(buf_T *buf, char *name, char *s)
   xstrlcat(IObuff, s, IOSIZE);
 
   // For the first message may have to start a new line.
-  // For further ones overwrite the previous one, reset msg_scroll before
-  // calling filemess().
-  int msg_scroll_save = msg_scroll;
-  if (shortmess(SHM_OVERALL) && !msg_listdo_overwrite && !exiting && p_verbose == 0) {
-    msg_scroll = false;
-  }
-  if (!msg_scroll) {    // wait a bit when overwriting an error msg
-    msg_check_for_delay(false);
-  }
+  // For further ones overwrite the previous one.
+  msg_ext_overwrite = shortmess(SHM_OVERALL) && !msg_listdo_overwrite && !exiting && !p_verbose;
   msg_start();
-  if (prev_msg_col != 0 && msg_col == 0) {
-    msg_putchar('\r');  // overwrite any previous message.
-  }
-  msg_scroll = msg_scroll_save;
-  msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
-  msg_outtrans(msg_may_trunc(false, IObuff), 0, false);
-  msg_clr_eos();
+  msg_outtrans(IObuff, 0, false);
   ui_flush();
-  msg_scrolled_ign = false;
 }
 
 /// Read lines from file "fname" into the buffer after line "from".
@@ -201,7 +185,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   FileInfo file_info;
   linenr_T skip_count = 0;
   linenr_T read_count = 0;
-  int msg_save = msg_scroll;
   linenr_T read_no_eol_lnum = 0;        // non-zero lnum when last line of
                                         // last read was missing the eol
   bool file_rewind = false;
@@ -323,11 +306,8 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     }
   }
 
-  if (((shortmess(SHM_OVER) && !msg_listdo_overwrite) || curbuf->b_help) && p_verbose == 0) {
-    msg_scroll = false;         // overwrite previous file message
-  } else {
-    msg_scroll = true;          // don't overwrite previous file message
-  }
+  msg_ext_overwrite = ((shortmess(SHM_OVER) && !msg_listdo_overwrite) || curbuf->b_help)
+                      && p_verbose == 0;  // overwrite previous file message
   // If the name is too long we might crash further on, quit here.
   if (fname != NULL && *fname != NUL) {
     size_t namelen = strlen(fname);
@@ -336,7 +316,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     if (namelen >= MAXPATHL) {
       filemess(curbuf, fname, _("Illegal file name"));
       msg_end();
-      msg_scroll = msg_save;
       goto theend;
     }
 
@@ -348,7 +327,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         filemess(curbuf, fname, _(msg_is_a_directory));
       }
       msg_end();
-      msg_scroll = msg_save;
       retval = NOTDONE;
       goto theend;
     }
@@ -382,7 +360,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         filemess(curbuf, fname, _("is not a file"));
       }
       msg_end();
-      msg_scroll = msg_save;
       goto theend;
     }
   }
@@ -442,7 +419,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   }
 
   if (fd < 0) {                     // cannot open at all
-    msg_scroll = msg_save;
     if (!newfile) {
       goto theend;
     }
@@ -578,8 +554,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     goto theend;
   }
 
-  no_wait_return++;         // don't wait for return yet
-
   // Set '[ mark to the line above where the lines go (line 1 if zero).
   orig_start = curbuf->b_op_start;
   curbuf->b_op_start.lnum = ((from == 0) ? 1 : from);
@@ -590,19 +564,12 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   int try_unix = (vim_strchr(p_ffs, 'x') != NULL);
 
   if (!read_buffer) {
-    int m = msg_scroll;
-    int n = msg_scrolled;
-
     // The file must be closed again, the autocommands may want to change
     // the file before reading it.
     if (!read_stdin) {
       close(fd);                // ignore errors
     }
 
-    // The output from the autocommands should not overwrite anything and
-    // should not be overwritten: Set msg_scroll, restore its value if no
-    // output was done.
-    msg_scroll = true;
     if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPRE, NULL, sfname,
                            false, curbuf, eap);
@@ -623,13 +590,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     try_unix = (vim_strchr(p_ffs, 'x') != NULL);
     curbuf->b_op_start = orig_start;
 
-    if (msg_scrolled == n) {
-      msg_scroll = m;
-    }
-
     if (aborting()) {       // autocmds may abort script processing
-      no_wait_return--;
-      msg_scroll = msg_save;
       curbuf->b_p_ro = true;            // must use "w!" now
       goto theend;
     }
@@ -642,8 +603,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
                         || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
                         || (using_b_fname && (old_b_fname != curbuf->b_fname))
                         || (fd = os_open(fname, O_RDONLY, 0)) < 0)) {
-      no_wait_return--;
-      msg_scroll = msg_save;
       if (fd < 0) {
         emsg(_("E200: *ReadPre autocommands made the file unreadable"));
       } else {
@@ -662,8 +621,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       filemess(curbuf, sfname, "");
     }
   }
-
-  msg_scroll = false;                   // overwrite the file message
 
   // Set linecnt now, before the "retry" caused by a wrong guess for
   // fileformat, and after the autocommands, which may change them.
@@ -1655,7 +1612,6 @@ failed:
     os_remove(tmpname);  // delete converted file
     xfree(tmpname);
   }
-  no_wait_return--;                     // may wait for return now
 
   // In recovery mode everything but autocommands is skipped.
   if (!recoverymode) {
@@ -1691,7 +1647,6 @@ failed:
           curbuf->b_p_ro = true;                // must use "w!" now
         }
       }
-      msg_scroll = msg_save;
       check_marks_read();
       retval = OK;        // an interrupt isn't really an error
       goto theend;
@@ -1758,27 +1713,12 @@ failed:
 
       msg_add_lines(c, linecnt, filesize);
 
-      XFREE_CLEAR(keep_msg);
       p = NULL;
-      msg_scrolled_ign = true;
 
       if (!read_stdin && !read_buffer) {
-        if (msg_col > 0) {
-          msg_putchar('\r');  // overwrite previous message
-        }
-        p = (uint8_t *)msg_trunc(IObuff, false, 0);
+        msg_ext_overwrite = true;  // overwrite previous message
+        msg(IObuff, 0);
       }
-
-      if (read_stdin || read_buffer || restart_edit != 0
-          || (msg_scrolled != 0 && !need_wait_return)) {
-        // Need to repeat the message after redrawing when:
-        // - When reading from stdin (the screen will be cleared next).
-        // - When restart_edit is set (otherwise there will be a delay before
-        //   redrawing).
-        // - When the screen was scrolled but there is no wait-return prompt.
-        set_keep_msg((char *)p, 0);
-      }
-      msg_scrolled_ign = false;
     }
 
     // with errors writing the file requires ":w!"
@@ -1808,7 +1748,6 @@ failed:
       curbuf->b_op_end.col = 0;
     }
   }
-  msg_scroll = msg_save;
 
   // Get the marks before executing autocommands, so they can be used there.
   check_marks_read();
@@ -1834,19 +1773,12 @@ failed:
   }
 
   if (!read_stdin && !read_fifo && (!read_buffer || sfname != NULL)) {
-    int m = msg_scroll;
-    int n = msg_scrolled;
-
     // Save the fileformat now, otherwise the buffer will be considered
     // modified if the format/encoding was automatically detected.
     if (set_options) {
       save_file_ff(curbuf);
     }
 
-    // The output from the autocommands should not overwrite anything and
-    // should not be overwritten: Set msg_scroll, restore its value if no
-    // output was done.
-    msg_scroll = true;
     if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPOST, NULL, sfname,
                            false, curbuf, eap);
@@ -1861,9 +1793,6 @@ failed:
     } else {
       apply_autocmds_exarg(EVENT_FILEREADPOST, sfname, sfname,
                            false, NULL, eap);
-    }
-    if (msg_scrolled == n) {
-      msg_scroll = m;
     }
     if (aborting()) {       // autocmds may abort script processing
       return FAIL;
@@ -2770,7 +2699,6 @@ int check_timestamps(int focus)
       || allbuf_lock > 0) {
     need_check_timestamps = true;               // check later
   } else {
-    no_wait_return++;
     did_check_timestamps = true;
     already_warned = false;
     FOR_ALL_BUFFERS(buf) {
@@ -2787,13 +2715,7 @@ int check_timestamps(int focus)
         }
       }
     }
-    no_wait_return--;
     need_check_timestamps = false;
-    if (need_wait_return && didit == 2) {
-      // make sure msg isn't overwritten
-      msg_puts("\n");
-      ui_flush();
-    }
   }
   return didit;
 }
@@ -3026,16 +2948,7 @@ int buf_check_timestamp(buf_T *buf)
         if (*mesg2 != NUL) {
           msg_puts_hl(mesg2, HLF_W, true);
         }
-        msg_clr_eos();
         msg_end();
-        if (emsg_silent == 0 && !in_assert_fails && !ui_has(kUIMessages)) {
-          ui_flush();
-          // give the user some time to think about it
-          os_delay(1004, true);
-
-          // don't redraw and erase the message
-          redraw_cmdline = false;
-        }
       }
       already_warned = true;
     }

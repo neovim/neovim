@@ -557,11 +557,6 @@ void ex_args(exarg_T *eap)
     }
 
     char **items = xmalloc(sizeof(char *) * (size_t)ARGCOUNT);
-
-    // Overwrite the command, for a short list there is no scrolling
-    // required and no wait_return().
-    gotocmdline(true);
-
     for (int i = 0; i < ARGCOUNT; i++) {
       items[i] = alist_name(&ARGLIST[i]);
     }

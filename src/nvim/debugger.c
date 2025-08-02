@@ -69,7 +69,6 @@ struct debuggy {
 /// execution.
 void do_debug(char *cmd)
 {
-  int save_msg_scroll = msg_scroll;
   int save_State = State;
   int save_did_emsg = did_emsg;
   const bool save_cmd_silent = cmd_silent;
@@ -95,7 +94,6 @@ void do_debug(char *cmd)
 #define CMD_DOWN        10
 
   RedrawingDisabled++;          // don't redisplay the window
-  no_wait_return++;             // don't wait for return
   did_emsg = false;             // don't use error from debugged stuff
   cmd_silent = false;           // display commands
   msg_silent = false;           // display messages
@@ -129,9 +127,6 @@ void do_debug(char *cmd)
 
   // Repeat getting a command and executing it.
   while (true) {
-    msg_scroll = true;
-    need_wait_return = false;
-
     // Save the current typeahead buffer and replace it with an empty one.
     // This makes sure we get input from the user here and don't interfere
     // with the commands being executed.  Reset "ex_normal_busy" to avoid
@@ -151,7 +146,7 @@ void do_debug(char *cmd)
     debug_break_level = -1;
 
     xfree(cmdline);
-    cmdline = getcmdline_prompt('>', NULL, 0, EXPAND_NOTHING, NULL, CALLBACK_NONE, false, NULL);
+    cmdline = getcmdline_prompt('>', NULL, 0, EXPAND_NOTHING, NULL, false, NULL);
 
     debug_break_level = n;
     if (typeahead_saved) {
@@ -160,8 +155,6 @@ void do_debug(char *cmd)
     }
     ex_normal_busy = save_ex_normal_busy;
 
-    cmdline_row = msg_row;
-    msg_starthere();
     if (cmdline != NULL) {
       // If this is a debug command, set "last_cmd".
       // If not, reset "last_cmd".
@@ -291,16 +284,11 @@ void do_debug(char *cmd)
       do_cmdline(cmdline, getexline, NULL, DOCMD_VERBOSE|DOCMD_EXCRESET);
       debug_break_level = n;
     }
-    lines_left = Rows - 1;
   }
   xfree(cmdline);
 
   RedrawingDisabled--;
-  no_wait_return--;
   redraw_all_later(UPD_NOT_VALID);
-  need_wait_return = false;
-  msg_scroll = save_msg_scroll;
-  lines_left = Rows - 1;
   State = save_State;
   debug_mode = false;
   did_emsg = save_did_emsg;

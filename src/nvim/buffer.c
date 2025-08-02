@@ -1039,10 +1039,8 @@ void handle_swap_exists(bufref_T *old_curbuf)
     enter_cleanup(&cs);
 
     // User selected Recover at ATTENTION prompt.
-    msg_scroll = true;
     ml_recover(false);
     msg_puts("\n");     // don't overwrite the last message
-    cmdline_row = msg_row;
     do_modelines(0);
 
     // Restore the error/interrupt/exception state if not discarded by a
@@ -3205,7 +3203,7 @@ static bool buf_same_file_id(buf_T *buf, FileID *file_id)
 /// Print info about the current buffer.
 ///
 /// @param fullname  when non-zero print full path
-void fileinfo(int fullname, int shorthelp, bool dont_truncate)
+void fileinfo(int fullname, int shorthelp)
 {
   char *p;
 
@@ -3277,26 +3275,7 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
   }
 
   append_arg_number(curwin, buffer, IOSIZE);
-
-  if (dont_truncate) {
-    // Temporarily set msg_scroll to avoid the message being truncated.
-    // First call msg_start() to get the message in the right place.
-    msg_start();
-    n = msg_scroll;
-    msg_scroll = true;
-    msg(buffer, 0);
-    msg_scroll = n;
-  } else {
-    p = msg_trunc(buffer, false, 0);
-    if (restart_edit != 0 || (msg_scrolled && !need_wait_return)) {
-      // Need to repeat the message after redrawing when:
-      // - When restart_edit is set (otherwise there will be a delay
-      //   before redrawing).
-      // - When the screen was scrolled but there is no wait-return
-      //   prompt.
-      set_keep_msg(p, 0);
-    }
-  }
+  msg(buffer, 0);
 
   xfree(buffer);
 }

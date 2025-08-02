@@ -51,9 +51,6 @@ CTRL-G		or				*CTRL-G* *:f* *:fi* *:file*
 			modified, read errors, new file).  See the 'shortmess'
 			option about how to make this message shorter.
 
-:f[ile]!		like |:file|, but don't truncate the name even when
-			'shortmess' indicates this.
-
 {count}CTRL-G		Like CTRL-G, but prints the current file name with
 			full path.  If the count is higher than 1 the current
 			buffer number is also given.

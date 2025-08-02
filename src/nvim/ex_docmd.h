@@ -12,11 +12,10 @@
 /// flags for do_cmdline()
 enum {
   DOCMD_VERBOSE  = 0x01,  ///< included command in error message
-  DOCMD_NOWAIT   = 0x02,  ///< don't call wait_return() and friends
-  DOCMD_REPEAT   = 0x04,  ///< repeat exec. until getline() returns NULL
-  DOCMD_KEYTYPED = 0x08,  ///< don't reset KeyTyped
-  DOCMD_EXCRESET = 0x10,  ///< reset exception environment (for debugging
-  DOCMD_KEEPLINE = 0x20,  ///< keep typed line for repeating with "."
+  DOCMD_REPEAT   = 0x02,  ///< repeat exec. until getline() returns NULL
+  DOCMD_KEYTYPED = 0x04,  ///< don't reset KeyTyped
+  DOCMD_EXCRESET = 0x08,  ///< reset exception environment (for debugging
+  DOCMD_KEEPLINE = 0x10,  ///< keep typed line for repeating with "."
 };
 
 /// defines for eval_vars()
@@ -33,9 +32,7 @@ enum { DIALOG_MSG_SIZE = 1000, };  ///< buffer size for dialog_msg()
 /// Structure used to save the current state.  Used when executing Normal mode
 /// commands while in any other mode.
 typedef struct {
-  int save_msg_scroll;
   int save_restart_edit;
-  bool save_msg_didout;
   int save_State;
   bool save_finish_op;
   int save_opcount;

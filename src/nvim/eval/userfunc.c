@@ -1178,8 +1178,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
   estack_push_ufunc(fp, 1);
   if (p_verbose >= 12) {
-    no_wait_return++;
-    verbose_enter_scroll();
+    verbose_enter();
 
     smsg(0, _("calling %s"), SOURCING_NAME);
     if (p_verbose >= 14) {
@@ -1196,13 +1195,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
           char *tofree = encode_tv2string(&argvars[i], NULL);
           emsg_off--;
           if (tofree != NULL) {
-            char *s = tofree;
-            char buf[MSG_BUF_LEN];
-            if (vim_strsize(s) > MSG_BUF_CLEN) {
-              trunc_string(s, buf, MSG_BUF_CLEN, sizeof(buf));
-              s = buf;
-            }
-            msg_puts(s);
+            msg_puts(tofree);
             xfree(tofree);
           }
         }
@@ -1211,8 +1204,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     }
     msg_puts("\n");  // don't overwrite this either
 
-    verbose_leave_scroll();
-    no_wait_return--;
+    verbose_leave();
   }
 
   const bool do_profiling_yes = do_profiling == PROF_YES;
@@ -1258,8 +1250,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     ex_nesting_level--;
   } else {
     // call do_cmdline() to execute the lines
-    do_cmdline(NULL, get_func_line, (void *)fc,
-               DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT);
+    do_cmdline(NULL, get_func_line, (void *)fc, DOCMD_VERBOSE|DOCMD_REPEAT);
   }
 
   // Invoke functions added with ":defer".
@@ -1295,8 +1286,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
   // when being verbose, mention the return value
   if (p_verbose >= 12) {
-    no_wait_return++;
-    verbose_enter_scroll();
+    verbose_enter();
 
     if (aborting()) {
       smsg(0, _("%s aborted"), SOURCING_NAME);
@@ -1304,28 +1294,17 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
       smsg(0, _("%s returning #%" PRId64 ""),
            SOURCING_NAME, (int64_t)fc->fc_rettv->vval.v_number);
     } else {
-      char buf[MSG_BUF_LEN];
-
-      // The value may be very long.  Skip the middle part, so that we
-      // have some idea how it starts and ends. smsg() would always
-      // truncate it at the end. Don't want errors such as E724 here.
-      emsg_off++;
+      emsg_off++;  // don't want errors such as E724 here
       char *s = encode_tv2string(fc->fc_rettv, NULL);
-      char *tofree = s;
       emsg_off--;
       if (s != NULL) {
-        if (vim_strsize(s) > MSG_BUF_CLEN) {
-          trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
-          s = buf;
-        }
         smsg(0, _("%s returning %s"), SOURCING_NAME, s);
-        xfree(tofree);
+        xfree(s);
       }
     }
     msg_puts("\n");  // don't overwrite this either
 
-    verbose_leave_scroll();
-    no_wait_return--;
+    verbose_leave();
   }
 
   estack_pop();
@@ -1333,19 +1312,13 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   if (do_profiling_yes) {
     script_prof_restore(&wait_start);
   }
-  if (using_sandbox) {
-    sandbox--;
-  }
+  sandbox -= using_sandbox;
 
   if (p_verbose >= 12 && SOURCING_NAME != NULL) {
-    no_wait_return++;
-    verbose_enter_scroll();
-
+    verbose_enter();
     smsg(0, _("continuing in %s"), SOURCING_NAME);
     msg_puts("\n");  // don't overwrite this either
-
-    verbose_leave_scroll();
-    no_wait_return--;
+    verbose_leave();
   }
 
   did_emsg |= save_did_emsg;
@@ -1947,7 +1920,6 @@ static int list_func_head(ufunc_T *fp, bool indent, bool force)
   if (fp->uf_flags & FC_CLOSURE) {
     msg_puts(" closure");
   }
-  msg_clr_eos();
   if (p_verbose > 0) {
     last_set_msg(fp->uf_script_ctx);
   }
@@ -2352,7 +2324,6 @@ static ufunc_T *list_one_function(exarg_T *eap, char *name, char *p)
 static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in,
                              char **line_to_free, bool show_block)
 {
-  bool saved_wait_return = need_wait_return;
   char *line_arg = line_arg_in;
   int indent = 2;
   int nesting = 0;
@@ -2364,16 +2335,7 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
   bool do_concat = true;
 
   while (true) {
-    if (KeyTyped) {
-      msg_scroll = true;
-      saved_wait_return = false;
-    }
-    need_wait_return = false;
-
-    char *theline;
-    char *p;
-    char *arg;
-
+    char *theline, *p;
     if (line_arg != NULL) {
       // Use eap->arg, split up in parts by line breaks.
       theline = line_arg;
@@ -2392,9 +2354,6 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
         theline = eap->ea_getline(':', eap->cookie, indent, do_concat);
       }
       *line_to_free = theline;
-    }
-    if (KeyTyped) {
-      lines_left = Rows - 1;
     }
     if (theline == NULL) {
       if (skip_until != NULL) {
@@ -2516,7 +2475,7 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
       }
 
       // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
-      arg = skipwhite(skiptowhite(p));
+      char *arg = skipwhite(skiptowhite(p));
       if (arg[0] == '<' && arg[1] == '<'
           && ((p[0] == 'p' && p[1] == 'y'
                && (!ASCII_ISALNUM(p[2]) || p[2] == 't'
@@ -2621,7 +2580,6 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
 theend:
   xfree(skip_until);
   xfree(heredoc_trimmed);
-  need_wait_return |= saved_wait_return;
   return ret;
 }
 
@@ -2812,11 +2770,6 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && did_emsg) {
       goto erret;
     }
-
-    if (!ui_has(kUICmdline)) {
-      msg_putchar('\n');              // don't overwrite the function name
-    }
-    cmdline_row = msg_row;
   }
 
   // Save the starting line number.

@@ -133,7 +133,6 @@ typedef enum {
 #endif
 
 static bool redraw_popupmenu = false;
-static bool msg_grid_invalid = false;
 static bool resizing_autocmd = false;
 static bool conceal_cursor_used = false;
 
@@ -219,8 +218,6 @@ bool default_grid_alloc(void)
 
 void screenclear(void)
 {
-  msg_check_for_delay(false);
-
   if (starting == NO_SCREEN || default_grid.chars == NULL) {
     return;
   }
@@ -253,17 +250,6 @@ void screenclear(void)
     must_redraw = UPD_NOT_VALID;  // no need to clear again
   }
   compute_cmdrow();
-  msg_row = cmdline_row;  // put cursor on last line for messages
-  msg_col = 0;
-  msg_reset_scroll();     // can't scroll back
-  msg_didany = false;
-  msg_didout = false;
-  if (HL_ATTR(HLF_MSG) > 0 && msg_use_grid() && msg_grid.chars) {
-    grid_invalidate(&msg_grid);
-    msg_grid_validate();
-    msg_grid_invalid = false;
-    clear_cmdline = true;
-  }
 }
 
 /// Unlike cmdline "one_key" prompts, the message part of the prompt is not stored
@@ -331,9 +317,6 @@ void screen_resize(int width, int height)
     // win_new_screensize will recompute floats position, but tell the
     // compositor to not redraw them yet
     ui_comp_set_screen_valid(false);
-    if (msg_grid.chars) {
-      msg_grid_invalid = true;
-    }
 
     RedrawingDisabled++;
 
@@ -366,24 +349,10 @@ void screen_resize(int width, int height)
     invalidate_botline(curwin);
 
     // We only redraw when it's needed:
-    // - While at the more prompt or executing an external command, don't
-    //   redraw, but position the cursor.
     // - While editing the command line, only redraw that. TODO: lies
     // - in Ex mode, don't redraw anything.
     // - Otherwise, redraw right now, and position the cursor.
-    if (State == MODE_ASKMORE || State == MODE_EXTERNCMD || exmode_active
-        || (State == MODE_CMDLINE && get_cmdline_info()->one_key)) {
-      if (State == MODE_CMDLINE) {
-        update_screen();
-      }
-      if (msg_grid.chars) {
-        msg_grid_validate();
-      }
-      // TODO(bfredl): sometimes messes up the output. Implement clear+redraw
-      // also for the pager? (or: what if the pager was just a modal window?)
-      ui_comp_set_screen_valid(true);
-      repeat_message();
-    } else {
+    if (State != MODE_EXTERNCMD && !exmode_active) {
       if (curwin->w_p_scb) {
         do_check_scrollbind(true);
       }
@@ -427,8 +396,7 @@ void check_screensize(void)
 /// Return true if redrawing should currently be done.
 bool redrawing(void)
 {
-  return !RedrawingDisabled
-         && !(p_lz && char_avail() && !KeyTyped && !do_redraw);
+  return !RedrawingDisabled && !(p_lz && char_avail() && !KeyTyped);
 }
 
 /// Redraw the parts of the screen that is marked for redraw.
@@ -444,8 +412,6 @@ int update_screen(void)
       still_may_intro = false;
     }
   }
-
-  bool is_stl_global = global_stl_height() > 0;
 
   // Don't do anything if the screen structures are (not yet) valid.
   // A VimResized autocmd can invoke redrawing in the middle of a resize,
@@ -488,67 +454,8 @@ int update_screen(void)
     type = MAX(type, UPD_CLEAR);
   }
 
-  // Tricky: vim code can reset msg_scrolled behind our back, so need
-  // separate bookkeeping for now.
-  if (msg_did_scroll) {
-    msg_did_scroll = false;
-    msg_scrolled_at_flush = 0;
-  }
-
   if (type >= UPD_CLEAR || !default_grid.valid) {
     ui_comp_set_screen_valid(false);
-  }
-
-  // if the screen was scrolled up when displaying a message, scroll it down
-  if (msg_scrolled || msg_grid_invalid) {
-    clear_cmdline = true;
-    int valid = MAX(Rows - msg_scrollsize(), 0);
-    if (msg_grid.chars) {
-      // non-displayed part of msg_grid is considered invalid.
-      for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.rows); i++) {
-        grid_clear_line(&msg_grid, msg_grid.line_offset[i],
-                        msg_grid.cols, i < p_ch);
-      }
-    }
-    msg_grid.throttled = false;
-    bool was_invalidated = false;
-
-    // UPD_CLEAR is already handled
-    if (type == UPD_NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
-      was_invalidated = ui_comp_set_screen_valid(false);
-      for (int i = valid; i < Rows - p_ch; i++) {
-        grid_clear_line(&default_grid, default_grid.line_offset[i],
-                        Columns, false);
-      }
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        if (wp->w_floating) {
-          continue;
-        }
-        if (W_ENDROW(wp) > valid) {
-          // TODO(bfredl): too pessimistic. type could be UPD_NOT_VALID
-          // only because windows that are above the separator.
-          wp->w_redr_type = MAX(wp->w_redr_type, UPD_NOT_VALID);
-        }
-        if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height > valid) {
-          wp->w_redr_status = true;
-        }
-      }
-      if (is_stl_global && Rows - p_ch - 1 > valid) {
-        curwin->w_redr_status = true;
-      }
-    }
-    msg_grid_set_pos(Rows - (int)p_ch, false);
-    msg_grid_invalid = false;
-    if (was_invalidated) {
-      // screen was only invalid for the msgarea part.
-      // @TODO(bfredl): using the same "valid" flag
-      // for both messages and floats moving is bit of a mess.
-      ui_comp_set_screen_valid(true);
-    }
-    msg_scrolled = 0;
-    msg_scrolled_at_flush = 0;
-    msg_grid_scroll_discount = 0;
-    need_wait_return = false;
   }
 
   win_ui_flush(true);
@@ -591,10 +498,6 @@ int update_screen(void)
   if (win_check_ns_hl(NULL)) {
     redraw_cmdline = true;
     redraw_tabline = true;
-  }
-
-  if (clear_cmdline) {          // going to clear cmdline (done below)
-    msg_check_for_delay(false);
   }
 
   // Force redraw when width of 'number' or 'relativenumber' column
@@ -709,7 +612,6 @@ int update_screen(void)
   if (still_may_intro) {
     intro_message(false);
   }
-  repeat_message();
 
   decor_providers_invoke_end();
 
@@ -962,15 +864,10 @@ bool skip_showmode(void)
 /// If clear_cmdline is false there may be a message there that needs to be
 /// cleared only if a mode is shown.
 /// If redraw_mode is true show or clear the mode.
-/// @return the length of the message (0 if no message).
-int showmode(void)
+void showmode(void)
 {
-  int length = 0;
-
   // Don't make non-flushed message part of the showmode.
   msg_ext_ui_flush();
-
-  msg_grid_validate();
 
   bool do_mode = ((p_smd && msg_silent == 0)
                   && ((State & MODE_TERMINAL)
@@ -981,60 +878,23 @@ int showmode(void)
   bool can_show_mode = (p_ch != 0 || ui_has(kUIMessages));
   if ((do_mode || reg_recording != 0) && can_show_mode) {
     if (skip_showmode()) {
-      return 0;  // show mode later
+      return;  // show mode later
     }
 
-    bool nwr_save = need_wait_return;
-
-    // wait a bit before overwriting an important message
-    msg_check_for_delay(false);
-
-    // if the cmdline is more than one line high, erase top lines
-    bool need_clear = clear_cmdline;
-    if (clear_cmdline && cmdline_row < Rows - 1) {
-      msg_clr_cmdline();  // will reset clear_cmdline
-    }
-
-    // Position on the last line in the window, column 0
-    msg_pos_mode();
     int hl_id = HLF_CM;  // Highlight mode
-
-    // When the screen is too narrow to show the entire mode message,
-    // avoid scrolling and truncate instead.
-    msg_no_more = true;
-    int save_lines_left = lines_left;
-    lines_left = 0;
 
     if (do_mode) {
       msg_puts_hl("--", hl_id, false);
       // CTRL-X in Insert mode
       if (edit_submode != NULL && !shortmess(SHM_COMPLETIONMENU)) {
-        // These messages can get long, avoid a wrap in a narrow window.
-        // Prefer showing edit_submode_extra. With external messages there
-        // is no imposed limit.
-        if (ui_has(kUIMessages)) {
-          length = INT_MAX;
-        } else {
-          length = (Rows - msg_row) * Columns - 3;
+        if (edit_submode_pre != NULL) {
+          msg_puts_hl(edit_submode_pre, hl_id, false);
         }
+        msg_puts_hl(edit_submode, hl_id, false);
         if (edit_submode_extra != NULL) {
-          length -= vim_strsize(edit_submode_extra);
-        }
-        if (length > 0) {
-          if (edit_submode_pre != NULL) {
-            length -= vim_strsize(edit_submode_pre);
-          }
-          if (length - vim_strsize(edit_submode) > 0) {
-            if (edit_submode_pre != NULL) {
-              msg_puts_hl(edit_submode_pre, hl_id, false);
-            }
-            msg_puts_hl(edit_submode, hl_id, false);
-          }
-          if (edit_submode_extra != NULL) {
-            msg_puts_hl(" ", hl_id, false);  // Add a space in between.
-            int sub_id = edit_submode_highl < HLF_COUNT ? (int)edit_submode_highl : hl_id;
-            msg_puts_hl(edit_submode_extra, sub_id, false);
-          }
+          msg_puts_hl(" ", hl_id, false);  // Add a space in between.
+          int sub_id = edit_submode_highl < HLF_COUNT ? (int)edit_submode_highl : hl_id;
+          msg_puts_hl(edit_submode_extra, sub_id, false);
         }
       } else {
         if (State & MODE_TERMINAL) {
@@ -1096,32 +956,12 @@ int showmode(void)
         }
         msg_puts_hl(" --", hl_id, false);
       }
-
-      need_clear = true;
     }
-    if (reg_recording != 0
-        && edit_submode == NULL             // otherwise it gets too long
-        ) {
-      recording_mode(hl_id);
-      need_clear = true;
+    if (reg_recording != 0 && edit_submode == NULL) {
+      recording_mode(hl_id);  // gets too long with submode
     }
 
     mode_displayed = true;
-    if (need_clear || clear_cmdline || redraw_mode) {
-      msg_clr_eos();
-    }
-    msg_didout = false;                 // overwrite this message
-    length = msg_col;
-    msg_col = 0;
-    msg_no_more = false;
-    lines_left = save_lines_left;
-    need_wait_return = nwr_save;        // never ask for hit-return for this
-  } else if (clear_cmdline && msg_silent == 0) {
-    // Clear the whole command line.  Will reset "clear_cmdline".
-    msg_clr_cmdline();
-  } else if (redraw_mode) {
-    msg_pos_mode();
-    msg_clr_eos();
   }
 
   // NB: also handles clearing the showmode if it was empty or disabled
@@ -1133,18 +973,6 @@ int showmode(void)
   }
 
   redraw_ruler();      // check if ruler should be redrawn
-  redraw_cmdline = false;
-  redraw_mode = false;
-  clear_cmdline = false;
-
-  return length;
-}
-
-/// Position for a mode message.
-static void msg_pos_mode(void)
-{
-  msg_col = 0;
-  msg_row = Rows - 1;
 }
 
 /// Delete mode message.  Used when ESC is typed which is expected to end
@@ -1163,19 +991,11 @@ void unshowmode(bool force)
 // Clear the mode message.
 void clearmode(void)
 {
-  const int save_msg_row = msg_row;
-  const int save_msg_col = msg_col;
-
   msg_ext_ui_flush();
-  msg_pos_mode();
   if (reg_recording != 0) {
     recording_mode(HLF_CM);
   }
-  msg_clr_eos();
   msg_ext_flush_showmode();
-
-  msg_col = save_msg_col;
-  msg_row = save_msg_row;
 }
 
 static void recording_mode(int hl_id)

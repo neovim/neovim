@@ -1,3 +1,5 @@
+require('vim._extui').enable({})
+
 --- Default user commands
 do
   vim.api.nvim_create_user_command('Inspect', function(cmd)

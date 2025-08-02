@@ -381,23 +381,11 @@ bool check_changed_any(bool hidden, bool unload)
   exiting = false;
   // When ":confirm" used, don't give an error message.
   if (!(p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM))) {
-    // There must be a wait_return() for this message, do_buffer()
-    // may cause a redraw.  But wait_return() is a no-op when vgetc()
-    // is busy (Quit used from window menu), then make sure we don't
-    // cause a scroll up.
-    if (vgetc_busy > 0) {
-      msg_row = cmdline_row;
-      msg_col = 0;
-      msg_didout = false;
-    }
-    if ((buf->terminal && channel_job_running((uint64_t)buf->b_p_channel))
-        ? semsg(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
-        : semsg(_("E162: No write since last change for buffer \"%s\""),
-                buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
-      int save = no_wait_return;
-      no_wait_return = false;
-      wait_return(false);
-      no_wait_return = save;
+    if (buf->terminal && channel_job_running((uint64_t)buf->b_p_channel)) {
+      semsg(_("E947: Job still running in buffer \"%s\""), buf->b_fname);
+    } else {
+      semsg(_("E162: No write since last change for buffer \"%s\""),
+            buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname);
     }
   }
 
@@ -621,7 +609,7 @@ void ex_listdo(exarg_T *eap)
       i++;
       // execute the command
       if (execute) {
-        do_cmdline(eap->arg, eap->ea_getline, eap->cookie, DOCMD_VERBOSE + DOCMD_NOWAIT);
+        do_cmdline(eap->arg, eap->ea_getline, eap->cookie, DOCMD_VERBOSE);
       }
 
       if (eap->cmdidx == CMD_bufdo) {

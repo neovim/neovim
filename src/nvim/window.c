@@ -1540,12 +1540,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
   status_redraw_all();
 
   if (need_status) {
-    msg_row = Rows - 1;
-    msg_col = sc_col;
-    msg_clr_eos_force();        // Old command/ruler may still be there
     comp_col();
-    msg_row = Rows - 1;
-    msg_col = 0;        // put position back at start of line
   }
 
   // equalize the window sizes.
@@ -4632,9 +4627,6 @@ void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_le
     CHECK_CMDWIN;
   }
 
-  // Don't repeat a message in another tab page.
-  set_keep_msg(NULL, 0);
-
   skip_win_fix_scroll = true;
   if (tp != curtab && leave_tabpage(tp->tp_curwin->w_buffer,
                                     trigger_leave_autocmds) == OK) {
@@ -4758,10 +4750,10 @@ void win_goto(win_T *wp)
   win_enter(wp, true);
 
   // Conceal cursor line in previous window, unconceal in current window.
-  if (win_valid(owp) && owp->w_p_cole > 0 && !msg_scrolled) {
+  if (win_valid(owp) && owp->w_p_cole > 0) {
     redrawWinline(owp, owp->w_cursor.lnum);
   }
-  if (curwin->w_p_cole > 0 && !msg_scrolled) {
+  if (curwin->w_p_cole > 0) {
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 }
@@ -6813,17 +6805,6 @@ void command_height(void)
   cmdline_row = Rows - (int)p_ch;
   redraw_cmdline = true;
 
-  // Clear the cmdheight area.
-  if (msg_scrolled == 0 && full_screen) {
-    GridView *grid = &default_gridview;
-    if (!ui_has(kUIMessages)) {
-      msg_grid_validate();
-      grid = &msg_grid_adj;
-    }
-    grid_clear(grid, cmdline_row, Rows, 0, Columns, 0);
-    msg_row = cmdline_row;
-  }
-
   // Use the value of p_ch that we remembered.  This is needed for when the
   // GUI starts up, we can't be sure in what order things happen.  And when
   // p_ch was changed in another tab page.
@@ -7529,9 +7510,6 @@ void win_ui_flush(bool validate)
   }
   // The popupmenu could also have moved or changed its comp_index
   pum_ui_flush();
-
-  // And the message
-  msg_ui_flush();
 }
 
 win_T *lastwin_nofloating(void)

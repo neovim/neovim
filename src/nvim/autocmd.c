@@ -237,7 +237,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
           return;
         }
 
-        msg_col = 4;
+        msg_advance(4);
         msg_outtrans(ac->pat->pat, 0, false);
       }
 
@@ -248,23 +248,20 @@ static void au_show_for_event(int group, event_T event, const char *pat)
       if (msg_col >= 14) {
         msg_putchar('\n');
       }
-      msg_col = 14;
+      msg_advance(14);
       if (got_int) {
         return;
       }
 
       char *handler_str = aucmd_handler_to_string(ac);
       if (ac->desc != NULL) {
-        size_t msglen = 100;
-        char *msg = xmallocz(msglen);
         if (ac->handler_cmd) {
-          snprintf(msg, msglen, "%s [%s]", handler_str, ac->desc);
+          snprintf(IObuff, IOSIZE, "%s [%s]", handler_str, ac->desc);
         } else {
           msg_puts_hl(handler_str, HLF_8, false);
-          snprintf(msg, msglen, " [%s]", ac->desc);
+          snprintf(IObuff, IOSIZE, " [%s]", ac->desc);
         }
-        msg_outtrans(msg, 0, false);
-        XFREE_CLEAR(msg);
+        msg_outtrans(IObuff, 0, false);
       } else if (ac->handler_cmd) {
         msg_outtrans(handler_str, 0, false);
       } else {
@@ -568,7 +565,6 @@ void do_augroup(char *arg, bool del_group)
       msg_puts("  ");
     });
 
-    msg_clr_eos();
     msg_end();
   }
 }
@@ -1874,7 +1870,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     const bool save_ex_pressedreturn = get_pressedreturn();
 
     // Execute the autocmd. The `getnextac` callback handles iteration.
-    do_cmdline(NULL, getnextac, &patcmd, DOCMD_NOWAIT | DOCMD_VERBOSE | DOCMD_REPEAT);
+    do_cmdline(NULL, getnextac, &patcmd, DOCMD_VERBOSE | DOCMD_REPEAT);
 
     did_emsg += save_did_emsg;
     set_pressedreturn(save_ex_pressedreturn);
@@ -2125,12 +2121,12 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
   bool oneshot = ac->once;
 
   if (p_verbose >= 9) {
-    verbose_enter_scroll();
+    verbose_enter();
     char *handler_str = aucmd_handler_to_string(ac);
     smsg(0, _("autocommand %s"), handler_str);
     msg_puts("\n");  // don't overwrite this either
     XFREE_CLEAR(handler_str);
-    verbose_leave_scroll();
+    verbose_leave();
   }
 
   // Make sure to set autocmd_nested before executing

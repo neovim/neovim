@@ -1095,7 +1095,6 @@ const char *did_set_display(optset_T *args)
     return errmsg;
   }
   init_chartab();
-  msg_grid_validate();
   return NULL;
 }
 

@@ -294,7 +294,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       maxwidth -= col;
       if (!in_status_line) {
         row = Rows - 1;
-        grid = grid_adjust(&msg_grid_adj, &row, &col);
+        grid = grid_adjust(&default_gridview, &row, &col);
         maxwidth--;  // writing in last column may cause scrolling
         fillchar = schar_from_ascii(' ');
         attr = HL_ATTR(HLF_MSG);
@@ -396,22 +396,16 @@ void win_redr_winbar(win_T *wp)
 
 void redraw_ruler(void)
 {
-  static int did_ruler_col = -1;
   static bool did_show_ext_ruler = false;
   win_T *wp = curwin->w_status_height == 0 ? curwin : lastwin_nofloating();
   bool is_stl_global = global_stl_height() > 0;
 
   // Check if ruler should be drawn, clear if it was drawn before.
-  if (!p_ru || wp->w_status_height > 0 || is_stl_global || (p_ch == 0 && !ui_has(kUIMessages))) {
-    if (did_ruler_col > 0 && ui_has(kUIMessages)) {
+  if (!p_ru || wp->w_status_height > 0 || is_stl_global) {
+    if (did_show_ext_ruler) {
       ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
       did_show_ext_ruler = false;
-    } else if (did_ruler_col > 0) {
-      msg_col = did_ruler_col;
-      msg_row = Rows - 1;
-      msg_clr_eos();
     }
-    did_ruler_col = -1;
     return;
   }
 
@@ -429,36 +423,26 @@ void redraw_ruler(void)
     }
   }
 
-  if (*p_ruf && p_ch > 0 && !ui_has(kUIMessages)) {
-    win_redr_custom(wp, false, true);
-    return;
-  }
-
   // Check if not in Insert mode and the line is empty (will show "0-1").
   int empty_line = (State & MODE_INSERT) == 0
                    && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) == NUL;
-
-  int width;
+  int attr, width;
   schar_T fillchar;
-  int attr;
-  int off;
   bool part_of_status = false;
 
   if (wp->w_status_height) {
     fillchar = fillchar_status(&attr, wp);
-    off = wp->w_wincol;
     width = wp->w_width;
     part_of_status = true;
+    assert(false);
   } else if (is_stl_global) {
     fillchar = fillchar_status(&attr, wp);
-    off = 0;
     width = Columns;
     part_of_status = true;
   } else {
     fillchar = schar_from_ascii(' ');
     attr = HL_ATTR(HLF_MSG);
     width = Columns;
-    off = 0;
   }
 
   // In list mode virtcol needs to be recomputed
@@ -507,7 +491,7 @@ void redraw_ruler(void)
   }
   (void)bufferlen;
 
-  if (ui_has(kUIMessages) && !part_of_status) {
+  if (!part_of_status) {
     MAXSIZE_TEMP_ARRAY(content, 1);
     MAXSIZE_TEMP_ARRAY(chunk, 3);
     ADD_C(chunk, INTEGER_OBJ(attr));
@@ -517,27 +501,9 @@ void redraw_ruler(void)
     ADD_C(content, ARRAY_OBJ(chunk));
     ui_call_msg_ruler(content);
     did_show_ext_ruler = true;
-    did_ruler_col = 1;
-  } else {
-    if (did_show_ext_ruler) {
-      ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
-      did_show_ext_ruler = false;
-    }
-    // Truncate at window boundary.
-    for (n1 = 0, n2 = 0; buffer[n1] != NUL; n1 += utfc_ptr2len(buffer + n1)) {
-      n2 += utf_ptr2cells(buffer + n1);
-      if (this_ru_col + n2 > width) {
-        bufferlen = n1;
-        buffer[bufferlen] = NUL;
-        break;
-      }
-    }
-
-    grid_line_start(&msg_grid_adj, Rows - 1);
-    did_ruler_col = off + this_ru_col;
-    int w = grid_line_puts(did_ruler_col, buffer, -1, attr);
-    grid_line_fill(did_ruler_col + w, off + width, fillchar, attr);
-    grid_line_flush();
+  } else if (did_show_ext_ruler) {
+    ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
+    did_show_ext_ruler = false;
   }
 }
 

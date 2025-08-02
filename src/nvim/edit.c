@@ -90,7 +90,6 @@ typedef struct {
   int count;
   int c;
   int lastc;
-  int i;
   bool did_backspace;                // previous char was backspace
   bool line_is_white;                // line is empty before insert
   linenr_T old_topline;              // topline before insertion
@@ -152,9 +151,6 @@ static void insert_enter(InsertState *s)
   s->cmdchar_todo = s->cmdchar;
   // Remember whether editing was restarted after CTRL-O
   did_restart_edit = restart_edit;
-  // sleep before redrawing, needed for "CTRL-O :" that results in an
-  // error message
-  msg_check_for_delay(true);
   // set Insstart_orig to Insstart
   update_Insstart_orig = true;
 
@@ -289,9 +285,9 @@ static void insert_enter(InsertState *s)
       if (ptr[1] == NUL) {
         curwin->w_cursor.col++;
       } else {
-        s->i = utfc_ptr2len(ptr);
-        if (ptr[s->i] == NUL) {
-          curwin->w_cursor.col += s->i;
+        int i = utfc_ptr2len(ptr);
+        if (ptr[i] == NUL) {
+          curwin->w_cursor.col += i;
         }
       }
     }
@@ -315,14 +311,13 @@ static void insert_enter(InsertState *s)
 
   // If 'showmode' is set, show the current (insert/replace/..) mode.
   // A warning message for changing a readonly file is given here, before
-  // actually changing anything.  It's put after the mode, if any.
-  s->i = 0;
+  // actually changing anything.
   if (p_smd && msg_silent == 0) {
-    s->i = showmode();
+    showmode();
   }
 
   if (did_restart_edit == 0) {
-    change_warning(curbuf, s->i == 0 ? 0 : s->i + 1);
+    change_warning(curbuf);
   }
 
   ui_cursor_shape();            // may show different cursor shape
@@ -439,9 +434,6 @@ static int insert_check(VimState *state)
       check_timestamps(false);
     }
   }
-
-  // When emsg() was called msg_scroll will have been set.
-  msg_scroll = false;
 
   // Open fold at the cursor line, according to 'foldopen'.
   if (fdo_flags & kOptFdoFlagInsert) {
