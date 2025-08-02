@@ -305,7 +305,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   msg_start();
   msg_clr_eos();
   bool need_clear = false;
-  bool is_kind_progress = strcmp(kind, MSG_KIND_PROGRESS) == 0;
+  bool is_kind_progress = kind != NULL && strcmp(kind, MSG_KIND_PROGRESS) == 0;
   msg_ext_history = history;
   if (kind != NULL) {
     msg_ext_set_kind(kind);
