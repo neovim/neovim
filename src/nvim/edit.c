@@ -849,6 +849,16 @@ static int insert_handle_key(InsertState *s)
   case Ctrl_H:
     s->did_backspace = ins_bs(s->c, BACKSPACE_CHAR, &s->inserted_space);
     auto_format(false, true);
+    if (s->did_backspace && p_ac && !char_avail() && curwin->w_cursor.col > 0) {
+      s->c = char_before_cursor();
+      if (ins_compl_setup_autocompl(s->c)) {
+        redraw_later(curwin, UPD_VALID);
+        update_screen();  // Show char deletion immediately
+        ui_flush();
+        insert_do_complete(s);  // Trigger autocompletion
+        return 1;
+      }
+    }
     break;
 
   case Ctrl_W:        // delete word before the cursor
@@ -1224,6 +1234,14 @@ normalchar:
     // When inserting a character the cursor line must never be in a
     // closed fold.
     foldOpenCursor();
+    // Trigger autocompletion
+    if (p_ac && !char_avail() && ins_compl_setup_autocompl(s->c)) {
+      redraw_later(curwin, UPD_VALID);
+      update_screen();  // Show character immediately
+      ui_flush();
+      insert_do_complete(s);
+    }
+
     break;
   }       // end of switch (s->c)
 
@@ -1978,6 +1996,7 @@ void insertchar(int c, int flags, int second_indent)
   if (!ISSPECIAL(c)
       && (utf_char2len(c) == 1)
       && !has_event(EVENT_INSERTCHARPRE)
+      && !test_disable_char_avail
       && vpeekc() != NUL
       && !(State & REPLACE_FLAG)
       && !cindent_on()

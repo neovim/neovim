@@ -111,6 +111,15 @@ vim.o.acd = vim.o.autochdir
 vim.go.autochdir = vim.o.autochdir
 vim.go.acd = vim.go.autochdir
 
+--- When on, Vim shows a completion menu as you type, similar to using
+--- `i_CTRL-N`, but triggered automatically.  See `ins-autocompletion`.
+---
+--- @type boolean
+vim.o.autocomplete = false
+vim.o.ac = vim.o.autocomplete
+vim.go.autocomplete = vim.o.autocomplete
+vim.go.ac = vim.go.autocomplete
+
 --- Copy indent from current line when starting a new line (typing <CR>
 --- in Insert mode or when using the "o" or "O" command).  If you do not
 --- type anything on the new line except <BS> or CTRL-D and then type
@@ -1047,9 +1056,9 @@ vim.bo.cms = vim.bo.commentstring
 --- 	If the Dict returned by the {func} includes {"refresh": "always"},
 --- 	the function will be invoked again whenever the leading text
 --- 	changes.
---- 	If generating matches is potentially slow, `complete_check()`
---- 	should be used to avoid blocking and preserve editor
---- 	responsiveness.
+--- 	If generating matches is potentially slow, call
+--- 	`complete_check()` periodically to keep Vim responsive. This
+--- 	is especially important for `ins-autocompletion`.
 --- F	equivalent to using "F{func}", where the function is taken from
 --- 	the 'completefunc' option.
 --- o	equivalent to using "F{func}", where the function is taken from
@@ -1188,6 +1197,9 @@ vim.go.cia = vim.go.completeitemalign
 ---    preview  Show extra information about the currently selected
 --- 	    completion in the preview window.  Only works in
 --- 	    combination with "menu" or "menuone".
+---
+--- Only "fuzzy", "popup" and "preview" have an effect when 'autocomplete'
+--- is enabled.
 ---
 --- This option does not apply to `cmdline-completion`. See 'wildoptions'
 --- for that.

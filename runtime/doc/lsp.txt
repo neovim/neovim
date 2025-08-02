@@ -2059,8 +2059,7 @@ you want to trigger on EVERY keypress you can either:
   `LspAttach`, before you call
   `vim.lsp.completion.enable(… {autotrigger=true})`. See the |lsp-attach|
   example.
-• Call `vim.lsp.completion.get()` from the handler described at
-  |compl-autocomplete|.
+• Call `vim.lsp.completion.get()` from an |InsertCharPre| autocommand.
 
 
                                                  *vim.lsp.completion.enable()*

@@ -229,6 +229,19 @@ local options = {
       varname = 'p_acd',
     },
     {
+      abbreviation = 'ac',
+      defaults = false,
+      desc = [=[
+        When on, Vim shows a completion menu as you type, similar to using
+        |i_CTRL-N|, but triggered automatically.  See |ins-autocompletion|.
+      ]=],
+      full_name = 'autocomplete',
+      scope = { 'global' },
+      short_desc = N_('automatic completion in insert mode'),
+      type = 'boolean',
+      varname = 'p_ac',
+    },
+    {
       abbreviation = 'ai',
       defaults = true,
       desc = [=[
@@ -1465,9 +1478,9 @@ local options = {
         	If the Dict returned by the {func} includes {"refresh": "always"},
         	the function will be invoked again whenever the leading text
         	changes.
-        	If generating matches is potentially slow, |complete_check()|
-        	should be used to avoid blocking and preserve editor
-        	responsiveness.
+        	If generating matches is potentially slow, call
+        	|complete_check()| periodically to keep Vim responsive. This
+        	is especially important for |ins-autocompletion|.
         F	equivalent to using "F{func}", where the function is taken from
         	the 'completefunc' option.
         o	equivalent to using "F{func}", where the function is taken from
@@ -1652,6 +1665,9 @@ local options = {
            preview  Show extra information about the currently selected
         	    completion in the preview window.  Only works in
         	    combination with "menu" or "menuone".
+
+        Only "fuzzy", "popup" and "preview" have an effect when 'autocomplete'
+        is enabled.
 
         This option does not apply to |cmdline-completion|. See 'wildoptions'
         for that.
