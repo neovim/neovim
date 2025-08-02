@@ -5,6 +5,8 @@ local priority = 100
 local hi_range = function(lnum, start_col, end_col, hl, pr)
   --- @type vim.api.keyset.set_extmark
   local opts = { end_row = lnum - 1, end_col = end_col, hl_group = hl, priority = pr or priority }
+  -- Set expanding gravity for easier testing. Should not make big difference.
+  opts.right_gravity, opts.end_right_gravity = false, true
   vim.api.nvim_buf_set_extmark(0, ns, lnum - 1, start_col, opts)
 end
 
@@ -30,8 +32,10 @@ for i, l in ipairs(lines) do
     hi_range(i, cur_info:len(), end_col, 'DiagnosticInfo')
 
     -- Plugin state after update
-    local col = l:match('() %b()$') or l:len()
-    hi_range(i, col, l:len(), 'DiagnosticHint')
+    local col = l:match('() %b()$')
+    if col then
+      hi_range(i, col, l:len(), 'DiagnosticHint')
+    end
   elseif l:match('^> ') then
     -- Added change with possibly "breaking message"
     hi_range(i, 0, l:len(), 'Added')
