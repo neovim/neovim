@@ -221,6 +221,9 @@ LSP
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_linkedEditingRange
 • Support for related documents in pull diagnostics:
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
+• Re-implemented support for `textDocument/documentHighlight
+  |lsp-document_highlight|
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentHighlight
 
 LUA
 
