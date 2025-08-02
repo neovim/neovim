@@ -330,6 +330,7 @@ They are also listed below.
 - `'textDocument/formatting'`
 - `'textDocument/hover'`
 - `'textDocument/inlayHint'`
+- `'textDocument/inlineCompletion'`
 - `'textDocument/publishDiagnostics'`
 - `'textDocument/rangeFormatting'`
 - `'textDocument/rename'`
@@ -2177,6 +2178,32 @@ is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
 
     Return: ~
         (`boolean`)
+
+
+==============================================================================
+Lua module: vim.lsp.inline_completion                  *lsp-inline_completion*
+
+get({opts})                                  *vim.lsp.inline_completion.get()*
+    Accepts the currently presented inline completion candidate, or requests a
+    new inline completion.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {bufnr}? (`integer`, default: 0) Buffer handle, or 0 for
+                  current.
+
+jump({opts})                                *vim.lsp.inline_completion.jump()*
+    Switch between available inline completion candidates.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {bufnr}? (`integer`) (default: current buffer)
+                • {count}? (`integer`, default: v:count1) The number of
+                  candidates to move by. A positive integer moves forward by
+                  {count} candidates, while a negative integer moves backward
+                  by {count} candidates.
+                • {wrap}? (`boolean`, default: `true`) Whether to loop around
+                  the file or not. Similar to 'wrapscan'.
 
 
 ==============================================================================
