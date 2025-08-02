@@ -1,6 +1,6 @@
 --- Module for private utility functions
 
---- @alias vim.func.MemoObj { _hash: (fun(...): any), _weak: boolean?, _cache: table<any> }
+--- @alias vim.func.MemoObj { _hash: (fun(...): any), _weak: boolean?, _cache: table<any,any> }
 
 --- @param argc integer?
 --- @return fun(...): any
@@ -26,7 +26,7 @@ local function resolve_hash(hash)
   elseif type(hash) == 'string' then
     local c = hash == 'concat' or hash:match('^concat%-(%d+)')
     if c then
-      hash = concat_hash(tonumber(c))
+      hash = concat_hash(tonumber(c) --[[@as integer?]])
     else
       error('invalid value for hash: ' .. hash)
     end

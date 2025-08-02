@@ -3,7 +3,7 @@ local fn = vim.fn
 
 local M = {}
 
---- @alias vim.filetype.mapfn fun(path:string,bufnr:integer, ...):string?, fun(b:integer)?
+--- @alias vim.filetype.mapfn (fun(path:string,bufnr:integer, ...):string?, fun(b:integer)?)
 --- @alias vim.filetype.mapopts { priority: number }
 --- @alias vim.filetype.maptbl [string|vim.filetype.mapfn, vim.filetype.mapopts]
 --- @alias vim.filetype.mapping.value string|vim.filetype.mapfn|vim.filetype.maptbl
@@ -2534,7 +2534,7 @@ local pattern = {
     ['/app%-defaults/'] = starsetf('xdefaults'),
     ['^Xresources'] = starsetf('xdefaults'),
     -- Increase priority to run before the pattern below
-    ['^XF86Config%-4'] = starsetf(detect.xfree86_v4, -math.huge + 1),
+    ['^XF86Config%-4'] = starsetf(detect.xfree86_v4, -vim._maxint + 1),
     ['^XF86Config'] = starsetf(detect.xfree86_v3),
     ['Xmodmap$'] = 'xmodmap',
     ['xmodmap'] = starsetf('xmodmap'),
@@ -3006,7 +3006,7 @@ function M.match(args)
       local ok, ft, on_detect = pcall(
         require('vim.filetype.detect').match_contents,
         contents,
-        name,
+        name --[[@as string]],
         function(ext)
           return dispatch(extension[ext], name, bufnr)
         end
