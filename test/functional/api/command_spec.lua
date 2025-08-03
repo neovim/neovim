@@ -782,6 +782,13 @@ describe('nvim_create_user_command', function()
     eq(5, #api.nvim_list_tabpages())
     eq(1, fn.tabpagenr())
   end)
+
+  it('"addr" flag allows ranges without explicit "range" flag', function()
+    exec_lua([[
+      vim.api.nvim_create_user_command('Test2', 'echo "hello <line1><line2>"', { addr = 'other' })
+    ]])
+    eq('hello 12', n.exec_capture('1,2Test2'))
+  end)
 end)
 
 describe('nvim_del_user_command', function()
