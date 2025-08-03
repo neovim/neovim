@@ -31,9 +31,7 @@
 #include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "plines.c.generated.h"
-#endif
+#include "plines.c.generated.h"
 
 /// Functions calculating horizontal size of text, when displayed in a window.
 

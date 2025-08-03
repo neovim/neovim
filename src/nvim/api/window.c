@@ -26,9 +26,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/window.c.generated.h"  // IWYU pragma: keep
-#endif
+#include "api/window.c.generated.h"  // IWYU pragma: keep
 
 /// Gets the current buffer in a window
 ///

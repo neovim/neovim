@@ -91,9 +91,7 @@ struct bw_info {
   iconv_t bw_iconv_fd;            // descriptor for iconv() or -1
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "bufwrite.c.generated.h"
-#endif
+#include "bufwrite.c.generated.h"
 
 /// Convert a Unicode character to bytes.
 ///

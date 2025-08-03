@@ -42,9 +42,7 @@ const char *const encode_special_var_names[] = {
   [kSpecialVarNull] = "v:null",
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/encode.c.generated.h"
-#endif
+#include "eval/encode.c.generated.h"
 
 /// Msgpack callback for writing to a Blob
 int encode_blob_write(void *const data, const char *const buf, const size_t len)

@@ -66,9 +66,7 @@ typedef struct {
 
 typedef struct match_struct match_struct;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fuzzy.c.generated.h"
-#endif
+#include "fuzzy.c.generated.h"
 
 /// fuzzy_match()
 ///

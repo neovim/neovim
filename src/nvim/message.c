@@ -89,9 +89,7 @@ enum {
 };
 
 static int confirm_msg_used = false;            // displaying confirm_msg
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "message.c.generated.h"
-#endif
+#include "message.c.generated.h"
 static char *confirm_msg = NULL;            // ":confirm" message
 static char *confirm_buttons;               // ":confirm" buttons sent to cmdline as prompt
 

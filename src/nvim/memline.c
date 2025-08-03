@@ -255,9 +255,7 @@ typedef enum {
   SEA_CHOICE_ABORT = 6,
 } sea_choice_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "memline.c.generated.h"
-#endif
+#include "memline.c.generated.h"
 
 static const char e_ml_get_invalid_lnum_nr[]
   = N_("E315: ml_get: Invalid lnum: %" PRId64);

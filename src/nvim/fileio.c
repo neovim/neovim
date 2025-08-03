@@ -92,9 +92,7 @@
 # define UV_FS_COPYFILE_FICLONE 0
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fileio.c.generated.h"
-#endif
+#include "fileio.c.generated.h"
 
 static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buffer name");
 

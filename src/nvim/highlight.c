@@ -32,9 +32,7 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "highlight.c.generated.h"
-#endif
+#include "highlight.c.generated.h"
 
 static bool hlstate_active = false;
 

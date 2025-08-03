@@ -106,9 +106,7 @@ EXTERN int *hl_attr_active INIT( = highlight_attr);
 // Enums need a typecast to be used as array index.
 #define HL_ATTR(n)      hl_attr_active[(int)(n)]
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "highlight.h.generated.h"
-#endif
+#include "highlight.h.generated.h"
 
 static inline int win_hl_attr(win_T *wp, int hlf)
 {

@@ -67,9 +67,7 @@
 
 #define MEMFILE_PAGE_SIZE 4096       /// default page size
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "memfile.c.generated.h"
-#endif
+#include "memfile.c.generated.h"
 
 static const char e_block_was_not_locked[] = N_("E293: Block was not locked");
 

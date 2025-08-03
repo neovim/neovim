@@ -27,9 +27,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/autocmd.c.generated.h"
-#endif
+#include "api/autocmd.c.generated.h"
 
 #define AUCMD_MAX_PATTERNS 256
 

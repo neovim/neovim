@@ -15,19 +15,17 @@
 
 #define ERROR_SET(e) ((e)->type != kErrorTypeNone)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# define ArrayOf(...) Array
-# define DictOf(...) Dict
-# define DictAs(name) Dict
-# define Dict(name) KeyDict_##name
-# define Enum(...) String
-# define DictHash(name) KeyDict_##name##_get_field
-# define DictKey(name)
-# define LuaRefOf(...) LuaRef
-# define Union(...) Object
-# define Tuple(...) Array
-# include "api/private/defs.h.inline.generated.h"
-#endif
+#define ArrayOf(...) Array
+#define DictOf(...) Dict
+#define DictAs(name) Dict
+#define Dict(name) KeyDict_##name
+#define Enum(...) String
+#define DictHash(name) KeyDict_##name##_get_field
+#define DictKey(name)
+#define LuaRefOf(...) LuaRef
+#define Union(...) Object
+#define Tuple(...) Array
+#include "api/private/defs.h.inline.generated.h"
 
 // Basic types
 typedef enum {

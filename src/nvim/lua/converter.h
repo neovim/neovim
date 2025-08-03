@@ -19,6 +19,4 @@ enum {
   kNluaPushFreeRefs = 0x02,  ///< Free luarefs to elide an api_luarefs_free_*() later
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/converter.h.generated.h"
-#endif
+#include "lua/converter.h.generated.h"

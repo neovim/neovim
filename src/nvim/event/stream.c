@@ -14,9 +14,7 @@
 # include "nvim/os/os_win_console.h"
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/stream.c.generated.h"
-#endif
+#include "event/stream.c.generated.h"
 
 // For compatibility with libuv < 1.19.0 (tested on 1.18.0)
 #if UV_VERSION_MINOR < 19

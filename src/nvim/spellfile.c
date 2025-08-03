@@ -529,9 +529,7 @@ typedef struct {
   int si_newcompID;             // current value for compound ID
 } spellinfo_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spellfile.c.generated.h"
-#endif
+#include "spellfile.c.generated.h"
 
 /// Read n bytes from fd to buf, returning on errors
 ///

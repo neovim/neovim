@@ -6,9 +6,7 @@
 #include "nvim/vterm/vterm.h"
 #include "nvim/vterm/vterm_internal_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "vterm/keyboard.c.generated.h"
-#endif
+#include "vterm/keyboard.c.generated.h"
 
 static VTermKeyEncodingFlags vterm_state_get_key_encoding_flags(const VTermState *state)
 {

@@ -36,9 +36,7 @@ typedef struct {
   int cob_save_VIsual_active;
 } cob_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/buffer.c.generated.h"
-#endif
+#include "eval/buffer.c.generated.h"
 
 /// Find a buffer by number or exact name.
 buf_T *find_buffer(typval_T *avar)

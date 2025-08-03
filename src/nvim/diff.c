@@ -142,9 +142,7 @@ typedef enum {
   DIFF_NONE,
 } diffstyle_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "diff.c.generated.h"
-#endif
+#include "diff.c.generated.h"
 
 #define FOR_ALL_DIFFBLOCKS_IN_TAB(tp, dp) \
   for ((dp) = (tp)->tp_first_diff; (dp) != NULL; (dp) = (dp)->df_next)

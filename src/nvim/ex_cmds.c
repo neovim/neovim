@@ -133,9 +133,7 @@ typedef struct {
   linenr_T lines_needed;  // lines needed in the preview window
 } PreviewLines;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_cmds.c.generated.h"
-#endif
+#include "ex_cmds.c.generated.h"
 
 static const char e_non_numeric_argument_to_z[]
   = N_("E144: Non-numeric argument to :z");

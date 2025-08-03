@@ -20,6 +20,4 @@ typedef struct {
   int score;
 } fuzmatch_str_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fuzzy.h.generated.h"
-#endif
+#include "fuzzy.h.generated.h"

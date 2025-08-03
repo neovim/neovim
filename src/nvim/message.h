@@ -58,9 +58,7 @@ EXTERN int msg_grid_scroll_discount INIT( = 0);
 
 EXTERN int msg_listdo_overwrite INIT( = 0);
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "message.h.generated.h"
-#endif
+#include "message.h.generated.h"
 
 // Prefer using semsg(), because perror() may send the output to the wrong
 // destination and mess up the screen.

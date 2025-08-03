@@ -28,9 +28,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "decoration.c.generated.h"
-#endif
+#include "decoration.c.generated.h"
 
 uint32_t decor_freelist = UINT32_MAX;
 

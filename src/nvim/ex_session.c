@@ -49,9 +49,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_session.c.generated.h"
-#endif
+#include "ex_session.c.generated.h"
 
 /// Whether ":lcd" or ":tcd" was produced for a session.
 static int did_lcd;

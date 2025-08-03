@@ -37,9 +37,7 @@ typedef struct {
   bool iwhite;
 } hunkpriv_t;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/xdiff.c.generated.h"
-#endif
+#include "lua/xdiff.c.generated.h"
 
 static void lua_pushhunk(lua_State *lstate, long start_a, long count_a, long start_b, long count_b)
 {

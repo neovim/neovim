@@ -11,9 +11,7 @@
 #include "nvim/vterm/vterm_defs.h"
 #include "nvim/vterm/vterm_internal_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "vterm/screen.c.generated.h"
-#endif
+#include "vterm/screen.c.generated.h"
 
 #define UNICODE_SPACE 0x20
 #define UNICODE_LINEFEED 0x0a

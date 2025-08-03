@@ -8,9 +8,7 @@
 #include "nvim/os/time_defs.h"
 #include "nvim/regexp_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_cmds_enum.generated.h"
-#endif
+#include "ex_cmds_enum.generated.h"
 
 // When adding an Ex command:
 // 1. Add an entry to the table in src/nvim/ex_cmds.lua.  Keep it sorted on the

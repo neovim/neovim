@@ -14,10 +14,8 @@
 
 #define GRAPHEME_STATE_INIT 0
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mbyte.h.generated.h"
-# include "mbyte.h.inline.generated.h"
-#endif
+#include "mbyte.h.generated.h"
+#include "mbyte.h.inline.generated.h"
 
 enum {
   kInvalidByteCells = 4,

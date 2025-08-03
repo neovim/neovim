@@ -24,6 +24,4 @@ enum {
   FNAME_UNESC = 32,  ///< remove backslashes used for escaping
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "file_search.h.generated.h"
-#endif
+#include "file_search.h.generated.h"

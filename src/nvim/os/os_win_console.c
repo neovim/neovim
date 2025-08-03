@@ -7,9 +7,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_win_console.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/os_win_console.c.generated.h"
-#endif
 
 static char origTitle[256] = { 0 };
 static HWND hWnd = NULL;

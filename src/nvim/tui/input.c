@@ -121,9 +121,7 @@ static const struct kitty_key_map_entry {
 
 static PMap(int) kitty_key_map = MAP_INIT;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/input.c.generated.h"
-#endif
+#include "tui/input.c.generated.h"
 
 void tinput_init(TermInput *input, Loop *loop)
 {

@@ -13,9 +13,7 @@
 #include "nvim/path.h"
 #include "nvim/strings.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/stdpaths.c.generated.h"
-#endif
+#include "os/stdpaths.c.generated.h"
 
 /// Names of the environment variables, mapped to XDGVarType values
 static const char *xdg_env_vars[] = {

@@ -37,9 +37,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "match.c.generated.h"
-#endif
+#include "match.c.generated.h"
 
 static const char *e_invalwindow = N_("E957: Invalid window number");
 

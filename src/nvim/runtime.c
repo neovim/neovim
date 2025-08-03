@@ -99,9 +99,7 @@ typedef struct {
 typedef kvec_t(SearchPathItem) RuntimeSearchPath;
 typedef kvec_t(char *) CharVec;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "runtime.c.generated.h"
-#endif
+#include "runtime.c.generated.h"
 
 garray_T exestack = { 0, 0, sizeof(estack_T), 50, NULL };
 garray_T script_items = { 0, 0, sizeof(scriptitem_T *), 20, NULL };

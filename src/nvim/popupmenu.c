@@ -81,9 +81,7 @@ static bool pum_is_drawn = false;
 static bool pum_external = false;
 static bool pum_invalid = false;  // the screen was just cleared
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "popupmenu.c.generated.h"
-#endif
+#include "popupmenu.c.generated.h"
 #define PUM_DEF_HEIGHT 10
 
 static void pum_compute_size(void)

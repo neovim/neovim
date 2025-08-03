@@ -33,9 +33,7 @@
 #include "nvim/runtime.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "profile.c.generated.h"
-#endif
+#include "profile.c.generated.h"
 
 /// Struct used in sn_prl_ga for every line of a script.
 typedef struct {

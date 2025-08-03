@@ -44,6 +44,4 @@ typedef struct {
   size_t key_buffer_len;
 } TermInput;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/input.h.generated.h"
-#endif
+#include "tui/input.h.generated.h"
