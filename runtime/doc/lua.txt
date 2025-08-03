@@ -1755,13 +1755,66 @@ vim.islist({t})                                                 *vim.islist()*
     See also: ~
       • |vim.isarray()|
 
+vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
+    Search for a position in a sorted list {t} where {val} can be inserted
+    while keeping the list sorted.
+
+    Use {bound} to determine whether to return the first or the last position,
+    defaults to "lower", i.e., the first position.
+
+    NOTE: Behavior is undefined on unsorted lists!
+
+    Example: >lua
+
+        local t = { 1, 2, 2, 3, 3, 3 }
+        local first = vim.list.bisect(t, 3)
+        -- `first` is `val`'s first index if found,
+        -- useful for existence checks.
+        print(t[first]) -- 3
+
+        local last = vim.list.bisect(t, 3, { bound = 'upper' })
+        -- Note that `last` is 7, not 6,
+        -- this is suitable for insertion.
+
+        table.insert(t, last, 4)
+        -- t is now { 1, 2, 2, 3, 3, 3, 4 }
+
+        -- You can use lower bound and upper bound together
+        -- to obtain the range of occurrences of `val`.
+
+        -- 3 is in [first, last)
+        for i = first, last - 1 do
+          print(t[i]) -- { 3, 3, 3 }
+        end
+<
+
+    Parameters: ~
+      • {t}     (`any[]`) A comparable list.
+      • {val}   (`any`) The value to search.
+      • {opts}  (`table?`) A table with the following fields:
+                • {lo}? (`integer`, default: `1`) Start index of the list.
+                • {hi}? (`integer`, default: `#t + 1`) End index of the list,
+                  exclusive.
+                • {key}? (`fun(val: any): any`) Optional, compare the return
+                  value instead of the {val} itself if provided.
+                • {bound}? (`'lower'|'upper'`, default: `'lower'`) Specifies
+                  the search variant.
+                  • "lower": returns the first position where inserting {val}
+                    keeps the list sorted.
+                  • "upper": returns the last position where inserting {val}
+                    keeps the list sorted..
+
+    Return: ~
+        (`integer`) index serves as either the lower bound or the upper bound
+        position.
+
 vim.list.unique({t}, {key})                                *vim.list.unique()*
     Removes duplicate values from a list-like table in-place.
 
     Only the first occurrence of each value is kept. The operation is
     performed in-place and the input table is modified.
 
-    Accepts an optional `hash` argument that if provided is called for each
+    Accepts an optional `key` argument that if provided is called for each
     value in the list to compute a hash key for uniqueness comparison. This is
     useful for deduplicating table values or complex objects.
 
@@ -1778,7 +1831,7 @@ vim.list.unique({t}, {key})                                *vim.list.unique()*
 
     Parameters: ~
       • {t}    (`any[]`)
-      • {key}  (`fun(x: T): any??`) Optional hash function to determine
+      • {key}  (`fun(x: T): any?`) Optional hash function to determine
                uniqueness of values
 
     Return: ~

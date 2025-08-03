@@ -1260,28 +1260,6 @@ describe('lua stdlib', function()
     eq({ 2 }, exec_lua [[ return vim.list_extend({}, {2;a=1}, -1, 2) ]])
   end)
 
-  it('vim.list.unique', function()
-    eq({ 1, 2, 3, 4, 5 }, vim.list.unique({ 1, 2, 2, 3, 4, 4, 5 }))
-    eq({ 1, 2, 3, 4, 5 }, vim.list.unique({ 1, 2, 3, 4, 4, 5, 1, 2, 3, 2, 1, 2, 3, 4, 5 }))
-    eq({ 1, 2, 3, 4, 5, field = 1 }, vim.list.unique({ 1, 2, 2, 3, 4, 4, 5, field = 1 }))
-
-    -- Not properly defined, but test anyway
-    -- luajit evaluates #t as 7, whereas Lua 5.1 evaluates it as 12
-    local r = vim.list.unique({ 1, 2, 2, 3, 4, 4, 5, nil, 6, 6, 7, 7 })
-    if jit then
-      eq({ 1, 2, 3, 4, 5, nil, nil, nil, 6, 6, 7, 7 }, r)
-    else
-      eq({ 1, 2, 3, 4, 5, nil, 6, 7 }, r)
-    end
-
-    eq(
-      { { 1 }, { 2 }, { 3 } },
-      vim.list.unique({ { 1 }, { 1 }, { 2 }, { 2 }, { 3 }, { 3 } }, function(x)
-        return x[1]
-      end)
-    )
-  end)
-
   it('vim.tbl_add_reverse_lookup', function()
     eq(
       true,
