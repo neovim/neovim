@@ -105,17 +105,20 @@ local config = {
   api = {
     filename = 'api.txt',
     section_order = {
+      -- Sections at the top, in a specific order:
       'vim.c',
       'vimscript.c',
-      'command.c',
-      'options.c',
-      'buffer.c',
-      'extmark.c',
-      'window.c',
-      'win_config.c',
-      'tabpage.c',
+
+      -- Sections in alphanumeric order:
       'autocmd.c',
+      'buffer.c',
+      'command.c',
+      'extmark.c',
+      'options.c',
+      'tabpage.c',
       'ui.c',
+      'win_config.c',
+      'window.c',
     },
     fn_name_pat = 'nvim_.*',
     files = { 'src/nvim/api' },
@@ -132,66 +135,71 @@ local config = {
   lua = {
     filename = 'lua.txt',
     section_order = {
-      'hl.lua',
-      'mpack.lua',
-      'json.lua',
-      'base64.lua',
-      'spell.lua',
+      -- Sections at the top, in a specific order:
       'builtin.lua',
       '_options.lua',
       '_editor.lua',
-      '_system.lua',
       '_inspector.lua',
       'shared.lua',
-      'loader.lua',
-      'uri.lua',
-      'ui.lua',
-      '_extui.lua',
+
+      -- Sections in alphanumeric order:
+      'base64.lua',
       'filetype.lua',
-      'keymap.lua',
       'fs.lua',
       'glob.lua',
+      'hl.lua',
+      'iter.lua',
+      'json.lua',
+      'keymap.lua',
+      'loader.lua',
       'lpeg.lua',
+      'mpack.lua',
+      'net.lua',
       're.lua',
       'regex.lua',
       'secure.lua',
-      'version.lua',
-      'iter.lua',
       'snippet.lua',
+      'spell.lua',
+      '_system.lua',
       'text.lua',
+      'ui.lua',
+      'uri.lua',
+      'version.lua',
+
+      -- Sections at the end, in a specific order:
       'tohtml.lua',
-      'net.lua',
+      '_extui.lua',
     },
     files = {
-      'runtime/lua/vim/iter.lua',
+      'runtime/lua/tohtml.lua',
       'runtime/lua/vim/_editor.lua',
-      'runtime/lua/vim/_options.lua',
-      'runtime/lua/vim/shared.lua',
-      'runtime/lua/vim/loader.lua',
-      'runtime/lua/vim/uri.lua',
-      'runtime/lua/vim/ui.lua',
       'runtime/lua/vim/_extui.lua',
+      'runtime/lua/vim/_inspector.lua',
+      'runtime/lua/vim/_meta/base64.lua',
+      'runtime/lua/vim/_meta/builtin.lua',
+      'runtime/lua/vim/_meta/json.lua',
+      'runtime/lua/vim/_meta/lpeg.lua',
+      'runtime/lua/vim/_meta/mpack.lua',
+      'runtime/lua/vim/_meta/re.lua',
+      'runtime/lua/vim/_meta/regex.lua',
+      'runtime/lua/vim/_meta/spell.lua',
+      'runtime/lua/vim/_options.lua',
       'runtime/lua/vim/_system.lua',
       'runtime/lua/vim/filetype.lua',
-      'runtime/lua/vim/keymap.lua',
       'runtime/lua/vim/fs.lua',
+      'runtime/lua/vim/glob.lua',
       'runtime/lua/vim/hl.lua',
+      'runtime/lua/vim/iter.lua',
+      'runtime/lua/vim/keymap.lua',
+      'runtime/lua/vim/loader.lua',
+      'runtime/lua/vim/net.lua',
       'runtime/lua/vim/secure.lua',
-      'runtime/lua/vim/version.lua',
-      'runtime/lua/vim/_inspector.lua',
+      'runtime/lua/vim/shared.lua',
       'runtime/lua/vim/snippet.lua',
       'runtime/lua/vim/text.lua',
-      'runtime/lua/vim/glob.lua',
-      'runtime/lua/vim/_meta/builtin.lua',
-      'runtime/lua/vim/_meta/mpack.lua',
-      'runtime/lua/vim/_meta/json.lua',
-      'runtime/lua/vim/_meta/base64.lua',
-      'runtime/lua/vim/_meta/regex.lua',
-      'runtime/lua/vim/_meta/lpeg.lua',
-      'runtime/lua/vim/_meta/re.lua',
-      'runtime/lua/vim/_meta/spell.lua',
-      'runtime/lua/tohtml.lua',
-      'runtime/lua/vim/net.lua',
+      'runtime/lua/vim/ui.lua',
+      'runtime/lua/vim/uri.lua',
+      'runtime/lua/vim/version.lua',
     },
     fn_xform = function(fun)
       if contains(fun.module, { 'vim.uri', 'vim.shared', 'vim._editor' }) then
@@ -221,20 +229,6 @@ local config = {
         return 'LUA-VIMSCRIPT BRIDGE'
       elseif name == 'builtin' then
         return 'VIM'
-      end
-      if
-        contains(name, {
-          'hl',
-          'mpack',
-          'json',
-          'base64',
-          'spell',
-          'regex',
-          'lpeg',
-          're',
-        })
-      then
-        return 'VIM.' .. name:upper()
       end
       if name == 'tohtml' then
         return 'Lua module: tohtml'
@@ -272,22 +266,27 @@ local config = {
   lsp = {
     filename = 'lsp.txt',
     section_order = {
+      -- Sections at the top, in a specific order:
       'lsp.lua',
-      'client.lua',
+
+      -- Sections in alphanumeric order:
       'buf.lua',
-      'diagnostic.lua',
+      'client.lua',
       'codelens.lua',
       'completion.lua',
-      'folding_range.lua',
-      'inlay_hint.lua',
-      'tagfunc.lua',
-      'semantic_tokens.lua',
+      'diagnostic.lua',
       'document_color.lua',
-      'linked_editing_range.lua',
+      'folding_range.lua',
       'handlers.lua',
-      'util.lua',
+      'inlay_hint.lua',
+      'linked_editing_range.lua',
       'log.lua',
       'rpc.lua',
+      'semantic_tokens.lua',
+      'tagfunc.lua',
+
+      -- Sections at the end, in a specific order:
+      'util.lua',
       'protocol.lua',
     },
     files = {
@@ -329,15 +328,18 @@ local config = {
   treesitter = {
     filename = 'treesitter.txt',
     section_order = {
+      -- Sections at the top, in a specific order:
       'tstree.lua',
       'tsnode.lua',
       'treesitter.lua',
+
+      -- Sections in alphanumeric order:
+      'dev.lua',
+      'highlighter.lua',
       'language.lua',
+      'languagetree.lua',
       'query.lua',
       'tsquery.lua',
-      'highlighter.lua',
-      'languagetree.lua',
-      'dev.lua',
     },
     append_only = { 'tsquery.lua' },
     files = {

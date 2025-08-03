@@ -593,189 +593,6 @@ A subset of the `vim.*` stdlib is available in threads, including:
 
 
 ==============================================================================
-VIM.HL                                                                *vim.hl*
-
-vim.hl.on_yank({opts})                                      *vim.hl.on_yank()*
-    Highlight the yanked text during a |TextYankPost| event.
-
-    Add the following to your `init.vim`: >vim
-        autocmd TextYankPost * silent! lua vim.hl.on_yank {higroup='Visual', timeout=300}
-<
-
-    Parameters: ~
-      • {opts}  (`table?`) Optional parameters
-                • higroup highlight group for yanked region (default
-                  "IncSearch")
-                • timeout time in ms before highlight is cleared (default 150)
-                • on_macro highlight when executing macro (default false)
-                • on_visual highlight when yanking visual selection (default
-                  true)
-                • event event structure (default vim.v.event)
-                • priority integer priority (default
-                  |vim.hl.priorities|`.user`)
-
-vim.hl.priorities                                          *vim.hl.priorities*
-    Table with default priorities used for highlighting:
-    • `syntax`: `50`, used for standard syntax highlighting
-    • `treesitter`: `100`, used for treesitter-based highlighting
-    • `semantic_tokens`: `125`, used for LSP semantic token highlighting
-    • `diagnostics`: `150`, used for code analysis such as diagnostics
-    • `user`: `200`, used for user-triggered highlights such as LSP document
-      symbols or `on_yank` autocommands
-
-                                                              *vim.hl.range()*
-vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
-    Apply highlight group to range of text.
-
-    Parameters: ~
-      • {bufnr}    (`integer`) Buffer number to apply highlighting to
-      • {ns}       (`integer`) Namespace to add highlight to
-      • {higroup}  (`string`) Highlight group to use for highlighting
-      • {start}    (`[integer,integer]|string`) Start of region as a (line,
-                   column) tuple or string accepted by |getpos()|
-      • {finish}   (`[integer,integer]|string`) End of region as a (line,
-                   column) tuple or string accepted by |getpos()|
-      • {opts}     (`table?`) A table with the following fields:
-                   • {regtype}? (`string`, default: `'v'` i.e. charwise) Type
-                     of range. See |getregtype()|
-                   • {inclusive}? (`boolean`, default: `false`) Indicates
-                     whether the range is end-inclusive
-                   • {priority}? (`integer`, default:
-                     `vim.hl.priorities.user`) Highlight priority
-                   • {timeout}? (`integer`, default: -1 no timeout) Time in ms
-                     before highlight is cleared
-
-    Return (multiple): ~
-        (`uv.uv_timer_t?`) range_timer A timer which manages how much time the
-        highlight has left
-        (`fun()?`) range_clear A function which allows clearing the highlight
-        manually. nil is returned if timeout is not specified
-
-
-==============================================================================
-VIM.MPACK                                                          *vim.mpack*
-
-This module provides encoding and decoding of Lua objects to and from
-msgpack-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
-
-
-vim.mpack.decode({str})                                   *vim.mpack.decode()*
-    Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
-
-    Parameters: ~
-      • {str}  (`string`)
-
-    Return: ~
-        (`any`)
-
-vim.mpack.encode({obj})                                   *vim.mpack.encode()*
-    Encodes (or "packs") Lua object {obj} as msgpack in a Lua string.
-
-    Parameters: ~
-      • {obj}  (`any`)
-
-    Return: ~
-        (`string`)
-
-
-==============================================================================
-VIM.JSON                                                            *vim.json*
-
-This module provides encoding and decoding of Lua objects to and from
-JSON-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
-
-
-vim.json.decode({str}, {opts})                             *vim.json.decode()*
-    Decodes (or "unpacks") the JSON-encoded {str} to a Lua object.
-    • Decodes JSON "null" as |vim.NIL| (controllable by {opts}, see below).
-    • Decodes empty object as |vim.empty_dict()|.
-    • Decodes empty array as `{}` (empty Lua table).
-
-    Example: >lua
-        vim.print(vim.json.decode('{"bar":[],"foo":{},"zub":null}'))
-        -- { bar = {}, foo = vim.empty_dict(), zub = vim.NIL }
-<
-
-    Parameters: ~
-      • {str}   (`string`) Stringified JSON data.
-      • {opts}  (`table<string,any>?`) Options table with keys:
-                • luanil: (table) Table with keys:
-                  • object: (boolean) When true, converts `null` in JSON
-                    objects to Lua `nil` instead of |vim.NIL|.
-                  • array: (boolean) When true, converts `null` in JSON arrays
-                    to Lua `nil` instead of |vim.NIL|.
-
-    Return: ~
-        (`any`)
-
-vim.json.encode({obj}, {opts})                             *vim.json.encode()*
-    Encodes (or "packs") Lua object {obj} as JSON in a Lua string.
-
-    Parameters: ~
-      • {obj}   (`any`)
-      • {opts}  (`table<string,any>?`) Options table with keys:
-                • escape_slash: (boolean) (default false) Escape slash
-                  characters "/" in string values.
-
-    Return: ~
-        (`string`)
-
-
-==============================================================================
-VIM.BASE64                                                        *vim.base64*
-
-vim.base64.decode({str})                                 *vim.base64.decode()*
-    Decode a Base64 encoded string.
-
-    Parameters: ~
-      • {str}  (`string`) Base64 encoded string
-
-    Return: ~
-        (`string`) Decoded string
-
-vim.base64.encode({str})                                 *vim.base64.encode()*
-    Encode {str} using Base64.
-
-    Parameters: ~
-      • {str}  (`string`) String to encode
-
-    Return: ~
-        (`string`) Encoded string
-
-
-==============================================================================
-VIM.SPELL                                                          *vim.spell*
-
-vim.spell.check({str})                                     *vim.spell.check()*
-    Check {str} for spelling errors. Similar to the Vimscript function
-    |spellbadword()|.
-
-    Note: The behaviour of this function is dependent on: 'spelllang',
-    'spellfile', 'spellcapcheck' and 'spelloptions' which can all be local to
-    the buffer. Consider calling this with |nvim_buf_call()|.
-
-    Example: >lua
-        vim.spell.check("the quik brown fox")
-        -- =>
-        -- {
-        --     {'quik', 'bad', 5}
-        -- }
-<
-
-    Parameters: ~
-      • {str}  (`string`)
-
-    Return: ~
-        (`[string, 'bad'|'rare'|'local'|'caps', integer][]`) List of tuples
-        with three items:
-        • The badly spelled word.
-        • The type of the spelling error: "bad" spelling mistake "rare" rare
-          word "local" word only valid in another region "caps" word should
-          start with Capital
-        • The position in {str} where the word begins.
-
-
-==============================================================================
 VIM                                                              *vim.builtin*
 
 
@@ -1693,169 +1510,6 @@ vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})
 
 
 ==============================================================================
-Lua module: vim.system                                        *lua-vim-system*
-
-*vim.SystemCompleted*
-
-    Fields: ~
-      • {code}     (`integer`)
-      • {signal}   (`integer`)
-      • {stdout}?  (`string`) `nil` if stdout is disabled or has a custom
-                   handler.
-      • {stderr}?  (`string`) `nil` if stderr is disabled or has a custom
-                   handler.
-
-*vim.SystemObj*
-
-    Fields: ~
-      • {cmd}         (`string[]`) Command name and args
-      • {pid}         (`integer`) Process ID
-      • {kill}        (`fun(self: vim.SystemObj, signal: integer|string)`) See
-                      |SystemObj:kill()|.
-      • {wait}        (`fun(self: vim.SystemObj, timeout: integer?): vim.SystemCompleted`)
-                      See |SystemObj:wait()|.
-      • {write}       (`fun(self: vim.SystemObj, data: string[]|string?)`) See
-                      |SystemObj:write()|.
-      • {is_closing}  (`fun(self: vim.SystemObj): boolean`) See
-                      |SystemObj:is_closing()|.
-
-
-SystemObj:is_closing()                                *SystemObj:is_closing()*
-    Checks if the process handle is closing or already closed.
-
-    This method returns `true` if the underlying process handle is either
-    `nil` or is in the process of closing. It is useful for determining
-    whether it is safe to perform operations on the process handle.
-
-    Return: ~
-        (`boolean`)
-
-SystemObj:kill({signal})                                    *SystemObj:kill()*
-    Sends a signal to the process.
-
-    The signal can be specified as an integer or as a string.
-
-    Example: >lua
-        local obj = vim.system({'sleep', '10'})
-        obj:kill('TERM') -- sends SIGTERM to the process
-<
-
-    Parameters: ~
-      • {signal}  (`integer|string`) Signal to send to the process.
-
-SystemObj:wait({timeout})                                   *SystemObj:wait()*
-    Waits for the process to complete or until the specified timeout elapses.
-
-    This method blocks execution until the associated process has exited or
-    the optional `timeout` (in milliseconds) has been reached. If the process
-    does not exit before the timeout, it is forcefully terminated with SIGKILL
-    (signal 9), and the exit code is set to 124.
-
-    If no `timeout` is provided, the method will wait indefinitely (or use the
-    timeout specified in the options when the process was started).
-
-    Example: >lua
-        local obj = vim.system({'echo', 'hello'}, { text = true })
-        local result = obj:wait(1000) -- waits up to 1000ms
-        print(result.code, result.signal, result.stdout, result.stderr)
-<
-
-    Parameters: ~
-      • {timeout}  (`integer?`)
-
-    Return: ~
-        (`vim.SystemCompleted`) See |vim.SystemCompleted|.
-
-SystemObj:write({data})                                    *SystemObj:write()*
-    Writes data to the stdin of the process or closes stdin.
-
-    If `data` is a list of strings, each string is written followed by a
-    newline.
-
-    If `data` is a string, it is written as-is.
-
-    If `data` is `nil`, the write side of the stream is shut down and the pipe
-    is closed.
-
-    Example: >lua
-        local obj = vim.system({'cat'}, { stdin = true })
-        obj:write({'hello', 'world'}) -- writes 'hello\nworld\n' to stdin
-        obj:write(nil) -- closes stdin
-<
-
-    Parameters: ~
-      • {data}  (`string[]|string?`)
-
-vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
-    Runs a system command or throws an error if {cmd} cannot be run.
-
-    The command runs directly (not in 'shell') so shell builtins such as
-    "echo" in cmd.exe, cmdlets in powershell, or "help" in bash, will not work
-    unless you actually invoke a shell: `vim.system({'bash', '-c', 'help'})`.
-
-    Examples: >lua
-        local on_exit = function(obj)
-          print(obj.code)
-          print(obj.signal)
-          print(obj.stdout)
-          print(obj.stderr)
-        end
-
-        -- Runs asynchronously:
-        vim.system({'echo', 'hello'}, { text = true }, on_exit)
-
-        -- Runs synchronously:
-        local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
-        -- { code = 0, signal = 0, stdout = 'hello\n', stderr = '' }
-<
-
-    See |uv.spawn()| for more details. Note: unlike |uv.spawn()|, vim.system
-    throws an error if {cmd} cannot be run.
-
-    Parameters: ~
-      • {cmd}      (`string[]`) Command to execute
-      • {opts}     (`table?`) A table with the following fields:
-                   • {cwd}? (`string`) Set the current working directory for
-                     the sub-process.
-                   • {env}? (`table<string,string|number>`) Set environment
-                     variables for the new process. Inherits the current
-                     environment with `NVIM` set to |v:servername|.
-                   • {clear_env}? (`boolean`) `env` defines the job
-                     environment exactly, instead of merging current
-                     environment. Note: if `env` is `nil`, the current
-                     environment is used but without `NVIM` set.
-                   • {stdin}? (`string|string[]|true`) If `true`, then a pipe
-                     to stdin is opened and can be written to via the
-                     `write()` method to SystemObj. If `string` or `string[]`
-                     then will be written to stdin and closed.
-                   • {stdout}? (`fun(err:string?, data: string?)|boolean`,
-                     default: `true`) Handle output from stdout.
-                   • {stderr}? (`fun(err:string?, data: string?)|boolean`,
-                     default: `true`) Handle output from stderr.
-                   • {text}? (`boolean`) Handle stdout and stderr as text.
-                     Normalizes line endings by replacing `\r\n` with `\n`.
-                   • {timeout}? (`integer`) Run the command with a time limit
-                     in ms. Upon timeout the process is sent the TERM signal
-                     (15) and the exit code is set to 124.
-                   • {detach}? (`boolean`) Spawn the child process in a
-                     detached state - this will make it a process group
-                     leader, and will effectively enable the child to keep
-                     running after the parent exits. Note that the child
-                     process will still keep the parent's event loop alive
-                     unless the parent process calls |uv.unref()| on the
-                     child's process handle.
-      • {on_exit}  (`fun(out: vim.SystemCompleted)?`) Called when subprocess
-                   exits. When provided, the command runs asynchronously. See
-                   return of SystemObj:wait().
-
-    Overloads: ~
-      • `fun(cmd: string, on_exit: fun(out: vim.SystemCompleted)): vim.SystemObj`
-
-    Return: ~
-        (`vim.SystemObj`) See |vim.SystemObj|.
-
-
-==============================================================================
 Lua module: vim.inspector                                      *vim.inspector*
 
 vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
@@ -2517,255 +2171,26 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
 
 
 ==============================================================================
-Lua module: vim.loader                                            *vim.loader*
+Lua module: vim.base64                                            *vim.base64*
 
-vim.loader.enable({enable})                              *vim.loader.enable()*
-    WARNING: This feature is experimental/unstable.
-
-    Enables or disables the experimental Lua module loader:
-
-    Enable (`enable=true`):
-    • overrides |loadfile()|
-    • adds the Lua loader using the byte-compilation cache
-    • adds the libs loader
-    • removes the default Nvim loader
-
-    Disable (`enable=false`):
-    • removes the loaders
-    • adds the default Nvim loader
+vim.base64.decode({str})                                 *vim.base64.decode()*
+    Decode a Base64 encoded string.
 
     Parameters: ~
-      • {enable}  (`boolean?`) true/nil to enable, false to disable
-
-vim.loader.find({modname}, {opts})                         *vim.loader.find()*
-    WARNING: This feature is experimental/unstable.
-
-    Finds Lua modules for the given module name.
-
-    Parameters: ~
-      • {modname}  (`string`) Module name, or `"*"` to find the top-level
-                   modules instead
-      • {opts}     (`table?`) Options for finding a module:
-                   • {rtp}? (`boolean`, default: `true`) Search for modname in
-                     the runtime path.
-                   • {paths}? (`string[]`, default: `{}`) Extra paths to
-                     search for modname
-                   • {patterns}? (`string[]`, default:
-                     `{"/init.lua", ".lua"}`) List of patterns to use when
-                     searching for modules. A pattern is a string added to the
-                     basename of the Lua module being searched.
-                   • {all}? (`boolean`, default: `false`) Search for all
-                     matches.
+      • {str}  (`string`) Base64 encoded string
 
     Return: ~
-        (`table[]`) A list of objects with the following fields:
-        • {modpath} (`string`) Path of the module
-        • {modname} (`string`) Name of the module
-        • {stat}? (`uv.fs_stat.result`) The fs_stat of the module path. Won't
-          be returned for `modname="*"`
+        (`string`) Decoded string
 
-vim.loader.reset({path})                                  *vim.loader.reset()*
-    WARNING: This feature is experimental/unstable.
-
-    Resets the cache for the path, or all the paths if path is nil.
+vim.base64.encode({str})                                 *vim.base64.encode()*
+    Encode {str} using Base64.
 
     Parameters: ~
-      • {path}  (`string?`) path to reset
-
-
-==============================================================================
-Lua module: vim.uri                                                  *vim.uri*
-
-vim.uri_decode({str})                                       *vim.uri_decode()*
-    URI-decodes a string containing percent escapes.
-
-    Parameters: ~
-      • {str}  (`string`) string to decode
+      • {str}  (`string`) String to encode
 
     Return: ~
-        (`string`) decoded string
+        (`string`) Encoded string
 
-vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
-    URI-encodes a string using percent escapes.
-
-    Parameters: ~
-      • {str}  (`string`) string to encode
-      • {rfc}  (`"rfc2396"|"rfc2732"|"rfc3986"?`)
-
-    Return: ~
-        (`string`) encoded string
-
-vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
-    Gets a URI from a bufnr.
-
-    Parameters: ~
-      • {bufnr}  (`integer`)
-
-    Return: ~
-        (`string`) URI
-
-vim.uri_from_fname({path})                              *vim.uri_from_fname()*
-    Gets a URI from a file path.
-
-    Parameters: ~
-      • {path}  (`string`) Path to file
-
-    Return: ~
-        (`string`) URI
-
-vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
-    Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
-    the uri already exists.
-
-    Parameters: ~
-      • {uri}  (`string`)
-
-    Return: ~
-        (`integer`) bufnr
-
-vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
-    Gets a filename from a URI.
-
-    Parameters: ~
-      • {uri}  (`string`)
-
-    Return: ~
-        (`string`) filename or unchanged URI for non-file URIs
-
-
-==============================================================================
-Lua module: vim.ui                                                    *vim.ui*
-
-vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
-    Prompts the user for input, allowing arbitrary (potentially asynchronous)
-    work until `on_confirm`.
-
-    Example: >lua
-        vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
-            vim.o.shiftwidth = tonumber(input)
-        end)
-<
-
-    Parameters: ~
-      • {opts}        (`table?`) Additional options. See |input()|
-                      • {prompt}? (`string`) Text of the prompt
-                      • {default}? (`string`) Default reply to the input
-                      • {completion}? (`string`) Specifies type of completion
-                        supported for input. Supported types are the same that
-                        can be supplied to a user-defined command using the
-                        "-complete=" argument. See |:command-completion|
-                      • {highlight}? (`function`) Function that will be used
-                        for highlighting user inputs.
-      • {on_confirm}  (`fun(input?: string)`) Called once the user confirms or
-                      abort the input. `input` is what the user typed (it
-                      might be an empty string if nothing was entered), or
-                      `nil` if the user aborted the dialog.
-
-vim.ui.open({path}, {opt})                                     *vim.ui.open()*
-    Opens `path` with the system default handler (macOS `open`, Windows
-    `explorer.exe`, Linux `xdg-open`, …), or returns (but does not show) an
-    error message on failure.
-
-    Can also be invoked with `:Open`.                                  *:Open*
-
-    Expands "~/" and environment variables in filesystem paths.
-
-    Examples: >lua
-        -- Asynchronous.
-        vim.ui.open("https://neovim.io/")
-        vim.ui.open("~/path/to/file")
-        -- Use the "osurl" command to handle the path or URL.
-        vim.ui.open("gh#neovim/neovim!29490", { cmd = { 'osurl' } })
-        -- Synchronous (wait until the process exits).
-        local cmd, err = vim.ui.open("$VIMRUNTIME")
-        if cmd then
-          cmd:wait()
-        end
-<
-
-    Parameters: ~
-      • {path}  (`string`) Path or URL to open
-      • {opt}   (`table?`) Options
-                • {cmd}? (`string[]`) Command used to open the path or URL.
-
-    Return (multiple): ~
-        (`vim.SystemObj?`) Command object, or nil if not found. See
-        |vim.SystemObj|.
-        (`string?`) Error message on failure, or nil on success.
-
-    See also: ~
-      • |vim.system()|
-
-vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
-    Prompts the user to pick from a list of items, allowing arbitrary
-    (potentially asynchronous) work until `on_choice`.
-
-    Example: >lua
-        vim.ui.select({ 'tabs', 'spaces' }, {
-            prompt = 'Select tabs or spaces:',
-            format_item = function(item)
-                return "I'd like to choose " .. item
-            end,
-        }, function(choice)
-            if choice == 'spaces' then
-                vim.o.expandtab = true
-            else
-                vim.o.expandtab = false
-            end
-        end)
-<
-
-    Parameters: ~
-      • {items}      (`any[]`) Arbitrary items
-      • {opts}       (`table`) Additional options
-                     • {prompt}? (`string`) Text of the prompt. Defaults to
-                       `Select one of:`
-                     • {format_item}? (`fun(item: any):string`) Function to
-                       format an individual item from `items`. Defaults to
-                       `tostring`.
-                     • {kind}? (`string`) Arbitrary hint string indicating the
-                       item shape. Plugins reimplementing `vim.ui.select` may
-                       wish to use this to infer the structure or semantics of
-                       `items`, or the context in which select() was called.
-      • {on_choice}  (`fun(item: T?, idx: integer?)`) Called once the user
-                     made a choice. `idx` is the 1-based index of `item`
-                     within `items`. `nil` if the user aborted the dialog.
-
-
-==============================================================================
-Lua module: vim._extui                                            *vim._extui*
-
-WARNING: This is an experimental interface intended to replace the message
-grid in the TUI.
-
-To enable the experimental UI (default opts shown): >lua
-    require('vim._extui').enable({
-     enable = true, -- Whether to enable or disable the UI.
-     msg = { -- Options related to the message module.
-       ---@type 'cmd'|'msg' Where to place regular messages, either in the
-       ---cmdline or in a separate ephemeral message window.
-       target = 'cmd',
-       timeout = 4000, -- Time a message is visible in the message window.
-     },
-    })
-<
-
-There are four separate window types used by this interface:
-• "cmd": The cmdline window; also used for 'showcmd', 'showmode', 'ruler', and
-  messages if 'cmdheight' > 0.
-• "msg": The message window; used for messages when 'cmdheight' == 0.
-• "pager": The pager window; used for |:messages| and certain messages that
-  should be shown in full.
-• "dialog": The dialog window; used for prompt messages that expect user
-  input.
-
-These four windows are assigned the "cmd", "msg", "pager" and "dialog"
-'filetype' respectively. Use a |FileType| autocommand to configure any local
-options for these windows and their respective buffers.
-
-Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
-not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
-spilled lines. To see the full message, the |g<| command can be used.
 
 ==============================================================================
 Lua module: vim.filetype                                        *vim.filetype*
@@ -2934,65 +2359,6 @@ vim.filetype.match({args})                              *vim.filetype.match()*
         (`function?`) A function that modifies buffer state when called (for
         example, to set some filetype specific buffer variables). The function
         accepts a buffer number as its only argument.
-
-
-==============================================================================
-Lua module: vim.keymap                                            *vim.keymap*
-
-vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
-    Remove an existing mapping. Examples: >lua
-        vim.keymap.del('n', 'lhs')
-
-        vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
-<
-
-    Parameters: ~
-      • {modes}  (`string|string[]`)
-      • {lhs}    (`string`)
-      • {opts}   (`table?`) A table with the following fields:
-                 • {buffer}? (`integer|boolean`) Remove a mapping from the
-                   given buffer. When `0` or `true`, use the current buffer.
-
-    See also: ~
-      • |vim.keymap.set()|
-
-vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
-    Defines a |mapping| of |keycodes| to a function or keycodes.
-
-    Examples: >lua
-        -- Map "x" to a Lua function:
-        vim.keymap.set('n', 'x', function() print('real lua function') end)
-        -- Map "<leader>x" to multiple modes for the current buffer:
-        vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buffer = true })
-        -- Map <Tab> to an expression (|:map-<expr>|):
-        vim.keymap.set('i', '<Tab>', function()
-          return vim.fn.pumvisible() == 1 and '<C-n>' or '<Tab>'
-        end, { expr = true })
-        -- Map "[%%" to a <Plug> mapping:
-        vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
-<
-
-    Parameters: ~
-      • {mode}  (`string|string[]`) Mode "short-name" (see
-                |nvim_set_keymap()|), or a list thereof.
-      • {lhs}   (`string`) Left-hand side |{lhs}| of the mapping.
-      • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
-                can be a Lua function.
-      • {opts}  (`table?`) Table of |:map-arguments|. Same as
-                |nvim_set_keymap()| {opts}, except:
-                • {replace_keycodes} defaults to `true` if "expr" is `true`.
-
-                Also accepts:
-                • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
-                  `0` or `true` for current buffer.
-                • {remap}? (`boolean`, default: `false`) Make the mapping
-                  recursive. Inverse of {noremap}.
-
-    See also: ~
-      • |nvim_set_keymap()|
-      • |maparg()|
-      • |mapcheck()|
-      • |mapset()|
 
 
 ==============================================================================
@@ -3350,828 +2716,63 @@ vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
 
 
 ==============================================================================
-VIM.LPEG                                                            *vim.lpeg*
+Lua module: vim.hl                                                    *vim.hl*
 
+vim.hl.on_yank({opts})                                      *vim.hl.on_yank()*
+    Highlight the yanked text during a |TextYankPost| event.
 
-LPeg is a pattern-matching library for Lua, based on Parsing Expression
-Grammars (PEGs). https://bford.info/packrat/
-
-                                                   *lua-lpeg* *vim.lpeg.Pattern*
-The LPeg library for parsing expression grammars is included as `vim.lpeg`
-(https://www.inf.puc-rio.br/~roberto/lpeg/).
-
-In addition, its regex-like interface is available as |vim.re|
-(https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
-
-
-
-Pattern:match({subject}, {init}, {...})                      *Pattern:match()*
-    Matches the given `pattern` against the `subject` string. If the match
-    succeeds, returns the index in the subject of the first character after
-    the match, or the captured values (if the pattern captured any value). An
-    optional numeric argument `init` makes the match start at that position in
-    the subject string. As usual in Lua libraries, a negative value counts
-    from the end. Unlike typical pattern-matching functions, `match` works
-    only in anchored mode; that is, it tries to match the pattern with a
-    prefix of the given subject string (at position `init`), not with an
-    arbitrary substring of the subject. So, if we want to find a pattern
-    anywhere in a string, we must either write a loop in Lua or write a
-    pattern that matches anywhere.
-
-    Example: >lua
-        local pattern = lpeg.R('az') ^ 1 * -1
-        assert(pattern:match('hello') == 6)
-        assert(lpeg.match(pattern, 'hello') == 6)
-        assert(pattern:match('1 hello') == nil)
+    Add the following to your `init.vim`: >vim
+        autocmd TextYankPost * silent! lua vim.hl.on_yank {higroup='Visual', timeout=300}
 <
 
     Parameters: ~
-      • {subject}  (`string`)
-      • {init}     (`integer?`)
-      • {...}      (`any`)
+      • {opts}  (`table?`) Optional parameters
+                • higroup highlight group for yanked region (default
+                  "IncSearch")
+                • timeout time in ms before highlight is cleared (default 150)
+                • on_macro highlight when executing macro (default false)
+                • on_visual highlight when yanking visual selection (default
+                  true)
+                • event event structure (default vim.v.event)
+                • priority integer priority (default
+                  |vim.hl.priorities|`.user`)
 
-    Return: ~
-        (`any`) ...
+vim.hl.priorities                                          *vim.hl.priorities*
+    Table with default priorities used for highlighting:
+    • `syntax`: `50`, used for standard syntax highlighting
+    • `treesitter`: `100`, used for treesitter-based highlighting
+    • `semantic_tokens`: `125`, used for LSP semantic token highlighting
+    • `diagnostics`: `150`, used for code analysis such as diagnostics
+    • `user`: `200`, used for user-triggered highlights such as LSP document
+      symbols or `on_yank` autocommands
 
-vim.lpeg.B({pattern})                                           *vim.lpeg.B()*
-    Returns a pattern that matches only if the input string at the current
-    position is preceded by `patt`. Pattern `patt` must match only strings
-    with some fixed length, and it cannot contain captures. Like the `and`
-    predicate, this pattern never consumes any input, independently of success
-    or failure.
-
-    Parameters: ~
-      • {pattern}  (`vim.lpeg.Pattern|string|integer|boolean|table`)
-
-    Return: ~
-        (`vim.lpeg.Pattern`)
-
-vim.lpeg.C({patt})                                              *vim.lpeg.C()*
-    Creates a simple capture, which captures the substring of the subject that
-    matches `patt`. The captured value is a string. If `patt` has other
-    captures, their values are returned after this one.
-
-    Example: >lua
-        local function split (s, sep)
-          sep = lpeg.P(sep)
-          local elem = lpeg.C((1 - sep) ^ 0)
-          local p = elem * (sep * elem) ^ 0
-          return lpeg.match(p, s)
-        end
-        local a, b, c = split('a,b,c', ',')
-        assert(a == 'a')
-        assert(b == 'b')
-        assert(c == 'c')
-<
+                                                              *vim.hl.range()*
+vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
+    Apply highlight group to range of text.
 
     Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.Carg({n})                                           *vim.lpeg.Carg()*
-    Creates an argument capture. This pattern matches the empty string and
-    produces the value given as the nth extra argument given in the call to
-    `lpeg.match`.
-
-    Parameters: ~
-      • {n}  (`integer`)
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.Cb({name})                                            *vim.lpeg.Cb()*
-    Creates a back capture. This pattern matches the empty string and produces
-    the values produced by the most recent group capture named `name` (where
-    `name` can be any Lua value). Most recent means the last complete
-    outermost group capture with the given name. A Complete capture means that
-    the entire pattern corresponding to the capture has matched. An Outermost
-    capture means that the capture is not inside another complete capture. In
-    the same way that LPeg does not specify when it evaluates captures, it
-    does not specify whether it reuses values previously produced by the group
-    or re-evaluates them.
-
-    Parameters: ~
-      • {name}  (`any`)
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.Cc({...})                                             *vim.lpeg.Cc()*
-    Creates a constant capture. This pattern matches the empty string and
-    produces all given values as its captured values.
-
-    Parameters: ~
-      • {...}  (`any`)
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.Cf({patt}, {func})                                    *vim.lpeg.Cf()*
-    Creates a fold capture. If `patt` produces a list of captures C1 C2 ...
-    Cn, this capture will produce the value
-    `func(...func(func(C1, C2), C3)...,Cn)`, that is, it will fold (or
-    accumulate, or reduce) the captures from `patt` using function `func`.
-    This capture assumes that `patt` should produce at least one capture with
-    at least one value (of any type), which becomes the initial value of an
-    accumulator. (If you need a specific initial value, you may prefix a
-    constant capture to `patt`.) For each subsequent capture, LPeg calls
-    `func` with this accumulator as the first argument and all values produced
-    by the capture as extra arguments; the first result from this call becomes
-    the new value for the accumulator. The final value of the accumulator
-    becomes the captured value.
-
-    Example: >lua
-        local number = lpeg.R('09') ^ 1 / tonumber
-        local list = number * (',' * number) ^ 0
-        local function add(acc, newvalue) return acc + newvalue end
-        local sum = lpeg.Cf(list, add)
-        assert(sum:match('10,30,43') == 83)
-<
-
-    Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
-      • {func}  (`fun(acc, newvalue)`)
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.Cg({patt}, {name})                                    *vim.lpeg.Cg()*
-    Creates a group capture. It groups all values returned by `patt` into a
-    single capture. The group may be anonymous (if no name is given) or named
-    with the given name (which can be any non-nil Lua value).
-
-    Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
-      • {name}  (`string?`)
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.Cmt({patt}, {fn})                                    *vim.lpeg.Cmt()*
-    Creates a match-time capture. Unlike all other captures, this one is
-    evaluated immediately when a match occurs (even if it is part of a larger
-    pattern that fails later). It forces the immediate evaluation of all its
-    nested captures and then calls `function`. The given function gets as
-    arguments the entire subject, the current position (after the match of
-    `patt`), plus any capture values produced by `patt`. The first value
-    returned by `function` defines how the match happens. If the call returns
-    a number, the match succeeds and the returned number becomes the new
-    current position. (Assuming a subject sand current position `i`, the
-    returned number must be in the range `[i, len(s) + 1]`.) If the call
-    returns `true`, the match succeeds without consuming any input (so, to
-    return true is equivalent to return `i`). If the call returns `false`,
-    `nil`, or no value, the match fails. Any extra values returned by the
-    function become the values produced by the capture.
-
-    Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
-      • {fn}    (`fun(s: string, i: integer, ...: any)`) (position:
-                boolean|integer, ...: any)
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.Cp()                                                  *vim.lpeg.Cp()*
-    Creates a position capture. It matches the empty string and captures the
-    position in the subject where the match occurs. The captured value is a
-    number.
-
-    Example: >lua
-        local I = lpeg.Cp()
-        local function anywhere(p) return lpeg.P({I * p * I + 1 * lpeg.V(1)}) end
-        local match_start, match_end = anywhere('world'):match('hello world!')
-        assert(match_start == 7)
-        assert(match_end == 12)
-<
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.Cs({patt})                                            *vim.lpeg.Cs()*
-    Creates a substitution capture. This function creates a substitution
-    capture, which captures the substring of the subject that matches `patt`,
-    with substitutions. For any capture inside `patt` with a value, the
-    substring that matched the capture is replaced by the capture value (which
-    should be a string). The final captured value is the string resulting from
-    all replacements.
-
-    Example: >lua
-        local function gsub (s, patt, repl)
-          patt = lpeg.P(patt)
-          patt = lpeg.Cs((patt / repl + 1) ^ 0)
-          return lpeg.match(patt, s)
-        end
-        assert(gsub('Hello, xxx!', 'xxx', 'World') == 'Hello, World!')
-<
-
-    Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.Ct({patt})                                            *vim.lpeg.Ct()*
-    Creates a table capture. This capture returns a table with all values from
-    all anonymous captures made by `patt` inside this table in successive
-    integer keys, starting at 1. Moreover, for each named capture group
-    created by `patt`, the first value of the group is put into the table with
-    the group name as its key. The captured value is only the table.
-
-    Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
-
-    Return: ~
-        (`vim.lpeg.Capture`)
-
-vim.lpeg.locale({tab})                                     *vim.lpeg.locale()*
-    Returns a table with patterns for matching some character classes
-    according to the current locale. The table has fields named `alnum`,
-    `alpha`, `cntrl`, `digit`, `graph`, `lower`, `print`, `punct`, `space`,
-    `upper`, and `xdigit`, each one containing a correspondent pattern. Each
-    pattern matches any single character that belongs to its class. If called
-    with an argument `table`, then it creates those fields inside the given
-    table and returns that table.
-
-    Example: >lua
-        lpeg.locale(lpeg)
-        local space = lpeg.space ^ 0
-        local name = lpeg.C(lpeg.alpha ^ 1) * space
-        local sep = lpeg.S(',;') * space
-        local pair = lpeg.Cg(name * '=' * space * name) * sep ^ -1
-        local list = lpeg.Cf(lpeg.Ct('') * pair ^ 0, rawset)
-        local t = list:match('a=b, c = hi; next = pi')
-        assert(t.a == 'b')
-        assert(t.c == 'hi')
-        assert(t.next == 'pi')
-        local locale = lpeg.locale()
-        assert(type(locale.digit) == 'userdata')
-<
-
-    Parameters: ~
-      • {tab}  (`table?`)
-
-    Return: ~
-        (`vim.lpeg.Locale`)
-
-vim.lpeg.match({pattern}, {subject}, {init}, {...})         *vim.lpeg.match()*
-    Matches the given `pattern` against the `subject` string. If the match
-    succeeds, returns the index in the subject of the first character after
-    the match, or the captured values (if the pattern captured any value). An
-    optional numeric argument `init` makes the match start at that position in
-    the subject string. As usual in Lua libraries, a negative value counts
-    from the end. Unlike typical pattern-matching functions, `match` works
-    only in anchored mode; that is, it tries to match the pattern with a
-    prefix of the given subject string (at position `init`), not with an
-    arbitrary substring of the subject. So, if we want to find a pattern
-    anywhere in a string, we must either write a loop in Lua or write a
-    pattern that matches anywhere.
-
-    Example: >lua
-        local pattern = lpeg.R('az') ^ 1 * -1
-        assert(pattern:match('hello') == 6)
-        assert(lpeg.match(pattern, 'hello') == 6)
-        assert(pattern:match('1 hello') == nil)
-<
-
-    Parameters: ~
-      • {pattern}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
-      • {subject}  (`string`)
-      • {init}     (`integer?`)
-      • {...}      (`any`)
-
-    Return: ~
-        (`any`) ...
-
-vim.lpeg.P({value})                                             *vim.lpeg.P()*
-    Converts the given value into a proper pattern. The following rules are
-    applied:
-    • If the argument is a pattern, it is returned unmodified.
-    • If the argument is a string, it is translated to a pattern that matches
-      the string literally.
-    • If the argument is a non-negative number `n`, the result is a pattern
-      that matches exactly `n` characters.
-    • If the argument is a negative number `-n`, the result is a pattern that
-      succeeds only if the input string has less than `n` characters left:
-      `lpeg.P(-n)` is equivalent to `-lpeg.P(n)` (see the unary minus
-      operation).
-    • If the argument is a boolean, the result is a pattern that always
-      succeeds or always fails (according to the boolean value), without
-      consuming any input.
-    • If the argument is a table, it is interpreted as a grammar (see
-      Grammars).
-    • If the argument is a function, returns a pattern equivalent to a
-      match-time capture over the empty string.
-
-    Parameters: ~
-      • {value}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
-
-    Return: ~
-        (`vim.lpeg.Pattern`)
-
-vim.lpeg.R({...})                                               *vim.lpeg.R()*
-    Returns a pattern that matches any single character belonging to one of
-    the given ranges. Each `range` is a string `xy` of length 2, representing
-    all characters with code between the codes of `x` and `y` (both
-    inclusive). As an example, the pattern `lpeg.R('09')` matches any digit,
-    and `lpeg.R('az', 'AZ')` matches any ASCII letter.
-
-    Example: >lua
-        local pattern = lpeg.R('az') ^ 1 * -1
-        assert(pattern:match('hello') == 6)
-<
-
-    Parameters: ~
-      • {...}  (`string`)
-
-    Return: ~
-        (`vim.lpeg.Pattern`)
-
-vim.lpeg.S({string})                                            *vim.lpeg.S()*
-    Returns a pattern that matches any single character that appears in the
-    given string (the `S` stands for Set). As an example, the pattern
-    `lpeg.S('+-*/')` matches any arithmetic operator. Note that, if `s` is a
-    character (that is, a string of length 1), then `lpeg.P(s)` is equivalent
-    to `lpeg.S(s)` which is equivalent to `lpeg.R(s..s)`. Note also that both
-    `lpeg.S('')` and `lpeg.R()` are patterns that always fail.
-
-    Parameters: ~
-      • {string}  (`string`)
-
-    Return: ~
-        (`vim.lpeg.Pattern`)
-
-vim.lpeg.setmaxstack({max})                           *vim.lpeg.setmaxstack()*
-    Sets a limit for the size of the backtrack stack used by LPeg to track
-    calls and choices. The default limit is `400`. Most well-written patterns
-    need little backtrack levels and therefore you seldom need to change this
-    limit; before changing it you should try to rewrite your pattern to avoid
-    the need for extra space. Nevertheless, a few useful patterns may
-    overflow. Also, with recursive grammars, subjects with deep recursion may
-    also need larger limits.
-
-    Parameters: ~
-      • {max}  (`integer`)
-
-vim.lpeg.type({value})                                       *vim.lpeg.type()*
-    Returns the string `"pattern"` if the given value is a pattern, otherwise
-    `nil`.
-
-    Parameters: ~
-      • {value}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
-
-    Return: ~
-        (`"pattern"?`)
-
-vim.lpeg.V({v})                                                 *vim.lpeg.V()*
-    Creates a non-terminal (a variable) for a grammar. This operation creates
-    a non-terminal (a variable) for a grammar. The created non-terminal refers
-    to the rule indexed by `v` in the enclosing grammar.
-
-    Example: >lua
-        local b = lpeg.P({'(' * ((1 - lpeg.S '()') + lpeg.V(1)) ^ 0 * ')'})
-        assert(b:match('((string))') == 11)
-        assert(b:match('(') == nil)
-<
-
-    Parameters: ~
-      • {v}  (`boolean|string|number|function|table|thread|userdata|lightuserdata`)
-
-    Return: ~
-        (`vim.lpeg.Pattern`)
-
-vim.lpeg.version()                                        *vim.lpeg.version()*
-    Returns a string with the running version of LPeg.
-
-    Return: ~
-        (`string`)
-
-
-==============================================================================
-VIM.RE                                                                *vim.re*
-
-The `vim.re` module provides a conventional regex-like syntax for pattern
-usage within LPeg |vim.lpeg|. (Unrelated to |vim.regex| which provides Vim
-|regexp| from Lua.)
-
-See https://www.inf.puc-rio.br/~roberto/lpeg/re.html for the original
-documentation including regex syntax and examples.
-
-
-vim.re.compile({string}, {defs})                            *vim.re.compile()*
-    Compiles the given {string} and returns an equivalent LPeg pattern. The
-    given string may define either an expression or a grammar. The optional
-    {defs} table provides extra Lua values to be used by the pattern.
-
-    Parameters: ~
-      • {string}  (`string`)
-      • {defs}    (`table?`)
-
-    Return: ~
-        (`vim.lpeg.Pattern`)
-
-vim.re.find({subject}, {pattern}, {init})                      *vim.re.find()*
-    Searches the given {pattern} in the given {subject}. If it finds a match,
-    returns the index where this occurrence starts and the index where it
-    ends. Otherwise, returns nil.
-
-    An optional numeric argument {init} makes the search starts at that
-    position in the subject string. As usual in Lua libraries, a negative
-    value counts from the end.
-
-    Parameters: ~
-      • {subject}  (`string`)
-      • {pattern}  (`vim.lpeg.Pattern|string`)
-      • {init}     (`integer?`)
+      • {bufnr}    (`integer`) Buffer number to apply highlighting to
+      • {ns}       (`integer`) Namespace to add highlight to
+      • {higroup}  (`string`) Highlight group to use for highlighting
+      • {start}    (`[integer,integer]|string`) Start of region as a (line,
+                   column) tuple or string accepted by |getpos()|
+      • {finish}   (`[integer,integer]|string`) End of region as a (line,
+                   column) tuple or string accepted by |getpos()|
+      • {opts}     (`table?`) A table with the following fields:
+                   • {regtype}? (`string`, default: `'v'` i.e. charwise) Type
+                     of range. See |getregtype()|
+                   • {inclusive}? (`boolean`, default: `false`) Indicates
+                     whether the range is end-inclusive
+                   • {priority}? (`integer`, default:
+                     `vim.hl.priorities.user`) Highlight priority
+                   • {timeout}? (`integer`, default: -1 no timeout) Time in ms
+                     before highlight is cleared
 
     Return (multiple): ~
-        (`integer?`) the index where the occurrence starts, nil if no match
-        (`integer?`) the index where the occurrence ends, nil if no match
-
-vim.re.gsub({subject}, {pattern}, {replacement})               *vim.re.gsub()*
-    Does a global substitution, replacing all occurrences of {pattern} in the
-    given {subject} by {replacement}.
-
-    Parameters: ~
-      • {subject}      (`string`)
-      • {pattern}      (`vim.lpeg.Pattern|string`)
-      • {replacement}  (`string`)
-
-    Return: ~
-        (`string`)
-
-vim.re.match({subject}, {pattern}, {init})                    *vim.re.match()*
-    Matches the given {pattern} against the given {subject}, returning all
-    captures.
-
-    Parameters: ~
-      • {subject}  (`string`)
-      • {pattern}  (`vim.lpeg.Pattern|string`)
-      • {init}     (`integer?`)
-
-    Return: ~
-        (`integer|vim.lpeg.Capture?`)
-
-    See also: ~
-      • vim.lpeg.match()
-
-vim.re.updatelocale()                                  *vim.re.updatelocale()*
-    Updates the pre-defined character classes to the current locale.
-
-
-==============================================================================
-VIM.REGEX                                                          *vim.regex*
-
-Vim regexes can be used directly from Lua. Currently they only allow matching
-within a single line.
-
-
-                                                          *regex:match_line()*
-regex:match_line({bufnr}, {line_idx}, {start}, {end_})
-    Matches line at `line_idx` (zero-based) in buffer `bufnr`. Match is
-    restricted to byte index range `start` and `end_` if given, otherwise see
-    |regex:match_str()|. Returned byte indices are relative to `start` if
-    given.
-
-    Parameters: ~
-      • {bufnr}     (`integer`)
-      • {line_idx}  (`integer`)
-      • {start}     (`integer?`)
-      • {end_}      (`integer?`)
-
-    Return (multiple): ~
-        (`integer?`) match start (byte index) relative to `start`, or `nil` if
-        no match
-        (`integer?`) match end (byte index) relative to `start`, or `nil` if
-        no match
-
-regex:match_str({str})                                     *regex:match_str()*
-    Matches string `str` against this regex. To match the string precisely,
-    surround the regex with "^" and "$". Returns the byte indices for the
-    start and end of the match, or `nil` if there is no match. Because any
-    integer is "truthy", `regex:match_str()` can be directly used as a
-    condition in an if-statement.
-
-    Parameters: ~
-      • {str}  (`string`)
-
-    Return (multiple): ~
-        (`integer?`) match start (byte index), or `nil` if no match
-        (`integer?`) match end (byte index), or `nil` if no match
-
-vim.regex({re})                                                  *vim.regex()*
-    Parses the Vim regex `re` and returns a regex object. Regexes are "magic"
-    and case-sensitive by default, regardless of 'magic' and 'ignorecase'.
-    They can be controlled with flags, see |/magic| and |/ignorecase|.
-
-    Parameters: ~
-      • {re}  (`string`)
-
-    Return: ~
-        (`vim.regex`)
-
-
-==============================================================================
-Lua module: vim.secure                                            *vim.secure*
-
-vim.secure.read({path})                                    *vim.secure.read()*
-    If {path} is a file: attempt to read the file, prompting the user if the
-    file should be trusted.
-
-    If {path} is a directory: return true if the directory is trusted
-    (non-recursive), prompting the user as necessary.
-
-    The user's choice is persisted in a trust database at
-    $XDG_STATE_HOME/nvim/trust.
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {path}  (`string`) Path to a file or directory to read.
-
-    Return: ~
-        (`boolean|string?`) If {path} is not trusted or does not exist,
-        returns `nil`. Otherwise, returns the contents of {path} if it is a
-        file, or true if {path} is a directory.
-
-    See also: ~
-      • |:trust|
-
-vim.secure.trust({opts})                                  *vim.secure.trust()*
-    Manage the trust database.
-
-    The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {opts}  (`table`) A table with the following fields:
-                • {action} (`'allow'|'deny'|'remove'`) - `'allow'` to add a
-                  file to the trust database and trust it,
-                • `'deny'` to add a file to the trust database and deny it,
-                • `'remove'` to remove file from the trust database
-                • {path}? (`string`) Path to a file to update. Mutually
-                  exclusive with {bufnr}. Cannot be used when {action} is
-                  "allow".
-                • {bufnr}? (`integer`) Buffer number to update. Mutually
-                  exclusive with {path}.
-
-    Return (multiple): ~
-        (`boolean`) success true if operation was successful
-        (`string`) msg full path if operation was successful, else error
-        message
-
-
-==============================================================================
-Lua module: vim.version                                          *vim.version*
-
-The `vim.version` module provides functions for comparing versions and ranges
-conforming to the https://semver.org spec. Plugins, and plugin managers, can
-use this to check available tools and dependencies on the current system.
-
-Example: >lua
-    local v = vim.version.parse(vim.system({'tmux', '-V'}):wait().stdout, {strict=false})
-    if vim.version.gt(v, {3, 2, 0}) then
-      -- ...
-    end
-<
-
-*vim.version()* returns the version of the current Nvim process.
-
-VERSION RANGE SPEC                                             *version-range*
-
-A version "range spec" defines a semantic version range which can be tested
-against a version, using |vim.version.range()|.
-
-Supported range specs are shown in the following table. Note: suffixed
-versions (1.2.3-rc1) are not matched. >
-    1.2.3             is 1.2.3
-    =1.2.3            is 1.2.3
-    >1.2.3            greater than 1.2.3
-    <1.2.3            before 1.2.3
-    >=1.2.3           at least 1.2.3
-    <=1.2.3           at most 1.2.3
-    ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
-    ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
-    ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
-    ^0.0.1            is =0.0.1               (0.0.x is special)
-    ^1.2              is >=1.2.0 <2.0.0       (like ^1.2.0)
-    ~1.2              is >=1.2.0 <1.3.0       (like ~1.2.0)
-    ^1                is >=1.0.0 <2.0.0       "compatible with 1"
-    ~1                same                    "reasonably close to 1"
-    1.x               same
-    1.*               same
-    1                 same
-    *                 any version
-    x                 same
-
-    1.2.3 - 2.3.4     is >=1.2.3 <2.3.4
-
-    Partial right: missing pieces treated as x (2.3 => 2.3.x).
-    1.2.3 - 2.3       is >=1.2.3 <2.4.0
-    1.2.3 - 2         is >=1.2.3 <3.0.0
-
-    Partial left: missing pieces treated as 0 (1.2 => 1.2.0).
-    1.2 - 2.3.0       is 1.2.0 - 2.3.0
-<
-
-
-*vim.VersionRange*
-
-    Fields: ~
-      • {from}  (`vim.Version`)
-      • {to}?   (`vim.Version`)
-      • {has}   (`fun(self: vim.VersionRange, version: string|vim.Version): boolean`)
-                See |VersionRange:has()|.
-
-
-VersionRange:has({version})                               *VersionRange:has()*
-    Check if a version is in the range (inclusive `from`, exclusive `to`).
-
-    Example: >lua
-        local r = vim.version.range('1.0.0 - 2.0.0')
-        print(r:has('1.9.9'))       -- true
-        print(r:has('2.0.0'))       -- false
-        print(r:has(vim.version())) -- check against current Nvim version
-<
-
-    Or use cmp(), le(), lt(), ge(), gt(), and/or eq() to compare a version
-    against `.to` and `.from` directly: >lua
-        local r = vim.version.range('1.0.0 - 2.0.0') -- >=1.0, <2.0
-        print(vim.version.ge({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
-<
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {version}  (`string|vim.Version`)
-
-    Return: ~
-        (`boolean`)
-
-    See also: ~
-      • https://github.com/npm/node-semver#ranges
-
-vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
-    Parses and compares two version objects (the result of
-    |vim.version.parse()|, or specified literally as a `{major, minor, patch}`
-    tuple, e.g. `{1, 0, 3}`).
-
-    Example: >lua
-        if vim.version.cmp({1,0,3}, {0,2,1}) == 0 then
-          -- ...
-        end
-        local v1 = vim.version.parse('1.0.3-pre')
-        local v2 = vim.version.parse('0.2.1')
-        if vim.version.cmp(v1, v2) == 0 then
-          -- ...
-        end
-<
-
-    Note: ~
-      • Per semver, build metadata is ignored when comparing two
-        otherwise-equivalent versions.
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`) Version object.
-      • {v2}  (`vim.Version|number[]|string`) Version to compare with `v1`.
-
-    Return: ~
-        (`integer`) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
-
-vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
-    Returns `true` if the given versions are equal. See |vim.version.cmp()|
-    for usage.
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
-
-    Return: ~
-        (`boolean`)
-
-vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
-    Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
-
-    Return: ~
-        (`boolean`)
-
-vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
-    Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
-
-    Return: ~
-        (`boolean`)
-
-vim.version.intersect({r1}, {r2})                    *vim.version.intersect()*
-    WARNING: This feature is experimental/unstable.
-
-    Computes the common range shared by the given ranges.
-
-    Parameters: ~
-      • {r1}  (`vim.VersionRange`) First range to intersect. See
-              |vim.VersionRange|.
-      • {r2}  (`vim.VersionRange`) Second range to intersect. See
-              |vim.VersionRange|.
-
-    Return: ~
-        (`vim.VersionRange?`) Maximal range that is present inside both `r1`
-        and `r2`. `nil` if such range does not exist. See |vim.VersionRange|.
-
-vim.version.last({versions})                              *vim.version.last()*
-    TODO: generalize this, move to func.lua
-
-    Parameters: ~
-      • {versions}  (`vim.Version[]`)
-
-    Return: ~
-        (`vim.Version?`)
-
-vim.version.le({v1}, {v2})                                  *vim.version.le()*
-    Returns `true` if `v1 <= v2`. See |vim.version.cmp()| for usage.
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
-
-    Return: ~
-        (`boolean`)
-
-vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
-    Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {v1}  (`vim.Version|number[]|string`)
-      • {v2}  (`vim.Version|number[]|string`)
-
-    Return: ~
-        (`boolean`)
-
-vim.version.parse({version}, {opts})                     *vim.version.parse()*
-    Parses a semantic version string and returns a version object which can be
-    used with other `vim.version` functions. For example "1.0.1-rc1+build.2"
-    returns: >
-        { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
-<
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {version}  (`string`) Version string to parse.
-      • {opts}     (`table?`) Options for parsing.
-                   • {strict}? (`boolean`, default: `false`) If `true`, no
-                     coercion is attempted on input not conforming to semver
-                     v2.0.0. If `false`, `parse()` attempts to coerce input
-                     such as "1.0", "0-x", "tmux 3.2a" into valid versions.
-
-    Return: ~
-        (`vim.Version?`) `Version` object or `nil` if input is invalid.
-
-    See also: ~
-      • https://semver.org/spec/v2.0.0.html
-
-vim.version.range({spec})                                *vim.version.range()*
-    Parses a semver |version-range| "spec" and returns |vim.VersionRange|
-    object:
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {spec}  (`string`) Version range "spec"
-
-    Return: ~
-        (`vim.VersionRange?`) See |vim.VersionRange|.
+        (`uv.uv_timer_t?`) range_timer A timer which manages how much time the
+        highlight has left
+        (`fun()?`) range_clear A function which allows clearing the highlight
+        manually. nil is returned if timeout is not specified
 
 
 ==============================================================================
@@ -4684,6 +3285,795 @@ Iter:totable()                                                *Iter:totable()*
 
 
 ==============================================================================
+Lua module: vim.json                                                *vim.json*
+
+This module provides encoding and decoding of Lua objects to and from
+JSON-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
+
+
+vim.json.decode({str}, {opts})                             *vim.json.decode()*
+    Decodes (or "unpacks") the JSON-encoded {str} to a Lua object.
+    • Decodes JSON "null" as |vim.NIL| (controllable by {opts}, see below).
+    • Decodes empty object as |vim.empty_dict()|.
+    • Decodes empty array as `{}` (empty Lua table).
+
+    Example: >lua
+        vim.print(vim.json.decode('{"bar":[],"foo":{},"zub":null}'))
+        -- { bar = {}, foo = vim.empty_dict(), zub = vim.NIL }
+<
+
+    Parameters: ~
+      • {str}   (`string`) Stringified JSON data.
+      • {opts}  (`table<string,any>?`) Options table with keys:
+                • luanil: (table) Table with keys:
+                  • object: (boolean) When true, converts `null` in JSON
+                    objects to Lua `nil` instead of |vim.NIL|.
+                  • array: (boolean) When true, converts `null` in JSON arrays
+                    to Lua `nil` instead of |vim.NIL|.
+
+    Return: ~
+        (`any`)
+
+vim.json.encode({obj}, {opts})                             *vim.json.encode()*
+    Encodes (or "packs") Lua object {obj} as JSON in a Lua string.
+
+    Parameters: ~
+      • {obj}   (`any`)
+      • {opts}  (`table<string,any>?`) Options table with keys:
+                • escape_slash: (boolean) (default false) Escape slash
+                  characters "/" in string values.
+
+    Return: ~
+        (`string`)
+
+
+==============================================================================
+Lua module: vim.keymap                                            *vim.keymap*
+
+vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
+    Remove an existing mapping. Examples: >lua
+        vim.keymap.del('n', 'lhs')
+
+        vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
+<
+
+    Parameters: ~
+      • {modes}  (`string|string[]`)
+      • {lhs}    (`string`)
+      • {opts}   (`table?`) A table with the following fields:
+                 • {buffer}? (`integer|boolean`) Remove a mapping from the
+                   given buffer. When `0` or `true`, use the current buffer.
+
+    See also: ~
+      • |vim.keymap.set()|
+
+vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
+    Defines a |mapping| of |keycodes| to a function or keycodes.
+
+    Examples: >lua
+        -- Map "x" to a Lua function:
+        vim.keymap.set('n', 'x', function() print('real lua function') end)
+        -- Map "<leader>x" to multiple modes for the current buffer:
+        vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buffer = true })
+        -- Map <Tab> to an expression (|:map-<expr>|):
+        vim.keymap.set('i', '<Tab>', function()
+          return vim.fn.pumvisible() == 1 and '<C-n>' or '<Tab>'
+        end, { expr = true })
+        -- Map "[%%" to a <Plug> mapping:
+        vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
+<
+
+    Parameters: ~
+      • {mode}  (`string|string[]`) Mode "short-name" (see
+                |nvim_set_keymap()|), or a list thereof.
+      • {lhs}   (`string`) Left-hand side |{lhs}| of the mapping.
+      • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
+                can be a Lua function.
+      • {opts}  (`table?`) Table of |:map-arguments|. Same as
+                |nvim_set_keymap()| {opts}, except:
+                • {replace_keycodes} defaults to `true` if "expr" is `true`.
+
+                Also accepts:
+                • {buffer}? (`integer|boolean`) Creates buffer-local mapping,
+                  `0` or `true` for current buffer.
+                • {remap}? (`boolean`, default: `false`) Make the mapping
+                  recursive. Inverse of {noremap}.
+
+    See also: ~
+      • |nvim_set_keymap()|
+      • |maparg()|
+      • |mapcheck()|
+      • |mapset()|
+
+
+==============================================================================
+Lua module: vim.loader                                            *vim.loader*
+
+vim.loader.enable({enable})                              *vim.loader.enable()*
+    WARNING: This feature is experimental/unstable.
+
+    Enables or disables the experimental Lua module loader:
+
+    Enable (`enable=true`):
+    • overrides |loadfile()|
+    • adds the Lua loader using the byte-compilation cache
+    • adds the libs loader
+    • removes the default Nvim loader
+
+    Disable (`enable=false`):
+    • removes the loaders
+    • adds the default Nvim loader
+
+    Parameters: ~
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
+
+vim.loader.find({modname}, {opts})                         *vim.loader.find()*
+    WARNING: This feature is experimental/unstable.
+
+    Finds Lua modules for the given module name.
+
+    Parameters: ~
+      • {modname}  (`string`) Module name, or `"*"` to find the top-level
+                   modules instead
+      • {opts}     (`table?`) Options for finding a module:
+                   • {rtp}? (`boolean`, default: `true`) Search for modname in
+                     the runtime path.
+                   • {paths}? (`string[]`, default: `{}`) Extra paths to
+                     search for modname
+                   • {patterns}? (`string[]`, default:
+                     `{"/init.lua", ".lua"}`) List of patterns to use when
+                     searching for modules. A pattern is a string added to the
+                     basename of the Lua module being searched.
+                   • {all}? (`boolean`, default: `false`) Search for all
+                     matches.
+
+    Return: ~
+        (`table[]`) A list of objects with the following fields:
+        • {modpath} (`string`) Path of the module
+        • {modname} (`string`) Name of the module
+        • {stat}? (`uv.fs_stat.result`) The fs_stat of the module path. Won't
+          be returned for `modname="*"`
+
+vim.loader.reset({path})                                  *vim.loader.reset()*
+    WARNING: This feature is experimental/unstable.
+
+    Resets the cache for the path, or all the paths if path is nil.
+
+    Parameters: ~
+      • {path}  (`string?`) path to reset
+
+
+==============================================================================
+Lua module: vim.lpeg                                                *vim.lpeg*
+
+
+LPeg is a pattern-matching library for Lua, based on Parsing Expression
+Grammars (PEGs). https://bford.info/packrat/
+
+                                                   *lua-lpeg* *vim.lpeg.Pattern*
+The LPeg library for parsing expression grammars is included as `vim.lpeg`
+(https://www.inf.puc-rio.br/~roberto/lpeg/).
+
+In addition, its regex-like interface is available as |vim.re|
+(https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
+
+
+
+Pattern:match({subject}, {init}, {...})                      *Pattern:match()*
+    Matches the given `pattern` against the `subject` string. If the match
+    succeeds, returns the index in the subject of the first character after
+    the match, or the captured values (if the pattern captured any value). An
+    optional numeric argument `init` makes the match start at that position in
+    the subject string. As usual in Lua libraries, a negative value counts
+    from the end. Unlike typical pattern-matching functions, `match` works
+    only in anchored mode; that is, it tries to match the pattern with a
+    prefix of the given subject string (at position `init`), not with an
+    arbitrary substring of the subject. So, if we want to find a pattern
+    anywhere in a string, we must either write a loop in Lua or write a
+    pattern that matches anywhere.
+
+    Example: >lua
+        local pattern = lpeg.R('az') ^ 1 * -1
+        assert(pattern:match('hello') == 6)
+        assert(lpeg.match(pattern, 'hello') == 6)
+        assert(pattern:match('1 hello') == nil)
+<
+
+    Parameters: ~
+      • {subject}  (`string`)
+      • {init}     (`integer?`)
+      • {...}      (`any`)
+
+    Return: ~
+        (`any`) ...
+
+vim.lpeg.B({pattern})                                           *vim.lpeg.B()*
+    Returns a pattern that matches only if the input string at the current
+    position is preceded by `patt`. Pattern `patt` must match only strings
+    with some fixed length, and it cannot contain captures. Like the `and`
+    predicate, this pattern never consumes any input, independently of success
+    or failure.
+
+    Parameters: ~
+      • {pattern}  (`vim.lpeg.Pattern|string|integer|boolean|table`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.C({patt})                                              *vim.lpeg.C()*
+    Creates a simple capture, which captures the substring of the subject that
+    matches `patt`. The captured value is a string. If `patt` has other
+    captures, their values are returned after this one.
+
+    Example: >lua
+        local function split (s, sep)
+          sep = lpeg.P(sep)
+          local elem = lpeg.C((1 - sep) ^ 0)
+          local p = elem * (sep * elem) ^ 0
+          return lpeg.match(p, s)
+        end
+        local a, b, c = split('a,b,c', ',')
+        assert(a == 'a')
+        assert(b == 'b')
+        assert(c == 'c')
+<
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Carg({n})                                           *vim.lpeg.Carg()*
+    Creates an argument capture. This pattern matches the empty string and
+    produces the value given as the nth extra argument given in the call to
+    `lpeg.match`.
+
+    Parameters: ~
+      • {n}  (`integer`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cb({name})                                            *vim.lpeg.Cb()*
+    Creates a back capture. This pattern matches the empty string and produces
+    the values produced by the most recent group capture named `name` (where
+    `name` can be any Lua value). Most recent means the last complete
+    outermost group capture with the given name. A Complete capture means that
+    the entire pattern corresponding to the capture has matched. An Outermost
+    capture means that the capture is not inside another complete capture. In
+    the same way that LPeg does not specify when it evaluates captures, it
+    does not specify whether it reuses values previously produced by the group
+    or re-evaluates them.
+
+    Parameters: ~
+      • {name}  (`any`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cc({...})                                             *vim.lpeg.Cc()*
+    Creates a constant capture. This pattern matches the empty string and
+    produces all given values as its captured values.
+
+    Parameters: ~
+      • {...}  (`any`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cf({patt}, {func})                                    *vim.lpeg.Cf()*
+    Creates a fold capture. If `patt` produces a list of captures C1 C2 ...
+    Cn, this capture will produce the value
+    `func(...func(func(C1, C2), C3)...,Cn)`, that is, it will fold (or
+    accumulate, or reduce) the captures from `patt` using function `func`.
+    This capture assumes that `patt` should produce at least one capture with
+    at least one value (of any type), which becomes the initial value of an
+    accumulator. (If you need a specific initial value, you may prefix a
+    constant capture to `patt`.) For each subsequent capture, LPeg calls
+    `func` with this accumulator as the first argument and all values produced
+    by the capture as extra arguments; the first result from this call becomes
+    the new value for the accumulator. The final value of the accumulator
+    becomes the captured value.
+
+    Example: >lua
+        local number = lpeg.R('09') ^ 1 / tonumber
+        local list = number * (',' * number) ^ 0
+        local function add(acc, newvalue) return acc + newvalue end
+        local sum = lpeg.Cf(list, add)
+        assert(sum:match('10,30,43') == 83)
+<
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+      • {func}  (`fun(acc, newvalue)`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cg({patt}, {name})                                    *vim.lpeg.Cg()*
+    Creates a group capture. It groups all values returned by `patt` into a
+    single capture. The group may be anonymous (if no name is given) or named
+    with the given name (which can be any non-nil Lua value).
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+      • {name}  (`string?`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cmt({patt}, {fn})                                    *vim.lpeg.Cmt()*
+    Creates a match-time capture. Unlike all other captures, this one is
+    evaluated immediately when a match occurs (even if it is part of a larger
+    pattern that fails later). It forces the immediate evaluation of all its
+    nested captures and then calls `function`. The given function gets as
+    arguments the entire subject, the current position (after the match of
+    `patt`), plus any capture values produced by `patt`. The first value
+    returned by `function` defines how the match happens. If the call returns
+    a number, the match succeeds and the returned number becomes the new
+    current position. (Assuming a subject sand current position `i`, the
+    returned number must be in the range `[i, len(s) + 1]`.) If the call
+    returns `true`, the match succeeds without consuming any input (so, to
+    return true is equivalent to return `i`). If the call returns `false`,
+    `nil`, or no value, the match fails. Any extra values returned by the
+    function become the values produced by the capture.
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+      • {fn}    (`fun(s: string, i: integer, ...: any)`) (position:
+                boolean|integer, ...: any)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cp()                                                  *vim.lpeg.Cp()*
+    Creates a position capture. It matches the empty string and captures the
+    position in the subject where the match occurs. The captured value is a
+    number.
+
+    Example: >lua
+        local I = lpeg.Cp()
+        local function anywhere(p) return lpeg.P({I * p * I + 1 * lpeg.V(1)}) end
+        local match_start, match_end = anywhere('world'):match('hello world!')
+        assert(match_start == 7)
+        assert(match_end == 12)
+<
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cs({patt})                                            *vim.lpeg.Cs()*
+    Creates a substitution capture. This function creates a substitution
+    capture, which captures the substring of the subject that matches `patt`,
+    with substitutions. For any capture inside `patt` with a value, the
+    substring that matched the capture is replaced by the capture value (which
+    should be a string). The final captured value is the string resulting from
+    all replacements.
+
+    Example: >lua
+        local function gsub (s, patt, repl)
+          patt = lpeg.P(patt)
+          patt = lpeg.Cs((patt / repl + 1) ^ 0)
+          return lpeg.match(patt, s)
+        end
+        assert(gsub('Hello, xxx!', 'xxx', 'World') == 'Hello, World!')
+<
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Ct({patt})                                            *vim.lpeg.Ct()*
+    Creates a table capture. This capture returns a table with all values from
+    all anonymous captures made by `patt` inside this table in successive
+    integer keys, starting at 1. Moreover, for each named capture group
+    created by `patt`, the first value of the group is put into the table with
+    the group name as its key. The captured value is only the table.
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.locale({tab})                                     *vim.lpeg.locale()*
+    Returns a table with patterns for matching some character classes
+    according to the current locale. The table has fields named `alnum`,
+    `alpha`, `cntrl`, `digit`, `graph`, `lower`, `print`, `punct`, `space`,
+    `upper`, and `xdigit`, each one containing a correspondent pattern. Each
+    pattern matches any single character that belongs to its class. If called
+    with an argument `table`, then it creates those fields inside the given
+    table and returns that table.
+
+    Example: >lua
+        lpeg.locale(lpeg)
+        local space = lpeg.space ^ 0
+        local name = lpeg.C(lpeg.alpha ^ 1) * space
+        local sep = lpeg.S(',;') * space
+        local pair = lpeg.Cg(name * '=' * space * name) * sep ^ -1
+        local list = lpeg.Cf(lpeg.Ct('') * pair ^ 0, rawset)
+        local t = list:match('a=b, c = hi; next = pi')
+        assert(t.a == 'b')
+        assert(t.c == 'hi')
+        assert(t.next == 'pi')
+        local locale = lpeg.locale()
+        assert(type(locale.digit) == 'userdata')
+<
+
+    Parameters: ~
+      • {tab}  (`table?`)
+
+    Return: ~
+        (`vim.lpeg.Locale`)
+
+vim.lpeg.match({pattern}, {subject}, {init}, {...})         *vim.lpeg.match()*
+    Matches the given `pattern` against the `subject` string. If the match
+    succeeds, returns the index in the subject of the first character after
+    the match, or the captured values (if the pattern captured any value). An
+    optional numeric argument `init` makes the match start at that position in
+    the subject string. As usual in Lua libraries, a negative value counts
+    from the end. Unlike typical pattern-matching functions, `match` works
+    only in anchored mode; that is, it tries to match the pattern with a
+    prefix of the given subject string (at position `init`), not with an
+    arbitrary substring of the subject. So, if we want to find a pattern
+    anywhere in a string, we must either write a loop in Lua or write a
+    pattern that matches anywhere.
+
+    Example: >lua
+        local pattern = lpeg.R('az') ^ 1 * -1
+        assert(pattern:match('hello') == 6)
+        assert(lpeg.match(pattern, 'hello') == 6)
+        assert(pattern:match('1 hello') == nil)
+<
+
+    Parameters: ~
+      • {pattern}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+      • {subject}  (`string`)
+      • {init}     (`integer?`)
+      • {...}      (`any`)
+
+    Return: ~
+        (`any`) ...
+
+vim.lpeg.P({value})                                             *vim.lpeg.P()*
+    Converts the given value into a proper pattern. The following rules are
+    applied:
+    • If the argument is a pattern, it is returned unmodified.
+    • If the argument is a string, it is translated to a pattern that matches
+      the string literally.
+    • If the argument is a non-negative number `n`, the result is a pattern
+      that matches exactly `n` characters.
+    • If the argument is a negative number `-n`, the result is a pattern that
+      succeeds only if the input string has less than `n` characters left:
+      `lpeg.P(-n)` is equivalent to `-lpeg.P(n)` (see the unary minus
+      operation).
+    • If the argument is a boolean, the result is a pattern that always
+      succeeds or always fails (according to the boolean value), without
+      consuming any input.
+    • If the argument is a table, it is interpreted as a grammar (see
+      Grammars).
+    • If the argument is a function, returns a pattern equivalent to a
+      match-time capture over the empty string.
+
+    Parameters: ~
+      • {value}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.R({...})                                               *vim.lpeg.R()*
+    Returns a pattern that matches any single character belonging to one of
+    the given ranges. Each `range` is a string `xy` of length 2, representing
+    all characters with code between the codes of `x` and `y` (both
+    inclusive). As an example, the pattern `lpeg.R('09')` matches any digit,
+    and `lpeg.R('az', 'AZ')` matches any ASCII letter.
+
+    Example: >lua
+        local pattern = lpeg.R('az') ^ 1 * -1
+        assert(pattern:match('hello') == 6)
+<
+
+    Parameters: ~
+      • {...}  (`string`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.S({string})                                            *vim.lpeg.S()*
+    Returns a pattern that matches any single character that appears in the
+    given string (the `S` stands for Set). As an example, the pattern
+    `lpeg.S('+-*/')` matches any arithmetic operator. Note that, if `s` is a
+    character (that is, a string of length 1), then `lpeg.P(s)` is equivalent
+    to `lpeg.S(s)` which is equivalent to `lpeg.R(s..s)`. Note also that both
+    `lpeg.S('')` and `lpeg.R()` are patterns that always fail.
+
+    Parameters: ~
+      • {string}  (`string`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.setmaxstack({max})                           *vim.lpeg.setmaxstack()*
+    Sets a limit for the size of the backtrack stack used by LPeg to track
+    calls and choices. The default limit is `400`. Most well-written patterns
+    need little backtrack levels and therefore you seldom need to change this
+    limit; before changing it you should try to rewrite your pattern to avoid
+    the need for extra space. Nevertheless, a few useful patterns may
+    overflow. Also, with recursive grammars, subjects with deep recursion may
+    also need larger limits.
+
+    Parameters: ~
+      • {max}  (`integer`)
+
+vim.lpeg.type({value})                                       *vim.lpeg.type()*
+    Returns the string `"pattern"` if the given value is a pattern, otherwise
+    `nil`.
+
+    Parameters: ~
+      • {value}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+
+    Return: ~
+        (`"pattern"?`)
+
+vim.lpeg.V({v})                                                 *vim.lpeg.V()*
+    Creates a non-terminal (a variable) for a grammar. This operation creates
+    a non-terminal (a variable) for a grammar. The created non-terminal refers
+    to the rule indexed by `v` in the enclosing grammar.
+
+    Example: >lua
+        local b = lpeg.P({'(' * ((1 - lpeg.S '()') + lpeg.V(1)) ^ 0 * ')'})
+        assert(b:match('((string))') == 11)
+        assert(b:match('(') == nil)
+<
+
+    Parameters: ~
+      • {v}  (`boolean|string|number|function|table|thread|userdata|lightuserdata`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.version()                                        *vim.lpeg.version()*
+    Returns a string with the running version of LPeg.
+
+    Return: ~
+        (`string`)
+
+
+==============================================================================
+Lua module: vim.mpack                                              *vim.mpack*
+
+This module provides encoding and decoding of Lua objects to and from
+msgpack-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
+
+
+vim.mpack.decode({str})                                   *vim.mpack.decode()*
+    Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
+
+    Parameters: ~
+      • {str}  (`string`)
+
+    Return: ~
+        (`any`)
+
+vim.mpack.encode({obj})                                   *vim.mpack.encode()*
+    Encodes (or "packs") Lua object {obj} as msgpack in a Lua string.
+
+    Parameters: ~
+      • {obj}  (`any`)
+
+    Return: ~
+        (`string`)
+
+
+==============================================================================
+Lua module: vim.net                                                  *vim.net*
+
+vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
+    Makes an HTTP GET request to the given URL (asynchronous).
+
+    This function operates in one mode:
+    • Asynchronous (non-blocking): Returns immediately and passes the response
+      object to the provided `on_response` handler on completetion.
+
+    Parameters: ~
+      • {url}          (`string`) The URL for the request.
+      • {opts}         (`table?`) Optional parameters:
+                       • `verbose` (boolean|nil): Enables verbose output.
+                       • `retry` (integer|nil): Number of retries on transient
+                         failures (default: 3).
+                       • `outpath` (string|nil): File path to save the
+                         response body to. If set, the `body` value in the
+                         Response Object will be `true` instead of the
+                         response body.
+      • {on_response}  (`fun(err?: string, response?: { body: string|boolean })`)
+                       Callback invoked on request completetion. The `body`
+                       field in the response object contains the raw response
+                       data (text or binary). Called with (err, nil) on
+                       failure, or (nil, { body = string|boolean }) on
+                       success.
+
+
+==============================================================================
+Lua module: vim.re                                                    *vim.re*
+
+The `vim.re` module provides a conventional regex-like syntax for pattern
+usage within LPeg |vim.lpeg|. (Unrelated to |vim.regex| which provides Vim
+|regexp| from Lua.)
+
+See https://www.inf.puc-rio.br/~roberto/lpeg/re.html for the original
+documentation including regex syntax and examples.
+
+
+vim.re.compile({string}, {defs})                            *vim.re.compile()*
+    Compiles the given {string} and returns an equivalent LPeg pattern. The
+    given string may define either an expression or a grammar. The optional
+    {defs} table provides extra Lua values to be used by the pattern.
+
+    Parameters: ~
+      • {string}  (`string`)
+      • {defs}    (`table?`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.re.find({subject}, {pattern}, {init})                      *vim.re.find()*
+    Searches the given {pattern} in the given {subject}. If it finds a match,
+    returns the index where this occurrence starts and the index where it
+    ends. Otherwise, returns nil.
+
+    An optional numeric argument {init} makes the search starts at that
+    position in the subject string. As usual in Lua libraries, a negative
+    value counts from the end.
+
+    Parameters: ~
+      • {subject}  (`string`)
+      • {pattern}  (`vim.lpeg.Pattern|string`)
+      • {init}     (`integer?`)
+
+    Return (multiple): ~
+        (`integer?`) the index where the occurrence starts, nil if no match
+        (`integer?`) the index where the occurrence ends, nil if no match
+
+vim.re.gsub({subject}, {pattern}, {replacement})               *vim.re.gsub()*
+    Does a global substitution, replacing all occurrences of {pattern} in the
+    given {subject} by {replacement}.
+
+    Parameters: ~
+      • {subject}      (`string`)
+      • {pattern}      (`vim.lpeg.Pattern|string`)
+      • {replacement}  (`string`)
+
+    Return: ~
+        (`string`)
+
+vim.re.match({subject}, {pattern}, {init})                    *vim.re.match()*
+    Matches the given {pattern} against the given {subject}, returning all
+    captures.
+
+    Parameters: ~
+      • {subject}  (`string`)
+      • {pattern}  (`vim.lpeg.Pattern|string`)
+      • {init}     (`integer?`)
+
+    Return: ~
+        (`integer|vim.lpeg.Capture?`)
+
+    See also: ~
+      • vim.lpeg.match()
+
+vim.re.updatelocale()                                  *vim.re.updatelocale()*
+    Updates the pre-defined character classes to the current locale.
+
+
+==============================================================================
+Lua module: vim.regex                                              *vim.regex*
+
+Vim regexes can be used directly from Lua. Currently they only allow matching
+within a single line.
+
+
+                                                          *regex:match_line()*
+regex:match_line({bufnr}, {line_idx}, {start}, {end_})
+    Matches line at `line_idx` (zero-based) in buffer `bufnr`. Match is
+    restricted to byte index range `start` and `end_` if given, otherwise see
+    |regex:match_str()|. Returned byte indices are relative to `start` if
+    given.
+
+    Parameters: ~
+      • {bufnr}     (`integer`)
+      • {line_idx}  (`integer`)
+      • {start}     (`integer?`)
+      • {end_}      (`integer?`)
+
+    Return (multiple): ~
+        (`integer?`) match start (byte index) relative to `start`, or `nil` if
+        no match
+        (`integer?`) match end (byte index) relative to `start`, or `nil` if
+        no match
+
+regex:match_str({str})                                     *regex:match_str()*
+    Matches string `str` against this regex. To match the string precisely,
+    surround the regex with "^" and "$". Returns the byte indices for the
+    start and end of the match, or `nil` if there is no match. Because any
+    integer is "truthy", `regex:match_str()` can be directly used as a
+    condition in an if-statement.
+
+    Parameters: ~
+      • {str}  (`string`)
+
+    Return (multiple): ~
+        (`integer?`) match start (byte index), or `nil` if no match
+        (`integer?`) match end (byte index), or `nil` if no match
+
+vim.regex({re})                                                  *vim.regex()*
+    Parses the Vim regex `re` and returns a regex object. Regexes are "magic"
+    and case-sensitive by default, regardless of 'magic' and 'ignorecase'.
+    They can be controlled with flags, see |/magic| and |/ignorecase|.
+
+    Parameters: ~
+      • {re}  (`string`)
+
+    Return: ~
+        (`vim.regex`)
+
+
+==============================================================================
+Lua module: vim.secure                                            *vim.secure*
+
+vim.secure.read({path})                                    *vim.secure.read()*
+    If {path} is a file: attempt to read the file, prompting the user if the
+    file should be trusted.
+
+    If {path} is a directory: return true if the directory is trusted
+    (non-recursive), prompting the user as necessary.
+
+    The user's choice is persisted in a trust database at
+    $XDG_STATE_HOME/nvim/trust.
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {path}  (`string`) Path to a file or directory to read.
+
+    Return: ~
+        (`boolean|string?`) If {path} is not trusted or does not exist,
+        returns `nil`. Otherwise, returns the contents of {path} if it is a
+        file, or true if {path} is a directory.
+
+    See also: ~
+      • |:trust|
+
+vim.secure.trust({opts})                                  *vim.secure.trust()*
+    Manage the trust database.
+
+    The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {opts}  (`table`) A table with the following fields:
+                • {action} (`'allow'|'deny'|'remove'`) - `'allow'` to add a
+                  file to the trust database and trust it,
+                • `'deny'` to add a file to the trust database and deny it,
+                • `'remove'` to remove file from the trust database
+                • {path}? (`string`) Path to a file to update. Mutually
+                  exclusive with {bufnr}. Cannot be used when {action} is
+                  "allow".
+                • {bufnr}? (`integer`) Buffer number to update. Mutually
+                  exclusive with {path}.
+
+    Return (multiple): ~
+        (`boolean`) success true if operation was successful
+        (`string`) msg full path if operation was successful, else error
+        message
+
+
+==============================================================================
 Lua module: vim.snippet                                          *vim.snippet*
 
 *vim.snippet.ActiveFilter*
@@ -4738,6 +4128,201 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
 
 vim.snippet.stop()                                        *vim.snippet.stop()*
     Exits the current snippet.
+
+
+==============================================================================
+Lua module: vim.spell                                              *vim.spell*
+
+vim.spell.check({str})                                     *vim.spell.check()*
+    Check {str} for spelling errors. Similar to the Vimscript function
+    |spellbadword()|.
+
+    Note: The behaviour of this function is dependent on: 'spelllang',
+    'spellfile', 'spellcapcheck' and 'spelloptions' which can all be local to
+    the buffer. Consider calling this with |nvim_buf_call()|.
+
+    Example: >lua
+        vim.spell.check("the quik brown fox")
+        -- =>
+        -- {
+        --     {'quik', 'bad', 5}
+        -- }
+<
+
+    Parameters: ~
+      • {str}  (`string`)
+
+    Return: ~
+        (`[string, 'bad'|'rare'|'local'|'caps', integer][]`) List of tuples
+        with three items:
+        • The badly spelled word.
+        • The type of the spelling error: "bad" spelling mistake "rare" rare
+          word "local" word only valid in another region "caps" word should
+          start with Capital
+        • The position in {str} where the word begins.
+
+
+==============================================================================
+Lua module: vim.system                                        *lua-vim-system*
+
+*vim.SystemCompleted*
+
+    Fields: ~
+      • {code}     (`integer`)
+      • {signal}   (`integer`)
+      • {stdout}?  (`string`) `nil` if stdout is disabled or has a custom
+                   handler.
+      • {stderr}?  (`string`) `nil` if stderr is disabled or has a custom
+                   handler.
+
+*vim.SystemObj*
+
+    Fields: ~
+      • {cmd}         (`string[]`) Command name and args
+      • {pid}         (`integer`) Process ID
+      • {kill}        (`fun(self: vim.SystemObj, signal: integer|string)`) See
+                      |SystemObj:kill()|.
+      • {wait}        (`fun(self: vim.SystemObj, timeout: integer?): vim.SystemCompleted`)
+                      See |SystemObj:wait()|.
+      • {write}       (`fun(self: vim.SystemObj, data: string[]|string?)`) See
+                      |SystemObj:write()|.
+      • {is_closing}  (`fun(self: vim.SystemObj): boolean`) See
+                      |SystemObj:is_closing()|.
+
+
+SystemObj:is_closing()                                *SystemObj:is_closing()*
+    Checks if the process handle is closing or already closed.
+
+    This method returns `true` if the underlying process handle is either
+    `nil` or is in the process of closing. It is useful for determining
+    whether it is safe to perform operations on the process handle.
+
+    Return: ~
+        (`boolean`)
+
+SystemObj:kill({signal})                                    *SystemObj:kill()*
+    Sends a signal to the process.
+
+    The signal can be specified as an integer or as a string.
+
+    Example: >lua
+        local obj = vim.system({'sleep', '10'})
+        obj:kill('TERM') -- sends SIGTERM to the process
+<
+
+    Parameters: ~
+      • {signal}  (`integer|string`) Signal to send to the process.
+
+SystemObj:wait({timeout})                                   *SystemObj:wait()*
+    Waits for the process to complete or until the specified timeout elapses.
+
+    This method blocks execution until the associated process has exited or
+    the optional `timeout` (in milliseconds) has been reached. If the process
+    does not exit before the timeout, it is forcefully terminated with SIGKILL
+    (signal 9), and the exit code is set to 124.
+
+    If no `timeout` is provided, the method will wait indefinitely (or use the
+    timeout specified in the options when the process was started).
+
+    Example: >lua
+        local obj = vim.system({'echo', 'hello'}, { text = true })
+        local result = obj:wait(1000) -- waits up to 1000ms
+        print(result.code, result.signal, result.stdout, result.stderr)
+<
+
+    Parameters: ~
+      • {timeout}  (`integer?`)
+
+    Return: ~
+        (`vim.SystemCompleted`) See |vim.SystemCompleted|.
+
+SystemObj:write({data})                                    *SystemObj:write()*
+    Writes data to the stdin of the process or closes stdin.
+
+    If `data` is a list of strings, each string is written followed by a
+    newline.
+
+    If `data` is a string, it is written as-is.
+
+    If `data` is `nil`, the write side of the stream is shut down and the pipe
+    is closed.
+
+    Example: >lua
+        local obj = vim.system({'cat'}, { stdin = true })
+        obj:write({'hello', 'world'}) -- writes 'hello\nworld\n' to stdin
+        obj:write(nil) -- closes stdin
+<
+
+    Parameters: ~
+      • {data}  (`string[]|string?`)
+
+vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
+    Runs a system command or throws an error if {cmd} cannot be run.
+
+    The command runs directly (not in 'shell') so shell builtins such as
+    "echo" in cmd.exe, cmdlets in powershell, or "help" in bash, will not work
+    unless you actually invoke a shell: `vim.system({'bash', '-c', 'help'})`.
+
+    Examples: >lua
+        local on_exit = function(obj)
+          print(obj.code)
+          print(obj.signal)
+          print(obj.stdout)
+          print(obj.stderr)
+        end
+
+        -- Runs asynchronously:
+        vim.system({'echo', 'hello'}, { text = true }, on_exit)
+
+        -- Runs synchronously:
+        local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
+        -- { code = 0, signal = 0, stdout = 'hello\n', stderr = '' }
+<
+
+    See |uv.spawn()| for more details. Note: unlike |uv.spawn()|, vim.system
+    throws an error if {cmd} cannot be run.
+
+    Parameters: ~
+      • {cmd}      (`string[]`) Command to execute
+      • {opts}     (`table?`) A table with the following fields:
+                   • {cwd}? (`string`) Set the current working directory for
+                     the sub-process.
+                   • {env}? (`table<string,string|number>`) Set environment
+                     variables for the new process. Inherits the current
+                     environment with `NVIM` set to |v:servername|.
+                   • {clear_env}? (`boolean`) `env` defines the job
+                     environment exactly, instead of merging current
+                     environment. Note: if `env` is `nil`, the current
+                     environment is used but without `NVIM` set.
+                   • {stdin}? (`string|string[]|true`) If `true`, then a pipe
+                     to stdin is opened and can be written to via the
+                     `write()` method to SystemObj. If `string` or `string[]`
+                     then will be written to stdin and closed.
+                   • {stdout}? (`fun(err:string?, data: string?)|boolean`,
+                     default: `true`) Handle output from stdout.
+                   • {stderr}? (`fun(err:string?, data: string?)|boolean`,
+                     default: `true`) Handle output from stderr.
+                   • {text}? (`boolean`) Handle stdout and stderr as text.
+                     Normalizes line endings by replacing `\r\n` with `\n`.
+                   • {timeout}? (`integer`) Run the command with a time limit
+                     in ms. Upon timeout the process is sent the TERM signal
+                     (15) and the exit code is set to 124.
+                   • {detach}? (`boolean`) Spawn the child process in a
+                     detached state - this will make it a process group
+                     leader, and will effectively enable the child to keep
+                     running after the parent exits. Note that the child
+                     process will still keep the parent's event loop alive
+                     unless the parent process calls |uv.unref()| on the
+                     child's process handle.
+      • {on_exit}  (`fun(out: vim.SystemCompleted)?`) Called when subprocess
+                   exits. When provided, the command runs asynchronously. See
+                   return of SystemObj:wait().
+
+    Overloads: ~
+      • `fun(cmd: string, on_exit: fun(out: vim.SystemCompleted)): vim.SystemObj`
+
+    Return: ~
+        (`vim.SystemObj`) See |vim.SystemObj|.
 
 
 ==============================================================================
@@ -4863,6 +4448,414 @@ vim.text.indent({size}, {text}, {opts})                    *vim.text.indent()*
 
 
 ==============================================================================
+Lua module: vim.ui                                                    *vim.ui*
+
+vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
+    Prompts the user for input, allowing arbitrary (potentially asynchronous)
+    work until `on_confirm`.
+
+    Example: >lua
+        vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
+            vim.o.shiftwidth = tonumber(input)
+        end)
+<
+
+    Parameters: ~
+      • {opts}        (`table?`) Additional options. See |input()|
+                      • {prompt}? (`string`) Text of the prompt
+                      • {default}? (`string`) Default reply to the input
+                      • {completion}? (`string`) Specifies type of completion
+                        supported for input. Supported types are the same that
+                        can be supplied to a user-defined command using the
+                        "-complete=" argument. See |:command-completion|
+                      • {highlight}? (`function`) Function that will be used
+                        for highlighting user inputs.
+      • {on_confirm}  (`fun(input?: string)`) Called once the user confirms or
+                      abort the input. `input` is what the user typed (it
+                      might be an empty string if nothing was entered), or
+                      `nil` if the user aborted the dialog.
+
+vim.ui.open({path}, {opt})                                     *vim.ui.open()*
+    Opens `path` with the system default handler (macOS `open`, Windows
+    `explorer.exe`, Linux `xdg-open`, …), or returns (but does not show) an
+    error message on failure.
+
+    Can also be invoked with `:Open`.                                  *:Open*
+
+    Expands "~/" and environment variables in filesystem paths.
+
+    Examples: >lua
+        -- Asynchronous.
+        vim.ui.open("https://neovim.io/")
+        vim.ui.open("~/path/to/file")
+        -- Use the "osurl" command to handle the path or URL.
+        vim.ui.open("gh#neovim/neovim!29490", { cmd = { 'osurl' } })
+        -- Synchronous (wait until the process exits).
+        local cmd, err = vim.ui.open("$VIMRUNTIME")
+        if cmd then
+          cmd:wait()
+        end
+<
+
+    Parameters: ~
+      • {path}  (`string`) Path or URL to open
+      • {opt}   (`table?`) Options
+                • {cmd}? (`string[]`) Command used to open the path or URL.
+
+    Return (multiple): ~
+        (`vim.SystemObj?`) Command object, or nil if not found. See
+        |vim.SystemObj|.
+        (`string?`) Error message on failure, or nil on success.
+
+    See also: ~
+      • |vim.system()|
+
+vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
+    Prompts the user to pick from a list of items, allowing arbitrary
+    (potentially asynchronous) work until `on_choice`.
+
+    Example: >lua
+        vim.ui.select({ 'tabs', 'spaces' }, {
+            prompt = 'Select tabs or spaces:',
+            format_item = function(item)
+                return "I'd like to choose " .. item
+            end,
+        }, function(choice)
+            if choice == 'spaces' then
+                vim.o.expandtab = true
+            else
+                vim.o.expandtab = false
+            end
+        end)
+<
+
+    Parameters: ~
+      • {items}      (`any[]`) Arbitrary items
+      • {opts}       (`table`) Additional options
+                     • {prompt}? (`string`) Text of the prompt. Defaults to
+                       `Select one of:`
+                     • {format_item}? (`fun(item: any):string`) Function to
+                       format an individual item from `items`. Defaults to
+                       `tostring`.
+                     • {kind}? (`string`) Arbitrary hint string indicating the
+                       item shape. Plugins reimplementing `vim.ui.select` may
+                       wish to use this to infer the structure or semantics of
+                       `items`, or the context in which select() was called.
+      • {on_choice}  (`fun(item: T?, idx: integer?)`) Called once the user
+                     made a choice. `idx` is the 1-based index of `item`
+                     within `items`. `nil` if the user aborted the dialog.
+
+
+==============================================================================
+Lua module: vim.uri                                                  *vim.uri*
+
+vim.uri_decode({str})                                       *vim.uri_decode()*
+    URI-decodes a string containing percent escapes.
+
+    Parameters: ~
+      • {str}  (`string`) string to decode
+
+    Return: ~
+        (`string`) decoded string
+
+vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
+    URI-encodes a string using percent escapes.
+
+    Parameters: ~
+      • {str}  (`string`) string to encode
+      • {rfc}  (`"rfc2396"|"rfc2732"|"rfc3986"?`)
+
+    Return: ~
+        (`string`) encoded string
+
+vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
+    Gets a URI from a bufnr.
+
+    Parameters: ~
+      • {bufnr}  (`integer`)
+
+    Return: ~
+        (`string`) URI
+
+vim.uri_from_fname({path})                              *vim.uri_from_fname()*
+    Gets a URI from a file path.
+
+    Parameters: ~
+      • {path}  (`string`) Path to file
+
+    Return: ~
+        (`string`) URI
+
+vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
+    Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
+    the uri already exists.
+
+    Parameters: ~
+      • {uri}  (`string`)
+
+    Return: ~
+        (`integer`) bufnr
+
+vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
+    Gets a filename from a URI.
+
+    Parameters: ~
+      • {uri}  (`string`)
+
+    Return: ~
+        (`string`) filename or unchanged URI for non-file URIs
+
+
+==============================================================================
+Lua module: vim.version                                          *vim.version*
+
+The `vim.version` module provides functions for comparing versions and ranges
+conforming to the https://semver.org spec. Plugins, and plugin managers, can
+use this to check available tools and dependencies on the current system.
+
+Example: >lua
+    local v = vim.version.parse(vim.system({'tmux', '-V'}):wait().stdout, {strict=false})
+    if vim.version.gt(v, {3, 2, 0}) then
+      -- ...
+    end
+<
+
+*vim.version()* returns the version of the current Nvim process.
+
+VERSION RANGE SPEC                                             *version-range*
+
+A version "range spec" defines a semantic version range which can be tested
+against a version, using |vim.version.range()|.
+
+Supported range specs are shown in the following table. Note: suffixed
+versions (1.2.3-rc1) are not matched. >
+    1.2.3             is 1.2.3
+    =1.2.3            is 1.2.3
+    >1.2.3            greater than 1.2.3
+    <1.2.3            before 1.2.3
+    >=1.2.3           at least 1.2.3
+    <=1.2.3           at most 1.2.3
+    ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
+    ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
+    ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
+    ^0.0.1            is =0.0.1               (0.0.x is special)
+    ^1.2              is >=1.2.0 <2.0.0       (like ^1.2.0)
+    ~1.2              is >=1.2.0 <1.3.0       (like ~1.2.0)
+    ^1                is >=1.0.0 <2.0.0       "compatible with 1"
+    ~1                same                    "reasonably close to 1"
+    1.x               same
+    1.*               same
+    1                 same
+    *                 any version
+    x                 same
+
+    1.2.3 - 2.3.4     is >=1.2.3 <2.3.4
+
+    Partial right: missing pieces treated as x (2.3 => 2.3.x).
+    1.2.3 - 2.3       is >=1.2.3 <2.4.0
+    1.2.3 - 2         is >=1.2.3 <3.0.0
+
+    Partial left: missing pieces treated as 0 (1.2 => 1.2.0).
+    1.2 - 2.3.0       is 1.2.0 - 2.3.0
+<
+
+
+*vim.VersionRange*
+
+    Fields: ~
+      • {from}  (`vim.Version`)
+      • {to}?   (`vim.Version`)
+      • {has}   (`fun(self: vim.VersionRange, version: string|vim.Version): boolean`)
+                See |VersionRange:has()|.
+
+
+VersionRange:has({version})                               *VersionRange:has()*
+    Check if a version is in the range (inclusive `from`, exclusive `to`).
+
+    Example: >lua
+        local r = vim.version.range('1.0.0 - 2.0.0')
+        print(r:has('1.9.9'))       -- true
+        print(r:has('2.0.0'))       -- false
+        print(r:has(vim.version())) -- check against current Nvim version
+<
+
+    Or use cmp(), le(), lt(), ge(), gt(), and/or eq() to compare a version
+    against `.to` and `.from` directly: >lua
+        local r = vim.version.range('1.0.0 - 2.0.0') -- >=1.0, <2.0
+        print(vim.version.ge({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
+<
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {version}  (`string|vim.Version`)
+
+    Return: ~
+        (`boolean`)
+
+    See also: ~
+      • https://github.com/npm/node-semver#ranges
+
+vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
+    Parses and compares two version objects (the result of
+    |vim.version.parse()|, or specified literally as a `{major, minor, patch}`
+    tuple, e.g. `{1, 0, 3}`).
+
+    Example: >lua
+        if vim.version.cmp({1,0,3}, {0,2,1}) == 0 then
+          -- ...
+        end
+        local v1 = vim.version.parse('1.0.3-pre')
+        local v2 = vim.version.parse('0.2.1')
+        if vim.version.cmp(v1, v2) == 0 then
+          -- ...
+        end
+<
+
+    Note: ~
+      • Per semver, build metadata is ignored when comparing two
+        otherwise-equivalent versions.
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {v1}  (`vim.Version|number[]|string`) Version object.
+      • {v2}  (`vim.Version|number[]|string`) Version to compare with `v1`.
+
+    Return: ~
+        (`integer`) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
+
+vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
+    Returns `true` if the given versions are equal. See |vim.version.cmp()|
+    for usage.
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
+
+    Return: ~
+        (`boolean`)
+
+vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
+    Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
+
+    Return: ~
+        (`boolean`)
+
+vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
+    Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
+
+    Return: ~
+        (`boolean`)
+
+vim.version.intersect({r1}, {r2})                    *vim.version.intersect()*
+    WARNING: This feature is experimental/unstable.
+
+    Computes the common range shared by the given ranges.
+
+    Parameters: ~
+      • {r1}  (`vim.VersionRange`) First range to intersect. See
+              |vim.VersionRange|.
+      • {r2}  (`vim.VersionRange`) Second range to intersect. See
+              |vim.VersionRange|.
+
+    Return: ~
+        (`vim.VersionRange?`) Maximal range that is present inside both `r1`
+        and `r2`. `nil` if such range does not exist. See |vim.VersionRange|.
+
+vim.version.last({versions})                              *vim.version.last()*
+    TODO: generalize this, move to func.lua
+
+    Parameters: ~
+      • {versions}  (`vim.Version[]`)
+
+    Return: ~
+        (`vim.Version?`)
+
+vim.version.le({v1}, {v2})                                  *vim.version.le()*
+    Returns `true` if `v1 <= v2`. See |vim.version.cmp()| for usage.
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
+
+    Return: ~
+        (`boolean`)
+
+vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
+    Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {v1}  (`vim.Version|number[]|string`)
+      • {v2}  (`vim.Version|number[]|string`)
+
+    Return: ~
+        (`boolean`)
+
+vim.version.parse({version}, {opts})                     *vim.version.parse()*
+    Parses a semantic version string and returns a version object which can be
+    used with other `vim.version` functions. For example "1.0.1-rc1+build.2"
+    returns: >
+        { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
+<
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {version}  (`string`) Version string to parse.
+      • {opts}     (`table?`) Options for parsing.
+                   • {strict}? (`boolean`, default: `false`) If `true`, no
+                     coercion is attempted on input not conforming to semver
+                     v2.0.0. If `false`, `parse()` attempts to coerce input
+                     such as "1.0", "0-x", "tmux 3.2a" into valid versions.
+
+    Return: ~
+        (`vim.Version?`) `Version` object or `nil` if input is invalid.
+
+    See also: ~
+      • https://semver.org/spec/v2.0.0.html
+
+vim.version.range({spec})                                *vim.version.range()*
+    Parses a semver |version-range| "spec" and returns |vim.VersionRange|
+    object:
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {spec}  (`string`) Version range "spec"
+
+    Return: ~
+        (`vim.VersionRange?`) See |vim.VersionRange|.
+
+
+==============================================================================
 Lua module: tohtml                                                *vim.tohtml*
 
 
@@ -4896,31 +4889,38 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
 
 
 ==============================================================================
-Lua module: vim.net                                                  *vim.net*
+Lua module: vim._extui                                            *vim._extui*
 
-vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
-    Makes an HTTP GET request to the given URL (asynchronous).
+WARNING: This is an experimental interface intended to replace the message
+grid in the TUI.
 
-    This function operates in one mode:
-    • Asynchronous (non-blocking): Returns immediately and passes the response
-      object to the provided `on_response` handler on completetion.
+To enable the experimental UI (default opts shown): >lua
+    require('vim._extui').enable({
+     enable = true, -- Whether to enable or disable the UI.
+     msg = { -- Options related to the message module.
+       ---@type 'cmd'|'msg' Where to place regular messages, either in the
+       ---cmdline or in a separate ephemeral message window.
+       target = 'cmd',
+       timeout = 4000, -- Time a message is visible in the message window.
+     },
+    })
+<
 
-    Parameters: ~
-      • {url}          (`string`) The URL for the request.
-      • {opts}         (`table?`) Optional parameters:
-                       • `verbose` (boolean|nil): Enables verbose output.
-                       • `retry` (integer|nil): Number of retries on transient
-                         failures (default: 3).
-                       • `outpath` (string|nil): File path to save the
-                         response body to. If set, the `body` value in the
-                         Response Object will be `true` instead of the
-                         response body.
-      • {on_response}  (`fun(err?: string, response?: { body: string|boolean })`)
-                       Callback invoked on request completetion. The `body`
-                       field in the response object contains the raw response
-                       data (text or binary). Called with (err, nil) on
-                       failure, or (nil, { body = string|boolean }) on
-                       success.
+There are four separate window types used by this interface:
+• "cmd": The cmdline window; also used for 'showcmd', 'showmode', 'ruler', and
+  messages if 'cmdheight' > 0.
+• "msg": The message window; used for messages when 'cmdheight' == 0.
+• "pager": The pager window; used for |:messages| and certain messages that
+  should be shown in full.
+• "dialog": The dialog window; used for prompt messages that expect user
+  input.
 
+These four windows are assigned the "cmd", "msg", "pager" and "dialog"
+'filetype' respectively. Use a |FileType| autocommand to configure any local
+options for these windows and their respective buffers.
+
+Rather than a |hit-enter-prompt|, messages shown in the cmdline area that do
+not fit are appended with a `[+x]` "spill" indicator, where `x` indicates the
+spilled lines. To see the full message, the |g<| command can be used.
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

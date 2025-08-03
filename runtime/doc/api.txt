@@ -1927,348 +1927,256 @@ nvim_parse_expression({expr}, {flags}, {highlight})
 
 
 ==============================================================================
-Command Functions                                                *api-command*
+Autocmd Functions                                                *api-autocmd*
 
-                                              *nvim_buf_create_user_command()*
-nvim_buf_create_user_command({buffer}, {name}, {command}, {opts})
-    Creates a buffer-local command |user-commands|.
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {buffer}   (`integer`) Buffer id, or 0 for current buffer.
-      • {name}     (`string`)
-      • {command}  (`any`)
-      • {opts}     (`vim.api.keyset.user_command`)
-
-    See also: ~
-      • nvim_create_user_command
-
-                                                 *nvim_buf_del_user_command()*
-nvim_buf_del_user_command({buffer}, {name})
-    Delete a buffer-local user-defined command.
-
-    Only commands created with |:command-buffer| or
-    |nvim_buf_create_user_command()| can be deleted with this function.
+nvim_clear_autocmds({opts})                            *nvim_clear_autocmds()*
+    Clears all autocommands selected by {opts}. To delete autocmds see
+    |nvim_del_autocmd()|.
 
     Attributes: ~
         Since: 0.7.0
 
     Parameters: ~
-      • {buffer}  (`integer`) Buffer id, or 0 for current buffer.
-      • {name}    (`string`) Name of the command to delete.
+      • {opts}  (`vim.api.keyset.clear_autocmds`) Parameters
+                • event: (vim.api.keyset.events|vim.api.keyset.events[])
+                  Examples:
+                  • event: "pat1"
+                  • event: { "pat1" }
+                  • event: { "pat1", "pat2", "pat3" }
+                • pattern: (string|table)
+                  • pattern or patterns to match exactly.
+                    • For example, if you have `*.py` as that pattern for the
+                      autocmd, you must pass `*.py` exactly to clear it.
+                      `test.py` will not match the pattern.
+                  • defaults to clearing all patterns.
+                  • NOTE: Cannot be used with {buffer}
+                • buffer: (bufnr)
+                  • clear only |autocmd-buflocal| autocommands.
+                  • NOTE: Cannot be used with {pattern}
+                • group: (string|int) The augroup name or id.
+                  • NOTE: If not passed, will only delete autocmds not in any
+                    group.
 
-nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
-    Gets a map of buffer-local |user-commands|.
+nvim_create_augroup({name}, {opts})                    *nvim_create_augroup()*
+    Create or get an autocommand group |autocmd-groups|.
 
-    Attributes: ~
-        Since: 0.3.0
-
-    Parameters: ~
-      • {buffer}  (`integer`) Buffer id, or 0 for current buffer
-      • {opts}    (`vim.api.keyset.get_commands`) Optional parameters.
-                  Currently not used.
-
-    Return: ~
-        (`vim.api.keyset.command_info`) Map of maps describing commands.
-
-nvim_cmd({cmd}, {opts})                                           *nvim_cmd()*
-    Executes an Ex command.
-
-    Unlike |nvim_command()| this command takes a structured Dict instead of a
-    String. This allows for easier construction and manipulation of an Ex
-    command. This also allows for things such as having spaces inside a
-    command argument, expanding filenames in a command that otherwise doesn't
-    expand filenames, etc. Command arguments may also be Number, Boolean or
-    String.
-
-    The first argument may also be used instead of count for commands that
-    support it in order to make their usage simpler with |vim.cmd()|. For
-    example, instead of `vim.cmd.bdelete{ count = 2 }`, you may do
-    `vim.cmd.bdelete(2)`.
-
-    On execution error: fails with Vimscript error, updates v:errmsg.
-
-    Attributes: ~
-        Since: 0.8.0
-
-    Parameters: ~
-      • {cmd}   (`vim.api.keyset.cmd`) Command to execute. Must be a Dict that
-                can contain the same values as the return value of
-                |nvim_parse_cmd()| except "addr", "nargs" and "nextcmd" which
-                are ignored if provided. All values except for "cmd" are
-                optional.
-      • {opts}  (`vim.api.keyset.cmd_opts`) Optional parameters.
-                • output: (boolean, default false) Whether to return command
-                  output.
-
-    Return: ~
-        (`string`) Command output (non-error, non-shell |:!|) if `output` is
-        true, else empty string.
-
-    See also: ~
-      • |nvim_exec2()|
-      • |nvim_command()|
-
-                                                  *nvim_create_user_command()*
-nvim_create_user_command({name}, {command}, {opts})
-    Creates a global |user-commands| command.
-
-    For Lua usage see |lua-guide-commands-create|.
-
-    Example: >vim
-        :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {'bang': v:true})
-        :SayHello
-        Hello world!
+    To get an existing group id, do: >lua
+        local id = vim.api.nvim_create_augroup('my.lsp.config', {
+            clear = false
+        })
 <
 
     Attributes: ~
         Since: 0.7.0
 
     Parameters: ~
-      • {name}     (`string`) Name of the new user command. Must begin with an
-                   uppercase letter.
-      • {command}  (`string|fun(args: vim.api.keyset.create_user_command.command_args)`)
-                   Replacement command to execute when this user command is
-                   executed. When called from Lua, the command can also be a
-                   Lua function. The function is called with a single table
-                   argument that contains the following keys:
-                   • name: (string) Command name
-                   • args: (string) The args passed to the command, if any
-                     <args>
-                   • fargs: (table) The args split by unescaped whitespace
-                     (when more than one argument is allowed), if any <f-args>
-                   • nargs: (string) Number of arguments |:command-nargs|
-                   • bang: (boolean) "true" if the command was executed with a
-                     ! modifier <bang>
-                   • line1: (number) The starting line of the command range
-                     <line1>
-                   • line2: (number) The final line of the command range
-                     <line2>
-                   • range: (number) The number of items in the command range:
-                     0, 1, or 2 <range>
-                   • count: (number) Any count supplied <count>
-                   • reg: (string) The optional register, if specified <reg>
-                   • mods: (string) Command modifiers, if any <mods>
-                   • smods: (table) Command modifiers in a structured format.
-                     Has the same structure as the "mods" key of
-                     |nvim_parse_cmd()|.
-      • {opts}     (`vim.api.keyset.user_command`) Optional
-                   |command-attributes|.
-                   • Set boolean attributes such as |:command-bang| or
-                     |:command-bar| to true (but not |:command-buffer|, use
-                     |nvim_buf_create_user_command()| instead).
-                   • "complete" |:command-complete| also accepts a Lua
-                     function which works like
-                     |:command-completion-customlist|.
-                   • Other parameters:
-                     • desc: (string) Used for listing the command when a Lua
-                       function is used for {command}.
-                     • force: (boolean, default true) Override any previous
-                       definition.
-                     • preview: (function) Preview callback for 'inccommand'
-                       |:command-preview|
-
-nvim_del_user_command({name})                        *nvim_del_user_command()*
-    Delete a user-defined command.
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {name}  (`string`) Name of the command to delete.
-
-nvim_get_commands({opts})                                *nvim_get_commands()*
-    Gets a map of global (non-buffer-local) Ex commands.
-
-    Currently only |user-commands| are supported, not builtin Ex commands.
-
-    Attributes: ~
-        Since: 0.3.0
-
-    Parameters: ~
-      • {opts}  (`vim.api.keyset.get_commands`) Optional parameters. Currently
-                only supports {"builtin":false}
+      • {name}  (`string`) String: The name of the group
+      • {opts}  (`vim.api.keyset.create_augroup`) Dict Parameters
+                • clear (bool) optional: defaults to true. Clear existing
+                  commands if the group already exists |autocmd-groups|.
 
     Return: ~
-        (`table<string,vim.api.keyset.command_info>`) Map of maps describing
-        commands.
+        (`integer`) Integer id of the created group.
 
     See also: ~
-      • |nvim_get_all_options_info()|
+      • |autocmd-groups|
 
-nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
-    Parse command line.
+nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
+    Creates an |autocommand| event handler, defined by `callback` (Lua
+    function or Vimscript function name string) or `command` (Ex command
+    string).
 
-    Doesn't check the validity of command arguments.
+    Example using Lua callback: >lua
+        vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
+          pattern = {'*.c', '*.h'},
+          callback = function(ev)
+            print(string.format('event fired: %s', vim.inspect(ev)))
+          end
+        })
+<
+
+    Example using an Ex command as the handler: >lua
+        vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
+          pattern = {'*.c', '*.h'},
+          command = "echo 'Entering a C or C++ file'",
+        })
+<
+
+    Note: `pattern` is NOT automatically expanded (unlike with |:autocmd|),
+    thus names like "$HOME" and "~" must be expanded explicitly: >lua
+        pattern = vim.fn.expand('~') .. '/some/path/*.py'
+<
 
     Attributes: ~
-        |api-fast|
-        Since: 0.8.0
+        Since: 0.7.0
 
     Parameters: ~
-      • {str}   (`string`) Command line string to parse. Cannot contain "\n".
-      • {opts}  (`vim.api.keyset.empty`) Optional parameters. Reserved for
-                future use.
+      • {event}  (`vim.api.keyset.events|vim.api.keyset.events[]`) Event(s)
+                 that will trigger the handler (`callback` or `command`).
+      • {opts}   (`vim.api.keyset.create_autocmd`) Options dict:
+                 • group (string|integer) optional: autocommand group name or
+                   id to match against.
+                 • pattern (string|array) optional: pattern(s) to match
+                   literally |autocmd-pattern|.
+                 • buffer (integer) optional: buffer number for buffer-local
+                   autocommands |autocmd-buflocal|. Cannot be used with
+                   {pattern}.
+                 • desc (string) optional: description (for documentation and
+                   troubleshooting).
+                 • callback (function|string) optional: Lua function (or
+                   Vimscript function name, if string) called when the
+                   event(s) is triggered. Lua callback can return a truthy
+                   value (not `false` or `nil`) to delete the autocommand, and
+                   receives one argument, a table with these keys:
+                                                                  *event-args*
+                   • id: (number) autocommand id
+                   • event: (vim.api.keyset.events) name of the triggered
+                     event |autocmd-events|
+                   • group: (number|nil) autocommand group id, if any
+                   • file: (string) <afile> (not expanded to a full path)
+                   • match: (string) <amatch> (expanded to a full path)
+                   • buf: (number) <abuf>
+                   • data: (any) arbitrary data passed from
+                     |nvim_exec_autocmds()|                       *event-data*
+                 • command (string) optional: Vim command to execute on event.
+                   Cannot be used with {callback}
+                 • once (boolean) optional: defaults to false. Run the
+                   autocommand only once |autocmd-once|.
+                 • nested (boolean) optional: defaults to false. Run nested
+                   autocommands |autocmd-nested|.
 
     Return: ~
-        (`vim.api.keyset.cmd`) Dict containing command information, with these
-        keys:
-        • cmd: (string) Command name.
-        • range: (array) (optional) Command range (<line1> <line2>). Omitted
-          if command doesn't accept a range. Otherwise, has no elements if no
-          range was specified, one element if only a single range item was
-          specified, or two elements if both range items were specified.
-        • count: (number) (optional) Command <count>. Omitted if command
-          cannot take a count.
-        • reg: (string) (optional) Command <register>. Omitted if command
-          cannot take a register.
-        • bang: (boolean) Whether command contains a <bang> (!) modifier.
-        • args: (array) Command arguments.
-        • addr: (string) Value of |:command-addr|. Uses short name or "line"
-          for -addr=lines.
-        • nargs: (string) Value of |:command-nargs|.
-        • nextcmd: (string) Next command if there are multiple commands
-          separated by a |:bar|. Empty if there isn't a next command.
-        • magic: (dict) Which characters have special meaning in the command
-          arguments.
-          • file: (boolean) The command expands filenames. Which means
-            characters such as "%", "#" and wildcards are expanded.
-          • bar: (boolean) The "|" character is treated as a command separator
-            and the double quote character (") is treated as the start of a
-            comment.
-        • mods: (dict) |:command-modifiers|.
-          • filter: (dict) |:filter|.
-            • pattern: (string) Filter pattern. Empty string if there is no
-              filter.
-            • force: (boolean) Whether filter is inverted or not.
-          • silent: (boolean) |:silent|.
-          • emsg_silent: (boolean) |:silent!|.
-          • unsilent: (boolean) |:unsilent|.
-          • sandbox: (boolean) |:sandbox|.
-          • noautocmd: (boolean) |:noautocmd|.
-          • browse: (boolean) |:browse|.
-          • confirm: (boolean) |:confirm|.
-          • hide: (boolean) |:hide|.
-          • horizontal: (boolean) |:horizontal|.
-          • keepalt: (boolean) |:keepalt|.
-          • keepjumps: (boolean) |:keepjumps|.
-          • keepmarks: (boolean) |:keepmarks|.
-          • keeppatterns: (boolean) |:keeppatterns|.
-          • lockmarks: (boolean) |:lockmarks|.
-          • noswapfile: (boolean) |:noswapfile|.
-          • tab: (integer) |:tab|. -1 when omitted.
-          • verbose: (integer) |:verbose|. -1 when omitted.
-          • vertical: (boolean) |:vertical|.
-          • split: (string) Split modifier string, is an empty string when
-            there's no split modifier. If there is a split modifier it can be
-            one of:
-            • "aboveleft": |:aboveleft|.
-            • "belowright": |:belowright|.
-            • "topleft": |:topleft|.
-            • "botright": |:botright|.
-
-
-==============================================================================
-Options Functions                                                *api-options*
-
-nvim_get_all_options_info()                      *nvim_get_all_options_info()*
-    Gets the option information for all options.
-
-    The dict has the full option names as keys and option metadata dicts as
-    detailed at |nvim_get_option_info2()|.
-
-    Attributes: ~
-        Since: 0.5.0
-
-    Return: ~
-        (`table<string,any>`) dict of all options
+        (`integer`) Autocommand id (number)
 
     See also: ~
-      • |nvim_get_commands()|
+      • |autocommand|
+      • |nvim_del_autocmd()|
 
-nvim_get_option_info2({name}, {opts})                *nvim_get_option_info2()*
-    Gets the option information for one option from arbitrary buffer or window
+nvim_del_augroup_by_id({id})                        *nvim_del_augroup_by_id()*
+    Delete an autocommand group by id.
 
-    Resulting dict has keys:
-    • name: Name of the option (like 'filetype')
-    • shortname: Shortened name of the option (like 'ft')
-    • type: type of option ("string", "number" or "boolean")
-    • default: The default value for the option
-    • was_set: Whether the option was set.
-    • last_set_sid: Last set script id (if any)
-    • last_set_linenr: line number where option was set
-    • last_set_chan: Channel where option was set (0 for local)
-    • scope: one of "global", "win", or "buf"
-    • global_local: whether win or buf option has a global value
-    • commalist: List of comma separated values
-    • flaglist: List of single char flags
+    To get a group id one can use |nvim_get_autocmds()|.
 
-    When {scope} is not provided, the last set information applies to the
-    local value in the current buffer or window if it is available, otherwise
-    the global value information is returned. This behavior can be disabled by
-    explicitly specifying {scope} in the {opts} table.
-
-    Attributes: ~
-        Since: 0.9.0
-
-    Parameters: ~
-      • {name}  (`string`) Option name
-      • {opts}  (`vim.api.keyset.option`) Optional parameters
-                • scope: One of "global" or "local". Analogous to |:setglobal|
-                  and |:setlocal|, respectively.
-                • win: |window-ID|. Used for getting window local options.
-                • buf: Buffer number. Used for getting buffer local options.
-                  Implies {scope} is "local".
-
-    Return: ~
-        (`vim.api.keyset.get_option_info`) Option Information
-
-nvim_get_option_value({name}, {opts})                *nvim_get_option_value()*
-    Gets the value of an option. The behavior of this function matches that of
-    |:set|: the local value of an option is returned if it exists; otherwise,
-    the global value is returned. Local values always correspond to the
-    current buffer or window, unless "buf" or "win" is set in {opts}.
+    NOTE: behavior differs from |:augroup-delete|. When deleting a group,
+    autocommands contained in this group will also be deleted and cleared.
+    This group will no longer exist.
 
     Attributes: ~
         Since: 0.7.0
 
     Parameters: ~
-      • {name}  (`string`) Option name
-      • {opts}  (`vim.api.keyset.option`) Optional parameters
-                • scope: One of "global" or "local". Analogous to |:setglobal|
-                  and |:setlocal|, respectively.
-                • win: |window-ID|. Used for getting window local options.
-                • buf: Buffer number. Used for getting buffer local options.
-                  Implies {scope} is "local".
-                • filetype: |filetype|. Used to get the default option for a
-                  specific filetype. Cannot be used with any other option.
-                  Note: this will trigger |ftplugin| and all |FileType|
-                  autocommands for the corresponding filetype.
+      • {id}  (`integer`) Integer The id of the group.
 
-    Return: ~
-        (`any`) Option value
+    See also: ~
+      • |nvim_del_augroup_by_name()|
+      • |nvim_create_augroup()|
 
-                                                     *nvim_set_option_value()*
-nvim_set_option_value({name}, {value}, {opts})
-    Sets the value of an option. The behavior of this function matches that of
-    |:set|: for global-local options, both the global and local value are set
-    unless otherwise specified with {scope}.
+nvim_del_augroup_by_name({name})                  *nvim_del_augroup_by_name()*
+    Delete an autocommand group by name.
 
-    Note the options {win} and {buf} cannot be used together.
+    NOTE: behavior differs from |:augroup-delete|. When deleting a group,
+    autocommands contained in this group will also be deleted and cleared.
+    This group will no longer exist.
 
     Attributes: ~
         Since: 0.7.0
 
     Parameters: ~
-      • {name}   (`string`) Option name
-      • {value}  (`any`) New option value
-      • {opts}   (`vim.api.keyset.option`) Optional parameters
-                 • scope: One of "global" or "local". Analogous to
-                   |:setglobal| and |:setlocal|, respectively.
-                 • win: |window-ID|. Used for setting window local option.
-                 • buf: Buffer number. Used for setting buffer local option.
+      • {name}  (`string`) String The name of the group.
+
+    See also: ~
+      • |autocmd-groups|
+
+nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
+    Deletes an autocommand by id.
+
+    Attributes: ~
+        Since: 0.7.0
+
+    Parameters: ~
+      • {id}  (`integer`) Integer Autocommand id returned by
+              |nvim_create_autocmd()|
+
+nvim_exec_autocmds({event}, {opts})                     *nvim_exec_autocmds()*
+    Execute all autocommands for {event} that match the corresponding {opts}
+    |autocmd-execute|.
+
+    Attributes: ~
+        Since: 0.7.0
+
+    Parameters: ~
+      • {event}  (`vim.api.keyset.events|vim.api.keyset.events[]`) The event
+                 or events to execute
+      • {opts}   (`vim.api.keyset.exec_autocmds`) Dict of autocommand options:
+                 • group (string|integer) optional: the autocommand group name
+                   or id to match against. |autocmd-groups|.
+                 • pattern (string|array) optional: defaults to "*"
+                   |autocmd-pattern|. Cannot be used with {buffer}.
+                 • buffer (integer) optional: buffer number
+                   |autocmd-buflocal|. Cannot be used with {pattern}.
+                 • modeline (bool) optional: defaults to true. Process the
+                   modeline after the autocommands <nomodeline>.
+                 • data (any): arbitrary data to send to the autocommand
+                   callback. See |nvim_create_autocmd()| for details.
+
+    See also: ~
+      • |:doautocmd|
+
+nvim_get_autocmds({opts})                                *nvim_get_autocmds()*
+    Get all autocommands that match the corresponding {opts}.
+
+    These examples will get autocommands matching ALL the given criteria: >lua
+        -- Matches all criteria
+        autocommands = vim.api.nvim_get_autocmds({
+          group = 'MyGroup',
+          event = {'BufEnter', 'BufWinEnter'},
+          pattern = {'*.c', '*.h'}
+        })
+
+        -- All commands from one group
+        autocommands = vim.api.nvim_get_autocmds({
+          group = 'MyGroup',
+        })
+<
+
+    NOTE: When multiple patterns or events are provided, it will find all the
+    autocommands that match any combination of them.
+
+    Attributes: ~
+        Since: 0.7.0
+
+    Parameters: ~
+      • {opts}  (`vim.api.keyset.get_autocmds`) Dict with at least one of the
+                following:
+                • buffer: (integer) Buffer number or list of buffer numbers
+                  for buffer local autocommands |autocmd-buflocal|. Cannot be
+                  used with {pattern}
+                • event: (vim.api.keyset.events|vim.api.keyset.events[]) event
+                  or events to match against |autocmd-events|.
+                • id: (integer) Autocommand ID to match.
+                • group: (string|table) the autocommand group name or id to
+                  match against.
+                • pattern: (string|table) pattern or patterns to match against
+                  |autocmd-pattern|. Cannot be used with {buffer}
+
+    Return: ~
+        (`vim.api.keyset.get_autocmds.ret[]`) Array of autocommands matching
+        the criteria, with each item containing the following fields:
+        • buffer: (integer) the buffer number.
+        • buflocal: (boolean) true if the autocommand is buffer local.
+        • command: (string) the autocommand command. Note: this will be empty
+          if a callback is set.
+        • callback: (function|string|nil): Lua function or name of a Vim
+          script function which is executed when this autocommand is
+          triggered.
+        • desc: (string) the autocommand description.
+        • event: (vim.api.keyset.events) the autocommand event.
+        • id: (integer) the autocommand id (only when defined with the API).
+        • group: (integer) the autocommand group id.
+        • group_name: (string) the autocommand group name.
+        • once: (boolean) whether the autocommand is only run once.
+        • pattern: (string) the autocommand pattern. If the autocommand is
+          buffer local |autocmd-buffer-local|:
 
 
 ==============================================================================
@@ -2797,6 +2705,250 @@ nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
 
 
 ==============================================================================
+Command Functions                                                *api-command*
+
+                                              *nvim_buf_create_user_command()*
+nvim_buf_create_user_command({buffer}, {name}, {command}, {opts})
+    Creates a buffer-local command |user-commands|.
+
+    Attributes: ~
+        Since: 0.7.0
+
+    Parameters: ~
+      • {buffer}   (`integer`) Buffer id, or 0 for current buffer.
+      • {name}     (`string`)
+      • {command}  (`any`)
+      • {opts}     (`vim.api.keyset.user_command`)
+
+    See also: ~
+      • nvim_create_user_command
+
+                                                 *nvim_buf_del_user_command()*
+nvim_buf_del_user_command({buffer}, {name})
+    Delete a buffer-local user-defined command.
+
+    Only commands created with |:command-buffer| or
+    |nvim_buf_create_user_command()| can be deleted with this function.
+
+    Attributes: ~
+        Since: 0.7.0
+
+    Parameters: ~
+      • {buffer}  (`integer`) Buffer id, or 0 for current buffer.
+      • {name}    (`string`) Name of the command to delete.
+
+nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
+    Gets a map of buffer-local |user-commands|.
+
+    Attributes: ~
+        Since: 0.3.0
+
+    Parameters: ~
+      • {buffer}  (`integer`) Buffer id, or 0 for current buffer
+      • {opts}    (`vim.api.keyset.get_commands`) Optional parameters.
+                  Currently not used.
+
+    Return: ~
+        (`vim.api.keyset.command_info`) Map of maps describing commands.
+
+nvim_cmd({cmd}, {opts})                                           *nvim_cmd()*
+    Executes an Ex command.
+
+    Unlike |nvim_command()| this command takes a structured Dict instead of a
+    String. This allows for easier construction and manipulation of an Ex
+    command. This also allows for things such as having spaces inside a
+    command argument, expanding filenames in a command that otherwise doesn't
+    expand filenames, etc. Command arguments may also be Number, Boolean or
+    String.
+
+    The first argument may also be used instead of count for commands that
+    support it in order to make their usage simpler with |vim.cmd()|. For
+    example, instead of `vim.cmd.bdelete{ count = 2 }`, you may do
+    `vim.cmd.bdelete(2)`.
+
+    On execution error: fails with Vimscript error, updates v:errmsg.
+
+    Attributes: ~
+        Since: 0.8.0
+
+    Parameters: ~
+      • {cmd}   (`vim.api.keyset.cmd`) Command to execute. Must be a Dict that
+                can contain the same values as the return value of
+                |nvim_parse_cmd()| except "addr", "nargs" and "nextcmd" which
+                are ignored if provided. All values except for "cmd" are
+                optional.
+      • {opts}  (`vim.api.keyset.cmd_opts`) Optional parameters.
+                • output: (boolean, default false) Whether to return command
+                  output.
+
+    Return: ~
+        (`string`) Command output (non-error, non-shell |:!|) if `output` is
+        true, else empty string.
+
+    See also: ~
+      • |nvim_exec2()|
+      • |nvim_command()|
+
+                                                  *nvim_create_user_command()*
+nvim_create_user_command({name}, {command}, {opts})
+    Creates a global |user-commands| command.
+
+    For Lua usage see |lua-guide-commands-create|.
+
+    Example: >vim
+        :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {'bang': v:true})
+        :SayHello
+        Hello world!
+<
+
+    Attributes: ~
+        Since: 0.7.0
+
+    Parameters: ~
+      • {name}     (`string`) Name of the new user command. Must begin with an
+                   uppercase letter.
+      • {command}  (`string|fun(args: vim.api.keyset.create_user_command.command_args)`)
+                   Replacement command to execute when this user command is
+                   executed. When called from Lua, the command can also be a
+                   Lua function. The function is called with a single table
+                   argument that contains the following keys:
+                   • name: (string) Command name
+                   • args: (string) The args passed to the command, if any
+                     <args>
+                   • fargs: (table) The args split by unescaped whitespace
+                     (when more than one argument is allowed), if any <f-args>
+                   • nargs: (string) Number of arguments |:command-nargs|
+                   • bang: (boolean) "true" if the command was executed with a
+                     ! modifier <bang>
+                   • line1: (number) The starting line of the command range
+                     <line1>
+                   • line2: (number) The final line of the command range
+                     <line2>
+                   • range: (number) The number of items in the command range:
+                     0, 1, or 2 <range>
+                   • count: (number) Any count supplied <count>
+                   • reg: (string) The optional register, if specified <reg>
+                   • mods: (string) Command modifiers, if any <mods>
+                   • smods: (table) Command modifiers in a structured format.
+                     Has the same structure as the "mods" key of
+                     |nvim_parse_cmd()|.
+      • {opts}     (`vim.api.keyset.user_command`) Optional
+                   |command-attributes|.
+                   • Set boolean attributes such as |:command-bang| or
+                     |:command-bar| to true (but not |:command-buffer|, use
+                     |nvim_buf_create_user_command()| instead).
+                   • "complete" |:command-complete| also accepts a Lua
+                     function which works like
+                     |:command-completion-customlist|.
+                   • Other parameters:
+                     • desc: (string) Used for listing the command when a Lua
+                       function is used for {command}.
+                     • force: (boolean, default true) Override any previous
+                       definition.
+                     • preview: (function) Preview callback for 'inccommand'
+                       |:command-preview|
+
+nvim_del_user_command({name})                        *nvim_del_user_command()*
+    Delete a user-defined command.
+
+    Attributes: ~
+        Since: 0.7.0
+
+    Parameters: ~
+      • {name}  (`string`) Name of the command to delete.
+
+nvim_get_commands({opts})                                *nvim_get_commands()*
+    Gets a map of global (non-buffer-local) Ex commands.
+
+    Currently only |user-commands| are supported, not builtin Ex commands.
+
+    Attributes: ~
+        Since: 0.3.0
+
+    Parameters: ~
+      • {opts}  (`vim.api.keyset.get_commands`) Optional parameters. Currently
+                only supports {"builtin":false}
+
+    Return: ~
+        (`table<string,vim.api.keyset.command_info>`) Map of maps describing
+        commands.
+
+    See also: ~
+      • |nvim_get_all_options_info()|
+
+nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
+    Parse command line.
+
+    Doesn't check the validity of command arguments.
+
+    Attributes: ~
+        |api-fast|
+        Since: 0.8.0
+
+    Parameters: ~
+      • {str}   (`string`) Command line string to parse. Cannot contain "\n".
+      • {opts}  (`vim.api.keyset.empty`) Optional parameters. Reserved for
+                future use.
+
+    Return: ~
+        (`vim.api.keyset.cmd`) Dict containing command information, with these
+        keys:
+        • cmd: (string) Command name.
+        • range: (array) (optional) Command range (<line1> <line2>). Omitted
+          if command doesn't accept a range. Otherwise, has no elements if no
+          range was specified, one element if only a single range item was
+          specified, or two elements if both range items were specified.
+        • count: (number) (optional) Command <count>. Omitted if command
+          cannot take a count.
+        • reg: (string) (optional) Command <register>. Omitted if command
+          cannot take a register.
+        • bang: (boolean) Whether command contains a <bang> (!) modifier.
+        • args: (array) Command arguments.
+        • addr: (string) Value of |:command-addr|. Uses short name or "line"
+          for -addr=lines.
+        • nargs: (string) Value of |:command-nargs|.
+        • nextcmd: (string) Next command if there are multiple commands
+          separated by a |:bar|. Empty if there isn't a next command.
+        • magic: (dict) Which characters have special meaning in the command
+          arguments.
+          • file: (boolean) The command expands filenames. Which means
+            characters such as "%", "#" and wildcards are expanded.
+          • bar: (boolean) The "|" character is treated as a command separator
+            and the double quote character (") is treated as the start of a
+            comment.
+        • mods: (dict) |:command-modifiers|.
+          • filter: (dict) |:filter|.
+            • pattern: (string) Filter pattern. Empty string if there is no
+              filter.
+            • force: (boolean) Whether filter is inverted or not.
+          • silent: (boolean) |:silent|.
+          • emsg_silent: (boolean) |:silent!|.
+          • unsilent: (boolean) |:unsilent|.
+          • sandbox: (boolean) |:sandbox|.
+          • noautocmd: (boolean) |:noautocmd|.
+          • browse: (boolean) |:browse|.
+          • confirm: (boolean) |:confirm|.
+          • hide: (boolean) |:hide|.
+          • horizontal: (boolean) |:horizontal|.
+          • keepalt: (boolean) |:keepalt|.
+          • keepjumps: (boolean) |:keepjumps|.
+          • keepmarks: (boolean) |:keepmarks|.
+          • keeppatterns: (boolean) |:keeppatterns|.
+          • lockmarks: (boolean) |:lockmarks|.
+          • noswapfile: (boolean) |:noswapfile|.
+          • tab: (integer) |:tab|. -1 when omitted.
+          • verbose: (integer) |:verbose|. -1 when omitted.
+          • vertical: (boolean) |:vertical|.
+          • split: (string) Split modifier string, is an empty string when
+            there's no split modifier. If there is a split modifier it can be
+            one of:
+            • "aboveleft": |:aboveleft|.
+            • "belowright": |:belowright|.
+            • "topleft": |:topleft|.
+            • "botright": |:botright|.
+
+
+==============================================================================
 Extmark Functions                                                *api-extmark*
 
                                                   *nvim_buf_clear_namespace()*
@@ -3183,6 +3335,551 @@ nvim__ns_set({ns_id}, {opts})                                 *nvim__ns_set()*
 
 
 ==============================================================================
+Options Functions                                                *api-options*
+
+nvim_get_all_options_info()                      *nvim_get_all_options_info()*
+    Gets the option information for all options.
+
+    The dict has the full option names as keys and option metadata dicts as
+    detailed at |nvim_get_option_info2()|.
+
+    Attributes: ~
+        Since: 0.5.0
+
+    Return: ~
+        (`table<string,any>`) dict of all options
+
+    See also: ~
+      • |nvim_get_commands()|
+
+nvim_get_option_info2({name}, {opts})                *nvim_get_option_info2()*
+    Gets the option information for one option from arbitrary buffer or window
+
+    Resulting dict has keys:
+    • name: Name of the option (like 'filetype')
+    • shortname: Shortened name of the option (like 'ft')
+    • type: type of option ("string", "number" or "boolean")
+    • default: The default value for the option
+    • was_set: Whether the option was set.
+    • last_set_sid: Last set script id (if any)
+    • last_set_linenr: line number where option was set
+    • last_set_chan: Channel where option was set (0 for local)
+    • scope: one of "global", "win", or "buf"
+    • global_local: whether win or buf option has a global value
+    • commalist: List of comma separated values
+    • flaglist: List of single char flags
+
+    When {scope} is not provided, the last set information applies to the
+    local value in the current buffer or window if it is available, otherwise
+    the global value information is returned. This behavior can be disabled by
+    explicitly specifying {scope} in the {opts} table.
+
+    Attributes: ~
+        Since: 0.9.0
+
+    Parameters: ~
+      • {name}  (`string`) Option name
+      • {opts}  (`vim.api.keyset.option`) Optional parameters
+                • scope: One of "global" or "local". Analogous to |:setglobal|
+                  and |:setlocal|, respectively.
+                • win: |window-ID|. Used for getting window local options.
+                • buf: Buffer number. Used for getting buffer local options.
+                  Implies {scope} is "local".
+
+    Return: ~
+        (`vim.api.keyset.get_option_info`) Option Information
+
+nvim_get_option_value({name}, {opts})                *nvim_get_option_value()*
+    Gets the value of an option. The behavior of this function matches that of
+    |:set|: the local value of an option is returned if it exists; otherwise,
+    the global value is returned. Local values always correspond to the
+    current buffer or window, unless "buf" or "win" is set in {opts}.
+
+    Attributes: ~
+        Since: 0.7.0
+
+    Parameters: ~
+      • {name}  (`string`) Option name
+      • {opts}  (`vim.api.keyset.option`) Optional parameters
+                • scope: One of "global" or "local". Analogous to |:setglobal|
+                  and |:setlocal|, respectively.
+                • win: |window-ID|. Used for getting window local options.
+                • buf: Buffer number. Used for getting buffer local options.
+                  Implies {scope} is "local".
+                • filetype: |filetype|. Used to get the default option for a
+                  specific filetype. Cannot be used with any other option.
+                  Note: this will trigger |ftplugin| and all |FileType|
+                  autocommands for the corresponding filetype.
+
+    Return: ~
+        (`any`) Option value
+
+                                                     *nvim_set_option_value()*
+nvim_set_option_value({name}, {value}, {opts})
+    Sets the value of an option. The behavior of this function matches that of
+    |:set|: for global-local options, both the global and local value are set
+    unless otherwise specified with {scope}.
+
+    Note the options {win} and {buf} cannot be used together.
+
+    Attributes: ~
+        Since: 0.7.0
+
+    Parameters: ~
+      • {name}   (`string`) Option name
+      • {value}  (`any`) New option value
+      • {opts}   (`vim.api.keyset.option`) Optional parameters
+                 • scope: One of "global" or "local". Analogous to
+                   |:setglobal| and |:setlocal|, respectively.
+                 • win: |window-ID|. Used for setting window local option.
+                 • buf: Buffer number. Used for setting buffer local option.
+
+
+==============================================================================
+Tabpage Functions                                                *api-tabpage*
+
+nvim_tabpage_del_var({tabpage}, {name})               *nvim_tabpage_del_var()*
+    Removes a tab-scoped (t:) variable
+
+    Attributes: ~
+        Since: 0.1.0
+
+    Parameters: ~
+      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
+      • {name}     (`string`) Variable name
+
+nvim_tabpage_get_number({tabpage})                 *nvim_tabpage_get_number()*
+    Gets the tabpage number
+
+    Attributes: ~
+        Since: 0.1.0
+
+    Parameters: ~
+      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
+
+    Return: ~
+        (`integer`) Tabpage number
+
+nvim_tabpage_get_var({tabpage}, {name})               *nvim_tabpage_get_var()*
+    Gets a tab-scoped (t:) variable
+
+    Attributes: ~
+        Since: 0.1.0
+
+    Parameters: ~
+      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
+      • {name}     (`string`) Variable name
+
+    Return: ~
+        (`any`) Variable value
+
+nvim_tabpage_get_win({tabpage})                       *nvim_tabpage_get_win()*
+    Gets the current window in a tabpage
+
+    Attributes: ~
+        Since: 0.1.0
+
+    Parameters: ~
+      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
+
+    Return: ~
+        (`integer`) |window-ID|
+
+nvim_tabpage_is_valid({tabpage})                     *nvim_tabpage_is_valid()*
+    Checks if a tabpage is valid
+
+    Attributes: ~
+        Since: 0.1.0
+
+    Parameters: ~
+      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
+
+    Return: ~
+        (`boolean`) true if the tabpage is valid, false otherwise
+
+nvim_tabpage_list_wins({tabpage})                   *nvim_tabpage_list_wins()*
+    Gets the windows in a tabpage
+
+    Attributes: ~
+        Since: 0.1.0
+
+    Parameters: ~
+      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
+
+    Return: ~
+        (`integer[]`) List of windows in `tabpage`
+
+                                                      *nvim_tabpage_set_var()*
+nvim_tabpage_set_var({tabpage}, {name}, {value})
+    Sets a tab-scoped (t:) variable
+
+    Attributes: ~
+        Since: 0.1.0
+
+    Parameters: ~
+      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
+      • {name}     (`string`) Variable name
+      • {value}    (`any`) Variable value
+
+nvim_tabpage_set_win({tabpage}, {win})                *nvim_tabpage_set_win()*
+    Sets the current window in a tabpage
+
+    Attributes: ~
+        Since: 0.10.0
+
+    Parameters: ~
+      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
+      • {win}      (`integer`) |window-ID|, must already belong to {tabpage}
+
+
+==============================================================================
+UI Functions                                                          *api-ui*
+
+nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*
+    Activates UI events on the channel.
+
+    Entry point of all UI clients. Allows |--embed| to continue startup.
+    Implies that the client is ready to show the UI. Adds the client to the
+    list of UIs. |nvim_list_uis()|
+
+    Note: ~
+      • If multiple UI clients are attached, the global screen dimensions
+        degrade to the smallest client. E.g. if client A requests 80x40 but
+        client B requests 200x100, the global screen has size 80x40.
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.1.0
+
+    Parameters: ~
+      • {width}    (`integer`) Requested screen columns
+      • {height}   (`integer`) Requested screen rows
+      • {options}  (`table<string,any>`) |ui-option| map
+
+nvim_ui_detach()                                            *nvim_ui_detach()*
+    Deactivates UI events on the channel.
+
+    Removes the client from the list of UIs. |nvim_list_uis()|
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.1.0
+
+                                                    *nvim_ui_pum_set_bounds()*
+nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
+    Tells Nvim the geometry of the popupmenu, to align floating windows with
+    an external popup menu.
+
+    Note that this method is not to be confused with
+    |nvim_ui_pum_set_height()|, which sets the number of visible items in the
+    popup menu, while this function sets the bounding box of the popup menu,
+    including visual elements such as borders and sliders. Floats need not use
+    the same font size, nor be anchored to exact grid corners, so one can set
+    floating-point numbers to the popup menu geometry.
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.5.0
+
+    Parameters: ~
+      • {width}   (`number`) Popupmenu width.
+      • {height}  (`number`) Popupmenu height.
+      • {row}     (`number`) Popupmenu row.
+      • {col}     (`number`) Popupmenu height.
+
+nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
+    Tells Nvim the number of elements displaying in the popupmenu, to decide
+    <PageUp> and <PageDown> movement.
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.4.0
+
+    Parameters: ~
+      • {height}  (`integer`) Popupmenu height, must be greater than zero.
+
+nvim_ui_set_focus({gained})                              *nvim_ui_set_focus()*
+    Tells the nvim server if focus was gained or lost by the GUI
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.9.0
+
+    Parameters: ~
+      • {gained}  (`boolean`)
+
+nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.1.0
+
+    Parameters: ~
+      • {name}   (`string`)
+      • {value}  (`any`)
+
+nvim_ui_term_event({event}, {value})                    *nvim_ui_term_event()*
+    Tells Nvim when a terminal event has occurred
+
+    The following terminal events are supported:
+    • "termresponse": The terminal sent a DA1, OSC, DCS, or APC response
+      sequence to Nvim. The payload is the received response. Sets
+      |v:termresponse| and fires |TermResponse|.
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.10.0
+
+    Parameters: ~
+      • {event}  (`string`) Event name
+      • {value}  (`any`) Event payload
+
+nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.1.0
+
+    Parameters: ~
+      • {width}   (`integer`)
+      • {height}  (`integer`)
+
+                                                   *nvim_ui_try_resize_grid()*
+nvim_ui_try_resize_grid({grid}, {width}, {height})
+    Tell Nvim to resize a grid. Triggers a grid_resize event with the
+    requested grid size or the maximum size if it exceeds size limits.
+
+    On invalid grid handle, fails with error.
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.4.0
+
+    Parameters: ~
+      • {grid}    (`integer`) The handle of the grid to be changed.
+      • {width}   (`integer`) The new requested width.
+      • {height}  (`integer`) The new requested height.
+
+
+==============================================================================
+Win_config Functions                                          *api-win_config*
+
+nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
+    Opens a new split window, or a floating window if `relative` is specified,
+    or an external window (managed by the UI) if `external` is specified.
+
+    Floats are windows that are drawn above the split layout, at some anchor
+    position in some other window. Floats can be drawn internally or by
+    external GUI with the |ui-multigrid| extension. External windows are only
+    supported with multigrid GUIs, and are displayed as separate top-level
+    windows.
+
+    For a general overview of floats, see |api-floatwin|.
+
+    The `width` and `height` of the new window must be specified when opening
+    a floating window, but are optional for normal windows.
+
+    If `relative` and `external` are omitted, a normal "split" window is
+    created. The `win` property determines which window will be split. If no
+    `win` is provided or `win == 0`, a window will be created adjacent to the
+    current window. If -1 is provided, a top-level split will be created.
+    `vertical` and `split` are only valid for normal windows, and are used to
+    control split direction. For `vertical`, the exact direction is determined
+    by |'splitright'| and |'splitbelow'|. Split windows cannot have
+    `bufpos`/`row`/`col`/`border`/`title`/`footer` properties.
+
+    With relative=editor (row=0,col=0) refers to the top-left corner of the
+    screen-grid and (row=Lines-1,col=Columns-1) refers to the bottom-right
+    corner. Fractional values are allowed, but the builtin implementation
+    (used by non-multigrid UIs) will always round down to nearest integer.
+
+    Out-of-bounds values, and configurations that make the float not fit
+    inside the main editor, are allowed. The builtin implementation truncates
+    values so floats are fully within the main screen grid. External GUIs
+    could let floats hover outside of the main window like a tooltip, but this
+    should not be used to specify arbitrary WM screen positions.
+
+    Example (Lua): window-relative float >lua
+        vim.api.nvim_open_win(0, false,
+          {relative='win', row=3, col=3, width=12, height=3})
+<
+
+    Example (Lua): buffer-relative float (travels as buffer is scrolled) >lua
+        vim.api.nvim_open_win(0, false,
+          {relative='win', width=12, height=3, bufpos={100,10}})
+<
+
+    Example (Lua): vertical split left of the current window >lua
+        vim.api.nvim_open_win(0, false, {
+          split = 'left',
+          win = 0
+        })
+<
+
+    Attributes: ~
+        not allowed when |textlock| is active
+        Since: 0.4.0
+
+    Parameters: ~
+      • {buffer}  (`integer`) Buffer to display, or 0 for current buffer
+      • {enter}   (`boolean`) Enter the window (make it the current window)
+      • {config}  (`vim.api.keyset.win_config`) Map defining the window
+                  configuration. Keys:
+                  • relative: Sets the window layout to "floating", placed at
+                    (row,col) coordinates relative to:
+                    • "cursor" Cursor position in current window.
+                    • "editor" The global editor grid.
+                    • "laststatus" 'laststatus' if present, or last row.
+                    • "mouse" Mouse position.
+                    • "tabline" Tabline if present, or first row.
+                    • "win" Window given by the `win` field, or current
+                      window.
+                  • win: |window-ID| window to split, or relative window when
+                    creating a float (relative="win").
+                  • anchor: Decides which corner of the float to place at
+                    (row,col):
+                    • "NW" northwest (default)
+                    • "NE" northeast
+                    • "SW" southwest
+                    • "SE" southeast
+                  • width: Window width (in character cells). Minimum of 1.
+                  • height: Window height (in character cells). Minimum of 1.
+                  • bufpos: Places float relative to buffer text (only when
+                    relative="win"). Takes a tuple of zero-indexed
+                    `[line, column]`. `row` and `col` if given are applied
+                    relative to this position, else they default to:
+                    • `row=1` and `col=0` if `anchor` is "NW" or "NE"
+                    • `row=0` and `col=0` if `anchor` is "SW" or "SE" (thus
+                      like a tooltip near the buffer text).
+                  • row: Row position in units of "screen cell height", may be
+                    fractional.
+                  • col: Column position in units of screen cell width, may be
+                    fractional.
+                  • focusable: Enable focus by user actions (wincmds, mouse
+                    events). Defaults to true. Non-focusable windows can be
+                    entered by |nvim_set_current_win()|, or, when the `mouse`
+                    field is set to true, by mouse events. See |focusable|.
+                  • mouse: Specify how this window interacts with mouse
+                    events. Defaults to `focusable` value.
+                    • If false, mouse events pass through this window.
+                    • If true, mouse events interact with this window
+                      normally.
+                  • external: GUI should display the window as an external
+                    top-level window. Currently accepts no other positioning
+                    configuration together with this.
+                  • zindex: Stacking order. floats with higher `zindex` go on
+                    top on floats with lower indices. Must be larger than
+                    zero. The following screen elements have hard-coded
+                    z-indices:
+                    • 100: insert completion popupmenu
+                    • 200: message scrollback
+                    • 250: cmdline completion popupmenu (when
+                      wildoptions+=pum) The default value for floats are 50.
+                      In general, values below 100 are recommended, unless
+                      there is a good reason to overshadow builtin elements.
+                  • style: (optional) Configure the appearance of the window.
+                    Currently only supports one value:
+                    • "minimal" Nvim will display the window with many UI
+                      options disabled. This is useful when displaying a
+                      temporary float where the text should not be edited.
+                      Disables 'number', 'relativenumber', 'cursorline',
+                      'cursorcolumn', 'foldcolumn', 'spell' and 'list'
+                      options. 'signcolumn' is changed to `auto` and
+                      'colorcolumn' is cleared. 'statuscolumn' is changed to
+                      empty. The end-of-buffer region is hidden by setting
+                      `eob` flag of 'fillchars' to a space char, and clearing
+                      the |hl-EndOfBuffer| region in 'winhighlight'.
+                  • border: (`string|string[]`) (defaults to 'winborder'
+                    option) Window border. The string form accepts the same
+                    values as the 'winborder' option. The array form must have
+                    a length of eight or any divisor of eight, specifying the
+                    chars that form the border in a clockwise fashion starting
+                    from the top-left corner. For example, the double-box
+                    style can be specified as: >
+                    [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
+<
+                    If fewer than eight chars are given, they will be
+                    repeated. An ASCII border could be specified as: >
+                    [ "/", "-", \"\\\\\", "|" ],
+<
+                    Or one char for all sides: >
+                    [ "x" ].
+<
+                    Empty string can be used to hide a specific border. This
+                    example will show only vertical borders, not horizontal: >
+                    [ "", "", "", ">", "", "", "", "<" ]
+<
+                    By default, |hl-FloatBorder| highlight is used, which
+                    links to |hl-WinSeparator| when not defined. Each border
+                    side can specify an optional highlight: >
+                    [ ["+", "MyCorner"], ["x", "MyBorder"] ].
+<
+                  • title: (optional) Title in window border, string or list.
+                    List should consist of `[text, highlight]` tuples. If
+                    string, or a tuple lacks a highlight, the default
+                    highlight group is `FloatTitle`.
+                  • title_pos: Title position. Must be set with `title`
+                    option. Value can be one of "left", "center", or "right".
+                    Default is `"left"`.
+                  • footer: (optional) Footer in window border, string or
+                    list. List should consist of `[text, highlight]` tuples.
+                    If string, or a tuple lacks a highlight, the default
+                    highlight group is `FloatFooter`.
+                  • footer_pos: Footer position. Must be set with `footer`
+                    option. Value can be one of "left", "center", or "right".
+                    Default is `"left"`.
+                  • noautocmd: If true then all autocommands are blocked for
+                    the duration of the call.
+                  • fixed: If true when anchor is NW or SW, the float window
+                    would be kept fixed even if the window would be truncated.
+                  • hide: If true the floating window will be hidden and the
+                    cursor will be invisible when focused on it.
+                  • vertical: Split vertically |:vertical|.
+                  • split: Split direction: "left", "right", "above", "below".
+                  • _cmdline_offset: (EXPERIMENTAL) When provided, anchor the
+                    |cmdline-completion| popupmenu to this window, with an
+                    offset in screen cell width.
+
+    Return: ~
+        (`integer`) |window-ID|, or 0 on error
+
+nvim_win_get_config({window})                          *nvim_win_get_config()*
+    Gets window configuration.
+
+    The returned value may be given to |nvim_open_win()|.
+
+    `relative` is empty for normal windows.
+
+    Attributes: ~
+        Since: 0.4.0
+
+    Parameters: ~
+      • {window}  (`integer`) |window-ID|, or 0 for current window
+
+    Return: ~
+        (`vim.api.keyset.win_config`) Map defining the window configuration,
+        see |nvim_open_win()|
+
+nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
+    Configures window layout. Cannot be used to move the last window in a
+    tabpage to a different one.
+
+    When reconfiguring a window, absent option keys will not be changed.
+    `row`/`col` and `relative` must be reconfigured together.
+
+    Attributes: ~
+        Since: 0.4.0
+
+    Parameters: ~
+      • {window}  (`integer`) |window-ID|, or 0 for current window
+      • {config}  (`vim.api.keyset.win_config`) Map defining the window
+                  configuration, see |nvim_open_win()|
+
+    See also: ~
+      • |nvim_open_win()|
+
+
+==============================================================================
 Window Functions                                                  *api-window*
 
 nvim_win_call({window}, {fun})                               *nvim_win_call()*
@@ -3473,703 +4170,6 @@ nvim_win_text_height({window}, {opts})                *nvim_win_text_height()*
 
     See also: ~
       • |virtcol()| for text width.
-
-
-==============================================================================
-Win_config Functions                                          *api-win_config*
-
-nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
-    Opens a new split window, or a floating window if `relative` is specified,
-    or an external window (managed by the UI) if `external` is specified.
-
-    Floats are windows that are drawn above the split layout, at some anchor
-    position in some other window. Floats can be drawn internally or by
-    external GUI with the |ui-multigrid| extension. External windows are only
-    supported with multigrid GUIs, and are displayed as separate top-level
-    windows.
-
-    For a general overview of floats, see |api-floatwin|.
-
-    The `width` and `height` of the new window must be specified when opening
-    a floating window, but are optional for normal windows.
-
-    If `relative` and `external` are omitted, a normal "split" window is
-    created. The `win` property determines which window will be split. If no
-    `win` is provided or `win == 0`, a window will be created adjacent to the
-    current window. If -1 is provided, a top-level split will be created.
-    `vertical` and `split` are only valid for normal windows, and are used to
-    control split direction. For `vertical`, the exact direction is determined
-    by |'splitright'| and |'splitbelow'|. Split windows cannot have
-    `bufpos`/`row`/`col`/`border`/`title`/`footer` properties.
-
-    With relative=editor (row=0,col=0) refers to the top-left corner of the
-    screen-grid and (row=Lines-1,col=Columns-1) refers to the bottom-right
-    corner. Fractional values are allowed, but the builtin implementation
-    (used by non-multigrid UIs) will always round down to nearest integer.
-
-    Out-of-bounds values, and configurations that make the float not fit
-    inside the main editor, are allowed. The builtin implementation truncates
-    values so floats are fully within the main screen grid. External GUIs
-    could let floats hover outside of the main window like a tooltip, but this
-    should not be used to specify arbitrary WM screen positions.
-
-    Example (Lua): window-relative float >lua
-        vim.api.nvim_open_win(0, false,
-          {relative='win', row=3, col=3, width=12, height=3})
-<
-
-    Example (Lua): buffer-relative float (travels as buffer is scrolled) >lua
-        vim.api.nvim_open_win(0, false,
-          {relative='win', width=12, height=3, bufpos={100,10}})
-<
-
-    Example (Lua): vertical split left of the current window >lua
-        vim.api.nvim_open_win(0, false, {
-          split = 'left',
-          win = 0
-        })
-<
-
-    Attributes: ~
-        not allowed when |textlock| is active
-        Since: 0.4.0
-
-    Parameters: ~
-      • {buffer}  (`integer`) Buffer to display, or 0 for current buffer
-      • {enter}   (`boolean`) Enter the window (make it the current window)
-      • {config}  (`vim.api.keyset.win_config`) Map defining the window
-                  configuration. Keys:
-                  • relative: Sets the window layout to "floating", placed at
-                    (row,col) coordinates relative to:
-                    • "cursor" Cursor position in current window.
-                    • "editor" The global editor grid.
-                    • "laststatus" 'laststatus' if present, or last row.
-                    • "mouse" Mouse position.
-                    • "tabline" Tabline if present, or first row.
-                    • "win" Window given by the `win` field, or current
-                      window.
-                  • win: |window-ID| window to split, or relative window when
-                    creating a float (relative="win").
-                  • anchor: Decides which corner of the float to place at
-                    (row,col):
-                    • "NW" northwest (default)
-                    • "NE" northeast
-                    • "SW" southwest
-                    • "SE" southeast
-                  • width: Window width (in character cells). Minimum of 1.
-                  • height: Window height (in character cells). Minimum of 1.
-                  • bufpos: Places float relative to buffer text (only when
-                    relative="win"). Takes a tuple of zero-indexed
-                    `[line, column]`. `row` and `col` if given are applied
-                    relative to this position, else they default to:
-                    • `row=1` and `col=0` if `anchor` is "NW" or "NE"
-                    • `row=0` and `col=0` if `anchor` is "SW" or "SE" (thus
-                      like a tooltip near the buffer text).
-                  • row: Row position in units of "screen cell height", may be
-                    fractional.
-                  • col: Column position in units of screen cell width, may be
-                    fractional.
-                  • focusable: Enable focus by user actions (wincmds, mouse
-                    events). Defaults to true. Non-focusable windows can be
-                    entered by |nvim_set_current_win()|, or, when the `mouse`
-                    field is set to true, by mouse events. See |focusable|.
-                  • mouse: Specify how this window interacts with mouse
-                    events. Defaults to `focusable` value.
-                    • If false, mouse events pass through this window.
-                    • If true, mouse events interact with this window
-                      normally.
-                  • external: GUI should display the window as an external
-                    top-level window. Currently accepts no other positioning
-                    configuration together with this.
-                  • zindex: Stacking order. floats with higher `zindex` go on
-                    top on floats with lower indices. Must be larger than
-                    zero. The following screen elements have hard-coded
-                    z-indices:
-                    • 100: insert completion popupmenu
-                    • 200: message scrollback
-                    • 250: cmdline completion popupmenu (when
-                      wildoptions+=pum) The default value for floats are 50.
-                      In general, values below 100 are recommended, unless
-                      there is a good reason to overshadow builtin elements.
-                  • style: (optional) Configure the appearance of the window.
-                    Currently only supports one value:
-                    • "minimal" Nvim will display the window with many UI
-                      options disabled. This is useful when displaying a
-                      temporary float where the text should not be edited.
-                      Disables 'number', 'relativenumber', 'cursorline',
-                      'cursorcolumn', 'foldcolumn', 'spell' and 'list'
-                      options. 'signcolumn' is changed to `auto` and
-                      'colorcolumn' is cleared. 'statuscolumn' is changed to
-                      empty. The end-of-buffer region is hidden by setting
-                      `eob` flag of 'fillchars' to a space char, and clearing
-                      the |hl-EndOfBuffer| region in 'winhighlight'.
-                  • border: (`string|string[]`) (defaults to 'winborder'
-                    option) Window border. The string form accepts the same
-                    values as the 'winborder' option. The array form must have
-                    a length of eight or any divisor of eight, specifying the
-                    chars that form the border in a clockwise fashion starting
-                    from the top-left corner. For example, the double-box
-                    style can be specified as: >
-                    [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
-<
-                    If fewer than eight chars are given, they will be
-                    repeated. An ASCII border could be specified as: >
-                    [ "/", "-", \"\\\\\", "|" ],
-<
-                    Or one char for all sides: >
-                    [ "x" ].
-<
-                    Empty string can be used to hide a specific border. This
-                    example will show only vertical borders, not horizontal: >
-                    [ "", "", "", ">", "", "", "", "<" ]
-<
-                    By default, |hl-FloatBorder| highlight is used, which
-                    links to |hl-WinSeparator| when not defined. Each border
-                    side can specify an optional highlight: >
-                    [ ["+", "MyCorner"], ["x", "MyBorder"] ].
-<
-                  • title: (optional) Title in window border, string or list.
-                    List should consist of `[text, highlight]` tuples. If
-                    string, or a tuple lacks a highlight, the default
-                    highlight group is `FloatTitle`.
-                  • title_pos: Title position. Must be set with `title`
-                    option. Value can be one of "left", "center", or "right".
-                    Default is `"left"`.
-                  • footer: (optional) Footer in window border, string or
-                    list. List should consist of `[text, highlight]` tuples.
-                    If string, or a tuple lacks a highlight, the default
-                    highlight group is `FloatFooter`.
-                  • footer_pos: Footer position. Must be set with `footer`
-                    option. Value can be one of "left", "center", or "right".
-                    Default is `"left"`.
-                  • noautocmd: If true then all autocommands are blocked for
-                    the duration of the call.
-                  • fixed: If true when anchor is NW or SW, the float window
-                    would be kept fixed even if the window would be truncated.
-                  • hide: If true the floating window will be hidden and the
-                    cursor will be invisible when focused on it.
-                  • vertical: Split vertically |:vertical|.
-                  • split: Split direction: "left", "right", "above", "below".
-                  • _cmdline_offset: (EXPERIMENTAL) When provided, anchor the
-                    |cmdline-completion| popupmenu to this window, with an
-                    offset in screen cell width.
-
-    Return: ~
-        (`integer`) |window-ID|, or 0 on error
-
-nvim_win_get_config({window})                          *nvim_win_get_config()*
-    Gets window configuration.
-
-    The returned value may be given to |nvim_open_win()|.
-
-    `relative` is empty for normal windows.
-
-    Attributes: ~
-        Since: 0.4.0
-
-    Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-
-    Return: ~
-        (`vim.api.keyset.win_config`) Map defining the window configuration,
-        see |nvim_open_win()|
-
-nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
-    Configures window layout. Cannot be used to move the last window in a
-    tabpage to a different one.
-
-    When reconfiguring a window, absent option keys will not be changed.
-    `row`/`col` and `relative` must be reconfigured together.
-
-    Attributes: ~
-        Since: 0.4.0
-
-    Parameters: ~
-      • {window}  (`integer`) |window-ID|, or 0 for current window
-      • {config}  (`vim.api.keyset.win_config`) Map defining the window
-                  configuration, see |nvim_open_win()|
-
-    See also: ~
-      • |nvim_open_win()|
-
-
-==============================================================================
-Tabpage Functions                                                *api-tabpage*
-
-nvim_tabpage_del_var({tabpage}, {name})               *nvim_tabpage_del_var()*
-    Removes a tab-scoped (t:) variable
-
-    Attributes: ~
-        Since: 0.1.0
-
-    Parameters: ~
-      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
-      • {name}     (`string`) Variable name
-
-nvim_tabpage_get_number({tabpage})                 *nvim_tabpage_get_number()*
-    Gets the tabpage number
-
-    Attributes: ~
-        Since: 0.1.0
-
-    Parameters: ~
-      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
-
-    Return: ~
-        (`integer`) Tabpage number
-
-nvim_tabpage_get_var({tabpage}, {name})               *nvim_tabpage_get_var()*
-    Gets a tab-scoped (t:) variable
-
-    Attributes: ~
-        Since: 0.1.0
-
-    Parameters: ~
-      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
-      • {name}     (`string`) Variable name
-
-    Return: ~
-        (`any`) Variable value
-
-nvim_tabpage_get_win({tabpage})                       *nvim_tabpage_get_win()*
-    Gets the current window in a tabpage
-
-    Attributes: ~
-        Since: 0.1.0
-
-    Parameters: ~
-      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
-
-    Return: ~
-        (`integer`) |window-ID|
-
-nvim_tabpage_is_valid({tabpage})                     *nvim_tabpage_is_valid()*
-    Checks if a tabpage is valid
-
-    Attributes: ~
-        Since: 0.1.0
-
-    Parameters: ~
-      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
-
-    Return: ~
-        (`boolean`) true if the tabpage is valid, false otherwise
-
-nvim_tabpage_list_wins({tabpage})                   *nvim_tabpage_list_wins()*
-    Gets the windows in a tabpage
-
-    Attributes: ~
-        Since: 0.1.0
-
-    Parameters: ~
-      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
-
-    Return: ~
-        (`integer[]`) List of windows in `tabpage`
-
-                                                      *nvim_tabpage_set_var()*
-nvim_tabpage_set_var({tabpage}, {name}, {value})
-    Sets a tab-scoped (t:) variable
-
-    Attributes: ~
-        Since: 0.1.0
-
-    Parameters: ~
-      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
-      • {name}     (`string`) Variable name
-      • {value}    (`any`) Variable value
-
-nvim_tabpage_set_win({tabpage}, {win})                *nvim_tabpage_set_win()*
-    Sets the current window in a tabpage
-
-    Attributes: ~
-        Since: 0.10.0
-
-    Parameters: ~
-      • {tabpage}  (`integer`) |tab-ID|, or 0 for current tabpage
-      • {win}      (`integer`) |window-ID|, must already belong to {tabpage}
-
-
-==============================================================================
-Autocmd Functions                                                *api-autocmd*
-
-nvim_clear_autocmds({opts})                            *nvim_clear_autocmds()*
-    Clears all autocommands selected by {opts}. To delete autocmds see
-    |nvim_del_autocmd()|.
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {opts}  (`vim.api.keyset.clear_autocmds`) Parameters
-                • event: (vim.api.keyset.events|vim.api.keyset.events[])
-                  Examples:
-                  • event: "pat1"
-                  • event: { "pat1" }
-                  • event: { "pat1", "pat2", "pat3" }
-                • pattern: (string|table)
-                  • pattern or patterns to match exactly.
-                    • For example, if you have `*.py` as that pattern for the
-                      autocmd, you must pass `*.py` exactly to clear it.
-                      `test.py` will not match the pattern.
-                  • defaults to clearing all patterns.
-                  • NOTE: Cannot be used with {buffer}
-                • buffer: (bufnr)
-                  • clear only |autocmd-buflocal| autocommands.
-                  • NOTE: Cannot be used with {pattern}
-                • group: (string|int) The augroup name or id.
-                  • NOTE: If not passed, will only delete autocmds not in any
-                    group.
-
-nvim_create_augroup({name}, {opts})                    *nvim_create_augroup()*
-    Create or get an autocommand group |autocmd-groups|.
-
-    To get an existing group id, do: >lua
-        local id = vim.api.nvim_create_augroup('my.lsp.config', {
-            clear = false
-        })
-<
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {name}  (`string`) String: The name of the group
-      • {opts}  (`vim.api.keyset.create_augroup`) Dict Parameters
-                • clear (bool) optional: defaults to true. Clear existing
-                  commands if the group already exists |autocmd-groups|.
-
-    Return: ~
-        (`integer`) Integer id of the created group.
-
-    See also: ~
-      • |autocmd-groups|
-
-nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
-    Creates an |autocommand| event handler, defined by `callback` (Lua
-    function or Vimscript function name string) or `command` (Ex command
-    string).
-
-    Example using Lua callback: >lua
-        vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
-          pattern = {'*.c', '*.h'},
-          callback = function(ev)
-            print(string.format('event fired: %s', vim.inspect(ev)))
-          end
-        })
-<
-
-    Example using an Ex command as the handler: >lua
-        vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
-          pattern = {'*.c', '*.h'},
-          command = "echo 'Entering a C or C++ file'",
-        })
-<
-
-    Note: `pattern` is NOT automatically expanded (unlike with |:autocmd|),
-    thus names like "$HOME" and "~" must be expanded explicitly: >lua
-        pattern = vim.fn.expand('~') .. '/some/path/*.py'
-<
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {event}  (`vim.api.keyset.events|vim.api.keyset.events[]`) Event(s)
-                 that will trigger the handler (`callback` or `command`).
-      • {opts}   (`vim.api.keyset.create_autocmd`) Options dict:
-                 • group (string|integer) optional: autocommand group name or
-                   id to match against.
-                 • pattern (string|array) optional: pattern(s) to match
-                   literally |autocmd-pattern|.
-                 • buffer (integer) optional: buffer number for buffer-local
-                   autocommands |autocmd-buflocal|. Cannot be used with
-                   {pattern}.
-                 • desc (string) optional: description (for documentation and
-                   troubleshooting).
-                 • callback (function|string) optional: Lua function (or
-                   Vimscript function name, if string) called when the
-                   event(s) is triggered. Lua callback can return a truthy
-                   value (not `false` or `nil`) to delete the autocommand, and
-                   receives one argument, a table with these keys:
-                                                                  *event-args*
-                   • id: (number) autocommand id
-                   • event: (vim.api.keyset.events) name of the triggered
-                     event |autocmd-events|
-                   • group: (number|nil) autocommand group id, if any
-                   • file: (string) <afile> (not expanded to a full path)
-                   • match: (string) <amatch> (expanded to a full path)
-                   • buf: (number) <abuf>
-                   • data: (any) arbitrary data passed from
-                     |nvim_exec_autocmds()|                       *event-data*
-                 • command (string) optional: Vim command to execute on event.
-                   Cannot be used with {callback}
-                 • once (boolean) optional: defaults to false. Run the
-                   autocommand only once |autocmd-once|.
-                 • nested (boolean) optional: defaults to false. Run nested
-                   autocommands |autocmd-nested|.
-
-    Return: ~
-        (`integer`) Autocommand id (number)
-
-    See also: ~
-      • |autocommand|
-      • |nvim_del_autocmd()|
-
-nvim_del_augroup_by_id({id})                        *nvim_del_augroup_by_id()*
-    Delete an autocommand group by id.
-
-    To get a group id one can use |nvim_get_autocmds()|.
-
-    NOTE: behavior differs from |:augroup-delete|. When deleting a group,
-    autocommands contained in this group will also be deleted and cleared.
-    This group will no longer exist.
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {id}  (`integer`) Integer The id of the group.
-
-    See also: ~
-      • |nvim_del_augroup_by_name()|
-      • |nvim_create_augroup()|
-
-nvim_del_augroup_by_name({name})                  *nvim_del_augroup_by_name()*
-    Delete an autocommand group by name.
-
-    NOTE: behavior differs from |:augroup-delete|. When deleting a group,
-    autocommands contained in this group will also be deleted and cleared.
-    This group will no longer exist.
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {name}  (`string`) String The name of the group.
-
-    See also: ~
-      • |autocmd-groups|
-
-nvim_del_autocmd({id})                                    *nvim_del_autocmd()*
-    Deletes an autocommand by id.
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {id}  (`integer`) Integer Autocommand id returned by
-              |nvim_create_autocmd()|
-
-nvim_exec_autocmds({event}, {opts})                     *nvim_exec_autocmds()*
-    Execute all autocommands for {event} that match the corresponding {opts}
-    |autocmd-execute|.
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {event}  (`vim.api.keyset.events|vim.api.keyset.events[]`) The event
-                 or events to execute
-      • {opts}   (`vim.api.keyset.exec_autocmds`) Dict of autocommand options:
-                 • group (string|integer) optional: the autocommand group name
-                   or id to match against. |autocmd-groups|.
-                 • pattern (string|array) optional: defaults to "*"
-                   |autocmd-pattern|. Cannot be used with {buffer}.
-                 • buffer (integer) optional: buffer number
-                   |autocmd-buflocal|. Cannot be used with {pattern}.
-                 • modeline (bool) optional: defaults to true. Process the
-                   modeline after the autocommands <nomodeline>.
-                 • data (any): arbitrary data to send to the autocommand
-                   callback. See |nvim_create_autocmd()| for details.
-
-    See also: ~
-      • |:doautocmd|
-
-nvim_get_autocmds({opts})                                *nvim_get_autocmds()*
-    Get all autocommands that match the corresponding {opts}.
-
-    These examples will get autocommands matching ALL the given criteria: >lua
-        -- Matches all criteria
-        autocommands = vim.api.nvim_get_autocmds({
-          group = 'MyGroup',
-          event = {'BufEnter', 'BufWinEnter'},
-          pattern = {'*.c', '*.h'}
-        })
-
-        -- All commands from one group
-        autocommands = vim.api.nvim_get_autocmds({
-          group = 'MyGroup',
-        })
-<
-
-    NOTE: When multiple patterns or events are provided, it will find all the
-    autocommands that match any combination of them.
-
-    Attributes: ~
-        Since: 0.7.0
-
-    Parameters: ~
-      • {opts}  (`vim.api.keyset.get_autocmds`) Dict with at least one of the
-                following:
-                • buffer: (integer) Buffer number or list of buffer numbers
-                  for buffer local autocommands |autocmd-buflocal|. Cannot be
-                  used with {pattern}
-                • event: (vim.api.keyset.events|vim.api.keyset.events[]) event
-                  or events to match against |autocmd-events|.
-                • id: (integer) Autocommand ID to match.
-                • group: (string|table) the autocommand group name or id to
-                  match against.
-                • pattern: (string|table) pattern or patterns to match against
-                  |autocmd-pattern|. Cannot be used with {buffer}
-
-    Return: ~
-        (`vim.api.keyset.get_autocmds.ret[]`) Array of autocommands matching
-        the criteria, with each item containing the following fields:
-        • buffer: (integer) the buffer number.
-        • buflocal: (boolean) true if the autocommand is buffer local.
-        • command: (string) the autocommand command. Note: this will be empty
-          if a callback is set.
-        • callback: (function|string|nil): Lua function or name of a Vim
-          script function which is executed when this autocommand is
-          triggered.
-        • desc: (string) the autocommand description.
-        • event: (vim.api.keyset.events) the autocommand event.
-        • id: (integer) the autocommand id (only when defined with the API).
-        • group: (integer) the autocommand group id.
-        • group_name: (string) the autocommand group name.
-        • once: (boolean) whether the autocommand is only run once.
-        • pattern: (string) the autocommand pattern. If the autocommand is
-          buffer local |autocmd-buffer-local|:
-
-
-==============================================================================
-UI Functions                                                          *api-ui*
-
-nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*
-    Activates UI events on the channel.
-
-    Entry point of all UI clients. Allows |--embed| to continue startup.
-    Implies that the client is ready to show the UI. Adds the client to the
-    list of UIs. |nvim_list_uis()|
-
-    Note: ~
-      • If multiple UI clients are attached, the global screen dimensions
-        degrade to the smallest client. E.g. if client A requests 80x40 but
-        client B requests 200x100, the global screen has size 80x40.
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.1.0
-
-    Parameters: ~
-      • {width}    (`integer`) Requested screen columns
-      • {height}   (`integer`) Requested screen rows
-      • {options}  (`table<string,any>`) |ui-option| map
-
-nvim_ui_detach()                                            *nvim_ui_detach()*
-    Deactivates UI events on the channel.
-
-    Removes the client from the list of UIs. |nvim_list_uis()|
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.1.0
-
-                                                    *nvim_ui_pum_set_bounds()*
-nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
-    Tells Nvim the geometry of the popupmenu, to align floating windows with
-    an external popup menu.
-
-    Note that this method is not to be confused with
-    |nvim_ui_pum_set_height()|, which sets the number of visible items in the
-    popup menu, while this function sets the bounding box of the popup menu,
-    including visual elements such as borders and sliders. Floats need not use
-    the same font size, nor be anchored to exact grid corners, so one can set
-    floating-point numbers to the popup menu geometry.
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.5.0
-
-    Parameters: ~
-      • {width}   (`number`) Popupmenu width.
-      • {height}  (`number`) Popupmenu height.
-      • {row}     (`number`) Popupmenu row.
-      • {col}     (`number`) Popupmenu height.
-
-nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
-    Tells Nvim the number of elements displaying in the popupmenu, to decide
-    <PageUp> and <PageDown> movement.
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.4.0
-
-    Parameters: ~
-      • {height}  (`integer`) Popupmenu height, must be greater than zero.
-
-nvim_ui_set_focus({gained})                              *nvim_ui_set_focus()*
-    Tells the nvim server if focus was gained or lost by the GUI
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.9.0
-
-    Parameters: ~
-      • {gained}  (`boolean`)
-
-nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.1.0
-
-    Parameters: ~
-      • {name}   (`string`)
-      • {value}  (`any`)
-
-nvim_ui_term_event({event}, {value})                    *nvim_ui_term_event()*
-    Tells Nvim when a terminal event has occurred
-
-    The following terminal events are supported:
-    • "termresponse": The terminal sent a DA1, OSC, DCS, or APC response
-      sequence to Nvim. The payload is the received response. Sets
-      |v:termresponse| and fires |TermResponse|.
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.10.0
-
-    Parameters: ~
-      • {event}  (`string`) Event name
-      • {value}  (`any`) Event payload
-
-nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.1.0
-
-    Parameters: ~
-      • {width}   (`integer`)
-      • {height}  (`integer`)
-
-                                                   *nvim_ui_try_resize_grid()*
-nvim_ui_try_resize_grid({grid}, {width}, {height})
-    Tell Nvim to resize a grid. Triggers a grid_resize event with the
-    requested grid size or the maximum size if it exceeds size limits.
-
-    On invalid grid handle, fails with error.
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.4.0
-
-    Parameters: ~
-      • {grid}    (`integer`) The handle of the grid to be changed.
-      • {width}   (`integer`) The new requested width.
-      • {height}  (`integer`) The new requested height.
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
