@@ -2171,7 +2171,7 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
 
 
 ==============================================================================
-VIM.BASE64                                                        *vim.base64*
+Lua module: vim.base64                                            *vim.base64*
 
 vim.base64.decode({str})                                 *vim.base64.decode()*
     Decode a Base64 encoded string.
@@ -2716,7 +2716,7 @@ vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
 
 
 ==============================================================================
-VIM.HL                                                                *vim.hl*
+Lua module: vim.hl                                                    *vim.hl*
 
 vim.hl.on_yank({opts})                                      *vim.hl.on_yank()*
     Highlight the yanked text during a |TextYankPost| event.
@@ -3285,7 +3285,7 @@ Iter:totable()                                                *Iter:totable()*
 
 
 ==============================================================================
-VIM.JSON                                                            *vim.json*
+Lua module: vim.json                                                *vim.json*
 
 This module provides encoding and decoding of Lua objects to and from
 JSON-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
@@ -3444,7 +3444,7 @@ vim.loader.reset({path})                                  *vim.loader.reset()*
 
 
 ==============================================================================
-VIM.LPEG                                                            *vim.lpeg*
+Lua module: vim.lpeg                                                *vim.lpeg*
 
 
 LPeg is a pattern-matching library for Lua, based on Parsing Expression
@@ -3843,7 +3843,7 @@ vim.lpeg.version()                                        *vim.lpeg.version()*
 
 
 ==============================================================================
-VIM.MPACK                                                          *vim.mpack*
+Lua module: vim.mpack                                              *vim.mpack*
 
 This module provides encoding and decoding of Lua objects to and from
 msgpack-encoded strings. Supports |vim.NIL| and |vim.empty_dict()|.
@@ -3897,7 +3897,7 @@ vim.net.request({url}, {opts}, {on_response})              *vim.net.request()*
 
 
 ==============================================================================
-VIM.RE                                                                *vim.re*
+Lua module: vim.re                                                    *vim.re*
 
 The `vim.re` module provides a conventional regex-like syntax for pattern
 usage within LPeg |vim.lpeg|. (Unrelated to |vim.regex| which provides Vim
@@ -3969,7 +3969,7 @@ vim.re.updatelocale()                                  *vim.re.updatelocale()*
 
 
 ==============================================================================
-VIM.REGEX                                                          *vim.regex*
+Lua module: vim.regex                                              *vim.regex*
 
 Vim regexes can be used directly from Lua. Currently they only allow matching
 within a single line.
@@ -4131,7 +4131,7 @@ vim.snippet.stop()                                        *vim.snippet.stop()*
 
 
 ==============================================================================
-VIM.SPELL                                                          *vim.spell*
+Lua module: vim.spell                                              *vim.spell*
 
 vim.spell.check({str})                                     *vim.spell.check()*
     Check {str} for spelling errors. Similar to the Vimscript function

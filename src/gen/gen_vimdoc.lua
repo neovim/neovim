@@ -230,20 +230,6 @@ local config = {
       elseif name == 'builtin' then
         return 'VIM'
       end
-      if
-        contains(name, {
-          'base64',
-          'hl',
-          'json',
-          'lpeg',
-          'mpack',
-          're',
-          'regex',
-          'spell',
-        })
-      then
-        return 'VIM.' .. name:upper()
-      end
       if name == 'tohtml' then
         return 'Lua module: tohtml'
       end
