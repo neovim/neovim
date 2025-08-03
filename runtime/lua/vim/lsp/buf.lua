@@ -809,7 +809,7 @@ function M.references(context, opts)
 
     for client_id, res in pairs(results) do
       local client = assert(lsp.get_client_by_id(client_id))
-      local items = util.locations_to_items(res.result, client.offset_encoding)
+      local items = util.locations_to_items(res.result or {}, client.offset_encoding)
       vim.list_extend(all_items, items)
     end
 
