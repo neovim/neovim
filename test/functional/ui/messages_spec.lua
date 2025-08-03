@@ -3139,27 +3139,30 @@ it('pager works in headless mode with UI attached', function()
   ]])
 end)
 
-describe('progress-message', function ()
+describe('progress-message', function()
   local screen
 
   local function setup_autocmd(pattern)
     exec_lua(function()
-      local grp = vim.api.nvim_create_augroup("ProgressListener", {clear = true})
+      local grp = vim.api.nvim_create_augroup('ProgressListener', { clear = true })
       vim.api.nvim_create_autocmd('Progress', {
         pattern = pattern,
         group = grp,
         callback = function(ev)
           _G.progress_autocmd_result = ev.data
-        end
+        end,
       })
     end)
   end
 
-
   local function assert_progress_autocmd(expected, context)
-    local progress_autocmd_result = exec_lua(function() return _G.progress_autocmd_result end)
+    local progress_autocmd_result = exec_lua(function()
+      return _G.progress_autocmd_result
+    end)
     eq(expected, progress_autocmd_result, context)
-    exec_lua(function() _G.progress_autocmd_result = nil end)
+    exec_lua(function()
+      _G.progress_autocmd_result = nil
+    end)
   end
 
   local function setup_screen(with_ext_msg)
@@ -3180,87 +3183,118 @@ describe('progress-message', function ()
     setup_autocmd()
   end)
 
-  it('can send progress-message through nvim-echo', function ()
-    local id = api.nvim_echo({{'test-message'}}, true, {kind='progress', title='TestSuit', percent=10, status='running'})
+  it('can send progress-message through nvim-echo', function()
+    local id = api.nvim_echo(
+      { { 'test-message' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+    )
 
     screen:expect({
       grid = [[
         ^                         |
         {1:~                        }|*4
       ]],
-      messages = { {
-        content = { { "test-message" } },
-        extra_info = {
-          percent = 10,
-          status = "running",
-          title = "TestSuit"
+      messages = {
+        {
+          content = { { 'test-message' } },
+          extra_info = {
+            percent = 10,
+            status = 'running',
+            title = 'TestSuit',
+          },
+          history = true,
+          id = 1,
+          kind = 'progress',
         },
-        history = true,
-        id = 1,
-        kind = "progress"
-      } },
+      },
     })
 
     assert_progress_autocmd({
-      message = { "test-message"},
+      message = { 'test-message' },
       percent = 10,
-      status = "running",
-      title = "TestSuit",
+      status = 'running',
+      title = 'TestSuit',
       msg_id = 1,
     }, 'Progress autocmd receives progress messages')
 
-
     -- can update progress messages
     -- also partial updates still send full content as event
-    api.nvim_echo({{'test-message-updated'}}, true, {id = id, kind='progress', percent=50})
+    api.nvim_echo(
+      { { 'test-message-updated' } },
+      true,
+      { id = id, kind = 'progress', percent = 50 }
+    )
     screen:expect({
       grid = [[
         ^                         |
         {1:~                        }|*4
       ]],
-      messages = { {
-        content = { { "test-message-updated" } },
-        extra_info = {
-          percent = 50,
-          status = "running",
-          title = "TestSuit"
+      messages = {
+        {
+          content = { { 'test-message-updated' } },
+          extra_info = {
+            percent = 50,
+            status = 'running',
+            title = 'TestSuit',
+          },
+          history = true,
+          id = 1,
+          kind = 'progress',
         },
-        history = true,
-        id = 1,
-        kind = "progress"
-      } },
+      },
     })
 
     assert_progress_autocmd({
-      message = { "test-message-updated"},
+      message = { 'test-message-updated' },
       percent = 50,
-      status = "running",
-      title = "TestSuit",
+      status = 'running',
+      title = 'TestSuit',
       msg_id = 1,
     }, 'Progress autocmd receives progress update')
 
     -- progress event can filter by title
     setup_autocmd('Special Title')
-    api.nvim_echo({{'test-message-updated'}}, true, {id = id, kind='progress', percent=80})
+    api.nvim_echo(
+      { { 'test-message-updated' } },
+      true,
+      { id = id, kind = 'progress', percent = 80 }
+    )
     assert_progress_autocmd(nil, 'No progress message with Special Title yet')
 
-    api.nvim_echo({{'test-message-updated'}}, true, {id = id, title='Special Title', kind='progress', percent=100, status='success'})
+    api.nvim_echo(
+      { { 'test-message-updated' } },
+      true,
+      { id = id, title = 'Special Title', kind = 'progress', percent = 100, status = 'success' }
+    )
     assert_progress_autocmd({
-      message = { "test-message-updated"},
+      message = { 'test-message-updated' },
       percent = 100,
-      status = "success",
-      title = "Special Title",
+      status = 'success',
+      title = 'Special Title',
       msg_id = 1,
     }, 'Progress autocmd receives progress update')
 
     -- throws error if history is false
-    eq('progress messages must be on history', t.pcall_err(api.nvim_echo, {{'test-message'}}, false, {kind='progress', title='TestSuit', percent=10, status='running'}))
+    eq(
+      'progress messages must be on history',
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+      )
+    )
   end)
 
-  it('tui displays progress message in proper format', function ()
+  it('tui displays progress message in proper format', function()
     clear()
     setup_screen(false)
-    api.nvim_echo({{'test-message'}}, true, {kind='progress', title='TestSuit', percent=10, status='running'})
+    api.nvim_echo(
+      { { 'test-message' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+    )
     screen:expect([[
       ^                                        |
       {1:~                                       }|*3
