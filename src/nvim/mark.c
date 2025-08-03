@@ -7,7 +7,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -89,6 +91,24 @@ void clear_fmark(fmark_T *const fm, const Timestamp timestamp)
   fm->timestamp = timestamp;
 }
 
+/// Execute "MarkSet" autocommand.
+///
+/// @param c The name of the mark, e.g., 'a'.
+/// @param pos Position of the mark in the buffer.
+/// @param buf The buffer of the mark.
+///
+/// @return true if the autocommand was executed.
+static bool apply_markset_autocmd(char c, pos_T *pos, buf_T *buf)
+{
+  MAXSIZE_TEMP_DICT(data, 3);
+  char mark_str[2] = { c, '\0' };
+  PUT_C(data, "mark", STRING_OBJ(((String){ .data = mark_str, .size = 1 })));
+  PUT_C(data, "line", INTEGER_OBJ(pos->lnum));
+  PUT_C(data, "col", INTEGER_OBJ(pos->col));
+  return apply_autocmds_group(EVENT_MARKSET, buf->b_fname, buf->b_fname, false, AUGROUP_ALL, buf,
+                              NULL, &DICT_OBJ(data));
+}
+
 // Set named mark "c" to position "pos".
 // When "c" is upper case use file "fnum".
 // Returns OK on success, FAIL if bad name given.
@@ -121,6 +141,7 @@ int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
 
   if (c == '"') {
     RESET_FMARK(&buf->b_last_cursor, *pos, buf->b_fnum, view);
+    apply_markset_autocmd((char)c, pos, buf);
     return OK;
   }
 
@@ -128,10 +149,12 @@ int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
   // file.
   if (c == '[') {
     buf->b_op_start = *pos;
+    apply_markset_autocmd((char)c, pos, buf);
     return OK;
   }
   if (c == ']') {
     buf->b_op_end = *pos;
+    apply_markset_autocmd((char)c, pos, buf);
     return OK;
   }
 
@@ -145,12 +168,14 @@ int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
       // Visual_mode has not yet been set, use a sane default.
       buf->b_visual.vi_mode = 'v';
     }
+    apply_markset_autocmd((char)c, pos, buf);
     return OK;
   }
 
   if (ASCII_ISLOWER(c)) {
     i = c - 'a';
     RESET_FMARK(buf->b_namedm + i, *pos, fnum, view);
+    apply_markset_autocmd((char)c, pos, buf);
     return OK;
   }
   if (ASCII_ISUPPER(c) || ascii_isdigit(c)) {
@@ -160,6 +185,7 @@ int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
       i = c - 'A';
     }
     RESET_XFMARK(namedfm + i, *pos, fnum, view, NULL);
+    apply_markset_autocmd((char)c, pos, buf);
     return OK;
   }
   return FAIL;
