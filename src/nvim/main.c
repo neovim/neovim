@@ -2100,38 +2100,18 @@ static bool do_user_initialization(void)
 }
 
 // Read initialization commands from ".nvim.lua", ".nvimrc", or ".exrc" in
-// current directory.  This is only done if the 'exrc' option is set.
-// Only do this if VIMRC_FILE is not the same as vimrc file sourced in
-// do_user_initialization.
+// current directory and all parent directories.  This is only done if the 'exrc'
+// option is set. Only do this if VIMRC_FILE is not the same as vimrc file
+// sourced in do_user_initialization.
 static void do_exrc_initialization(void)
 {
-  char *str;
+  lua_State *const L = get_global_lstate();
+  assert(L);
 
-  if (os_path_exists(VIMRC_LUA_FILE)) {
-    str = nlua_read_secure(VIMRC_LUA_FILE);
-    if (str != NULL) {
-      Error err = ERROR_INIT;
-      nlua_exec(cstr_as_string(str), "@"VIMRC_LUA_FILE, (Array)ARRAY_DICT_INIT, kRetNilBool, NULL,
-                &err);
-      xfree(str);
-      if (ERROR_SET(&err)) {
-        semsg("Error in %s:", VIMRC_LUA_FILE);
-        semsg_multiline("emsg", err.msg);
-        api_clear_error(&err);
-      }
-    }
-  } else if (os_path_exists(VIMRC_FILE)) {
-    str = nlua_read_secure(VIMRC_FILE);
-    if (str != NULL) {
-      do_source_str(str, VIMRC_FILE);
-      xfree(str);
-    }
-  } else if (os_path_exists(EXRC_FILE)) {
-    str = nlua_read_secure(EXRC_FILE);
-    if (str != NULL) {
-      do_source_str(str, EXRC_FILE);
-      xfree(str);
-    }
+  lua_getglobal(L, "require");
+  lua_pushstring(L, "vim._core.exrc");
+  if (nlua_pcall(L, 1, 0)) {
+    fprintf(stderr, "%s\n", lua_tostring(L, -1));
   }
 }
 
