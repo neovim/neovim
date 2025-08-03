@@ -1074,13 +1074,14 @@ end
 ---         |hl-LspReferenceText|
 ---         |hl-LspReferenceRead|
 ---         |hl-LspReferenceWrite|
+--- @deprecated
 function M.document_highlight()
-  lsp.buf_request(0, ms.textDocument_documentHighlight, client_positional_params())
+  vim.deprecate('vim.lsp.buf.document_highlight()', 'vim.lsp.document_highlight.enable()', '0.12')
 end
 
---- Removes document highlights from current buffer.
+--- @deprecated
 function M.clear_references()
-  util.buf_clear_references()
+  vim.deprecate('vim.lsp.buf.clear_references(false)', 'vim.lsp.document_highlight.enable()', '0.12')
 end
 
 ---@nodoc

@@ -1329,9 +1329,6 @@ add_workspace_folder({workspace_folder})
     Parameters: ~
       • {workspace_folder}  (`string?`)
 
-clear_references()                            *vim.lsp.buf.clear_references()*
-    Removes document highlights from current buffer.
-
 code_action({opts})                                *vim.lsp.buf.code_action()*
     Selects a code action (LSP: "textDocument/codeAction" request) available
     at cursor position.
@@ -1377,20 +1374,6 @@ definition({opts})                                  *vim.lsp.buf.definition()*
 
     Parameters: ~
       • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
-
-document_highlight()                        *vim.lsp.buf.document_highlight()*
-    Send request to the server to resolve document highlights for the current
-    text document position. This request can be triggered by a key mapping or
-    by events such as `CursorHold`, e.g.: >vim
-        autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
-        autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
-        autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
-<
-
-    Note: Usage of |vim.lsp.buf.document_highlight()| requires the following
-    highlight groups to be defined or you won't be able to see the actual
-    highlights. |hl-LspReferenceText| |hl-LspReferenceRead|
-    |hl-LspReferenceWrite|
 
 document_symbol({opts})                        *vim.lsp.buf.document_symbol()*
     Lists all symbols in the current buffer in the |location-list|.
@@ -2580,24 +2563,6 @@ apply_workspace_edit({workspace_edit}, {position_encoding})
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
-
-buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
-    Removes document highlights from a buffer.
-
-    Parameters: ~
-      • {bufnr}  (`integer?`) Buffer id
-
-                                     *vim.lsp.util.buf_highlight_references()*
-buf_highlight_references({bufnr}, {references}, {position_encoding})
-    Shows a list of document highlights for a certain buffer.
-
-    Parameters: ~
-      • {bufnr}              (`integer`) Buffer id
-      • {references}         (`lsp.DocumentHighlight[]`) objects to highlight
-      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
-
-    See also: ~
-      • https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
 
                                              *vim.lsp.util.character_offset()*
 character_offset({buf}, {row}, {col}, {offset_encoding})
