@@ -1205,7 +1205,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   msg_hist_last = entry;
   msg_ext_history = true;
 
-  msg_ext_id = msg_id;
+  msg_ext_id = entry->message_id;
   if (is_kind_progress && ui_has(kUIMessages)) {
     kv_resize(msg_ext_extra_info, 3);
     if (entry->ext_data.title.size != 0) {
