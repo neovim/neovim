@@ -286,15 +286,6 @@ end
 
 --- Enables document highlighting from the given language client in the given buffer.
 ---
---- You can enable document highlighting when a client attaches to a buffer as follows:
---- ```lua
---- vim.api.nvim_create_autocmd('LspAttach', {
----   callback = function(args)
----     vim.lsp.document_color.enable(true, args.buf)
----   end
---- })
---- ```
----
 --- To "toggle", pass the inverse of `is_enabled()`:
 ---
 --- ```lua
