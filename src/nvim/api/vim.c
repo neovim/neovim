@@ -804,14 +804,19 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
   }
 
   if (is_kind_progress
-      && ((opts->status.data == NULL)
-          || (strcmp(opts->status.data, "success") != 0
+      && ((opts->status.data != NULL)
+          && (strcmp(opts->status.data, "success") != 0
               && strcmp(opts->status.data, "failed") != 0
               && strcmp(opts->status.data, "running") != 0
               && strcmp(opts->status.data, "cancel") != 0)
           )
       ) {
     api_set_error(err, kErrorTypeValidation, "invalid message status");
+    return -1;
+  }
+
+  if (is_kind_progress && (opts->percent < 0 || opts->percent > 100)) {
+    api_set_error(err, kErrorTypeValidation, "progress percent out of bounds");
     return -1;
   }
 

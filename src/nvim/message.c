@@ -339,7 +339,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
 
   if (is_kind_progress) {
-    draw_progress_message(id);
+    draw_progress_message(id, err);
   }
 
   msg_ext_skip_flush = false;
@@ -1086,7 +1086,7 @@ static void emit_progress_event(MessageHistoryEntry *msg)
   kv_destroy(messages);
 }
 
-static void draw_progress_message(MsgID msg_id)
+static void draw_progress_message(MsgID msg_id, bool err)
 {
   MessageHistoryEntry *hist_msg = NULL;
   bool need_clear = false;
@@ -1106,9 +1106,13 @@ static void draw_progress_message(MsgID msg_id)
   }
   for (uint32_t i = 0; i < kv_size(hist_msg->msg); i++) {
     HlMessageChunk chunk = kv_A(hist_msg->msg, i);
-    msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
+    if (err) {
+      emsg_multiline(chunk.text.data, hist_msg->kind, chunk.hl_id, true);
+    } else {
+      msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
+    }
   }
-  if (hist_msg && hist_msg->ext_data.percent >= 0) {
+  if (hist_msg && hist_msg->ext_data.percent > 0) {
     // this block draws the "...percent%" before the progress-message
     char percent_buf[10];
     vim_snprintf(percent_buf, sizeof(percent_buf), "...%ld%%", (long)hist_msg->ext_data.percent);
