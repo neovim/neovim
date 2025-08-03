@@ -214,6 +214,20 @@ describe('vim.snippet', function()
     eq(false, exec_lua('return vim.snippet.active()'))
   end)
 
+  it('stop session when jumping to $0', function()
+    test_expand_success({ 'local ${1:name} = ${2:value}$0' }, { 'local name = value' })
+    -- Jump to $2
+    feed('<Tab>')
+    poke_eventloop()
+    -- Jump to $0 (stop snippet)
+    feed('<Tab>')
+    poke_eventloop()
+    -- Insert literal \t
+    feed('<Tab>')
+    poke_eventloop()
+    eq({ 'local name = value\t' }, buf_lines(0))
+  end)
+
   it('inserts choice', function()
     test_expand_success({ 'console.${1|assert,log,error|}()' }, { 'console.()' })
     wait_for_pum()
