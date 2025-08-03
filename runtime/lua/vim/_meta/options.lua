@@ -700,12 +700,11 @@ vim.go.cmp = vim.go.casemap
 --- When on, `:cd`, `:tcd` and `:lcd` without an argument changes the
 --- current working directory to the `$HOME` directory like in Unix.
 --- When off, those commands just print the current directory name.
---- On Unix this option has no effect.
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
 --- @type boolean
-vim.o.cdhome = false
+vim.o.cdhome = true
 vim.o.cdh = vim.o.cdhome
 vim.go.cdhome = vim.o.cdhome
 vim.go.cdh = vim.go.cdhome

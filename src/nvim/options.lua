@@ -1005,12 +1005,16 @@ local options = {
     },
     {
       abbreviation = 'cdh',
-      defaults = false,
+      defaults = {
+        condition = 'MSWIN',
+        if_false = true,
+        if_true = false,
+        doc = [[on on Unix, off on Windows]],
+      },
       desc = [=[
         When on, |:cd|, |:tcd| and |:lcd| without an argument changes the
         current working directory to the |$HOME| directory like in Unix.
         When off, those commands just print the current directory name.
-        On Unix this option has no effect.
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
       ]=],
