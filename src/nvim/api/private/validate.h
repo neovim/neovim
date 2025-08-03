@@ -91,6 +91,4 @@
 #define VALIDATE_R(cond, name, code) \
   VALIDATE(cond, "Required: '%s'", name, code);
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/validate.h.generated.h"
-#endif
+#include "api/private/validate.h.generated.h"

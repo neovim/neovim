@@ -26,6 +26,4 @@ typedef struct {
   switchwin_T switchwin;
 } win_execute_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/window.h.generated.h"
-#endif
+#include "eval/window.h.generated.h"

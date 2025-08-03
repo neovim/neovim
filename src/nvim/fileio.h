@@ -53,6 +53,4 @@ enum {
   ICONV_MULT = 8,
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fileio.h.generated.h"
-#endif
+#include "fileio.h.generated.h"

@@ -39,9 +39,7 @@ typedef struct {
   bool has_type_key;  ///< True if type key is present.
 } LuaTableProps;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/converter.c.generated.h"
-#endif
+#include "lua/converter.c.generated.h"
 
 #define TYPE_IDX_VALUE true
 #define VAL_IDX_VALUE false

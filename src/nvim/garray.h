@@ -18,9 +18,7 @@
 #define GA_APPEND_VIA_PTR(item_type, gap) \
   ga_append_via_ptr(gap, sizeof(item_type))
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "garray.h.generated.h"
-#endif
+#include "garray.h.generated.h"
 
 /// Deep free a garray of specific type using a custom free function.
 /// Items in the array as well as the array itself are freed.

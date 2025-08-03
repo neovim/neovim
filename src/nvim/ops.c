@@ -87,9 +87,7 @@ static bool clipboard_delay_update = false;  // delay clipboard update
 static bool clipboard_needs_update = false;  // clipboard was updated
 static bool clipboard_didwarn = false;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ops.c.generated.h"
-#endif
+#include "ops.c.generated.h"
 
 static const char e_search_pattern_and_expression_register_may_not_contain_two_or_more_lines[]
   = N_("E883: Search pattern and expression register may not contain two or more lines");

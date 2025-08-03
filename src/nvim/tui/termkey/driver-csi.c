@@ -7,9 +7,7 @@
 #include "nvim/tui/termkey/termkey-internal.h"
 #include "nvim/tui/termkey/termkey_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/termkey/driver-csi.c.generated.h"
-#endif
+#include "tui/termkey/driver-csi.c.generated.h"
 
 // There are 64 codes 0x40 - 0x7F
 static int keyinfo_initialised = 0;

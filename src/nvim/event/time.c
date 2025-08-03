@@ -8,9 +8,7 @@
 #include "nvim/event/time.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/time.c.generated.h"
-#endif
+#include "event/time.c.generated.h"
 
 void time_watcher_init(Loop *loop, TimeWatcher *watcher, void *data)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)

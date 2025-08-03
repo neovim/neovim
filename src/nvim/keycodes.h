@@ -501,6 +501,4 @@ enum {
   FSK_SIMPLIFY   = 0x08,  ///< simplify <C-H>, etc.
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "keycodes.h.generated.h"
-#endif
+#include "keycodes.h.generated.h"

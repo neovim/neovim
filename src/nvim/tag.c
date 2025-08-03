@@ -192,9 +192,7 @@ typedef struct {
   hashtab_T ht_match[MT_COUNT];  ///< stores matches by key
 } findtags_state_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tag.c.generated.h"
-#endif
+#include "tag.c.generated.h"
 
 static const char e_tag_stack_empty[]
   = N_("E73: Tag stack empty");

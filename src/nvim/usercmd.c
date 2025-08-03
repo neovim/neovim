@@ -36,9 +36,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "usercmd.c.generated.h"
-#endif
+#include "usercmd.c.generated.h"
 
 garray_T ucmds = { 0, 0, sizeof(ucmd_T), 4, NULL };
 

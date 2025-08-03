@@ -17,6 +17,4 @@ enum {
 /// 'showcmd' buffer shared between normal.c and statusline.c
 EXTERN char showcmd_buf[SHOWCMD_BUFLEN];
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "normal.h.generated.h"
-#endif
+#include "normal.h.generated.h"

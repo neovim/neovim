@@ -51,9 +51,7 @@ typedef kvec_t(ValuesStackItem) ValuesStack;
 /// Vector containing containers, each next container is located inside previous
 typedef kvec_t(ContainerStackItem) ContainerStack;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/decode.c.generated.h"
-#endif
+#include "eval/decode.c.generated.h"
 
 /// Create special dictionary
 ///

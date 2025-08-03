@@ -140,9 +140,7 @@ typedef struct {
   FILE *bi_fp;
 } bufinfo_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "undo.c.generated.h"
-#endif
+#include "undo.c.generated.h"
 
 static const char e_undo_list_corrupt[]
   = N_("E439: Undo list corrupt");

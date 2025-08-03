@@ -120,6 +120,4 @@ typedef struct {
   int score;
 } fuzmatch_str_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "search.h.generated.h"
-#endif
+#include "search.h.generated.h"

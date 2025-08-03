@@ -48,9 +48,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "help.c.generated.h"
-#endif
+#include "help.c.generated.h"
 
 /// ":help": open a read-only window on a help file
 void ex_help(exarg_T *eap)

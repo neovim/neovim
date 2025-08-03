@@ -20,6 +20,4 @@ typedef struct {
   bool force_crlf;
 } TerminalOptions;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "terminal.h.generated.h"
-#endif
+#include "terminal.h.generated.h"

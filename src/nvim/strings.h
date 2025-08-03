@@ -21,10 +21,8 @@ typedef struct {
 
 #define KEYVALUE_ENTRY(k, v) { (k), (v), STRLEN_LITERAL(v) }
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "strings.h.generated.h"
-# include "strings.h.inline.generated.h"
-#endif
+#include "strings.h.generated.h"
+#include "strings.h.inline.generated.h"
 
 /// Append string to string and return pointer to the next byte
 ///

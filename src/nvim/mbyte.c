@@ -83,9 +83,7 @@ struct interval {
 };
 
 // uncrustify:off
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mbyte.c.generated.h"
-#endif
+#include "mbyte.c.generated.h"
 // uncrustify:on
 
 static const char e_list_item_nr_is_not_list[]

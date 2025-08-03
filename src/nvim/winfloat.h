@@ -10,6 +10,4 @@
 /// SE -> kFloatAnchorSouth | kFloatAnchorEast
 EXTERN const char *const float_anchor_str[] INIT( = { "NW", "NE", "SW", "SE" });
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "winfloat.h.generated.h"
-#endif
+#include "winfloat.h.generated.h"

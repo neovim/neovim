@@ -186,9 +186,7 @@ typedef struct {
 
 // locally needed functions
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "file_search.c.generated.h"
-#endif
+#include "file_search.c.generated.h"
 
 static const char e_path_too_long_for_completion[]
   = N_("E854: Path too long for completion");

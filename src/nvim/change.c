@@ -56,9 +56,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "change.c.generated.h"
-#endif
+#include "change.c.generated.h"
 
 /// If the file is readonly, give a warning message with the first change.
 /// Don't do this for autocommands.

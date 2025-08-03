@@ -17,6 +17,4 @@
 #define REX_USE        2       ///< to allow \z\1 et al.
 #define REX_ALL       (REX_SET | REX_USE)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "regexp.h.generated.h"
-#endif
+#include "regexp.h.generated.h"

@@ -5,6 +5,4 @@
 
 #include "nvim/tui/termkey/termkey_defs.h"  // IWYU pragma: keep
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/termkey/termkey.h.generated.h"
-#endif
+#include "tui/termkey/termkey.h.generated.h"

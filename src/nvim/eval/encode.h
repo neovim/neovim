@@ -51,6 +51,4 @@ extern const char *const encode_special_var_names[];
 /// First character that needs to be encoded as surrogate pair
 #define SURROGATE_FIRST_CHAR 0x10000
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/encode.h.generated.h"
-#endif
+#include "eval/encode.h.generated.h"

@@ -22,6 +22,4 @@ typedef struct arg_node {
   QUEUE node;  // QUEUE structure.
 } ArgNode;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_proc_win.h.generated.h"
-#endif
+#include "os/pty_proc_win.h.generated.h"

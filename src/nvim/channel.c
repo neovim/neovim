@@ -58,9 +58,7 @@ static bool did_stdio = false;
 /// 2 is reserved for stderr channel
 static uint64_t next_chan_id = CHAN_STDERR + 1;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "channel.c.generated.h"
-#endif
+#include "channel.c.generated.h"
 
 /// Teardown the module
 void channel_teardown(void)

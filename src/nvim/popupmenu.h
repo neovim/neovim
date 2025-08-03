@@ -29,6 +29,4 @@ EXTERN struct {
   bool finish;
 } pum_want;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "popupmenu.h.generated.h"
-#endif
+#include "popupmenu.h.generated.h"

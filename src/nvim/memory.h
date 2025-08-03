@@ -50,9 +50,7 @@ EXTERN size_t arena_alloc_count INIT( = 0);
   ((v).capacity = (s), \
    (v).items = (void *)arena_alloc(a, sizeof((v).items[0]) * (v).capacity, true))
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "memory.h.generated.h"
-#endif
+#include "memory.h.generated.h"
 
 #define XFREE_CLEAR(ptr) \
   do { \

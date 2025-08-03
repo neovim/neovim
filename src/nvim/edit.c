@@ -102,9 +102,7 @@ typedef struct {
   bool nomove;
 } InsertState;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "edit.c.generated.h"
-#endif
+#include "edit.c.generated.h"
 enum {
   BACKSPACE_CHAR = 1,
   BACKSPACE_WORD = 2,

@@ -31,9 +31,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/deprecated.c.generated.h"
-#endif
+#include "api/deprecated.c.generated.h"
 
 /// @deprecated Use nvim_exec2() instead.
 /// @see nvim_exec2

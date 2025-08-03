@@ -52,6 +52,4 @@ typedef struct {
 # define __ubsan_default_options vim__ubsan_default_options
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "main.h.generated.h"
-#endif
+#include "main.h.generated.h"
