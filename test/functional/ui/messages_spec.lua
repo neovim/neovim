@@ -3212,7 +3212,7 @@ describe('progress-message', function ()
 
     -- can update progress messages
     -- also partial updates still send full content as event
-    api.nvim_echo({{'test-message-updated'}}, true, {id = id, kind='progress', percent=50, status='running'})
+    api.nvim_echo({{'test-message-updated'}}, true, {id = id, kind='progress', percent=50})
     screen:expect({
       grid = [[
         ^                         |
@@ -3241,7 +3241,7 @@ describe('progress-message', function ()
 
     -- progress event can filter by title
     setup_autocmd('Special Title')
-    api.nvim_echo({{'test-message-updated'}}, true, {id = id, kind='progress', percent=80, status='running'})
+    api.nvim_echo({{'test-message-updated'}}, true, {id = id, kind='progress', percent=80})
     assert_progress_autocmd(nil, 'No progress message with Special Title yet')
 
     api.nvim_echo({{'test-message-updated'}}, true, {id = id, title='Special Title', kind='progress', percent=100, status='success'})
