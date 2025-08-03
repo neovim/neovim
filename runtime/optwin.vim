@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Jul 16
+" Last Change:	2025 Jul 25
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " If there already is an option window, jump to that one.
@@ -734,13 +734,19 @@ endif
 if has("insert_expand")
   call <SID>AddOption("complete", gettext("specifies how Insert mode completion works for CTRL-N and CTRL-P"))
   call append("$", "\t" .. s:local_to_buffer)
-  call <SID>OptionL("cfc")
-  call <SID>AddOption("completefuzzycollect", gettext("use fuzzy collection for specific completion modes"))
   call <SID>OptionL("cpt")
+  call <SID>AddOption("autocomplete", gettext("automatic completion in insert mode"))
+  call <SID>BinOptionG("ac", &ac)
   call <SID>AddOption("completeopt", gettext("whether to use a popup menu for Insert mode completion"))
   call <SID>OptionL("cot")
   call <SID>AddOption("completeitemalign", gettext("popup menu item align order"))
   call <SID>OptionG("cia", &cia)
+  call <SID>AddOption("completefuzzycollect", gettext("use fuzzy collection for specific completion modes"))
+  call <SID>OptionL("cfc")
+  if exists("+completepopup")
+    call <SID>AddOption("completepopup", gettext("options for the Insert mode completion info popup"))
+    call <SID>OptionG("cpp", &cpp)
+  endif
   call <SID>AddOption("pumheight", gettext("maximum height of the popup menu"))
   call <SID>OptionG("ph", &ph)
   call <SID>AddOption("pumwidth", gettext("minimum width of the popup menu"))

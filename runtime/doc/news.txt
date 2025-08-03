@@ -236,6 +236,7 @@ LUA
 
 OPTIONS
 
+• 'autocomplete' enables |ins-autocompletion|.
 • 'autowriteall' writes all buffers upon receiving `SIGHUP`, `SIGQUIT` or `SIGTSTP`.
 • 'chistory' and 'lhistory' set size of the |quickfix-stack|.
 • 'completefuzzycollect' enables fuzzy collection of candidates for (some)

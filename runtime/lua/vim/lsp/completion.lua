@@ -29,7 +29,7 @@
 --- on EVERY keypress you can either:
 --- - Extend `client.server_capabilities.completionProvider.triggerCharacters` on `LspAttach`,
 ---   before you call `vim.lsp.completion.enable(… {autotrigger=true})`. See the |lsp-attach| example.
---- - Call `vim.lsp.completion.get()` from the handler described at |compl-autocomplete|.
+--- - Call `vim.lsp.completion.get()` from an |InsertCharPre| autocommand.
 
 local M = {}
 

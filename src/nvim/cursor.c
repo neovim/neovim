@@ -480,6 +480,19 @@ int gchar_cursor(void)
   return utf_ptr2char(get_cursor_pos_ptr());
 }
 
+/// Return the character immediately before the cursor.
+int char_before_cursor(void)
+{
+  if (curwin->w_cursor.col == 0) {
+    return -1;
+  }
+
+  char *line = get_cursor_line_ptr();
+  char *p = line + curwin->w_cursor.col;
+  int prev_len = utf_head_off(line, p - 1) + 1;
+  return utf_ptr2char(p - prev_len);
+}
+
 /// Write a character at the current cursor position.
 /// It is directly written into the block.
 void pchar_cursor(char c)
