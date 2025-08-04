@@ -13,6 +13,7 @@ func Test_AAA_python3_setup()
 
     py33_type_error_pattern = re.compile('^__call__\(\) takes (\d+) positional argument but (\d+) were given$')
     py37_exception_repr = re.compile(r'([^\(\),])(\)+)$')
+    py39_type_error_pattern = re.compile('\w+\.([^(]+\(\) takes)')
 
     def emsg(ei):
       return ei[0].__name__ + ':' + repr(ei[1].args)
@@ -46,6 +47,8 @@ func Test_AAA_python3_setup()
                         oldmsg2 = '''"Can't convert 'int' object to str implicitly"'''
                         if msg.find(newmsg2) > -1:
                             msg = msg.replace(newmsg2, oldmsg2)
+                        # Python 3.9 reports errors like "vim.command() takes ..." instead of "command() takes ..."
+                        msg = py39_type_error_pattern.sub(r'\1', msg)
                 elif sys.version_info >= (3, 5) and e.__class__ is ValueError and str(e) == 'embedded null byte':
                     msg = repr((TypeError, TypeError('expected bytes with no null')))
                 else:
@@ -3508,7 +3511,16 @@ func Test_python3_errors()
     vim.current.xxx = True:(<class 'AttributeError'>, AttributeError('xxx',))
   END
 
-  call assert_equal(expected, getline(2, '$'))
+  let actual = getline(2, '$')
+  let n_expected = len(expected)
+  let n_actual = len(actual)
+  call assert_equal(n_expected, n_actual, 'number of lines to compare')
+
+  " Compare line by line so the errors are easier to understand.  Missing lines
+  " are compared with an empty string.
+  for i in range(n_expected > n_actual ? n_expected : n_actual)
+    call assert_equal(i >= n_expected ? '' : expected[i], i >= n_actual ? '' : actual[i])
+  endfor
   close!
 endfunc
 
