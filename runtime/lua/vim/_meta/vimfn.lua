@@ -9476,8 +9476,8 @@ function vim.fn.stdioopen(opts) end
 --- log          String  Logs directory (for use by plugins too).
 --- run          String  Run directory: temporary, local storage
 ---          for sockets, named pipes, etc.
---- state        String  Session state directory: storage for file
----          drafts, swap, undo, |shada|.
+--- state        String  Session state: storage for backupdir,
+---          file drafts, |shada|, swap, undo, 'viewdir'.
 ---
 --- Example: >vim
 ---   echo stdpath("config")
