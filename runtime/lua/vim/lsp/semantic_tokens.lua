@@ -2,7 +2,6 @@ local api = vim.api
 local bit = require('bit')
 local ms = require('vim.lsp.protocol').Methods
 local util = require('vim.lsp.util')
-local Range = require('vim.treesitter._range')
 local uv = vim.uv
 
 local Capability = require('vim.lsp._capability')
@@ -10,13 +9,10 @@ local Capability = require('vim.lsp._capability')
 local M = {}
 
 --- @class (private) STTokenHighlight
---- @field line integer line number 0-based
---- @field start_col integer start column 0-based
---- @field end_line integer end line number 0-based
---- @field end_col integer end column 0-based
 --- @field type string token type as string
 --- @field modifiers table<string,boolean> token modifiers as a set. E.g., { static = true, readonly = true }
 --- @field marked boolean whether this token has had extmarks applied
+--- @field range vim.Range
 ---
 --- @class (private) STCurrentResult
 --- @field version? integer document version associated with this result
@@ -123,6 +119,7 @@ local function tokens_to_highlights(data, bufnr, client, request)
       local end_line = line ---@type integer
       local start_col = vim.str_byteindex(buf_line, encoding, start_char, false)
 
+      ---TODO(ofseed): extract this offset calculation into `vim.Range`
       ---@type integer LuaLS bug, type must be marked explicitly here
       local new_end_char = end_char - vim.str_utfindex(buf_line, encoding) - eol_offset
       -- While end_char goes past the given line, extend the token range to the next line
@@ -136,13 +133,10 @@ local function tokens_to_highlights(data, bufnr, client, request)
       local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
 
       highlights[#highlights + 1] = {
-        line = line,
-        end_line = end_line,
-        start_col = start_col,
-        end_col = end_col,
         type = token_type,
         modifiers = modifiers,
         marked = false,
+        range = vim.range(line, start_col, end_line, end_col, { buf = bufnr }),
       }
     end
   end
@@ -365,10 +359,10 @@ end
 --- @param hl_group string
 --- @param priority integer
 local function set_mark(bufnr, ns, highlight, hl_group, priority)
-  vim.api.nvim_buf_set_extmark(bufnr, ns, highlight.line, highlight.start_col, {
+  vim.api.nvim_buf_set_extmark(bufnr, ns, highlight.range.start.row, highlight.range.start.col, {
+    end_row = highlight.range.end_.row,
+    end_col = highlight.range.end_.col,
     hl_group = hl_group,
-    end_line = highlight.end_line,
-    end_col = highlight.end_col,
     priority = priority,
     strict = false,
   })
@@ -456,16 +450,20 @@ function STHighlighter:on_win(topline, botline)
 
       local ft = vim.bo[self.bufnr].filetype
       local highlights = assert(current_result.highlights)
-      local first = vim.list.bisect(highlights, { end_line = topline }, {
+      local first = vim.list.bisect(highlights, {
+        range = { end_ = { row = topline } },
+      }, {
         key = function(highlight)
-          return highlight.end_line
+          return highlight.range.end_.row
         end,
       })
-      local last = vim.list.bisect(highlights, { line = botline }, {
+      local last = vim.list.bisect(highlights, {
+        range = { start = { row = botline } },
+      }, {
         lo = first,
         bound = 'upper',
         key = function(highlight)
-          return highlight.line
+          return highlight.range.start.row
         end,
       }) - 1
 
@@ -475,13 +473,17 @@ function STHighlighter:on_win(topline, botline)
       for i = first, last do
         local highlight = assert(highlights[i])
 
-        is_folded, foldend = check_fold(highlight.line + 1, foldend)
+        is_folded, foldend = check_fold(highlight.range.start.row + 1, foldend)
 
         if not is_folded and not highlight.marked then
           set_mark0(highlight, string.format('@lsp.type.%s.%s', highlight.type, ft), 0)
           for modifier in pairs(highlight.modifiers) do
             set_mark0(highlight, string.format('@lsp.mod.%s.%s', modifier, ft), 1)
-            set_mark0(highlight, string.format('@lsp.typemod.%s.%s.%s', highlight.type, modifier, ft), 2)
+            set_mark0(
+              highlight,
+              string.format('@lsp.typemod.%s.%s.%s', highlight.type, modifier, ft),
+              2
+            )
           end
           highlight.marked = true
 
@@ -733,8 +735,6 @@ function M.get_at_pos(bufnr, row, col)
     row, col = cursor[1] - 1, cursor[2]
   end
 
-  local position = { row, col, row, col }
-
   local result = {} --- @type STHighlightInspect[]
   for client_id, client in pairs(highlighter.client_state) do
     local highlights = client.current_result.highlights
@@ -748,13 +748,11 @@ function M.get_at_pos(bufnr, row, col)
         local highlight = highlights[i]
         --- @cast highlight STHighlightInspect
 
-        if highlight.line > row then
+        if highlight.range.start.row > row then
           break
         end
 
-        if
-          Range.contains({ highlight.line, highlight.start_col, highlight.end_line, highlight.end_col }, position)
-        then
+        if highlight.range:has(vim.range(row, col, row, col, { buf = bufnr })) then
           highlight.client_id = client_id
           result[#result + 1] = highlight
         end
