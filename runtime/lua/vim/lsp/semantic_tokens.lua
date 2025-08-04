@@ -9,7 +9,7 @@ local Capability = require('vim.lsp._capability')
 
 local M = {}
 
---- @class (private) STTokenRange
+--- @class (private) STTokenHighlight
 --- @field line integer line number 0-based
 --- @field start_col integer start column 0-based
 --- @field end_line integer end line number 0-based
@@ -21,7 +21,7 @@ local M = {}
 --- @class (private) STCurrentResult
 --- @field version? integer document version associated with this result
 --- @field result_id? string resultId from the server; used with delta requests
---- @field highlights? STTokenRange[] cache of highlight ranges for this document version
+--- @field highlights? STTokenHighlight[] cache of highlight ranges for this document version
 --- @field tokens? integer[] raw token array as received by the server. used for calculating delta responses
 --- @field namespace_cleared? boolean whether the namespace was cleared for this result yet
 ---
@@ -71,8 +71,8 @@ end
 ---@param bufnr integer
 ---@param client vim.lsp.Client
 ---@param request STActiveRequest
----@return STTokenRange[]
-local function tokens_to_ranges(data, bufnr, client, request)
+---@return STTokenHighlight[]
+local function tokens_to_highlights(data, bufnr, client, request)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
@@ -80,7 +80,7 @@ local function tokens_to_ranges(data, bufnr, client, request)
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   -- For all encodings, \r\n takes up two code points, and \n (or \r) takes up one.
   local eol_offset = vim.bo.fileformat[bufnr] == 'dos' and 2 or 1
-  local ranges = {} ---@type STTokenRange[]
+  local highlights = {} ---@type STTokenHighlight[]
 
   local start = uv.hrtime()
   local ms_to_ns = 1e6
@@ -135,7 +135,7 @@ local function tokens_to_ranges(data, bufnr, client, request)
 
       local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
 
-      ranges[#ranges + 1] = {
+      highlights[#highlights + 1] = {
         line = line,
         end_line = end_line,
         start_col = start_col,
@@ -147,7 +147,7 @@ local function tokens_to_ranges(data, bufnr, client, request)
     end
   end
 
-  return ranges
+  return highlights
 end
 
 --- Construct a new STHighlighter for the buffer
@@ -340,7 +340,7 @@ function STHighlighter:process_response(response, client, version)
 
   -- convert token list to highlight ranges
   -- this could yield and run over multiple event loop iterations
-  local highlights = tokens_to_ranges(tokens, self.bufnr, client, state.active_request)
+  local highlights = tokens_to_highlights(tokens, self.bufnr, client, state.active_request)
 
   -- reset active request
   state.active_request = {}
@@ -361,14 +361,14 @@ end
 
 --- @param bufnr integer
 --- @param ns integer
---- @param token STTokenRange
+--- @param highlight STTokenHighlight
 --- @param hl_group string
 --- @param priority integer
-local function set_mark(bufnr, ns, token, hl_group, priority)
-  vim.api.nvim_buf_set_extmark(bufnr, ns, token.line, token.start_col, {
+local function set_mark(bufnr, ns, highlight, hl_group, priority)
+  vim.api.nvim_buf_set_extmark(bufnr, ns, highlight.line, highlight.start_col, {
     hl_group = hl_group,
-    end_line = token.end_line,
-    end_col = token.end_col,
+    end_line = highlight.end_line,
+    end_col = highlight.end_col,
     priority = priority,
     strict = false,
   })
@@ -473,23 +473,23 @@ function STHighlighter:on_win(topline, botline)
       local is_folded, foldend
 
       for i = first, last do
-        local token = assert(highlights[i])
+        local highlight = assert(highlights[i])
 
-        is_folded, foldend = check_fold(token.line + 1, foldend)
+        is_folded, foldend = check_fold(highlight.line + 1, foldend)
 
-        if not is_folded and not token.marked then
-          set_mark0(token, string.format('@lsp.type.%s.%s', token.type, ft), 0)
-          for modifier in pairs(token.modifiers) do
-            set_mark0(token, string.format('@lsp.mod.%s.%s', modifier, ft), 1)
-            set_mark0(token, string.format('@lsp.typemod.%s.%s.%s', token.type, modifier, ft), 2)
+        if not is_folded and not highlight.marked then
+          set_mark0(highlight, string.format('@lsp.type.%s.%s', highlight.type, ft), 0)
+          for modifier in pairs(highlight.modifiers) do
+            set_mark0(highlight, string.format('@lsp.mod.%s.%s', modifier, ft), 1)
+            set_mark0(highlight, string.format('@lsp.typemod.%s.%s.%s', highlight.type, modifier, ft), 2)
           end
-          token.marked = true
+          highlight.marked = true
 
           api.nvim_exec_autocmds('LspTokenUpdate', {
             buffer = self.bufnr,
             modeline = false,
             data = {
-              token = token,
+              token = highlight,
               client_id = client_id,
             },
           })
@@ -701,7 +701,7 @@ function M.enable(enable, filter)
 end
 
 --- @nodoc
---- @class STTokenRangeInspect : STTokenRange
+--- @class STHighlightInspect : STTokenHighlight
 --- @field client_id integer
 
 --- Return the semantic token(s) at the given position.
@@ -711,7 +711,7 @@ end
 ---@param row integer|nil Position row (default cursor position)
 ---@param col integer|nil Position column (default cursor position)
 ---
----@return STTokenRangeInspect[]|nil (table|nil) List of tokens at position. Each token has
+---@return STHighlightInspect[]|nil (table|nil) List of tokens at position. Each token has
 ---        the following fields:
 ---        - line (integer) line number, 0-based
 ---        - start_col (integer) start column, 0-based
@@ -735,7 +735,7 @@ function M.get_at_pos(bufnr, row, col)
 
   local position = { row, col, row, col }
 
-  local tokens = {} --- @type STTokenRangeInspect[]
+  local result = {} --- @type STHighlightInspect[]
   for client_id, client in pairs(highlighter.client_state) do
     local highlights = client.current_result.highlights
     if highlights then
@@ -745,23 +745,23 @@ function M.get_at_pos(bufnr, row, col)
         end,
       })
       for i = idx, #highlights do
-        local token = highlights[i]
-        --- @cast token STTokenRangeInspect
+        local highlight = highlights[i]
+        --- @cast highlight STHighlightInspect
 
-        if token.line > row then
+        if highlight.line > row then
           break
         end
 
         if
-          Range.contains({ token.line, token.start_col, token.end_line, token.end_col }, position)
+          Range.contains({ highlight.line, highlight.start_col, highlight.end_line, highlight.end_col }, position)
         then
-          token.client_id = client_id
-          tokens[#tokens + 1] = token
+          highlight.client_id = client_id
+          result[#result + 1] = highlight
         end
       end
     end
   end
-  return tokens
+  return result
 end
 
 --- Force a refresh of all semantic tokens
