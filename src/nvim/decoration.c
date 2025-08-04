@@ -513,7 +513,7 @@ static void decor_state_pack(DecorState *state)
   state->future_begin = fut_beg;
 }
 
-bool decor_redraw_line(win_T *wp, int row, DecorState *state)
+void decor_redraw_line(win_T *wp, int row, DecorState *state)
 {
   decor_state_pack(state);
 
@@ -527,7 +527,11 @@ bool decor_redraw_line(win_T *wp, int row, DecorState *state)
   state->row = row;
   state->col_until = -1;
   state->eol_col = -1;
+}
 
+// Checks if there are (likely) more decorations on the current line.
+bool decor_has_more_decorations(DecorState *state, int row)
+{
   if (state->current_end != 0 || state->future_begin != (int)kv_size(state->ranges_i)) {
     return true;
   }
