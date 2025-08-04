@@ -1097,10 +1097,39 @@ local function is_blank_line(line)
 end
 
 ---Returns true if the line corresponds to a Markdown thematic break.
+---@see https://github.github.com/gfm/#thematic-break
 ---@param line string
 ---@return boolean
 local function is_separator_line(line)
-  return line and line:match('^ ? ? ?%-%-%-+%s*$')
+  local i = 1
+  -- 1. Skip up to 3 leading spaces
+  local leading_spaces = 3
+  while i <= #line and line:byte(i) == string.byte(' ') and leading_spaces > 0 do
+    i = i + 1
+    leading_spaces = leading_spaces - 1
+  end
+  -- 2. Determine the delimiter character
+  local delimiter = line:byte(i) -- nil if i > #line
+  if
+    delimiter ~= string.byte('-')
+    and delimiter ~= string.byte('_')
+    and delimiter ~= string.byte('*')
+  then
+    return false
+  end
+  local ndelimiters = 1
+  i = i + 1
+  -- 3. Iterate until found non-whitespace or other than expected delimiter
+  while i <= #line do
+    local char = line:byte(i)
+    if char == delimiter then
+      ndelimiters = ndelimiters + 1
+    elseif not (char == string.byte(' ') or char == string.byte('\t')) then
+      return false
+    end
+    i = i + 1
+  end
+  return ndelimiters >= 3
 end
 
 ---Replaces separator lines by the given divider and removing surrounding blank lines.
@@ -1371,7 +1400,7 @@ end
 --- Normalizes Markdown input to a canonical form.
 ---
 --- The returned Markdown adheres to the GitHub Flavored Markdown (GFM)
---- specification.
+--- specification, as required by the LSP.
 ---
 --- The following transformations are made:
 ---
@@ -1382,6 +1411,7 @@ end
 ---@param contents string[]
 ---@param opts? vim.lsp.util._normalize_markdown.Opts
 ---@return string[] table of lines containing normalized Markdown
+---@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#markupContent
 ---@see https://github.github.com/gfm
 function M._normalize_markdown(contents, opts)
   validate('contents', contents, 'table')
