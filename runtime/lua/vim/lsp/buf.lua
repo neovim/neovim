@@ -723,7 +723,7 @@ function M.rename(new_name, opts)
     if client:supports_method(ms.textDocument_prepareRename) then
       local params = util.make_position_params(win, client.offset_encoding)
       client:request(ms.textDocument_prepareRename, params, function(err, result)
-        if err or result == vim.NIL then
+        if err or result == nil then
           if next(clients, idx) then
             try_use_client(next(clients, idx))
           else
@@ -809,11 +809,7 @@ function M.references(context, opts)
 
     for client_id, res in pairs(results) do
       local client = assert(lsp.get_client_by_id(client_id))
-      local result = res.result
-      if result == vim.NIL then
-        result = {}
-      end
-      local items = util.locations_to_items(result, client.offset_encoding)
+      local items = util.locations_to_items(res.result or {}, client.offset_encoding)
       vim.list_extend(all_items, items)
     end
 
