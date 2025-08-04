@@ -191,6 +191,31 @@ func Test_unicode()
   set encoding=utf8
 endfunc
 
+" Test vim.eval() with various types.
+func Test_python3_vim_val()
+  call assert_equal("\n8",             execute('py3 print(vim.eval("3+5"))'))
+  if has('float')
+    call assert_equal("\n3.1399999999999997",    execute('py3 print(vim.eval("1.01+2.13"))'))
+    call assert_equal("\n0.0",    execute('py3 print(vim.eval("0.0/(1.0/0.0)"))'))
+    call assert_equal("\n0.0",    execute('py3 print(vim.eval("0.0/(1.0/0.0)"))'))
+    call assert_equal("\n-0.0",   execute('py3 print(vim.eval("0.0/(-1.0/0.0)"))'))
+    " Commented out: output of infinity and nan depend on platforms.
+    " call assert_equal("\ninf",         execute('py3 print(vim.eval("1.0/0.0"))'))
+    " call assert_equal("\n-inf",        execute('py3 print(vim.eval("-1.0/0.0"))'))
+    " call assert_equal("\n-nan",        execute('py3 print(vim.eval("0.0/0.0"))'))
+  endif
+  call assert_equal("\nabc",           execute('py3 print(vim.eval("\"abc\""))'))
+  call assert_equal("\n['1', '2']",    execute('py3 print(vim.eval("[1, 2]"))'))
+  call assert_equal("\n{'1': '2'}",    execute('py3 print(vim.eval("{1:2}"))'))
+  call assert_equal("\nTrue",          execute('py3 print(vim.eval("v:true"))'))
+  call assert_equal("\nFalse",         execute('py3 print(vim.eval("v:false"))'))
+  call assert_equal("\nNone",          execute('py3 print(vim.eval("v:null"))'))
+  " call assert_equal("\nNone",          execute('py3 print(vim.eval("v:none"))'))
+  " call assert_equal("\nb'\\xab\\x12'", execute('py3 print(vim.eval("0zab12"))'))
+
+  call assert_fails('py3 vim.eval("1+")', 'E5108:')
+endfunc
+
 " Test for resetting options with local values to global values
 func Test_python3_opt_reset_local_to_global()
   throw 'Skipped: Nvim does not support vim.bindeval()'
