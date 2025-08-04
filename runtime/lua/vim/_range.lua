@@ -36,6 +36,40 @@ function Range:new(...)
   return self
 end
 
+---@param range vim.Range
+---@param position_encoding lsp.PositionEncodingKind
+local function to_lsp_range(range, position_encoding)
+  ---@type lsp.Range
+  return {
+    ['start'] = range.start:lsp(position_encoding),
+    ['end'] = range.end_:lsp(position_encoding),
+  }
+end
+
+---@param bufnr integer
+---@param range lsp.Range
+---@param position_encoding lsp.PositionEncodingKind
+local function from_lsp_range(bufnr, range, position_encoding)
+  -- TODO(ofseed): avoid using `Pos:lsp()` here,
+  -- as they need reading files separately if buffer is unloaded.
+  local start = pos.lsp(bufnr, range['start'], position_encoding)
+  local end_ = pos.lsp(bufnr, range['end'], position_encoding)
+  return Range:new(start, end_)
+end
+
+---@overload fun(range: vim.Pos, position_encoding: lsp.PositionEncodingKind): lsp.Range
+---@overload fun(bufnr: integer, range: lsp.Position, position_encoding: lsp.PositionEncodingKind): vim.Range
+function Range.lsp(...)
+  local args = { ... }
+  if #args == 2 then
+    return to_lsp_range(...)
+  elseif #args == 3 then
+    return from_lsp_range(...)
+  else
+    error('invalid parameters')
+  end
+end
+
 --- Checks whether {outer} range contains {inner} range.
 ---
 ---@param outer vim.Range

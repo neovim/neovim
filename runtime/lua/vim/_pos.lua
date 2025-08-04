@@ -36,6 +36,62 @@ function Pos:new(row, col, opts)
   return self
 end
 
+--- TODO(ofseed): Make it work for unloaded buffers.
+---@param bufnr integer
+---@param row integer
+local function get_line(bufnr, row)
+  return api.nvim_buf_get_lines(bufnr, row, row + 1, true)[1]
+end
+
+---@param pos vim.Pos
+---@param position_encoding lsp.PositionEncodingKind
+local function to_lsp_position(pos, position_encoding)
+  validate('pos', pos, 'table')
+  validate('position_encoding', position_encoding, 'string')
+
+  local bufnr = assert(pos.bufnr, 'position is not a buffer position')
+  local row, col = pos.row, pos.col
+  -- When on the first character,
+  -- we can ignore the difference between byte and character.
+  if col > 0 then
+    col = vim.str_utfindex(get_line(bufnr, row), position_encoding, col, false)
+  end
+
+  ---@type lsp.Position
+  return { line = row, character = col }
+end
+
+---@param bufnr integer
+---@param pos lsp.Position
+---@param position_encoding lsp.PositionEncodingKind
+local function from_lsp_position(bufnr, pos, position_encoding)
+  validate('bufnr', bufnr, 'number')
+  validate('pos', pos, 'table')
+  validate('position_encoding', position_encoding, 'string')
+
+  local row, col = pos.line, pos.character
+  -- When on the first character,
+  -- we can ignore the difference between byte and character.
+  if col > 0 then
+    col = vim.str_byteindex(get_line(bufnr, row), position_encoding, col)
+  end
+
+  return Pos:new(row, col, { bufnr = bufnr })
+end
+
+---@overload fun(pos: vim.Pos, position_encoding: lsp.PositionEncodingKind): lsp.Position
+---@overload fun(bufnr: integer, pos: lsp.Position, position_encoding: lsp.PositionEncodingKind): vim.Pos
+function Pos.lsp(...)
+  local args = { ... }
+  if #args == 2 then
+    return to_lsp_position(...)
+  elseif #args == 3 then
+    return from_lsp_position(...)
+  else
+    error('invalid parameters')
+  end
+end
+
 ---@param p1 vim.Pos First position to compare.
 ---@param p2 vim.Pos Second position to compare.
 ---@return integer
