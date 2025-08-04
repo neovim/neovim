@@ -2286,7 +2286,7 @@ func Test_python3_chdir()
     cb.append(vim.eval('@%'))
     os.chdir('..')
     path = fnamemodify('.', ':p:h:t')
-    if path != b'src':
+    if path != b'src' and path != b'src2':
       # Running tests from a shadow directory, so move up another level
       # This will result in @% looking like shadow/testdir/Xfile, hence the
       # slicing to remove the leading path and path separator
@@ -2296,7 +2296,8 @@ func Test_python3_chdir()
       os.chdir(path)
       del path
     else:
-      cb.append(str(fnamemodify('.', ':p:h:t')))
+      # Also accept running from src2/testdir/ for MS-Windows CI.
+      cb.append(str(fnamemodify('.', ':p:h:t').replace(b'src2', b'src')))
       cb.append(vim.eval('@%').replace(os.path.sep, '/'))
     del path
     os.chdir('testdir')
