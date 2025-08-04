@@ -1520,4 +1520,32 @@ describe('cmdheight=0', function()
       {3:[No Name]                }|
     ]])
   end)
+
+  it('nvim_echo does not lose first line with cmdheight=0 #22875', function()
+    clear()
+    screen = Screen.new(25, 5)
+    command('set cmdheight=0')
+    n.exec_lua([[
+      vim.defer_fn(function() vim.api.nvim_echo({ { "foo\nbar" } }, false, {}) end, 0)
+    ]])
+    screen:expect([[
+      {3:                         }|
+      foo                      |
+      bar                      |
+      {6:Press ENTER or type comma}|
+      {6:nd to continue}^           |
+    ]])
+
+    feed('<ESC>')
+    n.exec_lua([[
+      vim.defer_fn(function() vim.api.nvim_echo({ { "one\ntwo\nthree\nfour\nfive\nsix" } }, false, {}) end, 0)
+    ]])
+    screen:expect([[
+      four                     |
+      five                     |
+      six                      |
+      {6:Press ENTER or type comma}|
+      {6:nd to continue}^           |
+    ]])
+  end)
 end)
