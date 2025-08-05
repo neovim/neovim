@@ -667,8 +667,27 @@ LspProgress                                                       *LspProgress*
     properties, where `params` is the request params sent by the server (see
     `lsp.ProgressParams`).
 
-    Example: >vim
+    Examples:
+
+    Redraw the statusline whenever an LSP progress message arrives: >vim
         autocmd LspProgress * redrawstatus
+<
+
+    Tell the parent terminal to indicate progress using a native progress
+    indicator (requires a supporting terminal): >lua
+
+        vim.api.nvim_create_autocmd('LspProgress', {
+          callback = function(ev)
+            local value = ev.data.params.value
+            if value.kind == 'begin' then
+              io.stdout:write('\027]9;4;1;0\027\\')
+            elseif value.kind == 'end' then
+              io.stdout:write('\027]9;4;0\027\\')
+            elseif value.kind == 'report' then
+              io.stdout:write(string.format('\027]9;4;1;%d\027\\', value.percentage))
+            end
+          end,
+        })
 <
 
 LspRequest                                                        *LspRequest*
