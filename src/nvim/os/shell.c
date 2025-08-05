@@ -47,6 +47,13 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
+#ifdef MSWIN
+#include <io.h>
+#include <fcntl.h>
+#include <windows.h>
+#endif
+
+
 #define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
 #define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
@@ -88,7 +95,27 @@ static bool have_dollars(int num, char **file)
   }
   return false;
 }
-
+#ifdef MSWIN
+static void setup_windows_utf8_env(void) {
+  // Set console to UTF-8
+  SetConsoleOutputCP(CP_UTF8);
+  SetConsoleCP(CP_UTF8);
+  
+  // Set environment variables for child processes
+  if (!os_getenv("PYTHONIOENCODING")) {
+    os_setenv("PYTHONIOENCODING", "utf-8", 1);
+  }
+  if (!os_getenv("PYTHONLEGACYWINDOWSFSENCODING")) {
+    os_setenv("PYTHONLEGACYWINDOWSFSENCODING", "utf-8", 1);
+  }
+  if (!os_getenv("FORCE_COLOR")) {
+    os_setenv("FORCE_COLOR", "1", 1);
+  }
+  if (!os_getenv("COLORTERM")) {
+    os_setenv("COLORTERM", "truecolor", 1);
+  }
+}
+#endif
 /// Performs wildcard pattern matching using the shell.
 ///
 /// @param      num_pat  is the number of input patterns.
@@ -845,11 +872,19 @@ done:
 ///             returned buffer is not NULL)
 /// @return the return code of the process, -1 if the process couldn't be
 ///         started properly
+
+
 int os_system(char **argv, const char *input, size_t len, char **output,
               size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
 {
+#ifdef MSWIN
+  SetConsoleOutputCP(CP_UTF8); SetConsoleCP(CP_UTF8);
+  if (!os_getenv("PYTHONIOENCODING")) os_setenv("PYTHONIOENCODING", "utf-8", 0);
+#endif
   return do_os_system(argv, input, len, output, nread, true, false);
 }
+
+
 
 static int do_os_system(char **argv, const char *input, size_t len, char **output, size_t *nread,
                         bool silent, bool forward_output)
