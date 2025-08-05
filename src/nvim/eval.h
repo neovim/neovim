@@ -173,6 +173,7 @@ typedef enum {
   VV_STDERR,
   VV_MSGPACK_TYPES,
   VV__NULL_STRING,  // String with NULL value. For test purposes only.
+  VV__NULL_FUNC,  // Function with NULL value. For test purposes only.
   VV__NULL_LIST,  // List with NULL value. For test purposes only.
   VV__NULL_DICT,  // Dict with NULL value. For test purposes only.
   VV__NULL_BLOB,  // Blob with NULL value. For test purposes only.
