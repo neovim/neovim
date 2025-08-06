@@ -22,13 +22,13 @@ For inserting text see |insert.txt|.
 			"dl".
 			The <Del> key does not take a [count].  Instead, it
 			deletes the last character of the count.
-			See |'whichwrap'| for deleting a line break (join
+			See 'whichwrap' for deleting a line break (join
 			lines).
 
 							*X* *dh*
 ["x]X			Delete [count] characters before the cursor [into
 			register x] (not |linewise|).  Does the same as "dh".
-			Also see |'whichwrap'|.
+			Also see 'whichwrap'.
 
 							*d*
 ["x]d{motion}		Delete text that {motion} moves over [into register
@@ -583,9 +583,9 @@ with ".".  Vim does not recognize a comment (starting with '"') after the
 ={motion}		Filter {motion} lines through the external program
 			given with the 'equalprg' option.  When the 'equalprg'
 			option is empty (this is the default), use the
-			internal formatting function |C-indenting| and
-			|'lisp'|.  But when 'indentexpr' is not empty, it will
-			be used instead |indent-expression|.
+			internal formatting function |C-indenting| and 'lisp'.
+			But when 'indentexpr' is not empty, it will be used
+			instead |indent-expression|.
 
 							*==*
 ==			Filter [count] lines like with ={motion}.

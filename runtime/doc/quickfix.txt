@@ -1072,8 +1072,8 @@ commands can be combined to create a NewGrep command: >
 
 			{pattern} is a Vim search pattern.  Instead of
 			enclosing it in / any non-ID character (see
-			|'isident'|) can be used, so long as it does not
-			appear in {pattern}.
+			'isident') can be used, so long as it does not appear
+			in {pattern}.
 			'ignorecase' applies.  To overrule it put |/\c| in the
 			pattern to ignore case or |/\C| to match case.
 			'smartcase' is not used.

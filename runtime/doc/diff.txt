@@ -448,7 +448,7 @@ Manually set two anchors using line numbers via buffer-local options: >
 ==============================================================================
 6. Diff options						*diff-options*
 
-Also see |'diffopt'| and the "diff" item of |'fillchars'|.
+Also see 'diffopt' and the "diff" item of 'fillchars'.
 
 					    *diff-slow* *diff_translations*
 For very long lines, the diff syntax highlighting might be slow, especially

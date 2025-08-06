@@ -29,7 +29,7 @@ use "CTRL-V 003" to insert a CTRL-C.  Note: When CTRL-V is mapped you can
 often use CTRL-Q instead |i_CTRL-Q|.
 
 If you are working in a special language mode when inserting text, see the
-'langmap' option, |'langmap'|, on how to avoid switching this mode on and off
+'langmap' option, 'langmap', on how to avoid switching this mode on and off
 all the time.
 
 char		action	~
@@ -279,7 +279,7 @@ When 'backspace' is empty, Vi compatible backspacing is used.  You cannot
 backspace over autoindent, before column 1 or before where insert started.
 
 For backwards compatibility the values "0", "1", "2" and "3" are also allowed,
-see |'backspace'|.
+see 'backspace'.
 
 If the 'backspace' option does contain "eol" and the cursor is in column 1
 when one of the three keys is used, the current line is joined with the
@@ -601,7 +601,7 @@ In 'list' mode, Virtual Replace mode acts as if it was not in 'list' mode,
 unless "L" is in 'cpoptions'.
 
 Note that the only situations for which characters beyond the cursor should
-appear to move are in List mode |'list'|, and occasionally when 'wrap' is set
+appear to move are in List mode 'list', and occasionally when 'wrap' is set
 (and the line changes length to become shorter or wider than the width of the
 screen).  In other cases spaces may be inserted to avoid following characters
 to move.
@@ -1117,11 +1117,11 @@ CTRL-X CTRL-Z		Stop completion without changing the text.
 AUTOCOMPLETION						*ins-autocompletion*
 
 Vim can display a completion menu as you type, similar to using |i_CTRL-N|,
-but triggered automatically.  See |'autocomplete'|. The menu items are
-collected from the sources listed in the |'complete'| option.
+but triggered automatically.  See 'autocomplete'. The menu items are collected
+from the sources listed in the 'complete' option.
 
 Unlike manual |i_CTRL-N| completion, this mode uses a decaying timeout to keep
-Vim responsive.  Sources earlier in the |'complete'| list are given more time
+Vim responsive.  Sources earlier in the 'complete' list are given more time
 (higher priority), but every source is guaranteed a time slice, however small.
 
 This mode is fully compatible with other completion modes.  You can invoke
