@@ -861,7 +861,7 @@ function M.make_floating_popup_options(width, height, opts)
     col = 1
   end
 
-  local title = (opts.border and opts.title) and opts.title or nil
+  local title = ((opts.border or vim.o.winborder ~= '') and opts.title) and opts.title or nil
   local title_pos --- @type 'left'|'center'|'right'?
 
   if title then
