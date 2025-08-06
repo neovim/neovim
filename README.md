@@ -50,6 +50,7 @@ See [BUILD.md](./BUILD.md) and [supported platforms](https://neovim.io/doc/user/
 
 The build is CMake-based, but a Makefile is provided as a convenience.
 After installing the dependencies, run the following command.
+**Note:** The neovim directory path cannot contain spaces due to limitations in the Makefile's path detection. If your path contains spaces, either move the project to a path without spaces or use the CMake commands directly.
 
     make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
