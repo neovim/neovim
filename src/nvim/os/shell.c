@@ -882,6 +882,10 @@ int os_system(char **argv, const char *input, size_t len, char **output,
   if (!os_getenv("PYTHONIOENCODING")) {
     os_setenv("PYTHONIOENCODING", "utf-8", 0);
   }
+  SetConsoleOutputCP(CP_UTF8); 
+  SetConsoleCP(CP_UTF8);
+  if (!os_getenv("PYTHONIOENCODING")) os_setenv("PYTHONIOENCODING", "utf-8", 0);
+c8ab86b15b (fix(windows): separate SetConsole function calls to different lines)
 #endif
   return do_os_system(argv, input, len, output, nread, true, false);
 }
