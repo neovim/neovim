@@ -13,7 +13,7 @@ local function get_lsp_root(buf)
     return nil
   end
 
-  local clients = vim.lsp.get_clients({bufnr = buf})
+  local clients = vim.lsp.get_clients({ bufnr = buf })
   if #clients == 0 then
     return nil
   end
@@ -45,7 +45,7 @@ function M.get_root(buf)
     return lsp_root
   end
 
-  local ft = vim.api.nvim_get_option_value('filetype', {buf = buf})
+  local ft = vim.api.nvim_get_option_value('filetype', { buf = buf })
   local ft_root_patterns = config.root_markers[ft] or {}
   local root = vim.fs.root(buf, vim.list_extend(config.root_markers.global, ft_root_patterns))
   vim.api.nvim_buf_set_var(buf, 'project_root', root)
@@ -61,7 +61,7 @@ end
 ---@param buf number The buffer number to get the data directory for.
 ---@param kind 'data'|'config' The kind of data directory to get ('.nvim/data' or '.nvim/config').
 function M.get_data_dir(buf, kind)
-  local valid_kind_dirs = {'data', 'config'}
+  local valid_kind_dirs = { 'data', 'config' }
   vim.validate('buf', buf, 'number')
   vim.validate('kind', kind, function(v)
     return v == nil or (type(v) == 'string' and vim.list_contains(valid_kind_dirs, v))
@@ -110,23 +110,23 @@ function M.enable(opts)
 
   history.read_history()
 
-  local agroup = vim.api.nvim_create_augroup('Nvim-Project', {clear = true})
-  vim.api.nvim_create_autocmd({'BufEnter'}, {
+  local agroup = vim.api.nvim_create_augroup('Nvim-Project', { clear = true })
+  vim.api.nvim_create_autocmd({ 'BufEnter' }, {
     group = agroup,
-    desc = "Setup project on BufEnter",
+    desc = 'Setup project on BufEnter',
     callback = on_buf_enter,
   })
 
-  vim.api.nvim_create_autocmd({'VimLeavePre'}, {
+  vim.api.nvim_create_autocmd({ 'VimLeavePre' }, {
     group = agroup,
-    desc = "Write project history on VimLeavePre",
+    desc = 'Write project history on VimLeavePre',
     callback = history.write_history,
   })
 end
 
 --- Disables the Nvim-Project
 function M.disable()
-  local agroup = vim.api.nvim_create_augroup('Nvim-Project', {clear = true})
+  local agroup = vim.api.nvim_create_augroup('Nvim-Project', { clear = true })
   vim.api.nvim_del_augroup_by_id(agroup)
 end
 

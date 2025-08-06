@@ -26,7 +26,7 @@ end
 --- @param key string|nil The key to retrieve from the context data. If nil, returns the entire context data.
 --- @return table|nil The context data as a table, or nil if the key does not exist.
 function M.get_context(key)
-  vim.validate('key', key, function (v)
+  vim.validate('key', key, function(v)
     return v == nil or (type(v) == 'string' and v ~= '')
   end)
 
@@ -66,7 +66,7 @@ end
 --- @param value any The value to set for the key.
 --- @return table The updated context data as a table.
 function M.set_context(key, value)
-  vim.validate('key', key, function (v)
+  vim.validate('key', key, function(v)
     return v == nil or (type(v) == 'string' and v ~= '')
   end)
   local context_data = M.get_context()
@@ -84,7 +84,7 @@ end
 --- @param key string|nil The key to delete from the context data. If nil, it clears the entire context data.
 --- @return nil
 function M.del_context(key)
-  vim.validate('key', key, function (v)
+  vim.validate('key', key, function(v)
     return v == nil or (type(v) == 'string' and v ~= '')
   end)
 
@@ -105,7 +105,6 @@ local function is_excluded(exclude_patterns, path)
   --- TODO: implement file/folder exclusion
   return false
 end
-
 
 --- Traverses the directory recursively and collects files and directories based on the provided options.
 --- @param opts table Options for traversal
@@ -130,7 +129,7 @@ local function traverse_directory(opts, dir, depth, files)
         if typ == 'file' and vim.tbl_contains(opts.include, 'files') then
           table.insert(files, path)
         elseif typ == 'directory' then
-          if  vim.tbl_contains(opts.include, 'dirs') then
+          if vim.tbl_contains(opts.include, 'dirs') then
             table.insert(files, path)
           end
           traverse_directory(opts, path, depth + 1, files)
@@ -155,7 +154,7 @@ function M.get_project_files(opts)
   local defaults = {
     root = vim.project.get_root(0),
     include = { 'files', 'dirs' },
-    exclude = {'.git', '.hg', '.svn', '.cache', 'node_modules', 'build' },
+    exclude = { '.git', '.hg', '.svn', '.cache', 'node_modules', 'build' },
     max_depth = 5,
     follow_links = false,
     follow_gitignore = true,
