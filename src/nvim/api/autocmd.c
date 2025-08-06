@@ -393,6 +393,7 @@ cleanup:
 Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autocmd) *opts,
                             Arena *arena, Error *err)
   FUNC_API_SINCE(9)
+  FUNC_API_FAST
 {
   int64_t autocmd_id = -1;
   char *desc = NULL;
