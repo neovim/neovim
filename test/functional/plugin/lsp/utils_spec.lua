@@ -267,6 +267,14 @@ describe('vim.lsp.util', function()
 
         eq(56, opts.height)
       end)
+
+      it('title with winborder option #35179', function()
+        local opts = exec_lua(function()
+          vim.o.winborder = 'single'
+          return vim.lsp.util.make_floating_popup_options(100, 100, { title = 'Title' })
+        end)
+        eq('Title', opts.title)
+      end)
     end)
   end)
 
