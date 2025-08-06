@@ -269,9 +269,11 @@ The effect of the <BS>, CTRL-W, and CTRL-U depend on the 'backspace' option
 
 item	    action ~
 indent	    allow backspacing over autoindent
-eol	    allow backspacing over end-of-line (join lines)
-start	    allow backspacing over the start position of insert; CTRL-W and
-	    CTRL-U stop once at the start position
+eol	    allow backspacing over line breaks (join lines)
+start	    allow backspacing over the start of insert; CTRL-W and CTRL-U stop
+	    once at the start of insert.
+nostop	    like start, except CTRL-W and CTRL-U do not stop at the start of
+	    insert.
 
 When 'backspace' is empty, Vi compatible backspacing is used.  You cannot
 backspace over autoindent, before column 1 or before where insert started.
