@@ -10837,7 +10837,7 @@ function vim.fn.wildmenumode() end
 ---         *cmdline-autocompletion*
 --- Example: To make the completion menu pop up automatically as
 --- you type on the command line, use: >vim
----   autocmd CmdlineChanged [:/?] call wildtrigger()
+---   autocmd CmdlineChanged [:/\?] call wildtrigger()
 ---   set wildmode=noselect:lastused,full wildoptions=pum
 --- <
 --- To retain normal history navigation (up/down keys): >vim
