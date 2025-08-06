@@ -248,7 +248,7 @@ tag		char	      note action in Normal mode	~
 |&|		&		2  repeat last :s
 |'|		'{a-zA-Z0-9}	1  cursor to the first CHAR on the line with
 				   mark {a-zA-Z0-9}
-''		''		1  cursor to the first CHAR of the line where
+|''|		''		1  cursor to the first CHAR of the line where
 				   the cursor was before the latest jump.
 |'(|		'(		1  cursor to the first CHAR on the line of the
 				   start of the current sentence

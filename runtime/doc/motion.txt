@@ -1025,7 +1025,7 @@ These commands are not marks themselves, but jump to a mark:
 
 							*:keepj* *:keepjumps*
 :keepj[umps] {command}
-			Moving around in {command} does not change the '',
+			Moving around in {command} does not change the |''|,
 			|'.| and |'^| marks, the |jumplist| or the
 			|changelist|.
 			Useful when making a change or inserting text
