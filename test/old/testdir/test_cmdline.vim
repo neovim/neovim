@@ -4592,11 +4592,19 @@ func Test_search_complete()
   call feedkeys("gg/r\\n.*\\n\<tab>\<f9>", 'tx')
   call assert_equal(['r\nFoobar\nfooBAr', 'r\nfooBAr\nFooBARR'], g:compl_info.matches)
 
+  " Issue #17858
+  %d
+  set wildcharm=0 incsearch& ignorecase& smartcase& wildoptions&
+  setlocal iskeyword=!-~,192-255
+  let l:lines = ['th=~/foo', 'these', 'tho']
+  call setline(1, l:lines)
+  call feedkeys("G/th\<tab>\<f9>", 'tx')
+  call assert_equal(l:lines, g:compl_info.matches)
+
   bw!
   call Ntest_override("char_avail", 0)
   delfunc GetComplInfo
   unlet! g:compl_info
-  set wildcharm=0 incsearch& ignorecase& smartcase& wildoptions&
 endfunc
 
 func Test_search_wildmenu_screendump()
@@ -4642,6 +4650,25 @@ func Test_search_wildmenu_screendump()
   call VerifyScreenDump(buf, 'Test_search_wildmenu_7', {})
   call term_sendkeys(buf, "\<c-n>\<c-y>")
   call VerifyScreenDump(buf, 'Test_search_wildmenu_8', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" Issue #17858
+func Test_search_wildmenu_iminsert()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    set wop=pum imi=1
+    h wildoptions
+  [SCRIPT]
+  call writefile(lines, 'XTest_search_wildmenu', 'D')
+  let buf = RunVimInTerminal('-S XTest_search_wildmenu', {'rows': 20})
+
+  call term_sendkeys(buf, "/gl\<Tab>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_search_wildmenu_iminsert', {})
 
   call term_sendkeys(buf, "\<esc>")
   call StopVimInTerminal(buf)

@@ -142,10 +142,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // To keep the code simple, we only allow changing the
     // draw mode when the popup menu is not being displayed
     pum_external = ui_has(kUIPopupmenu)
-                   || (State == MODE_CMDLINE && ui_has(kUIWildmenu));
+                   || ((State & MODE_CMDLINE) && ui_has(kUIWildmenu));
   }
 
-  pum_rl = State != MODE_CMDLINE && curwin->w_p_rl;
+  pum_rl = (State & MODE_CMDLINE) == 0 && curwin->w_p_rl;
 
   do {
     // Mark the pum as visible already here,
@@ -163,7 +163,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     pum_win_col_offset = 0;
 
     // wildoptions=pum
-    if (State == MODE_CMDLINE) {
+    if (State & MODE_CMDLINE) {
       pum_win_row = cmdline_win ? cmdline_win->w_wrow : ui_has(kUICmdline) ? 0 : cmdline_row;
       cursor_col = (cmdline_win ? cmdline_win->w_config._cmdline_offset : 0) + cmd_startcol;
       cursor_col %= cmdline_win ? cmdline_win->w_view_width : Columns;
@@ -257,7 +257,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // pum above "pum_win_row"
       pum_above = true;
 
-      if (State == MODE_CMDLINE && target_win == NULL) {
+      if ((State & MODE_CMDLINE) && target_win == NULL) {
         // For cmdline pum, no need for context lines unless target_win is set
         context_lines = 0;
       } else {
@@ -281,7 +281,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // pum below "pum_win_row"
       pum_above = false;
 
-      if (State == MODE_CMDLINE && target_win == NULL) {
+      if ((State & MODE_CMDLINE) && target_win == NULL) {
         // for cmdline pum, no need for context lines unless target_win is set
         context_lines = 0;
       } else {
@@ -437,7 +437,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // room the window size will keep changing.
   } while (pum_set_selected(selected, redo_count) && ++redo_count <= 2);
 
-  pum_grid.zindex = (State == MODE_CMDLINE) ? kZIndexCmdlinePopupMenu : kZIndexPopupMenu;
+  pum_grid.zindex = (State & MODE_CMDLINE) ? kZIndexCmdlinePopupMenu : kZIndexPopupMenu;
   pum_redraw();
 }
 
@@ -451,15 +451,15 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
     return NULL;
   }
 
-  char *leader = State == MODE_CMDLINE ? cmdline_compl_pattern()
-                                       : ins_compl_leader();
+  char *leader = (State & MODE_CMDLINE) ? cmdline_compl_pattern()
+                                        : ins_compl_leader();
   if (leader == NULL || *leader == NUL) {
     return NULL;
   }
 
   int *attrs = xmalloc(sizeof(int) * (size_t)vim_strsize(text));
-  bool in_fuzzy = State == MODE_CMDLINE ? cmdline_compl_is_fuzzy()
-                                        : (get_cot_flags() & kOptCotFlagFuzzy) != 0;
+  bool in_fuzzy = (State & MODE_CMDLINE) ? cmdline_compl_is_fuzzy()
+                                         : (get_cot_flags() & kOptCotFlagFuzzy) != 0;
   size_t leader_len = strlen(leader);
 
   garray_T *ga = NULL;
