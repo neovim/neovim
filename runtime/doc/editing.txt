@@ -1356,7 +1356,7 @@ exist, the next-higher scope in the hierarchy applies.
 
 :cd[!] {path}		Change the current directory to {path}.
 			If {path} is relative, it is searched for in the
-			directories listed in |'cdpath'|.
+			directories listed in 'cdpath'.
 			Clear any window-local directory.
 			Does not change the meaning of an already opened file,
 			because its full path name is remembered.  Files from

@@ -648,7 +648,7 @@ vim.bo.bl = vim.bo.buflisted
 --- "nofile" and "nowrite" buffers are similar:
 --- both:		The buffer is not to be written to disk, ":w" doesn't
 --- 		work (":w filename" does work though).
---- both:		The buffer is never considered to be `'modified'`.
+--- both:		The buffer is never considered to be 'modified'.
 --- 		There is no warning when the changes will be lost, for
 --- 		example when you quit Vim.
 --- both:		A swap file is only created when using too much memory
@@ -714,7 +714,7 @@ vim.go.cdh = vim.go.cdhome
 --- searched for has a relative path, not an absolute part starting with
 --- "/", "./" or "../", the 'cdpath' option is not used then.
 --- The 'cdpath' option's value has the same form and semantics as
---- `'path'`.  Also see `file-searching`.
+--- 'path'.  Also see `file-searching`.
 --- The default value is taken from $CDPATH, with a "," prepended to look
 --- in the current directory first.
 --- If the default value taken from $CDPATH is not what you want, include
@@ -1149,7 +1149,7 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    controls how completion candidates are reduced from the
 --- 	    list of alternatives.  If you want to use `fuzzy-matching`
 --- 	    to gather more alternatives for your candidate list,
---- 	    see `'completefuzzycollect'`.
+--- 	    see 'completefuzzycollect'.
 ---
 ---    longest  Only insert the longest common text of the matches.  If
 --- 	    the menu is displayed you can use CTRL-L to add more
@@ -1293,7 +1293,7 @@ vim.go.cf = vim.go.confirm
 
 --- Copy the structure of the existing lines indent when autoindenting a
 --- new line.  Normally the new indent is reconstructed by a series of
---- tabs followed by spaces as required (unless `'expandtab'` is enabled,
+--- tabs followed by spaces as required (unless 'expandtab' is enabled,
 --- in which case only spaces are used).  Enabling this option makes the
 --- new line copy whatever characters were used for indenting on the
 --- existing line.  'expandtab' has no effect on these characters, a Tab
@@ -1409,7 +1409,7 @@ vim.bo.ci = vim.bo.copyindent
 --- 							*cpo-m*
 --- 	m	When included, a showmatch will always wait half a
 --- 		second.  When not included, a showmatch will wait half
---- 		a second or until a character is typed.  `'showmatch'`
+--- 		a second or until a character is typed.  'showmatch'
 --- 							*cpo-M*
 --- 	M	When excluded, "%" matching will take backslashes into
 --- 		account.  Thus in "( \( )" and "\( ( \)" the outer
@@ -4045,8 +4045,7 @@ vim.o.lisp = false
 vim.bo.lisp = vim.o.lisp
 
 --- Comma-separated list of items that influence the Lisp indenting when
---- enabled with the `'lisp'` option.  Currently only one item is
---- supported:
+--- enabled with the 'lisp' option.  Currently only one item is supported:
 --- 	expr:1	use 'indentexpr' for Lisp indenting when it is set
 --- 	expr:0	do not use 'indentexpr' for Lisp indenting (default)
 --- Note that when using 'indentexpr' the `=` operator indents all the
@@ -4059,7 +4058,7 @@ vim.bo.lispoptions = vim.o.lispoptions
 vim.bo.lop = vim.bo.lispoptions
 
 --- Comma-separated list of words that influence the Lisp indenting when
---- enabled with the `'lisp'` option.
+--- enabled with the 'lisp' option.
 ---
 --- @type string
 vim.o.lispwords = "defun,define,defmacro,set!,lambda,if,case,let,flet,let*,letrec,do,do*,define-syntax,let-syntax,letrec-syntax,destructuring-bind,defpackage,defparameter,defstruct,deftype,defvar,do-all-symbols,do-external-symbols,do-symbols,dolist,dotimes,ecase,etypecase,eval-when,labels,macrolet,multiple-value-bind,multiple-value-call,multiple-value-prog1,multiple-value-setq,prog1,progv,typecase,unless,unwind-protect,when,with-input-from-string,with-open-file,with-open-stream,with-output-to-string,with-package-iterator,define-condition,handler-bind,handler-case,restart-bind,restart-case,with-simple-restart,store-value,use-value,muffle-warning,abort,continue,with-slots,with-slots*,with-accessors,with-accessors*,defclass,defmethod,print-unreadable-object"
@@ -5002,7 +5001,7 @@ vim.go.pa = vim.go.path
 
 --- When changing the indent of the current line, preserve as much of the
 --- indent structure as possible.  Normally the indent is replaced by a
---- series of tabs followed by spaces as required (unless `'expandtab'` is
+--- series of tabs followed by spaces as required (unless 'expandtab' is
 --- enabled, in which case only spaces are used).  Enabling this option
 --- means the indent will preserve as many existing characters as possible
 --- for indenting, and only add additional tabs or spaces as required.
@@ -5454,7 +5453,7 @@ vim.bo.scbk = vim.bo.scrollback
 --- current window also scrolls other scrollbind windows (windows that
 --- also have this option set).  This option is useful for viewing the
 --- differences between two versions of a file, see 'diff'.
---- See `'scrollopt'` for options that determine how this option should be
+--- See 'scrollopt' for options that determine how this option should be
 --- interpreted.
 --- This option is mostly reset when splitting a window to edit another
 --- file.  This means that ":split | edit file" results in two windows
@@ -6007,7 +6006,7 @@ vim.go.shiftround = vim.o.shiftround
 vim.go.sr = vim.go.shiftround
 
 --- Number of columns that make up one level of (auto)indentation.  Used
---- by `'cindent'`, `<<`, `>>`, etc.
+--- by 'cindent', `<<`, `>>`, etc.
 --- If set to 0, Vim uses the current 'tabstop' value.  Use `shiftwidth()`
 --- to obtain the effective value in scripts.
 ---
@@ -6222,7 +6221,7 @@ vim.go.ss = vim.go.sidescroll
 
 --- The minimal number of screen columns to keep to the left and to the
 --- right of the cursor if 'nowrap' is set.  Setting this option to a
---- value greater than 0 while having `'sidescroll'` also at a non-zero
+--- value greater than 0 while having 'sidescroll' also at a non-zero
 --- value makes some context visible in the line you are scrolling in
 --- horizontally (except at beginning of the line).  Setting this option
 --- to a large value (like 999) has the effect of keeping the cursor
@@ -6236,9 +6235,9 @@ vim.go.ss = vim.go.sidescroll
 --- 	setlocal sidescrolloff=-1
 --- ```
 ---
---- Example: Try this together with 'sidescroll' and 'listchars' as
---- 	 in the following example to never allow the cursor to move
---- 	 onto the "extends" character:
+--- Example: Try this together with 'sidescroll' and 'listchars' as in the
+--- 	 following example to never allow the cursor to move onto the
+--- 	 "extends" character:
 ---
 --- ```vim
 ---
@@ -6366,8 +6365,8 @@ vim.wo.sms = vim.wo.smoothscroll
 --- enabled.  See also `ins-expandtab` ans user manual section `30.5` for
 --- in-depth explanations.
 ---
---- The value of 'softtabstop' will be ignored if `'varsofttabstop'` is set
---- to anything other than an empty string.
+--- The value of 'softtabstop' will be ignored if 'varsofttabstop' is set to
+--- anything other than an empty string.
 ---
 --- @type integer
 vim.o.softtabstop = 0
@@ -6629,8 +6628,8 @@ vim.go.sol = vim.go.startofline
 --- %C	fold column for currently drawn line
 ---
 --- The 'statuscolumn' width follows that of the default columns and
---- adapts to the `'numberwidth'`, `'signcolumn'` and `'foldcolumn'` option
---- values (regardless of whether the sign and fold items are present).
+--- adapts to the 'numberwidth', 'signcolumn' and 'foldcolumn' option values
+--- (regardless of whether the sign and fold items are present).
 --- Additionally, the 'statuscolumn' grows with the size of the evaluated
 --- format string, up to a point (following the maximum size of the default
 --- fold, sign and number columns). Shrinking only happens when the number
@@ -6643,7 +6642,7 @@ vim.go.sol = vim.go.startofline
 --- 	      drawing the wrapped part of a buffer line.
 ---
 --- When using `v:relnum`, keep in mind that cursor movement by itself will
---- not cause the 'statuscolumn' to update unless `'relativenumber'` is set.
+--- not cause the 'statuscolumn' to update unless 'relativenumber' is set.
 ---
 --- NOTE: The %@ click execute function item is supported as well but the
 --- specified function will be the same for each row in the same column.
@@ -6964,7 +6963,7 @@ vim.bo.sua = vim.bo.suffixesadd
 --- Careful: All text will be in memory:
 --- 	- Don't use this for big files.
 --- 	- Recovery will be impossible!
---- A swapfile will only be present when `'updatecount'` is non-zero and
+--- A swapfile will only be present when 'updatecount' is non-zero and
 --- 'swapfile' is set.
 --- When 'swapfile' is reset, the swap file for the current buffer is
 --- immediately deleted.  When 'swapfile' is set, and 'updatecount' is
@@ -7124,7 +7123,7 @@ vim.go.tpm = vim.go.tabpagemax
 --- character (ASCII 9); a Horizontal Tab always advances to the next tab
 --- stop.
 --- The value must be at least 1 and at most 9999.
---- If `'vartabstop'` is set, this option is ignored.
+--- If 'vartabstop' is set, this option is ignored.
 --- Leave it at 8 unless you have a strong reason (see usr `30.5`).
 ---
 --- @type integer
@@ -7622,12 +7621,12 @@ vim.go.ur = vim.go.undoreload
 --- recovery `crash-recovery`).  'updatecount' is set to zero by starting
 --- Vim with the "-n" option, see `startup`.  When editing in readonly
 --- mode this option will be initialized to 10000.
---- The swapfile can be disabled per buffer with `'swapfile'`.
+--- The swapfile can be disabled per buffer with 'swapfile'.
 --- When 'updatecount' is set from zero to non-zero, swap files are
 --- created for all buffers that have 'swapfile' set.  When 'updatecount'
 --- is set to zero, existing swap files are not deleted.
---- This option has no meaning in buffers where `'buftype'` is "nofile"
---- or "nowrite".
+--- This option has no meaning in buffers where 'buftype' is "nofile" or
+--- "nowrite".
 ---
 --- @type integer
 vim.o.updatecount = 200

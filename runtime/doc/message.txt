@@ -540,7 +540,7 @@ attempting a symlink attack (could happen when editing a file in /tmp or when
 
 Vim (and Vi) expect tags files to be sorted in ASCII order.  Binary searching
 can then be used, which is a lot faster than a linear search.  If your tags
-files are not properly sorted, reset the |'tagbsearch'| option.
+files are not properly sorted, reset the 'tagbsearch' option.
 This message is only given when Vim detects a problem when searching for a
 tag.  Sometimes this message is not given, even though the tags file is not
 properly sorted.

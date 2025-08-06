@@ -62,7 +62,7 @@ N			Repeat the latest "/" or "?" [count] times in
 *			Search forward for the [count]'th occurrence of the
 			word nearest to the cursor.  The word used for the
 			search is the first of:
-				1. the keyword under the cursor |'iskeyword'|
+				1. the keyword under the cursor 'iskeyword'
 				2. the first keyword after the cursor, in the
 				   current line
 				3. the non-blank word under the cursor

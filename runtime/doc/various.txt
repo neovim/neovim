@@ -29,7 +29,7 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			screen if "!" is included.  To CLEAR the screen use
 			|:mode| or |CTRL-L|.
 			It can be used to redraw the screen in a script
-			or function (or a mapping if |'lazyredraw'| is set).
+			or function (or a mapping if 'lazyredraw' is set).
 			See also |nvim__redraw()|.
 
 						*:redraws* *:redrawstatus*
@@ -409,7 +409,7 @@ gx			Opens the current filepath or URL (decided by
 			to lines that do NOT match {pattern}.
 
 			{pattern} is a Vim search pattern.  Instead of enclosing
-			it in / any non-ID character (see |'isident'|) can be
+			it in / any non-ID character (see 'isident') can be
 			used, so long as it does not appear in {pattern}.
 			Without the enclosing character the pattern cannot
 			include the bar character. 'ignorecase' is not used.

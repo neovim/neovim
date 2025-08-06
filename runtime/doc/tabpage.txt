@@ -119,7 +119,7 @@ Closing the last window of a tab page closes the tab page too, unless there is
 only one tab page.
 
 Using the mouse: If the tab page line is displayed you can click in the "X" at
-the top right to close the current tab page.  A custom |'tabline'| may show
+the top right to close the current tab page.  A custom 'tabline' may show
 something else.
 
 							*:tabc* *:tabclose*
@@ -182,7 +182,7 @@ SWITCHING TO ANOTHER TAB PAGE:
 
 Using the mouse: If the tab page line is displayed you can click in a tab page
 label to switch to that tab page.  Click where there is no label to go to the
-next tab page.  |'tabline'|
+next tab page.  'tabline'
 
 :tabn[ext]				*:tabn* *:tabnext* *gt*
 <C-PageDown>				*CTRL-<PageDown>* *<C-PageDown>*

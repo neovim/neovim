@@ -529,7 +529,7 @@ accordingly, proceeding as follows:
 	However, directories in 'runtimepath' ending in "after" are skipped
 	here and only loaded after packages, see below.
 	Loading plugins won't be done when:
-	- The |'loadplugins'| option was reset in a vimrc file.
+	- The 'loadplugins' option was reset in a vimrc file.
 	- The |--noplugin| command line argument is used.
 	- The |--clean| command line argument is used.
 	- The "-u NONE" command line argument is used |-u|.

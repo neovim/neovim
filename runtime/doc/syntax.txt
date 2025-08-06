@@ -1854,7 +1854,7 @@ the parentheses and backquoted parentheses.  Because of the quantity of
 colorization levels, unlike non-rainbow highlighting, the rainbow mode
 specifies its highlighting using ctermfg and guifg, thereby bypassing the
 usual color scheme control using standard highlighting groups.  The actual
-highlighting used depends on the dark/bright setting  (see |'bg'|).
+highlighting used depends on the dark/bright setting  (see 'bg').
 
 
 LITE						*lite.vim* *ft-lite-syntax*
@@ -3421,7 +3421,7 @@ always accept such use of @.
 					*tex-cchar* *tex-cole* *tex-conceal*
  Tex: Taking Advantage of Conceal Mode~
 
-If you have |'conceallevel'| set to 2 and if your encoding is utf-8, then a
+If you have 'conceallevel' set to 2 and if your encoding is utf-8, then a
 number of character sequences can be translated into appropriate utf-8 glyphs,
 including various accented characters, Greek characters in MathZones, and
 superscripts and subscripts in MathZones.  Not all characters can be made into
@@ -3429,7 +3429,7 @@ superscripts or subscripts; the constraint is due to what utf-8 supports.
 In fact, only a few characters are supported as subscripts.
 
 One way to use this is to have vertically split windows (see |CTRL-W_v|); one
-with |'conceallevel'| at 0 and the other at 2; and both using |'scrollbind'|.
+with 'conceallevel' at 0 and the other at 2; and both using 'scrollbind'.
 
 					*g:tex_conceal*
  Tex: Selective Conceal Mode~

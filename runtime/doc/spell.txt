@@ -207,7 +207,7 @@ CTRL-X s to find suggestions.  This works like Insert mode completion.  Use
 CTRL-N to use the next suggestion, CTRL-P to go back. |i_CTRL-X_s|
 
 The 'spellsuggest' option influences how the list of suggestions is generated
-and sorted.  See |'spellsuggest'|.
+and sorted.  See 'spellsuggest'.
 
 The 'spellcapcheck' option is used to check the first word of a sentence
 starts with a capital.  This doesn't work for the first word in the file.

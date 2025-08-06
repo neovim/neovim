@@ -1017,7 +1017,7 @@ tag		command		action in Command-line editing mode	~
 |c_CTRL-D|	CTRL-D		list completions that match the pattern in
 				front of the cursor
 |c_CTRL-E|	CTRL-E		cursor to end of command-line
-|'cedit'|	CTRL-F		default value for 'cedit': opens the
+'cedit'	CTRL-F		default value for 'cedit': opens the
 				command-line window; otherwise not used
 |c_CTRL-G|	CTRL-G		next match when 'incsearch' is active
 |c_<BS>|	<BS>		delete the character in front of the cursor
