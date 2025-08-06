@@ -40,6 +40,7 @@ for k, v in pairs({
   secure = true,
   snippet = true,
   pack = true,
+  project = true,
   _watch = true,
   net = true,
 }) do
