@@ -168,7 +168,7 @@ jobs:
       # before running, and would therefore delete the downloaded artifacts
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y gettext-base
