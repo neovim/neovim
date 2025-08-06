@@ -48,7 +48,7 @@
 #endif
 
 #ifdef MSWIN
-static bool os_proc_tree_kill_rec(HANDLE proc, int sig)
+static bool os_proc_tree_kill_rec(void *proc, int sig)
 {
   if (proc == NULL) {
     return false;

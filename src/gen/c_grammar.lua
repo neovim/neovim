@@ -160,6 +160,8 @@ local typed_container = P({
         )
     + Cg(opt(P('*')) * P('Dict')) * paren(C(id))
     + Cg(opt(P('*')) * P('DictAs')) * paren(C(id))
+    + Cg(opt(P('*')) * P('Set')) * paren(C(id))
+    + Cg(opt(P('*')) * P('PMap')) * paren(C(id))
   ),
   -- Remove captures here (with / 0 ) as api_types will recursively run parse the type.
   TY = Cg(V('S') / 0 + V('ID')),

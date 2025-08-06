@@ -33,6 +33,10 @@
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "msgpack_rpc/channel.c.generated.h"
+#endif
+
 #ifdef NVIM_LOG_DEBUG
 # define REQ "[request]  "
 # define RES "[response] "
@@ -64,10 +68,6 @@ static void log_notify(char *dir, uint64_t channel_id, const char *name)
 # define log_request(...)
 # define log_response(...)
 # define log_notify(...)
-#endif
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "msgpack_rpc/channel.c.generated.h"
 #endif
 
 void rpc_init(void)

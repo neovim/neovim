@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>  // IWYU pragma: keep
 #include <time.h>  // IWYU pragma: keep
 

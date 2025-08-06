@@ -232,8 +232,8 @@ pub fn build(b: *std.Build) !void {
         \\
     , .{medium}));
 
-    // TODO(zig): using getEmittedIncludeTree() is ugly af. we want run_preprocessor()
-    // to use the std.build.Module include_path thing
+    // TODO(zig): using getEmittedIncludeTree() is ugly af. we want unittests
+    // to reuse the std.build.Module include_path thing
     const include_path = [_]LazyPath{
         b.path("src/"),
         gen_config.getDirectory(),
@@ -245,7 +245,7 @@ pub fn build(b: *std.Build) !void {
         treesitter.artifact("tree-sitter").getEmittedIncludeTree(),
     };
 
-    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, &include_path, target, versiondef_git, version_lua);
+    const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, versiondef_git, version_lua);
 
     const test_config_step = b.addWriteFiles();
     _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b));
