@@ -988,7 +988,7 @@ end
 
 ---@private
 --- Extract injections according to:
---- https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
+--- https://tree-sitter.github.io/tree-sitter/3-syntax-highlighting.html#language-injection
 ---@param match table<integer,TSNode[]>
 ---@param metadata vim.treesitter.query.TSMetadata
 ---@return string?, boolean, Range6[]
