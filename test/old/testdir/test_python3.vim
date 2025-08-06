@@ -11,10 +11,10 @@ func Test_AAA_python3_setup()
     import sys
     import re
 
-    py33_type_error_pattern = re.compile('^__call__\(\) takes (\d+) positional argument but (\d+) were given$')
+    py33_type_error_pattern = re.compile(r'^__call__\(\) takes (\d+) positional argument but (\d+) were given$')
     py37_exception_repr = re.compile(r'([^\(\),])(\)+)$')
-    py39_type_error_pattern = re.compile('\w+\.([^(]+\(\) takes)')
-    py310_type_error_pattern = re.compile('takes (\d+) positional argument but (\d+) were given')
+    py39_type_error_pattern = re.compile(r'\w+\.([^(]+\(\) takes)')
+    py310_type_error_pattern = re.compile(r'takes (\d+) positional argument but (\d+) were given')
 
     def emsg(ei):
       return ei[0].__name__ + ':' + repr(ei[1].args)
