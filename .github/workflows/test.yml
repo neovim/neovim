@@ -206,7 +206,8 @@ jobs:
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
 
-  zig-build:
+  # TODO: matrixify
+  zig-build-linux:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     name: build using zig build (linux)
@@ -214,7 +215,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: mlugg/setup-zig@v2
         with:
-         version: 0.14.1
+          version: master # TODO: 0.15.0
       - run: sudo apt-get install -y inotify-tools
       - run: zig build test_nlua0
       - run: zig build nvim && ./zig-out/bin/nvim --version
@@ -224,6 +225,34 @@ jobs:
       # compare with the builtin generator that they match
       - run: cd runtime; ../zig-out/bin/nvim -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
       - run: diff -u runtime/doc/tags zig-out/runtime/doc/tags
+
+  zig-build-macos-15
+    runs-on: macos-15
+    timeout-minutes: 45
+    name: build using zig build (macos 15)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: master # TODO: 0.15.0
+      - run: zig build test_nlua0 -Dluajit=false
+      - run: zig build nvim_bin -Dluajit=false && ./zig-out/bin/nvim --version
+      - run: zig build functionaltest -Dluajit=false
+
+  zig-build-windows:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    name: build using zig build (windows)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: master # TODO: 0.15.0
+      - run: zig build test_nlua0
+      - run: zig build nvim_bin
+      - run: ./zig-out/bin/nvim --version
+      - run: zig build functionaltest
+      - run: zig build unittest
 
   windows:
     uses: ./.github/workflows/test_windows.yml
