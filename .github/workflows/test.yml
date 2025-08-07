@@ -206,10 +206,11 @@ jobs:
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
 
-  zig-build:
+  # TODO: matrixify
+  zig-build-linux:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
-    name: build using zig build
+    name: build using zig build (linux)
     steps:
       - uses: actions/checkout@v4
       - uses: mlugg/setup-zig@v2
@@ -220,6 +221,49 @@ jobs:
       - run: zig build nvim_bin && ./zig-out/bin/nvim --version
       - run: zig build unittest
       - run: zig build functionaltest
+
+  zig-build-macos-15:
+    runs-on: macos-15
+    timeout-minutes: 45
+    name: build using zig build (macos 15)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+         version: 0.14.1
+      - run: zig build test_nlua0
+      - run: zig build nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build unittest
+      - run: zig build functionaltest
+
+  zig-build-macos-15-zig15:
+    runs-on: macos-15
+    timeout-minutes: 45
+    name: build using ZIG 0.15 build (macos 15)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+         version: master
+      # - run: zig build test_nlua0
+      - run: zig build nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build unittest
+      - run: zig build functionaltest
+
+  zig-build-windows:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    name: build using zig build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+         version: master
+      - run: zig build test_nlua0
+      - run: zig build nvim_bin
+      - run: ./zig-out/bin/nvim --version
+      - run: zig build functionaltest
+      - run: zig build unittest
 
   windows:
     uses: ./.github/workflows/test_windows.yml
