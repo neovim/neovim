@@ -171,7 +171,7 @@ local ui_options_text = nil
 for i = pre_args + 1, #arg do
   local full_path = arg[i]
   local parts = {} --- @type string[]
-  for part in full_path:gmatch('[^/]+') do
+  for part in full_path:gmatch('[^/\\]+') do
     parts[#parts + 1] = part
   end
   headers[#headers + 1] = parts[#parts - 1] .. '/' .. parts[#parts]
