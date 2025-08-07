@@ -984,6 +984,7 @@ do
   end
 
   vim.api.nvim_create_autocmd({ 'VimEnter', 'BufNew' }, {
+    nested = true,
     group = nvim_set_root,
     desc = 'set buffer root when buffer is being created',
     callback = function(event)
