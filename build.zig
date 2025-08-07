@@ -43,7 +43,8 @@ pub fn build(b: *std.Build) !void {
     const cross_compiling = b.option(bool, "cross", "cross compile") orelse false;
     // TODO(bfredl): option to set nlua0 target explicitly when cross compiling?
     const target_host = if (cross_compiling) b.graph.host else target;
-    const optimize_host = .ReleaseSafe;
+    // without cross_compiling we like to reuse libluv etc at the same optimize level
+    const optimize_host = if (cross_compiling) .ReleaseSafe else optimize;
 
     // puc lua 5.1 is not ReleaseSafe "safe"
     const optimize_lua = if (optimize == .Debug or optimize == .ReleaseSafe) .ReleaseSmall else optimize;
@@ -63,7 +64,7 @@ pub fn build(b: *std.Build) !void {
 
     const ziglua_host = if (cross_compiling) b.dependency("zlua", .{
         .target = target_host,
-        .optimize = optimize_lua,
+        .optimize = .ReleaseSmall,
         .lang = if (host_use_luajit) E.luajit else E.lua51,
         .shared = false,
     }) else ziglua;
@@ -146,12 +147,12 @@ pub fn build(b: *std.Build) !void {
                 }
             }
             if (std.mem.eql(u8, ".c", entry.name[entry.name.len - 2 ..])) {
-                try nvim_sources.append(.{ .name = b.fmt("{s}{s}", .{ s, entry.name }), .api_export = api_export });
+                try nvim_sources.append(b.allocator, .{ .name = b.fmt("{s}{s}", .{ s, entry.name }), .api_export = api_export });
             }
             if (std.mem.eql(u8, ".h", entry.name[entry.name.len - 2 ..])) {
-                try nvim_headers.append(b.fmt("{s}{s}", .{ s, entry.name }));
+                try nvim_headers.append(b.allocator, b.fmt("{s}{s}", .{ s, entry.name }));
                 if (api_export and !std.mem.eql(u8, "ui_events.in.h", entry.name)) {
-                    try api_headers.append(b.path(b.fmt("src/nvim/{s}{s}", .{ s, entry.name })));
+                    try api_headers.append(b.allocator, b.path(b.fmt("src/nvim/{s}{s}", .{ s, entry.name })));
                 }
             }
         }
@@ -296,7 +297,7 @@ pub fn build(b: *std.Build) !void {
         while (try it.next()) |entry| {
             if (entry.name.len < 3) continue;
             if (std.mem.eql(u8, ".c", entry.name[entry.name.len - 2 ..])) {
-                try unit_test_sources.append(b.fmt("test/unit/fixtures/{s}", .{entry.name}));
+                try unit_test_sources.append(b.allocator, b.fmt("test/unit/fixtures/{s}", .{entry.name}));
             }
         }
     }
