@@ -169,6 +169,17 @@ func Test_bnext_bprev_help()
   b XHelp1
   blast   | call assert_equal(b4, bufnr())
 
+  " Cycling through help buffers works even if they aren't listed.
+  b XHelp1
+  setlocal nobuflisted
+  bnext | call assert_equal(b3, bufnr())
+  bnext | call assert_equal(b1, bufnr())
+  bprev | call assert_equal(b3, bufnr())
+  setlocal nobuflisted
+  bprev | call assert_equal(b1, bufnr())
+  bprev | call assert_equal(b3, bufnr())
+  bnext | call assert_equal(b1, bufnr())
+
   %bwipe!
 endfunc
 
