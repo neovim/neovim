@@ -4130,7 +4130,7 @@ describe('builtin popupmenu', function()
         ]])
       end
 
-      -- not rightleft on the cmdline
+      -- oldtest: Test_wildmenu_pum_rightleft()
       feed('<esc>:sign ')
       if multigrid then
         screen:expect({
@@ -4154,9 +4154,8 @@ describe('builtin popupmenu', function()
         ]],
         }
       end
-
-      -- oldtest: Test_wildmenu_pum_rightleft()
-      feed('<tab>')
+      -- Not rightleft on the cmdline.
+      feed('<Tab>')
       if multigrid then
         screen:expect({
           grid = [[
@@ -4195,6 +4194,15 @@ describe('builtin popupmenu', function()
         ]],
         }
       end
+
+      -- Behavior is the same when using 'keymap'.
+      feed('<Esc>')
+      command('set keymap=dvorak')
+      -- ";gul" -> "sign" when using Dvorak keymap.
+      feed(':<C-^>;gul <Tab>')
+      screen:expect_unchanged(true)
+      feed('<Esc>')
+      command('set keymap&')
     end)
 
     it('with rightleft vsplits', function()
