@@ -43,7 +43,8 @@ pub fn build(b: *std.Build) !void {
     const cross_compiling = b.option(bool, "cross", "cross compile") orelse false;
     // TODO(bfredl): option to set nlua0 target explicitly when cross compiling?
     const target_host = if (cross_compiling) b.graph.host else target;
-    const optimize_host = .ReleaseSafe;
+    // without cross_compiling we like to reuse libluv etc at the same optimize level
+    const optimize_host = if (cross_compiling) .ReleaseSafe else optimize;
 
     // puc lua 5.1 is not ReleaseSafe "safe"
     const optimize_lua = if (optimize == .Debug or optimize == .ReleaseSafe) .ReleaseSmall else optimize;
@@ -63,7 +64,7 @@ pub fn build(b: *std.Build) !void {
 
     const ziglua_host = if (cross_compiling) b.dependency("zlua", .{
         .target = target_host,
-        .optimize = optimize_lua,
+        .optimize = .ReleaseSmall,
         .lang = if (host_use_luajit) E.luajit else E.lua51,
         .shared = false,
     }) else ziglua;
@@ -146,12 +147,12 @@ pub fn build(b: *std.Build) !void {
                 }
             }
             if (std.mem.eql(u8, ".c", entry.name[entry.name.len - 2 ..])) {
-                try nvim_sources.append(.{ .name = b.fmt("{s}{s}", .{ s, entry.name }), .api_export = api_export });
+                try nvim_sources.append(b.allocator, .{ .name = b.fmt("{s}{s}", .{ s, entry.name }), .api_export = api_export });
             }
             if (std.mem.eql(u8, ".h", entry.name[entry.name.len - 2 ..])) {
-                try nvim_headers.append(b.fmt("{s}{s}", .{ s, entry.name }));
+                try nvim_headers.append(b.allocator, b.fmt("{s}{s}", .{ s, entry.name }));
                 if (api_export and !std.mem.eql(u8, "ui_events.in.h", entry.name)) {
-                    try api_headers.append(b.path(b.fmt("src/nvim/{s}{s}", .{ s, entry.name })));
+                    try api_headers.append(b.allocator, b.path(b.fmt("src/nvim/{s}{s}", .{ s, entry.name })));
                 }
             }
         }
@@ -296,7 +297,7 @@ pub fn build(b: *std.Build) !void {
         while (try it.next()) |entry| {
             if (entry.name.len < 3) continue;
             if (std.mem.eql(u8, ".c", entry.name[entry.name.len - 2 ..])) {
-                try unit_test_sources.append(b.fmt("test/unit/fixtures/{s}", .{entry.name}));
+                try unit_test_sources.append(b.allocator, b.fmt("test/unit/fixtures/{s}", .{entry.name}));
             }
         }
     }
@@ -331,6 +332,10 @@ pub fn build(b: *std.Build) !void {
         "src/cjson/strbuf.c",
     }, .flags = &flags });
 
+    if (is_windows) {
+        nvim_exe.addWin32ResourceFile(.{ .file = b.path("src/nvim/os/nvim.rc") });
+    }
+
     const nvim_exe_step = b.step("nvim_bin", "only the binary (not a fully working install!)");
     const nvim_exe_install = b.addInstallArtifact(nvim_exe, .{});
 
@@ -350,12 +355,12 @@ pub fn build(b: *std.Build) !void {
     test_deps.dependOn(&nvim_exe_install.step);
     test_deps.dependOn(&runtime_install.step);
 
-    test_deps.dependOn(test_fixture(b, "shell-test", null, target, optimize));
-    test_deps.dependOn(test_fixture(b, "tty-test", libuv, target, optimize));
-    test_deps.dependOn(test_fixture(b, "pwsh-test", null, target, optimize));
-    test_deps.dependOn(test_fixture(b, "printargs-test", null, target, optimize));
-    test_deps.dependOn(test_fixture(b, "printenv-test", null, target, optimize));
-    test_deps.dependOn(test_fixture(b, "streams-test", libuv, target, optimize));
+    test_deps.dependOn(test_fixture(b, "shell-test", null, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "tty-test", libuv, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "pwsh-test", null, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "printargs-test", null, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "printenv-test", null, target, optimize, &flags));
+    test_deps.dependOn(test_fixture(b, "streams-test", libuv, target, optimize, &flags));
 
     const parser_c = b.dependency("treesitter_c", .{ .target = target, .optimize = optimize });
     test_deps.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize));
@@ -382,6 +387,7 @@ pub fn test_fixture(
     libuv: ?*std.Build.Step.Compile,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
+    flags: []const []const u8,
 ) *std.Build.Step {
     const fixture = b.addExecutable(.{
         .name = name,
@@ -391,7 +397,11 @@ pub fn test_fixture(
         }),
     });
     const source = if (std.mem.eql(u8, name, "pwsh-test")) "shell-test" else name;
-    fixture.addCSourceFile(.{ .file = b.path(b.fmt("./test/functional/fixtures/{s}.c", .{source})) });
+    if (std.mem.eql(u8, name, "printenv-test")) {
+        fixture.mingw_unicode_entry_point = true; // uses UNICODE on WINDOWS :scream:
+    }
+
+    fixture.addCSourceFile(.{ .file = b.path(b.fmt("./test/functional/fixtures/{s}.c", .{source})), .flags = flags });
     fixture.linkLibC();
     if (libuv) |uv| fixture.linkLibrary(uv);
     return &b.addInstallArtifact(fixture, .{}).step;
@@ -437,6 +447,13 @@ pub fn lua_version_info(b: *std.Build) []u8 {
     , .{ v.major, v.minor, v.patch, v.prerelease.len > 0, v.api_level, v.api_level_compat, v.api_prerelease });
 }
 
+fn esc(b: *std.Build, input: []const u8) ![]const u8 {
+    return if (b.graph.host.result.os.tag == .windows)
+        std.mem.replaceOwned(u8, b.graph.arena, input, "\\", "/")
+    else
+        input;
+}
+
 pub fn test_config(b: *std.Build) ![]u8 {
     var buf: [std.fs.max_path_bytes]u8 = undefined;
     const src_path = try b.build_root.handle.realpath(".", &buf);
@@ -458,5 +475,5 @@ pub fn test_config(b: *std.Build) ![]u8 {
         \\M.include_paths = _G.c_include_path or {{}}
         \\
         \\return M
-    , .{ .bin_dir = b.install_path, .src_path = src_path });
+    , .{ .bin_dir = try esc(b, b.install_path), .src_path = try esc(b, src_path) });
 }
