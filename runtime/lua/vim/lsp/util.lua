@@ -745,6 +745,10 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
     if type(doc) == 'string' then
       signature.documentation = { kind = 'plaintext', value = doc }
     end
+    -- Add delimiter if there is documentation to display
+    if signature.documentation.value ~= '' then
+      contents[#contents + 1] = '---'
+    end
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
   if signature.parameters and #signature.parameters > 0 then
