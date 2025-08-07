@@ -489,21 +489,21 @@ describe('cmdline', function()
 
   -- oldtest: Test_search_wildmenu_iminsert()
   it('search wildmenu pum with iminsert=1', function()
-    local screen = Screen.new(65, 20)
+    local screen = Screen.new(65, 12)
     exec([[
       set wop=pum imi=1
       setlocal iskeyword=!-~,192-255
       call setline(1, [
-            \ " global toggle global-local global/local glyphs toggles English",
-            \ "accordingly. toggled accordingly single-byte glob() glob(pat,",
-            \ "English, 'gli' global-ime single-repeat 'toggle' 'toggle'.",
+            \ "global toggle global-local global/local glyphs toggles English",
+            \ "accordingly. toggled accordingly single-byte",
             \ ])
+      call cursor(2, 42)
     ]])
     feed('/gl<Tab>')
     screen:expect([[
-      {12: global         }lobal-local global/local glyphs toggles English  |
-      {4: gle            }gled accordingly single-byte glob() glob(pat,    |
-      {4: global-local   }lobal-ime single-repeat 'toggle' 'toggle'.       |
+      {12: global         }obal-local global/local glyphs toggles English   |
+      {4: gle            }gled accordingly single-byte                     |
+      {4: global-local   }{1:                                                 }|
       {4: global/local   }{1:                                                 }|
       {4: glyphs         }{1:                                                 }|
       {4: gles           }{1:                                                 }|
@@ -512,14 +512,6 @@ describe('cmdline', function()
       {4: gled           }{1:                                                 }|
       {4: gly            }{1:                                                 }|
       {4: gle-byte       }{1:                                                 }|
-      {4: glob()         }{1:                                                 }|
-      {4: glob(pat,      }{1:                                                 }|
-      {4: glish,         }{1:                                                 }|
-      {4: gli'           }{1:                                                 }|
-      {4: global-ime     }{1:                                                 }|
-      {4: gle-repeat     }{1:                                                 }|
-      {4: gle'           }{1:                                                 }|
-      {4: gle'.          }{1:                                                 }|
       /global^                                                          |
     ]])
   end)

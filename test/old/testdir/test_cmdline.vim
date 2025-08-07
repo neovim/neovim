@@ -3095,6 +3095,14 @@ func Test_wildmenu_pum_rightleft()
   call term_sendkeys(buf, ":sign \<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_rl', {})
 
+  " Behavior is the same when using 'keymap'.
+  call term_sendkeys(buf, "\<Esc>:set keymap=dvorak\<CR>")
+  call TermWait(buf)
+  " ";gul" -> "sign" when using Dvorak keymap.
+  call term_sendkeys(buf, ":\<C-^>;gul \<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_rl', {})
+  call term_sendkeys(buf, "\<Esc>:set keymap&\<CR>")
+
   call StopVimInTerminal(buf)
 endfunc
 
@@ -4661,10 +4669,15 @@ func Test_search_wildmenu_iminsert()
 
   let lines =<< trim [SCRIPT]
     set wop=pum imi=1
-    h wildoptions
+    setlocal iskeyword=!-~,192-255
+    call setline(1, [
+          \ "global toggle global-local global/local glyphs toggles English",
+          \ "accordingly. toggled accordingly single-byte",
+          \ ])
+    call cursor(2, 42)
   [SCRIPT]
   call writefile(lines, 'XTest_search_wildmenu', 'D')
-  let buf = RunVimInTerminal('-S XTest_search_wildmenu', {'rows': 20})
+  let buf = RunVimInTerminal('-S XTest_search_wildmenu', {'rows': 12})
 
   call term_sendkeys(buf, "/gl\<Tab>")
   call TermWait(buf, 50)
