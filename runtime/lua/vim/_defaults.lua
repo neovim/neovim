@@ -975,7 +975,7 @@ do
     end,
   })
 
-  local nvim_set_root = vim.api.nvim_create_augroup('nvim.setroot', {clear = true})
+  local nvim_set_root = vim.api.nvim_create_augroup('nvim.setroot', { clear = true })
   local function set_buffer_root(buf)
     local root_markers = vim.api.nvim_get_option_value('rootmarker', { buf = buf })
     root_markers = vim.split(root_markers, ',', { trimempty = true })
@@ -983,7 +983,7 @@ do
     vim.api.nvim_set_option_value('root', root, { buf = buf })
   end
 
-  vim.api.nvim_create_autocmd({'VimEnter', 'BufNew'}, {
+  vim.api.nvim_create_autocmd({ 'VimEnter', 'BufNew' }, {
     group = nvim_set_root,
     desc = 'set buffer root when buffer is being created',
     callback = function(event)
