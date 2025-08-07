@@ -307,43 +307,36 @@ void ui_client_may_restart_server(void)
   }
   restart_pending = false;
 
-  size_t argc;
-  char **argv = NULL;
   if (restart_args.size < 2
       || restart_args.items[0].type != kObjectTypeString
-      || restart_args.items[1].type != kObjectTypeArray
-      || (argc = restart_args.items[1].data.array.size) < 1) {
+      || restart_args.items[1].type != kObjectTypeString) {
     ELOG("Error handling ui event 'restart'");
     goto cleanup;
   }
 
-  // 1. Get executable path and command-line arguments.
-  const char *exepath = restart_args.items[0].data.string.data;
-  argv = xcalloc(argc + 1, sizeof(char *));
-  for (size_t i = 0; i < argc; i++) {
-    if (restart_args.items[1].data.array.items[i].type == kObjectTypeString) {
-      argv[i] = restart_args.items[1].data.array.items[i].data.string.data;
-    }
-    if (argv[i] == NULL) {
-      argv[i] = "";
-    }
-  }
-
-  // 2. Start a new `nvim --embed` server.
-  uint64_t rv = ui_client_start_server(exepath, argc, argv);
-  if (!rv) {
-    ELOG("failed to start nvim server");
+  const char *error = NULL;
+  char *listen_addr = restart_args.items[1].data.string.data;
+  bool is_tcp = strrchr(listen_addr, ':');
+  uint64_t chan_id = channel_connect(is_tcp, listen_addr, true, CALLBACK_READER_INIT, 50, &error);
+  if (error != NULL) {
+    ELOG("%s", error);
     goto cleanup;
   }
 
-  // 3. Client-side server re-attach.
-  ui_client_channel_id = rv;
-  ui_client_is_remote = false;
+  // Client-side server re-attach.
+  ui_client_channel_id = chan_id;
+  ui_client_is_remote = is_tcp;
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
-  ILOG("restarted server id=%" PRId64, rv);
+  String command = restart_args.items[0].data.string;
+  MAXSIZE_TEMP_ARRAY(cmd_args, 1);
+  ADD_C(cmd_args, STRING_OBJ(command));
+  if (!rpc_send_event(ui_client_channel_id, "nvim_command", cmd_args)) {
+    ELOG("cannot execute '%s'", command.data);
+  }
+
+  ILOG("restarted server id=%" PRId64, chan_id);
 cleanup:
-  xfree(argv);
   api_free_array(restart_args);
   restart_args = (Array)ARRAY_DICT_INIT;
 }
