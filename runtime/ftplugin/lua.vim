@@ -83,6 +83,9 @@ function s:LuaInclude(fname) abort
   return fname
 endfunction
 
+" Set the root patterns for project root detection
+setlocal rootpattern+=.luarc.json,.luarc.jsonc,.luacheckrc,.stylua.toml,stylua.toml,selene.toml,selene.yml
+
 let &cpo = s:cpo_save
 unlet s:cpo_save
 
