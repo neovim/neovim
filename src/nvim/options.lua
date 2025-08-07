@@ -7021,6 +7021,31 @@ local options = {
       varname = 'p_ruf',
     },
     {
+      defaults = '',
+      desc = [=[
+        The path to project-root of the current buffer.
+      ]=],
+      full_name = 'root',
+      noglob = true,
+      scope = { 'buf' },
+      short_desc = N_('Project root of buffer'),
+      type = 'string',
+      varname = 'p_root',
+    },
+    {
+      defaults = '.git,.hg,.svn',
+      desc = [=[
+        The path to project-root of the current buffer.
+      ]=],
+      full_name = 'rootpattern',
+      noglob = true,
+      scope = { 'buf' },
+      short_desc = N_('Glob patterns for detecting project root'),
+      list = 'onecomma',
+      type = 'string',
+      varname = 'p_root_pat',
+    },
+    {
       abbreviation = 'rtp',
       cb = 'did_set_runtimepackpath',
       defaults = {

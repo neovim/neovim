@@ -974,6 +974,30 @@ do
       end
     end,
   })
+
+  local nvim_set_root = vim.api.nvim_create_augroup('nvim.setroot', {clear = true})
+  local function set_buffer_root(buf)
+    local root_patterns = vim.api.nvim_get_option_value('rootpattern', { buf = buf })
+    root_patterns = vim.split(root_patterns, ',', { trimempty = true })
+    local root = vim.fs.root(buf, root_patterns)
+    vim.api.nvim_set_option_value('root', root, { buf = buf })
+  end
+  vim.api.nvim_create_autocmd({'VimEnter', 'BufNew'}, {
+    group = nvim_set_root,
+    desc = 'set buffer root when buffer is being created',
+    callback = function(event)
+      set_buffer_root(event.buf)
+    end,
+  })
+  vim.api.nvim_create_autocmd('OptionSet', {
+    nested = true,
+    group = nvim_set_root,
+    pattern = 'rootpattern',
+    desc = 'set buffer root when root pattern is changed',
+    callback = function(event)
+      set_buffer_root(event.buf)
+    end,
+  })
 end
 
 --- Default options

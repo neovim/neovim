@@ -4612,6 +4612,10 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_nu);
   case kOptRelativenumber:
     return &(win->w_p_rnu);
+  case kOptRoot:
+    return &(buf->b_root);
+  case kOptRootpattern:
+    return &(buf->b_root_pat);
   case kOptNumberwidth:
     return &(win->w_p_nuw);
   case kOptWinfixbuf:
