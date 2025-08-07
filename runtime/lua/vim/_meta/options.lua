@@ -1736,6 +1736,8 @@ vim.wo.diff = vim.o.diff
 --- If some of the {address} do not resolve to a line in each buffer (e.g.
 --- a pattern search that does not match anything), none of the anchors
 --- will be used.
+--- 							*E1562*
+--- Diff anchors can only be used when there are no hidden diff buffers.
 ---
 --- @type string
 vim.o.diffanchors = ""
