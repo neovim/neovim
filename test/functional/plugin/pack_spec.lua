@@ -14,6 +14,8 @@ local exec_lua = n.exec_lua
 -- Helpers ====================================================================
 -- Installed plugins ----------------------------------------------------------
 
+local test_new_data_path = vim.fs.abspath('test/functional/lua/pack-test-xdg-data-home')
+
 local function pack_get_dir()
   return vim.fs.joinpath(fn.stdpath('data'), 'site', 'pack', 'core', 'opt')
 end
@@ -289,6 +291,7 @@ describe('vim.pack', function()
 
   after_each(function()
     vim.fs.rm(pack_get_dir(), { force = true, recursive = true })
+    pcall(vim.fs.rm, test_new_data_path, { force = true, recursive = true })
   end)
 
   teardown(function()
@@ -347,6 +350,38 @@ describe('vim.pack', function()
       eq(true, vim.tbl_contains(rtp, plug_path))
       -- No 'after/' directory in runtimepath because it is not present in plugin
       eq(false, vim.tbl_contains(rtp, after_dir))
+    end)
+
+    it('ensures proper path options', function()
+      local orig_pack_dir = pack_get_dir()
+      n.exec_lua(function()
+        vim.env.XDG_DATA_HOME = test_new_data_path
+        vim.pack.add({ repos_src.basic })
+      end)
+      eq('basic main', n.exec_lua('return require("basic")'))
+      matches(vim.pesc(test_new_data_path), api.nvim_get_option_value('packpath', {}))
+
+      -- Should only create relevant package directory
+      eq(true, vim.uv.fs_stat(orig_pack_dir) == nil)
+    end)
+
+    it("does not duplicate 'packpath' entries", function()
+      n.exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+
+      -- Should not lead to duplicating entries with different slashes
+      local packpath = api.nvim_get_option_value('packpath', {})
+      local path_seen = {} --- @type table<string,string>
+      for _, path in ipairs(vim.split(packpath, ',')) do
+        local path_norm = vim.fs.normalize(path)
+        if path_seen[path_norm] then
+          local seen = path_seen[path_norm]
+          local msg = ("There are duplicating paths in 'packpath':\n%s\n%s"):format(path, seen)
+          error(msg)
+        end
+        path_seen[path_norm] = path
+      end
     end)
 
     it('can install from the Internet', function()
