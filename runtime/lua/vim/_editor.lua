@@ -79,11 +79,12 @@ local utfs = {
 
 -- Gets process info from the `ps` command.
 -- Used by nvim_get_proc() as a fallback.
+--- @param pid integer
 function vim._os_proc_info(pid)
-  if pid == nil or pid <= 0 or type(pid) ~= 'number' then
+  if not pid or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
   end
-  local cmd = { 'ps', '-p', pid, '-o', 'comm=' }
+  local cmd = { 'ps', '-p', tostring(pid), '-o', 'comm=' }
   local r = vim.system(cmd):wait()
   local name = assert(r.stdout)
   if r.code == 1 and vim.trim(name) == '' then
@@ -91,7 +92,7 @@ function vim._os_proc_info(pid)
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
-  local ppid_string = assert(vim.system({ 'ps', '-p', pid, '-o', 'ppid=' }):wait().stdout)
+  local ppid_string = assert(vim.system({ 'ps', '-p', tostring(pid), '-o', 'ppid=' }):wait().stdout)
   -- Remove trailing whitespace.
   name = vim.trim(name):gsub('^.*/', '')
   local ppid = tonumber(ppid_string) or -1
@@ -189,7 +190,7 @@ do
     -- Note: mode doesn't always start with "c" in cmdline mode, so use getcmdtype() instead.
     if vim.fn.getcmdtype() ~= '' then -- cmdline-mode: paste only 1 line.
       if not got_line1 then
-        got_line1 = (#lines > 1)
+        got_line1 = #lines > 1
         -- Escape control characters
         local line1 = lines[1]:gsub('(%c)', '\022%1')
         -- nvim_input() is affected by mappings,
@@ -214,7 +215,7 @@ do
       end
       --- @type integer, integer
       local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-      local bufline = vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1]
+      local bufline = assert(vim.api.nvim_buf_get_lines(0, row - 1, row, true)[1])
       local firstline = lines[1]
       firstline = bufline:sub(1, col) .. firstline
       lines[1] = firstline
@@ -442,9 +443,9 @@ end
 --- position (for example, |linewise| visual selection) is returned as |v:maxcol| (big number).
 ---
 ---@param bufnr integer Buffer number, or 0 for current buffer
----@param pos1 integer[]|string Start of region as a (line, column) tuple or |getpos()|-compatible string
----@param pos2 integer[]|string End of region as a (line, column) tuple or |getpos()|-compatible string
----@param regtype string [setreg()]-style selection type
+---@param pos1 [integer,integer]|string Start of region as a (line, column) tuple or |getpos()|-compatible string
+---@param pos2 [integer,integer]|string End of region as a (line, column) tuple or |getpos()|-compatible string
+---@param regtype string : [setreg()]-style selection type
 ---@param inclusive boolean Controls whether the ending column is inclusive (see also 'selection').
 ---@return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
 ---whole lines are returned as `{startcol,endcol} = {0,-1}`.
@@ -481,7 +482,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   -- in case of block selection, columns need to be adjusted for non-ASCII characters
   -- TODO: handle double-width characters
   if regtype:byte() == 22 then
-    local bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
+    local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1])
     pos1[2] = vim.str_utfindex(bufline, 'utf-32', pos1[2])
   end
 
@@ -493,7 +494,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       c1 = pos1[2]
       c2 = c1 + tonumber(regtype:sub(2))
       -- and adjust for non-ASCII characters
-      local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
+      local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1])
       local utflen = vim.str_utfindex(bufline, 'utf-32', #bufline)
       if c1 <= utflen then
         c1 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c1)))
@@ -511,7 +512,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
     else
       c1 = (l == pos1[1]) and pos1[2] or 0
       if inclusive and l == pos2[1] then
-        local bufline = vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1]
+        local bufline = assert(vim.api.nvim_buf_get_lines(bufnr, pos2[1], pos2[1] + 1, true)[1])
         pos2[2] = vim.fn.byteidx(bufline, vim.fn.charidx(bufline, pos2[2]) + 1)
       end
       c2 = (l == pos2[1]) and pos2[2] or -1
@@ -555,8 +556,8 @@ end
 ---@param msg string Content of the notification to show to the user.
 ---@param level integer|nil One of the values from |vim.log.levels|.
 ---@param opts table|nil Optional parameters. Unused by default.
----@diagnostic disable-next-line: unused-local
 function vim.notify(msg, level, opts) -- luacheck: no unused args
+  local _ = opts -- unused
   local chunks = { { msg, level == vim.log.levels.WARN and 'WarningMsg' or nil } }
   vim.api.nvim_echo(chunks, true, { err = level == vim.log.levels.ERROR })
 end
@@ -775,7 +776,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
   end
 
   if not index then
-    index = math.huge
+    index = vim._maxint
     strict_indexing = false
   end
 
@@ -1004,15 +1005,15 @@ function vim._expand_pat(pat, env)
     insert_keys(vim.iter(options):filter(filter):fold({}, _fold_to_map))
   end
 
-  keys = vim.tbl_keys(keys)
-  table.sort(keys)
+  local rkeys = vim.tbl_keys(keys)
+  table.sort(rkeys)
 
-  return keys, #prefix_match_pat
+  return rkeys, #prefix_match_pat
 end
 
 --- @param lua_string string
 --- @return (string|string[])[], integer
-vim._expand_pat_get_parts = function(lua_string)
+function vim._expand_pat_get_parts(lua_string)
   local parts = {}
 
   local accumulator, search_index = '', 1
@@ -1046,7 +1047,7 @@ vim._expand_pat_get_parts = function(lua_string)
           string_char = nil
         end
       elseif not string_char then
-        bracket_end = string.find(lua_string, ']', idx, true)
+        bracket_end = lua_string:find(']', idx, true)
 
         if s == '"' or s == "'" then
           string_char = s
@@ -1274,8 +1275,8 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
     -- Show a warning only if feature is hard-deprecated (see MAINTAIN.md).
     -- Example: if removal `version` is 0.12 (soft-deprecated since 0.10-dev), show warnings
     -- starting at 0.11, including 0.11-dev.
-    local major, minor = version:match('(%d+)%.(%d+)')
-    major, minor = tonumber(major), tonumber(minor)
+    local major_s, minor_s = version:match('(%d+)%.(%d+)')
+    local major, minor = assert(tonumber(major_s)), assert(tonumber(minor_s))
     local nvim_major = 0 --- Current Nvim major version.
 
     -- We can't "subtract" from a major version, so:

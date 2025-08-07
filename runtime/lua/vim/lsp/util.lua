@@ -295,7 +295,7 @@ end
 ---@param text_edits (lsp.TextEdit|lsp.AnnotatedTextEdit)[]
 ---@param bufnr integer Buffer id
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
----@param change_annotations? table<string, lsp.ChangeAnnotation>
+---@param change_annotations? table<string, lsp.ChangeAnnotation?>
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotations)
   validate('text_edits', text_edits, 'table', false)
@@ -431,10 +431,10 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
     end
   end
 
-  if next(confirmations) then
+  if change_annotations and next(confirmations) then
     local message = { 'Apply all changes?' }
     for id, count in pairs(confirmations) do
-      local annotation = assert(change_annotations)[id]
+      local annotation = assert(change_annotations[id])
       message[#message + 1] = annotation.label
         .. (annotation.description and (string.format(': %s', annotation.description)) or '')
         .. (count > 1 and string.format(' (%d)', count) or '')
@@ -453,10 +453,10 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
     apply_text_edits()
   end
 
-  if change_annotations ~= nil and next(change_count) then
+  if change_annotations and next(change_count) then
     local change_message = { 'Applied changes:' }
     for id, count in pairs(change_count) do
-      local annotation = change_annotations[id]
+      local annotation = assert(change_annotations[id])
       change_message[#change_message + 1] = annotation.label
         .. (annotation.description and (': ' .. annotation.description) or '')
         .. (count > 1 and string.format(' (%d)', count) or '')
@@ -1525,7 +1525,7 @@ function M._make_floating_popup_size(contents, opts)
   local title_length = 0
   local chunks = type(opts.title) == 'string' and { { opts.title } } or opts.title or {}
   for _, chunk in
-    ipairs(chunks --[=[@as [string, string][]]=])
+    ipairs(chunks --[[@as [string, string][] ]])
   do
     title_length = title_length + vim.fn.strdisplaywidth(chunk[1])
   end

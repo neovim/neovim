@@ -1,7 +1,16 @@
 {
+  "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
+  "workspace" : {
+    "ignoreGlobs": [
+      "src/gen/preload_nlua.lua",
+      "runtime/lua/coxpcall.lua"
+    ]
+  },
   "diagnostics" : {
     "disable" : [
-      "unnecessary-if"
+      "unnecessary-if",
+      "unknown-doc-tag",
+      "annotation-usage-error"
     ]
   },
   "codeAction": {

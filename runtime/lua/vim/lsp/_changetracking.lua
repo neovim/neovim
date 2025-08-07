@@ -31,9 +31,9 @@ local M = {}
 --- @field name string name of the buffer
 --- @field lines string[] snapshot of buffer lines from last didChange
 --- @field lines_tmp string[]
---- @field pending_changes table[] List of debounced changes in incremental sync mode
+--- @field pending_changes lsp.TextDocumentContentChangeEvent[] List of debounced changes in incremental sync mode
 --- @field timer uv.uv_timer_t? uv_timer
---- @field last_flush nil|number uv.hrtime of the last flush/didChange-notification
+--- @field last_flush number? uv.hrtime of the last flush/didChange-notification
 --- @field needs_flush boolean true if buffer updates haven't been sent to clients/servers yet
 --- @field refs integer how many clients are using this group
 ---
@@ -77,7 +77,7 @@ local function get_group(client)
 end
 
 ---@param state vim.lsp.CTBufferState
----@param encoding string
+---@param encoding lsp.PositionEncodingKind
 ---@param bufnr integer
 ---@param firstline integer
 ---@param lastline integer
@@ -130,7 +130,6 @@ end
 ---@param client vim.lsp.Client
 ---@param bufnr integer
 function M.init(client, bufnr)
-  assert(client.offset_encoding, 'lsp client must have an offset_encoding')
   local group = get_group(client)
   local state = state_by_group[group]
   if state then
@@ -230,7 +229,7 @@ end
 --
 ---@param debounce integer
 ---@param buf_state vim.lsp.CTBufferState
----@return number
+---@return integer
 local function next_debounce(debounce, buf_state)
   if debounce == 0 then
     return 0
@@ -241,7 +240,7 @@ local function next_debounce(debounce, buf_state)
   end
   local now = uv.hrtime()
   local ms_since_last_flush = (now - buf_state.last_flush) * ns_to_ms
-  return math.max(debounce - ms_since_last_flush, 0)
+  return math.floor(math.max(debounce - ms_since_last_flush, 0))
 end
 
 ---@param bufnr integer

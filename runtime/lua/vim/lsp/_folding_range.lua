@@ -288,7 +288,7 @@ end
 function State:foldclose(kind, winid)
   vim._with({ win = winid }, function()
     local bufnr = api.nvim_win_get_buf(winid)
-    local row_kinds = State.active[bufnr].row_kinds
+    local row_kinds = assert(State.active[bufnr]).row_kinds
     -- Reverse traverse to ensure that the smallest ranges are closed first.
     for row = api.nvim_buf_line_count(bufnr) - 1, 0, -1 do
       local kinds = row_kinds[row]

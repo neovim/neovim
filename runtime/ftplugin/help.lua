@@ -19,8 +19,8 @@ local function colorize_hl_groups(patterns)
     end
 
     for lnum = start_lnum, end_lnum do
-      local word = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]:match(pat.match)
-      if vim.fn.hlexists(word) ~= 0 then
+      local word = assert(vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]):match(pat.match)
+      if word and vim.fn.hlexists(word) ~= 0 then
         vim.api.nvim_buf_set_extmark(0, ns, lnum - 1, 0, { end_col = #word, hl_group = word })
       end
     end
@@ -81,7 +81,7 @@ local query = vim.treesitter.query.parse(
     (#set! @code lang @_lang))
 ]]
 )
-local root = parser:parse()[1]:root()
+local root = assert(assert(parser:parse())[1]):root()
 
 for _, match, metadata in query:iter_matches(root, 0, 0, -1) do
   for id, nodes in pairs(match) do

@@ -2,6 +2,11 @@ local ns = vim.api.nvim_create_namespace('nvim.pack.confirm')
 vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
 local priority = 100
+--- @param lnum integer
+--- @param start_col integer
+--- @param end_col integer
+--- @param hl? string
+--- @param pr? integer
 local hi_range = function(lnum, start_col, end_col, hl, pr)
   --- @type vim.api.keyset.set_extmark
   local opts = { end_row = lnum - 1, end_col = end_col, hl_group = hl, priority = pr or priority }
