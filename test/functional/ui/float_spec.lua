@@ -9655,7 +9655,7 @@ describe('float window', function()
           {1:^    }|
           {2:~   }|*3
         ]], float_pos={
-        [5] = {1002, "NW", 1, 1, 2, true, 50, 1, 1, 2};
+        [5] = {1002, "NW", 1, 1, 2, true, 50};
       }, win_viewport={
         [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
         [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
