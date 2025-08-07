@@ -2553,8 +2553,13 @@ static int parse_diffanchors(bool check_only, buf_T *buf, linenr_T *anchors, int
         break;
       }
     }
-    if (bufwin == NULL) {
-      return FAIL;  // should not really happen
+    if (bufwin == NULL && *dia != NUL) {
+      // The buffer is hidden. Currently this is not supported due to the
+      // edge cases of needing to decide if an address is window-specific
+      // or not. We could add more checks in the future so we can detect
+      // whether an address relies on curwin to make this more fleixble.
+      emsg(_(e_diff_anchors_with_hidden_windows));
+      return FAIL;
     }
   }
 

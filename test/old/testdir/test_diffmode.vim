@@ -3231,6 +3231,10 @@ func Test_diffanchors_invalid()
   call assert_fails('diffupdate', 'E1550:')
   call assert_equal('orig_search_pat', @/)
 
+  " Hidden buffers are not supported right now
+  hide
+  call assert_fails('diffupdate', 'E1562:')
+
   %bw!
   set diffopt&
   set diffanchors&
