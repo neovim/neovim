@@ -373,7 +373,7 @@ struct file_buffer {
   int b_ro_locked;              // Non-zero when the buffer can't be changed.
                                 // Used for FileChangedRO
   char *b_p_root;               // Project root of the buffer.
-  char *b_p_root_pat;           // glob root patterns for detecting root of the buffer.
+  char *b_p_root_marker;           // glob root patterns for detecting root of the buffer.
 
   // b_ffname   has the full path of the file (NULL for no name).
   // b_sfname   is the name as the user typed it (or NULL).

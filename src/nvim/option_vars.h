@@ -445,7 +445,7 @@ EXTERN OptInt p_pyx;            ///< 'pyxversion'
 EXTERN char *p_qe;              ///< 'quoteescape'
 EXTERN int p_ro;                ///< 'readonly'
 EXTERN char *p_root;            ///< 'root'
-EXTERN char *p_root_pat;        ///< 'rootpattern'
+EXTERN char *p_root_marker;     ///< 'rootmarker'
 EXTERN char *p_rdb;             ///< 'redrawdebug'
 EXTERN unsigned rdb_flags;
 EXTERN OptInt p_rdt;            ///< 'redrawtime'
