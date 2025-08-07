@@ -544,7 +544,7 @@ void ui_flush(void)
 
   cmdline_ui_flush();
 
-  if (State != MODE_CMDLINE && curwin->w_floating && curwin->w_config.hide) {
+  if (!(State & MODE_CMDLINE) && curwin->w_floating && curwin->w_config.hide) {
     if (!was_busy) {
       ui_call_busy_start();
       was_busy = true;

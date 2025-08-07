@@ -860,6 +860,16 @@ describe('cmdline redraw', function()
     ]])
     command('redraw')
     screen:expect_unchanged()
+
+    command('set keymap=dvorak')
+    feed('<C-^>')
+    command('redraw')
+    screen:expect_unchanged()
+
+    feed('<C-^>')
+    command('set keymap&')
+    command('redraw')
+    screen:expect_unchanged()
   end)
 
   it('substitute confirm prompt does not scroll', function()

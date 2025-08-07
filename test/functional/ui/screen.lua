@@ -368,7 +368,7 @@ for _, v in ipairs(ext_keys) do
   expect_keys[v] = true
 end
 
---- @class test.function.ui.screen.Expect
+--- @class test.functional.ui.screen.Expect
 ---
 --- Expected screen state (string). Each line represents a screen
 --- row. Last character of each row (typically "|") is stripped.
@@ -463,7 +463,7 @@ end
 --- or keyword args (supports more options):
 ---    screen:expect({ grid=[[...]], cmdline={...}, condition=function() ... end })
 ---
---- @param expected string|function|test.function.ui.screen.Expect
+--- @param expected string|function|test.functional.ui.screen.Expect
 --- @param attr_ids? table<integer,table<string,any>>
 function Screen:expect(expected, attr_ids, ...)
   --- @type string, fun()
