@@ -3062,7 +3062,7 @@ void repeat_message(void)
   if (State == MODE_ASKMORE) {
     msg_moremsg(true);          // display --more-- message again
     msg_row = Rows - 1;
-  } else if (State == MODE_CMDLINE && confirm_msg != NULL) {
+  } else if ((State & MODE_CMDLINE) && confirm_msg != NULL) {
     display_confirm_msg();      // display ":confirm" message again
     msg_row = Rows - 1;
   } else if (State == MODE_EXTERNCMD) {
