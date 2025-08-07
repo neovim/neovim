@@ -6152,6 +6152,8 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
 theend:
   p_ws = save_p_ws;
 
+  apply_autocmds(EVENT_SEARCHPOST, NULL, NULL, false, curbuf);
+
   return retval;
 }
 
