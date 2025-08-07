@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -70,6 +71,7 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
+#include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/normal_defs.h"
 #include "nvim/ops.h"
@@ -81,6 +83,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/os/proc.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/plines.h"
@@ -4708,13 +4711,6 @@ void not_exiting(void)
   exiting = false;
 }
 
-/// Call this function if we thought we were going to restart, but we won't
-/// (because of an error).
-void not_restarting(void)
-{
-  restarting = false;
-}
-
 bool before_quit_autocmds(win_T *wp, bool quit_all, bool forceit)
 {
   apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
@@ -4859,46 +4855,111 @@ static void ex_quitall(exarg_T *eap)
 
 /// ":restart": restart the Nvim server (using ":qall!").
 /// ":restart +cmd": restart the Nvim server using ":cmd".
-/// ":restart +cmd <command>": restart the Nvim server using ":cmd" and add -c <command> to the new server.
+/// ":restart +cmd <command>": restart the Nvim server using ":cmd" and add runs <command> in the new server.
 static void ex_restart(exarg_T *eap)
 {
-  // Patch v:argv to include "-c <arg>" when it restarts.
-  if (eap->arg != NULL) {
-    const list_T *l = get_vim_var_list(VV_ARGV);
-    int argc = tv_list_len(l);
-    list_T *argv_cpy = tv_list_alloc(argc + 2);
-    bool added_startup_arg = false;
-    TV_LIST_ITER_CONST(l, li, {
-      const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
-      size_t arg_size = strlen(arg);
-      assert(arg_size <= (size_t)SSIZE_MAX);
-      tv_list_append_string(argv_cpy, arg, (ssize_t)arg_size);
-      if (!added_startup_arg) {
-        tv_list_append_string(argv_cpy, "-c", 2);
-        size_t cmd_size = strlen(eap->arg);
-        assert(cmd_size <= (size_t)SSIZE_MAX);
-        tv_list_append_string(argv_cpy, eap->arg, (ssize_t)cmd_size);
-        added_startup_arg = true;
-      }
-    });
-    set_vim_var_list(VV_ARGV, argv_cpy);
-  }
-  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall!";
   Error err = ERROR_INIT;
   if ((cmdmod.cmod_flags & CMOD_CONFIRM) && check_changed_any(false, false)) {
     return;
   }
-  restarting = true;
+
+  const char *exepath = get_vim_var_str(VV_PROGPATH);
+  const list_T *l = get_vim_var_list(VV_ARGV);
+  int argc = tv_list_len(l);
+  assert(argc > 0);
+  char *prev_addr = NULL;
+  TV_LIST_ITER_CONST(l, li, {
+    const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
+    if (strequal(arg, "--listen")) {
+      li = TV_LIST_ITEM_NEXT(l, li);
+      prev_addr = xstrdup(tv_get_string(TV_LIST_ITEM_TV(li)));
+      break;
+    }
+  });
+
+  char *listen_addr;
+  if (!prev_addr || !strrchr(prev_addr, ':')) {
+    listen_addr = server_address_new("nvim");
+  } else {
+    listen_addr = server_remote_address_new(prev_addr);
+    if (!listen_addr) {
+      emsg("no new remote addresses could be created.");
+      return;
+    }
+    xfree(prev_addr);
+  }
+
+  char **argv;
+  argv = xcalloc((size_t)argc + 4, sizeof(char *));
+  bool had_minmin = false;
+  size_t i = 0;
+  TV_LIST_ITER_CONST(l, li, {
+    const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
+    if (i > 0 && !had_minmin && strequal(arg, "--")) {
+      had_minmin = true;
+    }
+    // Skip over --listen <addr> as we are already generating a new address.
+    if (!had_minmin && strequal(arg, "--listen")) {
+      li = TV_LIST_ITEM_NEXT(l, li);
+      continue;
+    }
+    // Exclude --embed/--headless from `argv`, as we are starting it with another listen address.
+    if (i == 0 || had_minmin
+        || (!strequal(arg, "--embed") && !strequal(arg, "--headless"))) {
+      argv[i++] = xstrdup(arg);
+      if (i == 1) {
+        argv[i++] = xstrdup("--headless");
+        argv[i++] = xstrdup("--listen");
+        argv[i++] = xstrdup(listen_addr);
+      }
+    }
+  });
+
+  CallbackReader on_err = CALLBACK_READER_INIT;
+  on_err.fwd_err = true;
+
+#ifdef MSWIN
+  // TODO(justinmk): detach breaks `tt.setup_child_nvim` tests on Windows?
+  bool detach = os_env_exists("__NVIM_DETACH", true);
+#else
+  bool detach = true;
+#endif
+  varnumber_T exit_status;
+  Channel *channel = channel_job_start(argv, exepath,
+                                       CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
+                                       false, true, true, detach, kChannelStdinPipe,
+                                       NULL, 0, 0, NULL, &exit_status);
+  if (!channel) {
+    ELOG("cannot create a channel job");
+    xfree(argv);
+    xfree(listen_addr);
+    return;
+  }
+
+  if (!remote_ui_restart(current_ui, cstr_as_string(eap->arg), listen_addr, &err)) {
+    if (ERROR_SET(&err)) {
+      ELOG("%s", err.msg);  // UI disappeared already?
+      api_clear_error(&err);
+    }
+    xfree(argv);
+    xfree(listen_addr);
+    return;
+  }
+  xfree(argv);
+  xfree(listen_addr);
+
+  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall!";
   nvim_command(cstr_as_string(quit_cmd), &err);
   if (ERROR_SET(&err)) {
     emsg(err.msg);  // Could not exit
     api_clear_error(&err);
-    not_restarting();
-    return;
-  }
-  if (!exiting) {
+  } else if (!exiting) {
     emsg("restart failed: +cmd did not quit the server");
-    not_restarting();
+  }
+  // Either nvim_command failed or +cmd did not quit.
+  int pid = channel->stream.proc.pid;
+  if (!os_proc_tree_kill(pid, SIGKILL)) {
+    emsg("killing new nvim server failed");
   }
 }
 
