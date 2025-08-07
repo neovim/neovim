@@ -10470,6 +10470,15 @@ describe('float window', function()
           ]],
         })
       end
+
+      command('set keymap=dvorak')
+      feed('<C-^>')
+      screen:expect_unchanged()
+
+      feed('<C-^>')
+      command('set keymap&')
+      screen:expect_unchanged()
+
       feed('<ESC>')
 
       -- Show cursor after switching to a normal window (hide=false).

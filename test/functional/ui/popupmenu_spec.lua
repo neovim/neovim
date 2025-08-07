@@ -6445,10 +6445,10 @@ describe('builtin popupmenu', function()
         menu PopUp.baz :let g:menustr = 'baz'<CR>
       ]])
 
-      --- @param state string|test.function.ui.screen.Expect
+      --- @param state string|test.functional.ui.screen.Expect
       --- @param str string
       --- @param repl string
-      --- @return string|test.function.ui.screen.Expect
+      --- @return string|test.functional.ui.screen.Expect
       local function screen_replace(state, str, repl)
         if type(state) == 'string' then
           local new_state = state:gsub(vim.pesc(str), vim.pesc(repl))
@@ -6461,7 +6461,7 @@ describe('builtin popupmenu', function()
         return new_state
       end
 
-      local no_sel_screen ---@type string|test.function.ui.screen.Expect
+      local no_sel_screen ---@type string|test.functional.ui.screen.Expect
       if multigrid then
         api.nvim_input_mouse('right', 'press', '', 2, 0, 4)
         no_sel_screen = {
