@@ -3555,8 +3555,8 @@ improve screen updating rates (see |:syn-sync| for more on this). >
 The g:vimsyn_embed option allows users to select what, if any, types of
 embedded script highlighting they wish to have. >
 
-   g:vimsyn_embed == 0      : disable (don't embed any scripts)
-   g:vimsyn_embed == 'lpPr' : support embedded Lua, Perl, Python and Ruby
+   g:vimsyn_embed == 0       : disable (don't embed any scripts)
+   g:vimsyn_embed ==# 'lpPr' : support embedded Lua, Perl, Python and Ruby
 <
 By default, g:vimsyn_embed is unset, and embedded Lua scripts are supported.
 
@@ -3564,13 +3564,13 @@ By default, g:vimsyn_embed is unset, and embedded Lua scripts are supported.
 Some folding is now supported with when 'foldmethod' is set to "syntax": >
 
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
-   g:vimsyn_folding =~ 'a' : fold augroups
-   g:vimsyn_folding =~ 'f' : fold functions
-   g:vimsyn_folding =~ 'h' : fold let heredocs
-   g:vimsyn_folding =~ 'l' : fold Lua      heredocs
-   g:vimsyn_folding =~ 'p' : fold Perl     heredocs
-   g:vimsyn_folding =~ 'P' : fold Python   heredocs
-   g:vimsyn_folding =~ 'r' : fold Ruby     heredocs
+   g:vimsyn_folding =~# 'a' : fold augroups
+   g:vimsyn_folding =~# 'f' : fold functions
+   g:vimsyn_folding =~# 'h' : fold let heredocs
+   g:vimsyn_folding =~# 'l' : fold Lua      heredocs
+   g:vimsyn_folding =~# 'p' : fold Perl     heredocs
+   g:vimsyn_folding =~# 'P' : fold Python   heredocs
+   g:vimsyn_folding =~# 'r' : fold Ruby     heredocs
 <
 
 By default, g:vimsyn_folding is unset.  Concatenate the indicated characters
