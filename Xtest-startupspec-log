@@ -1,0 +1,2 @@
+ERR 2025-08-05T15:54:49.124 ui/c/T1633.35245.0 tui_stop:625: TUI already stopped (race?)
+ERR 2025-08-05T15:54:49.272 ui/c/T1635.35257.0 tui_stop:625: TUI already stopped (race?)
