@@ -2,6 +2,7 @@
 " Language:     TypeScript and TypeScriptReact
 " Maintainer:   Herrington Darkholme
 " Last Change:  2024 May 24
+" 2025 Aug 05   support for new TypeScript syntaxes
 " Based On:     Herrington Darkholme's yats.vim
 " Changes:      See https://github.com/HerringtonDarkholme/yats.vim
 " Credits:      See yats.vim on github
@@ -10,7 +11,6 @@ if &cpo =~ 'C'
   let s:cpo_save = &cpo
   set cpo&vim
 endif
-
 
 " NOTE: this results in accurate highlighting, but can be slow.
 syntax sync fromstart
@@ -240,10 +240,22 @@ syntax cluster typescriptSymbols               contains=typescriptBinaryOp,types
 "Import
 syntax keyword typescriptImport                from as
 syntax keyword typescriptImport                import
-  \ nextgroup=typescriptImportType,typescriptTypeBlock,typescriptDefaultImportName
+  \ nextgroup=typescriptImportType,typescriptImportBlock,typescriptDefaultImportName,typescriptImportDefer
   \ skipwhite
 syntax keyword typescriptImportType            type
   \ contained
+syntax match typescriptDefaultImportName /\v\h\k*( |,)/
+  \ contained
+  \ nextgroup=typescriptImportBlock
+  \ skipwhite skipempty
+syntax match typescriptImportDefer             /\<defer\%(\s\+\*\)\@=/
+  \ contained
+syntax region  typescriptImportBlock
+  \ matchgroup=typescriptBraces
+  \ start=/{/ end=/}/
+  \ contained
+  \ contains=typescriptIdentifierName,typescriptImportType,typescriptString
+  \ fold
 syntax keyword typescriptExport                export
   \ nextgroup=typescriptExportType
   \ skipwhite
@@ -329,21 +341,11 @@ syntax cluster typescriptAmbients contains=
   \ typescriptModule
 
 syntax keyword typescriptIdentifier            arguments  nextgroup=@afterIdentifier
-syntax match typescriptDefaultImportName /\v\h\k*( |,)/
-  \ contained
-  \ nextgroup=typescriptTypeBlock
-  \ skipwhite skipempty
-
-syntax region  typescriptTypeBlock
-  \ matchgroup=typescriptBraces
-  \ start=/{/ end=/}/
-  \ contained
-  \ contains=typescriptIdentifierName,typescriptImportType
-  \ fold
 
 "Program Keywords
 syntax keyword typescriptNull null undefined nextgroup=@typescriptSymbols skipwhite skipempty
-syntax keyword typescriptIdentifier this super prototype nextgroup=@afterIdentifier
+syntax keyword typescriptIdentifier this super nextgroup=@afterIdentifier
+syntax keyword typescriptPrototype prototype nextgroup=@afterIdentifier
 syntax keyword typescriptStatementKeyword return skipwhite contained nextgroup=@typescriptValue containedin=typescriptBlock
 
 "Syntax coloring for Node.js shebang line
@@ -1988,100 +1990,101 @@ syntax match typescriptDecorator /@\([_$a-zA-Z][_$a-zA-Z0-9]*\.\)*[_$a-zA-Z][_$a
   \ contains=@_semantic,typescriptDotNotation
 
 
-hi def link typescriptReserved             Error
+hi def link typescriptReserved              Error
 
-hi def link typescriptEndColons            Exception
-hi def link typescriptSymbols              Normal
-hi def link typescriptBraces               Function
-hi def link typescriptParens               Normal
-hi def link typescriptComment              Comment
-hi def link typescriptLineComment          Comment
-hi def link typescriptDocComment           Comment
-hi def link typescriptCommentTodo          Todo
-hi def link typescriptMagicComment         SpecialComment
-hi def link typescriptRef                  Include
-hi def link typescriptDocNotation          SpecialComment
-hi def link typescriptDocTags              SpecialComment
-hi def link typescriptDocNGParam           typescriptDocParam
-hi def link typescriptDocParam             Function
-hi def link typescriptDocNumParam          Function
-hi def link typescriptDocEventRef          Function
-hi def link typescriptDocNamedParamType    Type
-hi def link typescriptDocParamName         Type
-hi def link typescriptDocParamType         Type
-hi def link typescriptString               String
-hi def link typescriptSpecial              Special
-hi def link typescriptStringLiteralType    String
-hi def link typescriptTemplateLiteralType  String
-hi def link typescriptStringMember         String
-hi def link typescriptTemplate             String
-hi def link typescriptEventString          String
-hi def link typescriptDestructureString    String
-hi def link typescriptASCII                Special
-hi def link typescriptTemplateSB           Label
-hi def link typescriptRegexpString         String
-hi def link typescriptGlobal               Constant
-hi def link typescriptTestGlobal           Function
-hi def link typescriptPrototype            Type
-hi def link typescriptConditional          Conditional
-hi def link typescriptConditionalElse      Conditional
-hi def link typescriptCase                 Conditional
-hi def link typescriptDefault              typescriptCase
-hi def link typescriptBranch               Conditional
-hi def link typescriptIdentifier           Structure
-hi def link typescriptVariable             Identifier
-hi def link typescriptUsing                Identifier
-hi def link typescriptDestructureVariable  PreProc
-hi def link typescriptEnumKeyword          Identifier
-hi def link typescriptRepeat               Repeat
-hi def link typescriptForOperator          Repeat
-hi def link typescriptStatementKeyword     Statement
-hi def link typescriptMessage              Keyword
-hi def link typescriptOperator             Identifier
-hi def link typescriptKeywordOp            Identifier
-hi def link typescriptCastKeyword          Special
-hi def link typescriptType                 Type
-hi def link typescriptNull                 Boolean
-hi def link typescriptNumber               Number
-hi def link typescriptBoolean              Boolean
-hi def link typescriptObjectLabel          typescriptLabel
-hi def link typescriptDestructureLabel     Function
-hi def link typescriptLabel                Label
-hi def link typescriptTupleLable           Label
-hi def link typescriptStringProperty       String
-hi def link typescriptImport               Special
-hi def link typescriptImportType           Special
-hi def link typescriptAmbientDeclaration   Special
-hi def link typescriptExport               Special
-hi def link typescriptExportType           Special
-hi def link typescriptModule               Special
-hi def link typescriptTry                  Special
-hi def link typescriptExceptions           Special
+hi def link typescriptEndColons             Exception
+hi def link typescriptSymbols               Normal
+hi def link typescriptBraces                Function
+hi def link typescriptParens                Normal
+hi def link typescriptComment               Comment
+hi def link typescriptLineComment           Comment
+hi def link typescriptDocComment            Comment
+hi def link typescriptCommentTodo           Todo
+hi def link typescriptMagicComment          SpecialComment
+hi def link typescriptRef                   Include
+hi def link typescriptDocNotation           SpecialComment
+hi def link typescriptDocTags               SpecialComment
+hi def link typescriptDocNGParam            typescriptDocParam
+hi def link typescriptDocParam              Function
+hi def link typescriptDocNumParam           Function
+hi def link typescriptDocEventRef           Function
+hi def link typescriptDocNamedParamType     Type
+hi def link typescriptDocParamName          Type
+hi def link typescriptDocParamType          Type
+hi def link typescriptString                String
+hi def link typescriptSpecial               Special
+hi def link typescriptStringLiteralType     String
+hi def link typescriptTemplateLiteralType   String
+hi def link typescriptStringMember          String
+hi def link typescriptTemplate              String
+hi def link typescriptEventString           String
+hi def link typescriptDestructureString     String
+hi def link typescriptASCII                 Special
+hi def link typescriptTemplateSB            Label
+hi def link typescriptRegexpString          String
+hi def link typescriptGlobal                Constant
+hi def link typescriptTestGlobal            Function
+hi def link typescriptPrototype             Type
+hi def link typescriptConditional           Conditional
+hi def link typescriptConditionalElse       Conditional
+hi def link typescriptCase                  Conditional
+hi def link typescriptDefault               typescriptCase
+hi def link typescriptBranch                Conditional
+hi def link typescriptIdentifier            Structure
+hi def link typescriptVariable              Keyword
+hi def link typescriptUsing                 Identifier
+hi def link typescriptDestructureVariable   PreProc
+hi def link typescriptEnumKeyword           Identifier
+hi def link typescriptRepeat                Repeat
+hi def link typescriptForOperator           Repeat
+hi def link typescriptStatementKeyword      Statement
+hi def link typescriptMessage               Keyword
+hi def link typescriptOperator              Operator
+hi def link typescriptKeywordOp             Operator
+hi def link typescriptCastKeyword           Special
+hi def link typescriptType                  Type
+hi def link typescriptNull                  Boolean
+hi def link typescriptNumber                Number
+hi def link typescriptBoolean               Boolean
+hi def link typescriptObjectLabel           typescriptLabel
+hi def link typescriptDestructureLabel      Function
+hi def link typescriptLabel                 Label
+hi def link typescriptTupleLable            Label
+hi def link typescriptStringProperty        String
+hi def link typescriptImport                Keyword
+hi def link typescriptImportType            Keyword
+hi def link typescriptImportDefer           Keyword
+hi def link typescriptAmbientDeclaration    Keyword
+hi def link typescriptExport                Keyword
+hi def link typescriptExportType            Keyword
+hi def link typescriptModule                Keyword
+hi def link typescriptTry                   Exception
+hi def link typescriptExceptions            Exception
 
-hi def link typescriptMember              Function
-hi def link typescriptMethodAccessor       Operator
+hi def link typescriptMember                Function
+hi def link typescriptMethodAccessor        Operator
 
-hi def link typescriptAsyncFuncKeyword     Keyword
-hi def link typescriptObjectAsyncKeyword   Keyword
-hi def link typescriptAsyncFor             Keyword
-hi def link typescriptFuncKeyword          Keyword
-hi def link typescriptAsyncFunc            Keyword
-hi def link typescriptArrowFunc            Type
-hi def link typescriptFuncName             Function
-hi def link typescriptFuncCallArg          PreProc
-hi def link typescriptArrowFuncArg         PreProc
-hi def link typescriptFuncComma            Operator
+hi def link typescriptAsyncFuncKeyword      Keyword
+hi def link typescriptObjectAsyncKeyword    Keyword
+hi def link typescriptAsyncFor              Keyword
+hi def link typescriptFuncKeyword           Keyword
+hi def link typescriptAsyncFunc             Keyword
+hi def link typescriptArrowFunc             Type
+hi def link typescriptFuncName              Function
+hi def link typescriptFuncCallArg           PreProc
+hi def link typescriptArrowFuncArg          PreProc
+hi def link typescriptFuncComma             Operator
 
-hi def link typescriptClassKeyword         Keyword
-hi def link typescriptClassExtends         Keyword
-hi def link typescriptAbstract             Special
-hi def link typescriptClassStatic          StorageClass
-hi def link typescriptReadonlyModifier     Keyword
-hi def link typescriptInterfaceKeyword     Keyword
-hi def link typescriptInterfaceExtends     Keyword
-hi def link typescriptInterfaceName        Function
+hi def link typescriptClassKeyword          Keyword
+hi def link typescriptClassExtends          Keyword
+hi def link typescriptAbstract              Special
+hi def link typescriptClassStatic           StorageClass
+hi def link typescriptReadonlyModifier      StorageClass
+hi def link typescriptInterfaceKeyword      Keyword
+hi def link typescriptInterfaceExtends      Keyword
+hi def link typescriptInterfaceName         Function
 
-hi def link shellbang                      Comment
+hi def link shellbang                       Comment
 
 hi def link typescriptTypeParameter         Identifier
 hi def link typescriptConstraint            Keyword
@@ -2107,7 +2110,7 @@ hi def link typescriptConstructor           Keyword
 hi def link typescriptDecorator             Special
 hi def link typescriptAssertType            Keyword
 
-hi link typeScript             NONE
+hi def link typeScript                      NONE
 
 if exists('s:cpo_save')
   let &cpo = s:cpo_save
