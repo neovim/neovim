@@ -484,6 +484,21 @@ describe('cmdline', function()
       /the^                                                        |
     ]])
 
+    -- 'incsearch' highlight is restored after dismissing popup (Ctrl_E)
+    feed('<esc>')
+    command('set wop=pum is nohls')
+    feed('gg/th<tab><c-e>')
+    screen:expect([[
+      the                                                         |
+      {2:th}ese                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*3
+      /th^                                                         |
+    ]])
+
     feed('<esc>')
   end)
 
