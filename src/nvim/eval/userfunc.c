@@ -2500,19 +2500,14 @@ static int get_function_body(exarg_T *eap, garray_T *newlines, char *line_arg_in
       }
 
       // Check for ":append", ":change", ":insert".
-      p = skip_range(p, NULL);
-      if ((p[0] == 'a' && (!ASCII_ISALPHA(p[1]) || p[1] == 'p'))
-          || (p[0] == 'c'
-              && (!ASCII_ISALPHA(p[1])
-                  || (p[1] == 'h' && (!ASCII_ISALPHA(p[2])
-                                      || (p[2] == 'a'
-                                          && (strncmp(&p[3], "nge", 3) != 0
-                                              || !ASCII_ISALPHA(p[6])))))))
-          || (p[0] == 'i'
-              && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
-                                           && (!ASCII_ISALPHA(p[2])
-                                               || (p[2] == 's')))))) {
+      char *const tp = p = skip_range(p, NULL);
+      if ((checkforcmd(&p, "append", 1)
+           || checkforcmd(&p, "change", 1)
+           || checkforcmd(&p, "insert", 1))
+          && (*p == '!' || *p == '|' || ascii_iswhite_nl_or_nul(*p))) {
         skip_until = xmemdupz(".", 1);
+      } else {
+        p = tp;
       }
 
       // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
