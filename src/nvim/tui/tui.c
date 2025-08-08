@@ -112,7 +112,15 @@ struct TUIData {
   bool set_cursor_color_as_str;
   bool cursor_has_color;
   bool is_starting;
-  bool did_set_grapheme_cluster_mode;
+  bool resize_events_enabled;
+
+  // Terminal modes that Nvim enabled that it must disable on exit
+  struct {
+    bool grapheme_clusters : 1;
+    bool theme_updates : 1;
+    bool resize_events : 1;
+  } modes;
+
   FILE *screenshot;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs clear_attrs;
@@ -245,19 +253,23 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
     case kTermModeGraphemeClusters:
       if (!is_set) {
         tui_set_term_mode(tui, mode, true);
-        tui->did_set_grapheme_cluster_mode = true;
+        tui->modes.grapheme_clusters = true;
       }
       break;
     case kTermModeThemeUpdates:
       if (!is_set) {
         tui_set_term_mode(tui, mode, true);
+        tui->modes.theme_updates = true;
       }
       break;
     case kTermModeResizeEvents:
-      signal_watcher_stop(&tui->winch_handle);
       if (!is_set) {
         tui_set_term_mode(tui, mode, true);
+        tui->modes.resize_events = true;
       }
+
+      // We track both whether the mode is enabled AND if Nvim was the one to enable it
+      tui->resize_events_enabled = true;
       break;
     case kTermModeLeftAndRightMargins:
       tui->has_left_and_right_margin_mode = true;
@@ -365,7 +377,10 @@ static void terminfo_start(TUIData *tui)
   tui->overflow = false;
   tui->set_cursor_color_as_str = false;
   tui->cursor_has_color = false;
-  tui->did_set_grapheme_cluster_mode = false;
+  tui->resize_events_enabled = false;
+  tui->modes.grapheme_clusters = false;
+  tui->modes.resize_events = false;
+  tui->modes.theme_updates = false;
   tui->showing_mode = SHAPE_IDX_N;
   tui->unibi_ext.set_cursor_color = -1;
   tui->unibi_ext.reset_cursor_color = -1;
@@ -529,7 +544,9 @@ static void terminfo_disable(TUIData *tui)
 {
   // Disable theme update notifications. We do this first to avoid getting any
   // more notifications after we reset the cursor and any color palette changes.
-  tui_set_term_mode(tui, kTermModeThemeUpdates, false);
+  if (tui->modes.theme_updates) {
+    tui_set_term_mode(tui, kTermModeThemeUpdates, false);
+  }
 
   // Destroy output stuff
   tui_mode_change(tui, NULL_STRING, SHAPE_IDX_N);
@@ -542,9 +559,12 @@ static void terminfo_disable(TUIData *tui)
   // Reset the key encoding
   tui_reset_key_encoding(tui);
 
-  // Disable resize events
-  tui_set_term_mode(tui, kTermModeResizeEvents, false);
-  if (tui->did_set_grapheme_cluster_mode) {
+  // Disable terminal modes that we enabled
+  if (tui->modes.resize_events) {
+    tui_set_term_mode(tui, kTermModeResizeEvents, false);
+  }
+
+  if (tui->modes.grapheme_clusters) {
     tui_set_term_mode(tui, kTermModeGraphemeClusters, false);
   }
 
@@ -690,7 +710,7 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *cbdata)
 {
   got_winch++;
   TUIData *tui = cbdata;
-  if (tui_is_stopped(tui)) {
+  if (tui_is_stopped(tui) || tui->resize_events_enabled) {
     return;
   }
 
