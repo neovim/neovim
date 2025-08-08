@@ -4659,6 +4659,12 @@ func Test_search_wildmenu_screendump()
   call term_sendkeys(buf, "\<c-n>\<c-y>")
   call VerifyScreenDump(buf, 'Test_search_wildmenu_8', {})
 
+  " 'incsearch' highlight is restored after dismissing popup (Ctrl_E)
+  call term_sendkeys(buf, "\<esc>:set wop=pum is hls&\<cr>")
+  call term_sendkeys(buf, "gg/th\<tab>\<c-e>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_search_wildmenu_9', {})
+
   call term_sendkeys(buf, "\<esc>")
   call StopVimInTerminal(buf)
 endfunc

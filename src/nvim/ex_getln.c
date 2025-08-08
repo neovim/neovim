@@ -1489,13 +1489,11 @@ static int command_line_execute(VimState *state, int key)
   // If already used to cancel/accept wildmenu, don't process the key further.
   if (wild_type == WILD_CANCEL || wild_type == WILD_APPLY) {
     // Apply search highlighting
-    if (wild_type == WILD_APPLY) {
-      if (s->is_state.winid != curwin->handle) {
-        init_incsearch_state(&s->is_state);
-      }
-      if (KeyTyped || vpeekc() == NUL) {
-        may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
-      }
+    if (s->is_state.winid != curwin->handle) {
+      init_incsearch_state(&s->is_state);
+    }
+    if (KeyTyped || vpeekc() == NUL) {
+      may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
     }
     return command_line_not_changed(s);
   }
