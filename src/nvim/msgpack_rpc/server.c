@@ -156,6 +156,7 @@ char *server_remote_address_new(const char *prev_addr)
     return NULL;
   }
   if (port >= 65535) {
+    xfree(host);
     return NULL;
   }
   port += 1;
