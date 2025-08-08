@@ -865,8 +865,7 @@ int os_system(char **argv, const char *input, size_t len, char **output,
               size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
 {
 #ifdef MSWIN
-  SetConsoleOutputCP(CP_UTF8);
-  SetConsoleCP(CP_UTF8);
+  setup_windows_utf8_env();
 #endif
   return do_os_system(argv, input, len, output, nread, true, false);
 }
