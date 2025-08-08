@@ -1489,7 +1489,7 @@ bool is_cmd_ni(cmdidx_T cmdidx)
 /// @param[out] errormsg Error message, if any
 ///
 /// @return Success or failure
-bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const char **errormsg)
+bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const char **errormsg)
 {
   char *after_modifier = NULL;
   bool retval = false;
@@ -1507,8 +1507,8 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
   *eap = (exarg_T){
     .line1 = 1,
     .line2 = 1,
-    .cmd = cmdline,
-    .cmdlinep = &cmdline,
+    .cmd = *cmdline,
+    .cmdlinep = cmdline,
     .ea_getline = NULL,
     .cookie = NULL,
   };
@@ -1549,7 +1549,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
   if (eap->cmdidx == CMD_SIZE) {
     xstrlcpy(IObuff, _(e_not_an_editor_command), IOSIZE);
     // If the modifier was parsed OK the error must be in the following command
-    char *cmdname = after_modifier ? after_modifier : cmdline;
+    char *cmdname = after_modifier ? after_modifier : *cmdline;
     append_command(cmdname);
     *errormsg = IObuff;
     goto end;
