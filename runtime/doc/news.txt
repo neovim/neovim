@@ -302,6 +302,7 @@ UI
 
 VIMSCRIPT
 
+• |chdir()| allows optionally specifying a scope argument.
 • |cmdcomplete_info()| gets current cmdline completion info.
 • |getcompletiontype()| gets command-line completion type for any string.
 • |prompt_getinput()| gets current user-input in prompt-buffer.

@@ -99,10 +99,20 @@ func Test_chdir_func()
   call assert_equal('y', fnamemodify(getcwd(3, 2), ':t'))
   call assert_equal('testdir', fnamemodify(getcwd(1, 1), ':t'))
 
+  " Forcing scope
+  call chdir('.', 'global')
+  call assert_match('^\[global\]', trim(execute('verbose pwd')))
+  call chdir('.', 'tabpage')
+  call assert_match('^\[tabpage\]', trim(execute('verbose pwd')))
+  call chdir('.', 'window')
+  call assert_match('^\[window\]', trim(execute('verbose pwd')))
+
   " Error case
   call assert_fails("call chdir('dir-abcd')", 'E344:')
   silent! let d = chdir("dir_abcd")
   call assert_equal("", d)
+  call assert_fails("call chdir('.', v:_null_string)", 'E475:')
+  call assert_fails("call chdir('.', [])", 'E730:')
   " Should not crash
   call chdir(d)
   call assert_equal('', chdir([]))
