@@ -1190,18 +1190,25 @@ M.funcs = {
     signature = 'charidx({string}, {idx} [, {countcc} [, {utf16}]])',
   },
   chdir = {
-    args = 1,
+    args = { 1, 2 },
     base = 1,
     desc = [=[
-      Change the current working directory to {dir}.  The scope of
-      the directory change depends on the directory of the current
-      window:
-      	- If the current window has a window-local directory
-      	  (|:lcd|), then changes the window local directory.
-      	- Otherwise, if the current tabpage has a local
-      	  directory (|:tcd|) then changes the tabpage local
-      	  directory.
-      	- Otherwise, changes the global directory.
+      Changes the current working directory to {dir}.  The scope of
+      the change is determined as follows:
+      If {scope} is not present, the current working directory is
+      changed to the scope of the current directory:
+          - If the window local directory (|:lcd|) is set, it
+            changes the current working directory for that scope.
+          - Otherwise, if the tab page local directory (|:tcd|) is
+            set, it changes the current directory for that scope.
+          - Otherwise, changes the global directory for that scope.
+
+      If {scope} is present, changes the current working directory
+      for the specified scope:
+          "window"	Changes the window local directory.  |:lcd|
+          "tabpage"	Changes the tab page local directory.  |:tcd|
+          "global"	Changes the global directory.  |:cd|
+
       {dir} must be a String.
       If successful, returns the previous working directory.  Pass
       this to another chdir() to restore the directory.
@@ -1217,9 +1224,9 @@ M.funcs = {
 
     ]=],
     name = 'chdir',
-    params = { { 'dir', 'string' } },
+    params = { { 'dir', 'string' }, { 'scope', 'string' } },
     returns = 'string',
-    signature = 'chdir({dir})',
+    signature = 'chdir({dir} [, {scope}])',
   },
   cindent = {
     args = 1,
