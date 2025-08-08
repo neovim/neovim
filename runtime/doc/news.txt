@@ -92,6 +92,7 @@ LUA
 
 • Renamed `vim.diff` to `vim.text.diff`.
 • |vim.net.request()| adds a minimal HTTP GET API using curl.
+• |vim.fs.find()| accepts a `filter` predicate.
 
 OPTIONS
 
