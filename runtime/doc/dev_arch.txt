@@ -53,6 +53,27 @@ Other references:
 - https://github.com/neovim/neovim/pull/21605
 
 
+==============================================================================
+API
+
+                                                        *dev-api-fast*
+API functions and Vimscript "eval" functions may be marked as |api-fast| which
+means they are safe to call in Lua callbacks and other scenarios. A functions
+CANNOT be marked as "fast" if could trigger `os_breakcheck()`, which may
+"yield" the current execution and start a new execution of code not expecting
+this:
+- accidentally recursing into a function not expecting this.
+- changing (global) state without restoring it before returning to the
+  "yielded" callsite.
+
+In practice, this means any code that could trigger `os_breakcheck()` cannot
+be "fast". For example, commit 3940c435e405 fixed such a bug with
+`nvim__get_runtime` by explicitly disallowing `os_breakcheck()` via the
+`EW_NOBREAK` flag.
+
+Common examples of non-fast code: regexp matching, wildcard expansion,
+expression evaluation.
+
 
 ==============================================================================
 
