@@ -2343,6 +2343,7 @@ local pattern = {
   },
   ['require'] = {
     ['%-requirements%.txt$'] = 'requirements',
+    ['requirements%-.*%.txt$'] = 'requirements',
     ['^requirements/.*%.txt$'] = 'requirements',
     ['^requires/.*%.txt$'] = 'requirements',
   },
