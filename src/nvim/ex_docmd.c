@@ -4886,11 +4886,12 @@ static void ex_restart(exarg_T *eap)
       emsg("no new remote addresses could be created.");
       return;
     }
+  }
+  if (prev_addr) {
     xfree(prev_addr);
   }
 
-  char **argv;
-  argv = xcalloc((size_t)argc + 4, sizeof(char *));
+  char **argv = xcalloc((size_t)argc + 4, sizeof(char *));
   bool had_minmin = false;
   size_t i = 0;
   TV_LIST_ITER_CONST(l, li, {
@@ -4931,7 +4932,6 @@ static void ex_restart(exarg_T *eap)
                                        NULL, 0, 0, NULL, &exit_status);
   if (!channel) {
     ELOG("cannot create a channel job");
-    xfree(argv);
     xfree(listen_addr);
     return;
   }
@@ -4941,11 +4941,9 @@ static void ex_restart(exarg_T *eap)
       ELOG("%s", err.msg);  // UI disappeared already?
       api_clear_error(&err);
     }
-    xfree(argv);
     xfree(listen_addr);
     return;
   }
-  xfree(argv);
   xfree(listen_addr);
 
   char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall!";

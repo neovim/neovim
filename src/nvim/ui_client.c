@@ -39,6 +39,8 @@ static int tui_height = 0;
 static char *tui_term = "";
 static bool tui_rgb = false;
 static bool ui_client_is_remote = false;
+static int restart_attempts = 0;
+#define MAX_RESTART_ATTEMPTS 100
 
 // uncrustify:off
 #include "ui_client.c.generated.h"
@@ -181,6 +183,9 @@ void ui_client_run(bool remote_ui)
 
 void ui_client_stop(void)
 {
+  if (restart_attempts > 0) {
+    return;
+  }
   ui_client_attached = false;
   if (!tui_is_stopped(tui)) {
     tui_stop(tui);
@@ -332,11 +337,25 @@ void ui_client_event_restart(Array args)
   restart_pending = true;
 }
 
+/// @return true If the client can still attempt to restart.
+bool ui_client_can_attempt_restart(void)
+{
+  return 0 < restart_attempts && restart_attempts <= MAX_RESTART_ATTEMPTS;
+}
+
 /// Called when the current server has exited.
 void ui_client_may_restart_server(void)
 {
   if (!restart_pending) {
     return;
+  }
+
+  bool should_exit = false;
+  if (restart_attempts >= MAX_RESTART_ATTEMPTS) {
+    ELOG("could not restart even after %d retries", MAX_RESTART_ATTEMPTS);
+    restart_pending = false;
+    should_exit = true;
+    goto cleanup;
   }
   restart_pending = false;
 
@@ -353,7 +372,11 @@ void ui_client_may_restart_server(void)
   uint64_t chan_id = channel_connect(is_tcp, listen_addr, true, CALLBACK_READER_INIT, 50, &error);
   if (error != NULL) {
     ELOG("%s", error);
-    goto cleanup;
+    // Recurse for at least MAX_RESTART_ATTEMPTS before giving up.
+    restart_pending = true;
+    restart_attempts += 1;
+    ui_client_may_restart_server();
+    return;
   }
 
   // Client-side server re-attach.
@@ -362,16 +385,22 @@ void ui_client_may_restart_server(void)
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
   String command = restart_args.items[0].data.string;
-  MAXSIZE_TEMP_ARRAY(cmd_args, 1);
-  ADD_C(cmd_args, STRING_OBJ(command));
-  if (!rpc_send_event(ui_client_channel_id, "nvim_command", cmd_args)) {
-    ELOG("cannot execute '%s'", command.data);
+  if (command.data && strlen(command.data) > 0) {
+    MAXSIZE_TEMP_ARRAY(cmd_args, 1);
+    ADD_C(cmd_args, STRING_OBJ(command));
+    if (!rpc_send_event(ui_client_channel_id, "nvim_command", cmd_args)) {
+      ELOG("cannot execute '%s'", command.data);
+    }
   }
 
   ILOG("restarted server id=%" PRId64, chan_id);
 cleanup:
   api_free_array(restart_args);
   restart_args = (Array)ARRAY_DICT_INIT;
+  restart_attempts = 0;
+  if (should_exit) {
+    getout(1);
+  }
 }
 
 void ui_client_event_error_exit(Array args)
