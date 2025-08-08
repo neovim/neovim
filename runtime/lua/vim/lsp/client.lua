@@ -209,8 +209,7 @@ local all_clients = {}
 --- See [vim.lsp.ClientConfig].
 --- @field workspace_folders lsp.WorkspaceFolder[]?
 ---
---- Whether linked editing ranges are enabled for this client.
---- @field _linked_editing_enabled boolean?
+--- @field _enabled_capabilities table<vim.lsp.capability.Name, boolean?>
 ---
 --- Track this so that we can escalate automatically if we've already tried a
 --- graceful shutdown
@@ -436,6 +435,9 @@ function Client.create(config)
     end,
   }
 
+  ---@type table <vim.lsp.capability.Name, boolean?>
+  self._enabled_capabilities = {}
+
   --- @type table<string|integer, string> title of unfinished progress sequences by token
   self.progress.pending = {}
 
@@ -508,6 +510,10 @@ function Client:initialize()
     root_uri = self.workspace_folders[1].uri
     root_path = vim.uri_to_fname(root_uri)
   end
+
+  -- HACK: Capability modules must be loaded
+  require('vim.lsp.semantic_tokens')
+  require('vim.lsp._folding_range')
 
   local init_params = {
     -- The process Id of the parent process that started the server. Is null if
@@ -1084,16 +1090,21 @@ function Client:on_attach(bufnr)
   })
 
   self:_run_callbacks(self._on_attach_cbs, lsp.client_errors.ON_ATTACH_ERROR, self, bufnr)
-
-  -- schedule the initialization of semantic tokens to give the above
+  -- schedule the initialization of capabilities to give the above
   -- on_attach and LspAttach callbacks the ability to schedule wrap the
   -- opt-out (deleting the semanticTokensProvider from capabilities)
   vim.schedule(function()
-    if vim.tbl_get(self.server_capabilities, 'semanticTokensProvider', 'full') then
-      lsp.semantic_tokens._start(bufnr, self.id)
-    end
-    if vim.tbl_get(self.server_capabilities, 'foldingRangeProvider') then
-      lsp._folding_range._setup(bufnr)
+    for _, Capability in pairs(vim.lsp._capability.all) do
+      if
+        self:supports_method(Capability.method)
+        and vim.lsp._capability.is_enabled(Capability.name, {
+          bufnr = bufnr,
+          client_id = self.id,
+        })
+      then
+        local capability = Capability.active[bufnr] or Capability:new(bufnr)
+        capability:on_attach(self.id)
+      end
     end
   end)
 
@@ -1205,6 +1216,24 @@ function Client:_on_detach(bufnr)
       modeline = false,
       data = { client_id = self.id },
     })
+  end
+
+  for _, Capability in pairs(vim.lsp._capability.all) do
+    if
+      self:supports_method(Capability.method)
+      and vim.lsp._capability.is_enabled(Capability.name, {
+        bufnr = bufnr,
+        client_id = self.id,
+      })
+    then
+      local capability = Capability.active[bufnr]
+      if capability then
+        capability:on_detach(self.id)
+        if next(capability.client_state) == nil then
+          capability:destroy()
+        end
+      end
+    end
   end
 
   changetracking.reset_buf(self, bufnr)
