@@ -3290,6 +3290,35 @@ func Test_tagfunc_wipes_out_buffer()
   bwipe!
 endfunc
 
+func s:TagfuncComplete(t,f,o)
+  call complete(1, ['ddd', 'eee', 'fff'])
+  return []
+endfunc
+
+" 'tagfunc' calling complete() should not cause hang or E684.
+func Test_tagfunc_calls_complete()
+  new
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  setlocal tagfunc=s:TagfuncComplete
+  setlocal completeopt=menu,noselect
+
+  let v:errmsg = ''
+
+  " This used to hang.
+  setlocal complete=.,t
+  call feedkeys("Go\<C-N>\<C-E>\<Esc>", 'tx')
+  call assert_equal('', getline('.'))
+  call assert_equal('', v:errmsg)
+
+  " This used to cause E684.
+  setlocal complete=t,.
+  call feedkeys("cc\<C-N>\<C-E>\<Esc>", 'tx')
+  call assert_equal('', getline('.'))
+  call assert_equal('', v:errmsg)
+
+  bwipe!
+endfunc
+
 func Test_ins_complete_popup_position()
   CheckScreendump
 
