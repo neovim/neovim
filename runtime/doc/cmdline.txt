@@ -867,7 +867,7 @@ to insert special things while typing you can use the CTRL-R command.  For
 example, "%" stands for the current file name, while CTRL-R % inserts the
 current file name right away.  See |c_CTRL-R|.
 
-Note:  If you want to avoid the effects of special characters in a Vim script
+Note: If you want to avoid the effects of special characters in a Vim script
 you may want to use |fnameescape()|.  Also see |`=|.
 
 
@@ -1239,8 +1239,10 @@ Example: >
 	:au CmdwinLeave :  let &cpt = b:cpt_save
 This sets 'complete' to use completion in the current window for |i_CTRL-N|.
 Another example: >
-	:au CmdwinEnter [/?]  startinsert
+	:au CmdwinEnter [/\?]  startinsert
 This will make Vim start in Insert mode in the command-line window.
+Note: The "?" needs to be escaped, as this is a |file-pattern|.  See also
+|cmdline-autocompletion|.
 
 					*cmdline-char* *cmdwin-char*
 The character used for the pattern indicates the type of command-line:

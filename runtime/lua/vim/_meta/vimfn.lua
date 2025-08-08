@@ -10844,6 +10844,11 @@ function vim.fn.wildmenumode() end
 ---   cnoremap <Up>   <C-U><Up>
 ---   cnoremap <Down> <C-U><Down>
 --- <
+--- To set an option specifically when performing a search, e.g.
+--- to set 'pumheight': >vim
+---   autocmd CmdlineEnter [/\?] set pumheight=8
+---   autocmd CmdlineLeave [/\?] set pumheight&
+--- <
 --- Return value is always 0.
 ---
 --- @return number
