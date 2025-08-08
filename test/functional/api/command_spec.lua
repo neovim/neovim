@@ -789,6 +789,25 @@ describe('nvim_create_user_command', function()
     ]])
     eq('hello 12', n.exec_capture('1,2Test2'))
   end)
+
+  it('does not crash with % in user command having preview and file completion #28851', function()
+    exec_lua([[
+      local function callback() end
+      local function preview()
+        return 0
+      end
+
+      vim.api.nvim_create_user_command('TestCommand', callback, {
+        nargs = '?',
+        complete = 'file',
+        preview = preview,
+      })
+
+      vim.cmd.edit('Xtestscript')
+    ]])
+    feed(':TestCommand %')
+    assert_alive()
+  end)
 end)
 
 describe('nvim_del_user_command', function()
