@@ -1204,6 +1204,10 @@ func Test_cmdline_complete_various()
   call feedkeys(":ka\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"ka\<C-A>", @:)
 
+  " completion for :keepmarks command
+  call feedkeys(":kee edi\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"kee edit", @:)
+
   " completion for short version of the :s command
   call feedkeys(":sI \<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"sI \<C-A>", @:)
@@ -4274,6 +4278,28 @@ func Test_term_option()
   call feedkeys(":set t_\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match(expected, @:)
   let &cpo = _cpo
+endfunc
+
+func Test_ex_command_completion()
+  " required for :*
+  " set cpo+=*
+  let list = filter(getcompletion('', 'command'), 'exists(":" . v:val) == 0')
+  " :++ and :-- are only valid in Vim9 script context, so they can be ignored
+  " call assert_equal(['++', '--'], sort(list))
+  call assert_equal([], sort(list))
+  call assert_equal(2, exists(':k'))
+  call assert_equal(0, exists(':ke'))
+  call assert_equal(1, exists(':kee'))
+  call assert_equal(1, exists(':keep'))
+  call assert_equal(1, exists(':keepm'))
+  call assert_equal(1, exists(':keepma'))
+  call assert_equal(1, exists(':keepmar'))
+  call assert_equal(1, exists(':keepmark'))
+  call assert_equal(2, exists(':keepmarks'))
+  call assert_equal(2, exists(':keepalt'))
+  call assert_equal(2, exists(':keepjumps'))
+  call assert_equal(2, exists(':keeppatterns'))
+  set cpo-=*
 endfunc
 
 func Test_cd_bslash_completion_windows()
