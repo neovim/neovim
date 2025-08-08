@@ -3025,13 +3025,16 @@ static void append_command(const char *cmd)
 }
 
 /// Return true and set "*idx" if "p" points to a one letter command.
-/// - The 'k' command can directly be followed by any character.
+/// - The 'k' command can directly be followed by any character
+///          but :keepa[lt] is another command, as are :keepj[umps],
+///          :kee[pmarks] and :keepp[atterns].
 /// - The 's' command can be followed directly by 'c', 'g', 'i', 'I' or 'r'
 ///          but :sre[wind] is another command, as are :scr[iptnames],
 ///          :scs[cope], :sim[alt], :sig[ns] and :sil[ent].
 static int one_letter_cmd(const char *p, cmdidx_T *idx)
 {
-  if (*p == 'k') {
+  if (p[0] == 'k'
+      && (p[1] != 'e' || (p[1] == 'e' && p[2] != 'e'))) {
     *idx = CMD_k;
     return true;
   }
@@ -3064,6 +3067,9 @@ char *find_ex_command(exarg_T *eap, int *full)
   char *p = eap->cmd;
   if (one_letter_cmd(p, &eap->cmdidx)) {
     p++;
+    if (full != NULL) {
+      *full = true;
+    }
   } else {
     while (ASCII_ISALPHA(*p)) {
       p++;
