@@ -146,7 +146,7 @@ char *server_remote_address_new(const char *prev_addr)
   assert(colon - prev_addr > 0);
   size_t host_len = (size_t)(colon - prev_addr);
   char *host = xmalloc(host_len + 1);
-  xstrlcpy(host, prev_addr, host_len);
+  xstrlcpy(host, prev_addr, host_len + 1);
   host[host_len] = NUL;
 
   char *endptr;

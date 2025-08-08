@@ -4867,15 +4867,7 @@ static void ex_restart(exarg_T *eap)
   const list_T *l = get_vim_var_list(VV_ARGV);
   int argc = tv_list_len(l);
   assert(argc > 0);
-  char *prev_addr = NULL;
-  TV_LIST_ITER_CONST(l, li, {
-    const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
-    if (strequal(arg, "--listen")) {
-      li = TV_LIST_ITEM_NEXT(l, li);
-      prev_addr = xstrdup(tv_get_string(TV_LIST_ITEM_TV(li)));
-      break;
-    }
-  });
+  char *prev_addr = get_vim_var_str(VV_SEND_SERVER);
 
   char *listen_addr;
   if (!prev_addr || !strrchr(prev_addr, ':')) {
@@ -4886,9 +4878,6 @@ static void ex_restart(exarg_T *eap)
       emsg("no new remote addresses could be created.");
       return;
     }
-  }
-  if (prev_addr) {
-    xfree(prev_addr);
   }
 
   char **argv = xcalloc((size_t)argc + 4, sizeof(char *));

@@ -183,7 +183,7 @@ void ui_client_run(bool remote_ui)
 
 void ui_client_stop(void)
 {
-  if (restart_attempts > 0) {
+  if (ui_client_can_attempt_restart()) {
     return;
   }
   ui_client_attached = false;
