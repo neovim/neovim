@@ -2048,6 +2048,7 @@ local patterns_text = {
   ['^From [a-zA-Z][a-zA-Z_0-9%.=%-]*(@[^ ]*)? .* 20%d%d$'] = 'mail',
   ['^From %- .* 19%d%d$'] = 'mail',
   ['^From %- .* 20%d%d$'] = 'mail',
+  ['^[Rr][Ee][Tt][Uu][Rr][Nn]%-[Pp][Aa][Tt][Hh]:%s<.*@.*>$'] = 'mail',
   -- Mason
   ['^<[%%&].*>'] = 'mason',
   -- Vim scripts (must have '" vim' as the first line to trigger this)
@@ -2164,6 +2165,10 @@ local patterns_text = {
   -- #ncomment is allowed but most likely a false positive so require a space before any trailing comment text
   ['^#n%s'] = 'sed',
   ['^#n$'] = 'sed',
+  ['^#%s+Reconstructed via infocmp from file:'] = 'terminfo',
+  ['^File: .*%.info,  Node: .*,  Next: .*,  Up: '] = 'info',
+  ['^File: .*%.info,  Node: .*,  Prev: .*,  Up: '] = 'info',
+  ['This is the top of the INFO tree.'] = 'info',
 }
 
 --- File does not start with "#!".
