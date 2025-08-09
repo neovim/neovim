@@ -186,9 +186,14 @@ end
 
 -- Plugin operations ----------------------------------------------------------
 
+local function get_pack_dir()
+  return vim.fs.joinpath(vim.fn.stdpath('data'), 'site')
+end
+
+--- @param pack_dir string?
 --- @return string
-local function get_plug_dir()
-  return vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'pack', 'core', 'opt')
+local function get_plug_dir(pack_dir)
+  return vim.fs.joinpath(pack_dir or get_pack_dir(), 'pack', 'core', 'opt')
 end
 
 --- @param msg string|string[]
@@ -268,10 +273,11 @@ end
 --- @field info vim.pack.PlugInfo Gathered information about plugin.
 
 --- @param spec string|vim.pack.Spec
+--- @param pack_dir string?
 --- @return vim.pack.Plug
-local function new_plug(spec)
+local function new_plug(spec, pack_dir)
   local spec_resolved = normalize_spec(spec)
-  local path = vim.fs.joinpath(get_plug_dir(), spec_resolved.name)
+  local path = vim.fs.joinpath(get_plug_dir(pack_dir), spec_resolved.name)
   local info = { err = '', installed = uv.fs_stat(path) ~= nil }
   return { spec = spec_resolved, path = path, info = info }
 end
@@ -667,6 +673,22 @@ local function pack_add(plug, load)
   end
 end
 
+local function packpath_contains(pack_dir)
+  return vim.tbl_contains(vim.opt.packpath:get(), pack_dir)
+end
+if vim.fn.has('win32') == 1 then
+  packpath_contains = function(pack_dir)
+    local pattern = '^' .. vim.pesc(pack_dir):gsub('[\\/]', '[\\/]') .. '$'
+    local paths = vim.opt.packpath:get() --- @type string[]
+    for _, p in ipairs(paths) do
+      if p:match(pattern) then
+        return true
+      end
+    end
+    return false
+  end
+end
+
 --- @class vim.pack.keyset.add
 --- @inlinedoc
 --- @field load? boolean Load `plugin/` files and `ftdetect/` scripts. If `false`, works like `:packadd!`. Default `true`.
@@ -696,8 +718,15 @@ function M.add(specs, opts)
   opts = vim.tbl_extend('force', { load = true }, opts or {})
   vim.validate('opts', opts, 'table')
 
-  --- @type vim.pack.Plug[]
-  local plugs = vim.tbl_map(new_plug, specs)
+  local pack_dir = get_pack_dir()
+  if not packpath_contains(pack_dir) then
+    vim.opt.packpath:prepend(pack_dir)
+  end
+
+  local plugs = {} --- @type vim.pack.Plug[]
+  for i = 1, #specs do
+    plugs[i] = new_plug(specs[i], pack_dir)
+  end
   plugs = normalize_plugs(plugs)
 
   -- Install
