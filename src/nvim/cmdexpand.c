@@ -2014,6 +2014,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_lockmarks:
   case CMD_noautocmd:
   case CMD_noswapfile:
+  case CMD_restart:
   case CMD_rightbelow:
   case CMD_sandbox:
   case CMD_silent:
