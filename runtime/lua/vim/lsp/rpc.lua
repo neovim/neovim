@@ -373,16 +373,7 @@ function Client:handle_body(body)
       end
       self:send_response(decoded.id, err, result)
     end))
-  -- Proceed only if exactly one of 'result' or 'error' is present, as required by the LSP spec:
-  -- - If 'error' is nil, then 'result' must be present.
-  -- - If 'result' is nil, then 'error' must be present (and not vim.NIL).
-  elseif
-    decoded.id
-    and (
-      (decoded.error == nil and decoded.result ~= nil)
-      or (decoded.result == nil and decoded.error ~= nil and decoded.error ~= vim.NIL)
-    )
-  then
+  elseif decoded.id then
     -- We sent a number, so we expect a number.
     local result_id = assert(tonumber(decoded.id), 'response id must be a number') --[[@as integer]]
 
@@ -394,20 +385,40 @@ function Client:handle_body(body)
       self.notify_reply_callbacks[result_id] = nil
     end
 
-    -- Do not surface RequestCancelled to users, it is RPC-internal.
     if decoded.error then
-      assert(type(decoded.error) == 'table')
-      if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
-        log.debug('Received cancellation ack', decoded)
-        -- Clear any callback since this is cancelled now.
-        -- This is safe to do assuming that these conditions hold:
-        -- - The server will not send a result callback after this cancellation.
-        -- - If the server sent this cancellation ACK after sending the result, the user of this RPC
-        -- client will ignore the result themselves.
-        if result_id then
-          self.message_callbacks[result_id] = nil
+      -- TODO(skewb1k): Consider adding a 'name' field (similar to |vim.lsp.Client|) for use in RPC logs.
+      if decoded.error == vim.NIL then
+        log.warn(
+          'The language server violated the JSON-RPC specification by '
+            .. 'sending "error": null instead of omitting the field when there is no error. '
+            .. 'Report this upstream, this warning is harmless.'
+        )
+        -- This ensures downstream code processes the response correctly.
+        decoded.error = nil ---@type lsp.ResponseError?
+      else
+        if decoded.result then
+          log.warn(
+            'The language server violated the JSON-RPC specification by '
+              .. 'including a "result" field in an error response. '
+              .. 'Report upstream, this warning is harmless'
+          )
+          decoded.result = nil ---@type any?
         end
-        return
+
+        assert(type(decoded.error) == 'table')
+        -- Do not surface RequestCancelled to users, it is RPC-internal.
+        if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
+          log.debug('Received cancellation ack', decoded)
+          -- Clear any callback since this is cancelled now.
+          -- This is safe to do assuming that these conditions hold:
+          -- - The server will not send a result callback after this cancellation.
+          -- - If the server sent this cancellation ACK after sending the result, the user of this RPC
+          -- client will ignore the result themselves.
+          if result_id then
+            self.message_callbacks[result_id] = nil
+          end
+          return
+        end
       end
     end
 
