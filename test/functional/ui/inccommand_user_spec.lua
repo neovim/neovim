@@ -569,20 +569,51 @@ describe("'inccommand' for user commands", function()
       assert(screen._cursor.col < 12)
     end
     feed(':Test baz<Left><Left>arb')
-    screen:expect({
-      grid = [[
-        Preview                                 |
-        oh no, even more text                   |
-        will the text ever stop                 |
-        oh well                                 |
-        did the text stop                       |
-        why won't it stop                       |
-        make the text stop                      |
-                                                |
-        {1:~                                       }|*8
-        :Test barb^az                            |
-      ]],
-    })
+    screen:expect([[
+      Preview                                 |
+      oh no, even more text                   |
+      will the text ever stop                 |
+      oh well                                 |
+      did the text stop                       |
+      why won't it stop                       |
+      make the text stop                      |
+                                              |
+      {1:~                                       }|*8
+      :Test barb^az                            |
+    ]])
+  end)
+
+  it('works when CmdlineChanged calls wildtrigger() #35246', function()
+    api.nvim_buf_set_text(0, 0, 0, 1, -1, { '' })
+    exec_lua([[
+      vim.api.nvim_create_user_command("Repro", function() end, {
+        nargs = '+',
+        preview = function(opts, ns, buf)
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, { opts.args })
+          return 2
+        end
+      })
+    ]])
+    command([[autocmd CmdlineChanged [:/\?] call wildtrigger()]])
+    command('set wildmode=noselect:lastused,full wildoptions=pum')
+    feed(':Repro ')
+    screen:expect([[
+                                              |
+      {1:~                                       }|*15
+      :Repro ^                                 |
+    ]])
+    feed('a')
+    screen:expect([[
+      a                                       |
+      {1:~                                       }|*15
+      :Repro a^                                |
+    ]])
+    feed('bc')
+    screen:expect([[
+      abc                                     |
+      {1:~                                       }|*15
+      :Repro abc^                              |
+    ]])
   end)
 end)
 

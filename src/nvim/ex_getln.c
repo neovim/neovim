@@ -2793,15 +2793,6 @@ static void do_autocmd_cmdlinechanged(int firstc)
 
 static int command_line_changed(CommandLineState *s)
 {
-  if (ccline.cmdpos != s->prev_cmdpos
-      || (s->prev_cmdbuff != NULL
-          && strncmp(s->prev_cmdbuff, ccline.cmdbuff, (size_t)s->prev_cmdpos) != 0)) {
-    // Trigger CmdlineChanged autocommands.
-    do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
-  }
-
-  may_trigger_cursormovedc(s);
-
   const bool prev_cmdpreview = cmdpreview;
   if (s->firstc == ':'
       && current_sctx.sc_sid == 0    // only if interactive
@@ -2822,6 +2813,15 @@ static int command_line_changed(CommandLineState *s)
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
     }
   }
+
+  if (ccline.cmdpos != s->prev_cmdpos
+      || (s->prev_cmdbuff != NULL
+          && strncmp(s->prev_cmdbuff, ccline.cmdbuff, (size_t)s->prev_cmdpos) != 0)) {
+    // Trigger CmdlineChanged autocommands.
+    do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
+  }
+
+  may_trigger_cursormovedc(s);
 
   if (p_arshape && !p_tbidi) {
     // Always redraw the whole command line to fix shaping and
