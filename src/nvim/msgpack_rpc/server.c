@@ -136,6 +136,41 @@ char *server_address_new(const char *name)
   return xstrdup(fmt);
 }
 
+/// Generates unique address for remote server.
+/// Increments the port number in `prev_addr` and returns the newly allocated address.
+char *server_remote_address_new(const char *prev_addr)
+{
+  const char *colon = strrchr(prev_addr, ':');
+  if (!colon) {
+    return NULL;
+  }
+
+  assert(colon - prev_addr > 0);
+  size_t host_len = (size_t)(colon - prev_addr);
+  char *host = xmalloc(host_len + 1);
+  xstrlcpy(host, prev_addr, host_len + 1);
+  host[host_len] = NUL;
+
+  char *endptr;
+  long port = strtol(colon + 1, &endptr, 10);
+  if (*endptr != NUL) {
+    xfree(host);
+    return NULL;
+  }
+  if (port >= 65535) {
+    xfree(host);
+    return NULL;
+  }
+  port += 1;
+
+  size_t new_addr_len = host_len + 1 + 6;
+  char *new_addr = xmalloc(new_addr_len);
+  snprintf(new_addr, new_addr_len, "%s:%ld", host, port);
+
+  xfree(host);
+  return new_addr;
+}
+
 /// Check if this instance owns a pipe address.
 /// The argument must already be resolved to an absolute path!
 bool server_owns_pipe_address(const char *path)

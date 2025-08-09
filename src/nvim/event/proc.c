@@ -417,6 +417,9 @@ static void exit_event(void **argv)
 
   if (!exiting) {
     if (ui_client_channel_id) {
+      if (ui_client_can_attempt_restart()) {
+        return;
+      }
       ui_client_exit_status = status;
       os_exit(status);
     } else {
