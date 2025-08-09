@@ -40,7 +40,7 @@ static char *tui_term = "";
 static bool tui_rgb = false;
 static bool ui_client_is_remote = false;
 static int restart_attempts = 0;
-#define MAX_RESTART_ATTEMPTS 100
+#define MAX_RESTART_ATTEMPTS 1000
 
 // uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -366,7 +366,7 @@ cleanup:
   restart_args = (Array)ARRAY_DICT_INIT;
   restart_attempts = 0;
   if (should_exit) {
-    getout(1);
+    os_exit(1);
   }
 }
 
