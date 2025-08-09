@@ -298,6 +298,8 @@ static bool is_multihl = false;
 void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
 {
   no_wait_return++;
+  is_multihl = true;
+  msg_ext_skip_flush = true;
   msg_start();
   msg_clr_eos();
   bool need_clear = false;
@@ -305,8 +307,7 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
   if (kind != NULL) {
     msg_ext_set_kind(kind);
   }
-  is_multihl = true;
-  msg_ext_skip_flush = true;
+
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     if (err) {
@@ -1545,11 +1546,15 @@ void msg_start(void)
   }
 
   // if cmdheight=0, we need to scroll in the first line of msg_grid upon the screen
-  if (p_ch == 0 && !ui_has(kUIMessages) && !msg_scrolled) {
-    msg_grid_validate();
-    msg_scroll_up(false, true);
-    msg_scrolled++;
-    cmdline_row = Rows - 1;
+  if (p_ch == 0 && !ui_has(kUIMessages)) {
+    if (!msg_scrolled && !is_multihl) {
+      msg_grid_validate();
+      msg_scroll_up(false, true);
+      msg_scrolled++;
+      cmdline_row = Rows - 1;
+    } else if (is_multihl) {
+      msg_grid_validate();
+    }
   }
 
   if (!msg_scroll && full_screen) {     // overwrite last message
