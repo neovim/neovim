@@ -211,6 +211,8 @@ static const char *highlight_init_both[] = {
   "default link SpecialChar    Special",
   "default link SpecialComment Special",
   "default link Debug          Special",
+  // Used by HLF_8 (very common). None of the HLF_* things use the other Special* groups.
+  "default link SpecialKey     Special",
   "default link Ignore         Normal",
 
   // Built-in LSP
@@ -384,7 +386,6 @@ static const char *highlight_init_light[] = {
   "Removed              guifg=NvimDarkRed                                    ctermfg=1",
   "Search               guifg=NvimDarkGrey1  guibg=NvimLightYellow           ctermfg=15 ctermbg=3",
   "SignColumn           guifg=NvimLightGrey4",
-  "SpecialKey           guifg=NvimLightGrey4",
   "SpellBad             guisp=NvimDarkRed    gui=undercurl                   cterm=undercurl",
   "SpellCap             guisp=NvimDarkYellow gui=undercurl                   cterm=undercurl",
   "SpellLocal           guisp=NvimDarkGreen  gui=undercurl                   cterm=undercurl",
@@ -468,7 +469,6 @@ static const char *highlight_init_dark[] = {
   "Removed              guifg=NvimLightRed                                  ctermfg=9",
   "Search               guifg=NvimLightGrey1  guibg=NvimDarkYellow          ctermfg=0 ctermbg=11",
   "SignColumn           guifg=NvimDarkGrey4",
-  "SpecialKey           guifg=NvimDarkGrey4",
   "SpellBad             guisp=NvimLightRed    gui=undercurl                 cterm=undercurl",
   "SpellCap             guisp=NvimLightYellow gui=undercurl                 cterm=undercurl",
   "SpellLocal           guisp=NvimLightGreen  gui=undercurl                 cterm=undercurl",
