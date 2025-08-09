@@ -29,9 +29,7 @@
 #include "nvim/viml/parser/parser.h"
 #include "nvim/viml/parser/parser_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/vimscript.c.generated.h"
-#endif
+#include "api/vimscript.c.generated.h"
 
 /// Executes Vimscript (multiline block of Ex commands), like anonymous
 /// |:source|.

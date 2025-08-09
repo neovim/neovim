@@ -47,10 +47,9 @@
 # include <sys/utsname.h>
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "auto/pathdef.h"
-# include "os/env.c.generated.h"
-#endif
+#include "auto/pathdef.h"
+
+#include "os/env.c.generated.h"
 
 /// Like getenv(), but returns NULL if the variable is empty.
 /// Result must be freed by the caller.

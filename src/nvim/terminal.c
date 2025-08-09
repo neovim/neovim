@@ -113,9 +113,7 @@ typedef struct {
   bool cursor_visible;  ///< cursor's current visibility; ensures matched busy_start/stop UI events
 } TerminalState;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "terminal.c.generated.h"
-#endif
+#include "terminal.c.generated.h"
 
 // Delay for refreshing the terminal buffer after receiving updates from
 // libvterm. Improves performance when receiving large bursts of data.

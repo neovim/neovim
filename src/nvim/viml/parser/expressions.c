@@ -128,9 +128,7 @@ typedef enum {
   kEOpAssRight = 'r',  ///< Right associativity.
 } ExprOpAssociativity;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/parser/expressions.c.generated.h"
-#endif
+#include "viml/parser/expressions.c.generated.h"
 
 /// Scale number by a given factor
 ///

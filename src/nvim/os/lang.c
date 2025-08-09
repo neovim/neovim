@@ -32,9 +32,7 @@
 #include "nvim/profile.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/lang.c.generated.h"
-#endif
+#include "os/lang.c.generated.h"
 
 static char *get_locale_val(int what)
 {

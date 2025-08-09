@@ -159,9 +159,7 @@ struct TUIData {
 
 static int got_winch = 0;
 static bool cursor_style_enabled = false;
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/tui.c.generated.h"
-#endif
+#include "tui/tui.c.generated.h"
 
 static Set(cstr_t) urls = SET_INIT;
 

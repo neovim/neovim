@@ -168,14 +168,10 @@ struct dbg_stuff {
   except_T *current_exception;
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_docmd.c.generated.h"
-#endif
+#include "ex_docmd.c.generated.h"
 
 // Declare cmdnames[].
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_cmds_defs.generated.h"
-#endif
+#include "ex_cmds_defs.generated.h"
 
 static char dollar_command[2] = { '$', 0 };
 

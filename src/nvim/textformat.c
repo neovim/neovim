@@ -41,9 +41,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "textformat.c.generated.h"
-#endif
+#include "textformat.c.generated.h"
 
 static bool did_add_space = false;  ///< auto_format() added an extra space
                                     ///< under the cursor

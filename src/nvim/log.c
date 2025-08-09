@@ -37,9 +37,7 @@ static char log_file_path[MAXPATHL + 1] = { 0 };
 static bool did_log_init = false;
 static uv_mutex_t mutex;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "log.c.generated.h"
-#endif
+#include "log.c.generated.h"
 
 #ifdef HAVE_EXECINFO_BACKTRACE
 # include <execinfo.h>

@@ -30,9 +30,7 @@
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_compositor.c.generated.h"
-#endif
+#include "ui_compositor.c.generated.h"
 
 static int composed_uis = 0;
 kvec_t(ScreenGrid *) layers = KV_INITIAL_VALUE;

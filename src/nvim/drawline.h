@@ -30,6 +30,4 @@ typedef struct {
   linenr_T spv_capcol_lnum;   ///< line number for "cap_col"
 } spellvars_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "drawline.h.generated.h"
-#endif
+#include "drawline.h.generated.h"

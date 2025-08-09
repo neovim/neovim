@@ -43,9 +43,7 @@
 # include "nvim/api/private/helpers.h"
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/proc.c.generated.h"
-#endif
+#include "os/proc.c.generated.h"
 
 #ifdef MSWIN
 static bool os_proc_tree_kill_rec(void *proc, int sig)

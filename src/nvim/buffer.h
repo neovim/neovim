@@ -73,10 +73,8 @@ enum bfa_values {
 EXTERN char *msg_loclist INIT( = N_("[Location List]"));
 EXTERN char *msg_qflist INIT( = N_("[Quickfix List]"));
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "buffer.h.generated.h"
-# include "buffer.h.inline.generated.h"
-#endif
+#include "buffer.h.generated.h"
+#include "buffer.h.inline.generated.h"
 
 /// Get b:changedtick value
 ///

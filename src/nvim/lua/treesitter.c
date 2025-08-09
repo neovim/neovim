@@ -60,9 +60,7 @@ typedef struct {
   uint64_t timeout_threshold_ns;
 } TSLuaParserCallbackPayload;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/treesitter.c.generated.h"
-#endif
+#include "lua/treesitter.c.generated.h"
 
 static PMap(cstr_t) langs = MAP_INIT;
 

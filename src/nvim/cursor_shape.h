@@ -55,6 +55,4 @@ typedef struct {
 
 extern cursorentry_T shape_table[SHAPE_IDX_COUNT];
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "cursor_shape.h.generated.h"
-#endif
+#include "cursor_shape.h.generated.h"

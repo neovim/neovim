@@ -69,9 +69,7 @@ typedef enum {
   kDict2ListItems,   ///< List dictionary contents: [keys, values].
 } DictListType;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/typval.c.generated.h"
-#endif
+#include "eval/typval.c.generated.h"
 
 static const char e_variable_nested_too_deep_for_unlock[]
   = N_("E743: Variable nested too deep for (un)lock");

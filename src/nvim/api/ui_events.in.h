@@ -1,9 +1,7 @@
 #pragma once
 
 // This file is not compiled, just parsed for definitions
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# error "don't include this file, include nvim/ui.h"
-#endif
+#error "don't include this file, include nvim/ui.h"
 
 #include "nvim/api/private/defs.h"
 #include "nvim/func_attr.h"

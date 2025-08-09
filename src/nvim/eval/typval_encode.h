@@ -12,9 +12,7 @@
 #include "klib/kvec.h"
 #include "nvim/eval/typval_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/typval_encode.h.inline.generated.h"
-#endif
+#include "eval/typval_encode.h.inline.generated.h"
 
 /// Type of the stack entry
 typedef enum {

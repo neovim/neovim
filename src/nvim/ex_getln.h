@@ -15,6 +15,4 @@ enum {
   VSE_BUFFER = 2,  ///< escape for a ":buffer" command
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_getln.h.generated.h"
-#endif
+#include "ex_getln.h.generated.h"

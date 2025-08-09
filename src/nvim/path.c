@@ -42,9 +42,7 @@ enum {
 # undef gen_expand_wildcards
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "path.c.generated.h"
-#endif
+#include "path.c.generated.h"
 
 /// Compare two file names.
 ///

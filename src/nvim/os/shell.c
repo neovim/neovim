@@ -52,9 +52,7 @@
 
 #define SHELL_SPECIAL "\t \"&'$;<>()\\|"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/shell.c.generated.h"
-#endif
+#include "os/shell.c.generated.h"
 
 static void save_patterns(int num_pat, char **pat, int *num_file, char ***file)
 {

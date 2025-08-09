@@ -34,9 +34,7 @@
 // Magic value for algorithm that walks through the array.
 #define PERTURB_SHIFT 5
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "hashtab.c.generated.h"
-#endif
+#include "hashtab.c.generated.h"
 
 char hash_removed;
 

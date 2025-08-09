@@ -240,9 +240,7 @@ enum {
 
 static int spell_suggest_timeout = 5000;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spellsuggest.c.generated.h"
-#endif
+#include "spellsuggest.c.generated.h"
 
 /// Returns true when the sequence of flags in "compflags" plus "flag" can
 /// possibly form a valid compounded word.  This also checks the COMPOUNDRULE

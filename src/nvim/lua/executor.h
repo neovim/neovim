@@ -50,9 +50,7 @@ enum { CB_MAX_ERROR = 3, };
 /// To use with kRetNilBool for quick truthiness check
 #define LUARET_TRUTHY(res) ((res).type == kObjectTypeBoolean && (res).data.boolean == true)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/executor.h.generated.h"
-#endif
+#include "lua/executor.h.generated.h"
 
 EXTERN nlua_ref_state_t *nlua_global_refs INIT( = NULL);
 EXTERN bool nlua_disable_preload INIT( = false);

@@ -56,9 +56,7 @@ typedef struct {
   int height;                   // height of added line
 } lineoff_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "move.c.generated.h"
-#endif
+#include "move.c.generated.h"
 
 /// Get the number of screen lines skipped with "wp->w_skipcol".
 int adjust_plines_for_skipcol(win_T *wp)

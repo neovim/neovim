@@ -48,9 +48,7 @@ typedef struct {
   bool ext_widgets[kUIGlobalCount];
 } UIEventCallback;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui.c.generated.h"
-#endif
+#include "ui.c.generated.h"
 
 #define MAX_UI_COUNT 16
 
@@ -118,9 +116,7 @@ static void ui_log(const char *funname)
     } \
   } while (0)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_events_call.generated.h"
-#endif
+#include "ui_events_call.generated.h"
 
 void ui_init(void)
 {

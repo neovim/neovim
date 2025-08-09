@@ -86,9 +86,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/vim.c.generated.h"
-#endif
+#include "api/vim.c.generated.h"
 
 /// Gets a highlight group by name
 ///

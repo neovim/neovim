@@ -4,9 +4,7 @@
 #include "nvim/vterm/vterm.h"
 #include "nvim/vterm/vterm_internal_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "vterm/mouse.c.generated.h"
-#endif
+#include "vterm/mouse.c.generated.h"
 
 static void output_mouse(VTermState *state, int code, int pressed, int modifiers, int col, int row)
 {

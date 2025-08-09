@@ -130,9 +130,7 @@ typedef struct {
   int *color_cols;           ///< if not NULL, highlight colorcolumn using according columns array
 } winlinevars_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "drawline.c.generated.h"
-#endif
+#include "drawline.c.generated.h"
 
 static char *extra_buf = NULL;
 static size_t extra_buf_size = 0;

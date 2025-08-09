@@ -60,9 +60,7 @@
 # include "nvim/strings.h"
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/fs.c.generated.h"
-#endif
+#include "os/fs.c.generated.h"
 
 #ifdef HAVE_XATTR
 static const char e_xattr_erange[]

@@ -54,9 +54,7 @@ MemCalloc mem_calloc = &calloc;
 MemRealloc mem_realloc = &realloc;
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "memory.c.generated.h"
-#endif
+#include "memory.c.generated.h"
 
 #ifdef EXITFREE
 bool entered_free_all_mem = false;

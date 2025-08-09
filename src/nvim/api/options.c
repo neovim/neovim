@@ -19,9 +19,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/options.c.generated.h"
-#endif
+#include "api/options.c.generated.h"
 
 static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *opt_idxp,
                                       int *opt_flags, OptScope *scope, void **from, char **filetype,

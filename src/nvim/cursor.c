@@ -27,9 +27,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "cursor.c.generated.h"
-#endif
+#include "cursor.c.generated.h"
 
 /// @return  the screen position of the cursor.
 int getviscol(void)

@@ -45,9 +45,7 @@ int forkpty(int *, char *, const struct termios *, const struct winsize *);
 #include "nvim/os/pty_proc_unix.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_proc_unix.c.generated.h"
-#endif
+#include "os/pty_proc_unix.c.generated.h"
 
 #if defined(__sun) && !defined(HAVE_FORKPTY)
 

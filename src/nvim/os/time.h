@@ -6,6 +6,4 @@
 
 #include "nvim/os/time_defs.h"  // IWYU pragma: keep
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/time.h.generated.h"
-#endif
+#include "os/time.h.generated.h"

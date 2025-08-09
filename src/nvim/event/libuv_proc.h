@@ -11,6 +11,4 @@ typedef struct {
   uv_stdio_container_t uvstdio[4];
 } LibuvProc;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/libuv_proc.h.generated.h"
-#endif
+#include "event/libuv_proc.h.generated.h"

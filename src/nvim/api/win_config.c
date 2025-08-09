@@ -36,9 +36,7 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/win_config.c.generated.h"
-#endif
+#include "api/win_config.c.generated.h"
 
 /// Opens a new split window, or a floating window if `relative` is specified,
 /// or an external window (managed by the UI) if `external` is specified.

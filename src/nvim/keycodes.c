@@ -24,10 +24,8 @@
 #include "nvim/option_vars.h"
 #include "nvim/strings.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "keycode_names.generated.h"
-# include "keycodes.c.generated.h"
-#endif
+#include "keycode_names.generated.h"
+#include "keycodes.c.generated.h"
 
 // Some useful tables.
 

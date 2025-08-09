@@ -36,9 +36,7 @@
 #include "nvim/ui.h"
 #include "nvim/ui_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "grid.c.generated.h"
-#endif
+#include "grid.c.generated.h"
 
 // temporary buffer for rendering a single screenline, so it can be
 // compared with previous contents to calculate smallest delta.

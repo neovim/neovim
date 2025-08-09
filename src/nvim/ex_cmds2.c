@@ -49,9 +49,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ex_cmds2.c.generated.h"
-#endif
+#include "ex_cmds2.c.generated.h"
 
 static const char e_compiler_not_supported_str[]
   = N_("E666: Compiler not supported: %s");

@@ -33,6 +33,4 @@ extern char hash_removed;
     } \
   } while (0)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "hashtab.h.generated.h"
-#endif
+#include "hashtab.h.generated.h"

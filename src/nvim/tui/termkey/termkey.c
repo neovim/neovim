@@ -21,9 +21,7 @@
 # include <io.h>
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/termkey/termkey.c.generated.h"
-#endif
+#include "tui/termkey/termkey.c.generated.h"
 
 #ifdef _MSC_VER
 # define strcaseeq(a, b) (_stricmp(a, b) == 0)

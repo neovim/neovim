@@ -4,6 +4,4 @@
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/terminfo.h.generated.h"
-#endif
+#include "tui/terminfo.h.generated.h"

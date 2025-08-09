@@ -48,6 +48,4 @@ typedef kvec_t(char) AdditionalDataBuilder;
 // unrecovareble error. unpack_error should be set!
 #define unpacker_closed(p) ((p)->state < 0)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "msgpack_rpc/unpacker.h.generated.h"
-#endif
+#include "msgpack_rpc/unpacker.h.generated.h"

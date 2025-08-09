@@ -12,6 +12,4 @@
 
 EXTERN int disable_fold_update INIT( = 0);
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fold.h.generated.h"
-#endif
+#include "fold.h.generated.h"

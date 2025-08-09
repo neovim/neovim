@@ -35,6 +35,4 @@ EXTERN linenr_T search_hl_has_cursor_lnum INIT( = 0);
 #define W_ENDCOL(wp)   ((wp)->w_wincol + (wp)->w_width)
 #define W_ENDROW(wp)   ((wp)->w_winrow + (wp)->w_height)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "drawscreen.h.generated.h"
-#endif
+#include "drawscreen.h.generated.h"

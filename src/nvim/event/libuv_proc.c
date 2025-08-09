@@ -14,9 +14,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui_client.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/libuv_proc.c.generated.h"
-#endif
+#include "event/libuv_proc.c.generated.h"
 
 /// @returns zero on success, or negative error code
 int libuv_proc_spawn(LibuvProc *uvproc)

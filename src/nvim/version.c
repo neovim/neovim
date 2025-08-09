@@ -53,9 +53,7 @@ char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "version.c.generated.h"
-#endif
+#include "version.c.generated.h"
 
 // clang-format off
 static const int included_patches[] = {

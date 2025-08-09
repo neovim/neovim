@@ -45,6 +45,4 @@ static inline bool proc_is_stopped(Proc *proc)
   return exited || (proc->stopped_time != 0);
 }
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/proc.h.generated.h"
-#endif
+#include "event/proc.h.generated.h"

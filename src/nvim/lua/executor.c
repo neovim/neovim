@@ -95,10 +95,8 @@ typedef struct {
   size_t size;
 } ModuleDef;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/executor.c.generated.h"
-# include "lua/vim_module.generated.h"
-#endif
+#include "lua/executor.c.generated.h"
+#include "lua/vim_module.generated.h"
 
 #define PUSH_ALL_TYPVALS(lstate, args, argcount, special) \
   for (int i = 0; i < argcount; i++) { \

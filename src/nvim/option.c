@@ -157,18 +157,14 @@ typedef enum {
   PREFIX_INV,     ///< "inv" prefix
 } set_prefix_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "option.c.generated.h"
-#endif
+#include "option.c.generated.h"
 
 // options[] is initialized in options.generated.h.
 // The options with a NULL variable are 'hidden': a set command for them is
 // ignored and they are not printed.
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "options.generated.h"
-# include "options_map.generated.h"
-#endif
+#include "options.generated.h"
+#include "options_map.generated.h"
 
 static int p_bin_dep_opts[] = {
   kOptTextwidth, kOptWrapmargin, kOptModeline, kOptExpandtab, kOptInvalid
