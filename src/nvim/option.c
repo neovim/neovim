@@ -5109,6 +5109,7 @@ void buf_copy_options(buf_T *buf, int flags)
       }
       buf->b_p_cpt = xstrdup(p_cpt);
       COPY_OPT_SCTX(buf, kBufOptComplete);
+      set_buflocal_cpt_callbacks(buf);
 #ifdef BACKSLASH_IN_FILENAME
       buf->b_p_csl = xstrdup(p_csl);
       COPY_OPT_SCTX(buf, kBufOptCompleteslash);

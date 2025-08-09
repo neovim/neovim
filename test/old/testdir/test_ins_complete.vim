@@ -178,6 +178,38 @@ func Test_omni_throw()
   set omnifunc= complete&
 endfunc
 
+func Test_omni_autoload()
+  let save_rtp = &rtp
+  set rtp=Xruntime/some
+  let dir = 'Xruntime/some/autoload'
+  call mkdir(dir, 'pR')
+
+  let lines =<< trim END
+      func omni#Func(findstart, base)
+          if a:findstart
+              return 1
+          else
+              return ['match']
+          endif
+      endfunc
+
+      eval 1 + 2
+  END
+  call writefile(lines, dir .. '/omni.vim')
+
+  new
+  setlocal omnifunc=omni#Func
+  call feedkeys("i\<C-X>\<C-O>\<Esc>", 'xt')
+
+  setlocal complete=.,Fomni#Func
+  call feedkeys("S\<C-N>\<Esc>", 'xt')
+  setlocal complete&
+
+  bwipe!
+  set omnifunc=
+  let &rtp = save_rtp
+endfunc
+
 func Test_completefunc_args()
   let s:args = []
   func! CompleteFunc(findstart, base)
@@ -2772,6 +2804,15 @@ func Test_omnifunc_callback()
   call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
   call assert_equal([[1, ''], [0, 'script1']], g:OmniFunc3Args)
   bw!
+
+  set complete=Fs:OmniFunc3
+  new
+  call setline(1, 'script1')
+  let g:OmniFunc3Args = []
+  call feedkeys("A\<C-N>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:OmniFunc3Args)
+  bw!
+  set complete&
 
   let &omnifunc = 's:OmniFunc3'
   new
@@ -5435,6 +5476,80 @@ func Test_autocomplete_timer()
   delfunc TestComplete
   set autocomplete& complete&
   unlet g:CallCount
+endfunc
+
+func s:TestCompleteScriptLocal(findstart, base)
+  if a:findstart
+    return 1
+  else
+    return ['foo', 'foobar']
+  endif
+endfunc
+
+" Issue 17869
+func Test_scriplocal_autoload_func()
+  let save_rtp = &rtp
+  set rtp=Xruntime/some
+  let dir = 'Xruntime/some/autoload'
+  call mkdir(dir, 'pR')
+
+  let lines =<< trim END
+      func compl#Func(findstart, base)
+          if a:findstart
+              return 1
+          else
+              return ['match', 'matchfoo']
+          endif
+      endfunc
+  END
+  call writefile(lines, dir .. '/compl.vim')
+
+  call Ntest_override("char_avail", 1)
+  new
+  inoremap <buffer> <F2> <Cmd>let b:matches = complete_info(["matches"]).matches<CR>
+  set autocomplete
+
+  setlocal complete=.,Fcompl#Func
+  call feedkeys("im\<F2>\<Esc>0", 'xt!')
+  call assert_equal(['match', 'matchfoo'], b:matches->mapnew('v:val.word'))
+
+  setlocal complete=.,F<SID>TestCompleteScriptLocal
+  call feedkeys("Sf\<F2>\<Esc>0", 'xt!')
+  call assert_equal(['foo', 'foobar'], b:matches->mapnew('v:val.word'))
+
+  setlocal complete&
+  set autocomplete&
+  bwipe!
+  call Ntest_override("char_avail", 0)
+  let &rtp = save_rtp
+endfunc
+
+" Issue #17907
+func Test_omni_start_invalid_col()
+  func OmniFunc(startcol, findstart, base)
+    if a:findstart
+      return a:startcol
+    else
+      return ['foo', 'foobar']
+    endif
+  endfunc
+
+  new
+  redraw  " need this to prevent NULL dereference in Nvim
+  set complete=o
+  set omnifunc=funcref('OmniFunc',\ [-1])
+  call setline(1, ['baz '])
+  call feedkeys("A\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('baz foo', getline(1))
+
+  set omnifunc=funcref('OmniFunc',\ [1000])
+  call setline(1, ['bar '])
+  call feedkeys("A\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('bar foo', getline(1))
+  bw!
+
+  delfunc OmniFunc
+  set omnifunc& complete&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

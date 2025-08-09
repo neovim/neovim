@@ -290,11 +290,17 @@ func Test_complete()
   set complete=.,w,b,u,k,s,i,d,],t,U,F,o
   set complete=.
   set complete=.^10,t^0
-  set complete+=Ffuncref('foo'\\,\ [10])
-  set complete=Ffuncref('foo'\\,\ [10])^10
+
+  func Foo(a, b)
+    return ''
+  endfunc
+
+  set complete+=Ffuncref('Foo'\\,\ [10])
+  set complete=Ffuncref('Foo'\\,\ [10])^10
   set complete&
-  set complete+=Ffunction('g:foo'\\,\ [10\\,\ 20])
+  set complete+=Ffunction('g:Foo'\\,\ [10\\,\ 20])
   set complete&
+  delfunc Foo
 endfun
 
 func Test_set_completion()

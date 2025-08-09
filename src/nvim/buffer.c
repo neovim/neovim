@@ -68,6 +68,7 @@
 #include "nvim/help.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/insexpand.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/mapping.h"
@@ -2104,6 +2105,8 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   callback_free(&buf->b_ofu_cb);
   clear_string_option(&buf->b_p_tsrfu);
   callback_free(&buf->b_tsrfu_cb);
+  clear_cpt_callbacks(&buf->b_p_cpt_cb, buf->b_p_cpt_count);
+  buf->b_p_cpt_count = 0;
   clear_string_option(&buf->b_p_gefm);
   clear_string_option(&buf->b_p_gp);
   clear_string_option(&buf->b_p_mp);

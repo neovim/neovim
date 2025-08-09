@@ -4795,6 +4795,9 @@ bool garbage_collect(bool testing)
     ABORTING(set_ref_in_callback)(&buf->b_tsrfu_cb, copyID, NULL, NULL);
     ABORTING(set_ref_in_callback)(&buf->b_tfu_cb, copyID, NULL, NULL);
     ABORTING(set_ref_in_callback)(&buf->b_ffu_cb, copyID, NULL, NULL);
+    if (!abort && buf->b_p_cpt_cb != NULL) {
+      ABORTING(set_ref_in_cpt_callbacks)(buf->b_p_cpt_cb, buf->b_p_cpt_count, copyID);
+    }
   }
 
   // 'completefunc', 'omnifunc' and 'thesaurusfunc' callbacks
