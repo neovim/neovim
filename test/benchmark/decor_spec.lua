@@ -8,7 +8,7 @@ describe('decor perf', function()
   it('can handle long lines', function()
     Screen.new(100, 101)
 
-    local result = exec_lua [==[
+    local result = exec_lua(function()
       local ephemeral_pattern = {
         { 0, 4, 'Comment', 11 },
         { 0, 3, 'Keyword', 12 },
@@ -61,7 +61,7 @@ describe('decor perf', function()
           return true
         end,
         on_line = function()
-            add_pattern(ephemeral_pattern, true)
+          add_pattern(ephemeral_pattern, true)
         end,
       })
 
@@ -69,16 +69,16 @@ describe('decor perf', function()
 
       local total = {}
       local provider = {}
-      for i = 1, 100 do
+      for _ = 1, 100 do
         local tic = vim.uv.hrtime()
-        vim.cmd'redraw!'
+        vim.cmd 'redraw!'
         local toc = vim.uv.hrtime()
         table.insert(total, toc - tic)
         table.insert(provider, pe - ps)
       end
 
       return { total, provider }
-    ]==]
+    end)
 
     local total, provider = unpack(result)
     table.sort(total)
@@ -114,6 +114,41 @@ describe('decor perf', function()
 
       local total = {}
       for _ = 1, 100 do
+        local tic = vim.uv.hrtime()
+        vim.cmd 'redraw!'
+        local toc = vim.uv.hrtime()
+        table.insert(total, toc - tic)
+      end
+
+      return { total }
+    end)
+
+    local total = unpack(result)
+    table.sort(total)
+
+    local ms = 1 / 1000000
+    local res = string.format(
+      'min, 25%%, median, 75%%, max:\n\t%0.1fms,\t%0.1fms,\t%0.1fms,\t%0.1fms,\t%0.1fms',
+      total[1] * ms,
+      total[1 + math.floor(#total * 0.25)] * ms,
+      total[1 + math.floor(#total * 0.5)] * ms,
+      total[1 + math.floor(#total * 0.75)] * ms,
+      total[#total] * ms
+    )
+    print('\nTotal ' .. res)
+  end)
+
+  it('can handle long lines with treesitter highlighting', function()
+    Screen.new(100, 51)
+
+    local result = exec_lua(function()
+      local long_line = 'local a = { ' .. ('a = 5, '):rep(2000) .. '}'
+      vim.api.nvim_buf_set_lines(0, 0, 0, false, { long_line })
+      vim.api.nvim_win_set_cursor(0, { 1, 0 })
+      vim.treesitter.start(0, 'lua')
+
+      local total = {}
+      for _ = 1, 50 do
         local tic = vim.uv.hrtime()
         vim.cmd 'redraw!'
         local toc = vim.uv.hrtime()
