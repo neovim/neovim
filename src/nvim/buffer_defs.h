@@ -540,6 +540,8 @@ struct file_buffer {
 #ifdef BACKSLASH_IN_FILENAME
   char *b_p_csl;                ///< 'completeslash'
 #endif
+  Callback *b_p_cpt_cb;         ///< F{func} in 'complete' callback
+  int b_p_cpt_count;            ///< Count of values in 'complete'
   char *b_p_cfu;                ///< 'completefunc'
   Callback b_cfu_cb;            ///< 'completefunc' callback
   char *b_p_ofu;                ///< 'omnifunc'
