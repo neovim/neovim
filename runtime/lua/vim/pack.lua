@@ -352,7 +352,13 @@ end
 --- @param event_name 'PackChangedPre'|'PackChanged'
 --- @param kind 'install'|'update'|'delete'
 local function trigger_event(p, event_name, kind)
-  local data = { kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
+  local spec = vim.deepcopy(p.spec)
+  -- Infer default branch for fuller `event-data` (if possible)
+  -- Doing it only on event trigger level allows keeping `spec` close to what
+  -- user supplied without performance issues during startup.
+  spec.version = spec.version or (uv.fs_stat(p.path) and git_get_default_branch(p.path))
+
+  local data = { kind = kind, spec = spec, path = p.path }
   vim.api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
 end
 
@@ -574,9 +580,6 @@ local function install_list(plug_list)
     git_clone(p.spec.src, p.path)
     p.info.installed = true
 
-    -- Infer default branch for fuller `event-data`
-    p.spec.version = p.spec.version or git_get_default_branch(p.path)
-
     -- Do not skip checkout even if HEAD and target have same commit hash to
     -- have new repo in expected detached HEAD state and generated help files.
     checkout(p, timestamp, false)
@@ -640,7 +643,7 @@ local active_plugins = {}
 local n_active_plugins = 0
 
 --- @param plug vim.pack.Plug
---- @param load boolean
+--- @param load boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})
 local function pack_add(plug, load)
   -- Add plugin only once, i.e. no overriding of spec. This allows users to put
   -- plugin first to fully control its spec.
@@ -650,6 +653,11 @@ local function pack_add(plug, load)
 
   n_active_plugins = n_active_plugins + 1
   active_plugins[plug.path] = { plug = plug, id = n_active_plugins }
+
+  if vim.is_callable(load) then
+    load({ spec = vim.deepcopy(plug.spec), path = plug.path })
+    return
+  end
 
   -- NOTE: The `:packadd` specifically seems to not handle spaces in dir name
   vim.cmd.packadd({ vim.fn.escape(plug.spec.name, ' '), bang = not load, magic = { file = false } })
@@ -670,16 +678,18 @@ end
 --- @class vim.pack.keyset.add
 --- @inlinedoc
 --- Load `plugin/` files and `ftdetect/` scripts. If `false`, works like `:packadd!`.
+--- If function, called with plugin data and is fully responsible for loading plugin.
 --- Default `false` during startup and `true` afterwards.
---- @field load? boolean
+--- @field load? boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})
 
 --- Add plugin to current session
 ---
 --- - For each specification check that plugin exists on disk in |vim.pack-directory|:
----     - If exists, do nothin in this step.
+---     - If exists, do nothing in this step.
 ---     - If doesn't exist, install it by downloading from `src` into `name`
 ---       subdirectory (via `git clone`) and update state to match `version` (via `git checkout`).
---- - For each plugin execute |:packadd| making them reachable by Nvim.
+--- - For each plugin execute |:packadd| (or customizable `load` function) making
+---   it reachable by Nvim.
 ---
 --- Notes:
 --- - Installation is done in parallel, but waits for all to finish before

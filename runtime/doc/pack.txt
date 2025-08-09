@@ -315,11 +315,12 @@ add({specs}, {opts})                                          *vim.pack.add()*
     Add plugin to current session
     • For each specification check that plugin exists on disk in
       |vim.pack-directory|:
-      • If exists, do nothin in this step.
+      • If exists, do nothing in this step.
       • If doesn't exist, install it by downloading from `src` into `name`
         subdirectory (via `git clone`) and update state to match `version`
         (via `git checkout`).
-    • For each plugin execute |:packadd| making them reachable by Nvim.
+    • For each plugin execute |:packadd| (or customizable `load` function)
+      making it reachable by Nvim.
 
     Notes:
     • Installation is done in parallel, but waits for all to finish before
@@ -334,8 +335,11 @@ add({specs}, {opts})                                          *vim.pack.add()*
       • {specs}  (`(string|vim.pack.Spec)[]`) List of plugin specifications.
                  String item is treated as `src`.
       • {opts}   (`table?`) A table with the following fields:
-                 • {load}? (`boolean`) Load `plugin/` files and `ftdetect/`
-                   scripts. If `false`, works like `:packadd!`. Default
+                 • {load}?
+                   (`boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})`)
+                   Load `plugin/` files and `ftdetect/` scripts. If `false`,
+                   works like `:packadd!`. If function, called with plugin
+                   data and is fully responsible for loading plugin. Default
                    `false` during startup and `true` afterwards.
 
 del({names})                                                  *vim.pack.del()*

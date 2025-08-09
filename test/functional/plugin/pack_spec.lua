@@ -484,6 +484,52 @@ describe('vim.pack', function()
       validate(false, {})
     end)
 
+    it('can use function `opts.load`', function()
+      local validate = function()
+        n.exec_lua(function()
+          _G.load_log = {}
+          local load = function(...)
+            table.insert(_G.load_log, { ... })
+          end
+          vim.pack.add({ repos_src.plugindirs, repos_src.basic }, { load = load })
+        end)
+
+        -- Order of execution should be the same as supplied in `add()`
+        local plugindirs_data = {
+          spec = { src = repos_src.plugindirs, name = 'plugindirs' },
+          path = pack_get_plug_path('plugindirs'),
+        }
+        local basic_data = {
+          spec = { src = repos_src.basic, name = 'basic' },
+          path = pack_get_plug_path('basic'),
+        }
+        -- - Only single table argument should be supplied to `load`
+        local ref_log = { { plugindirs_data }, { basic_data } }
+        eq(ref_log, n.exec_lua('return _G.load_log'))
+
+        -- Should not add plugin to the session in any way
+        eq(false, exec_lua('return pcall(require, "plugindirs")'))
+        eq(false, exec_lua('return pcall(require, "basic")'))
+
+        -- Should not source 'plugin/'
+        eq({}, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
+
+        -- Plugins should still be marked as "active", since they were added
+        plugindirs_data.spec.version = 'main'
+        plugindirs_data.active = true
+        basic_data.spec.version = 'main'
+        basic_data.active = true
+        eq({ plugindirs_data, basic_data }, n.exec_lua('return vim.pack.get()'))
+      end
+
+      -- Works on initial install
+      validate()
+
+      -- Works when loading already installed plugin
+      n.clear()
+      validate()
+    end)
+
     it('generates help tags', function()
       exec_lua(function()
         vim.pack.add({ { src = repos_src.helptags, name = 'help tags' } })
