@@ -60,7 +60,8 @@ If Nvim is built with LuaJIT, Lua code can be profiled via >lua
     -- Stop the session. Profile is written to /tmp/profile.
     require('jit.p').stop()
 
-See https://luajit.org/ext_profiler.html or the `p.lua` source for details: >
+See https://luajit.org/ext_profiler.html or the `p.lua` source for details:
+>vim
     :lua vim.cmd.edit(package.searchpath('jit.p', package.path))
 
 ==============================================================================
@@ -91,7 +92,7 @@ which you can handle with |pcall()|.
 When failure is normal and expected, it's idiomatic to return `nil` which
 signals to the caller that failure is not "exceptional" and must be handled.
 This "result-or-message" pattern is expressed as the multi-value return type
-`any|nil,nil|string`, or in LuaLS notation: >
+`any|nil,nil|string`, or in LuaLS notation: >lua
 
     ---@return any|nil    # result on success, nil on failure.
     ---@return nil|string # nil on success, error message on failure.
@@ -231,7 +232,7 @@ Note:
   it is better to not have them in 'runtimepath' at all.
 
                                                          *lua-script-location*
-To get its own location, Lua scripts/modules can use |debug.getinfo()|: >
+To get its own location, Lua scripts/modules can use |debug.getinfo()|: >lua
     debug.getinfo(1, 'S').source:sub(2)
 <
 
@@ -439,7 +440,7 @@ You can peek at the module properties: >vim
 
     :lua vim.print(vim)
 
-Result is something like this: >
+Result is something like this: >lua
 
     {
       _os_proc_children = <function 1>,
@@ -4873,7 +4874,7 @@ vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
 vim.version.parse({version}, {opts})                     *vim.version.parse()*
     Parses a semantic version string and returns a version object which can be
     used with other `vim.version` functions. For example "1.0.1-rc1+build.2"
-    returns: >
+    returns: >lua
         { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
 <
 

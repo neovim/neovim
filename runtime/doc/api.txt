@@ -47,7 +47,8 @@ opened by other processes connecting to TCP/IP sockets or named pipes listened
 to by Nvim.
 
 Nvim creates a default RPC socket at |startup|, given by |v:servername|. To
-start with a TCP/IP socket instead, use |--listen| with a TCP-style address: >
+start with a TCP/IP socket instead, use |--listen| with a TCP-style address:
+>sh
     nvim --listen 127.0.0.1:6666
 More endpoints can be started with |serverstart()|.
 
@@ -209,7 +210,7 @@ any of these approaches:
      can define functions at runtime.
 
   2. Start Nvim with |--api-info|. Useful for statically-compiled clients.
-     Example (requires Python "pyyaml" and "msgpack-python" modules): >
+     Example (requires Python "pyyaml" and "msgpack-python" modules): >sh
      nvim --api-info | python -c 'import msgpack, sys, yaml; yaml.dump(msgpack.unpackb(sys.stdin.buffer.read()), sys.stdout)'
 <
   3. Use the |api_info()| Vimscript function. >vim

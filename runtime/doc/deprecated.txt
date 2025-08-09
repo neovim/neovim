@@ -139,7 +139,7 @@ LSP
 • *vim.lsp.util.extract_completion_items()*
 • *vim.lsp.util.parse_snippet()*
 • *vim.lsp.util.text_document_completion_list_to_complete_items()*
-• *vim.lsp.util.lookup_section()*		Use |vim.tbl_get()| instead: >
+• *vim.lsp.util.lookup_section()*		Use |vim.tbl_get()| instead: >lua
 						local keys = vim.split(section, '.', { plain = true })
 						local  vim.tbl_get(table, unpack(keys))
 

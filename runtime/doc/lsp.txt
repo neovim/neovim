@@ -142,16 +142,16 @@ EXAMPLE: DEFINE A CONFIG AS CODE ~
 
 EXAMPLE: DEFINE A CONFIG AS A FILE ~
 
-1. Create a file `lsp/foo.lua` somewhere on your 'runtimepath'. >
+1. Create a file `lsp/foo.lua` somewhere on your 'runtimepath'. >vim
    :exe 'edit' stdpath('config') .. '/lsp/foo.lua'
 2. Add this code to the file (or copy an example from
-   https://github.com/neovim/nvim-lspconfig): >
+   https://github.com/neovim/nvim-lspconfig): >lua
    return {
      cmd = { 'true' },
    }
-3. Save the file (with `++p` to ensure its parent directory is created). >
+3. Save the file (with `++p` to ensure its parent directory is created). >vim
    :write ++p
-4. Enable the config. >
+4. Enable the config. >vim
    :lua vim.lsp.enable('foo')
 5. Run `:checkhealth vim.lsp`, check "Enabled Configurations". 🌈
 
@@ -356,7 +356,7 @@ LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
 to the server. (Notifications, as opposed to requests, are fire-and-forget:
 there is no response, so they can't be handled. |lsp-notification|)
 
-Each response handler has this signature: >
+Each response handler has this signature: >lua
 
     function(err, result, ctx)
 <
