@@ -551,7 +551,7 @@ TREESITTER LANGUAGE INJECTIONS                *treesitter-language-injections*
 <
 
 Note the following information is adapted from:
-  https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
+  https://tree-sitter.github.io/tree-sitter/3-syntax-highlighting.html#language-injection
 
 Some source files contain code written in multiple different languages.
 Examples include:
