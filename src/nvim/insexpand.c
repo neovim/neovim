@@ -333,7 +333,6 @@ typedef struct cpt_source_T {
   uint64_t compl_start_tv;  ///< Timestamp when match collection starts
 } cpt_source_T;
 
-#define STARTCOL_NONE   -9
 /// Pointer to the array of completion sources
 static cpt_source_T *cpt_sources_array;
 /// Total number of completion sources specified in the 'cpt' option
@@ -4620,10 +4619,12 @@ static void prepare_cpt_compl_funcs(void)
         } else {
           startcol = -2;
         }
+      } else if (startcol < 0 || startcol > curwin->w_cursor.col) {
+        startcol = curwin->w_cursor.col;
       }
       cpt_sources_array[idx].cs_startcol = startcol;
     } else {
-      cpt_sources_array[idx].cs_startcol = STARTCOL_NONE;
+      cpt_sources_array[idx].cs_startcol = -3;
     }
 
     (void)copy_option_part(&p, IObuff, IOSIZE, ",");  // Advance p
@@ -6379,14 +6380,14 @@ static void cpt_compl_refresh(void)
           } else {
             startcol = -2;
           }
+        } else if (startcol < 0 || startcol > curwin->w_cursor.col) {
+          startcol = curwin->w_cursor.col;
         }
         cpt_sources_array[cpt_sources_index].cs_startcol = startcol;
         if (ret == OK) {
           compl_source_start_timer(cpt_sources_index);
           get_cpt_func_completion_matches(cb);
         }
-      } else {
-        cpt_sources_array[cpt_sources_index].cs_startcol = STARTCOL_NONE;
       }
     }
 
