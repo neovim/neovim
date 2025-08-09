@@ -222,6 +222,8 @@ LSP
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_linkedEditingRange
 • Support for related documents in pull diagnostics:
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
+• Support for `textDocument/onTypeFormatting`: |lsp-on_type_formatting|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_onTypeFormatting
 
 LUA
 
