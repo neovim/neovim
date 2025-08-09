@@ -5,9 +5,9 @@
     .minimum_zig_version = "0.14.0",
 
     .dependencies = .{
-        .lua_wrapper = .{
-            .url = "git+https://github.com/natecraddock/ziglua#7bfb3c2b87220cdc89ef01cc99a200dad7a28e50",
-            .hash = "lua_wrapper-0.1.0-OyMC27fOBAAU3E2ueB-EWGSgsuCFQZL83pT0nQJ1ufOI",
+        .zlua = .{
+            .url = "git+https://github.com/natecraddock/ziglua#6889b2d90ee6ae96810a9f04ec7c62d9aa91d088",
+            .hash = "zlua-0.1.0-hGRpCxctBQDEQgDArJ0Kc4RDIsD-Hw3pw9pPPw_kGmmY",
         },
         .lpeg = .{
             .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
@@ -22,8 +22,8 @@
             .hash = "N-V-__8AADi-AwDnVoXwDCQvv2wcYOmN0bJLqZ44J3lwoQY2",
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter?ref=v0.25.8#854f527f6ef9fdf563efb13d016e52df3ee6c45c",
-            .hash = "tree_sitter-0.26.0-Tw2sR8u8CwBPBvzDbE0Ggokap5sll_qol0WSVuwjdOfC",
+            .url = "git+https://github.com/tree-sitter/tree-sitter#d87921bb9c39b0b06c811f2082f9a9991cdca027",
+            .hash = "tree_sitter-0.26.0-Tw2sRxO7CwC0NyDrSygSi7UXRHMNUFEF8GRq6dK81lRF",
         },
         .libuv = .{ .path = "./deps/libuv" },
         .utf8proc = .{ .path = "./deps/utf8proc/" },
