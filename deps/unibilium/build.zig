@@ -5,10 +5,13 @@ pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{});
 
     const upstream = b.dependency("unibilium", .{});
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "unibilium",
-        .target = target,
-        .optimize = optimize,
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     lib.addIncludePath(upstream.path(""));

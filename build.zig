@@ -54,14 +54,14 @@ pub fn build(b: *std.Build) !void {
     const host_use_luajit = if (cross_compiling) false else use_luajit;
     const E = enum { luajit, lua51 };
 
-    const ziglua = b.dependency("lua_wrapper", .{
+    const ziglua = b.dependency("zlua", .{
         .target = target,
         .optimize = optimize_lua,
         .lang = if (use_luajit) E.luajit else E.lua51,
         .shared = false,
     });
 
-    const ziglua_host = if (cross_compiling) b.dependency("lua_wrapper", .{
+    const ziglua_host = if (cross_compiling) b.dependency("zlua", .{
         .target = target_host,
         .optimize = optimize_lua,
         .lang = if (host_use_luajit) E.luajit else E.lua51,
@@ -70,12 +70,13 @@ pub fn build(b: *std.Build) !void {
 
     const lpeg = b.dependency("lpeg", .{});
 
-    const iconv_apple = if (cross_compiling and is_darwin) b.lazyDependency("iconv_apple", .{ .target = target, .optimize = optimize }) else null;
+    // TODO: or rather exclusive, "if host uses glibc, othergoodlibc, skip"
+    const iconv = if (is_windows or is_darwin) b.lazyDependency("libiconv", .{ .target = target, .optimize = optimize }) else null;
 
     // this is currently not necessary, as ziglua currently doesn't use lazy dependencies
     // to circumvent ziglua.artifact() failing in a bad way.
-    // const lua = lazyArtifact(ziglua, "lua") orelse return;
-    const lua = ziglua.artifact("lua");
+    const lua = lazyArtifact(ziglua, "lua") orelse return;
+    // const lua = ziglua.artifact("lua");
 
     const libuv_dep = b.dependency("libuv", .{ .target = target, .optimize = optimize });
     const libuv = libuv_dep.artifact("uv");
@@ -243,6 +244,8 @@ pub fn build(b: *std.Build) !void {
         utf8proc.artifact("utf8proc").getEmittedIncludeTree(),
         unibilium.artifact("unibilium").getEmittedIncludeTree(),
         treesitter.artifact("tree-sitter").getEmittedIncludeTree(),
+        // TODO: yaaaank
+        if (iconv) |dep| dep.artifact("iconv").getEmittedIncludeTree() else b.path("INVALID_PATH/"),
     };
 
     const gen_headers, const funcs_data = try gen.nvim_gen_sources(b, nlua0, &nvim_sources, &nvim_headers, &api_headers, versiondef_git, version_lua);
@@ -257,20 +260,23 @@ pub fn build(b: *std.Build) !void {
 
     const nvim_exe = b.addExecutable(.{
         .name = "nvim",
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     nvim_exe.rdynamic = true; // -E
 
     nvim_exe.linkLibrary(lua);
     nvim_exe.linkLibrary(libuv);
     nvim_exe.linkLibrary(libluv);
-    if (iconv_apple) |iconv| {
-        nvim_exe.linkLibrary(iconv.artifact("iconv"));
-    }
+    if (iconv) |dep| nvim_exe.linkLibrary(dep.artifact("iconv"));
     nvim_exe.linkLibrary(utf8proc.artifact("utf8proc"));
     nvim_exe.linkLibrary(unibilium.artifact("unibilium"));
     nvim_exe.linkLibrary(treesitter.artifact("tree-sitter"));
+    if (is_windows) {
+        nvim_exe.linkSystemLibrary("netapi32");
+    }
     nvim_exe.addIncludePath(b.path("src"));
     nvim_exe.addIncludePath(gen_config.getDirectory());
     nvim_exe.addIncludePath(gen_headers.getDirectory());
@@ -302,6 +308,9 @@ pub fn build(b: *std.Build) !void {
         "-D_GNU_SOURCE",
         if (support_unittests) "-DUNIT_TESTING" else "",
         if (use_luajit) "" else "-DNVIM_VENDOR_BIT",
+        if (is_windows) "-DMSWIN" else "",
+        if (is_windows) "-DWIN32_LEAN_AND_MEAN" else "",
+        if (is_windows) "-DUTF8PROC_STATIC" else "",
     };
     nvim_exe.addCSourceFiles(.{ .files = src_paths, .flags = &flags });
 
@@ -371,8 +380,10 @@ pub fn test_fixture(
 ) *std.Build.Step {
     const fixture = b.addExecutable(.{
         .name = name,
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     const source = if (std.mem.eql(u8, name, "pwsh-test")) "shell-test" else name;
     fixture.addCSourceFile(.{ .file = b.path(b.fmt("./test/functional/fixtures/{s}.c", .{source})) });

@@ -5,10 +5,13 @@ pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{});
 
     const upstream = b.dependency("utf8proc", .{});
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "utf8proc",
-        .target = target,
-        .optimize = optimize,
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     lib.addIncludePath(upstream.path(""));
@@ -18,7 +21,7 @@ pub fn build(b: *std.Build) !void {
 
     lib.addCSourceFiles(.{ .root = upstream.path(""), .files = &.{
         "utf8proc.c",
-    } });
+    }, .flags = &.{"-DUTF8PROC_STATIC"} });
 
     b.installArtifact(lib);
 }
