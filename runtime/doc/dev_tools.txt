@@ -102,7 +102,7 @@ Then, in another terminal:
 
 USING LLDB TO STEP THROUGH UNIT TESTS
 
->
+>sh
     lldb .deps/usr/bin/luajit -- .deps/usr/bin/busted --lpath="./build/?.lua" test/unit/
 <
 USING GDB

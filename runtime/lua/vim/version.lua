@@ -481,7 +481,7 @@ end
 --- Parses a semantic version string and returns a version object which can be used with other
 --- `vim.version` functions. For example "1.0.1-rc1+build.2" returns:
 ---
---- ```
+--- ```lua
 --- { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
 --- ```
 ---

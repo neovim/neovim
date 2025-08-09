@@ -22,8 +22,8 @@ positions in files.  For example, |:vimgrep| finds pattern matches.  You can
 use the positions in a script with the |getqflist()| function.  Thus you can
 do a lot more than the edit/compile/fix cycle!
 
-If you have the error messages in a file you can start Vim with: >
-	vim -q filename
+If you have the error messages in a file you can start Nvim with: >
+	nvim -q filename
 
 From inside Vim an easy way to run a command and handle the output is with the
 |:make| command (see below).

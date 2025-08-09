@@ -1529,7 +1529,7 @@ handler (only from Lua, see |nvim_create_user_command()|).
 Before the preview callback is executed, Nvim will temporarily disable
 'cursorline' and 'cursorcolumn' to avoid highlighting issues.
 
-The preview callback must be a Lua function with this signature: >
+The preview callback must be a Lua function with this signature: >lua
 
     function cmdpreview(opts, ns, buf)
 <
@@ -1559,7 +1559,7 @@ preview and clears all highlights in the preview namespace.
 
 Here's an example of a command to trim trailing whitespace from lines that
 supports incremental command preview:
->
+>lua
 	-- If invoked as a preview callback, performs 'inccommand' preview by
 	-- highlighting trailing whitespace in the current buffer.
 	local function trim_space_preview(opts, preview_ns, preview_buf)
@@ -1580,8 +1580,7 @@ supports incremental command preview:
 	        preview_ns,
 	        'Substitute',
 	        {line1 + i - 2, start_idx - 1},
-	        {line1 + i - 2, end_idx},
-	      )
+	        {line1 + i - 2, end_idx})
 
 	      -- Add lines and set highlights in the preview buffer
 	      -- if inccommand=split
@@ -1593,15 +1592,15 @@ supports incremental command preview:
 	          preview_buf_line,
 	          preview_buf_line,
 	          false,
-	          { prefix .. line }
-	        )
+	          { prefix .. line })
+
 	        vim.hl.range(
 	          preview_buf,
 	          preview_ns,
 	          'Substitute',
 	          {preview_buf_line, #prefix + start_idx - 1},
-	          {preview_buf_line, #prefix + end_idx},
-	        )
+	          {preview_buf_line, #prefix + end_idx})
+
 	        preview_buf_line = preview_buf_line + 1
 	      end
 	    end

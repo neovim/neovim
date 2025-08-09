@@ -85,13 +85,13 @@ HANDLERS                                                *diagnostic-handlers*
 Diagnostics are shown to the user with |vim.diagnostic.show()|. The display of
 diagnostics is managed through handlers. A handler is a table with a "show"
 and (optionally) a "hide" function. The "show" function has the signature
->
+>lua
     function(namespace, bufnr, diagnostics, opts)
 <
 and is responsible for displaying or otherwise handling the given
 diagnostics. The "hide" function takes care of "cleaning up" any actions taken
 by the "show" function and has the signature
->
+>lua
     function(namespace, bufnr)
 <
 Handlers can be configured with |vim.diagnostic.config()| and added by
