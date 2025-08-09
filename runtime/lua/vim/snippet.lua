@@ -375,7 +375,7 @@ local function setup_autocmds(bufnr)
     end,
   })
 
-  vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
+  vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'TextChangedP' }, {
     group = snippet_group,
     desc = 'Update active tabstops when buffer text changes',
     buffer = bufnr,
