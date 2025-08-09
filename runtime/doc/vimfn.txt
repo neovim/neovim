@@ -3430,7 +3430,7 @@ getcmdtype()                                                      *getcmdtype()*
 		Also see |getcmdpos()|, |setcmdpos()| and |getcmdline()|.
 
                 Return: ~
-                  (`':'|'>'|'/'|'?'|'@'|'-'|'='`)
+                  (`':'|'>'|'/'|'?'|'@'|'-'|'='|''`)
 
 getcmdwintype()                                                *getcmdwintype()*
 		Return the current |command-line-window| type. Possible return
@@ -3438,7 +3438,7 @@ getcmdwintype()                                                *getcmdwintype()*
 		when not in the command-line window.
 
                 Return: ~
-                  (`':'|'>'|'/'|'?'|'@'|'-'|'='`)
+                  (`':'|'>'|'/'|'?'|'@'|'-'|'='|''`)
 
 getcompletion({pat}, {type} [, {filtered}])                    *getcompletion()*
 		Return a list of command-line completion matches. The String
