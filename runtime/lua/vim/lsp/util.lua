@@ -829,18 +829,21 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
   if signature.parameters and #signature.parameters > 0 then
-    -- First check if the signature has an activeParameter. If it doesn't check if the response
-    -- had that property instead. Else just default to 0.
-    --
-    -- NOTE: Using tonumber() as a temporary workaround to handle `vim.NIL` until #34838 is merged
-    local active_parameter = math.max(
-      tonumber(signature.activeParameter) or tonumber(signature_help.activeParameter) or 0,
-      0
-    )
+    local active_parameter = signature.activeParameter or signature_help.activeParameter
 
-    -- If the activeParameter is > #parameters, then set it to the last
-    -- NOTE: this is not fully according to the spec, but a client-side interpretation
-    active_parameter = math.min(active_parameter, #signature.parameters - 1)
+    -- NOTE: We intentionally violate the LSP spec, which states that if `activeParameter`
+    -- is not provided or is out-of-bounds, it should default to 0.
+    -- Instead, we default to `nil`, as most clients do. In practice, 'no active parameter'
+    -- is better default than 'first parameter' and aligns better with user expectations.
+    -- Related discussion: https://github.com/microsoft/language-server-protocol/issues/1271
+    if
+      not active_parameter
+      or active_parameter == vim.NIL
+      or active_parameter < 0
+      or active_parameter >= #signature.parameters
+    then
+      return contents, nil
+    end
 
     local parameter = signature.parameters[active_parameter + 1]
     local parameter_label = parameter.label
