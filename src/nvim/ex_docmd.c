@@ -4870,7 +4870,25 @@ static void ex_restart(exarg_T *eap)
 
   char *listen_addr;
   if (!prev_addr || !strrchr(prev_addr, ':')) {
-    listen_addr = server_address_new("nvim");
+    char *new_addr = server_address_new("nvim");
+    listen_addr = xstrdup(new_addr);
+    // COMPAT: Create new directories if it doesn't exist.
+    *path_tail(new_addr) = NUL;
+    if (!os_path_exists(new_addr)) {
+      char *failed_dir;
+      char *created;
+      int result = os_mkdir_recurse(new_addr, 0755, &failed_dir, &created);
+      if (result) {
+        emsg(uv_strerror(result));
+        ELOG("failed to make directory: %s", failed_dir);
+        ELOG("created directory: %s", created);
+        xfree(failed_dir);
+        xfree(created);
+        return;
+      }
+      xfree(created);
+    }
+    xfree(new_addr);
   } else {
     listen_addr = server_remote_address_new(prev_addr);
     if (!listen_addr) {
