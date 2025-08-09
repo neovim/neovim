@@ -3864,6 +3864,7 @@ describe('TUI client', function()
 
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
     screen_client:expect({ any = 'GUI Running: 0' })
+    feed_data(':q\013') -- quit the new server
 
     client_super:close()
     server:close()

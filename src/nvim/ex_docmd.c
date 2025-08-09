@@ -4870,14 +4870,14 @@ static void ex_restart(exarg_T *eap)
 
   char *listen_addr;
   if (!prev_addr || !strrchr(prev_addr, ':')) {
-    char *new_addr = server_address_new("nvim");
+    char *new_addr = server_address_new(NULL);
     listen_addr = xstrdup(new_addr);
     // COMPAT: Create new directories if it doesn't exist.
     *path_tail(new_addr) = NUL;
     if (!os_path_exists(new_addr)) {
       char *failed_dir;
       char *created;
-      int result = os_mkdir_recurse(new_addr, 0755, &failed_dir, &created);
+      int result = os_mkdir_recurse(fix_fname(new_addr), 0755, &failed_dir, &created);
       if (result) {
         emsg(uv_strerror(result));
         ELOG("failed to make directory: %s", failed_dir);
@@ -4938,6 +4938,14 @@ static void ex_restart(exarg_T *eap)
                                        NULL, 0, 0, NULL, &exit_status);
   if (!channel) {
     ELOG("cannot create a channel job");
+    xfree(listen_addr);
+    return;
+  }
+
+  channel->detach = true;
+  const char *error;
+  if (!channel_close(channel->id, kChannelPartRpc, &error)) {
+    emsg(error);
     xfree(listen_addr);
     return;
   }
