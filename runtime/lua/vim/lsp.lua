@@ -1504,10 +1504,13 @@ lsp.log_levels = log.levels
 ---
 --- Use `lsp.log_levels` for reverse lookup.
 ---
+---@deprecated
 ---@see |vim.lsp.log_levels|
 ---
 ---@param level (integer|string) the case insensitive level name or number
 function lsp.set_log_level(level)
+  vim.deprecate('vim.lsp.set_log_level()', 'vim.lsp.log.set_level()', '0.13')
+
   if type(level) == 'string' or type(level) == 'number' then
     log.set_level(level)
   else
@@ -1516,8 +1519,12 @@ function lsp.set_log_level(level)
 end
 
 --- Gets the path of the logfile used by the LSP client.
+---
+---@deprecated
 ---@return string path to log file
 function lsp.get_log_path()
+  vim.deprecate('vim.lsp.get_log_path()', 'vim.lsp.log.get_filename()', '0.13')
+
   return log.get_filename()
 end
 
