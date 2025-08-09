@@ -332,6 +332,22 @@ describe('vim.pack', function()
       eq({ confirm_msg, 'Proceed? &Yes\n&No', 1, 'Question' }, exec_lua('return _G.confirm_args'))
     end)
 
+    it('respects `opts.confirm`', function()
+      exec_lua(function()
+        _G.confirm_used = false
+        ---@diagnostic disable-next-line: duplicate-set-field
+        vim.fn.confirm = function()
+          _G.confirm_used = true
+          return 1
+        end
+
+        vim.pack.add({ repos_src.basic }, { confirm = false })
+      end)
+
+      eq(false, exec_lua('return _G.confirm_used'))
+      eq('basic main', exec_lua('return require("basic")'))
+    end)
+
     it('installs at proper version', function()
       local out = exec_lua(function()
         vim.pack.add({

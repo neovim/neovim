@@ -562,9 +562,9 @@ local function checkout(p, timestamp, skip_same_sha)
 end
 
 --- @param plug_list vim.pack.Plug[]
-local function install_list(plug_list)
+local function install_list(plug_list, confirm)
   -- Get user confirmation to install plugins
-  if not confirm_install(plug_list) then
+  if confirm and not confirm_install(plug_list) then
     for _, p in ipairs(plug_list) do
       p.info.err = 'Installation was not confirmed'
     end
@@ -681,6 +681,8 @@ end
 --- If function, called with plugin data and is fully responsible for loading plugin.
 --- Default `false` during startup and `true` afterwards.
 --- @field load? boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})
+---
+--- @field confirm? boolean Whether to ask user to confirm initial install. Default `true`.
 
 --- Add plugin to current session
 ---
@@ -705,7 +707,7 @@ end
 --- @param opts? vim.pack.keyset.add
 function M.add(specs, opts)
   vim.validate('specs', specs, vim.islist, false, 'list')
-  opts = vim.tbl_extend('force', { load = vim.v.vim_did_enter == 1 }, opts or {})
+  opts = vim.tbl_extend('force', { load = vim.v.vim_did_enter == 1, confirm = true }, opts or {})
   vim.validate('opts', opts, 'table')
 
   --- @type vim.pack.Plug[]
@@ -720,7 +722,7 @@ function M.add(specs, opts)
 
   if #plugs_to_install > 0 then
     git_ensure_exec()
-    install_list(plugs_to_install)
+    install_list(plugs_to_install, opts.confirm)
   end
 
   -- Register and load those actually on disk while collecting errors
