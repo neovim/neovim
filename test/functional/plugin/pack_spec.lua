@@ -137,10 +137,12 @@ function repos_setup.plugindirs()
 
   repo_write_file('plugindirs', 'lua/plugindirs.lua', 'return "plugindirs main"')
   repo_write_file('plugindirs', 'plugin/dirs.lua', 'vim.g._plugin = true')
+  repo_write_file('plugindirs', 'plugin/dirs_log.lua', '_G.DL = _G.DL or {}; DL[#DL+1] = "p"')
   repo_write_file('plugindirs', 'plugin/dirs.vim', 'let g:_plugin_vim=v:true')
   repo_write_file('plugindirs', 'plugin/sub/dirs.lua', 'vim.g._plugin_sub = true')
   repo_write_file('plugindirs', 'plugin/bad % name.lua', 'vim.g._plugin_bad = true')
   repo_write_file('plugindirs', 'after/plugin/dirs.lua', 'vim.g._after_plugin = true')
+  repo_write_file('plugindirs', 'after/plugin/dirs_log.lua', '_G.DL = _G.DL or {}; DL[#DL+1] = "a"')
   repo_write_file('plugindirs', 'after/plugin/dirs.vim', 'let g:_after_plugin_vim=v:true')
   repo_write_file('plugindirs', 'after/plugin/sub/dirs.lua', 'vim.g._after_plugin_sub = true')
   repo_write_file('plugindirs', 'after/plugin/bad % name.lua', 'vim.g._after_plugin_bad = true')
@@ -355,6 +357,45 @@ describe('vim.pack', function()
         vim.pack.add({ 'https://github.com/neovim/nvim-lspconfig' })
       end)
       eq(true, exec_lua('return pcall(require, "lspconfig")'))
+    end)
+
+    describe('startup', function()
+      local init_lua = ''
+      before_each(function()
+        init_lua = vim.fs.joinpath(fn.stdpath('config'), 'init.lua')
+        fn.mkdir(vim.fs.dirname(init_lua), 'p')
+      end)
+      after_each(function()
+        pcall(vim.fs.rm, init_lua, { force = true })
+      end)
+
+      it('works in init.lua', function()
+        local pack_add_cmd = ('vim.pack.add({ %s })'):format(vim.inspect(repos_src.plugindirs))
+        fn.writefile({ pack_add_cmd, '_G.done = true' }, init_lua)
+
+        local validate_loaded = function()
+          eq('plugindirs main', exec_lua('return require("plugindirs")'))
+
+          -- Should source 'plugin/' and 'after/plugin/' exactly once
+          eq({ true, true }, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
+          eq({ 'p', 'a' }, n.exec_lua('return _G.DL'))
+        end
+
+        -- Should auto-install but wait before executing code after it
+        n.clear({ args_rm = { '-u' } })
+        n.exec_lua('vim.wait(500, function() return _G.done end, 50)')
+        validate_loaded()
+
+        -- Should only `:packadd!` already installed plugin
+        n.clear({ args_rm = { '-u' } })
+        validate_loaded()
+
+        -- Should not load plugins if `--noplugin`, only adjust 'runtimepath'
+        n.clear({ args = { '--noplugin' }, args_rm = { '-u' } })
+        eq('plugindirs main', exec_lua('return require("plugindirs")'))
+        eq({}, n.exec_lua('return { vim.g._plugin, vim.g._after_plugin }'))
+        eq(vim.NIL, n.exec_lua('return _G.DL'))
+      end)
     end)
 
     it('shows progress report during installation', function()

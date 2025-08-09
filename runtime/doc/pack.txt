@@ -336,7 +336,7 @@ add({specs}, {opts})                                          *vim.pack.add()*
       • {opts}   (`table?`) A table with the following fields:
                  • {load}? (`boolean`) Load `plugin/` files and `ftdetect/`
                    scripts. If `false`, works like `:packadd!`. Default
-                   `true`.
+                   `false` during startup and `true` afterwards.
 
 del({names})                                                  *vim.pack.del()*
     Remove plugins from disk

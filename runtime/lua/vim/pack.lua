@@ -669,7 +669,9 @@ end
 
 --- @class vim.pack.keyset.add
 --- @inlinedoc
---- @field load? boolean Load `plugin/` files and `ftdetect/` scripts. If `false`, works like `:packadd!`. Default `true`.
+--- Load `plugin/` files and `ftdetect/` scripts. If `false`, works like `:packadd!`.
+--- Default `false` during startup and `true` afterwards.
+--- @field load? boolean
 
 --- Add plugin to current session
 ---
@@ -693,7 +695,7 @@ end
 --- @param opts? vim.pack.keyset.add
 function M.add(specs, opts)
   vim.validate('specs', specs, vim.islist, false, 'list')
-  opts = vim.tbl_extend('force', { load = true }, opts or {})
+  opts = vim.tbl_extend('force', { load = vim.v.vim_did_enter == 1 }, opts or {})
   vim.validate('opts', opts, 'table')
 
   --- @type vim.pack.Plug[]
