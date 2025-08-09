@@ -2128,6 +2128,8 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_lw);
   clear_string_option(&buf->b_p_bkc);
   clear_string_option(&buf->b_p_menc);
+  clear_string_option(&buf->b_p_root);
+  clear_string_option(&buf->b_p_root_marker);
 }
 
 /// Get alternate file "n".
