@@ -608,8 +608,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return string.format('<div class="help-li" style="%s">%s</div>', margin, text)
   elseif node_name == 'taglink' or node_name == 'optionlink' then
     local helppage, tagname, ignored = validate_link(root, opt.buf, opt.fname)
-    if ignored then
-      return text
+    if ignored or not helppage then
+      return html_esc(node_text(root))
     end
     local s = ('%s<a href="%s#%s">%s</a>'):format(
       ws(),
