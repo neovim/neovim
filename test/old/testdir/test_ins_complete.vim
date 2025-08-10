@@ -5487,7 +5487,7 @@ func s:TestCompleteScriptLocal(findstart, base)
 endfunc
 
 " Issue 17869
-func Test_scriplocal_autoload_func()
+func Test_scriptlocal_autoload_func()
   let save_rtp = &rtp
   set rtp=Xruntime/some
   let dir = 'Xruntime/some/autoload'
