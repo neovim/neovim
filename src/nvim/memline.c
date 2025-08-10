@@ -3794,6 +3794,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     }
 
     if (buf->b_ml.ml_chunksize[curix].mlcs_numlines >= MLCS_MAXL) {
+      int end_idx;
       int text_end;
 
       memmove(buf->b_ml.ml_chunksize + curix + 1,
@@ -3813,21 +3814,21 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
           = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;  // number of entries in block
         int idx = curline - buf->b_ml.ml_locked_low;
         curline = buf->b_ml.ml_locked_high + 1;
-        if (idx == 0) {      // first line in block, text at the end
+        // compute index of last line to use in this MEMLINE
+        rest = count - idx;
+        if (linecnt + rest > MLCS_MINL) {
+          end_idx = idx + MLCS_MINL - linecnt - 1;
+          linecnt = MLCS_MINL;
+        } else {
+          end_idx = count - 1;
+          linecnt += rest;
+        }
+        if (idx == 0) {  // first line in block, text at the end
           text_end = (int)dp->db_txt_end;
         } else {
           text_end = ((dp->db_index[idx - 1]) & DB_INDEX_MASK);
         }
-        // Compute index of last line to use in this MEMLINE
-        rest = count - idx;
-        if (linecnt + rest > MLCS_MINL) {
-          idx += MLCS_MINL - linecnt - 1;
-          linecnt = MLCS_MINL;
-        } else {
-          idx = count - 1;
-          linecnt += rest;
-        }
-        size += text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK);
+        size += text_end - (int)((dp->db_index[end_idx]) & DB_INDEX_MASK);
       }
       buf->b_ml.ml_chunksize[curix].mlcs_numlines = linecnt;
       buf->b_ml.ml_chunksize[curix + 1].mlcs_numlines -= linecnt;
