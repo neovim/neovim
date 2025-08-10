@@ -70,16 +70,20 @@ function M.get(bufnr)
   return lenses
 end
 
---- Run the code lens in the current line
----
+--- Run the code lens available in the current line.
 function M.run()
-  local line = api.nvim_win_get_cursor(0)[1]
+  local line = api.nvim_win_get_cursor(0)[1] - 1
   local bufnr = api.nvim_get_current_buf()
   local options = {} --- @type {client: integer, lens: lsp.CodeLens}[]
   local lenses_by_client = lens_cache_by_buf[bufnr] or {}
   for client, lenses in pairs(lenses_by_client) do
     for _, lens in pairs(lenses) do
-      if lens.range.start.line == (line - 1) and lens.command and lens.command.command ~= '' then
+      if
+        lens.command
+        and lens.command.command ~= ''
+        and lens.range.start.line <= line
+        and lens.range['end'].line >= line
+      then
         table.insert(options, { client = client, lens = lens })
       end
     end

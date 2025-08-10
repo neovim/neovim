@@ -1982,7 +1982,7 @@ refresh({opts})                                   *vim.lsp.codelens.refresh()*
                   for current buffer
 
 run()                                                 *vim.lsp.codelens.run()*
-    Run the code lens in the current line
+    Run the code lens available in the current line.
 
 save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
     Store lenses for a specific buffer and client
