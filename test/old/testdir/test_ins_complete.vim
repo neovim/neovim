@@ -3630,7 +3630,7 @@ func Test_complete_opt_fuzzy()
   set cot+=noinsert
   call feedkeys("i\<C-R>=CompAnother()\<CR>f", 'tx')
   call assert_equal("for", g:abbr)
-  call assert_equal(0, g:selected)
+  call assert_equal(2, g:selected)
 
   set cot=menu,menuone,noselect,fuzzy
   call feedkeys("i\<C-R>=CompAnother()\<CR>\<C-N>\<C-N>\<C-N>\<C-N>", 'tx')
@@ -4015,6 +4015,27 @@ func Test_complete_info_completed()
   set cot&
 endfunc
 
+func Test_complete_info_selected()
+  set completeopt=menuone,noselect
+  new
+  call setline(1, ["ward", "werd", "wurd", "wxrd"])
+
+  exe "normal! Gow\<c-n>u\<c-n>\<c-r>=complete_info().selected\<cr>"
+  call assert_equal('wurd2', getline(5))
+
+  exe "normal! Sw\<c-n>u\<c-n>\<c-r>=complete_info(['selected']).selected\<cr>"
+  call assert_equal('wurd2', getline(5))
+
+  exe "normal! Sw\<c-n>u\<c-n>\<c-r>=complete_info(['items', 'selected']).selected\<cr>"
+  call assert_equal('wurd2', getline(5))
+
+  exe "normal! Sw\<c-n>u\<c-n>\<c-r>=complete_info(['matches', 'selected']).selected\<cr>"
+  call assert_equal('wurd0', getline(5))
+
+  bw!
+  set cot&
+endfunc
+
 func Test_completeopt_preinsert()
   func Omni_test(findstart, base)
     if a:findstart
@@ -4035,7 +4056,7 @@ func Test_completeopt_preinsert()
   call assert_equal("fobar", g:line)
   call assert_equal(2, g:col)
 
-  call feedkeys("S\<C-X>\<C-O>foo\<F5><ESC>", 'tx')
+  call feedkeys("S\<C-X>\<C-O>foo\<F5>\<ESC>", 'tx')
   call assert_equal("foobar", g:line)
 
   call feedkeys("S\<C-X>\<C-O>foo\<BS>\<BS>\<BS>", 'tx')
@@ -5179,7 +5200,7 @@ func Test_autocomplete_trigger()
 
   new
   inoremap <buffer> <F2> <Cmd>let b:matches = complete_info(["matches"]).matches<CR>
-  inoremap <buffer> <F3> <Cmd>let b:selected = complete_info(["selected"]).selected<CR>
+  inoremap <buffer> <F3> <Cmd>let b:selected = complete_info(["matches", "selected"]).selected<CR>
 
   call setline(1, ['abc', 'abcd', 'fo', 'b', ''])
   set autocomplete
