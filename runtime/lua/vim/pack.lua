@@ -674,7 +674,7 @@ end
 --- Add plugin to current session
 ---
 --- - For each specification check that plugin exists on disk in |vim.pack-directory|:
----     - If exists, do nothin in this step.
+---     - If exists, do nothing in this step.
 ---     - If doesn't exist, install it by downloading from `src` into `name`
 ---       subdirectory (via `git clone`) and update state to match `version` (via `git checkout`).
 --- - For each plugin execute |:packadd| making them reachable by Nvim.
