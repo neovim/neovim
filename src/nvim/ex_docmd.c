@@ -4974,6 +4974,13 @@ static void ex_restart(exarg_T *eap)
   if (!os_proc_tree_kill(pid, SIGKILL)) {
     emsg("killing new nvim server failed");
   }
+  if (!remote_ui_cancel_restart(current_ui, &err)) {
+    if (ERROR_SET(&err)) {
+      ELOG("%s", err.msg);
+      api_clear_error(&err);
+    }
+    return;
+  }
 }
 
 /// ":close": close current window, unless it is the last one

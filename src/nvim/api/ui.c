@@ -282,6 +282,21 @@ bool remote_ui_restart(uint64_t channel_id, String command, const char *listen_a
   return true;
 }
 
+/// Sends a "cancel_restart" UI event to the UI on the given channel.
+///
+/// @return  false if there is no UI on the channel, otherwise true
+bool remote_ui_cancel_restart(uint64_t channel_id, Error *err)
+{
+  RemoteUI *ui = get_ui_or_err(channel_id, err);
+  if (!ui) {
+    return false;
+  }
+
+  Array args = ARRAY_DICT_INIT;
+  push_call(ui, "cancel_restart", args);
+  return true;
+}
+
 // Send a connect UI event to the UI on the given channel
 void remote_ui_connect(uint64_t channel_id, char *server_addr, Error *err)
 {
