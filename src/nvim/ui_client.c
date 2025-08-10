@@ -344,6 +344,7 @@ void ui_client_event_cancel_restart(Array args)
 {
   // Free arguments saved.
   api_free_array(restart_args);
+  restart_args = (Array)ARRAY_DICT_INIT;
   restart_pending = false;
   restart_attempts = 0;
 }
@@ -382,7 +383,7 @@ void ui_client_may_restart_server(void)
   bool is_tcp = strrchr(listen_addr, ':');
   uint64_t chan_id = channel_connect(is_tcp, listen_addr, true, CALLBACK_READER_INIT, 50, &error);
   if (error != NULL) {
-    ELOG("%s", error);
+    // ELOG("%s", error);
     // Recurse for at least MAX_RESTART_ATTEMPTS before giving up.
     restart_pending = true;
     restart_attempts += 1;
