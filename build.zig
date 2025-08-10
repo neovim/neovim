@@ -54,14 +54,14 @@ pub fn build(b: *std.Build) !void {
     const host_use_luajit = if (cross_compiling) false else use_luajit;
     const E = enum { luajit, lua51 };
 
-    const ziglua = b.dependency("lua_wrapper", .{
+    const ziglua = b.dependency("zlua", .{
         .target = target,
         .optimize = optimize_lua,
         .lang = if (use_luajit) E.luajit else E.lua51,
         .shared = false,
     });
 
-    const ziglua_host = if (cross_compiling) b.dependency("lua_wrapper", .{
+    const ziglua_host = if (cross_compiling) b.dependency("zlua", .{
         .target = target_host,
         .optimize = optimize_lua,
         .lang = if (host_use_luajit) E.luajit else E.lua51,
@@ -74,8 +74,8 @@ pub fn build(b: *std.Build) !void {
 
     // this is currently not necessary, as ziglua currently doesn't use lazy dependencies
     // to circumvent ziglua.artifact() failing in a bad way.
-    // const lua = lazyArtifact(ziglua, "lua") orelse return;
-    const lua = ziglua.artifact("lua");
+    const lua = lazyArtifact(ziglua, "lua") orelse return;
+    // const lua = ziglua.artifact("lua");
 
     const libuv_dep = b.dependency("libuv", .{ .target = target, .optimize = optimize });
     const libuv = libuv_dep.artifact("uv");
@@ -257,8 +257,10 @@ pub fn build(b: *std.Build) !void {
 
     const nvim_exe = b.addExecutable(.{
         .name = "nvim",
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     nvim_exe.rdynamic = true; // -E
 
@@ -371,8 +373,10 @@ pub fn test_fixture(
 ) *std.Build.Step {
     const fixture = b.addExecutable(.{
         .name = name,
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     const source = if (std.mem.eql(u8, name, "pwsh-test")) "shell-test" else name;
     fixture.addCSourceFile(.{ .file = b.path(b.fmt("./test/functional/fixtures/{s}.c", .{source})) });
