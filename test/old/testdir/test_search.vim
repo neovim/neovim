@@ -1565,7 +1565,7 @@ func Test_search_match_at_curpos()
   call search('.', 'c')
   call assert_equal([3, 5], [line('.'), col('.')])
 
-  close!
+  bw!
 endfunc
 
 " Test for error cases with the search() function
@@ -1741,7 +1741,7 @@ func Test_search_pat_not_found()
   call assert_fails('normal n', 'E385:')
   call assert_fails('normal N', 'E384:')
   set wrapscan&
-  close
+  bw
 endfunc
 
 " Test for v:searchforward variable
@@ -1757,7 +1757,7 @@ func Test_searchforward_var()
   let v:searchforward = 1
   normal N
   call assert_equal(1, line('.'))
-  close!
+  bw!
 endfunc
 
 " Test for invalid regular expressions
@@ -1818,7 +1818,7 @@ func Test_search_in_visual_area()
   call assert_equal([2, 5], [line('.'), col('.')])
   exe "normal 2GVj$?\\%Vbar\<CR>\<Esc>"
   call assert_equal([3, 5], [line('.'), col('.')])
-  close!
+  bw!
 endfunc
 
 " Test for searching with 'smartcase' and 'ignorecase'
@@ -1846,7 +1846,7 @@ func Test_search_smartcase()
   call assert_equal([2, 4], [line('.'), col('.')])
 
   set ignorecase& smartcase&
-  close!
+  bw!
 endfun
 
 " Test 'smartcase' with utf-8.
@@ -1944,7 +1944,7 @@ func Test_search_offset()
   exe "normal /four/e+1\<CR>"
   call assert_equal([2, 10], [line('.'), col('.')])
 
-  close!
+  bw!
 endfunc
 
 " Test for searching for matching parenthesis using %
@@ -1970,7 +1970,7 @@ func Test_search_match_paren()
   normal 20|%
   call assert_equal(4, col('.'))
   set virtualedit&
-  close!
+  bw!
 endfunc
 
 " Test for searching a pattern and stopping before a specified line
@@ -1983,7 +1983,7 @@ func Test_search_stopline()
   call cursor(4, 1)
   call assert_equal(0, search('vim', 'bn', 2))
   call assert_equal(1, search('vim', 'bn', 1))
-  close!
+  bw!
 endfunc
 
 func Test_incsearch_highlighting_newline()
