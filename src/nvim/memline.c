@@ -2543,6 +2543,10 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noallo
 int ml_delete(linenr_T lnum, bool message)
 {
   ml_flush_line(curbuf, false);
+  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
+    return FAIL;
+  }
+
   return ml_delete_int(curbuf, lnum, message);
 }
 
@@ -2561,10 +2565,6 @@ int ml_delete_buf(buf_T *buf, linenr_T lnum, bool message)
 
 static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
 {
-  if (lnum < 1 || lnum > buf->b_ml.ml_line_count) {
-    return FAIL;
-  }
-
   if (lowest_marked && lowest_marked > lnum) {
     lowest_marked--;
   }
