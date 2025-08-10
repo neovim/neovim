@@ -156,7 +156,7 @@ Copyright 2005-2017:					*tar-copyright*
 	v2			* converted to use Vim7's new autoload feature
 				  by Bram Moolenaar
 	v1	(original)	* Michael Toren
-				  (see http://michael.toren.net/code/
+				  (see michael.toren.net/code/
 				   link seems dead)
 
 ==============================================================================
