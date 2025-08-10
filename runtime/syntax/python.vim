@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2025 Jul 17
+" Last Change:	2025 Jul 26
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -97,7 +97,8 @@ endif
 syn keyword pythonStatement	False None True
 syn keyword pythonStatement	as assert break continue del global
 syn keyword pythonStatement	lambda nonlocal pass return with yield
-syn keyword pythonStatement	class def nextgroup=pythonFunction skipwhite
+syn keyword pythonStatement	class nextgroup=pythonClass skipwhite
+syn keyword pythonStatement	def nextgroup=pythonFunction skipwhite
 syn keyword pythonConditional	elif else if
 syn keyword pythonRepeat	for while
 syn keyword pythonOperator	and in is not or
@@ -123,20 +124,21 @@ syn match   pythonDecoratorName	"@\s*\h\%(\w\|\.\)*" display contains=pythonDeco
 " Single line multiplication.
 syn match   pythonMatrixMultiply
       \ "\%(\w\|[])]\)\s*@"
-      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonClass,pythonFunction,pythonDoctestValue
       \ transparent
 " Multiplication continued on the next line after backslash.
 syn match   pythonMatrixMultiply
       \ "[^\\]\\\s*\n\%(\s*\.\.\.\s\)\=\s\+@"
-      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonClass,pythonFunction,pythonDoctestValue
       \ transparent
 " Multiplication in a parenthesized expression over multiple lines with @ at
 " the start of each continued line; very similar to decorators and complex.
 syn match   pythonMatrixMultiply
       \ "^\s*\%(\%(>>>\|\.\.\.\)\s\+\)\=\zs\%(\h\|\%(\h\|[[(]\).\{-}\%(\w\|[])]\)\)\s*\n\%(\s*\.\.\.\s\)\=\s\+@\%(.\{-}\n\%(\s*\.\.\.\s\)\=\s\+@\)*"
-      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonClass,pythonFunction,pythonDoctestValue
       \ transparent
 
+syn match   pythonClass		"\h\w*" display contained
 syn match   pythonFunction	"\h\w*" display contained
 
 syn match   pythonComment	"#.*$" contains=pythonTodo,@Spell
@@ -279,7 +281,7 @@ if !exists("python_no_builtin_highlight")
   syn keyword pythonBuiltin	tuple type vars zip __import__
   " avoid highlighting attributes as builtins
   syn match   pythonAttribute	/\.\h\w*/hs=s+1
-	\ contains=ALLBUT,pythonBuiltin,pythonFunction,pythonAsync
+	\ contains=ALLBUT,pythonBuiltin,pythonClass,pythonFunction,pythonAsync
 	\ transparent
 endif
 
@@ -336,7 +338,7 @@ if !exists("python_no_doctest_highlight")
   if !exists("python_no_doctest_code_highlight")
     syn region pythonDoctest
 	  \ start="^\s*>>>\s" end="^\s*$"
-	  \ contained contains=ALLBUT,pythonDoctest,pythonFunction,@Spell
+	  \ contained contains=ALLBUT,pythonDoctest,pythonClass,pythonFunction,@Spell
     syn region pythonDoctestValue
 	  \ start=+^\s*\%(>>>\s\|\.\.\.\s\|"""\|'''\)\@!\S\++ end="$"
 	  \ contained
@@ -360,6 +362,7 @@ hi def link pythonInclude		Include
 hi def link pythonAsync			Statement
 hi def link pythonDecorator		Define
 hi def link pythonDecoratorName		Function
+hi def link pythonClass			Structure
 hi def link pythonFunction		Function
 hi def link pythonComment		Comment
 hi def link pythonTodo			Todo
