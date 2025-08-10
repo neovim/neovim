@@ -598,7 +598,7 @@ String manipulation:					*string-functions*
 	str2list()		get list of numbers from a string
 	str2nr()		convert a string to a Number
 	str2float()		convert a string to a Float
-	printf()		format a string according to % items
+	printf()		format a string according to "%" items
 	escape()		escape characters in a string with a '\'
 	shellescape()		escape a string for use with a shell command
 	fnameescape()		escape a file name for use with a Vim command
@@ -676,9 +676,8 @@ List manipulation:					*list-functions*
 	range()			return a List with a sequence of numbers
 	string()		String representation of a List
 	call()			call a function with List as arguments
-	index()			index of a value in a List or Blob
-	indexof()		index in a List or Blob where an expression
-				evaluates to true
+	index()			index of a value in a List
+	indexof()		index in a List where an expression is true
 	max()			maximum value in a List
 	min()			minimum value in a List
 	count()			count number of times a value appears in a List
@@ -738,6 +737,8 @@ Blob manipulation:					*blob-functions*
 	blob2list()		get a list of numbers from a blob
 	list2blob()		get a blob from a list of numbers
 	reverse()		reverse the order of numbers in a blob
+	index()			index of a value in a Blob
+	indexof()		index in a Blob where an expression is true
 
 Other computation:					*bitwise-function*
 	and()			bitwise AND
