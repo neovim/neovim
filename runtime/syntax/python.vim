@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2025 Jul 26
+" Last Change:	2025 Aug 10
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -165,25 +165,25 @@ syn region  pythonFString
       \ start=+\cF\z(['"]\)+
       \ end="\z1"
       \ skip="\\\\\|\\\z1"
-      \ contains=pythonEscape,pythonUnicodeEscape,@Spell
+      \ contains=pythonFStringField,pythonFStringSkip,pythonEscape,pythonUnicodeEscape,@Spell
 syn region  pythonFString
       \ matchgroup=pythonTripleQuotes
       \ start=+\cF\z('''\|"""\)+
       \ end="\z1"
       \ keepend
-      \ contains=pythonEscape,pythonUnicodeEscape,pythonSpaceError,pythonDoctest,@Spell
+      \ contains=pythonFStringField,pythonFStringSkip,pythonEscape,pythonUnicodeEscape,pythonSpaceError,pythonDoctest,@Spell
 syn region  pythonRawFString
       \ matchgroup=pythonQuotes
       \ start=+\c\%(FR\|RF\)\z(['"]\)+
       \ end="\z1"
       \ skip="\\\\\|\\\z1"
-      \ contains=@Spell
+      \ contains=pythonFStringField,pythonFStringSkip,@Spell
 syn region  pythonRawFString
       \ matchgroup=pythonTripleQuotes
       \ start=+\c\%(FR\|RF\)\z('''\|"""\)+
       \ end="\z1"
       \ keepend
-      \ contains=pythonSpaceError,pythonDoctest,@Spell
+      \ contains=pythonFStringField,pythonFStringSkip,pythonSpaceError,pythonDoctest,@Spell
 
 " Bytes
 syn region  pythonBytes
@@ -208,6 +208,24 @@ syn region  pythonRawBytes
       \ start=+\c\%(BR\|RB\)\z('''\|"""\)+
       \ end="\z1"
       \ keepend
+
+" F-string replacement fields
+"
+" - Matched parentheses, brackets and braces are ignored
+" - A bare # is ignored to end of line
+" - A bare = (surrounded by optional whitespace) enables debugging
+" - A bare ! prefixes a conversion field
+" - A bare : begins a format specification
+"     - Matched braces inside a format specification are ignored
+"
+syn region  pythonFStringField
+    \ matchgroup=pythonFStringDelimiter
+    \ start=/{/
+    \ skip=/([^)]*)\|\[[^]]*]\|{[^}]*}\|#.*$/
+    \ end=/\%(\s*=\s*\)\=\%(!\a\)\=\%(:\%({[^}]*}\|[^}]*\)\+\)\=}/
+    \ contained
+" Doubled braces and Unicode escapes are not replacement fields
+syn match   pythonFStringSkip	/{{\|\\N{/ transparent contained contains=NONE
 
 syn match   pythonEscape	+\\[abfnrtv'"\\]+ contained
 syn match   pythonEscape	"\\\o\{1,3}" contained
@@ -376,6 +394,7 @@ hi def link pythonQuotes		String
 hi def link pythonTripleQuotes		pythonQuotes
 hi def link pythonEscape		Special
 hi def link pythonUnicodeEscape		pythonEscape
+hi def link pythonFStringDelimiter	Special
 if !exists("python_no_number_highlight")
   hi def link pythonNumber		Number
 endif
