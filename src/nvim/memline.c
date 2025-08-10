@@ -2039,6 +2039,9 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
   if (len == 0) {
     len = (colnr_T)strlen(line) + 1;            // space needed for the text
   }
+  if (curbuf->b_ml.ml_line_lnum != 0) {
+    ml_flush_line(curbuf, false);
+  }
   int space_needed = len + (int)INDEX_SIZE;     // space needed for text + index
 
   memfile_T *mfp = buf->b_ml.ml_mfp;
