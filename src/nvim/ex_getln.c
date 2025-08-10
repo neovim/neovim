@@ -1543,6 +1543,17 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
     pat = ccline.cmdbuff + skiplen;
   }
 
+  bool bslsh = false;
+  // do not search for the search end delimiter,
+  // unless it is part of the pattern
+  if (patlen > 2 && firstc == pat[patlen - 1]) {
+    patlen--;
+    if (pat[patlen - 1] == '\\') {
+      pat[patlen - 1] = (char)(uint8_t)firstc;
+      bslsh = true;
+    }
+  }
+
   if (next_match) {
     t = s->match_end;
     if (lt(s->match_start, s->match_end)) {
@@ -1566,6 +1577,9 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
                        RE_SEARCH, NULL);
   emsg_off--;
   pat[patlen] = save;
+  if (bslsh) {
+    pat[patlen - 1] = '\\';
+  }
   ui_busy_stop();
   if (found) {
     s->search_start = s->match_start;

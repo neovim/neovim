@@ -2159,5 +2159,86 @@ func Test_search_with_invalid_range()
   bwipe!
 endfunc
 
+func Test_incsearch_delimiter_ctrlg()
+  CheckOption incsearch
+  CheckScreendump
+  CheckRunVimInTerminal
+  call assert_equal(0, &scrolloff)
+  call writefile([
+	\ 'set incsearch hls',
+  \ 'call setline(1, ["1 vim inc", "2 vim /", "3 vim /", "4 vim ?", "5 vim ?"])',
+	\ 'normal gg',
+	\ 'redraw',
+	\ ], 'Xscript_incsearch_delim', 'D')
+  let buf = RunVimInTerminal('-S Xscript_incsearch_delim', {'rows': 6})
+
+  call term_sendkeys(buf, '/')
+  sleep 100m
+  call term_sendkeys(buf, 'v')
+  sleep 100m
+  call term_sendkeys(buf, 'i')
+  sleep 100m
+  call term_sendkeys(buf, 'm')
+  sleep 100m
+  call term_sendkeys(buf, ' ')
+  sleep 100m
+  call term_sendkeys(buf, '/')
+  sleep 100m
+  call term_sendkeys(buf, "\<C-G>")
+  call VerifyScreenDump(buf, 'Test_incsearch_delim_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ":5\<cr>")
+  call term_sendkeys(buf, '?')
+  sleep 100m
+  call term_sendkeys(buf, 'v')
+  sleep 100m
+  call term_sendkeys(buf, 'i')
+  sleep 100m
+  call term_sendkeys(buf, 'm')
+  sleep 100m
+  call term_sendkeys(buf, ' ')
+  sleep 100m
+  call term_sendkeys(buf, '?')
+  sleep 100m
+  call term_sendkeys(buf, "\<C-T>")
+  call VerifyScreenDump(buf, 'Test_incsearch_delim_02', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, '/')
+  sleep 100m
+  call term_sendkeys(buf, 'v')
+  sleep 100m
+  call term_sendkeys(buf, 'i')
+  sleep 100m
+  call term_sendkeys(buf, 'm')
+  sleep 100m
+  call term_sendkeys(buf, ' ')
+  sleep 100m
+  call term_sendkeys(buf, '\/')
+  sleep 100m
+  call term_sendkeys(buf, "\<C-G>")
+  call VerifyScreenDump(buf, 'Test_incsearch_delim_03', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call term_sendkeys(buf, ":5\<cr>")
+  call term_sendkeys(buf, '?')
+  sleep 100m
+  call term_sendkeys(buf, 'v')
+  sleep 100m
+  call term_sendkeys(buf, 'i')
+  sleep 100m
+  call term_sendkeys(buf, 'm')
+  sleep 100m
+  call term_sendkeys(buf, ' ')
+  sleep 100m
+  call term_sendkeys(buf, '\?')
+  sleep 100m
+  call term_sendkeys(buf, "\<C-T>")
+  call VerifyScreenDump(buf, 'Test_incsearch_delim_04', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
