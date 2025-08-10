@@ -39,7 +39,6 @@ static int tui_height = 0;
 static char *tui_term = "";
 static bool tui_rgb = false;
 static bool ui_client_is_remote = false;
-static int restart_attempts = 0;
 #define MAX_RESTART_ATTEMPTS 1000
 
 // uncrustify:off
@@ -322,6 +321,7 @@ static void channel_connect_event(void **argv)
 /// waiting for the server to exit.
 static Array restart_args = ARRAY_DICT_INIT;
 static bool restart_pending = false;
+static int restart_attempts = 0;
 
 void ui_client_event_restart(Array args)
 {
@@ -332,6 +332,17 @@ void ui_client_event_restart(Array args)
   api_free_array(restart_args);
   restart_args = copy_array(args, NULL);
   restart_pending = true;
+  restart_attempts = 0;
+}
+
+/// When a "cancel_restart" UI event is received, the arguments already
+/// saved are freed/reset.
+void ui_client_event_cancel_restart(Array args)
+{
+  // Free arguments saved.
+  api_free_array(restart_args);
+  restart_pending = false;
+  restart_attempts = 0;
 }
 
 /// @return true If the client can still attempt to restart.
