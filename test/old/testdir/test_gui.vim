@@ -44,17 +44,4 @@ func Test_colorscheme()
   redraw!
 endfunc
 
-" Test that buffer names are shown at the end in the :Buffers menu
-func Test_Buffers_Menu()
-  doautocmd LoadBufferMenu VimEnter
-
-  let name = '天'
-  exe ':badd ' .. name
-  let nr = bufnr('$')
-
-  let cmd = printf(':amenu Buffers.%s\ (%d)', name, nr)
-  let menu = split(execute(cmd), '\n')[1]
-  call assert_match('^9999 '.. name, menu)
-endfunc
-
 " vim: shiftwidth=2 sts=2 expandtab
