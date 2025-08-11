@@ -17,6 +17,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/eval.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
@@ -134,12 +135,22 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char *cmdline = arena_memdupz(arena, str.data, str.size);
   const char *errormsg = NULL;
 
-  if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
+  int save_called_emsg = called_emsg;
+  int save_emsg_silent = emsg_silent;
+  emsg_silent++;
+  bool parse_success = parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg);
+
+  emsg_silent = save_emsg_silent;
+  if (!parse_success) {
     if (errormsg != NULL) {
       api_set_error(err, kErrorTypeException, "Parsing command-line: %s", errormsg);
     } else {
-      api_set_error(err, kErrorTypeException, "Parsing command-line");
+      errormsg = get_vim_var_str(VV_ERRMSG);
+      bool has_detail = (*errormsg != NUL && called_emsg > save_called_emsg);
+      api_set_error(err, kErrorTypeException, "Parsing command-line%s%s", has_detail ? ": " : "",
+                    has_detail ? errormsg : "");
     }
+
     goto end;
   }
 
