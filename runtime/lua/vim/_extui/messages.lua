@@ -467,7 +467,6 @@ function M.set_pos(type)
     local height = type and math.min(texth.all, math.ceil(o.lines * 0.5))
     local top = { vim.opt.fcs:get().horiz or o.ambw == 'single' and '─' or '-', 'MsgSeparator' }
     local border = win ~= ext.wins.msg and { '', top, '', '', '', '', '', '' } or nil
-    local save_config = type == 'cmd' and api.nvim_win_get_config(win) or {}
     local config = {
       hide = false,
       relative = 'laststatus',
@@ -491,11 +490,11 @@ function M.set_pos(type)
           return
         end
         vim.schedule(function()
-          if api.nvim_win_is_valid(win) then
-            api.nvim_win_set_config(win, save_config)
-          end
-          cmd_on_key = nil
           local entered = api.nvim_get_current_win() == win
+          cmd_on_key = nil
+          if api.nvim_win_is_valid(win) then
+            api.nvim_win_close(win, true)
+          end
           ext.check_targets()
           -- Show or clear the message depending on if the pager was opened.
           if entered or not api.nvim_win_get_config(ext.wins.pager).hide then
