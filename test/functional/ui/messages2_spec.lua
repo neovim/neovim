@@ -234,4 +234,23 @@ describe('messages2', function()
       foo [+1]                                             |
     ]])
   end)
+
+  it('not restoring already open hit-enter-prompt config #35298', function()
+    command('echo "foo\nbar"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*10
+      {3:─────────────────────────────────────────────────────}|
+      foo                                                  |
+      bar                                                  |
+    ]])
+    command('echo "foo\nbar"')
+    screen:expect_unchanged()
+    feed(':')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}^                                                    |
+    ]])
+  end)
 end)
