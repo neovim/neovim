@@ -4874,20 +4874,13 @@ static void ex_restart(exarg_T *eap)
     char *new_addr = server_address_new(NULL);
     listen_addr = xstrdup(new_addr);
     // COMPAT: Create new directories if it doesn't exist.
-    *path_tail(new_addr) = NUL;
+    new_addr = fix_fname(new_addr);
     if (!os_path_exists(new_addr)) {
-      char *failed_dir;
-      char *created;
-      int result = os_mkdir_recurse(fix_fname(new_addr), 0755, &failed_dir, &created);
+      int result = os_file_mkdir(new_addr, 0755);
       if (result) {
         emsg(uv_strerror(result));
-        ELOG("failed to make directory: %s", failed_dir);
-        ELOG("created directory: %s", created);
-        xfree(failed_dir);
-        xfree(created);
         return;
       }
-      xfree(created);
     }
     xfree(new_addr);
   } else {
