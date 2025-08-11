@@ -502,9 +502,9 @@ describe('semantic token highlighting', function()
             name = 'dummy',
             cmd = _G.server.cmd,
             --- @param client vim.lsp.Client
-            on_attach = vim.schedule_wrap(function(client, _bufnr)
+            on_attach = function(client, _bufnr)
               client.server_capabilities.semanticTokensProvider = nil
-            end),
+            end,
           })
         end)
         eq(true, exec_lua('return vim.lsp.buf_is_attached(0, ...)', client_id))
