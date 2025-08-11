@@ -35,8 +35,8 @@
 //
 // Thanks to Olaf Seibert for providing an example implementation of this tree
 // and the compression mechanism.
-// LZ trie ideas:
-//      http://www.irb.hr/hr/home/ristov/papers/RistovLZtrieRevision1.pdf
+// LZ trie ideas, original link (now dead)
+//      irb.hr/hr/home/ristov/papers/RistovLZtrieRevision1.pdf
 // More papers: http://www-igm.univ-mlv.fr/~laporte/publi_en.html
 //
 // Matching involves checking the caps type: Onecap ALLCAP KeepCap.
