@@ -18,7 +18,7 @@ local function check_log()
     )
   end
 
-  local log_path = vim.lsp.get_log_path()
+  local log_path = log.get_filename()
   report_info(string.format('Log path: %s', log_path))
 
   local log_file = vim.uv.fs_stat(log_path)

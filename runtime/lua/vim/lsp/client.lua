@@ -1272,7 +1272,7 @@ function Client:_on_exit(code, signal)
         self and self.name or 'unknown',
         code,
         signal,
-        lsp.get_log_path()
+        log.get_filename()
       )
       vim.notify(msg, vim.log.levels.WARN)
     end
