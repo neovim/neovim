@@ -643,6 +643,7 @@ local underline_highlight_map = make_highlight_map('Underline')
 local floating_highlight_map = make_highlight_map('Floating')
 local sign_highlight_map = make_highlight_map('Sign')
 
+--- Get a position based on an extmark referenced by `_extmark_id` field
 --- @param diagnostic vim.Diagnostic
 --- @return integer lnum
 --- @return integer col
@@ -662,15 +663,24 @@ local function get_logical_pos(diagnostic)
 end
 
 --- @param diagnostics vim.Diagnostic[]
+--- @param use_logical_pos boolean
 --- @return table<integer,vim.Diagnostic[]>
-local function diagnostic_lines(diagnostics)
+local function diagnostic_lines(diagnostics, use_logical_pos)
   if not diagnostics then
     return {}
   end
 
   local diagnostics_by_line = {} --- @type table<integer,vim.Diagnostic[]>
   for _, diagnostic in ipairs(diagnostics) do
-    local lnum, _, _, _, valid = get_logical_pos(diagnostic)
+    local lnum ---@type integer
+    local valid ---@type boolean
+
+    if use_logical_pos then
+      lnum, _, _, _, valid = get_logical_pos(diagnostic)
+    else
+      lnum, valid = diagnostic.lnum, true
+    end
+
     if valid then
       local line_diagnostics = diagnostics_by_line[lnum]
       if not line_diagnostics then
@@ -1024,8 +1034,9 @@ end
 
 --- @param search_forward boolean
 --- @param opts vim.diagnostic.JumpOpts?
+--- @param use_logical_pos boolean
 --- @return vim.Diagnostic?
-local function next_diagnostic(search_forward, opts)
+local function next_diagnostic(search_forward, opts, use_logical_pos)
   opts = opts or {}
   --- @cast opts vim.diagnostic.JumpOpts1
 
@@ -1058,12 +1069,12 @@ local function next_diagnostic(search_forward, opts)
     filter_highest(diagnostics)
   end
 
-  local line_diagnostics = diagnostic_lines(diagnostics)
+  local line_diagnostics = diagnostic_lines(diagnostics, use_logical_pos)
 
   --- @param diagnostic vim.Diagnostic
   --- @return integer
   local function col(diagnostic)
-    return select(2, get_logical_pos(diagnostic))
+    return use_logical_pos and select(2, get_logical_pos(diagnostic)) or diagnostic.col
   end
 
   local line_count = api.nvim_buf_line_count(bufnr)
@@ -1424,7 +1435,7 @@ end
 ---@param opts? vim.diagnostic.JumpOpts
 ---@return vim.Diagnostic? : Previous diagnostic
 function M.get_prev(opts)
-  return next_diagnostic(false, opts)
+  return next_diagnostic(false, opts, false)
 end
 
 --- Return the position of the previous diagnostic in the current buffer.
@@ -1464,7 +1475,7 @@ end
 ---@param opts? vim.diagnostic.JumpOpts
 ---@return vim.Diagnostic? : Next diagnostic
 function M.get_next(opts)
-  return next_diagnostic(true, opts)
+  return next_diagnostic(true, opts, false)
 end
 
 --- Return the position of the next diagnostic in the current buffer.
@@ -1582,7 +1593,7 @@ function M.jump(opts)
 
   local diag = nil
   while count ~= 0 do
-    local next = next_diagnostic(count > 0, opts)
+    local next = next_diagnostic(count > 0, opts, true)
     if not next then
       break
     end
@@ -1814,7 +1825,7 @@ M.handlers.virtual_text = {
 
     api.nvim_clear_autocmds({ group = ns.user_data.virt_text_augroup, buffer = bufnr })
 
-    local line_diagnostics = diagnostic_lines(diagnostics)
+    local line_diagnostics = diagnostic_lines(diagnostics, true)
 
     if opts.virtual_text.current_line ~= nil then
       api.nvim_create_autocmd('CursorMoved', {
@@ -2067,7 +2078,7 @@ M.handlers.virtual_lines = {
     if opts.virtual_lines.current_line == true then
       -- Create a mapping from line -> diagnostics so that we can quickly get the
       -- diagnostics we need when the cursor line doesn't change.
-      local line_diagnostics = diagnostic_lines(diagnostics)
+      local line_diagnostics = diagnostic_lines(diagnostics, true)
       api.nvim_create_autocmd('CursorMoved', {
         buffer = bufnr,
         group = ns.user_data.virt_lines_augroup,
