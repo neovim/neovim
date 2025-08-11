@@ -4819,6 +4819,10 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
+  if (cmdpreview) {
+    return;
+  }
+
   const char *prompt;
   const char *defstr = "";
   typval_T *cancelreturn = NULL;
