@@ -4021,9 +4021,12 @@ int ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int *offp, bool no_ff)
       }
     } else {
       extra = 0;
-      while (offset >= size
-             + text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK)
-             + ffdos) {
+      while (true) {
+        if (!(offset >= size
+              + text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK)
+              + ffdos)) {
+          break;
+        }
         if (ffdos) {
           size++;
         }
