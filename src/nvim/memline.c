@@ -1972,61 +1972,16 @@ int ml_line_alloced(void)
   return curbuf->b_ml.ml_flags & ML_LINE_DIRTY;
 }
 
-/// Append a line after lnum (may be 0 to insert a line in front of the file).
-/// "line" does not need to be allocated, but can't be another line in a
-/// buffer, unlocking may make it invalid.
-///
-///   newfile: true when starting to edit a new file, meaning that pe_old_lnum
-///              will be set for recovery
-/// Check: The caller of this function should probably also call
-/// appended_lines().
-///
-/// @param lnum  append after this line (can be 0)
-/// @param line  text of the new line
-/// @param len  length of new line, including NUL, or 0
-/// @param newfile  flag, see above
-///
-/// @return  FAIL for failure, OK otherwise
-int ml_append(linenr_T lnum, char *line, colnr_T len, bool newfile)
-{
-  // When starting up, we might still need to create the memfile
-  if (curbuf->b_ml.ml_mfp == NULL && open_buffer(false, NULL, 0) == FAIL) {
-    return FAIL;
-  }
-
-  if (curbuf->b_ml.ml_line_lnum != 0) {
-    ml_flush_line(curbuf, false);
-  }
-  return ml_append_int(curbuf, lnum, line, len, newfile, false);
-}
-
-/// Like ml_append() but for an arbitrary buffer.  The buffer must already have
-/// a memline.
-///
-/// @param lnum  append after this line (can be 0)
-/// @param line  text of the new line
-/// @param len  length of new line, including NUL, or 0
-/// @param newfile  flag, see above
-int ml_append_buf(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfile)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  if (buf->b_ml.ml_mfp == NULL) {
-    return FAIL;
-  }
-
-  if (buf->b_ml.ml_line_lnum != 0) {
-    ml_flush_line(buf, false);
-  }
-  return ml_append_int(buf, lnum, line, len, newfile, false);
-}
-
 /// @param lnum  append after this line (can be 0)
 /// @param line  text of the new line
 /// @param len  length of line, including NUL, or 0
 /// @param newfile  flag, see above
 /// @param mark  mark the new line
+///
+/// @return  FAIL for failure, OK otherwise
 static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfile,
                          bool mark)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   // lnum out of range
   if (lnum > buf->b_ml.ml_line_count || buf->b_ml.ml_mfp == NULL) {
@@ -2427,6 +2382,71 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
   return OK;
 }
 
+/// Flush any pending change and call ml_append_int()
+///
+/// @param buf
+/// @param lnum  append after this line (can be 0)
+/// @param line  text of the new line
+/// @param len  length of line, including NUL, or 0
+/// @param newfile  flag, see above
+///
+/// @return  FAIL for failure, OK otherwise
+static int ml_append_flush(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfile)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (lnum > buf->b_ml.ml_line_count) {
+    return FAIL;  // lnum out of range
+  }
+  if (buf->b_ml.ml_line_lnum != 0) {
+    // This may also invoke ml_append_int().
+    ml_flush_line(buf, false);
+  }
+
+  return ml_append_int(buf, lnum, line, len, newfile, false);
+}
+
+/// Append a line after lnum (may be 0 to insert a line in front of the file).
+/// "line" does not need to be allocated, but can't be another line in a
+/// buffer, unlocking may make it invalid.
+///
+///   newfile: true when starting to edit a new file, meaning that pe_old_lnum
+///              will be set for recovery
+/// Check: The caller of this function should probably also call
+/// appended_lines().
+///
+/// @param lnum  append after this line (can be 0)
+/// @param line  text of the new line
+/// @param len  length of new line, including NUL, or 0
+/// @param newfile  flag, see above
+///
+/// @return  FAIL for failure, OK otherwise
+int ml_append(linenr_T lnum, char *line, colnr_T len, bool newfile)
+{
+  // When starting up, we might still need to create the memfile
+  if (curbuf->b_ml.ml_mfp == NULL && open_buffer(false, NULL, 0) == FAIL) {
+    return FAIL;
+  }
+
+  return ml_append_flush(curbuf, lnum, line, len, newfile);
+}
+
+/// Like ml_append() but for an arbitrary buffer.  The buffer must already have
+/// a memline.
+///
+/// @param lnum  append after this line (can be 0)
+/// @param line  text of the new line
+/// @param len  length of new line, including NUL, or 0
+/// @param newfile  flag, see above
+int ml_append_buf(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfile)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (buf->b_ml.ml_mfp == NULL) {
+    return FAIL;
+  }
+
+  return ml_append_flush(buf, lnum, line, len, newfile);
+}
+
 void ml_add_deleted_len(char *ptr, ssize_t len)
 {
   ml_add_deleted_len_buf(curbuf, ptr, len);
@@ -2523,6 +2543,10 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noallo
 int ml_delete(linenr_T lnum, bool message)
 {
   ml_flush_line(curbuf, false);
+  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
+    return FAIL;
+  }
+
   return ml_delete_int(curbuf, lnum, message);
 }
 
@@ -2541,10 +2565,6 @@ int ml_delete_buf(buf_T *buf, linenr_T lnum, bool message)
 
 static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
 {
-  if (lnum < 1 || lnum > buf->b_ml.ml_line_count) {
-    return FAIL;
-  }
-
   if (lowest_marked && lowest_marked > lnum) {
     lowest_marked--;
   }
@@ -3794,6 +3814,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     }
 
     if (buf->b_ml.ml_chunksize[curix].mlcs_numlines >= MLCS_MAXL) {
+      int end_idx;
       int text_end;
 
       memmove(buf->b_ml.ml_chunksize + curix + 1,
@@ -3813,21 +3834,21 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
           = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;  // number of entries in block
         int idx = curline - buf->b_ml.ml_locked_low;
         curline = buf->b_ml.ml_locked_high + 1;
-        if (idx == 0) {      // first line in block, text at the end
+        // compute index of last line to use in this MEMLINE
+        rest = count - idx;
+        if (linecnt + rest > MLCS_MINL) {
+          end_idx = idx + MLCS_MINL - linecnt - 1;
+          linecnt = MLCS_MINL;
+        } else {
+          end_idx = count - 1;
+          linecnt += rest;
+        }
+        if (idx == 0) {  // first line in block, text at the end
           text_end = (int)dp->db_txt_end;
         } else {
           text_end = ((dp->db_index[idx - 1]) & DB_INDEX_MASK);
         }
-        // Compute index of last line to use in this MEMLINE
-        rest = count - idx;
-        if (linecnt + rest > MLCS_MINL) {
-          idx += MLCS_MINL - linecnt - 1;
-          linecnt = MLCS_MINL;
-        } else {
-          idx = count - 1;
-          linecnt += rest;
-        }
-        size += text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK);
+        size += text_end - (int)((dp->db_index[end_idx]) & DB_INDEX_MASK);
       }
       buf->b_ml.ml_chunksize[curix].mlcs_numlines = linecnt;
       buf->b_ml.ml_chunksize[curix + 1].mlcs_numlines -= linecnt;
@@ -4002,9 +4023,12 @@ int ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int *offp, bool no_ff)
       }
     } else {
       extra = 0;
-      while (offset >= size
-             + text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK)
-             + ffdos) {
+      while (true) {
+        if (!(offset >= size
+              + text_end - (int)((dp->db_index[idx]) & DB_INDEX_MASK)
+              + ffdos)) {
+          break;
+        }
         if (ffdos) {
           size++;
         }
