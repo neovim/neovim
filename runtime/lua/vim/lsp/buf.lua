@@ -516,7 +516,7 @@ end
 --- Can be used to specify FormattingOptions. Some unspecified options will be
 --- automatically derived from the current Nvim options.
 --- See https://microsoft.github.io/language-server-protocol/specification/#formattingOptions
---- @field formatting_options? table
+--- @field formatting_options? lsp.FormattingOptions
 ---
 --- Time in milliseconds to block for formatting requests. No effect if async=true.
 --- (default: `1000`)
