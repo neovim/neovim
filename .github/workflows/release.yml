@@ -55,7 +55,7 @@ jobs:
     outputs:
       version: ${{ steps.build.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -101,7 +101,7 @@ jobs:
     env:
       MACOSX_DEPLOYMENT_TARGET: 11.0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -134,7 +134,7 @@ jobs:
     needs: setup
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -166,7 +166,7 @@ jobs:
     steps:
       # Must perform checkout first, since it deletes the target directory
       # before running, and would therefore delete the downloaded artifacts
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v5
 
