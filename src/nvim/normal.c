@@ -4237,7 +4237,7 @@ static void nv_brackets(cmdarg_T *cap)
                             ? curwin->w_cursor.lnum + 1
                             : 1),
                            MAXLNUM,
-                           false);
+                           false, false);
       xfree(ptr);
       curwin->w_set_curswant = true;
     }
