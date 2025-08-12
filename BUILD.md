@@ -273,7 +273,7 @@ podman run \
   -v "$PWD:/workdir" \
   -w /workdir \
   alpine:latest \
-  bash -c 'apk add build-base cmake coreutils curl gettext-tiny-dev && make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"'
+  bash -c 'apk add build-base cmake coreutils curl gettext-tiny-dev git && make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"'
 ```
 
 The resulting binary in `build/bin/nvim` will have all the dependencies statically linked:
@@ -317,31 +317,31 @@ Platform-specific requirements are listed below.
 ### Ubuntu / Debian
 
 ```sh
-sudo apt-get install ninja-build gettext cmake curl build-essential
+sudo apt-get install ninja-build gettext cmake curl build-essential git
 ```
 
 ### RHEL / Fedora
 
 ```
-sudo dnf -y install ninja-build cmake gcc make gettext curl glibc-gconv-extra
+sudo dnf -y install ninja-build cmake gcc make gettext curl glibc-gconv-extra git
 ```
 
 ### openSUSE
 
 ```
-sudo zypper install ninja cmake gcc-c++ gettext-tools curl
+sudo zypper install ninja cmake gcc-c++ gettext-tools curl git
 ```
 
 ### Arch Linux
 
 ```
-sudo pacman -S base-devel cmake ninja curl
+sudo pacman -S base-devel cmake ninja curl git
 ```
 
 ### Alpine Linux
 
 ```
-apk add build-base cmake coreutils curl gettext-tiny-dev
+apk add build-base cmake coreutils curl gettext-tiny-dev git
 ```
 
 ### Void Linux
@@ -405,7 +405,7 @@ or a specific SHA1 like `--override-input neovim-src github:neovim/neovim/89dc8f
 ### FreeBSD
 
 ```
-sudo pkg install cmake gmake sha wget gettext curl
+sudo pkg install cmake gmake sha wget gettext curl git
 ```
 
 If you get an error regarding a `sha256sum` mismatch, where the actual SHA-256 hash is `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`, then this is your issue (that's the `sha256sum` of an empty file).
@@ -413,7 +413,7 @@ If you get an error regarding a `sha256sum` mismatch, where the actual SHA-256 h
 ### OpenBSD
 
 ```sh
-doas pkg_add gmake cmake curl gettext-tools
+doas pkg_add gmake cmake curl gettext-tools git
 ```
 
 Build can sometimes fail when using the top level `Makefile`, apparently due to some third-party component (see [#2445-comment](https://github.com/neovim/neovim/issues/2445#issuecomment-108124236)). The following instructions use CMake:
@@ -438,7 +438,7 @@ gmake
 2. Install [Homebrew](http://brew.sh)
 3. Install Neovim build dependencies:
     ```
-    brew install ninja cmake gettext curl
+    brew install ninja cmake gettext curl git
     ```
   - **Note**: If you see Wget certificate errors (for older macOS versions less than 10.10):
     ```sh
@@ -456,7 +456,7 @@ gmake
 2. Install [MacPorts](http://www.macports.org)
 3. Install Neovim build dependencies:
     ```
-    sudo port install ninja cmake gettext
+    sudo port install ninja cmake gettext git
     ```
   - **Note**: If you see Wget certificate errors (for older macOS versions less than 10.10):
     ```sh
