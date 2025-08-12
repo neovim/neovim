@@ -132,6 +132,7 @@ function M.cmdline_hide(level, abort)
       api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
       api.nvim_buf_set_lines(ext.bufs.dialog, 0, -1, false, {})
       api.nvim_win_set_config(ext.wins.dialog, { hide = true })
+      vim.on_key(nil, ext.msg.on_dialog_key)
     end
     -- Messages emitted as a result of a typed command are treated specially:
     -- remember if the cmdline was used this event loop iteration.
