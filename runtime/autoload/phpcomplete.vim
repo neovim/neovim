@@ -2059,6 +2059,99 @@ function! phpcomplete#ClearCachedClassContents(full_file_path) " {{{
 	endfor
 endfunction " }}}
 
+function! s:FindOpeningBrace(lines, start_line) " {{{
+	" Find opening brace after class/interface/trait/function declaration skipping
+	" comments
+	let in_comment = 0
+	for i in range(a:start_line, len(a:lines) - 1)
+		let line = a:lines[i]
+		let j = 0
+		while j < len(line)
+			let char = line[j]
+			let next_char = j + 1 < len(line) ? line[j + 1] : ''
+			if !in_comment && char == '{'
+				return i
+			elseif !in_comment && char == '/' && next_char == '*'
+				let in_comment = 1
+			elseif in_comment && char == '*' && next_char == '/'
+				let in_comment = 0
+			elseif !in_comment && char == '/' && next_char == '/'
+				break
+			endif
+			let j += 1
+		endwhile
+	endfor
+
+	return -1
+endfunction
+" }}}
+
+function! s:FindMatchingBrace(lines, start_line) " {{{
+	" Find matching brace of a class/function/interface/trait declaration block
+	" skipping strings and comments
+	let brace_count = 0
+	let in_single_quote = 0
+	let in_double_quote = 0
+	let in_heredoc = 0
+	let heredoc_tag = ''
+	let in_comment = 0
+	
+	for i in range(a:start_line, len(a:lines) - 1)
+		let line = a:lines[i]
+		let j = 0
+
+		if in_heredoc
+			if line =~# '^\s*' . heredoc_tag . '\s*;*\s*$'
+				let in_heredoc = 0
+				let heredoc_tag = ''
+			endif
+			continue
+		endif
+
+		while j < len(line)
+			let char = line[j]
+			let next_char = j + 1 < len(line) ? line[j + 1] : ''
+			let in_string = (in_single_quote || in_double_quote)
+			
+			" Handle heredoc/nowdoc
+			if !in_string && !in_comment && line[j:] =~# '^<<<\s*\(\w\+\)'
+				let in_heredoc = 1
+				let heredoc_tag = matchstr(line[j:], '^<<<\s*\zs\w\+')
+				break
+			" Handle comments
+			elseif !in_string && char == '/' && next_char == '*'
+				let in_comment = 1
+				let j += 1
+			elseif in_comment && char == '*' && next_char == '/'
+				let in_comment = 0
+				let j += 1
+			elseif !in_string && !in_comment && ((char == '/' && next_char == '/') || char == '#')
+				" Single line comment, skip rest of line
+				break
+			" Handle strings
+			elseif !in_comment && !in_single_quote && char == '"' && (j == 0 || line[j-1] != '\')
+				let in_double_quote = !in_double_quote
+			elseif !in_comment && !in_double_quote && char == "'" && (j == 0 || line[j-1] != '\')
+				let in_single_quote = !in_single_quote
+			elseif !in_string && !in_comment
+				if char == '{'
+					let brace_count += 1
+				elseif char == '}'
+					let brace_count -= 1
+					if brace_count == 0
+						return i
+					endif
+				endif
+			endif
+			
+			let j += 1
+		endwhile
+	endfor
+	
+	return -1
+endfunction
+" }}}
+
 function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_name) " {{{
 	" returns dictionary containing content, namespace and imports for the class and all parent classes.
 	" Example:
@@ -2086,22 +2179,30 @@ function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_nam
 	let class_name_pattern = '[a-zA-Z_\x7f-\xff\\][a-zA-Z_0-9\x7f-\xff\\]*'
 	let cfile = join(a:file_lines, "\n")
 	let result = []
-	" We use new buffer and (later) normal! because
-	" this is the most efficient way. The other way
-	" is to go through the looong string looking for
-	" matching {}
+	
+	let lines = a:file_lines
+	let cfline = -1
+	let endline = -1
+	
+	" Find class/interface/trait declaration line
+	for i in range(len(lines))
+		if lines[i] =~? '\c\(class\|interface\|trait\)\_s\+'.a:class_name.'\(\>\|$\)'
+			let cfline = i
+			break
+		endif
+	endfor
+	
+	if cfline == -1
+		return result
+	endif
 
-	" remember the window we started at
-	let phpcomplete_original_window = winnr()
+	let endline = s:FindOpeningBrace(lines, cfline)
+	
+	if endline == -1
+		return result
+	endif
 
-	silent! below 1new
-	silent! 0put =cfile
-	call search('\c\(class\|interface\|trait\)\_s\+'.a:class_name.'\(\>\|$\)')
-	let cfline = line('.')
-	call search('{')
-	let endline = line('.')
-
-	let content = join(getline(cfline, endline), "\n")
+	let content = join(lines[cfline:endline], "\n")
 	" Catch extends
 	if content =~? 'extends'
 		let extends_string = matchstr(content, '\(class\|interface\)\_s\+'.a:class_name.'\_.\+extends\_s\+\zs\('.class_name_pattern.'\(,\|\_s\)*\)\+\ze\(extends\|{\)')
@@ -2117,65 +2218,54 @@ function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_nam
 	else
 		let implemented_interfaces = []
 	endif
-	call searchpair('{', '', '}', 'W')
-	let class_closing_bracket_line = line('.')
-
-	" Include class docblock
-	let doc_line = cfline - 1
-	if getline(doc_line) =~? '^\s*\*/'
-		while doc_line != 0
-			if getline(doc_line) =~? '^\s*/\*\*'
-				let cfline = doc_line
-				break
-			endif
-			let doc_line -= 1
-		endwhile
+	
+	" Find the end of class body
+	let class_closing_bracket_line = s:FindMatchingBrace(lines, endline)
+	
+	if class_closing_bracket_line == -1
+		let class_closing_bracket_line = len(lines) - 1
 	endif
 
-	let classcontent = join(getline(cfline, class_closing_bracket_line), "\n")
+	" Include class docblock
+	let doc_start_line = cfline
+	if cfline > 0 && lines[cfline - 1] =~? '^\s*\*/'
+		for doc_line in range(cfline - 1, 0, -1)
+			if lines[doc_line] =~? '^\s*/\*\*'
+				let doc_start_line = doc_line
+				break
+			endif
+		endfor
+	endif
 
+	let classcontent = join(lines[doc_start_line:class_closing_bracket_line], "\n")
+
+	" Find used traits
 	let used_traits = []
-	" move back to the line next to the class's definition
-	call cursor(endline + 1, 1)
-	let keep_searching = 1
-	while keep_searching != 0
-		" try to grab "use..." keywords
-		let [lnum, col] = searchpos('\c^\s\+use\s\+'.class_name_pattern, 'cW', class_closing_bracket_line)
-		let syn_name = synIDattr(synID(lnum, col, 0), "name")
-		if syn_name =~? 'string\|comment'
-			call cursor(lnum + 1, 1)
-			continue
-		endif
-
-		let trait_line = getline(lnum)
-		if trait_line !~? ';'
-			" try to find the next line containing ';'
-			let l = lnum
-			let search_line = trait_line
-
-			" add lines from the file until theres no ';' in them
-			while search_line !~? ';' && l > 0
-				" file lines are reversed so we need to go backwards
-				let l += 1
-				let search_line = getline(l)
-				let trait_line .= ' '.substitute(search_line, '\(^\s\+\|\s\+$\)', '', 'g')
+	for i in range(endline + 1, class_closing_bracket_line)
+		let line = lines[i]
+		if line =~? '\c^\s\+use\s\+'.class_name_pattern
+			" Handle multi-line use statements
+			let trait_line = line
+			let j = i
+			while trait_line !~? ';' && j < class_closing_bracket_line
+				let j += 1
+				if j < len(lines)
+					let trait_line .= ' '.substitute(lines[j], '\(^\s\+\|\s\+$\)', '', 'g')
+				else
+					break
+				endif
 			endwhile
+			
+			let use_expression = matchstr(trait_line, '\c^\s*use\s\+\zs.\{-}\ze;')
+			if use_expression != ''
+				let use_parts = map(split(use_expression, '\s*,\s*'), 'substitute(v:val, "\\s+", " ", "g")')
+				let used_traits += map(use_parts, 'substitute(v:val, "\\s", "", "g")')
+			endif
 		endif
-		let use_expression = matchstr(trait_line, '^\s*use\s\+\zs.\{-}\ze;')
-		let use_parts = map(split(use_expression, '\s*,\s*'), 'substitute(v:val, "\\s+", " ", "g")')
-		let used_traits += map(use_parts, 'substitute(v:val, "\\s", "", "g")')
-		call cursor(lnum + 1, 1)
+	endfor
 
-		if [lnum, col] == [0, 0]
-			let keep_searching = 0
-		endif
-	endwhile
+	let [current_namespace, imports] = phpcomplete#GetCurrentNameSpace(lines[0:cfline])
 
-	silent! bw! %
-
-	let [current_namespace, imports] = phpcomplete#GetCurrentNameSpace(a:file_lines[0:cfline])
-	" go back to original window
-	exe phpcomplete_original_window.'wincmd w'
 	call add(result, {
 				\ 'class': a:class_name,
 				\ 'content': classcontent,
@@ -2535,38 +2625,98 @@ function! phpcomplete#FormatDocBlock(info) " {{{
 endfunction!
 " }}}
 
+function! s:ExtractNamespaceDeclaration(lines) " {{{
+	let i = 0
+	let result = []
+	let in_comment = 0
+	for line in a:lines
+		let result += [line]
+		let match_end = match(line, '[^\s]namespace\s+')
+		let j = 0
+		if match_end != -1
+			let j = match_end
+		endif
+		while j < len(line)
+			let char = line[j]
+			let next_char = j + 1 < len(line) ? line[j + 1] : ''
+			if !in_comment && (char == '{' || char == ';')
+				return [i, result]
+			elseif !in_comment && char == '/' && next_char == '*'
+				let in_comment = 1
+			elseif in_comment && char == '*' && next_char == '/'
+				let in_comment = 0
+			elseif !in_comment && char == '/' && next_char == '/'
+				break
+			endif
+			let j += 1
+		endwhile
+		let i += 1
+	endfor
+
+	return [i, result]
+endfunction
+" {{{
+
+function! s:ExtractUseStatement(lines) " {{{
+	let i = 0
+	let result = []
+	let in_comment = 0
+	for line in a:lines
+		let result += [line]
+		let match_end = match(line, '[^\s]use\s+')
+		let j = 0
+		if match_end != -1
+			let j = match_end
+		endif
+		while j < len(line)
+			let char = line[j]
+			let next_char = j + 1 < len(line) ? line[j + 1] : ''
+			if !in_comment && char == ';'
+				return [i, result]
+			elseif !in_comment && char == '/' && next_char == '*'
+				let in_comment = 1
+			elseif in_comment && char == '*' && next_char == '/'
+				let in_comment = 0
+			elseif !in_comment && char == '/' && next_char == '/'
+				break
+			endif
+			let j += 1
+		endwhile
+		let i += 1
+	endfor
+
+	return [i, result]
+endfunction
+" {{{
+
 function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
-	let original_window = winnr()
-
-	silent! below 1new
-	silent! 0put =a:file_lines
-	normal! G
-
-	" clear out classes, functions and other blocks
+	let lines = a:file_lines
+	let processed_lines = []
+	let match = 0
+	" Collect use and namespace blocks
 	while 1
-		let block_start_pos = searchpos('\c\(class\|trait\|function\|interface\)\s\+\_.\{-}\zs{', 'Web')
-		if block_start_pos == [0, 0]
+		let new_match = match(lines[match:], '\(namespace\|use\)\s\+')
+		if new_match == -1
 			break
 		endif
-		let block_end_pos = searchpairpos('{', '', '}\|\%$', 'W', 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\\|comment"')
-
-		if block_end_pos != [0, 0]
-			" end of the block found, just delete it
-			silent! exec block_start_pos[0].','.block_end_pos[0].'d _'
-		else
-			" block pair not found, use block start as beginning and the end
-			" of the buffer instead
-			silent! exec block_start_pos[0].',$d _'
+		let match += new_match
+		if lines[match] =~? 'namespace'
+			let extract_result = s:ExtractNamespaceDeclaration(lines[match:])
+			let match += extract_result[0]
+			let processed_lines += extract_result[1]
 		endif
-	endwhile
-	normal! G
-
-	" grab the remains
-	let file_lines = reverse(getline(1, line('.') - 1))
-
-	silent! bw! %
-	exe original_window.'wincmd w'
-
+		if lines[match] =~? 'use'
+			let extract_result = s:ExtractUseStatement(lines[match:])
+			let match += extract_result[0]
+			let processed_lines += extract_result[1]
+		endif
+		let match += 1
+		if match >= len(lines)
+			break
+		endif
+ 	endwhile
+	let file_lines = reverse(processed_lines)
+	
 	let namespace_name_pattern = '[a-zA-Z_\x7f-\xff\\][a-zA-Z_0-9\x7f-\xff\\]*'
 	let i = 0
 	let file_length = len(file_lines)
