@@ -615,6 +615,25 @@ describe("'inccommand' for user commands", function()
       :Repro abc^                              |
     ]])
   end)
+
+  it('no crash with % + preview + file completion #28851', function()
+    exec_lua([[
+      local function callback() end
+      local function preview()
+        return 0
+      end
+
+      vim.api.nvim_create_user_command('TestCommand', callback, {
+        nargs = '?',
+        complete = 'file',
+        preview = preview,
+      })
+
+      vim.cmd.edit('Xtestscript')
+    ]])
+    feed(':TestCommand %')
+    assert_alive()
+  end)
 end)
 
 describe("'inccommand' with multiple buffers", function()
