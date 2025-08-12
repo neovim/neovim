@@ -262,6 +262,10 @@ preprocess_patch() {
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/evalwindow\.c/\1\/eval\/window.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename cindent.c to indent_c.c
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/cindent\.c/\1\/indent_c.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename map.c to mapping.c
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/map\.c/\1\/mapping.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
