@@ -5,8 +5,9 @@ local M = {
   highlighter = nil, ---@type vim.treesitter.highlighter?
   indent = 0, -- Current indent for block event.
   prompt = false, -- Whether a prompt is active; messages are placed in the 'dialog' window.
-  row = 0, -- Current row in the cmdline buffer, > 0 for block events.
-  level = -1, -- Current cmdline level, 0 when inactive, -1 one loop iteration after closing.
+  srow = 0, -- Buffer row at which the current cmdline starts; > 0 in block mode.
+  erow = 0, -- Buffer row at which the current cmdline ends; messages appended here in block mode.
+  level = -1, -- Current cmdline level; 0 when inactive, -1 one loop iteration after closing.
 }
 
 --- Set the 'cmdheight' and cmdline window height. Reposition message windows.
@@ -31,7 +32,7 @@ local function win_config(win, hide, height)
 end
 
 local cmdbuff = '' ---@type string Stored cmdline used to calculate translation offset.
-local promptlen = 0 -- Current length of the prompt, stored for use in "cmdline_pos"
+local promptlen = 0 -- Current length of the last line in the prompt.
 --- Concatenate content chunks and set the text for the current row in the cmdline buffer.
 ---
 ---@alias CmdChunk [integer, string]
@@ -39,11 +40,16 @@ local promptlen = 0 -- Current length of the prompt, stored for use in "cmdline_
 ---@param content CmdContent
 ---@param prompt string
 local function set_text(content, prompt)
-  promptlen, cmdbuff = #prompt, ''
+  local lines = {} ---@type string[]
+  for line in prompt:gmatch('[^\n]+') do
+    lines[#lines + 1] = fn.strtrans(line)
+  end
+  cmdbuff, promptlen, M.erow = '', #lines[#lines], M.srow + #lines - 1
   for _, chunk in ipairs(content) do
     cmdbuff = cmdbuff .. chunk[2]
   end
-  api.nvim_buf_set_lines(ext.bufs.cmd, M.row, -1, false, { prompt .. fn.strtrans(cmdbuff) .. ' ' })
+  lines[#lines] = ('%s%s '):format(lines[#lines], fn.strtrans(cmdbuff))
+  api.nvim_buf_set_lines(ext.bufs.cmd, M.srow, -1, false, lines)
 end
 
 --- Set the cmdline buffer text and cursor position.
@@ -96,8 +102,8 @@ local curpos = { 0, 0 } -- Last drawn cursor position.
 --@param level integer
 function M.cmdline_pos(pos)
   pos = #fn.strtrans(cmdbuff:sub(1, pos))
-  if curpos[1] ~= M.row + 1 or curpos[2] ~= promptlen + pos then
-    curpos[1], curpos[2] = M.row + 1, promptlen + pos
+  if curpos[1] ~= M.erow + 1 or curpos[2] ~= promptlen + pos then
+    curpos[1], curpos[2] = M.erow + 1, promptlen + pos
     -- Add matchparen highlighting to non-prompt part of cmdline.
     if pos > 0 and fn.exists('#matchparen#CursorMoved') == 1 then
       api.nvim_win_set_cursor(ext.wins.cmd, { curpos[1], curpos[2] - 1 })
@@ -114,7 +120,7 @@ end
 ---@param level integer
 ---@param abort boolean
 function M.cmdline_hide(level, abort)
-  if M.row > 0 or level > (fn.getcmdwintype() == '' and 1 or 2) then
+  if M.srow > 0 or level > (fn.getcmdwintype() == '' and 1 or 2) then
     return -- No need to hide when still in nested cmdline or cmdline_block.
   end
 
@@ -132,6 +138,7 @@ function M.cmdline_hide(level, abort)
       api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
       api.nvim_buf_set_lines(ext.bufs.dialog, 0, -1, false, {})
       api.nvim_win_set_config(ext.wins.dialog, { hide = true })
+      vim.on_key(nil, ext.msg.dialog_on_key)
     end
     -- Messages emitted as a result of a typed command are treated specially:
     -- remember if the cmdline was used this event loop iteration.
@@ -152,7 +159,7 @@ end
 function M.cmdline_block_show(lines)
   for _, content in ipairs(lines) do
     set_text(content, ':')
-    M.row = M.row + 1
+    M.srow = M.srow + 1
   end
 end
 
@@ -161,12 +168,12 @@ end
 ---@param line CmdContent
 function M.cmdline_block_append(line)
   set_text(line, ':')
-  M.row = M.row + 1
+  M.srow = M.srow + 1
 end
 
 --- Clear cmdline buffer and leave the cmdline.
 function M.cmdline_block_hide()
-  M.row = 0
+  M.srow = 0
   M.cmdline_hide(M.level, true)
 end
 

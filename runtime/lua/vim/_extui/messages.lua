@@ -27,11 +27,14 @@ local M = {
   prev_msg = '', -- Concatenated content of the previous message.
   virt = { -- Stored virt_text state.
     last = { {}, {}, {}, {} }, ---@type MsgContent[] status in last cmdline row.
-    msg = { {}, {} }, ---@type MsgContent[] [(x)] indicators in message window.
+    msg = { {}, {} }, ---@type MsgContent[] [(x)] indicators in msg window.
+    top = { {} }, ---@type MsgContent[] [+x] top indicator in dialog window.
+    bot = { {} }, ---@type MsgContent[] [+x] bottom indicator in dialog window.
     idx = { mode = 1, search = 2, cmd = 3, ruler = 4, spill = 1, dupe = 2 },
-    ids = {}, ---@type { ['last'|'msg']: integer? } Table of mark IDs.
+    ids = {}, ---@type { ['last'|'msg'|'top'|'bot']: integer? } Table of mark IDs.
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
   },
+  on_dialog_key = 0, -- vim.on_key namespace for paging in the dialog window.
 }
 
 function M.msg:close()
@@ -66,8 +69,8 @@ end
 local cmd_on_key = nil
 --- Place or delete a virtual text mark in the cmdline or message window.
 ---
----@param type 'last'|'msg'
----@param tar? 'cmd'|'msg'
+---@param type 'last'|'msg'|'top'|'bot'
+---@param tar? 'cmd'|'msg'|'dialog'
 local function set_virttext(type, tar)
   if (type == 'last' and (ext.cmdheight == 0 or M.virt.delayed)) or cmd_on_key then
     return -- Don't show virtual text while cmdline, error or full message in cmdline is shown.
@@ -75,32 +78,34 @@ local function set_virttext(type, tar)
 
   -- Concatenate the components of M.virt[type] and calculate the concatenated width.
   local width, chunks = 0, {} ---@type integer, [string, integer|string][]
-  local contents = type == 'last' and M.virt.last or M.virt.msg
+  local contents = M.virt[type] ---@type MsgContent[]
   for _, content in ipairs(contents) do
     for _, chunk in ipairs(content) do
       chunks[#chunks + 1] = { chunk[2], chunk[3] }
       width = width + api.nvim_strwidth(chunk[2])
     end
   end
+  tar = tar or type == 'msg' and ext.cfg.msg.target or 'cmd'
 
   if M.virt.ids[type] and #chunks == 0 then
-    api.nvim_buf_del_extmark(ext.bufs.cmd, ext.ns, M.virt.ids[type])
-    M.virt.ids[type] = nil
+    api.nvim_buf_del_extmark(ext.bufs[tar], ext.ns, M.virt.ids[type])
     M.cmd.last_col = type == 'last' and o.columns or M.cmd.last_col
+    M.virt.ids[type] = nil
   elseif #chunks > 0 then
-    tar = tar or type == 'msg' and ext.cfg.msg.target or 'cmd'
     local win = ext.wins[tar]
+    local line = (tar == 'msg' or type == 'top') and 'w0' or type == 'bot' and 'w$'
+    local srow = line and fn.line(line, ext.wins.dialog) - 1
     local erow = tar == 'cmd' and math.min(M.cmd.msg_row, api.nvim_buf_line_count(ext.bufs.cmd) - 1)
     local texth = api.nvim_win_text_height(win, {
-      max_height = api.nvim_win_get_height(win),
-      start_row = tar == 'msg' and fn.line('w0', ext.wins.msg) - 1 or nil,
+      max_height = (type == 'top' or type == 'bot') and 1 or api.nvim_win_get_height(win),
+      start_row = srow or nil,
       end_row = erow or nil,
     })
     local row = texth.end_row
     local col = fn.virtcol2col(win, row + 1, texth.end_vcol)
     local scol = fn.screenpos(win, row + 1, col).col ---@type integer
 
-    if type == 'msg' then
+    if type ~= 'last' then
       -- Calculate at which column to place the virt_text such that it is at the end
       -- of the last visible message line, overlapping the message text if necessary,
       -- but not overlapping the 'last' virt_text.
@@ -115,7 +120,7 @@ local function set_virttext(type, tar)
         M.msg.width = maxwidth
       end
 
-      local mwidth = tar == 'msg' and M.msg.width or M.cmd.last_col
+      local mwidth = tar == 'msg' and M.msg.width or tar == 'dialog' and o.columns or M.cmd.last_col
       if scol - offset + width > mwidth then
         col = fn.virtcol2col(win, row + 1, texth.end_vcol - (scol - offset + width - mwidth))
       end
@@ -231,7 +236,7 @@ function M.show_msg(tar, content, replace_last, append)
       for _, chunk in ipairs(content) do
         msg = msg .. chunk[2]
       end
-      dupe = (msg == M.prev_msg and ext.cmd.row == 0 and M.dupe + 1 or 0)
+      dupe = (msg == M.prev_msg and ext.cmd.srow == 0 and M.dupe + 1 or 0)
     end
 
     cr = M[tar].count > 0 and msg:sub(1, 1) == '\r'
@@ -239,7 +244,7 @@ function M.show_msg(tar, content, replace_last, append)
     count = M[tar].count + ((restart or msg == '\n') and 0 or 1)
 
     -- Ensure cmdline is clear when writing the first message.
-    if tar == 'cmd' and not will_full and dupe == 0 and M.cmd.count == 0 and ext.cmd.row == 0 then
+    if tar == 'cmd' and not will_full and dupe == 0 and M.cmd.count == 0 and ext.cmd.srow == 0 then
       api.nvim_buf_set_lines(ext.bufs.cmd, 0, -1, false, {})
     end
   end
@@ -252,7 +257,7 @@ function M.show_msg(tar, content, replace_last, append)
   local line_count = api.nvim_buf_line_count(ext.bufs[tar])
   ---@type integer Start row after last line in the target buffer, unless
   ---this is the first message, or in case of a repeated or replaced message.
-  local row = M[tar] and count <= 1 and not will_full and (tar == 'cmd' and ext.cmd.row or 0)
+  local row = M[tar] and count <= 1 and not will_full and (tar == 'cmd' and ext.cmd.erow or 0)
     or line_count - ((replace_last or restart or cr or append) and 1 or 0)
   local curline = (cr or append) and api.nvim_buf_get_lines(ext.bufs[tar], row, row + 1, false)[1]
   local start_row, width = row, M.msg.width
@@ -307,10 +312,10 @@ function M.show_msg(tar, content, replace_last, append)
     end
   elseif tar == 'cmd' and dupe == 0 then
     fn.clearmatches(ext.wins.cmd) -- Clear matchparen highlights.
-    if ext.cmd.row > 0 then
+    if ext.cmd.srow > 0 then
       -- In block mode the cmdheight is already dynamic, so just print the full message
       -- regardless of height. Spoof cmdline_show to put cmdline below message.
-      ext.cmd.row = ext.cmd.row + 1 + row - start_row
+      ext.cmd.srow = ext.cmd.srow + 1 + row - start_row
       ext.cmd.cmdline_show({}, 0, ':', '', ext.cmd.indent, 0, 0)
       api.nvim__redraw({ flush = true, cursor = true, win = ext.wins.cmd })
     else
@@ -340,7 +345,7 @@ function M.show_msg(tar, content, replace_last, append)
   end
 
   -- Reset message state the next event loop iteration.
-  if start_row == 0 or ext.cmd.row > 0 then
+  if start_row == 0 or ext.cmd.srow > 0 then
     vim.schedule(function()
       col, M.cmd.count = 0, 0
     end)
@@ -359,7 +364,7 @@ end
 function M.msg_show(kind, content, replace_last, _, append)
   if kind == 'empty' then
     -- A sole empty message clears the cmdline.
-    if ext.cfg.msg.target == 'cmd' and M.cmd.count == 0 then
+    if ext.cfg.msg.target == 'cmd' and M.cmd.count == 0 and ext.cmd.srow == 0 then
       M.msg_clear()
     end
   elseif kind == 'search_count' then
@@ -370,7 +375,7 @@ function M.msg_show(kind, content, replace_last, _, append)
     M.virt.last[M.virt.idx.search] = content
     M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
     set_virttext('last')
-  elseif ext.cmd.prompt or kind == 'wildlist' then
+  elseif (ext.cmd.prompt or kind == 'wildlist') and ext.cmd.srow == 0 then
     -- Route to dialog that stays open so long as the cmdline prompt is active.
     replace_last = api.nvim_win_get_config(ext.wins.dialog).hide or kind == 'wildlist'
     if kind == 'wildlist' then
@@ -383,7 +388,7 @@ function M.msg_show(kind, content, replace_last, _, append)
     -- Set the entered search command in the cmdline (if available).
     local tar = kind == 'search_cmd' and 'cmd' or ext.cfg.msg.target
     if tar == 'cmd' then
-      if ext.cmdheight == 0 or (ext.cmd.level > 0 and ext.cmd.row == 0) then
+      if ext.cmdheight == 0 or (ext.cmd.level > 0 and ext.cmd.srow == 0) then
         return -- Do not overwrite an active cmdline unless in block mode.
       end
       -- Store the time when an important message was emitted in order to not overwrite
@@ -458,7 +463,7 @@ function M.msg_history_show(entries, prev_cmd)
   M.set_pos('pager')
 end
 
---- Adjust dimensions of the message windows after certain events.
+--- Adjust visibility and dimensions of the message windows after certain events.
 ---
 ---@param type? 'cmd'|'dialog'|'msg'|'pager' Type of to be positioned window (nil for all).
 function M.set_pos(type)
@@ -469,10 +474,10 @@ function M.set_pos(type)
     local border = win ~= ext.wins.msg and { '', top, '', '', '', '', '', '' } or nil
     local config = {
       hide = false,
-      relative = 'laststatus',
+      relative = (win == ext.wins.pager or win == ext.wins.dialog) and 'editor' or 'laststatus',
       border = border,
       height = height,
-      row = win == ext.wins.msg and 0 or 1,
+      row = (win == ext.wins.pager or win == ext.wins.dialog) and o.lines - o.cmdheight or 0,
       col = 10000,
       focusable = type == 'cmd' or nil, -- Allow entering the cmdline window.
     }
@@ -511,6 +516,41 @@ function M.set_pos(type)
         end)
         vim.on_key(nil, ext.ns)
       end, ext.ns)
+    elseif type == 'dialog' then
+      -- Add virtual [+x] text to indicate scrolling is possible.
+      local function set_top_bot_spill()
+        local topspill = fn.line('w0', ext.wins.dialog) - 1
+        local botspill = api.nvim_buf_line_count(ext.bufs.dialog) - fn.line('w$', ext.wins.dialog)
+        M.virt.top[1][1] = topspill > 0 and { 0, (' [+%d]'):format(topspill) } or nil
+        set_virttext('top', 'dialog')
+        M.virt.bot[1][1] = botspill > 0 and { 0, (' [+%d]'):format(botspill) } or nil
+        set_virttext('bot', 'dialog')
+        api.nvim__redraw({ flush = true })
+      end
+      set_top_bot_spill()
+
+      -- Allow paging in the dialog window, consume the key if the topline changes.
+      M.dialog_on_key = vim.on_key(function(key, typed)
+        if not typed then
+          return
+        end
+        local page_keys = {
+          g = 'gg',
+          G = 'G',
+          j = 'Lj',
+          k = 'Hk',
+          d = [[\<C-D>]],
+          u = [[\<C-U>]],
+          f = [[\<C-F>]],
+          b = [[\<C-B>]],
+        }
+        if page_keys[key] then
+          local topline = fn.getwininfo(ext.wins.dialog)[1].topline
+          fn.win_execute(ext.wins.dialog, ('exe "norm! %s"'):format(page_keys[key]))
+          set_top_bot_spill()
+          return fn.getwininfo(ext.wins.dialog)[1].topline ~= topline and '' or nil
+        end
+      end)
     elseif type == 'msg' then
       -- Ensure last line is visible and first line is at top of window.
       local row = (texth.all > height and texth.end_row or 0) + 1
