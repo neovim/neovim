@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2025 Aug 10
+" Last Change:	2025 Aug 11
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -367,8 +367,8 @@ if !exists("python_no_doctest_highlight")
   endif
 endif
 
-" Sync at the beginning of class, function, or method definition.
-syn sync match pythonSync grouphere NONE "^\%(def\|class\)\s\+\h\w*\s*[(:]"
+" Sync at the beginning of (async) function or class definitions.
+syn sync match pythonSync grouphere NONE "^\%(async\s\+def\|def\|class\)\s\+\h\w*\s*[(:]"
 
 " The default highlight links.  Can be overridden later.
 hi def link pythonStatement		Statement
