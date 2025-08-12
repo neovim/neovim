@@ -7070,7 +7070,7 @@ static void ex_checkpath(exarg_T *eap)
 {
   find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1,
                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
-                       1, (linenr_T)MAXLNUM, eap->forceit);
+                       1, (linenr_T)MAXLNUM, eap->forceit, false);
 }
 
 /// ":psearch"
@@ -7128,8 +7128,8 @@ static void ex_findpat(exarg_T *eap)
   }
   if (!eap->skip) {
     find_pattern_in_path(eap->arg, 0, strlen(eap->arg), whole, !eap->forceit,
-                         *eap->cmd == 'd' ? FIND_DEFINE : FIND_ANY,
-                         n, action, eap->line1, eap->line2, eap->forceit);
+                         *eap->cmd == 'd' ? FIND_DEFINE : FIND_ANY, n, action,
+                         eap->line1, eap->line2, eap->forceit, false);
   }
 }
 

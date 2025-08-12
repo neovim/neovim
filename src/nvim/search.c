@@ -3852,9 +3852,10 @@ static char *get_line_and_copy(linenr_T lnum, char *buf)
 /// @param start_lnum     first line to start searching
 /// @param end_lnum       last line for searching
 /// @param forceit        If true, always switch to the found path
+/// @param silent         Do not print messages when ACTION_EXPAND
 void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool skip_comments,
                           int type, int count, int action, linenr_T start_lnum, linenr_T end_lnum,
-                          int forceit)
+                          bool forceit, bool silent)
 {
   SearchedFile *files;                  // Stack of included files
   SearchedFile *bigger;                 // When we need more space
@@ -4082,7 +4083,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           files[depth].name = curr_fname = new_fname;
           files[depth].lnum = 0;
           files[depth].matched = false;
-          if (action == ACTION_EXPAND) {
+          if (action == ACTION_EXPAND && !shortmess(SHM_COMPLETIONSCAN) && !silent) {
             msg_hist_off = true;                // reset in msg_trunc()
             vim_snprintf(IObuff, IOSIZE,
                          _("Scanning included file: %s"),
@@ -4411,8 +4412,7 @@ exit_matched:
         msg(_("No included files"), 0);
       }
     }
-  } else if (!found
-             && action != ACTION_EXPAND) {
+  } else if (!found && action != ACTION_EXPAND && !silent) {
     if (got_int || ins_compl_interrupted()) {
       emsg(_(e_interr));
     } else if (type == FIND_DEFINE) {
