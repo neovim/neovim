@@ -160,12 +160,12 @@ end
 ---@param b integer
 ---@param opts nil|{ indent?: integer }
 local function set_dev_options(w, b, opts)
-  vim.wo[w].scrolloff = 5
-  vim.wo[w].wrap = false
-  vim.wo[w].foldmethod = 'expr'
-  vim.wo[w].foldexpr = 'v:lua.vim.treesitter.foldexpr()' -- explicitly set foldexpr
-  vim.wo[w].foldenable = false -- Don't fold on first open InspectTree
-  vim.wo[w].foldlevel = 99
+  vim.wo[w][0].scrolloff = 5
+  vim.wo[w][0].wrap = false
+  vim.wo[w][0].foldmethod = 'expr'
+  vim.wo[w][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()' -- explicitly set foldexpr
+  vim.wo[w][0].foldenable = false -- Don't fold on first open InspectTree
+  vim.wo[w][0].foldlevel = 99
   vim.bo[b].buflisted = false
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
