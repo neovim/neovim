@@ -266,14 +266,14 @@ cmake --build build
 
 In case you are not using Alpine Linux you can use a container to do the build the binary:
 
-```bash
+```sh
 podman run \
   --rm \
   -it \
   -v "$PWD:/workdir" \
   -w /workdir \
   alpine:latest \
-  bash -c 'apk add build-base cmake coreutils curl gettext-tiny-dev && make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"'
+  sh -c 'apk add build-base cmake coreutils curl gettext-tiny-dev && make CMAKE_EXTRA_FLAGS="-DSTATIC_BUILD=1"'
 ```
 
 The resulting binary in `build/bin/nvim` will have all the dependencies statically linked:
