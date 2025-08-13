@@ -13,6 +13,7 @@ local hashpipe = assert(io.open(funcsfname, 'wb'))
 
 hashpipe:write([[
 #include "nvim/arglist.h"
+#include "nvim/channel.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdhist.h"
 #include "nvim/diff.h"
@@ -28,7 +29,10 @@ hashpipe:write([[
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fold.h"
+#include "nvim/fuzzy.h"
 #include "nvim/getchar.h"
+#include "nvim/indent.h"
+#include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/mapping.h"
 #include "nvim/match.h"

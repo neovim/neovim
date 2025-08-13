@@ -56,6 +56,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/ex_session.h"
 #include "nvim/fold.h"
+#include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/gettext_defs.h"
@@ -97,7 +98,6 @@
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
-#include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
@@ -5578,7 +5578,7 @@ static bool match_str(char *const str, regmatch_T *const regmatch, char **const 
     }
   } else {
     const int score = fuzzy_match_str(str, fuzzystr);
-    if (score != 0) {
+    if (score != FUZZY_SCORE_NONE) {
       if (!test_only) {
         fuzmatch[idx].idx = idx;
         fuzmatch[idx].str = xstrdup(str);

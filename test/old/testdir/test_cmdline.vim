@@ -3262,7 +3262,7 @@ endfunc
 func Test_fuzzy_completion_bufname_fullpath()
   CheckUnix
   set wildoptions&
-  call mkdir('Xcmd/Xstate/Xfile.js', 'p')
+  call mkdir('Xcmd/Xstate/Xfile.js', 'pR')
   edit Xcmd/Xstate/Xfile.js
   cd Xcmd/Xstate
   enew
@@ -3270,9 +3270,8 @@ func Test_fuzzy_completion_bufname_fullpath()
   call assert_equal('"b CmdStateFile', @:)
   set wildoptions=fuzzy
   call feedkeys(":b CmdStateFile\<Tab>\<C-B>\"\<CR>", 'tx')
-  call assert_match('Xcmd/Xstate/Xfile.js$', @:)
+  call assert_equal('"b CmdStateFile', @:)
   cd -
-  call delete('Xcmd', 'rf')
   set wildoptions&
 endfunc
 
@@ -3551,7 +3550,7 @@ func Test_fuzzy_completion_mapname()
   nmap <Plug>state :
   nmap <Plug>FendingOff :
   call feedkeys(":nmap <Plug>fo\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal("\"nmap <Plug>format <Plug>TestFOrmat <Plug>FendingOff <Plug>goformat <Plug>fendoff", @:)
+  call assert_equal("\"nmap <Plug>format <Plug>TestFOrmat <Plug>FendingOff <Plug>fendoff <Plug>goformat", @:)
   nunmap <Plug>format
   nunmap <Plug>goformat
   nunmap <Plug>TestFOrmat
@@ -3673,9 +3672,7 @@ func Test_fuzzy_completion_syntax_group()
   call assert_equal('"syntax list mpar', @:)
   set wildoptions=fuzzy
   call feedkeys(":syntax list mpar\<Tab>\<C-B>\"\<CR>", 'tx')
-  " Fuzzy match prefers NvimParenthesis over MatchParen
-  " call assert_equal('"syntax list MatchParen', @:)
-  call assert_equal('"syntax list NvimParenthesis', @:)
+  call assert_equal('"syntax list MatchParen', @:)
   set wildoptions&
 endfunc
 
@@ -3726,7 +3723,7 @@ func Test_fuzzy_completion_cmd_sort_results()
   command T123FendingOff :
   set wildoptions=fuzzy
   call feedkeys(":T123fo\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"T123format T123TestFOrmat T123FendingOff T123goformat T123fendoff', @:)
+  call assert_equal('"T123format T123TestFOrmat T123FendingOff T123fendoff T123goformat', @:)
   delcommand T123format
   delcommand T123goformat
   delcommand T123TestFOrmat
