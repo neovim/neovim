@@ -182,6 +182,8 @@ EDITOR
    and |:vimgrep| commands.
 • For security, 'exrc' no longer shows an "(a)llow" choice. Instead you must
   "(v)iew" then run `:trust`.
+• |:read:| reads the output of an Ex command into the buffer. Example:>
+    :read :ls
 
 EVENTS
 
