@@ -50,7 +50,7 @@
 typedef double score_t;
 
 #define SCORE_MAX INFINITY
-#define SCORE_MIN -INFINITY
+#define SCORE_MIN (-INFINITY)
 #define SCORE_SCALE 1000
 
 typedef struct {
@@ -253,8 +253,9 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
       items[match_count].itemstr = itemstr_allocate ? xstrdup(itemstr) : itemstr;
       items[match_count].itemstr_allocated = itemstr_allocate;
 
-      // Copy the list of matching positions in itemstr to a list.
-      {
+      // Copy the list of matching positions in itemstr to a list, if
+      // "retmatchpos" is set.
+      if (retmatchpos) {
         items[match_count].lmatchpos = tv_list_alloc(kListLenMayKnow);
         int j = 0;
         const char *p = str;
@@ -305,6 +306,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
       for (int i = 0; i < match_count; i++) {
         assert(items[i].lmatchpos != NULL);
         tv_list_append_list(retlist, items[i].lmatchpos);
+        items[i].lmatchpos = NULL;
       }
 
       // copy the matching scores
@@ -321,6 +323,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
     if (items[i].itemstr_allocated) {
       xfree(items[i].itemstr);
     }
+    assert(items[i].lmatchpos == NULL);
   }
   xfree(items);
 }
@@ -901,9 +904,8 @@ static score_t match_positions(const char *const needle, const char *const hayst
           // If this score was determined using
           // SCORE_MATCH_CONSECUTIVE, the
           // previous character MUST be a match
-          match_required =
-            i && j
-            && M[i][j] == D[i - 1][j - 1] + SCORE_MATCH_CONSECUTIVE;
+          match_required = i && j
+                           && M[i][j] == D[i - 1][j - 1] + SCORE_MATCH_CONSECUTIVE;
           positions[i] = (uint32_t)(j--);
           break;
         }
