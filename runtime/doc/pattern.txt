@@ -1481,37 +1481,51 @@ Finally, these constructs are unique to Perl:
 ==============================================================================
 11. Fuzzy matching					*fuzzy-matching*
 
-Fuzzy matching refers to matching strings using a non-exact search string.
-Fuzzy matching will match a string, if all the characters in the search string
-are present anywhere in the string in the same order.  Case is ignored.  In a
-matched string, other characters can be present between two consecutive
-characters in the search string.  If the search string has multiple words, then
-each word is matched separately.  So the words in the search string can be
-present in any order in a string.
+Fuzzy matching scores how well a string matches a pattern when the pattern
+characters appear in order but not necessarily contiguously.
 
-Vim uses the same improved algorithm as the fzy project:
+Example: >
+    Pattern:    "vim"
+    Candidates: "vim"        -> perfect
+                "vimeo"      -> good (v i m)
+                "voice mail" -> weaker (v _ i _ _ _ m)
+                "vintage"    -> no match (no "m")
+<
+If the search string has multiple words, each word is matched separately and
+may appear in any order in the candidate.  For example "get pat" matches
+"GetPattern", "PatternGet", "getPattern", "patGetter", "getSomePattern",
+"MatchpatternGet", etc.
+
+The 'ignorecase' and 'smartcase' options do not apply, case is ignored if the
+pattern is all lower case.
+
+Vim's implementation is based on the algorithm from the fzy project:
 https://github.com/jhawthorn/fzy
 
-Fuzzy matching assigns a score for each matched string based on the following
-criteria:
-    - The number of sequentially matching characters.
-    - The number of characters (distance) between two consecutive matching
-      characters.
-    - Matches at the beginning of a word
-    - Matches at a camel case character (e.g. Case in CamelCase)
-    - Matches after a path separator or a hyphen.
-    - The number of unmatched characters in a string.
-    - A full/exact match is preferred.
-The matching string with the highest score is returned first.
+It uses dynamic programming to compute an optimal score for a given pattern
+and candidate.
 
-For example, when you search for the "get pat" string using fuzzy matching, it
-will match the strings "GetPattern", "PatternGet", "getPattern", "patGetter",
-"getSomePattern", "MatchpatternGet" etc.
+The algorithm works in two stages:
 
-The functions |matchfuzzy()| and |matchfuzzypos()| can be used to fuzzy search
-a string in a List of strings.  The matchfuzzy() function returns a List of
-matching strings.  The matchfuzzypos() functions returns the List of matches,
-the matching positions and the fuzzy match scores.
+1. Forward pass
+   Scan the candidate left to right, tracking the best score for each
+   pattern position.  Matches score higher when they occur at the start
+   of the candidate, the start of a word (space, underscore, dash,
+   camelCase), or directly after the previous match.
+
+2. Backward pass
+   Start from the best-scoring end position and step back to find match
+   positions, ensuring the alignment is optimal.
+
+Vim extends the original algorithm to support multibyte codepoints, allowing
+correct matching for UTF-8 and other encodings.
+
+Time complexity is O(pattern * candidate).  Memory usage is proportional
+to the same.
+
+The |matchfuzzy()| and |matchfuzzypos()| functions perform fuzzy searching in
+a List of strings.  |matchfuzzy()| returns the matching strings, while
+|matchfuzzypos()| returns the matches along with their positions and scores.
 
 The "f" flag of `:vimgrep` enables fuzzy matching.
 
