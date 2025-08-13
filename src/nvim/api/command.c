@@ -726,6 +726,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
   garray_T capture_local;
   const int save_msg_silent = msg_silent;
+  const bool save_redir_off = redir_off;
   garray_T * const save_capture_ga = capture_ga;
   const int save_msg_col = msg_col;
 
@@ -737,6 +738,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   TRY_WRAP(err, {
     if (opts->output) {
       msg_silent++;
+      redir_off = false;
       msg_col = 0;  // prevent leading spaces
     }
 
@@ -747,6 +749,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     if (opts->output) {
       capture_ga = save_capture_ga;
       msg_silent = save_msg_silent;
+      redir_off = save_redir_off;
       // Put msg_col back where it was, since nothing should have been written.
       msg_col = save_msg_col;
     }

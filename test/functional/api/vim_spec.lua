@@ -385,6 +385,9 @@ describe('API', function()
       )
       eq({ output = '' }, api.nvim_exec2('echo', { output = true }))
       eq({ output = 'foo 42' }, api.nvim_exec2('echo "foo" 42', { output = true }))
+      -- Returns output in cmdline mode #35321
+      feed(':')
+      eq({ output = 'foo 42' }, api.nvim_exec2('echo "foo" 42', { output = true }))
     end)
 
     it('displays messages when opts.output=false', function()
@@ -4944,6 +4947,9 @@ describe('API', function()
     end)
 
     it('captures output', function()
+      eq('foo', api.nvim_cmd({ cmd = 'echo', args = { '"foo"' } }, { output = true }))
+      -- Returns output in cmdline mode #35321
+      feed(':')
       eq('foo', api.nvim_cmd({ cmd = 'echo', args = { '"foo"' } }, { output = true }))
     end)
 
