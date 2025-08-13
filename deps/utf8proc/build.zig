@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) !void {
 
     lib.addCSourceFiles(.{ .root = upstream.path(""), .files = &.{
         "utf8proc.c",
-    } });
+    }, .flags = &.{"-DUTF8PROC_STATIC"} });
 
     b.installArtifact(lib);
 }
