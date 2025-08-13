@@ -29,6 +29,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
+#include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
@@ -3096,7 +3097,7 @@ void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regmatch, ch
         match = vim_regexec(regmatch, str, 0);
       } else {
         score = fuzzy_match_str(str, pat);
-        match = (score != 0);
+        match = (score != FUZZY_SCORE_NONE);
       }
     } else {
       match = true;
@@ -3408,7 +3409,7 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
         match = vim_regexec(regmatch, s, 0);
       } else {
         score = fuzzy_match_str(s, pat);
-        match = (score != 0);
+        match = (score != FUZZY_SCORE_NONE);
       }
     } else {
       match = true;               // match everything
