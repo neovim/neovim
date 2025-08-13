@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2025 Aug 11
+" Last Change:	2025 Aug 13
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -112,6 +112,10 @@ syn keyword pythonAsync		async await
 " for more on this.
 syn match   pythonConditional   "^\s*\zscase\%(\s\+.*:.*$\)\@="
 syn match   pythonConditional   "^\s*\zsmatch\%(\s\+.*:\s*\%(#.*\)\=$\)\@="
+
+" These names are special by convention. While they aren't real keywords,
+" giving them distinct highlighting provides a nice visual cue.
+syn keyword pythonClassVar	self cls
 
 " Decorators
 " A dot must be allowed because of @MyClass.myfunc decorators.
@@ -378,6 +382,7 @@ hi def link pythonOperator		Operator
 hi def link pythonException		Exception
 hi def link pythonInclude		Include
 hi def link pythonAsync			Statement
+hi def link pythonClassVar		Identifier
 hi def link pythonDecorator		Define
 hi def link pythonDecoratorName		Function
 hi def link pythonClass			Structure
