@@ -23,23 +23,24 @@ function M.check()
   ---@class ParserEntry
   ---@field name string
   ---@field path string
+  ---@field index integer runtime path index (unique)
 
   local sorted_parsers = {} ---@type ParserEntry[]
 
-  for _, parser in ipairs(parsers) do
+  for i, parser in ipairs(parsers) do
     local parsername = vim.fn.fnamemodify(parser, ':t:r')
-    table.insert(sorted_parsers, { name = parsername, path = parser })
+    table.insert(sorted_parsers, { name = parsername, path = parser, index = i })
   end
 
   table.sort(sorted_parsers, function(a, b)
     if a.name == b.name then
-      return a.path < b.path
+      return a.index < b.index -- if names are the same sort by rtpath index (unique)
     else
       return a.name < b.name
     end
   end)
 
-  for _, parser in ipairs(sorted_parsers) do
+  for i, parser in ipairs(sorted_parsers) do
     local is_loadable, err_or_nil = pcall(ts.language.add, parser.name)
 
     if not is_loadable then
@@ -51,10 +52,15 @@ function M.check()
           err_or_nil or '?'
         )
       )
+    elseif i > 1 and sorted_parsers[i - 1].name == parser.name then
+      -- Sorted by runtime path order (load order), thus, if the previous parser has the same name,
+      -- the current parser will not be loaded and `ts.language.inspect(parser.name)` with have
+      -- incorrect information.
+      health.ok(string.format('Parser: %-20s (not loaded), path: %s', parser.name, parser.path))
     else
       local lang = ts.language.inspect(parser.name)
       health.ok(
-        string.format('Parser: %-20s ABI: %d, path: %s', parser.name, lang.abi_version, parser.path)
+        string.format('Parser: %-25s ABI: %d, path: %s', parser.name, lang.abi_version, parser.path)
       )
     end
   end
