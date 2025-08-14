@@ -416,6 +416,8 @@ endforeach()
 list(SORT NVIM_SOURCES)
 list(SORT NVIM_HEADERS)
 
+list(APPEND UNCRUSTIFY_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
+
 foreach(sfile ${NVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
   if(WIN32 AND ${f} MATCHES "^(pty_proc_unix.c)$")
@@ -901,13 +903,13 @@ add_glob_target(
   TARGET lintc-uncrustify
   COMMAND ${UNCRUSTIFY_PRG}
   FLAGS -c ${UNCRUSTIFY_CONFIG} -q --check
-  FILES ${NVIM_SOURCES} ${NVIM_HEADERS})
+  FILES ${UNCRUSTIFY_NVIM_SOURCES})
 
 add_glob_target(
   TARGET formatc
   COMMAND ${UNCRUSTIFY_PRG}
   FLAGS -c ${UNCRUSTIFY_CONFIG} --replace --no-backup
-  FILES ${NVIM_SOURCES} ${NVIM_HEADERS})
+  FILES ${UNCRUSTIFY_NVIM_SOURCES})
 
 # TODO(bfredl): there is a bug in "uncrustify --update-config-with-doc" which breaks
 # our config (backslash escape in strings). Once fixed these two lines should be deleted

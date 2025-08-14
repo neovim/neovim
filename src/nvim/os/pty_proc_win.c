@@ -12,7 +12,7 @@
 #include "nvim/os/pty_conpty_win.h"
 #include "nvim/os/pty_proc_win.h"
 
-# include "os/pty_proc_win.c.generated.h"
+#include "os/pty_proc_win.c.generated.h"
 
 static void CALLBACK pty_proc_terminate_cb(void *context, BOOLEAN unused)
   FUNC_ATTR_NONNULL_ALL
