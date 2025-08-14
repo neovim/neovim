@@ -2591,6 +2591,21 @@ func Test_inc_file()
   call assert_equal('bitbake', &filetype)
   bwipe!
 
+  call writefile(['PREFERRED_PROVIDER_virtual/kernel = "somekernel"'], 'Xfile.inc')
+  split Xfile.inc
+  call assert_equal('bitbake', &filetype)
+  bwipe!
+
+  call writefile(['MACHINEOVERRIDES =. "qemuall:"'], 'Xfile.inc')
+  split Xfile.inc
+  call assert_equal('bitbake', &filetype)
+  bwipe!
+
+  call writefile(['BBPATH .= ":${LAYERDIR}"'], 'Xfile.inc')
+  split Xfile.inc
+  call assert_equal('bitbake', &filetype)
+  bwipe!
+
   " asm
   call writefile(['asmsyntax=foo'], 'Xfile.inc')
   split Xfile.inc

@@ -858,7 +858,7 @@ function M.inc(path, bufnr)
       -- headers so assume POV-Ray
     elseif findany(line, { '^%s{', '^%s%(%*' }) or matchregex(line, pascal_keywords) then
       return 'pascal'
-    elseif findany(line, { '^%s*inherit ', '^%s*require ', '^%s*%u[%w_:${}]*%s+%??[?:+]?= ' }) then
+    elseif findany(line, { '^%s*inherit ', '^%s*require ', '^%s*%u[%w_:${}/]*%s*%??[?:+.]?=%.? ' }) then
       return 'bitbake'
     end
   end
