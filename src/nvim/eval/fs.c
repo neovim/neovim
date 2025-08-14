@@ -45,9 +45,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/fs.c.generated.h"
-#endif
+#include "eval/fs.c.generated.h"
 
 static const char e_error_while_writing_str[] = N_("E80: Error while writing: %s");
 

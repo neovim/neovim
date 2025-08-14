@@ -23,9 +23,7 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "input.c.generated.h"  // IWYU pragma: export
-#endif
+#include "input.c.generated.h"  // IWYU pragma: export
 
 /// Ask for a reply from the user, a 'y' or a 'n', with prompt "str" (which
 /// should have been translated already).

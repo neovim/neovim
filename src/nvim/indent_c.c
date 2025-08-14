@@ -36,9 +36,7 @@ typedef struct {
   lpos_T lpos;
 } cpp_baseclass_cache_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "indent_c.c.generated.h"
-#endif
+#include "indent_c.c.generated.h"
 // Find the start of a comment, not knowing if we are in a comment right now.
 // Search starts at w_cursor.lnum and goes backwards.
 // Return NULL when not inside a comment.

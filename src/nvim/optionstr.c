@@ -54,9 +54,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "optionstr.c.generated.h"
-#endif
+#include "optionstr.c.generated.h"
 
 static const char e_illegal_character_after_chr[]
   = N_("E535: Illegal character after <%c>");

@@ -20,9 +20,7 @@
 #include "nvim/memory.h"
 #include "nvim/sha256.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "sha256.c.generated.h"
-#endif
+#include "sha256.c.generated.h"
 #define GET_UINT32(n, b, i) { \
   (n) = ((uint32_t)(b)[(i)] << 24) \
         | ((uint32_t)(b)[(i) + 1] << 16) \

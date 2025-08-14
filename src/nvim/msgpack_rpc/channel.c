@@ -33,9 +33,7 @@
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "msgpack_rpc/channel.c.generated.h"
-#endif
+#include "msgpack_rpc/channel.c.generated.h"
 
 #ifdef NVIM_LOG_DEBUG
 # define REQ "[request]  "

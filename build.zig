@@ -304,7 +304,6 @@ pub fn build(b: *std.Build) !void {
 
     const flags = [_][]const u8{
         "-std=gnu99",
-        "-DINCLUDE_GENERATED_DECLARATIONS",
         "-DZIG_BUILD",
         "-D_GNU_SOURCE",
         if (support_unittests) "-DUNIT_TESTING" else "",

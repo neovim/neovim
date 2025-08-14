@@ -33,10 +33,8 @@
 #include "nvim/runtime.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/api_metadata.generated.h"
-# include "api/private/helpers.c.generated.h"  // IWYU pragma: keep
-#endif
+#include "api/private/api_metadata.generated.h"
+#include "api/private/helpers.c.generated.h"  // IWYU pragma: keep
 
 /// Start block that may cause Vimscript exceptions while evaluating another code
 ///

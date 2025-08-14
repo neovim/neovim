@@ -160,9 +160,7 @@ enum {
   KEYLEN_PART_MAP = -2,  ///< keylen value for incomplete mapping
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "getchar.c.generated.h"
-#endif
+#include "getchar.c.generated.h"
 
 static const char e_recursive_mapping[] = N_("E223: Recursive mapping");
 static const char e_cmd_mapping_must_end_with_cr[]

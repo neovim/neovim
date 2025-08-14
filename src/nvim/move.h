@@ -4,6 +4,4 @@
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 #include "nvim/vim_defs.h"  // IWYU pragma: keep
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "move.h.generated.h"
-#endif
+#include "move.h.generated.h"

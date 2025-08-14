@@ -29,9 +29,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "state.c.generated.h"
-#endif
+#include "state.c.generated.h"
 
 void state_enter(VimState *s)
   FUNC_ATTR_NONNULL_ALL

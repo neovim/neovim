@@ -6,9 +6,7 @@
 #include "nvim/statusline_defs.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "option_vars.generated.h"  // NOLINT(build/include_defs)
-#endif
+#include "option_vars.generated.h"  // NOLINT(build/include_defs)
 
 // option_vars.h: definition of global variables for settable options
 

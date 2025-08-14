@@ -56,9 +56,7 @@
 #include "nvim/ui_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/userfunc.c.generated.h"
-#endif
+#include "eval/userfunc.c.generated.h"
 
 /// structure used as item in "fc_defer"
 typedef struct {

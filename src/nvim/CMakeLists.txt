@@ -180,8 +180,6 @@ if(HAS_DIAG_COLOR_FLAG)
   endif()
 endif()
 
-target_compile_definitions(main_lib INTERFACE INCLUDE_GENERATED_DECLARATIONS)
-
 # Remove --sort-common from linker flags, as this seems to cause bugs (see #2641, #3374).
 # TODO: Figure out the root cause.
 if(CMAKE_EXE_LINKER_FLAGS MATCHES "--sort-common" OR
@@ -911,8 +909,14 @@ add_glob_target(
   FLAGS -c ${UNCRUSTIFY_CONFIG} --replace --no-backup
   FILES ${NVIM_SOURCES} ${NVIM_HEADERS})
 
-add_dependencies(lintc-uncrustify uncrustify_update_config)
-add_dependencies(formatc uncrustify_update_config)
+# TODO(bfredl): there is a bug in "uncrustify --update-config-with-doc" which breaks
+# our config (backslash escape in strings). Once fixed these two lines should be deleted
+# and the following two commented lines be uncomennetd.
+add_dependencies(lintc-uncrustify uncrustify)
+add_dependencies(formatc uncrustify)
+#add_dependencies(lintc-uncrustify uncrustify_update_config)
+#add_dependencies(formatc uncrustify_update_config)
+
 add_dependencies(uncrustify_update_config uncrustify)
 
 add_custom_target(lintc)

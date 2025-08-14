@@ -81,9 +81,7 @@
 /// Type used by call_user_expand_func
 typedef void *(*user_expand_func_T)(const char *, int, typval_T *);
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "cmdexpand.c.generated.h"
-#endif
+#include "cmdexpand.c.generated.h"
 
 static bool cmd_showtail;  ///< Only show path tail in lists ?
 static bool may_expand_pattern = false;

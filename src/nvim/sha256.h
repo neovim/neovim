@@ -13,6 +13,4 @@ typedef struct {
   uint8_t buffer[SHA256_BUFFER_SIZE];
 } context_sha256_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "sha256.h.generated.h"
-#endif
+#include "sha256.h.generated.h"

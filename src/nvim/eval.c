@@ -315,9 +315,7 @@ typedef enum {
   FILTERMAP_FOREACH,
 } filtermap_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval.c.generated.h"
-#endif
+#include "eval.c.generated.h"
 
 static uint64_t last_timer_id = 1;
 static PMap(uint64_t) timers = MAP_INIT;

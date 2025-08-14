@@ -17,6 +17,4 @@ enum {
 
 typedef int (*Indenter)(void);
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "indent.h.generated.h"
-#endif
+#include "indent.h.generated.h"

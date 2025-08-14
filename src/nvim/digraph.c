@@ -53,9 +53,7 @@ static const char e_digraph_argument_must_be_one_character_str[]
 static const char e_digraph_setlist_argument_must_be_list_of_lists_with_two_items[]
   = N_("E1216: digraph_setlist() argument must be a list of lists with two items");
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "digraph.c.generated.h"
-#endif
+#include "digraph.c.generated.h"
 // digraphs added by the user
 static garray_T user_digraphs = { 0, 0, (int)sizeof(digr_T), 10, NULL };
 

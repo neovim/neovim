@@ -253,6 +253,4 @@ enum {
 /// Passed to an eval() function to enable evaluation.
 EXTERN evalarg_T EVALARG_EVALUATE INIT( = { EVAL_EVALUATE, NULL, NULL, NULL });
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval.h.generated.h"
-#endif
+#include "eval.h.generated.h"

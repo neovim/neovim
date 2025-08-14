@@ -12,9 +12,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/secure.c.generated.h"
-#endif
+#include "lua/secure.c.generated.h"
 
 char *nlua_read_secure(const char *path)
 {

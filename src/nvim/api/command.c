@@ -37,9 +37,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/command.c.generated.h"
-#endif
+#include "api/command.c.generated.h"
 
 /// Parse arguments for :map/:abbrev commands, preserving whitespace in RHS.
 /// @param arg_str  The argument string to parse

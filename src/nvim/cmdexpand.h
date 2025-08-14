@@ -45,6 +45,4 @@ enum {
   WILD_FUNC_TRIGGER         = 0x10000,  ///< called from wildtrigger()
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "cmdexpand.h.generated.h"
-#endif
+#include "cmdexpand.h.generated.h"

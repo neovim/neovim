@@ -55,9 +55,7 @@
 // There are marks 'A - 'Z (set by user) and '0 to '9 (set when writing
 // shada).
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mark.c.generated.h"
-#endif
+#include "mark.c.generated.h"
 
 // Set named mark "c" at current cursor position.
 // Returns OK on success, FAIL if bad name given.

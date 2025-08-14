@@ -338,9 +338,7 @@ typedef struct {
   PMap(cstr_t) file_marks;  ///< All file marks.
 } WriteMergerState;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "shada.c.generated.h"
-#endif
+#include "shada.c.generated.h"
 
 #define DEF_SDE(name, attr, ...) \
   [kSDItem##name] = { \

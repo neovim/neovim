@@ -107,6 +107,4 @@ typedef struct {
   int last_maxcount;  // the max count of the last search
 } searchstat_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "search.h.generated.h"
-#endif
+#include "search.h.generated.h"

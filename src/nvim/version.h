@@ -27,6 +27,4 @@ extern char *version_cflags;
 // swap file compatibility (max. length is 6 chars)
 #define VIM_VERSION_SHORT VIM_VERSION_MAJOR_STR "." VIM_VERSION_MINOR_STR
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "version.h.generated.h"
-#endif
+#include "version.h.generated.h"

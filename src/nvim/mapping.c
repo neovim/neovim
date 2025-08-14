@@ -117,9 +117,7 @@ typedef struct map_arguments MapArguments;
 #define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, false, \
                              { 0 }, 0, { 0 }, 0, NULL, 0, LUA_NOREF, false, NULL, 0, NULL }
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mapping.c.generated.h"
-#endif
+#include "mapping.c.generated.h"
 
 static const char e_global_abbreviation_already_exists_for_str[]
   = N_("E224: Global abbreviation already exists for %s");

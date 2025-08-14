@@ -158,9 +158,7 @@ static struct achar {
 
 #define a_BYTE_ORDER_MARK               0xfeff
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "arabic.c.generated.h"
-#endif
+#include "arabic.c.generated.h"
 
 /// Find the struct achar pointer to the given Arabic char.
 /// Returns NULL if not found.

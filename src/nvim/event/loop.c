@@ -10,9 +10,7 @@
 #include "nvim/os/time.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/loop.c.generated.h"
-#endif
+#include "event/loop.c.generated.h"
 
 void loop_init(Loop *loop, void *data)
 {

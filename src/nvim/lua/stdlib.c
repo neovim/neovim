@@ -47,9 +47,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/stdlib.c.generated.h"
-#endif
+#include "lua/stdlib.c.generated.h"
 
 static int regex_match(lua_State *lstate, regprog_T **prog, char *str)
 {

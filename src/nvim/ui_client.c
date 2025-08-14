@@ -41,10 +41,8 @@ static bool tui_rgb = false;
 static bool ui_client_is_remote = false;
 
 // uncrustify:off
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_client.c.generated.h"
-# include "ui_events_client.generated.h"
-#endif
+#include "ui_client.c.generated.h"
+#include "ui_events_client.generated.h"
 // uncrustify:on
 
 uint64_t ui_client_start_server(const char *exepath, size_t argc, char **argv)
