@@ -690,7 +690,7 @@ void fuzzymatches_to_strmatches(fuzmatch_str_T *const fuzmatch, char ***const ma
   FUNC_ATTR_NONNULL_ARG(2)
 {
   if (count <= 0) {
-    return;
+    goto theend;
   }
 
   *matches = xmalloc((size_t)count * sizeof(char *));
@@ -705,6 +705,8 @@ void fuzzymatches_to_strmatches(fuzmatch_str_T *const fuzmatch, char ***const ma
   for (int i = 0; i < count; i++) {
     (*matches)[i] = fuzmatch[i].str;
   }
+
+theend:
   xfree(fuzmatch);
 }
 
