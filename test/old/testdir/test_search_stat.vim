@@ -493,6 +493,9 @@ endfunc
 func Test_search_stat_option()
   " Asan causes wrong results, because the search times out
   CheckNotAsan
+  " Mark the test as flaky as the search may still occasionally time out
+  let g:test_is_flaky = 1
+
   enew
   set shortmess-=S
   set maxsearchcount=999
