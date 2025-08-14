@@ -46,7 +46,7 @@ function M:new(bufnr)
 
   api.nvim_create_autocmd('LspDetach', {
     group = self.augroup,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function(args)
       self:on_detach(args.data.client_id)
       if next(self.client_state) == nil then
