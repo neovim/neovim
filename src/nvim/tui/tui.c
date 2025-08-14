@@ -95,6 +95,7 @@ struct TUIData {
   kvec_t(Rect) invalid_regions;
   int row, col;
   int out_fd;
+  int pending_resize_events;
   bool can_change_scroll_region;
   bool has_left_and_right_margin_mode;
   bool can_set_lr_margin;  // smglr
@@ -157,7 +158,6 @@ struct TUIData {
   StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
 };
 
-static int got_winch = 0;
 static bool cursor_style_enabled = false;
 #include "tui/tui.c.generated.h"
 
@@ -706,7 +706,6 @@ void tui_free_all_mem(TUIData *tui)
 
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *cbdata)
 {
-  got_winch++;
   TUIData *tui = cbdata;
   if (tui_is_stopped(tui) || tui->resize_events_enabled) {
     return;
@@ -1223,13 +1222,14 @@ void tui_grid_resize(TUIData *tui, Integer g, Integer width, Integer height)
     r->right = MIN(r->right, grid->width);
   }
 
-  if (!got_winch && !tui->is_starting) {
+  if (tui->pending_resize_events == 0 && !tui->is_starting) {
     // Resize the _host_ terminal.
     UNIBI_SET_NUM_VAR(tui->params[0], (int)height);
     UNIBI_SET_NUM_VAR(tui->params[1], (int)width);
     unibi_out_ext(tui, tui->unibi_ext.resize_screen);
-  } else {  // Already handled the SIGWINCH signal; avoid double-resize.
-    got_winch = got_winch > 0 ? got_winch - 1 : 0;
+  } else {  // Already handled the resize; avoid double-resize.
+    tui->pending_resize_events = tui->pending_resize_events >
+                                 0 ? tui->pending_resize_events - 1 : 0;
     grid->row = -1;
   }
 }
@@ -1821,9 +1821,11 @@ static void ensure_space_buf_size(TUIData *tui, size_t len)
 void tui_set_size(TUIData *tui, int width, int height)
   FUNC_ATTR_NONNULL_ALL
 {
+  tui->pending_resize_events++;
   tui->width = width;
   tui->height = height;
   ensure_space_buf_size(tui, (size_t)tui->width);
+  ui_client_set_size(width, height);
 }
 
 /// Tries to get the user's wanted dimensions (columns and rows) for the entire
@@ -1863,9 +1865,6 @@ void tui_guess_size(TUIData *tui)
   }
 
   tui_set_size(tui, width, height);
-
-  // Redraw on SIGWINCH event if size didn't change. #23411
-  ui_client_set_size(width, height);
 
   xfree(lines);
   xfree(columns);
