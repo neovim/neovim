@@ -132,27 +132,38 @@ jobs:
 
   windows:
     needs: setup
-    runs-on: windows-2022
+    strategy:
+      matrix:
+        include:
+          - runner: windows-2022
+            arch: x64
+            zip_name: nvim-win64.zip
+          - runner: windows-11-arm
+            arch: arm64
+            zip_name: nvim-winarm64.zip
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
         with:
-          # Perform a full checkout #13471
           fetch-depth: 0
       - run: .github/scripts/env.ps1
+        env:
+          BUILD_ARCH: ${{ matrix.arch }}
       - name: Build deps
         run: |
           cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
           cmake --build .deps
-      - name: build package
+      - name: Build package
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }}
           cmake --build build --target package
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: nvim-win64
+          name: nvim-win-${{ matrix.arch }}
           path: |
-            build/nvim-win64.msi
-            build/nvim-win64.zip
+            build/${{ matrix.zip_name }}
+            ${{ matrix.arch == 'x64' && 'build/nvim-win-x64.msi' || '' }}
           retention-days: 1
 
   publish:
@@ -200,6 +211,6 @@ jobs:
         run: |
           envsubst < "$GITHUB_WORKSPACE/.github/workflows/notes.md" > "$RUNNER_TEMP/notes.md"
           if [ "$TAG_NAME" != "nightly" ]; then
-            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/*
+            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/* nvim-winarm64/*
           fi
-          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/*
+          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-arm64/* nvim-appimage-x86_64/* nvim-appimage-arm64/* nvim-win64/* nvim-winarm64/*
