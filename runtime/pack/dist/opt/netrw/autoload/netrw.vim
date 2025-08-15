@@ -6647,7 +6647,7 @@ fun! s:NetrwMarkFileCopy(islocal,...)
     "   call Decho("tgt    <".tgt.">",'~'.expand("<slnum>"))
     if isdirectory(s:NetrwFile(args))
       "    call Decho("args<".args."> is a directory",'~'.expand("<slnum>"))
-      let copycmd= g:netrw_localcopydircmd
+      let copycmd= g:netrw_localcopydircmd . g:netrw_localcopydircmdopt
       "    call Decho("using copydircmd<".copycmd.">",'~'.expand("<slnum>"))
       if !g:netrw_cygwin && has("win32")
         " window's xcopy doesn't copy a directory to a target properly.  Instead, it copies a directory's
