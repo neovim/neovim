@@ -7,7 +7,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_win_console.h"
 
-# include "os/os_win_console.c.generated.h"
+#include "os/os_win_console.c.generated.h"
 
 static char origTitle[256] = { 0 };
 static HWND hWnd = NULL;
@@ -27,7 +27,7 @@ int os_open_conin_fd(void)
   return conin_fd;
 }
 
-void os_clear_hwnd(void) 
+void os_clear_hwnd(void)
 {
   hWnd = NULL;
 }
@@ -57,7 +57,8 @@ void os_replace_stdout_and_stderr_to_conout(void)
 }
 
 /// Resets Windows console icon if we got an original one on startup.
-void os_icon_reset(void) {
+void os_icon_reset(void)
+{
   if (hWnd == NULL) {
     return;
   }

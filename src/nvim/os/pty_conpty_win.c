@@ -143,8 +143,8 @@ finished:
   return conpty_object;
 }
 
-bool os_conpty_spawn(conpty_t *conpty_object, HANDLE *proc_handle, wchar_t *name,
-                     wchar_t *cmd_line, wchar_t *cwd, wchar_t *env)
+bool os_conpty_spawn(conpty_t *conpty_object, HANDLE *proc_handle, wchar_t *name, wchar_t *cmd_line,
+                     wchar_t *cwd, wchar_t *env)
 {
   PROCESS_INFORMATION pi = { 0 };
   if (!CreateProcessW(name,
