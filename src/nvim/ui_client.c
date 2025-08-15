@@ -377,7 +377,7 @@ void ui_client_may_restart_server(void)
 
   const char *error = NULL;
   char *listen_addr = restart_args.items[1].data.string.data;
-  bool is_tcp = strrchr(listen_addr, ':');
+  bool is_tcp = !!strrchr(listen_addr, ':');
   uint64_t chan_id = channel_connect(is_tcp, listen_addr, true, CALLBACK_READER_INIT, 50, &error);
   if (error != NULL) {
     // ELOG("%s", error);
