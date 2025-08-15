@@ -57,6 +57,7 @@ local ns_to_ms = 0.000001
 --- @field clients table<integer, vim.lsp.Client>
 --- @field triggers table<string, vim.lsp.Client[]>
 --- @field convert? fun(item: lsp.CompletionItem): table
+--- @field on_empty? fun()
 
 --- @type table<integer, vim.lsp.completion.BufHandle>
 local buf_handles = {}
@@ -488,6 +489,7 @@ local function trigger(bufnr, clients, ctx)
   local line_to_cursor = line:sub(1, cursor_col)
   local word_boundary = vim.fn.match(line_to_cursor, '\\k*$')
   local start_time = vim.uv.hrtime() --[[@as integer]]
+  local on_empty = vim.tbl_get(buf_handles, bufnr, 'on_empty')
   Context.last_request_time = start_time
 
   local cancel_request = request(clients, bufnr, win, ctx, function(responses)
@@ -536,7 +538,11 @@ local function trigger(bufnr, clients, ctx)
     end
     local start_col = (server_start_boundary or word_boundary) + 1
     Context.cursor = { cursor_row, start_col }
-    vim.fn.complete(start_col, matches)
+    if #matches == 0 and on_empty then
+      on_empty()
+    else
+      vim.fn.complete(start_col, matches)
+    end
   end)
 
   table.insert(Context.pending_requests, cancel_request)
@@ -691,6 +697,7 @@ end
 --- @class vim.lsp.completion.BufferOpts
 --- @field autotrigger? boolean  (default: false) When true, completion triggers automatically based on the server's `triggerCharacters`.
 --- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
+--- @field on_empty? fun() Called when LSP does not return any matches. Useful for handling fallbacks
 
 ---@param client_id integer
 ---@param bufnr integer
@@ -698,7 +705,7 @@ end
 local function enable_completions(client_id, bufnr, opts)
   local buf_handle = buf_handles[bufnr]
   if not buf_handle then
-    buf_handle = { clients = {}, triggers = {}, convert = opts.convert }
+    buf_handle = { clients = {}, triggers = {}, convert = opts.convert, on_empty = opts.on_empty }
     buf_handles[bufnr] = buf_handle
 
     -- Attach to buffer events.
