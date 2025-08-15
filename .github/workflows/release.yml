@@ -160,10 +160,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nvim-win-${{ matrix.arch }}
+          name: ${{ matrix.arch == 'x64' && 'nvim-win64' || 'nvim-win-arm64' }}
           path: |
             build/${{ matrix.zip_name }}
-            ${{ matrix.arch == 'x64' && 'build/nvim-win-x64.msi' || '' }}
+            ${{ matrix.arch == 'x64' && format('build/nvim-win64.msi') || '' }}
           retention-days: 1
 
   publish:
