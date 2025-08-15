@@ -4871,18 +4871,19 @@ static void ex_restart(exarg_T *eap)
 
   char *listen_addr;
   if (!prev_addr || !strrchr(prev_addr, ':')) {
-    char *new_addr = server_address_new(NULL);
-    listen_addr = xstrdup(new_addr);
-    // COMPAT: Create new directories if it doesn't exist.
-    new_addr = fix_fname(new_addr);
-    if (!os_path_exists(new_addr)) {
-      int result = os_file_mkdir(new_addr, 0755);
-      if (result) {
-        emsg(uv_strerror(result));
-        return;
-      }
-    }
-    xfree(new_addr);
+    listen_addr = server_address_new(NULL);
+    // char *new_addr = server_address_new(NULL);
+    // listen_addr = xstrdup(new_addr);
+    // // COMPAT: Create new directories if it doesn't exist.
+    // new_addr = fix_fname(new_addr);
+    // if (!os_path_exists(new_addr)) {
+    //   int result = os_file_mkdir(new_addr, 0755);
+    //   if (result) {
+    //     emsg(uv_strerror(result));
+    //     return;
+    //   }
+    // }
+    // xfree(new_addr);
   } else {
     listen_addr = server_remote_address_new(prev_addr);
     if (!listen_addr) {
@@ -4936,13 +4937,13 @@ static void ex_restart(exarg_T *eap)
     return;
   }
 
-  channel->detach = true;
-  const char *error;
-  if (!channel_close(channel->id, kChannelPartRpc, &error)) {
-    emsg(error);
-    xfree(listen_addr);
-    return;
-  }
+  // channel->detach = true;
+  // const char *error;
+  // if (!channel_close(channel->id, kChannelPartRpc, &error)) {
+  //   emsg(error);
+  //   xfree(listen_addr);
+  //   return;
+  // }
 
   if (!remote_ui_restart(current_ui, cstr_as_string(eap->arg), listen_addr, &err)) {
     if (ERROR_SET(&err)) {
