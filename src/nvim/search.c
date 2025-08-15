@@ -1213,13 +1213,10 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
         } else if (!spats[0].off.line) {
           off_buf[off_len++] = 's';
         }
-        if (spats[0].off.off > 0 || spats[0].off.line) {
-          off_buf[off_len++] = '+';
-        }
         off_buf[off_len] = NUL;
         if (spats[0].off.off != 0 || spats[0].off.line) {
           off_len += (size_t)snprintf(off_buf + off_len, sizeof(off_buf) - off_len,
-                                      "%" PRId64, spats[0].off.off);
+                                      "%+" PRId64, spats[0].off.off);
         }
       }
 
