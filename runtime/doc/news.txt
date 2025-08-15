@@ -101,6 +101,8 @@ LUA
 OPTIONS
 
 • 'shelltemp' defaults to "false".
+• 'runtimepath', 'packpath', 'cdpath', and 'path' now have initial values
+  use "/" separator on Windows.
 
 PLUGINS
 

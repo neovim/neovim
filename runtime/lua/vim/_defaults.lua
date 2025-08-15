@@ -984,4 +984,15 @@ do
     vim.o.grepprg = 'rg --vimgrep -uu '
     vim.o.grepformat = '%f:%l:%c:%m'
   end
+
+  --- Normalize options that contain paths
+  if vim.fn.has('win32') == 1 then
+    local function normalize_path_option(name)
+      vim.o[name] = vim.o[name]:gsub('\\([^,])', '/%1'):gsub('\\$', '/') --- @type string
+    end
+    normalize_path_option('runtimepath')
+    normalize_path_option('packpath')
+    normalize_path_option('cdpath')
+    normalize_path_option('path')
+  end
 end
