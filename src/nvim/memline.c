@@ -1973,12 +1973,10 @@ int ml_line_alloced(void)
 /// @param lnum  append after this line (can be 0)
 /// @param line  text of the new line
 /// @param len  length of line, including NUL, or 0
-/// @param newfile  flag, see above
-/// @param mark  mark the new line
+/// @param flags  ML_APPEND_ flags
 ///
 /// @return  FAIL for failure, OK otherwise
-static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfile,
-                         bool mark)
+static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   // lnum out of range
@@ -2075,13 +2073,13 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
 
     // copy the text into the block
     memmove((char *)dp + dp->db_index[db_idx + 1], line, (size_t)len);
-    if (mark) {
+    if (flags & ML_APPEND_MARK) {
       dp->db_index[db_idx + 1] |= DB_MARKED;
     }
 
     // Mark the block dirty.
     buf->b_ml.ml_flags |= ML_LOCKED_DIRTY;
-    if (!newfile) {
+    if (!(flags & ML_APPEND_NEW)) {
       buf->b_ml.ml_flags |= ML_LOCKED_POS;
     }
   } else {        // not enough space in data block
@@ -2135,7 +2133,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     }
 
     int page_count = ((space_needed + (int)HEADER_SIZE) + page_size - 1) / page_size;
-    hp_new = ml_new_data(mfp, newfile, page_count);
+    hp_new = ml_new_data(mfp, flags & ML_APPEND_NEW, page_count);
     if (db_idx < 0) {           // left block is new
       hp_left = hp_new;
       hp_right = hp;
@@ -2159,7 +2157,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
       dp_right->db_txt_start -= (unsigned)len;
       dp_right->db_free -= (unsigned)len + (unsigned)INDEX_SIZE;
       dp_right->db_index[0] = dp_right->db_txt_start;
-      if (mark) {
+      if (flags & ML_APPEND_MARK) {
         dp_right->db_index[0] |= DB_MARKED;
       }
 
@@ -2192,7 +2190,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
       dp_left->db_txt_start -= (unsigned)len;
       dp_left->db_free -= (unsigned)len + (unsigned)INDEX_SIZE;
       dp_left->db_index[line_count_left] = dp_left->db_txt_start;
-      if (mark) {
+      if (flags & ML_APPEND_MARK) {
         dp_left->db_index[line_count_left] |= DB_MARKED;
       }
       memmove((char *)dp_left + dp_left->db_txt_start,
@@ -2221,7 +2219,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     if (lines_moved || in_left) {
       buf->b_ml.ml_flags |= ML_LOCKED_DIRTY;
     }
-    if (!newfile && db_idx >= 0 && in_left) {
+    if (!(flags & ML_APPEND_NEW) && db_idx >= 0 && in_left) {
       buf->b_ml.ml_flags |= ML_LOCKED_POS;
     }
     mf_put(mfp, hp_new, true, false);
@@ -2386,10 +2384,10 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
 /// @param lnum  append after this line (can be 0)
 /// @param line  text of the new line
 /// @param len  length of line, including NUL, or 0
-/// @param newfile  flag, see above
+/// @param flags  ML_APPEND_ flags
 ///
 /// @return  FAIL for failure, OK otherwise
-static int ml_append_flush(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfile)
+static int ml_append_flush(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (lnum > buf->b_ml.ml_line_count) {
@@ -2400,14 +2398,14 @@ static int ml_append_flush(buf_T *buf, linenr_T lnum, char *line, colnr_T len, b
     ml_flush_line(buf, false);
   }
 
-  return ml_append_int(buf, lnum, line, len, newfile, false);
+  return ml_append_int(buf, lnum, line, len, flags);
 }
 
 /// Append a line after lnum (may be 0 to insert a line in front of the file).
 /// "line" does not need to be allocated, but can't be another line in a
 /// buffer, unlocking may make it invalid.
 ///
-///   newfile: true when starting to edit a new file, meaning that pe_old_lnum
+/// "newfile": true when starting to edit a new file, meaning that pe_old_lnum
 ///              will be set for recovery
 /// Check: The caller of this function should probably also call
 /// appended_lines().
@@ -2420,12 +2418,23 @@ static int ml_append_flush(buf_T *buf, linenr_T lnum, char *line, colnr_T len, b
 /// @return  FAIL for failure, OK otherwise
 int ml_append(linenr_T lnum, char *line, colnr_T len, bool newfile)
 {
+  return ml_append_flags(lnum, line, len, newfile ? ML_APPEND_NEW : 0);
+}
+
+/// @param lnum  append after this line (can be 0)
+/// @param line  text of the new line
+/// @param len  length of new line, including nul, or 0
+/// @param flags  ML_APPEND_ values
+///
+/// @return  FAIL for failure, OK otherwise
+int ml_append_flags(linenr_T lnum, char *line, colnr_T len, int flags)
+{
   // When starting up, we might still need to create the memfile
   if (curbuf->b_ml.ml_mfp == NULL && open_buffer(false, NULL, 0) == FAIL) {
     return FAIL;
   }
 
-  return ml_append_flush(curbuf, lnum, line, len, newfile);
+  return ml_append_flush(curbuf, lnum, line, len, flags);
 }
 
 /// Like ml_append() but for an arbitrary buffer.  The buffer must already have
@@ -2442,7 +2451,7 @@ int ml_append_buf(buf_T *buf, linenr_T lnum, char *line, colnr_T len, bool newfi
     return FAIL;
   }
 
-  return ml_append_flush(buf, lnum, line, len, newfile);
+  return ml_append_flush(buf, lnum, line, len, newfile ? ML_APPEND_NEW : 0);
 }
 
 void ml_add_deleted_len(char *ptr, ssize_t len)
@@ -2530,24 +2539,6 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noallo
   return OK;
 }
 
-/// Delete line `lnum` in the current buffer.
-///
-/// @note The caller of this function should probably also call
-/// deleted_lines() after this.
-///
-/// @param message  Show "--No lines in buffer--" message.
-///
-/// @return  FAIL for failure, OK otherwise
-int ml_delete(linenr_T lnum, bool message)
-{
-  ml_flush_line(curbuf, false);
-  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
-    return FAIL;
-  }
-
-  return ml_delete_int(curbuf, lnum, message);
-}
-
 /// Delete line `lnum` in buffer
 ///
 /// @note The caller of this function should probably also call changed_lines() after this.
@@ -2556,12 +2547,20 @@ int ml_delete(linenr_T lnum, bool message)
 ///
 /// @return  FAIL for failure, OK otherwise
 int ml_delete_buf(buf_T *buf, linenr_T lnum, bool message)
+  FUNC_ATTR_NONNULL_ALL
 {
   ml_flush_line(buf, false);
   return ml_delete_int(buf, lnum, message);
 }
 
-static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
+/// Delete line `lnum` in the current buffer.
+///
+/// @param flags  ML_DEL_MESSAGE may give a "No lines in buffer" message.
+///               ML_DEL_UNDO this is called from undo.
+///
+/// @return  FAIL for failure, OK otherwise
+static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (lowest_marked && lowest_marked > lnum) {
     lowest_marked--;
@@ -2569,7 +2568,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
 
   // If the file becomes empty the last line is replaced by an empty line.
   if (buf->b_ml.ml_line_count == 1) {       // file becomes empty
-    if (message) {
+    if (flags & ML_DEL_MESSAGE) {
       set_keep_msg(_(no_lines_msg), 0);
     }
 
@@ -2683,6 +2682,32 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
 
   ml_updatechunk(buf, lnum, line_size, ML_CHNK_DELLINE);
   return OK;
+}
+
+/// Delete line "lnum" in the current buffer.
+///
+/// @note The caller of this function should probably also call
+/// deleted_lines() after this.
+///
+/// @param message  true may give a "No lines in buffer" message.
+///
+/// @return  FAIL for failure, OK otherwise
+int ml_delete(linenr_T lnum, bool message)
+{
+  return ml_delete_flags(lnum, message ? ML_DEL_MESSAGE : 0);
+}
+
+/// Like ml_delete() but using flags (see ml_delete_int()).
+///
+/// @return  FAIL for failure, OK otherwise
+int ml_delete_flags(linenr_T lnum, int flags)
+{
+  ml_flush_line(curbuf, false);
+  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
+    return FAIL;
+  }
+
+  return ml_delete_int(curbuf, lnum, flags);
 }
 
 /// set the B_MARKED flag for line 'lnum'
@@ -2853,9 +2878,9 @@ static void ml_flush_line(buf_T *buf, bool noalloc)
         // that has only one line.
         // Don't forget to copy the mark!
         // How about handling errors???
-        ml_append_int(buf, lnum, new_line, new_len, false,
-                      (int)(dp->db_index[idx] & DB_MARKED));
-        ml_delete_int(buf, lnum, false);
+        (void)ml_append_int(buf, lnum, new_line, new_len,
+                            (dp->db_index[idx] & DB_MARKED) ? ML_APPEND_MARK : 0);
+        (void)ml_delete_int(buf, lnum, 0);
       }
     }
     if (!noalloc) {
