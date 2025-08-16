@@ -73,7 +73,7 @@ if(HAS_OG_FLAG)
   set(DEFAULT_MAKE_CFLAGS CFLAGS+=-Og ${DEFAULT_MAKE_CFLAGS})
 endif()
 
-set(DEPS_INCLUDE_FLAGS "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.1")
+set(DEPS_INCLUDE_FLAGS "-I\"${DEPS_INSTALL_DIR}/include\" -I\"${DEPS_INSTALL_DIR}/include/luajit-2.1\"")
 
 # If the macOS deployment target is not set manually (via $MACOSX_DEPLOYMENT_TARGET),
 # fall back to local system version. Needs to be done here and in top-level CMakeLists.txt.
@@ -96,10 +96,10 @@ else()
   find_package(Lua 5.1 EXACT)
   if(LUAJIT_FOUND)
     set(LUA_ENGINE LuaJit)
-    string(APPEND DEPS_INCLUDE_FLAGS " -I${LUAJIT_INCLUDE_DIR}")
+    string(APPEND DEPS_INCLUDE_FLAGS " -I\"${LUAJIT_INCLUDE_DIR}\"")
   elseif(LUA_FOUND)
     set(LUA_ENGINE Lua)
-    string(APPEND DEPS_INCLUDE_FLAGS " -I${LUA_INCLUDE_DIR}")
+    string(APPEND DEPS_INCLUDE_FLAGS " -I\"${LUA_INCLUDE_DIR}\"")
   else()
     message(FATAL_ERROR "Could not find system lua or luajit")
   endif()
