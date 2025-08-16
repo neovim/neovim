@@ -193,7 +193,7 @@ function TSHighlighter:destroy()
     if vim.g.syntax_on == 1 then
       api.nvim_exec_autocmds(
         'FileType',
-        { group = 'syntaxset', buffer = self.bufnr, modeline = false }
+        { group = 'syntaxset', buf = self.bufnr, modeline = false }
       )
     end
   end
