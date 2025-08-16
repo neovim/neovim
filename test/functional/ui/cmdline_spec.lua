@@ -673,6 +673,36 @@ local function test_cmdline(linegrid)
       cmdline = { { content = { { '' } }, firstc = ':', indent = 2, pos = 0 } },
       cmdline_block = { { { 'if 1' } }, { { '  let x = 1' } }, { { '  ' } } },
     })
+    feed('call input("foo:")<CR>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = { { content = { { '' } }, pos = 0, prompt = 'foo:' } },
+      cmdline_block = {
+        { { 'if 1' } },
+        { { '  let x = 1' } },
+        { { '  ' } },
+        { { '  call input("foo:")' } },
+      },
+    })
+    feed('bar<CR>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = { { content = { { '' } }, firstc = ':', indent = 2, pos = 0 } },
+      cmdline_block = {
+        { { 'if 1' } },
+        { { '  let x = 1' } },
+        { { '  ' } },
+        { { '  call input("foo:")' } },
+      },
+    })
     feed('endif')
     screen:expect({
       grid = [[
@@ -681,7 +711,12 @@ local function test_cmdline(linegrid)
                                  |
       ]],
       cmdline = { { content = { { 'endif' } }, firstc = ':', indent = 2, pos = 5 } },
-      cmdline_block = { { { 'if 1' } }, { { '  let x = 1' } }, { { '  ' } } },
+      cmdline_block = {
+        { { 'if 1' } },
+        { { '  let x = 1' } },
+        { { '  ' } },
+        { { '  call input("foo:")' } },
+      },
     })
     feed('<CR>')
     screen:expect([[
