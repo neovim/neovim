@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Last Change:	2025 Aug 10
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
@@ -790,8 +790,21 @@ func s:BMShow(...)
 endfunc
 
 func s:BMHash(name)
-  " Make name all upper case, so that chars are between 32 and 96
-  let nm = substitute(a:name, ".*", '\U\0', "")
+  " Create a sortable numeric hash of the name. This number has to be within
+  " the bounds of a signed 32-bit integer as this is what Vim GUI uses
+  " internally for the index.
+
+  " Make name all upper case, so that alphanumeric chars are between 32 and 96
+  let nm = toupper(a:name)
+
+  if char2nr(nm[0] < 32) || char2nr(nm[0]) > 96
+    " We don't have an ASCII character, so just return the raw character value
+    " for first character (clamped to 2^31) and set the high bit to make it
+    " sort after other items. This means only the first character will be
+    " sorted, unfortunately.
+    return or(and(char2nr(nm), 0x7fffffff), 0x40000000)
+  endif
+
   if has("ebcdic")
     " HACK: Replace all non alphabetics with 'Z'
     "       Just to make it work for now.
@@ -800,12 +813,18 @@ func s:BMHash(name)
   else
     let sp = char2nr(' ')
   endif
-  " convert first six chars into a number for sorting:
-  return (char2nr(nm[0]) - sp) * 0x800000 + (char2nr(nm[1]) - sp) * 0x20000 + (char2nr(nm[2]) - sp) * 0x1000 + (char2nr(nm[3]) - sp) * 0x80 + (char2nr(nm[4]) - sp) * 0x20 + (char2nr(nm[5]) - sp)
+  " convert first five chars into a number for sorting by compressing each
+  " char into 5 bits (0-63), to a total of 30 bits. If any character is not
+  " ASCII, it will simply be clamped to prevent overflow.
+  return (max([0, min([63, char2nr(nm[0]) - sp])]) << 24) +
+    (max([0, min([63, char2nr(nm[1]) - sp])]) << 18) +
+    (max([0, min([63, char2nr(nm[2]) - sp])]) << 12) +
+    (max([0, min([63, char2nr(nm[3]) - sp])]) <<  6) +
+    max([0, min([63, char2nr(nm[4]) - sp])])
 endfunc
 
 func s:BMHash2(name)
-  let nm = substitute(a:name, ".", '\L\0', "")
+  let nm = tolower(a:name[0])
   " Not exactly right for EBCDIC...
   if nm[0] < 'a' || nm[0] > 'z'
     return '&others.'
