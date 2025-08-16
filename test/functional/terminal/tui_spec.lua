@@ -197,6 +197,8 @@ describe('TUI :restart', function()
       '--listen',
       server_pipe,
       '--cmd',
+      'lua require("vim._extui").enable({})', -- extui to catch multi line outputs.
+      '--cmd',
       'colorscheme vim',
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
@@ -221,6 +223,7 @@ describe('TUI :restart', function()
     local function gui_running_check()
       tt.feed_data(':echo "GUI Running: " .. has("gui_running")\013')
       screen:expect({ any = 'GUI Running: 0' })
+      tt.feed_data(':\027') -- clear cmdline
     end
 
     local s0 = [[
@@ -233,75 +236,72 @@ describe('TUI :restart', function()
     screen_expect(s0)
     gui_running_check()
 
-    local server_session --[[@type test.Session]]
-    local server_pid --[[@type any]]
-    -- FIXME: On Windows connect() hangs.
-    if not is_os('win') then
-      server_session = n.connect(server_pipe)
-      _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
-    end
+    -- local server_session --[[@type test.Session]]
+    -- local server_pid --[[@type any]]
+    -- -- FIXME: On Windows connect() hangs.
+    -- if not is_os('win') then
+    --   server_session = n.connect(server_pipe)
+    --   _, server_pid = server_session:request('nvim_call_function', 'getpid', {})
+    -- end
 
-    local function restart_pid_check()
-      if is_os('win') then
-        return
-      end
-      server_session:close()
-      server_session = n.connect(server_pipe)
-      local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
-      t.neq(server_pid, new_pid)
-      server_pid = new_pid
-    end
+    -- FIXME: Since we create a new pipe each time we :restart, we can't do this check anymore.
+    -- local function restart_pid_check()
+    --   if is_os('win') then
+    --     return
+    --   end
+    --   server_session:close()
+    --   local _, new_pid = server_session:request('nvim_call_function', 'getpid', {})
+    --   t.neq(server_pid, new_pid)
+    --   server_pid = new_pid
+    -- end
 
     tt.feed_data(':1restart\013')
     screen:expect({ any = vim.pesc('{101:E481: No range allowed}') })
 
     local s1 = [[
-                                                        |
-                                                        |
-      {2:                                                  }|
-      {MATCH:%d+ +}|
+      ^                                                  |
+      {100:~                                                 }|*3
+      {3:[No Name]                                         }|
       Hello                                             |
-      {102:Press ENTER or type command to continue}^           |
       {5:-- TERMINAL --}                                    |
     ]]
 
-    -- Check trailing characters are considered in -c
+    -- Check trailing characters are considered
     tt.feed_data(':restart echo "Hello"\013')
     screen_expect(s1)
-    tt.feed_data('\013')
-    restart_pid_check()
+    -- restart_pid_check()
     gui_running_check()
 
-    -- Check trailing characters after +cmd are considered in -c
+    -- Check trailing characters after +cmd are considered
     tt.feed_data(':restart +qall echo "Hello" | echo "World"\013')
-    screen_expect([[
-                                                        |
-      {2:                                                  }|
-      {MATCH:%d+ +}|
+    screen:expect([[
+      ^                                                  |
+      {100:~                                                 }|*2
+      {3:──────────────────────────────────────────────────}|
       Hello                                             |
       World                                             |
-      {102:Press ENTER or type command to continue}^           |
       {5:-- TERMINAL --}                                    |
     ]])
     tt.feed_data('\013')
-    restart_pid_check()
+    -- restart_pid_check()
     gui_running_check()
 
     -- Check ":restart" on an unmodified buffer.
     tt.feed_data(':restart\013')
     screen_expect(s0)
-    restart_pid_check()
+    -- restart_pid_check()
     gui_running_check()
 
     -- Check ":restart +qall" on an unmodified buffer.
     tt.feed_data(':restart +qall\013')
     screen_expect(s0)
-    restart_pid_check()
+    -- restart_pid_check()
     gui_running_check()
 
     -- Check ":restart +echo" cannot restart server.
     tt.feed_data(':restart +echo\013')
     screen:expect({ any = vim.pesc('+cmd did not quit the server') })
+    tt.feed_data(':\027') -- clear cmdline
 
     tt.feed_data('ithis will be removed\027')
     screen_expect([[
@@ -326,20 +326,19 @@ describe('TUI :restart', function()
 
     -- Check if the -c <cmd> runs after restart.
     screen_expect(s1)
-    tt.feed_data('\013')
-    restart_pid_check()
+    -- restart_pid_check()
     gui_running_check()
 
     -- Check ":restart" on the modified buffer.
     tt.feed_data(':restart\013')
     screen_expect(s0)
-    restart_pid_check()
+    -- restart_pid_check()
     gui_running_check()
 
     -- No --listen conflict when server exit is delayed.
     feed_data(':lua vim.schedule(function() vim.wait(100) end); vim.cmd.restart()\n')
     screen_expect(s0)
-    restart_pid_check()
+    -- restart_pid_check()
     gui_running_check()
 
     screen:try_resize(60, 6)
@@ -360,7 +359,7 @@ describe('TUI :restart', function()
       {MATCH:%d+ +}|
       {5:-- TERMINAL --}                                              |
     ]])
-    restart_pid_check()
+    -- restart_pid_check()
     gui_running_check()
   end)
 end)
@@ -3982,6 +3981,7 @@ describe('TUI client', function()
 
     feed_data(':echo "GUI Running: " .. has("gui_running")\013')
     screen_client:expect({ any = 'GUI Running: 0' })
+    feed_data(':q\013') -- quit the new server
 
     client_super:close()
     server:close()
