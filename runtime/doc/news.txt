@@ -263,6 +263,7 @@ OPTIONS
 • 'winborder' "bold" style, custom border style.
 • |g:clipboard| accepts a string name to force any builtin clipboard tool.
 • 'busy' sets a buffer "busy" status. Indicated in the default statusline.
+• Added 'previewpopup' option.
 
 PERFORMANCE
 
