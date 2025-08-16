@@ -8,6 +8,7 @@ pub fn build_nlua0(
     use_luajit: bool,
     ziglua: *std.Build.Dependency,
     lpeg: *std.Build.Dependency,
+    libluv: *std.Build.Step.Compile,
 ) *std.Build.Step.Compile {
     const options = b.addOptions();
     options.addOption(bool, "use_luajit", use_luajit);
@@ -39,6 +40,7 @@ pub fn build_nlua0(
         mod.addImport("embedded_data", embedded_data);
         // addImport already links by itself. but we need headers as well..
         mod.linkLibrary(ziglua.artifact("lua"));
+        mod.linkLibrary(libluv);
 
         mod.addOptions("options", options);
 
