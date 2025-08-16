@@ -186,6 +186,8 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_menc);
   check_string_option(&buf->b_p_vsts);
   check_string_option(&buf->b_p_vts);
+  check_string_option(&buf->b_p_root);
+  check_string_option(&buf->b_p_root_marker);
 }
 
 /// Free the string allocated for an option.
