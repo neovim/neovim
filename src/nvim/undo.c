@@ -2250,6 +2250,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
 {
   char **newarray = NULL;
   linenr_T newlnum = MAXLNUM;
+  pos_T new_curpos = curwin->w_cursor;
   u_entry_T *nuep;
   u_entry_T *newlist = NULL;
   fmark_T namedm[NMARKS];
@@ -2294,14 +2295,16 @@ static void u_undoredo(bool undo, bool do_buf_event)
     linenr_T oldsize = bot - top - 1;        // number of lines before undo
     linenr_T newsize = uep->ue_size;         // number of lines after undo
 
+    // Decide about the cursor position, depending on what text changed.
+    // Don't set it yet, it may be invalid if lines are going to be added.
     if (top < newlnum) {
       // If the saved cursor is somewhere in this undo block, move it to
       // the remembered position.  Makes "gwap" put the cursor back
       // where it was.
       linenr_T lnum = curhead->uh_cursor.lnum;
       if (lnum >= top && lnum <= top + newsize + 1) {
-        curwin->w_cursor = curhead->uh_cursor;
-        newlnum = curwin->w_cursor.lnum - 1;
+        new_curpos = curhead->uh_cursor;
+        newlnum = new_curpos.lnum - 1;
       } else {
         // Use the first line that actually changed.  Avoids that
         // undoing auto-formatting puts the cursor in the previous
@@ -2314,17 +2317,17 @@ static void u_undoredo(bool undo, bool do_buf_event)
         }
         if (i == newsize && newlnum == MAXLNUM && uep->ue_next == NULL) {
           newlnum = top;
-          curwin->w_cursor.lnum = newlnum + 1;
+          new_curpos.lnum = newlnum + 1;
         } else if (i < newsize) {
           newlnum = top + (linenr_T)i;
-          curwin->w_cursor.lnum = newlnum + 1;
+          new_curpos.lnum = newlnum + 1;
         }
       }
     }
 
     bool empty_buffer = false;
 
-    // delete the lines between top and bot and save them in newarray
+    // Delete the lines between top and bot and save them in newarray.
     if (oldsize > 0) {
       newarray = xmalloc(sizeof(char *) * (size_t)oldsize);
       // delete backwards, it goes faster in most cases
@@ -2344,7 +2347,10 @@ static void u_undoredo(bool undo, bool do_buf_event)
       newarray = NULL;
     }
 
-    // insert the lines in u_array between top and bot
+    // make sure the cursor is on a valid line after the deletions
+    check_cursor_lnum(curwin);
+
+    // Insert the lines in u_array between top and bot.
     if (newsize) {
       int i;
       linenr_T lnum;
@@ -2422,6 +2428,10 @@ static void u_undoredo(bool undo, bool do_buf_event)
     buf_updates_unload(curbuf, true);
   }
   // Finish adjusting extmarks
+
+  // Set the cursor to the desired position.  Check that the line is valid.
+  curwin->w_cursor = new_curpos;
+  check_cursor_lnum(curwin);
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;
