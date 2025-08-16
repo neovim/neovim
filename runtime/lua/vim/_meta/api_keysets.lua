@@ -165,6 +165,7 @@ error('Cannot require a meta file')
 --- |'OptionSet'
 --- |'PackChanged'
 --- |'PackChangedPre'
+--- |'Progress'
 --- |'QuickFixCmdPost'
 --- |'QuickFixCmdPre'
 --- |'QuitPre'
@@ -233,6 +234,10 @@ error('Cannot require a meta file')
 --- @field err? boolean
 --- @field verbose? boolean
 --- @field kind? string
+--- @field id? integer
+--- @field title? string
+--- @field status? string
+--- @field percent? integer
 
 --- @class vim.api.keyset.empty
 
