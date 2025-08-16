@@ -2,10 +2,6 @@
 
 " Tests for the getjumplist() function
 func Test_getjumplist()
-  if !has("jumplist")
-    return
-  endif
-
   %bwipe
   clearjumps
   call assert_equal([[], 0], getjumplist())
