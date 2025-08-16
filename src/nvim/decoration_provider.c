@@ -25,7 +25,7 @@ static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
 
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
   { ns_id, kDecorProviderDisabled, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, LUA_NOREF, LUA_NOREF, \
+    LUA_NOREF, LUA_NOREF, LUA_NOREF, LUA_NOREF, \
     LUA_NOREF, LUA_NOREF, -1, false, false, 0 }
 
 static void decor_provider_error(DecorProvider *provider, const char *name, const char *msg)
@@ -189,6 +189,30 @@ void decor_providers_invoke_line(win_T *wp, int row)
   decor_state.running_decor_provider = false;
 }
 
+void decor_providers_invoke_range(win_T *wp, int start_row, int start_col, int end_row, int end_col)
+{
+  decor_state.running_decor_provider = true;
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->state == kDecorProviderActive && p->redraw_range != LUA_NOREF) {
+      MAXSIZE_TEMP_ARRAY(args, 6);
+      ADD_C(args, WINDOW_OBJ(wp->handle));
+      ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
+      ADD_C(args, INTEGER_OBJ(start_row));
+      ADD_C(args, INTEGER_OBJ(start_col));
+      ADD_C(args, INTEGER_OBJ(end_row));
+      ADD_C(args, INTEGER_OBJ(end_col));
+      if (!decor_provider_invoke((int)i, "range", p->redraw_range, args, true)) {
+        // return 'false' or error: skip rest of this window
+        kv_A(decor_providers, i).state = kDecorProviderWinDisabled;
+      }
+
+      hl_check_ns();
+    }
+  }
+  decor_state.running_decor_provider = false;
+}
+
 /// For each provider invoke the 'buf' callback for a given buffer.
 ///
 /// @param      buf       Buffer
@@ -272,6 +296,7 @@ void decor_provider_clear(DecorProvider *p)
   NLUA_CLEAR_REF(p->redraw_buf);
   NLUA_CLEAR_REF(p->redraw_win);
   NLUA_CLEAR_REF(p->redraw_line);
+  NLUA_CLEAR_REF(p->redraw_range);
   NLUA_CLEAR_REF(p->redraw_end);
   NLUA_CLEAR_REF(p->spell_nav);
   NLUA_CLEAR_REF(p->conceal_line);
