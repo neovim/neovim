@@ -3993,6 +3993,30 @@ comparisons and conversions between various types of positions.
                 When specified, it indicates that this position belongs to a
                 specific buffer. This field is required when performing
                 position conversions.
+      • {lsp}   (`fun()`) See |Pos:lsp()|.
+
+
+Pos:lsp()                                                          *Pos:lsp()*
+    Converts between |vim.Pos| and `lsp.Position`.
+
+    Example: >lua
+        -- `buf` is required for conversion to LSP position.
+        local buf = vim.api.nvim_get_current_buf()
+        local pos = vim.pos(3, 5, { buf = buf })
+
+        -- Convert to LSP position.
+        local lsp_pos = pos:lsp('utf-16')
+
+        -- Convert back to `vim.Pos`.
+        if vim.pos.lsp(buf, lsp_pos, 'utf-16') == pos then
+          print("lsp_pos is equal to pos")
+        end
+<
+
+    Overloads: ~
+      • `fun(pos: vim.Pos, position_encoding: lsp.PositionEncodingKind): lsp.Position`
+      • `fun(buf: integer, pos: lsp.Position, position_encoding: lsp.PositionEncodingKind): vim.Pos`
+
 
 ==============================================================================
 Lua module: vim.range                                              *vim.range*
@@ -4040,6 +4064,7 @@ ranges). conversions between various types of ranges is also provided.
     Fields: ~
       • {start}      (`vim.Pos`) Start position.
       • {end_}       (`vim.Pos`) End position, exclusive.
+      • {lsp}        (`fun()`) See |Range:lsp()|.
       • {has}        (`fun(outer: vim.Range, inner: vim.Range): boolean`) See
                      |Range:has()|.
       • {intersect}  (`fun(r1: vim.Range, r2: vim.Range): vim.Range?`) See
@@ -4066,6 +4091,27 @@ Range:intersect({r1}, {r2})                                *Range:intersect()*
     Return: ~
         (`vim.Range?`) range that is present inside both `r1` and `r2`. `nil`
         if such range does not exist. See |vim.Range|.
+
+Range:lsp()                                                      *Range:lsp()*
+    Converts between |vim.Range| and `lsp.Range`.
+
+    Example: >lua
+        -- `buf` is required for conversion to LSP range.
+        local buf = vim.api.nvim_get_current_buf()
+        local range = vim.range(3, 5, 4, 0, { buf = buf })
+
+        -- Convert to LSP range.
+        local lsp_range = range:lsp('utf-16')
+
+        -- Convert back to `vim.Range`.
+        if vim.range.lsp(buf, lsp_range, 'utf-16') == range then
+          print("lsp_range is equal to range")
+        end
+<
+
+    Overloads: ~
+      • `fun(range: vim.Range, position_encoding: lsp.PositionEncodingKind): lsp.Range`
+      • `fun(buf: integer, range: lsp.Position, position_encoding: lsp.PositionEncodingKind): vim.Range`
 
 
 ==============================================================================

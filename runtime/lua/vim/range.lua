@@ -86,6 +86,64 @@ function Range:new(...)
   return self
 end
 
+---@param range vim.Range
+---@param position_encoding lsp.PositionEncodingKind
+local function to_lsp_range(range, position_encoding)
+  validate('range', range, 'table')
+  validate('position_encoding', position_encoding, 'string', true)
+
+  ---@type lsp.Range
+  return {
+    ['start'] = range.start:lsp(position_encoding),
+    ['end'] = range.end_:lsp(position_encoding),
+  }
+end
+
+---@param buf integer
+---@param range lsp.Range
+---@param position_encoding lsp.PositionEncodingKind
+local function from_lsp_range(buf, range, position_encoding)
+  validate('buf', buf, 'number')
+  validate('range', range, 'table')
+  validate('position_encoding', position_encoding, 'string')
+
+  -- TODO(ofseed): avoid using `Pos:lsp()` here,
+  -- as they need reading files separately if buffer is unloaded.
+  local start = vim.pos.lsp(buf, range['start'], position_encoding)
+  local end_ = vim.pos.lsp(buf, range['end'], position_encoding)
+
+  return Range:new(start, end_)
+end
+
+--- Converts between |vim.Range| and `lsp.Range`.
+---
+--- Example:
+--- ```lua
+--- -- `buf` is required for conversion to LSP range.
+--- local buf = vim.api.nvim_get_current_buf()
+--- local range = vim.range(3, 5, 4, 0, { buf = buf })
+---
+--- -- Convert to LSP range.
+--- local lsp_range = range:lsp('utf-16')
+---
+--- -- Convert back to `vim.Range`.
+--- if vim.range.lsp(buf, lsp_range, 'utf-16') == range then
+---   print("lsp_range is equal to range")
+--- end
+--- ```
+---@overload fun(range: vim.Range, position_encoding: lsp.PositionEncodingKind): lsp.Range
+---@overload fun(buf: integer, range: lsp.Position, position_encoding: lsp.PositionEncodingKind): vim.Range
+function Range.lsp(...)
+  local nargs = select('#', ...)
+  if nargs == 2 then
+    return to_lsp_range(...)
+  elseif nargs == 3 then
+    return from_lsp_range(...)
+  else
+    error('invalid parameters')
+  end
+end
+
 --- Checks whether {outer} range contains {inner} range.
 ---
 ---@param outer vim.Range

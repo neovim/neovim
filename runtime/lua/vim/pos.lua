@@ -11,6 +11,7 @@
 --- Built on |vim.Pos| objects, this module offers operations
 --- that support comparisons and conversions between various types of positions.
 
+local api = vim.api
 local validate = vim.validate
 
 --- Represents a well-defined position.
@@ -73,6 +74,78 @@ function Pos:new(row, col, opts)
   }, self)
 
   return self
+end
+
+--- TODO(ofseed): Make it work for unloaded buffers.
+---@param buf integer
+---@param row integer
+local function get_line(buf, row)
+  return api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
+end
+
+---@param pos vim.Pos
+---@param position_encoding lsp.PositionEncodingKind
+local function to_lsp_pos(pos, position_encoding)
+  validate('pos', pos, 'table')
+  validate('position_encoding', position_encoding, 'string')
+
+  local buf = assert(pos.buf, 'position is not a buffer position')
+  local row, col = pos.row, pos.col
+  -- When on the first character,
+  -- we can ignore the difference between byte and character.
+  if col > 0 then
+    col = vim.str_utfindex(get_line(buf, row), position_encoding, col, false)
+  end
+
+  ---@type lsp.Position
+  return { line = row, character = col }
+end
+
+---@param buf integer
+---@param pos lsp.Position
+---@param position_encoding lsp.PositionEncodingKind
+local function from_lsp_pos(buf, pos, position_encoding)
+  validate('buf', buf, 'number')
+  validate('pos', pos, 'table')
+  validate('position_encoding', position_encoding, 'string')
+
+  local row, col = pos.line, pos.character
+  -- When on the first character,
+  -- we can ignore the difference between byte and character.
+  if col > 0 then
+    col = vim.str_byteindex(get_line(buf, row), position_encoding, col)
+  end
+
+  return Pos:new(row, col, { buf = buf })
+end
+
+--- Converts between |vim.Pos| and `lsp.Position`.
+---
+--- Example:
+--- ```lua
+--- -- `buf` is required for conversion to LSP position.
+--- local buf = vim.api.nvim_get_current_buf()
+--- local pos = vim.pos(3, 5, { buf = buf })
+---
+--- -- Convert to LSP position.
+--- local lsp_pos = pos:lsp('utf-16')
+---
+--- -- Convert back to `vim.Pos`.
+--- if vim.pos.lsp(buf, lsp_pos, 'utf-16') == pos then
+---   print("lsp_pos is equal to pos")
+--- end
+--- ```
+---@overload fun(pos: vim.Pos, position_encoding: lsp.PositionEncodingKind): lsp.Position
+---@overload fun(buf: integer, pos: lsp.Position, position_encoding: lsp.PositionEncodingKind): vim.Pos
+function Pos.lsp(...)
+  local nargs = select('#', ...)
+  if nargs == 2 then
+    return to_lsp_pos(...)
+  elseif nargs == 3 then
+    return from_lsp_pos(...)
+  else
+    error('invalid parameters')
+  end
 end
 
 ---@param p1 vim.Pos First position to compare.
