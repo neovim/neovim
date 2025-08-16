@@ -7,6 +7,7 @@
 2. `git clone https://github.com/neovim/neovim`
 3. `cd neovim`
     - If you want the **stable release**, also run `git checkout stable`.
+    - Spaces in path not allowed. See notes below.
 4. `make CMAKE_BUILD_TYPE=RelWithDebInfo`
     - If you want to install to a custom location, set `CMAKE_INSTALL_PREFIX`. See also [INSTALL.md](./INSTALL.md#install-from-source).
     - On BSD, use `gmake` instead of `make`.
@@ -21,6 +22,7 @@
 - After building, you can run the `nvim` executable without installing it by running `VIMRUNTIME=runtime ./build/bin/nvim`.
 - If you plan to develop Neovim, install [Ninja](https://ninja-build.org/) for faster builds. It will automatically be used.
 - Install [ccache](https://ccache.dev/) for faster rebuilds of Neovim. It's used by default. To disable it, use `CCACHE_DISABLE=true make`.
+- The neovim directory path cannot contain spaces due to limitations in the Makefile's path detection. If your path contains spaces, either move the project to a path without spaces or use the CMake commands directly.
 
 ## Running tests
 
