@@ -1326,7 +1326,7 @@ static void f_empty(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     n = (tv_blob_len(argvars[0].vval.v_blob) == 0);
     break;
   case VAR_UNKNOWN:
-    internal_error("f_empty(UNKNOWN)");
+    internal_error_no_abort("f_empty(UNKNOWN)");
     break;
   }
 
@@ -2028,6 +2028,10 @@ static void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
     // function('MyFunc', [arg], dict)
     s = (char *)tv_get_string(&argvars[0]);
     use_string = true;
+  }
+  if (s == NULL) {
+    semsg(_(e_invarg2), "NULL");
+    return;
   }
 
   if ((use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL) || is_funcref) {
@@ -8123,7 +8127,7 @@ static void f_type(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   case VAR_BLOB:
     n = VAR_TYPE_BLOB; break;
   case VAR_UNKNOWN:
-    internal_error("f_type(UNKNOWN)");
+    internal_error_no_abort("f_type(UNKNOWN)");
     break;
   }
   rettv->vval.v_number = n;
