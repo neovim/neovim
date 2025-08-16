@@ -187,20 +187,19 @@ Run |:checkhealth| in Nvim for automatic diagnosis.
 
 Other hints:
 
-- The python `neovim` module was renamed to `pynvim` (long ago).
-- If you're using pyenv or virtualenv for the `pynvim` module
-    https://pypi.org/project/pynvim/, you must set `g:python3_host_prog` to
-    the virtualenv's interpreter path.
-- Read |provider-python|.
+- Read |provider-python| to learn how to install `pynvim`.
 - Be sure you have the latest version of the `pynvim` Python module: >bash
 
-    python -m pip install setuptools
-    python -m pip install --upgrade pynvim
-    python3 -m pip install --upgrade pynvim
+    uv tool install --upgrade pynvim
 <
+  See |provider-python| for other installation options.
+- If you're manually creating a Python virtual environment for the `pynvim` module
+    https://pypi.org/project/pynvim/, you must set `g:python3_host_prog` to
+    the virtualenv's interpreter path.
 - Try with `nvim -u NORC` to make sure your config (|init.vim|) isn't causing a
     problem. If you get `E117: Unknown function`, that means there's a runtime
     issue: |faq-runtime|.
+- The python `neovim` module was renamed to `pynvim` (long ago).
 
 
 :CHECKHEALTH REPORTS E5009: INVALID $VIMRUNTIME ~
