@@ -393,7 +393,7 @@ describe("'inccommand' for user commands", function()
     ]])
   end)
 
-  it('does not crash on ambiguous command #18825', function()
+  it('no crash on ambiguous command #18825', function()
     command('set inccommand=split')
     command('command Reply echo 1')
     feed(':R')

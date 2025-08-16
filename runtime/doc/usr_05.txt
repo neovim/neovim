@@ -291,7 +291,7 @@ GETTING A GLOBAL PLUGIN
 
 Where can you find plugins?
 - Some are always loaded, you can see them in the directory $VIMRUNTIME/plugin.
-- Some come with Vim.  You can find them in the directory $VIMRUNTIME/macros
+- Some come with Vim.  You can find them in the directory $VIMRUNTIME/scripts
   and its sub-directories and under $VIM/vimfiles/pack/dist/opt/.
 - Download from the net.  There is a large collection on https://www.vim.org.
 - They are sometimes posted in a Vim maillist.
@@ -338,8 +338,8 @@ GETTING A FILETYPE PLUGIN
 
 You can find them in the same places as the global plugins.  Watch out if the
 type of file is mentioned, then you know if the plugin is a global or a
-filetype one.  The scripts in $VIMRUNTIME/macros are global ones, the filetype
-plugins are in $VIMRUNTIME/ftplugin.
+filetype one.  The scripts in $VIMRUNTIME/scripts are global ones, the
+filetype plugins are in $VIMRUNTIME/ftplugin.
 
 
 USING A FILETYPE PLUGIN					*ftplugin-name*

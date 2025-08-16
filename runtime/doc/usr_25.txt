@@ -217,9 +217,9 @@ An alternative is to filter the text through an external program.  Example: >
 Indents can be used to make text stand out from the rest.  The example texts
 in this manual, for example, are indented by eight columns.  You would
 normally enter this by typing <Tab> at the start of each line.  Take this
-text:
-	the first line ~
-	the second line ~
+text: >
+	the first line
+	the second line
 
 This is entered by typing <Tab>, some text, <Enter>, <Tab> and more text.
    The 'autoindent' option inserts indents automatically: >
