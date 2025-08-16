@@ -248,7 +248,7 @@ int u_save_cursor(void)
 }
 
 /// Save the lines between "top" and "bot" for both the "u" and "U" command.
-/// "top" may be 0 and bot may be curbuf->b_ml.ml_line_count + 1.
+/// "top" may be 0 and "bot" may be curbuf->b_ml.ml_line_count + 1.
 /// Careful: may trigger autocommands that reload the buffer.
 /// Returns FAIL when lines could not be saved, OK otherwise.
 int u_save(linenr_T top, linenr_T bot)
