@@ -3,6 +3,7 @@ local M = {}
 local capabilities = {
   codeActionProvider = true,
   documentSymbolProvider = true,
+  executeCommandProvider = { commands = { 'delete_plugin', 'update_plugin', 'skip_update_plugin' } },
   hoverProvider = true,
 }
 --- @type table<string,function>
@@ -22,6 +23,48 @@ local get_confirm_bufnr = function(uri)
   return tonumber(uri:match('^nvim%-pack://(%d+)/confirm%-update$'))
 end
 
+local group_header_pattern = '^# (%S+)'
+local plugin_header_pattern = '^## (.+)$'
+
+--- @return { group: string?, name: string?, from: integer?, to: integer? }
+local get_plug_data_at_lnum = function(bufnr, lnum)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  --- @type string, string, integer, integer
+  local group, name, from, to
+  for i = lnum, 1, -1 do
+    group = group or lines[i]:match(group_header_pattern) --[[@as string]]
+    -- If group is found earlier than name - `lnum` is for group header line
+    -- If later - proper group header line.
+    if group then
+      break
+    end
+    name = name or lines[i]:match(plugin_header_pattern) --[[@as string]]
+    from = (not from and name) and i or from --[[@as integer]]
+  end
+  if not (group and name and from) then
+    return {}
+  end
+  --- @cast group string
+  --- @cast from integer
+
+  for i = lnum + 1, #lines do
+    if lines[i]:match(group_header_pattern) or lines[i]:match(plugin_header_pattern) then
+      -- Do not include blank line before next section
+      to = i - 2
+      break
+    end
+  end
+  to = to or #lines
+
+  if not (from <= lnum and lnum <= to) then
+    return {}
+  end
+  return { group = group, name = name, from = from, to = to }
+end
+
+--- @alias vim.pack.lsp.Position { line: integer, character: integer }
+--- @alias vim.pack.lsp.Range { start: vim.pack.lsp.Position, end: vim.pack.lsp.Position }
+
 --- @param params { textDocument: { uri: string } }
 --- @param callback function
 methods['textDocument/documentSymbol'] = function(params, callback)
@@ -30,8 +73,6 @@ methods['textDocument/documentSymbol'] = function(params, callback)
     return callback(nil, {})
   end
 
-  --- @alias vim.pack.lsp.Position { line: integer, character: integer }
-  --- @alias vim.pack.lsp.Range { start: vim.pack.lsp.Position, end: vim.pack.lsp.Position }
   --- @alias vim.pack.lsp.Symbol {
   ---   name: string,
   ---   kind: number,
@@ -69,28 +110,81 @@ methods['textDocument/documentSymbol'] = function(params, callback)
   end
 
   local group_kind = vim.lsp.protocol.SymbolKind.Namespace
-  local symbols = parse_headers('^# (%S+)', 0, #lines - 1, group_kind)
+  local symbols = parse_headers(group_header_pattern, 0, #lines - 1, group_kind)
 
   local plug_kind = vim.lsp.protocol.SymbolKind.Module
   for _, group in ipairs(symbols) do
     local start_line, end_line = group.range.start.line, group.range['end'].line
-    group.children = parse_headers('^## (.+)$', start_line, end_line, plug_kind)
+    group.children = parse_headers(plugin_header_pattern, start_line, end_line, plug_kind)
   end
 
   return callback(nil, symbols)
 end
 
+--- @alias vim.pack.lsp.CodeActionContext { diagnostics: table, only: table?, triggerKind: integer? }
+
+--- @param params { textDocument: { uri: string }, range: vim.pack.lsp.Range, context: vim.pack.lsp.CodeActionContext }
 --- @param callback function
-methods['textDocument/codeAction'] = function(_, callback)
-  -- TODO(echasnovski)
-  -- Suggested actions for "plugin under cursor":
-  -- - Delete plugin from disk.
-  -- - Update only this plugin.
-  -- - Exclude this plugin from update.
-  return callback(_, {})
+methods['textDocument/codeAction'] = function(params, callback)
+  local bufnr = get_confirm_bufnr(params.textDocument.uri)
+  local empty_kind = vim.lsp.protocol.CodeActionKind.Empty
+  local only = params.context.only or { empty_kind }
+  if not (bufnr and vim.tbl_contains(only, empty_kind)) then
+    return callback(nil, {})
+  end
+  local plug_data = get_plug_data_at_lnum(bufnr, params.range.start.line + 1)
+  if not plug_data.name then
+    return callback(nil, {})
+  end
+
+  local function new_action(title, command)
+    return {
+      title = ('%s `%s`'):format(title, plug_data.name),
+      command = { title = title, command = command, arguments = { bufnr, plug_data } },
+    }
+  end
+
+  local res = {}
+  if plug_data.group == 'Update' then
+    vim.list_extend(res, {
+      new_action('Update', 'update_plugin'),
+      new_action('Skip updating', 'skip_update_plugin'),
+    }, 0)
+  end
+  vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
+  callback(nil, res)
 end
 
---- @param params { textDocument: { uri: string }, position: { line: integer, character: integer } }
+local commands = {
+  update_plugin = function(plug_data)
+    vim.pack.update({ plug_data.name }, { force = true, _offline = true })
+  end,
+  skip_update_plugin = function(_) end,
+  delete_plugin = function(plug_data)
+    vim.pack.del({ plug_data.name })
+  end,
+}
+
+-- NOTE: Use `vim.schedule_wrap` to avoid press-enter after choosing code
+-- action via built-in `vim.fn.inputlist()`
+--- @param params { command: string, arguments: table }
+--- @param callback function
+methods['workspace/executeCommand'] = vim.schedule_wrap(function(params, callback)
+  --- @type integer, table
+  local bufnr, plug_data = unpack(params.arguments)
+  local ok, err = pcall(commands[params.command], plug_data)
+  if not ok then
+    return callback({ code = 1, message = err }, {})
+  end
+
+  -- Remove plugin lines (including blank line) to not later act on plugin
+  vim.bo[bufnr].modifiable = true
+  vim.api.nvim_buf_set_lines(bufnr, plug_data.from - 2, plug_data.to, false, {})
+  vim.bo[bufnr].modifiable, vim.bo[bufnr].modified = false, false
+  callback(nil, {})
+end)
+
+--- @param params { textDocument: { uri: string }, position: vim.pack.lsp.Position }
 --- @param callback function
 methods['textDocument/hover'] = function(params, callback)
   local bufnr = get_confirm_bufnr(params.textDocument.uri)
