@@ -93,6 +93,7 @@ return {
     RecordingLeave = true, -- just before a macro stops recording
     RemoteReply = false, -- upon string reception from a remote vim
     SafeState = false, -- going to wait for a character
+    SearchPost = true, -- after a search is performed
     SearchWrapped = true, -- after the search wrapped around
     SessionLoadPost = false, -- after loading a session file
     SessionWritePost = false, -- after writing a session file
