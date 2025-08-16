@@ -268,7 +268,10 @@ api.nvim_create_autocmd('LspAttach', {
   desc = 'Enable linked editing ranges for all buffers this client attaches to, if enabled',
   callback = function(ev)
     local client = assert(lsp.get_client_by_id(ev.data.client_id))
-    if not client._linked_editing_enabled or not client:supports_method(method, ev.buf) then
+    if
+      not client._enabled_capabilities['linked_editing_range']
+      or not client:supports_method(method, ev.buf)
+    then
       return
     end
 
@@ -286,7 +289,7 @@ local function toggle_linked_editing_for_client(enable, client)
     handler(bufnr, client)
   end
 
-  client._linked_editing_enabled = enable
+  client._enabled_capabilities['linked_editing_range'] = enable
 end
 
 ---@param enable boolean
