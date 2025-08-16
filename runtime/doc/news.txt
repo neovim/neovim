@@ -241,6 +241,7 @@ LUA
 • Built-in plugin manager |vim.pack|
 • |vim.list.unique()| to deduplicate lists.
 • |vim.list.bisect()| for binary search.
+• Experimental `vim.pos` and `vim.range` for Position/Range abstraction.
 
 OPTIONS
 

@@ -728,13 +728,21 @@ describe('semantic token highlighting', function()
         }]],
         expected = {
           {
-            line = 0,
-            end_line = 0,
             modifiers = { declaration = true, globalScope = true },
-            start_col = 6,
-            end_col = 9,
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 6,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 9,
+              },
+            },
           },
         },
         expected_screen = function()
@@ -770,103 +778,191 @@ int main()
         }]],
         expected = {
           { -- main
-            line = 1,
-            end_line = 1,
             modifiers = { declaration = true, globalScope = true },
-            start_col = 4,
-            end_col = 8,
             type = 'function',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 1,
+                col = 4,
+              },
+              end_ = {
+                buf = 1,
+                row = 1,
+                col = 8,
+              },
+            },
           },
           { --  __cplusplus
-            line = 3,
-            end_line = 3,
             modifiers = { globalScope = true },
-            start_col = 9,
-            end_col = 20,
             type = 'macro',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 3,
+                col = 9,
+              },
+              end_ = {
+                buf = 1,
+                row = 3,
+                col = 20,
+              },
+            },
           },
           { -- x
-            line = 4,
-            end_line = 4,
             modifiers = { declaration = true, readonly = true, functionScope = true },
-            start_col = 12,
-            end_col = 13,
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 4,
+                col = 12,
+              },
+              end_ = {
+                buf = 1,
+                row = 4,
+                col = 13,
+              },
+            },
           },
           { -- std
-            line = 5,
-            end_line = 5,
             modifiers = { defaultLibrary = true, globalScope = true },
-            start_col = 2,
-            end_col = 5,
             type = 'namespace',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 5,
+                col = 2,
+              },
+              end_ = {
+                buf = 1,
+                row = 5,
+                col = 5,
+              },
+            },
           },
           { -- cout
-            line = 5,
-            end_line = 5,
             modifiers = { defaultLibrary = true, globalScope = true },
-            start_col = 7,
-            end_col = 11,
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 5,
+                col = 7,
+              },
+              end_ = {
+                buf = 1,
+                row = 5,
+                col = 11,
+              },
+            },
           },
           { -- x
-            line = 5,
-            end_line = 5,
             modifiers = { readonly = true, functionScope = true },
-            start_col = 15,
-            end_col = 16,
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 5,
+                col = 15,
+              },
+              end_ = {
+                buf = 1,
+                row = 5,
+                col = 16,
+              },
+            },
           },
           { -- std
-            line = 5,
-            end_line = 5,
             modifiers = { defaultLibrary = true, globalScope = true },
-            start_col = 20,
-            end_col = 23,
             type = 'namespace',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 5,
+                col = 20,
+              },
+              end_ = {
+                buf = 1,
+                row = 5,
+                col = 23,
+              },
+            },
           },
           { -- endl
-            line = 5,
-            end_line = 5,
             modifiers = { defaultLibrary = true, globalScope = true },
-            start_col = 25,
-            end_col = 29,
             type = 'function',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 5,
+                col = 25,
+              },
+              end_ = {
+                buf = 1,
+                row = 5,
+                col = 29,
+              },
+            },
           },
           { -- #else comment #endif
-            line = 6,
-            end_line = 6,
             modifiers = {},
-            start_col = 0,
-            end_col = 7,
             type = 'comment',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 6,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 6,
+                col = 7,
+              },
+            },
           },
           {
-            line = 7,
-            end_line = 7,
             modifiers = {},
-            start_col = 0,
-            end_col = 11,
             type = 'comment',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 7,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 7,
+                col = 11,
+              },
+            },
           },
           {
-            line = 8,
-            end_line = 8,
             modifiers = {},
-            start_col = 0,
-            end_col = 8,
             type = 'comment',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 8,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 8,
+                col = 8,
+              },
+            },
           },
         },
         expected_screen = function()
@@ -904,31 +1000,55 @@ b = "as"]],
         }]],
         expected = {
           {
-            line = 0,
-            end_line = 0,
             modifiers = {},
-            start_col = 0,
-            end_col = 10,
             type = 'comment', -- comment
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 10,
+              },
+            },
           },
           {
-            line = 1,
-            end_line = 1,
             modifiers = { declaration = true }, -- a
-            start_col = 6,
-            end_col = 7,
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 1,
+                col = 6,
+              },
+              end_ = {
+                buf = 1,
+                row = 1,
+                col = 7,
+              },
+            },
           },
           {
-            line = 2,
-            end_line = 2,
             modifiers = { static = true }, -- b (global)
-            start_col = 0,
-            end_col = 1,
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 2,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 2,
+                col = 1,
+              },
+            },
           },
         },
         expected_screen = function()
@@ -965,149 +1085,277 @@ b = "as"]],
         ]
         }]],
         expected = {
-          {
-            line = 0,
-            end_line = 0,
+          { -- pub
             modifiers = {},
-            start_col = 0,
-            end_col = 3, -- pub
             type = 'keyword',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 3,
+              },
+            },
           },
-          {
-            line = 0,
-            end_line = 0,
+          { -- fn
             modifiers = {},
-            start_col = 4,
-            end_col = 6, -- fn
             type = 'keyword',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 4,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 6,
+              },
+            },
           },
-          {
-            line = 0,
-            end_line = 0,
+          { -- main
             modifiers = { declaration = true, public = true },
-            start_col = 7,
-            end_col = 11, -- main
             type = 'function',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 7,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 11,
+              },
+            },
           },
           {
-            line = 0,
-            end_line = 0,
             modifiers = {},
-            start_col = 11,
-            end_col = 12,
             type = 'parenthesis',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 11,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 12,
+              },
+            },
           },
           {
-            line = 0,
-            end_line = 0,
             modifiers = {},
-            start_col = 12,
-            end_col = 13,
             type = 'parenthesis',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 12,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 13,
+              },
+            },
           },
           {
-            line = 0,
-            end_line = 0,
             modifiers = {},
-            start_col = 14,
-            end_col = 15,
             type = 'brace',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 14,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 15,
+              },
+            },
           },
-          {
-            line = 1,
-            end_line = 1,
+          { -- println!
             modifiers = {},
-            start_col = 4,
-            end_col = 12,
-            type = 'macro', -- println!
+            type = 'macro',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 1,
+                col = 4,
+              },
+              end_ = {
+                buf = 1,
+                row = 1,
+                col = 12,
+              },
+            },
           },
           {
-            line = 1,
-            end_line = 1,
             modifiers = {},
-            start_col = 12,
-            end_col = 13,
             type = 'parenthesis',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 1,
+                col = 12,
+              },
+              end_ = {
+                buf = 1,
+                row = 1,
+                col = 13,
+              },
+            },
           },
-          {
-            line = 1,
-            end_line = 1,
+          { -- "Hello world!"
             modifiers = {},
-            start_col = 13,
-            end_col = 27,
-            type = 'string', -- "Hello world!"
+            type = 'string',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 1,
+                col = 13,
+              },
+              end_ = {
+                buf = 1,
+                row = 1,
+                col = 27,
+              },
+            },
           },
           {
-            line = 1,
-            end_line = 1,
             modifiers = {},
-            start_col = 27,
-            end_col = 28,
             type = 'parenthesis',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 1,
+                col = 27,
+              },
+              end_ = {
+                buf = 1,
+                row = 1,
+                col = 28,
+              },
+            },
           },
           {
-            line = 1,
-            end_line = 1,
             modifiers = {},
-            start_col = 28,
-            end_col = 29,
             type = 'semicolon',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 1,
+                col = 28,
+              },
+              end_ = {
+                buf = 1,
+                row = 1,
+                col = 29,
+              },
+            },
           },
-          {
-            line = 2,
-            end_line = 2,
+          { -- break
             modifiers = { controlFlow = true },
-            start_col = 4,
-            end_col = 9, -- break
             type = 'keyword',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 2,
+                col = 4,
+              },
+              end_ = {
+                buf = 1,
+                row = 2,
+                col = 9,
+              },
+            },
           },
-          {
-            line = 2,
-            end_line = 2,
+          { -- rust
             modifiers = {},
-            start_col = 10,
-            end_col = 14, -- rust
             type = 'unresolvedReference',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 2,
+                col = 10,
+              },
+              end_ = {
+                buf = 1,
+                row = 2,
+                col = 14,
+              },
+            },
           },
           {
-            line = 2,
-            end_line = 2,
             modifiers = {},
-            start_col = 14,
-            end_col = 15,
             type = 'semicolon',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 2,
+                col = 14,
+              },
+              end_ = {
+                buf = 1,
+                row = 2,
+                col = 15,
+              },
+            },
           },
-          {
-            line = 3,
-            end_line = 3,
+          { -- /// what?
             modifiers = { documentation = true },
-            start_col = 4,
-            end_col = 13,
-            type = 'comment', -- /// what?
+            type = 'comment',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 3,
+                col = 4,
+              },
+              end_ = {
+                buf = 1,
+                row = 3,
+                col = 13,
+              },
+            },
           },
           {
-            line = 4,
-            end_line = 4,
             modifiers = {},
-            start_col = 0,
-            end_col = 1,
             type = 'brace',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 4,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 4,
+                col = 1,
+              },
+            },
           },
         },
         expected_screen = function()
@@ -1178,30 +1426,46 @@ b = "as"]],
         response2 = [[{"edits": [{ "start": 0, "deleteCount": 1, "data": [1] }], "resultId": "2"}]],
         expected1 = {
           {
-            line = 0,
             modifiers = {
               declaration = true,
               globalScope = true,
             },
-            start_col = 6,
-            end_line = 0,
-            end_col = 9,
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 6,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 9,
+              },
+            },
           },
         },
         expected2 = {
           {
-            line = 1,
             modifiers = {
               declaration = true,
               globalScope = true,
             },
-            start_col = 6,
-            end_line = 1,
-            end_col = 9,
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 1,
+                col = 6,
+              },
+              end_ = {
+                buf = 1,
+                row = 1,
+                col = 9,
+              },
+            },
           },
         },
         expected_screen1 = function()
@@ -1268,177 +1532,329 @@ int main()
         }]],
         expected1 = {
           {
-            line = 2,
-            end_line = 2,
-            start_col = 4,
-            end_col = 8,
             modifiers = { declaration = true, globalScope = true },
             type = 'function',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 2,
+                col = 4,
+              },
+              end_ = {
+                buf = 1,
+                row = 2,
+                col = 8,
+              },
+            },
           },
           {
-            line = 4,
-            end_line = 4,
-            start_col = 8,
-            end_col = 9,
             modifiers = { declaration = true, functionScope = true },
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 4,
+                col = 8,
+              },
+              end_ = {
+                buf = 1,
+                row = 4,
+                col = 9,
+              },
+            },
           },
           {
-            line = 5,
-            end_line = 5,
-            start_col = 7,
-            end_col = 18,
             modifiers = { globalScope = true },
             type = 'macro',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 5,
+                col = 7,
+              },
+              end_ = {
+                buf = 1,
+                row = 5,
+                col = 18,
+              },
+            },
           },
           {
-            line = 6,
-            end_line = 6,
-            start_col = 4,
-            end_col = 7,
             modifiers = { defaultLibrary = true, globalScope = true },
             type = 'namespace',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 6,
+                col = 4,
+              },
+              end_ = {
+                buf = 1,
+                row = 6,
+                col = 7,
+              },
+            },
           },
           {
-            line = 6,
-            end_line = 6,
-            start_col = 9,
-            end_col = 13,
             modifiers = { defaultLibrary = true, globalScope = true },
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 6,
+                col = 9,
+              },
+              end_ = {
+                buf = 1,
+                row = 6,
+                col = 13,
+              },
+            },
           },
           {
-            line = 6,
-            end_line = 6,
-            start_col = 17,
-            end_col = 18,
             marked = true,
             modifiers = { functionScope = true },
             type = 'variable',
+            range = {
+              start = {
+                buf = 1,
+                row = 6,
+                col = 17,
+              },
+              end_ = {
+                buf = 1,
+                row = 6,
+                col = 18,
+              },
+            },
           },
           {
-            line = 7,
-            end_line = 7,
-            start_col = 0,
-            end_col = 5,
             marked = true,
             modifiers = {},
             type = 'comment',
+            range = {
+              start = {
+                buf = 1,
+                row = 7,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 7,
+                col = 5,
+              },
+            },
           },
           {
-            line = 8,
-            end_line = 8,
-            end_col = 22,
             modifiers = {},
-            start_col = 0,
             type = 'comment',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 8,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 8,
+                col = 22,
+              },
+            },
           },
           {
-            line = 9,
-            end_line = 9,
-            start_col = 0,
-            end_col = 6,
             modifiers = {},
             type = 'comment',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 9,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 9,
+                col = 6,
+              },
+            },
           },
         },
         expected2 = {
           {
-            line = 2,
-            end_line = 2,
-            start_col = 4,
-            end_col = 8,
             modifiers = { declaration = true, globalScope = true },
             type = 'function',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 2,
+                col = 4,
+              },
+              end_ = {
+                buf = 1,
+                row = 2,
+                col = 8,
+              },
+            },
           },
           {
-            line = 4,
-            end_line = 4,
-            start_col = 8,
-            end_col = 9,
             modifiers = { declaration = true, globalScope = true },
             type = 'function',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 4,
+                col = 8,
+              },
+              end_ = {
+                buf = 1,
+                row = 4,
+                col = 9,
+              },
+            },
           },
           {
-            line = 5,
-            end_line = 5,
-            end_col = 12,
-            start_col = 11,
             modifiers = { declaration = true, functionScope = true },
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 5,
+                col = 11,
+              },
+              end_ = {
+                buf = 1,
+                row = 5,
+                col = 12,
+              },
+            },
           },
           {
-            line = 6,
-            end_line = 6,
-            start_col = 7,
-            end_col = 18,
             modifiers = { globalScope = true },
             type = 'macro',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 6,
+                col = 7,
+              },
+              end_ = {
+                buf = 1,
+                row = 6,
+                col = 18,
+              },
+            },
           },
           {
-            line = 7,
-            end_line = 7,
-            start_col = 4,
-            end_col = 7,
             modifiers = { defaultLibrary = true, globalScope = true },
             type = 'namespace',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 7,
+                col = 4,
+              },
+              end_ = {
+                buf = 1,
+                row = 7,
+                col = 7,
+              },
+            },
           },
           {
-            line = 7,
-            end_line = 7,
-            start_col = 9,
-            end_col = 13,
             modifiers = { defaultLibrary = true, globalScope = true },
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 7,
+                col = 9,
+              },
+              end_ = {
+                buf = 1,
+                row = 7,
+                col = 13,
+              },
+            },
           },
           {
-            line = 7,
-            end_line = 7,
-            start_col = 17,
-            end_col = 18,
             marked = true,
             modifiers = { globalScope = true },
             type = 'function',
+            range = {
+              start = {
+                buf = 1,
+                row = 7,
+                col = 17,
+              },
+              end_ = {
+                buf = 1,
+                row = 7,
+                col = 18,
+              },
+            },
           },
           {
-            line = 8,
-            end_line = 8,
-            start_col = 0,
-            end_col = 5,
             marked = true,
             modifiers = {},
             type = 'comment',
+            range = {
+              start = {
+                buf = 1,
+                row = 8,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 8,
+                col = 5,
+              },
+            },
           },
           {
-            line = 9,
-            end_line = 9,
-            end_col = 22,
             modifiers = {},
-            start_col = 0,
             type = 'comment',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 9,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 9,
+                col = 22,
+              },
+            },
           },
           {
-            line = 10,
-            end_line = 10,
-            start_col = 0,
-            end_col = 6,
             modifiers = {},
             type = 'comment',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 10,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 10,
+                col = 6,
+              },
+            },
           },
         },
         expected_screen1 = function()
@@ -1497,15 +1913,23 @@ int main()
         response2 = [[{"edits": [{ "start": 0, "deleteCount": 5 }], "resultId": "2"}]],
         expected1 = {
           {
-            line = 0,
-            end_line = 0,
             modifiers = {
               declaration = true,
             },
-            start_col = 0,
-            end_col = 6,
             type = 'variable',
             marked = true,
+            range = {
+              start = {
+                buf = 1,
+                row = 0,
+                col = 0,
+              },
+              end_ = {
+                buf = 1,
+                row = 0,
+                col = 6,
+              },
+            },
           },
         },
         expected2 = {},
