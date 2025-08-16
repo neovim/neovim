@@ -191,7 +191,7 @@ EVENTS
 HIGHLIGHTS
 
 • |hl-DiffTextAdd| highlights added text within a changed line.
-• |hl-StderrMsg| |hl-StdoutMsg|
+• |hl-StderrMsg| |hl-StdoutMsg|, "Bold", "Italic", "BoldItalic".
 
 LSP
 

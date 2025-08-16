@@ -234,6 +234,9 @@ SpecialComment	special things inside a comment
 Debug		debugging statements
 
 Underlined	text that stands out, HTML links
+Bold		bold text
+Italic		italic text
+BoldItalic	bold and italic text
 
 Ignore		left blank, hidden  |hl-Ignore|
 
