@@ -32,6 +32,7 @@ local M = {
     ids = {}, ---@type { ['last'|'msg']: integer? } Table of mark IDs.
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
   },
+  on_dialog_key = 0, -- vim.on_key namespace for paging in the dialog window.
 }
 
 function M.msg:close()
@@ -379,6 +380,20 @@ function M.msg_show(kind, content, replace_last, _, append)
     end
     M.show_msg('dialog', content, replace_last, append)
     M.set_pos('dialog')
+
+    -- Allow paging in the dialog window. Forward the key if the topline did not change.
+    M.on_dialog_key = vim.on_key(function(key, typed)
+      if not typed then
+        return
+      end
+      local page_keys = { j = 'Lj', k = 'Hk', g = 'gg', G = 'G', d = [[\<C-D>]], u = [[\<C-U>]] }
+      if page_keys[key] then
+        local topline = fn.getwininfo(ext.wins.dialog)[1].topline
+        fn.win_execute(ext.wins.dialog, ('exe "norm %s"'):format(page_keys[key]))
+        api.nvim__redraw({ flush = true })
+        return fn.getwininfo(ext.wins.dialog)[1].topline ~= topline and '' or nil
+      end
+    end)
   else
     -- Set the entered search command in the cmdline (if available).
     local tar = kind == 'search_cmd' and 'cmd' or ext.cfg.msg.target
