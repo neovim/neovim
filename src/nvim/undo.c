@@ -2343,7 +2343,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
         if (curbuf->b_ml.ml_line_count == 1) {
           empty_buffer = true;
         }
-        ml_delete(lnum, false);
+        ml_delete(lnum);  // ML_DEL_UNDO
       }
     } else {
       newarray = NULL;
@@ -2362,7 +2362,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
         if (empty_buffer && lnum == 0) {
           ml_replace(1, uep->ue_array[i], true);
         } else {
-          ml_append(lnum, uep->ue_array[i], 0, false);
+          ml_append_flags(lnum, uep->ue_array[i], 0, 0);  // ML_APPEND_UNDO
         }
         xfree(uep->ue_array[i]);
       }
