@@ -47,6 +47,13 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
+#ifdef MSWIN
+#include <io.h>
+#include <fcntl.h>
+#include <windows.h>
+#endif
+
+
 #define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
 #define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
@@ -86,6 +93,13 @@ static bool have_dollars(int num, char **file)
   }
   return false;
 }
+#ifdef MSWIN
+static void setup_windows_utf8_env(void) {
+  SetConsoleOutputCP(CP_UTF8);
+  SetConsoleCP(CP_UTF8);
+}
+#endif
+
 
 /// Performs wildcard pattern matching using the shell.
 ///
@@ -843,11 +857,17 @@ done:
 ///             returned buffer is not NULL)
 /// @return the return code of the process, -1 if the process couldn't be
 ///         started properly
+
+
 int os_system(char **argv, const char *input, size_t len, char **output,
               size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
 {
+#ifdef MSWIN
+  setup_windows_utf8_env();
+#endif
   return do_os_system(argv, input, len, output, nread, true, false);
 }
+
 
 static int do_os_system(char **argv, const char *input, size_t len, char **output, size_t *nread,
                         bool silent, bool forward_output)
