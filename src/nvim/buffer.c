@@ -656,6 +656,10 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
 
   buf->b_nwindows = nwindows;
 
+  // Disable buffer-updates for the current buffer.
+  // No need to check `unload_buf`: in that case the function returned above.
+  buf_updates_unload(buf, false);
+
   buf_freeall(buf, ((del_buf ? BFA_DEL : 0)
                     + (wipe_buf ? BFA_WIPE : 0)
                     + (ignore_abort ? BFA_IGNORE_ABORT : 0)));
@@ -677,10 +681,6 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   if (buf == curbuf && !is_curbuf) {
     return false;
   }
-
-  // Disable buffer-updates for the current buffer.
-  // No need to check `unload_buf`: in that case the function returned above.
-  buf_updates_unload(buf, false);
 
   if (win != NULL  // Avoid bogus clang warning.
       && win_valid_any_tab(win)
