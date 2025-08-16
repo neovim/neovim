@@ -8,6 +8,7 @@
       "${3rd}/busted/library"
     ],
     "ignoreDir": [
+      "/lua/vim/async.lua",
       ".deps",
       "build",
       "test"
