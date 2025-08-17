@@ -593,38 +593,6 @@ describe('LSP', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
         local server = _G._create_server()
-        local bufnr = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_set_current_buf(bufnr)
-        local detach_called = false
-        vim.api.nvim_create_autocmd('LspDetach', {
-          callback = function()
-            detach_called = true
-          end,
-        })
-        local client_id = vim.lsp.start({ name = 'detach-dummy', cmd = server.cmd })
-        assert(client_id, 'lsp.start must return client_id')
-        local client = assert(vim.lsp.get_client_by_id(client_id))
-        local num_attached_before = vim.tbl_count(client.attached_buffers)
-        vim.api.nvim_buf_delete(bufnr, { force = true })
-        local num_attached_after = vim.tbl_count(client.attached_buffers)
-        return {
-          bufnr = bufnr,
-          client_id = client_id,
-          num_attached_before = num_attached_before,
-          num_attached_after = num_attached_after,
-          detach_called = detach_called,
-        }
-      end)
-      eq(true, result ~= nil, 'exec_lua must return result')
-      eq(1, result.num_attached_before)
-      eq(0, result.num_attached_after)
-      eq(true, result.detach_called)
-    end)
-
-    it('should detach buffer on bufwipe 2', function()
-      exec_lua(create_server_definition)
-      local result = exec_lua(function()
-        local server = _G._create_server()
         local bufnr1 = vim.api.nvim_create_buf(false, true)
         local bufnr2 = vim.api.nvim_create_buf(false, true)
         local detach_called1 = false
@@ -642,11 +610,15 @@ describe('LSP', function()
           end,
         })
         vim.api.nvim_set_current_buf(bufnr1)
-        vim.lsp.start({ name = 'detach-dummy', cmd = server.cmd })
+        local client_id = assert(vim.lsp.start({ name = 'detach-dummy', cmd = server.cmd }))
+        local client = assert(vim.lsp.get_client_by_id(client_id))
         vim.api.nvim_set_current_buf(bufnr2)
         vim.lsp.start({ name = 'detach-dummy', cmd = server.cmd })
+        assert(vim.tbl_count(client.attached_buffers) == 2)
         vim.api.nvim_buf_delete(bufnr1, { force = true })
+        assert(vim.tbl_count(client.attached_buffers) == 1)
         vim.api.nvim_buf_delete(bufnr2, { force = true })
+        assert(vim.tbl_count(client.attached_buffers) == 0)
         return detach_called1 and detach_called2
       end)
       eq(true, result)
