@@ -7597,7 +7597,7 @@ msgstr "\" 在索引行上按 <回车> 来跳转到那里。"
 
 #: ../../../runtime/optwin.vim:159
 msgid "\" Hit <Space> on a \"set\" line to refresh it."
-msgstr "\" 在 \"set\" 行上按 <空格> 来刷新。 "
+msgstr "\" 在 \"set\" 行上按 <空格> 来刷新。"
 
 #: ../../../runtime/optwin.vim:228
 msgid "important"
