@@ -165,6 +165,30 @@ https://github.com/cascent/neovim-cygwin was built on Cygwin 2.9.0. Newer `libuv
       mingw32-make install
       ```
 
+### Windows WSL
+
+Build Ubuntu/Debian linux binary on [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (Windows Subsystem for Linux).
+
+```bash
+# Install build prerequisites
+sudo apt-get install ninja-build gettext cmake build-essential
+
+# Build the linux binary in WSL
+make CMAKE_BUILD_TYPE=RelWithDebInfo
+
+# Install the linux binary in WSL (with `<arch>` either `x86_64` or `arm64`)
+cd build && cpack -G DEB && sudo dpkg -i nvim-linux-<arch>.deb
+
+# Verify the installation
+nvim --version && which nvim # should be debug build in /usr/bin/nvim
+```
+
+**Note**: If you encounter linker errors or segfaults during the build, Windows libraries in your PATH may be interfering. Use a clean PATH to avoid conflicts:
+
+```bash
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" make CMAKE_BUILD_TYPE=RelWithDebInfo
+```
+
 ## Localization
 
 ### Localization build
