@@ -1400,7 +1400,7 @@ stack traceback:
         for _, chunk in ipairs(screen.messages[1].content) do
           nl = nl + (chunk[2]:find('\n') and 1 or 0)
         end
-        eq(682, nl)
+        eq(683, nl)
         screen.messages = {}
       end,
     })
