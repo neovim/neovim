@@ -621,6 +621,37 @@ describe('LSP', function()
       eq(true, result.detach_called)
     end)
 
+    it('should detach buffer on bufwipe 2', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server()
+        local bufnr1 = vim.api.nvim_create_buf(false, true)
+        local bufnr2 = vim.api.nvim_create_buf(false, true)
+        local detach_called1 = false
+        local detach_called2 = false
+        vim.api.nvim_create_autocmd('LspDetach', {
+          buffer = bufnr1,
+          callback = function()
+            detach_called1 = true
+          end,
+        })
+        vim.api.nvim_create_autocmd('LspDetach', {
+          buffer = bufnr2,
+          callback = function()
+            detach_called2 = true
+          end,
+        })
+        vim.api.nvim_set_current_buf(bufnr1)
+        vim.lsp.start({ name = 'detach-dummy', cmd = server.cmd })
+        vim.api.nvim_set_current_buf(bufnr2)
+        vim.lsp.start({ name = 'detach-dummy', cmd = server.cmd })
+        vim.api.nvim_buf_delete(bufnr1, { force = true })
+        vim.api.nvim_buf_delete(bufnr2, { force = true })
+        return detach_called1 and detach_called2
+      end)
+      eq(true, result)
+    end)
+
     it('should not re-attach buffer if it was deleted in on_init #28575', function()
       exec_lua(create_server_definition)
       exec_lua(function()
