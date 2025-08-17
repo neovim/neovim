@@ -1384,3 +1384,44 @@ describe('lua: nvim_buf_attach on_bytes', function()
     do_both(false)
   end)
 end)
+
+describe('nvim_buf_attach on_detach', function()
+  it('is invoked before unloading buffer', function()
+    exec_lua(function()
+      _G.logs = {} ---@type table<integer, string[]>
+    end)
+    local function setup(bufnr)
+      exec_lua(function()
+        _G.logs[bufnr] = {}
+        vim.api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout' }, {
+          buffer = bufnr,
+          callback = function(ev)
+            table.insert(_G.logs[bufnr], ev.event)
+          end,
+        })
+        vim.api.nvim_buf_attach(bufnr, false, {
+          on_detach = function()
+            table.insert(_G.logs[bufnr], 'on_detach')
+          end,
+        })
+      end)
+    end
+    -- Test with two buffers because the :bw works differently for the last buffer.
+    -- Before #35355, the order was as follows:
+    -- * non-last buffers: BufUnload → BufWipeout → on_detach
+    -- * the last buffer (with text): BufUnload → on_detach → BufWipeout
+    local buf1 = api.nvim_get_current_buf()
+    local buf2 = api.nvim_create_buf(true, false)
+    api.nvim_open_win(buf2, false, { split = 'below' })
+    api.nvim_buf_set_lines(buf1, 0, -1, true, { 'abc' })
+    api.nvim_buf_set_lines(buf2, 0, -1, true, { 'abc' })
+    setup(buf1)
+    setup(buf2)
+    api.nvim_buf_delete(buf1, { force = true })
+    api.nvim_buf_delete(buf2, { force = true })
+    local logs = exec_lua('return _G.logs')
+    local order = { 'on_detach', 'BufUnload', 'BufWipeout' }
+    eq(order, logs[buf1])
+    eq(order, logs[buf2])
+  end)
+end)
