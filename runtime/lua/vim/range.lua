@@ -129,6 +129,59 @@ function Range.intersect(r1, r2)
   return Range.new(rs.start, re.end_)
 end
 
+--- Converts |vim.Range| to `lsp.Range`.
+---
+--- Example:
+--- ```lua
+--- -- `buf` is required for conversion to LSP range.
+--- local buf = vim.api.nvim_get_current_buf()
+--- local range = vim.range(3, 5, 4, 0, { buf = buf })
+---
+--- -- Convert to LSP range, you can call it in a method style.
+--- local lsp_range = range:to_lsp('utf-16')
+--- ```
+---@param range vim.Range
+---@param position_encoding lsp.PositionEncodingKind
+function Range.to_lsp(range, position_encoding)
+  validate('range', range, 'table')
+  validate('position_encoding', position_encoding, 'string', true)
+
+  ---@type lsp.Range
+  return {
+    ['start'] = range.start:to_lsp(position_encoding),
+    ['end'] = range.end_:to_lsp(position_encoding),
+  }
+end
+
+--- Creates a new |vim.Range| from `lsp.Range`.
+---
+--- Example:
+--- ```lua
+--- local buf = vim.api.nvim_get_current_buf()
+--- local lsp_range = {
+---   ['start'] = { line = 3, character = 5 },
+---   ['end'] = { line = 4, character = 0 }
+--- }
+---
+--- -- `buf` is mandatory, as LSP ranges are always associated with a buffer.
+--- local range = vim.range.lsp(buf, lsp_range, 'utf-16')
+--- ```
+---@param buf integer
+---@param range lsp.Range
+---@param position_encoding lsp.PositionEncodingKind
+function Range.lsp(buf, range, position_encoding)
+  validate('buf', buf, 'number')
+  validate('range', range, 'table')
+  validate('position_encoding', position_encoding, 'string')
+
+  -- TODO(ofseed): avoid using `Pos:lsp()` here,
+  -- as they need reading files separately if buffer is unloaded.
+  local start = vim.pos.lsp(buf, range['start'], position_encoding)
+  local end_ = vim.pos.lsp(buf, range['end'], position_encoding)
+
+  return Range.new(start, end_)
+end
+
 -- Overload `Range.new` to allow calling this module as a function.
 setmetatable(Range, {
   __call = function(_, ...)

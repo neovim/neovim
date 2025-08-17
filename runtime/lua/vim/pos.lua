@@ -11,6 +11,7 @@
 --- Built on |vim.Pos| objects, this module offers operations
 --- that support comparisons and conversions between various types of positions.
 
+local api = vim.api
 local validate = vim.validate
 
 --- Represents a well-defined position.
@@ -108,6 +109,73 @@ end
 ---@private
 function Pos.__eq(...)
   return cmp_pos(...) == 0
+end
+
+--- TODO(ofseed): Make it work for unloaded buffers. Check get_line() in vim.lsp.util.
+---@param buf integer
+---@param row integer
+local function get_line(buf, row)
+  return api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
+end
+
+--- Converts |vim.Pos| to `lsp.Position`.
+---
+--- Example:
+--- ```lua
+--- -- `buf` is required for conversion to LSP position.
+--- local buf = vim.api.nvim_get_current_buf()
+--- local pos = vim.pos(3, 5, { buf = buf })
+---
+--- -- Convert to LSP position, you can call it in a method style.
+--- local lsp_pos = pos:lsp('utf-16')
+--- ```
+---@param pos vim.Pos
+---@param position_encoding lsp.PositionEncodingKind
+function Pos.to_lsp(pos, position_encoding)
+  validate('pos', pos, 'table')
+  validate('position_encoding', position_encoding, 'string')
+
+  local buf = assert(pos.buf, 'position is not a buffer position')
+  local row, col = pos.row, pos.col
+  -- When on the first character,
+  -- we can ignore the difference between byte and character.
+  if col > 0 then
+    col = vim.str_utfindex(get_line(buf, row), position_encoding, col, false)
+  end
+
+  ---@type lsp.Position
+  return { line = row, character = col }
+end
+
+--- Creates a new |vim.Pos| from `lsp.Position`.
+---
+--- Example:
+--- ```lua
+--- local buf = vim.api.nvim_get_current_buf()
+--- local lsp_pos = {
+---   line = 3,
+---   character = 5
+--- }
+---
+--- -- `buf` is mandatory, as LSP positions are always associated with a buffer.
+--- local pos = vim.pos.lsp(buf, lsp_pos, 'utf-16')
+--- ```
+---@param buf integer
+---@param pos lsp.Position
+---@param position_encoding lsp.PositionEncodingKind
+function Pos.lsp(buf, pos, position_encoding)
+  validate('buf', buf, 'number')
+  validate('pos', pos, 'table')
+  validate('position_encoding', position_encoding, 'string')
+
+  local row, col = pos.line, pos.character
+  -- When on the first character,
+  -- we can ignore the difference between byte and character.
+  if col > 0 then
+    col = vim.str_byteindex(get_line(buf, row), position_encoding, col)
+  end
+
+  return Pos.new(row, col, { buf = buf })
 end
 
 -- Overload `Range.new` to allow calling this module as a function.

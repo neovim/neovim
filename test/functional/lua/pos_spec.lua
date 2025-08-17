@@ -5,6 +5,7 @@ local eq = t.eq
 
 local clear = n.clear
 local exec_lua = n.exec_lua
+local insert = n.insert
 
 describe('vim.pos', function()
   before_each(clear)
@@ -66,5 +67,25 @@ describe('vim.pos', function()
         return vim.pos(3, 5) ~= vim.pos(3, 6)
       end)
     )
+  end)
+
+  it('supports conversion between vim.Pos and lsp.Position', function()
+    local buf = exec_lua(function()
+      return vim.api.nvim_get_current_buf()
+    end)
+    insert('Neovim 是 Vim 的分支，专注于扩展性和可用性。')
+    local lsp_pos = exec_lua(function()
+      local pos = vim.pos(0, 36, { buf = buf })
+      return pos:to_lsp('utf-16')
+    end)
+    eq({ line = 0, character = 20 }, lsp_pos)
+    local pos = exec_lua(function()
+      return vim.pos.lsp(buf, lsp_pos, 'utf-16')
+    end)
+    eq({
+      buf = buf,
+      row = 0,
+      col = 36,
+    }, pos)
   end)
 end)

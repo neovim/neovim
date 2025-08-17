@@ -5,6 +5,7 @@ local eq = t.eq
 
 local clear = n.clear
 local exec_lua = n.exec_lua
+local insert = n.insert
 
 describe('vim.range', function()
   before_each(clear)
@@ -59,5 +60,27 @@ describe('vim.range', function()
       end)
     end)
     eq(success, false)
+  end)
+
+  it('supports conversion between vim.Range and lsp.Range', function()
+    local buf = exec_lua(function()
+      return vim.api.nvim_get_current_buf()
+    end)
+    insert('Neovim 是 Vim 的分支，专注于扩展性和可用性。')
+    local lsp_range = exec_lua(function()
+      local range = vim.range(0, 10, 0, 36, { buf = buf })
+      return range:to_lsp('utf-16')
+    end)
+    eq({
+      ['start'] = { line = 0, character = 8 },
+      ['end'] = { line = 0, character = 20 },
+    }, lsp_range)
+    local range = exec_lua(function()
+      return vim.range.lsp(buf, lsp_range, 'utf-16')
+    end)
+    eq({
+      start = { row = 0, col = 10, buf = buf },
+      end_ = { row = 0, col = 36, buf = buf },
+    }, range)
   end)
 end)

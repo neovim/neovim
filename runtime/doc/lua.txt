@@ -3986,13 +3986,54 @@ comparisons and conversions between various types of positions.
     as format conversions.
 
     Fields: ~
-      • {row}   (`integer`) 0-based byte index.
-      • {col}   (`integer`) 0-based byte index.
-      • {buf}?  (`integer`) Optional buffer handle.
+      • {row}     (`integer`) 0-based byte index.
+      • {col}     (`integer`) 0-based byte index.
+      • {buf}?    (`integer`) Optional buffer handle.
 
-                When specified, it indicates that this position belongs to a
-                specific buffer. This field is required when performing
-                position conversions.
+                  When specified, it indicates that this position belongs to a
+                  specific buffer. This field is required when performing
+                  position conversions.
+      • {to_lsp}  (`fun(pos: vim.Pos, position_encoding: lsp.PositionEncodingKind)`)
+                  See |Pos:to_lsp()|.
+      • {lsp}     (`fun(buf: integer, pos: lsp.Position, position_encoding: lsp.PositionEncodingKind)`)
+                  See |Pos:lsp()|.
+
+
+Pos:lsp({buf}, {pos}, {position_encoding})                         *Pos:lsp()*
+    Creates a new |vim.Pos| from `lsp.Position`.
+
+    Example: >lua
+        local buf = vim.api.nvim_get_current_buf()
+        local lsp_pos = {
+          line = 3,
+          character = 5
+        }
+
+        -- `buf` is mandatory, as LSP positions are always associated with a buffer.
+        local pos = vim.pos.lsp(buf, lsp_pos, 'utf-16')
+<
+
+    Parameters: ~
+      • {buf}                (`integer`)
+      • {pos}                (`lsp.Position`)
+      • {position_encoding}  (`lsp.PositionEncodingKind`)
+
+Pos:to_lsp({pos}, {position_encoding})                          *Pos:to_lsp()*
+    Converts |vim.Pos| to `lsp.Position`.
+
+    Example: >lua
+        -- `buf` is required for conversion to LSP position.
+        local buf = vim.api.nvim_get_current_buf()
+        local pos = vim.pos(3, 5, { buf = buf })
+
+        -- Convert to LSP position, you can call it in a method style.
+        local lsp_pos = pos:lsp('utf-16')
+<
+
+    Parameters: ~
+      • {pos}                (`vim.Pos`) See |vim.Pos|.
+      • {position_encoding}  (`lsp.PositionEncodingKind`)
+
 
 ==============================================================================
 Lua module: vim.range                                              *vim.range*
@@ -4044,6 +4085,10 @@ ranges). conversions between various types of ranges is also provided.
                      |Range:has()|.
       • {intersect}  (`fun(r1: vim.Range, r2: vim.Range): vim.Range?`) See
                      |Range:intersect()|.
+      • {to_lsp}     (`fun(range: vim.Range, position_encoding: lsp.PositionEncodingKind)`)
+                     See |Range:to_lsp()|.
+      • {lsp}        (`fun(buf: integer, range: lsp.Range, position_encoding: lsp.PositionEncodingKind)`)
+                     See |Range:lsp()|.
 
 
 Range:has({outer}, {inner})                                      *Range:has()*
@@ -4066,6 +4111,41 @@ Range:intersect({r1}, {r2})                                *Range:intersect()*
     Return: ~
         (`vim.Range?`) range that is present inside both `r1` and `r2`. `nil`
         if such range does not exist. See |vim.Range|.
+
+Range:lsp({buf}, {range}, {position_encoding})                   *Range:lsp()*
+    Creates a new |vim.Range| from `lsp.Range`.
+
+    Example: >lua
+        local buf = vim.api.nvim_get_current_buf()
+        local lsp_range = {
+          ['start'] = { line = 3, character = 5 },
+          ['end'] = { line = 4, character = 0 }
+        }
+
+        -- `buf` is mandatory, as LSP ranges are always associated with a buffer.
+        local range = vim.range.lsp(buf, lsp_range, 'utf-16')
+<
+
+    Parameters: ~
+      • {buf}                (`integer`)
+      • {range}              (`lsp.Range`)
+      • {position_encoding}  (`lsp.PositionEncodingKind`)
+
+Range:to_lsp({range}, {position_encoding})                    *Range:to_lsp()*
+    Converts |vim.Range| to `lsp.Range`.
+
+    Example: >lua
+        -- `buf` is required for conversion to LSP range.
+        local buf = vim.api.nvim_get_current_buf()
+        local range = vim.range(3, 5, 4, 0, { buf = buf })
+
+        -- Convert to LSP range, you can call it in a method style.
+        local lsp_range = range:to_lsp('utf-16')
+<
+
+    Parameters: ~
+      • {range}              (`vim.Range`) See |vim.Range|.
+      • {position_encoding}  (`lsp.PositionEncodingKind`)
 
 
 ==============================================================================
