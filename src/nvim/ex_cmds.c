@@ -2512,13 +2512,11 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         goto theend;
       }
       u_unchanged(curbuf);
-      buf_updates_unload(curbuf, false);
       buf_freeall(curbuf, BFA_KEEP_UNDO);
 
       // Tell readfile() not to clear or reload undo info.
       readfile_flags = READ_KEEP_UNDO;
     } else {
-      buf_updates_unload(curbuf, false);
       buf_freeall(curbuf, 0);  // Free all things for buffer.
     }
     // If autocommands deleted the buffer we were going to re-edit, give
