@@ -234,8 +234,10 @@ end
 --- - Output of |vim.version.range()| to install the greatest/last semver tag
 ---   inside the version constraint.
 --- @field version? string|vim.VersionRange
+---
+--- @field data? any Arbitrary data associated with a plugin.
 
---- @alias vim.pack.SpecResolved { src: string, name: string, version: nil|string|vim.VersionRange }
+--- @alias vim.pack.SpecResolved { src: string, name: string, version: nil|string|vim.VersionRange, data: any|nil }
 
 --- @param spec string|vim.pack.Spec
 --- @return vim.pack.SpecResolved
@@ -247,7 +249,7 @@ local function normalize_spec(spec)
   name = (type(name) == 'string' and name or ''):match('[^/]+$') or ''
   vim.validate('spec.name', name, is_nonempty_string, true, 'non-empty string')
   vim.validate('spec.version', spec.version, is_version, true, 'string or vim.VersionRange')
-  return { src = spec.src, name = name, version = spec.version }
+  return { src = spec.src, name = name, version = spec.version, data = spec.data }
 end
 
 --- @class (private) vim.pack.PlugInfo
