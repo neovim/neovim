@@ -188,6 +188,8 @@ INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch")
 EXTERN const char e_winfixbuf_cannot_go_to_buffer[]
 INIT(= N_("E1513: Cannot switch buffer. 'winfixbuf' is enabled"));
 EXTERN const char e_invalid_return_type_from_findfunc[] INIT( = N_("E1514: 'findfunc' did not return a List type"));
+EXTERN const char e_str_encoding_from_failed[] INIT( = N_("E1515: Unable to convert from '%s' encoding"));
+EXTERN const char e_str_encoding_to_failed[] INIT( = N_("E1516: Unable to convert to '%s' encoding"));
 EXTERN const char e_cannot_switch_to_a_closing_buffer[] INIT( = N_("E1546: Cannot switch to a closing buffer"));
 EXTERN const char e_cannot_have_more_than_nr_diff_anchors[] INIT( = N_("E1549: Cannot have more than %d diff anchors"));
 EXTERN const char e_failed_to_find_all_diff_anchors[] INIT( = N_("E1550: Failed to find all diff anchors"));

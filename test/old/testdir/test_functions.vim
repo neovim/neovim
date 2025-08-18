@@ -3928,4 +3928,101 @@ func Test_slice()
   call assert_equal(0, slice(v:true, 1))
 endfunc
 
+" Tests for the str2blob() function
+func Test_str2blob()
+  let lines =<< trim END
+    call assert_equal(0z, str2blob([""]))
+    call assert_equal(0z, str2blob([]))
+    call assert_equal(0z, str2blob(v:_null_list))
+    call assert_equal(0z, str2blob([v:_null_string]))
+    call assert_equal(0z0A, str2blob([v:_null_string, v:_null_string]))
+    call assert_fails("call str2blob('')", 'E1211: List required for argument 1')
+    call assert_equal(0z61, str2blob(["a"]))
+    call assert_equal(0z6162, str2blob(["ab"]))
+    call assert_equal(0z610062, str2blob(["a\nb"]))
+    call assert_equal(0z61620A6364, str2blob(["ab", "cd"]))
+    call assert_equal(0z0A, str2blob(["", ""]))
+    call assert_equal(0z610A62, str2blob(["a", "b"]))
+    call assert_equal(0z610A0A62, str2blob(["a", "", "b"]))
+    call assert_equal(0z610A0A62, str2blob(["a", v:_null_string, "b"]))
+
+    call assert_equal(0zC2ABC2BB, str2blob(["«»"]))
+    call assert_equal(0zC59DC59F, str2blob(["ŝş"]))
+    call assert_equal(0zE0AE85E0.AE87, str2blob(["அஇ"]))
+    call assert_equal(0zF09F81B0.F09F81B3, str2blob(["🁰🁳"]))
+    call assert_equal(0z616263, str2blob(['abc'], {}))
+    call assert_equal(0zABBB, str2blob(['«»'], {'encoding': 'latin1'}))
+    call assert_equal(0zABBB0AABBB, str2blob(['«»', '«»'], {'encoding': 'latin1'}))
+    call assert_equal(0zC2ABC2BB, str2blob(['«»'], {'encoding': 'utf8'}))
+
+    call assert_equal(0z62, str2blob(["b"], v:_null_dict))
+    call assert_equal(0z63, str2blob(["c"], {'encoding': v:_null_string}))
+
+    call assert_fails("call str2blob(['abc'], [])", 'E1206: Dictionary required for argument 2')
+    call assert_fails("call str2blob(['abc'], {'encoding': []})", 'E730: Using a List as a String')
+    call assert_fails("call str2blob(['abc'], {'encoding': 'ab12xy'})", 'E1516: Unable to convert to ''ab12xy'' encoding')
+    call assert_fails("call str2blob(['ŝş'], {'encoding': 'latin1'})", 'E1516: Unable to convert to ''latin1'' encoding')
+    call assert_fails("call str2blob(['அஇ'], {'encoding': 'latin1'})", 'E1516: Unable to convert to ''latin1'' encoding')
+    call assert_fails("call str2blob(['🁰🁳'], {'encoding': 'latin1'})", 'E1516: Unable to convert to ''latin1'' encoding')
+  END
+  call CheckLegacyAndVim9Success(lines)
+endfunc
+
+" Tests for the blob2str() function
+func Test_blob2str()
+  let lines =<< trim END
+    call assert_equal([], blob2str(0z))
+    call assert_equal([], blob2str(v:_null_blob))
+    call assert_fails("call blob2str([])", 'E1238: Blob required for argument 1')
+    call assert_equal(["ab"], blob2str(0z6162))
+    call assert_equal(["a\nb"], blob2str(0z610062))
+    call assert_equal(["ab", "cd"], blob2str(0z61620A6364))
+
+    call assert_equal(["«»"], blob2str(0zC2ABC2BB))
+    call assert_equal(["ŝş"], blob2str(0zC59DC59F))
+    call assert_equal(["அஇ"], blob2str(0zE0AE85E0.AE87))
+    call assert_equal(["🁰🁳"], blob2str(0zF09F81B0.F09F81B3))
+    call assert_equal(['«»'], blob2str(0zABBB, {'encoding': 'latin1'}))
+    call assert_equal(['«»'], blob2str(0zC2ABC2BB, {'encoding': 'utf8'}))
+    call assert_equal(['«»'], blob2str(0zC2ABC2BB, {'encoding': 'utf-8'}))
+
+    call assert_equal(['a'], blob2str(0z61, v:_null_dict))
+    call assert_equal(['a'], blob2str(0z61, {'encoding': v:_null_string}))
+
+    call assert_equal(["\x80"], blob2str(0z80, {'encoding': 'none'}))
+    call assert_equal(['a', "\x80"], blob2str(0z610A80, {'encoding': 'none'}))
+
+    #" Invalid encoding
+    call assert_fails("call blob2str(0z80)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0z610A80)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0zC0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0zE0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0zF0)", "E1515: Unable to convert from 'utf-8' encoding")
+
+    call assert_fails("call blob2str(0z6180)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0z61C0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0z61E0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0z61F0)", "E1515: Unable to convert from 'utf-8' encoding")
+
+    call assert_fails("call blob2str(0zC0C0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0z61C0C0)", "E1515: Unable to convert from 'utf-8' encoding")
+
+    call assert_fails("call blob2str(0zE0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0zE080)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0zE080C0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0z61E080C0)", "E1515: Unable to convert from 'utf-8' encoding")
+
+    call assert_fails("call blob2str(0zF08080C0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0z61F08080C0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0zF0)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0zF080)", "E1515: Unable to convert from 'utf-8' encoding")
+    call assert_fails("call blob2str(0zF08080)", "E1515: Unable to convert from 'utf-8' encoding")
+
+    call assert_fails("call blob2str(0z6162, [])", 'E1206: Dictionary required for argument 2')
+    call assert_fails("call blob2str(0z6162, {'encoding': []})", 'E730: Using a List as a String')
+    call assert_fails("call blob2str(0z6162, {'encoding': 'ab12xy'})", 'E1515: Unable to convert from ''ab12xy'' encoding')
+  END
+  call CheckLegacyAndVim9Success(lines)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

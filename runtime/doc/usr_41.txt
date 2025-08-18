@@ -650,6 +650,8 @@ String manipulation:					*string-functions*
 	win_execute()		like execute() but in a specified window
 	trim()			trim characters from a string
 	gettext()		lookup message translation
+	str2blob()		convert a list of strings into a blob
+	blob2str()		convert a blob into a list of strings
 
 List manipulation:					*list-functions*
 	get()			get an item without error for wrong index
