@@ -193,7 +193,12 @@ PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" make CMAKE_B
 
 ### Localization build
 
-A normal build will create `.mo` files in `build/src/nvim/po`.
+Translations are turned off by default. Enable by building Nvim with the CMake flag `ENABLE_TRANSLATIONS=ON`.
+Doing this will create `.mo` files in `build/src/nvim/po`. Example:
+
+```
+make CMAKE_EXTRA_FLAGS="-DENABLE_TRANSLATIONS=ON"
+```
 
 * If you see `msgfmt: command not found`, you need to install [`gettext`](http://en.wikipedia.org/wiki/Gettext). On most systems, the package is just called `gettext`.
 
