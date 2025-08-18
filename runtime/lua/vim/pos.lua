@@ -178,6 +178,19 @@ function Pos.lsp(buf, pos, position_encoding)
   return Pos.new(row, col, { buf = buf })
 end
 
+--- Converts |vim.Pos| to cursor position.
+---@param pos vim.Pos
+---@return [integer, integer]
+function Pos.to_cursor(pos)
+  return { pos.row + 1, pos.col }
+end
+
+--- Creates a new |vim.Pos| from cursor position.
+---@param pos [integer, integer]
+function Pos.cursor(pos)
+  return Pos.new(pos[1] - 1, pos[2])
+end
+
 -- Overload `Range.new` to allow calling this module as a function.
 setmetatable(Pos, {
   __call = function(_, ...)
