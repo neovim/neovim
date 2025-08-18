@@ -2871,7 +2871,9 @@ static void ml_flush_line(buf_T *buf, bool noalloc)
         memmove(old_line - extra, new_line, (size_t)new_len);
         buf->b_ml.ml_flags |= (ML_LOCKED_DIRTY | ML_LOCKED_POS);
         // The else case is already covered by the insert and delete
-        ml_updatechunk(buf, lnum, extra, ML_CHNK_UPDLINE);
+        if (extra != 0) {
+          ml_updatechunk(buf, lnum, extra, ML_CHNK_UPDLINE);
+        }
       } else {
         // Cannot do it in one data block: Delete and append.
         // Append first, because ml_delete_int() cannot delete the
@@ -4003,7 +4005,7 @@ int ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int *offp, bool no_ff)
     return 1;       // Not a "find offset" and offset 0 _must_ be in line 1
   }
   // Find the last chunk before the one containing our line. Last chunk is
-  // special because it will never qualify
+  // special because it will never qualify.
   linenr_T curline = 1;
   int curix = 0;
   int size = 0;
