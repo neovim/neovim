@@ -224,6 +224,39 @@ func Test_cd_completion()
     call assert_equal('"' .. cmd .. ' XComplDir1/ XComplDir2/ XComplDir3/', @:)
   endfor
   set cdpath&
+
+  if has('win32')
+    " Test windows absolute path completion
+    " Retrieve a suitable dir in the current drive
+    let dir = readdir('/', 'isdirectory("/" .. v:val) && len(v:val) > 2')[-1]
+    " Get partial path
+    let partial = dir[0:-2]
+    " Get the current drive letter
+    let old = chdir('/' . dir)
+    let full = getcwd()
+    let drive = full[0]
+    call chdir(old)
+
+    for cmd in ['cd', 'chdir', 'lcd', 'lchdir', 'tcd', 'tchdir']
+      for sep in [ '/', '\']
+
+        " Explicit drive letter
+        call feedkeys(':' .. cmd .. ' ' .. drive .. ':' .. sep ..
+                     \  partial .. "\<C-A>\<C-B>\"\<CR>", 'tx')
+        call assert_match(full, @:)
+
+        " Implicit drive letter
+        call feedkeys(':' .. cmd .. ' ' .. sep .. partial .. "\<C-A>\<C-B>\"\<CR>", 'tx')
+        call assert_match('/' .. dir .. '/', @:)
+
+        " UNC path
+        call feedkeys(':' .. cmd .. ' ' .. sep .. sep .. $COMPUTERNAME .. sep ..
+                     \ drive .. '$' .. sep .. partial .."\<C-A>\<C-B>\"\<CR>", 'tx')
+        call assert_match('//' .. $COMPUTERNAME .. '/' .. drive .. '$/' .. dir .. '/' , @:)
+
+      endfor
+    endfor
+  endif
 endfunc
 
 func Test_cd_unknown_dir()
