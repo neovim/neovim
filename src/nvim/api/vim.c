@@ -1096,18 +1096,18 @@ static void term_close(void *data)
   channel_decref(chan);
 }
 
-/// Send data to channel `id`. For a job, it writes it to the
-/// stdin of the process. For the stdio channel |channel-stdio|,
-/// it writes to Nvim's stdout.  For an internal terminal instance
-/// (|nvim_open_term()|) it writes directly to terminal output.
-/// See |channel-bytes| for more information.
+/// Sends raw data to channel `chan`. |channel-bytes|
+/// - For a job, it writes it to the stdin of the process.
+/// - For the stdio channel |channel-stdio|, it writes to Nvim's stdout.
+/// - For an internal terminal instance (|nvim_open_term()|) it writes directly to terminal output.
 ///
-/// This function writes raw data, not RPC messages.  If the channel
-/// was created with `rpc=true` then the channel expects RPC
-/// messages, use |vim.rpcnotify()| and |vim.rpcrequest()| instead.
+/// This function writes raw data, not RPC messages. Use |vim.rpcrequest()| and |vim.rpcnotify()| if
+/// the channel expects RPC messages (i.e. it was created with `rpc=true`).
 ///
-/// @param chan id of the channel
-/// @param data data to write. 8-bit clean: can contain NUL bytes.
+/// To write data to the |TUI| host terminal, see |nvim_ui_send()|.
+///
+/// @param chan Channel id
+/// @param data Data to write. 8-bit clean: may contain NUL bytes.
 /// @param[out] err Error details, if any
 void nvim_chan_send(Integer chan, String data, Error *err)
   FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY FUNC_API_LUA_ONLY

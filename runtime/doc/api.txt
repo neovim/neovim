@@ -557,14 +557,17 @@ created for extmark changes.
 Global Functions                                                  *api-global*
 
 nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
-    Send data to channel `id`. For a job, it writes it to the stdin of the
-    process. For the stdio channel |channel-stdio|, it writes to Nvim's
-    stdout. For an internal terminal instance (|nvim_open_term()|) it writes
-    directly to terminal output. See |channel-bytes| for more information.
+    Sends raw data to channel `chan`. |channel-bytes|
+    • For a job, it writes it to the stdin of the process.
+    • For the stdio channel |channel-stdio|, it writes to Nvim's stdout.
+    • For an internal terminal instance (|nvim_open_term()|) it writes
+      directly to terminal output.
 
-    This function writes raw data, not RPC messages. If the channel was
-    created with `rpc=true` then the channel expects RPC messages, use
-    |vim.rpcnotify()| and |vim.rpcrequest()| instead.
+    This function writes raw data, not RPC messages. Use |vim.rpcrequest()|
+    and |vim.rpcnotify()| if the channel expects RPC messages (i.e. it was
+    created with `rpc=true`).
+
+    To write data to the |TUI| host terminal, see |nvim_ui_send()|.
 
     Attributes: ~
         |RPC| only
@@ -572,8 +575,8 @@ nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
         Since: 0.5.0
 
     Parameters: ~
-      • {chan}  (`integer`) id of the channel
-      • {data}  (`string`) data to write. 8-bit clean: can contain NUL bytes.
+      • {chan}  (`integer`) Channel id
+      • {data}  (`string`) Data to write. 8-bit clean: may contain NUL bytes.
 
 nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
     Creates a new, empty, unnamed buffer.
@@ -3601,11 +3604,13 @@ nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
 nvim_ui_send({content})                                       *nvim_ui_send()*
     WARNING: This feature is experimental/unstable.
 
-    Sends arbitrary data to a UI.
+    Sends arbitrary data to a UI. Use this instead of |nvim_chan_send()| or
+    `io.stdout:write()`, if you really want to write to the |TUI| host
+    terminal.
 
-    This sends a "ui_send" event to any UI that has the "stdout_tty"
-    |ui-option| set. UIs are expected to write the received data to a
-    connected TTY if one exists.
+    Emits a "ui_send" event to all UIs with the "stdout_tty" |ui-option| set.
+    UIs are expected to write the received data to a connected TTY if one
+    exists.
 
     Parameters: ~
       • {content}  (`string`) Content to write to the TTY
@@ -3631,10 +3636,10 @@ nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
       • {value}  (`any`)
 
 nvim_ui_term_event({event}, {value})                    *nvim_ui_term_event()*
-    Tells Nvim when a terminal event has occurred
+    Tells Nvim when a host-terminal event occurred.
 
-    The following terminal events are supported:
-    • "termresponse": The terminal sent a DA1, OSC, DCS, or APC response
+    Supports these events:
+    • "termresponse": The host-terminal sent a DA1, OSC, DCS, or APC response
       sequence to Nvim. The payload is the received response. Sets
       |v:termresponse| and fires |TermResponse|.
 

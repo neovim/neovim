@@ -60,7 +60,7 @@ before_each(function()
   end)
 end)
 
-describe('lua buffer event callbacks: on_lines', function()
+describe('lua: nvim_buf_attach on_lines', function()
   local function setup_eventcheck(verify, utf_sizes, lines)
     local lastsize
     api.nvim_buf_set_lines(0, 0, -1, true, lines)
