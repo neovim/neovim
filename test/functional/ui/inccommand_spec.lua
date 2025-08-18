@@ -2938,7 +2938,7 @@ it("'inccommand' disables preview if preview buffer can't be created #27086", fu
   eq('nosplit', api.nvim_get_option_value('inccommand', {}))
 end)
 
-it(':substitute with inccommand, does not show prompt during preview #11940', function()
+it("'inccommand' :substitute preview skips input() prompt #11940", function()
   clear()
   local screen = Screen.new(30, 3)
   common_setup(screen, 'split', 'foo')

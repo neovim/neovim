@@ -313,6 +313,7 @@ UI
   • "Error detected while processing:" changed to "Error in:".
   • "Error executing Lua:" changed to "Lua:".
 • 'busy' status is shown in default statusline with symbol ◐
+• Improved LSP signature help rendering.
 
 VIMSCRIPT
 
