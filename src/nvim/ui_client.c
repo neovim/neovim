@@ -290,6 +290,8 @@ void ui_client_event_connect(Array args)
 
   char *server_addr = args.items[0].data.string.data;
   multiqueue_put(main_loop.fast_events, channel_connect_event, server_addr);
+  // Set a dummy channel ID to prevent client exit when server detaches.
+  ui_client_channel_id = UINT64_MAX;
 }
 
 static void channel_connect_event(void **argv)
@@ -302,15 +304,16 @@ static void channel_connect_event(void **argv)
   uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &err);
 
   if (!strequal(err, "")) {
-    ELOG("Error handling UI event 'connect': %s", err);
-    return;
+    ELOG("Cannot connect to server %s: %s", server_addr, err);
+    ui_client_exit_status = 1;
+    os_exit(1);
   }
 
   ui_client_channel_id = chan;
   ui_client_is_remote = true;
   ui_client_attach(tui_width, tui_height, tui_term, tui_rgb);
 
-  ELOG("Connected to channel: %" PRId64, chan);
+  ILOG("Connected to server %s on channel %" PRId64, server_addr, chan);
 }
 
 /// When a "restart" UI event is received, its arguments are saved here when
