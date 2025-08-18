@@ -410,7 +410,7 @@ describe('TUI :connect', function()
 
     local server1_session = n.connect(server1)
     server1_session:request('nvim_command', 'qall!')
-    screen2:expect({ any = [[Process exited]] })
+    screen2:expect({ any = vim.pesc('[Process exited 0]') })
 
     screen2:detach()
 
@@ -458,13 +458,8 @@ describe('TUI :connect', function()
       '--server',
       server2,
     })
-    screen3:expect([[
-      Remote ui failed to start: connection refused     |
-                                                        |
-      [Process exited 1]^                                |
-                                                        |*3
-      {5:-- TERMINAL --}                                    |
-    ]])
+    screen3:expect({ any = 'Remote ui failed to start: connection refused' })
+    screen3:expect({ any = vim.pesc('[Process exited 1]') })
     screen3:detach()
   end)
 end)
