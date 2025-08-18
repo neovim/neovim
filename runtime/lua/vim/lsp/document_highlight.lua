@@ -7,7 +7,6 @@ local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local ms = require('vim.lsp.protocol').Methods
-local Range = require('vim.treesitter._range')
 local api = vim.api
 
 local Capability = require('vim.lsp._capability')
@@ -16,7 +15,7 @@ local M = {}
 
 ---@class (private) vim.lsp.document_highlight.Highlight
 ---@field kind lsp.DocumentHighlightKind
----@field range Range4
+---@field range vim.Range
 
 ---@class (private) vim.lsp.document_highlight.ClientState
 ---@field namespace integer
@@ -31,60 +30,6 @@ local M = {}
 local State = { name = 'document_highlight', active = {} }
 State.__index = State
 setmetatable(State, Capability)
-
---- Do a binary search of the highlights in the half-open range [lo, hi).
----
---- Return the index i in range such that
---- highlights[j].range.end < (row, col) for all j < i, and
---- highlights[j].range.end >= (row, col) for all j >= i,
---- or return hi if no such index is found.
----@param highlights vim.lsp.document_highlight.Highlight
----@param row integer
----@param col integer
----@param lo integer
----@param hi integer
-local function lower_bound(highlights, row, col, lo, hi)
-  while lo < hi do
-    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
-    if Range.cmp_pos.lt(highlights[mid].range[3], highlights[mid].range[4], row, col) then
-      lo = mid + 1
-    else
-      hi = mid
-    end
-  end
-  return lo
-end
-
---- Do a binary search of the highlights in the half-open range [lo, hi).
----
---- Return the index i in range such that
---- highlights[j].range.start <= (row, col) for all j < i, and
---- highlights[j].range.start > (row, col) for all j >= i,
---- or return hi if no such index is found.
----@param highlights vim.lsp.document_highlight.Highlight
----@param row integer
----@param col integer
----@param lo integer
----@param hi integer
-local function upper_bound(highlights, row, col, lo, hi)
-  while lo < hi do
-    local mid = bit.rshift(lo + hi, 1) -- Equivalent to floor((lo + hi) / 2).
-    if Range.cmp_pos.lt(row, col, highlights[mid].range[1], highlights[mid].range[2]) then
-      hi = mid
-    else
-      lo = mid + 1
-    end
-  end
-  return lo
-end
-
---- Return 0-based cursor position
----
----@param winid? integer
-local function cursor_pos(winid)
-  local line, col = unpack(api.nvim_win_get_cursor(winid or api.nvim_get_current_win()))
-  return line - 1, col
-end
 
 ---@package
 ---@param bufnr integer
@@ -143,17 +88,21 @@ end
 
 ---@package
 function State:on_cursor_moved()
-  local row, col = cursor_pos(api.nvim_get_current_win())
+  local pos = vim.pos.cursor(api.nvim_win_get_cursor(0))
   --- Clear and re-request document highlights
   --- only when the cursor moves outside the current highlight range.
   --- This avoids the illusion of lag and reduces unnecessary resource usage.
   local update = false
   for _, state in pairs(self.client_state) do
     local highlights = state.highlights
-    local i = lower_bound(state.highlights, row, col, 1, #highlights)
+    local i = vim.list.bisect(state.highlights, { range = vim.range(pos, pos) }, {
+      key = function(highlight)
+        return highlight.range
+      end,
+    })
     local range = highlights[i] and highlights[i].range
 
-    if not range or not Range.contains(range, { row, col, row, col }) then
+    if not range or not range:has(vim.range(pos, pos)) then
       api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
       update = true
     end
@@ -217,16 +166,11 @@ function State:handler(err, result, ctx)
   for _, raw in ipairs(result or {}) do
     highlights[#highlights + 1] = {
       kind = raw.kind,
-      range = {
-        raw.range['start'].line,
-        util._get_line_byte_from_position(self.bufnr, raw.range['start'], client.offset_encoding),
-        raw.range['end'].line,
-        util._get_line_byte_from_position(self.bufnr, raw.range['end'], client.offset_encoding),
-      },
+      range = vim.range.lsp(self.bufnr, raw.range, client.offset_encoding),
     }
   end
   table.sort(highlights, function(a, b)
-    return Range.cmp_pos.lt(a.range[3], a.range[4], b.range[1], b.range[2])
+    return a.range < b.range
   end)
 
   state.highlights = highlights
@@ -281,15 +225,25 @@ function State:on_win(toprow, botrow)
 
       -- Only set extmarks for visible lines
       local highlights = state.highlights
-      local first = lower_bound(highlights, toprow, 0, 1, #highlights + 1)
-      local last = upper_bound(highlights, botrow, math.huge, first, #highlights + 1) - 1
+      local first = vim.list.bisect(highlights, { range = { end_ = vim.pos(toprow, 0) } }, {
+        key = function(highlight)
+          return highlight.range.end_
+        end,
+      })
+      local last = vim.list.bisect(highlights, { range = { start = vim.pos(botrow, 0) } }, {
+        key = function(highlight)
+          return highlight.range.start
+        end,
+        lo = first,
+        bound = 'upper',
+      }) - 1
 
       for i = first, last do
-        local row, col, end_row, end_col = Range.unpack4(highlights[i].range)
+        local range = highlights[i].range
 
-        api.nvim_buf_set_extmark(self.bufnr, state.namespace, row, col, {
-          end_row = end_row,
-          end_col = end_col,
+        api.nvim_buf_set_extmark(self.bufnr, state.namespace, range.start.row, range.start.col, {
+          end_row = range.end_.row,
+          end_col = range.end_.col,
           hl_group = kind_hl(highlights[i].kind),
           -- Although we want to avoid
           -- showing outdated document highlights when the cursor moves,
@@ -395,36 +349,44 @@ function M.jump(opts)
     return
   end
 
-  local cursor_row, cursor_col = cursor_pos(winid)
-  local row, col ---@type integer?, integer?
+  local cursor_pos = vim.pos.cursor(vim.api.nvim_win_get_cursor(winid))
+  local pos ---@type vim.Pos
   for _, client_state in pairs(state.client_state) do
     local highlights = client_state.highlights
-    local i = lower_bound(highlights, cursor_row, cursor_col, 1, #highlights + 1) + count
+    local i = vim.list.bisect(highlights, {
+      range = vim.range(cursor_pos, cursor_pos),
+    }, {
+      key = function(highlight)
+        return highlight.range
+      end,
+    }) + count
     i = math.min(math.max(1, i), #highlights)
     local range = highlights[i] and highlights[i].range
 
     -- For multiple clients support,
     -- Select the (row, col) closest to (cursor_row, cursor_col).
     if range then
-      if count < 0 and Range.cmp_pos.lt(range[1], range[2], cursor_row, cursor_col) then
-        if not (row and col) or Range.cmp_pos.lt(row, col, range[1], range[2]) then
-          row, col = range[1], range[2]
+      if count < 0 and range.start < cursor_pos then
+        if not pos or pos > range.start then
+          pos = range.start
         end
-      elseif count > 0 and Range.cmp_pos.lt(cursor_row, cursor_col, range[1], range[2]) then
-        if not (row and col) or Range.cmp_pos.lt(range[1], range[2], row, col) then
-          row, col = range[1], range[2]
+      elseif count > 0 and cursor_pos < range.start then
+        if not pos or range.start < pos then
+          pos = range.start
         end
       end
     end
   end
 
-  vim._with({ win = winid }, function()
-    -- Save position in the window's jumplist
-    vim.cmd("normal! m'")
-    vim.api.nvim_win_set_cursor(winid, { (row or cursor_row) + 1, col or cursor_col })
-    -- Open folds under the cursor
-    vim.cmd('normal! zv')
-  end)
+  if pos then
+    vim._with({ win = winid }, function()
+      -- Save position in the window's jumplist
+      vim.cmd("normal! m'")
+      vim.api.nvim_win_set_cursor(winid, pos:to_cursor())
+      -- Open folds under the cursor
+      vim.cmd('normal! zv')
+    end)
+  end
 end
 
 M.__DocumentHighlighter = State
