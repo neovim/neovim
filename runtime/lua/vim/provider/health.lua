@@ -364,8 +364,14 @@ end
 
 -- Resolves Python executable path by invoking and checking `sys.executable`.
 local function python_exepath(invocation)
+  if invocation == "" or invocation == nil then
+    return nil
+  end
   local p = vim.system({ invocation, '-c', 'import sys; sys.stdout.write(sys.executable)' }):wait()
-  assert(p.code == 0, p.stderr)
+  if p.code ~= 0 then
+    health.warn(p.stderr)
+    return nil
+  end
   return vim.fs.normalize(vim.trim(p.stdout))
 end
 
@@ -790,35 +796,37 @@ local function python()
   --- @param v string
   venv_bins = vim.tbl_filter(function(v)
     -- XXX: Remove irrelevant executables found in bin/.
-    return not v:match('python.*%-config')
+    return not v:match('python.*%-config') and not v:match('python%-argcomplete')
   end, venv_bins)
   if vim.tbl_count(venv_bins) > 0 then
     for _, venv_bin in pairs(venv_bins) do
       venv_bin = vim.fs.normalize(venv_bin)
       local py_bin_basename = vim.fs.basename(venv_bin)
       local nvim_py_bin = python_exepath(vim.fn.exepath(py_bin_basename))
-      local subshell_py_bin = python_exepath(py_bin_basename)
-      if venv_bin ~= nvim_py_bin then
-        errors[#errors + 1] = '$PATH yields this '
-          .. py_bin_basename
-          .. ' executable: '
-          .. nvim_py_bin
-        local hint = '$PATH ambiguities arise if the virtualenv is not '
-          .. 'properly activated prior to launching Nvim. Close Nvim, activate the virtualenv, '
-          .. 'check that invoking Python from the command line launches the correct one, '
-          .. 'then relaunch Nvim.'
-        hints[hint] = true
-      end
-      if venv_bin ~= subshell_py_bin then
-        errors[#errors + 1] = '$PATH in subshells yields this '
-          .. py_bin_basename
-          .. ' executable: '
-          .. subshell_py_bin
-        local hint = '$PATH ambiguities in subshells typically are '
-          .. 'caused by your shell config overriding the $PATH previously set by the '
-          .. 'virtualenv. Either prevent them from doing so, or use this workaround: '
-          .. 'https://vi.stackexchange.com/a/34996'
-        hints[hint] = true
+      if nvim_py_bin then
+        local subshell_py_bin = python_exepath(py_bin_basename)
+        if venv_bin ~= nvim_py_bin then
+          errors[#errors + 1] = '$PATH yields this '
+            .. py_bin_basename
+            .. ' executable: '
+            .. nvim_py_bin
+          local hint = '$PATH ambiguities arise if the virtualenv is not '
+            .. 'properly activated prior to launching Nvim. Close Nvim, activate the virtualenv, '
+            .. 'check that invoking Python from the command line launches the correct one, '
+            .. 'then relaunch Nvim.'
+          hints[hint] = true
+        end
+        if venv_bin ~= subshell_py_bin then
+          errors[#errors + 1] = '$PATH in subshells yields this '
+            .. py_bin_basename
+            .. ' executable: '
+            .. subshell_py_bin
+          local hint = '$PATH ambiguities in subshells typically are '
+            .. 'caused by your shell config overriding the $PATH previously set by the '
+            .. 'virtualenv. Either prevent them from doing so, or use this workaround: '
+            .. 'https://vi.stackexchange.com/a/34996'
+          hints[hint] = true
+        end
       end
     end
   else
@@ -849,6 +857,7 @@ local function python()
       msgs[#msgs + 1] = msg
       msgs[#msgs + 1] = conj
       msgs[#msgs + 1] = err
+      msgs[#msgs + 1] = '\n'
       conj = '\nAnd '
     end
     msgs[#msgs + 1] = '\nSo invoking Python may lead to unexpected results.'
