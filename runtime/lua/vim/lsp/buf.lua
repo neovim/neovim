@@ -1081,7 +1081,11 @@ end
 
 --- @deprecated
 function M.clear_references()
-  vim.deprecate('vim.lsp.buf.clear_references(false)', 'vim.lsp.document_highlight.enable()', '0.12')
+  vim.deprecate(
+    'vim.lsp.buf.clear_references(false)',
+    'vim.lsp.document_highlight.enable()',
+    '0.12'
+  )
 end
 
 ---@nodoc

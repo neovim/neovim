@@ -280,6 +280,7 @@ local config = {
       'completion.lua',
       'diagnostic.lua',
       'document_color.lua',
+      'document_highlight.lua',
       'folding_range.lua',
       'handlers.lua',
       'inlay_hint.lua',
