@@ -41,9 +41,14 @@ local M = {}
 ---@field debounce integer milliseconds to debounce requests for new tokens
 ---@field timer table uv_timer for debouncing requests for new tokens
 ---@field client_state table<integer, STClientState>
-local STHighlighter = { name = 'Semantic Tokens', active = {} }
+local STHighlighter = {
+  name = 'semantic_tokens',
+  method = ms.textDocument_semanticTokens_full,
+  active = {},
+}
 STHighlighter.__index = STHighlighter
 setmetatable(STHighlighter, Capability)
+Capability.all[STHighlighter.name] = STHighlighter
 
 --- Extracts modifier strings from the encoded number in the token array
 ---
@@ -156,6 +161,7 @@ end
 ---@param bufnr integer
 ---@return STHighlighter
 function STHighlighter:new(bufnr)
+  self.debounce = 200
   self = Capability.new(self, bufnr)
 
   api.nvim_buf_attach(bufnr, false, {
@@ -164,13 +170,11 @@ function STHighlighter:new(bufnr)
       if not highlighter then
         return true
       end
-      if M.is_enabled({ bufnr = buf }) then
-        highlighter:on_change()
-      end
+      highlighter:on_change()
     end,
     on_reload = function(_, buf)
       local highlighter = STHighlighter.active[buf]
-      if highlighter and M.is_enabled({ bufnr = bufnr }) then
+      if highlighter then
         highlighter:reset()
         highlighter:send_request()
       end
@@ -181,9 +185,7 @@ function STHighlighter:new(bufnr)
     buffer = self.bufnr,
     group = self.augroup,
     callback = function()
-      if M.is_enabled({ bufnr = bufnr }) then
-        self:send_request()
-      end
+      self:send_request()
     end,
   })
 
@@ -201,6 +203,7 @@ function STHighlighter:on_attach(client_id)
     }
     self.client_state[client_id] = state
   end
+  self:send_request()
 end
 
 ---@package
@@ -581,9 +584,6 @@ function M._start(bufnr, client_id, debounce)
   end
 
   highlighter:on_attach(client_id)
-  if M.is_enabled({ bufnr = bufnr }) then
-    highlighter:send_request()
-  end
 end
 
 --- Start the semantic token highlighting engine for the given buffer with the
@@ -670,9 +670,9 @@ function M.stop(bufnr, client_id)
 end
 
 --- Query whether semantic tokens is enabled in the {filter}ed scope
----@param filter? vim.lsp.enable.Filter
+---@param filter? vim.lsp.capability.enable.Filter
 function M.is_enabled(filter)
-  return util._is_enabled('semantic_tokens', filter)
+  return vim.lsp._capability.is_enabled('semantic_tokens', filter)
 end
 
 --- Enables or disables semantic tokens for the {filter}ed scope.
@@ -684,20 +684,9 @@ end
 --- ```
 ---
 ---@param enable? boolean true/nil to enable, false to disable
----@param filter? vim.lsp.enable.Filter
+---@param filter? vim.lsp.capability.enable.Filter
 function M.enable(enable, filter)
-  util._enable('semantic_tokens', enable, filter)
-
-  for _, bufnr in ipairs(api.nvim_list_bufs()) do
-    local highlighter = STHighlighter.active[bufnr]
-    if highlighter then
-      if M.is_enabled({ bufnr = bufnr }) then
-        highlighter:send_request()
-      else
-        highlighter:reset()
-      end
-    end
-  end
+  vim.lsp._capability.enable('semantic_tokens', enable, filter)
 end
 
 --- @nodoc
@@ -779,7 +768,7 @@ function M.force_refresh(bufnr)
 
   for _, buffer in ipairs(buffers) do
     local highlighter = STHighlighter.active[buffer]
-    if highlighter and M.is_enabled({ bufnr = bufnr }) then
+    if highlighter then
       highlighter:reset()
       highlighter:send_request()
     end
@@ -863,6 +852,6 @@ api.nvim_set_decoration_provider(namespace, {
 M.__STHighlighter = STHighlighter
 
 -- Semantic tokens is enabled by default
-util._enable('semantic_tokens', true)
+vim.lsp._capability.enable('semantic_tokens', true)
 
 return M
