@@ -448,19 +448,15 @@ describe('TUI :connect', function()
     tt.feed_data(':connect! ' .. server1 .. '\013')
     screen2:expect({ any = vim.pesc('This is server 1^.') })
 
+    retry(nil, nil, function()
+      eq(nil, vim.uv.fs_stat(server2))
+    end)
+
     local server1_session = n.connect(server1)
     server1_session:request('nvim_command', 'qall!')
+    screen2:expect({ any = vim.pesc('[Process exited 0]') })
 
     screen2:detach()
-
-    local screen3 = tt.setup_child_nvim({
-      '--remote-ui',
-      '--server',
-      server2,
-    })
-    screen3:expect({ any = 'Remote ui failed to start: connection refused' })
-    screen3:expect({ any = vim.pesc('[Process exited 1]') })
-    screen3:detach()
   end)
 end)
 
