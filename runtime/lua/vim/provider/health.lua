@@ -791,7 +791,7 @@ local function python()
   --- @param v string
   venv_bins = vim.tbl_filter(function(v)
     -- XXX: Remove irrelevant executables found in bin/.
-    return v:match('python[%-_%d%.]*$')
+    return v:match('python[%-_%d%.]*$') or v:match('python[%-_%d%.]*.exe$')
   end, venv_bins)
   if vim.tbl_count(venv_bins) > 0 then
     for _, venv_bin in pairs(venv_bins) do
