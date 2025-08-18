@@ -212,6 +212,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
     char *itemstr = NULL;
     bool itemstr_allocate = false;
     typval_T rettv;
+
     rettv.v_type = VAR_UNKNOWN;
     const typval_T *const tv = TV_LIST_ITEM_TV(li);
     if (tv->v_type == VAR_STRING) {  // list of strings
@@ -243,28 +244,33 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
     int score;
     if (itemstr != NULL
         && fuzzy_match(itemstr, str, matchseq, &score, matches, FUZZY_MATCH_MAX_LEN)) {
-      items[match_count].idx = (int)match_count;
-      items[match_count].item = li;
-      items[match_count].score = score;
-      items[match_count].pat = str;
-      items[match_count].startpos = (int)matches[0];
-      items[match_count].itemstr = itemstr_allocate ? xstrdup(itemstr) : itemstr;
-      items[match_count].itemstr_allocated = itemstr_allocate;
+      char *itemstr_copy = itemstr_allocate ? xstrdup(itemstr) : itemstr;
+      list_T *match_positions = NULL;
 
       // Copy the list of matching positions in itemstr to a list, if
       // "retmatchpos" is set.
       if (retmatchpos) {
-        items[match_count].lmatchpos = tv_list_alloc(kListLenMayKnow);
+        match_positions = tv_list_alloc(kListLenMayKnow);
+        // Fill position information
         int j = 0;
         const char *p = str;
         while (*p != NUL && j < FUZZY_MATCH_MAX_LEN) {
           if (!ascii_iswhite(utf_ptr2char(p)) || matchseq) {
-            tv_list_append_number(items[match_count].lmatchpos, matches[j]);
+            tv_list_append_number(match_positions, matches[j]);
             j++;
           }
           MB_PTR_ADV(p);
         }
       }
+      items[match_count].idx = match_count;
+      items[match_count].item = li;
+      items[match_count].score = score;
+      items[match_count].pat = str;
+      items[match_count].startpos = (int)matches[0];
+      items[match_count].itemstr = itemstr_copy;
+      items[match_count].itemstr_allocated = itemstr_allocate;
+      items[match_count].lmatchpos = match_positions;
+
       match_count++;
     }
     tv_clear(&rettv);
@@ -724,31 +730,37 @@ theend:
 #define SCORE_MATCH_CAPITAL 0.7
 #define SCORE_MATCH_DOT 0.6
 
-static int has_match(const char *needle, const char *haystack)
+static int has_match(const char *const needle, const char *const haystack)
 {
-  while (*needle != NUL) {
-    const int n_char = utf_ptr2char(needle);
-    const char *p = haystack;
-    bool matched = false;
+  if (!needle || !haystack || !*needle) {
+    return FAIL;
+  }
 
-    while (*p != NUL) {
-      const int h_char = utf_ptr2char(p);
+  const char *n_ptr = needle;
+  const char *h_ptr = haystack;
 
+  while (*n_ptr) {
+    const int n_char = utf_ptr2char(n_ptr);
+    bool found = false;
+
+    while (*h_ptr) {
+      const int h_char = utf_ptr2char(h_ptr);
       if (n_char == h_char || mb_toupper(n_char) == h_char) {
-        matched = true;
+        found = true;
+        h_ptr += utfc_ptr2len(h_ptr);
         break;
       }
-      p += utfc_ptr2len(p);
+      h_ptr += utfc_ptr2len(h_ptr);
     }
 
-    if (!matched) {
-      return 0;
+    if (!found) {
+      return FAIL;
     }
 
-    needle += utfc_ptr2len(needle);
-    haystack = p + utfc_ptr2len(p);
+    n_ptr += utfc_ptr2len(n_ptr);
   }
-  return 1;
+
+  return OK;
 }
 
 struct match_struct {
@@ -851,7 +863,7 @@ static inline void match_row(const match_struct *match, int row, score_t *curr_D
 static score_t match_positions(const char *const needle, const char *const haystack,
                                uint32_t *const positions)
 {
-  if (!*needle) {
+  if (!needle || !haystack || !*needle) {
     return (score_t)SCORE_MIN;
   }
 
@@ -878,10 +890,19 @@ static score_t match_positions(const char *const needle, const char *const hayst
     return (score_t)SCORE_MAX;
   }
 
+  // ensure n * MATCH_MAX_LEN * 2 won't overflow
+  if ((size_t)n > (SIZE_MAX / sizeof(score_t)) / MATCH_MAX_LEN / 2) {
+    return (score_t)SCORE_MIN;
+  }
+
+  // Allocate for both D and M matrices in one contiguous block
+  score_t *block = (score_t *)xmalloc(sizeof(score_t) * MATCH_MAX_LEN * (size_t)n * 2);
+
   // D[][] Stores the best score for this position ending with a match.
   // M[][] Stores the best possible score at this position.
-  score_t(*D)[MATCH_MAX_LEN] = xmalloc(sizeof(score_t) * MATCH_MAX_LEN * (size_t)n);
-  score_t(*M)[MATCH_MAX_LEN] = xmalloc(sizeof(score_t) * MATCH_MAX_LEN * (size_t)n);
+  score_t(*D)[MATCH_MAX_LEN] = (score_t(*)[MATCH_MAX_LEN])(block);
+  score_t(*M)[MATCH_MAX_LEN] = (score_t(*)[MATCH_MAX_LEN])(block
+                                                           + MATCH_MAX_LEN * (size_t)n);
 
   match_row(&match, 0, D[0], M[0], D[0], M[0]);
   for (int i = 1; i < n; i++) {
@@ -915,8 +936,6 @@ static score_t match_positions(const char *const needle, const char *const hayst
 
   score_t result = M[n - 1][m - 1];
 
-  xfree(M);
-  xfree(D);
-
+  xfree(block);
   return result;
 }
