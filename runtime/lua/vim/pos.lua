@@ -56,7 +56,7 @@ Pos.__index = Pos
 ---@package
 ---@param row integer
 ---@param col integer
----@param opts vim.Pos.Optional
+---@param opts? vim.Pos.Optional
 function Pos.new(row, col, opts)
   validate('row', row, 'number')
   validate('col', col, 'number')
