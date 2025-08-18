@@ -318,6 +318,7 @@ describe('TUI :restart', function()
 
     -- Cancel the operation (abandons restart).
     tt.feed_data('C\013')
+    screen:expect({ any = vim.pesc('[No Name]') })
 
     -- Check ":confirm restart <cmd>" on a modified buffer.
     tt.feed_data(':confirm restart echo "Hello"\013')
@@ -370,6 +371,12 @@ describe('TUI :connect', function()
     return
   end
 
+  local screen_empty = [[
+    ^                                                  |
+    {100:~                                                 }|*5
+                                                      |
+  ]]
+
   it('leaves the current server running', function()
     n.clear()
     finally(function()
@@ -377,61 +384,45 @@ describe('TUI :connect', function()
     end)
 
     local server1 = new_pipename()
-    local screen = tt.setup_child_nvim({
-      '--listen',
-      server1,
-      '-u',
-      'NONE',
-    })
+    local screen1 = tt.setup_child_nvim({ '--listen', server1, '--clean' })
+    screen1:expect({ any = vim.pesc('[No Name]') })
 
     tt.feed_data(':connect\013')
-    screen:expect([[
-      ^                                                  |
-      ~                                                 |*3
-      [No Name]                       0,0-1          All|
-      E471: Argument required                           |
-      {5:-- TERMINAL --}                                    |
-    ]])
+    screen1:expect({ any = 'E471: Argument required' })
 
-    screen:detach()
+    tt.feed_data('iThis is server 1.\027')
+    screen1:expect({ any = vim.pesc('This is server 1^.') })
+
+    -- Prevent screen2 from receiving the old terminal state.
+    command('enew')
+    screen1:expect(screen_empty)
+    screen1:detach()
 
     local server2 = new_pipename()
-    local screen2 = tt.setup_child_nvim({
-      '--listen',
-      server2,
-      '-u',
-      'NONE',
-    })
-    tt.feed_data('iThis is server 2.\027')
-    tt.feed_data(':connect ' .. server1 .. '\013')
+    local screen2 = tt.setup_child_nvim({ '--listen', server2, '--clean' })
+    screen2:expect({ any = vim.pesc('[No Name]') })
 
-    screen2:expect({
-      any = [[Process exited]],
-    })
+    tt.feed_data('iThis is server 2.\027')
+    screen2:expect({ any = vim.pesc('This is server 2^.') })
+
+    tt.feed_data(':connect ' .. server1 .. '\013')
+    screen2:expect({ any = vim.pesc('This is server 1^.') })
 
     local server1_session = n.connect(server1)
     server1_session:request('nvim_command', 'qall!')
+    screen2:expect({ any = [[Process exited]] })
 
     screen2:detach()
 
     local server2_session = n.connect(server2)
 
-    local screen3 = tt.setup_child_nvim({
-      '--remote-ui',
-      '--server',
-      server2,
-    })
-    screen3:expect([[
-      This is server 2^.                                 |
-      ~                                                 |*3
-      {2:[No Name] [+]                   1,17           All}|
-                                                        |
-      {5:-- TERMINAL --}                                    |
-    ]])
+    local screen3 = tt.setup_child_nvim({ '--remote-ui', '--server', server2 })
+    screen3:expect({ any = vim.pesc('This is server 2^.') })
 
     screen3:detach()
     server2_session:request('nvim_command', 'qall!')
   end)
+
   it('! stops the current server', function()
     n.clear()
     finally(function()
@@ -439,27 +430,23 @@ describe('TUI :connect', function()
     end)
 
     local server1 = new_pipename()
-    local screen1 = tt.setup_child_nvim({
-      '--listen',
-      server1,
-    })
-    tt.feed_data('iThis is server 1')
+    local screen1 = tt.setup_child_nvim({ '--listen', server1, '--clean' })
+    screen1:expect({ any = vim.pesc('[No Name]') })
 
+    tt.feed_data('iThis is server 1.\027')
+    screen1:expect({ any = vim.pesc('This is server 1^.') })
+
+    -- Prevent screen2 from receiving the old terminal state.
+    command('enew')
+    screen1:expect(screen_empty)
     screen1:detach()
 
     local server2 = new_pipename()
-    local screen2 = tt.setup_child_nvim({
-      '--listen',
-      server2,
-    })
-    tt.feed_data('\027:connect! ' .. server1 .. '\013')
-    screen2:expect([[
-      This is server 1^                                  |
-      ~                                                 |*3
-      [No Name] [+]                   1,17           All|
-      -- INSERT --                                      |
-      {5:-- TERMINAL --}                                    |
-    ]])
+    local screen2 = tt.setup_child_nvim({ '--listen', server2, '--clean' })
+    screen2:expect({ any = vim.pesc('[No Name]') })
+
+    tt.feed_data(':connect! ' .. server1 .. '\013')
+    screen2:expect({ any = vim.pesc('This is server 1^.') })
 
     local server1_session = n.connect(server1)
     server1_session:request('nvim_command', 'qall!')
