@@ -3986,18 +3986,27 @@ comparisons and conversions between various types of positions.
     as format conversions.
 
     Fields: ~
-      • {row}     (`integer`) 0-based byte index.
-      • {col}     (`integer`) 0-based byte index.
-      • {buf}?    (`integer`) Optional buffer handle.
+      • {row}        (`integer`) 0-based byte index.
+      • {col}        (`integer`) 0-based byte index.
+      • {buf}?       (`integer`) Optional buffer handle.
 
-                  When specified, it indicates that this position belongs to a
-                  specific buffer. This field is required when performing
-                  position conversions.
-      • {to_lsp}  (`fun(pos: vim.Pos, position_encoding: lsp.PositionEncodingKind)`)
-                  See |Pos:to_lsp()|.
-      • {lsp}     (`fun(buf: integer, pos: lsp.Position, position_encoding: lsp.PositionEncodingKind)`)
-                  See |Pos:lsp()|.
+                     When specified, it indicates that this position belongs
+                     to a specific buffer. This field is required when
+                     performing position conversions.
+      • {to_lsp}     (`fun(pos: vim.Pos, position_encoding: lsp.PositionEncodingKind)`)
+                     See |Pos:to_lsp()|.
+      • {lsp}        (`fun(buf: integer, pos: lsp.Position, position_encoding: lsp.PositionEncodingKind)`)
+                     See |Pos:lsp()|.
+      • {to_cursor}  (`fun(pos: vim.Pos): [integer, integer]`) See
+                     |Pos:to_cursor()|.
+      • {cursor}     (`fun(pos: [integer, integer])`) See |Pos:cursor()|.
 
+
+Pos:cursor({pos})                                               *Pos:cursor()*
+    Creates a new |vim.Pos| from cursor position.
+
+    Parameters: ~
+      • {pos}  (`[integer, integer]`)
 
 Pos:lsp({buf}, {pos}, {position_encoding})                         *Pos:lsp()*
     Creates a new |vim.Pos| from `lsp.Position`.
@@ -4017,6 +4026,15 @@ Pos:lsp({buf}, {pos}, {position_encoding})                         *Pos:lsp()*
       • {buf}                (`integer`)
       • {pos}                (`lsp.Position`)
       • {position_encoding}  (`lsp.PositionEncodingKind`)
+
+Pos:to_cursor({pos})                                         *Pos:to_cursor()*
+    Converts |vim.Pos| to cursor position.
+
+    Parameters: ~
+      • {pos}  (`vim.Pos`) See |vim.Pos|.
+
+    Return: ~
+        (`[integer, integer]`)
 
 Pos:to_lsp({pos}, {position_encoding})                          *Pos:to_lsp()*
     Converts |vim.Pos| to `lsp.Position`.

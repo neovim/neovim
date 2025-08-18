@@ -228,6 +228,9 @@ LSP
 • Support for related documents in pull diagnostics:
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
 • |vim.lsp.buf.signature_help()| supports "noActiveParameterSupport".
+• Re-implemented support for `textDocument/documentHighlight
+  |lsp-document_highlight|
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentHighlight
 
 LUA
 

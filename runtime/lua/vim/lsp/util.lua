@@ -1789,18 +1789,22 @@ do --[[ References ]]
 
   --- Removes document highlights from a buffer.
   ---
+  ---@deprecated
   ---@param bufnr integer? Buffer id
   function M.buf_clear_references(bufnr)
+    vim.deprecate('vim.lsp.util.buf_clear_references()', 'nil', '0.12')
     api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
   end
 
   --- Shows a list of document highlights for a certain buffer.
   ---
+  ---@deprecated
   ---@param bufnr integer Buffer id
   ---@param references lsp.DocumentHighlight[] objects to highlight
   ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
   ---@see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
   function M.buf_highlight_references(bufnr, references, position_encoding)
+    vim.deprecate('vim.lsp.util.buf_highlight_references()', 'nil', '0.12')
     validate('bufnr', bufnr, 'number', true)
     validate('position_encoding', position_encoding, 'string', false)
     for _, reference in ipairs(references) do
@@ -2362,7 +2366,7 @@ function M._is_enabled(feature, filter)
     and vim.F.if_nil(bufnr and vim.b[bufnr][var], vim.g[var])
 end
 
----@param feature 'semantic_tokens'
+---@param feature 'semantic_tokens' | 'document_highlight'
 ---@param enable? boolean
 ---@param filter? vim.lsp.enable.Filter
 function M._enable(feature, enable, filter)

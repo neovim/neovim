@@ -14,6 +14,7 @@ local lsp = vim._defer_require('vim.lsp', {
   completion = ..., --- @module 'vim.lsp.completion'
   diagnostic = ..., --- @module 'vim.lsp.diagnostic'
   document_color = ..., --- @module 'vim.lsp.document_color'
+  document_highlight = ..., --- @module 'vim.lsp.document_highlight'
   handlers = ..., --- @module 'vim.lsp.handlers'
   inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
   linked_editing_range = ..., --- @module 'vim.lsp.linked_editing_range'

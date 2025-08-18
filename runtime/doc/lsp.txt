@@ -1329,9 +1329,6 @@ add_workspace_folder({workspace_folder})
     Parameters: ~
       • {workspace_folder}  (`string?`)
 
-clear_references()                            *vim.lsp.buf.clear_references()*
-    Removes document highlights from current buffer.
-
 code_action({opts})                                *vim.lsp.buf.code_action()*
     Selects a code action (LSP: "textDocument/codeAction" request) available
     at cursor position.
@@ -1377,20 +1374,6 @@ definition({opts})                                  *vim.lsp.buf.definition()*
 
     Parameters: ~
       • {opts}  (`vim.lsp.LocationOpts?`) See |vim.lsp.LocationOpts|.
-
-document_highlight()                        *vim.lsp.buf.document_highlight()*
-    Send request to the server to resolve document highlights for the current
-    text document position. This request can be triggered by a key mapping or
-    by events such as `CursorHold`, e.g.: >vim
-        autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
-        autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
-        autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
-<
-
-    Note: Usage of |vim.lsp.buf.document_highlight()| requires the following
-    highlight groups to be defined or you won't be able to see the actual
-    highlights. |hl-LspReferenceText| |hl-LspReferenceRead|
-    |hl-LspReferenceWrite|
 
 document_symbol({opts})                        *vim.lsp.buf.document_symbol()*
     Lists all symbols in the current buffer in the |location-list|.
@@ -2154,6 +2137,55 @@ is_enabled({bufnr})                      *vim.lsp.document_color.is_enabled()*
 
 
 ==============================================================================
+Lua module: vim.lsp.document_highlight                *lsp-document_highlight*
+
+This module provides LSP support for highlighting patterns in a document,
+utility functions for interaction are also provided. Highlighting is disabled
+by default.
+
+
+enable({enable}, {filter})               *vim.lsp.document_highlight.enable()*
+    Enables or disables document highlights for the {filter}ed scope.
+
+    To "toggle", pass the inverse of `is_enabled()`: >lua
+        vim.lsp.document_highlight.enable(not vim.lsp.document_highlight.is_enabled())
+<
+
+    Note: Usage of |vim.lsp.document_highlight.enable()| requires the
+    following highlight groups to be defined or you won't be able to see the
+    actual highlights. |hl-LspReferenceText| |hl-LspReferenceRead|
+    |hl-LspReferenceWrite|
+
+    Parameters: ~
+      • {enable}  (`boolean?`)
+      • {filter}  (`table?`) A table with the following fields:
+                  • {bufnr}? (`integer`) Buffer number, or 0 for current
+                    buffer, or nil for all.
+                  • {client_id}? (`integer`) Client ID, or nil for all
+
+is_enabled({filter})                 *vim.lsp.document_highlight.is_enabled()*
+    Query whether document highlight is enabled in the {filter}ed scope
+
+    Parameters: ~
+      • {filter}  (`table?`) A table with the following fields:
+                  • {bufnr}? (`integer`) Buffer number, or 0 for current
+                    buffer, or nil for all.
+                  • {client_id}? (`integer`) Client ID, or nil for all
+
+jump({opts})                               *vim.lsp.document_highlight.jump()*
+    Jump to a document highlight.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {count} (`integer`, default: |v:count1|) The number of
+                  highlights to move by. A positive integer moves forward by
+                  {count} highlights, while a negative integer moves backward
+                  by {count} highlights.
+                • {winid}? (`integer`, default: `0`) Window ID, or 0 for the
+                  current window
+
+
+==============================================================================
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
@@ -2580,24 +2612,6 @@ apply_workspace_edit({workspace_edit}, {position_encoding})
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
-
-buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
-    Removes document highlights from a buffer.
-
-    Parameters: ~
-      • {bufnr}  (`integer?`) Buffer id
-
-                                     *vim.lsp.util.buf_highlight_references()*
-buf_highlight_references({bufnr}, {references}, {position_encoding})
-    Shows a list of document highlights for a certain buffer.
-
-    Parameters: ~
-      • {bufnr}              (`integer`) Buffer id
-      • {references}         (`lsp.DocumentHighlight[]`) objects to highlight
-      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
-
-    See also: ~
-      • https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
 
                                              *vim.lsp.util.character_offset()*
 character_offset({buf}, {row}, {col}, {offset_encoding})
