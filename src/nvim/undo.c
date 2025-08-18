@@ -2378,12 +2378,14 @@ static void u_undoredo(bool undo, bool do_buf_event)
       }
     }
 
-    changed_lines(curbuf, top + 1, 0, bot, newsize - oldsize, do_buf_event);
-    // When text has been changed, possibly the start of the next line
-    // may have SpellCap that should be removed or it needs to be
-    // displayed.  Schedule the next line for redrawing just in case.
-    if (spell_check_window(curwin) && bot <= curbuf->b_ml.ml_line_count) {
-      redrawWinline(curwin, bot);
+    if (oldsize > 0 || newsize > 0) {
+      changed_lines(curbuf, top + 1, 0, bot, newsize - oldsize, do_buf_event);
+      // When text has been changed, possibly the start of the next line
+      // may have SpellCap that should be removed or it needs to be
+      // displayed.  Schedule the next line for redrawing just in case.
+      if (spell_check_window(curwin) && bot <= curbuf->b_ml.ml_line_count) {
+        redrawWinline(curwin, bot);
+      }
     }
 
     // Set the '[ mark.
