@@ -961,7 +961,7 @@ void ml_recover(bool checkext)
   // Now that we are sure that the file is going to be recovered, clear the
   // contents of the current buffer.
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
-    ml_delete(1, false);
+    ml_delete(1);
   }
 
   // Try reading the original file to obtain the values of 'fileformat',
@@ -1185,7 +1185,7 @@ void ml_recover(bool checkext)
   // empty buffer.  These will now be after the last line in the buffer.
   while (curbuf->b_ml.ml_line_count > lnum
          && !(curbuf->b_ml.ml_flags & ML_EMPTY)) {
-    ml_delete(curbuf->b_ml.ml_line_count, false);
+    ml_delete(curbuf->b_ml.ml_line_count);
   }
   curbuf->b_flags |= BF_RECOVERED;
   check_cursor(curwin);
@@ -2690,12 +2690,10 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
 /// @note The caller of this function should probably also call
 /// deleted_lines() after this.
 ///
-/// @param message  true may give a "No lines in buffer" message.
-///
 /// @return  FAIL for failure, OK otherwise
-int ml_delete(linenr_T lnum, bool message)
+int ml_delete(linenr_T lnum)
 {
-  return ml_delete_flags(lnum, message ? ML_DEL_MESSAGE : 0);
+  return ml_delete_flags(lnum, 0);
 }
 
 /// Like ml_delete() but using flags (see ml_delete_int()).

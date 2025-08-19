@@ -454,7 +454,7 @@ void f_deletebufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   for (linenr_T lnum = first; lnum <= last; lnum++) {
-    ml_delete(first, true);
+    ml_delete_flags(first, ML_DEL_MESSAGE);
   }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
