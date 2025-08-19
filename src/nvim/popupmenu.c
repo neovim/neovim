@@ -460,6 +460,10 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
 
   if (in_fuzzy) {
     ga = fuzzy_match_str_with_pos(text, leader);
+    if (!ga) {
+      xfree(attrs);
+      return NULL;
+    }
   }
 
   const char *ptr = text;
