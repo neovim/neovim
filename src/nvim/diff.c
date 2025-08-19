@@ -3814,7 +3814,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
       for (int i = 0; i < count; i++) {
         // remember deleting the last line of the buffer
         buf_empty = curbuf->b_ml.ml_line_count == 1;
-        if (ml_delete(lnum, false) == OK) {
+        if (ml_delete(lnum) == OK) {
           added--;
         }
       }
@@ -3835,7 +3835,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
           // which results in inaccurate reporting of the byte count of
           // previous contents in buffer-update events.
           buf_empty = false;
-          ml_delete(2, false);
+          ml_delete(2);
         }
       }
       linenr_T new_count = dp->df_count[idx_to] + added;

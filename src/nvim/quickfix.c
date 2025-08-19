@@ -4359,7 +4359,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     while ((curbuf->b_ml.ml_flags & ML_EMPTY) == 0) {
       // If deletion fails, this loop may run forever, so
       // signal error and return.
-      if (ml_delete(1, false) == FAIL) {
+      if (ml_delete(1) == FAIL) {
         internal_error("qf_fill_buffer()");
         return;
       }
@@ -4429,7 +4429,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     }
     if (old_last == NULL) {
       // Delete the empty line which is now at the end
-      ml_delete(lnum + 1, false);
+      ml_delete(lnum + 1);
     }
 
     qfga_clear();

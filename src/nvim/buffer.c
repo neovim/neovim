@@ -157,12 +157,12 @@ static int read_buffer(bool read_stdin, exarg_T *eap, int flags)
   if (retval == OK) {
     // Delete the binary lines.
     while (--line_count >= 0) {
-      ml_delete(1, false);
+      ml_delete(1);
     }
   } else {
     // Delete the converted lines.
     while (curbuf->b_ml.ml_line_count > line_count) {
-      ml_delete(line_count, false);
+      ml_delete(line_count);
     }
   }
   // Put the cursor on the first line.
@@ -758,7 +758,7 @@ void buf_clear(void)
   linenr_T line_count = curbuf->b_ml.ml_line_count;
   extmark_free_all(curbuf);   // delete any extmarks
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
-    ml_delete(1, false);
+    ml_delete(1);
   }
   deleted_lines_mark(1, line_count);  // prepare for display
 }
