@@ -134,6 +134,7 @@ typedef struct {
 
 static TimeWatcher refresh_timer;
 static bool refresh_pending = false;
+static bool trigger_textchangedt = false;
 
 typedef struct {
   size_t cols;
@@ -775,6 +776,7 @@ bool terminal_enter(void)
 
   // Tell the terminal it has focus
   terminal_focus(s->term, true);
+  trigger_textchangedt = false;
 
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
   may_trigger_modechanged();
@@ -864,6 +866,7 @@ static bool terminal_check_focus(TerminalState *const s)
     s->term->pending.cursor = true;
     invalidate_terminal(s->term, -1, -1);
     terminal_focus(s->term, true);
+    trigger_textchangedt = false;
   }
   return true;
 }
@@ -887,9 +890,9 @@ static int terminal_check(VimState *state)
 
   // Don't let autocommands free the terminal from under our fingers.
   s->term->refcount++;
-  if (must_redraw) {
-    // TODO(seandewar): above changes will maybe change the behaviour of this more; untrollify this
+  if (trigger_textchangedt) {
     apply_autocmds(EVENT_TEXTCHANGEDT, NULL, NULL, false, curbuf);
+    trigger_textchangedt = false;
   }
   may_trigger_win_scrolled_resized();
   s->term->refcount--;
@@ -2305,6 +2308,9 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   changed_lines(buf, change_start, 0, change_end, added, true);
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
+  if (is_focused(term)) {
+    trigger_textchangedt = true;
+  }
 }
 
 static void adjust_topline(Terminal *term, buf_T *buf, int added)
