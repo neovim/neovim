@@ -563,7 +563,7 @@ static int nlua_foldupdate(lua_State *lstate)
   }
   // input is zero-based end-exclusive range
   linenr_T top = (linenr_T)luaL_checkinteger(lstate, 2) + 1;
-  if (top < 1 || top > win->w_buffer->b_ml.ml_line_count) {
+  if (top < 1) {
     return luaL_error(lstate, "invalid top");
   }
   linenr_T bot = (linenr_T)luaL_checkinteger(lstate, 3);
