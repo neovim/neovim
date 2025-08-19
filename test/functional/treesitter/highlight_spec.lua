@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = n.clear
 local insert = n.insert
 local exec_lua = n.exec_lua
+local eval = n.eval
 local feed = n.feed
 local command = n.command
 local api = n.api
@@ -197,6 +198,14 @@ describe('treesitter highlighting (C)', function()
     end)
     -- legacy syntax highlighting is used
     screen:expect(hl_grid_legacy_c)
+
+    exec_lua(function()
+      vim.cmd 'new | wincmd p'
+      vim.treesitter.start()
+      vim.cmd 'bdelete!'
+    end)
+    -- Does not change &syntax of the other, unrelated buffer.
+    eq('', eval('&syntax'))
   end)
 
   it('is updated with edits', function()
