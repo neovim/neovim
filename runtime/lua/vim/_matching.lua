@@ -42,56 +42,24 @@ end
 --- @param pattern string capture group pattern (without '@')
 --- @return boolean
 local function on_capture(pattern)
-  local captures = ts.get_captures_at_cursor(0)
+  -- local captures = ts.get_captures_at_cursor(0)
+  local r, c = unpack(norm_cursor_pos())
+  local captures = ts.get_captures_at_pos(0, r, c)
+  if #captures == 0 then
+    captures = ts.get_captures_at_pos(0, r, c-1)
+  end
   for _, capture in ipairs(captures) do
-    if vim.startswith(capture, pattern) then
+    if vim.startswith(capture['capture'], pattern) then
       return true
     end
   end
   return false
 end
 
---- TODO: return all keywords as list for highlighting
---- Find matching keywords (e.g. if/then/end)
---- @param current TSNode
---- @param backward boolean?
---- @return Pos[]?
-local function ts_match_keyword(current, backward)
-  if not current then
-    return
-  end
-  local keywords = anonymous_children(current)
-
-  -- prev for backwards matching, first for wrapping last item
-  local prev, first
-  for keyword in keywords do
-    -- cursor on keyword
-    if ts.is_in_node_range(keyword, unpack(norm_cursor_pos())) then
-      local match
-      if backward then
-        -- first item wraps to last item
-        match = prev or keywords:last()
-      else
-        -- last item wraps to first item
-        match = keywords:next() or first
-      end
-      if match then
-        return { node_pos(match) }
-      end
-    end
-    first = vim.F.if_nil(first, keyword)
-    prev = keyword
-  end
-end
-
 --- Find matching brackets
 --- @param node TSNode
 --- @return Pos[]?
 local function ts_match_punc(node)
-  if not node then
-    return
-  end
-
   local opening = anonymous_children(node):nth(1)
   local closing = anonymous_children(node):last()
 
@@ -255,26 +223,23 @@ end
 --- @param backward boolean? Search backwards
 --- @return Pos[]?
 local function find_matches(backward)
-  local node = ts.get_node()
-
-  if node and on_capture('punctuation.bracket') then
-    return ts_match_punc(node)
+  local pos = nil
+  -- TODO: rewrite
+  -- move one position back in insert mode
+  if vim.fn.mode() == 'i' then
+    local r, c = unpack(norm_cursor_pos())
+    pos = { r, math.max(0, c - 1) }
   end
-  if node and on_capture('keyword') then
-    return ts_match_keyword(node, backward)
+  local node = ts.get_node({ pos = pos })
+
+  if node and not node:has_error() and on_capture('punctuation.bracket') then
+    return ts_match_punc(node)
   end
 
   return syntax_match(backward)
 end
 
 function M.jump(opts)
-  if vim.o.rtp:find('matchit') ~= nil then
-    vim.cmd.unlet('g:loaded_matchit')
-    vim.cmd.runtime('plugin/matchit.vim')
-    -- doesn't allow both plugins to be used (even with different keymaps)
-    return
-  end
-
   -- [count]% goes to the percentage in a file |N%|
   if vim.v.count1 > 1 then
     vim.cmd(('normal! %s%%'):format(vim.v.count1))
@@ -307,11 +272,8 @@ function M.highlight()
   local matches = find_matches()
   for _, match in ipairs(matches or {}) do
     local row, col = unpack(match)
-    vim.hl.range(0, ns, 'MatchParen', { row, col }, { row, col + 1 })
+    vim.hl.range(0, ns, 'Error', { row, col }, { row, col + 1 })
   end
 end
-
--- inform ftplugin's to set b:match_words / b:match_ignorecase / b:match_skip
-vim.g.loaded_matchit = 1
 
 return M
