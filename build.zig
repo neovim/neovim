@@ -42,7 +42,18 @@ pub fn build(b: *std.Build) !void {
 
     const cross_compiling = b.option(bool, "cross", "cross compile") orelse false;
     // TODO(bfredl): option to set nlua0 target explicitly when cross compiling?
-    const target_host = if (cross_compiling) b.graph.host else target;
+    const target_host = if (cross_compiling) lufs: {
+        const maybe_triple = b.option(
+            []const u8,
+            "host_triple",
+            "The CPU architecture, OS, and ABI to build host utils for",
+        );
+        if (maybe_triple) |triple| {
+            const query = try std.Build.parseTargetQuery(.{ .arch_os_abi = triple });
+            break :lufs b.resolveTargetQuery(query);
+        }
+        break :lufs b.graph.host;
+    } else target;
     const optimize_host = .ReleaseSafe;
 
     // puc lua 5.1 is not ReleaseSafe "safe"
@@ -331,7 +342,7 @@ pub fn build(b: *std.Build) !void {
 
     nvim_exe_step.dependOn(&nvim_exe_install.step);
 
-    const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, nvim_exe, funcs_data);
+    const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, nvim_exe, funcs_data, cross_compiling);
     const runtime_install = b.addInstallDirectory(.{ .source_dir = gen_runtime.getDirectory(), .install_dir = .prefix, .install_subdir = "runtime/" });
 
     const nvim = b.step("nvim", "build the editor");

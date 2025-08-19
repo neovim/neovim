@@ -221,6 +221,23 @@ jobs:
       - run: zig build unittest
       - run: zig build functionaltest
 
+  zig-build-s390x:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    name: S390X cross-compile (zig build)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v1
+        with:
+         version: 0.14.0
+      - run: sudo apt-get install -y inotify-tools qemu-user-static
+      - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      - run: wget http://launchpadlibrarian.net/773667453/libc6_2.31-0ubuntu9.17_s390x.deb
+      - run: sudo dpkg-deb -RvD libc6_2.31-0ubuntu9.17_s390x.deb /
+      - run: zig build -Dcross=true -Dtarget=s390x-linux-gnu -Dhost_triple=x86_64-linux-gnu test_deps
+      - run: ./zig-out/bin/nvim --version
+      - run: zig build -Dcross=true -Dtarget=s390x-linux-gnu -Dhost_triple=x86_64-linux-gnu functionaltest
+
   windows:
     uses: ./.github/workflows/test_windows.yml
 
