@@ -221,6 +221,7 @@ static const char *highlight_init_both[] = {
   "default link LspReferenceTarget          LspReferenceText",
   "default link LspSignatureActiveParameter Visual",
   "default link SnippetTabstop              Visual",
+  "default link SnippetTabstopActive        SnippetTabstop",
 
   // Diagnostic
   "default link DiagnosticFloatingError    DiagnosticError",

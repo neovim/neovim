@@ -5343,6 +5343,9 @@ Search		Last search pattern highlighting (see 'hlsearch').
 		Also used for similar items that need to stand out.
 							*hl-SnippetTabstop*
 SnippetTabstop	Tabstops in snippets. |vim.snippet|
+							*hl-SnippetTabstopActive*
+SnippetTabstopActive
+		The currently active tabstop. |vim.snippet|
 							*hl-SpecialKey*
 SpecialKey	Unprintable characters: Text displayed differently from what
 		it really is. But not 'listchars' whitespace. |hl-Whitespace|

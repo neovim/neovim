@@ -2,6 +2,7 @@ local G = vim.lsp._snippet_grammar
 local snippet_group = vim.api.nvim_create_augroup('nvim.snippet', {})
 local snippet_ns = vim.api.nvim_create_namespace('nvim.snippet')
 local hl_group = 'SnippetTabstop'
+local hl_group_active = 'SnippetTabstopActive'
 
 --- Returns the 0-based cursor position.
 ---
@@ -124,7 +125,7 @@ function Tabstop.new(index, bufnr, placement, range, choices)
     end_right_gravity = false,
     end_line = range[3],
     end_col = range[4],
-    hl_group = hl_group,
+    hl_group = index == 1 and hl_group_active or hl_group,
   })
 
   local self = setmetatable({
@@ -168,19 +169,22 @@ function Tabstop:set_text(text)
 end
 
 ---@alias (private) vim.snippet.TabStopGravity
---- | "expand" Expand the (usually current) tabstop on text insert
+--- | "expand" Expand the current tabstop on text insert
 --- | "lock" The tabstop should NOT move on text insert
 --- | "shift" The tabstop should move on text insert (default)
 
 --- Sets the right gravity of the tabstop's extmark.
+--- Sets the active highlight group for current ("expand") tabstops
 ---
 ---@package
 ---@param target vim.snippet.TabStopGravity
 function Tabstop:set_gravity(target)
+  local hl = hl_group
   local right_gravity = true
   local end_right_gravity = true
 
   if target == 'expand' then
+    hl = hl_group_active
     right_gravity = false
     end_right_gravity = true
   elseif target == 'lock' then
@@ -189,12 +193,13 @@ function Tabstop:set_gravity(target)
   end
 
   local range = self:get_range()
+  vim.api.nvim_buf_del_extmark(self.bufnr, snippet_ns, self.extmark_id)
   self.extmark_id = vim.api.nvim_buf_set_extmark(self.bufnr, snippet_ns, range[1], range[2], {
     right_gravity = right_gravity,
     end_right_gravity = end_right_gravity,
     end_line = range[3],
     end_col = range[4],
-    hl_group = hl_group,
+    hl_group = hl,
   })
 end
 
@@ -469,7 +474,7 @@ end
 --- Refer to https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax
 --- for the specification of valid input.
 ---
---- Tabstops are highlighted with |hl-SnippetTabstop|.
+--- Tabstops are highlighted with |hl-SnippetTabstop| and |hl-SnippetTabstopActive|.
 ---
 --- @param input string
 function M.expand(input)

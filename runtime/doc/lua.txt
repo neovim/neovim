@@ -4354,7 +4354,8 @@ vim.snippet.expand({input})                             *vim.snippet.expand()*
     https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax
     for the specification of valid input.
 
-    Tabstops are highlighted with |hl-SnippetTabstop|.
+    Tabstops are highlighted with |hl-SnippetTabstop| and
+    |hl-SnippetTabstopActive|.
 
     Parameters: ~
       • {input}  (`string`)

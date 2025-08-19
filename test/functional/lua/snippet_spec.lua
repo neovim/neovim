@@ -116,6 +116,20 @@ describe('vim.snippet', function()
     test_expand_success({ 'print($UNKNOWN)' }, { 'print(UNKNOWN)' })
   end)
 
+  it('highlights active tabstop with SnippetTabstopActive', function()
+    local function get_extmark_details(col, end_col)
+      return api.nvim_buf_get_extmarks(0, -1, { 0, col }, { 0, end_col }, { details = true })[1][4]
+    end
+
+    test_expand_success({ 'local ${1:name} = ${2:value}' }, { 'local name = value' })
+    eq('SnippetTabstopActive', get_extmark_details(6, 10).hl_group)
+    eq('SnippetTabstop', get_extmark_details(13, 18).hl_group)
+    feed('<Tab>')
+    poke_eventloop()
+    eq('SnippetTabstop', get_extmark_details(6, 10).hl_group)
+    eq('SnippetTabstopActive', get_extmark_details(13, 18).hl_group)
+  end)
+
   it('does not jump outside snippet range', function()
     test_expand_success({ 'function $1($2)', '  $0', 'end' }, { 'function ()', '  ', 'end' })
     eq(false, exec_lua('return vim.snippet.active({ direction = -1 })'))
