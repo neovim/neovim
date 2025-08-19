@@ -2137,7 +2137,7 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
   if (scbk < term->sb_current) {
     size_t diff = term->sb_current - scbk;
     for (size_t i = 0; i < diff; i++) {
-      ml_delete(1, false);
+      ml_delete(1);
       term->sb_current--;
       xfree(term->sb_buffer[term->sb_current]);
     }
@@ -2178,7 +2178,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
     // section of the buffer
     if (((int)buf->b_ml.ml_line_count - height) >= (int)term->sb_size) {
       // scrollback full, delete lines at the top
-      ml_delete(1, false);
+      ml_delete(1);
       deleted_lines(1, 1);
     }
     fetch_row(term, -term->sb_pending - row_offset, width);
