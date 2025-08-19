@@ -399,7 +399,7 @@ struct file_buffer {
 
   varnumber_T b_last_changedtick;       // b:changedtick when TextChanged was
                                         // last triggered.
-  varnumber_T b_last_changedtick_i;     // b:changedtick for TextChangedI
+  varnumber_T b_last_changedtick_i;     // b:changedtick for TextChangedI/T
   varnumber_T b_last_changedtick_pum;   // b:changedtick for TextChangedP
 
   bool b_saving;                // Set to true if we are in the middle of
