@@ -780,6 +780,8 @@ bool terminal_enter(void)
 
   // Tell the terminal it has focus
   terminal_focus(s->term, true);
+  // Don't fire TextChangedT from changes in Normal mode.
+  curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
 
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
   may_trigger_modechanged();
@@ -805,6 +807,8 @@ bool terminal_enter(void)
 
   // Tell the terminal it lost focus
   terminal_focus(s->term, false);
+  // Don't fire TextChanged from changes in terminal mode.
+  curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
 
   if (curbuf->terminal == s->term && !s->close) {
     terminal_check_cursor();
@@ -892,9 +896,10 @@ static int terminal_check(VimState *state)
 
   // Don't let autocommands free the terminal from under our fingers.
   s->term->refcount++;
-  if (must_redraw) {
-    // TODO(seandewar): above changes will maybe change the behaviour of this more; untrollify this
+  if (has_event(EVENT_TEXTCHANGEDT)
+      && curbuf->b_last_changedtick_i != buf_get_changedtick(curbuf)) {
     apply_autocmds(EVENT_TEXTCHANGEDT, NULL, NULL, false, curbuf);
+    curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
   }
   may_trigger_win_scrolled_resized();
   s->term->refcount--;
