@@ -134,6 +134,7 @@ hi('DiagnosticDeprecated',       { sp = 'Red', strikethrough = true,    cterm = 
 hi('DiagnosticUnnecessary', { link = 'Comment' })
 hi('LspInlayHint',          { link = 'NonText' })
 hi('SnippetTabstop',        { link = 'Visual' })
+hi('SnippetTabstopActive',  { link = 'SnippetTabstop' })
 
 -- Text
 hi('@markup.raw',       { link = 'Comment' })
