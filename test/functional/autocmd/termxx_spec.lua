@@ -1,6 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
-local tt = require('test.functional.testterm')
+local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
 
 local clear, command, testprg = n.clear, n.command, n.testprg
@@ -202,12 +202,81 @@ describe('autocmd TextChangedT,WinResized', function()
   before_each(clear)
 
   it('TextChangedT works', function()
-    command('autocmd TextChangedT * ++once let g:called = 1')
-    tt.setup_screen()
-    tt.feed_data('a')
-    retry(nil, nil, function()
-      eq(1, api.nvim_get_var('called'))
+    local screen = Screen.new(50, 7)
+    screen:set_default_attr_ids({
+      [1] = { bold = true },
+      [31] = { foreground = Screen.colors.Gray100, background = Screen.colors.DarkGreen },
+      [32] = {
+        foreground = Screen.colors.Gray100,
+        bold = true,
+        background = Screen.colors.DarkGreen,
+      },
+    })
+
+    local term, term_unfocused = exec_lua(function()
+      -- Split windows before opening terminals so TextChangedT doesn't fire an additional time due
+      -- to the inner terminal being resized (which is usually deferred too).
+      vim.cmd.vnew()
+      local term_unfocused = vim.api.nvim_open_term(0, {})
+      vim.cmd.wincmd 'p'
+      local term = vim.api.nvim_open_term(0, {})
+      vim.cmd.startinsert()
+      return term, term_unfocused
     end)
+    eq('t', eval('mode()'))
+
+    exec_lua(function()
+      _G.n_triggered = 0
+      vim.api.nvim_create_autocmd('TextChanged', {
+        callback = function()
+          _G.n_triggered = _G.n_triggered + 1
+        end,
+      })
+      _G.t_triggered = 0
+      vim.api.nvim_create_autocmd('TextChangedT', {
+        callback = function()
+          _G.t_triggered = _G.t_triggered + 1
+        end,
+      })
+    end)
+
+    api.nvim_chan_send(term, 'a')
+    retry(nil, nil, function()
+      eq(1, exec_lua('return _G.t_triggered'))
+    end)
+    api.nvim_chan_send(term, 'b')
+    retry(nil, nil, function()
+      eq(2, exec_lua('return _G.t_triggered'))
+    end)
+
+    -- Not triggered by changes in a non-current terminal.
+    api.nvim_chan_send(term_unfocused, 'hello')
+    screen:expect([[
+      hello                    │ab^                      |
+                               │                        |*4
+      {31:[Scratch] [-]             }{32:[Scratch] [-]           }|
+      {1:-- TERMINAL --}                                    |
+    ]])
+    eq(2, exec_lua('return _G.t_triggered'))
+
+    -- Not triggered by unflushed redraws.
+    api.nvim__redraw({ valid = false, flush = false })
+    eq(2, exec_lua('return _G.t_triggered'))
+
+    -- Not triggered when not in terminal mode.
+    command('stopinsert')
+    eq('n', eval('mode()'))
+    eq(2, exec_lua('return _G.t_triggered'))
+    eq(0, exec_lua('return _G.n_triggered')) -- Nothing we did was in Normal mode yet.
+
+    api.nvim_chan_send(term, 'c')
+    screen:expect([[
+      hello                    │a^bc                     |
+                               │                        |*4
+      {31:[Scratch] [-]             }{32:[Scratch] [-]           }|
+                                                        |
+    ]])
+    eq(1, exec_lua('return _G.n_triggered')) -- Happened in Normal mode.
   end)
 
   it('no crash when deleting terminal buffer', function()
