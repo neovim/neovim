@@ -283,6 +283,7 @@ local config = {
       'folding_range.lua',
       'handlers.lua',
       'inlay_hint.lua',
+      'inline_completion.lua',
       'linked_editing_range.lua',
       'log.lua',
       'rpc.lua',

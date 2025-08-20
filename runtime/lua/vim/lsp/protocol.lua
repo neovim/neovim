@@ -312,6 +312,14 @@ local constants = {
     -- also be triggered when file content changes.
     Automatic = 2,
   },
+  InlineCompletionTriggerKind = {
+    -- Completion was triggered explicitly by a user gesture.
+    -- Return multiple completion items to enable cycling through them.
+    Invoked = 1,
+    -- Completion was triggered automatically while editing.
+    -- It is sufficient to return a single completion item in this case.
+    Automatic = 2,
+  },
 }
 
 --- Protocol for the Microsoft Language Server Protocol (mslsp)
@@ -502,6 +510,9 @@ function protocol.make_client_capabilities()
       },
       implementation = {
         linkSupport = true,
+      },
+      inlineCompletion = {
+        dynamicRegistration = false,
       },
       typeDefinition = {
         linkSupport = true,
