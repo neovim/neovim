@@ -403,8 +403,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   bool msg_didout_before_start = false;
   int count = 0;                        // line number count
   bool did_inc = false;                 // incremented RedrawingDisabled
-  int block_indent = -1;                // indent for ext_cmdline block event
-  char *block_line = NULL;              // block_line for ext_cmdline block event
+  bool did_block = false;               // emitted cmdline_block event
   int retval = OK;
   cstack_T cstack = {                   // conditional stack
     .cs_idx = -1,
@@ -573,18 +572,18 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     // 2. If no line given, get an allocated line with fgetline().
     if (next_cmdline == NULL) {
       int indent = cstack.cs_idx < 0 ? 0 : (cstack.cs_idx + 1) * 2;
-      if (count >= 1 && getline_equal(fgetline, cookie, getexline)) {
+
+      if (count == 1 && getline_equal(fgetline, cookie, getexline)) {
         if (ui_has(kUICmdline)) {
-          char *line = block_line == last_cmdline ? "" : last_cmdline;
-          ui_ext_cmdline_block_append((size_t)MAX(0, block_indent), line);
-          block_line = last_cmdline;
-          block_indent = indent;
-        } else if (count == 1) {
-          // Need to set msg_didout for the first line after an ":if",
-          // otherwise the ":if" will be overwritten.
-          msg_didout = true;
+          // Emit cmdline_block event for loop/conditional block.
+          ui_ext_cmdline_block_append(0, last_cmdline);
+          did_block = true;
         }
+        // Need to set msg_didout for the first line after an ":if",
+        // otherwise the ":if" will be overwritten.
+        msg_didout = true;
       }
+
       if (fgetline == NULL || (next_cmdline = fgetline(':', cookie, indent, true)) == NULL) {
         // Don't call wait_return() for aborted command line.  The NULL
         // returned for the end of a sourced file or executed function
@@ -596,6 +595,12 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
         break;
       }
       used_getline = true;
+
+      // Emit all but the first cmdline_block event immediately; waiting until after
+      // command execution would mess up event ordering with nested command lines.
+      if (ui_has(kUICmdline) && count > 0 && getline_equal(fgetline, cookie, getexline)) {
+        ui_ext_cmdline_block_append((size_t)indent, next_cmdline);
+      }
 
       // Keep the first typed line.  Clear it when more lines are typed.
       if (flags & DOCMD_KEEPLINE) {
@@ -941,7 +946,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     }
   }
 
-  if (block_indent >= 0) {
+  if (did_block) {
     ui_ext_cmdline_block_leave();
   }
 
