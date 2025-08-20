@@ -278,6 +278,7 @@ local extension = {
   c3t = 'c3',
   cabal = 'cabal',
   cairo = 'cairo',
+  cj = 'cangjie',
   capnp = 'capnp',
   cdc = 'cdc',
   cdl = 'cdl',

@@ -634,6 +634,23 @@ in the "after" directory in 'runtimepath'.  For Unix this would be
     syn sync fromstart
     set foldmethod=syntax
 
+CANGJIE					*cangjie.vim* *ft-cangjie-syntax*
+
+This file provides syntax highlighting for the Cangjie programming language, a
+new-generation language oriented to full-scenario intelligence.
+
+All highlighting is enabled by default.  To disable highlighting for a
+specific group, set the corresponding variable to 0 in your |vimrc|.
+All options to disable highlighting are: >
+	:let g:cangjie_comment_color = 0
+	:let g:cangjie_identifier_color = 0
+	:let g:cangjie_keyword_color = 0
+	:let g:cangjie_macro_color = 0
+	:let g:cangjie_number_color = 0
+	:let g:cangjie_operator_color = 0
+	:let g:cangjie_string_color = 0
+	:let g:cangjie_type_color = 0
+
 CH						*ch.vim* *ft-ch-syntax*
 
 C/C++ interpreter.  Ch has similar syntax highlighting to C and builds upon
