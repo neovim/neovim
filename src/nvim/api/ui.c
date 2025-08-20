@@ -1001,6 +1001,17 @@ void remote_ui_flush(RemoteUI *ui)
   }
 }
 
+void remote_ui_ui_send(RemoteUI *ui, String content)
+{
+  if (!ui->stdout_tty) {
+    return;
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  ADD_C(args, STRING_OBJ(content));
+  push_call(ui, "ui_send", args);
+}
+
 void remote_ui_flush_pending_data(RemoteUI *ui)
 {
   ui_flush_buf(ui, false);
@@ -1102,4 +1113,18 @@ void remote_ui_event(RemoteUI *ui, char *name, Array args)
 
 free_ret:
   arena_mem_free(arena_finish(&arena));
+}
+
+/// Sends arbitrary data to a UI.
+///
+/// This sends a "ui_send" event to any UI that has the "stdout_tty" |ui-option| set. UIs are
+/// expected to write the received data to a connected TTY if one exists.
+///
+/// @param channel_id
+/// @param content Content to write to the TTY
+/// @param[out] err Error details, if any
+void nvim_ui_send(uint64_t channel_id, String content, Error *err)
+  FUNC_API_SINCE(14)
+{
+  ui_call_ui_send(content);
 }

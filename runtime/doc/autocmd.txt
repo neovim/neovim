@@ -1067,7 +1067,7 @@ TermResponse			When Nvim receives a DA1, OSC, DCS, or APC response from
 				    local r, g, b = resp:match("\027%]4;1;rgb:(%w+)/(%w+)/(%w+)")
 				  end,
 				})
-				io.stdout:write("\027]4;1;?\027\\")
+				vim.api.nvim_ui_send("\027]4;1;?\027\\")
 <
 							*TextChanged*
 TextChanged			After a change was made to the text in the

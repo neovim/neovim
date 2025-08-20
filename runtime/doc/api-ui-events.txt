@@ -276,6 +276,10 @@ the editor.
 	to an internal buffer, this is the time to display the redrawn parts
 	to the user.
 
+["ui_send", content] ~
+	Write {content} to the connected TTY. Only UIs that have the
+	"stdout_tty" |ui-option| set will receive this event.
+
 ==============================================================================
 Grid Events (line-based)					  *ui-linegrid*
 
