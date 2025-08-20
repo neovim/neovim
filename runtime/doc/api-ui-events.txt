@@ -825,7 +825,7 @@ will be set to zero, but can be changed and used for the replacing cmdline or
 message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
-["msg_show", kind, content, replace_last, history, append, msg_id, extra_info] ~
+["msg_show", kind, content, replace_last, history, append, msg_id, progress] ~
 	Display a message to the user.
 
 	kind
@@ -887,7 +887,7 @@ must handle.
 	    to 1. 0 indicates msg_id was not assigned. When message of same id
 	    appears it should replace the older message.
 
-	extra_info
+	progress
 	    Placeholder for special items for special messages. Currently, used
 	    for progress-messages. Can contain following for progress-message
 	       • title: Title string of the progress message.

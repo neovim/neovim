@@ -1397,7 +1397,7 @@ function Screen:_handle_wildmenu_hide()
   self.wildmenu_items, self.wildmenu_pos = nil, nil
 end
 
-function Screen:_handle_msg_show(kind, chunks, replace_last, history, append, id, extra_info)
+function Screen:_handle_msg_show(kind, chunks, replace_last, history, append, id, progress)
   local pos = #self.messages
   if not replace_last or pos == 0 then
     pos = pos + 1
@@ -1408,7 +1408,7 @@ function Screen:_handle_msg_show(kind, chunks, replace_last, history, append, id
     history = history,
     append = append,
     id = id,
-    extra_info = extra_info,
+    progress = progress,
   }
 end
 
@@ -1541,7 +1541,7 @@ function Screen:_extstate_repr(attr_state)
       history = entry.history or nil,
       append = entry.append or nil,
       id = entry.kind == 'progress' and entry.id or nil,
-      extra_info = entry.kind == 'progress' and entry.extra_info or nil,
+      progress = entry.kind == 'progress' and entry.progress or nil,
     }
   end
 

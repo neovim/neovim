@@ -774,10 +774,10 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///                      initiator by listening for the `Progress` event
 ///          - percent: How much progress is done on the progress
 ///            message
-/// @return The message-id of the message.
-///         valid message-id is always greater or equal to 1
-///         -1 means nvim_echo didn't show a message
-///          0 means nvim_echo didn't allocate a message id for the message. happens
+/// @return The msg-id of the message.
+///         valid msg-id is always greater or equal to 1
+///         - -1 means nvim_echo didn't show a message
+///         - 0 means nvim_echo didn't allocate a message id for the message. happens
 ///            for temp messages not stored in message history.
 Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
                   Error *err)
@@ -795,35 +795,31 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
     kind = opts->err ? "echoerr" : history ? "echomsg" : "echo";
   }
 
-  bool is_kind_progress = kind != NULL && strcmp(kind, "progress") == 0;
+  bool is_kind_progress = strequal(kind, "progress");
 
-  if (!is_kind_progress && (opts->status.size != 0 || opts->title.size != 0 || opts->percent > 0)) {
-    api_set_error(err, kErrorTypeValidation,
-                  "title, status and percents fields can only be used with progress messages");
+  VALIDATE(is_kind_progress
+           || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0),
+           "%s", "title, status and percents fields can only be used with progress messages",  {
     return -1;
-  }
+  });
 
-  if (is_kind_progress
-      && ((opts->status.data != NULL)
-          && (strcmp(opts->status.data, "success") != 0
-              && strcmp(opts->status.data, "failed") != 0
-              && strcmp(opts->status.data, "running") != 0
-              && strcmp(opts->status.data, "cancel") != 0)
-          )
-      ) {
-    api_set_error(err, kErrorTypeValidation, "invalid message status");
+  VALIDATE(!is_kind_progress || (opts->status.data == NULL
+                                 || strequal(opts->status.data, "success")
+                                 || strequal(opts->status.data, "failed")
+                                 || strequal(opts->status.data, "running")
+                                 || strequal(opts->status.data, "cancel")),
+           "invalid message status: %s", opts->status.data, {
     return -1;
-  }
+  });
 
-  if (is_kind_progress && (opts->percent < 0 || opts->percent > 100)) {
-    api_set_error(err, kErrorTypeValidation, "progress percent out of bounds");
+  VALIDATE(!is_kind_progress || (opts->percent >= 0 && opts->percent <= 100),
+           "progress percent out of bounds: %ld", (long)opts->percent, {
     return -1;
-  }
+  });
 
-  if (is_kind_progress && !history) {
-    api_set_error(err, kErrorTypeValidation, "progress messages must be on history");
+  VALIDATE(!is_kind_progress || history, "%s", "progress messages must be on history", {
     return -1;
-  }
+  });
 
   MessageExtData ext_data = { .title = opts->title, .status = opts->status,
                               .percent = opts->percent };

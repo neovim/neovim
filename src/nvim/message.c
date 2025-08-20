@@ -151,7 +151,7 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
 static MsgID msg_ext_id = 0;
-static DictOf(Object) msg_ext_extra_info = ARRAY_DICT_INIT;
+static DictOf(Object) msg_ext_progress = ARRAY_DICT_INIT;
 static bool msg_ext_skip = false;  // don't send the message to ext-ui
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
@@ -314,7 +314,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   msg_start();
   msg_clr_eos();
   bool need_clear = false;
-  bool is_kind_progress = kind != NULL && strcmp(kind, MSG_KIND_PROGRESS) == 0;
+  bool is_kind_progress = strequal(kind, MSG_KIND_PROGRESS);
   msg_ext_history = history;
   if (kind != NULL) {
     msg_ext_set_kind(kind);
@@ -1057,7 +1057,7 @@ static MessageHistoryEntry *msg_find_by_id(MsgID id)
     return NULL;
   }
   MessageHistoryEntry *entry = msg_hist_last;
-  while (entry != NULL && entry->message_id != id) {
+  while (entry != NULL && entry->msg_id != id) {
     entry = entry->prev;
   }
   return entry;
@@ -1075,8 +1075,8 @@ static void emit_progress_event(MessageHistoryEntry *msg)
     ADD(messages, STRING_OBJ(msg->msg.items[i].text));
   }
 
-  PUT_C(data, "msg_id", INTEGER_OBJ(msg->message_id));
-  PUT_C(data, "message", ARRAY_OBJ(messages));
+  PUT_C(data, "msg_id", INTEGER_OBJ(msg->msg_id));
+  PUT_C(data, "content", ARRAY_OBJ(messages));
   PUT_C(data, "percent", INTEGER_OBJ(msg->ext_data.percent));
   PUT_C(data, "status", STRING_OBJ(msg->ext_data.status));
   PUT_C(data, "title", STRING_OBJ(msg->ext_data.title));
@@ -1134,7 +1134,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     return -1;
   }
 
-  bool is_kind_progress = msg_ext_kind != NULL && strcmp(msg_ext_kind, MSG_KIND_PROGRESS) == 0;
+  bool is_kind_progress = strequal(msg_ext_kind, MSG_KIND_PROGRESS);
   bool old_message_found = false;
 
   MessageHistoryEntry *entry = msg_find_by_id(msg_id);
@@ -1154,7 +1154,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   } else {
     // Allocate an entry and add the message at the end of the history.
     entry = xmalloc(sizeof(MessageHistoryEntry));
-    entry->message_id = msg_id_next++;
+    entry->msg_id = msg_id_next++;
     entry->msg.items = NULL;
     entry->msg.size = 0;
     entry->ext_data.title.data = NULL;
@@ -1207,17 +1207,17 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   msg_hist_last = entry;
   msg_ext_history = true;
 
-  msg_ext_id = entry->message_id;
+  msg_ext_id = entry->msg_id;
   if (is_kind_progress && ui_has(kUIMessages)) {
-    kv_resize(msg_ext_extra_info, 3);
+    kv_resize(msg_ext_progress, 3);
     if (entry->ext_data.title.size != 0) {
-      PUT_C(msg_ext_extra_info, "title", STRING_OBJ(entry->ext_data.title));
+      PUT_C(msg_ext_progress, "title", STRING_OBJ(entry->ext_data.title));
     }
     if (entry->ext_data.status.size != 0) {
-      PUT_C(msg_ext_extra_info, "status", STRING_OBJ(entry->ext_data.status));
+      PUT_C(msg_ext_progress, "status", STRING_OBJ(entry->ext_data.status));
     }
     if (entry->ext_data.percent >= 0) {
-      PUT_C(msg_ext_extra_info, "percent", INTEGER_OBJ(entry->ext_data.percent));
+      PUT_C(msg_ext_progress, "percent", INTEGER_OBJ(entry->ext_data.percent));
     }
   }
 
@@ -1225,7 +1225,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     emit_progress_event(entry);
   }
   msg_hist_clear(msg_hist_max);
-  return entry->message_id;
+  return entry->msg_id;
 }
 
 static void msg_hist_free_msg(MessageHistoryEntry *entry)
@@ -1371,7 +1371,7 @@ void ex_messages(exarg_T *eap)
     }
     if (redirecting() || !ui_has(kUIMessages)) {
       msg_silent += ui_has(kUIMessages);
-      msg_multihl(p->message_id, p->msg, p->kind, false, false, &(p->ext_data));
+      msg_multihl(p->msg_id, p->msg, p->kind, false, false, &(p->ext_data));
       msg_silent -= ui_has(kUIMessages);
     }
   }
@@ -3350,7 +3350,7 @@ void msg_ext_ui_flush(void)
     Array *tofree = msg_ext_init_chunks();
 
     ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history,
-                     msg_ext_append, msg_ext_id, msg_ext_extra_info);
+                     msg_ext_append, msg_ext_id, msg_ext_progress);
     // clear info after emiting message.
     if (msg_ext_history) {
       api_free_array(*tofree);
@@ -3371,7 +3371,7 @@ void msg_ext_ui_flush(void)
     msg_ext_append = false;
     msg_ext_kind = NULL;
     msg_ext_id = 0;
-    kv_destroy(msg_ext_extra_info);
+    kv_destroy(msg_ext_progress);
   }
 }
 

@@ -1116,10 +1116,10 @@ function vim.api.nvim_del_var(name) end
 ---             initiator by listening for the `Progress` event
 --- - percent: How much progress is done on the progress
 ---   message
---- @return integer # The message-id of the message.
---- valid message-id is always greater or equal to 1
---- -1 means nvim_echo didn't show a message
----  0 means nvim_echo didn't allocate a message id for the message. happens
+--- @return integer # The msg-id of the message.
+--- valid msg-id is always greater or equal to 1
+--- - -1 means nvim_echo didn't show a message
+--- - 0 means nvim_echo didn't allocate a message id for the message. happens
 ---    for temp messages not stored in message history.
 function vim.api.nvim_echo(chunks, history, opts) end
 

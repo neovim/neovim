@@ -680,10 +680,11 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
                      message
 
     Return: ~
-        (`integer`) The message-id of the message. valid message-id is always
-        greater or equal to 1 -1 means nvim_echo didn't show a message 0 means
-        nvim_echo didn't allocate a message id for the message. happens for
-        temp messages not stored in message history.
+        (`integer`) The msg-id of the message. valid msg-id is always greater
+        or equal to 1
+        • -1 means nvim_echo didn't show a message
+        • 0 means nvim_echo didn't allocate a message id for the message.
+          happens for temp messages not stored in message history.
 
 nvim_eval_statusline({str}, {opts})                   *nvim_eval_statusline()*
     Evaluates statusline string.

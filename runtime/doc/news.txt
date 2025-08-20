@@ -190,8 +190,8 @@ EVENTS
 
 • |CmdlineLeavePre| triggered before preparing to leave the command line.
 • New `append` paremeter for |ui-messages| `msg_show` event.
-• New `message-id` and `extra-info` paremeter for |ui-messages| `msg_show` event.
-• |Progress| event is triggered upon receiving a progress message
+• New `msg-id` and `extra-info` paremeter for |ui-messages| `msg_show` event.
+• Creating or updating a progress message with `nvim_echo` triggers a |Progress| event.
 
 
 HIGHLIGHTS

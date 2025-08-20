@@ -3198,7 +3198,7 @@ describe('progress-message', function()
       messages = {
         {
           content = { { 'test-message' } },
-          extra_info = {
+          progress = {
             percent = 10,
             status = 'running',
             title = 'TestSuit',
@@ -3211,7 +3211,7 @@ describe('progress-message', function()
     })
 
     assert_progress_autocmd({
-      message = { 'test-message' },
+      content = { 'test-message' },
       percent = 10,
       status = 'running',
       title = 'TestSuit',
@@ -3233,7 +3233,7 @@ describe('progress-message', function()
       messages = {
         {
           content = { { 'test-message-updated' } },
-          extra_info = {
+          progress = {
             percent = 50,
             status = 'running',
             title = 'TestSuit',
@@ -3246,7 +3246,7 @@ describe('progress-message', function()
     })
 
     assert_progress_autocmd({
-      message = { 'test-message-updated' },
+      content = { 'test-message-updated' },
       percent = 50,
       status = 'running',
       title = 'TestSuit',
@@ -3268,7 +3268,7 @@ describe('progress-message', function()
       { id = id, title = 'Special Title', kind = 'progress', percent = 100, status = 'success' }
     )
     assert_progress_autocmd({
-      message = { 'test-message-updated' },
+      content = { 'test-message-updated' },
       percent = 100,
       status = 'success',
       title = 'Special Title',
