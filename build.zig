@@ -146,12 +146,12 @@ pub fn build(b: *std.Build) !void {
                 }
             }
             if (std.mem.eql(u8, ".c", entry.name[entry.name.len - 2 ..])) {
-                try nvim_sources.append(.{ .name = b.fmt("{s}{s}", .{ s, entry.name }), .api_export = api_export });
+                try nvim_sources.append(b.allocator, .{ .name = b.fmt("{s}{s}", .{ s, entry.name }), .api_export = api_export });
             }
             if (std.mem.eql(u8, ".h", entry.name[entry.name.len - 2 ..])) {
-                try nvim_headers.append(b.fmt("{s}{s}", .{ s, entry.name }));
+                try nvim_headers.append(b.allocator, b.fmt("{s}{s}", .{ s, entry.name }));
                 if (api_export and !std.mem.eql(u8, "ui_events.in.h", entry.name)) {
-                    try api_headers.append(b.path(b.fmt("src/nvim/{s}{s}", .{ s, entry.name })));
+                    try api_headers.append(b.allocator, b.path(b.fmt("src/nvim/{s}{s}", .{ s, entry.name })));
                 }
             }
         }
@@ -296,7 +296,7 @@ pub fn build(b: *std.Build) !void {
         while (try it.next()) |entry| {
             if (entry.name.len < 3) continue;
             if (std.mem.eql(u8, ".c", entry.name[entry.name.len - 2 ..])) {
-                try unit_test_sources.append(b.fmt("test/unit/fixtures/{s}", .{entry.name}));
+                try unit_test_sources.append(b.allocator, b.fmt("test/unit/fixtures/{s}", .{entry.name}));
             }
         }
     }
