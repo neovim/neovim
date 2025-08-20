@@ -265,7 +265,7 @@ end
 
 ---@param client_id integer
 function State:on_attach(client_id)
-  self.client_state = {}
+  self.client_state[client_id] = {}
   self:refresh(vim.lsp.get_client_by_id(client_id))
 end
 
@@ -344,7 +344,9 @@ function M.foldexpr(lnum)
   if not vim.lsp._capability.is_enabled('folding_range', { bufnr = bufnr }) then
     -- `foldexpr` lead to a textlock, so any further operations need to be scheduled.
     vim.schedule(function()
-      vim.lsp._capability.enable('folding_range', true, { bufnr = bufnr })
+      if api.nvim_buf_is_valid(bufnr) then
+        vim.lsp._capability.enable('folding_range', true, { bufnr = bufnr })
+      end
     end)
   end
 
