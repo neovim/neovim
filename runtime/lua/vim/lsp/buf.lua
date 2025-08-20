@@ -352,6 +352,7 @@ function M.signature_help(config)
 
   config = config and vim.deepcopy(config) or {}
   config.focus_id = method
+  local user_title = config.title
 
   lsp.buf_request_all(0, method, client_positional_params(), function(results, ctx)
     if api.nvim_get_current_buf() ~= ctx.bufnr then
@@ -391,7 +392,7 @@ function M.signature_help(config)
         local sfx = total > 1
             and string.format(' (%d/%d)%s', idx, total, can_cycle and ' (<C-s> to cycle)' or '')
           or ''
-        config.title = config.title or string.format('Signature Help: %s%s', client.name, sfx)
+        config.title = user_title or string.format('Signature Help: %s%s', client.name, sfx)
         -- If no border is set, render title inside the window.
         if not (config.border or vim.o.winborder ~= '') then
           table.insert(lines, 1, '# ' .. config.title)
