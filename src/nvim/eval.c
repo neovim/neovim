@@ -2654,6 +2654,8 @@ int eval0_simple_funccal(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *co
 /// @return  OK or FAIL.
 int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
+  CLEAR_POINTER(rettv);
+
   // Get the first variable.
   if (eval2(arg, rettv, evalarg) == FAIL) {
     return FAIL;
