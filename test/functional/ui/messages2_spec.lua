@@ -253,4 +253,142 @@ describe('messages2', function()
       {16::}^                                                    |
     ]])
   end)
+
+  it('paging prompt dialog #35191', function()
+    screen:try_resize(71, screen._height)
+    local top = [[
+                                                                             |
+      {1:~                                                                      }|*4
+      {3:───────────────────────────────────────────────────────────────────────}|
+      0                                                                      |
+      1                                                                      |
+      2                                                                      |
+      3                                                                      |
+      4                                                                      |
+      5                                                                      |
+      6 [+93]                                                                |
+      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
+    ]]
+    feed(':call inputlist(range(100))<CR>')
+    screen:expect(top)
+    feed('j')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*4
+      {3:───────────────────────────────────────────────────────────────────────}|
+      1 [+1]                                                                 |
+      2                                                                      |
+      3                                                                      |
+      4                                                                      |
+      5                                                                      |
+      6                                                                      |
+      7 [+92]                                                                |
+      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
+    ]])
+    feed('k')
+    screen:expect(top)
+    feed('d')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*4
+      {3:───────────────────────────────────────────────────────────────────────}|
+      3 [+3]                                                                 |
+      4                                                                      |
+      5                                                                      |
+      6                                                                      |
+      7                                                                      |
+      8                                                                      |
+      9 [+90]                                                                |
+      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
+    ]])
+    feed('u')
+    screen:expect(top)
+    feed('f')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*4
+      {3:───────────────────────────────────────────────────────────────────────}|
+      5 [+5]                                                                 |
+      6                                                                      |
+      7                                                                      |
+      8                                                                      |
+      9                                                                      |
+      10                                                                     |
+      11 [+88]                                                               |
+      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
+    ]])
+    feed('b')
+    screen:expect(top)
+    feed('G')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*4
+      {3:───────────────────────────────────────────────────────────────────────}|
+      93 [+93]                                                               |
+      94                                                                     |
+      95                                                                     |
+      96                                                                     |
+      97                                                                     |
+      98                                                                     |
+      99                                                                     |
+      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
+    ]])
+    feed('g')
+    screen:expect(top)
+  end)
+
+  it('in cmdline_block mode', function()
+    feed(':if 1<CR>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*11
+      {16::}{15:if} {26:1}                                                |
+      {16::}  ^                                                  |
+    ]])
+    feed([[echo input("foo\nbar:")<CR>]])
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      :if 1                                                |
+      :  echo input("foo\nbar:")                           |
+      foo                                                  |
+      bar:^                                                 |
+    ]])
+    feed('baz<CR>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {16::}{15:if} {26:1}                                                |
+      {16::}  {15:echo} {25:input}{16:(}{26:"foo\nbar:"}{16:)}                           |
+      {15:baz}                                                  |
+      {16::}  ^                                                  |
+    ]])
+    feed([[echo input("foo\nbar:")<CR>]])
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*7
+      :if 1                                                |
+      :  echo input("foo\nbar:")                           |
+      baz                                                  |
+      :  echo input("foo\nbar:")                           |
+      foo                                                  |
+      bar:^                                                 |
+    ]])
+    feed('<Esc>:endif')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*8
+      {16::}{15:if} {26:1}                                                |
+      {16::}  {15:echo} {25:input}{16:(}{26:"foo\nbar:"}{16:)}                           |
+      {15:baz}                                                  |
+      {16::}  {15:echo} {25:input}{16:(}{26:"foo\nbar:"}{16:)}                           |
+      {16::}  {16::}{15:endif}^                                            |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+                                                           |
+    ]])
+  end)
 end)
