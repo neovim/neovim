@@ -191,6 +191,20 @@ function Pos.cursor(pos)
   return Pos.new(pos[1] - 1, pos[2])
 end
 
+--- Converts |vim.Pos| to extmark position.
+---@param pos vim.Pos
+---@return [integer, integer]
+function Pos.to_extmark(pos)
+  return { pos.row, pos.col }
+end
+
+--- Creates a new |vim.Pos| from extmark position.
+---@param pos [integer, integer]
+function Pos.extmark(pos)
+  local row, col = unpack(pos)
+  return Pos.new(row, col)
+end
+
 -- Overload `Range.new` to allow calling this module as a function.
 setmetatable(Pos, {
   __call = function(_, ...)
