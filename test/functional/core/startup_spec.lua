@@ -534,6 +534,26 @@ describe('startup', function()
     )
   end)
 
+  it('if stdin is empty and - is last: selects buffer 1, deletes buffer 3 #35269', function()
+    eq(
+      '\r\n  1 %a   "file1"                        line 0\r\n  2 #h   "file2"                        line 1',
+      fn.system({
+        nvim_prog,
+        '-n',
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--headless',
+        '+ls!',
+        '+qall!',
+        'file1',
+        'file2',
+        '-',
+      }, { '' })
+    )
+  end)
+
   it('stdin with -es/-Es #7679', function()
     local input = { 'append', 'line1', 'line2', '.', '%print', '' }
     local inputstr = table.concat(input, '\n')

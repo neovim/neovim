@@ -1623,15 +1623,37 @@ static void read_stdin(void)
   swap_exists_action = SEA_DIALOG;
   no_wait_return = true;
   bool save_msg_didany = msg_didany;
+  buf_T *prev_buf = NULL;
+
+  if (curbuf->b_ffname) {
+    // curbuf is already opened for a file, create a new buffer for stdin. #35269
+    buf_T *newbuf = buflist_new(NULL, NULL, 0, 0);
+    if (newbuf == NULL) {
+      semsg("Failed to create buffer for stdin");
+      return;
+    }
+
+    // remember the current buffer so we can go back to it
+    prev_buf = curbuf;
+    set_curbuf(newbuf, 0, false);
+  }
+
   set_buflisted(true);
   // Create memfile and read from stdin.
   open_buffer(true, NULL, 0);
-  if (buf_is_empty(curbuf) && curbuf->b_next != NULL) {
-    // stdin was empty, go to buffer 2 (e.g. "echo file1 | xargs nvim"). #8561
-    do_cmdline_cmd("silent! bnext");
-    // Delete the empty stdin buffer.
-    do_cmdline_cmd("bwipeout 1");
+  if (buf_is_empty(curbuf)) {
+    // stdin was empty so we should wipe it (e.g. "echo file1 | xargs nvim"). #8561
+    // stdin buffer may be first or last ("echo foo | nvim file1 -"). #35269
+    if ((curbuf->b_next != NULL) || (curbuf->b_prev != NULL)) {
+      do_bufdel(DOBUF_WIPE, NULL, 0, 0, 0, 1);
+    }
   }
+
+  // we had to switch buffers to load stdin, switch back
+  if (prev_buf) {
+    set_curbuf(prev_buf, 0, false);
+  }
+
   no_wait_return = false;
   msg_didany = save_msg_didany;
   TIME_MSG("reading stdin");
