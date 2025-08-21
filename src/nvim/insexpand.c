@@ -4902,7 +4902,7 @@ void ins_compl_delete(bool new_leader)
     }
 
     while (curwin->w_cursor.lnum > compl_lnum) {
-      if (ml_delete(curwin->w_cursor.lnum, false) == FAIL) {
+      if (ml_delete(curwin->w_cursor.lnum) == FAIL) {
         if (remaining.data) {
           xfree(remaining.data);
         }

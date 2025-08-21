@@ -3232,7 +3232,7 @@ void ex_spelldump(exarg_T *eap)
 
   // Delete the empty line that we started with.
   if (curbuf->b_ml.ml_line_count > 1) {
-    ml_delete(curbuf->b_ml.ml_line_count, false);
+    ml_delete(curbuf->b_ml.ml_line_count);
   }
   redraw_later(curwin, UPD_NOT_VALID);
 }
