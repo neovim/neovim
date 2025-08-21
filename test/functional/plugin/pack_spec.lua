@@ -311,6 +311,34 @@ describe('vim.pack', function()
       eq(exec_lua('return #_G.event_log'), 0)
     end)
 
+    it('passes data field through to opts.load', function()
+      eq(
+        2,
+        exec_lua(function()
+          local successes = 0
+          vim.pack.add({
+            { name = 'tabletest', src = repos_src.basic, data = { test = 'value' } },
+            { name = 'stringtest', src = repos_src.basic, data = 'value' },
+          }, {
+            confirm = false,
+            load = function(p)
+              if p.spec.name == 'tabletest' then
+                if p.spec.data.test == 'value' then
+                  successes = successes + 1
+                end
+              end
+              if p.spec.name == 'stringtest' then
+                if p.spec.data == 'value' then
+                  successes = successes + 1
+                end
+              end
+            end,
+          })
+          return successes
+        end)
+      )
+    end)
+
     it('asks for installation confirmation', function()
       exec_lua(function()
         ---@diagnostic disable-next-line: duplicate-set-field
@@ -1177,6 +1205,23 @@ describe('vim.pack', function()
         { active = true, path = basic_path, spec = basic_spec },
         { active = false, path = defbranch_path, spec = defbranch_spec },
       }, exec_lua('return vim.pack.get()'))
+    end)
+
+    it('respects data field', function()
+      eq(
+        true,
+        exec_lua(function()
+          vim.pack.add {
+            { src = repos_src.basic, data = { test = 'value' } },
+          }
+          for _, p in ipairs(vim.pack.get()) do
+            if p.spec.name == 'basic' and p.spec.data.test == 'value' then
+              return true
+            end
+          end
+          return false
+        end)
+      )
     end)
 
     it('works with `del()`', function()

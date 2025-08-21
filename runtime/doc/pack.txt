@@ -309,6 +309,7 @@ Each event populates the following |event-data| fields:
                     • String to use specific branch, tag, or commit hash.
                     • Output of |vim.version.range()| to install the
                       greatest/last semver tag inside the version constraint.
+      • {data}?     (`any`) Arbitrary data associated with a plugin.
 
 
 add({specs}, {opts})                                          *vim.pack.add()*
