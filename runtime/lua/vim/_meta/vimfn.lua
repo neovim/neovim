@@ -4908,22 +4908,26 @@ function vim.fn.islocked(expr) end
 --- @return 0|1
 function vim.fn.isnan(expr) end
 
---- Return a |List| with all the key-value pairs of {dict}.  Each
---- |List| item is a list with two items: the key of a {dict}
---- entry and the value of this entry.  The |List| is in arbitrary
---- order.  Also see |keys()| and |values()|.
---- Example: >vim
----   for [key, value] in items(mydict)
----      echo key .. ': ' .. value
----   endfor
---- <
---- A List or a String argument is also supported.  In these
---- cases, items() returns a List with the index and the value at
---- the index.
+--- Return a |List| with all the key/index and value pairs of {expr}.
+--- Each |List| item is a list with two items:
+--- - for a |Dict|: the key and the value
+--- - for a |List| or |String|: the index and the value
+--- The |List| is in arbitrary order.
 ---
---- @param dict table
+--- Also see |keys()| and |values()|.
+---
+--- Example: >vim
+---   let mydict = #{a: 'red', b: 'blue'}
+---   for [key, value] in items(mydict)
+---      echo $"{key} = {value}"
+---   endfor
+---   echo items([1, 2, 3])
+---   echo items("foobar")
+--- <
+---
+--- @param expr table|string
 --- @return any
-function vim.fn.items(dict) end
+function vim.fn.items(expr) end
 
 --- @deprecated
 --- Obsolete name for |chanclose()|
