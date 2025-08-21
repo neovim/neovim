@@ -6057,7 +6057,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Return a |List| with all the key/index and value pairs of {expr}.
+      Return a |List| with all key/index and value pairs of {expr}.
       Each |List| item is a list with two items:
       - for a |Dict|: the key and the value
       - for a |List| or |String|: the index and the value

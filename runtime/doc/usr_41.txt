@@ -650,6 +650,7 @@ String manipulation:					*string-functions*
 	win_execute()		like execute() but in a specified window
 	trim()			trim characters from a string
 	gettext()		lookup message translation
+	items()			get List of String index-character pairs
 
 List manipulation:					*list-functions*
 	get()			get an item without error for wrong index
