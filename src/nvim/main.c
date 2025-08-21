@@ -1627,7 +1627,7 @@ static void read_stdin(void)
 
   if (curbuf->b_ffname) {
     // curbuf is already opened for a file, create a new buffer for stdin. #35269
-    buf_T *newbuf = buflist_new(NULL, NULL, 0, 0);
+    buf_T *newbuf = buflist_new(NULL, NULL, 0, BLN_LISTED);
     if (newbuf == NULL) {
       semsg("Failed to create buffer for stdin");
       return;
@@ -1636,11 +1636,13 @@ static void read_stdin(void)
     // remember the current buffer so we can go back to it
     prev_buf = curbuf;
     set_curbuf(newbuf, 0, false);
+    readfile(NULL, NULL, 0, 0, (linenr_T)MAXLNUM, NULL, READ_NEW + READ_STDIN, true);
+  } else {
+    set_buflisted(true);
+    // Create memfile and read from stdin.
+    open_buffer(true, NULL, 0);
   }
 
-  set_buflisted(true);
-  // Create memfile and read from stdin.
-  open_buffer(true, NULL, 0);
   if (buf_is_empty(curbuf)) {
     // stdin was empty so we should wipe it (e.g. "echo file1 | xargs nvim"). #8561
     // stdin buffer may be first or last ("echo foo | nvim file1 -"). #35269
