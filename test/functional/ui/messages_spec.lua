@@ -3219,11 +3219,10 @@ describe('progress-message', function()
     }, 'Progress autocmd receives progress messages')
 
     -- can update progress messages
-    -- also partial updates still send full content as event
     api.nvim_echo(
       { { 'test-message-updated' } },
       true,
-      { id = id, kind = 'progress', percent = 50 }
+      { id = id, kind = 'progress', title = 'TestSuit', percent = 50, status = 'running' }
     )
     screen:expect({
       grid = [[
@@ -3265,7 +3264,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message-updated' } },
       true,
-      { id = id, title = 'Special Title', kind = 'progress', percent = 100, status = 'success' }
+      { id = id, kind = 'progress', title = 'Special Title', percent = 100, status = 'success' }
     )
     assert_progress_autocmd({
       content = { 'test-message-updated' },

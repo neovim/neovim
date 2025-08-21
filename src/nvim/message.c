@@ -1103,37 +1103,22 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     // Allocate an entry and add the message at the end of the history.
     entry = xmalloc(sizeof(MessageHistoryEntry));
     entry->msg_id = msg_id_next++;
-    entry->msg.items = NULL;
-    entry->msg.size = 0;
     entry->ext_data.title.data = NULL;
     entry->ext_data.title.size = 0;
     entry->ext_data.status.data = NULL;
     entry->ext_data.status.size = 0;
-    entry->ext_data.percent = -1;
   }
-  if (entry->msg.size == 0 || msg.size != 0) {
-    entry->msg = msg;
-  }
+  entry->msg = msg;
   entry->temp = temp;
   entry->kind = msg_ext_kind;
   entry->prev = msg_hist_last;
   entry->next = NULL;
   if (is_kind_progress && ext_data != NULL) {
-    if (ext_data->status.size != 0) {
-      if (old_message_found && entry->ext_data.status.size != 0) {
-        api_free_string(entry->ext_data.status);
-      }
-      entry->ext_data.status = copy_string(ext_data->status, NULL);
-    }
-    if (ext_data->title.size != 0) {
-      if (old_message_found && entry->ext_data.title.size != 0) {
-        api_free_string(entry->ext_data.title);
-      }
-      entry->ext_data.title = copy_string(ext_data->title, NULL);
-    }
-    if (entry->ext_data.percent == -1 || ext_data->percent >= 0) {
-      entry->ext_data.percent = ext_data->percent;
-    }
+    api_free_string(entry->ext_data.status);
+    api_free_string(entry->ext_data.title);
+    entry->ext_data.status = copy_string(ext_data->status, NULL);
+    entry->ext_data.title = copy_string(ext_data->title, NULL);
+    entry->ext_data.percent = ext_data->percent >= 0 ? ext_data->percent : -1;
   }
   // NOTE: this does not encode if the message was actually appended to the
   // previous entry in the message history. However append is currently only
