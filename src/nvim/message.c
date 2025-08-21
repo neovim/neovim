@@ -152,7 +152,6 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 static const char *msg_ext_kind = NULL;
 static MsgID msg_ext_id = 0;
 static DictOf(Object) msg_ext_progress = ARRAY_DICT_INIT;
-static bool msg_ext_skip = false;  // don't send the message to ext-ui
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
@@ -163,14 +162,6 @@ static bool msg_ext_history = false;  ///< message was added to history
 static int msg_grid_pos_at_flush = 0;
 
 static MsgID msg_id_next = 1;           ///< message id to be allocated to next message
-
-// code inside doesn't emit ext-message
-#define NO_EXT_MSG(code) \
-  do { \
-    msg_ext_skip = true; \
-    code; \
-    msg_ext_skip = false; \
-  } while (0)
 
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
@@ -314,7 +305,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   msg_start();
   msg_clr_eos();
   bool need_clear = false;
-  bool is_kind_progress = strequal(kind, MSG_KIND_PROGRESS);
   msg_ext_history = history;
   if (kind != NULL) {
     msg_ext_set_kind(kind);
@@ -322,24 +312,18 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   is_multihl = true;
   msg_ext_skip_flush = true;
 
-  if (!is_kind_progress) {
-    for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
-      HlMessageChunk chunk = kv_A(hl_msg, i);
-      if (err) {
-        emsg_multiline(chunk.text.data, kind, chunk.hl_id, true);
-      } else {
-        msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
-      }
-      assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
+  for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
+    HlMessageChunk chunk = kv_A(hl_msg, i);
+    if (err) {
+      emsg_multiline(chunk.text.data, kind, chunk.hl_id, true);
+    } else {
+      msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
     }
+    assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
 
-  if (is_kind_progress || (history && kv_size(hl_msg))) {
+  if (strequal(kind, MSG_KIND_PROGRESS) || (history && kv_size(hl_msg))) {
     id = msg_hist_add_multihl(id, hl_msg, false, ext_data);
-  }
-
-  if (is_kind_progress) {
-    draw_progress_message(id, err);
   }
 
   msg_ext_skip_flush = false;
@@ -1084,42 +1068,6 @@ static void emit_progress_event(MessageHistoryEntry *msg)
   apply_autocmds_group(EVENT_PROGRESS, msg->ext_data.title.data, NULL, true, AUGROUP_ALL, NULL,
                        NULL, &DICT_OBJ(data));
   kv_destroy(messages);
-}
-
-static void draw_progress_message(MsgID msg_id, bool err)
-{
-  MessageHistoryEntry *hist_msg = NULL;
-  bool need_clear = false;
-
-  hist_msg = msg_find_by_id(msg_id);
-  if (!hist_msg) {
-    return;
-  }
-  // progress message are special displayed as "title: msg...percent%"
-  if (hist_msg->ext_data.title.size != 0) {
-    // this block draws the "title:" before the progress-message
-    String title = cstr_as_string(concat_str(hist_msg->ext_data.title.data, ": "));
-    NO_EXT_MSG({
-      msg_multiline(title, 0, true, false, &need_clear);
-    });
-    api_free_string(title);
-  }
-  for (uint32_t i = 0; i < kv_size(hist_msg->msg); i++) {
-    HlMessageChunk chunk = kv_A(hist_msg->msg, i);
-    if (err) {
-      emsg_multiline(chunk.text.data, hist_msg->kind, chunk.hl_id, true);
-    } else {
-      msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
-    }
-  }
-  if (hist_msg && hist_msg->ext_data.percent > 0) {
-    // this block draws the "...percent%" before the progress-message
-    char percent_buf[10];
-    vim_snprintf(percent_buf, sizeof(percent_buf), "...%ld%%", (long)hist_msg->ext_data.percent);
-    NO_EXT_MSG({
-      msg_multiline(cstr_as_string(percent_buf), 0, true, false, &need_clear);
-    });
-  }
 }
 
 static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageExtData *ext_data)
@@ -2389,9 +2337,6 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
   did_wait_return = false;
 
   if (ui_has(kUIMessages)) {
-    if (msg_ext_skip) {
-      return;
-    }
     if (attr != msg_ext_last_attr) {
       msg_ext_emit_chunk();
       msg_ext_last_attr = attr;

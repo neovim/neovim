@@ -3298,7 +3298,7 @@ describe('progress-message', function()
     screen:expect([[
       ^                                        |
       {1:~                                       }|*3
-      TestSuit: test-message...10%            |
+      test-message                            |
     ]])
   end)
 end)
