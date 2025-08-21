@@ -229,6 +229,7 @@ LSP
 • Support for related documents in pull diagnostics:
   https://microsoft.github.io/language-server-protocol/specifications/specification-current/#relatedFullDocumentDiagnosticReport
 • |vim.lsp.buf.signature_help()| supports "noActiveParameterSupport".
+• |vim.json.encode()| has an option for pretty-formatting.
 
 LUA
 

@@ -38,5 +38,14 @@ function vim.json.decode(str, opts) end
 ---@param opts? table<string,any> Options table with keys:
 ---                                 - escape_slash: (boolean) (default false) Escape slash
 ---                                   characters "/" in string values.
+---                                 - pretty: (table) Table with keys:
+---                                     - enable: (boolean) Whether to enable
+---                                       pretty-formatting. Defaults to false.
+---                                     - indent: (string) String used for each
+---                                       indentation level. Defaults to `"  "`.
+---                                     - newline: (string) String used for line
+---                                       breaks. Defaults to `"\n"`.
+---                                     - colon_space: (string) String inserted after
+---                                       the ":" character. Defaults to `" "`.
 ---@return string
 function vim.json.encode(obj, opts) end

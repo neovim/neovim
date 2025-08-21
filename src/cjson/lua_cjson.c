@@ -87,6 +87,10 @@
 #define DEFAULT_DECODE_ARRAY_WITH_ARRAY_MT 0
 #define DEFAULT_ENCODE_ESCAPE_FORWARD_SLASH 1
 #define DEFAULT_ENCODE_SKIP_UNSUPPORTED_VALUE_TYPES 0
+#define DEFAULT_ENCODE_PRETTY_ENABLED 0
+#define DEFAULT_ENCODE_PRETTY_INDENT "  "
+#define DEFAULT_ENCODE_PRETTY_NEWLINE "\n"
+#define DEFAULT_ENCODE_PRETTY_COLON_SPACE " "
 
 #ifdef DISABLE_INVALID_NUMBERS
 #undef DEFAULT_DECODE_INVALID_NUMBERS
@@ -168,6 +172,10 @@ typedef struct {
     int encode_keep_buffer;
     int encode_empty_table_as_object;
     int encode_escape_forward_slash;
+    int encode_pretty_enabled;
+    const char *encode_pretty_indent;
+    const char *encode_pretty_newline;
+    const char *encode_pretty_colon_space;
 
     int decode_invalid_numbers;
     int decode_max_depth;
@@ -177,6 +185,10 @@ typedef struct {
 
 typedef struct {
     const char **char2escape[256];
+    int pretty_enabled;
+    const char *pretty_indent;
+    const char *pretty_newline;
+    const char *pretty_colon_space;
 } json_encode_options_t;
 
 typedef struct {
@@ -330,6 +342,20 @@ static int json_enum_option(lua_State *l, int optindex, int *setting,
 }
 */
 
+/* Process string option for a configuration function */
+/*
+static int json_string_option(lua_State *l, int optindex, const char **setting)
+{
+    if (!lua_isnil(l, optindex)) {
+        const char *value = luaL_checkstring(l, optindex);
+        *setting = value;
+    }
+
+    lua_pushstring(l, *setting ? *setting : "");
+    return 1;
+}
+*/
+
 /* Configures handling of extremely sparse arrays:
  * convert: Convert extremely sparse arrays into objects? Otherwise error.
  * ratio: 0: always allow sparse; 1: never allow sparse; >1: use ratio
@@ -436,6 +462,21 @@ static int json_cfg_encode_keep_buffer(lua_State *l)
 }
 */
 
+/* Configure pretty encoding */
+/*
+static int json_cfg_encode_pretty(lua_State *l)
+{
+    json_config_t *cfg = json_arg_init(l, 4);
+
+    json_enum_option(l, 1, &cfg->encode_pretty_enabled, NULL, 1);
+    json_string_option(l, 2, &cfg->encode_pretty_indent);
+    json_string_option(l, 3, &cfg->encode_pretty_newline);
+    json_string_option(l, 4, &cfg->encode_pretty_colon_space);
+
+    return 4;
+}
+*/
+
 #if defined(DISABLE_INVALID_NUMBERS) && !defined(USE_INTERNAL_FPCONV)
 void json_verify_invalid_number_setting(lua_State *l, int *setting)
 {
@@ -533,6 +574,10 @@ static void json_create_config(lua_State *l)
     cfg->decode_array_with_array_mt = DEFAULT_DECODE_ARRAY_WITH_ARRAY_MT;
     cfg->encode_escape_forward_slash = DEFAULT_ENCODE_ESCAPE_FORWARD_SLASH;
     cfg->encode_skip_unsupported_value_types = DEFAULT_ENCODE_SKIP_UNSUPPORTED_VALUE_TYPES;
+    cfg->encode_pretty_enabled = DEFAULT_ENCODE_PRETTY_ENABLED;
+    cfg->encode_pretty_indent = DEFAULT_ENCODE_PRETTY_INDENT;
+    cfg->encode_pretty_newline = DEFAULT_ENCODE_PRETTY_NEWLINE;
+    cfg->encode_pretty_colon_space = DEFAULT_ENCODE_PRETTY_COLON_SPACE;
 
 #if DEFAULT_ENCODE_KEEP_BUFFER > 0
     strbuf_init(&cfg->encode_buf, 0);
@@ -704,6 +749,13 @@ static void json_check_encode_depth(lua_State *l, json_config_t *cfg,
 static int json_append_data(lua_State *l, json_encode_t *cfg,
                              int current_depth);
 
+static void json_append_newline_and_indent(strbuf_t *json, json_encode_t *ctx, int depth)
+{
+    strbuf_append_string(json, ctx->options->pretty_newline);
+    for (int i = 0; i < depth; i++)
+        strbuf_append_string(json, ctx->options->pretty_indent);
+}
+
 /* json_append_array args:
  * - lua_State
  * - JSON strbuf
@@ -712,15 +764,22 @@ static void json_append_array(lua_State *l, json_encode_t *ctx, int current_dept
                               int array_length, int raw)
 {
     int comma, i, json_pos, err;
+    int has_items = 0;
     strbuf_t *json = ctx->json;
 
     strbuf_append_char(json, '[');
 
     comma = 0;
     for (i = 1; i <= array_length; i++) {
+        has_items = 1;
+
         json_pos = strbuf_length(json);
         if (comma++ > 0)
             strbuf_append_char(json, ',');
+
+        if (ctx->options->pretty_enabled)
+            json_append_newline_and_indent(json, ctx, current_depth);
+
         if (raw) {
             lua_rawgeti(l, -1, i);
         } else {
@@ -741,6 +800,9 @@ static void json_append_array(lua_State *l, json_encode_t *ctx, int current_dept
         }
         lua_pop(l, 1);
     }
+
+    if (has_items && ctx->options->pretty_enabled)
+        json_append_newline_and_indent(json, ctx, current_depth-1);
 
     strbuf_append_char(json, ']');
 }
@@ -798,6 +860,7 @@ static void json_append_object(lua_State *l, json_encode_t *ctx,
                                int current_depth)
 {
     int comma, keytype, json_pos, err;
+    int has_items = 0;
     strbuf_t *json = ctx->json;
 
     /* Object */
@@ -807,11 +870,16 @@ static void json_append_object(lua_State *l, json_encode_t *ctx,
     /* table, startkey */
     comma = 0;
     while (lua_next(l, -2) != 0) {
+        has_items = 1;
+
         json_pos = strbuf_length(json);
         if (comma++ > 0)
             strbuf_append_char(json, ',');
         else
             comma = 1;
+
+        if (ctx->options->pretty_enabled)
+            json_append_newline_and_indent(json, ctx, current_depth);
 
         /* table, key, value */
         keytype = lua_type(l, -2);
@@ -827,6 +895,8 @@ static void json_append_object(lua_State *l, json_encode_t *ctx,
                                   "table key must be a number or string");
             /* never returns */
         }
+        if (ctx->options->pretty_enabled)
+            strbuf_append_string(json, ctx->options->pretty_colon_space);
 
         /* table, key, value */
         err = json_append_data(l, ctx, current_depth);
@@ -840,6 +910,9 @@ static void json_append_object(lua_State *l, json_encode_t *ctx,
         lua_pop(l, 1);
         /* table, key */
     }
+
+    if (has_items && ctx->options->pretty_enabled)
+        json_append_newline_and_indent(json, ctx, current_depth-1);
 
     strbuf_append_char(json, '}');
 }
@@ -966,7 +1039,13 @@ static int json_append_data(lua_State *l, json_encode_t *ctx,
 static int json_encode(lua_State *l)
 {
     json_config_t *cfg = json_fetch_config(l);
-    json_encode_options_t options = { .char2escape = { char2escape } };
+    json_encode_options_t options = {
+        .char2escape = { char2escape },
+        .pretty_enabled = DEFAULT_ENCODE_PRETTY_ENABLED,
+        .pretty_indent = DEFAULT_ENCODE_PRETTY_INDENT,
+        .pretty_newline = DEFAULT_ENCODE_PRETTY_NEWLINE,
+        .pretty_colon_space = DEFAULT_ENCODE_PRETTY_COLON_SPACE,
+    };
     json_encode_t ctx = { .options = &options, .cfg = cfg };
     strbuf_t local_encode_buf;
     strbuf_t *encode_buf;
@@ -979,26 +1058,50 @@ static int json_encode(lua_State *l)
         break;
     case 2:
         luaL_checktype(l, 2, LUA_TTABLE);
+
         lua_getfield(l, 2, "escape_slash");
+        if (!lua_isnil(l, -1)) {
+            luaL_checktype(l, -1, LUA_TBOOLEAN);
 
-        /* We only handle the escape_slash option for now */
-        if (lua_isnil(l, -1)) {
-            lua_pop(l, 2);
-            break;
+            int escape_slash = lua_toboolean(l, -1);
+            if (escape_slash) {
+                /* This can be optimised by adding a new hard-coded escape table for this case,
+                 * but this path will rarely if ever be used, so let's just memcpy.*/
+                memcpy(customChar2escape, char2escape, sizeof(char2escape));
+                customChar2escape['/'] = "\\/";
+                *ctx.options->char2escape = customChar2escape;
+            }
         }
+        lua_pop(l, 1);
 
-        luaL_checktype(l, -1, LUA_TBOOLEAN);
+        lua_getfield(l, 2, "pretty");
+        if (!lua_isnil(l, -1)) {
+            luaL_checktype(l, -1, LUA_TTABLE);
 
-        int escape_slash = lua_toboolean(l, -1);
+            lua_getfield(l, -1, "enable");
+            options.pretty_enabled = lua_toboolean(l, -1);
+            lua_pop(l, 1);
 
-        if (escape_slash) {
-            /* This can be optimised by adding a new hard-coded escape table for this case,
-             * but this path will rarely if ever be used, so let's just memcpy.*/ 
-            memcpy(customChar2escape, char2escape, sizeof(char2escape));
-            customChar2escape['/'] = "\\/";
-            *ctx.options->char2escape = customChar2escape;
+            if (options.pretty_enabled) {
+                lua_getfield(l, -1, "indent");
+                if (lua_isstring(l, -1)) {
+                    options.pretty_indent = lua_tostring(l, -1);
+                }
+                lua_pop(l, 1);
+
+                lua_getfield(l, -1, "newline");
+                if (lua_isstring(l, -1)) {
+                    options.pretty_newline = lua_tostring(l, -1);
+                }
+                lua_pop(l, 1);
+
+                lua_getfield(l, -1, "colon_space");
+                if (lua_isstring(l, -1)) {
+                    options.pretty_colon_space = lua_tostring(l, -1);
+                }
+                lua_pop(l, 1);
+            }
         }
-
         lua_pop(l, 2);
         break;
     default:
@@ -1710,6 +1813,7 @@ int lua_cjson_new(lua_State *l)
         { "decode_invalid_numbers", json_cfg_decode_invalid_numbers },
         { "encode_escape_forward_slash", json_cfg_encode_escape_forward_slash },
         { "encode_skip_unsupported_value_types", json_cfg_encode_skip_unsupported_value_types },
+        { "encode_pretty", json_cfg_encode_pretty },
         */
         { "new", lua_cjson_new },
         { NULL, NULL }

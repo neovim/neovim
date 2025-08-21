@@ -192,6 +192,55 @@ describe('vim.json.encode()', function()
     )
   end)
 
+  it('pretty', function()
+    eq('"Test"', exec_lua([[return vim.json.encode('Test', { pretty = { enable = true } })]]))
+    eq('[]', exec_lua([[return vim.json.encode({}, { pretty = { enable = true } })]]))
+    eq('{}', exec_lua([[return vim.json.encode(vim.empty_dict(), { pretty = { enable = true } })]]))
+    eq(
+      '[\n  {\n    "a": "a"\n  },\n  {\n    "b": "b"\n  }\n]',
+      exec_lua(
+        [[return vim.json.encode({ { a = "a" }, { b = "b" } }, { pretty = { enable = true } })]]
+      )
+    )
+    -- Custom indent
+    eq(
+      '[\n\t{\n\t\t"a": "a"\n\t},\n\t{\n\t\t"b": "b"\n\t}\n]',
+      exec_lua(
+        [[return vim.json.encode({ { a = "a" }, { b = "b" } }, { pretty = { enable = true, indent = "\t" } })]]
+      )
+    )
+    -- Custom newline
+    eq(
+      '[\r\n  {\r\n    "a": "a"\r\n  },\r\n  {\r\n    "b": "b"\r\n  }\r\n]',
+      exec_lua(
+        [[return vim.json.encode({ { a = "a" }, { b = "b" } }, { pretty = { enable = true, newline = "\r\n" } })]]
+      )
+    )
+    -- Custom colon_space
+    eq(
+      '[\n  {\n    "a":"a"\n  },\n  {\n    "b":"b"\n  }\n]',
+      exec_lua(
+        [[return vim.json.encode({ { a = "a" }, { b = "b" } }, { pretty = { enable = true, colon_space = "" } })]]
+      )
+    )
+
+    -- Checks for for global side-effects
+    eq(
+      '[{"a":"a"},{"b":"b"}]',
+      exec_lua([[
+        vim.json.encode('', { pretty = { enable = true } })
+        return vim.json.encode({ { a = "a" }, { b = "b" } })
+      ]])
+    )
+    eq(
+      '[\n  {\n    "a": "a"\n  }\n]',
+      exec_lua([[
+        vim.json.encode('', { pretty = { newline = "\r\n" } })
+        return vim.json.encode({ { a = "a" } }, { pretty = { enable = true } })
+      ]])
+    )
+  end)
+
   it('dumps strings', function()
     eq('"Test"', exec_lua([[return vim.json.encode('Test')]]))
     eq('""', exec_lua([[return vim.json.encode('')]]))
