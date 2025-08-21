@@ -6061,7 +6061,8 @@ M.funcs = {
       Each |List| item is a list with two items:
       - for a |Dict|: the key and the value
       - for a |List| or |String|: the index and the value
-      The |List| is in arbitrary order.
+      The returned |List| is in arbitrary order for a |Dict|,
+      otherwise it's in ascending order of the index.
 
       Also see |keys()| and |values()|.
 
