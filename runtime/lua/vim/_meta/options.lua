@@ -120,6 +120,16 @@ vim.o.ac = vim.o.autocomplete
 vim.go.autocomplete = vim.o.autocomplete
 vim.go.ac = vim.go.autocomplete
 
+--- Delay in milliseconds before the autocomplete menu appears after
+--- typing. If you prefer it not to open too quickly, set this value
+--- slightly above your typing speed. See `ins-autocompletion`.
+---
+--- @type integer
+vim.o.autocompletedelay = 0
+vim.o.acl = vim.o.autocompletedelay
+vim.go.autocompletedelay = vim.o.autocompletedelay
+vim.go.acl = vim.go.autocompletedelay
+
 --- Copy indent from current line when starting a new line (typing <CR>
 --- in Insert mode or when using the "o" or "O" command).  If you do not
 --- type anything on the new line except <BS> or CTRL-D and then type

@@ -1409,4 +1409,98 @@ describe('completion', function()
       {5:-- INSERT --}                              4,6           All |
     ]])
   end)
+
+  -- oldtest: Test_autocompletedelay()
+  it("'autocompletedelay' option", function()
+    source([[
+      call setline(1, ['foo', 'foobar', 'foobarbaz'])
+      set autocomplete
+    ]])
+    screen:try_resize(60, 10)
+
+    feed('Gof')
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      f^                                                           |
+      {4:foobarbaz      }{1:                                             }|
+      {4:foobar         }{1:                                             }|
+      {4:foo            }{1:                                             }|
+      {1:~                                                           }|*2
+      {5:-- INSERT --}                                                |
+    ]])
+
+    feed('<Esc>')
+    command('set autocompletedelay=500')
+    feed('Sf')
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      f^                                                           |
+      {1:~                                                           }|*5
+      {5:-- INSERT --}                                                |
+    ]])
+    feed('o')
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      fo^                                                          |
+      {1:~                                                           }|*5
+      {5:-- INSERT --}                                                |
+    ]])
+    vim.uv.sleep(500)
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      fo^                                                          |
+      {4:foobarbaz      }{1:                                             }|
+      {4:foobar         }{1:                                             }|
+      {4:foo            }{1:                                             }|
+      {1:~                                                           }|*2
+      {5:-- INSERT --}                                                |
+    ]])
+    feed('<BS>')
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      f^                                                           |
+      {1:~                                                           }|*5
+      {5:-- INSERT --}                                                |
+    ]])
+    vim.uv.sleep(500)
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      f^                                                           |
+      {4:foobarbaz      }{1:                                             }|
+      {4:foobar         }{1:                                             }|
+      {4:foo            }{1:                                             }|
+      {1:~                                                           }|*2
+      {5:-- INSERT --}                                                |
+    ]])
+
+    -- During delay wait, user can open menu using CTRL_N completion
+    feed('<Esc>')
+    command('set completeopt=menuone,preinsert')
+    feed('Sf<C-N>')
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      f^oo                                                         |
+      {12:foo            }{1:                                             }|
+      {4:foobar         }{1:                                             }|
+      {4:foobarbaz      }{1:                                             }|
+      {1:~                                                           }|*2
+      {5:-- Keyword completion (^N^P) }{6:match 1 of 3}                   |
+    ]])
+
+    feed('<esc>')
+  end)
 end)

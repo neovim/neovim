@@ -301,6 +301,7 @@ EXTERN unsigned cia_flags;      ///< order flags of 'completeitemalign'
 EXTERN char *p_cot;             ///< 'completeopt'
 EXTERN unsigned cot_flags;      ///< flags from 'completeopt'
 EXTERN int p_ac;                ///< 'autocomplete'
+EXTERN OptInt p_acl;            ///< 'autocompletedelay'
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char *p_csl;             ///< 'completeslash'
 #endif
