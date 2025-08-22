@@ -70,8 +70,10 @@ function M.hover(config)
       elseif result and result.contents then
         -- Make sure the response is not empty
         if
-          (type(result.contents) == 'table' and #(vim.tbl_get(result.contents, 'value') or '') > 0)
-          or type(result.contents == 'string') and #result.contents > 0
+          (
+            type(result.contents) == 'table'
+            and #(vim.tbl_get(result.contents, 'value') or result.contents[1] or '') > 0
+          ) or (type(result.contents) == 'string' and #result.contents > 0)
         then
           results1[client_id] = result
         else
