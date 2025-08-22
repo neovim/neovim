@@ -1485,11 +1485,11 @@ Fuzzy matching scores how well a string matches a pattern when the pattern
 characters appear in order but not necessarily contiguously.
 
 Example: >
-    Pattern:    "vim"
-    Candidates: "vim"        -> perfect
-                "vimeo"      -> good (v i m)
-                "voice mail" -> weaker (v _ i _ _ _ m)
-                "vintage"    -> no match (no "m")
+    Pattern:	"vim"
+    Candidates:	"vim"	     -> perfect
+		"vimeo"	     -> good (v i m)
+		"voice mail" -> weaker (v _ i _ _ _ m)
+		"vintage"    -> no match (no "m")
 <
 If the search string has multiple words, each word is matched separately and
 may appear in any order in the candidate.  For example "get pat" matches

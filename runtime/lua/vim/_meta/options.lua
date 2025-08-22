@@ -121,8 +121,8 @@ vim.go.autocomplete = vim.o.autocomplete
 vim.go.ac = vim.go.autocomplete
 
 --- Delay in milliseconds before the autocomplete menu appears after
---- typing. If you prefer it not to open too quickly, set this value
---- slightly above your typing speed. See `ins-autocompletion`.
+--- typing.  If you prefer it not to open too quickly, set this value
+--- slightly above your typing speed.  See `ins-autocompletion`.
 ---
 --- @type integer
 vim.o.autocompletedelay = 0
