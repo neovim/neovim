@@ -226,7 +226,8 @@ end
 ---@param content MsgContent
 ---@param replace_last boolean
 ---@param append boolean
-function M.show_msg(tar, content, replace_last, append)
+---@param kind string
+function M.show_msg(tar, content, replace_last, append, kind)
   local msg, restart, cr, dupe, count = '', false, false, 0, 0
   append = append and col > 0
 
@@ -329,7 +330,9 @@ function M.show_msg(tar, content, replace_last, append)
       M.virt.msg[M.virt.idx.spill][1] = spill and { 0, spill } or nil
       M.cmd.msg_row = texth.end_row
 
-      if texth.all > ext.cmdheight then
+      if texth.all > ext.cmdheight
+        and not vim.tbl_contains({'rpc_error', 'emsg', 'echoerr', 'lua_error'}, kind) then
+        -- print(('xxx %s'):format(kind))
         msg_to_full(tar)
         return
       end
@@ -398,7 +401,7 @@ function M.msg_show(kind, content, replace_last, _, append)
       M.virt.last[M.virt.idx.search][1] = nil
     end
 
-    M.show_msg(tar, content, replace_last, append)
+    M.show_msg(tar, content, replace_last, append, kind)
     -- Don't remember search_cmd message as actual message.
     if kind == 'search_cmd' then
       M.cmd.count, M.prev_msg = 0, ''
