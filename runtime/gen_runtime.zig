@@ -31,6 +31,7 @@ pub fn nvim_gen_runtime(
         const file = gen_step.addOutputFileArg("tags");
         _ = gen_runtime.addCopyFile(file, "doc/tags");
         gen_step.addDirectoryArg(b.path("runtime/doc"));
+        gen_step.has_side_effects = true; // workaround: missing detection of input changes
     }
 
     return gen_runtime;
