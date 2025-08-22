@@ -3257,7 +3257,7 @@ describe('progress-message', function()
     api.nvim_echo(
       { { 'test-message-updated' } },
       true,
-      { id = id, kind = 'progress', percent = 80 }
+      { id = id, kind = 'progress', percent = 80, status = 'running' }
     )
     assert_progress_autocmd(nil, 'No progress message with Special Title yet')
 

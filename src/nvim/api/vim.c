@@ -803,11 +803,10 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
     return -1;
   });
 
-  VALIDATE(!is_kind_progress || (opts->status.data == NULL
-                                 || strequal(opts->status.data, "success")
-                                 || strequal(opts->status.data, "failed")
-                                 || strequal(opts->status.data, "running")
-                                 || strequal(opts->status.data, "cancel")),
+  VALIDATE(!is_kind_progress || strequal(opts->status.data, "success")
+           || strequal(opts->status.data, "failed")
+           || strequal(opts->status.data, "running")
+           || strequal(opts->status.data, "cancel"),
            "invalid message status: %s", opts->status.data, {
     return -1;
   });
