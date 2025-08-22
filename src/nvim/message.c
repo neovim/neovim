@@ -311,7 +311,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
   is_multihl = true;
   msg_ext_skip_flush = true;
-
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     if (err) {
@@ -321,7 +320,6 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     }
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
-
   if (strequal(kind, MSG_KIND_PROGRESS) || (history && kv_size(hl_msg))) {
     id = msg_hist_add_multihl(id, hl_msg, false, ext_data);
   }
