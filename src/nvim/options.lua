@@ -8777,6 +8777,7 @@ local options = {
           '%<',
           '%f %h%w%m%r ',
           '%=',
+          "%{% luaeval('(package.loaded[''vim.status''] and vim.status.get_progress_status()) or '''' ')%}",
           "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
           "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
           "%{% &busy > 0 ? '◐ ' : '' %}",
