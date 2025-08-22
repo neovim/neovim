@@ -832,8 +832,6 @@ bool terminal_enter(void)
 static void terminal_check_cursor(void)
 {
   Terminal *term = curbuf->terminal;
-  curwin->w_wrow = term->cursor.row;
-  curwin->w_wcol = term->cursor.col + win_col_off(curwin);
   curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
                               row_to_linenr(term, term->cursor.row));
   const linenr_T topline = MAX(curbuf->b_ml.ml_line_count - curwin->w_view_height + 1, 1);
