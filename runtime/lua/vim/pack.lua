@@ -4,7 +4,9 @@
 ---is appreciated, but expect breaking changes without notice.
 ---
 ---Manages plugins only in a dedicated [vim.pack-directory]() (see |packages|):
----`$XDG_DATA_HOME/nvim/site/pack/core/opt`.
+---`$XDG_DATA_HOME/nvim/site/pack/core/opt`. `$XDG_DATA_HOME/nvim/site` needs to
+---be part of 'packpath'. It usually is, but might not be in cases like |--clean| or
+---setting |$XDG_DATA_HOME| during startup.
 ---Plugin's subdirectory name matches plugin's name in specification.
 ---It is assumed that all plugins in the directory are managed exclusively by `vim.pack`.
 ---
