@@ -2649,8 +2649,6 @@ int eval0_simple_funccal(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *co
 /// "arg" must point to the first non-white of the expression.
 /// "arg" is advanced to the next non-white after the recognized expression.
 ///
-/// Note: "rettv.v_lock" is not set.
-///
 /// @return  OK or FAIL.
 int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 {
