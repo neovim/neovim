@@ -2008,6 +2008,7 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
 <
 
     Attributes: ~
+        |api-fast|
         Since: 0.7.0
 
     Parameters: ~
