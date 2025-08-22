@@ -211,9 +211,9 @@ local function try_query_terminal_color(color)
     end,
   })
   if type(color) == 'number' then
-    io.stdout:write(('\027]%s;%s;?\027\\'):format(parameter, color))
+    vim.api.nvim_ui_send(('\027]%s;%s;?\027\\'):format(parameter, color))
   else
-    io.stdout:write(('\027]%s;?\027\\'):format(parameter))
+    vim.api.nvim_ui_send(('\027]%s;?\027\\'):format(parameter))
   end
   vim.wait(100, function()
     return hex and true or false

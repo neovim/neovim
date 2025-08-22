@@ -48,6 +48,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local busted = require('busted')
+local uv = vim.uv
 
 local deepcopy = vim.deepcopy
 local shallowcopy = t.shallowcopy
@@ -89,6 +90,7 @@ end
 --- @field private _grid_win_extmarks table<integer,table>
 --- @field private _attr_table table<integer,table>
 --- @field private _hl_info table<integer,table>
+--- @field private _stdout uv.uv_pipe_t?
 local Screen = {}
 Screen.__index = Screen
 
@@ -235,6 +237,7 @@ function Screen.new(width, height, options, session)
       col = 1,
     },
     _busy = false,
+    _stdout = nil,
   }, Screen)
 
   local function ui(method, ...)
@@ -276,6 +279,12 @@ end
 
 function Screen:set_rgb_cterm(val)
   self._rgb_cterm = val
+end
+
+--- @param fd number
+function Screen:set_stdout(fd)
+  self._stdout = assert(uv.new_pipe())
+  self._stdout:open(fd)
 end
 
 --- @param session? test.Session
@@ -1414,6 +1423,12 @@ end
 
 function Screen:_handle_msg_history_show(entries, prev_cmd)
   self.msg_history = { entries, prev_cmd }
+end
+
+function Screen:_handle_ui_send(content)
+  if self._stdout then
+    self._stdout:write(content)
+  end
 end
 
 function Screen:_clear_block(grid, top, bot, left, right)

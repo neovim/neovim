@@ -89,7 +89,7 @@ vim.api.nvim_create_autocmd('UIEnter', {
     })
 
     -- Write DA1 request
-    io.stdout:write('\027[c')
+    vim.api.nvim_ui_send('\027[c')
   end,
 })
 

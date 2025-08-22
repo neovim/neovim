@@ -1533,6 +1533,19 @@ void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Intege
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
 }
 
+/// Writes directly to the TTY, bypassing the buffer.
+void tui_ui_send(TUIData *tui, String content)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uv_write_t req;
+  uv_buf_t buf = { .base = content.data, .len = UV_BUF_LEN(content.size) };
+  int ret = uv_write(&req, (uv_stream_t *)&tui->output_handle, &buf, 1, NULL);
+  if (ret) {
+    ELOG("uv_write failed: %s", uv_strerror(ret));
+  }
+  uv_run(&tui->write_loop, UV_RUN_DEFAULT);
+}
+
 /// Flushes TUI grid state to a buffer (which is later flushed to the TTY by `flush_buf`).
 ///
 /// @see flush_buf

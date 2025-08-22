@@ -2340,6 +2340,14 @@ function vim.api.nvim_tabpage_set_var(tabpage, name, value) end
 --- @param win integer `window-ID`, must already belong to {tabpage}
 function vim.api.nvim_tabpage_set_win(tabpage, win) end
 
+--- Sends arbitrary data to a UI.
+---
+--- This sends a "ui_send" event to any UI that has the "stdout_tty" `ui-option` set. UIs are
+--- expected to write the received data to a connected TTY if one exists.
+---
+--- @param content string Content to write to the TTY
+function vim.api.nvim_ui_send(content) end
+
 --- Calls a function with window as temporary current window.
 ---
 ---

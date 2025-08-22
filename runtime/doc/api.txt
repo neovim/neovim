@@ -3598,6 +3598,18 @@ nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
     Parameters: ~
       • {height}  (`integer`) Popupmenu height, must be greater than zero.
 
+nvim_ui_send({content})                                       *nvim_ui_send()*
+    WARNING: This feature is experimental/unstable.
+
+    Sends arbitrary data to a UI.
+
+    This sends a "ui_send" event to any UI that has the "stdout_tty"
+    |ui-option| set. UIs are expected to write the received data to a
+    connected TTY if one exists.
+
+    Parameters: ~
+      • {content}  (`string`) Content to write to the TTY
+
 nvim_ui_set_focus({gained})                              *nvim_ui_set_focus()*
     Tells the nvim server if focus was gained or lost by the GUI
 
