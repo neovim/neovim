@@ -458,6 +458,8 @@ UI
 • Cursor shape indicates when it is behind an unfocused floating window.
 • Improved LSP signature help rendering.
 • Multigrid UIs can call nvim_input_mouse with grid 0 to let Nvim decide the grid.
+• |vim.ui.progress_status()| returns a formatted string of currently
+running |progress-message|.
 
 VIMSCRIPT
 
