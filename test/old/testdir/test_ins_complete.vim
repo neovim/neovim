@@ -5471,7 +5471,7 @@ func Test_autocomplete_timer()
   call assert_equal(['abc', 'ab'], b:matches->mapnew('v:val.word'))
   call assert_equal(0, b:selected)
   call assert_equal(1, g:CallCount)
-  call assert_equal('ab', getline(4))
+  call assert_equal('abc', getline(4))
   set completeopt&
 
   " Test 8: {func} completes after space, but not '.'

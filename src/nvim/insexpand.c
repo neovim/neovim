@@ -6022,21 +6022,23 @@ static void ins_compl_show_statusmsg(void)
 /// Returns OK if completion was done, FAIL if something failed.
 int ins_complete(int c, bool enable_pum)
 {
+  const bool disable_ac_delay = compl_started && ctrl_x_mode_normal()
+                                && (c == Ctrl_N || c == Ctrl_P || c == Ctrl_R
+                                    || ins_compl_pum_key(c));
+
   compl_direction = ins_compl_key2dir(c);
   int insert_match = ins_compl_use_match(c);
 
   if (!compl_started) {
     if (ins_compl_start() == FAIL) {
-      compl_autocomplete = false;
       return FAIL;
     }
   } else if (insert_match && stop_arrow() == FAIL) {
     return FAIL;
   }
 
-  // Timestamp when match collection starts
-  uint64_t compl_start_tv = 0;
-  if (compl_autocomplete && p_acl > 0) {
+  uint64_t compl_start_tv = 0;  ///< Time when match collection starts
+  if (compl_autocomplete && p_acl > 0 && !disable_ac_delay) {
     compl_start_tv = os_hrtime();
   }
   compl_curr_win = curwin;
@@ -6089,7 +6091,7 @@ int ins_complete(int c, bool enable_pum)
   }
 
   // Wait for the autocompletion delay to expire
-  if (compl_autocomplete && p_acl > 0 && !no_matches_found
+  if (compl_autocomplete && p_acl > 0 && !disable_ac_delay && !no_matches_found
       && (os_hrtime() - compl_start_tv) / 1000000 < (uint64_t)p_acl) {
     setcursor();
     ui_flush();
@@ -6110,15 +6112,14 @@ int ins_complete(int c, bool enable_pum)
   }
   compl_was_interrupted = compl_interrupted;
   compl_interrupted = false;
-  compl_autocomplete = false;
 
   return OK;
 }
 
-/// Enable/disable autocompletion
-void ins_compl_set_autocomplete(bool value)
+/// Enable autocompletion
+void ins_compl_enable_autocomplete(void)
 {
-  compl_autocomplete = value;
+  compl_autocomplete = true;
 }
 
 /// Remove (if needed) and show the popup menu

@@ -581,10 +581,6 @@ static int insert_execute(VimState *state, int key)
         return 1;  // continue
       }
 
-      if (p_ac) {
-        ins_compl_set_autocomplete(true);
-      }
-
       // A non-white character that fits in with the current
       // completion: Add to "compl_leader".
       if (ins_compl_accept_char(s->c)) {
@@ -600,10 +596,6 @@ static int insert_execute(VimState *state, int key)
           ins_compl_addleader(s->c);
         }
         return 1;  // continue
-      }
-
-      if (p_ac) {
-        ins_compl_set_autocomplete(false);
       }
 
       // Pressing CTRL-Y selects the current match.  When
@@ -861,7 +853,7 @@ static int insert_handle_key(InsertState *s)
         redraw_later(curwin, UPD_VALID);
         update_screen();  // Show char deletion immediately
         ui_flush();
-        ins_compl_set_autocomplete(true);
+        ins_compl_enable_autocomplete();
         insert_do_complete(s);  // Trigger autocompletion
         return 1;
       }
@@ -1246,7 +1238,7 @@ normalchar:
       redraw_later(curwin, UPD_VALID);
       update_screen();  // Show character immediately
       ui_flush();
-      ins_compl_set_autocomplete(true);
+      ins_compl_enable_autocomplete();
       insert_do_complete(s);
     }
 
