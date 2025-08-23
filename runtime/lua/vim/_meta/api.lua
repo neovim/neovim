@@ -1105,7 +1105,7 @@ function vim.api.nvim_del_var(name) end
 --- - kind: Set the `ui-messages` kind with which this message will be emitted.
 --- - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
 ---   will write the message to the "log" file instead of standard output.
---- - title: The title for {progress-message|.
+--- - title: The title for `progress-message`.
 --- - status: Current status of the `progress-message`. Can be
 ---   one of the following values
 ---   - success: The progress item completed successfully
