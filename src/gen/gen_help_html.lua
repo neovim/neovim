@@ -1025,63 +1025,72 @@ local function gen_one(fname, text, to_fname, old, commit, parser_path)
   return html, stats
 end
 
--- NOTE: should probably live in neovim/neovim.github.io:doc2/
--- Mainly here for testing
-local function gen_tagindex_html(fname)
+--- Generates an HTML page that does a client-side redirect to the tag given by the "?tag=…"
+--- querystring parameter. The page gets tags from the "helptags.json" file.
+local function gen_helptag_html(fname)
   local html = [[
     <!doctype html>
     <html lang="en">
-
     <head>
       <meta charset="utf-8">
       <title>Redirecting…</title>
       <script type="module">
-        async function redirectByTag() {
+        async function do_redirect() {
+          const errorDiv = document.getElementById('error-message');
           try {
             const params = new URLSearchParams(window.location.search)
-            const tag = params.get("tag")
-            if (!tag) throw new Error("No tag")
+            const tag = params.get('tag')
+            if (!tag) {
+              throw new Error('No tag parameter')
+            }
 
-            const res = await fetch("tagindex.json")
-            if (!res.ok) throw new Error("Index not available")
+            // helptags.json lives next to helptag.html
+            const res = await fetch('./helptags.json')
+            if (!res.ok) {
+              throw new Error('helptags.json not found')
+            }
 
-            const index = await res.json()
-            if (!index[tag]) throw new Error("Tag not found")
+            const tagmap = await res.json()
+            if (!tagmap[tag]) {
+              throw new Error('helptag not found: "' + tag + '"')
+            }
 
-            window.location.href = index[tag]
+            window.location.href = tagmap[tag]
           } catch (err) {
             console.error(err)
-            window.location.href = "/index.html"
+            if (errorDiv) {
+              errorDiv.textContent = err.message
+            }
+            // Optionally, redirect to index after showing error
+            // setTimeout(() => window.location.href = './index.html', 3000)
           }
         }
 
-        redirectByTag()
+        do_redirect()
       </script>
     </head>
-
     <body>
-      Redirecting…
+      <p>Redirecting…</p>
+      <div id="error-message" style="margin-top:1em; font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;"></div>
     </body>
-
     </html>
   ]]
   tofile(fname, html)
 end
 
----Generate tagindex.json file that maps tags to the location of their docs.
+--- Generates a JSON map of tags to URL-encoded `filename#anchor` locations.
+---
 ---@param fname string
-local function gen_tagindex_json(fname)
-  if not tagmap then
-    error('tagmap not generated yet')
-  end
-  ---@type table<string, string>
-  local t = {}
-  for tag, helpfile in pairs(tagmap) do
-    local htmlpage = get_helppage(helpfile)
-    if htmlpage then
-      -- TODO: prepend '/doc/user/'
-      t[tag] = get_helppage(helpfile) .. '#' .. tag
-    end
+local function gen_helptags_json(fname)
+  assert(tagmap, '`tagmap` not generated yet')
+  local t = {} ---@type table<string, string>
+  for tag, f in pairs(tagmap) do
+    -- "foo.txt"
+    local helpfile = vim.fs.basename(f)
+    -- "foo.html"
+    local htmlpage = assert(get_helppage(helpfile))
+    -- "foo.html#tag"
+    t[tag] = ('%s#%s'):format(htmlpage, url_encode(tag))
   end
   tofile(fname, vim.json.encode(t))
 end
@@ -1362,8 +1371,8 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
   print(('output dir: %s\n\n'):format(to_dir))
   vim.fn.mkdir(to_dir, 'p')
   gen_css(('%s/help.css'):format(to_dir))
-  gen_tagindex_json(vim.fs.joinpath(to_dir, 'tagindex.json'))
-  gen_tagindex_html(vim.fs.joinpath(to_dir, 'tagindex.html'))
+  gen_helptags_json(('%s/helptags.json'):format(to_dir))
+  gen_helptag_html(('%s/helptag.html'):format(to_dir))
 
   for _, f in ipairs(helpfiles) do
     -- "foo.txt"
