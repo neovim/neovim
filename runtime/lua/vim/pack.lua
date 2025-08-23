@@ -395,11 +395,7 @@ local function new_progress_report(title)
     local progress = kind == 'end' and 'done' or ('%3d%%'):format(percent)
     local details = (' %s %s'):format(title, fmt:format(...))
     local chunks = { { 'vim.pack', 'ModeMsg' }, { ': ' }, { progress, 'WarningMsg' }, { details } }
-    vim.api.nvim_echo(
-      chunks,
-      true,
-      { kind = 'progress', status = 'running', percent = percent, title = 'vim.pack' }
-    )
+    vim.api.nvim_echo(chunks, true, {})
     -- Force redraw to show installation progress during startup
     vim.cmd.redraw({ bang = true })
   end)
