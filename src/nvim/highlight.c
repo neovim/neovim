@@ -621,7 +621,9 @@ int hl_combine_attr(int char_attr, int prim_attr)
                            | (prim_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
-  if (prim_aep.cterm_bg_color > 0) {
+  if (prim_aep.cterm_bg_color > 0
+      && !(prim_aep.cterm_bg_color == cterm_normal_bg_color && char_aep.cterm_bg_color > 0
+           && char_aep.cterm_bg_color != cterm_normal_bg_color)) {
     new_en.cterm_bg_color = prim_aep.cterm_bg_color;
     new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
                            | (prim_aep.rgb_ae_attr & HL_BG_INDEXED));
@@ -633,7 +635,12 @@ int hl_combine_attr(int char_attr, int prim_attr)
                            | (prim_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
-  if (prim_aep.rgb_bg_color >= 0) {
+  // Don't let normal background (from groups linked to Normal) override
+  // explicit non-normal backgrounds (like CursorLine). This ensures consistent
+  // behavior regardless of whether text uses Normal directly or through a linked group.
+  if (prim_aep.rgb_bg_color >= 0
+      && !(prim_aep.rgb_bg_color == normal_bg && char_aep.rgb_bg_color >= 0
+           && char_aep.rgb_bg_color != normal_bg)) {
     new_en.rgb_bg_color = prim_aep.rgb_bg_color;
     new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
                            | (prim_aep.rgb_ae_attr & HL_BG_INDEXED));
