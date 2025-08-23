@@ -804,7 +804,7 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
            "%s",
            "title, status, percents and extra_info fields can only be used with progress messages",
   {
-    return -1;
+    goto error;
   });
 
   VALIDATE(!is_kind_progress || strequal(opts->status.data, "success")
@@ -812,16 +812,16 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
            || strequal(opts->status.data, "running")
            || strequal(opts->status.data, "cancel"),
            "invalid message status: %s", opts->status.data, {
-    return -1;
+    goto error;
   });
 
   VALIDATE(!is_kind_progress || (opts->percent >= 0 && opts->percent <= 100),
            "progress percent out of bounds: %ld", (long)opts->percent, {
-    return -1;
+    goto error;
   });
 
   VALIDATE(!is_kind_progress || history, "%s", "progress messages must be on history", {
-    return -1;
+    goto error;
   });
 
   MessageExtData ext_data = { .title = opts->title, .status = opts->status,

@@ -1106,9 +1106,10 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     entry->ext_data.title.size = 0;
     entry->ext_data.status.data = NULL;
     entry->ext_data.status.size = 0;
-    entry->ext_data.extra_info.items = NULL;
-    entry->ext_data.extra_info.size = 0;
-    entry->ext_data.extra_info.capacity = 0;
+    kv_init(entry->ext_data.extra_info);
+  }
+  if (old_message_found) {
+    hl_msg_free(entry->msg);
   }
   entry->msg = msg;
   entry->temp = temp;
@@ -1186,6 +1187,7 @@ static void msg_hist_free_msg(MessageHistoryEntry *entry)
   hl_msg_free(entry->msg);
   api_free_string(entry->ext_data.status);
   api_free_string(entry->ext_data.title);
+  api_free_dict(entry->ext_data.extra_info);
   xfree(entry);
 }
 
