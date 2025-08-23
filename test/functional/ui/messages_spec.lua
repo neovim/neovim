@@ -3216,6 +3216,7 @@ describe('progress-message', function()
       status = 'running',
       title = 'TestSuit',
       msg_id = 1,
+      extra_info = {},
     }, 'Progress autocmd receives progress messages')
 
     -- can update progress messages
@@ -3250,6 +3251,7 @@ describe('progress-message', function()
       status = 'running',
       title = 'TestSuit',
       msg_id = 1,
+      extra_info = {},
     }, 'Progress autocmd receives progress update')
 
     -- progress event can filter by title
@@ -3272,6 +3274,7 @@ describe('progress-message', function()
       status = 'success',
       title = 'Special Title',
       msg_id = 1,
+      extra_info = {},
     }, 'Progress autocmd receives progress update')
 
     -- throws error if history is false
@@ -3284,6 +3287,51 @@ describe('progress-message', function()
         { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
       )
     )
+  end)
+
+  it('can send arbitrary data through extra_info', function()
+    api.nvim_echo(
+      { { 'test-message' } },
+      true,
+      {
+        kind = 'progress',
+        title = 'TestSuit',
+        percent = 10,
+        status = 'running',
+        extra_info = { test_attribute = 1 },
+      }
+    )
+
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'test-message' } },
+          history = true,
+          id = 1,
+          kind = 'progress',
+          progress = {
+            extra_info = {
+              test_attribute = 1,
+            },
+            percent = 10,
+            status = 'running',
+            title = 'TestSuit',
+          },
+        },
+      },
+    })
+    assert_progress_autocmd({
+      content = { 'test-message' },
+      percent = 10,
+      status = 'running',
+      title = 'TestSuit',
+      msg_id = 1,
+      extra_info = { test_attribute = 1 },
+    }, 'Progress autocmd receives progress messages')
   end)
 
   it('tui displays progress message in proper format', function()

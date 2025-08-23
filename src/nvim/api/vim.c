@@ -774,6 +774,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///                      initiator by listening for the `Progress` event
 ///          - percent: How much progress is done on the progress
 ///            message
+///          - extra_info: dictionary containing additional information
 /// @return The msg-id of the message.
 ///         valid msg-id is always greater or equal to 1
 ///         - -1 means nvim_echo didn't show a message
@@ -798,8 +799,8 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
   bool is_kind_progress = strequal(kind, "progress");
 
   VALIDATE(is_kind_progress
-           || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0),
-           "%s", "title, status and percents fields can only be used with progress messages",  {
+           || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0 && opts->extra_info.size == 0),
+           "%s", "title, status, percents and extra_info fields can only be used with progress messages",  {
     return -1;
   });
 
@@ -821,7 +822,7 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
   });
 
   MessageExtData ext_data = { .title = opts->title, .status = opts->status,
-                              .percent = opts->percent };
+                              .percent = opts->percent, .extra_info = opts->extra_info };
 
   MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &ext_data);
 

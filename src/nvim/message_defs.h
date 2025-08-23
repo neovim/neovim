@@ -18,6 +18,7 @@ typedef struct msg_ext_data {
   Integer percent;        ///< Progress percentage
   String title;           ///< Title for progress message
   String status;          ///< Status for progress message
+  DictOf(String, Object) extra_info;  ///< Extra info for 'echo' messages
 } MessageExtData;
 /// Message history for `:messages`
 typedef struct msg_hist {

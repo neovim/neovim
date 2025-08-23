@@ -678,6 +678,7 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
                        by listening for the `Progress` event
                    • percent: How much progress is done on the progress
                      message
+                   • extra_info: dictionary containing additional information
 
     Return: ~
         (`integer`) The msg-id of the message. valid msg-id is always greater
