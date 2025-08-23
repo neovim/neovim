@@ -2552,7 +2552,6 @@ void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
 /// Handle zero level expression.
 /// This calls eval1() and handles error message and nextcmd.
 /// Put the result in "rettv" when returning OK and "evaluate" is true.
-/// Note: "rettv.v_lock" is not set.
 ///
 /// @param evalarg  can be NULL, &EVALARG_EVALUATE or a pointer.
 ///
