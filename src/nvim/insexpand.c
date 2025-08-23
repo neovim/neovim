@@ -6027,6 +6027,7 @@ int ins_complete(int c, bool enable_pum)
 
   if (!compl_started) {
     if (ins_compl_start() == FAIL) {
+      compl_autocomplete = false;
       return FAIL;
     }
   } else if (insert_match && stop_arrow() == FAIL) {
@@ -6109,19 +6110,15 @@ int ins_complete(int c, bool enable_pum)
   }
   compl_was_interrupted = compl_interrupted;
   compl_interrupted = false;
+  compl_autocomplete = false;
 
   return OK;
 }
 
-/// Returns true if the given character 'c' can be used to trigger
-/// autocompletion.
-bool ins_compl_setup_autocompl(int c)
+/// Enable/disable autocompletion
+void ins_compl_set_autocomplete(bool value)
 {
-  if (vim_isprintc(c)) {
-    compl_autocomplete = true;
-    return true;
-  }
-  return false;
+  compl_autocomplete = value;
 }
 
 /// Remove (if needed) and show the popup menu

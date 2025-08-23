@@ -1417,6 +1417,14 @@ describe('completion', function()
       set autocomplete
     ]])
     screen:try_resize(60, 10)
+    screen:expect([[
+      ^foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      {1:~                                                           }|*6
+                                                                  |
+    ]])
+    screen.timeout = 200
 
     feed('Gof')
     screen:expect([[
@@ -1500,6 +1508,57 @@ describe('completion', function()
       {1:~                                                           }|*2
       {5:-- Keyword completion (^N^P) }{6:match 1 of 3}                   |
     ]])
+
+    -- After the menu is open, ^N/^P and Up/Down should not delay
+    feed('<Esc>')
+    command('set completeopt=menu')
+    feed('Sf')
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      f^                                                           |
+      {1:~                                                           }|*5
+      {5:-- INSERT --}                                                |
+    ]])
+    vim.uv.sleep(500)
+    feed('<C-N>')
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      foobarbaz^                                                   |
+      {12:foobarbaz      }{1:                                             }|
+      {4:foobar         }{1:                                             }|
+      {4:foo            }{1:                                             }|
+      {1:~                                                           }|*2
+      {5:-- INSERT --}                                                |
+    ]])
+    feed('<Down>')
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      foobarbaz^                                                   |
+      {4:foobarbaz      }{1:                                             }|
+      {12:foobar         }{1:                                             }|
+      {4:foo            }{1:                                             }|
+      {1:~                                                           }|*2
+      {5:-- INSERT --}                                                |
+    ]])
+
+    -- When menu is not open Up/Down moves cursor to different line
+    feed('<Esc>Sf')
+    screen:expect([[
+      foo                                                         |
+      foobar                                                      |
+      foobarbaz                                                   |
+      f^                                                           |
+      {1:~                                                           }|*5
+      {5:-- INSERT --}                                                |
+    ]])
+    feed('<Down>')
+    screen:expect_unchanged()
 
     feed('<esc>')
   end)

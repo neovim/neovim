@@ -5471,7 +5471,7 @@ func Test_autocomplete_timer()
   call assert_equal(['abc', 'ab'], b:matches->mapnew('v:val.word'))
   call assert_equal(0, b:selected)
   call assert_equal(1, g:CallCount)
-  call assert_equal('abc', getline(4))
+  call assert_equal('ab', getline(4))
   set completeopt&
 
   " Test 8: {func} completes after space, but not '.'
@@ -5602,6 +5602,20 @@ func Test_autocompletedelay()
   call term_sendkeys(buf, "\<Esc>:set completeopt=menuone,preinsert\<CR>")
   call term_sendkeys(buf, "Sf\<C-N>")
   call VerifyScreenDump(buf, 'Test_autocompletedelay_7', {})
+
+  " After the menu is open, ^N/^P and Up/Down should not delay
+  call term_sendkeys(buf, "\<Esc>:set completeopt=menu noruler\<CR>")
+  call term_sendkeys(buf, "\<Esc>Sf")
+  sleep 500ms
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_8', {})
+  call term_sendkeys(buf, "\<Down>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_9', {})
+
+  " When menu is not open Up/Down moves cursor to different line
+  call term_sendkeys(buf, "\<Esc>Sf")
+  call term_sendkeys(buf, "\<Down>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_10', {})
 
   call term_sendkeys(buf, "\<esc>")
   call StopVimInTerminal(buf)

@@ -581,6 +581,10 @@ static int insert_execute(VimState *state, int key)
         return 1;  // continue
       }
 
+      if (p_ac) {
+        ins_compl_set_autocomplete(true);
+      }
+
       // A non-white character that fits in with the current
       // completion: Add to "compl_leader".
       if (ins_compl_accept_char(s->c)) {
@@ -596,6 +600,10 @@ static int insert_execute(VimState *state, int key)
           ins_compl_addleader(s->c);
         }
         return 1;  // continue
+      }
+
+      if (p_ac) {
+        ins_compl_set_autocomplete(false);
       }
 
       // Pressing CTRL-Y selects the current match.  When
@@ -849,10 +857,11 @@ static int insert_handle_key(InsertState *s)
     auto_format(false, true);
     if (s->did_backspace && p_ac && !char_avail() && curwin->w_cursor.col > 0) {
       s->c = char_before_cursor();
-      if (ins_compl_setup_autocompl(s->c)) {
+      if (vim_isprintc(s->c)) {
         redraw_later(curwin, UPD_VALID);
         update_screen();  // Show char deletion immediately
         ui_flush();
+        ins_compl_set_autocomplete(true);
         insert_do_complete(s);  // Trigger autocompletion
         return 1;
       }
@@ -1233,10 +1242,11 @@ normalchar:
     // closed fold.
     foldOpenCursor();
     // Trigger autocompletion
-    if (p_ac && !char_avail() && ins_compl_setup_autocompl(s->c)) {
+    if (p_ac && !char_avail() && vim_isprintc(s->c)) {
       redraw_later(curwin, UPD_VALID);
       update_screen();  // Show character immediately
       ui_flush();
+      ins_compl_set_autocomplete(true);
       insert_do_complete(s);
     }
 
