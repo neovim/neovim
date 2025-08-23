@@ -626,6 +626,7 @@ Short explanation of each option:		*option-list*
 'arabicshape'	  'arshape' do shaping for Arabic characters
 'autochdir'	  'acd'     change directory to the file in the current window
 'autocomplete'	  'ac'      enable automatic completion in insert mode
+'autocompletedelay' 'acl'   delay in msec before menu appears after typing
 'autoindent'	  'ai'	    take indent for new line from previous line
 'autoread'	  'ar'	    autom. read file when changed outside of Vim
 'autowrite'	  'aw'	    automatically write file if changed

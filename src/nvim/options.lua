@@ -242,6 +242,20 @@ local options = {
       varname = 'p_ac',
     },
     {
+      abbreviation = 'acl',
+      defaults = 0,
+      desc = [=[
+        Delay in milliseconds before the autocomplete menu appears after
+        typing.  If you prefer it not to open too quickly, set this value
+        slightly above your typing speed.  See |ins-autocompletion|.
+      ]=],
+      full_name = 'autocompletedelay',
+      scope = { 'global' },
+      short_desc = N_('delay in msec before menu appears after typing'),
+      type = 'number',
+      varname = 'p_acl',
+    },
+    {
       abbreviation = 'ai',
       defaults = true,
       desc = [=[

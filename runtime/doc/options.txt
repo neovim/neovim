@@ -747,6 +747,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When on, Vim shows a completion menu as you type, similar to using
 	|i_CTRL-N|, but triggered automatically.  See |ins-autocompletion|.
 
+					*'autocompletedelay'* *'acl'*
+'autocompletedelay' 'acl'	number	(default 0)
+			global
+	Delay in milliseconds before the autocomplete menu appears after
+	typing.  If you prefer it not to open too quickly, set this value
+	slightly above your typing speed.  See |ins-autocompletion|.
+
 			*'autoindent'* *'ai'* *'noautoindent'* *'noai'*
 'autoindent' 'ai'	boolean	(default on)
 			local to buffer

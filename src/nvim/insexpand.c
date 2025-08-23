@@ -2206,6 +2206,13 @@ static void ins_compl_new_leader(void)
   ins_compl_insert_bytes(compl_leader.data + get_compl_len(), -1);
   compl_used_match = false;
 
+  if (p_acl > 0) {
+    pum_undisplay(true);
+    redraw_later(curwin, UPD_VALID);
+    update_screen();  // Show char (deletion) immediately
+    ui_flush();
+  }
+
   if (compl_started) {
     ins_compl_set_original_text(compl_leader.data, compl_leader.size);
     if (is_cpt_func_refresh_always()) {
@@ -4811,10 +4818,10 @@ static int ins_compl_get_exp(pos_T *ini)
     found_new_match = FAIL;
   }
 
-  int i = -1;               // total of matches, unknown
+  int match_count = -1;  // total of matches, unknown
   if (found_new_match == FAIL
       || (ctrl_x_mode_not_default() && !ctrl_x_mode_line_or_eval())) {
-    i = ins_compl_make_cyclic();
+    match_count = ins_compl_make_cyclic();
   }
 
   if (cfc_has_mode() && compl_get_longest && compl_num_bests > 0) {
@@ -4838,7 +4845,7 @@ static int ins_compl_get_exp(pos_T *ini)
     sort_compl_match_list(cp_compare_nearest);
   }
 
-  return i;
+  return match_count;
 }
 
 /// Update "compl_shown_match" to the actually shown match, it may differ when
@@ -5288,7 +5295,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
 /// collecting, and halve the timeout.
 static void check_elapsed_time(void)
 {
-  if (cpt_sources_array == NULL) {
+  if (cpt_sources_array == NULL || cpt_sources_index < 0) {
     return;
   }
 
@@ -6015,6 +6022,10 @@ static void ins_compl_show_statusmsg(void)
 /// Returns OK if completion was done, FAIL if something failed.
 int ins_complete(int c, bool enable_pum)
 {
+  const bool disable_ac_delay = compl_started && ctrl_x_mode_normal()
+                                && (c == Ctrl_N || c == Ctrl_P || c == Ctrl_R
+                                    || ins_compl_pum_key(c));
+
   compl_direction = ins_compl_key2dir(c);
   int insert_match = ins_compl_use_match(c);
 
@@ -6026,6 +6037,10 @@ int ins_complete(int c, bool enable_pum)
     return FAIL;
   }
 
+  uint64_t compl_start_tv = 0;  ///< Time when match collection starts
+  if (compl_autocomplete && p_acl > 0 && !disable_ac_delay) {
+    compl_start_tv = os_hrtime();
+  }
   compl_curr_win = curwin;
   compl_curr_buf = curwin->w_buffer;
   compl_shown_match = compl_curr_match;
@@ -6050,7 +6065,8 @@ int ins_complete(int c, bool enable_pum)
   }
 
   // we found no match if the list has only the "compl_orig_text"-entry
-  if (is_first_match(compl_first_match->cp_next)) {
+  bool no_matches_found = is_first_match(compl_first_match->cp_next);
+  if (no_matches_found) {
     // remove N_ADDS flag, so next ^X<> won't try to go to ADDING mode,
     // because we couldn't expand anything at first place, but if we used
     // ^P, ^N, ^X^I or ^X^D we might want to add-expand a single-char-word
@@ -6074,6 +6090,22 @@ int ins_complete(int c, bool enable_pum)
     ins_compl_show_statusmsg();
   }
 
+  // Wait for the autocompletion delay to expire
+  if (compl_autocomplete && p_acl > 0 && !disable_ac_delay && !no_matches_found
+      && (os_hrtime() - compl_start_tv) / 1000000 < (uint64_t)p_acl) {
+    setcursor();
+    ui_flush();
+    do {
+      if (char_avail()) {
+        ins_compl_restart();
+        compl_interrupted = true;
+        break;
+      } else {
+        os_delay(2L, true);
+      }
+    } while ((os_hrtime() - compl_start_tv) / 1000000 < (uint64_t)p_acl);
+  }
+
   // Show the popup menu, unless we got interrupted.
   if (enable_pum && !compl_interrupted) {
     show_pum(save_w_wrow, save_w_leftcol);
@@ -6084,15 +6116,10 @@ int ins_complete(int c, bool enable_pum)
   return OK;
 }
 
-/// Returns true if the given character 'c' can be used to trigger
-/// autocompletion.
-bool ins_compl_setup_autocompl(int c)
+/// Enable autocompletion
+void ins_compl_enable_autocomplete(void)
 {
-  if (vim_isprintc(c)) {
-    compl_autocomplete = true;
-    return true;
-  }
-  return false;
+  compl_autocomplete = true;
 }
 
 /// Remove (if needed) and show the popup menu

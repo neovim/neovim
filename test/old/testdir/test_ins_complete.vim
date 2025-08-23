@@ -5573,4 +5573,52 @@ func Test_omni_start_invalid_col()
   set omnifunc& complete&
 endfunc
 
+func Test_autocompletedelay()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    call setline(1, ['foo', 'foobar', 'foobarbaz'])
+    set autocomplete
+  [SCRIPT]
+  call writefile(lines, 'XTest_autocomplete_delay', 'D')
+  let buf = RunVimInTerminal('-S XTest_autocomplete_delay', {'rows': 10})
+
+  call term_sendkeys(buf, "Gof")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_1', {})
+
+  call term_sendkeys(buf, "\<Esc>:set autocompletedelay=500\<CR>")
+  call term_sendkeys(buf, "Sf")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_2', {})
+  call term_sendkeys(buf, "o")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_3', {})
+  sleep 500m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_4', {})
+  call term_sendkeys(buf, "\<BS>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_5', {})
+  sleep 500m
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_6', {})
+
+  " During delay wait, user can open menu using CTRL_N completion
+  call term_sendkeys(buf, "\<Esc>:set completeopt=menuone,preinsert\<CR>")
+  call term_sendkeys(buf, "Sf\<C-N>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_7', {})
+
+  " After the menu is open, ^N/^P and Up/Down should not delay
+  call term_sendkeys(buf, "\<Esc>:set completeopt=menu noruler\<CR>")
+  call term_sendkeys(buf, "\<Esc>Sf")
+  sleep 500ms
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_8', {})
+  call term_sendkeys(buf, "\<Down>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_9', {})
+
+  " When menu is not open Up/Down moves cursor to different line
+  call term_sendkeys(buf, "\<Esc>Sf")
+  call term_sendkeys(buf, "\<Down>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_10', {})
+
+  call term_sendkeys(buf, "\<esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
