@@ -1025,6 +1025,67 @@ local function gen_one(fname, text, to_fname, old, commit, parser_path)
   return html, stats
 end
 
+-- NOTE: should probably live in neovim/neovim.github.io:doc2/
+-- Mainly here for testing
+local function gen_tagindex_html(fname)
+  local html = [[
+    <!doctype html>
+    <html lang="en">
+
+    <head>
+      <meta charset="utf-8">
+      <title>Redirecting…</title>
+      <script type="module">
+        async function redirectByTag() {
+          try {
+            const params = new URLSearchParams(window.location.search)
+            const tag = params.get("tag")
+            if (!tag) throw new Error("No tag")
+
+            const res = await fetch("tagindex.json")
+            if (!res.ok) throw new Error("Index not available")
+
+            const index = await res.json()
+            if (!index[tag]) throw new Error("Tag not found")
+
+            window.location.href = index[tag]
+          } catch (err) {
+            console.error(err)
+            window.location.href = "/index.html"
+          }
+        }
+
+        redirectByTag()
+      </script>
+    </head>
+
+    <body>
+      Redirecting…
+    </body>
+
+    </html>
+  ]]
+  tofile(fname, html)
+end
+
+---Generate tagindex.json file that maps tags to the location of their docs.
+---@param fname string
+local function gen_tagindex_json(fname)
+  if not tagmap then
+    error('tagmap not generated yet')
+  end
+  ---@type table<string, string>
+  local t = {}
+  for tag, helpfile in pairs(tagmap) do
+    local htmlpage = get_helppage(helpfile)
+    if htmlpage then
+      -- TODO: prepend '/doc/user/'
+      t[tag] = get_helppage(helpfile) .. '#' .. tag
+    end
+  end
+  tofile(fname, vim.json.encode(t))
+end
+
 local function gen_css(fname)
   local css = [[
     :root {
@@ -1301,6 +1362,8 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
   print(('output dir: %s\n\n'):format(to_dir))
   vim.fn.mkdir(to_dir, 'p')
   gen_css(('%s/help.css'):format(to_dir))
+  gen_tagindex_json(vim.fs.joinpath(to_dir, 'tagindex.json'))
+  gen_tagindex_html(vim.fs.joinpath(to_dir, 'tagindex.html'))
 
   for _, f in ipairs(helpfiles) do
     -- "foo.txt"
