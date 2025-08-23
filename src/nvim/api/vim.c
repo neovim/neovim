@@ -799,8 +799,11 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
   bool is_kind_progress = strequal(kind, "progress");
 
   VALIDATE(is_kind_progress
-           || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0 && opts->extra_info.size == 0),
-           "%s", "title, status, percents and extra_info fields can only be used with progress messages",  {
+           || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0
+               && opts->extra_info.size == 0),
+           "%s",
+           "title, status, percents and extra_info fields can only be used with progress messages",
+  {
     return -1;
   });
 

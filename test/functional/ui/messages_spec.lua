@@ -3290,17 +3290,13 @@ describe('progress-message', function()
   end)
 
   it('can send arbitrary data through extra_info', function()
-    api.nvim_echo(
-      { { 'test-message' } },
-      true,
-      {
-        kind = 'progress',
-        title = 'TestSuit',
-        percent = 10,
-        status = 'running',
-        extra_info = { test_attribute = 1 },
-      }
-    )
+    api.nvim_echo({ { 'test-message' } }, true, {
+      kind = 'progress',
+      title = 'TestSuit',
+      percent = 10,
+      status = 'running',
+      extra_info = { test_attribute = 1 },
+    })
 
     screen:expect({
       grid = [[
