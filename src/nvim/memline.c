@@ -1972,13 +1972,15 @@ int ml_line_alloced(void)
 
 /// @param lnum  append after this line (can be 0)
 /// @param line  text of the new line
-/// @param len  length of line, including NUL, or 0
+/// @param len_arg  length of line, including NUL, or 0
 /// @param flags  ML_APPEND_ flags
 ///
 /// @return  FAIL for failure, OK otherwise
-static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int flags)
+static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len_arg, int flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  colnr_T len = len_arg;
+
   // lnum out of range
   if (lnum > buf->b_ml.ml_line_count || buf->b_ml.ml_mfp == NULL) {
     return FAIL;
@@ -2067,7 +2069,8 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
         dp->db_index[i + 1] = dp->db_index[i] - (unsigned)len;
       }
       dp->db_index[db_idx + 1] = (unsigned)(offset - len);
-    } else {  // add line at the end
+    } else {
+      // add line at the end (which is the start of the text)
       dp->db_index[db_idx + 1] = dp->db_txt_start;
     }
 
@@ -2496,7 +2499,19 @@ int ml_replace(linenr_T lnum, char *line, bool copy)
 ///
 /// @return  FAIL for failure, OK otherwise
 int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noalloc)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
+  size_t len = line != NULL ? strlen(line) : (size_t)-1;
+  return ml_replace_buf_len(buf, lnum, line, len, copy, noalloc);
+}
+
+int ml_replace_buf_len(buf_T *buf, linenr_T lnum, char *line_arg, size_t len_arg, bool copy,
+                       bool noalloc)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  char *line = line_arg;
+  colnr_T len = (colnr_T)len_arg;
+
   if (line == NULL) {           // just checking...
     return FAIL;
   }
@@ -2508,7 +2523,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noallo
 
   if (copy) {
     assert(!noalloc);
-    line = xstrdup(line);
+    line = xmemdupz(line, len_arg);
   }
 
   if (buf->b_ml.ml_line_lnum != lnum) {
@@ -2525,7 +2540,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noallo
   }
 
   buf->b_ml.ml_line_ptr = line;
-  buf->b_ml.ml_line_len = (colnr_T)strlen(line) + 1;
+  buf->b_ml.ml_line_len = len + 1;
   buf->b_ml.ml_line_lnum = lnum;
   buf->b_ml.ml_flags = (buf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
   if (noalloc) {
