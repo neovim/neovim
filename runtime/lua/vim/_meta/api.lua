@@ -725,12 +725,12 @@ function vim.api.nvim_buf_set_extmark(buffer, ns_id, line, col, opts) end
 ---
 ---
 --- @see vim.api.nvim_set_keymap
---- @param buffer integer Buffer id, or 0 for current buffer
+--- @param buf integer Buffer id, or 0 for current buffer
 --- @param mode string
 --- @param lhs string
 --- @param rhs string
 --- @param opts vim.api.keyset.keymap
-function vim.api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts) end
+function vim.api.nvim_buf_set_keymap(buf, mode, lhs, rhs, opts) end
 
 --- Sets (replaces) a line-range in the buffer.
 ---
@@ -867,10 +867,10 @@ function vim.api.nvim_chan_send(chan, data) end
 ---   - event: "pat1"
 ---   - event: { "pat1" }
 ---   - event: { "pat1", "pat2", "pat3" }
---- - pattern: (`string|table?`) Filter by patterns (exact match). Not allowed with {buffer}.
+--- - pattern: (`string|table?`) Filter by patterns (exact match). Not allowed with {buf}.
 ---   - Example: if you have `*.py` as that pattern for the autocmd, you must pass `*.py`
 ---     exactly to clear it. `test.py` will not match the pattern.
---- - buffer: (`integer?`) Select `autocmd-buflocal` autocommands. Not allowed with {pattern}.
+--- - buf: (`integer?`) Select `autocmd-buflocal` autocommands. Not allowed with {pattern}.
 --- - group: (`string|int?`) Group name or id.
 ---   - NOTE: If not given, matches autocmds *not* in any group.
 function vim.api.nvim_clear_autocmds(opts) end
@@ -973,7 +973,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- @see vim.api.nvim_del_autocmd
 --- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) that will trigger the handler (`callback` or `command`).
 --- @param opts vim.api.keyset.create_autocmd Options dict:
---- - buffer (`integer?`) Buffer id for buffer-local autocommands `autocmd-buflocal`.
+--- - buf (`integer?`) Buffer id for buffer-local autocommands `autocmd-buflocal`.
 ---   Not allowed with {pattern}.
 --- - callback (`function|string?`) Lua function (or Vimscript function name, if string)
 ---   called when the event(s) is triggered. Lua callback can return `lua-truthy` to delete
@@ -1224,8 +1224,8 @@ function vim.api.nvim_exec2(src, opts) end
 --- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) to execute.
 --- @param opts vim.api.keyset.exec_autocmds Optional filters:
 --- - group (`string|integer?`) Group name or id to match against. `autocmd-groups`.
---- - pattern (`string|array?`, default: current file name) `autocmd-pattern`. Not allowed with {buffer}.
---- - buffer (`integer?`) Buffer id `autocmd-buflocal`. Not allowed with {pattern}.
+--- - pattern (`string|array?`, default: current file name) `autocmd-pattern`. Not allowed with {buf}.
+--- - buf (`integer?`) Buffer id `autocmd-buflocal`. Not allowed with {pattern}.
 --- - modeline (`boolean?`, default: true) Process the modeline after the autocommands
 ---   [<nomodeline>].
 --- - data (`any`): Arbitrary data passed to the callback. See `nvim_create_autocmd()`.
@@ -1288,12 +1288,12 @@ function vim.api.nvim_get_all_options_info() end
 --- ```
 ---
 --- @param opts vim.api.keyset.get_autocmds Dict with at least one of these keys:
---- - buffer: (`integer[]|integer?`) Buffer id or list of buffer ids, for buffer-local autocommands
+--- - buf: (`integer[]|integer?`) Buffer id or list of buffer ids, for buffer-local autocommands
 ---   `autocmd-buflocal`. Not allowed with {pattern}.
 --- - event: (`vim.api.keyset.events|vim.api.keyset.events[]?`) Event(s) to match `autocmd-events`.
 --- - group: (`string|table?`) Group name or id to match.
 --- - id: (`integer?`) Autocommand ID to match.
---- - pattern: (`string|table?`) Pattern(s) to match `autocmd-pattern`. Not allowed with {buffer}.
+--- - pattern: (`string|table?`) Pattern(s) to match `autocmd-pattern`. Not allowed with {buf}.
 --- @return vim.api.keyset.get_autocmds.ret[] # Array of matching autocommands, where each item has:
 --- - buffer (`integer?`): Buffer id (only for |autocmd-buffer-local|).
 --- - buflocal (`boolean?`): true if the autocommand is buffer-local |autocmd-buffer-local|.

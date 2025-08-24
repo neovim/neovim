@@ -147,6 +147,12 @@ CHANGED FEATURES                                                 *news-changed*
 These existing features changed their behavior.
 
 • |:Open| with no arguments uses the current file.
+• The "buffer" key was renamed to "buf" in these functions (but the old name
+  "buffer" is still accepted, for backwards compatibility):
+  • |nvim_clear_autocmds()|
+  • |nvim_create_autocmd()|
+  • |nvim_exec_autocmds()|
+  • |nvim_get_autocmds()|
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

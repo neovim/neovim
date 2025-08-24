@@ -2068,11 +2068,11 @@ nvim_clear_autocmds({opts})                            *nvim_clear_autocmds()*
                   • event: { "pat1" }
                   • event: { "pat1", "pat2", "pat3" }
                 • pattern: (`string|table?`) Filter by patterns (exact match).
-                  Not allowed with {buffer}.
+                  Not allowed with {buf}.
                   • Example: if you have `*.py` as that pattern for the
                     autocmd, you must pass `*.py` exactly to clear it.
                     `test.py` will not match the pattern.
-                • buffer: (`integer?`) Select |autocmd-buflocal| autocommands.
+                • buf: (`integer?`) Select |autocmd-buflocal| autocommands.
                   Not allowed with {pattern}.
                 • group: (`string|int?`) Group name or id.
                   • NOTE: If not given, matches autocmds not in any group.
@@ -2134,7 +2134,7 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
       • {event}  (`vim.api.keyset.events|vim.api.keyset.events[]`) Event(s)
                  that will trigger the handler (`callback` or `command`).
       • {opts}   (`vim.api.keyset.create_autocmd`) Options dict:
-                 • buffer (`integer?`) Buffer id for buffer-local autocommands
+                 • buf (`integer?`) Buffer id for buffer-local autocommands
                    |autocmd-buflocal|. Not allowed with {pattern}.
                  • callback (`function|string?`) Lua function (or Vimscript
                    function name, if string) called when the event(s) is
@@ -2228,9 +2228,9 @@ nvim_exec_autocmds({event}, {opts})                     *nvim_exec_autocmds()*
                  • group (`string|integer?`) Group name or id to match
                    against. |autocmd-groups|.
                  • pattern (`string|array?`, default: current file name)
-                   |autocmd-pattern|. Not allowed with {buffer}.
-                 • buffer (`integer?`) Buffer id |autocmd-buflocal|. Not
-                   allowed with {pattern}.
+                   |autocmd-pattern|. Not allowed with {buf}.
+                 • buf (`integer?`) Buffer id |autocmd-buflocal|. Not allowed
+                   with {pattern}.
                  • modeline (`boolean?`, default: true) Process the modeline
                    after the autocommands <nomodeline>.
                  • data (`any`): Arbitrary data passed to the callback. See
@@ -2265,15 +2265,15 @@ nvim_get_autocmds({opts})                                *nvim_get_autocmds()*
     Parameters: ~
       • {opts}  (`vim.api.keyset.get_autocmds`) Dict with at least one of
                 these keys:
-                • buffer: (`integer[]|integer?`) Buffer id or list of buffer
-                  ids, for buffer-local autocommands |autocmd-buflocal|. Not
+                • buf: (`integer[]|integer?`) Buffer id or list of buffer ids,
+                  for buffer-local autocommands |autocmd-buflocal|. Not
                   allowed with {pattern}.
                 • event: (`vim.api.keyset.events|vim.api.keyset.events[]?`)
                   Event(s) to match |autocmd-events|.
                 • group: (`string|table?`) Group name or id to match.
                 • id: (`integer?`) Autocommand ID to match.
                 • pattern: (`string|table?`) Pattern(s) to match
-                  |autocmd-pattern|. Not allowed with {buffer}.
+                  |autocmd-pattern|. Not allowed with {buf}.
 
     Return: ~
         (`vim.api.keyset.get_autocmds.ret[]`) Array of matching autocommands,
@@ -2692,18 +2692,18 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
         (`integer`) Line count, or 0 for unloaded buffer. |api-buffer|
 
                                                        *nvim_buf_set_keymap()*
-nvim_buf_set_keymap({buffer}, {mode}, {lhs}, {rhs}, {opts})
+nvim_buf_set_keymap({buf}, {mode}, {lhs}, {rhs}, {opts})
     Sets a buffer-local |mapping| for the given mode.
 
     Attributes: ~
         Since: 0.4.0
 
     Parameters: ~
-      • {buffer}  (`integer`) Buffer id, or 0 for current buffer
-      • {mode}    (`string`)
-      • {lhs}     (`string`)
-      • {rhs}     (`string`)
-      • {opts}    (`vim.api.keyset.keymap`)
+      • {buf}   (`integer`) Buffer id, or 0 for current buffer
+      • {mode}  (`string`)
+      • {lhs}   (`string`)
+      • {rhs}   (`string`)
+      • {opts}  (`vim.api.keyset.keymap`)
 
     See also: ~
       • |nvim_set_keymap()|
