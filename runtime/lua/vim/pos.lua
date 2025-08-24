@@ -1,15 +1,11 @@
 ---@brief
 ---
---- WARNING: This module is under experimental support.
---- Its semantics are not yet finalized,
---- and the stability of this API is not guaranteed.
---- Avoid using it outside of Nvim.
---- You may subscribe to or participate in the tracking issue
---- https://github.com/neovim/neovim/issues/25509
+--- EXPERIMENTAL: This API may change in the future. Its semantics are not yet finalized.
+--- Subscribe to https://github.com/neovim/neovim/issues/25509
 --- to stay updated or contribute to its development.
 ---
---- Built on |vim.Pos| objects, this module offers operations
---- that support comparisons and conversions between various types of positions.
+--- Provides operations to compare, calculate, and convert positions represented by |vim.Pos|
+--- objects.
 
 local api = vim.api
 local validate = vim.validate
