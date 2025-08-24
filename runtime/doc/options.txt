@@ -754,6 +754,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	typing.  If you prefer it not to open too quickly, set this value
 	slightly above your typing speed.  See |ins-autocompletion|.
 
+					*'autocompletetimeout'* *'act'*
+'autocompletetimeout' 'act'	number	(default 80)
+			global
+	Initial timeout (in milliseconds) for the decaying time-sliced
+	completion algorithm.  Starts at this value, halves for each slower
+	source until a minimum is reached.  All sources run, but slower ones
+	are quickly de-prioritized.  The default is tuned so the popup menu
+	opens within ~200ms even with multiple slow sources on a slow system.
+	Changing this value is rarely needed.  Only 80 or higher is valid.
+	Special case: when 'complete' contains "F" or "o" (function sources),
+	a longer timeout is used, allowing up to ~1s for sources such as LSP
+	servers that may sometimes take longer (e.g., while loading modules).
+	See |ins-autocompletion|.
+
 			*'autoindent'* *'ai'* *'noautoindent'* *'noai'*
 'autoindent' 'ai'	boolean	(default on)
 			local to buffer
@@ -1687,6 +1701,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  'shellslash'.
 	For Insert mode completion the buffer-local value is used.  For
 	command line completion the global value is used.
+
+					*'completetimeout'* *'cto'*
+'completetimeout' 'cto'	number	(default 0)
+			global
+	Like 'autocompletetimeout', but applies to |i_CTRL-N| and |i_CTRL-P|
+	completion.  Value of 0 disables the timeout; positive values allowed.
 
 					*'concealcursor'* *'cocu'*
 'concealcursor' 'cocu'	string	(default "")

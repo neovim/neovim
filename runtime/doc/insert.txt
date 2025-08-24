@@ -1117,17 +1117,19 @@ CTRL-X CTRL-Z		Stop completion without changing the text.
 AUTOCOMPLETION						*ins-autocompletion*
 
 Vim can display a completion menu as you type, similar to using |i_CTRL-N|,
-but triggered automatically.  See 'autocomplete' and 'autocompletedelay'.
-The menu items are collected from the sources listed in the 'complete' option.
+but triggered automatically.  See 'autocomplete'. The menu items are collected
+from the sources listed in the 'complete' option, in order.
 
-Unlike manual |i_CTRL-N| completion, this mode uses a decaying timeout to keep
-Vim responsive.  Sources earlier in the 'complete' list are given more time
-(higher priority), but every source is guaranteed a time slice, however small.
+A decaying timeout keeps Vim responsive.  Sources earlier in the 'complete'
+list get more time (higher priority), but all sources receive at least a small
+time slice.
 
 This mode is fully compatible with other completion modes.  You can invoke
 any of them at any time by typing |CTRL-X|, which temporarily suspends
 autocompletion.  To use |i_CTRL-N| specifically, press |CTRL-E| first to
 dismiss the popup menu (see |complete_CTRL-E|).
+
+See also 'autocomplete', 'autocompletetimeout' and 'autocompletedelay'.
 
 To get LSP-driven auto-completion, see |lsp-completion|.
 

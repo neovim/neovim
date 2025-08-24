@@ -627,6 +627,7 @@ Short explanation of each option:		*option-list*
 'autochdir'	  'acd'     change directory to the file in the current window
 'autocomplete'	  'ac'      enable automatic completion in insert mode
 'autocompletedelay' 'acl'   delay in msec before menu appears after typing
+'autocompletetimeout' 'act' initial decay timeout for autocompletion algorithm
 'autoindent'	  'ai'	    take indent for new line from previous line
 'autoread'	  'ar'	    autom. read file when changed outside of Vim
 'autowrite'	  'aw'	    automatically write file if changed
@@ -670,6 +671,7 @@ Short explanation of each option:		*option-list*
 'completefunc'	  'cfu'     function to be used for Insert mode completion
 'completeopt'	  'cot'     options for Insert mode completion
 'completeslash'	  'csl'	    like 'shellslash' for completion
+'completetimeout' 'cto'     initial decay timeout for CTRL-N and CTRL-P
 'concealcursor'	  'cocu'    whether concealable text is hidden in cursor line
 'conceallevel'	  'cole'    whether concealable text is shown or hidden
 'confirm'	  'cf'	    ask what to do about unsaved/read-only files

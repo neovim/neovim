@@ -256,6 +256,27 @@ local options = {
       varname = 'p_acl',
     },
     {
+      abbreviation = 'act',
+      defaults = 80,
+      desc = [=[
+        Initial timeout (in milliseconds) for the decaying time-sliced
+        completion algorithm.  Starts at this value, halves for each slower
+        source until a minimum is reached.  All sources run, but slower ones
+        are quickly de-prioritized.  The default is tuned so the popup menu
+        opens within ~200ms even with multiple slow sources on a slow system.
+        Changing this value is rarely needed.  Only 80 or higher is valid.
+        Special case: when 'complete' contains "F" or "o" (function sources),
+        a longer timeout is used, allowing up to ~1s for sources such as LSP
+        servers that may sometimes take longer (e.g., while loading modules).
+        See |ins-autocompletion|.
+      ]=],
+      full_name = 'autocompletetimeout',
+      scope = { 'global' },
+      short_desc = N_('initial decay timeout for autocompletion algorithm'),
+      type = 'number',
+      varname = 'p_act',
+    },
+    {
       abbreviation = 'ai',
       defaults = true,
       desc = [=[
@@ -1721,6 +1742,19 @@ local options = {
       scope = { 'buf' },
       type = 'string',
       varname = 'p_csl',
+    },
+    {
+      abbreviation = 'cto',
+      defaults = 0,
+      desc = [=[
+        Like 'autocompletetimeout', but applies to |i_CTRL-N| and |i_CTRL-P|
+        completion.  Value of 0 disables the timeout; positive values allowed.
+      ]=],
+      full_name = 'completetimeout',
+      scope = { 'global' },
+      short_desc = N_('initial decay timeout for CTRL-N and CTRL-P'),
+      type = 'number',
+      varname = 'p_cto',
     },
     {
       abbreviation = 'cocu',
