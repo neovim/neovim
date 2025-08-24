@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Aug 16
+" Last Change:	2025 Aug 23
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " If there already is an option window, jump to that one.
@@ -737,6 +737,10 @@ if has("insert_expand")
   call <SID>OptionL("cpt")
   call <SID>AddOption("autocomplete", gettext("automatic completion in insert mode"))
   call <SID>BinOptionG("ac", &ac)
+  call <SID>AddOption("autocompletetimeout", gettext("initial decay timeout for 'autocomplete' algorithm"))
+  call append("$", " \tset act=" . &act)
+  call <SID>AddOption("completetimeout", gettext("initial decay timeout for CTRL-N and CTRL-P completion"))
+  call append("$", " \tset cto=" . &cto)
   call <SID>AddOption("autocompletedelay", gettext("delay in msec before menu appears after typing"))
   call append("$", " \tset acl=" . &acl)
   call <SID>AddOption("completeopt", gettext("whether to use a popup menu for Insert mode completion"))

@@ -130,6 +130,23 @@ vim.o.acl = vim.o.autocompletedelay
 vim.go.autocompletedelay = vim.o.autocompletedelay
 vim.go.acl = vim.go.autocompletedelay
 
+--- Initial timeout (in milliseconds) for the decaying time-sliced
+--- completion algorithm.  Starts at this value, halves for each slower
+--- source until a minimum is reached.  All sources run, but slower ones
+--- are quickly de-prioritized.  The default is tuned so the popup menu
+--- opens within ~200ms even with multiple slow sources on a slow system.
+--- Changing this value is rarely needed.  Only 80 or higher is valid.
+--- Special case: when 'complete' contains "F" or "o" (function sources),
+--- a longer timeout is used, allowing up to ~1s for sources such as LSP
+--- servers that may sometimes take longer (e.g., while loading modules).
+--- See `ins-autocompletion`.
+---
+--- @type integer
+vim.o.autocompletetimeout = 80
+vim.o.act = vim.o.autocompletetimeout
+vim.go.autocompletetimeout = vim.o.autocompletetimeout
+vim.go.act = vim.go.autocompletetimeout
+
 --- Copy indent from current line when starting a new line (typing <CR>
 --- in Insert mode or when using the "o" or "O" command).  If you do not
 --- type anything on the new line except <BS> or CTRL-D and then type
@@ -1238,6 +1255,15 @@ vim.o.completeslash = ""
 vim.o.csl = vim.o.completeslash
 vim.bo.completeslash = vim.o.completeslash
 vim.bo.csl = vim.bo.completeslash
+
+--- Like 'autocompletetimeout', but applies to `i_CTRL-N` and `i_CTRL-P`
+--- completion.  Value of 0 disables the timeout; positive values allowed.
+---
+--- @type integer
+vim.o.completetimeout = 0
+vim.o.cto = vim.o.completetimeout
+vim.go.completetimeout = vim.o.completetimeout
+vim.go.cto = vim.go.completetimeout
 
 --- Sets the modes in which text in the cursor line can also be concealed.
 --- When the current mode is listed then concealing happens just like in
