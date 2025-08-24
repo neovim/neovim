@@ -44,9 +44,9 @@ function M.on_inlayhint(err, result, ctx)
     return
   end
   local bufnr = assert(ctx.bufnr)
+
   if
     util.buf_versions[bufnr] ~= ctx.version
-    or not result
     or not api.nvim_buf_is_loaded(bufnr)
     or not bufstates[bufnr].enabled
   then
@@ -60,6 +60,9 @@ function M.on_inlayhint(err, result, ctx)
   end
   local client_hints = bufstate.client_hints
   local client = assert(vim.lsp.get_client_by_id(client_id))
+
+  -- If there's no error but the result is nil, clear existing hints.
+  result = result or {}
 
   local new_lnum_hints = vim.defaulttable()
   local num_unprocessed = #result
