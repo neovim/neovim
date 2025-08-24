@@ -814,6 +814,42 @@ describe('startup', function()
     ]])
   end)
 
+  it("default 'diffopt' is applied with -d", function()
+    clear({
+      args = {
+        '-d',
+        'test/functional/fixtures/diff/startup_old.txt',
+        'test/functional/fixtures/diff/startup_new.txt',
+        '--cmd',
+        'set laststatus=0',
+      },
+    })
+    local screen = Screen.new(80, 24)
+    screen:expect([[
+      {7:+ }{13:^+-- 15 lines: package main············}│{7:+ }{13:+-- 15 lines: package main···········}|
+      {7:  }                                      │{7:  }                                     |
+      {7:  }func printCharacters(str string) strin│{7:  }func printCharacters(str string) stri|
+      {7:  }        return str                    │{7:  }        return str                   |
+      {7:  }}                                     │{7:  }}                                    |
+      {7:  }                                      │{7:  }                                     |
+      {7:  }func main() {                         │{7:  }func main() {                        |
+      {7:  }{23:--------------------------------------}│{7:  }{22:        hello := "Hello, World!"     }|
+      {7:  }{23:--------------------------------------}│{7:  }{22:                                     }|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(compressString("aa}│{7:  }{4:        fmt.Print(compressString("aaa}|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(compressString("go}│{7:  }{4:        fmt.Print(compressString("gol}|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(removeDuplicate("a}│{7:  }{4:        fmt.Print(removeDuplicate("aa}|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(reverseAndDouble("}│{7:  }{4:        fmt.Print(reverseAndDouble("a}|
+      {7:  }{4:        fmt.Print}{27:Ln}{4:(printCharacters("g}│{7:  }{4:        fmt.Print(printCharacters("go}|
+      {7:  }{23:--------------------------------------}│{7:  }{22:                                     }|
+      {7:  }{23:--------------------------------------}│{7:  }{22:        fmt.Println(hello)           }|
+      {7:  }}                                     │{7:  }}                                    |
+      {1:~                                       }│{1:~                                      }|*6
+                                                                                      |
+    ]])
+    command('let &diffopt = &diffopt')
+    screen:expect_unchanged()
+  end)
+
   it('does not crash if --embed is given twice', function()
     clear { args = { '--embed' } }
     assert_alive()
