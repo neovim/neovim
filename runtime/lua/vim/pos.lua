@@ -172,7 +172,9 @@ function Pos.lsp(buf, pos, position_encoding)
   -- When on the first character,
   -- we can ignore the difference between byte and character.
   if col > 0 then
-    col = vim.str_byteindex(get_line(buf, row), position_encoding, col)
+    -- `strict_indexing` is disabled, because LSP responses are asynchronous,
+    -- and the buffer content may have changed, causing out-of-bounds errors.
+    col = vim.str_byteindex(get_line(buf, row), position_encoding, col, false)
   end
 
   return Pos.new(row, col, { buf = buf })
