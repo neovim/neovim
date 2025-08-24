@@ -199,6 +199,7 @@ EDITOR
 • |:Undotree| for visually navigating the |undo-tree|
 • |:wall| permits a |++p| option for creating parent directories when writing
   changed buffers.
+• The |:DiffTool| command compares directories (and files).
 
 EVENTS
 
