@@ -2593,8 +2593,8 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
     return i;
   }
 
-  // find the data block containing the line
-  // This also fills the stack with the blocks from the root to the data block
+  // Find the data block containing the line.
+  // This also fills the stack with the blocks from the root to the data block.
   // This also releases any locked block.
   memfile_T *mfp = buf->b_ml.ml_mfp;
   if (mfp == NULL) {
@@ -2635,6 +2635,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
   // block, and so on, up to the root if necessary.
   // The line counts in the pointer blocks have already been adjusted by
   // ml_find_line().
+  int ret = FAIL;
   if (count == 1) {
     mf_free(mfp, hp);           // free the data block
     buf->b_ml.ml_locked = NULL;
@@ -2644,13 +2645,13 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
       infoptr_T *ip = &(buf->b_ml.ml_stack[stack_idx]);
       idx = ip->ip_index;
       if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL) {
-        return FAIL;
+        goto theend;
       }
       PointerBlock *pp = hp->bh_data;         // must be pointer block
       if (pp->pb_id != PTR_ID) {
         iemsg(_(e_pointer_block_id_wrong_four));
         mf_put(mfp, hp, false, false);
-        return FAIL;
+        goto theend;
       }
       count = --(pp->pb_count);
       if (count == 0) {             // the pointer block becomes empty!
@@ -2696,7 +2697,10 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
   }
 
   ml_updatechunk(buf, lnum, line_size, ML_CHNK_DELLINE);
-  return OK;
+  ret = OK;
+
+theend:
+  return ret;
 }
 
 /// Delete line "lnum" in the current buffer.
@@ -2723,7 +2727,7 @@ int ml_delete_flags(linenr_T lnum, int flags)
   return ml_delete_int(curbuf, lnum, flags);
 }
 
-/// set the B_MARKED flag for line 'lnum'
+/// set the DB_MARKED flag for line 'lnum'
 void ml_setmarked(linenr_T lnum)
 {
   // invalid line number
@@ -2747,7 +2751,7 @@ void ml_setmarked(linenr_T lnum)
   curbuf->b_ml.ml_flags |= ML_LOCKED_DIRTY;
 }
 
-/// find the first line with its B_MARKED flag set
+/// find the first line with its DB_MARKED flag set
 linenr_T ml_firstmarked(void)
 {
   if (curbuf->b_ml.ml_mfp == NULL) {
@@ -2939,7 +2943,7 @@ static bhdr_T *ml_new_ptr(memfile_T *mfp)
   return hp;
 }
 
-/// lookup line 'lnum' in a memline
+/// Lookup line 'lnum' in a memline.
 ///
 /// @param action: if ML_DELETE or ML_INSERT the line count is updated while searching
 ///                if ML_FLUSH only flush a locked block
