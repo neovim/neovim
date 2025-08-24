@@ -2286,8 +2286,11 @@ func Wildmode_tests()
   " when using longest completion match, matches shorter than the argument
   " should be ignored (happens with :help)
   set wildmode=longest,full
-  call feedkeys(":help a*\t\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"help a', @:)
+  " XXX: This test is incorrect.  ':help a*' will never yield 'help a'
+  "   because '`a' exists as a menu item.  The intent was to test a case
+  "   handled by nextwild().
+  " call feedkeys(":help a*\t\<C-B>\"\<CR>", 'xt')
+  " call assert_equal('"help a', @:)
   " non existing file
   call feedkeys(":e a1b2y3z4\t\<C-B>\"\<CR>", 'xt')
   call assert_equal('"e a1b2y3z4', @:)
@@ -4406,7 +4409,7 @@ func Test_cmdcomplete_info()
     call feedkeys(":h echom\<cr>", "tx") " No expansion
     call assert_equal('{}', g:cmdcomplete_info)
     call feedkeys($":h echoms{trig}\<cr>", "tx")
-    call assert_equal('{''cmdline_orig'': '''', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
+    call assert_equal('{''cmdline_orig'': ''h echoms'', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
     call feedkeys($":h echom{trig}\<cr>", "tx")
     call assert_equal(
           \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 0, ''matches'': ['':echom'', '':echomsg''], ''selected'': 0}',
@@ -4422,7 +4425,7 @@ func Test_cmdcomplete_info()
 
     set wildoptions=pum
     call feedkeys($":h echoms{trig}\<cr>", "tx")
-    call assert_equal('{''cmdline_orig'': '''', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
+    call assert_equal('{''cmdline_orig'': ''h echoms'', ''pum_visible'': 0, ''matches'': [], ''selected'': 0}', g:cmdcomplete_info)
     call feedkeys($":h echom{trig}\<cr>", "tx")
     call assert_equal(
           \ '{''cmdline_orig'': ''h echom'', ''pum_visible'': 1, ''matches'': ['':echom'', '':echomsg''], ''selected'': 0}',
@@ -4872,6 +4875,35 @@ func Test_cmdline_changed()
   delfunc TestComplete
   delcommand Test
   call Ntest_override("char_avail", 0)
+endfunc
+
+" Issue #18035: long lines should not get listed twice in the menu when
+" 'wildmode' contains 'noselect'
+func Test_long_line_noselect()
+  CheckScreendump
+
+  let lines =<< trim [SCRIPT]
+    set wildmenu wildoptions=pum wildmode=noselect,full
+    command -nargs=1 -complete=custom,Entries DoubleEntry echo
+    func Entries(a, b, c)
+      return 'loooooooooooooooong quite loooooooooooong, really loooooooooooong, probably too looooooooooooooooooooooooooong entry'
+    endfunc
+  [SCRIPT]
+  call writefile(lines, 'XTest_wildmenu', 'D')
+  let buf = RunVimInTerminal('-S XTest_wildmenu', {'rows': 8, 'cols': 60})
+
+  call term_sendkeys(buf, ":DoubleEntry \<Tab>")
+  call VerifyScreenDump(buf, 'Test_long_line_noselect_1', {})
+
+  call term_sendkeys(buf, "\<Esc>:DoubleEntry \<Tab>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_long_line_noselect_2', {})
+
+  call term_sendkeys(buf, "\<Esc>:DoubleEntry \<Tab>\<C-N>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_long_line_noselect_3', {})
+
+  " clean up
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -530,6 +530,47 @@ describe('cmdline', function()
       /global^                                                          |
     ]])
   end)
+
+  -- oldtest: Test_long_line_noselect()
+  it("long line is shown properly with noselect in 'wildmode'", function()
+    local screen = Screen.new(60, 8)
+    exec([[
+      set wildmenu wildoptions=pum wildmode=noselect,full
+      command -nargs=1 -complete=custom,Entries DoubleEntry echo
+      func Entries(a, b, c)
+        return 'loooooooooooooooong quite loooooooooooong, really loooooooooooong, probably too looooooooooooooooooooooooooong entry'
+      endfunc
+    ]])
+
+    feed(':DoubleEntry <Tab>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*5
+      {1:~           }{4: loooooooooooooooong quite loooooooooooong, real}|
+      :DoubleEntry ^                                               |
+    ]])
+
+    feed('<C-N>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*3
+      {3:                                                            }|
+      :DoubleEntry loooooooooooooooong quite loooooooooooong, real|
+      ly loooooooo{12: loooooooooooooooong quite loooooooooooong, real}|
+      ong entry^                                                   |
+    ]])
+
+    feed('<C-N>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*3
+      {3:            }{4: loooooooooooooooong quite loooooooooooong, real}|
+      :DoubleEntry ^                                               |
+                                                                  |*2
+    ]])
+
+    feed('<Esc>')
+  end)
 end)
 
 describe('cmdwin', function()

@@ -1120,13 +1120,10 @@ static int command_line_wildchar_complete(CommandLineState *s)
 {
   int res;
   int options = WILD_NO_BEEP;
-  bool noselect = (wim_flags[0] & kOptWimFlagNoselect) != 0;
+  bool noselect = p_wmnu && (wim_flags[0] & kOptWimFlagNoselect) != 0;
 
   if (wim_flags[s->wim_index] & kOptWimFlagLastused) {
     options |= WILD_BUFLASTUSED;
-  }
-  if (noselect) {
-    options |= WILD_KEEP_SOLE_ITEM;
   }
   if (s->xpc.xp_numfiles > 0) {       // typed p_wc at least twice
     // if 'wildmode' contains "list" may still need to list
@@ -1164,6 +1161,9 @@ static int command_line_wildchar_complete(CommandLineState *s)
     if (wim_flags[0] & kOptWimFlagLongest) {
       res = nextwild(&s->xpc, WILD_LONGEST, options, s->firstc != '@');
     } else {
+      if (noselect || (wim_flags[s->wim_index] & kOptWimFlagList)) {
+        options |= WILD_NOSELECT;
+      }
       res = nextwild(&s->xpc, WILD_EXPAND_KEEP, options, s->firstc != '@');
     }
 
@@ -1188,14 +1188,6 @@ static int command_line_wildchar_complete(CommandLineState *s)
       }
       if ((wim_flags[s->wim_index] & kOptWimFlagList)
           || (p_wmnu && (wim_flags[s->wim_index] & (kOptWimFlagFull|kOptWimFlagNoselect)))) {
-        if (!(wim_flags[0] & kOptWimFlagLongest)) {
-          int p_wmnu_save = p_wmnu;
-          p_wmnu = 0;
-          // remove match
-          nextwild(&s->xpc, WILD_PREV, options, s->firstc != '@');
-          p_wmnu = p_wmnu_save;
-        }
-
         showmatches(&s->xpc,
                     p_wmnu && ((wim_flags[s->wim_index] & kOptWimFlagList) == 0),
                     noselect);
@@ -1204,9 +1196,6 @@ static int command_line_wildchar_complete(CommandLineState *s)
 
         if (wim_flags[s->wim_index] & kOptWimFlagLongest) {
           nextwild(&s->xpc, WILD_LONGEST, options, s->firstc != '@');
-        } else if ((wim_flags[s->wim_index] & kOptWimFlagFull)
-                   && !(wim_flags[s->wim_index] & kOptWimFlagNoselect)) {
-          nextwild(&s->xpc, WILD_NEXT, options, s->firstc != '@');
         }
       } else {
         vim_beep(kOptBoFlagWildmode);
