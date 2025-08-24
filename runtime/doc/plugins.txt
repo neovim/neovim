@@ -18,6 +18,7 @@ loaded by default while others are not loaded until requested by |:packadd|.
 Standard plugins ~
 						*standard-plugin-list*
 Help-link		Loaded	Short description ~
+|difftool|		No	Compares two directories or files side-by-side
 |editorconfig|		Yes	Detect and interpret editorconfig
 |ft-shada|		Yes	Allows editing binary |shada| files
 |man.lua|		Yes	View manpages in Nvim
@@ -38,6 +39,41 @@ Help-link		Loaded	Short description ~
 |pi_zip.txt|		Yes	Zip archive explorer
 |spellfile.vim|		Yes	Install spellfile if missing
 |tohtml|		Yes	Convert buffer to html, syntax included
+
+==============================================================================
+Builtin plugin: difftool                                            *difftool*
+
+
+:DiffTool {left} {right}                                           *:DiffTool*
+Compares two directories or files side-by-side.
+Supports directory diffing, rename detection, and highlights changes
+in quickfix list.
+
+The plugin is not loaded by default; use `:packadd nvim.difftool` before
+invoking `:DiffTool`.
+
+Example `git difftool -d` integration using `DiffTool` command: >ini
+    [difftool "nvim_difftool"]
+      cmd = nvim -c "packadd nvim.difftool" -c "DiffTool $LOCAL $REMOTE"
+    [diff]
+      tool = nvim_difftool
+<
+
+
+open({left}, {right}, {opt})                                 *difftool.open()*
+    Diff two files or directories
+
+    Parameters: ~
+      • {left}   (`string`)
+      • {right}  (`string`)
+      • {opt}    (`table?`) A table with the following fields:
+                 • {method} (`'auto'|'builtin'|'diffr'`, default: 'auto') Diff
+                   method to use
+                 • {ignore} (`string[]`, default: `{}`) List of file patterns
+                   to ignore (e.g {'.git', '*.log'})
+                 • {rename} (`difftool.opt.rename`) Rename detection options
+                   (supported only by 'builtin' method)
+
 
 ==============================================================================
 Builtin plugin: editorconfig                                    *editorconfig*
