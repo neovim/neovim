@@ -5608,7 +5608,6 @@ func Test_completetimeout_autocompletetimeout()
 
   " Clock does not have fine granularity, so checking 'elapsed time' is only
   " approximate. We can only test that some type of timeout is enforced.
-  call feedkeys("\<Esc>", 'xt!')
   call setline(1, map(range(60000), '"foo" . v:val'))
   set completetimeout=1
   call feedkeys("Gof\<C-N>\<F2>\<Esc>0", 'xt!')
@@ -5626,7 +5625,6 @@ func Test_completetimeout_autocompletetimeout()
   let match_count = len(b:matches->mapnew('v:val.word'))
   call assert_true(match_count < 50000)
 
-  call feedkeys("\<Esc>", 'xt!')
   set complete& omnifunc& autocomplete& autocompletetimeout& completetimeout&
   bwipe!
   %d
@@ -5676,8 +5674,10 @@ func Test_autocompletedelay()
 
   " When menu is not open Up/Down moves cursor to different line
   call term_sendkeys(buf, "\<Esc>Sf")
-  call term_sendkeys(buf, "\<Down>")
+  call term_sendkeys(buf, "\<Up>")
   call VerifyScreenDump(buf, 'Test_autocompletedelay_10', {})
+  call term_sendkeys(buf, "\<Down>")
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_11', {})
 
   call term_sendkeys(buf, "\<esc>")
   call StopVimInTerminal(buf)
