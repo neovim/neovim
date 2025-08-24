@@ -1971,17 +1971,19 @@ int ml_line_alloced(void)
 }
 
 /// @param lnum  append after this line (can be 0)
-/// @param line  text of the new line
-/// @param len  length of line, including NUL, or 0
+/// @param line_arg  text of the new line
+/// @param len_arg  length of line, including NUL, or 0
 /// @param flags  ML_APPEND_ flags
 ///
 /// @return  FAIL for failure, OK otherwise
-static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int flags)
+static int ml_append_int(buf_T *buf, linenr_T lnum, char *line_arg, colnr_T len_arg, int flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  // lnum out of range
+  char *line = line_arg;
+  colnr_T len = len_arg;
+
   if (lnum > buf->b_ml.ml_line_count || buf->b_ml.ml_mfp == NULL) {
-    return FAIL;
+    return FAIL;  // lnum out of range
   }
 
   if (lowest_marked && lowest_marked > lnum) {
@@ -1999,10 +2001,11 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
   // find the data block containing the previous line
   // This also fills the stack with the blocks from the root to the data block
   // This also releases any locked block.
+  int ret = FAIL;
   bhdr_T *hp;
   if ((hp = ml_find_line(buf, lnum == 0 ? 1 : lnum,
                          ML_INSERT)) == NULL) {
-    return FAIL;
+    goto theend;
   }
 
   buf->b_ml.ml_flags &= ~ML_EMPTY;
@@ -2031,7 +2034,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
     (buf->b_ml.ml_locked_lineadd)--;
     (buf->b_ml.ml_locked_high)--;
     if ((hp = ml_find_line(buf, lnum + 1, ML_INSERT)) == NULL) {
-      return FAIL;
+      goto theend;
     }
 
     db_idx = -1;                    // careful, it is negative!
@@ -2048,7 +2051,8 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
   buf->b_ml.ml_line_count++;
 
   if ((int)dp->db_free >= space_needed) {       // enough room in data block
-    // Insert new line in existing data block, or in data block allocated above.
+    // Insert the new line in an existing data block, or in the data block
+    // allocated above.
     dp->db_txt_start -= (unsigned)len;
     dp->db_free -= (unsigned)space_needed;
     dp->db_line_count++;
@@ -2067,7 +2071,8 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
         dp->db_index[i + 1] = dp->db_index[i] - (unsigned)len;
       }
       dp->db_index[db_idx + 1] = (unsigned)(offset - len);
-    } else {  // add line at the end
+    } else {
+      // add line at the end (which is the start of the text)
       dp->db_index[db_idx + 1] = dp->db_txt_start;
     }
 
@@ -2083,13 +2088,6 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
       buf->b_ml.ml_flags |= ML_LOCKED_POS;
     }
   } else {        // not enough space in data block
-    // If there is not enough room we have to create a new data block and copy some
-    // lines into it.
-    // Then we have to insert an entry in the pointer block.
-    // If this pointer block also is full, we go up another block, and so on, up
-    // to the root if necessary.
-    // The line counts in the pointer blocks have already been adjusted by
-    // ml_find_line().
     int line_count_left, line_count_right;
     int page_count_left, page_count_right;
     bhdr_T *hp_left;
@@ -2103,6 +2101,14 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
     linenr_T lnum_left, lnum_right;
     PointerBlock *pp_new;
 
+    // There is not enough room, we have to create a new data block and
+    // copy some lines into it.
+    // Then we have to insert an entry in the pointer block.
+    // If this pointer block also is full, we go up another block, and so
+    // on, up to the root if necessary.
+    // The line counts in the pointer blocks have already been adjusted by
+    // ml_find_line().
+    //
     // We are going to allocate a new data block. Depending on the
     // situation it will be put to the left or right of the existing
     // block.  If possible we put the new line in the left block and move
@@ -2236,13 +2242,13 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
       infoptr_T *ip = &(buf->b_ml.ml_stack[stack_idx]);
       int pb_idx = ip->ip_index;
       if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL) {
-        return FAIL;
+        goto theend;
       }
       PointerBlock *pp = hp->bh_data;         // must be pointer block
       if (pp->pb_id != PTR_ID) {
         iemsg(_(e_pointer_block_id_wrong_three));
         mf_put(mfp, hp, false, false);
-        return FAIL;
+        goto theend;
       }
       // TODO(vim): If the pointer block is full and we are adding at the end
       // try to insert in front of the next block
@@ -2292,7 +2298,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
       while (true) {          // do this twice when splitting block 1
         hp_new = ml_new_ptr(mfp);
         if (hp_new == NULL) {             // TODO(vim): try to fix tree
-          return FAIL;
+          goto theend;
         }
         pp_new = hp_new->bh_data;
 
@@ -2375,7 +2381,10 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, int
 
   // The line was inserted below 'lnum'
   ml_updatechunk(buf, lnum + 1, len, ML_CHNK_ADDLINE);
-  return OK;
+  ret = OK;
+
+theend:
+  return ret;
 }
 
 /// Flush any pending change and call ml_append_int()
@@ -2496,7 +2505,19 @@ int ml_replace(linenr_T lnum, char *line, bool copy)
 ///
 /// @return  FAIL for failure, OK otherwise
 int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noalloc)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
+  size_t len = line != NULL ? strlen(line) : (size_t)-1;
+  return ml_replace_buf_len(buf, lnum, line, len, copy, noalloc);
+}
+
+int ml_replace_buf_len(buf_T *buf, linenr_T lnum, char *line_arg, size_t len_arg, bool copy,
+                       bool noalloc)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  char *line = line_arg;
+  colnr_T len = (colnr_T)len_arg;
+
   if (line == NULL) {           // just checking...
     return FAIL;
   }
@@ -2508,7 +2529,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noallo
 
   if (copy) {
     assert(!noalloc);
-    line = xstrdup(line);
+    line = xmemdupz(line, len_arg);
   }
 
   if (buf->b_ml.ml_line_lnum != lnum) {
@@ -2525,7 +2546,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noallo
   }
 
   buf->b_ml.ml_line_ptr = line;
-  buf->b_ml.ml_line_len = (colnr_T)strlen(line) + 1;
+  buf->b_ml.ml_line_len = len + 1;
   buf->b_ml.ml_line_lnum = lnum;
   buf->b_ml.ml_flags = (buf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
   if (noalloc) {
@@ -2578,8 +2599,8 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
     return i;
   }
 
-  // find the data block containing the line
-  // This also fills the stack with the blocks from the root to the data block
+  // Find the data block containing the line.
+  // This also fills the stack with the blocks from the root to the data block.
   // This also releases any locked block.
   memfile_T *mfp = buf->b_ml.ml_mfp;
   if (mfp == NULL) {
@@ -2620,6 +2641,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
   // block, and so on, up to the root if necessary.
   // The line counts in the pointer blocks have already been adjusted by
   // ml_find_line().
+  int ret = FAIL;
   if (count == 1) {
     mf_free(mfp, hp);           // free the data block
     buf->b_ml.ml_locked = NULL;
@@ -2629,13 +2651,13 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
       infoptr_T *ip = &(buf->b_ml.ml_stack[stack_idx]);
       idx = ip->ip_index;
       if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL) {
-        return FAIL;
+        goto theend;
       }
       PointerBlock *pp = hp->bh_data;         // must be pointer block
       if (pp->pb_id != PTR_ID) {
         iemsg(_(e_pointer_block_id_wrong_four));
         mf_put(mfp, hp, false, false);
-        return FAIL;
+        goto theend;
       }
       count = --(pp->pb_count);
       if (count == 0) {             // the pointer block becomes empty!
@@ -2681,7 +2703,10 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int flags)
   }
 
   ml_updatechunk(buf, lnum, line_size, ML_CHNK_DELLINE);
-  return OK;
+  ret = OK;
+
+theend:
+  return ret;
 }
 
 /// Delete line "lnum" in the current buffer.
@@ -2708,7 +2733,7 @@ int ml_delete_flags(linenr_T lnum, int flags)
   return ml_delete_int(curbuf, lnum, flags);
 }
 
-/// set the B_MARKED flag for line 'lnum'
+/// set the DB_MARKED flag for line 'lnum'
 void ml_setmarked(linenr_T lnum)
 {
   // invalid line number
@@ -2732,7 +2757,7 @@ void ml_setmarked(linenr_T lnum)
   curbuf->b_ml.ml_flags |= ML_LOCKED_DIRTY;
 }
 
-/// find the first line with its B_MARKED flag set
+/// find the first line with its DB_MARKED flag set
 linenr_T ml_firstmarked(void)
 {
   if (curbuf->b_ml.ml_mfp == NULL) {
@@ -2924,7 +2949,7 @@ static bhdr_T *ml_new_ptr(memfile_T *mfp)
   return hp;
 }
 
-/// lookup line 'lnum' in a memline
+/// Lookup line 'lnum' in a memline.
 ///
 /// @param action: if ML_DELETE or ML_INSERT the line count is updated while searching
 ///                if ML_FLUSH only flush a locked block
