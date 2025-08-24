@@ -194,7 +194,7 @@ function TSHighlighter:destroy()
       api.nvim_buf_call(self.bufnr, function()
         api.nvim_exec_autocmds(
           'FileType',
-          { group = 'syntaxset', buffer = self.bufnr, modeline = false }
+          { group = 'syntaxset', buf = self.bufnr, modeline = false }
         )
       end)
     end

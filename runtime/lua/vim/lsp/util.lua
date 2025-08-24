@@ -1471,7 +1471,7 @@ local function close_preview_autocmd(events, winnr, floating_bufnr, bufnr)
   -- the floating window buffer or the buffer that spawned it
   api.nvim_create_autocmd('BufLeave', {
     group = augroup,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       vim.schedule(function()
         -- When jumping to the quickfix window from the preview window,
@@ -1486,7 +1486,7 @@ local function close_preview_autocmd(events, winnr, floating_bufnr, bufnr)
   if #events > 0 then
     api.nvim_create_autocmd(events, {
       group = augroup,
-      buffer = bufnr,
+      buf = bufnr,
       callback = function()
         close_preview_window(winnr)
       end,

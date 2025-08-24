@@ -203,7 +203,7 @@ function LinkedEditor.new(bufnr)
   self.client_states = {}
 
   api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
-    buffer = bufnr,
+    buf = bufnr,
     group = augroup,
     callback = function()
       for _, client_state in pairs(self.client_states) do
@@ -214,14 +214,14 @@ function LinkedEditor.new(bufnr)
   })
   api.nvim_create_autocmd('CursorMoved', {
     group = augroup,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function()
       self:refresh()
     end,
   })
   api.nvim_create_autocmd('LspDetach', {
     group = augroup,
-    buffer = bufnr,
+    buf = bufnr,
     callback = function(args)
       self:detach(args.data.client_id)
     end,

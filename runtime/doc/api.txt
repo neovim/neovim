@@ -2024,7 +2024,10 @@ nvim_clear_autocmds({opts})                            *nvim_clear_autocmds()*
                       `test.py` will not match the pattern.
                   • defaults to clearing all patterns.
                   • NOTE: Cannot be used with {buffer}
-                • buffer: (bufnr)
+                • buf: (bufnr)
+                  • clear only |autocmd-buflocal| autocommands.
+                  • NOTE: Cannot be used with {pattern}
+                • buffer: (bufnr) (deprecatd) use buf.
                   • clear only |autocmd-buflocal| autocommands.
                   • NOTE: Cannot be used with {pattern}
                 • group: (string|int) The augroup name or id.
@@ -2092,9 +2095,11 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
                    id to match against.
                  • pattern (string|array) optional: pattern(s) to match
                    literally |autocmd-pattern|.
+                 • buf (integer) optional: buffer number for buffer-local
+                   autocommands
                  • buffer (integer) optional: buffer number for buffer-local
-                   autocommands |autocmd-buflocal|. Cannot be used with
-                   {pattern}.
+                   autocommands. (deprecated) use buf. |autocmd-buflocal|.
+                   Cannot be used with {pattern}.
                  • desc (string) optional: description (for documentation and
                    troubleshooting).
                  • callback (function|string) optional: Lua function (or
@@ -2186,10 +2191,13 @@ nvim_exec_autocmds({event}, {opts})                     *nvim_exec_autocmds()*
                    or id to match against. |autocmd-groups|.
                  • pattern (string|array) optional: defaults to "*"
                    |autocmd-pattern|. Cannot be used with {buffer}.
-                 • buffer (integer) optional: buffer number
-                   |autocmd-buflocal|. Cannot be used with {pattern}.
+                 • buf (integer) optional: buffer number |autocmd-buflocal|.
+                   Cannot be used with {pattern}.
                  • modeline (bool) optional: defaults to true. Process the
                    modeline after the autocommands <nomodeline>.
+                 • buffer (integer) optional: buffer number
+                   |autocmd-buflocal|. Cannot be used with {pattern}.
+                   (deprecated) use buf.
                  • data (any): arbitrary data to send to the autocommand
                    callback. See |nvim_create_autocmd()| for details.
 
@@ -2222,9 +2230,9 @@ nvim_get_autocmds({opts})                                *nvim_get_autocmds()*
     Parameters: ~
       • {opts}  (`vim.api.keyset.get_autocmds`) Dict with at least one of the
                 following:
-                • buffer: (integer) Buffer number or list of buffer numbers
-                  for buffer local autocommands |autocmd-buflocal|. Cannot be
-                  used with {pattern}
+                • buf: (integer) Buffer number or list of buffer numbers for
+                  buffer local autocommands |autocmd-buflocal|. Cannot be used
+                  with {pattern}
                 • event: (vim.api.keyset.events|vim.api.keyset.events[]) event
                   or events to match against |autocmd-events|.
                 • id: (integer) Autocommand ID to match.
@@ -2651,18 +2659,18 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
         (`integer`) Line count, or 0 for unloaded buffer. |api-buffer|
 
                                                        *nvim_buf_set_keymap()*
-nvim_buf_set_keymap({buffer}, {mode}, {lhs}, {rhs}, {opts})
+nvim_buf_set_keymap({buf}, {mode}, {lhs}, {rhs}, {opts})
     Sets a buffer-local |mapping| for the given mode.
 
     Attributes: ~
         Since: 0.4.0
 
     Parameters: ~
-      • {buffer}  (`integer`) Buffer id, or 0 for current buffer
-      • {mode}    (`string`)
-      • {lhs}     (`string`)
-      • {rhs}     (`string`)
-      • {opts}    (`vim.api.keyset.keymap`)
+      • {buf}   (`integer`) Buffer id, or 0 for current buffer
+      • {mode}  (`string`)
+      • {lhs}   (`string`)
+      • {rhs}   (`string`)
+      • {opts}  (`vim.api.keyset.keymap`)
 
     See also: ~
       • |nvim_set_keymap()|

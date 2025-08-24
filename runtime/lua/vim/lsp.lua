@@ -870,7 +870,7 @@ local function buf_attach(bufnr)
   local group = api.nvim_create_augroup(augroup, { clear = true })
   api.nvim_create_autocmd('BufWritePre', {
     group = group,
-    buffer = bufnr,
+    buf = bufnr,
     desc = 'vim.lsp: textDocument/willSave',
     callback = function(ctx)
       for _, client in ipairs(lsp.get_clients({ bufnr = ctx.buf })) do
@@ -897,7 +897,7 @@ local function buf_attach(bufnr)
   })
   api.nvim_create_autocmd('BufWritePost', {
     group = group,
-    buffer = bufnr,
+    buf = bufnr,
     desc = 'vim.lsp: textDocument/didSave handler',
     callback = function(ctx)
       text_document_did_save_handler(ctx.buf)
