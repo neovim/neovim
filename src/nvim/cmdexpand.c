@@ -1087,12 +1087,11 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
 /// Show all matches for completion on the command line.
 /// Returns EXPAND_NOTHING when the character that triggered expansion should
 /// be inserted like a normal character.
-int showmatches(expand_T *xp, bool wildmenu)
+int showmatches(expand_T *xp, bool wildmenu, bool noselect)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
   int numMatches;
   char **matches;
-  int j;
   int maxlen;
   int lines;
   int columns;
@@ -1109,12 +1108,12 @@ int showmatches(expand_T *xp, bool wildmenu)
     if (xp->xp_context == EXPAND_LUA) {
       nlua_expand_pat(xp);
     }
-    int i = expand_cmdline(xp, ccline->cmdbuff, ccline->cmdpos,
-                           &numMatches, &matches);
-    showtail = expand_showtail(xp);
-    if (i != EXPAND_OK) {
-      return i;
+    int retval = expand_cmdline(xp, ccline->cmdbuff, ccline->cmdpos,
+                                &numMatches, &matches);
+    if (retval != EXPAND_OK) {
+      return retval;
     }
+    showtail = expand_showtail(xp);
   } else {
     numMatches = xp->xp_numfiles;
     matches = xp->xp_files;
@@ -1145,15 +1144,16 @@ int showmatches(expand_T *xp, bool wildmenu)
     // find the length of the longest file name
     maxlen = 0;
     for (int i = 0; i < numMatches; i++) {
+      int len;
       if (!showtail && (xp->xp_context == EXPAND_FILES
                         || xp->xp_context == EXPAND_SHELLCMD
                         || xp->xp_context == EXPAND_BUFFERS)) {
         home_replace(NULL, matches[i], NameBuff, MAXPATHL, true);
-        j = vim_strsize(NameBuff);
+        len = vim_strsize(NameBuff);
       } else {
-        j = vim_strsize(SHOW_MATCH(i));
+        len = vim_strsize(SHOW_MATCH(i));
       }
-      maxlen = MAX(maxlen, j);
+      maxlen = MAX(maxlen, len);
     }
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
