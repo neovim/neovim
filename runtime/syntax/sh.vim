@@ -16,7 +16,8 @@
 "		2025 May 10 improve wildcard character class lists
 "		2025 May 21 improve supported KornShell features
 "		2025 Jun 16 change how sh_fold_enabled is reset (#17557)
-"		2025 Jul 18 properly delete :commands #17785
+"		2025 Jul 18 properly delete :commands (#17785)
+"		2025 Aug 23 bash: add support for ${ cmd;} and ${|cmd;} (#18084)
 " }}}
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
@@ -474,6 +475,9 @@ if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
   if exists("b:is_mksh") || exists("b:generic_korn")
    syn region shValsub matchgroup=shCmdSubRegion start="\${|"  skip='\\\\\|\\.' end="}"  contains=@shCommandSubList
   endif
+ elseif exists("b:is_bash")
+  syn region shSubshare matchgroup=shCmdSubRegion start="\${\ze[ \t\n]"  skip='\\\\\|\\.' end="\zs[;\n][ \t\n]*}"  contains=@shCommandSubList
+  syn region shValsub matchgroup=shCmdSubRegion start="\${|"  skip='\\\\\|\\.' end="[;\n][ \t\n]*}"  contains=@shCommandSubList
  endif
  syn region shArithmetic matchgroup=shArithRegion  start="\$((" skip='\\\\\|\\.' end="))" contains=@shArithList
  syn region shArithmetic matchgroup=shArithRegion  start="\$\[" skip='\\\\\|\\.' end="\]" contains=@shArithList
@@ -677,6 +681,8 @@ if exists("b:is_kornshell") && !exists("b:is_ksh88")
  else
   syn region shDeref	matchgroup=PreProc start="\${\ze[^ \t\n<]" end="}"	contains=@shDerefList,shDerefVarArray nextgroup=shSpecialStart
  endif
+elseif exists("b:is_bash")
+ syn region shDeref	matchgroup=PreProc start="\${\ze[^ \t\n|]" end="}"	contains=@shDerefList,shDerefVarArray nextgroup=shSpecialStart
 else
  syn region shDeref	matchgroup=PreProc start="\${" end="}"			contains=@shDerefList,shDerefVarArray nextgroup=shSpecialStart
 endif
