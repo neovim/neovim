@@ -1249,6 +1249,7 @@ end)
 it('diff updates line numbers below filler lines', function()
   local screen = Screen.new(40, 14)
   exec([[
+    set diffopt=internal,filler,closeoff
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
     vnew
     call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
@@ -1384,6 +1385,7 @@ end)
 
 it("'relativenumber' doesn't draw beyond end of window in diff mode #29403", function()
   local screen = Screen.new(60, 12)
+  command('set diffopt=internal,filler,closeoff')
   command('set relativenumber')
   feed('10aa<CR><Esc>gg')
   command('vnew')
