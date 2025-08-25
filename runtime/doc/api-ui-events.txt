@@ -845,8 +845,8 @@ must handle.
 		"list_cmd"	List output for various commands (|:ls|, |:set|, …)
 		"lua_error"	Error in |:lua| code
 		"lua_print"	|print()| from |:lua| code
-		"rpc_error"	Error response from |rpcrequest()|
 		"progress"	Progress message emitted by |nvim_echo()|
+		"rpc_error"	Error response from |rpcrequest()|
 		"quickfix"	Quickfix navigation message
 		"search_cmd"	Entered search command
 		"search_count"	Search count message ("S" flag of 'shortmess')
@@ -888,8 +888,7 @@ must handle.
 	    appears it should replace the older message.
 
 	progress
-	    Placeholder for special items for special messages. Currently, used
-	    for progress-messages. Can contain following for progress-message
+	    Progress-message properties:
 	       • title: Title string of the progress message.
 	       • status: Status of the progress message. Can contain one of
 	         the following values
@@ -931,30 +930,5 @@ must handle.
 
 	prev_cmd
 	    True when sent with |g<| command, false with |:messages|.
-
-==============================================================================
-PROGRESS MESSAGE                                    *progress-message*
-
-Nvim can emit *progress-message*, which are a special kind of |ui-messages|
-used to report the state of long-running tasks.
-
-Progress messages are created or updated using |nvim_echo()| with `kind='progress'`
-and the related options. Each message has a unique `msg_id`. A subsequent
-message with the same `msg_id` replaces the older one.
-
-Listeners: ~
-    • msg_show |ui-messages| event is fired for ext-ui upon creation/update of a
-    progress-message
-    • Updating or creating a progress message also triggers the |Progress| autocommand.
-
-Example: >
-    local id = vim.api.nvim_echo({{'searching...'}}, true,
-          {kind='progress', status='running', percent=10, title="term"})
-    vim.api.nvim_echo({{'searching'}}, true,
-          {id=id, kind='progress', status='running', percent=50, title="term"})
-    vim.api.nvim_echo({{'done'}}, true,
-          {id=id, kind='progress', status='success', percent=100, title="term"})
-<
-See also: |nvim_echo()| |ui-messages| |Progress|
 
  vim:tw=78:ts=8:noet:ft=help:norl:

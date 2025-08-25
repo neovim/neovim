@@ -238,7 +238,7 @@ error('Cannot require a meta file')
 --- @field title? string
 --- @field status? string
 --- @field percent? integer
---- @field extra_info? table<string,any>
+--- @field data? table<string,any>
 
 --- @class vim.api.keyset.empty
 

@@ -774,9 +774,9 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///                      initiator by listening for the `Progress` event
 ///          - percent: How much progress is done on the progress
 ///            message
-///          - extra_info: dictionary containing additional information
-/// @return The msg-id of the message.
-///         valid msg-id is always greater or equal to 1
+///          - data: dictionary containing additional information
+/// @return Message id.
+///         Valid message id is always greater then 0
 ///         - -1 means nvim_echo didn't show a message
 ///         - 0 means nvim_echo didn't allocate a message id for the message. happens
 ///            for temp messages not stored in message history.
@@ -796,38 +796,38 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
     kind = opts->err ? "echoerr" : history ? "echomsg" : "echo";
   }
 
-  bool is_kind_progress = strequal(kind, "progress");
+  bool is_progress = strequal(kind, "progress");
 
-  VALIDATE(is_kind_progress
+  VALIDATE(is_progress
            || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0
-               && opts->extra_info.size == 0),
+               && opts->data.size == 0),
            "%s",
-           "title, status, percents and extra_info fields can only be used with progress messages",
+           "title, status, percents and data fields can only be used with progress messages",
   {
     goto error;
   });
 
-  VALIDATE(!is_kind_progress || strequal(opts->status.data, "success")
+  VALIDATE_EXP((!is_progress || strequal(opts->status.data, "success")
            || strequal(opts->status.data, "failed")
            || strequal(opts->status.data, "running")
-           || strequal(opts->status.data, "cancel"),
-           "invalid message status: %s", opts->status.data, {
+           || strequal(opts->status.data, "cancel")),
+           "status", "success|failed|running|cancel", opts->status.data, {
     goto error;
   });
 
-  VALIDATE(!is_kind_progress || (opts->percent >= 0 && opts->percent <= 100),
-           "progress percent out of bounds: %ld", (long)opts->percent, {
+  VALIDATE_RANGE(!is_progress || (opts->percent >= 0 && opts->percent <= 100),
+           "percent", {
     goto error;
   });
 
-  VALIDATE(!is_kind_progress || history, "%s", "progress messages must be on history", {
+  VALIDATE_S(!is_progress || history, "history", "false", {
     goto error;
   });
 
-  MessageExtData ext_data = { .title = opts->title, .status = opts->status,
-                              .percent = opts->percent, .extra_info = opts->extra_info };
+  MessageData msg_data = { .title = opts->title, .status = opts->status,
+                              .percent = opts->percent, .data = opts->data };
 
-  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &ext_data);
+  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data);
 
   if (opts->verbose) {
     verbose_leave();

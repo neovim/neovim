@@ -340,7 +340,7 @@ typedef struct {
   String title;
   String status;
   Integer percent;
-  DictOf(Object) extra_info;
+  DictOf(Object) data;
 } Dict(echo_opts);
 
 typedef struct {

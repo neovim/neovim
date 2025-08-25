@@ -299,7 +299,7 @@ static bool is_multihl = false;
 /// @param history Whether to add message to history
 /// @param err Whether to print message as an error
 MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
-                  MessageExtData *ext_data)
+                  MessageData *msg_data)
 {
   no_wait_return++;
   msg_start();
@@ -321,7 +321,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
   if (strequal(kind, MSG_KIND_PROGRESS) || (history && kv_size(hl_msg))) {
-    id = msg_hist_add_multihl(id, hl_msg, false, ext_data);
+    id = msg_hist_add_multihl(id, hl_msg, false, msg_data);
   }
 
   msg_ext_skip_flush = false;
@@ -1045,7 +1045,7 @@ static MessageHistoryEntry *msg_find_by_id(MsgID id)
   return entry;
 }
 
-static void emit_progress_event(MessageHistoryEntry *msg)
+static void do_autocmd_progress(MessageHistoryEntry *msg)
 {
   if (msg == NULL) {
     return;
@@ -1058,18 +1058,18 @@ static void emit_progress_event(MessageHistoryEntry *msg)
   }
 
   PUT_C(data, "msg_id", INTEGER_OBJ(msg->msg_id));
-  PUT_C(data, "content", ARRAY_OBJ(messages));
-  PUT_C(data, "percent", INTEGER_OBJ(msg->ext_data.percent));
-  PUT_C(data, "status", STRING_OBJ(msg->ext_data.status));
-  PUT_C(data, "title", STRING_OBJ(msg->ext_data.title));
-  PUT_C(data, "extra_info", DICT_OBJ(msg->ext_data.extra_info));
+  PUT_C(data, "text", ARRAY_OBJ(messages));
+  PUT_C(data, "percent", INTEGER_OBJ(msg->msg_data.percent));
+  PUT_C(data, "status", STRING_OBJ(msg->msg_data.status));
+  PUT_C(data, "title", STRING_OBJ(msg->msg_data.title));
+  PUT_C(data, "data", DICT_OBJ(msg->msg_data.data));
 
-  apply_autocmds_group(EVENT_PROGRESS, msg->ext_data.title.data, NULL, true, AUGROUP_ALL, NULL,
+  apply_autocmds_group(EVENT_PROGRESS, msg->msg_data.title.data, NULL, true, AUGROUP_ALL, NULL,
                        NULL, &DICT_OBJ(data));
   kv_destroy(messages);
 }
 
-static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageExtData *ext_data)
+static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageData *msg_data)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -1081,12 +1081,12 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     return -1;
   }
 
-  bool is_kind_progress = strequal(msg_ext_kind, MSG_KIND_PROGRESS);
-  bool old_message_found = false;
+  bool is_progress = strequal(msg_ext_kind, MSG_KIND_PROGRESS);
+  bool old_msg_found = false;
 
   MessageHistoryEntry *entry = msg_find_by_id(msg_id);
   if (entry) {
-    old_message_found = true;
+    old_msg_found = true;
     // detach the node if found
     if (entry->prev) {
       entry->prev->next = entry->next;
@@ -1102,13 +1102,13 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     // Allocate an entry and add the message at the end of the history.
     entry = xmalloc(sizeof(MessageHistoryEntry));
     entry->msg_id = msg_id_next++;
-    entry->ext_data.title.data = NULL;
-    entry->ext_data.title.size = 0;
-    entry->ext_data.status.data = NULL;
-    entry->ext_data.status.size = 0;
-    kv_init(entry->ext_data.extra_info);
+    entry->msg_data.title.data = NULL;
+    entry->msg_data.title.size = 0;
+    entry->msg_data.status.data = NULL;
+    entry->msg_data.status.size = 0;
+    kv_init(entry->msg_data.data);
   }
-  if (old_message_found) {
+  if (old_msg_found) {
     hl_msg_free(entry->msg);
   }
   entry->msg = msg;
@@ -1116,14 +1116,14 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   entry->kind = msg_ext_kind;
   entry->prev = msg_hist_last;
   entry->next = NULL;
-  if (is_kind_progress && ext_data != NULL) {
-    api_free_string(entry->ext_data.status);
-    api_free_string(entry->ext_data.title);
-    api_free_dict(entry->ext_data.extra_info);
-    entry->ext_data.status = copy_string(ext_data->status, NULL);
-    entry->ext_data.title = copy_string(ext_data->title, NULL);
-    entry->ext_data.percent = ext_data->percent >= 0 ? ext_data->percent : -1;
-    entry->ext_data.extra_info = copy_dict(ext_data->extra_info, NULL);
+  if (is_progress && msg_data != NULL) {
+    api_free_string(entry->msg_data.status);
+    api_free_string(entry->msg_data.title);
+    api_free_dict(entry->msg_data.data);
+    entry->msg_data.status = copy_string(msg_data->status, NULL);
+    entry->msg_data.title = copy_string(msg_data->title, NULL);
+    entry->msg_data.percent = msg_data->percent >= 0 ? msg_data->percent : -1;
+    entry->msg_data.data = copy_dict(msg_data->data, NULL);
   }
   // NOTE: this does not encode if the message was actually appended to the
   // previous entry in the message history. However append is currently only
@@ -1141,29 +1141,29 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     msg_hist_temp = entry;
   }
 
-  msg_hist_len += !temp && !old_message_found;
+  msg_hist_len += !temp && !old_msg_found;
   msg_hist_last = entry;
   msg_ext_history = true;
 
   msg_ext_id = entry->msg_id;
-  if (is_kind_progress && ui_has(kUIMessages)) {
+  if (is_progress && ui_has(kUIMessages)) {
     kv_resize(msg_ext_progress, 4);
-    if (entry->ext_data.title.size != 0) {
-      PUT_C(msg_ext_progress, "title", STRING_OBJ(entry->ext_data.title));
+    if (entry->msg_data.title.size != 0) {
+      PUT_C(msg_ext_progress, "title", STRING_OBJ(entry->msg_data.title));
     }
-    if (entry->ext_data.status.size != 0) {
-      PUT_C(msg_ext_progress, "status", STRING_OBJ(entry->ext_data.status));
+    if (entry->msg_data.status.size != 0) {
+      PUT_C(msg_ext_progress, "status", STRING_OBJ(entry->msg_data.status));
     }
-    if (entry->ext_data.percent >= 0) {
-      PUT_C(msg_ext_progress, "percent", INTEGER_OBJ(entry->ext_data.percent));
+    if (entry->msg_data.percent >= 0) {
+      PUT_C(msg_ext_progress, "percent", INTEGER_OBJ(entry->msg_data.percent));
     }
-    if (entry->ext_data.extra_info.size != 0) {
-      PUT_C(msg_ext_progress, "extra_info", DICT_OBJ(entry->ext_data.extra_info));
+    if (entry->msg_data.data.size != 0) {
+      PUT_C(msg_ext_progress, "data", DICT_OBJ(entry->msg_data.data));
     }
   }
 
-  if (is_kind_progress) {
-    emit_progress_event(entry);
+  if (is_progress) {
+    do_autocmd_progress(entry);
   }
   msg_hist_clear(msg_hist_max);
   return entry->msg_id;
@@ -1185,9 +1185,9 @@ static void msg_hist_free_msg(MessageHistoryEntry *entry)
     msg_hist_temp = entry->next;
   }
   hl_msg_free(entry->msg);
-  api_free_string(entry->ext_data.status);
-  api_free_string(entry->ext_data.title);
-  api_free_dict(entry->ext_data.extra_info);
+  api_free_string(entry->msg_data.status);
+  api_free_string(entry->msg_data.title);
+  api_free_dict(entry->msg_data.data);
   xfree(entry);
 }
 
@@ -1313,7 +1313,7 @@ void ex_messages(exarg_T *eap)
     }
     if (redirecting() || !ui_has(kUIMessages)) {
       msg_silent += ui_has(kUIMessages);
-      msg_multihl(p->msg_id, p->msg, p->kind, false, false, &(p->ext_data));
+      msg_multihl(p->msg_id, p->msg, p->kind, false, false, &(p->msg_data));
       msg_silent -= ui_has(kUIMessages);
     }
   }

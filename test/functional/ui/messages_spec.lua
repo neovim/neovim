@@ -3183,7 +3183,7 @@ describe('progress-message', function()
     setup_autocmd()
   end)
 
-  it('can send progress-message through nvim-echo', function()
+  it('can be sent by nvim_echo', function()
     local id = api.nvim_echo(
       { { 'test-message' } },
       true,
@@ -3211,12 +3211,12 @@ describe('progress-message', function()
     })
 
     assert_progress_autocmd({
-      content = { 'test-message' },
+      text = { 'test-message' },
       percent = 10,
       status = 'running',
       title = 'TestSuit',
       msg_id = 1,
-      extra_info = {},
+      data = {},
     }, 'Progress autocmd receives progress messages')
 
     -- can update progress messages
@@ -3246,12 +3246,12 @@ describe('progress-message', function()
     })
 
     assert_progress_autocmd({
-      content = { 'test-message-updated' },
+      text = { 'test-message-updated' },
       percent = 50,
       status = 'running',
       title = 'TestSuit',
       msg_id = 1,
-      extra_info = {},
+      data = {},
     }, 'Progress autocmd receives progress update')
 
     -- progress event can filter by title
@@ -3269,33 +3269,22 @@ describe('progress-message', function()
       { id = id, kind = 'progress', title = 'Special Title', percent = 100, status = 'success' }
     )
     assert_progress_autocmd({
-      content = { 'test-message-updated' },
+      text = { 'test-message-updated' },
       percent = 100,
       status = 'success',
       title = 'Special Title',
       msg_id = 1,
-      extra_info = {},
+      data = {},
     }, 'Progress autocmd receives progress update')
-
-    -- throws error if history is false
-    eq(
-      'progress messages must be on history',
-      t.pcall_err(
-        api.nvim_echo,
-        { { 'test-message' } },
-        false,
-        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
-      )
-    )
   end)
 
-  it('can send arbitrary data through extra_info', function()
+  it('user-defined data in `data` field', function()
     api.nvim_echo({ { 'test-message' } }, true, {
       kind = 'progress',
       title = 'TestSuit',
       percent = 10,
       status = 'running',
-      extra_info = { test_attribute = 1 },
+      data = { test_attribute = 1 },
     })
 
     screen:expect({
@@ -3310,7 +3299,7 @@ describe('progress-message', function()
           id = 1,
           kind = 'progress',
           progress = {
-            extra_info = {
+            data = {
               test_attribute = 1,
             },
             percent = 10,
@@ -3321,27 +3310,110 @@ describe('progress-message', function()
       },
     })
     assert_progress_autocmd({
-      content = { 'test-message' },
+      text = { 'test-message' },
       percent = 10,
       status = 'running',
       title = 'TestSuit',
       msg_id = 1,
-      extra_info = { test_attribute = 1 },
+      data = { test_attribute = 1 },
     }, 'Progress autocmd receives progress messages')
   end)
 
-  it('tui displays progress message in proper format', function()
-    clear()
-    setup_screen(false)
-    api.nvim_echo(
-      { { 'test-message' } },
-      true,
-      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+  it("validates", function ()
+    -- throws error if title, status, percent, data is used in non progress message
+    eq(
+      "title, status, percents and data fields can only be used with progress messages",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { title = 'TestSuit' }
+      )
     )
-    screen:expect([[
-      ^                                        |
-      {1:~                                       }|*3
-      test-message                            |
-    ]])
+
+    eq(
+      "title, status, percents and data fields can only be used with progress messages",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { status = 'running' }
+      )
+    )
+
+    eq(
+      "title, status, percents and data fields can only be used with progress messages",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { percent = 10 }
+      )
+    )
+
+    eq(
+      "title, status, percents and data fields can only be used with progress messages",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { data = { tag = "test" } }
+      )
+    )
+
+    -- throws error if anything other then running/success/failed/cancel is used in status
+    eq(
+      "Invalid 'status': expected success|failed|running|cancel, got live",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', status = 'live' }
+      )
+    )
+
+    -- throws error if parcent is not in 0-100
+    eq(
+      "Invalid 'percent': out of range",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', status = 'running', percent=-1 }
+      )
+    )
+
+    eq(
+      "Invalid 'percent': out of range",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', status = 'running', percent=101 }
+      )
+    )
+
+    -- throws error if history is false
+    eq(
+      "Invalid 'history': 'false'",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+      )
+    )
+
+    -- throws error if data is not a dictionary
+    eq(
+      "Invalid 'data': expected Dict, got String",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running', data="test" }
+      )
+    )
   end)
+
 end)
