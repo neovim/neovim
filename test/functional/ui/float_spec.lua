@@ -9,6 +9,7 @@ local command, feed_command = n.command, n.feed_command
 local eval = n.eval
 local eq = t.eq
 local neq = t.neq
+local matches = t.matches
 local expect = n.expect
 local exec = n.exec
 local exec_lua = n.exec_lua
@@ -899,14 +900,54 @@ describe('float window', function()
   end)
 
   it('non-visible/focusable are not assigned a window number', function()
-    local win = api.nvim_open_win(0, false, { relative = 'editor', width = 2, height = 2, row = 2, col = 2, focusable = false })
+    command('tabnew')
+    local tp = api.nvim_get_current_tabpage()
+    local split_win = api.nvim_get_current_win()
+    local float_buf = api.nvim_create_buf(true, true)
+    local win = api.nvim_open_win(float_buf, false, { relative = 'editor', width = 2, height = 2, row = 2, col = 2, focusable = false })
     api.nvim_open_win(0, false, { relative = 'editor', width = 2, height = 2, row = 2, col = 2, hide = true })
     api.nvim_open_win(0, false, { relative = 'editor', width = 2, height = 2, row = 2, col = 2 })
+
     eq(2, fn.winnr('$'))
     eq(0, fn.win_id2win(win))
+    eq(0, fn.getwininfo(win)[1].winnr)
+    eq({ 0, 0 }, fn.win_id2tabwin(win))
+    eq(2, fn.tabpagewinnr(2, '$'))
+    eq(0, fn.win_getid(3))
+    eq(0, fn.win_getid(3, 2))
+    eq(-1, fn.bufwinnr(float_buf))
+    eq(win, fn.bufwinid(float_buf)) -- bufwinid unaffected.
+    eq(nil, fn.winrestcmd():match('3resize'))
+
     -- Unless it is the current window.
     api.nvim_set_current_win(win)
-    eq({ 3, 3 }, { fn.winnr(), fn.win_id2win(win) })
+    eq(3, fn.winnr('$'))
+    eq(3, fn.winnr())
+    eq(3, fn.win_id2win(win))
+    eq(3, fn.getwininfo(win)[1].winnr)
+    eq({ 2, 3 }, fn.win_id2tabwin(win))
+    eq(3, fn.tabpagewinnr(2, '$'))
+    eq(3, fn.tabpagewinnr(2))
+    eq(win, fn.win_getid(3))
+    eq(win, fn.win_getid(3, 2))
+    eq(3, fn.bufwinnr(float_buf))
+    matches('3resize', fn.winrestcmd())
+
+    -- When switching tabpages it should still have a winnr, as it's current in the other tabpage.
+    command('tabfirst')
+    eq({ 2, 3 }, fn.win_id2tabwin(win))
+    eq(3, fn.getwininfo(win)[1].winnr)
+    eq(win, fn.win_getid(3, 2))
+    eq(3, fn.tabpagewinnr(2, '$'))
+    eq(3, fn.tabpagewinnr(2))
+
+    -- ...but not if it's non-current in that tabpage.
+    api.nvim_tabpage_set_win(tp, split_win)
+    eq({ 0, 0 }, fn.win_id2tabwin(win))
+    eq(0, fn.getwininfo(win)[1].winnr)
+    eq(0, fn.win_getid(3, 2))
+    eq(2, fn.tabpagewinnr(2, '$'))
+    eq(1, fn.tabpagewinnr(2))
   end)
 
   it('no crash for unallocated relative window grid', function()
