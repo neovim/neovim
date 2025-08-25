@@ -3709,10 +3709,17 @@ void ex_display(exarg_T *eap)
 
     get_clipboard(name, &yb, true);
 
+
     if (name == mb_tolower(redir_reg)
-        || (redir_reg == '"' && yb == y_previous)) {
+
+        || (vim_strchr("\"*+", redir_reg) != NULL &&
+
+            (yb == y_previous || yb == &y_regs[0]))) {
+
       continue;  // do not list register being written to, the
+
                  // pointer can be freed
+
     }
 
     if (yb->y_array != NULL) {
