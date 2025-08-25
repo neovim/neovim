@@ -43,7 +43,8 @@ pub fn build(b: *std.Build) !void {
     const cross_compiling = b.option(bool, "cross", "cross compile") orelse false;
     // TODO(bfredl): option to set nlua0 target explicitly when cross compiling?
     const target_host = if (cross_compiling) b.graph.host else target;
-    const optimize_host = .ReleaseSafe;
+    // without cross_compiling we like to reuse libluv etc at the same optimize level
+    const optimize_host = if (cross_compiling) .ReleaseSafe else optimize;
 
     // puc lua 5.1 is not ReleaseSafe "safe"
     const optimize_lua = if (optimize == .Debug or optimize == .ReleaseSafe) .ReleaseSmall else optimize;
@@ -63,7 +64,7 @@ pub fn build(b: *std.Build) !void {
 
     const ziglua_host = if (cross_compiling) b.dependency("zlua", .{
         .target = target_host,
-        .optimize = optimize_lua,
+        .optimize = .ReleaseSmall,
         .lang = if (host_use_luajit) E.luajit else E.lua51,
         .shared = false,
     }) else ziglua;
