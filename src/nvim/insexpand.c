@@ -356,7 +356,7 @@ void ins_ctrl_x(void)
 {
   if (!ctrl_x_mode_cmdline()) {
     // if the next ^X<> won't ADD nothing, then reset compl_cont_status
-    if ((compl_cont_status & CONT_N_ADDS) && !p_ac) {
+    if (compl_cont_status & CONT_N_ADDS) {
       compl_cont_status |= CONT_INTRPT;
     } else {
       compl_cont_status = 0;
