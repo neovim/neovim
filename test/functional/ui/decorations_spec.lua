@@ -28,11 +28,35 @@ local function setup_provider(code)
   ]]) .. [[
     api.nvim_set_decoration_provider(_G.ns1, {
       on_start = on_do; on_buf = on_do;
-      on_win = on_do; on_line = on_do;
+      on_win = on_do; on_line = on_do; on_range = on_do;
       on_end = on_do; _on_spell_nav = on_do;
     })
     return _G.ns1
   ]])
+end
+
+local function setup_screen(screen)
+  screen:set_default_attr_ids {
+    [1] = { bold = true, foreground = Screen.colors.Blue },
+    [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+    [3] = { foreground = Screen.colors.Brown },
+    [4] = { foreground = Screen.colors.Blue1 },
+    [5] = { foreground = Screen.colors.Magenta },
+    [6] = { bold = true, foreground = Screen.colors.Brown },
+    [7] = { background = Screen.colors.Gray90 },
+    [8] = { bold = true, reverse = true },
+    [9] = { reverse = true },
+    [10] = { italic = true, background = Screen.colors.Magenta },
+    [11] = { foreground = Screen.colors.Red, background = tonumber('0x005028') },
+    [12] = { foreground = tonumber('0x990000') },
+    [13] = { background = Screen.colors.LightBlue },
+    [14] = { background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue },
+    [15] = { special = Screen.colors.Blue, undercurl = true },
+    [16] = { special = Screen.colors.Red, undercurl = true },
+    [17] = { foreground = Screen.colors.Red },
+    [18] = { bold = true, foreground = Screen.colors.SeaGreen },
+    [19] = { bold = true },
+  }
 end
 
 describe('decorations providers', function()
@@ -40,27 +64,7 @@ describe('decorations providers', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 8)
-    screen:set_default_attr_ids {
-      [1] = { bold = true, foreground = Screen.colors.Blue },
-      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [3] = { foreground = Screen.colors.Brown },
-      [4] = { foreground = Screen.colors.Blue1 },
-      [5] = { foreground = Screen.colors.Magenta },
-      [6] = { bold = true, foreground = Screen.colors.Brown },
-      [7] = { background = Screen.colors.Gray90 },
-      [8] = { bold = true, reverse = true },
-      [9] = { reverse = true },
-      [10] = { italic = true, background = Screen.colors.Magenta },
-      [11] = { foreground = Screen.colors.Red, background = tonumber('0x005028') },
-      [12] = { foreground = tonumber('0x990000') },
-      [13] = { background = Screen.colors.LightBlue },
-      [14] = { background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue },
-      [15] = { special = Screen.colors.Blue, undercurl = true },
-      [16] = { special = Screen.colors.Red, undercurl = true },
-      [17] = { foreground = Screen.colors.Red },
-      [18] = { bold = true, foreground = Screen.colors.SeaGreen },
-      [19] = { bold = true },
-    }
+    setup_screen(screen)
   end)
 
   local mulholland = [[
@@ -110,12 +114,19 @@ describe('decorations providers', function()
       { 'start', 4 },
       { 'win', 1000, 1, 0, 6 },
       { 'line', 1000, 1, 0 },
+      { 'range', 1000, 1, 0, 0, 1, 0 },
       { 'line', 1000, 1, 1 },
+      { 'range', 1000, 1, 1, 0, 2, 0 },
       { 'line', 1000, 1, 2 },
+      { 'range', 1000, 1, 2, 0, 3, 0 },
       { 'line', 1000, 1, 3 },
+      { 'range', 1000, 1, 3, 0, 4, 0 },
       { 'line', 1000, 1, 4 },
+      { 'range', 1000, 1, 4, 0, 5, 0 },
       { 'line', 1000, 1, 5 },
+      { 'range', 1000, 1, 5, 0, 6, 0 },
       { 'line', 1000, 1, 6 },
+      { 'range', 1000, 1, 6, 0, 7, 0 },
       { 'end', 4 },
     }
 
@@ -137,6 +148,7 @@ describe('decorations providers', function()
       { 'buf', 1, 5 },
       { 'win', 1000, 1, 0, 6 },
       { 'line', 1000, 1, 6 },
+      { 'range', 1000, 1, 6, 0, 7, 0 },
       { 'end', 5 },
     }
   end)
@@ -206,9 +218,13 @@ describe('decorations providers', function()
       { 'start', 5 },
       { 'win', 1000, 1, 0, 3 },
       { 'line', 1000, 1, 0 },
+      { 'range', 1000, 1, 0, 0, 1, 0 },
       { 'line', 1000, 1, 1 },
+      { 'range', 1000, 1, 1, 0, 2, 0 },
       { 'line', 1000, 1, 2 },
+      { 'range', 1000, 1, 2, 0, 3, 0 },
       { 'line', 1000, 1, 3 },
+      { 'range', 1000, 1, 3, 0, 4, 0 },
       { 'end', 5 },
     }
 
@@ -804,6 +820,126 @@ describe('decorations providers', function()
     exec_lua([[
       assert(out_of_bound == false)
     ]])
+  end)
+
+  it('on_range is invoked on all visible characters', function()
+    clear()
+    screen = Screen.new(20, 4)
+    setup_screen(screen)
+
+    local function record()
+      exec_lua(function()
+        _G.p_min = { math.huge, math.huge }
+        _G.p_max = { -math.huge, -math.huge }
+        function _G.pos_gt(a, b)
+          return a[1] > b[1] or (a[1] == b[1] and a[2] > b[2])
+        end
+        function _G.pos_lt(a, b)
+          return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
+        end
+      end)
+      setup_provider [[
+        local function on_do(kind, _, bufnr, br, bc, er, ec)
+          if kind == 'range' then
+            local b = { br, bc }
+            local e = { er, ec }
+            if _G.pos_gt(_G.p_min, b) then
+              _G.p_min = b
+            end
+            if _G.pos_lt(_G.p_max, e) then
+              _G.p_max = e
+            end
+          end
+        end
+      ]]
+    end
+    local function check(min, max)
+      local p_min = exec_lua('return _G.p_min')
+      assert(
+        p_min[1] < min[1] or (p_min[1] == min[1] and p_min[2] <= min[2]),
+        'minimum position ' .. vim.inspect(p_min) .. ' should be before the first char'
+      )
+      local p_max = exec_lua('return _G.p_max')
+      assert(
+        p_max[1] > max[1] or (p_max[1] == max[1] and p_max[2] >= max[2]),
+        'maximum position ' .. vim.inspect(p_max) .. ' should be on or after the last char'
+      )
+    end
+
+    -- Multiple lines.
+    exec_lua([[
+      local lines = { ('a'):rep(40), ('b'):rep(40), ('c'):rep(40) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 2, 0 })
+    ]])
+    record()
+    screen:expect([[
+      ^bbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbb|
+      ccccccccccccccccc{1:@@@}|
+                          |
+    ]])
+    check({ 1, 0 }, { 2, 21 })
+
+    -- One long line.
+    exec_lua([[
+      local lines = { ('a'):rep(100) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 70 })
+    ]])
+    record()
+    screen:expect([[
+      {1:<<<}aaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaa^aaaaaaaaaa|
+                          |
+    ]])
+    check({ 0, 20 }, { 0, 81 })
+
+    -- Multibyte characters.
+    exec_lua([[
+      local lines = { ('\195\162'):rep(100) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 70 * 2 })
+    ]])
+    record()
+    screen:expect([[
+      {1:<<<}âââââââââââââââââ|
+      ââââââââââââââââââââ|
+      ââââââââââ^ââââââââââ|
+                          |
+    ]])
+    check({ 0, 20 * 2 }, { 0, 81 * 2 })
+
+    -- Tabs.
+    exec_lua([[
+      local lines = { 'a' .. ('\t'):rep(100) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 39 })
+    ]])
+    record()
+    screen:expect([[
+      {1:<<<}                 |
+                          |
+                 ^         |
+                          |
+    ]])
+    check({ 0, 33 }, { 0, 94 })
+
+    -- One long line without wrapping.
+    command('set nowrap')
+    exec_lua([[
+      local lines = { ('a'):rep(50) .. ('b'):rep(50) }
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 50 })
+    ]])
+    record()
+    screen:expect([[
+      aaaaaaaaaa^bbbbbbbbbb|
+      {1:~                   }|*2
+                          |
+    ]])
+    check({ 0, 40 }, { 0, 60 })
   end)
 
   it('can add new providers during redraw #26652', function()
