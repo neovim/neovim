@@ -10,9 +10,19 @@ typedef struct {
 } HlMessageChunk;
 
 typedef kvec_t(HlMessageChunk) HlMessage;
+typedef int64_t MsgID;
 
+#define MSG_KIND_PROGRESS "progress"
+
+typedef struct msg_ext_data {
+  Integer percent;        ///< Progress percentage
+  String title;           ///< Title for progress message
+  String status;          ///< Status for progress message
+  DictOf(String, Object) extra_info;  ///< Extra info for 'echo' messages
+} MessageExtData;
 /// Message history for `:messages`
 typedef struct msg_hist {
+  MsgID msg_id;           ///< Indentifier of the message
   struct msg_hist *next;  ///< Next message.
   struct msg_hist *prev;  ///< Previous message.
   HlMessage msg;          ///< Highlighted message.
@@ -20,4 +30,5 @@ typedef struct msg_hist {
   bool temp;              ///< Temporary message since last command ("g<")
   bool append;            ///< Message should be appended to previous entry, as opposed
                           ///< to on a new line (|ui-messages|->msg_show->append).
+  MessageExtData ext_data;  ///< Additional data for special messages
 } MessageHistoryEntry;
