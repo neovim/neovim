@@ -175,6 +175,8 @@ static const char *highlight_init_both[] = {
   "default link PmenuKindSel     PmenuSel",
   "default link PmenuSbar        Pmenu",
   "default link ComplMatchIns    NONE",
+  "default link ComplHint        NonText",
+  "default link ComplHintMore    MoreMsg",
   "default link Substitute       Search",
   "default link StatusLineTerm   StatusLine",
   "default link StatusLineTermNC StatusLineNC",

@@ -4,6 +4,7 @@ local api = vim.api
 ---| 'semantic_tokens'
 ---| 'folding_range'
 ---| 'linked_editing_range'
+---| 'inline_completion'
 
 --- Tracks all supported capabilities, all of which derive from `vim.lsp.Capability`.
 --- Returns capability *prototypes*, not their instances.

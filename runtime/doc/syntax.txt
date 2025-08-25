@@ -5350,6 +5350,10 @@ PmenuMatchSel	Popup menu: Matched text in selected item. Combined with
 		|hl-PmenuMatch| and |hl-PmenuSel|.
 							*hl-ComplMatchIns*
 ComplMatchIns	Matched text of the currently inserted completion.
+							*hl-ComplHint*
+ComplHint	Virtual text of the currently selected completion.
+							*hl-ComplHintMore*
+ComplHintMore	The additional information of the virtual text.
 							*hl-Question*
 Question	|hit-enter| prompt and yes/no questions.
 							*hl-QuickFixLine*

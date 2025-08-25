@@ -52,7 +52,7 @@ Pos.__index = Pos
 ---@package
 ---@param row integer
 ---@param col integer
----@param opts vim.Pos.Optional
+---@param opts? vim.Pos.Optional
 function Pos.new(row, col, opts)
   validate('row', row, 'number')
   validate('col', col, 'number')
@@ -168,10 +168,39 @@ function Pos.lsp(buf, pos, position_encoding)
   -- When on the first character,
   -- we can ignore the difference between byte and character.
   if col > 0 then
-    col = vim.str_byteindex(get_line(buf, row), position_encoding, col)
+    -- `strict_indexing` is disabled, because LSP responses are asynchronous,
+    -- and the buffer content may have changed, causing out-of-bounds errors.
+    col = vim.str_byteindex(get_line(buf, row), position_encoding, col, false)
   end
 
   return Pos.new(row, col, { buf = buf })
+end
+
+--- Converts |vim.Pos| to cursor position.
+---@param pos vim.Pos
+---@return [integer, integer]
+function Pos.to_cursor(pos)
+  return { pos.row + 1, pos.col }
+end
+
+--- Creates a new |vim.Pos| from cursor position.
+---@param pos [integer, integer]
+function Pos.cursor(pos)
+  return Pos.new(pos[1] - 1, pos[2])
+end
+
+--- Converts |vim.Pos| to extmark position.
+---@param pos vim.Pos
+---@return [integer, integer]
+function Pos.to_extmark(pos)
+  return { pos.row, pos.col }
+end
+
+--- Creates a new |vim.Pos| from extmark position.
+---@param pos [integer, integer]
+function Pos.extmark(pos)
+  local row, col = unpack(pos)
+  return Pos.new(row, col)
 end
 
 -- Overload `Range.new` to allow calling this module as a function.

@@ -332,6 +332,7 @@ They are also listed below.
 - `'textDocument/formatting'`
 - `'textDocument/hover'`
 - `'textDocument/inlayHint'`
+- `'textDocument/inlineCompletion'`
 - `'textDocument/publishDiagnostics'`
 - `'textDocument/rangeFormatting'`
 - `'textDocument/rename'`
@@ -2217,6 +2218,73 @@ is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
 
     Return: ~
         (`boolean`)
+
+
+==============================================================================
+Lua module: vim.lsp.inline_completion                  *lsp-inline_completion*
+
+enable({enable}, {filter})                *vim.lsp.inline_completion.enable()*
+    Enables or disables inline completion for the {filter}ed scope, inline
+    completion will automatically be refreshed when you are in insert mode.
+
+    To "toggle", pass the inverse of `is_enabled()`: >lua
+        vim.lsp.inline_completion.enable(not vim.lsp.inline_completion.is_enabled())
+<
+
+    Parameters: ~
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
+
+get({opts})                                  *vim.lsp.inline_completion.get()*
+    Apply the currently displayed completion candidate to the buffer.
+
+    It returns false when no candidate can be applied, so you can use the
+    return value to implement a fallback: >lua
+         vim.keymap.set('i', '<Tab>', function()
+          if not vim.lsp.inline_completion.get() then
+            return '<Tab>'
+          end
+        end, {
+          expr = true,
+          replace_keycodes = true,
+          desc = 'Get the current inline completion',
+        })
+<
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {bufnr}? (`integer`, default: 0) Buffer handle, or 0 for
+                  current.
+
+    Return: ~
+        (`boolean`) `true` if a completion was applied, else `false`.
+
+is_enabled({filter})                  *vim.lsp.inline_completion.is_enabled()*
+    Query whether inline completion is enabled in the {filter}ed scope
+
+    Parameters: ~
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
+
+select({opts})                            *vim.lsp.inline_completion.select()*
+    Switch between available inline completion candidates.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {bufnr}? (`integer`) (default: current buffer)
+                • {count}? (`integer`, default: v:count1) The number of
+                  candidates to move by. A positive integer moves forward by
+                  {count} candidates, while a negative integer moves backward
+                  by {count} candidates.
+                • {wrap}? (`boolean`, default: `true`) Whether to loop around
+                  file or not. Similar to 'wrapscan'.
 
 
 ==============================================================================

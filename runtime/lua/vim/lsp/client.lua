@@ -514,6 +514,7 @@ function Client:initialize()
   -- HACK: Capability modules must be loaded
   require('vim.lsp.semantic_tokens')
   require('vim.lsp._folding_range')
+  require('vim.lsp.inline_completion')
 
   local init_params = {
     -- The process Id of the parent process that started the server. Is null if
@@ -607,6 +608,7 @@ local static_registration_capabilities = {
   [ms.textDocument_foldingRange] = 'foldingRangeProvider',
   [ms.textDocument_implementation] = 'implementationProvider',
   [ms.textDocument_inlayHint] = 'inlayHintProvider',
+  [ms.textDocument_inlineCompletion] = 'inlineCompletionProvider',
   [ms.textDocument_inlineValue] = 'inlineValueProvider',
   [ms.textDocument_linkedEditingRange] = 'linkedEditingRangeProvider',
   [ms.textDocument_moniker] = 'monikerProvider',
