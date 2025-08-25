@@ -5,10 +5,13 @@ local tt = require('test.functional.testterm')
 local feed, clear = n.feed, n.clear
 local testprg, command = n.testprg, n.command
 local eq, eval = t.eq, n.eval
+local api = n.api
+local exec_lua = n.exec_lua
 local matches = t.matches
 local call = n.call
 local hide_cursor = tt.hide_cursor
 local show_cursor = tt.show_cursor
+local retry = t.retry
 local is_os = t.is_os
 local skip = t.skip
 
@@ -459,6 +462,52 @@ describe(':terminal cursor', function()
     eq('horizontal', screen._mode_info[terminal_mode_idx].cursor_shape)
     eq(0, screen._mode_info[terminal_mode_idx].blinkon)
     eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
+  end)
+
+  it('position correct within events', function()
+    local term, term_unfocused = exec_lua(function()
+      vim.cmd 'bwipeout!'
+      local term_unfocused = vim.api.nvim_open_term(0, {})
+      vim.cmd.vnew()
+      vim.cmd.wincmd '|'
+      local term = vim.api.nvim_open_term(0, {})
+      -- We'll use this keymap to pause the main loop while we send events, as we want the test to
+      -- run within the same terminal_execute call (while using test suite facilities like retry).
+      vim.keymap.set('t', '<F1>', '<Cmd>let g:sleepy = 1 | sleep 5000 | let g:sleepy = 0<CR>')
+      return term, term_unfocused
+    end)
+    feed('i<F1>')
+
+    local function check_pos(expected_pos, expected_virtcol, chan, data)
+      api.nvim_chan_send(chan, data) -- Using nvim_chan_send so terminal_receive is immediate.
+
+      -- Results won't be visible until refresh_terminal is called, which happens on a timer.
+      retry(nil, nil, function()
+        eq(expected_pos, eval("getpos('.')[1:]"))
+      end)
+      eq(expected_virtcol, eval("virtcol('.', 1)"))
+      eq(1, eval('g:sleepy')) -- :sleep shouldn't have timed out.
+    end
+
+    check_pos({ 1, 4, 0 }, { 4, 4 }, term, 'foo')
+    -- double-width char at end (3 bytes)
+    check_pos({ 2, 13, 0 }, { 12, 12 }, term, '\r\nbarbaaaar哦')
+    -- Move to 1,12 (beyond eol; sets coladd)
+    check_pos({ 1, 4, 8 }, { 12, 12 }, term, '\27[1;12H')
+    -- Move to 4,1
+    check_pos({ 4, 1, 0 }, { 1, 1 }, term, '\27[4;1H')
+    -- Move to 4,5 (beyond eol; sets coladd)
+    check_pos({ 4, 1, 4 }, { 5, 5 }, term, '\27[4;5H')
+    -- Move to 2,10 (head of wide char)
+    check_pos({ 2, 10, 0 }, { 10, 11 }, term, '\27[2;10H')
+    -- Move to 2,11 (non-head of wide char)
+    check_pos({ 2, 10, 0 }, { 10, 11 }, term, '\27[2;11H')
+    -- Move to 2,12 (after wide char)
+    check_pos({ 2, 13, 0 }, { 12, 12 }, term, '\27[2;12H')
+    -- Move to 2,13 (beyond eol; sets coladd)
+    check_pos({ 2, 13, 1 }, { 13, 13 }, term, '\27[2;13H')
+    -- Cursor movement in unfocused terminal shouldn't affect us
+    check_pos({ 2, 13, 1 }, { 13, 13 }, term_unfocused, 'amogus')
   end)
 end)
 

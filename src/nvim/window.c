@@ -4279,6 +4279,10 @@ int win_new_tabpage(int after, char *filename)
     newtp->tp_topframe = topframe;
     last_status(false);
 
+    if (curbuf->terminal) {
+      terminal_check_size(curbuf->terminal);
+    }
+
     redraw_all_later(UPD_NOT_VALID);
 
     tabpage_check_windows(old_curtab);
