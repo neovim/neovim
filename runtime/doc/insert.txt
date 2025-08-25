@@ -1126,8 +1126,8 @@ time slice.
 
 This mode is fully compatible with other completion modes.  You can invoke
 any of them at any time by typing |CTRL-X|, which temporarily suspends
-autocompletion.  To use |i_CTRL-N| specifically, press |CTRL-E| first to
-dismiss the popup menu (see |complete_CTRL-E|).
+autocompletion.  To use |i_CTRL-N| or |i_CTRL-X_CTRL-N| specifically, press
+|CTRL-E| first to dismiss the popup menu (see |complete_CTRL-E|).
 
 See also 'autocomplete', 'autocompletetimeout' and 'autocompletedelay'.
 

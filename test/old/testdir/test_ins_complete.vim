@@ -5311,7 +5311,7 @@ func Test_autocomplete_trigger()
 
   " Test 4a: When autocomplete menu is active, ^X^N completes buffer keywords
   let g:CallCount = 0
-  call feedkeys("S#a\<C-X>\<C-N>\<F2>\<Esc>0", 'tx!')
+  call feedkeys("S#a\<C-E>\<C-X>\<C-N>\<F2>\<Esc>0", 'tx!')
   call assert_equal(['abc', 'abcd'], b:matches->mapnew('v:val.word'))
   call assert_equal(2, g:CallCount)
 
@@ -5337,6 +5337,14 @@ func Test_autocomplete_trigger()
   call feedkeys("Goa\<C-X>\<C-L>\<F2>\<Esc>0", 'tx!')
   call assert_equal(['afoo bar', 'and'], b:matches->mapnew('v:val.word'))
   call assert_equal(1, g:CallCount)
+
+  " Issue #18044
+  %d
+  call setline(1, ["first line", "second line"])
+  call feedkeys("Gof\<C-X>\<C-L>\<Esc>", 'tx!')
+  call assert_equal("first line", getline(3))
+  call feedkeys("Sf\<C-X>\<C-L>\<C-X>\<C-L>\<Esc>", 'tx!')
+  call assert_equal("second line", getline(4))
 
   " Test 5: When invalid prefix stops completion, backspace should restart it
   %d
