@@ -101,14 +101,15 @@ CTRL-N		Find next keyword (see |i_CTRL-N|).
 CTRL-P		Find previous keyword (see |i_CTRL-P|).
 
 CTRL-R {register}				*i_CTRL-R*
-		Insert the contents of a register.  Between typing CTRL-R and
-		the second character, '"' will be displayed to indicate that
-		you are expected to enter the name of a register.
-		The text is inserted as if you typed it, but mappings and
-		abbreviations are not used.  If you have options like
-		'textwidth', 'formatoptions', or 'autoindent' set, this will
-		influence what will be inserted.  This is different from what
-		happens with the "p" command and pasting with the mouse.
+		Insert the contents of a register. When used with named
+		registers (A-Z,a-z,0-9) text is inserted literaly. Between
+		typing CTRL-R and the second character, '"' will be displayed
+		to indicate that you are expected to enter the name of a
+		register. The text is inserted as if you typed it, but
+		mappings and abbreviations are not used.  If you have options
+		like 'textwidth', 'formatoptions', or 'autoindent' set, this
+		will influence what will be inserted.  This is different from
+		what happens with the "p" command and pasting with the mouse.
 		Special registers:
 			'"'	the unnamed register, containing the text of
 				the last delete or yank
@@ -131,6 +132,8 @@ CTRL-R {register}				*i_CTRL-R*
 				special keys.  E.g., you can use this to move
 				the cursor up:
 					CTRL-R ="\<Up>"
+				you can use this to insert register as
+				keypress with CTRL-R =@reg.
 				Use CTRL-R CTRL-R to insert text literally.
 				When the result is a |List| the items are used
 				as lines.  They can have line breaks inside

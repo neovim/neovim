@@ -63,7 +63,8 @@ DIAGNOSTICS
 
 EDITOR
 
-• todo
+• |i_CTRL-R| inserts named registers (A-Z,a-z,0-9) literaly like paste instead of
+  as keypress.
 
 EVENTS
 
