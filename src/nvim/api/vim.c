@@ -808,15 +808,15 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
   });
 
   VALIDATE_EXP((!is_progress || strequal(opts->status.data, "success")
-           || strequal(opts->status.data, "failed")
-           || strequal(opts->status.data, "running")
-           || strequal(opts->status.data, "cancel")),
-           "status", "success|failed|running|cancel", opts->status.data, {
+                || strequal(opts->status.data, "failed")
+                || strequal(opts->status.data, "running")
+                || strequal(opts->status.data, "cancel")),
+               "status", "success|failed|running|cancel", opts->status.data, {
     goto error;
   });
 
   VALIDATE_RANGE(!is_progress || (opts->percent >= 0 && opts->percent <= 100),
-           "percent", {
+                 "percent", {
     goto error;
   });
 
@@ -825,7 +825,7 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
   });
 
   MessageData msg_data = { .title = opts->title, .status = opts->status,
-                              .percent = opts->percent, .data = opts->data };
+                           .percent = opts->percent, .data = opts->data };
 
   MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data);
 
