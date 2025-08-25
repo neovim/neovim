@@ -1135,7 +1135,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   msg_ext_history = true;
 
   msg_ext_id = entry->msg_id;
-  if (is_progress && ui_has(kUIMessages)) {
+  if (is_progress && msg_data != NULL && ui_has(kUIMessages)) {
     kv_resize(msg_ext_progress, 4);
     if (msg_data->title.size != 0) {
       PUT_C(msg_ext_progress, "title", STRING_OBJ(msg_data->title));
