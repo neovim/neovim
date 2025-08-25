@@ -30,5 +30,4 @@ typedef struct msg_hist {
   bool temp;              ///< Temporary message since last command ("g<")
   bool append;            ///< Message should be appended to previous entry, as opposed
                           ///< to on a new line (|ui-messages|->msg_show->append).
-  MessageData msg_data;   ///< Progress-message data + user-defined data.
 } MessageHistoryEntry;
