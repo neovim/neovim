@@ -320,7 +320,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     }
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
-  if (strequal(kind, MSG_KIND_PROGRESS) || (history && kv_size(hl_msg))) {
+  if (history && kv_size(hl_msg)) {
     id = msg_hist_add_multihl(id, hl_msg, false, msg_data);
   }
 
