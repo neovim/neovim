@@ -3138,3 +3138,296 @@ it('pager works in headless mode with UI attached', function()
     -- More --^                              |
   ]])
 end)
+
+describe('progress-message', function()
+  local screen
+
+  local function setup_autocmd(pattern)
+    exec_lua(function()
+      local grp = vim.api.nvim_create_augroup('ProgressListener', { clear = true })
+      vim.api.nvim_create_autocmd('Progress', {
+        pattern = pattern,
+        group = grp,
+        callback = function(ev)
+          _G.progress_autocmd_result = ev.data
+        end,
+      })
+    end)
+  end
+
+  local function assert_progress_autocmd(expected, context)
+    local progress_autocmd_result = exec_lua(function()
+      return _G.progress_autocmd_result
+    end)
+    eq(expected, progress_autocmd_result, context)
+    exec_lua(function()
+      _G.progress_autocmd_result = nil
+    end)
+  end
+
+  local function setup_screen(with_ext_msg)
+    if with_ext_msg then
+      screen = Screen.new(25, 5, { ext_messages = true })
+      screen:add_extra_attr_ids {
+        [100] = { undercurl = true, special = Screen.colors.Red },
+        [101] = { foreground = Screen.colors.Magenta1, bold = true },
+      }
+    else
+      screen = Screen.new(40, 5)
+    end
+  end
+
+  before_each(function()
+    clear()
+    setup_screen(true)
+    setup_autocmd()
+  end)
+
+  it('can be sent by nvim_echo', function()
+    local id = api.nvim_echo(
+      { { 'test-message' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+    )
+
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'test-message' } },
+          progress = {
+            percent = 10,
+            status = 'running',
+            title = 'TestSuit',
+          },
+          history = true,
+          id = 1,
+          kind = 'progress',
+        },
+      },
+    })
+
+    assert_progress_autocmd({
+      text = { 'test-message' },
+      percent = 10,
+      status = 'running',
+      title = 'TestSuit',
+      msg_id = 1,
+      data = {},
+    }, 'Progress autocmd receives progress messages')
+
+    -- can update progress messages
+    api.nvim_echo(
+      { { 'test-message-updated' } },
+      true,
+      { id = id, kind = 'progress', title = 'TestSuit', percent = 50, status = 'running' }
+    )
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'test-message-updated' } },
+          progress = {
+            percent = 50,
+            status = 'running',
+            title = 'TestSuit',
+          },
+          history = true,
+          id = 1,
+          kind = 'progress',
+        },
+      },
+    })
+
+    assert_progress_autocmd({
+      text = { 'test-message-updated' },
+      percent = 50,
+      status = 'running',
+      title = 'TestSuit',
+      msg_id = 1,
+      data = {},
+    }, 'Progress autocmd receives progress update')
+
+    -- progress event can filter by title
+    setup_autocmd('Special Title')
+    api.nvim_echo(
+      { { 'test-message-updated' } },
+      true,
+      { id = id, kind = 'progress', percent = 80, status = 'running' }
+    )
+    assert_progress_autocmd(nil, 'No progress message with Special Title yet')
+
+    api.nvim_echo(
+      { { 'test-message-updated' } },
+      true,
+      { id = id, kind = 'progress', title = 'Special Title', percent = 100, status = 'success' }
+    )
+    assert_progress_autocmd({
+      text = { 'test-message-updated' },
+      percent = 100,
+      status = 'success',
+      title = 'Special Title',
+      msg_id = 1,
+      data = {},
+    }, 'Progress autocmd receives progress update')
+  end)
+
+  it('user-defined data in `data` field', function()
+    api.nvim_echo({ { 'test-message' } }, true, {
+      kind = 'progress',
+      title = 'TestSuit',
+      percent = 10,
+      status = 'running',
+      data = { test_attribute = 1 },
+    })
+
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'test-message' } },
+          history = true,
+          id = 1,
+          kind = 'progress',
+          progress = {
+            data = {
+              test_attribute = 1,
+            },
+            percent = 10,
+            status = 'running',
+            title = 'TestSuit',
+          },
+        },
+      },
+    })
+    assert_progress_autocmd({
+      text = { 'test-message' },
+      percent = 10,
+      status = 'running',
+      title = 'TestSuit',
+      msg_id = 1,
+      data = { test_attribute = 1 },
+    }, 'Progress autocmd receives progress messages')
+  end)
+
+  it('validates', function()
+    -- throws error if title, status, percent, data is used in non progress message
+    eq(
+      'title, status, percents and data fields can only be used with progress messages',
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { title = 'TestSuit' })
+    )
+
+    eq(
+      'title, status, percents and data fields can only be used with progress messages',
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { status = 'running' })
+    )
+
+    eq(
+      'title, status, percents and data fields can only be used with progress messages',
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { percent = 10 })
+    )
+
+    eq(
+      'title, status, percents and data fields can only be used with progress messages',
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { data = { tag = 'test' } })
+    )
+
+    -- throws error if anything other then running/success/failed/cancel is used in status
+    eq(
+      "Invalid 'status': expected success|failed|running|cancel, got live",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', status = 'live' }
+      )
+    )
+
+    -- throws error if parcent is not in 0-100
+    eq(
+      "Invalid 'percent': out of range",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', status = 'running', percent = -1 }
+      )
+    )
+
+    eq(
+      "Invalid 'percent': out of range",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', status = 'running', percent = 101 }
+      )
+    )
+
+    -- throws error if history is false
+    eq(
+      "Invalid 'history': 'false'",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+      )
+    )
+
+    -- throws error if data is not a dictionary
+    eq(
+      "Invalid 'data': expected Dict, got String",
+      t.pcall_err(
+        api.nvim_echo,
+        { { 'test-message' } },
+        false,
+        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running', data = 'test' }
+      )
+    )
+  end)
+
+  it('gets moved to end of history upon update', function()
+    -- on empty history
+    local id = api.nvim_echo(
+      { { 'test-message 10' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+    )
+    eq('test-message 10', exec_capture('messages'))
+
+    api.nvim_echo(
+      { { 'test-message 20' } },
+      true,
+      { id = id, kind = 'progress', title = 'TestSuit', percent = 20, status = 'running' }
+    )
+    eq('test-message 20', exec_capture('messages'))
+
+    -- after some messsage in middle
+    api.nvim_echo({ { 'middle msg' } }, true, {})
+    eq('test-message 20\nmiddle msg', exec_capture('messages'))
+    api.nvim_echo(
+      { { 'test-message 30' } },
+      true,
+      { id = id, kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+    )
+    eq('middle msg\ntest-message 30', exec_capture('messages'))
+
+    -- at end of history
+    api.nvim_echo(
+      { { 'test-message 50' } },
+      true,
+      { id = id, kind = 'progress', title = 'TestSuit', percent = 50, status = 'running' }
+    )
+    eq('middle msg\ntest-message 50', exec_capture('messages'))
+  end)
+end)

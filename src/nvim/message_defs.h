@@ -10,9 +10,19 @@ typedef struct {
 } HlMessageChunk;
 
 typedef kvec_t(HlMessageChunk) HlMessage;
+typedef int64_t MsgID;
 
+#define MSG_KIND_PROGRESS "progress"
+
+typedef struct msg_data {
+  Integer percent;        ///< Progress percentage
+  String title;           ///< Title for progress message
+  String status;          ///< Status for progress message
+  DictOf(String, Object) data;  ///< Extra info for 'echo' messages
+} MessageData;
 /// Message history for `:messages`
 typedef struct msg_hist {
+  MsgID msg_id;           ///< Message id.
   struct msg_hist *next;  ///< Next message.
   struct msg_hist *prev;  ///< Previous message.
   HlMessage msg;          ///< Highlighted message.
