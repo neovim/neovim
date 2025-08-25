@@ -177,6 +177,7 @@ win_T *find_win_by_nr(typval_T *vp, tabpage_T *tp)
 
 /// Find a window: When using a Window ID in any tab page, when using a number
 /// in the current tab page.
+/// Returns NULL when not found.
 win_T *find_win_by_nr_or_id(typval_T *vp)
 {
   int nr = (int)tv_get_number_chk(vp, NULL);
