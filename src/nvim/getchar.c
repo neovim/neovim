@@ -2675,7 +2675,7 @@ static int vgetorpeek(bool advance)
 
           if (result == map_result_get) {
             // get a character: 2. from the typeahead buffer
-            c = typebuf.tb_buf[typebuf.tb_off] & 255;
+            c = typebuf.tb_buf[typebuf.tb_off];
             if (advance) {  // remove chars from tb_buf
               cmd_silent = (typebuf.tb_silent > 0);
               if (typebuf.tb_maplen > 0) {
