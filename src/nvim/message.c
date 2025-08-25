@@ -1085,30 +1085,10 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   }
 
   bool is_progress = strequal(msg_ext_kind, MSG_KIND_PROGRESS);
-  bool old_msg_found = false;
 
-  MessageHistoryEntry *entry = msg_find_by_id(msg_id);
-  if (entry) {
-    old_msg_found = true;
-    // detach the node if found
-    if (entry->prev) {
-      entry->prev->next = entry->next;
-    } else {
-      msg_hist_first = entry->next;
-    }
-    if (entry->next) {
-      entry->next->prev = entry->prev;
-    } else {
-      msg_hist_last = entry->prev;
-    }
-  } else {
-    // Allocate an entry and add the message at the end of the history.
-    entry = xmalloc(sizeof(MessageHistoryEntry));
-    entry->msg_id = msg_id_next++;
-  }
-  if (old_msg_found) {
-    hl_msg_free(entry->msg);
-  }
+  // Allocate an entry and add the message at the end of the history.
+  MessageHistoryEntry *entry = xmalloc(sizeof(MessageHistoryEntry));
+  entry->msg_id = msg_find_by_id(msg_id) != NULL ? msg_id : msg_id_next++;
   entry->msg = msg;
   entry->temp = temp;
   entry->kind = msg_ext_kind;
@@ -1130,7 +1110,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
     msg_hist_temp = entry;
   }
 
-  msg_hist_len += !temp && !old_msg_found;
+  msg_hist_len += !temp;
   msg_hist_last = entry;
   msg_ext_history = true;
 

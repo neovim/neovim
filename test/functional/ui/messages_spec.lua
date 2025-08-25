@@ -3396,8 +3396,7 @@ describe('progress-message', function()
     )
   end)
 
-  it('gets moved to end of history upon update', function()
-    -- on empty history
+  it('gets placed in history', function()
     local id = api.nvim_echo(
       { { 'test-message 10' } },
       true,
@@ -3410,24 +3409,25 @@ describe('progress-message', function()
       true,
       { id = id, kind = 'progress', title = 'TestSuit', percent = 20, status = 'running' }
     )
-    eq('test-message 20', exec_capture('messages'))
+    eq('test-message 10\ntest-message 20', exec_capture('messages'))
 
-    -- after some messsage in middle
     api.nvim_echo({ { 'middle msg' } }, true, {})
-    eq('test-message 20\nmiddle msg', exec_capture('messages'))
+    eq('test-message 10\ntest-message 20\nmiddle msg', exec_capture('messages'))
     api.nvim_echo(
       { { 'test-message 30' } },
       true,
       { id = id, kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
-    eq('middle msg\ntest-message 30', exec_capture('messages'))
+    eq('test-message 10\ntest-message 20\nmiddle msg\ntest-message 30', exec_capture('messages'))
 
-    -- at end of history
     api.nvim_echo(
       { { 'test-message 50' } },
       true,
       { id = id, kind = 'progress', title = 'TestSuit', percent = 50, status = 'running' }
     )
-    eq('middle msg\ntest-message 50', exec_capture('messages'))
+    eq(
+      'test-message 10\ntest-message 20\nmiddle msg\ntest-message 30\ntest-message 50',
+      exec_capture('messages')
+    )
   end)
 end)
