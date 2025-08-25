@@ -2479,6 +2479,8 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
   p_ws = save_p_ws;
   p_scs = save_p_scs;
 
+  apply_autocmds(EVENT_SEARCHPOST, NULL, NULL, false, curbuf);
+
   return retval;
 }
 

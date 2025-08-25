@@ -4902,6 +4902,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
 void ex_substitute(exarg_T *eap)
 {
   do_sub(eap, profile_zero(), 0, 0);
+  apply_autocmds(EVENT_SEARCHPOST, NULL, NULL, false, curbuf);
 }
 
 /// :substitute command preview callback.

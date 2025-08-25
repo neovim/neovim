@@ -172,6 +172,7 @@ error('Cannot require a meta file')
 --- |'RecordingLeave'
 --- |'RemoteReply'
 --- |'SafeState'
+--- |'SearchPost'
 --- |'SearchWrapped'
 --- |'SessionLoadPost'
 --- |'SessionWritePost'
