@@ -898,6 +898,7 @@ must handle.
 	            • cancel: The progressing process should be canceled.
 	       • percent: How much progress is done on the progress
                      message
+	       • data: dictionary containing additional information.
 
 ["msg_clear"] ~
 	Clear all messages currently displayed by "msg_show", emitted after
