@@ -1033,8 +1033,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///               ```
 ///                 ["win", winid, bufnr, toprow, botrow]
 ///               ```
-///             - on_line: called for each buffer line being redrawn.
-///                 (The interaction with fold lines is subject to change)
+///             - on_line: (deprecated, use on_range instead)
 ///               ```
 ///                 ["line", winid, bufnr, row]
 ///               ```

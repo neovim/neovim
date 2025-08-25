@@ -10,7 +10,7 @@
 ==============================================================================
 Introduction                                                       *lua-plugin*
 
-This document provides guidance for developing Nvim (Lua) plugins:
+This document provides guidance for developing Nvim Lua plugins.
 
 See |lua-guide| for guidance on using Lua to configure and operate Nvim.
 See |luaref| and |lua-concepts| for details on the Lua programming language.
@@ -19,7 +19,7 @@ See |luaref| and |lua-concepts| for details on the Lua programming language.
 Creating your first plugin                                    *lua-plugin-new*
 
 Any Vimscript or Lua code file that lives in the right directory,
-automatically is a "plugin". There's no maniest or "registration" required.
+automatically is a "plugin". There's no manifest or "registration" step.
 
 You can try it right now:
 
@@ -35,7 +35,7 @@ You can try it right now:
 
 Besides `plugin/foo.lua`, which is always run at startup, you can define Lua
 modules in the `lua/` directory. Those modules aren't loaded until your
-`plugin/foo.lua`, the user, calls `require(…)`.
+`plugin/foo.lua`, or the user, calls `require(…)`.
 
 ==============================================================================
 Type safety                                            *lua-plugin-type-safety*
@@ -108,11 +108,11 @@ In your plugin:
 >lua
     vim.keymap.set('n', '<Plug>(SayHello)', function()
         print('Hello from normal mode')
-    end, { noremap = true })
+    end)
 
     vim.keymap.set('v', '<Plug>(SayHello)', function()
         print('Hello from visual mode')
-    end, { noremap = true })
+    end)
 <
 In the user's config:
 >lua
@@ -176,7 +176,9 @@ For example, instead of:
     local foo = require('foo')
     vim.api.nvim_create_user_command('MyCommand', function()
         foo.do_something()
-    end, { -- ... })
+    end, {
+      -- ...
+    })
 <
 which calls `require('foo')` as soon as the module is loaded, you can
 lazy-load it by moving the `require` into the command's implementation:
@@ -227,7 +229,7 @@ A plugin tailored to Rust development might have initialization in
     -- e.g. add a |<Plug>| mapping or create a command
     vim.keymap.set('n', '<Plug>(MyPluginBufferAction)', function()
         print('Hello')
-    end, { noremap = true, buffer = bufnr, })
+    end, { buffer = bufnr, })
 <
 ==============================================================================
 Configuration                                              *lua-plugin-config*
@@ -274,7 +276,7 @@ Versioning and releases                                *lua-plugin-versioning*
 Consider:
 
 - Use |vim.deprecate()| or a `---@deprecate` annotation when you need to
-  communicate a (future) breaking change or discourged practice.
+  communicate a (future) breaking change or discouraged practice.
 - Using SemVer https://semver.org/ tags and releases to properly communicate
   bug fixes, new features, and breaking changes.
 - Automating versioning and releases in CI.
@@ -299,7 +301,9 @@ VERSIONING TOOLS
 Documentation                                                 *lua-plugin-doc*
 
 Provide vimdoc (see |help-writing|), so that users can read your plugin's
-documentation in Nvim, by entering `:h {plugin}` in |command-mode|.
+documentation in Nvim, by entering `:h {plugin}` in |command-mode|. The
+help-tags (the right-aligned "search keywords" in the help documents) are
+regenerated using the |:helptags| command.
 
 DOCUMENTATION TOOLS
 

@@ -1,3 +1,35 @@
+--- @brief
+--- This module provides the LSP "inline completion" feature, for completing multiline text (e.g.,
+--- whole methods) instead of just a word or line, which may result in "syntactically or
+--- semantically incorrect" code. Unlike regular completion, this is typically presented as overlay
+--- text instead of a menu of completion candidates.
+---
+--- LSP spec: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_inlineCompletion
+---
+--- To try it out, here is a quickstart example using Copilot: [lsp-copilot]()
+---
+--- 1. Install Copilot:
+---    ```sh
+---    npm install --global @github/copilot-language-server
+---    ```
+--- 2. Define a config, (or copy `lsp/copilot.lua` from https://github.com/neovim/nvim-lspconfig):
+---    ```lua
+---    vim.lsp.config('copilot', {
+---      cmd = { 'copilot-language-server', '--stdio', },
+---      root_markers = { '.git' },
+---    })
+---    ```
+--- 3. Activate the config:
+---    ```lua
+---    vim.lsp.enable('copilot')
+---    ```
+--- 4. Sign in to Copilot, or use the `:LspCopilotSignIn` command from https://github.com/neovim/nvim-lspconfig
+--- 5. Enable inline completion:
+---    ```lua
+---    vim.lsp.inline_completion.enable()
+---    ```
+--- 6. Set a keymap for `vim.lsp.inline_completion.get()` and invoke the keymap.
+
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')

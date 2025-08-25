@@ -5264,9 +5264,11 @@ EndOfBuffer	Filler lines (~) after the last line in the buffer.
 							*hl-TermCursor*
 TermCursor	Cursor in a focused terminal.
 							*hl-OkMsg*
-OkMsg		Success messages on the command line.
+OkMsg		Success messages.
+							*hl-WarningMsg*
+WarningMsg	Warning messages.
 							*hl-ErrorMsg*
-ErrorMsg	Error messages on the command line.
+ErrorMsg	Error messages.
 							*hl-StderrMsg*
 StderrMsg	Messages in stderr from shell commands.
 							*hl-StdoutMsg*
@@ -5407,8 +5409,6 @@ Title		Titles for output from ":set all", ":autocmd" etc.
 Visual		Visual mode selection.
 							*hl-VisualNOS*
 VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
-							*hl-WarningMsg*
-WarningMsg	Warning messages.
 							*hl-Whitespace*
 Whitespace	"nbsp", "space", "tab", "multispace", "lead" and "trail"
 		in 'listchars'.

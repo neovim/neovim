@@ -344,7 +344,7 @@ static HlMessage format_progress_message(HlMessage hl_msg, MessageData *msg_data
 /// @param kind Message kind (can be NULL to avoid setting kind)
 /// @param history Whether to add message to history
 /// @param err Whether to print message as an error
-/// @param msg_data Additional data for progress messages
+/// @param msg_data Progress-message data
 MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bool err,
                   MessageData *msg_data, bool *needs_msg_clear)
 {

@@ -4,8 +4,8 @@
 # changelog header
 header = """
 # Changelog\n
-For notable changes, see runtime/doc/news.txt (or `:help news` in Nvim).\n
-Following is a list of fixes/features commits.\n
+Following is a list of commits (fixes/features only) in this release.\n
+See `:help news` in Nvim for release notes.\n
 """
 # template for the changelog body
 # https://github.com/Keats/tera

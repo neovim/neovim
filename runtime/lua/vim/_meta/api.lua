@@ -2157,8 +2157,7 @@ function vim.api.nvim_set_current_win(window) end
 ---   ```
 ---     ["win", winid, bufnr, toprow, botrow]
 ---   ```
---- - on_line: called for each buffer line being redrawn.
----     (The interaction with fold lines is subject to change)
+--- - on_line: (deprecated, use on_range instead)
 ---   ```
 ---     ["line", winid, bufnr, row]
 ---   ```

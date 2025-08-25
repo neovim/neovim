@@ -1558,7 +1558,7 @@ ArrayOf(Object, 2) nvim_get_api_info(uint64_t channel_id, Arena *arena)
 /// orchestration. (Note: Something is better than nothing! Fields are optional, but at least set
 /// `name`.)
 ///
-/// Can be called more than once; the caller should merge old info if appropriate. Example: library
+/// Can be called more than once; caller should merge old info if appropriate. Example: a library
 /// first identifies the channel, then a plugin using that library later identifies itself.
 ///
 /// @param channel_id

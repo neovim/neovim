@@ -826,7 +826,8 @@ message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
 ["msg_show", kind, content, replace_last, history, append, msg_id] ~
-	Display a message to the user.
+	Display a message to the user. Update (replace) any existing message
+	matching `msg_id`.
 
 	kind
 	    Name indicating the message kind:

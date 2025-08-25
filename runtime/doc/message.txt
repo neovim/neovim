@@ -848,25 +848,32 @@ prompt.
 ==============================================================================
 4. PROGRESS MESSAGE                                    *progress-message*
 
-Nvim can emit progress-message, which are a special kind of |ui-messages|
-used to report the state of long-running tasks.
+Plugins and core Nvim features can emit "progress" |ui-messages| to report the
+state of long-running tasks.
 
-Progress messages are created or updated using |nvim_echo()| with `kind='progress'`
-and the related options. Each message has a unique `msg_id`. A subsequent
-message with the same `msg_id` replaces the older one.
+Create or update a progress-message by calling |nvim_echo()| with
+`kind='progress'`. Each message has a unique message-id, returned by
+`nvim_echo`. You can specify the id when calling `nvim_echo` to update an
+existing progress-message.
 
 Events: ~
     • msg_show |ui-messages| event is fired for ext-ui upon creation/update of a
     progress-message
     • Updating or creating a progress message also triggers the |Progress| autocommand.
 
-Example: >
-    local id = vim.api.nvim_echo({{'searching...'}}, true,
-          {kind='progress', status='running', percent=10, title="term"})
-    vim.api.nvim_echo({{'searching'}}, true,
-          {id=id, kind='progress', status='running', percent=50, title="term"})
-    vim.api.nvim_echo({{'done'}}, true,
-          {id=id, kind='progress', status='success', percent=100, title="term"})
+Example: >lua
+    local progress = {
+      kind = 'progress',
+      status = 'running',
+      percent = 10,
+      title = 'term',
+    }
+    progress.id = vim.api.nvim_echo({ { 'searching...' } }, true, progress)
+    progress.percent = 50
+    vim.api.nvim_echo({ { 'searching' } }, true, progress)
+    progress.status = 'success'
+    progress.percent = 100
+    vim.api.nvim_echo({ { 'done' } }, true, progress)
 <
 See also: |nvim_echo()| |ui-messages| |Progress|
 

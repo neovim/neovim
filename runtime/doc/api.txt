@@ -1385,9 +1385,9 @@ nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
     debugging and orchestration. (Note: Something is better than nothing!
     Fields are optional, but at least set `name`.)
 
-    Can be called more than once; the caller should merge old info if
-    appropriate. Example: library first identifies the channel, then a plugin
-    using that library later identifies itself.
+    Can be called more than once; caller should merge old info if appropriate.
+    Example: a library first identifies the channel, then a plugin using that
+    library later identifies itself.
 
     Attributes: ~
         |RPC| only
@@ -3324,8 +3324,7 @@ nvim_set_decoration_provider({ns_id}, {opts})
                  • on_win: called when starting to redraw a specific window. >
                     ["win", winid, bufnr, toprow, botrow]
 <
-                 • on_line: called for each buffer line being redrawn. (The
-                   interaction with fold lines is subject to change) >
+                 • on_line: (deprecated, use on_range instead) >
                     ["line", winid, bufnr, row]
 <
                  • on_range: called for each buffer range being redrawn. Range
