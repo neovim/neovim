@@ -380,8 +380,8 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
   int winid;
   bool found_buf = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    winnr += win_has_winnr(wp);
-    if (wp->w_buffer == buf) {
+    winnr += win_has_winnr(wp, curtab);
+    if (wp->w_buffer == buf && (!get_nr || win_has_winnr(wp, curtab))) {
       found_buf = true;
       winid = wp->handle;
       break;
