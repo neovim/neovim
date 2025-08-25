@@ -10,9 +10,9 @@
 ==============================================================================
 Introduction                                                         *lua-guide*
 
-This guide introduces the basics of everyday usage of Lua to configure and
-operate Nvim. It assumes some familiarity with the (non-Lua) basics of Nvim
-(commands, options, mappings, autocommands), which are covered in the
+This guide introduces the basics of everyday Lua usage for configuring and
+controlling Nvim. It assumes some familiarity with the (non-Lua) basics of
+Nvim (commands, options, mappings, autocommands), which are covered in the
 |user-manual|.
 
 This is not a comprehensive encyclopedia of all available features. Think of
