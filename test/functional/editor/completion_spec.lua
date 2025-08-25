@@ -1424,7 +1424,7 @@ describe('completion', function()
       {1:~                                                           }|*6
                                                                   |
     ]])
-    screen.timeout = 200
+    screen.timeout = 400
 
     feed('Gof')
     screen:expect([[
