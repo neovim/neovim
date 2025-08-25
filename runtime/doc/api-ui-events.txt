@@ -846,7 +846,7 @@ must handle.
 		"lua_error"	Error in |:lua| code
 		"lua_print"	|print()| from |:lua| code
 		"rpc_error"	Error response from |rpcrequest()|
-		"progress"	Progress message emitted by |nvim_echo|
+		"progress"	Progress message emitted by |nvim_echo()|
 		"quickfix"	Quickfix navigation message
 		"search_cmd"	Entered search command
 		"search_count"	Search count message ("S" flag of 'shortmess')
