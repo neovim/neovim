@@ -221,7 +221,7 @@ jobs:
       # This is a workaround for "zig fetch" being unable to decompress lua-dev-deps.tar.gz
       # As the hash in build.zig.zon is calculated after decompression, we can preload the cache instead.
       # This is hopefully fixed for zig 0.15.2, see https://github.com/ziglang/zig/issues/24916
-      - run: curl https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz | zcat > lua-dev-deps.tar
+      - run: curl -L https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz | zcat > lua-dev-deps.tar
       - run: zig fetch lua-dev-deps.tar
 
       - run: zig build test_nlua0
@@ -243,7 +243,7 @@ jobs:
         with:
           version: 0.15.1
 
-      - run: curl https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz | zcat > lua-dev-deps.tar
+      - run: curl -L https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz | zcat > lua-dev-deps.tar
       - run: zig fetch lua-dev-deps.tar
 
       - run: zig build test_nlua0 -Dluajit=false
