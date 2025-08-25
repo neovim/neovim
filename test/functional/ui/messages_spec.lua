@@ -3319,46 +3319,26 @@ describe('progress-message', function()
     }, 'Progress autocmd receives progress messages')
   end)
 
-  it("validates", function ()
+  it('validates', function()
     -- throws error if title, status, percent, data is used in non progress message
     eq(
-      "title, status, percents and data fields can only be used with progress messages",
-      t.pcall_err(
-        api.nvim_echo,
-        { { 'test-message' } },
-        false,
-        { title = 'TestSuit' }
-      )
+      'title, status, percents and data fields can only be used with progress messages',
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { title = 'TestSuit' })
     )
 
     eq(
-      "title, status, percents and data fields can only be used with progress messages",
-      t.pcall_err(
-        api.nvim_echo,
-        { { 'test-message' } },
-        false,
-        { status = 'running' }
-      )
+      'title, status, percents and data fields can only be used with progress messages',
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { status = 'running' })
     )
 
     eq(
-      "title, status, percents and data fields can only be used with progress messages",
-      t.pcall_err(
-        api.nvim_echo,
-        { { 'test-message' } },
-        false,
-        { percent = 10 }
-      )
+      'title, status, percents and data fields can only be used with progress messages',
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { percent = 10 })
     )
 
     eq(
-      "title, status, percents and data fields can only be used with progress messages",
-      t.pcall_err(
-        api.nvim_echo,
-        { { 'test-message' } },
-        false,
-        { data = { tag = "test" } }
-      )
+      'title, status, percents and data fields can only be used with progress messages',
+      t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { data = { tag = 'test' } })
     )
 
     -- throws error if anything other then running/success/failed/cancel is used in status
@@ -3379,7 +3359,7 @@ describe('progress-message', function()
         api.nvim_echo,
         { { 'test-message' } },
         false,
-        { kind = 'progress', status = 'running', percent=-1 }
+        { kind = 'progress', status = 'running', percent = -1 }
       )
     )
 
@@ -3389,7 +3369,7 @@ describe('progress-message', function()
         api.nvim_echo,
         { { 'test-message' } },
         false,
-        { kind = 'progress', status = 'running', percent=101 }
+        { kind = 'progress', status = 'running', percent = 101 }
       )
     )
 
@@ -3411,7 +3391,7 @@ describe('progress-message', function()
         api.nvim_echo,
         { { 'test-message' } },
         false,
-        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running', data="test" }
+        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running', data = 'test' }
       )
     )
   end)
@@ -3433,7 +3413,7 @@ describe('progress-message', function()
     eq('test-message 20', exec_capture('messages'))
 
     -- after some messsage in middle
-    api.nvim_echo( {{'middle msg'}}, true, {})
+    api.nvim_echo({ { 'middle msg' } }, true, {})
     eq('test-message 20\nmiddle msg', exec_capture('messages'))
     api.nvim_echo(
       { { 'test-message 30' } },
