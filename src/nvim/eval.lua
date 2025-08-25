@@ -12523,6 +12523,23 @@ M.funcs = {
     signature = 'test_garbagecollect_now()',
     lua = false,
   },
+  test_refcount = {
+    args = 1,
+    base = 1,
+    desc = [=[
+      Return the reference count of {expr}.  When {expr} is of a
+      type that does not have a reference count, returns -1.  Only
+      to be used for testing.
+    ]=],
+    params = { { 'expr', 'any' } },
+    returns = 'number',
+    signature = 'test_refcount({expr})',
+    lua = false,
+  },
+  test_unknown = {
+    args = 0,
+    lua = false,
+  },
   test_write_list_log = {
     args = 1,
     params = { { 'fname', 'string' } },

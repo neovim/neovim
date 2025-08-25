@@ -11383,6 +11383,17 @@ test_garbagecollect_now()                            *test_garbagecollect_now()*
                 Return: ~
                   (`any`)
 
+test_refcount({expr})                                          *test_refcount()*
+		Return the reference count of {expr}.  When {expr} is of a
+		type that does not have a reference count, returns -1.  Only
+		to be used for testing.
+
+                Parameters: ~
+                  • {expr} (`any`)
+
+                Return: ~
+                  (`number`)
+
 timer_info([{id}])                                                *timer_info()*
 		Return a list with information about timers.
 		When {id} is given only information about this timer is

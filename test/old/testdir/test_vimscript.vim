@@ -6533,6 +6533,9 @@ func Test_type()
     endif
     call assert_equal(v:t_blob, type(v:_null_blob))
 
+    " call assert_fails("call type(test_void())", 'E685:')
+    call assert_fails("call type(test_unknown())", 'E685:')
+
     call assert_equal(0, 0 + v:false)
     call assert_equal(1, 0 + v:true)
     " call assert_equal(0, 0 + v:none)
@@ -7096,7 +7099,6 @@ func Test_unlet_env()
 endfunc
 
 func Test_refcount()
-    throw 'Skipped: Nvim does not support test_refcount()'
     " Immediate values
     call assert_equal(-1, test_refcount(1))
     call assert_equal(-1, test_refcount('s'))
@@ -7204,11 +7206,11 @@ func Test_refcount()
       call assert_equal(-1, test_refcount(test_null_job()))
       call assert_equal(-1, test_refcount(test_null_channel()))
     endif
-    call assert_equal(-1, test_refcount(test_null_function()))
-    call assert_equal(-1, test_refcount(test_null_partial()))
-    call assert_equal(-1, test_refcount(test_null_blob()))
-    call assert_equal(-1, test_refcount(test_null_list()))
-    call assert_equal(-1, test_refcount(test_null_dict()))
+    call assert_equal(-1, test_refcount(v:_null_function))
+    " call assert_equal(-1, test_refcount(test_null_partial()))
+    call assert_equal(-1, test_refcount(v:_null_blob))
+    call assert_equal(-1, test_refcount(v:_null_list))
+    call assert_equal(-1, test_refcount(v:_null_dict))
 endfunc
 
 " Test for missing :endif, :endfor, :endwhile and :endtry           {{{1

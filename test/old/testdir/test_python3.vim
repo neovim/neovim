@@ -399,6 +399,14 @@ endfunc
 " Test for the python List object
 func Test_python3_list()
   throw 'Skipped: Nvim does not support vim.bindeval()'
+
+  " Try to bind a null List variable (works because an empty list is used)
+   let cmds =<< trim END
+     let l = test_null_list()
+     py3 ll = vim.bindeval('l')
+   END
+  call AssertException(cmds, '')
+
   let l = []
   py3 l = vim.bindeval('l')
   py3 f = vim.bindeval('function("strlen")')
