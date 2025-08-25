@@ -3324,8 +3324,7 @@ nvim_set_decoration_provider({ns_id}, {opts})
                  • on_win: called when starting to redraw a specific window. >
                     ["win", winid, bufnr, toprow, botrow]
 <
-                 • on_line: called for each buffer line being redrawn. (The
-                   interaction with fold lines is subject to change) >
+                 • on_line: (deprecated, use on_range instead) >
                     ["line", winid, bufnr, row]
 <
                  • on_range: called for each buffer range being redrawn. Range

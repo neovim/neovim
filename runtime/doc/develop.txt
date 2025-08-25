@@ -451,6 +451,8 @@ Use existing common {verb} names (actions) if possible:
                     a handler. |dev-name-events|
     - open:         Opens something (a buffer, window, …)
     - parse:        Parses something into a structured form
+    - request:      Calls a remote (network, RPC) operation.
+    - send:         Writes data or a message to a channel.
     - set:          Sets a thing (or group of things)
     - start:        Spin up a long-lived process. Prefer "enable" except when
                     "start" is obviously more appropriate.
@@ -461,7 +463,7 @@ Do NOT use these deprecated verbs:
     - contains:     Prefer "has".
     - disable:      Prefer `enable(enable: boolean)`.
     - exit:         Prefer "cancel" (or "stop" if appropriate).
-    - is_disabled:  Prefer `is_enabled()`.
+    - is_disabled:  Prefer `!is_enabled()`.
     - list:         Redundant with "get"
     - notify:       Redundant with "print", "echo"
     - show:         Redundant with "print", "echo"
