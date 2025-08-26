@@ -834,4 +834,24 @@ describe('default statusline', function()
                                                                   |
     ]])
   end)
+
+  it('shows progress status as progress messages are added', function()
+    local function get_progress()
+      return exec_lua(function()
+        local stl_str = vim.status.get_progress_status()
+        return vim.api.nvim_eval_statusline(stl_str, {}).str
+      end)
+    end
+
+    eq("", get_progress())
+    ---@type integer
+    local id1 = api.nvim_echo({{'searching...'}}, true, {kind='progress', title='test', status='running', percent=10})
+    eq("test: 10% ", get_progress())
+    api.nvim_echo({{'searching'}}, true, {id = id1, kind='progress', percent=50, status='running', title="terminal(ripgrep)"})
+    eq("terminal(ripgrep): 50% ", get_progress())
+    api.nvim_echo({{'searching...'}}, true, {kind='progress', title='second-item', status='running', percent=20})
+    eq("Progress: 2 items 35% ", get_progress())
+    api.nvim_echo({{'searching'}}, true, {id = id1, kind='progress', percent=100, status='success', title="terminal(ripgrep)"})
+    eq("second-item: 20% ", get_progress())
+  end)
 end)

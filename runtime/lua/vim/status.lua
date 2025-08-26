@@ -15,12 +15,12 @@ do
   vim.api.nvim_create_autocmd('Progress', {
     group = progress_group,
     desc = 'Track progress messages for statusline',
-    ---@param ev {data: {msg_id: integer, title: string, status: string, percent: integer}}
+    ---@param ev {data: {id: integer, title: string, status: string, percent: integer}}
     callback = function(ev)
-      if not ev.data or not ev.data.msg_id then
+      if not ev.data or not ev.data.id then
         return
       end
-      progress[ev.data.msg_id] = {
+      progress[ev.data.id] = {
         title = ev.data.title,
         status = ev.data.status,
         percent = ev.data.percent or 0,
@@ -33,7 +33,7 @@ do
         or ev.data.status == 'failed'
         or ev.data.status == 'cancel'
       then
-        progress[ev.data.msg_id] = nil
+        progress[ev.data.id] = nil
       end
     end,
   })
