@@ -3,7 +3,8 @@
 " Copyright:	Christian Jacobsen <clj3@kent.ac.uk>, Mario Schweigler <ms44@kent.ac.uk>
 " Maintainer:	Mario Schweigler <ms44@kent.ac.uk>
 " Last Change:	23 April 2003
-"		2024 Jan 14 by Vim Project (browsefilter)
+" 2024 Jan 14 by Vim Project (browsefilter)
+" 2025 Jun 08 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -26,6 +27,7 @@ setlocal expandtab
 " Break comment lines and insert comment leader in this case
 setlocal formatoptions-=t formatoptions+=cql
 setlocal comments+=:--
+setlocal commentstring=--\ %s
 " Maximum length of comments is 78
 setlocal textwidth=78
 "}}}
@@ -46,7 +48,7 @@ endif
 
 "{{{  Undo settings
 let b:undo_ftplugin = "setlocal shiftwidth< softtabstop< expandtab<"
-	\ . " formatoptions< comments< textwidth<"
+	\ . " formatoptions< comments< commentstring< textwidth<"
 	\ . "| unlet! b:browsefilter"
 "}}}
 

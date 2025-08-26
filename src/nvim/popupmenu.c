@@ -21,8 +21,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
-#include "nvim/extmark.h"
-#include "nvim/extmark_defs.h"
+#include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
@@ -33,22 +32,18 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
-#include "nvim/mark.h"
 #include "nvim/mbyte.h"
-#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/menu.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
-#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
-#include "nvim/search.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -86,9 +81,7 @@ static bool pum_is_drawn = false;
 static bool pum_external = false;
 static bool pum_invalid = false;  // the screen was just cleared
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "popupmenu.c.generated.h"
-#endif
+#include "popupmenu.c.generated.h"
 #define PUM_DEF_HEIGHT 10
 
 static void pum_compute_size(void)
@@ -142,10 +135,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // To keep the code simple, we only allow changing the
     // draw mode when the popup menu is not being displayed
     pum_external = ui_has(kUIPopupmenu)
-                   || (State == MODE_CMDLINE && ui_has(kUIWildmenu));
+                   || ((State & MODE_CMDLINE) && ui_has(kUIWildmenu));
   }
 
-  pum_rl = State != MODE_CMDLINE && curwin->w_p_rl;
+  pum_rl = (State & MODE_CMDLINE) == 0 && curwin->w_p_rl;
 
   do {
     // Mark the pum as visible already here,
@@ -163,7 +156,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     pum_win_col_offset = 0;
 
     // wildoptions=pum
-    if (State == MODE_CMDLINE) {
+    if (State & MODE_CMDLINE) {
       pum_win_row = cmdline_win ? cmdline_win->w_wrow : ui_has(kUICmdline) ? 0 : cmdline_row;
       cursor_col = (cmdline_win ? cmdline_win->w_config._cmdline_offset : 0) + cmd_startcol;
       cursor_col %= cmdline_win ? cmdline_win->w_view_width : Columns;
@@ -257,7 +250,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // pum above "pum_win_row"
       pum_above = true;
 
-      if (State == MODE_CMDLINE && target_win == NULL) {
+      if ((State & MODE_CMDLINE) && target_win == NULL) {
         // For cmdline pum, no need for context lines unless target_win is set
         context_lines = 0;
       } else {
@@ -281,11 +274,11 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       // pum below "pum_win_row"
       pum_above = false;
 
-      if (State == MODE_CMDLINE && target_win == NULL) {
+      if ((State & MODE_CMDLINE) && target_win == NULL) {
         // for cmdline pum, no need for context lines unless target_win is set
         context_lines = 0;
       } else {
-        // Leave two lines of context if possible
+        // Leave three lines of context if possible
         validate_cheight(target_win);
         int cline_visible_offset = target_win->w_cline_row +
                                    target_win->w_cline_height - target_win->w_wrow;
@@ -437,7 +430,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // room the window size will keep changing.
   } while (pum_set_selected(selected, redo_count) && ++redo_count <= 2);
 
-  pum_grid.zindex = (State == MODE_CMDLINE) ? kZIndexCmdlinePopupMenu : kZIndexPopupMenu;
+  pum_grid.zindex = (State & MODE_CMDLINE) ? kZIndexCmdlinePopupMenu : kZIndexPopupMenu;
   pum_redraw();
 }
 
@@ -451,15 +444,15 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
     return NULL;
   }
 
-  char *leader = State == MODE_CMDLINE ? cmdline_compl_pattern()
-                                       : ins_compl_leader();
+  char *leader = (State & MODE_CMDLINE) ? cmdline_compl_pattern()
+                                        : ins_compl_leader();
   if (leader == NULL || *leader == NUL) {
     return NULL;
   }
 
   int *attrs = xmalloc(sizeof(int) * (size_t)vim_strsize(text));
-  bool in_fuzzy = State == MODE_CMDLINE ? cmdline_compl_is_fuzzy()
-                                        : (get_cot_flags() & kOptCotFlagFuzzy) != 0;
+  bool in_fuzzy = (State & MODE_CMDLINE) ? cmdline_compl_is_fuzzy()
+                                         : (get_cot_flags() & kOptCotFlagFuzzy) != 0;
   size_t leader_len = strlen(leader);
 
   garray_T *ga = NULL;
@@ -467,6 +460,10 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
 
   if (in_fuzzy) {
     ga = fuzzy_match_str_with_pos(text, leader);
+    if (!ga) {
+      xfree(attrs);
+      return NULL;
+    }
   }
 
   const char *ptr = text;
@@ -1044,11 +1041,13 @@ static bool pum_set_selected(int n, int repeat)
     // 'completeopt' contains "preview".
     // Skip this when tried twice already.
     // Skip this also when there is not much room.
+    // Skip this for command-window when 'completeopt' contains "preview".
     // NOTE: Be very careful not to sync undo!
     if ((pum_array[pum_selected].pum_info != NULL)
         && (Rows > 10)
         && (repeat <= 1)
-        && (cur_cot_flags & (kOptCotFlagPreview | kOptCotFlagPopup))) {
+        && (cur_cot_flags & (kOptCotFlagPreview | kOptCotFlagPopup))
+        && !((cur_cot_flags & kOptCotFlagPreview) && cmdwin_type != 0)) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
 

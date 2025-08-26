@@ -160,7 +160,18 @@ g:rustfmt_emit_files ~
 	provided) instead of '--write-mode=overwrite'. >vim
 	    let g:rustfmt_emit_files = 0
 <
-
+                                                     *g:rustfmt_detect_version*
+g:rustfmt_detect_version ~
+	When set to 1, will try to parse the version output from "rustfmt".
+	Disabled by default for performance reasons >vim
+	    let g:rustfmt_detect_version = 1
+<
+                                                       *g:rustfmt_find_toml*
+g:rustfmt_emit_files ~
+	When set to 1, will try to find "rustfmt.toml" file by searching from
+	current path upwards.  Disabled by default for performance reasons >vim
+	    let g:rustfmt_find_toml = 1
+<
 							  *g:rust_playpen_url*
 g:rust_playpen_url ~
 	Set this option to override the url for the playpen to use: >vim

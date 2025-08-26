@@ -15,6 +15,7 @@ local globalstate = {
 ---@field version? integer
 ---@field client_hints? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
 ---@field applied table<integer, integer> Last version of hints applied to this line
+
 ---@type table<integer, vim.lsp.inlay_hint.bufstate>
 local bufstates = vim.defaulttable(function(_)
   return setmetatable({ applied = {} }, {
@@ -43,9 +44,9 @@ function M.on_inlayhint(err, result, ctx)
     return
   end
   local bufnr = assert(ctx.bufnr)
+
   if
     util.buf_versions[bufnr] ~= ctx.version
-    or not result
     or not api.nvim_buf_is_loaded(bufnr)
     or not bufstates[bufnr].enabled
   then
@@ -59,6 +60,9 @@ function M.on_inlayhint(err, result, ctx)
   end
   local client_hints = bufstate.client_hints
   local client = assert(vim.lsp.get_client_by_id(client_id))
+
+  -- If there's no error but the result is nil, clear existing hints.
+  result = result or {}
 
   local new_lnum_hints = vim.defaulttable()
   local num_unprocessed = #result
@@ -84,6 +88,29 @@ function M.on_inlayhint(err, result, ctx)
   api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
 end
 
+--- Refresh inlay hints, only if we have attached clients that support it
+---@param bufnr (integer) Buffer handle, or 0 for current
+---@param client_id? (integer) Client ID, or nil for all
+local function refresh(bufnr, client_id)
+  for _, client in
+    ipairs(vim.lsp.get_clients({
+      bufnr = bufnr,
+      id = client_id,
+      method = ms.textDocument_inlayHint,
+    }))
+  do
+    client:request(ms.textDocument_inlayHint, {
+      textDocument = util.make_text_document_params(bufnr),
+      range = util._make_line_range_params(
+        bufnr,
+        0,
+        api.nvim_buf_line_count(bufnr) - 1,
+        client.offset_encoding
+      ),
+    }, nil, bufnr)
+  end
+end
+
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
 ---@param ctx lsp.HandlerContext
 ---@private
@@ -96,7 +123,7 @@ function M.on_refresh(err, _, ctx)
       if api.nvim_win_get_buf(winid) == bufnr then
         if bufstates[bufnr] and bufstates[bufnr].enabled then
           bufstates[bufnr].applied = {}
-          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
+          refresh(bufnr)
         end
       end
     end
@@ -228,22 +255,13 @@ local function _disable(bufnr)
   bufstates[bufnr].enabled = false
 end
 
---- Refresh inlay hints, only if we have attached clients that support it
----@param bufnr (integer) Buffer handle, or 0 for current
----@param opts? vim.lsp.util._refresh.Opts Additional options to pass to util._refresh
-local function _refresh(bufnr, opts)
-  opts = opts or {}
-  opts['bufnr'] = bufnr
-  util._refresh(ms.textDocument_inlayHint, opts)
-end
-
 --- Enable inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
 local function _enable(bufnr)
   bufnr = vim._resolve_bufnr(bufnr)
   bufstates[bufnr] = nil
   bufstates[bufnr].enabled = true
-  _refresh(bufnr)
+  refresh(bufnr)
 end
 
 api.nvim_create_autocmd('LspNotify', {
@@ -258,7 +276,7 @@ api.nvim_create_autocmd('LspNotify', {
       return
     end
     if bufstates[bufnr].enabled then
-      _refresh(bufnr, { client_id = args.data.client_id })
+      refresh(bufnr, args.data.client_id)
     end
   end,
   group = augroup,
@@ -273,7 +291,7 @@ api.nvim_create_autocmd('LspAttach', {
         clear(cb_bufnr)
         if bufstates[cb_bufnr] and bufstates[cb_bufnr].enabled then
           bufstates[cb_bufnr].applied = {}
-          _refresh(cb_bufnr)
+          refresh(cb_bufnr)
         end
       end,
       on_detach = function(_, cb_bufnr)

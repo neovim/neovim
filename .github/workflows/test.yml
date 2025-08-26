@@ -28,17 +28,17 @@ env:
 
 jobs:
   lint:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
 
       - name: Install stylua
         run: |
-          wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
+          wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-aarch64.zip
           (cd "$BIN_DIR"; unzip stylua*.zip)
 
       - name: Build third-party deps
@@ -82,12 +82,12 @@ jobs:
         run: cmake --build build --target lintc-uncrustify
 
   clang-analyzer:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 20
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
       - name: Build third-party deps
         run: |
@@ -111,7 +111,7 @@ jobs:
             { runner: ubuntu-24.04, os: ubuntu, flavor: asan, cc: clang, flags: -D ENABLE_ASAN_UBSAN=ON },
             { runner: ubuntu-24.04, os: ubuntu, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
             { runner: ubuntu-24.04, os: ubuntu, flavor: release, cc: gcc, flags: -D CMAKE_BUILD_TYPE=Release -D ENABLE_TRANSLATIONS=ON },
-            # { runner: ubuntu-24.04-arm, os: ubuntu, flavor: arm, cc: gcc, flags: -D CMAKE_BUILD_TYPE=RelWithDebInfo },
+            { runner: ubuntu-24.04-arm, os: ubuntu, flavor: arm, cc: clang, flags: -D CMAKE_BUILD_TYPE=RelWithDebInfo },
             { runner: macos-13, os: macos, flavor: intel, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
             { runner: macos-15, os: macos, flavor: arm, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
             { runner: ubuntu-24.04, os: ubuntu, flavor: puc-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
@@ -124,12 +124,17 @@ jobs:
             build: { flavor: puc-lua }
           - test: oldtest
             build: { flavor: tsan }
+          - test: unittest
+            build: { runner: ubuntu-24.04-arm }
+          - test: oldtest
+            build: { runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.build.runner }}
     timeout-minutes: 45
     env:
       CC: ${{ matrix.build.cc }}
+      NVIM_TEST_INTEG: ${{ matrix.build.flavor == 'release' && '1' || '0' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
         with:
           install_flags: "--test"
@@ -204,28 +209,32 @@ jobs:
   zig-build:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
-    name: build using zig build
+    name: build using zig build (linux)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: mlugg/setup-zig@v2
         with:
          version: 0.14.1
       - run: sudo apt-get install -y inotify-tools
       - run: zig build test_nlua0
-      - run: zig build nvim_bin && ./zig-out/bin/nvim --version
+      - run: zig build nvim && ./zig-out/bin/nvim --version
       - run: zig build unittest
       - run: zig build functionaltest
+      # `zig build nvim` uses a lua script for doctags in order to support cross-compiling
+      # compare with the builtin generator that they match
+      - run: cd runtime; ../zig-out/bin/nvim -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
+      - run: diff -u runtime/doc/tags zig-out/runtime/doc/tags
 
   windows:
     uses: ./.github/workflows/test_windows.yml
 
   with-external-deps:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     env:
       CC: gcc
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
 
       - name: Install dependencies

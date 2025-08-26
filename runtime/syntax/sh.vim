@@ -3,7 +3,7 @@
 " Maintainer:		This runtime file is looking for a new maintainer.
 " Previous Maintainers:	Charles E. Campbell
 " 		Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		2024 Mar 04 by Vim Project
+" Last Change:		2024 Mar 04 by Vim Project {{{1
 "		2024 Nov 03 by Aliaksei Budavei <0x000c70 AT gmail DOT com> (improved bracket expressions, #15941)
 "		2025 Jan 06 add $PS0 to bashSpecialVariables (#16394)
 "		2025 Jan 18 add bash coproc, remove duplicate syn keywords (#16467)
@@ -15,6 +15,10 @@
 "		2025 May 06 match KornShell compound arrays
 "		2025 May 10 improve wildcard character class lists
 "		2025 May 21 improve supported KornShell features
+"		2025 Jun 16 change how sh_fold_enabled is reset (#17557)
+"		2025 Jul 18 properly delete :commands (#17785)
+"		2025 Aug 23 bash: add support for ${ cmd;} and ${|cmd;} (#18084)
+" }}}
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -147,8 +151,8 @@ endif
 if !exists("g:sh_fold_enabled")
  let g:sh_fold_enabled= 0
 elseif g:sh_fold_enabled != 0 && !has("folding")
- let g:sh_fold_enabled= 0
  echomsg "Ignoring g:sh_fold_enabled=".g:sh_fold_enabled."; need to re-compile vim for +fold support"
+ let g:sh_fold_enabled= 0
 endif
 let s:sh_fold_functions= and(g:sh_fold_enabled,1)
 let s:sh_fold_heredoc  = and(g:sh_fold_enabled,2)
@@ -173,9 +177,15 @@ endif
 
 " Set up folding commands for shell {{{1
 " =================================
-sil! delc ShFoldFunctions
-sil! delc ShFoldHereDoc
-sil! delc ShFoldIfDoFor
+if exists(":ShFoldFunctions") == 2
+  delc ShFoldFunctions
+endif
+if exists(":ShFoldIfHereDoc") == 2
+  delc ShFoldHereDoc
+endif
+if exists(":ShFoldIfDoFor") == 2
+  delc ShFoldIfDoFor
+endif
 if s:sh_fold_functions
  com! -nargs=* ShFoldFunctions <args> fold
 else
@@ -465,6 +475,9 @@ if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
   if exists("b:is_mksh") || exists("b:generic_korn")
    syn region shValsub matchgroup=shCmdSubRegion start="\${|"  skip='\\\\\|\\.' end="}"  contains=@shCommandSubList
   endif
+ elseif exists("b:is_bash")
+  syn region shSubshare matchgroup=shCmdSubRegion start="\${\ze[ \t\n]"  skip='\\\\\|\\.' end="\zs[;\n][ \t\n]*}"  contains=@shCommandSubList
+  syn region shValsub matchgroup=shCmdSubRegion start="\${|"  skip='\\\\\|\\.' end="[;\n][ \t\n]*}"  contains=@shCommandSubList
  endif
  syn region shArithmetic matchgroup=shArithRegion  start="\$((" skip='\\\\\|\\.' end="))" contains=@shArithList
  syn region shArithmetic matchgroup=shArithRegion  start="\$\[" skip='\\\\\|\\.' end="\]" contains=@shArithList
@@ -668,6 +681,8 @@ if exists("b:is_kornshell") && !exists("b:is_ksh88")
  else
   syn region shDeref	matchgroup=PreProc start="\${\ze[^ \t\n<]" end="}"	contains=@shDerefList,shDerefVarArray nextgroup=shSpecialStart
  endif
+elseif exists("b:is_bash")
+ syn region shDeref	matchgroup=PreProc start="\${\ze[^ \t\n|]" end="}"	contains=@shDerefList,shDerefVarArray nextgroup=shSpecialStart
 else
  syn region shDeref	matchgroup=PreProc start="\${" end="}"			contains=@shDerefList,shDerefVarArray nextgroup=shSpecialStart
 endif

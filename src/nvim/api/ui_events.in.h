@@ -1,9 +1,7 @@
 #pragma once
 
 // This file is not compiled, just parsed for definitions
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# error "don't include this file, include nvim/ui.h"
-#endif
+#error "don't include this file, include nvim/ui.h"
 
 #include "nvim/api/private/defs.h"
 #include "nvim/func_attr.h"
@@ -29,6 +27,10 @@ void visual_bell(void)
   FUNC_API_SINCE(3);
 void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
+void connect(Array args)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IMPL;
+void restart(String progpath, Array argv)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IMPL;
 void suspend(void)
   FUNC_API_SINCE(3);
 void set_title(String title)
@@ -44,6 +46,8 @@ void chdir(String path)
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)
   FUNC_API_NOEXPORT;
+void ui_send(String content)
+  FUNC_API_SINCE(14) FUNC_API_REMOTE_IMPL;
 
 // First revision of the grid protocol, used by default
 void update_fg(Integer fg)
@@ -170,12 +174,16 @@ void msg_showmode(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_ruler(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void msg_history_show(Array entries)
+void msg_history_show(Array entries, Boolean prev_cmd)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void msg_history_clear(void)
-  FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
 
+// This UI event is currently undocumented.
+// - When the server needs to intentionally exit with an exit code, and there is no
+//   message in server stderr for the user, this event is sent with positive `status`
+//   argument, to indicate that the UI should exit normally with `status`.
+// - When the server has crashed or there is a message in server stderr for the user,
+//   this event is not sent, and the UI should make server stderr visible.
+// - When :detach is used on the server, this event is sent with a zero `status`
+//   argument, to indicate that the UI shouldn't wait for server exit.
 void error_exit(Integer status)
-  FUNC_API_SINCE(12);
-void restart(void)
-  FUNC_API_SINCE(14) FUNC_API_REMOTE_ONLY FUNC_API_CLIENT_IMPL;
+  FUNC_API_SINCE(12) FUNC_API_CLIENT_IMPL;

@@ -4,13 +4,13 @@
 		  NVIM REFERENCE MANUAL
 
 
-Vimscript functions	*vimscript-functions* *builtin-functions* *builtin.txt*
+Vimscript functions			*vimscript-functions* *builtin.txt*
 
 For functions grouped by what they are used for see |function-list|.
 
 				      Type |gO| to see the table of contents.
 ==============================================================================
-1. Details					*builtin-function-details*
+1. Details					*vimscript-functions-details*
 
 abs({expr})                                                              *abs()*
 		Return the absolute value of {expr}.  When {expr} evaluates to
@@ -1008,16 +1008,23 @@ charidx({string}, {idx} [, {countcc} [, {utf16}]])                   *charidx()*
                 Return: ~
                   (`integer`)
 
-chdir({dir})                                                           *chdir()*
-		Change the current working directory to {dir}.  The scope of
-		the directory change depends on the directory of the current
-		window:
-			- If the current window has a window-local directory
-			  (|:lcd|), then changes the window local directory.
-			- Otherwise, if the current tabpage has a local
-			  directory (|:tcd|) then changes the tabpage local
-			  directory.
-			- Otherwise, changes the global directory.
+chdir({dir} [, {scope}])                                               *chdir()*
+		Changes the current working directory to {dir}.  The scope of
+		the change is determined as follows:
+		If {scope} is not present, the current working directory is
+		changed to the scope of the current directory:
+		    - If the window local directory (|:lcd|) is set, it
+		      changes the current working directory for that scope.
+		    - Otherwise, if the tab page local directory (|:tcd|) is
+		      set, it changes the current directory for that scope.
+		    - Otherwise, changes the global directory for that scope.
+
+		If {scope} is present, changes the current working directory
+		for the specified scope:
+		    "window"	Changes the window local directory.  |:lcd|
+		    "tabpage"	Changes the tab page local directory.  |:tcd|
+		    "global"	Changes the global directory.  |:cd|
+
 		{dir} must be a String.
 		If successful, returns the previous working directory.  Pass
 		this to another chdir() to restore the directory.
@@ -1033,6 +1040,7 @@ chdir({dir})                                                           *chdir()*
 
                 Parameters: ~
                   • {dir} (`string`)
+                  • {scope} (`string?`)
 
                 Return: ~
                   (`string`)
@@ -1278,8 +1286,8 @@ complete_match([{lnum}, {col}])                               *complete_match()*
 		  or empty string if no match was found or when using the
 		  default 'iskeyword' pattern.
 
-		When 'isexpand' is empty, uses the 'iskeyword' pattern
-		"\k\+$" to find the start of the current keyword.
+		When 'isexpand' is empty, uses the 'iskeyword' pattern "\k\+$"
+		to find the start of the current keyword.
 
 		Examples: >vim
 		  set isexpand=.,->,/,/*,abc
@@ -2098,34 +2106,35 @@ expand({string} [, {nosuf} [, {list}]])                               *expand()*
 		done like for the |cmdline-special| variables with their
 		associated modifiers.  Here is a short overview:
 
-			%		current file name
-			#		alternate file name
-			#n		alternate file name n
-			<cfile>		file name under the cursor
-			<afile>		autocmd file name
-			<abuf>		autocmd buffer number (as a String!)
-			<amatch>	autocmd matched name
+			%		Current file name
+			#		Alternate file name
+			#n		Alternate file name n
+			<cfile>		File name under the cursor
+			<afile>		Autocmd file name
+			<abuf>		Autocmd buffer number (as a String!)
+			<amatch>	Autocmd matched name
 			<cexpr>		C expression under the cursor
-			<sfile>		sourced script file or function name
-			<slnum>		sourced script line number or function
+			<sfile>		Deprecated, use <script> or <stack>
+			<slnum>		Sourced script line number or function
 					line number
-			<sflnum>	script file line number, also when in
+			<sflnum>	Script file line number, also when in
 					a function
 			<SID>		"<SNR>123_"  where "123" is the
 					current script ID  |<SID>|
-			<script>	sourced script file, or script file
-					where the current function was defined
-			<stack>		call stack
-			<cword>		word under the cursor
+			<script>	Sourced script file, or script file
+					where the current function was defined.
+					For Lua see |lua-script-location|.
+			<stack>		Call stack
+			<cword>		Word under the cursor
 			<cWORD>		WORD under the cursor
-			<client>	the {clientid} of the last received
+			<client>	The {clientid} of the last received
 					message
 		Modifiers:
-			:p		expand to full path
-			:h		head (last path component removed)
-			:t		tail (last path component only)
-			:r		root (one extension removed)
-			:e		extension only
+			:p		Expand to full path
+			:h		Head (last path component removed)
+			:t		Tail (last path component only)
+			:r		Root (one extension removed)
+			:e		Extension only
 
 		Example: >vim
 			let &tags = expand("%:p:h") .. "/tags"
@@ -3115,6 +3124,7 @@ getbufvar({buf}, {varname} [, {def}])                              *getbufvar()*
 		Examples: >vim
 			let bufmodified = getbufvar(1, "&mod")
 			echo "todo myvar = " .. getbufvar("todo", "myvar")
+<
 
                 Parameters: ~
                   • {buf} (`integer|string`)
@@ -3163,8 +3173,7 @@ getchar([{expr} [, {opts}]])                                         *getchar()*
 			Return zero otherwise.
 		If {expr} is 1, only check if a character is available, it is
 			not consumed.  Return zero if no character available.
-		If you prefer always getting a string use |getcharstr()|, or
-		specify |FALSE| as "number" in {opts}.
+		To always get a string, specify "number" as |FALSE| in {opts}.
 
 		Without {expr} and when {expr} is 0 a whole character or
 		special key is returned.  If it is a single character, the
@@ -3349,6 +3358,9 @@ getcmdcompltype()                                            *getcmdcompltype()*
 		|getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
 		Returns an empty string when completion is not defined.
 
+		To get the type of the command-line completion for a specified
+		string, use |getcompletiontype()|.
+
                 Return: ~
                   (`string`)
 
@@ -3445,13 +3457,13 @@ getcompletion({pat}, {type} [, {filtered}])                    *getcompletion()*
 		customlist,{func} custom completion, defined via {func}
 		diff_buffer	|:diffget| and |:diffput| completion
 		dir		directory names
-		dir_in_path	directory names in |'cdpath'|
+		dir_in_path	directory names in 'cdpath'
 		environment	environment variable names
 		event		autocommand events
 		expression	Vim expression
 		file		file and directory names
-		file_in_path	file and directory names in |'path'|
-		filetype	filetype names |'filetype'|
+		file_in_path	file and directory names in 'path'
+		filetype	filetype names 'filetype'
 		filetypecmd	|:filetype| suboptions
 		function	function name
 		help		help subjects
@@ -3465,12 +3477,13 @@ getcompletion({pat}, {type} [, {filtered}])                    *getcompletion()*
 		messages	|:messages| suboptions
 		option		options
 		packadd		optional package |pack-add| names
+		retab		|:retab| suboptions
 		runtime		|:runtime| completion
 		scriptnames	sourced script names |:scriptnames|
 		shellcmd	Shell command
 		shellcmdline	Shell command line with filename arguments
 		sign		|:sign| suboptions
-		syntax		syntax file names |'syntax'|
+		syntax		syntax file names 'syntax'
 		syntime		|:syntime| suboptions
 		tag		tags
 		tag_listfiles	tags, file names
@@ -3508,6 +3521,19 @@ getcompletion({pat}, {type} [, {filtered}])                    *getcompletion()*
                 Return: ~
                   (`string[]`)
 
+getcompletiontype({pat})                                   *getcompletiontype()*
+		Return the type of the command-line completion using {pat}.
+		When no corresponding completion type is found, an empty
+		string is returned.
+		To get the current command-line completion type, use
+		|getcmdcompltype()|.
+
+                Parameters: ~
+                  • {pat} (`string`)
+
+                Return: ~
+                  (`string`)
+
 getcurpos([{winid}])                                               *getcurpos()*
 		Get the position of the cursor.  This is like getpos('.'), but
 		includes an extra "curswant" item in the list:
@@ -3537,7 +3563,7 @@ getcurpos([{winid}])                                               *getcurpos()*
                   • {winid} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`[integer, integer, integer, integer, integer]`)
 
 getcursorcharpos([{winid}])                                 *getcursorcharpos()*
 		Same as |getcurpos()| but the column number in the returned
@@ -3846,7 +3872,7 @@ getmatches([{win}])                                               *getmatches()*
                   • {win} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`vim.fn.getmatches.ret.item[]`)
 
 getmousepos()                                                    *getmousepos()*
 		Returns a |Dictionary| with the last known position of the
@@ -3952,7 +3978,7 @@ getpos({expr})                                                        *getpos()*
                   • {expr} (`string`)
 
                 Return: ~
-                  (`integer[]`)
+                  (`[integer, integer, integer, integer]`)
 
 getqflist([{what}])                                                *getqflist()*
 		Returns a |List| with all the current quickfix errors.  Each
@@ -4089,6 +4115,7 @@ getreg([{regname} [, 1 [, {list}]]])                                  *getreg()*
 
                 Parameters: ~
                   • {regname} (`string?`)
+                  • {expr} (`any?`)
                   • {list} (`nil|false?`)
 
                 Return: ~
@@ -4168,6 +4195,10 @@ getregion({pos1}, {pos2} [, {opts}])                               *getregion()*
 		- It is evaluated in current window context, which makes a
 		  difference if the buffer is displayed in a window with
 		  different 'virtualedit' or 'list' values.
+		- When specifying an exclusive selection and {pos1} and {pos2}
+		  are equal, the returned list contains a single character as
+		  if selection is inclusive, to match the behavior of an empty
+		  exclusive selection in Visual mode.
 
 		Examples: >vim
 			xnoremap <CR>
@@ -4176,9 +4207,9 @@ getregion({pos1}, {pos2} [, {opts}])                               *getregion()*
 <
 
                 Parameters: ~
-                  • {pos1} (`table`)
-                  • {pos2} (`table`)
-                  • {opts} (`table?`)
+                  • {pos1} (`[integer, integer, integer, integer]`)
+                  • {pos2} (`[integer, integer, integer, integer]`)
+                  • {opts} (`{type?:string, exclusive?:boolean}?`)
 
                 Return: ~
                   (`string[]`)
@@ -4216,12 +4247,13 @@ getregionpos({pos1}, {pos2} [, {opts}])                         *getregionpos()*
 					(default: |FALSE|)
 
                 Parameters: ~
-                  • {pos1} (`table`)
-                  • {pos2} (`table`)
-                  • {opts} (`table?`)
+                  • {pos1} (`[integer, integer, integer, integer]`)
+                  • {pos2} (`[integer, integer, integer, integer]`)
+                  • {opts}
+                    (`{type?:string, exclusive?:boolean, eol?:boolean}?`)
 
                 Return: ~
-                  (`integer[][][]`)
+                  (`[ [integer, integer, integer, integer], [integer, integer, integer, integer] ][]`)
 
 getregtype([{regname}])                                           *getregtype()*
 		The result is a String, which is type of register {regname}.
@@ -4514,6 +4546,7 @@ getwinvar({winnr}, {varname} [, {def}])                            *getwinvar()*
 		Examples: >vim
 			let list_is_on = getwinvar(2, '&list')
 			echo "myvar = " .. getwinvar(1, 'myvar')
+<
 
                 Parameters: ~
                   • {winnr} (`integer`)
@@ -5213,6 +5246,7 @@ inputlist({textlist})                                              *inputlist()*
 		Example: >vim
 			let color = inputlist(['Select color:', '1. red',
 				\ '2. green', '3. blue'])
+<
 
                 Parameters: ~
                   • {textlist} (`string[]`)
@@ -5390,22 +5424,27 @@ isnan({expr})                                                          *isnan()*
                 Return: ~
                   (`0|1`)
 
-items({dict})                                                          *items()*
-		Return a |List| with all the key-value pairs of {dict}.  Each
-		|List| item is a list with two items: the key of a {dict}
-		entry and the value of this entry.  The |List| is in arbitrary
-		order.  Also see |keys()| and |values()|.
+items({expr})                                                          *items()*
+		Return a |List| with all key/index and value pairs of {expr}.
+		Each |List| item is a list with two items:
+		- for a |Dict|: the key and the value
+		- for a |List| or |String|: the index and the value
+		The returned |List| is in arbitrary order for a |Dict|,
+		otherwise it's in ascending order of the index.
+
+		Also see |keys()| and |values()|.
+
 		Example: >vim
+			let mydict = #{a: 'red', b: 'blue'}
 			for [key, value] in items(mydict)
-			   echo key .. ': ' .. value
+			   echo $"{key} = {value}"
 			endfor
+			echo items([1, 2, 3])
+			echo items("foobar")
 <
-		A List or a String argument is also supported.  In these
-		cases, items() returns a List with the index and the value at
-		the index.
 
                 Parameters: ~
-                  • {dict} (`table`)
+                  • {expr} (`table|string`)
 
                 Return: ~
                   (`any`)
@@ -5714,6 +5753,7 @@ libcall({libname}, {funcname}, {argument})                 *libcall()* *E364* *E
 		object code must be compiled as position-independent ('PIC').
 		Examples: >vim
 			echo libcall("libc.so", "getenv", "HOME")
+<
 
                 Parameters: ~
                   • {libname} (`string`)
@@ -6485,9 +6525,6 @@ matchfuzzy({list}, {str} [, {dict}])                              *matchfuzzy()*
 				given sequence.
 		    limit	Maximum number of matches in {list} to be
 				returned.  Zero means no limit.
-		    camelcase	Use enhanced camel case scoring making results
-				better suited for completion related to
-				programming languages.  Defaults to v:true.
 
 		If {list} is a list of dictionaries, then the optional {dict}
 		argument supports the following additional items:
@@ -7538,6 +7575,19 @@ printf({fmt}, {expr1} ...)                                            *printf()*
                 Return: ~
                   (`string`)
 
+prompt_getinput({buf})                                       *prompt_getinput()*
+		Gets the current user-input in |prompt-buffer| {buf} without invoking
+		prompt_callback. {buf} can be a buffer name or number.
+
+		If the buffer doesn't exist or isn't a prompt buffer, an empty
+		string is returned.
+
+                Parameters: ~
+                  • {buf} (`integer|string`)
+
+                Return: ~
+                  (`any`)
+
 prompt_getprompt({buf})                                     *prompt_getprompt()*
 		Returns the effective prompt text for buffer {buf}.  {buf} can
 		be a buffer name or number.  See |prompt-buffer|.
@@ -7847,7 +7897,7 @@ readfile({fname} [, {type} [, {max}]])                              *readfile()*
                   • {max} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 reduce({object}, {func} [, {initial}])                           *reduce()* *E998*
 		{func} is called for every item in {object}, which can be a
@@ -8416,11 +8466,12 @@ searchcount([{options}])                                         *searchcount()*
 
 		To get the last search count when |n| or |N| was pressed, call
 		this function with `recompute: 0` . This sometimes returns
-		wrong information because |n| and |N|'s maximum count is 999.
-		If it exceeded 999 the result must be max count + 1 (1000). If
-		you want to get correct information, specify `recompute: 1`: >vim
+		wrong information because of 'maxsearchcount'.
+		If the count exceeded 'maxsearchcount', the result must be
+		'maxsearchcount' + 1. If you want to get correct information,
+		specify `recompute: 1`: >vim
 
-			" result == maxcount + 1 (1000) when many matches
+			" result == 'maxsearchcount' + 1 when many matches
 			let result = searchcount(#{recompute: 0})
 
 			" Below returns correct result (recompute defaults
@@ -8507,7 +8558,7 @@ searchcount([{options}])                                         *searchcount()*
 						result.  if search exceeded
 						total count, "total" value
 						becomes `maxcount + 1`
-						(default: 0)
+						(default: 'maxsearchcount')
 		  pos		|List|		`[lnum, col, off]` value
 						when recomputing the result.
 						this changes "current" result
@@ -8695,12 +8746,22 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
                 Return: ~
                   (`any`)
 
-serverlist()                                                      *serverlist()*
+serverlist([{opts}])                                              *serverlist()*
 		Returns a list of server addresses, or empty if all servers
 		were stopped. |serverstart()| |serverstop()|
+
+		The optional argument {opts} is a Dict and supports the following items:
+
+		  peer  : If |TRUE|, servers not started by |serverstart()|
+		          will also be returned. (default: |FALSE|)
+		          Not supported on Windows yet.
+
 		Example: >vim
 			echo serverlist()
 <
+
+                Parameters: ~
+                  • {opts} (`table?`)
 
                 Return: ~
                   (`string[]`)
@@ -9058,7 +9119,7 @@ setmatches({list} [, {win}])                                      *setmatches()*
 		window ID instead of the current window.
 
                 Parameters: ~
-                  • {list} (`any`)
+                  • {list} (`vim.fn.getmatches.ret.item[]`)
                   • {win} (`integer?`)
 
                 Return: ~
@@ -9299,6 +9360,7 @@ setreg({regname}, {value} [, {options}])                              *setreg()*
 		You can also change the type of a register by appending
 		nothing: >vim
 			call setreg('a', '', 'al')
+<
 
                 Parameters: ~
                   • {regname} (`string`)
@@ -9396,6 +9458,7 @@ setwinvar({nr}, {varname}, {val})                                  *setwinvar()*
 		Examples: >vim
 			call setwinvar(1, "&list", 0)
 			call setwinvar(2, "myvar", "foobar")
+<
 
                 Parameters: ~
                   • {nr} (`integer`)
@@ -9866,6 +9929,7 @@ sign_unplace({group} [, {dict}])                                *sign_unplace()*
 
 			" Remove all the placed signs from all the buffers
 			call sign_unplace('*')
+<
 
                 Parameters: ~
                   • {group} (`string`)
@@ -10323,8 +10387,8 @@ stdpath({what})                                                *stdpath()* *E610
 		log          String  Logs directory (for use by plugins too).
 		run          String  Run directory: temporary, local storage
 				     for sockets, named pipes, etc.
-		state        String  Session state directory: storage for file
-				     drafts, swap, undo, |shada|.
+		state        String  Session state: storage for backupdir,
+				     file drafts, |shada|, swap, undo, 'viewdir'.
 
 		Example: >vim
 			echo stdpath("config")
@@ -10522,6 +10586,7 @@ strftime({format} [, {time}])                                       *strftime()*
 		  echo strftime("%H:%M")		   " 11:55
 		  echo strftime("%c", getftime("file.c"))
 						   " Show mod time of file.c.
+<
 
                 Parameters: ~
                   • {format} (`string`)
@@ -10711,7 +10776,7 @@ strridx({haystack}, {needle} [, {start}])                            *strridx()*
 
 strtrans({string})                                                  *strtrans()*
 		The result is a String, which is {string} with all unprintable
-		characters translated into printable characters |'isprint'|.
+		characters translated into printable characters 'isprint'.
 		Like they are shown in a window.  Example: >vim
 			echo strtrans(@a)
 <		This displays a newline in register a as "^@" instead of
@@ -10864,6 +10929,7 @@ swapfilelist()                                                  *swapfilelist()*
 			let &directory = '.'
 			let swapfiles = swapfilelist()
 			let &directory = save_dir
+<
 
                 Return: ~
                   (`string[]`)
@@ -11252,7 +11318,7 @@ taglist({expr} [, {filename}])                                       *taglist()*
 		Refer to |tag-regexp| for more information about the tag
 		search regular expression pattern.
 
-		Refer to |'tags'| for information about how the tags file is
+		Refer to 'tags' for information about how the tags file is
 		located by Vim. Refer to |tags-file-format| for the format of
 		the tags file generated by the different ctags tools.
 
@@ -11618,12 +11684,15 @@ undotree([{buf}])                                                   *undotree()*
                   (`vim.fn.undotree.ret`)
 
 uniq({list} [, {func} [, {dict}]])                                 *uniq()* *E882*
+		Note: Prefer |vim.list.unique()| in Lua.
+
 		Remove second and succeeding copies of repeated adjacent
 		{list} items in-place.  Returns {list}.  If you want a list
 		to remain unmodified make a copy first: >vim
 			let newlist = uniq(copy(mylist))
 <		The default compare function uses the string representation of
 		each item.  For the use of {func} and {dict} see |sort()|.
+		For deduplicating text in the current buffer see |:uniq|.
 
 		Returns zero if {list} is not a |List|.
 
@@ -11703,7 +11772,7 @@ virtcol({expr} [, {list} [, {winid}]])                               *virtcol()*
 		last character.  When "off" is omitted zero is used.  When
 		Virtual editing is active in the current mode, a position
 		beyond the end of the line can be returned.  Also see
-		|'virtualedit'|
+		'virtualedit'
 
 		If {list} is present and non-zero then virtcol() returns a
 		List with the first and last screen position occupied by the
@@ -11737,7 +11806,7 @@ virtcol({expr} [, {list} [, {winid}]])                               *virtcol()*
                   • {winid} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer|[integer, integer]`)
 
 virtcol2col({winid}, {lnum}, {col})                              *virtcol2col()*
 		The result is a Number, which is the byte index of the
@@ -11830,6 +11899,38 @@ wildmenumode()                                                  *wildmenumode()*
 
                 Return: ~
                   (`any`)
+
+wildtrigger()                                                    *wildtrigger()*
+		Start wildcard expansion in the command-line, using the
+		behavior defined by the 'wildmode' and 'wildoptions' settings.
+		See |cmdline-completion|.
+
+		This function also enables completion in search patterns such
+		as |/|, |?|, |:s|, |:g|, |:v| and |:vimgrep|.
+
+		Unlike pressing 'wildchar' manually, this function does not
+		produce a beep when no matches are found and generally
+		operates more quietly.  This makes it suitable for triggering
+		completion automatically, such as from an |:autocmd|.
+						*cmdline-autocompletion*
+		Example: To make the completion menu pop up automatically as
+		you type on the command line, use: >vim
+			autocmd CmdlineChanged [:/\?] call wildtrigger()
+			set wildmode=noselect:lastused,full wildoptions=pum
+<
+		To retain normal history navigation (up/down keys): >vim
+			cnoremap <Up>   <C-U><Up>
+			cnoremap <Down> <C-U><Down>
+<
+		To set an option specifically when performing a search, e.g.
+		to set 'pumheight': >vim
+			autocmd CmdlineEnter [/\?] set pumheight=8
+			autocmd CmdlineLeave [/\?] set pumheight&
+<
+		Return value is always 0.
+
+                Return: ~
+                  (`number`)
 
 win_execute({id}, {command} [, {silent}])                        *win_execute()*
 		Like `execute()` but in the context of window {id}.

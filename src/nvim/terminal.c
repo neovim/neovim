@@ -113,9 +113,7 @@ typedef struct {
   bool cursor_visible;  ///< cursor's current visibility; ensures matched busy_start/stop UI events
 } TerminalState;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "terminal.c.generated.h"
-#endif
+#include "terminal.c.generated.h"
 
 // Delay for refreshing the terminal buffer after receiving updates from
 // libvterm. Improves performance when receiving large bursts of data.
@@ -283,31 +281,22 @@ static int parse_osc8(VTermStringFragment frag, int *attr)
     }
   }
 
-  // Move past the semicolon
-  i++;
-
-  if (i >= frag.len) {
+  if (frag.str[i] != ';') {
     // Invalid OSC sequence
     return 0;
   }
 
-  // Find the terminator
-  const size_t start = i;
-  for (; i < frag.len; i++) {
-    if (frag.str[i] == '\a' || frag.str[i] == '\x1b') {
-      break;
-    }
-  }
+  // Move past the semicolon
+  i++;
 
-  const size_t len = i - start;
-  if (len == 0) {
+  if (i >= frag.len) {
     // Empty OSC 8, no URL
     *attr = 0;
     return 1;
   }
 
-  char *url = xmemdupz(&frag.str[start], len + 1);
-  url[len] = 0;
+  char *url = xmemdupz(&frag.str[i], frag.len - i + 1);
+  url[frag.len - i] = 0;
   *attr = hl_add_url(0, url);
   xfree(url);
 
@@ -2144,7 +2133,7 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
   if (scbk < term->sb_current) {
     size_t diff = term->sb_current - scbk;
     for (size_t i = 0; i < diff; i++) {
-      ml_delete(1, false);
+      ml_delete(1);
       term->sb_current--;
       xfree(term->sb_buffer[term->sb_current]);
     }

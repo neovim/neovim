@@ -9,7 +9,7 @@ func Test_version()
   let v2 = execute('version')
   call assert_equal(v1, v2)
 
-  call assert_match("^\n\nNVIM v[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+.*", v1)
+  call assert_match("^\nNVIM v[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+.*", v1)
 endfunc
 
 func Test_version_redirect()

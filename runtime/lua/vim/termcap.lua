@@ -71,7 +71,7 @@ function M.query(caps, cb)
 
   local query = string.format('\027P+q%s\027\\', table.concat(encoded, ';'))
 
-  io.stdout:write(query)
+  vim.api.nvim_ui_send(query)
 
   timer:start(1000, 0, function()
     -- Delete the autocommand if no response was received

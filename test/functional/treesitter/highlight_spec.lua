@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = n.clear
 local insert = n.insert
 local exec_lua = n.exec_lua
+local eval = n.eval
 local feed = n.feed
 local command = n.command
 local api = n.api
@@ -197,6 +198,14 @@ describe('treesitter highlighting (C)', function()
     end)
     -- legacy syntax highlighting is used
     screen:expect(hl_grid_legacy_c)
+
+    exec_lua(function()
+      vim.cmd 'new | wincmd p'
+      vim.treesitter.start()
+      vim.cmd 'bdelete!'
+    end)
+    -- Does not change &syntax of the other, unrelated buffer.
+    eq('', eval('&syntax'))
   end)
 
   it('is updated with edits', function()
@@ -550,24 +559,13 @@ describe('treesitter highlighting (C)', function()
     screen:expect([=[
       {18:-- }{25:print}{16:(}{26:[[}                                                      |
       {18:--}{26: some}                                                          |
-      {18:-- random}                                                        |
-      {18:-- text}                                                          |
-      {18:-- here]])}                                                       |
+      {18:--}{26: random}                                                        |
+      {18:--}{26: text}                                                          |
+      {18:--}{26: here]]}{16:)}                                                       |
       ^                                                                 |
       {1:~                                                                }|*11
                                                                        |
     ]=])
-    -- NOTE: Once #31777 is fixed, this test case should be updated to the following:
-    -- screen:expect([=[
-    --   {18:-- }{25:print}{16:(}{26:[[}                                                      |
-    --   {18:--}{26: some}                                                          |
-    --   {18:--}{26: random}                                                        |
-    --   {18:--}{26: text}                                                          |
-    --   {18:--}{26: here]]}{16:)}                                                       |
-    --   ^                                                                   |
-    --   {1:~                                                                }|*11
-    --                                                                    |
-    -- ]=])
   end)
 
   it('supports complicated combined injections', function()

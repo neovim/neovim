@@ -17,6 +17,8 @@ TUI and GUI (assuming the UI supports the given feature). See |TUI| for notes
 specific to the terminal UI. Help tags with the "gui-" prefix refer to UI
 features, whereas help tags with the "ui-" prefix refer to the |ui-protocol|.
 
+                                      Type |gO| to see the table of contents.
+
 ==============================================================================
 Third-party GUIs                                *third-party-guis* *vscode*
 
@@ -33,8 +35,6 @@ a Nvim GUI.
 - Neovim-Qt (Qt5) https://github.com/equalsraf/neovim-qt
 - VimR (macOS) https://github.com/qvacua/vimr
 - Others https://github.com/neovim/neovim/wiki/Related-projects#gui
-
-                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Starting the GUI                                *gui-config* *gui-start*
@@ -64,21 +64,50 @@ Stop or detach the current UI
                 the channel to be closed, it may be (incorrectly) reported as
                 an error.
 
-                Note: Not supported on Windows, currently.
+                Note: Not supported on Windows yet.
 
 ------------------------------------------------------------------------------
-Restart the embedded Nvim server
+Restart Nvim
 
                                                 *:restart*
-:restart
-                Detaches the embedded server from the UI and then restarts
-                it. This fails when changes have been made
-                and Vim refuses to |abandon| the current buffer.
+:restart [+cmd] [command]
+                Restarts Nvim.
 
-                Note: This only works if the UI started the server initially.
-:restart!
-                Force restarts the embedded server irrespective of unsaved
-                buffers.
+                1. Stops Nvim using `:qall!` (or |+cmd|, if given).
+                2. Starts a new Nvim server using the same |v:argv|,
+                   optionally running [command] at startup. |-c|
+                3. Attaches the current UI to the new Nvim server. Other UIs
+                   (if any) will not reattach on restart (this may change in
+                   the future).
+
+                Use with `:confirm` to prompt if changes have been made.
+
+                Example: stop with `:qall!`, then restart: >
+                    :restart +qall!
+<                Example: restart and restore the current session: >
+                    :mksession! Session.vim | restart source Session.vim
+<                Example: restart and update plugins: >
+                    :restart +qall! lua vim.pack.update()
+<
+                Note: Only works if the UI and server are on the same system.
+                Note: If the UI hasn't implemented the "restart" UI event,
+                this command is equivalent to `:qall!`.
+
+------------------------------------------------------------------------------
+Connect UI to a different server
+
+                                                *:connect*
+
+:connect {address}
+                Detaches the UI from the server it is currently attached to
+                and attaches it to the server at {address} instead.
+
+                Note: If the current UI hasn't implemented the "connect" UI
+                event, this command is equivalent to |:detach|.
+
+:connect! {address}
+                Same as |:connect| but it also stops the detached server if
+                no other UI is currently attached to it.
 
 ------------------------------------------------------------------------------
 GUI commands

@@ -11,9 +11,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/tabpage.c.generated.h"  // IWYU pragma: keep
-#endif
+#include "api/tabpage.c.generated.h"  // IWYU pragma: keep
 
 /// Gets the windows in a tabpage
 ///

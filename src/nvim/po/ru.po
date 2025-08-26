@@ -3946,12 +3946,8 @@ msgid "E325: ATTENTION"
 msgstr "E325: ВНИМАНИЕ"
 
 #: ../memline.c:3222
-msgid ""
-"\n"
-"Found a swap file by the name \""
-msgstr ""
-"\n"
-"Обнаружен своп-файл с именем \""
+msgid "Found a swap file by the name \""
+msgstr "Обнаружен своп-файл с именем \""
 
 # С маленькой буквы, чтобы соответствовало по стилю соседним сообщениям.
 #: ../memline.c:3226

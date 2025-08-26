@@ -26,9 +26,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/window.c.generated.h"  // IWYU pragma: keep
-#endif
+#include "api/window.c.generated.h"  // IWYU pragma: keep
 
 /// Gets the current buffer in a window
 ///
@@ -374,7 +372,7 @@ void nvim_win_hide(Window window, Error *err)
     } else if (tabpage == curtab) {
       win_close(win, false, false);
     } else {
-      win_close_othertab(win, false, tabpage);
+      win_close_othertab(win, false, tabpage, false);
     }
   });
 }
@@ -500,7 +498,8 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
 ///            height is reached. 0 if "end_row" is a closed fold.
 ///
 /// @see |virtcol()| for text width.
-Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *arena, Error *err)
+DictAs(win_text_height_ret) nvim_win_text_height(Window window, Dict(win_text_height) *opts,
+                                                 Arena *arena, Error *err)
   FUNC_API_SINCE(12)
 {
   Dict rv = arena_dict(arena, 2);

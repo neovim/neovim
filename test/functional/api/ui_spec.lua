@@ -10,7 +10,9 @@ local exec = n.exec
 local feed = n.feed
 local api = n.api
 local request = n.request
+local poke_eventloop = n.poke_eventloop
 local pcall_err = t.pcall_err
+local uv = vim.uv
 
 describe('nvim_ui_attach()', function()
   before_each(function()
@@ -68,6 +70,72 @@ describe('nvim_ui_attach()', function()
       'UI already attached to channel: 1',
       pcall_err(request, 'nvim_ui_attach', 40, 10, { rgb = false })
     )
+  end)
+end)
+
+describe('nvim_ui_send', function()
+  before_each(function()
+    clear()
+  end)
+
+  it('works with stdout_tty', function()
+    local fds = assert(uv.pipe())
+
+    local read_pipe = assert(uv.new_pipe())
+    read_pipe:open(fds.read)
+
+    local read_data = {}
+    read_pipe:read_start(function(err, data)
+      assert(not err, err)
+      if data then
+        table.insert(read_data, data)
+      end
+    end)
+
+    local screen = Screen.new(50, 10, { stdout_tty = true })
+    screen:set_stdout(fds.write)
+
+    api.nvim_ui_send('Hello world')
+
+    poke_eventloop()
+
+    screen:expect([[
+        ^                                                  |
+        {1:~                                                 }|*8
+                                                          |
+    ]])
+
+    eq('Hello world', table.concat(read_data))
+  end)
+
+  it('ignores ui_send event for UIs without stdout_tty', function()
+    local fds = assert(uv.pipe())
+
+    local read_pipe = assert(uv.new_pipe())
+    read_pipe:open(fds.read)
+
+    local read_data = {}
+    read_pipe:read_start(function(err, data)
+      assert(not err, err)
+      if data then
+        table.insert(read_data, data)
+      end
+    end)
+
+    local screen = Screen.new(50, 10)
+    screen:set_stdout(fds.write)
+
+    api.nvim_ui_send('Hello world')
+
+    poke_eventloop()
+
+    screen:expect([[
+        ^                                                  |
+        {1:~                                                 }|*8
+                                                          |
+    ]])
+
+    eq('', table.concat(read_data))
   end)
 end)
 

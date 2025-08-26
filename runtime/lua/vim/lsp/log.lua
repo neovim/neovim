@@ -4,13 +4,13 @@
 --- When debugging language servers, it is helpful to enable extra-verbose logging of the LSP client
 --- RPC events. Example:
 --- ```lua
---- vim.lsp.set_log_level 'trace'
+--- vim.lsp.log.set_level 'trace'
 --- require('vim.lsp.log').set_format_func(vim.inspect)
 --- ```
 ---
 --- Then try to run the language server, and open the log with:
 --- ```vim
---- :lua vim.cmd('tabnew ' .. vim.lsp.get_log_path())
+--- :lua vim.cmd('tabnew ' .. vim.lsp.log.get_filename())
 --- ```
 ---
 --- (Or use `:LspLog` if you have nvim-lspconfig installed.)
@@ -24,6 +24,8 @@
 local log = {}
 
 local log_levels = vim.log.levels
+
+local protocol = require('vim.lsp.protocol')
 
 --- Log level dictionary with reverse lookup as well.
 ---
@@ -216,6 +218,21 @@ function log.should_log(level)
   vim.validate('level', level, 'number')
 
   return level >= current_log_level
+end
+
+--- Convert LSP MessageType to vim.log.levels
+---
+---@param message_type lsp.MessageType
+function log._from_lsp_level(message_type)
+  if message_type == protocol.MessageType.Error then
+    return vim.log.levels.ERROR
+  elseif message_type == protocol.MessageType.Warning then
+    return vim.log.levels.WARN
+  elseif message_type == protocol.MessageType.Info or message_type == protocol.MessageType.Log then
+    return vim.log.levels.INFO
+  else
+    return vim.log.levels.DEBUG
+  end
 end
 
 return log

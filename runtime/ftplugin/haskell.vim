@@ -3,6 +3,7 @@
 " Maintainer:           Daniel Campoverde <alx@sillybytes.net>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
 " Latest Revision:      2018-08-27
+" 2025 Jul 09 by Vim Project revert setting iskeyword #8191
 
 if exists("b:did_ftplugin")
   finish
@@ -17,7 +18,6 @@ let b:undo_ftplugin = "setl com< cms< fo<"
 setlocal comments=s1fl:{-,mb:-,ex:-},:-- commentstring=--\ %s
 setlocal formatoptions-=t formatoptions+=croql
 setlocal omnifunc=haskellcomplete#Complete
-setlocal iskeyword+='
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

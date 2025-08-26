@@ -1,9 +1,11 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2023 Feb 28
+" Last Change:	2025 Aug 23
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
+"		Rob B
+"		Jon Parise
 "
 "		This version is a major rewrite by Zvezdan Petkovic.
 "
@@ -96,7 +98,8 @@ endif
 syn keyword pythonStatement	False None True
 syn keyword pythonStatement	as assert break continue del global
 syn keyword pythonStatement	lambda nonlocal pass return with yield
-syn keyword pythonStatement	class def nextgroup=pythonFunction skipwhite
+syn keyword pythonStatement	class nextgroup=pythonClass skipwhite
+syn keyword pythonStatement	def nextgroup=pythonFunction skipwhite
 syn keyword pythonConditional	elif else if
 syn keyword pythonRepeat	for while
 syn keyword pythonOperator	and in is not or
@@ -110,6 +113,11 @@ syn keyword pythonAsync		async await
 " for more on this.
 syn match   pythonConditional   "^\s*\zscase\%(\s\+.*:.*$\)\@="
 syn match   pythonConditional   "^\s*\zsmatch\%(\s\+.*:\s*\%(#.*\)\=$\)\@="
+syn match   pythonStatement     "\<type\ze\s\+\h\w*" nextgroup=pythonType skipwhite
+
+" These names are special by convention. While they aren't real keywords,
+" giving them distinct highlighting provides a nice visual cue.
+syn keyword pythonClassVar	self cls
 
 " Decorators
 " A dot must be allowed because of @MyClass.myfunc decorators.
@@ -122,21 +130,23 @@ syn match   pythonDecoratorName	"@\s*\h\%(\w\|\.\)*" display contains=pythonDeco
 " Single line multiplication.
 syn match   pythonMatrixMultiply
       \ "\%(\w\|[])]\)\s*@"
-      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonClass,pythonFunction,pythonType,pythonDoctestValue
       \ transparent
 " Multiplication continued on the next line after backslash.
 syn match   pythonMatrixMultiply
       \ "[^\\]\\\s*\n\%(\s*\.\.\.\s\)\=\s\+@"
-      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonClass,pythonFunction,pythonType,pythonDoctestValue
       \ transparent
 " Multiplication in a parenthesized expression over multiple lines with @ at
 " the start of each continued line; very similar to decorators and complex.
 syn match   pythonMatrixMultiply
       \ "^\s*\%(\%(>>>\|\.\.\.\)\s\+\)\=\zs\%(\h\|\%(\h\|[[(]\).\{-}\%(\w\|[])]\)\)\s*\n\%(\s*\.\.\.\s\)\=\s\+@\%(.\{-}\n\%(\s*\.\.\.\s\)\=\s\+@\)*"
-      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonClass,pythonFunction,pythonType,pythonDoctestValue
       \ transparent
 
+syn match   pythonClass		"\h\w*" display contained
 syn match   pythonFunction	"\h\w*" display contained
+syn match   pythonType		"\h\w*" display contained
 
 syn match   pythonComment	"#.*$" contains=pythonTodo,@Spell
 syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
@@ -144,23 +154,93 @@ syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
 " Triple-quoted strings can contain doctests.
 syn region  pythonString matchgroup=pythonQuotes
       \ start=+[uU]\=\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
-      \ contains=pythonEscape,@Spell
+      \ contains=pythonEscape,pythonUnicodeEscape,@Spell
 syn region  pythonString matchgroup=pythonTripleQuotes
       \ start=+[uU]\=\z('''\|"""\)+ skip=+\\["']+ end="\z1" keepend
-      \ contains=pythonEscape,pythonSpaceError,pythonDoctest,@Spell
+      \ contains=pythonEscape,pythonUnicodeEscape,pythonSpaceError,pythonDoctest,@Spell
 syn region  pythonRawString matchgroup=pythonQuotes
-      \ start=+[uU]\=[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
+      \ start=+[rR]\z(['"]\)+ end="\z1" skip="\\\\\|\\\z1"
       \ contains=@Spell
 syn region  pythonRawString matchgroup=pythonTripleQuotes
-      \ start=+[uU]\=[rR]\z('''\|"""\)+ end="\z1" keepend
+      \ start=+[rR]\z('''\|"""\)+ end="\z1" keepend
       \ contains=pythonSpaceError,pythonDoctest,@Spell
+
+" Formatted string literals (f-strings)
+" https://docs.python.org/3/reference/lexical_analysis.html#f-strings
+syn region  pythonFString
+      \ matchgroup=pythonQuotes
+      \ start=+\cF\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+      \ contains=pythonFStringField,pythonFStringSkip,pythonEscape,pythonUnicodeEscape,@Spell
+syn region  pythonFString
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\cF\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+      \ contains=pythonFStringField,pythonFStringSkip,pythonEscape,pythonUnicodeEscape,pythonSpaceError,pythonDoctest,@Spell
+syn region  pythonRawFString
+      \ matchgroup=pythonQuotes
+      \ start=+\c\%(FR\|RF\)\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+      \ contains=pythonFStringField,pythonFStringSkip,@Spell
+syn region  pythonRawFString
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\c\%(FR\|RF\)\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+      \ contains=pythonFStringField,pythonFStringSkip,pythonSpaceError,pythonDoctest,@Spell
+
+" Bytes
+syn region  pythonBytes
+      \ matchgroup=pythonQuotes
+      \ start=+\cB\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+      \ contains=pythonEscape
+syn region  pythonBytes
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\cB\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+      \ contains=pythonEscape
+syn region  pythonRawBytes
+      \ matchgroup=pythonQuotes
+      \ start=+\c\%(BR\|RB\)\z(['"]\)+
+      \ end="\z1"
+      \ skip="\\\\\|\\\z1"
+syn region  pythonRawBytes
+      \ matchgroup=pythonTripleQuotes
+      \ start=+\c\%(BR\|RB\)\z('''\|"""\)+
+      \ end="\z1"
+      \ keepend
+
+" F-string replacement fields
+"
+" - Matched parentheses, brackets and braces are ignored
+" - A bare # is ignored to end of line
+" - A bare = (surrounded by optional whitespace) enables debugging
+" - A bare ! prefixes a conversion field
+" - A bare : begins a format specification
+"     - Matched braces inside a format specification are ignored
+"
+syn region  pythonFStringField
+    \ matchgroup=pythonFStringDelimiter
+    \ start=/{/
+    \ skip=/([^)]*)\|\[[^]]*]\|{[^}]*}\|#.*$/
+    \ end=/\%(\s*=\s*\)\=\%(!\a\)\=\%(:\%({[^}]*}\|[^}]*\)\+\)\=}/
+    \ contained
+" Doubled braces and Unicode escapes are not replacement fields
+syn match   pythonFStringSkip	/{{\|\\N{/ transparent contained contains=NONE
 
 syn match   pythonEscape	+\\[abfnrtv'"\\]+ contained
 syn match   pythonEscape	"\\\o\{1,3}" contained
 syn match   pythonEscape	"\\x\x\{2}" contained
-syn match   pythonEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
+syn match   pythonUnicodeEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
 " Python allows case-insensitive Unicode IDs: http://www.unicode.org/charts/
-syn match   pythonEscape	"\\N{\a\+\%(\s\a\+\)*}" contained
+" The specification: https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-4/#G135165
+syn match   pythonUnicodeEscape	"\\N{\a\+\%(\%(\s\a\+[[:alnum:]]*\)\|\%(-[[:alnum:]]\+\)\)*}" contained
 syn match   pythonEscape	"\\$"
 
 " It is very important to understand all details before changing the
@@ -223,10 +303,12 @@ if !exists("python_no_builtin_highlight")
   syn keyword pythonBuiltin	memoryview min next object oct open ord pow
   syn keyword pythonBuiltin	print property range repr reversed round set
   syn keyword pythonBuiltin	setattr slice sorted staticmethod str sum super
-  syn keyword pythonBuiltin	tuple type vars zip __import__
+  syn keyword pythonBuiltin	tuple vars zip __import__
+  " only match `type` as a builtin when it's not followed by an identifier
+  syn match   pythonBuiltin	"\<type\ze\(\s\+\h\w*\)\@!"
   " avoid highlighting attributes as builtins
   syn match   pythonAttribute	/\.\h\w*/hs=s+1
-	\ contains=ALLBUT,pythonBuiltin,pythonFunction,pythonAsync
+	\ contains=ALLBUT,pythonBuiltin,pythonClass,pythonFunction,pythonType,pythonAsync
 	\ transparent
 endif
 
@@ -283,7 +365,7 @@ if !exists("python_no_doctest_highlight")
   if !exists("python_no_doctest_code_highlight")
     syn region pythonDoctest
 	  \ start="^\s*>>>\s" end="^\s*$"
-	  \ contained contains=ALLBUT,pythonDoctest,pythonFunction,@Spell
+	  \ contained contains=ALLBUT,pythonDoctest,pythonClass,pythonFunction,pythonType,@Spell
     syn region pythonDoctestValue
 	  \ start=+^\s*\%(>>>\s\|\.\.\.\s\|"""\|'''\)\@!\S\++ end="$"
 	  \ contained
@@ -294,8 +376,8 @@ if !exists("python_no_doctest_highlight")
   endif
 endif
 
-" Sync at the beginning of class, function, or method definition.
-syn sync match pythonSync grouphere NONE "^\%(def\|class\)\s\+\h\w*\s*[(:]"
+" Sync at the beginning of (async) function or class definitions.
+syn sync match pythonSync grouphere NONE "^\%(def\|class\|async\s\+def\)\s\+\h\w*\s*[(:]"
 
 " The default highlight links.  Can be overridden later.
 hi def link pythonStatement		Statement
@@ -305,16 +387,25 @@ hi def link pythonOperator		Operator
 hi def link pythonException		Exception
 hi def link pythonInclude		Include
 hi def link pythonAsync			Statement
+hi def link pythonClassVar		Identifier
 hi def link pythonDecorator		Define
 hi def link pythonDecoratorName		Function
+hi def link pythonClass			Structure
 hi def link pythonFunction		Function
+hi def link pythonType			Type
 hi def link pythonComment		Comment
 hi def link pythonTodo			Todo
 hi def link pythonString		String
 hi def link pythonRawString		String
+hi def link pythonFString		String
+hi def link pythonRawFString		String
+hi def link pythonBytes 		String
+hi def link pythonRawBytes 		String
 hi def link pythonQuotes		String
 hi def link pythonTripleQuotes		pythonQuotes
 hi def link pythonEscape		Special
+hi def link pythonUnicodeEscape		pythonEscape
+hi def link pythonFStringDelimiter	Special
 if !exists("python_no_number_highlight")
   hi def link pythonNumber		Number
 endif

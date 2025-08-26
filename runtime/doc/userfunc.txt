@@ -345,7 +345,7 @@ This function can then be called with: >
 <		Here GetDict() gets the range but method() does not.
 
 								*E132*
-The recursiveness of user functions is restricted with the |'maxfuncdepth'|
+The recursiveness of user functions is restricted with the 'maxfuncdepth'
 option.
 
 It is also possible to use `:eval`.  It does not support a range, but does

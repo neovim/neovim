@@ -1,8 +1,13 @@
 local M = {}
 local health = require('vim.health')
 
-local shell_error = function()
-  return vim.v.shell_error ~= 0
+---Run a system command and return ok and its stdout and stderr combined.
+---@param cmd string[]
+---@return boolean
+---@return string
+local function system(cmd)
+  local result = vim.system(cmd, { text = true }):wait()
+  return result.code == 0, vim.trim(('%s\n%s'):format(result.stdout, result.stderr))
 end
 
 local suggest_faq = 'https://github.com/neovim/neovim/blob/master/BUILD.md#building'
@@ -87,9 +92,9 @@ local function check_config()
     health.error(
       'Locale does not support UTF-8. Unicode characters may not display correctly.'
         .. ('\n$LANG=%s $LC_ALL=%s $LC_CTYPE=%s'):format(
-          vim.env.LANG,
-          vim.env.LC_ALL,
-          vim.env.LC_CTYPE
+          vim.env.LANG or '',
+          vim.env.LC_ALL or '',
+          vim.env.LC_CTYPE or ''
         ),
       {
         'If using tmux, try the -u option.',
@@ -168,10 +173,10 @@ local function check_performance()
   end
 
   -- check for slow shell invocation
-  local slow_cmd_time = 1.5
-  local start_time = vim.fn.reltime()
-  vim.fn.system('echo')
-  local elapsed_time = vim.fn.reltimefloat(vim.fn.reltime(start_time))
+  local slow_cmd_time = 1.5e9
+  local start_time = vim.uv.hrtime()
+  system({ 'echo' })
+  local elapsed_time = vim.uv.hrtime() - start_time
   if elapsed_time > slow_cmd_time then
     health.warn(
       'Slow shell invocation (took ' .. vim.fn.printf('%.2f', elapsed_time) .. ' seconds).'
@@ -252,17 +257,17 @@ local function check_tmux()
 
   ---@param option string
   local get_tmux_option = function(option)
-    local cmd = 'tmux show-option -qvg ' .. option -- try global scope
-    local out = vim.fn.system(vim.fn.split(cmd))
+    local cmd = { 'tmux', 'show-option', '-qvg', option } -- try global scope
+    local ok, out = system(cmd)
     local val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
-    if shell_error() then
+    if not ok then
       health.error('command failed: ' .. cmd .. '\n' .. out)
       return 'error'
     elseif val == '' then
-      cmd = 'tmux show-option -qvgs ' .. option -- try session scope
-      out = vim.fn.system(vim.fn.split(cmd))
+      cmd = { 'tmux', 'show-option', '-qvgs', option } -- try session scope
+      ok, out = system(cmd)
       val = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
-      if shell_error() then
+      if not ok then
         health.error('command failed: ' .. cmd .. '\n' .. out)
         return 'error'
       end
@@ -301,16 +306,16 @@ local function check_tmux()
 
   -- check default-terminal and $TERM
   health.info('$TERM: ' .. vim.env.TERM)
-  local cmd = 'tmux show-option -qvg default-terminal'
-  local out = vim.fn.system(vim.fn.split(cmd))
+  local cmd = { 'tmux', 'show-option', '-qvg', 'default-terminal' }
+  local ok, out = system(cmd)
   local tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
   if tmux_default_term == '' then
-    cmd = 'tmux show-option -qvgs default-terminal'
-    out = vim.fn.system(vim.fn.split(cmd))
+    cmd = { 'tmux', 'show-option', '-qvgs', 'default-terminal' }
+    ok, out = system(cmd)
     tmux_default_term = vim.fn.substitute(out, [[\v(\s|\r|\n)]], '', 'g')
   end
 
-  if shell_error() then
+  if not ok then
     health.error('command failed: ' .. cmd .. '\n' .. out)
   elseif tmux_default_term ~= vim.env.TERM then
     health.info('default-terminal: ' .. tmux_default_term)
@@ -329,7 +334,7 @@ local function check_tmux()
   end
 
   -- check for RGB capabilities
-  local info = vim.fn.system({ 'tmux', 'show-messages', '-T' })
+  local _, info = system({ 'tmux', 'show-messages', '-T' })
   local has_setrgbb = vim.fn.stridx(info, ' setrgbb: (string)') ~= -1
   local has_setrgbf = vim.fn.stridx(info, ' setrgbf: (string)') ~= -1
   if not has_setrgbb or not has_setrgbf then
@@ -349,13 +354,13 @@ local function check_terminal()
   end
 
   health.start('terminal')
-  local cmd = 'infocmp -L'
-  local out = vim.fn.system(vim.fn.split(cmd))
+  local cmd = { 'infocmp', '-L' }
+  local ok, out = system(cmd)
   local kbs_entry = vim.fn.matchstr(out, 'key_backspace=[^,[:space:]]*')
   local kdch1_entry = vim.fn.matchstr(out, 'key_dc=[^,[:space:]]*')
 
   if
-    shell_error()
+    not ok
     and (
       vim.fn.has('win32') == 0
       or vim.fn.matchstr(
@@ -399,12 +404,100 @@ local function check_external_tools()
   health.start('External Tools')
 
   if vim.fn.executable('rg') == 1 then
-    local rg = vim.fn.exepath('rg')
-    local cmd = 'rg -V'
-    local out = vim.fn.system(vim.fn.split(cmd))
-    health.ok(('%s (%s)'):format(vim.trim(out), rg))
+    local rg_path = vim.fn.exepath('rg')
+    local rg_job = vim.system({ rg_path, '-V' }):wait()
+    if rg_job.code == 0 then
+      health.ok(('%s (%s)'):format(vim.trim(rg_job.stdout), rg_path))
+    else
+      health.warn('found `rg` but failed to run `rg -V`', { rg_job.stderr })
+    end
   else
     health.warn('ripgrep not available')
+  end
+
+  -- `vim.pack` requires `git` executable with version at least 2.36
+  if vim.fn.executable('git') == 1 then
+    local git = vim.fn.exepath('git')
+    local out = vim.system({ 'git', 'version' }, {}):wait().stdout or ''
+    local version = vim.version.parse(out)
+    if version < vim.version.parse('2.36') then
+      local msg = string.format(
+        'git is available (%s), but needs at least version 2.36 (not %s) to work with `vim.pack`',
+        git,
+        tostring(version)
+      )
+      health.warn(msg)
+    else
+      health.ok(('%s (%s)'):format(vim.trim(out), git))
+    end
+  else
+    health.warn('git not available (required by `vim.pack`)')
+  end
+
+  if vim.fn.executable('curl') == 1 then
+    local curl_path = vim.fn.exepath('curl')
+    local curl_job = vim.system({ curl_path, '--version' }):wait()
+
+    if curl_job.code == 0 then
+      local curl_out = curl_job.stdout
+      if not curl_out or curl_out == '' then
+        health.warn(
+          string.format('`%s --version` produced no output', curl_path),
+          { curl_job.stderr }
+        )
+        return
+      end
+      local curl_version = vim.version.parse(curl_out)
+      if not curl_version then
+        health.warn('Unable to parse curl version from `curl --version`')
+        return
+      end
+      if vim.version.le(curl_version, { 7, 12, 3 }) then
+        health.warn('curl version %s not compatible', curl_version)
+        return
+      end
+      local lines = { string.format('curl %s (%s)', curl_version, curl_path) }
+
+      for line in vim.gsplit(curl_out, '\n', { plain = true }) do
+        if line ~= '' and not line:match('^curl') then
+          table.insert(lines, line)
+        end
+      end
+
+      -- Add subtitle only if any env var is present
+      local added_env_header = false
+      for _, var in ipairs({
+        'curl_ca_bundle',
+        'curl_home',
+        'curl_ssl_backend',
+        'ssl_cert_dir',
+        'ssl_cert_file',
+        'https_proxy',
+        'http_proxy',
+        'all_proxy',
+        'no_proxy',
+      }) do
+        ---@type string?
+        local val = vim.env[var] or vim.env[var:upper()]
+        if val then
+          if not added_env_header then
+            table.insert(lines, 'curl-related environment variables:')
+            added_env_header = true
+          end
+          local shown_var = vim.env[var] and var or var:upper()
+          table.insert(lines, string.format('  %s=%s', shown_var, val))
+        end
+      end
+
+      health.ok(table.concat(lines, '\n'))
+    else
+      health.warn('curl is installed but failed to run `curl --version`', { curl_job.stderr })
+    end
+  else
+    health.error('curl not found', {
+      'Required for vim.net.request() to function.',
+      'Install curl using your package manager.',
+    })
   end
 end
 

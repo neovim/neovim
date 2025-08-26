@@ -91,9 +91,7 @@ struct bw_info {
   iconv_t bw_iconv_fd;            // descriptor for iconv() or -1
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "bufwrite.c.generated.h"
-#endif
+#include "bufwrite.c.generated.h"
 
 /// Convert a Unicode character to bytes.
 ///
@@ -1763,7 +1761,6 @@ restore_backup:
     if (msg_add_fileformat(fileformat)) {
       insert_space = true;
     }
-    msg_ext_set_kind("bufwrite");
     msg_add_lines(insert_space, lnum, nchars);       // add line/char count
     if (!shortmess(SHM_WRITE)) {
       if (append) {
@@ -1773,6 +1770,8 @@ restore_backup:
       }
     }
 
+    msg_ext_set_kind("bufwrite");
+    msg_ext_overwrite = true;
     set_keep_msg(msg_trunc(IObuff, false, 0), 0);
   }
 

@@ -27,9 +27,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/autocmd.c.generated.h"
-#endif
+#include "api/autocmd.c.generated.h"
 
 #define AUCMD_MAX_PATTERNS 256
 
@@ -70,7 +68,8 @@ static int64_t next_autocmd_id = 1;
 /// @param opts Dict with at least one of the following:
 ///             - buffer: (integer) Buffer number or list of buffer numbers for buffer local autocommands
 ///             |autocmd-buflocal|. Cannot be used with {pattern}
-///             - event: (string|table) event or events to match against |autocmd-events|.
+///             - event: (vim.api.keyset.events|vim.api.keyset.events[])
+///               event or events to match against |autocmd-events|.
 ///             - id: (integer) Autocommand ID to match.
 ///             - group: (string|table) the autocommand group name or id to match against.
 ///             - pattern: (string|table) pattern or patterns to match against |autocmd-pattern|.
@@ -83,14 +82,15 @@ static int64_t next_autocmd_id = 1;
 ///             - callback: (function|string|nil): Lua function or name of a Vim script function
 ///               which is executed when this autocommand is triggered.
 ///             - desc: (string) the autocommand description.
-///             - event: (string) the autocommand event.
+///             - event: (vim.api.keyset.events) the autocommand event.
 ///             - id: (integer) the autocommand id (only when defined with the API).
 ///             - group: (integer) the autocommand group id.
 ///             - group_name: (string) the autocommand group name.
 ///             - once: (boolean) whether the autocommand is only run once.
 ///             - pattern: (string) the autocommand pattern.
 ///               If the autocommand is buffer local |autocmd-buffer-local|:
-Array nvim_get_autocmds(Dict(get_autocmds) *opts, Arena *arena, Error *err)
+ArrayOf(DictAs(get_autocmds__ret)) nvim_get_autocmds(Dict(get_autocmds) *opts, Arena *arena,
+                                                     Error *err)
   FUNC_API_SINCE(9)
 {
   ArrayBuilder autocmd_list = KV_INITIAL_VALUE;
@@ -360,7 +360,7 @@ cleanup:
 /// pattern = vim.fn.expand('~') .. '/some/path/*.py'
 /// ```
 ///
-/// @param event (string|array) Event(s) that will trigger the handler (`callback` or `command`).
+/// @param event Event(s) that will trigger the handler (`callback` or `command`).
 /// @param opts Options dict:
 ///             - group (string|integer) optional: autocommand group name or id to match against.
 ///             - pattern (string|array) optional: pattern(s) to match literally |autocmd-pattern|.
@@ -372,7 +372,7 @@ cleanup:
 ///             value (not `false` or `nil`) to delete the autocommand, and receives one argument, a
 ///             table with these keys: [event-args]()
 ///                 - id: (number) autocommand id
-///                 - event: (string) name of the triggered event |autocmd-events|
+///                 - event: (vim.api.keyset.events) name of the triggered event |autocmd-events|
 ///                 - group: (number|nil) autocommand group id, if any
 ///                 - file: (string) [<afile>] (not expanded to a full path)
 ///                 - match: (string) [<amatch>] (expanded to a full path)
@@ -522,7 +522,7 @@ void nvim_del_autocmd(Integer id, Error *err)
 /// Clears all autocommands selected by {opts}. To delete autocmds see |nvim_del_autocmd()|.
 ///
 /// @param opts Parameters
-///         - event: (string|table)
+///         - event: (vim.api.keyset.events|vim.api.keyset.events[])
 ///              Examples:
 ///              - event: "pat1"
 ///              - event: { "pat1" }
@@ -673,7 +673,7 @@ void nvim_del_augroup_by_name(String name, Error *err)
 
 /// Execute all autocommands for {event} that match the corresponding
 ///  {opts} |autocmd-execute|.
-/// @param event (String|Array) The event or events to execute
+/// @param event The event or events to execute
 /// @param opts Dict of autocommand options:
 ///             - group (string|integer) optional: the autocommand group name or
 ///             id to match against. |autocmd-groups|.

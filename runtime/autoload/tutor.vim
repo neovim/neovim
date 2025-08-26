@@ -77,46 +77,6 @@ function! tutor#TutorFolds()
     endif
 endfunction
 
-" Marks: {{{1
-
-function! tutor#ApplyMarks()
-    hi! link tutorExpect Special
-    if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
-        let b:tutor_sign_id = 1
-        for expct in keys(b:tutor_metadata['expect'])
-            let lnum = eval(expct)
-            call matchaddpos('tutorExpect', [lnum])
-            call tutor#CheckLine(lnum)
-        endfor
-    endif
-endfunction
-
-function! tutor#ApplyMarksOnChanged()
-    if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
-        let lnum = line('.')
-        if index(keys(b:tutor_metadata['expect']), string(lnum)) > -1
-            call tutor#CheckLine(lnum)
-        endif
-    endif
-endfunction
-
-function! tutor#CheckLine(line)
-    if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
-        let bufn = bufnr('%')
-        let ctext = getline(a:line)
-        let signs = sign_getplaced(bufn, {'lnum': a:line})[0].signs
-        if !empty(signs)
-            call sign_unplace('', {'id': signs[0].id})
-        endif
-        if b:tutor_metadata['expect'][string(a:line)] == -1 || ctext ==# b:tutor_metadata['expect'][string(a:line)]
-            exe "sign place ".b:tutor_sign_id." line=".a:line." name=tutorok buffer=".bufn
-        else
-            exe "sign place ".b:tutor_sign_id." line=".a:line." name=tutorbad buffer=".bufn
-        endif
-        let b:tutor_sign_id+=1
-    endif
-endfunction
-
 " Tutor Cmd: {{{1
 
 function! s:Locale()
@@ -170,14 +130,18 @@ endfunction
 " returns a list of all tutor files matching the given name
 function! tutor#GlobTutorials(name, locale)
     let locale = a:locale
+    " pack/*/start/* are not reported in &rtp
+    let rtp = nvim_list_runtime_paths()
+        \ ->map({_, v -> escape(v:lua.vim.fs.normalize(v), ',')})
+        \ ->join(',')
     " search for tutorials:
     " 1. non-localized
-    let l:tutors = s:GlobPath(&rtp, 'tutor/'.a:name.'.tutor')
+    let l:tutors = s:GlobPath(rtp, 'tutor/'.a:name.'.tutor')
     " 2. localized for current locale
-    let l:locale_tutors = s:GlobPath(&rtp, 'tutor/'.locale.'/'.a:name.'.tutor')
+    let l:locale_tutors = s:GlobPath(rtp, 'tutor/'.locale.'/'.a:name.'.tutor')
     " 3. fallback to 'en'
     if len(l:locale_tutors) == 0
-        let l:locale_tutors = s:GlobPath(&rtp, 'tutor/en/'.a:name.'.tutor')
+        let l:locale_tutors = s:GlobPath(rtp, 'tutor/en/'.a:name.'.tutor')
     endif
     call extend(l:tutors, l:locale_tutors)
     return uniq(sort(l:tutors, 's:Sort'), 's:Sort')
@@ -239,9 +203,9 @@ function! tutor#EnableInteractive(enable)
         setlocal buftype=nofile
         setlocal concealcursor+=inv
         setlocal conceallevel=2
-        call tutor#ApplyMarks()
+        lua require('nvim.tutor').apply_marks()
         augroup tutor_interactive
-            autocmd! TextChanged,TextChangedI <buffer> call tutor#ApplyMarksOnChanged()
+            autocmd! TextChanged,TextChangedI <buffer> lua require('nvim.tutor').apply_marks_on_changed()
         augroup END
     else
         setlocal buftype<

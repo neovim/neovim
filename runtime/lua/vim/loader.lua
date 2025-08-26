@@ -66,7 +66,7 @@ local indexed = {}
 --- @return uv.fs_stat.result?
 local function fs_stat_cached(path)
   if not fs_stat_cache then
-    return uv.fs_stat(path)
+    return (uv.fs_stat(path))
   end
 
   if not fs_stat_cache[path] then

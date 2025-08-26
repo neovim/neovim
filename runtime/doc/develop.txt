@@ -353,7 +353,7 @@ Where possible, these patterns apply to _both_ Lua and the API:
   - Examples: |vim.lsp.codelens.clear()| |vim.diagnostic.enable()|
 - Any function signature that accepts a callback (example: |table.foreach()|)
   should place it as the LAST parameter (after opts), if possible (or ALWAYS
-  for "continuation callbacks"—functions called exactly once).
+  for |continuation|s——functions called exactly once).
   - Improves readability by placing the less "noisy" arguments near the start.
   - Consistent with luv.
   - Useful for future async lib which transforms functions of the form
@@ -426,6 +426,9 @@ Use existing common {verb} names (actions) if possible:
     - add:          Appends or inserts into a collection
     - attach:       Listens to something to get events from it (TODO: rename to "on"?)
     - call:         Calls a function
+    - callback      |continuation|: Function parameter (NOT a field) that
+                    returns the result of an async function. Use the "on_…"
+                    naming-convention for all other callbacks and event handlers.
     - cancel:       Cancels or dismisses an event or interaction, typically
                     user-initiated and without error. (Compare "abort", which
                     cancels and signals error/failure.)
@@ -441,8 +444,11 @@ Use existing common {verb} names (actions) if possible:
     - get:          Gets things. Two variants (overloads):
                     1. `get<T>(id: int): T` returns one item.
                     2. `get<T>(filter: dict): T[]` returns a list.
+    - has:          Checks for the presence of an item, feature, etc.
     - inspect:      Presents a high-level, often interactive, view
     - is_enabled:   Checks if functionality is enabled.
+    - on_…:         Handles events or async results, or registers such
+                    a handler. |dev-name-events|
     - open:         Opens something (a buffer, window, …)
     - parse:        Parses something into a structured form
     - set:          Sets a thing (or group of things)
@@ -452,6 +458,7 @@ Use existing common {verb} names (actions) if possible:
     - try_{verb}:   Best-effort operation, failure returns null or error obj
 
 Do NOT use these deprecated verbs:
+    - contains:     Prefer "has".
     - disable:      Prefer `enable(enable: boolean)`.
     - exit:         Prefer "cancel" (or "stop" if appropriate).
     - is_disabled:  Prefer `is_enabled()`.
@@ -475,7 +482,6 @@ everywhere, not "buffer" in some places and "buf" in others.
 
 Do NOT use these deprecated nouns:
     - buffer        Use "buf" instead
-    - callback      Use on_foo instead
     - command       Use "cmd" instead
     - window        Use "win" instead
 
@@ -493,6 +499,14 @@ Use this format to name API (RPC) events: >
 Example: >
     nvim_buf_changedtick_event
 <
+                                                        *continuation*
+A "continuation" is implemented as a callback function that returns the result
+of an async function and is called exactly once. Often accepts `err` as the
+first parameter, to avoid erroring on the main thread. Example: >
+    foo(…, callback: fun(err, …))
+Use the name `callback` only for a continuation. All other callbacks and event
+handlers should be named with the |dev-name-events| "on_…" convention.
+
                                                         *dev-api-name*
 Use this format to name new RPC |API| functions: >
     nvim_{topic}_{verb}_{arbitrary-qualifiers}
@@ -666,6 +680,8 @@ External UIs are expected to implement these common features:
   the user).
 - Support the text decorations/attributes given by |ui-event-hl_attr_define|.
   The "url" attr should be presented as a clickable hyperlink.
+- Handle the "restart" UI event so that |:restart| works.
+- Detect capslock and show an indicator if capslock is active.
 
 
  vim:tw=78:ts=8:sw=4:et:ft=help:norl:

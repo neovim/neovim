@@ -123,9 +123,7 @@ enum {
   kColorIdxBg = -4,
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "highlight_group.c.generated.h"
-#endif
+#include "highlight_group.c.generated.h"
 
 static const char e_highlight_group_name_not_found_str[]
   = N_("E411: Highlight group not found: %s");
@@ -177,6 +175,8 @@ static const char *highlight_init_both[] = {
   "default link PmenuKindSel     PmenuSel",
   "default link PmenuSbar        Pmenu",
   "default link ComplMatchIns    NONE",
+  "default link ComplHint        NonText",
+  "default link ComplHintMore    MoreMsg",
   "default link Substitute       Search",
   "default link StatusLineTerm   StatusLine",
   "default link StatusLineTermNC StatusLineNC",
@@ -223,6 +223,7 @@ static const char *highlight_init_both[] = {
   "default link LspReferenceTarget          LspReferenceText",
   "default link LspSignatureActiveParameter Visual",
   "default link SnippetTabstop              Visual",
+  "default link SnippetTabstopActive        SnippetTabstop",
 
   // Diagnostic
   "default link DiagnosticFloatingError    DiagnosticError",

@@ -23,10 +23,16 @@ do
 
   vim.api.nvim_create_user_command('EditQuery', function(cmd)
     vim.treesitter.query.edit(cmd.fargs[1])
-  end, { desc = 'Edit treesitter query', nargs = '?' })
+  end, {
+    desc = 'Edit treesitter query',
+    nargs = '?',
+    complete = function()
+      return vim.treesitter.language._complete()
+    end,
+  })
 
   vim.api.nvim_create_user_command('Open', function(cmd)
-    vim.ui.open(cmd.fargs[1])
+    vim.ui.open(assert(cmd.fargs[1]))
   end, {
     desc = 'Open file with system default handler. See :help vim.ui.open()',
     nargs = 1,
@@ -191,7 +197,7 @@ do
   --- client is attached. If no client is attached, or if a server does not support a capability, an
   --- error message is displayed rather than exhibiting different behavior.
   ---
-  --- See |grr|, |grn|, |gra|, |gri|, |gO|, |i_CTRL-S|.
+  --- See |grr|, |grn|, |gra|, |gri|, |grt| |gO|, |i_CTRL-S|.
   do
     vim.keymap.set('n', 'grn', function()
       vim.lsp.buf.rename()
@@ -208,6 +214,18 @@ do
     vim.keymap.set('n', 'gri', function()
       vim.lsp.buf.implementation()
     end, { desc = 'vim.lsp.buf.implementation()' })
+
+    vim.keymap.set('n', 'grt', function()
+      vim.lsp.buf.type_definition()
+    end, { desc = 'vim.lsp.buf.type_definition()' })
+
+    vim.keymap.set('x', 'an', function()
+      vim.lsp.buf.selection_range(vim.v.count1)
+    end, { desc = 'vim.lsp.buf.selection_range(vim.v.count1)' })
+
+    vim.keymap.set('x', 'in', function()
+      vim.lsp.buf.selection_range(-vim.v.count1)
+    end, { desc = 'vim.lsp.buf.selection_range(-vim.v.count1)' })
 
     vim.keymap.set('n', 'gO', function()
       vim.lsp.buf.document_symbol()
@@ -253,11 +271,11 @@ do
     end, { desc = 'Jump to the previous diagnostic in the current buffer' })
 
     vim.keymap.set('n', ']D', function()
-      vim.diagnostic.jump({ count = math.huge, wrap = false })
+      vim.diagnostic.jump({ count = vim._maxint, wrap = false })
     end, { desc = 'Jump to the last diagnostic in the current buffer' })
 
     vim.keymap.set('n', '[D', function()
-      vim.diagnostic.jump({ count = -math.huge, wrap = false })
+      vim.diagnostic.jump({ count = -vim._maxint, wrap = false })
     end, { desc = 'Jump to the first diagnostic in the current buffer' })
 
     vim.keymap.set('n', '<C-W>d', function()
@@ -466,8 +484,8 @@ do
       amenu disable PopUp.Configure\ Diagnostics
     ]])
 
-    local urls = require('vim.ui')._get_urls()
-    if vim.startswith(urls[1], 'http') then
+    local url = require('vim.ui')._get_urls()[1]
+    if url and vim.startswith(url, 'http') then
       vim.cmd([[amenu enable PopUp.Open\ in\ web\ browser]])
     elseif vim.lsp.get_clients({ bufnr = 0 })[1] then
       vim.cmd([[anoremenu enable PopUp.Go\ to\ definition]])
@@ -595,7 +613,7 @@ do
       { limit = math.abs(count) }
     )
     if #extmarks > 0 then
-      local extmark = extmarks[math.min(#extmarks, math.abs(count))]
+      local extmark = assert(extmarks[math.min(#extmarks, math.abs(count))])
       vim.api.nvim_win_set_cursor(win, { extmark[2] + 1, extmark[3] })
     end
   end
@@ -733,7 +751,7 @@ do
           return nil
         end
 
-        local max = tonumber(string.rep('f', #c), 16)
+        local max = assert(tonumber(string.rep('f', #c), 16))
         return val / max
       end
 
@@ -821,7 +839,7 @@ do
         end,
       })
 
-      io.stdout:write('\027]11;?\007')
+      vim.api.nvim_ui_send('\027]11;?\007')
     end
 
     --- If the TUI (term_has_truecolor) was able to determine that the host
@@ -876,7 +894,7 @@ do
               end
 
               -- The returned SGR sequence should begin with 48:2
-              local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
+              local sgr = assert(attrs[#attrs]):match('^48:2:([%d:]+)$')
               if not sgr then
                 return false
               end
@@ -909,7 +927,7 @@ do
         local decrqss = '\027P$qm\027\\'
 
         -- Reset attributes first, as other code may have set attributes.
-        io.stdout:write(string.format('\027[0m\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
+        vim.api.nvim_ui_send(string.format('\027[0m\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
 
         timer:start(1000, 0, function()
           -- Delete the autocommand if no response was received
@@ -927,7 +945,7 @@ do
   end
 
   vim.api.nvim_create_autocmd('VimEnter', {
-    group = vim.api.nvim_create_augroup('nvim.find_exrc', {}),
+    group = vim.api.nvim_create_augroup('nvim.exrc', {}),
     desc = 'Find exrc files in parent directories',
     callback = function()
       if not vim.o.exrc then
@@ -938,13 +956,13 @@ do
         upward = true,
         limit = math.huge,
         -- exrc in cwd already handled from C, thus start in parent directory.
-        path = vim.fs.dirname(vim.uv.cwd()),
+        path = vim.fs.dirname((vim.uv.cwd())),
       })
       for _, file in ipairs(files) do
         local trusted = vim.secure.read(file) --[[@as string|nil]]
         if trusted then
           if vim.endswith(file, '.lua') then
-            loadstring(trusted)()
+            assert(loadstring(trusted, '@' .. file))()
           else
             vim.api.nvim_exec2(trusted, {})
           end

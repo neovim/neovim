@@ -282,6 +282,23 @@ func Test_V_arg()
    " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline 1: \" The default vimrc file\..*  verbose=15\n", out)
 endfunc
 
+" Test that an error is shown when the defaults.vim file could not be read
+func Test_defaults_error()
+  throw 'Skipped: Nvim does not support defaults.vim'
+  " Can't catch the output of gvim.
+  CheckNotGui
+  CheckNotMSWindows
+  " For unknown reasons freeing all memory does not work here, even though
+  " EXITFREE is defined.
+  CheckNotAsan
+
+  let out = system('VIMRUNTIME=/tmp ' .. GetVimCommand() .. ' --clean -cq')
+  call assert_match("E1187: Failed to source defaults.vim", out)
+
+  let out = system('VIMRUNTIME=/tmp ' .. GetVimCommand() .. ' -u DEFAULTS -cq')
+  call assert_match("E1187: Failed to source defaults.vim", out)
+endfunc
+
 " Test the '-q [errorfile]' argument.
 func Test_q_arg()
   CheckFeature quickfix
@@ -523,8 +540,10 @@ func Test_geometry()
       " Depending on the GUI library and the windowing system the final size
       " might be a bit different, allow for some tolerance.  Tuned based on
       " actual failures.
-      call assert_inrange(31, 35, str2nr(lines[0]))
-      call assert_equal('13', lines[1])
+      call assert_inrange(30, 35, str2nr(lines[0]))
+      " for some reason, the window may contain fewer lines than requested
+      " for GTK, so allow some tolerance
+      call assert_inrange(8, 13,  str2nr(lines[1]))
       call assert_equal('41', lines[2])
       call assert_equal('150', lines[3])
       call assert_equal('[41, 150]', lines[4])
@@ -1307,5 +1326,27 @@ func Test_rename_buffer_on_startup()
   call delete('Xresult')
 endfunc
 
+" Test that -cq works as expected
+func Test_cq_zero_exmode()
+  CheckFeature channel
+
+  let logfile = 'Xcq_log.txt'
+  let out = system(GetVimCommand() .. ' --clean --log ' .. logfile .. ' -es -X -c "argdelete foobar" -c"7cq"')
+  call assert_equal(8, v:shell_error)
+  let log = filter(readfile(logfile), {idx, val -> val =~ "E480"})
+  call assert_match('E480: No match: foobar', log[0])
+  call delete(logfile)
+
+  " wrap-around on Unix
+  let out = system(GetVimCommand() .. ' --clean --log ' .. logfile .. ' -es -X -c "argdelete foobar" -c"255cq"')
+  if !has('win32')
+    call assert_equal(0, v:shell_error)
+  else
+    call assert_equal(256, v:shell_error)
+  endif
+  let log = filter(readfile(logfile), {idx, val -> val =~ "E480"})
+  call assert_match('E480: No match: foobar', log[0])
+  call delete('Xcq_log.txt')
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

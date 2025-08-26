@@ -69,7 +69,7 @@ allows you to associate names with a specific node in a pattern. A `predicate`
 adds arbitrary metadata and conditional data to a match.
 
 Queries are written in a lisp-like language documented in
-https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax
+https://tree-sitter.github.io/tree-sitter/using-parsers/queries/1-syntax.html
 Note: The predicates listed there differ from those Nvim supports. See
 |treesitter-predicates| for a complete list of predicates supported by Nvim.
 
@@ -219,7 +219,9 @@ The following directives are built in:
         Takes the range of the captured node and applies an offset. This will
         set a new range in the form of a list like { {start_row}, {start_col},
         {end_row}, {end_col} } for the captured node with `capture_id` as
-        `metadata[capture_id].range`. Useful for |treesitter-language-injections|.
+        `metadata[capture_id].offset`. This offset will be applied to the
+        range returned in |vim.treesitter.get_range()|. Useful for
+        |treesitter-language-injections|.
 
         Parameters: ~
             {capture_id}
@@ -573,7 +575,10 @@ parent tree. The language injection query allows you to specify these
 “injections” using the following captures:
 
     • `@injection.content` - indicates that the captured node should have its
-      contents re-parsed using another language.
+      contents re-parsed using another language. If there are multiple
+      `@injection.content` captures in one pattern, all ranges will be
+      collected and parsed as one tree. This allows query authors to create
+      "scoped" injections with injection query quantifiers.
     • `@injection.language` - indicates that the captured node’s text may
       contain the name of a language that should be used to re-parse the
       `@injection.content`.
@@ -870,6 +875,9 @@ TSNode:range({include_bytes})                                 *TSNode:range()*
     Parameters: ~
       • {include_bytes}  (`false?`)
 
+    Overloads: ~
+      • `fun(self: TSNode, include_bytes: true): integer, integer, integer, integer, integer, integer`
+
     Return (multiple): ~
         (`integer`)
         (`integer`)
@@ -1129,7 +1137,7 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
     Can be used in an ftplugin or FileType autocommand.
 
     Note: By default, disables regex syntax highlighting, which may be
-    required for some plugins. In this case, add `vim.bo.syntax = 'on'` after
+    required for some plugins. In this case, add `vim.bo.syntax = 'ON'` after
     the call to `start`.
 
     Note: By default, the highlighter parses code asynchronously, using a
@@ -1139,7 +1147,7 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
         vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
             callback = function(args)
                 vim.treesitter.start(args.buf, 'latex')
-                vim.bo[args.buf].syntax = 'on'  -- only if additional legacy syntax is needed
+                vim.bo[args.buf].syntax = 'ON'  -- only if additional legacy syntax is needed
             end
         })
 <
@@ -1237,365 +1245,6 @@ register({lang}, {filetype})              *vim.treesitter.language.register()*
     Parameters: ~
       • {lang}      (`string`) Name of parser
       • {filetype}  (`string|string[]`) Filetype(s) to associate with lang
-
-
-==============================================================================
-Lua module: vim.treesitter.query                        *lua-treesitter-query*
-
-This Lua |treesitter-query| interface allows you to create queries and use
-them to parse text. See |vim.treesitter.query.parse()| for a working example.
-
-
-*vim.treesitter.Query*
-    Parsed query, see |vim.treesitter.query.parse()|
-
-    Fields: ~
-      • {lang}                     (`string`) parser language name
-      • {captures}                 (`string[]`) list of (unique) capture names
-                                   defined in query
-      • {info}                     (`vim.treesitter.QueryInfo`) query context
-                                   (e.g. captures, predicates, directives)
-      • {has_conceal_line}         (`boolean`) whether the query sets
-                                   conceal_lines metadata
-      • {has_combined_injections}  (`boolean`) whether the query contains
-                                   combined injections
-      • {query}                    (`TSQuery`) userdata query object
-      • {iter_captures}            (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
-                                   See |Query:iter_captures()|.
-      • {iter_matches}             (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
-                                   See |Query:iter_matches()|.
-
-
-                                        *vim.treesitter.query.add_directive()*
-add_directive({name}, {handler}, {opts})
-    Adds a new directive to be used in queries
-
-    Handlers can set match level data by setting directly on the metadata
-    object `metadata.key = value`. Additionally, handlers can set node level
-    data by using the capture id on the metadata table
-    `metadata[capture_id].key = value`
-
-    Parameters: ~
-      • {name}     (`string`) Name of the directive, without leading #
-      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata)`)
-                   • match: A table mapping capture IDs to a list of captured
-                     nodes
-                   • pattern: the index of the matching pattern in the query
-                     file
-                   • predicate: list of strings containing the full directive
-                     being called, e.g. `(node (#set! conceal "-"))` would get
-                     the predicate `{ "#set!", "conceal", "-" }`
-      • {opts}     (`table`) A table with the following fields:
-                   • {force}? (`boolean`) Override an existing predicate of
-                     the same name
-                   • {all}? (`boolean`) Use the correct implementation of the
-                     match table where capture IDs map to a list of nodes
-                     instead of a single node. Defaults to true. This option
-                     will be removed in a future release.
-
-                                        *vim.treesitter.query.add_predicate()*
-add_predicate({name}, {handler}, {opts})
-    Adds a new predicate to be used in queries
-
-    Parameters: ~
-      • {name}     (`string`) Name of the predicate, without leading #
-      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata): boolean?`)
-                   • see |vim.treesitter.query.add_directive()| for argument
-                     meanings
-      • {opts}     (`table?`) A table with the following fields:
-                   • {force}? (`boolean`) Override an existing predicate of
-                     the same name
-                   • {all}? (`boolean`) Use the correct implementation of the
-                     match table where capture IDs map to a list of nodes
-                     instead of a single node. Defaults to true. This option
-                     will be removed in a future release.
-
-edit({lang})                                     *vim.treesitter.query.edit()*
-    Opens a live editor to query the buffer you started from.
-
-    Can also be shown with *:EditQuery*.
-
-    If you move the cursor to a capture name ("@foo"), text matching the
-    capture is highlighted in the source buffer. The query editor is a scratch
-    buffer, use `:write` to save it. You can find example queries at
-    `$VIMRUNTIME/queries/`.
-
-    Parameters: ~
-      • {lang}  (`string?`) language to open the query editor for. If omitted,
-                inferred from the current buffer's filetype.
-
-get({lang}, {query_name})                         *vim.treesitter.query.get()*
-    Returns the runtime query {query_name} for {lang}.
-
-    Parameters: ~
-      • {lang}        (`string`) Language to use for the query
-      • {query_name}  (`string`) Name of the query (e.g. "highlights")
-
-    Return: ~
-        (`vim.treesitter.Query?`) Parsed query. `nil` if no query files are
-        found. See |vim.treesitter.Query|.
-
-                                            *vim.treesitter.query.get_files()*
-get_files({lang}, {query_name}, {is_included})
-    Gets the list of files used to make up a query
-
-    Parameters: ~
-      • {lang}         (`string`) Language to get query for
-      • {query_name}   (`string`) Name of the query to load (e.g.,
-                       "highlights")
-      • {is_included}  (`boolean?`) Internal parameter, most of the time left
-                       as `nil`
-
-    Return: ~
-        (`string[]`) query_files List of files to load for given query and
-        language
-
-lint({buf}, {opts})                              *vim.treesitter.query.lint()*
-    Lint treesitter queries using installed parser, or clear lint errors.
-
-    Use |treesitter-parsers| in runtimepath to check the query file in {buf}
-    for errors:
-    • verify that used nodes are valid identifiers in the grammar.
-    • verify that predicates and directives are valid.
-    • verify that top-level s-expressions are valid.
-
-    The found diagnostics are reported using |diagnostic-api|. By default, the
-    parser used for verification is determined by the containing folder of the
-    query file, e.g., if the path ends in `/lua/highlights.scm`, the parser
-    for the `lua` language will be used.
-
-    Parameters: ~
-      • {buf}   (`integer`) Buffer handle
-      • {opts}  (`table?`) Optional keyword arguments:
-                • {langs}? (`string|string[]`) Language(s) to use for checking
-                  the query. If multiple languages are specified, queries are
-                  validated for all of them
-                • {clear} (`boolean`) Just clear current lint errors
-
-list_directives()                     *vim.treesitter.query.list_directives()*
-    Lists the currently available directives to use in queries.
-
-    Return: ~
-        (`string[]`) Supported directives.
-
-list_predicates()                     *vim.treesitter.query.list_predicates()*
-    Lists the currently available predicates to use in queries.
-
-    Return: ~
-        (`string[]`) Supported predicates.
-
-omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
-    Omnifunc for completing node names and predicates in treesitter queries.
-
-    Use via >lua
-        vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
-<
-
-    Parameters: ~
-      • {findstart}  (`0|1`)
-      • {base}       (`string`)
-
-parse({lang}, {query})                          *vim.treesitter.query.parse()*
-    Parses a {query} string and returns a `Query` object
-    (|lua-treesitter-query|), which can be used to search the tree for the
-    query patterns (via |Query:iter_captures()|, |Query:iter_matches()|), or
-    inspect/modify the query via these fields:
-    • `captures`: a list of unique capture names defined in the query (alias:
-      `info.captures`).
-    • `info.patterns`: information about predicates.
-    • `query`: the underlying |TSQuery| which can be used to disable patterns
-      or captures.
-
-    Example: >lua
-        local query = vim.treesitter.query.parse('vimdoc', [[
-          ; query
-          ((h1) @str
-            (#trim! @str 1 1 1 1))
-        ]])
-        local tree = vim.treesitter.get_parser():parse()[1]
-        for id, node, metadata in query:iter_captures(tree:root(), 0) do
-           -- Print the node name and source text.
-           vim.print({node:type(), vim.treesitter.get_node_text(node, vim.api.nvim_get_current_buf())})
-        end
-<
-
-    Parameters: ~
-      • {lang}   (`string`) Language to use for the query
-      • {query}  (`string`) Query text, in s-expr syntax
-
-    Return: ~
-        (`vim.treesitter.Query`) Parsed query . See |vim.treesitter.Query|.
-
-    See also: ~
-      • |vim.treesitter.query.get()|
-
-                                                       *Query:iter_captures()*
-Query:iter_captures({node}, {source}, {start}, {stop}, {opts})
-    Iterates over all captures from all matches in {node}.
-
-    {source} is required if the query contains predicates; then the caller
-    must ensure to use a freshly parsed tree consistent with the current text
-    of the buffer (if relevant). {start} and {stop} can be used to limit
-    matches inside a row range (this is typically used with root node as the
-    {node}, i.e., to get syntax highlight matches in the current viewport).
-    When omitted, the {start} and {stop} row values are used from the given
-    node.
-
-    The iterator returns four values:
-    1. the numeric id identifying the capture
-    2. the captured node
-    3. metadata from any directives processing the match
-    4. the match itself
-
-    Example: how to get captures by name: >lua
-        for id, node, metadata, match in query:iter_captures(tree:root(), bufnr, first, last) do
-          local name = query.captures[id] -- name of the capture in the query
-          -- typically useful info about the node:
-          local type = node:type() -- type of the captured node
-          local row1, col1, row2, col2 = node:range() -- range of the capture
-          -- ... use the info here ...
-        end
-<
-
-    Note: ~
-      • Captures are only returned if the query pattern of a specific capture
-        contained predicates.
-
-    Parameters: ~
-      • {node}    (`TSNode`) under which the search will occur
-      • {source}  (`integer|string`) Source buffer or string to extract text
-                  from
-      • {start}   (`integer?`) Starting line for the search. Defaults to
-                  `node:start()`.
-      • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
-                  Defaults to `node:end_()`.
-      • {opts}    (`table?`) Optional keyword arguments:
-                  • max_start_depth (integer) if non-zero, sets the maximum
-                    start depth for each match. This is used to prevent
-                    traversing too deep into a tree.
-                  • match_limit (integer) Set the maximum number of
-                    in-progress matches (Default: 256).
-
-    Return: ~
-        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
-        capture id, capture node, metadata, match, tree
-
-                                                        *Query:iter_matches()*
-Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
-    Iterates the matches of self on a given range.
-
-    Iterate over all matches within a {node}. The arguments are the same as
-    for |Query:iter_captures()| but the iterated values are different: an
-    (1-based) index of the pattern in the query, a table mapping capture
-    indices to a list of nodes, and metadata from any directives processing
-    the match.
-
-    Example: >lua
-        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1) do
-          for id, nodes in pairs(match) do
-            local name = query.captures[id]
-            for _, node in ipairs(nodes) do
-              -- `node` was captured by the `name` capture in the match
-
-              local node_data = metadata[id] -- Node level metadata
-              -- ... use the info here ...
-            end
-          end
-        end
-<
-
-    Parameters: ~
-      • {node}    (`TSNode`) under which the search will occur
-      • {source}  (`integer|string`) Source buffer or string to search
-      • {start}   (`integer?`) Starting line for the search. Defaults to
-                  `node:start()`.
-      • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
-                  Defaults to `node:end_()`.
-      • {opts}    (`table?`) Optional keyword arguments:
-                  • max_start_depth (integer) if non-zero, sets the maximum
-                    start depth for each match. This is used to prevent
-                    traversing too deep into a tree.
-                  • match_limit (integer) Set the maximum number of
-                    in-progress matches (Default: 256). all (boolean) When
-                    `false` (default `true`), the returned table maps capture
-                    IDs to a single (last) node instead of the full list of
-                    matching nodes. This option is only for backward
-                    compatibility and will be removed in a future release.
-
-    Return: ~
-        (`fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
-        pattern id, match, metadata, tree
-
-set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
-    Sets the runtime query named {query_name} for {lang}
-
-    This allows users to override or extend any runtime files and/or
-    configuration set by plugins.
-
-    For example, you could enable spellchecking of `C` identifiers with the
-    following code: >lua
-        vim.treesitter.query.set(
-          'c',
-          'highlights',
-          [[;inherits c
-          (identifier) @spell]])
-        ]])
-<
-
-    Parameters: ~
-      • {lang}        (`string`) Language to use for the query
-      • {query_name}  (`string`) Name of the query (e.g., "highlights")
-      • {text}        (`string`) Query text (unparsed).
-
-
-
-
-*TSQuery*
-    Extends: |userdata|
-
-    Reference to an object held by the treesitter library that is used as a
-    component of the |vim.treesitter.Query| for language feature support. See
-    |treesitter-query| for more about queries or
-    |vim.treesitter.query.parse()| for an example of how to obtain a query
-    object.
-
-    Fields: ~
-      • {disable_capture}  (`fun(self: TSQuery, capture_name: string)`) See
-                           |TSQuery:disable_capture()|.
-      • {disable_pattern}  (`fun(self: TSQuery, pattern_index: integer)`) See
-                           |TSQuery:disable_pattern()|.
-
-
-TSQuery:disable_capture({capture_name})            *TSQuery:disable_capture()*
-    Disable a specific capture in this query; once disabled the capture cannot
-    be re-enabled. {capture_name} should not include a leading "@".
-
-    Example: To disable the `@variable.parameter` capture from the vimdoc
-    highlights query: >lua
-        local query = vim.treesitter.query.get('vimdoc', 'highlights')
-        query.query:disable_capture("variable.parameter")
-        vim.treesitter.get_parser():parse()
-<
-
-    Parameters: ~
-      • {capture_name}  (`string`)
-
-TSQuery:disable_pattern({pattern_index})           *TSQuery:disable_pattern()*
-    Disable a specific pattern in this query; once disabled the pattern cannot
-    be re-enabled. The {pattern_index} for a particular match can be obtained
-    with |:Inspect!|, or by reading the source of the query (i.e. from
-    |vim.treesitter.query.get_files()|).
-
-    Example: To disable `|` links in vimdoc but keep other `@markup.link`s
-    highlighted: >lua
-        local link_pattern = 9 -- from :Inspect!
-        local query = vim.treesitter.query.get('vimdoc', 'highlights')
-        query.query:disable_pattern(link_pattern)
-        local tree = vim.treesitter.get_parser():parse()[1]
-<
-
-    Parameters: ~
-      • {pattern_index}  (`integer`)
 
 
 ==============================================================================
@@ -1850,6 +1499,367 @@ LanguageTree:trees()                                    *LanguageTree:trees()*
 
     Return: ~
         (`table<integer, TSTree>`)
+
+
+==============================================================================
+Lua module: vim.treesitter.query                        *lua-treesitter-query*
+
+This Lua |treesitter-query| interface allows you to create queries and use
+them to parse text. See |vim.treesitter.query.parse()| for a working example.
+
+
+*vim.treesitter.Query*
+    Parsed query, see |vim.treesitter.query.parse()|
+
+    Fields: ~
+      • {lang}                     (`string`) parser language name
+      • {captures}                 (`string[]`) list of (unique) capture names
+                                   defined in query
+      • {info}                     (`vim.treesitter.QueryInfo`) query context
+                                   (e.g. captures, predicates, directives)
+      • {has_conceal_line}         (`boolean`) whether the query sets
+                                   conceal_lines metadata
+      • {has_combined_injections}  (`boolean`) whether the query contains
+                                   combined injections
+      • {query}                    (`TSQuery`) userdata query object
+      • {iter_captures}            (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
+                                   See |Query:iter_captures()|.
+      • {iter_matches}             (`fun(self: vim.treesitter.Query, node: TSNode, source: integer|string, start: integer?, stop: integer?, opts: table?): fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
+                                   See |Query:iter_matches()|.
+
+
+                                        *vim.treesitter.query.add_directive()*
+add_directive({name}, {handler}, {opts})
+    Adds a new directive to be used in queries
+
+    Handlers can set match level data by setting directly on the metadata
+    object `metadata.key = value`. Additionally, handlers can set node level
+    data by using the capture id on the metadata table
+    `metadata[capture_id].key = value`
+
+    Parameters: ~
+      • {name}     (`string`) Name of the directive, without leading #
+      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata)`)
+                   • match: A table mapping capture IDs to a list of captured
+                     nodes
+                   • pattern: the index of the matching pattern in the query
+                     file
+                   • predicate: list of strings containing the full directive
+                     being called, e.g. `(node (#set! conceal "-"))` would get
+                     the predicate `{ "#set!", "conceal", "-" }`
+      • {opts}     (`table`) A table with the following fields:
+                   • {force}? (`boolean`) Override an existing predicate of
+                     the same name
+                   • {all}? (`boolean`) Use the correct implementation of the
+                     match table where capture IDs map to a list of nodes
+                     instead of a single node. Defaults to true. This option
+                     will be removed in a future release.
+
+                                        *vim.treesitter.query.add_predicate()*
+add_predicate({name}, {handler}, {opts})
+    Adds a new predicate to be used in queries
+
+    Parameters: ~
+      • {name}     (`string`) Name of the predicate, without leading #
+      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata): boolean?`)
+                   • see |vim.treesitter.query.add_directive()| for argument
+                     meanings
+      • {opts}     (`table?`) A table with the following fields:
+                   • {force}? (`boolean`) Override an existing predicate of
+                     the same name
+                   • {all}? (`boolean`) Use the correct implementation of the
+                     match table where capture IDs map to a list of nodes
+                     instead of a single node. Defaults to true. This option
+                     will be removed in a future release.
+
+edit({lang})                                     *vim.treesitter.query.edit()*
+    Opens a live editor to query the buffer you started from.
+
+    Can also be shown with the *:EditQuery* command. `:EditQuery <tab>`
+    completes available parsers.
+
+    If you move the cursor to a capture name ("@foo"), text matching the
+    capture is highlighted in the source buffer. The query editor is a scratch
+    buffer, use `:write` to save it. You can find example queries at
+    `$VIMRUNTIME/queries/`.
+
+    Parameters: ~
+      • {lang}  (`string?`) language to open the query editor for. If omitted,
+                inferred from the current buffer's filetype.
+
+get({lang}, {query_name})                         *vim.treesitter.query.get()*
+    Returns the runtime query {query_name} for {lang}.
+
+    Parameters: ~
+      • {lang}        (`string`) Language to use for the query
+      • {query_name}  (`string`) Name of the query (e.g. "highlights")
+
+    Return: ~
+        (`vim.treesitter.Query?`) Parsed query. `nil` if no query files are
+        found. See |vim.treesitter.Query|.
+
+                                            *vim.treesitter.query.get_files()*
+get_files({lang}, {query_name}, {is_included})
+    Gets the list of files used to make up a query
+
+    Parameters: ~
+      • {lang}         (`string`) Language to get query for
+      • {query_name}   (`string`) Name of the query to load (e.g.,
+                       "highlights")
+      • {is_included}  (`boolean?`) Internal parameter, most of the time left
+                       as `nil`
+
+    Return: ~
+        (`string[]`) query_files List of files to load for given query and
+        language
+
+lint({buf}, {opts})                              *vim.treesitter.query.lint()*
+    Lint treesitter queries using installed parser, or clear lint errors.
+
+    Use |treesitter-parsers| in runtimepath to check the query file in {buf}
+    for errors:
+    • verify that used nodes are valid identifiers in the grammar.
+    • verify that predicates and directives are valid.
+    • verify that top-level s-expressions are valid.
+
+    The found diagnostics are reported using |diagnostic-api|. By default, the
+    parser used for verification is determined by the containing folder of the
+    query file, e.g., if the path ends in `/lua/highlights.scm`, the parser
+    for the `lua` language will be used.
+
+    Parameters: ~
+      • {buf}   (`integer`) Buffer handle
+      • {opts}  (`table?`) Optional keyword arguments:
+                • {langs}? (`string|string[]`) Language(s) to use for checking
+                  the query. If multiple languages are specified, queries are
+                  validated for all of them
+                • {clear} (`boolean`) Just clear current lint errors
+
+list_directives()                     *vim.treesitter.query.list_directives()*
+    Lists the currently available directives to use in queries.
+
+    Return: ~
+        (`string[]`) Supported directives.
+
+list_predicates()                     *vim.treesitter.query.list_predicates()*
+    Lists the currently available predicates to use in queries.
+
+    Return: ~
+        (`string[]`) Supported predicates.
+
+omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
+    Omnifunc for completing node names and predicates in treesitter queries.
+
+    Use via >lua
+        vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+<
+
+    Parameters: ~
+      • {findstart}  (`0|1`)
+      • {base}       (`string`)
+
+parse({lang}, {query})                          *vim.treesitter.query.parse()*
+    Parses a {query} string and returns a `Query` object
+    (|lua-treesitter-query|), which can be used to search the tree for the
+    query patterns (via |Query:iter_captures()|, |Query:iter_matches()|), or
+    inspect/modify the query via these fields:
+    • `captures`: a list of unique capture names defined in the query (alias:
+      `info.captures`).
+    • `info.patterns`: information about predicates.
+    • `query`: the underlying |TSQuery| which can be used to disable patterns
+      or captures.
+
+    Example: >lua
+        local query = vim.treesitter.query.parse('vimdoc', [[
+          ; query
+          ((h1) @str
+            (#trim! @str 1 1 1 1))
+        ]])
+        local tree = vim.treesitter.get_parser():parse()[1]
+        for id, node, metadata in query:iter_captures(tree:root(), 0) do
+           -- Print the node name and source text.
+           vim.print({node:type(), vim.treesitter.get_node_text(node, vim.api.nvim_get_current_buf())})
+        end
+<
+
+    Parameters: ~
+      • {lang}   (`string`) Language to use for the query
+      • {query}  (`string`) Query text, in s-expr syntax
+
+    Return: ~
+        (`vim.treesitter.Query`) Parsed query . See |vim.treesitter.Query|.
+
+    See also: ~
+      • |vim.treesitter.query.get()|
+
+                                                       *Query:iter_captures()*
+Query:iter_captures({node}, {source}, {start}, {stop}, {opts})
+    Iterates over all captures from all matches in {node}.
+
+    {source} is required if the query contains predicates; then the caller
+    must ensure to use a freshly parsed tree consistent with the current text
+    of the buffer (if relevant). {start} and {stop} can be used to limit
+    matches inside a row range (this is typically used with root node as the
+    {node}, i.e., to get syntax highlight matches in the current viewport).
+    When omitted, the {start} and {stop} row values are used from the given
+    node.
+
+    The iterator returns four values:
+    1. the numeric id identifying the capture
+    2. the captured node
+    3. metadata from any directives processing the match
+    4. the match itself
+
+    Example: how to get captures by name: >lua
+        for id, node, metadata, match in query:iter_captures(tree:root(), bufnr, first, last) do
+          local name = query.captures[id] -- name of the capture in the query
+          -- typically useful info about the node:
+          local type = node:type() -- type of the captured node
+          local row1, col1, row2, col2 = node:range() -- range of the capture
+          -- ... use the info here ...
+        end
+<
+
+    Note: ~
+      • Captures are only returned if the query pattern of a specific capture
+        contained predicates.
+
+    Parameters: ~
+      • {node}    (`TSNode`) under which the search will occur
+      • {source}  (`integer|string`) Source buffer or string to extract text
+                  from
+      • {start}   (`integer?`) Starting line for the search. Defaults to
+                  `node:start()`.
+      • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
+                  Defaults to `node:end_()`.
+      • {opts}    (`table?`) Optional keyword arguments:
+                  • max_start_depth (integer) if non-zero, sets the maximum
+                    start depth for each match. This is used to prevent
+                    traversing too deep into a tree.
+                  • match_limit (integer) Set the maximum number of
+                    in-progress matches (Default: 256).
+
+    Return: ~
+        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
+        capture id, capture node, metadata, match, tree
+
+                                                        *Query:iter_matches()*
+Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
+    Iterates the matches of self on a given range.
+
+    Iterate over all matches within a {node}. The arguments are the same as
+    for |Query:iter_captures()| but the iterated values are different: an
+    (1-based) index of the pattern in the query, a table mapping capture
+    indices to a list of nodes, and metadata from any directives processing
+    the match.
+
+    Example: >lua
+        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1) do
+          for id, nodes in pairs(match) do
+            local name = query.captures[id]
+            for _, node in ipairs(nodes) do
+              -- `node` was captured by the `name` capture in the match
+
+              local node_data = metadata[id] -- Node level metadata
+              -- ... use the info here ...
+            end
+          end
+        end
+<
+
+    Parameters: ~
+      • {node}    (`TSNode`) under which the search will occur
+      • {source}  (`integer|string`) Source buffer or string to search
+      • {start}   (`integer?`) Starting line for the search. Defaults to
+                  `node:start()`.
+      • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
+                  Defaults to `node:end_()`.
+      • {opts}    (`table?`) Optional keyword arguments:
+                  • max_start_depth (integer) if non-zero, sets the maximum
+                    start depth for each match. This is used to prevent
+                    traversing too deep into a tree.
+                  • match_limit (integer) Set the maximum number of
+                    in-progress matches (Default: 256).
+                  • all (boolean) When `false` (default `true`), the returned
+                    table maps capture IDs to a single (last) node instead of
+                    the full list of matching nodes. This option is only for
+                    backward compatibility and will be removed in a future
+                    release.
+
+    Return: ~
+        (`fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
+        pattern id, match, metadata, tree
+
+set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
+    Sets the runtime query named {query_name} for {lang}
+
+    This allows users to override or extend any runtime files and/or
+    configuration set by plugins.
+
+    For example, you could enable spellchecking of `C` identifiers with the
+    following code: >lua
+        vim.treesitter.query.set(
+          'c',
+          'highlights',
+          [[;inherits c
+          (identifier) @spell]])
+        ]])
+<
+
+    Parameters: ~
+      • {lang}        (`string`) Language to use for the query
+      • {query_name}  (`string`) Name of the query (e.g., "highlights")
+      • {text}        (`string`) Query text (unparsed).
+
+
+
+
+*TSQuery*
+    Extends: |userdata|
+
+    Reference to an object held by the treesitter library that is used as a
+    component of the |vim.treesitter.Query| for language feature support. See
+    |treesitter-query| for more about queries or
+    |vim.treesitter.query.parse()| for an example of how to obtain a query
+    object.
+
+    Fields: ~
+      • {disable_capture}  (`fun(self: TSQuery, capture_name: string)`) See
+                           |TSQuery:disable_capture()|.
+      • {disable_pattern}  (`fun(self: TSQuery, pattern_index: integer)`) See
+                           |TSQuery:disable_pattern()|.
+
+
+TSQuery:disable_capture({capture_name})            *TSQuery:disable_capture()*
+    Disable a specific capture in this query; once disabled the capture cannot
+    be re-enabled. {capture_name} should not include a leading "@".
+
+    Example: To disable the `@variable.parameter` capture from the vimdoc
+    highlights query: >lua
+        local query = vim.treesitter.query.get('vimdoc', 'highlights')
+        query.query:disable_capture("variable.parameter")
+        vim.treesitter.get_parser():parse()
+<
+
+    Parameters: ~
+      • {capture_name}  (`string`)
+
+TSQuery:disable_pattern({pattern_index})           *TSQuery:disable_pattern()*
+    Disable a specific pattern in this query; once disabled the pattern cannot
+    be re-enabled. The {pattern_index} for a particular match can be obtained
+    with |:Inspect!|, or by reading the source of the query (i.e. from
+    |vim.treesitter.query.get_files()|).
+
+    Example: To disable `|` links in vimdoc but keep other `@markup.link`s
+    highlighted: >lua
+        local link_pattern = 9 -- from :Inspect!
+        local query = vim.treesitter.query.get('vimdoc', 'highlights')
+        query.query:disable_pattern(link_pattern)
+        local tree = vim.treesitter.get_parser():parse()[1]
+<
+
+    Parameters: ~
+      • {pattern_index}  (`integer`)
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

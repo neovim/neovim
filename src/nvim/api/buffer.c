@@ -46,9 +46,7 @@
 #include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/buffer.c.generated.h"
-#endif
+#include "api/buffer.c.generated.h"
 
 /// @brief <pre>help
 /// For more information on buffers, see |buffers|.
@@ -87,7 +85,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
   return buf->b_ml.ml_line_count;
 }
 
-/// Activates buffer-update events on a channel, or as Lua callbacks.
+/// Activates |api-buffer-updates| events on a channel, or as Lua callbacks.
 ///
 /// Example (Lua): capture buffer updates in a global `events` variable
 /// (use "vim.print(events)" to see its contents):
@@ -663,7 +661,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     // changed range, and move any in the remainder of the buffer.
     // Do not adjust any cursors. need to use column-aware logic (below)
     linenr_T adjust = end_row >= start_row ? MAXLNUM : 0;
-    mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row, adjust, (linenr_T)extra,
+    mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row - 1, adjust, (linenr_T)extra,
                     true, true, kExtmarkNOOP);
 
     extmark_splice(buf, (int)start_row - 1, (colnr_T)start_col,
@@ -856,7 +854,8 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param[out]  err   Error details, if any
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer id.
-ArrayOf(Dict) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena, Error *err)
+ArrayOf(DictAs(get_keymap)) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena,
+                                                Error *err)
   FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);

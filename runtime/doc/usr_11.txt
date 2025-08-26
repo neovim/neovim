@@ -126,7 +126,7 @@ Example: >
 	vim -r .help.txt.swo
 
 This is also handy when the swap file is in another directory than expected.
-Vim recognizes files with the pattern *.s[uvw][a-z] as swap files.
+Vim recognizes files with the pattern "*.s[uvw][a-z]" as swap files.
 
 If this still does not work, see what file names Vim reports and rename the
 files accordingly.  Check the 'directory' option to see where Vim may have

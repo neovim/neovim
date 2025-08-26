@@ -4,9 +4,7 @@
 
 #include "nvim/os/os_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ascii_defs.h.inline.generated.h"
-#endif
+#include "ascii_defs.h.inline.generated.h"
 
 // Definitions of various common control characters.
 

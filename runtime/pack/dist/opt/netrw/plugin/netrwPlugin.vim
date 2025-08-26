@@ -38,7 +38,7 @@ augroup END
 augroup Network
     au!
     au BufReadCmd file://* call netrw#FileUrlEdit(expand("<amatch>"))
-    au BufReadCmd ftp://*,rcp://*,scp://*,http://*,https://*,dav://*,davs://*,rsync://*,sftp://* exe "sil doau BufReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(2,expand("<amatch>"))|exe "sil doau BufReadPost ".fnameescape(expand("<amatch>"))
+    au BufReadCmd ftp://*,rcp://*,scp://*,dav://*,davs://*,rsync://*,sftp://* exe "sil doau BufReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(2,expand("<amatch>"))|exe "sil doau BufReadPost ".fnameescape(expand("<amatch>"))
     au FileReadCmd ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://* exe "sil doau FileReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(1,expand("<amatch>"))|exe "sil doau FileReadPost ".fnameescape(expand("<amatch>"))
     au BufWriteCmd ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://* exe "sil doau BufWritePre ".fnameescape(expand("<amatch>"))|exe 'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau BufWritePost ".fnameescape(expand("<amatch>"))
     au FileWriteCmd ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://* exe "sil doau FileWritePre ".fnameescape(expand("<amatch>"))|exe "'[,']".'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau FileWritePost ".fnameescape(expand("<amatch>"))
@@ -69,12 +69,6 @@ command! -nargs=* -bar -count=0 -complete=dir Texplore call netrw#Explore(<count
 command! -nargs=* -bar -bang -count=0 -complete=dir Lexplore call netrw#Lexplore(<count>, <bang>0, <q-args>)
 command! -nargs=* -bar -bang Nexplore call netrw#Explore(-1, 0, 0, <q-args>)
 command! -nargs=* -bar -bang Pexplore call netrw#Explore(-2, 0, 0, <q-args>)
-
-" }}}
-" Commands: NetrwSettings {{{
-
-command! -nargs=0 NetrwSettings call netrwSettings#NetrwSettings()
-command! -bang NetrwClean call netrw#Clean(<bang>0)
 
 " }}}
 " Maps: {{{

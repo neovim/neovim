@@ -63,7 +63,9 @@ Transitioning from Vim                                         *nvim-from-vim*
     let &packpath = &runtimepath
     source ~/.vimrc
 
-3. Restart Nvim, your existing Vim config will be loaded.
+3. Restart Nvim, your existing Vim config will be loaded. >vim
+
+    :restart
 
 See |provider-python| and |provider-clipboard| for additional software you
 might need to use some features.

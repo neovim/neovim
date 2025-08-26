@@ -60,46 +60,46 @@ describe(':terminal window', function()
       feed([[<C-\><C-N>]])
       feed([[:set numberwidth=1 number<CR>i]])
       screen:expect([[
-        {7:1 }tty ready                                       |
-        {7:2 }rows: 6, cols: 48                               |
-        {7:3 }^                                                |
-        {7:4 }                                                |
-        {7:5 }                                                |
-        {7:6 }                                                |
-        {3:-- TERMINAL --}                                    |
+        {121:1 }tty ready                                       |
+        {121:2 }rows: 6, cols: 48                               |
+        {121:3 }^                                                |
+        {121:4 }                                                |
+        {121:5 }                                                |
+        {121:6 }                                                |
+        {5:-- TERMINAL --}                                    |
       ]])
       feed_data('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
       screen:expect([[
-        {7:1 }tty ready                                       |
-        {7:2 }rows: 6, cols: 48                               |
-        {7:3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV|
-        {7:4 }WXYZ^                                            |
-        {7:5 }                                                |
-        {7:6 }                                                |
-        {3:-- TERMINAL --}                                    |
+        {121:1 }tty ready                                       |
+        {121:2 }rows: 6, cols: 48                               |
+        {121:3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV|
+        {121:4 }WXYZ^                                            |
+        {121:5 }                                                |
+        {121:6 }                                                |
+        {5:-- TERMINAL --}                                    |
       ]])
 
       -- numberwidth=9
       feed([[<C-\><C-N>]])
       feed([[:set numberwidth=9 number<CR>i]])
       screen:expect([[
-        {7:       1 }tty ready                                |
-        {7:       2 }rows: 6, cols: 48                        |
-        {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
-        {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
-        {7:       5 }^                                         |
-        {7:       6 }                                         |
-        {3:-- TERMINAL --}                                    |
+        {121:       1 }tty ready                                |
+        {121:       2 }rows: 6, cols: 48                        |
+        {121:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
+        {121:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
+        {121:       5 }^                                         |
+        {121:       6 }                                         |
+        {5:-- TERMINAL --}                                    |
       ]])
       feed_data(' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
       screen:expect([[
-        {7:       1 }tty ready                                |
-        {7:       2 }rows: 6, cols: 48                        |
-        {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
-        {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
-        {7:       5 } abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN|
-        {7:       6 }OPQRSTUVWXYZ^                             |
-        {3:-- TERMINAL --}                                    |
+        {121:       1 }tty ready                                |
+        {121:       2 }rows: 6, cols: 48                        |
+        {121:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
+        {121:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
+        {121:       5 } abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN|
+        {121:       6 }OPQRSTUVWXYZ^                             |
+        {5:-- TERMINAL --}                                    |
       ]])
     end)
   end)
@@ -108,33 +108,33 @@ describe(':terminal window', function()
     it('wraps text', function()
       command([[set number statuscolumn=++%l\ \ ]])
       screen:expect([[
-        {7:++1  }tty ready                                    |
-        {7:++2  }rows: 6, cols: 45                            |
-        {7:++3  }^                                             |
-        {7:++4  }                                             |
-        {7:++5  }                                             |
-        {7:++6  }                                             |
-        {3:-- TERMINAL --}                                    |
+        {121:++1  }tty ready                                    |
+        {121:++2  }rows: 6, cols: 45                            |
+        {121:++3  }^                                             |
+        {121:++4  }                                             |
+        {121:++5  }                                             |
+        {121:++6  }                                             |
+        {5:-- TERMINAL --}                                    |
       ]])
       feed_data('\n\n\n\n\nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
       screen:expect([[
-        {7:++4  }                                             |
-        {7:++5  }                                             |
-        {7:++6  }                                             |
-        {7:++7  }                                             |
-        {7:++8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS|
-        {7:++9  }TUVWXYZ^                                      |
-        {3:-- TERMINAL --}                                    |
+        {121:++4  }                                             |
+        {121:++5  }                                             |
+        {121:++6  }                                             |
+        {121:++7  }                                             |
+        {121:++8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS|
+        {121:++9  }TUVWXYZ^                                      |
+        {5:-- TERMINAL --}                                    |
       ]])
       feed_data('\nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
       screen:expect([[
-        {7:++ 7  }                                            |
-        {7:++ 8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {7:++ 9  }STUVWXYZ                                    |
-        {7:++10  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {7:++11  }STUVWXYZrows: 6, cols: 44                   |
-        {7:++12  }^                                            |
-        {3:-- TERMINAL --}                                    |
+        {121:++ 7  }                                            |
+        {121:++ 8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
+        {121:++ 9  }STUVWXYZ                                    |
+        {121:++10  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
+        {121:++11  }STUVWXYZrows: 6, cols: 44                   |
+        {121:++12  }^                                            |
+        {5:-- TERMINAL --}                                    |
       ]])
     end)
   end)
@@ -155,7 +155,7 @@ describe(':terminal window', function()
         tty ready                                         |
         ^                                                  |
                                                           |*4
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end)
   end)
@@ -171,7 +171,7 @@ describe(':terminal window', function()
         line3                                             |
         line4                                             |
         ^                                                  |
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end)
 
@@ -209,7 +209,7 @@ describe(':terminal with multigrid', function()
       ^                                                  |
                                                         |*4
     ## grid 3
-      {3:-- TERMINAL --}                                    |
+      {5:-- TERMINAL --}                                    |
     ]])
 
     screen:try_resize_grid(2, 20, 10)
@@ -226,7 +226,7 @@ describe(':terminal with multigrid', function()
         ^                    |
                             |*7
       ## grid 3
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end
 
@@ -243,7 +243,7 @@ describe(':terminal with multigrid', function()
         rows: 3, cols: 70                                                     |
         ^                                                                      |
       ## grid 3
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end
 
@@ -263,7 +263,7 @@ describe(':terminal with multigrid', function()
         ^                                                  |
                                                           |
       ## grid 3
-        {3:-- TERMINAL --}                                    |
+        {5:-- TERMINAL --}                                    |
       ]])
     end
   end)

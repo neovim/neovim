@@ -5,9 +5,7 @@
 #include "nvim/memory.h"
 #include "nvim/ugrid.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ugrid.c.generated.h"
-#endif
+#include "ugrid.c.generated.h"
 
 void ugrid_init(UGrid *grid)
 {

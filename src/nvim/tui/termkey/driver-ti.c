@@ -18,9 +18,7 @@
 # include <io.h>
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "tui/termkey/driver-ti.c.generated.h"
-#endif
+#include "tui/termkey/driver-ti.c.generated.h"
 
 #define streq(a, b) (!strcmp(a, b))
 

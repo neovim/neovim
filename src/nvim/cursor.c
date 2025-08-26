@@ -27,9 +27,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "cursor.c.generated.h"
-#endif
+#include "cursor.c.generated.h"
 
 /// @return  the screen position of the cursor.
 int getviscol(void)
@@ -478,6 +476,19 @@ bool set_leftcol(colnr_T leftcol)
 int gchar_cursor(void)
 {
   return utf_ptr2char(get_cursor_pos_ptr());
+}
+
+/// Return the character immediately before the cursor.
+int char_before_cursor(void)
+{
+  if (curwin->w_cursor.col == 0) {
+    return -1;
+  }
+
+  char *line = get_cursor_line_ptr();
+  char *p = line + curwin->w_cursor.col;
+  int prev_len = utf_head_off(line, p - 1) + 1;
+  return utf_ptr2char(p - prev_len);
 }
 
 /// Write a character at the current cursor position.

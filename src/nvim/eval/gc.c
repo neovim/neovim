@@ -2,9 +2,7 @@
 
 #include "nvim/eval/gc.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/gc.c.generated.h"  // IWYU pragma: export
-#endif
+#include "eval/gc.c.generated.h"  // IWYU pragma: export
 
 /// Head of list of all dictionaries
 dict_T *gc_first_dict = NULL;

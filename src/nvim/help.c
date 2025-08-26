@@ -48,9 +48,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "help.c.generated.h"
-#endif
+#include "help.c.generated.h"
 
 /// ":help": open a read-only window on a help file
 void ex_help(exarg_T *eap)
@@ -141,7 +139,7 @@ void ex_help(exarg_T *eap)
     } else {
       wp = NULL;
       FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
-        if (bt_help(wp2->w_buffer)) {
+        if (bt_help(wp2->w_buffer) && !wp2->w_config.hide && wp2->w_config.focusable) {
           wp = wp2;
           break;
         }

@@ -1,11 +1,11 @@
 " These commands create the option window.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2025 Apr 24
+" Last Change:	2025 Aug 23
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " If there already is an option window, jump to that one.
-let buf = bufnr('option-window')
+let buf = bufexists('option-window') ? bufnr('option-window') : -1
 if buf >= 0
   let winids = win_findbuf(buf)
   if len(winids) > 0
@@ -261,6 +261,8 @@ call <SID>AddOption("ignorecase", gettext("ignore case when using a search patte
 call <SID>BinOptionG("ic", &ic)
 call <SID>AddOption("smartcase", gettext("override 'ignorecase' when pattern has upper case characters"))
 call <SID>BinOptionG("scs", &scs)
+call <SID>AddOption("maxsearchcount", gettext("maximum number for the search count feature"))
+call <SID>OptionG("msc", &msc)
 call <SID>AddOption("casemap", gettext("what method to use for changing case of letters"))
 call <SID>OptionG("cmp", &cmp)
 call <SID>AddOption("maxmempattern", gettext("maximum amount of memory in Kbyte used for pattern matching"))
@@ -732,13 +734,25 @@ endif
 if has("insert_expand")
   call <SID>AddOption("complete", gettext("specifies how Insert mode completion works for CTRL-N and CTRL-P"))
   call append("$", "\t" .. s:local_to_buffer)
-  call <SID>OptionL("cfc")
-  call <SID>AddOption("completefuzzycollect", gettext("use fuzzy collection for specific completion modes"))
   call <SID>OptionL("cpt")
+  call <SID>AddOption("autocomplete", gettext("automatic completion in insert mode"))
+  call <SID>BinOptionG("ac", &ac)
+  call <SID>AddOption("autocompletetimeout", gettext("initial decay timeout for 'autocomplete' algorithm"))
+  call append("$", " \tset act=" . &act)
+  call <SID>AddOption("completetimeout", gettext("initial decay timeout for CTRL-N and CTRL-P completion"))
+  call append("$", " \tset cto=" . &cto)
+  call <SID>AddOption("autocompletedelay", gettext("delay in msec before menu appears after typing"))
+  call append("$", " \tset acl=" . &acl)
   call <SID>AddOption("completeopt", gettext("whether to use a popup menu for Insert mode completion"))
   call <SID>OptionL("cot")
   call <SID>AddOption("completeitemalign", gettext("popup menu item align order"))
   call <SID>OptionG("cia", &cia)
+  call <SID>AddOption("completefuzzycollect", gettext("use fuzzy collection for specific completion modes"))
+  call <SID>OptionL("cfc")
+  if exists("+completepopup")
+    call <SID>AddOption("completepopup", gettext("options for the Insert mode completion info popup"))
+    call <SID>OptionG("cpp", &cpp)
+  endif
   call <SID>AddOption("pumheight", gettext("maximum height of the popup menu"))
   call <SID>OptionG("ph", &ph)
   call <SID>AddOption("pumwidth", gettext("minimum width of the popup menu"))
@@ -911,6 +925,9 @@ if has("diff")
   call <SID>OptionG("dip", &dip)
   call <SID>AddOption("diffexpr", gettext("expression used to obtain a diff file"))
   call <SID>OptionG("dex", &dex)
+  call <SID>AddOption("diffanchors", gettext("list of addresses for anchoring a diff"))
+  call append("$", "\t" .. s:global_or_local)
+  call <SID>OptionG("dia", &dia)
   call <SID>AddOption("patchexpr", gettext("expression used to patch a file"))
   call <SID>OptionG("pex", &pex)
 endif

@@ -421,18 +421,20 @@ EXTERN int sc_col;              // column for shown command
 
 // First NO_SCREEN, then NO_BUFFERS, then 0 when startup finished.
 EXTERN int starting INIT( = NO_SCREEN);
-// true when planning to exit. Might keep running if there is a changed buffer.
+// Planning to exit. Might keep running if there is a changed buffer.
 EXTERN bool exiting INIT( = false);
-// internal value of v:dying
+// Planning to restart.
+EXTERN bool restarting INIT( = false);
+// Internal value of v:dying
 EXTERN int v_dying INIT( = 0);
-// is stdin a terminal?
+// Is stdin a terminal?
 EXTERN bool stdin_isatty INIT( = true);
-// is stdout a terminal?
+// Is stdout a terminal?
 EXTERN bool stdout_isatty INIT( = true);
-// is stderr a terminal?
+// Is stderr a terminal?
 EXTERN bool stderr_isatty INIT( = true);
 
-/// filedesc set by embedder for reading first buffer like `cmd | nvim -`
+/// Filedesc set by embedder for reading first buffer like `cmd | nvim -`.
 EXTERN int stdin_fd INIT( = -1);
 
 // true when doing full-screen output, otherwise only writing some messages.

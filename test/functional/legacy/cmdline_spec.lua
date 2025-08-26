@@ -357,6 +357,179 @@ describe('cmdline', function()
                             10,20         30% |
     ]])
   end)
+
+  -- oldtest: Test_search_wildmenu_screendump()
+  it('wildmenu for search completion', function()
+    local screen = Screen.new(60, 10)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.Yellow, foreground = Screen.colors.Black },
+    })
+    exec([[
+      set wildmenu wildcharm=<f5> wildoptions-=pum
+      call setline(1, ['the', 'these', 'the', 'foobar', 'thethe', 'thethere'])
+    ]])
+
+    -- Pattern has newline at EOF
+    feed('gg2j/e\\n<f5>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*2
+      {100:e\nfoobar}{3:  e\nthethere  e\nthese  e\nthe                    }|
+      /e\nfoobar^                                                  |
+    ]])
+
+    -- longest:full
+    feed('<esc>')
+    command('set wim=longest,full')
+    feed('gg/t<f5>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*3
+      /the^                                                        |
+    ]])
+
+    -- list:full
+    feed('<esc>')
+    command('set wim=list,full')
+    feed('gg/t<f5>')
+    screen:expect([[
+      {10:t}he                                                         |
+      {10:t}hese                                                       |
+      {10:t}he                                                         |
+      foobar                                                      |
+      {10:t}he{10:t}he                                                      |
+      {10:t}he{10:t}here                                                    |
+      {3:                                                            }|
+      /t                                                          |
+      these     the       thethe    thethere  there               |
+      /t^                                                          |
+    ]])
+
+    -- noselect:full
+    feed('<esc>')
+    command('set wim=noselect,full')
+    feed('gg/t<f5>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*2
+      {3:these  the  thethe  thethere  there                         }|
+      /t^                                                          |
+    ]])
+
+    -- Multiline
+    feed('<esc>gg/t.*\\n.*\\n.<tab>')
+    screen:expect([[
+      the                                                         |
+      these                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*2
+      {3:t.*\n.*\n.oobar  t.*\n.*\n.hethe  t.*\n.*\n.he              }|
+      /t.*\n.*\n.^                                                 |
+    ]])
+
+    -- 'incsearch' is redrawn after accepting completion
+    feed('<esc>')
+    command('set wim=full')
+    command('set incsearch hlsearch')
+    feed('/th')
+    screen:expect([[
+      {10:th}e                                                         |
+      {2:th}ese                                                       |
+      {10:th}e                                                         |
+      foobar                                                      |
+      {10:th}e{10:th}e                                                      |
+      {10:th}e{10:th}ere                                                    |
+      {1:~                                                           }|*3
+      /th^                                                         |
+    ]])
+    feed('<f5>')
+    screen:expect([[
+      {10:th}e                                                         |
+      {2:th}ese                                                       |
+      {10:th}e                                                         |
+      foobar                                                      |
+      {10:th}e{10:th}e                                                      |
+      {10:th}e{10:th}ere                                                    |
+      {1:~                                                           }|*2
+      {100:these}{3:  the  thethe  thethere  there                         }|
+      /these^                                                      |
+    ]])
+    feed('<c-n><c-y>')
+    screen:expect([[
+      {10:the}                                                         |
+      {2:the}se                                                       |
+      {10:the}                                                         |
+      foobar                                                      |
+      {10:thethe}                                                      |
+      {10:thethe}re                                                    |
+      {1:~                                                           }|*3
+      /the^                                                        |
+    ]])
+
+    -- 'incsearch' highlight is restored after dismissing popup (Ctrl_E)
+    feed('<esc>')
+    command('set wop=pum is nohls')
+    feed('gg/th<tab><c-e>')
+    screen:expect([[
+      the                                                         |
+      {2:th}ese                                                       |
+      the                                                         |
+      foobar                                                      |
+      thethe                                                      |
+      thethere                                                    |
+      {1:~                                                           }|*3
+      /th^                                                         |
+    ]])
+
+    feed('<esc>')
+  end)
+
+  -- oldtest: Test_search_wildmenu_iminsert()
+  it('search wildmenu pum with iminsert=1', function()
+    local screen = Screen.new(65, 12)
+    exec([[
+      set wop=pum imi=1
+      setlocal iskeyword=!-~,192-255
+      call setline(1, [
+            \ "global toggle global-local global/local glyphs toggles English",
+            \ "accordingly. toggled accordingly single-byte",
+            \ ])
+      call cursor(2, 42)
+    ]])
+    feed('/gl<Tab>')
+    screen:expect([[
+      {12: global         }obal-local global/local glyphs toggles English   |
+      {4: gle            }gled accordingly single-byte                     |
+      {4: global-local   }{1:                                                 }|
+      {4: global/local   }{1:                                                 }|
+      {4: glyphs         }{1:                                                 }|
+      {4: gles           }{1:                                                 }|
+      {4: glish          }{1:                                                 }|
+      {4: gly.           }{1:                                                 }|
+      {4: gled           }{1:                                                 }|
+      {4: gly            }{1:                                                 }|
+      {4: gle-byte       }{1:                                                 }|
+      /global^                                                          |
+    ]])
+  end)
 end)
 
 describe('cmdwin', function()

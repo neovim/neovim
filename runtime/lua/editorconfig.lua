@@ -241,7 +241,7 @@ local function parse_line(line)
   end
 
   --- @type string?
-  local glob = (line:match('%b[]') or ''):match('^%s*%[(.*)%]%s*$')
+  local glob = line:match('^%s*%[(.*)%]%s*$')
   if glob then
     return glob
   end

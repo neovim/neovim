@@ -15,6 +15,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -36,9 +37,32 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/command.c.generated.h"
-#endif
+#include "api/command.c.generated.h"
+
+/// Parse arguments for :map/:abbrev commands, preserving whitespace in RHS.
+/// @param arg_str  The argument string to parse
+/// @param arena    Arena allocator
+/// @return Array with at most 2 elements: [lhs, rhs]
+static Array parse_map_cmd(const char *arg_str, Arena *arena)
+{
+  Array args = arena_array(arena, 2);
+
+  char *lhs_start = (char *)arg_str;
+  char *lhs_end = skiptowhite(lhs_start);
+  size_t lhs_len = (size_t)(lhs_end - lhs_start);
+
+  // Add the LHS (first argument)
+  ADD_C(args, STRING_OBJ(cstrn_as_string(lhs_start, lhs_len)));
+
+  // Add the RHS (second argument) if it exists, preserving all whitespace
+  char *rhs_start = skipwhite(lhs_end);
+  if (*rhs_start != NUL) {
+    size_t rhs_len = strlen(rhs_start);
+    ADD_C(args, STRING_OBJ(cstrn_as_string(rhs_start, rhs_len)));
+  }
+
+  return args;
+}
 
 /// Parse command line.
 ///
@@ -108,7 +132,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char *cmdline = arena_memdupz(arena, str.data, str.size);
   const char *errormsg = NULL;
 
-  if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
+  if (!parse_cmdline(&cmdline, &ea, &cmdinfo, &errormsg)) {
     if (errormsg != NULL) {
       api_set_error(err, kErrorTypeException, "Parsing command-line: %s", errormsg);
     } else {
@@ -121,9 +145,15 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   Array args = ARRAY_DICT_INIT;
   size_t length = strlen(ea.arg);
 
-  // For nargs = 1 or '?', pass the entire argument list as a single argument,
-  // otherwise split arguments by whitespace.
-  if (ea.argt & EX_NOSPC) {
+  // Check if this is a mapping command that needs special handling
+  // like mapping commands need special argument parsing to preserve whitespace in RHS:
+  // "map a b  c" => { args=["a", "b  c"], ... }
+  if (is_map_cmd(ea.cmdidx) && *ea.arg != NUL) {
+    // For mapping commands, split differently to preserve whitespace
+    args = parse_map_cmd(ea.arg, arena);
+  } else if (ea.argt & EX_NOSPC) {
+    // For nargs = 1 or '?', pass the entire argument list as a single argument,
+    // otherwise split arguments by whitespace.
     if (*ea.arg != NUL) {
       args = arena_array(arena, 1);
       ADD_C(args, STRING_OBJ(cstrn_as_string(ea.arg, length)));
@@ -165,7 +195,12 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
 
   if (ea.argt & EX_COUNT) {
     Integer count = ea.addr_count > 0 ? ea.line2 : (cmd != NULL ? cmd->uc_def : 0);
-    PUT_KEY(result, cmd, count, count);
+    // For built-in commands, if count is not explicitly provided and the default value is 0,
+    // do not include the count field in the result, so the command uses its built-in default
+    // behavior.
+    if (ea.addr_count > 0 || (cmd != NULL && cmd->uc_def != 0) || count != 0) {
+      PUT_KEY(result, cmd, count, count);
+    }
   }
 
   if (ea.argt & EX_REGSTR) {
@@ -377,68 +412,102 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     ea.argt = get_cmd_argt(ea.cmdidx);
   }
 
+  // Track whether the first argument was interpreted as count to avoid conflicts
+  bool count_from_first_arg = false;
   // Parse command arguments since it's needed to get the command address type.
   if (HAS_KEY(cmd, cmd, args)) {
-    // Process all arguments. Convert non-String arguments to String and check if String arguments
-    // have non-whitespace characters.
-    args = arena_array(arena, cmd->args.size);
-    for (size_t i = 0; i < cmd->args.size; i++) {
-      Object elem = cmd->args.items[i];
-      char *data_str;
+    // Special handling: for commands that support count but not regular arguments,
+    // if a single numeric argument is provided, interpret it as count
+    if (cmd->args.size == 1 && (ea.argt & EX_COUNT) && !(ea.argt & EX_EXTRA)) {
+      Object first_arg = cmd->args.items[0];
+      bool is_numeric = false;
+      int64_t count_value = 0;
 
-      switch (elem.type) {
-      case kObjectTypeBoolean:
-        data_str = arena_alloc(arena, 2, false);
-        data_str[0] = elem.data.boolean ? '1' : '0';
-        data_str[1] = NUL;
-        ADD_C(args, CSTR_AS_OBJ(data_str));
-        break;
-      case kObjectTypeBuffer:
-      case kObjectTypeWindow:
-      case kObjectTypeTabpage:
-      case kObjectTypeInteger:
-        data_str = arena_alloc(arena, NUMBUFLEN, false);
-        snprintf(data_str, NUMBUFLEN, "%" PRId64, elem.data.integer);
-        ADD_C(args, CSTR_AS_OBJ(data_str));
-        break;
-      case kObjectTypeString:
-        VALIDATE_EXP(!string_iswhite(elem.data.string), "command arg", "non-whitespace", NULL, {
-          goto end;
-        });
-        ADD_C(args, elem);
-        break;
-      default:
-        VALIDATE_EXP(false, "command arg", "valid type", api_typename(elem.type), {
-          goto end;
-        });
-        break;
+      if (first_arg.type == kObjectTypeInteger) {
+        is_numeric = true;
+        count_value = first_arg.data.integer;
+      } else if (first_arg.type == kObjectTypeString) {
+        // Try to parse string as a number Example: vim.api.nvim_cmd({cmd = 'copen', args = {'10'}}, {})
+        char *endptr;
+        long val = strtol(first_arg.data.string.data, &endptr, 10);
+        // Check if entire string was consumed (valid number) and string is not empty
+        if (*endptr == '\0' && first_arg.data.string.size > 0) {
+          is_numeric = true;
+          count_value = val;
+        }
+      }
+
+      if (is_numeric && count_value >= 0) {
+        // Interpret the argument as count
+        count_from_first_arg = true;
+        ea.addr_count = 1;
+        ea.line1 = ea.line2 = (linenr_T)count_value;
+        args = arena_array(arena, 0);
       }
     }
 
-    bool argc_valid;
+    if (!count_from_first_arg) {
+      // Process all arguments. Convert non-String arguments to String and check if String arguments
+      // have non-whitespace characters.
+      args = arena_array(arena, cmd->args.size);
+      for (size_t i = 0; i < cmd->args.size; i++) {
+        Object elem = cmd->args.items[i];
+        char *data_str;
 
-    // Check if correct number of arguments is used.
-    switch (ea.argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
-    case EX_EXTRA | EX_NOSPC | EX_NEEDARG:
-      argc_valid = args.size == 1;
-      break;
-    case EX_EXTRA | EX_NOSPC:
-      argc_valid = args.size <= 1;
-      break;
-    case EX_EXTRA | EX_NEEDARG:
-      argc_valid = args.size >= 1;
-      break;
-    case EX_EXTRA:
-      argc_valid = true;
-      break;
-    default:
-      argc_valid = args.size == 0;
-      break;
+        switch (elem.type) {
+        case kObjectTypeBoolean:
+          data_str = arena_alloc(arena, 2, false);
+          data_str[0] = elem.data.boolean ? '1' : '0';
+          data_str[1] = NUL;
+          ADD_C(args, CSTR_AS_OBJ(data_str));
+          break;
+        case kObjectTypeBuffer:
+        case kObjectTypeWindow:
+        case kObjectTypeTabpage:
+        case kObjectTypeInteger:
+          data_str = arena_alloc(arena, NUMBUFLEN, false);
+          snprintf(data_str, NUMBUFLEN, "%" PRId64, elem.data.integer);
+          ADD_C(args, CSTR_AS_OBJ(data_str));
+          break;
+        case kObjectTypeString:
+          VALIDATE_EXP(!string_iswhite(elem.data.string), "command arg", "non-whitespace", NULL, {
+            goto end;
+          });
+          ADD_C(args, elem);
+          break;
+        default:
+          VALIDATE_EXP(false, "command arg", "valid type", api_typename(elem.type), {
+            goto end;
+          });
+          break;
+        }
+      }
+
+      bool argc_valid;
+
+      // Check if correct number of arguments is used.
+      switch (ea.argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
+      case EX_EXTRA | EX_NOSPC | EX_NEEDARG:
+        argc_valid = args.size == 1;
+        break;
+      case EX_EXTRA | EX_NOSPC:
+        argc_valid = args.size <= 1;
+        break;
+      case EX_EXTRA | EX_NEEDARG:
+        argc_valid = args.size >= 1;
+        break;
+      case EX_EXTRA:
+        argc_valid = true;
+        break;
+      default:
+        argc_valid = args.size == 0;
+        break;
+      }
+
+      VALIDATE(argc_valid, "%s", "Wrong number of arguments", {
+        goto end;
+      });
     }
-
-    VALIDATE(argc_valid, "%s", "Wrong number of arguments", {
-      goto end;
-    });
   }
 
   // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
@@ -485,6 +554,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   }
 
   if (HAS_KEY(cmd, cmd, count)) {
+    VALIDATE(!count_from_first_arg, "%s", "Cannot specify both 'count' and numeric argument", {
+      goto end;
+    });
     VALIDATE_MOD((ea.argt & EX_COUNT), "count", cmd->cmd.data);
     VALIDATE_EXP((cmd->count >= 0), "count", "non-negative Integer", NULL, {
       goto end;
@@ -652,6 +724,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
   garray_T capture_local;
   const int save_msg_silent = msg_silent;
+  const bool save_redir_off = redir_off;
   garray_T * const save_capture_ga = capture_ga;
   const int save_msg_col = msg_col;
 
@@ -663,6 +736,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   TRY_WRAP(err, {
     if (opts->output) {
       msg_silent++;
+      redir_off = false;
       msg_col = 0;  // prevent leading spaces
     }
 
@@ -673,6 +747,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     if (opts->output) {
       capture_ga = save_capture_ga;
       msg_silent = save_msg_silent;
+      redir_off = save_redir_off;
       // Put msg_col back where it was, since nothing should have been written.
       msg_col = save_msg_col;
     }
@@ -853,6 +928,8 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   }
 }
 
+// uncrustify:off
+
 /// Creates a global |user-commands| command.
 ///
 /// For Lua usage see |lua-guide-commands-create|.
@@ -894,12 +971,17 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 ///                   - force: (boolean, default true) Override any previous definition.
 ///                   - preview: (function) Preview callback for 'inccommand' |:command-preview|
 /// @param[out] err Error details, if any.
-void nvim_create_user_command(uint64_t channel_id, String name, Object command,
-                              Dict(user_command) *opts, Error *err)
+void nvim_create_user_command(uint64_t channel_id,
+                              String name,
+                              Union(String, LuaRefOf((DictAs(create_user_command__command_args) args))) command,
+                              Dict(user_command) *opts,
+                              Error *err)
   FUNC_API_SINCE(9)
 {
   create_user_command(channel_id, name, command, opts, 0, err);
 }
+
+// uncrustify:on
 
 /// Delete a user-defined command.
 ///
@@ -971,8 +1053,8 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
   api_set_error(err, kErrorTypeException, "Invalid command (not found): %s", name.data);
 }
 
-void create_user_command(uint64_t channel_id, String name, Object command, Dict(user_command) *opts,
-                         int flags, Error *err)
+void create_user_command(uint64_t channel_id, String name, Union(String, LuaRef) command,
+                         Dict(user_command) *opts, int flags, Error *err)
 {
   uint32_t argt = 0;
   int64_t def = -1;
@@ -1089,6 +1171,7 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
       goto err;
     });
 
+    argt |= EX_RANGE;
     if (addr_type_arg != ADDR_LINES) {
       argt |= EX_ZEROR;
     }
@@ -1186,7 +1269,7 @@ err:
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dict nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
+DictOf(DictAs(command_info)) nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   return nvim_buf_get_commands(-1, opts, arena, err);
@@ -1199,7 +1282,8 @@ Dict nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dict nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Arena *arena, Error *err)
+DictAs(command_info) nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Arena *arena,
+                                           Error *err)
   FUNC_API_SINCE(4)
 {
   bool global = (buffer == -1);

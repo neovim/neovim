@@ -6,6 +6,8 @@
 " 2025 Mar 07 by Vim Project (add formatprg and keywordprg option #16804)
 " 2025 Mar 18 by Vim Project (use :term for 'keywordprg' #16911)
 " 2025 Apr 16 by Vim Project (set 'cpoptions' for line continuation, #17121)
+" 2025 Jul 02 by Vim Project (add section movement mappings #17641)
+" 2025 Jul 05 by Vim Project (update b:undo_ftplugin #17664)
 
 if exists('b:did_ftplugin')
   finish
@@ -29,10 +31,10 @@ let b:undo_ftplugin = 'setl fo< com< cms< fp< kp<'
 
 if get(g:, 'go_recommended_style', 1)
   setlocal noexpandtab softtabstop=0 shiftwidth=0
-  let b:undo_ftplugin ..= ' | setl et< sts< sw<'
+  let b:undo_ftplugin .= ' | setl et< sts< sw<'
 endif
 
-if !exists('*' .. expand('<SID>') .. 'GoKeywordPrg')
+if !exists('*' . expand('<SID>') . 'GoKeywordPrg')
   func! s:GoKeywordPrg()
     let temp_isk = &l:iskeyword
     setl iskeyword+=.
@@ -48,6 +50,35 @@ if !exists('*' .. expand('<SID>') .. 'GoKeywordPrg')
     endtry
   endfunc
 endif
+
+if !exists("no_plugin_maps") && !exists("no_go_maps")
+  noremap <silent> <buffer> ]] <Cmd>call <SID>GoFindSection('next_start', v:count1)<CR>
+  noremap <silent> <buffer> ][ <Cmd>call <SID>GoFindSection('next_end', v:count1)<CR>
+  noremap <silent> <buffer> [[ <Cmd>call <SID>GoFindSection('prev_start', v:count1)<CR>
+  noremap <silent> <buffer> [] <Cmd>call <SID>GoFindSection('prev_end', v:count1)<CR>
+  let b:undo_ftplugin .= ''
+                      \ . "| silent! exe 'unmap <buffer> ]]'"
+                      \ . "| silent! exe 'unmap <buffer> ]['"
+                      \ . "| silent! exe 'unmap <buffer> [['"
+                      \ . "| silent! exe 'unmap <buffer> []'"
+endif
+
+function! <SID>GoFindSection(dir, count)
+  mark '
+  let c = a:count
+  while c > 0
+    if a:dir == 'next_start'
+      keepjumps call search('^\(type\|func\)\>', 'W')
+    elseif a:dir == 'next_end'
+      keepjumps call search('^}', 'W')
+    elseif a:dir == 'prev_start'
+      keepjumps call search('^\(type\|func\)\>', 'bW')
+    elseif a:dir == 'prev_end'
+      keepjumps call search('^}', 'bW')
+    endif
+    let c -= 1
+  endwhile
+endfunction
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

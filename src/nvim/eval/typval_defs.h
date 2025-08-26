@@ -326,7 +326,7 @@ struct ufunc {
   int uf_flags;
   int uf_calls;         ///< nr of active calls
   bool uf_cleared;       ///< func_clear() was already called
-  garray_T uf_args;          ///< arguments
+  garray_T uf_args;          ///< arguments, including optional arguments
   garray_T uf_def_args;      ///< default argument expressions
   garray_T uf_lines;         ///< function lines
   int uf_profiling;     ///< true when func is being profiled

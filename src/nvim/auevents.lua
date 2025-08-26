@@ -88,6 +88,8 @@ return {
     QuickFixCmdPost = false, -- after :make, :grep etc.
     QuickFixCmdPre = false, -- before :make, :grep etc.
     QuitPre = false, -- before :quit
+    PackChangedPre = false, -- before trying to change state of `vim.pack` plugin
+    PackChanged = false, -- after changing state of `vim.pack` plugin
     RecordingEnter = true, -- when starting to record a macro
     RecordingLeave = true, -- just before a macro stops recording
     RemoteReply = false, -- upon string reception from a remote vim
@@ -159,6 +161,8 @@ return {
     LspProgress = true,
     LspRequest = true,
     LspTokenUpdate = true,
+    PackChangedPre = true,
+    PackChanged = true,
     RecordingEnter = true,
     RecordingLeave = true,
     Signal = true,

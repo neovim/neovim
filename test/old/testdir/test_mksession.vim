@@ -31,6 +31,42 @@ func Test__mksession_arglocal()
   call delete('Xtest_mks.out')
 endfunc
 
+func Test_mksession_arglocal_localdir()
+  call mkdir('Xa', 'R')
+  call writefile(['This is Xb'], 'Xa/Xb.txt', 'D')
+  let olddir = getcwd()
+  let oldargs = argv()
+
+  for tabpage in [v:false, v:true]
+    let msg = tabpage ? 'tabpage-local' : 'window-local'
+
+    exe tabpage ? 'tabnew' : 'botright new'
+    exe tabpage ? 'tcd Xa' : 'lcd Xa'
+    let localdir = getcwd()
+    arglocal
+    $argadd Xb.txt
+    let localargs = argv()
+    exe tabpage ? 'tabprev' : 'wincmd p'
+    call assert_equal(olddir, getcwd(), msg)
+    call assert_equal(oldargs, argv(), msg)
+    mksession! Xtest_mks_localdir.out
+    exe tabpage ? '+tabclose' : '$close'
+    bwipe! Xa/Xb.txt
+
+    source Xtest_mks_localdir.out
+    exe tabpage ? 'tabnext' : 'wincmd b'
+    call assert_equal(localdir, getcwd(), msg)
+    call assert_equal(localargs, argv(), msg)
+    $argument
+    call assert_equal('This is Xb', getline(1), msg)
+
+    bwipe!
+    call assert_equal(olddir, getcwd(), msg)
+    call assert_equal(oldargs, argv(), msg)
+    call delete('Xtest_mks_localdir.out')
+  endfor
+endfunc
+
 func Test_mksession()
   tabnew
   let wrap_save = &wrap

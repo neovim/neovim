@@ -32,9 +32,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/window.c.generated.h"
-#endif
+#include "eval/window.c.generated.h"
 
 static const char *e_invalwindow = N_("E957: Invalid window number");
 static const char e_cannot_resize_window_in_another_tab_page[]
@@ -179,6 +177,7 @@ win_T *find_win_by_nr(typval_T *vp, tabpage_T *tp)
 
 /// Find a window: When using a Window ID in any tab page, when using a number
 /// in the current tab page.
+/// Returns NULL when not found.
 win_T *find_win_by_nr_or_id(typval_T *vp)
 {
   int nr = (int)tv_get_number_chk(vp, NULL);

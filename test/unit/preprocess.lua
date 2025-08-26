@@ -123,7 +123,6 @@ function Gcc:init_defines()
   self:define('EXTERN', nil, 'extern')
   self:define('INIT', { '...' }, '')
   self:define('_GNU_SOURCE')
-  self:define('INCLUDE_GENERATED_DECLARATIONS')
   self:define('UNIT_TESTING')
   self:define('UNIT_TESTING_LUA_PREPROCESSING')
   -- Needed for FreeBSD

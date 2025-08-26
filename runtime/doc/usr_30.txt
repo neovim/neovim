@@ -547,8 +547,8 @@ tab stops.
 
   If you prefer to have different values for 'shiftwidth' and 'softtabstop',
 you can still do so and use <C-t> to indent with 'shiftwidth'.  Or you can
-use the 'smarttab' option introduced in Vim 5.6, allowing for a unified
-<Tab> key that knows what to do in the different situations.
+use the 'smarttab' option, allowing for a unified <Tab> key that knows what to
+do in the different situations.
 
 
 VARIABLE TAB STOPS

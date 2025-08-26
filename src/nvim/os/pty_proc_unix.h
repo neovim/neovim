@@ -13,6 +13,4 @@ typedef struct {
   int tty_fd;
 } PtyProc;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_proc_unix.h.generated.h"
-#endif
+#include "os/pty_proc_unix.h.generated.h"

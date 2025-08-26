@@ -19,9 +19,7 @@
 #include "nvim/move.h"
 #include "nvim/pos_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "decoration_provider.c.generated.h"
-#endif
+#include "decoration_provider.c.generated.h"
 
 static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
 

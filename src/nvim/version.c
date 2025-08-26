@@ -53,9 +53,7 @@ char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 #endif
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "version.c.generated.h"
-#endif
+#include "version.c.generated.h"
 
 // clang-format off
 static const int included_patches[] = {
@@ -114,7 +112,7 @@ static const int included_patches[] = {
   2372,
   // 2371,
   2370,
-  // 2369,
+  2369,
   2368,
   2367,
   2366,
@@ -146,7 +144,7 @@ static const int included_patches[] = {
   2340,
   2339,
   2338,
-  // 2337,
+  2337,
   2336,
   2335,
   // 2334,
@@ -175,7 +173,7 @@ static const int included_patches[] = {
   2311,
   2310,
   2309,
-  // 2308,
+  2308,
   // 2307,
   2306,
   2305,
@@ -184,10 +182,10 @@ static const int included_patches[] = {
   2302,
   2301,
   // 2300,
-  // 2299,
-  // 2298,
+  2299,
+  2298,
   2297,
-  // 2296,
+  2296,
   // 2295,
   2294,
   2293,
@@ -267,12 +265,12 @@ static const int included_patches[] = {
   // 2219,
   2218,
   2217,
-  // 2216,
-  // 2215,
+  2216,
+  2215,
   2214,
   // 2213,
   2212,
-  // 2211,
+  2211,
   // 2210,
   2209,
   // 2208,
@@ -283,7 +281,7 @@ static const int included_patches[] = {
   2203,
   2202,
   2201,
-  // 2200,
+  2200,
   2199,
   2198,
   2197,
@@ -337,7 +335,7 @@ static const int included_patches[] = {
   2149,
   2148,
   2147,
-  // 2146,
+  2146,
   2145,
   2144,
   2143,
@@ -356,7 +354,7 @@ static const int included_patches[] = {
   2130,
   2129,
   2128,
-  // 2127,
+  2127,
   2126,
   2125,
   2124,
@@ -376,7 +374,7 @@ static const int included_patches[] = {
   // 2110,
   // 2109,
   2108,
-  // 2107,
+  2107,
   2106,
   2105,
   2104,
@@ -398,7 +396,7 @@ static const int included_patches[] = {
   2088,
   2087,
   2086,
-  // 2085,
+  2085,
   2084,
   2083,
   2082,
@@ -412,7 +410,7 @@ static const int included_patches[] = {
   2074,
   2073,
   2072,
-  // 2071,
+  2071,
   2070,
   2069,
   2068,
@@ -475,7 +473,7 @@ static const int included_patches[] = {
   2011,
   2010,
   // 2009,
-  // 2008,
+  2008,
   2007,
   2006,
   2005,
@@ -592,7 +590,7 @@ static const int included_patches[] = {
   1894,
   1893,
   // 1892,
-  // 1891,
+  1891,
   1890,
   1889,
   1888,
@@ -612,12 +610,12 @@ static const int included_patches[] = {
   // 1874,
   1873,
   1872,
-  // 1871,
+  1871,
   1870,
   1869,
   1868,
   1867,
-  // 1866,
+  1866,
   1865,
   1864,
   1863,
@@ -630,7 +628,7 @@ static const int included_patches[] = {
   1856,
   1855,
   1854,
-  // 1853,
+  1853,
   1852,
   // 1851,
   // 1850,
@@ -639,7 +637,7 @@ static const int included_patches[] = {
   1847,
   1846,
   // 1845,
-  // 1844,
+  1844,
   1843,
   1842,
   1841,
@@ -681,7 +679,7 @@ static const int included_patches[] = {
   1805,
   1804,
   1803,
-  // 1802,
+  1802,
   1801,
   1800,
   // 1799,
@@ -747,15 +745,15 @@ static const int included_patches[] = {
   1739,
   1738,
   1737,
-  // 1736,
+  1736,
   1735,
   1734,
   // 1733,
   1732,
   1731,
-  // 1730,
+  1730,
   1729,
-  // 1728,
+  1728,
   1727,
   1726,
   1725,
@@ -772,18 +770,18 @@ static const int included_patches[] = {
   // 1714,
   // 1713,
   1712,
-  // 1711,
-  // 1710,
+  1711,
+  1710,
   // 1709,
   1708,
   // 1707,
   1706,
   1705,
   1704,
-  // 1703,
+  1703,
   1702,
   1701,
-  // 1700,
+  1700,
   1699,
   1698,
   1697,
@@ -802,13 +800,13 @@ static const int included_patches[] = {
   1684,
   1683,
   1682,
-  // 1681,
+  1681,
   1680,
   1679,
   // 1678,
   1677,
   // 1676,
-  // 1675,
+  1675,
   1674,
   // 1673,
   1672,
@@ -820,7 +818,7 @@ static const int included_patches[] = {
   // 1666,
   // 1665,
   1664,
-  // 1663,
+  1663,
   1662,
   1661,
   1660,
@@ -828,7 +826,7 @@ static const int included_patches[] = {
   1658,
   1657,
   // 1656,
-  // 1655,
+  1655,
   1654,
   1653,
   1652,
@@ -842,7 +840,7 @@ static const int included_patches[] = {
   1644,
   1643,
   1642,
-  // 1641,
+  1641,
   1640,
   1639,
   1638,
@@ -854,7 +852,7 @@ static const int included_patches[] = {
   1632,
   1631,
   1630,
-  // 1629,
+  1629,
   // 1628,
   1627,
   // 1626,
@@ -880,11 +878,11 @@ static const int included_patches[] = {
   1606,
   1605,
   1604,
-  // 1603,
+  1603,
   // 1602,
   1601,
   // 1600,
-  // 1599,
+  1599,
   1598,
   // 1597,
   // 1596,
@@ -897,9 +895,9 @@ static const int included_patches[] = {
   // 1589,
   1588,
   1587,
-  // 1586,
+  1586,
   1585,
-  // 1584,
+  1584,
   1583,
   1582,
   1581,
@@ -910,15 +908,15 @@ static const int included_patches[] = {
   1576,
   1575,
   // 1574,
-  // 1573,
+  1573,
   1572,
-  // 1571,
+  1571,
   1570,
   1569,
   1568,
   1567,
   1566,
-  // 1565,
+  1565,
   1564,
   1563,
   // 1562,
@@ -928,11 +926,11 @@ static const int included_patches[] = {
   // 1558,
   1557,
   1556,
-  // 1555,
+  1555,
   1554,
   // 1553,
   1552,
-  // 1551,
+  1551,
   // 1550,
   1549,
   // 1548,
@@ -949,7 +947,7 @@ static const int included_patches[] = {
   // 1537,
   1536,
   1535,
-  // 1534,
+  1534,
   1533,
   1532,
   1531,
@@ -957,7 +955,7 @@ static const int included_patches[] = {
   1529,
   1528,
   // 1527,
-  // 1526,
+  1526,
   // 1525,
   1524,
   // 1523,
@@ -1088,13 +1086,13 @@ static const int included_patches[] = {
   1398,
   1397,
   1396,
-  // 1395,
+  1395,
   1394,
   1393,
   1392,
   1391,
   1390,
-  // 1389,
+  1389,
   1388,
   1387,
   1386,
@@ -1440,7 +1438,7 @@ static const int included_patches[] = {
   1046,
   1045,
   // 1044,
-  // 1043,
+  1043,
   1042,
   1041,
   1040,
@@ -1479,7 +1477,7 @@ static const int included_patches[] = {
   1007,
   1006,
   1005,
-  // 1004,
+  1004,
   1003,
   1002,
   1001,
@@ -1506,7 +1504,7 @@ static const int included_patches[] = {
   980,
   979,
   978,
-  // 977,
+  977,
   976,
   975,
   974,
@@ -1514,7 +1512,7 @@ static const int included_patches[] = {
   972,
   971,
   970,
-  // 969,
+  969,
   968,
   967,
   966,
@@ -1569,7 +1567,7 @@ static const int included_patches[] = {
   917,
   916,
   915,
-  // 914,
+  914,
   913,
   912,
   911,
@@ -1626,7 +1624,7 @@ static const int included_patches[] = {
   860,
   859,
   858,
-  // 857,
+  857,
   856,
   855,
   854,
@@ -1713,7 +1711,7 @@ static const int included_patches[] = {
   773,
   772,
   771,
-  // 770,
+  770,
   769,
   // 768,
   767,
@@ -1773,7 +1771,7 @@ static const int included_patches[] = {
   713,
   712,
   711,
-  // 710,
+  710,
   709,
   708,
   707,
@@ -1847,7 +1845,7 @@ static const int included_patches[] = {
   639,
   638,
   637,
-  // 636,
+  636,
   635,
   634,
   633,
@@ -2058,7 +2056,7 @@ static const int included_patches[] = {
   428,
   427,
   426,
-  // 425,
+  425,
   424,
   423,
   422,
@@ -2528,6 +2526,12 @@ bool has_nvim_version(const char *const version_str)
                       && patch <= NVIM_VERSION_PATCH))));
 }
 
+int highest_patch(void)
+{
+  // this relies on the highest patch number to be the first entry
+  return included_patches[0];
+}
+
 /// Checks whether a Vim patch has been included.
 ///
 /// @param n Patch number.
@@ -2557,7 +2561,9 @@ void ex_version(exarg_T *eap)
 {
   // Ignore a ":version 9.99" command.
   if (*eap->arg == NUL) {
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');
+    }
     list_version();
   }
 }
@@ -2671,19 +2677,23 @@ void list_lua_version(void)
                                 (Array)ARRAY_DICT_INIT, kRetObject, NULL, &err);
   assert(!ERROR_SET(&err));
   assert(ret.type == kObjectTypeString);
-  msg(ret.data.string.data, 0);
+  msg_puts(ret.data.string.data);
   api_free_object(ret);
 }
 
 void list_version(void)
 {
-  msg(longVersion, 0);
-  msg(version_buildtype, 0);
+  msg_ext_set_kind("list_cmd");
+  msg_puts(longVersion);
+  msg_putchar('\n');
+  msg_puts(version_buildtype);
+  msg_putchar('\n');
   list_lua_version();
 
   if (p_verbose > 0) {
 #ifndef NDEBUG
-    msg(version_cflags, 0);
+    msg_putchar('\n');
+    msg_puts(version_cflags);
 #endif
     version_msg("\n\n");
 

@@ -76,8 +76,8 @@ The Ada plug-in provides support for:
  - user completion	(|i_CTRL-X_CTRL-U|)
  - tag searches		(|tagsrch.txt|)
  - Quick Fix		(|quickfix.txt|)
- - backspace handling	(|'backspace'|)
- - comment handling	(|'comments'|, |'commentstring'|)
+ - backspace handling	('backspace')
+ - comment handling	('comments', 'commentstring')
 
 The plug-in only activates the features of the Ada mode whenever an Ada
 file is opened and adds Ada related entries to the main and pop-up menu.
@@ -197,7 +197,7 @@ g:gnat.Project_File	string
 
 							 *g:gnat.Make_Command*
 g:gnat.Make_Command	string
-		External command used for |g:gnat.Make()| (|'makeprg'|).
+		External command used for |g:gnat.Make()| ('makeprg').
 
 						       *g:gnat.Pretty_Program*
 g:gnat.Pretty_Program	string
@@ -213,7 +213,7 @@ g:gnat.Tags_Command	string
 
 							 *g:gnat.Error_Format*
 g:gnat.Error_Format	string
-		Error format (|'errorformat'|)
+		Error format ('errorformat')
 
 ------------------------------------------------------------------------------
 4.2 Dec Ada ~
@@ -243,11 +243,11 @@ g:decada.Unit_Name()	function
 
 						       *g:decada.Make_Command*
 g:decada.Make_Command	string
-		External command used for |g:decada.Make()| (|'makeprg'|).
+		External command used for |g:decada.Make()| ('makeprg').
 
 						       *g:decada.Error_Format*
 g:decada.Error_Format	string
-		Error format (|'errorformat'|).
+		Error format ('errorformat').
 
 ==============================================================================
 5. References ~

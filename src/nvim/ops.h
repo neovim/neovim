@@ -33,8 +33,6 @@ struct block_def {
   colnr_T start_char_vcols;  ///< number of vcols of pre-block char
 };
 
-typedef int (*Indenter)(void);
-
 /// flags for do_put()
 enum {
   PUT_FIXINDENT    = 1,   ///< make indent look nice
@@ -120,10 +118,8 @@ typedef enum {
   YREG_PUT,
 } yreg_mode_t;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ops.h.generated.h"
-# include "ops.h.inline.generated.h"
-#endif
+#include "ops.h.generated.h"
+#include "ops.h.inline.generated.h"
 
 /// Convert register name into register index
 ///

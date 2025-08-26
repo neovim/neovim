@@ -17,6 +17,6 @@ typedef enum {
 
 enum { NSCRIPT = 15, };  ///< Maximum number of streams to read script from
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "getchar.h.generated.h"
-#endif
+EXTERN bool test_disable_char_avail INIT( = false);
+
+#include "getchar.h.generated.h"

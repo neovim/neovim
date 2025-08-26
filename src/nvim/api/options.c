@@ -19,9 +19,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/options.c.generated.h"
-#endif
+#include "api/options.c.generated.h"
 
 static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *opt_idxp,
                                       int *opt_flags, OptScope *scope, void **from, char **filetype,
@@ -308,7 +306,8 @@ Dict nvim_get_all_options_info(Arena *arena, Error *err)
 ///                         Implies {scope} is "local".
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dict nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena, Error *err)
+DictAs(get_option_info) nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena,
+                                              Error *err)
   FUNC_API_SINCE(11)
 {
   OptIndex opt_idx = 0;

@@ -727,6 +727,19 @@ v:version
 		  :if has("nvim-0.2.1")
 <
 
+				*v:versionlong* *versionlong-variable*
+v:versionlong
+		Like v:version, but also including the patchlevel in the last
+		four digits.  Version 8.1 with patch 123 has value 8010123.
+		This can be used like this: >
+		  if v:versionlong >= 8010123
+<
+		However, if there are gaps in the list of patches included
+		this will not work well.  This can happen if a recent patch
+		was included into an older version, e.g. for a security fix.
+		Use the has() function to make sure the patch is actually
+		included.
+
 			*v:vim_did_enter* *vim_did_enter-variable*
 v:vim_did_enter
 		0 during startup, 1 just before |VimEnter|.

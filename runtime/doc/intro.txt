@@ -89,7 +89,7 @@ To uninstall Nvim:
   - Scoop (Windows): `scoop uninstall neovim`
 
 ==============================================================================
-Sponsor Vim/Nvim development                            *sponsor* *register*
+Sponsor Vim/Nvim development                            *sponsor*
 
 Fixing bugs and adding new features takes a lot of time and effort.  To show
 your appreciation for the work and motivate developers to continue working on
@@ -605,7 +605,7 @@ status messages will only be used if an option is on: >
   command characters            'showcmd'       on          off
   cursor position               'ruler'         off         off
 
-The current mode is "-- INSERT --" or "-- REPLACE --", see |'showmode'|.  The
+The current mode is "-- INSERT --" or "-- REPLACE --", see 'showmode'.  The
 command characters are those that you typed but were not used yet.
 
 If you have a slow terminal you can switch off the status messages to speed

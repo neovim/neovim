@@ -3,7 +3,7 @@
 ---@field right string Right part of comment
 
 --- Get 'commentstring' at cursor
----@param ref_position integer[]
+---@param ref_position [integer,integer]
 ---@return string
 local function get_commentstring(ref_position)
   local buf_cs = vim.bo.commentstring
@@ -62,7 +62,7 @@ local function get_commentstring(ref_position)
 end
 
 --- Compute comment parts from 'commentstring'
----@param ref_position integer[]
+---@param ref_position [integer,integer]
 ---@return vim._comment.Parts
 local function get_comment_parts(ref_position)
   local cs = get_commentstring(ref_position)
@@ -78,6 +78,7 @@ local function get_comment_parts(ref_position)
 
   -- Structure of 'commentstring': <left part> <%s> <right part>
   local left, right = cs:match('^(.-)%%s(.-)$')
+  assert(left and right)
   return { left = left, right = right }
 end
 
@@ -112,6 +113,7 @@ local function get_lines_info(lines, parts)
   for _, l in ipairs(lines) do
     -- Update lines indent: minimum of all indents except blank lines
     local _, indent_width_cur, indent_cur = l:find('^(%s*)')
+    assert(indent_width_cur and indent_cur)
 
     -- Ignore blank lines completely when making a decision
     if indent_width_cur < l:len() then
@@ -188,7 +190,7 @@ end
 --- Comment/uncomment buffer range
 ---@param line_start integer
 ---@param line_end integer
----@param ref_position? integer[]
+---@param ref_position? [integer, integer]
 local function toggle_lines(line_start, line_end, ref_position)
   ref_position = ref_position or { line_start, 0 }
   local parts = get_comment_parts(ref_position)

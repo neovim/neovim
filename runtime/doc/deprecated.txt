@@ -26,7 +26,7 @@ DIAGNOSTICS
 
 HIGHLIGHTS
 
-• todo
+• *:ownsyntax* *w:current_syntax*	Use 'winhighlight' instead.
 
 LSP
 
@@ -35,10 +35,14 @@ LSP
 					`vim.wo.conceallevel = 2`.
 • *vim.lsp.log.should_log()*		Use |vim.lsp.log.set_format_func()| instead
 					and return `nil` to omit entries from the logfile.
+• *vim.lsp.semantic_tokens.start()*	Use `vim.lsp.semantic_tokens.enable(true)` instead
+• *vim.lsp.semantic_tokens.stop()*	Use `vim.lsp.semantic_tokens.enable(false)` instead
+• *vim.lsp.set_log_level()*		Use `vim.lsp.log.set_level()` instead
+• *vim.lsp.get_log_path()*		Use `vim.lsp.log.get_filename()` instead
 
 LUA
 
-• todo
+• *vim.diff()*				Renamed to |vim.text.diff()|
 
 VIMSCRIPT
 
@@ -330,13 +334,12 @@ UI EXTENSIONS
 • *term_background*	Unused. The terminal background color is now detected
 			by the Nvim core directly instead of the TUI.
 
-VARIABLES
+VIMSCRIPT
+• *<sfile>*		Use |<script>| or |<stack>| instead.
 • *b:terminal_job_pid*	Use `jobpid(&channel)` instead.
 • *b:terminal_job_id*	Use `&channel` instead. To access in non-current buffer:
 			• Lua: `vim.bo[bufnr].channel`
 			• Vimscript: `getbufvar(bufnr, '&channel')`
-
-VIMSCRIPT
 • *buffer_exists()*	Obsolete name for |bufexists()|.
 • *buffer_name()*	Obsolete name for |bufname()|.
 • *buffer_number()*	Obsolete name for |bufnr()|.

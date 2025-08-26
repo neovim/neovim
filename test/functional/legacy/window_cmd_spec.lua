@@ -326,4 +326,31 @@ describe('splitkeep', function()
                                               |
     ]])
   end)
+
+  -- oldtest: Test_splitkeep_line()
+  it("no scrolling with 'splitkeep' and line()", function()
+    screen:try_resize(40, 6)
+    exec([[
+      set splitkeep=screen nosplitbelow
+      autocmd WinResized * call line('w0', 1000)
+      call setline(1, range(1000))
+    ]])
+    screen:expect([[
+      ^0                                       |
+      1                                       |
+      2                                       |
+      3                                       |
+      4                                       |
+                                              |
+    ]])
+    feed(':wincmd s<CR>')
+    screen:expect([[
+      ^0                                       |
+      1                                       |
+      {3:[No Name] [+]                           }|
+      3                                       |
+      {2:[No Name] [+]                           }|
+      :wincmd s                               |
+    ]])
+  end)
 end)

@@ -590,7 +590,7 @@ describe('marktree', function()
     lib.marktree_check(tree)
     local iter = ffi.new('MarkTreeIter[1]')
     local filter = ffi.new('uint32_t[4]')
-    filter[0] = -1
+    filter[0] = -1ULL
     ok(lib.marktree_itr_get_filter(tree, 0, 0, 101, 0, filter, iter))
     local seen = {}
     repeat

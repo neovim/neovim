@@ -21,9 +21,7 @@
 #include "nvim/path.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/socket.c.generated.h"
-#endif
+#include "event/socket.c.generated.h"
 
 int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint)
   FUNC_ATTR_NONNULL_ALL

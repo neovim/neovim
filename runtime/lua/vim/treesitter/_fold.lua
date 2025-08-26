@@ -169,6 +169,7 @@ local function compute_folds_levels(bufnr, info, srow, erow, callback)
           -- If this line ends a fold f1 and starts a fold f2, then move f1's end to the previous line
           -- so that f2 gets the correct level on this line. This may reduce the size of f1 below
           -- foldminlines, but we don't handle it for simplicity.
+          --- @type integer avoid flaky error
           adjusted = level0 - leave_line
           leave_line = 0
         end

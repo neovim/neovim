@@ -119,25 +119,31 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
   api.nvim_command('highlight StatusLineTermNC ctermbg=2 ctermfg=8')
 
   local screen = Screen.new(cols, 7 + extra_rows, screen_opts or { rgb = false })
-  screen:set_default_attr_ids({
-    [1] = { reverse = true }, -- focused cursor
-    [2] = { background = 11 }, -- unfocused cursor
-    [3] = { bold = true },
-    [4] = { foreground = 12 }, -- NonText in :terminal session
-    [5] = { bold = true, reverse = true },
-    [6] = { foreground = 81 }, -- SpecialKey in :terminal session
-    [7] = { foreground = 130 }, -- LineNr in host session
-    [8] = { foreground = 15, background = 1 }, -- ErrorMsg in :terminal session
-    [9] = { foreground = 4 },
-    [10] = { foreground = 121 }, -- MoreMsg in :terminal session
-    [11] = { foreground = 11 }, -- LineNr in :terminal session
-    [12] = { underline = true },
-    [13] = { underline = true, reverse = true },
-    [14] = { underline = true, reverse = true, bold = true },
-    [15] = { underline = true, foreground = 12 },
-    [16] = { background = 248, foreground = 0 }, -- Visual in :terminal session
-    [17] = { background = 2, foreground = 0 }, -- StatusLineTerm
-    [18] = { background = 2, foreground = 8 }, -- StatusLineTermNC
+  screen:add_extra_attr_ids({
+    [100] = { foreground = 12 },
+    [101] = { foreground = 15, background = 1 },
+    [102] = { foreground = 121 },
+    [103] = { foreground = 11 },
+    [104] = { foreground = 81 },
+    [105] = { underline = true, reverse = true },
+    [106] = { underline = true, reverse = true, bold = true },
+    [107] = { underline = true },
+    [108] = { background = 248, foreground = Screen.colors.Black },
+    [109] = { bold = true, background = 121, foreground = Screen.colors.Grey0 },
+    [110] = { fg_indexed = true, foreground = tonumber('0xe0e000') },
+    [111] = { fg_indexed = true, foreground = tonumber('0x4040ff') },
+    [112] = { foreground = 4 },
+    [113] = { foreground = Screen.colors.SeaGreen4 },
+    [114] = { undercurl = true },
+    [115] = { underdouble = true },
+    [116] = { underline = true, foreground = 12 },
+    [117] = { background = 1 },
+    [118] = { background = 1, reverse = true },
+    [119] = { background = 2, foreground = 8 },
+    [120] = { foreground = Screen.colors.Black, background = 2 },
+    [121] = { foreground = 130 },
+    [122] = { background = 46 },
+    [123] = { foreground = 2 },
   })
 
   api.nvim_command('enew')
@@ -170,7 +176,7 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
       table.insert(expected, empty_line)
     end
 
-    table.insert(expected, '{3:-- TERMINAL --}' .. ((' '):rep(cols - 14)))
+    table.insert(expected, '{5:-- TERMINAL --}' .. ((' '):rep(cols - 14)))
     screen:expect(table.concat(expected, '|\n') .. '|')
   else
     -- This eval also acts as a poke_eventloop().

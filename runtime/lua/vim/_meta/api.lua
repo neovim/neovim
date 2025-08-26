@@ -27,7 +27,7 @@ function vim.api.nvim__buf_stats(buffer) end
 --- @param index integer Completion candidate index
 --- @param opts vim.api.keyset.complete_set Optional parameters.
 --- - info: (string) info text.
---- @return table<string,any> # Dict containing these keys:
+--- @return table<string,number> # Dict containing these keys:
 --- - winid: (number) floating window id
 --- - bufnr: (number) buffer id in floating window
 function vim.api.nvim__complete_set(index, opts) end
@@ -37,7 +37,7 @@ function vim.api.nvim__get_lib_dir() end
 
 --- Find files in runtime directories
 ---
---- @param pat any[] pattern of files to search for
+--- @param pat string[] pattern of files to search for
 --- @param all boolean whether to return all matches or only the first
 --- @param opts vim.api.keyset.runtime is_lua: only search Lua subdirs
 --- @return string[] # list of absolute paths to the found files
@@ -159,7 +159,7 @@ function vim.api.nvim__unpack(str) end
 --- @return integer
 function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start, col_end) end
 
---- Activates buffer-update events on a channel, or as Lua callbacks.
+--- Activates `api-buffer-updates` events on a channel, or as Lua callbacks.
 ---
 --- Example (Lua): capture buffer updates in a global `events` variable
 --- (use "vim.print(events)" to see its contents):
@@ -348,7 +348,7 @@ function vim.api.nvim_buf_get_changedtick(buffer) end
 ---
 --- @param buffer integer Buffer id, or 0 for current buffer
 --- @param opts vim.api.keyset.get_commands Optional parameters. Currently not used.
---- @return table<string,any> # Map of maps describing commands.
+--- @return vim.api.keyset.command_info # Map of maps describing commands.
 function vim.api.nvim_buf_get_commands(buffer, opts) end
 
 --- Gets the position (0-indexed) of an `extmark`.
@@ -359,7 +359,7 @@ function vim.api.nvim_buf_get_commands(buffer, opts) end
 --- @param opts vim.api.keyset.get_extmark Optional parameters. Keys:
 --- - details: Whether to include the details dict
 --- - hl_name: Whether to include highlight group name instead of id, true if omitted
---- @return vim.api.keyset.get_extmark_item_by_id # 0-indexed (row, col) tuple or empty list () if extmark id was
+--- @return [integer, integer, vim.api.keyset.extmark_details?] # 0-indexed (row, col) tuple or empty list () if extmark id was
 --- absent
 function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 
@@ -575,7 +575,7 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---            EOL of a line, continue the highlight for the rest
 ---            of the screen line (just like for diff and
 ---            cursorline highlight).
---- - virt_text : virtual text to link to this mark.
+--- - virt_text : [](virtual-text) to link to this mark.
 ---     A list of `[text, highlight]` tuples, each representing a
 ---     text chunk with specified highlight. `highlight` element
 ---     can either be a single highlight group, or an array of
@@ -813,24 +813,24 @@ function vim.api.nvim_call_dict_function(dict, fn, args) end
 --- @return any # Result of the function call
 function vim.api.nvim_call_function(fn, args) end
 
---- Send data to channel `id`. For a job, it writes it to the
---- stdin of the process. For the stdio channel `channel-stdio`,
---- it writes to Nvim's stdout.  For an internal terminal instance
---- (`nvim_open_term()`) it writes directly to terminal output.
---- See `channel-bytes` for more information.
+--- Sends raw data to channel `chan`. `channel-bytes`
+--- - For a job, it writes it to the stdin of the process.
+--- - For the stdio channel `channel-stdio`, it writes to Nvim's stdout.
+--- - For an internal terminal instance (`nvim_open_term()`) it writes directly to terminal output.
 ---
---- This function writes raw data, not RPC messages.  If the channel
---- was created with `rpc=true` then the channel expects RPC
---- messages, use `vim.rpcnotify()` and `vim.rpcrequest()` instead.
+--- This function writes raw data, not RPC messages. Use `vim.rpcrequest()` and `vim.rpcnotify()` if
+--- the channel expects RPC messages (i.e. it was created with `rpc=true`).
 ---
---- @param chan integer id of the channel
---- @param data string data to write. 8-bit clean: can contain NUL bytes.
+--- To write data to the `TUI` host terminal, see `nvim_ui_send()`.
+---
+--- @param chan integer Channel id
+--- @param data string Data to write. 8-bit clean: may contain NUL bytes.
 function vim.api.nvim_chan_send(chan, data) end
 
 --- Clears all autocommands selected by {opts}. To delete autocmds see `nvim_del_autocmd()`.
 ---
 --- @param opts vim.api.keyset.clear_autocmds Parameters
---- - event: (string|table)
+--- - event: (vim.api.keyset.events|vim.api.keyset.events[])
 ---      Examples:
 ---      - event: "pat1"
 ---      - event: { "pat1" }
@@ -939,7 +939,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 ---
 --- @see `:help autocommand`
 --- @see vim.api.nvim_del_autocmd
---- @param event any (string|array) Event(s) that will trigger the handler (`callback` or `command`).
+--- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) that will trigger the handler (`callback` or `command`).
 --- @param opts vim.api.keyset.create_autocmd Options dict:
 --- - group (string|integer) optional: autocommand group name or id to match against.
 --- - pattern (string|array) optional: pattern(s) to match literally `autocmd-pattern`.
@@ -951,7 +951,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- value (not `false` or `nil`) to delete the autocommand, and receives one argument, a
 --- table with these keys: [event-args]()
 ---     - id: (number) autocommand id
----     - event: (string) name of the triggered event `autocmd-events`
+---     - event: (vim.api.keyset.events) name of the triggered event `autocmd-events`
 ---     - group: (number|nil) autocommand group id, if any
 ---     - file: (string) [<afile>] (not expanded to a full path)
 ---     - match: (string) [<amatch>] (expanded to a full path)
@@ -1096,7 +1096,7 @@ function vim.api.nvim_del_var(name) end
 --- vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true, {})
 --- ```
 ---
---- @param chunks any[] List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
+--- @param chunks [string, integer|string?][] List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
 --- the (optional) name or ID `hl_group`.
 --- @param history boolean if true, add to `message-history`.
 --- @param opts vim.api.keyset.echo_opts Optional parameters.
@@ -1135,7 +1135,7 @@ function vim.api.nvim_eval(expr) end
 --- - use_tabline: (boolean) Evaluate tabline instead of statusline. When true, {winid}
 ---                          is ignored. Mutually exclusive with {use_winbar}.
 --- - use_statuscol_lnum: (number) Evaluate statuscolumn for this line number instead of statusline.
---- @return table<string,any> # Dict containing statusline information, with these keys:
+--- @return vim.api.keyset.eval_statusline_ret # Dict containing statusline information, with these keys:
 --- - str: (string) Characters that will be displayed on the statusline.
 --- - width: (number) Display width of the statusline.
 --- - highlights: Array containing highlight information of the statusline. Only included when
@@ -1176,7 +1176,7 @@ function vim.api.nvim_exec2(src, opts) end
 --- Execute all autocommands for {event} that match the corresponding
 ---  {opts} `autocmd-execute`.
 --- @see `:help :doautocmd`
---- @param event any (String|Array) The event or events to execute
+--- @param event vim.api.keyset.events|vim.api.keyset.events[] The event or events to execute
 --- @param opts vim.api.keyset.exec_autocmds Dict of autocommand options:
 --- - group (string|integer) optional: the autocommand group name or
 --- id to match against. `autocmd-groups`.
@@ -1249,7 +1249,8 @@ function vim.api.nvim_get_all_options_info() end
 --- @param opts vim.api.keyset.get_autocmds Dict with at least one of the following:
 --- - buffer: (integer) Buffer number or list of buffer numbers for buffer local autocommands
 --- `autocmd-buflocal`. Cannot be used with {pattern}
---- - event: (string|table) event or events to match against `autocmd-events`.
+--- - event: (vim.api.keyset.events|vim.api.keyset.events[])
+---   event or events to match against `autocmd-events`.
 --- - id: (integer) Autocommand ID to match.
 --- - group: (string|table) the autocommand group name or id to match against.
 --- - pattern: (string|table) pattern or patterns to match against `autocmd-pattern`.
@@ -1262,7 +1263,7 @@ function vim.api.nvim_get_all_options_info() end
 --- - callback: (function|string|nil): Lua function or name of a Vim script function
 ---   which is executed when this autocommand is triggered.
 --- - desc: (string) the autocommand description.
---- - event: (string) the autocommand event.
+--- - event: (vim.api.keyset.events) the autocommand event.
 --- - id: (integer) the autocommand id (only when defined with the API).
 --- - group: (integer) the autocommand group id.
 --- - group_name: (string) the autocommand group name.
@@ -1327,7 +1328,7 @@ function vim.api.nvim_get_color_map() end
 --- @see vim.api.nvim_get_all_options_info
 --- @param opts vim.api.keyset.get_commands Optional parameters. Currently only supports
 --- {"builtin":false}
---- @return table<string,any> # Map of maps describing commands.
+--- @return table<string,vim.api.keyset.command_info> # Map of maps describing commands.
 function vim.api.nvim_get_commands(opts) end
 
 --- Gets a map of the current editor state.
@@ -1427,7 +1428,7 @@ function vim.api.nvim_get_keymap(mode) end
 --- @see vim.api.nvim_del_mark
 --- @param name string Mark name
 --- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
---- @return vim.api.keyset.get_mark # 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
+--- @return [integer, integer, integer, string] # 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
 --- not set.
 function vim.api.nvim_get_mark(name, opts) end
 
@@ -1599,7 +1600,7 @@ function vim.api.nvim_list_bufs() end
 
 --- Get information about all open channels.
 ---
---- @return any[] # Array of Dictionaries, each describing a channel with
+--- @return table<string,any>[] # Array of Dictionaries, each describing a channel with
 --- the format specified at |nvim_get_chan_info()|.
 function vim.api.nvim_list_chans() end
 
@@ -1623,7 +1624,7 @@ function vim.api.nvim_list_tabpages() end
 --- vim.print(vim.api.nvim_get_chan_info(vim.api.nvim_list_uis()[1].chan).client.name)
 --- ```
 ---
---- @return any[] # Array of UI dictionaries, each with these keys:
+--- @return table<string,any>[] # Array of UI dictionaries, each with these keys:
 --- - "height"  Requested height of the UI
 --- - "width"   Requested width of the UI
 --- - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
@@ -1865,7 +1866,7 @@ function vim.api.nvim_out_write(str) end
 ---
 --- @param str string Command line string to parse. Cannot contain "\n".
 --- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
---- @return vim.api.keyset.parse_cmd # Dict containing command information, with these keys:
+--- @return vim.api.keyset.cmd # Dict containing command information, with these keys:
 --- - cmd: (string) Command name.
 --- - range: (array) (optional) Command range ([<line1>] [<line2>]).
 ---                  Omitted if command doesn't accept a range.
@@ -2043,6 +2044,10 @@ function vim.api.nvim_put(lines, type, after, follow) end
 
 --- Replaces terminal codes and `keycodes` ([<CR>], [<Esc>], ...) in a string with
 --- the internal representation.
+---
+---
+--- Note:
+--- Lua can use |vim.keycode()| instead.
 ---
 --- @see replace_termcodes
 --- @see cpoptions
@@ -2335,6 +2340,15 @@ function vim.api.nvim_tabpage_set_var(tabpage, name, value) end
 --- @param win integer `window-ID`, must already belong to {tabpage}
 function vim.api.nvim_tabpage_set_win(tabpage, win) end
 
+--- Sends arbitrary data to a UI. Use this instead of `nvim_chan_send()` or `io.stdout:write()`, if
+--- you really want to write to the `TUI` host terminal.
+---
+--- Emits a "ui_send" event to all UIs with the "stdout_tty" `ui-option` set. UIs are expected to
+--- write the received data to a connected TTY if one exists.
+---
+--- @param content string Content to write to the TTY
+function vim.api.nvim_ui_send(content) end
+
 --- Calls a function with window as temporary current window.
 ---
 ---
@@ -2538,7 +2552,7 @@ function vim.api.nvim_win_set_width(window, width) end
 ---               to find out how many buffer lines beyond "start_row" take
 ---               up a certain number of logical lines (returned in
 ---               "end_row" and "end_vcol").
---- @return table<string,any> # Dict containing text height information, with these keys:
+--- @return vim.api.keyset.win_text_height_ret # Dict containing text height information, with these keys:
 --- - all: The total number of screen lines occupied by the range.
 --- - fill: The number of diff filler or virtual lines among them.
 --- - end_row: The row on which the returned height is reached (first row of

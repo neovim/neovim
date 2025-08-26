@@ -16,6 +16,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
@@ -31,8 +32,10 @@
 #include "nvim/ex_eval.h"
 #include "nvim/ex_eval_defs.h"
 #include "nvim/ex_getln.h"
+#include "nvim/extmark.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/gettext_defs.h"
@@ -50,6 +53,7 @@
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -254,9 +258,7 @@ typedef struct {
   char *qf_title;      ///< quickfix list title
 } vgr_args_T;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "quickfix.c.generated.h"
-#endif
+#include "quickfix.c.generated.h"
 
 static const char *e_no_more_items = N_("E553: No more items");
 static const char *e_current_quickfix_list_was_changed =
@@ -2668,7 +2670,7 @@ static win_T *qf_find_help_win(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (bt_help(wp->w_buffer)) {
+    if (bt_help(wp->w_buffer) && !wp->w_config.hide && wp->w_config.focusable) {
       return wp;
     }
   }
@@ -4149,6 +4151,8 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
   }
 
   linenr_T old_line_count = buf->b_ml.ml_line_count;
+  colnr_T old_endcol = ml_get_buf_len(buf, old_line_count);
+  bcount_t old_bytecount = get_region_bytecount(buf, 1, old_line_count, 0, old_endcol);
   int qf_winid = 0;
 
   win_T *win;
@@ -4182,7 +4186,25 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
   qf_update_win_titlevar(qi);
 
   qf_fill_buffer(qf_get_curlist(qi), buf, old_last, qf_winid);
-  buf_inc_changedtick(buf);
+
+  linenr_T new_line_count = buf->b_ml.ml_line_count;
+  colnr_T new_endcol = ml_get_buf_len(buf, new_line_count);
+  bcount_t new_byte_count = 0;
+  linenr_T delta = new_line_count - old_line_count;
+
+  if (old_last == NULL) {
+    new_byte_count = get_region_bytecount(buf, 1, new_line_count, 0, new_endcol);
+    extmark_splice(buf, 0, 0, old_line_count - 1, 0, old_bytecount, new_line_count - 1, new_endcol,
+                   new_byte_count, kExtmarkNoUndo);
+    changed_lines(buf, 1, 0, old_line_count > 0 ? old_line_count + 1 : 1, delta, true);
+  } else if (delta > 0) {
+    linenr_T start_lnum = old_line_count + 1;
+    new_byte_count = get_region_bytecount(buf, start_lnum, new_line_count, 0, new_endcol);
+    extmark_splice(buf, old_line_count - 1, old_endcol, 0, 0, 0, delta, new_endcol, new_byte_count,
+                   kExtmarkNoUndo);
+    changed_lines(buf, start_lnum, 0, start_lnum, delta, true);
+  }
+  buf->b_changed = false;
 
   if (old_last == NULL) {
     qf_win_pos_update(qi, 0);
@@ -4337,7 +4359,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     while ((curbuf->b_ml.ml_flags & ML_EMPTY) == 0) {
       // If deletion fails, this loop may run forever, so
       // signal error and return.
-      if (ml_delete(1, false) == FAIL) {
+      if (ml_delete(1) == FAIL) {
         internal_error("qf_fill_buffer()");
         return;
       }
@@ -4407,7 +4429,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     }
     if (old_last == NULL) {
       // Delete the empty line which is now at the end
-      ml_delete(lnum + 1, false);
+      ml_delete(lnum + 1);
     }
 
     qfga_clear();
@@ -5464,7 +5486,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
 {
   bool found_match = false;
   size_t pat_len = strlen(spat);
-  pat_len = MIN(pat_len, MAX_FUZZY_MATCHES);
+  pat_len = MIN(pat_len, FUZZY_MATCH_MAX_LEN);
 
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count && *tomatch > 0; lnum++) {
     colnr_T col = 0;
@@ -5510,12 +5532,12 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
       char *const str = ml_get_buf(buf, lnum);
       const colnr_T linelen = ml_get_buf_len(buf, lnum);
       int score;
-      uint32_t matches[MAX_FUZZY_MATCHES];
+      uint32_t matches[FUZZY_MATCH_MAX_LEN];
       const size_t sz = sizeof(matches) / sizeof(matches[0]);
 
       // Fuzzy string match
       CLEAR_FIELD(matches);
-      while (fuzzy_match(str + col, spat, false, &score, matches, (int)sz, true) > 0) {
+      while (fuzzy_match(str + col, spat, false, &score, matches, (int)sz) > 0) {
         // Pass the buffer number so that it gets used even for a
         // dummy buffer, unless duplicate_name is set, then the
         // buffer will be wiped out below.

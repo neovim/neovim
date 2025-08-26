@@ -106,9 +106,7 @@ typedef void (*LevelGetter)(fline_T *);
 
 // static functions {{{2
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "fold.c.generated.h"
-#endif
+#include "fold.c.generated.h"
 static const char *e_nofold = N_("E490: No fold found");
 
 // While updating the folds lines between invalid_top and invalid_bot have an

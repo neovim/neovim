@@ -18,6 +18,7 @@ Checks: >
   -bugprone-not-null-terminated-result,
   -bugprone-suspicious-memory-comparison,
   -bugprone-switch-missing-default-case,
+  -bugprone-tagged-union-member-count,
   -cert-env33-c,
   -cert-err33-c,
   -cert-err34-c,
@@ -63,6 +64,7 @@ Checks: >
 
   Aliases. These are just duplicates of other warnings and should always be ignored,
   -bugprone-narrowing-conversions,
+  -cert-arr39-c,
   -cert-dcl37-c,
   -cert-dcl51-cpp,
   -cert-exp42-c,

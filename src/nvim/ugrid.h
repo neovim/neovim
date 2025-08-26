@@ -23,6 +23,4 @@ typedef struct {
     } \
   } while (0)
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ugrid.h.generated.h"
-#endif
+#include "ugrid.h.generated.h"

@@ -16,6 +16,4 @@ enum {
   OPENLINE_FORCE_INDENT = 0x40,  ///< use second_line_indent without indent logic
 };
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "change.h.generated.h"
-#endif
+#include "change.h.generated.h"

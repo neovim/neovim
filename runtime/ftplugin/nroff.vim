@@ -9,6 +9,7 @@
 "	2025 Feb 12 by Wu, Zhenyu <wuzhenyu@ustc.edu> (matchit configuration #16619)
 "	2025 Apr 16 by Eisuke Kawashima (cpoptions #17121)
 "	2025 Apr 24 by Eisuke Kawashima (move options from syntax to ftplugin #17174)
+"	2025 Jun 18 by Vim Project: update commentstring option (#17516)
 
 if exists("b:did_ftplugin")
   finish
@@ -19,7 +20,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 setlocal commentstring=.\\\"\ %s
-setlocal comments=:.\\\"
+setlocal comments=:.\\\",:\\\",:'\\\",:'''
 setlocal sections+=Sh
 setlocal define=.\s*de
 

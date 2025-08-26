@@ -2,6 +2,81 @@
 
 local M = {}
 
+--- Optional parameters:
+--- @class vim.text.diff.Opts
+--- @inlinedoc
+---
+--- Invoked for each hunk in the diff. Return a negative number
+--- to cancel the callback for any remaining hunks.
+--- Arguments:
+---   - `start_a` (`integer`): Start line of hunk in {a}.
+---   - `count_a` (`integer`): Hunk size in {a}.
+---   - `start_b` (`integer`): Start line of hunk in {b}.
+---   - `count_b` (`integer`): Hunk size in {b}.
+--- @field on_hunk? fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer?
+---
+--- Form of the returned diff:
+---   - `unified`: String in unified format.
+---   - `indices`: Array of hunk locations.
+--- Note: This option is ignored if `on_hunk` is used.
+--- (default: `'unified'`)
+--- @field result_type? 'unified'|'indices'
+---
+--- Run linematch on the resulting hunks from xdiff. When integer, only hunks
+--- upto this size in lines are run through linematch.
+--- Requires `result_type = indices`, ignored otherwise.
+--- @field linematch? boolean|integer
+---
+--- Diff algorithm to use. Values:
+---   - `myers`: the default algorithm
+---   - `minimal`: spend extra time to generate the smallest possible diff
+---   - `patience`: patience diff algorithm
+---   - `histogram`: histogram diff algorithm
+--- (default: `'myers'`)
+--- @field algorithm? 'myers'|'minimal'|'patience'|'histogram'
+--- @field ctxlen? integer Context length
+--- @field interhunkctxlen? integer Inter hunk context length
+--- @field ignore_whitespace? boolean Ignore whitespace
+--- @field ignore_whitespace_change? boolean Ignore whitespace change
+--- @field ignore_whitespace_change_at_eol? boolean Ignore whitespace change at end-of-line.
+--- @field ignore_cr_at_eol? boolean Ignore carriage return at end-of-line
+--- @field ignore_blank_lines? boolean Ignore blank lines
+--- @field indent_heuristic? boolean Use the indent heuristic for the internal diff library.
+
+-- luacheck: no unused args
+
+--- Run diff on strings {a} and {b}. Any indices returned by this function,
+--- either directly or via callback arguments, are 1-based.
+---
+--- Examples:
+---
+--- ```lua
+--- vim.text.diff('a\n', 'b\nc\n')
+--- -- =>
+--- -- @@ -1 +1,2 @@
+--- -- -a
+--- -- +b
+--- -- +c
+---
+--- vim.text.diff('a\n', 'b\nc\n', {result_type = 'indices'})
+--- -- =>
+--- -- {
+--- --   {1, 1, 1, 2}
+--- -- }
+--- ```
+---
+---@diagnostic disable-next-line: undefined-doc-param
+---@param a string First string to compare
+---@diagnostic disable-next-line: undefined-doc-param
+---@param b string Second string to compare
+---@diagnostic disable-next-line: undefined-doc-param
+---@param opts? vim.text.diff.Opts
+---@return string|integer[][]? # See {opts.result_type}. `nil` if {opts.on_hunk} is given.
+function M.diff(...)
+  ---@diagnostic disable-next-line: deprecated
+  return vim.diff(...)
+end
+
 local alphabet = '0123456789ABCDEF'
 local atoi = {} ---@type table<string, integer>
 local itoa = {} ---@type table<integer, string>
@@ -79,7 +154,7 @@ end
 ---
 --- @param size integer Number of spaces.
 --- @param text string Text to indent.
---- @param opts? { expandtab?: number }
+--- @param opts? { expandtab?: integer }
 --- @return string # Indented text.
 --- @return integer # Indent size _before_ modification.
 function M.indent(size, text, opts)
@@ -91,7 +166,7 @@ function M.indent(size, text, opts)
   local tabspaces = opts.expandtab and (' '):rep(opts.expandtab) or nil
 
   --- Minimum common indent shared by all lines.
-  local old_indent --[[@type number?]]
+  local old_indent --- @type integer?
   local prefix = tabspaces and ' ' or nil -- Indent char (space or tab).
   --- Check all non-empty lines, capturing leading whitespace (if any).
   --- @diagnostic disable-next-line: no-unknown
@@ -106,7 +181,7 @@ function M.indent(size, text, opts)
     end
     prefix = prefix and prefix or line_ws:sub(1, 1)
     local _, end_ = line_ws:find('^[' .. prefix .. ']+')
-    old_indent = math.min(old_indent or math.huge, end_ or 0)
+    old_indent = math.min(old_indent or math.huge, end_ or 0) --[[@as integer?]]
   end
   -- Default to 0 if all lines are empty.
   old_indent = old_indent or 0

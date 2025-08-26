@@ -62,6 +62,8 @@ hi('PmenuMatchSel',  { link = 'PmenuSel' })
 hi('PmenuExtra',     { link = 'Pmenu' })
 hi('PmenuExtraSel',  { link = 'PmenuSel' })
 hi('ComplMatchIns',  {})
+hi('ComplHint',      { link = 'NonText' })
+hi('ComplHintMore',  { link = 'MoreMsg' })
 hi('Substitute',     { link = 'Search' })
 hi('Whitespace',     { link = 'NonText' })
 hi('MsgSeparator',   { link = 'StatusLine' })
@@ -134,6 +136,7 @@ hi('DiagnosticDeprecated',       { sp = 'Red', strikethrough = true,    cterm = 
 hi('DiagnosticUnnecessary', { link = 'Comment' })
 hi('LspInlayHint',          { link = 'NonText' })
 hi('SnippetTabstop',        { link = 'Visual' })
+hi('SnippetTabstopActive',  { link = 'SnippetTabstop' })
 
 -- Text
 hi('@markup.raw',       { link = 'Comment' })

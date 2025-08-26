@@ -50,9 +50,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "mouse.c.generated.h"
-#endif
+#include "mouse.c.generated.h"
 
 static linenr_T orig_topline = 0;
 static int orig_topfill = 0;

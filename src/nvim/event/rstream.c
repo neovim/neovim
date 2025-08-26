@@ -13,9 +13,7 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/types_defs.h"
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/rstream.c.generated.h"
-#endif
+#include "event/rstream.c.generated.h"
 
 void rstream_init_fd(Loop *loop, RStream *stream, int fd)
   FUNC_ATTR_NONNULL_ARG(1, 2)
