@@ -7501,11 +7501,13 @@ void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
   FOR_ALL_TABS(tp) {
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
       if (wp->handle == id) {
-        *winnr = wnum;
-        *tabnr = tnum;
+        if (win_has_winnr(wp, tp)) {
+          *winnr = wnum;
+          *tabnr = tnum;
+        }
         return;
       }
-      wnum += win_has_winnr(wp);
+      wnum += win_has_winnr(wp, tp);
     }
     tnum++;
     wnum = 1;
