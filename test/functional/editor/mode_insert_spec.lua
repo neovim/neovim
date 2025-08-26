@@ -84,7 +84,7 @@ describe('insert-mode', function()
       ]])
     end)
 
-    it('inserts named registers literaly', function()
+    it('inserts named registers literally', function()
       local screen = Screen.new(50, 6)
       -- regular text without special charecter command
       command('let @a = "test"')
@@ -95,7 +95,7 @@ describe('insert-mode', function()
                                                           |
       ]])
 
-      -- text with backspace character gets written literaly by default
+      -- text with backspace character gets written literally by default
       command('let @a = "test\\<C-H>"')
       feed('cc<C-R>a<ESC>')
       screen:expect([[
