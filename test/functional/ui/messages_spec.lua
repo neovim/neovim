@@ -3187,7 +3187,7 @@ describe('progress-message', function()
     local id = api.nvim_echo(
       { { 'test-message' } },
       true,
-      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+      { kind = 'progress', title = 'testsuit', percent = 10, status = 'running' }
     )
 
     screen:expect({
@@ -3201,7 +3201,7 @@ describe('progress-message', function()
           progress = {
             percent = 10,
             status = 'running',
-            title = 'TestSuit',
+            title = 'testsuit',
           },
           history = true,
           id = 1,
@@ -3214,10 +3214,10 @@ describe('progress-message', function()
       text = { 'test-message' },
       percent = 10,
       status = 'running',
-      title = 'TestSuit',
+      title = 'testsuit',
       id = 1,
       data = {},
-    }, 'Progress autocmd receives progress messages')
+    }, 'progress autocmd receives progress messages')
 
     -- can update progress messages
     api.nvim_echo(
@@ -3444,7 +3444,7 @@ describe('progress-message', function()
     local id5 = api.nvim_echo(
       { { 'test-message 30' } },
       true,
-      { id=10, kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+      { id = 10, kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
     eq(10, id5)
 
@@ -3459,8 +3459,67 @@ describe('progress-message', function()
     local id6 = api.nvim_echo(
       { { 'test-message 30' } },
       true,
-      {kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+      { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
     )
     eq(11, id6)
+
+    local id7 = api.nvim_echo(
+      { { 'supports str-id' } },
+      true,
+      { id = 'str-id', kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+    )
+    eq('str-id', id7)
+
+    local id8 = api.nvim_echo(
+      { { 'test-message 30' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+    )
+    eq(12, id8)
+  end)
+
+  it('supports string ids', function()
+    -- string id works
+    local id = api.nvim_echo(
+      { { 'supports str-id' } },
+      true,
+      { id = 'str-id', kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+    )
+    eq('str-id', id)
+
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'supports str-id' } },
+          history = true,
+          id = 'str-id',
+          kind = 'progress',
+          progress = {
+            percent = 30,
+            status = 'running',
+            title = 'TestSuit',
+          },
+        },
+      },
+    })
+
+    local id_update = api.nvim_echo(
+      { { 'supports str-id updated' } },
+      true,
+      { id = id, kind = 'progress', title = 'testsuit', percent = 40, status = 'running' }
+    )
+    eq(id, id_update)
+    assert_progress_autocmd({
+      text = { 'supports str-id updated' },
+      percent = 40,
+      status = 'running',
+      title = 'testsuit',
+      id = 'str-id',
+      data = {},
+    })
   end)
 end)

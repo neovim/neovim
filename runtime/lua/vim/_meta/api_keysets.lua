@@ -234,7 +234,7 @@ error('Cannot require a meta file')
 --- @field err? boolean
 --- @field verbose? boolean
 --- @field kind? string
---- @field id? integer
+--- @field id? integer|string
 --- @field title? string
 --- @field status? string
 --- @field percent? integer

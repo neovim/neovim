@@ -10,7 +10,7 @@ typedef struct {
 } HlMessageChunk;
 
 typedef kvec_t(HlMessageChunk) HlMessage;
-typedef int64_t MsgID;
+#define MsgID Union(Integer, String)
 
 #define MSG_KIND_PROGRESS "progress"
 

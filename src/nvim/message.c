@@ -151,7 +151,7 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
-static MsgID msg_ext_id = 0;
+static MsgID msg_ext_id = { .type = kObjectTypeInteger, .data.integer = 0 };
 static DictOf(Object) msg_ext_progress = ARRAY_DICT_INIT;
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
@@ -162,7 +162,7 @@ static bool msg_ext_history = false;  ///< message was added to history
 
 static int msg_grid_pos_at_flush = 0;
 
-static MsgID msg_id_next = 1;           ///< message id to be allocated to next message
+static int64_t msg_id_next = 1;           ///< message id to be allocated to next message
 
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
@@ -314,9 +314,13 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   msg_ext_skip_flush = true;
 
   // provide a new id if not given
-  id = id > 0 ? id : msg_id_next++;
-  if (msg_id_next < id) {
-    msg_id_next = id + 1;
+  if (id.type == kObjectTypeNil) {
+    id = INTEGER_OBJ(msg_id_next++);
+  } else if (id.type == kObjectTypeInteger) {
+    id = id.data.integer > 0 ? id : INTEGER_OBJ(msg_id_next++);
+    if (msg_id_next < id.data.integer) {
+      msg_id_next = id.data.integer + 1;
+    }
   }
 
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
@@ -1034,7 +1038,7 @@ static void msg_hist_add(const char *s, int len, int hl_id)
 
   HlMessage msg = KV_INITIAL_VALUE;
   kv_push(msg, ((HlMessageChunk){ text, hl_id }));
-  msg_hist_add_multihl(0, msg, false, NULL);
+  msg_hist_add_multihl(INTEGER_OBJ(0), msg, false, NULL);
 }
 
 static bool do_clear_hist_temp = true;
@@ -1051,7 +1055,7 @@ static void do_autocmd_progress(MsgID msg_id, MessageHistoryEntry *msg, MessageD
     ADD(messages, STRING_OBJ(msg->msg.items[i].text));
   }
 
-  PUT_C(data, "id", INTEGER_OBJ(msg_id));
+  PUT_C(data, "id", OBJECT_OBJ(msg_id));
   PUT_C(data, "text", ARRAY_OBJ(messages));
   if (msg_data != NULL) {
     PUT_C(data, "percent", INTEGER_OBJ(msg_data->percent));
@@ -1270,7 +1274,7 @@ void ex_messages(exarg_T *eap)
     }
     if (redirecting() || !ui_has(kUIMessages)) {
       msg_silent += ui_has(kUIMessages);
-      msg_multihl(0, p->msg, p->kind, false, false, NULL);
+      msg_multihl(INTEGER_OBJ(0), p->msg, p->kind, false, false, NULL);
       msg_silent -= ui_has(kUIMessages);
     }
   }
@@ -2217,7 +2221,8 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   // Don't print anything when using ":silent cmd" or empty message.
   if (msg_silent != 0 || *str == NUL) {
     if (*str == NUL && ui_has(kUIMessages)) {
-      ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false, -1,
+      ui_call_msg_show(cstr_as_string("empty"), (Array)ARRAY_DICT_INIT, false, false, false,
+                       INTEGER_OBJ(-1),
                        (Dict)ARRAY_DICT_INIT);
     }
     return;
@@ -3259,14 +3264,14 @@ void msg_ext_ui_flush(void)
         xfree(chunk);
       }
       xfree(tofree->items);
-      msg_hist_add_multihl(0, msg, true, NULL);
+      msg_hist_add_multihl(INTEGER_OBJ(0), msg, true, NULL);
     }
     xfree(tofree);
     msg_ext_overwrite = false;
     msg_ext_history = false;
     msg_ext_append = false;
     msg_ext_kind = NULL;
-    msg_ext_id = 0;
+    msg_ext_id = INTEGER_OBJ(0);
     kv_destroy(msg_ext_progress);
   }
 }

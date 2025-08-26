@@ -883,9 +883,8 @@ must handle.
 	    rather than started on a new line. Is set for |:echon|.
 
 	msg_id
-	    Unique identifier for the message in history. Is greater or equal
-	    to 1. 0 indicates msg_id was not assigned. When message of same id
-	    appears it should replace the older message.
+	    Unique identifier for the message. It can either be an integer or
+	    string. When message of same id appears it should replace the older message.
 
 	progress
 	    Progress-message properties:

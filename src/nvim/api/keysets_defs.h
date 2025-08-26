@@ -336,7 +336,7 @@ typedef struct {
   Boolean err;
   Boolean verbose;
   String kind;
-  Integer id;
+  Union(Integer, String) id;
   String title;
   String status;
   Integer percent;

@@ -776,13 +776,13 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///            message
 ///          - data: dictionary containing additional information
 /// @return Message id.
-///         Valid message id is always greater then 0
 ///         - -1 means nvim_echo didn't show a message
-Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
-                  Error *err)
+Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history,
+                                 Dict(echo_opts) *opts,
+                                 Error *err)
   FUNC_API_SINCE(7)
 {
-  MsgID id = -1;
+  MsgID id = INTEGER_OBJ(-1);
   HlMessage hl_msg = parse_hl_msg(chunks, opts->err, err);
   if (ERROR_SET(err)) {
     goto error;
