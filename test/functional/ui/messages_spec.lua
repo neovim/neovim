@@ -3299,9 +3299,6 @@ describe('progress-message', function()
           id = 1,
           kind = 'progress',
           progress = {
-            data = {
-              test_attribute = 1,
-            },
             percent = 10,
             status = 'running',
             title = 'TestSuit',

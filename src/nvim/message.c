@@ -1112,7 +1112,7 @@ static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Message
 
   msg_ext_id = msg_id;
   if (is_progress && msg_data != NULL && ui_has(kUIMessages)) {
-    kv_resize(msg_ext_progress, 4);
+    kv_resize(msg_ext_progress, 3);
     if (msg_data->title.size != 0) {
       PUT_C(msg_ext_progress, "title", STRING_OBJ(msg_data->title));
     }
@@ -1121,9 +1121,6 @@ static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Message
     }
     if (msg_data->percent >= 0) {
       PUT_C(msg_ext_progress, "percent", INTEGER_OBJ(msg_data->percent));
-    }
-    if (msg_data->data.size != 0) {
-      PUT_C(msg_ext_progress, "data", DICT_OBJ(msg_data->data));
     }
   }
 
