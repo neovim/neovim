@@ -778,12 +778,11 @@ void nvim_set_vvar(String name, Object value, Error *err)
 /// @return Message id.
 ///         Valid message id is always greater then 0
 ///         - -1 means nvim_echo didn't show a message
-///         - 0 means nvim_echo didn't allocate a message id for the message. happens
-///            for temp messages not stored in message history.
 Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Dict(echo_opts) *opts,
                   Error *err)
   FUNC_API_SINCE(7)
 {
+  MsgID id = -1;
   HlMessage hl_msg = parse_hl_msg(chunks, opts->err, err);
   if (ERROR_SET(err)) {
     goto error;
@@ -820,14 +819,10 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
     goto error;
   });
 
-  VALIDATE_S(!is_progress || history, "history", "false", {
-    goto error;
-  });
-
   MessageData msg_data = { .title = opts->title, .status = opts->status,
                            .percent = opts->percent, .data = opts->data };
 
-  MsgID id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data);
+  id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data);
 
   if (opts->verbose) {
     verbose_leave();
@@ -841,7 +836,7 @@ Integer nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Boolean history, Di
 
 error:
   hl_msg_free(hl_msg);
-  return -1;
+  return id;
 }
 
 /// Gets the current list of buffers.

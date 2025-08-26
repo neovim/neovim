@@ -3215,7 +3215,7 @@ describe('progress-message', function()
       percent = 10,
       status = 'running',
       title = 'TestSuit',
-      msg_id = 1,
+      id = 1,
       data = {},
     }, 'Progress autocmd receives progress messages')
 
@@ -3250,7 +3250,7 @@ describe('progress-message', function()
       percent = 50,
       status = 'running',
       title = 'TestSuit',
-      msg_id = 1,
+      id = 1,
       data = {},
     }, 'Progress autocmd receives progress update')
 
@@ -3273,7 +3273,7 @@ describe('progress-message', function()
       percent = 100,
       status = 'success',
       title = 'Special Title',
-      msg_id = 1,
+      id = 1,
       data = {},
     }, 'Progress autocmd receives progress update')
   end)
@@ -3314,7 +3314,7 @@ describe('progress-message', function()
       percent = 10,
       status = 'running',
       title = 'TestSuit',
-      msg_id = 1,
+      id = 1,
       data = { test_attribute = 1 },
     }, 'Progress autocmd receives progress messages')
   end)
@@ -3373,17 +3373,6 @@ describe('progress-message', function()
       )
     )
 
-    -- throws error if history is false
-    eq(
-      "Invalid 'history': 'false'",
-      t.pcall_err(
-        api.nvim_echo,
-        { { 'test-message' } },
-        false,
-        { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
-      )
-    )
-
     -- throws error if data is not a dictionary
     eq(
       "Invalid 'data': expected Dict, got String",
@@ -3429,5 +3418,49 @@ describe('progress-message', function()
       'test-message 10\ntest-message 20\nmiddle msg\ntest-message 30\ntest-message 50',
       exec_capture('messages')
     )
+  end)
+
+  it('sets msg-id correctly', function()
+    local id1 = api.nvim_echo(
+      { { 'test-message 10' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 10, status = 'running' }
+    )
+    eq(1, id1)
+
+    local id2 = api.nvim_echo(
+      { { 'test-message 20' } },
+      true,
+      { kind = 'progress', title = 'TestSuit', percent = 20, status = 'running' }
+    )
+    eq(2, id2)
+
+    local id3 = api.nvim_echo({ { 'normal message' } }, true, {})
+    eq(3, id3)
+
+    local id4 = api.nvim_echo({ { 'without history' } }, false, {})
+    eq(4, id4)
+
+    local id5 = api.nvim_echo(
+      { { 'test-message 30' } },
+      true,
+      { id=10, kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+    )
+    eq(10, id5)
+
+    -- updating progress message does not create new msg-id
+    local id5_update = api.nvim_echo(
+      { { 'test-message 40' } },
+      true,
+      { id = id5, kind = 'progress', title = 'TestSuit', percent = 40, status = 'running' }
+    )
+    eq(id5, id5_update)
+
+    local id6 = api.nvim_echo(
+      { { 'test-message 30' } },
+      true,
+      {kind = 'progress', title = 'TestSuit', percent = 30, status = 'running' }
+    )
+    eq(11, id6)
   end)
 end)

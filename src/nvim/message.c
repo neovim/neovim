@@ -51,6 +51,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/message_defs.h"
 #include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -311,6 +312,13 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
   }
   is_multihl = true;
   msg_ext_skip_flush = true;
+
+  // provide a new id if not given
+  id = id > 0 ? id : msg_id_next++;
+  if (msg_id_next < id) {
+    msg_id_next = id + 1;
+  }
+
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
     if (err) {
@@ -321,7 +329,7 @@ MsgID msg_multihl(MsgID id, HlMessage hl_msg, const char *kind, bool history, bo
     assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
   if (history && kv_size(hl_msg)) {
-    id = msg_hist_add_multihl(id, hl_msg, false, msg_data);
+    msg_hist_add_multihl(id, hl_msg, false, msg_data);
   }
 
   msg_ext_skip_flush = false;
@@ -1008,7 +1016,7 @@ void hl_msg_free(HlMessage hl_msg)
 /// Add the message at the end of the history
 ///
 /// @param[in]  len  Length of s or -1.
-static MsgID msg_hist_add(const char *s, int len, int hl_id)
+static void msg_hist_add(const char *s, int len, int hl_id)
 {
   String text = { .size = len < 0 ? strlen(s) : (size_t)len };
   // Remove leading and trailing newlines.
@@ -1020,32 +1028,18 @@ static MsgID msg_hist_add(const char *s, int len, int hl_id)
     text.size--;
   }
   if (text.size == 0) {
-    return -1;
+    return;
   }
   text.data = xmemdupz(s, text.size);
 
   HlMessage msg = KV_INITIAL_VALUE;
   kv_push(msg, ((HlMessageChunk){ text, hl_id }));
-  MsgID id = msg_hist_add_multihl(0, msg, false, NULL);
-  return id;
+  msg_hist_add_multihl(0, msg, false, NULL);
 }
 
 static bool do_clear_hist_temp = true;
 
-/// returns message history item based on it's id or NULL if not found
-static MessageHistoryEntry *msg_find_by_id(MsgID id)
-{
-  if (id <= 0) {
-    return NULL;
-  }
-  MessageHistoryEntry *entry = msg_hist_last;
-  while (entry != NULL && entry->msg_id != id) {
-    entry = entry->prev;
-  }
-  return entry;
-}
-
-static void do_autocmd_progress(MessageHistoryEntry *msg, MessageData *msg_data)
+static void do_autocmd_progress(MsgID msg_id, MessageHistoryEntry *msg, MessageData *msg_data)
 {
   if (msg == NULL) {
     return;
@@ -1057,7 +1051,7 @@ static void do_autocmd_progress(MessageHistoryEntry *msg, MessageData *msg_data)
     ADD(messages, STRING_OBJ(msg->msg.items[i].text));
   }
 
-  PUT_C(data, "msg_id", INTEGER_OBJ(msg->msg_id));
+  PUT_C(data, "id", INTEGER_OBJ(msg_id));
   PUT_C(data, "text", ARRAY_OBJ(messages));
   if (msg_data != NULL) {
     PUT_C(data, "percent", INTEGER_OBJ(msg_data->percent));
@@ -1072,7 +1066,7 @@ static void do_autocmd_progress(MessageHistoryEntry *msg, MessageData *msg_data)
   kv_destroy(messages);
 }
 
-static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageData *msg_data)
+static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, MessageData *msg_data)
 {
   if (do_clear_hist_temp) {
     msg_hist_clear_temp();
@@ -1081,14 +1075,12 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
 
   if (msg_hist_off || msg_silent != 0) {
     hl_msg_free(msg);
-    return -1;
+    return;
   }
 
   bool is_progress = strequal(msg_ext_kind, MSG_KIND_PROGRESS);
-
   // Allocate an entry and add the message at the end of the history.
   MessageHistoryEntry *entry = xmalloc(sizeof(MessageHistoryEntry));
-  entry->msg_id = msg_find_by_id(msg_id) != NULL ? msg_id : msg_id_next++;
   entry->msg = msg;
   entry->temp = temp;
   entry->kind = msg_ext_kind;
@@ -1114,7 +1106,7 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   msg_hist_last = entry;
   msg_ext_history = true;
 
-  msg_ext_id = entry->msg_id;
+  msg_ext_id = msg_id;
   if (is_progress && msg_data != NULL && ui_has(kUIMessages)) {
     kv_resize(msg_ext_progress, 4);
     if (msg_data->title.size != 0) {
@@ -1132,10 +1124,9 @@ static MsgID msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Messag
   }
 
   if (is_progress) {
-    do_autocmd_progress(entry, msg_data);
+    do_autocmd_progress(msg_id, entry, msg_data);
   }
   msg_hist_clear(msg_hist_max);
-  return entry->msg_id;
 }
 
 static void msg_hist_free_msg(MessageHistoryEntry *entry)
@@ -1279,7 +1270,7 @@ void ex_messages(exarg_T *eap)
     }
     if (redirecting() || !ui_has(kUIMessages)) {
       msg_silent += ui_has(kUIMessages);
-      msg_multihl(p->msg_id, p->msg, p->kind, false, false, NULL);
+      msg_multihl(0, p->msg, p->kind, false, false, NULL);
       msg_silent -= ui_has(kUIMessages);
     }
   }

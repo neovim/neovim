@@ -22,7 +22,6 @@ typedef struct msg_data {
 } MessageData;
 /// Message history for `:messages`
 typedef struct msg_hist {
-  MsgID msg_id;           ///< Message id.
   struct msg_hist *next;  ///< Next message.
   struct msg_hist *prev;  ///< Previous message.
   HlMessage msg;          ///< Highlighted message.

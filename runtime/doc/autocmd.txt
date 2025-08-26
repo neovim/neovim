@@ -791,7 +791,7 @@ Progress						*Progress*
 				After a progress message is created via
 				`nvim_echo`. The pattern is matched against
 				title of the message. The |event-data| contains:
-					msg_id: id of the message
+					id: id of the message
 					text: text of the message
 					title: title of the progress message
 					status: status of the progress message
