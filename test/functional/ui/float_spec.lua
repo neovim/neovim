@@ -1008,6 +1008,7 @@ describe('float window', function()
         [29] = { background = Screen.colors.Yellow1, foreground = Screen.colors.Blue4 },
         [30] = { background = Screen.colors.Grey, foreground = Screen.colors.Blue4, bold = true },
         [31] = { foreground = Screen.colors.Grey0 },
+        [32] = { background = Screen.colors.LightMagenta, foreground = Screen.colors.Brown },
       }
       screen:set_default_attr_ids(attrs)
     end)
@@ -3110,6 +3111,42 @@ describe('float window', function()
           {0:~    }{1:line     }{0:                          }|
           {0:~    }{1:abb acc  }{0:                          }|
           {0:~                                       }|*6
+                                                  |
+        ]])
+      end
+    end)
+
+    it('border is drawn properly when number column is too wide #35431', function()
+      local buf = api.nvim_create_buf(false, false)
+      local opts = { relative = 'editor', row = 1, col = 1, width = 3, height = 3, border = 'rounded' }
+      local win = api.nvim_open_win(buf, false, opts)
+      api.nvim_set_option_value('number', true, { win = win })
+      if multigrid then
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:----------------------------------------]|*6
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|*5
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:╭───╮}|
+          {5:│}{32:  1}{5:│}|
+          {5:│}{32:   }{5:│}|*2
+          {5:╰───╯}|
+        ]],
+          float_pos = { [4] = { 1001, 'NW', 1, 1, 1, true, 50, 1, 1, 1 } },
+        })
+      else
+        screen:expect([[
+          ^                                        |
+          {0:~}{5:╭───╮}{0:                                  }|
+          {0:~}{5:│}{32:  1}{5:│}{0:                                  }|
+          {0:~}{5:│}{32:   }{5:│}{0:                                  }|*2
+          {0:~}{5:╰───╯}{0:                                  }|
                                                   |
         ]])
       end
