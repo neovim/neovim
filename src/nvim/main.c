@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __APPLE__
+# include <mach/task.h>
+#endif
 #ifdef ENABLE_ASAN_UBSAN
 # include <sanitizer/asan_interface.h>
 # ifndef MSWIN
@@ -209,6 +212,13 @@ void early_init(mparm_T *paramp)
 # endif
   snprintf(windowsVersion, sizeof(windowsVersion), "%d.%d",
            (int)ovi.dwMajorVersion, (int)ovi.dwMinorVersion);
+#endif
+
+  // Inform the macOS scheduler that Nvim renders UI, and so shouldn’t have its threads’ quality
+  // of service classes clamped.
+#ifdef __APPLE__
+  integer_t policy = TASK_DEFAULT_APPLICATION;
+  task_policy_set(mach_task_self(), TASK_CATEGORY_POLICY, &policy, 1);
 #endif
 
   TIME_MSG("early init");
