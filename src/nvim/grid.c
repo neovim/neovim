@@ -352,6 +352,7 @@ static int grid_line_maxcol = 0;
 static int grid_line_first = INT_MAX;
 static int grid_line_last = 0;
 static int grid_line_clear_to = 0;
+static int grid_line_bg_attr = 0;
 static int grid_line_clear_attr = 0;
 static int grid_line_flags = 0;
 
@@ -377,6 +378,7 @@ void screengrid_line_start(ScreenGrid *grid, int row, int col)
   grid_line_maxcol = MIN(grid_line_maxcol, grid->cols - grid_line_coloff);
   grid_line_last = 0;
   grid_line_clear_to = 0;
+  grid_line_bg_attr = 0;
   grid_line_clear_attr = 0;
   grid_line_flags = 0;
 
@@ -517,14 +519,17 @@ int grid_line_fill(int start_col, int end_col, schar_T sc, int attr)
   return end_col;
 }
 
-void grid_line_clear_end(int start_col, int end_col, int attr)
+/// @param bg_attr     applies to both the buffered line and the columns to clear
+/// @param clear_attr  applies only to the columns to clear
+void grid_line_clear_end(int start_col, int end_col, int bg_attr, int clear_attr)
 {
   if (grid_line_first > start_col) {
     grid_line_first = start_col;
     grid_line_last = start_col;
   }
   grid_line_clear_to = end_col;
-  grid_line_clear_attr = attr;
+  grid_line_bg_attr = bg_attr;
+  grid_line_clear_attr = clear_attr;
 }
 
 /// move the cursor to a position in a currently rendered line.
@@ -593,7 +598,8 @@ void grid_line_flush(void)
   }
 
   grid_put_linebuf(grid, grid_line_row, grid_line_coloff, grid_line_first, grid_line_last,
-                   grid_line_clear_to, grid_line_clear_attr, -1, grid_line_flags);
+                   grid_line_clear_to, grid_line_bg_attr, grid_line_clear_attr, -1,
+                   grid_line_flags);
 }
 
 /// flush grid line but only if on a valid row
@@ -621,7 +627,7 @@ void grid_clear(GridView *grid, int start_row, int end_row, int start_col, int e
       grid_line_grid = NULL;  // TODO(bfredl): make callers behave instead
       return;
     }
-    grid_line_clear_end(start_col, end_col, attr);
+    grid_line_clear_end(start_col, end_col, attr, 0);
     grid_line_flush();
   }
 }
@@ -648,6 +654,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
 /// @param coloff  gives the first column on the grid for this line.
 /// @param endcol  gives the columns where valid characters are.
 /// @param clear_width  see SLF_RIGHTLEFT.
+/// @param clear_attr   combined with "bg_attr" for the columns to clear.
 /// @param flags  can have bits:
 /// - SLF_RIGHTLEFT  rightleft text, like a window with 'rightleft' option set:
 ///   - When false, clear columns "endcol" to "clear_width".
@@ -658,7 +665,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
 ///   - When true, use an increasing sequence starting from "last_vcol + 1" for
 ///     grid->vcols[] of the columns to clear.
 void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol, int clear_width,
-                      int bg_attr, colnr_T last_vcol, int flags)
+                      int bg_attr, int clear_attr, colnr_T last_vcol, int flags)
 {
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
@@ -778,15 +785,16 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
       grid->vcols[off] = (flags & SLF_INC_VCOL) ? ++last_vcol : last_vcol;
     }
   }
+  clear_attr = hl_combine_attr(bg_attr, clear_attr);
   // blank out the rest of the line
   // TODO(bfredl): we could cache winline widths
   for (col = clear_start; col < clear_width; col++) {
     size_t off = off_to + (size_t)col;
     if (grid->chars[off] != schar_from_ascii(' ')
-        || grid->attrs[off] != bg_attr
+        || grid->attrs[off] != clear_attr
         || rdb_flags & kOptRdbFlagNodelta) {
       grid->chars[off] = schar_from_ascii(' ');
-      grid->attrs[off] = bg_attr;
+      grid->attrs[off] = clear_attr;
       if (clear_dirty_start == -1) {
         clear_dirty_start = col;
       }
@@ -803,7 +811,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
       start_dirty = clear_dirty_start;
     } else {
       ui_line(grid, row, invalid_row, coloff + clear_dirty_start, coloff + clear_dirty_start,
-              coloff + clear_end, bg_attr, flags & SLF_WRAP);
+              coloff + clear_end, clear_attr, flags & SLF_WRAP);
     }
     clear_end = end_dirty;
   } else {
@@ -820,7 +828,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   if (clear_end > start_dirty) {
     if (!grid->throttled) {
       ui_line(grid, row, invalid_row, coloff + start_dirty, coloff + end_dirty, coloff + clear_end,
-              bg_attr, flags & SLF_WRAP);
+              clear_attr, flags & SLF_WRAP);
     } else if (grid->dirty_col) {
       // TODO(bfredl): really get rid of the extra pseudo terminal in message.c
       // by using a linebuf_char copy for "throttled message line"

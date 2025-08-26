@@ -2577,7 +2577,8 @@ void win_draw_end(win_T *wp, schar_T c1, bool draw_margin, int startrow, int end
       n = grid_line_fill(n, n + fdc, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
 
       // draw the sign column
-      n = grid_line_fill(n, n + wp->w_scwidth, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
+      n = grid_line_fill(n, n + wp->w_scwidth * SIGN_WIDTH, schar_from_ascii(' '),
+                         win_hl_attr(wp, HLF_SC));
 
       // draw the number column
       if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
@@ -2586,14 +2587,14 @@ void win_draw_end(win_T *wp, schar_T c1, bool draw_margin, int startrow, int end
       }
     }
 
-    int attr = hl_combine_attr(win_bg_attr(wp), win_hl_attr(wp, (int)hl));
+    int attr = win_hl_attr(wp, (int)hl);
 
     if (n < wp->w_view_width) {
-      grid_line_put_schar(n, c1, 0);  // base attr is inherited from clear
+      grid_line_put_schar(n, c1, attr);
       n++;
     }
 
-    grid_line_clear_end(n, wp->w_view_width, attr);
+    grid_line_clear_end(n, wp->w_view_width, win_bg_attr(wp), attr);
 
     if (wp->w_p_rl) {
       grid_line_mirror(wp->w_view_width);
