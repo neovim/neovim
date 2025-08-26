@@ -304,7 +304,7 @@ function Completor:apply()
         range.end_.col,
         lines
       )
-      local pos = current.range.start:to_cursor()
+      local pos = range.start:to_cursor()
       api.nvim_win_set_cursor(vim.fn.bufwinid(self.bufnr), {
         pos[1] + #lines - 1,
         (#lines == 1 and pos[2] or 0) + #lines[#lines],

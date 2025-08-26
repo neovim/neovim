@@ -526,11 +526,11 @@ local function merge_dispatchers(dispatchers)
   ---@type vim.lsp.rpc.Dispatchers
   local merged = {
     notification = (
-      dispatchers.notification and vim.schedule_wrap(dispatchers.notification)
+      dispatchers.notification and schedule_wrap(dispatchers.notification)
       or default_dispatchers.notification
     ),
     on_error = (
-      dispatchers.on_error and vim.schedule_wrap(dispatchers.on_error)
+      dispatchers.on_error and schedule_wrap(dispatchers.on_error)
       or default_dispatchers.on_error
     ),
     on_exit = dispatchers.on_exit or default_dispatchers.on_exit,

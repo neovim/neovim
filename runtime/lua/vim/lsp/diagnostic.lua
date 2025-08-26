@@ -498,7 +498,7 @@ function M._workspace_diagnostics(opts)
   local function handler(error, result, ctx)
     -- Check for retrigger requests on cancellation errors.
     -- Unless `retriggerRequest` is explicitly disabled, try again.
-    if error ~= nil and error.code == lsp.protocol.ErrorCodes.ServerCancelled then
+    if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
       if error.data == nil or error.data.retriggerRequest ~= false then
         local client = assert(lsp.get_client_by_id(ctx.client_id))
         client:request(ms.workspace_diagnostic, ctx.params, handler)

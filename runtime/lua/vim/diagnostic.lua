@@ -1229,7 +1229,7 @@ function M.config(opts, namespace)
     if float_opts then
       float_opts = type(float_opts) == 'table' and float_opts or {}
 
-      opts.jump.on_jump = function(_, bufnr)
+      jump_opts.on_jump = function(_, bufnr)
         M.open_float(vim.tbl_extend('keep', float_opts, {
           bufnr = bufnr,
           scope = 'cursor',
@@ -1697,7 +1697,7 @@ M.handlers.underline = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    if not vim.api.nvim_buf_is_loaded(bufnr) then
+    if not api.nvim_buf_is_loaded(bufnr) then
       return
     end
 
@@ -1724,7 +1724,7 @@ M.handlers.underline = {
       end
 
       local lines =
-        vim.api.nvim_buf_get_lines(diagnostic.bufnr, diagnostic.lnum, diagnostic.lnum + 1, true)
+        api.nvim_buf_get_lines(diagnostic.bufnr, diagnostic.lnum, diagnostic.lnum + 1, true)
 
       vim.hl.range(
         bufnr,
@@ -1795,7 +1795,7 @@ M.handlers.virtual_text = {
     bufnr = vim._resolve_bufnr(bufnr)
     opts = opts or {}
 
-    if not vim.api.nvim_buf_is_loaded(bufnr) then
+    if not api.nvim_buf_is_loaded(bufnr) then
       return
     end
 
@@ -2491,7 +2491,7 @@ function M.open_float(opts, ...)
       local location = info.location
       local file_name = vim.fs.basename(vim.uri_to_fname(location.uri))
       local info_suffix = ': ' .. info.message
-      related_info_locations[#lines + 1] = info.location
+      related_info_locations[#lines + 1] = location
       lines[#lines + 1] = string.format(
         '%s%s:%s:%s%s',
         default_pre,
@@ -2881,11 +2881,11 @@ function M.status(bufnr)
   return result_str
 end
 
-vim.api.nvim_create_autocmd('DiagnosticChanged', {
-  group = vim.api.nvim_create_augroup('nvim.diagnostic.status', {}),
+api.nvim_create_autocmd('DiagnosticChanged', {
+  group = api.nvim_create_augroup('nvim.diagnostic.status', {}),
   callback = function(ev)
-    if vim.api.nvim_buf_is_loaded(ev.buf) then
-      vim.api.nvim__redraw({ buf = ev.buf, statusline = true })
+    if api.nvim_buf_is_loaded(ev.buf) then
+      api.nvim__redraw({ buf = ev.buf, statusline = true })
     end
   end,
   desc = 'diagnostics component for the statusline',

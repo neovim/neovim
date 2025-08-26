@@ -450,7 +450,7 @@ function M.color_presentation()
       end
       vim.list_extend(text_edits, choice.additionalTextEdits or {})
 
-      lsp.util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
+      util.apply_text_edits(text_edits, bufnr, client.offset_encoding)
     end)
   end)
 end

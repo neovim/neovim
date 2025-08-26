@@ -458,7 +458,7 @@ end
 --- @return F
 local function track(stat, f)
   return function(...)
-    local start = vim.uv.hrtime()
+    local start = uv.hrtime()
     local r = { f(...) }
     stats[stat] = stats[stat] or { total = 0, time = 0 }
     stats[stat].total = stats[stat].total + 1

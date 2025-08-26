@@ -8,7 +8,7 @@ local M = {}
 --- @param env? table<string,string|number>
 --- @return string
 local function system(cmd, silent, env)
-  if vim.fn.executable(cmd[1]) == 0 then
+  if fn.executable(cmd[1]) == 0 then
     error(string.format('executable not found: "%s"', cmd[1]), 0)
   end
 
@@ -651,10 +651,10 @@ function M.init_pager()
 
   -- Raw manpage into (:Man!) overlooks `match('man://')` condition,
   -- so if the buffer already exists, create new with a non existing name.
-  if vim.fn.bufexists(man_bufname) == 1 then
+  if fn.bufexists(man_bufname) == 1 then
     local new_bufname = man_bufname
     for i = 1, 100 do
-      if vim.fn.bufexists(new_bufname) == 0 then
+      if fn.bufexists(new_bufname) == 0 then
         break
       end
       new_bufname = ('%s?new=%s'):format(man_bufname, i)

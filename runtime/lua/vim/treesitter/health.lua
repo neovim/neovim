@@ -9,7 +9,7 @@ function M.check()
   health.info(
     string.format(
       'Treesitter ABI support: min %d, max %d',
-      vim.treesitter.minimum_language_version,
+      ts.minimum_language_version,
       ts.language_version
     )
   )

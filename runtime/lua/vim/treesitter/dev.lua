@@ -343,7 +343,7 @@ function M.inspect_tree(opts)
   local win = api.nvim_get_current_win()
   local treeview, err = TSTreeView:new(buf, opts.lang)
   if err and err:match('no parser for lang') then
-    vim.api.nvim_echo({ { err, 'WarningMsg' } }, true, {})
+    api.nvim_echo({ { err, 'WarningMsg' } }, true, {})
     return
   elseif not treeview then
     error(err)
@@ -627,7 +627,7 @@ function M.edit_query(lang)
   local base_buf = base_win and api.nvim_win_get_buf(base_win)
   local inspect_win = base_buf and vim.b[base_buf].dev_inspect
   if base_win and base_buf and api.nvim_win_is_valid(inspect_win) then
-    vim.api.nvim_set_current_win(inspect_win)
+    api.nvim_set_current_win(inspect_win)
     buf = base_buf
     win = base_win
     cmd = 'new'
