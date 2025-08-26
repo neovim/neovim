@@ -788,7 +788,7 @@ ModeChanged			After changing the mode. The pattern is
 		:au ModeChanged *:[vV\x16]* let &l:rnu = mode() =~# '^[vV\x16]'
 		:au WinEnter,WinLeave * let &l:rnu = mode() =~# '^[vV\x16]'
 Progress						*Progress*
-				After a progress message is created via
+				After a progress message is created or updated via
 				`nvim_echo`. The pattern is matched against
 				title of the message. The |event-data| contains:
 					id: id of the message
