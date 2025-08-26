@@ -3319,22 +3319,22 @@ describe('progress-message', function()
   it('validates', function()
     -- throws error if title, status, percent, data is used in non progress message
     eq(
-      'title, status, percents and data fields can only be used with progress messages',
+      'title, status, percent and data fields can only be used with progress messages',
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { title = 'TestSuit' })
     )
 
     eq(
-      'title, status, percents and data fields can only be used with progress messages',
+      'title, status, percent and data fields can only be used with progress messages',
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { status = 'running' })
     )
 
     eq(
-      'title, status, percents and data fields can only be used with progress messages',
+      'title, status, percent and data fields can only be used with progress messages',
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { percent = 10 })
     )
 
     eq(
-      'title, status, percents and data fields can only be used with progress messages',
+      'title, status, percent and data fields can only be used with progress messages',
       t.pcall_err(api.nvim_echo, { { 'test-message' } }, false, { data = { tag = 'test' } })
     )
 

@@ -801,7 +801,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
            || (opts->status.size == 0 && opts->title.size == 0 && opts->percent == 0
                && opts->data.size == 0),
            "%s",
-           "title, status, percents and data fields can only be used with progress messages",
+           "title, status, percent and data fields can only be used with progress messages",
   {
     goto error;
   });
