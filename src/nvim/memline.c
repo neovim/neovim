@@ -2487,23 +2487,19 @@ void ml_add_deleted_len_buf(buf_T *buf, char *ptr, ssize_t len)
   }
 }
 
+/// Replace line "lnum", with buffering, in current buffer.
 int ml_replace(linenr_T lnum, char *line, bool copy)
 {
   return ml_replace_buf(curbuf, lnum, line, copy, false);
 }
 
-/// Replace line "lnum", with buffering, in current buffer.
-///
-/// @param copy  if true, make a copy of the line, otherwise the line has been
-///              copied to allocated memory already.
-///              if false, the "line" may be freed to add text properties!
-///
-/// Do not use it after calling ml_replace().
-///
-/// Check: The caller of this function should probably also call
-/// changed_lines(), unless update_screen(UPD_NOT_VALID) is used.
-///
-/// @return  FAIL for failure, OK otherwise
+/// Replace a line for the current buffer.  Like ml_replace() with:
+/// "len" is the length of the text, excluding NUL.
+int ml_replace_len(linenr_T lnum, char *line, size_t len, bool copy)
+{
+  return ml_replace_buf_len(curbuf, lnum, line, len, copy, false);
+}
+
 int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noalloc)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -2511,6 +2507,19 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy, bool noallo
   return ml_replace_buf_len(buf, lnum, line, len, copy, noalloc);
 }
 
+/// Replace line "lnum", with buffering.
+///
+/// @param copy  if true, make a copy of the line, otherwise the line has been
+///              copied to allocated memory already.
+///              if false, the "line" may be freed to add text properties!
+/// @param len_arg  length of the text, excluding NUL
+///
+/// Do not use it after calling ml_replace().
+///
+/// Check: The caller of this function should probably also call
+/// changed_lines(), unless update_screen(UPD_NOT_VALID) is used.
+///
+/// @return  FAIL for failure, OK otherwise
 int ml_replace_buf_len(buf_T *buf, linenr_T lnum, char *line_arg, size_t len_arg, bool copy,
                        bool noalloc)
   FUNC_ATTR_NONNULL_ARG(1)
