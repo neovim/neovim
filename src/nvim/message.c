@@ -1043,16 +1043,12 @@ static void msg_hist_add(const char *s, int len, int hl_id)
 
 static bool do_clear_hist_temp = true;
 
-static void do_autocmd_progress(MsgID msg_id, MessageHistoryEntry *msg, MessageData *msg_data)
+void do_autocmd_progress(MsgID msg_id, HlMessage msg, MessageData *msg_data)
 {
-  if (msg == NULL) {
-    return;
-  }
-
   MAXSIZE_TEMP_DICT(data, 7);
   ArrayOf(String) messages = ARRAY_DICT_INIT;
-  for (size_t i = 0; i < msg->msg.size; i++) {
-    ADD(messages, STRING_OBJ(msg->msg.items[i].text));
+  for (size_t i = 0; i < msg.size; i++) {
+    ADD(messages, STRING_OBJ(msg.items[i].text));
   }
 
   PUT_C(data, "id", OBJECT_OBJ(msg_id));
@@ -1082,7 +1078,6 @@ static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Message
     return;
   }
 
-  bool is_progress = strequal(msg_ext_kind, MSG_KIND_PROGRESS);
   // Allocate an entry and add the message at the end of the history.
   MessageHistoryEntry *entry = xmalloc(sizeof(MessageHistoryEntry));
   entry->msg = msg;
@@ -1111,7 +1106,7 @@ static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Message
   msg_ext_history = true;
 
   msg_ext_id = msg_id;
-  if (is_progress && msg_data != NULL && ui_has(kUIMessages)) {
+  if (strequal(msg_ext_kind, MSG_KIND_PROGRESS) && msg_data != NULL && ui_has(kUIMessages)) {
     kv_resize(msg_ext_progress, 3);
     if (msg_data->title.size != 0) {
       PUT_C(msg_ext_progress, "title", STRING_OBJ(msg_data->title));
@@ -1122,10 +1117,6 @@ static void msg_hist_add_multihl(MsgID msg_id, HlMessage msg, bool temp, Message
     if (msg_data->percent >= 0) {
       PUT_C(msg_ext_progress, "percent", INTEGER_OBJ(msg_data->percent));
     }
-  }
-
-  if (is_progress) {
-    do_autocmd_progress(msg_id, entry, msg_data);
   }
   msg_hist_clear(msg_hist_max);
 }

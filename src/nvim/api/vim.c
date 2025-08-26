@@ -829,6 +829,10 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     verbose_stop();  // flush now
   }
 
+  if (is_progress) {
+    do_autocmd_progress(id, hl_msg, &msg_data);
+  }
+
   if (history) {
     // history takes ownership
     return id;
