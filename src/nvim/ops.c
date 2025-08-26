@@ -4014,9 +4014,9 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
   colnr_T col = sumsize - currsize - spaces[count - 1];
 
   // allocate the space for the new line
-  char *newp = xmalloc((size_t)sumsize + 1);
+  size_t newp_len = (size_t)sumsize;
+  char *newp = xmallocz(newp_len);
   cend = newp + sumsize;
-  *cend = 0;
 
   // Move affected lines to the new long one.
   // This loops backwards over the joined lines, including the original line.
@@ -4030,6 +4030,7 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
   for (linenr_T t = (linenr_T)count - 1;; t--) {
     cend -= currsize;
     memmove(cend, curr, (size_t)currsize);
+
     if (spaces[t] > 0) {
       cend -= spaces[t];
       memset(cend, ' ', (size_t)(spaces[t]));
@@ -4060,7 +4061,7 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
     currsize = (int)strlen(curr);
   }
 
-  ml_replace(curwin->w_cursor.lnum, newp, false);
+  ml_replace_len(curwin->w_cursor.lnum, newp, newp_len, false);
 
   if (setmark && (cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // Set the '] mark.
