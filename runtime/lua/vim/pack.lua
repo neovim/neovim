@@ -396,7 +396,7 @@ local function new_progress_report(title)
     local details = (' %s %s'):format(title, fmt:format(...))
     local chunks = { { 'vim.pack', 'ModeMsg' }, { ': ' }, { progress, 'WarningMsg' }, { details } }
     -- TODO: need to add support for progress-messages api
-    vim.api.nvim_echo(chunks, true, {})
+    api.nvim_echo(chunks, true, {})
     -- Force redraw to show installation progress during startup
     vim.cmd.redraw({ bang = true })
   end)
