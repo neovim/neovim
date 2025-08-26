@@ -410,8 +410,6 @@ This example shows the use of a few advanced tricks:
 This should be put in a Vim script file, since it uses script-local variables.
 It skips matches in strings or comments, unless the cursor started in string
 or comment.  This requires syntax highlighting.
-
-A slightly more advanced version is used in the |matchparen| plugin.
 >
 	let s:paren_hl_on = 0
 	function s:Highlight_Matching_Paren()

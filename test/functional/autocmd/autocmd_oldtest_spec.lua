@@ -107,7 +107,6 @@ describe('oldtests', function()
     }
     exec([[
       set noshowcmd noruler scrolloff=0
-      source test/old/testdir/samples/matchparen.vim
       edit test/old/testdir/samples/box.txt
     ]])
     feed('249GV<C-End>d')
