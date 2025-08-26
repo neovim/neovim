@@ -787,6 +787,31 @@ ModeChanged			After changing the mode. The pattern is
 		:au ModeChanged [vV\x16]*:* let &l:rnu = mode() =~# '^[vV\x16]'
 		:au ModeChanged *:[vV\x16]* let &l:rnu = mode() =~# '^[vV\x16]'
 		:au WinEnter,WinLeave * let &l:rnu = mode() =~# '^[vV\x16]'
+Progress						*Progress*
+				After a progress message is created or updated via
+				`nvim_echo`. The pattern is matched against
+				title of the message. The |event-data| contains:
+					id: id of the message
+					text: text of the message
+					title: title of the progress message
+					status: status of the progress message
+					percent: how much progress has been
+						 made for this progress item
+				Usage example:
+>
+		vim.api.nvim_create_autocmd('Progress', {
+		  pattern={"term"},
+		  callback = function(ev)
+		    print(string.format('event fired: %s', vim.inspect(ev)))
+		  end
+		})
+		local id = vim.api.nvim_echo({{'searching...'}}, true,
+				{kind='progress', status='running', percent=10, title="term"})
+		vim.api.nvim_echo({{'searching'}}, true,
+				{id = id, kind='progress', status='running', percent=50, title="term"})
+		vim.api.nvim_echo({{'done'}}, true,
+				{id = id, kind='progress', status='success', percent=100, title="term"})
+
 <							*OptionSet*
 OptionSet			After setting an option (except during
 				|startup|).  The |autocmd-pattern| is matched
