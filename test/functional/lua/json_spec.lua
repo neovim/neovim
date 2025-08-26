@@ -192,6 +192,41 @@ describe('vim.json.encode()', function()
     )
   end)
 
+  it('indent', function()
+    eq('"Test"', exec_lua([[return vim.json.encode('Test', { indent = "  " })]]))
+    eq('[]', exec_lua([[return vim.json.encode({}, { indent = "  " })]]))
+    eq('{}', exec_lua([[return vim.json.encode(vim.empty_dict(), { indent = "  " })]]))
+    eq(
+      '[\n  {\n    "a": "a"\n  },\n  {\n    "b": "b"\n  }\n]',
+      exec_lua([[return vim.json.encode({ { a = "a" }, { b = "b" } }, { indent = "  " })]])
+    )
+    eq(
+      '{\n  "a": {\n    "b": 1\n  }\n}',
+      exec_lua([[return vim.json.encode({ a = { b = 1 } }, { indent = "  " })]])
+    )
+    eq(
+      '[{"a":"a"},{"b":"b"}]',
+      exec_lua([[return vim.json.encode({ { a = "a" }, { b = "b" } }, { indent = "" })]])
+    )
+    eq(
+      '[\n  [\n    1,\n    2\n  ],\n  [\n    3,\n    4\n  ]\n]',
+      exec_lua([[return vim.json.encode({ { 1, 2 }, { 3, 4 } }, { indent = "  " })]])
+    )
+    eq(
+      '{\nabc"a": {\nabcabc"b": 1\nabc}\n}',
+      exec_lua([[return vim.json.encode({ a = { b = 1 } }, { indent = "abc" })]])
+    )
+
+    -- Checks for for global side-effects
+    eq(
+      '[{"a":"a"},{"b":"b"}]',
+      exec_lua([[
+        vim.json.encode('', { indent = "  " })
+        return vim.json.encode({ { a = "a" }, { b = "b" } })
+      ]])
+    )
+  end)
+
   it('dumps strings', function()
     eq('"Test"', exec_lua([[return vim.json.encode('Test')]]))
     eq('""', exec_lua([[return vim.json.encode('')]]))
