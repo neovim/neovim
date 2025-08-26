@@ -255,19 +255,6 @@ The idea is "versionless evolution", in the words of Rich Hickey:
 - Strengthening a promise should be a compatible change.
 
 ==============================================================================
-Global events                                               *api-global-events*
-
-When a client invokes an API request as an async notification, it is not
-possible for Nvim to send an error response. Instead, in case of error, the
-following notification will be sent to the client:
-
-                                                             *nvim_error_event*
-nvim_error_event[{type}, {message}]
-
-{type} is a numeric id as defined by `api_info().error_types`, and {message} is
-a string with the error message.
-
-==============================================================================
 Buffer update events                                    *api-buffer-updates*
 
 API clients can "attach" to Nvim buffers to subscribe to buffer update events.
@@ -552,6 +539,38 @@ created by another plugin.
 Extmark positions changed by an edit will be restored on undo/redo. Creating
 and deleting extmarks is not a buffer change, thus new undo states are not
 created for extmark changes.
+
+==============================================================================
+Global Events                                                     *api-events*
+
+nvim_error_event({type}, {msg})                             *nvim_error_event*
+    Emitted on the client channel if an async API request responds with an
+    error.
+
+    Attributes: ~
+        |RPC| only
+
+    Parameters: ~
+      • {type}  (`integer`) Error type id as defined by
+                `api_info().error_types`.
+      • {msg}   (`string`) Error message.
+
+nvim_ui_term_event({event}, {value})                      *nvim_ui_term_event*
+    Emitted by the TUI client to signal when a host-terminal event occurred.
+
+    Supports these events:
+    • "termresponse": The host-terminal sent a DA1, OSC, DCS, or APC response
+      sequence to Nvim. The payload is the received response. Sets
+      |v:termresponse| and fires |TermResponse|.
+
+    Attributes: ~
+        |RPC| only
+        Since: 0.10.0
+
+    Parameters: ~
+      • {event}  (`string`) Event name
+      • {value}  (`any`) Event payload
+
 
 ==============================================================================
 Global Functions                                                  *api-global*
@@ -3659,22 +3678,6 @@ nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
     Parameters: ~
       • {name}   (`string`)
       • {value}  (`any`)
-
-nvim_ui_term_event({event}, {value})                    *nvim_ui_term_event()*
-    Tells Nvim when a host-terminal event occurred.
-
-    Supports these events:
-    • "termresponse": The host-terminal sent a DA1, OSC, DCS, or APC response
-      sequence to Nvim. The payload is the received response. Sets
-      |v:termresponse| and fires |TermResponse|.
-
-    Attributes: ~
-        |RPC| only
-        Since: 0.10.0
-
-    Parameters: ~
-      • {event}  (`string`) Event name
-      • {value}  (`any`) Event payload
 
 nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
 

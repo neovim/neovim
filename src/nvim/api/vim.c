@@ -2222,15 +2222,6 @@ DictAs(eval_statusline_ret) nvim_eval_statusline(String str, Dict(eval_statuslin
   return result;
 }
 
-/// @nodoc
-void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
-  FUNC_API_REMOTE_ONLY
-{
-  // TODO(bfredl): consider printing message to user, as will be relevant
-  // if we fork nvim processes as async workers
-  ELOG("async error on channel %" PRId64 ": %s", channel_id, data.size ? data.data : "");
-}
-
 /// EXPERIMENTAL: this API may change in the future.
 ///
 /// Sets info for the completion item at the given index. If the info text was shown in a window,

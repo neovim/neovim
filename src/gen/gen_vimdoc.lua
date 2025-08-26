@@ -1,5 +1,8 @@
 #!/usr/bin/env -S nvim -l
---- Generates Nvim :help docs from Lua/C docstrings
+--- Generates Nvim :help docs from Lua/C docstrings.
+---
+--- Usage:
+---     make doc
 ---
 --- The generated :help text for each function is formatted as follows:
 --- - Max width of 78 columns (`TEXT_WIDTH`).
@@ -106,6 +109,7 @@ local config = {
     filename = 'api.txt',
     section_order = {
       -- Sections at the top, in a specific order:
+      'events.c',
       'vim.c',
       'vimscript.c',
 
@@ -126,10 +130,21 @@ local config = {
       ['vim.c'] = 'Global',
     },
     section_fmt = function(name)
+      if name == 'Events' then
+        return 'Global Events'
+      end
+
       return name .. ' Functions'
     end,
     helptag_fmt = function(name)
       return fmt('api-%s', name:lower())
+    end,
+    fn_helptag_fmt = function(fun)
+      local name = fun.name
+      if vim.endswith(name, '_event') then
+        return name
+      end
+      return fn_helptag_fmt_common(fun)
     end,
   },
   lua = {
