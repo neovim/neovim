@@ -428,7 +428,7 @@ function M.signature_help(config)
       local buf, win = util.open_floating_preview(lines, 'markdown', config)
 
       if hl then
-        vim.api.nvim_buf_clear_namespace(buf, sig_help_ns, 0, -1)
+        api.nvim_buf_clear_namespace(buf, sig_help_ns, 0, -1)
         vim.hl.range(
           buf,
           sig_help_ns,
@@ -1057,7 +1057,7 @@ end
 --- @param opts? vim.lsp.WorkspaceDiagnosticsOpts
 --- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
 function M.workspace_diagnostics(opts)
-  vim.validate('opts', opts, 'table', true)
+  validate('opts', opts, 'table', true)
 
   lsp.diagnostic._workspace_diagnostics(opts or {})
 end
@@ -1420,7 +1420,7 @@ function M.selection_range(direction)
 
   lsp.buf_request(
     0,
-    ms.textDocument_selectionRange,
+    method,
     params,
     ---@param response lsp.SelectionRange[]?
     function(err, response)

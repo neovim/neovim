@@ -368,7 +368,7 @@ end
 --- @param hl_group string
 --- @param priority integer
 local function set_mark(bufnr, ns, token, hl_group, priority)
-  vim.api.nvim_buf_set_extmark(bufnr, ns, token.line, token.start_col, {
+  api.nvim_buf_set_extmark(bufnr, ns, token.line, token.start_col, {
     hl_group = hl_group,
     end_line = token.end_line,
     end_col = token.end_col,

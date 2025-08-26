@@ -365,7 +365,7 @@ local function trigger_event(p, event_name, kind)
   spec.version = spec.version or (uv.fs_stat(p.path) and git_get_default_branch(p.path))
 
   local data = { kind = kind, spec = spec, path = p.path }
-  vim.api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
+  api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
 end
 
 --- @param title string

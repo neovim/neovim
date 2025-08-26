@@ -190,9 +190,9 @@ function M.dir(path, opts)
         if
           opts.depth
           and level < opts.depth
-          and (t == 'directory' or (t == 'link' and opts.follow and (vim.uv.fs_stat(
-            M.joinpath(path, f)
-          ) or {}).type == 'directory'))
+          and (t == 'directory' or (t == 'link' and opts.follow and (
+            uv.fs_stat(M.joinpath(path, f)) or {}
+          ).type == 'directory'))
           and (not opts.skip or opts.skip(f) ~= false)
         then
           dirs[#dirs + 1] = { f, level + 1 }
@@ -369,7 +369,7 @@ function M.find(names, opts)
 
         if
           type_ == 'directory'
-          or (type_ == 'link' and opts.follow and (vim.uv.fs_stat(f) or {}).type == 'directory')
+          or (type_ == 'link' and opts.follow and (uv.fs_stat(f) or {}).type == 'directory')
         then
           dirs[#dirs + 1] = f
         end

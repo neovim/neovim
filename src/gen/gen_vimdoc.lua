@@ -591,7 +591,7 @@ local function render_fields_or_params(xs, generics, classes, cfg)
     inline_type(p, classes)
     local nm, ty = p.name, p.type
 
-    local desc = p.classvar and string.format('See |%s|.', cfg.fn_helptag_fmt(p)) or p.desc
+    local desc = p.classvar and fmt('See |%s|.', cfg.fn_helptag_fmt(p)) or p.desc
 
     local fnm = p.kind == 'operator' and fmt('op(%s)', nm) or fmt_field_name(nm)
     local pnm = fmt('      • %-' .. indent .. 's', fnm)
@@ -1071,7 +1071,7 @@ local function gen_target(cfg)
   for _, f in ipairs(cfg.section_order) do
     local section = sections[f]
     if section then
-      print(string.format("    Rendering section: '%s'", section.title))
+      print(fmt("    Rendering section: '%s'", section.title))
       local add_sep_and_header = not vim.tbl_contains(cfg.append_only or {}, f)
       docs[#docs + 1] = render_section(section, add_sep_and_header)
     end

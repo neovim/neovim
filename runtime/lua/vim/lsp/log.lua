@@ -225,13 +225,13 @@ end
 ---@param message_type lsp.MessageType
 function log._from_lsp_level(message_type)
   if message_type == protocol.MessageType.Error then
-    return vim.log.levels.ERROR
+    return log_levels.ERROR
   elseif message_type == protocol.MessageType.Warning then
-    return vim.log.levels.WARN
+    return log_levels.WARN
   elseif message_type == protocol.MessageType.Info or message_type == protocol.MessageType.Log then
-    return vim.log.levels.INFO
+    return log_levels.INFO
   else
-    return vim.log.levels.DEBUG
+    return log_levels.DEBUG
   end
 end
 

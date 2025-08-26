@@ -871,7 +871,7 @@ function Client:stop(force)
   self._is_stopping = true
   local rpc = self.rpc
 
-  vim.lsp._watchfiles.cancel(self.id)
+  lsp._watchfiles.cancel(self.id)
 
   if force or not self.initialized or self._graceful_shutdown_failed then
     rpc.terminate()
@@ -921,7 +921,7 @@ function Client:_register(registrations)
   for _, reg in ipairs(registrations) do
     local method = reg.method
     if method == ms.workspace_didChangeWatchedFiles then
-      vim.lsp._watchfiles.register(reg, self.id)
+      lsp._watchfiles.register(reg, self.id)
     elseif not self:_supports_registration(method) then
       unsupported[#unsupported + 1] = method
     end
@@ -955,7 +955,7 @@ function Client:_unregister(unregistrations)
   self:_unregister_dynamic(unregistrations)
   for _, unreg in ipairs(unregistrations) do
     if unreg.method == ms.workspace_didChangeWatchedFiles then
-      vim.lsp._watchfiles.unregister(unreg, self.id)
+      lsp._watchfiles.unregister(unreg, self.id)
     end
   end
 end
@@ -1096,10 +1096,10 @@ function Client:on_attach(bufnr)
   -- on_attach and LspAttach callbacks the ability to schedule wrap the
   -- opt-out (deleting the semanticTokensProvider from capabilities)
   vim.schedule(function()
-    for _, Capability in pairs(vim.lsp._capability.all) do
+    for _, Capability in pairs(lsp._capability.all) do
       if
         self:supports_method(Capability.method)
-        and vim.lsp._capability.is_enabled(Capability.name, {
+        and lsp._capability.is_enabled(Capability.name, {
           bufnr = bufnr,
           client_id = self.id,
         })
@@ -1220,10 +1220,10 @@ function Client:_on_detach(bufnr)
     })
   end
 
-  for _, Capability in pairs(vim.lsp._capability.all) do
+  for _, Capability in pairs(lsp._capability.all) do
     if
       self:supports_method(Capability.method)
-      and vim.lsp._capability.is_enabled(Capability.name, {
+      and lsp._capability.is_enabled(Capability.name, {
         bufnr = bufnr,
         client_id = self.id,
       })
@@ -1266,7 +1266,7 @@ local function reset_defaults(bufnr)
   end
   vim._with({ buf = bufnr }, function()
     local keymap = vim.fn.maparg('K', 'n', false, true)
-    if keymap and keymap.callback == vim.lsp.buf.hover and keymap.buffer == 1 then
+    if keymap and keymap.callback == lsp.buf.hover and keymap.buffer == 1 then
       vim.keymap.del('n', 'K', { buffer = bufnr })
     end
   end)

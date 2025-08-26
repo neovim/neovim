@@ -595,7 +595,7 @@ function M.rename(old_fname, new_fname, opts)
   opts = opts or {}
   local skip = not opts.overwrite or opts.ignoreIfExists
 
-  local old_fname_full = vim.uv.fs_realpath(vim.fs.normalize(old_fname, { expand_env = false }))
+  local old_fname_full = uv.fs_realpath(vim.fs.normalize(old_fname, { expand_env = false }))
   if not old_fname_full then
     vim.notify('Invalid path: ' .. old_fname, vim.log.levels.ERROR)
     return
@@ -869,7 +869,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
           active_offset = { offset - 1, offset + #parameter_label - 1 }
           break
         end
-        offset = offset + #param.label + 1
+        offset = offset + #plabel + 1
       end
     end
     if parameter.documentation then

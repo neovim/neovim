@@ -249,7 +249,7 @@ function State:new(bufnr)
     group = self.augroup,
     pattern = 'foldexpr',
     callback = function()
-      if vim.v.option_type == 'global' or vim.api.nvim_get_current_buf() == bufnr then
+      if vim.v.option_type == 'global' or api.nvim_get_current_buf() == bufnr then
         vim.lsp._capability.enable('folding_range', false, { bufnr = bufnr })
       end
     end,

@@ -159,7 +159,7 @@ local function compute_start_range(
   else
     byte_idx = start_byte_idx + str_utf_start(prev_line, start_byte_idx)
     --- Convert to 0 based for input, and from 0 based for output
-    char_idx = vim.str_utfindex(prev_line, position_encoding, byte_idx - 1) + 1
+    char_idx = str_utfindex(prev_line, position_encoding, byte_idx - 1) + 1
   end
 
   -- Return the start difference (shared for new and prev lines)
