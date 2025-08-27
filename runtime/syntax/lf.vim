@@ -3,10 +3,10 @@
 " Maintainer: Andis Sprinkis <andis@sprinkis.com>
 " Former Maintainer: Cameron Wright
 " URL: https://github.com/andis-sprinkis/lf-vim
-" Last Change: 16 July 2025
+" Last Change: 16 August 2025
 "
 " The shell syntax highlighting is configurable. See $VIMRUNTIME/doc/syntax.txt
-" lf version: 36
+" lf version: 37
 
 if exists("b:current_syntax") | finish | endif
 
@@ -94,6 +94,7 @@ syn keyword lfOptions
   \ errorfmt
   \ filesep
   \ filter
+  \ filtermethod
   \ find
   \ find-back
   \ find-next
@@ -101,8 +102,6 @@ syn keyword lfOptions
   \ findlen
   \ glob-select
   \ glob-unselect
-  \ globfilter
-  \ globsearch
   \ half-down
   \ half-up
   \ hidden
@@ -169,6 +168,7 @@ syn keyword lfOptions
   \ search-back
   \ search-next
   \ search-prev
+  \ searchmethod
   \ select
   \ selectfmt
   \ selmode
