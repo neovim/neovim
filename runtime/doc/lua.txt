@@ -4734,6 +4734,23 @@ vim.text.indent({size}, {text}, {opts})                    *vim.text.indent()*
 ==============================================================================
 Lua module: vim.ui                                                    *vim.ui*
 
+*vim.ui.get_progress_status.Opts*
+
+    Fields: ~
+      • {fmt}?  (`fun(running: ProgressMessage[]):string`) custom formater for
+                progress messages
+
+
+vim.ui.get_progress_status({opts})              *vim.ui.get_progress_status()*
+    Function to format the list of running progress messages for statusline
+
+    Parameters: ~
+      • {opts}  (`vim.ui.get_progress_status.Opts?`) Options. See
+                |vim.ui.get_progress_status.Opts|.
+
+    Return: ~
+        (`string`) Statusline component text
+
 vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
     Prompts the user for input, allowing arbitrary (potentially asynchronous)
     work until `on_confirm`.

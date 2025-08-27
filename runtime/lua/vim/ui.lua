@@ -253,4 +253,93 @@ function M._get_urls()
   return urls
 end
 
+do
+  ---@class ProgressMessage
+  ---@field title string   Title of the progress message
+  ---@field status string  Status: "running" | "success" | "failed" | "cancel"
+  ---@field percent integer Percent complete (0–100)
+  ---@private
+
+  ---Cache of active progress messages, keyed by msg_id
+  ---@type table<integer, ProgressMessage>
+  local progress = {}
+
+  -- store progress events
+  local progress_group = vim.api.nvim_create_augroup('nvim.status.progress', { clear = true })
+  vim.api.nvim_create_autocmd('Progress', {
+    group = progress_group,
+    desc = 'Track progress messages for statusline',
+    ---@param ev {data: {id: integer, title: string, status: string, percent: integer}}
+    callback = function(ev)
+      if not ev.data or not ev.data.id then
+        return
+      end
+      progress[ev.data.id] = {
+        title = ev.data.title,
+        status = ev.data.status,
+        percent = ev.data.percent or 0,
+      }
+
+      -- Clear finished items
+      if
+        ev.data.status == 'success'
+        or ev.data.percent == 100
+        or ev.data.status == 'failed'
+        or ev.data.status == 'cancel'
+      then
+        progress[ev.data.id] = nil
+      end
+    end,
+  })
+
+  ---Return statusline text summarizing progress messages.
+  --- - If none: returns empty string
+  --- - If one running item: "title: 42%"
+  --- - If multiple running items: "Progress: N items AVG%"
+  ---@param running ProgressMessage[]
+  ---@return string
+  local function progress_status_fmt(running)
+    local count = #running
+    if count == 0 then
+      return '' -- nothing to show
+    elseif count == 1 then
+      local progress_item = running[1]
+      return string.format('%s: %d%%%% ', progress_item.title, progress_item.percent or 0)
+    else
+      local sum = 0 ---@type integer
+      for _, progress_item in ipairs(running) do
+        sum = sum + (progress_item.percent or 0)
+      end
+      local avg = math.floor(sum / count)
+      return string.format('Progress: %d items %d%%%% ', count, avg)
+    end
+  end
+
+
+  ---@class vim.ui.get_progress_status.Opts
+  ---custom formater for progress messages
+  ---@field fmt? fun(running: ProgressMessage[]):string
+  --
+  --- Function to format the list of running progress messages for statusline
+  ---@param opts? vim.ui.get_progress_status.Opts Options
+  ---@return string Statusline component text
+  function M.get_progress_status(opts)
+    vim.validate('opts', opts, 'table', true)
+    if opts ~= nil then
+      vim.validate('fmt', opts.fmt, 'function', true)
+    end
+    if opts == nil or opts.fmt == nil then
+      opts = { fmt = progress_status_fmt }
+    end
+
+    local running = {} ---@type ProgressMessage[]
+    for _, msg in pairs(progress) do
+      if msg.status == 'running' then
+        table.insert(running, msg)
+      end
+    end
+    return opts.fmt(running)
+  end
+end
+
 return M

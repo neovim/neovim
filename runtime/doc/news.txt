@@ -322,6 +322,8 @@ UI
   • "Error executing Lua:" changed to "Lua:".
 • 'busy' status is shown in default statusline with symbol ◐
 • Improved LSP signature help rendering.
+• |vim.ui.get_progress_status()| returns a formatted string of currently
+running |progress-message|.
 
 VIMSCRIPT
 
