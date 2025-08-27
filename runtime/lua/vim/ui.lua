@@ -255,9 +255,9 @@ end
 
 do
   ---@class ProgressMessage
-  ---@field title string   Title of the progress message
+  ---@field title? string   Title of the progress message
   ---@field status string  Status: "running" | "success" | "failed" | "cancel"
-  ---@field percent integer Percent complete (0–100)
+  ---@field percent? integer Percent complete (0–100)
   ---@private
 
   ---Cache of active progress messages, keyed by msg_id
@@ -304,6 +304,9 @@ do
       return '' -- nothing to show
     elseif count == 1 then
       local progress_item = running[1]
+      if progress_item.title == nil then
+        return string.format('%d%%%% ', progress_item.percent or 0)
+      end
       return string.format('%s: %d%%%% ', progress_item.title, progress_item.percent or 0)
     else
       local sum = 0 ---@type integer
@@ -337,7 +340,7 @@ do
         table.insert(running, msg)
       end
     end
-    return opts.fmt(running)
+    return opts.fmt(running) or ''
   end
 end
 
