@@ -373,7 +373,7 @@ function M.select(opts)
   end
 
   local count = opts.count or vim.v.count1
-  local wrap = opts.wrap or true
+  local wrap = opts.wrap ~= false
 
   local current = completor.current
   if not current then
