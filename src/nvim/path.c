@@ -754,9 +754,13 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
 
         vim_snprintf(buf + len, buflen - len, "%s", path_end);
         if (path_has_exp_wildcard(path_end)) {      // handle more wildcards
-          // need to expand another component of the path
-          // remove backslashes for the remaining components only
-          do_path_expand(gap, buf, len + 1, flags, false);
+          if (stardepth < 100) {
+            stardepth++;
+            // need to expand another component of the path
+            // remove backslashes for the remaining components only
+            do_path_expand(gap, buf, len + 1, flags, false);
+            stardepth--;
+          }
         } else {
           FileInfo file_info;
 
