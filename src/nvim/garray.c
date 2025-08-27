@@ -124,13 +124,13 @@ void ga_remove_duplicate_strings(garray_T *gap)
 }
 
 /// For a growing array that contains a list of strings: concatenate all the
-/// strings with sep as separator.
+/// strings with "sep" as separator.
 ///
 /// @param gap
 /// @param sep
 ///
 /// @returns the concatenated strings
-char *ga_concat_strings_sep(const garray_T *gap, const char *sep)
+char *ga_concat_strings(const garray_T *gap, const char *sep)
   FUNC_ATTR_NONNULL_RET
 {
   const size_t nelem = (size_t)gap->ga_len;
@@ -157,17 +157,6 @@ char *ga_concat_strings_sep(const garray_T *gap, const char *sep)
   strcpy(s, strings[nelem - 1]);  // NOLINT(runtime/printf)
 
   return ret;
-}
-
-/// For a growing array that contains a list of strings: concatenate all the
-/// strings with a separating comma.
-///
-/// @param gap
-///
-/// @returns the concatenated strings
-char *ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
-{
-  return ga_concat_strings_sep(gap, ",");
 }
 
 /// Concatenate a string to a growarray which contains characters.
